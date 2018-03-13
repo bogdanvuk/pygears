@@ -179,10 +179,6 @@ class GenericMeta(TypingMeta):
 
 
 def param_subs(t, matches, namespace):
-    # Add all registered objects (types and transformations) to the namespace
-    namespace = dict(namespace)
-    # namespace.update(get_typing_namespace())
-
     # Did we reach the parameter name?
     if isinstance(t, str):
         subs_dict = {}
