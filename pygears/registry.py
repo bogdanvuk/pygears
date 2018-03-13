@@ -15,3 +15,7 @@ class PluginBase:
     @classmethod
     def bind(cls):
         pass
+
+
+def registry(key):
+    return PluginBase.registry[key]
