@@ -63,12 +63,21 @@ class GenericMeta(TypingMeta):
         else:
             if len(bases[0].templates) < len(args):
                 raise TemplateArgumentsError(
-                    "Too many arguments to the templated type: {bases[0]}")
+                    f"Too many arguments to the templated type: {bases[0]}")
 
-            tmpl_map = {
-                name: val
-                for name, val in zip(bases[0].templates, args)
-            }
+            if isinstance(args, dict):
+                for t in args:
+                    if t not in bases[0].templates:
+                        raise TemplateArgumentsError(
+                            f"Template parameter '{t}' not part of the "
+                            f"templated type: {bases[0]}")
+
+                tmpl_map = args
+            else:
+                tmpl_map = {
+                    name: val
+                    for name, val in zip(bases[0].templates, args)
+                }
             return param_subs(bases[0], tmpl_map, {})
 
     def is_specified(self):
