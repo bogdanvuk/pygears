@@ -1,5 +1,6 @@
-from pygears.core.registry import PluginBase
-from pygears.typing import Union, Tuple, Uint, Int, Unit, Bool, Queue, Array, bitw
+from pygears.registry import PluginBase
+from pygears.typing import (Union, Tuple, Uint, Int, Unit, Bool, Queue, Array,
+                            bitw)
 
 
 class TypingNamespacePlugin(PluginBase):

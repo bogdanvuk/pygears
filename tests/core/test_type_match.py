@@ -1,6 +1,6 @@
 from nose.tools import raises
 
-from pygears.typing import Tuple, Uint
+from pygears import Tuple, Uint
 from pygears.core.type_match import type_match, TypeMatchError
 
 
