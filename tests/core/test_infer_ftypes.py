@@ -2,8 +2,6 @@ from nose.tools import raises
 
 from pygears import Int, Tuple, Uint
 from pygears.core.infer_ftypes import TypeMatchError, infer_ftypes
-from pygears.registry import registry
-from pygears.typing.base import param_subs
 
 
 def test_simple_deduction():
@@ -11,7 +9,6 @@ def test_simple_deduction():
     args = [Uint[2]]
 
     ftypes, match = infer_ftypes(ftypes, args)
-    ftypes[-1] = param_subs(ftypes[-1], match, registry('TypeArithNamespace'))
 
     assert ftypes[0] == Uint[2]
     assert ftypes[1] == Uint[2]
@@ -23,7 +20,6 @@ def test_templated_type_deduction():
     args = [Uint[2]]
 
     ftypes, match = infer_ftypes(ftypes, args)
-    ftypes[-1] = param_subs(ftypes[-1], match, registry('TypeArithNamespace'))
 
     assert ftypes[0] == Uint[2]
     assert ftypes[1] == Int[2]
@@ -35,7 +31,6 @@ def test_templated_type_deduction_multi_templates():
     args = [Tuple[Uint[1], Uint[2]]]
 
     ftypes, match = infer_ftypes(ftypes, args)
-    ftypes[-1] = param_subs(ftypes[-1], match, registry('TypeArithNamespace'))
 
     assert ftypes[0] == Tuple[Uint[1], Uint[2]]
     assert ftypes[1] == Tuple[Uint[1], 2]
@@ -47,7 +42,6 @@ def test_templated_type_deduction_multi_related_templates():
     args = [Tuple[Uint[1], Uint[2], Uint[1]]]
 
     ftypes, match = infer_ftypes(ftypes, args)
-    ftypes[-1] = param_subs(ftypes[-1], match, registry('TypeArithNamespace'))
 
     assert ftypes[0] == Tuple[Uint[1], Uint[2], Uint[1]]
     assert ftypes[1] == Tuple[Uint[1], 2]
@@ -67,7 +61,6 @@ def test_expression():
     args = [Uint[1], Tuple[Uint[2], Uint[3]]]
 
     ftypes, match = infer_ftypes(ftypes, args)
-    ftypes[-1] = param_subs(ftypes[-1], match, registry('TypeArithNamespace'))
 
     assert ftypes[0] == Uint[1]
     assert ftypes[1] == Tuple[Uint[2], Uint[3]]
@@ -80,7 +73,6 @@ def test_multidout():
     args = [Uint[1]]
 
     ftypes, match = infer_ftypes(ftypes, args)
-    ftypes[-1] = param_subs(ftypes[-1], match, registry('TypeArithNamespace'))
 
     assert ftypes[0] == Uint[1]
     assert ftypes[1] == (Uint[1], Uint[2])

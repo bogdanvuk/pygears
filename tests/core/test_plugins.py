@@ -1,4 +1,4 @@
-from pygears.core import PluginBase
+from pygears.registry import PluginBase
 
 
 def test_subclasses_registry():
@@ -8,8 +8,10 @@ def test_subclasses_registry():
     class Plugin2(PluginBase):
         pass
 
-    assert PluginBase.subclasses == [Plugin1, Plugin2]
-    assert Plugin1.subclasses == [Plugin1, Plugin2]
+    assert Plugin1 in PluginBase.subclasses
+    assert Plugin2 in PluginBase.subclasses
+    assert Plugin1 in Plugin1.subclasses
+    assert Plugin2 in Plugin1.subclasses
 
 
 def test_key_registry():

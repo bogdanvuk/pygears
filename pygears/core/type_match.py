@@ -1,7 +1,7 @@
 import re
 
 from pygears.registry import registry
-from pygears.typing.base import Any, GenericMeta, type_repr
+from pygears.typing.base import Any, GenericMeta, type_repr, param_subs
 
 
 class TypeMatchError(Exception):
@@ -13,7 +13,7 @@ class FormatDict(dict):
         return "{" + key + "}"
 
 
-def _type_match_rec(t, pat, matches):
+def _type_match_rec(t, pat, matches, allow_incomplete):
 
     # Ignore parameter names in type
     if isinstance(t, str):
@@ -21,29 +21,29 @@ def _type_match_rec(t, pat, matches):
     # Did we reach the parameter name?
     elif isinstance(pat, str):
         res = re.findall(r"\{(.*?)\}", pat)
-        if res and ((len(res) > 1) or ('{' + res[0] + '}' != pat)):
-
-            # formatter = string.Formatter()
+        if res and ('{' + res[0] + '}' != pat):
+            # if pattern is not a simple template argument, but an expression
             try:
                 param_str = pat.format(**matches)
             except KeyError as e:
-                raise TypeMatchError(
-                    f'Missing value for argument(s) {e.args}, in '
-                    f'substitution of template parameter "{pat}".')
+                if not allow_incomplete:
+                    raise TypeMatchError(
+                        f'Missing value for argument(s) {e.args}, in '
+                        f'substitution of template parameter "{pat}".')
 
             if repr(t) != repr(
                     eval(param_str, registry('TypeArithNamespace'))):
-                raise TypeMatchError(
-                    f'Template "{pat}" is an expresion. Matching to an'
-                    f' expression is not currently supported.')
+                if not allow_incomplete:
+                    raise TypeMatchError(
+                        f'Template "{pat}" is an expresion. Matching to an'
+                        f' expression is not currently supported.')
         elif len(res) == 0:
             raise TypeMatchError(
                 f'Malformed template expresion "{pat}". Did you forget '
                 'enclosing template arguments in curly braces?')
         else:
             # If the parameter name is already bound, but not to another
-            # parameter name, check if two deductions are same if (pat in
-            # matches) and (not isinstance(matches[pat], str)):
+            # parameter name, check if two deductions are same
             if res[0] in matches:
                 if repr(t) != repr(matches[res[0]]):
                     raise TypeMatchError(
@@ -57,7 +57,8 @@ def _type_match_rec(t, pat, matches):
             t, GenericMeta) and (t.base == pat.base):
         for ta, pa in zip(t.args, pat.args):
             try:
-                _type_match_rec(ta, pa, matches)
+                _type_match_rec(
+                    ta, pa, matches, allow_incomplete=allow_incomplete)
             except TypeMatchError as e:
                 raise TypeMatchError(
                     f'{str(e)}\n - when matching {repr(t)} to {repr(pat)}')
@@ -68,7 +69,7 @@ def _type_match_rec(t, pat, matches):
             type_repr(t), type_repr(pat)))
 
 
-def type_match(t, pat, matches={}):
+def type_match(t, pat, matches={}, allow_incomplete=False):
     matches = dict(matches)
-    _type_match_rec(t, pat, matches)
+    _type_match_rec(t, pat, matches, allow_incomplete=allow_incomplete)
     return matches
