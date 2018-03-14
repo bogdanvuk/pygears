@@ -63,7 +63,7 @@ class GenericMeta(TypingMeta):
         else:
             if len(bases[0].templates) < len(args):
                 raise TemplateArgumentsError(
-                    f"Too many arguments to the templated type: {bases[0]}")
+                    "Too many arguments to the templated type: {bases[0]}")
 
             if isinstance(args, dict):
                 for t in args:
@@ -196,29 +196,28 @@ def param_subs(t, matches, namespace):
 
         if not res:
             # String parameter with no placeholder names
-            return t
-            # raise TypeError(
-            #     "String parameter {}, with no placeholder names".format(
-            #         type_repr(t)))
+            param_str = t
+        else:
+            for r in res:
+                if r in matches:
+                    subs_dict[r] = r
+                else:
+                    all_subs = False
+                    subs_dict[r] = '{' + r + '}'
 
-        for r in res:
-            if r in matches:
-                subs_dict[r] = r
-            else:
-                all_subs = False
-                subs_dict[r] = '{' + r + '}'
-
-        if all_subs:
             param_str = t.format(**subs_dict)
+
+        if not all_subs:
+            return param_str
+        else:
             try:
                 return eval(param_str, namespace, matches)
             except Exception as e:
-                raise Exception(
-                    "Exception while evaluating parameter string '{}'".format(
-                        param_str)) from e
+                return param_str
+                # raise Exception(
+                #     "Exception while evaluating parameter string '{}'".format(
+                #         param_str)) from e
 
-        else:
-            return t.format(**subs_dict)
     elif isinstance(t, tuple):
         return tuple([param_subs(tt, matches, namespace) for tt in t])
     else:
