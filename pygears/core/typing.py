@@ -1,6 +1,6 @@
 from pygears.registry import PluginBase
 from pygears.typing import (Union, Tuple, Uint, Int, Unit, Bool, Queue, Array,
-                            bitw)
+                            bitw, typeof)
 
 
 class TypingNamespacePlugin(PluginBase):
@@ -21,3 +21,4 @@ class CoreTypesPlugin(TypingNamespacePlugin):
         cls.registry['TypeArithNamespace']['Queue'] = Queue
         cls.registry['TypeArithNamespace']['Array'] = Array
         cls.registry['TypeArithNamespace']['bitw'] = bitw
+        cls.registry['TypeArithNamespace']['typeof'] = typeof

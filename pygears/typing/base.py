@@ -280,3 +280,10 @@ class EnumerableGenericMeta(GenericMeta):
 
 class Any(metaclass=TypingMeta):
     pass
+
+
+def typeof(obj, t):
+    try:
+        return issubclass(obj, t)
+    except TypeError:
+        return False

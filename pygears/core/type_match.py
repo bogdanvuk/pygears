@@ -1,16 +1,11 @@
 import re
 
 from pygears.registry import registry
-from pygears.typing.base import Any, GenericMeta, type_repr, param_subs
+from pygears.typing.base import Any, GenericMeta, type_repr
 
 
 class TypeMatchError(Exception):
     pass
-
-
-class FormatDict(dict):
-    def __missing__(self, key):
-        return "{" + key + "}"
 
 
 def _type_match_rec(t, pat, matches, allow_incomplete):

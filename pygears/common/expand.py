@@ -1,6 +1,6 @@
 # from pygears.core.module import Module
 # from pygears.core.module_def import ModuleDefinition
-from pygears import Union, Queue, Tuple
+from pygears import Union, Queue, Tuple, typeof
 from pygears.core.typing import TypingNamespacePlugin
 
 # def expand_impl(din: '{Tdin}') -> 'expand({Tdin})':
@@ -21,7 +21,7 @@ def next_pos(type_list, comb, t):
 
 def type_comb_rec(type_list, comb):
     type_ = type_list[-1]
-    if issubclass(type_, Union):
+    if typeof(type_, Union):
         for t in type_.types():
             yield from next_pos(type_list, comb, t)
     else:
@@ -43,12 +43,12 @@ def queue_type_comb(type_):
 
 
 def type_expand(type_):
-    if issubclass(type_, Tuple):
+    if typeof(type_, Tuple):
         return Union[tuple(tuple_type_comb(type_))]
-    elif issubclass(type_, Queue):
-        if issubclass(type_[0], Tuple):
+    elif typeof(type_, Queue):
+        if typeof(type_[0], Tuple):
             return Tuple[tuple(queue_type_comb(type_))]
-        elif issubclass(type_[0], Union):
+        elif typeof(type_[0], Union):
             utypes = [Queue[t, type_.lvl] for t in type_[0].types()]
             return Union[tuple(utypes)]
     else:
