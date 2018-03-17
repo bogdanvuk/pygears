@@ -20,17 +20,18 @@ def operator_methods_gen(cls):
 class Intf:
     OPERATOR_SUPPORT = ['__len__']
 
-    def __init__(self, type_):
+    def __init__(self, dtype):
         self.consumers = []
-        self._type = type_
+        self.dtype = dtype
         self.producer = None
 
-    @property
-    def type(self):
-        return self._type
+    def source(self, port):
+        self.producer = port
+        port.consumer = self
 
     def connect(self, port):
         self.consumers.append(port)
+        port.producer = self
 
     def __hash__(self):
         return id(self)

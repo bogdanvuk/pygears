@@ -1,10 +1,12 @@
 from functools import wraps
 
 
-def func_module(cls, func, *meta_args, **meta_kwds):
+def func_module(cls, func, **meta_kwds):
     @wraps(func)
     def wrapper(*args, **kwds):
-        return cls(func, meta_args, meta_kwds, *args, **kwds)
+        kwds_comb = meta_kwds.copy()
+        kwds_comb.update(kwds)
+        return cls(func, *args, **kwds_comb)
 
     return wrapper
 

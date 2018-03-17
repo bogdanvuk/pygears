@@ -19,3 +19,7 @@ class PluginBase:
 
 def registry(key):
     return PluginBase.registry[key]
+
+
+def bind(key, val):
+    PluginBase.registry[key] = val
