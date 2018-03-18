@@ -1,9 +1,6 @@
-from pygears.core.gear import gear, clear, hier
-from pygears.core.intf import Intf
-from pygears.typing.uint import Uint
+from pygears import Intf, Uint, Queue, gear, clear, hier, registry, Tuple
 
 from nose import with_setup
-from pygears import registry
 
 
 @with_setup(clear)
@@ -110,3 +107,51 @@ def test_hier_hierarchy():
         'fhier1/fhier2/fhier3'].in_ports[0].producer
     assert root['fhier1/fhier2/fhier3'].in_ports[0].consumer == root[
         'fhier1/fhier2/fhier3/fgear'].args[0]
+
+
+@with_setup(clear)
+def test_alternatives():
+    @gear(version=4)
+    def fgear01(arg1: Tuple['{T1}', '{T2}'], *, lvl=0) -> '{T2}':
+        pass
+
+    @gear(alternatives=[fgear01], version=3)
+    def fgear0(arg1: Uint['{w}'], *, lvl=0) -> Uint['{w}']:
+        pass
+
+    @gear(version=2)
+    def fgear1(arg1: Queue['{T}', 1], *, lvl=1) -> Tuple['{T}', Uint['{lvl}']]:
+        pass
+
+    @gear(version=1)
+    def fgear2(arg1: Queue['{T}', 2], *, lvl=2) -> Tuple['{T}', Uint['{lvl}']]:
+        pass
+
+    @gear(alternatives=[fgear2, fgear1, fgear0], version=0)
+    def fgear(arg1: Queue['{T}', 3], *, lvl=3) -> Tuple['{T}', Uint['{lvl}']]:
+        pass
+
+    root = registry('HierRoot')
+
+    iout = Intf(Uint[1]) | fgear
+    assert iout.dtype == Uint[1]
+    assert root['fgear'].params['lvl'] == 0
+
+    iout = Intf(Queue[Uint[1], 3]) | fgear
+    assert iout.dtype == Tuple[Uint[1], Uint[3]]
+    assert root['fgear1'].params['lvl'] == 3
+
+    iout = Intf(Queue[Uint[1], 1]) | fgear
+    assert iout.dtype == Tuple[Uint[1], Uint[1]]
+    assert root['fgear2'].params['lvl'] == 1
+
+    iout = Intf(Queue[Uint[1], 2]) | fgear
+    assert iout.dtype == Tuple[Uint[1], Uint[2]]
+    assert root['fgear3'].params['lvl'] == 2
+
+    iout = Intf(Tuple[Uint[1], Uint[2]]) | fgear
+    assert iout.dtype == Uint[2]
+    assert root['fgear4'].params['lvl'] == 0
+    assert root['fgear4'].params['version'] == 4
+
+    assert len(root.child) == 5

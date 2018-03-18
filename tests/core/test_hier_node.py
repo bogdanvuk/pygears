@@ -8,5 +8,4 @@ def test_unique_renaming():
         NamedHierNode(n, root)
 
     renames = [c.basename for c in root.child]
-    print(renames)
     assert renames == ['stem0', 'stem2', 'stem1', 'stem01', 'stem1_2']

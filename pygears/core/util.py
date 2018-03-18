@@ -1,16 +1,6 @@
 from functools import wraps
 
 
-def func_module(cls, func, **meta_kwds):
-    @wraps(func)
-    def wrapper(*args, **kwds):
-        kwds_comb = meta_kwds.copy()
-        kwds_comb.update(kwds)
-        return cls(func, *args, **kwds_comb)
-
-    return wrapper
-
-
 def doublewrap(f):
     '''
     a decorator decorator, allowing the decorator to be used as:

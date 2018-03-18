@@ -1,10 +1,19 @@
-from .util import doublewrap, func_module
+from .util import doublewrap
 from .hier_node import NamedHierNode
 from .infer_ftypes import infer_ftypes, TypeMatchError
 from .intf import Intf
 from pygears.registry import registry, PluginBase, bind
 from .partial import Definition
 import inspect
+from functools import wraps
+
+
+def func_module(cls, func, **meta_kwds):
+    @wraps(func)
+    def wrapper(*args, **kwds):
+        return cls(func, meta_kwds, *args, **kwds)
+
+    return wrapper
 
 
 @doublewrap
@@ -56,14 +65,42 @@ class OutPort(Port):
 
 
 class GearBase(NamedHierNode):
-    def __new__(cls, func, *args, name=None, intfs=[], outnames=[], **kwds):
-        gear = super().__new__(cls)
-        gear.__init__(func, *args, intfs=[], **kwds)
-        return gear.resolve()
+    def __new__(cls,
+                func,
+                meta_kwds,
+                *args,
+                name=None,
+                **kwds):
+
+        if name is None:
+            name = func.__name__
+        kwds_comb = meta_kwds.copy()
+        kwds_comb.update(kwds)
+        alternatives = meta_kwds.get('alternatives', [])
+
+        errors = []
+        try:
+            gear = super().__new__(cls)
+            gear.__init__(
+                func, *args, name=name, **kwds_comb)
+            return gear.resolve()
+        except TypeMatchError as e:
+            gear.remove()
+            errors.append(e)
+            if not alternatives:
+                raise e
+
+        for cls in alternatives:
+            try:
+                return cls(
+                    *args, name=name, **kwds)
+            except TypeMatchError as e:
+                pass
+        else:
+            raise errors[0]
 
     def __init__(self, func, *args, name=None, intfs=[], outnames=[], **kwds):
-        super().__init__(name if name else func.__name__,
-                         registry('CurrentHier'))
+        super().__init__(name, registry('CurrentHier'))
         self.func = func
         self.outnames = outnames
         self.intfs = intfs.copy()
@@ -113,6 +150,8 @@ class GearBase(NamedHierNode):
                 raise ModuleArgsNotSpecified(
                     f"Input arg {i} for module {self.name} was not"
                     f" resolved to interface, instead {repr(a)} received")
+
+        self.infered_dtypes, self.params = self.infer_params_and_ftypes()
 
     def _handle_return_annot(self):
         if "return" in self.annotations:
@@ -180,13 +219,12 @@ class GearBase(NamedHierNode):
             raise TypeMatchError(f'{str(e)}, of the module {self.name}')
 
     def resolve(self):
-        dtypes, self.params = self.infer_params_and_ftypes()
         func_ret = self.resolve_func()
 
         if func_ret:
             out_dtype = tuple(r.dtype for r in func_ret)
-        elif not isinstance(dtypes[-1], tuple):
-            out_dtype = (dtypes[-1], )
+        elif not isinstance(self.infered_dtypes[-1], tuple):
+            out_dtype = (self.infered_dtypes[-1], )
 
         self.out_ports = [OutPort(self, i) for i, d in enumerate(out_dtype)]
         for i, r in enumerate(func_ret):

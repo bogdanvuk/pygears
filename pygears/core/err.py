@@ -1,9 +1,9 @@
 from pygears.registry import registry, PluginBase
-from enum import Enum
+from enum import IntEnum
 import sys
 
 
-class ErrReportLevel(Enum):
+class ErrReportLevel(IntEnum):
     debug = 0
     user = 1
 
