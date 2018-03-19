@@ -5,9 +5,10 @@ from collections import Counter
 class HierVisitorBase:
     def visit(self, node):
         import inspect
-        for base_class in reversed(inspect.getmro(node.__class__)):
+        for base_class in inspect.getmro(node.__class__):
             if hasattr(self, base_class.__name__):
-                getattr(self, base_class.__name__)(node)
+                if getattr(self, base_class.__name__)(node):
+                    return
 
     def HierNode(self, node):
         if hasattr(node, "child"):
