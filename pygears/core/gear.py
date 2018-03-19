@@ -31,6 +31,7 @@ class HierRootPlugin(PluginBase):
     def bind(cls):
         cls.registry['HierRoot'] = NamedHierNode('')
         cls.registry['CurrentHier'] = cls.registry['HierRoot']
+        cls.registry['GearMetaParams'] = {}
 
 
 def clear():
