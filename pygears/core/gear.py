@@ -66,12 +66,7 @@ class OutPort(Port):
 
 
 class GearBase(NamedHierNode):
-    def __new__(cls,
-                func,
-                meta_kwds,
-                *args,
-                name=None,
-                **kwds):
+    def __new__(cls, func, meta_kwds, *args, name=None, **kwds):
 
         if name is None:
             name = func.__name__
@@ -82,8 +77,7 @@ class GearBase(NamedHierNode):
         errors = []
         try:
             gear = super().__new__(cls)
-            gear.__init__(
-                func, *args, name=name, **kwds_comb)
+            gear.__init__(func, *args, name=name, **kwds_comb)
             return gear.resolve()
         except TypeMatchError as e:
             gear.remove()
@@ -93,8 +87,7 @@ class GearBase(NamedHierNode):
 
         for cls in alternatives:
             try:
-                return cls(
-                    *args, name=name, **kwds)
+                return cls(*args, name=name, **kwds)
             except TypeMatchError as e:
                 pass
         else:
@@ -113,11 +106,16 @@ class GearBase(NamedHierNode):
         self.argnames = argspec.args
         self.varargsname = argspec.varargs
         self.annotations = argspec.annotations
-        self.params = argspec.kwonlydefaults
         self.kwdnames = argspec.kwonlyargs
 
+        self.params = argspec.kwonlydefaults
         if self.params is None:
             self.params = {}
+
+        # Add defaults from GearMetaParams registry
+        for k, v in registry('GearMetaParams').items():
+            if k not in self.params:
+                self.params[k] = v
 
         self.params.update(kwds)
 
@@ -202,6 +200,9 @@ class GearBase(NamedHierNode):
                 return False
         else:
             return True
+
+    def get_arg_types(self):
+        return tuple(a.dtype for a in self.args)
 
     def get_type(self):
         if len(self.intfs) > 1:

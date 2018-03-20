@@ -1,15 +1,15 @@
 from collections import OrderedDict
 
-from .module_base import SVGenModuleBase
-from .inst import SVGenInstPlugin
+from pygears.svgen.module_base import SVGenModuleBase
+from pygears.svgen.inst import SVGenInstPlugin
 
 import re
 
 
 class SVGenSVMod(SVGenModuleBase):
-    def __init__(self, module, context, parent=None):
-        super().__init__(module, context, parent)
-        self.set_params(**module.meta_config[1])
+    def __init__(self, module, parent=None):
+        super().__init__(module, parent)
+        self.set_params(module.params)
 
     def set_params(self,
                    svmod=None,
@@ -52,5 +52,4 @@ class SVGenSVMod(SVGenModuleBase):
 class SVGenSVModPlugin(SVGenInstPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['SVGenModuleNamespace'] = {}
-        cls.registry['GearMetaParams']['svgen'] = SVGenSVMod
+        cls.registry['SVGenModuleNamespace']['Gear'] = SVGenSVMod

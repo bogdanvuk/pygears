@@ -35,10 +35,9 @@ def make_unique_name(objs, getter, setter):
 
 
 class SVGenNodeBase(NamedHierNode):
-    def __init__(self, context, parent, name, ports=[]):
+    def __init__(self, parent, name, ports=[]):
         super().__init__(name, parent)
         self.ports = ports.copy()
-        self.context = context
 
     def remove(self):
         for i, p in enumerate(self.in_ports()):
