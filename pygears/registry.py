@@ -1,3 +1,9 @@
+import importlib
+import os
+import re
+import sys
+
+
 class PluginBase:
     subclasses = []
     registry = {}
@@ -23,3 +29,19 @@ def registry(key):
 
 def bind(key, val):
     PluginBase.registry[key] = val
+
+
+def load_plugin_folder(path):
+    plugin_parent_dir, plugin_dir = os.path.split(path)
+    sys.path.insert(0, plugin_parent_dir)
+    pysearchre = re.compile('.py$', re.IGNORECASE)
+    pluginfiles = filter(pysearchre.search, os.listdir(path))
+    plugins = map(lambda fp: '.' + os.path.splitext(fp)[0], pluginfiles)
+    # import parent module / namespace
+    importlib.import_module(plugin_dir)
+    modules = []
+    for plugin in plugins:
+        if not plugin.startswith('__'):
+            modules.append(importlib.import_module(plugin, package="modules"))
+
+    return modules

@@ -1,12 +1,12 @@
 from collections import OrderedDict
 
-from pygears.svgen.module_base import SVGenModuleBase
+from pygears.svgen.module_base import SVGenGearBase
 from pygears.svgen.inst import SVGenInstPlugin
 
 import re
 
 
-class SVGenSVMod(SVGenModuleBase):
+class SVGenSVMod(SVGenGearBase):
     def __init__(self, module, parent=None):
         super().__init__(module, parent)
         self.set_params(module.params)

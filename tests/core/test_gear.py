@@ -109,11 +109,14 @@ def test_hier_hierarchy():
     assert root['fhier1/fhier2/fhier3'].in_ports[0].consumer == root[
         'fhier1/fhier2/fhier3/fgear'].args[0]
 
+
 from pygears import bind
 bind('ErrReportLevel', 0)
 test_hier_hierarchy()
 root = registry('HierRoot')
-svgen(root, '.')
+top = svgen(root, '.')
+from pygears.util.print_hier import print_hier
+print_hier(top)
 
 
 @with_setup(clear)

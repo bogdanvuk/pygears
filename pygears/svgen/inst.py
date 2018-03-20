@@ -1,4 +1,4 @@
-from pygears import PluginBase, registry
+from pygears import registry
 from pygears.core.hier_node import HierVisitorBase, NamedHierNode
 from pygears.core.gear import HierRootPlugin
 import inspect
@@ -20,23 +20,29 @@ class SVGenDesign(NamedHierNode):
 class SVGenInstVisitor(HierVisitorBase):
     def __init__(self):
         self.cur_hier = None
-        self.top = None
+        self.design = None
+        self.namespace = registry('SVGenModuleNamespace')
+        self.svgen_map = registry('SVGenMap')
 
     def NamedHierNode(self, module):
-        self.top = SVGenDesign(module)
-        self.cur_hier = self.top
+        self.design = SVGenDesign(module)
+        self.cur_hier = self.design
 
     def instantiate(self, module):
         svgen_cls = module.params['svgen']
 
         for base_class in inspect.getmro(module.__class__):
-            if base_class.__name__ in registry('SVGenModuleNamespace'):
-                svgen_cls = registry('SVGenModuleNamespace')[
-                    base_class.__name__]
+            if base_class.__name__ in self.namespace:
+                svgen_cls = self.namespace[base_class.__name__]
                 break
 
         if svgen_cls:
-            return svgen_cls(module, parent=self.cur_hier)
+            svgen_inst = svgen_cls(module, parent=self.cur_hier)
+        else:
+            svgen_inst = None
+
+        self.svgen_map[module] = svgen_inst
+        return svgen_inst
 
     def Hier(self, module):
         self.cur_hier = self.instantiate(module)
@@ -53,9 +59,12 @@ def svgen_inst(top):
     v = SVGenInstVisitor()
     v.visit(top)
 
+    return v.design
+
 
 class SVGenInstPlugin(HierRootPlugin):
     @classmethod
     def bind(cls):
         cls.registry['SVGenModuleNamespace'] = {}
         cls.registry['GearMetaParams']['svgen'] = None
+        cls.registry['SVGenMap'] = {}

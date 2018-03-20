@@ -52,9 +52,15 @@ class ModuleArgsNotSpecified(Exception):
 
 
 class Port:
-    def __init__(self, gear, index):
+    def __init__(self, gear, index, producer=None, consumer=None):
         self.gear = gear
         self.index = index
+        self.producer = producer
+        self.consumer = consumer
+
+    @property
+    def dtype(self):
+        return self.producer.dtype
 
 
 class InPort(Port):

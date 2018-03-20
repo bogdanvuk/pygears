@@ -35,9 +35,10 @@ def make_unique_name(objs, getter, setter):
 
 
 class SVGenNodeBase(NamedHierNode):
-    def __init__(self, parent, name, ports=[]):
+    def __init__(self, parent, name, in_ports=[], out_ports=[]):
         super().__init__(name, parent)
-        self.ports = ports.copy()
+        self.in_ports = in_ports.copy()
+        self.out_ports = out_ports.copy()
 
     def remove(self):
         for i, p in enumerate(self.in_ports()):
@@ -118,9 +119,6 @@ class SVGenNodeBase(NamedHierNode):
         # If this is a top level module, no ports need to be output further
         if self.parent is None:
             return
-
-        if self.name == '/is_stick_buff/queuemap/is_maybe_cache/unionmap/tuplemap/sdp':
-            proba = 2
 
         for p in self.in_ports():
             if p['intf'].parent != self.parent and (

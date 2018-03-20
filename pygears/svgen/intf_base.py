@@ -4,7 +4,6 @@ from collections import OrderedDict
 
 class SVGenIntfBase(NamedHierNode):
     def __init__(self,
-                 context,
                  parent,
                  name,
                  type_,
@@ -14,7 +13,6 @@ class SVGenIntfBase(NamedHierNode):
         super().__init__(name, parent)
         self.consumers = consumers.copy()
         self.producer = producer
-        self.context = context
         self.implicit = implicit
         self.type = type_
 

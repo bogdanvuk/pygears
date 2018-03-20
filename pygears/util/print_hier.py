@@ -32,7 +32,7 @@ class Visitor(HierVisitorBase):
         else:
             name = module.basename
 
-        print(f'{self.indent}Proc: {name} {types} ({sizes})')
+        print(f'{self.indent}{name}: {types} ({sizes})')
         if self.params:
             print(
                 f'{self.indent}    : {", ".join([p+": "+str(v) for p,v in module.params.items()])}'

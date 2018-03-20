@@ -1,45 +1,33 @@
 from pygears.svgen.node_base import SVGenDefaultNode
 from pygears.svgen.intf_base import SVGenIntfBase
+from pygears import registry
 
 
-class SVGenModuleBase(SVGenDefaultNode):
-    def __init__(self, module, parent):
-        self.module = module
-        outtypes = module.get_type()
-        if not isinstance(outtypes, tuple):
-            outtypes = (outtypes, )
+class SVGenGearBase(SVGenDefaultNode):
+    def __init__(self, gear, parent):
+        super().__init__(parent, gear.basename, gear.in_ports,
+                         gear.out_ports)
+        self.gear = gear
 
-        single_dout = (len(outtypes) == 1)
-        if 'outnames' in self.module.params:
-            outnames = self.module.params['outnames']
-        else:
-            outnames = [
-                "dout" if single_dout else f"dout{i}"
-                for i in range(len(outtypes))
-            ]
-
-        super().__init__(parent, module.basename)
-
-        for i, (name, ft) in enumerate(
-                zip(module.argnames, module.get_arg_types())):
-            self.add_port(name, 'in', None, ft, i)
-
-        for i, (name, ft) in enumerate(zip(outnames, outtypes)):
-            if ft is not None:
-                self.add_port(name, 'out', None, ft, i)
+    def create_intf(self, port, domain):
+        intf = port.producer
+        if intf is not None:
+            intf_inst = SVGenIntfModuleBase(intf, port, parent=domain)
+            self.svgen_map[intf] = intf_inst
+            port.producer = intf_inst
 
     def connect(self):
-        self.intfs = []
-        for a, p in zip(self.module.args, self.in_ports()):
-            self.connect_intf(p, self.context.svgens.get(a))
+        self.svgen_map = registry('SVGenMap')
+        for p in self.in_ports:
+            self.create_intf(p, domain=self)
 
-        for i, p in zip(self.module.intfs, self.out_ports()):
-            self.connect_intf(p, self.context.svgens.get(i))
+        for p in self.out_ports:
+            self.create_intf(p, domain=self.parent)
 
 
 class SVGenIntfModuleBase(SVGenIntfBase):
-    def __init__(self, intf, parent):
-        super().__init__(parent, name='', type_=intf.type, producer=None)
+    def __init__(self, intf, port, parent):
+        super().__init__(parent, name='', type_=intf.dtype, producer=port)
         self.intf = intf
-        self.index = intf.index
-        self.type = self.intf.type
+        # self.index = intf.index
+        # self.type = self.intf.type
