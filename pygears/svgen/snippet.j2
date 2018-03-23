@@ -1,0 +1,156 @@
+{%- set RBR = "{" %}
+{%- set LBR = "}" %}
+
+{%- macro generic_list(generics) -%}
+  {% for g in generics %}
+    {{g['name']}} = {{g['value']}}{{ "," if not loop.last }}
+  {%- endfor -%}
+{%- endmacro -%}
+
+{% macro intf_list(intfs) -%}
+  {% for i in intfs -%}
+    dti_s_if.{{i['modport']}} {{i['name']}}{{ "," if not loop.last }} // {{i['type']}} ({{i['width']}})
+  {% endfor -%}
+{%- endmacro %}
+
+{% macro module_inst(module_name, param_map, inst_name, port_map=None) -%}
+
+  {{module_name}}
+  {%- if param_map|length > 0 %}
+ #(
+    {% for name,value in param_map.items() -%}
+      {%- if name %}
+        {{"."|indent(4,True)}}{{name}}({{value}}){{ "," if not loop.last }}
+      {% else -%}
+        {{value|indent(4,True)}}{{ "," if not loop.last }}
+      {% endif -%}
+    {% endfor -%}
+    )
+  {% endif %}
+ {{inst_name}} (
+    .clk(clk),
+    .rst(rst),
+  {% if port_map -%}
+    {% for name,value in port_map.items() -%}
+      {{"."|indent(4,True)}}{{name}}({{value}}){{ "," if not loop.last }}
+    {% endfor -%}
+  {% else -%}
+    .*
+  {% endif -%}
+  );
+{% endmacro %}
+
+{% macro intf_inst(name, width, size, type) -%}
+  dti_s_if #(.DTI_DATA_WIDTH({{width}})) {{name}}{{ "[%d:0]"|format(size-1) if size>1 }}(); // {{type}} ({{width}})
+{%- endmacro %}
+
+{% macro assign(name, value) -%}
+  assign {{name}} = {{value}};
+{%- endmacro %}
+
+{% macro range(name, high, low=0) -%}
+  {{name}}[{{high}}:{{low}}]
+{%- endmacro %}
+
+{% macro concat(values) -%}
+  {{RBR}}{{ values|join(', ') }}{{LBR}}
+{%- endmacro %}
+
+{% macro logic(name, high=none, low=0) -%}
+  {%- if high is not none %}
+logic [{{high}}:{{low}}] {{name}};
+  {%- else -%}
+logic {{name}};
+  {% endif -%}
+{%- endmacro %}
+
+{% macro cons_signal_intf(intf) -%}
+output logic         {{intf['name']}}_tready,
+input  logic         {{intf['name']}}_tvalid,
+input  logic         {{intf['name']}}_tlast,
+input  logic [{{((intf['width']+7)//8)*8-1}}:0] {{intf['name']}}_tdata
+{%- endmacro %}
+
+{% macro prod_signal_intf(intf) -%}
+input  logic         {{intf['name']}}_tready,
+output logic         {{intf['name']}}_tvalid,
+output logic         {{intf['name']}}_tlast,
+output logic [{{((intf['width']+7)//8)*8-1}}:0] {{intf['name']}}_tdata
+{%- endmacro %}
+
+{% macro signal_intf_list(intfs) -%}
+  {% for i in intfs -%}
+    {% if i['modport'] == 'consumer' %}
+{{ cons_signal_intf(i) }}{{ "," if not loop.last }}
+    {% else %}
+{{ prod_signal_intf(i) }}{{ "," if not loop.last }}
+    {% endif %}
+  {% endfor %}
+{%- endmacro %}
+
+{% macro intf_list_inst(intfs) -%}
+  {% for i in intfs -%}
+{{ intf_inst(i['name'], i['width'], 1, i['type']) }}
+  {% endfor %}
+{%- endmacro %}
+
+{% macro cons_signal_intf_connect(intf) -%}
+output logic         {{intf['name']}}_tready,
+input  logic         {{intf['name']}}_tvalid,
+input  logic         {{intf['name']}}_tlast,
+input  logic [{{intf['width']}}:0] {{intf['name']}}_tdata
+{%- endmacro %}
+
+{% macro cons_signal_intf_connect(intf) -%}
+assign {{intf['name']}}.dvalid = {{intf['name']}}_tvalid;
+assign {{intf['name']}}.data = {{intf['name']}}_tdata;
+assign {{intf['name']}}.eot = {{intf['name']}}_tlast;
+assign {{intf['name']}}_tready = {{intf['name']}}.dready;
+{%- endmacro %}
+
+{% macro prod_signal_intf_connect(intf) -%}
+assign {{intf['name']}}_tvalid = {{intf['name']}}.dvalid;
+assign {{intf['name']}}_tdata = {{intf['name']}}.data;
+assign {{intf['name']}}_tlast = {{intf['name']}}.eot;
+assign {{intf['name']}}.dready = {{intf['name']}}_tready;
+{%- endmacro %}
+
+{% macro signal_intf_connect(intfs) -%}
+  {% for i in intfs -%}
+    {% if i['modport'] == 'consumer' %}
+{{ cons_signal_intf_connect(i) }}
+    {% else %}
+{{ prod_signal_intf_connect(i) }}
+    {% endif %}
+  {% endfor %}
+{%- endmacro %}
+
+{%- macro uint_def(name, t) -%}
+  logic [{{int(t)-1}}:0] {{name}}; // {{t}}
+{%- endmacro -%}
+
+{%- macro bool_def(name) -%}
+  logic {{name}};
+{%- endmacro -%}
+
+{%- macro field_def(field) -%}
+  {%- if field['svtype'] == None -%}
+    {%- if field['type'].__name__ in ["Uint", "Int"] -%}
+{{ uint_def(field['name'], field['type']) }}
+    {%- elif field['type'].__name__ == "Bool" -%}
+{{ bool_def(field['name']) }}
+    {%- else -%}
+    Unknown: {{ t }}
+    {%- endif -%}
+  {%- else -%}
+{{ field['svtype']['name'] }}_T {{ field['name'] }}; // {{ field['type'] }}
+  {%- endif -%}
+{%- endmacro -%}
+
+{%- macro sv_struct_def(sv_struct) -%}
+typedef {{ sv_struct['svtype'] }} packed {{RBR}} // {{ sv_struct['type'] }}
+{% for field in sv_struct['subtypes']|reverse -%}
+{{ field_def(field)|indent(4, True)}}
+{% endfor -%}
+{{LBR}} {{sv_struct['name']}}_T;
+{%- endmacro -%}

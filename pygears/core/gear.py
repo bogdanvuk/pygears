@@ -52,11 +52,12 @@ class ModuleArgsNotSpecified(Exception):
 
 
 class Port:
-    def __init__(self, gear, index, producer=None, consumer=None):
+    def __init__(self, gear, index, basename, producer=None, consumer=None):
         self.gear = gear
         self.index = index
         self.producer = producer
         self.consumer = consumer
+        self.basename = basename
 
     @property
     def dtype(self):
@@ -141,7 +142,9 @@ class GearBase(NamedHierNode):
 
         self._handle_return_annot()
         self._expand_varargs()
-        self.in_ports = [InPort(self, i) for i, _ in enumerate(self.args)]
+        self.in_ports = [
+            InPort(self, i, name) for i, name in enumerate(self.argnames)
+        ]
 
         for i, a in enumerate(self.args):
             if not self._type_is_specified(a.dtype):
@@ -233,8 +236,16 @@ class GearBase(NamedHierNode):
             out_dtype = tuple(r.dtype for r in func_ret)
         elif not isinstance(self.infered_dtypes[-1], tuple):
             out_dtype = (self.infered_dtypes[-1], )
+        else:
+            out_dtype = self.infered_dtypes[-1]
 
-        self.out_ports = [OutPort(self, i) for i, d in enumerate(out_dtype)]
+        for i in range(len(self.outnames), len(out_dtype)):
+            self.outnames.append(f'dout{i}')
+
+        self.out_ports = [
+            OutPort(self, i, name) for i, name in enumerate(self.outnames)
+        ]
+
         for i, r in enumerate(func_ret):
             r.connect(self.out_ports[i])
 

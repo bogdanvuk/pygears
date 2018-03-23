@@ -55,7 +55,7 @@ class SVGenInstVisitor(HierVisitorBase):
         return True
 
 
-def svgen_inst(top):
+def svgen_inst(top, conf):
     v = SVGenInstVisitor()
     v.visit(top)
 

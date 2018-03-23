@@ -68,16 +68,6 @@ class SVGenNodeBase(NamedHierNode):
 
         return self.ports[-1]
 
-    def in_ports(self):
-        for p in self.ports:
-            if p['dir'] == 'in':
-                yield p
-
-    def out_ports(self):
-        for p in self.ports:
-            if p['dir'] == 'out':
-                yield p
-
     @property
     def sv_module_name(self):
         trimmed_name = self.name
@@ -93,11 +83,6 @@ class SVGenNodeBase(NamedHierNode):
             consumers.extend(i['intf'].consumers)
 
         return consumers
-
-    # def get_intf_ports(self, intf):
-    #     for p in self.ports:
-    #         if p['intf'] == intf:
-    #             yield p
 
     def connect_intf(self, port, intf):
         if port['dir'] == 'in':
@@ -134,6 +119,9 @@ class SVGenNodeBase(NamedHierNode):
                     not p['intf'].consumers):
                 self.parent.out_port_make(p, self)
 
+    def get_module(self, template_env):
+        pass
+
     def get_fn(self):
         pass
 
@@ -149,12 +137,13 @@ class SVGenNodeBase(NamedHierNode):
 
 class SVGenDefaultNode(SVGenNodeBase):
     def sv_port_configs(self):
-        for p in self.ports:
-            if p['type'] is not None:
-                yield self.get_sv_port_config(
-                    'consumer' if p['dir'] == 'in' else 'producer',
-                    type_=p['type'],
-                    name=p['name'])
+        for p in self.in_ports:
+            yield self.get_sv_port_config(
+                'consumer', type_=p.producer.dtype, name=p.basename)
+
+        for p in self.out_ports:
+            yield self.get_sv_port_config(
+                'producer', type_=p.consumer.dtype, name=p.basename)
 
     def get_sv_port_config(self, modport, type_, name):
         return {
@@ -180,17 +169,17 @@ class SVGenDefaultNode(SVGenNodeBase):
     def get_params(self):
         return OrderedDict()
 
-    def get_port_map_intf_name(self, port):
-        intf = port['intf']
+    def get_out_port_map_intf_name(self, port):
+        return port.consumer.basename
 
-        if port['dir'] == 'in':
-            if len(intf.consumers) == 1:
-                return intf.outname
-            else:
-                i = list(intf.consumers).index((self, port['id']))
-                return f'{intf.outname}[{i}]'
+    def get_in_port_map_intf_name(self, port):
+        intf = port.producer
+
+        if len(intf.consumers) == 1:
+            return intf.outname
         else:
-            return intf.inname
+            i = intf.consumers.index(port)
+            return f'{intf.outname}[{i}]'
 
     def update_port_name(self, port, name):
         port['name'] = name
@@ -199,21 +188,20 @@ class SVGenDefaultNode(SVGenNodeBase):
         make_unique_name(self.ports, lambda p: p['name'],
                          self.update_port_name)
 
-    def get_inst(self):
+    def get_inst(self, template_env):
         param_map = self.get_params()
 
-        if any([p['intf'].producer is None for p in self.ports]):
-            return ""
+        in_port_map = [(port.basename, self.get_in_port_map_intf_name(port))
+                       for port in self.in_ports]
 
-        port_map = [(port['name'], self.get_port_map_intf_name(port))
-                    for port in self.ports]
+        out_port_map = [(port.basename, self.get_out_port_map_intf_name(port))
+                        for port in self.out_ports]
 
         context = {
             'module_name': self.sv_module_name,
             'inst_name': self.basename + "_i",
             'param_map': param_map,
-            'port_map': OrderedDict(port_map)
+            'port_map': OrderedDict(in_port_map + out_port_map)
         }
 
-        return self.context.jenv.get_template('snippet.j2').module.module_inst(
-            **context)
+        return template_env.snippets.module_inst(**context)

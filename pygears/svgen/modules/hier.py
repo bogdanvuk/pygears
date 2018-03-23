@@ -1,4 +1,5 @@
-from pygears.svgen.module_base import SVGenGearBase
+from pygears.svgen.module_base import SVGenGearBase, SVGenIntfBase
+from pygears.svgen.node_base import SVGenNodeBase
 from pygears.svgen.inst import SVGenInstPlugin
 
 
@@ -12,7 +13,17 @@ class SVGenHier(SVGenGearBase):
     #         for arg, name in zip(self.module.args, self.module.argnames)
     #     }
 
-    def get_module(self):
+    def local_interfaces(self):
+        for cgen in self.child:
+            if isinstance(cgen, SVGenIntfBase):
+                yield cgen
+
+    def local_modules(self):
+        for cgen in self.child:
+            if isinstance(cgen, SVGenNodeBase):
+                yield cgen
+
+    def get_module(self, template_env):
 
         context = {
             'module_name': self.sv_module_name,
@@ -21,22 +32,18 @@ class SVGenHier(SVGenGearBase):
             'inst': []
         }
 
-        # for ointf, oname in zip(self.out_intfs, self.outname):
-        #     ointf.rename = oname
-        #     ointf.implicit = True
-
         for cgen in self.local_interfaces():
-            contents = cgen.get_inst()
+            contents = cgen.get_inst(template_env)
             if contents:
                 context['inst'].append(contents)
 
         for cgen in self.local_modules():
             if hasattr(cgen, 'get_inst'):
-                contents = cgen.get_inst()
+                contents = cgen.get_inst(template_env)
                 if contents:
                     context['inst'].append(contents)
 
-        return self.context.jenv.get_template("hier_module.j2").render(context)
+        return template_env.render_local(__file__, "hier_module.j2", context)
 
 
 class SVGenHierPlugin(SVGenInstPlugin):

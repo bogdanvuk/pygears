@@ -8,6 +8,7 @@ class SVGenConnectVisitor(HierVisitorBase):
             svmod.connect()
 
 
-def svgen_connect(top):
+def svgen_connect(top, conf):
     v = SVGenConnectVisitor()
     v.visit(top)
+    return top

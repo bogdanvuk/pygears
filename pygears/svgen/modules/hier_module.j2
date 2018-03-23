@@ -1,0 +1,19 @@
+{%- import 'snippet.j2' as snippet -%}
+
+module {{module_name}}
+{%- if generics|length > 0 %}
+#({{snippet.generic_list(generics)}}
+)
+{%- endif %}
+(
+    input clk,
+    input rst,
+{{snippet.intf_list(intfs)|indent(4, True)}}
+);
+
+{% for i in inst %}
+{{i|indent(4,True)}}
+
+{% endfor %}
+
+endmodule

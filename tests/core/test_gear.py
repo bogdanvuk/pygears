@@ -1,7 +1,6 @@
-from pygears import Intf, Uint, Queue, gear, clear, hier, registry, Tuple
-from pygears.svgen import svgen
-
 from nose import with_setup
+
+from pygears import Intf, Queue, Tuple, Uint, clear, gear, hier, registry
 
 
 @with_setup(clear)
@@ -108,15 +107,6 @@ def test_hier_hierarchy():
         'fhier1/fhier2/fhier3'].in_ports[0].producer
     assert root['fhier1/fhier2/fhier3'].in_ports[0].consumer == root[
         'fhier1/fhier2/fhier3/fgear'].args[0]
-
-
-from pygears import bind
-bind('ErrReportLevel', 0)
-test_hier_hierarchy()
-root = registry('HierRoot')
-top = svgen(root, '.')
-from pygears.util.print_hier import print_hier
-print_hier(top)
 
 
 @with_setup(clear)

@@ -69,11 +69,12 @@ def find_unique_names(names):
 
 
 class NamedHierNode(HierNode):
-    def __init__(self, basename, parent=None):
+    def __init__(self, basename=None, parent=None):
         super().__init__(parent)
-        self.basename = basename
-        if parent:
-            parent.unique_rename()
+        if basename is not None:
+            self.basename = basename
+            if parent:
+                parent.unique_rename()
 
     def unique_rename(self):
         child_names = [c.basename for c in self.child]
