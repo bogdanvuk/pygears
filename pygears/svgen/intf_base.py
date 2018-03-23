@@ -1,6 +1,5 @@
 from pygears.core.hier_node import NamedHierNode
 from pygears.core.gear import InPort, OutPort
-from collections import OrderedDict
 
 
 class SVGenIntfBase(NamedHierNode):
