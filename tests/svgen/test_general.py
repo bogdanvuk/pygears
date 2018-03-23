@@ -15,8 +15,8 @@ module top(
 
 );
 
-    dti_s_if #(.DTI_DATA_WIDTH(2)) fgear0_if_s(); // u2 (2)
-    dti_s_if #(.DTI_DATA_WIDTH(2)) fgear0_if_s_bc[1:0](); // u2 (2)
+    dti_s_if #(.W_DATA(2)) fgear0_if_s(); // u2 (2)
+    dti_s_if #(.W_DATA(2)) fgear0_if_s_bc[1:0](); // u2 (2)
     bc #(
                 .SIZE(2)
     )
@@ -35,7 +35,7 @@ module top(
     );
 
 
-    dti_s_if #(.DTI_DATA_WIDTH(2)) top_din2_bc[1:0](); // u2 (2)
+    dti_s_if #(.W_DATA(2)) top_din2_bc[1:0](); // u2 (2)
     bc #(
                 .SIZE(2)
     )
@@ -63,8 +63,6 @@ module top(
         .arg2(top_din2_bc[1]),
         .ret(top_ret2)
     );
-
-
 
 endmodule
 """

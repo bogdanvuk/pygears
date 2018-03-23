@@ -41,7 +41,7 @@
 {% endmacro %}
 
 {% macro intf_inst(name, width, size, type) -%}
-  dti_s_if #(.DTI_DATA_WIDTH({{width}})) {{name}}{{ "[%d:0]"|format(size-1) if size>1 }}(); // {{type}} ({{width}})
+  dti_s_if #(.W_DATA({{width}})) {{name}}{{ "[%d:0]"|format(size-1) if size>1 }}(); // {{type}} ({{width}})
 {%- endmacro %}
 
 {% macro assign(name, value) -%}
@@ -97,22 +97,19 @@ output logic [{{((intf['width']+7)//8)*8-1}}:0] {{intf['name']}}_tdata
 {% macro cons_signal_intf_connect(intf) -%}
 output logic         {{intf['name']}}_tready,
 input  logic         {{intf['name']}}_tvalid,
-input  logic         {{intf['name']}}_tlast,
 input  logic [{{intf['width']}}:0] {{intf['name']}}_tdata
 {%- endmacro %}
 
 {% macro cons_signal_intf_connect(intf) -%}
-assign {{intf['name']}}.dvalid = {{intf['name']}}_tvalid;
+assign {{intf['name']}}.valid = {{intf['name']}}_tvalid;
 assign {{intf['name']}}.data = {{intf['name']}}_tdata;
-assign {{intf['name']}}.eot = {{intf['name']}}_tlast;
-assign {{intf['name']}}_tready = {{intf['name']}}.dready;
+assign {{intf['name']}}_tready = {{intf['name']}}.ready;
 {%- endmacro %}
 
 {% macro prod_signal_intf_connect(intf) -%}
-assign {{intf['name']}}_tvalid = {{intf['name']}}.dvalid;
+assign {{intf['name']}}_tvalid = {{intf['name']}}.valid;
 assign {{intf['name']}}_tdata = {{intf['name']}}.data;
-assign {{intf['name']}}_tlast = {{intf['name']}}.eot;
-assign {{intf['name']}}.dready = {{intf['name']}}_tready;
+assign {{intf['name']}}.ready = {{intf['name']}}_tready;
 {%- endmacro %}
 
 {% macro signal_intf_connect(intfs) -%}

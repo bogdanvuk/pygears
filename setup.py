@@ -25,5 +25,5 @@ setup(
         'Programming Language :: Python :: 3.6',
     ],
     keywords='Gears System Design Python Simulator HDL ASIC FPGA',
-    packages=find_packages(exclude=['examples*', 'docs'])
+    packages=find_packages(exclude=['examples*', 'docs', 'svlib'])
 )
