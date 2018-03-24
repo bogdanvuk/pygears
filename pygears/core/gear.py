@@ -180,6 +180,10 @@ class GearBase(NamedHierNode):
 
             self.params[self.varargsname] = f'[{", ".join(vararg_type_list)}]'
 
+    @property
+    def definition(self):
+        return self.params['definition']
+
     def set_ftype(self, ft, i):
         self.dtype_templates[i] = ft
 
@@ -228,8 +232,11 @@ class GearBase(NamedHierNode):
         else:
             out_dtype = self.infered_dtypes[-1]
 
-        for i in range(len(self.outnames), len(out_dtype)):
-            self.outnames.append(f'dout{i}')
+        if (len(self.outnames) == 0) and (len(out_dtype) == 1):
+            self.outnames.append('dout')
+        else:
+            for i in range(len(self.outnames), len(out_dtype)):
+                self.outnames.append(f'dout{i}')
 
         self.out_ports = [
             OutPort(self, i, name) for i, name in enumerate(self.outnames)
@@ -289,6 +296,7 @@ class Hier(GearBase):
 def func_module(cls, func, **meta_kwds):
     @wraps(func)
     def wrapper(*args, **kwds):
+        meta_kwds['definition'] = wrapper.definition
         return cls(func, meta_kwds, *args, **kwds)
 
     return wrapper

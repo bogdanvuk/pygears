@@ -38,7 +38,6 @@ class SVGenCZip(SVGenGearBase):
         return cfg
 
     def get_module(self, template_env):
-        stmts = []
         din_lvl = [lvl_if_queue(p.dtype) for p in self.in_ports]
         max_lvl = max(din_lvl)
         self.eot_type = Uint[max_lvl]
@@ -53,7 +52,6 @@ class SVGenCZip(SVGenGearBase):
         ]
 
         context = {
-            'statements': stmts,
             'max_lvl': max_lvl,
             'queue_intfs': queue_intfs,
             'data_intfs': data_intfs,

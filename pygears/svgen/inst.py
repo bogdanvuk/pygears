@@ -31,10 +31,14 @@ class SVGenInstVisitor(HierVisitorBase):
     def instantiate(self, module):
         svgen_cls = module.params['svgen']
 
-        for base_class in inspect.getmro(module.__class__):
-            if base_class.__name__ in self.namespace:
-                svgen_cls = self.namespace[base_class.__name__]
-                break
+        if svgen_cls is None:
+            svgen_cls = self.namespace.get(module.definition, None)
+
+        if svgen_cls is None:
+            for base_class in inspect.getmro(module.__class__):
+                if base_class.__name__ in self.namespace:
+                    svgen_cls = self.namespace[base_class.__name__]
+                    break
 
         if svgen_cls:
             svgen_inst = svgen_cls(module, parent=self.cur_hier)

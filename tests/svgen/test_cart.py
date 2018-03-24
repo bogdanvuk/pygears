@@ -13,74 +13,30 @@ module cart
     input rst,
     dti_s_if.consumer din0, // [Unit]^3 (3)
     dti_s_if.consumer din1, // u1 (1)
-    dti_s_if.producer dout0 // [u1]^3 (4)
+    dti_s_if.producer dout // [u1]^3 (4)
 
 );
 
 
     typedef struct packed { // [Unit]^3
         logic [2:0] eot; // u3
-    } din0_T;
+    } din0_t;
     typedef struct packed { // u1
         logic [0:0] data; // u1
-    } din1_T;
+    } din1_t;
     typedef struct packed { // [u1]^3
         logic [2:0] eot; // u3
         logic [0:0] data; // u1
-    } dout0_T;
+    } dout_t;
 
     din0_t din0_s;
     din1_t din1_s;
-    dout0_t dout0_s;
+    dout_t dout_s;
     assign din0_s = din0.data;
     assign din1_s = din1.data;
 
     assign dout_s.eot = { din0_s.eot };
     assign dout_s.data = { din1_s.data };
-
-    logic  handshake;
-    assign dout.valid = din0.valid & din1.valid;
-    assign handshake = dout.valid & dout.ready;
-    assign dout.data = dout_s;
-
-    assign din0.ready = handshake & dout.valid;
-    assign din1.ready = handshake & dout.valid & (&din0_s.eot);
-
-endmodule
-"""
-test_queue_and_queue_ref = """
-module cart
-(
-    input clk,
-    input rst,
-    dti_s_if.consumer din0, // [u1]^3 (4)
-    dti_s_if.consumer din1, // [u2] (3)
-    dti_s_if.producer dout0 // [(u1, u2)]^4 (7)
-
-);
-
-
-    typedef struct packed { // [u1]^3
-        logic [2:0] eot; // u3
-        logic [0:0] data; // u1
-    } din0_T;
-    typedef struct packed { // [u2]
-        logic [0:0] eot; // u1
-        logic [1:0] data; // u2
-    } din1_T;
-    typedef struct packed { // [(u1, u2)]^4
-        logic [3:0] eot; // u4
-        logic [2:0] data; // u3
-    } dout0_T;
-
-    din0_t din0_s;
-    din1_t din1_s;
-    dout0_t dout0_s;
-    assign din0_s = din0.data;
-    assign din1_s = din1.data;
-
-    assign dout_s.eot = { din1_s.eot, din0_s.eot };
-    assign dout_s.data = { din1_s.data, din0_s.data };
 
     logic  handshake;
     assign dout.valid = din0.valid & din1.valid;
@@ -104,6 +60,52 @@ def test_non_queue_and_queue_with_unit():
                              test_non_queue_and_queue_with_unit_ref)
 
 
+test_queue_and_queue_ref = """
+module cart
+(
+    input clk,
+    input rst,
+    dti_s_if.consumer din0, // [u1]^3 (4)
+    dti_s_if.consumer din1, // [u2] (3)
+    dti_s_if.producer dout // [(u1, u2)]^4 (7)
+
+);
+
+
+    typedef struct packed { // [u1]^3
+        logic [2:0] eot; // u3
+        logic [0:0] data; // u1
+    } din0_t;
+    typedef struct packed { // [u2]
+        logic [0:0] eot; // u1
+        logic [1:0] data; // u2
+    } din1_t;
+    typedef struct packed { // [(u1, u2)]^4
+        logic [3:0] eot; // u4
+        logic [2:0] data; // u3
+    } dout_t;
+
+    din0_t din0_s;
+    din1_t din1_s;
+    dout_t dout_s;
+    assign din0_s = din0.data;
+    assign din1_s = din1.data;
+
+    assign dout_s.eot = { din1_s.eot, din0_s.eot };
+    assign dout_s.data = { din1_s.data, din0_s.data };
+
+    logic  handshake;
+    assign dout.valid = din0.valid & din1.valid;
+    assign handshake = dout.valid & dout.ready;
+    assign dout.data = dout_s;
+
+    assign din0.ready = handshake & dout.valid;
+    assign din1.ready = handshake & dout.valid & (&din0_s.eot);
+
+endmodule
+"""
+
+
 @with_setup(clear)
 def test_queue_and_queue():
     cart(Intf(Queue[Uint[1], 3]), Intf(Queue[Uint[2]]))
@@ -122,7 +124,7 @@ module cart(
     dti_s_if.consumer din1, // [Unit] (1)
     dti_s_if.consumer din2, // [u3]^3 (6)
     dti_s_if.consumer din3, // [u4]^5 (9)
-    dti_s_if.producer dout0 // [(u1, u3, u4)]^9 (17)
+    dti_s_if.producer dout // [(u1, u3, u4)]^9 (17)
 
 );
 
@@ -137,7 +139,7 @@ module cart(
         .rst(rst),
         .din0(din0),
         .din1(din1),
-        .dout0(cart0_if_s)
+        .dout(cart0_if_s)
     );
 
 
@@ -146,7 +148,7 @@ module cart(
         .rst(rst),
         .din0(cart0_if_s),
         .din1(din2),
-        .dout0(cart1_if_s)
+        .dout(cart1_if_s)
     );
 
 
@@ -155,15 +157,15 @@ module cart(
         .rst(rst),
         .din0(cart1_if_s),
         .din1(din3),
-        .dout0(cart2_if_s)
+        .dout(cart2_if_s)
     );
 
 
-    conv_dout0 conv_dout0_i (
+    conv_dout conv_dout_i (
         .clk(clk),
         .rst(rst),
         .din(cart2_if_s),
-        .dout0(dout0)
+        .dout(dout)
     );
 
 
@@ -182,4 +184,3 @@ def test_general():
     svtop = svgen()
     assert equal_on_nonspace(svtop['cart'].get_module(TemplateEnv()),
                              test_general_ref)
-

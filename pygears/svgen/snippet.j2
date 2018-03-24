@@ -149,5 +149,5 @@ typedef {{ sv_struct['svtype'] }} packed {{RBR}} // {{ sv_struct['type'] }}
 {% for field in sv_struct['subtypes']|reverse -%}
 {{ field_def(field)|indent(4, True)}}
 {% endfor -%}
-{{LBR}} {{sv_struct['name']}}_T;
+{{LBR}} {{sv_struct['name']}}_t;
 {%- endmacro -%}

@@ -40,10 +40,6 @@ class SVGenCart(SVGenGearBase):
         return cfg
 
     def get_module(self, template_env):
-        stmts = []
-        din_lvl = [lvl_if_queue(p.dtype) for p in self.in_ports]
-        max_lvl = max(din_lvl)
-        self.eot_type = Uint[max_lvl]
         queue_intfs = [
             p for p in self.sv_port_configs()
             if p['lvl'] > 0 and p['modport'] == 'consumer'
@@ -55,11 +51,8 @@ class SVGenCart(SVGenGearBase):
         ]
 
         context = {
-            'statements': stmts,
-            'max_lvl': max_lvl,
             'queue_intfs': queue_intfs,
             'data_intfs': data_intfs,
-            'max_lvl_din': self.in_ports[din_lvl.index(max_lvl)],
             'module_name': self.sv_module_name,
             'intfs': list(self.sv_port_configs())
         }

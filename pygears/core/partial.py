@@ -111,8 +111,9 @@ each of the function invocations.
 
     '''
 
-    def __init__(self, func, *args, **kwds):
+    def __init__(self, func):
         self.func = func
+        self.func.definition = self
 
         functools.update_wrapper(self, func)
 

@@ -1,0 +1,57 @@
+{%- import 'snippet.j2' as snippet -%}
+
+module {{module_name}}
+(
+    input clk,
+    input rst,
+{{snippet.intf_list(intfs)|indent(4, True)}}
+);
+
+{% set input_intf_names = intfs|isinput|keymap("name") %}
+
+{% for i in intfs %}
+{{snippet.sv_struct_def(i['struct'])|indent(4, True)}}
+{% endfor %}
+
+{% for i in intfs %}
+    {{i['name']}}_t {{i['name']}}_s;
+{% endfor %}
+{% for i in intfs|isinput %}
+  {% if i['width'] > 0 %}
+    assign {{i['name']}}_s = {{i['name']}}.data;
+  {% endif %}
+{% endfor %}
+
+    assign dout_s.out_eot = din_s.out_eot;
+    assign dout.data = dout_s;
+
+{% if dout_align == 1 %}
+    assign din.ready = dout.ready;
+    assign dout.valid = din.valid;
+{% else %}
+    logic  handshake;
+    logic  ready_reg;
+    logic  subelem_done;
+
+    assign subelem_done = {{dout_align}};
+    assign din.ready = (dout.ready || (!subelem_done));
+    assign dout.valid = din.valid && (!ready_reg);
+
+    assign handshake = dout.valid & dout.ready;
+
+    always_ff @(posedge clk) begin
+        if (rst) begin
+          ready_reg <= 1'b0;
+        end
+        else begin
+          if (subelem_done && handshake) begin
+              ready_reg <= 1'b0;
+          end
+          else begin
+              ready_reg <= ready_reg || handshake;
+          end
+        end
+    end
+{% endif %}
+
+endmodule

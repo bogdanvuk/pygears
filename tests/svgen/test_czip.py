@@ -15,35 +15,35 @@ module czip
     dti_s_if.consumer din1, // [Unit] (1)
     dti_s_if.consumer din2, // [u3]^3 (6)
     dti_s_if.consumer din3, // [u4]^5 (9)
-    dti_s_if.producer dout0 // [(u1, u3, u4)]^5 (13)
+    dti_s_if.producer dout // [(u1, u3, u4)]^5 (13)
 
 );
 
 
     typedef struct packed { // u1
         logic [0:0] data; // u1
-    } din0_T;
+    } din0_t;
     typedef struct packed { // [Unit]
         logic [0:0] eot; // u1
-    } din1_T;
+    } din1_t;
     typedef struct packed { // [u3]^3
         logic [2:0] eot; // u3
         logic [2:0] data; // u3
-    } din2_T;
+    } din2_t;
     typedef struct packed { // [u4]^5
         logic [4:0] eot; // u5
         logic [3:0] data; // u4
-    } din3_T;
+    } din3_t;
     typedef struct packed { // [(u1, u3, u4)]^5
         logic [4:0] eot; // u5
         logic [7:0] data; // u8
-    } dout0_T;
+    } dout_t;
 
     din0_t din0_s;
     din1_t din1_s;
     din2_t din2_s;
     din3_t din3_s;
-    dout0_t dout0_s;
+    dout_t dout_s;
     assign din0_s = din0.data;
     assign din1_s = din1.data;
     assign din2_s = din2.data;
