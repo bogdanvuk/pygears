@@ -41,7 +41,7 @@ def load_plugin_folder(path):
     importlib.import_module(plugin_dir)
     modules = []
     for plugin in plugins:
-        if not plugin.startswith('__'):
-            modules.append(importlib.import_module(plugin, package="modules"))
+        if not plugin.endswith('__'):
+            modules.append(importlib.import_module(plugin, package=plugin_dir))
 
     return modules

@@ -1,25 +1,11 @@
-from collections import OrderedDict
-from pygears.svgen.module_base import SVGenModuleBase
-from pygears.typing.queue import Queue, QueueMeta
+from pygears.svgen.module_base import SVGenGearBase
+from pygears.typing.queue import Queue
 from pygears.typing.uint import Uint
-from pygears.core.concat import arg_is_delim, lvl_if_queue
-from .svstruct import field_def, compose
+from pygears.svgen.inst import SVGenInstPlugin
+from pygears.common.czip import lvl_if_queue
 
 
-class SVGenConcat(SVGenModuleBase):
-    def get_params(self):
-        pexclude = ['queue_pack']
-        params = OrderedDict([(p.upper(), int(v))
-                              for p, v in self.module.params.items()
-                              if p not in pexclude])
-
-        is_queue = [lvl_if_queue(p['type']) for p in self.in_ports()]
-        # is_queue = [isinstance(t['type'], QueueMeta) for t in self.in_ports()]
-        for p, isq in zip(self.ports, is_queue):
-            params[f'{p["name"].upper()}_EOT_WIDTH'] = int(isq)
-
-        return params
-
+class SVGenCZip(SVGenGearBase):
     def get_module_intf_decl(self, ftype, intf):
         snippet = self.context.snippets
         intf_w = f'{intf.upper()}_WIDTH'
@@ -42,74 +28,42 @@ class SVGenConcat(SVGenModuleBase):
 
             yield snippet.assign(f'{intf}_eot', eot_rng)
 
-    def get_module_stmts(self):
-
-        snippet = self.context.snippets
-
-        is_queue = [isinstance(t['type'], QueueMeta) for t in self.in_ports()]
-        is_delim = [arg_is_delim(t['type']) for t in self.in_ports()]
-
-        for p in self.in_ports():
-            yield from self.get_module_intf_decl(p['type'], p['name'])
-
-        if self.module.params['queue_pack']:
-            out_data = [
-                f'{p["name"]}_data' for p in reversed(list(self.in_ports()))
-                if int(p['type']) > 0
-            ]
-        else:
-            out_data = [
-                f'{p["name"]}.data' for p in reversed(list(self.in_ports()))
-                if int(p['type']) > 0
-            ]
-
-        din_align = ['1'] * len(list(self.in_ports()))
-
-        if all(is_queue):
-            # If all inputs are queues, zip operation is performed
-            out_data.insert(0, f'din0_eot')
-        elif any(is_queue) and is_delim[-1] and (not all(is_delim)):
-            # If one input is a Queue and the other is delimiter is_delim[-1]
-            # is only possible for now, since delimiters are produced by Queue
-            # Fmap only, and this Fmap places delimiters in line 1 only
-            out_data.insert(1, 'din0_eot')
-            din_align[0] = '&din0_eot'
-        else:
-            # Only some of the inputs are queues
-            for i, isq in enumerate(is_queue):
-                if isq:
-                    if self.module.params['queue_pack']:
-                        out_data.insert(0, f'din{i}_eot')
-
-                    din_align[i] = f'&din{i}_eot'
-
-        yield snippet.assign('dout.data', snippet.concat(out_data))
-        for p, da in zip(self.in_ports(), din_align):
-            yield snippet.assign(f'{p["name"]}_align', da)
-
     def get_sv_port_config(self, modport, type_, name):
         cfg = super().get_sv_port_config(modport, type_, name)
 
         if issubclass(type_, Queue):
             lvl = type_.lvl
             type_ = type_[0]
-            fields = [
-                field_def('data', Uint[int(type_)]),
-                field_def('eot', Uint[lvl])
-            ]
+            fields = [{
+                'name': 'data',
+                'svtype': None,
+                'type': Uint[int(type_)]
+            }, {
+                'name': 'eot',
+                'svtype': None,
+                'type': Uint[lvl]
+            }]
         else:
             lvl = 0
-            fields = [field_def('data', Uint[int(type_)])]
+            fields = [{
+                'name': 'data',
+                'svtype': None,
+                'type': Uint[int(type_)]
+            }]
 
         cfg['lvl'] = lvl
-        cfg['struct'] = compose(name, type_, fields)
+        cfg['struct'] = {
+            'name': name,
+            'type': type_,
+            'subtypes': fields,
+            'svtype': 'struct'
+        }
 
         return cfg
 
-    def get_module(self):
-        # stmts = list(self.get_module_stmts())
+    def get_module(self, template_env):
         stmts = []
-        din_lvl = [lvl_if_queue(p['type']) for p in self.in_ports()]
+        din_lvl = [lvl_if_queue(p.dtype) for p in self.in_ports]
         max_lvl = max(din_lvl)
         self.eot_type = Uint[max_lvl]
         queue_intfs = [
@@ -117,12 +71,19 @@ class SVGenConcat(SVGenModuleBase):
             if p['lvl'] > 0 and p['modport'] == 'consumer'
         ]
 
-        # dout_valid_elems = [f'{p["name"].dvalid}' for p in self.in_ports()]
+        context = {
+            'statements': stmts,
+            'max_lvl': max_lvl,
+            'queue_intfs': queue_intfs,
+            'max_lvl_din': self.in_ports[din_lvl.index(max_lvl)],
+            'module_name': self.sv_module_name,
+            'intfs': list(self.sv_port_configs())
+        }
 
-        return self.context.jenv.get_template("concat.j2").render(
-            statements=stmts,
-            max_lvl=max_lvl,
-            queue_intfs=queue_intfs,
-            max_lvl_din=list(self.in_ports())[din_lvl.index(max_lvl)],
-            module_name=self.sv_module_name,
-            intfs=list(self.sv_port_configs()))
+        return template_env.render_local(__file__, "czip.j2", context)
+
+
+class SVGenCZipPlugin(SVGenInstPlugin):
+    @classmethod
+    def bind(cls):
+        cls.registry['SVGenModuleNamespace']['CZip'] = SVGenCZip

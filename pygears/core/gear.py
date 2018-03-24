@@ -8,32 +8,6 @@ import inspect
 from functools import wraps
 
 
-def func_module(cls, func, **meta_kwds):
-    @wraps(func)
-    def wrapper(*args, **kwds):
-        return cls(func, meta_kwds, *args, **kwds)
-
-    return wrapper
-
-
-@doublewrap
-def gear(func, *args, **kwds):
-    return Definition(func_module(Gear, func, *args, **kwds))
-
-
-@doublewrap
-def hier(func, *args, **kwds):
-    return Definition(func_module(Hier, func, *args, **kwds))
-
-
-class HierRootPlugin(PluginBase):
-    @classmethod
-    def bind(cls):
-        cls.registry['HierRoot'] = NamedHierNode('')
-        cls.registry['CurrentHier'] = cls.registry['HierRoot']
-        cls.registry['GearMetaParams'] = {}
-
-
 def clear():
     bind('HierRoot', NamedHierNode(''))
     bind('CurrentHier', registry('HierRoot'))
@@ -61,7 +35,10 @@ class Port:
 
     @property
     def dtype(self):
-        return self.producer.dtype
+        if self.producer is not None:
+            return self.producer.dtype
+        else:
+            return self.consumer.dtype
 
 
 class InPort(Port):
@@ -179,7 +156,7 @@ class GearBase(NamedHierNode):
             else:
                 vararg_type = "{{" + self.varargsname + "{0}}}"
             # Append the types of the self.varargsname
-            for i, a in enumerate(self.args[len(self.annotations) - 1:]):
+            for i, a in enumerate(self.args[len(self.argnames):]):
                 if isinstance(vararg_type, str):
                     # If vararg_type is a template string, it can be made
                     # dependent on the arguments position
@@ -295,3 +272,29 @@ class Hier(GearBase):
             ret = (ret, )
 
         return ret
+
+
+def func_module(cls, func, **meta_kwds):
+    @wraps(func)
+    def wrapper(*args, **kwds):
+        return cls(func, meta_kwds, *args, **kwds)
+
+    return wrapper
+
+
+@doublewrap
+def gear(func, *args, gear_cls=Gear, **kwds):
+    return Definition(func_module(gear_cls, func, *args, **kwds))
+
+
+@doublewrap
+def hier(func, *args, **kwds):
+    return Definition(func_module(Hier, func, *args, **kwds))
+
+
+class HierRootPlugin(PluginBase):
+    @classmethod
+    def bind(cls):
+        cls.registry['HierRoot'] = NamedHierNode('')
+        cls.registry['CurrentHier'] = cls.registry['HierRoot']
+        cls.registry['GearMetaParams'] = {}

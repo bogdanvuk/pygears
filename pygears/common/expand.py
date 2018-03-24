@@ -2,14 +2,12 @@
 # from pygears.core.module_def import ModuleDefinition
 from pygears import Union, Queue, Tuple, typeof
 from pygears.core.typing import TypingNamespacePlugin
+from pygears.core.gear import gear
 
-# def expand_impl(din: '{Tdin}') -> 'expand({Tdin})':
-#     pass
 
-# class Expand(Module):
-#     pass
-
-# expand = ModuleDefinition(Expand, expand_impl)
+@gear
+def expand(din: '{Tdin}') -> 'expand({Tdin})':
+    pass
 
 
 def next_pos(type_list, comb, t):

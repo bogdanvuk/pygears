@@ -7,19 +7,22 @@ module {{module_name}}
 {{snippet.intf_list(intfs)|indent(4, True)}}
 );
 
+{% set queue_intf_names = queue_intfs|keymap("name") %}
+{% set input_intf_names = intfs|isinput|keymap("name") %}
+
 {% for i in intfs %}
 {{snippet.sv_struct_def(i['struct'])|indent(4, True)}}
 {% endfor %}
 
 {% for i in intfs %}
-    {{i['name']}}_T {{i['name']}}_s;
+    {{i['name']}}_t {{i['name']}}_s;
 {% endfor %}
 {% for i in intfs|isinput %}
     assign {{i['name']}}_s = {{i['name']}}.data;
 {% endfor %}
 
-    assign dout_s.eot = {{queue_intfs|keymap("name")|format_list("%s_s.eot")|join(" | ")}};
-    assign dout_s.data = { {{queue_intfs|reversed|keymap("name")|format_list("%s_s.data")|join(", ")}} };
+    assign dout_s.eot = {{queue_intf_names|format_list("%s_s.eot")|join(" | ")}};
+    assign dout_s.data = { {{input_intf_names|reverse|format_list("%s_s.data")|join(", ")}} };
 
 {% for i in queue_intfs|isinput %}
     logic {{i['name']}}_eot_aligned;
@@ -29,32 +32,19 @@ module {{module_name}}
     logic all_valid;
     logic all_aligned;
     logic  handshake;
-    assign all_valid = {{intfs|isinput|keymap("name")|format_list("%s.dvalid")|join(" & ")}};
-    assign all_aligned = {{queue_intfs|keymap("name")|format_list("%s_eot_aligned")|join(" & ")}};
-    assign handshake = dout.dvalid & dout.dready;
-    assign dout.dvalid = all_valid & all_aligned;
+    assign all_valid = {{input_intf_names|format_list("%s.valid")|join(" & ")}};
+    assign all_aligned = {{queue_intf_names|format_list("%s_eot_aligned")|join(" & ")}};
+    assign handshake = dout.valid & dout.ready;
+    assign dout.valid = all_valid & all_aligned;
     assign dout.data = dout_s;
-    assign dout.eot = 0;
 
 {% for i in intfs|isinput %}
   {% if i['lvl'] == 0 %}
-    assign {{i['name']}}.dready = handshake;
+    assign {{i['name']}}.ready = handshake;
   {%- else %}
-    assign {{i['name']}}.dready = all_valid & (all_aligned ? dout.dready : !{{i['name']}}_eot_aligned);
+    assign {{i['name']}}.ready = all_valid & (all_aligned ? dout.ready : !{{i['name']}}_eot_aligned);
   {%- endif %}
 
 {% endfor %}
-
-{# {% for i in intfs|isinput %} #}
-{#     logic {{i['name']}}_align; #}
-{# {% endfor %} #}
-
-{# {% for i in intfs|isinput %} #}
-{#     assign {{i['name']}}.dready = cart_handshake & {{intfs|isinput|keymap("name")|reject("equalto", i['name'])|format_list("%s_align")|join(" & ")}}; #}
-{# {% endfor %} #}
-
-{# {% for l in statements %} #}
-{# {{l|indent(4,True)}} #}
-{# {% endfor %} #}
 
 endmodule

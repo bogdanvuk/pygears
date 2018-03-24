@@ -5,9 +5,13 @@ import sys
 from pygears.core.err import pygears_excepthook, ErrReportLevel
 from pygears.core.typing import (Array, Bool, Int, Queue, Tuple, Uint, Union,
                                  Unit, bitw, typeof)
-from pygears.registry import registry, bind, PluginBase
+from pygears.registry import PluginBase, bind, registry
 from pygears.core.gear import gear, clear, hier
 from pygears.core.intf import Intf
+
+import pygears.common
+
+# load_plugin_folder(os.path.join(os.path.dirname(__file__), 'common'))
 
 sys.excepthook = pygears_excepthook
 
