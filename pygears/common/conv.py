@@ -20,6 +20,6 @@ class Conv(Gear):
         return ftypes, params
 
 
-@gear(gear_cls=Gear)
+@gear(gear_cls=Gear, sv_param_kwds=[])
 def conv(din, *, cast_type) -> '{cast_type}':
     pass

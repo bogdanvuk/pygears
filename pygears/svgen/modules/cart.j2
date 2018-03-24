@@ -1,0 +1,38 @@
+{%- import 'snippet.j2' as snippet -%}
+
+module {{module_name}}
+(
+    input clk,
+    input rst,
+{{snippet.intf_list(intfs)|indent(4, True)}}
+);
+
+{% set queue_intf_names = queue_intfs|keymap("name") %}
+{% set data_intf_names = data_intfs|keymap("name") %}
+{% set input_intf_names = intfs|isinput|keymap("name") %}
+
+{% for i in intfs %}
+{{snippet.sv_struct_def(i['struct'])|indent(4, True)}}
+{% endfor %}
+
+{% for i in intfs %}
+    {{i['name']}}_t {{i['name']}}_s;
+{% endfor %}
+{% for i in intfs|isinput %}
+  {% if i['width'] > 0 %}
+    assign {{i['name']}}_s = {{i['name']}}.data;
+  {% endif %}
+{% endfor %}
+
+    assign dout_s.eot = { {{queue_intf_names|reverse|format_list("%s_s.eot")|join(", ")}} };
+    assign dout_s.data = { {{data_intf_names|reverse|format_list("%s_s.data")|join(", ")}} };
+
+    logic  handshake;
+    assign dout.valid = {{input_intf_names|format_list("%s.valid")|join(" & ")}};
+    assign handshake = dout.valid & dout.ready;
+    assign dout.data = dout_s;
+
+    assign din0.ready = handshake & dout.valid;
+    assign din1.ready = handshake & dout.valid & {{intfs[0]['data_eot']}};
+
+endmodule
