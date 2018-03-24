@@ -6,55 +6,31 @@ from pygears.common.czip import lvl_if_queue
 
 
 class SVGenCZip(SVGenGearBase):
-    def get_module_intf_decl(self, ftype, intf):
-        snippet = self.context.snippets
-        intf_w = f'{intf.upper()}_WIDTH'
-        intf_eot_w = f'{intf.upper()}_EOT_WIDTH'
-        intf_data_w_high = f'{intf_w}-{intf_eot_w}-1'
-
-        yield snippet.logic(f'{intf}_data', intf_data_w_high)
-        data_rng = self.context.snippets.range(f'{intf}.data',
-                                               intf_data_w_high)
-        yield snippet.assign(f'{intf}_data', data_rng)
-
-        # if isinstance(ftype, QueueMeta):
-        if issubclass(ftype, Queue):
-            yield snippet.logic(f'{intf}_eot', f'{intf_eot_w}-1')
-
-            eot_rng = self.context.snippets.range(
-                name=f'{intf}.data',
-                high=f'{intf_w}-1',
-                low=f'{intf_w}-{intf_eot_w}')
-
-            yield snippet.assign(f'{intf}_eot', eot_rng)
-
     def get_sv_port_config(self, modport, type_, name):
         cfg = super().get_sv_port_config(modport, type_, name)
+        struct_type = type_
 
+        fields = []
         if issubclass(type_, Queue):
             lvl = type_.lvl
             type_ = type_[0]
-            fields = [{
-                'name': 'data',
-                'svtype': None,
-                'type': Uint[int(type_)]
-            }, {
-                'name': 'eot',
-                'svtype': None,
-                'type': Uint[lvl]
-            }]
         else:
             lvl = 0
-            fields = [{
+
+        if int(type_) > 0:
+            fields.append({
                 'name': 'data',
                 'svtype': None,
                 'type': Uint[int(type_)]
-            }]
+            })
+
+        if lvl > 0:
+            fields.append({'name': 'eot', 'svtype': None, 'type': Uint[lvl]})
 
         cfg['lvl'] = lvl
         cfg['struct'] = {
             'name': name,
-            'type': type_,
+            'type': struct_type,
             'subtypes': fields,
             'svtype': 'struct'
         }
@@ -71,10 +47,16 @@ class SVGenCZip(SVGenGearBase):
             if p['lvl'] > 0 and p['modport'] == 'consumer'
         ]
 
+        data_intfs = [
+            p for p in self.sv_port_configs()
+            if p['width'] - p['lvl'] > 0 and p['modport'] == 'consumer'
+        ]
+
         context = {
             'statements': stmts,
             'max_lvl': max_lvl,
             'queue_intfs': queue_intfs,
+            'data_intfs': data_intfs,
             'max_lvl_din': self.in_ports[din_lvl.index(max_lvl)],
             'module_name': self.sv_module_name,
             'intfs': list(self.sv_port_configs())

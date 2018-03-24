@@ -116,7 +116,6 @@ def test_multi_tmpl_make_same():
 
     assert a == Tuple[TCoord[Uint[8], Uint[8]], TCoord[Uint[9], Uint[9]]]
 
-
 def test_named_subs():
     a = Tuple[{'F1': '{T1}', 'F2': '{T2}'}]
     b = a[{'T1': 1, 'T2': 2}]

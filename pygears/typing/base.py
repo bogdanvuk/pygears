@@ -1,4 +1,5 @@
 import re
+import collections
 
 
 class TemplateArgumentsError(Exception):
@@ -199,8 +200,12 @@ def param_subs(t, matches, namespace):
             param_str = t
         else:
             for r in res:
-                if r in matches:
-                    subs_dict[r] = r
+                if (r in matches):
+                    if is_template(matches[r]):
+                        all_subs = False
+                        subs_dict[r] = matches[r]
+                    else:
+                        subs_dict[r] = r
                 else:
                     all_subs = False
                     subs_dict[r] = '{' + r + '}'
@@ -218,8 +223,8 @@ def param_subs(t, matches, namespace):
                 #     "Exception while evaluating parameter string '{}'".format(
                 #         param_str)) from e
 
-    elif isinstance(t, tuple):
-        return tuple([param_subs(tt, matches, namespace) for tt in t])
+    elif isinstance(t, collections.Iterable):
+        return type(t)(param_subs(tt, matches, namespace) for tt in t)
     else:
         if isinstance(t, GenericMeta) and (not t.is_specified()):
             args = [

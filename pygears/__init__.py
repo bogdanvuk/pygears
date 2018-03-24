@@ -10,6 +10,7 @@ from pygears.core.gear import gear, clear, hier
 from pygears.core.intf import Intf
 
 import pygears.common
+import pygears.intf_opers
 
 # load_plugin_folder(os.path.join(os.path.dirname(__file__), 'common'))
 

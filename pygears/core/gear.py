@@ -54,14 +54,22 @@ class GearBase(NamedHierNode):
 
         if name is None:
             name = func.__name__
+
+        alternatives = meta_kwds.get('alternatives', [])
+        # enablement = meta_kwds.pop('enablement', [])
+
         kwds_comb = meta_kwds.copy()
         kwds_comb.update(kwds)
-        alternatives = meta_kwds.get('alternatives', [])
 
         errors = []
         try:
             gear = super().__new__(cls)
             gear.__init__(func, *args, name=name, **kwds_comb)
+            enablement = gear.params.pop('enablement')
+
+            if not enablement:
+                raise TypeMatchError('Enablement condition failed')
+
             return gear.resolve()
         except TypeMatchError as e:
             gear.remove()
@@ -151,6 +159,7 @@ class GearBase(NamedHierNode):
 
     def _expand_varargs(self):
         if self.varargsname:
+            vararg_type_list = []
             if self.varargsname in self.annotations:
                 vararg_type = self.annotations[self.varargsname]
             else:
@@ -165,8 +174,11 @@ class GearBase(NamedHierNode):
                     # Vararg is not a template and should be passed as is
                     type_tmpl_i = vararg_type
 
+                vararg_type_list.append(type_tmpl_i)
                 self.dtype_templates.insert(-1, type_tmpl_i)
                 self.argnames.append(f'{self.varargsname}{i}')
+
+            self.params[self.varargsname] = f'[{", ".join(vararg_type_list)}]'
 
     def set_ftype(self, ft, i):
         self.dtype_templates[i] = ft
@@ -297,4 +309,7 @@ class HierRootPlugin(PluginBase):
     def bind(cls):
         cls.registry['HierRoot'] = NamedHierNode('')
         cls.registry['CurrentHier'] = cls.registry['HierRoot']
-        cls.registry['GearMetaParams'] = {}
+        cls.registry['GearMetaParams'] = {
+            'alternatives': [],
+            'enablement': True
+        }

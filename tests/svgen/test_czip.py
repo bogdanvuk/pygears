@@ -1,6 +1,6 @@
 from nose import with_setup
 
-from pygears import Intf, Queue, Uint, clear, bind
+from pygears import Intf, Queue, Uint, clear, bind, Unit
 from pygears.svgen import svgen_connect, svgen_inst, svgen
 from pygears.common import czip
 from pygears.svgen.generate import TemplateEnv
@@ -12,10 +12,10 @@ module czip
     input clk,
     input rst,
     dti_s_if.consumer din0, // u1 (1)
-    dti_s_if.consumer din1, // [u2] (3)
+    dti_s_if.consumer din1, // [Unit] (1)
     dti_s_if.consumer din2, // [u3]^3 (6)
     dti_s_if.consumer din3, // [u4]^5 (9)
-    dti_s_if.producer dout0 // [(u1, u2, u3, u4)]^5 (15)
+    dti_s_if.producer dout0 // [(u1, u3, u4)]^5 (13)
 
 );
 
@@ -23,21 +23,20 @@ module czip
     typedef struct packed { // u1
         logic [0:0] data; // u1
     } din0_T;
-    typedef struct packed { // u2
+    typedef struct packed { // [Unit]
         logic [0:0] eot; // u1
-        logic [1:0] data; // u2
     } din1_T;
-    typedef struct packed { // u3
+    typedef struct packed { // [u3]^3
         logic [2:0] eot; // u3
         logic [2:0] data; // u3
     } din2_T;
-    typedef struct packed { // u4
+    typedef struct packed { // [u4]^5
         logic [4:0] eot; // u5
         logic [3:0] data; // u4
     } din3_T;
-    typedef struct packed { // (u1, u2, u3, u4)
+    typedef struct packed { // [(u1, u3, u4)]^5
         logic [4:0] eot; // u5
-        logic [9:0] data; // u10
+        logic [7:0] data; // u8
     } dout0_T;
 
     din0_t din0_s;
@@ -51,7 +50,7 @@ module czip
     assign din3_s = din3.data;
 
     assign dout_s.eot = din1_s.eot | din2_s.eot | din3_s.eot;
-    assign dout_s.data = { din3_s.data, din2_s.data, din1_s.data, din0_s.data };
+    assign dout_s.data = { din3_s.data, din2_s.data, din0_s.data };
 
     logic din1_eot_aligned;
     assign din1_eot_aligned = (din1_s.eot==dout_s.eot[0:0]);
@@ -81,7 +80,7 @@ endmodule
 @with_setup(clear)
 def test_general():
     czip(
-        Intf(Uint[1]), Intf(Queue[Uint[2], 1]), Intf(Queue[Uint[3], 3]),
+        Intf(Uint[1]), Intf(Queue[Unit, 1]), Intf(Queue[Uint[3], 3]),
         Intf(Queue[Uint[4], 5]))
 
     bind('SVGenFlow', [svgen_inst, svgen_connect])

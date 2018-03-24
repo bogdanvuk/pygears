@@ -1,8 +1,4 @@
 from pygears.core.gear import Gear, gear
-# from pygears.core.module_def import ModuleDefinition
-# from pygears.typing.tuple import Tuple
-# import pygears.typing.queue
-# from pygears.typing.base import param_subs
 from pygears import Queue, Tuple
 
 
@@ -21,6 +17,9 @@ class CZip(Gear):
 
         base_type = Tuple[tuple(t.dtype if lvl == 0 else t.dtype[0]
                                 for t, lvl in zip(self.args, arg_queue_lvl))]
+
+        # If there are no Queues, i.e. max(arg_queue_lvl) == 0, the type below
+        # will resolve to just base_type
         ftypes[-1] = Queue[base_type, max(arg_queue_lvl)]
 
         return ftypes, params

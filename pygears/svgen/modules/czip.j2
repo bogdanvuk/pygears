@@ -8,6 +8,7 @@ module {{module_name}}
 );
 
 {% set queue_intf_names = queue_intfs|keymap("name") %}
+{% set data_intf_names = data_intfs|keymap("name") %}
 {% set input_intf_names = intfs|isinput|keymap("name") %}
 
 {% for i in intfs %}
@@ -22,7 +23,7 @@ module {{module_name}}
 {% endfor %}
 
     assign dout_s.eot = {{queue_intf_names|format_list("%s_s.eot")|join(" | ")}};
-    assign dout_s.data = { {{input_intf_names|reverse|format_list("%s_s.data")|join(", ")}} };
+    assign dout_s.data = { {{data_intf_names|reverse|format_list("%s_s.data")|join(", ")}} };
 
 {% for i in queue_intfs|isinput %}
     logic {{i['name']}}_eot_aligned;
