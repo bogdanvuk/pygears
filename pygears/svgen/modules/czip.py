@@ -1,61 +1,33 @@
 from pygears.svgen.module_base import SVGenGearBase
 from pygears.typing.queue import Queue
-from pygears.typing.uint import Uint
 from pygears.svgen.inst import SVGenInstPlugin
-from pygears.common.czip import lvl_if_queue
 
 
 class SVGenCZip(SVGenGearBase):
     def get_sv_port_config(self, modport, type_, name):
         cfg = super().get_sv_port_config(modport, type_, name)
-        struct_type = type_
 
-        fields = []
         if issubclass(type_, Queue):
-            lvl = type_.lvl
-            type_ = type_[0]
+            cfg['lvl'] = type_.lvl
         else:
-            lvl = 0
-
-        if int(type_) > 0:
-            fields.append({
-                'name': 'data',
-                'svtype': None,
-                'type': Uint[int(type_)]
-            })
-
-        if lvl > 0:
-            fields.append({'name': 'eot', 'svtype': None, 'type': Uint[lvl]})
-
-        cfg['lvl'] = lvl
-        cfg['struct'] = {
-            'name': name,
-            'type': struct_type,
-            'subtypes': fields,
-            'svtype': 'struct'
-        }
+            cfg['lvl'] = 0
 
         return cfg
 
     def get_module(self, template_env):
-        din_lvl = [lvl_if_queue(p.dtype) for p in self.in_ports]
-        max_lvl = max(din_lvl)
-        self.eot_type = Uint[max_lvl]
+        intfs = list(self.sv_port_configs())
         queue_intfs = [
-            p for p in self.sv_port_configs()
-            if p['lvl'] > 0 and p['modport'] == 'consumer'
+            i for i in intfs if i['lvl'] > 0 and i['modport'] == 'consumer'
         ]
 
         data_intfs = [
-            p for p in self.sv_port_configs()
-            if p['width'] - p['lvl'] > 0 and p['modport'] == 'consumer'
+            i for i in intfs
+            if i['width'] - i['lvl'] > 0 and i['modport'] == 'consumer'
         ]
 
         context = {
-            'max_lvl': max_lvl,
             'queue_intfs': queue_intfs,
             'data_intfs': data_intfs,
-            'max_lvl_din': self.in_ports[din_lvl.index(max_lvl)],
             'module_name': self.sv_module_name,
             'intfs': list(self.sv_port_configs())
         }

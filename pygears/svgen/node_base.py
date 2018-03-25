@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from pygears.core.hier_node import NamedHierNode
 from collections import Counter
+from pygears.svgen.svstruct import SVStruct
 
 
 def is_in_subbranch(root, node):
@@ -150,7 +151,8 @@ class SVGenDefaultNode(SVGenNodeBase):
             'modport': modport,
             'name': name,
             'type': str(type_),
-            'width': int(type_)
+            'width': int(type_),
+            'struct': SVStruct(name, type_)
         }
 
     def get_fn(self):

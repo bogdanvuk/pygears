@@ -153,7 +153,13 @@ typedef {{ sv_struct['svtype'] }} packed {{RBR}} // {{ sv_struct['type'] }}
 {%- endmacro -%}
 
 
-{% macro module_with_intf_structs(module_name, intfs) -%}
+{% macro module_with_intf_structs(module_name, intfs, comment) -%}
+  {% if comment is defined -%}
+/*
+    {{ comment }}
+*/
+  {% endif %}
+
 module {{module_name}}
 (
     input clk,
@@ -162,7 +168,8 @@ module {{module_name}}
 );
 
   {% for i in intfs %}
-    {{ sv_struct_def(i['struct'])|indent(4, True) }}
+    {{ sv_struct_def(i['struct'])|indent(4, False) }}
+
   {% endfor %}
 
   {% for i in intfs %}

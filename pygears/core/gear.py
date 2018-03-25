@@ -88,6 +88,7 @@ class GearBase(NamedHierNode):
     def __init__(self, func, *args, name=None, intfs=[], outnames=[], **kwds):
         super().__init__(name, registry('CurrentHier'))
         self.func = func
+        self.__doc__ = func.__doc__
         self.outnames = outnames
         self.intfs = intfs.copy()
 

@@ -1,29 +1,29 @@
 from nose import with_setup
 
 from pygears import clear, Uint, Queue, Intf, Unit, bind
-from pygears.common import qenvelope
+from pygears.common import quenvelope
 from pygears.svgen import svgen_connect, svgen_inst, svgen
 from pygears.svgen.generate import TemplateEnv
 from . import equal_on_nonspace
 
 test_skip_ref = """
-module qenvelope
+module quenvelope
 (
     input clk,
     input rst,
-    dti_s_if.consumer din, // [u1]^5 (6)
-    dti_s_if.producer dout // [Unit]^2 (2)
+    dti_s_if.consumer din,
+    dti_s_if.producer dout
 
 );
 
 
-    typedef struct packed { // [u1]^5
-        logic [1:0] out_eot; // u2
-        logic [2:0] subenvelope; // u3
-        logic [0:0] data; // u1
+    typedef struct packed {
+        logic [1:0] out_eot;
+        logic [2:0] subenvelope;
+        logic [0:0] data;
     } din_t;
-    typedef struct packed { // [Unit]^2
-        logic [1:0] out_eot; // u2
+    typedef struct packed {
+        logic [1:0] out_eot;
     } dout_t;
 
     din_t din_s;
@@ -63,31 +63,31 @@ endmodule
 
 @with_setup(clear)
 def test_skip():
-    qenvelope(Intf(Queue[Uint[1], 5]), lvl=2)
+    quenvelope(Intf(Queue[Uint[1], 5]), lvl=2)
 
     bind('SVGenFlow', [svgen_inst, svgen_connect])
     svtop = svgen()
-    assert equal_on_nonspace(svtop['qenvelope'].get_module(TemplateEnv()),
+    assert equal_on_nonspace(svtop['quenvelope'].get_module(TemplateEnv()),
                              test_skip_ref)
 
 
 test_all_pass_ref = """
-module qenvelope
+module quenvelope
 (
     input clk,
     input rst,
-    dti_s_if.consumer din, // [u1]^2 (3)
-    dti_s_if.producer dout // [Unit]^2 (2)
+    dti_s_if.consumer din,
+    dti_s_if.producer dout
 
 );
 
 
-    typedef struct packed { // [u1]^2
-        logic [1:0] out_eot; // u2
-        logic [0:0] data; // u1
+    typedef struct packed {
+        logic [1:0] out_eot;
+        logic [0:0] data;
     } din_t;
-    typedef struct packed { // [Unit]^2
-        logic [1:0] out_eot; // u2
+    typedef struct packed {
+        logic [1:0] out_eot;
     } dout_t;
 
     din_t din_s;
@@ -106,9 +106,9 @@ endmodule
 
 @with_setup(clear)
 def test_all_pass():
-    qenvelope(Intf(Queue[Uint[1], 2]), lvl=2)
+    quenvelope(Intf(Queue[Uint[1], 2]), lvl=2)
 
     bind('SVGenFlow', [svgen_inst, svgen_connect])
     svtop = svgen()
-    assert equal_on_nonspace(svtop['qenvelope'].get_module(TemplateEnv()),
+    assert equal_on_nonspace(svtop['quenvelope'].get_module(TemplateEnv()),
                              test_all_pass_ref)

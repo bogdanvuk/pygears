@@ -12,6 +12,7 @@ class SVGenGearBase(SVGenDefaultNode):
             p.gear = self
 
         self.gear = gear
+        self.__doc__ = gear.__doc__
 
     def create_intf(self, port, domain):
         intf = port.consumer

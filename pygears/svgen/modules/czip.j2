@@ -1,6 +1,6 @@
 {%- import 'snippet.j2' as snippet -%}
 
-{% call snippet.module_with_intf_structs(module_name, intfs) %}
+{% call snippet.module_with_intf_structs(module_name, intfs, comment) %}
 
   {%- set queue_intf_names = queue_intfs|keymap("name") %}
   {%- set data_intf_names = data_intfs|keymap("name") %}
