@@ -1,7 +1,7 @@
 
-interface dti_if #(
-                     W_DATA = 64
-                     )
+interface dti #(
+                W_DATA = 64
+                )();
 
    logic [W_DATA-1:0] data;
    logic              valid;
@@ -17,4 +17,4 @@ interface dti_if #(
                      input  valid,
                      output ready);
 
-endinterface : dti_if
+endinterface : dti

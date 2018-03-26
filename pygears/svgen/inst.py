@@ -46,6 +46,10 @@ class SVGenInstVisitor(HierVisitorBase):
             svgen_inst = None
 
         self.svgen_map[module] = svgen_inst
+
+        if self.cur_hier is None:
+            self.design = svgen_inst
+
         return svgen_inst
 
     def Hier(self, module):

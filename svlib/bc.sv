@@ -5,8 +5,8 @@ module bc #(
    (
     input logic clk,
     input       rst,
-    dti_s_if.consumer din,
-    dti_s_if.producer dout[SIZE-1 : 0]
+    dti.consumer din,
+    dti.producer dout[SIZE-1 : 0]
     );
 
    logic [SIZE-1 : 0] ready_reg;

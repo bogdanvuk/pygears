@@ -9,7 +9,7 @@
 
 {% macro intf_list(intfs) -%}
   {% for i in intfs -%}
-    dti_s_if.{{i['modport']}} {{i['name']}}{{ "," if not loop.last }} // {{i['type']}} ({{i['width']}})
+    dti.{{i['modport']}} {{i['name']}}{{ "," if not loop.last }} // {{i['type']}} ({{i['width']}})
   {% endfor -%}
 {%- endmacro %}
 
@@ -41,7 +41,7 @@
 {% endmacro %}
 
 {% macro intf_inst(name, width, size, type) -%}
-  dti_s_if #(.W_DATA({{width}})) {{name}}{{ "[%d:0]"|format(size-1) if size>1 }}(); // {{type}} ({{width}})
+  dti #(.W_DATA({{width}})) {{name}}{{ "[%d:0]"|format(size-1) if size>1 }}(); // {{type}} ({{width}})
 {%- endmacro %}
 
 {% macro assign(name, value) -%}

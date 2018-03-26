@@ -11,9 +11,9 @@ module cart
 (
     input clk,
     input rst,
-    dti_s_if.consumer din0, // [Unit]^3 (3)
-    dti_s_if.consumer din1, // u1 (1)
-    dti_s_if.producer dout // [u1]^3 (4)
+    dti.consumer din0, // [Unit]^3 (3)
+    dti.consumer din1, // u1 (1)
+    dti.producer dout // [u1]^3 (4)
 
 );
 
@@ -65,9 +65,9 @@ module cart
 (
     input clk,
     input rst,
-    dti_s_if.consumer din0, // [u1]^3 (4)
-    dti_s_if.consumer din1, // [u2] (3)
-    dti_s_if.producer dout // [(u1, u2)]^4 (7)
+    dti.consumer din0, // [u1]^3 (4)
+    dti.consumer din1, // [u2] (3)
+    dti.producer dout // [(u1, u2)]^4 (7)
 
 );
 
@@ -120,19 +120,19 @@ test_general_ref = """
 module cart(
     input clk,
     input rst,
-    dti_s_if.consumer din0, // u1 (1)
-    dti_s_if.consumer din1, // [Unit] (1)
-    dti_s_if.consumer din2, // [u3]^3 (6)
-    dti_s_if.consumer din3, // [u4]^5 (9)
-    dti_s_if.producer dout // [(u1, u3, u4)]^9 (17)
+    dti.consumer din0, // u1 (1)
+    dti.consumer din1, // [Unit] (1)
+    dti.consumer din2, // [u3]^3 (6)
+    dti.consumer din3, // [u4]^5 (9)
+    dti.producer dout // [(u1, u3, u4)]^9 (17)
 
 );
 
-    dti_s_if #(.W_DATA(2)) cart0_if_s(); // [u1] (2)
+    dti #(.W_DATA(2)) cart0_if_s(); // [u1] (2)
 
-    dti_s_if #(.W_DATA(8)) cart1_if_s(); // [(u1, u3)]^4 (8)
+    dti #(.W_DATA(8)) cart1_if_s(); // [(u1, u3)]^4 (8)
 
-    dti_s_if #(.W_DATA(17)) cart2_if_s(); // [((u1, u3), u4)]^9 (17)
+    dti #(.W_DATA(17)) cart2_if_s(); // [((u1, u3), u4)]^9 (17)
 
     cart_cart0 cart0_i (
         .clk(clk),
