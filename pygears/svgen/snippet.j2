@@ -152,8 +152,7 @@ typedef {{ sv_struct['svtype'] }} packed {{RBR}} // {{ sv_struct['type'] }}
 {{LBR}} {{sv_struct['name']}}_t;
 {%- endmacro -%}
 
-
-{% macro module_with_intf_structs(module_name, intfs, comment) -%}
+{% macro gear_module(module_name, intfs, comment) -%}
   {% if comment is defined -%}
 /*
     {{ comment }}
@@ -166,7 +165,13 @@ module {{module_name}}
     input rst,
 {{ intf_list(intfs)|indent(4, True) }}
 );
+  {{ caller() }}
+endmodule
+{%- endmacro %}
 
+{% macro module_with_intf_structs(module_name, intfs, comment) -%}
+{% set caller_ = caller %}
+{% call gear_module(module_name, intfs, comment) %}
   {% for i in intfs %}
     {{ sv_struct_def(i['struct'])|indent(4, False) }}
 
@@ -181,6 +186,6 @@ module {{module_name}}
     assign {{i['name']}}_s = {{i['name']}}.data;
     {% endif %}
   {%- endfor %}
-  {{ caller() }}
-endmodule
+  {{ caller_() }}
+{% endcall %}
 {%- endmacro %}

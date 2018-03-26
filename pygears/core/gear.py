@@ -4,6 +4,7 @@ from .infer_ftypes import infer_ftypes, TypeMatchError
 from .intf import Intf
 from pygears.registry import registry, PluginBase, bind
 from .partial import Definition
+from .port import InPort, OutPort
 import inspect
 from functools import wraps
 
@@ -22,30 +23,6 @@ class ModuleTypeNotSpecified(Exception):
 
 
 class ModuleArgsNotSpecified(Exception):
-    pass
-
-
-class Port:
-    def __init__(self, gear, index, basename, producer=None, consumer=None):
-        self.gear = gear
-        self.index = index
-        self.producer = producer
-        self.consumer = consumer
-        self.basename = basename
-
-    @property
-    def dtype(self):
-        if self.producer is not None:
-            return self.producer.dtype
-        else:
-            return self.consumer.dtype
-
-
-class InPort(Port):
-    pass
-
-
-class OutPort(Port):
     pass
 
 

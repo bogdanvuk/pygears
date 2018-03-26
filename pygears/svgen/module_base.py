@@ -1,5 +1,5 @@
 from pygears import registry
-from pygears.core.gear import InPort
+from pygears.core.port import InPort
 from pygears.svgen.intf_base import SVGenIntfBase
 from pygears.svgen.node_base import SVGenDefaultNode
 import itertools

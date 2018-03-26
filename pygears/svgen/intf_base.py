@@ -1,5 +1,5 @@
 from pygears.core.hier_node import NamedHierNode
-from pygears.core.gear import InPort, OutPort
+from pygears.core.port import InPort, OutPort
 
 
 class SVGenIntfBase(NamedHierNode):
