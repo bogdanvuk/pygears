@@ -169,19 +169,19 @@ module {{module_name}}
 endmodule
 {%- endmacro %}
 
-{% macro module_with_intf_structs(module_name, intfs, comment) -%}
+{% macro module_with_intf_structs(module_name, intfs, struct_intfs, comment) -%}
 {% set caller_ = caller %}
 {% call gear_module(module_name, intfs, comment) %}
-  {% for i in intfs %}
+  {% for i in struct_intfs %}
     {{ sv_struct_def(i['struct'])|indent(4, False) }}
 
   {% endfor %}
 
-  {% for i in intfs %}
+  {% for i in struct_intfs %}
     {{i['name']}}_t {{i['name']}}_s;
   {% endfor %}
 
-  {% for i in intfs|isinput -%}
+  {% for i in struct_intfs|isinput -%}
     {% if i['width'] > 0 %}
     assign {{i['name']}}_s = {{i['name']}}.data;
     {% endif %}

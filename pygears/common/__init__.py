@@ -4,5 +4,6 @@ from .ccat import ccat
 from .cart import cart
 from .conv import conv
 from .quenvelope import quenvelope
+from .zip_sync import zip_sync
 
-__all__ = ['expand', 'czip', 'ccat', 'cart', 'conv', 'quenvelope']
+__all__ = ['expand', 'czip', 'ccat', 'cart', 'conv', 'quenvelope', 'zip_sync']
