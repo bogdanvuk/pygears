@@ -56,7 +56,7 @@ class SVGenGenerateVisitor(HierVisitorBase):
         self.outdir = outdir
         self.template_env = TemplateEnv()
 
-    def SVGenGearBase(self, module):
+    def SVGenNodeBase(self, module):
         contents = module.get_module(self.template_env)
         if contents:
             save_file(module.get_fn(), self.outdir, contents)

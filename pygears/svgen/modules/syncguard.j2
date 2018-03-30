@@ -1,18 +1,18 @@
 {%- import 'snippet.j2' as snippet -%}
-{% call gear_module(module_name, intfs, comment) %}
+{% call snippet.gear_module(module_name, intfs, comment) %}
 
-    localparam NUM_OF_BUSSES = {{len(intfs)//2}};
+    localparam SIZE = {{len(intfs)//2}};
 
     logic in_ready;
-    logic [NUM_OF_BUSES-1 : 0] channel_open_reg;
-    logic [NUM_OF_BUSES-1 : 0] ready_all;
+    logic [SIZE-1 : 0] channel_open_reg;
+    logic [SIZE-1 : 0] ready_all;
 
-    logic [NUM_OF_BUSES-1 : 0] out_valid;
-    logic [NUM_OF_BUSES-1 : 0] out_ready;
+    logic [SIZE-1 : 0] out_valid;
+    logic [SIZE-1 : 0] out_ready;
 
-    logic [NUM_OF_BUSES-1 : 0] in_valid;
+    logic [SIZE-1 : 0] in_valid;
 
-    logic [NUM_OF_BUSES-1 : 0] channel_open;
+    logic [SIZE-1 : 0] channel_open;
 
 
 {% set in_names = intfs|isinput|keymap("name") %}
@@ -31,7 +31,7 @@
 
     assign in_ready = &ready_all;
     generate
-        for (genvar i = 0; i < NUM_OF_BUSES; i++) begin
+        for (genvar i = 0; i < SIZE; i++) begin
          // Since data has been posted, i-th channel is considered to have been
          // opened if either
          assign channel_open[i]

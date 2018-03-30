@@ -5,42 +5,41 @@
   {%- set queue_intf_names = queue_intfs|keymap("name") %}
   {%- set data_intf_names = data_intfs|keymap("name") %}
   {%- set input_intf_names = intfs|isinput|keymap("name") %}
+  {%- set max_lvl = intfs|isinput|keymap("lvl")|max %}
 
 {% for i in intfs|selectattr('modport', 'equalto', 'consumer') %}
-{{snippet.intf_inst(i['name']+"_if", width=i['param'], size=1, type="")|indent(4,True)}}
+{{snippet.intf_inst(i['name']+"_if", width=i['width'], size=1, type=i['type'])|indent(4,True)}}
 {% endfor %}
-
-  {# {% for dout in intfs|isoutput %} #}
-  {#   assign {{dout['name']}}.data = {{dout['name']}}_s; #}
-  {# {% endfor %} #}
 
     logic all_valid;
     logic out_valid;
     logic all_aligned;
     logic handshake;
-    logic eot_zip;
-
+    logic [{{max_lvl-1}}:0] eot_zip;
   {% for i in queue_intfs|isinput %}
     logic {{i['name']}}_eot_aligned;
-    assign {{i['name']}}_eot_aligned = ({{i['name']}}_s.eot==dout_s.eot[{{i['lvl']-1}}:0]);
   {% endfor %}
 
     assign eot_zip     = {{queue_intf_names|format_list("%s_s.eot")|join(" | ")}};
-    assign all_valid   = {{input_intf_names|format_list("%s.valid")|join(" & ")}};
-    assign all_aligned = {{queue_intf_names|format_list("%s_eot_aligned")|join(" & ")}};
+    assign all_valid   = {{input_intf_names|format_list("%s.valid")|join(" && ")}};
+    assign all_aligned = {{queue_intf_names|format_list("%s_eot_aligned")|join(" && ")}};
     assign out_valid   = all_valid & all_aligned;
-    assign handshake   = dout.valid & dout.ready;
+    // Use any ready for the handshake since they are all synced
+    assign handshake   = out_valid & dout0.ready;
+  {% for i in queue_intfs|isinput %}
+    assign {{i['name']}}_eot_aligned = ({{i['name']}}_s.eot==eot_zip[{{i['lvl']-1}}:0]);
+  {% endfor %}
 
-  {% for din, dout in zip(intfs|isinput, intfs|isoutput) %}
-    assign {{dout['name']}}.valid = out_valid;
-    assign {{dout['name']}}_s = {{din['name']}}_s;
+  {% for din in intfs|isinput %}
+    assign {{din['name']}}_if.valid = out_valid;
+    assign {{din['name']}}_if.data = {{din['name']}}_s;
   {% endfor %}
 
   {% for i in intfs|isinput %}
     {% if i['lvl'] == 0 %}
     assign {{i['name']}}.ready = handshake;
     {%- else %}
-    assign {{i['name']}}.ready = all_valid & (all_aligned ? dout.ready : !{{i['name']}}_eot_aligned);
+    assign {{i['name']}}.ready = all_valid & (all_aligned ? dout0.ready : !{{i['name']}}_eot_aligned);
     {%- endif %}
 
   {% endfor %}
@@ -53,14 +52,5 @@
   {% for i, dout in enumerate(intfs|isoutput) %}
     {% do port_map.update({"dout%s" % i: dout['name']}) %}
   {% endfor %}
-{# {% for i, intf in enumerate(intfs|isinput) %} #}
-{#    {% do port_map.update({"din%s" % i: intf['name']+"_if"}) %} #}
-{# {% endfor %} #}
-
-{# {% for i, intf in enumerate(intfs|isinput) %} #}
-{#    {% do port_map.update({"dout%s" % i: intf['name']}) %} #}
-{# {% endfor %} #}
-
 {{snippet.module_inst(module_name + "_syncguard", {}, "syncguard", port_map=port_map)|indent(4, True)}} 
-
 {% endcall %}
