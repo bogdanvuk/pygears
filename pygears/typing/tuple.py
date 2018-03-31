@@ -11,15 +11,6 @@ class TupleMeta(EnumerableGenericMeta):
             # Generic parameter values have not been supplied
             return cls
         else:
-            # for i in reversed(range(len(args))):
-            #     if cls.args[i] == Unit:
-            #         del args[i]
-
-            # if len(args) == 0:
-            #     return Unit
-            # elif len(args) == 1:
-            #     return args[0]
-            # else:
             cls.args = args
             return cls
 

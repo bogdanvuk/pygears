@@ -3,6 +3,7 @@
 from pygears import Union, Queue, Tuple, typeof
 from pygears.core.typing import TypingNamespacePlugin
 from pygears.core.gear import gear
+import types
 
 
 @gear
@@ -53,7 +54,10 @@ def type_expand(type_):
         return type_
 
 
+typing = types.SimpleNamespace(expand=type_expand)
+
+
 class TypeExpandPlugin(TypingNamespacePlugin):
     @classmethod
     def bind(cls):
-        cls.registry['TypeArithNamespace']['expand'] = type_expand
+        cls.registry['TypeArithNamespace']['expand'] = typing.expand
