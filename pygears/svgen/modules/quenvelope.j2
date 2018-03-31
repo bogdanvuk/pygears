@@ -1,7 +1,7 @@
 {%- import 'snippet.j2' as snippet -%}
 
 
-{% call snippet.module_with_intf_structs(module_name, intfs, comment) %}
+{% call snippet.module_with_intf_structs(module_name, intfs, intfs, comment) %}
 
   {% set input_intf_names = intfs|isinput|keymap("name") %}
 

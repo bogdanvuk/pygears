@@ -38,7 +38,6 @@ class SVGenQuEnvelope(SVGenGearBase):
             'module_name': self.sv_module_name,
             'intfs': intfs
         }
-
         return template_env.render_local(__file__, "quenvelope.j2", context)
 
 
