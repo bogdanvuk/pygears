@@ -69,6 +69,8 @@ class GearBase(NamedHierNode):
 
         self.outnames = outnames.copy()
         self.intfs = intfs.copy()
+        self.in_ports = []
+        self.out_ports = []
 
         self.args = args
         self.resolved = False
@@ -159,6 +161,19 @@ class GearBase(NamedHierNode):
 
             self.params[self.varargsname] = f'({", ".join(vararg_type_list)})'
 
+    def remove(self):
+        for p in self.in_ports:
+            try:
+                p.producer.disconnect(p)
+            except ValueError:
+                pass
+
+        for p in self.out_ports:
+            p.producer.disconnect(p)
+
+        super().remove()
+
+
     @property
     def definition(self):
         return self.params['definition']
@@ -197,7 +212,10 @@ class GearBase(NamedHierNode):
         arg_types = [i.dtype for i in self.args]
         try:
             return infer_ftypes(
-                self.dtype_templates, arg_types, params=self.params)
+                self.dtype_templates,
+                arg_types,
+                namespace=self.func.__globals__,
+                params=self.params)
         except TypeMatchError as e:
             raise TypeMatchError(f'{str(e)}, of the module {self.name}')
 

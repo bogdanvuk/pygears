@@ -40,9 +40,9 @@ def combine_arg_kwds(args, kwds, func):
 
 def all_args_specified(args, func):
     arg_names, varargs, _, _, kwds, _, types = argspec_unwrap(func)
-    if len(args) == len(arg_names):
-        return True
-    elif varargs and (len(args) > 0):
+    if varargs:
+        return len(args) > 0
+    elif len(args) == len(arg_names):
         return True
     else:
         return False
