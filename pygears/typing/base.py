@@ -253,11 +253,11 @@ class EnumerableGenericMeta(GenericMeta):
     def keys(self):
         return list(range(len(self.args)))
 
-    def _index_norm(self, index):
+    def index_norm(self, index):
         if not isinstance(index, tuple):
             index = (index, )
 
-        index_norm = []
+        norm = []
         for i in index:
             if isinstance(i, slice):
                 if i.start is None:
@@ -281,9 +281,9 @@ class EnumerableGenericMeta(GenericMeta):
                 if i > len(self):
                     raise IndexError
 
-            index_norm.append(i)
+            norm.append(i)
 
-        return tuple(index_norm)
+        return tuple(norm)
 
     def items(self):
         for k in self.keys():

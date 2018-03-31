@@ -26,3 +26,24 @@ def test_explicit_tuple_multi_slice():
         index=(slice(0, 2), 3))
 
     assert iout.dtype == Tuple[Uint[1], Uint[2], Uint[4]]
+
+
+@with_setup(clear)
+def test_indexing_tuple_single():
+    iout = Intf(Tuple[Uint[1], Uint[2], Uint[3], Uint[4]])[0]
+
+    assert iout.dtype == Uint[1]
+
+
+@with_setup(clear)
+def test_indexing_tuple_slice():
+    iout = Intf(Tuple[Uint[1], Uint[2], Uint[3], Uint[4]])[1:3]
+
+    assert iout.dtype == Tuple[Uint[2], Uint[3]]
+
+
+@with_setup(clear)
+def test_indexing_tuple_multi_slice():
+    iout = Intf(Tuple[Uint[1], Uint[2], Uint[3], Uint[4]])[:2, 3]
+
+    assert iout.dtype == Tuple[Uint[1], Uint[2], Uint[4]]

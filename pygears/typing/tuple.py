@@ -39,7 +39,7 @@ class TupleMeta(EnumerableGenericMeta):
             index = self.fields.index(index)
             return self.__args__[index]
 
-        index = self._index_norm(index)
+        index = self.index_norm(index)
 
         subtypes = []
         for i in index:

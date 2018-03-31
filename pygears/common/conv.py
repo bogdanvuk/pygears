@@ -1,6 +1,7 @@
 from pygears.core.gear import Gear, gear
 from pygears import Int, Uint
-from pygears.core.type_match import type_match, TypeMatchError
+from pygears.typing.base import TypingMeta
+from pygears.core.intf import IntfOperPlugin
 
 
 class Conv(Gear):
@@ -23,3 +24,17 @@ class Conv(Gear):
 @gear(gear_cls=Gear, sv_param_kwds=[])
 def conv(din, *, cast_type) -> '{cast_type}':
     pass
+
+
+def pipe(self, other):
+    if isinstance(other, (str, TypingMeta)):
+        return conv(
+            self, cast_type=other, name=f'conv_{self.producer.basename}')
+    else:
+        return other.__ror__(self)
+
+
+class PipeIntfOperPlugin(IntfOperPlugin):
+    @classmethod
+    def bind(cls):
+        cls.registry['IntfOperNamespace']['__or__'] = pipe

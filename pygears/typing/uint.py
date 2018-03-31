@@ -95,7 +95,7 @@ class UintMeta(EnumerableGenericMeta):
         if not self.is_specified():
             return super().__getitem__(index)
 
-        index = self._index_norm(index)
+        index = self.index_norm(index)
 
         width = 0
         for i in index:

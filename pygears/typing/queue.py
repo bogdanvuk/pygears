@@ -22,7 +22,7 @@ class QueueMeta(EnumerableGenericMeta):
             else:
                 return super().__getitem__(index)
 
-        index = self._index_norm(index)
+        index = self.index_norm(index)
 
         lvl = 0
         data_incl = False
