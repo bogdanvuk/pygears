@@ -165,7 +165,7 @@ module {{module_name}}
     input rst,
 {{ intf_list(intfs)|indent(4, True) }}
 );
-  {{ caller() }}
+{{ caller() }}
 endmodule
 {%- endmacro %}
 
@@ -186,6 +186,6 @@ endmodule
     assign {{i['name']}}_s = {{i['name']}}.data;
     {% endif %}
   {%- endfor %}
-  {{ caller_() }}
+{{ caller_() }}
 {% endcall %}
 {%- endmacro %}

@@ -28,7 +28,7 @@ class SVGenIntfBase(NamedHierNode):
 
         if isinstance(producer_port, InPort):
             return port_name
-        elif ((not self.is_broadcast)
+        elif ((not self.is_broadcast) and self.consumers
               and isinstance(self.consumers[0], OutPort)):
             return self.consumers[0].basename
         elif self.sole_intf:
@@ -40,8 +40,8 @@ class SVGenIntfBase(NamedHierNode):
     def is_port_intf(self):
         if isinstance(self.producer, InPort):
             return True
-        elif (not self.is_broadcast) and isinstance(self.consumers[0],
-                                                    OutPort):
+        elif ((not self.is_broadcast) and self.consumers
+              and isinstance(self.consumers[0], OutPort)):
             return True
         else:
             return False

@@ -1,0 +1,7 @@
+{%- import 'snippet.j2' as snippet -%}
+
+{% call snippet.gear_module(module_name, intfs, comment) %}
+   assign dout.data = {{ snippet.concat(indexes|reverse|format_list("din.data[%s]")) }};
+   assign dout.valid = din.valid;
+   assign din.ready  = dout.ready;
+{% endcall %}
