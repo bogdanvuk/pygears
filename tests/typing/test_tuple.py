@@ -87,6 +87,10 @@ def test_indexing():
     assert b[1] == 2
     assert b[2] == 'T2'
     assert b[3] == Tuple[3, Tuple[3, 4]]
+    assert b[0:3] == Tuple[1, 2, 'T2']
+    assert b[0, 1, 2] == Tuple[1, 2, 'T2']
+    assert b[0, 2] == Tuple[1, 'T2']
+    assert b[:2, 3:] == Tuple[1, 2, Tuple[3, Tuple[3, 4]]]
 
 
 def test_unit():

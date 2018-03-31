@@ -58,9 +58,9 @@ def test_excessive_subs():
 
 
 def test_indexing():
-    a = Queue[Uint[1]]
-    assert a[0] == Uint[1]
-    assert a[1] == Bool
+    a = Queue[Uint[10]]
+    assert a[0] == Uint[10]
+    assert a[1] == Uint[1]
 
 
 def test_multilevel_indexing():
@@ -68,5 +68,11 @@ def test_multilevel_indexing():
     assert a[0] == Uint[2]
     assert a[0:2] == Queue[Uint[2]]
     assert a[0:3] == Queue[Uint[2], 2]
-    assert a[1:] == Tuple[Bool, Bool, Bool, Bool, Bool, Bool]
+    assert a[1:] == Uint[6]
     assert a[:3][:2][0] == Uint[2]
+
+
+def test_multiple_indexing():
+    a = Queue[Uint[2], 6]
+    assert a[0:2, 5] == Queue[Uint[2], 2]
+    assert a[0:2, 4:] == Queue[Uint[2], 4]

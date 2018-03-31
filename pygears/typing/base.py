@@ -253,30 +253,37 @@ class EnumerableGenericMeta(GenericMeta):
     def keys(self):
         return list(range(len(self.args)))
 
-    def _index_norm(self, s):
-        if isinstance(s, slice):
-            if s.start is None:
-                s = slice(0, s.stop)
+    def _index_norm(self, index):
+        if not isinstance(index, tuple):
+            index = (index, )
 
-            if s.stop is None:
-                s = slice(s.start, len(self))
+        index_norm = []
+        for i in index:
+            if isinstance(i, slice):
+                if i.start is None:
+                    i = slice(0, i.stop)
 
-            if s.stop < 0:
-                s = slice(s.start, len(self) + s.stop)
+                if i.stop is None:
+                    i = slice(i.start, len(self))
 
-            if s.stop > len(self):
-                raise IndexError
+                if i.stop < 0:
+                    i = slice(i.start, len(self) + i.stop)
 
-            if s.start == s.stop:
-                raise IndexError
-        else:
-            if s < 0:
-                s = len(self) + s
+                if i.stop > len(self):
+                    raise IndexError
 
-            if s > len(self):
-                raise IndexError
+                if i.start == i.stop:
+                    raise IndexError
+            else:
+                if i < 0:
+                    i = len(self) + i
 
-        return s
+                if i > len(self):
+                    raise IndexError
+
+            index_norm.append(i)
+
+        return tuple(index_norm)
 
     def items(self):
         for k in self.keys():

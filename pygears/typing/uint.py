@@ -97,13 +97,18 @@ class UintMeta(EnumerableGenericMeta):
 
         index = self._index_norm(index)
 
-        if isinstance(index, slice):
-            if (index.stop == 0) or (index.stop - index.start > len(self)):
-                raise IndexError
+        width = 0
+        for i in index:
+            if isinstance(i, slice):
+                if (i.stop == 0) or (i.stop - i.start > len(self)):
+                    raise IndexError
+                width += i.stop - i.start
             else:
-                return Uint[index.stop - index.start]
-        else:
-            raise IndexError
+                if i >= len(self):
+                    raise IndexError
+                width += 1
+
+        return Uint[width]
 
 
 class Uint(metaclass=UintMeta):

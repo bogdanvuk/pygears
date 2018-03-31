@@ -33,15 +33,18 @@ class ArrayMeta(EnumerableGenericMeta):
 
         index = self._index_norm(index)
 
-        if isinstance(index, slice):
-            if (index.stop == 0) or (index.stop - index.start > len(self)):
-                raise IndexError
+        width = 0
+        for i in index:
+            if isinstance(i, slice):
+                if (i.stop == 0) or (i.stop - i.start > len(self)):
+                    raise IndexError
+                width += i.stop - i.start
             else:
-                return Array[self.args[0], index.stop - index.start]
-        elif index < len(self):
-            return self.args[0]
-        else:
-            raise IndexError
+                if i >= len(self):
+                    raise IndexError
+                width += 1
+
+        return Array[self.args[0], width]
 
     def __str__(self):
         return f'Array[{str(self.args[0])}, {len(self)}]'

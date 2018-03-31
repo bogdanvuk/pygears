@@ -63,6 +63,12 @@ def test_indexing():
     assert a[2:] == Array[Uint[1], 4]
 
 
+def test_multiple_indexing():
+    a = Array[Uint[1], 6]
+    assert a[0, 2, 5] == Array[Uint[1], 3]
+    assert a[:2, 5:] == Array[Uint[1], 3]
+
+
 @raises(IndexError)
 def test_index_error():
     a = Array[Uint[1], 6]

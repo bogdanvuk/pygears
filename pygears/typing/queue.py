@@ -1,8 +1,7 @@
 import inspect
 
 from .base import EnumerableGenericMeta, type_str
-from .bool import Bool
-from .tuple import Tuple
+from .uint import Uint
 
 
 class QueueMeta(EnumerableGenericMeta):
@@ -25,21 +24,30 @@ class QueueMeta(EnumerableGenericMeta):
 
         index = self._index_norm(index)
 
-        if isinstance(index, slice):
-            if (index.stop == 0) or (index.stop - index.start > self.lvl):
-                raise
-            elif index.start == 0 and index.stop == 1:
-                return self.args[0]
-            elif index.start == 0 and index.stop > 1:
-                return Queue[self.args[0], index.stop - 1]
+        lvl = 0
+        data_incl = False
+        for i in index:
+            if isinstance(i, slice):
+                if (i.stop == 0) or (i.stop - i.start > self.lvl):
+                    raise IndexError
+                elif i.start == 0 and i.stop == 1:
+                    data_incl = True
+                elif i.start == 0 and i.stop > 1:
+                    data_incl = True
+                    lvl += i.stop - 1
+                else:
+                    lvl += (i.stop - i.start)
+            elif i == 0:
+                data_incl = True
+            elif i <= self.lvl:
+                lvl += 1
             else:
-                return Tuple[tuple([Bool] * (index.stop - index.start))]
-        elif index == 0:
-            return self.args[0]
-        elif index <= self.lvl:
-            return Bool
+                raise IndexError
+
+        if data_incl:
+            return Queue[self.args[0], lvl]
         else:
-            raise IndexError
+            return Uint[lvl]
 
     @property
     def lvl(self):

@@ -28,7 +28,8 @@ class TupleMeta(EnumerableGenericMeta):
             return super().__repr__()
         else:
             return 'Tuple[{%s}]' % ', '.join([
-                f'{repr(f)}: {type_repr(a)}' for f, a in zip(self.fields, self.args)
+                f'{repr(f)}: {type_repr(a)}'
+                for f, a in zip(self.fields, self.args)
             ])
 
     def __getitem__(self, index):
@@ -40,10 +41,12 @@ class TupleMeta(EnumerableGenericMeta):
 
         index = self._index_norm(index)
 
-        if isinstance(index, slice):
-            return Tuple[tuple([a for a in self.__args__[index]])]
-        else:
-            return self.__args__[index]
+        subtypes = []
+        for i in index:
+            subt = self.__args__[i]
+            subtypes.extend(subt if isinstance(i, slice) else [subt])
+
+        return Tuple[tuple(subtypes)]
 
     def __str__(self):
         return '(%s)' % ', '.join([type_str(a) for a in self.args])
