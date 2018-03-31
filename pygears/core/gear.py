@@ -66,7 +66,8 @@ class GearBase(NamedHierNode):
         super().__init__(name, registry('CurrentHier'))
         self.func = func
         self.__doc__ = func.__doc__
-        self.outnames = outnames
+
+        self.outnames = outnames.copy()
         self.intfs = intfs.copy()
 
         self.args = args

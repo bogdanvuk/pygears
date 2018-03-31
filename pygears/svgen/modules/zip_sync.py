@@ -9,8 +9,12 @@ class SVGenZipSync(SVGenGearBase):
     def __init__(self, gear, parent):
         super().__init__(gear, parent)
 
-        SVGenSyncGuard(self, f'{self.sv_module_name}_syncguard',
-                       len(gear.in_ports))
+        if 'outsync' not in self.params:
+            self.params['outsync'] = True
+
+        if self.params['outsync']:
+            SVGenSyncGuard(self, f'{self.sv_module_name}_syncguard',
+                           len(gear.in_ports))
 
     def get_sv_port_config(self, modport, type_, name):
         cfg = super().get_sv_port_config(modport, type_, name)
@@ -23,19 +27,9 @@ class SVGenZipSync(SVGenGearBase):
         return cfg
 
     def get_module(self, template_env):
-        intfs = list(self.sv_port_configs())
-        queue_intfs = [
-            i for i in intfs if i['lvl'] > 0 and i['modport'] == 'consumer'
-        ]
-
-        data_intfs = [
-            i for i in intfs
-            if i['width'] - i['lvl'] > 0 and i['modport'] == 'consumer'
-        ]
 
         context = {
-            'queue_intfs': queue_intfs,
-            'data_intfs': data_intfs,
+            'outsync': self.params['outsync'],
             'module_name': self.sv_module_name,
             'intfs': list(self.sv_port_configs())
         }

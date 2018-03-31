@@ -4,126 +4,76 @@ from pygears import Intf, Queue, Uint, clear, bind, Unit
 from pygears.svgen import svgen_connect, svgen_inst, svgen
 from pygears.common import zip_sync
 from pygears.svgen.generate import TemplateEnv
-# from . import equal_on_nonspace
+from . import equal_on_nonspace
 
-test_zip_sync_general_sv_ref = """
+test_two_inputs_no_outsync_ref = """
 module zip_sync
 (
     input clk,
     input rst,
-    dti.consumer din0, // u1 (1)
-    dti.consumer din1, // [Unit] (1)
-    dti.consumer din2, // [u3]^3 (6)
-    dti.consumer din3, // [u4]^5 (9)
-    dti.producer dout0, // u1 (1)
-    dti.producer dout1, // [Unit] (1)
-    dti.producer dout2, // [u3]^3 (6)
-    dti.producer dout3 // [u4]^5 (9)
+    dti.consumer din0, // [u3]^3 (6)
+    dti.consumer din1, // [u4]^5 (9)
+    dti.producer dout0, // [u3]^3 (6)
+    dti.producer dout1 // [u4]^5 (9)
 
 );
-      typedef struct packed { // u1
-        logic [0:0] data; // u1
+    typedef struct packed { // [u3]^3
+        logic [2:0] eot; // u3
+        logic [2:0] data; // u3
     } din0_t;
 
-    typedef struct packed { // [Unit]
-        logic [0:0] eot; // u1
+    typedef struct packed { // [u4]^5
+        logic [4:0] eot; // u5
+        logic [3:0] data; // u4
     } din1_t;
-
-    typedef struct packed { // [u3]^3
-        logic [2:0] eot; // u3
-        logic [2:0] data; // u3
-    } din2_t;
-
-    typedef struct packed { // [u4]^5
-        logic [4:0] eot; // u5
-        logic [3:0] data; // u4
-    } din3_t;
-
-    typedef struct packed { // u1
-        logic [0:0] data; // u1
-    } dout0_t;
-
-    typedef struct packed { // [Unit]
-        logic [0:0] eot; // u1
-    } dout1_t;
-
-    typedef struct packed { // [u3]^3
-        logic [2:0] eot; // u3
-        logic [2:0] data; // u3
-    } dout2_t;
-
-    typedef struct packed { // [u4]^5
-        logic [4:0] eot; // u5
-        logic [3:0] data; // u4
-    } dout3_t;
 
 
     din0_t din0_s;
     din1_t din1_s;
-    din2_t din2_s;
-    din3_t din3_s;
-    dout0_t dout0_s;
-    dout1_t dout1_s;
-    dout2_t dout2_s;
-    dout3_t dout3_s;
 
     assign din0_s = din0.data;
     assign din1_s = din1.data;
-    assign din2_s = din2.data;
-    assign din3_s = din3.data;
-  
-    assign dout0.data = dout0_s;
-    assign dout1.data = dout1_s;
-    assign dout2.data = dout2_s;
-    assign dout3.data = dout3_s;
+
+
+    dti #(.W_DATA(6)) din0_if(); // [u3]^3 (6)
+    dti #(.W_DATA(9)) din1_if(); // [u4]^5 (9)
 
     logic all_valid;
     logic out_valid;
+    logic out_ready;
     logic all_aligned;
     logic handshake;
-    logic eot_zip;
-
+    logic [2:0] din0_eot_overlap;
+    logic din0_eot_aligned;
+    logic [2:0] din1_eot_overlap;
     logic din1_eot_aligned;
-    assign din1_eot_aligned = (din1_s.eot==dout_s.eot[0:0]);
-    logic din2_eot_aligned;
-    assign din2_eot_aligned = (din2_s.eot==dout_s.eot[2:0]);
-    logic din3_eot_aligned;
-    assign din3_eot_aligned = (din3_s.eot==dout_s.eot[4:0]);
 
-    assign eot_zip     = din1_s.eot | din2_s.eot | din3_s.eot;
-    assign all_valid   = din0.valid & din1.valid & din2.valid & din3.valid;
-    assign all_aligned = din1_eot_aligned & din2_eot_aligned & din3_eot_aligned;
+    assign din0_eot_overlap = din0_s.eot[2:0];
+    assign din1_eot_overlap = din1_s.eot[2:0];
+
+    assign din0_eot_aligned = din0_eot_overlap >= din1_eot_overlap;
+    assign din1_eot_aligned = din1_eot_overlap >= din0_eot_overlap;
+
+    assign all_valid   = din0.valid && din1.valid;
+    assign all_aligned = din0_eot_aligned && din1_eot_aligned;
     assign out_valid   = all_valid & all_aligned;
-    assign handshake   = dout.valid & dout.ready;
 
     assign dout0.valid = out_valid;
-    assign dout0_s = din0_s;
+    assign dout0.data = din0_s;
+    assign din0.ready = dout0.dready || !din0_eot_aligned;
     assign dout1.valid = out_valid;
-    assign dout1_s = din1_s;
-    assign dout2.valid = out_valid;
-    assign dout2_s = din2_s;
-    assign dout3.valid = out_valid;
-    assign dout3_s = din3_s;
+    assign dout1.data = din1_s;
+    assign din1.ready = dout1.dready || !din1_eot_aligned;
 
-    assign din0.ready = handshake;
-    assign din1.ready = all_valid & (all_aligned ? dout.ready : !din1_eot_aligned);
-    assign din2.ready = all_valid & (all_aligned ? dout.ready : !din2_eot_aligned);
-    assign din3.ready = all_valid & (all_aligned ? dout.ready : !din3_eot_aligned);
 endmodule
 """
 
 
 @with_setup(clear)
-def test_general():
-    zip_sync(
-        Intf(Uint[1]), Intf(Queue[Unit, 1]), Intf(Queue[Uint[3], 3]),
-        Intf(Queue[Uint[4], 5]))
+def test_two_inputs_no_outsync():
+    zip_sync(Intf(Queue[Uint[3], 3]), Intf(Queue[Uint[4], 5]), outsync=False)
 
     bind('SVGenFlow', [svgen_inst, svgen_connect])
     svtop = svgen()
-    print(svtop['zip_sync'].get_module(TemplateEnv()))
-    # assert equal_on_nonspace(svtop['zip_sync'].get_module(TemplateEnv()),
-    #                          test_zip_sync_general_sv_ref)
-
-
-test_general()
+    assert equal_on_nonspace(svtop['zip_sync'].get_module(TemplateEnv()),
+                             test_two_inputs_no_outsync_ref)

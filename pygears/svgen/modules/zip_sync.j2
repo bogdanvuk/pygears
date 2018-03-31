@@ -2,55 +2,55 @@
 
 {% call snippet.module_with_intf_structs(module_name, intfs, intfs|isinput, comment) %}
 
-  {%- set queue_intf_names = queue_intfs|keymap("name") %}
-  {%- set data_intf_names = data_intfs|keymap("name") %}
   {%- set input_intf_names = intfs|isinput|keymap("name") %}
-  {%- set max_lvl = intfs|isinput|keymap("lvl")|max %}
+  {%- set min_lvl = intfs|isinput|keymap("lvl")|min %}
 
-{% for i in intfs|selectattr('modport', 'equalto', 'consumer') %}
+  {% if outsync %}
+    {%- set out_intf_names = intfs|isoutput|keymap("name")|format_list("%s_if") %}
+  {% else %}
+    {%- set out_intf_names = intfs|isoutput|keymap("name") %}
+  {% endif %}
+
+{% for i in intfs|isinput %}
 {{snippet.intf_inst(i['name']+"_if", width=i['width'], size=1, type=i['type'])|indent(4,True)}}
 {% endfor %}
 
     logic all_valid;
     logic out_valid;
+    logic out_ready;
     logic all_aligned;
     logic handshake;
-    logic [{{max_lvl-1}}:0] eot_zip;
-  {% for i in queue_intfs|isinput %}
-    logic {{i['name']}}_eot_aligned;
+  {% for name in input_intf_names %}
+    logic [{{min_lvl-1}}:0] {{name}}_eot_overlap;
+    logic {{name}}_eot_aligned;
   {% endfor %}
 
-    assign eot_zip     = {{queue_intf_names|format_list("%s_s.eot")|join(" | ")}};
+  {% for name in input_intf_names %}
+    assign {{name}}_eot_overlap = {{name}}_s.eot[{{min_lvl-1}}:0];
+  {% endfor %}
+
+    assign din0_eot_aligned = din0_eot_overlap >= din1_eot_overlap;
+    assign din1_eot_aligned = din1_eot_overlap >= din0_eot_overlap;
+
     assign all_valid   = {{input_intf_names|format_list("%s.valid")|join(" && ")}};
-    assign all_aligned = {{queue_intf_names|format_list("%s_eot_aligned")|join(" && ")}};
+    assign all_aligned = din0_eot_aligned && din1_eot_aligned;
     assign out_valid   = all_valid & all_aligned;
-    // Use any ready for the handshake since they are all synced
-    assign handshake   = out_valid & dout0.ready;
-  {% for i in queue_intfs|isinput %}
-    assign {{i['name']}}_eot_aligned = ({{i['name']}}_s.eot==eot_zip[{{i['lvl']-1}}:0]);
+
+  {% for din, dout in zip(input_intf_names, out_intf_names) %}
+    assign {{dout}}.valid = out_valid;
+    assign {{dout}}.data = {{din}}_s;
+    assign {{din}}.ready = {{dout}}.dready || !{{din}}_eot_aligned;
   {% endfor %}
 
-  {% for din in intfs|isinput %}
-    assign {{din['name']}}_if.valid = out_valid;
-    assign {{din['name']}}_if.data = {{din['name']}}_s;
-  {% endfor %}
+  {% if outsync %}
+    {% set port_map = {} %}
+    {% for i, din in enumerate(intfs|isinput) %}
+      {% do port_map.update({"din%s" % i: din['name']+"_if"}) %}
+    {% endfor %}
 
-  {% for i in intfs|isinput %}
-    {% if i['lvl'] == 0 %}
-    assign {{i['name']}}.ready = handshake;
-    {%- else %}
-    assign {{i['name']}}.ready = all_valid & (all_aligned ? dout0.ready : !{{i['name']}}_eot_aligned);
-    {%- endif %}
-
-  {% endfor %}
-
-  {% set port_map = {} %}
-  {% for i, din in enumerate(intfs|isinput) %}
-    {% do port_map.update({"din%s" % i: din['name']+"_if"}) %}
-  {% endfor %}
-
-  {% for i, dout in enumerate(intfs|isoutput) %}
-    {% do port_map.update({"dout%s" % i: dout['name']}) %}
-  {% endfor %}
+    {% for i, dout in enumerate(intfs|isoutput) %}
+      {% do port_map.update({"dout%s" % i: dout['name']}) %}
+    {% endfor %}
 {{snippet.module_inst(module_name + "_syncguard", {}, "syncguard", port_map=port_map)|indent(4, True)}} 
+  {%- endif %}
 {% endcall %}
