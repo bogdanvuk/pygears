@@ -44,10 +44,12 @@ class QueueMeta(EnumerableGenericMeta):
             else:
                 raise IndexError
 
-        if data_incl:
+        if data_incl and lvl > 0:
             return Queue[self.args[0], lvl]
-        else:
+        elif lvl > 0:
             return Uint[lvl]
+        else:
+            return self.args[0]
 
     @property
     def lvl(self):

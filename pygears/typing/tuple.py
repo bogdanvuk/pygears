@@ -11,17 +11,17 @@ class TupleMeta(EnumerableGenericMeta):
             # Generic parameter values have not been supplied
             return cls
         else:
-            for i in reversed(range(len(args))):
-                if cls.args[i] == Unit:
-                    del args[i]
+            # for i in reversed(range(len(args))):
+            #     if cls.args[i] == Unit:
+            #         del args[i]
 
-            if len(args) == 0:
-                return Unit
-            elif len(args) == 1:
-                return args[0]
-            else:
-                cls.args = args
-                return cls
+            # if len(args) == 0:
+            #     return Unit
+            # elif len(args) == 1:
+            #     return args[0]
+            # else:
+            cls.args = args
+            return cls
 
     def __repr__(self):
         if not self.args or not hasattr(self, '__parameters__'):
@@ -41,12 +41,15 @@ class TupleMeta(EnumerableGenericMeta):
 
         index = self.index_norm(index)
 
-        subtypes = []
-        for i in index:
-            subt = self.__args__[i]
-            subtypes.extend(subt if isinstance(i, slice) else [subt])
+        if (len(index) == 1) and (not isinstance(index[0], slice)):
+            return self.__args__[index[0]]
+        else:
+            subtypes = []
+            for i in index:
+                subt = self.__args__[i]
+                subtypes.extend(subt if isinstance(i, slice) else [subt])
 
-        return Tuple[tuple(subtypes)]
+            return Tuple[tuple(subtypes)]
 
     def __str__(self):
         return '(%s)' % ', '.join([type_str(a) for a in self.args])
