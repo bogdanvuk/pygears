@@ -20,7 +20,7 @@ def type_cast(dtype, cast_type):
 
 
 @gear(gear_cls=Gear, sv_param_kwds=[])
-def cast(din, *, cast_type) -> 'cast({din})':
+def cast(din, *, cast_type) -> 'cast({din}, {cast_type})':
     pass
 
 

@@ -1,9 +1,11 @@
 from pygears.svgen.module_base import SVGenGearBase
 from pygears.typing.queue import Queue
 from pygears.svgen.inst import SVGenInstPlugin
+from pygears.common.czip import zip_sync, zip_cat
+from .syncguard import SVGenSyncGuard
 
 
-class SVGenCZip(SVGenGearBase):
+class SVGenCZipBase(SVGenGearBase):
     def get_sv_port_config(self, modport, type_, name):
         cfg = super().get_sv_port_config(modport, type_, name)
 
@@ -14,6 +16,8 @@ class SVGenCZip(SVGenGearBase):
 
         return cfg
 
+
+class SVGenZipCat(SVGenCZipBase):
     def get_module(self, template_env):
         intfs = list(self.sv_port_configs())
         queue_intfs = [
@@ -32,10 +36,41 @@ class SVGenCZip(SVGenGearBase):
             'intfs': list(self.sv_port_configs())
         }
 
-        return template_env.render_local(__file__, "czip.j2", context)
+        return template_env.render_local(__file__, "zip_cat.j2", context)
+
+
+class SVGenZipSyncBase(SVGenCZipBase):
+    def __init__(self, gear, parent):
+        super().__init__(gear, parent)
+
+        if 'outsync' not in self.params:
+            self.params['outsync'] = True
+
+        if self.params['outsync']:
+            SVGenSyncGuard(self, f'{self.sv_module_name}_syncguard',
+                           len(gear.in_ports))
+
+    def get_module(self, template_env, template_fn):
+
+        context = {
+            'outsync': self.params['outsync'],
+            'module_name': self.sv_module_name,
+            'intfs': list(self.sv_port_configs())
+        }
+
+        return template_env.render_local(__file__, template_fn, context)
+
+
+class SVGenZipSync(SVGenZipSyncBase):
+    def get_module(self, template_env):
+        if all(map(lambda i: i['lvl'] > 0, self.sv_port_configs())):
+            return super().get_module(template_env, 'zip_sync.j2')
+        else:
+            return super().get_module(template_env, 'zip_sync_simple.j2')
 
 
 class SVGenCZipPlugin(SVGenInstPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['SVGenModuleNamespace']['CZip'] = SVGenCZip
+        cls.registry['SVGenModuleNamespace'][zip_sync] = SVGenZipSync
+        cls.registry['SVGenModuleNamespace'][zip_cat] = SVGenZipCat

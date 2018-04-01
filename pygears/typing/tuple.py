@@ -1,5 +1,4 @@
 from .base import EnumerableGenericMeta, type_str, type_repr
-from .unit import Unit
 
 
 class TupleMeta(EnumerableGenericMeta):

@@ -4,7 +4,7 @@ from pygears.core.typing import TypingNamespacePlugin
 
 
 @gear(enablement='issubclass({din}, Tuple)')
-def flatten_tuple(din, *, lvl=1) -> 'flatten({din})':
+def flatten_tuple(din, *, lvl=1) -> 'flatten({din}, {lvl})':
     pass
 
 

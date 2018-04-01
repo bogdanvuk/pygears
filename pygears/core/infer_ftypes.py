@@ -1,6 +1,7 @@
 from .type_match import type_match, TypeMatchError
 from pygears.typing.base import param_subs, is_template
 from pygears.registry import registry
+import types
 
 
 def type_is_specified(t):
