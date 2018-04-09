@@ -337,7 +337,12 @@ def test_general():
 
     bind('SVGenFlow', [svgen_inst, svgen_connect])
     svtop = svgen()
+    # from pygears.util.print_hier import print_hier
+    # print_hier(svtop)
     print(svtop['zip_sync'].get_module(TemplateEnv()))
+    print(svtop['zip_sync/czip'].get_module(TemplateEnv()))
+    print(svtop['zip_sync/czip/cast_dout0'].get_module(TemplateEnv()))
+
     # assert equal_on_nonspace(svtop['zip_sync'].get_module(TemplateEnv()),
     #                          test_zip_sync_general_sv_ref)
 

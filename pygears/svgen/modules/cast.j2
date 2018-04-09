@@ -1,0 +1,7 @@
+{%- import 'snippet.j2' as snippet -%}
+
+{% call snippet.gear_module(module_name, intfs, comment) %}
+   assign dout.data  = {{ data_expr }};
+   assign dout.valid = din.valid;
+   assign din.ready  = dout.ready;
+{% endcall %}

@@ -16,7 +16,7 @@ def getitem(self, index):
         else:
             name_appendices.append(f'{i}')
 
-    return self | sieve(index=index, name='conv_' + '_'.join(name_appendices))
+    return self | sieve(index=index, name='sieve_' + '_'.join(name_appendices))
 
 
 class GetitemIntfOperPlugin(IntfOperPlugin):

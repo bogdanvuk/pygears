@@ -43,33 +43,6 @@ def isort(iterable, key=lambda x: x, reverse=False):
     return values, indices
 
 
-def get_din_spans_in_sorted_zip(sort_indices, dtypes):
-    """Calculates spans where the data of input interfaces ended up after
-zipping them in sorted order"""
-
-    channel_field_span = list(map(int, dtypes))
-
-    channel_field_start_sorted = [0]
-    channel_field_start = [None] * len(dtypes)
-    channel_field_start[sort_indices[0]] = 0
-    for i in range(1, len(dtypes)):
-        i_orig = sort_indices[i]
-        i_orig_prev = sort_indices[i - 1]
-        start = (
-            channel_field_start_sorted[-1] + channel_field_span[i_orig_prev])
-        channel_field_start_sorted.append(start)
-        channel_field_start[i_orig] = start
-
-    dtype_span = []
-    for i, (start, span) in enumerate(
-            zip(channel_field_start, channel_field_span)):
-
-        if span > 0:
-            dtype_span.append(slice(start, start + span))
-
-    return dtype_span
-
-
 @hier
 def czip_vararg(*din):
     # Sort input interfaces in descending order of their Queue levels, i.e. we
@@ -83,35 +56,17 @@ def czip_vararg(*din):
     ret_flat_type = zip_type([d.dtype for d in din_sorted_by_lvl])
     ret = reduce(czip, din_sorted_by_lvl) | ret_flat_type
 
-    # # Data of input interfaces (din) is now zipped inside interface "ret" in
-    # # sorted order. Calculate the tuple of slices for a Sieve that will
-    # # reshuffle the output data to appear in the order in which inputs are
-    # # supplied.
-    # dtypes = [data_if_queue(d.dtype) for d in din]
-    # print('Lvls:  ', [lvl_if_queue(d.dtype) for d in din])
-    # dtype_span = get_din_spans_in_sorted_zip(din_sort_indices, dtypes)
-
-    # # Add eot field also
-    # dtype_span.append(slice(int(out_type[0]), None))
-
-    # print(out_type)
-    # print(ret.dtype)
-    # print(dtype_span)
-
-    # # Apply sieve and cast to the output type (this will remove hierarchy of
-    # # Tuple's that arose by zipping in two's)
-    # return ret[tuple(dtype_span)] | out_type
-
     ret_tuple = ret | Tuple | flatten
 
-    print(din_sort_indices)
-    # Append eot field to reordering tuple
-    type_sort_indices = tuple(list(din_sort_indices) + [-1])
-    print(ret_tuple.dtype)
-    reordered = ret_tuple[type_sort_indices]
-    print(reordered.dtype)
-    print(out_type)
-    return reordered | out_type
+    # Data of input interfaces (din) is now zipped inside interface "ret" in
+    # sorted order. Calculate the tuple of indices for a Sieve that will
+    # reshuffle the output data to appear in the order in which inputs are
+    # supplied. Append eot field to reordering tuple
+    reshuffle_indices = [0] * len(din_sort_indices) + [-1]
+    for i, index in enumerate(din_sort_indices):
+        reshuffle_indices[index] = i
+
+    return ret_tuple[tuple(reshuffle_indices)] | out_type
 
 
 @hier(alternatives=[czip_vararg], enablement='len({din}) == 2')
