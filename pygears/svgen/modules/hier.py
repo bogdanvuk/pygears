@@ -1,6 +1,9 @@
 from pygears.svgen.module_base import SVGenGearBase, SVGenIntfBase
 from pygears.svgen.node_base import SVGenNodeBase
+from pygears.svgen.generate import svgen_generate
 from pygears.svgen.inst import SVGenInstPlugin
+from pygears.svgen.svgen import svgen_visitor
+from pygears.core.hier_node import HierVisitorBase
 
 
 class SVGenHier(SVGenGearBase):
@@ -46,7 +49,19 @@ class SVGenHier(SVGenGearBase):
         return template_env.render_local(__file__, "hier_module.j2", context)
 
 
+@svgen_visitor
+class RemoveEqualReprCastVisitor(HierVisitorBase):
+    def SVGenHier(self, svmod):
+        super().HierNode(svmod)
+
+        if all([isinstance(c, SVGenIntfBase) for c in svmod.child]):
+            svmod.bypass()
+
+
 class SVGenHierPlugin(SVGenInstPlugin):
     @classmethod
     def bind(cls):
         cls.registry['SVGenModuleNamespace']['Hier'] = SVGenHier
+        cls.registry['SVGenFlow'].insert(
+            cls.registry['SVGenFlow'].index(svgen_generate),
+            RemoveEqualReprCastVisitor)

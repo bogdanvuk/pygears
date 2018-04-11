@@ -1,6 +1,6 @@
 from nose import with_setup
 
-from pygears import Intf, Queue, Uint, clear, bind, Unit
+from pygears import Intf, Queue, Uint, clear, bind, Unit, registry
 from pygears.svgen import svgen_connect, svgen_inst, svgen
 from pygears.common.czip import zip_sync, zip_cat
 from pygears.svgen.generate import TemplateEnv
@@ -335,13 +335,15 @@ def test_general():
         Intf(Queue[Uint[4], 5]), Intf(Uint[1]), Intf(Queue[Uint[3], 3]),
         Intf(Queue[Unit, 1]))
 
-    bind('SVGenFlow', [svgen_inst, svgen_connect])
+    bind('SVGenFlow', registry('SVGenFlow')[:-1])
+    print(registry('SVGenFlow'))
+
     svtop = svgen()
     # from pygears.util.print_hier import print_hier
     # print_hier(svtop)
     print(svtop['zip_sync'].get_module(TemplateEnv()))
     print(svtop['zip_sync/czip'].get_module(TemplateEnv()))
-    print(svtop['zip_sync/czip/cast_dout0'].get_module(TemplateEnv()))
+    print(svtop['zip_sync/czip/sieve_0_3_1_2_4'].get_module(TemplateEnv()))
 
     # assert equal_on_nonspace(svtop['zip_sync'].get_module(TemplateEnv()),
     #                          test_zip_sync_general_sv_ref)

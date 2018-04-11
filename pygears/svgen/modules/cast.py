@@ -1,7 +1,8 @@
 from pygears.typing.uint import IntMeta, UintMeta
-from pygears.typing import Union, Tuple, Queue
+from pygears.typing import Queue
 from pygears.svgen.inst import SVGenInstPlugin
 from pygears.svgen.svgen import SVGenPlugin
+from pygears.svgen.connect import svgen_connect
 from pygears.svgen.module_base import SVGenGearBase
 from pygears.common import cast
 from pygears.core.hier_node import HierVisitorBase
@@ -54,9 +55,11 @@ class SVGenCast(SVGenGearBase):
 
 class RemoveEqualReprCastVisitor(HierVisitorBase):
     def SVGenCast(self, svmod):
-        super().HierNode(svmod)
-        if hasattr(svmod, 'connect'):
-            svmod.connect()
+        pout = svmod.out_ports[0]
+        pin = svmod.in_ports[0]
+
+        if int(pin.dtype) == int(pout.dtype):
+            svmod.bypass()
 
 
 def remove_equal_repr_casts(top, conf):
@@ -69,4 +72,6 @@ class SVGenSievePlugin(SVGenInstPlugin, SVGenPlugin):
     @classmethod
     def bind(cls):
         cls.registry['SVGenModuleNamespace'][cast] = SVGenCast
-        cls.registry['SVGenFlow'] = [svgen_inst, svgen_connect, svgen_generate]
+        cls.registry['SVGenFlow'].insert(
+            cls.registry['SVGenFlow'].index(svgen_connect) + 1,
+            remove_equal_repr_casts)

@@ -41,12 +41,28 @@ class SVGenNodeBase(NamedHierNode):
         self.in_ports = in_ports.copy()
         self.out_ports = out_ports.copy()
 
-    def remove(self):
-        for i, p in enumerate(self.in_ports()):
-            p['intf'].consumers.remove((self, i))
+    def bypass(self):
+        if not (len(self.in_ports) == 1 and len(self.out_ports) == 1):
+            raise Exception(
+                'Can only bypass single input, single output modules')
 
-        for p in self.out_ports():
-            p['intf'].producer = None
+        iin = self.in_ports[0].producer
+        iout = self.out_ports[0].consumer
+        self.remove()
+
+        for port in iout.consumers:
+            iout.disconnect(port)
+            iin.connect(port)
+
+    def remove(self):
+        for p in self.in_ports:
+            p.producer.disconnect(p)
+
+        for p in self.out_ports:
+            p.consumer.producer = None
+
+        # for p in self.out_ports:
+        #     p['intf'].producer = None
 
         super().remove()
 

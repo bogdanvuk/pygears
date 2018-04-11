@@ -53,6 +53,18 @@ class SVGenIntfBase(NamedHierNode):
         else:
             return self.basename
 
+    def disconnect(self, port):
+        if port in self.consumers:
+            self.consumers.remove(port)
+            port.producer = None
+        elif port == self.producer:
+            port.consumer = None
+            self.producer = None
+
+    def connect(self, port):
+        self.consumers.append(port)
+        port.producer = self
+
     def get_inst(self, template_env):
         if self.producer is None:
             return
