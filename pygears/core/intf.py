@@ -33,8 +33,12 @@ class Intf:
         port.consumer = self
 
     def disconnect(self, port):
-        self.consumers.remove(port)
-        port.producer = None
+        if port in self.consumers:
+            self.consumers.remove(port)
+            port.producer = None
+        elif port == self.producer:
+            port.consumer = None
+            self.producer = None
 
     def connect(self, port):
         self.consumers.append(port)

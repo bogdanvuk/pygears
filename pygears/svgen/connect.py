@@ -8,7 +8,15 @@ class SVGenConnectVisitor(HierVisitorBase):
             svmod.connect()
 
 
+# class SVGenPortFreezeVisitor(HierVisitorBase):
+#     def SVGenNodeBase(self, svmod):
+#         super().HierNode(svmod)
+#         svmod.in_ports = 
+
+
 def svgen_connect(top, conf):
     v = SVGenConnectVisitor()
     v.visit(top)
+    # f = SVGenPortFreezeVisitor()
+    # f.visit(top)
     return top

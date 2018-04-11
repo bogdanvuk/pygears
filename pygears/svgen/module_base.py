@@ -1,15 +1,34 @@
 from pygears import registry
-from pygears.core.port import InPort
 from pygears.svgen.intf_base import SVGenIntfBase
 from pygears.svgen.node_base import SVGenDefaultNode
+from pygears.svgen.port import InPort, OutPort
 import itertools
+
+
+def reconnect_port(gear_port, port):
+    iin = gear_port.producer
+    iout = gear_port.consumer
+
+    if iin:
+        iin.disconnect(gear_port)
+        iin.connect(port)
+
+    if iout:
+        iout.disconnect(gear_port)
+        iout.source(port)
 
 
 class SVGenGearBase(SVGenDefaultNode):
     def __init__(self, gear, parent):
-        super().__init__(parent, gear.basename, gear.in_ports, gear.out_ports)
-        for p in itertools.chain(self.in_ports, self.out_ports):
-            p.gear = self
+        in_ports = [InPort(self, p) for p in gear.in_ports]
+        out_ports = [OutPort(self, p) for p in gear.out_ports]
+
+        for gear_port, port in zip(
+                itertools.chain(gear.in_ports, gear.out_ports),
+                itertools.chain(in_ports, out_ports)):
+            reconnect_port(gear_port, port)
+
+        super().__init__(parent, gear.basename, in_ports, out_ports)
 
         self.gear = gear
         self.params = gear.params
@@ -21,18 +40,6 @@ class SVGenGearBase(SVGenDefaultNode):
             intf_inst = SVGenIntfModuleBase(intf, port, parent=domain)
             self.svgen_map[intf] = intf_inst
             port.consumer = intf_inst
-
-            # producer_port = intf.producer
-            # # If interface has a producer port, wire its svgen counterpart to
-            # # intf_inst
-            # if producer_port is not None:
-            #     svmod = producer_port.gear
-            #     if isinstance(producer_port, InPort):
-            #         port_group = svmod.in_ports
-            #     else:
-            #         port_group = svmod.out_ports
-
-            #     port_group[producer_port.index].consumer = intf_inst
 
     def connect(self):
         self.svgen_map = registry('SVGenMap')
@@ -47,7 +54,7 @@ class SVGenIntfModuleBase(SVGenIntfBase):
     def __init__(self, intf, port, parent):
         consumers = []
         for cons_port in intf.consumers:
-            svmod = cons_port.gear
+            svmod = cons_port.svmod
             if isinstance(cons_port, InPort):
                 port_group = svmod.in_ports
             else:
@@ -58,10 +65,7 @@ class SVGenIntfModuleBase(SVGenIntfBase):
             svgen_port.producer = self
 
         super().__init__(
-            parent,
-            type_=intf.dtype,
-            producer=port,
-            consumers=consumers)
+            parent, type_=intf.dtype, producer=port, consumers=consumers)
         self.intf = intf
 
     @property
