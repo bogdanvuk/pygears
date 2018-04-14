@@ -2,11 +2,16 @@
 
 {% call snippet.gear_module(module_name, intfs, comment) %}
 
-  {% if indexes %}
-	{% for stage in indexes %}
-	  {% set concat = snippet.concat(stage|reverse|format_list("din.data[%s]")) %}
-	  {%- if loop.last %}
+  {% if stages %}
+    {% set ns = namespace(prev_name = "din.data") %}
+	  {% for i, (slices, dtype) in enumerate(stages) %}
+	    {% set concat = snippet.concat(slices|reverse|format_list(ns.prev_name + "[%s]")) %}
+	    {%- if loop.last %}
    assign dout.data = {{ concat }};
+      {% else %}
+   logic [{{int(dtype)-1}}:0] stage{{i}}_data;
+   assign stage{{i}}_data = {{ concat }};
+        {% set ns.prev_name = "stage{}_data".format(i) %}
       {% endif %}
     {% endfor %}
   {% else %}

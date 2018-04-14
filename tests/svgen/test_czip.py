@@ -4,7 +4,7 @@ from pygears import Intf, Queue, Uint, clear, bind, Unit, registry
 from pygears.svgen import svgen_connect, svgen_inst, svgen
 from pygears.common.czip import zip_sync, zip_cat
 from pygears.svgen.generate import TemplateEnv
-# from . import equal_on_nonspace
+from . import equal_on_nonspace
 
 test_two_inputs_no_outsync_ref = """
 module zip_sync
@@ -57,10 +57,10 @@ module zip_sync
 
     assign dout0.valid = out_valid;
     assign dout0.data = din0_s;
-    assign din0.ready = dout0.dready || !din0_eot_aligned;
+    assign din0.ready = out_valid && (dout0.ready || !din0_eot_aligned);
     assign dout1.valid = out_valid;
     assign dout1.data = din1_s;
-    assign din1.ready = dout1.dready || !din1_eot_aligned;
+    assign din1.ready = out_valid && (dout1.ready || !din1_eot_aligned);
 
 
 
@@ -219,10 +219,10 @@ module zip_sync
 
     assign dout0_if.valid = out_valid;
     assign dout0_if.data = din0_s;
-    assign din0.ready = dout0_if.dready || !din0_eot_aligned;
+    assign din0.ready = out_valid && (dout0_if.ready || !din0_eot_aligned);
     assign dout1_if.valid = out_valid;
     assign dout1_if.data = din1_s;
-    assign din1.ready = dout1_if.dready || !din1_eot_aligned;
+    assign din1.ready = out_valid && (dout1_if.ready || !din1_eot_aligned);
 
 
     zip_sync_syncguard syncguard (
@@ -329,25 +329,25 @@ def test_zip_cat():
                              test_zip_cat_ref)
 
 
-@with_setup(clear)
-def test_general():
-    zip_sync(
-        Intf(Queue[Uint[4], 5]), Intf(Uint[1]), Intf(Queue[Uint[3], 3]),
-        Intf(Queue[Unit, 1]))
+# @with_setup(clear)
+# def test_general():
+#     zip_sync(
+#         Intf(Queue[Uint[4], 5]), Intf(Uint[1]), Intf(Queue[Uint[3], 3]),
+#         Intf(Queue[Unit, 1]))
 
-    bind('SVGenFlow', registry('SVGenFlow')[:-1])
+#     bind('SVGenFlow', registry('SVGenFlow')[:-1])
 
-    svtop = svgen()
-    # from pygears.util.print_hier import print_hier
-    # print_hier(svtop)
-    print(svtop['zip_sync'].get_module(TemplateEnv()))
-    print(svtop['zip_sync/sieve_3'].get_module(TemplateEnv()))
-    # print(svtop['zip_sync/czip'].get_module(TemplateEnv()))
-    # print(svtop['zip_sync/czip/sieve_0_3_1_2_4'].get_module(TemplateEnv()))
+#     svtop = svgen()
+#     # from pygears.util.print_hier import print_hier
+#     # print_hier(svtop)
+#     print(svtop['zip_sync'].get_module(TemplateEnv()))
+#     # print(svtop['zip_sync/sieve_2'].get_module(TemplateEnv()))
+#     # print(svtop['zip_sync/czip'].get_module(TemplateEnv()))
+#     # print(svtop['zip_sync/czip/sieve_0_3_1_2_4'].get_module(TemplateEnv()))
 
-    # assert equal_on_nonspace(svtop['zip_sync'].get_module(TemplateEnv()),
-    #                          test_zip_sync_general_sv_ref)
+#     # assert equal_on_nonspace(svtop['zip_sync'].get_module(TemplateEnv()),
+#     #                          test_zip_sync_general_sv_ref)
 
 
-bind('ErrReportLevel', 0)
-test_general()
+# bind('ErrReportLevel', 0)
+# test_general()

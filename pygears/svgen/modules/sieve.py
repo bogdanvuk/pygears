@@ -31,24 +31,25 @@ class SVGenSieve(SVGenGearBase):
         self.pre_sieves = []
 
     def get_module(self, template_env):
-
-        def get_indexes():
+        def get_stages():
             for s in itertools.chain(self.pre_sieves, [self]):
                 indexes = s.params['index']
                 dtype = s.in_ports[0].dtype
-                print(s.name)
-                print(dtype)
-                print(indexes)
-                yield list(map(
-                    partial(index_to_sv_slice, dtype),
-                    filter(lambda i: int(dtype[i]) > 0, indexes)))
+                out_type = s.out_ports[0].dtype
+                slices = list(
+                    map(
+                        partial(index_to_sv_slice, dtype),
+                        filter(lambda i: int(dtype[i]) > 0, indexes)))
+                yield slices, out_type
 
-        indexes = list(get_indexes())
-        if any(i == [] for i in indexes):
-            indexes = []
+        stages = list(get_stages())
+        # If any of the sieves has shrunk data to 0 width, there is nothing to
+        # do
+        if any(i[0] == [] for i in stages):
+            stages = []
 
         context = {
-            'indexes': indexes,
+            'stages': stages,
             'module_name': self.sv_module_name,
             'intfs': list(self.sv_port_configs())
         }

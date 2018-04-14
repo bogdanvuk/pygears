@@ -80,12 +80,13 @@ def zip_sync_vararg(*din):
 
     def split():
         for i, d in enumerate(din):
+            data = zdata[i]
             if issubclass(d.dtype, Queue):
                 yield ccat(
-                    zdata[i],
-                    zlast[:d.dtype.lvl]) | Queue[zdata[i].dtype, d.dtype.lvl]
+                    data,
+                    zlast[:d.dtype.lvl]) | Queue[data.dtype, d.dtype.lvl]
             else:
-                yield zdata[i]
+                yield data
 
     return tuple(split())
 

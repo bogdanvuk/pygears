@@ -7,7 +7,7 @@ from pygears.svgen.generate import TemplateEnv
 from . import equal_on_nonspace
 
 test_uint_ref = """
-module conv_0v2_7_8v10
+module sieve_0v2_7_8v10
 (
     input clk,
     input rst,
@@ -15,7 +15,7 @@ module conv_0v2_7_8v10
     dti.producer dout // u5 (5)
 
 );
-   assign dout.data = {din.data[9:8], din.data[7], din.data[1:0]};
+   assign dout.data = {din.data[9:8], din.data[7:7], din.data[1:0]};
    assign dout.valid = din.valid;
    assign din.ready  = dout.ready;
 
@@ -31,12 +31,13 @@ def test_uint():
 
     bind('SVGenFlow', [svgen_inst, svgen_connect])
     svtop = svgen()
-    assert equal_on_nonspace(svtop['conv_0v2_7_8v10'].get_module(
+
+    assert equal_on_nonspace(svtop['sieve_0v2_7_8v10'].get_module(
         TemplateEnv()), test_uint_ref)
 
 
 test_queue_ref = """
-module conv_0v2_3_5v7
+module sieve_0v2_3_5v7
 (
     input clk,
     input rst,
@@ -44,7 +45,7 @@ module conv_0v2_3_5v7
     dti.producer dout // [u2]^4 (6)
 
 );
-   assign dout.data = {din.data[6:5], din.data[3], din.data[1:0]};
+   assign dout.data = {din.data[7:6], din.data[4:4], din.data[2:0]};
    assign dout.valid = din.valid;
    assign din.ready  = dout.ready;
 
@@ -60,5 +61,6 @@ def test_queue():
 
     bind('SVGenFlow', [svgen_inst, svgen_connect])
     svtop = svgen()
-    assert equal_on_nonspace(svtop['conv_0v2_3_5v7'].get_module(
+
+    assert equal_on_nonspace(svtop['sieve_0v2_3_5v7'].get_module(
         TemplateEnv()), test_queue_ref)
