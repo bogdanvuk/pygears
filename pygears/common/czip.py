@@ -1,6 +1,7 @@
 from pygears import Queue, Tuple, Uint
 from pygears.core.gear import gear, hier
 from pygears.common import flatten
+from pygears.common.ccat import ccat
 from functools import reduce
 
 
@@ -20,9 +21,6 @@ def data_if_queue(t):
 
 def zip_type(dtypes):
     arg_queue_lvl = list(map(lvl_if_queue, dtypes))
-
-    # base_type = Tuple[tuple(dtype if lvl == 0 else dtype[0]
-    #                         for dtype, lvl in zip(dtypes, arg_queue_lvl))]
     base_type = Tuple[tuple(map(data_if_queue, dtypes))]
 
     # If there are no Queues, i.e. max(arg_queue_lvl) == 0, the type below
@@ -76,7 +74,20 @@ def czip(*din) -> zip_type:
 
 @hier
 def zip_sync_vararg(*din):
-    return din | czip
+    zipped = din | czip
+    zdata = zipped[0]
+    zlast = zipped[1:]
+
+    def split():
+        for i, d in enumerate(din):
+            if issubclass(d.dtype, Queue):
+                yield ccat(
+                    zdata[i],
+                    zlast[:d.dtype.lvl]) | Queue[zdata[i].dtype, d.dtype.lvl]
+            else:
+                yield zdata[i]
+
+    return tuple(split())
 
 
 @gear(alternatives=[zip_sync_vararg], enablement='len({din}) == 2')

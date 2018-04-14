@@ -53,10 +53,12 @@ class SVGenNodeBase(NamedHierNode):
         for port in iout.consumers:
             iout.disconnect(port)
             iin.connect(port)
+            iout.remove()
 
     def remove(self):
         for p in self.in_ports:
-            p.producer.disconnect(p)
+            if p.producer is not None:
+                p.producer.disconnect(p)
 
         for p in self.out_ports:
             p.consumer.producer = None
@@ -96,8 +98,9 @@ class SVGenNodeBase(NamedHierNode):
     @property
     def consumers(self):
         consumers = []
-        for i in self.out_ports():
-            consumers.extend(i['intf'].consumers)
+        for p in self.out_ports:
+            iout = p.consumer
+            consumers.extend(iout.consumers)
 
         return consumers
 

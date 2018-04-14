@@ -41,6 +41,9 @@
 {% endmacro %}
 
 {% macro intf_inst(name, width, size, type) -%}
+  {% if width == 0 %}
+	{% set width = 1 %}
+  {% endif %}
   dti #(.W_DATA({{width}})) {{name}}{{ "[%d:0]"|format(size-1) if size>1 }}(); // {{type}} ({{width}})
 {%- endmacro %}
 

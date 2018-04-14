@@ -1,7 +1,7 @@
 from pygears.typing.uint import IntMeta, UintMeta
 from pygears.typing import Queue
 from pygears.svgen.inst import SVGenInstPlugin
-from pygears.svgen.svgen import SVGenPlugin
+from pygears.svgen.svgen import SVGenPlugin, svgen_visitor
 from pygears.svgen.connect import svgen_connect
 from pygears.svgen.module_base import SVGenGearBase
 from pygears.common import cast
@@ -53,6 +53,7 @@ class SVGenCast(SVGenGearBase):
         return template_env.render_local(__file__, "cast.j2", context)
 
 
+@svgen_visitor
 class RemoveEqualReprCastVisitor(HierVisitorBase):
     def SVGenCast(self, svmod):
         pout = svmod.out_ports[0]
@@ -62,16 +63,10 @@ class RemoveEqualReprCastVisitor(HierVisitorBase):
             svmod.bypass()
 
 
-def remove_equal_repr_casts(top, conf):
-    v = RemoveEqualReprCastVisitor()
-    v.visit(top)
-    return top
-
-
 class SVGenSievePlugin(SVGenInstPlugin, SVGenPlugin):
     @classmethod
     def bind(cls):
         cls.registry['SVGenModuleNamespace'][cast] = SVGenCast
         cls.registry['SVGenFlow'].insert(
             cls.registry['SVGenFlow'].index(svgen_connect) + 1,
-            remove_equal_repr_casts)
+            RemoveEqualReprCastVisitor)

@@ -1,7 +1,18 @@
 {%- import 'snippet.j2' as snippet -%}
 
 {% call snippet.gear_module(module_name, intfs, comment) %}
-   assign dout.data = {{ snippet.concat(indexes|reverse|format_list("din.data[%s]")) }};
+
+  {% if indexes %}
+	{% for stage in indexes %}
+	  {% set concat = snippet.concat(stage|reverse|format_list("din.data[%s]")) %}
+	  {%- if loop.last %}
+   assign dout.data = {{ concat }};
+      {% endif %}
+    {% endfor %}
+  {% else %}
+   assign dout.data = 0;
+  {% endif %}
+
    assign dout.valid = din.valid;
    assign din.ready  = dout.ready;
 {% endcall %}
