@@ -1,0 +1,19 @@
+{%- import 'snippet.j2' as snippet -%}
+
+{% call snippet.gear_module(module_name, intfs, comment) %}
+
+  {%- set input_intf_names = intfs|isinput|keymap("name") %}
+
+    logic  all_valid;
+    logic  handshake;
+    assign all_valid = {{input_intf_names|format_list("%s.valid")|join(" && ")}};
+    assign handshake = dout.valid & dout.ready;
+
+    assign dout.valid = all_valid;
+    assign dout.data = { {{input_intf_names|reverse|format_list("%s.data")|join(", ")}} };
+
+  {% for i in input_intf_names %}
+    assign {{i}}.ready = handshake;
+  {% endfor %}
+
+{% endcall %}

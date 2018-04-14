@@ -34,9 +34,6 @@ def infer_ftypes(ftypes, args, namespace={}, params={}):
         for p, v in match.items():
             if is_template(v):
                 unresolved = True
-                if (v == 'len({din}) == 2'):
-                    unresolved = True
-
                 new_p = param_subs(v, match, {})
                 if (not isinstance(new_p, str)) or new_p != match[p]:
                     match[p] = new_p
