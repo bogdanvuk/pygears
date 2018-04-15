@@ -218,9 +218,9 @@ def param_subs(t, matches, namespace):
             try:
                 return eval(param_str, namespace, matches)
             except Exception as e:
-                return param_str
-                # raise Exception(
-                #     f"{str(e)}\n - while evaluating parameter string '{param_str}'")
+                # return param_str
+                raise Exception(
+                    f"{str(e)}\n - while evaluating parameter string '{param_str}'")
 
     elif isinstance(t, collections.Iterable):
         return type(t)(param_subs(tt, matches, namespace) for tt in t)

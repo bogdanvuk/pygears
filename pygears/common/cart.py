@@ -9,23 +9,15 @@ def lvl_if_queue(t):
         return t.lvl
 
 
-def calc_cart_type(args):
-    arg_queue_lvl = [lvl_if_queue(a.dtype) for a in args]
+def cart_type(dtypes):
+    arg_queue_lvl = [lvl_if_queue(d) for d in dtypes]
 
-    base_type = Tuple[tuple(t.dtype if lvl == 0 else t.dtype[0]
-                            for t, lvl in zip(args, arg_queue_lvl))]
+    base_type = Tuple[tuple(d if lvl == 0 else d[0]
+                            for d, lvl in zip(dtypes, arg_queue_lvl))]
 
     # If there are no Queues, i.e. sum(arg_queue_lvl) == 0, the type below
     # will resolve to just base_type
     return Queue[base_type, sum(arg_queue_lvl)]
-
-
-class Cart(Gear):
-    def infer_params_and_ftypes(self):
-        ftypes, params = super().infer_params_and_ftypes()
-        ftypes[-1] = calc_cart_type(self.args)
-
-        return ftypes, params
 
 
 @hier
@@ -34,9 +26,42 @@ def cart_vararg(*din):
     for d in din[2:]:
         ret = cart(ret, d)
 
-    return ret | calc_cart_type(din)
+    return ret | cart_type([d.dtype for d in din])
 
 
-@gear(gear_cls=Cart, alternatives=[cart_vararg], enablement='len({din}) == 2')
-def cart(*din):
+@gear
+def cart_cat(*din) -> 'cart_type({din})':
+    pass
+
+
+@hier(alternatives=[cart_vararg], enablement='len({din}) == 2')
+def cart(*din) -> 'cart_type({din})':
+    return din | cart_sync(outsync=False) | cart_cat
+
+
+@hier
+def uncart(din, *, dtypes):
+    zdata = din[0]
+    zlast = din[1:]
+
+    print(din.dtype)
+    print(dtypes)
+    def split():
+        for i, d in enumerate(dtypes):
+            data = zdata[i]
+            if issubclass(d, Queue):
+                yield ccat(data, zlast[:d.lvl]) | Queue[data.dtype, d.lvl]
+            else:
+                yield data
+
+    return tuple(split())
+
+
+@hier
+def cart_sync_vararg(*din):
+    return din | cart | uncart(dtypes=[d.dtype for d in din])
+
+
+@gear(alternatives=[cart_sync_vararg], enablement='len({din}) == 2')
+def cart_sync(*din) -> '{din}':
     pass

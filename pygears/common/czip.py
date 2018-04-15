@@ -73,22 +73,25 @@ def czip(*din) -> zip_type:
 
 
 @hier
-def zip_sync_vararg(*din):
-    zipped = din | czip
-    zdata = zipped[0]
-    zlast = zipped[1:]
+def unzip(din, *, dtypes):
+    zdata = din[0]
+    zlast = din[1:]
 
     def split():
-        for i, d in enumerate(din):
+        for i, d in enumerate(dtypes):
             data = zdata[i]
-            if issubclass(d.dtype, Queue):
+            if issubclass(d, Queue):
                 yield ccat(
-                    data,
-                    zlast[:d.dtype.lvl]) | Queue[data.dtype, d.dtype.lvl]
+                    data, zlast[:d.lvl]) | Queue[data.dtype, d.lvl]
             else:
                 yield data
 
     return tuple(split())
+
+
+@hier
+def zip_sync_vararg(*din):
+    return din | czip | unzip(dtypes=[d.dtype for d in din])
 
 
 @gear(alternatives=[zip_sync_vararg], enablement='len({din}) == 2')

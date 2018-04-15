@@ -341,6 +341,7 @@ def test_zip_cat():
 #     # from pygears.util.print_hier import print_hier
 #     # print_hier(svtop)
 #     print(svtop['zip_sync'].get_module(TemplateEnv()))
+#     print(svtop['zip_sync/unzip'].get_module(TemplateEnv()))
 #     # print(svtop['zip_sync/sieve_2'].get_module(TemplateEnv()))
 #     # print(svtop['zip_sync/czip'].get_module(TemplateEnv()))
 #     # print(svtop['zip_sync/czip/sieve_0_3_1_2_4'].get_module(TemplateEnv()))

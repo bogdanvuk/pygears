@@ -87,8 +87,8 @@ class CollapseSievesVisitor(HierVisitorBase):
             for cons_pin in iout.consumers.copy():
                 consumer = cons_pin.svmod
                 if isinstance(consumer, SVGenSieve):
-                    print(f'Merging {svmod.name} to {consumer.name}')
-                    print(consumer.params['index'])
+                    # print(f'Merging {svmod.name} to {consumer.name}')
+                    # print(consumer.params['index'])
                     # If the consumer is a Sieve, just register this Sieve with
                     # it, and short circuit this one
                     consumer.pre_sieves = svmod.pre_sieves + [svmod]
