@@ -34,7 +34,7 @@ def infer_ftypes(ftypes, args, namespace={}, params={}):
         for p, v in match.items():
             if is_template(v):
                 unresolved = True
-                new_p = param_subs(v, match, {})
+                new_p = param_subs(v, match, namespace)
                 if (not isinstance(new_p, str)) or new_p != match[p]:
                     match[p] = new_p
                     substituted = True

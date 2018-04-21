@@ -1,12 +1,16 @@
-from .util import doublewrap
-from .hier_node import NamedHierNode
-from .infer_ftypes import infer_ftypes, TypeMatchError
-from .intf import Intf
-from pygears.registry import registry, PluginBase, bind
-from .partial import Definition
-from .port import InPort, OutPort
+import copy
 import inspect
 from functools import wraps
+
+from pygears.registry import PluginBase, bind, registry
+
+from .hier_node import NamedHierNode
+from .infer_ftypes import TypeMatchError, infer_ftypes
+from .intf import Intf
+from .partial import Definition
+from .port import InPort, OutPort
+from .util import doublewrap
+from .type_match import type_match, TypeMatchError
 
 
 def clear():
@@ -18,12 +22,20 @@ class TooManyArguments(Exception):
     pass
 
 
-class ModuleTypeNotSpecified(Exception):
+class GearTypeNotSpecified(Exception):
     pass
 
 
-class ModuleArgsNotSpecified(Exception):
+class GearArgsNotSpecified(Exception):
     pass
+
+
+class GearMatchError(Exception):
+    def __init__(self, errors):
+        self.errors = errors
+
+    def __str__(self):
+        return str(self.errors)
 
 
 class GearBase(NamedHierNode):
@@ -48,7 +60,7 @@ class GearBase(NamedHierNode):
                 raise TypeMatchError('Enablement condition failed')
 
             return gear.resolve()
-        except TypeMatchError as e:
+        except (TypeMatchError, GearTypeNotSpecified) as e:
             gear.remove()
             errors.append(e)
             if not alternatives:
@@ -58,9 +70,9 @@ class GearBase(NamedHierNode):
             try:
                 return cls(*args, name=name, **kwds)
             except TypeMatchError as e:
-                pass
+                errors.append(e)
         else:
-            raise errors[0]
+            raise GearMatchError(errors)
 
     def __init__(self, func, *args, name=None, intfs=[], outnames=[], **kwds):
         super().__init__(name, registry('CurrentHier'))
@@ -84,11 +96,6 @@ class GearBase(NamedHierNode):
         self.params = argspec.kwonlydefaults
         if self.params is None:
             self.params = {}
-
-        # Add defaults from GearMetaParams registry
-        for k, v in registry('GearMetaParams').items():
-            if k not in self.params:
-                self.params[k] = v
 
         self.params.update(kwds)
 
@@ -114,18 +121,22 @@ class GearBase(NamedHierNode):
 
         for i, a in enumerate(self.args):
             if not self._type_is_specified(a.dtype):
-                raise ModuleArgsNotSpecified(
+                raise GearArgsNotSpecified(
                     f"Input arg {i} for module {self.name} has"
                     f" unresolved type {repr(a)}")
 
             try:
                 a.connect(self.in_ports[i])
             except AttributeError:
-                raise ModuleArgsNotSpecified(
+                raise GearArgsNotSpecified(
                     f"Input arg {i} for module {self.name} was not"
                     f" resolved to interface, instead {repr(a)} received")
 
         self.infered_dtypes, self.params = self.infer_params_and_ftypes()
+
+        arg_types = [i.dtype for i in self.args]
+        for a, t in zip(arg_types, self.infered_dtypes):
+            type_match(a, t, self.params, allow_incomplete=False)
 
     def _handle_return_annot(self):
         if "return" in self.annotations:
@@ -169,10 +180,10 @@ class GearBase(NamedHierNode):
                 pass
 
         for p in self.out_ports:
-            p.producer.disconnect(p)
+            if p.producer is not None:
+                p.producer.disconnect(p)
 
         super().remove()
-
 
     @property
     def definition(self):
@@ -250,7 +261,7 @@ class GearBase(NamedHierNode):
             intf.source(port)
 
         if not self.is_specified():
-            raise ModuleTypeNotSpecified(
+            raise GearTypeNotSpecified(
                 f"Output type of the module {self.name}"
                 f" could not be resolved, and resulted in {repr(out_dtype)}")
 
@@ -293,10 +304,31 @@ class Hier(GearBase):
 def func_module(cls, func, **meta_kwds):
     @wraps(func)
     def wrapper(*args, **kwds):
-        meta_kwds['definition'] = wrapper.definition
+        wrapper.meta_kwds['definition'] = wrapper.definition
         return cls(func, meta_kwds, *args, **kwds)
 
+    # Add defaults from GearMetaParams registry
+    for k, v in registry('GearMetaParams').items():
+        if k not in meta_kwds:
+            meta_kwds[k] = copy.copy(v)
+
+    wrapper.meta_kwds = meta_kwds
     return wrapper
+
+
+def alternative(*base_gear_defs):
+    def gear_decorator(gear_def):
+        for d in base_gear_defs:
+            d.func.meta_kwds['alternatives'].append(gear_def)
+        return gear_def
+
+    return gear_decorator
+
+
+# @doublewrap
+# def alternative(gear_def, *args, **kwds):
+#     gear_def.func.meta_kwds['alternatives'].extend(args)
+#     return gear_def
 
 
 @doublewrap

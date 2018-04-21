@@ -6,7 +6,7 @@ from pygears.core.err import pygears_excepthook, ErrReportLevel
 from pygears.core.typing import (Array, Bool, Int, Queue, Tuple, Uint, Union,
                                  Unit, bitw, typeof)
 from pygears.registry import PluginBase, bind, registry
-from pygears.core.gear import gear, clear, hier
+from pygears.core.gear import gear, clear, hier, alternative
 from pygears.core.intf import Intf
 
 import pygears.common

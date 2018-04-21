@@ -62,8 +62,7 @@ def test_two_queue_inputs():
     bind('SVGenFlow', registry('SVGenFlow')[:-1])
 
     svtop = svgen()
-    print(svtop['cart'].get_module(TemplateEnv()))
-    assert equal_on_nonspace(svtop['car'].get_module(TemplateEnv()),
+    assert equal_on_nonspace(svtop['cart'].get_module(TemplateEnv()),
                              test_two_queue_inputs_ref)
 
 
@@ -123,8 +122,7 @@ def test_two_inputs_first_queue():
     bind('SVGenFlow', registry('SVGenFlow')[:-1])
 
     svtop = svgen()
-    print(svtop['cart'].get_module(TemplateEnv()))
-    assert equal_on_nonspace(svtop['car'].get_module(TemplateEnv()),
+    assert equal_on_nonspace(svtop['cart'].get_module(TemplateEnv()),
                              test_two_inputs_first_queue_ref)
 
 
@@ -184,8 +182,7 @@ def test_two_inputs_second_queue():
     bind('SVGenFlow', registry('SVGenFlow')[:-1])
 
     svtop = svgen()
-    print(svtop['cart'].get_module(TemplateEnv()))
-    assert equal_on_nonspace(svtop['car'].get_module(TemplateEnv()),
+    assert equal_on_nonspace(svtop['cart'].get_module(TemplateEnv()),
                              test_two_inputs_second_queue_ref)
 
 

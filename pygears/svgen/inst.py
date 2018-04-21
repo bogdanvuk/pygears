@@ -29,7 +29,7 @@ class SVGenInstVisitor(HierVisitorBase):
         self.cur_hier = self.design
 
     def instantiate(self, module):
-        svgen_cls = module.params['svgen']
+        svgen_cls = module.params.get('svgen', None)
 
         if svgen_cls is None:
             svgen_cls = self.namespace.get(module.definition, None)
@@ -74,5 +74,5 @@ class SVGenInstPlugin(HierRootPlugin):
     @classmethod
     def bind(cls):
         cls.registry['SVGenModuleNamespace'] = {}
-        cls.registry['GearMetaParams']['svgen'] = None
+        # cls.registry['GearMetaParams']['svgen'] = None
         cls.registry['SVGenMap'] = {}
