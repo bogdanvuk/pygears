@@ -1,9 +1,10 @@
 from pygears.svgen.module_base import SVGenGearBase
 from pygears.typing.queue import Queue
 from pygears.svgen.inst import SVGenInstPlugin
+from pygears.common.cart import cart
 
 
-class SVGenCart(SVGenGearBase):
+class SVGenCartBase(SVGenGearBase):
     def get_sv_port_config(self, modport, type_, name):
         cfg = super().get_sv_port_config(modport, type_, name)
 
@@ -16,6 +17,8 @@ class SVGenCart(SVGenGearBase):
 
         return cfg
 
+
+class SVGenCart(SVGenCartBase):
     def get_module(self, template_env):
         intfs = list(self.sv_port_configs())
         queue_intfs = [
@@ -40,4 +43,4 @@ class SVGenCart(SVGenGearBase):
 class SVGenCartPlugin(SVGenInstPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['SVGenModuleNamespace']['Cart'] = SVGenCart
+        cls.registry['SVGenModuleNamespace'][cart] = SVGenCart

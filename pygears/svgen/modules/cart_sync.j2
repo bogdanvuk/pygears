@@ -1,6 +1,6 @@
 {%- import 'snippet.j2' as snippet -%}
 
-{% call snippet.module_with_intf_structs(module_name, intfs, intfs|isinput, comment) %}
+{% call snippet.module_with_intf_structs(module_name, intfs, intfs|isinput|last, comment) %}
 
   {%- set input_intf_names = intfs|isinput|keymap("name") %}
   {%- set min_lvl = intfs|isinput|keymap("lvl")|min %}
@@ -32,17 +32,16 @@
 
   {# Main zip functionality that determines which of the inputs is ahead in
   Queue structure, i.e. aligned. #}
-    assign din0_eot_aligned = din0_eot_overlap >= din1_eot_overlap;
-    assign din1_eot_aligned = din1_eot_overlap >= din0_eot_overlap;
+    assign din0_eot_aligned = 1;
+    assign din1_eot_aligned = 1;
 
     assign all_valid   = {{input_intf_names|format_list("%s.valid")|join(" && ")}};
     assign all_aligned = din0_eot_aligned && din1_eot_aligned;
-    assign out_valid   = all_valid & all_aligned;
 
   {# Connect internal signals to either output interfaces or sync-guard input interfaces. #}
   {% for din, dout in zip(input_intf_names, out_intf_names) %}
-    assign {{dout}}.valid = out_valid;
-    assign {{dout}}.data = {{din}}_s;
+    assign {{dout}}.valid = all_valid;
+    assign {{dout}}.data = {{din}}.data;
     assign {{din}}.ready = out_valid && ({{dout}}.ready || !{{din}}_eot_aligned);
   {% endfor %}
 

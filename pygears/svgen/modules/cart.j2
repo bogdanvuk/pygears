@@ -1,20 +1,20 @@
 {%- import 'snippet.j2' as snippet -%}
 
-{% call snippet.module_with_intf_structs(module_name, intfs) %}
+{% call snippet.module_with_intf_structs(module_name, intfs, intfs, comment) %}
 
   {%- set queue_intf_names = queue_intfs|keymap("name") %}
   {%- set data_intf_names = data_intfs|keymap("name") %}
   {%- set input_intf_names = intfs|isinput|keymap("name") %}
 
-    assign dout_s.eot = { {{queue_intf_names|reverse|format_list("%s_s.eot")|join(", ")}} };
+    assign dout_s.eot = { {{queue_intf_names|format_list("%s_s.eot")|join(", ")}} };
     assign dout_s.data = { {{data_intf_names|reverse|format_list("%s_s.data")|join(", ")}} };
 
     logic  handshake;
     assign dout.valid = {{input_intf_names|format_list("%s.valid")|join(" & ")}};
-    assign handshake = dout.valid & dout.ready;
+    assign handshake = dout.valid && dout.ready;
     assign dout.data = dout_s;
 
-    assign din0.ready = handshake & dout.valid;
-    assign din1.ready = handshake & dout.valid & {{intfs[0]['data_eot']}};
+    assign din0.ready = handshake && {{intfs[1]['data_eot']}};
+    assign din1.ready = handshake;
 
 {% endcall %}

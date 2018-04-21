@@ -12,8 +12,8 @@ def lvl_if_queue(t):
 def cart_type(dtypes):
     arg_queue_lvl = [lvl_if_queue(d) for d in dtypes]
 
-    base_type = Tuple[tuple(d if lvl == 0 else d[0]
-                            for d, lvl in zip(dtypes, arg_queue_lvl))]
+    base_type = Tuple[tuple(
+        d if lvl == 0 else d[0] for d, lvl in zip(dtypes, arg_queue_lvl))]
 
     # If there are no Queues, i.e. sum(arg_queue_lvl) == 0, the type below
     # will resolve to just base_type
@@ -29,16 +29,12 @@ def cart_vararg(*din):
     return ret | cart_type([d.dtype for d in din])
 
 
-@gear
-def cart_cat(*din) -> 'cart_type({din})':
+@hier(alternatives=[cart_vararg], enablement='len({din}) == 2')
+def cart(*din) -> 'cart_type({din})':
     pass
 
 
-@hier(alternatives=[cart_vararg], enablement='len({din}) == 2')
-def cart(*din) -> 'cart_type({din})':
-    return din | cart_sync(outsync=False) | cart_cat
-
-
+# TODO: Lowest eot for each uncart output needs to be shortened to 1 data using flattening
 @hier
 def uncart(din, *, dtypes):
     zdata = din[0]
@@ -46,6 +42,7 @@ def uncart(din, *, dtypes):
 
     print(din.dtype)
     print(dtypes)
+
     def split():
         for i, d in enumerate(dtypes):
             data = zdata[i]
