@@ -3,7 +3,7 @@ from pygears.common import fmap, quenvelope, cart
 
 
 @alternative(fmap)
-@hier(enablement='issubclass({din}, Queue)')
+@hier(enablement=b'issubclass(din, Queue)')
 def fmap(din, *, f, lvl=1, fcat=cart):
     queue_lvl = din.dtype.lvl
     fmap_lvl = min(lvl, queue_lvl)

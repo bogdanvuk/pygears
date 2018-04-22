@@ -10,7 +10,7 @@ templ_var_re = re.compile(r"\{([^\d\W]\w*?)\}")
 
 
 def is_template(s):
-    if not isinstance(s, str):
+    if not isinstance(s, (str, bytes)):
         return False
 
     return bool(templ_var_re.search(s))
@@ -92,8 +92,9 @@ class GenericMeta(TypingMeta):
                 try:
                     spec &= a.is_specified()
                 except AttributeError:
-                    if isinstance(a, str):
-                        spec &= (templ_var_re.search(a) is None)
+                    if isinstance(a, (str, bytes)):
+                        return False
+                        # spec &= (templ_var_re.search(a) is None)
 
             return spec
         else:
@@ -129,7 +130,7 @@ class GenericMeta(TypingMeta):
                 a_templates = a.templates
                 templates += [v for v in a_templates if v not in templates]
             else:
-                if isinstance(a, str) and templ_var_re.search(a):
+                if isinstance(a, str): #and templ_var_re.search(a):
                     templates.append(a[1:-1])
 
         return make_unique(templates)
@@ -190,37 +191,40 @@ class GenericMeta(TypingMeta):
 
 def param_subs(t, matches, namespace):
     # Did we reach the parameter name?
+    if isinstance(t, bytes):
+        t = t.decode()
+
     if isinstance(t, str):
-        subs_dict = {}
-        all_subs = True
-        res = re.findall(r"\{(.*?)\}", t)
+        # subs_dict = {}
+        # all_subs = True
+        # res = re.findall(r"\{(.*?)\}", t)
 
-        if not res:
-            # String parameter with no placeholder names
-            param_str = t
-        else:
-            for r in res:
-                if (r in matches):
-                    if is_template(matches[r]):
-                        all_subs = False
-                        subs_dict[r] = matches[r]
-                    else:
-                        subs_dict[r] = r
-                else:
-                    all_subs = False
-                    subs_dict[r] = '{' + r + '}'
+        # if not res:
+        #     # String parameter with no placeholder names
+        #     param_str = t
+        # else:
+        #     for r in res:
+        #         if (r in matches):
+        #             if is_template(matches[r]):
+        #                 all_subs = False
+        #                 subs_dict[r] = matches[r]
+        #             else:
+        #                 subs_dict[r] = r
+        #         else:
+        #             all_subs = False
+        #             subs_dict[r] = '{' + r + '}'
 
-            param_str = t.format(**subs_dict)
+        #     param_str = t.format(**subs_dict)
 
-        if not all_subs:
-            return param_str
-        else:
-            try:
-                return eval(param_str, namespace, matches)
-            except Exception as e:
-                return param_str
-                # raise Exception(
-                #     f"{str(e)}\n - while evaluating parameter string '{param_str}'")
+        # if not all_subs:
+        #     return param_str
+        # else:
+        try:
+            return eval(t, namespace, matches)
+        except Exception as e:
+            # return param_str
+            raise Exception(
+                f"{str(e)}\n - while evaluating parameter string '{t}'")
 
     elif isinstance(t, collections.Iterable):
         return type(t)(param_subs(tt, matches, namespace) for tt in t)

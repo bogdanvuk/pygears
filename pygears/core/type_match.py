@@ -15,37 +15,21 @@ def _type_match_rec(t, pat, matches, allow_incomplete):
         pass
     # Did we reach the parameter name?
     elif isinstance(pat, str):
-        res = re.findall(r"\{(.*?)\}", pat)
-        if res and ('{' + res[0] + '}' != pat):
-            # if pattern is not a simple template argument, but an expression
-            try:
-                param_str = pat.format(**matches)
-            except KeyError as e:
-                if not allow_incomplete:
-                    raise TypeMatchError(
-                        f'Missing value for argument(s) {e.args}, in '
-                        f'substitution of template parameter "{pat}".')
-
-            if repr(t) != repr(
-                    eval(param_str, registry('TypeArithNamespace'))):
-                if not allow_incomplete:
-                    raise TypeMatchError(
-                        f'Template "{pat}" is an expresion. Matching to an'
-                        f' expression is not currently supported.')
-        elif len(res) == 0:
-            raise TypeMatchError(
-                f'Malformed template expresion "{pat}". Did you forget '
-                'enclosing template arguments in curly braces?')
+        if pat in matches:
+            # If the parameter name is already bound, check if two deductions
+            # are same
+            if repr(t) != repr(matches[pat]):
+                raise TypeMatchError(
+                    f"Ambiguous match for parameter {pat}: {type_repr(t)} and {type_repr(matches[res])}")
         else:
-            # If the parameter name is already bound, but not to another
-            # parameter name, check if two deductions are same
-            if res[0] in matches:
-                if repr(t) != repr(matches[res[0]]):
-                    raise TypeMatchError(
-                        "Ambiguous match for parameter {}: {} and {}".format(
-                            res[0], type_repr(t), type_repr(matches[res[0]])))
-            else:
-                matches[res[0]] = t
+            try:
+                res = eval(pat, registry('TypeArithNamespace'), matches)
+                if repr(t) != repr(res):
+                    raise TypeMatchError(f"{type_repr(t)} cannot be matched to {type_repr(pat)}")
+            except Exception as e:
+                matches[pat] = t
+                # if not allow_incomplete:
+                    # raise TypeMatchError(f"Cannot evaluate {type_repr(pat)}")
     elif (t == Any) or (pat == Any):
         pass
     elif isinstance(t, GenericMeta) and isinstance(

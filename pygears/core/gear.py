@@ -1,5 +1,7 @@
 import copy
 import inspect
+import sys
+import traceback
 from functools import wraps
 
 from pygears.registry import PluginBase, bind, registry
@@ -35,7 +37,11 @@ class GearMatchError(Exception):
         self.errors = errors
 
     def __str__(self):
-        return str(self.errors)
+        ret = []
+        for e, exc_info in self.errors:
+            # traceback.print_exception(*exc_info)
+            ret.append(str(e))
+        return str(ret)
 
 
 class GearBase(NamedHierNode):
@@ -60,17 +66,18 @@ class GearBase(NamedHierNode):
                 raise TypeMatchError('Enablement condition failed')
 
             return gear.resolve()
-        except (TypeMatchError, GearTypeNotSpecified) as e:
+        # except (TypeMatchError, GearTypeNotSpecified) as e:
+        except Exception as e:
             gear.remove()
-            errors.append(e)
+            errors.append((e, sys.exc_info()))
             if not alternatives:
                 raise e
 
         for cls in alternatives:
             try:
                 return cls(*args, name=name, **kwds)
-            except TypeMatchError as e:
-                errors.append(e)
+            except Exception as e:
+                errors.append((e, sys.exc_info()))
         else:
             raise GearMatchError(errors)
 
@@ -100,7 +107,7 @@ class GearBase(NamedHierNode):
         self.params.update(kwds)
 
         self.dtype_templates = [
-            self.annotations[a] if a in self.annotations else f'{{{a}}}'
+            self.annotations[a] if a in self.annotations else f'{a}'
             for a in self.argnames
         ]
 
@@ -134,10 +141,6 @@ class GearBase(NamedHierNode):
 
         self.infered_dtypes, self.params = self.infer_params_and_ftypes()
 
-        arg_types = [i.dtype for i in self.args]
-        for a, t in zip(arg_types, self.infered_dtypes):
-            type_match(a, t, self.params, allow_incomplete=False)
-
     def _handle_return_annot(self):
         if "return" in self.annotations:
             ret_anot = self.annotations["return"]
@@ -155,7 +158,7 @@ class GearBase(NamedHierNode):
             if self.varargsname in self.annotations:
                 vararg_type = self.annotations[self.varargsname]
             else:
-                vararg_type = "{{" + self.varargsname + "{0}}}"
+                vararg_type = self.varargsname + "{0}"
             # Append the types of the self.varargsname
             for i, a in enumerate(self.args[len(self.argnames):]):
                 if isinstance(vararg_type, str):
@@ -170,7 +173,7 @@ class GearBase(NamedHierNode):
                 self.dtype_templates.insert(-1, type_tmpl_i)
                 self.argnames.append(f'{self.varargsname}{i}')
 
-            self.params[self.varargsname] = f'({", ".join(vararg_type_list)})'
+            self.params[self.varargsname] = f'({", ".join(vararg_type_list)})'.encode()
 
     def remove(self):
         for p in self.in_ports:
@@ -226,8 +229,10 @@ class GearBase(NamedHierNode):
                 self.dtype_templates,
                 arg_types,
                 namespace=self.func.__globals__,
-                params=self.params)
-        except TypeMatchError as e:
+                params=self.params,
+                allow_incomplete=False
+                )
+        except Exception as e:
             raise TypeMatchError(f'{str(e)}, of the module {self.name}')
 
     def resolve(self):

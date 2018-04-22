@@ -3,7 +3,7 @@ from pygears.core.intf import IntfOperPlugin
 
 
 @gear
-def sieve(din, *, index) -> '{din}[index]':
+def sieve(din, *, index) -> b'din[index]':
     pass
 
 

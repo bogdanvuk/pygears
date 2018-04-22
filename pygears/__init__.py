@@ -3,10 +3,11 @@ __version__ = "0.1"
 import sys
 
 from pygears.core.err import pygears_excepthook, ErrReportLevel
+from pygears.core.type_match import TypeMatchError
 from pygears.core.typing import (Array, Bool, Int, Queue, Tuple, Uint, Union,
                                  Unit, bitw, typeof)
 from pygears.registry import PluginBase, bind, registry
-from pygears.core.gear import gear, clear, hier, alternative
+from pygears.core.gear import gear, clear, hier, alternative, GearMatchError
 from pygears.core.intf import Intf
 
 import pygears.common
