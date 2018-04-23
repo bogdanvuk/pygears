@@ -131,7 +131,7 @@ class GenericMeta(TypingMeta):
                 templates += [v for v in a_templates if v not in templates]
             else:
                 if isinstance(a, str): #and templ_var_re.search(a):
-                    templates.append(a[1:-1])
+                    templates.append(a)
 
         return make_unique(templates)
 

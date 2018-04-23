@@ -1,10 +1,10 @@
 from pygears.core.gear import gear
-from pygears import Queue
+from pygears import Queue, Unit
 
 
-@gear(sv_param_kwds=[], enablement='{din_lvl} >= {lvl}')
-def quenvelope(din: Queue['{din_t}', '{din_lvl}'], *,
-               lvl) -> 'Queue[Unit, {lvl}]':
+@gear(sv_param_kwds=[], enablement=b'din_lvl >= lvl')
+def quenvelope(din: Queue['din_t', 'din_lvl'], *,
+               lvl) -> Queue[Unit, 'lvl']:
     """Extracts the queue structure of desired level called the envelope
 
     If there are more eot levels then forwarded to the output, those eot excess

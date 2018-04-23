@@ -30,7 +30,7 @@ def cart_vararg(*din, enablement=b'len(din) > 2'):
 
 
 @hier(alternatives=[cart_vararg], enablement=b'len(din) == 2')
-def cart(*din) -> 'cart_type(din)':
+def cart(*din) -> b'cart_type(din)':
     pass
 
 
@@ -60,5 +60,5 @@ def cart_sync_vararg(*din):
 
 
 @gear(alternatives=[cart_sync_vararg], enablement=b'len(din) == 2')
-def cart_sync(*din) -> 'din':
+def cart_sync(*din) -> b'din':
     pass

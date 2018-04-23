@@ -24,29 +24,29 @@ def test_union_collapse():
 
 def test_is_specified():
     assert Union[1, 2].is_specified() is True
-    assert Union['{T1}', 2].is_specified() is False
-    assert Union[1, Uint['{T2}']].is_specified() is False
+    assert Union['T1', 2].is_specified() is False
+    assert Union[1, Uint['T2']].is_specified() is False
 
 
 def test_repr():
-    a = Union['{T1}', 2, 'T2', 3, '{T3}', '{T4}']
-    assert repr(a) == "Union['{T1}', 2, 'T2', 3, '{T3}', '{T4}']"
+    a = Union['T1', 2, 'T2', 3, 'T3', 'T4']
+    assert repr(a) == "Union['T1', 2, 'T2', 3, 'T3', 'T4']"
 
 
 def test_str():
-    a = Union['{T1}', 2, 'T2', 3, '{T3}', '{T4}']
-    assert str(a) == "{T1} | 2 | T2 | 3 | {T3} | {T4}"
+    a = Union['T1', 2, 'T2', 3, 'T3', 'T4']
+    assert str(a) == "T1 | 2 | T2 | 3 | T3 | T4"
 
 
 def test_partial_subs():
-    a = Union['{T1}', 2, 'T2', 3, '{T3}', '{T4}']
+    a = Union['T1', 2, 'T2', 3, 'T3', 'T4']
     b = a[1, 3]
     assert b.is_specified() is False
-    assert b == Union[1, 2, 'T2', 3, 3, '{T4}']
+    assert b == Union[1, 2, 'T2', 3, 3, 'T4']
 
 
 def test_all_subs():
-    a = Union['{T1}', 2, 'T2', 3, '{T3}', '{T4}']
+    a = Union['T1', 2, 'T2', 3, 'T3', 'T4']
     b = a[1, 3, 4]
     assert b.is_specified() is True
     assert b == Union[1, 2, 'T2', 3, 3, 4]
@@ -54,7 +54,7 @@ def test_all_subs():
 
 @raises(TemplateArgumentsError)
 def test_excessive_subs():
-    a = Union['{T1}', 2, 'T2', 3, '{T3}', '{T4}']
+    a = Union['T1', 2, 'T2', 3, 'T3', 'T4']
     a[1, 3, 4, 5]
 
 

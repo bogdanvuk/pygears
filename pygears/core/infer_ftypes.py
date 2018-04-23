@@ -10,6 +10,8 @@ def type_is_specified(t):
     except Exception as e:
         if t is None:
             return True
+        elif isinstance(t, tuple):
+            return all(type_is_specified(subt) for subt in t)
         else:
             return False
 
@@ -71,16 +73,18 @@ def infer_ftypes(ftypes, args, namespace={}, params={},
             continue
 
         for i in range(len(ftypes)):
-            if isinstance(ftypes[i],
-                          (str, bytes)) or (not type_is_specified(ftypes[i])):
-                # if is_template(ftypes[i]) or (not type_is_specified(ftypes[i])):
+            if isinstance(ftypes[i], bytes) or (not type_is_specified(ftypes[i])):
                 if i < len(args):
                     # Match input template to received arguments
                     try:
+                        templ = ftypes[i]
+                        if isinstance(ftypes[i], bytes):
+                            templ = templ.decode()
+
                         match.update(
                             type_match(
                                 args[i],
-                                ftypes[i],
+                                templ,
                                 match,
                                 allow_incomplete=(not final_check)))
                     except Exception as e:
@@ -88,31 +92,25 @@ def infer_ftypes(ftypes, args, namespace={}, params={},
                             f'{str(e)}\n - when deducing type for argument '
                             f'{ftypes.index(ftypes[i])}')
 
-            try:
-                substituted, ft = resolve_param(ftypes[i], match, namespace)
+                try:
+                    substituted, ft = resolve_param(ftypes[i], match, namespace)
 
-                if substituted and ft.is_specified():
-                    # print(i, ': ', ftypes[i], ' -> ', ft)
-                    ftypes[i] = ft
-                    break
-            except Exception as e:
-                if final_check:
-                    raise TypeMatchError(f'{str(e)} - when resolving '
-                                         f'argument type {i}: {ftypes[i]}')
-                # ft = param_subs(ftypes[i], match, namespace)
-                # if repr(ft) != repr(ftypes[i]):
-                #     ftypes[i] = ft
-                #     substituted = True
-                #     break
+                    if substituted and type_is_specified(ft):
+                        # print(i, ': ', ftypes[i], ' -> ', ft)
+                        ftypes[i] = ft
+                        break
+                    else:
+                        substituted = False
+
+                except Exception as e:
+                    if final_check:
+                        raise TypeMatchError(f'{str(e)} - when resolving '
+                                            f'argument type {i}: {ftypes[i]}')
 
         final_check = not substituted and not final_check
 
-        # if not final_check and not substituted:
-        #     print(match)
-
-    for name, value in match.items():
-        if isinstance(value, bytes) or (isinstance(value, GenericMeta)
-                                        and not value.is_specified()):
-            raise TypeMatchError(f'Parameter {name} unresolved: {value}')
+    if postponed:
+        name, value = next(iter(postponed.items()))
+        raise TypeMatchError(f'Parameter {name} unresolved: {value}')
 
     return ftypes, match

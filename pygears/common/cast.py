@@ -4,7 +4,7 @@ from pygears.core.intf import IntfOperPlugin
 
 
 @gear
-def cast(din, *, cast_type) -> 'cast({din}, {cast_type})':
+def cast(din, *, cast_type) -> b'cast(din, cast_type)':
     pass
 
 

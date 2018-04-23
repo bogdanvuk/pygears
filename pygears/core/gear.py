@@ -169,7 +169,7 @@ class GearBase(NamedHierNode):
                     type_tmpl_i = vararg_type
 
                 vararg_type_list.append(type_tmpl_i)
-                self.dtype_templates.insert(-1, type_tmpl_i)
+                self.dtype_templates.insert(-1, type_tmpl_i.encode())
                 self.argnames.append(f'{self.varargsname}{i}')
 
             self.params[self.varargsname] = f'({", ".join(vararg_type_list)})'.encode()

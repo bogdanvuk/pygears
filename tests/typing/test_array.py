@@ -14,23 +14,23 @@ def test_equality():
 
 
 def test_repr():
-    a = Array['{T1}', 3]
-    assert repr(a) == "Array['{T1}', 3]"
+    a = Array['T1', 3]
+    assert repr(a) == "Array['T1', 3]"
 
 
 def test_str():
-    a = Array['{T1}', 3]
-    assert str(a) == "Array[{T1}, 3]"
+    a = Array['T1', 3]
+    assert str(a) == "Array[T1, 3]"
 
 
 def test_is_specified():
     assert Array[Uint[1], 2].is_specified() is True
-    assert Array['{T1}', 3].is_specified() is False
-    assert Array[Uint['{T2}'], 2].is_specified() is False
+    assert Array['T1', 3].is_specified() is False
+    assert Array[Uint['T2'], 2].is_specified() is False
 
 
 def test_subs():
-    a = Array['{T1}', 2]
+    a = Array['T1', 2]
     b = a[Uint[1]]
     assert b == Array[Uint[1], 2]
 
@@ -42,14 +42,14 @@ def test_disolve():
 
 
 def test_multilevel_subs():
-    a = Array[Uint['{T1}'], 2]
+    a = Array[Uint['T1'], 2]
     b = a[1]
     assert b == Array[Uint[1], 2]
 
 
 @raises(TemplateArgumentsError)
 def test_excessive_subs():
-    a = Array[Uint['{T1}']]
+    a = Array[Uint['T1']]
     a[1, 2]
 
 

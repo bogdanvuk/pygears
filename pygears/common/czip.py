@@ -29,7 +29,7 @@ def zip_type(dtypes):
 
 
 @gear
-def zip_cat(*din) -> 'zip_type({din})':
+def zip_cat(*din) -> b'zip_type(din)':
     pass
 
 
@@ -67,7 +67,7 @@ def czip_vararg(*din):
     return ret_tuple[tuple(reshuffle_indices)] | out_type
 
 
-@hier(alternatives=[czip_vararg], enablement='len({din}) == 2')
+@hier(alternatives=[czip_vararg], enablement=b'len(din) == 2')
 def czip(*din) -> zip_type:
     return din | zip_sync(outsync=False) | zip_cat
 
@@ -94,6 +94,6 @@ def zip_sync_vararg(*din):
     return din | czip | unzip(dtypes=[d.dtype for d in din])
 
 
-@gear(alternatives=[zip_sync_vararg], enablement='len({din}) == 2')
-def zip_sync(*din) -> '{din}':
+@gear(alternatives=[zip_sync_vararg], enablement=b'len(din) == 2')
+def zip_sync(*din) -> b'din':
     pass

@@ -23,37 +23,37 @@ def test_equality():
 
 
 def test_repr():
-    a = Queue['{T1}', 3]
-    assert repr(a) == "Queue['{T1}', 3]"
+    a = Queue['T1', 3]
+    assert repr(a) == "Queue['T1', 3]"
 
 
 def test_str():
-    a = Queue['{T1}', 3]
-    assert str(a) == "[{T1}]^3"
+    a = Queue['T1', 3]
+    assert str(a) == "[T1]^3"
 
 
 def test_is_specified():
     assert Queue[1].is_specified() is True
-    assert Queue['{T1}'].is_specified() is False
-    assert Queue[Uint['{T2}']].is_specified() is False
+    assert Queue['T1'].is_specified() is False
+    assert Queue[Uint['T2']].is_specified() is False
     assert Queue[Uint[1]].is_specified() is True
 
 
 def test_subs():
-    a = Queue['{T1}']
+    a = Queue['T1']
     b = a[1]
     assert b == Queue[1]
 
 
 def test_multilevel_subs():
-    a = Queue[Uint['{T1}']]
+    a = Queue[Uint['T1']]
     b = a[1]
     assert b == Queue[Uint[1]]
 
 
 @raises(TemplateArgumentsError)
 def test_excessive_subs():
-    a = Queue[Uint['{T1}']]
+    a = Queue[Uint['T1']]
     a[1, 2]
 
 
