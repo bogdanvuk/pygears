@@ -2,6 +2,7 @@ import copy
 import inspect
 import sys
 import traceback
+import inspect
 from functools import wraps
 
 from pygears.registry import PluginBase, bind, registry
@@ -63,15 +64,18 @@ class GearBase(NamedHierNode):
             enablement = gear.params.pop('enablement')
 
             if not enablement:
-                raise TypeMatchError('Enablement condition failed')
+                raise TypeMatchError(f'Tried {inspect.getfile(func)}: Enablement condition failed')
 
             return gear.resolve()
-        # except (TypeMatchError, GearTypeNotSpecified) as e:
-        except TypeMatchError as e:
-            gear.remove()
-            errors.append((e, sys.exc_info()))
+        except (TypeMatchError, GearMatchError) as e:
             if not alternatives:
                 raise e
+            else:
+                gear.remove()
+                errors.append(
+                    (TypeMatchError(
+                        f'Tried {inspect.getfile(func)}: {str(e)}'),
+                     sys.exc_info()))
 
         for cls in alternatives:
             try:
@@ -79,7 +83,6 @@ class GearBase(NamedHierNode):
             except TypeMatchError as e:
                 errors.append((e, sys.exc_info()))
         else:
-            print(errors)
             raise GearMatchError(errors)
 
     def __init__(self, func, *args, name=None, intfs=[], outnames=[], **kwds):
@@ -128,7 +131,12 @@ class GearBase(NamedHierNode):
         ]
 
         for i, a in enumerate(self.args):
-            if not self._type_is_specified(a.dtype):
+            try:
+                specified = self._type_is_specified(a.dtype)
+            except Exception as e:
+                specified = False
+
+            if not specified:
                 raise GearArgsNotSpecified(
                     f"Input arg {i} for module {self.name} has"
                     f" unresolved type {repr(a)}")

@@ -1,8 +1,9 @@
 from pygears import alternative, hier, Queue
-from pygears.common import fmap, quenvelope, cart
+from pygears.common import quenvelope, cart
+from pygears.common import fmap as common_fmap
 
 
-@alternative(fmap)
+@alternative(common_fmap)
 @hier(enablement=b'issubclass(din, Queue)')
 def fmap(din, *, f, lvl=1, fcat=cart):
     queue_lvl = din.dtype.lvl
@@ -13,7 +14,7 @@ def fmap(din, *, f, lvl=1, fcat=cart):
     data = din[0:queue_lvl - fmap_lvl + 1]
 
     if lvl > 0:
-        f = fmap(f, lvl)
+        f = common_fmap(f=f, lvl=lvl)
 
     dout = fcat(env, data | f)
 

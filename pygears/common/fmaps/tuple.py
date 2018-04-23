@@ -1,5 +1,5 @@
 from pygears import alternative, hier, TypeMatchError, Tuple
-from pygears.common import fmap, ccat
+from pygears.common import fmap as common_fmap, ccat
 
 
 def tuplemap_check(dtype, f):
@@ -16,7 +16,7 @@ def tuplemap_check(dtype, f):
 
     return True
 
-@alternative(fmap)
+@alternative(common_fmap)
 @hier(enablement=b'tuplemap_check(din, f)')
 def fmap(din, *, f, lvl=1, fcat=ccat):
     lvl -= 1
@@ -24,12 +24,8 @@ def fmap(din, *, f, lvl=1, fcat=ccat):
     dout = []
     for i, fd in enumerate(f):
         if lvl > 0:
-           fd = fmap(fd, lvl)
+           fd = common_fmap(f=fd, lvl=lvl)
 
         dout.append(din[i] | fd)
 
-    dout = fcat(*dout)
-    print(dout.dtype)
-
-    # return fcat(*dout)
-    return dout
+    return fcat(*dout)

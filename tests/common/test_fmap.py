@@ -43,10 +43,14 @@ def test_tuplemap_simple():
         pass
 
     iout = fmap(Intf(Tuple[Uint[1], Uint[2]]), f=(test, test))
-    # print(iout.dtype)
-    print(repr(iout.dtype))
     assert iout.dtype == Tuple[Uint[2], Uint[3]]
 
 
-# bind('ErrReportLevel', 0)
-# test_tuplemap_simple()
+@with_setup(clear)
+def test_queuemap_tuplemap():
+    @gear
+    def test(din: Uint['size']) -> Uint['size+1']:
+        pass
+
+    iout = fmap(Intf(Queue[Tuple[Uint[1], Uint[2]], 2]), f=(test, test), lvl=3)
+    assert iout.dtype == Queue[Tuple[Uint[2], Uint[3]], 2]
