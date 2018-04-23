@@ -20,16 +20,19 @@ def _type_match_rec(t, pat, matches, allow_incomplete):
             # are same
             if repr(t) != repr(matches[pat]):
                 raise TypeMatchError(
-                    f"Ambiguous match for parameter {pat}: {type_repr(t)} and {type_repr(matches[res])}")
+                    f"Ambiguous match for parameter {pat}: {type_repr(t)} "
+                    f"and {type_repr(matches[pat])}")
         else:
             try:
                 res = eval(pat, registry('TypeArithNamespace'), matches)
                 if repr(t) != repr(res):
-                    raise TypeMatchError(f"{type_repr(t)} cannot be matched to {type_repr(pat)}")
+                    raise TypeMatchError(
+                        f"{type_repr(t)} cannot be matched to {type_repr(res)}"
+                    )
             except Exception as e:
                 matches[pat] = t
                 # if not allow_incomplete:
-                    # raise TypeMatchError(f"Cannot evaluate {type_repr(pat)}")
+                # raise TypeMatchError(f"Cannot evaluate {type_repr(pat)}")
     elif (t == Any) or (pat == Any):
         pass
     elif isinstance(t, GenericMeta) and isinstance(

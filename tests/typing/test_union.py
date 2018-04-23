@@ -40,22 +40,22 @@ def test_str():
 
 def test_partial_subs():
     a = Union['T1', 2, 'T2', 3, 'T3', 'T4']
-    b = a[1, 3]
+    b = a[1, 'T2', 3]
     assert b.is_specified() is False
     assert b == Union[1, 2, 'T2', 3, 3, 'T4']
 
 
 def test_all_subs():
     a = Union['T1', 2, 'T2', 3, 'T3', 'T4']
-    b = a[1, 3, 4]
+    b = a[1, 2, 3, 4]
     assert b.is_specified() is True
-    assert b == Union[1, 2, 'T2', 3, 3, 4]
+    assert b == Union[1, 2, 2, 3, 3, 4]
 
 
 @raises(TemplateArgumentsError)
 def test_excessive_subs():
     a = Union['T1', 2, 'T2', 3, 'T3', 'T4']
-    a[1, 3, 4, 5]
+    a[1, 2, 3, 4, 5]
 
 
 def test_indexing():

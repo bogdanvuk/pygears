@@ -1,7 +1,14 @@
-from .type_match import type_match, TypeMatchError
-from pygears.typing.base import param_subs, GenericMeta
+import collections
+
 from pygears.registry import registry
-import types
+from pygears.typing.base import GenericMeta, param_subs
+
+from .type_match import TypeMatchError, type_match
+
+
+def is_type_iterable(t):
+    return (not isinstance(t, (str, bytes))) and isinstance(
+        t, collections.Iterable)
 
 
 def type_is_specified(t):
@@ -10,7 +17,7 @@ def type_is_specified(t):
     except Exception as e:
         if t is None:
             return True
-        elif isinstance(t, tuple):
+        elif is_type_iterable(t):
             return all(type_is_specified(subt) for subt in t)
         else:
             return False
@@ -18,7 +25,8 @@ def type_is_specified(t):
 
 def resolve_param(param, match, namespace):
 
-    if isinstance(param, GenericMeta) and not param.is_specified():
+    if (isinstance(param, GenericMeta)
+            or is_type_iterable(param)) and not type_is_specified(param):
         new_p = param_subs(param, match, namespace)
         if repr(new_p) != repr(param):
             return True, new_p
@@ -73,7 +81,8 @@ def infer_ftypes(ftypes, args, namespace={}, params={},
             continue
 
         for i in range(len(ftypes)):
-            if isinstance(ftypes[i], bytes) or (not type_is_specified(ftypes[i])):
+            if isinstance(ftypes[i],
+                          bytes) or (not type_is_specified(ftypes[i])):
                 if i < len(args):
                     # Match input template to received arguments
                     try:
@@ -93,7 +102,8 @@ def infer_ftypes(ftypes, args, namespace={}, params={},
                             f'{ftypes.index(ftypes[i])}')
 
                 try:
-                    substituted, ft = resolve_param(ftypes[i], match, namespace)
+                    substituted, ft = resolve_param(ftypes[i], match,
+                                                    namespace)
 
                     if substituted and type_is_specified(ft):
                         # print(i, ': ', ftypes[i], ' -> ', ft)
@@ -105,9 +115,12 @@ def infer_ftypes(ftypes, args, namespace={}, params={},
                 except Exception as e:
                     if final_check:
                         raise TypeMatchError(f'{str(e)} - when resolving '
-                                            f'argument type {i}: {ftypes[i]}')
+                                             f'argument type {i}: {ftypes[i]}')
 
         final_check = not substituted and not final_check
+
+    for f, a in zip(ftypes, args):
+        type_match(a, f, {})
 
     if postponed:
         name, value = next(iter(postponed.items()))

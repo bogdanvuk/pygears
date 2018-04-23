@@ -112,23 +112,23 @@ def test_hier_hierarchy():
 @with_setup(clear)
 def test_alternatives():
     @gear(version=4)
-    def fgear01(arg1: Tuple['{T1}', '{T2}'], *, lvl=0) -> '{T2}':
+    def fgear01(arg1: Tuple['T1', 'T2'], *, lvl=0) -> b'T2':
         pass
 
     @gear(alternatives=[fgear01], version=3)
-    def fgear0(arg1: Uint['{w}'], *, lvl=0) -> Uint['{w}']:
+    def fgear0(arg1: Uint['w'], *, lvl=0) -> Uint['w']:
         pass
 
     @gear(version=2)
-    def fgear1(arg1: Queue['{T}', 1], *, lvl=1) -> Tuple['{T}', Uint['{lvl}']]:
+    def fgear1(arg1: Queue['T', 1], *, lvl=1) -> Tuple['T', Uint['lvl']]:
         pass
 
     @gear(version=1)
-    def fgear2(arg1: Queue['{T}', 2], *, lvl=2) -> Tuple['{T}', Uint['{lvl}']]:
+    def fgear2(arg1: Queue['T', 2], *, lvl=2) -> Tuple['T', Uint['lvl']]:
         pass
 
     @gear(alternatives=[fgear2, fgear1, fgear0], version=0)
-    def fgear(arg1: Queue['{T}', 3], *, lvl=3) -> Tuple['{T}', Uint['{lvl}']]:
+    def fgear(arg1: Queue['T', 3], *, lvl=3) -> Tuple['T', Uint['lvl']]:
         pass
 
     root = registry('HierRoot')

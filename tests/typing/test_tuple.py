@@ -48,7 +48,7 @@ def test_single_lvl():
 
 
 def test_single_lvl_template_partial_subs():
-    a = Tuple[Uint[1], 'T2']
+    a = Tuple['T1', 'T2']
     b = a[1]
     assert b == Tuple[1, 'T2']
 
@@ -63,35 +63,35 @@ def test_multi_level_template():
 
 def test_multi_level_template_partial_subs():
     a = Tuple[Tuple['T1', 2, 'T2', Tuple[3, Tuple['T3', 'T4']]]]
-    b = a[1, 3]
+    b = a[1, 'T2', 3]
     assert b.is_specified() is False
     assert b == Tuple[Tuple[1, 2, 'T2', Tuple[3, Tuple[3, 'T4']]]]
 
 
 def test_multi_level_template_all_subs():
     a = Tuple[Tuple['T1', 2, 'T2', Tuple[3, Tuple['T3', 'T4']]]]
-    b = a[1, 3, 4]
+    b = a[1, 2, 3, 4]
     assert b.is_specified() is True
-    assert b == Tuple[Tuple[1, 2, 'T2', Tuple[3, Tuple[3, 4]]]]
+    assert b == Tuple[Tuple[1, 2, 2, Tuple[3, Tuple[3, 4]]]]
 
 
 @raises(TemplateArgumentsError)
 def test_multi_level_template_excessive_subs():
     a = Tuple[Tuple['T1', 2, 'T2', Tuple[3, Tuple['T3', 'T4']]]]
-    a[1, 3, 4, 5]
+    a[1, 2, 3, 4, 5]
 
 
 def test_indexing():
     a = Tuple[Tuple['T1', 2, 'T2', Tuple[3, Tuple['T3', 'T4']]]]
-    b = a[1, 3, 4][0]
-    assert b == Tuple[1, 2, 'T2', Tuple[3, Tuple[3, 4]]]
+    b = a[1, 2, 3, 4][0]
+    assert b == Tuple[1, 2, 2, Tuple[3, Tuple[3, 4]]]
     assert b[0] == 1
     assert b[1] == 2
-    assert b[2] == 'T2'
+    assert b[2] == 2
     assert b[3] == Tuple[3, Tuple[3, 4]]
-    assert b[0:3] == Tuple[1, 2, 'T2']
-    assert b[0, 1, 2] == Tuple[1, 2, 'T2']
-    assert b[0, 2] == Tuple[1, 'T2']
+    assert b[0:3] == Tuple[1, 2, 2]
+    assert b[0, 1, 2] == Tuple[1, 2, 2]
+    assert b[0, 2] == Tuple[1, 2]
     assert b[:2, 3:] == Tuple[1, 2, Tuple[3, Tuple[3, 4]]]
 
 

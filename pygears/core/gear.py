@@ -64,18 +64,31 @@ class GearBase(NamedHierNode):
             enablement = gear.params.pop('enablement')
 
             if not enablement:
-                raise TypeMatchError(f'Tried {inspect.getfile(func)}: Enablement condition failed')
+                gear.remove()
+                # print(
+                #     f'Tried {inspect.getfile(func)}:{func.__code__.co_firstlineno}: Enablement condition failed'
+                # )
+                raise TypeMatchError(
+                    f'Tried {inspect.getfile(func)}: Enablement condition failed'
+                )
 
             return gear.resolve()
         except (TypeMatchError, GearMatchError) as e:
+            # print(
+            #     f'Tried {inspect.getfile(func)}:{func.__code__.co_firstlineno}: {str(e)}'
+            # )
+
+            try:
+                gear.remove()
+            except ValueError:
+                pass
+
             if not alternatives:
                 raise e
             else:
-                gear.remove()
-                errors.append(
-                    (TypeMatchError(
-                        f'Tried {inspect.getfile(func)}: {str(e)}'),
-                     sys.exc_info()))
+                errors.append((TypeMatchError(
+                    f'Tried {inspect.getfile(func)}:{func.__code__.co_firstlineno}: {str(e)}'
+                ), sys.exc_info()))
 
         for cls in alternatives:
             try:
@@ -104,9 +117,9 @@ class GearBase(NamedHierNode):
         self.annotations = argspec.annotations
         self.kwdnames = argspec.kwonlyargs
 
-        self.params = argspec.kwonlydefaults
-        if self.params is None:
-            self.params = {}
+        self.params = {}
+        if isinstance(argspec.kwonlydefaults, dict):
+            self.params.update(argspec.kwonlydefaults)
 
         self.params.update(kwds)
 
@@ -180,14 +193,17 @@ class GearBase(NamedHierNode):
                 self.dtype_templates.insert(-1, type_tmpl_i.encode())
                 self.argnames.append(f'{self.varargsname}{i}')
 
-            self.params[self.varargsname] = f'({", ".join(vararg_type_list)})'.encode()
+            self.params[
+                self.varargsname] = f'({", ".join(vararg_type_list)})'.encode(
+                )
 
     def remove(self):
         for p in self.in_ports:
-            try:
-                p.producer.disconnect(p)
-            except ValueError:
-                pass
+            if p.producer is not None:
+                try:
+                    p.producer.disconnect(p)
+                except ValueError:
+                    pass
 
         for p in self.out_ports:
             if p.producer is not None:
@@ -237,8 +253,7 @@ class GearBase(NamedHierNode):
                 arg_types,
                 namespace=self.func.__globals__,
                 params=self.params,
-                allow_incomplete=False
-                )
+                allow_incomplete=False)
         except TypeMatchError as e:
             raise TypeMatchError(f'{str(e)}, of the module {self.name}')
 

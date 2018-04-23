@@ -57,10 +57,10 @@ module zip_sync
 
     assign dout0.valid = out_valid;
     assign dout0.data = din0_s;
-    assign din0.ready = out_valid && (dout0.ready || !din0_eot_aligned);
+    assign din0.ready = all_valid && (dout0.ready || !din0_eot_aligned);
     assign dout1.valid = out_valid;
     assign dout1.data = din1_s;
-    assign din1.ready = out_valid && (dout1.ready || !din1_eot_aligned);
+    assign din1.ready = all_valid && (dout1.ready || !din1_eot_aligned);
 
 
 
@@ -219,10 +219,10 @@ module zip_sync
 
     assign dout0_if.valid = out_valid;
     assign dout0_if.data = din0_s;
-    assign din0.ready = out_valid && (dout0_if.ready || !din0_eot_aligned);
+    assign din0.ready = all_valid && (dout0_if.ready || !din0_eot_aligned);
     assign dout1_if.valid = out_valid;
     assign dout1_if.data = din1_s;
-    assign din1.ready = out_valid && (dout1_if.ready || !din1_eot_aligned);
+    assign din1.ready = all_valid && (dout1_if.ready || !din1_eot_aligned);
 
 
     zip_sync_syncguard syncguard (
