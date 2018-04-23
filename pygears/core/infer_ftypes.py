@@ -1,5 +1,5 @@
 from .type_match import type_match, TypeMatchError
-from pygears.typing.base import param_subs, is_template, GenericMeta
+from pygears.typing.base import param_subs, GenericMeta
 from pygears.registry import registry
 import types
 

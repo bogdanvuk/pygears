@@ -6,16 +6,6 @@ class TemplateArgumentsError(Exception):
     pass
 
 
-templ_var_re = re.compile(r"\{([^\d\W]\w*?)\}")
-
-
-def is_template(s):
-    if not isinstance(s, (str, bytes)):
-        return False
-
-    return bool(templ_var_re.search(s))
-
-
 class TypingMeta(type):
     def is_specified(self):
         return True
@@ -190,35 +180,11 @@ class GenericMeta(TypingMeta):
 
 
 def param_subs(t, matches, namespace):
-    # Did we reach the parameter name?
     if isinstance(t, bytes):
         t = t.decode()
 
+    # Did we reach the parameter name?
     if isinstance(t, str):
-        # subs_dict = {}
-        # all_subs = True
-        # res = re.findall(r"\{(.*?)\}", t)
-
-        # if not res:
-        #     # String parameter with no placeholder names
-        #     param_str = t
-        # else:
-        #     for r in res:
-        #         if (r in matches):
-        #             if is_template(matches[r]):
-        #                 all_subs = False
-        #                 subs_dict[r] = matches[r]
-        #             else:
-        #                 subs_dict[r] = r
-        #         else:
-        #             all_subs = False
-        #             subs_dict[r] = '{' + r + '}'
-
-        #     param_str = t.format(**subs_dict)
-
-        # if not all_subs:
-        #     return param_str
-        # else:
         try:
             return eval(t, namespace, matches)
         except Exception as e:
