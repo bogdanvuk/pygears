@@ -27,7 +27,8 @@ def resolve_param(param, match, namespace):
     return False, None
 
 
-def infer_ftypes(ftypes, args, namespace={}, params={}, allow_incomplete=False):
+def infer_ftypes(ftypes, args, namespace={}, params={},
+                 allow_incomplete=False):
 
     # Add all registered objects (types and transformations) to the namespace
     namespace = dict(namespace)
@@ -35,7 +36,14 @@ def infer_ftypes(ftypes, args, namespace={}, params={}, allow_incomplete=False):
 
     # Copy structures that will be changed
     ftypes = list(ftypes)
-    match = dict(params)
+    postponed = {
+        name: val
+        for name, val in params.items() if isinstance(val, bytes)
+    }
+    match = {
+        name: val
+        for name, val in params.items() if name not in postponed
+    }
 
     substituted = True
     final_check = False
@@ -44,25 +52,28 @@ def infer_ftypes(ftypes, args, namespace={}, params={}, allow_incomplete=False):
     while substituted or final_check:
         substituted = False
         # Loops until none of the parameters has been additionally resolved
-        for p, param in match.items():
-            try:
-                substituted, new_p = resolve_param(
-                    param, match, namespace)
+        for p, param in postponed.copy().items():
+            if isinstance(param, bytes):
+                try:
+                    substituted, new_p = resolve_param(param, match, namespace)
 
-                if substituted:
-                    # print(p, ': ', param, ' -> ', new_p)
-                    match[p] = new_p
-                    break
-            except Exception as e:
-                if final_check:
-                    raise e
+                    if substituted:
+                        # print(p, ': ', param, ' -> ', new_p)
+                        match[p] = new_p
+                        del postponed[p]
+                        break
+                except Exception as e:
+                    if final_check:
+                        raise TypeMatchError(f'{str(e)} - when resolving '
+                                             f'parameter {p}: {param}')
 
         if substituted:
             continue
 
         for i in range(len(ftypes)):
-            if isinstance(ftypes[i], (str, bytes)) or (not type_is_specified(ftypes[i])):
-            # if is_template(ftypes[i]) or (not type_is_specified(ftypes[i])):
+            if isinstance(ftypes[i],
+                          (str, bytes)) or (not type_is_specified(ftypes[i])):
+                # if is_template(ftypes[i]) or (not type_is_specified(ftypes[i])):
                 if i < len(args):
                     # Match input template to received arguments
                     try:
@@ -78,8 +89,7 @@ def infer_ftypes(ftypes, args, namespace={}, params={}, allow_incomplete=False):
                             f'{ftypes.index(ftypes[i])}')
 
             try:
-                substituted, ft = resolve_param(
-                    ftypes[i], match, namespace)
+                substituted, ft = resolve_param(ftypes[i], match, namespace)
 
                 if substituted and ft.is_specified():
                     # print(i, ': ', ftypes[i], ' -> ', ft)
@@ -87,7 +97,8 @@ def infer_ftypes(ftypes, args, namespace={}, params={}, allow_incomplete=False):
                     break
             except Exception as e:
                 if final_check:
-                    raise e
+                    raise TypeMatchError(f'{str(e)} - when resolving '
+                                         f'argument type {i}: {ftypes[i]}')
                 # ft = param_subs(ftypes[i], match, namespace)
                 # if repr(ft) != repr(ftypes[i]):
                 #     ftypes[i] = ft
@@ -96,11 +107,12 @@ def infer_ftypes(ftypes, args, namespace={}, params={}, allow_incomplete=False):
 
         final_check = not substituted and not final_check
 
-        if not final_check and not substituted:
-            print(match)
+        # if not final_check and not substituted:
+        #     print(match)
 
     for name, value in match.items():
-        if isinstance(value, bytes) or (isinstance(value, GenericMeta) and not value.is_specified()):
+        if isinstance(value, bytes) or (isinstance(value, GenericMeta)
+                                        and not value.is_specified()):
             raise TypeMatchError(f'Parameter {name} unresolved: {value}')
 
     return ftypes, match

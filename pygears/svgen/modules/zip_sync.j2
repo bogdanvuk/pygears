@@ -43,7 +43,7 @@
   {% for din, dout in zip(input_intf_names, out_intf_names) %}
     assign {{dout}}.valid = out_valid;
     assign {{dout}}.data = {{din}}_s;
-    assign {{din}}.ready = out_valid && ({{dout}}.ready || !{{din}}_eot_aligned);
+    assign {{din}}.ready = all_valid && ({{dout}}.ready || !{{din}}_eot_aligned);
   {% endfor %}
 
   {# Instantiate sync-guard if used. #}

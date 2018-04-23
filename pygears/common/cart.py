@@ -21,7 +21,7 @@ def cart_type(dtypes):
 
 
 @hier
-def cart_vararg(*din):
+def cart_vararg(*din, enablement=b'len(din) > 2'):
     ret = cart(din[0], din[1])
     for d in din[2:]:
         ret = cart(ret, d)
@@ -29,8 +29,8 @@ def cart_vararg(*din):
     return ret | cart_type([d.dtype for d in din])
 
 
-@hier(alternatives=[cart_vararg], enablement='len({din}) == 2')
-def cart(*din) -> 'cart_type({din})':
+@hier(alternatives=[cart_vararg], enablement=b'len(din) == 2')
+def cart(*din) -> 'cart_type(din)':
     pass
 
 
@@ -59,6 +59,6 @@ def cart_sync_vararg(*din):
     return din | cart | uncart(dtypes=[d.dtype for d in din])
 
 
-@gear(alternatives=[cart_sync_vararg], enablement='len({din}) == 2')
-def cart_sync(*din) -> '{din}':
+@gear(alternatives=[cart_sync_vararg], enablement=b'len(din) == 2')
+def cart_sync(*din) -> 'din':
     pass

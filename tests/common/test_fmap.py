@@ -48,5 +48,5 @@ def test_tuplemap_simple():
     assert iout.dtype == Tuple[Uint[2], Uint[3]]
 
 
-bind('ErrReportLevel', 0)
-test_tuplemap_simple()
+# bind('ErrReportLevel', 0)
+# test_tuplemap_simple()

@@ -67,7 +67,7 @@ class GearBase(NamedHierNode):
 
             return gear.resolve()
         # except (TypeMatchError, GearTypeNotSpecified) as e:
-        except Exception as e:
+        except TypeMatchError as e:
             gear.remove()
             errors.append((e, sys.exc_info()))
             if not alternatives:
@@ -76,9 +76,10 @@ class GearBase(NamedHierNode):
         for cls in alternatives:
             try:
                 return cls(*args, name=name, **kwds)
-            except Exception as e:
+            except TypeMatchError as e:
                 errors.append((e, sys.exc_info()))
         else:
+            print(errors)
             raise GearMatchError(errors)
 
     def __init__(self, func, *args, name=None, intfs=[], outnames=[], **kwds):
@@ -149,8 +150,6 @@ class GearBase(NamedHierNode):
                 self.dtype_templates.append(tuple(ret_anot.values()))
             else:
                 self.dtype_templates.append(ret_anot)
-        else:
-            self.dtype_templates.append('{ret}')
 
     def _expand_varargs(self):
         if self.varargsname:
@@ -232,7 +231,7 @@ class GearBase(NamedHierNode):
                 params=self.params,
                 allow_incomplete=False
                 )
-        except Exception as e:
+        except TypeMatchError as e:
             raise TypeMatchError(f'{str(e)}, of the module {self.name}')
 
     def resolve(self):
