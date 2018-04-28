@@ -82,6 +82,9 @@ class Int(Integer, metaclass=IntMeta):
 
 
 class UintMeta(IntegerMeta):
+    def __call__(self, val):
+        return val
+
     def __str__(self):
         if not self.args:
             return f'u'

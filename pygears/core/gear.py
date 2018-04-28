@@ -58,11 +58,20 @@ def check_arg_num(argnames, varargsname, args):
 
 
 def check_arg_specified(args):
+    args_res = []
     for i, a in enumerate(args):
+        if not isinstance(a, Intf):
+            from pygears.common import const
+            a = const(val=a)
+
+        args_res.append(a)
+
         if not type_is_specified(a.dtype):
             raise GearArgsNotSpecified(
                 f"Input arg {i} for module {self.name} has"
                 f" unresolved type {repr(a)}")
+
+    return tuple(args_res)
 
 
 class GearBase(NamedHierNode):
@@ -138,7 +147,7 @@ class GearBase(NamedHierNode):
         self.kwdnames = argspec.kwonlyargs
 
         check_arg_num(self.argnames, self.varargsname, self.args)
-        check_arg_specified(self.args)
+        self.args = check_arg_specified(self.args)
 
         self.params = {}
         if isinstance(argspec.kwonlydefaults, dict):
