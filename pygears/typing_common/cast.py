@@ -1,5 +1,4 @@
-from pygears.core.typing import TypingNamespacePlugin
-from pygears import Int, Uint, Queue, Tuple
+from pygears.typing import TypingNamespacePlugin, Int, Uint, Queue, Tuple
 
 
 def cast(dtype, cast_type):

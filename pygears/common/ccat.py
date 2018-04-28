@@ -1,5 +1,5 @@
 from pygears.core.gear import gear
-from pygears import Tuple
+from pygears.typing import Tuple
 
 
 @gear

@@ -1,5 +1,4 @@
-from pygears import Queue, Tuple, Union, typeof
-from pygears.core.typing import TypingNamespacePlugin
+from pygears.typing import TypingNamespacePlugin, Queue, Tuple, Union, typeof
 
 
 def next_pos(type_list, comb, t):

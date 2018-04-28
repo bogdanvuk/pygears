@@ -4,13 +4,13 @@ import sys
 
 from pygears.core.err import pygears_excepthook, ErrReportLevel
 from pygears.core.type_match import TypeMatchError
-from pygears.core.typing import (Array, Bool, Int, Queue, Tuple, Uint, Union,
-                                 Unit, bitw, typeof)
 from pygears.registry import PluginBase, bind, registry
 from pygears.core.gear import gear, clear, hier, alternative, GearMatchError
 from pygears.core.intf import Intf
+from pygears.util.find import find
 
 import pygears.common
+import pygears.typing
 import pygears.typing_common
 
 # load_plugin_folder(os.path.join(os.path.dirname(__file__), 'common'))
@@ -18,7 +18,6 @@ import pygears.typing_common
 sys.excepthook = pygears_excepthook
 
 __all__ = [
-    'Union', 'Tuple', 'Uint', 'Int', 'Unit', 'Bool', 'Queue', 'Array', 'bitw',
     'registry', 'typeof', 'ErrReportLevel', 'bind', 'gear', 'hier', 'clear',
-    'Intf', 'PluginBase'
+    'Intf', 'PluginBase', 'find'
 ]

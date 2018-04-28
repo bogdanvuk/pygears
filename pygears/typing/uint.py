@@ -2,53 +2,13 @@ from pygears.typing.base import EnumerableGenericMeta, GenericMeta
 from pygears.typing.tuple import Tuple
 from pygears.typing.bool import Bool
 
-
-class IntMeta(GenericMeta):
-    def __int__(self):
-        return self.__args__[0]
-
-    def __add__(self, other):
-        return Int[max(int(self), int(other)) + 1]
-
-    def __sub__(self, other):
-        return Int[max(int(self), int(other)) + 1]
-
-    def __mul__(self, other):
-        return Int[int(self) + int(other)]
-
-    def __truediv__(self, other):
-        return Int[int(self) - int(other) + 1]
-
-    def __rtruediv__(self, other):
-        return Int[int(self) - int(other) + 1]
-
-    def __floordiv__(self, other):
-        return Int[int(self) - int(other) + 1]
-
-    def __rfloordiv__(self, other):
-        return Int[int(other) - int(self) + 1]
-
-    def __mod__(self, other):
-        return Int[int(self) % int(other)]
-
-    def __rmod__(self, other):
-        return Int[int(other) % int(self)]
-
-    __radd__ = __add__
-    __rmul__ = __mul__
-
+class IntegerMeta(EnumerableGenericMeta):
     def __str__(self):
         if isinstance(self.args[0], int):
-            return f'i{self.args[0]}'
+            return f'Z{self.args[0]}'
         else:
-            return f'i({self.args[0]})'
+            return f'Z({self.args[0]})'
 
-
-class Int(metaclass=IntMeta):
-    pass
-
-
-class UintMeta(EnumerableGenericMeta):
     def __int__(self):
         return int(self.__args__[0])
 
@@ -56,40 +16,35 @@ class UintMeta(EnumerableGenericMeta):
         return list(range(int(self)))
 
     def __add__(self, other):
-        return Uint[max(int(self), int(other)) + 1]
+        return self.base[max(int(self), int(other)) + 1]
+
+    __radd__ = __add__
 
     def __sub__(self, other):
         return Tuple[Uint[max(int(self), int(other))], Bool]
 
     def __mul__(self, other):
-        return Uint[int(self) + int(other)]
+        return self.base[int(self) + int(other)]
 
     def __truediv__(self, other):
-        return Uint[int(self) - int(other) + 1]
+        return self.base[int(self) - int(other) + 1]
 
     def __rtruediv__(self, other):
-        return Uint[int(self) - int(other) + 1]
+        return self.base[int(self) - int(other) + 1]
 
     def __floordiv__(self, other):
-        return Uint[int(self) - int(other) + 1]
+        return self.base[int(self) - int(other) + 1]
 
     def __rfloordiv__(self, other):
-        return Uint[int(other) - int(self) + 1]
+        return self.base[int(other) - int(self) + 1]
 
     def __mod__(self, other):
-        return Uint[int(self) % int(other)]
+        return self.base[int(self) % int(other)]
 
     def __rmod__(self, other):
-        return Uint[int(other) % int(self)]
+        return self.base[int(other) % int(self)]
 
-    __radd__ = __add__
     __rmul__ = __mul__
-
-    def __str__(self):
-        if isinstance(self.args[0], int):
-            return f'u{self.args[0]}'
-        else:
-            return f'u({self.args[0]})'
 
     def __getitem__(self, index):
         if not self.is_specified():
@@ -108,8 +63,35 @@ class UintMeta(EnumerableGenericMeta):
                     raise IndexError
                 width += 1
 
-        return Uint[width]
+        return self.base[width]
+
+class Integer(metaclass=IntegerMeta):
+    pass
+
+class IntMeta(IntegerMeta):
+    def __str__(self):
+        if isinstance(self.args[0], int):
+            return f'i{self.args[0]}'
+        else:
+            return f'i({self.args[0]})'
 
 
-class Uint(metaclass=UintMeta):
+class Int(Integer, metaclass=IntMeta):
     __parameters__ = ['N']
+    pass
+
+
+class UintMeta(IntegerMeta):
+    def __str__(self):
+        if not self.args:
+            return f'u'
+        elif isinstance(self.args[0], int):
+            return f'u{self.args[0]}'
+        else:
+            return f'u({self.args[0]})'
+
+
+class Uint(Integer, metaclass=UintMeta):
+    __parameters__ = ['N']
+    pass
+

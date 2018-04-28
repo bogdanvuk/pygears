@@ -1,7 +1,7 @@
-from pygears import Queue, Tuple, Uint
+from pygears.typing import Queue, Tuple
 from pygears.core.gear import gear, hier
-from pygears.common import flatten
 from pygears.common.ccat import ccat
+from pygears.common.arrange_apply import arrange_apply
 from functools import reduce
 
 
@@ -48,23 +48,14 @@ def czip_vararg(*din):
     din_sorted_by_lvl, din_sort_indices = isort(
         din, key=lambda x: lvl_if_queue(x[1].dtype), reverse=True)
 
-    out_type = zip_type([d.dtype for d in din])
     # Zip din's in sorted order using it as a binary operation. This will
     # produce nested Tuple's, hence we cast it to a Queue of single Tuple
     ret_flat_type = zip_type([d.dtype for d in din_sorted_by_lvl])
-    ret = reduce(czip, din_sorted_by_lvl) | ret_flat_type
 
-    ret_tuple = ret | Tuple | flatten
+    def czip_cascade(*din):
+        return reduce(czip, din_sorted_by_lvl) | ret_flat_type
 
-    # Data of input interfaces (din) is now zipped inside interface "ret" in
-    # sorted order. Calculate the tuple of indices for a Sieve that will
-    # reshuffle the output data to appear in the order in which inputs are
-    # supplied. Append eot field to reordering tuple
-    reshuffle_indices = [0] * len(din_sort_indices) + [-1]
-    for i, index in enumerate(din_sort_indices):
-        reshuffle_indices[index] = i
-
-    return ret_tuple[tuple(reshuffle_indices)] | out_type
+    return arrange_apply(*din, f=czip_cascade, indices=din_sort_indices)
 
 
 @hier(alternatives=[czip_vararg], enablement=b'len(din) == 2')
@@ -81,8 +72,7 @@ def unzip(din, *, dtypes):
         for i, d in enumerate(dtypes):
             data = zdata[i]
             if issubclass(d, Queue):
-                yield ccat(
-                    data, zlast[:d.lvl]) | Queue[data.dtype, d.lvl]
+                yield ccat(data, zlast[:d.lvl]) | Queue[data.dtype, d.lvl]
             else:
                 yield data
 

@@ -1,5 +1,5 @@
 from pygears.core.gear import Gear, gear, hier
-from pygears import Queue, Tuple
+from pygears.typing import Queue, Tuple
 
 
 def lvl_if_queue(t):

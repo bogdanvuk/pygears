@@ -1,5 +1,4 @@
-from pygears import Queue, Tuple, Unit
-from pygears.core.typing import TypingNamespacePlugin
+from pygears.typing import Queue, Tuple, Unit, TypingNamespacePlugin
 
 
 def flatten(dtype, lvl=1):

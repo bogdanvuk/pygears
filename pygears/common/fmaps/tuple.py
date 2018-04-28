@@ -1,4 +1,5 @@
-from pygears import alternative, hier, TypeMatchError, Tuple
+from pygears import alternative, hier, TypeMatchError
+from pygears.typing import Tuple
 from pygears.common import fmap as common_fmap, ccat
 
 

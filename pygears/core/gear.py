@@ -6,9 +6,10 @@ import inspect
 from functools import wraps
 
 from pygears.registry import PluginBase, bind, registry
+from pygears.typing import Any
 
 from .hier_node import NamedHierNode
-from .infer_ftypes import TypeMatchError, infer_ftypes
+from .infer_ftypes import TypeMatchError, infer_ftypes, type_is_specified
 from .intf import Intf
 from .partial import Definition
 from .port import InPort, OutPort
@@ -43,6 +44,25 @@ class GearMatchError(Exception):
             # traceback.print_exception(*exc_info)
             ret.append(str(e))
         return str(ret)
+
+
+def check_arg_num(argnames, varargsname, args):
+    if (len(args) < len(argnames)) or (
+            not varargsname and (len(args) > len(argnames))):
+        balance = "few" if (len(args) < len(
+            argnames)) else "many"
+
+        raise TooManyArguments(
+            f"Too {balance} arguments for the module {self.name} provided."
+        )
+
+
+def check_arg_specified(args):
+    for i, a in enumerate(args):
+        if not type_is_specified(a.dtype):
+            raise GearArgsNotSpecified(
+                f"Input arg {i} for module {self.name} has"
+                f" unresolved type {repr(a)}")
 
 
 class GearBase(NamedHierNode):
@@ -117,25 +137,19 @@ class GearBase(NamedHierNode):
         self.annotations = argspec.annotations
         self.kwdnames = argspec.kwonlyargs
 
+        check_arg_num(self.argnames, self.varargsname, self.args)
+        check_arg_specified(self.args)
+
         self.params = {}
         if isinstance(argspec.kwonlydefaults, dict):
             self.params.update(argspec.kwonlydefaults)
 
         self.params.update(kwds)
 
-        self.dtype_templates = [
-            self.annotations[a] if a in self.annotations else f'{a}'
+        self.params.update({
+            a: (self.annotations[a] if a in self.annotations else Any)
             for a in self.argnames
-        ]
-
-        if (len(self.args) < len(self.argnames)) or (
-                not self.varargsname and (len(self.args) > len(args))):
-            balance = "few" if (len(self.args) < len(
-                self.argnames)) else "many"
-
-            raise TooManyArguments(
-                f"Too {balance} arguments for the module {self.name} provided."
-            )
+        })
 
         self._handle_return_annot()
         self._expand_varargs()
@@ -145,32 +159,25 @@ class GearBase(NamedHierNode):
 
         for i, a in enumerate(self.args):
             try:
-                specified = self._type_is_specified(a.dtype)
-            except Exception as e:
-                specified = False
-
-            if not specified:
-                raise GearArgsNotSpecified(
-                    f"Input arg {i} for module {self.name} has"
-                    f" unresolved type {repr(a)}")
-
-            try:
                 a.connect(self.in_ports[i])
             except AttributeError:
                 raise GearArgsNotSpecified(
                     f"Input arg {i} for module {self.name} was not"
                     f" resolved to interface, instead {repr(a)} received")
 
-        self.infered_dtypes, self.params = self.infer_params_and_ftypes()
+        self.infer_params()
+        print(self.params)
 
     def _handle_return_annot(self):
         if "return" in self.annotations:
             ret_anot = self.annotations["return"]
             if isinstance(ret_anot, dict):
                 self.outnames = tuple(ret_anot.keys())
-                self.dtype_templates.append(tuple(ret_anot.values()))
+                self.params['return'] = tuple(ret_anot.values())
             else:
-                self.dtype_templates.append(ret_anot)
+                self.params['return'] = ret_anot
+        else:
+            self.params['return'] = Any
 
     def _expand_varargs(self):
         if self.varargsname:
@@ -218,18 +225,9 @@ class GearBase(NamedHierNode):
     def set_ftype(self, ft, i):
         self.dtype_templates[i] = ft
 
-    def _type_is_specified(self, t):
-        try:
-            return t.is_specified()
-        except Exception as e:
-            if t is None:
-                return True
-            else:
-                return False
-
     def is_specified(self):
         for i in self.intfs:
-            if not self._type_is_specified(i.dtype):
+            if not type_is_specified(i.dtype):
                 return False
         else:
             return True
@@ -245,14 +243,14 @@ class GearBase(NamedHierNode):
         else:
             return None
 
-    def infer_params_and_ftypes(self):
-        arg_types = [i.dtype for i in self.args]
+    def infer_params(self):
+        arg_types = {name: arg.dtype for name, arg in zip(self.argnames, self.args)}
+
         try:
-            return infer_ftypes(
-                self.dtype_templates,
+            self.params = infer_ftypes(
+                self.params,
                 arg_types,
                 namespace=self.func.__globals__,
-                params=self.params,
                 allow_incomplete=False)
         except TypeMatchError as e:
             raise TypeMatchError(f'{str(e)}, of the module {self.name}')
@@ -262,10 +260,10 @@ class GearBase(NamedHierNode):
 
         if func_ret:
             out_dtype = tuple(r.dtype for r in func_ret)
-        elif not isinstance(self.infered_dtypes[-1], tuple):
-            out_dtype = (self.infered_dtypes[-1], )
+        elif not isinstance(self.params['return'], tuple):
+            out_dtype = (self.params['return'], )
         else:
-            out_dtype = self.infered_dtypes[-1]
+            out_dtype = self.params['return']
 
         if (len(self.outnames) == 0) and (len(out_dtype) == 1):
             self.outnames.append('dout')

@@ -1,4 +1,5 @@
-from pygears import Queue, gear, hier
+from pygears import gear, hier
+from pygears.typing import Queue
 from pygears.typing_common.flatten import flatten as type_flatten
 
 

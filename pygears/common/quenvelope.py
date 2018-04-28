@@ -1,5 +1,5 @@
 from pygears.core.gear import gear
-from pygears import Queue, Unit
+from pygears.typing import Queue, Unit
 
 
 @gear(sv_param_kwds=[], enablement=b'din_lvl >= lvl')

@@ -1,4 +1,5 @@
-from pygears import alternative, hier, Queue
+from pygears import alternative, hier
+from pygears.typing import Queue
 from pygears.common import quenvelope, cart
 from pygears.common import fmap as common_fmap
 

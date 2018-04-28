@@ -1,7 +1,7 @@
 import collections
 
 from pygears.registry import registry
-from pygears.typing.base import GenericMeta, param_subs
+from pygears.typing.base import GenericMeta, param_subs, TypingMeta
 
 from .type_match import TypeMatchError, type_match
 
@@ -23,32 +23,37 @@ def type_is_specified(t):
             return False
 
 
-def resolve_param(param, match, namespace):
+def resolve_param(val, match, namespace):
 
-    if (isinstance(param, GenericMeta)
-            or is_type_iterable(param)) and not type_is_specified(param):
-        new_p = param_subs(param, match, namespace)
-        if repr(new_p) != repr(param):
+    if (isinstance(val, GenericMeta)
+            or is_type_iterable(val)) and not type_is_specified(val):
+        new_p = param_subs(val, match, namespace)
+        if repr(new_p) != repr(val):
             return True, new_p
 
-    elif isinstance(param, bytes):
-        return True, eval(param, namespace, match)
+    elif isinstance(val, bytes):
+        return True, eval(val, namespace, match)
 
     return False, None
 
 
-def infer_ftypes(ftypes, args, namespace={}, params={},
-                 allow_incomplete=False):
+def infer_ftypes(params, args, namespace={}, allow_incomplete=False):
 
     # Add all registered objects (types and transformations) to the namespace
     namespace = dict(namespace)
     namespace.update(registry('TypeArithNamespace'))
 
-    # Copy structures that will be changed
-    ftypes = list(ftypes)
+    def is_postponed(val):
+        if isinstance(val, bytes):
+            return True
+        if isinstance(val, TypingMeta) and (not type_is_specified(val)):
+            return True
+
+        return False
+
     postponed = {
         name: val
-        for name, val in params.items() if isinstance(val, bytes)
+        for name, val in params.items() if is_postponed(val)
     }
     match = {
         name: val
@@ -62,68 +67,48 @@ def infer_ftypes(ftypes, args, namespace={}, params={},
     while substituted or final_check:
         substituted = False
         # Loops until none of the parameters has been additionally resolved
-        for p, param in postponed.copy().items():
-            if isinstance(param, bytes):
+        for name, val in postponed.copy().items():
+            if name in args:
                 try:
-                    substituted, new_p = resolve_param(param, match, namespace)
+                    templ = val
+                    if isinstance(val, bytes):
+                        templ = templ.decode()
 
-                    if substituted:
-                        # print(p, ': ', param, ' -> ', new_p)
-                        match[p] = new_p
-                        del postponed[p]
-                        break
+                    match.update(
+                        type_match(
+                            args[name],
+                            templ,
+                            match,
+                            allow_incomplete=(not final_check)))
                 except Exception as e:
-                    if final_check:
-                        raise TypeMatchError(f'{str(e)} - when resolving '
-                                             f'parameter {p}: {param}')
-
-        if substituted:
-            continue
-
-        for i in range(len(ftypes)):
-            if isinstance(ftypes[i],
-                          bytes) or (not type_is_specified(ftypes[i])):
-                if i < len(args):
-                    # Match input template to received arguments
-                    try:
-                        templ = ftypes[i]
-                        if isinstance(ftypes[i], bytes):
-                            templ = templ.decode()
-
-                        match.update(
-                            type_match(
-                                args[i],
-                                templ,
-                                match,
-                                allow_incomplete=(not final_check)))
-                    except Exception as e:
-                        raise TypeMatchError(
-                            f'{str(e)}\n - when deducing type for argument '
-                            f'{ftypes.index(ftypes[i])}')
-
-                try:
-                    substituted, ft = resolve_param(ftypes[i], match,
-                                                    namespace)
-
-                    if substituted and type_is_specified(ft):
-                        # print(i, ': ', ftypes[i], ' -> ', ft)
-                        ftypes[i] = ft
-                        break
+                    raise TypeMatchError(
+                        f'{str(e)}\n - when deducing type for argument '
+                        f'{ftypes.index(ftypes[i])}')
+            try:
+                substituted, new_p = resolve_param(val, match, namespace)
+                if name in args:
+                    if type_is_specified(new_p):
+                        new_p = args[name]
                     else:
                         substituted = False
 
-                except Exception as e:
-                    if final_check:
-                        raise TypeMatchError(f'{str(e)} - when resolving '
-                                             f'argument type {i}: {ftypes[i]}')
+                if substituted:
+                    # print(name, ': ', val, ' -> ', new_p)
+                    match[name] = new_p
+                    del postponed[name]
+                    break
+            except Exception as e:
+                if final_check:
+                    raise TypeMatchError(f'{str(e)} - when resolving '
+                                        f'parameter {name}: {val}')
 
         final_check = not substituted and not final_check
 
-    for f, a in zip(ftypes, args):
-        type_match(a, f, {})
+    for name, val in args.items():
+        type_match(val, match[name], {})
 
     if postponed:
         name, value = next(iter(postponed.items()))
         raise TypeMatchError(f'Parameter {name} unresolved: {value}')
 
-    return ftypes, match
+    return match
