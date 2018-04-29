@@ -3,6 +3,7 @@ from pygears.typing import Uint, Int, Tuple, bitw
 
 
 def get_int_type(val):
+    print(val)
     if val == 0:
         return Uint[1]
     elif val > 0:

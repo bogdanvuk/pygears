@@ -12,6 +12,9 @@ class IntegerMeta(EnumerableGenericMeta):
     def __int__(self):
         return int(self.__args__[0])
 
+    def __gt__(self, others):
+        return int(self) > int(others)
+
     def keys(self):
         return list(range(int(self)))
 
