@@ -29,7 +29,7 @@ def cart_vararg(*din, enablement=b'len(din) > 2'):
     return ret | cart_type([d.dtype for d in din])
 
 
-@hier(alternatives=[cart_vararg], enablement=b'len(din) == 2')
+@gear(alternatives=[cart_vararg], enablement=b'len(din) == 2')
 def cart(*din) -> b'cart_type(din)':
     pass
 

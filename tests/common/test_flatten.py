@@ -1,5 +1,5 @@
 from pygears.typing_common import flatten
-from pygears import Tuple, Unit, Uint
+from pygears.typing import Tuple, Unit, Uint
 
 
 def test_unit_remove_single_level():

@@ -1,6 +1,7 @@
 from nose import with_setup
 
-from pygears import Intf, Queue, Uint, clear, bind, Unit, registry
+from pygears import Intf, bind, clear
+from pygears.typing import Queue, Uint, Unit
 from pygears.svgen import svgen_connect, svgen_inst, svgen
 from pygears.common.czip import zip_sync, zip_cat
 from pygears.svgen.generate import TemplateEnv

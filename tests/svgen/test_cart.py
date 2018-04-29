@@ -1,7 +1,8 @@
 from nose import with_setup
 
-from pygears import Intf, Queue, Uint, clear, bind, Unit, registry
-from pygears.svgen import svgen_connect, svgen_inst, svgen
+from pygears import Intf, clear, bind, registry
+from pygears.typing import Queue, Uint, Unit
+from pygears.svgen import svgen
 from pygears.common.cart import cart
 from pygears.svgen.generate import TemplateEnv
 from . import equal_on_nonspace

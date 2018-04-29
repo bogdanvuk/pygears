@@ -1,6 +1,7 @@
 from nose import with_setup
 
-from pygears import Intf, Tuple, Uint, clear
+from pygears import Intf, clear
+from pygears.typing import Tuple, Uint
 from pygears.common import sieve
 
 

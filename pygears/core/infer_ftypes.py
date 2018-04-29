@@ -43,22 +43,28 @@ def infer_ftypes(params, args, namespace={}, allow_incomplete=False):
     namespace = dict(namespace)
     namespace.update(registry('TypeArithNamespace'))
 
-    def is_postponed(val):
+    def is_postponed(name, val):
         if isinstance(val, bytes):
             return True
-        if isinstance(val, TypingMeta) and (not type_is_specified(val)):
+        if (name in args):
             return True
+
+        if (name == 'return'):
+            return not type_is_specified(val)
 
         return False
 
     postponed = {
         name: val
-        for name, val in params.items() if is_postponed(val)
+        for name, val in params.items() if is_postponed(name, val)
     }
     match = {
         name: val
         for name, val in params.items() if name not in postponed
     }
+
+    # print('Postponed: ', postponed)
+    # print('Match: ', match)
 
     substituted = True
     final_check = False
@@ -87,10 +93,10 @@ def infer_ftypes(params, args, namespace={}, allow_incomplete=False):
             try:
                 substituted, new_p = resolve_param(val, match, namespace)
                 if name in args:
-                    if type_is_specified(new_p):
-                        new_p = args[name]
-                    else:
-                        substituted = False
+                    new_p = args[name]
+                    # substituted = ((repr(new_p) != repr(val))
+                    #                and type_is_specified(new_p))
+                    substituted = type_is_specified(new_p)
 
                 if substituted:
                     # print(name, ': ', val, ' -> ', new_p)
@@ -100,9 +106,12 @@ def infer_ftypes(params, args, namespace={}, allow_incomplete=False):
             except Exception as e:
                 if final_check:
                     raise TypeMatchError(f'{str(e)} - when resolving '
-                                        f'parameter {name}: {val}')
+                                         f'parameter {name}: {val}')
 
         final_check = not substituted and not final_check
+
+    # print('Final postponed: ', postponed)
+    # print('Final match: ', match)
 
     for name, val in args.items():
         type_match(val, match[name], {})

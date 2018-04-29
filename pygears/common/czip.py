@@ -59,7 +59,7 @@ def czip_vararg(*din):
 
 
 @hier(alternatives=[czip_vararg], enablement=b'len(din) == 2')
-def czip(*din) -> zip_type:
+def czip(*din) -> b'zip_type(din)':
     return din | zip_sync(outsync=False) | zip_cat
 
 

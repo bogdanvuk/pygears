@@ -1,4 +1,4 @@
-from pygears import Queue, Uint
+from pygears.typing import Queue, Uint
 
 
 class SVStruct:

@@ -1,6 +1,7 @@
 from nose import with_setup
 
-from pygears import Intf, Queue, Tuple, Uint, clear, gear, hier, registry
+from pygears import Intf, clear, gear, hier, registry
+from pygears.typing import Queue, Tuple, Uint
 
 
 @with_setup(clear)

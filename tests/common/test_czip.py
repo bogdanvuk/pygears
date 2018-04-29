@@ -1,6 +1,7 @@
 from nose import with_setup
 
-from pygears import clear, Uint, Queue, Intf, Tuple
+from pygears import clear, Intf
+from pygears.typing import Queue, Tuple, Uint
 from pygears.common import czip
 
 

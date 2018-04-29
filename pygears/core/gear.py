@@ -174,8 +174,10 @@ class GearBase(NamedHierNode):
                     f"Input arg {i} for module {self.name} was not"
                     f" resolved to interface, instead {repr(a)} received")
 
+        # print(self.params)
+        # print(self.name)
         self.infer_params()
-        print(self.params)
+        # print(self.params)
 
     def _handle_return_annot(self):
         if "return" in self.annotations:
@@ -185,8 +187,6 @@ class GearBase(NamedHierNode):
                 self.params['return'] = tuple(ret_anot.values())
             else:
                 self.params['return'] = ret_anot
-        else:
-            self.params['return'] = Any
 
     def _expand_varargs(self):
         if self.varargsname:
@@ -194,20 +194,22 @@ class GearBase(NamedHierNode):
             if self.varargsname in self.annotations:
                 vararg_type = self.annotations[self.varargsname]
             else:
-                vararg_type = self.varargsname + "{0}"
+                vararg_type = Any
             # Append the types of the self.varargsname
             for i, a in enumerate(self.args[len(self.argnames):]):
                 if isinstance(vararg_type, str):
                     # If vararg_type is a template string, it can be made
                     # dependent on the arguments position
-                    type_tmpl_i = vararg_type.format(i)
+                    type_tmpl_i = vararg_type.format(i).encode()
                 else:
                     # Vararg is not a template and should be passed as is
                     type_tmpl_i = vararg_type
 
-                vararg_type_list.append(type_tmpl_i)
-                self.dtype_templates.insert(-1, type_tmpl_i.encode())
-                self.argnames.append(f'{self.varargsname}{i}')
+                argname = f'{self.varargsname}{i}'
+
+                vararg_type_list.append(argname)
+                self.params[argname] = type_tmpl_i
+                self.argnames.append(argname)
 
             self.params[
                 self.varargsname] = f'({", ".join(vararg_type_list)})'.encode(

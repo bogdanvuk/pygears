@@ -1,7 +1,8 @@
 from nose import with_setup
 from nose.tools import raises
 
-from pygears import Intf, Queue, Uint, clear, gear, Tuple, bind
+from pygears import Intf, clear, gear
+from pygears.typing import Queue, Uint, Tuple
 from pygears.common import fmap
 from pygears.core.gear import GearMatchError
 

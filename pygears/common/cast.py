@@ -10,8 +10,13 @@ def cast(din, *, cast_type) -> b'cast(din, cast_type)':
 
 def pipe(self, other):
     if isinstance(other, (str, TypingMeta)):
+        if self.producer is not None:
+            name = f'cast_{self.producer.basename}'
+        else:
+            name = 'cast'
+
         return cast(
-            self, cast_type=other, name=f'cast_{self.producer.basename}')
+            self, cast_type=other, name=name)
     else:
         return other.__ror__(self)
 

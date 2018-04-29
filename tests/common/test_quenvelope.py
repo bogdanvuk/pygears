@@ -1,6 +1,7 @@
 from nose import with_setup
 
-from pygears import clear, Uint, Queue, Intf, Unit
+from pygears import clear, Intf
+from pygears.typing import Uint, Queue, Unit
 from pygears.common import quenvelope
 
 

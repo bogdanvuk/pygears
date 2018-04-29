@@ -1,4 +1,5 @@
-from pygears import clear, bind, Uint, Intf, gear, hier
+from pygears import clear, bind, Intf, gear, hier
+from pygears.typing import Uint
 from pygears.svgen import svgen_connect, svgen_inst, svgen
 from pygears.svgen.generate import TemplateEnv
 from nose import with_setup

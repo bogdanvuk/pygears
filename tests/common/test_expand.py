@@ -1,4 +1,5 @@
-from pygears import Queue, Union, registry, Tuple
+from pygears import registry
+from pygears.typing import Queue, Tuple, Union
 from pygears.typing.base import param_subs
 from pygears.typing_common.expand import expand
 
