@@ -3,13 +3,12 @@ from pygears.typing import Uint, Int, Tuple, bitw
 
 
 def get_int_type(val):
-    print(val)
     if val == 0:
         return Uint[1]
     elif val > 0:
         return Uint[bitw(val)]
     else:
-        return Int(bitw(val))
+        return Int[bitw(val)+1]
 
 
 def get_literal_type(val):

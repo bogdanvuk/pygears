@@ -10,7 +10,7 @@ from pygears.cookbook.rng import rng
 def test_basic_unsigned():
     iout = rng(Intf(Tuple[Uint[4], Uint[2], Uint[2]]))
 
-    rng_gear = find('/rng')
+    rng_gear = find('/rng/sv_rng')
 
     assert iout.dtype == Queue[Uint[4]]
     assert not rng_gear.params['signed']
@@ -30,9 +30,10 @@ def test_basic_signed():
 def test_supply_constant():
     iout = rng((Uint[4](0), 8, 1))
 
-    rng_gear = find('/rng')
+    rng_gear = find('/rng/sv_rng')
 
-    assert iout.dtype == Queue[Uint[1]]
+    assert iout.dtype == Queue[Uint[4]]
+    assert rng_gear.params['cfg'] == Tuple[Uint[1], Uint[4], Uint[1]]
     assert not rng_gear.params['signed']
 
 
@@ -40,26 +41,18 @@ def test_supply_constant():
 def test_cnt_only():
     iout = rng(8)
 
+    assert iout.dtype == Queue[Uint[4]]
+
     rng_gear = find('/rng/rng/sv_rng')
-
-    print(iout.dtype)
-    print(rng_gear.params['signed'])
-
-    assert iout.dtype == Queue[Uint[1]]
+    assert rng_gear.params['cfg'] == Tuple[Uint[1], Uint[4], Uint[1]]
 
 
 @with_setup(clear)
 def test_cnt_down():
-    iout = rng(7, 0, -1)
+    iout = rng((7, 0, -1))
 
-    rng_gear = find('/rng/rng/sv_rng')
+    rng_gear = find('/rng/sv_rng')
 
-    print(iout.dtype)
-    print(rng_gear.params['signed'])
-    print(rng_gear.params['cfg'])
-
-    assert iout.dtype == Queue[Uint[1]]
-
-
-bind('ErrReportLevel', 0)
-test_cnt_down()
+    assert rng_gear.params['signed']
+    assert rng_gear.params['cfg'] == Tuple[Int[4], Int[2], Int[1]]
+    assert iout.dtype == Queue[Int[4]]
