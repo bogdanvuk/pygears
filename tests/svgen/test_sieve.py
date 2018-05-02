@@ -1,11 +1,11 @@
 from nose import with_setup
 
-from pygears import Intf, bind, clear
+from pygears import Intf, bind, clear, registry
 from pygears.typing import Queue, Uint
-from pygears.svgen import svgen, svgen_connect, svgen_inst
-from pygears.svgen.generate import TemplateEnv
+from pygears.svgen import svgen
+from pygears.svgen.generate import svgen_module
 
-from . import equal_on_nonspace
+from utils import equal_on_nonspace
 
 test_uint_ref = """
 module sieve_0v2_7_8v10
@@ -30,11 +30,9 @@ def test_uint():
 
     assert iout.dtype == Uint[5]
 
-    bind('SVGenFlow', [svgen_inst, svgen_connect])
-    svtop = svgen()
-
-    assert equal_on_nonspace(svtop['sieve_0v2_7_8v10'].get_module(
-        TemplateEnv()), test_uint_ref)
+    bind('SVGenFlow', registry('SVGenFlow')[:-1])
+    assert equal_on_nonspace(
+        svgen_module(svgen()['sieve_0v2_7_8v10']), test_uint_ref)
 
 
 test_queue_ref = """
@@ -60,8 +58,6 @@ def test_queue():
 
     assert iout.dtype == Queue[Uint[2], 4]
 
-    bind('SVGenFlow', [svgen_inst, svgen_connect])
-    svtop = svgen()
-
-    assert equal_on_nonspace(svtop['sieve_0v2_3_5v7'].get_module(
-        TemplateEnv()), test_queue_ref)
+    bind('SVGenFlow', registry('SVGenFlow')[:-1])
+    assert equal_on_nonspace(
+        svgen_module(svgen()['sieve_0v2_3_5v7']), test_queue_ref)

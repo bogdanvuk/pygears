@@ -6,7 +6,8 @@ from pygears.svgen.svmod import SVModuleGen
 from functools import partial
 from pygears.svgen.svgen import SVGenPlugin, svgen_visitor
 from pygears.core.hier_node import HierVisitorBase
-from pygears.svgen.generate import svgen_generate
+from pygears.svgen.inst import svgen_inst
+from pygears.rtl.gear import RTLGearHierVisitor, is_gear_instance
 
 
 def index_to_sv_slice(dtype, index):
@@ -26,13 +27,9 @@ def index_to_sv_slice(dtype, index):
 
 
 class SVGenSieve(SVModuleGen):
-    def __init__(self, gear, parent):
-        super().__init__(gear, parent)
-        self.pre_sieves = []
-
     def get_module(self, template_env):
         def get_stages():
-            for s in itertools.chain(self.pre_sieves, [self]):
+            for s in itertools.chain(self.node.pre_sieves, [self.node]):
                 indexes = s.params['index']
                 dtype = s.in_ports[0].dtype
                 out_type = s.out_ports[0].dtype
@@ -58,23 +55,26 @@ class SVGenSieve(SVModuleGen):
 
 
 @svgen_visitor
-class RemoveEqualReprSieveVisitor(HierVisitorBase):
-    def SVGenSieve(self, svmod):
-        pout = svmod.out_ports[0]
-        pin = svmod.in_ports[0]
+class RemoveEqualReprSieveVisitor(RTLGearHierVisitor):
+    def sieve(self, node):
+        pout = node.out_ports[0]
+        pin = node.in_ports[0]
 
         if pin.dtype == pout.dtype:
-            svmod.bypass()
+            node.bypass()
 
 
 @svgen_visitor
-class CollapseSievesVisitor(HierVisitorBase):
-    def SVGenSieve(self, svmod):
+class CollapseSievesVisitor(RTLGearHierVisitor):
+    def sieve(self, node):
+        if not hasattr(node, 'pre_sieves'):
+            node.pre_sieves = []
+
         sieve_cons = [
-            p for p in svmod.consumers if isinstance(p.svmod, SVGenSieve)
+            p for p in node.consumers if is_gear_instance(p.node, sieve)
         ]
-        pin = svmod.in_ports[0]
-        pout = svmod.out_ports[0]
+        pin = node.in_ports[0]
+        pout = node.out_ports[0]
         iin = pin.producer
         iout = pout.consumer
 
@@ -85,23 +85,23 @@ class CollapseSievesVisitor(HierVisitorBase):
             # Connect the consumers of this Sieve, which are Sieves themselves,
             # to this Sieve's predecessor
             for cons_pin in iout.consumers.copy():
-                consumer = cons_pin.svmod
-                if isinstance(consumer, SVGenSieve):
-                    # print(f'Merging {svmod.name} to {consumer.name}')
+                consumer = cons_pin.node
+                if is_gear_instance(consumer, sieve):
+                    # print(f'Merging {node.name} to {consumer.name}')
                     # print(consumer.params['index'])
                     # If the consumer is a Sieve, just register this Sieve with
                     # it, and short circuit this one
-                    consumer.pre_sieves = svmod.pre_sieves + [svmod]
+                    consumer.pre_sieves = node.pre_sieves + [node]
                     iout.disconnect(cons_pin)
                     iin.connect(cons_pin)
 
-            # print(f'Remaining conusmer: {[p.svmod.name for p in svmod.consumers]}')
+            # print(f'Remaining conusmer: {[p.node.name for p in node.consumers]}')
 
-            if not svmod.consumers:
+            if not node.consumers:
                 # Finally, if ther are no consumers left for this sieve remove
                 # this Sieve completely (with all it's connections) from the
                 # SVGen tree
-                svmod.remove()
+                node.remove()
                 iout.remove()
 
 
@@ -110,7 +110,7 @@ class SVGenSievePlugin(SVGenInstPlugin, SVGenPlugin):
     def bind(cls):
         cls.registry['SVGenModuleNamespace'][sieve] = SVGenSieve
         cls.registry['SVGenFlow'].insert(
-            cls.registry['SVGenFlow'].index(svgen_generate),
+            cls.registry['SVGenFlow'].index(svgen_inst),
             CollapseSievesVisitor)
         cls.registry['SVGenFlow'].insert(
             cls.registry['SVGenFlow'].index(CollapseSievesVisitor),

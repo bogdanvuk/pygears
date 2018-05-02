@@ -35,3 +35,7 @@ class SVGenInstPlugin(PluginBase):
         cls.registry['SVGenModuleNamespace'] = {}
         cls.registry['SVGenMap'] = {}
         cls.registry['SVGenSystemVerilogPaths'] = []
+
+    @classmethod
+    def reset(cls):
+        cls.registry['SVGenMap'] = {}

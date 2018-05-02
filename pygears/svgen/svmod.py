@@ -42,7 +42,6 @@ class SVModuleGen:
         else:
             sv_params = {}
 
-        print(sv_params)
         return {
             k.upper(): int(v)
             for k, v in self.node.params.items()

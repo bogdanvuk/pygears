@@ -17,11 +17,6 @@ from .util import doublewrap
 from .type_match import type_match, TypeMatchError
 
 
-def clear():
-    bind('HierRoot', NamedHierNode(''))
-    bind('CurrentHier', registry('HierRoot'))
-
-
 class TooManyArguments(Exception):
     pass
 
@@ -386,3 +381,8 @@ class HierRootPlugin(PluginBase):
             'alternatives': [],
             'enablement': True
         }
+
+    @classmethod
+    def reset(cls):
+        bind('HierRoot', NamedHierNode(''))
+        bind('CurrentHier', cls.registry['HierRoot'])

@@ -16,7 +16,7 @@ class SVIntfGen:
         elif ((not self.intf.is_broadcast) and self.intf.consumers
               and isinstance(self.intf.consumers[0], OutPort)):
             return self.intf.consumers[0].basename
-        elif self.sole_intf:
+        elif self.intf.sole_intf:
             return f'{producer_name}_if_s'
         else:
             return f'{producer_name}_{port_name}_if_s'
@@ -72,7 +72,7 @@ class SVIntfGen:
             'param_map': {},
             'port_map': {
                 'din': din_name,
-                'dout': self.consumers[index].basename
+                'dout': self.intf.consumers[index].basename
             }
         }
 

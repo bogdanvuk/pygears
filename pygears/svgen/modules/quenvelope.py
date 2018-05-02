@@ -23,7 +23,7 @@ class SVGenQuEnvelope(SVModuleGen):
         return cfg
 
     def get_module(self, template_env):
-        self.lvl = self.gear.params['lvl']
+        self.lvl = self.node.params['lvl']
         intfs = list(self.sv_port_configs())
 
         if intfs[0]['lvl'] > self.lvl:

@@ -1,6 +1,6 @@
 from pygears import registry, PluginBase
 from pygears.core.hier_node import HierVisitorBase, NamedHierNode, HierNode
-from pygears.rtl.gear import RTLGear
+from pygears.rtl.gear import RTLGearNodeGen
 import inspect
 
 
@@ -82,7 +82,11 @@ class RTLNodeInstPlugin(PluginBase):
     def bind(cls):
         cls.registry['RTLNodeNamespace'] = {}
         cls.registry['RTLGearGenNamespace'] = {
-            'Gear': RTLGear,
-            'Hier': RTLGear
+            'Gear': RTLGearNodeGen,
+            'Hier': RTLGearNodeGen
         }
+        cls.registry['RTLNodeMap'] = {}
+
+    @classmethod
+    def reset(cls):
         cls.registry['RTLNodeMap'] = {}

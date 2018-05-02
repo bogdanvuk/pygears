@@ -1,11 +1,11 @@
 from nose import with_setup
 
-from pygears import Intf, bind, clear
+from pygears import Intf, bind, clear, registry
 from pygears.typing import Queue, Uint, Unit
-from pygears.svgen import svgen_connect, svgen_inst, svgen
+from pygears.svgen import svgen
 from pygears.common.czip import zip_sync, zip_cat
-from pygears.svgen.generate import TemplateEnv
-from . import equal_on_nonspace
+from pygears.svgen.generate import svgen_module
+from utils import equal_on_nonspace
 
 test_two_inputs_no_outsync_ref = """
 module zip_sync
@@ -73,9 +73,8 @@ endmodule
 def test_two_inputs_no_outsync():
     zip_sync(Intf(Queue[Uint[3], 3]), Intf(Queue[Uint[4], 5]), outsync=False)
 
-    bind('SVGenFlow', [svgen_inst, svgen_connect])
-    svtop = svgen()
-    assert equal_on_nonspace(svtop['zip_sync'].get_module(TemplateEnv()),
+    bind('SVGenFlow', registry('SVGenFlow')[:-1])
+    assert equal_on_nonspace(svgen_module(svgen()['zip_sync']),
                              test_two_inputs_no_outsync_ref)
 
 
@@ -111,9 +110,8 @@ endmodule
 def test_two_inputs_simple_no_outsync():
     zip_sync(Intf(Queue[Uint[3], 3]), Intf(Uint[4]), outsync=False)
 
-    bind('SVGenFlow', [svgen_inst, svgen_connect])
-    svtop = svgen()
-    assert equal_on_nonspace(svtop['zip_sync'].get_module(TemplateEnv()),
+    bind('SVGenFlow', registry('SVGenFlow')[:-1])
+    assert equal_on_nonspace(svgen_module(svgen()['zip_sync']),
                              test_two_inputs_simple_no_outsync_ref)
 
 
@@ -160,9 +158,9 @@ endmodule
 def test_two_inputs_simple():
     zip_sync(Intf(Queue[Uint[3], 3]), Intf(Uint[4]))
 
-    bind('SVGenFlow', [svgen_inst, svgen_connect])
-    svtop = svgen()
-    assert equal_on_nonspace(svtop['zip_sync'].get_module(TemplateEnv()),
+    bind('SVGenFlow', registry('SVGenFlow')[:-1])
+    sv_zip_sync, sv_syncguard = svgen_module(svgen()['zip_sync'])
+    assert equal_on_nonspace(sv_zip_sync,
                              test_two_inputs_simple_ref)
 
 
@@ -244,9 +242,9 @@ endmodule
 def test_two_inputs():
     zip_sync(Intf(Queue[Uint[3], 3]), Intf(Queue[Uint[4], 5]))
 
-    bind('SVGenFlow', [svgen_inst, svgen_connect])
-    svtop = svgen()
-    assert equal_on_nonspace(svtop['zip_sync'].get_module(TemplateEnv()),
+    bind('SVGenFlow', registry('SVGenFlow')[:-1])
+    sv_zip_sync, sv_syncguard = svgen_module(svgen()['zip_sync'])
+    assert equal_on_nonspace(sv_zip_sync,
                              test_two_inputs_ref)
 
 
@@ -324,9 +322,8 @@ def test_zip_cat():
         Intf(Queue[Uint[4], 5]), Intf(Uint[1]), Intf(Queue[Uint[3], 3]),
         Intf(Queue[Unit, 1]))
 
-    bind('SVGenFlow', [svgen_inst, svgen_connect])
-    svtop = svgen()
-    assert equal_on_nonspace(svtop['zip_cat'].get_module(TemplateEnv()),
+    bind('SVGenFlow', registry('SVGenFlow')[:-1])
+    assert equal_on_nonspace(svgen_module(svgen()['zip_cat']),
                              test_zip_cat_ref)
 
 

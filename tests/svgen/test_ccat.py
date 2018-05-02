@@ -1,10 +1,12 @@
 from nose import with_setup
+
+from pygears import Intf, bind, clear, registry
 from pygears.common import ccat
 from pygears.svgen import svgen
-from pygears import Intf, clear, bind, registry
+from pygears.svgen.generate import svgen_module
 from pygears.typing import Queue, Uint, Unit
-from pygears.svgen.generate import TemplateEnv
-from . import equal_on_nonspace
+from utils import equal_on_nonspace
+
 
 test_general_ref = """
 module ccat
@@ -45,6 +47,4 @@ def test_general():
 
     bind('SVGenFlow', registry('SVGenFlow')[:-1])
 
-    svtop = svgen()
-    assert equal_on_nonspace(svtop['ccat'].get_module(TemplateEnv()),
-                             test_general_ref)
+    assert equal_on_nonspace(svgen_module(svgen()['ccat']), test_general_ref)

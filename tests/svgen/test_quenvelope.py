@@ -1,11 +1,11 @@
 from nose import with_setup
 
-from pygears import clear, Intf, bind
+from pygears import clear, Intf, bind, registry
 from pygears.typing import Queue, Uint
 from pygears.common import quenvelope
-from pygears.svgen import svgen_connect, svgen_inst, svgen
-from pygears.svgen.generate import TemplateEnv
-from . import equal_on_nonspace
+from pygears.svgen import svgen
+from pygears.svgen.generate import svgen_module
+from utils import equal_on_nonspace
 
 test_skip_ref = """
 module quenvelope
@@ -66,9 +66,8 @@ endmodule
 def test_skip():
     quenvelope(Intf(Queue[Uint[1], 5]), lvl=2)
 
-    bind('SVGenFlow', [svgen_inst, svgen_connect])
-    svtop = svgen()
-    assert equal_on_nonspace(svtop['quenvelope'].get_module(TemplateEnv()),
+    bind('SVGenFlow', registry('SVGenFlow')[:-1])
+    assert equal_on_nonspace(svgen_module(svgen()['quenvelope']),
                              test_skip_ref)
 
 
@@ -109,7 +108,6 @@ endmodule
 def test_all_pass():
     quenvelope(Intf(Queue[Uint[1], 2]), lvl=2)
 
-    bind('SVGenFlow', [svgen_inst, svgen_connect])
-    svtop = svgen()
-    assert equal_on_nonspace(svtop['quenvelope'].get_module(TemplateEnv()),
+    bind('SVGenFlow', registry('SVGenFlow')[:-1])
+    assert equal_on_nonspace(svgen_module(svgen()['quenvelope']),
                              test_all_pass_ref)

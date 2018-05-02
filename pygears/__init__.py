@@ -4,8 +4,8 @@ import sys
 
 from pygears.core.err import pygears_excepthook, ErrReportLevel
 from pygears.core.type_match import TypeMatchError
-from pygears.registry import PluginBase, bind, registry
-from pygears.core.gear import gear, clear, hier, alternative, GearMatchError
+from pygears.registry import PluginBase, bind, registry, clear
+from pygears.core.gear import gear, hier, alternative, GearMatchError
 from pygears.core.intf import Intf
 from pygears.util.find import find
 

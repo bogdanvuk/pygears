@@ -1,9 +1,9 @@
-from pygears import clear, bind, Intf, gear, hier
+from pygears import clear, bind, Intf, gear, hier, registry
 from pygears.typing import Uint
-from pygears.svgen import svgen_connect, svgen_inst, svgen
-from pygears.svgen.generate import TemplateEnv
+from pygears.svgen import svgen
+from pygears.svgen.generate import svgen_module
 from nose import with_setup
-from . import equal_on_nonspace
+from utils import equal_on_nonspace
 
 test_hier_module_gen_sv_ref = """
 module top(
@@ -88,7 +88,6 @@ def test_hier_module_gen():
     # from pygears.util.print_hier import print_hier
     # print_hier()
 
-    bind('SVGenFlow', [svgen_inst, svgen_connect])
-    svtop = svgen()
-    assert equal_on_nonspace(svtop['top'].get_module(TemplateEnv()),
+    bind('SVGenFlow', registry('SVGenFlow')[:-1])
+    assert equal_on_nonspace(svgen_module(svgen()['top']),
                              test_hier_module_gen_sv_ref)

@@ -3,8 +3,9 @@ from nose import with_setup
 from pygears import Intf, clear, bind, find, registry
 from pygears.typing import Queue, Tuple, Uint, Int
 from pygears.cookbook.rng import rng
-from pygears.svgen.generate import svgen_yield
+from pygears.svgen.generate import svgen_module
 from pygears.svgen import svgen
+from utils import equal_on_nonspace
 
 
 @with_setup(clear)
@@ -59,23 +60,38 @@ def test_cnt_down():
     assert iout.dtype == Queue[Int[4]]
 
 
+test_basic_unsigned_svgen_ref = """
+module rng(
+    input clk,
+    input rst,
+    dti.consumer cfg, // (u4, u2, u2) (8)
+    dti.producer dout // [u4] (5)
+
+);
+
+    sv_rng #(
+                .W_START(4),
+                .W_CNT(2),
+                .W_INCR(2)
+    )
+     sv_rng_i (
+        .clk(clk),
+        .rst(rst),
+        .cfg(cfg),
+        .dout(dout)
+    );
+
+
+
+endmodule
+"""
+
+
 @with_setup(clear)
 def test_basic_unsigned_svgen():
     rng(Intf(Tuple[Uint[4], Uint[2], Uint[2]]))
 
-    # rng_gear = find('/rng/sv_rng')
-
     bind('SVGenFlow', registry('SVGenFlow')[:-1])
 
-    svtop = svgen()
-    for gen, contents in svgen_yield(svtop['rng']):
-        print(contents)
-
-    # assert equal_on_nonspace(svtop['ccat'].get_module(TemplateEnv()),
-    #                          test_general_ref)
-
-    # assert iout.dtype == Queue[Uint[4]]
-    # assert not rng_gear.params['signed']
-
-
-test_basic_unsigned_svgen()
+    assert equal_on_nonspace(
+        svgen_module(svgen()['rng']), test_basic_unsigned_svgen_ref)

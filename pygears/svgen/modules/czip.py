@@ -40,25 +40,37 @@ class SVGenZipCat(SVGenCZipBase):
 
 
 class SVGenZipSyncBase(SVGenCZipBase):
-    def __init__(self, gear, parent):
-        super().__init__(gear, parent)
+    def __init__(self, node):
+        super().__init__(node)
 
-        if 'outsync' not in self.params:
-            self.params['outsync'] = True
+        if 'outsync' not in self.node.params:
+            self.node.params['outsync'] = True
 
-        if self.params['outsync']:
-            SVGenSyncGuard(self, f'{self.sv_module_name}_syncguard',
-                           len(gear.in_ports))
+        if self.node.params['outsync']:
+            self.syncguard = SVGenSyncGuard(f'{self.sv_module_name}_syncguard',
+                                            len(self.node.in_ports))
+        else:
+            self.syncguard = None
+
+    def get_fn(self):
+        if self.syncguard is None:
+            return super().get_fn()
+        else:
+            return super().get_fn(), self.syncguard.get_fn()
 
     def get_module(self, template_env, template_fn):
 
         context = {
-            'outsync': self.params['outsync'],
+            'outsync': self.node.params['outsync'],
             'module_name': self.sv_module_name,
             'intfs': list(self.sv_port_configs())
         }
+        contents = template_env.render_local(__file__, template_fn, context)
 
-        return template_env.render_local(__file__, template_fn, context)
+        if self.syncguard is None:
+            return contents
+        else:
+            return contents, self.syncguard.get_module(template_env)
 
 
 class SVGenZipSync(SVGenZipSyncBase):

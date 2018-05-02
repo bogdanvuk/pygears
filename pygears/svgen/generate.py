@@ -58,11 +58,18 @@ class SVGenGenerateVisitor(HierYielderBase):
         self.svgen_map = registry('SVGenMap')
 
     def RTLNode(self, node):
-        yield from super().HierNode(node)
         svgen = self.svgen_map.get(node, None)
         if svgen is not None:
             contents = svgen.get_module(self.template_env)
             yield svgen, contents
+
+        yield from super().HierNode(node)
+
+
+def svgen_module(node):
+    v = SVGenGenerateVisitor()
+    svgen, contents = next(v.visit(node))
+    return contents
 
 
 def svgen_yield(top):
@@ -76,6 +83,10 @@ def svgen_generate(top, conf):
     v = SVGenGenerateVisitor()
     for svgen, contents in v.visit(top):
         if contents:
-            save_file(svgen.get_fn(), conf['outdir'], contents)
+            if isinstance(contents, (tuple, list)):
+                for fn, c in zip(contents, svgen.get_fn()):
+                    save_file(fn, conf['outdir'], c)
+            else:
+                save_file(svgen.get_fn(), conf['outdir'], contents)
 
     return top

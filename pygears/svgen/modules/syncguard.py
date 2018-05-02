@@ -1,11 +1,8 @@
-from pygears.svgen.node_base import SVGenNodeBase
-
-
-class SVGenSyncGuard(SVGenNodeBase):
-    def __init__(self, parent, name, size):
-        super().__init__(parent, name)
+class SVGenSyncGuard:
+    def __init__(self, name, size):
         self.size = size
         self.intf_ports = []
+        self.basename = name
 
         for i in range(size):
             self.add_port('consumer', f'din{i}')

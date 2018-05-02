@@ -15,11 +15,21 @@ class PluginBase:
 
     @classmethod
     def clear(cls):
+        cls.registry.clear()
+        for subc in cls.subclasses:
+            subc.bind()
+
+    @classmethod
+    def purge(cls):
         cls.subclasses.clear()
         cls.registry.clear()
 
     @classmethod
     def bind(cls):
+        pass
+
+    @classmethod
+    def reset(cls):
         pass
 
 
@@ -29,6 +39,10 @@ def registry(key):
 
 def bind(key, val):
     PluginBase.registry[key] = val
+
+
+def clear():
+    PluginBase.clear()
 
 
 def load_plugin_folder(path):

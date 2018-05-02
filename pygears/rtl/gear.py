@@ -5,6 +5,7 @@ import itertools
 from pygears import registry
 from pygears.core.hier_node import HierNode
 from pygears import registry, PluginBase
+from pygears.core.hier_node import HierVisitorBase
 import inspect
 
 
@@ -21,11 +22,31 @@ def reconnect_port(gear_port, port):
         iout.source(port)
 
 
-class RTLGear(HierNode):
+class RTLGear(RTLNode):
+    def __init__(self, gear, parent):
+        super().__init__(parent, gear.basename, params=gear.params)
+        self.gear = gear
+
+
+def is_gear_instance(node, definition):
+    if isinstance(node, RTLGear):
+        return node.gear.definition is definition
+
+    return False
+
+
+class RTLGearHierVisitor(HierVisitorBase):
+    def RTLGear(self, node):
+        gear = node.gear
+        if hasattr(self, gear.definition.__name__):
+            return getattr(self, gear.definition.__name__)(node)
+
+
+class RTLGearNodeGen(HierNode):
     def __init__(self, gear, parent):
         super().__init__(parent)
         self.gear = gear
-        self.node = RTLNode(parent.node, gear.basename, params=gear.params)
+        self.node = RTLGear(gear, parent.node)
 
         namespace = registry('SVGenModuleNamespace')
 

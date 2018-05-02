@@ -4,8 +4,8 @@ from pygears import Intf, clear, bind, registry
 from pygears.typing import Queue, Uint, Unit
 from pygears.svgen import svgen
 from pygears.common.cart import cart
-from pygears.svgen.generate import TemplateEnv
-from . import equal_on_nonspace
+from pygears.svgen.generate import svgen_module
+from utils import equal_on_nonspace
 
 test_two_queue_inputs_ref = """
 module cart
@@ -62,8 +62,7 @@ def test_two_queue_inputs():
 
     bind('SVGenFlow', registry('SVGenFlow')[:-1])
 
-    svtop = svgen()
-    assert equal_on_nonspace(svtop['cart'].get_module(TemplateEnv()),
+    assert equal_on_nonspace(svgen_module(svgen()['cart']),
                              test_two_queue_inputs_ref)
 
 
@@ -122,8 +121,7 @@ def test_two_inputs_first_queue():
 
     bind('SVGenFlow', registry('SVGenFlow')[:-1])
 
-    svtop = svgen()
-    assert equal_on_nonspace(svtop['cart'].get_module(TemplateEnv()),
+    assert equal_on_nonspace(svgen_module(svgen()['cart']),
                              test_two_inputs_first_queue_ref)
 
 
@@ -182,8 +180,7 @@ def test_two_inputs_second_queue():
 
     bind('SVGenFlow', registry('SVGenFlow')[:-1])
 
-    svtop = svgen()
-    assert equal_on_nonspace(svtop['cart'].get_module(TemplateEnv()),
+    assert equal_on_nonspace(svgen_module(svgen()['cart']),
                              test_two_inputs_second_queue_ref)
 
 
