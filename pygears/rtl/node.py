@@ -1,0 +1,104 @@
+from pygears.core.hier_node import NamedHierNode
+from pygears.rtl.port import InPort, OutPort
+
+
+def is_in_subbranch(root, node):
+    root_path = root.name.split('/')
+    node_path = node.name.split('/')
+
+    if len(root_path) > len(node_path):
+        return False
+
+    for r, n in zip(root_path, node_path):
+        if r != n:
+            return False
+    else:
+        return True
+
+
+class RTLNode(NamedHierNode):
+    def __init__(self, parent, name, params={}):
+        super().__init__(name, parent)
+        self.in_ports = []
+        self.out_ports = []
+        self.params = params.copy()
+
+    def add_in_port(self, basename, producer=None, consumer=None, dtype=None):
+        self.in_ports.append(
+            InPort(
+                svmod=self,
+                index=len(self.in_ports),
+                basename=basename,
+                producer=producer,
+                consumer=consumer,
+                dtype=dtype))
+
+    def add_out_port(self, basename, producer=None, consumer=None, dtype=None):
+        self.out_ports.append(
+            OutPort(
+                svmod=self,
+                index=len(self.out_ports),
+                basename=basename,
+                producer=producer,
+                consumer=consumer,
+                dtype=dtype))
+
+    def bypass(self):
+        if not (len(self.in_ports) == 1 and len(self.out_ports) == 1):
+            raise Exception(
+                'Can only bypass single input, single output modules')
+
+        iin = self.in_ports[0].producer
+        iout = self.out_ports[0].consumer
+        self.remove()
+
+        for port in iout.consumers:
+            iout.disconnect(port)
+            iin.connect(port)
+            iout.remove()
+
+    def remove(self):
+        for p in self.in_ports:
+            if p.producer is not None:
+                p.producer.disconnect(p)
+
+        for p in self.out_ports:
+            p.consumer.producer = None
+
+        super().remove()
+
+    @property
+    def sv_module_name(self):
+        trimmed_name = self.name
+        if trimmed_name.startswith('/'):
+            trimmed_name = trimmed_name[1:]
+
+        return trimmed_name.replace('/', '_')
+
+    @property
+    def consumers(self):
+        consumers = []
+        for p in self.out_ports:
+            iout = p.consumer
+            consumers.extend(iout.consumers)
+
+        return consumers
+
+    def channel_ports(self):
+        # If this is a top level module, no ports need to be output further
+        if self.parent is None:
+            return
+
+        for p in self.in_ports():
+            if p['intf'].parent != self.parent and (
+                    not self.parent.is_descendent(p['intf'].parent)):
+                self.parent.in_port_make(p, self)
+
+        for p in self.out_ports():
+            consumers_at_same_level_or_sublevel = [
+                is_in_subbranch(p['intf'].parent, c[0])
+                for c in p['intf'].consumers
+            ]
+            if not all(consumers_at_same_level_or_sublevel) or (
+                    not p['intf'].consumers):
+                self.parent.out_port_make(p, self)

@@ -1,10 +1,10 @@
-from pygears.svgen.module_base import SVGenGearBase
+from pygears.svgen.svmod import SVModuleGen
 from pygears.typing.uint import Uint
 from pygears.svgen.inst import SVGenInstPlugin
 from pygears.common import quenvelope
 
 
-class SVGenQuEnvelope(SVGenGearBase):
+class SVGenQuEnvelope(SVModuleGen):
     def get_sv_port_config(self, modport, type_, name):
         cfg = super().get_sv_port_config(modport, type_, name)
 

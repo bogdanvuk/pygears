@@ -13,8 +13,8 @@ module rnggen
    (
     input clk,
     input rst,
-    dti_s_if.consumer cfg,
-    dti_s_if.producer dout
+    dti.consumer cfg,
+    dti.producer dout
     );
 
    typedef struct packed
@@ -41,9 +41,8 @@ module rnggen
    assign cfg_s = cfg.data;
    assign dout.data = dout_s;
 
-   assign dout.dvalid = cfg.dvalid;
-   assign cfg.dready = eot_internal_cond & handshake;
-   assign dout.eot = 0;
+   assign dout.valid = cfg.valid;
+   assign cfg.ready = eot_internal_cond & handshake;
 
    assign dout_s.eot = eot_internal_cond;
 
@@ -76,7 +75,7 @@ module rnggen
    else
      assign eot_internal_cond = (cnt_next == cfg_s.cnt);
 
-   assign handshake = dout.dready & cfg.dvalid;
+   assign handshake = dout.ready & cfg.valid;
 
    always_ff@(posedge clk) begin
       if (rst | (eot_internal_cond & handshake)) begin
@@ -101,7 +100,7 @@ module rnggen
    if (CNT_ONE_MORE == 0) begin
       asrt_nonzero_cnt : assert property (
                                           @(posedge clk) disable iff(rst)
-                                          cfg.dvalid |-> cfg_s.cnt !== 0)
+                                          cfg.valid |-> cfg_s.cnt !== 0)
         else $error("Empty list not supported when CNT_ONE_MORE == 0.");
    end
 

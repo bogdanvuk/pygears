@@ -1,9 +1,9 @@
 from pygears.svgen.inst import SVGenInstPlugin
 from pygears.common.ccat import ccat
-from pygears.svgen.module_base import SVGenGearBase
+from pygears.svgen.svmod import SVModuleGen
 
 
-class SVGenCCat(SVGenGearBase):
+class SVGenCCat(SVModuleGen):
     def get_module(self, template_env):
         context = {
             'module_name': self.sv_module_name,

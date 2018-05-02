@@ -2,6 +2,7 @@ from pygears.typing.base import EnumerableGenericMeta, GenericMeta
 from pygears.typing.tuple import Tuple
 from pygears.typing.bool import Bool
 
+
 class IntegerMeta(EnumerableGenericMeta):
     def __str__(self):
         if isinstance(self.args[0], int):
@@ -68,8 +69,20 @@ class IntegerMeta(EnumerableGenericMeta):
 
         return self.base[width]
 
+
 class Integer(metaclass=IntegerMeta):
-    pass
+    def __init__(self, val):
+        self.val = int(val)
+
+    def __str__(self):
+        return f'{str(type(self))}({self.val})'
+
+    def __repr__(self):
+        return f'{repr(type(self))}({self.val})'
+
+    def __int__(self):
+        return self.val
+
 
 class IntMeta(IntegerMeta):
     def __str__(self):
@@ -81,13 +94,9 @@ class IntMeta(IntegerMeta):
 
 class Int(Integer, metaclass=IntMeta):
     __parameters__ = ['N']
-    pass
 
 
 class UintMeta(IntegerMeta):
-    def __call__(self, val):
-        return val
-
     def __str__(self):
         if not self.args:
             return f'u'
@@ -99,5 +108,3 @@ class UintMeta(IntegerMeta):
 
 class Uint(Integer, metaclass=UintMeta):
     __parameters__ = ['N']
-    pass
-

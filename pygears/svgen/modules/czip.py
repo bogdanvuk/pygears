@@ -1,11 +1,11 @@
-from pygears.svgen.module_base import SVGenGearBase
+from pygears.svgen.svmod import SVModuleGen
 from pygears.typing.queue import Queue
 from pygears.svgen.inst import SVGenInstPlugin
 from pygears.common.czip import zip_sync, zip_cat
 from .syncguard import SVGenSyncGuard
 
 
-class SVGenCZipBase(SVGenGearBase):
+class SVGenCZipBase(SVModuleGen):
     def get_sv_port_config(self, modport, type_, name):
         cfg = super().get_sv_port_config(modport, type_, name)
 

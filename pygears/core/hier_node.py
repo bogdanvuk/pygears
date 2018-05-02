@@ -2,6 +2,21 @@ import string
 from collections import Counter
 
 
+class HierYielderBase:
+    def visit(self, node):
+        import inspect
+        for base_class in inspect.getmro(node.__class__):
+            if hasattr(self, base_class.__name__):
+                yield from getattr(self, base_class.__name__)(node)
+
+    def HierNode(self, node):
+        if hasattr(node, "child"):
+            # Iterate over a copy in case visiting removes or adds children
+            # from the parent
+            for c in list(node.child):
+                yield from self.visit(c)
+
+
 class HierVisitorBase:
     def visit(self, node):
         import inspect

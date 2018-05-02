@@ -18,6 +18,6 @@ import pygears.typing_common
 sys.excepthook = pygears_excepthook
 
 __all__ = [
-    'registry', 'typeof', 'ErrReportLevel', 'bind', 'gear', 'hier', 'clear',
+    'registry', 'ErrReportLevel', 'bind', 'gear', 'hier', 'clear',
     'Intf', 'PluginBase', 'find'
 ]

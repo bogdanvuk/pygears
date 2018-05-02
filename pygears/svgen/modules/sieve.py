@@ -2,7 +2,7 @@ import itertools
 
 from pygears.common import sieve
 from pygears.svgen.inst import SVGenInstPlugin
-from pygears.svgen.module_base import SVGenGearBase
+from pygears.svgen.svmod import SVModuleGen
 from functools import partial
 from pygears.svgen.svgen import SVGenPlugin, svgen_visitor
 from pygears.core.hier_node import HierVisitorBase
@@ -25,7 +25,7 @@ def index_to_sv_slice(dtype, index):
     return f'{high_pos}:{low_pos}'
 
 
-class SVGenSieve(SVGenGearBase):
+class SVGenSieve(SVModuleGen):
     def __init__(self, gear, parent):
         super().__init__(gear, parent)
         self.pre_sieves = []

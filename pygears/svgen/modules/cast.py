@@ -1,14 +1,14 @@
 from pygears.typing.uint import IntMeta, UintMeta
 from pygears.typing import Queue
-from pygears.svgen.inst import SVGenInstPlugin
 from pygears.svgen.svgen import SVGenPlugin, svgen_visitor
-from pygears.svgen.connect import svgen_connect
-from pygears.svgen.module_base import SVGenGearBase
+from pygears.rtl.connect import rtl_connect
+from pygears.rtl.inst import RTLNodeInstPlugin
+from pygears.svgen.svmod import SVModuleGen
 from pygears.common import cast
 from pygears.core.hier_node import HierVisitorBase
 
 
-class SVGenCast(SVGenGearBase):
+class SVGenCast(SVModuleGen):
     # def channel_ports(self):
     #     super().channel_ports()
     #     t_in = self.ports[0]['type']
@@ -63,10 +63,10 @@ class RemoveEqualReprCastVisitor(HierVisitorBase):
             svmod.bypass()
 
 
-class SVGenSievePlugin(SVGenInstPlugin, SVGenPlugin):
+class SVGenSievePlugin(RTLNodeInstPlugin, SVGenPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['SVGenModuleNamespace'][cast] = SVGenCast
+        cls.registry['RTLNodeNamespace'][cast] = SVGenCast
         cls.registry['SVGenFlow'].insert(
-            cls.registry['SVGenFlow'].index(svgen_connect) + 1,
+            cls.registry['SVGenFlow'].index(rtl_connect) + 1,
             RemoveEqualReprCastVisitor)

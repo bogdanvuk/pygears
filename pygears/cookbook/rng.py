@@ -10,7 +10,7 @@ def rng_out_type(cfg, cnt_steps):
         return max(cfg[0], cfg[1])
 
 
-@gear
+@gear(svgen={'svmod_fn': 'rng.sv'})
 def sv_rng(cfg: Tuple[Integer['w_start'], Integer['w_cnt'], Integer['w_incr']],
            *,
            signed=b'typeof(cfg[0], Int)',

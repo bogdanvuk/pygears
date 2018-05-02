@@ -1,7 +1,8 @@
 from pygears.registry import PluginBase, bind, registry
-from .inst import svgen_inst
-from .connect import svgen_connect
+from pygears.rtl.inst import rtl_inst
+from pygears.rtl.connect import rtl_connect
 from .generate import svgen_generate
+from .inst import svgen_inst
 
 
 def svgen(top=None, **conf):
@@ -30,4 +31,6 @@ class SVGenPlugin(PluginBase):
     @classmethod
     def bind(cls):
         cls.registry['SVGenConf'] = {}
-        cls.registry['SVGenFlow'] = [svgen_inst, svgen_connect, svgen_generate]
+        cls.registry['SVGenFlow'] = [
+            rtl_inst, rtl_connect, svgen_inst, svgen_generate
+        ]

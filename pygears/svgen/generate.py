@@ -1,7 +1,8 @@
-from pygears.core.hier_node import HierVisitorBase
+from pygears.core.hier_node import HierVisitorBase, HierYielderBase
 import os
 import jinja2
 from pygears.util.fileio import save_file
+from pygears import registry
 
 
 def format_list(list_, pattern):
@@ -51,19 +52,30 @@ class TemplateEnv:
         return self.load(tmplt_dir, tmplt_fn).render(context)
 
 
-class SVGenGenerateVisitor(HierVisitorBase):
-    def __init__(self, outdir):
-        self.outdir = outdir
+class SVGenGenerateVisitor(HierYielderBase):
+    def __init__(self):
         self.template_env = TemplateEnv()
+        self.svgen_map = registry('SVGenMap')
 
-    def SVGenNodeBase(self, module):
-        contents = module.get_module(self.template_env)
+    def RTLNode(self, node):
+        yield from super().HierNode(node)
+        svgen = self.svgen_map.get(node, None)
+        if svgen is not None:
+            contents = svgen.get_module(self.template_env)
+            yield svgen, contents
+
+
+def svgen_yield(top):
+    v = SVGenGenerateVisitor()
+    for svgen, contents in v.visit(top):
         if contents:
-            save_file(module.get_fn(), self.outdir, contents)
+            yield svgen, contents
 
 
 def svgen_generate(top, conf):
-    v = SVGenGenerateVisitor(conf['outdir'])
-    v.visit(top)
+    v = SVGenGenerateVisitor()
+    for svgen, contents in v.visit(top):
+        if contents:
+            save_file(svgen.get_fn(), conf['outdir'], contents)
 
     return top
