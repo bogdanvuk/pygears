@@ -25,9 +25,10 @@ def rng(cfg: Tuple[Integer['w_start'], Integer['w_cnt'], Integer['w_incr']],
         *,
         cnt_steps=False,
         incr_steps=False):
+
     signed = any([typeof(d, Int) for d in cfg.dtype])
     if signed:
-        cfg = cfg | fmap(f=(Int, Int, Int))
+        cfg = cfg | fmap(f=(Int,)*len(cfg.dtype))
 
     return cfg | sv_rng(signed=signed)
 

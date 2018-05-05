@@ -22,31 +22,47 @@ class SVModuleGen:
     def __init__(self, node):
         self.node = node
         self.svgen_map = registry("SVGenMap")
+        self._sv_module_name = None
+        self.sv_module_path = None
+        self.sv_params = {}
+
+        try:
+            self.sv_module_path, self._sv_module_name, self.sv_params = self.get_sv_module_info()
+        except FileNotFoundError:
+            pass
 
     @property
     def sv_module_name(self):
-        return self.node.basename
+        return self._sv_module_name or self.node.basename
+
+    @property
+    def sv_inst_name(self):
+        return f'{self.node.basename}_i'
+
+    @property
+    def sv_file_name(self):
+        svgen_params = self.node.params.get('svgen', {})
+        return svgen_params.get('svmod_fn', self.sv_module_name + ".sv")
+
+    def get_sv_module_info(self):
+        svmod_fn = self.sv_file_name
+        if svmod_fn:
+            svmod_path = find_in_dirs(svmod_fn,
+                                      registry('SVGenSystemVerilogPaths'))
+            if svmod_path:
+                with open(svmod_path, 'r') as f:
+                    name, _, _, svparams = parse(f.read())
+
+                return svmod_path, name, svparams
+
+        raise FileNotFoundError
 
     def get_params(self):
-        svgen_params = self.node.params.get('svgen', {})
-        svmod_fn = svgen_params.get('svmod_fn', self.sv_module_name)
-
-        if svmod_fn:
-            svmod_fn = find_in_dirs(svmod_fn,
-                                    registry('SVGenSystemVerilogPaths'))
-
-        if svmod_fn:
-            with open(svmod_fn, 'r') as f:
-                name, _, _, sv_params = parse(f.read())
-
-        else:
-            sv_params = {}
-
         return {
             k.upper(): int(v)
             for k, v in self.node.params.items()
-            if (k.upper() in sv_params) and (
-                int(v) != int(sv_params[k.upper()]['val']))
+            if (k.upper() in self.sv_params) and (
+                int(v) != int(self.sv_params[k.upper()]['val']))
         }
 
     def sv_port_configs(self):
@@ -66,9 +82,6 @@ class SVModuleGen:
             'width': int(type_),
             'struct': SVStruct(name, type_)
         }
-
-    def get_fn(self):
-        return self.sv_module_name + ".sv"
 
     def get_synth_wrap(self):
 
@@ -110,7 +123,7 @@ class SVModuleGen:
 
         context = {
             'module_name': self.sv_module_name,
-            'inst_name': self.node.basename + "_i",
+            'inst_name': self.sv_inst_name,
             'param_map': param_map,
             'port_map': OrderedDict(in_port_map + out_port_map)
         }
@@ -124,6 +137,6 @@ class SVGenSVModPlugin(SVGenInstPlugin):
         cls.registry['SVGenModuleNamespace']['Gear'] = SVModuleGen
 
         cls.registry['SVGenSystemVerilogPaths'].append(
-            os.path.join(ROOT_DIR, 'svlib'))
+            os.path.join(ROOT_DIR, '..', 'svlib'))
         cls.registry['SVGenSystemVerilogPaths'].append(
             os.path.join(ROOT_DIR, 'cookbook', 'svlib'))

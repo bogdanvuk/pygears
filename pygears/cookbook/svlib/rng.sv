@@ -1,6 +1,6 @@
 `define `maybe_signed(val) (SIGNED ? signed'(val) : val)
 
-module rnggen
+module rng
   #(
     parameter W_INCR = 16,
     parameter W_CNT  = 16,

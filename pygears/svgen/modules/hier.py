@@ -9,6 +9,13 @@ from pygears import registry
 
 
 class SVGenHier(SVModuleGen):
+    def __init__(self, node):
+        super().__init__(node)
+        # If a module with same is discovered
+        if self.sv_module_path:
+            self.sv_module_path = None
+            self._sv_module_name = self.hier_sv_path_name + '_hier'
+
     def local_interfaces(self):
         for child in self.node.child:
             if isinstance(child, RTLIntf):
@@ -18,6 +25,19 @@ class SVGenHier(SVModuleGen):
         for child in self.node.child:
             if isinstance(child, RTLNode):
                 yield child
+
+    @property
+    def hier_sv_path_name(self):
+        trimmed_name = self.node.name
+
+        if trimmed_name.startswith('/'):
+            trimmed_name = trimmed_name[1:]
+
+        return trimmed_name.replace('/', '_')
+
+    @property
+    def sv_module_name(self):
+        return self._sv_module_name or self.hier_sv_path_name
 
     def get_module(self, template_env):
 
