@@ -1,3 +1,5 @@
+import os
+
 from nose import with_setup
 
 from pygears import Intf, clear, bind, find, registry
@@ -5,7 +7,7 @@ from pygears.typing import Queue, Tuple, Uint, Int
 from pygears.cookbook.rng import rng
 from pygears.svgen.generate import svgen_module
 from pygears.svgen import svgen
-from utils import equal_on_nonspace, prepare_result_dir
+from utils import prepare_result_dir, svgen_test
 
 
 @with_setup(clear)
@@ -88,25 +90,15 @@ endmodule
 
 
 @with_setup(clear)
+@svgen_test(['rng_hier.sv'])
 def test_basic_unsigned_svgen():
     rng(Intf(Tuple[Uint[4], Uint[2], Uint[2]]))
 
-    # bind('SVGenFlow', registry('SVGenFlow')[:-1])
-
-    outdir = prepare_result_dir()
-    svgen(outdir=outdir)
-
-    # svgen_module(svgen()['rng'])
-
-    # assert equal_on_nonspace(
-    #     svgen_module(svgen()['rng']), test_basic_unsigned_svgen_ref)
-
 
 @with_setup(clear)
+@svgen_test(['rng_rng.sv', 'ccat.sv', 'rng_hier.sv'])
 def test_cnt_svgen():
     rng(8)
 
-    outdir = prepare_result_dir()
-    svgen(outdir=outdir)
 
-test_cnt_svgen()
+test_basic_unsigned_svgen()
