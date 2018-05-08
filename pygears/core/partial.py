@@ -1,5 +1,22 @@
 import functools
 import inspect
+import sys
+import traceback
+
+
+class MultiAlternativeError(Exception):
+    def __init__(self, errors):
+        self.errors = errors
+
+    def __str__(self):
+        ret = ['\n']
+        for func, e, info in self.errors:
+            uwrp = inspect.unwrap(func, stop=(lambda f: hasattr(f, "__signature__")))
+            fn = inspect.getfile(uwrp)
+            _, ln = inspect.getsourcelines(uwrp)
+            ret.append(f'\nFile "{fn}", line {ln}, func {uwrp.__name__}()\n')
+            ret.extend(traceback.format_exception(*info))
+        return str(''.join(ret))
 
 
 def argspec_unwrap(func):
@@ -76,13 +93,29 @@ operates.
     '''
 
     def __new__(cls, func, *args, **kwds):
-        kwd_intfs, kwd_params = extract_arg_kwds(kwds, func)
-        args_comb = combine_arg_kwds(args, kwd_intfs, func)
+        alternatives = getattr(func, 'alternatives', [])
+        alternatives.insert(0, func)
+        errors = []
 
-        if all_args_specified(args_comb, func):
-            return func(*args_comb, **kwd_params)
+        for func in alternatives:
+            try:
+                kwd_intfs, kwd_params = extract_arg_kwds(kwds, func)
+                args_comb = combine_arg_kwds(args, kwd_intfs, func)
+
+                if all_args_specified(args_comb, func):
+                    return func(*args_comb, **kwd_params)
+            except Exception as e:
+                errors.append((func, e, sys.exc_info()))
         else:
-            return super().__new__(Partial)
+            # If no alternatives, just re-raise an error
+            if (len(alternatives) == 1) and (len(errors) == 1):
+                raise errors[0][1]
+            elif len(errors) == len(alternatives):
+                raise MultiAlternativeError(errors)
+            else:
+                # If some alternative can handle more arguments, try to wait
+                # for it
+                return super().__new__(Partial)
 
     def __init__(self, func, *args, **kwds):
         functools.update_wrapper(self, func)
@@ -117,7 +150,6 @@ each of the function invocations.
 
     def __init__(self, func):
         self.func = func
-        self.func.definition = self
 
         functools.update_wrapper(self, func)
 

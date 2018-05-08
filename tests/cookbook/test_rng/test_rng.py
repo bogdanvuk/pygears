@@ -62,31 +62,14 @@ def test_cnt_down():
     assert iout.dtype == Queue[Int[4]]
 
 
-test_basic_unsigned_svgen_ref = """
-module rng(
-    input clk,
-    input rst,
-    dti.consumer cfg, // (u4, u2, u2) (8)
-    dti.producer dout // [u4] (5)
-
-);
-
-    sv_rng #(
-                .W_START(4),
-                .W_CNT(2),
-                .W_INCR(2)
-    )
-     sv_rng_i (
-        .clk(clk),
-        .rst(rst),
-        .cfg(cfg),
-        .dout(dout)
-    );
+@with_setup(clear)
+def test_multi_lvl():
+    iout = rng((1, 2, 3), lvl=2)
+    print(iout.dtype)
 
 
-
-endmodule
-"""
+bind('ErrReportLevel', 0)
+test_multi_lvl()
 
 
 @with_setup(clear)
@@ -101,4 +84,26 @@ def test_cnt_svgen():
     rng(8)
 
 
-test_basic_unsigned_svgen()
+# def proba(din, *, dout, bla=2, **kwargs):
+#     print("Here")
+#     print(kwargs)
+
+
+# def probac(din, *, dout, bla=2, **kwargs):
+#     print(kwargs)
+
+
+# from funcutils import FunctionBuilder
+# fb = FunctionBuilder.from_func(proba)
+# fb.kwonlyargs.append('proba1')
+# # fb.body = 'proba(din, dout=dout, bla=bla, proba1=proba1)'
+# # fb.body = 'probac(din, dout=dout, bla=bla, proba1=proba1)'
+# # fb.body = 'print(globals())'
+# fb.varkw = None
+# f = fb.get_func()
+# f(1, dout=2, proba1=7)
+# print(f.__name__)
+
+# from pygears.core.partial import argspec_unwrap
+# ret = argspec_unwrap(f)
+# print(ret.kwonlyargs)

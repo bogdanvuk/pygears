@@ -25,8 +25,8 @@ def type_is_specified(t):
 
 def resolve_param(val, match, namespace):
 
-    if (isinstance(val, GenericMeta)
-            or is_type_iterable(val)) and not type_is_specified(val):
+    if ((isinstance(val, GenericMeta) or is_type_iterable(val))
+            and (not type_is_specified(val)) and (not val.is_generic())):
         new_p = param_subs(val, match, namespace)
         if repr(new_p) != repr(val):
             return True, new_p

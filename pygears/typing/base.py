@@ -71,6 +71,9 @@ class GenericMeta(TypingMeta):
                 }
             return param_subs(bases[0], tmpl_map, {})
 
+    def is_generic(self):
+        return len(self.args) == 0
+
     def is_specified(self):
         if hasattr(self, '__parameters__'):
             if len(self.args) != len(self.__parameters__):
