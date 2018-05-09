@@ -8,7 +8,7 @@ class Visitor(HierVisitorBase):
         self.params = params
         self.fullname = fullname
 
-    def GearBase(self, node):
+    def Gear(self, node):
         self.print_module_signature(node)
         self.indent += "    "
         super().HierNode(node)

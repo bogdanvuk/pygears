@@ -44,6 +44,13 @@ class HierNode:
         self.child.append(module)
         module.parent = self
 
+    def clear(self):
+        for c in self.child.copy():
+            if hasattr(c, 'remove'):
+                c.remove()
+
+        self.child = []
+
     def remove(self):
         if self.parent:
             self.parent.child.remove(self)

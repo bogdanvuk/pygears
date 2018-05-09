@@ -1,4 +1,4 @@
-from pygears import gear, hier, alternative
+from pygears import gear, alternative
 from pygears.typing import Queue
 from pygears.typing_common.flatten import flatten as type_flatten
 
@@ -10,6 +10,6 @@ def flatten(din: Queue['tdin', 'din_lvl'], *, lvl=1,
 
 
 @alternative(flatten)
-@hier(enablement=b'issubclass(din, Tuple)')
+@gear(enablement=b'issubclass(din, Tuple)')
 def flatten_tuple(din, *, lvl=1):
     return din | type_flatten(din.dtype, lvl)

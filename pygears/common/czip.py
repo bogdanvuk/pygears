@@ -1,5 +1,5 @@
 from pygears.typing import Queue, Tuple
-from pygears.core.gear import gear, hier, alternative
+from pygears.core.gear import gear, alternative
 from pygears.common.ccat import ccat
 from pygears.common.permute import permuted_apply
 from functools import reduce

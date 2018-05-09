@@ -1,6 +1,6 @@
 from nose import with_setup
 
-from pygears import Intf, clear, gear, hier, registry
+from pygears import Intf, clear, gear, registry
 from pygears.typing import Queue, Tuple, Uint
 
 
@@ -41,7 +41,7 @@ def test_hier():
     def func2(arg1) -> Uint[2]:
         pass
 
-    @hier
+    @gear
     def func_hier(arg1, arg2, arg3):
         return func1(arg1, arg2, arg3) | func2
 
@@ -74,15 +74,15 @@ def test_hier_hierarchy():
     def fgear(arg1) -> Uint[2]:
         pass
 
-    @hier
+    @gear
     def fhier3(arg1):
         return arg1 | fgear
 
-    @hier
+    @gear
     def fhier2(arg1):
         return arg1 | fhier3
 
-    @hier
+    @gear
     def fhier1(arg1):
         return arg1 | fhier2
 

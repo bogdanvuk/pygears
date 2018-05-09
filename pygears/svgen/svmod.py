@@ -1,5 +1,8 @@
 from collections import OrderedDict
 
+from pygears.svgen.generate import svgen_generate
+from pygears.core.hier_node import HierVisitorBase
+from pygears.svgen.svgen import svgen_visitor
 from pygears.svgen.inst import SVGenInstPlugin
 from pygears.svgen.svparse import parse
 from pygears.definitions import ROOT_DIR
@@ -31,9 +34,24 @@ class SVModuleGen:
         except FileNotFoundError:
             pass
 
+        if self.sv_module_path and self.is_hierarchical:
+            self.sv_module_path = None
+            self._sv_module_name = self.hier_sv_path_name + '_hier'
+
+    @property
+    def is_generated(self):
+        return self.is_hierarchical
+
+    @property
+    def is_hierarchical(self):
+        return self.node.is_hierarchical
+
     @property
     def sv_module_name(self):
-        return self._sv_module_name or self.node.basename
+        if self.is_generated:
+            return self._sv_module_name or self.hier_sv_path_name
+        else:
+            return self._sv_module_name or self.node.basename
 
     @property
     def sv_inst_name(self):
@@ -106,8 +124,40 @@ class SVModuleGen:
             i = intf.consumers.index(port)
             return f'{svgen_intf.outname}[{i}]'
 
+    @property
+    def hier_sv_path_name(self):
+        trimmed_name = self.node.name
+
+        if trimmed_name.startswith('/'):
+            trimmed_name = trimmed_name[1:]
+
+        return trimmed_name.replace('/', '_')
+
     def get_module(self, template_env):
-        pass
+        if self.is_hierarchical:
+            self.svgen_map = registry('SVGenMap')
+
+            context = {
+                'module_name': self.sv_module_name,
+                'generics': [],
+                'intfs': list(self.sv_port_configs()),
+                'inst': []
+            }
+
+            for child in self.node.local_interfaces():
+                svgen = self.svgen_map[child]
+                contents = svgen.get_inst(template_env)
+                if contents:
+                    context['inst'].append(contents)
+
+            for child in self.node.local_modules():
+                svgen = self.svgen_map[child]
+                if hasattr(svgen, 'get_inst'):
+                    contents = svgen.get_inst(template_env)
+                    if contents:
+                        context['inst'].append(contents)
+
+            return template_env.render_local(__file__, "hier_module.j2", context)
 
     def update_port_name(self, port, name):
         port['name'] = name
@@ -131,6 +181,15 @@ class SVModuleGen:
         return template_env.snippets.module_inst(**context)
 
 
+@svgen_visitor
+class RemoveEqualReprCastVisitor(HierVisitorBase):
+    def SVGenHier(self, svmod):
+        super().HierNode(svmod)
+
+        if all([isinstance(c, RTLIntf) for c in svmod.child]):
+            svmod.bypass()
+
+
 class SVGenSVModPlugin(SVGenInstPlugin):
     @classmethod
     def bind(cls):
@@ -140,3 +199,7 @@ class SVGenSVModPlugin(SVGenInstPlugin):
             os.path.join(ROOT_DIR, '..', 'svlib'))
         cls.registry['SVGenSystemVerilogPaths'].append(
             os.path.join(ROOT_DIR, 'cookbook', 'svlib'))
+
+        cls.registry['SVGenFlow'].insert(
+            cls.registry['SVGenFlow'].index(svgen_generate),
+            RemoveEqualReprCastVisitor)

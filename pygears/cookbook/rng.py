@@ -1,5 +1,5 @@
 from pygears.typing import Integer, Tuple, Queue, Int, typeof
-from pygears import gear, hier, alternative
+from pygears import gear, alternative
 from pygears.common import ccat, fmap
 
 def rng_out_type(cfg, cnt_steps):
@@ -19,7 +19,7 @@ def sv_rng(cfg: Tuple[Integer['w_start'], Integer['w_cnt'], Integer['w_incr']],
     pass
 
 
-@hier
+@gear
 def rng(cfg: Tuple[Integer['w_start'], Integer['w_cnt'], Integer['w_incr']],
         *,
         cnt_steps=False,
@@ -33,13 +33,13 @@ def rng(cfg: Tuple[Integer['w_start'], Integer['w_cnt'], Integer['w_incr']],
 
 
 @alternative(rng)
-@hier
+@gear
 def rng_cnt_only(cfg: Integer['w_cnt']):
     return ccat(0, cfg, 1) | rng
 
 
 @alternative(rng)
-@hier(enablement=b'len(cfg) == lvl')
+@gear(enablement=b'len(cfg) == lvl')
 def rng_multi_lvl(cfg: Tuple, *, lvl=1):
     print(cfg.dtype)
     return rng(cfg)

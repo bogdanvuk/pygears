@@ -1,5 +1,6 @@
 from pygears.core.hier_node import NamedHierNode
 from pygears.rtl.port import InPort, OutPort
+from pygears.rtl.intf import RTLIntf
 
 
 def is_in_subbranch(root, node):
@@ -68,12 +69,18 @@ class RTLNode(NamedHierNode):
         super().remove()
 
     @property
-    def sv_module_name(self):
-        trimmed_name = self.name
-        if trimmed_name.startswith('/'):
-            trimmed_name = trimmed_name[1:]
+    def is_hierarchical(self):
+        return any([isinstance(c, RTLNode) for c in self.child])
 
-        return trimmed_name.replace('/', '_')
+    def local_interfaces(self):
+        for child in self.child:
+            if isinstance(child, RTLIntf):
+                yield child
+
+    def local_modules(self):
+        for child in self.child:
+            if isinstance(child, RTLNode):
+                yield child
 
     @property
     def consumers(self):

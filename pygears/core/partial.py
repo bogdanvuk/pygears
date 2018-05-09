@@ -22,8 +22,9 @@ class MultiAlternativeError(Exception):
 
 
 def argspec_unwrap(func):
-    uwrp = inspect.unwrap(func, stop=(lambda f: hasattr(f, "__signature__")))
-    return inspect.getfullargspec(uwrp)
+    # uwrp = inspect.unwrap(func, stop=(lambda f: hasattr(f, "__signature__")))
+    # return inspect.getfullargspec(uwrp)
+    return inspect.getfullargspec(func)
 
 
 def extract_arg_kwds(kwds, func):
@@ -116,6 +117,9 @@ operates.
                 args_comb = combine_arg_kwds(args, kwd_intfs, func)
 
                 if all_args_specified(args_comb, func):
+                    argspec = argspec_unwrap(func)
+                    if '__base__' in argspec.kwonlyargs:
+                        kwd_params['__base__'] = self.func
                     return func(*args_comb, **kwd_params)
             except Exception as e:
                 # If no alternatives, just re-raise an error

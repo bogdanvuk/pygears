@@ -85,6 +85,8 @@ def test_basic_unsigned_svgen():
 def test_cnt_svgen():
     rng(8)
 
+# bind('ErrReportLevel', 0)
+# test_basic_unsigned_svgen()
 
 # def proba(din, *, dout, bla=2, **kwargs):
 #     print("Here")

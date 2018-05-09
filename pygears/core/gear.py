@@ -55,20 +55,39 @@ def check_arg_specified(args):
     return tuple(args_res)
 
 
-class GearBase(NamedHierNode):
-    def __new__(cls, func, meta_kwds, *args, name=None, **kwds):
+class create_hier:
+    def __init__(self, gear):
+        self.gear = gear
+
+    def __enter__(self):
+        bind('CurrentHier', self.gear)
+        return self
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        bind('CurrentHier', self.gear.parent)
+        if exception_type is not None:
+            self.gear.clear()
+
+
+class Gear(NamedHierNode):
+    def __new__(cls, func, meta_kwds, *args, name=None, __base__=None, **kwds):
 
         if name is None:
-            name = func.__name__
+            if __base__ is None:
+                name = func.__name__
+            else:
+                name = __base__.__name__
 
         kwds_comb = meta_kwds.copy()
         kwds_comb.update(kwds)
 
         gear = super().__new__(cls)
-        gear.__init__(func, *args, name=name, **kwds_comb)
-        enablement = gear.params.pop('enablement')
+        try:
+            gear.__init__(func, *args, name=name, **kwds_comb)
+        except Exception as e:
+            gear.remove()
 
-        if not enablement:
+        if not gear.params.pop('enablement'):
             gear.remove()
             raise TypeMatchError(
                 f'Enablement condition failed: {meta_kwds["enablement"]}')
@@ -261,18 +280,20 @@ class GearBase(NamedHierNode):
             return None
 
     def resolve_func(self):
-        bind('CurrentHier', self)
-        func_args = [Intf(a.dtype) for a in self.args]
-        for arg, port in zip(func_args, self.in_ports):
-            arg.source(port)
+        with create_hier(self):
+            func_args = [Intf(a.dtype) for a in self.args]
+            for arg, port in zip(func_args, self.in_ports):
+                arg.source(port)
 
-        func_kwds = {
-            k: self.params[k]
-            for k in self.kwdnames if k in self.params
-        }
+            func_kwds = {
+                k: self.params[k]
+                for k in self.kwdnames if k in self.params
+            }
 
-        ret = self.func(*func_args, **func_kwds)
-        bind('CurrentHier', self.parent)
+            ret = self.func(*func_args, **func_kwds)
+
+        if not any([isinstance(c, Gear) for c in self.child]):
+            self.clear()
 
         if ret is None:
             ret = tuple()
@@ -280,29 +301,6 @@ class GearBase(NamedHierNode):
             ret = (ret, )
 
         return ret
-
-
-class Gear(GearBase):
-    pass
-
-
-class Hier(GearBase):
-    pass
-
-
-# def func_module(cls, func, **meta_kwds):
-#     @wraps(func)
-#     def wrapper(*args, **kwds):
-#         wrapper.meta_kwds['definition'] = wrapper.definition
-#         return cls(func, meta_kwds, *args, **kwds)
-
-#     # Add defaults from GearMetaParams registry
-#     for k, v in registry('GearMetaParams').items():
-#         if k not in meta_kwds:
-#             meta_kwds[k] = copy.copy(v)
-
-#     wrapper.meta_kwds = meta_kwds
-#     return wrapper
 
 
 def alternative(*base_gear_defs):
@@ -316,24 +314,19 @@ def alternative(*base_gear_defs):
     return gear_decorator
 
 
-# @doublewrap
-# def alternative(gear_def, *args, **kwds):
-#     gear_def.func.meta_kwds['alternatives'].extend(args)
-#     return gear_def
-
-
 @doublewrap
 def gear(func, gear_cls=Gear, **meta_kwds):
     from pygears.core.funcutils import FunctionBuilder
     fb = FunctionBuilder.from_func(func)
-    fb.body = (f"return gear_cls(gear_func, meta_kwds, "
-               f"{fb.get_invocation_str()})")
 
     # Add defaults from GearExtraParams registry
     for k, v in registry('GearExtraParams').items():
         if k not in fb.kwonlyargs:
             fb.kwonlyargs.append(k)
             fb.kwonlydefaults[k] = copy.copy(v)
+
+    fb.body = (f"return gear_cls(gear_func, meta_kwds, "
+               f"{fb.get_invocation_str()})")
 
     # Add defaults from GearMetaParams registry
     for k, v in registry('GearMetaParams').items():
@@ -352,13 +345,9 @@ def gear(func, gear_cls=Gear, **meta_kwds):
 
     p = Partial(gear_func)
     meta_kwds['definition'] = p
+    p.meta_kwds = meta_kwds
 
     return p
-
-
-@doublewrap
-def hier(func, **meta_kwds):
-    return gear(gear_cls=Hier, **meta_kwds)(func)
 
 
 class HierRootPlugin(PluginBase):
@@ -368,9 +357,10 @@ class HierRootPlugin(PluginBase):
         cls.registry['CurrentHier'] = cls.registry['HierRoot']
         cls.registry['GearMetaParams'] = {'enablement': True}
         cls.registry['GearExtraParams'] = {
-            'name': True,
+            'name': None,
             'intfs': [],
-            'outnames': []
+            'outnames': [],
+            '__base__': None
         }
 
     @classmethod

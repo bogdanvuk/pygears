@@ -59,14 +59,10 @@ class RTLNodeInstVisitor(HierVisitorBase):
 
         return svgen_inst
 
-    def Hier(self, module):
+    def Gear(self, module):
         self.cur_hier = self.instantiate(module)
         super().HierNode(module)
         self.cur_hier = self.cur_hier.parent
-        return True
-
-    def Gear(self, module):
-        self.instantiate(module)
         return True
 
 

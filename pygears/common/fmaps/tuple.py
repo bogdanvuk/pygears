@@ -1,4 +1,4 @@
-from pygears import alternative, hier, TypeMatchError
+from pygears import alternative, TypeMatchError, gear
 from pygears.typing import Tuple
 from pygears.common import fmap as common_fmap, ccat
 
@@ -22,7 +22,7 @@ def tuplemap_check(dtype, f):
 
 
 @alternative(common_fmap)
-@hier(enablement=b'tuplemap_check(din, f)')
+@gear(enablement=b'tuplemap_check(din, f)')
 def fmap(din, *, f, lvl=1, fcat=ccat):
     lvl -= 1
 

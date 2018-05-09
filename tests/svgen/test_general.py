@@ -1,4 +1,4 @@
-from pygears import clear, bind, Intf, gear, hier, registry
+from pygears import clear, bind, Intf, gear, registry
 from pygears.typing import Uint
 from pygears.svgen import svgen
 from pygears.svgen.generate import svgen_module
@@ -75,7 +75,7 @@ def test_hier_module_gen():
     def fgear(arg1, arg2) -> {'ret': Uint[2]}:
         pass
 
-    @hier(outnames=['top_ret1', 'top_ret2'])
+    @gear(outnames=['top_ret1', 'top_ret2'])
     def top(top_din1, top_din2):
 
         ret1 = fgear(top_din1, top_din2)
