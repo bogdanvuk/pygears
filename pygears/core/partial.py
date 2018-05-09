@@ -14,8 +14,10 @@ class MultiAlternativeError(Exception):
             uwrp = inspect.unwrap(func, stop=(lambda f: hasattr(f, "__signature__")))
             fn = inspect.getfile(uwrp)
             _, ln = inspect.getsourcelines(uwrp)
-            ret.append(f'\nFile "{fn}", line {ln}, func {uwrp.__name__}()\n')
-            ret.extend(traceback.format_exception(*info))
+            ret.extend(traceback.format_tb(info[2]))
+            ret.append(f'  File "{fn}", line {ln}, in {uwrp.__name__}\n')
+            ret.extend(traceback.format_exception_only(*info[:2]))
+            ret.append('\n')
         return str(''.join(ret))
 
 
@@ -92,9 +94,20 @@ operates.
 
     '''
 
-    def __new__(cls, func, *args, **kwds):
-        alternatives = getattr(func, 'alternatives', [])
-        alternatives.insert(0, func)
+    def __init__(self, func, *args, **kwds):
+        functools.update_wrapper(self, func)
+        self.func = func
+        self.args = args
+        self.kwds = kwds
+
+    def __call__(self, *args, **kwds):
+        prev_kwds = self.kwds.copy()
+        prev_kwds.update(kwds)
+        kwds = prev_kwds
+
+        args = self.args + args
+
+        alternatives = [self.func] + getattr(self.func, 'alternatives', [])
         errors = []
 
         for func in alternatives:
@@ -105,28 +118,18 @@ operates.
                 if all_args_specified(args_comb, func):
                     return func(*args_comb, **kwd_params)
             except Exception as e:
-                errors.append((func, e, sys.exc_info()))
+                # If no alternatives, just re-raise an error
+                if len(alternatives) == 1:
+                    raise e
+                else:
+                    errors.append((func, e, sys.exc_info()))
         else:
-            # If no alternatives, just re-raise an error
-            if (len(alternatives) == 1) and (len(errors) == 1):
-                raise errors[0][1]
-            elif len(errors) == len(alternatives):
+            if len(errors) == len(alternatives):
                 raise MultiAlternativeError(errors)
             else:
                 # If some alternative can handle more arguments, try to wait
                 # for it
-                return super().__new__(Partial)
-
-    def __init__(self, func, *args, **kwds):
-        functools.update_wrapper(self, func)
-        self.func = func
-        self.args = args
-        self.kwds = kwds
-
-    def __call__(self, *args, **kwds):
-        self.kwds.update(kwds)
-        self.args += args
-        return Partial(self.func, *self.args, **self.kwds)
+                return Partial(self.func, *args, **kwds)
 
     def __or__(self, iin):
         return iin.__ror__(self)

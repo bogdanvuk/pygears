@@ -1,8 +1,9 @@
 import os
 
 from nose import with_setup
+from nose.tools import raises
 
-from pygears import Intf, clear, bind, find, registry
+from pygears import Intf, clear, bind, find, registry, MultiAlternativeError
 from pygears.typing import Queue, Tuple, Uint, Int
 from pygears.cookbook.rng import rng
 from pygears.svgen.generate import svgen_module
@@ -62,14 +63,15 @@ def test_cnt_down():
     assert iout.dtype == Queue[Int[4]]
 
 
+@raises(MultiAlternativeError)
 @with_setup(clear)
 def test_multi_lvl():
     iout = rng((1, 2, 3), lvl=2)
     print(iout.dtype)
 
 
-bind('ErrReportLevel', 0)
-test_multi_lvl()
+# bind('ErrReportLevel', 0)
+# test_multi_lvl()
 
 
 @with_setup(clear)

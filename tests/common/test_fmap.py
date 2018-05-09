@@ -1,13 +1,13 @@
 from nose import with_setup
 from nose.tools import raises
 
-from pygears import Intf, clear, gear
+from pygears import Intf, clear, gear, MultiAlternativeError
 from pygears.typing import Queue, Uint, Tuple
 from pygears.common import fmap
-from pygears.core.gear import GearMatchError
+# from pygears.core.gear import GearMatchError
 
 
-@raises(GearMatchError)
+@raises(MultiAlternativeError)
 @with_setup(clear)
 def test_queuemap_simple_fail():
     @gear
@@ -27,7 +27,7 @@ def test_queuemap_simple():
     assert iout.dtype == Queue[Uint[2], 2]
 
 
-@raises(GearMatchError)
+@raises(MultiAlternativeError)
 @with_setup(clear)
 def test_tuplemap_simple_fail():
     @gear

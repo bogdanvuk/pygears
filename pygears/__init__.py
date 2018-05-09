@@ -7,6 +7,7 @@ from pygears.core.type_match import TypeMatchError
 from pygears.registry import PluginBase, bind, registry, clear
 from pygears.core.gear import gear, hier, alternative
 from pygears.core.intf import Intf
+from pygears.core.partial import MultiAlternativeError
 from pygears.util.find import find
 
 import pygears.common
@@ -19,5 +20,5 @@ sys.excepthook = pygears_excepthook
 
 __all__ = [
     'registry', 'ErrReportLevel', 'bind', 'gear', 'hier', 'clear',
-    'Intf', 'PluginBase', 'find'
+    'Intf', 'PluginBase', 'find', 'MultiAlternativeError'
 ]

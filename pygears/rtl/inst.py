@@ -83,7 +83,6 @@ class RTLNodeInstPlugin(PluginBase):
         cls.registry['RTLNodeNamespace'] = {}
         cls.registry['RTLGearGenNamespace'] = {
             'Gear': RTLGearNodeGen,
-            'Hier': RTLGearNodeGen
         }
         cls.registry['RTLNodeMap'] = {}
 

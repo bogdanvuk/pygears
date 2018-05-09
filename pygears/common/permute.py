@@ -2,7 +2,7 @@ from pygears.typing import Queue, Tuple, typeof
 from pygears.common import flatten
 
 
-def rearange_output(dout, indices):
+def permute(dout, indices):
     dtype = dout.dtype
     lvl = 0
     if typeof(dtype, Queue):
@@ -33,10 +33,10 @@ def tpl_arrange(*din, f, indices):
     return din[tuple(indices)]
 
 
-def arrange_apply(*din, f, indices):
+def permuted_apply(*din, f, indices):
     if len(din) == len(indices):
         din_arranged = intf_arrange(*din, indices=indices)
     else:
         din_arranged = tpl_arrange(din[0], indices=indices)
 
-    return rearange_output(f(din_arranged), indices)
+    return permute(f(din_arranged), indices)

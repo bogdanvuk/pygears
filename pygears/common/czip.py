@@ -1,7 +1,7 @@
 from pygears.typing import Queue, Tuple
-from pygears.core.gear import gear, hier
+from pygears.core.gear import gear, hier, alternative
 from pygears.common.ccat import ccat
-from pygears.common.arrange_apply import arrange_apply
+from pygears.common.permute import permuted_apply
 from functools import reduce
 
 
@@ -41,7 +41,13 @@ def isort(iterable, key=lambda x: x, reverse=False):
     return values, indices
 
 
-@hier
+@gear(enablement=b'len(din) == 2')
+def czip(*din) -> b'zip_type(din)':
+    return din | zip_sync(outsync=False) | zip_cat
+
+
+@alternative(czip)
+@gear(enablement=b'len(din) > 2')
 def czip_vararg(*din):
     # Sort input interfaces in descending order of their Queue levels, i.e. we
     # want to zip highest Queue levels first in order to synchronize them first
@@ -55,15 +61,10 @@ def czip_vararg(*din):
     def czip_cascade(*din):
         return reduce(czip, din_sorted_by_lvl) | ret_flat_type
 
-    return arrange_apply(*din, f=czip_cascade, indices=din_sort_indices)
+    return permuted_apply(*din, f=czip_cascade, indices=din_sort_indices)
 
 
-@hier(alternatives=[czip_vararg], enablement=b'len(din) == 2')
-def czip(*din) -> b'zip_type(din)':
-    return din | zip_sync(outsync=False) | zip_cat
-
-
-@hier
+@gear
 def unzip(din, *, dtypes):
     zdata = din[0]
     zlast = din[1:]
@@ -79,11 +80,12 @@ def unzip(din, *, dtypes):
     return tuple(split())
 
 
-@hier
+@gear(enablement=b'len(din) == 2')
+def zip_sync(*din, outsync=True) -> b'din':
+    pass
+
+
+@alternative(zip_sync)
+@gear(enablement=b'len(din) > 2')
 def zip_sync_vararg(*din):
     return din | czip | unzip(dtypes=[d.dtype for d in din])
-
-
-@gear(alternatives=[zip_sync_vararg], enablement=b'len(din) == 2')
-def zip_sync(*din) -> b'din':
-    pass

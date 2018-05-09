@@ -1,4 +1,4 @@
-from pygears.core.gear import Gear, gear, hier
+from pygears.core.gear import alternative, gear, hier
 from pygears.typing import Queue, Tuple
 
 
@@ -20,6 +20,12 @@ def cart_type(dtypes):
     return Queue[base_type, sum(arg_queue_lvl)]
 
 
+@gear(enablement=b'len(din) == 2')
+def cart(*din) -> b'cart_type(din)':
+    pass
+
+
+@alternative(cart)
 @hier
 def cart_vararg(*din, enablement=b'len(din) > 2'):
     ret = cart(din[0], din[1])
@@ -27,11 +33,6 @@ def cart_vararg(*din, enablement=b'len(din) > 2'):
         ret = cart(ret, d)
 
     return ret | cart_type([d.dtype for d in din])
-
-
-@gear(alternatives=[cart_vararg], enablement=b'len(din) == 2')
-def cart(*din) -> b'cart_type(din)':
-    pass
 
 
 # TODO: Lowest eot for each uncart output needs to be shortened to 1 data using flattening
@@ -54,11 +55,12 @@ def uncart(din, *, dtypes):
     return tuple(split())
 
 
+@gear(enablement=b'len(din) == 2')
+def cart_sync(*din) -> b'din':
+    pass
+
+
+@alternative(cart_sync)
 @hier
 def cart_sync_vararg(*din):
     return din | cart | uncart(dtypes=[d.dtype for d in din])
-
-
-@gear(alternatives=[cart_sync_vararg], enablement=b'len(din) == 2')
-def cart_sync(*din) -> b'din':
-    pass

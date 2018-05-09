@@ -12,7 +12,7 @@ from pygears.typing import Any
 from .hier_node import NamedHierNode
 from .infer_ftypes import TypeMatchError, infer_ftypes, type_is_specified
 from .intf import Intf
-from .partial import Definition
+from .partial import Partial
 from .port import InPort, OutPort
 from .util import doublewrap
 from .type_match import type_match, TypeMatchError
@@ -31,14 +31,12 @@ class GearArgsNotSpecified(Exception):
 
 
 def check_arg_num(argnames, varargsname, args):
-    if (len(args) < len(argnames)) or (
-            not varargsname and (len(args) > len(argnames))):
-        balance = "few" if (len(args) < len(
-            argnames)) else "many"
+    if (len(args) < len(argnames)) or (not varargsname and
+                                       (len(args) > len(argnames))):
+        balance = "few" if (len(args) < len(argnames)) else "many"
 
         raise TooManyArguments(
-            f"Too {balance} arguments for the module {self.name} provided."
-        )
+            f"Too {balance} arguments for the module {self.name} provided.")
 
 
 def check_arg_specified(args):
@@ -69,13 +67,11 @@ class GearBase(NamedHierNode):
         gear = super().__new__(cls)
         gear.__init__(func, *args, name=name, **kwds_comb)
         enablement = gear.params.pop('enablement')
-        print(enablement)
 
         if not enablement:
             gear.remove()
             raise TypeMatchError(
-                f'Enablement condition failed: {meta_kwds["enablement"]}'
-            )
+                f'Enablement condition failed: {meta_kwds["enablement"]}')
 
         return gear.resolve()
 
@@ -102,7 +98,8 @@ class GearBase(NamedHierNode):
         try:
             self.args = check_arg_specified(self.args)
         except GearArgsNotSpecified as e:
-            raise GearArgsNotSpecified(f'{str(e)}, when instantiating {self.name}')
+            raise GearArgsNotSpecified(
+                f'{str(e)}, when instantiating {self.name}')
 
         self.params = {}
         if isinstance(argspec.kwonlydefaults, dict):
@@ -207,7 +204,10 @@ class GearBase(NamedHierNode):
             return None
 
     def infer_params(self):
-        arg_types = {name: arg.dtype for name, arg in zip(self.argnames, self.args)}
+        arg_types = {
+            name: arg.dtype
+            for name, arg in zip(self.argnames, self.args)
+        }
 
         try:
             self.params = infer_ftypes(
@@ -260,14 +260,8 @@ class GearBase(NamedHierNode):
         else:
             return None
 
-
-class Gear(GearBase):
     def resolve_func(self):
-        return tuple()
-
-
-class Hier(GearBase):
-    def resolve_func(self):
+        bind('CurrentHier', self)
         func_args = [Intf(a.dtype) for a in self.args]
         for arg, port in zip(func_args, self.in_ports):
             arg.source(port)
@@ -277,7 +271,6 @@ class Hier(GearBase):
             for k in self.kwdnames if k in self.params
         }
 
-        bind('CurrentHier', self)
         ret = self.func(*func_args, **func_kwds)
         bind('CurrentHier', self.parent)
 
@@ -287,6 +280,14 @@ class Hier(GearBase):
             ret = (ret, )
 
         return ret
+
+
+class Gear(GearBase):
+    pass
+
+
+class Hier(GearBase):
+    pass
 
 
 # def func_module(cls, func, **meta_kwds):
@@ -308,7 +309,7 @@ def alternative(*base_gear_defs):
     def gear_decorator(gear_def):
         for d in base_gear_defs:
             alternatives = getattr(d.func, 'alternatives', [])
-            alternatives.append(gear_def)
+            alternatives.append(gear_def.func)
             d.func.alternatives = alternatives
         return gear_def
 
@@ -339,18 +340,20 @@ def gear(func, gear_cls=Gear, **meta_kwds):
         if k not in meta_kwds:
             meta_kwds[k] = copy.copy(v)
 
-    execdict = {'gear_cls': gear_cls, 'meta_kwds': meta_kwds, 'gear_func': func}
+    execdict = {
+        'gear_cls': gear_cls,
+        'meta_kwds': meta_kwds,
+        'gear_func': func
+    }
     execdict.update(func.__globals__)
-    gear_func = fb.get_func(
-        execdict=execdict)
+    gear_func = fb.get_func(execdict=execdict)
 
     functools.update_wrapper(gear_func, func)
 
-    dfn = Definition(gear_func)
-    meta_kwds['definition'] = dfn
-    dfn.meta_kwds = meta_kwds
+    p = Partial(gear_func)
+    meta_kwds['definition'] = p
 
-    return dfn
+    return p
 
 
 @doublewrap
@@ -363,9 +366,7 @@ class HierRootPlugin(PluginBase):
     def bind(cls):
         cls.registry['HierRoot'] = NamedHierNode('')
         cls.registry['CurrentHier'] = cls.registry['HierRoot']
-        cls.registry['GearMetaParams'] = {
-            'enablement': True
-        }
+        cls.registry['GearMetaParams'] = {'enablement': True}
         cls.registry['GearExtraParams'] = {
             'name': True,
             'intfs': [],
