@@ -3,7 +3,7 @@ from pygears.typing import Uint
 from pygears.svgen import svgen
 from pygears.svgen.generate import svgen_module
 from nose import with_setup
-from utils import equal_on_nonspace
+from utils import svgen_check
 
 test_hier_module_gen_sv_ref = """
 module top(
@@ -70,6 +70,7 @@ endmodule
 
 
 @with_setup(clear)
+@svgen_check(['top.sv'])
 def test_hier_module_gen():
     @gear
     def fgear(arg1, arg2) -> {'ret': Uint[2]}:
@@ -84,10 +85,3 @@ def test_hier_module_gen():
         return ret1, ret2
 
     top(Intf(Uint[1]), Intf(Uint[2]))
-
-    # from pygears.util.print_hier import print_hier
-    # print_hier()
-
-    bind('SVGenFlow', registry('SVGenFlow')[:-1])
-    assert equal_on_nonspace(svgen_module(svgen()['top']),
-                             test_hier_module_gen_sv_ref)

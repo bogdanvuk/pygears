@@ -31,12 +31,14 @@ def extract_arg_kwds(kwds, func):
     arg_names, *_ = argspec_unwrap(func)
 
     arg_kwds = {}
+    kwds_only = {}
     for k in list(kwds.keys()):
         if k in arg_names:
             arg_kwds[k] = kwds[k]
-            del kwds[k]
+        else:
+            kwds_only[k] = kwds[k]
 
-    return arg_kwds, kwds
+    return arg_kwds, kwds_only
 
 
 def combine_arg_kwds(args, kwds, func):

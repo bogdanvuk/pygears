@@ -1,14 +1,11 @@
-import os
 
 from nose import with_setup
 from nose.tools import raises
 
-from pygears import Intf, clear, bind, find, registry, MultiAlternativeError
+from pygears import Intf, MultiAlternativeError, clear, find
 from pygears.typing import Queue, Tuple, Uint, Int
 from pygears.cookbook.rng import rng
-from pygears.svgen.generate import svgen_module
-from pygears.svgen import svgen
-from utils import prepare_result_dir, svgen_test
+from utils import svgen_check
 
 
 @with_setup(clear)
@@ -70,44 +67,13 @@ def test_multi_lvl():
     print(iout.dtype)
 
 
-# bind('ErrReportLevel', 0)
-# test_multi_lvl()
-
-
 @with_setup(clear)
-@svgen_test(['rng_hier.sv'])
+@svgen_check(['rng_hier.sv'])
 def test_basic_unsigned_svgen():
     rng(Intf(Tuple[Uint[4], Uint[2], Uint[2]]))
 
 
 @with_setup(clear)
-@svgen_test(['rng_rng.sv', 'ccat.sv', 'rng_hier.sv'])
+@svgen_check(['rng_rng.sv', 'ccat.sv', 'rng_hier.sv'])
 def test_cnt_svgen():
     rng(8)
-
-# bind('ErrReportLevel', 0)
-# test_basic_unsigned_svgen()
-
-# def proba(din, *, dout, bla=2, **kwargs):
-#     print("Here")
-#     print(kwargs)
-
-
-# def probac(din, *, dout, bla=2, **kwargs):
-#     print(kwargs)
-
-
-# from funcutils import FunctionBuilder
-# fb = FunctionBuilder.from_func(proba)
-# fb.kwonlyargs.append('proba1')
-# # fb.body = 'proba(din, dout=dout, bla=bla, proba1=proba1)'
-# # fb.body = 'probac(din, dout=dout, bla=bla, proba1=proba1)'
-# # fb.body = 'print(globals())'
-# fb.varkw = None
-# f = fb.get_func()
-# f(1, dout=2, proba1=7)
-# print(f.__name__)
-
-# from pygears.core.partial import argspec_unwrap
-# ret = argspec_unwrap(f)
-# print(ret.kwonlyargs)

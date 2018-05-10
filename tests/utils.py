@@ -51,9 +51,11 @@ def get_result_dir(filename=None, function_name=None):
     if not filename:
         filename, function_name = get_cur_test_name()
 
+    test_dir = os.path.dirname(__file__)
+
     return os.path.join(
-        os.path.dirname(__file__), 'result',
-        filename, function_name)
+        test_dir, 'result',
+        os.path.relpath(filename, test_dir), function_name)
 
 
 def prepare_result_dir(filename=None, function_name=None):
@@ -75,10 +77,10 @@ def sv_file_equal_to_ref(fn, filename=None, function_name=None):
     res_dir = get_result_dir(filename, function_name)
 
     return sv_files_equal(
-        os.path.join(function_name, fn), os.path.join(res_dir, fn))
+        os.path.join(filename, function_name, fn), os.path.join(res_dir, fn))
 
 
-def svgen_test(files):
+def svgen_check(files):
     def decorator(func):
         @wraps(func)
         def wrapper():

@@ -1,6 +1,6 @@
 from nose import with_setup
 
-from pygears import Intf, clear, gear, registry
+from pygears import Intf, clear, gear, registry, alternative
 from pygears.typing import Queue, Tuple, Uint
 
 
@@ -112,24 +112,28 @@ def test_hier_hierarchy():
 
 @with_setup(clear)
 def test_alternatives():
-    @gear(version=4)
-    def fgear01(arg1: Tuple['T1', 'T2'], *, lvl=0) -> b'T2':
+    @gear(version=0)
+    def fgear(arg1: Queue['T', 3], *, lvl=3) -> Tuple['T', Uint['lvl']]:
         pass
 
-    @gear(alternatives=[fgear01], version=3)
-    def fgear0(arg1: Uint['w'], *, lvl=0) -> Uint['w']:
-        pass
-
-    @gear(version=2)
-    def fgear1(arg1: Queue['T', 1], *, lvl=1) -> Tuple['T', Uint['lvl']]:
-        pass
-
+    @alternative(fgear)
     @gear(version=1)
     def fgear2(arg1: Queue['T', 2], *, lvl=2) -> Tuple['T', Uint['lvl']]:
         pass
 
-    @gear(alternatives=[fgear2, fgear1, fgear0], version=0)
-    def fgear(arg1: Queue['T', 3], *, lvl=3) -> Tuple['T', Uint['lvl']]:
+    @alternative(fgear)
+    @gear(version=2)
+    def fgear1(arg1: Queue['T', 1], *, lvl=1) -> Tuple['T', Uint['lvl']]:
+        pass
+
+    @alternative(fgear)
+    @gear(version=3)
+    def fgear0(arg1: Uint['w'], *, lvl=0) -> Uint['w']:
+        pass
+
+    @alternative(fgear)
+    @gear(version=4)
+    def fgear01(arg1: Tuple['T1', 'T2'], *, lvl=0) -> b'T2':
         pass
 
     root = registry('HierRoot')

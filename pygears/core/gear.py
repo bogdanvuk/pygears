@@ -86,6 +86,7 @@ class Gear(NamedHierNode):
             gear.__init__(func, *args, name=name, **kwds_comb)
         except Exception as e:
             gear.remove()
+            raise e
 
         if not gear.params.pop('enablement'):
             gear.remove()
