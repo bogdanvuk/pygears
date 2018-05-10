@@ -52,7 +52,8 @@ class SVGenZipSyncBase(SVGenCZipBase):
         else:
             self.syncguard = None
 
-    def get_fn(self):
+    @property
+    def sv_file_name(self):
         if self.syncguard is None:
             return super().get_fn()
         else:

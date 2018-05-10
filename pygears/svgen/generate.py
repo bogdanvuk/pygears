@@ -84,7 +84,8 @@ def svgen_generate(top, conf):
     for svgen, contents in v.visit(top):
         if contents:
             if isinstance(contents, (tuple, list)):
-                for fn, c in zip(contents, svgen.sv_file_name):
+                print(svgen.sv_file_name)
+                for fn, c in zip(svgen.sv_file_name, contents):
                     save_file(fn, conf['outdir'], c)
             else:
                 save_file(svgen.sv_file_name, conf['outdir'], contents)
