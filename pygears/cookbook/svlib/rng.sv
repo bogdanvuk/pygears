@@ -1,6 +1,7 @@
-`define `maybe_signed(val) (SIGNED ? signed'(val) : val)
+`define maybe_signed(val) ((SIGNED) ? (signed'(val)) : (val))
+`define max(a, b) ((a > b) ? a : b)
 
-module rng
+  module rng
   #(
     parameter W_INCR = 16,
     parameter W_CNT  = 16,
@@ -32,8 +33,8 @@ module rng
 
    cfg_t cfg_s;
    dout_t dout_s;
-   logic [W_CNT-1:0] 							  cnt_next;
-   logic [W_CNT-1:0] 							  cnt_reg;
+   logic [`max(W_CNT, W_START)-1:0] 			  cnt_next;
+   logic [`max(W_CNT, W_START)-1:0] 			  cnt_reg;
 
    logic 										  eot_internal_cond;
    logic 										  handshake;
@@ -48,12 +49,23 @@ module rng
 
    if (CNT_STEPS) begin
 	  if (INCR_STEPS) begin
-		 assign dout_s.data = `maybe_signed(cfg_s.base)
-		   + cnt_reg*`maybe_signed(cfg_s.incr);
+
+     if (SIGNED) begin
+        assign dout_s.data = signed'(cfg_s.base) + cnt_reg*signed'(cfg_s.incr);
+     end else begin
+        assign dout_s.data = cfg_s.base + cnt_reg*cfg_s.incr;
+     end
+
 		 assign cnt_next = cnt_reg + 1;
 	  end else begin
-		 assign dout_s.data = `maybe_signed(cfg_s.base) + `maybe_signed(cnt_reg);
-		 assign cnt_next = cnt_reg + cfg_s.incr;
+
+     if (SIGNED) begin
+		    assign dout_s.data = signed'(cfg_s.base) + signed'(cnt_reg);
+     end else begin
+		    assign dout_s.data = cfg_s.base + cnt_reg;
+     end
+
+     assign cnt_next = cnt_reg + cfg_s.incr;
 	  end
    end else begin
       logic cnt_started;
@@ -67,11 +79,18 @@ module rng
       end
 
       assign dout_s.data = cnt_started ? cnt_reg : cfg_s.base;
-      assign cnt_next = `maybe_signed(dout_s.data) + `maybe_signed(cfg_s.incr);
+   if (SIGNED) begin
+      assign cnt_next = signed'(dout_s.data) + signed'(cfg_s.incr);
+   end else begin
+      assign cnt_next = dout_s.data + cfg_s.incr;
    end
 
-   if (CNT_ONE_MORE || (!CNT_STEPS))
+   end
+
+   if (CNT_ONE_MORE)
      assign eot_internal_cond = (cnt_reg == cfg_s.cnt);
+   else if (!CNT_STEPS)
+     assign eot_internal_cond = (dout_s.data == cfg_s.cnt);
    else
      assign eot_internal_cond = (cnt_next == cfg_s.cnt);
 

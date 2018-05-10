@@ -21,6 +21,6 @@ def get_literal_type(val):
         return Tuple[tuple(dtypes)]
 
 
-@gear
+@gear(svgen={'svmod_fn': 'sustain.sv'})
 def const(*, val, tout=b'get_literal_type(val)') -> b'tout':
     pass

@@ -9,7 +9,7 @@ class SVIntfGen:
     def basename(self):
         producer_port = self.intf.producer
         port_name = producer_port.basename
-        producer_name = producer_port.svmod.basename
+        producer_name = producer_port.node.basename
 
         if isinstance(producer_port, InPort):
             return port_name

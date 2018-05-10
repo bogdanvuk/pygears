@@ -12,7 +12,7 @@ class SVGenIntfBase(NamedHierNode):
     @property
     def sole_intf(self):
         if self.producer:
-            return len(self.producer.svmod.out_ports) == 1
+            return len(self.producer.node.out_ports) == 1
         else:
             return True
 
@@ -24,7 +24,7 @@ class SVGenIntfBase(NamedHierNode):
     def basename(self):
         producer_port = self.producer
         port_name = producer_port.basename
-        producer_name = producer_port.svmod.basename
+        producer_name = producer_port.node.basename
 
         if isinstance(producer_port, InPort):
             return port_name

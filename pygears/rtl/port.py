@@ -1,12 +1,12 @@
 class Port:
     def __init__(self,
-                 svmod,
+                 node,
                  index,
                  basename,
                  producer=None,
                  consumer=None,
                  dtype=None):
-        self.svmod = svmod
+        self.node = node
         self.index = index
         self.producer = producer
         self.consumer = consumer

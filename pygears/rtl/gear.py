@@ -46,7 +46,7 @@ class RTLGearNodeGen(HierNode):
     def __init__(self, gear, parent):
         super().__init__(parent)
         self.gear = gear
-        self.node = RTLGear(gear, parent.node)
+        self.node = RTLGear(gear, getattr(parent, "node", None))
 
         namespace = registry('SVGenModuleNamespace')
 
@@ -88,7 +88,7 @@ class RTLGearNodeGen(HierNode):
         if intf is not None:
             consumers = []
             for cons_port in intf.consumers:
-                svmod = cons_port.svmod
+                svmod = cons_port.node
                 if isinstance(cons_port, InPort):
                     port_group = svmod.in_ports
                 else:

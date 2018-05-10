@@ -5,30 +5,17 @@ from pygears.rtl.connect import rtl_connect
 from pygears.rtl.inst import RTLNodeInstPlugin
 from pygears.svgen.svmod import SVModuleGen
 from pygears.common import cast
-from pygears.core.hier_node import HierVisitorBase
+from pygears.rtl.gear import RTLGearHierVisitor
 
 
 class SVGenCast(SVModuleGen):
-    # def channel_ports(self):
-    #     super().channel_ports()
-    #     t_in = self.ports[0]['type']
-    #     t_out = self.ports[1]['type']
-    #     iin = self.ports[0]['intf']
-    #     iout = self.ports[1]['intf']
-
-    #     if int(t_in) == int(t_out) \
-    #        or issubclass(t_out, Union) and issubclass(t_in, Tuple):
-    #         self.remove()
-    #         iin.implicit = iout.implicit or iin.implicit
-    #         for m in iout.consumers.copy():
-    #             m[0].connect_intf(m[0].ports[m[1]], iin)
-
-    #             # for p in m.get_intf_ports(iout):
-    #             #     m.connect_intf(p, iin)
+    @property
+    def is_generated(self):
+        return True
 
     def get_module(self, template_env):
-        outtype = self.out_ports[0].dtype
-        intype = self.in_ports[0].dtype
+        outtype = self.node.out_ports[0].dtype
+        intype = self.node.in_ports[0].dtype
         out_width = int(outtype)
 
         if isinstance(outtype, IntMeta):
@@ -54,19 +41,19 @@ class SVGenCast(SVModuleGen):
 
 
 @svgen_visitor
-class RemoveEqualReprCastVisitor(HierVisitorBase):
-    def SVGenCast(self, svmod):
-        pout = svmod.out_ports[0]
-        pin = svmod.in_ports[0]
+class RemoveEqualReprCastVisitor(RTLGearHierVisitor):
+    def cast(self, node):
+        pout = node.out_ports[0]
+        pin = node.in_ports[0]
 
         if int(pin.dtype) == int(pout.dtype):
-            svmod.bypass()
+            node.bypass()
 
 
 class SVGenSievePlugin(RTLNodeInstPlugin, SVGenPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['RTLNodeNamespace'][cast] = SVGenCast
+        cls.registry['SVGenModuleNamespace'][cast] = SVGenCast
         cls.registry['SVGenFlow'].insert(
             cls.registry['SVGenFlow'].index(rtl_connect) + 1,
             RemoveEqualReprCastVisitor)

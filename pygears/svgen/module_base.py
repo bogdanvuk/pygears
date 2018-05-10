@@ -54,7 +54,7 @@ class SVGenIntfModuleBase(SVGenIntfBase):
     def __init__(self, intf, port, parent):
         consumers = []
         for cons_port in intf.consumers:
-            svmod = cons_port.svmod
+            svmod = cons_port.node
             if isinstance(cons_port, InPort):
                 port_group = svmod.in_ports
             else:

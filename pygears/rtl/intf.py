@@ -12,7 +12,7 @@ class RTLIntf(NamedHierNode):
     @property
     def sole_intf(self):
         if self.producer:
-            return len(self.producer.svmod.out_ports) == 1
+            return len(self.producer.node.out_ports) == 1
         else:
             return True
 
