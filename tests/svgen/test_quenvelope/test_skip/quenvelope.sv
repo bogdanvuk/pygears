@@ -1,23 +1,41 @@
-{%- import 'snippet.j2' as snippet -%}
+/*
+    None
+*/
+
+module quenvelope
+(
+    input clk,
+    input rst,
+    dti.consumer din, // [u1]^5 (6)
+    dti.producer dout // [()]^2 (2)
+
+);
+    typedef struct packed { // [u1]^5
+        logic [1:0] out_eot; // u2
+        logic [2:0] subenvelope; // u3
+        logic [0:0] data; // u1
+    } din_t;
+
+    typedef struct packed { // [()]^2
+        logic [1:0] out_eot; // u2
+    } dout_t;
 
 
-{% call snippet.module_with_intf_structs(module_name, intfs, intfs, comment) %}
+    din_t din_s;
+    dout_t dout_s;
 
-  {% set input_intf_names = intfs|isinput|keymap("name") %}
+    assign din_s = din.data;
+
 
     assign dout_s.out_eot = din_s.out_eot;
     assign dout.data = dout_s;
 
-  {% if dout_align == 1 %}
-    assign din.ready = dout.ready;
-    assign dout.valid = din.valid;
-  {% else %}
     logic  handshake;
     logic  ready_reg;
     logic  valid_reg;
     logic  subelem_done;
 
-    assign subelem_done = {{dout_align}};
+    assign subelem_done = &din_s.subenvelope;
     assign din.ready = (dout.ready || ready_reg || (!subelem_done));
     assign dout.valid = (din.valid || valid_reg) && (!ready_reg);
 
@@ -39,5 +57,6 @@
           end
         end
     end
-  {% endif %}
-{% endcall %}
+
+
+endmodule
