@@ -55,9 +55,8 @@ def get_result_dir(filename=None, function_name=None):
 
     test_dir = os.path.dirname(__file__)
 
-    return os.path.join(
-        test_dir, 'result',
-        os.path.relpath(filename, test_dir), function_name)
+    return os.path.join(test_dir, 'result', os.path.relpath(
+        filename, test_dir), function_name)
 
 
 def prepare_result_dir(filename=None, function_name=None):
@@ -87,7 +86,8 @@ def svgen_check(files):
         @wraps(func)
         def wrapper():
             func()
-            filename = os.path.splitext(inspect.getfile(func))[0]
+            filename = os.path.splitext(
+                os.path.abspath(inspect.getfile(func)))[0]
 
             outdir = prepare_result_dir(filename, func.__name__)
             svgen(outdir=outdir)

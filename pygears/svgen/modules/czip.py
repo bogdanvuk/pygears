@@ -6,6 +6,10 @@ from .syncguard import SVGenSyncGuard
 
 
 class SVGenCZipBase(SVModuleGen):
+    @property
+    def is_generated(self):
+        return True
+
     def get_sv_port_config(self, modport, type_, name):
         cfg = super().get_sv_port_config(modport, type_, name)
 
@@ -55,9 +59,9 @@ class SVGenZipSyncBase(SVGenCZipBase):
     @property
     def sv_file_name(self):
         if self.syncguard is None:
-            return super().get_fn()
+            return super().sv_file_name
         else:
-            return super().get_fn(), self.syncguard.get_fn()
+            return super().sv_file_name, self.syncguard.sv_file_name
 
     def get_module(self, template_env, template_fn):
 

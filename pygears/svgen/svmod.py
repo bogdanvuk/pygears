@@ -29,10 +29,11 @@ class SVModuleGen:
         self.sv_module_path = None
         self.sv_params = {}
 
-        try:
-            self.sv_module_path, self._sv_module_name, self.sv_params = self.get_sv_module_info()
-        except FileNotFoundError:
-            pass
+        if not self.is_generated:
+            try:
+                self.sv_module_path, self._sv_module_name, self.sv_params = self.get_sv_module_info()
+            except FileNotFoundError:
+                pass
 
         if self.sv_module_path and self.is_hierarchical:
             self.sv_module_path = None

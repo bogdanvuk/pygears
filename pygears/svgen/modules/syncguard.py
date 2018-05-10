@@ -8,7 +8,8 @@ class SVGenSyncGuard:
             self.add_port('consumer', f'din{i}')
             self.add_port('producer', f'dout{i}')
 
-    def get_fn(self):
+    @property
+    def sv_file_name(self):
         return self.basename + ".sv"
 
     def add_port(self, modport, name):
