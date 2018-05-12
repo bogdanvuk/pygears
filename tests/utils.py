@@ -71,14 +71,12 @@ def prepare_result_dir(filename=None, function_name=None):
     return res_dir
 
 
-def sv_file_equal_to_ref(fn, filename=None, function_name=None):
+def get_sv_file_comparison_pair(fn, filename=None, function_name=None):
     if not filename:
         filename, function_name = get_cur_test_name()
 
     res_dir = get_result_dir(filename, function_name)
-
-    return sv_files_equal(
-        os.path.join(filename, function_name, fn), os.path.join(res_dir, fn))
+    return os.path.join(filename, function_name, fn), os.path.join(res_dir, fn)
 
 
 def svgen_check(files):
@@ -93,7 +91,12 @@ def svgen_check(files):
             svgen(outdir=outdir)
 
             for fn in files:
-                assert sv_file_equal_to_ref(fn, filename, func.__name__)
+                comp_file_paths = get_sv_file_comparison_pair(
+                    fn, filename, func.__name__)
+
+                assert sv_files_equal(
+                    *comp_file_paths
+                ), f'{comp_file_paths[0]} != {comp_file_paths[1]}'
 
         return wrapper
 

@@ -31,13 +31,15 @@ class SVModuleGen:
 
         if not self.is_generated:
             try:
-                self.sv_module_path, self._sv_module_name, self.sv_params = self.get_sv_module_info()
+                self.sv_module_path, self._sv_module_name, self.sv_params = self.get_sv_module_info(
+                )
             except FileNotFoundError:
                 pass
-
-        if self.sv_module_path and self.is_hierarchical:
-            self.sv_module_path = None
-            self._sv_module_name = self.hier_sv_path_name + '_hier'
+        elif self.is_hierarchical:
+            if find_in_dirs(self.sv_file_name,
+                            registry('SVGenSystemVerilogPaths')):
+                self.sv_module_path = None
+                self._sv_module_name = self.hier_sv_path_name + '_hier'
 
     @property
     def is_generated(self):
@@ -158,7 +160,8 @@ class SVModuleGen:
                     if contents:
                         context['inst'].append(contents)
 
-            return template_env.render_local(__file__, "hier_module.j2", context)
+            return template_env.render_local(__file__, "hier_module.j2",
+                                             context)
 
     def update_port_name(self, port, name):
         port['name'] = name

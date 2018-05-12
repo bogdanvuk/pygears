@@ -27,7 +27,7 @@ class RTLNode(NamedHierNode):
     def add_in_port(self, basename, producer=None, consumer=None, dtype=None):
         self.in_ports.append(
             InPort(
-                svmod=self,
+                node=self,
                 index=len(self.in_ports),
                 basename=basename,
                 producer=producer,
@@ -37,7 +37,7 @@ class RTLNode(NamedHierNode):
     def add_out_port(self, basename, producer=None, consumer=None, dtype=None):
         self.out_ports.append(
             OutPort(
-                svmod=self,
+                node=self,
                 index=len(self.out_ports),
                 basename=basename,
                 producer=producer,
