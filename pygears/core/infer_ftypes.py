@@ -97,8 +97,6 @@ def infer_ftypes(params, args, namespace={}, allow_incomplete=False):
                 substituted, new_p = resolve_param(val, match, namespace)
                 if name in args:
                     new_p = args[name]
-                    # substituted = ((repr(new_p) != repr(val))
-                    #                and type_is_specified(new_p))
                     substituted = type_is_specified(new_p)
 
                 if substituted:

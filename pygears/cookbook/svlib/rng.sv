@@ -116,11 +116,11 @@
         end
    end
 
-   if (CNT_ONE_MORE == 0) begin
-      asrt_nonzero_cnt : assert property (
-                                          @(posedge clk) disable iff(rst)
-                                          cfg.valid |-> cfg_s.cnt !== 0)
-        else $error("Empty list not supported when CNT_ONE_MORE == 0.");
-   end
+   // if (CNT_ONE_MORE == 0) begin
+   //    asrt_nonzero_cnt : assert property (
+   //                                        @(posedge clk) disable iff(rst)
+   //                                        cfg.valid |-> cfg_s.cnt !== 0)
+   //      else $error("Empty list not supported when CNT_ONE_MORE == 0.");
+   // end
 
 endmodule

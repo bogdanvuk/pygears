@@ -74,6 +74,6 @@ def test_basic_unsigned_svgen():
 
 
 @with_setup(clear)
-@svgen_check(['rng_rng.sv', 'ccat.sv', 'rng_hier.sv'])
+@svgen_check(['rng_rng.sv', 'rng_ccat.sv', 'rng_hier.sv'])
 def test_cnt_svgen():
     rng(8)

@@ -31,6 +31,9 @@ def fmap(din, *, f, lvl=1, fcat=ccat):
         if lvl > 0:
             fd = common_fmap(f=fd, lvl=lvl)
 
-        dout.append(din[i] | fd)
+        if fd is None:
+            dout.append(din[i])
+        else:
+            dout.append(din[i] | fd)
 
     return fcat(*dout)

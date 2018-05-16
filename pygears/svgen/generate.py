@@ -63,8 +63,6 @@ class SVGenGenerateVisitor(HierYielderBase):
             contents = svgen.get_module(self.template_env)
             yield svgen, contents
 
-        yield from super().HierNode(node)
-
 
 def svgen_module(node):
     v = SVGenGenerateVisitor()

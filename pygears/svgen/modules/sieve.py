@@ -27,6 +27,10 @@ def index_to_sv_slice(dtype, index):
 
 
 class SVGenSieve(SVModuleGen):
+    @property
+    def is_generated(self):
+        return True
+
     def get_module(self, template_env):
         def get_stages():
             for s in itertools.chain(self.node.pre_sieves, [self.node]):
@@ -112,6 +116,6 @@ class SVGenSievePlugin(SVGenInstPlugin, SVGenPlugin):
         cls.registry['SVGenFlow'].insert(
             cls.registry['SVGenFlow'].index(svgen_inst),
             CollapseSievesVisitor)
-        cls.registry['SVGenFlow'].insert(
-            cls.registry['SVGenFlow'].index(CollapseSievesVisitor),
-            RemoveEqualReprSieveVisitor)
+        # cls.registry['SVGenFlow'].insert(
+        #     cls.registry['SVGenFlow'].index(CollapseSievesVisitor),
+        #     RemoveEqualReprSieveVisitor)

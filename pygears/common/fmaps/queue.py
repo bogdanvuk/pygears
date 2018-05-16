@@ -15,7 +15,7 @@ def fmap(din, *, f, lvl=1, fcat=cart):
     data = din[0:queue_lvl - fmap_lvl + 1]
 
     if lvl > 0:
-        f = common_fmap(f=f, lvl=lvl)
+        f = common_fmap(f=f, lvl=lvl, fcat=fcat)
 
     dout = fcat(env, data | f)
 

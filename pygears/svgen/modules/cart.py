@@ -5,6 +5,10 @@ from pygears.common.cart import cart
 
 
 class SVGenCartBase(SVModuleGen):
+    @property
+    def is_generated(self):
+        return True
+
     def get_sv_port_config(self, modport, type_, name):
         cfg = super().get_sv_port_config(modport, type_, name)
 
@@ -19,6 +23,10 @@ class SVGenCartBase(SVModuleGen):
 
 
 class SVGenCart(SVGenCartBase):
+    @property
+    def is_generated(self):
+        return True
+
     def get_module(self, template_env):
         intfs = list(self.sv_port_configs())
         queue_intfs = [

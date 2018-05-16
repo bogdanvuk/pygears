@@ -1,9 +1,5 @@
 import copy
 import inspect
-import sys
-import traceback
-import inspect
-from functools import wraps
 import functools
 
 from pygears.registry import PluginBase, bind, registry
@@ -15,7 +11,6 @@ from .intf import Intf
 from .partial import Partial
 from .port import InPort, OutPort
 from .util import doublewrap
-from .type_match import type_match, TypeMatchError
 
 
 class TooManyArguments(Exception):
@@ -36,7 +31,7 @@ def check_arg_num(argnames, varargsname, args):
         balance = "few" if (len(args) < len(argnames)) else "many"
 
         raise TooManyArguments(
-            f"Too {balance} arguments for the module {self.name} provided.")
+            f"Too {balance} arguments provided.")
 
 
 def check_arg_specified(args):
@@ -114,7 +109,11 @@ class Gear(NamedHierNode):
         self.annotations = argspec.annotations
         self.kwdnames = argspec.kwonlyargs
 
-        check_arg_num(self.argnames, self.varargsname, self.args)
+        try:
+            check_arg_num(self.argnames, self.varargsname, self.args)
+        except TooManyArguments as e:
+            TooManyArguments(f'{e}, for the module {self.name}')
+
         try:
             self.args = check_arg_specified(self.args)
         except GearArgsNotSpecified as e:

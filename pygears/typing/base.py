@@ -123,7 +123,7 @@ class GenericMeta(TypingMeta):
                 a_templates = a.templates
                 templates += [v for v in a_templates if v not in templates]
             else:
-                if isinstance(a, str): #and templ_var_re.search(a):
+                if isinstance(a, str):  #and templ_var_re.search(a):
                     templates.append(a)
 
         return make_unique(templates)
@@ -178,7 +178,6 @@ class GenericMeta(TypingMeta):
         else:
             if len(self.args) != len(other.args):
                 return False
-
             return all([s == o for s, o in zip(self.args, other.args)])
 
 
@@ -204,8 +203,14 @@ def param_subs(t, matches, namespace):
                 for i in range(len(t.args))
             ]
 
+            if hasattr(t, '__parameters__'):
+                args = {
+                    name: a
+                    for name, a in zip(t.__parameters__, args)
+                }
+
             return t.__class__(
-                t.__name__, t.__bases__, dict(t.__dict__), args=tuple(args))
+                t.__name__, t.__bases__, dict(t.__dict__), args=args)
 
     return t
 

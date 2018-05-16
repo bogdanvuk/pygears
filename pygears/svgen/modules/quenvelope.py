@@ -5,6 +5,10 @@ from pygears.common import quenvelope
 
 
 class SVGenQuEnvelope(SVModuleGen):
+    @property
+    def is_generated(self):
+        return True
+
     def get_sv_port_config(self, modport, type_, name):
         cfg = super().get_sv_port_config(modport, type_, name)
 

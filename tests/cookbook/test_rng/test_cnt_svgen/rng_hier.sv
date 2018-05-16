@@ -12,7 +12,7 @@ module rng_hier(
 
    dti #(.W_DATA(1)) const1_if_s(); // u1 (1)
 
-   ccat ccat_i (
+   rng_ccat ccat_i (
                 .clk(clk),
                 .rst(rst),
                 .din0(const0_if_s),

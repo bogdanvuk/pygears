@@ -1,5 +1,5 @@
 
-module ccat
+module rng_ccat
 (
     input clk,
     input rst,

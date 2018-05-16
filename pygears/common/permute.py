@@ -1,5 +1,6 @@
 from pygears.typing import Queue, Tuple, typeof
 from pygears.common import flatten
+from pygears import gear
 
 
 def permute(dout, indices):
@@ -33,10 +34,11 @@ def tpl_arrange(*din, f, indices):
     return din[tuple(indices)]
 
 
+@gear
 def permuted_apply(*din, f, indices):
     if len(din) == len(indices):
         din_arranged = intf_arrange(*din, indices=indices)
     else:
         din_arranged = tpl_arrange(din[0], indices=indices)
 
-    return permute(f(din_arranged), indices)
+    return permute(f(*din_arranged), indices)

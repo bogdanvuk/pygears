@@ -4,6 +4,10 @@ from pygears.svgen.svmod import SVModuleGen
 
 
 class SVGenCCat(SVModuleGen):
+    @property
+    def is_generated(self):
+        return True
+
     def get_module(self, template_env):
         context = {
             'module_name': self.sv_module_name,

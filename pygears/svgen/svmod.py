@@ -1,8 +1,5 @@
 from collections import OrderedDict
 
-from pygears.svgen.generate import svgen_generate
-from pygears.core.hier_node import HierVisitorBase
-from pygears.svgen.svgen import svgen_visitor
 from pygears.svgen.inst import SVGenInstPlugin
 from pygears.svgen.svparse import parse
 from pygears.definitions import ROOT_DIR
@@ -78,7 +75,8 @@ class SVModuleGen:
 
         raise FileNotFoundError
 
-    def get_params(self):
+    @property
+    def params(self):
         return {
             k.upper(): int(v)
             for k, v in self.node.params.items()
@@ -109,7 +107,7 @@ class SVModuleGen:
         context = {
             'module_name': self.sv_module_name,
             'intfs': list(self.sv_port_configs()),
-            'param_map': self.get_params()
+            'param_map': self.params
         }
         return self.context.jenv.get_template("module_synth_wrap.j2").render(
             **context)
@@ -167,7 +165,7 @@ class SVModuleGen:
         port['name'] = name
 
     def get_inst(self, template_env):
-        param_map = self.get_params()
+        param_map = self.params
 
         in_port_map = [(port.basename, self.get_in_port_map_intf_name(port))
                        for port in self.node.in_ports]
@@ -185,15 +183,6 @@ class SVModuleGen:
         return template_env.snippets.module_inst(**context)
 
 
-@svgen_visitor
-class RemoveEqualReprCastVisitor(HierVisitorBase):
-    def SVGenHier(self, svmod):
-        super().HierNode(svmod)
-
-        if all([isinstance(c, RTLIntf) for c in svmod.child]):
-            svmod.bypass()
-
-
 class SVGenSVModPlugin(SVGenInstPlugin):
     @classmethod
     def bind(cls):
@@ -203,7 +192,3 @@ class SVGenSVModPlugin(SVGenInstPlugin):
             os.path.join(ROOT_DIR, '..', 'svlib'))
         cls.registry['SVGenSystemVerilogPaths'].append(
             os.path.join(ROOT_DIR, 'cookbook', 'svlib'))
-
-        cls.registry['SVGenFlow'].insert(
-            cls.registry['SVGenFlow'].index(svgen_generate),
-            RemoveEqualReprCastVisitor)
