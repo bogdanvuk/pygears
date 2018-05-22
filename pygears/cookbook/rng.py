@@ -27,13 +27,14 @@ def sv_rng(cfg: TCfg,
 
 
 @gear
-def rng(cfg: TCfg, *, cnt_steps=False, incr_steps=False):
+def rng(cfg: TCfg, *, cnt_steps=False, incr_steps=False, cnt_one_more=False):
 
     signed = any([typeof(d, Int) for d in cfg.dtype])
     if signed:
         cfg = cfg | fmap(f=(Int, ) * len(cfg.dtype))
 
-    return cfg | sv_rng(signed=signed)
+    return cfg | sv_rng(signed=signed, cnt_steps=cnt_steps,
+                        incr_steps=incr_steps, cnt_one_more=cnt_one_more)
 
 
 @alternative(rng)

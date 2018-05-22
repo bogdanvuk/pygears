@@ -79,6 +79,7 @@
       end
 
       assign dout_s.data = cnt_started ? cnt_reg : cfg_s.base;
+
    if (SIGNED) begin
       assign cnt_next = signed'(dout_s.data) + signed'(cfg_s.incr);
    end else begin
