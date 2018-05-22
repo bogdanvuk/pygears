@@ -14,7 +14,6 @@ class RemoveTupleFlattenVisitor(RTLGearHierVisitor):
 class SVGenFlattenPlugin(SVGenInstPlugin):
     @classmethod
     def bind(cls):
-        print("Here")
         cls.registry['SVGenFlow'].insert(
             cls.registry['SVGenFlow'].index(svgen_inst),
             RemoveTupleFlattenVisitor)

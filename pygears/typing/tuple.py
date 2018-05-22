@@ -13,6 +13,16 @@ class TupleMeta(EnumerableGenericMeta):
             cls.args = args
             return cls
 
+    def without(self, index):
+        return Tuple[{
+            k: v
+            for k, v in zip(self.fields, self.args) if k != index
+        }]
+
+    def __add__(self, other):
+        return Tuple[{**{k: v for k, v in zip(self.fields, self.args)},
+                      **{k: v for k, v in zip(other.fields, other.args)}}]
+
     def __repr__(self):
         if not self.args or not hasattr(self, '__parameters__'):
             return super().__repr__()
@@ -22,12 +32,23 @@ class TupleMeta(EnumerableGenericMeta):
                 for f, a in zip(self.fields, self.args)
             ])
 
+    def index_norm(self, index):
+        if not isinstance(index, tuple):
+            index = (index, )
+
+        index = list(index)
+        for i, ind in enumerate(index):
+            if isinstance(ind, str):
+                try:
+                    index[i] = self.fields.index(ind)
+                except ValueError as e:
+                    raise ValueError(f'Field "{ind}" not in Tuple')
+
+        return super().index_norm(tuple(index))
+
     def __getitem__(self, index):
         if not self.is_specified():
             return super().__getitem__(index)
-        elif index in self.fields:
-            index = self.fields.index(index)
-            return self.__args__[index]
 
         index = self.index_norm(index)
 

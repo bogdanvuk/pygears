@@ -76,8 +76,8 @@ def all_args_specified(args, func):
 
 class Partial:
     '''The Partial class implements a mechanism similar to that of the
-functools.partial, with one important difference with how calling its objects
-operates.
+    functools.partial, with one important difference with how calling
+    its objects operates.
 
     When Partial class is instantiated, arguments that are to be passed to the
     wrapped function are inspected. If not enough positional arguments, as
