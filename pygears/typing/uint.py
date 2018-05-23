@@ -25,7 +25,7 @@ class IntegerMeta(EnumerableGenericMeta):
     __radd__ = __add__
 
     def __sub__(self, other):
-        return Tuple[Uint[max(int(self), int(other))], Bool]
+        return Int[max(int(self), int(other)) + 1]
 
     def __mul__(self, other):
         return self.base[int(self) + int(other)]
@@ -34,7 +34,7 @@ class IntegerMeta(EnumerableGenericMeta):
         return self.base[int(self) - int(other) + 1]
 
     def __rtruediv__(self, other):
-        return self.base[int(self) - int(other) + 1]
+        return self.base[int(other) - int(self) + 1]
 
     def __floordiv__(self, other):
         return self.base[int(self) - int(other) + 1]
@@ -97,6 +97,12 @@ class Int(Integer, metaclass=IntMeta):
 
 
 class UintMeta(IntegerMeta):
+    def __sub__(self, other):
+        if(issubclass(other, Uint)):
+            return Tuple[Uint[max(int(self), int(other))], Bool]
+        else:
+            return super().__sub__(self, other)
+
     def __str__(self):
         if not self.args:
             return f'u'

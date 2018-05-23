@@ -21,7 +21,8 @@ def operator_methods_gen(cls):
 
 @operator_methods_gen
 class Intf:
-    OPERATOR_SUPPORT = ['__or__', '__getitem__']
+    OPERATOR_SUPPORT = ['__or__', '__getitem__',
+                        '__add__', '__sub__', '__mul__', '__div__']
 
     def __init__(self, dtype):
         self.consumers = []
