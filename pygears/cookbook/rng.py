@@ -39,13 +39,19 @@ def rng(cfg: TCfg, *, cnt_steps=False, incr_steps=False, cnt_one_more=False):
 
 @alternative(rng)
 @gear
-def rng_cnt_only(cfg: Integer['w_cnt']):
+def rng_cnt_only(cfg: Integer['w_cnt'], *,
+                 cnt_steps=False,
+                 incr_steps=False,
+                 cnt_one_more=False):
     return ccat(0, cfg, 1) | rng
 
 
 @alternative(rng)
 @gear(enablement=b'len(cfg) == lvl')
-def rng_multi_lvl(cfg: Tuple, *, lvl=1):
+def rng_multi_lvl(cfg: Tuple, *, lvl=1,
+                  cnt_steps=False,
+                  incr_steps=False,
+                  cnt_one_more=False):
     return cfg \
         | fmap(name='forx', f=(None, rng), fcat=cart) \
         | fmap(name='fory',

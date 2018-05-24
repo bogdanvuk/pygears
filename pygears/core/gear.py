@@ -180,7 +180,7 @@ class Gear(NamedHierNode):
                 self.argnames.append(argname)
 
             self.params[
-                self.varargsname] = f'({", ".join(vararg_type_list)})'.encode(
+                self.varargsname] = f'({", ".join(vararg_type_list)}, )'.encode(
                 )
 
     def remove(self):
