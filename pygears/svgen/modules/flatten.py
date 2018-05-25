@@ -7,7 +7,6 @@ from pygears.svgen.svgen import SVGenPlugin, svgen_visitor
 @svgen_visitor
 class RemoveTupleFlattenVisitor(RTLGearHierVisitor):
     def flatten_tuple(self, node):
-        print(node.name)
         node.bypass()
 
 

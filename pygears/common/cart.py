@@ -41,8 +41,8 @@ def uncart(din, *, dtypes):
     zdata = din[0]
     zlast = din[1:]
 
-    print(din.dtype)
-    print(dtypes)
+    # print(din.dtype)
+    # print(dtypes)
 
     def split():
         for i, d in enumerate(dtypes):
