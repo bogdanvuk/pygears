@@ -1,6 +1,6 @@
 module mul #(
-             parameter TDIN0 = 0,
-             parameter TDIN1 = 0,
+             parameter DIN0 = 0,
+             parameter DIN1 = 0,
              parameter DIN0_SIGNED = 0,
              parameter DIN1_SIGNED = 0
              )
@@ -11,7 +11,7 @@ module mul #(
                 dti_s_if.consumer din1,
                 dti_s_if.producer dout);
 
-   localparam TDOUT = TDIN0 + TDIN1;
+   localparam TDOUT = DIN0 + DIN1;
 
    if ((!DIN0_SIGNED) && (!DIN1_SIGNED)) begin
        assign dout.data = din0.data * din1.data;
@@ -25,12 +25,11 @@ module mul #(
 
    logic handshake;
 
-   assign handshake = dout.dvalid & dout.dready;
+   assign handshake = dout.valid & dout.ready;
 
-   assign din0.dready = handshake;
-   assign din1.dready = handshake;
-   assign dout.eot = 0;
+   assign din0.ready = handshake;
+   assign din1.ready = handshake;
 
-   assign dout.dvalid = din0.dvalid & din1.dvalid;
+   assign dout.valid = din0.valid & din1.valid;
 
 endmodule

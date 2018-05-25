@@ -15,7 +15,8 @@ def add_type(dtypes):
 
 
 @gear(svgen={'svmod_fn': 'add.sv'}, enablement=b'len(din) == 2')
-def add(*din: Integer) -> b'add_type(din)':
+def add(*din: Integer, din0_signed=b'typeof(din0, Int)',
+        din1_signed=b'typeof(din1, Int)') -> b'add_type(din)':
     pass
 
 

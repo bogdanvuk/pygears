@@ -1,6 +1,6 @@
 module sub #(
-             parameter TDIN0 = 0,
-             parameter TDIN1 = 0,
+             parameter DIN0 = 0,
+             parameter DIN1 = 0,
              parameter DIN0_SIGNED = 0,
              parameter DIN1_SIGNED = 0
              )
@@ -11,7 +11,7 @@ module sub #(
     dti_s_if.consumer din1,
     dti_s_if.producer dout);
 
-   localparam TDOUT = (TDIN0 > TDIN1) ? TDIN0 : TDIN1 + 1;
+   localparam TDOUT = (DIN0 > DIN1) ? (DIN0 + 1) : (DIN1 + 1);
 
    if ((!DIN0_SIGNED) && (!DIN1_SIGNED)) begin
        assign dout.data = TDOUT'(din0.data) - TDOUT'(din1.data);

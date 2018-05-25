@@ -16,7 +16,8 @@ def mul_type(dtypes):
 
 
 @gear(svgen={'svmod_fn': 'mul.sv'}, enablement=b'len(din) == 2')
-def mul(*din: Integer) -> b'mul_type(din)':
+def mul(*din: Integer, din0_signed=b'typeof(din0, Int)',
+        din1_signed=b'typeof(din1, Int)') -> b'mul_type(din)':
     pass
 
 

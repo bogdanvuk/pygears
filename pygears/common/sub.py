@@ -15,7 +15,8 @@ def sub_type(dtypes):
 
 
 @gear(svgen={'svmod_fn': 'sub.sv'}, enablement=b'len(din) == 2')
-def sub(*din: Integer) -> b'sub_type(din)':
+def sub(*din: Integer, din0_signed=b'typeof(din0, Int)',
+        din1_signed=b'typeof(din1, Int)') -> b'sub_type(din)':
     pass
 
 

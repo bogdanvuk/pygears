@@ -1,5 +1,5 @@
 module neg #(
-             parameter TDIN = 0
+             parameter DIN = 0
              )
    (
     input logic clk,
@@ -8,10 +8,10 @@ module neg #(
     dti_s_if.producer dout);
 
 
-   assign din.dready = dout.dready;
+   assign din.ready = dout.ready;
    assign dout.eot = 0;
 
-   assign dout.dvalid = din.dvalid;
+   assign dout.valid = din.valid;
    assign dout.data = -signed'(din.data);
 
 endmodule
