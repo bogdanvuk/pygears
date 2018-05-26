@@ -55,6 +55,13 @@ class HierNode:
         if self.parent:
             self.parent.child.remove(self)
 
+    def root(self):
+        node = self
+        while node.parent is not None:
+            node = node.parent
+
+        return node
+
 
 def find_unique_names(names):
     def get_stem(s):

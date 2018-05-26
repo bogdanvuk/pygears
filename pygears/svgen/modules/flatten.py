@@ -1,7 +1,7 @@
 from pygears.svgen.inst import SVGenInstPlugin
 from pygears.svgen.inst import svgen_inst
 from pygears.rtl.gear import RTLGearHierVisitor, is_gear_instance
-from pygears.svgen.svgen import SVGenPlugin, svgen_visitor
+from pygears.svgen.util import svgen_visitor
 
 
 @svgen_visitor

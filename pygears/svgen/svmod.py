@@ -122,7 +122,10 @@ class SVModuleGen:
         if len(intf.consumers) == 1:
             return svgen_intf.outname
         else:
+            # try:
             i = intf.consumers.index(port)
+            # except ValueError:
+                # i = 156
             return f'{svgen_intf.outname}[{i}]'
 
     @property

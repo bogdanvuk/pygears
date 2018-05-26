@@ -1,6 +1,7 @@
 from pygears.typing.uint import IntMeta, UintMeta
 from pygears.typing import Queue
-from pygears.svgen.svgen import SVGenPlugin, svgen_visitor
+from pygears.svgen.svgen import SVGenPlugin
+from pygears.svgen.util import svgen_visitor
 from pygears.rtl.connect import rtl_connect
 from pygears.rtl.inst import RTLNodeInstPlugin
 from pygears.svgen.svmod import SVModuleGen
