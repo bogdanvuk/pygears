@@ -44,6 +44,17 @@ typedef struct packed { // (u1, u2)
     assert equal_on_nonspace(svtype, test_ref)
 
 
+def test_tuple_unit():
+    test_ref = """
+typedef struct packed { // (u1, ())
+    logic [0:0] f0; // u1
+} data_t;
+"""
+    svtype = svgen_typedef(Tuple[Uint[1], Unit], 'data')
+
+    assert equal_on_nonspace(svtype, test_ref)
+
+
 def test_tuple_multilevel():
     test_ref = """
 typedef struct packed { // (u3, u4)

@@ -3,6 +3,7 @@ from pygears.typing.queue import Queue
 from pygears.svgen.inst import SVGenInstPlugin
 from pygears.common.czip import zip_sync, zip_cat
 from .syncguard import SVGenSyncGuard
+from .cat_util import din_data_cat
 
 
 class SVGenCZipBase(SVModuleGen):
@@ -28,16 +29,11 @@ class SVGenZipCat(SVGenCZipBase):
             i for i in intfs if i['lvl'] > 0 and i['modport'] == 'consumer'
         ]
 
-        data_intfs = [
-            i for i in intfs
-            if i['width'] - i['lvl'] > 0 and i['modport'] == 'consumer'
-        ]
-
         context = {
             'queue_intfs': queue_intfs,
-            'data_intfs': data_intfs,
             'module_name': self.sv_module_name,
-            'intfs': list(self.sv_port_configs())
+            'intfs': list(self.sv_port_configs()),
+            'din_data_cat': din_data_cat
         }
 
         return template_env.render_local(__file__, "zip_cat.j2", context)

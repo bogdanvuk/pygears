@@ -136,7 +136,8 @@ class SVGenTypeVisitor(TypingVisitorBase):
         for t, f in zip(reversed(type_.args), reversed(type_.fields)):
             self.context = f'{parent_context}_{f}'
             type_declaration = self.visit(t, f)
-            struct_fields.append(f'    {type_declaration} {f}; // {t}')
+            if type_declaration:
+                struct_fields.append(f'    {type_declaration} {f}; // {t}')
 
         struct_fields.append(f'}} {parent_context}_t;\n')
         self.struct_array.append('\n'.join(struct_fields))

@@ -1,5 +1,5 @@
 from pygears.svgen.svmod import SVModuleGen
-from pygears.typing.uint import Uint
+from pygears.typing import Uint, Tuple
 from pygears.svgen.inst import SVGenInstPlugin
 from pygears.common import quenvelope
 
@@ -12,16 +12,13 @@ class SVGenQuEnvelope(SVModuleGen):
     def get_sv_port_config(self, modport, type_, name):
         cfg = super().get_sv_port_config(modport, type_, name)
 
-        eot_i = cfg['struct'].subindex('eot')
-        eot_s = cfg['struct'].subget('eot')
+        fields = {
+            'data': type_[0],
+            'subenvelope': Uint[type_.lvl - self.lvl],
+            'out_eot': Uint[self.lvl]
+        }
 
-        eot_s['type'] = Uint[self.lvl]
-        eot_s['name'] = 'out_eot'
-
-        if type_.lvl > self.lvl:
-            cfg['struct'].insert(eot_i, 'subenvelope',
-                                 Uint[type_.lvl - self.lvl])
-
+        cfg['local_type'] = Tuple[fields]
         cfg['lvl'] = type_.lvl
 
         return cfg

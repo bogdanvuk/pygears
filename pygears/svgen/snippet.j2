@@ -125,36 +125,6 @@ assign {{intf['name']}}.ready = {{intf['name']}}_tready;
   {% endfor %}
 {%- endmacro %}
 
-{%- macro uint_def(name, t) -%}
-  logic [{{int(t)-1}}:0] {{name}}; // {{t}}
-{%- endmacro -%}
-
-{%- macro bool_def(name) -%}
-  logic {{name}};
-{%- endmacro -%}
-
-{%- macro field_def(field) -%}
-  {%- if field['svtype'] == None -%}
-    {%- if field['type'].__name__ in ["Uint", "Int"] -%}
-{{ uint_def(field['name'], field['type']) }}
-    {%- elif field['type'].__name__ == "Bool" -%}
-{{ bool_def(field['name']) }}
-    {%- else -%}
-    Unknown: {{ t }}
-    {%- endif -%}
-  {%- else -%}
-{{ field['svtype']['name'] }}_T {{ field['name'] }}; // {{ field['type'] }}
-  {%- endif -%}
-{%- endmacro -%}
-
-{%- macro sv_struct_def(sv_struct) -%}
-typedef {{ sv_struct['svtype'] }} packed {{RBR}} // {{ sv_struct['type'] }}
-{% for field in sv_struct['subtypes']|reverse -%}
-{{ field_def(field)|indent(4, True)}}
-{% endfor -%}
-{{LBR}} {{sv_struct['name']}}_t;
-{%- endmacro -%}
-
 {% macro gear_module(module_name, intfs, comment) -%}
   {% if comment is defined -%}
 /*
@@ -176,7 +146,7 @@ endmodule
 {% set caller_ = caller %}
 {% call gear_module(module_name, intfs, comment) %}
   {% for i in struct_intfs %}
-    {{ sv_struct_def(i['struct'])|indent(4, False) }}
+    {{ svgen_typedef(i['local_type'], i['name'])|indent(4, False) }}
 
   {% endfor %}
 

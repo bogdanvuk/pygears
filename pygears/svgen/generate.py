@@ -3,6 +3,7 @@ import os
 import jinja2
 from pygears.util.fileio import save_file
 from pygears import registry
+from pygears.svgen.util import svgen_typedef
 
 
 def format_list(list_, pattern):
@@ -31,7 +32,11 @@ class TemplateEnv:
         self.jenv = jinja2.Environment(
             extensions=['jinja2.ext.do'], trim_blocks=True, lstrip_blocks=True)
         self.jenv.globals.update(
-            zip=zip, len=len, int=int, enumerate=enumerate)
+            zip=zip,
+            len=len,
+            int=int,
+            enumerate=enumerate,
+            svgen_typedef=svgen_typedef)
 
         self.jenv.filters['format_list'] = format_list
         self.jenv.filters['keymap'] = keymap

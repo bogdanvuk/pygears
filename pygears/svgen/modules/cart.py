@@ -3,6 +3,7 @@ from pygears.typing.queue import Queue
 from pygears.svgen.inst import SVGenInstPlugin
 from pygears.common.cart import cart, cart_sync
 from .syncguard import SVGenSyncGuard
+from .cat_util import din_data_cat
 
 
 class SVGenCartBase(SVModuleGen):
@@ -34,16 +35,11 @@ class SVGenCart(SVGenCartBase):
             i for i in intfs if i['lvl'] > 0 and i['modport'] == 'consumer'
         ]
 
-        data_intfs = [
-            i for i in intfs
-            if i['width'] - i['lvl'] > 0 and i['modport'] == 'consumer'
-        ]
-
         context = {
             'queue_intfs': queue_intfs,
-            'data_intfs': data_intfs,
             'module_name': self.sv_module_name,
-            'intfs': intfs
+            'intfs': intfs,
+            'din_data_cat': din_data_cat
         }
 
         return template_env.render_local(__file__, "cart.j2", context)
@@ -74,7 +70,8 @@ class SVGenCartSyncBase(SVGenCartBase):
         context = {
             'outsync': self.node.params['outsync'],
             'module_name': self.sv_module_name,
-            'intfs': list(self.sv_port_configs())
+            'intfs': list(self.sv_port_configs()),
+            'din_data_cat': din_data_cat
         }
         contents = template_env.render_local(__file__, template_fn, context)
 

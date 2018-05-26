@@ -2,12 +2,11 @@
 
 {% call snippet.module_with_intf_structs(module_name, intfs, intfs, comment) %}
 
-  {%- set data_intf_names = data_intfs|keymap("name") %}
   {%- set input_intf_names = intfs|isinput|keymap("name") %}
   {%- set max_lvl_intf = intfs|isinput|max(attribute="lvl") %}
 
     assign dout_s.eot = {{ max_lvl_intf['name'] }}_s.eot;
-    assign dout_s.data = { {{data_intf_names|reverse|format_list("%s_s.data")|join(", ")}} };
+    assign dout_s.data = {{din_data_cat(intfs)}};
 
     logic  all_valid;
     logic  handshake;

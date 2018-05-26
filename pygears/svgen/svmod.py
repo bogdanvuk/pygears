@@ -4,7 +4,6 @@ from pygears.svgen.inst import SVGenInstPlugin
 from pygears.svgen.svparse import parse
 from pygears.definitions import ROOT_DIR
 from pygears import registry
-from pygears.svgen.svstruct import SVStruct
 
 import os
 
@@ -97,9 +96,9 @@ class SVModuleGen:
         return {
             'modport': modport,
             'name': name,
-            'type': str(type_),
+            'type': type_,
             'width': int(type_),
-            'struct': SVStruct(name, type_)
+            'local_type': type_
         }
 
     def get_synth_wrap(self):

@@ -15,23 +15,32 @@ module zip_cat
         logic [3:0] data; // u4
     } din0_t;
 
-    typedef struct packed { // u1
-        logic [0:0] data; // u1
-    } din1_t;
+
+    typedef logic [0:0] din1_t; // u1
+
 
     typedef struct packed { // [u3]^3
         logic [2:0] eot; // u3
         logic [2:0] data; // u3
     } din2_t;
 
+
     typedef struct packed { // [()]
         logic [0:0] eot; // u1
     } din3_t;
 
+
+    typedef struct packed { // (u4, u1, u3, ())
+        logic [2:0] f2; // u3
+        logic [0:0] f1; // u1
+        logic [3:0] f0; // u4
+    } dout_data_t;
+
     typedef struct packed { // [(u4, u1, u3, ())]^5
         logic [4:0] eot; // u5
-        logic [7:0] data; // u8
+        dout_data_t data; // (u4, u1, u3, ())
     } dout_t;
+
 
 
     din0_t din0_s;
@@ -46,7 +55,7 @@ module zip_cat
     assign din3_s = din3.data;
 
     assign dout_s.eot = din0_s.eot;
-    assign dout_s.data = { din2_s.data, din1_s.data, din0_s.data };
+    assign dout_s.data = { din2_s.data, din1_s, din0_s.data };
 
     logic  all_valid;
     logic  handshake;
