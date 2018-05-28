@@ -14,6 +14,31 @@ In **PyGears**, each HDL module is considered a Python function, called the *gea
 
 There is also an experimental API that allows for generated SystemVerilog design to be simulated from Python using `Verilator <http://www.veripool.org/wiki/verilator>`_.
 
+Where to start?
+===============
+
+Installation
+------------
+
+Install PyGears from source::
+
+  python setup.py install
+
+Read the documentation
+----------------------
+
+`PyGears documentation <https://bogdanvuk.github.io/pygears/>`_
+
+Checkout the test suite
+-----------------------
+
+Tests contain many examples on how individual **PyGears** components operate. Tests are located in the `tests <https://github.com/bogdanvuk/pygears/tree/develop/tests>`_ repository folder.
+
+Get involved
+------------
+
+Pull your copy from `github repository <https://github.com/bogdanvuk/pygears>`_
+
 Contents
 ========
 
@@ -27,5 +52,4 @@ Indices and tables
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`

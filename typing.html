@@ -31,18 +31,59 @@
           <div class="body" role="main">
             
   <div class="section" id="typing">
-<h1>Typing<a class="headerlink" href="#typing" title="Permalink to this headline">¶</a></h1>
+<span id="id1"></span><h1>Typing<a class="headerlink" href="#typing" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="pygears.typing.Integer">
+<em class="property">class </em><code class="descclassname">pygears.typing.</code><code class="descname">Integer</code><span class="sig-paren">(</span><em>val: int = 0</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.Integer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base type for both <a class="reference internal" href="#pygears.typing.Int" title="pygears.typing.Int"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int</span></code></a> [N] and <a class="reference internal" href="#pygears.typing.Uint" title="pygears.typing.Uint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Uint</span></code></a> [N] generic types.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pygears.typing.Int">
+<em class="property">class </em><code class="descclassname">pygears.typing.</code><code class="descname">Int</code><span class="sig-paren">(</span><em>val: int = 0</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.Int" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fixed width generic signed integer data type.</p>
+<dl class="docutils">
+<dt>Generic parameters:</dt>
+<dd>N: Bit width of the <a class="reference internal" href="#pygears.typing.Int" title="pygears.typing.Int"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int</span></code></a> [N] representation</dd>
+<dt>Args:</dt>
+<dd>val: Integer value to convert to <a class="reference internal" href="#pygears.typing.Int" title="pygears.typing.Int"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int</span></code></a> [N]</dd>
+</dl>
+<p><a class="reference internal" href="#pygears.typing.Int" title="pygears.typing.Int"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int</span></code></a> [N] is a generic datatype derived from <a class="reference internal" href="#pygears.typing.Integer" title="pygears.typing.Integer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Integer</span></code></a> [N]. It represents signed integers with fixed width binary representation. Concrete data type is obtained by indexing:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">i16</span> <span class="o">=</span> <span class="n">Int</span><span class="p">[</span><span class="mi">16</span><span class="p">]</span>
+</pre></div>
+</div>
+</dd></dl>
+
 <dl class="class">
 <dt id="pygears.typing.Uint">
 <em class="property">class </em><code class="descclassname">pygears.typing.</code><code class="descname">Uint</code><span class="sig-paren">(</span><em>val: int = 0</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.Uint" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fixed width generic unsigned integer data type.</p>
-<p>Uint[N] is a datatype derived from Integer. It represents unsigned integers with fixed width binary representation.</p>
 <dl class="docutils">
 <dt>Generic parameters:</dt>
-<dd>N: Bit width of the Uint[N] representation</dd>
+<dd>N: Bit width of the <a class="reference internal" href="#pygears.typing.Uint" title="pygears.typing.Uint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Uint</span></code></a> [N] representation</dd>
 <dt>Args:</dt>
-<dd>val: Integer value to convert to Uint[N]</dd>
+<dd>val: Integer value to convert to <a class="reference internal" href="#pygears.typing.Uint" title="pygears.typing.Uint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Uint</span></code></a> [N]</dd>
 </dl>
+<p><a class="reference internal" href="#pygears.typing.Uint" title="pygears.typing.Uint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Uint</span></code></a> [N] is a generic datatype derived from <a class="reference internal" href="#pygears.typing.Integer" title="pygears.typing.Integer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Integer</span></code></a> [N]. It represents unsigned integers with fixed width binary representation. Concrete data type is obtained by indexing:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">u16</span> <span class="o">=</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="class">
+<dt id="pygears.typing.Array">
+<em class="property">class </em><code class="descclassname">pygears.typing.</code><code class="descname">Array</code><a class="headerlink" href="#pygears.typing.Array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generic container datatype that holds N instances of type T</p>
+<dl class="docutils">
+<dt>Generic parameters:</dt>
+<dd><p class="first">T: Type of the <a class="reference internal" href="#pygears.typing.Array" title="pygears.typing.Array"><code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code></a> [T, N] elements</p>
+<p class="last">N: Number of elements in the <a class="reference internal" href="#pygears.typing.Array" title="pygears.typing.Array"><code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code></a> [T, N]</p>
+</dd>
+</dl>
+<p>Concrete data type is obtained by indexing:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">u16_4</span> <span class="o">=</span> <span class="n">Array</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">],</span> <span class="mi">4</span><span class="p">]</span>
+</pre></div>
+</div>
 </dd></dl>
 
 </div>
