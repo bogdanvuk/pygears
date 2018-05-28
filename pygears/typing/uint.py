@@ -71,6 +71,9 @@ class IntegerMeta(EnumerableGenericMeta):
 
 
 class Integer(metaclass=IntegerMeta):
+    """Base type for both :class:`Int` [N] and :class:`Uint` [N] generic types.
+    """
+
     def __init__(self, val: int=0):
         self.val = int(val)
 
@@ -93,6 +96,19 @@ class IntMeta(IntegerMeta):
 
 
 class Int(Integer, metaclass=IntMeta):
+    """Fixed width generic signed integer data type.
+
+    Generic parameters:
+       N: Bit width of the :class:`Int` [N] representation
+
+    Args:
+       val: Integer value to convert to :class:`Int` [N]
+
+    :class:`Int` [N] is a generic datatype derived from :class:`Integer` [N]. It represents signed integers with fixed width binary representation. Concrete data type is obtained by indexing:
+
+    >>> i16 = Int[16]
+
+    """
     __parameters__ = ['N']
 
 
@@ -115,13 +131,15 @@ class UintMeta(IntegerMeta):
 class Uint(Integer, metaclass=UintMeta):
     """Fixed width generic unsigned integer data type.
 
-    Uint[N] is a datatype derived from Integer. It represents unsigned integers with fixed width binary representation.
-
     Generic parameters:
-       N: Bit width of the Uint[N] representation
+       N: Bit width of the :class:`Uint` [N] representation
 
     Args:
-       val: Integer value to convert to Uint[N]
+       val: Integer value to convert to :class:`Uint` [N]
+
+    :class:`Uint` [N] is a generic datatype derived from :class:`Integer` [N]. It represents unsigned integers with fixed width binary representation. Concrete data type is obtained by indexing:
+
+    >>> u16 = Uint[16]
 
     """
     __parameters__ = ['N']
