@@ -71,7 +71,7 @@ class IntegerMeta(EnumerableGenericMeta):
 
 
 class Integer(metaclass=IntegerMeta):
-    def __init__(self, val):
+    def __init__(self, val: int=0):
         self.val = int(val)
 
     def __str__(self):
@@ -113,12 +113,15 @@ class UintMeta(IntegerMeta):
 
 
 class Uint(Integer, metaclass=UintMeta):
-    """Unsigned integer data type.
+    """Fixed width generic unsigned integer data type.
 
-    Uint is a datatype derived from Integer. It represents unsigned integers with fixed width binary representation.
+    Uint[N] is a datatype derived from Integer. It represents unsigned integers with fixed width binary representation.
 
-    Parameters:
-       N: Representation bit width
+    Generic parameters:
+       N: Bit width of the Uint[N] representation
+
+    Args:
+       val: Integer value to convert to Uint[N]
 
     """
     __parameters__ = ['N']
