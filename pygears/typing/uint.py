@@ -113,4 +113,12 @@ class UintMeta(IntegerMeta):
 
 
 class Uint(Integer, metaclass=UintMeta):
+    """Unsigned integer data type.
+
+    Uint is a datatype derived from Integer. It represents unsigned integers with fixed width binary representation.
+
+    Parameters:
+       N: Representation bit width
+
+    """
     __parameters__ = ['N']
