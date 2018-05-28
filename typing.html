@@ -34,12 +34,14 @@
 <h1>Typing<a class="headerlink" href="#typing" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="pygears.typing.Uint">
-<em class="property">class </em><code class="descclassname">pygears.typing.</code><code class="descname">Uint</code><span class="sig-paren">(</span><em>val</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.Uint" title="Permalink to this definition">¶</a></dt>
-<dd><p>Unsigned integer data type.</p>
-<p>Uint is a datatype derived from Integer. It represents unsigned integers with fixed width binary representation.</p>
+<em class="property">class </em><code class="descclassname">pygears.typing.</code><code class="descname">Uint</code><span class="sig-paren">(</span><em>val: int = 0</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.Uint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fixed width generic unsigned integer data type.</p>
+<p>Uint[N] is a datatype derived from Integer. It represents unsigned integers with fixed width binary representation.</p>
 <dl class="docutils">
-<dt>Parameters:</dt>
-<dd>N: Representation bit width</dd>
+<dt>Generic parameters:</dt>
+<dd>N: Bit width of the Uint[N] representation</dd>
+<dt>Args:</dt>
+<dd>val: Integer value to convert to Uint[N]</dd>
 </dl>
 </dd></dl>
 
