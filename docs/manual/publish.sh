@@ -9,10 +9,11 @@ git checkout gh-pages
 
 # goto GIT root
 cd $(git rev-parse --show-toplevel)
-echo "docs/\\npygears/\\n" > .gitignore
 # remove tracked files
 git ls-files -z | xargs -0 rm -f
 mv ./docs/manual/_build/html/{.,}* ./
+
+printf "docs/\npygears/\n" > .gitignore
 
 git add -A
 git commit -m "publishing updated docs..."
