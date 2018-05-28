@@ -1,0 +1,31 @@
+.. pygears documentation master file, created by
+   sphinx-quickstart on Mon May 28 12:15:25 2018.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
+Welcome to PyGears
+==================
+
+**PyGears** is a Python framework that facilitates describing hardware by providing a way to use powerful features of Python language to compose modules writen in a HDL (currently only supports SystemVerilog). **PyGears** can then generate hierarchical HDL modules, functionaly equivalent to the Python description.
+
+In **PyGears**, each HDL module is considered a Python function, called the *gear*, hence the design is described in form of a functional (gear) composition. **PyGears** supports also the hierarchical gears which do not have a HDL implementation, but are defined in tearms of other gears. Each gear accepts and returns interface objects as arguments, which represents module connections. This allows  for a module composition to be described in terms of powerfull functional concepts, such as: partial application, higher-order functions, function polymorphism. 
+
+**PyGears** features a powerfull system of generic types, which allows for generic modules to be described, as well as to perform type checking of the gear composition.
+
+There is also an experimental API that allows for generated SystemVerilog design to be simulated from Python using `Verilator <http://www.veripool.org/wiki/verilator>`_.
+
+Contents
+========
+
+.. toctree::
+   :maxdepth: 2
+
+   introduction
+   typing
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
