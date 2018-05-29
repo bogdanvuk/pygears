@@ -25,7 +25,7 @@ module add #(
 
    logic handshake;
 
-   assign handshake = dout.dvalid & dout.dready;
+   assign handshake = dout.valid & dout.ready;
 
    assign din0.ready = handshake;
    assign din1.ready = handshake;

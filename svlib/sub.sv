@@ -24,12 +24,11 @@ module sub #(
    end
 
    logic                 handshake;
-   assign handshake = dout.dvalid & dout.dready;
+   assign handshake = dout.valid & dout.ready;
 
-   assign din0.dready = handshake;
-   assign din1.dready = handshake;
-   assign dout.eot = 0;
+   assign din0.ready = handshake;
+   assign din1.ready = handshake;
 
-   assign dout.dvalid = din0.dvalid & din1.dvalid;
+   assign dout.valid = din0.valid & din1.valid;
 
 endmodule
