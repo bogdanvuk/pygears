@@ -31,6 +31,8 @@
                      logic [$size(dout.data)-2:0] data;
                   } dout_t;
 
+   localparam W_DOUT_DATA = $size(dout.data)-1;
+
    cfg_t cfg_s;
    dout_t dout_s;
    logic [`max(W_CNT, W_START)-1:0] 			  cnt_next;
@@ -51,7 +53,7 @@
 	  if (INCR_STEPS) begin
 
      if (SIGNED) begin
-        assign dout_s.data = signed'(cfg_s.base) + cnt_reg*signed'(cfg_s.incr);
+        assign dout_s.data = W_DOUT_DATA'(signed'(cfg_s.base)) + cnt_reg*signed'(cfg_s.incr);
      end else begin
         assign dout_s.data = cfg_s.base + cnt_reg*cfg_s.incr;
      end
@@ -60,7 +62,7 @@
 	  end else begin
 
      if (SIGNED) begin
-		    assign dout_s.data = signed'(cfg_s.base) + signed'(cnt_reg);
+		    assign dout_s.data = W_DOUT_DATA'(signed'(cfg_s.base)) + signed'(cnt_reg);
      end else begin
 		    assign dout_s.data = cfg_s.base + cnt_reg;
      end
@@ -78,11 +80,12 @@
          end
       end
 
-      assign dout_s.data = cnt_started ? cnt_reg : cfg_s.base;
 
    if (SIGNED) begin
-      assign cnt_next = signed'(dout_s.data) + signed'(cfg_s.incr);
+      assign dout_s.data = cnt_started ? W_DOUT_DATA'(signed'(cnt_reg)) : W_DOUT_DATA'(signed'(cfg_s.base));
+      assign cnt_next = W_DOUT_DATA'(signed'(dout_s.data)) + W_DOUT_DATA'(signed'(cfg_s.incr));
    end else begin
+      assign dout_s.data = cnt_started ? cnt_reg : cfg_s.base;
       assign cnt_next = dout_s.data + cfg_s.incr;
    end
 
