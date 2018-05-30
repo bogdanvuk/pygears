@@ -1,0 +1,4 @@
+systemc/
+scv/
+verilator/
+tools.sh
