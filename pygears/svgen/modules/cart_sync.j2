@@ -17,33 +17,25 @@
   {% endif %}
 
     logic all_valid;
-    logic out_valid;
-    logic out_ready;
-    logic all_aligned;
-    logic handshake;
-  {% for name in input_intf_names %}
-    logic [{{min_lvl-1}}:0] {{name}}_eot_overlap;
-    logic {{name}}_eot_aligned;
-  {% endfor %}
-
-  {% for name in input_intf_names %}
-    assign {{name}}_eot_overlap = {{name}}_s.eot[{{min_lvl-1}}:0];
-  {% endfor %}
-
-  {# Main zip functionality that determines which of the inputs is ahead in
-  Queue structure, i.e. aligned. #}
-    assign din0_eot_aligned = 1;
-    assign din1_eot_aligned = 1;
 
     assign all_valid   = {{input_intf_names|format_list("%s.valid")|join(" && ")}};
-    assign all_aligned = din0_eot_aligned && din1_eot_aligned;
 
   {# Connect internal signals to either output interfaces or sync-guard input interfaces. #}
   {% for din, dout in zip(input_intf_names, out_intf_names) %}
-    assign {{dout}}.valid = all_valid;
-    assign {{dout}}.data = {{din}}.data;
-    assign {{din}}.ready = out_valid && ({{dout}}.ready || !{{din}}_eot_aligned);
+    assign {{din}}_if.valid = all_valid;
+    assign {{din}}_if.data = {{din}}.data;
   {% endfor %}
+
+  {% if min_lvl > 0 %}
+    assign din0.ready = din1.valid && din1.ready && {{intfs[1]['data_eot']}};
+    assign din1.ready = din1_if.valid && din1_if.ready;
+  {% elif intfs[1]['lvl'] > 0 %}
+    assign din0.ready = din1.valid && din1.ready && {{intfs[1]['data_eot']}};
+    assign din1.ready = din1_if.valid && din1_if.ready;
+  {% else %}
+    assign din0.ready = din0_if.valid && din0_if.ready;
+    assign din1.ready = din0.valid && din0.ready && {{intfs[0]['data_eot']}};
+  {% endif %}
 
   {# Instantiate sync-guard if used. #}
   {% if outsync %}
@@ -55,6 +47,6 @@
     {% for i, dout in enumerate(intfs|isoutput) %}
       {% do port_map.update({"dout%s" % i: dout['name']}) %}
     {% endfor %}
-{{snippet.module_inst(module_name + "_syncguard", {}, "syncguard", port_map=port_map)|indent(4, True)}} 
+{{snippet.module_inst(module_name + "_syncguard", {}, "syncguard", port_map=port_map)|indent(4, True)}}
   {%- endif %}
 {% endcall %}
