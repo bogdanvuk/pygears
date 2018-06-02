@@ -6,6 +6,7 @@ from pygears import registry
 from pygears.svgen import svgen
 from pygears.sim.sim_gear import SimGear
 from pygears.sim.c_drv import CInputDrv, COutputDrv
+import atexit
 
 
 class SimVerilated(SimGear):
@@ -16,6 +17,8 @@ class SimVerilated(SimGear):
         self.svnode = svgen(gear, outdir=self.outdir, wrapper=True)
         self.svmod = registry('SVGenMap')[self.svnode]
         self.wrap_name = f'wrap_{self.svmod.sv_module_name}'
+
+        atexit.register(self.cleanup)
 
         rebuild = False
 
@@ -64,7 +67,7 @@ class SimVerilated(SimGear):
         self.verilib.init()
 
         while (1):
-        # for i in range(10):
+            # for i in range(10):
             for d in self.c_in_drvs:
                 await d.post()
 
@@ -80,6 +83,9 @@ class SimVerilated(SimGear):
 
             self.verilib.trig()
 
+        self.cleanup()
+
+    def cleanup(self):
         self.verilib.final()
 
 

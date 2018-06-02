@@ -5,7 +5,7 @@ extern "C" {
 
 struct CConstraint : public scv_constraint_base {
 {% for n, t in vars.items() -%}
-  scv_smart_ptr<{{t}}> {{n}};
+  scv_smart_ptr<{{t[0]}}> {{n}};
 {% endfor %}
 
   SCV_CONSTRAINT_CTOR(CConstraint) {
@@ -24,16 +24,30 @@ int init(void) {
 }
 
 void next(void) {
-	top->next();
+  top->next();
 }
 
 {% for n, t in vars.items() -%}
-{{t}} get_{{n}}(void) {
-    return *(top->{{n}});
+  {% if t[1] and (t[1] < 64 ) %}
+long int get_{{n}}(void) {
+    return (top->{{n}})->to_int();
 }
+  {% endif %}
 {% endfor %}
 
 int sc_main (int argc, char** argv) {
     return 0;
 }
+
+void set_seed(unsigned long long seed) {
+    scv_random::set_global_seed(seed);
 }
+
+unsigned long long randomize_seed() {
+    unsigned long long seed = scv_random::pick_random_seed();
+    set_seed(seed);
+    return seed;
+}
+
+}
+

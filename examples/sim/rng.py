@@ -1,24 +1,19 @@
 from pygears import Intf, bind, ErrReportLevel, gear
 from pygears.common import quenvelope
 from pygears.typing import Queue, Uint, Tuple, TLM
-from pygears.sim import sim, seq, verif
+from pygears.sim import sim, verif
+from pygears.sim.modules.dtype_rnd_seq import dtype_rnd_seq
+from pygears.sim.scv import create_type_cons
 from pygears.cookbook.rng import rng
-
-cons = {
-    'vars': {
-        'f0': 'unsigned',
-        'f1': 'unsigned',
-        'f2': 'unsigned',
-    },
-    'constraints':
-    ['f0() < f1()', 'f0() < 16', 'f1() < 4', 'f2() < f1() - f0()', 'f2() > 0']
-}
 
 bind("ErrReportLevel", ErrReportLevel.debug)
 
-t_cfg = Tuple[Uint[4], Uint[2], Uint[2]]
+t_cfg = Tuple[Uint[4], Uint[4], Uint[2]]
 outdir = '/tmp/sim_test'
 params = dict(cnt_steps=False, incr_steps=False, cnt_one_more=False)
+
+cons = create_type_cons(
+    t_cfg, scale=Uint[4], cons=['scale > 0', 'f1 > f0', 'f1 - f0 == scale*f2'])
 
 
 @gear
@@ -33,7 +28,9 @@ async def ref(din: TLM[t_cfg], *, cnt_steps, incr_steps,
 
 
 report = verif(
-    seq(t=t_cfg, cons=cons, outdir=outdir), f=rng(**params), ref=ref(**params))
+    dtype_rnd_seq(t=t_cfg, cons=cons, outdir=outdir),
+    f=rng(**params),
+    ref=ref(**params))
 
 from pygears.util.print_hier import print_hier
 print_hier()
