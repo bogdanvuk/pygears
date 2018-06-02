@@ -53,7 +53,7 @@
 	  if (INCR_STEPS) begin
 
      if (SIGNED) begin
-        assign dout_s.data = signed'(cfg_s.base) + cnt_reg*signed'(cfg_s.incr);
+        assign dout_s.data = W_DOUT_DATA'(signed'(cfg_s.base)) + cnt_reg*signed'(cfg_s.incr);
      end else begin
         assign dout_s.data = cfg_s.base + cnt_reg*cfg_s.incr;
      end
@@ -62,7 +62,7 @@
 	  end else begin
 
      if (SIGNED) begin
-		    assign dout_s.data = signed'(cfg_s.base) + signed'(cnt_reg);
+		    assign dout_s.data = W_DOUT_DATA'(signed'(cfg_s.base)) + signed'(cnt_reg);
      end else begin
 		    assign dout_s.data = cfg_s.base + cnt_reg;
      end
@@ -80,13 +80,13 @@
          end
       end
 
+   if (SIGNED) begin
+      assign dout_s.data = cnt_started ? W_DOUT_DATA'(signed'(cnt_reg)) : W_DOUT_DATA'(signed'(cfg_s.base));
+      assign cnt_next = W_DOUT_DATA'(signed'(dout_s.data)) + W_DOUT_DATA'(signed'(cfg_s.incr));
+   end else begin
       assign dout_s.data = cnt_started ? cnt_reg : cfg_s.base;
-
-      if (SIGNED) begin
-          assign cnt_next = signed'(dout_s.data) + signed'(cfg_s.incr);
-      end else begin
-          assign cnt_next = dout_s.data + W_DOUT_DATA'(cfg_s.incr);
-      end
+      assign cnt_next = dout_s.data + W_DOUT_DATA'(cfg_s.incr);
+   end
 
    end
 
@@ -122,7 +122,7 @@
    // if (CNT_ONE_MORE == 0) begin
    //    asrt_nonzero_cnt : assert property (
    //                                        @(posedge clk) disable iff(rst)
-   //                                        cfg.valid |-> cfg_s.cnt !== 0)
+    //                                        cfg.valid |-> cfg_s.cnt !== 0)
    //      else $error("Empty list not supported when CNT_ONE_MORE == 0.");
    // end
 

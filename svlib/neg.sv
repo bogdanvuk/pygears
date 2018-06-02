@@ -9,7 +9,6 @@ module neg #(
 
 
    assign din.ready = dout.ready;
-   assign dout.eot = 0;
 
    assign dout.valid = din.valid;
    assign dout.data = -signed'(din.data);

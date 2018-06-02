@@ -51,4 +51,16 @@ class ArrayMeta(EnumerableGenericMeta):
 
 
 class Array(metaclass=ArrayMeta):
+    """Generic container datatype that holds N instances of type T
+
+    Generic parameters:
+       T: Type of the :class:`Array` [T, N] elements
+
+       N: Number of elements in the :class:`Array` [T, N]
+
+    Concrete data type is obtained by indexing:
+
+    >>> u16_4 = Array[Uint[16], 4]
+
+    """
     __parameters__ = ['T', 'N']

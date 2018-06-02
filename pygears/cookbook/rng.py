@@ -53,10 +53,15 @@ def rng_multi_lvl(cfg: Tuple, *, lvl=1,
                   incr_steps=False,
                   cnt_one_more=False):
     return cfg \
-        | fmap(name='forx', f=(None, rng), fcat=cart) \
+        | fmap(name='forx', f=(None, rng(cnt_steps=cnt_steps,
+                                         incr_steps=incr_steps,
+                                         cnt_one_more=cnt_one_more)), fcat=cart) \
         | fmap(name='fory',
                f=fmap(
-                   f=(rng, None), fcat=permuted_apply(f=cart, indices=(1,0)))
+                   f=(rng(cnt_steps=cnt_steps,
+                          incr_steps=incr_steps,
+                          cnt_one_more=cnt_one_more), None),
+                   fcat=permuted_apply(f=cart, indices=(1,0)))
                    # f=(rng, None), fcat=cart)
                )
 

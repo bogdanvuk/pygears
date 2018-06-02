@@ -27,7 +27,6 @@ module div #(
 
    assign din0.ready = handshake;
    assign din1.ready = handshake;
-   assign dout.eot = 0;
 
    assign dout.valid = din0.valid & din1.valid;
 
