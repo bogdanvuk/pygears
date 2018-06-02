@@ -28,9 +28,7 @@ async def ref(din: TLM[t_cfg], *, cnt_steps, incr_steps,
 
 
 report = verif(
-    dtype_rnd_seq(t=t_cfg, cons=cons, outdir=outdir),
-    f=rng(**params),
-    ref=ref(**params))
+    dtype_rnd_seq(t=t_cfg, cons=cons), f=rng(**params), ref=ref(**params))
 
 from pygears.util.print_hier import print_hier
 print_hier()

@@ -4,6 +4,11 @@
 		    "flow": "default_cpp.py",
 		    "url": "https://www.veripool.org/ftp/verilator-3.922.tgz",
 		    "src_root_path": "{install_path}/verilator-3.922",
+        "pre_custom_run": ["export VERILATOR_ROOT={path}"],
+        "post_custom_run": [
+            "cp -r {path}/share/verilator/include {path}"
+            "cp {path}/share/verilator/bin/* {path}/bin"
+		    ],
 		    "configure": "",
 		    "deps": "autoconf flex bison",
 		    "env" : [
@@ -32,8 +37,8 @@
         "configure": "--with-systemc=$SYSTEMC_HOME",
 		    "env" : [
 			      "export SCV_HOME={path}",
-			      "export SYSTEMC_INCLUDE={path}/include",
-			      "export SYSTEMC_LIBDIR={path}/lib-linux64"
+			      "export SCV_INCLUDE={path}/include",
+			      "export SCV_LIBDIR={path}/lib-linux64"
 		    ]
     }
 ]

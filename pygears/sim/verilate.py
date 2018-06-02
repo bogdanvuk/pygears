@@ -14,19 +14,20 @@ class SimVerilated(SimGear):
         super().__init__(gear)
         self.name = gear.name[1:].replace('/', '_')
         self.outdir = os.path.join(outdir, self.name)
+        self.objdir = os.path.join(self.outdir, 'obj_dir')
         self.svnode = svgen(gear, outdir=self.outdir, wrapper=True)
         self.svmod = registry('SVGenMap')[self.svnode]
         self.wrap_name = f'wrap_{self.svmod.sv_module_name}'
 
         atexit.register(self.cleanup)
 
-        rebuild = False
+        rebuild = True
 
         if rebuild:
             self.build()
 
         self.verilib = ctypes.CDLL(
-            os.path.join(self.outdir, 'obj_dir', f'V{self.wrap_name}'))
+            os.path.join(self.objdir, f'V{self.wrap_name}'))
 
     def build(self):
         context = {
@@ -45,14 +46,11 @@ class SimVerilated(SimGear):
         c = jenv.get_template('sim_veriwrap.j2').render(context)
         save_file('sim_main.cpp', self.outdir, c)
 
-        os.chdir(self.outdir)
-
         os.system(
-            f"verilator -cc -CFLAGS -fpic -LDFLAGS -shared --exe {include} -clk clk --trace --trace-structs --top-module {self.wrap_name} {self.outdir}/*.sv dti.sv sim_main.cpp"
+            f"cd {self.outdir}; verilator -cc -CFLAGS -fpic -LDFLAGS -shared --exe {include} -clk clk --trace --trace-structs --top-module {self.wrap_name} {self.outdir}/*.sv dti.sv sim_main.cpp"
         )
 
-        os.chdir(os.path.join(self.outdir, 'obj_dir'))
-        os.system(f"make -j -f V{self.wrap_name}.mk")
+        os.system(f"cd {self.objdir}; make -j -f V{self.wrap_name}.mk")
 
     async def func(self, *args, **kwds):
         self.c_in_drvs = [
@@ -87,27 +85,3 @@ class SimVerilated(SimGear):
 
     def cleanup(self):
         self.verilib.final()
-
-
-# def verilate(top, outdir):
-#     context = {
-#         'in_ports': top.in_ports,
-#         'out_ports': top.out_ports,
-#         'tracing': True
-#     }
-#     include = ' '.join([f'-I{p}' for p in registry('SVGenSystemVerilogPaths')])
-
-#     jenv = jinja2.Environment(trim_blocks=True, lstrip_blocks=True)
-#     jenv.globals.update(int=int)
-#     jenv.loader = jinja2.FileSystemLoader([os.path.dirname(__file__)])
-#     c = jenv.get_template('sim_veriwrap.j2').render(context)
-#     save_file('sim_main.cpp', outdir, c)
-
-#     os.chdir(outdir)
-
-#     os.system(
-#         f"verilator -cc -CFLAGS -fpic -LDFLAGS -shared --exe {include} -clk clk --trace --trace-structs --top-module wrap_top {outdir}/*.sv dti.sv sim_main.cpp"
-#     )
-
-#     os.chdir(os.path.join(outdir, 'obj_dir'))
-#     os.system(f"make -j -f Vwrap_top.mk")

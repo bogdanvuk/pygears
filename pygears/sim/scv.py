@@ -8,6 +8,10 @@ from pygears.typing.visitor import TypingVisitorBase
 from pygears.util.fileio import save_file
 
 
+class SCVCompileError(Exception):
+    pass
+
+
 def file_changed(fn, new_contents):
     with open(fn) as f:
         data = f.read()
@@ -106,13 +110,14 @@ def scv_compile(outdir, name, cons):
         # if True:
         save_file(f'{name}.cpp', outdir, c)
 
-        os.chdir(outdir)
-        os.environ["SYSTEMC_ROOT"] = '/data/tools/systemc'
-        os.environ["SCV_ROOT"] = '/data/tools/scv'
-
-        os.system(
-            f"g++ -fpic -shared -I. -I$SYSTEMC_ROOT/include -I $SCV_ROOT/include -Wall -Wformat -O2 $SCV_ROOT/lib-linux64/libscv.so -L$SYSTEMC_ROOT/lib-linux64 $SYSTEMC_ROOT/lib-linux64/libsystemc.so -lpthread -pthread -Wl,-rpath -Wl,$SCV_ROOT/lib-linux64 -Wl,-rpath -Wl,$SYSTEMC_ROOT/lib-linux64 -o {name} {name}.cpp"
+        ret = os.system(
+            f"cd {outdir}; g++ -fpic -shared -I. -I$SYSTEMC_INCLUDE -I$SCV_INCLUDE -Wall -Wformat -O2 $SCV_LIBDIR/libscv.so -L$SYSTEMC_LIBRID $SYSTEMC_LIBDIR/libsystemc.so -lpthread -pthread -Wl,-rpath -Wl,$SCV_LIBDIR -Wl,-rpath -Wl,$SYSTEMC_LIBDIR -o {name} {name}.cpp"
         )
+
+        if ret != 0:
+            raise SCVCompileError(
+                f'Constrained random library compilation failed for module {name}.'
+            )
 
     return ctypes.CDLL(os.path.join(outdir, name))
 
