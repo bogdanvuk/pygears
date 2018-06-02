@@ -1,0 +1,16 @@
+{%- import 'snippet.j2' as snippet -%}
+
+module wrap_{{module_name}}
+(
+    input clk,
+    input rst,
+{{snippet.signal_intf_list(intfs)|indent(4, True)}}
+);
+
+{{snippet.intf_list_inst(intfs)|indent(4, True)}}
+
+{{snippet.signal_intf_connect(intfs)|indent(4, True)}}
+
+{{snippet.module_inst(module_name, param_map, module_name+"_i")|indent(4, True)}}
+
+endmodule

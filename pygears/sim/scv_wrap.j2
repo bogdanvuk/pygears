@@ -1,0 +1,39 @@
+
+#include "scv.h"
+
+extern "C" {
+
+struct CConstraint : public scv_constraint_base {
+{% for n, t in vars.items() -%}
+  scv_smart_ptr<{{t}}> {{n}};
+{% endfor %}
+
+  SCV_CONSTRAINT_CTOR(CConstraint) {
+
+{% for c in constraints -%}
+    SCV_CONSTRAINT ( {{c}} );
+{% endfor %}
+  }
+};
+
+CConstraint *top;
+
+int init(void) {
+	top = new CConstraint("addr");
+	return 0;
+}
+
+void next(void) {
+	top->next();
+}
+
+{% for n, t in vars.items() -%}
+{{t}} get_{{n}}(void) {
+    return *(top->{{n}});
+}
+{% endfor %}
+
+int sc_main (int argc, char** argv) {
+    return 0;
+}
+}

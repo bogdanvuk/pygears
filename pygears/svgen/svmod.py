@@ -86,11 +86,11 @@ class SVModuleGen:
     def sv_port_configs(self):
         for p in self.node.in_ports:
             yield self.get_sv_port_config(
-                'consumer', type_=p.producer.dtype, name=p.basename)
+                'consumer', type_=p.dtype, name=p.basename)
 
         for p in self.node.out_ports:
             yield self.get_sv_port_config(
-                'producer', type_=p.consumer.dtype, name=p.basename)
+                'producer', type_=p.dtype, name=p.basename)
 
     def get_sv_port_config(self, modport, type_, name):
         return {
@@ -101,15 +101,15 @@ class SVModuleGen:
             'local_type': type_
         }
 
-    def get_synth_wrap(self):
+    def get_synth_wrap(self, template_env):
 
         context = {
             'module_name': self.sv_module_name,
             'intfs': list(self.sv_port_configs()),
             'param_map': self.params
         }
-        return self.context.jenv.get_template("module_synth_wrap.j2").render(
-            **context)
+        return template_env.render_local(__file__, "module_synth_wrap.j2",
+                                         context)
 
     def get_out_port_map_intf_name(self, port):
         return self.svgen_map[port.consumer].basename
@@ -121,10 +121,7 @@ class SVModuleGen:
         if len(intf.consumers) == 1:
             return svgen_intf.outname
         else:
-            # try:
             i = intf.consumers.index(port)
-            # except ValueError:
-                # i = 156
             return f'{svgen_intf.outname}[{i}]'
 
     @property
@@ -185,10 +182,17 @@ class SVModuleGen:
         return template_env.snippets.module_inst(**context)
 
 
+class SVTopGen(SVModuleGen):
+    @property
+    def sv_module_name(self):
+        return "top"
+
+
 class SVGenSVModPlugin(SVGenInstPlugin):
     @classmethod
     def bind(cls):
         cls.registry['SVGenModuleNamespace']['Gear'] = SVModuleGen
+        cls.registry['SVGenModuleNamespace']['RTLNodeDesign'] = SVTopGen
 
         cls.registry['SVGenSystemVerilogPaths'].append(
             os.path.join(ROOT_DIR, '..', 'svlib'))

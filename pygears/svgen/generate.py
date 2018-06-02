@@ -4,6 +4,7 @@ import jinja2
 from pygears.util.fileio import save_file
 from pygears import registry
 from pygears.svgen.util import svgen_typedef
+from pygears.rtl.inst import RTLNodeDesign
 
 
 def format_list(list_, pattern):
@@ -58,15 +59,21 @@ class TemplateEnv:
 
 
 class SVGenGenerateVisitor(HierYielderBase):
-    def __init__(self):
+    def __init__(self, top, wrapper=False):
         self.template_env = TemplateEnv()
         self.svgen_map = registry('SVGenMap')
+        self.wrapper = wrapper
+        self.top = top
 
     def RTLNode(self, node):
         svgen = self.svgen_map.get(node, None)
         if svgen is not None:
             contents = svgen.get_module(self.template_env)
-            yield svgen, contents
+            yield svgen.sv_file_name, contents
+
+            if (self.wrapper) and (node == self.top):
+                yield f'wrap_{svgen.sv_file_name}', svgen.get_synth_wrap(
+                    self.template_env)
 
 
 def svgen_module(node):
@@ -83,13 +90,13 @@ def svgen_yield(top):
 
 
 def svgen_generate(top, conf):
-    v = SVGenGenerateVisitor()
-    for svgen, contents in v.visit(top):
+    v = SVGenGenerateVisitor(top, conf.get('wrapper', False))
+    for file_names, contents in v.visit(top):
         if contents:
             if isinstance(contents, (tuple, list)):
-                for fn, c in zip(svgen.sv_file_name, contents):
+                for fn, c in zip(file_names, contents):
                     save_file(fn, conf['outdir'], c)
             else:
-                save_file(svgen.sv_file_name, conf['outdir'], contents)
+                save_file(file_names, conf['outdir'], contents)
 
     return top

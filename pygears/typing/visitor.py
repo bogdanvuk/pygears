@@ -22,10 +22,10 @@ class TypingVisitorBase:
     def visit_default(self, type_, field):
         if hasattr(type_, 'fields'):
             for t, f in zip(type_, type_.fields):
-                self.visit(t, f)
+                return self.visit(t, f)
         else:
             try:
                 for t in type_:
-                    self.visit(t)
+                    return self.visit(t)
             except TypeError:
                 pass

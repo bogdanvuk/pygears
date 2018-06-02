@@ -8,7 +8,7 @@ def get_int_type(val):
     elif val > 0:
         return Uint[bitw(val)]
     else:
-        return Int[bitw(val)+1]
+        return Int[bitw(val) + 1]
 
 
 def get_literal_type(val):
@@ -22,5 +22,5 @@ def get_literal_type(val):
 
 
 @gear(svgen={'svmod_fn': 'sustain.sv'})
-def const(*, val, tout=b'get_literal_type(val)') -> b'tout':
-    pass
+async def const(*, val, tout=b'get_literal_type(val)') -> b'tout':
+    yield tout(val)

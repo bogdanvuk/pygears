@@ -31,10 +31,12 @@
                      logic [$size(dout.data)-2:0] data;
                   } dout_t;
 
+   localparam W_DOUT_DATA = `max(W_CNT, W_START);
+
    cfg_t cfg_s;
    dout_t dout_s;
-   logic [`max(W_CNT, W_START)-1:0] 			  cnt_next;
-   logic [`max(W_CNT, W_START)-1:0] 			  cnt_reg;
+   logic [W_DOUT_DATA-1:0]                        cnt_next;
+   logic [W_DOUT_DATA-1:0]                        cnt_reg;
 
    logic 										  eot_internal_cond;
    logic 										  handshake;
@@ -80,18 +82,18 @@
 
       assign dout_s.data = cnt_started ? cnt_reg : cfg_s.base;
 
-   if (SIGNED) begin
-      assign cnt_next = signed'(dout_s.data) + signed'(cfg_s.incr);
-   end else begin
-      assign cnt_next = dout_s.data + cfg_s.incr;
-   end
+      if (SIGNED) begin
+          assign cnt_next = signed'(dout_s.data) + signed'(cfg_s.incr);
+      end else begin
+          assign cnt_next = dout_s.data + W_DOUT_DATA'(cfg_s.incr);
+      end
 
    end
 
    if (CNT_ONE_MORE)
      assign eot_internal_cond = (cnt_reg == cfg_s.cnt);
    else if (!CNT_STEPS)
-     assign eot_internal_cond = (dout_s.data == cfg_s.cnt);
+     assign eot_internal_cond = (dout_s.data == W_DOUT_DATA'(cfg_s.cnt));
    else
      assign eot_internal_cond = (cnt_next == cfg_s.cnt);
 

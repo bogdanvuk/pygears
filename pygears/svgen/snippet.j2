@@ -68,17 +68,17 @@ logic {{name}};
 {%- endmacro %}
 
 {% macro cons_signal_intf(intf) -%}
-output logic         {{intf['name']}}_tready,
-input  logic         {{intf['name']}}_tvalid,
-input  logic         {{intf['name']}}_tlast,
-input  logic [{{((intf['width']+7)//8)*8-1}}:0] {{intf['name']}}_tdata
+output logic         {{intf['name']}}_ready,
+input  logic         {{intf['name']}}_valid,
+{# input  logic [{{((intf['width']+7)//8)*8-1}}:0] {{intf['name']}}_data #}
+input  logic [{{intf['width']-1}}:0] {{intf['name']}}_data
 {%- endmacro %}
 
 {% macro prod_signal_intf(intf) -%}
-input  logic         {{intf['name']}}_tready,
-output logic         {{intf['name']}}_tvalid,
-output logic         {{intf['name']}}_tlast,
-output logic [{{((intf['width']+7)//8)*8-1}}:0] {{intf['name']}}_tdata
+input  logic         {{intf['name']}}_ready,
+output logic         {{intf['name']}}_valid,
+{# output logic [{{((intf['width']+7)//8)*8-1}}:0] {{intf['name']}}_data #}
+output logic [{{intf['width']-1}}:0] {{intf['name']}}_data
 {%- endmacro %}
 
 {% macro signal_intf_list(intfs) -%}
@@ -98,21 +98,21 @@ output logic [{{((intf['width']+7)//8)*8-1}}:0] {{intf['name']}}_tdata
 {%- endmacro %}
 
 {% macro cons_signal_intf_connect(intf) -%}
-output logic         {{intf['name']}}_tready,
-input  logic         {{intf['name']}}_tvalid,
-input  logic [{{intf['width']}}:0] {{intf['name']}}_tdata
+output logic         {{intf['name']}}_ready,
+input  logic         {{intf['name']}}_valid,
+input  logic [{{intf['width']}}:0] {{intf['name']}}_data
 {%- endmacro %}
 
 {% macro cons_signal_intf_connect(intf) -%}
-assign {{intf['name']}}.valid = {{intf['name']}}_tvalid;
-assign {{intf['name']}}.data = {{intf['name']}}_tdata;
-assign {{intf['name']}}_tready = {{intf['name']}}.ready;
+assign {{intf['name']}}.valid = {{intf['name']}}_valid;
+assign {{intf['name']}}.data = {{intf['name']}}_data;
+assign {{intf['name']}}_ready = {{intf['name']}}.ready;
 {%- endmacro %}
 
 {% macro prod_signal_intf_connect(intf) -%}
-assign {{intf['name']}}_tvalid = {{intf['name']}}.valid;
-assign {{intf['name']}}_tdata = {{intf['name']}}.data;
-assign {{intf['name']}}.ready = {{intf['name']}}_tready;
+assign {{intf['name']}}_valid = {{intf['name']}}.valid;
+assign {{intf['name']}}_data = {{intf['name']}}.data;
+assign {{intf['name']}}.ready = {{intf['name']}}_ready;
 {%- endmacro %}
 
 {% macro signal_intf_connect(intfs) -%}

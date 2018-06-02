@@ -11,4 +11,7 @@ class RTLConnectVisitor(HierVisitorBase):
 def rtl_connect(top, conf):
     v = RTLConnectVisitor()
     v.visit(top)
+    # for rtl_gear in top.child:
+    #     v.visit(rtl_gear)
+
     return top.node

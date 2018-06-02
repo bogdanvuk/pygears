@@ -5,13 +5,16 @@ from pygears.rtl.intf import RTLIntf
 
 @svgen_visitor
 class RTLChannelVisitor(HierVisitorBase):
-    def RTLGear(self, node):
+    def RTLNode(self, node):
+        if node.parent is None:
+            return
+
         for p in node.in_ports:
             prod_intf = p.producer
             parent = node.parent
 
-            if prod_intf.parent != parent and (not parent.is_descendent(
-                    prod_intf.parent)):
+            if (prod_intf is not None and prod_intf.parent != parent
+                    and (not parent.is_descendent(prod_intf.parent))):
 
                 parent.add_in_port(
                     p.basename, producer=prod_intf, dtype=prod_intf.dtype)

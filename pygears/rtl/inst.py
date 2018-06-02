@@ -1,26 +1,42 @@
-from pygears import registry, PluginBase
+from pygears import registry, PluginBase, Intf
 from pygears.core.hier_node import HierVisitorBase, NamedHierNode, HierNode
-from pygears.rtl.gear import RTLGearNodeGen
+from pygears.rtl.gear import RTLGearNodeGen, RTLNode
 import inspect
 
 
-class RTLNodeDesign(NamedHierNode):
+# class RTLNodeDesign(NamedHierNode):
+class RTLNodeDesign(RTLNode):
     def __init__(self):
-        super().__init__('')
+        super().__init__(None, '')
 
 
-class RTLNodeGearRoot(HierNode):
+class RTLNodeGearRoot(RTLGearNodeGen):
     def __init__(self, module):
-        super().__init__()
+        HierNode.__init__(self)
         self.node = RTLNodeDesign()
+
+        namespace = registry('SVGenModuleNamespace')
+        self.node.params['svgen'] = {'svgen_cls': namespace['RTLNodeDesign']}
         self.module = module
 
-    def out_port_make(self, port, node):
-        print(
-            f'Module {node.name} has unconnected output port {port["name"]}.')
+        for cnode in module.child:
+            for p in cnode.in_ports:
+                self.node.add_in_port(
+                    p.basename, consumer=p.producer, dtype=p.dtype)
+                p.producer.source(self.node.in_ports[-1])
 
-    def in_port_make(self, port, node):
-        print(f'Module {node.name} has unconnected input port {port["name"]}.')
+            for p in cnode.out_ports:
+                self.node.add_out_port(
+                    p.basename, producer=p.consumer, dtype=p.dtype)
+
+                p.consumer.connect(self.node.out_ports[-1])
+
+    # def out_port_make(self, port, node):
+    #     print(
+    #         f'Module {node.name} has unconnected output port {port["name"]}.')
+
+    # def in_port_make(self, port, node):
+    #     print(f'Module {node.name} has unconnected input port {port["name"]}.')
 
 
 class RTLNodeInstVisitor(HierVisitorBase):

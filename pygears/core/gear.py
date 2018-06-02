@@ -13,6 +13,10 @@ from .port import InPort, OutPort
 from .util import doublewrap
 
 
+class StopGear(Exception):
+    pass
+
+
 class TooManyArguments(Exception):
     pass
 
@@ -30,8 +34,7 @@ def check_arg_num(argnames, varargsname, args):
                                        (len(args) > len(argnames))):
         balance = "few" if (len(args) < len(argnames)) else "many"
 
-        raise TooManyArguments(
-            f"Too {balance} arguments provided.")
+        raise TooManyArguments(f"Too {balance} arguments provided.")
 
 
 def check_arg_specified(args):
@@ -180,8 +183,8 @@ class Gear(NamedHierNode):
                 self.argnames.append(argname)
 
             self.params[
-                self.varargsname] = f'({", ".join(vararg_type_list)}, )'.encode(
-                )
+                self.
+                varargsname] = f'({", ".join(vararg_type_list)}, )'.encode()
 
     def remove(self):
         for p in self.in_ports:
@@ -238,7 +241,13 @@ class Gear(NamedHierNode):
             raise TypeMatchError(f'{str(e)}, of the module {self.name}')
 
     def resolve(self):
-        func_ret = self.resolve_func()
+        is_async_gen = bool(
+            self.func.__code__.co_flags & inspect.CO_ASYNC_GENERATOR)
+        func_ret = tuple()
+        if (not inspect.iscoroutinefunction(self.func)
+                and not inspect.isgeneratorfunction(self.func)
+                and not is_async_gen):
+            func_ret = self.resolve_func()
 
         if func_ret:
             out_dtype = tuple(r.dtype for r in func_ret)
@@ -289,7 +298,6 @@ class Gear(NamedHierNode):
                 k: self.params[k]
                 for k in self.kwdnames if k in self.params
             }
-
             ret = self.func(*func_args, **func_kwds)
 
         if not any([isinstance(c, Gear) for c in self.child]):

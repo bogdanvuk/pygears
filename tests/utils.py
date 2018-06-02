@@ -79,7 +79,7 @@ def get_sv_file_comparison_pair(fn, filename=None, function_name=None):
     return os.path.join(filename, function_name, fn), os.path.join(res_dir, fn)
 
 
-def svgen_check(files):
+def svgen_check(files, **kwds):
     def decorator(func):
         @wraps(func)
         def wrapper():
@@ -88,7 +88,7 @@ def svgen_check(files):
                 os.path.abspath(inspect.getfile(func)))[0]
 
             outdir = prepare_result_dir(filename, func.__name__)
-            svgen(outdir=outdir)
+            svgen(outdir=outdir, **kwds)
 
             for fn in files:
                 comp_file_paths = get_sv_file_comparison_pair(
