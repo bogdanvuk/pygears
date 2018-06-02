@@ -6,32 +6,38 @@ from pygears.rtl.intf import RTLIntf
 @svgen_visitor
 class RTLChannelVisitor(HierVisitorBase):
     def RTLNode(self, node):
-        if node.parent is None:
-            return
+        # super().HierNode(node)
+        # print(node.name)
+        # if node.parent is None:
+        #     return
 
         for p in node.in_ports:
             prod_intf = p.producer
+
             parent = node.parent
+            while parent is not None:
+                if (prod_intf is not None and prod_intf.parent != parent
+                        and (not parent.is_descendent(prod_intf.parent))):
 
-            if (prod_intf is not None and prod_intf.parent != parent
-                    and (not parent.is_descendent(prod_intf.parent))):
+                    parent.add_in_port(
+                        p.basename, producer=prod_intf, dtype=prod_intf.dtype)
+                    in_port = parent.in_ports[-1]
 
-                parent.add_in_port(
-                    p.basename, producer=prod_intf, dtype=prod_intf.dtype)
-                in_port = parent.in_ports[-1]
+                    local_cons = [
+                        port for port in prod_intf.consumers
+                        if parent.is_descendent(port.node)
+                    ]
 
-                local_cons = [
-                    port for port in prod_intf.consumers
-                    if parent.is_descendent(port.node)
-                ]
+                    local_intf = RTLIntf(
+                        parent, prod_intf.dtype, producer=in_port)
 
-                local_intf = RTLIntf(parent, prod_intf.dtype, producer=in_port)
+                    for port in local_cons:
+                        prod_intf.consumers.remove(port)
+                        local_intf.connect(port)
 
-                for port in local_cons:
-                    prod_intf.consumers.remove(port)
-                    local_intf.connect(port)
+                    prod_intf.connect(in_port)
 
-                prod_intf.connect(in_port)
+                parent = parent.parent
 
         # for p in self.out_ports():
         #     consumers_at_same_level_or_sublevel = [

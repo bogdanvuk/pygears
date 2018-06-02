@@ -9,19 +9,6 @@ from pygears.core.hier_node import HierVisitorBase
 import inspect
 
 
-def reconnect_port(gear_port, port):
-    iin = gear_port.producer
-    iout = gear_port.consumer
-
-    if iin:
-        # iin.disconnect(gear_port)
-        iin.connect(port)
-
-    if iout:
-        # iout.disconnect(gear_port)
-        iout.source(port)
-
-
 class RTLGear(RTLNode):
     def __init__(self, gear, parent):
         super().__init__(parent, gear.basename, params=gear.params)
@@ -70,37 +57,44 @@ class RTLGearNodeGen(HierNode):
         for p in gear.out_ports:
             self.node.add_out_port(p.basename, p.producer, p.consumer, p.dtype)
 
-        # for gear_port, port in zip(
-        #         itertools.chain(gear.in_ports, gear.out_ports),
-        #         itertools.chain(self.node.in_ports, self.node.out_ports)):
-        #     reconnect_port(gear_port, port)
-
     def connect(self):
         self.rtl_map = registry('RTLNodeMap')
         for p, gear_p in zip(self.node.in_ports, self.gear.in_ports):
             self.create_intf(p, gear_p, domain=self.node)
-            # prod_intf = p.producer
-            # if prod_intf is not None and prod_intf.producer is None:
-            #     self.create_unsourced_intf(p)
+            prod_intf = gear_p.producer
+            if prod_intf is not None and prod_intf.producer is None:
+                self.create_unsourced_intf(p, gear_p)
 
         for p, gear_p in zip(self.node.out_ports, self.gear.out_ports):
             self.create_intf(p, gear_p, domain=self.node.parent)
 
-    # def create_unsourced_intf(self, port):
-    #     intf = port.producer
-    #     consumers = []
-    #     for cons_port in intf.consumers:
-    #         rtl_port = cons_port.node.in_ports[cons_port.index]
-    #         consumers.append(rtl_port)
+    def create_unsourced_intf(self, port, gear_port):
+        gear_intf = gear_port.producer
+        consumers = []
+        for cons_port in gear_intf.consumers:
+            node_gen = registry('RTLNodeMap').get(cons_port.gear, None)
+            if node_gen:
+                rtl_port = node_gen.node.in_ports[cons_port.index]
+                consumers.append(rtl_port)
 
-    #     intf_inst = RTLIntf(
-    #         self.node.root(), intf.dtype, producer=None, consumers=consumers)
+        intf_inst = RTLIntf(
+            self.node.root(),
+            gear_intf.dtype,
+            producer=None,
+            consumers=consumers)
 
-    #     for cons_port in consumers:
-    #         cons_port.producer = intf_inst
+        self.node.root().add_in_port(
+            port.basename,
+            producer=None,
+            dtype=intf_inst.dtype,
+            consumer=intf_inst)
 
-    #     self.rtl_map[intf] = intf_inst
-    #     port.producer = intf_inst
+        intf_inst.producer = self.node.root().in_ports[-1]
+
+        for cons_port in consumers:
+            cons_port.producer = intf_inst
+
+        self.rtl_map[gear_intf] = intf_inst
 
     def create_intf(self, port, gear_port, domain):
         gear_intf = gear_port.consumer

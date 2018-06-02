@@ -12,28 +12,38 @@ t_cfg = Tuple[Uint[4], Uint[4], Uint[2]]
 outdir = '/tmp/sim_test'
 params = dict(cnt_steps=False, incr_steps=False, cnt_one_more=False)
 
-cons = create_type_cons(
-    t_cfg, scale=Uint[4], cons=['scale > 0', 'f1 > f0', 'f1 - f0 == scale*f2'])
-
+from pygears.svgen import svgen
+@gear
+def func(din, channeled) -> Tuple['din', 'channeled']:
+    pass
 
 @gear
-async def ref(din: TLM[t_cfg], *, cnt_steps, incr_steps,
-              cnt_one_more) -> TLM[Queue[Uint[4]]]:
-    cfg = await din.get()
-    din.task_done()
+def hier(din, *, f):
+    return din | f
 
-    cfg = list(cfg)
-    cfg[1] += 1
-    yield list(range(*cfg))
+hier(Intf(Uint[2]), f=func(channeled=Intf(Uint[1])))
+svgen(outdir=outdir)
 
+# cons = create_type_cons(
+#     t_cfg, scale=Uint[4], cons=['scale > 0', 'f1 > f0', 'f1 - f0 == scale*f2'])
 
-report = verif(
-    dtype_rnd_seq(t=t_cfg, cons=cons), f=rng(**params), ref=ref(**params))
+# @gear
+# async def ref(din: TLM[t_cfg], *, cnt_steps, incr_steps,
+#               cnt_one_more) -> TLM[Queue[Uint[4]]]:
+#     cfg = await din.get()
+#     din.task_done()
 
-from pygears.util.print_hier import print_hier
-print_hier()
+#     cfg = list(cfg)
+#     cfg[1] += 1
+#     yield list(range(*cfg))
 
-sim(outdir=outdir)
+# report = verif(
+#     dtype_rnd_seq(t=t_cfg, cons=cons), f=rng(**params), ref=ref(**params))
 
-print(report)
-assert all(item['match'] for item in report)
+# from pygears.util.print_hier import print_hier
+# print_hier()
+
+# sim(outdir=outdir)
+
+# print(report)
+# assert all(item['match'] for item in report)

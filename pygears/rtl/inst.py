@@ -1,6 +1,7 @@
 from pygears import registry, PluginBase, Intf
 from pygears.core.hier_node import HierVisitorBase, NamedHierNode, HierNode
 from pygears.rtl.gear import RTLGearNodeGen, RTLNode
+from pygears.core.port import InPort, OutPort
 import inspect
 
 
@@ -10,26 +11,40 @@ class RTLNodeDesign(RTLNode):
         super().__init__(None, '')
 
 
+class GearHierRoot(NamedHierNode):
+    def __init__(self, root):
+        super().__init__('')
+        self.in_ports = []
+        self.out_ports = []
+        self.root = root
+
+        for c in self.root.child:
+            for p in c.in_ports:
+                p_top = InPort(self, len(self.in_ports), p.basename)
+                p.producer.source(p_top)
+                self.in_ports.append(p_top)
+
+            for p in c.out_ports:
+                p_top = OutPort(self, len(self.out_ports), p.basename)
+                p.consumer.connect(p_top)
+                self.out_ports.append(p_top)
+
+
 class RTLNodeGearRoot(RTLGearNodeGen):
     def __init__(self, module):
         HierNode.__init__(self)
         self.node = RTLNodeDesign()
+        self.gear = GearHierRoot(module)
 
         namespace = registry('SVGenModuleNamespace')
         self.node.params['svgen'] = {'svgen_cls': namespace['RTLNodeDesign']}
         self.module = module
 
-        for cnode in module.child:
-            for p in cnode.in_ports:
-                self.node.add_in_port(
-                    p.basename, consumer=p.producer, dtype=p.dtype)
-                p.producer.source(self.node.in_ports[-1])
+        for p in self.gear.in_ports:
+            self.node.add_in_port(p.basename, p.producer, p.consumer, p.dtype)
 
-            for p in cnode.out_ports:
-                self.node.add_out_port(
-                    p.basename, producer=p.consumer, dtype=p.dtype)
-
-                p.consumer.connect(self.node.out_ports[-1])
+        for p in self.gear.out_ports:
+            self.node.add_out_port(p.basename, p.producer, p.consumer, p.dtype)
 
     # def out_port_make(self, port, node):
     #     print(
