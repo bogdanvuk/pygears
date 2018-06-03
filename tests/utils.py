@@ -4,6 +4,7 @@ import inspect
 import shutil
 
 from pygears.svgen import svgen
+from pygears.sim import sim
 from functools import wraps
 
 re_trailing_space_rem = re.compile(r"\s+$", re.MULTILINE)
@@ -79,15 +80,20 @@ def get_sv_file_comparison_pair(fn, filename=None, function_name=None):
     return os.path.join(filename, function_name, fn), os.path.join(res_dir, fn)
 
 
+def get_test_res_ref_dir_pair(func):
+    filename = os.path.splitext(os.path.abspath(inspect.getfile(func)))[0]
+
+    outdir =  prepare_result_dir(filename, func.__name__)
+
+    return filename, outdir
+
+
 def svgen_check(files, **kwds):
     def decorator(func):
         @wraps(func)
         def wrapper():
             func()
-            filename = os.path.splitext(
-                os.path.abspath(inspect.getfile(func)))[0]
-
-            outdir = prepare_result_dir(filename, func.__name__)
+            filename, outdir = get_test_res_ref_dir_pair(func)
             svgen(outdir=outdir, **kwds)
 
             for fn in files:
@@ -97,6 +103,21 @@ def svgen_check(files, **kwds):
                 assert sv_files_equal(
                     *comp_file_paths
                 ), f'{comp_file_paths[0]} != {comp_file_paths[1]}'
+
+        return wrapper
+
+    return decorator
+
+
+def sim_check(**kwds):
+    def decorator(func):
+        @wraps(func)
+        def wrapper():
+            report = func()
+            filename, outdir = get_test_res_ref_dir_pair(func)
+            sim(outdir=outdir, **kwds)
+
+            assert all(item['match'] for item in report)
 
         return wrapper
 
