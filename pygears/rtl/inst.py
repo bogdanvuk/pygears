@@ -1,11 +1,9 @@
-from pygears import registry, PluginBase, Intf
+from pygears import PluginBase, registry
 from pygears.core.hier_node import HierVisitorBase, NamedHierNode, HierNode
 from pygears.rtl.gear import RTLGearNodeGen, RTLNode
-from pygears.core.port import InPort, OutPort
 import inspect
 
 
-# class RTLNodeDesign(NamedHierNode):
 class RTLNodeDesign(RTLNode):
     def __init__(self):
         super().__init__(None, '')
@@ -17,17 +15,6 @@ class GearHierRoot(NamedHierNode):
         self.in_ports = []
         self.out_ports = []
         self.root = root
-
-        for c in self.root.child:
-            for p in c.in_ports:
-                p_top = InPort(self, len(self.in_ports), p.basename)
-                p.producer.source(p_top)
-                self.in_ports.append(p_top)
-
-            for p in c.out_ports:
-                p_top = OutPort(self, len(self.out_ports), p.basename)
-                p.consumer.connect(p_top)
-                self.out_ports.append(p_top)
 
 
 class RTLNodeGearRoot(RTLGearNodeGen):
@@ -45,13 +32,6 @@ class RTLNodeGearRoot(RTLGearNodeGen):
 
         for p in self.gear.out_ports:
             self.node.add_out_port(p.basename, p.producer, p.consumer, p.dtype)
-
-    # def out_port_make(self, port, node):
-    #     print(
-    #         f'Module {node.name} has unconnected output port {port["name"]}.')
-
-    # def in_port_make(self, port, node):
-    #     print(f'Module {node.name} has unconnected input port {port["name"]}.')
 
 
 class RTLNodeInstVisitor(HierVisitorBase):

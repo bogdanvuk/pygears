@@ -29,6 +29,22 @@ class RTLGearHierVisitor(HierVisitorBase):
             return getattr(self, gear.definition.__name__)(node)
 
 
+def rtl_from_gear_port(gear_port):
+    node_gen = registry('RTLNodeMap').get(gear_port.gear, None)
+    rtl_port = None
+    if node_gen:
+        node = node_gen.node
+
+        if isinstance(gear_port, InPort):
+            port_group = node.in_ports
+        else:
+            port_group = node.out_ports
+
+        rtl_port = port_group[gear_port.index]
+
+    return rtl_port
+
+
 class RTLGearNodeGen(HierNode):
     def __init__(self, gear, parent):
         super().__init__(parent)
@@ -67,27 +83,28 @@ class RTLGearNodeGen(HierNode):
 
         for p, gear_p in zip(self.node.out_ports, self.gear.out_ports):
             self.create_intf(p, gear_p, domain=self.node.parent)
+            gear_intf = gear_p.consumer
+            if gear_intf is not None and not gear_intf.consumers:
+                intf_inst = RTLIntf(
+                    self.node.root(), gear_intf.dtype, producer=p)
+
+                self.node.root().add_out_port(
+                    p.basename, dtype=intf_inst.dtype)
+                intf_inst.connect(self.node.root().out_ports[-1])
 
     def create_unsourced_intf(self, port, gear_port):
         gear_intf = gear_port.producer
         consumers = []
         for cons_port in gear_intf.consumers:
-            node_gen = registry('RTLNodeMap').get(cons_port.gear, None)
-            if node_gen:
-                rtl_port = node_gen.node.in_ports[cons_port.index]
+            rtl_port = rtl_from_gear_port(cons_port)
+            if rtl_port:
                 consumers.append(rtl_port)
 
         intf_inst = RTLIntf(
-            self.node.root(),
-            gear_intf.dtype,
-            producer=None,
-            consumers=consumers)
+            self.node.root(), gear_intf.dtype, consumers=consumers)
 
         self.node.root().add_in_port(
-            port.basename,
-            producer=None,
-            dtype=intf_inst.dtype,
-            consumer=intf_inst)
+            port.basename, dtype=intf_inst.dtype, consumer=intf_inst)
 
         intf_inst.producer = self.node.root().in_ports[-1]
 
@@ -101,16 +118,8 @@ class RTLGearNodeGen(HierNode):
         if gear_intf is not None:
             consumers = []
             for cons_port in gear_intf.consumers:
-                node_gen = registry('RTLNodeMap').get(cons_port.gear, None)
-                if node_gen:
-                    node = node_gen.node
-
-                    if isinstance(cons_port, InPort):
-                        port_group = node.in_ports
-                    else:
-                        port_group = node.out_ports
-
-                    rtl_port = port_group[cons_port.index]
+                rtl_port = rtl_from_gear_port(cons_port)
+                if rtl_port:
                     consumers.append(rtl_port)
 
             intf_inst = RTLIntf(

@@ -37,6 +37,7 @@ module cart
     assign din0_s = din0.data;
     assign din1_s = din1.data;
 
+
     assign dout_s.eot = { din0_s.eot, din1_s.eot };
     assign dout_s.data = { din0_s.data };
 

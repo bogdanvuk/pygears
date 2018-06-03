@@ -20,10 +20,10 @@ module top(
         .dout(fgear0_if_s_bc)
     );
 
-    connect connect_fgear0_if_s_0 (
+    connect connect_fgear0_if_s_1 (
         .clk(clk),
         .rst(rst),
-        .din(fgear0_if_s_bc[0]),
+        .din(fgear0_if_s_bc[1]),
         .dout(dout0)
     );
 
@@ -52,7 +52,7 @@ module top(
     fgear1 fgear1_i (
         .clk(clk),
         .rst(rst),
-        .arg1(fgear0_if_s_bc[1]),
+        .arg1(fgear0_if_s_bc[0]),
         .arg2(top_din2_bc[1]),
         .ret(dout1)
     );
