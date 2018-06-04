@@ -50,25 +50,25 @@
    assign dout_s.eot = eot_internal_cond;
 
    if (CNT_STEPS) begin
-	  if (INCR_STEPS) begin
+	    if (INCR_STEPS) begin
 
-     if (SIGNED) begin
-        assign dout_s.data = W_DOUT_DATA'(signed'(cfg_s.base)) + cnt_reg*signed'(cfg_s.incr);
-     end else begin
-        assign dout_s.data = cfg_s.base + cnt_reg*cfg_s.incr;
-     end
+         if (SIGNED) begin
+            assign dout_s.data = W_DOUT_DATA'(signed'(cfg_s.base)) + cnt_reg*signed'(cfg_s.incr);
+         end else begin
+            assign dout_s.data = cfg_s.base + cnt_reg*cfg_s.incr;
+         end
 
-		 assign cnt_next = cnt_reg + 1;
-	  end else begin
+		     assign cnt_next = cnt_reg + 1;
+	    end else begin
 
-     if (SIGNED) begin
-		    assign dout_s.data = W_DOUT_DATA'(signed'(cfg_s.base)) + signed'(cnt_reg);
-     end else begin
-		    assign dout_s.data = cfg_s.base + cnt_reg;
-     end
-
-     assign cnt_next = cnt_reg + cfg_s.incr;
-	  end
+         if (SIGNED) begin
+		        assign dout_s.data = W_DOUT_DATA'(signed'(cfg_s.base)) + signed'(cnt_reg);
+            assign cnt_next = W_DOUT_DATA'(signed'(cnt_reg)) + W_DOUT_DATA'(signed'(cfg_s.incr));
+         end else begin
+		        assign dout_s.data = cfg_s.base + cnt_reg;
+            assign cnt_next = cnt_reg + cfg_s.incr;
+         end
+	    end
    end else begin
       logic cnt_started;
 
@@ -84,7 +84,7 @@
       assign dout_s.data = cnt_started ? W_DOUT_DATA'(signed'(cnt_reg)) : W_DOUT_DATA'(signed'(cfg_s.base));
       assign cnt_next = W_DOUT_DATA'(signed'(dout_s.data)) + W_DOUT_DATA'(signed'(cfg_s.incr));
    end else begin
-      assign dout_s.data = cnt_started ? cnt_reg : cfg_s.base;
+      assign dout_s.data = cnt_started ? cnt_reg : W_DOUT_DATA'(cfg_s.base);
       assign cnt_next = dout_s.data + W_DOUT_DATA'(cfg_s.incr);
    end
 

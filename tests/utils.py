@@ -83,7 +83,7 @@ def get_sv_file_comparison_pair(fn, filename=None, function_name=None):
 def get_test_res_ref_dir_pair(func):
     filename = os.path.splitext(os.path.abspath(inspect.getfile(func)))[0]
 
-    outdir =  prepare_result_dir(filename, func.__name__)
+    outdir = prepare_result_dir(filename, func.__name__)
 
     return filename, outdir
 
@@ -122,3 +122,13 @@ def sim_check(**kwds):
         return wrapper
 
     return decorator
+
+
+def skip_sim_if_no_tools():
+    import unittest
+    import os
+    if ('VERILATOR_ROOT' not in os.environ) or (
+            'SYSTEMC_HOME' not in os.environ) or (
+            'SCV_HOME' not in os.environ):
+        raise unittest.SkipTest(
+            "Such-and-such failed. Skipping all tests in foo.py")

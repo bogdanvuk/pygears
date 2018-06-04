@@ -154,7 +154,12 @@ class SCVTypeSeqVisitor(TypingVisitorBase):
             return random.randrange(0, 2**(int(dtype)) - 1)
 
     def visit_int(self, dtype, field):
-        return random.randrange(-2**(int(dtype) - 1), 2**(int(dtype) - 1) - 1)
+        scv_var_func = getattr(self.scvlib, f'get_{field}', None)
+        if scv_var_func:
+            return scv_var_func()
+        else:
+            return random.randrange(-2**(int(dtype) - 1),
+                                    2**(int(dtype) - 1) - 1)
 
 
 def type_seq(dtype, scvlib):

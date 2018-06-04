@@ -7,9 +7,9 @@ module sub #(
    (
     input logic clk,
     input       rst,
-    dti_s_if.consumer din0,
-    dti_s_if.consumer din1,
-    dti_s_if.producer dout);
+    dti.consumer din0,
+    dti.consumer din1,
+    dti.producer dout);
 
    localparam TDOUT = (DIN0 > DIN1) ? (DIN0 + 1) : (DIN1 + 1);
 
