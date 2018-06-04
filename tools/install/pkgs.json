@@ -6,7 +6,7 @@
 		    "src_root_path": "{install_path}/verilator-3.922",
         "pre_custom_run": ["export VERILATOR_ROOT={path}"],
         "post_custom_run": [
-            "cp -r {path}/share/verilator/include {path}"
+            "cp -r {path}/share/verilator/include {path}",
             "cp {path}/share/verilator/bin/* {path}/bin"
 		    ],
 		    "configure": "",
