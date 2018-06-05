@@ -7,11 +7,10 @@ module sustain
     input clk,
     input rst,
 
-	dti_s_if.producer dout
+	  dti.producer dout
     );
 
-   assign dout.dvalid = 1'b1;
+   assign dout.valid = 1'b1;
    assign dout.data = TOUT'(VAL);
-   assign dout.eot = 1'b0;
 
 endmodule

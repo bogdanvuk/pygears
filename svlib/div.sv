@@ -7,9 +7,9 @@ module div #(
    (
     input logic clk,
     input       rst,
-                dti_s_if.consumer din0,
-                dti_s_if.consumer din1,
-                dti_s_if.producer dout);
+                dti.consumer din0,
+                dti.consumer din1,
+                dti.producer dout);
 
    if ((!DIN0_SIGNED) && (!DIN1_SIGNED)) begin
        assign dout.data = din0.data / din1.data;

@@ -33,6 +33,10 @@ class TypeDrvVisitor(TypingYieldVisitorBase):
         mask = ((1 << int(dtype)) - 1)
         return data & mask
 
+    def visit_int(self, data, dtype):
+        mask = ((1 << int(dtype)) - 1)
+        return data & mask
+
     def visit_queue(self, data, dtype):
         for i, d in enumerate(data):
             for ret in self.visit(d, dtype[:-1]):

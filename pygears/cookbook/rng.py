@@ -29,17 +29,22 @@ def sv_rng(cfg: TCfg,
 @gear
 def rng(cfg: TCfg, *, cnt_steps=False, incr_steps=False, cnt_one_more=False):
 
-    signed = any([typeof(d, Int) for d in cfg.dtype])
-    if signed:
+    any_signed = any([typeof(d, Int) for d in cfg.dtype])
+    all_signed = all([typeof(d, Int) for d in cfg.dtype])
+    if any_signed and not all_signed:
         cfg = cfg | fmap(f=(Int, ) * len(cfg.dtype))
 
-    return cfg | sv_rng(signed=signed, cnt_steps=cnt_steps,
-                        incr_steps=incr_steps, cnt_one_more=cnt_one_more)
+    return cfg | sv_rng(
+        signed=any_signed,
+        cnt_steps=cnt_steps,
+        incr_steps=incr_steps,
+        cnt_one_more=cnt_one_more)
 
 
 @alternative(rng)
 @gear
-def rng_cnt_only(cfg: Integer['w_cnt'], *,
+def rng_cnt_only(cfg: Integer['w_cnt'],
+                 *,
                  cnt_steps=False,
                  incr_steps=False,
                  cnt_one_more=False):
@@ -48,7 +53,9 @@ def rng_cnt_only(cfg: Integer['w_cnt'], *,
 
 @alternative(rng)
 @gear(enablement=b'len(cfg) == lvl')
-def rng_multi_lvl(cfg: Tuple, *, lvl=1,
+def rng_multi_lvl(cfg: Tuple,
+                  *,
+                  lvl=1,
                   cnt_steps=False,
                   incr_steps=False,
                   cnt_one_more=False):

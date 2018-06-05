@@ -41,6 +41,12 @@ class TypeMonitorVisitor:
     def visit_default(self, data, elem, dtype):
         return elem
 
+    def visit_int(self, data, elem, dtype):
+        if elem.bit_length() == int(dtype):
+            return elem - (1 << int(dtype))
+        else:
+            return elem
+
     def visit_unit(self, data, elem, dtype):
         return None
 

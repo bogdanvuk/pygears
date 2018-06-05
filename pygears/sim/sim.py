@@ -28,7 +28,7 @@ def sim(**conf):
     for oper in registry('SimFlow'):
         top = oper(top, conf)
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.new_event_loop()
 
     tasks = {proc.run(): proc for proc in registry('SimMap').values()}
     # for t, sim_gear in zip(tasks, registry('SimMap').values()):
@@ -55,6 +55,11 @@ class SVGenPlugin(PluginBase):
     @classmethod
     def bind(cls):
         cls.registry['SimFlow'] = [sim_inst]
+        cls.registry['SimTasks'] = {}
+
+    @classmethod
+    def reset(cls):
+        bind('SimTasks', {})
 
 
 def verif(*seq, f, ref):
