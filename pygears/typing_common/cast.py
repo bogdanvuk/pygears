@@ -7,6 +7,8 @@ def cast(dtype, cast_type):
             return Int[int(dtype) + 1]
         elif issubclass(dtype, Int):
             return dtype
+        else:
+            return Int[int(dtype)]
     elif issubclass(cast_type, Tuple) and issubclass(dtype, Queue):
         if not cast_type.is_specified():
             return Tuple[dtype[0], dtype[1:]]
