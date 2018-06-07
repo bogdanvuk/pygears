@@ -1,0 +1,54 @@
+{%- import 'snippet.j2' as snippet -%}
+
+module {{module_name}} #(
+{% for i in intfs %}
+  parameter {{i['param']}}     = {{i['width']}}{{ "," if not loop.last }}
+{% endfor -%}
+)
+(
+    input clk,
+    input rst,
+{{snippet.intf_list(intfs)|indent(4, True)}}
+);
+
+    localparam DOUT_DATA_WIDTH = DOUT_WIDTH - CTRL_WIDTH;
+
+    logic handshake;
+    logic din_dvalid_sel;
+    logic[DOUT_DATA_WIDTH-1 : 0]  din_data_sel;
+{% for i in intfs|isinput %}
+    logic {{i['name']}}_eot;
+{% endfor %}
+
+    assign handshake = dout.dvalid & dout.dready;
+{% for i in intfs|isinput %}
+    assign {{i['name']}}_eot = {{i['name']}}.dvalid && ({{i['eot_expr']}});
+{% endfor %}
+
+    always_comb
+    begin
+{% for i in intfs[1:-1] %}
+        {{i['name']}}.dready = 0;
+{% endfor %}
+        case( ctrl.data )
+{% for i in intfs[1:-1] %}
+            {{loop.index-1}} : begin
+                din_dvalid_sel = {{i['name']}}.dvalid;
+                din_data_sel = {{i['name']}}.data;
+                {{i['name']}}.dready = handshake;
+                ctrl.dready = dout.dready && {{i['name']}}_eot;
+            end
+{% endfor %}
+            default: begin
+                din_dvalid_sel = 0;
+                din_data_sel = 0;
+                ctrl.dready = 0;
+            end
+        endcase
+    end
+
+    assign dout.dvalid = ctrl.dvalid & din_dvalid_sel;
+    assign dout.data = {ctrl.data, din_data_sel};
+    assign dout.eot = 0;
+
+endmodule
