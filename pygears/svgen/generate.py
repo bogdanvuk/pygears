@@ -5,6 +5,7 @@ from pygears.util.fileio import save_file
 from pygears import registry
 from pygears.svgen.util import svgen_typedef
 from pygears.rtl.inst import RTLNodeDesign
+from pygears.typing import bitw
 
 
 def format_list(list_, pattern):
@@ -36,6 +37,7 @@ class TemplateEnv:
             zip=zip,
             len=len,
             int=int,
+            bitw=bitw,
             enumerate=enumerate,
             svgen_typedef=svgen_typedef)
 

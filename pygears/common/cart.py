@@ -1,5 +1,6 @@
 from pygears.core.gear import alternative, gear
 from pygears.typing import Queue, Tuple
+from pygears.common import ccat
 
 
 def lvl_if_queue(t):
