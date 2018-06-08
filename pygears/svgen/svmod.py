@@ -97,6 +97,7 @@ class SVModuleGen:
             'modport': modport,
             'name': name,
             'type': type_,
+            'param': f'W_{name.upper()}',
             'width': int(type_),
             'local_type': type_
         }
