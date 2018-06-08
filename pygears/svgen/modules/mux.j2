@@ -1,54 +1,45 @@
 {%- import 'snippet.j2' as snippet -%}
-
-module {{module_name}} #(
-{% for i in intfs %}
-  parameter {{i['param']}}     = {{i['width']}}{{ "," if not loop.last }}
-{% endfor -%}
-)
-(
-    input clk,
-    input rst,
-{{snippet.intf_list(intfs)|indent(4, True)}}
-);
-
-    localparam DOUT_DATA_WIDTH = DOUT_WIDTH - CTRL_WIDTH;
+{% call snippet.module_with_intf_structs(module_name, intfs, intfs, comment) %}
 
     logic handshake;
-    logic din_dvalid_sel;
-    logic[DOUT_DATA_WIDTH-1 : 0]  din_data_sel;
+    logic din_valid_sel;
 {% for i in intfs|isinput %}
     logic {{i['name']}}_eot;
 {% endfor %}
 
-    assign handshake = dout.dvalid & dout.dready;
+    assign handshake = dout.valid & dout.ready;
 {% for i in intfs|isinput %}
-    assign {{i['name']}}_eot = {{i['name']}}.dvalid && ({{i['eot_expr']}});
+  {% if i['type'].__name__.startswith('Queue')%}
+    assign {{i['name']}}_eot = {{i['name']}}.valid && (&{{i['name']}}_s.eot);
+  {% else %}
+    assign {{i['name']}}_eot = {{i['name']}}.valid && 1;
+  {% endif %}
 {% endfor %}
 
     always_comb
     begin
 {% for i in intfs[1:-1] %}
-        {{i['name']}}.dready = 0;
+        {{i['name']}}.ready = 0;
 {% endfor %}
-        case( ctrl.data )
+        case( {{intfs[0]['name']}}.data )
 {% for i in intfs[1:-1] %}
             {{loop.index-1}} : begin
-                din_dvalid_sel = {{i['name']}}.dvalid;
-                din_data_sel = {{i['name']}}.data;
-                {{i['name']}}.dready = handshake;
-                ctrl.dready = dout.dready && {{i['name']}}_eot;
+                din_valid_sel = {{i['name']}}.valid;
+                dout_s.data = {{i['name']}}_s;
+                {{i['name']}}.ready = handshake;
+                ctrl.ready = dout.ready && {{i['name']}}_eot;
             end
 {% endfor %}
             default: begin
-                din_dvalid_sel = 0;
-                din_data_sel = 0;
-                ctrl.dready = 0;
+                din_valid_sel = 0;
+                dout_s.data = 0;
+                ctrl.ready = 0;
             end
         endcase
     end
 
-    assign dout.dvalid = ctrl.dvalid & din_dvalid_sel;
-    assign dout.data = {ctrl.data, din_data_sel};
-    assign dout.eot = 0;
+    assign dout_s.ctrl = ctrl_s;
+    assign dout.valid = ctrl.valid & din_valid_sel;
+    assign dout.data = dout_s;
 
-endmodule
+{% endcall %}

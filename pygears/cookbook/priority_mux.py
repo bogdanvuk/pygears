@@ -9,7 +9,6 @@ def priority_mux_type(dtypes):
     return Union[dtypes]
 
 
-# @gear(enablement=b'len(din) == 2')
 @gear
 def priority_mux(*din) -> b'priority_mux_type(din)':
     pass
@@ -19,7 +18,6 @@ class SVGenPriorityMux(SVModuleGen):
     def get_module(self, template_env):
         context = {
             'module_name': self.sv_module_name,
-            # 'w_ctrl': int(self.node.out_ports[0].dtype[1]),
             'intfs': list(self.sv_port_configs())
         }
         return template_env.render_local(__file__, "priority_mux.j2", context)
