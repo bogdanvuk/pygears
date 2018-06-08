@@ -5,15 +5,6 @@ from pygears.common import mux
 
 
 class SVGenMux(SVModuleGen):
-    def get_sv_port_config(self, modport, type_, name):
-        return {
-            'modport': modport,
-            'name': name,
-            'param': f'{name.upper()}_WIDTH',
-            'type': str(type_),
-            'width': int(type_)
-        }
-
     def get_module(self, template_env):
 
         intf_cfgs = list(self.sv_port_configs())
@@ -32,7 +23,7 @@ class SVGenMux(SVModuleGen):
         return template_env.render_local(__file__, "mux.j2", context)
 
 
-class SVGenCartPlugin(SVGenInstPlugin):
+class SVGenMuxPlugin(SVGenInstPlugin):
     @classmethod
     def bind(cls):
         cls.registry['SVGenModuleNamespace'][mux] = SVGenMux

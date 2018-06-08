@@ -16,15 +16,6 @@ def priority_mux(*din) -> b'priority_mux_type(din)':
 
 
 class SVGenPriorityMux(SVModuleGen):
-    def get_sv_port_config(self, modport, type_, name):
-        return {
-            'modport': modport,
-            'name': name,
-            'param': f'W_{name.upper()}',
-            'type': str(type_),
-            'width': int(type_)
-        }
-
     def get_module(self, template_env):
         context = {
             'module_name': self.sv_module_name,

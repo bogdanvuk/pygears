@@ -3,7 +3,7 @@ from pygears.typing import Union
 
 
 def mux_type(dtypes):
-    return Union[tuple(dtypes[1:-1])]
+    return Union[dtypes]
 
 
 @gear
