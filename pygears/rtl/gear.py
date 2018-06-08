@@ -86,12 +86,15 @@ class RTLGearNodeGen(HierNode):
             self.create_intf(p, gear_p, domain=self.node.parent)
             gear_intf = gear_p.consumer
             if self.node.parent is not None and gear_intf is not None and not gear_intf.consumers:
-                intf_inst = RTLIntf(
-                    self.node.root(), gear_intf.dtype, producer=p)
+                # intf_inst = RTLIntf(
+                #     self.node.root(), gear_intf.dtype)
 
                 self.node.root().add_out_port(
-                    p.basename, dtype=intf_inst.dtype)
-                intf_inst.connect(self.node.root().out_ports[-1])
+                    p.basename, dtype=p.dtype)
+
+                # intf_inst.producer = self.node.root().out_ports[-1]
+
+                self.rtl_map[gear_intf].connect(self.node.root().out_ports[-1])
 
     def create_unsourced_intf(self, port, gear_port):
         gear_intf = gear_port.producer

@@ -1,4 +1,4 @@
-from pygears.core.hier_node import NamedHierNode
+from pygears.core.hier_node import NamedHierNode, find_unique_names
 from pygears.rtl.port import InPort, OutPort
 from pygears.rtl.intf import RTLIntf
 
@@ -34,6 +34,11 @@ class RTLNode(NamedHierNode):
                 consumer=consumer,
                 dtype=dtype))
 
+        port_names = [p.basename for p in self.in_ports]
+        for port, new_name in zip(self.in_ports, find_unique_names(port_names)):
+            if new_name:
+                port.basename = new_name
+
     def add_out_port(self, basename, producer=None, consumer=None, dtype=None):
         self.out_ports.append(
             OutPort(
@@ -43,6 +48,11 @@ class RTLNode(NamedHierNode):
                 producer=producer,
                 consumer=consumer,
                 dtype=dtype))
+
+        port_names = [p.basename for p in self.out_ports]
+        for port, new_name in zip(self.out_ports, find_unique_names(port_names)):
+            if new_name:
+                port.basename = new_name
 
     def bypass(self):
         if not (len(self.in_ports) == 1 and len(self.out_ports) == 1):
