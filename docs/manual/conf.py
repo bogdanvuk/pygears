@@ -45,6 +45,50 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.githubpages',
 ]
+autodoc_default_flags = ['show-inheritance', 'members', 'special-members']
+autoclass_content = "class"
+
+
+# Taken from: https://stackoverflow.com/questions/46279030/how-can-i-prevent-sphinx-from-listing-object-as-a-base-class
+# ClassDocumenter.add_directive_header uses ClassDocumenter.add_line to write
+#   the class documentation. We'll monkeypatch the add_line method and
+#   intercept lines that begin with "Bases:". In order to minimize the risk of
+#   accidentally intercepting a wrong line, we'll apply this patch inside of
+#   the add_directive_header method.
+
+from sphinx.ext.autodoc import ClassDocumenter, _
+
+def autodoc_skip_member(app, what, name, obj, skip, options):
+    exclusions = ('__weakref__',  # special-members
+                  '__new__', '__str__', '__repr__',  # undoc-members
+                  )
+    exclude = name in exclusions
+    return skip or exclude
+
+def setup(app):
+    app.connect('autodoc-skip-member', autodoc_skip_member)
+
+add_line = ClassDocumenter.add_line
+line_to_delete = _(u'Bases: %s') % u':class:`object`'
+
+def add_line_no_object_base(self, text, *args, **kwargs):
+    if text.strip() == line_to_delete:
+        return
+
+    add_line(self, text, *args, **kwargs)
+
+add_directive_header = ClassDocumenter.add_directive_header
+
+def add_directive_header_no_object_base(self, *args, **kwargs):
+    self.add_line = add_line_no_object_base.__get__(self)
+
+    result = add_directive_header(self, *args, **kwargs)
+
+    del self.add_line
+
+    return result
+
+ClassDocumenter.add_directive_header = add_directive_header_no_object_base
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

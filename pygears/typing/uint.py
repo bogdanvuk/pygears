@@ -4,6 +4,9 @@ from pygears.typing.bool import Bool
 
 
 class IntegerMeta(EnumerableGenericMeta):
+    """Defines common methods for all Integer based classes.
+    """
+
     def __str__(self):
         if isinstance(self.args[0], int):
             return f'Z{self.args[0]}'
@@ -17,17 +20,33 @@ class IntegerMeta(EnumerableGenericMeta):
         return int(self) > int(others)
 
     def keys(self):
+        """Returns a list of keys that can be used for indexing the type.
+
+        >>> assert Int[8].keys() == [0, 1, 2, 3, 4, 5, 6, 7]
+        """
         return list(range(int(self)))
 
     def __add__(self, other):
+        """Returns the same type, but one bit wider to accomodate potential overflow.
+
+        >>> assert Uint[8] + Uint[8] == Uint[9]
+        """
         return self.base[max(int(self), int(other)) + 1]
 
     __radd__ = __add__
 
     def __sub__(self, other):
+        """Returns the signed Int type, but one bit wider to accomodate potential overflow.
+
+        >>> assert Uint[8] + Uint[8] == Int[9]
+        """
         return Int[max(int(self), int(other)) + 1]
 
     def __mul__(self, other):
+        """Returns the same type, whose width is equal to the sum of operand widths.
+
+        >>> assert Uint[8] + Uint[8] == Uint[16]
+        """
         return self.base[int(self) + int(other)]
 
     def __truediv__(self, other):
@@ -114,6 +133,10 @@ class Int(Integer, metaclass=IntMeta):
 
 class UintMeta(IntegerMeta):
     def __sub__(self, other):
+        """Returns a Tuple of the result type and overflow bit.
+
+        >>> assert Uint[16] - Uint[8] == Tuple(Uint[16], Bool)
+        """
         if(issubclass(other, Uint)):
             return Tuple[Uint[max(int(self), int(other))], Bool]
         else:
