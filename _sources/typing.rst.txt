@@ -3,10 +3,20 @@
 Typing
 ======
 
-.. autoclass:: pygears.typing.Integer
+.. autoclass:: pygears.typing.base.TypingMeta
 
-.. autoclass:: pygears.typing.Int
+.. autoclass:: pygears.typing.base.GenericMeta
 
-.. autoclass:: pygears.typing.Uint
+.. autoclass:: pygears.typing.base.EnumerableGenericMeta
 
-.. autoclass:: pygears.typing.Array
+.. autoclass:: pygears.typing.uint.IntegerMeta
+
+.. autoclass:: pygears.typing.uint.Integer
+
+.. autoclass:: pygears.typing.uint.Int
+
+.. autoclass:: pygears.typing.uint.Uint
+
+.. autoclass:: pygears.typing.array.ArrayMeta
+
+.. autoclass:: pygears.typing.array.Array
