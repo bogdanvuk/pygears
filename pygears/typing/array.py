@@ -4,6 +4,11 @@ from .unit import Unit
 
 class ArrayMeta(EnumerableGenericMeta):
     def keys(self):
+        """Returns a list of keys that can be used for indexing :class:`Array` [T, N] type. Number of keys equals to the number of elements N.
+
+        >>> assert Array[Uint[2], 5].keys() == [0, 1, 2, 3, 4]
+        """
+
         return list(range(int(self.args[1])))
 
     def __new__(cls, name, bases, namespace, args=[]):
@@ -28,6 +33,12 @@ class ArrayMeta(EnumerableGenericMeta):
             return cls
 
     def __getitem__(self, index):
+        """If a single element is supplied for index, returns type T. If a slice is suplied for index, an :class:`Array` type is returned with a number of elements equal to the slice size.
+
+        >>> assert Array[Uint[2], 5][3] == Uint[2]
+        >>> assert Array[Uint[2], 5][2:4] == Array[Uint[2], 2]
+        """
+
         if not self.is_specified():
             return super().__getitem__(index)
 

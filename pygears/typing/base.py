@@ -7,6 +7,9 @@ class TemplateArgumentsError(Exception):
 
 
 class TypingMeta(type):
+    """Base class all types.
+    """
+
     def is_specified(self):
         return True
 
@@ -39,6 +42,9 @@ def type_str(obj):
 
 
 class GenericMeta(TypingMeta):
+    """Base class for all types that have a generic parameter.
+    """
+
     def __new__(cls, name, bases, namespace, args=[]):
         if (not bases) or (not bases[0].args):
             # Form a class that has the generic arguments specified
@@ -72,9 +78,24 @@ class GenericMeta(TypingMeta):
             return param_subs(bases[0], tmpl_map, {})
 
     def is_generic(self):
+        """Return True if no generic parameter of the type was supplied a value.
+
+        >>> assert Uint.is_generic() == True
+        >>> assert Uint[16].is_generic() == False
+        """
+
         return len(self.args) == 0
 
+    def __bool__(self):
+        return self.is_specified()
+
     def is_specified(self):
+        """Return True if all generic parameters were supplied concrete values.
+
+        >>> assert Uint['template'].is_specified() == False
+        >>> assert Uint[16].is_specified() == True
+        """
+
         if hasattr(self, '__parameters__'):
             if len(self.args) != len(self.__parameters__):
                 return False
@@ -106,6 +127,11 @@ class GenericMeta(TypingMeta):
 
     @property
     def base(self):
+        """Returns base generic class of the type.
+
+        >>> assert Uint[16].base == Uint
+        """
+
         if len(self.__bases__) == 1:
             return self
         else:
@@ -113,6 +139,12 @@ class GenericMeta(TypingMeta):
 
     @property
     def templates(self):
+        """Returns a list of templated generic variables within the type. The type is
+searched recursively. Each template is reported only once.
+
+        >>> assert Tuple[Tuple['T1', 'T2'], 'T1'].templates == ['T1', 'T2']
+        """
+
         def make_unique(seq):
             seen = set()
             return [x for x in seq if x not in seen and not seen.add(x)]
@@ -130,6 +162,11 @@ class GenericMeta(TypingMeta):
 
     @property
     def args(self):
+        """Returns a list of values supplied for each generic parameter.
+
+        >>> assert Tuple[Uint[1], Uint[2]].args == [Uint[1], Uint[2]]
+        """
+
         if hasattr(self, '__args__'):
             if hasattr(self, '__default__'):
                 plen = len(self.__parameters__)
@@ -165,6 +202,12 @@ class GenericMeta(TypingMeta):
 
     @property
     def fields(self):
+        """Returns the names of the generic parameters.
+
+        >>> assert Tuple[Uint[1], Uint[2]].fields == ('f0', 'f1')
+        >>> assert Tuple[{'u1': Uint[1], 'u2': Uint[2]}].fields == ('u0', 'u1')
+        """
+
         if hasattr(self, '__parameters__'):
             return self.__parameters__
         else:
@@ -216,7 +259,14 @@ def param_subs(t, matches, namespace):
 
 
 class EnumerableGenericMeta(GenericMeta):
+    """Base class for all types that are iterable.
+    """
+
     def __int__(self):
+        """Calculates the bit width of the type.
+
+        >>> assert int(Tuple[Uint[1], Uint[2]]) == 3
+        """
         if self.is_specified():
             return sum(map(int, self))
         else:
@@ -225,9 +275,15 @@ class EnumerableGenericMeta(GenericMeta):
                 f" {type_repr(self)}")
 
     def __len__(self):
+        """The number of elements type generates when iterated.
+
+        >>> len(Uint[16]) == 16
+        """
         return len(self.keys())
 
     def keys(self):
+        """Returns a list of keys that can be used for indexing the type.
+        """
         return list(range(len(self.args)))
 
     def index_norm(self, index):
@@ -263,15 +319,26 @@ class EnumerableGenericMeta(GenericMeta):
         return tuple(norm)
 
     def items(self):
+        """Generator that yields (key, element) pairs.
+        """
         for k in self.keys():
             yield k, self[k]
 
 
 class Any(metaclass=TypingMeta):
+    """Type that can be matched to any other type.
+    """
     pass
 
 
 def typeof(obj, t):
+    """Check if a specific type instance is a subclass of the type.
+
+    Args:
+       obj: Concrete type instance
+       t: Base type class
+
+    """
     try:
         return issubclass(obj, t)
     except TypeError:
