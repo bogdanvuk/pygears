@@ -358,7 +358,7 @@ def gear(func, gear_cls=Gear, **meta_kwds):
     return p
 
 
-class HierRootPlugin(PluginBase):
+class GearPlugin(PluginBase):
     @classmethod
     def bind(cls):
         cls.registry['HierRoot'] = NamedHierNode('')
