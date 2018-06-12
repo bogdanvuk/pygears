@@ -24,11 +24,13 @@ def sim(**conf):
 
     bind('SimArtifactDir', conf['outdir'])
 
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    print("Creating a new loop: ", id(loop))
+
     top = find('/')
     for oper in registry('SimFlow'):
         top = oper(top, conf)
-
-    loop = asyncio.new_event_loop()
 
     tasks = {proc.run(): proc for proc in registry('SimMap').values()}
     # for t, sim_gear in zip(tasks, registry('SimMap').values()):
@@ -39,6 +41,7 @@ def sim(**conf):
     finished, pending = loop.run_until_complete(
         asyncio.wait(tasks.keys(), return_when=asyncio.FIRST_COMPLETED))
 
+    print("Simulation finished, canceling other tasks")
     # Cancel the remaining tasks
     for task in pending:
         task.cancel()
@@ -48,6 +51,7 @@ def sim(**conf):
     except CancelledError:  # Any other exception would be bad
         pass
 
+    print("Tasks canceled, closing the loop")
     loop.close()
 
 
