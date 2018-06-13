@@ -64,6 +64,9 @@ class SimGear:
                                 await asyncio.wait([q.join() for q in out_q])
                 else:
                     await self.func(*args, **kwds)
+        except asyncio.CancelledError:
+            print(f"SimGear canceling: {self.gear.name}")
+            pass
         except StopGear:
             pass
 

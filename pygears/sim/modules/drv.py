@@ -1,4 +1,5 @@
 import inspect
+import asyncio
 
 from pygears import gear
 from pygears.typing import TLM
@@ -57,7 +58,13 @@ class TypeDrvVisitor(TypingYieldVisitorBase):
 
 @gear
 async def drv(din: TLM['t'], *, t=b't') -> b't':
-    item = await din.get()
+    print("Driver waiting")
+    try:
+        item = await din.get()
+    except asyncio.CancelledError as e:
+        print("Driver canceled")
+        raise e
+
     print("Driver got: ", item)
 
     for d in TypeDrvVisitor().visit(item, t):

@@ -33,38 +33,46 @@ class SimSocket(SimGear):
 
         # Listen for incoming connections
         self.sock.listen(5)
+        self.handlers = []
 
     async def handler(self, conn, din, dtype):
         while True:
-            item = await din.get()
+            try:
+                item = await din.get()
+            except asyncio.CancelledError as e:
+                await self.loop.sock_sendall(conn, b'\x00')
+                conn.close()
+                raise e
+
             din.task_done()
 
             pkt = u32_repr(item, dtype).tobytes()
-
-            # print("Handler thread started")
-            # msg = await self.loop.sock_recv(conn, 1024)
-            # print(f"Received: {msg}")
-            # if not msg:
-            #     break
             await self.loop.sock_sendall(conn, pkt)
-        conn.close()
 
     async def func(self, *args, **kwds):
         self.loop = asyncio.get_event_loop()
 
         print(self.gear.argnames)
 
-        while True:
-            print("Wait for connection")
-            conn, addr = await self.loop.sock_accept(self.sock)
+        try:
+            while True:
+                print("Wait for connection")
+                conn, addr = await self.loop.sock_accept(self.sock)
 
-            print("Connection received")
-            msg = await self.loop.sock_recv(conn, 1024)
-            port_name = msg.decode()
-            try:
-                i = self.gear.argnames.index(msg.decode())
-                self.loop.create_task(
-                    self.handler(conn, args[i], self.gear.in_ports[i].dtype))
-            except ValueError:
-                print(f"Nonexistant port {port_name}")
-                conn.close()
+                print("Connection received")
+                msg = await self.loop.sock_recv(conn, 1024)
+                port_name = msg.decode()
+                try:
+                    i = self.gear.argnames.index(msg.decode())
+                    handler = self.loop.create_task(
+                        self.handler(conn, args[i], self.gear.in_ports[i].dtype))
+                    self.handlers.append(handler)
+
+                except ValueError:
+                    print(f"Nonexistant port {port_name}")
+                    conn.close()
+        except asyncio.CancelledError as e:
+            for h in self.handlers:
+                h.cancel()
+
+            raise e
