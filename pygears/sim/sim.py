@@ -46,6 +46,7 @@ def sim(**conf):
     for task in pending:
         task.cancel()
 
+    # loop.run_until_complete(asyncio.gather(*pending))
     try:
         loop.run_until_complete(asyncio.gather(*pending))
     except CancelledError:  # Any other exception would be bad

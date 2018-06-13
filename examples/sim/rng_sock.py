@@ -27,7 +27,7 @@ async def ref(din: TLM[t_cfg], *, cnt_steps, incr_steps,
     yield list(range(*cfg))
 
 
-seqr(t=t_cfg, seq=[(2, 6, 1)]) \
+seqr(t=t_cfg, seq=[(2, 6, 1), (2, 8, 2)]) \
     | drv \
     | rng(**params, sim_cls=SimSocket)
 
