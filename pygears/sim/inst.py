@@ -41,6 +41,7 @@ class SimInstPlugin(GearPlugin):
     def bind(cls):
         cls.registry['SimModuleNamespace'] = {}
         cls.registry['SimMap'] = {}
+        print("Here")
         cls.registry['GearExtraParams']['sim_cls'] = None
 
     @classmethod

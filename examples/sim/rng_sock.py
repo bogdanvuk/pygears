@@ -10,7 +10,7 @@ from pygears.core.gear import Gear
 from pygears.sim.modules.socket import SimSocket
 
 bind("ErrReportLevel", ErrReportLevel.debug)
-registry("SimModuleNamespace")['Gear'] = SimSocket
+# registry("SimModuleNamespace")['Gear'] = SimSocket
 
 t_cfg = Tuple[Uint[4], Uint[4], Uint[2]]
 params = dict(cnt_steps=False, incr_steps=False, cnt_one_more=False)
