@@ -243,26 +243,28 @@ int sock_done(void* handle) {
     int ret;
     uint32_t val = 0;
     ret = send(h->sock, &val, 4, 0);
-    return 0;
+    if (ret < 0)
+	{
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
-int sock_get(void* handle, svOpenArrayHandle signal) {
+int sock_get_bv(void* handle, svBitVecVal* signal, int width) {
     // Validate input
     if(!handle) {
         return 1;
     }
 
     struct handle* h = handle;
-    int width = svSize(signal,0);
-    svBitVecVal *ptr = (svBitVecVal*)svGetArrayPtr(signal);
-
     int ret;
 
     ret = recv(h->sock, h->rbuf, BUFFER_SIZE, 0);
     if (ret <= 0)
-        {
-            return 1;
-        }
+	{
+		return 1;
+	}
 
     uint32_t* rval = (uint32_t*) h->rbuf;
 
@@ -273,12 +275,17 @@ int sock_get(void* handle, svOpenArrayHandle signal) {
 
     int i;
     for (i = 0; i < SV_PACKED_DATA_NELEMS(width); i++) {
-        ptr[i] = rval[i+1];
+        signal[i] = rval[i+1];
     }
 
     return 0;
 }
 
+int sock_get(void* handle, svOpenArrayHandle signal) {
+	return sock_get_bv(handle,
+					   (svBitVecVal*)svGetArrayPtr(signal),
+					   svSize(signal,0));
+}
 
 int sock_put(void* handle, const svOpenArrayHandle signal) {
     // Validate input
@@ -290,7 +297,7 @@ int sock_put(void* handle, const svOpenArrayHandle signal) {
     int width = svSize(signal,0);
     const svBitVecVal *ptr = (const svBitVecVal*)svGetArrayPtr(signal);
 
-    send(h->sock, ptr, SV_PACKED_DATA_NELEMS(width), 0);
+    send(h->sock, ptr, SV_PACKED_DATA_NELEMS(width)*sizeof(svBitVecVal), 0);
 
     return 0;
 }

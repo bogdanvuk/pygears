@@ -46,6 +46,12 @@ class SimGear:
 
         return args, kwds
 
+    async def output(self, val, dout_id):
+        for q in self.out_queues[dout_id]:
+            q.put_nowait(val)
+
+        await asyncio.wait([q.join() for q in self.out_queues[dout_id]])
+
     async def run(self):
         args, kwds = self.sim_func_args
 
@@ -56,12 +62,9 @@ class SimGear:
                         if len(self.out_queues) == 1:
                             val = (val, )
 
-                        for v, out_q in zip(val, self.out_queues):
+                        for dout_id, v in enumerate(val):
                             if v is not None:
-                                for q in out_q:
-                                    q.put_nowait(v)
-
-                                await asyncio.wait([q.join() for q in out_q])
+                                await self.output(v, dout_id)
                 else:
                     await self.func(*args, **kwds)
         except asyncio.CancelledError:
@@ -69,4 +72,3 @@ class SimGear:
             pass
         except StopGear:
             pass
-

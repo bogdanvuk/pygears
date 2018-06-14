@@ -77,9 +77,10 @@ class TypeMonitorVisitor:
 @gear
 async def mon(din, *, t=b'din') -> TLM['din']:
     v = TypeMonitorVisitor(t)
-    data = None
-    while (1):
+    while 1:
+        data = None
         while (isinstance(data, Partial) or data is None):
+            print('Monitor waiting')
             item = await din.get()
             din.task_done()
             print('Monitor got: ', item)

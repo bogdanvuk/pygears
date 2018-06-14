@@ -158,6 +158,8 @@ class Gear(NamedHierNode):
                 self.params['return'] = tuple(ret_anot.values())
             else:
                 self.params['return'] = ret_anot
+        else:
+            self.params['return'] = None
 
     def _expand_varargs(self):
         if self.varargsname:
