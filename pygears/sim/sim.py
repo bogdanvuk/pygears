@@ -4,7 +4,7 @@ import tempfile
 
 from pygears import registry, find, PluginBase, bind
 from pygears.sim.inst import sim_inst
-from concurrent.futures import CancelledError
+from concurrent.futures import CancelledError, TimeoutError
 from pygears.sim import drv, mon, scoreboard
 
 
@@ -17,6 +17,14 @@ def cur_gear():
 def artifacts_dir():
     return registry('SimArtifactDir')
 
+def custom_exception_handler(loop, context):
+    # first, handle with default handler
+    loop.default_exception_handler(context)
+
+    exception = context.get('exception')
+    if isinstance(exception, ZeroDivisionError):
+        print(context)
+        loop.stop()
 
 def sim(**conf):
     if "outdir" not in conf:
@@ -26,6 +34,7 @@ def sim(**conf):
 
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
+    loop.set_exception_handler(custom_exception_handler)
     print("Creating a new loop: ", id(loop))
 
     top = find('/')
@@ -40,6 +49,20 @@ def sim(**conf):
 
     finished, pending = loop.run_until_complete(
         asyncio.wait(tasks.keys(), return_when=asyncio.FIRST_COMPLETED))
+
+    # queue_joins = []
+    # for proc in registry('SimMap').values():
+    #     for out_q in proc.out_queues:
+    #         for q in out_q:
+    #             pending.append(q.join())
+
+    # finished, pending = loop.run_until_complete(
+    #     asyncio.wait(queue_joins))
+
+    try:
+        loop.run_until_complete(asyncio.wait_for(asyncio.gather(*pending), 0.5))
+    except TimeoutError:  # Any other exception would be bad
+        pass
 
     print("Simulation finished, canceling other tasks")
     # Cancel the remaining tasks

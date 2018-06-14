@@ -16,6 +16,16 @@ def u32_repr_gen(data, dtype):
 def u32_repr(data, dtype):
     return array.array('I', u32_repr_gen(data, dtype))
 
+def u32_bytes_to_int(data):
+    arr = array.array('I')
+    arr.frombytes(data)
+    val = 0
+    for val32 in arr:
+        val <<= 32
+        val |= val32
+
+    return val
+
 
 class SimSocket(SimGear):
     def __init__(self, gear):
@@ -56,15 +66,22 @@ class SimSocket(SimGear):
 
             din.task_done()
 
-    async def in_handler(self, conn, din, dtype):
-        while True:
-            try:
+    async def in_handler(self, conn, dout_id, dtype):
+        try:
+            while True:
+                print("Wait for input data")
                 item = await self.loop.sock_recv(conn, 1024)
-            except asyncio.CancelledError as e:
-                conn.close()
-                raise e
 
-            print(item)
+                print(f"Output data {item}, of len {len(item)}")
+
+                await self.output(u32_bytes_to_int(item), dout_id)
+
+        except asyncio.CancelledError as e:
+            conn.close()
+            raise e
+        except Exception as e:
+            print(f"Exception in socket handler: {e}")
+
 
     def make_out_handler(self, name, conn, args):
         try:
@@ -77,9 +94,12 @@ class SimSocket(SimGear):
 
     def make_in_handler(self, name, conn, args):
         try:
+            print(self.gear.outnames)
+            print(name)
             i = self.gear.outnames.index(name)
+            print(i)
             return self.loop.create_task(
-                self.in_handler(conn, None, self.gear.in_ports[i].dtype))
+                self.in_handler(conn, i, self.gear.out_ports[i].dtype))
 
         except ValueError:
             pass
@@ -94,12 +114,14 @@ class SimSocket(SimGear):
                 print("Wait for connection")
                 conn, addr = await self.loop.sock_accept(self.sock)
 
-                print("Connection received")
                 msg = await self.loop.sock_recv(conn, 1024)
                 port_name = msg.decode()
 
+                print(f"Connection received for {port_name}")
+
                 handler = self.make_out_handler(port_name, conn, args)
                 if handler is None:
+                    print("Trying in port")
                     handler = self.make_in_handler(port_name, conn, args)
 
                 if handler is None:
