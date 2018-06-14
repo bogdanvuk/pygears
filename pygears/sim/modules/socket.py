@@ -20,7 +20,7 @@ def u32_bytes_to_int(data):
     arr = array.array('I')
     arr.frombytes(data)
     val = 0
-    for val32 in arr:
+    for val32 in reversed(arr):
         val <<= 32
         val |= val32
 
