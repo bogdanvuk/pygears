@@ -149,16 +149,23 @@ void* sock_open(const char* uri, const char* channel) {
     size_t len = strlen(uri);
     struct handle* handle = NULL;
 
-    if( len > 6 && strncmp("tcp://", uri, 6) == 0 ) {
-        handle = tcp_sock_open(uri+6);
-    }
+	printf("Waiting on socket connection...\n");
+	do {
+		if( len > 6 && strncmp("tcp://", uri, 6) == 0 ) {
+			handle = tcp_sock_open(uri+6);
+		}
 #ifdef __linux__
-    else if( len > 7 && strncmp("unix://", uri, 7) == 0 ) {
-        handle = unix_sock_open(uri+7);
-    }
+		else if( len > 7 && strncmp("unix://", uri, 7) == 0 ) {
+			handle = unix_sock_open(uri+7);
+		}
 #endif
+		if (handle == NULL) {
+			usleep(200000);
+		}
+	} while (handle == NULL);
 
-    send(handle->sock, channel, strlen(channel), 0);
+	send(handle->sock, channel, strlen(channel), 0);
+
     return handle;
 }
 
@@ -296,6 +303,9 @@ int sock_put(void* handle, const svOpenArrayHandle signal) {
     struct handle* h = handle;
     int width = svSize(signal,0);
     const svBitVecVal *ptr = (const svBitVecVal*)svGetArrayPtr(signal);
+
+	printf("Width: %d", width);
+	printf("Sending %d bytes", SV_PACKED_DATA_NELEMS(width)*sizeof(svBitVecVal));
 
     send(h->sock, ptr, SV_PACKED_DATA_NELEMS(width)*sizeof(svBitVecVal), 0);
 

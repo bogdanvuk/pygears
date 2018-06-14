@@ -18,6 +18,8 @@ class Partial:
     def val(self):
         return self._val
 
+def dtype_mask(dtype):
+    return (1 << int(dtype)) - 1
 
 class TypeMonitorVisitor:
     def __init__(self, dtype):
@@ -46,6 +48,17 @@ class TypeMonitorVisitor:
             return elem - (1 << int(dtype))
         else:
             return elem
+
+    def visit_tuple(self, data, elem, dtype):
+        ret = []
+        if not data:
+            data = (None,)*len(dtype)
+
+        for d, t in zip(data, dtype):
+            ret.append(self.visit(d, elem & dtype_mask(t), t))
+            elem >>= int(t)
+
+        return tuple(ret)
 
     def visit_unit(self, data, elem, dtype):
         return None
