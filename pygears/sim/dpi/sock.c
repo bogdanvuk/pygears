@@ -147,7 +147,7 @@ void* unix_sock_open(const char* name) {
 
 void* sock_open(const char* uri, const char* channel) {
     size_t len = strlen(uri);
-	struct handle* handle;
+    struct handle* handle = NULL;
 
     if( len > 6 && strncmp("tcp://", uri, 6) == 0 ) {
         handle = tcp_sock_open(uri+6);
@@ -158,7 +158,7 @@ void* sock_open(const char* uri, const char* channel) {
     }
 #endif
 
-	send(handle->sock, channel, strlen(channel), 0);
+    send(handle->sock, channel, strlen(channel), 0);
     return handle;
 }
 
@@ -233,54 +233,83 @@ const char* sock_readln(void* handle) {
     return h->rbuf;
 }
 
-int sock_get(void* handle, svLogicVecVal* signal, int width) {
+int sock_done(void* handle) {
     // Validate input
-    if(!handle) {
-		/* svAckDisabledState(); */
-		return 1;
-	}
+    if(!handle)
+        return 0; // Invalid handle
 
     struct handle* h = handle;
 
-	int ret;
+    int ret;
+    uint32_t val = 0;
+    ret = send(h->sock, &val, 4, 0);
+    return 0;
+}
 
-	ret = recv(h->sock, h->rbuf, BUFFER_SIZE, 0);
-	if (ret <= 0)
-	{
-		/* svAckDisabledState(); */
-		return 1;
-	}
+int sock_get(void* handle, svOpenArrayHandle signal) {
+    // Validate input
+    if(!handle) {
+        return 1;
+    }
 
-	uint32_t* rval = (uint32_t*) h->rbuf;
-	printf("Len: %d, RVAL: 0x%x, 0x%x\n", SV_PACKED_DATA_NELEMS(width), rval[0], rval[1]);
-	for (int i = 0; i < SV_PACKED_DATA_NELEMS(width); i++) {
-		signal[i].aval = rval[i+1];
-		signal[i].bval = 0;
-	}
+    struct handle* h = handle;
+    int width = svSize(signal,0);
+    svBitVecVal *ptr = (svBitVecVal*)svGetArrayPtr(signal);
 
-	return 0;
+    int ret;
+
+    ret = recv(h->sock, h->rbuf, BUFFER_SIZE, 0);
+    if (ret <= 0)
+        {
+            return 1;
+        }
+
+    uint32_t* rval = (uint32_t*) h->rbuf;
+
+    printf("Len: %d, RVAL: 0x%x, 0x%x\n", SV_PACKED_DATA_NELEMS(width), rval[0], rval[1]);
+    if (rval[0] == 0) {
+        return 1;
+    }
+
+    int i;
+    for (i = 0; i < SV_PACKED_DATA_NELEMS(width); i++) {
+        ptr[i] = rval[i+1];
+    }
+
+    return 0;
 }
 
 
-int sock_put(void* handle, const svLogicVecVal* signal, int width) {
-	return 0;
+int sock_put(void* handle, const svOpenArrayHandle signal) {
+    // Validate input
+    if(!handle) {
+        return 1;
+    }
+
+    struct handle* h = handle;
+    int width = svSize(signal,0);
+    const svBitVecVal *ptr = (const svBitVecVal*)svGetArrayPtr(signal);
+
+    send(h->sock, ptr, SV_PACKED_DATA_NELEMS(width), 0);
+
+    return 0;
 }
 
 
-int main() {
-	struct handle* handle;
+/* int main() { */
+/* 	struct handle* handle; */
 
-	handle = sock_open("tcp://localhost:1234", "cfg");
+/* 	handle = sock_open("tcp://localhost:1234", "cfg"); */
 
-	printf("Socket opened\n");
+/* 	printf("Socket opened\n"); */
 
-	svLogicVecVal signal[1];
-	while (sock_get(handle, signal, 10) == 0) {
-		printf("Received: 0x%x\n", signal[0].aval);
-	}
+/* 	svBitVecVal signal[1]; */
+/* 	while (sock_get(handle, signal) == 0) { */
+/* 		printf("Received: 0x%x\n", signal[0]); */
+/* 	} */
 
-	sock_close(handle);
+/* 	sock_close(handle); */
 
-	return 0;
+/* 	return 0; */
 
-}
+/* } */

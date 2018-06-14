@@ -4,8 +4,7 @@ import array
 from math import ceil
 
 from pygears.sim.sim_gear import SimGear
-from pygears.sim.modules.drv import TypeDrvVisitor
-from pygears.typing import Uint
+
 
 def u32_repr_gen(data, dtype):
     yield int(dtype)
@@ -13,8 +12,10 @@ def u32_repr_gen(data, dtype):
         yield data & 0xffffffff
         data >>= 32
 
+
 def u32_repr(data, dtype):
     return array.array('I', u32_repr_gen(data, dtype))
+
 
 class SimSocket(SimGear):
     def __init__(self, gear):
@@ -35,7 +36,7 @@ class SimSocket(SimGear):
         self.sock.listen(5)
         self.handlers = []
 
-    async def handler(self, conn, din, dtype):
+    async def out_handler(self, conn, din, dtype):
         while True:
             try:
                 item = await din.get()
@@ -44,10 +45,44 @@ class SimSocket(SimGear):
                 conn.close()
                 raise e
 
-            din.task_done()
-
             pkt = u32_repr(item, dtype).tobytes()
             await self.loop.sock_sendall(conn, pkt)
+
+            try:
+                await self.loop.sock_recv(conn, 1024)
+            except asyncio.CancelledError as e:
+                conn.close()
+                raise e
+
+            din.task_done()
+
+    async def in_handler(self, conn, din, dtype):
+        while True:
+            try:
+                item = await self.loop.sock_recv(conn, 1024)
+            except asyncio.CancelledError as e:
+                conn.close()
+                raise e
+
+            print(item)
+
+    def make_out_handler(self, name, conn, args):
+        try:
+            i = self.gear.argnames.index(name)
+            return self.loop.create_task(
+                self.out_handler(conn, args[i], self.gear.in_ports[i].dtype))
+
+        except ValueError:
+            pass
+
+    def make_in_handler(self, name, conn, args):
+        try:
+            i = self.gear.outnames.index(name)
+            return self.loop.create_task(
+                self.in_handler(conn, None, self.gear.in_ports[i].dtype))
+
+        except ValueError:
+            pass
 
     async def func(self, *args, **kwds):
         self.loop = asyncio.get_event_loop()
@@ -62,15 +97,17 @@ class SimSocket(SimGear):
                 print("Connection received")
                 msg = await self.loop.sock_recv(conn, 1024)
                 port_name = msg.decode()
-                try:
-                    i = self.gear.argnames.index(msg.decode())
-                    handler = self.loop.create_task(
-                        self.handler(conn, args[i], self.gear.in_ports[i].dtype))
-                    self.handlers.append(handler)
 
-                except ValueError:
+                handler = self.make_out_handler(port_name, conn, args)
+                if handler is None:
+                    handler = self.make_in_handler(port_name, conn, args)
+
+                if handler is None:
                     print(f"Nonexistant port {port_name}")
                     conn.close()
+                else:
+                    self.handlers.append(handler)
+
         except asyncio.CancelledError as e:
             for h in self.handlers:
                 h.cancel()
