@@ -14,6 +14,8 @@ from pygears.sim.modules.seqr import seqr
 
 from pygears.typing import Queue, Uint, Tuple
 
+import sys
+sys.path.append('/tools/home/pygears/tests')
 from utils import prepare_result_dir
 
 test_single_word_data_cmake = """
@@ -100,9 +102,13 @@ def test_tuple():
     seq = [(1, 2, 3), (2, 4, 6), (4, 8, 12)]
     socket_echo_test(t_din, seq)
 
+
 @with_setup(clear)
 def test_queue_tuple():
     t_din = Queue[Tuple[Uint[2], Uint[70], Uint[22]]]
     seq = [[(1, i * 12, i * 4) for i in range(4)],
            [(2, i * 23, i * 3) for i in range(3)]]
     socket_echo_test(t_din, seq)
+
+
+test_queue_tuple()

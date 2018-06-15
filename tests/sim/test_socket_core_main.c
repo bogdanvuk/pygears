@@ -1,6 +1,7 @@
 #include "svdpi.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include "sock.h"
 
 #define MAX_ARR_SIZE 128
 
