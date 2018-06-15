@@ -5,7 +5,6 @@ import tempfile
 from pygears import registry, find, PluginBase, bind
 from pygears.sim.inst import sim_inst
 from concurrent.futures import CancelledError, TimeoutError
-from pygears.sim import drv, mon, scoreboard
 
 
 def cur_gear():
@@ -87,20 +86,16 @@ class SVGenPlugin(PluginBase):
     def bind(cls):
         cls.registry['SimFlow'] = [sim_inst]
         cls.registry['SimTasks'] = {}
+        cls.registry['SimConfig'] = {'dbg_assert': True}
 
     @classmethod
     def reset(cls):
         bind('SimTasks', {})
 
 
-def verif(*seq, f, ref):
-    res_tlm = tuple(s | drv for s in seq) \
-        | f \
-        | mon
-
-    ref_tlm = seq | ref
-
-    report = []
-    scoreboard(res_tlm, ref_tlm, report=report)
-
-    return report
+def sim_assert(cond, msg=None):
+    if not cond:
+        print(f'Assertion failed: {msg}')
+        if registry('SimConfig')['dbg_assert']:
+            import pdb
+            pdb.set_trace()

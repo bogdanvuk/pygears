@@ -11,8 +11,6 @@ t_din = Queue[Uint[16]]
 # def dut(din: Queue[Uint['dinw']], *, param=1) -> Queue[Uint['dinw']]:
 #     pass
 
-registry('SVGenSystemVerilogPaths').append('/tools/home/dti_lib/src')
-
 
 @gear
 async def check(din, *, ret):

@@ -43,9 +43,65 @@ j2_templates = ['runsim.j2', 'top.j2']
 j2_file_names = ['run_sim.sh', 'top.sv']
 
 
+def sv_cosim_gen(gear):
+    pygearslib = util.find_spec("pygearslib")
+    if pygearslib is not None:
+        from pygearslib import sv_src_path
+        registry('SVGenSystemVerilogPaths').append(sv_src_path)
+
+    outdir = registry('SimArtifactDir')
+
+    rtl_node = svgen(gear, outdir=outdir)
+    sv_node = registry('SVGenMap')[rtl_node]
+
+    port_map = {
+        port.basename: port.basename
+        for port in itertools.chain(rtl_node.in_ports, rtl_node.out_ports)
+    }
+
+    structs = [
+        svgen_typedef(port.dtype, f"{port.basename}")
+        for port in itertools.chain(rtl_node.in_ports, rtl_node.out_ports)
+    ]
+
+    base_addr = os.path.dirname(__file__)
+    env = jinja2.Environment(
+        loader=jinja2.FileSystemLoader(base_addr),
+        trim_blocks=True,
+        lstrip_blocks=True)
+    env.globals.update(zip=zip, int=int, print=print, issubclass=issubclass)
+
+    context = {
+        'intfs': list(sv_node.sv_port_configs()),
+        'module_name': sv_node.sv_module_name,
+        'dut_name': sv_node.sv_module_name,
+        'dti_verif_path': os.path.abspath(
+            os.path.join(ROOT_DIR, 'sim', 'dpi')),
+        'param_map': sv_node.params,
+        'structs': structs,
+        'port_map': port_map,
+        'out_path': outdir
+    }
+    context['includes'] = [
+        os.path.abspath(os.path.join(ROOT_DIR, '..', 'svlib', '*.sv'))
+    ]
+
+    if pygearslib is not None:
+        context['includes'].append(
+            os.path.abspath(os.path.join(sv_src_path, '*.sv')))
+
+    for templ, tname in zip(j2_templates, j2_file_names):
+        res = env.get_template(templ).render(context)
+        fname = save_file(tname, context['out_path'], res)
+        if os.path.splitext(fname)[1] == '.sh':
+            os.chmod(fname, 0o777)
+
+
 class SimSocket(SimGear):
     def __init__(self, gear):
         super().__init__(gear)
+
+        sv_cosim_gen(gear)
 
         # Create a TCP/IP socket
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -61,70 +117,6 @@ class SimSocket(SimGear):
         # Listen for incoming connections
         self.sock.listen(5)
         self.handlers = []
-
-        outdir = registry('SimArtifactDir')
-
-        rtl_node = svgen(gear, outdir=outdir)
-        sv_node = registry('SVGenMap')[rtl_node]
-
-        port_map = {
-            port.basename: port.basename
-            for port in itertools.chain(rtl_node.in_ports, rtl_node.out_ports)
-        }
-
-        structs = [
-            svgen_typedef(port.dtype, f"{port.basename}")
-            for port in itertools.chain(rtl_node.in_ports, rtl_node.out_ports)
-        ]
-
-        base_addr = os.path.dirname(__file__)
-        env = jinja2.Environment(
-            loader=jinja2.FileSystemLoader(base_addr),
-            trim_blocks=True,
-            lstrip_blocks=True)
-        env.globals.update(
-            zip=zip, int=int, print=print, issubclass=issubclass)
-
-        context = {
-            'intfs':
-            list(sv_node.sv_port_configs()),
-            'module_name':
-            sv_node.sv_module_name,
-            'dut_name':
-            sv_node.sv_module_name,
-            'dti_verif_path':
-            os.path.abspath(os.path.join(ROOT_DIR, 'sim', 'dpi')),
-            'param_map':
-            sv_node.params,
-            'structs':
-            structs,
-            # 'param_map': {p['name']: p['name']
-            # for p in params},
-            'port_map':
-            port_map,
-            'out_path':
-            outdir,
-            # 'types': module_types,
-            # 'struct_types': sv_structs,
-            # 'int_types': sv_ints,
-            # 'array_types': sv_array,
-            # 'cfg_params': cfg_params
-        }
-        context['includes'] = [
-            os.path.abspath(os.path.join(ROOT_DIR, '..', 'svlib', '*.sv'))
-        ]
-
-        pygearslib = util.find_spec("pygearslib")
-        if pygearslib is not None:
-            from pygearslib import sv_src_path
-            context['includes'].append(
-                os.path.abspath(os.path.join(sv_src_path, '*.sv')))
-
-        for templ, tname in zip(j2_templates, j2_file_names):
-            res = env.get_template(templ).render(context)
-            fname = save_file(tname, context['out_path'], res)
-            if os.path.splitext(fname)[1] == '.sh':
-                os.chmod(fname, 0o777)
 
     async def out_handler(self, conn, din, dtype):
         while True:
