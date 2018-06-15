@@ -1,0 +1,49 @@
+`ifndef DTI_CONSUMER_DRIVER_SV
+ `define DTI_CONSUMER_DRIVER_SV
+
+class dti_consumer_driver#(type DATA_T = bit [15:0]);
+
+   virtual dti_verif_if#(DATA_T) vif;
+   string  name;
+
+	 chandle handle;
+
+   function new
+     (
+      virtual dti_verif_if#(DATA_T) vif,
+      string  name = "dti_consumer_driver"
+      );
+      this.vif = vif;
+      this.name = name;
+	    handle = sock_open("tcp://localhost:1234", name);
+   endfunction
+
+   task init();
+      vif.cb_consumer.ready <= 1'b0;
+      @(negedge vif.rst);
+   endtask
+
+   task main();
+      init();
+      get_and_drive();
+	    sock_close(handle);
+   endtask
+
+   task get_and_drive();
+      int ret;
+      bit[$size(DATA_T)-1 : 0] data;
+
+      forever begin
+         vif.cb_consumer.ready <= 1'b1;
+
+         @(vif.cb_consumer iff vif.cb_consumer.valid);
+         data = vif.cb_consumer.data;
+         ret = sock_put(handle, data);
+         if (ret == 1) break;
+      end
+
+   endtask
+
+endclass
+
+`endif
