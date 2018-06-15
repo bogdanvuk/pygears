@@ -1,9 +1,9 @@
 from pygears import gear
-from pygears.typing import TLM
+from pygears.sim import sim_assert
 
 
 @gear
-async def scoreboard(*din: TLM['t'], report, t=b't') -> None:
+async def scoreboard(*din: b't', report) -> None:
     while (1):
         items = []
         for d in din:
@@ -15,3 +15,5 @@ async def scoreboard(*din: TLM['t'], report, t=b't') -> None:
 
         for d in din:
             d.task_done()
+
+        sim_assert(match)

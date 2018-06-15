@@ -40,6 +40,10 @@ def check_arg_num(argnames, varargsname, args):
 def check_arg_specified(args):
     args_res = []
     for i, a in enumerate(args):
+        if isinstance(a, Partial):
+            raise GearArgsNotSpecified(
+                f"Unresolved input arg {i}")
+
         if not isinstance(a, Intf):
             from pygears.common import const
             a = const(val=a)
