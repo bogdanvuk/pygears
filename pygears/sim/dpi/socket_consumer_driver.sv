@@ -1,7 +1,7 @@
-`ifndef DTI_CONSUMER_DRIVER_SV
- `define DTI_CONSUMER_DRIVER_SV
+`ifndef SOCKET_CONSUMER_DRIVER_SV
+ `define SOCKET_CONSUMER_DRIVER_SV
 
-class dti_consumer_driver#(type DATA_T = bit [15:0]);
+class socket_consumer_driver#(type DATA_T = bit [15:0]);
 
    virtual dti_verif_if#(DATA_T) vif;
    string  name;
@@ -11,7 +11,7 @@ class dti_consumer_driver#(type DATA_T = bit [15:0]);
    function new
      (
       virtual dti_verif_if#(DATA_T) vif,
-      string  name = "dti_consumer_driver"
+      string  name = "socket_consumer_driver"
       );
       this.vif = vif;
       this.name = name;

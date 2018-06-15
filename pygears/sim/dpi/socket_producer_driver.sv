@@ -1,9 +1,9 @@
-`ifndef DTI_PRODUCER_DRIVER_SV
- `define DTI_PRODUCER_DRIVER_SV
+`ifndef SOCKET_PRODUCER_DRIVER_SV
+ `define SOCKET_PRODUCER_DRIVER_SV
 
 import sock::*;
 
-class dti_producer_driver #(type DATA_T = bit [15:0]);
+class socket_producer_driver #(type DATA_T = bit [15:0]);
 
    virtual dti_verif_if#(DATA_T) vif;
    string  name;
@@ -13,7 +13,7 @@ class dti_producer_driver #(type DATA_T = bit [15:0]);
    function new
      (
       virtual dti_verif_if#(DATA_T) vif,
-      string  name = "dti_producer_driver"
+      string  name = "socket_producer_driver"
       );
       this.vif = vif;
       this.name = name;
@@ -36,8 +36,6 @@ class dti_producer_driver #(type DATA_T = bit [15:0]);
       int ret;
 
 	    while(sock_get(handle, data) == 0) begin
-         @(vif.cb_producer);
-
          $display("Start driving item:\n%p", DATA_T'(data));
 
          vif.cb_producer.valid <= 1'b1;
