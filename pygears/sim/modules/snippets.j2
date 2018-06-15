@@ -1,0 +1,27 @@
+{% macro module_inst(module_name, param_map, inst_name, port_map=None) -%}
+
+  {{module_name}}
+  {%- if param_map|length > 0 %}
+ #(
+    {% for name,value in param_map.items() -%}
+      {%- if name %}
+        {{"."|indent(4,True)}}{{name}}({{value}}){{ "," if not loop.last }}
+      {% else -%}
+        {{value|indent(4,True)}}{{ "," if not loop.last }}
+      {% endif -%}
+    {% endfor -%}
+    )
+  {% endif %}
+ {{inst_name}} (
+    .clk(clk),
+    .rst(rst),
+  {% if port_map -%}
+    {% for name,value in port_map.items() -%}
+      {{"."|indent(4,True)}}{{name}}({{value}}){{ "," if not loop.last }}
+    {% endfor -%}
+  {% else -%}
+    .*
+  {% endif -%}
+  );
+{% endmacro %}
+

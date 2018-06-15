@@ -1,0 +1,76 @@
+{%- import 'snippets.j2' as snippets -%}
+`ifndef TOP_SV
+`define TOP_SV
+
+module top;
+
+   import socket_pkg::*;
+
+   logic clk;
+   logic rst;
+
+{% for s in structs %}
+{{s|indent(3, True)}}
+{% endfor %}
+
+{% for intf in intfs %}
+   dti_verif_if#({{intf['name']}}_t) {{intf['name']}}_vif (clk, rst);
+   dti#({{intf['width']}}) {{intf['name']}} ();
+{% endfor %}
+{% for intf in intfs %}
+  {% if intf['modport'] == 'consumer' %}
+   socket_producer_driver#({{intf['name']}}_t) {{intf['name']}}_driver = new({{intf['name']}}_vif, "{{intf['name']}}");
+  {% else %}
+   socket_consumer_driver#({{intf['name']}}_t) {{intf['name']}}_driver = new({{intf['name']}}_vif, "{{intf['name']}}");
+  {% endif %}
+{% endfor %}
+
+   initial begin
+{% for intf in intfs %}
+      {{intf['name']}}_vif.name = "{{intf['name']}}";
+{% endfor %}
+      fork
+{% for intf in intfs %}
+  {% if intf['modport'] == 'producer' %}
+         {{intf['name']}}_driver.main();
+  {% endif %}
+{% endfor %}
+      join_none
+
+      fork
+{% for intf in intfs %}
+  {% if intf['modport'] == 'consumer' %}
+         {{intf['name']}}_driver.main();
+  {% endif %}
+{% endfor %}
+      join
+
+      disable fork;
+      $finish();
+   end
+
+{{snippets.module_inst(dut_name, param_map, "dut", port_map)|indent(3, True)}}
+
+   initial begin
+      clk = 0;
+      rst = 1;
+      #10 rst = 0;
+   end
+   always #5 clk = ~clk;
+
+   // DUT if to verification if
+{% for intf in intfs %}
+  {% if intf['modport'] == 'consumer' %}
+    assign {{intf['name']}}.valid = {{intf['name']}}_vif.valid;
+    assign {{intf['name']}}.data = {{intf['name']}}_vif.data;
+    assign {{intf['name']}}_vif.ready = {{intf['name']}}.ready;
+  {% else %}
+    assign {{intf['name']}}_vif.valid = {{intf['name']}}.valid;
+    assign {{intf['name']}}_vif.data = {{intf['name']}}.data;
+    assign {{intf['name']}}.ready = {{intf['name']}}_vif.ready;
+  {% endif %}
+{% endfor %}
+
+endmodule : top
+
+`endif

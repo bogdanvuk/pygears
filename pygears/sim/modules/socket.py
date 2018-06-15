@@ -1,9 +1,20 @@
 import socket
 import asyncio
 import array
+import os
+import jinja2
 from math import ceil
 
+import itertools
+from importlib import util
+
+from pygears.svgen.generate import TemplateEnv
+from pygears.svgen.util import svgen_typedef
+from pygears.svgen import svgen
+from pygears.definitions import ROOT_DIR
+from pygears import registry
 from pygears.sim.sim_gear import SimGear
+from pygears.util.fileio import save_file
 
 
 def u32_repr_gen(data, dtype):
@@ -16,6 +27,7 @@ def u32_repr_gen(data, dtype):
 def u32_repr(data, dtype):
     return array.array('I', u32_repr_gen(data, dtype))
 
+
 def u32_bytes_to_int(data):
     arr = array.array('I')
     arr.frombytes(data)
@@ -25,6 +37,10 @@ def u32_bytes_to_int(data):
         val |= val32
 
     return val
+
+
+j2_templates = ['runsim.j2', 'top.j2']
+j2_file_names = ['run_sim.sh', 'top.sv']
 
 
 class SimSocket(SimGear):
@@ -45,6 +61,70 @@ class SimSocket(SimGear):
         # Listen for incoming connections
         self.sock.listen(5)
         self.handlers = []
+
+        outdir = registry('SimArtifactDir')
+
+        rtl_node = svgen(gear, outdir=outdir)
+        sv_node = registry('SVGenMap')[rtl_node]
+
+        port_map = {
+            port.basename: port.basename
+            for port in itertools.chain(rtl_node.in_ports, rtl_node.out_ports)
+        }
+
+        structs = [
+            svgen_typedef(port.dtype, f"{port.basename}")
+            for port in itertools.chain(rtl_node.in_ports, rtl_node.out_ports)
+        ]
+
+        base_addr = os.path.dirname(__file__)
+        env = jinja2.Environment(
+            loader=jinja2.FileSystemLoader(base_addr),
+            trim_blocks=True,
+            lstrip_blocks=True)
+        env.globals.update(
+            zip=zip, int=int, print=print, issubclass=issubclass)
+
+        context = {
+            'intfs':
+            list(sv_node.sv_port_configs()),
+            'module_name':
+            sv_node.sv_module_name,
+            'dut_name':
+            sv_node.sv_module_name,
+            'dti_verif_path':
+            os.path.abspath(os.path.join(ROOT_DIR, 'sim', 'dpi')),
+            'param_map':
+            sv_node.params,
+            'structs':
+            structs,
+            # 'param_map': {p['name']: p['name']
+            # for p in params},
+            'port_map':
+            port_map,
+            'out_path':
+            outdir,
+            # 'types': module_types,
+            # 'struct_types': sv_structs,
+            # 'int_types': sv_ints,
+            # 'array_types': sv_array,
+            # 'cfg_params': cfg_params
+        }
+        context['includes'] = [
+            os.path.abspath(os.path.join(ROOT_DIR, '..', 'svlib', '*.sv'))
+        ]
+
+        pygearslib = util.find_spec("pygearslib")
+        if pygearslib is not None:
+            from pygearslib import sv_src_path
+            context['includes'].append(
+                os.path.abspath(os.path.join(sv_src_path, '*.sv')))
+
+        for templ, tname in zip(j2_templates, j2_file_names):
+            res = env.get_template(templ).render(context)
+            fname = save_file(tname, context['out_path'], res)
+            if os.path.splitext(fname)[1] == '.sh':
+                os.chmod(fname, 0o777)
 
     async def out_handler(self, conn, din, dtype):
         while True:
@@ -84,7 +164,6 @@ class SimSocket(SimGear):
             raise e
         except Exception as e:
             print(f"Exception in socket handler: {e}")
-
 
     def make_out_handler(self, name, conn, args):
         try:

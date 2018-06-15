@@ -17,6 +17,7 @@ def cur_gear():
 def artifacts_dir():
     return registry('SimArtifactDir')
 
+
 def custom_exception_handler(loop, context):
     # first, handle with default handler
     loop.default_exception_handler(context)
@@ -25,6 +26,7 @@ def custom_exception_handler(loop, context):
     if isinstance(exception, ZeroDivisionError):
         print(context)
         loop.stop()
+
 
 def sim(**conf):
     if "outdir" not in conf:
@@ -60,7 +62,8 @@ def sim(**conf):
     #     asyncio.wait(queue_joins))
 
     try:
-        loop.run_until_complete(asyncio.wait_for(asyncio.gather(*pending), 0.5))
+        loop.run_until_complete(
+            asyncio.wait_for(asyncio.gather(*pending), 0.5))
     except TimeoutError:  # Any other exception would be bad
         pass
 
