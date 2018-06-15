@@ -26,11 +26,20 @@ import "DPI-C" function chandle sock_open(input string uri, input string channel
 import "DPI-C" function void sock_close(input chandle handle);
 
 // Returns 1 on success, 0 on error
-import "DPI-C" function int sock_get(input chandle handle, output bit[] signal);
+import "DPI-C" context function int sock_get(input chandle handle, output bit[] signal);
 
 import "DPI-C" function int sock_done(input chandle handle);
 
 // Returns 1 on success, 0 on error
 import "DPI-C" function int sock_put(input chandle handle, input bit [] signal);
+
+   export "DPI-C" function pause_sim;
+
+   function void pause_sim();
+      $display("Before stop");
+      $stop();
+      $display("After stop");
+   endfunction
+
 
 endpackage

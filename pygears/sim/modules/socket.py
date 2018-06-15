@@ -72,6 +72,9 @@ class SimSocket(SimGear):
                 print("Wait for input data")
                 item = await self.loop.sock_recv(conn, 1024)
 
+                if not item:
+                    break
+
                 print(f"Output data {item}, of len {len(item)}")
 
                 await self.output(u32_bytes_to_int(item), dout_id)
