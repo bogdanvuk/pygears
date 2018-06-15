@@ -33,26 +33,23 @@ class UnionMeta(EnumerableGenericMeta):
     def __getitem__(self, parameters):
         if not self.is_specified():
             return super().__getitem__(parameters)
-        elif isinstance(parameters, slice):
-            if(parameters.stop == 0):
+
+        index = self.index_norm(parameters)
+
+        if isinstance(index[0], slice):
+            if(index[0].stop == 1):
                 return Uint[max(map(int, self.args))]
-            elif(parameters.stop == 1):
-                return Uint[max(map(int, self.args)) + bitw(len(self.args)-1)]
+            elif(index[0].stop == 2):
+                return self
             else:
                 raise IndexError
-        elif isinstance(parameters, tuple):
-            if(parameters[0] == 0):
+        else:
+            if(index[0] == 0):
                 return Uint[max(map(int, self.args))]
-            elif(parameters[0] == 1):
+            elif(index[0] == 1):
                 return Uint[bitw(len(self.args) - 1)]
             else:
                 raise IndexError
-        elif parameters == 0:
-            return Uint[max(map(int, self.args))]
-        elif parameters == 1:
-            return Uint[bitw(len(self.args) - 1)]
-        else:
-            raise IndexError
 
     def keys(self):
         return [0, 1]

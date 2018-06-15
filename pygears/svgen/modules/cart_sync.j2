@@ -1,6 +1,6 @@
 {%- import 'snippet.j2' as snippet -%}
 
-{% call snippet.module_with_intf_structs(module_name, intfs, [intfs|isinput|last], comment) %}
+{% call snippet.module_with_intf_structs(module_name, intfs, intfs|isinput, comment) %}
 
   {%- set input_intf_names = intfs|isinput|keymap("name") %}
   {%- set min_lvl = intfs|isinput|keymap("lvl")|min %}

@@ -1,5 +1,5 @@
 {%- import 'snippet.j2' as snippet -%}
-{% call snippet.module_with_intf_structs(module_name, intfs, intfs, comment) %}
+{% call snippet.module_with_intf_structs(module_name, intfs, intfs|isinput, comment) %}
 
 {% for i in intfs[1:] %}
     assign {{i['name']}}.data = din.data;
@@ -23,7 +23,6 @@
     begin
 {% for i in intfs[1:] %}
         {{i['name']}}.valid = 0;
-        {{i['name']}}.eot = 0;
 {% endfor %}
 
         case( din_s.ctrl )

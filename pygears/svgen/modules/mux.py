@@ -5,6 +5,10 @@ from pygears.common import mux
 
 
 class SVGenMux(SVModuleGen):
+    @property
+    def is_generated(self):
+        return True
+
     def get_module(self, template_env):
 
         intf_cfgs = list(self.sv_port_configs())
