@@ -4,7 +4,6 @@ import tempfile
 
 from pygears import registry, find, PluginBase, bind
 from pygears.sim.inst import sim_inst
-from concurrent.futures import CancelledError, TimeoutError
 
 
 def cur_gear():
@@ -43,43 +42,11 @@ def sim(**conf):
         top = oper(top, conf)
 
     tasks = {proc.run(): proc for proc in registry('SimMap').values()}
-    # for t, sim_gear in zip(tasks, registry('SimMap').values()):
-    #     t.gear = sim_gear.gear
 
     bind('SimTasks', tasks)
 
-    # finished, pending = loop.run_until_complete(
-    #     asyncio.wait(tasks.keys(), return_when=asyncio.FIRST_COMPLETED))
     loop.run_until_complete(
         asyncio.gather(*tasks.keys()))
-
-    # queue_joins = []
-    # for proc in registry('SimMap').values():
-    #     for out_q in proc.out_queues:
-    #         for q in out_q:
-    #             pending.append(q.join())
-
-    # finished, pending = loop.run_until_complete(
-    #     asyncio.wait(queue_joins))
-
-    # try:
-    #     loop.run_until_complete(
-    #         asyncio.wait_for(asyncio.gather(*pending), 0.5))
-    # except TimeoutError:  # Any other exception would be bad
-    #     pass
-
-    # print("Simulation finished, canceling other tasks")
-    # # Cancel the remaining tasks
-    # for task in pending:
-    #     task.cancel()
-
-    # # loop.run_until_complete(asyncio.gather(*pending))
-    # try:
-    #     loop.run_until_complete(asyncio.gather(*pending))
-    # except CancelledError:  # Any other exception would be bad
-    #     pass
-
-    # print("Tasks canceled, closing the loop")
     loop.close()
 
 
@@ -101,3 +68,5 @@ def sim_assert(cond, msg=None):
         if registry('SimConfig')['dbg_assert']:
             import pdb
             pdb.set_trace()
+        else:
+            assert cond
