@@ -10,16 +10,16 @@ import atexit
 
 
 class SimVerilated(SimGear):
-    def __init__(self, gear, outdir):
+    def __init__(self, gear):
         super().__init__(gear)
         self.name = gear.name[1:].replace('/', '_')
-        self.outdir = os.path.join(outdir, self.name)
+        self.outdir = os.path.join(registry('SimArtifactDir'), self.name)
         self.objdir = os.path.join(self.outdir, 'obj_dir')
         self.svnode = svgen(gear, outdir=self.outdir, wrapper=True)
         self.svmod = registry('SVGenMap')[self.svnode]
         self.wrap_name = f'wrap_{self.svmod.sv_module_name}'
 
-        atexit.register(self.cleanup)
+        # atexit.register(self.finish)
 
         rebuild = True
 
@@ -64,8 +64,7 @@ class SimVerilated(SimGear):
 
         self.verilib.init()
 
-        while (1):
-            # for i in range(10):
+        while True:
             for d in self.c_in_drvs:
                 await d.post()
 
@@ -83,5 +82,6 @@ class SimVerilated(SimGear):
 
         self.cleanup()
 
-    def cleanup(self):
+    def finish(self):
+        super().finish()
         self.verilib.final()

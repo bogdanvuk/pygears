@@ -9,7 +9,9 @@ async def chop(din: Queue['data_t'], cfg: Uint['w_cfg']) -> Queue['data_t', 2]:
     val = (0, 0)
 
     async with cfg as size:
+        print(f"Got size: {size}")
         while (val[1] == 0):
             i += 1
             async with din as val:
-                yield (val[0], val[1] or (i%size == 0), val[1])
+                print(f"Got din: {din}")
+                yield (val[0], val[1] or (i % size == 0), val[1])

@@ -1,16 +1,12 @@
-import inspect
-import asyncio
-from pygears import registry, PluginBase, Intf
-from pygears.core.hier_node import HierVisitorBase
-from pygears.sim.verilate import SimVerilated
+from pygears import registry
 from pygears.sim.sim_gear import SimGear, is_simgear_func
 from pygears.core.gear import GearPlugin
+
 
 def sim_inst(top, conf):
 
     namespace = registry('SimModuleNamespace')
     sim_map = registry('SimMap')
-    outdir = conf['outdir']
 
     for gear in top.child:
         sim_cls = gear.params.get('sim_cls', None)

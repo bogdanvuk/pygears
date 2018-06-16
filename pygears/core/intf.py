@@ -21,13 +21,31 @@ def operator_methods_gen(cls):
     return cls
 
 
+def _get_consumer_tree_rec(intf, consumers):
+    for port in intf.consumers:
+        cons_intf = port.consumer
+        if not cons_intf.consumers:
+            consumers.append(port)
+        else:
+            _get_consumer_tree_rec(cons_intf, consumers)
+
+
+def get_consumer_tree(intf):
+    consumers = []
+    _get_consumer_tree_rec(intf, consumers)
+    return consumers
+
+
 @operator_methods_gen
 class Intf:
-    OPERATOR_SUPPORT = ['__or__', '__getitem__', '__neg__',
-                        '__add__', '__sub__', '__mul__', '__div__']
+    OPERATOR_SUPPORT = [
+        '__or__', '__getitem__', '__neg__', '__add__', '__sub__', '__mul__',
+        '__div__'
+    ]
 
     def __init__(self, dtype):
         self.consumers = []
+        self.end_consumers = []
         self.dtype = dtype
         self.producer = None
         self._in_queue = None
@@ -54,23 +72,32 @@ class Intf:
     def in_queue(self):
         if self._in_queue is None:
             if self.producer is not None:
-                self._in_queue = self.producer.queue
+                self._in_queue = self.producer.get_queue()
 
         return self._in_queue
 
     def get_consumer_queue(self, port):
-        i = self.consumers.index(port)
-        return self.out_queues[i]
+        if (not self._out_queues
+                and self._in_queue is None and self.producer is not None):
+            return self.producer.get_queue(port)
+        else:
+            out_queues = self.out_queues
+            i = self.end_consumers.index(port)
+            return out_queues[i]
 
     @property
     def out_queues(self):
         if self._out_queues:
             return self._out_queues
 
-        if len(self.consumers) == 1 and self.in_queue:
+        # if len(self.consumers) == 1 and self.in_queue:
+        if self.producer is not None:
             return [self.in_queue]
         else:
-            self._out_queues = [asyncio.Queue(maxsize=1) for _ in self.consumers]
+            self.end_consumers = get_consumer_tree(self)
+            self._out_queues = [
+                asyncio.Queue(maxsize=1) for _ in self.end_consumers
+            ]
 
             return self._out_queues
 
@@ -82,7 +109,7 @@ class Intf:
 
     def finish(self):
         self._done = True
-        for q, c in zip(self.out_queues, self.consumers):
+        for q, c in zip(self.out_queues, self.end_consumers):
             c.finish()
             for task in q._getters:
                 task.cancel()
