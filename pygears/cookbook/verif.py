@@ -1,4 +1,16 @@
-from pygears.sim import drv, mon, scoreboard
+from pygears import gear
+from pygears.sim import drv, mon, scoreboard, sim_assert
+
+
+@gear
+async def check(din, *, ref):
+    try:
+        items = []
+        while (1):
+            items.append(await din.get())
+
+    finally:
+        sim_assert(items == ref)
 
 
 def tlm_verif(*seq, f, ref):
@@ -26,3 +38,9 @@ def verif(*seq, f, ref):
 
     return report
 
+
+def directed(*seq, f, ref):
+    tuple(s | drv for s in seq) \
+        | f \
+        | mon \
+        | check(ref=ref)

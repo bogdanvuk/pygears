@@ -8,13 +8,13 @@ from math import ceil
 import itertools
 from importlib import util
 
-from pygears.svgen.generate import TemplateEnv
 from pygears.svgen.util import svgen_typedef
 from pygears.svgen import svgen
 from pygears.definitions import ROOT_DIR
-from pygears import registry
+from pygears import registry, GearDone
 from pygears.sim.sim_gear import SimGear
 from pygears.util.fileio import save_file
+from pygears.typing_common.codec import code, decode
 
 
 def u32_repr_gen(data, dtype):
@@ -25,7 +25,7 @@ def u32_repr_gen(data, dtype):
 
 
 def u32_repr(data, dtype):
-    return array.array('I', u32_repr_gen(data, dtype))
+    return array.array('I', u32_repr_gen(code(dtype, data), dtype))
 
 
 def u32_bytes_to_int(data):
@@ -37,6 +37,10 @@ def u32_bytes_to_int(data):
         val |= val32
 
     return val
+
+
+def u32_bytes_decode(data, dtype):
+    return decode(dtype, u32_bytes_to_int(data))
 
 
 j2_templates = ['runsim.j2', 'top.j2']
@@ -115,97 +119,103 @@ class SimSocket(SimGear):
         self.sock.bind(server_address)
 
         # Listen for incoming connections
-        self.sock.listen(5)
-        self.handlers = []
+        self.sock.listen(len(gear.in_ports) + len(gear.out_ports))
+        self.handlers = {}
 
-    async def out_handler(self, conn, din, dtype):
-        while True:
-            try:
-                item = await din.get()
-            except asyncio.CancelledError as e:
-                await self.loop.sock_sendall(conn, b'\x00')
-                conn.close()
-                raise e
-
-            pkt = u32_repr(item, dtype).tobytes()
-            await self.loop.sock_sendall(conn, pkt)
-
-            try:
-                await self.loop.sock_recv(conn, 1024)
-            except asyncio.CancelledError as e:
-                conn.close()
-                raise e
-
-            din.task_done()
-
-    async def in_handler(self, conn, dout_id, dtype):
+    async def in_handler(self, conn, pin):
+        din = pin.consumer
         try:
             while True:
-                print("Wait for input data")
-                item = await self.loop.sock_recv(conn, 1024)
+                async with din as item:
+                    pkt = u32_repr(item, din.dtype).tobytes()
+                    await self.loop.sock_sendall(conn, pkt)
+                    await self.loop.sock_recv(conn, 1024)
 
-                if not item:
-                    break
-
-                print(f"Output data {item}, of len {len(item)}")
-
-                await self.output(u32_bytes_to_int(item), dout_id)
-
-        except asyncio.CancelledError as e:
+        except GearDone as e:
+            print(f"SimGear canceling: socket@{pin.basename}")
+            del self.handlers[pin]
+            conn.send(b'\x00')
             conn.close()
+
+            if not self.handlers:
+                self.finish()
+
             raise e
         except Exception as e:
             print(f"Exception in socket handler: {e}")
 
-    def make_out_handler(self, name, conn, args):
+    async def out_handler(self, conn, pout):
+        dout = pout.producer
         try:
-            i = self.gear.argnames.index(name)
-            return self.loop.create_task(
-                self.out_handler(conn, args[i], self.gear.in_ports[i].dtype))
+            while True:
+                item = await self.loop.sock_recv(conn, 1024)
+                if not item:
+                    raise GearDone
 
-        except ValueError:
-            pass
+                print(f"Output data {item}, of len {len(item)}")
+
+                await dout.put(u32_bytes_decode(item, dout.dtype))
+
+        except GearDone as e:
+            print(f"SimGear canceling: socket@{pout.basename}")
+            del self.handlers[pout]
+            dout.finish()
+            conn.close()
+            if not self.handlers:
+                self.finish()
+
+            raise e
+        except Exception as e:
+            print(f"Exception in socket handler: {e}")
 
     def make_in_handler(self, name, conn, args):
         try:
-            print(self.gear.outnames)
-            print(name)
-            i = self.gear.outnames.index(name)
-            print(i)
-            return self.loop.create_task(
-                self.in_handler(conn, i, self.gear.out_ports[i].dtype))
+            i = self.gear.argnames.index(name)
+            return self.gear.in_ports[i], self.loop.create_task(
+                self.in_handler(conn, self.gear.in_ports[i]))
 
-        except ValueError:
-            pass
+        except ValueError as e:
+            return None, None
+
+    def make_out_handler(self, name, conn, args):
+        try:
+            i = self.gear.outnames.index(name)
+            return self.gear.out_ports[i], self.loop.create_task(
+                self.out_handler(conn, self.gear.out_ports[i]))
+
+        except ValueError as e:
+            return None, None
+
+    def finish(self):
+        print("Closing socket server")
+        super().finish()
+        for h in self.handlers.values():
+            h.cancel()
+
+        self.sock.close()
 
     async def func(self, *args, **kwds):
         self.loop = asyncio.get_event_loop()
 
         print(self.gear.argnames)
 
-        try:
-            while True:
-                print("Wait for connection")
-                conn, addr = await self.loop.sock_accept(self.sock)
+        while True:
+            print("Wait for connection")
+            conn, addr = await self.loop.sock_accept(self.sock)
 
-                msg = await self.loop.sock_recv(conn, 1024)
-                port_name = msg.decode()
+            msg = await self.loop.sock_recv(conn, 1024)
+            port_name = msg.decode()
 
-                print(f"Connection received for {port_name}")
+            print(f"Connection received for {port_name}")
 
-                handler = self.make_out_handler(port_name, conn, args)
-                if handler is None:
-                    print("Trying in port")
-                    handler = self.make_in_handler(port_name, conn, args)
+            port, handler = self.make_in_handler(port_name, conn, args)
+            if handler is None:
+                print("Trying in port")
+                port, handler = self.make_out_handler(
+                    port_name, conn, args)
 
-                if handler is None:
-                    print(f"Nonexistant port {port_name}")
-                    conn.close()
-                else:
-                    self.handlers.append(handler)
-
-        except asyncio.CancelledError as e:
-            for h in self.handlers:
-                h.cancel()
-
-            raise e
+            if handler is None:
+                print(f"Nonexistant port {port_name}")
+                conn.close()
+            else:
+                self.handlers[port] = handler

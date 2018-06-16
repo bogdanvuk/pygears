@@ -65,7 +65,6 @@ class SVModuleGen:
         if svmod_fn:
             svmod_path = find_in_dirs(svmod_fn,
                                       registry('SVGenSystemVerilogPaths'))
-            print(f"SVModPath: {registry('SVGenSystemVerilogPaths')}")
             if svmod_path:
                 with open(svmod_path, 'r') as f:
                     name, _, _, svparams = parse(f.read())

@@ -20,24 +20,7 @@ class TypingYieldVisitorBase:
         yield data
 
 
-def pack_data(self, lvl, dtype, d):
-    out = 0
-    for bit in lvl:
-        out = (out << 1) | bit
-
-    out = (out << int(dtype[0])) | d
-    return d
-
-
 class TypeDrvVisitor(TypingYieldVisitorBase):
-    # def visit_uint(self, data, dtype):
-    #     mask = ((1 << int(dtype)) - 1)
-    #     return data & mask
-
-    # def visit_int(self, data, dtype):
-    #     mask = ((1 << int(dtype)) - 1)
-    #     return data & mask
-
     def visit_queue(self, data, dtype):
         for i, d in enumerate(data):
             for ret in self.visit(d, dtype[:-1]):
@@ -50,15 +33,6 @@ class TypeDrvVisitor(TypingYieldVisitorBase):
                     yield (ret, eot)
                 else:
                     yield (ret[0], *ret[1:], eot)
-
-    # def visit_tuple(self, data, dtype):
-    #     ret = 0
-    #     for d, t in zip(reversed(data), reversed(dtype)):
-    #         elem = next(self.visit(d, t))
-    #         ret <<= int(t)
-    #         ret |= elem
-
-    #     return ret
 
 
 @gear

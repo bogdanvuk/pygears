@@ -1,8 +1,5 @@
 from pygears import GearDone, gear
-from pygears.sim.scv import SCVTypeSeqVisitor, scv_compile
-from pygears.sim import cur_gear, artifacts_dir
 from pygears.typing import TLM
-import os
 
 
 @gear

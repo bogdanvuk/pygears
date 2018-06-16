@@ -88,7 +88,7 @@ class SVGenPlugin(PluginBase):
     def bind(cls):
         cls.registry['SimFlow'] = [sim_inst]
         cls.registry['SimTasks'] = {}
-        cls.registry['SimConfig'] = {'dbg_assert': True}
+        cls.registry['SimConfig'] = {'dbg_assert': False}
 
     @classmethod
     def reset(cls):

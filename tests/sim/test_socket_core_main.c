@@ -10,6 +10,8 @@ struct array_handle {
 	int size;
 };
 
+void pause_sim() {
+}
 
 int svSize(const svOpenArrayHandle h, int d) {
 	struct array_handle* arr = h;
@@ -38,6 +40,9 @@ int main(int argc, char *argv[]) {
 		sock_done(in_handle);
 		sock_put(out_handle, (svOpenArrayHandle) &signal);
 	}
+
+	sock_done(out_handle);
+	printf("Done, closing connections\n");
 
 	sock_close(in_handle);
 	sock_close(out_handle);
