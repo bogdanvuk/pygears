@@ -1,6 +1,6 @@
 import asyncio
 import inspect
-from pygears import registry, StopGear
+from pygears import registry, GearDone
 
 
 def is_async_gen(func):
@@ -68,9 +68,11 @@ class SimGear:
                                 await p.producer.put(v)
                 else:
                     await self.func(*args, **kwds)
-        except (asyncio.CancelledError, StopGear):
+        except GearDone:
 
             for port in self.gear.out_ports:
                 port.producer.finish()
+            for a in args:
+                a.finish()
 
             print(f"SimGear canceling: {self.gear.name}")
