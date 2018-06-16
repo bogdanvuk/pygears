@@ -1,16 +1,16 @@
 from nose import with_setup
-from utils import sim_check, skip_sim_if_no_tools
+from utils import sim_check, skip_ifndef
 from pygears import clear
 
 from pygears import gear
-from pygears.sim import verif
+from pygears.cookbook.verif import verif
 from pygears.sim.modules.dtype_rnd_seq import dtype_rnd_seq
 from pygears.sim.modules.seqr import seqr
 from pygears.sim.scv import create_type_cons
 from pygears.typing import Queue, Uint, Tuple, TLM, Int
 from pygears.cookbook.rng import rng
 
-skip_sim_if_no_tools()
+skip_ifndef('INCLUDE_SLOW_TESTS', 'VERILATOR_ROOT', 'SYSTEMC_HOME', 'SCV_HOME')
 
 
 @with_setup(clear)

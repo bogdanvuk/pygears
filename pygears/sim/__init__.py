@@ -6,10 +6,10 @@ from .sim import sim, cur_gear, artifacts_dir, sim_assert
 
 from .modules.drv import drv
 from .modules.mon import mon
+from .modules.seqr import seqr
 from .modules.scoreboard import scoreboard
-from .verif import verif, tlm_verif
 
 __all__ = [
-    'sim', 'drv', 'mon', 'scoreboard', 'verif', 'tlm_verif', 'cur_gear',
-    'artifacts_dir', 'sim_assert'
+    'sim', 'drv', 'mon', 'scoreboard', 'cur_gear', 'artifacts_dir',
+    'sim_assert', 'seqr'
 ]
