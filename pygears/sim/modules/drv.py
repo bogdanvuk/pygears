@@ -58,18 +58,9 @@ class TypeDrvVisitor(TypingYieldVisitorBase):
 
 @gear
 async def drv(din: TLM['t'], *, t=b't') -> b't':
-    print("Driver waiting")
-    try:
-        item = await din.get()
-    except asyncio.CancelledError as e:
-        print("Driver canceled")
-        raise e
-
-    print("Driver got: ", item)
-
-    for d in TypeDrvVisitor().visit(item, t):
-        print('Driver sends: ', d)
-        yield d
+    async with din as item:
+        for d in TypeDrvVisitor().visit(item, t):
+            print('Driver sends: ', d)
+            yield d
 
     print("Driver done")
-    din.task_done()
