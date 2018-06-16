@@ -10,6 +10,7 @@ async def check(din, *, ref):
             items.append(await din.get())
 
     finally:
+        print(f"Here: {items}")
         sim_assert(items == ref)
 
 
