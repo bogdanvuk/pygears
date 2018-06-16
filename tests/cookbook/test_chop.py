@@ -41,7 +41,4 @@ def test_verilator_cosim():
         f=chop(sim_cls=SimVerilated),
         ref=chop(name='ref_model'))
 
-    sim(outdir='/tmp/tmp1wm1jv_v')
-
-
-test_verilator_cosim()
+    sim()
