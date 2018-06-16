@@ -48,8 +48,10 @@ def sim(**conf):
 
     bind('SimTasks', tasks)
 
-    finished, pending = loop.run_until_complete(
-        asyncio.wait(tasks.keys(), return_when=asyncio.FIRST_COMPLETED))
+    # finished, pending = loop.run_until_complete(
+    #     asyncio.wait(tasks.keys(), return_when=asyncio.FIRST_COMPLETED))
+    loop.run_until_complete(
+        asyncio.gather(*tasks.keys()))
 
     # queue_joins = []
     # for proc in registry('SimMap').values():
@@ -60,24 +62,24 @@ def sim(**conf):
     # finished, pending = loop.run_until_complete(
     #     asyncio.wait(queue_joins))
 
-    try:
-        loop.run_until_complete(
-            asyncio.wait_for(asyncio.gather(*pending), 0.5))
-    except TimeoutError:  # Any other exception would be bad
-        pass
+    # try:
+    #     loop.run_until_complete(
+    #         asyncio.wait_for(asyncio.gather(*pending), 0.5))
+    # except TimeoutError:  # Any other exception would be bad
+    #     pass
 
-    print("Simulation finished, canceling other tasks")
-    # Cancel the remaining tasks
-    for task in pending:
-        task.cancel()
+    # print("Simulation finished, canceling other tasks")
+    # # Cancel the remaining tasks
+    # for task in pending:
+    #     task.cancel()
 
-    # loop.run_until_complete(asyncio.gather(*pending))
-    try:
-        loop.run_until_complete(asyncio.gather(*pending))
-    except CancelledError:  # Any other exception would be bad
-        pass
+    # # loop.run_until_complete(asyncio.gather(*pending))
+    # try:
+    #     loop.run_until_complete(asyncio.gather(*pending))
+    # except CancelledError:  # Any other exception would be bad
+    #     pass
 
-    print("Tasks canceled, closing the loop")
+    # print("Tasks canceled, closing the loop")
     loop.close()
 
 

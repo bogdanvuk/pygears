@@ -13,6 +13,13 @@ class Port:
         else:
             return self.consumer.dtype
 
+    @property
+    def queue(self):
+        return self.producer.get_consumer_queue(self)
+
+    def finish(self):
+        self.consumer.finish()
+
 
 class InPort(Port):
     pass

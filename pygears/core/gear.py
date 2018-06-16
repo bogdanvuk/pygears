@@ -247,6 +247,9 @@ class Gear(NamedHierNode):
             raise TypeMatchError(f'{str(e)}, of the module {self.name}')
 
     def resolve(self):
+        for port in self.in_ports:
+            Intf(port.dtype).source(port)
+
         is_async_gen = bool(
             self.func.__code__.co_flags & inspect.CO_ASYNC_GENERATOR)
         func_ret = tuple()
@@ -272,8 +275,13 @@ class Gear(NamedHierNode):
             OutPort(self, i, name) for i, name in enumerate(self.outnames)
         ]
 
-        for i, r in enumerate(func_ret):
-            r.connect(self.out_ports[i])
+        if func_ret:
+            for i, r in enumerate(func_ret):
+                r.connect(self.out_ports[i])
+        else:
+            for dtype, port in zip(out_dtype, self.out_ports):
+                Intf(dtype).connect(port)
+
 
         if not self.intfs:
             self.intfs = [Intf(dt) for dt in out_dtype]
@@ -296,9 +304,7 @@ class Gear(NamedHierNode):
 
     def resolve_func(self):
         with create_hier(self):
-            func_args = [Intf(a.dtype) for a in self.args]
-            for arg, port in zip(func_args, self.in_ports):
-                arg.source(port)
+            func_args = [p.consumer for p in self.in_ports]
 
             func_kwds = {
                 k: self.params[k]
@@ -306,8 +312,8 @@ class Gear(NamedHierNode):
             }
             ret = self.func(*func_args, **func_kwds)
 
-        if not any([isinstance(c, Gear) for c in self.child]):
-            self.clear()
+        # if not any([isinstance(c, Gear) for c in self.child]):
+        #     self.clear()
 
         if ret is None:
             ret = tuple()

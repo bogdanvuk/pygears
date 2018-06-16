@@ -19,25 +19,26 @@ class SimGear:
         if not hasattr(self, 'func'):
             self.func = gear.func
 
-        for p in gear.out_ports:
-            out_intf = p.consumer
-            consumers = out_intf.consumers
-            self.out_queues.append(
-                [asyncio.Queue(maxsize=1) for _ in consumers])
+        # for p in gear.out_ports:
+        #     out_intf = p.consumer
+        #     consumers = out_intf.consumers
+        #     self.out_queues.append(
+        #         [asyncio.Queue(maxsize=1) for _ in consumers])
 
-    def get_queue(self, port, consumer):
-        out_intf = port.consumer
-        cons_index = out_intf.consumers.index(consumer)
-        return self.out_queues[port.index][cons_index]
+    # def get_queue(self, port, consumer):
+    #     out_intf = port.consumer
+    #     cons_index = out_intf.consumers.index(consumer)
+    #     return self.out_queues[port.index][cons_index]
 
     @property
     def sim_func_args(self):
         args = []
         for p in self.gear.in_ports:
-            prod_intf = p.producer
-            prod_port = prod_intf.producer
-            prod_sim = self.namespace[prod_port.gear]
-            args.append(prod_sim.get_queue(prod_port, p))
+            # prod_intf = p.producer
+            # prod_port = prod_intf.producer
+            # prod_sim = self.namespace[prod_port.gear]
+            # args.append(prod_sim.get_queue(prod_port, p))
+            args.append(p.consumer)
 
         kwds = {
             k: self.gear.params[k]
@@ -46,11 +47,11 @@ class SimGear:
 
         return args, kwds
 
-    async def output(self, val, dout_id):
-        for q in self.out_queues[dout_id]:
-            q.put_nowait(val)
+    # async def output(self, val, dout_id):
+    #     for q in self.out_queues[dout_id]:
+    #         q.put_nowait(val)
 
-        await asyncio.wait([q.join() for q in self.out_queues[dout_id]])
+    #     await asyncio.wait([q.join() for q in self.out_queues[dout_id]])
 
     async def run(self):
         args, kwds = self.sim_func_args
@@ -59,16 +60,17 @@ class SimGear:
             while (1):
                 if is_async_gen(self.func):
                     async for val in self.func(*args, **kwds):
-                        if len(self.out_queues) == 1:
+                        if len(self.gear.out_ports) == 1:
                             val = (val, )
 
-                        for dout_id, v in enumerate(val):
+                        for p, v in zip(self.gear.out_ports,val):
                             if v is not None:
-                                await self.output(v, dout_id)
+                                await p.producer.put(v)
                 else:
                     await self.func(*args, **kwds)
-        except asyncio.CancelledError:
+        except (asyncio.CancelledError, StopGear):
+
+            for port in self.gear.out_ports:
+                port.producer.finish()
+
             print(f"SimGear canceling: {self.gear.name}")
-            pass
-        except StopGear:
-            pass
