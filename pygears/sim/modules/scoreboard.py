@@ -13,7 +13,4 @@ async def scoreboard(*din: b't', report) -> None:
 
         report.append({'match': match, 'items': items})
 
-        for d in din:
-            d.task_done()
-
         sim_assert(match)

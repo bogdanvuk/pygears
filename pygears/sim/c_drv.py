@@ -1,5 +1,6 @@
 import ctypes
 from math import ceil
+from pygears.typing_common.codec import code, decode
 
 
 class IdleIteration(Exception):
@@ -74,18 +75,18 @@ class CInputDrv(CDrv):
         if self.data_posted:
             return
 
-        data = await self.seq.get()
+        data = await self.seq.pull()
         print("Data received: ", data)
 
         self.data_posted = True
-        self.c_set_api(self.to_c_data(data), 1)
+        self.c_set_api(self.to_c_data(code(self.port.dtype, data)), 1)
 
     def ack(self):
         if self.data_posted:
             ack = self.c_get_api()
             self.data_posted = not ack
             if ack:
-                self.seq.task_done()
+                self.seq.ack()
                 self.c_set_api(self.to_c_data(0), 0)
 
 
@@ -113,6 +114,6 @@ class COutputDrv(CDrv):
             f'{self.port.basename}: {self.active}, {self.from_c_data(self.dout)}'
         )
         if self.active:
-            return self.from_c_data(self.dout)
+            return decode(self.port.dtype, self.from_c_data(self.dout))
         else:
             return None
