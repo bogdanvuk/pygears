@@ -1,6 +1,7 @@
 import copy
 import inspect
 import functools
+import asyncio
 
 from pygears.registry import PluginBase, bind, registry
 from pygears.typing import Any
@@ -12,9 +13,7 @@ from .partial import Partial
 from .port import InPort, OutPort
 from .util import doublewrap
 
-
-class StopGear(Exception):
-    pass
+GearDone = asyncio.CancelledError
 
 
 class TooManyArguments(Exception):

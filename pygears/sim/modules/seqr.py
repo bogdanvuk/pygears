@@ -1,4 +1,4 @@
-from pygears import StopGear, gear
+from pygears import GearDone, gear
 from pygears.sim.scv import SCVTypeSeqVisitor, scv_compile
 from pygears.sim import cur_gear, artifacts_dir
 from pygears.typing import TLM
@@ -12,4 +12,4 @@ async def seqr(*, t, seq) -> TLM['t']:
         yield val
 
     print(f'Sequence {seq} done')
-    raise StopGear
+    raise GearDone
