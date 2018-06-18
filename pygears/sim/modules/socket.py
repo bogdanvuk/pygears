@@ -87,7 +87,8 @@ def sv_cosim_gen(gear):
         'out_path': outdir
     }
     context['includes'] = [
-        os.path.abspath(os.path.join(ROOT_DIR, '..', 'svlib', '*.sv'))
+        os.path.abspath(os.path.join(ROOT_DIR, '..', 'svlib', '*.sv')),
+        os.path.abspath(os.path.join(outdir, '*.sv')),
     ]
 
     if pygearslib is not None:
@@ -211,8 +212,7 @@ class SimSocket(SimGear):
             port, handler = self.make_in_handler(port_name, conn, args)
             if handler is None:
                 print("Trying in port")
-                port, handler = self.make_out_handler(
-                    port_name, conn, args)
+                port, handler = self.make_out_handler(port_name, conn, args)
 
             if handler is None:
                 print(f"Nonexistant port {port_name}")
