@@ -149,7 +149,7 @@ class SimSocket(SimGear):
         dout = pout.producer
         try:
             while True:
-                item = await self.loop.sock_recv(conn, 1024)
+                item = await self.loop.sock_recv(conn, 4)
                 if not item:
                     raise GearDone
 
