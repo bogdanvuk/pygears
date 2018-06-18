@@ -10,14 +10,11 @@ def trr_type(dtypes):
 
 @gear
 async def trr(*din) -> b'trr_type(din)':
-    val = (0, 0)
-    i = 0
-    while (i != (len(din))):
+    for i, d in enumerate(din):
         val = (0, 0)
         while (val[1] == 0):
-            async with din[i] as val:
+            async with d as val:
                 yield (val[0], val[1], (i == len(din) - 1))
-        i += 1
 
 
 class SVGenTrr(SVModuleGen):
