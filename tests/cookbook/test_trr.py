@@ -22,7 +22,20 @@ def test_socket_sim():
         ref=[[[0, 1, 2, 3, 4, 5, 6, 7, 8], [0, 1, 2, 3, 4, 5, 6, 7, 8],
               [0, 1, 2, 3, 4, 5, 6, 7, 8]], [[0, 1, 2], [0, 1, 2], [0, 1, 2]]])
 
-    sim(outdir='/tools/home/tmp')
+    sim()
 
 
-test_socket_sim()
+@with_setup(clear)
+def test_pygears_sim():
+    directed(
+        seqr(t=Queue[Uint[16]], seq=[list(range(9)),
+                                     list(range(3))]),
+        seqr(t=Queue[Uint[16]], seq=[list(range(9)),
+                                     list(range(3))]),
+        seqr(t=Queue[Uint[16]], seq=[list(range(9)),
+                                     list(range(3))]),
+        f=trr,
+        ref=[[[0, 1, 2, 3, 4, 5, 6, 7, 8], [0, 1, 2, 3, 4, 5, 6, 7, 8],
+              [0, 1, 2, 3, 4, 5, 6, 7, 8]], [[0, 1, 2], [0, 1, 2], [0, 1, 2]]])
+
+    sim()
