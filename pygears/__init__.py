@@ -11,6 +11,7 @@ from pygears.core.partial import MultiAlternativeError
 from pygears.util.find import find
 
 import pygears.common
+import pygears.sim
 import pygears.typing
 import pygears.typing_common
 
