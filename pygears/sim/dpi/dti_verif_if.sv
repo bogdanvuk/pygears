@@ -9,7 +9,7 @@ interface dti_verif_if #(
     input logic rst
     );
 
-   wire [$size(DATA_T)-1:0] data;
+   wire [$bits(DATA_T)-1:0] data;
    wire valid;
    wire ready;
 

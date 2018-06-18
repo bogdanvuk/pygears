@@ -1,7 +1,7 @@
 from nose.tools import raises
 
 from pygears.typing_common.codec import code, decode
-from pygears.typing import Queue, Uint, Tuple
+from pygears.typing import Queue, Uint, Tuple, Array
 
 
 def test_uint():
@@ -19,6 +19,15 @@ def test_queue():
     assert decode(Queue[Uint[16]], 0xbaba) == (0xbaba, 0)
     assert decode(Queue[Uint[7]], 0xba) == (0x3a, 1)
     assert decode(Queue[Uint[7]], 0x3a) == (0x3a, 0)
+
+
+def test_array():
+    assert code(Array[Uint[8], 4], (0xba, 0xba, 0xba, 0xba)) == 0xbabababa
+    assert code(Array[Uint[4], 7],
+                (0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7)) == 0x7654321
+    assert decode(Array[Uint[8], 4], 0xbabababa) == (0xba, 0xba, 0xba, 0xba)
+    assert decode(Array[Uint[4], 7], 0x7654321) == (0x1, 0x2, 0x3, 0x4, 0x5,
+                                                    0x6, 0x7)
 
 
 @raises(ValueError)
