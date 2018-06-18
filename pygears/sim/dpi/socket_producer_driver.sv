@@ -32,11 +32,11 @@ class socket_producer_driver #(type DATA_T = bit [15:0]);
    endtask
 
    task get_and_drive();
-      bit[$size(DATA_T)-1 : 0] data;
+      bit[$bits(DATA_T)-1 : 0] data;
       int ret;
 
 	    while(sock_get(handle, data) == 0) begin
-         $display("Start driving item:\n%p", DATA_T'(data));
+         $display("Start driving item: %p", DATA_T'(data));
 
          vif.cb_producer.valid <= 1'b1;
          vif.cb_producer.data <= data;
@@ -46,7 +46,7 @@ class socket_producer_driver #(type DATA_T = bit [15:0]);
 
          vif.cb_producer.valid <= 1'b0;
 
-         $display("Finished driving item:\n%p", DATA_T'(data));
+         $display("Finished driving item: %p", DATA_T'(data));
          ret = sock_done(handle);
          if (ret == 1) break;
       end

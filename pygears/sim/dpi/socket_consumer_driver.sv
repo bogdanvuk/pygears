@@ -31,7 +31,7 @@ class socket_consumer_driver#(type DATA_T = bit [15:0]);
 
    task get_and_drive();
       int ret;
-      bit[$size(DATA_T)-1 : 0] data;
+      bit[$bits(DATA_T)-1 : 0] data;
 
       forever begin
          vif.cb_consumer.ready <= 1'b1;
@@ -39,6 +39,7 @@ class socket_consumer_driver#(type DATA_T = bit [15:0]);
          @(vif.cb_consumer iff vif.cb_consumer.valid);
          data = vif.cb_consumer.data;
          ret = sock_put(handle, data);
+         $display("Consumer driver sent: %p", data);
          if (ret == 1) break;
       end
 
