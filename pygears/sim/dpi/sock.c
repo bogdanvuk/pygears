@@ -185,68 +185,6 @@ void sock_close(void *handle) {
   free(h);
 }
 
-int sock_writeln(void *handle, const char *data) {
-  // Validate input
-  if (!handle)
-    return 0; // Invalid handle
-  size_t len = strlen(data);
-  if (len >= BUFFER_SIZE)
-    return 0; // String too big
-  struct handle *h = handle;
-
-  // Create output string (replace null termination with newline)
-  memcpy(h->wbuf, data, len);
-  h->wbuf[len] = '\n';
-  len++;
-
-  // Write
-  int ret = 0;
-  int done = 0;
-  while (ret != -1 && done != len) {
-    ret = send(h->sock, h->wbuf + done, len - done, 0);
-    done += ret;
-  }
-  return ret == -1 ? 0 : 1; // Success if ret != -1
-}
-
-const char *sock_readln(void *handle) {
-  // Validate input
-  if (!handle)
-    return 0;
-  struct handle *h = handle;
-
-  // Prepare read - move down any spare data from last time
-  if (h->roff > h->eoff) {
-    memmove(h->rbuf, h->rbuf + h->eoff, h->roff - h->eoff);
-    h->roff -= h->eoff;
-  } else {
-    h->roff = 0;
-  }
-
-  // Read
-  int ret = 0;
-  char *end = memchr(h->rbuf, '\n', h->roff);
-  while (ret != -1 && h->roff != BUFFER_SIZE && end == NULL) {
-    ret = recv(h->sock, h->rbuf + h->roff, BUFFER_SIZE - h->roff, 0);
-    if (ret != -1)
-      end = memchr(h->rbuf + h->roff, '\n', ret); // Search for \n
-    h->roff += ret;
-  }
-
-  // Tidy up string
-  if (ret == -1) {
-    h->rbuf[0] = '\0'; // Empty string on error
-  }
-  if (end) {
-    *end = '\0';                 // Replace newline
-    h->eoff = end + 1 - h->rbuf; // Store where we got to
-  } else {
-    h->roff = 0;
-  }
-
-  return h->rbuf;
-}
-
 int sock_done(void *handle) {
   // Validate input
   if (!handle)
