@@ -17,11 +17,15 @@ from .neg import neg
 from .mux import mux
 from .demux import demux
 from .shred import shred
+from .decoupler import decoupler
+from .buff import buff
+from .dreg import dreg
 
 import pygears.common.fmaps
 
 __all__ = [
     'expand', 'czip', 'ccat', 'cart', 'cast', 'quenvelope', 'zip_sync',
-    'sieve', 'flatten', 'fmap', 'permuted_apply', 'const', 'add', 'sub',
-    'mul', 'div', 'neg', 'mux', 'demux', 'shred', 'cart_sync'
+    'sieve', 'flatten', 'fmap', 'permuted_apply', 'const', 'add', 'sub', 'mul',
+    'div', 'neg', 'mux', 'demux', 'shred', 'cart_sync', 'decoupler', 'buff',
+    'dreg'
 ]
