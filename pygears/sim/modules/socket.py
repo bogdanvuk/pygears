@@ -85,7 +85,8 @@ def sv_cosim_gen(gear):
         'param_map': sv_node.params,
         'structs': structs,
         'port_map': port_map,
-        'out_path': outdir
+        'out_path': outdir,
+        'activity_timeout': 10000  # in clk cycles
     }
     context['includes'] = []
 
