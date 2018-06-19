@@ -149,7 +149,13 @@ class SimSocket(SimGear):
         dout = pout.producer
         try:
             while True:
-                item = await self.loop.sock_recv(conn, 4)
+                # recv buffer size must be a multiple of 4 bytes
+                buff_size = int(dout.dtype) // 8
+                if buff_size < 4:
+                    buff_size = 4
+                buff_size += buff_size % 4
+                item = await self.loop.sock_recv(conn, buff_size)
+
                 if not item:
                     raise GearDone
 
