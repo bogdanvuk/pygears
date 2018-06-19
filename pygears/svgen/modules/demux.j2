@@ -1,5 +1,5 @@
 {%- import 'snippet.j2' as snippet -%}
-{% call snippet.module_with_intf_structs(module_name, intfs, intfs, comment) %}
+{% call snippet.module_with_intf_structs(module_name, intfs, intfs|isinput, comment) %}
 
 {{snippet.intf_inst("ctrl_if", width="$bits(din_s.ctrl)", size=1, type="")|indent(4,True)}}
 {{snippet.intf_inst("data_if", width="$bits(din_s.data)", size=1, type="")|indent(4,True)}}
@@ -12,7 +12,7 @@
     assign data_if.data = din_s.data;
     assign data_if.valid = din.valid;
 
-    assign din.dready = ctrl_if.ready && data_if.ready;
+    assign din.ready = ctrl_if.ready && data_if.ready;
 
 {{snippet.module_inst(module_name + "_syncguard", {}, "syncguard", {"din0":"ctrl_if", "din1": "data_if", "dout0": "ctrl_eot_sync", "dout1": "data_sync_if"})|indent(4, True)}}
 
@@ -72,11 +72,11 @@
 
     always_comb
     begin
-        ctrl_eot_sync.ready = ctrl.ready;
+        ctrl_eot_sync.ready = {{(intfs|isoutput)[0]['name']}}.ready;
         case({{(intfs|isoutput)[0]['name']}}.data)
 {% for i in intfs[2:] %}
             {{loop.index-1}} : begin
-                ctrl_eot_sync.ready = ctrl.ready | ({{i['name']}}.valid && !{{i['name']}}_eot);
+                ctrl_eot_sync.ready = {{(intfs|isoutput)[0]['name']}}.ready | ({{i['name']}}.valid && !{{i['name']}}_eot);
             end
 {% endfor %}
         endcase

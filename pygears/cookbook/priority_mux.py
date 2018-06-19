@@ -15,6 +15,10 @@ def priority_mux(*din) -> b'priority_mux_type(din)':
 
 
 class SVGenPriorityMux(SVModuleGen):
+    @property
+    def is_generated(self):
+        return True
+
     def get_module(self, template_env):
         context = {
             'module_name': self.sv_module_name,

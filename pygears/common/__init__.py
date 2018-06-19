@@ -2,7 +2,7 @@ from .expand import expand
 from .flatten import flatten
 from .czip import czip, zip_sync
 from .ccat import ccat
-from .cart import cart
+from .cart import cart, cart_sync
 from .cast import cast
 from .quenvelope import quenvelope
 from .sieve import sieve
@@ -23,5 +23,5 @@ import pygears.common.fmaps
 __all__ = [
     'expand', 'czip', 'ccat', 'cart', 'cast', 'quenvelope', 'zip_sync',
     'sieve', 'flatten', 'fmap', 'permuted_apply', 'const', 'add', 'sub',
-    'mul', 'div', 'neg', 'mux', 'demux', 'shred'
+    'mul', 'div', 'neg', 'mux', 'demux', 'shred', 'cart_sync'
 ]

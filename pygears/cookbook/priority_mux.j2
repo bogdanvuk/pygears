@@ -1,25 +1,7 @@
 {%- import 'snippet.j2' as snippet -%}
+{% call snippet.module_with_intf_structs(module_name, intfs, intfs|isoutput, comment) %}
 
-module {{module_name}} #(
-  parameter W_CTRL     = {{bitw(intfs|isinput|length)}},
-{% for i in intfs %}
-  parameter {{i['param']}}     = {{i['width']}}{{ "," if not loop.last }}
-{% endfor -%}
-)
-(
-    input clk,
-    input rst,
-{{snippet.intf_list(intfs)|indent(4, True)}}
-);
-
-   typedef struct packed {
-      logic [W_CTRL-1:0] ctrl;
-      logic [W_DOUT-W_CTRL-1:0] data;
-   } dout_t;
-
-   dout_t dout_s;
-
-   logic [{{intfs|length}}-2:0] flag, flag_reg;
+   logic [{{intfs|isinput|length}}-1:0] flag, flag_reg; // {{intfs|isinput|length}} = no of input interfaces
    logic handshake;
    assign handshake = dout.valid && dout.ready;
 
@@ -29,18 +11,18 @@ module {{module_name}} #(
       dout_s.data = din0.data;
       dout.valid = 1'b0;
 {% for i in intfs|isinput %}
-      {{i['name']}}.dready = 1'b0;
+      {{i['name']}}.ready = 1'b0;
 {% endfor %}
 
       if(din0.valid && (!flag_reg || flag_reg[0])) begin
          dout.valid = din0.valid;
-         din0.dready = dout.ready;
+         din0.ready = dout.ready;
          flag[0] = 1;
 {% for i in intfs[1:]|isinput %}
       end else if ({{i['name']}}.valid && (!flag_reg || flag_reg[{{loop.index}}])) begin
          dout_s.data = {{i['name']}}.data;
          dout.valid = {{i['name']}}.valid;
-         {{i['name']}}.dready = dout.ready;
+         {{i['name']}}.ready = dout.ready;
          dout_s.ctrl = {{loop.index}};
          flag[{{loop.index}}] = 1;
 {% endfor %}
@@ -57,4 +39,4 @@ module {{module_name}} #(
 
    assign dout.data = dout_s;
 
-endmodule
+{% endcall %}
