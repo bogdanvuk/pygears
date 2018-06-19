@@ -26,11 +26,8 @@ class SVModuleGen:
         self.sv_params = {}
 
         if not self.is_generated:
-            try:
-                self.sv_module_path, self._sv_module_name, self.sv_params = self.get_sv_module_info(
-                )
-            except FileNotFoundError:
-                pass
+            self.sv_module_path, self._sv_module_name, self.sv_params = self.get_sv_module_info(
+            )
         elif self.is_hierarchical:
             if find_in_dirs(self.sv_file_name,
                             registry('SVGenSystemVerilogPaths')):
@@ -72,7 +69,7 @@ class SVModuleGen:
 
                 return svmod_path, name, svparams
 
-        raise FileNotFoundError
+        raise FileNotFoundError(f'SystemVerilog file not found for {self.node.name}')
 
     @property
     def params(self):
