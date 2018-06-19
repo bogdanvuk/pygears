@@ -50,7 +50,7 @@ class SVModuleGen:
         if self.is_generated:
             return self._sv_module_name or self.hier_sv_path_name
         else:
-            return self._sv_module_name or self.node.basename
+            return self._sv_module_name or self.node.gear.definition.__name__
 
     @property
     def sv_inst_name(self):
