@@ -39,7 +39,7 @@ class socket_consumer_driver#(type DATA_T = bit [15:0]);
          @(vif.cb_consumer iff vif.cb_consumer.valid);
          data = vif.cb_consumer.data;
          ret = sock_put(handle, data);
-         $display("Consumer driver sent: %p", data);
+         $display("Consumer driver sent: %p", DATA_T'(data));
          if (ret == 1) break;
       end
 

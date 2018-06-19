@@ -1,6 +1,7 @@
 import asyncio
 
 from pygears import registry
+from pygears.core.port import InPort, OutPort
 from pygears.registry import PluginBase
 
 
@@ -24,7 +25,8 @@ def operator_methods_gen(cls):
 def _get_consumer_tree_rec(intf, consumers):
     for port in intf.consumers:
         cons_intf = port.consumer
-        if not cons_intf.consumers:
+        if (port.gear in registry('SimMap')) and (isinstance(port, InPort)):
+            # if not cons_intf.consumers:
             consumers.append(port)
         else:
             _get_consumer_tree_rec(cons_intf, consumers)
@@ -77,13 +79,19 @@ class Intf:
         return self._in_queue
 
     def get_consumer_queue(self, port):
-        if (not self._out_queues
-                and self._in_queue is None and self.producer is not None):
-            return self.producer.get_queue(port)
-        else:
+        pout = self.consumers[0]
+        if pout.gear in registry('SimMap') and (isinstance(pout, OutPort)):
             out_queues = self.out_queues
-            i = self.end_consumers.index(port)
+            try:
+                i = self.end_consumers.index(port)
+            except Exception as e:
+                print(
+                    f'Port {port.gear.name}.{port.basename} not in end consumer list of {self.consumers[0].gear.name}.{self.consumers[0].basename}'
+                )
+                raise e
             return out_queues[i]
+        else:
+            return self.producer.get_queue(port)
 
     @property
     def out_queues(self):
@@ -91,15 +99,15 @@ class Intf:
             return self._out_queues
 
         # if len(self.consumers) == 1 and self.in_queue:
-        if self.producer is not None:
-            return [self.in_queue]
-        else:
-            self.end_consumers = get_consumer_tree(self)
-            self._out_queues = [
-                asyncio.Queue(maxsize=1) for _ in self.end_consumers
-            ]
+        # if self.producer is not None:
+        #     return [self.in_queue]
+        # else:
+        self.end_consumers = get_consumer_tree(self)
+        self._out_queues = [
+            asyncio.Queue(maxsize=1) for _ in self.end_consumers
+        ]
 
-            return self._out_queues
+        return self._out_queues
 
     async def put(self, val):
         for q in self.out_queues:

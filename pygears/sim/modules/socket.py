@@ -3,6 +3,7 @@ import asyncio
 import array
 import os
 import jinja2
+import math
 from math import ceil
 
 import itertools
@@ -153,10 +154,11 @@ class SimSocket(SimGear):
         try:
             while True:
                 # recv buffer size must be a multiple of 4 bytes
-                buff_size = int(dout.dtype) // 8
+                buff_size = math.ceil(int(dout.dtype) / 8)
                 if buff_size < 4:
                     buff_size = 4
-                buff_size += buff_size % 4
+                if buff_size % 4:
+                    buff_size += 4 - (buff_size % 4)
                 item = await self.loop.sock_recv(conn, buff_size)
 
                 if not item:
