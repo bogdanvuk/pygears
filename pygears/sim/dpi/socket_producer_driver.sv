@@ -22,7 +22,7 @@ class socket_producer_driver #(type DATA_T = bit [15:0]);
 
    task init();
       vif.cb_producer.valid <= 1'b0;
-      @(negedge vif.rst);
+      @(vif.cb_producer iff !vif.rst);
    endtask
 
    task main();

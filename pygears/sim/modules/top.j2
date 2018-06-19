@@ -5,6 +5,7 @@
 module top;
 
    import socket_pkg::*;
+   import sock::*;
 
    logic clk;
    logic rst;
@@ -22,6 +23,7 @@ module top;
    socket_producer_driver#({{intf['name']}}_t) {{intf['name']}}_driver = new({{intf['name']}}_vif, "{{intf['name']}}");
   {% else %}
    socket_consumer_driver#({{intf['name']}}_t) {{intf['name']}}_driver = new({{intf['name']}}_vif, "{{intf['name']}}");
+   activity_monitor#({{intf['name']}}_t, {{activity_timeout}}) {{intf['name']}}_mon = new({{intf['name']}}_vif, "{{intf['name']}}");
   {% endif %}
 {% endfor %}
 
@@ -44,9 +46,24 @@ module top;
   {% endif %}
 {% endfor %}
       join
+      $display("Producer drivers finished");
 
-      #500;
+      fork
+{% for intf in intfs %}
+  {% if intf['modport'] == 'producer' %}
+         {{intf['name']}}_mon.main();
+  {% endif %}
+{% endfor %}
+      join
+      $display("Activity monitors finished");
+
       disable fork;
+
+{% for intf in intfs %}
+  {% if intf['modport'] == 'producer' %}
+         sock_close({{intf['name']}}_driver.handle);
+  {% endif %}
+{% endfor %}
       $finish();
    end
 

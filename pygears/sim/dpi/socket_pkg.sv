@@ -5,9 +5,11 @@ package socket_pkg;
 
    typedef class socket_producer_driver;
    typedef class socket_consumer_driver;
+   typedef class activity_monitor;
 
  `include "socket_producer_driver.sv"
  `include "socket_consumer_driver.sv"
+ `include "activity_monitor.sv"
 
 endpackage : socket_pkg
 
