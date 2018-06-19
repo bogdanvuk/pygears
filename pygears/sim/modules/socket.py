@@ -86,14 +86,17 @@ def sv_cosim_gen(gear):
         'port_map': port_map,
         'out_path': outdir
     }
-    context['includes'] = [
-        os.path.abspath(os.path.join(ROOT_DIR, '..', 'svlib', '*.sv')),
-        os.path.abspath(os.path.join(outdir, '*.sv')),
-    ]
+    context['includes'] = []
 
     if pygearslib is not None:
         context['includes'].append(
             os.path.abspath(os.path.join(sv_src_path, '*.sv')))
+
+    context['includes'].append(
+        os.path.abspath(os.path.join(ROOT_DIR, '..', 'svlib', '*.sv')))
+    context['includes'].append(
+        os.path.abspath(os.path.join(ROOT_DIR, 'cookbook', 'svlib', '*.sv')))
+    context['includes'].append(os.path.abspath(os.path.join(outdir, '*.sv')))
 
     for templ, tname in zip(j2_templates, j2_file_names):
         res = env.get_template(templ).render(context)
