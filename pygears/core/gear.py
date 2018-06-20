@@ -76,8 +76,8 @@ class Gear(NamedHierNode):
             else:
                 name = __base__.__name__
 
-        kwds_comb = meta_kwds.copy()
-        kwds_comb.update(kwds)
+        kwds_comb = kwds.copy()
+        kwds_comb.update(meta_kwds)
 
         gear = super().__new__(cls)
         try:
@@ -158,6 +158,8 @@ class Gear(NamedHierNode):
                 self.params['return'] = tuple(ret_anot.values())
             else:
                 self.params['return'] = ret_anot
+        else:
+            self.params['return'] = None
 
     def _expand_varargs(self):
         if self.varargsname:
@@ -347,7 +349,16 @@ def gear(func, gear_cls=Gear, **meta_kwds):
         'gear_func': func
     }
     execdict.update(func.__globals__)
-    gear_func = fb.get_func(execdict=execdict)
+    execdict_keys = list(execdict.keys())
+    execdict_values = list(execdict.values())
+
+    def formatannotation(annotation, base_module=None):
+        try:
+            return execdict_keys[execdict_values.index(annotation)]
+        except ValueError:
+            return repr(annotation)
+
+    gear_func = fb.get_func(execdict=execdict, formatannotation=formatannotation)
 
     functools.update_wrapper(gear_func, func)
 

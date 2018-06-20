@@ -36,7 +36,7 @@ def _type_match_rec(t, pat, matches, allow_incomplete):
     elif (t == Any) or (pat == Any):
         pass
     elif isinstance(t, GenericMeta) and isinstance(
-            t, GenericMeta) and (issubclass(t.base, pat.base)):
+            pat, GenericMeta) and (issubclass(t.base, pat.base)):
         for ta, pa in zip(t.args, pat.args):
             try:
                 _type_match_rec(

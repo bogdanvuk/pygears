@@ -25,6 +25,10 @@ else:
     _IS_PY2 = True
 
 
+def formatannotation(annotation, base_module=None):
+    return repr(annotation)
+
+
 def get_module_callables(mod, ignore=None):
     """Returns two maps of (*types*, *funcs*) from *mod*, optionally
     ignoring based on the :class:`bool` return value of the *ignore*
@@ -438,10 +442,7 @@ class FunctionBuilder(object):
             return inspect.formatargspec(self.args, self.varargs,
                                          self.varkw, [])[1:-1]
     else:
-        def get_sig_str(self):
-            def formatannotation(annotation, base_module=None):
-                return repr(annotation)
-
+        def get_sig_str(self, formatannotation=formatannotation):
             return inspect.formatargspec(self.args,
                                          self.varargs,
                                          self.varkw,
@@ -498,7 +499,7 @@ class FunctionBuilder(object):
 
         return cls(**kwargs)
 
-    def get_func(self, execdict=None, add_source=True, with_dict=True):
+    def get_func(self, execdict=None, add_source=True, with_dict=True, formatannotation=formatannotation):
         """Compile and return a new function based on the current values of
         the FunctionBuilder.
 
@@ -526,7 +527,7 @@ class FunctionBuilder(object):
         body = _indent(self.body, ' ' * self.indent)
 
         name = self.name.replace('<', '_').replace('>', '_')  # lambdas
-        src = tmpl.format(name=name, sig_str=self.get_sig_str(),
+        src = tmpl.format(name=name, sig_str=self.get_sig_str(formatannotation),
                           doc=self.doc, body=body)
         self._compile(src, execdict)
         func = execdict[name]

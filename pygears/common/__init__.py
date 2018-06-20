@@ -1,6 +1,6 @@
 from .expand import expand
 from .flatten import flatten
-from .czip import czip, zip_sync
+from .czip import czip, zip_sync, unzip
 from .ccat import ccat
 from .cart import cart, cart_sync
 from .cast import cast
@@ -26,5 +26,5 @@ __all__ = [
     'expand', 'czip', 'ccat', 'cart', 'cast', 'quenvelope', 'zip_sync',
     'sieve', 'flatten', 'fmap', 'permuted_apply', 'const', 'add', 'sub',
     'mul', 'div', 'neg', 'mux', 'demux', 'cart_sync', 'decoupler', 'buff',
-    'dreg'
+    'dreg', 'unzip'
 ]
