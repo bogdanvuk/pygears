@@ -24,7 +24,7 @@ def unionmap_check(dtype, f):
 
 @alternative(common_fmap)
 @gear(enablement=b'unionmap_check(din, f)')
-def fmap(din, *, f, lvl=1, fcat=ccat):
+def fmap(din, *, f, lvl=1, fcat=ccat, balance=None):
     lvl -= 1
 
     demux_dout = din | demux(ctrl_out=True)
@@ -33,11 +33,17 @@ def fmap(din, *, f, lvl=1, fcat=ccat):
     dout = []
     for i, fd in enumerate(f):
         if lvl > 0:
-            fd = common_fmap(f=fd, lvl=lvl)
+            fd = common_fmap(f=fd, lvl=lvl, fcat=fcat, balance=balance)
 
         if fd is None:
-            dout.append(branches[i])
+            if balance is None:
+                dout.append(branches[i])
+            else:
+                dout.append(branches[i] | balance)
         else:
             dout.append(branches[i] | fd)
+
+    if balance is not None:
+        ctrl = ctrl | balance
 
     return mux(ctrl, *dout)

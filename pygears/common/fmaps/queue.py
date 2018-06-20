@@ -6,7 +6,7 @@ from pygears.common import fmap as common_fmap
 
 @alternative(common_fmap)
 @gear(enablement=b'issubclass(din, Queue)')
-def fmap(din, *, f, lvl=1, fcat=cart):
+def fmap(din, *, f, lvl=1, fcat=cart, balance=None):
     queue_lvl = din.dtype.lvl
     fmap_lvl = min(lvl, queue_lvl)
     lvl -= fmap_lvl
@@ -15,7 +15,10 @@ def fmap(din, *, f, lvl=1, fcat=cart):
     data = din[0:queue_lvl - fmap_lvl + 1]
 
     if lvl > 0:
-        f = common_fmap(f=f, lvl=lvl, fcat=fcat)
+        f = common_fmap(f=f, lvl=lvl, fcat=fcat, balance=balance)
+
+    if balance is not None:
+        env = env | balance
 
     dout = fcat(env, data | f)
 
