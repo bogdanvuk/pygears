@@ -3,8 +3,8 @@ module top(
     input rst,
     dti.consumer top_din1, // u1 (1)
     dti.consumer top_din2, // u2 (2)
-    dti.producer dout0, // u2 (2)
-    dti.producer dout1 // u2 (2)
+    dti.producer top_ret1, // u2 (2)
+    dti.producer top_ret2 // u2 (2)
 
 );
 
@@ -24,7 +24,7 @@ module top(
         .clk(clk),
         .rst(rst),
         .din(fgear0_if_s_bc[1]),
-        .dout(dout0)
+        .dout(top_ret1)
     );
 
 
@@ -40,7 +40,7 @@ module top(
     );
 
 
-    fgear0 fgear0_i (
+    fgear fgear0_i (
         .clk(clk),
         .rst(rst),
         .arg1(top_din1),
@@ -49,12 +49,12 @@ module top(
     );
 
 
-    fgear1 fgear1_i (
+    fgear fgear1_i (
         .clk(clk),
         .rst(rst),
         .arg1(fgear0_if_s_bc[0]),
         .arg2(top_din2_bc[1]),
-        .ret(dout1)
+        .ret(top_ret2)
     );
 
 
