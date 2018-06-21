@@ -5,8 +5,8 @@ from pygears.typing import TLM
 @gear
 async def seqr(*, t, seq) -> TLM['t']:
     for val in seq:
-        print("Sequencer: ", val)
+        # print("Sequencer: ", val)
         yield val
 
-    print(f'Sequence {seq} done')
+    # print(f'Sequence {seq} done')
     raise GearDone

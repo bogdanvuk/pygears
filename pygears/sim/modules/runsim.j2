@@ -61,6 +61,9 @@ if [ $simulator == "cadence" ]; then
     irun -64bit \
         -incdir {{dti_verif_path}} \
         -incdir {{out_path}} \
+        {% for i in imports %}
+        -incdir {{i}} \
+        {% endfor %}
         {{dti_verif_path}}/sock.sv \
         {{dti_verif_path}}/socket_pkg.sv \
         {{dti_verif_path}}/sock.c \

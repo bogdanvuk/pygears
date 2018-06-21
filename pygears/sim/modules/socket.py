@@ -89,6 +89,7 @@ def sv_cosim_gen(gear):
         'activity_timeout': 10000  # in clk cycles
     }
     context['includes'] = []
+    context['imports'] = registry('SVGenSystemVerilogImportPaths')
 
     if pygearslib is not None:
         context['includes'].append(
@@ -148,7 +149,7 @@ class SimSocket(SimGear):
 
             raise e
         except Exception as e:
-            print(f"Exception in socket handler: {e}")
+            print(f"Exception in socket handler {pin.basename}: {e}")
 
     async def out_handler(self, conn, pout):
         dout = pout.producer
@@ -179,7 +180,7 @@ class SimSocket(SimGear):
 
             raise e
         except Exception as e:
-            print(f"Exception in socket handler: {e}")
+            print(f"Exception in socket handler {pout.basename}: {e}")
 
     def make_in_handler(self, name, conn, args):
         try:
