@@ -47,6 +47,8 @@ def extract_ports(port_list):
 def extract_params(param_list):
     if param_list is None:
         return []
+    if param_list.strip():
+        return []
     else:
         param_defs = [p.strip() for p in param_list.split(',')]
         params = {}
