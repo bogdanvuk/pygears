@@ -115,6 +115,12 @@ class Intf:
 
         await asyncio.wait([q.join() for q in self.out_queues])
 
+    def empty(self):
+        if self._done:
+            raise asyncio.CancelledError
+
+        return self.in_queue.empty()
+
     def finish(self):
         self._done = True
         for q, c in zip(self.out_queues, self.end_consumers):

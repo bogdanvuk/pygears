@@ -25,6 +25,36 @@ def custom_exception_handler(loop, context):
         print(context)
         loop.stop()
 
+async def idle():
+    loop = asyncio.get_event_loop()
+    clk = registry('ClkEvent')
+    delta = registry('DeltaEvent')
+    timestep = 0
+
+    while loop._ready:
+        while loop._ready:
+            await asyncio.sleep(0)
+            if not loop._ready:
+                delta.set()
+                delta.clear()
+
+        print(f"-------------- {timestep} ------------------")
+        timestep += 1
+        bind('Timestep', timestep)
+        clk.set()
+        clk.clear()
+
+
+    print("Loop empty: simulation done")
+
+def timestep():
+    return registry('Timestep')
+
+def clk():
+    return registry('ClkEvent').wait()
+
+def delta():
+    return registry('DeltaEvent').wait()
 
 def sim(**conf):
     if "outdir" not in conf:
@@ -45,8 +75,11 @@ def sim(**conf):
 
     bind('SimTasks', tasks)
 
+    bind('ClkEvent', asyncio.Event())
+    bind('DeltaEvent', asyncio.Event())
+    bind('Timestep', 0)
     loop.run_until_complete(
-        asyncio.gather(*tasks.keys()))
+        asyncio.gather(*tasks.keys(), idle()))
     loop.close()
 
 
