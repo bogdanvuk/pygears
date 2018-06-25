@@ -73,6 +73,7 @@ module top;
       sock_close({{intf['name']}}_driver.handle);
   {% endif %}
 {% endfor %}
+      sock_close(synchro_handle);
       $finish();
    end
 
@@ -90,7 +91,6 @@ module top;
          ret = sock_done(synchro_handle);
          if (ret == 1) break;
       end
-      sock_close(synchro_handle);
    end
 
 {{snippets.module_inst(dut_name, param_map, "dut", port_map)|indent(3, true)}}
