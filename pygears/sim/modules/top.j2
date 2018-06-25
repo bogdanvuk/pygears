@@ -40,6 +40,14 @@ module top;
       join_none
 
       fork
+         begin
+            #1s;
+            $warning("Watchdog timer expired. Killing test...");
+            $finish();
+         end
+      join_none
+
+      fork
 {% for intf in intfs %}
   {% if intf['modport'] == 'consumer' %}
          {{intf['name']}}_driver.main();
@@ -61,7 +69,7 @@ module top;
 
 {% for intf in intfs %}
   {% if intf['modport'] == 'producer' %}
-         sock_close({{intf['name']}}_driver.handle);
+      sock_close({{intf['name']}}_driver.handle);
   {% endif %}
 {% endfor %}
       $finish();
