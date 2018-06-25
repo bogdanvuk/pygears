@@ -25,18 +25,26 @@ def custom_exception_handler(loop, context):
         print(context)
         loop.stop()
 
+
 async def idle():
     loop = asyncio.get_event_loop()
     clk = registry('ClkEvent')
     delta = registry('DeltaEvent')
     timestep = 0
+    long_delayed = False
 
     while loop._ready:
+        long_delayed = False
         while loop._ready:
             await asyncio.sleep(0)
             if not loop._ready:
+                long_delayed = False
                 delta.set()
                 delta.clear()
+
+            if (not loop._ready) and (not long_delayed):
+                await asyncio.sleep(0)
+                long_delayed = True
 
         print(f"-------------- {timestep} ------------------")
         timestep += 1
@@ -44,17 +52,20 @@ async def idle():
         clk.set()
         clk.clear()
 
-
     print("Loop empty: simulation done")
+
 
 def timestep():
     return registry('Timestep')
 
+
 def clk():
     return registry('ClkEvent').wait()
 
+
 def delta():
     return registry('DeltaEvent').wait()
+
 
 def sim(**conf):
     if "outdir" not in conf:
@@ -71,6 +82,7 @@ def sim(**conf):
     for oper in registry('SimFlow'):
         top = oper(top, conf)
 
+    setup_tasks = {proc.setup(): proc for proc in registry('SimMap').values()}
     tasks = {proc.run(): proc for proc in registry('SimMap').values()}
 
     bind('SimTasks', tasks)
@@ -78,8 +90,8 @@ def sim(**conf):
     bind('ClkEvent', asyncio.Event())
     bind('DeltaEvent', asyncio.Event())
     bind('Timestep', 0)
-    loop.run_until_complete(
-        asyncio.gather(*tasks.keys(), idle()))
+    loop.run_until_complete(asyncio.gather(*setup_tasks.keys()))
+    loop.run_until_complete(asyncio.gather(*tasks.keys(), idle()))
     loop.close()
 
 

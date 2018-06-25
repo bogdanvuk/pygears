@@ -61,3 +61,6 @@ class SimGear:
                 port.producer.finish()
 
             print(f"SimGear canceling: {self.gear.name}")
+
+    async def setup(self, *args, **kwds):
+        pass

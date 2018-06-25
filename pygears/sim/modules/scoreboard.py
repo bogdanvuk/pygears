@@ -12,5 +12,6 @@ async def scoreboard(*din: b't', report) -> None:
         match = all(v == items[0] for v in items)
 
         report.append({'match': match, 'items': items})
+        print(f"Scoreboard received: {items[0]}, {items[1]}")
 
         sim_assert(match)

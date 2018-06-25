@@ -1,5 +1,6 @@
 #include "svdpi.h"
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -37,6 +38,7 @@ struct handle {
   char rbuf[BUFFER_SIZE + 1];
   size_t roff; // Read pointer
   size_t eoff; // Read end
+  int timeout;
 };
 
 int sock_init() {
@@ -56,18 +58,19 @@ void sock_shutdown() {
 #endif /* _WIN32 */
 }
 
-struct handle *init_struct(SOCKET sock) {
+struct handle *init_struct(SOCKET sock, int timeout) {
   struct handle *h = malloc(sizeof(struct handle));
   if (h) {
     h->sock = sock;
     h->roff = 0;
     h->eoff = 0;
     h->rbuf[BUFFER_SIZE] = '\0'; // Overflow protection for long strings
+    h->timeout = timeout;
   }
   return h;
 }
 
-void *tcp_sock_open(const char *name) {
+void *tcp_sock_open(const char *name, int timeout) {
   // Extract hostname / port
   char *string = strdup(name);
   if (!string)
@@ -114,13 +117,20 @@ void *tcp_sock_open(const char *name) {
   }
 
   // Timeout
-  struct timeval timeout;
-  timeout.tv_sec = 1;
-  timeout.tv_usec = 0;
-  setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout));
+  if (timeout > 0) {
+    struct timeval tim_str;
+    tim_str.tv_sec = timeout;
+    tim_str.tv_usec = 0;
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tim_str,
+               sizeof(tim_str));
+  } else if (timeout == 0) {
+    if (fcntl(sock, F_SETFL, fcntl(sock, F_GETFL) | O_NONBLOCK) < 0) {
+      printf("Error while putting the socket in non-blocking mode\n");
+    }
+  }
 
   // Create handle
-  return init_struct(sock);
+  return init_struct(sock, timeout);
 }
 
 #ifdef __linux__
@@ -148,7 +158,7 @@ void *unix_sock_open(const char *name) {
   }
 
   // Create handle
-  return init_struct(sock);
+  return init_struct(sock, 0);
 }
 #endif
 
@@ -159,7 +169,10 @@ void *sock_open(const char *uri, const char *channel) {
   printf("Waiting on socket connection...\n");
   do {
     if (len > 6 && strncmp("tcp://", uri, 6) == 0) {
-      handle = tcp_sock_open(uri + 6);
+      if (strncmp(channel, "_synchro", 10) == 0)
+        handle = tcp_sock_open(uri + 6, 5);
+      else
+        handle = tcp_sock_open(uri + 6, 0);
     }
 #ifdef __linux__
     else if (len > 7 && strncmp("unix://", uri, 7) == 0) {
@@ -172,6 +185,8 @@ void *sock_open(const char *uri, const char *channel) {
   } while (handle == NULL);
 
   send(handle->sock, channel, strlen(channel), 0);
+  printf("Opened socket for %s: %p, timeout=%d\n", channel, handle,
+         handle->timeout);
 
   return handle;
 }
@@ -216,10 +231,16 @@ int sock_get_bv(void *handle, svBitVecVal *signal, int width) {
   do {
     ret = recv(h->sock, h->rbuf, BUFFER_SIZE, 0);
     if (ret <= 0) {
-      if ((errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == EINTR)) {
-        pause_sim();
-      } else {
-        printf("Ret value %d, errno value %d", ret, errno);
+      if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
+        if (h->timeout > 0) {
+          printf("%p timeout\n", handle);
+          printf("Ret value %d, errno value %d\n", ret, errno);
+          pause_sim();
+        } else if (h->timeout == 0) {
+          return 2;
+        }
+      } else if (errno != EINTR) {
+        printf("Ret value %d, errno value %d\n", ret, errno);
         return 1;
       }
     }

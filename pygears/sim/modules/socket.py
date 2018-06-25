@@ -17,6 +17,8 @@ from pygears.sim.sim_gear import SimGear
 from pygears.util.fileio import save_file
 from pygears.typing_common.codec import code, decode
 
+from pygears.sim import delta, clk
+
 
 def u32_repr_gen(data, dtype):
     yield int(dtype)
@@ -86,7 +88,7 @@ def sv_cosim_gen(gear):
         'structs': structs,
         'port_map': port_map,
         'out_path': outdir,
-        'activity_timeout': 10000  # in clk cycles
+        'activity_timeout': 1000  # in clk cycles
     }
     context['includes'] = []
     context['imports'] = registry('SVGenSystemVerilogImportPaths')
@@ -122,6 +124,7 @@ class SimSocket(SimGear):
         print('starting up on %s port %s' % server_address)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.setblocking(False)
+        # self.sock.setblocking(True)
 
         self.sock.bind(server_address)
 
@@ -144,7 +147,8 @@ class SimSocket(SimGear):
             conn.send(b'\x00')
             conn.close()
 
-            if not self.handlers:
+            # If only synchro remains...
+            if len(self.handlers) == 1:
                 self.finish()
 
             raise e
@@ -175,18 +179,46 @@ class SimSocket(SimGear):
             del self.handlers[pout]
             dout.finish()
             conn.close()
-            if not self.handlers:
+            # If only synchro remains...
+            if len(self.handlers) == 1:
                 self.finish()
 
             raise e
         except Exception as e:
             print(f"Exception in socket handler {pout.basename}: {e}")
 
+    async def synchro_handler(self, conn, pin):
+        try:
+            conn.setblocking(True)
+            while True:
+                await delta()
+                # print("Sending synchro info")
+                conn.send(b'\x00')
+                # print("Receiving clock info")
+                conn.recv(4)
+                # print("Cadence clock done")
+                # print(asyncio.get_event_loop()._ready)
+                # print(asyncio.get_event_loop()._scheduled)
+                await clk()
+
+        except GearDone as e:
+            print(f"SimGear canceling: socket@{pin.basename}")
+            del self.handlers[pin]
+            conn.send(b'\x00')
+            conn.close()
+
+            if not self.handlers:
+                self.finish()
+
+            raise e
+        except Exception as e:
+            print(f"Exception in socket handler {pin.basename}: {e}")
+
     def make_in_handler(self, name, conn, args):
         try:
             i = self.gear.argnames.index(name)
-            return self.gear.in_ports[i], self.loop.create_task(
-                self.in_handler(conn, self.gear.in_ports[i]))
+            return self.gear.in_ports[i], self.in_handler(
+                conn, self.gear.in_ports[i])
 
         except ValueError as e:
             return None, None
@@ -194,8 +226,15 @@ class SimSocket(SimGear):
     def make_out_handler(self, name, conn, args):
         try:
             i = self.gear.outnames.index(name)
-            return self.gear.out_ports[i], self.loop.create_task(
-                self.out_handler(conn, self.gear.out_ports[i]))
+            return self.gear.out_ports[i], self.out_handler(
+                conn, self.gear.out_ports[i])
+
+        except ValueError as e:
+            return None, None
+
+    def make_synchro_handler(self, name, conn, args):
+        try:
+            return name, self.synchro_handler(conn, name)
 
         except ValueError as e:
             return None, None
@@ -209,11 +248,17 @@ class SimSocket(SimGear):
         self.sock.close()
 
     async def func(self, *args, **kwds):
+        await asyncio.gather(*self.handlers.values())
+        raise GearDone
+
+    async def setup(self, *args, **kwds):
         self.loop = asyncio.get_event_loop()
 
         print(self.gear.argnames)
 
-        while True:
+        total_conn_num = len(self.gear.argnames) + len(self.gear.outnames) + 1
+        conn_num = 0
+        while conn_num != total_conn_num:
             print("Wait for connection")
             conn, addr = await self.loop.sock_accept(self.sock)
 
@@ -222,13 +267,21 @@ class SimSocket(SimGear):
 
             print(f"Connection received for {port_name}")
 
-            port, handler = self.make_in_handler(port_name, conn, args)
-            if handler is None:
-                print("Trying in port")
-                port, handler = self.make_out_handler(port_name, conn, args)
-
-            if handler is None:
-                print(f"Nonexistant port {port_name}")
-                conn.close()
+            if port_name == '_synchro':
+                print("Trying synchro port")
+                port, handler = self.make_synchro_handler(
+                    port_name, conn, args)
             else:
-                self.handlers[port] = handler
+                port, handler = self.make_in_handler(port_name, conn, args)
+                if handler is None:
+                    print("Trying in port")
+                    port, handler = self.make_out_handler(
+                        port_name, conn, args)
+
+                if handler is None:
+                    print(f"Nonexistant port {port_name}")
+                    conn.close()
+                    continue
+
+            self.handlers[port] = handler
+            conn_num += 1

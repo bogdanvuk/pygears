@@ -36,10 +36,12 @@ class socket_consumer_driver#(type DATA_T = bit [15:0]);
       forever begin
          vif.cb_consumer.ready <= 1'b1;
 
-         @(vif.cb_consumer iff vif.cb_consumer.valid);
-         data = vif.cb_consumer.data;
+         // @(vif.cb_consumer iff vif.cb_consumer.valid);
+         @(negedge vif.clk iff vif.valid);
+         // data = vif.cb_consumer.data;
+         data = vif.data;
          ret = sock_put(handle, data);
-         $display("Consumer driver sent: %p", DATA_T'(data));
+         $display("Consumer driver sent: %p at %0t", DATA_T'(data), $time);
          if (ret == 1) break;
       end
 

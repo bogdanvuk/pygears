@@ -9,9 +9,10 @@ module top;
 
    logic clk;
    logic rst;
+   chandle synchro_handle;
 
 {% for s in structs %}
-{{s|indent(3, True)}}
+{{s|indent(3, true)}}
 {% endfor %}
 
 {% for intf in intfs %}
@@ -42,7 +43,7 @@ module top;
       fork
          begin
             #1s;
-            $warning("Watchdog timer expired. Killing test...");
+            $warning("watchdog timer expired. killing test...");
             $finish();
          end
       join_none
@@ -54,7 +55,7 @@ module top;
   {% endif %}
 {% endfor %}
       join
-      $display("Producer drivers finished");
+      $display("producer drivers finished");
 
       fork
 {% for intf in intfs %}
@@ -63,7 +64,7 @@ module top;
   {% endif %}
 {% endfor %}
       join
-      $display("Activity monitors finished");
+      $display("activity monitors finished");
 
       disable fork;
 
@@ -75,7 +76,24 @@ module top;
       $finish();
    end
 
-{{snippets.module_inst(dut_name, param_map, "dut", port_map)|indent(3, True)}}
+   initial begin
+      int ret;
+      int data;
+      // synchro socket
+      synchro_handle = sock_open("tcp://localhost:1234", "_synchro");
+      @(posedge clk iff !rst);
+
+      forever begin
+         ret = sock_get(synchro_handle, data);
+         @(negedge clk);
+         #1;
+         ret = sock_done(synchro_handle);
+         if (ret == 1) break;
+      end
+      sock_close(synchro_handle);
+   end
+
+{{snippets.module_inst(dut_name, param_map, "dut", port_map)|indent(3, true)}}
 
    initial begin
       clk = 0;
@@ -84,7 +102,7 @@ module top;
    end
    always #5 clk = ~clk;
 
-   // DUT if to verification if
+   // dut if to verification if
 {% for intf in intfs %}
   {% if intf['modport'] == 'consumer' %}
     assign {{intf['name']}}.valid = {{intf['name']}}_vif.valid;
