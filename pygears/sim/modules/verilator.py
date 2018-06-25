@@ -6,6 +6,7 @@ from pygears import registry
 from pygears.svgen import svgen
 from pygears.sim.sim_gear import SimGear
 from pygears.sim.c_drv import CInputDrv, COutputDrv
+from pygears.sim import clk, delta
 import atexit
 
 
@@ -65,8 +66,12 @@ class SimVerilated(SimGear):
         self.verilib.init()
 
         while True:
+
+            await delta()
+
             for d in self.c_in_drvs:
-                await d.post()
+                if not d.empty():
+                    await d.post()
 
             self.verilib.propagate()
 
@@ -79,6 +84,7 @@ class SimVerilated(SimGear):
                 d.ack()
 
             self.verilib.trig()
+            await clk()
 
         self.cleanup()
 

@@ -71,6 +71,9 @@ class CInputDrv(CDrv):
         else:
             return self.c_dtype(data)
 
+    def empty(self):
+        return self.seq.empty()
+
     async def post(self):
         if self.data_posted:
             return
