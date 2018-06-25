@@ -1,7 +1,8 @@
 import inspect
 import asyncio
 
-from pygears import gear
+from pygears import gear, registry
+from pygears.sim.sim import clk
 from pygears.typing import TLM
 
 
@@ -41,5 +42,8 @@ async def drv(din: TLM['t'], *, t=b't') -> b't':
         for d in TypeDrvVisitor().visit(item, t):
             print('Driver sends: ', d)
             yield d
+            print('Driver sent: ', d)
+            await clk()
+            print('Driver waited for clock')
 
     print("Driver done")
