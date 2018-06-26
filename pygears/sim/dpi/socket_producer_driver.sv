@@ -39,12 +39,12 @@ class socket_producer_driver #(type DATA_T = bit [15:0]);
 	       ret = sock_get(handle, data);
          if (ret == 1) break;
          if (ret == 2) begin
-            $display("Driver %s got ret 2 at %0t", name, DATA_T'(data), $time);
+            // $display("Driver %s got ret 2 at %0t", name, DATA_T'(data), $time);
             @(vif.cb_producer);
             continue;
          end
 
-         $display("Start driving item: %p at %0t", DATA_T'(data), $time);
+         $display("%s start driving item: %p at %0t", name, DATA_T'(data), $time);
 
          vif.cb_producer.valid <= 1'b1;
          vif.cb_producer.data <= data;
@@ -55,7 +55,7 @@ class socket_producer_driver #(type DATA_T = bit [15:0]);
 
          vif.cb_producer.valid <= 1'b0;
 
-         $display("Finished driving item: %p", DATA_T'(data));
+         $display("%s finished driving item: %p", name, DATA_T'(data));
          ret = sock_done(handle);
          if (ret == 1) break;
       end
