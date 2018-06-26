@@ -43,7 +43,5 @@ async def drv(din: TLM['t'], *, t=b't') -> b't':
             print('Driver sends: ', d)
             yield d
             print('Driver sent: ', d)
-            # await clk()
-            # print('Driver waited for clock')
 
     print("Driver done")

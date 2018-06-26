@@ -1,7 +1,7 @@
 import inspect
 import asyncio
 from pygears import registry, GearDone
-from pygears.sim import clk
+from pygears.sim import clk, timestep
 
 
 def is_async_gen(func):
@@ -45,18 +45,22 @@ class SimGear:
     async def run(self):
         self.task = asyncio.Task.current_task()
         args, kwds = self.sim_func_args
+        ack_timestep = None
 
         try:
             while (1):
                 if is_async_gen(self.func):
                     async for val in self.func(*args, **kwds):
+                        if ack_timestep == timestep():
+                            await clk()
+
                         if len(self.gear.out_ports) == 1:
                             val = (val, )
 
                         for p, v in zip(self.gear.out_ports, val):
                             if v is not None:
                                 await p.producer.put(v)
-                    # await clk()
+                        ack_timestep = timestep()
                 else:
                     await self.func(*args, **kwds)
 

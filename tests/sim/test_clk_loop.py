@@ -13,9 +13,7 @@ def test_general():
                     yield item
                     print(f'Priority done')
                     break
-        # else:
         await clk()
-        #     print(f'Priority skip')
 
     @gear
     async def f(din0: Uint['T'], din1: Uint['T'], *, skip) -> Uint['T']:
