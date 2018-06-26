@@ -104,7 +104,8 @@ class Intf:
         # else:
         self.end_consumers = get_consumer_tree(self)
         self._out_queues = [
-            asyncio.Queue(maxsize=1) for _ in self.end_consumers
+            asyncio.Queue(maxsize=1, loop=registry('EventLoop'))
+            for _ in self.end_consumers
         ]
 
         return self._out_queues
@@ -113,7 +114,9 @@ class Intf:
         for q in self.out_queues:
             q.put_nowait(val)
 
-        await asyncio.wait([q.join() for q in self.out_queues])
+        for q in self.out_queues:
+            await q.join()
+        # await asyncio.wait([q.join() for q in self.out_queues], loop=registry('EventLoop'))
 
     def empty(self):
         if self._done:
