@@ -1,10 +1,13 @@
 import asyncio
 from concurrent.futures import Future
 import tempfile
+import os
 
 from pygears import registry, find, PluginBase, bind, GearDone
 from pygears.sim.inst import sim_inst
 from pygears.core.intf import get_consumer_tree
+
+from vcd import VCDWriter
 
 def cur_gear():
     loop = asyncio.get_event_loop()
@@ -116,6 +119,11 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         self.cancelled = set()
         bind('ClkEvent', asyncio.Event())
         bind('Timestep', 0)
+        self.vcd_file = open(os.path.join(registry('SimArtifactDir'), 'pygears.vcd'), 'w')
+        self.vcd = VCDWriter(self.vcd_file, timescale='1 ns', date='today')
+        bind('VCDWriter', self.vcd)
+
+        clk_var = self.vcd.register_var('', 'clk', 'wire', size=1, init=1)
 
         clk = registry('ClkEvent')
         timestep = 0
@@ -131,15 +139,21 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
             clk.set()
             clk.clear()
+            self.vcd.change(clk_var, timestep*10 + 5, 0)
             timestep += 1
+            self.vcd.change(clk_var, timestep*10, 1)
             print(f"-------------- {timestep} ------------------")
             bind('Timestep', timestep)
             if (timeout is not None) and (timestep == timeout):
                 break
 
+        self.vcd.close()
+
 def sim(**conf):
     if "outdir" not in conf:
         conf["outdir"] = tempfile.mkdtemp()
+    else:
+        os.makedirs(conf['outdir'], exist_ok=True)
 
     bind('SimArtifactDir', conf['outdir'])
 

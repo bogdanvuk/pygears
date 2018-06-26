@@ -109,6 +109,7 @@ class Intf:
             for _ in self.end_consumers
         ]
 
+
         return self._out_queues
 
     async def put(self, val):

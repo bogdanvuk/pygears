@@ -36,7 +36,7 @@ def test_general():
         | priority_mux \
         | check(ref=[0, 11, 1, 2, 13, 3, 4, 15, 5, 6, 17, 7])
 
-    sim()
+    sim(outdir='/tmp/proba')
 
 
 test_general()
