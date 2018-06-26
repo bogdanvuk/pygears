@@ -1,6 +1,7 @@
 import inspect
 import asyncio
 from pygears import registry, GearDone
+from pygears.sim import clk
 
 
 def is_async_gen(func):
@@ -16,6 +17,7 @@ class SimGear:
         self.gear = gear
         self.out_queues = []
         self.namespace = registry('SimMap')
+        self._done = False
         if not hasattr(self, 'func'):
             self.func = gear.func
 
@@ -33,7 +35,8 @@ class SimGear:
         return args, kwds
 
     def finish(self):
-        self.task.cancel()
+        # self._done
+        # self.task.cancel()
         for port in self.gear.out_ports:
             port.producer.finish()
 
@@ -53,11 +56,13 @@ class SimGear:
                         for p, v in zip(self.gear.out_ports, val):
                             if v is not None:
                                 await p.producer.put(v)
+                    # await clk()
                 else:
                     await self.func(*args, **kwds)
-        except GearDone:
 
-            for port in self.gear.out_ports:
-                port.producer.finish()
+                if all(a.done() for a in args):
+                    raise GearDone
 
-            print(f"SimGear canceling: {self.gear.name}")
+        except GearDone as e:
+            self.finish()
+            raise e

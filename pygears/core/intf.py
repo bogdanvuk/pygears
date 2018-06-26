@@ -104,7 +104,8 @@ class Intf:
         # else:
         self.end_consumers = get_consumer_tree(self)
         self._out_queues = [
-            asyncio.Queue(maxsize=1, loop=registry('EventLoop'))
+            # asyncio.Queue(maxsize=1, loop=registry('EventLoop'))
+            asyncio.Queue(maxsize=1)
             for _ in self.end_consumers
         ]
 
@@ -114,14 +115,15 @@ class Intf:
         for q in self.out_queues:
             q.put_nowait(val)
 
-        for q in self.out_queues:
+        for i, q in enumerate(self.out_queues):
+            print(f"Waiting on ack #{i}")
             await q.join()
+
+        print(f"Waiting on ack done")
+
         # await asyncio.wait([q.join() for q in self.out_queues], loop=registry('EventLoop'))
 
     def empty(self):
-        if self._done:
-            raise asyncio.CancelledError
-
         return self.in_queue.empty()
 
     def finish(self):
@@ -130,6 +132,9 @@ class Intf:
             c.finish()
             for task in q._getters:
                 task.cancel()
+
+    def done(self):
+        return self._done
 
     async def pull(self):
         if self._done:

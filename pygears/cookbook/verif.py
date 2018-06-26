@@ -8,6 +8,7 @@ async def check(din, *, ref):
         items = []
         while (1):
             items.append(await din.get())
+            print(f"Check: {items}")
 
     finally:
         print(f"Here: {items}")
