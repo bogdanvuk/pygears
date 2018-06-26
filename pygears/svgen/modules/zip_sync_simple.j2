@@ -20,7 +20,7 @@
   {% for din, dout in zip(input_intf_names, out_intf_names) %}
     assign {{dout}}.valid = all_valid;
     assign {{dout}}.data = {{din}}.data;
-    assign {{din}}.ready = {{dout}}.dready;
+    assign {{din}}.ready = {{dout}}.ready;
   {% endfor %}
 
   {% if outsync %}

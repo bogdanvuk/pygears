@@ -28,7 +28,6 @@ module sdp_rd_port #(
    // data interface
    assign data_if.data   = data_i;
    assign data_if.valid = data_dvalid_reg;
-   assign data_if.eot    = 0;
 
    // valid and eot for data interface are registered
    always_ff @(posedge clk) begin
