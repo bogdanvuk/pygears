@@ -3,9 +3,11 @@ from pygears.svgen.inst import SVGenInstPlugin
 from pygears import gear
 from pygears.typing import Queue, Uint
 
-@gear(svgen={'svmod_fn': 'qcnt.sv'})
-def qcnt(din: Queue, *, lvl = 1, w_out=16) -> Queue[Uint['w_out']]:
+
+@gear
+def qcnt(din: Queue, *, lvl=1, w_out=16) -> Queue[Uint['w_out']]:
     pass
+
 
 class SVGenQcnt(SVModuleGen):
     @property
@@ -16,9 +18,8 @@ class SVGenQcnt(SVModuleGen):
         context = {
             'module_name': self.sv_module_name,
             'intfs': list(self.sv_port_configs()),
-            'lvl' : self.node.params['lvl']
+            'lvl': self.node.params['lvl']
         }
-        print(self.node.params);
         return template_env.render_local(__file__, "qcnt.j2", context)
 
 

@@ -1,7 +1,7 @@
 {%- import 'snippet.j2' as snippet -%}
 {% call snippet.module_with_intf_structs(module_name, intfs, intfs, comment) %}
 
-    logic [$bits(din_s.data) - 1 : 0] cnt_reg, cnt_next;
+    logic [$bits(dout_s.data) - 1 : 0] cnt_reg, cnt_next;
     logic handshake;
     logic eot_internal_cond;
     logic cnt_mode;
