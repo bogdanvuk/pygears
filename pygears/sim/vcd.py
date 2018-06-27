@@ -7,6 +7,11 @@ from pygears.typing_common.codec import code
 from pygears.typing import typeof, TLM
 from vcd import VCDWriter
 import os
+import fnmatch
+
+
+def match(val, include_pattern):
+    return any(fnmatch.fnmatch(val, p) for p in include_pattern)
 
 
 class VCD:
@@ -43,6 +48,9 @@ class VCD:
             gear_vcd_scope = sim_gear.gear.name[1:].replace('/', '.')
 
             for p in sim_gear.gear.out_ports:
+                if not match(f'{sim_gear.gear.name}.{p.basename}', vcd_include):
+                    continue
+
                 if (p.dtype is None) or (typeof(p.dtype, TLM) and not vcd_tlm):
                     continue
 
@@ -76,7 +84,8 @@ class VCD:
         if typeof(intf.dtype, TLM):
             self.writer.change(v['data'], timestep() * 10, str(val))
         else:
-            self.writer.change(v['data'], timestep() * 10, code(intf.dtype, val))
+            self.writer.change(v['data'],
+                               timestep() * 10, code(intf.dtype, val))
 
         self.writer.change(v['valid'], timestep() * 10, 1)
         return True
