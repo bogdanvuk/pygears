@@ -28,11 +28,4 @@ module dreg
    assign dout.data = din_reg_data;
    assign dout.valid = din_reg_valid;
 
-   // ---------------------------------------------------------------------------
-   // Usage checks
-   // ---------------------------------------------------------------------------
-
-   if ($size(din.data) != $size(dout.data))
-     $error("Reg incorrect usage: output data must be same width as input data");
-
 endmodule

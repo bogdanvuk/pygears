@@ -146,6 +146,17 @@ class Intf:
     def done(self):
         return self._done
 
+    def pull_nowait(self):
+        if self._done:
+            raise GearDone
+
+        return self.in_queue.get_nowait()
+
+    def get_nowait(self):
+        val = self.pull_nowait()
+        self.ack()
+        return val
+
     async def pull(self):
         if self._done:
             raise GearDone
