@@ -150,8 +150,8 @@ class SimSocket(SimGear):
             # If only synchro remains...
             if len(self.handlers) == 1:
                 self.finish()
+                raise e
 
-            raise e
         except Exception as e:
             print(f"Exception in socket handler {pin.basename}: {e}")
 
@@ -182,8 +182,8 @@ class SimSocket(SimGear):
             # If only synchro remains...
             if len(self.handlers) == 1:
                 self.finish()
+                raise e
 
-            raise e
         except Exception as e:
             print(f"Exception in socket handler {pout.basename}: {e}")
 
@@ -210,7 +210,7 @@ class SimSocket(SimGear):
             if not self.handlers:
                 self.finish()
 
-            raise e
+            # raise e
         except Exception as e:
             print(f"Exception in socket handler {pin.basename}: {e}")
 

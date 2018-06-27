@@ -46,7 +46,7 @@ async def idle():
                 await asyncio.sleep(0)
                 long_delayed = True
 
-        print(f"-------------- {timestep} ------------------")
+        # print(f"-------------- {timestep} ------------------")
         timestep += 1
         bind('Timestep', timestep)
         clk.set()

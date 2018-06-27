@@ -40,10 +40,10 @@ class TypeDrvVisitor(TypingYieldVisitorBase):
 async def drv(din: TLM['t'], *, t=b't') -> b't':
     async with din as item:
         for d in TypeDrvVisitor().visit(item, t):
-            print('Driver sends: ', d)
+            # print('Driver sends: ', d)
             yield d
-            print('Driver sent: ', d)
+            # print('Driver sent: ', d)
             await clk()
-            print('Driver waited for clock')
+            # print('Driver waited for clock')
 
     print("Driver done")

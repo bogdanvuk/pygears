@@ -45,3 +45,14 @@ def directed(*seq, f, ref):
         | f \
         | mon \
         | check(ref=ref)
+
+
+def directed_on_the_fly(*seq, f, ref):
+    stim = tuple(s | drv for s in seq)
+
+    res_tlm = stim | f
+
+    report = []
+    scoreboard(res_tlm, ref, report=report)
+
+    return report
