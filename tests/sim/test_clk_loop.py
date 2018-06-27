@@ -3,7 +3,7 @@ from pygears.typing import Uint
 from pygears.sim import seqr, drv, delta, clk, sim
 from pygears.cookbook.verif import check
 
-import pygears.sim.vcd
+from pygears.sim.vcd import VCD
 
 
 def test_general():
@@ -39,7 +39,7 @@ def test_general():
         | priority_mux \
         | check(ref=[0, 11, 1, 2, 13, 3, 4, 15, 5, 6, 17, 7])
 
-    sim(outdir='/tmp/proba', vcd_include=['*priority*'])
+    sim(outdir='/tmp/proba', extens=[VCD], vcd_include=['*priority*'])
 
 
-test_general()
+# test_general()

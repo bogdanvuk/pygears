@@ -115,7 +115,7 @@ class VCD:
         return True
 
 
-class SimVCDPlugin(SimPlugin):
-    @classmethod
-    def bind(cls):
-        cls.registry['SimFlow'].append(VCD)
+# class SimVCDPlugin(SimPlugin):
+#     @classmethod
+#     def bind(cls):
+#         cls.registry['SimFlow'].append(VCD)

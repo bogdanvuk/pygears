@@ -2,6 +2,7 @@ import asyncio
 from concurrent.futures import Future
 import tempfile
 import os
+import itertools
 
 from pygears import registry, find, PluginBase, bind, GearDone
 from pygears.sim.inst import sim_inst
@@ -159,11 +160,12 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         self.events['after_run'](self)
 
 
-def sim(**conf):
-    if "outdir" not in conf:
-        conf["outdir"] = tempfile.mkdtemp()
-    else:
-        os.makedirs(conf['outdir'], exist_ok=True)
+def sim(outdir=None, extens=[], **conf):
+    if outdir is None:
+        outdir = tempfile.mkdtemp()
+
+    conf["outdir"] = outdir
+    os.makedirs(conf['outdir'], exist_ok=True)
 
     bind('SimArtifactDir', conf['outdir'])
 
@@ -172,7 +174,7 @@ def sim(**conf):
     bind('Simulator', loop)
 
     top = find('/')
-    for oper in registry('SimFlow'):
+    for oper in itertools.chain(registry('SimFlow'), extens):
         top = oper(top, conf)
 
     loop.run()

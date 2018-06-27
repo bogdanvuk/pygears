@@ -2,11 +2,11 @@ import jinja2
 import os
 import ctypes
 from pygears.util.fileio import save_file
-from pygears import registry
+from pygears import registry, GearDone
 from pygears.svgen import svgen
 from pygears.sim.sim_gear import SimGear
 from pygears.sim.c_drv import CInputDrv, COutputDrv
-from pygears.sim import clk, delta
+from pygears.sim import clk
 import atexit
 
 
@@ -64,11 +64,10 @@ class SimVerilated(SimGear):
         ]
 
         self.verilib.init()
+        activity_monitor = 0
+        watchdog = 100
 
         while True:
-
-            await delta()
-
             for d in self.c_in_drvs:
                 if not d.empty():
                     await d.post()
@@ -80,13 +79,18 @@ class SimVerilated(SimGear):
             else:
                 yield tuple(d.read() for d in self.c_out_drvs)
 
+            if all(not d.active for d in self.c_out_drvs):
+                activity_monitor += 1
+                if activity_monitor == watchdog:
+                    raise GearDone
+            else:
+                activity_monitor = 0
+
             for d in self.c_in_drvs:
                 d.ack()
 
             self.verilib.trig()
             await clk()
-
-        self.cleanup()
 
     def finish(self):
         super().finish()

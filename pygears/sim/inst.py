@@ -10,6 +10,7 @@ def sim_inst(top, conf):
 
     for gear in top.child:
         sim_cls = gear.params.get('sim_cls', None)
+        sim_inst = None
 
         if sim_cls is None:
             sim_cls = namespace.get(gear.definition, None)

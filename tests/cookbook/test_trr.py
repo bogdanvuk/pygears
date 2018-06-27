@@ -8,10 +8,12 @@ from pygears.sim.modules.seqr import seqr
 from pygears.sim.modules.socket import SimSocket
 from pygears.sim.modules.verilator import SimVerilated
 from pygears.typing import Queue, Uint
+from utils import skip_ifndef
 
 
 @with_setup(clear)
 def test_socket_sim():
+    skip_ifndef('SIM_SOCKET_TEST')
     directed(
         seqr(t=Queue[Uint[16]], seq=[list(range(9)),
                                      list(range(3))]),
@@ -28,6 +30,7 @@ def test_socket_sim():
 
 @with_setup(clear)
 def test_verilate_sim():
+    skip_ifndef('VERILATOR_ROOT')
     directed(
         seqr(t=Queue[Uint[16]], seq=[list(range(9)),
                                      list(range(3))]),
@@ -60,6 +63,7 @@ def test_pygears_sim():
 
 @with_setup(clear)
 def test_socket_cosim():
+    skip_ifndef('SIM_SOCKET_TEST')
     verif(
         seqr(t=Queue[Uint[16]], seq=[list(range(9)),
                                      list(range(3))]),

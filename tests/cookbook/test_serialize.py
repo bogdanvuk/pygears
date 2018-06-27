@@ -9,6 +9,8 @@ from pygears.sim.modules.socket import SimSocket
 from pygears.sim.modules.verilator import SimVerilated
 from pygears.typing import Array, Uint
 
+from utils import skip_ifndef, prepare_result_dir
+
 
 @with_setup(clear)
 def test_pygears_sim():
@@ -26,6 +28,7 @@ def test_pygears_sim():
 
 @with_setup(clear)
 def test_socket_sim():
+    skip_ifndef('SIM_SOCKET_TEST')
     brick_size = 4
     seq_list = [1, 2, 3]
     directed(
@@ -40,6 +43,7 @@ def test_socket_sim():
 
 @with_setup(clear)
 def test_verilate_sim():
+    skip_ifndef('VERILATOR_ROOT')
     brick_size = 4
     seq_list = [1, 2, 3, 4]
     directed(
@@ -49,11 +53,12 @@ def test_verilate_sim():
         f=serialize(sim_cls=SimVerilated),
         ref=sorted(seq_list * brick_size))
 
-    sim()
+    sim(outdir=prepare_result_dir())
 
 
 @with_setup(clear)
 def test_socket_cosim():
+    skip_ifndef('SIM_SOCKET_TEST')
     brick_size = 4
     seq_list = [1, 2, 3, 4]
     verif(
