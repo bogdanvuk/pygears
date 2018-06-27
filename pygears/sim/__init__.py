@@ -2,14 +2,18 @@
 # import os
 # load_plugin_folder(os.path.join(os.path.dirname(__file__), 'modules'))
 
+
 def timestep():
     return registry('Timestep')
+
 
 def clk():
     return registry('ClkEvent').wait()
 
+
 def delta():
     return registry('DeltaEvent').wait()
+
 
 from pygears import registry
 from .sim import sim, cur_gear, artifacts_dir, sim_assert

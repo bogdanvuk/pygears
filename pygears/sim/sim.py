@@ -6,8 +6,8 @@ import os
 from pygears import registry, find, PluginBase, bind, GearDone
 from pygears.sim.inst import sim_inst
 from pygears.core.intf import get_consumer_tree
+from pygears.core.sim_event import SimEvent
 
-from vcd import VCDWriter
 
 def cur_gear():
     loop = asyncio.get_event_loop()
@@ -26,6 +26,7 @@ class SimFuture(Future):
         return self.coro_iter()
 
     __await__ = __iter__
+
 
 # A recursive function used by topo_sort
 def topo_sort_util(v, g, dag, visited, stack):
@@ -56,8 +57,17 @@ def topo_sort(dag):
 
     return stack
 
+
 class EventLoop(asyncio.events.AbstractEventLoop):
     def __init__(self):
+        self.events = {
+            'before_run': SimEvent(),
+            'after_run': SimEvent(),
+            'before_timestep': SimEvent(),
+            'after_timestep': SimEvent(),
+        }
+
+    def get_tasks(self):
         self.sim_map = registry('SimMap')
         dag = {}
 
@@ -69,8 +79,8 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
         gear_order = topo_sort(dag)
         self.sim_gears = [self.sim_map[g] for g in gear_order]
-        self.tasks = {g:g.run() for g in self.sim_gears}
-        self.task_data = {g:None for g in self.sim_gears}
+        self.tasks = {g: g.run() for g in self.sim_gears}
+        self.task_data = {g: None for g in self.sim_gears}
 
     def fut_done(self, fut):
         sim_gear = self.wait_list.pop(fut)
@@ -113,21 +123,18 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
             self.task_data[sim_gear] = data
 
-    def run(self, timeout = None):
+    def run(self, timeout=None):
+        self.get_tasks()
         self.wait_list = {}
         self.ready = set(self.sim_gears)
         self.cancelled = set()
         bind('ClkEvent', asyncio.Event())
         bind('Timestep', 0)
-        self.vcd_file = open(os.path.join(registry('SimArtifactDir'), 'pygears.vcd'), 'w')
-        self.vcd = VCDWriter(self.vcd_file, timescale='1 ns', date='today')
-        bind('VCDWriter', self.vcd)
-
-        clk_var = self.vcd.register_var('', 'clk', 'wire', size=1, init=1)
 
         clk = registry('ClkEvent')
         timestep = 0
 
+        self.events['before_run'](self)
         while self.ready:
             print("Forward pass...")
             for sim_gear in self.sim_gears:
@@ -137,17 +144,20 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             for sim_gear in reversed(self.sim_gears):
                 self.maybe_run_gear(sim_gear)
 
+            self.events['before_timestep'](self, timestep)
+
             clk.set()
             clk.clear()
-            self.vcd.change(clk_var, timestep*10 + 5, 0)
             timestep += 1
-            self.vcd.change(clk_var, timestep*10, 1)
             print(f"-------------- {timestep} ------------------")
             bind('Timestep', timestep)
+
+            self.events['after_timestep'](self, timestep)
             if (timeout is not None) and (timestep == timeout):
                 break
 
-        self.vcd.close()
+        self.events['after_run'](self)
+
 
 def sim(**conf):
     if "outdir" not in conf:
@@ -157,16 +167,18 @@ def sim(**conf):
 
     bind('SimArtifactDir', conf['outdir'])
 
+    loop = EventLoop()
+    asyncio.set_event_loop(loop)
+    bind('Simulator', loop)
+
     top = find('/')
     for oper in registry('SimFlow'):
         top = oper(top, conf)
 
-    loop = EventLoop()
-    asyncio.set_event_loop(loop)
     loop.run()
 
 
-class SVGenPlugin(PluginBase):
+class SimPlugin(PluginBase):
     @classmethod
     def bind(cls):
         cls.registry['SimFlow'] = [sim_inst]

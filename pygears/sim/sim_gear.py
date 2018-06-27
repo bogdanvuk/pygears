@@ -48,18 +48,6 @@ class SimGear:
         self.task = asyncio.Task.current_task()
         args, kwds = self.sim_func_args
         ack_timestep = None
-
-        vcd = registry('VCDWriter')
-        gear_vcd_scope = self.gear.name[1:].replace('/', '.')
-        self.vcd_vars = []
-        for p in self.gear.out_ports:
-            scope = '.'.join([gear_vcd_scope, p.basename])
-            if not typeof(p.dtype, TLM) and p.dtype is not None:
-                p.vcd_data = vcd.register_var(scope, 'data', 'integer', size=int(p.dtype))
-
-                p.vcd_valid = vcd.register_var(scope, 'valid', 'wire', size=1, init=0)
-                p.vcd_ready = vcd.register_var(scope, 'ready', 'wire', size=1, init=0)
-
         try:
             while (1):
                 if is_async_gen(self.func):
@@ -67,22 +55,12 @@ class SimGear:
                         if ack_timestep == timestep():
                             await clk()
 
-                        if not typeof(p.dtype, TLM) and p.dtype is not None:
-                            vcd.change(p.vcd_ready, timestep()*10, 0)
-                            vcd.change(p.vcd_valid, timestep()*10, 0)
-
                         if len(self.gear.out_ports) == 1:
                             val = (val, )
 
                         for p, v in zip(self.gear.out_ports, val):
                             if v is not None:
-                                if not typeof(p.dtype, TLM) and p.dtype is not None:
-                                    vcd.change(p.vcd_data, timestep()*10, code(p.dtype, v))
-
-                                    vcd.change(p.vcd_valid, timestep()*10, 1)
                                 await p.producer.put(v)
-                                if not typeof(p.dtype, TLM) and p.dtype is not None:
-                                    vcd.change(p.vcd_ready, timestep()*10, 1)
                         ack_timestep = timestep()
                 else:
                     await self.func(*args, **kwds)

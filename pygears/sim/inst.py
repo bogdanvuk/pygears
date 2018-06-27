@@ -31,6 +31,8 @@ def sim_inst(top, conf):
         if sim_inst:
             sim_map[gear] = sim_inst
 
+    return top
+
 
 class SimInstPlugin(GearPlugin):
     @classmethod

@@ -13,8 +13,6 @@ from .partial import Partial
 from .port import InPort, OutPort
 from .util import doublewrap
 
-GearDone = asyncio.CancelledError
-
 
 class TooManyArguments(Exception):
     pass

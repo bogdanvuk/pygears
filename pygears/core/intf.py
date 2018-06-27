@@ -1,8 +1,9 @@
 import asyncio
 
-from pygears import registry
+from pygears import registry, GearDone
 from pygears.core.port import InPort, OutPort
 from pygears.registry import PluginBase
+from pygears.core.sim_event import SimEvent
 
 
 def operator_func_from_namespace(cls, name):
@@ -53,6 +54,13 @@ class Intf:
         self._in_queue = None
         self._out_queues = []
         self._done = False
+
+        self.events = {
+            'put': SimEvent(),
+            'put_out': SimEvent(),
+            'ack': SimEvent(),
+            'ack_in': SimEvent(),
+        }
 
     def source(self, port):
         self.producer = port
@@ -105,21 +113,22 @@ class Intf:
         self.end_consumers = get_consumer_tree(self)
         self._out_queues = [
             # asyncio.Queue(maxsize=1, loop=registry('EventLoop'))
-            asyncio.Queue(maxsize=1)
-            for _ in self.end_consumers
+            asyncio.Queue(maxsize=1) for _ in self.end_consumers
         ]
-
 
         return self._out_queues
 
     async def put(self, val):
+        self.events['put'](self, val)
         for q in self.out_queues:
+            self.events['put_out'](self, q, val)
             q.put_nowait(val)
 
         for i, q in enumerate(self.out_queues):
             print(f"Waiting on ack #{i}")
             await q.join()
 
+        self.events['ack'](self)
         print(f"Waiting on ack done")
 
         # await asyncio.wait([q.join() for q in self.out_queues], loop=registry('EventLoop'))
@@ -139,7 +148,7 @@ class Intf:
 
     async def pull(self):
         if self._done:
-            raise asyncio.CancelledError
+            raise GearDone
 
         return await self.in_queue.get()
 

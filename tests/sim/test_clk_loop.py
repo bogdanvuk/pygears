@@ -3,6 +3,9 @@ from pygears.typing import Uint
 from pygears.sim import seqr, drv, delta, clk, sim
 from pygears.cookbook.verif import check
 
+import pygears.sim.vcd
+
+
 def test_general():
     @gear
     async def priority_mux(*din: b'T') -> b'T':
