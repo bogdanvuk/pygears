@@ -44,6 +44,9 @@ class VCD:
 
         sim_map = registry('SimMap')
         for gear in top.child:
+            if gear not in sim_map:
+                continue
+
             sim_gear = sim_map[gear]
             gear_vcd_scope = sim_gear.gear.name[1:].replace('/', '.')
 

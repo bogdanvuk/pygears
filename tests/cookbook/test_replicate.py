@@ -8,7 +8,7 @@ from pygears.sim.modules.seqr import seqr
 from pygears.sim.modules.socket import SimSocket
 from pygears.sim.modules.verilator import SimVerilated
 from pygears.typing import Tuple, Uint
-from utils import skip_ifndef
+from utils import skip_ifndef, prepare_result_dir
 
 sequence = [(2, 3), (5, 5), (3, 9), (8, 1)]
 ref = list([x[1]] * x[0] for x in sequence)
@@ -41,7 +41,7 @@ def test_verilate_sim():
         f=replicate(sim_cls=SimVerilated),
         ref=ref)
 
-    sim()
+    sim(outdir=prepare_result_dir())
 
 
 @with_setup(clear)
