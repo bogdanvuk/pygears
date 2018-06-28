@@ -142,6 +142,9 @@ class Int(Integer, metaclass=IntMeta):
 
         return val
 
+    def __eq__(self, other):
+        return int(self) == int(other)
+
 
 class UintMeta(IntegerMeta):
     def __sub__(self, other):

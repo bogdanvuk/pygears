@@ -36,12 +36,12 @@ class TypeCode(TypingVisitorBase):
 class TypeDecode(TypingVisitorBase):
     def visit_int(self, dtype, field=None, data=None):
         if data.bit_length() == int(dtype):
-            return data - (1 << int(dtype))
+            return dtype(data - (1 << int(dtype)))
         else:
-            return data
+            return dtype(data)
 
     def visit_uint(self, dtype, field=None, data=None):
-        return data & dtype_mask(dtype)
+        return dtype(data & dtype_mask(dtype))
 
     def visit_tuple(self, dtype, field=None, data=None):
         ret = []
@@ -49,7 +49,7 @@ class TypeDecode(TypingVisitorBase):
             ret.append(self.visit(t, data=data & dtype_mask(t)))
             data >>= int(t)
 
-        return tuple(ret)
+        return dtype(tuple(ret))
 
     def visit_unit(self, dtype, field=None, data=None):
         return None
@@ -63,9 +63,9 @@ class TypeDecode(TypingVisitorBase):
         eot = bool(data & (1 << (int(dtype) - 1)))
 
         if dtype.lvl == 1:
-            return (ret, eot)
+            return dtype((ret, eot))
         else:
-            return (ret[0], *ret[1:], eot)
+            return dtype((ret[0], *ret[1:], eot))
 
     def visit_array(self, dtype, field=None, data=None):
         ret = []
@@ -73,7 +73,7 @@ class TypeDecode(TypingVisitorBase):
             ret.append(self.visit(t, data=data & dtype_mask(t)))
             data >>= int(t)
 
-        return tuple(ret)
+        return dtype(tuple(ret))
 
 
 def code(dtype, data):

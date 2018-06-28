@@ -77,6 +77,7 @@ class Queue(tuple, metaclass=QueueMeta):
         data_incl = False
 
         dout = []
+        outtype = type(self)[index]
         for i in index:
             if isinstance(i, slice):
                 if (i.stop == 0) or (i.stop - i.start > self.lvl):
@@ -90,14 +91,23 @@ class Queue(tuple, metaclass=QueueMeta):
 
                 dout.extend(super().__getitem__(i))
             elif i == 0:
+                data_incl = True
                 dout.append(super().__getitem__(i))
-            elif i <= self.lvl:
+            elif i <= type(self).lvl:
                 lvl += 1
                 dout.append(super().__getitem__(i))
             else:
                 raise IndexError
 
         if lvl > 0:
-            return type(self)[index](tuple(dout))
+            if data_incl:
+                return outtype(tuple(dout))
+            else:
+                eot = 0
+                for d in reversed(dout):
+                    eot <<= 1
+                    eot |= d
+
+                return outtype(eot)
         else:
             return type(self)[0](dout[0])

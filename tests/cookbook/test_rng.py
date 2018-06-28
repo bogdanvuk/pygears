@@ -38,6 +38,7 @@ def test_basic_unsigned_sim():
 
 @with_setup(clear)
 def test_basic_unsigned_cosim():
+    skip_ifndef('VERILATOR_ROOT')
     seq = [(2, 8, 2)]
 
     verif(
@@ -65,21 +66,16 @@ def test_basic_signed_sim():
 
     directed(seqr(t=Tuple[Int[5], Int[6], Uint[2]], seq=seq), f=rng, ref=ref)
 
-    from pygears.util.print_hier import print_hier
-    print_hier()
+    sim(outdir=prepare_result_dir())
 
-    sim(outdir=prepare_result_dir(), extens=[VCD], vcd_include=['*'])
-
-
-registry('SimConfig')['dbg_assert'] = True
-test_basic_signed_sim()
 
 @with_setup(clear)
-def test_basic_unsigned_cosim():
-    seq = [(2, 8, 2)]
+def test_basic_signed_cosim():
+    skip_ifndef('VERILATOR_ROOT')
+    seq = [(-15, -3, 2)]
 
     verif(
-        seqr(t=Tuple[Uint[4], Uint[4], Uint[2]], seq=seq),
+        seqr(t=Tuple[Int[5], Int[6], Uint[2]], seq=seq),
         f=rng(sim_cls=SimVerilated),
         ref=rng(name='ref_model'))
 
@@ -105,6 +101,29 @@ def test_cnt_only():
 
     rng_gear = find('/rng/rng/sv_rng')
     assert rng_gear.params['cfg'] == Tuple[Uint[1], Uint[4], Uint[1]]
+
+
+@with_setup(clear)
+def test_cnt_only_sim():
+    seq = [8]
+    ref = list(range(8))
+
+    directed(seqr(t=Uint[4], seq=seq), f=rng, ref=ref)
+
+    sim(outdir=prepare_result_dir())
+
+
+@with_setup(clear)
+def test_cnt_only_cosim():
+    skip_ifndef('VERILATOR_ROOT')
+    seq = [8]
+
+    verif(
+        seqr(t=Uint[4], seq=seq),
+        f=rng(sim_cls=SimVerilated),
+        ref=rng(name='ref_model'))
+
+    sim(outdir=prepare_result_dir())
 
 
 @with_setup(clear)

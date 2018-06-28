@@ -26,7 +26,7 @@ async def sv_rng(cfg: TCfg,
                  cnt_steps=False,
                  incr_steps=False) -> Queue['rng_out_type(cfg, cnt_steps)']:
     def sign(x):
-        return 1 if x < 0 else -1
+        return -1 if x < 0 else 1
 
     outtype = cur_gear().out_ports[0].dtype
 
