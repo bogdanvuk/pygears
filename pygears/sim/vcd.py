@@ -44,8 +44,7 @@ class VCD:
             gear_vcd_scope = module.name[1:].replace('/', '.')
 
             for p in module.out_ports:
-                if not match(f'{module.name}.{p.basename}',
-                             vcd_include):
+                if not match(f'{module.name}.{p.basename}', vcd_include):
                     continue
 
                 if (p.dtype is None) or (typeof(p.dtype, TLM) and not vcd_tlm):
@@ -60,7 +59,9 @@ class VCD:
                 else:
                     vcd_data = self.writer.register_var(
                         scope, f'{scope}.data', 'wire', size=int(p.dtype))
-                    print(f'VCD for {module.name}.{p.basename}: {scope, "wire", int(p.dtype)}')
+                    print(
+                        f'VCD for {module.name}.{p.basename}: {scope, "wire", int(p.dtype)}'
+                    )
 
                 vcd_valid = self.writer.register_var(
                     scope, f'{scope}.valid', 'wire', size=1, init=0)

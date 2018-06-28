@@ -67,7 +67,6 @@ class Queue(tuple, metaclass=QueueMeta):
     __parameters__ = ['T', 'N']
 
     def __new__(cls, val: tuple):
-        print(f"Class: {cls}")
         return super(Queue, cls).__new__(cls, (cls[0](val[0]), ) + val[1:])
 
     def __getitem__(self, index):

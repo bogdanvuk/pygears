@@ -62,5 +62,7 @@ class UnionMeta(EnumerableGenericMeta):
         return '%s' % ' | '.join([type_str(a) for a in self.args])
 
 
-class Union(metaclass=UnionMeta):
-    pass
+class Union(tuple, metaclass=UnionMeta):
+    def __new__(cls, val: tuple):
+        print(f'{cls}: {val}')
+        return super(Union, cls).__new__(cls, (cls[0](val[0]), val[1]))

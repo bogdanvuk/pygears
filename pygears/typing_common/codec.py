@@ -32,6 +32,9 @@ class TypeCode(TypingVisitorBase):
     def visit_array(self, dtype, field=None, data=None):
         return self.visit_tuple(Tuple[(dtype[0], ) * len(dtype)], data=data)
 
+    def visit_union(self, dtype, field=None, data=None):
+        return self.visit_tuple(Tuple[(dtype[0], dtype[1])], data=data)
+
 
 class TypeDecode(TypingVisitorBase):
     def visit_int(self, dtype, field=None, data=None):
@@ -74,6 +77,15 @@ class TypeDecode(TypingVisitorBase):
             data >>= int(t)
 
         return dtype(tuple(ret))
+
+    def visit_union(self, dtype, field=None, data=None):
+        ret = []
+        for t in dtype:
+            ret.append(self.visit(t, data=data & dtype_mask(t)))
+            data >>= int(t)
+
+        return dtype(tuple(ret))
+        # return self.visit_tuple(Tuple[(dtype[0], dtype[1])], data=data)
 
 
 def code(dtype, data):
