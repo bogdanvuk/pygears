@@ -5,6 +5,8 @@ import tempfile
 from pygears import registry, find, PluginBase, bind
 from pygears.sim.inst import sim_inst
 
+import logging
+
 
 def cur_gear():
     cur_task = asyncio.Task.current_task()
@@ -111,7 +113,8 @@ class SVGenPlugin(PluginBase):
 
 def sim_assert(cond, msg=None):
     if not cond:
-        # print(f'Assertion failed: {msg}')
+        logger = logging.getLogger('sim_assert')
+        logger.error(f'Assertion failed: {msg}')
         if registry('SimConfig')['dbg_assert']:
             import pdb
             pdb.set_trace()

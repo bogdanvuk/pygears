@@ -1,6 +1,5 @@
 from pygears import gear
 from pygears.sim import sim_assert
-import time
 
 
 @gear
@@ -14,9 +13,5 @@ async def scoreboard(*din: b't', report) -> None:
         match = all(v == items[0] for v in items)
 
         report.append({'match': match, 'items': items})
-        print(f"#{cnt} scoreboard received: {items[0]}, {items[1]}")
-        print(time.strftime('%X'))
-
         cnt += 1
-
-        sim_assert(match)
+        sim_assert(match, f'Scbd mismatch on #{cnt}: {items[0]}, {items[1]}')
