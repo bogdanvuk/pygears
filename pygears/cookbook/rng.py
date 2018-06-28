@@ -1,6 +1,7 @@
-from pygears.typing import Integer, Tuple, Queue, Int, typeof
+from pygears.typing import Integer, Tuple, Queue, Int, typeof, Uint
 from pygears import gear, alternative
 from pygears.common import ccat, fmap, cart, permuted_apply
+from pygears.sim import cur_gear
 from pygears.util.utils import quiter
 
 TCfg = Tuple[{
@@ -24,9 +25,18 @@ async def sv_rng(cfg: TCfg,
                  cnt_one_more=False,
                  cnt_steps=False,
                  incr_steps=False) -> Queue['rng_out_type(cfg, cnt_steps)']:
+    def sign(x):
+        return 1 if x < 0 else -1
+
+    outtype = cur_gear().out_ports[0].dtype
+
     async with cfg as (start, cnt, incr):
-        for data, last in quiter(range(int(start), int(cnt) + 1, int(incr))):
-            yield data, last
+
+        for data, last in quiter(
+                range(int(start),
+                      int(cnt) + sign(int(incr)) * 1, int(incr))):
+
+            yield outtype[0](data), last
 
 
 @gear

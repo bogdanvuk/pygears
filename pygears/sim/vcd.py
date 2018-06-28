@@ -1,7 +1,4 @@
 from pygears import registry, bind
-from pygears.sim.sim_gear import SimGear, is_simgear_func
-from pygears.core.gear import GearPlugin
-from pygears.sim.sim import SimPlugin
 from pygears.sim import timestep
 from pygears.typing_common.codec import code
 from pygears.typing import typeof, TLM
@@ -43,15 +40,12 @@ class VCD:
         self.handhake = set()
 
         sim_map = registry('SimMap')
-        for gear in top.child:
-            if gear not in sim_map:
-                continue
+        for module, sim_gear in sim_map.items():
+            gear_vcd_scope = module.name[1:].replace('/', '.')
 
-            sim_gear = sim_map[gear]
-            gear_vcd_scope = sim_gear.gear.name[1:].replace('/', '.')
-
-            for p in sim_gear.gear.out_ports:
-                if not match(f'{sim_gear.gear.name}.{p.basename}', vcd_include):
+            for p in module.out_ports:
+                if not match(f'{module.name}.{p.basename}',
+                             vcd_include):
                     continue
 
                 if (p.dtype is None) or (typeof(p.dtype, TLM) and not vcd_tlm):
@@ -65,7 +59,8 @@ class VCD:
                         scope, f'{scope}.data', 'string')
                 else:
                     vcd_data = self.writer.register_var(
-                        scope, f'{scope}.data', 'integer', size=int(p.dtype))
+                        scope, f'{scope}.data', 'wire', size=int(p.dtype))
+                    print(f'VCD for {module.name}.{p.basename}: {scope, "wire", int(p.dtype)}')
 
                 vcd_valid = self.writer.register_var(
                     scope, f'{scope}.valid', 'wire', size=1, init=0)

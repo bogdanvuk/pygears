@@ -5,6 +5,7 @@ from pygears import Intf, MultiAlternativeError, clear, find, registry
 from pygears.typing import Queue, Tuple, Uint, Int
 from pygears.cookbook.rng import rng
 from pygears.sim.modules.verilator import SimVerilated
+from pygears.sim.vcd import VCD
 
 import sys
 sys.path.append('/tools/home/pygears/tests')
@@ -64,7 +65,10 @@ def test_basic_signed_sim():
 
     directed(seqr(t=Tuple[Int[5], Int[6], Uint[2]], seq=seq), f=rng, ref=ref)
 
-    sim(outdir=prepare_result_dir())
+    from pygears.util.print_hier import print_hier
+    print_hier()
+
+    sim(outdir=prepare_result_dir(), extens=[VCD], vcd_include=['*'])
 
 
 registry('SimConfig')['dbg_assert'] = True

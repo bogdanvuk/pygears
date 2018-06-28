@@ -62,6 +62,42 @@ class QueueMeta(EnumerableGenericMeta):
             return '[{}]^{}'.format(type_str(self.args[0]), self.lvl)
 
 
-class Queue(metaclass=QueueMeta):
+class Queue(tuple, metaclass=QueueMeta):
     __default__ = [1]
     __parameters__ = ['T', 'N']
+
+    def __new__(cls, val: tuple):
+        print(f"Class: {cls}")
+        return super(Queue, cls).__new__(cls, (cls[0](val[0]), ) + val[1:])
+
+    def __getitem__(self, index):
+        index = type(self).index_norm(index)
+
+        lvl = 0
+        data_incl = False
+
+        dout = []
+        for i in index:
+            if isinstance(i, slice):
+                if (i.stop == 0) or (i.stop - i.start > self.lvl):
+                    raise IndexError
+                elif i.start == 0 and i.stop == 1:
+                    data_incl = True
+                elif i.start == 0 and i.stop > 1:
+                    lvl += i.stop - 1
+                else:
+                    lvl += (i.stop - i.start)
+
+                dout.extend(super().__getitem__(i))
+            elif i == 0:
+                dout.append(super().__getitem__(i))
+            elif i <= self.lvl:
+                lvl += 1
+                dout.append(super().__getitem__(i))
+            else:
+                raise IndexError
+
+        if lvl > 0:
+            return type(self)[index](tuple(dout))
+        else:
+            return type(self)[0](dout[0])
