@@ -25,7 +25,7 @@ async def sv_rng(cfg: TCfg,
                  cnt_steps=False,
                  incr_steps=False) -> Queue['rng_out_type(cfg, cnt_steps)']:
     async with cfg as (start, cnt, incr):
-        for data, last in quiter(range(start, cnt, incr)):
+        for data, last in quiter(range(int(start), int(cnt) + 1, int(incr))):
             yield data, last
 
 

@@ -3,8 +3,9 @@ from pygears.core.intf import IntfOperPlugin
 
 
 @gear
-def sieve(din, *, index) -> b'din[index]':
-    pass
+async def sieve(din, *, index) -> b'din[index]':
+    async with din as d:
+        yield d[index]
 
 
 def getitem(self, index):

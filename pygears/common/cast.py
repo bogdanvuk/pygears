@@ -1,11 +1,13 @@
 from pygears.core.gear import gear
+from pygears.sim import cur_gear
 from pygears.typing.base import TypingMeta
 from pygears.core.intf import IntfOperPlugin
 
 
 @gear
-def cast(din, *, cast_type) -> b'cast(din, cast_type)':
-    pass
+async def cast(din, *, cast_type) -> b'cast(din, cast_type)':
+    async with din as d:
+        yield cur_gear().out_ports[0].dtype(d)
 
 
 def pipe(self, other):

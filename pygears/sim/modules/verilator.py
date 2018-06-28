@@ -66,6 +66,7 @@ class SimVerilated(SimGear):
         self.verilib.init()
         activity_monitor = 0
         watchdog = 100
+        self.finished = False
 
         while True:
             for d in self.c_in_drvs:
@@ -112,5 +113,7 @@ class SimVerilated(SimGear):
             await clk()
 
     def finish(self):
-        super().finish()
-        self.verilib.final()
+        if not self.finished:
+            self.finished = True
+            super().finish()
+            self.verilib.final()

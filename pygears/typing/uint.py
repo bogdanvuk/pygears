@@ -97,6 +97,10 @@ class Integer(int, metaclass=IntegerMeta):
         return super(Integer, cls).__new__(cls,
                                            int(val) & ((1 << len(cls)) - 1))
 
+    @property
+    def width(self):
+        return len(type(self))
+
     def __str__(self):
         return f'{str(type(self))}({int(self)})'
 
@@ -130,6 +134,13 @@ class Int(Integer, metaclass=IntMeta):
 
     """
     __parameters__ = ['N']
+
+    def __int__(self):
+        val = super(Int, self).__int__()
+        if val >= (1 << (self.width - 1)):
+            val -= 1 << self.width
+
+        return val
 
 
 class UintMeta(IntegerMeta):

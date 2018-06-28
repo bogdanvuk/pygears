@@ -70,4 +70,19 @@ class Tuple(tuple, metaclass=TupleMeta):
     # def __new__(self, val: tuple):
     def __new__(cls, val: tuple):
         print(f"Class: {cls}")
-        return super(Tuple, cls).__new__(cls, tuple(t(v) for t, v in zip(cls, val)))
+        return super(Tuple, cls).__new__(cls,
+                                         tuple(t(v) for t, v in zip(cls, val)))
+
+    def __getitem__(self, index):
+        index = type(self).index_norm(index)
+
+        if (len(index) == 1) and (not isinstance(index[0], slice)):
+            return super(Tuple, self).__getitem__(index[0])
+        else:
+            tout = type(self)[index]
+            subtypes = []
+            for i in index:
+                subt = super(Tuple, self).__getitem__(i)
+                subtypes.extend(subt if isinstance(i, slice) else [subt])
+
+            return tout(tuple(subtypes))

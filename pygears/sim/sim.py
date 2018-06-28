@@ -112,7 +112,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
         self.ready.remove(sim_gear)
 
-        self.cur_gear = sim_gear
+        self.cur_gear = sim_gear.gear
         print(f"Running task {sim_gear.gear.name}")
         try:
             data = self.tasks[sim_gear].send(self.task_data[sim_gear])
