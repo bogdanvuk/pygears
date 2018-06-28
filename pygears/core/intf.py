@@ -118,20 +118,26 @@ class Intf:
 
         return self._out_queues
 
-    async def put(self, val):
+    def put_nb(self, val):
         self.events['put'](self, val)
         for q in self.out_queues:
             self.events['put_out'](self, q, val)
             q.put_nowait(val)
+
+    async def put(self, val):
+        self.put_nb(val)
 
         for i, q in enumerate(self.out_queues):
             print(f"Waiting on ack #{i}")
             await q.join()
 
         self.events['ack'](self)
-        print(f"Waiting on ack done")
+        print(f"All acks received")
 
         # await asyncio.wait([q.join() for q in self.out_queues], loop=registry('EventLoop'))
+
+    def ready(self):
+        return all(q.empty() for q in self.out_queues)
 
     def empty(self):
         return self.in_queue.empty()
@@ -146,14 +152,14 @@ class Intf:
     def done(self):
         return self._done
 
-    def pull_nowait(self):
+    def pull_nb(self):
         if self._done:
             raise GearDone
 
         return self.in_queue.get_nowait()
 
-    def get_nowait(self):
-        val = self.pull_nowait()
+    def get_nb(self):
+        val = self.pull_nb()
         self.ack()
         return val
 

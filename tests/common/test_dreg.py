@@ -8,6 +8,8 @@ from pygears.sim.modules.seqr import seqr
 from pygears.sim.modules.verilator import SimVerilated
 from pygears.typing import Uint
 
+# import sys
+# sys.path.append('/tools/home/pygears/tests')
 from utils import prepare_result_dir, skip_ifndef
 
 
@@ -34,3 +36,5 @@ def test_verilator_cosim():
         ref=dreg(name='ref_model'))
 
     sim(outdir=prepare_result_dir())
+
+# test_verilator_cosim()

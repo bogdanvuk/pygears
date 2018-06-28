@@ -130,9 +130,11 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         self.ready = set(self.sim_gears)
         self.cancelled = set()
         bind('ClkEvent', asyncio.Event())
+        bind('DeltaEvent', asyncio.Event())
         bind('Timestep', 0)
 
         clk = registry('ClkEvent')
+        delta = registry('DeltaEvent')
         timestep = 0
 
         self.events['before_run'](self)
@@ -140,6 +142,9 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             print("Forward pass...")
             for sim_gear in self.sim_gears:
                 self.maybe_run_gear(sim_gear)
+
+            delta.set()
+            delta.clear()
 
             print("Back pass...")
             for sim_gear in reversed(self.sim_gears):

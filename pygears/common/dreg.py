@@ -16,6 +16,6 @@ async def dreg(din: 'tdin') -> b'tdin':
         yield module.reg
 
         try:
-            module.reg = din.get_nowait()
+            module.reg = din.get_nb()
         except QueueEmpty:
             module.reg = None

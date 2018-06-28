@@ -82,15 +82,19 @@ class CInputDrv(CDrv):
         print("Data received: ", data)
 
         self.data_posted = True
+        self.acked = False
         self.c_set_api(self.to_c_data(code(self.port.dtype, data)), 1)
 
     def ack(self):
         if self.data_posted:
-            ack = self.c_get_api()
-            self.data_posted = not ack
-            if ack:
+            self.acked = self.c_get_api()
+            if self.acked:
                 self.seq.ack()
-                self.c_set_api(self.to_c_data(0), 0)
+
+    def cycle(self):
+        if self.acked:
+            self.data_posted = False
+            self.c_set_api(self.to_c_data(0), 0)
 
 
 class COutputDrv(CDrv):
@@ -110,6 +114,14 @@ class COutputDrv(CDrv):
             dout |= d
 
         return dout
+
+    def cycle(self):
+        self.c_set_api(0)
+
+    def ack(self):
+        if self.active:
+            self.active = False
+            self.c_set_api(1)
 
     def read(self):
         self.active = self.c_get_api(self.dout)
