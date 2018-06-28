@@ -263,8 +263,8 @@ class SimSocket(SimGear):
     def finish(self):
         print("Closing socket server")
         super().finish()
-        for h in self.handlers.values():
-            h.cancel()
+        # for h in self.handlers.values():
+        #     h.cancel()
 
         self.sock.close()
 

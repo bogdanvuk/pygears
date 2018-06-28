@@ -5,6 +5,23 @@ from pygears.sim.sim import clk
 from pygears.typing import TLM
 
 
+def quiter(iterable):
+    """Pass through all values from the given iterable, augmented by the
+    information if there are more values to come after the current one
+    (True), or if it is the last value (False).
+    """
+    # Get an iterator and pull the first value.
+    it = iter(iterable)
+    last = next(it)
+    # Run the iterator to exhaustion (starting from the second value).
+    for val in it:
+        # Report the *previous* value (more to come).
+        yield last, False
+        last = val
+    # Report the last value.
+    yield last, True
+
+
 class TypingYieldVisitorBase:
     def visit(self, data, dtype):
         visit_func_name = f'visit_{dtype.__name__.lower()}'
@@ -22,13 +39,8 @@ class TypingYieldVisitorBase:
 
 class TypeDrvVisitor(TypingYieldVisitorBase):
     def visit_queue(self, data, dtype):
-        for i, d in enumerate(data):
+        for (i, d), eot in quiter(enumerate(data)):
             for ret in self.visit(d, dtype[:-1]):
-                eot = False
-                if i == len(data) - 1:
-                    eot = True
-                    # ret |= 1 << (int(dtype) - 1)
-
                 if dtype.lvl == 1:
                     yield (ret, eot)
                 else:
@@ -37,12 +49,13 @@ class TypeDrvVisitor(TypingYieldVisitorBase):
 
 @gear
 async def drv(din: TLM['t'], *, t=b't') -> b't':
-    async with din as item:
-        for d in TypeDrvVisitor().visit(item, t):
-            # print('Driver sends: ', d)
-            yield d
-            # print('Driver sent: ', d)
-            await clk()
-            # print('Driver waited for clock')
+    while 1:
+        async with din as item:
+            for d in TypeDrvVisitor().visit(item, t):
+                # print('Driver sends: ', d)
+                yield d
+                # print('Driver sent: ', d)
+                await clk()
+                # print('Driver waited for clock')
 
     print("Driver done")

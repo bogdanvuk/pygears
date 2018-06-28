@@ -101,6 +101,7 @@ class SVGenPlugin(PluginBase):
         cls.registry['SimFlow'] = [sim_inst]
         cls.registry['SimTasks'] = {}
         cls.registry['SimConfig'] = {'dbg_assert': False}
+        cls.registry['SimConfig']['assert_warn'] = False
         cls.registry['SVGenSystemVerilogImportPaths'] = []
 
     @classmethod
