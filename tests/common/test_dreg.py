@@ -8,8 +8,6 @@ from pygears.sim.modules.seqr import seqr
 from pygears.sim.modules.verilator import SimVerilated
 from pygears.typing import Uint
 
-# import sys
-# sys.path.append('/tools/home/pygears/tests')
 from utils import prepare_result_dir, skip_ifndef
 
 

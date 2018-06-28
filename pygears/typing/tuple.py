@@ -66,5 +66,8 @@ class TupleMeta(EnumerableGenericMeta):
         return '(%s)' % ', '.join([type_str(a) for a in self.args])
 
 
-class Tuple(metaclass=TupleMeta):
-    pass
+class Tuple(tuple, metaclass=TupleMeta):
+    # def __new__(self, val: tuple):
+    def __new__(cls, val: tuple):
+        print(f"Class: {cls}")
+        return super(Tuple, cls).__new__(cls, tuple(t(v) for t, v in zip(cls, val)))

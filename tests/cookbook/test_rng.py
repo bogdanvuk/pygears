@@ -1,11 +1,18 @@
-
 from nose import with_setup
 from nose.tools import raises
 
 from pygears import Intf, MultiAlternativeError, clear, find
 from pygears.typing import Queue, Tuple, Uint, Int
 from pygears.cookbook.rng import rng
-from utils import svgen_check
+from pygears.sim.modules.verilator import SimVerilated
+
+import sys
+sys.path.append('/tools/home/pygears/tests')
+from utils import svgen_check, prepare_result_dir, skip_ifndef
+
+from pygears.cookbook.verif import directed, verif
+from pygears.sim import sim
+from pygears.sim.modules.seqr import seqr
 
 
 @with_setup(clear)
@@ -16,6 +23,31 @@ def test_basic_unsigned():
 
     assert iout.dtype == Queue[Uint[4]]
     assert not rng_gear.params['signed']
+
+
+@with_setup(clear)
+def test_basic_unsigned_sim():
+    seq = [(2, 7, 2)]
+    ref = list(range(*seq[0]))
+
+    directed(seqr(t=Tuple[Uint[4], Uint[2], Uint[2]], seq=seq), f=rng, ref=ref)
+
+    sim(outdir=prepare_result_dir())
+
+
+@with_setup(clear)
+def test_basic_unsigned_cosim():
+    seq = [(2, 7, 2)]
+
+    verif(
+        seqr(t=Uint[16], seq=seq),
+        f=rng(sim_cls=SimVerilated),
+        ref=rng(name='ref_model'))
+
+    sim(outdir=prepare_result_dir())
+
+
+test_basic_unsigned_sim()
 
 
 @with_setup(clear)

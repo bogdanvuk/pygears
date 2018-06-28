@@ -89,21 +89,22 @@ class IntegerMeta(EnumerableGenericMeta):
         return self.base[width]
 
 
-class Integer(metaclass=IntegerMeta):
+class Integer(int, metaclass=IntegerMeta):
     """Base type for both :class:`Int` [N] and :class:`Uint` [N] generic types.
     """
 
-    def __init__(self, val: int=0):
-        self.val = int(val)
+    def __new__(cls, val: int = 0):
+        return super(Integer, cls).__new__(cls,
+                                           int(val) & ((1 << len(cls)) - 1))
 
     def __str__(self):
-        return f'{str(type(self))}({self.val})'
+        return f'{str(type(self))}({int(self)})'
 
     def __repr__(self):
-        return f'{repr(type(self))}({self.val})'
+        return f'{repr(type(self))}({int(self)})'
 
     def __int__(self):
-        return self.val
+        return super(Integer, self).__int__()
 
 
 class IntMeta(IntegerMeta):
@@ -137,7 +138,7 @@ class UintMeta(IntegerMeta):
 
         >>> assert Uint[16] - Uint[8] == Tuple(Uint[16], Bool)
         """
-        if(issubclass(other, Uint)):
+        if (issubclass(other, Uint)):
             return Tuple[Uint[max(int(self), int(other))], Bool]
         else:
             return super().__sub__(self, other)
