@@ -110,9 +110,9 @@ class SVGenPlugin(PluginBase):
 
 def sim_assert(cond, msg=None):
     if not cond:
-        print(f'Assertion failed: {msg}')
+        # print(f'Assertion failed: {msg}')
         if registry('SimConfig')['dbg_assert']:
             import pdb
             pdb.set_trace()
-        else:
+        elif not registry('SimConfig')['assert_warn']:
             assert cond

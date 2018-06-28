@@ -5,6 +5,7 @@ import os
 import jinja2
 import math
 from math import ceil
+import time
 
 import itertools
 from importlib import util
@@ -170,7 +171,7 @@ class SimSocket(SimGear):
                 if not item:
                     raise GearDone
 
-                print(f"Output data {item}, of len {len(item)}")
+                # print(f"Output data {item}, of len {len(item)}")
 
                 await dout.put(u32_bytes_decode(item, dout.dtype))
 
@@ -190,12 +191,32 @@ class SimSocket(SimGear):
     async def synchro_handler(self, conn, pin):
         try:
             conn.setblocking(True)
+            # cadence_time = 0
+            # python_time = 0
+            # start = None
+            # end = None
+            # cnt = 0
+
             while True:
                 await delta()
                 # print("Sending synchro info")
+                # start = time.time()
+                # if end is not None:
+                #     python_time += start - end
+
                 conn.send(b'\x00')
-                # print("Receiving clock info")
                 conn.recv(4)
+                # end = time.time()
+                # cnt += 1
+
+                # cadence_time += end - start
+
+                # if (cnt % 1000) == 0:
+                #     print(f'Cadence time: {cadence_time/1000}')
+                #     print(f'Python time: {python_time/999}')
+                #     cadence_time = 0
+                #     python_time = 0
+
                 # print("Cadence clock done")
                 # print(asyncio.get_event_loop()._ready)
                 # print(asyncio.get_event_loop()._scheduled)

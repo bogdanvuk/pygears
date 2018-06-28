@@ -3,6 +3,8 @@
 
 package socket_pkg;
 
+   `include "socket_macros.svh"
+
    typedef class socket_producer_driver;
    typedef class socket_consumer_driver;
    typedef class activity_monitor;

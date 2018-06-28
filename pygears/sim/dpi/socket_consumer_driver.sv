@@ -41,7 +41,7 @@ class socket_consumer_driver#(type DATA_T = bit [15:0]);
          // data = vif.cb_consumer.data;
          data = vif.data;
          ret = sock_put(handle, data);
-         $display("Consumer driver %s sent: %p at %0t", name, DATA_T'(data), $time);
+         `verif_info($sformatf("Consumer driver %s sent: %p at %0t", name, DATA_T'(data), $time), 2);
          if (ret == 1) break;
       end
 

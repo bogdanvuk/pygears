@@ -125,7 +125,7 @@ void *tcp_sock_open(const char *name, int timeout) {
                sizeof(tim_str));
   } else if (timeout == 0) {
     if (fcntl(sock, F_SETFL, fcntl(sock, F_GETFL) | O_NONBLOCK) < 0) {
-      printf("Error while putting the socket in non-blocking mode\n");
+      // printf("Error while putting the socket in non-blocking mode\n");
     }
   }
 
@@ -166,11 +166,11 @@ void *sock_open(const char *uri, const char *channel) {
   size_t len = strlen(uri);
   struct handle *handle = NULL;
 
-  printf("Waiting on socket connection...\n");
+  // printf("Waiting on socket connection...\n");
   do {
     if (len > 6 && strncmp("tcp://", uri, 6) == 0) {
       if (strncmp(channel, "_synchro", 10) == 0)
-        handle = tcp_sock_open(uri + 6, 5);
+        handle = tcp_sock_open(uri + 6, 1);
       else
         handle = tcp_sock_open(uri + 6, 0);
     }
@@ -185,8 +185,8 @@ void *sock_open(const char *uri, const char *channel) {
   } while (handle == NULL);
 
   send(handle->sock, channel, strlen(channel), 0);
-  printf("Opened socket for %s: %p, timeout=%d\n", channel, handle,
-         handle->timeout);
+  // printf("Opened socket for %s: %p, timeout=%d\n", channel, handle,
+  /* handle->timeout); */
 
   return handle;
 }
@@ -233,14 +233,14 @@ int sock_get_bv(void *handle, svBitVecVal *signal, int width) {
     if (ret <= 0) {
       if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
         if (h->timeout > 0) {
-          printf("%p timeout\n", handle);
-          printf("Ret value %d, errno value %d\n", ret, errno);
+          // printf("%p timeout\n", handle);
+          // printf("Ret value %d, errno value %d\n", ret, errno);
           pause_sim();
         } else if (h->timeout == 0) {
           return 2;
         }
       } else if (errno != EINTR) {
-        printf("Ret value %d, errno value %d\n", ret, errno);
+        // printf("Ret value %d, errno value %d\n", ret, errno);
         return 1;
       }
     }
@@ -248,8 +248,9 @@ int sock_get_bv(void *handle, svBitVecVal *signal, int width) {
 
   uint32_t *rval = (uint32_t *)h->rbuf;
 
-  printf("Len: %d, RVAL: 0x%x, 0x%x\n", SV_PACKED_DATA_NELEMS(width), rval[0],
-         rval[1]);
+  // printf("Len: %d, RVAL: 0x%x, 0x%x\n", SV_PACKED_DATA_NELEMS(width),
+  // rval[0],
+  /* rval[1]); */
   if (rval[0] == 0) {
     return 1;
   }
@@ -277,9 +278,9 @@ int sock_put(void *handle, const svOpenArrayHandle signal) {
   int width = svSize(signal, 0);
   const svBitVecVal *ptr = (const svBitVecVal *)svGetArrayPtr(signal);
 
-  printf("Width: %d\n", width);
-  printf("Sending %d bytes\n",
-         SV_PACKED_DATA_NELEMS(width) * sizeof(svBitVecVal));
+  // printf("Width: %d\n", width);
+  // printf("Sending %d bytes\n",
+  /* SV_PACKED_DATA_NELEMS(width) * sizeof(svBitVecVal)); */
 
   send(h->sock, ptr, SV_PACKED_DATA_NELEMS(width) * sizeof(svBitVecVal), 0);
 
@@ -291,11 +292,11 @@ int sock_put(void *handle, const svOpenArrayHandle signal) {
 
 /* 	handle = sock_open("tcp://localhost:1234", "cfg"); */
 
-/* 	printf("Socket opened\n"); */
+/* 	// printf("Socket opened\n"); */
 
 /* 	svBitVecVal signal[1]; */
 /* 	while (sock_get(handle, signal) == 0) { */
-/* 		printf("Received: 0x%x\n", signal[0]); */
+/* 		// printf("Received: 0x%x\n", signal[0]); */
 /* 	} */
 
 /* 	sock_close(handle); */

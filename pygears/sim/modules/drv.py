@@ -1,7 +1,6 @@
 import inspect
-import asyncio
 
-from pygears import gear, registry
+from pygears import gear
 from pygears.sim.sim import clk
 from pygears.typing import TLM
 

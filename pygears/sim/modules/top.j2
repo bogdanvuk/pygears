@@ -4,6 +4,8 @@
 
 module top;
 
+   `include "socket_macros.svh"
+
    import socket_pkg::*;
    import sock::*;
 
@@ -42,8 +44,12 @@ module top;
 
       fork
          begin
-            #1s;
+            #0.5s;
             $warning("watchdog timer expired. killing test...");
+{% for intf in intfs %}
+            sock_close({{intf['name']}}_driver.handle);
+{% endfor %}
+            sock_close(synchro_handle);
             $finish();
          end
       join_none
@@ -55,7 +61,7 @@ module top;
   {% endif %}
 {% endfor %}
       join
-      $display("producer drivers finished");
+      `verif_info("producer drivers finished", 5);
 
       fork
 {% for intf in intfs %}
@@ -64,7 +70,7 @@ module top;
   {% endif %}
 {% endfor %}
       join
-      $display("activity monitors finished");
+      `verif_info("activity monitors finished", 5);
 
       disable fork;
 
