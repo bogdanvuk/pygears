@@ -1,10 +1,12 @@
 from pygears import registry, bind
+from pygears.core.port import OutPort
 from pygears.sim import timestep
 from pygears.typing_common.codec import code
 from pygears.typing import typeof, TLM
 from vcd import VCDWriter
 import os
 import fnmatch
+import itertools
 
 
 def match(val, include_pattern):
@@ -24,6 +26,16 @@ def register_traces_for_intf(dtype, scope, writer):
         scope, f'{scope}.ready', 'wire', size=1, init=0)
 
     return {'data': vcd_data, 'valid': vcd_valid, 'ready': vcd_ready}
+
+
+def is_trace_included(port, vcd_include, vcd_tlm):
+    if not match(f'{port.gear.name}.{port.basename}', vcd_include):
+        return False
+
+    if (port.dtype is None) or (typeof(port.dtype, TLM) and not vcd_tlm):
+        return False
+
+    return True
 
 
 class VCD:
@@ -58,15 +70,15 @@ class VCD:
         for module, sim_gear in sim_map.items():
             gear_vcd_scope = module.name[1:].replace('/', '.')
 
-            for p in module.out_ports:
-                if not match(f'{module.name}.{p.basename}', vcd_include):
-                    continue
-
-                if (p.dtype is None) or (typeof(p.dtype, TLM) and not vcd_tlm):
+            for p in itertools.chain(module.out_ports, module.in_ports):
+                if not is_trace_included(p, vcd_include, vcd_tlm):
                     continue
 
                 scope = '.'.join([gear_vcd_scope, p.basename])
-                intf = p.producer
+                if isinstance(p, OutPort):
+                    intf = p.producer
+                else:
+                    intf = p.consumer
 
                 self.vcd_vars[intf] = register_traces_for_intf(
                     p.dtype, scope, self.writer)

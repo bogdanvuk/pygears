@@ -123,16 +123,16 @@ class Intf:
 
     def put_nb(self, val):
         self.events['put'](self, val)
-        for q in self.out_queues:
-            self.events['put_out'](self, q, val)
+        for q, c in zip(self.out_queues, self.end_consumers):
+            self.events['put'](c.consumer, val)
             q.put_nowait(val)
 
     async def put(self, val):
         self.put_nb(val)
 
-        for i, q in enumerate(self.out_queues):
-            print(f"Waiting on ack #{i}")
+        for q, c in zip(self.out_queues, self.end_consumers):
             await q.join()
+            self.events['ack'](c.consumer)
 
         self.events['ack'](self)
         print(f"All acks received")
