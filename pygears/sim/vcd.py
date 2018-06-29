@@ -30,12 +30,12 @@ class VCDTypeVisitor(TypingVisitorBase):
         self.fields[field] = type_
 
     def visit_queue(self, type_, field):
-        self.visit(type_[0], f'{field}.data')
-        self.visit(type_[1:], f'{field}.eot')
+        self.visit(type_[0], f'{field}/data')
+        self.visit(type_[1:], f'{field}/eot')
 
     def visit_union(self, type_, field):
-        self.visit(type_[0], f'{field}.data')
-        self.visit(type_[1], f'{field}.ctrl')
+        self.visit(type_[0], f'{field}/data')
+        self.visit(type_[1], f'{field}/ctrl')
 
     def visit_default(self, type_, field):
         if hasattr(type_, 'fields'):
@@ -59,13 +59,13 @@ class VCDValVisitor(TypingVisitorBase):
         self.change(type_, field, val)
 
     def visit_union(self, type_, field, val=None):
-        self.visit(type_[0], f'{field}.data', val=val[0])
-        self.visit(type_[1], f'{field}.ctrl', val=val[1])
+        self.visit(type_[0], f'{field}/data', val=val[0])
+        self.visit(type_[1], f'{field}/ctrl', val=val[1])
 
     def visit_queue(self, type_, field, val=None):
         val = type_(val)
-        self.visit(type_[0], f'{field}.data', val=val[0])
-        self.visit(type_[1:], f'{field}.eot', val=val[1:])
+        self.visit(type_[0], f'{field}/data', val=val[0])
+        self.visit(type_[1:], f'{field}/eot', val=val[1:])
 
     def visit_uint(self, type_, field, val=None):
         self.change(type_, field, val)
@@ -116,9 +116,18 @@ class VCDHierVisitor(HierVisitorBase):
         self.gtkw = gtkw
         self.vcd_vars = {}
         self.writer = writer
+        self.indent = 0
+
+    def enter_hier(self, name):
+        self.gtkw.begin_group(f'{" "*self.indent}{name}', closed=True)
+        self.indent += 4
+
+    def exit_hier(self, name):
+        self.indent -= 4
+        self.gtkw.end_group(f'{" "*self.indent}{name}', closed=True)
 
     def Gear(self, module):
-        self.gtkw.begin_group(module.basename, closed=True)
+        self.enter_hier(module.basename)
 
         if module in self.sim_map:
             gear_vcd_scope = module.name[1:].replace('/', '.')
@@ -136,18 +145,18 @@ class VCDHierVisitor(HierVisitorBase):
                 self.vcd_vars[intf] = register_traces_for_intf(
                     p.dtype, scope, self.writer)
 
-                self.gtkw.begin_group(p.basename, closed=True)
+                self.enter_hier(p.basename)
                 for name, var in self.vcd_vars[intf].items():
                     width = ''
                     if var.size > 1:
                         width = f'[{var.size - 1}:0]'
 
                     self.gtkw.trace(f'{scope}.{name}{width}')
-                self.gtkw.end_group(p.basename, closed=True)
+                self.exit_hier(p.basename)
 
         super().HierNode(module)
 
-        self.gtkw.end_group(module.basename, closed=True)
+        self.exit_hier(module.basename)
 
         return True
 
