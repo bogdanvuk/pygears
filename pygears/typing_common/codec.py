@@ -10,6 +10,9 @@ class TypeCode(TypingVisitorBase):
     def visit_uint(self, dtype, field=None, data=None):
         return data & dtype_mask(dtype)
 
+    def visit_bool(self, dtype, field=None, data=None):
+        return data
+
     def visit_int(self, dtype, field=None, data=None):
         return data & dtype_mask(dtype)
 
@@ -23,9 +26,9 @@ class TypeCode(TypingVisitorBase):
             raise ValueError
 
         for d, t in zip(reversed(data), reversed(dtype)):
-            data = self.visit(t, data=d)
+            field_data = self.visit(t, data=d)
             ret <<= int(t)
-            ret |= data
+            ret |= field_data
 
         return ret
 
@@ -42,6 +45,9 @@ class TypeDecode(TypingVisitorBase):
             return dtype(data - (1 << int(dtype)))
         else:
             return dtype(data)
+
+    def visit_bool(self, dtype, field=None, data=None):
+        return dtype(data)
 
     def visit_uint(self, dtype, field=None, data=None):
         return dtype(data & dtype_mask(dtype))

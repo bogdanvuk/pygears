@@ -14,6 +14,10 @@ def cur_gear():
     loop = asyncio.get_event_loop()
     return loop.cur_gear
 
+def module():
+    loop = asyncio.get_event_loop()
+    return loop.cur_gear
+
 
 def artifacts_dir():
     return registry('SimArtifactDir')

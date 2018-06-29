@@ -1,7 +1,11 @@
+import operator
+
 from pygears.core.gear import alternative, gear
 from pygears.typing import Integer, Int, Uint
 from pygears.core.intf import IntfOperPlugin
 from pygears.util.hof import oper_tree
+from pygears.util.utils import gather
+from functools import reduce
 
 
 def add_type(dtypes):
@@ -15,9 +19,12 @@ def add_type(dtypes):
 
 
 @gear(svgen={'svmod_fn': 'add.sv'}, enablement=b'len(din) == 2')
-def add(*din: Integer, din0_signed=b'typeof(din0, Int)',
+async def add(*din: Integer, din0_signed=b'typeof(din0, Int)',
         din1_signed=b'typeof(din1, Int)') -> b'add_type(din)':
-    pass
+
+    async with gather(*din) as dout:
+        print(f"Add: {dout}")
+        yield reduce(operator.add, dout)
 
 
 @alternative(add)

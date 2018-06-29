@@ -207,6 +207,13 @@ class Gear(NamedHierNode):
     def definition(self):
         return self.params['definition']
 
+    @property
+    def tout(self):
+        if len(self.intfs) > 1:
+            return tuple(i.dtype for i in self.intfs)
+        else:
+            return self.intfs[0].dtype
+
     def set_ftype(self, ft, i):
         self.dtype_templates[i] = ft
 

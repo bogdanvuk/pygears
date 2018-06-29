@@ -1,4 +1,4 @@
-from pygears.typing.base import EnumerableGenericMeta, GenericMeta
+from pygears.typing.base import EnumerableGenericMeta, GenericMeta, typeof
 from pygears.typing.tuple import Tuple
 from pygears.typing.bool import Bool
 
@@ -101,6 +101,9 @@ class Integer(int, metaclass=IntegerMeta):
     def width(self):
         return len(type(self))
 
+    def __add__(self, other):
+        return (type(self) + type(other))(int(self) + int(other))
+
     def __str__(self):
         return f'{str(type(self))}({int(self)})'
 
@@ -181,3 +184,11 @@ class Uint(Integer, metaclass=UintMeta):
 
     """
     __parameters__ = ['N']
+
+    def __sub__(self, other):
+        if (typeof(type(other), Uint)):
+            res = int(self) - int(other)
+            tout = type(self) - type(other)
+            return tout((res, res < 0))
+        else:
+            return super().__sub__(self, other)

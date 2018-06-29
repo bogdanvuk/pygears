@@ -5,7 +5,17 @@ from pygears.core.intf import IntfOperPlugin
 @gear
 async def sieve(din, *, index) -> b'din[index]':
     async with din as d:
-        yield d[index]
+        dout = []
+        for i in index:
+            if isinstance(i, slice):
+                dout.extend(d[i])
+            else:
+                dout.append(d[i])
+
+        if len(dout) == 1:
+            dout = dout[0]
+
+        yield dout
 
 
 def getitem(self, index):
