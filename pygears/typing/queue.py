@@ -79,7 +79,7 @@ class Queue(tuple, metaclass=QueueMeta):
         outtype = type(self)[index]
         for i in index:
             if isinstance(i, slice):
-                if (i.stop == 0) or (i.stop - i.start > self.lvl):
+                if (i.stop == 0) or (i.stop - i.start > type(self).lvl):
                     raise IndexError
                 elif i.start == 0 and i.stop == 1:
                     data_incl = True
