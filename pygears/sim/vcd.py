@@ -90,7 +90,7 @@ def register_traces_for_intf(dtype, scope, writer):
 
         for name, t in v.fields.items():
             vcd_vars[name] = writer.register_var(
-                scope, name, 'wire', size=int(t))
+                scope, name, 'wire', size=max(int(t), 1))
 
     for sig in ('valid', 'ready'):
         vcd_vars[sig] = writer.register_var(scope, sig, 'wire', size=1, init=0)

@@ -1,6 +1,8 @@
 from pygears.core.gear import alternative, gear
-from pygears.typing import Queue, Tuple
+from pygears.typing import Queue, Tuple, typeof
 from pygears.common import ccat
+from pygears.util.utils import quiter_async
+from pygears.sim import cur_gear
 
 
 def lvl_if_queue(t):
@@ -22,8 +24,20 @@ def cart_type(dtypes):
 
 
 @gear(enablement=b'len(din) == 2')
-def cart(*din) -> b'cart_type(din)':
-    pass
+async def cart(*din) -> b'cart_type(din)':
+    din_t = [din[i].dtype for i in 2]
+
+    outtype = cur_gear().out_types[0].dtype
+
+    queue_id, single_id = (0, 1) if typeof(din_t[0], Queue) else (1, 0)
+
+    async with din[single_id] as single_data:
+        async for queue_data, queue_eot in quiter_async(din[queue_id]):
+            dout = [0, 0] + [b for b in queue_eot]
+            dout[single_id] = single_data
+            dout[queue_id] = queue_data
+
+            yield outtype(tuple(dout))
 
 
 @alternative(cart)
@@ -57,8 +71,20 @@ def uncart(din, *, dtypes):
 
 
 @gear(enablement=b'len(din) == 2')
-def cart_sync(*din) -> b'din':
-    pass
+async def cart_sync(*din) -> b'din':
+    din_t = [din[i].dtype for i in 2]
+
+    outtype = cur_gear().out_types[0].dtype
+
+    queue_id, single_id = (0, 1) if typeof(din_t[0], Queue) else (1, 0)
+
+    async with din[single_id] as single_data:
+        async for queue_data, queue_eot in quiter_async(din[queue_id]):
+            dout = [0, 0] + [b for b in queue_eot]
+            dout[single_id] = single_data
+            dout[queue_id] = queue_data
+
+            yield outtype(tuple(dout))
 
 
 @alternative(cart_sync)

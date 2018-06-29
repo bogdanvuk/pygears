@@ -68,10 +68,14 @@ class TupleMeta(EnumerableGenericMeta):
 
 class Tuple(tuple, metaclass=TupleMeta):
     # def __new__(self, val: tuple):
-    def __new__(cls, val: tuple):
+    def __new__(cls, val):
         print(f"Class: {cls}")
-        return super(Tuple, cls).__new__(cls,
-                                         tuple(t(v) for t, v in zip(cls, val)))
+        if isinstance(val, dict):
+            tpl_val = tuple(t(val[f]) for t, f in zip(cls, cls.fields))
+        else:
+            tpl_val = tuple(t(v) for t, v in zip(cls, val))
+
+        return super(Tuple, cls).__new__(cls, tpl_val)
 
     def __getitem__(self, index):
         index = type(self).index_norm(index)

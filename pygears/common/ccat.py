@@ -1,13 +1,17 @@
 from pygears.core.gear import gear
+from pygears.util.utils import gather
 
 
 @gear
 async def ccat(*din) -> b'Tuple[din]':
-    din_data = []
-    for d in din:
-        din_data.append(await d.pull())
+    async with gather(*din) as dout:
+        yield dout
 
-    yield tuple(din_data)
+    # din_data = []
+    # for d in din:
+    #     din_data.append(await d.pull())
 
-    for d in din:
-        d.ack()
+    # yield tuple(din_data)
+
+    # for d in din:
+    #     d.ack()
