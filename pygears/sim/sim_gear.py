@@ -66,8 +66,9 @@ class SimGear:
                 else:
                     await self.func(*args, **kwds)
 
-                if all(a.done() for a in args):
-                    raise GearDone
+                if args:
+                    if all(a.done() for a in args):
+                        raise GearDone
 
         except GearDone as e:
             self.finish()

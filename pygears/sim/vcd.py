@@ -11,6 +11,21 @@ def match(val, include_pattern):
     return any(fnmatch.fnmatch(val, p) for p in include_pattern)
 
 
+def register_traces_for_intf(dtype, scope, writer):
+    if typeof(dtype, TLM):
+        vcd_data = writer.register_var(scope, f'{scope}.data', 'string')
+    else:
+        vcd_data = writer.register_var(
+            scope, f'{scope}.data', 'wire', size=int(dtype))
+
+    vcd_valid = writer.register_var(
+        scope, f'{scope}.valid', 'wire', size=1, init=0)
+    vcd_ready = writer.register_var(
+        scope, f'{scope}.ready', 'wire', size=1, init=0)
+
+    return {'data': vcd_data, 'valid': vcd_valid, 'ready': vcd_ready}
+
+
 class VCD:
     def __init__(self, top, conf):
         vcd_file = open(
@@ -53,26 +68,8 @@ class VCD:
                 scope = '.'.join([gear_vcd_scope, p.basename])
                 intf = p.producer
 
-                if typeof(p.dtype, TLM):
-                    vcd_data = self.writer.register_var(
-                        scope, f'{scope}.data', 'string')
-                else:
-                    vcd_data = self.writer.register_var(
-                        scope, f'{scope}.data', 'wire', size=int(p.dtype))
-                    print(
-                        f'VCD for {module.name}.{p.basename}: {scope, "wire", int(p.dtype)}'
-                    )
-
-                vcd_valid = self.writer.register_var(
-                    scope, f'{scope}.valid', 'wire', size=1, init=0)
-                vcd_ready = self.writer.register_var(
-                    scope, f'{scope}.ready', 'wire', size=1, init=0)
-
-                self.vcd_vars[intf] = {
-                    'data': vcd_data,
-                    'valid': vcd_valid,
-                    'ready': vcd_ready
-                }
+                self.vcd_vars[intf] = register_traces_for_intf(
+                    p.dtype, scope, self.writer)
 
                 intf.events['put'].append(self.intf_put)
                 intf.events['ack'].append(self.intf_ack)

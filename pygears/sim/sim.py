@@ -162,6 +162,15 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             if (timeout is not None) and (timestep == timeout):
                 break
 
+        for module, sim_gear in registry('SimMap').items():
+            for p in module.in_ports:
+                q = p.get_queue()
+                print(f'{module.name}.{p.basename} queue empty: {q.empty()}')
+                if not q.empty():
+                    print(
+                        f'Input data on port {module.name}.{p.basename} was not acknowledged'
+                    )
+
         self.events['after_run'](self)
 
 

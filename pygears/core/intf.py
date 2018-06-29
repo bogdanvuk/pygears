@@ -112,9 +112,12 @@ class Intf:
         # else:
         self.end_consumers = get_consumer_tree(self)
         self._out_queues = [
-            # asyncio.Queue(maxsize=1, loop=registry('EventLoop'))
             asyncio.Queue(maxsize=1) for _ in self.end_consumers
         ]
+
+        for i, q in enumerate(self._out_queues):
+            q.intf = self
+            q.index = i
 
         return self._out_queues
 
@@ -140,7 +143,9 @@ class Intf:
         return all(q.empty() for q in self.out_queues)
 
     def empty(self):
-        return self.in_queue.empty()
+        # return self.in_queue.empty()
+        intf, index = self.in_queue
+        return intf.out_queues[index].empty()
 
     def finish(self):
         self._done = True

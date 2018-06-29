@@ -32,10 +32,18 @@ async def sv_rng(cfg: TCfg,
 
     async with cfg as (start, cnt, incr):
 
-        for data, last in quiter(
-                range(int(start),
-                      int(cnt) + sign(int(incr)) * 1, int(incr))):
+        if not cnt_steps:
+            rng_cfg = [int(start), int(cnt), int(incr)]
+        else:
+            rng_cfg = [
+                int(start),
+                int(start) + int(cnt) * int(incr),
+                int(incr)
+            ]
 
+        rng_cfg[1] += sign(int(incr)) * 1
+
+        for data, last in quiter(range(*rng_cfg)):
             yield outtype[0](data), last
 
 
