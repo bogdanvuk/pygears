@@ -87,7 +87,7 @@ class SimVerilated(SimGear):
 
             if any(d.active for d in self.c_out_drvs):
                 for p, d in zip(self.gear.out_ports, self.c_out_drvs):
-                    if p.producer.ready():
+                    if p.producer.ready_nb():
                         print(f'Port {p.basename} acked')
                         d.ack()
 

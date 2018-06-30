@@ -127,20 +127,21 @@ class Intf:
             self.events['put'](c.consumer, val)
             q.put_nowait(val)
 
-    async def put(self, val):
-        self.put_nb(val)
-
-        for q, c in zip(self.out_queues, self.end_consumers):
-            await q.join()
-            self.events['ack'](c.consumer)
+    async def ready(self):
+        if not self.ready_nb():
+            for q, c in zip(self.out_queues, self.end_consumers):
+                await q.join()
+                self.events['ack'](c.consumer)
 
         self.events['ack'](self)
         print(f"All acks received")
 
-        # await asyncio.wait([q.join() for q in self.out_queues], loop=registry('EventLoop'))
-
-    def ready(self):
+    def ready_nb(self):
         return all(q.empty() for q in self.out_queues)
+
+    async def put(self, val):
+        self.put_nb(val)
+        await self.ready()
 
     def empty(self):
         # return self.in_queue.empty()

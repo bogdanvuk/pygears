@@ -26,6 +26,8 @@ async def quiter_async(intf):
 
         yield data
 
+        intf.ack()
+
 
 class gather:
     def __init__(self, *din):

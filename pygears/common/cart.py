@@ -27,15 +27,31 @@ def cart_type(dtypes):
 async def cart(*din) -> b'cart_type(din)':
     din_t = [d.dtype for d in din]
 
-    queue_id, single_id = (0, 1) if typeof(din_t[0], Queue) else (1, 0)
+    if all(typeof(t, Queue) for t in din_t):
+        queue_id, single_id = 1, 0
+    elif typeof(din_t[0], Queue):
+        queue_id, single_id = 0, 1
+    else:
+        queue_id, single_id = 1, 0
 
     async with din[single_id] as single_data:
         async for queue_data in quiter_async(din[queue_id]):
-            dout = list(queue_data)
-            dout.insert(single_id, single_data)
 
-            print(tuple(dout))
-            yield module().tout(tuple(dout))
+            if typeof(din_t[single_id], Queue):
+                print(module().name)
+                print(din_t[single_id])
+                print(single_data)
+                single_eot = single_data.eot
+                single_data = single_data.data
+            else:
+                single_eot = []
+
+            out_data = [0, 0]
+            out_data[queue_id] = queue_data.data
+            out_data[single_id] = single_data
+
+            print((tuple(out_data), *queue_data.eot, *single_eot))
+            yield module().tout((tuple(out_data), *queue_data.eot, *single_eot))
 
 
 @alternative(cart)

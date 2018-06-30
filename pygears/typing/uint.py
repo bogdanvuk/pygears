@@ -113,6 +113,12 @@ class Integer(int, metaclass=IntegerMeta):
     def __int__(self):
         return super(Integer, self).__int__()
 
+    def __getitem__(self, index):
+        if index < self.width:
+            return Bool(int(self) & (1 << index))
+        else:
+            raise IndexError
+
 
 class IntMeta(IntegerMeta):
     def __str__(self):

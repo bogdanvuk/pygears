@@ -27,8 +27,9 @@ class TypeCode(TypingVisitorBase):
 
         for d, t in zip(reversed(data), reversed(dtype)):
             field_data = self.visit(t, data=d)
-            ret <<= int(t)
-            ret |= field_data
+            if field_data is not None:
+                ret <<= int(t)
+                ret |= field_data
 
         return ret
 

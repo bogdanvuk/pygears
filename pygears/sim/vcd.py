@@ -10,6 +10,7 @@ from pygears.core.hier_node import HierVisitorBase
 import os
 import fnmatch
 import itertools
+import atexit
 
 
 def match(val, include_pattern):
@@ -163,6 +164,9 @@ class VCDHierVisitor(HierVisitorBase):
 
 class VCD:
     def __init__(self, top, conf):
+        self.finished = False
+        atexit.register(self.finish)
+
         outdir = registry('SimArtifactDir')
         vcd_file = open(os.path.join(outdir, 'pygears.vcd'), 'w')
 
@@ -178,6 +182,7 @@ class VCD:
 
         self.writer = VCDWriter(vcd_file, timescale='1 ns', date='today')
         bind('VCDWriter', self.writer)
+
 
         sim = registry('Simulator')
         sim.events['before_timestep'].append(self.before_timestep)
@@ -250,9 +255,14 @@ class VCD:
 
         return True
 
+    def finish(self):
+        if not self.finished:
+            self.writer.close()
+            self.finished = True
+
+
     def after_run(self, sim):
-        self.writer.close()
-        return True
+        self.finish()
 
 
 # class SimVCDPlugin(SimPlugin):

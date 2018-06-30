@@ -1,5 +1,6 @@
 from pygears.core.gear import gear
 from pygears.core.intf import IntfOperPlugin
+from pygears.sim import module
 
 
 @gear
@@ -15,7 +16,7 @@ async def sieve(din, *, index) -> b'din[index]':
         if len(dout) == 1:
             dout = dout[0]
 
-        yield dout
+        yield module().tout(dout)
 
 
 def getitem(self, index):

@@ -103,14 +103,20 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
         return fut
 
+    def cancel(self, sim_gear):
+        try:
+            self.tasks[sim_gear].throw(GearDone)
+        except (StopIteration, GearDone):
+            self.done.add(sim_gear)
+        else:
+            raise Exception("Gear didn't stop on cancel!")
+
+
     def maybe_run_gear(self, sim_gear):
         if sim_gear in self.cancelled:
-            try:
-                self.tasks[sim_gear].throw(GearDone)
-            except (StopIteration, GearDone):
-                self.cancelled.remove(sim_gear)
-            else:
-                raise Exception("Gear didn't stop on cancel!")
+            self.cancel(sim_gear)
+            self.cancelled.remove(sim_gear)
+
         if sim_gear not in self.ready:
             return
 
@@ -121,6 +127,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         try:
             data = self.tasks[sim_gear].send(self.task_data[sim_gear])
         except (StopIteration, GearDone):
+            self.done.add(sim_gear)
             print(f"Task {sim_gear.gear.name} done")
         else:
             if isinstance(data, SimFuture):
@@ -133,6 +140,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         self.wait_list = {}
         self.ready = set(self.sim_gears)
         self.cancelled = set()
+        self.done = set()
         bind('ClkEvent', asyncio.Event())
         bind('DeltaEvent', asyncio.Event())
         bind('Timestep', 0)
@@ -165,6 +173,11 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             self.events['after_timestep'](self, timestep)
             if (timeout is not None) and (timestep == timeout):
                 break
+
+        for sim_gear in self.sim_gears:
+            if not sim_gear in self.done:
+                print(f'Canceling {sim_gear.gear.name}')
+                self.cancel(sim_gear)
 
         for module, sim_gear in registry('SimMap').items():
             for p in module.in_ports:

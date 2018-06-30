@@ -294,11 +294,14 @@ class EnumerableGenericMeta(GenericMeta):
                 if i.start is None:
                     i = slice(0, i.stop)
 
+                if i.start < 0:
+                    i = slice(len(self) + i.start, i.stop, i.step)
+
                 if i.stop is None:
-                    i = slice(i.start, len(self))
+                    i = slice(i.start, len(self), i.step)
 
                 if i.stop < 0:
-                    i = slice(i.start, len(self) + i.stop)
+                    i = slice(i.start, len(self) + i.stop, i.step)
 
                 if i.stop > len(self):
                     raise IndexError

@@ -12,6 +12,8 @@ async def check(din, *, ref):
 
     finally:
         print(f"Here: {items}")
+        print(f"{ref}")
+        print(f"{items == ref}")
         sim_assert(items == ref)
 
 

@@ -208,6 +208,13 @@ class Gear(NamedHierNode):
         return self.params['definition']
 
     @property
+    def dout(self):
+        if len(self.intfs) > 1:
+            return tuple(p.producer for p in self.out_ports)
+        else:
+            return self.out_ports[0].producer
+
+    @property
     def tout(self):
         if len(self.intfs) > 1:
             return tuple(i.dtype for i in self.intfs)

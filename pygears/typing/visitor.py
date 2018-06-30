@@ -28,7 +28,7 @@ class TypingVisitorBase:
         else:
             try:
                 return tuple(
-                    self.visit(t, f, **kwds)
-                    for t, f in zip(type_, type_.fields))
+                    self.visit(t, **kwds)
+                    for t in type_)
             except TypeError:
                 pass
