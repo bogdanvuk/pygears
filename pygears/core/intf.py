@@ -48,7 +48,7 @@ class Intf:
 
     def __init__(self, dtype):
         self.consumers = []
-        self.end_consumers = []
+        self._end_consumers = None
         self.dtype = dtype
         self.producer = None
         self._in_queue = None
@@ -77,6 +77,13 @@ class Intf:
     def connect(self, port):
         self.consumers.append(port)
         port.producer = self
+
+    @property
+    def end_consumers(self):
+        if self._end_consumers is None:
+            self._end_consumers = get_consumer_tree(self)
+
+        return self._end_consumers
 
     @property
     def in_queue(self):
@@ -110,7 +117,6 @@ class Intf:
         # if self.producer is not None:
         #     return [self.in_queue]
         # else:
-        self.end_consumers = get_consumer_tree(self)
         self._out_queues = [
             asyncio.Queue(maxsize=1) for _ in self.end_consumers
         ]

@@ -8,13 +8,9 @@ from pygears import registry, find, PluginBase, bind, GearDone
 from pygears.sim.inst import sim_inst
 from pygears.core.intf import get_consumer_tree
 from pygears.core.sim_event import SimEvent
-
+from pygears.core.gear import GearPlugin
 
 def cur_gear():
-    loop = asyncio.get_event_loop()
-    return loop.cur_gear
-
-def module():
     loop = asyncio.get_event_loop()
     return loop.cur_gear
 
@@ -66,10 +62,12 @@ def topo_sort(dag):
 class EventLoop(asyncio.events.AbstractEventLoop):
     def __init__(self):
         self.events = {
+            'before_setup': SimEvent(),
             'before_run': SimEvent(),
             'after_run': SimEvent(),
             'before_timestep': SimEvent(),
             'after_timestep': SimEvent(),
+            'after_cleanup': SimEvent()
         }
 
     def get_tasks(self):
@@ -123,6 +121,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         self.ready.remove(sim_gear)
 
         self.cur_gear = sim_gear.gear
+        bind('CurrentModule', self.cur_gear)
         print(f"Running task {sim_gear.gear.name}")
         try:
             data = self.tasks[sim_gear].send(self.task_data[sim_gear])
@@ -149,6 +148,11 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         delta = registry('DeltaEvent')
         timestep = 0
 
+        self.events['before_setup'](self)
+
+        for sim_gear in self.sim_gears:
+            sim_gear.setup()
+
         self.events['before_run'](self)
         while self.ready:
             print("Forward pass...")
@@ -174,24 +178,19 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             if (timeout is not None) and (timestep == timeout):
                 break
 
-        for sim_gear in self.sim_gears:
-            if not sim_gear in self.done:
-                print(f'Canceling {sim_gear.gear.name}')
-                self.cancel(sim_gear)
-
-        for module, sim_gear in registry('SimMap').items():
-            for p in module.in_ports:
-                q = p.get_queue()
-                print(f'{module.name}.{p.basename} queue empty: {q.empty()}')
-                if not q.empty():
-                    print(
-                        f'Input data on port {module.name}.{p.basename} was not acknowledged'
-                    )
+        print(f"----------- Simulation done ---------------")
 
         self.events['after_run'](self)
 
+        for sim_gear in self.sim_gears:
+            if not sim_gear in self.done:
+                # print(f'Canceling {sim_gear.gear.name}')
+                self.cancel(sim_gear)
 
-def sim(outdir=None, extens=[], **conf):
+        self.events['after_cleanup'](self)
+
+
+def sim(outdir=None, extens=[], run=True, **conf):
     if outdir is None:
         outdir = tempfile.mkdtemp()
 
@@ -208,16 +207,20 @@ def sim(outdir=None, extens=[], **conf):
     for oper in itertools.chain(registry('SimFlow'), extens):
         top = oper(top, conf)
 
-    loop.run()
+    if run:
+        loop.run()
+
+    return loop
 
 
-class SimPlugin(PluginBase):
+class SimPlugin(GearPlugin):
     @classmethod
     def bind(cls):
         cls.registry['SimFlow'] = [sim_inst]
         cls.registry['SimTasks'] = {}
         cls.registry['SimConfig'] = {'dbg_assert': False}
         cls.registry['SVGenSystemVerilogImportPaths'] = []
+        cls.registry['GearExtraParams']['sim_setup'] = None
 
     @classmethod
     def reset(cls):

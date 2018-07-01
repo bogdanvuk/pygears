@@ -17,10 +17,10 @@ class SimInstVisitor(HierVisitorBase):
             sim_cls = self.namespace.get(module.definition, None)
 
         if sim_cls:
-            print(f"Recognized {module.name} as {sim_cls}")
+            # print(f"Recognized {module.name} as {sim_cls}")
             sim_inst = sim_cls(module)
         elif is_simgear_func(module.func):
-            print(f"Recognized {module.name} as sim_gear")
+            # print(f"Recognized {module.name} as sim_gear")
             sim_inst = SimGear(module)
 
         if sim_inst:

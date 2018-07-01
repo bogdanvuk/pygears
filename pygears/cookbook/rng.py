@@ -1,7 +1,7 @@
 from pygears.typing import Integer, Tuple, Queue, Int, typeof, Uint
 from pygears import gear, alternative
 from pygears.common import ccat, fmap, cart, permuted_apply
-from pygears.sim import module
+from pygears import module
 from pygears.util.utils import quiter
 
 TCfg = Tuple[{

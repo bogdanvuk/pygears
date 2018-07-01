@@ -16,7 +16,7 @@ def delta():
 
 
 from pygears import registry
-from .sim import sim, module, cur_gear, artifacts_dir, sim_assert
+from .sim import sim, cur_gear, artifacts_dir, sim_assert
 
 from .modules.drv import drv
 from .modules.mon import mon
@@ -25,5 +25,5 @@ from .modules.scoreboard import scoreboard
 
 __all__ = [
     'sim', 'drv', 'mon', 'scoreboard', 'cur_gear', 'artifacts_dir',
-    'sim_assert', 'seqr', 'clk', 'delta', 'timestep', 'module'
+    'sim_assert', 'seqr', 'clk', 'delta', 'timestep'
 ]

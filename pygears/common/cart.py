@@ -2,7 +2,7 @@ from pygears.core.gear import alternative, gear
 from pygears.typing import Queue, Tuple, typeof
 from pygears.common import ccat
 from pygears.util.utils import quiter_async
-from pygears.sim import cur_gear, module
+from pygears import module
 
 
 def lvl_if_queue(t):
@@ -35,17 +35,16 @@ async def cart(*din) -> b'cart_type(din)':
         queue_id, single_id = 1, 0
 
     async with din[single_id] as single_data:
+        if typeof(din_t[single_id], Queue):
+            print(module().name)
+            print(din_t[single_id])
+            print(single_data)
+            single_eot = single_data.eot
+            single_data = single_data.data
+        else:
+            single_eot = []
+
         async for queue_data in quiter_async(din[queue_id]):
-
-            if typeof(din_t[single_id], Queue):
-                print(module().name)
-                print(din_t[single_id])
-                print(single_data)
-                single_eot = single_data.eot
-                single_data = single_data.data
-            else:
-                single_eot = []
-
             out_data = [0, 0]
             out_data[queue_id] = queue_data.data
             out_data[single_id] = single_data

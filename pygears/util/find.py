@@ -4,6 +4,9 @@ from pygears import registry
 def _find_rec(path, root):
     parts = path.split("/")
 
+    if parts[0] == '..':
+        return _find_rec("/".join(parts[1:]), root.parent)
+
     for c in root.child:
         if hasattr(c, 'basename') and c.basename == parts[0]:
             child = c
@@ -18,10 +21,15 @@ def _find_rec(path, root):
 
 
 def find(path, root=None):
-    if not root:
+    if path.startswith('/'):
+        path = path[1:]
         root = registry('HierRoot')
+        relpath = False
+    else:
+        root = registry('CurrentModule')
+        relpath = True
 
-    path = path[len(root.name) + 1:]
+
     if path == '':
         return root
 

@@ -1,6 +1,6 @@
 from pygears.core.gear import gear
 from pygears.typing import Queue, Unit
-from pygears.sim import module
+from pygears import module
 from pygears.util.utils import quiter_async
 
 

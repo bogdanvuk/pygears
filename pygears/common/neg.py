@@ -1,7 +1,7 @@
 from pygears.core.gear import gear
 from pygears.typing import Integer, Int
 from pygears.core.intf import IntfOperPlugin
-from pygears.sim import module
+from pygears import module
 
 
 def neg_type(dtype):

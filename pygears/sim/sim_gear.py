@@ -42,7 +42,9 @@ class SimGear:
         for port in self.gear.out_ports:
             port.producer.finish()
 
-        print(f"SimGear canceling: {self.gear.name}")
+    def setup(self):
+        if self.gear.params['sim_setup'] is not None:
+            self.gear.params['sim_setup'](self.gear)
 
     async def run(self):
         self.task = asyncio.Task.current_task()
@@ -61,7 +63,12 @@ class SimGear:
 
                         for p, v in zip(self.gear.out_ports, val):
                             if v is not None:
-                                await p.producer.put(v)
+                                p.producer.put_nb(v)
+
+                        for p, v in zip(self.gear.out_ports, val):
+                            if v is not None:
+                                await p.producer.ready()
+
                         ack_timestep = timestep()
                 else:
                     await self.func(*args, **kwds)
@@ -71,5 +78,6 @@ class SimGear:
                         raise GearDone
 
         except GearDone as e:
+            print(f"SimGear canceling: {self.gear.name}")
             self.finish()
             raise e

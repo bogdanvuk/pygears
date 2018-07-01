@@ -1,20 +1,17 @@
 from pygears.core.gear import gear
 from pygears.core.intf import IntfOperPlugin
-from pygears.sim import module
+from pygears import module
 
 
 @gear
 async def sieve(din, *, index) -> b'din[index]':
     async with din as d:
-        dout = []
+        dout = None
         for i in index:
-            if isinstance(i, slice):
-                dout.extend(d[i])
+            if dout is None:
+                dout = d[i]
             else:
-                dout.append(d[i])
-
-        if len(dout) == 1:
-            dout = dout[0]
+                dout += d[i]
 
         yield module().tout(dout)
 

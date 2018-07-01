@@ -4,7 +4,7 @@ from pygears.typing.base import TypingMeta, typeof
 from pygears.core.intf import IntfOperPlugin
 from pygears.typing_common.codec import code, decode
 from pygears.typing import Int, Tuple, Queue, Uint
-from pygears.sim import module
+from pygears import module
 
 
 @gear

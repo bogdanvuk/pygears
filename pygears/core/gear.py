@@ -59,11 +59,11 @@ class create_hier:
         self.gear = gear
 
     def __enter__(self):
-        bind('CurrentHier', self.gear)
+        bind('CurrentModule', self.gear)
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
-        bind('CurrentHier', self.gear.parent)
+        bind('CurrentModule', self.gear.parent)
         if exception_type is not None:
             self.gear.clear()
 
@@ -95,7 +95,7 @@ class Gear(NamedHierNode):
         return gear.resolve()
 
     def __init__(self, func, *args, name=None, intfs=[], outnames=[], **kwds):
-        super().__init__(name, registry('CurrentHier'))
+        super().__init__(name, registry('CurrentModule'))
         self.func = func
         self.__doc__ = func.__doc__
 
@@ -389,12 +389,14 @@ def gear(func, gear_cls=Gear, **meta_kwds):
 
     return p
 
+def module():
+    return registry('CurrentModule')
 
 class GearPlugin(PluginBase):
     @classmethod
     def bind(cls):
         cls.registry['HierRoot'] = NamedHierNode('')
-        cls.registry['CurrentHier'] = cls.registry['HierRoot']
+        cls.registry['CurrentModule'] = cls.registry['HierRoot']
         cls.registry['GearMetaParams'] = {'enablement': True}
         cls.registry['GearExtraParams'] = {
             'name': None,
@@ -406,4 +408,4 @@ class GearPlugin(PluginBase):
     @classmethod
     def reset(cls):
         bind('HierRoot', NamedHierNode(''))
-        bind('CurrentHier', cls.registry['HierRoot'])
+        bind('CurrentModule', cls.registry['HierRoot'])
