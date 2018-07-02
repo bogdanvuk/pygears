@@ -25,5 +25,10 @@ setup(
         'Programming Language :: Python :: 3.6',
     ],
     keywords='Gears System Design Python Simulator HDL ASIC FPGA',
-    packages=find_packages(exclude=['examples*', 'docs', 'svlib'])
+    packages=find_packages(exclude=['examples*', 'docs', 'svlib']),
+    entry_points={
+        'console_scripts': [
+            'pywave = pygears.sim.extens.pywave:main',
+        ],
+    },
 )

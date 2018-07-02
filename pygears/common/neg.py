@@ -12,7 +12,7 @@ def neg_type(dtype):
 async def neg(din: Integer) -> b'neg_type(din)':
 
     async with din as d:
-        yield module().tout(d)
+        yield module().tout(-d)
 
 
 class NegIntfOperPlugin(IntfOperPlugin):

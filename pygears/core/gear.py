@@ -25,6 +25,24 @@ class GearTypeNotSpecified(Exception):
 class GearArgsNotSpecified(Exception):
     pass
 
+def get_instantiation_src(module):
+    from traceback import extract_tb, format_list, walk_tb
+    from traceback import format_exception_only
+    # from pygears.util.print_hier import print_hier
+    # from pygears import find
+    import os
+
+    # try:
+    #     print_hier(find('/'))
+    # except Exception as e:
+    #     pass
+
+    for s, t in zip(
+            format_list(extract_tb(traceback)), walk_tb(traceback)):
+        if not t[0].f_code.co_filename.startswith(
+                os.path.dirname(__file__)):
+            print(s, end='')
+
 
 def check_arg_num(argnames, varargsname, args):
     if (len(args) < len(argnames)) or (not varargsname and

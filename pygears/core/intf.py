@@ -142,7 +142,7 @@ class Intf:
                 self.events['ack'](c.consumer)
 
         self.events['ack'](self)
-        print(f"All acks received")
+        # print(f"All acks received")
 
     def ready_nb(self):
         return all(q.empty() for q in self.out_queues)

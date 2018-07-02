@@ -10,6 +10,7 @@ from pygears.core.intf import get_consumer_tree
 from pygears.core.sim_event import SimEvent
 from pygears.core.gear import GearPlugin
 
+
 def cur_gear():
     loop = asyncio.get_event_loop()
     return loop.cur_gear
@@ -92,7 +93,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             print(f'Future cancelled: {sim_gear.gear.name} ready.')
         else:
             self.ready.add(sim_gear)
-            print(f'Future done: {sim_gear.gear.name} ready.')
+            # print(f'Future done: {sim_gear.gear.name} ready.')
 
     def create_future(self):
         """Create a Future object attached to the loop."""
@@ -109,7 +110,6 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         else:
             raise Exception("Gear didn't stop on cancel!")
 
-
     def maybe_run_gear(self, sim_gear):
         if sim_gear in self.cancelled:
             self.cancel(sim_gear)
@@ -122,12 +122,12 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
         self.cur_gear = sim_gear.gear
         bind('CurrentModule', self.cur_gear)
-        print(f"Running task {sim_gear.gear.name}")
+        # print(f"Running task {sim_gear.gear.name}")
         try:
             data = self.tasks[sim_gear].send(self.task_data[sim_gear])
         except (StopIteration, GearDone):
             self.done.add(sim_gear)
-            print(f"Task {sim_gear.gear.name} done")
+            # print(f"Task {sim_gear.gear.name} done")
         else:
             if isinstance(data, SimFuture):
                 self.wait_list[data] = sim_gear
@@ -155,14 +155,14 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
         self.events['before_run'](self)
         while self.ready:
-            print("Forward pass...")
+            # print("Forward pass...")
             for sim_gear in self.sim_gears:
                 self.maybe_run_gear(sim_gear)
 
             delta.set()
             delta.clear()
 
-            print("Back pass...")
+            # print("Back pass...")
             for sim_gear in reversed(self.sim_gears):
                 self.maybe_run_gear(sim_gear)
 

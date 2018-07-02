@@ -24,7 +24,6 @@ async def flatten(din: Queue['tdin', 'din_lvl'],
         if len(dout) == 1:
             dout = dout[0]
 
-        print("Flatten: ", dout)
         yield outtype(dout)
 
 

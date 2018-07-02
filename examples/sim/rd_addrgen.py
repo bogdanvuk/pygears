@@ -48,8 +48,12 @@ seqr(t=cfg_t, seq=[cfg_t(cfg)]) \
     | rd_addrgen \
     | shred
 
-from pygears.util.graphviz import graph
-s = sim(outdir='/tmp/proba', extens=[VCD, ActivityReporter], vcd_include=['*'], run=False)
+s = sim(
+    outdir='/tmp/proba',
+    # # extens=[VCD, ActivityReporter],
+    # extens=[ActivityReporter],
+    vcd_include=['*'],
+    run=False)
 
 # g = graph()
 # g.write_svg('proba.svg')
@@ -59,4 +63,3 @@ s = sim(outdir='/tmp/proba', extens=[VCD, ActivityReporter], vcd_include=['*'], 
 # g.write_dot('proba.dot')
 
 s.run()
-

@@ -1,12 +1,38 @@
+import pprint
 from pygears import registry
 from pygears.core.hier_node import HierVisitorBase
+import textwrap
+
+
+def module_signature(module, fullname, params):
+    t = module.get_type()
+    if t is None:
+        types = "None"
+        sizes = ""
+    elif isinstance(t, tuple):
+        types = ', '.join([str(tt) for tt in t])
+        sizes = ', '.join([str(int(tt)) for tt in t])
+    else:
+        types = str(t)
+        sizes = int(t)
+
+    if fullname:
+        name = module.name
+    else:
+        name = module.basename
+
+    return f'{name}: {types} ({sizes})'
 
 
 class Visitor(HierVisitorBase):
+    omitted = ['definition', 'sim_setup']
+
     def __init__(self, params=False, fullname=False):
         self.indent = ""
         self.params = params
         self.fullname = fullname
+        self.res = []
+        self.pp = pprint.PrettyPrinter(indent=4, width=120)
 
     def Gear(self, node):
         self.print_module_signature(node)
@@ -32,15 +58,23 @@ class Visitor(HierVisitorBase):
         else:
             name = module.basename
 
-        print(f'{self.indent}{name}: {types} ({sizes})')
+        self.res.append(f'{self.indent}{name}: {types} ({sizes})')
         if self.params:
-            print(
-                f'{self.indent}    : {", ".join([p+": "+str(v) for p,v in module.params.items()])}'
-            )
+            params = {
+                p: repr(v)
+                for p, v in module.params.items() if p not in self.omitted
+            }
+
+            p = self.pp.pformat(params)
+            # print(p)
+            self.res.append(textwrap.indent(p, self.indent))
+            # self.res.append(f'{self.indent}    {p}')
 
 
 def print_hier(root=None, params=False, fullname=False):
     if root is None:
         root = registry('HierRoot')
 
-    Visitor(params, fullname).visit(root)
+    v = Visitor(params, fullname)
+    v.visit(root)
+    print('\n'.join(v.res))

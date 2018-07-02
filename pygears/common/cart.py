@@ -36,9 +36,6 @@ async def cart(*din) -> b'cart_type(din)':
 
     async with din[single_id] as single_data:
         if typeof(din_t[single_id], Queue):
-            print(module().name)
-            print(din_t[single_id])
-            print(single_data)
             single_eot = single_data.eot
             single_data = single_data.data
         else:
@@ -49,8 +46,8 @@ async def cart(*din) -> b'cart_type(din)':
             out_data[queue_id] = queue_data.data
             out_data[single_id] = single_data
 
-            print((tuple(out_data), *queue_data.eot, *single_eot))
-            yield module().tout((tuple(out_data), *queue_data.eot, *single_eot))
+            yield module().tout((tuple(out_data), *queue_data.eot,
+                                 *single_eot))
 
 
 @alternative(cart)
@@ -68,9 +65,6 @@ def cart_vararg(*din, enablement=b'len(din) > 2'):
 def uncart(din, *, dtypes):
     zdata = din[0]
     zlast = din[1:]
-
-    # print(din.dtype)
-    # print(dtypes)
 
     def split():
         for i, d in enumerate(dtypes):

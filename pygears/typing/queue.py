@@ -68,8 +68,6 @@ class Queue(tuple, metaclass=QueueMeta):
     __parameters__ = ['T', 'N']
 
     def __new__(cls, val: tuple):
-        print(type(val))
-        # queue_tpl = (cls[0](val[0]), *cls[1:](val[1:]))
         queue_tpl = (cls[0](val[0]), *(Bool(v) for v in val[1:]))
         return super(Queue, cls).__new__(cls, queue_tpl)
 

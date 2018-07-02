@@ -23,22 +23,15 @@ correctly used within cartesian concatenations.
     out_data = None
 
     async for data in quiter_async(din):
-        print('------- Quenvelope ----------')
         if out_data is None:
             out_data = module().tout((Unit(), *data[-lvl:]))
             dout.put_nb(out_data)
 
-        print(out_data)
-
         if sub_lvl > 0:
             subelem = data[:len(data)-lvl]
-            print(subelem)
             if subelem.last:
-                print("Detected last")
                 out_data = None
         else:
             out_data = None
 
         await dout.ready()
-
-        print('-----------------------------')

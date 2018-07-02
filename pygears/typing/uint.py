@@ -8,10 +8,13 @@ class IntegerMeta(EnumerableGenericMeta):
     """
 
     def __str__(self):
-        if isinstance(self.args[0], int):
-            return f'Z{self.args[0]}'
+        if self.args:
+            if isinstance(self.args[0], int):
+                return f'Z{self.args[0]}'
+            else:
+                return f'Z({self.args[0]})'
         else:
-            return f'Z({self.args[0]})'
+            return super().__str__()
 
     def __int__(self):
         return int(self.__args__[0])
@@ -122,10 +125,13 @@ class Integer(int, metaclass=IntegerMeta):
 
 class IntMeta(IntegerMeta):
     def __str__(self):
-        if isinstance(self.args[0], int):
-            return f'i{self.args[0]}'
+        if self.args:
+            if isinstance(self.args[0], int):
+                return f'i{self.args[0]}'
+            else:
+                return f'i({self.args[0]})'
         else:
-            return f'i({self.args[0]})'
+            return super().__str__()
 
 
 class Int(Integer, metaclass=IntMeta):

@@ -109,6 +109,26 @@ def is_trace_included(port, vcd_include, vcd_tlm):
     return True
 
 
+def module_sav(gtkw, module, vcd_vars):
+    gear_vcd_scope = module.name[1:].replace('/', '.')
+    with gtkw.group(module.basename):
+        for p in itertools.chain(module.out_ports, module.in_ports):
+            if isinstance(p, OutPort):
+                intf = p.producer
+            else:
+                intf = p.consumer
+
+            if intf in vcd_vars:
+                scope = '.'.join([gear_vcd_scope, p.basename])
+                with gtkw.group("    " + p.basename):
+                    for name, var in vcd_vars[intf].items():
+                        width = ''
+                        if var.size > 1:
+                            width = f'[{var.size - 1}:0]'
+
+                        gtkw.trace(f'{scope}.{name}{width}')
+
+
 class VCDHierVisitor(HierVisitorBase):
     def __init__(self, gtkw, writer, vcd_include, vcd_tlm):
         self.vcd_include = vcd_include
@@ -132,7 +152,6 @@ class VCDHierVisitor(HierVisitorBase):
 
         if module in self.sim_map:
             gear_vcd_scope = module.name[1:].replace('/', '.')
-
             for p in itertools.chain(module.out_ports, module.in_ports):
                 if not is_trace_included(p, self.vcd_include, self.vcd_tlm):
                     continue
@@ -182,7 +201,7 @@ class VCD:
 
         self.writer = VCDWriter(vcd_file, timescale='1 ns', date='today')
         bind('VCDWriter', self.writer)
-
+        bind('VCD', self)
 
         sim = registry('Simulator')
         sim.events['before_timestep'].append(self.before_timestep)
@@ -202,6 +221,13 @@ class VCD:
             for intf in self.vcd_vars:
                 intf.events['put'].append(self.intf_put)
                 intf.events['ack'].append(self.intf_ack)
+
+        sim_map = registry('SimMap')
+        for module in sim_map:
+            gear_fn = module.name.replace('/', '_')
+            with open(os.path.join(outdir, f'{gear_fn}.sav'), 'w') as f:
+                gtkw = GTKWSave(f)
+                module_sav(gtkw, module, self.vcd_vars)
 
         # sim_map = registry('SimMap')
         # for module, sim_gear in sim_map.items():
@@ -259,7 +285,6 @@ class VCD:
         if not self.finished:
             self.writer.close()
             self.finished = True
-
 
     def after_run(self, sim):
         self.finish()

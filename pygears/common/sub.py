@@ -25,7 +25,6 @@ async def sub(*din: Integer,
               din1_signed=b'typeof(din1, Int)') -> b'sub_type(din)':
 
     async with gather(*din) as dout:
-        print(f'Sub: {dout}')
         yield reduce(operator.sub, dout)
 
 

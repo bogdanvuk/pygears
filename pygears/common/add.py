@@ -12,18 +12,17 @@ def add_type(dtypes):
     max_len = max(int(d) for d in dtypes)
     length = max_len + len(dtypes) - 1
 
-    if(all(issubclass(d, Uint) for d in dtypes)):
+    if (all(issubclass(d, Uint) for d in dtypes)):
         return Uint[length]
 
     return Int[length]
 
 
 @gear(svgen={'svmod_fn': 'add.sv'}, enablement=b'len(din) == 2')
-async def add(*din: Integer, din0_signed=b'typeof(din0, Int)',
-        din1_signed=b'typeof(din1, Int)') -> b'add_type(din)':
-
+async def add(*din: Integer,
+              din0_signed=b'typeof(din0, Int)',
+              din1_signed=b'typeof(din1, Int)') -> b'add_type(din)':
     async with gather(*din) as dout:
-        print(f"Add: {dout}")
         yield reduce(operator.add, dout)
 
 

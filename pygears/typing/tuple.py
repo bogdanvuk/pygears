@@ -69,7 +69,6 @@ class TupleMeta(EnumerableGenericMeta):
 class Tuple(tuple, metaclass=TupleMeta):
     # def __new__(self, val: tuple):
     def __new__(cls, val):
-        print(f"Class: {cls}")
         if isinstance(val, dict):
             tpl_val = tuple(t(val[f]) for t, f in zip(cls, cls.fields))
         else:

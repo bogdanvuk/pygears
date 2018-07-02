@@ -1,6 +1,12 @@
 from pygears import registry
 from pygears.common.decoupler import decoupler_din
 from pygears.sim.extens.graphviz import graph
+from pygears.sim.extens.vcd import module_sav
+from vcd.gtkw import GTKWSave
+from pygears.core.port import OutPort
+import itertools
+import os
+
 
 class ActivityReporter:
     def __init__(self, top, conf):
@@ -12,7 +18,6 @@ class ActivityReporter:
     def intf_pull_start(self, intf):
         consumer = intf.producer
         producer = intf.in_queue.intf.consumers[0]
-        print("Activity report called")
         self.blockers[consumer] = producer
         return True
 
@@ -32,10 +37,15 @@ class ActivityReporter:
     def after_run(self, sim):
         g = graph()
 
+        blocking_gears = set()
+
         for sim_gear in sim.sim_gears:
             module = sim_gear.gear
             if module.definition == decoupler_din:
                 if not module.queue.empty():
+                    g.node_map[module].set_fillcolor('red')
+                    g.node_map[module].set_style('filled')
+                    blocking_gears.add(module)
                     print(f'Data left in decoupler: {module.name}')
 
             for p in module.in_ports:
@@ -43,11 +53,29 @@ class ActivityReporter:
                 # print(f'{module.name}.{p.basename} queue empty: {q.empty()}')
                 if not q.empty():
                     src_port = q.intf.consumers[0]
+                    g.edge_map[p].set_color('red')
+                    g.edge_map[p].set_penwidth(6)
+                    blocking_gears.add(module)
                     print(
                         f'{src_port.gear.name}.{src_port.basename} -> {module.name}.{p.basename} was not acknowledged'
                     )
 
                 if p in self.blockers:
+                    g.edge_map[p].set_color('blue')
+                    g.edge_map[p].set_penwidth(6)
                     src_port = self.blockers[p]
                     print(
-                        f'{p.gear.name}.{p.basename} waiting on {src_port.gear.name}.{src_port.basename}')
+                        f'{p.gear.name}.{p.basename} waiting on {src_port.gear.name}.{src_port.basename}'
+                    )
+
+        g.graph.write_svg('proba.svg')
+        try:
+            vcd_writer = registry('VCD')
+            outdir = registry('SimArtifactDir')
+        except:
+            return
+
+        with open(os.path.join(outdir, 'issue.sav'), 'w') as f:
+            gtkw = GTKWSave(f)
+            for module in blocking_gears:
+                module_sav(gtkw, module, vcd_writer.vcd_vars)

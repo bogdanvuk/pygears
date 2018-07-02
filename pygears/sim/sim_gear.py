@@ -55,7 +55,7 @@ class SimGear:
                 if is_async_gen(self.func):
                     async for val in self.func(*args, **kwds):
                         if ack_timestep == timestep():
-                            print(f"Decided to wait for clk() in for {self.gear.name}")
+                            # print(f"Decided to wait for clk() in for {self.gear.name}")
                             await clk()
 
                         if len(self.gear.out_ports) == 1:
