@@ -27,7 +27,7 @@ def flatten(dtype, lvl=1):
         return dtype
 
 
-class TypeExpandPlugin(TypingNamespacePlugin):
+class TypeFlattenPlugin(TypingNamespacePlugin):
     @classmethod
     def bind(cls):
         cls.registry['TypeArithNamespace']['flatten'] = flatten

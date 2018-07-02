@@ -21,7 +21,7 @@ def permute(dout, indices):
     out_type = Queue[dtype[tuple(reorder_indices)], lvl]
 
     # leave Queue delimiters in same place after reordering
-    reorder_indices += [i for i in range(-lvl, 0)]
+    reorder_indices.append(-1)
 
     return dout[tuple(reorder_indices)] | out_type
 
