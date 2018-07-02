@@ -60,6 +60,8 @@ class Intf:
             'put_out': SimEvent(),
             'ack': SimEvent(),
             'ack_in': SimEvent(),
+            'pull_start': SimEvent(),
+            'pull_done': SimEvent()
         }
 
     def source(self, port):
@@ -179,7 +181,10 @@ class Intf:
         if self._done:
             raise GearDone
 
-        return await self.in_queue.get()
+        self.events['pull_start'](self)
+        ret = await self.in_queue.get()
+        self.events['pull_done'](self)
+        return ret
 
     def ack(self):
         return self.in_queue.task_done()

@@ -49,4 +49,4 @@ def graph(path='/', root=None):
                 v.graph.add_edge(
                     pydot.Edge(node, v.node_map[e.gear], label=f"{pout.basename} -> {e.basename}"))
 
-    return v.graph
+    return v
