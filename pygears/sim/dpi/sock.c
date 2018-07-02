@@ -170,7 +170,7 @@ void *sock_open(const char *uri, const char *channel) {
   do {
     if (len > 6 && strncmp("tcp://", uri, 6) == 0) {
       if (strncmp(channel, "_synchro", 10) == 0)
-        handle = tcp_sock_open(uri + 6, 1);
+        handle = tcp_sock_open(uri + 6, 2);
       else
         handle = tcp_sock_open(uri + 6, 0);
     }
