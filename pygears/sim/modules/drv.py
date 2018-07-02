@@ -1,25 +1,9 @@
 import inspect
 
 from pygears import gear
-from pygears.sim.sim import clk
+from pygears.sim import clk
 from pygears.typing import TLM
-
-
-def quiter(iterable):
-    """Pass through all values from the given iterable, augmented by the
-    information if there are more values to come after the current one
-    (True), or if it is the last value (False).
-    """
-    # Get an iterator and pull the first value.
-    it = iter(iterable)
-    last = next(it)
-    # Run the iterator to exhaustion (starting from the second value).
-    for val in it:
-        # Report the *previous* value (more to come).
-        yield last, False
-        last = val
-    # Report the last value.
-    yield last, True
+from pygears.util.utils import quiter
 
 
 class TypingYieldVisitorBase:
@@ -53,7 +37,7 @@ async def drv(din: TLM['t'], *, t=b't') -> b't':
         async with din as item:
             for d in TypeDrvVisitor().visit(item, t):
                 # print('Driver sends: ', d)
-                yield d
+                yield t(d)
                 # print('Driver sent: ', d)
                 await clk()
                 # print('Driver waited for clock')

@@ -1,14 +1,14 @@
 from pygears import gear
 from pygears.typing import Uint
-from pygears.sim import seqr, sim, drv, delta, clk
+from pygears.sim import clk, drv, seqr, sim
 from pygears.cookbook.verif import check
 
-def test_general():
+from pygears.sim.vcd import VCD
 
+
+def test_general():
     @gear
     async def priority_mux(*din: b'T') -> b'T':
-        await delta()
-
         for i, d in enumerate(din):
             if not d.empty():
                 async with d as item:
@@ -16,9 +16,7 @@ def test_general():
                     yield item
                     print(f'Priority done')
                     break
-
         await clk()
-
 
     @gear
     async def f(din0: Uint['T'], din1: Uint['T'], *, skip) -> Uint['T']:
@@ -39,8 +37,9 @@ def test_general():
 
     (f(stim0, stim1, skip=1), stim1) \
         | priority_mux \
-        | check(ref=[1, 4, 7, 10])
+        | check(ref=[0, 11, 1, 2, 13, 3, 4, 15, 5, 6, 17, 7])
 
-    sim()
+    sim(outdir='/tmp/proba', extens=[VCD], vcd_include=['*priority*'])
 
-test_general()
+
+# test_general()

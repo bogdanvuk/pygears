@@ -1,8 +1,9 @@
 import asyncio
 
-from pygears import registry
+from pygears import registry, GearDone
 from pygears.core.port import InPort, OutPort
 from pygears.registry import PluginBase
+from pygears.core.sim_event import SimEvent
 
 
 def operator_func_from_namespace(cls, name):
@@ -47,12 +48,21 @@ class Intf:
 
     def __init__(self, dtype):
         self.consumers = []
-        self.end_consumers = []
+        self._end_consumers = None
         self.dtype = dtype
         self.producer = None
         self._in_queue = None
         self._out_queues = []
         self._done = False
+
+        self.events = {
+            'put': SimEvent(),
+            'put_out': SimEvent(),
+            'ack': SimEvent(),
+            'ack_in': SimEvent(),
+            'pull_start': SimEvent(),
+            'pull_done': SimEvent()
+        }
 
     def source(self, port):
         self.producer = port
@@ -69,6 +79,13 @@ class Intf:
     def connect(self, port):
         self.consumers.append(port)
         port.producer = self
+
+    @property
+    def end_consumers(self):
+        if self._end_consumers is None:
+            self._end_consumers = get_consumer_tree(self)
+
+        return self._end_consumers
 
     @property
     def in_queue(self):
@@ -102,24 +119,42 @@ class Intf:
         # if self.producer is not None:
         #     return [self.in_queue]
         # else:
-        self.end_consumers = get_consumer_tree(self)
         self._out_queues = [
             asyncio.Queue(maxsize=1) for _ in self.end_consumers
         ]
 
+        for i, q in enumerate(self._out_queues):
+            q.intf = self
+            q.index = i
+
         return self._out_queues
 
-    async def put(self, val):
-        for q in self.out_queues:
+    def put_nb(self, val):
+        self.events['put'](self, val)
+        for q, c in zip(self.out_queues, self.end_consumers):
+            self.events['put'](c.consumer, val)
             q.put_nowait(val)
 
-        await asyncio.wait([q.join() for q in self.out_queues])
+    async def ready(self):
+        if not self.ready_nb():
+            for q, c in zip(self.out_queues, self.end_consumers):
+                await q.join()
+                self.events['ack'](c.consumer)
+
+        self.events['ack'](self)
+        # print(f"All acks received")
+
+    def ready_nb(self):
+        return all(q.empty() for q in self.out_queues)
+
+    async def put(self, val):
+        self.put_nb(val)
+        await self.ready()
 
     def empty(self):
-        if self._done:
-            raise asyncio.CancelledError
-
-        return self.in_queue.empty()
+        # return self.in_queue.empty()
+        intf, index = self.in_queue
+        return intf.out_queues[index].empty()
 
     def finish(self):
         self._done = True
@@ -128,11 +163,28 @@ class Intf:
             for task in q._getters:
                 task.cancel()
 
+    def done(self):
+        return self._done
+
+    def pull_nb(self):
+        if self._done:
+            raise GearDone
+
+        return self.in_queue.get_nowait()
+
+    def get_nb(self):
+        val = self.pull_nb()
+        self.ack()
+        return val
+
     async def pull(self):
         if self._done:
-            raise asyncio.CancelledError
+            raise GearDone
 
-        return await self.in_queue.get()
+        self.events['pull_start'](self)
+        ret = await self.in_queue.get()
+        self.events['pull_done'](self)
+        return ret
 
     def ack(self):
         return self.in_queue.task_done()

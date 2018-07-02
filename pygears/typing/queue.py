@@ -2,6 +2,7 @@ import inspect
 
 from .base import EnumerableGenericMeta, type_str
 from .uint import Uint
+from .bool import Bool
 
 
 class QueueMeta(EnumerableGenericMeta):
@@ -62,6 +63,65 @@ class QueueMeta(EnumerableGenericMeta):
             return '[{}]^{}'.format(type_str(self.args[0]), self.lvl)
 
 
-class Queue(metaclass=QueueMeta):
+class Queue(tuple, metaclass=QueueMeta):
     __default__ = [1]
     __parameters__ = ['T', 'N']
+
+    def __new__(cls, val: tuple):
+        queue_tpl = (cls[0](val[0]), *(Bool(v) for v in val[1:]))
+        return super(Queue, cls).__new__(cls, queue_tpl)
+
+    @property
+    def last(self):
+        return self[1:] == ((1 << type(self).lvl) - 1)
+
+    @property
+    def eot(self):
+        return self[1:]
+
+    @property
+    def data(self):
+        return self[0]
+
+    def __getitem__(self, index):
+        index = type(self).index_norm(index)
+
+        lvl = 0
+        data_incl = False
+
+        dout = []
+        outtype = type(self)[index]
+        for i in index:
+            if isinstance(i, slice):
+                if (i.stop == 0) or (i.stop - i.start > type(self).lvl):
+                    raise IndexError
+                elif i.start == 0 and i.stop == 1:
+                    data_incl = True
+                elif i.start == 0 and i.stop > 1:
+                    lvl += i.stop - 1
+                    data_incl = True
+                else:
+                    lvl += (i.stop - i.start)
+
+                dout.extend(super().__getitem__(i))
+            elif i == 0:
+                data_incl = True
+                dout.append(super().__getitem__(i))
+            elif i <= type(self).lvl:
+                lvl += 1
+                dout.append(super().__getitem__(i))
+            else:
+                raise IndexError
+
+        if lvl > 0:
+            if data_incl:
+                return outtype(tuple(dout))
+            else:
+                eot = 0
+                for d in reversed(dout):
+                    eot <<= 1
+                    eot |= d
+
+                return outtype(eot)
+        else:
+            return type(self)[0](dout[0])

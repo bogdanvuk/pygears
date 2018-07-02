@@ -8,9 +8,10 @@ async def check(din, *, ref):
         items = []
         while (1):
             items.append(await din.get())
-
     finally:
         print(f"Here: {items}")
+        print(f"{ref}")
+        print(f"{items == ref}")
         sim_assert(items == ref)
 
 

@@ -2,11 +2,11 @@ import jinja2
 import os
 import ctypes
 from pygears.util.fileio import save_file
-from pygears import registry
+from pygears import registry, GearDone
 from pygears.svgen import svgen
 from pygears.sim.sim_gear import SimGear
 from pygears.sim.c_drv import CInputDrv, COutputDrv
-from pygears.sim import clk, delta
+from pygears.sim import clk, timestep, delta
 import atexit
 
 
@@ -20,7 +20,7 @@ class SimVerilated(SimGear):
         self.svmod = registry('SVGenMap')[self.svnode]
         self.wrap_name = f'wrap_{self.svmod.sv_module_name}'
 
-        # atexit.register(self.finish)
+        atexit.register(self.finish)
 
         rebuild = True
 
@@ -64,21 +64,40 @@ class SimVerilated(SimGear):
         ]
 
         self.verilib.init()
+        activity_monitor = 0
+        watchdog = 100
+        self.finished = False
 
         while True:
-
-            await delta()
-
             for d in self.c_in_drvs:
                 if not d.empty():
                     await d.post()
 
             self.verilib.propagate()
 
-            if len(self.c_out_drvs) == 1:
-                yield self.c_out_drvs[0].read()
+            dout = tuple(
+                None if d.active else d.read() for d in self.c_out_drvs)
+
+            for p, v in zip(self.gear.out_ports, dout):
+                if v is not None:
+                    print(f'Port {p.basename} output')
+                    p.producer.put_nb(v)
+
+            await delta()
+
+            if any(d.active for d in self.c_out_drvs):
+                for p, d in zip(self.gear.out_ports, self.c_out_drvs):
+                    if p.producer.ready_nb():
+                        print(f'Port {p.basename} acked')
+                        d.ack()
+
+                self.verilib.eval()
+
+                activity_monitor = 0
             else:
-                yield tuple(d.read() for d in self.c_out_drvs)
+                activity_monitor += 1
+                if activity_monitor == watchdog:
+                    raise GearDone
 
             for d in self.c_in_drvs:
                 d.ack()
@@ -86,8 +105,16 @@ class SimVerilated(SimGear):
             self.verilib.trig()
             await clk()
 
-        self.cleanup()
+            for d in self.c_in_drvs:
+                d.cycle()
+
+            for d in self.c_out_drvs:
+                d.cycle()
+
+            await clk()
 
     def finish(self):
-        super().finish()
-        self.verilib.final()
+        if not self.finished:
+            self.finished = True
+            super().finish()
+            self.verilib.final()

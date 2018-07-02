@@ -46,7 +46,8 @@ class GenericMeta(TypingMeta):
     """
 
     def __new__(cls, name, bases, namespace, args=[]):
-        if (not bases) or (not bases[0].args):
+        if (not bases) or (not hasattr(bases[0],
+                                       'args')) or (not bases[0].args):
             # Form a class that has the generic arguments specified
             if isinstance(args, dict):
                 namespace.update({
@@ -247,10 +248,7 @@ def param_subs(t, matches, namespace):
             ]
 
             if hasattr(t, '__parameters__'):
-                args = {
-                    name: a
-                    for name, a in zip(t.__parameters__, args)
-                }
+                args = {name: a for name, a in zip(t.__parameters__, args)}
 
             return t.__class__(
                 t.__name__, t.__bases__, dict(t.__dict__), args=args)
@@ -296,11 +294,14 @@ class EnumerableGenericMeta(GenericMeta):
                 if i.start is None:
                     i = slice(0, i.stop)
 
+                if i.start < 0:
+                    i = slice(len(self) + i.start, i.stop, i.step)
+
                 if i.stop is None:
-                    i = slice(i.start, len(self))
+                    i = slice(i.start, len(self), i.step)
 
                 if i.stop < 0:
-                    i = slice(i.start, len(self) + i.stop)
+                    i = slice(i.start, len(self) + i.stop, i.step)
 
                 if i.stop > len(self):
                     raise IndexError

@@ -21,11 +21,14 @@ class TypingVisitorBase:
 
     def visit_default(self, type_, field, **kwds):
         if hasattr(type_, 'fields'):
-            for t, f in zip(type_, type_.fields):
-                return self.visit(t, f, **kwds)
+            return {
+                f: self.visit(t, f, **kwds)
+                for t, f in zip(type_, type_.fields)
+            }
         else:
             try:
-                for t in type_:
-                    return self.visit(t, **kwds)
+                return tuple(
+                    self.visit(t, **kwds)
+                    for t in type_)
             except TypeError:
                 pass

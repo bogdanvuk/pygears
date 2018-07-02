@@ -59,7 +59,7 @@ int init(void) {
 {% endif %}
 
 {% for p in out_ports -%}
-	  top->{{p.basename}}_ready = 1;
+	  top->{{p.basename}}_ready = 0;
 {% endfor %}
 
     top->rst = 1; 
@@ -124,6 +124,11 @@ int get_{{p.basename}}(uint32_t* data) {
 
 	printf("Dout: %lx, Valid: %d\n", data[0], top->{{p.basename}}_valid);
 	return top->{{p.basename}}_valid;
+}
+
+int set_{{p.basename}}(uint ready) {
+	  printf("{{p.basename}}_ready = %d\n", ready);
+	top->{{p.basename}}_ready = ready;
 }
 {% endfor %}
 }

@@ -10,6 +10,9 @@ class TypeCode(TypingVisitorBase):
     def visit_uint(self, dtype, field=None, data=None):
         return data & dtype_mask(dtype)
 
+    def visit_bool(self, dtype, field=None, data=None):
+        return data
+
     def visit_int(self, dtype, field=None, data=None):
         return data & dtype_mask(dtype)
 
@@ -23,25 +26,32 @@ class TypeCode(TypingVisitorBase):
             raise ValueError
 
         for d, t in zip(reversed(data), reversed(dtype)):
-            data = self.visit(t, data=d)
-            ret <<= int(t)
-            ret |= data
+            field_data = self.visit(t, data=d)
+            if field_data is not None:
+                ret <<= int(t)
+                ret |= field_data
 
         return ret
 
     def visit_array(self, dtype, field=None, data=None):
         return self.visit_tuple(Tuple[(dtype[0], ) * len(dtype)], data=data)
 
+    def visit_union(self, dtype, field=None, data=None):
+        return self.visit_tuple(Tuple[(dtype[0], dtype[1])], data=data)
+
 
 class TypeDecode(TypingVisitorBase):
     def visit_int(self, dtype, field=None, data=None):
         if data.bit_length() == int(dtype):
-            return data - (1 << int(dtype))
+            return dtype(data - (1 << int(dtype)))
         else:
-            return data
+            return dtype(data)
+
+    def visit_bool(self, dtype, field=None, data=None):
+        return dtype(data)
 
     def visit_uint(self, dtype, field=None, data=None):
-        return data & dtype_mask(dtype)
+        return dtype(data & dtype_mask(dtype))
 
     def visit_tuple(self, dtype, field=None, data=None):
         ret = []
@@ -49,7 +59,7 @@ class TypeDecode(TypingVisitorBase):
             ret.append(self.visit(t, data=data & dtype_mask(t)))
             data >>= int(t)
 
-        return tuple(ret)
+        return dtype(tuple(ret))
 
     def visit_unit(self, dtype, field=None, data=None):
         return None
@@ -63,9 +73,9 @@ class TypeDecode(TypingVisitorBase):
         eot = bool(data & (1 << (int(dtype) - 1)))
 
         if dtype.lvl == 1:
-            return (ret, eot)
+            return dtype((ret, eot))
         else:
-            return (ret[0], *ret[1:], eot)
+            return dtype((ret[0], *ret[1:], eot))
 
     def visit_array(self, dtype, field=None, data=None):
         ret = []
@@ -73,7 +83,16 @@ class TypeDecode(TypingVisitorBase):
             ret.append(self.visit(t, data=data & dtype_mask(t)))
             data >>= int(t)
 
-        return tuple(ret)
+        return dtype(tuple(ret))
+
+    def visit_union(self, dtype, field=None, data=None):
+        ret = []
+        for t in dtype:
+            ret.append(self.visit(t, data=data & dtype_mask(t)))
+            data >>= int(t)
+
+        return dtype(tuple(ret))
+        # return self.visit_tuple(Tuple[(dtype[0], dtype[1])], data=data)
 
 
 def code(dtype, data):

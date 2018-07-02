@@ -1,0 +1,34 @@
+{%- import 'snippet.j2' as snippet -%}
+{% call snippet.module_with_intf_structs(module_name, intfs, intfs, comment) %}
+
+    logic [$bits(dout_s.data) - 1 : 0] cnt_reg, cnt_next;
+    logic handshake;
+    logic eot_internal_cond;
+    logic cnt_mode;
+
+    assign din.ready = dout.ready || (!cnt_mode && din.valid);
+    assign handshake = dout.valid & dout.ready;
+
+    assign cnt_next = cnt_reg + 1;
+{% if lvl == intfs[0]['type'].lvl %}
+    assign cnt_mode = 1;
+{% else %}
+    assign cnt_mode = &din_s.eot[$bits(din_s.eot) - {{lvl}} - 1 : 0]; // lvl = {{lvl}}
+{% endif %}
+
+    assign eot_internal_cond = &din_s.eot;
+
+    assign dout_s.data = cnt_reg;
+    assign dout_s.eot = eot_internal_cond;
+    assign dout.data = dout_s;
+    assign dout.valid = din.valid & cnt_mode;
+
+    always_ff @(posedge clk) begin
+      if(rst | (eot_internal_cond & din.valid & handshake)) begin
+        cnt_reg <= '0;
+      end else if (handshake) begin
+        cnt_reg <= cnt_next;
+      end
+    end
+
+{% endcall %}

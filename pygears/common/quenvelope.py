@@ -1,10 +1,12 @@
 from pygears.core.gear import gear
 from pygears.typing import Queue, Unit
+from pygears import module
+from pygears.util.utils import quiter_async
 
 
 @gear(sv_param_kwds=[], enablement=b'din_lvl >= lvl')
-def quenvelope(din: Queue['din_t', 'din_lvl'], *,
-               lvl) -> Queue[Unit, 'lvl']:
+async def quenvelope(din: Queue['din_t', 'din_lvl'], *,
+                     lvl) -> Queue[Unit, 'lvl']:
     """Extracts the queue structure of desired level called the envelope
 
     If there are more eot levels then forwarded to the output, those eot excess
@@ -16,4 +18,20 @@ correctly used within cartesian concatenations.
 
     """
 
-    pass
+    dout = module().dout
+    sub_lvl = din.dtype.lvl - lvl
+    out_data = None
+
+    async for data in quiter_async(din):
+        if out_data is None:
+            out_data = module().tout((Unit(), *data[-lvl:]))
+            dout.put_nb(out_data)
+
+        if sub_lvl > 0:
+            subelem = data[:len(data)-lvl]
+            if subelem.last:
+                out_data = None
+        else:
+            out_data = None
+
+        await dout.ready()

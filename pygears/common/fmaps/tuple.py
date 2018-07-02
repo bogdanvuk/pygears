@@ -23,16 +23,19 @@ def tuplemap_check(dtype, f):
 
 @alternative(common_fmap)
 @gear(enablement=b'tuplemap_check(din, f)')
-def fmap(din, *, f, lvl=1, fcat=ccat):
+def fmap(din, *, f, lvl=1, fcat=ccat, balance=None):
     lvl -= 1
 
     dout = []
     for i, fd in enumerate(f):
         if lvl > 0:
-            fd = common_fmap(f=fd, lvl=lvl)
+            fd = common_fmap(f=fd, lvl=lvl, balance=balance)
 
         if fd is None:
-            dout.append(din[i])
+            if balance is None:
+                dout.append(din[i])
+            else:
+                dout.append(din[i] | balance)
         else:
             dout.append(din[i] | fd)
 

@@ -1,5 +1,5 @@
 {%- import 'snippet.j2' as snippet -%}
-{% call snippet.module_with_intf_structs(module_name, intfs, intfs|isinput, comment) %}
+{% call snippet.module_with_intf_structs(module_name, intfs, intfs, comment) %}
 
 {{snippet.intf_inst("ctrl_if", width="$bits(din_s.ctrl)", size=1, type="")|indent(4,True)}}
 {{snippet.intf_inst("data_if", width="$bits(din_s.data)", size=1, type="")|indent(4,True)}}

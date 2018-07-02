@@ -1,14 +1,18 @@
 __version__ = "0.1"
 
 import sys
+from asyncio import CancelledError as GearDone
+from asyncio.queues import QueueEmpty
 
+from pygears.registry import PluginBase, bind, registry, clear
+from pygears.util.find import find
 from pygears.core.err import pygears_excepthook, ErrReportLevel
 from pygears.core.type_match import TypeMatchError
 from pygears.registry import PluginBase, bind, registry, clear
 from pygears.core.gear import gear, alternative, GearDone
+from pygears.core.gear import gear, alternative, module
 from pygears.core.intf import Intf
 from pygears.core.partial import MultiAlternativeError
-from pygears.util.find import find
 
 import pygears.common
 import pygears.sim
@@ -23,5 +27,6 @@ sys.excepthook = pygears_excepthook
 
 __all__ = [
     'registry', 'ErrReportLevel', 'bind', 'gear', 'clear', 'Intf',
-    'PluginBase', 'find', 'MultiAlternativeError', 'GearDone'
+    'PluginBase', 'find', 'MultiAlternativeError', 'GearDone', 'QueueEmpty',
+    'module'
 ]

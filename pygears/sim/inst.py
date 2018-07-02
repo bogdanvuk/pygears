@@ -1,35 +1,38 @@
 from pygears import registry
 from pygears.sim.sim_gear import SimGear, is_simgear_func
 from pygears.core.gear import GearPlugin
+from pygears.core.hier_node import HierVisitorBase
+
+
+class SimInstVisitor(HierVisitorBase):
+    def __init__(self):
+        self.namespace = registry('SimModuleNamespace')
+        self.sim_map = registry('SimMap')
+
+    def Gear(self, module):
+        sim_cls = module.params.get('sim_cls', None)
+        sim_inst = None
+
+        if sim_cls is None:
+            sim_cls = self.namespace.get(module.definition, None)
+
+        if sim_cls:
+            # print(f"Recognized {module.name} as {sim_cls}")
+            sim_inst = sim_cls(module)
+        elif is_simgear_func(module.func):
+            # print(f"Recognized {module.name} as sim_gear")
+            sim_inst = SimGear(module)
+
+        if sim_inst:
+            self.sim_map[module] = sim_inst
+            return True
 
 
 def sim_inst(top, conf):
+    v = SimInstVisitor()
+    v.visit(top)
 
-    namespace = registry('SimModuleNamespace')
-    sim_map = registry('SimMap')
-
-    for gear in top.child:
-        sim_cls = gear.params.get('sim_cls', None)
-
-        if sim_cls is None:
-            sim_cls = namespace.get(gear.definition, None)
-
-        # if sim_cls is None:
-        #     for base_class in inspect.getmro(gear.__class__):
-        #         if base_class.__name__ in namespace:
-        #             print(base_class.__name__)
-        #             node_cls = namespace[base_class.__name__]
-        #             break
-
-        if sim_cls:
-            sim_inst = sim_cls(gear)
-        elif is_simgear_func(gear.func):
-            sim_inst = SimGear(gear)
-        # else:
-        #     sim_inst = SimVerilated(gear, outdir)
-
-        if sim_inst:
-            sim_map[gear] = sim_inst
+    return top
 
 
 class SimInstPlugin(GearPlugin):

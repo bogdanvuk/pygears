@@ -10,10 +10,12 @@ from pygears.sim.modules.verilator import SimVerilated
 from pygears.typing import Queue, Uint
 from pygears import GearDone, gear
 from pygears.typing import TLM
+from utils import skip_ifndef
 
 
 @with_setup(clear)
 def test_socket_sim():
+    skip_ifndef('SIM_SOCKET_TEST')
     directed(
         seqr(t=Queue[Uint[16]], seq=[list(range(9)),
                                      list(range(3))]),
@@ -30,6 +32,7 @@ def test_socket_sim():
 
 @with_setup(clear)
 def test_verilate_sim():
+    skip_ifndef('VERILATOR_ROOT')
     directed(
         seqr(t=Queue[Uint[16]], seq=[list(range(9)),
                                      list(range(3))]),
@@ -62,6 +65,7 @@ def test_pygears_sim():
 
 @with_setup(clear)
 def test_socket_cosim():
+    skip_ifndef('SIM_SOCKET_TEST')
     verif(
         seqr(t=Queue[Uint[16]], seq=[list(range(9)),
                                      list(range(3))]),
@@ -90,10 +94,8 @@ async def vir_seqr(*, t=Queue[Uint[16]]) -> (TLM['t'], ) * 3:
 
 @with_setup(clear)
 def test_virseqr_cosim():
+    skip_ifndef('SIM_SOCKET_TEST')
     sequencers = vir_seqr()
     verif(*sequencers, f=trr(sim_cls=SimSocket), ref=trr(name='ref_model'))
 
-    sim(outdir='/tools/home/tmp1')
-
-
-test_virseqr_cosim()
+    sim()
