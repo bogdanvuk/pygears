@@ -16,10 +16,10 @@ module zip_sync
 
     assign dout0.valid = all_valid;
     assign dout0.data = din0.data;
-    assign din0.ready = dout0.dready;
+    assign din0.ready = dout0.ready;
     assign dout1.valid = all_valid;
     assign dout1.data = din1.data;
-    assign din1.ready = dout1.dready;
+    assign din1.ready = dout1.ready;
 
 
 endmodule
