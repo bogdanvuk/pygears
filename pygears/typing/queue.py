@@ -9,6 +9,12 @@ class QueueMeta(EnumerableGenericMeta):
     def keys(self):
         return list(range(self.lvl + 1))
 
+    def __new__(cls, name, bases, namespace, args=[]):
+        if isinstance(args, dict) and (list(args.values())[1] == 0):
+            return list(args.values())[0]
+        else:
+            return super().__new__(cls, name, bases, namespace, args)
+
     def __getitem__(self, index):
         if not self.is_specified():
             if inspect.isclass(index) and issubclass(
