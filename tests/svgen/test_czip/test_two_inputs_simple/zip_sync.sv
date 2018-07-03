@@ -18,10 +18,10 @@ module zip_sync
 
     assign dout0_if.valid = all_valid;
     assign dout0_if.data = din0.data;
-    assign din0.ready = dout0_if.dready;
+    assign din0.ready = dout0_if.ready;
     assign dout1_if.valid = all_valid;
     assign dout1_if.data = din1.data;
-    assign din1.ready = dout1_if.dready;
+    assign din1.ready = dout1_if.ready;
 
 
     zip_sync_syncguard syncguard (

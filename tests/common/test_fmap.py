@@ -98,6 +98,16 @@ def test_unionmap_simple():
 
 
 @with_setup(clear)
+def test_unionmap_simple_asymmetric():
+    @gear
+    def test(din: Uint['size']) -> Uint['size+1']:
+        pass
+
+    iout = fmap(Intf(Union[Uint[8], Uint[8]]), f=(test, None))
+    assert iout.dtype == Union[Uint[9], Uint[8]]
+
+
+@with_setup(clear)
 def test_unionmap_balance():
     @gear
     def bal(din: 'tdin') -> b'tdin':

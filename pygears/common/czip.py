@@ -59,7 +59,7 @@ def czip_vararg(*din):
     ret_flat_type = zip_type([d.dtype for d in din_sorted_by_lvl])
 
     def czip_cascade(*din):
-        return reduce(czip, din_sorted_by_lvl) | ret_flat_type
+        return reduce(czip, din) | ret_flat_type
 
     return permuted_apply(*din, f=czip_cascade, indices=din_sort_indices)
 
