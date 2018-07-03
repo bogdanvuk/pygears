@@ -88,13 +88,22 @@ module top;
       int data;
       // synchro socket
       synchro_handle = sock_open("tcp://localhost:1234", "_synchro");
-      @(posedge clk iff !rst);
 
       forever begin
          ret = sock_get(synchro_handle, data);
-         @(negedge clk);
-         #1;
+         `verif_info($sformatf("Got synchro 1 at %0t", $time), 1);
+         @(posedge clk iff !rst);
+         #3;
+         `verif_info($sformatf("Synchro 1 done at %0t", $time), 1);
          ret = sock_done(synchro_handle);
+         if (ret == 1) break;
+
+         ret = sock_get(synchro_handle, data);
+         `verif_info($sformatf("Got synchro 2 at %0t", $time), 1);
+         @(negedge clk);
+         #3;
+         ret = sock_done(synchro_handle);
+         `verif_info($sformatf("Synchro 2 done at %0t", $time), 1);
          if (ret == 1) break;
       end
    end
@@ -104,9 +113,9 @@ module top;
    initial begin
       clk = 0;
       rst = 1;
-      #10 rst = 0;
+      #15 rst = 0;
    end
-   always #5 clk = ~clk;
+   always #10 clk = ~clk;
 
    // dut if to verification if
 {% for intf in intfs %}

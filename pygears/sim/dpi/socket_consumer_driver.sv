@@ -19,7 +19,7 @@ class socket_consumer_driver#(type DATA_T = bit [15:0]);
    endfunction
 
    task init();
-      vif.cb_consumer.ready <= 1'b0;
+      vif.ready <= 1'b0;
       @(negedge vif.rst);
    endtask
 
@@ -34,15 +34,26 @@ class socket_consumer_driver#(type DATA_T = bit [15:0]);
       bit[$bits(DATA_T)-1 : 0] data;
 
       forever begin
-         vif.cb_consumer.ready <= 1'b1;
 
-         // @(vif.cb_consumer iff vif.cb_consumer.valid);
-         @(negedge vif.clk iff vif.valid);
-         // data = vif.cb_consumer.data;
+         do begin
+            @(posedge vif.clk);
+            #1;
+         end while(!vif.valid);
+
          data = vif.data;
          ret = sock_put(handle, data);
          `verif_info($sformatf("Consumer driver %s sent: %p at %0t", name, DATA_T'(data), $time), 2);
          if (ret == 1) break;
+
+         do begin
+            @(negedge vif.clk);
+            vif.ready <= 1'b0;
+	          ret = sock_get(handle, data);
+            if (ret == 1) break;
+         end while (ret == 2);
+         `verif_info($sformatf("%s driver got ret %0d at %0t", name, ret, $time), 2);
+
+         vif.ready <= 1'b1;
       end
 
    endtask

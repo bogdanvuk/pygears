@@ -110,6 +110,9 @@ def sv_cosim_gen(gear):
             os.chmod(fname, 0o777)
 
 
+SYNCHRO_CONN_NAME = "_synchro"
+
+
 class SimSocket(SimGear):
     def __init__(self, gear):
         super().__init__(gear)
@@ -123,7 +126,7 @@ class SimSocket(SimGear):
         server_address = ('localhost', 1234)
         print('starting up on %s port %s' % server_address)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.sock.setblocking(False)
+        # self.sock.setblocking(False)
         # self.sock.setblocking(True)
 
         self.sock.bind(server_address)
@@ -131,133 +134,6 @@ class SimSocket(SimGear):
         # Listen for incoming connections
         self.sock.listen(len(gear.in_ports) + len(gear.out_ports))
         self.handlers = {}
-
-    async def in_handler(self, conn, pin):
-        din = pin.consumer
-        try:
-            while True:
-                async with din as item:
-                    pkt = u32_repr(item, din.dtype).tobytes()
-                    await self.loop.sock_sendall(conn, pkt)
-                    await self.loop.sock_recv(conn, 1024)
-
-        except GearDone as e:
-            print(f"SimGear canceling: socket@{pin.basename}")
-            del self.handlers[pin]
-            conn.send(b'\x00')
-            conn.close()
-
-            # If only synchro remains...
-            if len(self.handlers) == 1:
-                self.finish()
-                raise e
-
-        except Exception as e:
-            print(f"Exception in socket handler {pin.basename}: {e}")
-
-    async def out_handler(self, conn, pout):
-        dout = pout.producer
-        try:
-            while True:
-                # recv buffer size must be a multiple of 4 bytes
-                buff_size = math.ceil(int(dout.dtype) / 8)
-                if buff_size < 4:
-                    buff_size = 4
-                if buff_size % 4:
-                    buff_size += 4 - (buff_size % 4)
-                item = await self.loop.sock_recv(conn, buff_size)
-
-                if not item:
-                    raise GearDone
-
-                # print(f"Output data {item}, of len {len(item)}")
-
-                await dout.put(u32_bytes_decode(item, dout.dtype))
-
-        except GearDone as e:
-            print(f"SimGear canceling: socket@{pout.basename}")
-            del self.handlers[pout]
-            dout.finish()
-            conn.close()
-            # If only synchro remains...
-            if len(self.handlers) == 1:
-                self.finish()
-                raise e
-
-        except Exception as e:
-            print(f"Exception in socket handler {pout.basename}: {e}")
-
-    async def synchro_handler(self, conn, pin):
-        try:
-            conn.setblocking(True)
-            # cadence_time = 0
-            # python_time = 0
-            # start = None
-            # end = None
-            # cnt = 0
-
-            while True:
-                await delta()
-                # print("Sending synchro info")
-                # start = time.time()
-                # if end is not None:
-                #     python_time += start - end
-
-                conn.send(b'\x00')
-                conn.recv(4)
-                # end = time.time()
-                # cnt += 1
-
-                # cadence_time += end - start
-
-                # if (cnt % 1000) == 0:
-                #     print(f'Cadence time: {cadence_time/1000}')
-                #     print(f'Python time: {python_time/999}')
-                #     cadence_time = 0
-                #     python_time = 0
-
-                # print("Cadence clock done")
-                # print(asyncio.get_event_loop()._ready)
-                # print(asyncio.get_event_loop()._scheduled)
-                await clk()
-
-        except GearDone as e:
-            print(f"SimGear canceling: socket@{pin.basename}")
-            del self.handlers[pin]
-            conn.send(b'\x00')
-            conn.close()
-
-            if not self.handlers:
-                self.finish()
-
-            # raise e
-        except Exception as e:
-            print(f"Exception in socket handler {pin.basename}: {e}")
-
-    def make_in_handler(self, name, conn, args):
-        try:
-            i = self.gear.argnames.index(name)
-            return self.gear.in_ports[i], self.in_handler(
-                conn, self.gear.in_ports[i])
-
-        except ValueError as e:
-            return None, None
-
-    def make_out_handler(self, name, conn, args):
-        try:
-            i = self.gear.outnames.index(name)
-            return self.gear.out_ports[i], self.out_handler(
-                conn, self.gear.out_ports[i])
-
-        except ValueError as e:
-            return None, None
-
-    def make_synchro_handler(self, name, conn, args):
-        try:
-            return name, self.synchro_handler(conn, name)
-
-        except ValueError as e:
-            return None, None
 
     def finish(self):
         print("Closing socket server")
@@ -268,40 +144,101 @@ class SimSocket(SimGear):
         self.sock.close()
 
     async def func(self, *args, **kwds):
-        await asyncio.gather(*self.handlers.values())
-        raise GearDone
+        din_pulled = set()
+        dout_put = set()
+        while True:
+            for p in self.gear.in_ports:
+                intf = p.consumer
+                if p.basename not in self.handlers:
+                    continue
 
-    async def setup(self, *args, **kwds):
+                conn = self.handlers[p.basename]
+
+                if intf.done():
+                    print(f"Closing connection for {p.basename}")
+                    conn.sendall(b'\x00')
+                    conn.close()
+                    del self.handlers[p.basename]
+
+                if p not in din_pulled and not intf.empty():
+                    data = intf.pull_nb()
+                    din_pulled.add(p)
+
+                    pkt = u32_repr(data, intf.dtype).tobytes()
+                    conn.sendall(pkt)
+
+            try:
+                self.handlers[SYNCHRO_CONN_NAME].send(b'\x00')
+                self.handlers[SYNCHRO_CONN_NAME].recv(4)
+            except socket.error:
+                raise GearDone
+
+            for p in self.gear.out_ports:
+                intf = p.producer
+                if intf.ready_nb:
+                    conn = self.handlers[p.basename]
+                    try:
+                        buff_size = math.ceil(int(p.dtype) / 8)
+                        if buff_size < 4:
+                            buff_size = 4
+                        if buff_size % 4:
+                            buff_size += 4 - (buff_size % 4)
+
+                        data = conn.recv(buff_size)
+
+                        dout_put.add(p)
+                        intf.put_nb(u32_bytes_decode(data, p.dtype))
+
+                    except socket.error:
+                        pass
+
+            await delta()
+
+            for p in dout_put.copy():
+                intf = p.producer
+                if intf.ready_nb:
+                    conn.sendall(b'\x00')
+                    dout_put.remove(p)
+
+            try:
+                self.handlers[SYNCHRO_CONN_NAME].send(b'\x00')
+                self.handlers[SYNCHRO_CONN_NAME].recv(4)
+            except socket.error:
+                raise GearDone
+
+            for p in din_pulled.copy():
+                if p.basename not in self.handlers:
+                    continue
+
+                conn = self.handlers[p.basename]
+                try:
+                    data = conn.recv(1024)
+                    din_pulled.remove(p)
+                    intf = p.consumer
+                    intf.ack()
+                except socket.error:
+                    pass
+
+            await clk()
+
+    def setup(self):
         self.loop = asyncio.get_event_loop()
 
         print(self.gear.argnames)
 
         total_conn_num = len(self.gear.argnames) + len(self.gear.outnames) + 1
-        conn_num = 0
-        while conn_num != total_conn_num:
+        while len(self.handlers) != total_conn_num:
             print("Wait for connection")
-            conn, addr = await self.loop.sock_accept(self.sock)
+            conn, addr = self.sock.accept()
 
-            msg = await self.loop.sock_recv(conn, 1024)
+            msg = conn.recv(1024)
             port_name = msg.decode()
 
-            print(f"Connection received for {port_name}")
+            self.handlers[port_name] = conn
 
-            if port_name == '_synchro':
-                print("Trying synchro port")
-                port, handler = self.make_synchro_handler(
-                    port_name, conn, args)
+            if port_name == SYNCHRO_CONN_NAME:
+                conn.setblocking(True)
             else:
-                port, handler = self.make_in_handler(port_name, conn, args)
-                if handler is None:
-                    print("Trying in port")
-                    port, handler = self.make_out_handler(
-                        port_name, conn, args)
+                conn.setblocking(False)
 
-                if handler is None:
-                    print(f"Nonexistant port {port_name}")
-                    conn.close()
-                    continue
-
-            self.handlers[port] = handler
-            conn_num += 1
+            print(f"Connection received for {port_name}")

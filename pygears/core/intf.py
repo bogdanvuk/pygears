@@ -152,9 +152,9 @@ class Intf:
         await self.ready()
 
     def empty(self):
-        # return self.in_queue.empty()
-        intf, index = self.in_queue
-        return intf.out_queues[index].empty()
+        return self.in_queue.empty()
+        # intf, index = self.in_queue
+        # return intf.out_queues[index].empty()
 
     def finish(self):
         self._done = True

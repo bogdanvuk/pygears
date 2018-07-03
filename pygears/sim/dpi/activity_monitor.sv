@@ -19,8 +19,8 @@ class activity_monitor#(type DATA_T = bit [15:0], parameter int ACTIVITY_TIMEOUT
       int cnt;
       cnt = 0;
       forever begin
-         @(vif.cb_monitor);
-         if (vif.cb_monitor.valid && vif.cb_monitor.ready) begin
+         @(posedge vif.clk);
+         if (vif.valid && vif.ready) begin
             cnt = 0;
          end else begin
             cnt++;

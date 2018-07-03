@@ -203,4 +203,4 @@ class Uint(Integer, metaclass=UintMeta):
             tout = type(self) - type(other)
             return tout((res, res < 0))
         else:
-            return super().__sub__(self, other)
+            return super().__sub__(other)

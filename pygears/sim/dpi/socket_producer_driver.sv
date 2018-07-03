@@ -21,8 +21,8 @@ class socket_producer_driver #(type DATA_T = bit [15:0]);
    endfunction
 
    task init();
-      vif.cb_producer.valid <= 1'b0;
-      @(vif.cb_producer iff !vif.rst);
+      vif.valid <= 1'b0;
+      @(negedge vif.rst);
    endtask
 
    task main();
@@ -36,28 +36,28 @@ class socket_producer_driver #(type DATA_T = bit [15:0]);
       int ret;
 
       forever begin
-	       ret = sock_get(handle, data);
-         if (ret == 1) break;
-         if (ret == 2) begin
-            `verif_info($sformatf("%s driver got ret 2 at %0t", name, $time), 1);
-            @(vif.cb_producer);
-            continue;
-         end
+
+         do begin
+            @(posedge vif.clk);
+            vif.valid <= 1'b0;
+	          ret = sock_get(handle, data);
+            `verif_info($sformatf("%s sock_get: %d ast %0t", name, ret, $time), 1);
+            if (ret == 1) return;
+         end while (ret == 2);
 
          `verif_info($sformatf("%s start driving item: %p at %0t", name, DATA_T'(data), $time), 2);
 
-         vif.cb_producer.valid <= 1'b1;
-         vif.cb_producer.data <= data;
+         vif.valid <= 1'b1;
+         vif.data <= data;
 
-         // wait for handshake
-         // @(vif.cb_producer iff vif.cb_producer.ready);
-         @(negedge vif.clk iff vif.ready);
+         do begin
+            @(negedge vif.clk);
+            #1;
+         end while(!vif.ready);
 
-         vif.cb_producer.valid <= 1'b0;
-
-         `verif_info($sformatf("%s finished driving item: %p", name, DATA_T'(data)), 2);
+         `verif_info($sformatf("%s finished driving item: %p at %0t", name, DATA_T'(data), $time), 2);
          ret = sock_done(handle);
-         if (ret == 1) break;
+         if (ret == 1) return;
       end
    endtask : get_and_drive
 

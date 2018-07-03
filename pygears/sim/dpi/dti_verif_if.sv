@@ -9,35 +9,13 @@ interface dti_verif_if #(
     input logic rst
     );
 
-   wire [$bits(DATA_T)-1:0] data;
-   wire valid;
-   wire ready;
+   logic [$bits(DATA_T)-1:0] data;
+   logic valid;
+   logic ready;
 
    bit   checks_enable = 1;
    bit   coverage_enable = 1;
    string name;
-
-   clocking cb_producer @(posedge clk);
-      default input #1 output #1;
-      input ready;
-      output data;
-      inout valid;
-   endclocking : cb_producer
-
-   clocking cb_consumer @(posedge clk);
-      default input #1 output #1;
-      input data, valid;
-      inout ready;
-   endclocking : cb_consumer
-
-   clocking cb_monitor @(posedge clk);
-     default input #1 output #1;
-      input data, valid, ready;
-   endclocking : cb_monitor
-
-   modport mp_producer (clocking cb_producer, input rst);
-   modport mp_consumer (clocking cb_consumer, input rst);
-   modport mp_monitor (clocking cb_monitor, input rst);
 
    // ---------------------------------------------------------------------------
    // Checks

@@ -36,10 +36,6 @@ async def drv(din: TLM['t'], *, t=b't') -> b't':
     while 1:
         async with din as item:
             for d in TypeDrvVisitor().visit(item, t):
-                # print('Driver sends: ', d)
                 yield t(d)
-                # print('Driver sent: ', d)
-                await clk()
-                # print('Driver waited for clock')
 
     print("Driver done")
