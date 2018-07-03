@@ -47,23 +47,23 @@ class RTLNodeInstVisitor(HierVisitorBase):
 
     def instantiate(self, module):
         svgen = module.params.get('svgen', {})
-        node_cls = svgen.get('node_cls', None)
-
-        if node_cls is None:
+        # node_cls = svgen.get('node_cls', None)
+        if 'node_cls' in svgen:
+            node_cls = svgen['node_cls']
+        else:
             node_cls = self.namespace.get(module.definition, None)
 
-        if node_cls is None:
-            for base_class in inspect.getmro(module.__class__):
-                if base_class.__name__ in self.namespace:
-                    node_cls = self.namespace[base_class.__name__]
-                    break
+            if node_cls is None:
+                for base_class in inspect.getmro(module.__class__):
+                    if base_class.__name__ in self.namespace:
+                        node_cls = self.namespace[base_class.__name__]
+                        break
 
         if node_cls:
             svgen_inst = node_cls(module, parent=self.cur_hier)
+            self.svgen_map[module] = svgen_inst
         else:
             svgen_inst = None
-
-        self.svgen_map[module] = svgen_inst
 
         if self.cur_hier is None:
             self.design = svgen_inst
@@ -71,9 +71,13 @@ class RTLNodeInstVisitor(HierVisitorBase):
         return svgen_inst
 
     def Gear(self, module):
-        self.cur_hier = self.instantiate(module)
-        super().HierNode(module)
-        self.cur_hier = self.cur_hier.parent
+        inst = self.instantiate(module)
+
+        if inst:
+            self.cur_hier = inst
+            super().HierNode(module)
+            self.cur_hier = self.cur_hier.parent
+
         return True
 
 
