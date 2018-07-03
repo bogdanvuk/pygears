@@ -171,7 +171,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             clk.set()
             clk.clear()
             timestep += 1
-            print(f"-------------- {timestep} ------------------")
+            # print(f"-------------- {timestep} ------------------")
             bind('Timestep', timestep)
 
             self.events['after_timestep'](self, timestep)

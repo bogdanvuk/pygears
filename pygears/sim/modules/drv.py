@@ -1,7 +1,6 @@
 import inspect
 
 from pygears import gear
-from pygears.sim import clk
 from pygears.typing import TLM
 from pygears.util.utils import quiter
 
