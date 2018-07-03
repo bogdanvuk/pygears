@@ -145,7 +145,7 @@ class Intf:
         # print(f"All acks received")
 
     def ready_nb(self):
-        return all(q.empty() for q in self.out_queues)
+        return all(not q._unfinished_tasks for q in self.out_queues)
 
     async def put(self, val):
         self.put_nb(val)

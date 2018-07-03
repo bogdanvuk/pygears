@@ -187,8 +187,9 @@ class SimSocket(SimGear):
                         if buff_size % 4:
                             buff_size += 4 - (buff_size % 4)
 
-                        dout_put.add(p)
                         data = conn.recv(buff_size)
+                        # print(f'{p.basename} received data')
+                        dout_put.add(p)
 
                         intf.put_nb(u32_bytes_decode(data, p.dtype))
 
