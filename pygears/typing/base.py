@@ -1,5 +1,42 @@
-import re
 import collections
+import functools
+
+
+@functools.lru_cache(maxsize=None)
+def index_norm_hashable_single(i, size):
+    if isinstance(i, tuple):
+        start, stop, incr = i
+
+        if start is None:
+            start = 0
+        elif start < 0:
+            start = size + start
+
+        if stop is None:
+            stop = size
+        elif stop < 0:
+            stop += size
+        elif stop > size:
+            raise IndexError
+
+        if start == stop:
+            raise IndexError
+
+        return slice(start, stop, incr)
+
+    else:
+        if i < 0:
+            i = size + i
+
+        if i > size:
+            raise IndexError
+
+        return i
+
+
+@functools.lru_cache(maxsize=None)
+def index_norm_hashable(index, size):
+    return tuple(index_norm_hashable_single(i, size) for i in index)
 
 
 class TemplateArgumentsError(Exception):
@@ -90,6 +127,10 @@ class GenericMeta(TypingMeta):
     def __bool__(self):
         return self.is_specified()
 
+    def __hash__(self):
+        return id(self)
+
+    @functools.lru_cache()
     def is_specified(self):
         """Return True if all generic parameters were supplied concrete values.
 
@@ -286,38 +327,15 @@ class EnumerableGenericMeta(GenericMeta):
 
     def index_norm(self, index):
         if not isinstance(index, tuple):
-            index = (index, )
-
-        norm = []
-        for i in index:
-            if isinstance(i, slice):
-                if i.start is None:
-                    i = slice(0, i.stop)
-
-                if i.start < 0:
-                    i = slice(len(self) + i.start, i.stop, i.step)
-
-                if i.stop is None:
-                    i = slice(i.start, len(self), i.step)
-
-                if i.stop < 0:
-                    i = slice(i.start, len(self) + i.stop, i.step)
-
-                if i.stop > len(self):
-                    raise IndexError
-
-                if i.start == i.stop:
-                    raise IndexError
-            else:
-                if i < 0:
-                    i = len(self) + i
-
-                if i > len(self):
-                    raise IndexError
-
-            norm.append(i)
-
-        return tuple(norm)
+            return (index_norm_hashable_single(
+                index
+                if not isinstance(index, slice) else index.__reduce__()[1],
+                len(self)), )
+        else:
+            return index_norm_hashable(
+                tuple(
+                    i if not isinstance(i, slice) else i.__reduce__()[1]
+                    for i in index), len(self))
 
     def items(self):
         """Generator that yields (key, element) pairs.
