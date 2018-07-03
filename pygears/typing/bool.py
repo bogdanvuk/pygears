@@ -9,5 +9,6 @@ class BoolMeta(TypingMeta):
         return 1
 
 
-class Bool(metaclass=BoolMeta):
-    pass
+class Bool(int, metaclass=BoolMeta):
+    def __new__(cls, val):
+        return super(Bool, cls).__new__(cls, bool(val))

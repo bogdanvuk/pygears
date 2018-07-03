@@ -66,5 +66,26 @@ class TupleMeta(EnumerableGenericMeta):
         return '(%s)' % ', '.join([type_str(a) for a in self.args])
 
 
-class Tuple(metaclass=TupleMeta):
-    pass
+class Tuple(tuple, metaclass=TupleMeta):
+    # def __new__(self, val: tuple):
+    def __new__(cls, val):
+        if isinstance(val, dict):
+            tpl_val = tuple(t(val[f]) for t, f in zip(cls, cls.fields))
+        else:
+            tpl_val = tuple(t(v) for t, v in zip(cls, val))
+
+        return super(Tuple, cls).__new__(cls, tpl_val)
+
+    def __getitem__(self, index):
+        index = type(self).index_norm(index)
+
+        if (len(index) == 1) and (not isinstance(index[0], slice)):
+            return super(Tuple, self).__getitem__(index[0])
+        else:
+            tout = type(self)[index]
+            subtypes = []
+            for i in index:
+                subt = super(Tuple, self).__getitem__(i)
+                subtypes.extend(subt if isinstance(i, slice) else [subt])
+
+            return tout(tuple(subtypes))

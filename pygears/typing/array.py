@@ -61,7 +61,7 @@ class ArrayMeta(EnumerableGenericMeta):
         return f'Array[{str(self.args[0])}, {len(self)}]'
 
 
-class Array(metaclass=ArrayMeta):
+class Array(tuple, metaclass=ArrayMeta):
     """Generic container datatype that holds N instances of type T
 
     Generic parameters:
@@ -75,3 +75,7 @@ class Array(metaclass=ArrayMeta):
 
     """
     __parameters__ = ['T', 'N']
+
+    def __new__(cls, val: tuple):
+        array_tpl = (cls[0](v) for v in val)
+        return super(Array, cls).__new__(cls, array_tpl)

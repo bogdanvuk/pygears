@@ -1,35 +1,46 @@
-import inspect
-import asyncio
-from pygears import registry, PluginBase, Intf
-from pygears.core.hier_node import HierVisitorBase
-from pygears.sim.verilate import SimVerilated
+from pygears import registry
 from pygears.sim.sim_gear import SimGear, is_simgear_func
+from pygears.core.gear import GearPlugin
+from pygears.core.hier_node import HierVisitorBase
 
-def sim_inst(top, conf):
 
-    namespace = registry('SimModuleNamespace')
-    sim_map = registry('SimMap')
-    outdir = conf['outdir']
+class SimInstVisitor(HierVisitorBase):
+    def __init__(self):
+        self.namespace = registry('SimModuleNamespace')
+        self.sim_map = registry('SimMap')
 
-    for gear in top.child:
-        sim_cls = namespace.get(gear.definition, None)
+    def Gear(self, module):
+        sim_cls = module.params.get('sim_cls', None)
+        sim_inst = None
+
+        if sim_cls is None:
+            sim_cls = self.namespace.get(module.definition, None)
 
         if sim_cls:
-            sim_inst = sim_cls(gear)
-        elif is_simgear_func(gear.func):
-            sim_inst = SimGear(gear)
-        else:
-            sim_inst = SimVerilated(gear, outdir)
+            # print(f"Recognized {module.name} as {sim_cls}")
+            sim_inst = sim_cls(module)
+        elif is_simgear_func(module.func):
+            # print(f"Recognized {module.name} as sim_gear")
+            sim_inst = SimGear(module)
 
         if sim_inst:
-            sim_map[gear] = sim_inst
+            self.sim_map[module] = sim_inst
+            return True
 
 
-class SimInstPlugin(PluginBase):
+def sim_inst(top, conf):
+    v = SimInstVisitor()
+    v.visit(top)
+
+    return top
+
+
+class SimInstPlugin(GearPlugin):
     @classmethod
     def bind(cls):
         cls.registry['SimModuleNamespace'] = {}
         cls.registry['SimMap'] = {}
+        cls.registry['GearExtraParams']['sim_cls'] = None
 
     @classmethod
     def reset(cls):

@@ -1,6 +1,8 @@
 from pygears.core.gear import alternative, gear
-from pygears.typing import Queue, Tuple
+from pygears.typing import Queue, Tuple, typeof
 from pygears.common import ccat
+from pygears.util.utils import quiter_async
+from pygears import module
 
 
 def lvl_if_queue(t):
@@ -22,8 +24,30 @@ def cart_type(dtypes):
 
 
 @gear(enablement=b'len(din) == 2')
-def cart(*din) -> b'cart_type(din)':
-    pass
+async def cart(*din) -> b'cart_type(din)':
+    din_t = [d.dtype for d in din]
+
+    if all(typeof(t, Queue) for t in din_t):
+        queue_id, single_id = 1, 0
+    elif typeof(din_t[0], Queue):
+        queue_id, single_id = 0, 1
+    else:
+        queue_id, single_id = 1, 0
+
+    async with din[single_id] as single_data:
+        if typeof(din_t[single_id], Queue):
+            single_eot = single_data.eot
+            single_data = single_data.data
+        else:
+            single_eot = []
+
+        async for queue_data in quiter_async(din[queue_id]):
+            out_data = [0, 0]
+            out_data[queue_id] = queue_data.data
+            out_data[single_id] = single_data
+
+            yield module().tout((tuple(out_data), *queue_data.eot,
+                                 *single_eot))
 
 
 @alternative(cart)
@@ -42,9 +66,6 @@ def uncart(din, *, dtypes):
     zdata = din[0]
     zlast = din[1:]
 
-    # print(din.dtype)
-    # print(dtypes)
-
     def split():
         for i, d in enumerate(dtypes):
             data = zdata[i]
@@ -57,8 +78,17 @@ def uncart(din, *, dtypes):
 
 
 @gear(enablement=b'len(din) == 2')
-def cart_sync(*din) -> b'din':
-    pass
+async def cart_sync(*din) -> b'din':
+    din_t = [d.dtype for d in din]
+
+    queue_id, single_id = (0, 1) if typeof(din_t[0], Queue) else (1, 0)
+
+    async with din[single_id] as single_data:
+        async for queue_data in quiter_async(din[queue_id]):
+            dout = [0, 0]
+            dout[single_id] = single_data
+            dout[queue_id] = queue_data
+            yield tuple(dout)
 
 
 @alternative(cart_sync)

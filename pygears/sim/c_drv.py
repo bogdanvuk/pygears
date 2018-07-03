@@ -1,5 +1,6 @@
 import ctypes
 from math import ceil
+from pygears.typing_common.codec import code, decode
 
 
 class IdleIteration(Exception):
@@ -70,23 +71,30 @@ class CInputDrv(CDrv):
         else:
             return self.c_dtype(data)
 
+    def empty(self):
+        return self.seq.empty()
+
     async def post(self):
         if self.data_posted:
             return
 
-        data = await self.seq.get()
+        data = await self.seq.pull()
         print("Data received: ", data)
 
         self.data_posted = True
-        self.c_set_api(self.to_c_data(data), 1)
+        self.acked = False
+        self.c_set_api(self.to_c_data(code(self.port.dtype, data)), 1)
 
     def ack(self):
         if self.data_posted:
-            ack = self.c_get_api()
-            self.data_posted = not ack
-            if ack:
-                self.seq.task_done()
-                self.c_set_api(self.to_c_data(0), 0)
+            self.acked = self.c_get_api()
+            if self.acked:
+                self.seq.ack()
+
+    def cycle(self):
+        if self.acked:
+            self.data_posted = False
+            self.c_set_api(self.to_c_data(0), 0)
 
 
 class COutputDrv(CDrv):
@@ -107,12 +115,20 @@ class COutputDrv(CDrv):
 
         return dout
 
+    def cycle(self):
+        self.c_set_api(0)
+
+    def ack(self):
+        if self.active:
+            self.active = False
+            self.c_set_api(1)
+
     def read(self):
         self.active = self.c_get_api(self.dout)
         print(
             f'{self.port.basename}: {self.active}, {self.from_c_data(self.dout)}'
         )
         if self.active:
-            return self.from_c_data(self.dout)
+            return decode(self.port.dtype, self.from_c_data(self.dout))
         else:
             return None

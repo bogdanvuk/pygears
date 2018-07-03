@@ -41,18 +41,11 @@ class TypeMonitorVisitor:
     def visit_default(self, data, elem, dtype):
         return elem
 
-    def visit_int(self, data, elem, dtype):
-        if elem.bit_length() == int(dtype):
-            return elem - (1 << int(dtype))
-        else:
-            return elem
-
-    def visit_unit(self, data, elem, dtype):
-        return None
-
     def visit_queue(self, data, elem, dtype):
-        sub_elem_mask = ((1 << (int(dtype) - 1)) - 1)
-        sub_elem = elem & sub_elem_mask
+        if dtype.lvl == 1:
+            sub_elem = elem[0]
+        else:
+            sub_elem = elem[:-1]
 
         if not data:
             sub_data = None
@@ -67,7 +60,7 @@ class TypeMonitorVisitor:
         sub_data = self.visit(sub_data, sub_elem, dtype[:-1])
         data.append(sub_data)
 
-        eot = elem & (1 << (int(dtype) - 1))
+        eot = elem[-1]
         if eot and (not isinstance(sub_data, Partial)):
             return data
         else:
@@ -77,11 +70,11 @@ class TypeMonitorVisitor:
 @gear
 async def mon(din, *, t=b'din') -> TLM['din']:
     v = TypeMonitorVisitor(t)
-    data = None
-    while (1):
+    while 1:
+        data = None
         while (isinstance(data, Partial) or data is None):
+            print('Monitor waiting')
             item = await din.get()
-            din.task_done()
             print('Monitor got: ', item)
             data = v.visit(data, item, t)
 

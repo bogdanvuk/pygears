@@ -1,6 +1,7 @@
 import copy
 import inspect
 import functools
+import asyncio
 
 from pygears.registry import PluginBase, bind, registry
 from pygears.typing import Any
@@ -11,10 +12,6 @@ from .intf import Intf
 from .partial import Partial
 from .port import InPort, OutPort
 from .util import doublewrap
-
-
-class StopGear(Exception):
-    pass
 
 
 class TooManyArguments(Exception):
@@ -40,6 +37,9 @@ def check_arg_num(argnames, varargsname, args):
 def check_arg_specified(args):
     args_res = []
     for i, a in enumerate(args):
+        if isinstance(a, Partial):
+            raise GearArgsNotSpecified(f"Unresolved input arg {i}")
+
         if not isinstance(a, Intf):
             from pygears.common import const
             a = const(val=a)
@@ -58,11 +58,11 @@ class create_hier:
         self.gear = gear
 
     def __enter__(self):
-        bind('CurrentHier', self.gear)
+        bind('CurrentModule', self.gear)
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
-        bind('CurrentHier', self.gear.parent)
+        bind('CurrentModule', self.gear.parent)
         if exception_type is not None:
             self.gear.clear()
 
@@ -94,7 +94,7 @@ class Gear(NamedHierNode):
         return gear.resolve()
 
     def __init__(self, func, *args, name=None, intfs=[], outnames=[], **kwds):
-        super().__init__(name, registry('CurrentHier'))
+        super().__init__(name, registry('CurrentModule'))
         self.func = func
         self.__doc__ = func.__doc__
 
@@ -206,6 +206,20 @@ class Gear(NamedHierNode):
     def definition(self):
         return self.params['definition']
 
+    @property
+    def dout(self):
+        if len(self.intfs) > 1:
+            return tuple(p.producer for p in self.out_ports)
+        else:
+            return self.out_ports[0].producer
+
+    @property
+    def tout(self):
+        if len(self.intfs) > 1:
+            return tuple(i.dtype for i in self.intfs)
+        else:
+            return self.intfs[0].dtype
+
     def set_ftype(self, ft, i):
         self.dtype_templates[i] = ft
 
@@ -243,6 +257,9 @@ class Gear(NamedHierNode):
             raise TypeMatchError(f'{str(e)}, of the module {self.name}')
 
     def resolve(self):
+        for port in self.in_ports:
+            Intf(port.dtype).source(port)
+
         is_async_gen = bool(
             self.func.__code__.co_flags & inspect.CO_ASYNC_GENERATOR)
         func_ret = tuple()
@@ -268,8 +285,12 @@ class Gear(NamedHierNode):
             OutPort(self, i, name) for i, name in enumerate(self.outnames)
         ]
 
-        for i, r in enumerate(func_ret):
-            r.connect(self.out_ports[i])
+        if func_ret:
+            for i, r in enumerate(func_ret):
+                r.connect(self.out_ports[i])
+        else:
+            for dtype, port in zip(out_dtype, self.out_ports):
+                Intf(dtype).connect(port)
 
         if not self.intfs:
             self.intfs = [Intf(dt) for dt in out_dtype]
@@ -292,9 +313,7 @@ class Gear(NamedHierNode):
 
     def resolve_func(self):
         with create_hier(self):
-            func_args = [Intf(a.dtype) for a in self.args]
-            for arg, port in zip(func_args, self.in_ports):
-                arg.source(port)
+            func_args = [p.consumer for p in self.in_ports]
 
             func_kwds = {
                 k: self.params[k]
@@ -302,8 +321,8 @@ class Gear(NamedHierNode):
             }
             ret = self.func(*func_args, **func_kwds)
 
-        if not any([isinstance(c, Gear) for c in self.child]):
-            self.clear()
+        # if not any([isinstance(c, Gear) for c in self.child]):
+        #     self.clear()
 
         if ret is None:
             ret = tuple()
@@ -358,7 +377,8 @@ def gear(func, gear_cls=Gear, **meta_kwds):
         except ValueError:
             return repr(annotation)
 
-    gear_func = fb.get_func(execdict=execdict, formatannotation=formatannotation)
+    gear_func = fb.get_func(
+        execdict=execdict, formatannotation=formatannotation)
 
     functools.update_wrapper(gear_func, func)
 
@@ -369,11 +389,15 @@ def gear(func, gear_cls=Gear, **meta_kwds):
     return p
 
 
-class HierRootPlugin(PluginBase):
+def module():
+    return registry('CurrentModule')
+
+
+class GearPlugin(PluginBase):
     @classmethod
     def bind(cls):
         cls.registry['HierRoot'] = NamedHierNode('')
-        cls.registry['CurrentHier'] = cls.registry['HierRoot']
+        cls.registry['CurrentModule'] = cls.registry['HierRoot']
         cls.registry['GearMetaParams'] = {'enablement': True}
         cls.registry['GearExtraParams'] = {
             'name': None,
@@ -385,4 +409,4 @@ class HierRootPlugin(PluginBase):
     @classmethod
     def reset(cls):
         bind('HierRoot', NamedHierNode(''))
-        bind('CurrentHier', cls.registry['HierRoot'])
+        bind('CurrentModule', cls.registry['HierRoot'])

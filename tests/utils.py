@@ -124,11 +124,19 @@ def sim_check(**kwds):
     return decorator
 
 
+def skip_ifndef(*envars):
+    import unittest
+    import os
+    if any(v not in os.environ for v in envars):
+        raise unittest.SkipTest(
+            f"Skipping test, {envars} not defined")
+
+
 def skip_sim_if_no_tools():
     import unittest
     import os
     if ('VERILATOR_ROOT' not in os.environ) or (
             'SYSTEMC_HOME' not in os.environ) or (
-            'SCV_HOME' not in os.environ):
+                'SCV_HOME' not in os.environ):
         raise unittest.SkipTest(
             "Such-and-such failed. Skipping all tests in foo.py")

@@ -1,0 +1,135 @@
+{%- import 'snippets.j2' as snippets -%}
+`ifndef TOP_SV
+`define TOP_SV
+
+module top;
+
+   `include "socket_macros.svh"
+
+   import socket_pkg::*;
+   import sock::*;
+
+   logic clk;
+   logic rst;
+   chandle synchro_handle;
+
+{% for s in structs %}
+{{s|indent(3, true)}}
+{% endfor %}
+
+{% for intf in intfs %}
+   dti_verif_if#({{intf['name']}}_t) {{intf['name']}}_vif (clk, rst);
+   dti#({{intf['width']}}) {{intf['name']}} ();
+{% endfor %}
+{% for intf in intfs %}
+  {% if intf['modport'] == 'consumer' %}
+   socket_producer_driver#({{intf['name']}}_t) {{intf['name']}}_driver = new({{intf['name']}}_vif, "{{intf['name']}}");
+  {% else %}
+   socket_consumer_driver#({{intf['name']}}_t) {{intf['name']}}_driver = new({{intf['name']}}_vif, "{{intf['name']}}");
+   activity_monitor#({{intf['name']}}_t, {{activity_timeout}}) {{intf['name']}}_mon = new({{intf['name']}}_vif, "{{intf['name']}}");
+  {% endif %}
+{% endfor %}
+
+   initial begin
+{% for intf in intfs %}
+      {{intf['name']}}_vif.name = "{{intf['name']}}";
+{% endfor %}
+      fork
+{% for intf in intfs %}
+  {% if intf['modport'] == 'producer' %}
+         {{intf['name']}}_driver.main();
+  {% endif %}
+{% endfor %}
+      join_none
+
+      fork
+         begin
+            #0.5s;
+            $warning("watchdog timer expired. killing test...");
+{% for intf in intfs %}
+            sock_close({{intf['name']}}_driver.handle);
+{% endfor %}
+            sock_close(synchro_handle);
+            $finish();
+         end
+      join_none
+
+      fork
+{% for intf in intfs %}
+  {% if intf['modport'] == 'consumer' %}
+         {{intf['name']}}_driver.main();
+  {% endif %}
+{% endfor %}
+      join
+      `verif_info("producer drivers finished", 5);
+
+      fork
+{% for intf in intfs %}
+  {% if intf['modport'] == 'producer' %}
+         {{intf['name']}}_mon.main();
+  {% endif %}
+{% endfor %}
+      join
+      `verif_info("activity monitors finished", 5);
+
+      disable fork;
+
+{% for intf in intfs %}
+  {% if intf['modport'] == 'producer' %}
+      sock_close({{intf['name']}}_driver.handle);
+  {% endif %}
+{% endfor %}
+      sock_close(synchro_handle);
+      $finish();
+   end
+
+   initial begin
+      int ret;
+      int data;
+      // synchro socket
+      synchro_handle = sock_open("tcp://localhost:1234", "_synchro");
+
+      forever begin
+         ret = sock_get(synchro_handle, data);
+         `verif_info($sformatf("Got synchro 1 at %0t", $time), 1);
+         @(posedge clk iff !rst);
+         #3;
+         `verif_info($sformatf("Synchro 1 done at %0t", $time), 1);
+         ret = sock_done(synchro_handle);
+         if (ret == 1) break;
+
+         ret = sock_get(synchro_handle, data);
+         `verif_info($sformatf("Got synchro 2 at %0t", $time), 1);
+         @(negedge clk);
+         #3;
+         ret = sock_done(synchro_handle);
+         `verif_info($sformatf("Synchro 2 done at %0t", $time), 1);
+         if (ret == 1) break;
+      end
+   end
+
+{{snippets.module_inst(dut_name, param_map, "dut", port_map)|indent(3, true)}}
+
+   initial begin
+      clk = 0;
+      rst = 1;
+      #15 rst = 0;
+   end
+   always #10 clk = ~clk;
+
+   // dut if to verification if
+{% for intf in intfs %}
+  {% if intf['modport'] == 'consumer' %}
+    assign {{intf['name']}}.valid = {{intf['name']}}_vif.valid;
+    assign {{intf['name']}}.data = {{intf['name']}}_vif.data;
+    assign {{intf['name']}}_vif.ready = {{intf['name']}}.ready;
+  {% else %}
+    assign {{intf['name']}}_vif.valid = {{intf['name']}}.valid;
+    assign {{intf['name']}}_vif.data = {{intf['name']}}.data;
+    assign {{intf['name']}}.ready = {{intf['name']}}_vif.ready;
+  {% endif %}
+{% endfor %}
+
+endmodule : top
+
+`endif

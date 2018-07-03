@@ -1,0 +1,84 @@
+#!/bin/bash
+
+gui="-gui"
+other_args="";
+seed=1
+simulator="cadence"
+
+cleanup() {
+    rm -r INCA_libs
+    rm -r irun.key
+    rm -r *.log
+    rm -r *.history
+    rm -r ncsim.shm
+    rm -r .simvision
+    rm -r waves.shm
+    rm -r vsim.wlf
+}
+
+usage() {
+    echo "Usage:  run_sim.sh"
+    echo ""
+    echo "  -batch : no gui"
+    echo "  -seed  : random | <integer value> (default = 1)"
+    echo "  -sim   : cadence | questa"
+    echo "  -top_path : /tools/home by default"
+    echo "  + any other args to pass to sim:"
+    echo " for example: -define VERBOSITY=<0, 1, ...>"
+    echo ""
+}
+
+while [ $# -gt 0 ]; do
+    case $1 in
+        -h|-help)
+            usage
+            exit 1
+            ;;
+        -batch)
+            gui=""
+            shift
+            ;;
+        -seed)
+            seed=$2
+            shift
+            shift
+            ;;
+        -sim)
+            simulator=$2
+            shift
+            shift
+            ;;
+        -clean)
+            cleanup
+            shift
+            ;;
+        *)
+            other_args="$other_args $1"
+            shift
+            ;;
+    esac
+done
+
+if [ $simulator == "cadence" ]; then
+    irun -64bit \
+        -incdir {{dti_verif_path}} \
+        -incdir {{out_path}} \
+        {% for i in imports %}
+        -incdir {{i}} \
+        {% endfor %}
+        {{dti_verif_path}}/sock.sv \
+        {{dti_verif_path}}/socket_pkg.sv \
+        {{dti_verif_path}}/sock.c \
+    {% for i in includes %}
+    {{i|indent(4, True)}} \
+    {% endfor %}
+        {{out_path}}/top.sv \
+        -top top \
+        +svseed=$seed \
+        -logfile log.log -v93 -ALLOWREDEFINITION \
+        -access rwc \
+        $other_args $gui \
+        "$@"
+else
+    echo "Not supported yet..."
+fi

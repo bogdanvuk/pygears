@@ -1,6 +1,8 @@
-from pygears.typing import Integer, Tuple, Queue, Int, typeof
+from pygears.typing import Integer, Tuple, Queue, Int, typeof, Uint
 from pygears import gear, alternative
 from pygears.common import ccat, fmap, cart, permuted_apply
+from pygears import module
+from pygears.util.utils import quiter
 
 TCfg = Tuple[{
     'start': Integer['w_start'],
@@ -17,13 +19,31 @@ def rng_out_type(cfg, cnt_steps):
 
 
 @gear(svgen={'svmod_fn': 'rng.sv'})
-def sv_rng(cfg: TCfg,
-           *,
-           signed=b'typeof(cfg[0], Int)',
-           cnt_one_more=False,
-           cnt_steps=False,
-           incr_steps=False) -> Queue['rng_out_type(cfg, cnt_steps)']:
-    pass
+async def sv_rng(cfg: TCfg,
+                 *,
+                 signed=b'typeof(cfg[0], Int)',
+                 cnt_one_more=False,
+                 cnt_steps=False,
+                 incr_steps=False) -> Queue['rng_out_type(cfg, cnt_steps)']:
+    def sign(x):
+        return -1 if x < 0 else 1
+
+    async with cfg as (start, cnt, incr):
+
+        if not cnt_steps:
+            rng_cfg = [int(start), int(cnt), int(incr)]
+        else:
+            rng_cfg = [
+                int(start),
+                int(start) + int(cnt) * int(incr),
+                int(incr)
+            ]
+
+        if cnt_one_more:
+            rng_cfg[1] += sign(int(incr)) * 1
+
+        for data, last in quiter(range(*rng_cfg)):
+            yield module().tout((data, last))
 
 
 @gear
