@@ -75,23 +75,25 @@ class SVGenTypeVisitor(TypingVisitorBase):
         #             struct_fields.append(f'    {type_declaration} {fd}; // {tp}')
         #     struct_fields.append(f'}} {middle_parent_context}_{f}_t;\n')
 
-        for t, f in zip(reversed(type_.args), reversed(type_.fields)):
+        for i, t in reversed(list(enumerate(type_.args))):
+            field_tmp = f'f{i}'
             struct_fields.append(f'{self.struct_str} // ({t}, u?)')
-            self.context = f'{low_parent_context}_{f}'
-            type_declaration = self.visit(t, f)
+            self.context = f'{low_parent_context}_{field_tmp}'
+            type_declaration = self.visit(t, field_tmp)
             if (int(t) < max_len):
                 struct_fields.append(
                     f'    {self.basic_type} [{max_len-int(t)-1}:0] dummy; // u{max_len-int(t)}'
                 )
             if (type_declaration is not None):
-                struct_fields.append(f'    {type_declaration} {f}; // {t}')
-            struct_fields.append(f'}} {middle_parent_context}_{f}_t;\n')
+                struct_fields.append(f'    {type_declaration} {field_tmp}; // {t}')
+            struct_fields.append(f'}} {middle_parent_context}_{field_tmp}_t;\n')
 
         # create union
         struct_fields.append(f'{self.union_str} // {type_}')
-        for t, f in zip(reversed(type_.args), reversed(type_.fields)):
+        for i, t in reversed(list(enumerate(type_.args))):
+            field_tmp = f'f{i}'
             struct_fields.append(
-                f'    {middle_parent_context}_{f}_t {f}; // ({t}, u?)')
+                f'    {middle_parent_context}_{field_tmp}_t {field_tmp}; // ({t}, u?)')
         struct_fields.append(f'}} {middle_parent_context}_t;\n')
 
         # create struct
