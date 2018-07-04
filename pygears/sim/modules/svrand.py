@@ -34,7 +34,7 @@ def create_type_cons(dtype, name, cons, **var):
     return tcons
 
 
-def get_svrand_constraint(outdir, cons, seed='random'):
+def get_svrand_constraint(outdir, cons, seed='random', start_cadence=True):
     base_addr = os.path.dirname(__file__)
     env = jinja2.Environment(
         loader=jinja2.FileSystemLoader(base_addr),
@@ -46,12 +46,13 @@ def get_svrand_constraint(outdir, cons, seed='random'):
     res = env.get_template('svrand_top.j2').render(context)
     save_file('svrand_top.sv', outdir, res)
 
-    dpi_path = os.path.abspath(os.path.join(ROOT_DIR, 'sim', 'dpi'))
-    ret = os.system(
-        f'irun -64bit -incdir {dpi_path} {dpi_path}/sock.sv {dpi_path}/socket_pkg.sv {dpi_path}/sock.c {outdir}/svrand_top.sv -top top +svseed={seed} -define VERBOSITY=3'
-    )
-    if ret != 0:
-        raise SVRandCompileError(f'Constrained random compilation failed.')
+    if start_cadence:
+        dpi_path = os.path.abspath(os.path.join(ROOT_DIR, 'sim', 'dpi'))
+        ret = os.system(
+            f'irun -64bit -incdir {dpi_path} {dpi_path}/sock.sv {dpi_path}/socket_pkg.sv {dpi_path}/sock.c {outdir}/svrand_top.sv -top top +svseed={seed} -define VERBOSITY=3'
+        )
+        if ret != 0:
+            raise SVRandCompileError(f'Constrained random compilation failed.')
 
 
 class SVRandSocket:
@@ -64,7 +65,7 @@ class SVRandSocket:
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         # Bind the socket to the port
-        server_address = ('localhost', 1234)
+        server_address = ('localhost', 4567)
         print('starting up on %s port %s' % server_address)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.setblocking(True)

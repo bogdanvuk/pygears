@@ -28,10 +28,13 @@ def tlm_verif(*seq, f, ref):
     return report
 
 
-def verif(*seq, f, ref):
+def verif(*seq, f, ref, dly_out=False):
     stim = tuple(s | drv for s in seq)
 
-    res_tlm = stim | f
+    if dly_out:
+        res_tlm = stim | f | dly_mon
+    else:
+        res_tlm = stim | f
 
     ref_tlm = stim | ref
 
