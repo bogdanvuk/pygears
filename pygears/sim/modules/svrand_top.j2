@@ -1,0 +1,43 @@
+`ifndef TOP_SV
+`define TOP_SV
+
+{% for con in tcons %}
+
+class {{con.name}}_cls;
+
+{% for n, s in con.cvars.items() %}
+   {{s}}
+{% endfor %}
+
+{% for n in con.cvars %}
+   rand {{n}}_t {{n}};
+{% endfor %}
+
+   constraint c_dflt {
+{% for c in con.cons %}
+      {{c}};
+{% endfor %}
+   }
+endclass
+
+{% endfor %}
+
+module top;
+
+{% for con in tcons %}
+   {{con.name}}_cls {{con.name}}_i;
+{% endfor %}
+
+{% for con in tcons %}
+
+   initial begin
+      {{con.name}}_i = new();
+      assert({{con.name}}_i.randomize());
+      $display("%p", {{con.name}}_i.{{con.name}});
+   end
+
+{% endfor %}
+
+endmodule
+
+`endif
