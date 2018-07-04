@@ -19,7 +19,8 @@ async def flatten(din: Queue['tdin', 'din_lvl'],
         if lvl > 1:
             dout.append(reduce(lambda x, y: x & y, d[1:lvl]))
 
-        dout += list(d[lvl + 1:])
+        if lvl < din.dtype.lvl:
+            dout += list(d[lvl + 1:])
 
         if len(dout) == 1:
             dout = dout[0]

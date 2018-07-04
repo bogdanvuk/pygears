@@ -105,6 +105,8 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
     def cancel(self, sim_gear):
         try:
+            self.cur_gear = sim_gear.gear
+            bind('CurrentModule', self.cur_gear)
             self.tasks[sim_gear].throw(GearDone)
         except (StopIteration, GearDone):
             self.done.add(sim_gear)
@@ -180,6 +182,9 @@ class EventLoop(asyncio.events.AbstractEventLoop):
                 break
 
         print(f"----------- Simulation done ---------------")
+
+        for sim_gear in self.cancelled.copy():
+            self.maybe_run_gear(sim_gear)
 
         self.events['after_run'](self)
 

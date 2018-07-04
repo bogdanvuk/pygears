@@ -10,6 +10,7 @@ from pygears import registry
 from functools import partial
 from traceback import extract_tb, format_list, walk_tb
 
+
 def finish():
     os.system(f'pywave "exit"')
 
@@ -39,22 +40,7 @@ def ActivityWaveFactory(cfg):
             logging.info(f'Request received: {self.path}')
 
             try:
-
                 self.send_response(200)
-                logging.info(f'Here 0')
-                self.send_header("Content-type", "text/html")
-                self.end_headers()
-                self.wfile.write(
-                    b"<html><head><title>Title goes here.</title></head>")
-
-                if 'filedir' in cfg:
-                    self.wfile.write(f"<body><p>{cfg['filedir']}.</p>".encode())
-
-                # If someone went to "http://something.somewhere.net/foo/bar/",
-                # then self.path equals "/foo/bar/".
-                self.wfile.write(f"<p>You accessed path: {self.path}</p>".encode())
-                self.wfile.write(b"</body></html>")
-
                 if not self.path:
                     logging.info(f'Here?')
                     return
@@ -70,13 +56,28 @@ def ActivityWaveFactory(cfg):
                         logging.info(f'Gear received: {self.path}')
                         pywave_load_file(f"{cfg['filedir']}/{gear}.sav")
 
+                    logging.info(f'Here 0')
+                    self.send_header("Content-type", "text/html")
+                    self.end_headers()
+                    self.wfile.write(
+                        b"<html><head><title>Title goes here.</title></head>")
+
+                    if 'filedir' in cfg:
+                        self.wfile.write(
+                            f"<body><p>{cfg['filedir']}.</p>".encode())
+
+                    # If someone went to "http://something.somewhere.net/foo/bar/",
+                    # then self.path equals "/foo/bar/".
+                    self.wfile.write(
+                        f"<p>You accessed path: {self.path}</p>".encode())
+                    self.wfile.write(b"</body></html>")
+
             except Exception as e:
                 type, value, tr = sys.exc_info()
                 for s in format_list(extract_tb(tr)):
                     logging.info(s)
 
                 logging.info(f'Error: {e}')
-
 
                 raise e
 
@@ -102,7 +103,8 @@ def restart_wave(sim, outdir, address):
             conn.close()
             command = [
                 'python',
-                os.path.join(os.path.dirname(__file__), 'activity_wave.py')]
+                os.path.join(os.path.dirname(__file__), 'activity_wave.py')
+            ]
 
             pid = os.fork()
             if pid == 0:
