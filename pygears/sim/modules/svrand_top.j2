@@ -12,31 +12,65 @@ class {{con.name}}_cls;
 {% for n in con.cvars %}
    rand {{n}}_t {{n}};
 {% endfor %}
+   bit[$bits({{con.name}}_t)-1 : 0] res;
 
    constraint c_dflt {
 {% for c in con.cons %}
       {{c}};
 {% endfor %}
    }
+
+   function void post_randomize();
+      res = {{con.name}};
+   endfunction
 endclass
 
 {% endfor %}
 
 module top;
 
+   `include "socket_macros.svh"
+
+   import sock::*;
+
+   chandle handle;
 {% for con in tcons %}
    {{con.name}}_cls {{con.name}}_i;
 {% endfor %}
 
-{% for con in tcons %}
-
    initial begin
-      {{con.name}}_i = new();
-      assert({{con.name}}_i.randomize());
-      $display("%p", {{con.name}}_i.{{con.name}});
+      handle = sock_open("tcp://localhost:1234", "_svrand");
    end
 
+   initial begin
+      int ret;
+      bit [31:0] req;
+{% for con in tcons %}
+      {{con.name}}_i = new();
 {% endfor %}
+      forever begin
+         do begin
+            ret = sock_get(handle, req);
+            if (ret == 1) $finish();
+         end while (ret == 2);
+         `verif_info($sformatf("svrand: Got rand request for %0d", req), 1);
+
+         case (req)
+{% for con in tcons %}
+            {{loop.index}}: begin
+               assert({{con.name}}_i.randomize());
+               ret = sock_put(handle, {{con.name}}_i.res);
+               `verif_info($sformatf("svrand: Sent {{con.name}} value %p", {{con.name}}_i.{{con.name}}), 1);
+            end
+{% endfor %}
+         endcase
+         if (ret == 1) $finish();
+      end
+   end
+
+   final begin
+	    sock_close(handle);
+   end
 
 endmodule
 
