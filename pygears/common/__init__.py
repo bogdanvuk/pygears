@@ -1,5 +1,6 @@
 from .expand import expand
 from .flatten import flatten
+from .project import project
 from .czip import czip, zip_sync, unzip
 from .ccat import ccat
 from .cart import cart, cart_sync
@@ -18,6 +19,7 @@ from .mux import mux
 from .demux import demux
 from .shred import shred
 from .decoupler import decoupler
+from .fifo import fifo
 from .buff import buff
 from .dreg import dreg
 from .serialize import serialize
@@ -29,5 +31,5 @@ __all__ = [
     'expand', 'czip', 'ccat', 'cart', 'cast', 'quenvelope', 'zip_sync',
     'sieve', 'flatten', 'fmap', 'permuted_apply', 'const', 'add', 'sub', 'mul',
     'div', 'neg', 'mux', 'demux', 'shred', 'cart_sync', 'decoupler', 'buff',
-    'dreg', 'unzip', 'serialize'
+    'dreg', 'unzip', 'serialize', 'project', 'fifo'
 ]

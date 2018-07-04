@@ -42,16 +42,16 @@ class socket_consumer_driver#(type DATA_T = bit [15:0]);
 
          data = vif.data;
          ret = sock_put(handle, data);
-         `verif_info($sformatf("Consumer driver %s sent: %p at %0t", name, DATA_T'(data), $time), 2);
-         if (ret == 1) break;
+         `verif_info($sformatf("Consumer driver %s sent: %p with ret %0d at %0t", name, DATA_T'(data), ret, $time), 2);
+         if (ret == 1) return;
 
          do begin
             @(negedge vif.clk);
             vif.ready <= 1'b0;
 	          ret = sock_get(handle, data);
-            if (ret == 1) break;
+            if (ret == 1) return;
          end while (ret == 2);
-         `verif_info($sformatf("%s driver got ret %0d at %0t", name, ret, $time), 2);
+         `verif_info($sformatf("Consumer driver %s got ret %0d at %0t", name, ret, $time), 2);
 
          vif.ready <= 1'b1;
       end

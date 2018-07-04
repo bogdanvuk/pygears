@@ -156,7 +156,7 @@ class SimSocket(SimGear):
 
                 if intf.done():
                     print(f"Closing connection for {p.basename}")
-                    conn.sendall(b'\x00')
+                    conn.sendall(b'\x00\x00\x00\x00')
                     conn.close()
                     del self.handlers[p.basename]
 
@@ -165,17 +165,20 @@ class SimSocket(SimGear):
                     din_pulled.add(p)
 
                     pkt = u32_repr(data, intf.dtype).tobytes()
+                    # print(
+                    #     f'{p.basename} sending data {data} of type {intf.dtype} or {pkt.hex()}'
+                    # )
                     conn.sendall(pkt)
 
             try:
-                self.handlers[SYNCHRO_CONN_NAME].send(b'\x00')
+                self.handlers[SYNCHRO_CONN_NAME].sendall(b'\x00\x00\x00\x00')
                 self.handlers[SYNCHRO_CONN_NAME].recv(4)
             except socket.error:
                 raise GearDone
 
             for p in self.gear.out_ports:
                 intf = p.producer
-                if intf.ready_nb:
+                if intf.ready_nb():
                     conn = self.handlers[p.basename]
                     try:
                         buff_size = math.ceil(int(p.dtype) / 8)
@@ -185,8 +188,9 @@ class SimSocket(SimGear):
                             buff_size += 4 - (buff_size % 4)
 
                         data = conn.recv(buff_size)
-
+                        # print(f'{p.basename} received data')
                         dout_put.add(p)
+
                         intf.put_nb(u32_bytes_decode(data, p.dtype))
 
                     except socket.error:
@@ -196,12 +200,17 @@ class SimSocket(SimGear):
 
             for p in dout_put.copy():
                 intf = p.producer
-                if intf.ready_nb:
-                    conn.sendall(b'\x00')
-                    dout_put.remove(p)
+                if intf.ready_nb():
+                    try:
+                        conn = self.handlers[p.basename]
+                        # print(f'{p.basename} sending data ack')
+                        conn.sendall(b'\x01\x00\x00\x00')
+                        dout_put.remove(p)
+                    except socket.error:
+                        raise GearDone
 
             try:
-                self.handlers[SYNCHRO_CONN_NAME].send(b'\x00')
+                self.handlers[SYNCHRO_CONN_NAME].sendall(b'\x00\x00\x00\x00')
                 self.handlers[SYNCHRO_CONN_NAME].recv(4)
             except socket.error:
                 raise GearDone
@@ -212,7 +221,7 @@ class SimSocket(SimGear):
 
                 conn = self.handlers[p.basename]
                 try:
-                    data = conn.recv(1024)
+                    data = conn.recv(4)
                     din_pulled.remove(p)
                     intf = p.consumer
                     intf.ack()
