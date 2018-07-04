@@ -51,7 +51,7 @@ class ActivityReporter:
             for p in module.in_ports:
                 q = p.get_queue()
                 # print(f'{module.name}.{p.basename} queue empty: {q.empty()}')
-                if not q.empty():
+                if q._unfinished_tasks:
                     src_port = q.intf.consumers[0]
                     g.edge_map[p].set_color('red')
                     g.edge_map[p].set_penwidth(6)
@@ -68,11 +68,12 @@ class ActivityReporter:
                         f'{p.gear.name}.{p.basename} waiting on {src_port.gear.name}.{src_port.basename}'
                     )
 
-        g.graph.write_svg('proba.svg')
+        outdir = registry('SimArtifactDir')
+        g.graph.write_svg(os.path.join(outdir, 'proba.svg'))
+
         try:
             vcd_writer = registry('VCD')
-            outdir = registry('SimArtifactDir')
-        except:
+        except KeyError:
             return
 
         with open(os.path.join(outdir, 'issue.sav'), 'w') as f:

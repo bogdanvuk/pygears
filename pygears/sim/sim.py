@@ -68,7 +68,8 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             'after_run': SimEvent(),
             'before_timestep': SimEvent(),
             'after_timestep': SimEvent(),
-            'after_cleanup': SimEvent()
+            'after_cleanup': SimEvent(),
+            'at_exit': SimEvent()
         }
 
     def get_tasks(self):
@@ -188,6 +189,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
                 self.cancel(sim_gear)
 
         self.events['after_cleanup'](self)
+        self.events['at_exit'](self)
 
 
 def sim(outdir=None, extens=[], run=True, **conf):
