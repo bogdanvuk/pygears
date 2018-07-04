@@ -41,36 +41,39 @@ class ActivityReporter:
 
         for sim_gear in sim.sim_gears:
             module = sim_gear.gear
+
+            g.node_map[module].set_style('filled')
             if sim_gear in sim.done:
                 g.node_map[module].set_fillcolor('green')
-                g.node_map[module].set_style('filled')
             else:
-                if module.definition == decoupler_din:
-                    if not module.queue.empty():
-                        g.node_map[module].set_fillcolor('red')
-                        g.node_map[module].set_style('filled')
-                        blocking_gears.add(module)
-                        print(f'Data left in decoupler: {module.name}')
+                g.node_map[module].set_fillcolor('red')
 
-                for p in module.in_ports:
-                    q = p.get_queue()
-                    # print(f'{module.name}.{p.basename} queue empty: {q.empty()}')
-                    if q._unfinished_tasks:
-                        src_port = q.intf.consumers[0]
-                        g.edge_map[p].set_color('red')
-                        g.edge_map[p].set_penwidth(6)
-                        blocking_gears.add(module)
-                        print(
-                            f'{src_port.gear.name}.{src_port.basename} -> {module.name}.{p.basename} was not acknowledged'
-                        )
+            if module.definition == decoupler_din:
+                if not module.queue.empty():
+                    g.node_map[module].set_fillcolor('red')
+                    g.node_map[module].set_style('filled')
+                    blocking_gears.add(module)
+                    print(f'Data left in decoupler: {module.name}')
 
-                    if p in self.blockers:
-                        g.edge_map[p].set_color('blue')
-                        g.edge_map[p].set_penwidth(6)
-                        src_port = self.blockers[p]
-                        print(
-                            f'{p.gear.name}.{p.basename} waiting on {src_port.gear.name}.{src_port.basename}'
-                        )
+            for p in module.in_ports:
+                q = p.get_queue()
+                # print(f'{module.name}.{p.basename} queue empty: {q.empty()}')
+                if q._unfinished_tasks:
+                    src_port = q.intf.consumers[0]
+                    g.edge_map[p].set_color('red')
+                    g.edge_map[p].set_penwidth(6)
+                    blocking_gears.add(module)
+                    print(
+                        f'{src_port.gear.name}.{src_port.basename} -> {module.name}.{p.basename} was not acknowledged'
+                    )
+
+                if p in self.blockers:
+                    g.edge_map[p].set_color('blue')
+                    g.edge_map[p].set_penwidth(6)
+                    src_port = self.blockers[p]
+                    print(
+                        f'{p.gear.name}.{p.basename} waiting on {src_port.gear.name}.{src_port.basename}'
+                    )
 
         outdir = registry('SimArtifactDir')
         g.graph.write_svg(os.path.join(outdir, 'proba.svg'))

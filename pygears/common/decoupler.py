@@ -14,7 +14,8 @@ async def decoupler_din(din: 'tdin', *, depth) -> None:
         async with din as d:
             await module().queue.put(d)
     except GearDone:
-        # await module().queue.put(GearDone)
+        # await module().queue.join()
+        await module().queue.put(GearDone)
         raise GearDone
 
 
