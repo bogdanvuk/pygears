@@ -69,6 +69,9 @@ class TupleMeta(EnumerableGenericMeta):
 class Tuple(tuple, metaclass=TupleMeta):
     # def __new__(self, val: tuple):
     def __new__(cls, val):
+        if type(val) == cls:
+            return val
+
         if isinstance(val, dict):
             tpl_val = tuple(t(val[f]) for t, f in zip(cls, cls.fields))
         else:
@@ -89,3 +92,12 @@ class Tuple(tuple, metaclass=TupleMeta):
                 subtypes.extend(subt if isinstance(i, slice) else [subt])
 
             return tout(tuple(subtypes))
+
+    @classmethod
+    def decode(cls, val):
+        ret = []
+        for t in cls:
+            ret.append(t.decode(val))
+            val >>= int(t)
+
+        return cls(tuple(ret))

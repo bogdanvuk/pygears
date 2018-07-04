@@ -107,8 +107,10 @@ class Intf:
                 )
                 raise e
             return out_queues[i]
-        else:
+        elif self.producer:
             return self.producer.get_queue(port)
+        else:
+            raise Exception(f'Interface path does not end with a simulation gear at {pout.gear.name}.{pout.basename}')
 
     @property
     def out_queues(self):
@@ -145,7 +147,7 @@ class Intf:
         # print(f"All acks received")
 
     def ready_nb(self):
-        return all(q.empty() for q in self.out_queues)
+        return all(not q._unfinished_tasks for q in self.out_queues)
 
     async def put(self, val):
         self.put_nb(val)
