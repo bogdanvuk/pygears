@@ -25,10 +25,12 @@ def tuple_type_comb(type_):
 
 
 def queue_type_comb(type_):
-    type_list = [t for t in type_[0]]
+    # type_list = [t for t in type_[0]]
+    for t in type_[0]:
+        yield Queue[t, type_.lvl]
 
-    for t in type_comb_rec(type_list, []):
-        yield Queue[tuple(reversed(t)), type_.lvl]
+    # for t in type_comb_rec(type_list, []):
+    #     yield Queue[tuple(reversed(t)), type_.lvl]
 
 
 def expand(type_):

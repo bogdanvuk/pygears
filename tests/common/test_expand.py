@@ -18,6 +18,13 @@ def test_expand_tuple_union():
     assert b == Union[Tuple[1, 3], Tuple[2, 3], Tuple[1, 4], Tuple[2, 4]]
 
 
+def test_expand_queue_tuple():
+    a = Queue[Tuple[1, 2]]
+    b = expand(a)
+
+    assert b == Tuple[Queue[1], Queue[2]]
+
+
 def test_expand_queue_union_str_subs():
     a = param_subs('expand(Queue[Union[1, 2], 6])', {},
                    registry('TypeArithNamespace'))
