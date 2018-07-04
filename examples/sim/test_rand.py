@@ -30,15 +30,15 @@ def start_cadence():
 
 
 def get_random_data():
-    soc = SVRandSocket()
+    soc = SVRandSocket(cons)
 
     for i in range(1, 3):
         print(f'test_rand: Try to get data #{i}')
-        data = soc.get_rand(1, t_cfg)
+        data = soc.get_rand('cfg')
         print(f'test_rand: cfg got {data}')
-        data = soc.get_rand(2, t_din)
+        data = soc.get_rand('din')
         print(f'test_rand: din got {data}')
-        data = soc.get_rand(3, t_ain)
+        data = soc.get_rand('ain')
         print(f'test_rand: ain got {data}')
 
     soc.finish()

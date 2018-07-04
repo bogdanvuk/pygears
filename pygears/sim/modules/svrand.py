@@ -34,7 +34,7 @@ def create_type_cons(dtype, name, cons, **var):
     return tcons
 
 
-def get_svrand_constraint(outdir, cons):
+def get_svrand_constraint(outdir, cons, seed='random'):
     base_addr = os.path.dirname(__file__)
     env = jinja2.Environment(
         loader=jinja2.FileSystemLoader(base_addr),
@@ -48,7 +48,7 @@ def get_svrand_constraint(outdir, cons):
 
     dpi_path = os.path.abspath(os.path.join(ROOT_DIR, 'sim', 'dpi'))
     ret = os.system(
-        f'irun -64bit -incdir {dpi_path} {dpi_path}/sock.sv {dpi_path}/socket_pkg.sv {dpi_path}/sock.c {outdir}/svrand_top.sv -top top +svseed=random'
+        f'irun -64bit -incdir {dpi_path} {dpi_path}/sock.sv {dpi_path}/socket_pkg.sv {dpi_path}/sock.c {outdir}/svrand_top.sv -top top +svseed={seed} -define VERBOSITY=3'
     )
     if ret != 0:
         raise SVRandCompileError(f'Constrained random compilation failed.')
@@ -57,7 +57,8 @@ def get_svrand_constraint(outdir, cons):
 class SVRandSocket:
     SVRAND_CONN_NAME = "_svrand"
 
-    def __init__(self):
+    def __init__(self, constraints):
+        self.constraints = constraints
 
         # Create a TCP/IP socket
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -84,8 +85,13 @@ class SVRandSocket:
 
         print(f"Connection received for {port_name}")
 
-    def get_rand(self, req, dtype):
+    def get_rand(self, name):
         data = None
+        for i, c in enumerate(self.constraints):
+            if c.name == name:
+                dtype = c.dtype
+                req = i + 1
+                break
 
         # Send request
         pkt = req.to_bytes(4, byteorder='little')
