@@ -49,15 +49,10 @@ class SimGear:
     async def run(self):
         self.task = asyncio.Task.current_task()
         args, kwds = self.sim_func_args
-        ack_timestep = None
         try:
             while (1):
                 if is_async_gen(self.func):
                     async for val in self.func(*args, **kwds):
-                        if ack_timestep == timestep():
-                            # print(f"Decided to wait for clk() in for {self.gear.name}")
-                            await clk()
-
                         if len(self.gear.out_ports) == 1:
                             val = (val, )
 
@@ -68,8 +63,6 @@ class SimGear:
                         for p, v in zip(self.gear.out_ports, val):
                             if v is not None:
                                 await p.producer.ready()
-
-                        ack_timestep = timestep()
                 else:
                     await self.func(*args, **kwds)
 

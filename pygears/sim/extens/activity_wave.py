@@ -15,6 +15,14 @@ def finish():
     os.system(f'pywave "exit"')
 
 
+def pywave_running():
+    return not os.system('pywave -c ""')
+
+
+def pywave_reload():
+    os.system(f'pywave "gtkwave::reLoadFile"')
+
+
 def pywave_load_file(fn):
     if os.path.isfile(fn):
         os.system(f'pywave "gtkwave::loadFile {fn}"')
@@ -45,11 +53,19 @@ def ActivityWaveFactory(cfg):
                     logging.info(f'Here?')
                     return
                 elif self.path[0] == ':':
-                    cfg['filedir'] = self.path[1:]
                     logging.info(f'Filedir received: {self.path}')
-                    finish()
-                    pywave_load_file(f"{cfg['filedir']}/pygears.vcd")
-                    pywave_load_file(f"{cfg['filedir']}/issue.sav")
+                    running = pywave_running()
+                    if ('filedir' in cfg and cfg['filedir'] == self.path[1:]
+                            and running):
+                        pywave_reload()
+                    else:
+                        cfg['filedir'] = self.path[1:]
+                        if running:
+                            finish()
+
+                        pywave_load_file(f"{cfg['filedir']}/pygears.vcd")
+                        pywave_load_file(f"{cfg['filedir']}/issue.sav")
+
                 elif self.path[0] == '/':
                     if 'filedir' in cfg:
                         gear = self.path[1:]

@@ -43,9 +43,7 @@ class ActivityReporter:
             module = sim_gear.gear
 
             g.node_map[module].set_style('filled')
-            if sim_gear in sim.done:
-                g.node_map[module].set_fillcolor('green')
-            else:
+            if sim_gear not in sim.done:
                 g.node_map[module].set_fillcolor('red')
 
             if module.definition == decoupler_din:
