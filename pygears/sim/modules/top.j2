@@ -4,6 +4,12 @@
 
 module top;
 
+{# {% if "includes" in hooks %} #}
+{#   {% for f in hooks["includes"] %} #}
+{#    `include "{{f}}" #}
+{#   {% endfor %} #}
+{# {% endif %} #}
+
    `include "socket_macros.svh"
 
    import socket_pkg::*;
@@ -12,6 +18,7 @@ module top;
    logic clk;
    logic rst;
    chandle synchro_handle;
+{{snippets.hook_unroll(hooks, "module_init")}}
 
 {% for s in structs %}
 {{s|indent(3, true)}}
@@ -90,7 +97,17 @@ module top;
       synchro_handle = sock_open("tcp://localhost:1234", "_synchro");
 
       forever begin
+{% if 'synchro_req' in hooks %}
+         do begin
+            ret = sock_get(synchro_handle, data);
+            if (ret == 1) break;
+            `verif_info($sformatf("Got synchro with data %0d at %0t", data, $time), 2);
+  {{snippets.hook_unroll(hooks, "synchro_req")}}
+         end while (data != 0);
+{% else %}
          ret = sock_get(synchro_handle, data);
+         if (ret == 1) break;
+{% endif %}
          `verif_info($sformatf("Got synchro 1 at %0t", $time), 1);
          @(posedge clk iff !rst);
          #3;

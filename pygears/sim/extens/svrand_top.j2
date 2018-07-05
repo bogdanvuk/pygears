@@ -1,5 +1,5 @@
-`ifndef TOP_SV
-`define TOP_SV
+`ifndef SVRAND_TOP_SV
+`define SVRAND_TOP_SV
 
 {% for con in tcons %}
 
@@ -27,17 +27,18 @@ endclass
 
 {% endfor %}
 
-module top;
+module svrand_top;
 
    `include "socket_macros.svh"
 
    import sock::*;
 
-   chandle handle;
 {% for con in tcons %}
    {{con.name}}_cls {{con.name}}_i;
 {% endfor %}
 
+{% if open_sock %}
+   chandle handle;
    initial begin
       handle = sock_open("tcp://localhost:4567", "_svrand");
    end
@@ -45,9 +46,6 @@ module top;
    initial begin
       int ret;
       bit [31:0] req;
-{% for con in tcons %}
-      {{con.name}}_i = new();
-{% endfor %}
       forever begin
          do begin
             ret = sock_get(handle, req);
@@ -55,22 +53,35 @@ module top;
          end while (ret == 2);
          `verif_info($sformatf("svrand: Got rand request for %0d", req), 1);
 
-         case (req)
-{% for con in tcons %}
-            {{loop.index}}: begin
-               assert({{con.name}}_i.randomize());
-               ret = sock_put(handle, {{con.name}}_i.res);
-               `verif_info($sformatf("svrand: Sent {{con.name}} value %p", {{con.name}}_i.{{con.name}}), 1);
-            end
-{% endfor %}
-         endcase
+         ret = get_rand(handle, req);
          if (ret == 1) $finish();
       end
    end
 
    final begin
-	    sock_close(handle);
+      sock_close(handle);
    end
+{% endif %}
+
+   initial begin
+{% for con in tcons %}
+      {{con.name}}_i = new();
+{% endfor %}
+   end
+
+   function int get_rand(chandle handle, int req);
+      int ret;
+      case (req)
+{% for con in tcons %}
+         {{loop.index}}: begin
+            assert({{con.name}}_i.randomize());
+            ret = sock_put(handle, {{con.name}}_i.res);
+            `verif_info($sformatf("svrand: Sent {{con.name}} value %p", {{con.name}}_i.{{con.name}}), 2);
+         end
+{% endfor %}
+      endcase
+      return ret;
+   endfunction
 
 endmodule
 
