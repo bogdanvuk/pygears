@@ -1,18 +1,21 @@
-from pygears.typing import TypingNamespacePlugin, Int, Uint, Queue, Tuple
+from pygears.typing import TypingNamespacePlugin, typeof
+from pygears.typing import Int, Uint, Queue, Tuple, Union
 
 
 def cast(dtype, cast_type):
-    if issubclass(cast_type, Int) and (not cast_type.is_specified()):
+    if typeof(cast_type, Int) and (not cast_type.is_specified()):
         if issubclass(dtype, Uint):
             return Int[int(dtype) + 1]
         elif issubclass(dtype, Int):
             return dtype
         else:
             return Int[int(dtype)]
-    elif issubclass(cast_type, Tuple) and issubclass(dtype, Queue):
+    elif typeof(cast_type, Tuple):
         if not cast_type.is_specified():
-            return Tuple[dtype[0], dtype[1:]]
-
+            if typeof(dtype, Queue) or typeof(dtype, Union):
+                return Tuple[dtype[0], dtype[1:]]
+        else:
+            return cast_type
     else:
         return cast_type
 
