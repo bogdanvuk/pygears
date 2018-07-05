@@ -88,5 +88,14 @@ def trr_main():
     sim(outdir=outdir, extens=[SVRandSocket], constraints=trr_cons)
 
 
+def py_trr_main():
+    sequencers = vir_seqr()
+    delays = [SimDelay(1, 10)] * 3
+    delays.append(SimDelay(0, 0))  # ready always high
+    verif(*sequencers, f=trr, ref=trr(name='ref_model'), delays=delays)
+
+    sim(outdir=outdir, extens=[SVRandSocket], constraints=trr_cons)
+
+
 if __name__ == '__main__':
-    trr_main()
+    py_trr_main()
