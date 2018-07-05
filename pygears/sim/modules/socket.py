@@ -57,7 +57,10 @@ def sv_cosim_gen(gear):
         registry('SVGenSystemVerilogPaths').append(sv_src_path)
 
     outdir = registry('SimArtifactDir')
-    hooks = registry('SimConfig')['SimSocketHooks']
+    if 'SimSocketHooks' in registry('SimConfig'):
+        hooks = registry('SimConfig')['SimSocketHooks']
+    else:
+        hooks = {}
 
     rtl_node = svgen(gear, outdir=outdir)
     sv_node = registry('SVGenMap')[rtl_node]

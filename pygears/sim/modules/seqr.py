@@ -11,7 +11,7 @@ async def seqr(*, t, seq) -> TLM['t']:
 
 
 @gear
-async def dly_seqr(din: TLM['t'], *, seq) -> TLM['t']:
+async def delay_seqr(din: TLM['t'], *, seq) -> TLM['t']:
     item = await din.get()
     for val in seq:
         yield val

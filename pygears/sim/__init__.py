@@ -20,11 +20,11 @@ from .sim import sim, cur_gear, artifacts_dir, sim_assert
 
 from .modules.drv import drv
 from .modules.mon import mon
-from .modules.mon import dly_mon
+from .modules.mon import delay_mon
 from .modules.seqr import seqr
 from .modules.scoreboard import scoreboard
 
 __all__ = [
     'sim', 'drv', 'mon', 'scoreboard', 'cur_gear', 'artifacts_dir',
-    'sim_assert', 'seqr', 'clk', 'delta', 'timestep', 'dly_mon'
+    'sim_assert', 'seqr', 'clk', 'delta', 'timestep', 'delay_mon'
 ]

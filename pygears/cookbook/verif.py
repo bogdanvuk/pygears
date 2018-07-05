@@ -1,5 +1,6 @@
 from pygears import gear
-from pygears.sim import drv, mon, scoreboard, sim_assert, dly_mon
+from pygears.sim import delay_mon, drv, mon, scoreboard, sim_assert
+from pygears.sim.utils import SimDelay
 
 
 @gear
@@ -28,13 +29,17 @@ def tlm_verif(*seq, f, ref):
     return report
 
 
-def verif(*seq, f, ref, dly_out=False):
-    stim = tuple(s | drv for s in seq)
-
-    if dly_out:
-        res_tlm = stim | f | dly_mon
+def verif(*seq, f, ref, delays=None):
+    '''Using ref. model'''
+    if delays is None:
+        delays = [SimDelay(0, 0)] * (len(seq) + 1)
     else:
-        res_tlm = stim | f
+        assert len(seq) + 1 == len(delays), print(
+            'Not enough delays specified')
+
+    stim = tuple(s | drv(delay=delays[i]) for i, s in enumerate(seq))
+
+    res_tlm = stim | f | delay_mon(delay=delays[-1])
 
     ref_tlm = stim | ref
 
@@ -45,16 +50,24 @@ def verif(*seq, f, ref, dly_out=False):
 
 
 def directed(*seq, f, ref):
+    '''Directed test, ref is a list of expected results'''
     tuple(s | drv for s in seq) \
         | f \
         | mon \
         | check(ref=ref)
 
 
-def directed_on_the_fly(*seq, f, ref):
-    stim = tuple(s | drv for s in seq)
+def directed_on_the_fly(*seq, f, ref, delays=None):
+    '''Directed test, but checking done on-the-fly (from generators)'''
+    if delays is None:
+        delays = [SimDelay(0, 0)] * (len(seq) + 1)
+    else:
+        assert len(seq) + 1 == len(delays), print(
+            'Not enough delays specified')
 
-    res_tlm = stim | f | dly_mon
+    stim = tuple(s | drv(delay=delays[i]) for i, s in enumerate(seq))
+
+    res_tlm = stim | f | delay_mon(delay=delays[-1])
 
     report = []
     scoreboard(res_tlm, ref, report=report)
