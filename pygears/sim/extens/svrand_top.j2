@@ -34,7 +34,7 @@ module svrand_top;
    import sock::*;
 
 {% for con in tcons %}
-   {{con.name}}_cls {{con.name}}_i;
+   {{con.name}}_cls {{con.name}}_i = new();
 {% endfor %}
 
 {% if open_sock %}
@@ -63,11 +63,11 @@ module svrand_top;
    end
 {% endif %}
 
-   initial begin
-{% for con in tcons %}
-      {{con.name}}_i = new();
-{% endfor %}
-   end
+{#    initial begin #}
+{# {% for con in tcons %} #}
+{#       {{con.name}}_i = new(); #}
+{# {% endfor %} #}
+{#    end #}
 
    function int get_rand(chandle handle, int req);
       int ret;

@@ -15,9 +15,12 @@ from pygears.sim.modules.socket import SimSocket
 def get_rand_data(name):
     # print(f'Getting random data for {name}')
     svrand = registry('SimConfig')['SVRandSocket']
-    req, dtype = svrand.parse_name(name)
-    simsoc = registry('SimConfig')['SimSocket']
-    data = simsoc.send_req(req, dtype)
+    if svrand.open_sock:
+        data = svrand.get_rand(name)
+    else:
+        req, dtype = svrand.parse_name(name)
+        simsoc = registry('SimConfig')['SimSocket']
+        data = simsoc.send_req(req, dtype)
     return data
 
 
@@ -73,6 +76,8 @@ class SVRandSocket:
             if isinstance(sim_gear, SimSocket):
                 self.open_sock = False
 
+        self.create_svrand_top()
+
         if self.open_sock:
             self.connect()
         else:
@@ -82,7 +87,6 @@ class SVRandSocket:
             hooks[
                 'synchro_req'] = 'if (data != 0) ret = rand_i.get_rand(synchro_handle, data);'
             registry('SimConfig')['SimSocketHooks'] = hooks
-            self.create_svrand_top()
 
     def connect(self):
         # Create a TCP/IP socket
