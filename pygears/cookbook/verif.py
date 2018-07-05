@@ -1,5 +1,5 @@
 from pygears import gear
-from pygears.sim import drv, mon, scoreboard, sim_assert
+from pygears.sim import drv, mon, scoreboard, sim_assert, dly_mon
 
 
 @gear
@@ -51,7 +51,7 @@ def directed(*seq, f, ref):
 def directed_on_the_fly(*seq, f, ref):
     stim = tuple(s | drv for s in seq)
 
-    res_tlm = stim | f
+    res_tlm = stim | f | dly_mon
 
     report = []
     scoreboard(res_tlm, ref, report=report)

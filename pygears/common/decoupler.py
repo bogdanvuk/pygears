@@ -1,6 +1,6 @@
 import asyncio
 
-from pygears import gear, module
+from pygears import gear, module, GearDone
 from pygears.util.find import find
 
 
@@ -10,14 +10,24 @@ def decoupler_din_setup(module):
 
 @gear(sim_setup=decoupler_din_setup, svgen={'node_cls': None})
 async def decoupler_din(din: 'tdin', *, depth) -> None:
-    async with din as d:
-        await module().queue.put(d)
+    try:
+        async with din as d:
+            await module().queue.put(d)
+    except GearDone:
+        # await module().queue.join()
+        await module().queue.put(GearDone)
+        raise GearDone
 
 
 @gear(svgen={'node_cls': None})
 async def decoupler_dout(*, t, depth) -> b't':
     queue = find('../decoupler_din').queue
     data = await queue.get()
+
+    if data is GearDone:
+        queue.task_done()
+        raise GearDone
+
     yield data
     queue.task_done()
 

@@ -37,16 +37,16 @@ class UnionMeta(EnumerableGenericMeta):
         index = self.index_norm(parameters)
 
         if isinstance(index[0], slice):
-            if(index[0].stop == 1):
+            if (index[0].stop == 1):
                 return Uint[max(map(int, self.args))]
-            elif(index[0].stop == 2):
+            elif (index[0].stop == 2):
                 return self
             else:
                 raise IndexError
         else:
-            if(index[0] == 0):
+            if (index[0] == 0):
                 return Uint[max(map(int, self.args))]
-            elif(index[0] == 1):
+            elif (index[0] == 1):
                 return Uint[bitw(len(self.args) - 1)]
             else:
                 raise IndexError
@@ -54,9 +54,9 @@ class UnionMeta(EnumerableGenericMeta):
     def keys(self):
         return [0, 1]
 
+    @property
     def types(self):
-        for a in self.args:
-            yield a
+        return self.args
 
     def __str__(self):
         return '%s' % ' | '.join([type_str(a) for a in self.args])
@@ -64,5 +64,32 @@ class UnionMeta(EnumerableGenericMeta):
 
 class Union(tuple, metaclass=UnionMeta):
     def __new__(cls, val: tuple):
-        print(f'{cls}: {val}')
         return super(Union, cls).__new__(cls, (cls[0](val[0]), val[1]))
+
+    # def __getitem__(self, index):
+    #     index = type(self).index_norm(index)
+    #     if len(index) == 2:
+    #         return self
+    #     else:
+    #         index = index[0]
+    #         val = super().__getitem__(index)
+
+    #         if index == 0:
+    #             type(self).decode(val)
+    #             select = super().__getitem__(1)
+    #             return type(self).types[select].decode(val)
+    #         else:
+    #             return val
+
+    @property
+    def data(self):
+        return type(self).types[self[1]].decode(self[0])
+
+    @classmethod
+    def decode(cls, val):
+        ret = []
+        for t in cls:
+            ret.append(t.decode(val))
+            val >>= int(t)
+
+        return cls(tuple(ret))

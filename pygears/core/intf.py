@@ -61,7 +61,8 @@ class Intf:
             'ack': SimEvent(),
             'ack_in': SimEvent(),
             'pull_start': SimEvent(),
-            'pull_done': SimEvent()
+            'pull_done': SimEvent(),
+            'cancel': SimEvent()
         }
 
     def source(self, port):
@@ -107,8 +108,10 @@ class Intf:
                 )
                 raise e
             return out_queues[i]
-        else:
+        elif self.producer:
             return self.producer.get_queue(port)
+        else:
+            raise Exception(f'Interface path does not end with a simulation gear at {pout.gear.name}.{pout.basename}')
 
     @property
     def out_queues(self):
@@ -138,6 +141,7 @@ class Intf:
     async def ready(self):
         if not self.ready_nb():
             for q, c in zip(self.out_queues, self.end_consumers):
+                registry('CurrentModule').phase = 'join'
                 await q.join()
                 self.events['ack'](c.consumer)
 
@@ -145,7 +149,7 @@ class Intf:
         # print(f"All acks received")
 
     def ready_nb(self):
-        return all(q.empty() for q in self.out_queues)
+        return all(not q._unfinished_tasks for q in self.out_queues)
 
     async def put(self, val):
         self.put_nb(val)
@@ -161,6 +165,7 @@ class Intf:
         for q, c in zip(self.out_queues, self.end_consumers):
             c.finish()
             for task in q._getters:
+                self.events['cancel'](self, c)
                 task.cancel()
 
     def done(self):
@@ -178,10 +183,10 @@ class Intf:
         return val
 
     async def pull(self):
+        self.events['pull_start'](self)
         if self._done:
             raise GearDone
 
-        self.events['pull_start'](self)
         ret = await self.in_queue.get()
         self.events['pull_done'](self)
         return ret
@@ -198,7 +203,8 @@ class Intf:
         return await self.pull()
 
     async def __aexit__(self, exception_type, exception_value, traceback):
-        self.ack()
+        if exception_type is None:
+            self.ack()
 
     def __hash__(self):
         return id(self)

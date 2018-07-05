@@ -97,6 +97,9 @@ class Integer(int, metaclass=IntegerMeta):
     """
 
     def __new__(cls, val: int = 0):
+        if type(val) == cls:
+            return val
+
         return super(Integer, cls).__new__(cls,
                                            int(val) & ((1 << len(cls)) - 1))
 
@@ -121,6 +124,10 @@ class Integer(int, metaclass=IntegerMeta):
             return Bool(int(self) & (1 << index))
         else:
             raise IndexError
+
+    @classmethod
+    def decode(cls, val):
+        return cls(int(val))
 
 
 class IntMeta(IntegerMeta):

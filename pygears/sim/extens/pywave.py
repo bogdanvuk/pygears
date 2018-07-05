@@ -45,16 +45,23 @@ def send_cmd(sock, cmd, log_level='INFO'):
     return ret, errs
 
 
-def connect_and_send(sock, port, log_level, timeout, cmd, return_err=False):
+def connect_and_send(sock,
+                     port,
+                     log_level,
+                     timeout,
+                     cmd,
+                     return_err=False,
+                     check=False):
     sock.connect(('', port))
     sock.settimeout(timeout)
 
-    # ret, errs = send_cmd(sock, cmd, log_level, timeout)
-    ret, errs = send_cmd(sock, cmd, log_level)
-    print('\n'.join(ret))
-    print('\n'.join(errs), file=sys.stderr)
-    if errs and return_err:
-        return -1
+    if not check:
+        # ret, errs = send_cmd(sock, cmd, log_level, timeout)
+        ret, errs = send_cmd(sock, cmd, log_level)
+        print('\n'.join(ret))
+        print('\n'.join(errs), file=sys.stderr)
+        if errs and return_err:
+            return -1
 
 
 def main(argv=sys.argv):
@@ -62,6 +69,12 @@ def main(argv=sys.argv):
 
     parser.add_argument(
         '-p', dest='port', type=int, default=60000, help="Server port")
+
+    parser.add_argument(
+        '-c',
+        dest='check',
+        action='store_true',
+        help="Only check if server is up")
 
     parser.add_argument(
         '-l', dest='log_level', default='INFO', help="Logging level")
@@ -80,9 +93,10 @@ def main(argv=sys.argv):
 
     try:
         return connect_and_send(client_socket, args.port, args.log_level,
-                                args.timeout, args.cmd, args.error)
+                                args.timeout, args.cmd, args.error, args.check)
     except socket.error as err:
-        pass
+        if args.check:
+            return -1
 
     command = [
         'python',

@@ -6,11 +6,6 @@ from pygears import module
 @gear
 async def sieve(din, *, index) -> b'din[index]':
     async with din as d:
-        # if module().name in [
-        #         "/rd_addrgen/rnghop/rng/fory/fmap/permuted_apply/sieve_1_0_2",
-        # ]:
-        #     print(module().name)
-
         dout = []
         for i in index:
             dout.append(d[i])
