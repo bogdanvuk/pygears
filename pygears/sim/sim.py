@@ -51,6 +51,11 @@ def topo_sort(dag):
     visited = [False] * len(dag)
     stack = []
 
+    # for i, g in enumerate(dag):
+    #     if not g.in_ports:
+    #         stack.append(g)
+    #         visited[i] = True
+
     # Call the recursive helper function to store Topological
     # Sort starting from all vertices one by one
     for i, g in enumerate(dag):
@@ -68,7 +73,9 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             'after_run': SimEvent(),
             'before_timestep': SimEvent(),
             'after_timestep': SimEvent(),
-            'after_cleanup': SimEvent()
+            'after_cleanup': SimEvent(),
+            'after_cancel': SimEvent(),
+            'at_exit': SimEvent()
         }
 
     def get_tasks(self):
@@ -82,17 +89,27 @@ class EventLoop(asyncio.events.AbstractEventLoop):
                     [port.gear for port in get_consumer_tree(p.producer)])
 
         gear_order = topo_sort(dag)
+        # print("Topological order:")
+        # for g in gear_order:
+        #     print(g.name)
+
+        # print("-"*60)
+
         self.sim_gears = [self.sim_map[g] for g in gear_order]
         self.tasks = {g: g.run() for g in self.sim_gears}
         self.task_data = {g: None for g in self.sim_gears}
 
     def fut_done(self, fut):
-        sim_gear = self.wait_list.pop(fut)
+        sim_gear, join = self.wait_list.pop(fut)
         if fut.cancelled():
             self.cancelled.add(sim_gear)
-            print(f'Future cancelled: {sim_gear.gear.name} ready.')
+            # print(f'Future cancelled: {sim_gear.gear.name} {join}.')
         else:
-            self.ready.add(sim_gear)
+            if join:
+                self.back_ready.add(sim_gear)
+            else:
+                self.forward_ready.add(sim_gear)
+
             # print(f'Future done: {sim_gear.gear.name} ready.')
 
     def create_future(self):
@@ -104,40 +121,48 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
     def cancel(self, sim_gear):
         try:
+            self.cur_gear = sim_gear.gear
+            bind('CurrentModule', self.cur_gear)
             self.tasks[sim_gear].throw(GearDone)
         except (StopIteration, GearDone):
             self.done.add(sim_gear)
+            self.events['after_cancel'](self, sim_gear)
         else:
             raise Exception("Gear didn't stop on cancel!")
 
-    def maybe_run_gear(self, sim_gear):
+    def maybe_run_gear(self, sim_gear, ready):
         if sim_gear in self.cancelled:
             self.cancel(sim_gear)
             self.cancelled.remove(sim_gear)
 
-        if sim_gear not in self.ready:
+        if sim_gear not in ready:
             return
 
-        self.ready.remove(sim_gear)
+        ready.remove(sim_gear)
 
         self.cur_gear = sim_gear.gear
         bind('CurrentModule', self.cur_gear)
         # print(f"Running task {sim_gear.gear.name}")
         try:
+            self.cur_gear.phase = 'forward'
             data = self.tasks[sim_gear].send(self.task_data[sim_gear])
         except (StopIteration, GearDone):
             self.done.add(sim_gear)
             # print(f"Task {sim_gear.gear.name} done")
         else:
             if isinstance(data, SimFuture):
-                self.wait_list[data] = sim_gear
+                if self.cur_gear.phase == 'join':
+                    self.wait_list[data] = (sim_gear, True)
+                else:
+                    self.wait_list[data] = (sim_gear, False)
 
             self.task_data[sim_gear] = data
 
     def run(self, timeout=None):
         self.get_tasks()
         self.wait_list = {}
-        self.ready = set(self.sim_gears)
+        self.forward_ready = set(self.sim_gears)
+        self.back_ready = set()
         self.cancelled = set()
         self.done = set()
         bind('ClkEvent', asyncio.Event())
@@ -154,17 +179,17 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             sim_gear.setup()
 
         self.events['before_run'](self)
-        while self.ready:
+        while self.forward_ready or self.back_ready:
             # print("Forward pass...")
             for sim_gear in self.sim_gears:
-                self.maybe_run_gear(sim_gear)
+                self.maybe_run_gear(sim_gear, self.forward_ready)
 
             delta.set()
             delta.clear()
 
             # print("Back pass...")
             for sim_gear in reversed(self.sim_gears):
-                self.maybe_run_gear(sim_gear)
+                self.maybe_run_gear(sim_gear, self.back_ready)
 
             self.events['before_timestep'](self, timestep)
 
@@ -180,14 +205,19 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
         print(f"----------- Simulation done ---------------")
 
+        while self.cancelled:
+            sim_gear = self.cancelled.pop()
+            self.cancel(sim_gear)
+
+        print(f"----------- After run ---------------")
         self.events['after_run'](self)
 
         for sim_gear in self.sim_gears:
             if not sim_gear in self.done:
-                # print(f'Canceling {sim_gear.gear.name}')
                 self.cancel(sim_gear)
 
         self.events['after_cleanup'](self)
+        self.events['at_exit'](self)
 
 
 def sim(outdir=None, extens=[], run=True, **conf):

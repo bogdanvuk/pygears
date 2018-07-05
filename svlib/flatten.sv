@@ -59,8 +59,7 @@ module flatten
    end
 
 //interface assignments
-   assign dout.dvalid = din.dvalid;
-   assign dout.eot    = din.eot;
-   assign din.dready = dout.dready;
+   assign dout.valid = din.valid;
+   assign din.ready = dout.ready;
 
 endmodule : flatten

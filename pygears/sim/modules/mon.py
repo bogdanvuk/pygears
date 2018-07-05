@@ -1,5 +1,7 @@
 from pygears import gear
 from pygears.typing import TLM
+from pygears.sim import clk
+import random
 
 
 class Partial:
@@ -80,3 +82,13 @@ async def mon(din, *, t=b'din') -> TLM['din']:
 
         print('Monitor emits: ', data)
         yield data
+
+
+@gear
+async def dly_mon(din, *, t=b'din', dly_low=5, dly_high=10) -> b'din':
+    while 1:
+        async with din as item:
+            dly = random.randint(dly_low, dly_high)
+            for i in range(dly):
+                await clk()
+        yield item

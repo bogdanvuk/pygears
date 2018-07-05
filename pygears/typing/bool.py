@@ -12,3 +12,7 @@ class BoolMeta(TypingMeta):
 class Bool(int, metaclass=BoolMeta):
     def __new__(cls, val):
         return super(Bool, cls).__new__(cls, bool(val))
+
+    @classmethod
+    def decode(cls, val):
+        return cls(val)

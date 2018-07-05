@@ -74,6 +74,9 @@ class Queue(tuple, metaclass=QueueMeta):
     __parameters__ = ['T', 'N']
 
     def __new__(cls, val: tuple):
+        if type(val) == cls:
+            return val
+
         queue_tpl = (cls[0](val[0]), *(Bool(v) for v in val[1:]))
         return super(Queue, cls).__new__(cls, queue_tpl)
 
@@ -131,3 +134,14 @@ class Queue(tuple, metaclass=QueueMeta):
                 return outtype(eot)
         else:
             return type(self)[0](dout[0])
+
+    @classmethod
+    def decode(cls, val):
+        data = [cls[0].decode(val)]
+
+        eot_mask = 1 << int(cls[0])
+        for i in range(cls.lvl):
+            data.append(Bool(val & eot_mask))
+            eot_mask <<= 1
+
+        return cls(tuple(data))

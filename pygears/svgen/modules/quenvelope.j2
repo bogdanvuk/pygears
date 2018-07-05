@@ -5,19 +5,22 @@
 
   {% set input_intf_names = intfs|isinput|keymap("name") %}
 
-    assign dout_s.out_eot = din_s.out_eot;
-    assign dout.data = dout_s;
-
   {% if dout_align == 1 %}
     assign din.ready = dout.ready;
     assign dout.valid = din.valid;
+    assign dout_s.out_eot = din_s.out_eot;
+    assign dout.data = dout_s;
   {% else %}
     logic  handshake;
     logic  ready_reg;
     logic  valid_reg;
     logic  subelem_done;
+    logic [{{lvl-1}}:0] eots_reg;
 
-    assign subelem_done = {{dout_align}};
+    assign dout_s.out_eot = valid_reg ? &eots_reg : din_s.out_eot;
+    assign dout.data = dout_s;
+
+    assign subelem_done = {{dout_align}} && din.valid;
     assign din.ready = (dout.ready || ready_reg || (!subelem_done));
     assign dout.valid = (din.valid || valid_reg) && (!ready_reg);
 
@@ -27,15 +30,18 @@
         if (rst) begin
           ready_reg <= 1'b0;
           valid_reg <= 1'b0;
+          eots_reg <= 0;
         end
         else begin
-          if (subelem_done && handshake) begin
+          if (subelem_done && (handshake || ready_reg)) begin
               ready_reg <= 1'b0;
               valid_reg <= 1'b0;
+              eots_reg <= 0;
           end
           else begin
               ready_reg <= ready_reg || handshake;
               valid_reg <= valid_reg || din.valid;
+              eots_reg <= din.valid ? (eots_reg | din_s.out_eot) : eots_reg;
           end
         end
     end

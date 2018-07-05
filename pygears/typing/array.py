@@ -79,3 +79,12 @@ class Array(tuple, metaclass=ArrayMeta):
     def __new__(cls, val: tuple):
         array_tpl = (cls[0](v) for v in val)
         return super(Array, cls).__new__(cls, array_tpl)
+
+    @classmethod
+    def decode(cls, val):
+        ret = []
+        for t in cls:
+            ret.append(t.decode(val))
+            val >>= int(t)
+
+        return cls(tuple(ret))
