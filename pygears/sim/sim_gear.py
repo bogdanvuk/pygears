@@ -71,6 +71,6 @@ class SimGear:
                         raise GearDone
 
         except GearDone as e:
-            print(f"SimGear canceling: {self.gear.name}")
+            # print(f"SimGear canceling: {self.gear.name}")
             self.finish()
             raise e

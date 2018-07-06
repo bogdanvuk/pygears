@@ -39,8 +39,7 @@ async def sv_rng(cfg: TCfg,
                 int(incr)
             ]
 
-        if cnt_one_more:
-            rng_cfg[1] += sign(int(incr)) * 1
+        rng_cfg[1] += sign(int(incr)) * cnt_one_more
 
         for data, last in quiter(range(*rng_cfg)):
             yield module().tout((data, last))

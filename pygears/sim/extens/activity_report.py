@@ -44,7 +44,7 @@ class ActivityReporter:
 
             g.node_map[module].set_style('filled')
             if sim_gear not in sim.done:
-                g.node_map[module].set_fillcolor('red')
+                g.node_map[module].set_fillcolor('yellow')
 
             if module.definition == decoupler_din:
                 if not module.queue.empty():

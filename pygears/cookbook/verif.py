@@ -43,8 +43,14 @@ def verif(*seq, f, ref, delays=None):
 
     ref_tlm = stim | ref
 
-    report = []
-    scoreboard(res_tlm, ref_tlm, report=report)
+    if not isinstance(res_tlm, tuple):
+        res_tlm = (res_tlm, )
+        ref_tlm = (ref_tlm, )
+
+    report = [[] for _ in range(len(res_tlm))]
+
+    for r, res_intf, ref_intf in zip(report, res_tlm, ref_tlm):
+        scoreboard(res_intf, ref_intf, report=r)
 
     return report
 

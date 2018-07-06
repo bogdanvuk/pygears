@@ -158,28 +158,12 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
             self.task_data[sim_gear] = data
 
-    def run(self, timeout=None):
-        self.get_tasks()
-        self.wait_list = {}
-        self.forward_ready = set(self.sim_gears)
-        self.back_ready = set()
-        self.cancelled = set()
-        self.done = set()
-        bind('ClkEvent', asyncio.Event())
-        bind('DeltaEvent', asyncio.Event())
-        bind('Timestep', 0)
-
+    def sim_loop(self, timeout):
         clk = registry('ClkEvent')
         delta = registry('DeltaEvent')
         timestep = 0
 
-        self.events['before_setup'](self)
-
-        for sim_gear in self.sim_gears:
-            sim_gear.setup()
-
-        self.events['before_run'](self)
-        while self.forward_ready or self.back_ready:
+        while self.forward_ready or self.back_ready or self.cancelled:
             # print("Forward pass...")
             for sim_gear in self.sim_gears:
                 self.maybe_run_gear(sim_gear, self.forward_ready)
@@ -203,21 +187,50 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             if (timeout is not None) and (timestep == timeout):
                 break
 
+        # while self.cancelled:
+        #     # print(f'Canceling {sim_gear.gear.name}')
+        #     sim_gear = self.cancelled.pop()
+        #     self.cancel(sim_gear)
+
         print(f"----------- Simulation done ---------------")
 
-        while self.cancelled:
-            sim_gear = self.cancelled.pop()
-            self.cancel(sim_gear)
+    def run(self, timeout=None):
+        self.get_tasks()
+        self.wait_list = {}
+        self.forward_ready = set(self.sim_gears)
+        self.back_ready = set()
+        self.cancelled = set()
+        self.done = set()
+        bind('ClkEvent', asyncio.Event())
+        bind('DeltaEvent', asyncio.Event())
+        bind('Timestep', 0)
+
+        self.events['before_setup'](self)
+
+        for sim_gear in self.sim_gears:
+            sim_gear.setup()
+
+        self.events['before_run'](self)
+
+        sim_exception = None
+        try:
+            self.sim_loop(timeout)
+        except Exception as e:
+            sim_exception = e
 
         print(f"----------- After run ---------------")
         self.events['after_run'](self)
 
-        for sim_gear in self.sim_gears:
-            if not sim_gear in self.done:
-                self.cancel(sim_gear)
+        if not sim_exception:
+            for sim_gear in self.sim_gears:
+                if sim_gear not in self.done:
+                    self.cancel(sim_gear)
 
         self.events['after_cleanup'](self)
         self.events['at_exit'](self)
+
+        if sim_exception:
+            raise sim_exception
 
 
 def sim(outdir=None, extens=[], run=True, **conf):
