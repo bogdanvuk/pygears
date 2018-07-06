@@ -10,7 +10,7 @@ class QueueMeta(EnumerableGenericMeta):
         return list(range(self.lvl + 1))
 
     def __new__(cls, name, bases, namespace, args=[]):
-        if isinstance(args, dict) and (list(args.values())[1] == 0):
+        if not cls.is_generic and isinstance(args, dict) and (list(args.values())[1] == 0):
             return list(args.values())[0]
         else:
             return super().__new__(cls, name, bases, namespace, args)

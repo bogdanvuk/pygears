@@ -69,6 +69,7 @@ if [ $simulator == "cadence" ]; then
         {{dti_verif_path}}/sock.sv \
         {{dti_verif_path}}/socket_pkg.sv \
         {{dti_verif_path}}/sock.c \
+        {{dti_verif_path}}/../extens/*.sv \
     {% for i in includes %}
     {{i|indent(4, True)}} \
     {% endfor %}

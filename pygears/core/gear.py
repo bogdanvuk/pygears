@@ -375,7 +375,10 @@ def gear(func, gear_cls=Gear, **meta_kwds):
         try:
             return execdict_keys[execdict_values.index(annotation)]
         except ValueError:
-            return repr(annotation)
+            if not isinstance(str, bytes):
+                return '"b' + repr(annotation) + '"'
+            else:
+                return annotation
 
     gear_func = fb.get_func(
         execdict=execdict, formatannotation=formatannotation)

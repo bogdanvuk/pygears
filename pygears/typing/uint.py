@@ -157,6 +157,16 @@ class Int(Integer, metaclass=IntMeta):
     """
     __parameters__ = ['N']
 
+    def __new__(cls, val: int = 0):
+        if type(val) == cls:
+            return val
+
+        if cls.is_generic() and isinstance(val, Uint):
+            return cls[val.width + 1](int(val))
+        else:
+            return super(Int, cls).__new__(cls,
+                                           int(val) & ((1 << len(cls)) - 1))
+
     def __int__(self):
         val = super(Int, self).__int__()
         if val >= (1 << (self.width - 1)):

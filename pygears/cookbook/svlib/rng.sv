@@ -80,22 +80,27 @@
          end
       end
 
-   if (SIGNED) begin
-      assign dout_s.data = cnt_started ? W_DOUT_DATA'(signed'(cnt_reg)) : W_DOUT_DATA'(signed'(cfg_s.base));
-      assign cnt_next = W_DOUT_DATA'(signed'(dout_s.data)) + W_DOUT_DATA'(signed'(cfg_s.incr));
-   end else begin
-      assign dout_s.data = cnt_started ? cnt_reg : W_DOUT_DATA'(cfg_s.base);
-      assign cnt_next = dout_s.data + W_DOUT_DATA'(cfg_s.incr);
-   end
+     if (SIGNED) begin
+        assign dout_s.data = cnt_started ? W_DOUT_DATA'(signed'(cnt_reg)) : W_DOUT_DATA'(signed'(cfg_s.base));
+        assign cnt_next = W_DOUT_DATA'(signed'(dout_s.data)) + W_DOUT_DATA'(signed'(cfg_s.incr));
+     end else begin
+        assign dout_s.data = cnt_started ? cnt_reg : W_DOUT_DATA'(cfg_s.base);
+        assign cnt_next = dout_s.data + W_DOUT_DATA'(cfg_s.incr);
+     end
 
    end
 
    if (CNT_ONE_MORE)
-     assign eot_internal_cond = (cnt_reg == cfg_s.cnt);
-   else if (!CNT_STEPS)
-     assign eot_internal_cond = (dout_s.data == W_DOUT_DATA'(cfg_s.cnt));
-   else
-     assign eot_internal_cond = (cnt_next == cfg_s.cnt);
+      if (CNT_STEPS)
+        assign eot_internal_cond = (cnt_reg == cfg_s.cnt);
+      else
+        assign eot_internal_cond = (dout_s.data == W_DOUT_DATA'(cfg_s.cnt));
+   else begin
+      if (CNT_STEPS)
+        assign eot_internal_cond = (cnt_next == cfg_s.cnt);
+      else
+        assign eot_internal_cond = (cnt_next == W_DOUT_DATA'(cfg_s.cnt));
+   end
 
    assign handshake = dout.ready & cfg.valid;
 

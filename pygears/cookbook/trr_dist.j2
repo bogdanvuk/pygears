@@ -1,0 +1,59 @@
+{%- import 'snippet.j2' as snippet -%}
+
+{% call snippet.gear_module(module_name, intfs, comment) %}
+
+   localparam DOUT_NUM = {{intfs|length - 1}};
+   localparam DIN_LVL  = {{intfs[0]['type'].lvl}};
+   localparam DOUT_LVL = {{intfs[-1]['type'].lvl}};
+
+  {% for i in intfs %}
+   {{ svgen_typedef(i['local_type'], i['name'])|indent(4, False) }}
+  {% endfor %}
+
+   logic [DOUT_NUM-1:0]         valid_array;
+   logic [DOUT_NUM-1:0]         ready_array;
+   logic [$clog2(DOUT_NUM)-1:0] cnt_s;
+   logic handshake;
+   logic cnt_rst;
+   din_t din_s;
+{% for i in intfs[1:] %}
+   {{i['name']}}_t {{i['name']}}_s;
+{% endfor %}
+
+   assign handshake = din.valid & din.ready;
+   assign din_s = din.data;
+
+{% for i in intfs[1:] %}
+   assign {{i['name']}}_s.data = din_s.data;
+   assign {{i['name']}}_s.eot = din_s.eot[DOUT_LVL-1:0];
+{% endfor %}
+
+{% for i in intfs[1:] %}
+   assign {{i['name']}}.data = {{i['name']}}_s;
+   assign {{i['name']}}.valid = valid_array[{{loop.index-1}}];
+   assign ready_array[{{loop.index-1}}] = {{i['name']}}.ready;
+{% endfor %}
+
+   generate
+      for (genvar i = 0; i < DOUT_NUM; i++) begin
+         assign valid_array[i] = (i == cnt_s) && din.valid;
+      end
+   endgenerate
+   assign din.ready = ready_array[cnt_s];
+
+   if (DIN_LVL > 1) begin
+      assign cnt_rst = rst | (handshake & (&din_s.eot));
+   end else begin
+      assign cnt_rst = rst;
+   end
+
+   always_ff @(posedge clk) begin
+      if (cnt_rst) begin
+         cnt_s <= '0;
+      end else begin
+         if (handshake & din_s.eot[0]) begin
+            cnt_s <= cnt_s + 1;
+         end
+      end
+   end
+{% endcall %}

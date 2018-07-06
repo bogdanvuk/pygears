@@ -67,8 +67,8 @@ def ActivityWaveFactory(cfg):
                         pywave_load_file(f"{cfg['filedir']}/issue.sav")
 
                 elif self.path[0] == '/':
+                    gear = self.path[1:]
                     if 'filedir' in cfg:
-                        gear = self.path[1:]
                         logging.info(f'Gear received: {self.path}')
                         pywave_load_file(f"{cfg['filedir']}/{gear}.sav")
 
@@ -76,17 +76,22 @@ def ActivityWaveFactory(cfg):
                     self.send_header("Content-type", "text/html")
                     self.end_headers()
                     self.wfile.write(
-                        b"<html><head><title>Title goes here.</title></head>")
+                        f"<html><head><title>{gear}.</title></head>".encode())
 
                     if 'filedir' in cfg:
                         self.wfile.write(
-                            f"<body><p>{cfg['filedir']}.</p>".encode())
+                            f"<body><p>Reading from: {cfg['filedir']}.</p>".
+                            encode())
 
-                    # If someone went to "http://something.somewhere.net/foo/bar/",
-                    # then self.path equals "/foo/bar/".
-                    self.wfile.write(
-                        f"<p>You accessed path: {self.path}</p>".encode())
-                    self.wfile.write(b"</body></html>")
+                    self.wfile.write(b"<p>")
+
+                    fn = f"{cfg['filedir']}/{gear}.txt"
+                    if os.path.isfile(fn):
+                        with open(fn, 'r') as f:
+                            for line in f:
+                                self.wfile.write(f'{line}<br/>'.encode())
+
+                    self.wfile.write(b"</p></body></html>")
 
             except Exception as e:
                 type, value, tr = sys.exc_info()
