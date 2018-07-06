@@ -39,7 +39,7 @@ def verif(*seq, f, ref, delays=None):
 
     stim = tuple(s | drv(delay=delays[i]) for i, s in enumerate(seq))
 
-    res = stim | f
+    res_tlm = stim | f
     ref_tlm = stim | ref
 
     if not isinstance(res_tlm, tuple):
@@ -49,20 +49,10 @@ def verif(*seq, f, ref, delays=None):
     report = [[] for _ in range(len(res_tlm))]
 
     for r, res_intf, ref_intf in zip(report, res_tlm, ref_tlm):
-        scoreboard(res_intf | delay_mon(delay=delays[-1]), ref_intf, report=r)
-=======
-    if isinstance(res, tuple):
-        res_tlm = tuple(r | delay_mon(delay=delays[-1]) for r in res)
-    else:
-        res_tlm = res | delay_mon(delay=delays[-1])
-
-    report = []
-    if isinstance(res_tlm, tuple):
-        for res, ref in zip(res_tlm, ref_tlm):
-            scoreboard(res, ref, report=report)
-    else:
-        scoreboard(res_tlm, ref_tlm, report=report)
->>>>>>> 92d0dcfb60a2e508e646f9c173ab574018f00e74
+        scoreboard(
+            res_intf | delay_mon(delay=delays[-1]),
+            ref_intf | delay_mon(delay=delays[-1]),
+            report=r)
 
     return report
 
