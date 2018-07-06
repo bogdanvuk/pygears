@@ -3,7 +3,8 @@
 
 {% for con in tcons %}
 
-class {{con.name}}_cls;
+{% if con.cls == 'dflt_tcon' %}
+class {{con.name}}_dflt_tcon;
 
 {% for n, s in con.cvars.items() %}
    {{s}}
@@ -25,6 +26,7 @@ class {{con.name}}_cls;
    endfunction
 endclass
 
+{% endif %}
 {% endfor %}
 
 module svrand_top;
@@ -34,13 +36,26 @@ module svrand_top;
    import sock::*;
 
 {% for con in tcons %}
-   {{con.name}}_cls {{con.name}}_i = new();
+  {% if con.cls == 'dflt_tcon' %}
+   {{con.name}}_dflt_tcon {{con.name}}_i = new();
+  {% else %}
+    {% for n, s in con.cvars.items() %}
+   {{s}}
+    {% endfor %}
+    {% if con.cls_params %}
+   {{con.cls}}#(
+      {% for p in con.cls_params %}
+      {{p}}{{ "," if not loop.last }}
+      {% endfor %}
+   ) {{con.name}}_i = new();
+    {% endif %}
+  {% endif %}
 {% endfor %}
 
 {% if open_sock %}
    chandle handle;
    initial begin
-      handle = sock_open("tcp://localhost:4567", "_svrand");
+      handle = sock_open("tcp://localhost:{{port}}", "_svrand");
    end
 
    initial begin
@@ -63,20 +78,22 @@ module svrand_top;
    end
 {% endif %}
 
-{#    initial begin #}
-{# {% for con in tcons %} #}
-{#       {{con.name}}_i = new(); #}
-{# {% endfor %} #}
-{#    end #}
-
    function int get_rand(chandle handle, int req);
       int ret;
       case (req)
 {% for con in tcons %}
          {{loop.index}}: begin
+  {% if con.cls == 'dflt_tcon' %}
             assert({{con.name}}_i.randomize());
+  {% else %}
+            assert({{con.name}}_i.randomize() with {
+    {% for c in con.cons %}
+               {{c}};
+    {% endfor %}
+    });
+  {% endif %}
             ret = sock_put(handle, {{con.name}}_i.res);
-            `verif_info($sformatf("svrand: Sent {{con.name}} value %p", {{con.name}}_i.{{con.name}}), 2);
+            `verif_info($sformatf("svrand: Sent {{con.name}} value %p", {{con.name}}_i.res), 2);
          end
 {% endfor %}
       endcase

@@ -29,10 +29,17 @@ class SVRandError(Exception):
 
 
 class SVRandConstraints:
-    def __init__(self, name='dflt', cons=[], dtype=None):
+    def __init__(self,
+                 name='dflt',
+                 cons=[],
+                 dtype=None,
+                 cls='dflt_tcon',
+                 cls_params=None):
         self.name = name
         self.cons = cons.copy()
         self.dtype = dtype
+        self.cls = cls
+        self.cls_params = cls_params
         self.cvars = {}
         self.cvars[name] = svgen_typedef(dtype, name)
 
@@ -40,8 +47,14 @@ class SVRandConstraints:
         self.cvars[name] = svgen_typedef(dtype, name)
 
 
-def create_type_cons(dtype, name, cons, **var):
-    tcons = SVRandConstraints(name, cons, dtype)
+def create_type_cons(dtype,
+                     name,
+                     cons,
+                     cls='dflt_tcon',
+                     cls_params=None,
+                     **var):
+    tcons = SVRandConstraints(
+        name=name, cons=cons, dtype=dtype, cls=cls, cls_params=cls_params)
     for name, dtype in var.items():
         tcons.add_var(name, dtype)
 
@@ -164,6 +177,10 @@ class SVRandSocket:
         env.globals.update(
             zip=zip, int=int, print=print, issubclass=issubclass)
 
-        context = {'tcons': self.constraints, 'open_sock': self.open_sock}
+        context = {
+            'tcons': self.constraints,
+            'open_sock': self.open_sock,
+            'port': self.port
+        }
         res = env.get_template('svrand_top.j2').render(context)
         save_file('svrand_top.sv', self.outdir, res)

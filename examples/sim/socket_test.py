@@ -51,11 +51,25 @@ def main():
 t_trr = Queue[Uint[16]]
 trr_cons = []
 trr_cons.append(
-    create_type_cons(t_trr, 'din0', cons=['din0.eot dist {0:=90, 1:=10}']))
+    create_type_cons(
+        Uint[16], 'din0_data', cons=['din0_data dist {5:=50, 10:=50}']))
 trr_cons.append(
-    create_type_cons(t_trr, 'din1', cons=['din1.data dist {0:=50, 1:=50}']))
+    create_type_cons(
+        Uint[16], 'din1_data', cons=['din1_data dist {0:=50, 1:=50}']))
 trr_cons.append(
-    create_type_cons(t_trr, 'din2', cons=['din2.data dist {0:=10, 1:=90}']))
+    create_type_cons(
+        Uint[16], 'din2_data', cons=[]))
+trr_cons.append(
+    create_type_cons(
+        t_trr.eot,
+        'din_eot',
+        cons=['num_trans[0][0] == 20'],
+        cls='qenvelope',
+        cls_params=[t_trr.lvl]))
+# trr_cons.append(
+#     create_type_cons(t_trr, 'din1', cons=['din1.data dist {0:=50, 1:=50}']))
+# trr_cons.append(
+#     create_type_cons(t_trr, 'din2', cons=['din2.data dist {0:=10, 1:=90}']))
 
 
 def get_data(i):
@@ -66,12 +80,20 @@ def get_data(i):
         x = data[1]
 
 
+def get_data_eot(i):
+    eot = 0
+    while eot == 0:
+        eot = get_rand_data('din_eot')
+        data = get_rand_data(f'din{i}_data')
+        yield data
+
+
 @gear
 async def vir_seqr(*, t=t_trr) -> (TLM['t'], ) * 3:
     for x in range(10):
-        yield (get_data(0), None, None)
-        yield (None, get_data(1), None)
-        yield (None, None, get_data(2))
+        yield (get_data_eot(0), None, None)
+        yield (None, get_data_eot(1), None)
+        yield (None, None, get_data_eot(2))
     raise GearDone
 
 
@@ -98,4 +120,4 @@ def py_trr_main():
 
 
 if __name__ == '__main__':
-    py_trr_main()
+    trr_main()
