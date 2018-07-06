@@ -106,7 +106,7 @@ module top;
          end while (data != 0);
 {% else %}
          ret = sock_get(synchro_handle, data);
-         if (ret == 1) break;
+         {# if (ret == 1) break; #}
 {% endif %}
          `verif_info($sformatf("Got synchro 1 at %0t", $time), 1);
          @(posedge clk iff !rst);
