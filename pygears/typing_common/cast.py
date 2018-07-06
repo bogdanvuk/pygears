@@ -4,18 +4,20 @@ from pygears.typing import Int, Uint, Queue, Tuple, Union
 
 def cast(dtype, cast_type):
     if typeof(cast_type, Int) and (not cast_type.is_specified()):
-        if issubclass(dtype, Uint):
+        if typeof(dtype, Uint):
             return Int[int(dtype) + 1]
-        elif issubclass(dtype, Int):
+        elif typeof(dtype, Int):
             return dtype
         else:
             return Int[int(dtype)]
-    elif typeof(cast_type, Tuple):
-        if not cast_type.is_specified():
-            if typeof(dtype, Queue) or typeof(dtype, Union):
-                return Tuple[dtype[0], dtype[1:]]
+    if typeof(cast_type, Uint) and (not cast_type.is_specified()):
+        if typeof(dtype, Int):
+            return Uint[int(dtype) - 1]
         else:
-            return cast_type
+            return Uint[int(dtype)]
+    elif typeof(cast_type, Tuple) and (not cast_type.is_specified()):
+        if typeof(dtype, Queue) or typeof(dtype, Union):
+            return Tuple[dtype[0], dtype[1:]]
     else:
         return cast_type
 
