@@ -39,22 +39,32 @@ def verif(*seq, f, ref, delays=None):
 
     stim = tuple(s | drv(delay=delays[i]) for i, s in enumerate(seq))
 
-    res_tlm = stim | f | delay_mon(delay=delays[-1])
-
+    res = stim | f
     ref_tlm = stim | ref
 
+    if isinstance(res, tuple):
+        res_tlm = tuple(r | delay_mon(delay=delays[-1]) for r in res)
+    else:
+        res_tlm = res | delay_mon(delay=delays[-1])
+
     report = []
-    scoreboard(res_tlm, ref_tlm, report=report)
+    if isinstance(res_tlm, tuple):
+        for res, ref in zip(res_tlm, ref_tlm):
+            scoreboard(res, ref, report=report)
+    else:
+        scoreboard(res_tlm, ref_tlm, report=report)
 
     return report
 
 
 def directed(*seq, f, ref):
     '''Directed test, ref is a list of expected results'''
-    tuple(s | drv for s in seq) \
-        | f \
-        | mon \
-        | check(ref=ref)
+    res = tuple(s | drv for s in seq) | f
+    if isinstance(res, tuple):
+        for i, r in enumerate(res):
+            r | mon | check(ref=ref[i])
+    else:
+        res | mon | check(ref=ref)
 
 
 def directed_on_the_fly(*seq, f, ref, delays=None):
