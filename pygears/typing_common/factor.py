@@ -3,12 +3,12 @@ from pygears.typing import TypingNamespacePlugin, Queue, Tuple, Union, typeof
 
 def factor(type_):
     if typeof(type_, Union):
-        for t in type_.types():
+        for t in type_.types:
             if not typeof(t, Queue):
                 return type_
         else:
             union_types = []
-            for t in type_.types():
+            for t in type_.types:
                 union_types.append(t[0])
                 lvl = t.lvl
 
