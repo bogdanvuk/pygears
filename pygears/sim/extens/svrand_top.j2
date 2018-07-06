@@ -1,0 +1,105 @@
+`ifndef SVRAND_TOP_SV
+`define SVRAND_TOP_SV
+
+{% for con in tcons %}
+
+{% if con.cls == 'dflt_tcon' %}
+class {{con.name}}_dflt_tcon;
+
+{% for n, s in con.cvars.items() %}
+   {{s}}
+{% endfor %}
+
+{% for n in con.cvars %}
+   rand {{n}}_t {{n}};
+{% endfor %}
+   bit[$bits({{con.name}}_t)-1 : 0] res;
+
+   constraint c_dflt {
+{% for c in con.cons %}
+      {{c}};
+{% endfor %}
+   }
+
+   function void post_randomize();
+      res = {{con.name}};
+   endfunction
+endclass
+
+{% endif %}
+{% endfor %}
+
+module svrand_top;
+
+   `include "socket_macros.svh"
+
+   import sock::*;
+
+{% for con in tcons %}
+  {% if con.cls == 'dflt_tcon' %}
+   {{con.name}}_dflt_tcon {{con.name}}_i = new();
+  {% else %}
+    {% for n, s in con.cvars.items() %}
+   {{s}}
+    {% endfor %}
+    {% if con.cls_params %}
+   {{con.cls}}#(
+      {% for p in con.cls_params %}
+      {{p}}{{ "," if not loop.last }}
+      {% endfor %}
+   ) {{con.name}}_i = new();
+    {% endif %}
+  {% endif %}
+{% endfor %}
+
+{% if open_sock %}
+   chandle handle;
+   initial begin
+      handle = sock_open("tcp://localhost:{{port}}", "_svrand");
+   end
+
+   initial begin
+      int ret;
+      bit [31:0] req;
+      forever begin
+         do begin
+            ret = sock_get(handle, req);
+            if (ret == 1) $finish();
+         end while (ret == 2);
+         `verif_info($sformatf("svrand: Got rand request for %0d", req), 1);
+
+         ret = get_rand(handle, req);
+         if (ret == 1) $finish();
+      end
+   end
+
+   final begin
+      sock_close(handle);
+   end
+{% endif %}
+
+   function int get_rand(chandle handle, int req);
+      int ret;
+      case (req)
+{% for con in tcons %}
+         {{loop.index}}: begin
+  {% if con.cls == 'dflt_tcon' %}
+            assert({{con.name}}_i.randomize());
+  {% else %}
+            assert({{con.name}}_i.randomize() with {
+    {% for c in con.cons %}
+               {{c}};
+    {% endfor %}
+    });
+  {% endif %}
+            ret = sock_put(handle, {{con.name}}_i.res);
+            `verif_info($sformatf("svrand: Sent {{con.name}} value %p", {{con.name}}_i.res), 2);
+         end
+{% endfor %}
+      endcase
+      return ret;
+   endfunction
+
+endmodule
+
+`endif

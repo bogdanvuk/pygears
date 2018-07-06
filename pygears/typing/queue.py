@@ -62,6 +62,10 @@ class QueueMeta(EnumerableGenericMeta):
     def lvl(self):
         return self.args[1]
 
+    @property
+    def eot(self):
+        return Uint[self.lvl]
+
     def __str__(self):
         if self.lvl == 1:
             return '[%s]' % type_str(self.args[0])

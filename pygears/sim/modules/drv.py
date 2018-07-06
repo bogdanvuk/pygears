@@ -1,8 +1,10 @@
 import inspect
 
 from pygears import gear
+from pygears.sim import clk
 from pygears.typing import TLM
 from pygears.util.utils import quiter
+from pygears.sim.utils import SimDelay
 
 
 class TypingYieldVisitorBase:
@@ -31,10 +33,11 @@ class TypeDrvVisitor(TypingYieldVisitorBase):
 
 
 @gear
-async def drv(din: TLM['t'], *, t=b't') -> b't':
+async def drv(din: TLM['t'], *, t=b't', delay=SimDelay(0, 0)) -> b't':
     while 1:
         async with din as item:
             for d in TypeDrvVisitor().visit(item, t):
+                await delay.delay
                 yield t(d)
 
     print("Driver done")

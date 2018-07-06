@@ -1,7 +1,7 @@
 from pygears import gear
-from pygears.typing import TLM
 from pygears.sim import clk
-import random
+from pygears.sim.utils import SimDelay
+from pygears.typing import TLM
 
 
 class Partial:
@@ -85,10 +85,8 @@ async def mon(din, *, t=b'din') -> TLM['din']:
 
 
 @gear
-async def dly_mon(din, *, t=b'din', dly_low=5, dly_high=10) -> b'din':
+async def delay_mon(din, *, t=b'din', delay=SimDelay(0, 0)) -> b'din':
     while 1:
         async with din as item:
-            dly = random.randint(dly_low, dly_high)
-            for i in range(dly):
-                await clk()
+            await delay.delay
         yield item

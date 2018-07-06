@@ -25,3 +25,9 @@
   );
 {% endmacro %}
 
+{%- macro hook_unroll(hooks, hook_name) -%}
+  {%- if hook_name in hooks -%}
+      {{hooks[hook_name]}}
+  {%- endif -%}
+{%- endmacro -%}
+

@@ -57,6 +57,10 @@ def sv_cosim_gen(gear):
         registry('SVGenSystemVerilogPaths').append(sv_src_path)
 
     outdir = registry('SimArtifactDir')
+    if 'SimSocketHooks' in registry('SimConfig'):
+        hooks = registry('SimConfig')['SimSocketHooks']
+    else:
+        hooks = {}
 
     rtl_node = svgen(gear, outdir=outdir)
     sv_node = registry('SVGenMap')[rtl_node]
@@ -88,6 +92,7 @@ def sv_cosim_gen(gear):
         'structs': structs,
         'port_map': port_map,
         'out_path': outdir,
+        'hooks': hooks,
         'activity_timeout': 1000  # in clk cycles
     }
     context['includes'] = []
@@ -117,8 +122,6 @@ class SimSocket(SimGear):
     def __init__(self, gear):
         super().__init__(gear)
 
-        sv_cosim_gen(gear)
-
         # Create a TCP/IP socket
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -135,13 +138,35 @@ class SimSocket(SimGear):
         self.sock.listen(len(gear.in_ports) + len(gear.out_ports))
         self.handlers = {}
 
+        registry('SimConfig')['SimSocket'] = self
+
     def finish(self):
         print("Closing socket server")
         super().finish()
-        # for h in self.handlers.values():
-        #     h.cancel()
 
         self.sock.close()
+
+    def send_req(self, req, dtype):
+        # print('SimSocket sending request...')
+        data = None
+
+        # Send request
+        pkt = req.to_bytes(4, byteorder='little')
+        self.handlers[SYNCHRO_CONN_NAME].sendall(b'\x01\x00\x00\x00' + pkt)
+
+        # Get random data
+        while data is None:
+            try:
+                buff_size = math.ceil(int(dtype) / 8)
+                if buff_size < 4:
+                    buff_size = 4
+                if buff_size % 4:
+                    buff_size += 4 - (buff_size % 4)
+                data = self.handlers[SYNCHRO_CONN_NAME].recv(buff_size)
+            except socket.error:
+                print('SVRandSocket: socket error on {SVRAND_CONN_NAME}')
+        data = u32_bytes_decode(data, dtype)
+        return data
 
     async def func(self, *args, **kwds):
         din_pulled = set()
@@ -231,6 +256,8 @@ class SimSocket(SimGear):
             await clk()
 
     def setup(self):
+        sv_cosim_gen(self.gear)
+
         self.loop = asyncio.get_event_loop()
 
         print(self.gear.argnames)
