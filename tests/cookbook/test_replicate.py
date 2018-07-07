@@ -5,7 +5,7 @@ from pygears.cookbook.replicate import replicate
 from pygears.cookbook.verif import directed, verif
 from pygears.sim import sim
 from pygears.sim.modules.seqr import seqr
-from pygears.sim.modules.socket import SimSocket
+from pygears.sim.modules.sim_socket import SimSocket
 from pygears.sim.modules.verilator import SimVerilated
 from pygears.typing import Tuple, Uint
 from utils import skip_ifndef, prepare_result_dir

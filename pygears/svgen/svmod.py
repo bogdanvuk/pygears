@@ -29,7 +29,7 @@ class SVModuleGen:
             try:
                 self.sv_module_path, self._sv_module_name, self.sv_params = self.get_sv_module_info()
             except FileNotFoundError:
-                print(f'SystemVerilog file not found for {self.node.name}')
+                print(f'Warning: SystemVerilog file not found for {self.node.name}')
         elif self.is_hierarchical:
             if find_in_dirs(self.sv_file_name,
                             registry('SVGenSystemVerilogPaths')):

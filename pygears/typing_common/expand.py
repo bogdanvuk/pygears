@@ -11,7 +11,7 @@ def next_pos(type_list, comb, t):
 def type_comb_rec(type_list, comb):
     type_ = type_list[-1]
     if typeof(type_, Union):
-        for t in type_.types():
+        for t in type_.types:
             yield from next_pos(type_list, comb, t)
     else:
         yield from next_pos(type_list, comb, type_)
@@ -40,7 +40,7 @@ def expand(type_):
         if typeof(type_[0], Tuple):
             return Tuple[tuple(queue_type_comb(type_))]
         elif typeof(type_[0], Union):
-            utypes = [Queue[t, type_.lvl] for t in type_[0].types()]
+            utypes = [Queue[t, type_.lvl] for t in type_[0].types]
             return Union[tuple(utypes)]
     else:
         return type_

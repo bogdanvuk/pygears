@@ -5,11 +5,11 @@ import socket
 import jinja2
 
 from pygears import registry
-from pygears.sim.modules.socket import u32_bytes_decode
+from pygears.sim.modules.sim_socket import u32_bytes_decode
 from pygears.svgen.util import svgen_typedef
 from pygears.util.fileio import save_file
 
-from pygears.sim.modules.socket import SimSocket
+from pygears.sim.modules.sim_socket import SimSocket
 
 
 def get_rand_data(name):

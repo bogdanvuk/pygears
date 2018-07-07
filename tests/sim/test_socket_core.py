@@ -8,7 +8,7 @@ from pygears import clear, gear
 from pygears.cookbook.verif import directed
 from pygears.definitions import ROOT_DIR
 from pygears.sim import seqr, sim
-from pygears.sim.modules.socket import SimSocket
+from pygears.sim.modules.sim_socket import SimSocket
 from pygears.typing import Queue, Tuple, Uint
 # import sys
 # sys.path.append('/data/projects/pygears/tests')

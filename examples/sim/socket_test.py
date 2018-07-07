@@ -7,7 +7,7 @@ from pygears.cookbook.verif import verif
 from pygears.sim import clk, sim
 from pygears.sim.extens.svrand import (SVRandSocket, create_type_cons,
                                        get_rand_data)
-from pygears.sim.modules.socket import SimSocket
+from pygears.sim.modules.sim_socket import SimSocket
 from pygears.sim.utils import SimDelay
 from pygears.typing import TLM, Queue, Tuple, Uint
 

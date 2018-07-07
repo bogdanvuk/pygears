@@ -4,15 +4,27 @@ import ctypes
 from pygears.util.fileio import save_file
 from pygears import registry, GearDone
 from pygears.svgen import svgen
-from pygears.sim.sim_gear import SimGear
+from pygears.sim.modules.cosim_base import CosimBase, CosimNoData
 from pygears.sim.c_drv import CInputDrv, COutputDrv
-from pygears.sim import clk, timestep, delta
 import atexit
 
+class SimVerilatorSynchro:
+    def __init__(self, verilib):
+        self.verilib = verilib
 
-class SimVerilated(SimGear):
+    def cycle(self):
+        self.verilib.trig()
+
+    def forward(self):
+        self.verilib.propagate()
+
+    def back(self):
+        self.verilib.eval()
+
+
+class SimVerilated(CosimBase):
     def __init__(self, gear):
-        super().__init__(gear)
+        super().__init__(gear, timeout=100)
         self.name = gear.name[1:].replace('/', '_')
         self.outdir = os.path.join(registry('SimArtifactDir'), self.name)
         self.objdir = os.path.join(self.outdir, 'obj_dir')
@@ -20,6 +32,7 @@ class SimVerilated(SimGear):
         self.svmod = registry('SVGenMap')[self.svnode]
         self.wrap_name = f'wrap_{self.svmod.sv_module_name}'
 
+    def setup(self):
         atexit.register(self.finish)
 
         rebuild = True
@@ -29,6 +42,19 @@ class SimVerilated(SimGear):
 
         self.verilib = ctypes.CDLL(
             os.path.join(self.objdir, f'V{self.wrap_name}'))
+
+        self.verilib.init()
+
+        self.handlers = {}
+        for p in self.gear.in_ports:
+            self.handlers[p.basename] = CInputDrv(self.verilib, p)
+
+        for p in self.gear.out_ports:
+            self.handlers[p.basename] = COutputDrv(self.verilib, p)
+
+        self.handlers[self.SYNCHRO_HANDLE_NAME] = SimVerilatorSynchro(self.verilib)
+        self.finished = False
+
 
     def build(self):
         context = {
@@ -48,70 +74,61 @@ class SimVerilated(SimGear):
         save_file('sim_main.cpp', self.outdir, c)
 
         os.system(
-            f"cd {self.outdir}; verilator -cc -CFLAGS -fpic -LDFLAGS -shared --exe {include} -clk clk --trace --trace-structs --top-module {self.wrap_name} {self.outdir}/*.sv dti.sv sim_main.cpp"
+            f"cd {self.outdir}; verilator -cc -CFLAGS -fpic -LDFLAGS -shared --exe {include} -clk clk --trace --trace-structs --top-module {self.wrap_name} {self.outdir}/*.sv dti.sv sim_main.cpp > verilate.log 2>&1"
         )
 
-        os.system(f"cd {self.objdir}; make -j -f V{self.wrap_name}.mk")
+        os.system(f"cd {self.objdir}; make -j -f V{self.wrap_name}.mk > make.log 2>&1")
 
-    async def func(self, *args, **kwds):
-        self.c_in_drvs = [
-            CInputDrv(self.verilib, a, p)
-            for a, p in zip(args, self.svnode.in_ports)
-        ]
+    # async def func(self, *args, **kwds):
+    #     self.verilib.init()
+    #     activity_monitor = 0
+    #     watchdog = 100
+    #     self.finished = False
 
-        self.c_out_drvs = [
-            COutputDrv(self.verilib, p) for p in self.svnode.out_ports
-        ]
+    #     while True:
+    #         for d in self.c_in_drvs:
+    #             if not d.empty():
+    #                 await d.post()
 
-        self.verilib.init()
-        activity_monitor = 0
-        watchdog = 100
-        self.finished = False
+    #         self.verilib.propagate()
 
-        while True:
-            for d in self.c_in_drvs:
-                if not d.empty():
-                    await d.post()
+    #         dout = tuple(
+    #             None if d.active else d.read() for d in self.c_out_drvs)
 
-            self.verilib.propagate()
+    #         for p, v in zip(self.gear.out_ports, dout):
+    #             if v is not None:
+    #                 # print(f'Port {p.basename} output')
+    #                 p.producer.put_nb(v)
 
-            dout = tuple(
-                None if d.active else d.read() for d in self.c_out_drvs)
+    #         await delta()
 
-            for p, v in zip(self.gear.out_ports, dout):
-                if v is not None:
-                    print(f'Port {p.basename} output')
-                    p.producer.put_nb(v)
+    #         if any(d.active for d in self.c_out_drvs):
+    #             for p, d in zip(self.gear.out_ports, self.c_out_drvs):
+    #                 if p.producer.ready_nb():
+    #                     # print(f'Port {p.basename} acked')
+    #                     d.ack()
 
-            await delta()
+    #             self.verilib.eval()
 
-            if any(d.active for d in self.c_out_drvs):
-                for p, d in zip(self.gear.out_ports, self.c_out_drvs):
-                    if p.producer.ready_nb():
-                        print(f'Port {p.basename} acked')
-                        d.ack()
+    #             activity_monitor = 0
+    #         else:
+    #             activity_monitor += 1
+    #             if activity_monitor == watchdog:
+    #                 raise GearDone
 
-                self.verilib.eval()
+    #         for d in self.c_in_drvs:
+    #             d.ack()
 
-                activity_monitor = 0
-            else:
-                activity_monitor += 1
-                if activity_monitor == watchdog:
-                    raise GearDone
+    #         self.verilib.trig()
+    #         await clk()
 
-            for d in self.c_in_drvs:
-                d.ack()
+    #         for d in self.c_in_drvs:
+    #             d.cycle()
 
-            self.verilib.trig()
-            await clk()
+    #         for d in self.c_out_drvs:
+    #             d.cycle()
 
-            for d in self.c_in_drvs:
-                d.cycle()
-
-            for d in self.c_out_drvs:
-                d.cycle()
-
-            await clk()
+    #         await clk()
 
     def finish(self):
         if not self.finished:

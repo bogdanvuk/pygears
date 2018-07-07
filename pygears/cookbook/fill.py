@@ -6,7 +6,7 @@ from pygears.typing import Union
 
 def fill_type(din_t, union_t, field_sel):
     dtypes = []
-    for i, t in enumerate(union_t.types()):
+    for i, t in enumerate(union_t.types):
         if(i == field_sel):
             dtypes.append(din_t)
         else:

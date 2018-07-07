@@ -5,10 +5,12 @@ from pygears.common.serialize import serialize
 from pygears.cookbook.verif import directed, verif
 from pygears.sim import sim
 from pygears.sim.modules.seqr import seqr
-from pygears.sim.modules.socket import SimSocket
+from pygears.sim.modules.sim_socket import SimSocket
 from pygears.sim.modules.verilator import SimVerilated
 from pygears.typing import Array, Uint
 
+import sys
+sys.path.append('/data/projects/pygears/tests')
 from utils import skip_ifndef, prepare_result_dir
 
 
@@ -55,6 +57,7 @@ def test_verilate_sim():
 
     sim(outdir=prepare_result_dir())
 
+test_verilate_sim()
 
 @with_setup(clear)
 def test_socket_cosim():

@@ -180,7 +180,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             clk.set()
             clk.clear()
             timestep += 1
-            print(f"-------------- {timestep} ------------------")
+            # print(f"-------------- {timestep} ------------------")
             bind('Timestep', timestep)
 
             self.events['after_timestep'](self, timestep)
@@ -192,7 +192,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         #     sim_gear = self.cancelled.pop()
         #     self.cancel(sim_gear)
 
-        print(f"----------- Simulation done ---------------")
+        # print(f"----------- Simulation done ---------------")
 
     def run(self, timeout=None):
         self.get_tasks()
@@ -218,7 +218,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         except Exception as e:
             sim_exception = e
 
-        print(f"----------- After run ---------------")
+        # print(f"----------- After run ---------------")
         self.events['after_run'](self)
 
         if not sim_exception:

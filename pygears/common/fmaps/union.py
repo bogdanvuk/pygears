@@ -14,7 +14,7 @@ def unionmap_check(dtype, f):
         raise TypeMatchError(
             f'Union fmap argument "f" needs to be a sequence, received {f}')
 
-    if len(list(dtype.types())) != num_f:
+    if len(list(dtype.types)) != num_f:
         raise TypeMatchError(
             'Number of union types different from the number of fmap functions'
         )
