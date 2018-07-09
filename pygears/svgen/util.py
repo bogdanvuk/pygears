@@ -61,7 +61,7 @@ class SVGenTypeVisitor(TypingVisitorBase):
         middle_parent_context = f'{high_parent_context}_data'
         low_parent_context = f'{middle_parent_context}_data'
 
-        for t in (type_.types()):
+        for t in (type_.types):
             if (int(t) > max_len):
                 max_len = int(t)
 
