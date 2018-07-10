@@ -7,7 +7,7 @@
 
     always_comb
     begin
-        case( din_s.ctrl )
+        case(din_s.ctrl)
 {% for i in intfs[1:] %}
             {{loop.index-1}} : begin
                 din.ready = {{i['name']}}.ready;
@@ -25,7 +25,7 @@
         {{i['name']}}.valid = 0;
 {% endfor %}
 
-        case( din_s.ctrl )
+        case(din_s.ctrl)
 {% for i in intfs[1:] %}
             {{loop.index-1}} : begin
                 {{i['name']}}.valid = din.valid;
