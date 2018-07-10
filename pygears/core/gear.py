@@ -42,6 +42,11 @@ def check_arg_specified(args):
 
         if not isinstance(a, Intf):
             from pygears.common import const
+            try:
+                int(a)
+            except TypeError:
+                raise GearArgsNotSpecified(f"Unresolved input arg {i}")
+
             a = const(val=a)
 
         args_res.append(a)
