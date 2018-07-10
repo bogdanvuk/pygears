@@ -7,7 +7,7 @@ from pygears.sim.modules.dtype_rnd_seq import dtype_rnd_seq
 from pygears.sim.scv import create_type_cons
 from pygears.cookbook.rng import rng
 from pygears.core.gear import Gear
-from pygears.sim.modules.socket import SimSocket
+from pygears.sim.modules.sim_socket import SimSocket
 
 bind("ErrReportLevel", ErrReportLevel.debug)
 # registry("SimModuleNamespace")['Gear'] = SimSocket

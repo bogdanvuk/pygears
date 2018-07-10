@@ -13,39 +13,47 @@ VerilatedVcdC* tfp = NULL;
 {% endif %}
 
 void eval(void) {
-	  printf("eval\n");
+#ifdef DEBUG
+    printf("eval\n");
+#endif
     top->eval();
 }
 
 void propagate(void) {
-	  printf("propagate\n");
-    top->eval(); 
-    main_time++; 
-{% if tracing %} 
-    if (tfp) tfp->dump (main_time); 
-{% endif %} 
-    top->clk = 0;  
+#ifdef DEBUG
+    printf("propagate\n");
+#endif
     top->eval();
     main_time++;
+    main_time++;
+{% if tracing %}
+    if (tfp) tfp->dump (main_time);
+{% endif %}
+    top->clk = 0;
+    top->eval();
 {% if tracing %}
     if (tfp) tfp->dump (main_time);
 {% endif %}
 }
 
 void trig(void) {
-	  printf("trig\n");
-    top->clk = 1;  
-    top->eval(); 
+#ifdef DEBUG
+    printf("trig\n");
+#endif
+    top->clk = 1;
+    top->eval();
 }
 
 void cycle(void) {
-	  printf("cycle\n");
+#ifdef DEBUG
+    printf("cycle\n");
+#endif
     propagate();
     trig();
 }
 
 int init(void) {
-	  top = new V{{top_name}};
+    top = new V{{top_name}};
 
 {% if tracing %}
     Verilated::traceEverOn(true);
@@ -53,21 +61,26 @@ int init(void) {
     top->trace(tfp, 99);  // Trace 99 levels of hierarchy
     {# mkdir("logs", 0777); #}
 
-	  printf("%p\n", tfp);
+
+#ifdef DEBUG
+    printf("%p\n", tfp);
+#endif
     tfp->open("{{outdir}}/vlt_dump.vcd");  // Open the dump file
-	  printf("tfp->open\n");
+#ifdef DEBUG
+    printf("tfp->open\n");
+#endif
 {% endif %}
 
 {% for p in out_ports -%}
-	  top->{{p.basename}}_ready = 0;
+    top->{{p.basename}}_ready = 0;
 {% endfor %}
 
-    top->rst = 1; 
+    top->rst = 1;
     trig();
     cycle();
-    top->rst = 0; 
+    top->rst = 0;
 
-	  return 0;
+    return 0;
 }
 
 void final() {
@@ -89,19 +102,25 @@ void set_{{p.basename}}(uint32_t data, uint valid) {
 
   {% if int(p.dtype) > 64 %}
     for (int i = 0; i < {{ (int(p.dtype) + 31) // 32 }}; ++i) {
-	      top->{{p.basename}}_data[i] = data[i];
-	      printf("Din: %x, Valid: %d\n", data[i], valid);
+        top->{{p.basename}}_data[i] = data[i];
+#ifdef DEBUG
+        printf("Din: %x, Valid: %d\n", data[i], valid);
+#endif
     }
   {% else %}
-	  printf("Din: %lx, Valid: %d\n", data, valid);
-	  top->{{p.basename}}_data = data;
+
+#ifdef DEBUG
+    printf("Din: %lx, Valid: %d\n", data, valid);
+#endif
+
+    top->{{p.basename}}_data = data;
   {% endif %}
 
-	  top->{{p.basename}}_valid = valid;
+    top->{{p.basename}}_valid = valid;
 }
 
 int get_{{p.basename}}() {
-	return top->{{p.basename}}_ready;
+    return top->{{p.basename}}_ready;
 }
 
 {% endfor %}
@@ -116,19 +135,23 @@ int get_{{p.basename}}(uint32_t* data) {
 
   {% if int(p.dtype) > 32 %}
     for (int i = 0; i < {{ (int(p.dtype) + 31) // 32 }}; ++i) {
-	      data[i] = p_data[i];
+    data[i] = p_data[i];
     }
   {% else %}
     data[0] = top->{{p.basename}}_data;
   {% endif %}
 
-	printf("Dout: %lx, Valid: %d\n", data[0], top->{{p.basename}}_valid);
-	return top->{{p.basename}}_valid;
+#ifdef DEBUG
+    printf("Dout: %lx, Valid: %d\n", data[0], top->{{p.basename}}_valid);
+#endif
+    return top->{{p.basename}}_valid;
 }
 
 int set_{{p.basename}}(uint ready) {
-	  printf("{{p.basename}}_ready = %d\n", ready);
-	top->{{p.basename}}_ready = ready;
+#ifdef DEBUG
+    printf("{{p.basename}}_ready = %d\n", ready);
+#endif
+    top->{{p.basename}}_ready = ready;
 }
 {% endfor %}
 }

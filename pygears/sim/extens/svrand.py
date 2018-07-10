@@ -5,11 +5,11 @@ import socket
 import jinja2
 
 from pygears import registry
-from pygears.sim.modules.socket import u32_bytes_decode
+from pygears.sim.modules.sim_socket import u32_bytes_decode
 from pygears.svgen.util import svgen_typedef
 from pygears.util.fileio import save_file
 
-from pygears.sim.modules.socket import SimSocket
+from pygears.sim.modules.sim_socket import SimSocket
 
 
 def get_rand_data(name):
@@ -184,3 +184,10 @@ class SVRandSocket:
         }
         res = env.get_template('svrand_top.j2').render(context)
         save_file('svrand_top.sv', self.outdir, res)
+
+        # custom classes
+        for con in self.constraints:
+            if con.cls == 'qenvelope':
+                context = {'tcon': con}
+                res = env.get_template('qenvelope.j2').render(context)
+                save_file(f'qenvelope_{con.name}.sv', self.outdir, res)

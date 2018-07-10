@@ -7,7 +7,7 @@ class TypingVisitorBase:
         return visit_func(type_, field, **kwds)
 
     def visit_union(self, type_, field, **kwds):
-        for t, f in zip(type_.types(), type_.fields):
+        for t, f in zip(type_.types, type_.fields):
             self.visit(t, f)
 
     def visit_int(self, type_, field, **kwds):

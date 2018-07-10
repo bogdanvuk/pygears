@@ -5,7 +5,6 @@ from pygears import Intf, MultiAlternativeError, clear, find, registry
 from pygears.typing import Queue, Tuple, Uint, Int
 from pygears.cookbook.rng import rng
 from pygears.sim.modules.verilator import SimVerilated
-from pygears.sim.vcd import VCD
 
 import sys
 sys.path.append('/tools/home/pygears/tests')
@@ -89,7 +88,7 @@ def test_supply_constant():
     rng_gear = find('/rng/sv_rng')
 
     assert iout.dtype == Queue[Uint[4]]
-    assert rng_gear.params['cfg'] == Tuple[Uint[4], Uint[4], Uint[1]]
+    assert rng_gear.params['cfg'] == Tuple[{'start': Uint[1], 'cnt': Uint[4], 'incr': Uint[1]}]
     assert not rng_gear.params['signed']
 
 

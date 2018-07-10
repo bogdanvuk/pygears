@@ -20,7 +20,7 @@ def test_pygears_sim():
 
     sim()
 
-    assert timestep() == (len(seq) + 1)
+    assert timestep() == (len(seq) + 2)
 
 
 @with_setup(clear)
@@ -28,7 +28,7 @@ def test_verilator_cosim():
     skip_ifndef('VERILATOR_ROOT')
 
     seq = list(range(10))
-    verif(
+    report = verif(
         seqr(t=Uint[16], seq=seq),
         f=dreg(sim_cls=SimVerilated),
         ref=dreg(name='ref_model'))

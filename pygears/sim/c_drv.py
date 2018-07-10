@@ -1,6 +1,7 @@
 import ctypes
 from math import ceil
 from pygears.typing_common.codec import code, decode
+from pygears.sim.modules.cosim_base import CosimNoData
 
 
 class IdleIteration(Exception):
@@ -54,10 +55,12 @@ class CDrv:
 
 
 class CInputDrv(CDrv):
-    def __init__(self, verilib, seq, port):
+    def __init__(self, verilib, port):
         super().__init__(verilib, port)
         self.c_set_api.argtypes = (self.c_dtype, ctypes.c_uint)
-        self.seq = seq
+
+    def close(self):
+        pass
 
     def to_c_data(self, data):
         if self.width > 64:
@@ -74,27 +77,14 @@ class CInputDrv(CDrv):
     def empty(self):
         return self.seq.empty()
 
-    async def post(self):
-        if self.data_posted:
-            return
-
-        data = await self.seq.pull()
-        print("Data received: ", data)
-
-        self.data_posted = True
-        self.acked = False
+    def send(self, data):
         self.c_set_api(self.to_c_data(code(self.port.dtype, data)), 1)
 
-    def ack(self):
-        if self.data_posted:
-            self.acked = self.c_get_api()
-            if self.acked:
-                self.seq.ack()
+    def ready(self):
+        return self.c_get_api()
 
-    def cycle(self):
-        if self.acked:
-            self.data_posted = False
-            self.c_set_api(self.to_c_data(0), 0)
+    def reset(self):
+        self.c_set_api(self.to_c_data(0), 0)
 
 
 class COutputDrv(CDrv):
@@ -115,20 +105,18 @@ class COutputDrv(CDrv):
 
         return dout
 
-    def cycle(self):
+    def reset(self):
         self.c_set_api(0)
 
     def ack(self):
-        if self.active:
-            self.active = False
-            self.c_set_api(1)
+        self.c_set_api(1)
 
     def read(self):
         self.active = self.c_get_api(self.dout)
-        print(
-            f'{self.port.basename}: {self.active}, {self.from_c_data(self.dout)}'
-        )
+        # print(
+        #     f'{self.port.basename}: {self.active}, {self.from_c_data(self.dout)}'
+        # )
         if self.active:
             return decode(self.port.dtype, self.from_c_data(self.dout))
         else:
-            return None
+            raise CosimNoData

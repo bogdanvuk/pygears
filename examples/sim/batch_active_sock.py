@@ -1,7 +1,7 @@
 from pygears import gear, registry
 from pygears.sim import drv, mon, sim, verif
 from pygears.sim.modules.seqr import seqr
-from pygears.sim.modules.socket import SimSocket
+from pygears.sim.modules.sim_socket import SimSocket
 from pygearslib.batch_active import batch_active
 from pygears.typing import Queue, Uint
 

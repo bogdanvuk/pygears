@@ -75,12 +75,12 @@ async def mon(din, *, t=b'din') -> TLM['din']:
     while 1:
         data = None
         while (isinstance(data, Partial) or data is None):
-            print('Monitor waiting')
+            # print('Monitor waiting')
             item = await din.get()
-            print('Monitor got: ', item)
+            # print('Monitor got: ', item)
             data = v.visit(data, item, t)
 
-        print('Monitor emits: ', data)
+        # print('Monitor emits: ', data)
         yield data
 
 
