@@ -276,5 +276,5 @@ def sim_assert(cond, msg=None):
         if registry('SimConfig')['dbg_assert']:
             import pdb
             pdb.set_trace()
-        else:
+        elif not registry('SimConfig')['assert_warn']:
             assert cond
