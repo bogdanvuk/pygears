@@ -268,12 +268,14 @@ class Gear(NamedHierNode):
                 and not is_async_gen):
             func_ret = self.resolve_func()
 
+        out_dtype = tuple()
         if func_ret:
             out_dtype = tuple(r.dtype for r in func_ret)
-        elif not isinstance(self.params['return'], tuple):
-            out_dtype = (self.params['return'], )
-        else:
-            out_dtype = self.params['return']
+        elif self.params['return'] is not None:
+            if not isinstance(self.params['return'], tuple):
+                out_dtype = (self.params['return'], )
+            else:
+                out_dtype = self.params['return']
 
         if (len(self.outnames) == 0) and (len(out_dtype) == 1):
             self.outnames.append('dout')
@@ -303,6 +305,12 @@ class Gear(NamedHierNode):
             raise GearTypeNotSpecified(
                 f"Output type of the module {self.name}"
                 f" could not be resolved, and resulted in {repr(out_dtype)}")
+
+        for c in self.child:
+            for p in c.out_ports:
+                intf = p.consumer
+                if intf not in self.intfs and not intf.consumers:
+                    print(f'Warning: {c.name}.{p.basename} left dangling.')
 
         if len(self.intfs) > 1:
             return tuple(self.intfs)
