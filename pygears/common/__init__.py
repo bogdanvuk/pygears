@@ -1,4 +1,5 @@
 from .expand import expand
+from .factor import factor
 from .flatten import flatten
 from .project import project
 from .czip import czip, zip_sync, unzip
@@ -16,14 +17,15 @@ from .mul import mul
 from .div import div
 from .neg import neg
 from .mux import mux
+from .mux_zip import mux_zip
 from .demux import demux
 from .shred import shred
 from .decoupler import decoupler
 from .fifo import fifo
+from .fill import fill
 from .buff import buff
 from .dreg import dreg
 from .serialize import serialize
-from .shred import shred
 
 import pygears.common.fmaps
 
@@ -31,5 +33,6 @@ __all__ = [
     'expand', 'czip', 'ccat', 'cart', 'cast', 'quenvelope', 'zip_sync',
     'sieve', 'flatten', 'fmap', 'permuted_apply', 'const', 'add', 'sub', 'mul',
     'div', 'neg', 'mux', 'demux', 'shred', 'cart_sync', 'decoupler', 'buff',
-    'dreg', 'unzip', 'serialize', 'project', 'fifo'
+    'dreg', 'unzip', 'serialize', 'project', 'fifo', 'factor', 'fill',
+    'mux_zip'
 ]

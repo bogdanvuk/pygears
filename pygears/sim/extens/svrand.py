@@ -184,3 +184,10 @@ class SVRandSocket:
         }
         res = env.get_template('svrand_top.j2').render(context)
         save_file('svrand_top.sv', self.outdir, res)
+
+        # custom classes
+        for con in self.constraints:
+            if con.cls == 'qenvelope':
+                context = {'tcon': con}
+                res = env.get_template('qenvelope.j2').render(context)
+                save_file(f'qenvelope_{con.name}.sv', self.outdir, res)

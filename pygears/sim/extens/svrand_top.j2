@@ -39,15 +39,21 @@ module svrand_top;
   {% if con.cls == 'dflt_tcon' %}
    {{con.name}}_dflt_tcon {{con.name}}_i = new();
   {% else %}
-    {% for n, s in con.cvars.items() %}
+    {% if con.cls == 'qenvelope' %}
+   qenvelope_{{con.name}} {{con.name}}_i = new();
+    {% else %}
+      {% for n, s in con.cvars.items() %}
    {{s}}
-    {% endfor %}
-    {% if con.cls_params %}
-   {{con.cls}}#(
-      {% for p in con.cls_params %}
-      {{p}}{{ "," if not loop.last }}
       {% endfor %}
+      {% if con.cls_params %}
+   {{con.cls}}#(
+        {% for p in con.cls_params %}
+      {{p}}{{ "," if not loop.last }}
+        {% endfor %}
    ) {{con.name}}_i = new();
+      {% else %}
+   {{con.cls}} {{con.name}}_i = new();
+      {% endif %}
     {% endif %}
   {% endif %}
 {% endfor %}

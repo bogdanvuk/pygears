@@ -17,7 +17,7 @@
 {{snippet.module_inst(module_name + "_syncguard", {}, "syncguard", {"din0":"ctrl_if", "din1": "data_if", "dout0": "ctrl_eot_sync", "dout1": "data_sync_if"})|indent(4, True)}}
 
 {% for i in intfs[2:] %}
-    assign {{i['name']}}.data = data_sync_if.data;
+    assign {{i['name']}}_s = data_sync_if.data;
 {% endfor %}
 
     always_comb
@@ -76,7 +76,7 @@
         case({{(intfs|isoutput)[0]['name']}}.data)
 {% for i in intfs[2:] %}
             {{loop.index-1}} : begin
-                ctrl_eot_sync.ready = {{(intfs|isoutput)[0]['name']}}.ready | ({{i['name']}}.valid && !{{i['name']}}_eot);
+                ctrl_eot_sync.ready = {{(intfs|isoutput)[0]['name']}}.ready | ({{i['name']}}.valid && !{{i['name']}}_eot && {{i['name']}}.ready);
             end
 {% endfor %}
         endcase

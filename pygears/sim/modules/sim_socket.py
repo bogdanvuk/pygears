@@ -1,23 +1,24 @@
-import socket
-import asyncio
 import array
-import os
-import jinja2
-import math
-from math import ceil
-
+import asyncio
 import itertools
+import math
+import os
+import socket
 from importlib import util
+from math import ceil
+import atexit
 
-from pygears.svgen.util import svgen_typedef
-from pygears.svgen import svgen
+import jinja2
+
+from pygears import GearDone, registry
 from pygears.definitions import ROOT_DIR
-from pygears import registry, GearDone
-from pygears.sim.sim_gear import SimGear
-from pygears.util.fileio import save_file
+from pygears.sim.modules.cosim_base import CosimBase
+from pygears.svgen import svgen
+from pygears.svgen.util import svgen_typedef
 from pygears.typing_common.codec import code, decode
+from pygears.util.fileio import save_file
 
-from pygears.sim import delta, clk
+from pygears.sim.modules.cosim_base import CosimNoData
 
 
 def u32_repr_gen(data, dtype):
@@ -115,10 +116,82 @@ def sv_cosim_gen(gear):
             os.chmod(fname, 0o777)
 
 
-SYNCHRO_CONN_NAME = "_synchro"
+class SimSocketDrv:
+    def __init__(self, handler, port):
+        self.handler = handler
+        self.port = port
+
+    def reset(self):
+        pass
 
 
-class SimSocket(SimGear):
+class SimSocketInputDrv(SimSocketDrv):
+    def close(self):
+        self.handler.sendall(b'\x00\x00\x00\x00')
+        self.handler.close()
+        # del self.handler
+
+    def send(self, data):
+        pkt = u32_repr(data, self.port.dtype).tobytes()
+        self.handler.sendall(pkt)
+
+    def ready(self):
+        try:
+            self.handler.recv(4)
+            return True
+        except socket.error:
+            return False
+
+
+class SimSocketOutputDrv(SimSocketDrv):
+    def read(self):
+        buff_size = math.ceil(int(self.port.dtype) / 8)
+        if buff_size < 4:
+            buff_size = 4
+        if buff_size % 4:
+            buff_size += 4 - (buff_size % 4)
+        try:
+            data = self.handler.recv(buff_size)
+            return u32_bytes_decode(data, self.port.dtype)
+        except socket.error:
+            raise CosimNoData
+
+    def ack(self):
+        try:
+            self.handler.sendall(b'\x01\x00\x00\x00')
+        except socket.error:
+            raise GearDone
+
+
+class SimSocketSynchro:
+    def __init__(self, handler):
+        self.synchro_handler = handler
+
+    def cycle(self):
+        pass
+
+    def forward(self):
+        try:
+            self.synchro_handler.sendall(b'\x00\x00\x00\x00')
+            self.synchro_handler.recv(4)
+        except socket.error:
+            raise GearDone
+
+    def back(self):
+        try:
+            self.synchro_handler.sendall(b'\x00\x00\x00\x00')
+            self.synchro_handler.recv(4)
+        except socket.error:
+            raise GearDone
+
+    def sendall(self, pkt):
+        self.synchro_handler.sendall(pkt)
+
+    def recv(self, buff_size):
+        return self.synchro_handler.recv(buff_size)
+
+
+class SimSocket(CosimBase):
     def __init__(self, gear):
         super().__init__(gear)
 
@@ -129,8 +202,6 @@ class SimSocket(SimGear):
         server_address = ('localhost', 1234)
         print('starting up on %s port %s' % server_address)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        # self.sock.setblocking(False)
-        # self.sock.setblocking(True)
 
         self.sock.bind(server_address)
 
@@ -152,7 +223,8 @@ class SimSocket(SimGear):
 
         # Send request
         pkt = req.to_bytes(4, byteorder='little')
-        self.handlers[SYNCHRO_CONN_NAME].sendall(b'\x01\x00\x00\x00' + pkt)
+        self.handlers[self.SYNCHRO_HANDLE_NAME].sendall(
+            b'\x01\x00\x00\x00' + pkt)
 
         # Get random data
         while data is None:
@@ -162,100 +234,15 @@ class SimSocket(SimGear):
                     buff_size = 4
                 if buff_size % 4:
                     buff_size += 4 - (buff_size % 4)
-                data = self.handlers[SYNCHRO_CONN_NAME].recv(buff_size)
+                data = self.handlers[self.SYNCHRO_HANDLE_NAME].recv(buff_size)
             except socket.error:
                 print('SVRandSocket: socket error on {SVRAND_CONN_NAME}')
         data = u32_bytes_decode(data, dtype)
         return data
 
-    async def func(self, *args, **kwds):
-        din_pulled = set()
-        dout_put = set()
-        while True:
-            for p in self.gear.in_ports:
-                intf = p.consumer
-                if p.basename not in self.handlers:
-                    continue
-
-                conn = self.handlers[p.basename]
-
-                if intf.done():
-                    print(f"Closing connection for {p.basename}")
-                    conn.sendall(b'\x00\x00\x00\x00')
-                    conn.close()
-                    del self.handlers[p.basename]
-
-                if p not in din_pulled and not intf.empty():
-                    data = intf.pull_nb()
-                    din_pulled.add(p)
-
-                    pkt = u32_repr(data, intf.dtype).tobytes()
-                    # print(
-                    #     f'{p.basename} sending data {data} of type {intf.dtype} or {pkt.hex()}'
-                    # )
-                    conn.sendall(pkt)
-
-            try:
-                self.handlers[SYNCHRO_CONN_NAME].sendall(b'\x00\x00\x00\x00')
-                self.handlers[SYNCHRO_CONN_NAME].recv(4)
-            except socket.error:
-                raise GearDone
-
-            for p in self.gear.out_ports:
-                intf = p.producer
-                if intf.ready_nb():
-                    conn = self.handlers[p.basename]
-                    try:
-                        buff_size = math.ceil(int(p.dtype) / 8)
-                        if buff_size < 4:
-                            buff_size = 4
-                        if buff_size % 4:
-                            buff_size += 4 - (buff_size % 4)
-
-                        data = conn.recv(buff_size)
-                        # print(f'{p.basename} received data')
-                        dout_put.add(p)
-
-                        intf.put_nb(u32_bytes_decode(data, p.dtype))
-
-                    except socket.error:
-                        pass
-
-            await delta()
-
-            for p in dout_put.copy():
-                intf = p.producer
-                if intf.ready_nb():
-                    try:
-                        conn = self.handlers[p.basename]
-                        # print(f'{p.basename} sending data ack')
-                        conn.sendall(b'\x01\x00\x00\x00')
-                        dout_put.remove(p)
-                    except socket.error:
-                        raise GearDone
-
-            try:
-                self.handlers[SYNCHRO_CONN_NAME].sendall(b'\x00\x00\x00\x00')
-                self.handlers[SYNCHRO_CONN_NAME].recv(4)
-            except socket.error:
-                raise GearDone
-
-            for p in din_pulled.copy():
-                if p.basename not in self.handlers:
-                    continue
-
-                conn = self.handlers[p.basename]
-                try:
-                    data = conn.recv(4)
-                    din_pulled.remove(p)
-                    intf = p.consumer
-                    intf.ack()
-                except socket.error:
-                    pass
-
-            await clk()
-
     def setup(self):
+        atexit.register(self.finish)
+
         sv_cosim_gen(self.gear)
 
         self.loop = asyncio.get_event_loop()
@@ -270,11 +257,19 @@ class SimSocket(SimGear):
             msg = conn.recv(1024)
             port_name = msg.decode()
 
-            self.handlers[port_name] = conn
-
-            if port_name == SYNCHRO_CONN_NAME:
+            if port_name == self.SYNCHRO_HANDLE_NAME:
+                self.handlers[self.SYNCHRO_HANDLE_NAME] = SimSocketSynchro(
+                    conn)
                 conn.setblocking(True)
             else:
+                for p in self.gear.in_ports:
+                    if p.basename == port_name:
+                        self.handlers[port_name] = SimSocketInputDrv(conn, p)
+                        break
+                for p in self.gear.out_ports:
+                    if p.basename == port_name:
+                        self.handlers[port_name] = SimSocketOutputDrv(conn, p)
+                        break
                 conn.setblocking(False)
 
             print(f"Connection received for {port_name}")

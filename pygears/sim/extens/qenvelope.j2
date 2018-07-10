@@ -1,0 +1,94 @@
+`ifndef QENVELOPE_{{tcon.name.upper()}}_SV
+ `define QENVELOPE_{{tcon.name.upper()}}_SV
+
+class qenvelope_{{tcon.name}} #(int lvl={{int(tcon.dtype)}});
+
+   rand int data_size;
+   int num_trans[lvl-1:0][$];
+
+{% for i in range(int(tcon.dtype)) %}
+  {% if i == (int(tcon.dtype) - 1) %}
+   rand int trans_lvl{{i}}[1];
+ {% else %}
+   rand int trans_lvl{{i}}[$];
+ {% endif %}
+{% endfor %}
+
+   bit [lvl-1 : 0] eots[$];
+   bit [lvl-1 : 0] res;
+   int             idx;
+   int             idx_max;
+
+{% for i in range(int(tcon.dtype)) %}
+  {% if i == (int(tcon.dtype) - 1) %}
+   constraint c_trans_lvl{{i}} {
+      trans_lvl{{i}}[0] == trans_lvl{{i-1}}.size;
+   }
+ {% else %}
+  {% if i == 0 %}
+
+   constraint c_trans_lvl0 {
+      trans_lvl0.size inside {[1:data_size]};
+      trans_lvl0.sum() == data_size;
+      foreach (trans_lvl0[j]) {
+         trans_lvl0[j] inside {[1:data_size]};
+      }
+   }
+
+ {% else %}
+
+   constraint c_trans_lvl{{i}} {
+      trans_lvl{{i}}.size inside {[1:trans_lvl{{i-1}}.size]};
+      trans_lvl{{i}}.sum() == trans_lvl{{i-1}}.size;
+      foreach (trans_lvl{{i}}[j]) {
+         trans_lvl{{i}}[j] inside {[1:trans_lvl{{i-1}}.size]};
+      }
+   }
+
+ {% endif %}
+{% endif %}
+{% endfor %}
+
+   function void eot_setup(int cur_lvl, bit [lvl-1:0] eot, int trans_id);
+      int          flat_subtrans_id;
+
+      for (int sub_trans_id = 0; sub_trans_id < num_trans[cur_lvl][trans_id]; sub_trans_id++) begin
+         if (sub_trans_id == num_trans[cur_lvl][trans_id] - 1) begin
+            eot[cur_lvl] = 1;
+         end else begin
+            eot[cur_lvl] = 0;
+         end
+
+         flat_subtrans_id = sub_trans_id;
+         for (int i = 0; i < trans_id; i++)
+           flat_subtrans_id += num_trans[cur_lvl][i];
+
+         if (cur_lvl == 0) begin
+            this.eots[flat_subtrans_id] = eot;
+         end else begin
+            eot_setup(cur_lvl - 1, eot, flat_subtrans_id);
+         end
+
+         flat_subtrans_id++;
+      end
+   endfunction
+
+   function void post_randomize();
+      if (idx == 0) begin
+{% for i in range(int(tcon.dtype)) %}
+         num_trans[{{i}}] = trans_lvl{{i}};
+{% endfor %}
+         eot_setup(lvl-1, {lvl{1'b0}}, 0);
+         idx_max = data_size;
+      end
+      res = eots[idx];
+      idx++;
+      if (idx == idx_max) begin
+         idx = 0;
+         this.eots = {};
+      end
+   endfunction
+
+endclass
+
+`endif
