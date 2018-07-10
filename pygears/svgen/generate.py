@@ -31,6 +31,7 @@ def startswith(field, s):
 class TemplateEnv:
     def __init__(self):
         self.basedir = os.path.dirname(__file__)
+        self.templates = {}
         self.jenv = jinja2.Environment(
             extensions=['jinja2.ext.do'], trim_blocks=True, lstrip_blocks=True)
         self.jenv.globals.update(
@@ -50,8 +51,13 @@ class TemplateEnv:
         self.snippets = self.load(self.basedir, 'snippet.j2').module
 
     def load(self, tmplt_dir, tmplt_fn):
-        self.jenv.loader = jinja2.FileSystemLoader([self.basedir, tmplt_dir])
-        return self.jenv.get_template(tmplt_fn)
+        key = os.path.join(self.basedir, tmplt_dir, tmplt_fn)
+        if key not in self.templates:
+            self.jenv.loader = jinja2.FileSystemLoader([self.basedir, tmplt_dir])
+            template = self.jenv.get_template(tmplt_fn)
+            self.templates[key] = template
+
+        return self.templates[key]
 
     def render_local(self, fn, tmplt_fn, context):
         return self.render(os.path.dirname(fn), tmplt_fn, context)
@@ -71,6 +77,7 @@ class SVGenGenerateVisitor(HierYielderBase):
         svgen = self.svgen_map.get(node, None)
         if svgen is not None:
             contents = svgen.get_module(self.template_env)
+            # print(f'Generating {svgen.sv_file_name}')
             yield svgen.sv_file_name, contents
 
             if (self.wrapper) and (node == self.top):

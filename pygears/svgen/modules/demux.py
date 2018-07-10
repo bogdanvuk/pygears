@@ -1,7 +1,7 @@
 from pygears.svgen.svmod import SVModuleGen
 from pygears.typing.queue import Queue
 from pygears.svgen.inst import SVGenInstPlugin
-from pygears.common import demux
+from pygears.common.demux import demux
 from .syncguard import SVGenSyncGuard
 
 
