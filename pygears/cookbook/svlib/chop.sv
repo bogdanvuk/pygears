@@ -30,7 +30,6 @@ module chop
    assign din_s = din.data;
 
    assign dout.data = dout_s;
-   // assign dout.eot = 0;
 
    assign dout.valid = din.valid & cfg.valid;
    assign din.ready = dout.ready & cfg.valid;
