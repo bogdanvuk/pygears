@@ -95,10 +95,10 @@ class SVRandSocket:
             self.connect()
         else:
             hooks = {}
-            # hooks['includes'] = ['svrand_top.sv']
             hooks['module_init'] = 'svrand_top rand_i();'
+            data_rng = [x for x in range(1, len(self.constraints) + 1)]
             hooks[
-                'synchro_req'] = 'if (data != 0) ret = rand_i.get_rand(synchro_handle, data);'
+                'synchro_req'] = f'if (data inside {{{", ".join(str(x) for x in data_rng)}}}) ret = rand_i.get_rand(synchro_handle, data);'
             registry('SimConfig')['SimSocketHooks'] = hooks
 
     def connect(self):
