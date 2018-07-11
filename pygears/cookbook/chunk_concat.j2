@@ -34,13 +34,13 @@
    else
       assign last_span = (cnt_reg == cfg.data);
 
-   assign handshake = dout.dready && dout.dvalid && cfg.dvalid;
+   assign handshake = dout.ready && dout.valid && cfg.valid;
 
 {% for i in intfs[1:-1] %}
-   assign valid_array[{{loop.index-1}}] = {{i['name']}}.dvalid;
+   assign valid_array[{{loop.index-1}}] = {{i['name']}}.valid;
    assign din_data_array[{{loop.index-1}}] = {{i['name']}}.data[DIN0_WIDTH-2:0];
    assign din_eot_array[{{loop.index-1}}] = {{i['name']}}.data[DIN0_WIDTH-1:DIN0_WIDTH-1];
-   assign {{i['name']}}.dready = handshake && last_span;
+   assign {{i['name']}}.ready = handshake && last_span;
 {% endfor %}
 
    generate
@@ -66,8 +66,8 @@
    assign dout_s.eot[1] = dout_array[cnt_reg].eot[0];
 
    assign dout.data = dout_s;
-   assign dout.dvalid = dout_valid_array[cnt_reg] && cfg.dvalid;
+   assign dout.valid = dout_valid_array[cnt_reg] && cfg.valid;
 
-   assign cfg.dready = handshake && last_span;
+   assign cfg.ready = handshake && last_span;
 
 {% endcall %}

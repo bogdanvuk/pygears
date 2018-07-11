@@ -1,7 +1,7 @@
 from pygears.svgen.svmod import SVModuleGen
 from pygears.typing import Uint, Tuple
 from pygears.svgen.inst import SVGenInstPlugin
-from pygears.common import quenvelope
+from pygears.common.quenvelope import quenvelope
 
 
 class SVGenQuEnvelope(SVModuleGen):

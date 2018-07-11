@@ -5,7 +5,7 @@ from pygears.svgen.util import svgen_visitor
 from pygears.rtl.connect import rtl_connect
 from pygears.rtl.inst import RTLNodeInstPlugin
 from pygears.svgen.svmod import SVModuleGen
-from pygears.common import cast
+from pygears.common.cast import cast
 from pygears.rtl.gear import RTLGearHierVisitor
 
 

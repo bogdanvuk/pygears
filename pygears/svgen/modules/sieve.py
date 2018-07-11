@@ -1,6 +1,6 @@
 import itertools
 
-from pygears.common import sieve
+from pygears.common.sieve import sieve
 from pygears.svgen.inst import SVGenInstPlugin
 from pygears.svgen.svmod import SVModuleGen
 from functools import partial

@@ -99,14 +99,16 @@ def sv_cosim_gen(gear):
     context['includes'] = []
     context['imports'] = registry('SVGenSystemVerilogImportPaths')
 
-    if pygearslib is not None:
-        context['includes'].append(
-            os.path.abspath(os.path.join(sv_src_path, '*.sv')))
+    # if pygearslib is not None:
+    #     context['includes'].append(
+    #         os.path.abspath(os.path.join(sv_src_path, '*.sv')))
+    for path in registry('SVGenSystemVerilogPaths'):
+        context['includes'].append(os.path.abspath(os.path.join(path, '*.sv')))
 
-    context['includes'].append(
-        os.path.abspath(os.path.join(ROOT_DIR, '..', 'svlib', '*.sv')))
-    context['includes'].append(
-        os.path.abspath(os.path.join(ROOT_DIR, 'cookbook', 'svlib', '*.sv')))
+    # context['includes'].append(
+    #     os.path.abspath(os.path.join(ROOT_DIR, '..', 'svlib', '*.sv')))
+    # context['includes'].append(
+    #     os.path.abspath(os.path.join(ROOT_DIR, 'cookbook', 'svlib', '*.sv')))
     context['includes'].append(os.path.abspath(os.path.join(outdir, '*.sv')))
 
     for templ, tname in zip(j2_templates, j2_file_names):

@@ -38,14 +38,13 @@ module {{module_name}} #(
       assign queue_delim[{{i}}] = &{{intf['name']}}.data[W_DIN{{i}}_DATA + W_DIN{{i}}_LVL - 1: W_DIN{{i}}_DATA];
    end
 
-   assign dout{{i}}.eot = 0;
-   assign din{{i}}.dready = in_ready[{{i}}];
+   assign din{{i}}.ready = in_ready[{{i}}];
    assign dout{{i}}.data = din{{i}}.data;
-   assign dout{{i}}.dvalid = out_valid[{{i}}];
+   assign dout{{i}}.valid = out_valid[{{i}}];
 {% endfor -%}
 
-   assign in_valid = {din1.dvalid, din0.dvalid};
-   assign out_ready = {dout1.dready, dout0.dready};
+   assign in_valid = {din1.valid, din0.valid};
+   assign out_ready = {dout1.ready, dout0.ready};
    assign all_aligned = &aligned;
     generate
        for (genvar i = 0; i < NUM_OF_BUSES; i++) begin
