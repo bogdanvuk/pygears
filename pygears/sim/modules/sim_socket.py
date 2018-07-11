@@ -63,7 +63,8 @@ def sv_cosim_gen(gear):
     else:
         hooks = {}
 
-    rtl_node = svgen(gear, outdir=outdir)
+    srcdir = os.path.join(outdir, 'src_gen')
+    rtl_node = svgen(gear, outdir=srcdir)
     sv_node = registry('SVGenMap')[rtl_node]
 
     port_map = {
@@ -97,18 +98,9 @@ def sv_cosim_gen(gear):
         'activity_timeout': 1000  # in clk cycles
     }
     context['includes'] = []
-    context['imports'] = registry('SVGenSystemVerilogImportPaths')
-
-    # if pygearslib is not None:
-    #     context['includes'].append(
-    #         os.path.abspath(os.path.join(sv_src_path, '*.sv')))
     for path in registry('SVGenSystemVerilogPaths'):
         context['includes'].append(os.path.abspath(os.path.join(path, '*.sv')))
-
-    # context['includes'].append(
-    #     os.path.abspath(os.path.join(ROOT_DIR, '..', 'svlib', '*.sv')))
-    # context['includes'].append(
-    #     os.path.abspath(os.path.join(ROOT_DIR, 'cookbook', 'svlib', '*.sv')))
+    context['includes'].append(os.path.abspath(os.path.join(srcdir, '*.sv')))
     context['includes'].append(os.path.abspath(os.path.join(outdir, '*.sv')))
 
     for templ, tname in zip(j2_templates, j2_file_names):

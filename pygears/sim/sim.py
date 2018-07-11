@@ -262,7 +262,6 @@ class SimPlugin(GearPlugin):
         cls.registry['SimFlow'] = [sim_inst]
         cls.registry['SimTasks'] = {}
         cls.registry['SimConfig'] = {'dbg_assert': False}
-        cls.registry['SVGenSystemVerilogImportPaths'] = []
         cls.registry['GearExtraParams']['sim_setup'] = None
 
     @classmethod

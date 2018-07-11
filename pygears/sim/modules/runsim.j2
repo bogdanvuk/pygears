@@ -22,6 +22,7 @@ usage() {
     echo "  -batch : no gui"
     echo "  -seed  : random | <integer value> (default = 1)"
     echo "  -sim   : cadence | questa"
+    echo "  -clean : removed sim. files"
     echo "  -top_path : /tools/home by default"
     echo "  + any other args to pass to sim:"
     echo " for example: -define VERBOSITY=<0, 1, ...>"
@@ -63,9 +64,6 @@ if [ $simulator == "cadence" ]; then
     irun -64bit \
         -incdir {{dti_verif_path}} \
         -incdir {{out_path}} \
-        {% for i in imports %}
-        -incdir {{i}} \
-        {% endfor %}
         {{dti_verif_path}}/sock.sv \
         {{dti_verif_path}}/socket_pkg.sv \
         {{dti_verif_path}}/sock.c \
