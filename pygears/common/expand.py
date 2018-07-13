@@ -1,6 +1,6 @@
 from pygears import gear, alternative
-from pygears.common.fmap import fmap
-from pygears.common.flatten import flatten
+from .fmap import fmap
+from .flatten import flatten
 from pygears.typing import Tuple
 from pygears.typing_common import expand as expand_type
 

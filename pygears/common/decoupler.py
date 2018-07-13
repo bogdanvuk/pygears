@@ -36,3 +36,6 @@ async def decoupler_dout(*, t, depth) -> b't':
 def decoupler(din: 'tdin', *, depth=2) -> b'tdin':
     din | decoupler_din(depth=depth)
     return decoupler_dout(t=din.dtype, depth=depth)
+
+
+buff = decoupler(depth=1)
