@@ -5,15 +5,21 @@ import os
 import itertools
 
 from pygears import registry, find, PluginBase, bind, GearDone
-from pygears.sim.inst import sim_inst
 from pygears.core.intf import get_consumer_tree
 from pygears.core.sim_event import SimEvent
 from pygears.core.gear import GearPlugin
 
 
-def cur_gear():
-    loop = asyncio.get_event_loop()
-    return loop.cur_gear
+def timestep():
+    return registry('Timestep')
+
+
+def clk():
+    return registry('ClkEvent').wait()
+
+
+def delta():
+    return registry('DeltaEvent').wait()
 
 
 def artifacts_dir():
@@ -180,7 +186,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             clk.set()
             clk.clear()
             timestep += 1
-            # print(f"-------------- {timestep} ------------------")
+            print(f"-------------- {timestep} ------------------")
             bind('Timestep', timestep)
 
             self.events['after_timestep'](self, timestep)
@@ -259,7 +265,7 @@ def sim(outdir=None, extens=[], run=True, **conf):
 class SimPlugin(GearPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['SimFlow'] = [sim_inst]
+        cls.registry['SimFlow'] = []
         cls.registry['SimTasks'] = {}
         cls.registry['SimConfig'] = {'dbg_assert': False}
         cls.registry['SimConfig']['assert_warn'] = False

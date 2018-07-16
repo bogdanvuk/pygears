@@ -50,6 +50,15 @@ def test_gear_expand_tuple_union():
     assert iout.dtype == expand_type(a)
 
 
+def test_gear_expand_tuple_union_tuple():
+    a = Tuple[Union[Uint[2], Uint[2]],
+              Tuple[Uint[3], Uint[3]],
+              Union[Uint[4], Uint[4]]]
+    iout = expand(Intf(a))
+
+    assert iout.dtype == expand_type(a)
+
+
 def test_gear_expand_tuple_three_union():
     a = Tuple[Union[Uint[2], Uint[2]], Union[Uint[4], Uint[4]],
               Union[Uint[8], Uint[8]]]

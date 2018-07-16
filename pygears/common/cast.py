@@ -1,10 +1,8 @@
-from pygears.core.gear import gear
-from pygears.sim import cur_gear
+from pygears import module, gear
 from pygears.typing.base import TypingMeta, typeof
 from pygears.core.intf import IntfOperPlugin
 from pygears.typing_common.codec import code, decode
 from pygears.typing import Int, Tuple, Queue, Uint
-from pygears import module
 
 
 @gear

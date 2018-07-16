@@ -20,10 +20,9 @@ from .mux import mux
 from .mux_zip import mux_zip
 from .demux import demux
 from .shred import shred
-from .decoupler import decoupler
+from .decoupler import decoupler, buff
 from .fifo import fifo
 from .fill import fill
-from .buff import buff
 from .dreg import dreg
 from .serialize import serialize
 
