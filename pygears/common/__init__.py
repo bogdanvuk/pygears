@@ -16,8 +16,7 @@ from .sub import sub
 from .mul import mul
 from .div import div
 from .neg import neg
-from .mux import mux
-from .mux_zip import mux_zip
+from .mux import mux, mux_zip, mux_valve
 from .demux import demux
 from .shred import shred
 from .decoupler import decoupler
@@ -34,5 +33,5 @@ __all__ = [
     'sieve', 'flatten', 'fmap', 'permuted_apply', 'const', 'add', 'sub', 'mul',
     'div', 'neg', 'mux', 'demux', 'shred', 'cart_sync', 'decoupler', 'buff',
     'dreg', 'unzip', 'serialize', 'project', 'fifo', 'factor', 'fill',
-    'mux_zip'
+    'mux_zip', 'mux_valve'
 ]

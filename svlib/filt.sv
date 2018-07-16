@@ -1,8 +1,9 @@
 module filt #(
-                       parameter W_DIN = 16,
-                       parameter LVL = 1,
-                       parameter FIELD_SEL = 0
-                       )
+              parameter W_DIN = 16,
+              parameter W_DOUT = 16,
+              parameter LVL = 1,
+              parameter FIELD_SEL = 0
+              )
   (
    input clk,
    input rst,
@@ -20,7 +21,7 @@ module filt #(
    typedef struct packed
                   {
                      logic [LVL-1:0] eot;
-                     logic [W_DIN-1:0] data;
+                     logic [W_DOUT-1:0] data;
                   } dout_t;
 
    din_t din_s;
