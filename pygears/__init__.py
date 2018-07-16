@@ -6,6 +6,9 @@ from asyncio.queues import QueueEmpty
 
 from pygears.registry import PluginBase, bind, registry, clear
 from pygears.util.find import find
+
+import pygears.sim
+
 from pygears.core.err import pygears_excepthook, ErrReportLevel
 from pygears.core.type_match import TypeMatchError
 from pygears.registry import PluginBase, bind, registry, clear
@@ -14,7 +17,6 @@ from pygears.core.intf import Intf
 from pygears.core.partial import MultiAlternativeError
 
 import pygears.common
-import pygears.sim
 import pygears.typing
 import pygears.typing_common
 

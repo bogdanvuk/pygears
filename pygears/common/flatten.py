@@ -1,7 +1,6 @@
-from pygears import gear, alternative
+from pygears import gear, alternative, module
 from pygears.typing import Queue
 from pygears.typing_common.flatten import flatten as type_flatten
-from pygears.sim import cur_gear
 
 from functools import reduce
 
@@ -12,7 +11,7 @@ async def flatten(din: Queue['tdin', 'din_lvl'],
                   lvl=1,
                   dout_lvl=b'din_lvl - lvl') -> b'Queue[tdin, dout_lvl]':
 
-    outtype = cur_gear().out_ports[0].dtype
+    outtype = module().out_ports[0].dtype
 
     async with din as d:
         dout = [d[0]]

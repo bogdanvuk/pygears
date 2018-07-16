@@ -1,5 +1,5 @@
 from pygears.typing import Queue, Tuple, typeof
-from pygears.common import flatten
+from .flatten import flatten
 from pygears import gear
 
 

@@ -94,7 +94,9 @@ class Gear(NamedHierNode):
         if not gear.params.pop('enablement'):
             gear.remove()
             raise TypeMatchError(
-                f'Enablement condition failed: {meta_kwds["enablement"]}')
+                f'Enablement condition failed for "{gear.name}" alternative'
+                f' "{gear.definition.__module__}.{gear.definition.__name__}": '
+                f'{meta_kwds["enablement"]}')
 
         return gear.resolve()
 
