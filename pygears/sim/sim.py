@@ -3,6 +3,8 @@ from concurrent.futures import Future
 import tempfile
 import os
 import itertools
+import time
+import cProfile, pstats, io
 
 from pygears import registry, find, PluginBase, bind, GearDone
 from pygears.core.intf import get_consumer_tree
@@ -152,12 +154,13 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         try:
             self.cur_gear.phase = 'forward'
             data = self.tasks[sim_gear].send(self.task_data[sim_gear])
+
         except (StopIteration, GearDone):
             self.done.add(sim_gear)
             # print(f"Task {sim_gear.gear.name} done")
         else:
             if isinstance(data, SimFuture):
-                if self.cur_gear.phase == 'join':
+                if self.cur_gear.phase == 'back':
                     self.wait_list[data] = (sim_gear, True)
                 else:
                     self.wait_list[data] = (sim_gear, False)
@@ -169,17 +172,47 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         delta = registry('DeltaEvent')
         timestep = 0
 
+        pr = cProfile.Profile()
         while self.forward_ready or self.back_ready or self.cancelled:
+
+            # if (timestep % self.time_window) == 0:
+            #     if timestep > 0:
+            #         print(f"-------------------- {timestep} ----------------------")
+            #         for sim_gear in self.sim_gears:
+            #             forward = self.forward_times[sim_gear] / self.time_window * 1000
+            #             back = self.back_times[sim_gear] / self.time_window * 1000
+            #             print(f'{sim_gear.gear.name:20}: forward={forward:5.3f}, back={back:5.3f}')
+            #         print(f"------------------------------------------------")
+
+            #     for sim_gear in self.sim_gears:
+            #         self.forward_times[sim_gear] = 0
+            #         self.back_times[sim_gear] = 0
+
+            # if timestep == 95000:
+            #     pr.enable()
+
+            # if timestep == 96000:
+            #     pr.disable()
+            #     s = io.StringIO()
+            #     sortby = 'cumulative'
+            #     ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+            #     ps.print_stats()
+            #     print(s.getvalue())
+
             # print("Forward pass...")
             for sim_gear in self.sim_gears:
+                start_time = time.time()
                 self.maybe_run_gear(sim_gear, self.forward_ready)
+                self.forward_times[sim_gear] += time.time() - start_time
 
             delta.set()
             delta.clear()
 
             # print("Back pass...")
             for sim_gear in reversed(self.sim_gears):
+                start_time = time.time()
                 self.maybe_run_gear(sim_gear, self.back_ready)
+                self.back_times[sim_gear] += time.time() - start_time
 
             self.events['before_timestep'](self, timestep)
 
@@ -207,6 +240,10 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         self.back_ready = set()
         self.cancelled = set()
         self.done = set()
+        self.time_window = 1000
+        self.forward_times = {}
+        self.back_times = {}
+
         bind('ClkEvent', asyncio.Event())
         bind('DeltaEvent', asyncio.Event())
         bind('Timestep', 0)
