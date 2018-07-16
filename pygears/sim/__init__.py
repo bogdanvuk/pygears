@@ -2,29 +2,8 @@
 # import os
 # load_plugin_folder(os.path.join(os.path.dirname(__file__), 'modules'))
 
+from .sim import sim, artifacts_dir, sim_assert, timestep, clk, delta
 
-def timestep():
-    return registry('Timestep')
+from . import inst
 
-
-def clk():
-    return registry('ClkEvent').wait()
-
-
-def delta():
-    return registry('DeltaEvent').wait()
-
-
-from pygears import registry
-from .sim import sim, cur_gear, artifacts_dir, sim_assert
-
-from .modules.drv import drv
-from .modules.mon import mon
-from .modules.mon import delay_mon
-from .modules.seqr import seqr
-from .modules.scoreboard import scoreboard
-
-__all__ = [
-    'sim', 'drv', 'mon', 'scoreboard', 'cur_gear', 'artifacts_dir',
-    'sim_assert', 'seqr', 'clk', 'delta', 'timestep', 'delay_mon'
-]
+__all__ = ['sim', 'artifacts_dir', 'sim_assert', 'clk', 'delta', 'timestep']

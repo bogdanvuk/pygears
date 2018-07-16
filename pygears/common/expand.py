@@ -1,11 +1,10 @@
 from pygears import gear, alternative
-from pygears.common.fmap import fmap
-from pygears.common.flatten import flatten
-from pygears.common.filt import filt
-from pygears.common.fill import fill
-from pygears.common.fifo import fifo
-from pygears.common.mux import mux_zip, mux_valve
-from pygears.common.ccat import ccat
+from .fmap import fmap
+from .flatten import flatten
+from .filt import filt
+from .fill import fill
+from .fifo import fifo
+from .mux import mux_zip
 from pygears.typing import Tuple, Union, Uint, typeof
 from pygears.typing_common import expand as expand_type
 

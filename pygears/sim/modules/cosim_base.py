@@ -1,12 +1,16 @@
 from pygears.sim.sim_gear import SimGear
 from pygears.sim import clk, timestep, delta
-from pygears import GearDone
+from pygears import GearDone, module
+import time
+
 
 class CosimNoData(Exception):
     pass
 
+
 class CosimBase(SimGear):
     SYNCHRO_HANDLE_NAME = "_synchro"
+
     def __init__(self, gear, timeout=-1):
         super().__init__(gear)
         self.timeout = timeout
@@ -56,6 +60,7 @@ class CosimBase(SimGear):
                 else:
                     hout.reset()
 
+            module().phase = 'back'
             await delta()
 
             for p in dout_put.copy():

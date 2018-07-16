@@ -141,7 +141,7 @@ class Intf:
     async def ready(self):
         if not self.ready_nb():
             for q, c in zip(self.out_queues, self.end_consumers):
-                registry('CurrentModule').phase = 'join'
+                registry('CurrentModule').phase = 'back'
                 await q.join()
                 self.events['ack'](c.consumer)
 

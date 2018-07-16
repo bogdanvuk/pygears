@@ -1,5 +1,6 @@
 from pygears import gear
-from pygears.sim import delay_mon, drv, mon, scoreboard, sim_assert
+from pygears.sim import sim_assert
+from pygears.sim.modules import delay_mon, drv, mon, scoreboard
 from pygears.sim.utils import SimDelay
 
 

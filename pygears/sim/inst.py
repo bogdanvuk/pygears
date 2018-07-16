@@ -1,5 +1,6 @@
 from pygears import registry
 from pygears.sim.sim_gear import SimGear, is_simgear_func
+from pygears.sim.sim import SimPlugin
 from pygears.core.gear import GearPlugin
 from pygears.core.hier_node import HierVisitorBase
 
@@ -35,9 +36,10 @@ def sim_inst(top, conf):
     return top
 
 
-class SimInstPlugin(GearPlugin):
+class SimInstPlugin(SimPlugin, GearPlugin):
     @classmethod
     def bind(cls):
+        cls.registry['SimFlow'].append(sim_inst)
         cls.registry['SimModuleNamespace'] = {}
         cls.registry['SimMap'] = {}
         cls.registry['GearExtraParams']['sim_cls'] = None
