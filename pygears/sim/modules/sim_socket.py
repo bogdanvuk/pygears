@@ -175,30 +175,31 @@ class SimSocketOutputDrv(SimSocketDrv):
 
 class SimSocketSynchro:
     def __init__(self, handler):
-        self.synchro_handler = handler
+        self.handler = handler
+        self.handler.settimeout(5.0)
 
     def cycle(self):
         pass
 
     def forward(self):
-        try:
-            self.synchro_handler.sendall(b'\x00\x00\x00\x00')
-            self.synchro_handler.recv(4)
-        except socket.error:
-            raise GearDone
+        data = None
+        while not data:
+            try:
+                self.handler.sendall(b'\x00\x00\x00\x00')
+                data = self.handler.recv(4)
+            except socket.timeout:
+                import pdb
+                pdb.set_trace()
+            except socket.error:
+                raise GearDone
 
-    def back(self):
-        try:
-            self.synchro_handler.sendall(b'\x00\x00\x00\x00')
-            self.synchro_handler.recv(4)
-        except socket.error:
-            raise GearDone
+    back = forward
 
     def sendall(self, pkt):
-        self.synchro_handler.sendall(pkt)
+        self.handler.sendall(pkt)
 
     def recv(self, buff_size):
-        return self.synchro_handler.recv(buff_size)
+        return self.handler.recv(buff_size)
 
 
 class SimSocket(CosimBase):
@@ -270,7 +271,7 @@ class SimSocket(CosimBase):
             if port_name == self.SYNCHRO_HANDLE_NAME:
                 self.handlers[self.SYNCHRO_HANDLE_NAME] = SimSocketSynchro(
                     conn)
-                conn.setblocking(True)
+                # conn.setblocking(True)
             else:
                 for p in self.gear.in_ports:
                     if p.basename == port_name:
