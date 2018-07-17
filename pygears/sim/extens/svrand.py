@@ -8,8 +8,24 @@ from pygears import registry
 from pygears.sim.modules.sim_socket import u32_bytes_decode
 from pygears.svgen.util import svgen_typedef
 from pygears.util.fileio import save_file
+from functools import partial
+from pygears.definitions import ROOT_DIR
+from .sim_extend import SimExtend
 
 from pygears.sim.modules.sim_socket import SimSocket
+
+
+def svrand(name):
+    # print(f'Getting random data for {name}')
+    svrand = registry('SimConfig')['SVRandSocket']
+    if svrand.open_sock:
+        rand_func = partial(svrand.get_rand, name)
+    else:
+        req, dtype = svrand.parse_name(name)
+        simsoc = registry('SimConfig')['SimSocket']
+        rand_func = partial(simsoc.send_req, req, dtype)
+
+    yield rand_func()
 
 
 def get_rand_data(name):
@@ -61,10 +77,11 @@ def create_type_cons(dtype,
     return tcons
 
 
-class SVRandSocket:
+class SVRandSocket(SimExtend):
     SVRAND_CONN_NAME = "_svrand"
 
     def __init__(self, top, conf):
+        super().__init__()
         self.outdir = conf['outdir']
 
         try:
@@ -78,9 +95,6 @@ class SVRandSocket:
             self.port = 4567
 
         self.open_sock = True
-        sim = registry('Simulator')
-        sim.events['before_setup'].append(self.before_setup)
-        sim.events['after_run'].append(self.after_run)
         registry('SimConfig')['SVRandSocket'] = self
 
     def before_setup(self, sim):
@@ -160,13 +174,15 @@ class SVRandSocket:
         data = self.send_req(req, dtype)
         return data
 
-    def after_run(self, sim):
+    def at_exit(self, sim):
+        print("Closing")
         if self.open_sock:
             print(f"Closing connection for _svrand")
             self.conn.sendall(b'\x00\x00\x00\x00')
             self.conn.close()
             print("Closing socket server")
             self.sock.close()
+            self.open_sock = False
 
     def create_svrand_top(self):
         base_addr = os.path.dirname(__file__)
@@ -182,6 +198,7 @@ class SVRandSocket:
             'open_sock': self.open_sock,
             'port': self.port
         }
+
         res = env.get_template('svrand_top.j2').render(context)
         save_file('svrand_top.sv', self.outdir, res)
 
@@ -191,3 +208,15 @@ class SVRandSocket:
                 context = {'tcon': con}
                 res = env.get_template('qenvelope.j2').render(context)
                 save_file(f'qenvelope_{con.name}.sv', self.outdir, res)
+
+        context = {
+            'dti_verif_path':
+            os.path.abspath(os.path.join(ROOT_DIR, 'sim', 'dpi')),
+            'out_path':
+            self.outdir,
+            'includes': [os.path.abspath(os.path.join(self.outdir, '*.sv'))]
+        }
+
+        res = env.get_template('runsim.j2').render(context)
+        fname = save_file('svrand_runsim.sh', self.outdir, res)
+        os.chmod(fname, 0o777)

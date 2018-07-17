@@ -79,6 +79,10 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             'before_setup': SimEvent(),
             'before_run': SimEvent(),
             'after_run': SimEvent(),
+            'before_call_forward': SimEvent(),
+            'after_call_forward': SimEvent(),
+            'before_call_back': SimEvent(),
+            'after_call_back': SimEvent(),
             'before_timestep': SimEvent(),
             'after_timestep': SimEvent(),
             'after_cleanup': SimEvent(),
@@ -153,7 +157,17 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         # print(f"Running task {sim_gear.gear.name}")
         try:
             self.cur_gear.phase = 'forward'
+            if ready == self.forward_ready:
+                self.events['before_call_forward'](self, sim_gear)
+            else:
+                self.events['before_call_back'](self, sim_gear)
+
             data = self.tasks[sim_gear].send(self.task_data[sim_gear])
+
+            if ready == self.forward_ready:
+                self.events['after_call_forward'](self, sim_gear)
+            else:
+                self.events['after_call_back'](self, sim_gear)
 
         except (StopIteration, GearDone):
             self.done.add(sim_gear)
@@ -173,65 +187,48 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         timestep = 0
 
         pr = cProfile.Profile()
+        start_time = time.time()
         while self.forward_ready or self.back_ready or self.cancelled:
-
-            # if (timestep % self.time_window) == 0:
-            #     if timestep > 0:
-            #         print(f"-------------------- {timestep} ----------------------")
-            #         for sim_gear in self.sim_gears:
-            #             forward = self.forward_times[sim_gear] / self.time_window * 1000
-            #             back = self.back_times[sim_gear] / self.time_window * 1000
-            #             print(f'{sim_gear.gear.name:20}: forward={forward:5.3f}, back={back:5.3f}')
-            #         print(f"------------------------------------------------")
-
-            #     for sim_gear in self.sim_gears:
-            #         self.forward_times[sim_gear] = 0
-            #         self.back_times[sim_gear] = 0
-
-            # if timestep == 95000:
+            # if timestep == 100:
             #     pr.enable()
 
-            # if timestep == 96000:
+            # if timestep == 200:
             #     pr.disable()
             #     s = io.StringIO()
-            #     sortby = 'cumulative'
-            #     ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+            #     ps = pstats.Stats(pr, stream=s).sort_stats('time')
             #     ps.print_stats()
             #     print(s.getvalue())
 
             # print("Forward pass...")
             for sim_gear in self.sim_gears:
-                start_time = time.time()
                 self.maybe_run_gear(sim_gear, self.forward_ready)
-                self.forward_times[sim_gear] += time.time() - start_time
 
             delta.set()
             delta.clear()
 
             # print("Back pass...")
             for sim_gear in reversed(self.sim_gears):
-                start_time = time.time()
                 self.maybe_run_gear(sim_gear, self.back_ready)
-                self.back_times[sim_gear] += time.time() - start_time
 
             self.events['before_timestep'](self, timestep)
 
             clk.set()
             clk.clear()
             timestep += 1
-            print(f"-------------- {timestep} ------------------")
+            # print(f"-------------- {timestep} ------------------")
             bind('Timestep', timestep)
 
             self.events['after_timestep'](self, timestep)
             if (timeout is not None) and (timestep == timeout):
                 break
 
+        print(f"----------- Simulation done ---------------")
+        print(f'Elapsed: {time.time() - start_time:.2f}')
+
         # while self.cancelled:
         #     # print(f'Canceling {sim_gear.gear.name}')
         #     sim_gear = self.cancelled.pop()
         #     self.cancel(sim_gear)
-
-        # print(f"----------- Simulation done ---------------")
 
     def run(self, timeout=None):
         self.get_tasks()
@@ -240,9 +237,6 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         self.back_ready = set()
         self.cancelled = set()
         self.done = set()
-        self.time_window = 1000
-        self.forward_times = {}
-        self.back_times = {}
 
         bind('ClkEvent', asyncio.Event())
         bind('DeltaEvent', asyncio.Event())
@@ -251,6 +245,8 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         self.events['before_setup'](self)
 
         for sim_gear in self.sim_gears:
+            self.cur_gear = sim_gear.gear
+            bind('CurrentModule', self.cur_gear)
             sim_gear.setup()
 
         self.events['before_run'](self)
