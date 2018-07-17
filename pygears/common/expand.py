@@ -4,7 +4,9 @@ from .flatten import flatten
 from .filt import filt
 from .fill import fill
 from .fifo import fifo
-from .mux import mux_zip
+from .mux import mux_zip, mux_valve
+from .ccat import ccat
+from .demux import demux_zip
 from pygears.typing import Tuple, Union, Uint, typeof
 from pygears.typing_common import expand as expand_type
 
@@ -17,8 +19,8 @@ def expand(din, *, depth=16) -> b'expand(din)':
     union_din = din_tuple[0, 2, 1] | expand_type(din.dtype)
     for i in range(len(union_din.dtype.types)):
         union_din = union_din | fifo(depth=depth) \
-                    | fill(din=din | filt(field_sel=i, lvl=din.dtype.lvl),
-                           fmux=mux_zip, field_sel=i)
+                    | fill(din=din | fifo(depth=depth) | filt(field_sel=i),
+                           fmux=mux_zip, fdemux=demux_zip, field_sel=i)
 
     return union_din
 

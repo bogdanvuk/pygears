@@ -28,7 +28,7 @@ module filt #(
    dout_t dout_reg;
    logic valid_reg;
    logic reg_empty;
-   logic reg_load;
+   logic eot_load;
    logic field_sel;
    logic din_eot;
    logic dout_eot;
@@ -38,31 +38,29 @@ module filt #(
    assign field_sel = (din_s.ctrl == FIELD_SEL);
 
    assign din_eot = din_s.eot[0];
-   assign dout_eot = &dout_reg.eot;
+   assign dout_eot = dout_reg.eot[0];
 
    assign handshake = dout.valid && dout.ready;
    assign din_sel_valid = din.valid && field_sel;
 
-   assign data_reg_en = din_sel_valid && (reg_empty || handshake);
+   assign data_load = din_sel_valid && (reg_empty || handshake);
    assign dout.valid = !reg_empty && (din_sel_valid || dout_eot);
 
-   // assign eot_reg_en = din.valid && (reg_empty || handshake || (din_eot && !field_sel));
-   assign eot_merge = din.valid && din_eot && !field_sel;
-   assign eot_reg_en = data_reg_en || eot_merge;
+   assign eot_merge = din.valid && din_eot && !field_sel && (!dout.valid || handshake);
 
    assign reg_empty = !valid_reg;
-   assign reg_load = data_reg_en || eot_reg_en;
+   assign eot_load = data_load || eot_merge;
 
    always_ff @(posedge clk) begin
-      if (rst || (handshake && !data_reg_en)) begin
+      if (rst || (handshake && !data_load)) begin
          dout_reg <= '0;
          valid_reg <= '0;
       end else begin
-         if (reg_load) begin
+         if (eot_load) begin
             dout_reg.eot <= din_s.eot;
          end
 
-         if (data_reg_en) begin
+         if (data_load) begin
             valid_reg <= '1;
             dout_reg.data <= din_s.data;
          end
@@ -71,6 +69,6 @@ module filt #(
 
    assign dout.data = dout_reg;
 
-   assign din.ready = reg_load || (!field_sel && !din_eot && din.valid);
+   assign din.ready = eot_load || (!field_sel && !din_eot && din.valid);
 
 endmodule

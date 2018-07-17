@@ -10,7 +10,6 @@ def filt_type(din, lvl, field_sel):
 def filt(din: Queue['TUnion', 'lvl'],
          *,
          field_sel=0,
-         lvl=0,
          w_din=b'int(din[0][0])',
          w_dout=b'int((din[0].types)[field_sel])'
          ) -> b'filt_type(din, lvl, field_sel)':
