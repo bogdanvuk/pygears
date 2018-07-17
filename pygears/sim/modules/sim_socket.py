@@ -20,6 +20,21 @@ from pygears.util.fileio import save_file
 
 from pygears.sim.modules.cosim_base import CosimNoData
 
+from pygears.typing import Uint
+
+from pygears.sim import clk
+
+
+async def drive_reset(duration):
+    print('Driving reset...')
+    simsoc = registry('SimConfig')['SimSocket']
+    await clk()
+    data = simsoc.send_req(duration | (1 << 31), Uint[4])
+    for i in range(duration):
+        await clk()
+
+    return data
+
 
 def u32_repr_gen(data, dtype):
     yield int(dtype)
@@ -95,6 +110,7 @@ def sv_cosim_gen(gear):
         'port_map': port_map,
         'out_path': outdir,
         'hooks': hooks,
+        'rst_mask': "32'h8000_0000",
         'activity_timeout': 1000  # in clk cycles
     }
     context['includes'] = []

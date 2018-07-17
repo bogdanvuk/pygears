@@ -305,6 +305,7 @@ class SimPlugin(GearPlugin):
         cls.registry['SimFlow'] = []
         cls.registry['SimTasks'] = {}
         cls.registry['SimConfig'] = {'dbg_assert': False}
+        cls.registry['SimConfig']['assert_warn'] = False
         cls.registry['GearExtraParams']['sim_setup'] = None
 
     @classmethod
