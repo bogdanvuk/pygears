@@ -86,7 +86,6 @@ async def mon(din, *, t=b'din') -> TLM['din']:
 
 @gear
 async def delay_mon(din, *, t=b'din', delay=SimDelay(0, 0)) -> b'din':
-    while 1:
-        async with din as item:
-            await delay.delay
+    async with din as item:
+        await delay.delay
         yield item

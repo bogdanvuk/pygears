@@ -201,25 +201,25 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
             # print("Forward pass...")
             for sim_gear in self.sim_gears:
-                start_time = time.time()
+                # start_time = time.time()
                 self.maybe_run_gear(sim_gear, self.forward_ready)
-                self.forward_times[sim_gear] += time.time() - start_time
+                # self.forward_times[sim_gear] += time.time() - start_time
 
             delta.set()
             delta.clear()
 
             # print("Back pass...")
             for sim_gear in reversed(self.sim_gears):
-                start_time = time.time()
+                # start_time = time.time()
                 self.maybe_run_gear(sim_gear, self.back_ready)
-                self.back_times[sim_gear] += time.time() - start_time
+                # self.back_times[sim_gear] += time.time() - start_time
 
             self.events['before_timestep'](self, timestep)
 
             clk.set()
             clk.clear()
             timestep += 1
-            print(f"-------------- {timestep} ------------------")
+            # print(f"-------------- {timestep} ------------------")
             bind('Timestep', timestep)
 
             self.events['after_timestep'](self, timestep)
