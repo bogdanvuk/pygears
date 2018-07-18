@@ -175,12 +175,9 @@ class SVRandSocket(SimExtend):
         return data
 
     def at_exit(self, sim):
-        print("Closing")
         if self.open_sock:
-            print(f"Closing connection for _svrand")
             self.conn.sendall(b'\x00\x00\x00\x00')
             self.conn.close()
-            print("Closing socket server")
             self.sock.close()
             self.open_sock = False
 

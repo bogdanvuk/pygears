@@ -7,10 +7,11 @@ import socket
 from importlib import util
 from math import ceil
 import atexit
+import logging
 import signal
 
 import jinja2
-from subprocess import Popen
+from subprocess import Popen, DEVNULL
 
 from pygears import GearDone, registry
 from pygears.definitions import ROOT_DIR
@@ -24,11 +25,10 @@ from pygears.sim.modules.cosim_base import CosimNoData
 
 from pygears.typing import Uint
 
-from pygears.sim import clk
+from pygears.sim import clk, sim_log
 
 
 async def drive_reset(duration):
-    print('Driving reset...')
     simsoc = registry('SimConfig')['SimSocket']
     await clk()
     data = simsoc.send_req(duration | (1 << 31), Uint[4])
@@ -216,7 +216,6 @@ class SimSocket(CosimBase):
 
         # Bind the socket to the port
         server_address = ('localhost', 1234)
-        print('starting up on %s port %s' % server_address)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
         self.sock.bind(server_address)
@@ -228,7 +227,7 @@ class SimSocket(CosimBase):
         registry('SimConfig')['SimSocket'] = self
 
     def finish(self):
-        print("Closing socket server")
+        sim_log().debug(f'Closing socket server')
         super().finish()
 
         self.sock.close()
@@ -256,32 +255,41 @@ class SimSocket(CosimBase):
                     buff_size += 4 - (buff_size % 4)
                 data = self.handlers[self.SYNCHRO_HANDLE_NAME].recv(buff_size)
             except socket.error:
-                print('SVRandSocket: socket error on {SVRAND_CONN_NAME}')
+                sim_log().error('socket error on {SVRAND_CONN_NAME}')
         data = u32_bytes_decode(data, dtype)
         return data
 
     def setup(self):
         atexit.register(self.finish)
 
+        sim_log().info(f'waiting on {self.sock.getsockname()}')
+
         sv_cosim_gen(self.gear)
 
         self.cosim_pid = None
         if self.run_cosim:
+            print(self.kwds)
             outdir = registry('SimArtifactDir')
             args = ' '.join(f'-{k} {v if not isinstance(v, bool) else ""}'
                             for k, v in self.kwds.items()
                             if not isinstance(v, bool) or v)
-            # os.system(f'{outdir}/run_sim.sh {args}')
-            # os._exit(0)
-            self.cosim_pid = Popen([f'{outdir}/run_sim.sh', args])
+            if sim_log().isEnabledFor(logging.DEBUG):
+                stdout = None
+            else:
+                stdout = DEVNULL
+
+            sim_log().info(f'Running runsim with: {args}')
+            self.cosim_pid = Popen(
+                [f'./run_sim.sh'] + args.split(' '),
+                stdout=stdout,
+                cwd=outdir
+                )
 
         self.loop = asyncio.get_event_loop()
 
-        print(self.gear.argnames)
-
         total_conn_num = len(self.gear.argnames) + len(self.gear.outnames) + 1
         while len(self.handlers) != total_conn_num:
-            print("Wait for connection")
+            sim_log().debug("Wait for connection")
             conn, addr = self.sock.accept()
 
             msg = conn.recv(1024)
@@ -302,4 +310,4 @@ class SimSocket(CosimBase):
                         break
                 conn.setblocking(False)
 
-            print(f"Connection received for {port_name}")
+            sim_log().debug(f"Connection received for {port_name}")

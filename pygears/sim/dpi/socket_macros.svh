@@ -6,8 +6,8 @@ begin\
  `ifdef VERBOSITY\
    if (ver > `VERBOSITY)\
      $display(msg);\
- `else\
-   $display(msg);\
+ // `else\
+ //   $display(msg);\
  `endif\
 end\
 
