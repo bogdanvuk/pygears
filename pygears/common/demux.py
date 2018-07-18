@@ -20,3 +20,8 @@ async def demux(din: Union, *, ctrl_out=False) -> b'demux_type(din, ctrl_out)':
             dout = [item[1]] + dout
 
         yield tuple(dout)
+
+
+@gear
+def demux_zip(din: Union) -> b'demux_type(din, True)':
+    pass

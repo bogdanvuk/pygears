@@ -16,9 +16,10 @@ def fill_type(din_t, union_t, field_sel):
 def fill(din,
          union_din: Union,
          *,
+         fdemux=demux(ctrl_out=True),
          fmux=mux,
          field_sel) -> b'fill_type(din, union_din, field_sel)':
-    fields = union_din | demux(ctrl_out=True)
+    fields = union_din | fdemux
     fields_list = list(fields)
 
     fields_list[field_sel+1] | shred
