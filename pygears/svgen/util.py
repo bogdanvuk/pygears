@@ -170,6 +170,9 @@ class SVGenTypeVisitor(TypingVisitorBase):
 
 
 def svgen_typedef(dtype, name):
+    if isinstance(dtype, str):
+        return f'typedef {dtype} {name}_t;'
+
     vis = SVGenTypeVisitor(name)
     vis.visit(type_=dtype, field=name)
     return '\n'.join(vis.struct_array)

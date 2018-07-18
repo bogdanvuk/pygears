@@ -7,8 +7,10 @@ import socket
 from importlib import util
 from math import ceil
 import atexit
+import signal
 
 import jinja2
+from subprocess import Popen
 
 from pygears import GearDone, registry
 from pygears.definitions import ROOT_DIR
@@ -175,38 +177,42 @@ class SimSocketOutputDrv(SimSocketDrv):
 
 class SimSocketSynchro:
     def __init__(self, handler):
-        self.synchro_handler = handler
+        self.handler = handler
+        self.handler.settimeout(5.0)
 
     def cycle(self):
         pass
 
     def forward(self):
-        try:
-            self.synchro_handler.sendall(b'\x00\x00\x00\x00')
-            self.synchro_handler.recv(4)
-        except socket.error:
-            raise GearDone
+        data = None
+        while not data:
+            try:
+                self.handler.sendall(b'\x00\x00\x00\x00')
+                data = self.handler.recv(4)
+            except socket.timeout:
+                import pdb
+                pdb.set_trace()
+            except socket.error:
+                raise GearDone
 
-    def back(self):
-        try:
-            self.synchro_handler.sendall(b'\x00\x00\x00\x00')
-            self.synchro_handler.recv(4)
-        except socket.error:
-            raise GearDone
+    back = forward
 
     def sendall(self, pkt):
-        self.synchro_handler.sendall(pkt)
+        self.handler.sendall(pkt)
 
     def recv(self, buff_size):
-        return self.synchro_handler.recv(buff_size)
+        return self.handler.recv(buff_size)
 
 
 class SimSocket(CosimBase):
-    def __init__(self, gear):
+    def __init__(self, gear, run=False, batch=True, **kwds):
         super().__init__(gear)
 
         # Create a TCP/IP socket
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.run_cosim = run
+        kwds['batch'] = batch
+        self.kwds = kwds
 
         # Bind the socket to the port
         server_address = ('localhost', 1234)
@@ -226,6 +232,10 @@ class SimSocket(CosimBase):
         super().finish()
 
         self.sock.close()
+
+        if self.cosim_pid is not None:
+            self.cosim_pid.terminate()
+            # signal.pthread_kill(self.cosim_pid)
 
     def send_req(self, req, dtype):
         # print('SimSocket sending request...')
@@ -255,6 +265,16 @@ class SimSocket(CosimBase):
 
         sv_cosim_gen(self.gear)
 
+        self.cosim_pid = None
+        if self.run_cosim:
+            outdir = registry('SimArtifactDir')
+            args = ' '.join(f'-{k} {v if not isinstance(v, bool) else ""}'
+                            for k, v in self.kwds.items()
+                            if not isinstance(v, bool) or v)
+            # os.system(f'{outdir}/run_sim.sh {args}')
+            # os._exit(0)
+            self.cosim_pid = Popen([f'{outdir}/run_sim.sh', args])
+
         self.loop = asyncio.get_event_loop()
 
         print(self.gear.argnames)
@@ -270,7 +290,7 @@ class SimSocket(CosimBase):
             if port_name == self.SYNCHRO_HANDLE_NAME:
                 self.handlers[self.SYNCHRO_HANDLE_NAME] = SimSocketSynchro(
                     conn)
-                conn.setblocking(True)
+                # conn.setblocking(True)
             else:
                 for p in self.gear.in_ports:
                     if p.basename == port_name:

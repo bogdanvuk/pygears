@@ -4,7 +4,7 @@ from pygears import gear, GearDone
 from pygears.typing import TLM
 from pygears.util.utils import quiter
 from pygears.sim.utils import SimDelay
-from pygears.sim.extens.svrand import get_rand_data
+# from pygears.sim.extens.svrand import get_rand_data
 
 
 class TypingYieldVisitorBase:
@@ -43,12 +43,12 @@ async def drv(din: TLM['t'], *, t=b't', delay=SimDelay(0, 0)) -> b't':
     print("Driver done")
 
 
-@gear
-async def drv_rand_queue(*, tout, data_func,
-                         eot_con_name='din_eot') -> b'tout':
-    eot = 0
-    while eot != int('1' * tout.lvl, 2):
-        eot = get_rand_data(eot_con_name)
-        yield tout((data_func(), *eot))
+# @gear
+# async def drv_rand_queue(*, tout, data_func,
+#                          eot_con_name='din_eot') -> b'tout':
+#     eot = 0
+#     while eot != int('1' * tout.lvl, 2):
+#         eot = get_rand_data(eot_con_name)
+#         yield tout((data_func(), *eot))
 
-    raise GearDone
+#     raise GearDone
