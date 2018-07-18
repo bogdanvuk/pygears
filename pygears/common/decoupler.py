@@ -19,9 +19,13 @@ async def decoupler_din(din: 'tdin', *, depth) -> None:
         raise GearDone
 
 
-@gear(svgen={'node_cls': None})
+def decoupler_dout_setup(module):
+    module.decoupler_din = find('../decoupler_din')
+
+
+@gear(sim_setup=decoupler_dout_setup, svgen={'node_cls': None})
 async def decoupler_dout(*, t, depth) -> b't':
-    queue = find('../decoupler_din').queue
+    queue = module().decoupler_din.queue
     data = await queue.get()
 
     if data is GearDone:

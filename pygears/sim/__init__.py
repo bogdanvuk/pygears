@@ -2,7 +2,7 @@
 # import os
 # load_plugin_folder(os.path.join(os.path.dirname(__file__), 'modules'))
 
-from .sim import sim, artifacts_dir, sim_assert, timestep, clk, delta
+from .sim import sim, artifacts_dir, sim_assert, timestep, clk, delta, sim_log
 
 from . import inst
 

@@ -7,8 +7,11 @@ import socket
 from importlib import util
 from math import ceil
 import atexit
+import logging
+import signal
 
 import jinja2
+from subprocess import Popen, DEVNULL
 
 from pygears import GearDone, registry
 from pygears.definitions import ROOT_DIR
@@ -19,6 +22,20 @@ from pygears.typing_common.codec import code, decode
 from pygears.util.fileio import save_file
 
 from pygears.sim.modules.cosim_base import CosimNoData
+
+from pygears.typing import Uint
+
+from pygears.sim import clk, sim_log
+
+
+async def drive_reset(duration):
+    simsoc = registry('SimConfig')['SimSocket']
+    await clk()
+    data = simsoc.send_req(duration | (1 << 31), Uint[4])
+    for i in range(duration):
+        await clk()
+
+    return data
 
 
 def u32_repr_gen(data, dtype):
@@ -95,6 +112,7 @@ def sv_cosim_gen(gear):
         'port_map': port_map,
         'out_path': outdir,
         'hooks': hooks,
+        'rst_mask': "32'h8000_0000",
         'activity_timeout': 1000  # in clk cycles
     }
     context['includes'] = []
@@ -159,42 +177,45 @@ class SimSocketOutputDrv(SimSocketDrv):
 
 class SimSocketSynchro:
     def __init__(self, handler):
-        self.synchro_handler = handler
+        self.handler = handler
+        self.handler.settimeout(5.0)
 
     def cycle(self):
         pass
 
     def forward(self):
-        try:
-            self.synchro_handler.sendall(b'\x00\x00\x00\x00')
-            self.synchro_handler.recv(4)
-        except socket.error:
-            raise GearDone
+        data = None
+        while not data:
+            try:
+                self.handler.sendall(b'\x00\x00\x00\x00')
+                data = self.handler.recv(4)
+            except socket.timeout:
+                import pdb
+                pdb.set_trace()
+            except socket.error:
+                raise GearDone
 
-    def back(self):
-        try:
-            self.synchro_handler.sendall(b'\x00\x00\x00\x00')
-            self.synchro_handler.recv(4)
-        except socket.error:
-            raise GearDone
+    back = forward
 
     def sendall(self, pkt):
-        self.synchro_handler.sendall(pkt)
+        self.handler.sendall(pkt)
 
     def recv(self, buff_size):
-        return self.synchro_handler.recv(buff_size)
+        return self.handler.recv(buff_size)
 
 
 class SimSocket(CosimBase):
-    def __init__(self, gear):
+    def __init__(self, gear, run=False, batch=True, **kwds):
         super().__init__(gear)
 
         # Create a TCP/IP socket
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.run_cosim = run
+        kwds['batch'] = batch
+        self.kwds = kwds
 
         # Bind the socket to the port
         server_address = ('localhost', 1234)
-        print('starting up on %s port %s' % server_address)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
         self.sock.bind(server_address)
@@ -206,10 +227,14 @@ class SimSocket(CosimBase):
         registry('SimConfig')['SimSocket'] = self
 
     def finish(self):
-        print("Closing socket server")
+        sim_log().debug(f'Closing socket server')
         super().finish()
 
         self.sock.close()
+
+        if self.cosim_pid is not None:
+            self.cosim_pid.terminate()
+            # signal.pthread_kill(self.cosim_pid)
 
     def send_req(self, req, dtype):
         # print('SimSocket sending request...')
@@ -230,22 +255,41 @@ class SimSocket(CosimBase):
                     buff_size += 4 - (buff_size % 4)
                 data = self.handlers[self.SYNCHRO_HANDLE_NAME].recv(buff_size)
             except socket.error:
-                print('SVRandSocket: socket error on {SVRAND_CONN_NAME}')
+                sim_log().error('socket error on {SVRAND_CONN_NAME}')
         data = u32_bytes_decode(data, dtype)
         return data
 
     def setup(self):
         atexit.register(self.finish)
 
+        sim_log().info(f'waiting on {self.sock.getsockname()}')
+
         sv_cosim_gen(self.gear)
+
+        self.cosim_pid = None
+        if self.run_cosim:
+            print(self.kwds)
+            outdir = registry('SimArtifactDir')
+            args = ' '.join(f'-{k} {v if not isinstance(v, bool) else ""}'
+                            for k, v in self.kwds.items()
+                            if not isinstance(v, bool) or v)
+            if sim_log().isEnabledFor(logging.DEBUG):
+                stdout = None
+            else:
+                stdout = DEVNULL
+
+            sim_log().info(f'Running runsim with: {args}')
+            self.cosim_pid = Popen(
+                [f'./run_sim.sh'] + args.split(' '),
+                stdout=stdout,
+                cwd=outdir
+                )
 
         self.loop = asyncio.get_event_loop()
 
-        print(self.gear.argnames)
-
         total_conn_num = len(self.gear.argnames) + len(self.gear.outnames) + 1
         while len(self.handlers) != total_conn_num:
-            print("Wait for connection")
+            sim_log().debug("Wait for connection")
             conn, addr = self.sock.accept()
 
             msg = conn.recv(1024)
@@ -254,7 +298,7 @@ class SimSocket(CosimBase):
             if port_name == self.SYNCHRO_HANDLE_NAME:
                 self.handlers[self.SYNCHRO_HANDLE_NAME] = SimSocketSynchro(
                     conn)
-                conn.setblocking(True)
+                # conn.setblocking(True)
             else:
                 for p in self.gear.in_ports:
                     if p.basename == port_name:
@@ -266,4 +310,4 @@ class SimSocket(CosimBase):
                         break
                 conn.setblocking(False)
 
-            print(f"Connection received for {port_name}")
+            sim_log().debug(f"Connection received for {port_name}")

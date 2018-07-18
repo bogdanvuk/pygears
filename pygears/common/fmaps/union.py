@@ -1,6 +1,6 @@
 from pygears import alternative, TypeMatchError, gear
 from pygears.typing import Union
-from pygears.common import fmap as common_fmap, ccat
+from pygears.common import fmap as common_fmap
 from pygears.common import mux, demux
 
 
@@ -24,17 +24,12 @@ def unionmap_check(dtype, f):
 
 @alternative(common_fmap)
 @gear(enablement=b'unionmap_check(din, f)')
-def fmap(din, *, f, lvl=1, fcat=ccat, balance=None):
-    lvl -= 1
-
-    demux_dout = din | demux(ctrl_out=True)
+def fmap(din, *, f, fdemux=demux(ctrl_out=True), fmux=mux, balance=None):
+    demux_dout = din | fdemux
     ctrl = demux_dout[0]
     branches = demux_dout[1:]
     dout = []
     for i, fd in enumerate(f):
-        if lvl > 0:
-            fd = common_fmap(f=fd, lvl=lvl, fcat=fcat, balance=balance)
-
         if fd is None:
             if balance is None:
                 dout.append(branches[i])
@@ -46,4 +41,4 @@ def fmap(din, *, f, lvl=1, fcat=ccat, balance=None):
     if balance is not None:
         ctrl = ctrl | balance
 
-    return mux(ctrl, *dout)
+    return fmux(ctrl, *dout)

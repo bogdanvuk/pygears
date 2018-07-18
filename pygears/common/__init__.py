@@ -16,11 +16,10 @@ from .sub import sub
 from .mul import mul
 from .div import div
 from .neg import neg
-from .mux import mux
-from .mux_zip import mux_zip
-from .demux import demux
+from .mux import mux, mux_zip, mux_valve
+from .demux import demux, demux_zip
 from .shred import shred
-from .decoupler import decoupler, buff
+from .decoupler import decoupler
 from .fifo import fifo
 from .fill import fill
 from .dreg import dreg
@@ -31,7 +30,7 @@ import pygears.common.fmaps
 __all__ = [
     'expand', 'czip', 'ccat', 'cart', 'cast', 'quenvelope', 'zip_sync',
     'sieve', 'flatten', 'fmap', 'permuted_apply', 'const', 'add', 'sub', 'mul',
-    'div', 'neg', 'mux', 'demux', 'shred', 'cart_sync', 'decoupler', 'buff',
-    'dreg', 'unzip', 'serialize', 'project', 'fifo', 'factor', 'fill',
-    'mux_zip'
+    'div', 'neg', 'mux', 'demux', 'shred', 'cart_sync', 'decoupler', 'dreg',
+    'unzip', 'serialize', 'project', 'fifo', 'factor', 'fill', 'mux_zip',
+    'mux_valve', 'demux_zip'
 ]

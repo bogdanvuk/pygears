@@ -24,11 +24,8 @@ def find(path, root=None):
     if path.startswith('/'):
         path = path[1:]
         root = registry('HierRoot')
-        relpath = False
     else:
         root = registry('CurrentModule')
-        relpath = True
-
 
     if path == '':
         return root

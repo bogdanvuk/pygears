@@ -6,7 +6,7 @@ module decoupler#(DEPTH = 2)
     dti.producer dout
     );
 
-    if (DEPTH == 1) begin
+    if (DEPTH > 1) begin
 
       localparam MSB = $clog2(DEPTH);
       localparam W_DATA = $size(din.data);

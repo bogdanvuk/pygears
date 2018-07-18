@@ -8,8 +8,9 @@ from .clip import clip
 from .trr import trr
 from .trr_dist import trr_dist
 from .replicate import replicate
+from .din_cat import din_cat
 
 __all__ = [
     'rng', 'iceil', 'priority_mux', 'qcnt', 'sdp', 'chop', 'trr',
-    'replicate', 'trr_dist', 'clip'
+    'replicate', 'trr_dist', 'clip', 'din_cat'
 ]

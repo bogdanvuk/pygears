@@ -4,6 +4,8 @@ import tempfile
 import os
 import itertools
 import time
+import logging
+import sys
 import cProfile, pstats, io
 
 from pygears import registry, find, PluginBase, bind, GearDone
@@ -13,7 +15,10 @@ from pygears.core.gear import GearPlugin
 
 
 def timestep():
-    return registry('Timestep')
+    try:
+        return registry('Timestep')
+    except KeyError:
+        return None
 
 
 def clk():
@@ -79,6 +84,10 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             'before_setup': SimEvent(),
             'before_run': SimEvent(),
             'after_run': SimEvent(),
+            'before_call_forward': SimEvent(),
+            'after_call_forward': SimEvent(),
+            'before_call_back': SimEvent(),
+            'after_call_back': SimEvent(),
             'before_timestep': SimEvent(),
             'after_timestep': SimEvent(),
             'after_cleanup': SimEvent(),
@@ -137,6 +146,9 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             self.events['after_cancel'](self, sim_gear)
         else:
             raise Exception("Gear didn't stop on cancel!")
+        finally:
+            self.cur_gear = registry('HierRoot')
+            bind('CurrentModule', self.cur_gear)
 
     def maybe_run_gear(self, sim_gear, ready):
         if sim_gear in self.cancelled:
@@ -153,7 +165,17 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         # print(f"Running task {sim_gear.gear.name}")
         try:
             self.cur_gear.phase = 'forward'
+            if ready == self.forward_ready:
+                self.events['before_call_forward'](self, sim_gear)
+            else:
+                self.events['before_call_back'](self, sim_gear)
+
             data = self.tasks[sim_gear].send(self.task_data[sim_gear])
+
+            if ready == self.forward_ready:
+                self.events['after_call_forward'](self, sim_gear)
+            else:
+                self.events['after_call_back'](self, sim_gear)
 
         except (StopIteration, GearDone):
             self.done.add(sim_gear)
@@ -167,52 +189,37 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
             self.task_data[sim_gear] = data
 
+        self.cur_gear = registry('HierRoot')
+        bind('CurrentModule', self.cur_gear)
+
     def sim_loop(self, timeout):
         clk = registry('ClkEvent')
         delta = registry('DeltaEvent')
         timestep = 0
 
         pr = cProfile.Profile()
+        start_time = time.time()
         while self.forward_ready or self.back_ready or self.cancelled:
-
-            # if (timestep % self.time_window) == 0:
-            #     if timestep > 0:
-            #         print(f"-------------------- {timestep} ----------------------")
-            #         for sim_gear in self.sim_gears:
-            #             forward = self.forward_times[sim_gear] / self.time_window * 1000
-            #             back = self.back_times[sim_gear] / self.time_window * 1000
-            #             print(f'{sim_gear.gear.name:20}: forward={forward:5.3f}, back={back:5.3f}')
-            #         print(f"------------------------------------------------")
-
-            #     for sim_gear in self.sim_gears:
-            #         self.forward_times[sim_gear] = 0
-            #         self.back_times[sim_gear] = 0
-
-            # if timestep == 95000:
+            # if timestep == 100:
             #     pr.enable()
 
-            # if timestep == 96000:
+            # if timestep == 200:
             #     pr.disable()
             #     s = io.StringIO()
-            #     sortby = 'cumulative'
-            #     ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+            #     ps = pstats.Stats(pr, stream=s).sort_stats('time')
             #     ps.print_stats()
             #     print(s.getvalue())
 
             # print("Forward pass...")
             for sim_gear in self.sim_gears:
-                # start_time = time.time()
                 self.maybe_run_gear(sim_gear, self.forward_ready)
-                # self.forward_times[sim_gear] += time.time() - start_time
 
             delta.set()
             delta.clear()
 
             # print("Back pass...")
             for sim_gear in reversed(self.sim_gears):
-                # start_time = time.time()
                 self.maybe_run_gear(sim_gear, self.back_ready)
-                # self.back_times[sim_gear] += time.time() - start_time
 
             self.events['before_timestep'](self, timestep)
 
@@ -226,12 +233,13 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             if (timeout is not None) and (timestep == timeout):
                 break
 
+        sim_log().info(f"----------- Simulation done ---------------")
+        sim_log().info(f'Elapsed: {time.time() - start_time:.2f}')
+
         # while self.cancelled:
         #     # print(f'Canceling {sim_gear.gear.name}')
         #     sim_gear = self.cancelled.pop()
         #     self.cancel(sim_gear)
-
-        # print(f"----------- Simulation done ---------------")
 
     def run(self, timeout=None):
         self.get_tasks()
@@ -240,9 +248,6 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         self.back_ready = set()
         self.cancelled = set()
         self.done = set()
-        self.time_window = 1000
-        self.forward_times = {}
-        self.back_times = {}
 
         bind('ClkEvent', asyncio.Event())
         bind('DeltaEvent', asyncio.Event())
@@ -251,7 +256,11 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         self.events['before_setup'](self)
 
         for sim_gear in self.sim_gears:
+            self.cur_gear = sim_gear.gear
+            bind('CurrentModule', self.cur_gear)
             sim_gear.setup()
+            self.cur_gear = registry('HierRoot')
+            bind('CurrentModule', self.cur_gear)
 
         self.events['before_run'](self)
 
@@ -276,9 +285,37 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             raise sim_exception
 
 
-def sim(outdir=None, extens=[], run=True, **conf):
+class SimFmtFilter(logging.Filter):
+    def filter(self, record):
+        m = registry('CurrentModule')
+
+        record.module = m.name
+        record.timestep = timestep()
+        if record.timestep is None:
+            record.timestep = '-'
+        return True
+
+
+def get_default_logger_handler(verbosity):
+    fmt = logging.Formatter(
+        '%(timestep)s %(module)s [%(levelname)s]: %(message)s')
+
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setLevel(verbosity)
+    ch.setFormatter(fmt)
+    ch.addFilter(SimFmtFilter())
+    return ch
+
+
+def sim(outdir=None, extens=[], run=True, verbosity=logging.INFO, **conf):
     if outdir is None:
         outdir = tempfile.mkdtemp()
+
+    logger = logging.getLogger('sim')
+    if not logger.hasHandlers():
+        logger.setLevel(verbosity)
+        ch = get_default_logger_handler(verbosity)
+        logger.addHandler(ch)
 
     conf["outdir"] = outdir
     os.makedirs(conf['outdir'], exist_ok=True)
@@ -305,11 +342,16 @@ class SimPlugin(GearPlugin):
         cls.registry['SimFlow'] = []
         cls.registry['SimTasks'] = {}
         cls.registry['SimConfig'] = {'dbg_assert': False}
+        cls.registry['SimConfig']['assert_warn'] = False
         cls.registry['GearExtraParams']['sim_setup'] = None
 
     @classmethod
     def reset(cls):
         bind('SimTasks', {})
+
+
+def sim_log():
+    return logging.getLogger('sim')
 
 
 def sim_assert(cond, msg=None):

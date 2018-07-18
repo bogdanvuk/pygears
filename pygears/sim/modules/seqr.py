@@ -16,4 +16,4 @@ async def delay_seqr(din: TLM['t'], *, seq) -> TLM['t']:
     for val in seq:
         yield val
 
-    raise GearDone
+    # raise GearDone

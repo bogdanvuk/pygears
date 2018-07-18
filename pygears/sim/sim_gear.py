@@ -70,6 +70,8 @@ class SimGear:
                     if all(a.done() for a in args):
                         raise GearDone
 
+                await clk()
+
         except GearDone as e:
             # print(f"SimGear canceling: {self.gear.name}")
             self.finish()

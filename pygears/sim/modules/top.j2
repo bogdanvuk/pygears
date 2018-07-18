@@ -90,26 +90,39 @@ module top;
       $finish();
    end
 
+   task drive_reset(int duration);
+      fork
+         if (rst != 1) begin
+            rst = 1;
+            repeat(duration) @(negedge clk);
+            rst = 0;
+         end
+      join_none
+   endtask
+
    initial begin
       int ret;
-      int data;
+      bit[31:0] data;
       // synchro socket
       synchro_handle = sock_open("tcp://localhost:1234", "_synchro");
 
+      @(negedge rst); // wait for power up rst
       forever begin
-{% if 'synchro_req' in hooks %}
          do begin
             ret = sock_get(synchro_handle, data);
-            if (ret == 1) break;
             `verif_info($sformatf("Got synchro with data %0d at %0t", data, $time), 2);
+             if (ret == 1) break;
+             if (data & {{rst_mask}}) begin
+                drive_reset(data & ~{{rst_mask}});
+                ret = sock_done(synchro_handle);
+                if (ret == 1) break;
+             end
+{% if 'synchro_req' in hooks %}
   {{snippets.hook_unroll(hooks, "synchro_req")}}
-         end while (data != 0);
-{% else %}
-         ret = sock_get(synchro_handle, data);
-         {# if (ret == 1) break; #}
 {% endif %}
+         end while (data != 0);
          `verif_info($sformatf("Got synchro 1 at %0t", $time), 1);
-         @(posedge clk iff !rst);
+         @(posedge clk);
          #3;
          `verif_info($sformatf("Synchro 1 done at %0t", $time), 1);
          ret = sock_done(synchro_handle);
