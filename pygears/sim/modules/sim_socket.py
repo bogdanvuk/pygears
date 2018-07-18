@@ -7,8 +7,10 @@ import socket
 from importlib import util
 from math import ceil
 import atexit
+import signal
 
 import jinja2
+from subprocess import Popen
 
 from pygears import GearDone, registry
 from pygears.definitions import ROOT_DIR
@@ -203,11 +205,14 @@ class SimSocketSynchro:
 
 
 class SimSocket(CosimBase):
-    def __init__(self, gear):
+    def __init__(self, gear, run=False, batch=True, **kwds):
         super().__init__(gear)
 
         # Create a TCP/IP socket
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.run_cosim = run
+        kwds['batch'] = batch
+        self.kwds = kwds
 
         # Bind the socket to the port
         server_address = ('localhost', 1234)
@@ -227,6 +232,10 @@ class SimSocket(CosimBase):
         super().finish()
 
         self.sock.close()
+
+        if self.cosim_pid is not None:
+            self.cosim_pid.terminate()
+            # signal.pthread_kill(self.cosim_pid)
 
     def send_req(self, req, dtype):
         # print('SimSocket sending request...')
@@ -255,6 +264,16 @@ class SimSocket(CosimBase):
         atexit.register(self.finish)
 
         sv_cosim_gen(self.gear)
+
+        self.cosim_pid = None
+        if self.run_cosim:
+            outdir = registry('SimArtifactDir')
+            args = ' '.join(f'-{k} {v if not isinstance(v, bool) else ""}'
+                            for k, v in self.kwds.items()
+                            if not isinstance(v, bool) or v)
+            # os.system(f'{outdir}/run_sim.sh {args}')
+            # os._exit(0)
+            self.cosim_pid = Popen([f'{outdir}/run_sim.sh', args])
 
         self.loop = asyncio.get_event_loop()
 
