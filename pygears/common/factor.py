@@ -12,6 +12,7 @@ def is_union_of_queues_with_equal_len(din):
         lengths[1:] == lengths[:-1]
 
 
+# TODO: consider what to do with eots
 @gear(enablement=b'is_union_of_queues_with_equal_len(din)')
 def factor(din) -> b'factor(din)':
     lvl = din.dtype.types[0].lvl

@@ -24,6 +24,7 @@ from .fifo import fifo
 from .fill import fill
 from .dreg import dreg
 from .serialize import serialize
+from .data_dly import data_dly
 
 import pygears.common.fmaps
 
@@ -32,5 +33,5 @@ __all__ = [
     'sieve', 'flatten', 'fmap', 'permuted_apply', 'const', 'add', 'sub', 'mul',
     'div', 'neg', 'mux', 'demux', 'shred', 'cart_sync', 'decoupler', 'dreg',
     'unzip', 'serialize', 'project', 'fifo', 'factor', 'fill', 'mux_zip',
-    'mux_valve', 'demux_zip'
+    'mux_valve', 'demux_zip', 'data_dly'
 ]
