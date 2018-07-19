@@ -6,7 +6,7 @@
    localparam CFG_WIDTH = {{intfs[0]['width']}};
    localparam DIN0_WIDTH = {{intfs[1]['width']}};
    localparam DOUT_WIDTH = {{intfs[-1]['width']}};
-   localparam DIN_NUM = {{intfs|length - 1}};
+   localparam DIN_NUM = {{intfs|length - 2}};
    localparam CHUNK_SIZE = ((DOUT_WIDTH-3)/(DIN0_WIDTH-2));
 
    typedef struct packed {
