@@ -282,6 +282,7 @@ class SimSocket(CosimBase):
             self.cosim_pid = Popen(
                 [f'./run_sim.sh'] + args.split(' '),
                 stdout=stdout,
+                stderr=stdout,
                 cwd=outdir
                 )
 
