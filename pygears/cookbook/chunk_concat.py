@@ -1,10 +1,7 @@
-from pygears import module, gear
-from pygears.util.utils import quiter_async
-from pygears.typing import Uint, Queue
-from pygears.core.gear import gear
+from pygears import gear
 from pygears.svgen.inst import SVGenInstPlugin
 from pygears.svgen.svmod import SVModuleGen
-from pygears.typing import Queue
+from pygears.typing import Queue, Uint
 
 
 def chunk_type(dtypes):
