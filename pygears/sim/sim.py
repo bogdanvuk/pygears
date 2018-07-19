@@ -199,6 +199,8 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
         pr = cProfile.Profile()
         start_time = time.time()
+
+        sim_log().info("-------------- Simulation start --------------")
         while self.forward_ready or self.back_ready or self.cancelled:
             # if timestep == 100:
             #     pr.enable()
@@ -226,8 +228,12 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             clk.set()
             clk.clear()
             timestep += 1
-            # print(f"-------------- {timestep} ------------------")
             bind('Timestep', timestep)
+
+            if (timestep % 1000) == 0:
+                sim_log().info("-------------- Simulation cycle --------------")
+
+            # print(f"-------------- {timestep} ------------------")
 
             self.events['after_timestep'](self, timestep)
             if (timeout is not None) and (timestep == timeout):
