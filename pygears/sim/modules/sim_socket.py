@@ -9,6 +9,7 @@ from math import ceil
 import atexit
 import logging
 import signal
+import time
 
 import jinja2
 from subprocess import Popen, DEVNULL
@@ -26,6 +27,10 @@ from pygears.sim.modules.cosim_base import CosimNoData
 from pygears.typing import Uint
 
 from pygears.sim import clk, sim_log
+
+
+class CosimulatorStartError(Exception):
+    pass
 
 
 async def drive_reset(duration):
@@ -110,7 +115,7 @@ def sv_cosim_gen(gear):
         'param_map': sv_node.params,
         'structs': structs,
         'port_map': port_map,
-        'out_path': outdir,
+        'out_path': os.path.abspath(outdir),
         'hooks': hooks,
         'rst_mask': "32'h8000_0000",
         'activity_timeout': 1000  # in clk cycles
@@ -278,13 +283,19 @@ class SimSocket(CosimBase):
             else:
                 stdout = DEVNULL
 
-            sim_log().info(f'Running runsim with: {args}')
+            sim_log().info(f'Running cosimulator with: {args}')
             self.cosim_pid = Popen(
                 [f'./run_sim.sh'] + args.split(' '),
                 stdout=stdout,
                 stderr=stdout,
-                cwd=outdir
-                )
+                cwd=outdir)
+            time.sleep(0.1)
+            ret = self.cosim_pid.poll()
+            if ret is not None:
+                sim_log().error(f"Cosimulator error: {ret}")
+                raise CosimulatorStartError
+            else:
+                sim_log().info(f"Cosimulator started")
 
         self.loop = asyncio.get_event_loop()
 
