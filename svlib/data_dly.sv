@@ -3,13 +3,13 @@ module data_dly #(parameter LEN = 5,
    (
     input clk,
     input rst,
-    dti_s_if.consumer din,
-    dti_s_if.producer dout
+    dti.consumer din,
+    dti.producer dout
     );
 
    logic dly_done;
    logic [LEN-1:0] reg_valid;
-   dti_s_if#(.DTI_DATA_WIDTH(W_DIN)) reg_dout[LEN-1:0]();
+   dti#(.W_DATA(W_DIN)) reg_dout[LEN-1:0]();
 
    always_ff @(posedge clk) begin
       if (rst || !(|reg_valid)) begin
