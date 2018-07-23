@@ -46,9 +46,8 @@ async def drv(*, t, seq) -> b't':
     raise GearDone
 
 
-@alternative(drv)
 @gear
-async def drv(seqin, *, t) -> b't':
+async def secdrv(seqin, *, t) -> b't':
     async with seqin as seq:
         for val in seq:
             if type(val) == t:
