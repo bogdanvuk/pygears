@@ -111,7 +111,9 @@ class Intf:
         elif self.producer:
             return self.producer.get_queue(port)
         else:
-            raise Exception(f'Interface path does not end with a simulation gear at {pout.gear.name}.{pout.basename}')
+            raise Exception(
+                f'Interface path does not end with a simulation gear at {pout.gear.name}.{pout.basename}'
+            )
 
     @property
     def out_queues(self):
@@ -143,13 +145,17 @@ class Intf:
             for q, c in zip(self.out_queues, self.end_consumers):
                 registry('CurrentModule').phase = 'back'
                 await q.join()
-                self.events['ack'](c.consumer)
+                # self.events['ack'](c.consumer)
 
-        self.events['ack'](self)
+            # self.events['ack'](self)
         # print(f"All acks received")
 
     def ready_nb(self):
         return all(not q._unfinished_tasks for q in self.out_queues)
+        # if ready:
+        #     self.events['ack'](self)
+
+        # return ready
 
     async def put(self, val):
         self.put_nb(val)
@@ -192,7 +198,11 @@ class Intf:
         return ret
 
     def ack(self):
-        return self.in_queue.task_done()
+        self.events['ack'](self)
+        ret = self.in_queue.task_done()
+        if self.in_queue.intf.ready_nb():
+            self.events['ack'](self.in_queue.intf)
+        return ret
 
     async def get(self):
         val = await self.pull()

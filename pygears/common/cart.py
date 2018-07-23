@@ -79,6 +79,7 @@ def uncart(din, *, dtypes):
 
 @gear(enablement=b'len(din) == 2')
 async def cart_sync(*din) -> b'din':
+    from pygears.sim import sim_log
     din_t = [d.dtype for d in din]
 
     queue_id, single_id = (0, 1) if typeof(din_t[0], Queue) else (1, 0)

@@ -1,7 +1,6 @@
 from pygears.svgen.svmod import SVModuleGen
 from pygears.svgen.inst import SVGenInstPlugin
-from pygears.core.gear import alternative, gear
-from pygears.typing import Union
+from pygears.core.gear import gear
 from pygears import module
 from pygears.sim import clk
 
@@ -13,6 +12,8 @@ async def priority_mux(*din) -> b'Union[din]':
         if not d.empty():
             async with d as item:
                 yield module().tout((item, i))
+                break
+
     await clk()
 
 

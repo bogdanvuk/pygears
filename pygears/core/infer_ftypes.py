@@ -125,8 +125,8 @@ def infer_ftypes(params, args, namespace={}, allow_incomplete=False):
                     break
             except Exception as e:
                 if final_check:
-                    raise TypeMatchError(f'{str(e)} - when resolving '
-                                         f'parameter {name}: {val}')
+                    raise type(e)(f'{str(e)} - when resolving '
+                                  f'parameter {name}: {val}')
 
         final_check = not substituted and not final_check
 

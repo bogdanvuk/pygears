@@ -21,11 +21,17 @@ def timestep():
         return None
 
 
+def sim_phase():
+    return registry('Simulator').phase
+
+
 def clk():
+    registry('CurrentModule').phase = 'forward'
     return registry('ClkEvent').wait()
 
 
 def delta():
+    registry('CurrentModule').phase = 'back'
     return registry('DeltaEvent').wait()
 
 
@@ -142,11 +148,12 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             bind('CurrentModule', self.cur_gear)
             self.tasks[sim_gear].throw(GearDone)
         except (StopIteration, GearDone):
+            pass
+        else:
+            sim_log().error("Gear didn't stop on cancel!")
+        finally:
             self.done.add(sim_gear)
             self.events['after_cancel'](self, sim_gear)
-        else:
-            raise Exception("Gear didn't stop on cancel!")
-        finally:
             self.cur_gear = registry('HierRoot')
             bind('CurrentModule', self.cur_gear)
 
@@ -213,15 +220,22 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             #     print(s.getvalue())
 
             # print("Forward pass...")
+            self.phase = 'forward'
             for sim_gear in self.sim_gears:
                 self.maybe_run_gear(sim_gear, self.forward_ready)
 
+            self.phase = 'delta'
             delta.set()
             delta.clear()
 
+            # sim_log().info("-------------- Delta --------------")
+
+            self.phase = 'back'
             # print("Back pass...")
             for sim_gear in reversed(self.sim_gears):
                 self.maybe_run_gear(sim_gear, self.back_ready)
+
+            self.phase = 'cycle'
 
             self.events['before_timestep'](self, timestep)
 
@@ -313,7 +327,12 @@ def get_default_logger_handler(verbosity):
     return ch
 
 
-def sim(outdir=None, extens=[], run=True, verbosity=logging.INFO, **conf):
+def sim(outdir=None,
+        timeout=None,
+        extens=[],
+        run=True,
+        verbosity=logging.INFO,
+        **conf):
     if outdir is None:
         outdir = tempfile.mkdtemp()
 
@@ -337,7 +356,7 @@ def sim(outdir=None, extens=[], run=True, verbosity=logging.INFO, **conf):
         top = oper(top, conf)
 
     if run:
-        loop.run()
+        loop.run(timeout)
 
     return loop
 

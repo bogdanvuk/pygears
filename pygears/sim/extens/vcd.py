@@ -210,6 +210,9 @@ class VCD:
         self.clk_var = self.writer.register_var(
             '', 'clk', 'wire', size=1, init=1)
 
+        self.timestep_var = self.writer.register_var(
+            '', 'timestep', 'integer')
+
         self.handhake = set()
 
         with open(os.path.join(outdir, 'pygears.sav'), 'w') as f:
@@ -268,6 +271,7 @@ class VCD:
         return True
 
     def before_timestep(self, sim, timestep):
+        self.writer.change(self.timestep_var, timestep * 10, timestep)
         self.writer.change(self.clk_var, timestep * 10 + 5, 0)
         return True
 

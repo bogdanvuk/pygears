@@ -9,23 +9,55 @@ from pygears.sim.modules.sim_socket import u32_bytes_decode
 from pygears.svgen.util import svgen_typedef
 from pygears.util.fileio import save_file
 from functools import partial
+from itertools import islice
 from pygears.definitions import ROOT_DIR
 from .sim_extend import SimExtend
+from pygears.typing import Queue
+from pygears.sim import sim_log
+from pygears.core.util import perpetum
+import logging
+import time
+from subprocess import Popen, DEVNULL
 
 from pygears.sim.modules.sim_socket import SimSocket
 
 
-def svrand(name):
+def svrand(name, cnt=None):
     # print(f'Getting random data for {name}')
     svrand = registry('SimConfig')['SVRandSocket']
     if svrand.open_sock:
-        rand_func = partial(svrand.get_rand, name)
+        rand_func = perpetum(svrand.get_rand, name)
     else:
         req, dtype = svrand.parse_name(name)
         simsoc = registry('SimConfig')['SimSocket']
-        rand_func = partial(simsoc.send_req, req, dtype)
+        rand_func = perpetum(simsoc.send_req, req, dtype)
 
-    yield rand_func()
+    if cnt is not None:
+        return islice(rand_func, cnt)
+    else:
+        return rand_func
+
+
+def qrand(name, cnt=None):
+    # svrand = registry('SimConfig')['SVRandSocket']
+
+    rnd_eot = svrand(f'{name}_eot')
+    rnd_data = svrand(f'{name}_data')
+
+    # _, eot_dtype = svrand.parse_name(f'{name}_eot')
+    # _, data_dtype = svrand.parse_name(f'{name}_data')
+
+    tout = None
+    while cnt != 0:
+        eot = next(rnd_eot)
+        data = next(rnd_data)
+        if tout is None:
+            tout = Queue[type(data), len(eot)]
+
+        yield tout((data, *eot))
+        if cnt is not None:
+            if eot == int('1' * len(eot), 2):
+                cnt -= 1
 
 
 def get_rand_data(name):
@@ -77,17 +109,57 @@ def create_type_cons(dtype,
     return tcons
 
 
+def create_queue_cons(dtype,
+                      name,
+                      eot_cons=[],
+                      data_cons=[],
+                      data_cls='dflt_tcon',
+                      eot_cls='qenvelope',
+                      data_cls_params=None,
+                      eot_cls_params=None,
+                      data_vars={},
+                      eot_vars={}):
+    eot_tcons = SVRandConstraints(
+        name=f'{name}_eot',
+        cons=eot_cons,
+        dtype=dtype.eot,
+        cls=eot_cls,
+        cls_params=eot_cls_params)
+
+    for name, dtype in eot_vars.items():
+        eot_tcons.add_var(name, dtype)
+
+    data_tcons = SVRandConstraints(
+        name=f'{name}_data',
+        cons=data_cons,
+        dtype=dtype[0],
+        cls=data_cls,
+        cls_params=data_cls_params)
+
+    for name, dtype in data_vars.items():
+        data_tcons.add_var(name, dtype)
+
+    return data_tcons, eot_tcons
+
+
 class SVRandSocket(SimExtend):
     SVRAND_CONN_NAME = "_svrand"
 
-    def __init__(self, top, conf):
+    def __init__(self, top, conf, cons, run=False, **kwds):
         super().__init__()
         self.outdir = conf['outdir']
 
-        try:
-            self.constraints = conf['constraints']
-        except KeyError:
-            raise SVRandError(f'No constraints passed to init')
+        self.constraints = cons
+        self.run_cosim = run
+        self.cosim_pid = None
+        kwds['batch'] = True
+        kwds['clean'] = True
+        self.kwds = kwds
+
+        # try:
+        #     self.constraints = conf['constraints']
+        # except KeyError:
+        #     raise SVRandError(f'No constraints passed to init')
 
         if 'rand_port' in conf:
             self.port = conf['rand_port']
@@ -106,6 +178,25 @@ class SVRandSocket(SimExtend):
         self.create_svrand_top()
 
         if self.open_sock:
+            self.cosim_pid = None
+            if self.run_cosim:
+                outdir = registry('SimArtifactDir')
+                args = ' '.join(f'-{k} {v if not isinstance(v, bool) else ""}'
+                                for k, v in self.kwds.items()
+                                if not isinstance(v, bool) or v)
+                if sim_log().isEnabledFor(logging.DEBUG):
+                    stdout = None
+                else:
+                    stdout = DEVNULL
+
+                sim_log().info(f'Running cosimulator with: {args}')
+                self.cosim_pid = Popen(
+                    [f'./svrand_runsim.sh'] + args.split(' '),
+                    stdout=stdout,
+                    stderr=stdout,
+                    cwd=outdir)
+                sim_log().info(f"Cosimulator started")
+
             self.connect()
         else:
             hooks = {}
@@ -123,15 +214,31 @@ class SVRandSocket(SimExtend):
         server_address = ('localhost', self.port)
         print('starting up on %s port %s' % server_address)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.sock.setblocking(True)
-
         self.sock.bind(server_address)
 
-        # Listen for incoming connections
+        if self.cosim_pid:
+            self.sock.settimeout(1)
+        else:
+            self.sock.setblocking(True)
+
         self.sock.listen(1)
 
-        print("Wait for connection")
-        conn, addr = self.sock.accept()
+        if self.cosim_pid:
+            ret = None
+            while ret is None:
+                try:
+                    conn, addr = self.sock.accept()
+                    break
+                except socket.timeout:
+                    ret = self.cosim_pid.poll()
+                    if ret is not None:
+                        sim_log().error(f"Cosimulator error: {ret}")
+                        raise Exception
+
+        else:
+            sim_log().info("Wait for connection")
+            self.sock.listen(1)
+            conn, addr = self.sock.accept()
 
         msg = conn.recv(1024)
         port_name = msg.decode()
@@ -176,10 +283,14 @@ class SVRandSocket(SimExtend):
 
     def at_exit(self, sim):
         if self.open_sock:
-            self.conn.sendall(b'\x00\x00\x00\x00')
-            self.conn.close()
-            self.sock.close()
-            self.open_sock = False
+            if hasattr(self, 'conn'):
+                self.conn.sendall(b'\x00\x00\x00\x00')
+                self.conn.close()
+                self.sock.close()
+                self.open_sock = False
+
+            if self.cosim_pid is not None:
+                self.cosim_pid.terminate()
 
     def create_svrand_top(self):
         base_addr = os.path.dirname(__file__)

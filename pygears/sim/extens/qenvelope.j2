@@ -20,12 +20,16 @@ class qenvelope_{{tcon.name}} #(int lvl={{int(tcon.dtype)}});
    int             idx_max;
 
 {% for i in range(int(tcon.dtype)) %}
-  {% if i == (int(tcon.dtype) - 1) %}
-   constraint c_trans_lvl{{i}} {
-      trans_lvl{{i}}[0] == trans_lvl{{i-1}}.size;
-   }
- {% else %}
   {% if i == 0 %}
+
+    {# if this is lvl 1 Queue #}
+    {% if i == (int(tcon.dtype) - 1) %}
+
+   constraint c_trans_lvl0 {
+      trans_lvl0[0] inside {[1:data_size]};
+   }
+
+    {% else %}
 
    constraint c_trans_lvl0 {
       trans_lvl0.size inside {[1:data_size]};
@@ -34,8 +38,15 @@ class qenvelope_{{tcon.name}} #(int lvl={{int(tcon.dtype)}});
          trans_lvl0[j] inside {[1:data_size]};
       }
    }
+    {% endif %}
 
- {% else %}
+  {% elif i == (int(tcon.dtype) - 1) %}
+
+   constraint c_trans_lvl{{i}} {
+      trans_lvl{{i}}[0] == trans_lvl{{i-1}}.size;
+   }
+
+  {% else %}
 
    constraint c_trans_lvl{{i}} {
       trans_lvl{{i}}.size inside {[1:trans_lvl{{i-1}}.size]};
@@ -45,8 +56,7 @@ class qenvelope_{{tcon.name}} #(int lvl={{int(tcon.dtype)}});
       }
    }
 
- {% endif %}
-{% endif %}
+  {% endif %}
 {% endfor %}
 
    function void eot_setup(int cur_lvl, bit [lvl-1:0] eot, int trans_id);

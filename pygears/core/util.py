@@ -19,3 +19,8 @@ def doublewrap(f):
             return lambda realf: f(realf, *args, **kwds)
 
     return new_dec
+
+
+def perpetum(func, *args, **kwds):
+    while True:
+        yield func(*args, **kwds)

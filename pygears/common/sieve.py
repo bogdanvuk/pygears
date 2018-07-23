@@ -5,6 +5,8 @@ from pygears import module
 
 @gear
 async def sieve(din, *, index) -> b'din[index]':
+    from pygears.sim import sim_log
+
     async with din as d:
         dout = []
         for i in index:

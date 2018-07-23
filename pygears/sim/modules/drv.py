@@ -1,9 +1,11 @@
 import inspect
 
-from pygears import gear, GearDone
+from pygears import gear, GearDone, alternative
+from pygears.sim import clk, sim_log
 from pygears.typing import TLM
 from pygears.util.utils import quiter
 from pygears.sim.utils import SimDelay
+
 # from pygears.sim.extens.svrand import get_rand_data
 
 
@@ -33,14 +35,27 @@ class TypeDrvVisitor(TypingYieldVisitorBase):
 
 
 @gear
-async def drv(din: TLM['t'], *, t=b't', delay=SimDelay(0, 0)) -> b't':
-    while 1:
-        async with din as item:
-            for d in TypeDrvVisitor().visit(item, t):
-                await delay.delay
+async def drv(*, t, seq) -> b't':
+    for val in seq:
+        if type(val) == t:
+            yield val
+        else:
+            for d in TypeDrvVisitor().visit(val, t):
                 yield t(d)
 
-    print("Driver done")
+    raise GearDone
+
+
+@alternative(drv)
+@gear
+async def drv(seqin, *, t) -> b't':
+    async with seqin as seq:
+        for val in seq:
+            if type(val) == t:
+                yield val
+            else:
+                for d in TypeDrvVisitor().visit(val, t):
+                    yield t(d)
 
 
 # @gear

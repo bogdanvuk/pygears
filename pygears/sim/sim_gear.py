@@ -1,7 +1,7 @@
 import inspect
 import asyncio
 from pygears import registry, GearDone
-from pygears.sim import clk, timestep
+from pygears.sim import clk, timestep, delta, sim_log, sim_phase
 from pygears.typing_common.codec import code
 from pygears.typing import typeof, TLM
 
@@ -53,6 +53,9 @@ class SimGear:
             while (1):
                 if is_async_gen(self.func):
                     async for val in self.func(*args, **kwds):
+                        if sim_phase() == 'back':
+                            await clk()
+
                         if len(self.gear.out_ports) == 1:
                             val = (val, )
 
@@ -63,14 +66,13 @@ class SimGear:
                         for p, v in zip(self.gear.out_ports, val):
                             if v is not None:
                                 await p.producer.ready()
+
                 else:
                     await self.func(*args, **kwds)
 
                 if args:
                     if all(a.done() for a in args):
                         raise GearDone
-
-                await clk()
 
         except GearDone as e:
             # print(f"SimGear canceling: {self.gear.name}")

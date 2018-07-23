@@ -60,7 +60,6 @@ class CosimBase(SimGear):
                 else:
                     hout.reset()
 
-            module().phase = 'back'
             await delta()
 
             for p in dout_put.copy():

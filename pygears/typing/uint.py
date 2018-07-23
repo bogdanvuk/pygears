@@ -107,6 +107,9 @@ class Integer(int, metaclass=IntegerMeta):
     def width(self):
         return len(type(self))
 
+    def __len__(self):
+        return self.width
+
     def __add__(self, other):
         return (type(self) + type(other))(int(self) + int(other))
 

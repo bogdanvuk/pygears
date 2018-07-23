@@ -273,7 +273,6 @@ class SimSocket(CosimBase):
 
         self.cosim_pid = None
         if self.run_cosim:
-            print(self.kwds)
             outdir = registry('SimArtifactDir')
             args = ' '.join(f'-{k} {v if not isinstance(v, bool) else ""}'
                             for k, v in self.kwds.items()
