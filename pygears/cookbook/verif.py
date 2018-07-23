@@ -30,7 +30,7 @@ def tlm_verif(*seq, f, ref):
     return report
 
 
-def verif(*stim, f, ref, mon=None):
+def verif(*stim, f, ref, delays=None):
     '''Using ref. model'''
     # if delays is None:
     #     delays = [SimDelay(0, 0)] * (len(seq) + 1)
@@ -49,12 +49,12 @@ def verif(*stim, f, ref, mon=None):
 
     report = [[] for _ in range(len(res_tlm))]
 
-    if mon is None:
-        mon = (None, ) * len(res_tlm)
+    if delays is None:
+        delays = (None, ) * len(res_tlm)
 
-    for r, res_intf, ref_intf, m in zip(report, res_tlm, ref_tlm, mon):
-        if m is not None:
-            res_intf = res_intf | m
+    for r, res_intf, ref_intf, d in zip(report, res_tlm, ref_tlm, delays):
+        if d is not None:
+            res_intf = res_intf | d
 
         scoreboard(res_intf, ref_intf, report=r)
 
