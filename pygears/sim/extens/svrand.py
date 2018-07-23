@@ -33,9 +33,9 @@ def svrand(name, cnt=None):
         rand_func = perpetum(simsoc.send_req, req, dtype)
 
     if cnt is not None:
-        return islice(rand_func, cnt)
+        yield from islice(rand_func, cnt)
     else:
-        return rand_func
+        yield from rand_func
 
 
 def qrand(name, cnt=None):

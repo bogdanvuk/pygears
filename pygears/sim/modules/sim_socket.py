@@ -273,6 +273,9 @@ class SimSocket(CosimBase):
 
         self.cosim_pid = None
         if self.run_cosim:
+
+            self.sock.settimeout(1)
+
             outdir = registry('SimArtifactDir')
             args = ' '.join(f'-{k} {v if not isinstance(v, bool) else ""}'
                             for k, v in self.kwds.items()
@@ -300,8 +303,21 @@ class SimSocket(CosimBase):
 
         total_conn_num = len(self.gear.argnames) + len(self.gear.outnames) + 1
         while len(self.handlers) != total_conn_num:
-            sim_log().debug("Wait for connection")
-            conn, addr = self.sock.accept()
+            if self.cosim_pid:
+                ret = None
+                while ret is None:
+                    try:
+                        conn, addr = self.sock.accept()
+                        break
+                    except socket.timeout:
+                        ret = self.cosim_pid.poll()
+                        if ret is not None:
+                            sim_log().error(f"Cosimulator error: {ret}")
+                            raise Exception
+            else:
+                sim_log().info("Wait for connection")
+                self.sock.listen(1)
+                conn, addr = self.sock.accept()
 
             msg = conn.recv(1024)
             port_name = msg.decode()
