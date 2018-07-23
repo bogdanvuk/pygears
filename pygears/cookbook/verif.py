@@ -71,19 +71,21 @@ def directed(*seq, f, ref):
         res | mon | check(ref=ref)
 
 
-def directed_on_the_fly(*seq, f, ref, delays=None):
+def directed_on_the_fly(*stim, f, refs, delays=None):
     '''Directed test, but checking done on-the-fly (from generators)'''
+    res_tlm = stim | f
+
+    if not isinstance(res_tlm, tuple):
+        res_tlm = (res_tlm, )
+
     if delays is None:
-        delays = [SimDelay(0, 0)] * (len(seq) + 1)
-    else:
-        assert len(seq) + 1 == len(delays), print(
-            'Not enough delays specified')
+        delays = (None, ) * len(res_tlm)
 
-    stim = tuple(s | drv(delay=delays[i]) for i, s in enumerate(seq))
+    report = [[] for _ in range(len(res_tlm))]
+    for r, res_intf, ref, d in zip(report, res_tlm, refs, delays):
+        if d is not None:
+            res_intf = res_intf | d
 
-    res_tlm = stim | f | delay_mon(delay=delays[-1])
-
-    report = []
-    scoreboard(res_tlm, ref, report=report)
+        scoreboard(res_intf, ref, report=r)
 
     return report
