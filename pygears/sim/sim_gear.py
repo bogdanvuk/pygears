@@ -56,16 +56,17 @@ class SimGear:
                         if sim_phase() == 'back':
                             await clk()
 
-                        if len(self.gear.out_ports) == 1:
-                            val = (val, )
+                        if val is not None:
+                            if len(self.gear.out_ports) == 1:
+                                val = (val, )
 
-                        for p, v in zip(self.gear.out_ports, val):
-                            if v is not None:
-                                p.producer.put_nb(v)
+                            for p, v in zip(self.gear.out_ports, val):
+                                if v is not None:
+                                    p.producer.put_nb(v)
 
-                        for p, v in zip(self.gear.out_ports, val):
-                            if v is not None:
-                                await p.producer.ready()
+                            for p, v in zip(self.gear.out_ports, val):
+                                if v is not None:
+                                    await p.producer.ready()
 
                 else:
                     await self.func(*args, **kwds)

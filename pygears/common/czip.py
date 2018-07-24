@@ -1,8 +1,11 @@
-from pygears.typing import Queue, Tuple
+from pygears import module
+from pygears.sim import delta
+from pygears.typing import Queue, Tuple, typeof
 from pygears.core.gear import gear, alternative
 from .ccat import ccat
 from .permute import permuted_apply
 from functools import reduce
+from pygears.util.utils import gather
 
 
 def lvl_if_queue(t):
@@ -29,8 +32,16 @@ def zip_type(dtypes):
 
 
 @gear
-def zip_cat(*din) -> b'zip_type(din)':
-    pass
+async def zip_cat(*din) -> b'zip_type(din)':
+    id_max_lvl, max_lvl = max(
+        enumerate(din),
+        key=lambda p: p[1].dtype.lvl if typeof(p[1].dtype, Queue) else 0)
+
+    async with gather(*din) as dout:
+        data = tuple(d.data if typeof(d, Queue) else d for d in dout)
+        eots = dout[id_max_lvl].eot
+
+        yield module().tout((data, *eots))
 
 
 def isort(iterable, key=lambda x: x, reverse=False):
@@ -81,8 +92,28 @@ def unzip(din, *, dtypes):
 
 
 @gear(enablement=b'len(din) == 2')
-def zip_sync(*din, outsync=True) -> b'din':
-    pass
+async def zip_sync(*din, outsync=True) -> b'din':
+    lvls = (d.dtype.lvl if typeof(d.dtype, Queue) else 0 for d in din)
+    overlap_lvl = min(lvls)
+
+    eot_aligned = (1, 1)
+
+    while(1):
+
+        din_data = tuple(await d.pull() for d in din)
+
+        eot_overlap = [d[:overlap_lvl] for d in din_data]
+
+        eot_aligned = (eot_overlap[0] >= eot_overlap[1], eot_overlap[1] >= eot_overlap[0])
+
+        if all(eot_aligned):
+            yield din_data
+        else:
+            await delta()
+
+            for d, aligned in zip(din, eot_aligned):
+                if not aligned:
+                    d.ack()
 
 
 @alternative(zip_sync)

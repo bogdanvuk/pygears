@@ -1,6 +1,5 @@
 module fifo
   #(
-	  parameter WIDTH = 16,
 	  parameter DEPTH = 64
 	  )
 	 (
@@ -11,6 +10,7 @@ module fifo
 	  ) ;
 
 	 localparam CW = $clog2(DEPTH);
+	 localparam WIDTH = $size(din.data);
 
 	 logic [WIDTH-1:0] ram [0:DEPTH-1];
 	 logic [CW:0]      raddr_reg;

@@ -74,10 +74,10 @@ j2_file_names = ['run_sim.sh', 'top.sv']
 
 
 def sv_cosim_gen(gear):
-    pygearslib = util.find_spec("pygearslib")
-    if pygearslib is not None:
-        from pygearslib import sv_src_path
-        registry('SVGenSystemVerilogPaths').append(sv_src_path)
+    # pygearslib = util.find_spec("pygearslib")
+    # if pygearslib is not None:
+    #     from pygearslib import sv_src_path
+    #     registry('SVGenSystemVerilogPaths').append(sv_src_path)
 
     outdir = registry('SimArtifactDir')
     if 'SimSocketHooks' in registry('SimConfig'):
@@ -236,6 +236,7 @@ class SimSocket(CosimBase):
         super().finish()
 
         self.sock.close()
+        time.sleep(1)
 
         if self.cosim_pid is not None:
             self.cosim_pid.terminate()
