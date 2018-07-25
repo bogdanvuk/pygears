@@ -1,4 +1,4 @@
-from .base import EnumerableGenericMeta, type_str, type_repr
+from .base import EnumerableGenericMeta, type_str, type_repr, TemplatedTypeUnspecified
 
 
 class TupleMeta(EnumerableGenericMeta):
@@ -42,7 +42,7 @@ class TupleMeta(EnumerableGenericMeta):
                 try:
                     index[i] = self.fields.index(ind)
                 except ValueError as e:
-                    raise ValueError(f'Field "{ind}" not in Tuple')
+                    raise KeyError(f'Field "{ind}" not in Tuple')
 
         return super().index_norm(tuple(index))
 
@@ -69,6 +69,9 @@ class TupleMeta(EnumerableGenericMeta):
 class Tuple(tuple, metaclass=TupleMeta):
     # def __new__(self, val: tuple):
     def __new__(cls, val):
+        if not cls.is_specified():
+            raise TemplatedTypeUnspecified
+
         if type(val) == cls:
             return val
 
@@ -92,6 +95,12 @@ class Tuple(tuple, metaclass=TupleMeta):
                 subtypes.extend(subt if isinstance(i, slice) else [subt])
 
             return tout(tuple(subtypes))
+
+    def get(self, key, default=None):
+        try:
+            return self[key]
+        except KeyError:
+            return default
 
     @classmethod
     def decode(cls, val):

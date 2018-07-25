@@ -43,6 +43,10 @@ class TemplateArgumentsError(Exception):
     pass
 
 
+class TemplatedTypeUnspecified(Exception):
+    pass
+
+
 class TypingMeta(type):
     """Base class all types.
     """
