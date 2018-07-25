@@ -244,8 +244,8 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             timestep += 1
             bind('Timestep', timestep)
 
-            if (timestep % 1000) == 0:
-                sim_log().info("-------------- Simulation cycle --------------")
+            # if (timestep % 1000) == 0:
+            #     sim_log().info("-------------- Simulation cycle --------------")
 
             # print(f"-------------- {timestep} ------------------")
 

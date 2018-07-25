@@ -272,7 +272,8 @@ class SVRandSocket(SimExtend):
                     buff_size += 4 - (buff_size % 4)
                 data = self.conn.recv(buff_size)
             except socket.error:
-                print('SVRandSocket: socket error on {SVRAND_CONN_NAME}')
+                sim_log().error(f'socket error on {self.SYNCHRO_HANDLE_NAME}')
+                raise socket.error
         data = u32_bytes_decode(data, dtype)
         return data
 
