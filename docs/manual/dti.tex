@@ -1,0 +1,6 @@
+\draw[thick] (0, 0) \gear{10}{2}{2.4}{16}{2}{prod}{Producer};
+\draw[thick,xshift=120mm] \gear{10}{2}{2.4}{16}{2}{cons}{Consumer};
+\draw[-Triangle,line width=2mm] (3, 1) -- node[above] {Data [T]} ++(6, 0);
+\draw[-Triangle,line width=0.5mm] (3, -0.5) -- node[above] {Valid} ++(6, 0);
+\draw[Triangle-,line width=0.5mm] (3, -1.5) -- node[above] {Ready} ++(6, 0);
+\node (A) [cylinder, draw,minimum height=6.8cm,minimum width=3.8cm, label=below:DTI] at (6,0) {};

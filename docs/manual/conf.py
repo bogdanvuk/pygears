@@ -44,6 +44,10 @@ release = '0.1b'
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.githubpages',
+    'sphinxcontrib.tikz',
+    'sphinxcontrib.wavedrom',
+    'sphinxcontrib.blockdiag',
+    'bdp.sphinxext.bdpfigure'
 ]
 autodoc_default_flags = ['show-inheritance', 'members', 'special-members']
 autoclass_content = "class"
@@ -166,7 +170,8 @@ latex_elements = {
 
     # Additional stuff for the LaTeX preamble.
     #
-    # 'preamble': '',
+    'preamble': r'''
+    ''',
 
     # Latex figure (float) alignment
     #
@@ -205,3 +210,32 @@ texinfo_documents = [
 
 
 # -- Extension configuration -------------------------------------------------
+
+# Gear takes five parameters:
+# 1. Number of cogs
+# 2. Radius of center
+# 3. Radius of the gear
+# 4. Width of the cog
+# 5. Slope of the cog
+# 6. Gear node
+# 7. Gear text
+
+tikz_latex_preamble = r'''
+
+\newcommand{\gear}[7]{%
+
+node {#7}
+
+\foreach \i in {1,...,#1} {%
+  [rotate=(\i-1)*360/#1]  (0:#2)  arc (0:#4:#2) {[rounded corners=1.5pt]
+            -- (#4+#5:#3)  arc (#4+#5:360/#1-#5:#3)} --  (360/#1:#2)
+}}
+
+\tikzset{
+  pics/mynode/.style args={#1}{
+     code={
+       \draw[thick] \gear{10}{2}{2.4}{14}{1}{prod}{#1};
+     }
+  }
+}
+'''

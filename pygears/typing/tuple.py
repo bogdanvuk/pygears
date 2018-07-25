@@ -102,6 +102,15 @@ class Tuple(tuple, metaclass=TupleMeta):
         except KeyError:
             return default
 
+    def __int__(self):
+        ret = 0
+
+        for d, t in zip(reversed(self), reversed(type(self))):
+            ret <<= int(t)
+            ret |= int(d)
+
+        return ret
+
     @classmethod
     def decode(cls, val):
         ret = []
