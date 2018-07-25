@@ -52,6 +52,9 @@ def verif(*stim, f, ref, delays=None):
     if delays is None:
         delays = (None, ) * len(res_tlm)
 
+    assert len(ref_tlm) == len(res_tlm)
+    assert len(delays) == len(res_tlm)
+
     for r, res_intf, ref_intf, d in zip(report, res_tlm, ref_tlm, delays):
         if d is not None:
             res_intf = res_intf | d

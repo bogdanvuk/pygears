@@ -1,5 +1,6 @@
 from pygears.core.gear import gear
 from pygears.typing import Union
+from pygears import module
 
 
 def mux_type(dtypes):
@@ -7,8 +8,10 @@ def mux_type(dtypes):
 
 
 @gear
-def mux(ctrl, *din) -> b'mux_type(din)':
-    pass
+async def mux(ctrl, *din) -> b'mux_type(din)':
+    async with ctrl as c:
+        async with din[c] as d:
+            yield module().tout((d, c))
 
 
 @gear

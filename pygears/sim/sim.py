@@ -244,8 +244,8 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             timestep += 1
             bind('Timestep', timestep)
 
-            if (timestep % 1000) == 0:
-                sim_log().info("-------------- Simulation cycle --------------")
+            # if (timestep % 1000) == 0:
+            #     sim_log().info("-------------- Simulation cycle --------------")
 
             # print(f"-------------- {timestep} ------------------")
 
@@ -296,6 +296,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         if not sim_exception:
             for sim_gear in self.sim_gears:
                 if sim_gear not in self.done:
+                    sim_log().debug(f"Canceling {sim_gear.gear.name}")
                     self.cancel(sim_gear)
 
         self.events['after_cleanup'](self)
