@@ -9,14 +9,16 @@
     <title>Quick introduction &#8212; pygears 0.1b documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://wavedrom.com/skins/default.js"></script>
+    <script type="text/javascript" src="http://wavedrom.com/WaveDrom.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Typing" href="typing.html" />
-    <link rel="prev" title="Welcome to PyGears" href="index.html" />
+    <link rel="prev" title="Introduction to Gears" href="gears.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -29,6 +31,8 @@
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
+          
+
           <div class="body" role="main">
             
   <div class="section" id="quick-introduction">
@@ -43,7 +47,7 @@
     <span class="k">return</span> <span class="n">x2</span> <span class="o">*</span> <span class="n">b2</span>
 </pre></div>
 </div>
-<p>Notice the <em>&#64;gear</em> decorator, which tells <strong>PyGears</strong> that HDL code should be generated when this function is called in the design. It also allows for partial application and polymorphism which are not natively supported by the Python language.</p>
+<p>Notice the <em>&#64;gear</em> decorator which will tells <strong>PyGears</strong> to treat this functions as a HDL module. It also allows for partial application and polymorphism which are not natively supported by the Python language.</p>
 <p>The variables <em>x, b0, b1, b2, x1, x2</em> are interface objects and represent connections between modules. Input arguments <em>x, b0, b1, b2</em> correspond to the input ports of the HDL module. In <strong>PyGears</strong> the function call corresponds to the HDL module instantiation. The <em>mac</em> gear will return an interface object, as all gears are required to do. Returned interface object corresponds to the output port connection from the MAC module, and can be passed to some other gear which will make the connection from the MAC’s output to the this gear’s input. Additionaly, <strong>PyGears</strong> interfaces support some of the Python operators (‘*’ in this example) and can be used to infer corresponding HDL modules. The above gear describes the following composition:
 - first inputs <em>x</em> and <em>b0</em> are connected to the MAC module,
 - output of the first MAC and the input <em>b1</em> are fed to the second MAC module,
@@ -170,8 +174,15 @@
 </div>
 </div>
 
+    <script type="text/javascript">
+        function init() {
+            WaveDrom.ProcessAll();
+        }
+        window.onload = init;
+    </script>
 
           </div>
+          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -191,7 +202,7 @@
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="index.html" title="previous chapter">Welcome to PyGears</a></li>
+      <li>Previous: <a href="gears.html" title="previous chapter">Introduction to Gears</a></li>
       <li>Next: <a href="typing.html" title="next chapter">Typing</a></li>
   </ul></li>
 </ul>
@@ -223,8 +234,8 @@
       &copy;2018, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.4</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
       
       |
       <a href="_sources/introduction.rst.txt"
