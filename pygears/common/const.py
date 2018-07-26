@@ -1,6 +1,7 @@
 from pygears import gear
 from pygears.core.gear import GearTypeNotSpecified
 from pygears.typing import Uint, Int, Tuple, bitw, Integer
+from pygears.typing.base import TypingMeta
 
 
 def get_int_type(val):
@@ -13,10 +14,10 @@ def get_int_type(val):
 
 
 def get_literal_type(val):
-    if isinstance(val, int):
-        return get_int_type(val)
-    elif isinstance(val, Integer):
+    if isinstance(type(val), TypingMeta):
         return type(val)
+    elif isinstance(val, int):
+        return get_int_type(val)
     elif isinstance(val, tuple):
         dtypes = [get_literal_type(v) for v in val]
         return Tuple[tuple(dtypes)]

@@ -13,7 +13,7 @@ In this quick introduction, we will consider describing a gear that might be use
       x2 = mac(x1, b1)
       return x2 * b2
   
-Notice the *@gear* decorator, which tells **PyGears** that HDL code should be generated when this function is called in the design. It also allows for partial application and polymorphism which are not natively supported by the Python language.
+Notice the *@gear* decorator which will tells **PyGears** to treat this functions as a HDL module. It also allows for partial application and polymorphism which are not natively supported by the Python language.
 
 The variables *x, b0, b1, b2, x1, x2* are interface objects and represent connections between modules. Input arguments *x, b0, b1, b2* correspond to the input ports of the HDL module. In **PyGears** the function call corresponds to the HDL module instantiation. The *mac* gear will return an interface object, as all gears are required to do. Returned interface object corresponds to the output port connection from the MAC module, and can be passed to some other gear which will make the connection from the MAC's output to the this gear's input. Additionaly, **PyGears** interfaces support some of the Python operators ('*' in this example) and can be used to infer corresponding HDL modules. The above gear describes the following composition:
 - first inputs *x* and *b0* are connected to the MAC module,

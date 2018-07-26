@@ -1,7 +1,33 @@
-from pygears import gear
+from pygears import gear, module, GearDone
+from pygears.sim import delta, clk
 
 
-@gear(svgen={'svmod_fn': 'fifo.sv'})
-def fifo(din: 'width', *, depth=2) -> b'width':
+@gear
+async def fifo(din, *, depth=2) -> b'din':
     '''For this implementation depth must be a power of 2'''
-    pass
+
+    data = []
+    out_data = False
+    dout = module().dout
+
+    while (1):
+        if not data and din.done():
+            raise GearDone
+
+        # TODO: Make fifo work correctly in corner case when it is full, but
+        # consumer is ready
+        if len(data) < depth:
+            if not din.empty():
+                data.insert(0, din.get_nb())
+
+        if len(data) and not out_data and dout.ready_nb():
+            dout.put_nb(data[-1])
+            out_data = True
+
+        await delta()
+
+        if out_data and dout.ready_nb():
+            data.pop()
+            out_data = False
+
+        await clk()

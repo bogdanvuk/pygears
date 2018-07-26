@@ -1,7 +1,7 @@
 def quiter(iterable):
     """Pass through all values from the given iterable, augmented by the
     information if there are more values to come after the current one
-    (True), or if it is the last value (False).
+    (False), or if it is the last value (True).
     """
     # Get an iterator and pull the first value.
     it = iter(iterable)

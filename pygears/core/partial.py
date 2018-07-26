@@ -141,7 +141,7 @@ class Partial:
         return iin.__ror__(self)
 
     def __ror__(self, iin):
-        if isinstance(iin, tuple):
+        if type(iin) == tuple:
             return self(*iin)
         else:
             return self(iin)

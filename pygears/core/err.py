@@ -11,8 +11,8 @@ class ErrReportLevel(IntEnum):
 class ErrReportPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        # cls.registry['ErrReportLevel'] = ErrReportLevel.user
-        cls.registry['ErrReportLevel'] = ErrReportLevel.debug
+        cls.registry['ErrReportLevel'] = ErrReportLevel.user
+        # cls.registry['ErrReportLevel'] = ErrReportLevel.debug
 
 
 def pygears_excepthook(exception_type,
@@ -35,8 +35,9 @@ def pygears_excepthook(exception_type,
 
         for s, t in zip(
                 format_list(extract_tb(traceback)), walk_tb(traceback)):
-            if not t[0].f_code.co_filename.startswith(
-                    os.path.dirname(__file__)):
+            is_internal = t[0].f_code.co_filename.startswith(os.path.dirname(__file__))
+            is_boltons = 'boltons' in t[0].f_code.co_filename
+            if not is_internal and not is_boltons:
                 print(s, end='')
 
         print(format_exception_only(exception_type, exception)[0])

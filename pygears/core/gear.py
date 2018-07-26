@@ -261,7 +261,7 @@ class Gear(NamedHierNode):
                 namespace=self.func.__globals__,
                 allow_incomplete=False)
         except TypeMatchError as e:
-            raise TypeMatchError(f'{str(e)}, of the module {self.name}')
+            raise TypeMatchError(f'{str(e)}, of the module "{self.name}"')
 
     def resolve(self):
         for port in self.in_ports:
