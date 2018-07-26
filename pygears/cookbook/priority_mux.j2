@@ -30,7 +30,11 @@
    end
 
    always_ff @(posedge clk) begin
+  {% if is_queue %}
+      if (rst | (handshake && (dout_s.eot[0])) begin
+  {% else %}
       if (rst | handshake) begin
+  {% endif %}
          flag_reg <= 0;
       end else begin
          flag_reg <= flag;

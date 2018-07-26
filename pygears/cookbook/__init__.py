@@ -4,6 +4,7 @@ from .priority_mux import priority_mux
 from .qcnt import qcnt
 from .sdp import sdp
 from .chop import chop
+from .accumulator import accumulator
 from .clip import clip
 from .trr import trr
 from .trr_dist import trr_dist
@@ -13,6 +14,6 @@ from .take import take
 from .release_after_eot import release_after_eot
 
 __all__ = [
-    'rng', 'iceil', 'priority_mux', 'qcnt', 'sdp', 'chop', 'trr',
+    'rng', 'iceil', 'priority_mux', 'qcnt', 'sdp', 'chop', 'accumulator', 'trr',
     'replicate', 'trr_dist', 'clip', 'din_cat', 'take', 'release_after_eot'
 ]

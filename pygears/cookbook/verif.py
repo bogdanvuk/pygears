@@ -61,9 +61,9 @@ def verif(*stim, f, ref, delays=None):
     return report
 
 
-def directed(*seq, f, ref):
+def directed(*stim, f, ref):
     '''Directed test, ref is a list of expected results'''
-    res = tuple(s | drv for s in seq) | f
+    res = stim | f
     if isinstance(res, tuple):
         for i, r in enumerate(res):
             r | mon | check(ref=ref[i])
