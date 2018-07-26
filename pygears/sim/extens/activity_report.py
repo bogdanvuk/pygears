@@ -35,7 +35,10 @@ class ActivityReporter:
                 p.consumer.events['pull_done'].append(self.intf_pull_done)
 
     def after_run(self, sim):
-        g = graph()
+
+        g = graph(
+            outdir=registry('SimArtifactDir'),
+            node_filter=lambda g: g in registry('SimMap'))
 
         blocking_gears = set()
 
