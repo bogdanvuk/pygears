@@ -2,6 +2,7 @@ import copy
 import inspect
 import functools
 import asyncio
+import sys
 
 from pygears.registry import PluginBase, bind, registry
 from pygears.typing import Any
@@ -12,6 +13,8 @@ from .intf import Intf
 from .partial import Partial
 from .port import InPort, OutPort
 from .util import doublewrap
+
+code_map = {}
 
 
 class TooManyArguments(Exception):
@@ -334,7 +337,30 @@ class Gear(NamedHierNode):
                 k: self.params[k]
                 for k in self.kwdnames if k in self.params
             }
+
+            self.func_locals = {}
+            code_map = registry('GearCodeMap')
+            code_map[self.func.__code__] = self
+
+            def tracer(frame, event, arg):
+                if event == 'return':
+                    if frame.f_code in code_map:
+                        print(code_map[frame.f_code].name)
+                        code_map[
+                            frame.f_code].func_locals = frame.f_locals.copy()
+
+            # tracer is activated on next call, return or exception
+            if registry('CurrentModule').parent == registry('HierRoot'):
+                sys.setprofile(tracer)
+
             ret = self.func(*func_args, **func_kwds)
+
+            if registry('CurrentModule').parent == registry('HierRoot'):
+                sys.setprofile(None)
+
+            for name, val in self.func_locals.items():
+                if isinstance(val, Intf):
+                    val.var_name = name
 
         # if not any([isinstance(c, Gear) for c in self.child]):
         #     self.clear()
@@ -416,6 +442,7 @@ class GearPlugin(PluginBase):
     def bind(cls):
         cls.registry['HierRoot'] = NamedHierNode('')
         cls.registry['CurrentModule'] = cls.registry['HierRoot']
+        cls.registry['GearCodeMap'] = {}
         cls.registry['GearMetaParams'] = {'enablement': True}
         cls.registry['GearExtraParams'] = {
             'name': None,
@@ -428,3 +455,4 @@ class GearPlugin(PluginBase):
     def reset(cls):
         bind('HierRoot', NamedHierNode(''))
         bind('CurrentModule', cls.registry['HierRoot'])
+        bind('GearCodeMap', {})

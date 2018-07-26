@@ -11,8 +11,8 @@ class ErrReportLevel(IntEnum):
 class ErrReportPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        cls.registry['ErrReportLevel'] = ErrReportLevel.user
-        # cls.registry['ErrReportLevel'] = ErrReportLevel.debug
+        # cls.registry['ErrReportLevel'] = ErrReportLevel.user
+        cls.registry['ErrReportLevel'] = ErrReportLevel.debug
 
 
 def pygears_excepthook(exception_type,

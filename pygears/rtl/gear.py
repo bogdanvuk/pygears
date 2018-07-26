@@ -79,7 +79,8 @@ class RTLGearNodeGen(HierNode):
         for p, gear_p in zip(self.node.in_ports, self.gear.in_ports):
             self.create_intf(p, gear_p, domain=self.node)
             prod_intf = gear_p.producer
-            if (self.node.parent is not None and prod_intf is not None and prod_intf.producer is None):
+            if (self.node.parent is not None and prod_intf is not None
+                    and prod_intf.producer is None):
                 self.create_unsourced_intf(p, gear_p)
 
         for p, gear_p in zip(self.node.out_ports, self.gear.out_ports):
@@ -89,8 +90,7 @@ class RTLGearNodeGen(HierNode):
                 # intf_inst = RTLIntf(
                 #     self.node.root(), gear_intf.dtype)
 
-                self.node.root().add_out_port(
-                    p.basename, dtype=p.dtype)
+                self.node.root().add_out_port(p.basename, dtype=p.dtype)
 
                 # intf_inst.producer = self.node.root().out_ports[-1]
 
@@ -128,6 +128,9 @@ class RTLGearNodeGen(HierNode):
 
             intf_inst = RTLIntf(
                 domain, gear_intf.dtype, producer=port, consumers=consumers)
+
+            if hasattr(gear_intf, 'var_name'):
+                intf_inst.var_name = gear_intf.var_name
 
             for cons_port in consumers:
                 cons_port.producer = intf_inst
