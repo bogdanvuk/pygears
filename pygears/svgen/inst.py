@@ -23,8 +23,8 @@ class SVGenInstVisitor(HierVisitorBase):
 
 
 def svgen_inst(top, conf):
-    if 'outdir' in conf:
-        registry('SVGenSystemVerilogPaths').append(conf['outdir'])
+    # if 'outdir' in conf:
+    #     registry('SVGenSystemVerilogPaths').append(conf['outdir'])
 
     v = SVGenInstVisitor()
     v.visit(top)

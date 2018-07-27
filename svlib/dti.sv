@@ -18,3 +18,17 @@ interface dti #(
                      output ready);
 
 endinterface : dti
+
+
+interface dti_spy #(
+                type data_type = logic
+                )(input spy_clk);
+
+   data_type       data;
+   logic           valid;
+   logic           ready;
+   logic           handshake;
+
+   assign handshake = valid && ready && !spy_clk;
+
+endinterface : dti_spy

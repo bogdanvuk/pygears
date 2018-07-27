@@ -1,4 +1,5 @@
 from pygears.rtl.port import InPort, OutPort
+from pygears.svgen.util import svgen_typedef
 
 
 class SVIntfGen:
@@ -9,7 +10,11 @@ class SVIntfGen:
     def basename(self):
         producer_port = self.intf.producer
         port_name = producer_port.basename
-        producer_name = producer_port.node.basename
+
+        if hasattr(self.intf, 'var_name'):
+            producer_name = self.intf.var_name
+        else:
+            producer_name = producer_port.node.basename
 
         if isinstance(producer_port, InPort):
             return port_name
@@ -17,9 +22,9 @@ class SVIntfGen:
               and isinstance(self.intf.consumers[0], OutPort)):
             return self.intf.consumers[0].basename
         elif self.intf.sole_intf:
-            return f'{producer_name}_if_s'
+            return f'{producer_name}_s'
         else:
-            return f'{producer_name}_{port_name}_if_s'
+            return f'{producer_name}_{port_name}_s'
 
     @property
     def outname(self):
@@ -46,6 +51,14 @@ class SVIntfGen:
             for i, cons_port in enumerate(self.intf.consumers):
                 if isinstance(cons_port, OutPort):
                     inst.append(self.get_connect_module(i, template_env))
+
+        inst.extend(svgen_typedef(self.intf.dtype, self.basename).split('\n'))
+
+        inst.extend(f"""
+dti_spy #({self.basename}_t) _{self.basename}(clk);
+assign _{self.basename}.data = {self.basename}.data;
+assign _{self.basename}.valid = {self.basename}.valid;
+assign _{self.basename}.ready = {self.basename}.ready;""".split('\n'))
 
         return '\n'.join(inst)
 

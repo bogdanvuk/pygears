@@ -75,6 +75,7 @@ if [ $simulator == "cadence" ]; then
         +svseed=$seed \
         -logfile log.log -v93 -ALLOWREDEFINITION \
         -access rwc \
+        -input $WORKSPACE/cadence.tcl \
         $other_args $gui \
         "$@"
 else
