@@ -52,6 +52,9 @@ extensions = [
 autodoc_default_flags = ['show-inheritance', 'members', 'special-members']
 autoclass_content = "class"
 
+offline_skin_js_path = r"default.js"
+offline_wavedrom_js_path = r"wavedrom.js"
+
 
 # Taken from: https://stackoverflow.com/questions/46279030/how-can-i-prevent-sphinx-from-listing-object-as-a-base-class
 # ClassDocumenter.add_directive_header uses ClassDocumenter.add_line to write
