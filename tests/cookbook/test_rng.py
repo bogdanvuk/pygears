@@ -1,18 +1,16 @@
 from nose import with_setup
 from nose.tools import raises
 
-from pygears import Intf, MultiAlternativeError, clear, find, registry
+from pygears import Intf, MultiAlternativeError, clear, find
 from pygears.typing import Queue, Tuple, Uint, Int
-from pygears.cookbook.rng import rng
+from pygears.cookbook.rng import rng, TCfg
 from pygears.sim.modules.verilator import SimVerilated
-
-import sys
-sys.path.append('/tools/home/pygears/tests')
-from utils import svgen_check, prepare_result_dir, skip_ifndef
 
 from pygears.cookbook.verif import directed, verif
 from pygears.sim import sim
-from pygears.sim.modules.seqr import seqr
+from pygears.sim.modules.drv import drv
+
+from utils import svgen_check, prepare_result_dir, skip_ifndef
 
 
 @with_setup(clear)
@@ -28,9 +26,9 @@ def test_basic_unsigned():
 @with_setup(clear)
 def test_basic_unsigned_sim():
     seq = [(2, 8, 2)]
-    ref = list(range(*seq[0]))
+    ref = [list(range(*seq[0]))]
 
-    directed(seqr(t=Tuple[Uint[4], Uint[4], Uint[2]], seq=seq), f=rng, ref=ref)
+    directed(drv(t=Tuple[Uint[4], Uint[4], Uint[2]], seq=seq), f=rng, ref=ref)
 
     sim(outdir=prepare_result_dir())
 
@@ -41,7 +39,7 @@ def test_basic_unsigned_cosim():
     seq = [(2, 8, 2)]
 
     verif(
-        seqr(t=Tuple[Uint[4], Uint[4], Uint[2]], seq=seq),
+        drv(t=Tuple[Uint[4], Uint[4], Uint[2]], seq=seq),
         f=rng(sim_cls=SimVerilated),
         ref=rng(name='ref_model'))
 
@@ -61,9 +59,9 @@ def test_basic_signed():
 @with_setup(clear)
 def test_basic_signed_sim():
     seq = [(-15, -3, 2)]
-    ref = list(range(*seq[0]))
+    ref = [list(range(*seq[0]))]
 
-    directed(seqr(t=Tuple[Int[5], Int[6], Uint[2]], seq=seq), f=rng, ref=ref)
+    directed(drv(t=Tuple[Int[5], Int[6], Uint[2]], seq=seq), f=rng, ref=ref)
 
     sim(outdir=prepare_result_dir())
 
@@ -74,7 +72,7 @@ def test_basic_signed_cosim():
     seq = [(-15, -3, 2)]
 
     verif(
-        seqr(t=Tuple[Int[5], Int[6], Uint[2]], seq=seq),
+        drv(t=Tuple[Int[5], Int[6], Uint[2]], seq=seq),
         f=rng(sim_cls=SimVerilated),
         ref=rng(name='ref_model'))
 
@@ -88,7 +86,11 @@ def test_supply_constant():
     rng_gear = find('/rng/sv_rng')
 
     assert iout.dtype == Queue[Uint[4]]
-    assert rng_gear.params['cfg'] == Tuple[{'start': Uint[1], 'cnt': Uint[4], 'incr': Uint[1]}]
+    assert rng_gear.params['cfg'] == Tuple[{
+        'start': Uint[4],
+        'cnt': Uint[4],
+        'incr': Uint[1]
+    }]
     assert not rng_gear.params['signed']
 
 
@@ -105,9 +107,9 @@ def test_cnt_only():
 @with_setup(clear)
 def test_cnt_only_sim():
     seq = [8]
-    ref = list(range(8))
+    ref = [list(range(8))]
 
-    directed(seqr(t=Uint[4], seq=seq), f=rng, ref=ref)
+    directed(drv(t=Uint[4], seq=seq), f=rng, ref=ref)
 
     sim(outdir=prepare_result_dir())
 
@@ -118,7 +120,7 @@ def test_cnt_only_cosim():
     seq = [8]
 
     verif(
-        seqr(t=Uint[4], seq=seq),
+        drv(t=Uint[4], seq=seq),
         f=rng(sim_cls=SimVerilated),
         ref=rng(name='ref_model'))
 

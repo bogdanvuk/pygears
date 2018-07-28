@@ -1,5 +1,6 @@
 from pygears.rtl.port import InPort, OutPort
 from pygears.svgen.util import svgen_typedef
+from pygears import PluginBase, registry
 
 
 class SVIntfGen:
@@ -52,13 +53,15 @@ class SVIntfGen:
                 if isinstance(cons_port, OutPort):
                     inst.append(self.get_connect_module(i, template_env))
 
-        inst.extend(svgen_typedef(self.intf.dtype, self.basename).split('\n'))
+        if registry('SVGenDebugIntfs'):
+            inst.extend(
+                svgen_typedef(self.intf.dtype, self.basename).split('\n'))
 
-        inst.extend(f"""
-dti_spy #({self.basename}_t) _{self.basename}(clk);
-assign _{self.basename}.data = {self.basename}.data;
-assign _{self.basename}.valid = {self.basename}.valid;
-assign _{self.basename}.ready = {self.basename}.ready;""".split('\n'))
+            inst.extend(f"""
+    dti_spy #({self.basename}_t) _{self.basename}(clk);
+    assign _{self.basename}.data = {self.basename}.data;
+    assign _{self.basename}.valid = {self.basename}.valid;
+    assign _{self.basename}.ready = {self.basename}.ready;""".split('\n'))
 
         return '\n'.join(inst)
 
@@ -108,3 +111,9 @@ assign _{self.basename}.ready = {self.basename}.ready;""".split('\n'))
         }
 
         return template_env.snippets.module_inst(**bc_context)
+
+
+class SVGenIntfPlugin(PluginBase):
+    @classmethod
+    def bind(cls):
+        cls.registry['SVGenDebugIntfs'] = False

@@ -9,19 +9,23 @@ module serialize (
    // internal signals
    // ---------------------------------------------------------------------------
 
-   logic [$clog2($size(din.data)/$size(dout.data))-1 : 0] count_s;
-   logic [$size(din.data)/$size(dout.data)-1 : 0] [$size(dout.data)-1 : 0] splitted_input;
+   localparam W_DIN = din.W_DATA;
+   localparam W_DOUT = dout.W_DATA;
+   localparam DIN_SIZE = W_DIN / W_DOUT;
+
+   logic [$clog2(DIN_SIZE)-1 : 0] count_s;
+   logic [W_DOUT-1 : 0] splitted_input[DIN_SIZE-1 : 0];
 
    logic last_data_s;
-   assign last_data_s = (count_s == ($size(din.data)/$size(dout.data)-1));
+   assign last_data_s = (count_s == ($size(din.data)/W_DOUT-1));
 
    // ---------------------------------------------------------------------------
    // interfaces
    // ---------------------------------------------------------------------------
 
    generate
-      for (genvar i = 0; i < $size(din.data)/$size(dout.data); i++) begin
-         assign splitted_input[i] = din.data[((i+1)*$size(dout.data))-1 : (i*$size(dout.data))];
+      for (genvar i = 0; i < $size(din.data)/W_DOUT; i++) begin
+         assign splitted_input[i] = din.data[((i+1)*W_DOUT)-1 : (i*W_DOUT)];
       end
    endgenerate
 

@@ -128,12 +128,7 @@ def server_loop(port, log_level='INFO'):
 
 
 def main(argv=sys.argv):
-    parser = argparse.ArgumentParser(prog="CLI application deamon TCP server")
-
-    parser.add_argument(dest='cmd', help="Application command")
-
-    parser.add_argument(
-        '-p', dest='port', help="Application prompt")
+    parser = argparse.ArgumentParser(prog="GTKWave deamon TCP server")
 
     parser.add_argument(
         '-p', dest='port', type=int, default=60000, help="Server port")

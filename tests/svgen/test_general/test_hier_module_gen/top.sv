@@ -8,22 +8,22 @@ module top(
 
 );
 
-      dti #(.W_DATA(2)) fgear0_if_s(); // u2 (2)
-      dti #(.W_DATA(2)) fgear0_if_s_bc[1:0](); // u2 (2)
+      dti #(.W_DATA(2)) ret1_s(); // u2 (2)
+      dti #(.W_DATA(2)) ret1_s_bc[1:0](); // u2 (2)
     bc #(
                 .SIZE(2)
     )
-     bc_fgear0 (
+     bc_ret1_s (
         .clk(clk),
         .rst(rst),
-        .din(fgear0_if_s),
-        .dout(fgear0_if_s_bc)
+        .din(ret1_s),
+        .dout(ret1_s_bc)
     );
 
-    connect connect_fgear0_if_s_1 (
+    connect connect_ret1_s_1 (
         .clk(clk),
         .rst(rst),
-        .din(fgear0_if_s_bc[1]),
+        .din(ret1_s_bc[1]),
         .dout(top_ret1)
     );
 
@@ -45,14 +45,14 @@ module top(
         .rst(rst),
         .arg1(top_din1),
         .arg2(top_din2_bc[0]),
-        .ret(fgear0_if_s)
+        .ret(ret1_s)
     );
 
 
     fgear fgear1_i (
         .clk(clk),
         .rst(rst),
-        .arg1(fgear0_if_s_bc[0]),
+        .arg1(ret1_s_bc[0]),
         .arg2(top_din2_bc[1]),
         .ret(top_ret2)
     );

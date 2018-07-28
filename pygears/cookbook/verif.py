@@ -14,7 +14,7 @@ async def check(din, *, ref):
         # print(f"Here: {items}")
         # print(f"{ref}")
         # print(f"{items == ref}")
-        sim_assert(items == ref)
+        sim_assert(items == ref, f'mismatch. Got: {items}, expected: {ref}')
 
 
 def tlm_verif(*seq, f, ref):
@@ -66,7 +66,7 @@ def verif(*stim, f, ref, delays=None):
 
 def directed(*seq, f, ref):
     '''Directed test, ref is a list of expected results'''
-    res = tuple(s | drv for s in seq) | f
+    res = seq | f
     if isinstance(res, tuple):
         for i, r in enumerate(res):
             r | mon | check(ref=ref[i])

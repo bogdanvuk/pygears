@@ -136,7 +136,7 @@ def restart_wave(sim, outdir, address):
                 pass
 
 
-def activity_wave(top, cfg):
+def activity_wave(top):
 
     sim = registry('Simulator')
     outdir = os.path.abspath(registry('SimArtifactDir'))

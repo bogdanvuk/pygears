@@ -6,19 +6,19 @@ module rng_hier(
 
                 );
 
-   dti #(.W_DATA(6)) ccat_if_s(); // (u1, u4, u1) (6)
+   dti #(.W_DATA(6)) ccat_s(); // (u1, u4, u1) (6)
 
-   dti #(.W_DATA(1)) const0_if_s(); // u1 (1)
+   dti #(.W_DATA(1)) const0_s(); // u1 (1)
 
-   dti #(.W_DATA(1)) const1_if_s(); // u1 (1)
+   dti #(.W_DATA(1)) const1_s(); // u1 (1)
 
    rng_ccat ccat_i (
                 .clk(clk),
                 .rst(rst),
-                .din0(const0_if_s),
+                .din0(const0_s),
                 .din1(cfg),
-                .din2(const1_if_s),
-                .dout(ccat_if_s)
+                .din2(const1_s),
+                .dout(ccat_s)
                 );
 
 
@@ -28,7 +28,7 @@ module rng_hier(
    const0_i (
              .clk(clk),
              .rst(rst),
-             .dout(const0_if_s)
+             .dout(const0_s)
              );
 
 
@@ -39,14 +39,14 @@ module rng_hier(
    const1_i (
              .clk(clk),
              .rst(rst),
-             .dout(const1_if_s)
+             .dout(const1_s)
              );
 
 
    rng_rng rng_i (
                   .clk(clk),
                   .rst(rst),
-                  .cfg(ccat_if_s),
+                  .cfg(ccat_s),
                   .dout(dout)
                   );
 

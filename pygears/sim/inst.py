@@ -29,7 +29,7 @@ class SimInstVisitor(HierVisitorBase):
             return True
 
 
-def sim_inst(top, conf):
+def sim_inst(top):
     v = SimInstVisitor()
     v.visit(top)
 

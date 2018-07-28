@@ -332,10 +332,12 @@ def sim(outdir=None,
         timeout=None,
         extens=[],
         run=True,
-        verbosity=logging.INFO,
-        **conf):
+        verbosity=logging.INFO):
+
     if outdir is None:
         outdir = tempfile.mkdtemp()
+    os.makedirs(outdir, exist_ok=True)
+    bind('SimArtifactDir', outdir)
 
     logger = logging.getLogger('sim')
     if not logger.hasHandlers():
@@ -343,18 +345,13 @@ def sim(outdir=None,
         ch = get_default_logger_handler(verbosity)
         logger.addHandler(ch)
 
-    conf["outdir"] = outdir
-    os.makedirs(conf['outdir'], exist_ok=True)
-
-    bind('SimArtifactDir', conf['outdir'])
-
     loop = EventLoop()
     asyncio.set_event_loop(loop)
     bind('Simulator', loop)
 
     top = find('/')
     for oper in itertools.chain(registry('SimFlow'), extens):
-        top = oper(top, conf)
+        top = oper(top)
 
     if run:
         loop.run(timeout)

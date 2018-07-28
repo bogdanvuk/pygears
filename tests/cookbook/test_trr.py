@@ -4,7 +4,7 @@ from pygears import clear
 from pygears.cookbook.trr import trr
 from pygears.cookbook.verif import directed, verif
 from pygears.sim import sim
-from pygears.sim.modules.seqr import seqr
+from pygears.sim.modules.drv import drv
 from pygears.sim.modules.sim_socket import SimSocket
 from pygears.sim.modules.verilator import SimVerilated
 from pygears.typing import Queue, Uint
@@ -17,12 +17,12 @@ from utils import skip_ifndef
 def test_socket_sim():
     skip_ifndef('SIM_SOCKET_TEST')
     directed(
-        seqr(t=Queue[Uint[16]], seq=[list(range(9)),
-                                     list(range(3))]),
-        seqr(t=Queue[Uint[16]], seq=[list(range(9)),
-                                     list(range(3))]),
-        seqr(t=Queue[Uint[16]], seq=[list(range(9)),
-                                     list(range(3))]),
+        drv(t=Queue[Uint[16]], seq=[list(range(9)),
+                                    list(range(3))]),
+        drv(t=Queue[Uint[16]], seq=[list(range(9)),
+                                    list(range(3))]),
+        drv(t=Queue[Uint[16]], seq=[list(range(9)),
+                                    list(range(3))]),
         f=trr(sim_cls=SimSocket),
         ref=[[[0, 1, 2, 3, 4, 5, 6, 7, 8], [0, 1, 2, 3, 4, 5, 6, 7, 8],
               [0, 1, 2, 3, 4, 5, 6, 7, 8]], [[0, 1, 2], [0, 1, 2], [0, 1, 2]]])
@@ -34,12 +34,12 @@ def test_socket_sim():
 def test_verilate_sim():
     skip_ifndef('VERILATOR_ROOT')
     directed(
-        seqr(t=Queue[Uint[16]], seq=[list(range(9)),
-                                     list(range(3))]),
-        seqr(t=Queue[Uint[16]], seq=[list(range(9)),
-                                     list(range(3))]),
-        seqr(t=Queue[Uint[16]], seq=[list(range(9)),
-                                     list(range(3))]),
+        drv(t=Queue[Uint[16]], seq=[list(range(9)),
+                                    list(range(3))]),
+        drv(t=Queue[Uint[16]], seq=[list(range(9)),
+                                    list(range(3))]),
+        drv(t=Queue[Uint[16]], seq=[list(range(9)),
+                                    list(range(3))]),
         f=trr(sim_cls=SimVerilated),
         ref=[[[0, 1, 2, 3, 4, 5, 6, 7, 8], [0, 1, 2, 3, 4, 5, 6, 7, 8],
               [0, 1, 2, 3, 4, 5, 6, 7, 8]], [[0, 1, 2], [0, 1, 2], [0, 1, 2]]])
@@ -50,12 +50,12 @@ def test_verilate_sim():
 @with_setup(clear)
 def test_pygears_sim():
     directed(
-        seqr(t=Queue[Uint[16]], seq=[list(range(9)),
-                                     list(range(3))]),
-        seqr(t=Queue[Uint[16]], seq=[list(range(9)),
-                                     list(range(3))]),
-        seqr(t=Queue[Uint[16]], seq=[list(range(9)),
-                                     list(range(3))]),
+        drv(t=Queue[Uint[16]], seq=[list(range(9)),
+                                    list(range(3))]),
+        drv(t=Queue[Uint[16]], seq=[list(range(9)),
+                                    list(range(3))]),
+        drv(t=Queue[Uint[16]], seq=[list(range(9)),
+                                    list(range(3))]),
         f=trr,
         ref=[[[0, 1, 2, 3, 4, 5, 6, 7, 8], [0, 1, 2, 3, 4, 5, 6, 7, 8],
               [0, 1, 2, 3, 4, 5, 6, 7, 8]], [[0, 1, 2], [0, 1, 2], [0, 1, 2]]])
@@ -67,12 +67,12 @@ def test_pygears_sim():
 def test_socket_cosim():
     skip_ifndef('SIM_SOCKET_TEST')
     verif(
-        seqr(t=Queue[Uint[16]], seq=[list(range(9)),
-                                     list(range(3))]),
-        seqr(t=Queue[Uint[16]], seq=[list(range(9)),
-                                     list(range(3))]),
-        seqr(t=Queue[Uint[16]], seq=[list(range(9)),
-                                     list(range(3))]),
+        drv(t=Queue[Uint[16]], seq=[list(range(9)),
+                                    list(range(3))]),
+        drv(t=Queue[Uint[16]], seq=[list(range(9)),
+                                    list(range(3))]),
+        drv(t=Queue[Uint[16]], seq=[list(range(9)),
+                                    list(range(3))]),
         f=trr(sim_cls=SimSocket),
         ref=trr(name='ref_model'))
 
@@ -80,7 +80,7 @@ def test_socket_cosim():
 
 
 @gear
-async def vir_seqr(*, t=Queue[Uint[16]]) -> (TLM['t'], ) * 3:
+async def vir_drv(*, t=Queue[Uint[16]]) -> (TLM['t'], ) * 3:
     x = [list(range(9))]
     for val in x:
         yield (val, None, None)
@@ -93,9 +93,9 @@ async def vir_seqr(*, t=Queue[Uint[16]]) -> (TLM['t'], ) * 3:
 
 
 @with_setup(clear)
-def test_virseqr_cosim():
+def test_virdrv_cosim():
     skip_ifndef('SIM_SOCKET_TEST')
-    sequencers = vir_seqr()
+    sequencers = vir_drv()
     verif(*sequencers, f=trr(sim_cls=SimSocket), ref=trr(name='ref_model'))
 
     sim()

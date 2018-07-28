@@ -6,7 +6,7 @@ from pygears.typing import Queue, Uint
 async def chop(din: Queue['data_t'], cfg: Uint['w_cfg']) -> Queue['data_t', 2]:
 
     i = 0
-    val = (0, 0)
+    val = din.dtype((0, 0))
 
     async with cfg as size:
         while (val.eot == 0):

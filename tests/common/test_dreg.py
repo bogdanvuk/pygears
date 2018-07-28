@@ -4,7 +4,7 @@ from pygears import clear
 from pygears.cookbook.verif import directed, verif
 from pygears.common.dreg import dreg
 from pygears.sim import sim, timestep
-from pygears.sim.modules.seqr import seqr
+from pygears.sim.modules.drv import drv
 from pygears.sim.modules.verilator import SimVerilated
 from pygears.typing import Uint
 
@@ -16,11 +16,11 @@ def test_pygears_sim():
     seq = list(range(10))
 
     directed(
-        seqr(t=Uint[16], seq=seq), f=dreg, ref=seq)
+        drv(t=Uint[16], seq=seq), f=dreg, ref=seq)
 
     sim()
 
-    assert timestep() == (len(seq) + 2)
+    assert timestep() == (len(seq) + 1)
 
 
 @with_setup(clear)
@@ -29,7 +29,7 @@ def test_verilator_cosim():
 
     seq = list(range(10))
     report = verif(
-        seqr(t=Uint[16], seq=seq),
+        drv(t=Uint[16], seq=seq),
         f=dreg(sim_cls=SimVerilated),
         ref=dreg(name='ref_model'))
 

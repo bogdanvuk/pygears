@@ -1,3 +1,5 @@
+import os
+
 from pygears import PluginBase, registry
 from pygears.core.hier_node import HierVisitorBase
 from pygears.svgen.intf import SVIntfGen
@@ -37,7 +39,9 @@ class SVGenInstPlugin(PluginBase):
     def bind(cls):
         cls.registry['SVGenModuleNamespace'] = {}
         cls.registry['SVGenMap'] = {}
-        cls.registry['SVGenSystemVerilogPaths'] = []
+        cls.registry['SVGenSystemVerilogPaths'] = [
+            os.path.expanduser('~/.pygears/svlib')
+        ]
 
     @classmethod
     def reset(cls):
