@@ -13,8 +13,8 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="http://wavedrom.com/skins/default.js"></script>
-    <script type="text/javascript" src="http://wavedrom.com/WaveDrom.js"></script>
+    <script type="text/javascript" src="_static/default.js"></script>
+    <script type="text/javascript" src="_static/wavedrom.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Typing" href="typing.html" />
@@ -37,7 +37,7 @@
             
   <div class="section" id="quick-introduction">
 <span id="introduction"></span><h1>Quick introduction<a class="headerlink" href="#quick-introduction" title="Permalink to this headline">¶</a></h1>
-<p>In this quick introduction, we will consider describing a gear that might be used as some kind of filter. It will feature two pipelined MAC operations and a multiplication at the end, and use three coefficinets <em>b0</em>, <em>b1</em> and <em>b2</em> for the calculation:</p>
+<p>In this quick introduction, we will consider describing a gear that might be used as some kind of filter. It will feature two pipelined MAC operations and a multiplication at the end, and use three coefficients <em>b0</em>, <em>b1</em> and <em>b2</em> for the calculation:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pygears</span> <span class="k">import</span> <span class="n">gear</span>
 
 <span class="nd">@gear</span>
@@ -75,7 +75,7 @@
 </pre></div>
 </div>
 <p>This expression will unfold in the following manner:
-- Two versions of the MAC gears will be prepared by using function partial application, one where <em>b0</em> is passed for its argument <em>b</em> and the other where <em>b1</em> is passed for its argument <em>b</em>. In therms of the HDLs, this corresponds to one MAC module with interface <em>b0</em> connected to its <em>b</em> port and the other with <em>b1</em> interface connected to its <em>b</em> port. MAC modules are not instantiated at this moment since they didn’t receive all required arguments.
+- Two versions of the MAC gears will be prepared by using function partial application, one where <em>b0</em> is passed for its argument <em>b</em> and the other where <em>b1</em> is passed for its argument <em>b</em>. In terms of the HDLs, this corresponds to one MAC module with interface <em>b0</em> connected to its <em>b</em> port and the other with <em>b1</em> interface connected to its <em>b</em> port. MAC modules are not instantiated at this moment since they didn’t receive all required arguments.
 - Input <em>x</em> is piped to the first partially applied MAC gear and it is passed as its first argument <em>a</em>. At this moment, all required arguments are supplied to it, and <em>mac</em> gear is called. Types of the supplied arguments are checked, parameters and output type are resolved. Since <em>mac</em> gear contains no body, an interface object is created with the resolved output type and returned from the function.</p>
 </div>
 <div class="section" id="variable-number-of-arguments">
@@ -86,8 +86,8 @@
 <span class="nd">@gear</span>
 <span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">b</span><span class="p">):</span>
     <span class="n">y</span> <span class="o">=</span> <span class="n">x</span>
-        <span class="k">for</span> <span class="n">bi</span> <span class="ow">in</span> <span class="n">b</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
-            <span class="n">y</span> <span class="o">=</span> <span class="n">y</span> <span class="o">|</span> <span class="n">mac</span><span class="p">(</span><span class="n">b</span><span class="o">=</span><span class="n">bi</span><span class="p">)</span>
+  <span class="k">for</span> <span class="n">bi</span> <span class="ow">in</span> <span class="n">b</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+      <span class="n">y</span> <span class="o">=</span> <span class="n">y</span> <span class="o">|</span> <span class="n">mac</span><span class="p">(</span><span class="n">b</span><span class="o">=</span><span class="n">bi</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">y</span> <span class="o">*</span> <span class="n">b</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 </pre></div>
@@ -123,7 +123,7 @@
 </div>
 <div class="section" id="type-casting">
 <h2>Type casting<a class="headerlink" href="#type-casting" title="Permalink to this headline">¶</a></h2>
-<p>In the previos example, if <em>mac</em> gear is used, after each stage the interface size will increase, which is usually not the desired implementation. We can keep constant interface size by using type casting after each stage:</p>
+<p>In the previous example, if <em>mac</em> gear is used, after each stage the interface size will increase, which is usually not the desired implementation. We can keep constant interface size by using type casting after each stage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pygears</span> <span class="k">import</span> <span class="n">gear</span>
 
 <span class="nd">@gear</span>
@@ -165,7 +165,7 @@
 <span class="n">svgen</span><span class="p">(</span><span class="s1">&#39;/filter&#39;</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="s1">&#39;~/filter_svlib&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Since we are only interested in generating SystemVerilog files for the <em>filter</em> gear, it will be the only gear we will instantiate. Since <em>filter</em> needs to be passed input interfaces, we will manually instantiate interface objects of the desired type and pass them to the <em>filter</em>. Output interface of the <em>filter</em> is not needed, and we only used it to check whether we got correct output type (which is of course optional). Since we called <em>filter</em> with four coefficinet interfaces <em>b</em> and didn’t supply an alternative to the default <em>mac</em> stage, we will get a <em>filter</em> implementation with four MAC stages.</p>
+<p>Since we are only interested in generating SystemVerilog files for the <em>filter</em> gear, it will be the only gear we will instantiate. Since <em>filter</em> needs to be passed input interfaces, we will manually instantiate interface objects of the desired type and pass them to the <em>filter</em>. Output interface of the <em>filter</em> is not needed, and we only used it to check whether we got correct output type (which is of course optional). Since we called <em>filter</em> with four coefficient interfaces <em>b</em> and didn’t supply an alternative to the default <em>mac</em> stage, we will get a <em>filter</em> implementation with four MAC stages.</p>
 <p><strong>PyGears</strong> will maintain a hierarchy of the instantiated gears in which each gear has been assigned a name. By default, gear instance gets the name of the function used to describe it. In this case, <em>filter</em> instance will be named ‘filter’. Instances in the hierarchy can be accessed by via the path string. Path string follows the conventions of the unix path syntax, where root ‘/’ is autogenerated container for all the top gear instances (i.e. the ones not instantiated within other gears). In this case <em>filter</em> is one such gear, hence it is directly below root ‘/filter’. The <em>mac</em> gears are instantiated from within the <em>filter</em>, so their paths will be: ‘/filter/mac0’, ‘/filter/mac1’, ‘/filter/mac2’ and ‘/filter/mac3’. So, if some gear instances have the same names on the same hierarchical level, their names will be suffixed with an increasing sequence of integers. Finally, it is possible to supply a custom name via gear <em>name</em> builtin parameter. This parameter is added by the <em>&#64;gear</em> opertor and need not be supplied in the function signature:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">filter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">b</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;filt&quot;</span><span class="p">)</span>
 </pre></div>

@@ -13,8 +13,8 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="http://wavedrom.com/skins/default.js"></script>
-    <script type="text/javascript" src="http://wavedrom.com/WaveDrom.js"></script>
+    <script type="text/javascript" src="_static/default.js"></script>
+    <script type="text/javascript" src="_static/wavedrom.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Quick introduction" href="introduction.html" />
@@ -37,7 +37,7 @@
             
   <div class="section" id="introduction-to-gears">
 <span id="gears-introduction-to-gears"></span><h1>Introduction to Gears<a class="headerlink" href="#introduction-to-gears" title="Permalink to this headline">¶</a></h1>
-<p>The main goal of the <strong>Gears</strong> hardware design methodology is to enable easy composition of hardware modules. <strong>Gears</strong> provides guidelines on how modules need to be implemented and standardizes the <a class="reference internal" href="#gears-interface"><span class="std std-ref">interface</span></a> between them. This methodology was inspired by the <a class="reference external" href="https://en.wikipedia.org/wiki/Category_theory">Cathegory theory</a> and functional programming.</p>
+<p>The main goal of the <strong>Gears</strong> hardware design methodology is to enable easy composition of hardware modules. <strong>Gears</strong> provides guidelines on how modules need to be implemented and standardizes the <a class="reference internal" href="#gears-interface"><span class="std std-ref">interface</span></a> between them. This methodology was inspired by the <a class="reference external" href="https://en.wikipedia.org/wiki/Category_theory">Category theory</a> and functional programming.</p>
 <p>Modules that adhere to the <strong>Gears</strong> methodology are called <strong>gears</strong>. Gears are self-synchronizing, meaning that they can be composed without the need of some global control FSM. On the other hand, they add no overhead in terms of latency and induce little to no overhead in terms of the logic gates used.</p>
 <p>Since the composition becomes easy when adhering to <strong>Gears</strong>, the design can be broken down/factored to small modules that implement basic functionalities, which is alligned with the <a class="reference external" href="https://en.wikipedia.org/wiki/Single_responsibility_principle">Single responsibility principle</a>. Small modules with a single functionality are easier to understand, test, debug, maintain and most importantly: <strong>reuse</strong>. When using <strong>Gears</strong> for your project, you are basically building a library of well tested, well understood modules, that you can easily reuse.</p>
 <div class="section" id="one-interface">
@@ -52,29 +52,29 @@
 \node (A) [cylinder, draw,minimum height=6.8cm,minimum width=3.8cm, label=below:DTI] at (6,0) {};" /></p>
 <p class="caption">DTI - Data Transfer Interface</p></div><p><strong>Gears</strong> proposes the use of a single interface type for gear communication, called DTI (Data Transfer Interface), throughout the design. Interface connects two gears, one which sends the data and the otherone which receives it, called Producer and Consumer respectively. This interface DTI is a simple synchronous, flow-controlled interface, somewhat similar to AXI4-Stream, consisting of the following three signals:</p>
 <ul class="simple">
-<li><strong>Data</strong> - Variable width signal, drived by the Producer, which carries the actual data.</li>
-<li><strong>Valid</strong> - Single bit wide signal, drived by the Producer, which signals when valid data is available on Data signal.</li>
-<li><strong>Ready</strong> - Single bit wide signal, drived by the Consumer, which signals when the data provided by the Producer has been consumed.</li>
+<li><strong>Data</strong> - Variable width signal, driven by the Producer, which carries the actual data.</li>
+<li><strong>Valid</strong> - Single bit wide signal, driven by the Producer, which signals when valid data is available on Data signal.</li>
+<li><strong>Ready</strong> - Single bit wide signal, driven by the Consumer, which signals when the data provided by the Producer has been consumed.</li>
 </ul>
 
 <div style="overflow-x:auto">
 <script type="WaveDrom">
 {
   signal: [
-        {name: 'clk', wave:   'p.........'},
-        {},
-        ['DTI',
-              {name: 'data', wave:  'x=..x.==x.'},
-              {},
-              {name: 'valid', wave: '01..0.1.0.'},
-              {name: 'ready', wave: '0..1....0.'}
-        ],
-        {},
-        {name: 'event', wave: 'x..=x.==xx', data: ['ACK', 'ACK', 'ACK']}
-      ],
-      head:{
-        tock:0,
-      },
+  {name: 'clk', wave:   'p.........'},
+  {},
+  ['DTI',
+  {name: 'data', wave:  'x=..x.==x.'},
+  {},
+  {name: 'valid', wave: '01..0.1.0.'},
+  {name: 'ready', wave: '0..1....0.'}
+  ],
+  {},
+  {name: 'event', wave: 'x..=x.==xx', data: ['ACK', 'ACK', 'ACK']}
+],
+head:{
+  tock:0,
+},
 }
 </script>
 </div>
@@ -156,19 +156,19 @@
 <script type="WaveDrom">
 {
   signal: [
-        {name: 'clk',           wave: 'p...........'},
-        {},
-        ['DTI',
-              {name: 'data.eot[0]', wave: 'x0..x.01x.1x'},
-              {name: 'data.data',   wave: 'x=..x.==x.=x', data: ['1.1', '1.2', '1.3', '2.1']},
-              {},
-              {name: 'valid',       wave: '01..0.1.0.10'},
-              {name: 'ready',       wave: 'x0.1....0.10'}
-        ],
-      ],
-      head:{
-        tock:0,
-      },
+  {name: 'clk',           wave: 'p...........'},
+  {},
+  ['DTI',
+  {name: 'data.eot[0]', wave: 'x0..x.01x.1x'},
+  {name: 'data.data',   wave: 'x=..x.==x.=x', data: ['1.1', '1.2', '1.3', '2.1']},
+  {},
+  {name: 'valid',       wave: '01..0.1.0.10'},
+  {name: 'ready',       wave: 'x0.1....0.10'}
+  ],
+],
+head:{
+  tock:0,
+},
 }
 </script>
 </div>
@@ -190,20 +190,20 @@
 <script type="WaveDrom">
 {
   signal: [
-        {name: 'clk',           wave: 'p............'},
-        {},
-        ['DTI',
-              {name: 'data.eot[1]', wave: 'x0..x.0.x.1.x'},
-              {name: 'data.eot[0]', wave: 'x0..x.01x.01x'},
-              {name: 'data.data',   wave: 'x=..x.==x.==x', data: ['1.1', '1.2', '1.3', '2.1', '2.2']},
-              {},
-              {name: 'valid',       wave: '01..0.1.0.1.0'},
-              {name: 'ready',       wave: 'x0.1....0.1.0'}
-        ],
-      ],
-      head:{
-        tock:0,
-      },
+  {name: 'clk',           wave: 'p............'},
+  {},
+  ['DTI',
+  {name: 'data.eot[1]', wave: 'x0..x.0.x.1.x'},
+  {name: 'data.eot[0]', wave: 'x0..x.01x.01x'},
+  {name: 'data.data',   wave: 'x=..x.==x.==x', data: ['1.1', '1.2', '1.3', '2.1', '2.2']},
+  {},
+  {name: 'valid',       wave: '01..0.1.0.1.0'},
+  {name: 'ready',       wave: 'x0.1....0.1.0'}
+  ],
+],
+head:{
+  tock:0,
+},
 }
 </script>
 </div>

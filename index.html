@@ -13,8 +13,8 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="http://wavedrom.com/skins/default.js"></script>
-    <script type="text/javascript" src="http://wavedrom.com/WaveDrom.js"></script>
+    <script type="text/javascript" src="_static/default.js"></script>
+    <script type="text/javascript" src="_static/wavedrom.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Introduction to Gears" href="gears.html" />
@@ -37,8 +37,8 @@
   <div class="section" id="welcome-to-pygears">
 <h1>Welcome to PyGears<a class="headerlink" href="#welcome-to-pygears" title="Permalink to this headline">¶</a></h1>
 <p><strong>PyGears</strong> is an ambitious attempt to create a Python framework that facilitates describing digital hardware, by providing a way to use powerful features of Python language to compose modules writen in a HDL (currently only supports SystemVerilog). <strong>PyGears</strong> can then generate hierarchical HDL modules, functionaly equivalent to the Python description.</p>
-<p>In <strong>PyGears</strong>, each HDL module is considered a Python function, called the <em>gear</em>, hence the design is described in form of a functional (gear) composition. In order for HDL modules to be composable in thes way, they need to be design in accordance with the <strong>Gears</strong> methodology. You should probably <a class="reference internal" href="gears.html#gears-introduction-to-gears"><span class="std std-ref">read a short intro to Gears</span></a> in order to understand this project from the hardware prespective.</p>
-<p><strong>PyGears</strong> supports also the hierarchical gears which do not have a HDL implementation, but are defined in tearms of other gears. Each gear accepts and returns interface objects as arguments, which represents module connections (<a class="reference internal" href="gears.html#gears-interface"><span class="std std-ref">read about the hardware implementation of the interface here</span></a>). This allows  for a module composition to be described in terms of powerfull functional concepts, such as: partial application, higher-order functions, function polymorphism.</p>
+<p>In <strong>PyGears</strong>, each HDL module is considered a Python function, called the <em>gear</em>, hence the design is described in form of a functional (gear) composition. In order for HDL modules to be composable in this way, they need to be designed in accordance with the <strong>Gears</strong> methodology. You should probably <a class="reference internal" href="gears.html#gears-introduction-to-gears"><span class="std std-ref">read a short intro to Gears</span></a> in order to understand this project from the hardware prespective.</p>
+<p><strong>PyGears</strong> supports also the hierarchical gears which do not have a HDL implementation, but are defined in terms of other gears. Each gear accepts and returns interface objects as arguments, which represents module connections (<a class="reference internal" href="gears.html#gears-interface"><span class="std std-ref">read about the hardware implementation of the interface here</span></a>). This allows for a module composition to be described in terms of powerfull functional concepts, such as: partial application, higher-order functions, function polymorphism.</p>
 <p><strong>PyGears</strong> features a powerfull system of <a class="reference internal" href="typing.html#typing"><span class="std std-ref">generic types</span></a>, which allows for generic modules to be described, as well as to perform type checking of the gear composition.</p>
 <p><strong>PyGears</strong> lets you also simulate the resulting RTL, by connecting to an external HDL simulator. Currently <strong>PyGears</strong> supports <a class="reference external" href="http://www.veripool.org/wiki/verilator">Verilator</a> and standard SystemVerilog simulators via the <a class="reference external" href="https://en.wikipedia.org/wiki/SystemVerilog_DPI">DPI</a> (tested on Questa and NCSim).</p>
 </div>

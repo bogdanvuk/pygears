@@ -3,7 +3,7 @@
 Introduction to Gears
 =====================
 
-The main goal of the **Gears** hardware design methodology is to enable easy composition of hardware modules. **Gears** provides guidelines on how modules need to be implemented and standardizes the :ref:`interface <gears-interface>` between them. This methodology was inspired by the `Cathegory theory <https://en.wikipedia.org/wiki/Category_theory>`__ and functional programming.
+The main goal of the **Gears** hardware design methodology is to enable easy composition of hardware modules. **Gears** provides guidelines on how modules need to be implemented and standardizes the :ref:`interface <gears-interface>` between them. This methodology was inspired by the `Category theory <https://en.wikipedia.org/wiki/Category_theory>`__ and functional programming.
 
 Modules that adhere to the **Gears** methodology are called **gears**. Gears are self-synchronizing, meaning that they can be composed without the need of some global control FSM. On the other hand, they add no overhead in terms of latency and induce little to no overhead in terms of the logic gates used.
 
@@ -22,37 +22,37 @@ The main idea behind standardized interfaces is to provide easy composition of t
 
 **Gears** proposes the use of a single interface type for gear communication, called DTI (Data Transfer Interface), throughout the design. Interface connects two gears, one which sends the data and the otherone which receives it, called Producer and Consumer respectively. This interface DTI is a simple synchronous, flow-controlled interface, somewhat similar to AXI4-Stream, consisting of the following three signals:
 
-- **Data** - Variable width signal, drived by the Producer, which carries the actual data.
-- **Valid** - Single bit wide signal, drived by the Producer, which signals when valid data is available on Data signal.
-- **Ready** - Single bit wide signal, drived by the Consumer, which signals when the data provided by the Producer has been consumed.
+- **Data** - Variable width signal, driven by the Producer, which carries the actual data.
+- **Valid** - Single bit wide signal, driven by the Producer, which signals when valid data is available on Data signal.
+- **Ready** - Single bit wide signal, driven by the Consumer, which signals when the data provided by the Producer has been consumed.
 
 .. wavedrom::
 
   {
     signal: [
-	  {name: 'clk', wave:   'p.........'},
-	  {},
-	  ['DTI',
-		{name: 'data', wave:  'x=..x.==x.'},
-		{},
-		{name: 'valid', wave: '01..0.1.0.'},
-		{name: 'ready', wave: '0..1....0.'}
-	  ],
-	  {},
-	  {name: 'event', wave: 'x..=x.==xx', data: ['ACK', 'ACK', 'ACK']}
-	],
-	head:{
-	  tock:0,
-	},
+    {name: 'clk', wave:   'p.........'},
+    {},
+    ['DTI',
+    {name: 'data', wave:  'x=..x.==x.'},
+    {},
+    {name: 'valid', wave: '01..0.1.0.'},
+    {name: 'ready', wave: '0..1....0.'}
+    ],
+    {},
+    {name: 'event', wave: 'x..=x.==xx', data: ['ACK', 'ACK', 'ACK']}
+  ],
+  head:{
+    tock:0,
+  },
   }
 
 Gears need to adhere to the following rules:
 
-1. Producer shall initiate the data transfer by posting the data on Data signal, and rising Valid signal to high, as seen in cycle 1, 6 and 7 in the figure. 
+1. Producer shall initiate the data transfer by posting the data on Data signal, and rising Valid signal to high, as seen in cycle 1, 6 and 7 in the figure.
 2. Consumer can start using the input data in the same cycle the Valid line went high.
 3. Consumer can use the input data sent by the Producer for internal calculations for as many cycles as needed. For an example in cycles 1-3 in the figure.
 4. When Consumer realizes that it is the last cycle in which it needs the input data, it raises the Ready signal to high (cycles 3, 6 and 7 in the figure, marked also as ACK). On the edge of the clock if both Valid and Ready signals are high, it is said that the Consumer acknowledged/consumed the data, or that the handshake has happened. This signals the Producer that in the following cycle new data transfer can be initiated, or Valid signal can be set to low (cycles 4 or 7 in the figure), which will pause the data transfer.
-5. After initiating the transfer, Producer shall keep the Data signal unchanged and the Valid signal high until the handshake occurs, as seen in cycles 1-2 in the figure. 
+5. After initiating the transfer, Producer shall keep the Data signal unchanged and the Valid signal high until the handshake occurs, as seen in cycles 1-2 in the figure.
 6. Producer can keep Valid signal low for as many cycles as needed, which will block the Consumer if it is waiting for new input data, as seen in cycles 6-7 in the figure.
 7. There must be no combinatorial path from Ready to Valid signal on the Producer side. In other words, the Producer should not decide whether to output the data based on the state of the Consumer, but only based on its own inputs and internal state.
 8. Consumer may decide whether to acknowledge the data based on the state of the Valid signal, i.e. there may exist a combinatorial path from Valid to Ready signal on the Consumer side.
@@ -71,7 +71,7 @@ Tuple combines multiple data types, even other Tuples. They are akin to structs 
 
     example_t = Tuple[Uint[8], Tuple[Uint[16], Uint[16]]]  # (u8, (u16, u16))
 
-is a structure with two fields, one 8-bit unsigned integer and another again tuple with two 16-bit unsigned integer fields. In SystemVerilog this example type would be encoded as: 
+is a structure with two fields, one 8-bit unsigned integer and another again tuple with two 16-bit unsigned integer fields. In SystemVerilog this example type would be encoded as:
 
 .. code-block:: systemverilog
 
@@ -128,25 +128,25 @@ is a structure of 4 fields, each of which is an 8-bit unsigned integers. In Syst
 Queue
 ~~~~~
 
-Queue is a data type which is a bit special in that it describes a transaction and spans multiple cycles. It has a **data** field as well as an **eot** field which marks the end of a transaction. Below, you can see two transactions of a single-level Queue, one consisting of 3 data (cycles 3, 6 and 7), and the other consisting of a single data (cycle 10). Value of 1 for the field **eot** marks the last data within a transaction (cycles 7 and 10). 
+Queue is a data type which is a bit special in that it describes a transaction and spans multiple cycles. It has a **data** field as well as an **eot** field which marks the end of a transaction. Below, you can see two transactions of a single-level Queue, one consisting of 3 data (cycles 3, 6 and 7), and the other consisting of a single data (cycle 10). Value of 1 for the field **eot** marks the last data within a transaction (cycles 7 and 10).
 
 .. wavedrom::
 
   {
     signal: [
-	  {name: 'clk',           wave: 'p...........'},
-	  {},
-	  ['DTI',
-		{name: 'data.eot[0]', wave: 'x0..x.01x.1x'},
-		{name: 'data.data',   wave: 'x=..x.==x.=x', data: ['1.1', '1.2', '1.3', '2.1']},
-		{},
-		{name: 'valid',       wave: '01..0.1.0.10'},
-		{name: 'ready',       wave: 'x0.1....0.10'}
-	  ],
-	],
-	head:{
-	  tock:0,
-	},
+    {name: 'clk',           wave: 'p...........'},
+    {},
+    ['DTI',
+    {name: 'data.eot[0]', wave: 'x0..x.01x.1x'},
+    {name: 'data.data',   wave: 'x=..x.==x.=x', data: ['1.1', '1.2', '1.3', '2.1']},
+    {},
+    {name: 'valid',       wave: '01..0.1.0.10'},
+    {name: 'ready',       wave: 'x0.1....0.10'}
+    ],
+  ],
+  head:{
+    tock:0,
+  },
   }
 
 Queue can have multiple levels and hence describe more complex transactions. For an example::
@@ -163,33 +163,33 @@ is a level 2 Queue of 8-bit unsigned integers. Level 2 means that it is a Queue 
       logic [7 : 0] data;
    } example_t;
 
-Below, you can see a single transactions of a two-level Queue, consisting of two first-level Queues. The higher bit of the **eot** field - **eot[1]**, describes the higher level Queue. It has value of 1 throughout the last first-level Queue (cycles 10 and 11). 
+Below, you can see a single transactions of a two-level Queue, consisting of two first-level Queues. The higher bit of the **eot** field - **eot[1]**, describes the higher level Queue. It has value of 1 throughout the last first-level Queue (cycles 10 and 11).
 
 .. wavedrom::
 
   {
     signal: [
-	  {name: 'clk',           wave: 'p............'},
-	  {},
-	  ['DTI',
-		{name: 'data.eot[1]', wave: 'x0..x.0.x.1.x'},
-		{name: 'data.eot[0]', wave: 'x0..x.01x.01x'},
-		{name: 'data.data',   wave: 'x=..x.==x.==x', data: ['1.1', '1.2', '1.3', '2.1', '2.2']},
-		{},
-		{name: 'valid',       wave: '01..0.1.0.1.0'},
-		{name: 'ready',       wave: 'x0.1....0.1.0'}
-	  ],
-	],
-	head:{
-	  tock:0,
-	},
+    {name: 'clk',           wave: 'p............'},
+    {},
+    ['DTI',
+    {name: 'data.eot[1]', wave: 'x0..x.0.x.1.x'},
+    {name: 'data.eot[0]', wave: 'x0..x.01x.01x'},
+    {name: 'data.data',   wave: 'x=..x.==x.==x', data: ['1.1', '1.2', '1.3', '2.1', '2.2']},
+    {},
+    {name: 'valid',       wave: '01..0.1.0.1.0'},
+    {name: 'ready',       wave: 'x0.1....0.1.0'}
+    ],
+  ],
+  head:{
+    tock:0,
+  },
   }
 
 
 Gear composition
 ----------------
 
-Any composition of gears again yields a gear which obeys all the listed rules, i.e. gears are closed under composition. This means that composing gears is predictible in many ways and having rich and verified low level library of gears, translates to reliable description of high level modules, where many (especially synchronization) errors are avoided by design. Hence, **Gears** methodology is usefull for high level as well as low level modules. **Gears** methodology maximizes module reuse, which in turn minimizes design and debugging efforts. 
+Any composition of gears again yields a gear which obeys all the listed rules, i.e. gears are closed under composition. This means that composing gears is predictible in many ways and having rich and verified low level library of gears, translates to reliable description of high level modules, where many (especially synchronization) errors are avoided by design. Hence, **Gears** methodology is usefull for high level as well as low level modules. **Gears** methodology maximizes module reuse, which in turn minimizes design and debugging efforts.
 
 .. tikz:: Example 2-input and 1-output complex gear as a composition of gears G1, G2, G3 and G4
    :libs: arrows.meta
@@ -198,12 +198,12 @@ Any composition of gears again yields a gear which obeys all the listed rules, i
 
 Each gear is locally synchonized with each of its neighbours, hence no clunky global control FSM is needed to synhronize a high level module. This is a huge benefit for using the **Gears** methodology, because control FSMs are very hard to write and error-prone for complex systems. Furthermore, they make any change to the system very expensive, especially those that alter the data-path latency.
 
-In order to further reduce the cognitive load, testability and amount of errors in a hardware system being developped, **Gears** methodology proposes that gears should aim to be pure (akin to `pure functions <https://en.wikipedia.org/wiki/Pure_function>`__). A gear is considered pure if its local state is reset each time after the gear consumes/acknowledges its input data. If a gear operates on Queues, it is still considered pure if its local state is reset after the whole Queue has been processed.  
+In order to further reduce the cognitive load, testability and amount of errors in a hardware system being developped, **Gears** methodology proposes that gears should aim to be pure (akin to `pure functions <https://en.wikipedia.org/wiki/Pure_function>`__). A gear is considered pure if its local state is reset each time after the gear consumes/acknowledges its input data. If a gear operates on Queues, it is still considered pure if its local state is reset after the whole Queue has been processed.
 
 Functors
 --------
 
-Functors are powerfull patterns for gear composition that significantly improve possibilities for gear reuse. There is one functor for each complex data type. Functors allow for gears that operate on simpler data types to be used in context where a more complex data type is needed. 
+Functors are powerfull patterns for gear composition that significantly improve possibilities for gear reuse. There is one functor for each complex data type. Functors allow for gears that operate on simpler data types to be used in context where a more complex data type is needed.
 
 Tuple functor
 ~~~~~~~~~~~~~
@@ -212,7 +212,7 @@ Tuple functors are usefull in context where we need to operate on Tuples of some
 
   cmplx_t = Tuple[Uint[16], Uint[16]]  # (u16, u16)
 
-Suppose we would like to implement a module that doubles the complex numbers, and we already have a module that doubles 16-bit unsigned numbers that we would like to reuse. We could than make use of the Tuple functor structure to achieve this. 
+Suppose we would like to implement a module that doubles the complex numbers, and we already have a module that doubles 16-bit unsigned numbers that we would like to reuse. We could than make use of the Tuple functor structure to achieve this.
 
 .. bdp:: tuple_functor.py
     :align: center
@@ -226,7 +226,7 @@ Union functors are usefull in context where we need to operate on Unions of some
 
   num_t = Union[Uint[16], Tuple[Uint[8], Uint[8]]]  # u16 | (u8, u8)
 
-Suppose we would like to implement a module that decrements the number, and we already have a module that decrements 16-bit unsigned integers and a module that decrements Q8.8 fixed point numbers that we would like to reuse. We could than make use of the Union functor structure to achieve this. 
+Suppose we would like to implement a module that decrements the number, and we already have a module that decrements 16-bit unsigned integers and a module that decrements Q8.8 fixed point numbers that we would like to reuse. We could than make use of the Union functor structure to achieve this.
 
 .. bdp:: union_functor.py
     :align: center
@@ -236,7 +236,7 @@ Within Union functor, input Union data is routed to one of two gears by the **De
 Array functor
 ~~~~~~~~~~~~~
 
-Array functor operates in the same manner as Tuple functor. 
+Array functor operates in the same manner as Tuple functor.
 
 
 Queue functor
@@ -246,9 +246,9 @@ Queue functors are usefull in context where we need to operate on Queues of some
 
   q_num_t = Queue[Uint[16]]  # [u16]
 
-Suppose we would like to implement a module that multiplies each number in the Queue by 2, and we already have a module that multiplies single numbers that we would like to reuse. We could than make use of the Queue functor structure to achieve this. 
+Suppose we would like to implement a module that multiplies each number in the Queue by 2, and we already have a module that multiplies single numbers that we would like to reuse. We could than make use of the Queue functor structure to achieve this.
 
 .. bdp:: queue_functor.py
-	:align: center
+  :align: center
 
 Within Queue functor, input Queue data is first split into the individual data and the Queue structure, also called the envelope. Queue structure is defined by the pattern of its **eot** field. The individual data is fed to the function and is then recombined with the envelope to produce the output Queue. **PyGears** can automatically generate such a structure based on the input type and gears that are to be used inside a functor.
