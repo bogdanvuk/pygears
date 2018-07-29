@@ -1,3 +1,8 @@
+"""Implements fixed width integer types: :class:`Uint` [N] - unsigned, :class:`Int` [N] - signed and :class:`Integer` [N] - sign agnostic type. These types correspond to HDL logic vector types.
+
+Objects of these classes can also be instantiated and they provide some integer arithmetic capabilities.
+"""
+
 from pygears.typing.base import EnumerableGenericMeta, GenericMeta, typeof
 from pygears.typing.tuple import Tuple
 from pygears.typing.bool import Bool
@@ -25,14 +30,16 @@ class IntegerMeta(EnumerableGenericMeta):
     def keys(self):
         """Returns a list of keys that can be used for indexing the type.
 
-        >>> assert Int[8].keys() == [0, 1, 2, 3, 4, 5, 6, 7]
+        >>> Int[8].keys()
+        [0, 1, 2, 3, 4, 5, 6, 7]
         """
         return list(range(int(self)))
 
     def __add__(self, other):
         """Returns the same type, but one bit wider to accomodate potential overflow.
 
-        >>> assert Uint[8] + Uint[8] == Uint[9]
+        >>> Uint[8] + Uint[8]
+        Uint[9]
         """
         return self.base[max(int(self), int(other)) + 1]
 
@@ -41,14 +48,16 @@ class IntegerMeta(EnumerableGenericMeta):
     def __sub__(self, other):
         """Returns the signed Int type, but one bit wider to accomodate potential overflow.
 
-        >>> assert Uint[8] + Uint[8] == Int[9]
+        >>> Uint[8] + Uint[8]
+        Int[9]
         """
         return Int[max(int(self), int(other)) + 1]
 
     def __mul__(self, other):
         """Returns the same type, whose width is equal to the sum of operand widths.
 
-        >>> assert Uint[8] + Uint[8] == Uint[16]
+        >>> Uint[8] + Uint[8]
+        Uint[16]
         """
         return self.base[int(self) + int(other)]
 
@@ -93,7 +102,7 @@ class IntegerMeta(EnumerableGenericMeta):
 
 
 class Integer(int, metaclass=IntegerMeta):
-    """Base type for both :class:`Int` [N] and :class:`Uint` [N] generic types.
+    """Base type for both :class:`Int` [N] and :class:`Uint` [N] generic types. Translates to correspond to HDL logic vector types. For an example Integer[9] translates to :sv:`logic [8:0]`.
     """
 
     def __new__(cls, val: int = 0):
@@ -105,9 +114,19 @@ class Integer(int, metaclass=IntegerMeta):
 
     @property
     def width(self):
+        """Returns the number of bits used for the representation
+
+        >>> Integer[8](0).width
+        8
+        """
         return len(type(self))
 
     def __len__(self):
+        """Returns the number of bits used for the representation
+
+        >>> len(Integer[8](0))
+        8
+        """
         return self.width
 
     def __add__(self, other):
@@ -120,9 +139,19 @@ class Integer(int, metaclass=IntegerMeta):
         return f'{repr(type(self))}({int(self)})'
 
     def __int__(self):
+        """Returns builtin integer type
+
+        >>> type(int(Integer[8](0)))
+        <class 'int'>
+        """
         return super(Integer, self).__int__()
 
     def __getitem__(self, index):
+        """Returns the value of the indexth bit in the number representation.
+
+        >>> Integer[8](0b10101010)[5]
+        1
+        """
         if index < self.width:
             return Bool(int(self) & (1 << index))
         else:
@@ -130,6 +159,11 @@ class Integer(int, metaclass=IntegerMeta):
 
     @classmethod
     def decode(cls, val):
+        """Creates Integer object from any int-convertible object val.
+
+        >>> Integer[8].decode(0xffff)
+        Integer[8](255)
+        """
         return cls(int(val))
 
 
@@ -185,7 +219,8 @@ class UintMeta(IntegerMeta):
     def __sub__(self, other):
         """Returns a Tuple of the result type and overflow bit.
 
-        >>> assert Uint[16] - Uint[8] == Tuple(Uint[16], Bool)
+        >>> Uint[16] - Uint[8]
+        Tuple(Uint[16], Bool)
         """
         if (issubclass(other, Uint)):
             return Tuple[Uint[max(int(self), int(other))], Bool]
