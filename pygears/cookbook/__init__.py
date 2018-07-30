@@ -6,7 +6,6 @@ from .sdp import sdp
 from .chop import chop
 from .accumulator import accumulator
 from .clip import clip
-from .shr import shr
 from .trr import trr
 from .trr_dist import trr_dist
 from .replicate import replicate
@@ -22,5 +21,5 @@ from .width_reductor import width_reductor
 __all__ = [
     'rng', 'iceil', 'priority_mux', 'qcnt', 'sdp', 'chop', 'trr', 'replicate',
     'trr_dist', 'clip', 'din_cat', 'take', 'release_after_eot', 'reverse',
-    'valve', 'form_sub_cfg', 'reduce2', 'width_reductor', 'accumulator', 'shr'
+    'valve', 'form_sub_cfg', 'reduce2', 'width_reductor', 'accumulator'
 ]
