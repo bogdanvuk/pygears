@@ -16,6 +16,7 @@ class Visitor(HierVisitorBase):
         self.hier = [self.graph]
         self.node_filter = node_filter
         self.outdir = outdir
+        os.makedirs(self.outdir, exist_ok=True)
 
     def enter_hier(self, module):
         self.hier.append(self.gear_map[module])

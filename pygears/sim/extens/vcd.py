@@ -99,8 +99,8 @@ def register_traces_for_intf(dtype, scope, writer):
     return vcd_vars
 
 
-def is_trace_included(port, vcd_include, vcd_tlm):
-    if not match(f'{port.gear.name}.{port.basename}', vcd_include):
+def is_trace_included(port, include, vcd_tlm):
+    if not match(f'{port.gear.name}.{port.basename}', include):
         return False
 
     if (port.dtype is None) or (typeof(port.dtype, TLM) and not vcd_tlm):
@@ -130,8 +130,8 @@ def module_sav(gtkw, module, vcd_vars):
 
 
 class VCDHierVisitor(HierVisitorBase):
-    def __init__(self, gtkw, writer, vcd_include, vcd_tlm):
-        self.vcd_include = vcd_include
+    def __init__(self, gtkw, writer, include, vcd_tlm):
+        self.include = include
         self.vcd_tlm = vcd_tlm
         self.sim_map = registry('SimMap')
         self.gtkw = gtkw
@@ -153,7 +153,7 @@ class VCDHierVisitor(HierVisitorBase):
         if module in self.sim_map:
             gear_vcd_scope = module.name[1:].replace('/', '.')
             for p in itertools.chain(module.out_ports, module.in_ports):
-                if not is_trace_included(p, self.vcd_include, self.vcd_tlm):
+                if not is_trace_included(p, self.include, self.vcd_tlm):
                     continue
 
                 scope = '.'.join([gear_vcd_scope, p.basename])
@@ -227,7 +227,7 @@ class VCD:
         #     gear_vcd_scope = module.name[1:].replace('/', '.')
 
         #     for p in itertools.chain(module.out_ports, module.in_ports):
-        #         if not is_trace_included(p, vcd_include, vcd_tlm):
+        #         if not is_trace_included(p, include, vcd_tlm):
         #             continue
 
         #         scope = '.'.join([gear_vcd_scope, p.basename])
