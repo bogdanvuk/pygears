@@ -1,8 +1,8 @@
 from pygears import gear
-from pygears.typing import Queue, Tuple, Integer
+from pygears.typing import Queue, Tuple
 
 
 @gear
-def accumulator(din: Queue[Tuple[Integer['w_data'], Integer['w_data']]]
-                ) -> b'Integer[w_data]':
+def accumulator(din: Queue[Tuple['w_data', 'w_data']]
+                ) -> b'w_data':
     pass

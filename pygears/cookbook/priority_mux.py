@@ -42,7 +42,7 @@ class SVGenPriorityMux(SVModuleGen):
             list(self.sv_port_configs()),
             'is_queue':
             all(
-                map(lambda i: i['lvl'] > 0 if 'lvl' in i else False,
+                map(lambda i: issubclass(i['type'], Queue),
                     self.sv_port_configs()))
         }
         return template_env.render_local(__file__, "priority_mux.j2", context)
@@ -52,3 +52,5 @@ class SVGenPriorityMuxPlugin(SVGenInstPlugin):
     @classmethod
     def bind(cls):
         cls.registry['SVGenModuleNamespace'][priority_mux] = SVGenPriorityMux
+        cls.registry['SVGenModuleNamespace'][
+            priority_mux_queue] = SVGenPriorityMux

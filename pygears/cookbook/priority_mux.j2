@@ -7,8 +7,14 @@
 
    always_comb begin
       flag = 0;
+  {% if is_queue %}
+      dout_s.data.ctrl = 0;
+      dout_s.data.data = din0.data;
+      dout_s.eot = din0.data[$size(din0.data)-1:$size(din0.data)-1];
+  {% else %}
       dout_s.ctrl = 0;
       dout_s.data = din0.data;
+  {% endif %}
       dout.valid = 1'b0;
 {% for i in intfs|isinput %}
       {{i['name']}}.ready = 1'b0;
@@ -20,10 +26,16 @@
          flag[0] = 1;
 {% for i in intfs[1:]|isinput %}
       end else if ({{i['name']}}.valid && (!flag_reg || flag_reg[{{loop.index}}])) begin
+  {% if is_queue %}
+         dout_s.data.data = {{i['name']}}.data;
+         dout_s.data.ctrl = {{loop.index}};
+         dout_s.eot = {{i['name']}}.data[{{i['width']-1}}:{{i['width']-1}}];
+  {% else %}
          dout_s.data = {{i['name']}}.data;
+         dout_s.ctrl = {{loop.index}};
+  {% endif %}
          dout.valid = {{i['name']}}.valid;
          {{i['name']}}.ready = dout.ready;
-         dout_s.ctrl = {{loop.index}};
          flag[{{loop.index}}] = 1;
 {% endfor %}
       end
@@ -31,7 +43,7 @@
 
    always_ff @(posedge clk) begin
   {% if is_queue %}
-      if (rst | (handshake && (dout_s.eot[0])) begin
+      if (rst | (handshake && dout_s.eot)) begin
   {% else %}
       if (rst | handshake) begin
   {% endif %}

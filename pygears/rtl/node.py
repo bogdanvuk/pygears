@@ -63,10 +63,11 @@ class RTLNode(NamedHierNode):
         iout = self.out_ports[0].consumer
         self.remove()
 
-        for port in iout.consumers:
+        for port in iout.consumers.copy():
             iout.disconnect(port)
             iin.connect(port)
-            iout.remove()
+
+        iout.remove()
 
     def remove(self):
         for p in self.in_ports:
