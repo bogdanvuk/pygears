@@ -342,17 +342,24 @@ class EnumerableGenericMeta(GenericMeta):
         """
         return list(range(len(self.args)))
 
+    def index_convert(self, index):
+        if isinstance(index, str):
+            try:
+                return self.fields.index(index)
+            except ValueError as e:
+                raise KeyError(f'Field "{index}" not in type "{repr(self)}"')
+        elif not isinstance(index, slice):
+            return index
+        else:
+            return index.__reduce__()[1]
+
     def index_norm(self, index):
         if not isinstance(index, tuple):
             return (index_norm_hashable_single(
-                index
-                if not isinstance(index, slice) else index.__reduce__()[1],
-                len(self)), )
+                self.index_convert(index), len(self)), )
         else:
             return index_norm_hashable(
-                tuple(
-                    i if not isinstance(i, slice) else i.__reduce__()[1]
-                    for i in index), len(self))
+                tuple(self.index_convert(i) for i in index), len(self))
 
     def items(self):
         """Generator that yields (key, element) pairs.
