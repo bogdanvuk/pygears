@@ -145,9 +145,9 @@ def create_queue_cons(dtype,
 class SVRandSocket(SimExtend):
     SVRAND_CONN_NAME = "_svrand"
 
-    def __init__(self, top, conf, cons, run=False, **kwds):
+    def __init__(self, top, cons, run=False, port=4567, **kwds):
         super().__init__()
-        self.outdir = conf['outdir']
+        self.outdir = registry('SimArtifactDir')
 
         self.constraints = cons
         self.run_cosim = run
@@ -161,10 +161,7 @@ class SVRandSocket(SimExtend):
         # except KeyError:
         #     raise SVRandError(f'No constraints passed to init')
 
-        if 'rand_port' in conf:
-            self.port = conf['rand_port']
-        else:
-            self.port = 4567
+        self.port = port
 
         self.open_sock = True
         registry('SimConfig')['SVRandSocket'] = self

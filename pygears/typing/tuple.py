@@ -32,19 +32,19 @@ class TupleMeta(EnumerableGenericMeta):
                 for f, a in zip(self.fields, self.args)
             ])
 
-    def index_norm(self, index):
-        if not isinstance(index, tuple):
-            index = (index, )
+    # def index_norm(self, index):
+    #     if not isinstance(index, tuple):
+    #         index = (index, )
 
-        index = list(index)
-        for i, ind in enumerate(index):
-            if isinstance(ind, str):
-                try:
-                    index[i] = self.fields.index(ind)
-                except ValueError as e:
-                    raise KeyError(f'Field "{ind}" not in Tuple')
+    #     index = list(index)
+    #     for i, ind in enumerate(index):
+    #         if isinstance(ind, str):
+    #             try:
+    #                 index[i] = self.fields.index(ind)
+    #             except ValueError as e:
+    #                 raise KeyError(f'Field "{ind}" not in Tuple')
 
-        return super().index_norm(tuple(index))
+    #     return super().index_norm(tuple(index))
 
     def __getitem__(self, index):
         if not self.is_specified():

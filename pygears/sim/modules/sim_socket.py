@@ -120,11 +120,18 @@ def sv_cosim_gen(gear):
         'rst_mask': "32'h8000_0000",
         'activity_timeout': 1000  # in clk cycles
     }
+
+    inc_paths = []
     context['includes'] = []
     for path in registry('SVGenSystemVerilogPaths'):
-        context['includes'].append(os.path.abspath(os.path.join(path, '*.sv')))
-    context['includes'].append(os.path.abspath(os.path.join(srcdir, '*.sv')))
-    context['includes'].append(os.path.abspath(os.path.join(outdir, '*.sv')))
+        inc_paths.append(path)
+    inc_paths.append(srcdir)
+    inc_paths.append(outdir)
+
+    context['includes'] = [
+        os.path.abspath(os.path.join(p, '*.sv')) for p in inc_paths
+        if os.path.exists(p)
+    ]
 
     for templ, tname in zip(j2_templates, j2_file_names):
         res = env.get_template(templ).render(context)

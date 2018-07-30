@@ -182,22 +182,13 @@ class VCDHierVisitor(HierVisitorBase):
 
 
 class VCD:
-    def __init__(self, top, conf):
+    def __init__(self, top, fn='pygears.vcd', include=['*'], tlm=False):
         self.finished = False
         atexit.register(self.finish)
 
         outdir = registry('SimArtifactDir')
-        vcd_file = open(os.path.join(outdir, 'pygears.vcd'), 'w')
 
-        if 'vcd_include' in conf:
-            vcd_include = conf['vcd_include']
-        else:
-            vcd_include = []
-
-        if 'vcd_tlm' in conf:
-            vcd_tlm = conf['vcd_tlm']
-        else:
-            vcd_tlm = False
+        vcd_file = open(os.path.join(outdir, fn), 'w')
 
         self.writer = VCDWriter(vcd_file, timescale='1 ns', date='today')
         bind('VCDWriter', self.writer)
@@ -210,14 +201,13 @@ class VCD:
         self.clk_var = self.writer.register_var(
             '', 'clk', 'wire', size=1, init=1)
 
-        self.timestep_var = self.writer.register_var(
-            '', 'timestep', 'integer')
+        self.timestep_var = self.writer.register_var('', 'timestep', 'integer')
 
         self.handhake = set()
 
         with open(os.path.join(outdir, 'pygears.sav'), 'w') as f:
             gtkw = GTKWSave(f)
-            v = VCDHierVisitor(gtkw, self.writer, vcd_include, vcd_tlm)
+            v = VCDHierVisitor(gtkw, self.writer, include, tlm)
             v.visit(top)
             self.vcd_vars = v.vcd_vars
 

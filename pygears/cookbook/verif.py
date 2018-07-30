@@ -14,7 +14,7 @@ async def check(din, *, ref):
         # print(f"Here: {items}")
         # print(f"{ref}")
         # print(f"{items == ref}")
-        sim_assert(items == ref)
+        sim_assert(items == ref, f'mismatch. Got: {items}, expected: {ref}')
 
 
 def tlm_verif(*seq, f, ref):

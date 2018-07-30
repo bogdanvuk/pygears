@@ -46,11 +46,9 @@ def check_arg_specified(args):
         if not isinstance(a, Intf):
             from pygears.common import const
             try:
-                int(a)
-            except TypeError:
+                a = const(val=a)
+            except GearTypeNotSpecified:
                 raise GearArgsNotSpecified(f"Unresolved input arg {i}")
-
-            a = const(val=a)
 
         args_res.append(a)
 
@@ -345,7 +343,6 @@ class Gear(NamedHierNode):
             def tracer(frame, event, arg):
                 if event == 'return':
                     if frame.f_code in code_map:
-                        print(code_map[frame.f_code].name)
                         code_map[
                             frame.f_code].func_locals = frame.f_locals.copy()
 

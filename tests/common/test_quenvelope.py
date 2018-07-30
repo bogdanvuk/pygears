@@ -4,7 +4,7 @@ from pygears import clear, Intf
 from pygears.typing import Uint, Queue, Unit
 from pygears.common import quenvelope
 from pygears.cookbook.verif import directed, verif
-from pygears.sim.modules.seqr import seqr
+from pygears.sim.modules.drv import drv
 from pygears.sim import sim
 
 
@@ -26,7 +26,7 @@ def test_skip_sim():
            [Unit(), Unit(), Unit()]]
 
     directed(
-        seqr(t=Queue[Uint[1], 3], seq=[seq]), f=quenvelope(lvl=2), ref=[ref])
+        drv(t=Queue[Uint[1], 3], seq=[seq]), f=quenvelope(lvl=2), ref=[ref])
 
     sim()
 
@@ -36,6 +36,3 @@ def test_all_pass():
     iout = quenvelope(Intf(Queue[Uint[1], 2]), lvl=2)
 
     assert iout.dtype == Queue[Unit, 2]
-
-
-test_skip_sim()

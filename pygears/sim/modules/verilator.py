@@ -2,11 +2,17 @@ import jinja2
 import os
 import ctypes
 from pygears.util.fileio import save_file
-from pygears import registry, GearDone
+from pygears import registry
 from pygears.svgen import svgen
-from pygears.sim.modules.cosim_base import CosimBase, CosimNoData
+from pygears.sim.modules.cosim_base import CosimBase
 from pygears.sim.c_drv import CInputDrv, COutputDrv
+from pygears.sim import sim_log
 import atexit
+
+
+class VerilatorCompileError(Exception):
+    pass
+
 
 class SimVerilatorSynchro:
     def __init__(self, verilib):
@@ -33,16 +39,18 @@ class SimVerilated(CosimBase):
         self.wrap_name = f'wrap_{self.svmod.sv_module_name}'
 
     def setup(self):
-        atexit.register(self.finish)
-
         rebuild = True
 
         if rebuild:
+            sim_log().info(f'Verilating...')
             self.build()
+            sim_log().info(f'Done')
 
         self.verilib = ctypes.CDLL(
             os.path.join(self.objdir, f'V{self.wrap_name}'))
 
+        self.finished = False
+        atexit.register(self.finish)
         self.verilib.init()
 
         self.handlers = {}
@@ -52,8 +60,9 @@ class SimVerilated(CosimBase):
         for p in self.gear.out_ports:
             self.handlers[p.basename] = COutputDrv(self.verilib, p)
 
-        self.handlers[self.SYNCHRO_HANDLE_NAME] = SimVerilatorSynchro(self.verilib)
-        self.finished = False
+        self.handlers[self.SYNCHRO_HANDLE_NAME] = SimVerilatorSynchro(
+            self.verilib)
+
 
 
     def build(self):
@@ -73,62 +82,31 @@ class SimVerilated(CosimBase):
         c = jenv.get_template('sim_veriwrap.j2').render(context)
         save_file('sim_main.cpp', self.outdir, c)
 
-        os.system(
+        ret = os.system(
             f"cd {self.outdir}; verilator -cc -CFLAGS -fpic -LDFLAGS -shared --exe {include} -clk clk --trace --trace-structs --top-module {self.wrap_name} {self.outdir}/*.sv dti.sv sim_main.cpp > verilate.log 2>&1"
         )
 
-        os.system(f"cd {self.objdir}; make -j -f V{self.wrap_name}.mk > make.log 2>&1")
+        if ret != 0:
+            if not os.path.exists(self.objdir):
+                raise VerilatorCompileError(
+                    f'Verilator compile error: {ret}. '
+                    f'Please inspect "{self.outdir}/verilate.log"'
+                )
+            else:
+                sim_log().warning(
+                    f'Verilator compiled with warnings. '
+                    f'Please inspect "{self.outdir}/verilate.log"'
+                    )
 
-    # async def func(self, *args, **kwds):
-    #     self.verilib.init()
-    #     activity_monitor = 0
-    #     watchdog = 100
-    #     self.finished = False
+        ret = os.system(
+            f"cd {self.objdir}; make -j -f V{self.wrap_name}.mk > make.log 2>&1"
+        )
 
-    #     while True:
-    #         for d in self.c_in_drvs:
-    #             if not d.empty():
-    #                 await d.post()
-
-    #         self.verilib.propagate()
-
-    #         dout = tuple(
-    #             None if d.active else d.read() for d in self.c_out_drvs)
-
-    #         for p, v in zip(self.gear.out_ports, dout):
-    #             if v is not None:
-    #                 # print(f'Port {p.basename} output')
-    #                 p.producer.put_nb(v)
-
-    #         await delta()
-
-    #         if any(d.active for d in self.c_out_drvs):
-    #             for p, d in zip(self.gear.out_ports, self.c_out_drvs):
-    #                 if p.producer.ready_nb():
-    #                     # print(f'Port {p.basename} acked')
-    #                     d.ack()
-
-    #             self.verilib.eval()
-
-    #             activity_monitor = 0
-    #         else:
-    #             activity_monitor += 1
-    #             if activity_monitor == watchdog:
-    #                 raise GearDone
-
-    #         for d in self.c_in_drvs:
-    #             d.ack()
-
-    #         self.verilib.trig()
-    #         await clk()
-
-    #         for d in self.c_in_drvs:
-    #             d.cycle()
-
-    #         for d in self.c_out_drvs:
-    #             d.cycle()
-
-    #         await clk()
+        if ret != 0:
+            raise VerilatorCompileError(
+                f'Verilator compile error: {ret}. '
+                f'Please inspect "{self.outdir}/make.log"'
+            )
 
     def finish(self):
         if not self.finished:

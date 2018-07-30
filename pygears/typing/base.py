@@ -122,8 +122,11 @@ class GenericMeta(TypingMeta):
     def is_generic(self):
         """Return True if no generic parameter of the type was supplied a value.
 
-        >>> assert Uint.is_generic() == True
-        >>> assert Uint[16].is_generic() == False
+        >>> Uint.is_generic()
+        True
+
+        >>> Uint[16].is_generic()
+        False
         """
 
         return len(self.args) == 0
@@ -138,8 +141,11 @@ class GenericMeta(TypingMeta):
     def is_specified(self):
         """Return True if all generic parameters were supplied concrete values.
 
-        >>> assert Uint['template'].is_specified() == False
-        >>> assert Uint[16].is_specified() == True
+        >>> Uint['template'].is_specified()
+        False
+
+        >>> Uint[16].is_specified()
+        True
         """
 
         if hasattr(self, '__parameters__'):
@@ -188,7 +194,8 @@ class GenericMeta(TypingMeta):
         """Returns a list of templated generic variables within the type. The type is
 searched recursively. Each template is reported only once.
 
-        >>> assert Tuple[Tuple['T1', 'T2'], 'T1'].templates == ['T1', 'T2']
+        >>> Tuple[Tuple['T1', 'T2'], 'T1'].templates
+        ['T1', 'T2']
         """
 
         def make_unique(seq):
@@ -210,7 +217,8 @@ searched recursively. Each template is reported only once.
     def args(self):
         """Returns a list of values supplied for each generic parameter.
 
-        >>> assert Tuple[Uint[1], Uint[2]].args == [Uint[1], Uint[2]]
+        >>> Tuple[Uint[1], Uint[2]].args
+        [Uint[1], Uint[2]]
         """
 
         if hasattr(self, '__args__'):
@@ -250,8 +258,11 @@ searched recursively. Each template is reported only once.
     def fields(self):
         """Returns the names of the generic parameters.
 
-        >>> assert Tuple[Uint[1], Uint[2]].fields == ('f0', 'f1')
-        >>> assert Tuple[{'u1': Uint[1], 'u2': Uint[2]}].fields == ('u0', 'u1')
+        >>> Tuple[Uint[1], Uint[2]].fields
+        ('f0', 'f1')
+
+        >>> Tuple[{'u1': Uint[1], 'u2': Uint[2]}].fields
+        ('u0', 'u1')
         """
 
         if hasattr(self, '__parameters__'):
@@ -308,7 +319,8 @@ class EnumerableGenericMeta(GenericMeta):
     def __int__(self):
         """Calculates the bit width of the type.
 
-        >>> assert int(Tuple[Uint[1], Uint[2]]) == 3
+        >>> int(Tuple[Uint[1], Uint[2]])
+        3
         """
         if self.is_specified():
             return sum(map(int, self))
@@ -320,7 +332,8 @@ class EnumerableGenericMeta(GenericMeta):
     def __len__(self):
         """The number of elements type generates when iterated.
 
-        >>> len(Uint[16]) == 16
+        >>> Uint[16])
+        16
         """
         return len(self.keys())
 
@@ -329,17 +342,24 @@ class EnumerableGenericMeta(GenericMeta):
         """
         return list(range(len(self.args)))
 
+    def index_convert(self, index):
+        if isinstance(index, str):
+            try:
+                return self.fields.index(index)
+            except ValueError as e:
+                raise KeyError(f'Field "{index}" not in type "{repr(self)}"')
+        elif not isinstance(index, slice):
+            return index
+        else:
+            return index.__reduce__()[1]
+
     def index_norm(self, index):
         if not isinstance(index, tuple):
             return (index_norm_hashable_single(
-                index
-                if not isinstance(index, slice) else index.__reduce__()[1],
-                len(self)), )
+                self.index_convert(index), len(self)), )
         else:
             return index_norm_hashable(
-                tuple(
-                    i if not isinstance(i, slice) else i.__reduce__()[1]
-                    for i in index), len(self))
+                tuple(self.index_convert(i) for i in index), len(self))
 
     def items(self):
         """Generator that yields (key, element) pairs.
