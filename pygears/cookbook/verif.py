@@ -2,6 +2,7 @@ from pygears import gear
 from pygears.sim import sim_assert
 from pygears.sim.modules import delay_mon, drv, mon, scoreboard
 from pygears.sim.utils import SimDelay
+from pygears.common import decoupler
 
 
 @gear
@@ -59,6 +60,9 @@ def verif(*stim, f, ref, delays=None):
         if d is not None:
             res_intf = res_intf | d
 
+        res_intf = res_intf | decoupler(depth=0)
+        ref_intf = ref_intf | decoupler(depth=0)
+
         scoreboard(res_intf, ref_intf, report=r)
 
     return report
@@ -88,6 +92,9 @@ def directed_on_the_fly(*stim, f, refs, delays=None):
     for r, res_intf, ref, d in zip(report, res_tlm, refs, delays):
         if d is not None:
             res_intf = res_intf | d
+
+        res_intf = res_intf | decoupler(depth=0)
+        ref = ref | decoupler(depth=0)
 
         scoreboard(res_intf, ref, report=r)
 
