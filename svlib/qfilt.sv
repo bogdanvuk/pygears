@@ -1,4 +1,4 @@
-module filt #(
+module qfilt #(
               parameter W_DIN = 16,
               parameter W_DOUT = 16,
               parameter LVL = 1,

@@ -1,0 +1,42 @@
+{%- import 'snippet.j2' as snippet -%}
+
+{% call snippet.module_with_intf_structs(module_name, intfs, intfs|isinput, comment) %}
+
+  {%- set input_intf_names = intfs|isinput|keymap("name") %}
+
+  {# If sync-guard is used, generate declarations for the internal interfaces
+  that connect to sync-guard inputs. #}
+  {% if outsync %}
+    {%- set out_intf_names = intfs|isinput|keymap("name")|format_list("%s_if") %}
+    {% for i in intfs|isinput %}
+{{snippet.intf_inst(i['name']+"_if", width=i['width'], size=1, type=i['type'])|indent(4,True)}}
+    {% endfor %}
+  {% else %}
+    {%- set out_intf_names = intfs|isoutput|keymap("name") %}
+  {% endif %}
+
+    logic all_valid;
+    assign all_valid   = {{input_intf_names|format_list("%s.valid")|join(" && ")}};
+
+  {% for i, (din, dout) in enumerate(zip(input_intf_names, out_intf_names)) %}
+    {% if i == 0 %}
+    assign {{dout}}.valid = all_valid;
+    {% else %}
+    assign {{dout}}.valid = all_valid & (din0_s.ctrl == {{ctrl}});
+    {% endif %}
+    assign {{dout}}.data = {{din}}.data;
+    assign {{din}}.ready = {{dout}}.ready & all_valid;
+  {% endfor %}
+
+  {% if outsync %}
+    {% set port_map = {} %}
+    {% for i, din in enumerate(intfs|isinput) %}
+      {% do port_map.update({"din%s" % i: din['name']+"_if"}) %}
+    {% endfor %}
+
+    {% for i, dout in enumerate(intfs|isoutput) %}
+      {% do port_map.update({"dout%s" % i: dout['name']}) %}
+    {% endfor %}
+{{snippet.module_inst(module_name + "_syncguard", {}, "syncguard", port_map=port_map)|indent(4, True)}} 
+  {%- endif %}
+{% endcall %}
