@@ -14,11 +14,11 @@ async def decoupler_din(din: 'tdin', *, depth) -> None:
     try:
         async with din as d:
             await module().queue.put(d)
-            sim_log().info(f'qsize: {module().queue.qsize()}')
+            sim_log().debug(f'qsize: {module().queue.qsize()}')
             while (module().queue.full()):
                 await delta()
 
-            sim_log().info(f'allowed')
+            sim_log().debug(f'allowed')
 
     except GearDone:
         # await module().queue.join()
@@ -34,7 +34,7 @@ def decoupler_dout_setup(module):
 async def decoupler_dout(*, t, depth) -> b't':
     queue = module().decoupler_din.queue
     data = await queue.get()
-    sim_log().info(f'data: {data}, qsize: {queue.qsize()}')
+    sim_log().debug(f'data: {data}, qsize: {queue.qsize()}')
 
     if data is GearDone:
         queue.task_done()
