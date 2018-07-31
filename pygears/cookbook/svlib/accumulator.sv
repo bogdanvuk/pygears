@@ -55,7 +55,7 @@ module accumulator #(
    assign add_term = offset_added ? acc : din_s.offset;
 
    assign dout.valid = acc_done;
-   assign din.ready = (dout.ready | !dout.valid);
+   assign din.ready = (dout.ready || !dout.valid);
    assign dout.data = acc;
 
  endmodule : accumulator
