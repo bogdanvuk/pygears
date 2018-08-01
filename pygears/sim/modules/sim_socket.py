@@ -1,32 +1,27 @@
 import array
 import asyncio
+import atexit
+import glob
 import itertools
+import logging
 import math
 import os
 import socket
-from importlib import util
-from math import ceil
-import atexit
-import logging
-import signal
 import time
+from math import ceil
+from subprocess import DEVNULL, Popen
 
 import jinja2
-from subprocess import Popen, DEVNULL
 
 from pygears import GearDone, registry
 from pygears.definitions import ROOT_DIR
-from pygears.sim.modules.cosim_base import CosimBase
+from pygears.sim import clk, sim_log
+from pygears.sim.modules.cosim_base import CosimBase, CosimNoData
 from pygears.svgen import svgen
 from pygears.svgen.util import svgen_typedef
+from pygears.typing import Uint
 from pygears.typing_common.codec import code, decode
 from pygears.util.fileio import save_file
-
-from pygears.sim.modules.cosim_base import CosimNoData
-
-from pygears.typing import Uint
-
-from pygears.sim import clk, sim_log
 
 
 class CosimulatorStartError(Exception):
@@ -132,6 +127,9 @@ def sv_cosim_gen(gear):
         os.path.abspath(os.path.join(p, '*.sv')) for p in inc_paths
         if os.path.exists(p)
     ]
+
+    # remove empty wildcard imports
+    context['includes'] = [p for p in context['includes'] if glob.glob(p)]
 
     for templ, tname in zip(j2_templates, j2_file_names):
         res = env.get_template(templ).render(context)
