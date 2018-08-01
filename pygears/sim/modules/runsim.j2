@@ -1,6 +1,7 @@
 #!/bin/bash
 
-gui="-gui"
+# run cadence.tcl only in gui mode
+gui="-gui -input $WORKSPACE/cadence.tcl"
 other_args="";
 seed=1
 simulator="cadence"
@@ -75,7 +76,6 @@ if [ $simulator == "cadence" ]; then
         +svseed=$seed \
         -logfile log.log -v93 -ALLOWREDEFINITION \
         -access rwc \
-        -input $WORKSPACE/cadence.tcl \
         $other_args $gui \
         "$@"
 else
