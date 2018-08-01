@@ -1,11 +1,12 @@
+import os
+
+from vcd.gtkw import GTKWSave
+
 from pygears import registry
 from pygears.common.decoupler import decoupler_din
+from pygears.sim import sim_log
 from pygears.sim.extens.graphviz import graph
 from pygears.sim.extens.vcd import module_sav
-from vcd.gtkw import GTKWSave
-from pygears.core.port import OutPort
-import itertools
-import os
 
 
 class ActivityReporter:
@@ -54,7 +55,7 @@ class ActivityReporter:
                     g.node_map[module].set_fillcolor('red')
                     g.node_map[module].set_style('filled')
                     blocking_gears.add(module)
-                    print(f'Data left in decoupler: {module.name}')
+                    sim_log().error(f'Data left in decoupler: {module.name}')
 
             for p in module.in_ports:
                 q = p.get_queue()
@@ -64,7 +65,7 @@ class ActivityReporter:
                     g.edge_map[p].set_color('red')
                     g.edge_map[p].set_penwidth(6)
                     blocking_gears.add(module)
-                    print(
+                    sim_log().error(
                         f'{src_port.gear.name}.{src_port.basename} -> {module.name}.{p.basename} was not acknowledged'
                     )
 
@@ -72,7 +73,7 @@ class ActivityReporter:
                     g.edge_map[p].set_color('blue')
                     g.edge_map[p].set_penwidth(6)
                     src_port = self.blockers[p]
-                    print(
+                    sim_log().info(
                         f'{p.gear.name}.{p.basename} waiting on {src_port.gear.name}.{src_port.basename}'
                     )
 
