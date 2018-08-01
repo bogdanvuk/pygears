@@ -1,6 +1,7 @@
 from pygears.core.gear import alternative, gear
 from pygears.typing import Queue, Tuple, typeof
-from pygears.common import ccat
+from pygears.common.shred import shred
+from pygears.common.ccat import ccat
 from pygears.util.utils import quiter_async
 from pygears import module
 
@@ -96,3 +97,10 @@ async def cart_sync(*din) -> b'din':
 @gear
 def cart_sync_vararg(*din):
     return din | cart | uncart(dtypes=[d.dtype for d in din])
+
+
+@gear
+def cart_sync_with(din, sync_in):
+    din_sync, sync_in_sync = cart_sync(din, sync_in)
+    sync_in_sync | shred
+    return din_sync
