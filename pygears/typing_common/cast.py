@@ -20,6 +20,9 @@ def cast(dtype, cast_type):
             return Tuple[dtype[0], dtype[1:]]
         elif typeof(dtype, Tuple):
             return dtype
+    elif (typeof(cast_type, Union) and typeof(dtype, Tuple)
+          and len(dtype) == 2 and not cast_type.is_specified()):
+        return Union[(dtype[0], )*(2**int(dtype[1]))]
     else:
         return cast_type
 

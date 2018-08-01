@@ -108,8 +108,8 @@ def infer_ftypes(params, args, namespace={}, allow_incomplete=False):
                             allow_incomplete=(not final_check)))
                 except Exception as e:
                     raise TypeMatchError(
-                        f'{str(e)}\n - when deducing type for argument '
-                        f'{name}')
+                        f"{str(e)}\n - when deducing type for argument "
+                        f"'{name}'")
             try:
                 substituted, new_p = resolve_param(val, match, namespace)
                 if name in args:

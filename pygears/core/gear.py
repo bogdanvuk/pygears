@@ -107,7 +107,7 @@ class Gear(NamedHierNode):
         self.__doc__ = func.__doc__
 
         self.outnames = outnames.copy()
-        self.intfs = intfs.copy()
+        self.fix_intfs = intfs.copy()
         self.in_ports = []
         self.out_ports = []
 
@@ -302,8 +302,23 @@ class Gear(NamedHierNode):
             for dtype, port in zip(out_dtype, self.out_ports):
                 Intf(dtype).connect(port)
 
-        if not self.intfs:
+        self.intfs = []
+        out_intfs = []
+        if isinstance(self.fix_intfs, dict):
+            for i, (name, dt) in enumerate(zip(self.outnames, out_dtype)):
+                if name in self.fix_intfs:
+                    intf = self.fix_intfs[name]
+                    out_intfs.append(intf)
+                else:
+                    intf = Intf(dt)
+
+                self.intfs.append(intf)
+
+        elif self.fix_intfs:
+            self.intfs = self.fix_intfs
+        else:
             self.intfs = [Intf(dt) for dt in out_dtype]
+            out_intfs = self.intfs
 
         assert len(self.intfs) == len(out_dtype)
         for intf, port in zip(self.intfs, self.out_ports):
@@ -320,10 +335,10 @@ class Gear(NamedHierNode):
                 if intf not in self.intfs and not intf.consumers:
                     print(f'Warning: {c.name}.{p.basename} left dangling.')
 
-        if len(self.intfs) > 1:
-            return tuple(self.intfs)
-        elif len(self.intfs) == 1:
-            return self.intfs[0]
+        if len(out_intfs) > 1:
+            return tuple(out_intfs)
+        elif len(out_intfs) == 1:
+            return out_intfs[0]
         else:
             return None
 

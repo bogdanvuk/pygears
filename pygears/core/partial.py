@@ -11,7 +11,8 @@ class MultiAlternativeError(Exception):
     def __str__(self):
         ret = ['\n']
         for func, e, info in self.errors:
-            uwrp = inspect.unwrap(func, stop=(lambda f: hasattr(f, "__signature__")))
+            uwrp = inspect.unwrap(
+                func, stop=(lambda f: hasattr(f, "__signature__")))
             fn = inspect.getfile(uwrp)
             _, ln = inspect.getsourcelines(uwrp)
             ret.extend(traceback.format_tb(info[2]))
@@ -28,15 +29,18 @@ def argspec_unwrap(func):
 
 
 def extract_arg_kwds(kwds, func):
-    arg_names, *_ = argspec_unwrap(func)
+    arg_names, _, _, _, kwonlyargs, *_ = argspec_unwrap(func)
 
     arg_kwds = {}
     kwds_only = {}
     for k in list(kwds.keys()):
         if k in arg_names:
             arg_kwds[k] = kwds[k]
-        else:
+        elif k in kwonlyargs:
             kwds_only[k] = kwds[k]
+        else:
+            raise TypeError(
+                f"{func.__name__}() got an unexpected keyword argument '{k}'")
 
     return arg_kwds, kwds_only
 

@@ -1,5 +1,5 @@
-from pygears import gear
-from pygears.typing import Queue
+from pygears import gear, alternative
+from pygears.typing import Queue, Union
 
 
 def filt_type(din, lvl, field_sel):
@@ -7,10 +7,16 @@ def filt_type(din, lvl, field_sel):
 
 
 @gear
-def filt(din: Queue['TUnion', 'lvl'],
-         *,
-         field_sel=0,
-         w_din=b'int(din[0][0])',
-         w_dout=b'int((din[0].types)[field_sel])'
-         ) -> b'filt_type(din, lvl, field_sel)':
+def filt(din: Union, *, sel) -> b'din.types[sel]':
+    pass
+
+
+@alternative(filt)
+@gear(svgen={'svmod_fn': 'qfilt.sv'})
+def qfilt(din: Queue['TUnion', 'lvl'],
+          *,
+          field_sel=0,
+          w_din=b'int(din[0][0])',
+          w_dout=b'int((din[0].types)[field_sel])'
+          ) -> b'filt_type(din, lvl, field_sel)':
     pass

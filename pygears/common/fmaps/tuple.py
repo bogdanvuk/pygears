@@ -28,7 +28,7 @@ def fmap(din, *, f, lvl=1, fcat=ccat, balance=None):
 
     dout = []
     for i, fd in enumerate(f):
-        if lvl > 0:
+        if (lvl > 0) and (fd is not None):
             fd = common_fmap(f=fd, lvl=lvl, balance=balance)
 
         if fd is None:

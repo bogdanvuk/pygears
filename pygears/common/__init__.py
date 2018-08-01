@@ -5,6 +5,7 @@ from .project import project
 from .czip import czip, zip_sync, unzip
 from .ccat import ccat
 from .cart import cart, cart_sync
+from .union import union_sync, union_collapse
 from .cast import cast
 from .quenvelope import quenvelope
 from .sieve import sieve
@@ -35,5 +36,6 @@ __all__ = [
     'sieve', 'flatten', 'fmap', 'permuted_apply', 'const', 'add', 'sub', 'mul',
     'div', 'neg', 'mux', 'demux', 'shred', 'cart_sync', 'decoupler', 'dreg',
     'unzip', 'serialize', 'project', 'fifo', 'factor', 'fill', 'mux_zip',
-    'mux_valve', 'demux_zip', 'data_dly', 'eq', 'filt'
+    'mux_valve', 'demux_zip', 'data_dly', 'eq', 'union_sync', 'union_collapse',
+    'filt'
 ]

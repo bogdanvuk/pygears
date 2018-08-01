@@ -1,0 +1,8 @@
+{%- import 'snippet.j2' as snippet -%}
+{% call snippet.module_with_intf_structs(module_name, intfs, intfs, comment) %}
+
+    assign dout.valid = din.valid & (din_s.ctrl == {{sel}});
+    assign din.ready = (dout.ready || (din_s.ctrl != {{sel}})) & din.valid;
+    assign dout.data = din_s.data;
+
+{% endcall %}
