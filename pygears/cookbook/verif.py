@@ -94,7 +94,7 @@ def directed_on_the_fly(*stim, f, refs, delays=None):
             res_intf = res_intf | d
 
         res_intf = res_intf | decoupler(depth=0)
-        ref = ref | decoupler(depth=0)
+        # ref = ref | decoupler(depth=0)
 
         scoreboard(res_intf, ref, report=r)
 

@@ -130,7 +130,10 @@ class Integer(int, metaclass=IntegerMeta):
         return self.width
 
     def __add__(self, other):
-        return (type(self) + type(other))(int(self) + int(other))
+        if isinstance(other, int):
+            return type(self)(int(self) + other)
+        else:
+            return (type(self) + type(other))(int(self) + int(other))
 
     def __str__(self):
         return f'{str(type(self))}({int(self)})'

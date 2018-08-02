@@ -51,7 +51,10 @@ class Visitor(HierVisitorBase):
             sizes = ', '.join([str(int(tt)) for tt in t])
         else:
             types = str(t)
-            sizes = int(t)
+            try:
+                sizes = int(t)
+            except TypeError:
+                sizes = '?'
 
         if self.fullname:
             name = module.name
