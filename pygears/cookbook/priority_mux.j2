@@ -48,7 +48,7 @@
       if (rst | handshake) begin
   {% endif %}
          flag_reg <= 0;
-      end else begin
+      end else if (handshake) begin
          flag_reg <= flag;
       end
    end
