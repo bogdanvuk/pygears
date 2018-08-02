@@ -1,6 +1,14 @@
+from string import Template
+
+from pygears import PluginBase, registry
 from pygears.rtl.port import InPort, OutPort
 from pygears.svgen.util import svgen_typedef
-from pygears import PluginBase, registry
+
+spy_connect_t = Template("""
+dti_spy #(${intf_name}_t) _${intf_name}(clk, rst);
+assign _${intf_name}.data = ${conn_name}.data;
+assign _${intf_name}.valid = ${conn_name}.valid;
+assign _${intf_name}.ready = ${conn_name}.ready;""")
 
 
 class SVIntfGen:
@@ -53,15 +61,26 @@ class SVIntfGen:
                 if isinstance(cons_port, OutPort):
                     inst.append(self.get_connect_module(i, template_env))
 
+            if registry('SVGenDebugIntfs'):
+                for i in range(len(self.intf.consumers)):
+                    intf_name = f'{self.outname}_{i}'
+                    conn_name = f'{self.outname}[{i}]'
+                    inst.extend(
+                        svgen_typedef(self.intf.dtype, intf_name).split('\n'))
+
+                    inst.extend(
+                        spy_connect_t.substitute(
+                            intf_name=intf_name,
+                            conn_name=conn_name).split('\n'))
+
         if registry('SVGenDebugIntfs'):
             inst.extend(
                 svgen_typedef(self.intf.dtype, self.basename).split('\n'))
 
-            inst.extend(f"""
-    dti_spy #({self.basename}_t) _{self.basename}(clk);
-    assign _{self.basename}.data = {self.basename}.data;
-    assign _{self.basename}.valid = {self.basename}.valid;
-    assign _{self.basename}.ready = {self.basename}.ready;""".split('\n'))
+            inst.extend(
+                spy_connect_t.substitute(
+                    intf_name=self.basename,
+                    conn_name=self.basename).split('\n'))
 
         return '\n'.join(inst)
 
