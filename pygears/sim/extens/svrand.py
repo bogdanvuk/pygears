@@ -319,7 +319,7 @@ class SVRandSocket(SimExtend):
             'dti_verif_path':
             os.path.abspath(os.path.join(ROOT_DIR, 'sim', 'dpi')),
             'out_path':
-            self.outdir,
+            os.path.abspath(self.outdir),
             'includes': [os.path.abspath(os.path.join(self.outdir, '*.sv'))]
         }
 
