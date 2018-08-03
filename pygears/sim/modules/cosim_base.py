@@ -16,7 +16,7 @@ class CosimBase(SimGear):
         self.timeout = timeout
 
     def finish(self):
-        pass
+        super().finish()
 
     async def func(self, *args, **kwds):
         activity_monitor = 0

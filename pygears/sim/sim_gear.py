@@ -1,5 +1,6 @@
 import inspect
 import asyncio
+from pygears.core.err import register_exit_hook
 from pygears import registry, GearDone
 from pygears.sim import clk, timestep, delta, sim_log, sim_phase
 from pygears.typing_common.codec import code
@@ -42,7 +43,13 @@ class SimGear:
         for port in self.gear.out_ports:
             port.producer.finish()
 
+        self.cleanup()
+
+    def cleanup(self):
+        pass
+
     def setup(self):
+        register_exit_hook(self.cleanup)
         if self.gear.params['sim_setup'] is not None:
             self.gear.params['sim_setup'](self.gear)
 

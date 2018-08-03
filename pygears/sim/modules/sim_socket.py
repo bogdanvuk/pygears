@@ -240,6 +240,8 @@ class SimSocket(CosimBase):
         sim_log().debug(f'Closing socket server')
         super().finish()
 
+    def cleanup(self):
+        time.sleep(4)
         self.sock.close()
         time.sleep(1)
 
