@@ -1,4 +1,6 @@
-from .base import EnumerableGenericMeta, type_str, type_repr, TemplatedTypeUnspecified
+from .base import EnumerableGenericMeta, type_str, type_repr
+from .base import TemplatedTypeUnspecified
+from .base import class_and_instance_method
 
 
 class TupleMeta(EnumerableGenericMeta):
@@ -20,8 +22,12 @@ class TupleMeta(EnumerableGenericMeta):
         }]
 
     def __add__(self, other):
-        return Tuple[{**{k: v for k, v in zip(self.fields, self.args)},
-                      **{k: v for k, v in zip(other.fields, other.args)}}]
+        return Tuple[{
+            **{k: v
+               for k, v in zip(self.fields, self.args)},
+            **{k: v
+               for k, v in zip(other.fields, other.args)}
+        }]
 
     def __repr__(self):
         if not self.args or not hasattr(self, '__parameters__'):
@@ -45,6 +51,12 @@ class TupleMeta(EnumerableGenericMeta):
     #                 raise KeyError(f'Field "{ind}" not in Tuple')
 
     #     return super().index_norm(tuple(index))
+
+    def get(self, key, default=None):
+        try:
+            return self[key]
+        except KeyError:
+            return default
 
     def __getitem__(self, index):
         if not self.is_specified():
@@ -96,6 +108,7 @@ class Tuple(tuple, metaclass=TupleMeta):
 
             return tout(tuple(subtypes))
 
+    @class_and_instance_method
     def get(self, key, default=None):
         try:
             return self[key]
