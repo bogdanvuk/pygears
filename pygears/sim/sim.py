@@ -328,10 +328,7 @@ def get_default_logger_handler(verbosity):
     return ch
 
 
-def sim(outdir=None,
-        timeout=None,
-        extens=[],
-        run=True,
+def sim(outdir=None, timeout=None, extens=[], run=True,
         verbosity=logging.INFO):
 
     if outdir is None:
@@ -379,7 +376,7 @@ def sim_log():
 
 def sim_assert(cond, msg=None):
     if not cond:
-        print(f'Assertion failed: {msg}')
+        sim_log().error(f'Assertion failed: {msg}')
         if registry('SimConfig')['dbg_assert']:
             import pdb
             pdb.set_trace()
