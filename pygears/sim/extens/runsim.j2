@@ -1,6 +1,7 @@
 #!/bin/bash
 
-gui="-gui"
+# run cadence.tcl only in gui mode
+gui="-gui -input $WORKSPACE/cadence.tcl"
 other_args="";
 seed=1
 simulator="cadence"
@@ -68,14 +69,13 @@ if [ $simulator == "cadence" ]; then
         {{dti_verif_path}}/socket_pkg.sv \
         {{dti_verif_path}}/sock.c \
     {% for i in includes %}
-    {{i|indent(4, True)}} \
+    "{{i|indent(4, True)}}" \
     {% endfor %}
         {{out_path}}/svrand_top.sv \
         -top svrand_top \
         +svseed=$seed \
         -logfile log.log -v93 -ALLOWREDEFINITION \
         -access rwc \
-        -input $WORKSPACE/cadence.tcl \
         $other_args $gui \
         "$@"
 else

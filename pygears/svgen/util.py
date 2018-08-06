@@ -31,9 +31,9 @@ class SVGenTypeVisitor(TypingVisitorBase):
     def visit_int(self, type_, field):
         if (not self.depth):
             self.struct_array.append(
-                f'typedef {self.basic_type} [{int(type_)-1}:0] {self.context}_t; // {type_}\n'
+                f'typedef {self.basic_type} signed [{int(type_)-1}:0] {self.context}_t; // {type_}\n'
             )
-        return f'{self.basic_type} [{int(type_)-1}:0]'
+        return f'{self.basic_type} signed [{int(type_)-1}:0]'
 
     def visit_bool(self, type_, field):
         if (not self.depth):
