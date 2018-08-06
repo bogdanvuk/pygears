@@ -82,6 +82,18 @@ def type_str(obj):
     return str(obj)
 
 
+class class_and_instance_method:
+    def __init__(self, func):
+        self.func = func
+
+    def __get__(self, instance, cls=None):
+        if instance is None:
+            # return the metaclass method, bound to the class
+            type_ = type(cls)
+            return getattr(type_, self.func.__name__).__get__(cls, type_)
+        return self.func.__get__(instance, cls)
+
+
 class GenericMeta(TypingMeta):
     """Base class for all types that have a generic parameter.
     """
@@ -97,6 +109,7 @@ class GenericMeta(TypingMeta):
                 })
             else:
                 namespace.update({'__args__': args})
+
             spec_cls = super().__new__(cls, name, bases, namespace)
             return spec_cls
         else:
