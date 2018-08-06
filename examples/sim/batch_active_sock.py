@@ -7,6 +7,7 @@ from pygears.typing import Queue, Uint
 
 t_din = Queue[Uint[16]]
 
+
 # @gear
 # def dut(din: Queue[Uint['dinw']], *, param=1) -> Queue[Uint['dinw']]:
 #     pass

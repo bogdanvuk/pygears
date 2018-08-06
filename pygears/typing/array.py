@@ -88,6 +88,15 @@ class Array(tuple, metaclass=ArrayMeta):
         array_tpl = (cls[0](v) for v in val)
         return super(Array, cls).__new__(cls, array_tpl)
 
+    def __int__(self):
+        w_dtype = int(type(self).dtype)
+        ret = 0
+        for d in reversed(self):
+            ret <<= w_dtype
+            ret |= int(d)
+
+        return ret
+
     @classmethod
     def decode(cls, val):
         ret = []

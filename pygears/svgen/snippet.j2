@@ -20,7 +20,7 @@
  #(
     {% for name,value in param_map.items() -%}
       {%- if name %}
-        {{"."|indent(4,True)}}{{name}}({{value}}){{ "," if not loop.last }}
+        {{"."|indent(4,True)}}{{name}}({{value.bit_length()}}'d{{value}}){{ "," if not loop.last }}
       {% else -%}
         {{value|indent(4,True)}}{{ "," if not loop.last }}
       {% endif -%}

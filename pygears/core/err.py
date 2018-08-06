@@ -1,4 +1,5 @@
 from pygears.registry import registry, PluginBase
+from functools import partial
 from enum import IntEnum
 import sys
 
@@ -13,12 +14,24 @@ class ErrReportPlugin(PluginBase):
     def bind(cls):
         # cls.registry['ErrReportLevel'] = ErrReportLevel.user
         cls.registry['ErrReportLevel'] = ErrReportLevel.debug
+        cls.registry['ExitHooks'] = []
+
+
+def register_exit_hook(hook, *args, **kwds):
+    registry('ExitHooks').append(partial(hook, *args, **kwds))
 
 
 def pygears_excepthook(exception_type,
                        exception,
                        traceback,
                        debug_hook=sys.excepthook):
+
+    for hook in registry('ExitHooks'):
+        try:
+            hook()
+        except:
+            pass
+
     if registry("ErrReportLevel") == ErrReportLevel.debug:
         debug_hook(exception_type, exception, traceback)
     else:
@@ -35,7 +48,8 @@ def pygears_excepthook(exception_type,
 
         for s, t in zip(
                 format_list(extract_tb(traceback)), walk_tb(traceback)):
-            is_internal = t[0].f_code.co_filename.startswith(os.path.dirname(__file__))
+            is_internal = t[0].f_code.co_filename.startswith(
+                os.path.dirname(__file__))
             is_boltons = 'boltons' in t[0].f_code.co_filename
             if not is_internal and not is_boltons:
                 print(s, end='')

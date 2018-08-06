@@ -24,6 +24,11 @@ cp ld ld_bkp
 ln -s /usr/bin/ld ld
 
 
+Error:
+fatal error: sys/cdefs.h: No such file or directory
+
+Fix:
+sudo apt install libc6-dev-i386
 
 
 Error:

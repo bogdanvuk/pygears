@@ -29,7 +29,7 @@ interface dti_spy #(
    logic           ready;
    logic           handshake;
 
-   bit checks_enable = 1;
+   bit checks_enable = 0;
 
    assign handshake = valid && ready && !spy_clk;
 
