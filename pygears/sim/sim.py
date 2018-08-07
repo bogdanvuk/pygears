@@ -4,6 +4,7 @@ import tempfile
 import os
 import itertools
 import time
+import random
 import logging
 import sys
 import cProfile, pstats, io
@@ -328,8 +329,12 @@ def get_default_logger_handler(verbosity):
     return ch
 
 
-def sim(outdir=None, timeout=None, extens=[], run=True,
-        verbosity=logging.INFO):
+def sim(outdir=None,
+        timeout=None,
+        extens=[],
+        run=True,
+        verbosity=logging.INFO,
+        seed=None):
 
     if outdir is None:
         outdir = tempfile.mkdtemp()
@@ -341,6 +346,12 @@ def sim(outdir=None, timeout=None, extens=[], run=True,
         logger.setLevel(verbosity)
         ch = get_default_logger_handler(verbosity)
         logger.addHandler(ch)
+
+    if seed is None:
+        seed = int(time.time())
+    random.seed(seed)
+    bind('SimRandSeed', seed)
+    sim_log().info(f'Running sim with seed: {seed}')
 
     loop = EventLoop()
     asyncio.set_event_loop(loop)

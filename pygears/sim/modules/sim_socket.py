@@ -68,7 +68,7 @@ j2_templates = ['runsim.j2', 'top.j2']
 j2_file_names = ['run_sim.sh', 'top.sv']
 
 
-def sv_cosim_gen(gear):
+def sv_cosim_gen(gear, tcp_port=1234):
     # pygearslib = util.find_spec("pygearslib")
     # if pygearslib is not None:
     #     from pygearslib import sv_src_path
@@ -113,6 +113,7 @@ def sv_cosim_gen(gear):
         'out_path': os.path.abspath(outdir),
         'hooks': hooks,
         'rst_mask': "32'h8000_0000",
+        'port': tcp_port,
         'activity_timeout': 1000  # in clk cycles
     }
 
@@ -215,7 +216,7 @@ class SimSocketSynchro:
 
 
 class SimSocket(CosimBase):
-    def __init__(self, gear, run=False, batch=True, **kwds):
+    def __init__(self, gear, run=False, batch=True, tcp_port=1234, **kwds):
         super().__init__(gear)
 
         # Create a TCP/IP socket
@@ -225,7 +226,8 @@ class SimSocket(CosimBase):
         self.kwds = kwds
 
         # Bind the socket to the port
-        server_address = ('localhost', 1234)
+        server_address = ('localhost', tcp_port)
+        self.tcp_port = tcp_port
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
         self.sock.bind(server_address)
@@ -255,8 +257,8 @@ class SimSocket(CosimBase):
 
         # Send request
         pkt = req.to_bytes(4, byteorder='little')
-        self.handlers[self.SYNCHRO_HANDLE_NAME].sendall(
-            b'\x01\x00\x00\x00' + pkt)
+        self.handlers[self.SYNCHRO_HANDLE_NAME].sendall(b'\x01\x00\x00\x00' +
+                                                        pkt)
 
         # Get random data
         while data is None:
@@ -279,7 +281,7 @@ class SimSocket(CosimBase):
 
         sim_log().info(f'waiting on {self.sock.getsockname()}')
 
-        sv_cosim_gen(self.gear)
+        sv_cosim_gen(self.gear, self.tcp_port)
 
         self.cosim_pid = None
         if self.run_cosim:
@@ -290,6 +292,12 @@ class SimSocket(CosimBase):
             args = ' '.join(f'-{k} {v if not isinstance(v, bool) else ""}'
                             for k, v in self.kwds.items()
                             if not isinstance(v, bool) or v)
+            if 'seed' in self.kwds:
+                sim_log().warning(
+                    'Separately set seed for cosimulator. Ignoring SimRandSeed.'
+                )
+            else:
+                args += f' -seed {registry("SimRandSeed")}'
             if sim_log().isEnabledFor(logging.DEBUG):
                 stdout = None
             else:

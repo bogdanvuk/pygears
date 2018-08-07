@@ -181,6 +181,13 @@ class SVRandSocket(SimExtend):
                 args = ' '.join(f'-{k} {v if not isinstance(v, bool) else ""}'
                                 for k, v in self.kwds.items()
                                 if not isinstance(v, bool) or v)
+                if 'seed' in self.kwds:
+                    sim_log().warning(
+                        'Separately set seed for cosimulator. Ignoring SimRandSeed.'
+                    )
+                else:
+                    args += f' -seed {registry("SimRandSeed")}'
+
                 if sim_log().isEnabledFor(logging.DEBUG):
                     stdout = None
                 else:
