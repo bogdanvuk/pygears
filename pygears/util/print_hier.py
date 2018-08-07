@@ -42,19 +42,22 @@ class Visitor(HierVisitorBase):
         return True
 
     def print_module_signature(self, module):
+        def get_size(t):
+            try:
+                return str(int(t))
+            except TypeError:
+                return '?'
+
         t = module.get_type()
         if t is None:
             types = "None"
             sizes = ""
         elif isinstance(t, tuple):
             types = ', '.join([str(tt) for tt in t])
-            sizes = ', '.join([str(int(tt)) for tt in t])
+            sizes = ', '.join([get_size(tt) for tt in t])
         else:
             types = str(t)
-            try:
-                sizes = int(t)
-            except TypeError:
-                sizes = '?'
+            sizes = get_size(t)
 
         if self.fullname:
             name = module.name

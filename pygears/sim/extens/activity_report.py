@@ -104,11 +104,12 @@ def set_blocking_node(g, module):
 
 
 class ActivityReporter:
-    def __init__(self, top):
+    def __init__(self, top, draw_graph=True):
         sim = registry('Simulator')
         sim.events['before_run'].append(self.before_run)
         sim.events['after_run'].append(self.after_run)
         self.blockers = {}
+        self.draw_graph = draw_graph
 
     def intf_pull_start(self, intf):
         consumer = intf.producer
@@ -131,9 +132,12 @@ class ActivityReporter:
 
     def after_run(self, sim):
 
-        g = graph(
-            outdir=registry('SimArtifactDir'),
-            node_filter=lambda g: not g.child)
+        if self.draw_graph:
+            g = graph(
+                outdir=registry('SimArtifactDir'),
+                node_filter=lambda g: not g.child)
+        else:
+            g = None
 
         blocking_gears = set()
         cosim_name = None
@@ -145,8 +149,9 @@ class ActivityReporter:
             self.cosim_activity(g, cosim_name)
         self.sim_gears_activity(g, sim, blocking_gears)
 
-        outdir = registry('SimArtifactDir')
-        g.graph.write_svg(os.path.join(outdir, 'proba.svg'))
+        if self.draw_graph:
+            outdir = registry('SimArtifactDir')
+            g.graph.write_svg(os.path.join(outdir, 'proba.svg'))
 
         try:
             vcd_writer = registry('VCD')
@@ -165,13 +170,15 @@ class ActivityReporter:
 
             module = sim_gear.gear
 
-            g.node_map[module].set_style('filled')
-            if sim_gear not in sim.done:
-                g.node_map[module].set_fillcolor('yellow')
+            if self.draw_graph:
+                g.node_map[module].set_style('filled')
+                if sim_gear not in sim.done:
+                    g.node_map[module].set_fillcolor('yellow')
 
             if module.definition == decoupler_din:
                 if not module.queue.empty():
-                    set_blocking_node(g, module)
+                    if self.draw_graph:
+                        set_blocking_node(g, module)
                     blocking_gears.add(module)
                     sim_log().error(f'Data left in decoupler: {module.name}')
 
@@ -180,14 +187,16 @@ class ActivityReporter:
                 # print(f'{module.name}.{p.basename} queue empty: {q.empty()}')
                 if q._unfinished_tasks:
                     src_port = q.intf.consumers[0]
-                    set_blocking_edge(g, p)
+                    if self.draw_graph:
+                        set_blocking_edge(g, p)
                     blocking_gears.add(module)
                     sim_log().error(
                         f'{src_port.gear.name}.{src_port.basename} -> {module.name}.{p.basename} was not acknowledged'
                     )
 
                 if p in self.blockers:
-                    set_waiting_edge(g, p)
+                    if self.draw_graph:
+                        set_waiting_edge(g, p)
                     src_port = self.blockers[p]
                     sim_log().info(
                         f'{p.gear.name}.{p.basename} waiting on {src_port.gear.name}.{src_port.basename}'
@@ -217,30 +226,35 @@ class ActivityReporter:
                     sim_log().error(
                         f'Cosim spy not acknowledged: {activity_name}')
 
-                bc_regex = r'.*_bc_(?P<num>\d+).*'
-                if re.match(bc_regex, intf_name):
-                    sim_log().debug(
-                        f'Activity monitor cosim: bc not supported {activity_name}'
-                    )
-                    continue
+                if self.draw_graph:
+                    bc_regex = r'.*_bc_(?P<num>\d+).*'
+                    if re.match(bc_regex, intf_name):
+                        sim_log().debug(
+                            f'Activity monitor cosim: bc not supported {activity_name}'
+                        )
+                        continue
 
-                intf = find_target_intf(gear_name, intf_name)
-                if intf is None:
-                    sim_log().error(
-                        f'Cannot find matching interface for {activity_name}')
-                    continue
-                if intf.is_broadcast:
-                    sim_log().debug(f'Intf bc not supported {activity_name}')
-                    continue
+                    intf = find_target_intf(gear_name, intf_name)
+                    if intf is None:
+                        sim_log().error(
+                            f'Cannot find matching interface for {activity_name}'
+                        )
+                        continue
+                    if intf.is_broadcast:
+                        sim_log().debug(
+                            f'Intf bc not supported {activity_name}')
+                        continue
 
-                try:
-                    prod_gear = find_target_prod(intf)
-                    set_blocking_node(g, prod_gear)
-                except (KeyError, AttributeError):
-                    sim_log().debug(f'Cannot find node for {activity_name}')
+                    try:
+                        prod_gear = find_target_prod(intf)
+                        set_blocking_node(g, prod_gear)
+                    except (KeyError, AttributeError):
+                        sim_log().debug(
+                            f'Cannot find node for {activity_name}')
 
-                try:
-                    cons_port = find_target_cons(intf)
-                    set_blocking_edge(g, cons_port)
-                except (KeyError, AttributeError):
-                    sim_log().debug(f'Cannot find edge for {activity_name}')
+                    try:
+                        cons_port = find_target_cons(intf)
+                        set_blocking_edge(g, cons_port)
+                    except (KeyError, AttributeError):
+                        sim_log().debug(
+                            f'Cannot find edge for {activity_name}')
