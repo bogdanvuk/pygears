@@ -2,7 +2,7 @@ module qfilt #(
               parameter W_DIN = 16,
               parameter W_DOUT = 16,
               parameter LVL = 1,
-              parameter FIELD_SEL = 0
+              parameter SEL = 0
               )
   (
    input clk,
@@ -35,7 +35,7 @@ module qfilt #(
    logic eot_merge;
 
    assign din_s = din.data;
-   assign field_sel = (din_s.ctrl == FIELD_SEL);
+   assign field_sel = (din_s.ctrl == SEL);
 
    assign din_eot = din_s.eot[0];
    assign dout_eot = dout_reg.eot[0];

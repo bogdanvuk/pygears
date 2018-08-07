@@ -201,8 +201,11 @@ class Int(Integer, metaclass=IntMeta):
         if type(val) == cls:
             return val
 
-        if cls.is_generic() and isinstance(val, Uint):
-            return cls[val.width + 1](int(val))
+        if cls.is_generic():
+            if isinstance(val, Uint):
+                return cls[val.width + 1](int(val))
+            else:
+                return cls[val.bit_length() + 1](int(val))
         else:
             return super(Int, cls).__new__(cls,
                                            int(val) & ((1 << len(cls)) - 1))
