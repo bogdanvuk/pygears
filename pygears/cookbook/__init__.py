@@ -14,6 +14,7 @@ from .take import take
 from .release_after_eot import release_after_eot
 from .reverse import reverse
 from .valve import valve
+from .shr import shr
 from .form_sub_cfg import form_sub_cfg
 from .reduce2 import reduce2
 from .width_reductor import width_reductor
@@ -21,5 +22,5 @@ from .width_reductor import width_reductor
 __all__ = [
     'rng', 'iceil', 'priority_mux', 'qcnt', 'sdp', 'chop', 'trr', 'replicate',
     'trr_dist', 'clip', 'din_cat', 'take', 'release_after_eot', 'reverse',
-    'valve', 'form_sub_cfg', 'reduce2', 'width_reductor', 'accumulator'
+    'valve', 'form_sub_cfg', 'reduce2', 'width_reductor', 'accumulator', 'shr'
 ]

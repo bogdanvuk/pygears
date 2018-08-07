@@ -3,7 +3,7 @@ from pygears.sim import delta, clk
 
 
 @gear
-async def fifo(din, *, depth=2) -> b'din':
+async def fifo(din, *, depth=2, threshold=0) -> b'din':
     '''For this implementation depth must be a power of 2'''
 
     data = []

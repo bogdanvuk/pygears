@@ -97,23 +97,24 @@ class Intf:
         return self._in_queue
 
     def get_consumer_queue(self, port):
-        pout = self.consumers[0]
-        if pout.gear in registry('SimMap') and (isinstance(pout, OutPort)):
-            out_queues = self.out_queues
-            try:
-                i = self.end_consumers.index(port)
-            except Exception as e:
-                print(
-                    f'Port {port.gear.name}.{port.basename} not in end consumer list of {self.consumers[0].gear.name}.{self.consumers[0].basename}'
-                )
-                raise e
-            return out_queues[i]
-        elif self.producer:
-            return self.producer.get_queue(port)
+        for pout in self.consumers:
+            if pout.gear in registry('SimMap') and (isinstance(pout, OutPort)):
+                out_queues = self.out_queues
+                try:
+                    i = self.end_consumers.index(port)
+                except Exception as e:
+                    print(
+                        f'Port {port.gear.name}.{port.basename} not in end consumer list of {self.consumers[0].gear.name}.{self.consumers[0].basename}'
+                    )
+                    raise e
+                return out_queues[i]
         else:
-            raise Exception(
-                f'Interface path does not end with a simulation gear at {pout.gear.name}.{pout.basename}'
-            )
+            if self.producer:
+                return self.producer.get_queue(port)
+            else:
+                raise Exception(
+                    f'Interface path does not end with a simulation gear at {pout.gear.name}.{pout.basename}'
+                )
 
     @property
     def out_queues(self):
