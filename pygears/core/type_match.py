@@ -18,7 +18,7 @@ def _type_match_rec(t, pat, matches, allow_incomplete):
         if pat in matches:
             # If the parameter name is already bound, check if two deductions
             # are same
-            if repr(t) != repr(matches[pat]):
+            if repr(t) != repr(matches[pat]) and t != Any and matches[pat] != Any:
                 raise TypeMatchError(
                     f"Ambiguous match for parameter {pat}: {type_repr(t)} "
                     f"and {type_repr(matches[pat])}")

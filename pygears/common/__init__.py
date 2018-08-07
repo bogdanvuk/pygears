@@ -5,7 +5,7 @@ from .project import project
 from .czip import czip, zip_sync, unzip
 from .ccat import ccat
 from .cart import cart, cart_sync, cart_sync_with
-from .union import union_sync, union_collapse
+from .union import union_sync, union_collapse, union_sync_with
 from .cast import cast
 from .quenvelope import quenvelope
 from .sieve import sieve

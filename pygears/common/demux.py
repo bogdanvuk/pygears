@@ -1,5 +1,6 @@
 from pygears.core.gear import gear
 from pygears.typing import Union
+from pygears.common.ccat import ccat
 
 
 def demux_type(dtypes, ctrl_out):
@@ -20,6 +21,13 @@ async def demux(din: Union, *, ctrl_out=False) -> b'demux_type(din, ctrl_out)':
             dout = [item[1]] + dout
 
         yield tuple(dout)
+
+
+@gear
+def demux_by(din, ctrl, *, fcat=ccat):
+    return fcat(din, ctrl) \
+        | Union \
+        | demux
 
 
 @gear
