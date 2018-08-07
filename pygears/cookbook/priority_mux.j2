@@ -4,6 +4,9 @@
    logic [{{intfs|isinput|length}}-1:0] flag, flag_reg; // {{intfs|isinput|length}} = no of input interfaces
    logic handshake;
    assign handshake = dout.valid && dout.ready;
+{% if is_queue %}
+   logic start_reg;
+{% endif %}
 
    always_comb begin
       flag = 0;
@@ -44,11 +47,17 @@
    always_ff @(posedge clk) begin
   {% if is_queue %}
       if (rst | (handshake && dout_s.eot)) begin
+         start_reg <= 0;
   {% else %}
       if (rst | handshake) begin
   {% endif %}
          flag_reg <= 0;
-      end else if (handshake) begin
+  {% if is_queue %}
+      end else if (dout.valid && !start_reg) begin
+         start_reg <= 1;
+  {% else %}
+      end else begin
+  {% endif %}
          flag_reg <= flag;
       end
    end

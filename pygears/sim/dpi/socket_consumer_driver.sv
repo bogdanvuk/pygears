@@ -11,11 +11,12 @@ class socket_consumer_driver#(type DATA_T = bit [15:0]);
    function new
      (
       virtual dti_verif_if#(DATA_T) vif,
-      string  name = "socket_consumer_driver"
+      string  name = "socket_consumer_driver",
+      int     port = 1234
       );
       this.vif = vif;
       this.name = name;
-	    handle = sock_open("tcp://localhost:1234", name);
+	    handle = sock_open($sformatf("tcp://localhost:%d", port), name);
    endfunction
 
    task init();

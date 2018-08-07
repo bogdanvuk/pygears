@@ -1,20 +1,115 @@
 import os
+import re
 
 from vcd.gtkw import GTKWSave
 
-from pygears import registry
+from pygears import find, registry
 from pygears.common.decoupler import decoupler_din
+from pygears.core.port import OutPort as GearOutPort
+from pygears.rtl.port import InPort, OutPort
 from pygears.sim import sim_log
 from pygears.sim.extens.graphviz import graph
 from pygears.sim.extens.vcd import module_sav
+from pygears.sim.modules.sim_socket import SimSocket
+
+
+def _get_end_consumer_rec(intf, consumers):
+    for port in intf.consumers:
+        cons_intf = port.consumer
+
+        if isinstance(port, InPort) and (not cons_intf.consumers):
+            consumers.append(port)
+        else:
+            _get_end_consumer_rec(cons_intf, consumers)
+
+
+def get_end_consumer(intf):
+    consumers = []
+    _get_end_consumer_rec(intf, consumers)
+    return consumers
+
+
+def _get_producer_rec(intf, producers):
+    if isinstance(intf.producer, OutPort) or isinstance(
+            intf.producer, GearOutPort):
+        producers.append(intf.producer)
+    else:
+        _get_producer_rec(intf.producer, producers)
+
+
+def get_producer(intf):
+    producers = []
+    _get_producer_rec(intf, producers)
+    return producers
+
+
+def find_target_prod(intf):
+    # Who is producer gear?
+    # prod_rtl_port = intf.producer
+    end_p = get_producer(intf)
+    if len(end_p) != 1:
+        return None
+    if isinstance(end_p[0], OutPort):
+        prod_rtl_port = end_p[0]
+        prod_rtl_node = prod_rtl_port.node
+        prod_gear = prod_rtl_node.gear
+    else:
+        prod_gear = end_p[0].gear
+    if len(prod_gear.child):
+        assert len(prod_gear.child) == 1
+        return prod_gear.child[0]
+    else:
+        return prod_gear
+
+
+def find_target_cons(intf):
+    # Who is consumer port? Case when not broadcast!
+    # cons_rtl_port = intf.consumers[0]
+    end_c = get_end_consumer(intf)
+    if len(end_c) != 1:
+        if len(end_c) > 1:
+            sim_log().debug(f'Find target cons: found broadcast')
+        return None
+    cons_rtl_port = end_c[0]
+    cons_rtl_node, port_id = cons_rtl_port.node, cons_rtl_port.index
+    cons_gear = cons_rtl_node.gear
+    cons_port = cons_gear.in_ports[port_id]
+
+    return cons_port
+
+
+def find_target_intf(gear_name, intf_name):
+    gear_mod = find(gear_name)
+    rtl_node = registry('RTLNodeMap')[gear_mod].node
+
+    intf_name = intf_name[1:]  # spy name always starts with _
+    for i in rtl_node.local_interfaces():
+        if registry('SVGenMap')[i].basename == intf_name:
+            return i
+
+
+def set_waiting_edge(g, port):
+    g.edge_map[port].set_color('blue')
+    g.edge_map[port].set_penwidth(6)
+
+
+def set_blocking_edge(g, port):
+    g.edge_map[port].set_color('red')
+    g.edge_map[port].set_penwidth(6)
+
+
+def set_blocking_node(g, module):
+    g.node_map[module].set_fillcolor('red')
+    g.node_map[module].set_style('filled')
 
 
 class ActivityReporter:
-    def __init__(self, top):
+    def __init__(self, top, draw_graph=True):
         sim = registry('Simulator')
         sim.events['before_run'].append(self.before_run)
         sim.events['after_run'].append(self.after_run)
         self.blockers = {}
+        self.draw_graph = draw_graph
 
     def intf_pull_start(self, intf):
         consumer = intf.producer
@@ -37,48 +132,26 @@ class ActivityReporter:
 
     def after_run(self, sim):
 
-        g = graph(
-            outdir=registry('SimArtifactDir'),
-            node_filter=lambda g: g in registry('SimMap'))
+        if self.draw_graph:
+            g = graph(
+                outdir=registry('SimArtifactDir'),
+                node_filter=lambda g: not g.child)
+        else:
+            g = None
 
         blocking_gears = set()
-
+        cosim_name = None
         for sim_gear in sim.sim_gears:
-            module = sim_gear.gear
+            if isinstance(sim_gear, SimSocket):
+                cosim_name = sim_gear.gear.name
+                break
+        if cosim_name:
+            self.cosim_activity(g, cosim_name)
+        self.sim_gears_activity(g, sim, blocking_gears)
 
-            g.node_map[module].set_style('filled')
-            if sim_gear not in sim.done:
-                g.node_map[module].set_fillcolor('yellow')
-
-            if module.definition == decoupler_din:
-                if not module.queue.empty():
-                    g.node_map[module].set_fillcolor('red')
-                    g.node_map[module].set_style('filled')
-                    blocking_gears.add(module)
-                    sim_log().error(f'Data left in decoupler: {module.name}')
-
-            for p in module.in_ports:
-                q = p.get_queue()
-                # print(f'{module.name}.{p.basename} queue empty: {q.empty()}')
-                if q._unfinished_tasks:
-                    src_port = q.intf.consumers[0]
-                    g.edge_map[p].set_color('red')
-                    g.edge_map[p].set_penwidth(6)
-                    blocking_gears.add(module)
-                    sim_log().error(
-                        f'{src_port.gear.name}.{src_port.basename} -> {module.name}.{p.basename} was not acknowledged'
-                    )
-
-                if p in self.blockers:
-                    g.edge_map[p].set_color('blue')
-                    g.edge_map[p].set_penwidth(6)
-                    src_port = self.blockers[p]
-                    sim_log().info(
-                        f'{p.gear.name}.{p.basename} waiting on {src_port.gear.name}.{src_port.basename}'
-                    )
-
-        outdir = registry('SimArtifactDir')
-        g.graph.write_svg(os.path.join(outdir, 'proba.svg'))
+        if self.draw_graph:
+            outdir = registry('SimArtifactDir')
+            g.graph.write_svg(os.path.join(outdir, 'proba.svg'))
 
         try:
             vcd_writer = registry('VCD')
@@ -89,3 +162,99 @@ class ActivityReporter:
             gtkw = GTKWSave(f)
             for module in blocking_gears:
                 module_sav(gtkw, module, vcd_writer.vcd_vars)
+
+    def sim_gears_activity(self, g, sim, blocking_gears):
+        for sim_gear in sim.sim_gears:
+            if isinstance(sim_gear, SimSocket):
+                continue
+
+            module = sim_gear.gear
+
+            if self.draw_graph:
+                g.node_map[module].set_style('filled')
+                if sim_gear not in sim.done:
+                    g.node_map[module].set_fillcolor('yellow')
+
+            if module.definition == decoupler_din:
+                if not module.queue.empty():
+                    if self.draw_graph:
+                        set_blocking_node(g, module)
+                    blocking_gears.add(module)
+                    sim_log().error(f'Data left in decoupler: {module.name}')
+
+            for p in module.in_ports:
+                q = p.get_queue()
+                # print(f'{module.name}.{p.basename} queue empty: {q.empty()}')
+                if q._unfinished_tasks:
+                    src_port = q.intf.consumers[0]
+                    if self.draw_graph:
+                        set_blocking_edge(g, p)
+                    blocking_gears.add(module)
+                    sim_log().error(
+                        f'{src_port.gear.name}.{src_port.basename} -> {module.name}.{p.basename} was not acknowledged'
+                    )
+
+                if p in self.blockers:
+                    if self.draw_graph:
+                        set_waiting_edge(g, p)
+                    src_port = self.blockers[p]
+                    sim_log().info(
+                        f'{p.gear.name}.{p.basename} waiting on {src_port.gear.name}.{src_port.basename}'
+                    )
+
+    def cosim_activity(self, g, top_name):
+        outdir = registry('SimArtifactDir')
+        activity_path = os.path.join(outdir, 'activity.log')
+
+        if not os.path.isfile(activity_path):
+            return
+
+        with open(activity_path, 'r') as log:
+            for line in log:
+                activity_name = line.rpartition(': ')[0]
+                activity_name = activity_name.replace('top.dut.',
+                                                      f'{top_name}/')
+                activity_name = activity_name.rpartition('.')[0]
+                activity_name = activity_name.replace('_i.', '/')
+                gear_name, _, intf_name = activity_name.rpartition('/')
+
+                # Const always has valid high
+                const_regex = r'.*_const(?P<num>\d+)_s'
+                const_regex_one = r'.*_const_s'
+                if not (re.match(const_regex, intf_name)
+                        or re.match(const_regex_one, intf_name)):
+                    sim_log().error(
+                        f'Cosim spy not acknowledged: {activity_name}')
+
+                if self.draw_graph:
+                    bc_regex = r'.*_bc_(?P<num>\d+).*'
+                    if re.match(bc_regex, intf_name):
+                        sim_log().debug(
+                            f'Activity monitor cosim: bc not supported {activity_name}'
+                        )
+                        continue
+
+                    intf = find_target_intf(gear_name, intf_name)
+                    if intf is None:
+                        sim_log().error(
+                            f'Cannot find matching interface for {activity_name}'
+                        )
+                        continue
+                    if intf.is_broadcast:
+                        sim_log().debug(
+                            f'Intf bc not supported {activity_name}')
+                        continue
+
+                    try:
+                        prod_gear = find_target_prod(intf)
+                        set_blocking_node(g, prod_gear)
+                    except (KeyError, AttributeError):
+                        sim_log().debug(
+                            f'Cannot find node for {activity_name}')
+
+                    try:
+                        cons_port = find_target_cons(intf)
+                        set_blocking_edge(g, cons_port)
+                    except (KeyError, AttributeError):
+                        sim_log().debug(
+                            f'Cannot find edge for {activity_name}')

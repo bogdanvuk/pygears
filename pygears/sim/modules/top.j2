@@ -30,9 +30,9 @@ module top;
 {% endfor %}
 {% for intf in intfs %}
   {% if intf['modport'] == 'consumer' %}
-   socket_producer_driver#({{intf['name']}}_t) {{intf['name']}}_driver = new({{intf['name']}}_vif, "{{intf['name']}}");
+   socket_producer_driver#({{intf['name']}}_t) {{intf['name']}}_driver = new({{intf['name']}}_vif, "{{intf['name']}}", {{port}});
   {% else %}
-   socket_consumer_driver#({{intf['name']}}_t) {{intf['name']}}_driver = new({{intf['name']}}_vif, "{{intf['name']}}");
+   socket_consumer_driver#({{intf['name']}}_t) {{intf['name']}}_driver = new({{intf['name']}}_vif, "{{intf['name']}}", {{port}});
    activity_monitor#({{intf['name']}}_t, {{activity_timeout}}) {{intf['name']}}_mon = new({{intf['name']}}_vif, "{{intf['name']}}");
   {% endif %}
 {% endfor %}
@@ -104,7 +104,7 @@ module top;
       int ret;
       bit[31:0] data;
       // synchro socket
-      synchro_handle = sock_open("tcp://localhost:1234", "_synchro");
+      synchro_handle = sock_open("tcp://localhost:{{port}}", "_synchro");
 
       @(negedge rst); // wait for power up rst
       forever begin
