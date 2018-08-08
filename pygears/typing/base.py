@@ -283,6 +283,14 @@ searched recursively. Each template is reported only once.
         else:
             return [f'f{i}' for i in self.keys()]
 
+    def replace(self, field_map, arg_map={}):
+        args = {
+            field_map.get(k, k): arg_map.get(field_map.get(k, k), v)
+            for k, v in zip(self.fields, self.args)
+        }
+
+        return self.base[args]
+
     def __eq__(self, other):
         if not isinstance(other, GenericMeta):
             return False

@@ -9,7 +9,8 @@ class Identity(dict):
 
 @gear
 def form_sub_cfg_impl(cfg, *, sub_cfg_t, name_map=Identity()):
-    sub_cfg_fields = (cfg[name_map[f]] for f in sub_cfg_t.fields)
+    sub_cfg_fields = (cfg[name_map[f] if f in name_map else f]
+                      for f in sub_cfg_t.fields)
     return ccat(*sub_cfg_fields)
 
 
