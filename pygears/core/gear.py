@@ -295,6 +295,7 @@ class Gear(NamedHierNode):
             OutPort(self, i, name) for i, name in enumerate(self.outnames)
         ]
 
+        # Connect internal interfaces
         if func_ret:
             for i, r in enumerate(func_ret):
                 r.connect(self.out_ports[i])
@@ -302,15 +303,16 @@ class Gear(NamedHierNode):
             for dtype, port in zip(out_dtype, self.out_ports):
                 Intf(dtype).connect(port)
 
+        # Connect output interfaces
         self.intfs = []
         out_intfs = []
         if isinstance(self.fix_intfs, dict):
             for i, (name, dt) in enumerate(zip(self.outnames, out_dtype)):
                 if name in self.fix_intfs:
                     intf = self.fix_intfs[name]
-                    out_intfs.append(intf)
                 else:
                     intf = Intf(dt)
+                    out_intfs.append(intf)
 
                 self.intfs.append(intf)
 
