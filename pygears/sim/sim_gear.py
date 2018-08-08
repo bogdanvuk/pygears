@@ -1,5 +1,6 @@
 import inspect
 import asyncio
+import atexit
 from pygears.core.err import register_exit_hook
 from pygears import registry, GearDone
 from pygears.sim import clk, timestep, delta, sim_log, sim_phase
@@ -21,6 +22,7 @@ class SimGear:
         self.out_queues = []
         self.namespace = registry('SimMap')
         self._done = False
+        self._clean = True
         if not hasattr(self, 'func'):
             self.func = gear.func
 
@@ -43,12 +45,16 @@ class SimGear:
         for port in self.gear.out_ports:
             port.producer.finish()
 
-        self.cleanup()
+        if not self._clean:
+            self.cleanup()
+            self._clean = True
 
     def cleanup(self):
         pass
 
     def setup(self):
+        self._clean = False
+        atexit.register(self.finish)
         register_exit_hook(self.cleanup)
         if self.gear.params['sim_setup'] is not None:
             self.gear.params['sim_setup'](self.gear)

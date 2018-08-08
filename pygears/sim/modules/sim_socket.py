@@ -1,6 +1,5 @@
 import array
 import asyncio
-import atexit
 import glob
 import itertools
 import logging
@@ -243,7 +242,8 @@ class SimSocket(CosimBase):
         super().finish()
 
     def cleanup(self):
-        time.sleep(4)
+        sim_log().info(f'Done. Closing the socket...')
+        time.sleep(3)
         self.sock.close()
         time.sleep(1)
 
@@ -277,9 +277,7 @@ class SimSocket(CosimBase):
         return data
 
     def setup(self):
-        atexit.register(self.finish)
-
-        sim_log().info(f'waiting on {self.sock.getsockname()}')
+        super().setup()
 
         sv_cosim_gen(self.gear, self.tcp_port)
 
@@ -320,6 +318,8 @@ class SimSocket(CosimBase):
         self.loop = asyncio.get_event_loop()
 
         total_conn_num = len(self.gear.argnames) + len(self.gear.outnames) + 1
+
+        sim_log().info(f'Waiting on {self.sock.getsockname()}')
         while len(self.handlers) != total_conn_num:
             if self.cosim_pid:
                 ret = None
@@ -333,7 +333,7 @@ class SimSocket(CosimBase):
                             sim_log().error(f"Cosimulator error: {ret}")
                             raise Exception
             else:
-                sim_log().info("Wait for connection")
+                sim_log().debug("Wait for connection")
                 self.sock.listen(1)
                 conn, addr = self.sock.accept()
 
