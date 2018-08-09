@@ -56,7 +56,10 @@ def find_target_prod(intf):
     else:
         prod_gear = end_p[0].gear
     if len(prod_gear.child):
-        assert len(prod_gear.child) == 1
+        if len(prod_gear.child) > 1:
+            sim_log().warning(
+                f'ActivityCosim: prod has more than one child. Setting on first.'
+            )
         return prod_gear.child[0]
     else:
         return prod_gear
