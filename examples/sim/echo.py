@@ -11,6 +11,9 @@ import numpy as np
 import math
 import itertools
 
+# Provide WAV file and path to wav.read(),
+# COMMENT spy interface in DTI.sv in order for this test to work.
+
 
 def float_to_fixp(number, num_format):
     rng = (2**float(num_format[0])) / 2
