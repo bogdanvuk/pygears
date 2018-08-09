@@ -47,10 +47,9 @@ class SimGear:
 
         if not self._clean:
             self.cleanup()
-            self._clean = True
 
     def cleanup(self):
-        pass
+        self._clean = True
 
     def setup(self):
         self._clean = False

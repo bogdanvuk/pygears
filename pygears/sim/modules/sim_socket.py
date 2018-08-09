@@ -251,6 +251,8 @@ class SimSocket(CosimBase):
             self.cosim_pid.terminate()
             # signal.pthread_kill(self.cosim_pid)
 
+        super().cleanup()
+
     def send_req(self, req, dtype):
         # print('SimSocket sending request...')
         data = None
