@@ -347,7 +347,7 @@ def sim(outdir=None,
         ch = get_default_logger_handler(verbosity)
         logger.addHandler(ch)
 
-    if seed is None:
+    if not seed:
         seed = int(time.time())
     random.seed(seed)
     bind('SimRandSeed', seed)
