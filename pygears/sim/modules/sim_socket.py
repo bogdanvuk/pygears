@@ -219,20 +219,12 @@ class SimSocket(CosimBase):
         super().__init__(gear)
 
         # Create a TCP/IP socket
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.run_cosim = run
         kwds['batch'] = batch
         self.kwds = kwds
+        self.sock = None
 
-        # Bind the socket to the port
-        server_address = ('localhost', tcp_port)
-        self.tcp_port = tcp_port
-        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-
-        self.sock.bind(server_address)
-
-        # Listen for incoming connections
-        self.sock.listen(len(gear.in_ports) + len(gear.out_ports))
+        self.server_address = ('localhost', tcp_port)
         self.handlers = {}
 
         registry('SimConfig')['SimSocket'] = self
@@ -242,14 +234,14 @@ class SimSocket(CosimBase):
         super().finish()
 
     def cleanup(self):
-        sim_log().info(f'Done. Closing the socket...')
-        time.sleep(3)
-        self.sock.close()
-        time.sleep(1)
+        if self.sock:
+            sim_log().info(f'Done. Closing the socket...')
+            time.sleep(3)
+            self.sock.close()
+            time.sleep(1)
 
-        if self.cosim_pid is not None:
-            self.cosim_pid.terminate()
-            # signal.pthread_kill(self.cosim_pid)
+            if self.cosim_pid is not None:
+                self.cosim_pid.terminate()
 
         super().cleanup()
 
@@ -281,7 +273,16 @@ class SimSocket(CosimBase):
     def setup(self):
         super().setup()
 
-        sv_cosim_gen(self.gear, self.tcp_port)
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # Bind the socket to the port
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+        self.sock.bind(self.server_address)
+
+        # Listen for incoming connections
+        self.sock.listen(len(self.gear.in_ports) + len(self.gear.out_ports))
+
+        sv_cosim_gen(self.gear, self.server_address[1])
 
         self.cosim_pid = None
         if self.run_cosim:
