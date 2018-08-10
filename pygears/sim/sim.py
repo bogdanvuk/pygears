@@ -156,6 +156,8 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             self.done.add(sim_gear)
             self.events['after_cancel'](self, sim_gear)
             self.cur_gear = registry('HierRoot')
+            self.back_ready.discard(sim_gear)
+            self.forward_ready.discard(sim_gear)
             bind('CurrentModule', self.cur_gear)
 
     def maybe_run_gear(self, sim_gear, ready):
