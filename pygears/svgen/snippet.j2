@@ -13,7 +13,7 @@
   {% endfor -%}
 {%- endmacro %}
 
-{% macro module_inst(module_name, param_map, inst_name, port_map=None) -%}
+{% macro module_inst(module_name, param_map, inst_name, port_map=None, rst_name="local_rst") -%}
 
   {{module_name}}
   {%- if param_map|length > 0 %}
@@ -29,7 +29,7 @@
   {% endif %}
  {{inst_name}} (
     .clk(clk),
-    .rst(rst),
+    .rst({{rst_name}}),
   {% if port_map -%}
     {% for name,value in port_map.items() -%}
       {{"."|indent(4,True)}}{{name}}({{value}}){{ "," if not loop.last }}

@@ -1,6 +1,9 @@
 from pygears.registry import registry, PluginBase
 from functools import partial
 from enum import IntEnum
+from traceback import extract_tb, format_list, walk_tb
+from traceback import format_exception_only
+import os
 import sys
 
 
@@ -21,9 +24,21 @@ def register_exit_hook(hook, *args, **kwds):
     registry('ExitHooks').append(partial(hook, *args, **kwds))
 
 
+def enum_traceback(tr):
+    for s, t in zip(format_list(extract_tb(tr)), walk_tb(tr)):
+        if registry("ErrReportLevel") == ErrReportLevel.debug:
+            yield s
+        else:
+            is_internal = t[0].f_code.co_filename.startswith(
+                os.path.dirname(__file__))
+            is_boltons = 'boltons' in t[0].f_code.co_filename
+            if not is_internal and not is_boltons:
+                yield s
+
+
 def pygears_excepthook(exception_type,
                        exception,
-                       traceback,
+                       tr,
                        debug_hook=sys.excepthook):
 
     for hook in registry('ExitHooks'):
@@ -33,25 +48,17 @@ def pygears_excepthook(exception_type,
             pass
 
     if registry("ErrReportLevel") == ErrReportLevel.debug:
-        debug_hook(exception_type, exception, traceback)
+        debug_hook(exception_type, exception, tr)
     else:
-        from traceback import extract_tb, format_list, walk_tb
-        from traceback import format_exception_only
         from pygears.util.print_hier import print_hier
         from pygears import find
-        import os
 
         try:
             print_hier(find('/'))
         except Exception as e:
             pass
 
-        for s, t in zip(
-                format_list(extract_tb(traceback)), walk_tb(traceback)):
-            is_internal = t[0].f_code.co_filename.startswith(
-                os.path.dirname(__file__))
-            is_boltons = 'boltons' in t[0].f_code.co_filename
-            if not is_internal and not is_boltons:
-                print(s, end='')
+        for s in enum_traceback(tr):
+            print(s, end='')
 
         print(format_exception_only(exception_type, exception)[0])

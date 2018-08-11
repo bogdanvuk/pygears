@@ -36,6 +36,9 @@ class SVGenSieve(SVModuleGen):
         def get_stages():
             for s in itertools.chain(self.node.pre_sieves, [self.node]):
                 indexes = s.params['index']
+                if not isinstance(indexes, tuple):
+                    indexes = (indexes, )
+
                 dtype = s.in_ports[0].dtype
                 out_type = s.out_ports[0].dtype
                 slices = list(

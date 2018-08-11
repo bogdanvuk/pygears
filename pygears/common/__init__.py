@@ -1,4 +1,5 @@
 from .expand import expand
+from .local_rst import local_rst
 from .factor import factor
 from .flatten import flatten
 from .project import project
@@ -21,7 +22,7 @@ from .eq import eq
 from .mux import mux, mux_zip, mux_valve
 from .demux import demux, demux_zip
 from .shred import shred
-from .decoupler import decoupler
+from .decoupler import decoupler, buff
 from .fifo import fifo
 from .fill import fill
 from .dreg import dreg
@@ -37,5 +38,5 @@ __all__ = [
     'div', 'neg', 'mux', 'demux', 'shred', 'cart_sync', 'decoupler', 'dreg',
     'unzip', 'serialize', 'project', 'fifo', 'factor', 'fill', 'mux_zip',
     'mux_valve', 'demux_zip', 'data_dly', 'eq', 'union_sync', 'union_collapse',
-    'filt'
+    'filt', 'buff', 'local_rst'
 ]

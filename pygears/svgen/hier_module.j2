@@ -11,6 +11,11 @@ module {{module_name}}
 {{snippet.intf_list(intfs)|indent(4, True)}}
 );
 
+{% if not has_local_rst %}
+    logic local_rst;
+    assign local_rst = rst;
+{% endif %}
+
 {% for i in inst %}
 {{i|indent(4,True)}}
 

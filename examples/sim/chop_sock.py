@@ -14,6 +14,7 @@ seqrs = [
     seqr(t=t_cfg, seq=[2, 3])
 ]
 
+
 directed(
     *seqrs, f=chop, ref=[[[0, 1], [2, 3], [4, 5], [6, 7], [8]], [[0, 1, 2]]])
 

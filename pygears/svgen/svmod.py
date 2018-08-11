@@ -27,9 +27,12 @@ class SVModuleGen:
 
         if not self.is_generated:
             try:
-                self.sv_module_path, self._sv_module_name, self.sv_params = self.get_sv_module_info()
+                self.sv_module_path, self._sv_module_name, self.sv_params = self.get_sv_module_info(
+                )
             except FileNotFoundError:
-                print(f'Warning: SystemVerilog file not found for {self.node.name}')
+                print(
+                    f'Warning: SystemVerilog file not found for {self.node.name}'
+                )
         elif self.is_hierarchical:
             if find_in_dirs(self.sv_file_name,
                             registry('SVGenSystemVerilogPaths')):
@@ -71,7 +74,8 @@ class SVModuleGen:
 
                 return svmod_path, name, svparams
 
-        raise FileNotFoundError(f'SystemVerilog file not found for {self.node.name}')
+        raise FileNotFoundError(
+            f'SystemVerilog file not found for {self.node.name}')
 
     @property
     def params(self):
@@ -137,10 +141,15 @@ class SVModuleGen:
             self.svgen_map = registry('SVGenMap')
 
             context = {
-                'module_name': self.sv_module_name,
+                'module_name':
+                self.sv_module_name,
                 'generics': [],
-                'intfs': list(self.sv_port_configs()),
-                'inst': []
+                'intfs':
+                list(self.sv_port_configs()),
+                'inst': [],
+                'has_local_rst':
+                any(child.gear.definition.__name__ == 'local_rst'
+                    for child in self.node.local_modules())
             }
 
             for child in self.node.local_interfaces():
