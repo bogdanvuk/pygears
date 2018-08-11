@@ -492,6 +492,7 @@ class FunctionBuilder(object):
 
         kwargs = {'name': func.__name__,
                   'doc': func.__doc__,
+                  'filename': func.__code__.co_filename,
                   'module': func.__module__,
                   'dict': getattr(func, '__dict__', {})}
 
@@ -589,10 +590,10 @@ class FunctionBuilder(object):
 
     def _compile(self, src, execdict):
 
-        filename = ('<%s-%d>'
-                    % (self.filename, next(self._compile_count),))
+        # filename = ('<%s-%d>'
+        #             % (self.filename, next(self._compile_count),))
         try:
-            code = compile(src, filename, 'single')
+            code = compile(src, self.filename, 'single')
             exec(code, execdict)
         except Exception:
             raise
