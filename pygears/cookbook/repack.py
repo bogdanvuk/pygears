@@ -15,7 +15,14 @@ from pygears.common import ccat
 
 @gear
 def repack(cfg, *, t, name_map={}, val_map={}):
-    fields = (val_map.get(f, None)
-              if f not in cfg.dtype.fields else cfg[name_map.get(f, f)]
-              for f in t.fields)
+    fields = []
+    for f_name in t.fields:
+        if f_name in val_map:
+            f = val_map[f_name]
+        else:
+            f_name = name_map.get(f_name, f_name)
+            f = cfg[f_name]
+
+        fields.append(f)
+
     return ccat(*fields) | t
