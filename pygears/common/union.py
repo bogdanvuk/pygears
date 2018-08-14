@@ -23,7 +23,7 @@ def union_sync_with(din, sync_in, *, ctrl, balance=None):
 
 
 @gear
-def filt_by(din, ctrl, *, sel=0, fcat=ccat):
+def filt_by(din, ctrl, *, sel, fcat=ccat):
     return fcat(din, ctrl) \
         | Union \
         | filt(sel=sel)

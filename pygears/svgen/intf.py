@@ -1,3 +1,4 @@
+import fnmatch
 from string import Template
 
 from pygears import PluginBase, registry
@@ -50,6 +51,10 @@ class SVIntfGen:
         if not self.intf.is_port_intf:
             inst.append(self.get_intf_def(self.basename, 1, template_env))
 
+        gen_dbg_intf = any(
+            fnmatch.fnmatch(self.intf.parent.gear.name, p)
+            for p in registry('SVGenDebugIntfs'))
+
         if self.intf.is_broadcast:
             inst.extend([
                 self.get_intf_def(self.outname, len(self.intf.consumers),
@@ -61,7 +66,7 @@ class SVIntfGen:
                 if isinstance(cons_port, OutPort):
                     inst.append(self.get_connect_module(i, template_env))
 
-            if registry('SVGenDebugIntfs'):
+            if gen_dbg_intf:
                 for i in range(len(self.intf.consumers)):
                     intf_name = f'{self.outname}_{i}'
                     conn_name = f'{self.outname}[{i}]'
@@ -73,7 +78,7 @@ class SVIntfGen:
                             intf_name=intf_name,
                             conn_name=conn_name).split('\n'))
 
-        if registry('SVGenDebugIntfs'):
+        if gen_dbg_intf:
             inst.extend(
                 svgen_typedef(self.intf.dtype, self.basename).split('\n'))
 
@@ -135,4 +140,4 @@ class SVIntfGen:
 class SVGenIntfPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        cls.registry['SVGenDebugIntfs'] = False
+        cls.registry['SVGenDebugIntfs'] = []

@@ -180,7 +180,15 @@ class SVModuleGen:
         out_port_map = [(port.basename, self.get_out_port_map_intf_name(port))
                         for port in self.node.out_ports]
 
+        rst_name = 'local_rst'
+        try:
+            if self.node.out_ports[-1].basename == 'rst_o':
+                rst_name = 'rst'
+        except:
+            pass
+
         context = {
+            'rst_name': rst_name,
             'module_name': self.sv_module_name,
             'inst_name': self.sv_inst_name,
             'param_map': param_map,

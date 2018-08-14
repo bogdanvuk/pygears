@@ -54,6 +54,7 @@ class Intf:
         self._in_queue = None
         self._out_queues = []
         self._done = False
+        self._data = None
 
         self.events = {
             'put': SimEvent(),
@@ -163,7 +164,10 @@ class Intf:
         await self.ready()
 
     def empty(self):
-        return self.in_queue.empty()
+        if self._data is not None:
+            return False
+        else:
+            return self.in_queue.empty()
         # intf, index = self.in_queue
         # return intf.out_queues[index].empty()
 
@@ -182,7 +186,10 @@ class Intf:
         if self._done:
             raise GearDone
 
-        return self.in_queue.get_nowait()
+        if self._data is None:
+            self._data = self.in_queue.get_nowait()
+
+        return self._data
 
     def get_nb(self):
         val = self.pull_nb()
@@ -203,6 +210,8 @@ class Intf:
         ret = self.in_queue.task_done()
         if self.in_queue.intf.ready_nb():
             self.events['ack'](self.in_queue.intf)
+
+        self._data = None
         return ret
 
     async def get(self):

@@ -154,6 +154,7 @@ class SimSocketInputDrv(SimSocketDrv):
         # del self.handler
 
     def send(self, data):
+        # print(f'Sending {repr(data)} for {self.port.basename} of type {self.port.dtype}')
         pkt = u32_repr(data, self.port.dtype).tobytes()
         self.handler.sendall(pkt)
 
@@ -215,8 +216,16 @@ class SimSocketSynchro:
 
 
 class SimSocket(CosimBase):
-    def __init__(self, gear, run=False, batch=True, tcp_port=1234, **kwds):
+    def __init__(self,
+                 gear,
+                 rebuild=True,
+                 run=False,
+                 batch=True,
+                 tcp_port=1234,
+                 **kwds):
         super().__init__(gear)
+
+        self.rebuild = rebuild
 
         # Create a TCP/IP socket
         self.run_cosim = run
@@ -282,7 +291,8 @@ class SimSocket(CosimBase):
         # Listen for incoming connections
         self.sock.listen(len(self.gear.in_ports) + len(self.gear.out_ports))
 
-        sv_cosim_gen(self.gear, self.server_address[1])
+        if self.rebuild:
+            sv_cosim_gen(self.gear, self.server_address[1])
 
         self.cosim_pid = None
         if self.run_cosim:
