@@ -51,7 +51,7 @@ def do_if(cond, din, *, f, fe=None, fcat=ccat, **kwds):
 
 
 def all_same(din):
-    return din.types.count(din.types[0]) == len(din)
+    return din.types.count(din.types[0]) == len(din.types)
 
 
 @gear(enablement=b'all_same(din)')
