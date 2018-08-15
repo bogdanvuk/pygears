@@ -10,6 +10,33 @@ class RTLIntf(NamedHierNode):
         self.dtype = dtype
 
     @property
+    def basename(self):
+        producer_port = self.producer
+        port_name = producer_port.basename
+
+        if hasattr(self, 'var_name'):
+            producer_name = self.var_name
+        else:
+            producer_name = producer_port.node.basename
+
+        if isinstance(producer_port, InPort):
+            return port_name
+        elif ((not self.is_broadcast) and self.consumers
+              and isinstance(self.consumers[0], OutPort)):
+            return self.consumers[0].basename
+        elif self.sole_intf:
+            return f'{producer_name}_s'
+        else:
+            return f'{producer_name}_{port_name}_s'
+
+    @property
+    def outname(self):
+        if self.is_broadcast:
+            return f'{self.basename}_bc'
+        else:
+            return self.basename
+
+    @property
     def sole_intf(self):
         if self.producer:
             return len(self.producer.node.out_ports) == 1
