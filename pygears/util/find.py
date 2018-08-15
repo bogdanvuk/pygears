@@ -25,6 +25,9 @@ def find(path, root=None):
         path = path[1:]
         root = registry('HierRoot')
     else:
+        if path.startswith('./'):
+            path = path[2:]
+
         root = registry('CurrentModule')
 
     if path == '':

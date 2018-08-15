@@ -18,30 +18,11 @@ class SVIntfGen:
 
     @property
     def basename(self):
-        producer_port = self.intf.producer
-        port_name = producer_port.basename
-
-        if hasattr(self.intf, 'var_name'):
-            producer_name = self.intf.var_name
-        else:
-            producer_name = producer_port.node.basename
-
-        if isinstance(producer_port, InPort):
-            return port_name
-        elif ((not self.intf.is_broadcast) and self.intf.consumers
-              and isinstance(self.intf.consumers[0], OutPort)):
-            return self.intf.consumers[0].basename
-        elif self.intf.sole_intf:
-            return f'{producer_name}_s'
-        else:
-            return f'{producer_name}_{port_name}_s'
+        return self.intf.basename
 
     @property
     def outname(self):
-        if self.intf.is_broadcast:
-            return f'{self.basename}_bc'
-        else:
-            return self.basename
+        return self.intf.outname
 
     def get_inst(self, template_env):
         if self.intf.producer is None:
