@@ -107,6 +107,8 @@ class SimVerilated(CosimBase):
                 f'Verilator compile error: {ret}. '
                 f'Please inspect "{self.outdir}/make.log"')
 
+        sim_log().info(f'Verilator VCD dump to "{self.outdir}/vlt_dump.vcd"')
+
     def finish(self):
         if not self.finished:
             self.finished = True
