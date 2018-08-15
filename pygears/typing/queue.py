@@ -93,6 +93,10 @@ class Queue(tuple, metaclass=QueueMeta):
         return self[1:]
 
     @property
+    def lvl(self):
+        return len(self) - 1
+
+    @property
     def data(self):
         return self[0]
 
