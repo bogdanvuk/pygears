@@ -5,9 +5,9 @@ from pygears.common.mux import mux
 from pygears.common.shred import shred
 
 
-def fill_type(din_t, union_t, field_sel):
+def fill_type(din_t, union_t, sel):
     dtypes = union_t.types.copy()
-    dtypes[field_sel] = din_t
+    dtypes[sel] = din_t
 
     return Union[tuple(dtypes)]
 
@@ -18,11 +18,11 @@ def fill(din,
          *,
          fdemux=demux(ctrl_out=True),
          fmux=mux,
-         field_sel) -> b'fill_type(din, union_din, field_sel)':
+         sel) -> b'fill_type(din, union_din, sel)':
     fields = union_din | fdemux
     fields_list = list(fields)
 
-    fields_list[field_sel+1] | shred
+    fields_list[sel+1] | shred
 
-    fields_list[field_sel+1] = din
+    fields_list[sel+1] = din
     return tuple(fields_list) | fmux

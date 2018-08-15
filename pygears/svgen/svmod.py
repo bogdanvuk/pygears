@@ -128,6 +128,11 @@ class SVModuleGen:
             return f'{svgen_intf.outname}[{i}]'
 
     @property
+    def has_local_rst(self):
+        return any(child.gear.definition.__name__ == 'local_rst'
+                   for child in self.node.local_modules())
+
+    @property
     def hier_sv_path_name(self):
         trimmed_name = self.node.name
 
@@ -141,15 +146,11 @@ class SVModuleGen:
             self.svgen_map = registry('SVGenMap')
 
             context = {
-                'module_name':
-                self.sv_module_name,
+                'module_name': self.sv_module_name,
                 'generics': [],
-                'intfs':
-                list(self.sv_port_configs()),
+                'intfs': list(self.sv_port_configs()),
                 'inst': [],
-                'has_local_rst':
-                any(child.gear.definition.__name__ == 'local_rst'
-                    for child in self.node.local_modules())
+                'has_local_rst': self.has_local_rst
             }
 
             for child in self.node.local_interfaces():
@@ -180,7 +181,9 @@ class SVModuleGen:
         out_port_map = [(port.basename, self.get_out_port_map_intf_name(port))
                         for port in self.node.out_ports]
 
-        rst_name = 'local_rst'
+        rst_name = 'local_rst' if self.svgen_map[
+            self.node.parent].has_local_rst else 'rst'
+
         try:
             if self.node.out_ports[-1].basename == 'rst_o':
                 rst_name = 'rst'

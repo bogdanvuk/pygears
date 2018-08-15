@@ -32,7 +32,8 @@ class SimVerilated(CosimBase):
     def __init__(self, gear):
         super().__init__(gear, timeout=100)
         self.name = gear.name[1:].replace('/', '_')
-        self.outdir = os.path.abspath(os.path.join(registry('SimArtifactDir'), self.name))
+        self.outdir = os.path.abspath(
+            os.path.join(registry('SimArtifactDir'), self.name))
         self.objdir = os.path.join(self.outdir, 'obj_dir')
         self.svnode = svgen(gear, outdir=self.outdir, wrapper=True)
         self.svmod = registry('SVGenMap')[self.svnode]
@@ -63,8 +64,6 @@ class SimVerilated(CosimBase):
         self.handlers[self.SYNCHRO_HANDLE_NAME] = SimVerilatorSynchro(
             self.verilib)
 
-
-
     def build(self):
         context = {
             'in_ports': self.svnode.in_ports,
@@ -74,8 +73,10 @@ class SimVerilated(CosimBase):
             'outdir': self.outdir
         }
 
-        include = ' '.join(
-            [f'-I{p}' for p in registry('SVGenSystemVerilogPaths')])
+        include = ' '.join([
+            f'-I{os.path.abspath(p)}'
+            for p in registry('SVGenSystemVerilogPaths')
+        ])
 
         jenv = jinja2.Environment(trim_blocks=True, lstrip_blocks=True)
         jenv.globals.update(int=int)
@@ -91,13 +92,11 @@ class SimVerilated(CosimBase):
             if not os.path.exists(self.objdir):
                 raise VerilatorCompileError(
                     f'Verilator compile error: {ret}. '
-                    f'Please inspect "{self.outdir}/verilate.log"'
-                )
+                    f'Please inspect "{self.outdir}/verilate.log"')
             else:
                 sim_log().warning(
                     f'Verilator compiled with warnings. '
-                    f'Please inspect "{self.outdir}/verilate.log"'
-                    )
+                    f'Please inspect "{self.outdir}/verilate.log"')
 
         ret = os.system(
             f"cd {self.objdir}; make -j -f V{self.wrap_name}.mk > make.log 2>&1"
@@ -106,8 +105,7 @@ class SimVerilated(CosimBase):
         if ret != 0:
             raise VerilatorCompileError(
                 f'Verilator compile error: {ret}. '
-                f'Please inspect "{self.outdir}/make.log"'
-            )
+                f'Please inspect "{self.outdir}/make.log"')
 
     def finish(self):
         if not self.finished:
