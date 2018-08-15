@@ -1,4 +1,4 @@
-module div #(
+module mod #(
              parameter DIN0_SIGNED = 0,
              parameter DIN1_SIGNED = 0
              )
@@ -10,13 +10,13 @@ module div #(
                 dti.producer dout);
 
    if ((!DIN0_SIGNED) && (!DIN1_SIGNED)) begin
-       assign dout.data = din0.data / din1.data;
+       assign dout.data = din0.data % din1.data;
    end else if ((DIN0_SIGNED) && (!DIN1_SIGNED)) begin
-       assign dout.data = signed'(din0.data) / din1.data;
+       assign dout.data = signed'(din0.data) % din1.data;
    end else if ((!DIN0_SIGNED) && (DIN1_SIGNED)) begin
-       assign dout.data = din0.data / signed'(din1.data);
+       assign dout.data = din0.data % signed'(din1.data);
    end else if ((DIN0_SIGNED) && (DIN1_SIGNED)) begin
-       assign dout.data = signed'(din0.data) / signed'(din1.data);
+       assign dout.data = signed'(din0.data) % signed'(din1.data);
    end
 
    logic handshake;

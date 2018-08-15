@@ -32,3 +32,4 @@ class DivIntfOperPlugin(IntfOperPlugin):
     @classmethod
     def bind(cls):
         cls.registry['IntfOperNamespace']['__div__'] = div
+        cls.registry['IntfOperNamespace']['__floordiv__'] = div

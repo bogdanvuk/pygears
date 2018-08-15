@@ -17,6 +17,7 @@ from .add import add
 from .sub import sub
 from .mul import mul
 from .div import div
+from .mod import mod
 from .neg import neg
 from .eq import eq
 from .mux import mux, mux_zip, mux_valve
@@ -38,5 +39,5 @@ __all__ = [
     'div', 'neg', 'mux', 'demux', 'shred', 'cart_sync', 'decoupler', 'dreg',
     'unzip', 'serialize', 'project', 'fifo', 'factor', 'fill', 'mux_zip',
     'mux_valve', 'demux_zip', 'data_dly', 'eq', 'union_sync', 'union_collapse',
-    'filt', 'buff', 'local_rst'
+    'filt', 'buff', 'local_rst', 'mod'
 ]
