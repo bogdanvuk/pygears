@@ -1,5 +1,5 @@
 from pygears.typing import TypingNamespacePlugin, typeof
-from pygears.typing import Int, Uint, Queue, Tuple, Union
+from pygears.typing import Int, Uint, Queue, Tuple, Union, Array
 
 
 def cast(dtype, cast_type):
@@ -20,6 +20,8 @@ def cast(dtype, cast_type):
             return Tuple[dtype[0], dtype[1:]]
         elif typeof(dtype, Tuple):
             return dtype
+        elif typeof(dtype, Array):
+            return Tuple[(dtype[0], )*len(dtype)]
     elif (typeof(cast_type, Union) and typeof(dtype, Tuple)
           and len(dtype) == 2 and not cast_type.is_specified()):
         return Union[(dtype[0], )*(2**int(dtype[1]))]

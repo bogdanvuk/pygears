@@ -20,6 +20,7 @@ from .div import div
 from .mod import mod
 from .neg import neg
 from .eq import eq
+from .invert import invert
 from .mux import mux, mux_zip, mux_valve
 from .demux import demux, demux_zip
 from .shred import shred
@@ -39,5 +40,5 @@ __all__ = [
     'div', 'neg', 'mux', 'demux', 'shred', 'cart_sync', 'decoupler', 'dreg',
     'unzip', 'serialize', 'project', 'fifo', 'factor', 'fill', 'mux_zip',
     'mux_valve', 'demux_zip', 'data_dly', 'eq', 'union_sync', 'union_collapse',
-    'filt', 'buff', 'local_rst', 'mod'
+    'filt', 'buff', 'local_rst', 'mod', 'invert'
 ]
