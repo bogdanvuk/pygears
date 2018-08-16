@@ -4,8 +4,8 @@ module iceil #(
    (
     input clk,
     input rst,
-    dti_s_if.consumer din,
-    dti_s_if.producer dout
+    dti.consumer din,
+    dti.producer dout
     );
 
    wire [$size(din.data)-1:0] din_add = din.data + (DIV - 1);

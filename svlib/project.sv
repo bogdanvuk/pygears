@@ -7,8 +7,8 @@ module project
    (
     input clk,
     input rst,
-    dti_s_if.consumer din,
-    dti_s_if.producer dout
+    dti.consumer din,
+    dti.producer dout
     );
 
    typedef struct packed {
