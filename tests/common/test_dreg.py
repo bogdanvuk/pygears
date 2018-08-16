@@ -15,8 +15,7 @@ from utils import prepare_result_dir, skip_ifndef
 def test_pygears_sim():
     seq = list(range(10))
 
-    directed(
-        drv(t=Uint[16], seq=seq), f=dreg, ref=seq)
+    directed(drv(t=Uint[16], seq=seq), f=dreg, ref=seq)
 
     sim()
 
@@ -28,11 +27,12 @@ def test_verilator_cosim():
     skip_ifndef('VERILATOR_ROOT')
 
     seq = list(range(10))
-    report = verif(
+    verif(
         drv(t=Uint[16], seq=seq),
         f=dreg(sim_cls=SimVerilated),
         ref=dreg(name='ref_model'))
 
     sim(outdir=prepare_result_dir())
+
 
 # test_verilator_cosim()

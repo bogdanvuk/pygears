@@ -12,7 +12,7 @@ def test_uint():
 
 def test_int():
 
-    test_ref = "typedef logic [15:0] data_t; // i16"
+    test_ref = "typedef logic signed [15:0] data_t; // i16"
     svtype = svgen_typedef(Int[16], 'data')
 
     assert equal_on_nonspace(svtype, test_ref)
@@ -120,17 +120,17 @@ typedef struct packed { // [u16]
 def test_union():
     test_ref = """
 typedef struct packed { // (u2, u?)
-    logic [1:0] alt2; // u2
-} data_data_alt2_t;
+    logic [1:0] f1; // u2
+} data_data_f1_t;
 
 typedef struct packed { // (u1, u?)
     logic [0:0] dummy; // u1
-    logic [0:0] alt1; // u1
-} data_data_alt1_t;
+    logic [0:0] f0; // u1
+} data_data_f0_t;
 
 typedef union packed { // u1 | u2
-    data_data_alt2_t alt2; // (u2, u?)
-    data_data_alt1_t alt1; // (u1, u?)
+    data_data_f1_t f1; // (u2, u?)
+    data_data_f0_t f0; // (u1, u?)
 } data_data_t;
 
 typedef struct packed { // u1 | u2
@@ -147,15 +147,15 @@ def test_union_unit():
     test_ref = """
 typedef struct packed { // ((), u?)
     logic [15:0] dummy; // u16
-} data_data_alt2_t;
+} data_data_f1_t;
 
 typedef struct packed { // (u16, u?)
-    logic [15:0] alt1; // u16
-} data_data_alt1_t;
+    logic [15:0] f0; // u16
+} data_data_f0_t;
 
 typedef union packed { // u16 | ()
-    data_data_alt2_t alt2; // ((), u?)
-    data_data_alt1_t alt1; // (u16, u?)
+    data_data_f1_t f1; // ((), u?)
+    data_data_f0_t f0; // (u16, u?)
 } data_data_t;
 
 typedef struct packed { // u16 | ()
@@ -163,6 +163,7 @@ typedef struct packed { // u16 | ()
     data_data_t data; // u16 | ()
 } data_t;
 """
+
     svtype = svgen_typedef(Union[{'alt1': Uint[16], 'alt2': Unit}], 'data')
 
     assert equal_on_nonspace(svtype, test_ref)
@@ -173,35 +174,35 @@ def test_complex():
 typedef struct packed { // (u16, u16)
     logic [15:0] f1; // u16
     logic [15:0] f0; // u16
-} data_data_data_data_un2_data_field1_t;
+} data_data_data_data_f1_data_field1_t;
 
 typedef struct packed { // (Array[Array[(u16, u16), 2], 4], u16)
     logic [15:0] field2; // u16
-    data_data_data_data_un2_data_field1_t [3:0] [1:0] field1; // Array[Array[(u16, u16), 2], 4]
-} data_data_data_data_un2_data_t;
+    data_data_data_data_f1_data_field1_t [3:0] [1:0] field1; // Array[Array[(u16, u16), 2], 4]
+} data_data_data_data_f1_data_t;
 
 typedef struct packed { // [(Array[Array[(u16, u16), 2], 4], u16)]^5
     logic [4:0] eot; // u5
-    data_data_data_data_un2_data_t data; // (Array[Array[(u16, u16), 2], 4], u16)
-} data_data_data_data_un2_t;
+    data_data_data_data_f1_data_t data; // (Array[Array[(u16, u16), 2], 4], u16)
+} data_data_data_data_f1_t;
 
 typedef struct packed { // (u16, u16)
     logic [15:0] f1; // u16
     logic [15:0] f0; // u16
-} data_data_data_data_un1_t;
+} data_data_data_data_f0_t;
 
 typedef struct packed { // ([(Array[Array[(u16, u16), 2], 4], u16)]^5, u?)
-    data_data_data_data_un2_t un2; // [(Array[Array[(u16, u16), 2], 4], u16)]^5
-} data_data_data_un2_t;
+    data_data_data_data_f1_t f1; // [(Array[Array[(u16, u16), 2], 4], u16)]^5
+} data_data_data_f1_t;
 
 typedef struct packed { // (Array[(u16, u16), 2], u?)
     logic [212:0] dummy; // u213
-    data_data_data_data_un1_t [1:0] un1; // Array[(u16, u16), 2]
-} data_data_data_un1_t;
+    data_data_data_data_f0_t [1:0] f0; // Array[(u16, u16), 2]
+} data_data_data_f0_t;
 
 typedef union packed { // Array[(u16, u16), 2] | [(Array[Array[(u16, u16), 2], 4], u16)]^5
-    data_data_data_un2_t un2; // ([(Array[Array[(u16, u16), 2], 4], u16)]^5, u?)
-    data_data_data_un1_t un1; // (Array[(u16, u16), 2], u?)
+    data_data_data_f1_t f1; // ([(Array[Array[(u16, u16), 2], 4], u16)]^5, u?)
+    data_data_data_f0_t f0; // (Array[(u16, u16), 2], u?)
 } data_data_data_t;
 
 typedef struct packed { // Array[(u16, u16), 2] | [(Array[Array[(u16, u16), 2], 4], u16)]^5

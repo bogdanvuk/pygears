@@ -35,10 +35,10 @@ def test_subs():
     assert b == Array[Uint[1], 2]
 
 
-def test_disolve():
-    assert Array[Unit, 4] == Unit
-    assert Array[Uint[2], 0] == Unit
-    assert Array[Uint[4], 1] == Uint[4]
+# def test_disolve():
+#     assert Array[Unit, 4] == Unit
+#     assert Array[Uint[2], 0] == Unit
+#     assert Array[Uint[4], 1] == Uint[4]
 
 
 def test_multilevel_subs():

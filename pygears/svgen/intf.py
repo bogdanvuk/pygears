@@ -103,7 +103,12 @@ class SVIntfGen:
         inst_name = f'bc_{self.basename}'
         if inst_name.endswith('_if_s'):
             inst_name = inst_name[:-len('_if_s')]
+
+        rst_name = 'local_rst' if registry("SVGenMap")[
+            self.intf.parent].has_local_rst else 'rst'
+
         bc_context = {
+            'rst_name': rst_name,
             'module_name': 'bc',
             'inst_name': inst_name,
             'param_map': {

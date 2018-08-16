@@ -11,7 +11,7 @@ module top(
       dti #(.W_DATA(2)) ret1_s(); // u2 (2)
       dti #(.W_DATA(2)) ret1_s_bc[1:0](); // u2 (2)
     bc #(
-                .SIZE(2)
+                .SIZE(2'd2)
     )
      bc_ret1_s (
         .clk(clk),
@@ -30,7 +30,7 @@ module top(
 
       dti #(.W_DATA(2)) top_din2_bc[1:0](); // u2 (2)
     bc #(
-                .SIZE(2)
+                .SIZE(2'd2)
     )
      bc_top_din2 (
         .clk(clk),

@@ -5,6 +5,7 @@ from pygears.typing import Queue, Uint
 from pygears.common import quenvelope
 from utils import svgen_check
 
+
 @with_setup(clear)
 @svgen_check(['quenvelope.sv'])
 def test_skip():

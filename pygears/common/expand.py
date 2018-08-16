@@ -19,8 +19,8 @@ def expand(din, *, depth=16) -> b'expand(din)':
     union_din = din_tuple[0, 2, 1] | expand_type(din.dtype)
     for i in range(len(union_din.dtype.types)):
         union_din = union_din | fifo(depth=depth) \
-                    | fill(din=din | fifo(depth=depth) | filt(field_sel=i),
-                           fmux=mux_zip, fdemux=demux_zip, field_sel=i)
+                    | fill(din=din | fifo(depth=depth) | filt(sel=i),
+                           fmux=mux_zip, fdemux=demux_zip, sel=i)
 
     return union_din
 

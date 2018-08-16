@@ -13,7 +13,7 @@
   {% endfor -%}
 {%- endmacro %}
 
-{% macro module_inst(module_name, param_map, inst_name, port_map=None, rst_name="local_rst") -%}
+{% macro module_inst(module_name, param_map, inst_name, port_map=None, rst_name="rst") -%}
 
   {{module_name}}
   {%- if param_map|length > 0 %}

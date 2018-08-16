@@ -11,7 +11,7 @@ module hier0(
 
       dti #(.W_DATA(2)) din_bc[2:0](); // u2 (2)
     bc #(
-                .SIZE(3)
+                .SIZE(2'd3)
     )
      bc_din (
         .clk(clk),
@@ -23,7 +23,7 @@ module hier0(
 
       dti #(.W_DATA(1)) channeled_bc[2:0](); // u1 (1)
     bc #(
-                .SIZE(3)
+                .SIZE(2'd3)
     )
      bc_channeled (
         .clk(clk),

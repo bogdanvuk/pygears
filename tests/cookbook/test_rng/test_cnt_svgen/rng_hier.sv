@@ -13,17 +13,17 @@ module rng_hier(
    dti #(.W_DATA(1)) const1_s(); // u1 (1)
 
    rng_ccat ccat_i (
-                .clk(clk),
-                .rst(rst),
-                .din0(const0_s),
-                .din1(cfg),
-                .din2(const1_s),
-                .dout(ccat_s)
-                );
+                    .clk(clk),
+                    .rst(rst),
+                    .din0(const0_s),
+                    .din1(cfg),
+                    .din2(const1_s),
+                    .dout(ccat_s)
+                    );
 
 
    sustain #(
-             .TOUT(1)
+             .TOUT(1'd1)
              )
    const0_i (
              .clk(clk),
@@ -33,8 +33,8 @@ module rng_hier(
 
 
    sustain #(
-             .VAL(1),
-             .TOUT(1)
+             .VAL(1'd1),
+             .TOUT(1'd1)
              )
    const1_i (
              .clk(clk),
