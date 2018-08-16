@@ -326,6 +326,9 @@ class Gear(NamedHierNode):
         for intf, port in zip(self.intfs, self.out_ports):
             intf.source(port)
 
+        for name, dtype in zip(self.outnames, out_dtype):
+            self.params[name] = dtype
+
         if not self.is_specified():
             raise GearTypeNotSpecified(
                 f"Output type of the module {self.name}"
