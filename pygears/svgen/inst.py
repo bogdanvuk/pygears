@@ -34,6 +34,12 @@ def svgen_inst(top, conf):
     return top
 
 
+def register_sv_paths(*paths):
+    for p in paths:
+        registry('SVGenSystemVerilogPaths').append(
+            os.path.abspath(os.path.expandvars(os.path.expanduser(p))))
+
+
 class SVGenInstPlugin(PluginBase):
     @classmethod
     def bind(cls):
