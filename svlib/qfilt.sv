@@ -1,8 +1,9 @@
 module qfilt #(
-              parameter W_DIN = 16,
-              parameter W_DOUT = 16,
-              parameter LVL = 1,
-              parameter SEL = 0
+               parameter W_DIN = 16,
+               parameter W_DOUT = 16,
+               parameter LVL = 1,
+               parameter SEL = 0,
+               parameter FILT_LVL = 0
               )
   (
    input clk,
@@ -38,7 +39,7 @@ module qfilt #(
    assign field_sel = (din_s.ctrl == SEL);
 
    assign din_eot = din_s.eot[0];
-   assign dout_eot = &dout_reg.eot;
+   assign dout_eot = &dout_reg.eot[FILT_LVL-1:0];
 
    assign handshake = dout.valid && dout.ready;
    assign din_sel_valid = din.valid && field_sel;

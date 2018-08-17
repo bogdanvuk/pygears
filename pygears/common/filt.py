@@ -16,7 +16,7 @@ def filt(din: Union, *, sel) -> b'din.types[sel]':
 def qfilt(din: Queue['TUnion', 'lvl'],
           *,
           sel=0,
+          filt_lvl=1,
           w_din=b'int(din[0][0])',
-          w_dout=b'int((din[0].types)[sel])'
-          ) -> b'filt_type(din, lvl, sel)':
+          w_dout=b'int((din[0].types)[sel])') -> b'filt_type(din, lvl, sel)':
     pass
