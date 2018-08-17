@@ -37,8 +37,8 @@ module qfilt #(
    assign din_s = din.data;
    assign field_sel = (din_s.ctrl == SEL);
 
-   assign din_eot = din_s.eot[0];
-   assign dout_eot = dout_reg.eot[0];
+   assign din_eot = &din_s.eot;
+   assign dout_eot = &dout_reg.eot;
 
    assign handshake = dout.valid && dout.ready;
    assign din_sel_valid = din.valid && field_sel;
