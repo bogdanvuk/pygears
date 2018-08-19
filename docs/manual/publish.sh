@@ -13,7 +13,7 @@ cd $(git rev-parse --show-toplevel)
 git ls-files -z | xargs -0 rm -f
 mv ./docs/manual/_build/html/{.,}* ./
 
-printf "tools/\ndocs/\npygears/\n" > .gitignore
+printf "tools/\ndocs/\npygears/\nexamples/\ntests/\n" > .gitignore
 
 git add -A
 git commit -m "publishing updated docs..."
