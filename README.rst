@@ -3,7 +3,7 @@ Welcome to PyGears
 
 **PyGears** is an ambitious attempt to create a Python framework that facilitates describing digital hardware. It aims to augment current RTL methodology to drasticly increase **composability** of hardware modules. Ease of composition leads to better **reusability**, since modulse that compose better can be used in a wider variety of contexts. Set of reausable components can then form a well-tested and documented library that significantly speeds up the development process.  
 
-For an introductory **PyGears** example, checkout `echo <https://github.com/bogdanvuk/pygears/tree/develop/examples/echo>`_. A snippet is given below:: 
+For an introductory **PyGears** example, checkout `echo <https://bogdanvuk.github.io/pygears/echo.html#examples-echo>`_. A snippet is given below:: 
 
   @gear
   def echo(samples, *, fifo_depth, feedback_gain, precision):
@@ -44,7 +44,7 @@ Install PyGears from source::
 Checkout examples
 -----------------
 
-`Echo <https://github.com/bogdanvuk/pygears/tree/develop/examples/echo>`_: Hardware module that applies echo audio effect to a continuous audio stream.
+`Echo <https://bogdanvuk.github.io/pygears/echo.html#examples-echo>`_: Hardware module that applies echo audio effect to a continuous audio stream.
 
 
 Read the documentation
