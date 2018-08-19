@@ -1,8 +1,3 @@
-.. pygears documentation master file, created by
-   sphinx-quickstart on Mon May 28 12:15:25 2018.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 Welcome to PyGears
 ==================
 
@@ -76,19 +71,3 @@ Special thanks to the people that helped develop this framework:
 - Vladimir Vrbaški
 
 In order to contribute, pull your copy from `github repository <https://github.com/bogdanvuk/pygears>`_ and create a pull request.
-
-Contents
-========
-
-.. toctree::
-   :maxdepth: 2
-
-   gears
-   introduction
-   typing
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`search`
