@@ -10,7 +10,7 @@ def list_samples(sample_bytes, params):
     ]
 
 
-def load_wav(fn, mono=False):
+def load_wav(fn, stereo=True):
 
     with wave.open(fn, mode='rb') as audio_file:
         params = audio_file.getparams()
@@ -27,25 +27,22 @@ def load_wav(fn, mono=False):
 
         ch_left = audioop.tomono(sample_bytes, params.sampwidth, 1, 0)
 
-        if mono:
-            samples = list_samples(ch_left, params)
-        else:
+        if stereo:
             ch_right = audioop.tomono(sample_bytes, params.sampwidth, 0, 1)
             samples = [(l, r) for l, r in zip(
                 list_samples(ch_left, params), list_samples(ch_right, params))]
+        else:
+            samples = list_samples(ch_left, params)
 
     return samples, params
 
 
-def dump_wav(fn, samples, params, mono=False):
+def dump_wav(fn, samples, params, stereo=True):
     with wave.open(fn, mode='wb') as audio_file:
 
         audio_file.setparams(params)
 
-        if mono:
-            audio_file.setnchannels(1)
-            sample_bytes = array.array('h', samples)
-        else:
+        if stereo:
             audio_file.setnchannels(2)
 
             ch_left, ch_right = list(zip(*samples))
@@ -58,14 +55,17 @@ def dump_wav(fn, samples, params, mono=False):
 
             sample_bytes = audioop.add(left_bytes, right_bytes,
                                        params.sampwidth)
+        else:
+            audio_file.setnchannels(1)
+            sample_bytes = array.array('h', samples)
 
         audio_file.writeframesraw(sample_bytes)
 
 
-def plot_wavs(*wavs, mono=False):
+def plot_wavs(*wavs, stereo=True):
     import matplotlib.pyplot as plt
 
-    if not mono:
+    if stereo:
         stereo_wavs = wavs
         wavs = []
         for wav in stereo_wavs:

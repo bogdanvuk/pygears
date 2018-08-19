@@ -102,15 +102,15 @@ def echo_sim(seq,
              sample_width,
              feedback_gain=0.5,
              delay=0.250,
-             mono=False):
+             stereo=True):
     sample_bit_width = 8 * sample_width
 
-    if mono:
-        dtype = Int[sample_bit_width]
-        echo_func = echo
-    else:
+    if stereo:
         dtype = Tuple[Int[sample_bit_width], Int[sample_bit_width]]
         echo_func = stereo_echo
+    else:
+        dtype = Int[sample_bit_width]
+        echo_func = echo
 
     result = []
     drv(t=dtype, seq=seq) \

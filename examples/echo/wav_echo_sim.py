@@ -12,14 +12,14 @@ def wav_echo_sim_gen(ifn, ofn):
     """
 
 
-def wav_echo_sim(ifn, ofn, plot=True, mono=False, sample_rng=None):
+def wav_echo_sim(ifn, ofn, plot=True, stereo=True, sample_rng=None):
     """Applies echo effect on a WAV file using Verilator cosimulation
 
     ifn - Input WAV file name
     ofn - Output WAV file name
     """
 
-    samples_all, params = wav_utils.load_wav(ifn, mono=mono)
+    samples_all, params = wav_utils.load_wav(ifn, stereo=stereo)
     sample_rng = samples_all[:None]
 
     res = echo_sim(
@@ -28,11 +28,11 @@ def wav_echo_sim(ifn, ofn, plot=True, mono=False, sample_rng=None):
         sample_width=params.sampwidth,
         feedback_gain=0.6,
         delay=0.25,
-        mono=mono)
+        stereo=stereo)
 
     print(f'Result length: {len(res)}')
 
-    wav_utils.dump_wav(ofn, res, params, mono=mono)
+    wav_utils.dump_wav(ofn, res, params, stereo=stereo)
 
     if plot:
-        wav_utils.plot_wavs(sample_rng, res, mono=mono)
+        wav_utils.plot_wavs(sample_rng, res, stereo=stereo)
