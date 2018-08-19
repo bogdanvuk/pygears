@@ -46,7 +46,6 @@ extensions = [
     'sphinx.ext.githubpages',
     'sphinxcontrib.tikz',
     'sphinxcontrib.wavedrom',
-    'sphinxcontrib.blockdiag',
     'bdp.sphinxext.bdpfigure'
 ]
 autodoc_default_flags = ['show-inheritance', 'members', 'special-members']
