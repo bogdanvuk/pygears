@@ -23,12 +23,18 @@ def float_to_fixp(number, num_format):
 
 
 @gear
+def fill_void(din, fill):
+    return priority_mux(din, fill) \
+        | union_collapse
+
+
+@gear
 def echo(
         din,  # audio samples
         *,
-        feedback_gain,  # feedback gain == echo gain
-        sample_rate,  # sample_rate in samples per second
-        delay,  # delay in seconds
+        feedback_gain: float,  # feedback gain == echo gain
+        sample_rate: int,  # sample_rate in samples per second
+        delay: float,  # delay in seconds
         num_format=(1, 15)):  # 1 for sign, 15 fraction
 
     # Parameter calculation
@@ -39,18 +45,15 @@ def echo(
 
     # Hardware description
 
-    feedback_attenuation = Intf(dtype=din.dtype)
+    dout = Intf(din.dtype)
 
-    dout = add(din, feedback_attenuation) \
-        | din.dtype
+    feedback = dout \
+        | fifo(depth=fifo_depth, threshold=fifo_depth - 1) \
+        | fill_void(fill=Int[16](0))
 
-    feedback = dout | fifo(depth=fifo_depth, threshold=fifo_depth - 1)
+    feedback_attenuated = (feedback * feedback_gain_fixp) >> num_format[1]
 
-    feedback = priority_mux(feedback, Int[16](0)) \
-        | union_collapse \
-
-    (feedback * feedback_gain_fixp >> num_format[1]) \
-        @ feedback_attenuation
+    dout |= (din + feedback_attenuated) | dout.dtype
 
     return dout
 

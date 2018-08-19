@@ -66,11 +66,14 @@ class Intf:
             'cancel': SimEvent()
         }
 
+    def __ior__(self, iout):
+        return iout.__matmul__(self)
+
     def __matmul__(self, iout):
         self.producer.consumer = iout
         iout.producer = self.producer
-        print(self.consumers)
-        print(iout.consumers)
+
+        return iout
 
     def source(self, port):
         self.producer = port
