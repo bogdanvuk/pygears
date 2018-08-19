@@ -6,14 +6,14 @@ Welcome to PyGears
 .. code-block:: python
 
   @gear
-  def echo(samples, *, fifo_depth, feedback_gain):
+  def echo(samples, *, fifo_depth, feedback_gain, precision):
       dout = Intf(din.dtype)
 
       feedback = dout
           | fifo(depth=fifo_depth, threshold=fifo_depth - 1)
           | fill_void(fill=Int[16](0))
 
-      feedback_attenuated = (feedback * feedback_gain) >> num_format
+      feedback_attenuated = (feedback * feedback_gain) >> precision
 
       dout |= (din + feedback_attenuated) | dout.dtype
 

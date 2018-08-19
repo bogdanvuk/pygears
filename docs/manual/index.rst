@@ -1,27 +1,27 @@
 Welcome to PyGears
 ==================
 
-**PyGears** is an ambitious attempt to create a Python framework that facilitates describing digital hardware. It aims to augment current RTL methodology to drasticly increase **composability** of hardware modules. Ease of composition leads to better **reusability**, since composable hardware modules can be used in a wide variety of contexts. Set of reausable components can then form a well-tested and documented library that
+**PyGears** is an ambitious attempt to create a Python framework that facilitates describing digital hardware. It aims to augment current RTL methodology to drasticly increase **composability** of hardware modules. Ease of composition leads to better **reusability**, since modulse that compose better can be used in a wider variety of contexts. Set of reausable components can then form a well-tested and documented library that significantly speeds up the development process.  
 
-.. code-block:: python
+For an introductory **PyGears** example, checkout :ref:`echo <examples-echo>`. A snippet is given below:: 
 
   @gear
-  def echo(samples, *, fifo_depth, feedback_gain):
+  def echo(samples, *, fifo_depth, feedback_gain, precision):
       dout = Intf(din.dtype)
 
       feedback = dout
           | fifo(depth=fifo_depth, threshold=fifo_depth - 1)
           | fill_void(fill=Int[16](0))
 
-      feedback_attenuated = (feedback * feedback_gain) >> num_format
+      feedback_attenuated = (feedback * feedback_gain) >> precision
 
       dout |= (din + feedback_attenuated) | dout.dtype
 
       return dout
 
-**PyGears** proposes a single generic interface for all modules (:ref:`read about the hardware implementation of the interface here <gears-interface>`) and provides a way to use powerful features of Python language to compose modules writen in an existing HDL (currently only supports SystemVerilog). Based on the Python description, **PyGears** generates functionaly equivalent, synthesizable RTL.
+**PyGears** proposes a single generic interface for all modules (:ref:`read about the hardware implementation of the interface here <gears-interface>`) and provides a way to use powerful features of Python language to compose modules writen in an existing HDL (currently only supports SystemVerilog). Based on the Python description, **PyGears** generates functionaly equivalent, synthesizable RTL code.
 
-Furthermore, **PyGears** offers a way to write verification environment in high-level Python language and co-simulate the generated RTL with an external HDL simulator. **PyGears** featuresf a completely free solution using `Verilator <http://www.veripool.org/wiki/verilator>`_ simulator and standard SystemVerilog simulators via the `DPI <https://en.wikipedia.org/wiki/SystemVerilog_DPI>`_ (tested on proprietary Questa and NCSim simulators).
+Furthermore, **PyGears** offers a way to write verification environment in high-level Python language and co-simulate the generated RTL with an external HDL simulator. **PyGears** features a completely free solution using `Verilator <http://www.veripool.org/wiki/verilator>`_ simulator and standard SystemVerilog simulators via the `DPI <https://en.wikipedia.org/wiki/SystemVerilog_DPI>`_ (tested on proprietary Questa and NCSim simulators).
 
 **PyGears** also features a `library of standard modules <https://github.com/bogdanvuk/pygears/tree/develop/pygears/common>`_ and the `cookbook library <https://github.com/bogdanvuk/pygears/tree/develop/pygears/cookbook>`_ that are ready to be used in a **PyGears** design.
 
@@ -44,7 +44,7 @@ Install PyGears from source::
 Checkout examples
 -----------------
 
-`Echo <https://github.com/bogdanvuk/pygears/tree/develop/examples/echo>`_: Hardware module that applies echo audio effect to a continuous audio stream.
+:ref:`Echo <examples-echo>`: Hardware module that applies echo audio effect to a continuous audio stream.
 
 
 Read the documentation
@@ -81,6 +81,7 @@ Contents
    gears
    introduction
    typing
+   examples
 
 Indices and tables
 ==================

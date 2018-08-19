@@ -15,10 +15,10 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('../..'))
+sys.path.insert(0, os.path.abspath('../../examples/echo'))
 
 print(os.path.abspath('../../pygears'))
 import pygears.typing.uint
-
 
 # -- Project information -----------------------------------------------------
 
@@ -31,7 +31,6 @@ version = ''
 # The full version, including alpha/beta/rc tags
 release = '0.1b'
 
-
 # -- General configuration ---------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -42,11 +41,8 @@ release = '0.1b'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.githubpages',
-    'sphinxcontrib.tikz',
-    'sphinxcontrib.wavedrom',
-    'bdp.sphinxext.bdpfigure'
+    'sphinx.ext.autodoc', 'sphinx.ext.githubpages', 'sphinxcontrib.tikz',
+    'sphinxcontrib.wavedrom', 'bdp.sphinxext.bdpfigure', 'sphinx.ext.napoleon'
 ]
 autodoc_default_flags = ['show-inheritance', 'members', 'special-members']
 autoclass_content = "class"
@@ -54,7 +50,6 @@ add_module_names = False
 
 offline_skin_js_path = r"default.js"
 offline_wavedrom_js_path = r"wavedrom.js"
-
 
 # Taken from: https://stackoverflow.com/questions/46279030/how-can-i-prevent-sphinx-from-listing-object-as-a-base-class
 # ClassDocumenter.add_directive_header uses ClassDocumenter.add_line to write
@@ -65,18 +60,25 @@ offline_wavedrom_js_path = r"wavedrom.js"
 
 from sphinx.ext.autodoc import ClassDocumenter, _
 
+
 def autodoc_skip_member(app, what, name, obj, skip, options):
-    exclusions = ('__weakref__',  # special-members
-                  '__new__', '__str__', '__repr__',  # undoc-members
-                  )
+    exclusions = (
+        '__weakref__',  # special-members
+        '__new__',
+        '__str__',
+        '__repr__',  # undoc-members
+    )
     exclude = name in exclusions
     return skip or exclude
+
 
 def setup(app):
     app.connect('autodoc-skip-member', autodoc_skip_member)
 
+
 add_line = ClassDocumenter.add_line
 line_to_delete = _(u'Bases: %s') % u':class:`object`'
+
 
 def add_line_no_object_base(self, text, *args, **kwargs):
     if text.strip() == line_to_delete:
@@ -84,7 +86,9 @@ def add_line_no_object_base(self, text, *args, **kwargs):
 
     add_line(self, text, *args, **kwargs)
 
+
 add_directive_header = ClassDocumenter.add_directive_header
+
 
 def add_directive_header_no_object_base(self, *args, **kwargs):
     self.add_line = add_line_no_object_base.__get__(self)
@@ -94,6 +98,7 @@ def add_directive_header_no_object_base(self, *args, **kwargs):
     del self.add_line
 
     return result
+
 
 ClassDocumenter.add_directive_header = add_directive_header_no_object_base
 
@@ -124,7 +129,6 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
-
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -153,12 +157,10 @@ html_static_path = ['_static']
 #
 # html_sidebars = {}
 
-
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'pygearsdoc'
-
 
 # -- Options for LaTeX output ------------------------------------------------
 
@@ -185,20 +187,15 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'pygears.tex', 'pygears Documentation',
-     'Bogdan Vukobratovic', 'manual'),
+    (master_doc, 'pygears.tex', 'pygears Documentation', 'Bogdan Vukobratovic',
+     'manual'),
 ]
-
 
 # -- Options for manual page output ------------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    (master_doc, 'pygears', 'pygears Documentation',
-     [author], 1)
-]
-
+man_pages = [(master_doc, 'pygears', 'pygears Documentation', [author], 1)]
 
 # -- Options for Texinfo output ----------------------------------------------
 
@@ -206,11 +203,9 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'pygears', 'pygears Documentation',
-     author, 'pygears', 'One line description of project.',
-     'Miscellaneous'),
+    (master_doc, 'pygears', 'pygears Documentation', author, 'pygears',
+     'One line description of project.', 'Miscellaneous'),
 ]
-
 
 # -- Extension configuration -------------------------------------------------
 

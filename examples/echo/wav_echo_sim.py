@@ -20,10 +20,10 @@ def wav_echo_sim(ifn, ofn, plot=True, stereo=True, sample_rng=None):
     """
 
     samples_all, params = wav_utils.load_wav(ifn, stereo=stereo)
-    sample_rng = samples_all[:None]
+    samples = samples_all[:sample_rng]
 
     res = echo_sim(
-        sample_rng,
+        samples,
         sample_rate=params.framerate,
         sample_width=params.sampwidth,
         feedback_gain=0.6,
@@ -35,4 +35,4 @@ def wav_echo_sim(ifn, ofn, plot=True, stereo=True, sample_rng=None):
     wav_utils.dump_wav(ofn, res, params, stereo=stereo)
 
     if plot:
-        wav_utils.plot_wavs(sample_rng, res, stereo=stereo)
+        wav_utils.plot_wavs(samples, res, stereo=stereo)

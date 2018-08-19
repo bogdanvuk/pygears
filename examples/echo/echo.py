@@ -1,6 +1,6 @@
 from pygears import gear, Intf
 from pygears.common import fifo, mul, add, const, union_collapse, fmap
-from pygears.typing import Int, ceil_pow2, Tuple, typeof
+from pygears.typing import Int, ceil_pow2, Tuple, typeof, Integer
 from pygears.cookbook import priority_mux
 
 from pygears import gear
@@ -14,11 +14,10 @@ from pygears.sim.modules.drv import drv
 # COMMENT spy interface in DTI.sv in order for this test to work.
 
 
-def float_to_fixp(number, num_format):
-    rng = (2**float(num_format[0])) / 2
+def float_to_fixp(number, precision, sample_width):
+    rng = (2**float(sample_width - precision)) / 2
     number = number / rng
-    w_num = sum(num_format)
-    number = int(number * 2**(w_num - 1))
+    number = int(number * 2**(sample_width - 1))
     return number
 
 
@@ -29,13 +28,27 @@ def fill_void(din, fill):
 
 
 @gear
-def echo(
-        din,  # audio samples
-        *,
-        feedback_gain: float,  # feedback gain == echo gain
-        sample_rate: int,  # sample_rate in samples per second
-        delay: float,  # delay in seconds
-        num_format=(1, 15)):  # 1 for sign, 15 fraction
+def echo(din: Integer,
+         *,
+         feedback_gain: float,
+         sample_rate: int,
+         delay: float,
+         precision=15):
+    """Performs echo audio effect on the continuous input sample stream
+
+    Args:
+        din: Stream of audio samples
+
+    Keyword Args:
+        feedback_gain: gain of the feedback loop
+        sample_rate: samples per second
+        delay: delay in seconds
+        precision: sample fixed point precision
+
+    Returns:
+        - **dout** - Stream of audio samples with applied echo
+
+    """
 
     #########################
     # Parameter calculation #
@@ -43,7 +56,9 @@ def echo(
 
     sample_dly_len = sample_rate * delay
     fifo_depth = ceil_pow2(sample_dly_len)
-    feedback_gain_fixp = Int[16](float_to_fixp(feedback_gain, num_format))
+    sample_width = int(din.dtype)
+    feedback_gain_fixp = din.dtype(
+        float_to_fixp(feedback_gain, precision, sample_width))
 
     #########################
     # Hardware description  #
@@ -53,9 +68,9 @@ def echo(
 
     feedback = dout \
         | fifo(depth=fifo_depth, threshold=fifo_depth - 1) \
-        | fill_void(fill=Int[16](0))
+        | fill_void(fill=din.dtype(0))
 
-    feedback_attenuated = (feedback * feedback_gain_fixp) >> num_format[1]
+    feedback_attenuated = (feedback * feedback_gain_fixp) >> precision
 
     dout |= (din + feedback_attenuated) | dout.dtype
 
@@ -69,13 +84,13 @@ def stereo_echo(
         feedback_gain: float,  # feedback gain == echo gain
         sample_rate: int,  # sample_rate in samples per second
         delay: float,  # delay in seconds
-        num_format=(1, 15)):
+        precision=15):
 
     mono_echo = echo(
         feedback_gain=feedback_gain,
         sample_rate=sample_rate,
         delay=delay,
-        num_format=num_format)
+        precision=precision)
 
     return din | fmap(f=(mono_echo, mono_echo))
 
