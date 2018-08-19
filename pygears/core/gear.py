@@ -101,15 +101,22 @@ class Gear(NamedHierNode):
 
         return gear.resolve()
 
-    def __init__(self, func, *args, name=None, intfs=[], outnames=[], **kwds):
+    def __init__(self, func, *args, name=None, intfs=None, outnames=[], **kwds):
         super().__init__(name, registry('CurrentModule'))
+
+        self.in_ports = []
+        self.out_ports = []
+
         self.func = func
         self.__doc__ = func.__doc__
 
         self.outnames = outnames.copy()
-        self.fix_intfs = intfs.copy()
-        self.in_ports = []
-        self.out_ports = []
+        if intfs is None:
+            self.fix_intfs = []
+        elif isinstance(intfs, Intf):
+            self.fix_intfs = [intfs]
+        else:
+            self.fix_intfs = intfs.copy()
 
         self.args = args
         self.resolved = False

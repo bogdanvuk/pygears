@@ -43,7 +43,7 @@ def get_consumer_tree(intf):
 class Intf:
     OPERATOR_SUPPORT = [
         '__or__', '__getitem__', '__neg__', '__add__', '__sub__', '__mul__',
-        '__div__', '__floordiv__', '__mod__', '__invert__'
+        '__div__', '__floordiv__', '__mod__', '__invert__', '__rshift__'
     ]
 
     def __init__(self, dtype):
@@ -65,6 +65,12 @@ class Intf:
             'pull_done': SimEvent(),
             'cancel': SimEvent()
         }
+
+    def __matmul__(self, iout):
+        self.producer.consumer = iout
+        iout.producer = self.producer
+        print(self.consumers)
+        print(iout.consumers)
 
     def source(self, port):
         self.producer = port

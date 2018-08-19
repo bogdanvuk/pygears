@@ -1,7 +1,7 @@
 from pygears import gear, Intf
 from pygears.common import fifo, mul, add, const, union_collapse
 from pygears.typing import Int, ceil_pow2
-from pygears.cookbook import shr, priority_mux
+from pygears.cookbook import priority_mux
 
 from pygears import gear
 from pygears.typing import Int
@@ -31,26 +31,26 @@ def echo(
         delay,  # delay in seconds
         num_format=(1, 15)):  # 1 for sign, 15 fraction
 
+    # Parameter calculation
+
     dly_len = sample_rate * delay
     fifo_depth = ceil_pow2(dly_len)
+    feedback_gain_fixp = Int[16](float_to_fixp(feedback_gain, num_format))
+
+    # Hardware description
 
     feedback_attenuation = Intf(dtype=din.dtype)
 
     dout = add(din, feedback_attenuation) \
         | din.dtype
 
-    feedback = dout | fifo(
-        depth=fifo_depth, threshold=fifo_depth - 1)
+    feedback = dout | fifo(depth=fifo_depth, threshold=fifo_depth - 1)
 
-    feedback_gain_fix = const(
-        val=float_to_fixp(feedback_gain, num_format), tout=Int[16])
+    feedback = priority_mux(feedback, Int[16](0)) \
+        | union_collapse \
 
-    feedback_attenuated = priority_mux(feedback, Int[16](0)) \
-        | union_collapse
-
-    feedback_attenuated = mul(feedback_attenuated, feedback_gain_fix)
-
-    feedback_attenuated | shr(cfg=num_format[1], intfs=[feedback_attenuation])
+    (feedback * feedback_gain_fixp >> num_format[1]) \
+        @ feedback_attenuation
 
     return dout
 

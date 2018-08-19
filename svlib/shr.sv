@@ -1,4 +1,6 @@
-module shr
+module shr #(
+             parameter SIGNED = 0
+             )
 	 (
 	  input logic clk,
 	  input logic rst,
@@ -12,7 +14,12 @@ module shr
    assign cfg.ready = handshake;
 
    assign dout.valid = din.valid & cfg.valid;
-   assign dout.data = signed'(din.data) >> (cfg.data);
    assign din.ready = handshake;
+
+   if (SIGNED) begin
+      assign dout.data = signed'(din.data) >> (cfg.data);
+   end else begin
+      assign dout.data = din.data >> (cfg.data);
+   end
 
 endmodule

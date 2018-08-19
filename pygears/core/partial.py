@@ -143,6 +143,9 @@ class Partial:
                 # for it
                 return Partial(self.func, *args, **kwds)
 
+    def __matmul__(self, iin):
+        return self(intfs=iin)
+
     def __or__(self, iin):
         return iin.__ror__(self)
 

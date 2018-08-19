@@ -31,6 +31,7 @@ from .dreg import dreg
 from .serialize import serialize
 from .data_dly import data_dly
 from .filt import filt
+from .shr import shr
 
 import pygears.common.fmaps
 
@@ -40,5 +41,5 @@ __all__ = [
     'div', 'neg', 'mux', 'demux', 'shred', 'cart_sync', 'decoupler', 'dreg',
     'unzip', 'serialize', 'project', 'fifo', 'factor', 'fill', 'mux_zip',
     'mux_valve', 'demux_zip', 'data_dly', 'eq', 'union_sync', 'union_collapse',
-    'filt', 'buff', 'local_rst', 'mod', 'invert'
+    'filt', 'buff', 'local_rst', 'mod', 'invert', 'shr'
 ]
