@@ -1,9 +1,9 @@
 Welcome to PyGears
 ==================
 
-**PyGears** is an ambitious attempt to create a Python framework that facilitates describing digital hardware. It aims to augment current RTL methodology to drasticly increase **composability** of hardware modules. Ease of composition leads to better **reusability**, since composable hardware modules can be used in a wide variety of contexts. Set of reausable components can then form a well-tested and documented library that
+**PyGears** is an ambitious attempt to create a Python framework that facilitates describing digital hardware. It aims to augment current RTL methodology to drasticly increase **composability** of hardware modules. Ease of composition leads to better **reusability**, since modulse that compose better can be used in a wider variety of contexts. Set of reausable components can then form a well-tested and documented library that significantly speeds up the development process.  
 
-.. code-block:: python
+For an introductory **PyGears** example, checkout `echo <https://github.com/bogdanvuk/pygears/tree/develop/examples/echo>`_. A snippet is given below:: 
 
   @gear
   def echo(samples, *, fifo_depth, feedback_gain, precision):
@@ -19,7 +19,7 @@ Welcome to PyGears
 
       return dout
 
-**PyGears** proposes a single generic interface for all modules (`read about the hardware implementation of the interface here <https://bogdanvuk.github.io/pygears/gears.html#gears-interface>`_) and provides a way to use powerful features of Python language to compose modules writen in an existing HDL (currently only supports SystemVerilog). Based on the Python description, **PyGears** generates functionaly equivalent, synthesizable RTL.
+**PyGears** proposes a single generic interface for all modules (`read about the hardware implementation of the interface here <https://bogdanvuk.github.io/pygears/gears.html#gears-interface>`_) and provides a way to use powerful features of Python language to compose modules writen in an existing HDL (currently only supports SystemVerilog). Based on the Python description, **PyGears** generates functionaly equivalent, synthesizable RTL code.
 
 Furthermore, **PyGears** offers a way to write verification environment in high-level Python language and co-simulate the generated RTL with an external HDL simulator. **PyGears** featuresf a completely free solution using `Verilator <http://www.veripool.org/wiki/verilator>`_ simulator and standard SystemVerilog simulators via the `DPI <https://en.wikipedia.org/wiki/SystemVerilog_DPI>`_ (tested on proprietary Questa and NCSim simulators).
 
