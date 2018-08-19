@@ -8,13 +8,14 @@ from .tuple import Tuple
 from .uint import Int, Uint, Integer
 from .unit import Unit
 from .union import Union
-from .bitw import bitw
+from .bitw import bitw, ceil_pow2
 from .tlm import TLM
 
 __all__ = [
     'Bool', 'Queue', 'TemplateArgumentsError', 'Tuple', 'Int', 'Uint', 'Unit',
-    'Union', 'Array', 'bitw', 'typeof', 'Any', 'TLM'
+    'Union', 'Array', 'bitw', 'typeof', 'Any', 'TLM', 'ceil_pow2'
 ]
+
 
 class TypingNamespacePlugin(PluginBase):
     @classmethod
@@ -35,6 +36,7 @@ class CoreTypesPlugin(TypingNamespacePlugin):
         cls.registry['TypeArithNamespace']['Queue'] = Queue
         cls.registry['TypeArithNamespace']['Array'] = Array
         cls.registry['TypeArithNamespace']['bitw'] = bitw
+        cls.registry['TypeArithNamespace']['ceil_pow2'] = ceil_pow2
         cls.registry['TypeArithNamespace']['typeof'] = typeof
         cls.registry['TypeArithNamespace']['Any'] = Any
         cls.registry['TypeArithNamespace']['TLM'] = TLM

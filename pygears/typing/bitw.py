@@ -4,3 +4,7 @@ def bitw(num: int) -> int:
         shifter <<= 1
         accum += 1
     return accum
+
+
+def ceil_pow2(num: int) -> int:
+    return 2**(bitw(num))
