@@ -1,5 +1,8 @@
 ..  _typing:
 
+.. role:: sv(code)
+   :language: systemverilog
+
 Typing
 ======
 
@@ -122,23 +125,44 @@ The RTL implementation of the "example" module can be also parametrized in this 
 
 	endmodule
 
+Types overview
+--------------
+
+.. autoclass:: pygears.typing.uint.Integer
+   :no-members:
+   :no-special-members:
+   :no-show-inheritance:
+
+.. autoclass:: pygears.typing.uint.Uint
+   :no-members:
+   :no-special-members:
+   :no-show-inheritance:
+
+.. autoclass:: pygears.typing.uint.Int
+   :no-members:
+   :no-special-members:
+   :no-show-inheritance:
+
+.. autoclass:: pygears.typing.array.Array
+   :no-members:
+   :no-special-members:
+   :no-show-inheritance:
+
+
 Reference
 ---------
 
-.. autoclass:: pygears.typing.base.TypingMeta
+Base classes
+~~~~~~~~~~~~
 
-.. autoclass:: pygears.typing.base.GenericMeta
+.. automodule:: pygears.typing.base
 
-.. autoclass:: pygears.typing.base.EnumerableGenericMeta
+Integers
+~~~~~~~~
 
-.. autoclass:: pygears.typing.uint.IntegerMeta
+.. automodule:: pygears.typing.uint
 
-.. autoclass:: pygears.typing.uint.Integer
+Array
+~~~~~
 
-.. autoclass:: pygears.typing.uint.Int
-
-.. autoclass:: pygears.typing.uint.Uint
-
-.. autoclass:: pygears.typing.array.ArrayMeta
-
-.. autoclass:: pygears.typing.array.Array
+.. automodule:: pygears.typing.array

@@ -1,0 +1,200 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Echo &#8212; pygears 0.1b documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/default.js"></script>
+    <script type="text/javascript" src="_static/wavedrom.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Examples" href="examples.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="echo">
+<span id="examples-echo"></span><h1>Echo<a class="headerlink" href="#echo" title="Permalink to this headline">¶</a></h1>
+<p>This example shows how to implement in <strong>PyGears</strong> a hardware module that applies echo audio effect to a continuous audio stream. The hardware module is defined in <a class="reference external" href="https://github.com/bogdanvuk/pygears/tree/develop/examples/echo/echo.py">echo.py</a>:</p>
+<dl class="function">
+<dt id="echo.echo">
+<code class="descname">echo</code><span class="sig-paren">(</span><em>din: Integer</em>, <em>*</em>, <em>feedback_gain: float</em>, <em>sample_rate: int</em>, <em>delay: float</em>, <em>precision=15</em><span class="sig-paren">)</span><a class="headerlink" href="#echo.echo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs echo audio effect on the continuous input sample stream</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>din</strong> – Stream of audio samples</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Keyword Arguments:</th></tr>
+<tr class="field-even field"><td>&#160;</td><td class="field-body"><ul class="first simple">
+<li><strong>feedback_gain</strong> – gain of the feedback loop</li>
+<li><strong>sample_rate</strong> – samples per second</li>
+<li><strong>delay</strong> – delay in seconds</li>
+<li><strong>precision</strong> – sample fixed point precision</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>dout</strong> - Stream of audio samples with applied echo</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<div class="figure align-center">
+<img alt="echo.png" src="echo.png" />
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@gear</span>
+<span class="k">def</span> <span class="nf">echo</span><span class="p">(</span><span class="n">din</span><span class="p">:</span> <span class="n">Integer</span><span class="p">,</span>
+         <span class="o">*</span><span class="p">,</span>
+         <span class="n">feedback_gain</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+         <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+         <span class="n">delay</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+         <span class="n">precision</span><span class="o">=</span><span class="mi">15</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Performs echo audio effect on the continuous input sample stream</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        din: Stream of audio samples</span>
+
+<span class="sd">    Keyword Args:</span>
+<span class="sd">        feedback_gain: gain of the feedback loop</span>
+<span class="sd">        sample_rate: samples per second</span>
+<span class="sd">        delay: delay in seconds</span>
+<span class="sd">        precision: sample fixed point precision</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        - **dout** - Stream of audio samples with applied echo</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1">#########################</span>
+    <span class="c1"># Parameter calculation #</span>
+    <span class="c1">#########################</span>
+
+    <span class="n">sample_dly_len</span> <span class="o">=</span> <span class="n">sample_rate</span> <span class="o">*</span> <span class="n">delay</span>
+    <span class="n">fifo_depth</span> <span class="o">=</span> <span class="n">ceil_pow2</span><span class="p">(</span><span class="n">sample_dly_len</span><span class="p">)</span>
+    <span class="n">sample_width</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">din</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="n">feedback_gain_fixp</span> <span class="o">=</span> <span class="n">din</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span>
+        <span class="n">float_to_fixp</span><span class="p">(</span><span class="n">feedback_gain</span><span class="p">,</span> <span class="n">precision</span><span class="p">,</span> <span class="n">sample_width</span><span class="p">))</span>
+
+    <span class="c1">#########################</span>
+    <span class="c1"># Hardware description  #</span>
+    <span class="c1">#########################</span>
+
+    <span class="n">dout</span> <span class="o">=</span> <span class="n">Intf</span><span class="p">(</span><span class="n">din</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+
+    <span class="n">feedback</span> <span class="o">=</span> <span class="n">dout</span> \
+        <span class="o">|</span> <span class="n">fifo</span><span class="p">(</span><span class="n">depth</span><span class="o">=</span><span class="n">fifo_depth</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="n">fifo_depth</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> \
+        <span class="o">|</span> <span class="n">fill_void</span><span class="p">(</span><span class="n">fill</span><span class="o">=</span><span class="n">din</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+
+    <span class="n">feedback_attenuated</span> <span class="o">=</span> <span class="p">(</span><span class="n">feedback</span> <span class="o">*</span> <span class="n">feedback_gain_fixp</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="n">precision</span>
+
+    <span class="n">dout</span> <span class="o">|=</span> <span class="p">(</span><span class="n">din</span> <span class="o">+</span> <span class="n">feedback_attenuated</span><span class="p">)</span> <span class="o">|</span> <span class="n">dout</span><span class="o">.</span><span class="n">dtype</span>
+
+    <span class="k">return</span> <span class="n">dout</span>
+</pre></div>
+</div>
+</div>
+
+    <script type="text/javascript">
+        function init() {
+            WaveDrom.ProcessAll();
+        }
+        window.onload = init;
+    </script>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">pygears</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="gears.html">Introduction to Gears</a></li>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Quick introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="typing.html">Typing</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="examples.html">Examples</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Echo</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="examples.html">Examples</a><ul>
+      <li>Previous: <a href="examples.html" title="previous chapter">Examples</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Bogdan Vukobratovic.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.7</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+      |
+      <a href="_sources/echo.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

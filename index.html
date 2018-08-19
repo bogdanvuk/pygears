@@ -36,11 +36,29 @@
             
   <div class="section" id="welcome-to-pygears">
 <h1>Welcome to PyGears<a class="headerlink" href="#welcome-to-pygears" title="Permalink to this headline">¶</a></h1>
-<p><strong>PyGears</strong> is an ambitious attempt to create a Python framework that facilitates describing digital hardware, by providing a way to use powerful features of Python language to compose modules writen in a HDL (currently only supports SystemVerilog). <strong>PyGears</strong> can then generate hierarchical HDL modules, functionaly equivalent to the Python description.</p>
+<p><strong>PyGears</strong> is an ambitious attempt to create a Python framework that facilitates describing digital hardware. It aims to augment current RTL methodology to drasticly increase <strong>composability</strong> of hardware modules. Ease of composition leads to better <strong>reusability</strong>, since modulse that compose better can be used in a wider variety of contexts. Set of reausable components can then form a well-tested and documented library that significantly speeds up the development process.</p>
+<p>For an introductory <strong>PyGears</strong> example, checkout <a class="reference internal" href="echo.html#examples-echo"><span class="std std-ref">echo</span></a>. A snippet is given below:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@gear</span>
+<span class="k">def</span> <span class="nf">echo</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">fifo_depth</span><span class="p">,</span> <span class="n">feedback_gain</span><span class="p">,</span> <span class="n">precision</span><span class="p">):</span>
+    <span class="n">dout</span> <span class="o">=</span> <span class="n">Intf</span><span class="p">(</span><span class="n">din</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+
+    <span class="n">feedback</span> <span class="o">=</span> <span class="n">dout</span>
+        <span class="o">|</span> <span class="n">fifo</span><span class="p">(</span><span class="n">depth</span><span class="o">=</span><span class="n">fifo_depth</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="n">fifo_depth</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="o">|</span> <span class="n">fill_void</span><span class="p">(</span><span class="n">fill</span><span class="o">=</span><span class="n">Int</span><span class="p">[</span><span class="mi">16</span><span class="p">](</span><span class="mi">0</span><span class="p">))</span>
+
+    <span class="n">feedback_attenuated</span> <span class="o">=</span> <span class="p">(</span><span class="n">feedback</span> <span class="o">*</span> <span class="n">feedback_gain</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="n">precision</span>
+
+    <span class="n">dout</span> <span class="o">|=</span> <span class="p">(</span><span class="n">din</span> <span class="o">+</span> <span class="n">feedback_attenuated</span><span class="p">)</span> <span class="o">|</span> <span class="n">dout</span><span class="o">.</span><span class="n">dtype</span>
+
+    <span class="k">return</span> <span class="n">dout</span>
+</pre></div>
+</div>
+<p><strong>PyGears</strong> proposes a single generic interface for all modules (<a class="reference internal" href="gears.html#gears-interface"><span class="std std-ref">read about the hardware implementation of the interface here</span></a>) and provides a way to use powerful features of Python language to compose modules writen in an existing HDL (currently only supports SystemVerilog). Based on the Python description, <strong>PyGears</strong> generates functionaly equivalent, synthesizable RTL code.</p>
+<p>Furthermore, <strong>PyGears</strong> offers a way to write verification environment in high-level Python language and co-simulate the generated RTL with an external HDL simulator. <strong>PyGears</strong> features a completely free solution using <a class="reference external" href="http://www.veripool.org/wiki/verilator">Verilator</a> simulator and standard SystemVerilog simulators via the <a class="reference external" href="https://en.wikipedia.org/wiki/SystemVerilog_DPI">DPI</a> (tested on proprietary Questa and NCSim simulators).</p>
+<p><strong>PyGears</strong> also features a <a class="reference external" href="https://github.com/bogdanvuk/pygears/tree/develop/pygears/common">library of standard modules</a> and the <a class="reference external" href="https://github.com/bogdanvuk/pygears/tree/develop/pygears/cookbook">cookbook library</a> that are ready to be used in a <strong>PyGears</strong> design.</p>
 <p>In <strong>PyGears</strong>, each HDL module is considered a Python function, called the <em>gear</em>, hence the design is described in form of a functional (gear) composition. In order for HDL modules to be composable in this way, they need to be designed in accordance with the <strong>Gears</strong> methodology. You should probably <a class="reference internal" href="gears.html#gears-introduction-to-gears"><span class="std std-ref">read a short intro to Gears</span></a> in order to understand this project from the hardware prespective.</p>
-<p><strong>PyGears</strong> supports also the hierarchical gears which do not have a HDL implementation, but are defined in terms of other gears. Each gear accepts and returns interface objects as arguments, which represents module connections (<a class="reference internal" href="gears.html#gears-interface"><span class="std std-ref">read about the hardware implementation of the interface here</span></a>). This allows for a module composition to be described in terms of powerfull functional concepts, such as: partial application, higher-order functions, function polymorphism.</p>
+<p><strong>PyGears</strong> supports also the hierarchical gears which do not have a HDL implementation, but are defined in terms of other gears. Each gear accepts and returns interface objects as arguments, which represents module connections. This allows for a module composition to be described in terms of powerfull functional concepts, such as: partial application, higher-order functions, function polymorphism.</p>
 <p><strong>PyGears</strong> features a powerfull system of <a class="reference internal" href="typing.html#typing"><span class="std std-ref">generic types</span></a>, which allows for generic modules to be described, as well as to perform type checking of the gear composition.</p>
-<p><strong>PyGears</strong> lets you also simulate the resulting RTL, by connecting to an external HDL simulator. Currently <strong>PyGears</strong> supports <a class="reference external" href="http://www.veripool.org/wiki/verilator">Verilator</a> and standard SystemVerilog simulators via the <a class="reference external" href="https://en.wikipedia.org/wiki/SystemVerilog_DPI">DPI</a> (tested on Questa and NCSim).</p>
 </div>
 <div class="section" id="where-to-start">
 <h1>Where to start?<a class="headerlink" href="#where-to-start" title="Permalink to this headline">¶</a></h1>
@@ -50,6 +68,10 @@
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span>
 </pre></div>
 </div>
+</div>
+<div class="section" id="checkout-examples">
+<h2>Checkout examples<a class="headerlink" href="#checkout-examples" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference internal" href="echo.html#examples-echo"><span class="std std-ref">Echo</span></a>: Hardware module that applies echo audio effect to a continuous audio stream.</p>
 </div>
 <div class="section" id="read-the-documentation">
 <h2>Read the documentation<a class="headerlink" href="#read-the-documentation" title="Permalink to this headline">¶</a></h2>
@@ -96,7 +118,12 @@
 <li class="toctree-l1"><a class="reference internal" href="typing.html">Typing</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="typing.html#compile-time-type-checking">Compile time type checking</a></li>
 <li class="toctree-l2"><a class="reference internal" href="typing.html#polymorphic-modules-and-pattern-matching">Polymorphic modules and pattern matching</a></li>
+<li class="toctree-l2"><a class="reference internal" href="typing.html#types-overview">Types overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="typing.html#reference">Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="echo.html">Echo</a></li>
 </ul>
 </li>
 </ul>
@@ -123,19 +150,23 @@
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="#">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Welcome to PyGears</a></li>
-<li><a class="reference internal" href="#where-to-start">Where to start?</a><ul>
-<li><a class="reference internal" href="#installation">Installation</a></li>
-<li><a class="reference internal" href="#read-the-documentation">Read the documentation</a></li>
-<li><a class="reference internal" href="#checkout-the-test-suite">Checkout the test suite</a></li>
+<h1 class="logo"><a href="#">pygears</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="gears.html">Introduction to Gears</a></li>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Quick introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="typing.html">Typing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 </ul>
-</li>
-<li><a class="reference internal" href="#contributions">Contributions</a></li>
-<li><a class="reference internal" href="#contents">Contents</a></li>
-<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
-</ul>
+
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
@@ -144,13 +175,6 @@
   </ul></li>
 </ul>
 </div>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/index.rst.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <div class="searchformwrapper">
@@ -171,7 +195,7 @@
       &copy;2018, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.5</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.7</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
       
       |

@@ -1,3 +1,5 @@
 tools/
 docs/
 pygears/
+examples/
+tests/
