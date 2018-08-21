@@ -155,7 +155,13 @@ class Integer(int, metaclass=IntegerMeta):
         >>> Integer[8](0b10101010)[5]
         1
         """
-        if index < self.width:
+        if isinstance(index, slice):
+            bits = tuple(
+                Bool(int(self) & (1 << i))
+                for i in range(*index.indices(self.width)))
+
+            return Uint[len(bits)](Tuple[(Bool, ) * len(bits)](bits))
+        elif index < self.width:
             return Bool(int(self) & (1 << index))
         else:
             raise IndexError

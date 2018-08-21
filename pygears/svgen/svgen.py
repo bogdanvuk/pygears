@@ -1,7 +1,7 @@
 from pygears.registry import PluginBase, bind, registry
 from pygears.rtl.inst import rtl_inst
 from pygears.rtl.connect import rtl_connect
-from pygears.rtl.channel import RTLChannelVisitor
+from pygears.rtl.channel import RTLChannelVisitor, RTLOutChannelVisitor
 from pygears.util.find import find
 from .generate import svgen_generate
 from .inst import svgen_inst
@@ -26,6 +26,6 @@ class SVGenPlugin(PluginBase):
     def bind(cls):
         cls.registry['SVGenConf'] = {}
         cls.registry['SVGenFlow'] = [
-            rtl_inst, rtl_connect, RTLChannelVisitor, svgen_inst,
+            rtl_inst, rtl_connect, RTLChannelVisitor, RTLOutChannelVisitor, svgen_inst,
             svgen_generate
         ]

@@ -20,7 +20,7 @@ ld: final link failed: Bad value
 Fix:
 
 cd <ncsim_install_dir>/tools/cdsgcc/gcc/4.8/bin/
-cp ld ld_bkp
+mv ld ld_bkp
 ln -s /usr/bin/ld ld
 
 

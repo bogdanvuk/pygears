@@ -15,19 +15,19 @@ class UnionMeta(EnumerableGenericMeta):
         if not args:
             return cls
         else:
-            flat_params = []
-            for a in args:
-                if inspect.isclass(a) and issubclass(a, Union):
-                    flat_params.extend(a.args)
-                else:
-                    flat_params.append(a)
+            # flat_params = []
+            # for a in args:
+            #     if inspect.isclass(a) and issubclass(a, Union):
+            #         flat_params.extend(a.args)
+            #     else:
+            #         flat_params.append(a)
 
             if len(args) == 0:
                 return Unit
             elif len(args) == 1:
                 return args[0]
             else:
-                cls.args = flat_params
+                # cls.args = flat_params
                 return cls
 
     def __getitem__(self, parameters):

@@ -67,7 +67,7 @@ def echo(din: Integer,
     dout = Intf(din.dtype)
 
     feedback = dout \
-        | fifo(depth=fifo_depth, threshold=fifo_depth - 1) \
+        | fifo(depth=fifo_depth, threshold=sample_dly_len) \
         | fill_void(fill=din.dtype(0))
 
     feedback_attenuated = (feedback * feedback_gain_fixp) >> precision

@@ -75,7 +75,7 @@ class QueueMeta(EnumerableGenericMeta):
 
 class Queue(tuple, metaclass=QueueMeta):
     __default__ = [1]
-    __parameters__ = ['T', 'N']
+    __parameters__ = ['data', 'eot']
 
     def __new__(cls, val: tuple):
         if type(val) == cls:
