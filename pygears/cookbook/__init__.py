@@ -18,6 +18,7 @@ from .trr_dist import trr_dist
 from .valve import valve
 from .width_reductor import width_reductor
 from .repack import repack
+from .priority_mux_valve import priority_mux_valve
 
 # hier. blocks
 from .reduce2 import reduce2
@@ -26,5 +27,5 @@ __all__ = [
     'rng', 'iceil', 'priority_mux', 'qcnt', 'sdp', 'chop', 'trr', 'replicate',
     'trr_dist', 'clip', 'din_cat', 'take', 'release_after_eot', 'reverse',
     'valve', 'form_sub_cfg', 'reduce2', 'width_reductor', 'accumulator',
-    'tr_cnt', 'repack'
+    'tr_cnt', 'repack', 'priority_mux_valve'
 ]
