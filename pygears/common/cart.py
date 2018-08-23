@@ -100,7 +100,7 @@ def cart_sync_vararg(*din):
 
 
 @gear
-def cart_sync_with(din, sync_in, *, balance=None):
+def cart_sync_with(sync_in, din, *, balance=None):
     if balance:
         sync_in = sync_in | balance
 
