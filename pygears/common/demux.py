@@ -24,9 +24,12 @@ async def demux(din: Union, *, ctrl_out=False) -> b'demux_type(din, ctrl_out)':
 
 
 @gear
-def demux_by(din, ctrl, *, fcat=ccat):
+def demux_by(ctrl, din, *, fcat=ccat, out_num=None):
+    if out_num is None:
+        out_num = 2**int(ctrl.dtype)
+
     return fcat(din, ctrl) \
-        | Union \
+        | Union[(din.dtype, )*out_num] \
         | demux
 
 

@@ -23,7 +23,7 @@ from .neg import neg
 from .eq import eq
 from .invert import invert
 from .mux import mux, mux_zip, mux_valve
-from .demux import demux, demux_zip
+from .demux import demux, demux_zip, demux_by
 from .shred import shred
 from .decoupler import decoupler, buff
 from .fifo import fifo
@@ -42,5 +42,5 @@ __all__ = [
     'div', 'neg', 'mux', 'demux', 'shred', 'cart_sync', 'decoupler', 'dreg',
     'unzip', 'serialize', 'project', 'fifo', 'factor', 'fill', 'mux_zip',
     'mux_valve', 'demux_zip', 'data_dly', 'eq', 'union_sync', 'union_collapse',
-    'filt', 'buff', 'local_rst', 'mod', 'invert', 'shr', 'queue_wrap_from'
+    'filt', 'buff', 'local_rst', 'mod', 'invert', 'shr', 'queue_wrap_from', 'demux_by'
 ]
