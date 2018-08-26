@@ -39,6 +39,7 @@ def check_arg_num(argnames, varargsname, args):
 
 def check_arg_specified(args):
     args_res = []
+    const_args_gears = []
     for i, a in enumerate(args):
         if isinstance(a, Partial):
             raise GearArgsNotSpecified(f"Unresolved input arg {i}")
@@ -47,6 +48,7 @@ def check_arg_specified(args):
             from pygears.common import const
             try:
                 a = const(val=a)
+                const_args_gears.append(module().child[-1])
             except GearTypeNotSpecified:
                 raise GearArgsNotSpecified(f"Unresolved input arg {i}")
 
@@ -56,7 +58,7 @@ def check_arg_specified(args):
             raise GearArgsNotSpecified(
                 f"Input arg {i} has unresolved type {repr(a.dtype)}")
 
-    return tuple(args_res)
+    return tuple(args_res), const_args_gears
 
 
 class create_hier:
@@ -133,7 +135,7 @@ class Gear(NamedHierNode):
             TooManyArguments(f'{e}, for the module {self.name}')
 
         try:
-            self.args = check_arg_specified(self.args)
+            self.args, self.const_args_gears = check_arg_specified(self.args)
         except GearArgsNotSpecified as e:
             raise GearArgsNotSpecified(
                 f'{str(e)}, when instantiating {self.name}')
@@ -214,6 +216,9 @@ class Gear(NamedHierNode):
         for p in self.out_ports:
             if p.producer is not None:
                 p.producer.disconnect(p)
+
+        for g in self.const_args_gears:
+            g.remove()
 
         super().remove()
 
