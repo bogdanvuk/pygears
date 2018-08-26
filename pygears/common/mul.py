@@ -1,6 +1,6 @@
 import operator
 
-from pygears.core.gear import alternative, gear
+from pygears import alternative, gear, module
 from pygears.typing import Integer, Uint, Int
 from pygears.core.intf import IntfOperPlugin
 from pygears.util.hof import oper_tree
@@ -25,7 +25,7 @@ async def mul(*din: Integer,
               din1_signed=b'typeof(din1, Int)') -> b'mul_type(din)':
 
     async with gather(*din) as dout:
-        yield reduce(operator.mul, dout)
+        yield module().tout(reduce(operator.mul, dout))
 
 
 @alternative(mul)

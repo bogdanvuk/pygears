@@ -36,10 +36,9 @@ def create_logger(pkg):
 
 # def make(pkg):
 
-if len(sys.argv) > 1:
-    pkgs_fn = sys.argv[1]
-else:
-    pkgs_fn = "pkgs.json"
+pkg_names = sys.argv[1:]
+
+pkgs_fn = "pkgs.json"
 
 # print("Please enter sudo password:")
 # subprocess.run('sudo echo "Current install directory"; pwd', shell=True)
@@ -57,6 +56,9 @@ cfg = {
 
 with open(cfg["pkgs_fn"]) as json_data:
     pkgs = json.load(json_data)
+
+if pkg_names:
+    pkgs = {k: v for k, v in pkgs if k in pkg_names}
 
 os.chdir(cfg["tools_path"])
 
@@ -88,8 +90,8 @@ for pkg in pkgs:
 
     create_logger(pkg)
 
-for pkg in pkgs:
-    install_deps(pkg)
+# for pkg in pkgs:
+#     install_deps(pkg)
 
 
 def copyanything(src, dst):
@@ -113,9 +115,9 @@ for pkg in pkgs:
             for file in glob.glob(cmd[0].format(**pkg)):
                 pkg["logger"].info("Copying {} to {}".format(
                     file, cmd[1].format(**pkg)))
-                copyanything(file,
-                             os.path.join(cmd[1].format(**pkg),
-                                          os.path.basename(file)))
+                copyanything(
+                    file,
+                    os.path.join(cmd[1].format(**pkg), os.path.basename(file)))
 
     os.chdir(pkg["path"])
     if "url" in pkg:

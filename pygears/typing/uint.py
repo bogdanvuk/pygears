@@ -102,7 +102,7 @@ class IntegerMeta(EnumerableGenericMeta):
 
 
 class Integer(int, metaclass=IntegerMeta):
-    """Base type for both :class:`Int` [N] and :class:`Uint` [N] generic types. Translates to correspond to HDL logic vector types. For an example Integer[9] translates to :sv:`logic [8:0]`.
+    """Base type for both :class:`Int` [N] and :class:`Uint` [N] generic types. Corresponds to HDL logic vector types. For an example Integer[9] translates to :sv:`logic [8:0]`.
     """
 
     def __new__(cls, val: int = 0):

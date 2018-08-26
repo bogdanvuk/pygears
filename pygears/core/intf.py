@@ -146,6 +146,9 @@ class Intf:
         return self._out_queues
 
     def put_nb(self, val):
+        if any(registry('SimMap')[c.gear].done for c in self.end_consumers):
+            raise GearDone
+
         self.events['put'](self, val)
         for q, c in zip(self.out_queues, self.end_consumers):
             self.events['put'](c.consumer, val)
@@ -210,9 +213,11 @@ class Intf:
         if self._done:
             raise GearDone
 
-        ret = await self.in_queue.get()
+        if self._data is None:
+            self._data = await self.in_queue.get()
+
         self.events['pull_done'](self)
-        return ret
+        return self._data
 
     def ack(self):
         self.events['ack'](self)

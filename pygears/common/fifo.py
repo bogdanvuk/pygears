@@ -11,7 +11,7 @@ async def fifo(din, *, depth=2, threshold=0) -> b'din':
     dout = module().dout
 
     while (1):
-        if not data and din.done():
+        if len(data) == threshold and din.done():
             raise GearDone
 
         # TODO: Make fifo work correctly in corner case when it is full, but
@@ -20,7 +20,7 @@ async def fifo(din, *, depth=2, threshold=0) -> b'din':
             if not din.empty():
                 data.insert(0, din.get_nb())
 
-        if len(data) and not out_data and dout.ready_nb():
+        if len(data) > threshold and not out_data and dout.ready_nb():
             dout.put_nb(data[-1])
             out_data = True
 

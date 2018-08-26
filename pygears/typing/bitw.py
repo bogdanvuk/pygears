@@ -7,4 +7,4 @@ def bitw(num: int) -> int:
 
 
 def ceil_pow2(num: int) -> int:
-    return 2**(bitw(num))
+    return int(2**(bitw(num)))
