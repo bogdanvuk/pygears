@@ -1,5 +1,5 @@
 from pygears import gear, Intf
-from pygears.typing import Int, Uint, typeof
+from pygears.typing import Int, Uint, typeof, Array, Tuple
 from pygears.common import dreg, const, union_collapse
 from pygears.cookbook import priority_mux
 
@@ -23,21 +23,21 @@ def mac(u, b, mac_i):
 
 
 @gear
-def fir(din):
+def fir(din, b):
 
-    mac_inter0 = mac(
-        u=din, b=const(val=0x18bfcb) | Int[24], mac_i=const(val=0) | Int[48])
-    mac_inter1 = mac(u=din, b=const(val=0x1a05d9) | Int[24], mac_i=mac_inter0)
-    mac_inter2 = mac(u=din, b=const(val=0x1a74b5) | Int[24], mac_i=mac_inter1)
-    mac_inter3 = mac(u=din, b=const(val=0x1a05d9) | Int[24], mac_i=mac_inter2)
-    mac_inter4 = mac(u=din, b=const(val=0x18bfcb) | Int[24], mac_i=mac_inter3)
+    y = [const(val=0) | Int[48]]
 
-    ret = mac_inter4
+    for i in range(len(b.dtype)):
+        y.append(mac(u=din, b=b[i], mac_i=y[i]))
 
-    return ret
+    out_len = len(y[-1].dtype)
+    in_len = len(din.dtype)
+
+    return y[-1][out_len - in_len:out_len]
 
 
-#######################
+#####################################################################
+#####################################################################
 
 
 @gear
@@ -59,18 +59,27 @@ async def collect(din, *, result, samples_num):
 
 fs = 22050
 f1 = 400
-f2 = 40000
+f2 = 4000
+
+coef = [0x18bfcb, 0x1a05d9, 0x1a74b5, 0x1a05d9, 0x18bfcb]
 
 x = np.arange(300)
-
 u = (0.85 * np.cos(2 * pi * f1 / fs * x) + 0.2 * np.cos(2 * pi * f2 / fs * x))
 
 seq = u * 2**23 / 1.1
 seq = seq.astype('i4')
 
+
+b_type = Array[Int[24], len(coef)]
+b = []
+
+for i in range(len(seq)):
+    b.append(b_type((coef)))
+
 result = []
-drv(t=Int[24], seq=seq) | fir(sim_cls=SimVerilated) | collect(
-    result=result, samples_num=len(seq))
+fir(din=drv(t=Int[24], seq=seq), b=drv(t=b_type, seq=b),
+    sim_cls=SimVerilated) | collect(
+        result=result, samples_num=len(seq))
 
 # svgen('/fir', outdir='./build')
 sim(outdir='./build')
