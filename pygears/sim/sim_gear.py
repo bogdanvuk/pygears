@@ -4,6 +4,7 @@ import atexit
 from pygears.core.err import register_exit_hook
 from pygears import registry, GearDone
 from pygears.sim import clk, timestep, delta, sim_log, sim_phase
+from pygears.sim.sim import cancel
 from pygears.typing_common.codec import code
 from pygears.typing import typeof, TLM
 
@@ -21,7 +22,7 @@ class SimGear:
         self.gear = gear
         self.out_queues = []
         self.namespace = registry('SimMap')
-        self._done = False
+        self.done = False
         self._clean = True
         if not hasattr(self, 'func'):
             self.func = gear.func
@@ -40,7 +41,7 @@ class SimGear:
         return args, kwds
 
     def finish(self):
-        # self._done
+        self.done = True
         # self.task.cancel()
         for port in self.gear.out_ports:
             port.producer.finish()
@@ -88,6 +89,16 @@ class SimGear:
                         raise GearDone
 
         except GearDone as e:
-            # print(f"SimGear canceling: {self.gear.name}")
+            print(f"SimGear canceling: {self.gear.name}")
+            if self.gear.name == '/echo/shr':
+                print(f"SimGear canceling: {self.gear.name}")
+
+            for p in self.gear.in_ports:
+                intf = p.consumer
+                if not intf.empty():
+                    prod_intf = intf.in_queue.intf
+                    prod_gear = prod_intf.consumers[0].gear
+                    cancel(prod_gear)
+
             self.finish()
             raise e

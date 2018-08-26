@@ -1,12 +1,17 @@
-from pygears import gear
+from pygears import gear, module
 from pygears.typing import Integer, Uint
 from pygears.core.intf import IntfOperPlugin
 
 
 @gear
-def shr(din: Integer, cfg: Uint['w_shamt'], *,
-        signed=b'typeof(din, Int)') -> b'din':
-    pass
+async def shr(din: Integer,
+              cfg: Uint['w_shamt'],
+              *,
+              signed=b'typeof(din, Int)') -> b'din':
+
+    async with cfg as shamt:
+        async with din as d:
+            yield module().tout(d >> shamt)
 
 
 class MulIntfOperPlugin(IntfOperPlugin):

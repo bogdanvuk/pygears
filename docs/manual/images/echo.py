@@ -13,7 +13,7 @@ bus = path(
 bus_text = text(font="\\footnotesize", margin=p(0.4, 0.2))
 
 echo = block(
-    "Echo",
+    "echo",
     text_margin=p(0.5, 0.5),
     alignment="nw",
     dotted=True,
@@ -86,4 +86,4 @@ fig << bus_text("dout").aligny(fig[-1][1],
                                prev().s()).alignx(fig[-1][1],
                                                   prev().s(0.5))
 
-render_fig(fig)
+# render_fig(fig)

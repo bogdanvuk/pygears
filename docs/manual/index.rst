@@ -6,7 +6,7 @@ Welcome to PyGears
 For an introductory **PyGears** example, checkout :ref:`echo <examples-echo>`. A snippet is given below:: 
 
   @gear
-  def echo(samples, *, fifo_depth, feedback_gain, precision):
+  def echo(samples: Int, *, fifo_depth, feedback_gain, precision):
       dout = Intf(din.dtype)
 
       feedback = dout
@@ -31,18 +31,46 @@ In **PyGears**, each HDL module is considered a Python function, called the *gea
 
 **PyGears** features a powerfull system of :ref:`generic types <typing>`, which allows for generic modules to be described, as well as to perform type checking of the gear composition.
 
+References
+==========
+
+- `Kortiq's <http://www.kortiq.com/>`_ AIScale Deep Learning Processor was completely developed using PyGears
+
 Where to start?
 ===============
+
+..  _installation:
 
 Installation
 ------------
 
-Install PyGears from source::
+Install PyGears from source:
+
+.. code-block:: bash
 
   python setup.py install
 
-Checkout examples
------------------
+If you would like to run cosimulations with the Verilator, you need to make sure that it is available on the PATH.
+
+As an alternative, PyGears offers a script that automatically compiles the latest Verilator. The script was tested on Ubuntu, and should be invoked as follows:
+
+.. code-block:: bash
+
+  sudo apt install autoconf flex bison
+
+  cd <pygears_source_dir>/tools/install
+  python install.py verilator
+
+
+The script will create ``tools.sh`` bash file that should be sourced prior to running the cosimulation: 
+
+.. code-block:: bash
+
+  source <pygears_source_dir>/tools/tools.sh
+
+
+Checkout the examples
+---------------------
 
 :ref:`Echo <examples-echo>`: Hardware module that applies echo audio effect to a continuous audio stream.
 
@@ -82,6 +110,7 @@ Contents
    introduction
    typing
    examples
+   reference
 
 Indices and tables
 ==================

@@ -40,6 +40,11 @@ def artifacts_dir():
     return registry('SimArtifactDir')
 
 
+def cancel(gear):
+    sim = registry('Simulator')
+    sim.cancelled.add(registry('SimMap')[gear])
+
+
 class SimFuture(Future):
     def coro_iter(self):
         yield self

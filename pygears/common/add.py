@@ -1,6 +1,6 @@
 import operator
 
-from pygears.core.gear import alternative, gear
+from pygears import alternative, gear, module
 from pygears.typing import Integer, Int, Uint
 from pygears.core.intf import IntfOperPlugin
 from pygears.util.hof import oper_tree
@@ -23,7 +23,7 @@ async def add(*din: Integer,
               din0_signed=b'typeof(din0, Int)',
               din1_signed=b'typeof(din1, Int)') -> b'add_type(din)':
     async with gather(*din) as dout:
-        yield reduce(operator.add, dout)
+        yield module().tout(reduce(operator.add, dout))
 
 
 @alternative(add)

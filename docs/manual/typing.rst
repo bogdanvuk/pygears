@@ -132,37 +132,22 @@ Types overview
    :no-members:
    :no-special-members:
    :no-show-inheritance:
+   :noindex:
 
 .. autoclass:: pygears.typing.uint.Uint
    :no-members:
    :no-special-members:
    :no-show-inheritance:
+   :noindex:
 
 .. autoclass:: pygears.typing.uint.Int
    :no-members:
    :no-special-members:
    :no-show-inheritance:
+   :noindex:
 
 .. autoclass:: pygears.typing.array.Array
    :no-members:
    :no-special-members:
    :no-show-inheritance:
-
-
-Reference
----------
-
-Base classes
-~~~~~~~~~~~~
-
-.. automodule:: pygears.typing.base
-
-Integers
-~~~~~~~~
-
-.. automodule:: pygears.typing.uint
-
-Array
-~~~~~
-
-.. automodule:: pygears.typing.array
+   :noindex:
