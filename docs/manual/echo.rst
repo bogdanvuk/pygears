@@ -21,7 +21,7 @@ Run the script `examples/echo/echo_svgen.py <https://github.com/bogdanvuk/pygear
   cd <pygears_source_dir>/examples/echo
   python echo_svgen.py
 
-If you have `Vivado <https://www.xilinx.com/products/design-tools/vivado.html>` installed (you can download a free WebPack version from Xilinx website), the script will automatically try to synthesise the design and display the resource utilization report (displayed also :ref:`below <examples-echo-resource-utilization>`).
+If you have `Vivado <https://www.xilinx.com/products/design-tools/vivado.html>`_ installed (you can download a free WebPack version from Xilinx website), the script will automatically try to synthesise the design and display the resource utilization report (displayed also :ref:`below <examples-echo-resource-utilization>`).
 
 Running Simulation
 ------------------
@@ -145,6 +145,9 @@ At the end of the ``echo`` function implementation, we declare which of the inte
 Given description of the ``echo`` gear is translated by the PyGears into the SystemVerilog module given below:
 
 ..  _echo-sv:
+
+Generated SystemVerilog
+-----------------------
 
 .. code-block:: systemverilog
 

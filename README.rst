@@ -1,17 +1,20 @@
 Welcome to PyGears
 ==================
 
-**PyGears** is an ambitious attempt to create a Python framework that facilitates describing digital hardware. It aims to augment current RTL methodology to drasticly increase **composability** of hardware modules. Ease of composition leads to better **reusability**, since modulse that compose better can be used in a wider variety of contexts. Set of reausable components can then form a well-tested and documented library that significantly speeds up the development process.  
+**PyGears** is an ambitious attempt to create a Python framework that facilitates describing digital hardware. It aims to augment current RTL methodology to drasticly increase **composability** of hardware modules. Ease of composition leads to better **reusability**, since modules that compose better can be used in a wider variety of contexts. Set of reausable components can then form a well-tested and documented library that significantly speeds up the development process.  
 
 For an introductory **PyGears** example, checkout `echo <https://bogdanvuk.github.io/pygears/echo.html#examples-echo>`_. A snippet is given below:: 
 
+.. code-block:: python
+
   @gear
-  def echo(samples, *, fifo_depth, feedback_gain, precision):
+  def echo(samples: Int, *, fifo_depth, feedback_gain, precision):
       dout = Intf(din.dtype)
 
-      feedback = dout
-          | fifo(depth=fifo_depth, threshold=fifo_depth - 1)
-          | fill_void(fill=Int[16](0))
+      feedback = dout \
+          | fifo(depth=fifo_depth, threshold=fifo_depth - 1) \
+          | fill_void(fill=Int[16](0)) \
+          | decoupler
 
       feedback_attenuated = (feedback * feedback_gain) >> precision
 
@@ -31,15 +34,41 @@ In **PyGears**, each HDL module is considered a Python function, called the *gea
 
 **PyGears** features a powerfull system of `generic types <https://bogdanvuk.github.io/pygears/typing.html#typing>`_, which allows for generic modules to be described, as well as to perform type checking of the gear composition.
 
+References
+==========
+
+- `Kortiq's <http://www.kortiq.com/>`_ AIScale Deep Learning Processor was completely developed using PyGears
+
 Where to start?
 ===============
 
 Installation
 ------------
 
-Install PyGears from source::
+Install PyGears from source:
+
+.. code-block:: bash
 
   python setup.py install
+
+If you would like to run cosimulations with the Verilator, you need to make sure that it is available on the PATH.
+
+As an alternative, PyGears offers a script that automatically compiles the latest Verilator. The script was tested on Ubuntu, and should be invoked as follows:
+
+.. code-block:: bash
+
+  sudo apt install autoconf flex bison
+
+  cd <pygears_source_dir>/tools/install
+  python install.py verilator
+
+
+The script will create ``tools.sh`` bash file that should be sourced prior to running the cosimulation: 
+
+.. code-block:: bash
+
+  source <pygears_source_dir>/tools/tools.sh
+
 
 Checkout examples
 -----------------
