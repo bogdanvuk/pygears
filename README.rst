@@ -3,9 +3,7 @@ Welcome to PyGears
 
 **PyGears** is an ambitious attempt to create a Python framework that facilitates describing digital hardware. It aims to augment current RTL methodology to drasticly increase **composability** of hardware modules. Ease of composition leads to better **reusability**, since modules that compose better can be used in a wider variety of contexts. Set of reausable components can then form a well-tested and documented library that significantly speeds up the development process.  
 
-For an introductory **PyGears** example, checkout `echo <https://bogdanvuk.github.io/pygears/echo.html#examples-echo>`_. A snippet is given below:: 
-
-.. code-block:: python
+For an introductory **PyGears** example, checkout `echo <https://bogdanvuk.github.io/pygears/echo.html#examples-echo>`_. A snippet is given below::
 
   @gear
   def echo(samples: Int, *, fifo_depth, feedback_gain, precision):
