@@ -3,8 +3,8 @@ entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
  %&-line parsing enabled.
-**/tools/home/pygears/docs/manual/_build/html/_bdpfigure/queue_functor.tex
-(/tools/home/pygears/docs/manual/_build/html/_bdpfigure/queue_functor.tex
+**/tools/home/pygears/docs/manual/_build/html/_bdpfigure/echo_sim.tex
+(/tools/home/pygears/docs/manual/_build/html/_bdpfigure/echo_sim.tex
 LaTeX2e <2017-04-15>
 Babel <3.18> and hyphenation patterns for 84 language(s) loaded.
 (/usr/share/texlive/texmf-dist/tex/latex/standalone/standalone.cls
@@ -467,8 +467,8 @@ File: pgflibraryarrows.meta.code.tex 2015/05/13 v3.0.1a (rcs-revision 1.13)
 \pgfarrowwidth=\dimen161
 \pgfarrowlinewidth=\dimen162
 )
-No file queue_functor.aux.
-\openout1 = `queue_functor.aux'.
+No file echo_sim.aux.
+\openout1 = `echo_sim.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 13.
 LaTeX Font Info:    ... okay on input line 13.
@@ -546,20 +546,20 @@ e
 [1
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}]
-(/tools/home/pygears/docs/manual/_build/html/_bdpfigure/queue_functor.aux) ) 
+(/tools/home/pygears/docs/manual/_build/html/_bdpfigure/echo_sim.aux) ) 
 Here is how much of TeX's memory you used:
- 14938 strings out of 492982
- 335368 string characters out of 6134896
- 386121 words of memory out of 5000000
- 18231 multiletter control sequences out of 15000+600000
- 3640 words of font info for 14 fonts, out of 8000000 for 9000
+ 14937 strings out of 492982
+ 335118 string characters out of 6134896
+ 382121 words of memory out of 5000000
+ 18229 multiletter control sequences out of 15000+600000
+ 3938 words of font info for 15 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 55i,7n,68p,532b,636s stack positions out of 5000i,500n,10000p,200000b,80000s
-</u
-sr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/shar
-e/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb>
-Output written on /tools/home/pygears/docs/manual/_build/html/_bdpfigure/queue_
-functor.pdf (1 page, 24486 bytes).
+ 55i,7n,68p,444b,612s stack positions out of 5000i,500n,10000p,200000b,80000s
+</usr/sh
+are/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/tex
+live/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb>
+Output written on /tools/home/pygears/docs/manual/_build/html/_bdpfigure/echo_s
+im.pdf (1 page, 20543 bytes).
 PDF statistics:
  19 PDF objects out of 1000 (max. 8388607)
  13 compressed objects within 1 object stream

@@ -39,7 +39,7 @@
 <p><strong>PyGears</strong> is an ambitious attempt to create a Python framework that facilitates describing digital hardware. It aims to augment current RTL methodology to drasticly increase <strong>composability</strong> of hardware modules. Ease of composition leads to better <strong>reusability</strong>, since modulse that compose better can be used in a wider variety of contexts. Set of reausable components can then form a well-tested and documented library that significantly speeds up the development process.</p>
 <p>For an introductory <strong>PyGears</strong> example, checkout <a class="reference internal" href="echo.html#examples-echo"><span class="std std-ref">echo</span></a>. A snippet is given below:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@gear</span>
-<span class="k">def</span> <span class="nf">echo</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">fifo_depth</span><span class="p">,</span> <span class="n">feedback_gain</span><span class="p">,</span> <span class="n">precision</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">echo</span><span class="p">(</span><span class="n">samples</span><span class="p">:</span> <span class="n">Int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">fifo_depth</span><span class="p">,</span> <span class="n">feedback_gain</span><span class="p">,</span> <span class="n">precision</span><span class="p">):</span>
     <span class="n">dout</span> <span class="o">=</span> <span class="n">Intf</span><span class="p">(</span><span class="n">din</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
 
     <span class="n">feedback</span> <span class="o">=</span> <span class="n">dout</span>
@@ -60,17 +60,35 @@
 <p><strong>PyGears</strong> supports also the hierarchical gears which do not have a HDL implementation, but are defined in terms of other gears. Each gear accepts and returns interface objects as arguments, which represents module connections. This allows for a module composition to be described in terms of powerfull functional concepts, such as: partial application, higher-order functions, function polymorphism.</p>
 <p><strong>PyGears</strong> features a powerfull system of <a class="reference internal" href="typing.html#typing"><span class="std std-ref">generic types</span></a>, which allows for generic modules to be described, as well as to perform type checking of the gear composition.</p>
 </div>
+<div class="section" id="references">
+<h1>References<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference external" href="http://www.kortiq.com/">Kortiq’s</a> AIScale Deep Learning Processor was completely developed using PyGears</li>
+</ul>
+</div>
 <div class="section" id="where-to-start">
 <h1>Where to start?<a class="headerlink" href="#where-to-start" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="installation">
-<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<span id="id1"></span><h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
 <p>Install PyGears from source:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python setup.py install
+</pre></div>
+</div>
+<p>If you would like to run cosimulations with the Verilator, you need to make sure that it is available on the PATH.</p>
+<p>As an alternative, PyGears offers a script that automatically compiles the latest Verilator. The script was tested on Ubuntu, and should be invoked as follows:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo apt install autoconf flex bison
+
+<span class="nb">cd</span> &lt;pygears_source_dir&gt;/tools/install
+python install.py verilator
+</pre></div>
+</div>
+<p>The script will create <code class="docutils literal notranslate"><span class="pre">tools.sh</span></code> bash file that should be sourced prior to running the cosimulation:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span> &lt;pygears_source_dir&gt;/tools/tools.sh
 </pre></div>
 </div>
 </div>
-<div class="section" id="checkout-examples">
-<h2>Checkout examples<a class="headerlink" href="#checkout-examples" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="checkout-the-examples">
+<h2>Checkout the examples<a class="headerlink" href="#checkout-the-examples" title="Permalink to this headline">¶</a></h2>
 <p><a class="reference internal" href="echo.html#examples-echo"><span class="std std-ref">Echo</span></a>: Hardware module that applies echo audio effect to a continuous audio stream.</p>
 </div>
 <div class="section" id="read-the-documentation">
@@ -119,11 +137,14 @@
 <li class="toctree-l2"><a class="reference internal" href="typing.html#compile-time-type-checking">Compile time type checking</a></li>
 <li class="toctree-l2"><a class="reference internal" href="typing.html#polymorphic-modules-and-pattern-matching">Polymorphic modules and pattern matching</a></li>
 <li class="toctree-l2"><a class="reference internal" href="typing.html#types-overview">Types overview</a></li>
-<li class="toctree-l2"><a class="reference internal" href="typing.html#reference">Reference</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="echo.html">Echo</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reference.html">Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="typing_reference.html">Typing</a></li>
 </ul>
 </li>
 </ul>
@@ -165,6 +186,7 @@
 <li class="toctree-l1"><a class="reference internal" href="introduction.html">Quick introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="typing.html">Typing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference.html">Reference</a></li>
 </ul>
 
 <div class="relations">
