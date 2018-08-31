@@ -1,4 +1,8 @@
-module decoupler#(DEPTH = 2)
+module decoupler
+   #(
+	   parameter DEPTH = 2,
+     parameter DIN = 16
+	   )
    (
     input logic clk,
     input       rst,
@@ -9,7 +13,7 @@ module decoupler#(DEPTH = 2)
     if (DEPTH > 1) begin
 
       localparam MSB = $clog2(DEPTH);
-      localparam W_DATA = $size(din.data);
+      localparam W_DATA = DIN;
 
       logic [MSB:0] w_ptr;
       logic [MSB:0] r_ptr;
@@ -48,7 +52,7 @@ module decoupler#(DEPTH = 2)
 
    end else begin
 
-      logic [$size(din.data)-1 : 0] din_reg_data;
+      logic [DIN-1 : 0] din_reg_data;
       logic                         din_reg_valid;
       logic                         reg_empty;
       logic                         reg_ready;
@@ -69,12 +73,5 @@ module decoupler#(DEPTH = 2)
       assign dout.data = din_reg_data;
       assign dout.valid = din_reg_valid;
    end
-
-   // ---------------------------------------------------------------------------
-   // Usage checks
-   // ---------------------------------------------------------------------------
-
-   if ($size(din.data) != $size(dout.data))
-     $error("Ready cutter incorrect usage: output data must be same width as input data");
 
 endmodule : decoupler

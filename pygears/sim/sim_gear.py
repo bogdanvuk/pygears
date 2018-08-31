@@ -89,10 +89,6 @@ class SimGear:
                         raise GearDone
 
         except GearDone as e:
-            print(f"SimGear canceling: {self.gear.name}")
-            if self.gear.name == '/echo/shr':
-                print(f"SimGear canceling: {self.gear.name}")
-
             for p in self.gear.in_ports:
                 intf = p.consumer
                 if not intf.empty():

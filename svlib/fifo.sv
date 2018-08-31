@@ -26,7 +26,7 @@ module fifo
 	 logic             we;
 	 wire              dv = waddr_reg != raddr_reg;
 
-	 wire [WIDTH-1:0]  out_buff = ram[raddr_reg[CW-1:0]];
+	 logic [WIDTH-1:0]  out_buff;
 
 	 wire              eq_cnt = waddr_reg[CW-1:0] == raddr_reg[CW-1:0];
 	 wire              eq_msb = waddr_reg[CW] == raddr_reg[CW];
@@ -57,6 +57,10 @@ module fifo
 		   ram[waddr_reg[CW-1:0]] <= in_buff;
 
 	 always_ff @(posedge clk)
+	   out_buff <= ram[raddr_next[CW-1:0]];
+
+
+	 always_ff @(posedge clk)
 	   if (rst)
 		   begin
 			    raddr_reg <= '0;
@@ -69,7 +73,7 @@ module fifo
 		   end
 
 
-	 wire ready = dout.ready | ~full;//
+	 wire ready = dout.ready | ~full;
 	 assign din.ready = ready;
 
 	 always_comb // Write logic

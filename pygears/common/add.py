@@ -23,7 +23,11 @@ async def add(*din: Integer,
               din0_signed=b'typeof(din0, Int)',
               din1_signed=b'typeof(din1, Int)') -> b'add_type(din)':
     async with gather(*din) as dout:
+        from pygears.sim import sim_log
+        sim_log().info(f'{dout}')
         yield module().tout(reduce(operator.add, dout))
+
+        sim_log().info(f'ACK')
 
 
 @alternative(add)
