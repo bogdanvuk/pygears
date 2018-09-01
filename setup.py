@@ -33,10 +33,16 @@ class PostInstallCommand(install):
         setup_home()
 
 
+def readme():
+    with open('README.rst') as f:
+        return f.read()
+
+
 setup(
     name='pygears',
     version='0.1',
     description='Framework for functional hardware design approach',
+    long_description=readme(),
 
     # The project's main homepage.
     url='https://github.com/bogdanvuk/pygears.git',

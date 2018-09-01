@@ -42,32 +42,56 @@ References
 Where to start?
 ===============
 
+..  _installation:
+
 Installation
 ------------
 
-Install PyGears from source:
+Install with ``pip``
+~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
+   pip install pygears
+
+Obtain the examples:
+
+.. code-block:: bash
+
+   git clone https://github.com/bogdanvuk/pygears.git
+   cd pygears/examples
+
+Installing from source
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+  git clone https://github.com/bogdanvuk/pygears.git
+  cd pygears
   python3 setup.py install
 
-If you would like to run cosimulations with the Verilator, you need to make sure that it is available on the PATH.
+.. warning::
 
-As an alternative, PyGears offers a script that automatically compiles the latest Verilator. The script was tested on Ubuntu, and should be invoked as follows:
+  setup.py might fail to install the necessary dependencies, so you might additionally need to run::
+
+    pip install jinja2
+
+Installing Verilator
+~~~~~~~~~~~~~~~~~~~~
+
+If you would like to run cosimulations with the Verilator, you need to make sure that it is available on the PATH. As an alternative, PyGears offers a script that automatically compiles the latest Verilator. The script was tested on Ubuntu.
 
 .. code-block:: bash
 
-  sudo apt install autoconf flex bison
-
-  cd <pygears_source_dir>/tools/install
-  python3 install.py verilator
-
+   sudo apt install autoconf flex bison
+   pygears_tools_install verilator
 
 The script will create ``tools.sh`` bash file that should be sourced prior to running the cosimulation: 
 
 .. code-block:: bash
 
-  source <pygears_source_dir>/tools/tools.sh
+  source ~/.pygears/tools/tools.sh
+
 
 
 Checkout examples
