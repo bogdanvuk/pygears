@@ -42,8 +42,6 @@ References
 Where to start?
 ===============
 
-..  _installation:
-
 Installation
 ------------
 
@@ -61,8 +59,8 @@ Obtain the examples:
    git clone https://github.com/bogdanvuk/pygears.git
    cd pygears/examples
 
-Installing from source
-~~~~~~~~~~~~~~~~~~~~~~
+Alternative installation from source
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 

@@ -28,7 +28,7 @@ Furthermore, **PyGears** offers a way to write verification environment in high-
 
 **PyGears** also features a `library of standard modules <https://github.com/bogdanvuk/pygears/tree/develop/pygears/common>`_ and the `cookbook library <https://github.com/bogdanvuk/pygears/tree/develop/pygears/cookbook>`_ that are ready to be used in a **PyGears** design.
 
-In **PyGears**, each HDL module is considered a Python function, called the *gear*, hence the design is described in form of a functional (gear) composition. In order for HDL modules to be composable in this way, they need to be designed in accordance with the **Gears** methodology. You should probably `read a short intro to Gears https://bogdanvuk.github.io/pygears/gears.html#gears-introduction-to-gears`_ in order to understand this project from the hardware prespective.
+In **PyGears**, each HDL module is considered a Python function, called the *gear*, hence the design is described in form of a functional (gear) composition. In order for HDL modules to be composable in this way, they need to be designed in accordance with the **Gears** methodology. You should probably `read a short intro to Gears <https://bogdanvuk.github.io/pygears/gears.html#gears-introduction-to-gears>`_ in order to understand this project from the hardware prespective.
 
 **PyGears** supports also the hierarchical gears which do not have a HDL implementation, but are defined in terms of other gears. Each gear accepts and returns interface objects as arguments, which represents module connections. This allows for a module composition to be described in terms of powerfull functional concepts, such as: partial application, higher-order functions, function polymorphism.
 
@@ -41,8 +41,6 @@ References
 
 Where to start?
 ===============
-
-..  _installation:
 
 Installation
 ------------
@@ -61,8 +59,8 @@ Obtain the examples:
    git clone https://github.com/bogdanvuk/pygears.git
    cd pygears/examples
 
-Installing from source
-~~~~~~~~~~~~~~~~~~~~~~
+Alternative installation from source
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
