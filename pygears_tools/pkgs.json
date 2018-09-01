@@ -1,0 +1,44 @@
+[
+    {
+		    "name": "verilator",
+		    "flow": "default_cpp",
+		    "url": "https://www.veripool.org/ftp/verilator-3.926.tgz",
+		    "src_root_path": "{install_path}/verilator-3.926",
+        "pre_custom_run": ["export VERILATOR_ROOT={path}"],
+        "post_custom_run": [
+            "cp -r {path}/share/verilator/include {path}",
+            "cp {path}/share/verilator/bin/* {path}/bin"
+		    ],
+		    "configure": "",
+		    "deps": "autoconf flex bison",
+		    "env" : [
+			      "export VERILATOR_ROOT={path}",
+			      "export PATH={path}/bin:$PATH"
+		    ]
+    },
+    {
+		    "name": "systemc",
+		    "flow": "default_cpp",
+		    "url": "http://accellera.org/images/downloads/standards/systemc/systemc-2.3.2.tar.gz",
+		    "src_root_path": "{install_path}/systemc-2.3.2",
+        "configure": "",
+		    "env" : [
+			      "export SYSTEMC_DISABLE_COPYRIGHT_MESSAGE=1",
+			      "export SYSTEMC_HOME={path}",
+			      "export SYSTEMC_INCLUDE={path}/include",
+			      "export SYSTEMC_LIBDIR={path}/lib-linux64"
+		    ]
+    },
+    {
+		    "name": "scv",
+		    "flow": "default_cpp",
+		    "url": "http://www.accellera.org/images/downloads/standards/systemc/scv-2.0.1.tar.gz",
+		    "src_root_path": "{install_path}/scv-2.0.1",
+        "configure": "--with-systemc=$SYSTEMC_HOME",
+		    "env" : [
+			      "export SCV_HOME={path}",
+			      "export SCV_INCLUDE={path}/include",
+			      "export SCV_LIBDIR={path}/lib-linux64"
+		    ]
+    }
+]

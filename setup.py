@@ -1,6 +1,7 @@
 from setuptools import setup, find_packages
 from setuptools.command.develop import develop
 from setuptools.command.install import install
+from setuptools.command.egg_info import egg_info
 import os
 import glob
 
@@ -8,6 +9,12 @@ import glob
 def setup_home():
     os.makedirs(os.path.expanduser('~/.pygears'), exist_ok=True)
     os.makedirs(os.path.expanduser('~/.pygears/svlib'), exist_ok=True)
+
+
+class PostEggInfoCommand(egg_info):
+    def run(self):
+        egg_info.run(self)
+        setup_home()
 
 
 class PostDevelopCommand(develop):
@@ -28,7 +35,7 @@ class PostInstallCommand(install):
 
 setup(
     name='pygears',
-    version='0.2.6',
+    version='0.2.12',
     description='Framework for hardware design ',
 
     # The project's main homepage.
@@ -48,19 +55,20 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3.6',
     ],
-    include_package_data=True,
+    package_data={'': ['*.j2', '*.sv', '*.json']},
+    # include_package_data=True,
     keywords='Gears System Design Python Simulator HDL ASIC FPGA',
     install_requires=['jinja2>=2.10'],
     packages=find_packages(exclude=['examples*', 'docs']),
-    data_files=[(os.path.expanduser('~/.pygears/tools/install'),
-                 list(glob.glob('tools/install/*')))],
     entry_points={
         'console_scripts': [
             'pywave = pygears.sim.extens.pywave:main',
+            'pygears_tools_install = pygears_tools.install:main'
         ],
     },
     cmdclass={
         'develop': PostDevelopCommand,
         'install': PostInstallCommand,
+        'egg_info': PostEggInfoCommand,
     },
 )

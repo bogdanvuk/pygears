@@ -3,6 +3,7 @@ import shutil
 
 from echo import echo, stereo_echo
 from pygears import Intf
+from pygears.definitions import COMMON_SVLIB_DIR
 from pygears.svgen import svgen
 from pygears.typing import Int
 
@@ -12,9 +13,12 @@ svgen('/echo', outdir='build/echo', wrapper=True)
 print(f'Generated SystemVerilog files inside {os.path.abspath("build/echo")}')
 
 print(f'Creating Vivado project inside {os.path.abspath("build/echo/vivado")}')
-shutil.rmtree('build/echo/vivado')
-if os.system(
-        'vivado -mode batch -source echo_synth.tcl -nolog -nojournal') == 0:
+
+shutil.rmtree('build/echo/vivado', ignore_errors=True)
+
+viv_cmd = (f'vivado -mode batch -source echo_synth.tcl -nolog -nojournal'
+           f' -tclargs {COMMON_SVLIB_DIR}')
+
+if os.system(viv_cmd) == 0:
     with open('build/echo/echo_utilization.txt') as f:
-        for line in f:
-            print(line)
+        print(f.read())
