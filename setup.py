@@ -28,7 +28,7 @@ class PostInstallCommand(install):
 
 setup(
     name='pygears',
-    version='0.2.5',
+    version='0.2.6',
     description='Framework for hardware design ',
 
     # The project's main homepage.
@@ -48,11 +48,12 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3.6',
     ],
-    package_data={'': ['*.j2', '*.sv']},
     include_package_data=True,
     keywords='Gears System Design Python Simulator HDL ASIC FPGA',
-    install_requires=['jinja2'],
+    install_requires=['jinja2>=2.10'],
     packages=find_packages(exclude=['examples*', 'docs']),
+    data_files=[(os.path.expanduser('~/.pygears/tools/install'),
+                 list(glob.glob('tools/install/*')))],
     entry_points={
         'console_scripts': [
             'pywave = pygears.sim.extens.pywave:main',
