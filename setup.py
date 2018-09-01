@@ -28,7 +28,7 @@ class PostInstallCommand(install):
 
 setup(
     name='pygears',
-    version='0.2.3',
+    version='0.2.5',
     description='Framework for hardware design ',
 
     # The project's main homepage.
@@ -49,12 +49,10 @@ setup(
         'Programming Language :: Python :: 3.6',
     ],
     package_data={'': ['*.j2', '*.sv']},
-    data_files=[
-        ('pygears/cookbook/svlib', list(glob.iglob('pygears/cookbook/svlib/*.sv', recursive=True)))
-    ],
+    include_package_data=True,
     keywords='Gears System Design Python Simulator HDL ASIC FPGA',
     install_requires=['jinja2'],
-    packages=find_packages(exclude=['examples*', 'docs', 'svlib']),
+    packages=find_packages(exclude=['examples*', 'docs']),
     entry_points={
         'console_scripts': [
             'pywave = pygears.sim.extens.pywave:main',

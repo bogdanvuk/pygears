@@ -1,2 +1,3 @@
-recursive-include pygears *.sv *.j2
-recursive-include svlib *.sv
+recursive-include pygears *.j2
+recursive-include pygears/cookbook/svlib *.sv
+recursive-include pygears/common/svlib *.sv

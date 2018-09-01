@@ -2,7 +2,7 @@ from collections import OrderedDict
 
 from pygears.svgen.inst import SVGenInstPlugin
 from pygears.svgen.svparse import parse
-from pygears.definitions import ROOT_DIR
+from pygears.definitions import COMMON_SVLIB_DIR, COOKBOOK_SVLIB_DIR
 from pygears import registry
 
 import os
@@ -213,7 +213,5 @@ class SVGenSVModPlugin(SVGenInstPlugin):
         cls.registry['SVGenModuleNamespace']['Gear'] = SVModuleGen
         cls.registry['SVGenModuleNamespace']['RTLNodeDesign'] = SVTopGen
 
-        cls.registry['SVGenSystemVerilogPaths'].append(
-            os.path.join(ROOT_DIR, '..', 'svlib'))
-        cls.registry['SVGenSystemVerilogPaths'].append(
-            os.path.join(ROOT_DIR, 'cookbook', 'svlib'))
+        cls.registry['SVGenSystemVerilogPaths'].extend(
+            [COMMON_SVLIB_DIR, COOKBOOK_SVLIB_DIR])
