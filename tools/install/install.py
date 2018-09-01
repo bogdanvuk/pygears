@@ -57,8 +57,10 @@ cfg = {
 with open(cfg["pkgs_fn"]) as json_data:
     pkgs = json.load(json_data)
 
+print(pkgs)
+print(pkg_names)
 if pkg_names:
-    pkgs = {k: v for k, v in pkgs if k in pkg_names}
+    pkgs = [p for p in pkgs if p['name'] in pkg_names]
 
 os.chdir(cfg["tools_path"])
 

@@ -1,0 +1,2 @@
+recursive-include pygears *.sv *.j2
+recursive-include svlib *.sv

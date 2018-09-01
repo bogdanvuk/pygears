@@ -49,7 +49,7 @@ Install PyGears from source:
 
 .. code-block:: bash
 
-  python setup.py install
+  python3 setup.py install
 
 If you would like to run cosimulations with the Verilator, you need to make sure that it is available on the PATH.
 
@@ -60,7 +60,7 @@ As an alternative, PyGears offers a script that automatically compiles the lates
   sudo apt install autoconf flex bison
 
   cd <pygears_source_dir>/tools/install
-  python install.py verilator
+  python3 install.py verilator
 
 
 The script will create ``tools.sh`` bash file that should be sourced prior to running the cosimulation: 

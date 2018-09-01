@@ -2,6 +2,7 @@ from setuptools import setup, find_packages
 from setuptools.command.develop import develop
 from setuptools.command.install import install
 import os
+import glob
 
 
 def setup_home():
@@ -27,9 +28,8 @@ class PostInstallCommand(install):
 
 setup(
     name='pygears',
-    version='0.1',
-    description=
-    'Tools for the Gears HDM (Hardware Design Methodology) written in Python',
+    version='0.2.3',
+    description='Framework for hardware design ',
 
     # The project's main homepage.
     url='https://github.com/bogdanvuk/pygears.git',
@@ -44,12 +44,16 @@ setup(
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
         'Development Status :: 3 - Alpha',
-        'Intended Audience :: Developers',
         'Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)',
-        'License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)',
+        'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3.6',
     ],
+    package_data={'': ['*.j2', '*.sv']},
+    data_files=[
+        ('pygears/cookbook/svlib', list(glob.iglob('pygears/cookbook/svlib/*.sv', recursive=True)))
+    ],
     keywords='Gears System Design Python Simulator HDL ASIC FPGA',
+    install_requires=['jinja2'],
     packages=find_packages(exclude=['examples*', 'docs', 'svlib']),
     entry_points={
         'console_scripts': [
