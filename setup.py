@@ -35,11 +35,12 @@ class PostInstallCommand(install):
 
 setup(
     name='pygears',
-    version='0.2.12',
-    description='Framework for hardware design ',
+    version='0.1',
+    description='Framework for functional hardware design approach',
 
     # The project's main homepage.
     url='https://github.com/bogdanvuk/pygears.git',
+    # download_url = '',
 
     # Author details
     author='Bogdan Vukobratovic',
@@ -50,14 +51,14 @@ setup(
 
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3.6',
     ],
     package_data={'': ['*.j2', '*.sv', '*.json']},
     # include_package_data=True,
-    keywords='Gears System Design Python Simulator HDL ASIC FPGA',
+    keywords='Gears hardware design Python Simulator HDL ASIC FPGA',
     install_requires=['jinja2>=2.10'],
     packages=find_packages(exclude=['examples*', 'docs']),
     entry_points={
