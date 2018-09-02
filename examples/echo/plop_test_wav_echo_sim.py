@@ -5,7 +5,5 @@ wav_echo_sim(
     'build/plop_echo.wav',
     feedback_gain=0.6,
     delay=0.25,
-    # delay=0.01,
     stereo=False,
-    # sample_rng=1000,
-    )
+)

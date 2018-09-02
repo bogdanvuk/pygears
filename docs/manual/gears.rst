@@ -200,6 +200,8 @@ Each gear is locally synchonized with each of its neighbours, hence no clunky gl
 
 In order to further reduce the cognitive load, testability and amount of errors in a hardware system being developped, **Gears** methodology proposes that gears should aim to be pure (akin to `pure functions <https://en.wikipedia.org/wiki/Pure_function>`__). A gear is considered pure if its local state is reset each time after the gear consumes/acknowledges its input data. If a gear operates on Queues, it is still considered pure if its local state is reset after the whole Queue has been processed.
 
+.. _gears-functors:
+
 Functors
 --------
 

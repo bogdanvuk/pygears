@@ -58,8 +58,42 @@ Upon completion, the resulting wave will be saved in the file ``build/plop_echo.
 
 .. image:: images/echo_vcd.png
 
+You can now play with the parameters in ``plop_test_wav_echo_sim.py`` script. Try changing echo delay and gain settings and check the results.  
 
-You can now play with the parameters in ``plop_test_wav_echo_sim.py`` script. Change ``stereo=True`` to run the stereo version of the example. Try changing echo delay and gain settings and check the results.  
+Stereo Echo
+-----------
+
+PyGears lets you easily compose gears at any level. To create a stereo echo effect gear, we will instantiate one ``echo`` gear for each channel.
+
+.. bdp:: images/stereo_echo.py
+    :align: center
+
+In PyGears this can be described as follows:
+
+.. literalinclude:: ../../examples/echo/echo.py
+   :pyobject: stereo_echo
+
+The input interface ``din`` of the ``stereo_echo`` module, needs to carry two samples, one for each channel. This can be represented as a ``Tuple`` data type. If the samples are 16 bits wide, the stereo data should be of the type ``Tuple[Int[16], Int[16]]``, which can be displayed more succinctly as ``(i16, 116)``. Other parameters of the ``stere_echo`` gear have the same meaning as the ``echo`` gear parameters.
+
+First, a version of echo gear is created, with some of its paremeters supplied/set. This is akin to the `partial function application <https://en.wikipedia.org/wiki/Partial_application>`_::
+
+    mono_echo = echo(
+        feedback_gain=feedback_gain,
+        sample_rate=sample_rate,
+        delay=delay,
+        precision=precision)
+
+The ``mono_echo`` variable now points to the ``echo`` gear, but also carries the information about parameter settings for ``feedback_gain``, ``sample_rate``, ``delay`` and ``precision``. Even though the ``echo`` function seems to be called, it will not be instantiated at this moment. The reason is that the input interface ``din`` was not connected, i.e. it has not been supplied as a parameter. PyGears will instantiate a gear only when all of its input interfaces are supplied.
+
+Next, the input interface ``din`` is connected to the two ``echo`` gears. For this we will rely on ``fmap`` to split the data from ``din`` into two components, feed each of the components to the individual ``echo`` gear, and then combine the result. In more functional terms, ``fmap`` applies the ``echo`` functions to each item of the ``din`` data tuple, i.e. ``fmap`` is a polymorphic functor. Checkout a :ref:`short presentation <gears-functors>` of usefull functors used in PyGears.
+
+.. code-block::
+
+    return din | fmap(f=(mono_echo, mono_echo))
+
+The output interface of the ``fmap`` gear will also be output interface of the ``stereo_echo`` gear.
+
+You can run the cosimulation of the stereo design by setting ``stereo=True`` in `examples/echo/plop_test_wav_echo_sim.py <https://github.com/bogdanvuk/pygears/tree/develop/examples/echo/plop_test_wav_echo_sim.py>`_. 
 
 ..  _examples-echo-functional-description:
 
@@ -117,7 +151,8 @@ At this moment, this interface has no source (producer), which has to be attende
 
   feedback = dout \
       | fifo(depth=fifo_depth, threshold=sample_dly_len) \
-      | fill_void(fill=din.dtype(0))
+      | fill_void(fill=din.dtype(0)) \
+      | decoupler
 
 The FIFO gear is declared in `fifo.py <https://github.com/bogdanvuk/pygears/tree/develop/pygears/common/fifo.py>`_, and its SystemVerilog description is given in `fifo.sv <https://github.com/bogdanvuk/pygears/tree/develop/svlib/fifo.sv>`_. In the ``echo`` gear FIFO is used to delay the output audio samples before adding them back to the input stream. Parameters ``depth=fifo_depth`` and ``threshold=sample_dly_len`` are set using the values whose calculations were described earlier. Parameter ``threshold`` tells the FIFO the number of data it needs to contain before it starts ouputing them. When ``threshold=0``, the FIFO outputs the data immediatelly.
 

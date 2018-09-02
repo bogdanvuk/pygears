@@ -77,7 +77,7 @@ Alternative installation from source
 Installing Verilator
 ~~~~~~~~~~~~~~~~~~~~
 
-If you would like to run cosimulations with the Verilator, you need to make sure that it is available on the PATH. As an alternative, PyGears offers a script that automatically compiles the latest Verilator. The script was tested on Ubuntu.
+If you would like to run cosimulations with the Verilator, you need to make sure that it is available on the PATH. You can install it manually by following `these instructions <https://www.veripool.org/projects/verilator/wiki/Installing>`_. As an alternative, PyGears offers a script that automatically compiles the latest Verilator. The script was tested on Ubuntu.
 
 .. code-block:: bash
 
