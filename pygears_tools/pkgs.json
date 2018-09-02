@@ -10,9 +10,20 @@
             "cp {path}/share/verilator/bin/* {path}/bin"
 		    ],
 		    "configure": "",
-		    "deps": "autoconf flex bison",
+		    "deps": "build-essential autoconf flex bison",
 		    "env" : [
 			      "export VERILATOR_ROOT={path}",
+			      "export PATH={path}/bin:$PATH"
+		    ]
+    },
+    {
+		    "name": "gtkwave",
+		    "flow": "default_cpp",
+		    "url": "http://gtkwave.sourceforge.net/gtkwave-3.3.93.tar.gz",
+		    "deps": "build-essential gperf libgtk2.0-dev",
+		    "src_root_path": "{install_path}/gtkwave-3.3.93",
+		    "configure": "",
+		    "env" : [
 			      "export PATH={path}/bin:$PATH"
 		    ]
     },

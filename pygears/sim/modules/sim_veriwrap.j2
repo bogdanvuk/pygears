@@ -19,21 +19,22 @@ void eval(void) {
     top->eval();
 }
 
-void propagate(void) {
+void back(void) {
 #ifdef DEBUG
-    printf("propagate\n");
+    printf("back\n");
 #endif
     top->eval();
-    main_time++;
-    main_time++;
 {% if tracing %}
     if (tfp) tfp->dump (main_time);
 {% endif %}
+    main_time++;
     top->clk = 0;
+    top->rst = 0;
     top->eval();
 {% if tracing %}
     if (tfp) tfp->dump (main_time);
 {% endif %}
+    main_time++;
 }
 
 void trig(void) {
@@ -42,14 +43,6 @@ void trig(void) {
 #endif
     top->clk = 1;
     top->eval();
-}
-
-void cycle(void) {
-#ifdef DEBUG
-    printf("cycle\n");
-#endif
-    propagate();
-    trig();
 }
 
 int init(void) {
@@ -76,9 +69,7 @@ int init(void) {
 {% endfor %}
 
     top->rst = 1;
-    trig();
-    cycle();
-    top->rst = 0;
+    top->eval();
 
     return 0;
 }

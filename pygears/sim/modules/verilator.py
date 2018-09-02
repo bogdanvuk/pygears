@@ -22,10 +22,10 @@ class SimVerilatorSynchro:
         self.verilib.trig()
 
     def forward(self):
-        self.verilib.propagate()
+        self.verilib.eval()
 
     def back(self):
-        self.verilib.eval()
+        self.verilib.back()
 
 
 class SimVerilated(CosimBase):
