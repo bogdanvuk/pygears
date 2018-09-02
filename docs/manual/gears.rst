@@ -7,20 +7,20 @@ The main goal of the **Gears** hardware design methodology is to enable easy com
 
 Modules that adhere to the **Gears** methodology are called **gears**. Gears are self-synchronizing, meaning that they can be composed without the need of some global control FSM. On the other hand, they add no overhead in terms of latency and induce little to no overhead in terms of the logic gates used.
 
-Since the composition becomes easy when adhering to **Gears**, the design can be broken down/factored to small modules that implement basic functionalities, which is alligned with the `Single responsibility principle <https://en.wikipedia.org/wiki/Single_responsibility_principle>`__. Small modules with a single functionality are easier to understand, test, debug, maintain and most importantly: **reuse**. When using **Gears** for your project, you are basically building a library of well tested, well understood modules, that you can easily reuse.
+Since the composition becomes easy when adhering to **Gears**, the design can be broken down/factored to small modules that implement basic functionalities, which is aligned with the `Single responsibility principle <https://en.wikipedia.org/wiki/Single_responsibility_principle>`__. Small modules with a single functionality are easier to understand, test, debug, maintain and most importantly: **reuse**. When using **Gears** for your project, you are basically building a library of well tested, well understood modules, that you can easily reuse.
 
 .. _gears-interface:
 
 One interface
 -------------
 
-The main idea behind standardized interfaces is to provide easy composition of the modules. These interfaces: AXI, Avalon, etc., have been used so far to compose large modules written in RTL called IPs, and they are popular for developping SoCs (System on chip). **Gears** tries to push this standardization all the way down to the basic building blocks like: counters, MUXs and FIFOs.
+The main idea behind standardized interfaces is to provide easy composition of the modules. These interfaces: AXI, Avalon, etc., have been used so far to compose large modules written in RTL called IPs, and they are popular for developing SoCs (System on chip). **Gears** tries to push this standardization all the way down to the basic building blocks like: counters, MUXs and FIFOs.
 
 .. tikz:: DTI - Data Transfer Interface
    :libs: arrows.meta, shapes
    :include: dti.tex
 
-**Gears** proposes the use of a single interface type for gear communication, called DTI (Data Transfer Interface), throughout the design. Interface connects two gears, one which sends the data and the otherone which receives it, called Producer and Consumer respectively. This interface DTI is a simple synchronous, flow-controlled interface, somewhat similar to AXI4-Stream, consisting of the following three signals:
+**Gears** proposes the use of a single interface type for gear communication, called DTI (Data Transfer Interface), throughout the design. Interface connects two gears, one which sends the data and the other one which receives it, called Producer and Consumer respectively. This interface DTI is a simple synchronous, flow-controlled interface, somewhat similar to AXI4-Stream, consisting of the following three signals:
 
 - **Data** - Variable width signal, driven by the Producer, which carries the actual data.
 - **Valid** - Single bit wide signal, driven by the Producer, which signals when valid data is available on Data signal.
@@ -59,10 +59,10 @@ Gears need to adhere to the following rules:
 
 .. _gears-type-system:
 
-Powerfull type system
+Powerful type system
 ---------------------
 
-To enhance the composability, gear inputs and outputs are all assigned a type, which are usually generic, i.e. parametrized. Example of basic types are: Uint[T] and Int[T], which denote variable sized unsigned and signed integers. For an example Uint[16] is 16-bit wide unsigned integer. **Gears** defines complex types also, such as:
+To enhance the composability, gear inputs and outputs are all assigned a type, which are usually generic, i.e. parameterized. Example of basic types are: Uint[T] and Int[T], which denote variable sized unsigned and signed integers. For an example Uint[16] is 16-bit wide unsigned integer. **Gears** defines complex types also, such as:
 
 Tuple
 ~~~~~
@@ -94,7 +94,7 @@ Union can carry data of one of multiple other types. It has a control and data f
 
     example_t = Union[Uint[16], Uint[8]]  # u16 | u8
 
-is a union where its control bit determines if the data is interpreted as 16-bit or 8-bit unsinged integer. In SystemVerilog this example type would be encoded as:
+is a union where its control bit determines if the data is interpreted as 16-bit or 8-bit unsigned integer. In SystemVerilog this example type would be encoded as:
 
 .. code-block:: systemverilog
 
@@ -153,7 +153,7 @@ Queue can have multiple levels and hence describe more complex transactions. For
 
     example_t = Queue[Uint[8], 2]  # [u8]^2
 
-is a level 2 Queue of 8-bit unsigned integers. Level 2 means that it is a Queue of 8-bit unsinged integer Queues. In SystemVerilog this example type would be encoded as:
+is a level 2 Queue of 8-bit unsigned integers. Level 2 means that it is a Queue of 8-bit unsigned integer Queues. In SystemVerilog this example type would be encoded as:
 
 .. code-block:: systemverilog
 
@@ -189,26 +189,28 @@ Below, you can see a single transactions of a two-level Queue, consisting of two
 Gear composition
 ----------------
 
-Any composition of gears again yields a gear which obeys all the listed rules, i.e. gears are closed under composition. This means that composing gears is predictible in many ways and having rich and verified low level library of gears, translates to reliable description of high level modules, where many (especially synchronization) errors are avoided by design. Hence, **Gears** methodology is usefull for high level as well as low level modules. **Gears** methodology maximizes module reuse, which in turn minimizes design and debugging efforts.
+Any composition of gears again yields a gear which obeys all the listed rules, i.e. gears are closed under composition. This means that composing gears is predictable in many ways and having rich and verified low level library of gears, translates to reliable description of high level modules, where many (especially synchronization) errors are avoided by design. Hence, **Gears** methodology is useful for high level as well as low level modules. **Gears** methodology maximizes module reuse, which in turn minimizes design and debugging efforts.
 
 .. tikz:: Example 2-input and 1-output complex gear as a composition of gears G1, G2, G3 and G4
    :libs: arrows.meta
    :include: composition.tex
 
 
-Each gear is locally synchonized with each of its neighbours, hence no clunky global control FSM is needed to synhronize a high level module. This is a huge benefit for using the **Gears** methodology, because control FSMs are very hard to write and error-prone for complex systems. Furthermore, they make any change to the system very expensive, especially those that alter the data-path latency.
+Each gear is locally synchronized with each of its neighbors, hence no clunky global control FSM is needed to synchronize a high level module. This is a huge benefit for using the **Gears** methodology, because control FSMs are very hard to write and error-prone for complex systems. Furthermore, they make any change to the system very expensive, especially those that alter the data-path latency.
 
-In order to further reduce the cognitive load, testability and amount of errors in a hardware system being developped, **Gears** methodology proposes that gears should aim to be pure (akin to `pure functions <https://en.wikipedia.org/wiki/Pure_function>`__). A gear is considered pure if its local state is reset each time after the gear consumes/acknowledges its input data. If a gear operates on Queues, it is still considered pure if its local state is reset after the whole Queue has been processed.
+In order to further reduce the cognitive load, testability and amount of errors in a hardware system being developed, **Gears** methodology proposes that gears should aim to be pure (akin to `pure functions <https://en.wikipedia.org/wiki/Pure_function>`__). A gear is considered pure if its local state is reset each time after the gear consumes/acknowledges its input data. If a gear operates on Queues, it is still considered pure if its local state is reset after the whole Queue has been processed.
+
+.. _gears-functors:
 
 Functors
 --------
 
-Functors are powerfull patterns for gear composition that significantly improve possibilities for gear reuse. There is one functor for each complex data type. Functors allow for gears that operate on simpler data types to be used in context where a more complex data type is needed.
+Functors are powerful patterns for gear composition that significantly improve possibilities for gear reuse. There is one functor for each complex data type. Functors allow for gears that operate on simpler data types to be used in context where a more complex data type is needed.
 
 Tuple functor
 ~~~~~~~~~~~~~
 
-Tuple functors are usefull in context where we need to operate on Tuples of some data types, and we already have gears that implement desired transformation but operate on data types that are individual fields of the Tuple. Consider a simple example where a complex number is implemented as the following Tuple::
+Tuple functors are useful in context where we need to operate on Tuples of some data types, and we already have gears that implement desired transformation but operate on data types that are individual fields of the Tuple. Consider a simple example where a complex number is implemented as the following Tuple::
 
   cmplx_t = Tuple[Uint[16], Uint[16]]  # (u16, u16)
 
@@ -222,7 +224,7 @@ Within Tuple functor, input Tuple data is first split into two, fed to individua
 Union functor
 ~~~~~~~~~~~~~
 
-Union functors are usefull in context where we need to operate on Unions of some data types, and we already have gears that implement desired transformation but operate on data types that are part of the Union. Consider a simple example where a number can be represented by either an Uint[16] or a Q8.8 fixed point::
+Union functors are useful in context where we need to operate on Unions of some data types, and we already have gears that implement desired transformation but operate on data types that are part of the Union. Consider a simple example where a number can be represented by either an Uint[16] or a Q8.8 fixed point::
 
   num_t = Union[Uint[16], Tuple[Uint[8], Uint[8]]]  # u16 | (u8, u8)
 
@@ -242,7 +244,7 @@ Array functor operates in the same manner as Tuple functor.
 Queue functor
 ~~~~~~~~~~~~~
 
-Queue functors are usefull in context where we need to operate on Queues of some data types, and we already have gears that implement desired transformation but operate on single data or lower level Queues. They are akin to the Python's map function operating on a list. Consider a simple example where there is a Queue of numbers::
+Queue functors are useful in context where we need to operate on Queues of some data types, and we already have gears that implement desired transformation but operate on single data or lower level Queues. They are akin to the Python's map function operating on a list. Consider a simple example where there is a Queue of numbers::
 
   q_num_t = Queue[Uint[16]]  # [u16]
 

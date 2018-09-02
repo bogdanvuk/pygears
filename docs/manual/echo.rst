@@ -5,7 +5,7 @@ Echo
 
 This example shows how to use PyGears to implement a hardware module that applies echo audio effect to a continuous audio stream. For a more detailed explanation of PyGears features used in this example, you can checkout a :ref:`quick introduction to PyGears <introduction>`.
 
-The hardware module is defined in `examples/echo/echo.py <https://github.com/bogdanvuk/pygears/tree/develop/examples/echo/echo.py>`_, and block diagram is given below. Yout can checkout the :ref:`functional description <examples-echo-functional-description>` of the ``echo`` module. In-depth explanation of the PyGears description of the echo model given in :ref:`hardware description <examples-echo-hardware-description>` chapter. PyGears takes the Python module description and compiles it to SystemVerilog which is :ref:`listed below<echo-sv>`.
+The hardware module is defined in `examples/echo/echo.py <https://github.com/bogdanvuk/pygears/tree/develop/examples/echo/echo.py>`_, and block diagram is given below. You can checkout the :ref:`functional description <examples-echo-functional-description>` of the ``echo`` module. In-depth explanation of the PyGears description of the echo model given in :ref:`hardware description <examples-echo-hardware-description>` chapter. PyGears takes the Python module description and compiles it to SystemVerilog which is :ref:`listed below<echo-sv>`.
 
 .. bdp:: images/echo.py
     :align: center
@@ -21,7 +21,7 @@ Run the script `examples/echo/echo_svgen.py <https://github.com/bogdanvuk/pygear
   cd <pygears_source_dir>/examples/echo
   python echo_svgen.py
 
-If you have `Vivado <https://www.xilinx.com/products/design-tools/vivado.html>`_ installed (you can download a free WebPack version from Xilinx website), the script will automatically try to synthesise the design and display the resource utilization report (displayed also :ref:`below <examples-echo-resource-utilization>`).
+If you have `Vivado <https://www.xilinx.com/products/design-tools/vivado.html>`_ installed (you can download a free WebPack version from Xilinx website), the script will automatically try to synthesize the design and display the resource utilization report (displayed also :ref:`below <examples-echo-resource-utilization>`).
 
 Running Simulation
 ------------------
@@ -54,12 +54,50 @@ Upon starting the script, the following info should be displayed:
   165459  [INFO]: Elapsed: 31.78
   Result length: 165359
 
-Upon completion, the resulting wave will be saved in the file ``build/plop_echo.wav``. If you installed matplotlib, the plots of the original and the resulting audio waves should be displayed. Simulation log will display path to the simulation wave file in standard VCD. Wave can be viewed for an example with an open-source tool `GTKWave <http://gtkwave.sourceforge.net/>`_. 
+Upon completion, the resulting wave will be saved in the file ``build/plop_echo.wav``. If you installed matplotlib, the plots of the original and the resulting audio waves should be displayed.
+
+.. image:: images/echo_plot.png
+
+Simulation log will display path to the simulation wave file in standard VCD. Wave can be viewed for an example with an open-source tool `GTKWave <http://gtkwave.sourceforge.net/>`_.
 
 .. image:: images/echo_vcd.png
 
+You can now play with the parameters in ``plop_test_wav_echo_sim.py`` script. Try changing echo delay and gain settings and check the results.  
 
-You can now play with the parameters in ``plop_test_wav_echo_sim.py`` script. Change ``stereo=True`` to run the stereo version of the example. Try changing echo delay and gain settings and check the results.  
+Stereo Echo
+-----------
+
+PyGears lets you easily compose gears at any level. To create a stereo echo effect gear, we will instantiate one ``echo`` gear for each channel.
+
+.. bdp:: images/stereo_echo.py
+    :align: center
+
+In PyGears this can be described as follows:
+
+.. literalinclude:: ../../examples/echo/echo.py
+   :pyobject: stereo_echo
+
+The input interface ``din`` of the ``stereo_echo`` module, needs to carry two samples, one for each channel. This can be represented as a ``Tuple`` data type. If the samples are 16 bits wide, the stereo data should be of the type ``Tuple[Int[16], Int[16]]``, which can be displayed more succinctly as ``(i16, 116)``. Other parameters of the ``stereo_echo`` gear have the same meaning as the ``echo`` gear parameters.
+
+First, a version of echo gear is created, with some of its parameters supplied/set. This is akin to the `partial function application <https://en.wikipedia.org/wiki/Partial_application>`_::
+
+    mono_echo = echo(
+        feedback_gain=feedback_gain,
+        sample_rate=sample_rate,
+        delay=delay,
+        precision=precision)
+
+The ``mono_echo`` variable now points to the ``echo`` gear, but also carries the information about parameter settings for ``feedback_gain``, ``sample_rate``, ``delay`` and ``precision``. Even though the ``echo`` function seems to be called, it will not be instantiated at this moment. The reason is that the input interface ``din`` was not connected, i.e. it has not been supplied as a parameter. PyGears will instantiate a gear only when all of its input interfaces are supplied.
+
+Next, the input interface ``din`` is connected to the two ``echo`` gears. For this we will rely on ``fmap`` to split the data from ``din`` into two components, feed each of the components to the individual ``echo`` gear, and then combine the result. In more functional terms, ``fmap`` applies the ``echo`` functions to each item of the ``din`` data tuple, i.e. ``fmap`` is a polymorphic functor. Checkout a :ref:`short presentation <gears-functors>` of useful functors used in PyGears.
+
+.. code-block:: python
+
+    return din | fmap(f=(mono_echo, mono_echo))
+
+The output interface of the ``fmap`` gear will also be output interface of the ``stereo_echo`` gear.
+
+You can run the cosimulation of the stereo design by setting ``stereo=True`` in `examples/echo/plop_test_wav_echo_sim.py <https://github.com/bogdanvuk/pygears/tree/develop/examples/echo/plop_test_wav_echo_sim.py>`_. 
 
 ..  _examples-echo-functional-description:
 
@@ -85,13 +123,13 @@ In ``mono_echo_sim()`` function, ``drv`` gear is used to drive audio samples to 
 
 At compile time, PyGears will try to match output data type of ``drv`` gear: ``Int[sample_bit_width]`` to the input data type ``Int['W']`` of the ``echo`` gear, and since that their base types (:class:`~pygears.typing.uint.Int`) match, deduce the value of the template parameter ``W = sample_bit_width``. This parameter can then be used throughout the gear signature to calculate values of a gear compile-time parameters or fix types of a gear interfaces. In this example, value of the ``echo`` gear argument ``sample_width`` is set to be exactly equal to ``W``.   
 
-Conviniently, ``echo`` gear accepts also some floating point arguments, but these then need to be converted in order to be used for parametrizing hardware modules. This is done at the beggining of the function:
+Conveniently, ``echo`` gear accepts also some floating point arguments, but these then need to be converted in order to be used for parametrizing hardware modules. This is done at the beginning of the function:
 
 .. literalinclude:: ../../examples/echo/echo.py
    :pyobject: echo
    :lines: 30-33
 
-Since echo delay is given in seconds, it needs to be calculated in terms of the number of samples: variable ``sample_dly_len`` in the code. Then, feedback loop fifo needs to be deep enough to store the delayed samples. Current implementation of the fifo module in PyGears demands its depth to be a power of 2. Hence, function ``ceil_pow2`` is used to calculate the smallest power of 2 that can accomodate selected delay: variable ``fifo_depth`` in the code.
+Since echo delay is given in seconds, it needs to be calculated in terms of the number of samples: variable ``sample_dly_len`` in the code. Then, feedback loop fifo needs to be deep enough to store the delayed samples. Current implementation of the fifo module in PyGears demands its depth to be a power of 2. Hence, function ``ceil_pow2`` is used to calculate the smallest power of 2 that can accommodate selected delay: variable ``fifo_depth`` in the code.
 
 Feedback loop gain is also given as a floating point number and needs to be converted to its fixed-point representation: variable ``feedback_gain_fixp``. Width of the fixed-point gain is chosen to be equal to the width of the audio samples received at ``din``, which will be available via the ``sample_width`` argument. Calculated fixed-point value is then cast to the type of the *din* interface: ``feedback_gain_fixp = din.dtype(...)``. 
 
@@ -109,17 +147,18 @@ After the compile-time parameters calculation in the ``echo`` function, the desc
 .. bdp:: images/echo.py
     :align: center
 
-The feedback loop, present in the design, cannot be described as a plain gear composition since it forms a cycle. This cycle needs to be cut at one spot, described as the gear composition and then stiched together. In this example, we will cut the cycle after the adder and start by defining the interface ``dout``:: 
+The feedback loop, present in the design, cannot be described as a plain gear composition since it forms a cycle. This cycle needs to be cut at one spot, described as the gear composition and then stitched together. In this example, we will cut the cycle after the adder and start by defining the interface ``dout``:: 
 
   dout = Intf(din.dtype)
 
-At this moment, this interface has no source (producer), which has to be attended to later, when we stich the cycle. We will now connect ``dout`` interface to the FIFO, which we will in turn connect to the Fill Void gear::
+At this moment, this interface has no source (producer), which has to be attended to later, when we stitch the cycle. We will now connect ``dout`` interface to the FIFO, which we will in turn connect to the Fill Void gear::
 
   feedback = dout \
       | fifo(depth=fifo_depth, threshold=sample_dly_len) \
-      | fill_void(fill=din.dtype(0))
+      | fill_void(fill=din.dtype(0)) \
+      | decoupler
 
-The FIFO gear is declared in `fifo.py <https://github.com/bogdanvuk/pygears/tree/develop/pygears/common/fifo.py>`_, and its SystemVerilog description is given in `fifo.sv <https://github.com/bogdanvuk/pygears/tree/develop/svlib/fifo.sv>`_. In the ``echo`` gear FIFO is used to delay the output audio samples before adding them back to the input stream. Parameters ``depth=fifo_depth`` and ``threshold=sample_dly_len`` are set using the values whose calculations were described earlier. Parameter ``threshold`` tells the FIFO the number of data it needs to contain before it starts ouputing them. When ``threshold=0``, the FIFO outputs the data immediatelly.
+The FIFO gear is declared in `fifo.py <https://github.com/bogdanvuk/pygears/tree/develop/pygears/common/fifo.py>`_, and its SystemVerilog description is given in `fifo.sv <https://github.com/bogdanvuk/pygears/tree/develop/svlib/fifo.sv>`_. In the ``echo`` gear FIFO is used to delay the output audio samples before adding them back to the input stream. Parameters ``depth=fifo_depth`` and ``threshold=sample_dly_len`` are set using the values whose calculations were described earlier. Parameter ``threshold`` tells the FIFO the number of data it needs to contain before it starts outputting them. When ``threshold=0``, the FIFO outputs the data immediately.
 
 The function of the Fill Void gear is to supply the feedback loop with zeros until there are enough samples (``sample_dly_len`` of them) in the FIFO, at which moment the FIFO will start outputting the delayed samples. The definition of the Fill Void gear is given in the same file:: 
 
@@ -134,7 +173,7 @@ Back to the ``echo`` function. Finally the output interface of the ``fill_void``
 
   feedback_attenuated = (feedback * feedback_gain_fixp) >> precision
 
-The output of the multiplier is then connected to the SHR gear, whose output interface is in turn assigned to the variable ``feedback_attenuated``. Adder is then instantiated and ``din`` and ``feedback_attenuated`` interfaces are connected to it. Multiplication, shifting and addition operations change the bit width of the data, so we need restore the width of the data to the input data width. This is done by the cast to the input data type ``din.dtype``. Finally, we stich the feedback cycle back, by connecting the output interface of the adder to the previously declared ``dout`` interface::   
+The output of the multiplier is then connected to the SHR gear, whose output interface is in turn assigned to the variable ``feedback_attenuated``. Adder is then instantiated and ``din`` and ``feedback_attenuated`` interfaces are connected to it. Multiplication, shifting and addition operations change the bit width of the data, so we need restore the width of the data to the input data width. This is done by the cast to the input data type ``din.dtype``. Finally, we stitch the feedback cycle back, by connecting the output interface of the adder to the previously declared ``dout`` interface::   
 
   dout |= (din + feedback_attenuated) | din.dtype
 

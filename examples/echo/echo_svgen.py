@@ -1,7 +1,7 @@
 import os
 import shutil
 
-from echo import echo, stereo_echo
+from echo import echo
 from pygears import Intf
 from pygears.definitions import COMMON_SVLIB_DIR
 from pygears.svgen import svgen

@@ -1,4 +1,4 @@
-from bdp import block, cap, path, text, fig, prev, p
+from bdp import block, cap, path, text, fig, prev, p, poffx
 
 part = block(
     text_margin=p(0.5, 0.5),
@@ -14,12 +14,12 @@ bus = path(
     style=(None, bus_cap), line_width=0.3, double=True, border_width=0.06)
 bus_text = text(font="\\scriptsize", margin=p(0, 0.5))
 
-functor = part("Queue Functor")
+functor = part("stereo_echo")
 functor['split'] = comp("Split", size=(4, 6))
 functor['f1'] = comp(
-    "*2", size=(4, 4)).right(functor['split']).aligny(functor['split'].w(2),
+    "echo", size=(4, 4)).right(functor['split']).aligny(functor['split'].w(2),
                                                       prev().s(0))
-functor['f2'] = comp("*2", size=(4, 4)).below(functor['f1'])
+functor['f2'] = comp("echo", size=(4, 4)).below(functor['f1'])
 
 functor['concat'] = comp(
     "Concat", size=(4, 6)).right(functor['f1']).aligny(functor['split'].p)
@@ -27,10 +27,11 @@ functor['concat'] = comp(
 producer = comp("Producer").left(functor['split'], 1).aligny(
     functor['split'].e(0.5),
     prev().e(0.5))
-fig << producer
-prod2split = bus(producer.e(0.5), functor['split'].w(0.5))
+
+prod2split = bus(
+    functor['split'].w(0.5), poffx(-6), style=(bus_cap, None))
 fig << prod2split
-fig << bus_text("(u16, u16)").align(prod2split.pos(0.5), prev().s(0.5, 0.2))
+fig << bus_text("(i16, i16)").align(prod2split.pos(0.9), prev().s(0, 0.2))
 
 for i in range(2):
     conn = bus(
@@ -38,7 +39,7 @@ for i in range(2):
         functor[f'f{i+1}'].w(0.5) - (2, 0),
         functor[f'f{i+1}'].w(0.5),
         routedef='-|')
-    fig << bus_text("u16").align(conn.pos(0), prev().s(-0.4, 0.1))
+    fig << bus_text("i16").align(conn.pos(0), prev().s(-0.4, 0.1))
     fig << conn
 
     conn = bus(
@@ -46,16 +47,12 @@ for i in range(2):
         functor[f'f{i+1}'].e(0.5) + (2, 0),
         functor['concat'].w(i * 4 + 1),
         routedef='|-')
-    fig << bus_text("u17").align(conn.pos(1), prev().s(1.4, 0.1))
+    fig << bus_text("i17").align(conn.pos(1), prev().s(1.4, 0.1))
     fig << conn
 
-consumer = comp("Consumer").right(functor['concat'], 1).aligny(
-    functor['concat'].e(0.5),
-    prev().e(0.5))
-fig << consumer
-con2cons = bus(functor['concat'].e(0.5), consumer.w(0.5))
+con2cons = bus(functor['concat'].e(0.5), poffx(6))
 fig << con2cons
-fig << bus_text("(u17, u17)").align(con2cons.pos(0.5), prev().s(0.5, 0.2))
+fig << bus_text("(i17, i17)").align(con2cons.pos(0.9), prev().s(1.0, 0.2))
 
 fig << functor
 

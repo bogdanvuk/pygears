@@ -49,7 +49,7 @@ Using generic types, modules that adapt to their environment can be described. L
 
   print(find('/example').params['w_field_1'])
 
-Now, everything passes without an error. Last line of the script will print: "16" - the deduced value of the template parameter "w_field_1". Template parameters can be used within modules to change the behaviour. For an example, they can change the output type of the module::
+Now, everything passes without an error. Last line of the script will print: "16" - the deduced value of the template parameter "w_field_1". Template parameters can be used within modules to change the behavior. For an example, they can change the output type of the module::
 
   from pygears import gear
   from pygears.typing import Tuple, Uint
@@ -64,7 +64,7 @@ Now, everything passes without an error. Last line of the script will print: "16
 
 The output type of the "example" module is now dependent on the input type. Variable **res** will contain the output interface of the "example" module. The last line in the script prints: "u16" - which is the type of the output interface.
 
-The RTL implementation of the "example" module can be also parametrized in this way. Lets make a simple SystemVerilog implementation of this module, saved under "example.sv".
+The RTL implementation of the "example" module can be also parameterized in this way. Lets make a simple SystemVerilog implementation of this module, saved under "example.sv".
 
 .. code-block:: systemverilog
 
