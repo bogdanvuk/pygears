@@ -45,7 +45,7 @@ setup(
     long_description=readme(),
 
     # The project's main homepage.
-    url='https://github.com/bogdanvuk/pygears.git',
+    url='https://github.com/bogdanvuk/pygears',
     # download_url = '',
 
     # Author details
@@ -63,8 +63,8 @@ setup(
         'Programming Language :: Python :: 3.6',
     ],
     package_data={'': ['*.j2', '*.sv', '*.json']},
-    # include_package_data=True,
-    keywords='Gears hardware design Python Simulator HDL ASIC FPGA',
+    include_package_data=True,
+    keywords='functional hardware design Python simulator HDL ASIC FPGA Gears',
     install_requires=['jinja2>=2.10'],
     packages=find_packages(exclude=['examples*', 'docs']),
     entry_points={

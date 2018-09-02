@@ -54,7 +54,11 @@ Upon starting the script, the following info should be displayed:
   165459  [INFO]: Elapsed: 31.78
   Result length: 165359
 
-Upon completion, the resulting wave will be saved in the file ``build/plop_echo.wav``. If you installed matplotlib, the plots of the original and the resulting audio waves should be displayed. Simulation log will display path to the simulation wave file in standard VCD. Wave can be viewed for an example with an open-source tool `GTKWave <http://gtkwave.sourceforge.net/>`_. 
+Upon completion, the resulting wave will be saved in the file ``build/plop_echo.wav``. If you installed matplotlib, the plots of the original and the resulting audio waves should be displayed.
+
+.. image:: images/echo_plot.png
+
+Simulation log will display path to the simulation wave file in standard VCD. Wave can be viewed for an example with an open-source tool `GTKWave <http://gtkwave.sourceforge.net/>`_.
 
 .. image:: images/echo_vcd.png
 
