@@ -74,7 +74,7 @@
 <span class="k">print</span><span class="p">(</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;/example&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;w_field_1&#39;</span><span class="p">])</span>
 </pre></div>
 </div>
-<p>Now, everything passes without an error. Last line of the script will print: “16” - the deduced value of the template parameter “w_field_1”. Template parameters can be used within modules to change the behaviour. For an example, they can change the output type of the module:</p>
+<p>Now, everything passes without an error. Last line of the script will print: “16” - the deduced value of the template parameter “w_field_1”. Template parameters can be used within modules to change the behavior. For an example, they can change the output type of the module:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pygears</span> <span class="kn">import</span> <span class="n">gear</span>
 <span class="kn">from</span> <span class="nn">pygears.typing</span> <span class="kn">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Uint</span>
 
@@ -88,7 +88,7 @@
 </pre></div>
 </div>
 <p>The output type of the “example” module is now dependent on the input type. Variable <strong>res</strong> will contain the output interface of the “example” module. The last line in the script prints: “u16” - which is the type of the output interface.</p>
-<p>The RTL implementation of the “example” module can be also parametrized in this way. Lets make a simple SystemVerilog implementation of this module, saved under “example.sv”.</p>
+<p>The RTL implementation of the “example” module can be also parameterized in this way. Lets make a simple SystemVerilog implementation of this module, saved under “example.sv”.</p>
 <div class="highlight-systemverilog notranslate"><div class="highlight"><pre><span></span><span class="k">module</span> <span class="n">example</span>
       <span class="p">#(</span>
             <span class="k">parameter</span> <span class="no">W_FIELD_1</span> <span class="o">=</span> <span class="mh">8</span>

@@ -39,10 +39,10 @@
 <span id="gears-introduction-to-gears"></span><h1>Introduction to Gears<a class="headerlink" href="#introduction-to-gears" title="Permalink to this headline">¶</a></h1>
 <p>The main goal of the <strong>Gears</strong> hardware design methodology is to enable easy composition of hardware modules. <strong>Gears</strong> provides guidelines on how modules need to be implemented and standardizes the <a class="reference internal" href="#gears-interface"><span class="std std-ref">interface</span></a> between them. This methodology was inspired by the <a class="reference external" href="https://en.wikipedia.org/wiki/Category_theory">Category theory</a> and functional programming.</p>
 <p>Modules that adhere to the <strong>Gears</strong> methodology are called <strong>gears</strong>. Gears are self-synchronizing, meaning that they can be composed without the need of some global control FSM. On the other hand, they add no overhead in terms of latency and induce little to no overhead in terms of the logic gates used.</p>
-<p>Since the composition becomes easy when adhering to <strong>Gears</strong>, the design can be broken down/factored to small modules that implement basic functionalities, which is alligned with the <a class="reference external" href="https://en.wikipedia.org/wiki/Single_responsibility_principle">Single responsibility principle</a>. Small modules with a single functionality are easier to understand, test, debug, maintain and most importantly: <strong>reuse</strong>. When using <strong>Gears</strong> for your project, you are basically building a library of well tested, well understood modules, that you can easily reuse.</p>
+<p>Since the composition becomes easy when adhering to <strong>Gears</strong>, the design can be broken down/factored to small modules that implement basic functionalities, which is aligned with the <a class="reference external" href="https://en.wikipedia.org/wiki/Single_responsibility_principle">Single responsibility principle</a>. Small modules with a single functionality are easier to understand, test, debug, maintain and most importantly: <strong>reuse</strong>. When using <strong>Gears</strong> for your project, you are basically building a library of well tested, well understood modules, that you can easily reuse.</p>
 <div class="section" id="one-interface">
 <span id="gears-interface"></span><h2>One interface<a class="headerlink" href="#one-interface" title="Permalink to this headline">¶</a></h2>
-<p>The main idea behind standardized interfaces is to provide easy composition of the modules. These interfaces: AXI, Avalon, etc., have been used so far to compose large modules written in RTL called IPs, and they are popular for developping SoCs (System on chip). <strong>Gears</strong> tries to push this standardization all the way down to the basic building blocks like: counters, MUXs and FIFOs.</p>
+<p>The main idea behind standardized interfaces is to provide easy composition of the modules. These interfaces: AXI, Avalon, etc., have been used so far to compose large modules written in RTL called IPs, and they are popular for developing SoCs (System on chip). <strong>Gears</strong> tries to push this standardization all the way down to the basic building blocks like: counters, MUXs and FIFOs.</p>
 <div class="figure">
 <p><img src="_images/tikz-fb469c944d72dd32a859ee29fb8934cda7c66991.png" alt="\draw[thick] (0, 0) \gear{10}{2}{2.4}{16}{2}{prod}{Producer};
 \draw[thick,xshift=120mm] \gear{10}{2}{2.4}{16}{2}{cons}{Consumer};
@@ -50,7 +50,7 @@
 \draw[-Triangle,line width=0.5mm] (3, -0.5) -- node[above] {Valid} ++(6, 0);
 \draw[Triangle-,line width=0.5mm] (3, -1.5) -- node[above] {Ready} ++(6, 0);
 \node (A) [cylinder, draw,minimum height=6.8cm,minimum width=3.8cm, label=below:DTI] at (6,0) {};" /></p>
-<p class="caption">DTI - Data Transfer Interface</p></div><p><strong>Gears</strong> proposes the use of a single interface type for gear communication, called DTI (Data Transfer Interface), throughout the design. Interface connects two gears, one which sends the data and the otherone which receives it, called Producer and Consumer respectively. This interface DTI is a simple synchronous, flow-controlled interface, somewhat similar to AXI4-Stream, consisting of the following three signals:</p>
+<p class="caption">DTI - Data Transfer Interface</p></div><p><strong>Gears</strong> proposes the use of a single interface type for gear communication, called DTI (Data Transfer Interface), throughout the design. Interface connects two gears, one which sends the data and the other one which receives it, called Producer and Consumer respectively. This interface DTI is a simple synchronous, flow-controlled interface, somewhat similar to AXI4-Stream, consisting of the following three signals:</p>
 <ul class="simple">
 <li><strong>Data</strong> - Variable width signal, driven by the Producer, which carries the actual data.</li>
 <li><strong>Valid</strong> - Single bit wide signal, driven by the Producer, which signals when valid data is available on Data signal.</li>
@@ -90,9 +90,9 @@ head:{
 <li>Consumer may decide whether to acknowledge the data based on the state of the Valid signal, i.e. there may exist a combinatorial path from Valid to Ready signal on the Consumer side.</li>
 </ol>
 </div>
-<div class="section" id="powerfull-type-system">
-<span id="gears-type-system"></span><h2>Powerfull type system<a class="headerlink" href="#powerfull-type-system" title="Permalink to this headline">¶</a></h2>
-<p>To enhance the composability, gear inputs and outputs are all assigned a type, which are usually generic, i.e. parametrized. Example of basic types are: Uint[T] and Int[T], which denote variable sized unsigned and signed integers. For an example Uint[16] is 16-bit wide unsigned integer. <strong>Gears</strong> defines complex types also, such as:</p>
+<div class="section" id="powerful-type-system">
+<span id="gears-type-system"></span><h2>Powerful type system<a class="headerlink" href="#powerful-type-system" title="Permalink to this headline">¶</a></h2>
+<p>To enhance the composability, gear inputs and outputs are all assigned a type, which are usually generic, i.e. parameterized. Example of basic types are: Uint[T] and Int[T], which denote variable sized unsigned and signed integers. For an example Uint[16] is 16-bit wide unsigned integer. <strong>Gears</strong> defines complex types also, such as:</p>
 <div class="section" id="tuple">
 <h3>Tuple<a class="headerlink" href="#tuple" title="Permalink to this headline">¶</a></h3>
 <p>Tuple combines multiple data types, even other Tuples. They are akin to structs or records. For an example:</p>
@@ -120,7 +120,7 @@ head:{
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">example_t</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">],</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">]]</span>  <span class="c1"># u16 | u8</span>
 </pre></div>
 </div>
-<p>is a union where its control bit determines if the data is interpreted as 16-bit or 8-bit unsinged integer. In SystemVerilog this example type would be encoded as:</p>
+<p>is a union where its control bit determines if the data is interpreted as 16-bit or 8-bit unsigned integer. In SystemVerilog this example type would be encoded as:</p>
 <div class="highlight-systemverilog notranslate"><div class="highlight"><pre><span></span><span class="k">typedef</span> <span class="k">union</span> <span class="k">packed</span>
 <span class="p">{</span>
    <span class="k">logic</span> <span class="p">[</span> <span class="mh">7</span> <span class="o">:</span> <span class="mh">0</span><span class="p">]</span> <span class="n">type1</span><span class="p">;</span>
@@ -176,7 +176,7 @@ head:{
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">example_t</span> <span class="o">=</span> <span class="n">Queue</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="mi">2</span><span class="p">]</span>  <span class="c1"># [u8]^2</span>
 </pre></div>
 </div>
-<p>is a level 2 Queue of 8-bit unsigned integers. Level 2 means that it is a Queue of 8-bit unsinged integer Queues. In SystemVerilog this example type would be encoded as:</p>
+<p>is a level 2 Queue of 8-bit unsigned integers. Level 2 means that it is a Queue of 8-bit unsigned integer Queues. In SystemVerilog this example type would be encoded as:</p>
 <div class="highlight-systemverilog notranslate"><div class="highlight"><pre><span></span><span class="k">typedef</span> <span class="k">struct</span> <span class="k">packed</span>
 <span class="p">{</span>
    <span class="k">logic</span> <span class="p">[</span><span class="mh">1</span> <span class="o">:</span> <span class="mh">0</span><span class="p">]</span> <span class="n">eot</span><span class="p">;</span>
@@ -211,7 +211,7 @@ head:{
 </div>
 <div class="section" id="gear-composition">
 <h2>Gear composition<a class="headerlink" href="#gear-composition" title="Permalink to this headline">¶</a></h2>
-<p>Any composition of gears again yields a gear which obeys all the listed rules, i.e. gears are closed under composition. This means that composing gears is predictible in many ways and having rich and verified low level library of gears, translates to reliable description of high level modules, where many (especially synchronization) errors are avoided by design. Hence, <strong>Gears</strong> methodology is usefull for high level as well as low level modules. <strong>Gears</strong> methodology maximizes module reuse, which in turn minimizes design and debugging efforts.</p>
+<p>Any composition of gears again yields a gear which obeys all the listed rules, i.e. gears are closed under composition. This means that composing gears is predictable in many ways and having rich and verified low level library of gears, translates to reliable description of high level modules, where many (especially synchronization) errors are avoided by design. Hence, <strong>Gears</strong> methodology is useful for high level as well as low level modules. <strong>Gears</strong> methodology maximizes module reuse, which in turn minimizes design and debugging efforts.</p>
 <div class="figure">
 <p><img src="_images/tikz-b588b70894e8a4dcc98e49e37345812607263fe5.png" alt="\draw[thick] (0, 0) \gear{10}{2}{2.4}{16}{2}{g1}{G1};
 \draw[thick,xshift=32.5mm, yshift=30.5mm, rotate=17] \gear{10}{2}{2.4}{16}{2}{g2}{G3};
@@ -221,15 +221,15 @@ head:{
 \draw[-Triangle,line width=1mm] (-6, -0.5) -- node[above] {Input2} ++(3, 0);
 \draw[-Triangle,line width=1mm] (-6, 7.5) -- node[above] {Input1} ++(3.8, 0);
 \draw[-Triangle,line width=1mm] (10.2, 3.2) -- node[above] {Output} ++(3, 0);" /></p>
-<p class="caption">Example 2-input and 1-output complex gear as a composition of gears G1, G2, G3 and G4</p></div><p>Each gear is locally synchonized with each of its neighbours, hence no clunky global control FSM is needed to synhronize a high level module. This is a huge benefit for using the <strong>Gears</strong> methodology, because control FSMs are very hard to write and error-prone for complex systems. Furthermore, they make any change to the system very expensive, especially those that alter the data-path latency.</p>
-<p>In order to further reduce the cognitive load, testability and amount of errors in a hardware system being developped, <strong>Gears</strong> methodology proposes that gears should aim to be pure (akin to <a class="reference external" href="https://en.wikipedia.org/wiki/Pure_function">pure functions</a>). A gear is considered pure if its local state is reset each time after the gear consumes/acknowledges its input data. If a gear operates on Queues, it is still considered pure if its local state is reset after the whole Queue has been processed.</p>
+<p class="caption">Example 2-input and 1-output complex gear as a composition of gears G1, G2, G3 and G4</p></div><p>Each gear is locally synchronized with each of its neighbors, hence no clunky global control FSM is needed to synchronize a high level module. This is a huge benefit for using the <strong>Gears</strong> methodology, because control FSMs are very hard to write and error-prone for complex systems. Furthermore, they make any change to the system very expensive, especially those that alter the data-path latency.</p>
+<p>In order to further reduce the cognitive load, testability and amount of errors in a hardware system being developed, <strong>Gears</strong> methodology proposes that gears should aim to be pure (akin to <a class="reference external" href="https://en.wikipedia.org/wiki/Pure_function">pure functions</a>). A gear is considered pure if its local state is reset each time after the gear consumes/acknowledges its input data. If a gear operates on Queues, it is still considered pure if its local state is reset after the whole Queue has been processed.</p>
 </div>
 <div class="section" id="functors">
-<h2>Functors<a class="headerlink" href="#functors" title="Permalink to this headline">¶</a></h2>
-<p>Functors are powerfull patterns for gear composition that significantly improve possibilities for gear reuse. There is one functor for each complex data type. Functors allow for gears that operate on simpler data types to be used in context where a more complex data type is needed.</p>
+<span id="gears-functors"></span><h2>Functors<a class="headerlink" href="#functors" title="Permalink to this headline">¶</a></h2>
+<p>Functors are powerful patterns for gear composition that significantly improve possibilities for gear reuse. There is one functor for each complex data type. Functors allow for gears that operate on simpler data types to be used in context where a more complex data type is needed.</p>
 <div class="section" id="tuple-functor">
 <h3>Tuple functor<a class="headerlink" href="#tuple-functor" title="Permalink to this headline">¶</a></h3>
-<p>Tuple functors are usefull in context where we need to operate on Tuples of some data types, and we already have gears that implement desired transformation but operate on data types that are individual fields of the Tuple. Consider a simple example where a complex number is implemented as the following Tuple:</p>
+<p>Tuple functors are useful in context where we need to operate on Tuples of some data types, and we already have gears that implement desired transformation but operate on data types that are individual fields of the Tuple. Consider a simple example where a complex number is implemented as the following Tuple:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cmplx_t</span> <span class="o">=</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">],</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">]]</span>  <span class="c1"># (u16, u16)</span>
 </pre></div>
 </div>
@@ -241,7 +241,7 @@ head:{
 </div>
 <div class="section" id="union-functor">
 <h3>Union functor<a class="headerlink" href="#union-functor" title="Permalink to this headline">¶</a></h3>
-<p>Union functors are usefull in context where we need to operate on Unions of some data types, and we already have gears that implement desired transformation but operate on data types that are part of the Union. Consider a simple example where a number can be represented by either an Uint[16] or a Q8.8 fixed point:</p>
+<p>Union functors are useful in context where we need to operate on Unions of some data types, and we already have gears that implement desired transformation but operate on data types that are part of the Union. Consider a simple example where a number can be represented by either an Uint[16] or a Q8.8 fixed point:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">num_t</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">],</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">]]]</span>  <span class="c1"># u16 | (u8, u8)</span>
 </pre></div>
 </div>
@@ -257,7 +257,7 @@ head:{
 </div>
 <div class="section" id="queue-functor">
 <h3>Queue functor<a class="headerlink" href="#queue-functor" title="Permalink to this headline">¶</a></h3>
-<p>Queue functors are usefull in context where we need to operate on Queues of some data types, and we already have gears that implement desired transformation but operate on single data or lower level Queues. They are akin to the Python’s map function operating on a list. Consider a simple example where there is a Queue of numbers:</p>
+<p>Queue functors are useful in context where we need to operate on Queues of some data types, and we already have gears that implement desired transformation but operate on single data or lower level Queues. They are akin to the Python’s map function operating on a list. Consider a simple example where there is a Queue of numbers:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">q_num_t</span> <span class="o">=</span> <span class="n">Queue</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">]]</span>  <span class="c1"># [u16]</span>
 </pre></div>
 </div>
@@ -296,7 +296,7 @@ head:{
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Introduction to Gears</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#one-interface">One interface</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#powerfull-type-system">Powerfull type system</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#powerful-type-system">Powerful type system</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#gear-composition">Gear composition</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#functors">Functors</a></li>
 </ul>

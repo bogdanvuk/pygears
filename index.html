@@ -36,15 +36,16 @@
             
   <div class="section" id="welcome-to-pygears">
 <h1>Welcome to PyGears<a class="headerlink" href="#welcome-to-pygears" title="Permalink to this headline">¶</a></h1>
-<p><strong>PyGears</strong> is an ambitious attempt to create a Python framework that facilitates describing digital hardware. It aims to augment current RTL methodology to drasticly increase <strong>composability</strong> of hardware modules. Ease of composition leads to better <strong>reusability</strong>, since modulse that compose better can be used in a wider variety of contexts. Set of reausable components can then form a well-tested and documented library that significantly speeds up the development process.</p>
+<p><strong>PyGears</strong> is an ambitious attempt to create a Python framework that facilitates describing digital hardware. It aims to augment current RTL methodology to drastically increase <strong>composability</strong> of hardware modules. Ease of composition leads to better <strong>reusability</strong>, since modules that compose better can be used in a wider variety of contexts. Set of reusable components can then form a well-tested and documented library that significantly speeds up the development process.</p>
 <p>For an introductory <strong>PyGears</strong> example, checkout <a class="reference internal" href="echo.html#examples-echo"><span class="std std-ref">echo</span></a>. A snippet is given below:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@gear</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@gear</span>
 <span class="k">def</span> <span class="nf">echo</span><span class="p">(</span><span class="n">samples</span><span class="p">:</span> <span class="n">Int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">fifo_depth</span><span class="p">,</span> <span class="n">feedback_gain</span><span class="p">,</span> <span class="n">precision</span><span class="p">):</span>
     <span class="n">dout</span> <span class="o">=</span> <span class="n">Intf</span><span class="p">(</span><span class="n">din</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
 
-    <span class="n">feedback</span> <span class="o">=</span> <span class="n">dout</span>
-        <span class="o">|</span> <span class="n">fifo</span><span class="p">(</span><span class="n">depth</span><span class="o">=</span><span class="n">fifo_depth</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="n">fifo_depth</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="o">|</span> <span class="n">fill_void</span><span class="p">(</span><span class="n">fill</span><span class="o">=</span><span class="n">Int</span><span class="p">[</span><span class="mi">16</span><span class="p">](</span><span class="mi">0</span><span class="p">))</span>
+    <span class="n">feedback</span> <span class="o">=</span> <span class="n">dout</span> \
+        <span class="o">|</span> <span class="n">fifo</span><span class="p">(</span><span class="n">depth</span><span class="o">=</span><span class="n">fifo_depth</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="n">fifo_depth</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> \
+        <span class="o">|</span> <span class="n">fill_void</span><span class="p">(</span><span class="n">fill</span><span class="o">=</span><span class="n">Int</span><span class="p">[</span><span class="mi">16</span><span class="p">](</span><span class="mi">0</span><span class="p">))</span> \
+        <span class="o">|</span> <span class="n">decoupler</span>
 
     <span class="n">feedback_attenuated</span> <span class="o">=</span> <span class="p">(</span><span class="n">feedback</span> <span class="o">*</span> <span class="n">feedback_gain</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="n">precision</span>
 
@@ -53,12 +54,12 @@
     <span class="k">return</span> <span class="n">dout</span>
 </pre></div>
 </div>
-<p><strong>PyGears</strong> proposes a single generic interface for all modules (<a class="reference internal" href="gears.html#gears-interface"><span class="std std-ref">read about the hardware implementation of the interface here</span></a>) and provides a way to use powerful features of Python language to compose modules writen in an existing HDL (currently only supports SystemVerilog). Based on the Python description, <strong>PyGears</strong> generates functionaly equivalent, synthesizable RTL code.</p>
+<p><strong>PyGears</strong> proposes a single generic interface for all modules (<a class="reference internal" href="gears.html#gears-interface"><span class="std std-ref">read about the hardware implementation of the interface here</span></a>) and provides a way to use powerful features of Python language to compose modules written in an existing HDL (currently only supports SystemVerilog). Based on the Python description, <strong>PyGears</strong> generates functionally equivalent, synthetizable RTL code.</p>
 <p>Furthermore, <strong>PyGears</strong> offers a way to write verification environment in high-level Python language and co-simulate the generated RTL with an external HDL simulator. <strong>PyGears</strong> features a completely free solution using <a class="reference external" href="http://www.veripool.org/wiki/verilator">Verilator</a> simulator and standard SystemVerilog simulators via the <a class="reference external" href="https://en.wikipedia.org/wiki/SystemVerilog_DPI">DPI</a> (tested on proprietary Questa and NCSim simulators).</p>
 <p><strong>PyGears</strong> also features a <a class="reference external" href="https://github.com/bogdanvuk/pygears/tree/develop/pygears/common">library of standard modules</a> and the <a class="reference external" href="https://github.com/bogdanvuk/pygears/tree/develop/pygears/cookbook">cookbook library</a> that are ready to be used in a <strong>PyGears</strong> design.</p>
-<p>In <strong>PyGears</strong>, each HDL module is considered a Python function, called the <em>gear</em>, hence the design is described in form of a functional (gear) composition. In order for HDL modules to be composable in this way, they need to be designed in accordance with the <strong>Gears</strong> methodology. You should probably <a class="reference internal" href="gears.html#gears-introduction-to-gears"><span class="std std-ref">read a short intro to Gears</span></a> in order to understand this project from the hardware prespective.</p>
-<p><strong>PyGears</strong> supports also the hierarchical gears which do not have a HDL implementation, but are defined in terms of other gears. Each gear accepts and returns interface objects as arguments, which represents module connections. This allows for a module composition to be described in terms of powerfull functional concepts, such as: partial application, higher-order functions, function polymorphism.</p>
-<p><strong>PyGears</strong> features a powerfull system of <a class="reference internal" href="typing.html#typing"><span class="std std-ref">generic types</span></a>, which allows for generic modules to be described, as well as to perform type checking of the gear composition.</p>
+<p>In <strong>PyGears</strong>, each HDL module is considered a Python function, called the <em>gear</em>, hence the design is described in form of a functional (gear) composition. In order for HDL modules to be composable in this way, they need to be designed in accordance with the <strong>Gears</strong> methodology. You should probably <a class="reference internal" href="gears.html#gears-introduction-to-gears"><span class="std std-ref">read a short intro to Gears</span></a> in order to understand this project from the hardware perspective.</p>
+<p><strong>PyGears</strong> supports also the hierarchical gears which do not have a HDL implementation, but are defined in terms of other gears. Each gear accepts and returns interface objects as arguments, which represents module connections. This allows for a module composition to be described in terms of powerful functional concepts, such as: partial application, higher-order functions, function polymorphism.</p>
+<p><strong>PyGears</strong> features a powerful system of <a class="reference internal" href="typing.html#typing"><span class="std std-ref">generic types</span></a>, which allows for generic modules to be described, as well as to perform type checking of the gear composition.</p>
 </div>
 <div class="section" id="references">
 <h1>References<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h1>
@@ -70,21 +71,43 @@
 <h1>Where to start?<a class="headerlink" href="#where-to-start" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="installation">
 <span id="id1"></span><h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
-<p>Install PyGears from source:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python setup.py install
+<div class="section" id="install-with-pip">
+<h3>Install with <code class="docutils literal notranslate"><span class="pre">pip</span></code><a class="headerlink" href="#install-with-pip" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install pygears
 </pre></div>
 </div>
-<p>If you would like to run cosimulations with the Verilator, you need to make sure that it is available on the PATH.</p>
-<p>As an alternative, PyGears offers a script that automatically compiles the latest Verilator. The script was tested on Ubuntu, and should be invoked as follows:</p>
+<p>Obtain the examples:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/bogdanvuk/pygears.git
+<span class="nb">cd</span> pygears/examples
+</pre></div>
+</div>
+</div>
+<div class="section" id="alternative-installation-from-source">
+<h3>Alternative installation from source<a class="headerlink" href="#alternative-installation-from-source" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/bogdanvuk/pygears.git
+<span class="nb">cd</span> pygears
+python3 setup.py install
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p>setup.py might fail to install the necessary dependencies, so you might additionally need to run:</p>
+<div class="last highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">jinja2</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="installing-verilator">
+<h3>Installing Verilator<a class="headerlink" href="#installing-verilator" title="Permalink to this headline">¶</a></h3>
+<p>If you would like to run cosimulations with the Verilator, you need to make sure that it is available on the PATH. You can install it manually by following <a class="reference external" href="https://www.veripool.org/projects/verilator/wiki/Installing">these instructions</a>. As an alternative, PyGears offers a script that automatically compiles the latest Verilator. The script was tested on Ubuntu.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo apt install autoconf flex bison
-
-<span class="nb">cd</span> &lt;pygears_source_dir&gt;/tools/install
-python install.py verilator
+pygears_tools_install verilator
 </pre></div>
 </div>
 <p>The script will create <code class="docutils literal notranslate"><span class="pre">tools.sh</span></code> bash file that should be sourced prior to running the cosimulation:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span> &lt;pygears_source_dir&gt;/tools/tools.sh
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span> ~/.pygears/tools/tools.sh
 </pre></div>
+</div>
 </div>
 </div>
 <div class="section" id="checkout-the-examples">
@@ -120,7 +143,7 @@ python install.py verilator
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="gears.html">Introduction to Gears</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="gears.html#one-interface">One interface</a></li>
-<li class="toctree-l2"><a class="reference internal" href="gears.html#powerfull-type-system">Powerfull type system</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gears.html#powerful-type-system">Powerful type system</a></li>
 <li class="toctree-l2"><a class="reference internal" href="gears.html#gear-composition">Gear composition</a></li>
 <li class="toctree-l2"><a class="reference internal" href="gears.html#functors">Functors</a></li>
 </ul>
