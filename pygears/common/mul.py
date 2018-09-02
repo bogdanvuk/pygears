@@ -25,8 +25,6 @@ async def mul(*din: Integer,
               din1_signed=b'typeof(din1, Int)') -> b'mul_type(din)':
 
     async with gather(*din) as dout:
-        from pygears.sim import sim_log
-        sim_log().info(f'{dout}')
         yield module().tout(reduce(operator.mul, dout))
 
 
