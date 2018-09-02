@@ -15,7 +15,7 @@ In this quick introduction, we will consider describing a gear that might be use
 
 Notice the *@gear* decorator which will tells **PyGears** to treat this functions as a HDL module. It also allows for partial application and polymorphism which are not natively supported by the Python language.
 
-The variables *x, b0, b1, b2, x1, x2* are interface objects and represent connections between modules. Input arguments *x, b0, b1, b2* correspond to the input ports of the HDL module. In **PyGears** the function call corresponds to the HDL module instantiation. The *mac* gear will return an interface object, as all gears are required to do. Returned interface object corresponds to the output port connection from the MAC module, and can be passed to some other gear which will make the connection from the MAC's output to the this gear's input. Additionaly, **PyGears** interfaces support some of the Python operators ('*' in this example) and can be used to infer corresponding HDL modules. The above gear describes the following composition:
+The variables *x, b0, b1, b2, x1, x2* are interface objects and represent connections between modules. Input arguments *x, b0, b1, b2* correspond to the input ports of the HDL module. In **PyGears** the function call corresponds to the HDL module instantiation. The *mac* gear will return an interface object, as all gears are required to do. Returned interface object corresponds to the output port connection from the MAC module, and can be passed to some other gear which will make the connection from the MAC's output to the this gear's input. Additionally, **PyGears** interfaces support some of the Python operators ('*' in this example) and can be used to infer corresponding HDL modules. The above gear describes the following composition:
 - first inputs *x* and *b0* are connected to the MAC module,
 - output of the first MAC and the input *b1* are fed to the second MAC module,
 - output of the second MAC is multiplied with *b2* which is connected to the output port of the *filter* module
@@ -31,12 +31,12 @@ If we have implementation of the MAC module in HDL, a gear wrapper needs to be p
   def mac(a: Uint['w_a'], b: Uint['w_b']) -> Uint['w_a + w_b']:
       pass
 
-For the gears that are implemented in HDL, return type needs to be specified so that **PyGears** can infer the output interface object type, as opposed to the *filter* gear description, where the multiplication submodule was responsible for forming the output interface object, and the *filter* only passed it through. A generic version of the *mac* gear is described above, where it accepts interfaces of variable sized unsigned integers - Uint type. Generic types are described by using strings ('w_a', 'w_b' and 'w_a + w_b') for some of its parameters. These strings are resolved differently for input and output types. For the input types, the strings are resolved when the gear is called and the supplied arguments are matched against parametrized type definitions. If the matching succeeds, the values for the parameters are extracted and can be used for resolving the output types. Uint['w_a'] type maps to a logic vector in HDL with length *w_a*. The output type will thus have the number of bits equal to the sum of *w_a* and *w_b*. If some a type other than Uint is supplied to *mac*, the exception will be raised.
+For the gears that are implemented in HDL, return type needs to be specified so that **PyGears** can infer the output interface object type, as opposed to the *filter* gear description, where the multiplication submodule was responsible for forming the output interface object, and the *filter* only passed it through. A generic version of the *mac* gear is described above, where it accepts interfaces of variable sized unsigned integers - Uint type. Generic types are described by using strings ('w_a', 'w_b' and 'w_a + w_b') for some of its parameters. These strings are resolved differently for input and output types. For the input types, the strings are resolved when the gear is called and the supplied arguments are matched against parameterized type definitions. If the matching succeeds, the values for the parameters are extracted and can be used for resolving the output types. Uint['w_a'] type maps to a logic vector in HDL with length *w_a*. The output type will thus have the number of bits equal to the sum of *w_a* and *w_b*. If some a type other than Uint is supplied to *mac*, the exception will be raised.
 
 Pipe operator
 -------------
 
-Infix composition operator '|', aka pipe, is also supported, hence the module can be rewriten as::
+Infix composition operator '|', aka pipe, is also supported, hence the module can be rewritten as::
 
   from pygears import gear
 
@@ -109,7 +109,7 @@ In the previous example, if *mac* gear is used, after each stage the interface s
 
       return y * b[-1]
 
-Interface type can be accessed via its *dtype* attribute. Let's for the sake of an example leave-out the type cast of the last multiplication. Multiplication operator will increase the size of the output interface to accomodate for the largest possible multiplication product.
+Interface type can be accessed via its *dtype* attribute. Let's for the sake of an example leave-out the type cast of the last multiplication. Multiplication operator will increase the size of the output interface to accommodate for the largest possible multiplication product.
 
 SystemVerilog generation
 ------------------------
@@ -142,7 +142,7 @@ SystemVerilog is generated by instantiating desired gears and calling **PyGears*
 
 Since we are only interested in generating SystemVerilog files for the *filter* gear, it will be the only gear we will instantiate. Since *filter* needs to be passed input interfaces, we will manually instantiate interface objects of the desired type and pass them to the *filter*. Output interface of the *filter* is not needed, and we only used it to check whether we got correct output type (which is of course optional). Since we called *filter* with four coefficient interfaces *b* and didn't supply an alternative to the default *mac* stage, we will get a *filter* implementation with four MAC stages.
 
-**PyGears** will maintain a hierarchy of the instantiated gears in which each gear has been assigned a name. By default, gear instance gets the name of the function used to describe it. In this case, *filter* instance will be named 'filter'. Instances in the hierarchy can be accessed by via the path string. Path string follows the conventions of the unix path syntax, where root '/' is autogenerated container for all the top gear instances (i.e. the ones not instantiated within other gears). In this case *filter* is one such gear, hence it is directly below root '/filter'. The *mac* gears are instantiated from within the *filter*, so their paths will be: '/filter/mac0', '/filter/mac1', '/filter/mac2' and '/filter/mac3'. So, if some gear instances have the same names on the same hierarchical level, their names will be suffixed with an increasing sequence of integers. Finally, it is possible to supply a custom name via gear *name* builtin parameter. This parameter is added by the *@gear* opertor and need not be supplied in the function signature::
+**PyGears** will maintain a hierarchy of the instantiated gears in which each gear has been assigned a name. By default, gear instance gets the name of the function used to describe it. In this case, *filter* instance will be named 'filter'. Instances in the hierarchy can be accessed by via the path string. Path string follows the conventions of the Unix path syntax, where root '/' is auto-generated container for all the top gear instances (i.e. the ones not instantiated within other gears). In this case *filter* is one such gear, hence it is directly below root '/filter'. The *mac* gears are instantiated from within the *filter*, so their paths will be: '/filter/mac0', '/filter/mac1', '/filter/mac2' and '/filter/mac3'. So, if some gear instances have the same names on the same hierarchical level, their names will be suffixed with an increasing sequence of integers. Finally, it is possible to supply a custom name via gear *name* builtin parameter. This parameter is added by the *@gear* operator and need not be supplied in the function signature::
 
   filter(x, *b, name="filt")
 
