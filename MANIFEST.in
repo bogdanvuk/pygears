@@ -1,0 +1,2 @@
+recursive-include pygears/common/svlib *.sv
+recursive-include pygears/cookbook/svlib *.sv
