@@ -7,6 +7,7 @@ from .form_sub_cfg import form_sub_cfg
 from .iceil import iceil
 from .priority_mux import priority_mux
 from .qcnt import qcnt
+from .qlen_cnt import qlen_cnt
 from .release_after_eot import release_after_eot
 from .reverse import reverse
 from .rng import rng
@@ -19,6 +20,7 @@ from .valve import valve
 from .width_reductor import width_reductor
 from .repack import repack
 from .priority_mux_valve import priority_mux_valve
+from .max_gears import max2
 
 # hier. blocks
 from .reduce2 import reduce2
@@ -27,5 +29,5 @@ __all__ = [
     'rng', 'iceil', 'priority_mux', 'qcnt', 'sdp', 'chop', 'trr', 'replicate',
     'trr_dist', 'clip', 'din_cat', 'take', 'release_after_eot', 'reverse',
     'valve', 'form_sub_cfg', 'reduce2', 'width_reductor', 'accumulator',
-    'tr_cnt', 'repack', 'priority_mux_valve'
+    'tr_cnt', 'repack', 'priority_mux_valve', 'max2', 'qlen_cnt'
 ]

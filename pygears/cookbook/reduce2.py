@@ -17,11 +17,10 @@ def reduce2(din, cfg: TCfg, *, f, max_size):
     temp_res = Intf(dtype=qtype)
     cfg_rep = cfg | replicate
     sec_opnd = (cfg_rep, temp_res) \
-               | priority_mux \
-               | fmap(f=union_collapse, fcat=czip, lvl=1)
+        | priority_mux \
+        | fmap(f=union_collapse, fcat=czip, lvl=1)
 
-    result = czip(din, sec_opnd) | decoupler | fmap(
-        f=f, fcat=czip, lvl=2)  #sumnjiv czip
+    result = czip(din, sec_opnd) | decoupler | fmap(f=f, fcat=czip, lvl=2)
     acc, fin_res = result | Union[qtype, qtype] | demux
     acc | fifo(intfs=[temp_res], depth=max_size)
 

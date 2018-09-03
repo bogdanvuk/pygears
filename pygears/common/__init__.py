@@ -33,6 +33,7 @@ from .serialize import serialize
 from .data_dly import data_dly
 from .filt import filt
 from .shr import shr
+from .align import align
 
 import pygears.common.fmaps
 
@@ -42,5 +43,6 @@ __all__ = [
     'div', 'neg', 'mux', 'demux', 'shred', 'cart_sync', 'decoupler', 'dreg',
     'unzip', 'serialize', 'project', 'fifo', 'factor', 'fill', 'mux_zip',
     'mux_valve', 'demux_zip', 'data_dly', 'eq', 'union_sync', 'union_collapse',
-    'filt', 'buff', 'local_rst', 'mod', 'invert', 'shr', 'queue_wrap_from', 'demux_by'
+    'filt', 'buff', 'local_rst', 'mod', 'invert', 'shr', 'queue_wrap_from',
+    'demux_by', 'align'
 ]
