@@ -85,18 +85,22 @@ class SimVerilated(CosimBase):
         save_file('sim_main.cpp', self.outdir, c)
 
         ret = os.system(
-            f"cd {self.outdir}; verilator -cc -CFLAGS -fpic -LDFLAGS -shared --exe {include} -clk clk --trace --trace-structs --top-module {self.wrap_name} {self.outdir}/*.sv dti.sv sim_main.cpp > verilate.log 2>&1"
+            f"cd {self.outdir}; verilator -cc -CFLAGS -fpic -LDFLAGS -shared --exe {include} -clk clk --trace --trace-structs --top-module {self.wrap_name} {self.outdir}/*.sv dti.sv sim_main.cpp -Wno-fatal > verilate.log 2>&1"
         )
 
         if ret != 0:
-            if not os.path.exists(self.objdir):
-                raise VerilatorCompileError(
-                    f'Verilator compile error: {ret}. '
-                    f'Please inspect "{self.outdir}/verilate.log"')
-            else:
-                sim_log().warning(
-                    f'Verilator compiled with warnings. '
-                    f'Please inspect "{self.outdir}/verilate.log"')
+            raise VerilatorCompileError(
+                f'Verilator compile error: {ret}. '
+                f'Please inspect "{self.outdir}/verilate.log"')
+
+            # if not os.path.exists(self.objdir):
+            #     raise VerilatorCompileError(
+            #         f'Verilator compile error: {ret}. '
+            #         f'Please inspect "{self.outdir}/verilate.log"')
+            # else:
+            #     sim_log().warning(
+            #         f'Verilator compiled with warnings. '
+            #         f'Please inspect "{self.outdir}/verilate.log"')
 
         ret = os.system(
             f"cd {self.objdir}; make -j -f V{self.wrap_name}.mk > make.log 2>&1"
