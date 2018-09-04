@@ -41,7 +41,7 @@ module qlen_cnt #(
    always_ff @(posedge clk) begin
       if (rst | (last && handshake)) begin
          cnt_reg <= '0;
-      end else if (din.valid && part_last) begin
+      end else if (din.valid && part_last && !last) begin
          cnt_reg <= cnt_next;
       end
    end
