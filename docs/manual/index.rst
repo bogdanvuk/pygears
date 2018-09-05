@@ -37,18 +37,17 @@ In **PyGears**, each HDL module is considered a Python function, called the *gea
 References
 ==========
 
-- `Kortiq's <http://www.kortiq.com/>`_ AIScale Deep Learning Processor was completely developed using PyGears
-
-Where to start?
-===============
+- `Kortiq's <http://www.kortiq.com/>`_ AIScale Deep Learning Processor was completely developed using **PyGears**
 
 .. _installation:
 
 Installation
-------------
+============
 
 Install with ``pip``
-~~~~~~~~~~~~~~~~~~~~
+--------------------
+
+**PyGears** requires Python3, so check if you need to run ``pip3`` instead of ``pip`` on your distribution. Also consider using `virtualenv <https://virtualenv.pypa.io/en/stable/>`_ or `pyenv <https://github.com/pyenv/pyenv>`_ to manage your Python version.
 
 .. code-block:: bash
 
@@ -62,7 +61,7 @@ Obtain the examples:
    cd pygears/examples
 
 Alternative installation from source
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------------
 
 .. code-block:: bash
 
@@ -77,7 +76,7 @@ Alternative installation from source
     pip install jinja2
 
 Installing Verilator
-~~~~~~~~~~~~~~~~~~~~
+--------------------
 
 If you would like to run cosimulations with the Verilator, you need to make sure that it is available on the PATH. You can install it manually by following `these instructions <https://www.veripool.org/projects/verilator/wiki/Installing>`_. As an alternative, PyGears offers a script that automatically compiles the latest Verilator. The script was tested on Ubuntu.
 
@@ -94,18 +93,18 @@ The script will create ``tools.sh`` bash file that should be sourced prior to ru
 
 
 Checkout the examples
----------------------
+=====================
 
 :ref:`Echo <examples-echo>`: Hardware module that applies echo audio effect to a continuous audio stream.
 
 
 Read the documentation
-----------------------
+======================
 
 `PyGears documentation <https://bogdanvuk.github.io/pygears/>`_
 
 Checkout the test suite
------------------------
+=======================
 
 Tests contain many examples on how individual **PyGears** components operate. Tests are located in the `tests <https://github.com/bogdanvuk/pygears/tree/develop/tests>`_ repository folder.
 

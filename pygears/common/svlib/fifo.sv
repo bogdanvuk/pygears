@@ -2,7 +2,8 @@ module fifo
   #(
 	  parameter DEPTH = 64,
     parameter THRESHOLD = 0,
-    parameter DIN = 16
+    parameter DIN = 16,
+    parameter REGOUT = 0
 	  )
 	 (
 	  input logic clk,
@@ -22,11 +23,15 @@ module fifo
 
    logic [CW:0]      fifo_load_tmp;
    logic [CW-1:0]    fifo_load;
+   logic             fifo_valid;
+   logic             out_ready;
+   logic             out_valid;
+   logic             out_handshake;
 
 	 logic             we;
 	 wire              dv = waddr_reg != raddr_reg;
 
-	 logic [WIDTH-1:0]  out_buff;
+   logic [WIDTH-1:0]  out_buff;
 
 	 wire              eq_cnt = waddr_reg[CW-1:0] == raddr_reg[CW-1:0];
 	 wire              eq_msb = waddr_reg[CW] == raddr_reg[CW];
@@ -43,21 +48,47 @@ module fifo
    assign thr_reached = fifo_load > (THRESHOLD - 1);
 
    if ( THRESHOLD ) begin
-      assign dout.valid = ~empty && thr_reached;
+      assign fifo_valid = ~empty && thr_reached;
    end else begin
-      assign dout.valid = ~empty;
+      assign fifo_valid = ~empty;
    end
 
    assign in_buff = din.data;
 	 assign dout.data = out_buff[WIDTH-1:0];
-	 //assign dout.eot = 1'b0;
+   assign dout.valid = out_valid;
+
+   assign out_handshake = fifo_valid && out_ready;
+
+   if (REGOUT) begin
+      always_ff @(posedge clk)
+        begin
+            if(rst) begin
+              out_valid <= '0;
+            end else if (out_ready) begin
+              out_valid <= fifo_valid;
+            end
+        end
+
+      assign out_ready = (!out_valid) | dout.ready;
+
+      always_ff @(posedge clk) begin
+         if (out_ready) begin
+            out_buff <= ram[raddr_reg[CW-1:0]];
+         end
+      end
+
+   end else begin
+
+      assign out_buff = ram[raddr_reg[CW-1:0]];
+      assign out_valid = fifo_valid;
+      assign out_ready = dout.ready;
+
+   end
+
 
 	 always @(posedge clk)
 	   if (we == 1'b1)
 		   ram[waddr_reg[CW-1:0]] <= in_buff;
-
-	 always_ff @(posedge clk)
-	   out_buff <= ram[raddr_next[CW-1:0]];
 
 
 	 always_ff @(posedge clk)
@@ -73,7 +104,7 @@ module fifo
 		   end
 
 
-	 wire ready = dout.ready | ~full;
+	 wire ready = out_ready | ~full;
 	 assign din.ready = ready;
 
 	 always_comb // Write logic
@@ -89,10 +120,9 @@ module fifo
 		   end
 
 	 always_comb // Read logic
-	   if (dout.ready & ~empty)
-		   begin
-			    raddr_next = raddr_reg + 1'b1;
-		   end
-	   else
+	   if (out_handshake) begin
+			  raddr_next = raddr_reg + 1'b1;
+		 end else begin
 		   raddr_next = raddr_reg;
+     end
 endmodule

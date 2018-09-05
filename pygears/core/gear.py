@@ -108,6 +108,7 @@ class Gear(NamedHierNode):
 
         self.in_ports = []
         self.out_ports = []
+        self.const_args_gears = []
 
         self.func = func
         self.__doc__ = func.__doc__
@@ -220,7 +221,10 @@ class Gear(NamedHierNode):
         for g in self.const_args_gears:
             g.remove()
 
-        super().remove()
+        try:
+            super().remove()
+        except ValueError:
+            pass
 
     @property
     def definition(self):

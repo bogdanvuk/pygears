@@ -3,7 +3,7 @@ from pygears.sim import delta, clk
 
 
 @gear
-async def fifo(din, *, depth=2, threshold=0) -> b'din':
+async def fifo(din, *, depth=2, threshold=0, regout=False) -> b'din':
     '''For this implementation depth must be a power of 2'''
 
     data = []
@@ -19,12 +19,8 @@ async def fifo(din, *, depth=2, threshold=0) -> b'din':
         if len(data) < depth:
             if not din.empty():
                 data.insert(0, din.get_nb())
-                from pygears.sim import sim_log
-                sim_log().info(f'{data[-1]}')
 
         if len(data) > threshold and not out_data and dout.ready_nb():
-            from pygears.sim import sim_log
-            sim_log().info(f'{data[-1]}')
             dout.put_nb(data[-1])
             out_data = True
 

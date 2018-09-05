@@ -15,7 +15,7 @@ def _find_rec(path, root):
         raise ModuleNotFoundError()
 
     if len(parts) == 1:
-        return c
+        return child
     else:
         return _find_rec("/".join(parts[1:]), child)
 

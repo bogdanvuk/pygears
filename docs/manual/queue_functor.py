@@ -14,7 +14,7 @@ bus = path(
     style=(None, bus_cap), line_width=0.3, double=True, border_width=0.06)
 bus_text = text(font="\\scriptsize", margin=p(0, 0.5))
 
-functor = part("Tuple Functor")
+functor = part("Queue Functor")
 functor['split'] = comp("Split", size=(4, 6))
 functor['f1'] = comp(
     "*2", size=(4, 4)).right(functor['split']).aligny(functor['split'].w(2),
