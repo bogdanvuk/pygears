@@ -37,7 +37,7 @@ In **PyGears**, each HDL module is considered a Python function, called the *gea
 References
 ==========
 
-- `Kortiq's <http://www.kortiq.com/>`_ AIScale Deep Learning Processor was completely developed using PyGears
+- `Kortiq's <http://www.kortiq.com/>`_ AIScale Deep Learning Processor was completely developed using **PyGears**
 
 .. _installation:
 

@@ -47,12 +47,12 @@ for i in range(2):
         functor[f'f{i+1}'].e(0.5) + (2, 0),
         functor['concat'].w(i * 4 + 1),
         routedef='|-')
-    fig << bus_text("i17").align(conn.pos(1), prev().s(1.4, 0.1))
+    fig << bus_text("i16").align(conn.pos(1), prev().s(1.4, 0.1))
     fig << conn
 
 con2cons = bus(functor['concat'].e(0.5), poffx(6))
 fig << con2cons
-fig << bus_text("(i17, i17)").align(con2cons.pos(0.9), prev().s(1.0, 0.2))
+fig << bus_text("(i16, i16)").align(con2cons.pos(0.9), prev().s(1.0, 0.2))
 
 fig << functor
 
