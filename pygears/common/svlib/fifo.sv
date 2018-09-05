@@ -26,6 +26,7 @@ module fifo
    logic             fifo_valid;
    logic             out_ready;
    logic             out_valid;
+   logic             out_handshake;
 
 	 logic             we;
 	 wire              dv = waddr_reg != raddr_reg;
@@ -56,6 +57,8 @@ module fifo
 	 assign dout.data = out_buff[WIDTH-1:0];
    assign dout.valid = out_valid;
 
+   assign out_handshake = fifo_valid && out_ready;
+
    if (REGOUT) begin
       always_ff @(posedge clk)
         begin
@@ -68,8 +71,11 @@ module fifo
 
       assign out_ready = (!out_valid) | dout.ready;
 
-      always_ff @(posedge clk)
-        out_buff <= ram[raddr_reg[CW-1:0]];
+      always_ff @(posedge clk) begin
+         if (out_ready) begin
+            out_buff <= ram[raddr_reg[CW-1:0]];
+         end
+      end
 
    end else begin
 
@@ -114,10 +120,9 @@ module fifo
 		   end
 
 	 always_comb // Read logic
-	   if (out_ready & ~empty)
-		   begin
-			    raddr_next = raddr_reg + 1'b1;
-		   end
-	   else
+	   if (out_handshake) begin
+			  raddr_next = raddr_reg + 1'b1;
+		 end else begin
 		   raddr_next = raddr_reg;
+     end
 endmodule
