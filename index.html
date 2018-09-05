@@ -64,15 +64,14 @@
 <div class="section" id="references">
 <h1>References<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
-<li><a class="reference external" href="http://www.kortiq.com/">Kortiq’s</a> AIScale Deep Learning Processor was completely developed using PyGears</li>
+<li><a class="reference external" href="http://www.kortiq.com/">Kortiq’s</a> AIScale Deep Learning Processor was completely developed using <strong>PyGears</strong></li>
 </ul>
 </div>
-<div class="section" id="where-to-start">
-<h1>Where to start?<a class="headerlink" href="#where-to-start" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="installation">
-<span id="id1"></span><h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<span id="id1"></span><h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="install-with-pip">
-<h3>Install with <code class="docutils literal notranslate"><span class="pre">pip</span></code><a class="headerlink" href="#install-with-pip" title="Permalink to this headline">¶</a></h3>
+<h2>Install with <code class="docutils literal notranslate"><span class="pre">pip</span></code><a class="headerlink" href="#install-with-pip" title="Permalink to this headline">¶</a></h2>
+<p><strong>PyGears</strong> requires Python3, so check if you need to run <code class="docutils literal notranslate"><span class="pre">pip3</span></code> instead of <code class="docutils literal notranslate"><span class="pre">pip</span></code> on your distribution. Also consider using <a class="reference external" href="https://virtualenv.pypa.io/en/stable/">virtualenv</a> or <a class="reference external" href="https://github.com/pyenv/pyenv">pyenv</a> to manage your Python version.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install pygears
 </pre></div>
 </div>
@@ -83,7 +82,7 @@
 </div>
 </div>
 <div class="section" id="alternative-installation-from-source">
-<h3>Alternative installation from source<a class="headerlink" href="#alternative-installation-from-source" title="Permalink to this headline">¶</a></h3>
+<h2>Alternative installation from source<a class="headerlink" href="#alternative-installation-from-source" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/bogdanvuk/pygears.git
 <span class="nb">cd</span> pygears
 python3 setup.py install
@@ -98,7 +97,7 @@ python3 setup.py install
 </div>
 </div>
 <div class="section" id="installing-verilator">
-<h3>Installing Verilator<a class="headerlink" href="#installing-verilator" title="Permalink to this headline">¶</a></h3>
+<h2>Installing Verilator<a class="headerlink" href="#installing-verilator" title="Permalink to this headline">¶</a></h2>
 <p>If you would like to run cosimulations with the Verilator, you need to make sure that it is available on the PATH. You can install it manually by following <a class="reference external" href="https://www.veripool.org/projects/verilator/wiki/Installing">these instructions</a>. As an alternative, PyGears offers a script that automatically compiles the latest Verilator. The script was tested on Ubuntu.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo apt install autoconf flex bison
 pygears_tools_install verilator
@@ -111,17 +110,16 @@ pygears_tools_install verilator
 </div>
 </div>
 <div class="section" id="checkout-the-examples">
-<h2>Checkout the examples<a class="headerlink" href="#checkout-the-examples" title="Permalink to this headline">¶</a></h2>
+<h1>Checkout the examples<a class="headerlink" href="#checkout-the-examples" title="Permalink to this headline">¶</a></h1>
 <p><a class="reference internal" href="echo.html#examples-echo"><span class="std std-ref">Echo</span></a>: Hardware module that applies echo audio effect to a continuous audio stream.</p>
 </div>
 <div class="section" id="read-the-documentation">
-<h2>Read the documentation<a class="headerlink" href="#read-the-documentation" title="Permalink to this headline">¶</a></h2>
+<h1>Read the documentation<a class="headerlink" href="#read-the-documentation" title="Permalink to this headline">¶</a></h1>
 <p><a class="reference external" href="https://bogdanvuk.github.io/pygears/">PyGears documentation</a></p>
 </div>
 <div class="section" id="checkout-the-test-suite">
-<h2>Checkout the test suite<a class="headerlink" href="#checkout-the-test-suite" title="Permalink to this headline">¶</a></h2>
+<h1>Checkout the test suite<a class="headerlink" href="#checkout-the-test-suite" title="Permalink to this headline">¶</a></h1>
 <p>Tests contain many examples on how individual <strong>PyGears</strong> components operate. Tests are located in the <a class="reference external" href="https://github.com/bogdanvuk/pygears/tree/develop/tests">tests</a> repository folder.</p>
-</div>
 </div>
 <div class="section" id="contributions">
 <h1>Contributions<a class="headerlink" href="#contributions" title="Permalink to this headline">¶</a></h1>

@@ -203,7 +203,7 @@ Result length: <span class="m">165359</span>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">dout</span> <span class="o">=</span> <span class="n">Intf</span><span class="p">(</span><span class="n">din</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
 
     <span class="n">feedback</span> <span class="o">=</span> <span class="n">dout</span> \
-        <span class="o">|</span> <span class="n">fifo</span><span class="p">(</span><span class="n">depth</span><span class="o">=</span><span class="n">fifo_depth</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="n">sample_dly_len</span><span class="p">)</span> \
+        <span class="o">|</span> <span class="n">fifo</span><span class="p">(</span><span class="n">depth</span><span class="o">=</span><span class="n">fifo_depth</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="n">sample_dly_len</span><span class="p">,</span> <span class="n">regout</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> \
         <span class="o">|</span> <span class="n">fill_void</span><span class="p">(</span><span class="n">fill</span><span class="o">=</span><span class="n">din</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span> \
         <span class="o">|</span> <span class="n">decoupler</span>
 

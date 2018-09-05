@@ -1,4 +1,0 @@
-[console_scripts]
-pygears_tools_install = pygears_tools.install:main
-pywave = pygears.sim.extens.pywave:main
-

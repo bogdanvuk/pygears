@@ -46,7 +46,7 @@
 
 <span class="nd">@gear</span>
 <span class="k">def</span> <span class="nf">example</span><span class="p">(</span><span class="n">din</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">]]):</span>
-        <span class="k">pass</span>
+    <span class="k">pass</span>
 
 <span class="n">Tuple</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">]]((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="o">|</span> <span class="n">example</span>
 </pre></div>
@@ -67,7 +67,7 @@
 
 <span class="nd">@gear</span>
 <span class="k">def</span> <span class="nf">example</span><span class="p">(</span><span class="n">din</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="n">Uint</span><span class="p">[</span><span class="s1">&#39;w_field_1&#39;</span><span class="p">]]):</span>
-        <span class="k">pass</span>
+    <span class="k">pass</span>
 
 <span class="n">Tuple</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">]]((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="o">|</span> <span class="n">example</span>
 
@@ -80,7 +80,7 @@
 
 <span class="nd">@gear</span>
 <span class="k">def</span> <span class="nf">example</span><span class="p">(</span><span class="n">din</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="n">Uint</span><span class="p">[</span><span class="s1">&#39;w_field_1&#39;</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Uint</span><span class="p">[</span><span class="s1">&#39;w_field_1&#39;</span><span class="p">]:</span>
-        <span class="k">pass</span>
+    <span class="k">pass</span>
 
 <span class="n">res</span> <span class="o">=</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">]]((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="o">|</span> <span class="n">example</span>
 
@@ -90,58 +90,57 @@
 <p>The output type of the “example” module is now dependent on the input type. Variable <strong>res</strong> will contain the output interface of the “example” module. The last line in the script prints: “u16” - which is the type of the output interface.</p>
 <p>The RTL implementation of the “example” module can be also parameterized in this way. Lets make a simple SystemVerilog implementation of this module, saved under “example.sv”.</p>
 <div class="highlight-systemverilog notranslate"><div class="highlight"><pre><span></span><span class="k">module</span> <span class="n">example</span>
-      <span class="p">#(</span>
-            <span class="k">parameter</span> <span class="no">W_FIELD_1</span> <span class="o">=</span> <span class="mh">8</span>
-            <span class="p">)</span>
-      <span class="p">(</span>
-            <span class="k">input</span> <span class="n">clk</span><span class="p">,</span>
-            <span class="k">input</span> <span class="n">rst</span><span class="p">,</span>
-            <span class="n">dti</span><span class="p">.</span><span class="n">consumer</span> <span class="n">din</span><span class="p">,</span>
-            <span class="n">dti</span><span class="p">.</span><span class="n">producer</span> <span class="n">dout</span>
-            <span class="p">);</span>
+<span class="p">#(</span>
+    <span class="k">parameter</span> <span class="no">W_FIELD_1</span> <span class="o">=</span> <span class="mh">8</span>
+<span class="p">)</span>
+<span class="p">(</span>
+    <span class="k">input</span> <span class="n">clk</span><span class="p">,</span>
+    <span class="k">input</span> <span class="n">rst</span><span class="p">,</span>
+    <span class="n">dti</span><span class="p">.</span><span class="n">consumer</span> <span class="n">din</span><span class="p">,</span>
+    <span class="n">dti</span><span class="p">.</span><span class="n">producer</span> <span class="n">dout</span>
+<span class="p">);</span>
 
-      <span class="k">typedef</span> <span class="k">struct</span> <span class="k">packed</span> <span class="p">{</span>
-              <span class="k">logic</span> <span class="p">[</span><span class="no">W_FIELD_1</span><span class="o">-</span><span class="mh">1</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span> <span class="n">f1</span><span class="p">;</span>
-              <span class="k">logic</span> <span class="p">[</span>          <span class="mh">7</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span> <span class="n">f0</span><span class="p">;</span>
-      <span class="p">}</span> <span class="n">din_t</span><span class="p">;</span>
+<span class="k">typedef</span> <span class="k">struct</span> <span class="k">packed</span> <span class="p">{</span>
+    <span class="k">logic</span> <span class="p">[</span><span class="no">W_FIELD_1</span><span class="o">-</span><span class="mh">1</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span> <span class="n">f1</span><span class="p">;</span>
+    <span class="k">logic</span> <span class="p">[</span>          <span class="mh">7</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span> <span class="n">f0</span><span class="p">;</span>
+<span class="p">}</span> <span class="n">din_t</span><span class="p">;</span>
 
-      <span class="n">din_t</span> <span class="n">din_s</span><span class="p">;</span>
+<span class="n">din_t</span> <span class="n">din_s</span><span class="p">;</span>
 
-      <span class="k">assign</span> <span class="n">dout</span><span class="p">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">din_s</span><span class="p">.</span><span class="n">f1</span><span class="p">;</span>
-      <span class="k">assign</span> <span class="n">dout</span><span class="p">.</span><span class="n">valid</span> <span class="o">=</span> <span class="n">din</span><span class="p">.</span><span class="n">valid</span>
-      <span class="k">assign</span> <span class="n">din</span><span class="p">.</span><span class="n">ready</span> <span class="o">=</span> <span class="n">dout</span><span class="p">.</span><span class="n">ready</span><span class="p">;</span>
+<span class="k">assign</span> <span class="n">dout</span><span class="p">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">din_s</span><span class="p">.</span><span class="n">f1</span><span class="p">;</span>
+<span class="k">assign</span> <span class="n">dout</span><span class="p">.</span><span class="n">valid</span> <span class="o">=</span> <span class="n">din</span><span class="p">.</span><span class="n">valid</span>
+<span class="k">assign</span> <span class="n">din</span><span class="p">.</span><span class="n">ready</span> <span class="o">=</span> <span class="n">dout</span><span class="p">.</span><span class="n">ready</span><span class="p">;</span>
 
 <span class="k">endmodule</span>
 </pre></div>
 </div>
 <div class="highlight-systemverilog notranslate"><div class="highlight"><pre><span></span><span class="k">module</span> <span class="n">top</span><span class="p">(</span>
-        <span class="k">input</span> <span class="n">clk</span><span class="p">,</span>
-        <span class="k">input</span> <span class="n">rst</span><span class="p">,</span>
-        <span class="n">dti</span><span class="p">.</span><span class="n">producer</span> <span class="n">dout</span> <span class="c1">// u16 (16)</span>
-
+    <span class="k">input</span> <span class="n">clk</span><span class="p">,</span>
+    <span class="k">input</span> <span class="n">rst</span><span class="p">,</span>
+    <span class="n">dti</span><span class="p">.</span><span class="n">producer</span> <span class="n">dout</span> <span class="c1">// u16 (16)</span>
 <span class="p">);</span>
 
-    <span class="n">dti</span> <span class="p">#(.</span><span class="no">W_DATA</span><span class="p">(</span><span class="mh">24</span><span class="p">))</span> <span class="n">const_if_s</span><span class="p">();</span> <span class="c1">// (u8, u16) (24)</span>
+  <span class="n">dti</span> <span class="p">#(.</span><span class="no">W_DATA</span><span class="p">(</span><span class="mh">24</span><span class="p">))</span> <span class="n">const_if_s</span><span class="p">();</span> <span class="c1">// (u8, u16) (24)</span>
 
-        <span class="n">example</span> <span class="p">#(</span>
-                                <span class="p">.</span><span class="no">W_FIELD_1</span><span class="p">(</span><span class="mh">16</span><span class="p">)</span>
-        <span class="p">)</span>
-        <span class="n">example_i</span> <span class="p">(</span>
-                <span class="p">.</span><span class="n">clk</span><span class="p">(</span><span class="n">clk</span><span class="p">),</span>
-                <span class="p">.</span><span class="n">rst</span><span class="p">(</span><span class="n">rst</span><span class="p">),</span>
-                <span class="p">.</span><span class="n">din</span><span class="p">(</span><span class="n">const_if_s</span><span class="p">),</span>
-                <span class="p">.</span><span class="n">dout</span><span class="p">(</span><span class="n">dout</span><span class="p">)</span>
-        <span class="p">);</span>
+  <span class="n">example</span> <span class="p">#(</span>
+        <span class="p">.</span><span class="no">W_FIELD_1</span><span class="p">(</span><span class="mh">16</span><span class="p">)</span>
+  <span class="p">)</span>
+  <span class="n">example_i</span> <span class="p">(</span>
+      <span class="p">.</span><span class="n">clk</span><span class="p">(</span><span class="n">clk</span><span class="p">),</span>
+      <span class="p">.</span><span class="n">rst</span><span class="p">(</span><span class="n">rst</span><span class="p">),</span>
+      <span class="p">.</span><span class="n">din</span><span class="p">(</span><span class="n">const_if_s</span><span class="p">),</span>
+      <span class="p">.</span><span class="n">dout</span><span class="p">(</span><span class="n">dout</span><span class="p">)</span>
+  <span class="p">);</span>
 
-        <span class="n">sustain</span> <span class="p">#(</span>
-                                <span class="p">.</span><span class="no">VAL</span><span class="p">(</span><span class="mh">257</span><span class="p">),</span>
-                                <span class="p">.</span><span class="no">TOUT</span><span class="p">(</span><span class="mh">24</span><span class="p">)</span>
-        <span class="p">)</span>
-        <span class="n">const_i</span> <span class="p">(</span>
-                <span class="p">.</span><span class="n">clk</span><span class="p">(</span><span class="n">clk</span><span class="p">),</span>
-                <span class="p">.</span><span class="n">rst</span><span class="p">(</span><span class="n">rst</span><span class="p">),</span>
-                <span class="p">.</span><span class="n">dout</span><span class="p">(</span><span class="n">const_if_s</span><span class="p">)</span>
-        <span class="p">);</span>
+  <span class="n">sustain</span> <span class="p">#(</span>
+        <span class="p">.</span><span class="no">VAL</span><span class="p">(</span><span class="mh">257</span><span class="p">),</span>
+        <span class="p">.</span><span class="no">TOUT</span><span class="p">(</span><span class="mh">24</span><span class="p">)</span>
+  <span class="p">)</span>
+  <span class="n">const_i</span> <span class="p">(</span>
+      <span class="p">.</span><span class="n">clk</span><span class="p">(</span><span class="n">clk</span><span class="p">),</span>
+      <span class="p">.</span><span class="n">rst</span><span class="p">(</span><span class="n">rst</span><span class="p">),</span>
+      <span class="p">.</span><span class="n">dout</span><span class="p">(</span><span class="n">const_if_s</span><span class="p">)</span>
+  <span class="p">);</span>
 
 <span class="k">endmodule</span>
 </pre></div>
