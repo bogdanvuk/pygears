@@ -6,11 +6,16 @@ from pygears import Intf
 from pygears.definitions import COMMON_SVLIB_DIR
 from pygears.svgen import svgen
 from pygears.typing import Int
+from pygears.util.print_hier import print_hier
 
 Intf(Int[16]) | echo(feedback_gain=0.6, sample_rate=48000, delay=0.25)
 svgen('/echo', outdir='build/echo', wrapper=True)
 
 print(f'Generated SystemVerilog files inside {os.path.abspath("build/echo")}')
+
+print()
+print_hier()
+print()
 
 print(f'Creating Vivado project inside {os.path.abspath("build/echo/vivado")}')
 
