@@ -48,6 +48,8 @@ Installation
 Install with ``pip``
 ~~~~~~~~~~~~~~~~~~~~
 
+**PyGears** requires Python3, so check if you need to run ``pip3`` instead of ``pip`` on your distribution. Also consider using `virtualenv <https://virtualenv.pypa.io/en/stable/>`_ or `pyenv <https://github.com/pyenv/pyenv>`_ to manage your Python version.
+
 .. code-block:: bash
 
    pip install pygears

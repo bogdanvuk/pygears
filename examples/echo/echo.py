@@ -58,7 +58,7 @@ def echo(din: Int['W'],
     dout = Intf(din.dtype)
 
     feedback = dout \
-        | fifo(depth=fifo_depth, threshold=sample_dly_len) \
+        | fifo(depth=fifo_depth, threshold=sample_dly_len, regout=True) \
         | fill_void(fill=din.dtype(0)) \
         | decoupler
 
