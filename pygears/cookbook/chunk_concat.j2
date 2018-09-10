@@ -51,7 +51,7 @@
      assign vu_meter_out.ready = cfg.ready;
 
      vu_meter #(
-         .W_DATA(DIN_NUM)
+         .W_DATA($clog2(DIN_NUM)+1)
      ) vu
      (
          .clk(clk),
