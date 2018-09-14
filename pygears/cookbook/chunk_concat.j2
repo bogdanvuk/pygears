@@ -73,7 +73,7 @@
 {% endfor %}
 
    generate
-      for (genvar i = 0; i < DIN_NUM; i++) begin
+      for (genvar i = 0; i < (DIN_NUM/CHUNK_SIZE); i++) begin
          assign dout_valid_array[i] = &valid_array[(i + 1) * CHUNK_SIZE - 1 : i * CHUNK_SIZE];
          assign dout_array[i].data = sel_data_array[(i + 1) * CHUNK_SIZE - 1 : i * CHUNK_SIZE];
          assign dout_array[i].eot[0] = din_eot_array[(i + 1) * CHUNK_SIZE - 1 : i * CHUNK_SIZE];
