@@ -413,6 +413,7 @@ class FunctionBuilder(object):
                  'module': lambda: None,
                  'body': lambda: 'pass',
                  'indent': lambda: 4,
+                 'lineno': lambda: 1,
                  'filename': lambda: 'boltons.funcutils.FunctionBuilder'}
 
     _defaults.update(_argspec_defaults)
@@ -493,6 +494,7 @@ class FunctionBuilder(object):
         kwargs = {'name': func.__name__,
                   'doc': func.__doc__,
                   'filename': func.__code__.co_filename,
+                  'lineno': func.__code__.co_firstlineno,
                   'module': func.__module__,
                   'dict': getattr(func, '__dict__', {})}
 
@@ -546,6 +548,17 @@ class FunctionBuilder(object):
 
         if add_source:
             func.__source__ = src
+
+        # from types import CodeType
+        # co = func.__code__
+        # func.__code__ = CodeType(
+        #     co.co_argcount, co.co_kwonlyargcount, co.co_nlocals,
+        #     co.co_stacksize,
+        #     co.co_flags,
+        #     co.co_code,
+        #     co.co_consts, co.co_names, co.co_varnames, co.co_filename,
+        #     co.co_name, self.lineno, co.co_lnotab, co.co_freevars,
+        #     co.co_cellvars)
 
         return func
 

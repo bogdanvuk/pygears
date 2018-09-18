@@ -421,6 +421,7 @@ def alternative(*base_gear_defs):
 def gear(func, gear_cls=Gear, **meta_kwds):
     from pygears.core.funcutils import FunctionBuilder
     fb = FunctionBuilder.from_func(func)
+    fb.filename = '<string>'
 
     # Add defaults from GearExtraParams registry
     for k, v in registry('GearExtraParams').items():

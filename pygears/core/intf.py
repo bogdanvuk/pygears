@@ -4,6 +4,7 @@ from pygears import registry, GearDone
 from pygears.core.port import InPort, OutPort
 from pygears.registry import PluginBase
 from pygears.core.sim_event import SimEvent
+from pygears.typing.base import TypingMeta
 
 
 def operator_func_from_namespace(cls, name):
@@ -42,7 +43,7 @@ def get_consumer_tree(intf):
 @operator_methods_gen
 class Intf:
     OPERATOR_SUPPORT = [
-        '__or__', '__getitem__', '__neg__', '__add__', '__sub__', '__mul__',
+        '__getitem__', '__neg__', '__add__', '__sub__', '__mul__',
         '__div__', '__floordiv__', '__mod__', '__invert__', '__rshift__'
     ]
 
@@ -68,6 +69,13 @@ class Intf:
 
     def __ior__(self, iout):
         return iout.__matmul__(self)
+
+    def __or__(self, other):
+        if not isinstance(other, (str, TypingMeta)):
+            return other.__ror__(self)
+
+        operator_func = registry('IntfOperNamespace')['__or__']
+        return operator_func(self, other)
 
     def __matmul__(self, iout):
         self.producer.consumer = iout
