@@ -65,6 +65,9 @@ class SimGear:
         try:
             while (1):
                 if is_async_gen(self.func):
+                    if sim_phase() == 'back':
+                        await clk()
+
                     async for val in self.func(*args, **kwds):
                         if sim_phase() == 'back':
                             await clk()

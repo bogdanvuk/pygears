@@ -16,13 +16,15 @@ def is_skipped_frame(self, frame):
 
     # print(f'Entering: {fn}: {mn}')
 
-    for pattern in fn_skip:
-        if fnmatch.fnmatch(fn, pattern):
-            return True
+    if fn is not None:
+        for pattern in fn_skip:
+            if fnmatch.fnmatch(fn, pattern):
+                return True
 
-    for pattern in module_skip:
-        if fnmatch.fnmatch(mn, pattern):
-            return True
+    if mn is not None:
+        for pattern in module_skip:
+            if fnmatch.fnmatch(mn, pattern):
+                return True
 
     return False
 

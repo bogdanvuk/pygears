@@ -161,7 +161,7 @@ class ActivityReporter:
         except KeyError:
             return
 
-        with open(os.path.join(outdir, 'issue.sav'), 'w') as f:
+        with open(os.path.join(outdir, 'issue.gtkw'), 'w') as f:
             gtkw = GTKWSave(f)
             for module in blocking_gears:
                 module_sav(gtkw, module, vcd_writer.vcd_vars)

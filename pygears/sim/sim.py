@@ -7,7 +7,6 @@ import time
 import random
 import logging
 import sys
-import cProfile, pstats, io
 
 from pygears import registry, find, PluginBase, bind, GearDone
 from pygears.core.intf import get_consumer_tree
@@ -45,7 +44,8 @@ def cancel(gear):
     sim.cancelled.add(registry('SimMap')[gear])
 
 
-class SimFuture(Future):
+# class SimFuture(Future):
+class SimFuture(asyncio.Future):
     def coro_iter(self):
         yield self
 
@@ -107,6 +107,9 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             'at_exit': SimEvent()
         }
 
+    def get_debug(self):
+        return False
+
     def get_tasks(self):
         self.sim_map = registry('SimMap')
         dag = {}
@@ -127,6 +130,9 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         self.sim_gears = [self.sim_map[g] for g in gear_order]
         self.tasks = {g: g.run() for g in self.sim_gears}
         self.task_data = {g: None for g in self.sim_gears}
+
+    def call_soon(self, callback, fut):
+        callback(fut)
 
     def fut_done(self, fut):
         sim_gear, join = self.wait_list.pop(fut)
@@ -165,6 +171,29 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             self.forward_ready.discard(sim_gear)
             bind('CurrentModule', self.cur_gear)
 
+    def run_gear(self, sim_gear, ready):
+        self.cur_gear.phase = 'forward'
+
+        if ready is self.forward_ready:
+            ebef = self.events['before_call_forward']
+        else:
+            ebef = self.events['before_call_back']
+
+        if ebef:
+            ebef(self, sim_gear)
+
+        data = self.tasks[sim_gear].send(self.task_data[sim_gear])
+
+        if ready is self.forward_ready:
+            eafter = self.events['after_call_forward']
+        else:
+            eafter = self.events['after_call_back']
+
+        if eafter:
+            eafter(self, sim_gear)
+
+        return data
+
     def maybe_run_gear(self, sim_gear, ready):
         if sim_gear in self.cancelled:
             self.cancel(sim_gear)
@@ -175,32 +204,21 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
         ready.remove(sim_gear)
 
+        # if sim_gear.gear.name == "/echo/cast_dout":
+        #     import pdb; pdb.set_trace()
+
         self.cur_gear = sim_gear.gear
         bind('CurrentModule', self.cur_gear)
         # print(f"Running task {sim_gear.gear.name}")
         try:
-            self.cur_gear.phase = 'forward'
-            if ready == self.forward_ready:
-                self.events['before_call_forward'](self, sim_gear)
-            else:
-                self.events['before_call_back'](self, sim_gear)
-
-            data = self.tasks[sim_gear].send(self.task_data[sim_gear])
-
-            if ready == self.forward_ready:
-                self.events['after_call_forward'](self, sim_gear)
-            else:
-                self.events['after_call_back'](self, sim_gear)
-
+            data = self.run_gear(sim_gear, ready)
         except (StopIteration, GearDone):
             self.done.add(sim_gear)
             # print(f"Task {sim_gear.gear.name} done")
         else:
             if isinstance(data, SimFuture):
-                if self.cur_gear.phase == 'back':
-                    self.wait_list[data] = (sim_gear, True)
-                else:
-                    self.wait_list[data] = (sim_gear, False)
+                self.wait_list[data] = (sim_gear,
+                                        self.cur_gear.phase == 'back')
 
             self.task_data[sim_gear] = data
 
@@ -212,20 +230,10 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         delta = registry('DeltaEvent')
         timestep = 0
 
-        pr = cProfile.Profile()
         start_time = time.time()
 
         sim_log().info("-------------- Simulation start --------------")
         while self.forward_ready or self.back_ready or self.cancelled:
-            # if timestep == 100:
-            #     pr.enable()
-
-            # if timestep == 200:
-            #     pr.disable()
-            #     s = io.StringIO()
-            #     ps = pstats.Stats(pr, stream=s).sort_stats('time')
-            #     ps.print_stats()
-            #     print(s.getvalue())
 
             # print("Forward pass...")
             self.phase = 'forward'
@@ -327,7 +335,7 @@ class SimFmtFilter(logging.Filter):
 
 def get_default_logger_handler(verbosity):
     fmt = logging.Formatter(
-        '%(timestep)s %(module)s [%(levelname)s]: %(message)s')
+        '%(timestep)s %(module)40s [%(levelname)s]: %(message)s')
 
     ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(verbosity)
@@ -366,7 +374,7 @@ def sim(outdir=None,
 
     top = find('/')
     for oper in itertools.chain(registry('SimFlow'), extens):
-        top = oper(top)
+        oper(top)
 
     if run:
         loop.run(timeout)

@@ -7,6 +7,7 @@ from pygears.typing.visitor import TypingVisitorBase
 from vcd import VCDWriter
 from vcd.gtkw import GTKWSave
 from pygears.core.hier_node import HierVisitorBase
+from .sim_extend import SimExtend
 import os
 import fnmatch
 import itertools
@@ -181,8 +182,9 @@ class VCDHierVisitor(HierVisitorBase):
         return True
 
 
-class VCD:
+class VCD(SimExtend):
     def __init__(self, top, fn='pygears.vcd', include=['*'], tlm=False):
+        super().__init__()
         self.finished = False
         atexit.register(self.finish)
 
@@ -194,18 +196,15 @@ class VCD:
         bind('VCDWriter', self.writer)
         bind('VCD', self)
 
-        sim = registry('Simulator')
-        sim.events['before_timestep'].append(self.before_timestep)
-        sim.events['after_timestep'].append(self.after_timestep)
-        sim.events['after_run'].append(self.after_run)
         self.clk_var = self.writer.register_var(
             '', 'clk', 'wire', size=1, init=1)
 
-        self.timestep_var = self.writer.register_var('', 'timestep', 'integer')
+        self.timestep_var = self.writer.register_var(
+            '', 'timestep', 'integer', init=0)
 
         self.handhake = set()
 
-        with open(os.path.join(outdir, 'pygears.sav'), 'w') as f:
+        with open(os.path.join(outdir, 'pygears.gtkw'), 'w') as f:
             gtkw = GTKWSave(f)
             v = VCDHierVisitor(gtkw, self.writer, include, tlm)
             v.visit(top)
@@ -218,7 +217,7 @@ class VCD:
         sim_map = registry('SimMap')
         for module in sim_map:
             gear_fn = module.name.replace('/', '_')
-            with open(os.path.join(outdir, f'{gear_fn}.sav'), 'w') as f:
+            with open(os.path.join(outdir, f'{gear_fn}.gtkw'), 'w') as f:
                 gtkw = GTKWSave(f)
                 module_sav(gtkw, module, self.vcd_vars)
 
@@ -261,11 +260,11 @@ class VCD:
         return True
 
     def before_timestep(self, sim, timestep):
-        self.writer.change(self.timestep_var, timestep * 10, timestep)
         self.writer.change(self.clk_var, timestep * 10 + 5, 0)
         return True
 
     def after_timestep(self, sim, timestep):
+        self.writer.change(self.timestep_var, timestep * 10, timestep)
         self.writer.change(self.clk_var, timestep * 10, 1)
         for intf, v in self.vcd_vars.items():
             if intf in self.handhake:
