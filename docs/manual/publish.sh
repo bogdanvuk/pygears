@@ -4,6 +4,10 @@
 make clean
 make html
 
+cd ../blog
+make clean
+make html
+
 # switch branches and pull the data we want
 git checkout gh-pages
 
@@ -12,6 +16,9 @@ cd $(git rev-parse --show-toplevel)
 # remove tracked files
 git ls-files -z | xargs -0 rm -f
 mv ./docs/manual/_build/html/{.,}* ./
+
+mkdir blog
+mv ./docs/blog/_build/html/{.,}* ./blog
 
 printf "tools/\ndocs/\npygears/\nexamples/\ntests/\n" > .gitignore
 
