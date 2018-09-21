@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title type="text">PyGears</title>
+  <id>https://bogdanvuk.github.io/pygears/blog/atom.xml</id>
+  <updated>2018-09-20T00:00:00Z</updated>
+  <link href="https://bogdanvuk.github.io/pygears/" />
+  <link href="https://bogdanvuk.github.io/pygears/blog/atom.xml" rel="self" />
+  <generator uri="http://ablog.readthedocs.org" version="0.9.2">ABlog</generator>
+  <entry xml:base="https://bogdanvuk.github.io/pygears/blog/atom.xml">
+    <title type="text">RISC-V tools setup</title>
+    <id>https://bogdanvuk.github.io/pygears/riscv/setup.html</id>
+    <updated>2018-09-20T00:00:00Z</updated>
+    <published>2018-09-20T00:00:00Z</published>
+    <link href="https://bogdanvuk.github.io/pygears/riscv/setup.html" />
+    <author>
+      <name>Bogdan Vukobratović</name>
+    </author>
+    <content type="html">&lt;div class=&quot;section&quot; id=&quot;risc-v-tools-setup&quot;&gt;
+
+&lt;p&gt;ABlog v0.1 is released.&lt;/p&gt;
+&lt;p&gt;This is the very first release, so there are no release notes in this post.&lt;/p&gt;
+&lt;p&gt;Yes, this page is also a post and it resides in a folder different from
+most other posts in this blogumentation.&lt;/p&gt;
+&lt;p&gt;The idea is to enable making any page in a Sphinx project a post so that
+users of a software package can subscribe to feeds and follow new releases
+as well as code examples added to the documentation.&lt;/p&gt;
+&lt;/div&gt;
+</content>
+  </entry>
+  <entry xml:base="https://bogdanvuk.github.io/pygears/blog/atom.xml">
+    <title type="text">PyGears tools setup</title>
+    <id>https://bogdanvuk.github.io/pygears/general/setup.html</id>
+    <updated>2018-09-20T00:00:00Z</updated>
+    <published>2018-09-20T00:00:00Z</published>
+    <link href="https://bogdanvuk.github.io/pygears/general/setup.html" />
+    <author>
+      <name>Bogdan Vukobratović</name>
+    </author>
+    <content type="html">&lt;div class=&quot;section&quot; id=&quot;pygears-tools-setup&quot;&gt;
+
+&lt;p&gt;If I want to approach this project the TDD way, I need to be ready to test the design from the start. Hence, I will start by obtaining the “golden design”, “reference model” or the “test oracle”, depending on the terminology.&lt;/p&gt;
+&lt;/div&gt;
+</content>
+  </entry>
+</feed>
