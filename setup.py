@@ -70,7 +70,7 @@ setup(
     entry_points={
         'console_scripts': [
             'pywave = pygears.sim.extens.pywave:main',
-            'pygears_tools_install = pygears_tools.install:main'
+            'pygears-tools-install = pygears_tools.install:main'
         ],
     },
     cmdclass={

@@ -14,7 +14,8 @@ version = ''
 release = ''
 
 extensions = [
-    'sphinx-verboser.verboser',
+    'sphinxarg.ext',
+    'sphinx_verboser.verboser',
     'alabaster',
     'ablog'
 ]
