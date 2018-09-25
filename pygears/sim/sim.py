@@ -335,7 +335,7 @@ class SimFmtFilter(logging.Filter):
 
 def get_default_logger_handler(verbosity):
     fmt = logging.Formatter(
-        '%(timestep)s %(module)40s [%(levelname)s]: %(message)s')
+        '%(timestep)s %(module)20s [%(levelname)s]: %(message)s')
 
     ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(verbosity)

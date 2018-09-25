@@ -20,6 +20,7 @@ import pygears.common
 import pygears.typing
 import pygears.typing_common
 
+from pygears.core.log import LogPlugin
 # import os
 # from pygears.registry import load_plugin_folder
 # load_plugin_folder(os.path.join(os.path.dirname(__file__), 'common'))
