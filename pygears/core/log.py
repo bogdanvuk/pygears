@@ -1,8 +1,10 @@
-from pygears.registry import PluginBase
-from pygears import registry, bind
-import sys
+import copy
 import logging
+import sys
 from string import Template
+
+from pygears import bind, registry
+from pygears.registry import PluginBase
 
 registry_log_name = Template('${name}Log')
 
@@ -42,8 +44,8 @@ class LogWrap:
 class CustomLog:
     dflt_action = {'debug': False, 'exception': False}
     dflt_severity = {
-        'warning': dflt_action.copy(),
-        'error': dflt_action.copy()
+        'warning': copy.deepcopy(dflt_action),
+        'error': copy.deepcopy(dflt_action)
     }
 
     def __init__(self, name, verbosity=logging.INFO):
@@ -52,7 +54,8 @@ class CustomLog:
 
         self.set_default_logger()
         bind(
-            registry_log_name.substitute(name=name), self.dflt_severity.copy())
+            registry_log_name.substitute(name=name),
+            copy.deepcopy(self.dflt_severity))
 
         self.logger = logging.getLogger(name)
 
