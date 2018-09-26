@@ -1,3 +1,21 @@
+# ===========================================================================
+# Logger usage:
+#
+# To add new logger:
+#  - create CustomLog instance
+#  - create <name>_log() wrapper function
+#
+# To overwrite default behaviour:
+#  - change appropriate values in registry(<name>Log)[verbosity][action]
+#    - verbosity: error or warning
+#    - action: exception or debug
+#    For example: registry('coreLog')['error']['exception'] = False
+#
+# To change verbosity of displayed messages set the desired level:
+#   For example: core_log().level = logging.ERROR
+#
+# ===========================================================================
+
 import copy
 import logging
 import sys
@@ -101,9 +119,7 @@ class LogPlugin(PluginBase):
     @classmethod
     def bind(cls):
         tf = tempfile.NamedTemporaryFile(delete=False)
-        stack_traceback_fn = tf.name
-        open(stack_traceback_fn, 'w').close()  # clear previous
-        bind('StackTracebackFn', stack_traceback_fn)
+        bind('StackTracebackFn', tf.name)
 
         CustomLog('core')
         CustomLog('typing')
