@@ -7,7 +7,7 @@ PyGears tools setup
    :category: General
 
 
-.. verbosity_slider:: 2
+.. verbosity_slider:: 3
 
 :v:`2` There are so many ways you can approach organizing your tools, especially on Linux, that it can seem really intimidating to a beginner or someone who is used to working within a single IDE. I personally like using the right tool for the task at hand, so my workflow usually involves multiple programs. However, since I am working in a team, we need to maintain some level of consistency between our workflows.     
 
@@ -25,18 +25,16 @@ I've compiled a Python script for installing the PyGears workflow on Ubuntu and 
 
 .. code-block:: bash
      
-    pip3 install pygears-tools 
+    sudo pip3 install pygears-tools 
 
-Invoking pygears-tools-install
-------------------------------
+If you don't have pip3 tools, you need to install it:
 
-.. verbosity:: 2
+.. code-block:: bash
+     
+    sudo apt install python3-pip 
 
-.. argparse::
-   :module: pygears_tools.install
-   :func: get_argparser
-   :prog: pygears-tools-install
-   :nodefault:
+Minimal workflow toolset installation
+-------------------------------------
 
 .. verbosity:: 1
 
@@ -44,7 +42,7 @@ Installers for different packages have different dependencies that need to be in
 
 .. code-block:: bash
 
-   pygears-tools-install -l
+   pygears-tools-install -l pyenv python pygears
 
 .. verbosity:: 2
 
@@ -56,79 +54,94 @@ Which outputs something similar to this:
 
 .. verbosity:: 1
 
-After installing the dependencies, you can invoke the installation procedure:
+If you want to place your ``tools`` folder under the root, you need to first create it and change ownership to yourself in sudo mode. Otherwise, you can skip this step.
 
 .. code-block:: bash
 
-   pygears-tools-install -o /tools
+   sudo mkdir /tools && sudo chown <username> /tools
 
-.. code-block:: log
+Finally, invoke the instaler:
 
-    20:13:06 [emacs       ]: Installation started.
-    20:13:06 [emacs       ]: Downloading ftp://ftp.gnu.org/pub/gnu/emacs/emacs-26.1.tar.gz
-    Progress: 100%
-    20:14:07 [emacs       ]: Unpacking emacs-26.1.tar.gz
-    Progress: 100%
-    20:14:09 [emacs       ]: Using default_cpp flow.
-    20:14:09 [emacs       ]: Running auto configure. Output redirected to configure.log .
-    20:14:30 [emacs       ]: Running make. Output redirected to make.log .
-    20:15:01 [emacs       ]: Running make install. Output redirected to make_install.log .
-    20:15:14 [emacs       ]: Exporting the environment variables.
-    20:15:14 [emacs       ]: Installation finished successfully!
-    20:15:14 [spacemacs   ]: Installation started.
-    20:15:14 [spacemacs   ]: Copying package files...
-    20:15:14 [spacemacs   ]: Copying /tools/home/pygears-tools/pygears_tools/.spacemacs to /tools/home
-    20:15:14 [spacemacs   ]: Source git repo already available and will be reused.
-    20:15:14 [spacemacs   ]: Running custom package commands. Output redirected to custom_cmd.log .
-    20:15:14 [spacemacs   ]: Running command: "cd /tools/home/.emacs.d; git checkout develop"
-    20:15:14 [spacemacs   ]: Installation finished successfully!
-    20:15:14 [verilator   ]: Installation started.
-    20:15:14 [verilator   ]: Downloading https://www.veripool.org/ftp/verilator-3.926.tgz
-    Progress: 100%
-    20:15:31 [verilator   ]: Unpacking verilator-3.926.tgz
-    Progress: 100%
-    20:15:32 [verilator   ]: Running custom package commands. Output redirected to custom_cmd.log .
-    20:15:32 [verilator   ]: Running command: "export VERILATOR_ROOT=/tools/home/work/pygears_tools_test/tools/verilator"
-    20:15:32 [verilator   ]: Using default_cpp flow.
-    20:15:32 [verilator   ]: Running auto configure. Output redirected to configure.log .
-    20:15:36 [verilator   ]: Running make. Output redirected to make.log .
-    20:17:27 [verilator   ]: Running make install. Output redirected to make_install.log .
-    20:17:27 [verilator   ]: Exporting the environment variables.
-    20:17:27 [verilator   ]: Running custom package commands. Output redirected to custom_cmd.log .
-    20:17:27 [verilator   ]: Running command: "cp -r /tools/home/work/pygears_tools_test/tools/verilator/share/verilator/include /tools/home/work/pygears_tools_test/tools/verilator"
-    20:17:27 [verilator   ]: Running command: "cp /tools/home/work/pygears_tools_test/tools/verilator/share/verilator/bin/* /tools/home/work/pygears_tools_test/tools/verilator/bin"
-    20:17:27 [verilator   ]: Installation finished successfully!
-    20:17:27 [gtkwave     ]: Installation started.
-    20:17:27 [gtkwave     ]: Downloading http://gtkwave.sourceforge.net/gtkwave-3.3.93.tar.gz
-    Progress: 100%
-    20:17:39 [gtkwave     ]: Unpacking gtkwave-3.3.93.tar.gz
-    Progress: 100%
-    20:17:39 [gtkwave     ]: Using default_cpp flow.
-    20:17:39 [gtkwave     ]: Running auto configure. Output redirected to configure.log .
-    20:17:47 [gtkwave     ]: Running make. Output redirected to make.log .
-    20:18:10 [gtkwave     ]: Running make install. Output redirected to make_install.log .
-    20:18:11 [gtkwave     ]: Make install finished with error, please check the log.
-    20:18:11 [gtkwave     ]: Exporting the environment variables.
-    20:18:11 [gtkwave     ]: Installation finished successfully!
-    20:18:11 [systemc     ]: Installation started.
-    20:18:11 [systemc     ]: Downloading http://accellera.org/images/downloads/standards/systemc/systemc-2.3.2.tar.gz
-    Progress: 100%
-    20:18:20 [systemc     ]: Unpacking systemc-2.3.2.tar.gz
-    Progress: 100%
-    20:18:20 [systemc     ]: Using default_cpp flow.
-    20:18:20 [systemc     ]: Running auto configure. Output redirected to configure.log .
-    20:18:25 [systemc     ]: Running make. Output redirected to make.log .
-    20:19:07 [systemc     ]: Running make install. Output redirected to make_install.log .
-    20:19:08 [systemc     ]: Exporting the environment variables.
-    20:19:08 [systemc     ]: Installation finished successfully!
-    20:19:08 [scv         ]: Installation started.
-    20:19:08 [scv         ]: Downloading http://www.accellera.org/images/downloads/standards/systemc/scv-2.0.1.tar.gz
-    Progress: 100%
-    20:19:15 [scv         ]: Unpacking scv-2.0.1.tar.gz
-    Progress: 100%
-    20:19:15 [scv         ]: Using default_cpp flow.
-    20:19:15 [scv         ]: Running auto configure. Output redirected to configure.log .
-    20:19:22 [scv         ]: Running make. Output redirected to make.log .
-    20:20:21 [scv         ]: Running make install. Output redirected to make_install.log .
-    20:20:22 [scv         ]: Exporting the environment variables.
-    20:20:22 [scv         ]: Installation finished successfully!
+.. code-block:: bash
+
+   pygears-tools-install -o /tools -w /tools/home  pyenv python pygears
+
+.. verbosity:: 3
+
+which will produce output similar to this:: 
+
+  Installing to: /tools
+  17:58:28 [pyenv       ]: Installation started.
+  17:58:28 [pyenv       ]: Cloning git repo. Output redirected to git_clone.log .
+  17:58:46 [pyenv       ]: Exporting the environment variables.
+  17:58:47 [pyenv       ]: Installation finished successfully!
+  17:58:47 [python      ]: Installation started.
+  17:58:47 [python      ]: Running custom package commands. Output redirected to custom_cmd.log .
+  17:58:47 [python      ]: Running command: "pyenv install -s 3.6.6"
+  18:00:37 [python      ]: Running command: "pyenv global 3.6.6"
+  18:00:37 [python      ]: Running command: "rm -rf /tools/home/.local"
+  18:00:37 [python      ]: Installation finished successfully!
+  18:00:37 [pygears     ]: Installation started.
+  18:00:37 [pygears     ]: Running custom package commands. Output redirected to custom_cmd.log .
+  18:00:37 [pygears     ]: Running command: "pip install pygears"
+  18:00:41 [pygears     ]: Installation finished successfully!
+  Installation finished, before invoking tools, source /tools/tools.sh
+
+and create the tools setup script ``/tools/tools.sh`` similar to this:
+
+.. code-block:: bash
+
+  #!/bin/bash
+  # Script for setting up the environment for all the tools
+  # Tools installed relative to: /tools
+
+  # Setting new home directory:
+  export HOME=/tools/home
+
+  # Environment for pyenv
+  export PYENV_ROOT=/tools/home/.pyenv
+  export PATH=/tools/home/.pyenv/bin:$PATH
+  eval "$(pyenv init -)"
+  export PATH=/tools/home/.pyenv/libexec:$PATH
+
+.. verbosity:: 1
+
+Full workflow toolset installation
+----------------------------------
+
+.. code-block:: bash
+
+   pygears-tools-install -l
+
+   # run the sudo apt command output by 'pygears-tools-install -l'
+
+   # if you are using root location for the tools
+   sudo mkdir /tools && sudo chown <username> /tools
+
+   pygears-tools-install -o /tools -w /tools/home
+
+
+:v:`2` Complete list of command line arguments
+----------------------------------------------
+
+.. verbosity:: 2
+
+.. argparse::
+   :module: pygears_tools.install
+   :func: get_argparser
+   :prog: pygears-tools-install
+   :nodefault:
+
+.. verbosity:: 1
+
+Pygears Tools List
+------------------
+
+Here's the list of tools that can be installed using pygears-tools-install.
+
+- `Pyenv <https://github.com/pyenv/pyenv>`_ - a simple Python version management. Pyenv offers a simple way to install specific Python version,
+- `PyGears <https://bogdanvuk.github.io/pygears/>`_ - the PyGears itself,
+- `Verilator <https://www.veripool.org/projects/verilator>`_: an open-source Verilog/SystemVerilog simulator. PyGears has built-in support for it,
+- `GtkWave <http://gtkwave.sourceforge.net/>`_ - an open-source waveform viewer.
+- `SCV <http://www.accellera.org/activities/working-groups/systemc-verification>`_ with `SystemC <https://en.wikipedia.org/wiki/SystemC>`_ - an open-source tool that can be used for constrained random stimulus generation by PyGears, 
+- `Emacs <https://www.gnu.org/software/emacs/>`_ with `Spacemacs <http://spacemacs.org/>`_ configuration - an open-source editor that can handle all languages needed for using and extending PyGears (Python, SystemVerilog, Bash, Jinja2). Caution: very steep learning curve, but highly rewarding once mastered.
