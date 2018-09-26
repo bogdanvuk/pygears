@@ -1,20 +1,14 @@
 import copy
 import logging
 import sys
+import traceback
+import tempfile
 from string import Template
 
 from pygears import bind, registry
 from pygears.registry import PluginBase
 
 registry_log_name = Template('${name}Log')
-
-
-def core_log():
-    return logging.getLogger('core')
-
-
-def typing_log():
-    return logging.getLogger('typing')
 
 
 class LogWrap:
@@ -30,15 +24,38 @@ class LogWrap:
             import pdb
             pdb.set_trace()
 
+    def stack_trace(self):
+        stack_traceback_fn = registry('StackTracebackFn')
+        with open(stack_traceback_fn, 'a') as f:
+            delim = '-' * 50 + '\n'
+            f.write(delim)
+            traceback.print_stack(file=f)
+            f.write(delim)
+
     def warning(self, message, *args, **kws):
         if self.logger.isEnabledFor(logging.WARNING):
             self.logger._log(logging.WARNING, message, args, **kws)
+
+            self.stack_trace()
             self.severity_action('warning', message)
 
     def error(self, message, *args, **kws):
         if self.logger.isEnabledFor(logging.ERROR):
             self.logger._log(logging.ERROR, message, args, **kws)
+            self.stack_trace()
             self.severity_action('error', message)
+
+
+class LogFmtFilter(logging.Filter):
+    def filter(self, record):
+        record.stack_file = ''
+
+        if record.levelno > 20:  # > INFO
+            stack_traceback_fn = registry('StackTracebackFn')
+            stack_num = sum(1 for line in open(stack_traceback_fn))
+            record.stack_file = f'\n\t File "{stack_traceback_fn}", line {stack_num}, for stacktrace'
+
+        return True
 
 
 class CustomLog:
@@ -65,10 +82,12 @@ class CustomLog:
 
     def get_default_logger_handler(self):
         fmt = logging.Formatter(
-            '%(name)s %(module)s [%(levelname)s]: %(message)s')
+            '%(name)s log [%(levelname)s]: %(message)s \n\t File "%(pathname)s", line %(lineno)d, in %(funcName)s %(stack_file)s'
+        )
         ch = logging.StreamHandler(sys.stdout)
         ch.setLevel(self.verbosity)
         ch.setFormatter(fmt)
+        ch.addFilter(LogFmtFilter())
         return ch
 
     def set_default_logger(self):
@@ -81,5 +100,18 @@ class CustomLog:
 class LogPlugin(PluginBase):
     @classmethod
     def bind(cls):
+        tf = tempfile.NamedTemporaryFile(delete=False)
+        stack_traceback_fn = tf.name
+        open(stack_traceback_fn, 'w').close()  # clear previous
+        bind('StackTracebackFn', stack_traceback_fn)
+
         CustomLog('core')
         CustomLog('typing')
+
+
+def core_log():
+    return logging.getLogger('core')
+
+
+def typing_log():
+    return logging.getLogger('typing')
