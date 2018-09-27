@@ -19,8 +19,8 @@
 import copy
 import logging
 import sys
-import traceback
 import tempfile
+import traceback
 from string import Template
 
 from pygears import bind, registry
@@ -42,36 +42,40 @@ class LogWrap:
             import pdb
             pdb.set_trace()
 
-    def stack_trace(self):
+    def stack_trace(self, verbosity, message):
         stack_traceback_fn = registry('StackTracebackFn')
         with open(stack_traceback_fn, 'a') as f:
             delim = '-' * 50 + '\n'
             f.write(delim)
+            f.write(f'{self.name} [{verbosity.upper()}] {message}\n\n')
             traceback.print_stack(file=f)
             f.write(delim)
 
     def warning(self, message, *args, **kws):
         if self.logger.isEnabledFor(logging.WARNING):
+            severity = 'warning'
             self.logger._log(logging.WARNING, message, args, **kws)
-
-            self.stack_trace()
-            self.severity_action('warning', message)
+            self.stack_trace(severity, message)
+            self.severity_action(severity, message)
 
     def error(self, message, *args, **kws):
         if self.logger.isEnabledFor(logging.ERROR):
+            severity = 'error'
             self.logger._log(logging.ERROR, message, args, **kws)
-            self.stack_trace()
-            self.severity_action('error', message)
+            self.stack_trace(severity, message)
+            self.severity_action(severity, message)
 
 
 class LogFmtFilter(logging.Filter):
     def filter(self, record):
         record.stack_file = ''
+        record.err_file = ''
 
         if record.levelno > 20:  # > INFO
             stack_traceback_fn = registry('StackTracebackFn')
             stack_num = sum(1 for line in open(stack_traceback_fn))
             record.stack_file = f'\n\t File "{stack_traceback_fn}", line {stack_num}, for stacktrace'
+            record.err_file = f'\n\t File "{record.pathname}", line {record.lineno}, in {record.funcName}'
 
         return True
 
@@ -100,7 +104,7 @@ class CustomLog:
 
     def get_default_logger_handler(self):
         fmt = logging.Formatter(
-            '%(name)s log [%(levelname)s]: %(message)s \n\t File "%(pathname)s", line %(lineno)d, in %(funcName)s %(stack_file)s'
+            '%(name)s [%(levelname)s]: %(message)s %(err_file)s %(stack_file)s'
         )
         ch = logging.StreamHandler(sys.stdout)
         ch.setLevel(self.verbosity)
@@ -123,6 +127,7 @@ class LogPlugin(PluginBase):
 
         CustomLog('core')
         CustomLog('typing')
+        CustomLog('util')
 
 
 def core_log():
@@ -130,4 +135,8 @@ def core_log():
 
 
 def typing_log():
+    return logging.getLogger('typing')
+
+
+def util_log():
     return logging.getLogger('typing')
