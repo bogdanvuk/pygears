@@ -106,8 +106,9 @@ class Array(tuple, metaclass=ArrayMeta):
     @classmethod
     def decode(cls, val):
         ret = []
+        mask = int(len(cls[0]) * '1', 2)
         for t in cls:
-            ret.append(t.decode(val))
+            ret.append(t.decode(val & mask))
             val >>= int(t)
 
         return cls(tuple(ret))

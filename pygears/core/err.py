@@ -19,7 +19,7 @@ class ErrReportPlugin(PluginBase):
         from .pdb_patch import patch_pdb
         patch_pdb()
 
-        # cls.registry['ErrReportLevel'] = ErrReportLevel.debug
+        cls.registry['ErrReportLevel'] = ErrReportLevel.debug
         cls.registry['ExitHooks'] = []
 
 
