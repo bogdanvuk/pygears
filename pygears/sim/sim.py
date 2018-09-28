@@ -10,7 +10,7 @@ import time
 from pygears import GearDone, bind, find, registry
 from pygears.core.gear import GearPlugin
 from pygears.core.intf import get_consumer_tree
-from pygears.core.log import CustomLog
+from pygears.core.log import CustomLog, LogFmtFilter
 from pygears.core.sim_event import SimEvent
 
 
@@ -354,14 +354,17 @@ def sim(outdir=None,
     return loop
 
 
-class SimFmtFilter(logging.Filter):
+class SimFmtFilter(LogFmtFilter):
     def filter(self, record):
+        super().filter(record)
+
         m = registry('CurrentModule')
 
         record.module = m.name
         record.timestep = timestep()
         if record.timestep is None:
             record.timestep = '-'
+
         return True
 
 
@@ -371,16 +374,15 @@ class SimLog(CustomLog):
 
         # change default for error
         registry('simLog')['error']['exception'] = True
+        registry('simLog')['print_traceback'] = False
 
-    def get_default_logger_handler(self):
-        fmt = logging.Formatter(
-            '%(timestep)s %(module)20s [%(levelname)s]: %(message)s')
+    def get_format(self):
+        return logging.Formatter(
+            '%(timestep)s %(module)20s [%(levelname)s]: %(message)s %(err_file)s %(stack_file)s'
+        )
 
-        ch = logging.StreamHandler(sys.stdout)
-        ch.setLevel(self.verbosity)
-        ch.setFormatter(fmt)
-        ch.addFilter(SimFmtFilter())
-        return ch
+    def get_filter(self):
+        return SimFmtFilter()
 
 
 def sim_log():
