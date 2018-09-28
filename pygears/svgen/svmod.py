@@ -1,11 +1,12 @@
+import os
 from collections import OrderedDict
 
+from pygears import registry
+from pygears.definitions import COMMON_SVLIB_DIR, COOKBOOK_SVLIB_DIR
 from pygears.svgen.inst import SVGenInstPlugin
 from pygears.svgen.svparse import parse
-from pygears.definitions import COMMON_SVLIB_DIR, COOKBOOK_SVLIB_DIR
-from pygears import registry
 
-import os
+from .inst import svgen_log
 
 
 def find_in_dirs(fn, dirs):
@@ -30,9 +31,8 @@ class SVModuleGen:
                 self.sv_module_path, self._sv_module_name, self.sv_params = self.get_sv_module_info(
                 )
             except FileNotFoundError:
-                print(
-                    f'Warning: SystemVerilog file not found for {self.node.name}'
-                )
+                svgen_log().warning(
+                    f'SystemVerilog file not found for {self.node.name}')
         elif self.is_hierarchical:
             if find_in_dirs(self.sv_file_name,
                             registry('SVGenSystemVerilogPaths')):
