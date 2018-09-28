@@ -21,6 +21,7 @@ from .div import div
 from .mod import mod
 from .neg import neg
 from .eq import eq
+from .lt import lt
 from .invert import invert
 from .mux import mux, mux_zip, mux_valve
 from .demux import demux, demux_zip, demux_by
@@ -44,5 +45,5 @@ __all__ = [
     'unzip', 'serialize', 'project', 'fifo', 'factor', 'fill', 'mux_zip',
     'mux_valve', 'demux_zip', 'data_dly', 'eq', 'union_sync', 'union_collapse',
     'filt', 'buff', 'local_rst', 'mod', 'invert', 'shr', 'queue_wrap_from',
-    'demux_by', 'align'
+    'demux_by', 'align', 'lt'
 ]
