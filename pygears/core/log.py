@@ -10,6 +10,7 @@
 #    - verbosity: error or warning
 #    - action: exception or debug
 #    For example: registry('coreLog')['error']['exception'] = False
+#  - to print traceback on fail: registry(<name>Log)['print_traceback'] = True
 #
 # To change verbosity of displayed messages set the desired level:
 #   For example: core_log().level = logging.ERROR
@@ -20,13 +21,20 @@ import copy
 import logging
 import sys
 import tempfile
-import traceback
 from string import Template
 
 from pygears import bind, registry
 from pygears.registry import PluginBase
 
+from .err import enum_stacktrace
+
 registry_log_name = Template('${name}Log')
+
+
+class LogException(Exception):
+    def __init__(self, message, name):
+        super().__init__(message)
+        self.name = name
 
 
 class LogWrap:
@@ -37,7 +45,7 @@ class LogWrap:
     def severity_action(self, severity, message):
         log_cfg = registry(registry_log_name.substitute(name=self.name))
         if log_cfg[severity]['exception']:
-            raise Exception(message)
+            raise LogException(message, self.name)
         elif log_cfg[severity]['debug']:
             import pdb
             pdb.set_trace()
@@ -48,7 +56,11 @@ class LogWrap:
             delim = '-' * 50 + '\n'
             f.write(delim)
             f.write(f'{self.name} [{verbosity.upper()}] {message}\n\n')
-            traceback.print_stack(file=f)
+            tr = ''
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            for s in enum_stacktrace():
+                tr += s
+            f.write(tr)
             f.write(delim)
 
     def warning(self, message, *args, **kws):
@@ -83,6 +95,7 @@ class LogFmtFilter(logging.Filter):
 class CustomLog:
     dflt_action = {'debug': False, 'exception': False}
     dflt_severity = {
+        'print_traceback': True,
         'warning': copy.deepcopy(dflt_action),
         'error': copy.deepcopy(dflt_action)
     }
@@ -102,20 +115,25 @@ class CustomLog:
         self.logger.warning = self.wrap.warning
         self.logger.error = self.wrap.error
 
-    def get_default_logger_handler(self):
-        fmt = logging.Formatter(
+    def get_format(self):
+        return logging.Formatter(
             '%(name)s [%(levelname)s]: %(message)s %(err_file)s %(stack_file)s'
         )
+
+    def get_filter(self):
+        return LogFmtFilter()
+
+    def get_logger_handler(self):
         ch = logging.StreamHandler(sys.stdout)
         ch.setLevel(self.verbosity)
-        ch.setFormatter(fmt)
-        ch.addFilter(LogFmtFilter())
+        ch.setFormatter(self.get_format())
+        ch.addFilter(self.get_filter())
         return ch
 
     def set_default_logger(self):
         logger = logging.getLogger(self.name)
         logger.setLevel(self.verbosity)
-        ch = self.get_default_logger_handler()
+        ch = self.get_logger_handler()
         logger.addHandler(ch)
 
 
@@ -125,9 +143,9 @@ class LogPlugin(PluginBase):
         tf = tempfile.NamedTemporaryFile(delete=False)
         bind('StackTracebackFn', tf.name)
 
-        CustomLog('core')
-        CustomLog('typing')
-        CustomLog('util')
+        CustomLog('core', logging.WARNING)
+        CustomLog('typing', logging.WARNING)
+        CustomLog('util', logging.WARNING)
 
 
 def core_log():
@@ -139,4 +157,4 @@ def typing_log():
 
 
 def util_log():
-    return logging.getLogger('typing')
+    return logging.getLogger('util')
