@@ -1,17 +1,17 @@
 import asyncio
-from concurrent.futures import Future
-import tempfile
-import os
 import itertools
-import time
-import random
 import logging
+import os
+import random
 import sys
+import tempfile
+import time
 
-from pygears import registry, find, PluginBase, bind, GearDone
-from pygears.core.intf import get_consumer_tree
-from pygears.core.sim_event import SimEvent
+from pygears import GearDone, bind, find, registry
 from pygears.core.gear import GearPlugin
+from pygears.core.intf import get_consumer_tree
+from pygears.core.log import CustomLog, LogFmtFilter
+from pygears.core.sim_event import SimEvent
 
 
 def timestep():
@@ -316,28 +316,6 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             raise sim_exception
 
 
-class SimFmtFilter(logging.Filter):
-    def filter(self, record):
-        m = registry('CurrentModule')
-
-        record.module = m.name
-        record.timestep = timestep()
-        if record.timestep is None:
-            record.timestep = '-'
-        return True
-
-
-def get_default_logger_handler(verbosity):
-    fmt = logging.Formatter(
-        '%(timestep)s %(module)40s [%(levelname)s]: %(message)s')
-
-    ch = logging.StreamHandler(sys.stdout)
-    ch.setLevel(verbosity)
-    ch.setFormatter(fmt)
-    ch.addFilter(SimFmtFilter())
-    return ch
-
-
 def sim(outdir=None,
         timeout=None,
         extens=[],
@@ -349,12 +327,6 @@ def sim(outdir=None,
         outdir = tempfile.mkdtemp()
     os.makedirs(outdir, exist_ok=True)
     bind('SimArtifactDir', outdir)
-
-    logger = logging.getLogger('sim')
-    if not logger.hasHandlers():
-        logger.setLevel(verbosity)
-        ch = get_default_logger_handler(verbosity)
-        logger.addHandler(ch)
 
     if not seed:
         seed = int(time.time())
@@ -376,29 +348,55 @@ def sim(outdir=None,
     return loop
 
 
-class SimPlugin(GearPlugin):
-    @classmethod
-    def bind(cls):
-        cls.registry['SimFlow'] = []
-        cls.registry['SimTasks'] = {}
-        cls.registry['SimConfig'] = {'dbg_assert': False}
-        cls.registry['SimConfig']['assert_warn'] = False
-        cls.registry['GearExtraParams']['sim_setup'] = None
+class SimFmtFilter(LogFmtFilter):
+    def filter(self, record):
+        super().filter(record)
 
-    @classmethod
-    def reset(cls):
-        bind('SimTasks', {})
+        m = registry('CurrentModule')
+
+        record.module = m.name
+        record.timestep = timestep()
+        if record.timestep is None:
+            record.timestep = '-'
+
+        return True
+
+
+class SimLog(CustomLog):
+    def __init__(self, name, verbosity=logging.INFO):
+        super().__init__(name, verbosity)
+
+        # change default for error
+        registry('simLog')['error']['exception'] = True
+        registry('simLog')['print_traceback'] = False
+
+    def get_format(self):
+        return logging.Formatter(
+            '%(timestep)s %(module)20s [%(levelname)s]: %(message)s %(err_file)s %(stack_file)s'
+        )
+
+    def get_filter(self):
+        return SimFmtFilter()
 
 
 def sim_log():
     return logging.getLogger('sim')
 
 
+class SimPlugin(GearPlugin):
+    @classmethod
+    def bind(cls):
+        cls.registry['SimFlow'] = []
+        cls.registry['SimTasks'] = {}
+        cls.registry['SimConfig'] = {}
+        cls.registry['GearExtraParams']['sim_setup'] = None
+        SimLog('sim')
+
+    @classmethod
+    def reset(cls):
+        bind('SimTasks', {})
+
+
 def sim_assert(cond, msg=None):
     if not cond:
         sim_log().error(f'Assertion failed: {msg}')
-        if registry('SimConfig')['dbg_assert']:
-            import pdb
-            pdb.set_trace()
-        elif not registry('SimConfig')['assert_warn']:
-            assert cond

@@ -92,9 +92,9 @@
 
    if (CNT_ONE_MORE)
       if (CNT_STEPS)
-        assign eot_internal_cond = (cnt_reg == cfg_s.cnt);
+        assign eot_internal_cond = (cnt_next > cfg_s.cnt);
       else
-        assign eot_internal_cond = (dout_s.data == W_DOUT_DATA'(cfg_s.cnt));
+        assign eot_internal_cond = (cnt_next > W_DOUT_DATA'(cfg_s.cnt));
    else begin
       if (CNT_STEPS)
         assign eot_internal_cond = (cnt_next == cfg_s.cnt);
