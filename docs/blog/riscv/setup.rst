@@ -2,7 +2,7 @@ RISC-V tools setup
 ==================
 
 .. post:: September 20, 2018
-   :tags: riscv setup
+   :tags: riscv, setup
    :author: Bogdan
    :category: RISC-V
 

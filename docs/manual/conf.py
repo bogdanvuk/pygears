@@ -41,10 +41,15 @@ release = '0.1b'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc', 'sphinx.ext.githubpages', 'sphinxcontrib.tikz',
-    'sphinxcontrib.wavedrom', 'bdp.sphinxext.bdpfigure', 'sphinx.ext.napoleon'
+    'sphinx_verboser.verboser', 'sphinxarg.ext', 'sphinx.ext.autodoc',
+    'sphinx.ext.githubpages', 'sphinxcontrib.tikz', 'sphinxcontrib.wavedrom',
+    'bdp.sphinxext.bdpfigure', 'sphinx.ext.napoleon'
 ]
-autodoc_default_flags = ['show-inheritance', 'members', 'special-members']
+autodoc_default_options = {
+    'show-inheritance': None,
+    'members': None,
+    'special-members': None
+}
 autoclass_content = "class"
 add_module_names = False
 

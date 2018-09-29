@@ -3,7 +3,7 @@ Welcome to PyGears
 
 **PyGears** is an ambitious attempt to create a Python framework that facilitates describing digital hardware. It aims to augment current RTL methodology to drastically increase **composability** of hardware modules. Ease of composition leads to better **reusability**, since modules that compose better can be used in a wider variety of contexts. Set of reusable components can then form a well-tested and documented library that significantly speeds up the development process.  
 
-For an introductory **PyGears** example, checkout `echo <https://bogdanvuk.github.io/pygears/echo.html#examples-echo>`_. A snippet is given below: 
+For an introductory **PyGears** example, checkout `echo <https://bogdanvuk.github.io/pygears/echo.html#echo-examples>`_. A snippet is given below: 
 
 .. code-block:: python
 
@@ -22,7 +22,7 @@ For an introductory **PyGears** example, checkout `echo <https://bogdanvuk.githu
 
       return dout
 
-**PyGears** proposes a single generic interface for all modules (`read about the hardware implementation of the interface here <https://bogdanvuk.github.io/pygears/gears.html#gears-interface>`_) and provides a way to use powerful features of Python language to compose modules written in an existing HDL (currently only supports SystemVerilog). Based on the Python description, **PyGears** generates functionally equivalent, synthesizable RTL code.
+**PyGears** proposes a single generic interface for all modules (`read about the hardware implementation of the interface here <https://bogdanvuk.github.io/pygears/gears.html#gears-interface>`_) and provides a way to use powerful features of Python language to compose modules written in an existing HDL (currently only supports SystemVerilog). Based on the Python description, **PyGears** generates functionally equivalent, synthetizable RTL code.
 
 Furthermore, **PyGears** offers a way to write verification environment in high-level Python language and co-simulate the generated RTL with an external HDL simulator. **PyGears** features a completely free solution using `Verilator <http://www.veripool.org/wiki/verilator>`_ simulator and standard SystemVerilog simulators via the `DPI <https://en.wikipedia.org/wiki/SystemVerilog_DPI>`_ (tested on proprietary Questa and NCSim simulators).
 
@@ -37,7 +37,9 @@ In **PyGears**, each HDL module is considered a Python function, called the *gea
 References
 ==========
 
-- `Kortiq's <http://www.kortiq.com/>`_ AIScale Deep Learning Processor was completely developed using PyGears
+- `Kortiq's <http://www.kortiq.com/>`_ AIScale Deep Learning Processor was completely developed using **PyGears**
+
+.. _index-installation:
 
 Installation
 ============
@@ -45,11 +47,11 @@ Installation
 Install with ``pip``
 --------------------
 
-**PyGears** requires Python3, so check if you need to run ``pip3`` instead of ``pip`` on your distribution. Also consider using `virtualenv <https://virtualenv.pypa.io/en/stable/>`_ or `pyenv <https://github.com/pyenv/pyenv>`_ to manage your Python version.
+**PyGears** requires a specific version of Python3, so think about using ``pygears-tools`` and procedure given `below <https://bogdanvuk.github.io/pygears/index.html#index-installation-pygears-tools>`_. Otherwise, consider using `virtualenv <https://virtualenv.pypa.io/en/stable/>`_ or `pyenv <https://github.com/pyenv/pyenv>`_ to manage your Python version.
 
 .. code-block:: bash
 
-   pip install pygears
+   pip3 install pygears
 
 Obtain the examples:
 
@@ -57,6 +59,25 @@ Obtain the examples:
 
    git clone https://github.com/bogdanvuk/pygears.git
    cd pygears/examples
+
+.. _index-installation-pygears-tools:
+
+Installing using pygears-tools
+------------------------------
+
+On detailed description and capabilities of ``pygears-tools`` refer to `PyGears tools setup <https://bogdanvuk.github.io/pygears/pygears.html#pygears-tools-setup>`_ page. The procedure was tested on Ubuntu 18.04, Ubuntu 16.04 and openSUSE Leap 15.
+
+.. code-block:: bash
+
+   sudo apt install python3-pip
+   sudo pip3 install pygears-tools
+
+   # List the system-wide dependencies of the tools
+   pygears-tools-install -l
+
+   # copy and run the install commands output by 'pygears-tools-install -l'
+
+   pygears-tools-install
 
 Alternative installation from source
 ------------------------------------
@@ -89,10 +110,11 @@ The script will create ``tools.sh`` bash file that should be sourced prior to ru
 
   source ~/.pygears/tools/tools.sh
 
-Checkout examples
-=================
 
-`Echo <https://bogdanvuk.github.io/pygears/echo.html#examples-echo>`_: Hardware module that applies echo audio effect to a continuous audio stream.
+Checkout the examples
+=====================
+
+`Echo <https://bogdanvuk.github.io/pygears/examples.html#examples-echo>`_: Hardware module that applies echo audio effect to a continuous audio stream.
 
 
 Read the documentation
@@ -119,3 +141,4 @@ Special thanks to the people that helped develop this framework:
 - Vladimir Vrbaški
 
 In order to contribute, pull your copy from `github repository <https://github.com/bogdanvuk/pygears>`_ and create a pull request.
+

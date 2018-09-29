@@ -1,11 +1,7 @@
+.. _setup-pygears-tools:
+
 PyGears tools setup
 ===================
-
-.. post:: September 20, 2018
-   :tags: setup
-   :author: Bogdan
-   :category: General
-
 
 .. verbosity_slider:: 3
 
@@ -21,13 +17,17 @@ I will present here the solution for organizing tools on the Linux OS that worke
 
 - $HOME is set to point to a different folder, e.g. ``/tools/home``. :v:`2` Many tools offer a configuration mechanism that involves specifying the configuration options inside a file that should be placed in $HOME folder. One major example is Emacs, that expects its configuration placed inside ``~/.emacs.d``. If we want to load workflow settings at will, the $HOME for the workflow needs to be different from the user $HOME.
 
-I've compiled a Python script for installing the PyGears workflow on Ubuntu and uploaded it to the PyPI. :v:`2` Source code is available on the `pygears-tools github repo <https://github.com/bogdanvuk/pygears-tools.git>`_. The pygears-tools script can be installed using pip:
+I've compiled a Python script for installing the PyGears workflow on Ubuntu and uploaded it to the PyPI. :v:`2` Source code is available on the `pygears-tools github repo <https://github.com/bogdanvuk/pygears-tools.git>`_. The pygears-tools script can be installed using pip.
+
+.. warning::
+
+    This following procedures were only tested on Ubuntu 18.04, Ubuntu 16.04 and openSUSE Leap 15
 
 .. code-block:: bash
      
     sudo pip3 install pygears-tools 
 
-If you don't have pip3 tools, you need to install it:
+Ubuntu distributions didn't seem to have pip3 installed. In that case you need to install it:
 
 .. code-block:: bash
      
@@ -38,19 +38,27 @@ Minimal workflow toolset installation
 
 .. verbosity:: 1
 
-Installers for different packages have different dependencies that need to be installed system-wide. By invoking pygears-tools-install with ``-l`` option, you will get the list of needed depenendencies for all the tools.  
+Installers for different packages have different dependencies that need to be installed system-wide. By invoking pygears-tools-install with ``-l`` option, you will get the list of needed depenendencies for all the tools you need to install first. In this process we will install the right Python version (using ``pyenv``), PyGears itself and Verilator for RTL simulation.  
 
 .. code-block:: bash
 
-   pygears-tools-install -l pyenv python pygears
+   pygears-tools-install -l pyenv python pygears verilator
 
 .. verbosity:: 2
 
-Which outputs something similar to this:
+Which outputs on Ubuntu something similar to this:
 
 .. code-block:: bash
 
-   sudo apt install libjpeg-dev libncurses5-dev libgtk2.0-dev libxml2-dev libx11-dev libgif-dev git libpng-dev flex bison gperf gnutls-dev libgtk-3-dev build-essential autoconf libxpm-dev libtiff-dev
+    sudo apt install build-essential
+    sudo apt install git libxmlsec1-dev curl libsqlite3-dev libreadline-dev zlib1g-dev libbz2-dev libssl-dev flex bison autoconf wget llvm libncurses5-dev libffi-dev libxml2-dev tk-dev xz-utils
+
+and on openSUSE something like this:
+
+.. code-block:: bash
+
+  sudo zypper install -t pattern devel_basis
+  sudo apt install ncurses-devel flex git libffi-devel zlib-devel tk-devel bison readline-devel openssl-devel
 
 .. verbosity:: 1
 
@@ -109,6 +117,8 @@ and create the tools setup script ``/tools/tools.sh`` similar to this:
 Full workflow toolset installation
 ----------------------------------
 
+This procedure will install all available tools, see setup-pygears-tools-list_. 
+
 .. code-block:: bash
 
    pygears-tools-install -l
@@ -119,6 +129,19 @@ Full workflow toolset installation
    sudo mkdir /tools && sudo chown <username> /tools
 
    pygears-tools-install -o /tools -w /tools/home
+
+Verifying that it works
+-----------------------
+
+Lets run a PyGears example project to verify that setup is correct.
+
+.. code-block:: bash
+
+   source /tools/tools.sh
+
+   git clone https://github.com/bogdanvuk/pygears ~/pygears
+
+   python ~/pygears/examples/echo/plop_test_wav_echo_sim.py
 
 
 :v:`2` Complete list of command line arguments
@@ -134,6 +157,8 @@ Full workflow toolset installation
 
 .. verbosity:: 1
 
+.. _setup-pygears-tools-list:
+
 Pygears Tools List
 ------------------
 
@@ -142,6 +167,6 @@ Here's the list of tools that can be installed using pygears-tools-install.
 - `Pyenv <https://github.com/pyenv/pyenv>`_ - a simple Python version management. Pyenv offers a simple way to install specific Python version,
 - `PyGears <https://bogdanvuk.github.io/pygears/>`_ - the PyGears itself,
 - `Verilator <https://www.veripool.org/projects/verilator>`_: an open-source Verilog/SystemVerilog simulator. PyGears has built-in support for it,
+- `Emacs <https://www.gnu.org/software/emacs/>`_ with `Spacemacs <http://spacemacs.org/>`_ configuration - an open-source editor that can handle all languages needed for using and extending PyGears (Python, SystemVerilog, Bash, Jinja2). **Caution: very steep learning curve, but highly rewarding once mastered**. If you don't feel like investing in learning Spacemacs right now, at minimum you will need an editor that can handle Python, and any one will really do: `PyCharm <https://www.jetbrains.com/pycharm/>`_, `Eclipse with PyDev <http://www.pydev.org/>`_, etc.
 - `GtkWave <http://gtkwave.sourceforge.net/>`_ - an open-source waveform viewer.
 - `SCV <http://www.accellera.org/activities/working-groups/systemc-verification>`_ with `SystemC <https://en.wikipedia.org/wiki/SystemC>`_ - an open-source tool that can be used for constrained random stimulus generation by PyGears, 
-- `Emacs <https://www.gnu.org/software/emacs/>`_ with `Spacemacs <http://spacemacs.org/>`_ configuration - an open-source editor that can handle all languages needed for using and extending PyGears (Python, SystemVerilog, Bash, Jinja2). Caution: very steep learning curve, but highly rewarding once mastered.
