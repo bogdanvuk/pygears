@@ -68,8 +68,12 @@
 <li><p><a class="reference external" href="http://www.kortiq.com/">Kortiq’s</a> AIScale Deep Learning Processor was completely developed using <strong>PyGears</strong></p></li>
 </ul>
 </div>
-<div class="section" id="installation">
-<span id="index-installation"></span><h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="installation-on-windows">
+<span id="index-installation"></span><h1>Installation on Windows<a class="headerlink" href="#installation-on-windows" title="Permalink to this headline">¶</a></h1>
+<p>Currently, PyGears has been tested to work on Windows 7 on <a class="reference external" href="https://www.python.org/ftp/python/3.6.6/python-3.6.6.exe">Python 3.6.6</a> and installed via <a class="reference external" href="https://www.jetbrains.com/pycharm/">PyCharm</a>. Currently PyGears does not support co-simulation with third-party RTL simulators on Windows.</p>
+</div>
+<div class="section" id="installation-on-linux">
+<h1>Installation on Linux<a class="headerlink" href="#installation-on-linux" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="install-with-pip">
 <h2>Install with <code class="docutils literal notranslate"><span class="pre">pip</span></code><a class="headerlink" href="#install-with-pip" title="Permalink to this headline">¶</a></h2>
 <p><strong>PyGears</strong> requires a specific version of Python3, so think about using <code class="docutils literal notranslate"><span class="pre">pygears-tools</span></code> and procedure given <a class="reference internal" href="#index-installation-pygears-tools"><span class="std std-ref">below</span></a>. Otherwise, consider using <a class="reference external" href="https://virtualenv.pypa.io/en/stable/">virtualenv</a> or <a class="reference external" href="https://github.com/pyenv/pyenv">pyenv</a> to manage your Python version.</p>
@@ -115,7 +119,13 @@ python3 setup.py install
 <div class="section" id="installing-verilator">
 <h2>Installing Verilator<a class="headerlink" href="#installing-verilator" title="Permalink to this headline">¶</a></h2>
 <p>If you would like to run cosimulations with the Verilator, you need to make sure that it is available on the PATH. You can install it manually by following <a class="reference external" href="https://www.veripool.org/projects/verilator/wiki/Installing">these instructions</a>. As an alternative, PyGears offers a script that automatically compiles the latest Verilator. The script was tested on Ubuntu.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo apt install autoconf flex bison
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># List the system-wide dependencies for Verilator</span>
+pygears-tools-install -l verilator
+
+<span class="c1"># copy and run the install commands output by &#39;pygears-tools-install -l verilator&#39;, i.e:</span>
+<span class="c1"># sudo apt install build-essential</span>
+<span class="c1"># sudo apt install autoconf flex bison</span>
+
 pygears_tools_install verilator
 </pre></div>
 </div>
@@ -127,7 +137,7 @@ pygears_tools_install verilator
 </div>
 <div class="section" id="checkout-the-examples">
 <h1>Checkout the examples<a class="headerlink" href="#checkout-the-examples" title="Permalink to this headline">¶</a></h1>
-<p><span class="xref std std-ref">Echo</span>: Hardware module that applies echo audio effect to a continuous audio stream.</p>
+<p><a class="reference internal" href="echo.html#echo-examples"><span class="std std-ref">Echo</span></a>: Hardware module that applies echo audio effect to a continuous audio stream.</p>
 </div>
 <div class="section" id="read-the-documentation">
 <h1>Read the documentation<a class="headerlink" href="#read-the-documentation" title="Permalink to this headline">¶</a></h1>

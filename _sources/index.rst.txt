@@ -41,8 +41,13 @@ References
 
 .. _index-installation:
 
-Installation
-============
+Installation on Windows
+=======================
+
+Currently, PyGears has been tested to work on Windows 7 on `Python 3.6.6 <https://www.python.org/ftp/python/3.6.6/python-3.6.6.exe>`_ and installed via `PyCharm <https://www.jetbrains.com/pycharm/>`_. Currently PyGears does not support co-simulation with third-party RTL simulators on Windows.
+
+Installation on Linux
+=====================
 
 Install with ``pip``
 --------------------
@@ -101,7 +106,13 @@ If you would like to run cosimulations with the Verilator, you need to make sure
 
 .. code-block:: bash
 
-   sudo apt install autoconf flex bison
+   # List the system-wide dependencies for Verilator
+   pygears-tools-install -l verilator
+
+   # copy and run the install commands output by 'pygears-tools-install -l verilator', i.e:
+   # sudo apt install build-essential
+   # sudo apt install autoconf flex bison
+
    pygears_tools_install verilator
 
 The script will create ``tools.sh`` bash file that should be sourced prior to running the cosimulation: 
@@ -114,7 +125,7 @@ The script will create ``tools.sh`` bash file that should be sourced prior to ru
 Checkout the examples
 =====================
 
-:ref:`Echo <examples-echo>`: Hardware module that applies echo audio effect to a continuous audio stream.
+:ref:`Echo <echo-examples>`: Hardware module that applies echo audio effect to a continuous audio stream.
 
 
 Read the documentation

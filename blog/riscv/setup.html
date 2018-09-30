@@ -90,7 +90,7 @@ git submodule update --init --recursive
 <span class="nb">source</span> /tools/tools.sh
 </pre></div>
 </div>
-<p><span data-verbosity="2" hidden="true"> This took a while on my laptop, since whole RISC-V GCC compiler toolchain is being downloaded and built. </span><span> Finally, lets try if I can simulate a simple program. </span><span data-verbosity="2" hidden="true"> Unfortunatelly, the example given on the riscv-tools github page is for compiling C code. Since I’m interested in testing individual instructions, compiling from C will make too many hoops in the process. I need to be able to directly specify inftructions in assembly and avoid as much boilerplate as possible, i.e. main function call and stack manipulation. I started with the instructions provided in </span><a class="reference external" data-verbosity="2" hidden="true" href="https://github.com/jonesinator/riscv-spike-minimal-assembly/">riscv-spike-minimal-assembly github repo</a><span data-verbosity="2" hidden="true">. </span><span> I ended up with the following simple linker script </span><code class="docutils literal notranslate"><span class="pre">bare.ld</span></code><span>:</span></p>
+<p><span data-verbosity="2" hidden="true"> This took a while on my laptop, since whole RISC-V GCC compiler toolchain is being downloaded and built. </span><span> Finally, lets try if I can simulate a simple program. </span><span data-verbosity="2" hidden="true"> Unfortunately, the example given on the riscv-tools github page is for compiling C code. Since I’m interested in testing individual instructions, compiling from C will make too many hoops in the process. I need to be able to directly specify instructions in assembly and avoid as much boilerplate as possible, i.e. main function call and stack manipulation. I started with the instructions provided in </span><a class="reference external" data-verbosity="2" hidden="true" href="https://github.com/jonesinator/riscv-spike-minimal-assembly/">riscv-spike-minimal-assembly github repo</a><span data-verbosity="2" hidden="true">. </span><span> I ended up with the following simple linker script </span><code class="docutils literal notranslate"><span class="pre">bare.ld</span></code><span>:</span></p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SECTIONS</span>
 <span class="p">{</span>
 <span class="o">.</span> <span class="o">=</span> <span class="mh">0x80000000</span><span class="p">;</span>
@@ -151,7 +151,7 @@ git submodule update --init --recursive
 </pre></div>
 </div>
 
-</div><p><span data-verbosity="2" hidden="true">Sucess! The target test instruction is first to be executed, which will simplify my tests. </span><span> I can now invoke Spike simulator for the basic 32-bit ISA (</span><code class="docutils literal notranslate"><span class="pre">--isa=rv32i</span></code><span> option) to test the instruction execution and print the list of the instructions it their execution order (</span><code class="docutils literal notranslate"><span class="pre">-l</span></code><span> option):</span></p>
+</div><p><span data-verbosity="2" hidden="true">Success! The target test instruction is first to be executed, which will simplify my tests. </span><span> I can now invoke Spike simulator for the basic 32-bit ISA (</span><code class="docutils literal notranslate"><span class="pre">--isa=rv32i</span></code><span> option) to test the instruction execution and print the list of the instructions it their execution order (</span><code class="docutils literal notranslate"><span class="pre">-l</span></code><span> option):</span></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>spike -l --isa<span class="o">=</span>rv32i hello
 </pre></div>
 </div>
@@ -169,7 +169,7 @@ git submodule update --init --recursive
 <span class="x"> core   0: 0xffffffff80000014 (0x0000006f) j       pc + 0x0</span>
 </pre></div>
 </div>
-<p data-verbosity="2" hidden="true">It doesn’t matter anyways because it worked! I’ll probably get more insight into Spike as the time passes and figure exactly what’s happening, but it’s enough for the start. I invoked the simulator in interactive debug mode in order to check how the test instruction alters the processor state. The instruction <code class="docutils literal notranslate"><span class="pre">li</span> <span class="pre">a1,</span> <span class="pre">1</span></code> should load a value of 1 to the register <code class="docutils literal notranslate"><span class="pre">a1</span></code>. Name <code class="docutils literal notranslate"><span class="pre">li</span></code> stands for “load immediate” since it loads to a register a value that is immediatelly available in the instruction code. The code of this instruction is <code class="docutils literal notranslate"><span class="pre">0x00100593</span></code>, and there it is, the value of 1 in top three nibbles of the code: <code class="docutils literal notranslate"><span class="pre">0x001</span></code>.</p>
+<p data-verbosity="2" hidden="true">It doesn’t matter anyways because it worked! I’ll probably get more insight into Spike as the time passes and figure exactly what’s happening, but it’s enough for the start. I invoked the simulator in interactive debug mode in order to check how the test instruction alters the processor state. The instruction <code class="docutils literal notranslate"><span class="pre">li</span> <span class="pre">a1,</span> <span class="pre">1</span></code> should load a value of 1 to the register <code class="docutils literal notranslate"><span class="pre">a1</span></code>. Name <code class="docutils literal notranslate"><span class="pre">li</span></code> stands for “load immediate” since it loads to a register a value that is immediately available in the instruction code. The code of this instruction is <code class="docutils literal notranslate"><span class="pre">0x00100593</span></code>, and there it is, the value of 1 in top three nibbles of the code: <code class="docutils literal notranslate"><span class="pre">0x001</span></code>.</p>
 <div hidden data-verbosity=2>
 <div class="highlight-bash notranslate" data-verbosity="2" hidden="true"><div class="highlight"><pre><span></span>spike -d --isa<span class="o">=</span>rv32i hello
 </pre></div>
@@ -196,6 +196,12 @@ git submodule update --init --recursive
 
 <div class="section">
   <span style="float: left;">
+  
+  Previous: 
+  <a href="introduction.html">
+    
+    RISC-V Blog Series Introduction
+  </a>
   
   </span>
   <span>&nbsp;</span>
@@ -305,12 +311,7 @@ git submodule update --init --recursive
   
 
   
-  <li id="tags"><span>Tags:</span>
-      
-    
-      
-      <a href="../blog/tag/riscv.html">riscv</a>
-      
+  <li id="tags"><span>Tag:
     
       
       <a href="../blog/tag/setup.html">setup</a>
@@ -343,6 +344,8 @@ git submodule update --init --recursive
   <ul>
     
     
+      <li><a href="introduction.html">20 September - RISC-V Blog Series Introduction</a></li>
+    
   </ul>
 
   <h3><a href="../blog/tag.html">Tags</a></h3>
@@ -360,11 +363,6 @@ git submodule update --init --recursive
     
       
       <li class="ablog-cloud ablog-cloud-3">
-        <a href="../blog/tag/riscv.html">riscv</a></li>
-      
-    
-      
-      <li class="ablog-cloud ablog-cloud-3">
         <a href="../blog/tag/setup.html">setup</a></li>
       
     
@@ -374,7 +372,7 @@ git submodule update --init --recursive
   <ul>
   
     
-    <li><a href="../blog/category/risc-v.html">RISC-V (1)</a></li>
+    <li><a href="../blog/category/risc-v.html">RISC-V (2)</a></li>
     
   
     
@@ -385,7 +383,7 @@ git submodule update --init --recursive
   <ul>
   
     
-    <li><a href="../blog/2018.html">2018 (1)</a></li>
+    <li><a href="../blog/2018.html">2018 (2)</a></li>
     
   
   </ul>

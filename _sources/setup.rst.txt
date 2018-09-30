@@ -123,7 +123,9 @@ This procedure will install all available tools, see setup-pygears-tools-list_.
 
    pygears-tools-install -l
 
-   # run the sudo apt command output by 'pygears-tools-install -l'
+   # copy and run the install commands output by 'pygears-tools-install -l', i.e
+   # sudo apt install build-essential
+   # sudo apt install git libxmlsec1-dev curl ...
 
    # if you are using root location for the tools
    sudo mkdir /tools && sudo chown <username> /tools
