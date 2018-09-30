@@ -1,7 +1,7 @@
 .. _setup-pygears-tools:
 
-PyGears tools setup
-===================
+PyGears Tools Setup for Linux
+=============================
 
 .. verbosity_slider:: 3
 
@@ -58,7 +58,7 @@ and on openSUSE something like this:
 .. code-block:: bash
 
   sudo zypper install -t pattern devel_basis
-  sudo apt install ncurses-devel flex git libffi-devel zlib-devel tk-devel bison readline-devel openssl-devel
+  sudo zypper install ncurses-devel flex git libffi-devel zlib-devel tk-devel bison readline-devel openssl-devel
 
 .. verbosity:: 1
 

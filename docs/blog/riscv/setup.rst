@@ -1,4 +1,4 @@
-RISC-V tools setup
+RISC-V Tools Setup
 ==================
 
 .. post:: September 20, 2018
