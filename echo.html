@@ -37,7 +37,7 @@
           <div class="body" role="main">
             
   <div class="section" id="echo">
-<span id="examples-echo"></span><h1>Echo<a class="headerlink" href="#echo" title="Permalink to this headline">¶</a></h1>
+<span id="echo-examples"></span><h1>Echo<a class="headerlink" href="#echo" title="Permalink to this headline">¶</a></h1>
 <p>This example shows how to use PyGears to implement a hardware module that applies echo audio effect to a continuous audio stream. For a more detailed explanation of PyGears features used in this example, you can checkout a <a class="reference internal" href="introduction.html#introduction"><span class="std std-ref">quick introduction to PyGears</span></a>.</p>
 <p>The hardware module is defined in <a class="reference external" href="https://github.com/bogdanvuk/pygears/tree/develop/examples/echo/echo.py">examples/echo/echo.py</a>, and block diagram is given below. You can checkout the <a class="reference internal" href="#examples-echo-functional-description"><span class="std std-ref">functional description</span></a> of the <code class="docutils literal notranslate"><span class="pre">echo</span></code> module. In-depth explanation of the PyGears description of the echo model given in <a class="reference internal" href="#examples-echo-hardware-description"><span class="std std-ref">hardware description</span></a> chapter. PyGears takes the Python module description and compiles it to SystemVerilog which is <a class="reference internal" href="#echo-sv"><span class="std std-ref">listed below</span></a>.</p>
 <div class="figure align-center">
@@ -54,7 +54,7 @@ python echo_svgen.py
 </div>
 <div class="section" id="running-simulation">
 <h2>Running Simulation<a class="headerlink" href="#running-simulation" title="Permalink to this headline">¶</a></h2>
-<p>Run the script <a class="reference external" href="https://github.com/bogdanvuk/pygears/tree/develop/examples/echo/plop_test_wav_echo_sim.py">examples/echo/plop_test_wav_echo_sim.py</a> to run a simulation of the <code class="docutils literal notranslate"><span class="pre">echo</span></code> module. The simulation is run with the help of the Verilator tool, so please checkout the <a class="reference internal" href="index.html#installation"><span class="std std-ref">installation instructions</span></a> if you need help with installing the Verilator. Furthermore, if you would like to see plots of the audio waves, you need to install <a class="reference external" href="https://matplotlib.org/">matplotlib</a>. You can run the echo example like this:</p>
+<p>Run the script <a class="reference external" href="https://github.com/bogdanvuk/pygears/tree/develop/examples/echo/plop_test_wav_echo_sim.py">examples/echo/plop_test_wav_echo_sim.py</a> to run a simulation of the <code class="docutils literal notranslate"><span class="pre">echo</span></code> module. The simulation is run with the help of the Verilator tool, so please checkout the <a class="reference internal" href="index.html#index-installation"><span class="std std-ref">installation instructions</span></a> if you need help with installing the Verilator. Furthermore, if you would like to see plots of the audio waves, you need to install <a class="reference external" href="https://matplotlib.org/">matplotlib</a>. You can run the echo example like this:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> &lt;pygears_source_dir&gt;/examples/echo
 python plop_test_wav_echo_sim.py
 </pre></div>
@@ -133,31 +133,26 @@ Result length: <span class="m">165359</span>
 <dt id="echo.echo">
 <code class="descname">echo</code><span class="sig-paren">(</span><em>din: Int['W'], *, feedback_gain, sample_rate, delay, precision=15, sample_width=b'W'</em><span class="sig-paren">)</span><a class="headerlink" href="#echo.echo" title="Permalink to this definition">¶</a></dt>
 <dd><p>Performs echo audio effect on the continuous input sample stream</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>din</strong> – Stream of audio samples</p>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name" colspan="2">Keyword Arguments:</th></tr>
-<tr class="field-even field"><td>&#160;</td><td class="field-body"><ul class="first simple">
-<li><strong>feedback_gain</strong> (<em>float</em>) – gain of the feedback loop</li>
-<li><strong>sample_rate</strong> (<em>int</em>) – samples per second</li>
-<li><strong>delay</strong> (<em>float</em>) – delay in seconds</li>
-<li><strong>precision</strong> (<em>int</em>) – sample fixed point precision</li>
-<li><strong>sample_width</strong> (<em>int</em>) – sample width in bits</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>din</strong> – Stream of audio samples</p>
+</dd>
+<dt class="field-even">Keyword Arguments</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>feedback_gain</strong> (<em>float</em>) – gain of the feedback loop</p></li>
+<li><p><strong>sample_rate</strong> (<em>int</em>) – samples per second</p></li>
+<li><p><strong>delay</strong> (<em>float</em>) – delay in seconds</p></li>
+<li><p><strong>precision</strong> (<em>int</em>) – sample fixed point precision</p></li>
+<li><p><strong>sample_width</strong> (<em>int</em>) – sample width in bits</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
-<li><strong>dout</strong> - Stream of audio samples with applied echo</li>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>dout</strong> - Stream of audio samples with applied echo</p></li>
 </ul>
 </p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <p>As you can see the <code class="docutils literal notranslate"><span class="pre">echo</span></code> gear has few more parameters besides <code class="docutils literal notranslate"><span class="pre">din</span></code>: <code class="docutils literal notranslate"><span class="pre">feedback_gain</span></code>, <code class="docutils literal notranslate"><span class="pre">sample_rate</span></code>, <code class="docutils literal notranslate"><span class="pre">delay</span></code> and <code class="docutils literal notranslate"><span class="pre">precision</span></code>. These are declared after the ‘*’ symbol, which makes them keyword-only arguments in Python, which in turn makes them <strong>compile-time parameters</strong> in PyGears. These are akin to HDL parameters or generics.</p>
@@ -419,166 +414,166 @@ Result length: <span class="m">165359</span>
 <div class="section" id="resource-utilization">
 <span id="examples-echo-resource-utilization"></span><h2>Resource Utilization<a class="headerlink" href="#resource-utilization" title="Permalink to this headline">¶</a></h2>
 <p>If you have Vivado tool on your path while running the <a class="reference external" href="https://github.com/bogdanvuk/pygears/tree/develop/examples/echo/echo_svgen.py">examples/echo/echo_svgen.py</a> script, the following report will be produced. Some of the <code class="docutils literal notranslate"><span class="pre">echo</span></code> submodules are missing from the list, since Vivado tried to merged the modules in order to reduce the resource utilization.</p>
-<table border="1" class="docutils">
+<table class="docutils">
 <colgroup>
-<col width="23%" />
-<col width="13%" />
-<col width="13%" />
-<col width="9%" />
-<col width="6%" />
-<col width="5%" />
-<col width="8%" />
-<col width="8%" />
-<col width="15%" />
+<col style="width: 23%" />
+<col style="width: 13%" />
+<col style="width: 13%" />
+<col style="width: 9%" />
+<col style="width: 6%" />
+<col style="width: 5%" />
+<col style="width: 8%" />
+<col style="width: 8%" />
+<col style="width: 15%" />
 </colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td>Instance</td>
-<td>Total LUTs</td>
-<td>Logic LUTs</td>
-<td>LUTRAMs</td>
-<td>SRLs</td>
-<td>FFs</td>
-<td>RAMB36</td>
-<td>RAMB18</td>
-<td>DSP48 Blocks</td>
+<tbody>
+<tr class="row-odd"><td><p>Instance</p></td>
+<td><p>Total LUTs</p></td>
+<td><p>Logic LUTs</p></td>
+<td><p>LUTRAMs</p></td>
+<td><p>SRLs</p></td>
+<td><p>FFs</p></td>
+<td><p>RAMB36</p></td>
+<td><p>RAMB18</p></td>
+<td><p>DSP48 Blocks</p></td>
 </tr>
-<tr class="row-even"><td>wrap_echo</td>
-<td>88</td>
-<td>88</td>
-<td>0</td>
-<td>0</td>
-<td>72</td>
-<td>8</td>
-<td>0</td>
-<td>1</td>
+<tr class="row-even"><td><p>wrap_echo</p></td>
+<td><p>88</p></td>
+<td><p>88</p></td>
+<td><p>0</p></td>
+<td><p>0</p></td>
+<td><p>72</p></td>
+<td><p>8</p></td>
+<td><p>0</p></td>
+<td><p>1</p></td>
 </tr>
-<tr class="row-odd"><td><ul class="first last simple">
-<li>echo_i</li>
+<tr class="row-odd"><td><ul class="simple">
+<li><p>echo_i</p></li>
 </ul>
 </td>
-<td>88</td>
-<td>88</td>
-<td>0</td>
-<td>0</td>
-<td>72</td>
-<td>8</td>
-<td>0</td>
-<td>1</td>
+<td><p>88</p></td>
+<td><p>88</p></td>
+<td><p>0</p></td>
+<td><p>0</p></td>
+<td><p>72</p></td>
+<td><p>8</p></td>
+<td><p>0</p></td>
+<td><p>1</p></td>
 </tr>
-<tr class="row-even"><td><ul class="first last simple">
-<li><ul class="first">
-<li>add_i</li>
+<tr class="row-even"><td><ul class="simple">
+<li><ul>
+<li><p>add_i</p></li>
 </ul>
 </li>
 </ul>
 </td>
-<td>16</td>
-<td>16</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
+<td><p>16</p></td>
+<td><p>16</p></td>
+<td><p>0</p></td>
+<td><p>0</p></td>
+<td><p>0</p></td>
+<td><p>0</p></td>
+<td><p>0</p></td>
+<td><p>0</p></td>
 </tr>
-<tr class="row-odd"><td><ul class="first last simple">
-<li><ul class="first">
-<li>bc_dout_s</li>
+<tr class="row-odd"><td><ul class="simple">
+<li><ul>
+<li><p>bc_dout_s</p></li>
 </ul>
 </li>
 </ul>
 </td>
-<td>5</td>
-<td>5</td>
-<td>0</td>
-<td>0</td>
-<td>2</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
+<td><p>5</p></td>
+<td><p>5</p></td>
+<td><p>0</p></td>
+<td><p>0</p></td>
+<td><p>2</p></td>
+<td><p>0</p></td>
+<td><p>0</p></td>
+<td><p>0</p></td>
 </tr>
-<tr class="row-even"><td><ul class="first last simple">
-<li><ul class="first">
-<li>decoupler_i</li>
+<tr class="row-even"><td><ul class="simple">
+<li><ul>
+<li><p>decoupler_i</p></li>
 </ul>
 </li>
 </ul>
 </td>
-<td>24</td>
-<td>24</td>
-<td>0</td>
-<td>0</td>
-<td>38</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
+<td><p>24</p></td>
+<td><p>24</p></td>
+<td><p>0</p></td>
+<td><p>0</p></td>
+<td><p>38</p></td>
+<td><p>0</p></td>
+<td><p>0</p></td>
+<td><p>0</p></td>
 </tr>
-<tr class="row-odd"><td><ul class="first last simple">
-<li><ul class="first">
-<li>fifo_i</li>
+<tr class="row-odd"><td><ul class="simple">
+<li><ul>
+<li><p>fifo_i</p></li>
 </ul>
 </li>
 </ul>
 </td>
-<td>42</td>
-<td>42</td>
-<td>0</td>
-<td>0</td>
-<td>30</td>
-<td>8</td>
-<td>0</td>
-<td>0</td>
+<td><p>42</p></td>
+<td><p>42</p></td>
+<td><p>0</p></td>
+<td><p>0</p></td>
+<td><p>30</p></td>
+<td><p>8</p></td>
+<td><p>0</p></td>
+<td><p>0</p></td>
 </tr>
-<tr class="row-even"><td><ul class="first last simple">
-<li><ul class="first">
-<li>fill_void_i</li>
+<tr class="row-even"><td><ul class="simple">
+<li><ul>
+<li><p>fill_void_i</p></li>
 </ul>
 </li>
 </ul>
 </td>
-<td>1</td>
-<td>1</td>
-<td>0</td>
-<td>0</td>
-<td>2</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
+<td><p>1</p></td>
+<td><p>1</p></td>
+<td><p>0</p></td>
+<td><p>0</p></td>
+<td><p>2</p></td>
+<td><p>0</p></td>
+<td><p>0</p></td>
+<td><p>0</p></td>
 </tr>
-<tr class="row-odd"><td><ul class="first last simple">
-<li><ul class="first">
-<li><ul class="first">
-<li>priority_mux_i</li>
+<tr class="row-odd"><td><ul class="simple">
+<li><ul>
+<li><ul>
+<li><p>priority_mux_i</p></li>
 </ul>
 </li>
 </ul>
 </li>
 </ul>
 </td>
-<td>1</td>
-<td>1</td>
-<td>0</td>
-<td>0</td>
-<td>2</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
+<td><p>1</p></td>
+<td><p>1</p></td>
+<td><p>0</p></td>
+<td><p>0</p></td>
+<td><p>2</p></td>
+<td><p>0</p></td>
+<td><p>0</p></td>
+<td><p>0</p></td>
 </tr>
-<tr class="row-even"><td><ul class="first last simple">
-<li><ul class="first">
-<li>mul_i</li>
+<tr class="row-even"><td><ul class="simple">
+<li><ul>
+<li><p>mul_i</p></li>
 </ul>
 </li>
 </ul>
 </td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
-<td>1</td>
+<td><p>0</p></td>
+<td><p>0</p></td>
+<td><p>0</p></td>
+<td><p>0</p></td>
+<td><p>0</p></td>
+<td><p>0</p></td>
+<td><p>0</p></td>
+<td><p>1</p></td>
 </tr>
 </tbody>
 </table>
@@ -610,6 +605,7 @@ Result length: <span class="m">165359</span>
 <h3>Navigation</h3>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="gears.html">Introduction to Gears</a></li>
+<li class="toctree-l1"><a class="reference internal" href="setup.html">PyGears Tools Setup for Linux</a></li>
 <li class="toctree-l1"><a class="reference internal" href="introduction.html">Quick introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="typing.html">Typing</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="examples.html">Examples</a><ul class="current">

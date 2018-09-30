@@ -18,7 +18,7 @@
     <script type="text/javascript" src="_static/wavedrom.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Quick introduction" href="introduction.html" />
+    <link rel="next" title="PyGears Tools Setup for Linux" href="setup.html" />
     <link rel="prev" title="Welcome to PyGears" href="index.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -53,9 +53,9 @@
 \node (A) [cylinder, draw,minimum height=6.8cm,minimum width=3.8cm, label=below:DTI] at (6,0) {};" /></p>
 <p class="caption">DTI - Data Transfer Interface</p></div><p><strong>Gears</strong> proposes the use of a single interface type for gear communication, called DTI (Data Transfer Interface), throughout the design. Interface connects two gears, one which sends the data and the other one which receives it, called Producer and Consumer respectively. This interface DTI is a simple synchronous, flow-controlled interface, somewhat similar to AXI4-Stream, consisting of the following three signals:</p>
 <ul class="simple">
-<li><strong>Data</strong> - Variable width signal, driven by the Producer, which carries the actual data.</li>
-<li><strong>Valid</strong> - Single bit wide signal, driven by the Producer, which signals when valid data is available on Data signal.</li>
-<li><strong>Ready</strong> - Single bit wide signal, driven by the Consumer, which signals when the data provided by the Producer has been consumed.</li>
+<li><p><strong>Data</strong> - Variable width signal, driven by the Producer, which carries the actual data.</p></li>
+<li><p><strong>Valid</strong> - Single bit wide signal, driven by the Producer, which signals when valid data is available on Data signal.</p></li>
+<li><p><strong>Ready</strong> - Single bit wide signal, driven by the Consumer, which signals when the data provided by the Producer has been consumed.</p></li>
 </ul>
 
 <div style="overflow-x:auto">
@@ -81,14 +81,14 @@ head:{
 </div>
 <p>Gears need to adhere to the following rules:</p>
 <ol class="arabic simple">
-<li>Producer shall initiate the data transfer by posting the data on Data signal, and rising Valid signal to high, as seen in cycle 1, 6 and 7 in the figure.</li>
-<li>Consumer can start using the input data in the same cycle the Valid line went high.</li>
-<li>Consumer can use the input data sent by the Producer for internal calculations for as many cycles as needed. For an example in cycles 1-3 in the figure.</li>
-<li>When Consumer realizes that it is the last cycle in which it needs the input data, it raises the Ready signal to high (cycles 3, 6 and 7 in the figure, marked also as ACK). On the edge of the clock if both Valid and Ready signals are high, it is said that the Consumer acknowledged/consumed the data, or that the handshake has happened. This signals the Producer that in the following cycle new data transfer can be initiated, or Valid signal can be set to low (cycles 4 or 7 in the figure), which will pause the data transfer.</li>
-<li>After initiating the transfer, Producer shall keep the Data signal unchanged and the Valid signal high until the handshake occurs, as seen in cycles 1-2 in the figure.</li>
-<li>Producer can keep Valid signal low for as many cycles as needed, which will block the Consumer if it is waiting for new input data, as seen in cycles 6-7 in the figure.</li>
-<li>There must be no combinatorial path from Ready to Valid signal on the Producer side. In other words, the Producer should not decide whether to output the data based on the state of the Consumer, but only based on its own inputs and internal state.</li>
-<li>Consumer may decide whether to acknowledge the data based on the state of the Valid signal, i.e. there may exist a combinatorial path from Valid to Ready signal on the Consumer side.</li>
+<li><p>Producer shall initiate the data transfer by posting the data on Data signal, and rising Valid signal to high, as seen in cycle 1, 6 and 7 in the figure.</p></li>
+<li><p>Consumer can start using the input data in the same cycle the Valid line went high.</p></li>
+<li><p>Consumer can use the input data sent by the Producer for internal calculations for as many cycles as needed. For an example in cycles 1-3 in the figure.</p></li>
+<li><p>When Consumer realizes that it is the last cycle in which it needs the input data, it raises the Ready signal to high (cycles 3, 6 and 7 in the figure, marked also as ACK). On the edge of the clock if both Valid and Ready signals are high, it is said that the Consumer acknowledged/consumed the data, or that the handshake has happened. This signals the Producer that in the following cycle new data transfer can be initiated, or Valid signal can be set to low (cycles 4 or 7 in the figure), which will pause the data transfer.</p></li>
+<li><p>After initiating the transfer, Producer shall keep the Data signal unchanged and the Valid signal high until the handshake occurs, as seen in cycles 1-2 in the figure.</p></li>
+<li><p>Producer can keep Valid signal low for as many cycles as needed, which will block the Consumer if it is waiting for new input data, as seen in cycles 6-7 in the figure.</p></li>
+<li><p>There must be no combinatorial path from Ready to Valid signal on the Producer side. In other words, the Producer should not decide whether to output the data based on the state of the Consumer, but only based on its own inputs and internal state.</p></li>
+<li><p>Consumer may decide whether to acknowledge the data based on the state of the Valid signal, i.e. there may exist a combinatorial path from Valid to Ready signal on the Consumer side.</p></li>
 </ol>
 </div>
 <div class="section" id="powerful-type-system">
@@ -302,6 +302,7 @@ head:{
 <li class="toctree-l2"><a class="reference internal" href="#functors">Functors</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="setup.html">PyGears Tools Setup for Linux</a></li>
 <li class="toctree-l1"><a class="reference internal" href="introduction.html">Quick introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="typing.html">Typing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
@@ -313,7 +314,7 @@ head:{
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
       <li>Previous: <a href="index.html" title="previous chapter">Welcome to PyGears</a></li>
-      <li>Next: <a href="introduction.html" title="next chapter">Quick introduction</a></li>
+      <li>Next: <a href="setup.html" title="next chapter">PyGears Tools Setup for Linux</a></li>
   </ul></li>
 </ul>
 </div>
