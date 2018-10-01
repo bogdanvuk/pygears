@@ -110,12 +110,61 @@ I issued the following commands in order to test the value of the register ``a1`
   : until pc 0 0xffffffff80000000
   : reg 0 a1
   0x0000000000001020
-  : until pc 0 0xffffffff80000004
+  : run 1
+  core   0: 0xffffffff80000000 (0x00100593) li      a1, 1
   : reg 0 a1
   0x0000000000000001
   : q
 
+.. verbosity:: 1
+
 Invoking from Python
 --------------------
 
-I'd like to have at least one test per RISC-V instruction I implement and run them as often as possible. Hence I need them automated. Specifically, my automated tests need to check whether an instruction introduces the same changes to the memory and registers in my design as it does in the Spike simulator. Unfortunately, Spike doesn't offer an option of executing commmands from the script, so I'll have to run it in the interactive mode and send commands to him live. 
+I'd like to have at least one test per RISC-V instruction I implement and run them as often as possible. Hence I need them automated. Specifically, my automated tests need to check whether an instruction introduces the same changes to the memory and registers in my design as it does in the Spike simulator. Unfortunately, Spike doesn't offer an option of executing commmands from the script, so I'll have to run it in the interactive mode and send commands to him live. :v:`2` Luckily, the Python library `pexpect <https://pexpect.readthedocs.io/en/stable/index.html>`_ was created specifically for the task like this. Pexpect will allow me to start Spike from Python, send it some commands and retrieve the responses. I'll immediatelly wrap low-level calls to the ``pexpect`` library inside a class I'll name "Spike", which will provide a high-level interface for querying the memory and register state and steping through the program. :v:`1` Let's put all this functionality inside `examples/riscv/spike.py <>`_.   
+
+.. verbosity:: 2
+
+Let's do the Spike class the right way, by using the `Context Manager <https://docs.python.org/3/reference/datamodel.html#context-managers>`_ pattern. This pattern asks us to define initialization and cleanup code inside ``__enter__`` and ``__exit__`` methods respectively. During the initialization, I'd like to start the Spike simulator, setup some communication parameters and let the simulator run until it reaches the beggining of my set of instructions (first few instructions are injected by the simulator).  
+
+.. literalinclude:: ../../../examples/riscv/spike.py
+   :pyobject: Spike
+   :lines: 1-16
+
+This allows me to invoke Spike using ``with`` Python statement::
+
+  # This line invokes the initialization routine which opens up 
+  # the communication line with the Spike simulator
+  with Spike('spike -d --isa=rv32i hello') as sp:
+      # Here, within the with block I can interact with the simulator
+      ...
+
+  # Simulator is closed outside the with block
+
+Also, let's implement some high-level commands that will be used often: 
+
+.. literalinclude:: ../../../examples/riscv/spike.py
+   :pyobject: Spike
+   :lines: 23-33
+
+The ``until()`` method instructs the Spike simulator to run until ``PC`` reaches a specific address. Since my code starts (for some reason) at address ``0xffffffff80000000``, I'll make ``until()`` accept addressess in form of the offset to this base address, which will reduce the noise of always needing to write such large numbers.
+
+The ``pc()`` method queries the current value of the ``PC``, but also returns only the offset to the code base address. The ``step()`` method instructs the simulator to run the next instruction, and the ``reg()`` method retrieves the state of a specific register. 
+
+.. verbosity:: 1
+
+Now, I can interact with Spike on a pretty high level::
+
+  from spike import Spike
+
+  with Spike('spike -d --isa=rv32i hello') as sp:
+      print('A1 value before: ', hex(sp.reg(1)))
+      sp.step()
+      print('A1 value after:  ', hex(sp.reg(1)))
+
+.. verbosity:: 2
+
+Which gives me the same results as before when I interacted with the simulator manually. The script above prints::
+
+  A1 value before:  0x1020
+  A1 value after:   0x1

@@ -7,6 +7,8 @@ RISC-V Blog Series Introduction
 
 .. verbosity_slider:: 2
 
+Relevant PyGears git commit: `29f6f56f85697cd754befc6b60aa3506fc7fa851 <https://github.com/bogdanvuk/pygears/tree/29f6f56f85697cd754befc6b60aa3506fc7fa851>`_
+
 Welcome to the blog series in which I will be implementing the `RISC-V ISA <https://riscv.org/risc-v-isa/>`_ (instruction set) using PyGears. My aim is to show how PyGears offers a way to build hardware in an incremental, evolutionary fashion, where the architecture, implementation and the verification environment evolve together. This aligns with the `agile <https://en.wikipedia.org/wiki/Agile_software_development>`_ software philosophy, and offers many benefits to the hardware design process:
 
 - I don't need to take into the account all the requirements from the start in order to design the architecture before I start the implementation. :v:`2` This means that I will sooner start the implementation and have feedback about my architectural choices and thus avoid catching architectural errors late, which are then most expensive to fix.
@@ -61,9 +63,9 @@ I'll be using Spacemacs for editing files and running Python scripts, but I'll t
 Logistics
 ---------
 
-All the files related to the RISC-V implementation will be placed in ``examples/riscv`` folder of PyGears git repository. At the beggining of each blog post, I will state which exact git commit contains code relevant to that post, so that you can get back in history and inspect files at that development stage. 
+All the files related to the RISC-V implementation will be placed in ``examples/riscv`` folder of the PyGears git repository. At the beggining of each blog post, I will state which exact git commit contains code relevant to that post, so that you can get back in history and inspect files at that development stage. 
 
-Notice also a slider at the beginning of the post. It allows you to choose verbosity of the text, and I plan to use it for all future posts in a fashion similar to this:
+Notice also a slider at the beginning of the post. It allows you to choose verbosity of the text. I plan to use it for all future posts in a fashion similar to this:
 
 - Verbosity level 1: Only as much information as needed to reproduce the results the post is discussing,
 - Verbosity level 2: Additional details and explanations about each of the steps involved in the discussed procedure,
