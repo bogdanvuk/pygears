@@ -17,7 +17,7 @@ Welcome to the blog series in which I will be implementing the `RISC-V ISA <http
 
 :v:`2` Traditional HDLs and design methodologies built around them are ill-suited for building larger hardware systems, because they offer very few means of abstraction, besides grouping the implementation into modules. Modules are furthermore quite often formed in the wrong way, by bundling various functionalities together because they operate on the same data, even though they serve different purposes. Think big clunky state machines with many outputs which are usually the major source of bugs and a major obstacle for adding new features. Each of these outputs is probably computed by a functionality that deserves its own module, its own little abstraction. Why are they than being sucked into state machine module monsters? Usually because we either believe that it leads to a more optimized design, or we afraid of synchronization issues. But wire is a wire even if it leaves the module boundaries, and decent hardware synthesis tools offer inter-module optimization, so we lose next to nothing by factoring out the functionality. As for the synchronization, putting everything in a single module just offers a false sense of security and sweeps the problem under the rug until later when functionality piles up inside the module and pipelining becomes a nightmare, not to mention dealing with synchronization issues between such complex modules.
 
-:v:`1` Since the biggest issue with maintaining a large hardware design is synchronization (as with any other massively parallel system), PyGears tries to face it upfront by forcing each module to implement a `flow-controlled interface <https://bogdanvuk.github.io/pygears/gears.html#one-interface>`_, which turns modules into "gears" in PyGears terminology. :v:`2` As much as it may seem as an overkill in the beginning, it usually pays-off later, and is easily optimized-away by the hardware synthesis tools if not really needed. :v:`1` Gears are not grouped around the state, but are formed to group and abstract some functionality, while the state is encoded in the data sent between the gears. This further alleviates the synchronization problem, as I intend to show while implementing RISC-V ISA.
+:v:`1` Since the biggest issue with maintaining a large hardware design is synchronization (as with any other massively parallel system, think multithreading in software), PyGears tries to face it upfront by forcing each module to implement a `flow-controlled interface <https://bogdanvuk.github.io/pygears/gears.html#one-interface>`_, which turns modules into "gears" (in PyGears terminology). :v:`2` As much as it may seem as an overkill in the beginning, it usually pays-off later, and is easily optimized-away by the hardware synthesis tools if not really needed. :v:`1` Gears are not grouped around the state, but are formed to group and abstract some functionality, while the state is embedded in the data sent between the gears. This further alleviates the synchronization problem, as I intend to show while implementing RISC-V ISA.
 
 Usually the hardware implementation effort is split between the design and verification teams, where the design team leaves all the testing to the verification. I think that this is a bad dichotomy and tend to agree with the `TDD <https://en.wikipedia.org/wiki/Test-driven_development>`_ (Test-Driven Development) philosophy which points-out the importance of the development tests. These are the tests written by the designers continuously during the development, which test each of the functional requirements of the design.
 
@@ -42,3 +42,29 @@ Besides functional correctness, one additional important processor design qualit
 .. verbosity:: 2
 
 Even though I'm aware of the already proposed architectures for the RISC-V processor (like the one in the `Computer Architecture: A Quantitative Approach <https://www.amazon.com/Computer-Architecture-Quantitative-Approach-Kaufmann/dp/0128119055>`_), I will try to blank out the memory of them, and let the new one, guided by the PyGears principles, arise on its own.  
+
+.. verbosity:: 1
+
+Setup
+-----
+
+For this series I'll be working on Ubuntu 18.04. For the detailed description of the tools I'm going to use and how to set them up, please refer to `PyGears tools setup <https://bogdanvuk.github.io/pygears/setup.html#setup-pygears-tools>`_. You can of course choose an alternative to all these tools (except for the PyGears framework itself I hope). Furthermore, PyGears has been tested to work on Windows and openSUSE as well, so feel free to use the OS of your choice too. So in short you will need: 
+
+1. PyGears,
+2. An RTL simulator: I'll be using mostly Verilator since it is open-source, but I will try to provide an option in the code to run Questa or Cadence simulators as well, 
+3. A waveform viewer: I'll be using GtkWave since again it is open-source, but if you plan on using a proprietary simulator, they will usually come with a waveform viewer,
+4. A constrained random solver: I'll try to use `SCV <http://www.accellera.org/activities/working-groups/systemc-verification>`_. Again proprietary simulators have support for this too,
+5. Various RISC-V tools, for which I will make further posts on how to setup and use.
+
+I'll be using Spacemacs for editing files and running Python scripts, but I'll try to test the procedures I layout in blog posts on PyCharm as well.
+
+Logistics
+---------
+
+All the files related to the RISC-V implementation will be placed in ``examples/riscv`` folder of PyGears git repository. At the beggining of each blog post, I will state which exact git commit contains code relevant to that post, so that you can get back in history and inspect files at that development stage. 
+
+Notice also a slider at the beginning of the post. It allows you to choose verbosity of the text, and I plan to use it for all future posts in a fashion similar to this:
+
+- Verbosity level 1: Only as much information as needed to reproduce the results the post is discussing,
+- Verbosity level 2: Additional details and explanations about each of the steps involved in the discussed procedure,
+- Verbosity level 3: Various digressions, brain dumps, detailed results of the procedure steps (log files, command outputs), etc.

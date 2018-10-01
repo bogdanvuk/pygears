@@ -114,3 +114,8 @@ I issued the following commands in order to test the value of the register ``a1`
   : reg 0 a1
   0x0000000000000001
   : q
+
+Invoking from Python
+--------------------
+
+I'd like to have at least one test per RISC-V instruction I implement and run them as often as possible. Hence I need them automated. Specifically, my automated tests need to check whether an instruction introduces the same changes to the memory and registers in my design as it does in the Spike simulator. Unfortunately, Spike doesn't offer an option of executing commmands from the script, so I'll have to run it in the interactive mode and send commands to him live. 

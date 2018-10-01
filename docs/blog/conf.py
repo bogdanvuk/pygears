@@ -79,7 +79,7 @@ html_sidebars = {
 }
 html_theme_path = [alabaster.get_path()]
 html_theme_options = {
-    'travis_button': True,
+    'travis_button': False,
     'github_user': 'bogdanvuk',
     'github_repo': 'pygears',
     'description': 'PyGears blog',
