@@ -92,9 +92,17 @@
 
    if (CNT_ONE_MORE)
       if (CNT_STEPS)
-        assign eot_internal_cond = (cnt_next > cfg_s.cnt);
+        if (SIGNED) begin
+           assign eot_internal_cond = (signed'(cnt_next) > signed'(cfg_s.cnt));
+        end else begin
+           assign eot_internal_cond = (cnt_next > cfg_s.cnt);
+        end
       else
-        assign eot_internal_cond = (cnt_next > W_DOUT_DATA'(cfg_s.cnt));
+        if (SIGNED) begin
+           assign eot_internal_cond = (signed'(cnt_next) > W_DOUT_DATA'(signed'(cfg_s.cnt)));
+        end else begin
+           assign eot_internal_cond = (cnt_next > W_DOUT_DATA'(cfg_s.cnt));
+        end
    else begin
       if (CNT_STEPS)
         assign eot_internal_cond = (cnt_next == cfg_s.cnt);
