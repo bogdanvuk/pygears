@@ -70,19 +70,27 @@ Obtain the examples:
 Installing using pygears-tools
 ------------------------------
 
-On detailed description and capabilities of ``pygears-tools`` refer to `PyGears tools setup <https://bogdanvuk.github.io/pygears/setup.html#setup-pygears-tools>`_ page. The procedure was tested on Ubuntu 18.04, Ubuntu 16.04 and openSUSE Leap 15.
+Below you can find a procedure for installing the **PyGears** with the correct Python version. On detailed description and capabilities of ``pygears-tools`` refer to `PyGears tools setup <https://bogdanvuk.github.io/pygears/setup.html#setup-pygears-tools>`_ page. The procedure was tested on Ubuntu 18.04, Ubuntu 16.04 and openSUSE Leap 15.
 
 .. code-block:: bash
 
    sudo apt install python3-pip
    sudo pip3 install pygears-tools
 
-   # List the system-wide dependencies of the tools
-   pygears-tools-install -l
+   # List the system-wide dependencies for the tools
+   pygears-tools-install -l pyenv python pygears
 
-   # copy and run the install commands output by 'pygears-tools-install -l'
+   # copy and run the install commands output by 'pygears-tools-install -l', i.e
+   # sudo apt install build-essential
+   # sudo apt install git libxmlsec1-dev curl ...
 
-   pygears-tools-install
+   pygears-tools-install pyenv python pygears
+
+The script will create ``tools.sh`` bash file that should be sourced prior to running the cosimulation: 
+
+.. code-block:: bash
+
+   source ~/.pygears/tools/tools.sh
 
 Alternative installation from source
 ------------------------------------
