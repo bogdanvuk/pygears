@@ -146,6 +146,7 @@ class LogPlugin(PluginBase):
         CustomLog('core', logging.WARNING)
         CustomLog('typing', logging.WARNING)
         CustomLog('util', logging.WARNING)
+        CustomLog('gear', logging.WARNING)
 
 
 def core_log():
@@ -158,3 +159,7 @@ def typing_log():
 
 def util_log():
     return logging.getLogger('util')
+
+
+def gear_log():
+    return logging.getLogger('gear')

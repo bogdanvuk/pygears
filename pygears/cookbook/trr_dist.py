@@ -1,4 +1,5 @@
 from pygears import gear
+from pygears.core.log import gear_log
 from pygears.svgen.inst import SVGenInstPlugin
 from pygears.svgen.svmod import SVModuleGen
 from pygears.typing import Queue
@@ -9,15 +10,24 @@ def trr_dist_type(dtype):
 
 
 @gear
-async def trr_dist(din, *, dout_num) -> b'(trr_dist_type(din), ) * dout_num':
+async def trr_dist(din: Queue['t_data', 2], *,
+                   dout_num) -> b'(trr_dist_type(din), ) * dout_num':
+    t_din = din.dtype
+
     for i in range(dout_num):
         out_res = [None] * dout_num
-        val = (0, ) * din.dtype.lvl
-        while (val[1] == 0):
+        val = t_din((0, 0, 0))
+
+        while (val.eot[0] == 0):
             async with din as val:
                 out_res[i] = val[:-1]
-                # print(f'Trr_dist: yielding {tuple(out_res)}')
+                gear_log().debug(
+                    f'Trr_dist yielding on output {i} value {out_res[i]}')
                 yield tuple(out_res)
+
+        if val.eot == int('1' * t_din.lvl, 2):
+            gear_log().debug(f'Trr_dist reset to first output')
+            break
 
 
 class SVGenTrrDist(SVModuleGen):
