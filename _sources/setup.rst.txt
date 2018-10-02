@@ -135,7 +135,7 @@ This procedure will install all available tools, see setup-pygears-tools-list_.
 Verifying that it works
 -----------------------
 
-Lets run a PyGears example project to verify that setup is correct.
+Lets run a PyGears example project to verify that setup is correct. For this example to work, you need to have the Verilator RTL simulator installed. Checkout the :ref:`Echo example guide <echo-examples>` for the details.
 
 .. code-block:: bash
 

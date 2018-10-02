@@ -80,6 +80,7 @@
 <span class="nb">export</span> <span class="nv">RISCV</span><span class="o">=</span>/tools/riscv-tools
 
 git clone https://github.com/riscv/riscv-tools.git <span class="nv">$RISCV</span>/_install
+<span class="nb">cd</span> <span class="nv">$RISCV</span>/_install
 git submodule update --init --recursive
 ./build.sh
 
@@ -180,14 +181,86 @@ git submodule update --init --recursive
 <div class="highlight-bash notranslate" data-verbosity="2" hidden="true"><div class="highlight"><pre><span></span>: <span class="k">until</span> pc <span class="m">0</span> 0xffffffff80000000
 : reg <span class="m">0</span> a1
 0x0000000000001020
-: <span class="k">until</span> pc <span class="m">0</span> 0xffffffff80000004
+: run <span class="m">1</span>
+core   <span class="m">0</span>: 0xffffffff80000000 <span class="o">(</span>0x00100593<span class="o">)</span> li      a1, <span class="m">1</span>
 : reg <span class="m">0</span> a1
 0x0000000000000001
 : q
 </pre></div>
 </div>
 
+</div><div class="section" id="invoking-from-python">
+<h2>Invoking from Python<a class="headerlink" href="#invoking-from-python" title="Permalink to this headline">¶</a></h2>
+<p>I’d like to have at least one test per RISC-V instruction I implement and run them as often as possible. Hence I need them automated. Specifically, my automated tests need to check whether an instruction introduces the same changes to the memory and registers in my design as it does in the Spike simulator. Unfortunately, Spike doesn’t offer an option of executing commmands from the script, so I’ll have to run it in the interactive mode and send commands to him live. <span data-verbosity="2" hidden="true"> Luckily, the Python library </span><a class="reference external" data-verbosity="2" hidden="true" href="https://pexpect.readthedocs.io/en/stable/index.html">pexpect</a><span data-verbosity="2" hidden="true"> was created specifically for the task like this. Pexpect will allow me to start Spike from Python, send it some commands and retrieve the responses. I’ll immediatelly wrap low-level calls to the </span><code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">pexpect</span></code><span data-verbosity="2" hidden="true"> library inside a class I’ll name “Spike”, which will provide a high-level interface for querying the memory and register state and steping through the program. </span><span> Let’s put all this functionality inside </span><a href="#id1"><span class="problematic" id="id2">`examples/riscv/spike.py &lt;&gt;`_</span></a><span>.</span></p>
+<p data-verbosity="2" hidden="true">Let’s do the Spike class the right way, by using the <a class="reference external" href="https://docs.python.org/3/reference/datamodel.html#context-managers">Context Manager</a> pattern. This pattern asks us to define initialization and cleanup code inside <code class="docutils literal notranslate"><span class="pre">__enter__</span></code> and <code class="docutils literal notranslate"><span class="pre">__exit__</span></code> methods respectively. During the initialization, I’d like to start the Spike simulator, setup some communication parameters and let the simulator run until it reaches the beggining of my set of instructions (first few instructions are injected by the simulator).</p>
+<div hidden data-verbosity=2>
+<div class="highlight-default notranslate" data-verbosity="2" hidden="true"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Spike</span><span class="p">:</span>
+    <span class="n">PROMPT</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;: $&#39;</span>
+    <span class="n">CODE_BASE_ADDRESS</span> <span class="o">=</span> <span class="mh">0xffffffff80000000</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cmd_line</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cmd_line</span> <span class="o">=</span> <span class="n">cmd_line</span>
+
+    <span class="k">def</span> <span class="nf">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">proc</span> <span class="o">=</span> <span class="n">pexpect</span><span class="o">.</span><span class="n">spawnu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cmd_line</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">proc</span><span class="o">.</span><span class="n">expect</span><span class="p">(</span><span class="n">Spike</span><span class="o">.</span><span class="n">PROMPT</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">proc</span><span class="o">.</span><span class="n">setecho</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">until</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_value</span><span class="p">,</span> <span class="n">exc_traceback</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">proc</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+
+</div><p data-verbosity="2" hidden="true">This allows me to invoke Spike using <code class="docutils literal notranslate"><span class="pre">with</span></code> Python statement:</p>
+<div hidden data-verbosity=2>
+<div class="highlight-default notranslate" data-verbosity="2" hidden="true"><div class="highlight"><pre><span></span><span class="c1"># This line invokes the initialization routine which opens up</span>
+<span class="c1"># the communication line with the Spike simulator</span>
+<span class="k">with</span> <span class="n">Spike</span><span class="p">(</span><span class="s1">&#39;spike -d --isa=rv32i hello&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">sp</span><span class="p">:</span>
+    <span class="c1"># Here, within the with block I can interact with the simulator</span>
+    <span class="o">...</span>
+
+<span class="c1"># Simulator is closed outside the with block</span>
+</pre></div>
+</div>
+
+</div><p data-verbosity="2" hidden="true">Also, let’s implement some high-level commands that will be used often:</p>
+<div hidden data-verbosity=2>
+<div class="highlight-default notranslate" data-verbosity="2" hidden="true"><div class="highlight"><pre><span></span>    <span class="k">def</span> <span class="nf">until</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">address</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;until pc 0 {hex(Spike.CODE_BASE_ADDRESS + address)}&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">pc</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;pc 0&#39;</span><span class="p">),</span> <span class="mi">16</span><span class="p">)</span> <span class="o">-</span> <span class="n">Spike</span><span class="o">.</span><span class="n">CODE_BASE_ADDRESS</span>
+
+    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="s1">&#39;run 1&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">reg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reg_id</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;reg 0 a</span><span class="si">{reg_id}</span><span class="s1">&#39;</span><span class="p">),</span> <span class="mi">16</span><span class="p">)</span>
+</pre></div>
+</div>
+
+</div><p data-verbosity="2" hidden="true">The <code class="docutils literal notranslate"><span class="pre">until()</span></code> method instructs the Spike simulator to run until <code class="docutils literal notranslate"><span class="pre">PC</span></code> reaches a specific address. Since my code starts (for some reason) at address <code class="docutils literal notranslate"><span class="pre">0xffffffff80000000</span></code>, I’ll make <code class="docutils literal notranslate"><span class="pre">until()</span></code> accept addressess in form of the offset to this base address, which will reduce the noise of always needing to write such large numbers.</p>
+<p data-verbosity="2" hidden="true">The <code class="docutils literal notranslate"><span class="pre">pc()</span></code> method queries the current value of the <code class="docutils literal notranslate"><span class="pre">PC</span></code>, but also returns only the offset to the code base address. The <code class="docutils literal notranslate"><span class="pre">step()</span></code> method instructs the simulator to run the next instruction, and the <code class="docutils literal notranslate"><span class="pre">reg()</span></code> method retrieves the state of a specific register.</p>
+<p>Now, I can interact with Spike on a pretty high level:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">spike</span> <span class="k">import</span> <span class="n">Spike</span>
+
+<span class="k">with</span> <span class="n">Spike</span><span class="p">(</span><span class="s1">&#39;spike -d --isa=rv32i hello&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">sp</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;A1 value before: &#39;</span><span class="p">,</span> <span class="nb">hex</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">reg</span><span class="p">(</span><span class="mi">1</span><span class="p">)))</span>
+    <span class="n">sp</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;A1 value after:  &#39;</span><span class="p">,</span> <span class="nb">hex</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">reg</span><span class="p">(</span><span class="mi">1</span><span class="p">)))</span>
+</pre></div>
+</div>
+<p data-verbosity="2" hidden="true">Which gives me the same results as before when I interacted with the simulator manually. The script above prints:</p>
+<div hidden data-verbosity=2>
+<div class="highlight-default notranslate" data-verbosity="2" hidden="true"><div class="highlight"><pre><span></span><span class="n">A1</span> <span class="n">value</span> <span class="n">before</span><span class="p">:</span>  <span class="mh">0x1020</span>
+<span class="n">A1</span> <span class="n">value</span> <span class="n">after</span><span class="p">:</span>   <span class="mh">0x1</span>
+</pre></div>
+</div>
+
 </div></div>
+</div>
 
   <div class="section">
   
@@ -254,18 +327,6 @@ git submodule update --init --recursive
 
 
 
-
-
-    
-
-<p>
-<a href="https://travis-ci.org/bogdanvuk/pygears">
-    <img
-        alt="https://secure.travis-ci.org/bogdanvuk/pygears.svg?branch=master"
-        src="https://secure.travis-ci.org/bogdanvuk/pygears.svg?branch=master"
-    />
-</a>
-</p>
 
 
 
