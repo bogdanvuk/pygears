@@ -13,7 +13,7 @@ from pygears.sim.modules.drv import drv
 from pygears.sim.modules.sim_socket import SimSocket
 from pygears.sim.modules.verilator import SimVerilated
 from pygears.typing import Queue, Uint
-from utils import skip_ifndef
+from utils import prepare_result_dir, skip_ifndef
 
 t_din = Queue[Uint[16]]
 t_cfg = Uint[16]
@@ -48,7 +48,7 @@ def test_verilator_cosim():
     stim = get_stim()
     verif(*stim, f=chop(sim_cls=SimVerilated), ref=chop(name='ref_model'))
 
-    sim()
+    sim(outdir=prepare_result_dir())
 
 
 @with_setup(clear)
@@ -61,7 +61,7 @@ def test_socket_cosim():
         f=chop(sim_cls=partial(SimSocket, run=True)),
         ref=chop(name='ref_model'))
 
-    sim()
+    sim(outdir=prepare_result_dir())
 
 
 @with_setup(clear)
@@ -83,4 +83,4 @@ def test_socket_cosim_rand():
         f=chop(sim_cls=partial(SimSocket, run=True)),
         ref=chop(name='ref_model'))
 
-    sim(extens=[partial(SVRandSocket, cons=cons)])
+    sim(outdir=prepare_result_dir(), extens=[partial(SVRandSocket, cons=cons)])
