@@ -18,6 +18,7 @@ If I want to approach this project the TDD way, I need to be ready to test the d
    export RISCV=/tools/riscv-tools
 
    git clone https://github.com/riscv/riscv-tools.git $RISCV/_install
+   cd $RISCV/_install
    git submodule update --init --recursive
    ./build.sh
 
