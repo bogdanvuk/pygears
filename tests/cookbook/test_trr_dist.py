@@ -1,20 +1,25 @@
+import random
+from functools import partial
+
 from nose import with_setup
-# from pygears.sim.modules.drv import drv_rand_queue
 
 from pygears import clear
 from pygears.cookbook.trr_dist import trr_dist
 from pygears.cookbook.verif import directed, verif
 from pygears.sim import sim
-from pygears.sim.modules import scoreboard
+from pygears.sim.extens.randomization import create_constraint, rand_seq
+from pygears.sim.extens.svrand import SVRandSocket
 from pygears.sim.modules.drv import drv
 from pygears.sim.modules.sim_socket import SimSocket
+from pygears.sim.modules.verilator import SimVerilated
 from pygears.typing import Queue, Uint
-from utils import skip_ifndef, prepare_result_dir
-from pygears.sim.extens.svrand import (SVRandSocket, create_type_cons,
-                                       get_rand_data)
+from utils import prepare_result_dir, skip_ifndef
 
 t_trr_dist = Queue[Uint[16], 2]
-seq = [[list(range(9)), list(range(3))], [list(range(4)), list(range(7))]]
+seq = [[list(range(random.randint(1, 10))),
+        list(range(random.randint(1, 5)))],
+       [list(range(random.randint(1, 20))),
+        list(range(random.randint(1, 7)))]]
 ref0 = [seq[0][0], seq[1][0]]
 ref1 = [seq[0][1], seq[1][1]]
 
@@ -28,54 +33,44 @@ def test_pygears_sim():
 
 
 @with_setup(clear)
-def test_socket_sim():
-    skip_ifndef('SIM_SOCKET_TEST')
-    directed(
-        drv(t=Queue[Uint[16], 2], seq=seq),
-        f=trr_dist(sim_cls=SimSocket, dout_num=2),
-        ref=[ref0, ref1])
-
-    sim()
-
-
-@with_setup(clear)
 def test_socket_cosim():
     skip_ifndef('SIM_SOCKET_TEST')
     num = 2
     verif(
         drv(t=Queue[Uint[16], 2], seq=seq),
-        f=trr_dist(sim_cls=SimSocket, dout_num=num),
+        f=trr_dist(sim_cls=partial(SimSocket, run=True), dout_num=num),
         ref=trr_dist(name='ref_model', dout_num=num))
 
-    sim()
+    sim(outdir=prepare_result_dir())
 
 
-def get_data():
-    return get_rand_data('data')
+@with_setup(clear)
+def test_verilator_cosim():
+    skip_ifndef('VERILATOR_ROOT')
+    num = 2
+    verif(
+        drv(t=Queue[Uint[16], 2], seq=seq),
+        f=trr_dist(sim_cls=SimVerilated, dout_num=num),
+        ref=trr_dist(name='ref_model', dout_num=num))
+
+    sim(outdir=prepare_result_dir())
 
 
-# @with_setup(clear)
-# def test_socket_cosim_rand():
-#     skip_ifndef('SIM_SOCKET_TEST')
+@with_setup(clear)
+def test_socket_cosim_rand():
+    skip_ifndef('SIM_SOCKET_TEST')
 
-#     cons = []
-#     cons.append(create_type_cons(t_trr_dist[0], 'data', cons=['data != 0']))
-#     cons.append(
-#         create_type_cons(
-#             t_trr_dist.eot,
-#             'din_eot',
-#             cons=['data_size == 50', 'trans_lvl1[0] == 4'],
-#             cls='qenvelope'))
+    dout_num = 2
+    cons = []
+    cons.append(
+        create_constraint(
+            t_trr_dist,
+            'din',
+            eot_cons=['data_size == 50', 'trans_lvl1[0] == 4']))
 
-#     num = 2
+    verif(
+        drv(t=t_trr_dist, seq=rand_seq('din', 30)),
+        f=trr_dist(sim_cls=partial(SimSocket, run=True), dout_num=dout_num),
+        ref=trr_dist(name='ref_model', dout_num=dout_num))
 
-#     stim = drv_rand_queue(
-#         tout=t_trr_dist, eot_con_name='din_eot', data_func=get_data)
-#     res = stim | trr_dist(sim_cls=SimSocket, dout_num=num)
-#     ref = stim | trr_dist(name='ref_model', dout_num=num)
-
-#     report = [[] for _ in range(len(res))]
-#     for r, res_intf, ref_intf in zip(report, res, ref):
-#         scoreboard(res_intf, ref_intf, report=r)
-
-#     sim(outdir=prepare_result_dir(), extens=[SVRandSocket], constraints=cons)
+    sim(outdir=prepare_result_dir(), extens=[partial(SVRandSocket, cons=cons)])
