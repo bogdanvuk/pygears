@@ -1,79 +1,18 @@
+import logging
 import math
 import os
 import socket
+from subprocess import DEVNULL, Popen
 
 import jinja2
 
 from pygears import registry
-from pygears.sim.modules.sim_socket import u32_bytes_decode
+from pygears.definitions import ROOT_DIR
+from pygears.sim import sim_log
+from pygears.sim.extens.rand_base import RandBase
+from pygears.sim.modules.sim_socket import SimSocket, u32_bytes_decode
 from pygears.svgen.util import svgen_typedef
 from pygears.util.fileio import save_file
-from functools import partial
-from itertools import islice
-from pygears.definitions import ROOT_DIR
-from .sim_extend import SimExtend
-from pygears.typing import Queue
-from pygears.sim import sim_log
-from pygears.core.util import perpetum
-import logging
-import time
-from subprocess import Popen, DEVNULL
-
-from pygears.sim.modules.sim_socket import SimSocket
-
-
-def svrand(name, cnt=None):
-    # print(f'Getting random data for {name}')
-    svrand = registry('SimConfig')['SVRandSocket']
-    if svrand.open_sock:
-        rand_func = perpetum(svrand.get_rand, name)
-    else:
-        req, dtype = svrand.parse_name(name)
-        simsoc = registry('SimConfig')['SimSocket']
-        rand_func = perpetum(simsoc.send_req, req, dtype)
-
-    if cnt is not None:
-        yield from islice(rand_func, cnt)
-    else:
-        yield from rand_func
-
-
-def qrand(name, cnt=None):
-    # svrand = registry('SimConfig')['SVRandSocket']
-
-    rnd_eot = svrand(f'{name}_eot')
-    rnd_data = svrand(f'{name}_data')
-
-    # _, eot_dtype = svrand.parse_name(f'{name}_eot')
-    # _, data_dtype = svrand.parse_name(f'{name}_data')
-
-    tout = None
-    while cnt != 0:
-        eot = next(rnd_eot)
-        data = next(rnd_data)
-        if tout is None:
-            tout = Queue[type(data), len(eot)]
-
-        yield tout((data, *eot))
-        if cnt is not None:
-            if eot == int('1' * len(eot), 2):
-                cnt -= 1
-
-
-def get_rand_data(name):
-    # print(f'Getting random data for {name}')
-    svrand = registry('SimConfig')['SVRandSocket']
-    if svrand.open_sock:
-        data = svrand.get_rand(name)
-    else:
-        req, dtype = svrand.parse_name(name)
-        simsoc = registry('SimConfig')['SimSocket']
-        data = simsoc.send_req(req, dtype)
-    return data
-
-
-class SVRandError(Exception):
-    pass
 
 
 class SVRandConstraints:
@@ -95,76 +34,31 @@ class SVRandConstraints:
         self.cvars[name] = svgen_typedef(dtype, name)
 
 
-def create_type_cons(dtype,
-                     name,
-                     cons,
-                     cls='dflt_tcon',
-                     cls_params=None,
-                     **var):
-    tcons = SVRandConstraints(
-        name=name, cons=cons, dtype=dtype, cls=cls, cls_params=cls_params)
-    for name, dtype in var.items():
-        tcons.add_var(name, dtype)
-
-    return tcons
-
-
-def create_queue_cons(dtype,
-                      name,
-                      eot_cons=[],
-                      data_cons=[],
-                      data_cls='dflt_tcon',
-                      eot_cls='qenvelope',
-                      data_cls_params=None,
-                      eot_cls_params=None,
-                      data_vars={},
-                      eot_vars={}):
-    eot_tcons = SVRandConstraints(
-        name=f'{name}_eot',
-        cons=eot_cons,
-        dtype=dtype.eot,
-        cls=eot_cls,
-        cls_params=eot_cls_params)
-
-    for name, dtype in eot_vars.items():
-        eot_tcons.add_var(name, dtype)
-
-    data_tcons = SVRandConstraints(
-        name=f'{name}_data',
-        cons=data_cons,
-        dtype=dtype[0],
-        cls=data_cls,
-        cls_params=data_cls_params)
-
-    for name, dtype in data_vars.items():
-        data_tcons.add_var(name, dtype)
-
-    return data_tcons, eot_tcons
-
-
-class SVRandSocket(SimExtend):
+class SVRandSocket(RandBase):
     SVRAND_CONN_NAME = "_svrand"
 
     def __init__(self, top, cons, run=False, port=4567, **kwds):
-        super().__init__()
-        self.outdir = registry('SimArtifactDir')
-
-        self.constraints = cons
+        super().__init__(top, cons, **kwds)
         self.run_cosim = run
         self.cosim_pid = None
         kwds['batch'] = True
         kwds['clean'] = True
         self.kwds = kwds
-
-        # try:
-        #     self.constraints = conf['constraints']
-        # except KeyError:
-        #     raise SVRandError(f'No constraints passed to init')
-
         self.port = port
-
         self.open_sock = True
-        registry('SimConfig')['SVRandSocket'] = self
+
+    def create_type_cons(self, desc={}):
+        tcons = SVRandConstraints(
+            name=desc['name'],
+            dtype=desc['dtype'],
+            cons=desc['cons'],
+            cls=desc['cls'],
+            cls_params=desc['cls_params'])
+
+        for name, dtype in desc['params'].items():
+            tcons.add_var(name, dtype)
+
+        return tcons
 
     def before_setup(self, sim):
         sim_map = registry('SimMap')
