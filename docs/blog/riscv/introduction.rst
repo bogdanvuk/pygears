@@ -7,7 +7,7 @@ RISC-V Blog Series Introduction
 
 .. verbosity_slider:: 2
 
-Relevant PyGears git commit: `29f6f56f85697cd754befc6b60aa3506fc7fa851 <https://github.com/bogdanvuk/pygears/tree/29f6f56f85697cd754befc6b60aa3506fc7fa851>`_
+Relevant PyGears git commit: `29f6f56 <https://github.com/bogdanvuk/pygears/tree/29f6f56f85697cd754befc6b60aa3506fc7fa851>`_
 
 Welcome to the blog series in which I will be implementing the `RISC-V ISA <https://riscv.org/risc-v-isa/>`_ (instruction set) using PyGears. My aim is to show how PyGears offers a way to build hardware in an incremental, evolutionary fashion, where the architecture, implementation and the verification environment evolve together. This aligns with the `agile <https://en.wikipedia.org/wiki/Agile_software_development>`_ software philosophy, and offers many benefits to the hardware design process:
 
