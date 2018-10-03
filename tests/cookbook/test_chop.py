@@ -7,8 +7,9 @@ from pygears import clear
 from pygears.cookbook.chop import chop
 from pygears.cookbook.verif import directed, verif
 from pygears.sim import sim
-from pygears.sim.extens.svrand import (SVRandSocket, create_queue_cons,
-                                       create_type_cons, qrand, svrand)
+from pygears.sim.extens.randomization import create_constraint, rand_seq
+from pygears.sim.extens.scvrand import SCVRand
+from pygears.sim.extens.svrand import SVRandSocket
 from pygears.sim.modules.drv import drv
 from pygears.sim.modules.sim_socket import SimSocket
 from pygears.sim.modules.verilator import SimVerilated
@@ -71,12 +72,13 @@ def test_socket_cosim_rand():
     cnt = 5
 
     cons = []
-    cons.extend(create_queue_cons(t_din, 'din', eot_cons=['data_size < 20']))
-    cons.append(create_type_cons(t_cfg, 'cfg', cons=['cfg < 20']))
+    cons.append(create_constraint(t_din, 'din', eot_cons=['data_size == 20']))
+    cons.append(create_constraint(t_cfg, 'cfg', cons=['cfg < 20', 'cfg > 0']))
 
     stim = []
-    stim.append(drv(t=t_din, seq=qrand('din', cnt)))
-    stim.append(drv(t=t_cfg, seq=svrand('cfg', cnt)))
+
+    stim.append(drv(t=t_din, seq=rand_seq('din', cnt)))
+    stim.append(drv(t=t_cfg, seq=rand_seq('cfg', cnt)))
 
     verif(
         *stim,
@@ -84,3 +86,29 @@ def test_socket_cosim_rand():
         ref=chop(name='ref_model'))
 
     sim(outdir=prepare_result_dir(), extens=[partial(SVRandSocket, cons=cons)])
+
+
+@with_setup(clear)
+def test_open_rand():
+    skip_ifndef('SCV_HOME')
+    skip_ifndef('VERILATOR_ROOT')
+
+    cnt = 5
+
+    cons = []
+    # TODO : queue constraints not yet supported in SCVRand
+    # cons.append(create_constraint(t_din, 'din', eot_cons=['data_size == 20']))
+    cons.append(create_constraint(t_cfg, 'cfg', cons=['cfg < 20', 'cfg > 0']))
+
+    stim = []
+
+    din_seq = []
+    for i in range(cnt):
+        din_seq.append(list(range(random.randint(1, 10))))
+    stim.append(drv(t=t_din, seq=din_seq))
+    # stim.append(drv(t=t_din, seq=rand_seq('din', cnt)))
+    stim.append(drv(t=t_cfg, seq=rand_seq('cfg', cnt)))
+
+    verif(*stim, f=chop(sim_cls=SimVerilated), ref=chop(name='ref_model'))
+
+    sim(outdir=prepare_result_dir(), extens=[partial(SCVRand, cons=cons)])

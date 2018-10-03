@@ -6,7 +6,8 @@ from pygears import clear
 from pygears.cookbook.qcnt import qcnt
 from pygears.cookbook.verif import directed, verif
 from pygears.sim import sim
-from pygears.sim.extens.svrand import SVRandSocket, create_queue_cons, qrand
+from pygears.sim.extens.randomization import create_constraint, rand_seq
+from pygears.sim.extens.svrand import SVRandSocket
 from pygears.sim.modules.drv import drv
 from pygears.sim.modules.sim_socket import SimSocket
 from pygears.sim.modules.verilator import SimVerilated
@@ -52,12 +53,12 @@ def test_socket_cosim_rand():
     skip_ifndef('SIM_SOCKET_TEST')
 
     cons = []
-    cons.extend(
-        create_queue_cons(
+    cons.append(
+        create_constraint(
             t_din, 'din', eot_cons=['data_size == 50', 'trans_lvl1[0] == 4']))
 
     verif(
-        drv(t=t_din, seq=qrand('din', 30)),
+        drv(t=t_din, seq=rand_seq('din', 30)),
         f=qcnt(sim_cls=partial(SimSocket, run=True), lvl=t_din.lvl),
         ref=qcnt(name='ref_model', lvl=t_din.lvl))
 

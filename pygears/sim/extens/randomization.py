@@ -2,6 +2,7 @@ from itertools import islice
 
 from pygears import registry
 from pygears.core.util import perpetum
+from pygears.sim import sim_log
 from pygears.sim.extens.scvrand import SCVRand
 from pygears.sim.extens.svrand import SVRandSocket
 from pygears.typing import Queue
@@ -10,7 +11,6 @@ from pygears.typing.queue import QueueMeta
 
 def get_rand(name, cnt=None):
     randomizator = registry('SimConfig')['Randomizator']
-    dtype = randomizator.get_dtype_by_name(name)
 
     if isinstance(randomizator, SVRandSocket):
         if randomizator.open_sock:
@@ -22,7 +22,8 @@ def get_rand(name, cnt=None):
     elif isinstance(randomizator, SCVRand):
         rand_func = perpetum(randomizator.get_rand, name)
     else:
-        print('Not defined')
+        sim_log().error('Randomizator not set')
+        return None
 
     if cnt is not None:
         yield from islice(rand_func, cnt)
@@ -35,8 +36,8 @@ def rand_seq(name, cnt=None):
     dtype = randomizator.get_dtype_by_name(name)
 
     if isinstance(dtype, Queue) or isinstance(dtype, QueueMeta):
-        rnd_data = get_rand(f'{name}_data', cnt)
-        rnd_eot = get_rand(f'{name}_eot', cnt)
+        rnd_data = get_rand(f'{name}_data')
+        rnd_eot = get_rand(f'{name}_eot')
         tout = None
         while cnt != 0:
             eot = next(rnd_eot)
