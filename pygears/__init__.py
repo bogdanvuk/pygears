@@ -1,4 +1,6 @@
-__version__ = "0.1"
+import pkg_resources
+
+__version__ = pkg_resources.get_distribution("pygears").version
 
 import sys
 from asyncio import CancelledError as GearDone

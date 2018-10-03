@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+cd ../docs/manual
+
 # build the docs
 make clean
 make html

@@ -1,35 +1,21 @@
-# -*- coding: utf-8 -*-
-#
-# Configuration file for the Sphinx documentation builder.
-#
-# This file does only contain a selection of the most common options. For a
-# full list see the documentation:
-# http://www.sphinx-doc.org/en/master/config
-
-# -- Path setup --------------------------------------------------------------
-
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-#
+import pkg_resources
+import datetime
 import os
 import sys
 sys.path.insert(0, os.path.abspath('../..'))
 sys.path.insert(0, os.path.abspath('../../examples/echo'))
 
 print(os.path.abspath('../../pygears'))
-import pygears.typing.uint
 
 # -- Project information -----------------------------------------------------
 
 project = 'PyGears'
-copyright = '2018, Bogdan Vukobratovic'
+this_year = datetime.date.today().year
+copyright = f'{this_year}, Bogdan Vukobratovic'
 author = 'Bogdan Vukobratovic'
 
-# The short X.Y version
-version = ''
-# The full version, including alpha/beta/rc tags
-release = '0.1b'
+version = pkg_resources.get_distribution("pygears").version
+release = version
 
 # -- General configuration ---------------------------------------------------
 

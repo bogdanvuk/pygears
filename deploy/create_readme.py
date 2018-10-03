@@ -1,4 +1,5 @@
 import re
+import os
 
 re_ref = ':ref:`([^<]+)\s<([^>]+)>`'
 
@@ -9,6 +10,8 @@ def ref_replace(matchobj):
             f' <https://bogdanvuk.github.io/pygears/{page_name}.html'
             f'#{matchobj.group(2)}>`_')
 
+
+os.chdir('../docs/manual')
 
 with open('index.rst', 'r') as fin:
     with open('../../README.rst', 'w') as fout:
