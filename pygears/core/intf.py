@@ -9,11 +9,11 @@ from pygears.typing.base import TypingMeta
 
 def operator_func_from_namespace(cls, name):
     def wrapper(self, *args, **kwargs):
-        try:
-            operator_func = registry('IntfOperNamespace')[name]
-            return operator_func(self, *args, **kwargs)
-        except KeyError as e:
+        if name not in registry('IntfOperNamespace'):
             raise Exception(f'Operator {name} is not supported.')
+
+        operator_func = registry('IntfOperNamespace')[name]
+        return operator_func(self, *args, **kwargs)
 
     return wrapper
 
