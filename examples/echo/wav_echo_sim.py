@@ -10,6 +10,7 @@ from pygears.typing import Tuple, Int, typeof
 def wav_echo_sim(ifn,
                  ofn,
                  stereo=True,
+                 cosim=True,
                  sample_rng=None,
                  feedback_gain=0.6,
                  delay=0.25):
@@ -29,6 +30,7 @@ def wav_echo_sim(ifn,
 
     res = sim_func(
         samples,
+        cosim=cosim,
         sample_rate=params.framerate,
         sample_width=params.sampwidth,
         feedback_gain=feedback_gain,
@@ -46,7 +48,6 @@ def wav_echo_sim(ifn,
 
 @gear
 async def collect(din, *, result, samples_num):
-    from pygears.sim import sim_log
     async with din as val:
         if len(result) % 10 == 0:
             if samples_num is not None:
@@ -65,6 +66,7 @@ async def collect(din, *, result, samples_num):
 def mono_echo_sim(seq,
                   sample_rate,
                   sample_width,
+                  cosim=True,
                   feedback_gain=0.5,
                   delay=0.250,
                   stereo=True):
@@ -75,7 +77,7 @@ def mono_echo_sim(seq,
         | echo(feedback_gain=feedback_gain,
                sample_rate=sample_rate,
                delay=delay,
-               sim_cls=SimVerilated) \
+               sim_cls=SimVerilated if cosim else None) \
         | collect(result=result, samples_num=len(seq))
 
     sim(outdir='./build')
@@ -86,6 +88,7 @@ def mono_echo_sim(seq,
 def stereo_echo_sim(seq,
                     sample_rate,
                     sample_width,
+                    cosim=False,
                     feedback_gain=0.5,
                     delay=0.250,
                     stereo=True,
@@ -97,7 +100,7 @@ def stereo_echo_sim(seq,
         | stereo_echo(feedback_gain=feedback_gain,
                       sample_rate=sample_rate,
                       delay=delay,
-                      sim_cls=SimVerilated) \
+                      sim_cls=SimVerilated if cosim else None) \
         | collect(result=result, samples_num=len(seq))
 
     sim(outdir='./build')

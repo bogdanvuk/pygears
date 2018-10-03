@@ -3,7 +3,7 @@ Welcome to PyGears
 
 **PyGears** is an ambitious attempt to create a Python framework that facilitates describing digital hardware. It aims to augment current RTL methodology to drastically increase **composability** of hardware modules. Ease of composition leads to better **reusability**, since modules that compose better can be used in a wider variety of contexts. Set of reusable components can then form a well-tested and documented library that significantly speeds up the development process.  
 
-For an introductory **PyGears** example, checkout :ref:`echo <examples-echo>`. A snippet is given below: 
+For an introductory **PyGears** example, checkout :ref:`echo <echo-examples>`. A snippet is given below: 
 
 .. code-block:: python
 
@@ -39,19 +39,24 @@ References
 
 - `Kortiq's <http://www.kortiq.com/>`_ AIScale Deep Learning Processor was completely developed using **PyGears**
 
-.. _installation:
+.. _index-installation:
 
-Installation
-============
+Installation on Windows
+=======================
+
+Currently, PyGears has been tested to work on Windows 7 on `Python 3.6.6 <https://www.python.org/ftp/python/3.6.6/python-3.6.6.exe>`_ and installed via `PyCharm <https://www.jetbrains.com/pycharm/>`_. Currently PyGears does not support co-simulation with third-party RTL simulators on Windows.
+
+Installation on Linux
+=====================
 
 Install with ``pip``
 --------------------
 
-**PyGears** requires Python3, so check if you need to run ``pip3`` instead of ``pip`` on your distribution. Also consider using `virtualenv <https://virtualenv.pypa.io/en/stable/>`_ or `pyenv <https://github.com/pyenv/pyenv>`_ to manage your Python version.
+**PyGears** requires a specific version of Python3, so think about using ``pygears-tools`` and procedure given :ref:`below <index-installation-pygears-tools>`. Otherwise, consider using `virtualenv <https://virtualenv.pypa.io/en/stable/>`_ or `pyenv <https://github.com/pyenv/pyenv>`_ to manage your Python version.
 
 .. code-block:: bash
 
-   pip install pygears
+   pip3 install pygears
 
 Obtain the examples:
 
@@ -59,6 +64,33 @@ Obtain the examples:
 
    git clone https://github.com/bogdanvuk/pygears.git
    cd pygears/examples
+
+.. _index-installation-pygears-tools:
+
+Installing using pygears-tools
+------------------------------
+
+Below you can find a procedure for installing the **PyGears** with the correct Python version. On detailed description and capabilities of ``pygears-tools`` refer to :ref:`PyGears tools setup <setup-pygears-tools>` page. The procedure was tested on Ubuntu 18.04, Ubuntu 16.04 and openSUSE Leap 15.
+
+.. code-block:: bash
+
+   sudo apt install python3-pip
+   sudo pip3 install pygears-tools
+
+   # List the system-wide dependencies for the tools
+   pygears-tools-install -l pyenv python pygears
+
+   # copy and run the install commands output by 'pygears-tools-install -l', i.e
+   # sudo apt install build-essential
+   # sudo apt install git libxmlsec1-dev curl ...
+
+   pygears-tools-install pyenv python pygears
+
+The script will create ``tools.sh`` bash file that should be sourced prior to running the cosimulation: 
+
+.. code-block:: bash
+
+   source ~/.pygears/tools/tools.sh
 
 Alternative installation from source
 ------------------------------------
@@ -82,7 +114,13 @@ If you would like to run cosimulations with the Verilator, you need to make sure
 
 .. code-block:: bash
 
-   sudo apt install autoconf flex bison
+   # List the system-wide dependencies for Verilator
+   pygears-tools-install -l verilator
+
+   # copy and run the install commands output by 'pygears-tools-install -l verilator', i.e:
+   # sudo apt install build-essential
+   # sudo apt install autoconf flex bison
+
    pygears_tools_install verilator
 
 The script will create ``tools.sh`` bash file that should be sourced prior to running the cosimulation: 
@@ -95,7 +133,7 @@ The script will create ``tools.sh`` bash file that should be sourced prior to ru
 Checkout the examples
 =====================
 
-:ref:`Echo <examples-echo>`: Hardware module that applies echo audio effect to a continuous audio stream.
+:ref:`Echo <echo-examples>`: Hardware module that applies echo audio effect to a continuous audio stream.
 
 
 Read the documentation
@@ -130,6 +168,7 @@ Contents
    :maxdepth: 2
 
    gears
+   setup
    introduction
    typing
    examples

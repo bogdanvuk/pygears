@@ -22,7 +22,7 @@ import pygears.typing.uint
 
 # -- Project information -----------------------------------------------------
 
-project = 'pygears'
+project = 'PyGears'
 copyright = '2018, Bogdan Vukobratovic'
 author = 'Bogdan Vukobratovic'
 
@@ -41,10 +41,15 @@ release = '0.1b'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc', 'sphinx.ext.githubpages', 'sphinxcontrib.tikz',
-    'sphinxcontrib.wavedrom', 'bdp.sphinxext.bdpfigure', 'sphinx.ext.napoleon'
+    'sphinx_verboser.verboser', 'sphinxarg.ext', 'sphinx.ext.autodoc',
+    'sphinx.ext.githubpages', 'sphinxcontrib.tikz', 'sphinxcontrib.wavedrom',
+    'bdp.sphinxext.bdpfigure', 'sphinx.ext.napoleon'
 ]
-autodoc_default_flags = ['show-inheritance', 'members', 'special-members']
+autodoc_default_options = {
+    'show-inheritance': None,
+    'members': None,
+    'special-members': None
+}
 autoclass_content = "class"
 add_module_names = False
 
@@ -140,22 +145,23 @@ html_theme = 'alabaster'
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-# html_theme_options = {}
+html_theme_options = {
+    'travis_button': False,
+    'github_user': 'bogdanvuk',
+    'github_repo': 'pygears',
+    'github_banner': True,
+    'description': 'A functional approach to HW design',
+    # 'logo': 'ablog.png',
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-# Custom sidebar templates, must be a dictionary that maps document names
-# to template names.
-#
-# The default sidebars (for documents that don't match any pattern) are
-# defined by theme itself.  Builtin themes are using these templates by
-# default: ``['localtoc.html', 'relations.html', 'sourcelink.html',
-# 'searchbox.html']``.
-#
-# html_sidebars = {}
+html_sidebars = {
+    '**': ['about.html', 'globaltoc.html', 'searchbox.html']
+    }
 
 # -- Options for HTMLHelp output ---------------------------------------------
 

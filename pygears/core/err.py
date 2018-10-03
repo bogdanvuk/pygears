@@ -16,10 +16,11 @@ class ErrReportLevel(IntEnum):
 class ErrReportPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        cls.registry['ErrReportLevel'] = ErrReportLevel.user
-        from .pdb_patch import patch_pdb
-        patch_pdb()
+        # cls.registry['ErrReportLevel'] = ErrReportLevel.user
+        # from .pdb_patch import patch_pdb
+        # patch_pdb()
 
+        cls.registry['ErrReportLevel'] = ErrReportLevel.debug
         cls.registry['ExitHooks'] = []
 
 

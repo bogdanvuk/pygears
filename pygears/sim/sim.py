@@ -44,8 +44,10 @@ def cancel(gear):
     sim.cancelled.add(registry('SimMap')[gear])
 
 
-# class SimFuture(Future):
 class SimFuture(asyncio.Future):
+    # def _schedule_callbacks(self):
+    #     self._loop.fut_done(self)
+
     def coro_iter(self):
         yield self
 
@@ -172,55 +174,45 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             bind('CurrentModule', self.cur_gear)
 
     def run_gear(self, sim_gear, ready):
-        self.cur_gear.phase = 'forward'
-
-        if ready is self.forward_ready:
-            ebef = self.events['before_call_forward']
-        else:
-            ebef = self.events['before_call_back']
-
-        if ebef:
-            ebef(self, sim_gear)
-
-        data = self.tasks[sim_gear].send(self.task_data[sim_gear])
-
-        if ready is self.forward_ready:
-            eafter = self.events['after_call_forward']
-        else:
-            eafter = self.events['after_call_back']
-
-        if eafter:
-            eafter(self, sim_gear)
-
-        return data
-
-    def maybe_run_gear(self, sim_gear, ready):
-        if sim_gear in self.cancelled:
-            self.cancel(sim_gear)
-            self.cancelled.remove(sim_gear)
-
-        if sim_gear not in ready:
-            return
-
-        ready.remove(sim_gear)
-
-        # if sim_gear.gear.name == "/echo/cast_dout":
-        #     import pdb; pdb.set_trace()
-
-        self.cur_gear = sim_gear.gear
-        bind('CurrentModule', self.cur_gear)
-        # print(f"Running task {sim_gear.gear.name}")
         try:
-            data = self.run_gear(sim_gear, ready)
+            self.cur_gear.phase = 'forward'
+
+            if ready is self.forward_ready:
+                ebef = self.events['before_call_forward']
+            else:
+                ebef = self.events['before_call_back']
+
+            if ebef:
+                ebef(self, sim_gear)
+
+            data = self.tasks[sim_gear].send(self.task_data[sim_gear])
+
+            if ready is self.forward_ready:
+                eafter = self.events['after_call_forward']
+            else:
+                eafter = self.events['after_call_back']
+
+            if eafter:
+                eafter(self, sim_gear)
         except (StopIteration, GearDone):
             self.done.add(sim_gear)
-            # print(f"Task {sim_gear.gear.name} done")
         else:
             if isinstance(data, SimFuture):
                 self.wait_list[data] = (sim_gear,
                                         self.cur_gear.phase == 'back')
 
             self.task_data[sim_gear] = data
+
+    def maybe_run_gear(self, sim_gear, ready):
+        if sim_gear not in ready:
+            return
+
+        ready.remove(sim_gear)
+
+        self.cur_gear = sim_gear.gear
+        bind('CurrentModule', self.cur_gear)
+
+        self.run_gear(sim_gear, ready)
 
         self.cur_gear = registry('HierRoot')
         bind('CurrentModule', self.cur_gear)
@@ -234,22 +226,24 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
         sim_log().info("-------------- Simulation start --------------")
         while self.forward_ready or self.back_ready or self.cancelled:
-
-            # print("Forward pass...")
             self.phase = 'forward'
             for sim_gear in self.sim_gears:
-                self.maybe_run_gear(sim_gear, self.forward_ready)
+                if sim_gear in self.forward_ready:
+                    self.maybe_run_gear(sim_gear, self.forward_ready)
 
             self.phase = 'delta'
             delta.set()
             delta.clear()
 
-            # sim_log().info("-------------- Delta --------------")
-
             self.phase = 'back'
-            # print("Back pass...")
+
             for sim_gear in reversed(self.sim_gears):
-                self.maybe_run_gear(sim_gear, self.back_ready)
+                if sim_gear in self.cancelled:
+                    self.cancel(sim_gear)
+                    self.cancelled.remove(sim_gear)
+
+                if sim_gear in self.back_ready:
+                    self.maybe_run_gear(sim_gear, self.back_ready)
 
             self.phase = 'cycle'
 

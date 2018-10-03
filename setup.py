@@ -62,7 +62,7 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3.6',
     ],
-    package_data={'': ['*.j2', '*.sv', '*.json']},
+    package_data={'': ['*.j2', '*.sv']},
     include_package_data=True,
     keywords='functional hardware design Python simulator HDL ASIC FPGA Gears',
     install_requires=['jinja2>=2.10'],
@@ -70,7 +70,6 @@ setup(
     entry_points={
         'console_scripts': [
             'pywave = pygears.sim.extens.pywave:main',
-            'pygears_tools_install = pygears_tools.install:main'
         ],
     },
     cmdclass={

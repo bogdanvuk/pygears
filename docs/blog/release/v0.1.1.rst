@@ -1,0 +1,17 @@
+PyGears 0.1.1
+=============
+
+.. post::
+   :category: Release
+
+Features
+--------
+
+- Offer standardized solution for various logging needs 
+- Provide option to skip all PyGears framework related frames in PDB debugger
+- Factor-out pygears-tools to a separate repository
+
+Bug-fixes
+---------
+
+- Echo example can now be simulated completely in Python. Simulator is still in experimental stage, since not all gears from the libraries are supported.

@@ -62,34 +62,51 @@ class SimGear:
     async def run(self):
         self.task = asyncio.Task.current_task()
         args, kwds = self.sim_func_args
+
+        # out_ports = self.gear.out_ports
+        # if len(out_ports) == 1:
+        #     out_ports = out_ports[0]
+
+        out_prods = [p.producer for p in self.gear.out_ports]
+        single_output = len(out_prods) == 1
+        if single_output:
+            out_prods = out_prods[0]
+
+        sim = registry('Simulator')
+
         try:
-            while (1):
-                if is_async_gen(self.func):
-                    if sim_phase() == 'back':
+            if is_async_gen(self.func):
+                while(1):
+                    if sim.phase != 'forward':
                         await clk()
 
                     async for val in self.func(*args, **kwds):
-                        if sim_phase() == 'back':
+                        if sim.phase != 'forward':
                             await clk()
 
                         if val is not None:
-                            if len(self.gear.out_ports) == 1:
-                                val = (val, )
+                            if single_output:
+                                out_prods.put_nb(val)
+                                await out_prods.ready()
+                            else:
+                                for p, v in zip(out_prods, val):
+                                    if v is not None:
+                                        p.put_nb(v)
 
-                            for p, v in zip(self.gear.out_ports, val):
-                                if v is not None:
-                                    p.producer.put_nb(v)
+                                for p, v in zip(out_prods, val):
+                                    if v is not None:
+                                        await p.ready()
 
-                            for p, v in zip(self.gear.out_ports, val):
-                                if v is not None:
-                                    await p.producer.ready()
-
-                else:
+                    if args:
+                        if all(a.done() for a in args):
+                            raise GearDone
+            else:
+                while (1):
                     await self.func(*args, **kwds)
 
-                if args:
-                    if all(a.done() for a in args):
-                        raise GearDone
+                    if args:
+                        if all(a.done() for a in args):
+                            raise GearDone
 
         except GearDone as e:
             for p in self.gear.in_ports:
