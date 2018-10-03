@@ -1,6 +1,6 @@
 source /home/vagrant/.pygears/tools/tools.sh
 
-pip install nose
-nosetest -w ~/pygears/tests
+pip3 install nose
+nosetests -w ~/pygears/tests
 
-echo $? > /vagrant/test.res
+exit $?
