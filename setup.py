@@ -40,7 +40,7 @@ def readme():
 
 setup(
     name='pygears',
-    version='0.1.1a',
+    version='0.1.1a2',
     description='Framework for functional hardware design approach',
     long_description=readme(),
 
