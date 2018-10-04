@@ -10,7 +10,7 @@ def trr_dist_type(dtype):
 
 
 @gear
-async def trr_dist(din: Queue['t_data', 2], *,
+async def trr_dist(din: Queue, *,
                    dout_num) -> b'(trr_dist_type(din), ) * dout_num':
     t_din = din.dtype
 
