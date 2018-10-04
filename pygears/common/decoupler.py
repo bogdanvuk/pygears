@@ -1,8 +1,8 @@
 import asyncio
 
-from pygears import gear, module, GearDone
+from pygears import gear, module, GearDone, registry
 from pygears.util.find import find
-from pygears.sim import delta, clk
+from pygears.sim import delta, clk, sim_log
 
 
 def decoupler_din_setup(module):
@@ -11,16 +11,10 @@ def decoupler_din_setup(module):
 
 @gear(sim_setup=decoupler_din_setup, svgen={'node_cls': None})
 async def decoupler_din(din: 'tdin', *, depth) -> None:
-    try:
-        async with din as d:
-            await module().queue.put(d)
-            while (module().queue.full()):
-                await delta()
-
-    except GearDone:
-        # await module().queue.join()
-        await module().queue.put(GearDone)
-        raise GearDone
+    async with din as d:
+        await module().queue.put(d)
+        while (module().queue.full()):
+            await delta()
 
 
 def decoupler_dout_setup(module):
@@ -29,17 +23,15 @@ def decoupler_dout_setup(module):
 
 @gear(sim_setup=decoupler_dout_setup, svgen={'node_cls': None})
 async def decoupler_dout(*, t, depth) -> b't':
+    if registry('SimMap')[module().decoupler_din].done:
+        raise GearDone
+
     queue = module().decoupler_din.queue
     while queue.empty():
         await clk()
 
-    data = queue.get_nowait()
+    yield queue.get_nowait()
 
-    if data is GearDone:
-        queue.task_done()
-        raise GearDone
-
-    yield data
     queue.task_done()
     await clk()
 

@@ -6,5 +6,5 @@ wav_echo_sim(
     os.path.join('build', 'plop_echo.wav'),
     feedback_gain=0.6,
     delay=0.25,
-    stereo=False,
+    stereo=False
 )
