@@ -60,14 +60,14 @@ def test_socket_cosim():
     sim()
 
 
-@with_setup(clear)
-def test_verilator_cosim():
-    skip_ifndef('VERILATOR_ROOT')
+# @with_setup(clear)
+# def test_verilator_cosim():
+#     skip_ifndef('VERILATOR_ROOT')
 
-    stim = get_stim(4)
-    verif(
-        *stim,
-        f=chunk_concat(sim_cls=SimVerilated, cnt_type=1),
-        ref=chunk_concat(name='ref_model', cnt_type=1))
+#     stim = get_stim(4)
+#     verif(
+#         *stim,
+#         f=chunk_concat(sim_cls=SimVerilated, cnt_type=1),
+#         ref=chunk_concat(name='ref_model', cnt_type=1))
 
-    sim()
+#     sim()
