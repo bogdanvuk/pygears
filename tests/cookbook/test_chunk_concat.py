@@ -33,18 +33,18 @@ def get_stim(din_num=4):
     return [drv(t=t_cfg, seq=cfg_seq), *din]
 
 
-@with_setup(clear)
-def test_pygears_sim():
-    din_num = 4
+# @with_setup(clear)
+# def test_pygears_sim():
+#     din_num = 4
 
-    directed(
-        drv(t=t_cfg, seq=[din_num] * 8),
-        *[drv(t=t_din, seq=[list(range(5)), list(range(3))])] * din_num,
-        f=chunk_concat(cnt_type=1, chunk_size=1, pad=0),
-        ref=[[[i] * din_num for i in range(5)],
-             [[i] * din_num for i in range(3)]])
+#     directed(
+#         drv(t=t_cfg, seq=[din_num] * 8),
+#         *[drv(t=t_din, seq=[list(range(5)), list(range(3))])] * din_num,
+#         f=chunk_concat(cnt_type=1, chunk_size=1, pad=0),
+#         ref=[[[i] * din_num for i in range(5)],
+#              [[i] * din_num for i in range(3)]])
 
-    sim()
+#     sim()
 
 
 @with_setup(clear)
