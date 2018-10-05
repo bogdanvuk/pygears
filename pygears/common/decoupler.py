@@ -23,11 +23,11 @@ def decoupler_dout_setup(module):
 
 @gear(sim_setup=decoupler_dout_setup, svgen={'node_cls': None})
 async def decoupler_dout(*, t, depth) -> b't':
-    if registry('SimMap')[module().decoupler_din].done:
-        raise GearDone
-
     queue = module().decoupler_din.queue
     while queue.empty():
+        if registry('SimMap')[module().decoupler_din].done:
+            raise GearDone
+
         await clk()
 
     yield queue.get_nowait()
