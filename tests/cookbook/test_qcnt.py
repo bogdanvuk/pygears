@@ -13,10 +13,18 @@ from pygears.sim.modules.sim_socket import SimSocket
 from pygears.sim.modules.verilator import SimVerilated
 from pygears.typing import Queue, Uint
 from utils import prepare_result_dir, skip_ifndef
+import random
 
 t_din = Queue[Uint[16], 3]
-seq = [[[list(range(9)), list(range(3))], [list(range(4)), list(range(7))]]]
-ref = [list(range(23))]
+seq = [[[
+    list(range(random.randint(1, 10))),
+    list(range(random.randint(1, 10)))
+], [list(range(random.randint(1, 10))),
+    list(range(random.randint(1, 10)))]]]
+ref = [
+    list(
+        range(sum(len(x) for x in seq[0][0]) + sum(len(x) for x in seq[0][1])))
+]
 
 
 @with_setup(clear)

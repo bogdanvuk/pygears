@@ -24,35 +24,31 @@ ref0 = [seq[0][0], seq[1][0]]
 ref1 = [seq[0][1], seq[1][1]]
 
 
+def trr_dist_verif(sim_cls, seq, dout_num=2):
+    verif(
+        drv(t=Queue[Uint[16], 2], seq=seq),
+        f=trr_dist(sim_cls=sim_cls, dout_num=dout_num),
+        ref=trr_dist(name='ref_model', dout_num=dout_num))
+
+
 @with_setup(clear)
 def test_pygears_sim():
     directed(
         drv(t=t_trr_dist, seq=seq), f=trr_dist(dout_num=2), ref=[ref0, ref1])
-
     sim()
 
 
 @with_setup(clear)
 def test_socket_cosim():
     skip_ifndef('SIM_SOCKET_TEST')
-    num = 2
-    verif(
-        drv(t=Queue[Uint[16], 2], seq=seq),
-        f=trr_dist(sim_cls=partial(SimSocket, run=True), dout_num=num),
-        ref=trr_dist(name='ref_model', dout_num=num))
-
+    trr_dist_verif(sim_cls=partial(SimSocket, run=True), seq=seq)
     sim(outdir=prepare_result_dir())
 
 
 @with_setup(clear)
 def test_verilator_cosim():
     skip_ifndef('VERILATOR_ROOT')
-    num = 2
-    verif(
-        drv(t=Queue[Uint[16], 2], seq=seq),
-        f=trr_dist(sim_cls=SimVerilated, dout_num=num),
-        ref=trr_dist(name='ref_model', dout_num=num))
-
+    trr_dist_verif(sim_cls=SimVerilated, seq=seq)
     sim(outdir=prepare_result_dir())
 
 
@@ -60,7 +56,6 @@ def test_verilator_cosim():
 def test_socket_cosim_rand():
     skip_ifndef('SIM_SOCKET_TEST')
 
-    dout_num = 2
     cons = []
     cons.append(
         create_constraint(
@@ -68,9 +63,7 @@ def test_socket_cosim_rand():
             'din',
             eot_cons=['data_size == 50', 'trans_lvl1[0] == 4']))
 
-    verif(
-        drv(t=t_trr_dist, seq=rand_seq('din', 30)),
-        f=trr_dist(sim_cls=partial(SimSocket, run=True), dout_num=dout_num),
-        ref=trr_dist(name='ref_model', dout_num=dout_num))
+    trr_dist_verif(
+        sim_cls=partial(SimSocket, run=True), seq=rand_seq('din', 30))
 
     sim(outdir=prepare_result_dir(), extens=[partial(SVRandSocket, cons=cons)])
