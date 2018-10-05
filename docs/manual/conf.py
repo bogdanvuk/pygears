@@ -136,7 +136,7 @@ html_theme_options = {
     'github_user': 'bogdanvuk',
     'github_repo': 'pygears',
     'github_banner': True,
-    'description': 'A functional approach to HW design',
+    'description': 'HW design - a functional approach',
     # 'logo': 'ablog.png',
 }
 
@@ -146,7 +146,7 @@ html_theme_options = {
 html_static_path = ['_static']
 
 html_sidebars = {
-    '**': ['about.html', 'globaltoc.html', 'searchbox.html']
+    '**': ['about.html', 'globaltoc.html', 'blog_link.html', 'searchbox.html']
     }
 
 # -- Options for HTMLHelp output ---------------------------------------------

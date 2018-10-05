@@ -16,6 +16,7 @@ release = ''
 extensions = [
     'sphinxarg.ext',
     'sphinx_verboser.verboser',
+    'sphinxcontrib.tikz',
     'alabaster',
     'ablog'
 ]
@@ -160,3 +161,23 @@ epub_title = project
 
 # A list of files that should not be packed into the epub file.
 epub_exclude_files = ['search.html']
+
+tikz_latex_preamble = r'''
+
+\newcommand{\gear}[7]{%
+
+node {#7}
+
+\foreach \i in {1,...,#1} {%
+  [rotate=(\i-1)*360/#1]  (0:#2)  arc (0:#4:#2) {[rounded corners=1.5pt]
+            -- (#4+#5:#3)  arc (#4+#5:360/#1-#5:#3)} --  (360/#1:#2)
+}}
+
+\tikzset{
+  pics/mynode/.style args={#1}{
+     code={
+       \draw[thick] \gear{10}{2}{2.4}{14}{1}{prod}{#1};
+     }
+  }
+}
+'''
