@@ -2,4 +2,4 @@
 
 sudo apt update
 sudo apt install -y python3-pip git
-pip3 install -U --pre pygears
+pip3 install -U --pre pygears nose

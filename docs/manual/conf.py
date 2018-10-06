@@ -32,7 +32,7 @@ extensions = [
     'bdp.sphinxext.bdpfigure', 'sphinx.ext.napoleon', 'sphinx_sitemap'
 ]
 
-site_url = "https://bogdanvuk.github.io/pygears"
+site_url = "https://bogdanvuk.github.io/pygears/"
 
 autodoc_default_options = {
     'show-inheritance': None,

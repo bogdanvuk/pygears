@@ -17,6 +17,10 @@ Vagrant.configure("2") do |config|
       :os => 'ubuntu',
       :box => "ubuntu/xenial64",
     },
+    'ubuntu14' => {
+      :os => 'ubuntu',
+      :box => "ubuntu/trusty64",
+    },
     'openSUSE15' => {
       :os => 'opensuse',
       :box => "opensuse/openSUSE-15.0-x86_64",
@@ -24,7 +28,8 @@ Vagrant.configure("2") do |config|
   }
 
   special_build = {
-    'ubuntu16_pip' => 'common/build_ubuntu16_pip.sh'
+    'ubuntu16_pip' => 'common/build_ubuntu16_pip.sh',
+    'ubuntu14_pip' => 'common/build_ubuntu16_pip.sh'
   }
 
   methods = ['pygears_tools', 'pip']

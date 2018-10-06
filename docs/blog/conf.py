@@ -18,8 +18,11 @@ extensions = [
     'sphinx_verboser.verboser',
     'sphinxcontrib.tikz',
     'alabaster',
-    'ablog'
+    'ablog',
+    'sphinx_sitemap'
 ]
+
+site_url = "https://bogdanvuk.github.io/pygears/blog/"
 
 # Add any paths that contain templates here, relative to this directory.
 source_suffix = '.rst'
