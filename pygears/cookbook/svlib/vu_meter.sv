@@ -1,4 +1,4 @@
-module vu_meter
+module unary
   #(
     W_DATA = 16
     )
