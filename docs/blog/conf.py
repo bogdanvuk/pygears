@@ -40,7 +40,7 @@ html_show_sourcelink = True
 
 # ABLOG
 
-templates_path = [ablog.get_html_templates_path()]
+templates_path = [ablog.get_html_templates_path(), '_templates']
 
 blog_title = 'PyGears'
 blog_baseurl = 'https://bogdanvuk.github.io/pygears/'
@@ -72,7 +72,7 @@ disqus_pages = True
 html_style = 'alabaster.css'
 html_theme = 'alabaster'
 html_sidebars = {
-    '**': ['about.html',
+    '**': ['custom_about.html',
            'postcard.html', 'recentposts.html',
            'tagcloud.html', 'categories.html',
            'archives.html',
