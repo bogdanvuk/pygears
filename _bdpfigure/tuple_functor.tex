@@ -1,0 +1,65 @@
+
+\documentclass{standalone}
+
+\usepackage{tikz}
+
+\usetikzlibrary{arrows}
+\usetikzlibrary{arrows.meta}
+\usetikzlibrary{shapes}
+\usetikzlibrary{decorations.pathreplacing}
+\usetikzlibrary{decorations.markings}
+
+
+\begin{document}
+\pagestyle{empty}
+
+\begin{tikzpicture}[yscale=-1, every node/.style={inner sep=0,outer sep=0, anchor=center}]
+\node at (-90.00pt, 30.00pt) [minimum width=60.00pt,minimum height=40.00pt,draw,rectangle] {} ;
+
+\node at (-90.00pt, 30.00pt) [minimum width=60.00pt,minimum height=40.00pt,text width=54.00pt,align=center] {Producer} ;
+\path  [draw,line width=3.00pt,-{Stealth[length=4.00pt,width=6.00pt,inset=0,open,fill=white,line width=0.60pt]}] (-60.00pt,30.00pt) -- (0.00pt,30.00pt) ;
+
+\path  [draw,line width=1.80pt,shorten <=0.60pt,shorten >=2.90pt,color=white] (-60.00pt,30.00pt) -- (0.00pt,30.00pt) ;
+\node at (-30.00pt, 17.40pt) [minimum width=36.99pt,minimum height=18.00pt,text width=36.99pt,align=center,font=\scriptsize] {(u16, u16)} ;
+\node at (52.05pt, 0.69pt) [minimum width=13.39pt,minimum height=15.51pt,text width=13.39pt,align=center,font=\scriptsize] {u16} ;
+\path  [draw,line width=3.00pt,-{Stealth[length=4.00pt,width=6.00pt,inset=0,open,fill=white,line width=0.60pt]}] (40.00pt,10.00pt) -- (80.00pt,10.00pt) -- (80.00pt,0.00pt) -- (100.00pt,0.00pt) ;
+
+\path  [draw,line width=1.80pt,shorten <=0.60pt,shorten >=2.90pt,color=white] (40.00pt,10.00pt) -- (80.00pt,10.00pt) -- (80.00pt,0.00pt) -- (100.00pt,0.00pt) ;
+\node at (187.95pt, 0.69pt) [minimum width=13.39pt,minimum height=15.51pt,text width=13.39pt,align=center,font=\scriptsize] {u17} ;
+\path  [draw,line width=3.00pt,-{Stealth[length=4.00pt,width=6.00pt,inset=0,open,fill=white,line width=0.60pt]}] (140.00pt,0.00pt) -- (160.00pt,0.00pt) -- (160.00pt,10.00pt) -- (200.00pt,10.00pt) ;
+
+\path  [draw,line width=1.80pt,shorten <=0.60pt,shorten >=2.90pt,color=white] (140.00pt,0.00pt) -- (160.00pt,0.00pt) -- (160.00pt,10.00pt) -- (200.00pt,10.00pt) ;
+\node at (52.05pt, 40.69pt) [minimum width=13.39pt,minimum height=15.51pt,text width=13.39pt,align=center,font=\scriptsize] {u16} ;
+\path  [draw,line width=3.00pt,-{Stealth[length=4.00pt,width=6.00pt,inset=0,open,fill=white,line width=0.60pt]}] (40.00pt,50.00pt) -- (80.00pt,50.00pt) -- (80.00pt,60.00pt) -- (100.00pt,60.00pt) ;
+
+\path  [draw,line width=1.80pt,shorten <=0.60pt,shorten >=2.90pt,color=white] (40.00pt,50.00pt) -- (80.00pt,50.00pt) -- (80.00pt,60.00pt) -- (100.00pt,60.00pt) ;
+\node at (187.95pt, 40.69pt) [minimum width=13.39pt,minimum height=15.51pt,text width=13.39pt,align=center,font=\scriptsize] {u17} ;
+\path  [draw,line width=3.00pt,-{Stealth[length=4.00pt,width=6.00pt,inset=0,open,fill=white,line width=0.60pt]}] (140.00pt,60.00pt) -- (160.00pt,60.00pt) -- (160.00pt,50.00pt) -- (200.00pt,50.00pt) ;
+
+\path  [draw,line width=1.80pt,shorten <=0.60pt,shorten >=2.90pt,color=white] (140.00pt,60.00pt) -- (160.00pt,60.00pt) -- (160.00pt,50.00pt) -- (200.00pt,50.00pt) ;
+\node at (330.00pt, 30.00pt) [minimum width=60.00pt,minimum height=40.00pt,draw,rectangle] {} ;
+
+\node at (330.00pt, 30.00pt) [minimum width=60.00pt,minimum height=40.00pt,text width=54.00pt,align=center] {Consumer} ;
+\path  [draw,line width=3.00pt,-{Stealth[length=4.00pt,width=6.00pt,inset=0,open,fill=white,line width=0.60pt]}] (240.00pt,30.00pt) -- (300.00pt,30.00pt) ;
+
+\path  [draw,line width=1.80pt,shorten <=0.60pt,shorten >=2.90pt,color=white] (240.00pt,30.00pt) -- (300.00pt,30.00pt) ;
+\node at (270.00pt, 17.40pt) [minimum width=36.99pt,minimum height=18.00pt,text width=36.99pt,align=center,font=\scriptsize] {(u17, u17)} ;
+\node at (120.00pt, 25.00pt) [minimum width=260.00pt,minimum height=150.00pt,draw,rectangle,dotted] {} ;
+\node at (20.00pt, 30.00pt) [minimum width=40.00pt,minimum height=60.00pt,draw,rectangle] {} ;
+
+\node at (20.00pt, 30.00pt) [minimum width=40.00pt,minimum height=60.00pt,text width=34.00pt,align=center] {Split} ;
+\node at (120.00pt, 0.00pt) [minimum width=40.00pt,minimum height=40.00pt,draw,rectangle] {} ;
+
+\node at (120.00pt, 0.00pt) [minimum width=40.00pt,minimum height=40.00pt,text width=34.00pt,align=center] {*2} ;
+\node at (120.00pt, 60.00pt) [minimum width=40.00pt,minimum height=40.00pt,draw,rectangle] {} ;
+
+\node at (120.00pt, 60.00pt) [minimum width=40.00pt,minimum height=40.00pt,text width=34.00pt,align=center] {*2} ;
+\node at (220.00pt, 30.00pt) [minimum width=40.00pt,minimum height=60.00pt,draw,rectangle] {} ;
+
+\node at (220.00pt, 30.00pt) [minimum width=40.00pt,minimum height=60.00pt,text width=34.00pt,align=center] {Concat} ;
+
+\node at (26.56pt, -40.06pt) [minimum width=73.11pt,minimum height=19.89pt,text width=63.11pt,align=left] {Tuple Functor} ;
+
+\end{tikzpicture}
+
+\end{document}

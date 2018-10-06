@@ -1,0 +1,272 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Quick introduction &#8212; PyGears 0.1a0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="_static/default.js"></script>
+    <script type="text/javascript" src="_static/wavedrom.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Typing" href="typing.html" />
+    <link rel="prev" title="Installation on Windows" href="install.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="quick-introduction">
+<span id="introduction"></span><h1>Quick introduction<a class="headerlink" href="#quick-introduction" title="Permalink to this headline">¶</a></h1>
+<p>In this quick introduction, we will consider describing a gear that might be used as some kind of filter. It will feature two pipelined MAC operations and a multiplication at the end, and use three coefficients <em>b0</em>, <em>b1</em> and <em>b2</em> for the calculation:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pygears</span> <span class="k">import</span> <span class="n">gear</span>
+
+<span class="nd">@gear</span>
+<span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">b0</span><span class="p">,</span> <span class="n">b1</span><span class="p">,</span> <span class="n">b2</span><span class="p">):</span>
+    <span class="n">x1</span> <span class="o">=</span> <span class="n">mac</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">b0</span><span class="p">)</span>
+    <span class="n">x2</span> <span class="o">=</span> <span class="n">mac</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">b1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">x2</span> <span class="o">*</span> <span class="n">b2</span>
+</pre></div>
+</div>
+<p>Notice the <em>&#64;gear</em> decorator which will tells <strong>PyGears</strong> to treat this functions as a HDL module. It also allows for partial application and polymorphism which are not natively supported by the Python language.</p>
+<p>The variables <em>x, b0, b1, b2, x1, x2</em> are interface objects and represent connections between modules. Input arguments <em>x, b0, b1, b2</em> correspond to the input ports of the HDL module. In <strong>PyGears</strong> the function call corresponds to the HDL module instantiation. The <em>mac</em> gear will return an interface object, as all gears are required to do. Returned interface object corresponds to the output port connection from the MAC module, and can be passed to some other gear which will make the connection from the MAC’s output to the this gear’s input. Additionally, <strong>PyGears</strong> interfaces support some of the Python operators (‘*’ in this example) and can be used to infer corresponding HDL modules. The above gear describes the following composition:
+- first inputs <em>x</em> and <em>b0</em> are connected to the MAC module,
+- output of the first MAC and the input <em>b1</em> are fed to the second MAC module,
+- output of the second MAC is multiplied with <em>b2</em> which is connected to the output port of the <em>filter</em> module</p>
+<p><em>Filter</em> gear can now be used in the design, by calling it as a function and supplying the 4 arguments, which will in HDL terms instantiate the <em>filter</em> module. The output of the <em>filter</em> gear is directly the interface object returned by the multiplication operator.</p>
+<p>If we have implementation of the MAC module in HDL, a gear wrapper needs to be provided, so that it can be used with <strong>PyGears</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pygears</span> <span class="k">import</span> <span class="n">gear</span>
+<span class="kn">from</span> <span class="nn">pygears.typing</span> <span class="k">import</span> <span class="n">Uint</span>
+
+<span class="nd">@gear</span>
+<span class="k">def</span> <span class="nf">mac</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">Uint</span><span class="p">[</span><span class="s1">&#39;w_a&#39;</span><span class="p">],</span> <span class="n">b</span><span class="p">:</span> <span class="n">Uint</span><span class="p">[</span><span class="s1">&#39;w_b&#39;</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Uint</span><span class="p">[</span><span class="s1">&#39;w_a + w_b&#39;</span><span class="p">]:</span>
+    <span class="k">pass</span>
+</pre></div>
+</div>
+<p>For the gears that are implemented in HDL, return type needs to be specified so that <strong>PyGears</strong> can infer the output interface object type, as opposed to the <em>filter</em> gear description, where the multiplication submodule was responsible for forming the output interface object, and the <em>filter</em> only passed it through. A generic version of the <em>mac</em> gear is described above, where it accepts interfaces of variable sized unsigned integers - Uint type. Generic types are described by using strings (‘w_a’, ‘w_b’ and ‘w_a + w_b’) for some of its parameters. These strings are resolved differently for input and output types. For the input types, the strings are resolved when the gear is called and the supplied arguments are matched against parameterized type definitions. If the matching succeeds, the values for the parameters are extracted and can be used for resolving the output types. Uint[‘w_a’] type maps to a logic vector in HDL with length <em>w_a</em>. The output type will thus have the number of bits equal to the sum of <em>w_a</em> and <em>w_b</em>. If some a type other than Uint is supplied to <em>mac</em>, the exception will be raised.</p>
+<div class="section" id="pipe-operator">
+<h2>Pipe operator<a class="headerlink" href="#pipe-operator" title="Permalink to this headline">¶</a></h2>
+<p>Infix composition operator ‘|’, aka pipe, is also supported, hence the module can be rewritten as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pygears</span> <span class="k">import</span> <span class="n">gear</span>
+
+<span class="nd">@gear</span>
+<span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">b0</span><span class="p">,</span> <span class="n">b1</span><span class="p">,</span> <span class="n">b2</span><span class="p">):</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">x</span> <span class="o">|</span> <span class="n">mac</span><span class="p">(</span><span class="n">b</span><span class="o">=</span><span class="n">b0</span><span class="p">)</span> <span class="o">|</span> <span class="n">mac</span><span class="p">(</span><span class="n">b</span><span class="o">=</span><span class="n">b1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">y</span> <span class="o">*</span> <span class="n">b2</span>
+</pre></div>
+</div>
+<p>This expression will unfold in the following manner:
+- Two versions of the MAC gears will be prepared by using function partial application, one where <em>b0</em> is passed for its argument <em>b</em> and the other where <em>b1</em> is passed for its argument <em>b</em>. In terms of the HDLs, this corresponds to one MAC module with interface <em>b0</em> connected to its <em>b</em> port and the other with <em>b1</em> interface connected to its <em>b</em> port. MAC modules are not instantiated at this moment since they didn’t receive all required arguments.
+- Input <em>x</em> is piped to the first partially applied MAC gear and it is passed as its first argument <em>a</em>. At this moment, all required arguments are supplied to it, and <em>mac</em> gear is called. Types of the supplied arguments are checked, parameters and output type are resolved. Since <em>mac</em> gear contains no body, an interface object is created with the resolved output type and returned from the function.</p>
+</div>
+<div class="section" id="variable-number-of-arguments">
+<h2>Variable number of arguments<a class="headerlink" href="#variable-number-of-arguments" title="Permalink to this headline">¶</a></h2>
+<p>Gears with variable number of arguments are supported using the Python mechanism for functions with variable number of arguments. Below an implementation of the variable size <em>filter</em> gear is given:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pygears</span> <span class="k">import</span> <span class="n">gear</span>
+
+<span class="nd">@gear</span>
+<span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">b</span><span class="p">):</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">x</span>
+  <span class="k">for</span> <span class="n">bi</span> <span class="ow">in</span> <span class="n">b</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+      <span class="n">y</span> <span class="o">=</span> <span class="n">y</span> <span class="o">|</span> <span class="n">mac</span><span class="p">(</span><span class="n">b</span><span class="o">=</span><span class="n">bi</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">y</span> <span class="o">*</span> <span class="n">b</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Now, depending on the number of arguments supplied to the <em>filter</em> gear, corresponding number of MAC stages will be instantiated.</p>
+</div>
+<div class="section" id="gear-parameters">
+<h2>Gear parameters<a class="headerlink" href="#gear-parameters" title="Permalink to this headline">¶</a></h2>
+<p>Since all gear arguments are required to be interface objects, <strong>PyGears</strong> uses Python keyword-only argument mechanism to supply additional parameters to gears. In the following example, we will implement <em>filter</em> as a higher-order function, so that the filter stage can be implemented using an arbitrary gear, instead of it being fixed to the <em>mac</em> gear:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pygears</span> <span class="k">import</span> <span class="n">gear</span>
+
+<span class="nd">@gear</span>
+<span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">b</span><span class="p">,</span> <span class="n">stage</span><span class="p">):</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">x</span>
+    <span class="k">for</span> <span class="n">bi</span> <span class="ow">in</span> <span class="n">b</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">y</span> <span class="o">|</span> <span class="n">stage</span><span class="p">(</span><span class="n">b</span><span class="o">=</span><span class="n">bi</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">y</span> <span class="o">*</span> <span class="n">b</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Gear parameters can be made optional, by supplying the default value:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pygears</span> <span class="k">import</span> <span class="n">gear</span>
+
+<span class="nd">@gear</span>
+<span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">b</span><span class="p">,</span> <span class="n">stage</span><span class="o">=</span><span class="n">mac</span><span class="p">):</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">x</span>
+    <span class="k">for</span> <span class="n">bi</span> <span class="ow">in</span> <span class="n">b</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">y</span> <span class="o">|</span> <span class="n">stage</span><span class="p">(</span><span class="n">b</span><span class="o">=</span><span class="n">bi</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">y</span> <span class="o">*</span> <span class="n">b</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="type-casting">
+<h2>Type casting<a class="headerlink" href="#type-casting" title="Permalink to this headline">¶</a></h2>
+<p>In the previous example, if <em>mac</em> gear is used, after each stage the interface size will increase, which is usually not the desired implementation. We can keep constant interface size by using type casting after each stage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pygears</span> <span class="k">import</span> <span class="n">gear</span>
+
+<span class="nd">@gear</span>
+<span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">b</span><span class="p">,</span> <span class="n">stage</span><span class="o">=</span><span class="n">mac</span><span class="p">):</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">x</span>
+    <span class="k">for</span> <span class="n">bi</span> <span class="ow">in</span> <span class="n">b</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">y</span> <span class="o">|</span> <span class="n">stage</span><span class="p">(</span><span class="n">b</span><span class="o">=</span><span class="n">bi</span><span class="p">)</span> <span class="o">|</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span>
+
+    <span class="k">return</span> <span class="n">y</span> <span class="o">*</span> <span class="n">b</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Interface type can be accessed via its <em>dtype</em> attribute. Let’s for the sake of an example leave-out the type cast of the last multiplication. Multiplication operator will increase the size of the output interface to accommodate for the largest possible multiplication product.</p>
+</div>
+<div class="section" id="systemverilog-generation">
+<h2>SystemVerilog generation<a class="headerlink" href="#systemverilog-generation" title="Permalink to this headline">¶</a></h2>
+<p>SystemVerilog is generated by instantiating desired gears and calling <strong>PyGears</strong> <em>svgen</em> function. Here is an example of how this works for the <em>filter</em> gear:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pygears</span> <span class="k">import</span> <span class="n">gear</span><span class="p">,</span> <span class="n">Intf</span>
+<span class="kn">from</span> <span class="nn">pygears.typing</span> <span class="k">import</span> <span class="n">Uint</span>
+<span class="kn">from</span> <span class="nn">pygears.svgen</span> <span class="k">import</span> <span class="n">svgen</span>
+
+<span class="nd">@gear</span>
+<span class="k">def</span> <span class="nf">mac</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">Uint</span><span class="p">[</span><span class="s1">&#39;w_a&#39;</span><span class="p">],</span> <span class="n">b</span><span class="p">:</span> <span class="n">Uint</span><span class="p">[</span><span class="s1">&#39;w_b&#39;</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Uint</span><span class="p">[</span><span class="s1">&#39;w_a + w_b&#39;</span><span class="p">]:</span>
+    <span class="k">pass</span>
+
+<span class="nd">@gear</span>
+<span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">b</span><span class="p">,</span> <span class="n">stage</span><span class="o">=</span><span class="n">mac</span><span class="p">):</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">x</span>
+    <span class="k">for</span> <span class="n">bi</span> <span class="ow">in</span> <span class="n">b</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">y</span> <span class="o">|</span> <span class="n">stage</span><span class="p">(</span><span class="n">b</span><span class="o">=</span><span class="n">bi</span><span class="p">)</span> <span class="o">|</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span>
+
+    <span class="k">return</span> <span class="n">y</span> <span class="o">*</span> <span class="n">b</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+<span class="n">x</span> <span class="o">=</span> <span class="n">Intf</span><span class="p">(</span><span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">])</span>
+<span class="n">b</span> <span class="o">=</span> <span class="p">[</span><span class="n">Intf</span><span class="p">(</span><span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">])]</span><span class="o">*</span><span class="mi">4</span>
+
+<span class="n">iout</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">b</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">iout</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">32</span><span class="p">]</span>
+
+<span class="n">svgen</span><span class="p">(</span><span class="s1">&#39;/filter&#39;</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="s1">&#39;~/filter_svlib&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Since we are only interested in generating SystemVerilog files for the <em>filter</em> gear, it will be the only gear we will instantiate. Since <em>filter</em> needs to be passed input interfaces, we will manually instantiate interface objects of the desired type and pass them to the <em>filter</em>. Output interface of the <em>filter</em> is not needed, and we only used it to check whether we got correct output type (which is of course optional). Since we called <em>filter</em> with four coefficient interfaces <em>b</em> and didn’t supply an alternative to the default <em>mac</em> stage, we will get a <em>filter</em> implementation with four MAC stages.</p>
+<p><strong>PyGears</strong> will maintain a hierarchy of the instantiated gears in which each gear has been assigned a name. By default, gear instance gets the name of the function used to describe it. In this case, <em>filter</em> instance will be named ‘filter’. Instances in the hierarchy can be accessed by via the path string. Path string follows the conventions of the Unix path syntax, where root ‘/’ is auto-generated container for all the top gear instances (i.e. the ones not instantiated within other gears). In this case <em>filter</em> is one such gear, hence it is directly below root ‘/filter’. The <em>mac</em> gears are instantiated from within the <em>filter</em>, so their paths will be: ‘/filter/mac0’, ‘/filter/mac1’, ‘/filter/mac2’ and ‘/filter/mac3’. So, if some gear instances have the same names on the same hierarchical level, their names will be suffixed with an increasing sequence of integers. Finally, it is possible to supply a custom name via gear <em>name</em> builtin parameter. This parameter is added by the <em>&#64;gear</em> operator and need not be supplied in the function signature:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">filter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">b</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;filt&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Function <em>svgen</em> will generate needed hierarchical SystemVerilog modules with correct connections and instantiations of the submodules. In this example, HDL needs to be generated only for the <em>filter</em>. Other modules: <em>mac</em> and multiplication are already considered described in HDL. Hence, a single file ‘filter.sv’ will be generated inside ‘~/filter_svlib’ folder.</p>
+</div>
+</div>
+
+    <script type="text/javascript">
+        function init() {
+            WaveDrom.ProcessAll();
+        }
+        window.onload = init;
+    </script>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">PyGears</a></h1>
+
+
+
+<p class="blurb">HW design - a functional approach</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=bogdanvuk&repo=pygears&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+
+<h3><a href="index.html">Table of Contents</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="gears.html">Introduction to Gears</a></li>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation on Windows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="install.html#installation-on-linux">Installation on Linux</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Quick introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#pipe-operator">Pipe operator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#variable-number-of-arguments">Variable number of arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gear-parameters">Gear parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#type-casting">Type casting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#systemverilog-generation">SystemVerilog generation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="typing.html">Typing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="setup.html">PyGears Tools Setup for Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference.html">Reference</a></li>
+</ul>
+<hr />
+<p>
+    <h3> Blogs </h3>
+    <ul>
+        <li class="toctree-l1"><a href="https://bogdanvuk.github.io/pygears/blog/blog/category/risc-v.html">RISC-V implementation blog</a></li>
+    </ul>
+</p>
+<hr />
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Bogdan Vukobratovic.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+      |
+      <a href="_sources/introduction.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+    <a href="https://github.com/bogdanvuk/pygears" class="github">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>

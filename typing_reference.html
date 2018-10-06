@@ -1,0 +1,609 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Typing &#8212; PyGears 0.1a0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="_static/default.js"></script>
+    <script type="text/javascript" src="_static/wavedrom.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Reference" href="reference.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="typing">
+<h1>Typing<a class="headerlink" href="#typing" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-pygears.typing.base">
+<span id="base-classes"></span><h2>Base classes<a class="headerlink" href="#module-pygears.typing.base" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pygears.typing.base.Any">
+<em class="property">class </em><code class="descname">Any</code><a class="headerlink" href="#pygears.typing.base.Any" title="Permalink to this definition">¶</a></dt>
+<dd><p>Type that can be matched to any other type.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pygears.typing.base.EnumerableGenericMeta">
+<em class="property">class </em><code class="descname">EnumerableGenericMeta</code><a class="headerlink" href="#pygears.typing.base.EnumerableGenericMeta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pygears.typing.base.GenericMeta" title="pygears.typing.base.GenericMeta"><code class="xref py py-class docutils literal notranslate"><span class="pre">pygears.typing.base.GenericMeta</span></code></a></p>
+<p>Base class for all types that are iterable.</p>
+<dl class="method">
+<dt id="pygears.typing.base.EnumerableGenericMeta.__int__">
+<code class="descname">__int__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.base.EnumerableGenericMeta.__int__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the bit width of the type.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">int</span><span class="p">(</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">2</span><span class="p">]])</span>
+<span class="go">3</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pygears.typing.base.EnumerableGenericMeta.__len__">
+<code class="descname">__len__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.base.EnumerableGenericMeta.__len__" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of elements type generates when iterated.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">])</span>
+<span class="go">16</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pygears.typing.base.EnumerableGenericMeta.items">
+<code class="descname">items</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.base.EnumerableGenericMeta.items" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generator that yields (key, element) pairs.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pygears.typing.base.EnumerableGenericMeta.keys">
+<code class="descname">keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.base.EnumerableGenericMeta.keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of keys that can be used for indexing the type.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pygears.typing.base.GenericMeta">
+<em class="property">class </em><code class="descname">GenericMeta</code><a class="headerlink" href="#pygears.typing.base.GenericMeta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pygears.typing.base.TypingMeta" title="pygears.typing.base.TypingMeta"><code class="xref py py-class docutils literal notranslate"><span class="pre">pygears.typing.base.TypingMeta</span></code></a></p>
+<p>Base class for all types that have a generic parameter.</p>
+<dl class="method">
+<dt id="pygears.typing.base.GenericMeta.__eq__">
+<code class="descname">__eq__</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.base.GenericMeta.__eq__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return self==value.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pygears.typing.base.GenericMeta.__hash__">
+<code class="descname">__hash__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.base.GenericMeta.__hash__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return hash(self).</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pygears.typing.base.GenericMeta.args">
+<code class="descname">args</code><a class="headerlink" href="#pygears.typing.base.GenericMeta.args" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of values supplied for each generic parameter.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Tuple</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span><span class="o">.</span><span class="n">args</span>
+<span class="go">[Uint[1], Uint[2]]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pygears.typing.base.GenericMeta.base">
+<code class="descname">base</code><a class="headerlink" href="#pygears.typing.base.GenericMeta.base" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns base generic class of the type.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">]</span><span class="o">.</span><span class="n">base</span> <span class="o">==</span> <span class="n">Uint</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pygears.typing.base.GenericMeta.fields">
+<code class="descname">fields</code><a class="headerlink" href="#pygears.typing.base.GenericMeta.fields" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the names of the generic parameters.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Tuple</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span><span class="o">.</span><span class="n">fields</span>
+<span class="go">(&#39;f0&#39;, &#39;f1&#39;)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Tuple</span><span class="p">[{</span><span class="s1">&#39;u1&#39;</span><span class="p">:</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;u2&#39;</span><span class="p">:</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">2</span><span class="p">]}]</span><span class="o">.</span><span class="n">fields</span>
+<span class="go">(&#39;u0&#39;, &#39;u1&#39;)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pygears.typing.base.GenericMeta.is_generic">
+<code class="descname">is_generic</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.base.GenericMeta.is_generic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True if no generic parameter of the type was supplied a value.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Uint</span><span class="o">.</span><span class="n">is_generic</span><span class="p">()</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">]</span><span class="o">.</span><span class="n">is_generic</span><span class="p">()</span>
+<span class="go">False</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pygears.typing.base.GenericMeta.is_specified">
+<code class="descname">is_specified</code><a class="headerlink" href="#pygears.typing.base.GenericMeta.is_specified" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True if all generic parameters were supplied concrete values.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Uint</span><span class="p">[</span><span class="s1">&#39;template&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">is_specified</span><span class="p">()</span>
+<span class="go">False</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">]</span><span class="o">.</span><span class="n">is_specified</span><span class="p">()</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pygears.typing.base.GenericMeta.templates">
+<code class="descname">templates</code><a class="headerlink" href="#pygears.typing.base.GenericMeta.templates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of templated generic variables within the type. The type is
+searched recursively. Each template is reported only once.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="s1">&#39;T1&#39;</span><span class="p">,</span> <span class="s1">&#39;T2&#39;</span><span class="p">],</span> <span class="s1">&#39;T1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">templates</span>
+<span class="go">[&#39;T1&#39;, &#39;T2&#39;]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="pygears.typing.base.TemplateArgumentsError">
+<em class="property">exception </em><code class="descname">TemplateArgumentsError</code><a class="headerlink" href="#pygears.typing.base.TemplateArgumentsError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="pygears.typing.base.TemplatedTypeUnspecified">
+<em class="property">exception </em><code class="descname">TemplatedTypeUnspecified</code><a class="headerlink" href="#pygears.typing.base.TemplatedTypeUnspecified" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pygears.typing.base.TypingMeta">
+<em class="property">class </em><code class="descname">TypingMeta</code><a class="headerlink" href="#pygears.typing.base.TypingMeta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></p>
+<p>Base class all types.</p>
+<dl class="method">
+<dt id="pygears.typing.base.TypingMeta.__eq__">
+<code class="descname">__eq__</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.base.TypingMeta.__eq__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return self==value.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pygears.typing.base.TypingMeta.__hash__">
+<code class="descname">__hash__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.base.TypingMeta.__hash__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return hash(self).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="pygears.typing.base.typeof">
+<code class="descname">typeof</code><span class="sig-paren">(</span><em>obj</em>, <em>t</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.base.typeof" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if a specific type instance is a subclass of the type.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> – Concrete type instance</p></li>
+<li><p><strong>t</strong> – Base type class</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pygears.typing.uint">
+<span id="integers"></span><h2>Integers<a class="headerlink" href="#module-pygears.typing.uint" title="Permalink to this headline">¶</a></h2>
+<p>Implements fixed width integer types: <a class="reference internal" href="#pygears.typing.uint.Uint" title="pygears.typing.uint.Uint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Uint</span></code></a> [N] - unsigned, <a class="reference internal" href="#pygears.typing.uint.Int" title="pygears.typing.uint.Int"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int</span></code></a> [N] - signed and <a class="reference internal" href="#pygears.typing.uint.Integer" title="pygears.typing.uint.Integer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Integer</span></code></a> [N] - sign agnostic type. These types correspond to HDL logic vector types.</p>
+<p>Objects of these classes can also be instantiated and they provide some integer arithmetic capabilities.</p>
+<dl class="class">
+<dt id="pygears.typing.uint.Int">
+<em class="property">class </em><code class="descname">Int</code><a class="headerlink" href="#pygears.typing.uint.Int" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pygears.typing.uint.Integer" title="pygears.typing.uint.Integer"><code class="xref py py-class docutils literal notranslate"><span class="pre">pygears.typing.uint.Integer</span></code></a></p>
+<p>Fixed width generic signed integer data type.</p>
+<dl class="simple">
+<dt>Generic parameters:</dt>
+<dd><p>N: Bit width of the <a class="reference internal" href="#pygears.typing.uint.Int" title="pygears.typing.uint.Int"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int</span></code></a> [N] representation</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>val</strong> – Integer value to convert to <a class="reference internal" href="#pygears.typing.uint.Int" title="pygears.typing.uint.Int"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int</span></code></a> [N]</p>
+</dd>
+</dl>
+<p><a class="reference internal" href="#pygears.typing.uint.Int" title="pygears.typing.uint.Int"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int</span></code></a> [N] is a generic datatype derived from <a class="reference internal" href="#pygears.typing.uint.Integer" title="pygears.typing.uint.Integer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Integer</span></code></a> [N]. It represents signed integers with fixed width binary representation. Concrete data type is obtained by indexing:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">i16</span> <span class="o">=</span> <span class="n">Int</span><span class="p">[</span><span class="mi">16</span><span class="p">]</span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="pygears.typing.uint.Int.__eq__">
+<code class="descname">__eq__</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Int.__eq__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return self==value.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pygears.typing.uint.Int.__int__">
+<code class="descname">__int__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Int.__int__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns builtin integer type</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">type</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">Integer</span><span class="p">[</span><span class="mi">8</span><span class="p">](</span><span class="mi">0</span><span class="p">)))</span>
+<span class="go">&lt;class &#39;int&#39;&gt;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pygears.typing.uint.IntMeta">
+<em class="property">class </em><code class="descname">IntMeta</code><a class="headerlink" href="#pygears.typing.uint.IntMeta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pygears.typing.uint.IntegerMeta" title="pygears.typing.uint.IntegerMeta"><code class="xref py py-class docutils literal notranslate"><span class="pre">pygears.typing.uint.IntegerMeta</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pygears.typing.uint.Integer">
+<em class="property">class </em><code class="descname">Integer</code><a class="headerlink" href="#pygears.typing.uint.Integer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+<p>Base type for both <a class="reference internal" href="#pygears.typing.uint.Int" title="pygears.typing.uint.Int"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int</span></code></a> [N] and <a class="reference internal" href="#pygears.typing.uint.Uint" title="pygears.typing.uint.Uint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Uint</span></code></a> [N] generic types. Corresponds to HDL logic vector types. For an example Integer[9] translates to <code class="code sv systemverilog docutils literal notranslate"><span class="keyword"><span class="pre">logic</span></span> <span class="punctuation"><span class="pre">[</span></span><span class="literal number hex"><span class="pre">8</span></span><span class="operator"><span class="pre">:</span></span><span class="literal number hex"><span class="pre">0</span></span><span class="punctuation"><span class="pre">]</span></span></code>.</p>
+<dl class="method">
+<dt id="pygears.typing.uint.Integer.__add__">
+<code class="descname">__add__</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Integer.__add__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return self+value.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pygears.typing.uint.Integer.__getitem__">
+<code class="descname">__getitem__</code><span class="sig-paren">(</span><em>index</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Integer.__getitem__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the value of the indexth bit in the number representation.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Integer</span><span class="p">[</span><span class="mi">8</span><span class="p">](</span><span class="mb">0b10101010</span><span class="p">)[</span><span class="mi">5</span><span class="p">]</span>
+<span class="go">1</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pygears.typing.uint.Integer.__int__">
+<code class="descname">__int__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Integer.__int__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns builtin integer type</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">type</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">Integer</span><span class="p">[</span><span class="mi">8</span><span class="p">](</span><span class="mi">0</span><span class="p">)))</span>
+<span class="go">&lt;class &#39;int&#39;&gt;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pygears.typing.uint.Integer.__len__">
+<code class="descname">__len__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Integer.__len__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the number of bits used for the representation</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">Integer</span><span class="p">[</span><span class="mi">8</span><span class="p">](</span><span class="mi">0</span><span class="p">))</span>
+<span class="go">8</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pygears.typing.uint.Integer.__mul__">
+<code class="descname">__mul__</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Integer.__mul__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return self*value.</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="pygears.typing.uint.Integer.decode">
+<em class="property">classmethod </em><code class="descname">decode</code><span class="sig-paren">(</span><em>val</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Integer.decode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates Integer object from any int-convertible object val.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Integer</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="mh">0xffff</span><span class="p">)</span>
+<span class="go">Integer[8](255)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pygears.typing.uint.Integer.width">
+<code class="descname">width</code><a class="headerlink" href="#pygears.typing.uint.Integer.width" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the number of bits used for the representation</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Integer</span><span class="p">[</span><span class="mi">8</span><span class="p">](</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">width</span>
+<span class="go">8</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pygears.typing.uint.IntegerMeta">
+<em class="property">class </em><code class="descname">IntegerMeta</code><a class="headerlink" href="#pygears.typing.uint.IntegerMeta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pygears.typing.base.EnumerableGenericMeta" title="pygears.typing.base.EnumerableGenericMeta"><code class="xref py py-class docutils literal notranslate"><span class="pre">pygears.typing.base.EnumerableGenericMeta</span></code></a></p>
+<p>Defines common methods for all Integer based classes.</p>
+<dl class="method">
+<dt id="pygears.typing.uint.IntegerMeta.__add__">
+<code class="descname">__add__</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.IntegerMeta.__add__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the same type, but one bit wider to accomodate potential overflow.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span> <span class="o">+</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span>
+<span class="go">Uint[9]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pygears.typing.uint.IntegerMeta.__gt__">
+<code class="descname">__gt__</code><span class="sig-paren">(</span><em>others</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.IntegerMeta.__gt__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return self&gt;value.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pygears.typing.uint.IntegerMeta.__int__">
+<code class="descname">__int__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.IntegerMeta.__int__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the bit width of the type.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">int</span><span class="p">(</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">2</span><span class="p">]])</span>
+<span class="go">3</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pygears.typing.uint.IntegerMeta.__mul__">
+<code class="descname">__mul__</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.IntegerMeta.__mul__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the same type, whose width is equal to the sum of operand widths.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span> <span class="o">+</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span>
+<span class="go">Uint[16]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pygears.typing.uint.IntegerMeta.__radd__">
+<code class="descname">__radd__</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.IntegerMeta.__radd__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the same type, but one bit wider to accomodate potential overflow.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span> <span class="o">+</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span>
+<span class="go">Uint[9]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pygears.typing.uint.IntegerMeta.__rmul__">
+<code class="descname">__rmul__</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.IntegerMeta.__rmul__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the same type, whose width is equal to the sum of operand widths.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span> <span class="o">+</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span>
+<span class="go">Uint[16]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pygears.typing.uint.IntegerMeta.__sub__">
+<code class="descname">__sub__</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.IntegerMeta.__sub__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the signed Int type, but one bit wider to accomodate potential overflow.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span> <span class="o">+</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span>
+<span class="go">Int[9]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pygears.typing.uint.IntegerMeta.keys">
+<code class="descname">keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.IntegerMeta.keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of keys that can be used for indexing the type.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Int</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+<span class="go">[0, 1, 2, 3, 4, 5, 6, 7]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pygears.typing.uint.Uint">
+<em class="property">class </em><code class="descname">Uint</code><a class="headerlink" href="#pygears.typing.uint.Uint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pygears.typing.uint.Integer" title="pygears.typing.uint.Integer"><code class="xref py py-class docutils literal notranslate"><span class="pre">pygears.typing.uint.Integer</span></code></a></p>
+<p>Fixed width generic unsigned integer data type.</p>
+<dl class="simple">
+<dt>Generic parameters:</dt>
+<dd><p>N: Bit width of the <a class="reference internal" href="#pygears.typing.uint.Uint" title="pygears.typing.uint.Uint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Uint</span></code></a> [N] representation</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>val</strong> – Integer value to convert to <a class="reference internal" href="#pygears.typing.uint.Uint" title="pygears.typing.uint.Uint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Uint</span></code></a> [N]</p>
+</dd>
+</dl>
+<p><a class="reference internal" href="#pygears.typing.uint.Uint" title="pygears.typing.uint.Uint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Uint</span></code></a> [N] is a generic datatype derived from <a class="reference internal" href="#pygears.typing.uint.Integer" title="pygears.typing.uint.Integer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Integer</span></code></a> [N]. It represents unsigned integers with fixed width binary representation. Concrete data type is obtained by indexing:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">u16</span> <span class="o">=</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">]</span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="pygears.typing.uint.Uint.__sub__">
+<code class="descname">__sub__</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Uint.__sub__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return self-value.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pygears.typing.uint.UintMeta">
+<em class="property">class </em><code class="descname">UintMeta</code><a class="headerlink" href="#pygears.typing.uint.UintMeta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pygears.typing.uint.IntegerMeta" title="pygears.typing.uint.IntegerMeta"><code class="xref py py-class docutils literal notranslate"><span class="pre">pygears.typing.uint.IntegerMeta</span></code></a></p>
+<dl class="method">
+<dt id="pygears.typing.uint.UintMeta.__sub__">
+<code class="descname">__sub__</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.UintMeta.__sub__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a Tuple of the result type and overflow bit.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">]</span> <span class="o">-</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span>
+<span class="go">Tuple(Uint[16], Bool)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pygears.typing.array">
+<span id="array"></span><h2>Array<a class="headerlink" href="#module-pygears.typing.array" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pygears.typing.array.Array">
+<em class="property">class </em><code class="descname">Array</code><a class="headerlink" href="#pygears.typing.array.Array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></p>
+<p>Generic container datatype that holds N instances of type T</p>
+<dl>
+<dt>Generic parameters:</dt>
+<dd><p>T: Type of the <a class="reference internal" href="#pygears.typing.array.Array" title="pygears.typing.array.Array"><code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code></a> [T, N] elements</p>
+<p>N: Number of elements in the <a class="reference internal" href="#pygears.typing.array.Array" title="pygears.typing.array.Array"><code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code></a> [T, N]</p>
+</dd>
+</dl>
+<p>Concrete data type is obtained by indexing:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">u16_4</span> <span class="o">=</span> <span class="n">Array</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">],</span> <span class="mi">4</span><span class="p">]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="class">
+<dt id="pygears.typing.array.ArrayMeta">
+<em class="property">class </em><code class="descname">ArrayMeta</code><a class="headerlink" href="#pygears.typing.array.ArrayMeta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pygears.typing.base.EnumerableGenericMeta" title="pygears.typing.base.EnumerableGenericMeta"><code class="xref py py-class docutils literal notranslate"><span class="pre">pygears.typing.base.EnumerableGenericMeta</span></code></a></p>
+<dl class="method">
+<dt id="pygears.typing.array.ArrayMeta.__getitem__">
+<code class="descname">__getitem__</code><span class="sig-paren">(</span><em>index</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.array.ArrayMeta.__getitem__" title="Permalink to this definition">¶</a></dt>
+<dd><p>If a single element is supplied for index, returns type T. If a slice is suplied for index, an <a class="reference internal" href="#pygears.typing.array.Array" title="pygears.typing.array.Array"><code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code></a> type is returned with a number of elements equal to the slice size.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Array</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="mi">5</span><span class="p">][</span><span class="mi">3</span><span class="p">]</span>
+<span class="go">Uint[2]</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Array</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="mi">5</span><span class="p">][</span><span class="mi">2</span><span class="p">:</span><span class="mi">4</span><span class="p">]</span>
+<span class="go">Array[Uint[2], 2]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pygears.typing.array.ArrayMeta.keys">
+<code class="descname">keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.array.ArrayMeta.keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of keys that can be used for indexing <a class="reference internal" href="#pygears.typing.array.Array" title="pygears.typing.array.Array"><code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code></a> [T, N] type. Number of keys equals to the number of elements N.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Array</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+<span class="go">[0, 1, 2, 3, 4]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+    <script type="text/javascript">
+        function init() {
+            WaveDrom.ProcessAll();
+        }
+        window.onload = init;
+    </script>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">PyGears</a></h1>
+
+
+
+<p class="blurb">HW design - a functional approach</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=bogdanvuk&repo=pygears&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+
+<h3><a href="index.html">Table of Contents</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="gears.html">Introduction to Gears</a></li>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation on Windows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="install.html#installation-on-linux">Installation on Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Quick introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="typing.html">Typing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="setup.html">PyGears Tools Setup for Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="reference.html">Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Typing</a></li>
+</ul>
+</li>
+</ul>
+<hr />
+<p>
+    <h3> Blogs </h3>
+    <ul>
+        <li class="toctree-l1"><a href="https://bogdanvuk.github.io/pygears/blog/blog/category/risc-v.html">RISC-V implementation blog</a></li>
+    </ul>
+</p>
+<hr />
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Bogdan Vukobratovic.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+      |
+      <a href="_sources/typing_reference.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+    <a href="https://github.com/bogdanvuk/pygears" class="github">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>

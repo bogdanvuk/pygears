@@ -1,0 +1,38 @@
+
+\documentclass{standalone}
+
+\usepackage{tikz}
+
+\usetikzlibrary{arrows}
+\usetikzlibrary{arrows.meta}
+\usetikzlibrary{shapes}
+\usetikzlibrary{decorations.pathreplacing}
+\usetikzlibrary{decorations.markings}
+
+
+\begin{document}
+\pagestyle{empty}
+
+\begin{tikzpicture}[yscale=-1, every node/.style={inner sep=0,outer sep=0, anchor=center}]
+\path  [draw,line width=3.00pt,color=black!40,-{Stealth[length=4.00pt,width=6.00pt,inset=0,open,fill=white,line width=0.60pt]},shorten <=2.00pt,shorten >=2.00pt] (40.00pt,10.00pt) -- (60.00pt,10.00pt) ;
+
+\path  [draw,line width=1.80pt,color=white,shorten <=2.60pt,shorten >=4.90pt] (40.00pt,10.00pt) -- (60.00pt,10.00pt) ;
+\path  [draw,line width=3.00pt,color=black!40,-{Stealth[length=4.00pt,width=6.00pt,inset=0,open,fill=white,line width=0.60pt]},shorten <=2.00pt,shorten >=2.00pt] (100.00pt,10.00pt) -- (120.00pt,10.00pt) ;
+
+\path  [draw,line width=1.80pt,color=white,shorten <=2.60pt,shorten >=4.90pt] (100.00pt,10.00pt) -- (120.00pt,10.00pt) ;
+\node at (80.00pt, 0.00pt) [minimum width=200.00pt,minimum height=60.00pt,draw,rectangle,dotted] {} ;
+\node at (20.00pt, 10.00pt) [minimum width=40.00pt,minimum height=20.00pt,draw,rectangle] {} ;
+
+\node at (20.00pt, 10.00pt) [minimum width=40.00pt,minimum height=20.00pt,text width=34.00pt,align=center] {drv} ;
+\node at (80.00pt, 10.00pt) [minimum width=40.00pt,minimum height=20.00pt,draw,rectangle] {} ;
+
+\node at (80.00pt, 10.00pt) [minimum width=40.00pt,minimum height=20.00pt,text width=34.00pt,align=center] {echo} ;
+\node at (140.00pt, 10.00pt) [minimum width=40.00pt,minimum height=20.00pt,draw,rectangle] {} ;
+
+\node at (140.00pt, 10.00pt) [minimum width=40.00pt,minimum height=20.00pt,text width=34.00pt,align=center] {collect} ;
+
+\node at (31.54pt, -19.50pt) [minimum width=103.09pt,minimum height=21.00pt,text width=93.09pt,align=left,font=\Large] {mono\_echo\_sim} ;
+
+\end{tikzpicture}
+
+\end{document}
