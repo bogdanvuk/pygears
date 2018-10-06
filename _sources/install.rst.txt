@@ -11,7 +11,7 @@ Installation on Linux
 Install with ``pip``
 --------------------
 
-**PyGears** requires a specific version of Python3, so think about using ``pygears-tools`` and procedure given :ref:`below <install-pygears-tools>`. Otherwise, consider using `virtualenv <https://virtualenv.pypa.io/en/stable/>`_ or `pyenv <https://github.com/pyenv/pyenv>`_ to manage your Python version.
+**PyGears** requires a specific version of Python3, namely Python 3.6, so think about using ``pygears-tools`` and procedure given :ref:`below <install-pygears-tools>` for installing the correct python version together with **PyGears**. Otherwise, consider using `virtualenv <https://virtualenv.pypa.io/en/stable/>`_ or `pyenv <https://github.com/pyenv/pyenv>`_ to manage your Python version.
 
 .. code-block:: bash
 

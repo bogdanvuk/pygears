@@ -7,7 +7,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" /><meta content="SwfEvJJ_Q9MXxKIscULvgc4E_MvI1Be5lqBW2SOlDkg" name="google-site-verification" />
 
-    <title>Welcome to PyGears &#8212; PyGears 0.1a0 documentation</title>
+    <title>Welcome to PyGears &#8212; PyGears 0.1.1a3 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -38,6 +38,8 @@
             
   <div class="section" id="welcome-to-pygears">
 <h1>Welcome to PyGears<a class="headerlink" href="#welcome-to-pygears" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="hw-design-a-functional-approach">
+<h2>HW Design - a Functional Approach<a class="headerlink" href="#hw-design-a-functional-approach" title="Permalink to this headline">¶</a></h2>
 <p><strong>PyGears</strong> is an ambitious attempt to create a Python framework that facilitates describing digital hardware. It aims to augment current RTL methodology to drastically increase <strong>composability</strong> of hardware modules. Ease of composition leads to better <strong>reusability</strong>, since modules that compose better can be used in a wider variety of contexts. Set of reusable components can then form a well-tested and documented library that significantly speeds up the development process.</p>
 <p>For a guide through <strong>PyGears</strong> methodology, checkout <a class="reference external" href="https://bogdanvuk.github.io/pygears/blog/riscv/introduction.html">blog series on implementing RISC-V in PyGears</a>.</p>
 <p>For an introductory <strong>PyGears</strong> example, checkout <a class="reference internal" href="echo.html#echo-examples"><span class="std std-ref">echo</span></a>. A snippet is given below:</p>
@@ -63,6 +65,7 @@
 <p>In <strong>PyGears</strong>, each HDL module is considered a Python function, called the <em>gear</em>, hence the design is described in form of a functional (gear) composition. In order for HDL modules to be composable in this way, they need to be designed in accordance with the <strong>Gears</strong> methodology. You should probably <a class="reference internal" href="gears.html#gears-introduction-to-gears"><span class="std std-ref">read a short intro to Gears</span></a> in order to understand this project from the hardware perspective.</p>
 <p><strong>PyGears</strong> supports also the hierarchical gears which do not have a HDL implementation, but are defined in terms of other gears. Each gear accepts and returns interface objects as arguments, which represents module connections. This allows for a module composition to be described in terms of powerful functional concepts, such as: partial application, higher-order functions, function polymorphism.</p>
 <p><strong>PyGears</strong> features a powerful system of <a class="reference internal" href="typing.html#typing"><span class="std std-ref">generic types</span></a>, which allows for generic modules to be described, as well as to perform type checking of the gear composition.</p>
+</div>
 <div class="section" id="installation-instructions">
 <h2>Installation Instructions<a class="headerlink" href="#installation-instructions" title="Permalink to this headline">¶</a></h2>
 <p>For the instruction checkout <a class="reference internal" href="install.html#install"><span class="std std-ref">Installation</span></a> page.</p>
