@@ -1,9 +1,12 @@
+.. meta::
+   :google-site-verification: SwfEvJJ_Q9MXxKIscULvgc4E_MvI1Be5lqBW2SOlDkg
+
 Welcome to PyGears
 ==================
 
 **PyGears** is an ambitious attempt to create a Python framework that facilitates describing digital hardware. It aims to augment current RTL methodology to drastically increase **composability** of hardware modules. Ease of composition leads to better **reusability**, since modules that compose better can be used in a wider variety of contexts. Set of reusable components can then form a well-tested and documented library that significantly speeds up the development process.  
 
-For a guide through PyGears methodology, checkout `blog series on implementing RISC-V in PyGears <https://bogdanvuk.github.io/pygears/blog/riscv/introduction.html>`_. 
+For a guide through **PyGears** methodology, checkout `blog series on implementing RISC-V in PyGears <https://bogdanvuk.github.io/pygears/blog/riscv/introduction.html>`_. 
 
 For an introductory **PyGears** example, checkout :ref:`echo <echo-examples>`. A snippet is given below: 
 
@@ -41,17 +44,17 @@ Installation Instructions
 
 For the instruction checkout :ref:`Installation <install>` page.
 
-References
-----------
+Read the documentation
+----------------------
 
-- `Kortiq's <http://www.kortiq.com/>`_ AIScale Deep Learning Processor was completely developed using **PyGears**
+`PyGears documentation <https://bogdanvuk.github.io/pygears/>`_
 
 Checkout the examples
 ---------------------
 
 :ref:`Echo <echo-examples>`: Hardware module that applies echo audio effect to a continuous audio stream.
 
-`RISC-V Blog <https://bogdanvuk.github.io/pygears/blog/riscv/introduction.html>`_: Blog series on implementing RISC-V processor with PyGears
+`RISC-V Blog <https://bogdanvuk.github.io/pygears/blog/riscv/introduction.html>`_: Blog series on implementing RISC-V processor with **PyGears**
 
 `Tests <https://github.com/bogdanvuk/pygears/tree/master/tests>`_: Contain many examples on how individual **PyGears** components operate
 
@@ -59,10 +62,10 @@ Checkout the examples
 
 `Cookbook library <https://github.com/bogdanvuk/pygears/tree/master/pygears/cookbook>`_
 
-Read the documentation
-----------------------
+References
+----------
 
-`PyGears documentation <https://bogdanvuk.github.io/pygears/>`_
+- `Kortiq's <http://www.kortiq.com/>`_ AIScale Deep Learning Processor was completely developed using **PyGears**
 
 Contributions
 =============

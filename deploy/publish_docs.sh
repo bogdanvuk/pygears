@@ -19,6 +19,7 @@ cd $(git rev-parse --show-toplevel)
 git ls-files -z | xargs -0 rm -f
 mv ./docs/manual/_build/html/{.,}* ./
 
+rmdir -f blog
 mkdir blog
 mv ./docs/blog/_build/html/{.,}* ./blog
 

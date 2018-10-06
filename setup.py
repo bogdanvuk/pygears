@@ -45,7 +45,7 @@ setup(
     long_description=readme(),
 
     # The project's main homepage.
-    url='https://github.com/bogdanvuk/pygears',
+    url='https://bogdanvuk.github.io/pygears',
     # download_url = '',
 
     # Author details
