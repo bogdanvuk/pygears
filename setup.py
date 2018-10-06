@@ -40,7 +40,7 @@ def readme():
 
 setup(
     name='pygears',
-    version='0.1.1a2',
+    version='0.1.1a3',
     description='Framework for functional hardware design approach',
     long_description=readme(),
 
@@ -65,7 +65,7 @@ setup(
     package_data={'': ['*.j2', '*.sv']},
     include_package_data=True,
     keywords='functional hardware design Python simulator HDL ASIC FPGA Gears',
-    install_requires=['jinja2>=2.10'],
+    install_requires=['jinja2>=2.10', 'pygears-tools'],
     packages=find_packages(exclude=['examples*', 'docs']),
     entry_points={
         'console_scripts': [

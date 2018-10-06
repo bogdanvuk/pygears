@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 sudo zypper --non-interactive update
-sudo zypper --non-interactive install python3-pip
+sudo zypper --non-interactive install python3-pip git
 sudo pip3 install --pre pygears-tools
 
 pygears-tools-install -l pyenv python pygears verilator > /home/vagrant/dependencies.sh
@@ -14,7 +14,3 @@ pygears-tools-install pyenv python pygears verilator
 source ~/.pygears/tools/tools.sh
 
 pip install -U --pre pygears
-
-sudo zypper --non-interactive install git
-cd ~
-git clone https://github.com/bogdanvuk/pygears.git

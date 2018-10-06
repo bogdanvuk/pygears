@@ -12,6 +12,3 @@ pygears-tools-install pyenv python pygears verilator
 source ~/.pygears/tools/tools.sh
 
 pip install -U --pre pygears
-
-cd ~
-git clone https://github.com/bogdanvuk/pygears.git

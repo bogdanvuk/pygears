@@ -1,4 +1,6 @@
-source /home/vagrant/.pygears/tools/tools.sh
+if [ -f /home/vagrant/.pygears/tools/tools.sh ]; then
+    source /home/vagrant/.pygears/tools/tools.sh
+fi
 
 cd ~/pygears
 git checkout develop

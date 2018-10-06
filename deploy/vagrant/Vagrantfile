@@ -1,0 +1,71 @@
+$set_environment_variables = <<SCRIPT
+tee "/etc/profile.d/myvars.sh" > "/dev/null" <<EOF
+export PYGEARS_VERSION=#{ENV['PYGEARS_VERSION']}
+EOF
+SCRIPT
+
+Vagrant.configure("2") do |config|
+  # config.vm.box = "ubuntu/bionic64"
+
+  # our web/app servers and their IPs - format 192.168.1.8##
+  distribs = {
+    'ubuntu18' => {
+      :os => 'ubuntu',
+      :box => "ubuntu/bionic64",
+    },
+    'ubuntu16' => {
+      :os => 'ubuntu',
+      :box => "ubuntu/xenial64",
+    },
+    'openSUSE15' => {
+      :os => 'opensuse',
+      :box => "opensuse/openSUSE-15.0-x86_64",
+    }
+  }
+
+  methods = ['pygears_tools', 'pip']
+
+  methods.each do |method|
+    distribs.each do |key,value|
+
+      boxname = "#{key}_#{method}"
+
+      config.vm.provision :shell, inline: 'echo boxname: ' + boxname
+
+      config.vm.define boxname do |app_config|
+
+        app_config.vm.provision "shell", inline: $set_environment_variables, run: "always"
+
+        app_config.vm.provision :shell, path: "common/build_#{value[:os]}_#{method}.sh", privileged: false
+
+        app_config.vm.box = value[:box]
+
+        app_config.vm.box_check_update = false
+
+        app_config.vm.provider "virtualbox" do |v|
+          v.memory = 8192
+          v.cpus = 4
+        end
+
+        app_config.vm.provision :shell, path: "common/check_version.sh", privileged: false
+        app_config.vm.provision :shell, path: "common/git_clone.sh", privileged: false
+        app_config.vm.provision :shell, path: "common/test.sh", privileged: false
+
+        if method == 'pip'
+          app_config.vm.provision :shell, path: "common/install_verilator.sh", privileged: false
+        end
+
+        app_config.vm.provision :shell, path: "common/examples.sh", privileged: false
+
+      end # config.vm.define opts[:name] do |config|
+
+    end # distribs.each
+  end # methods.each
+
+  # config.vm.provision "shell", inline: $set_environment_variables, run: "always"
+  # config.vm.provision :shell, path: "common/build_pip_install.sh", privileged: false
+  # config.vm.provision :shell, path: "common/check_version.sh", privileged: false
+  # config.vm.provision :shell, path: "common/test.sh", privileged: false
+  # config.vm.provision :shell, path: "common/install_verilator.sh", privileged: false
+  # config.vm.provision :shell, path: "common/examples.sh", privileged: false
+end

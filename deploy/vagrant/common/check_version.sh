@@ -1,5 +1,7 @@
-source /home/vagrant/.pygears/tools/tools.sh
+if [ -f /home/vagrant/.pygears/tools/tools.sh ]; then
+    source /home/vagrant/.pygears/tools/tools.sh
+fi
 
-python -c "import pygears; import sys; sys.exit(pygears.__version__ != $PYGEARS_VERSION)"
+python3 -c "import pygears; import sys; sys.exit(pygears.__version__ != \"$PYGEARS_VERSION\")"
 
 exit $?
