@@ -23,6 +23,10 @@ Vagrant.configure("2") do |config|
     }
   }
 
+  special_build = {
+    'ubuntu16_pip' => 'common/build_ubuntu16_pip.sh'
+  }
+
   methods = ['pygears_tools', 'pip']
 
   methods.each do |method|
@@ -36,7 +40,12 @@ Vagrant.configure("2") do |config|
 
         app_config.vm.provision "shell", inline: $set_environment_variables, run: "always"
 
-        app_config.vm.provision :shell, path: "common/build_#{value[:os]}_#{method}.sh", privileged: false
+        build_script_name = "common/build_#{value[:os]}_#{method}.sh"
+        if special_build.key?(boxname)
+          build_script_name = special_build[boxname]
+        end
+
+        app_config.vm.provision :shell, :path => build_script_name, privileged: false
 
         app_config.vm.box = value[:box]
 

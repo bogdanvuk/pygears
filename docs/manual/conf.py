@@ -29,8 +29,11 @@ release = version
 extensions = [
     'sphinx_verboser.verboser', 'sphinxarg.ext', 'sphinx.ext.autodoc',
     'sphinx.ext.githubpages', 'sphinxcontrib.tikz', 'sphinxcontrib.wavedrom',
-    'bdp.sphinxext.bdpfigure', 'sphinx.ext.napoleon'
+    'bdp.sphinxext.bdpfigure', 'sphinx.ext.napoleon', 'sphinx_sitemap'
 ]
+
+site_url = "https://bogdanvuk.github.io/pygears"
+
 autodoc_default_options = {
     'show-inheritance': None,
     'members': None,
@@ -147,7 +150,7 @@ html_static_path = ['_static']
 
 html_sidebars = {
     '**': ['about.html', 'globaltoc.html', 'blog_link.html', 'searchbox.html']
-    }
+}
 
 # -- Options for HTMLHelp output ---------------------------------------------
 

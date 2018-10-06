@@ -62,6 +62,7 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3.6',
     ],
+    python_requires='>=3.6.0',
     package_data={'': ['*.j2', '*.sv']},
     include_package_data=True,
     keywords='functional hardware design Python simulator HDL ASIC FPGA Gears',
