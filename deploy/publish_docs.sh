@@ -23,7 +23,7 @@ rm -rf blog
 mkdir blog
 mv ./docs/blog/_build/html/{.,}* ./blog
 
-printf "tools/\ndocs/\npygears/\nexamples/\ntests/\n" > .gitignore
+printf "tools/\ndocs/\npygears/\nexamples/\ntests/\ndeploy/\n" > .gitignore
 
 git add -A
 git commit -m "publishing updated docs..."
