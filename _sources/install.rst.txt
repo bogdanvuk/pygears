@@ -3,7 +3,7 @@
 Installation on Windows
 =======================
 
-Currently, PyGears has been tested to work on Windows 7 on `Python 3.6.6 <https://www.python.org/ftp/python/3.6.6/python-3.6.6.exe>`_ and installed via `PyCharm <https://www.jetbrains.com/pycharm/>`_. Currently PyGears does not support co-simulation with third-party RTL simulators on Windows.
+PyGears has been tested to work on Windows 7 with `Python 3.6.6 <https://www.python.org/ftp/python/3.6.6/python-3.6.6.exe>`_ and installed via `PyCharm <https://www.jetbrains.com/pycharm/>`_. Currently PyGears does not support co-simulation with third-party RTL simulators on Windows.
 
 Installation on Linux
 =====================
@@ -24,7 +24,7 @@ Obtain the examples:
    git clone https://github.com/bogdanvuk/pygears.git
    cd pygears/examples
 
-.. _install-installation-pygears-tools:
+.. _install-pygears-tools:
 
 Installing using pygears-tools
 ------------------------------

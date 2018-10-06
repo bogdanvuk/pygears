@@ -44,10 +44,10 @@ Installation Instructions
 
 For the instruction checkout :ref:`Installation <install>` page.
 
-References
-----------
+Read the documentation
+----------------------
 
-- `Kortiq's <http://www.kortiq.com/>`_ AIScale Deep Learning Processor was completely developed using **PyGears**
+`PyGears documentation <https://bogdanvuk.github.io/pygears/>`_
 
 Checkout the examples
 ---------------------
@@ -62,10 +62,10 @@ Checkout the examples
 
 `Cookbook library <https://github.com/bogdanvuk/pygears/tree/master/pygears/cookbook>`_
 
-Read the documentation
-----------------------
+References
+----------
 
-`PyGears documentation <https://bogdanvuk.github.io/pygears/>`_
+- `Kortiq's <http://www.kortiq.com/>`_ AIScale Deep Learning Processor was completely developed using **PyGears**
 
 Contributions
 =============
