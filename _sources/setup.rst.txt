@@ -21,7 +21,7 @@ I've compiled a Python script for installing the PyGears workflow on Ubuntu and 
 
 .. warning::
 
-    This following procedures were only tested on Ubuntu 18.04, Ubuntu 16.04 and openSUSE Leap 15
+    This following procedures were only tested on Ubuntu 18.04, Ubuntu 16.04, Ubuntu 14.04 and openSUSE Leap 15
 
 .. code-block:: bash
      
