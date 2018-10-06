@@ -1,5 +1,5 @@
-PyGears 0.1.1
-=============
+PyGears 0.1.1 released
+======================
 
 .. post::
    :category: Release

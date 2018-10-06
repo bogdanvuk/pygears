@@ -149,7 +149,7 @@ html_theme_options = {
 html_static_path = ['_static']
 
 html_sidebars = {
-    '**': ['about.html', 'globaltoc.html', 'blog_link.html', 'searchbox.html']
+    '**': ['about.html', 'blog_link.html', 'globaltoc.html', 'searchbox.html']
 }
 
 # -- Options for HTMLHelp output ---------------------------------------------
