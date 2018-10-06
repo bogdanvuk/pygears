@@ -1,0 +1,3 @@
+[console_scripts]
+pywave = pygears.sim.extens.pywave:main
+

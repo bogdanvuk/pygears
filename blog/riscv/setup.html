@@ -74,6 +74,7 @@
     &ensp;
     <input type="number" maxlength="1" id="verbosity_value" min="1" max="2" value="1" oninput="changeVerbosity(this.value);" style="font-weight: bold"/>
 </form>
+<p>Relevant PyGears git commit: <a class="reference external" href="https://github.com/bogdanvuk/pygears/tree/b45f3a7a8d4db48dd76201f22739c9b097a5967a">b45f3a7</a></p>
 <p>If I want to approach this project the TDD way, I need to be ready to test the design from the start. Hence, I will start by obtaining the “golden design”, aka “reference model”, aka “test oracle”, depending on the terminology, and setting up the infrastructure to it with PyGears. <span data-verbosity="2" hidden="true"> RISC-V foundation github page offers </span><a class="reference external" data-verbosity="2" hidden="true" href="https://github.com/riscv/riscv-isa-sim/">Spike</a><span data-verbosity="2" hidden="true"> - RISC-V instruction set simulator which implements the RISC-V functional model. There are more simulators listed on the RISC-V </span><a class="reference external" data-verbosity="2" hidden="true" href="https://riscv.org/software-status/">website</a><span data-verbosity="2" hidden="true">, but I’d like to start with the official one. Spike is dependent on some other riscv-tool packages, so I’ll start from </span><a class="reference external" data-verbosity="2" hidden="true" href="https://github.com/riscv/riscv-isa-sim/">riscv-tools</a><span data-verbosity="2" hidden="true"> repo and its setup instructions.</span></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo apt-get install autoconf automake autotools-dev curl libmpc-dev libmpfr-dev libgmp-dev libusb-1.0-0-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev device-tree-compiler pkg-config libexpat-dev
 
@@ -129,7 +130,7 @@ git submodule update --init --recursive
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>riscv64-unknown-elf-gcc -march<span class="o">=</span>rv32i -mabi<span class="o">=</span>ilp32 -nostdlib -T bare.ld hello.s -o hello
 </pre></div>
 </div>
-<p data-verbosity="2" hidden="true">Execution of this command leaves me with the <code class="docutils literal notranslate"><span class="pre">hello</span></code> elf file in the same directory. In order to see the machine code of the instructions and their places in memory, I can run the dissasembler:</p>
+<p data-verbosity="2" hidden="true">Execution of this command leaves me with the <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">hello</span></code> elf file in the same directory. In order to see the machine code of the instructions and their places in memory, I can run the dissasembler:</p>
 <div hidden data-verbosity=2>
 <div class="highlight-bash notranslate" data-verbosity="2" hidden="true"><div class="highlight"><pre><span></span>riscv64-unknown-elf-objdump -d hello
 </pre></div>
@@ -170,13 +171,13 @@ git submodule update --init --recursive
 <span class="x"> core   0: 0xffffffff80000014 (0x0000006f) j       pc + 0x0</span>
 </pre></div>
 </div>
-<p data-verbosity="2" hidden="true">It doesn’t matter anyways because it worked! I’ll probably get more insight into Spike as the time passes and figure exactly what’s happening, but it’s enough for the start. I invoked the simulator in interactive debug mode in order to check how the test instruction alters the processor state. The instruction <code class="docutils literal notranslate"><span class="pre">li</span> <span class="pre">a1,</span> <span class="pre">1</span></code> should load a value of 1 to the register <code class="docutils literal notranslate"><span class="pre">a1</span></code>. Name <code class="docutils literal notranslate"><span class="pre">li</span></code> stands for “load immediate” since it loads to a register a value that is immediately available in the instruction code. The code of this instruction is <code class="docutils literal notranslate"><span class="pre">0x00100593</span></code>, and there it is, the value of 1 in top three nibbles of the code: <code class="docutils literal notranslate"><span class="pre">0x001</span></code>.</p>
+<p data-verbosity="2" hidden="true">It doesn’t matter anyways because it worked! I’ll probably get more insight into Spike as the time passes and figure exactly what’s happening, but it’s enough for the start. I invoked the simulator in interactive debug mode in order to check how the test instruction alters the processor state. The instruction <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">li</span> <span class="pre">a1,</span> <span class="pre">1</span></code> should load a value of 1 to the register <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">a1</span></code>. Name <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">li</span></code> stands for “load immediate” since it loads to a register a value that is immediately available in the instruction code. The code of this instruction is <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">0x00100593</span></code>, and there it is, the value of 1 in top three nibbles of the code: <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">0x001</span></code>.</p>
 <div hidden data-verbosity=2>
 <div class="highlight-bash notranslate" data-verbosity="2" hidden="true"><div class="highlight"><pre><span></span>spike -d --isa<span class="o">=</span>rv32i hello
 </pre></div>
 </div>
 
-</div><p data-verbosity="2" hidden="true">I issued the following commands in order to test the value of the register <code class="docutils literal notranslate"><span class="pre">a1</span></code> before and after the test instruction execution to observe the instruction effect. This is exactly what I will do when I start hardware implementation, in order to test it against the reference design which is the Spike simulator.</p>
+</div><p data-verbosity="2" hidden="true">I issued the following commands in order to test the value of the register <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">a1</span></code> before and after the test instruction execution to observe the instruction effect. This is exactly what I will do when I start hardware implementation, in order to test it against the reference design which is the Spike simulator.</p>
 <div hidden data-verbosity=2>
 <div class="highlight-bash notranslate" data-verbosity="2" hidden="true"><div class="highlight"><pre><span></span>: <span class="k">until</span> pc <span class="m">0</span> 0xffffffff80000000
 : reg <span class="m">0</span> a1
@@ -191,8 +192,8 @@ core   <span class="m">0</span>: 0xffffffff80000000 <span class="o">(</span>0x00
 
 </div><div class="section" id="invoking-from-python">
 <h2>Invoking from Python<a class="headerlink" href="#invoking-from-python" title="Permalink to this headline">¶</a></h2>
-<p>I’d like to have at least one test per RISC-V instruction I implement and run them as often as possible. Hence I need them automated. Specifically, my automated tests need to check whether an instruction introduces the same changes to the memory and registers in my design as it does in the Spike simulator. Unfortunately, Spike doesn’t offer an option of executing commmands from the script, so I’ll have to run it in the interactive mode and send commands to him live. <span data-verbosity="2" hidden="true"> Luckily, the Python library </span><a class="reference external" data-verbosity="2" hidden="true" href="https://pexpect.readthedocs.io/en/stable/index.html">pexpect</a><span data-verbosity="2" hidden="true"> was created specifically for the task like this. Pexpect will allow me to start Spike from Python, send it some commands and retrieve the responses. I’ll immediatelly wrap low-level calls to the </span><code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">pexpect</span></code><span data-verbosity="2" hidden="true"> library inside a class I’ll name “Spike”, which will provide a high-level interface for querying the memory and register state and steping through the program. </span><span> Let’s put all this functionality inside </span><a href="#id1"><span class="problematic" id="id2">`examples/riscv/spike.py &lt;&gt;`_</span></a><span>.</span></p>
-<p data-verbosity="2" hidden="true">Let’s do the Spike class the right way, by using the <a class="reference external" href="https://docs.python.org/3/reference/datamodel.html#context-managers">Context Manager</a> pattern. This pattern asks us to define initialization and cleanup code inside <code class="docutils literal notranslate"><span class="pre">__enter__</span></code> and <code class="docutils literal notranslate"><span class="pre">__exit__</span></code> methods respectively. During the initialization, I’d like to start the Spike simulator, setup some communication parameters and let the simulator run until it reaches the beggining of my set of instructions (first few instructions are injected by the simulator).</p>
+<p>I’d like to have at least one test per RISC-V instruction I implement and run them as often as possible. Hence I need them automated. Specifically, my automated tests need to check whether an instruction introduces the same changes to the memory and registers in my design as it does in the Spike simulator. Unfortunately, Spike doesn’t offer an option of executing commmands from the script, so I’ll have to run it in the interactive mode and send commands to him live. <span data-verbosity="2" hidden="true"> Luckily, the Python library </span><a class="reference external" data-verbosity="2" hidden="true" href="https://pexpect.readthedocs.io/en/stable/index.html">pexpect</a><span data-verbosity="2" hidden="true"> was created specifically for the task like this. Pexpect will allow me to start Spike from Python, send it some commands and retrieve the responses. I’ll immediatelly wrap low-level calls to the </span><code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">pexpect</span></code><span data-verbosity="2" hidden="true"> library inside a class I’ll name “Spike”, which will provide a high-level interface for querying the memory and register state and steping through the program. </span><span> Let’s put all this functionality inside </span><a class="reference external" href="https://github.com/bogdanvuk/pygears/blob/b45f3a7a8d4db48dd76201f22739c9b097a5967a/examples/riscv/spike.py">examples/riscv/spike.py</a><span>.</span></p>
+<p data-verbosity="2" hidden="true">Let’s do the Spike class the right way, by using the <a class="reference external" data-verbosity="2" hidden="true" href="https://docs.python.org/3/reference/datamodel.html#context-managers">Context Manager</a> pattern. This pattern asks us to define initialization and cleanup code inside <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">__enter__</span></code> and <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">__exit__</span></code> methods respectively. During the initialization, I’d like to start the Spike simulator, setup some communication parameters and let the simulator run until it reaches the beggining of my set of instructions (first few instructions are injected by the simulator).</p>
 <div hidden data-verbosity=2>
 <div class="highlight-default notranslate" data-verbosity="2" hidden="true"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Spike</span><span class="p">:</span>
     <span class="n">PROMPT</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;: $&#39;</span>
@@ -213,7 +214,7 @@ core   <span class="m">0</span>: 0xffffffff80000000 <span class="o">(</span>0x00
 </pre></div>
 </div>
 
-</div><p data-verbosity="2" hidden="true">This allows me to invoke Spike using <code class="docutils literal notranslate"><span class="pre">with</span></code> Python statement:</p>
+</div><p data-verbosity="2" hidden="true">This allows me to invoke Spike using <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">with</span></code> Python statement:</p>
 <div hidden data-verbosity=2>
 <div class="highlight-default notranslate" data-verbosity="2" hidden="true"><div class="highlight"><pre><span></span><span class="c1"># This line invokes the initialization routine which opens up</span>
 <span class="c1"># the communication line with the Spike simulator</span>
@@ -241,8 +242,8 @@ core   <span class="m">0</span>: 0xffffffff80000000 <span class="o">(</span>0x00
 </pre></div>
 </div>
 
-</div><p data-verbosity="2" hidden="true">The <code class="docutils literal notranslate"><span class="pre">until()</span></code> method instructs the Spike simulator to run until <code class="docutils literal notranslate"><span class="pre">PC</span></code> reaches a specific address. Since my code starts (for some reason) at address <code class="docutils literal notranslate"><span class="pre">0xffffffff80000000</span></code>, I’ll make <code class="docutils literal notranslate"><span class="pre">until()</span></code> accept addressess in form of the offset to this base address, which will reduce the noise of always needing to write such large numbers.</p>
-<p data-verbosity="2" hidden="true">The <code class="docutils literal notranslate"><span class="pre">pc()</span></code> method queries the current value of the <code class="docutils literal notranslate"><span class="pre">PC</span></code>, but also returns only the offset to the code base address. The <code class="docutils literal notranslate"><span class="pre">step()</span></code> method instructs the simulator to run the next instruction, and the <code class="docutils literal notranslate"><span class="pre">reg()</span></code> method retrieves the state of a specific register.</p>
+</div><p data-verbosity="2" hidden="true">The <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">until()</span></code> method instructs the Spike simulator to run until <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">PC</span></code> reaches a specific address. Since my code starts (for some reason) at address <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">0xffffffff80000000</span></code>, I’ll make <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">until()</span></code> accept addressess in form of the offset to this base address, which will reduce the noise of always needing to write such large numbers.</p>
+<p data-verbosity="2" hidden="true">The <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">pc()</span></code> method queries the current value of the <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">PC</span></code>, but also returns only the offset to the code base address. The <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">step()</span></code> method instructs the simulator to run the next instruction, and the <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">reg()</span></code> method retrieves the state of a specific register.</p>
 <p>Now, I can interact with Spike on a pretty high level:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">spike</span> <span class="k">import</span> <span class="n">Spike</span>
 
@@ -267,41 +268,7 @@ core   <span class="m">0</span>: 0xffffffff80000000 <span class="o">(</span>0x00
     
 
 
-<div class="section">
-  <span style="float: left;">
   
-  Previous: 
-  <a href="introduction.html">
-    
-    RISC-V Blog Series Introduction
-  </a>
-  
-  </span>
-  <span>&nbsp;</span>
-  <span style="float: right;">
-  
-</div>
-
-  
-  
-    <div class="section">
-    <h2>Comments</h2>
-    <div id="disqus_thread"></div>
-    <script type="text/javascript">
-        var disqus_shortname = 'pygears';
-        var disqus_identifier = '/riscv/setup/';
-        var disqus_title = 'RISC-V Tools Setup';
-        var disqus_url = 'https://bogdanvuk.github.io/pygears/riscv/setup';
-
-        (function() {
-            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-        })();
-    </script>
-    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
-    </div>
   
   </div>
 
@@ -334,8 +301,9 @@ core   <span class="m">0</span>: 0xffffffff80000000 <span class="o">(</span>0x00
   
   <h2>
   
-  
-    20 September 2018
+    
+    07 October 2018
+    
   
   </h2>
 
@@ -354,13 +322,6 @@ core   <span class="m">0</span>: 0xffffffff80000000 <span class="o">(</span>0x00
   
 
   
-  <li id="language"><span>Language:</span>
-    
-      
-      <a href="../blog/language/english.html">English</a>
-      
-    </li>
-  
 
   
   <li id="category"><span>Category:</span>
@@ -374,28 +335,9 @@ core   <span class="m">0</span>: 0xffffffff80000000 <span class="o">(</span>0x00
   
   <li id="tags"><span>Tag:
     
-      
-      <a href="../blog/tag/setup.html">setup</a>
-      
+      setup
     </li>
   
-  
-  <li id="comments">
-    <script type="text/javascript">
-    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
-    var disqus_shortname = 'pygears'; // required: replace example with your forum shortname
-
-    /* * * DON'T EDIT BELOW THIS LINE * * */
-    (function () {
-    var s = document.createElement('script'); s.async = true;
-    s.type = 'text/javascript';
-    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
-    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
-    }());
-    </script>
-    
-    <a href="#disqus_thread" data-disqus-identifier="/riscv/setup/"> Comments</a>
-  </li>
   
   </ul>
 
@@ -405,27 +347,7 @@ core   <span class="m">0</span>: 0xffffffff80000000 <span class="o">(</span>0x00
   <ul>
     
     
-      <li><a href="introduction.html">20 September - RISC-V Blog Series Introduction</a></li>
-    
-  </ul>
-
-  <h3><a href="../blog/tag.html">Tags</a></h3>
-  <style type="text/css">
-    ul.ablog-cloud {list-style: none; overflow: auto;}
-    ul.ablog-cloud li {float: left; height: 20pt; line-height: 18pt; margin-right: 5px;}
-    ul.ablog-cloud a {text-decoration: none; vertical-align: middle;}
-    li.ablog-cloud-1{font-size: 80%;}
-    li.ablog-cloud-2{font-size: 95%;}
-    li.ablog-cloud-3{font-size: 110%;}
-    li.ablog-cloud-4{font-size: 125%;}
-    li.ablog-cloud-5{font-size: 140%;}
-  </style>
-  <ul class="ablog-cloud">
-    
-      
-      <li class="ablog-cloud ablog-cloud-3">
-        <a href="../blog/tag/setup.html">setup</a></li>
-      
+      <li><a href="introduction.html">06 October - RISC-V Blog Series Introduction</a></li>
     
   </ul>
 
@@ -433,7 +355,7 @@ core   <span class="m">0</span>: 0xffffffff80000000 <span class="o">(</span>0x00
   <ul>
   
     
-    <li><a href="../blog/category/risc-v.html">RISC-V (2)</a></li>
+    <li><a href="../blog/category/risc-v.html">RISC-V (1)</a></li>
     
   
     
@@ -444,7 +366,7 @@ core   <span class="m">0</span>: 0xffffffff80000000 <span class="o">(</span>0x00
   <ul>
   
     
-    <li><a href="../blog/2018.html">2018 (2)</a></li>
+    <li><a href="../blog/2018.html">2018 (1)</a></li>
     
   
   </ul>

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2018.8.19)  2 OCT 2018 18:23
+This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2018.8.19)  5 OCT 2018 18:46
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -436,33 +436,33 @@ File: pgflibraryshapes.multipart.code.tex 2010/01/07 v3.0.1a (rcs-revision 1.2)
 \pgfnodepartfivebox=\box57
 )))
 (/usr/share/texlive/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tik
-zlibrarydecorations.markings.code.tex
-(/usr/share/texlive/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tik
-zlibrarydecorations.code.tex
-(/usr/share/texlive/texmf-dist/tex/generic/pgf/modules/pgfmoduledecorations.cod
-e.tex
-\pgfdecoratedcompleteddistance=\dimen155
-\pgfdecoratedremainingdistance=\dimen156
-\pgfdecoratedinputsegmentcompleteddistance=\dimen157
-\pgfdecoratedinputsegmentremainingdistance=\dimen158
-\pgf@decorate@distancetomove=\dimen159
-\pgf@decorate@repeatstate=\count109
-\pgfdecorationsegmentamplitude=\dimen160
-\pgfdecorationsegmentlength=\dimen161
-)
-\tikz@lib@dec@box=\box58
-)
-(/usr/share/texlive/texmf-dist/tex/generic/pgf/libraries/decorations/pgflibrary
-decorations.markings.code.tex))
-(/usr/share/texlive/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tik
 zlibraryarrows.code.tex
 File: tikzlibraryarrows.code.tex 2008/01/09 v3.0.1a (rcs-revision 1.1)
 
 (/usr/share/texlive/texmf-dist/tex/generic/pgf/libraries/pgflibraryarrows.code.
 tex
 File: pgflibraryarrows.code.tex 2013/09/23 v3.0.1a (rcs-revision 1.16)
-\arrowsize=\dimen162
+\arrowsize=\dimen155
 ))
+(/usr/share/texlive/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tik
+zlibrarydecorations.markings.code.tex
+(/usr/share/texlive/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tik
+zlibrarydecorations.code.tex
+(/usr/share/texlive/texmf-dist/tex/generic/pgf/modules/pgfmoduledecorations.cod
+e.tex
+\pgfdecoratedcompleteddistance=\dimen156
+\pgfdecoratedremainingdistance=\dimen157
+\pgfdecoratedinputsegmentcompleteddistance=\dimen158
+\pgfdecoratedinputsegmentremainingdistance=\dimen159
+\pgf@decorate@distancetomove=\dimen160
+\pgf@decorate@repeatstate=\count109
+\pgfdecorationsegmentamplitude=\dimen161
+\pgfdecorationsegmentlength=\dimen162
+)
+\tikz@lib@dec@box=\box58
+)
+(/usr/share/texlive/texmf-dist/tex/generic/pgf/libraries/decorations/pgflibrary
+decorations.markings.code.tex))
 (/usr/share/texlive/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tik
 zlibrarydecorations.pathreplacing.code.tex
 (/usr/share/texlive/texmf-dist/tex/generic/pgf/libraries/decorations/pgflibrary
