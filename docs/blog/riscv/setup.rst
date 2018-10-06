@@ -9,7 +9,9 @@ RISC-V Tools Setup
 
 .. verbosity_slider:: 2
 
-Relevant PyGears git commit: `b45f3a7 <https://github.com/bogdanvuk/pygears/tree/b45f3a7a8d4db48dd76201f22739c9b097a5967a>`_
+Relevant PyGears git commit:: `examples/riscv@b45f3a7 <https://github.com/bogdanvuk/pygears/tree/b45f3a7a8d4db48dd76201f22739c9b097a5967a/examples/riscv>`_
+
+This post only explains the setup procedure for the additional tools needed for the RISC-V development. Installation procedure for the PyGears tools has been discussed in the :ref:`previous post <riscv-introduction-setup>`.
 
 If I want to approach this project the TDD way, I need to be ready to test the design from the start. Hence, I will start by obtaining the "golden design", aka "reference model", aka "test oracle", depending on the terminology, and setting up the infrastructure to it with PyGears. :v:`2` RISC-V foundation github page offers `Spike <https://github.com/riscv/riscv-isa-sim/>`_ - RISC-V instruction set simulator which implements the RISC-V functional model. There are more simulators listed on the RISC-V `website <https://riscv.org/software-status/>`_, but I'd like to start with the official one. Spike is dependent on some other riscv-tool packages, so I'll start from `riscv-tools <https://github.com/riscv/riscv-isa-sim/>`_ repo and its setup instructions.
 
@@ -34,7 +36,7 @@ If I want to approach this project the TDD way, I need to be ready to test the d
 
 .. literalinclude:: files/bare.ld
 
-:v:`2` Why am I placing my code at address ``0x80000000``? Because nothing else worked. My best guess is that simulator maps RAM at address ``0x80000000`` by default and gets angry if you want your code somewhere else. :v:`1` I created a proof of concept assembly file ``hello.s``. :v:`2` It contains the example instruction that I want to test ``li a1, 1`` and some boilerplate needed to play nicely with the Spike simulator:
+:v:`2` Why am I placing my code at address ``0x80000000``? Because nothing else worked. My best guess is that simulator maps RAM at address ``0x80000000`` by default and gets angry if you want your code somewhere else. :v:`1` Next, I created a proof of concept assembly file ``hello.s``. :v:`2` It contains the example instruction that I want to test ``li a1, 1`` and some boilerplate needed to play nicely with the Spike simulator:
 
 .. literalinclude:: files/hello.s
    :language: ca65
@@ -124,11 +126,11 @@ I issued the following commands in order to test the value of the register ``a1`
 Invoking from Python
 --------------------
 
-I'd like to have at least one test per RISC-V instruction I implement and run them as often as possible. Hence I need them automated. Specifically, my automated tests need to check whether an instruction introduces the same changes to the memory and registers in my design as it does in the Spike simulator. Unfortunately, Spike doesn't offer an option of executing commmands from the script, so I'll have to run it in the interactive mode and send commands to him live. :v:`2` Luckily, the Python library `pexpect <https://pexpect.readthedocs.io/en/stable/index.html>`_ was created specifically for the task like this. Pexpect will allow me to start Spike from Python, send it some commands and retrieve the responses. I'll immediatelly wrap low-level calls to the ``pexpect`` library inside a class I'll name "Spike", which will provide a high-level interface for querying the memory and register state and steping through the program. :v:`1` Let's put all this functionality inside `examples/riscv/spike.py <https://github.com/bogdanvuk/pygears/blob/b45f3a7a8d4db48dd76201f22739c9b097a5967a/examples/riscv/spike.py>`_.   
+I'd like to have at least one test per RISC-V instruction I implement and run them as often as possible. Hence I need them automated. Specifically, my automated tests need to check whether an instruction introduces the same changes to the memory and registers in my design as it does in the Spike simulator. Unfortunately, Spike doesn't offer an option of executing commands from the script, so I'll have to run it in the interactive mode and send commands to him live. :v:`2` Luckily, the Python library `pexpect <https://pexpect.readthedocs.io/en/stable/index.html>`_ was created specifically for the task like this. Pexpect will allow me to start Spike from Python, send it some commands and retrieve the responses. I'll immediately wrap low-level calls to the ``pexpect`` library inside a class I'll name "Spike", which will provide a high-level interface for querying the memory and register state and stepping through the program. :v:`1` Let's put all this functionality inside `examples/riscv/spike.py <https://github.com/bogdanvuk/pygears/blob/b45f3a7a8d4db48dd76201f22739c9b097a5967a/examples/riscv/spike.py>`_.   
 
 .. verbosity:: 2
 
-Let's do the Spike class the right way, by using the `Context Manager <https://docs.python.org/3/reference/datamodel.html#context-managers>`_ pattern. This pattern asks us to define initialization and cleanup code inside ``__enter__`` and ``__exit__`` methods respectively. During the initialization, I'd like to start the Spike simulator, setup some communication parameters and let the simulator run until it reaches the beggining of my set of instructions (first few instructions are injected by the simulator).  
+Let's do the Spike class the right way, by using the `Context Manager <https://docs.python.org/3/reference/datamodel.html#context-managers>`_ pattern. This pattern asks us to define initialization and cleanup code inside ``__enter__`` and ``__exit__`` methods respectively. During the initialization, I'd like to start the Spike simulator, setup some communication parameters and let the simulator run until it reaches the beginning of my set of instructions (first few instructions are injected by the simulator).  
 
 .. literalinclude:: ../../../examples/riscv/spike.py
    :pyobject: Spike
