@@ -17,7 +17,7 @@ Features
 Infrastructure
 --------------
 
-- Factor-out pygears-tools to a `separate repository <https://github.com/bogdanvuk/pygears>`_
+- Factor-out pygears-tools to a `separate repository <https://github.com/bogdanvuk/pygears-tools>`_
 - Add `Vagrant <https://www.vagrantup.com/>`_ scripts for testing different PyGears installation methods on different supported OSs 
 
 Bug-fixes

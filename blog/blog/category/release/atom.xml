@@ -30,7 +30,7 @@
 &lt;div class=&quot;section&quot; id=&quot;infrastructure&quot;&gt;
 &lt;h2&gt;Infrastructure&lt;/h2&gt;
 &lt;ul class=&quot;simple&quot;&gt;
-&lt;li&gt;&lt;p&gt;Factor-out pygears-tools to a &lt;a class=&quot;reference external&quot; href=&quot;https://github.com/bogdanvuk/pygears&quot;&gt;separate repository&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;Factor-out pygears-tools to a &lt;a class=&quot;reference external&quot; href=&quot;https://github.com/bogdanvuk/pygears-tools&quot;&gt;separate repository&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
 &lt;li&gt;&lt;p&gt;Add &lt;a class=&quot;reference external&quot; href=&quot;https://www.vagrantup.com/&quot;&gt;Vagrant&lt;/a&gt; scripts for testing different PyGears installation methods on different supported OSs&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 &lt;/div&gt;
