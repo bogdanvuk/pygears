@@ -23,7 +23,7 @@ rm -rf blog
 mkdir blog
 mv ./docs/blog/_build/html/{.,}* ./blog
 
-printf "tools/\ndocs/\npygears/\nexamples/\ntests/\ndeploy/\n" > .gitignore
+printf "tools/\ndocs/\npygears/\nexamples/\ntests/\ndeploy/\ndist/\n*.egg-info/\n" > .gitignore
 printf "www.pygears.org" > CNAME
 
 git add -A

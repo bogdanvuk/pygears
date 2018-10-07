@@ -9,7 +9,7 @@ RISC-V Tools Setup
 
 .. verbosity_slider:: 2
 
-Relevant PyGears git commit:: `examples/riscv@b45f3a7 <https://github.com/bogdanvuk/pygears/tree/b45f3a7a8d4db48dd76201f22739c9b097a5967a/examples/riscv>`_
+Relevant PyGears git commit: `examples/riscv@b45f3a7 <https://github.com/bogdanvuk/pygears/tree/b45f3a7a8d4db48dd76201f22739c9b097a5967a/examples/riscv>`_
 
 This post only explains the setup procedure for the additional tools needed for the RISC-V development. Installation procedure for the PyGears tools has been discussed in the :ref:`previous post <riscv-introduction-setup>`.
 
