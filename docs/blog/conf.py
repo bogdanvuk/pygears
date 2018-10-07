@@ -14,12 +14,8 @@ version = ''
 release = ''
 
 extensions = [
-    'sphinxarg.ext',
-    'sphinx_verboser.verboser',
-    'sphinxcontrib.tikz',
-    'alabaster',
-    'ablog',
-    'sphinx_sitemap'
+    'sphinxarg.ext', 'sphinx_verboser.verboser', 'sphinxcontrib.tikz',
+    'alabaster', 'ablog', 'sphinx_sitemap'
 ]
 
 site_url = "https://bogdanvuk.github.io/pygears/blog/"
@@ -31,7 +27,6 @@ master_doc = 'index'
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 pygments_style = 'sphinx'
-
 
 html_theme = 'alabaster'
 html_title = "PyGears"
@@ -45,13 +40,28 @@ html_show_sourcelink = True
 
 templates_path = [ablog.get_html_templates_path(), '_templates']
 
+
+def link_posts_within_category(posts):
+    """Link posts after sorting them post by published date."""
+    from operator import attrgetter
+    posts = filter(attrgetter("order"), posts)
+    posts = sorted(posts)
+    for p in posts:
+        p.prev = p.next = None
+
+    for i in range(0, len(posts) - 1):
+        try:
+            succ = next(
+                p for p in posts[i + 1:] if p.category == posts[i].category)
+            posts[i].next = succ
+            succ.prev = posts[i]
+        except StopIteration:
+            posts[i].next = None
+
+
+ablog.blog.link_posts = link_posts_within_category
 blog_title = 'PyGears'
 blog_baseurl = 'https://bogdanvuk.github.io/pygears/'
-# blog_locations = {
-#     'Pittsburgh': ('Pittsburgh, PA', 'http://en.wikipedia.org/wiki/Pittsburgh'),
-#     'SF': ('San Francisco, CA', 'http://en.wikipedia.org/wiki/San_Francisco'),
-#     'Denizli': ('Denizli, Turkey', 'http://en.wikipedia.org/wiki/Denizli'),
-# }
 blog_languages = {
     'en': ('English', None),
 }
@@ -75,11 +85,10 @@ disqus_pages = True
 html_style = 'alabaster.css'
 html_theme = 'alabaster'
 html_sidebars = {
-    '**': ['custom_about.html',
-           'postcard.html', 'recentposts.html',
-           'tagcloud.html', 'categories.html',
-           'archives.html',
-           'searchbox.html']
+    '**': [
+        'custom_about.html', 'postcard.html', 'recentposts.html',
+        'tagcloud.html', 'categories.html', 'archives.html', 'searchbox.html'
+    ]
 }
 html_theme_path = [alabaster.get_path()]
 html_theme_options = {
@@ -90,12 +99,10 @@ html_theme_options = {
     # 'logo': 'ablog.png',
 }
 
-
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'PyGearsdoc'
-
 
 # -- Options for LaTeX output ------------------------------------------------
 
@@ -121,20 +128,15 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'PyGears.tex', 'PyGears Documentation',
-     'Bogdan Vukobratović', 'manual'),
+    (master_doc, 'PyGears.tex', 'PyGears Documentation', 'Bogdan Vukobratović',
+     'manual'),
 ]
-
 
 # -- Options for manual page output ------------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    (master_doc, 'pygears', 'PyGears Documentation',
-     [author], 1)
-]
-
+man_pages = [(master_doc, 'pygears', 'PyGears Documentation', [author], 1)]
 
 # -- Options for Texinfo output ----------------------------------------------
 
@@ -142,11 +144,9 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'PyGears', 'PyGears Documentation',
-     author, 'PyGears', 'One line description of project.',
-     'Miscellaneous'),
+    (master_doc, 'PyGears', 'PyGears Documentation', author, 'PyGears',
+     'One line description of project.', 'Miscellaneous'),
 ]
-
 
 # -- Options for Epub output -------------------------------------------------
 
