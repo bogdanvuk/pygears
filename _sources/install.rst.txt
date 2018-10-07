@@ -13,11 +13,13 @@ Install with ``pip``
 
 **PyGears** requires a specific version of Python3, namely Python 3.6, so think about using ``pygears-tools`` and the procedure given :ref:`below <install-pygears-tools>` for installing the correct python version together with **PyGears**. Otherwise, consider using `virtualenv <https://virtualenv.pypa.io/en/stable/>`_ or `pyenv <https://github.com/pyenv/pyenv>`_ to manage your Python version.
 
+Install **PyGears** package with the command below. Depending on how your Python was installed you might get an error and need to prefix the command with ``sudo``:
+
 .. code-block:: bash
 
    pip3 install pygears
 
-Obtain the examples:
+*[Optional]* Obtain examples and tests:
 
 .. code-block:: bash
 

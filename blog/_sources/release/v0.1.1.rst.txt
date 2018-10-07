@@ -1,7 +1,8 @@
-PyGears 0.1.1
-=============
+PyGears 0.1.1 released
+======================
 
-.. post::
+.. post:: October 07, 2018
+   :author: Bogdan
    :category: Release
 
 Features

@@ -74,7 +74,8 @@
     &ensp;
     <input type="number" maxlength="1" id="verbosity_value" min="1" max="2" value="1" oninput="changeVerbosity(this.value);" style="font-weight: bold"/>
 </form>
-<p>Relevant PyGears git commit: <a class="reference external" href="https://github.com/bogdanvuk/pygears/tree/b45f3a7a8d4db48dd76201f22739c9b097a5967a">b45f3a7</a></p>
+<p>Relevant PyGears git commit:: <a class="reference external" href="https://github.com/bogdanvuk/pygears/tree/b45f3a7a8d4db48dd76201f22739c9b097a5967a/examples/riscv">examples/riscv&#64;b45f3a7</a></p>
+<p>This post only explains the setup procedure for the additional tools needed for the RISC-V development. Installation procedure for the PyGears tools has been discussed in the <a class="reference internal" href="introduction.html#riscv-introduction-setup"><span class="std std-ref">previous post</span></a>.</p>
 <p>If I want to approach this project the TDD way, I need to be ready to test the design from the start. Hence, I will start by obtaining the “golden design”, aka “reference model”, aka “test oracle”, depending on the terminology, and setting up the infrastructure to it with PyGears. <span data-verbosity="2" hidden="true"> RISC-V foundation github page offers </span><a class="reference external" data-verbosity="2" hidden="true" href="https://github.com/riscv/riscv-isa-sim/">Spike</a><span data-verbosity="2" hidden="true"> - RISC-V instruction set simulator which implements the RISC-V functional model. There are more simulators listed on the RISC-V </span><a class="reference external" data-verbosity="2" hidden="true" href="https://riscv.org/software-status/">website</a><span data-verbosity="2" hidden="true">, but I’d like to start with the official one. Spike is dependent on some other riscv-tool packages, so I’ll start from </span><a class="reference external" data-verbosity="2" hidden="true" href="https://github.com/riscv/riscv-isa-sim/">riscv-tools</a><span data-verbosity="2" hidden="true"> repo and its setup instructions.</span></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo apt-get install autoconf automake autotools-dev curl libmpc-dev libmpfr-dev libgmp-dev libusb-1.0-0-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev device-tree-compiler pkg-config libexpat-dev
 
@@ -99,7 +100,7 @@ git submodule update --init --recursive
 <span class="p">}</span>
 </pre></div>
 </div>
-<p><span data-verbosity="2" hidden="true"> Why am I placing my code at address </span><code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">0x80000000</span></code><span data-verbosity="2" hidden="true">? Because nothing else worked. My best guess is that simulator maps RAM at address </span><code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">0x80000000</span></code><span data-verbosity="2" hidden="true"> by default and gets angry if you want your code somewhere else. </span><span> I created a proof of concept assembly file </span><code class="docutils literal notranslate"><span class="pre">hello.s</span></code><span>. </span><span data-verbosity="2" hidden="true"> It contains the example instruction that I want to test </span><code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">li</span> <span class="pre">a1,</span> <span class="pre">1</span></code><span data-verbosity="2" hidden="true"> and some boilerplate needed to play nicely with the Spike simulator:</span></p>
+<p><span data-verbosity="2" hidden="true"> Why am I placing my code at address </span><code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">0x80000000</span></code><span data-verbosity="2" hidden="true">? Because nothing else worked. My best guess is that simulator maps RAM at address </span><code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">0x80000000</span></code><span data-verbosity="2" hidden="true"> by default and gets angry if you want your code somewhere else. </span><span> Next, I created a proof of concept assembly file </span><code class="docutils literal notranslate"><span class="pre">hello.s</span></code><span>. </span><span data-verbosity="2" hidden="true"> It contains the example instruction that I want to test </span><code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">li</span> <span class="pre">a1,</span> <span class="pre">1</span></code><span data-verbosity="2" hidden="true"> and some boilerplate needed to play nicely with the Spike simulator:</span></p>
 <div class="highlight-ca65 notranslate"><div class="highlight"><pre><span></span><span class="c1">;; # Very simple assembly program that will cause Spike to terminate gracefully.</span>
 
 <span class="kp">.text</span>
@@ -192,8 +193,8 @@ core   <span class="m">0</span>: 0xffffffff80000000 <span class="o">(</span>0x00
 
 </div><div class="section" id="invoking-from-python">
 <h2>Invoking from Python<a class="headerlink" href="#invoking-from-python" title="Permalink to this headline">¶</a></h2>
-<p>I’d like to have at least one test per RISC-V instruction I implement and run them as often as possible. Hence I need them automated. Specifically, my automated tests need to check whether an instruction introduces the same changes to the memory and registers in my design as it does in the Spike simulator. Unfortunately, Spike doesn’t offer an option of executing commmands from the script, so I’ll have to run it in the interactive mode and send commands to him live. <span data-verbosity="2" hidden="true"> Luckily, the Python library </span><a class="reference external" data-verbosity="2" hidden="true" href="https://pexpect.readthedocs.io/en/stable/index.html">pexpect</a><span data-verbosity="2" hidden="true"> was created specifically for the task like this. Pexpect will allow me to start Spike from Python, send it some commands and retrieve the responses. I’ll immediatelly wrap low-level calls to the </span><code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">pexpect</span></code><span data-verbosity="2" hidden="true"> library inside a class I’ll name “Spike”, which will provide a high-level interface for querying the memory and register state and steping through the program. </span><span> Let’s put all this functionality inside </span><a class="reference external" href="https://github.com/bogdanvuk/pygears/blob/b45f3a7a8d4db48dd76201f22739c9b097a5967a/examples/riscv/spike.py">examples/riscv/spike.py</a><span>.</span></p>
-<p data-verbosity="2" hidden="true">Let’s do the Spike class the right way, by using the <a class="reference external" data-verbosity="2" hidden="true" href="https://docs.python.org/3/reference/datamodel.html#context-managers">Context Manager</a> pattern. This pattern asks us to define initialization and cleanup code inside <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">__enter__</span></code> and <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">__exit__</span></code> methods respectively. During the initialization, I’d like to start the Spike simulator, setup some communication parameters and let the simulator run until it reaches the beggining of my set of instructions (first few instructions are injected by the simulator).</p>
+<p>I’d like to have at least one test per RISC-V instruction I implement and run them as often as possible. Hence I need them automated. Specifically, my automated tests need to check whether an instruction introduces the same changes to the memory and registers in my design as it does in the Spike simulator. Unfortunately, Spike doesn’t offer an option of executing commands from the script, so I’ll have to run it in the interactive mode and send commands to him live. <span data-verbosity="2" hidden="true"> Luckily, the Python library </span><a class="reference external" data-verbosity="2" hidden="true" href="https://pexpect.readthedocs.io/en/stable/index.html">pexpect</a><span data-verbosity="2" hidden="true"> was created specifically for the task like this. Pexpect will allow me to start Spike from Python, send it some commands and retrieve the responses. I’ll immediately wrap low-level calls to the </span><code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">pexpect</span></code><span data-verbosity="2" hidden="true"> library inside a class I’ll name “Spike”, which will provide a high-level interface for querying the memory and register state and stepping through the program. </span><span> Let’s put all this functionality inside </span><a class="reference external" href="https://github.com/bogdanvuk/pygears/blob/b45f3a7a8d4db48dd76201f22739c9b097a5967a/examples/riscv/spike.py">examples/riscv/spike.py</a><span>.</span></p>
+<p data-verbosity="2" hidden="true">Let’s do the Spike class the right way, by using the <a class="reference external" data-verbosity="2" hidden="true" href="https://docs.python.org/3/reference/datamodel.html#context-managers">Context Manager</a> pattern. This pattern asks us to define initialization and cleanup code inside <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">__enter__</span></code> and <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">__exit__</span></code> methods respectively. During the initialization, I’d like to start the Spike simulator, setup some communication parameters and let the simulator run until it reaches the beginning of my set of instructions (first few instructions are injected by the simulator).</p>
 <div hidden data-verbosity=2>
 <div class="highlight-default notranslate" data-verbosity="2" hidden="true"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Spike</span><span class="p">:</span>
     <span class="n">PROMPT</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;: $&#39;</span>
@@ -268,7 +269,41 @@ core   <span class="m">0</span>: 0xffffffff80000000 <span class="o">(</span>0x00
     
 
 
+<div class="section">
+  <span style="float: left;">
   
+  Previous: 
+  <a href="introduction.html">
+    
+    RISC-V Blog Series Introduction
+  </a>
+  
+  </span>
+  <span>&nbsp;</span>
+  <span style="float: right;">
+  
+</div>
+
+  
+  
+    <div class="section">
+    <h2>Comments</h2>
+    <div id="disqus_thread"></div>
+    <script type="text/javascript">
+        var disqus_shortname = 'pygears';
+        var disqus_identifier = '/riscv/setup/';
+        var disqus_title = 'RISC-V Tools Setup';
+        var disqus_url = 'https://bogdanvuk.github.io/pygears/riscv/setup';
+
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </div>
   
   </div>
 
@@ -301,9 +336,8 @@ core   <span class="m">0</span>: 0xffffffff80000000 <span class="o">(</span>0x00
   
   <h2>
   
-    
+  
     07 October 2018
-    
   
   </h2>
 
@@ -322,6 +356,13 @@ core   <span class="m">0</span>: 0xffffffff80000000 <span class="o">(</span>0x00
   
 
   
+  <li id="language"><span>Language:</span>
+    
+      
+      <a href="../blog/language/english.html">English</a>
+      
+    </li>
+  
 
   
   <li id="category"><span>Category:</span>
@@ -335,9 +376,28 @@ core   <span class="m">0</span>: 0xffffffff80000000 <span class="o">(</span>0x00
   
   <li id="tags"><span>Tag:
     
-      setup
+      
+      <a href="../blog/tag/setup.html">setup</a>
+      
     </li>
   
+  
+  <li id="comments">
+    <script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+    var disqus_shortname = 'pygears'; // required: replace example with your forum shortname
+
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+    </script>
+    
+    <a href="#disqus_thread" data-disqus-identifier="/riscv/setup/"> Comments</a>
+  </li>
   
   </ul>
 
@@ -347,7 +407,29 @@ core   <span class="m">0</span>: 0xffffffff80000000 <span class="o">(</span>0x00
   <ul>
     
     
+      <li><a href="../release/v0.1.1.html">07 October - PyGears 0.1.1 released</a></li>
+    
       <li><a href="introduction.html">06 October - RISC-V Blog Series Introduction</a></li>
+    
+  </ul>
+
+  <h3><a href="../blog/tag.html">Tags</a></h3>
+  <style type="text/css">
+    ul.ablog-cloud {list-style: none; overflow: auto;}
+    ul.ablog-cloud li {float: left; height: 20pt; line-height: 18pt; margin-right: 5px;}
+    ul.ablog-cloud a {text-decoration: none; vertical-align: middle;}
+    li.ablog-cloud-1{font-size: 80%;}
+    li.ablog-cloud-2{font-size: 95%;}
+    li.ablog-cloud-3{font-size: 110%;}
+    li.ablog-cloud-4{font-size: 125%;}
+    li.ablog-cloud-5{font-size: 140%;}
+  </style>
+  <ul class="ablog-cloud">
+    
+      
+      <li class="ablog-cloud ablog-cloud-3">
+        <a href="../blog/tag/setup.html">setup</a></li>
+      
     
   </ul>
 
@@ -355,9 +437,11 @@ core   <span class="m">0</span>: 0xffffffff80000000 <span class="o">(</span>0x00
   <ul>
   
     
-    <li><a href="../blog/category/risc-v.html">RISC-V (1)</a></li>
+    <li><a href="../blog/category/risc-v.html">RISC-V (2)</a></li>
     
   
+    
+    <li><a href="../blog/category/release.html">Release (1)</a></li>
     
   
   </ul>
@@ -366,7 +450,7 @@ core   <span class="m">0</span>: 0xffffffff80000000 <span class="o">(</span>0x00
   <ul>
   
     
-    <li><a href="../blog/2018.html">2018 (1)</a></li>
+    <li><a href="../blog/2018.html">2018 (3)</a></li>
     
   
   </ul>

@@ -7,9 +7,7 @@ RISC-V Blog Series Introduction
 
 .. verbosity_slider:: 2
 
-Relevant PyGears git commit: `29f6f56 <https://github.com/bogdanvuk/pygears/tree/29f6f56f85697cd754befc6b60aa3506fc7fa851>`_
-
-Welcome to the blog series in which I'll be implementing the `RISC-V ISA <https://riscv.org/risc-v-isa/>`_ (Instruction Set Architecture) in hardware using functional approach with `PyGears <https://bogdanvuk.github.io/pygears/index.html>`_. My aim is to show how PyGears offers a way to build hardware in an incremental, evolutionary fashion, where the architecture, implementation and the verification environment evolve together, as opposed to the standard approach where these steps mostly happen in sequence. Developping hardware in such an `agile <https://en.wikipedia.org/wiki/Agile_software_development>`_ way offers many benefits to the hardware design process, with some of them being that:
+Welcome to the blog series in which I'll be implementing the `RISC-V ISA <https://riscv.org/risc-v-isa/>`_ (Instruction Set Architecture) in hardware using functional approach with `PyGears <https://bogdanvuk.github.io/pygears/index.html>`_. My aim is to show how PyGears offers a way to build hardware in an incremental, evolutionary fashion, where the architecture, implementation and the verification environment evolve together, as opposed to the standard approach where these steps mostly happen in sequence. Developing hardware in such an `agile <https://en.wikipedia.org/wiki/Agile_software_development>`_ way offers many benefits to the hardware design process, with some of them being that:
 
 - I don't need to take into the account all the requirements from the start in order to design the architecture before I start the implementation. :v:`2` This means that I will sooner start the implementation and have feedback about my architectural choices and thus avoid catching architectural errors late, which are then most expensive to fix.
 - I can get an `MVP <https://en.wikipedia.org/wiki/Minimum_viable_product>`_ (Minimum Viable Product) early, which means that I can start `system testing <http://softwaretestingfundamentals.com/system-testing/>`_ early and try to catch errors in the design's `functional requirements <https://en.wikipedia.org/wiki/Functional_requirement>`_ as early as possible.  
@@ -40,11 +38,11 @@ Since the biggest issue with maintaining a large hardware design is synchronizat
    :libs: arrows.meta, shapes
    :include: ../../manual/dti.tex
 
-Gears are also assigned `data types <https://bogdanvuk.github.io/pygears/gears.html#powerful-type-system>`_ for their interfaces, which dramatically eases their composition. If gears are easily **composable**, then they can be used in wider variety of situations, hence they are **reusable**. It makes sense then to create well-thought-out and well-tested **libraries of gears** (like `cookbook <https://github.com/bogdanvuk/pygears/tree/master/pygears/cookbook>`_ and `common <https://github.com/bogdanvuk/pygears/tree/master/pygears/common>`_ libraries shipped with PyGears), which pays off in the long run by reducing the design time and reducing the number of bugs. :v:`2` Absence of such libraries in other HDLs, speeks for itself.
+Gears are also assigned `data types <https://bogdanvuk.github.io/pygears/gears.html#powerful-type-system>`_ for their interfaces, which dramatically eases their composition. If gears are easily **composable**, then they can be used in wider variety of situations, hence they are **reusable**. It makes sense then to create well-thought-out and well-tested **libraries of gears** (like `cookbook <https://github.com/bogdanvuk/pygears/tree/master/pygears/cookbook>`_ and `common <https://github.com/bogdanvuk/pygears/tree/master/pygears/common>`_ libraries shipped with PyGears), which pays off in the long run by reducing the design time and reducing the number of bugs. :v:`2` Absence of such libraries in other HDLs, speaks for itself.
 
 :v:`2` Paradigm shift the PyGears framework offers over traditional HDLs is analog to the difference in paradigm between `OOP <https://en.wikipedia.org/wiki/Object-oriented_programming>`_ (Object Oriented Programming) and `Functional programming <https://en.wikipedia.org/wiki/Functional_programming>`_. In OOP, you program in terms of objects, which are in turn formed to enclose certain state and provide operations that depend on that state and can change it. This is very similar to how HDL modules are formed, as discussed earlier in this chapter. On the other hand, in functional programming, you program in terms of functions and types of the data passed between them, which is exactly how you describe hardware with PyGears. It is widely considered that parallel software designs are easier described using functional programming paradigm, so my aim is to show in this blog series that the same holds for the hardware design.   
 
-Furthermore, PyGears is written in Python and offers a way to run RTL siulation together with asynchronous Python functions, in which arbitrary functionality for stimulus generation, value checking, logging and gathering statistics. :v:`2` Some advantages over SystemVerilog are that Python is open-sourced, much more popular, has huge library of packages and has cleaner syntax. 
+Furthermore, PyGears is written in Python and offers a way to run RTL simulation together with asynchronous Python functions, in which arbitrary functionality for stimulus generation, value checking, logging and gathering statistics. :v:`2` Some advantages over SystemVerilog are that Python is open-sourced, much more popular, has huge library of packages and has cleaner syntax. 
 
 
 :v:`2` Why not some of the existing modern HDLs?
@@ -52,9 +50,9 @@ Furthermore, PyGears is written in Python and offers a way to run RTL siulation 
 
 .. verbosity:: 2
 
-I am aware of several other attempts at higher level HDLs, like: `Chisel <https://chisel.eecs.berkeley.edu/>`_, `Bluespec <http://bluespec.com/>`_, `Clash <http://www.clash-lang.org/>`_ and `MyHDL <http://www.myhdl.org/>`_. I never dug deeper into these languages, so I'm not able to give an in depth analysis of each of them here. It's not that I don't plan to learn them better sometimes, as I'm sure they have many briliant ideas incorporated, it's just that they didn't seem to really offer solutions to the problems discussed in the previous chapter. Even Clash, which takes the functional approach (and is written in the most functional language ever), in my opinion missed the opportunity to really raise the level of abstraction, by still dealing with the individual signals (as opposed to the flow-controlled interfaces in PyGears) and thus significantly lowering the composability of the modules. Other languages mentioned here take state-centric path of the traditional HDLs and so I truly feel that PyGears has to offer something better.  
+I am aware of several other attempts at higher level HDLs, like: `Chisel <https://chisel.eecs.berkeley.edu/>`_, `Bluespec <http://bluespec.com/>`_, `Clash <http://www.clash-lang.org/>`_ and `MyHDL <http://www.myhdl.org/>`_. I never dug deeper into these languages, so I'm not able to give an in depth analysis of each of them here. It's not that I don't plan to learn them better sometimes, as I'm sure they have many brilliant ideas incorporated, it's just that they didn't seem to really offer solutions to the problems discussed in the previous chapter. Even Clash, which takes the functional approach, in my opinion missed the opportunity to really raise the level of abstraction, by still dealing with the individual signals (as opposed to the flow-controlled interfaces in PyGears) and thus significantly lowering the composability of the modules. Other languages mentioned here take state-centric path of the traditional HDLs and so I truly feel that PyGears has to offer something better.  
 
-Writting tests as a design tool
+Writing tests as a design tool
 -------------------------------
 
 Usually the hardware implementation effort is split between the design and verification teams, where the design team leaves all the testing to the verification. I think that this is a bad dichotomy and tend to agree with the `TDD <https://en.wikipedia.org/wiki/Test-driven_development>`_ (Test-Driven Development) philosophy which points-out the importance of the developers tests. These are the tests written by the designers continuously during the development, which test each of the functional requirements of the design.
@@ -83,6 +81,8 @@ Even though I'm aware of the already proposed architectures for the RISC-V proce
 
 .. verbosity:: 1
 
+.. _riscv-introduction-setup:
+
 Setup
 -----
 
@@ -99,7 +99,7 @@ I'll be using Spacemacs for editing files and running Python scripts, but I'll t
 Logistics
 ---------
 
-All the files related to the RISC-V implementation will be placed in ``examples/riscv`` folder of the PyGears git repository. At the beggining of each blog post, I will state which exact git commit contains code relevant to that post, so that you can get back in history and inspect files at that development stage. 
+All the files related to the RISC-V implementation will be placed in ``examples/riscv`` folder of the PyGears git repository. At the beginning of each blog post, I will state which exact git commit contains code relevant to that post, so that you can get back in history and inspect files at that development stage. 
 
 Notice also a slider at the beginning of the post. It allows you to choose verbosity of the text. I plan to use it for all future posts in a fashion similar to this:
 

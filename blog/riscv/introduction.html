@@ -17,7 +17,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="RISC-V Tools Setup" href="setup.html" />
-    <link rel="prev" title="PyGears 0.1.1" href="../release/v0.1.1.html" />
+    <link rel="prev" title="PyGears 0.1.1 released" href="../release/v0.1.1.html" />
   
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
@@ -75,8 +75,7 @@
     &ensp;
     <input type="number" maxlength="1" id="verbosity_value" min="1" max="2" value="1" oninput="changeVerbosity(this.value);" style="font-weight: bold"/>
 </form>
-<p>Relevant PyGears git commit: <a class="reference external" href="https://github.com/bogdanvuk/pygears/tree/29f6f56f85697cd754befc6b60aa3506fc7fa851">29f6f56</a></p>
-<p>Welcome to the blog series in which I’ll be implementing the <a class="reference external" href="https://riscv.org/risc-v-isa/">RISC-V ISA</a> (Instruction Set Architecture) in hardware using functional approach with <a class="reference external" href="https://bogdanvuk.github.io/pygears/index.html">PyGears</a>. My aim is to show how PyGears offers a way to build hardware in an incremental, evolutionary fashion, where the architecture, implementation and the verification environment evolve together, as opposed to the standard approach where these steps mostly happen in sequence. Developping hardware in such an <a class="reference external" href="https://en.wikipedia.org/wiki/Agile_software_development">agile</a> way offers many benefits to the hardware design process, with some of them being that:</p>
+<p>Welcome to the blog series in which I’ll be implementing the <a class="reference external" href="https://riscv.org/risc-v-isa/">RISC-V ISA</a> (Instruction Set Architecture) in hardware using functional approach with <a class="reference external" href="https://bogdanvuk.github.io/pygears/index.html">PyGears</a>. My aim is to show how PyGears offers a way to build hardware in an incremental, evolutionary fashion, where the architecture, implementation and the verification environment evolve together, as opposed to the standard approach where these steps mostly happen in sequence. Developing hardware in such an <a class="reference external" href="https://en.wikipedia.org/wiki/Agile_software_development">agile</a> way offers many benefits to the hardware design process, with some of them being that:</p>
 <ul class="simple">
 <li><p>I don’t need to take into the account all the requirements from the start in order to design the architecture before I start the implementation. <span data-verbosity="2" hidden="true"> This means that I will sooner start the implementation and have feedback about my architectural choices and thus avoid catching architectural errors late, which are then most expensive to fix.</span></p></li>
 <li><p>I can get an <a class="reference external" href="https://en.wikipedia.org/wiki/Minimum_viable_product">MVP</a> (Minimum Viable Product) early, which means that I can start <a class="reference external" href="http://softwaretestingfundamentals.com/system-testing/">system testing</a> early and try to catch errors in the design’s <a class="reference external" href="https://en.wikipedia.org/wiki/Functional_requirement">functional requirements</a> as early as possible.</p></li>
@@ -99,18 +98,18 @@
 \draw[-Triangle,line width=0.5mm] (3, -0.5) -- node[above] {Valid} ++(6, 0);
 \draw[Triangle-,line width=0.5mm] (3, -1.5) -- node[above] {Ready} ++(6, 0);
 \node (A) [cylinder, draw,minimum height=6.8cm,minimum width=3.8cm, label=below:DTI] at (6,0) {};" /></p>
-<p class="caption">DTI - Data Transfer Interface</p></div><p><span>Gears are also assigned </span><a class="reference external" href="https://bogdanvuk.github.io/pygears/gears.html#powerful-type-system">data types</a><span> for their interfaces, which dramatically eases their composition. If gears are easily </span><strong>composable</strong><span>, then they can be used in wider variety of situations, hence they are </span><strong>reusable</strong><span>. It makes sense then to create well-thought-out and well-tested </span><strong>libraries of gears</strong><span> (like </span><a class="reference external" href="https://github.com/bogdanvuk/pygears/tree/master/pygears/cookbook">cookbook</a><span> and </span><a class="reference external" href="https://github.com/bogdanvuk/pygears/tree/master/pygears/common">common</a><span> libraries shipped with PyGears), which pays off in the long run by reducing the design time and reducing the number of bugs. </span><span data-verbosity="2" hidden="true"> Absence of such libraries in other HDLs, speeks for itself.</span></p>
+<p class="caption">DTI - Data Transfer Interface</p></div><p><span>Gears are also assigned </span><a class="reference external" href="https://bogdanvuk.github.io/pygears/gears.html#powerful-type-system">data types</a><span> for their interfaces, which dramatically eases their composition. If gears are easily </span><strong>composable</strong><span>, then they can be used in wider variety of situations, hence they are </span><strong>reusable</strong><span>. It makes sense then to create well-thought-out and well-tested </span><strong>libraries of gears</strong><span> (like </span><a class="reference external" href="https://github.com/bogdanvuk/pygears/tree/master/pygears/cookbook">cookbook</a><span> and </span><a class="reference external" href="https://github.com/bogdanvuk/pygears/tree/master/pygears/common">common</a><span> libraries shipped with PyGears), which pays off in the long run by reducing the design time and reducing the number of bugs. </span><span data-verbosity="2" hidden="true"> Absence of such libraries in other HDLs, speaks for itself.</span></p>
 <p data-verbosity="2" hidden="true"> Paradigm shift the PyGears framework offers over traditional HDLs is analog to the difference in paradigm between <a class="reference external" data-verbosity="2" hidden="true" href="https://en.wikipedia.org/wiki/Object-oriented_programming">OOP</a> (Object Oriented Programming) and <a class="reference external" data-verbosity="2" hidden="true" href="https://en.wikipedia.org/wiki/Functional_programming">Functional programming</a>. In OOP, you program in terms of objects, which are in turn formed to enclose certain state and provide operations that depend on that state and can change it. This is very similar to how HDL modules are formed, as discussed earlier in this chapter. On the other hand, in functional programming, you program in terms of functions and types of the data passed between them, which is exactly how you describe hardware with PyGears. It is widely considered that parallel software designs are easier described using functional programming paradigm, so my aim is to show in this blog series that the same holds for the hardware design.</p>
-<p><span data-verbosity="2" hidden="true">Furthermore, PyGears is written in Python and offers a way to run RTL siulation together with asynchronous Python functions, in which arbitrary functionality for stimulus generation, value checking, logging and gathering statistics. </span><span data-verbosity="2" hidden="true"> Some advantages over SystemVerilog are that Python is open-sourced, much more popular, has huge library of packages and has cleaner syntax.</span></p>
+<p><span data-verbosity="2" hidden="true">Furthermore, PyGears is written in Python and offers a way to run RTL simulation together with asynchronous Python functions, in which arbitrary functionality for stimulus generation, value checking, logging and gathering statistics. </span><span data-verbosity="2" hidden="true"> Some advantages over SystemVerilog are that Python is open-sourced, much more popular, has huge library of packages and has cleaner syntax.</span></p>
 </div>
 <div class="section" id="why-not-some-of-the-existing-modern-hdls">
 <div hidden data-verbosity=2>
 <h2 data-verbosity="2" hidden="true"> Why not some of the existing modern HDLs?<a class="headerlink" href="#why-not-some-of-the-existing-modern-hdls" title="Permalink to this headline">¶</a></h2>
 
-</div><p data-verbosity="2" hidden="true">I am aware of several other attempts at higher level HDLs, like: <a class="reference external" data-verbosity="2" hidden="true" href="https://chisel.eecs.berkeley.edu/">Chisel</a>, <a class="reference external" data-verbosity="2" hidden="true" href="http://bluespec.com/">Bluespec</a>, <a class="reference external" data-verbosity="2" hidden="true" href="http://www.clash-lang.org/">Clash</a> and <a class="reference external" data-verbosity="2" hidden="true" href="http://www.myhdl.org/">MyHDL</a>. I never dug deeper into these languages, so I’m not able to give an in depth analysis of each of them here. It’s not that I don’t plan to learn them better sometimes, as I’m sure they have many briliant ideas incorporated, it’s just that they didn’t seem to really offer solutions to the problems discussed in the previous chapter. Even Clash, which takes the functional approach (and is written in the most functional language ever), in my opinion missed the opportunity to really raise the level of abstraction, by still dealing with the individual signals (as opposed to the flow-controlled interfaces in PyGears) and thus significantly lowering the composability of the modules. Other languages mentioned here take state-centric path of the traditional HDLs and so I truly feel that PyGears has to offer something better.</p>
+</div><p data-verbosity="2" hidden="true">I am aware of several other attempts at higher level HDLs, like: <a class="reference external" data-verbosity="2" hidden="true" href="https://chisel.eecs.berkeley.edu/">Chisel</a>, <a class="reference external" data-verbosity="2" hidden="true" href="http://bluespec.com/">Bluespec</a>, <a class="reference external" data-verbosity="2" hidden="true" href="http://www.clash-lang.org/">Clash</a> and <a class="reference external" data-verbosity="2" hidden="true" href="http://www.myhdl.org/">MyHDL</a>. I never dug deeper into these languages, so I’m not able to give an in depth analysis of each of them here. It’s not that I don’t plan to learn them better sometimes, as I’m sure they have many brilliant ideas incorporated, it’s just that they didn’t seem to really offer solutions to the problems discussed in the previous chapter. Even Clash, which takes the functional approach, in my opinion missed the opportunity to really raise the level of abstraction, by still dealing with the individual signals (as opposed to the flow-controlled interfaces in PyGears) and thus significantly lowering the composability of the modules. Other languages mentioned here take state-centric path of the traditional HDLs and so I truly feel that PyGears has to offer something better.</p>
 </div>
-<div class="section" id="writting-tests-as-a-design-tool">
-<h2>Writting tests as a design tool<a class="headerlink" href="#writting-tests-as-a-design-tool" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="writing-tests-as-a-design-tool">
+<h2>Writing tests as a design tool<a class="headerlink" href="#writing-tests-as-a-design-tool" title="Permalink to this headline">¶</a></h2>
 <p>Usually the hardware implementation effort is split between the design and verification teams, where the design team leaves all the testing to the verification. I think that this is a bad dichotomy and tend to agree with the <a class="reference external" href="https://en.wikipedia.org/wiki/Test-driven_development">TDD</a> (Test-Driven Development) philosophy which points-out the importance of the developers tests. These are the tests written by the designers continuously during the development, which test each of the functional requirements of the design.</p>
 <p data-verbosity="2" hidden="true">According to the TDD, the implementation of each functional requirement should be performed in three steps: red, green and refactor:</p>
 <ol class="arabic simple" data-verbosity="2" hidden="true">
@@ -128,7 +127,7 @@
 <p data-verbosity="2" hidden="true">Even though I’m aware of the already proposed architectures for the RISC-V processor (like the one in the <a class="reference external" data-verbosity="2" hidden="true" href="https://www.amazon.com/Computer-Architecture-Quantitative-Approach-Kaufmann/dp/0128119055">Computer Architecture: A Quantitative Approach</a>), I will try to blank out the memory of them, and let the new one, guided by the PyGears principles, arise on its own.</p>
 </div>
 <div class="section" id="setup">
-<h2>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
+<span id="riscv-introduction-setup"></span><h2>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
 <p>For this series I’ll be working on Ubuntu 18.04. For the detailed description of the tools I’m going to use and how to set them up, please refer to <a class="reference external" href="https://bogdanvuk.github.io/pygears/setup.html#setup-pygears-tools">PyGears tools setup</a>. You can of course choose an alternative to all these tools (except for the PyGears framework itself I hope). Furthermore, PyGears has been tested to work on Windows and openSUSE as well, so feel free to use the OS of your choice. In short you will need:</p>
 <ol class="arabic simple">
 <li><p>PyGears,</p></li>
@@ -141,7 +140,7 @@
 </div>
 <div class="section" id="logistics">
 <h2>Logistics<a class="headerlink" href="#logistics" title="Permalink to this headline">¶</a></h2>
-<p>All the files related to the RISC-V implementation will be placed in <code class="docutils literal notranslate"><span class="pre">examples/riscv</span></code> folder of the PyGears git repository. At the beggining of each blog post, I will state which exact git commit contains code relevant to that post, so that you can get back in history and inspect files at that development stage.</p>
+<p>All the files related to the RISC-V implementation will be placed in <code class="docutils literal notranslate"><span class="pre">examples/riscv</span></code> folder of the PyGears git repository. At the beginning of each blog post, I will state which exact git commit contains code relevant to that post, so that you can get back in history and inspect files at that development stage.</p>
 <p>Notice also a slider at the beginning of the post. It allows you to choose verbosity of the text. I plan to use it for all future posts in a fashion similar to this:</p>
 <ul class="simple">
 <li><p>Verbosity level 1: Only as much information as needed to reproduce the results the post is discussing,</p></li>
@@ -162,6 +161,13 @@
   </span>
   <span>&nbsp;</span>
   <span style="float: right;">
+  
+  Next: 
+  <a href="setup.html">
+    RISC-V Tools Setup
+    
+  </a>
+  </span>
   
 </div>
 
@@ -281,15 +287,41 @@
   <ul>
     
     
+      <li><a href="setup.html">07 October - RISC-V Tools Setup</a></li>
+    
+      <li><a href="../release/v0.1.1.html">07 October - PyGears 0.1.1 released</a></li>
+    
+  </ul>
+
+  <h3><a href="../blog/tag.html">Tags</a></h3>
+  <style type="text/css">
+    ul.ablog-cloud {list-style: none; overflow: auto;}
+    ul.ablog-cloud li {float: left; height: 20pt; line-height: 18pt; margin-right: 5px;}
+    ul.ablog-cloud a {text-decoration: none; vertical-align: middle;}
+    li.ablog-cloud-1{font-size: 80%;}
+    li.ablog-cloud-2{font-size: 95%;}
+    li.ablog-cloud-3{font-size: 110%;}
+    li.ablog-cloud-4{font-size: 125%;}
+    li.ablog-cloud-5{font-size: 140%;}
+  </style>
+  <ul class="ablog-cloud">
+    
+      
+      <li class="ablog-cloud ablog-cloud-3">
+        <a href="../blog/tag/setup.html">setup</a></li>
+      
+    
   </ul>
 
   <h3><a href="../blog/category.html">Categories</a></h3>
   <ul>
   
     
-    <li><a href="../blog/category/risc-v.html">RISC-V (1)</a></li>
+    <li><a href="../blog/category/risc-v.html">RISC-V (2)</a></li>
     
   
+    
+    <li><a href="../blog/category/release.html">Release (1)</a></li>
     
   
   </ul>
@@ -298,7 +330,7 @@
   <ul>
   
     
-    <li><a href="../blog/2018.html">2018 (1)</a></li>
+    <li><a href="../blog/2018.html">2018 (3)</a></li>
     
   
   </ul>
