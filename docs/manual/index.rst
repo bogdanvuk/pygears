@@ -1,6 +1,3 @@
-.. meta::
-   :google-site-verification: AjhRHQh3VrfjkedIiaUazWGgzaSBonwmXT_Kf5sPD0I
-
 Welcome to PyGears 
 ==================
 

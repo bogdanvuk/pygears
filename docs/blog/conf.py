@@ -32,12 +32,12 @@ pygments_style = 'sphinx'
 html_theme = 'alabaster'
 html_title = "PyGears - HW Design: A Functional Approach"
 html_short_title = "PyGears"
-html_static_path = ['_static']
+html_static_path = ['_static', '../manual/_static']
 html_use_index = True
 html_baseurl = "https://www.pygears.org"
 html_domain_indices = False
 html_show_sourcelink = True
-# html_favicon = '_static/ablog.ico'
+html_favicon = '../manual/_static/pygears.ico'
 
 # ABLOG
 
@@ -99,7 +99,8 @@ html_theme_options = {
     'github_user': 'bogdanvuk',
     'github_repo': 'pygears',
     'description': 'HW Design: A Functional Approach',
-    # 'logo': 'ablog.png',
+    'logo': 'logo.png',
+    'sidebar_width': '230px'
 }
 
 # -- Options for HTMLHelp output ---------------------------------------------

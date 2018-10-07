@@ -130,6 +130,7 @@ html_theme = 'alabaster'
 html_title = "PyGears - HW Design: A Functional Approach"
 html_short_title = "PyGears"
 html_baseurl = "https://www.pygears.org"
+html_favicon = '_static/pygears.ico'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -141,7 +142,8 @@ html_theme_options = {
     'github_repo': 'pygears',
     'github_banner': True,
     'description': 'HW Design: A Functional Approach',
-    # 'logo': 'ablog.png',
+    'logo': 'logo.png',
+    'sidebar_width': '230px'
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
