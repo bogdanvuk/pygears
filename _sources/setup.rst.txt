@@ -167,7 +167,7 @@ Pygears Tools List
 Here's the list of tools that can be installed using pygears-tools-install.
 
 - `Pyenv <https://github.com/pyenv/pyenv>`_ - a simple Python version management. Pyenv offers a simple way to install specific Python version,
-- `PyGears <https://bogdanvuk.github.io/pygears/>`_ - the PyGears itself,
+- `PyGears <https://www.pygears.org/>`_ - the PyGears itself,
 - `Verilator <https://www.veripool.org/projects/verilator>`_: an open-source Verilog/SystemVerilog simulator. PyGears has built-in support for it,
 - `Emacs <https://www.gnu.org/software/emacs/>`_ with `Spacemacs <http://spacemacs.org/>`_ configuration - an open-source editor that can handle all languages needed for using and extending PyGears (Python, SystemVerilog, Bash, Jinja2). **Caution: very steep learning curve, but highly rewarding once mastered**. If you don't feel like investing in learning Spacemacs right now, at minimum you will need an editor that can handle Python, and any one will really do: `PyCharm <https://www.jetbrains.com/pycharm/>`_, `Eclipse with PyDev <http://www.pydev.org/>`_, etc.
 - `GtkWave <http://gtkwave.sourceforge.net/>`_ - an open-source waveform viewer.

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>RISC-V Blog Series Introduction &#8212; PyGears</title>
+    <title>RISC-V Blog Series Introduction &#8212; PyGears: HW Design - A Functional Approach</title>
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
@@ -14,6 +14,7 @@
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="canonical" href="https://www.pygears.org/riscv/introduction.html" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="RISC-V Tools Setup" href="setup.html" />
@@ -75,7 +76,7 @@
     &ensp;
     <input type="number" maxlength="1" id="verbosity_value" min="1" max="2" value="1" oninput="changeVerbosity(this.value);" style="font-weight: bold"/>
 </form>
-<p>Welcome to the blog series in which I’ll be implementing the <a class="reference external" href="https://riscv.org/risc-v-isa/">RISC-V ISA</a> (Instruction Set Architecture) in hardware using functional approach with <a class="reference external" href="https://bogdanvuk.github.io/pygears/index.html">PyGears</a>. My aim is to show how PyGears offers a way to build hardware in an incremental, evolutionary fashion, where the architecture, implementation and the verification environment evolve together, as opposed to the standard approach where these steps mostly happen in sequence. Developing hardware in such an <a class="reference external" href="https://en.wikipedia.org/wiki/Agile_software_development">agile</a> way offers many benefits to the hardware design process, with some of them being that:</p>
+<p>Welcome to the blog series in which I’ll be implementing the <a class="reference external" href="https://riscv.org/risc-v-isa/">RISC-V ISA</a> (Instruction Set Architecture) in hardware using functional approach with <a class="reference external" href="https://www.pygears.org/index.html">PyGears</a>. My aim is to show how PyGears offers a way to build hardware in an incremental, evolutionary fashion, where the architecture, implementation and the verification environment evolve together, as opposed to the standard approach where these steps mostly happen in sequence. Developing hardware in such an <a class="reference external" href="https://en.wikipedia.org/wiki/Agile_software_development">agile</a> way offers many benefits to the hardware design process, with some of them being that:</p>
 <ul class="simple">
 <li><p>I don’t need to take into the account all the requirements from the start in order to design the architecture before I start the implementation. <span data-verbosity="2" hidden="true"> This means that I will sooner start the implementation and have feedback about my architectural choices and thus avoid catching architectural errors late, which are then most expensive to fix.</span></p></li>
 <li><p>I can get an <a class="reference external" href="https://en.wikipedia.org/wiki/Minimum_viable_product">MVP</a> (Minimum Viable Product) early, which means that I can start <a class="reference external" href="http://softwaretestingfundamentals.com/system-testing/">system testing</a> early and try to catch errors in the design’s <a class="reference external" href="https://en.wikipedia.org/wiki/Functional_requirement">functional requirements</a> as early as possible.</p></li>
@@ -90,7 +91,7 @@
 <p class="caption" data-verbosity="2" hidden="true"><span class="caption-text" data-verbosity="2" hidden="true">Image from <a class="reference external" data-verbosity="2" hidden="true" href="http://ece-research.unm.edu/jimp/codesign/slides/microprogramming.pdf">&lt;http://ece-research.unm.edu/jimp/codesign/slides/microprogramming.pdf&gt;</a></span></p>
 </div>
 <p data-verbosity="2" hidden="true">Each of these outputs is probably computed by a functionality that deserves its own module, its own little abstraction. Why are they than being sucked into state machine module monsters? Usually because we either believe that it leads to a more optimized design, or we are afraid of synchronization issues. But wire is a wire even if it leaves the module boundaries, and decent hardware synthesis tools offer inter-module optimization, so we lose next to nothing by factoring out the functionality. As for the synchronization, putting everything in a single module just offers a false sense of security and sweeps the problem under the rug until later when functionality piles up inside the module and pipelining becomes a nightmare, not to mention dealing with synchronization issues between such complex modules.</p>
-<p><span>Since the biggest issue with maintaining a large hardware design is synchronization (as with any other massively parallel system: think multithreading in software), PyGears tries to face it upfront by forcing each module to implement a </span><a class="reference external" href="https://bogdanvuk.github.io/pygears/gears.html#one-interface">flow-controlled interface</a><span>, which turns modules into “gears” in PyGears terminology (checkout this </span><a class="reference external" href="https://bogdanvuk.github.io/pygears/gears.html">quick introduction to gears</a><span>). </span><span data-verbosity="2" hidden="true"> As much as it may seem as an overkill in the beginning, it usually pays-off later, and is easily optimized-away by the hardware synthesis tools if not really needed. </span><span> Gears are not built around the state, but are formed to group and abstract some functionality, while the state is embedded in the data sent between the gears. This further alleviates the synchronization problem and pipelined architectures arise naturally, as I intend to show while implementing RISC-V ISA.</span></p>
+<p><span>Since the biggest issue with maintaining a large hardware design is synchronization (as with any other massively parallel system: think multithreading in software), PyGears tries to face it upfront by forcing each module to implement a </span><a class="reference external" href="https://www.pygears.org/gears.html#one-interface">flow-controlled interface</a><span>, which turns modules into “gears” in PyGears terminology (checkout this </span><a class="reference external" href="https://www.pygears.org/gears.html">quick introduction to gears</a><span>). </span><span data-verbosity="2" hidden="true"> As much as it may seem as an overkill in the beginning, it usually pays-off later, and is easily optimized-away by the hardware synthesis tools if not really needed. </span><span> Gears are not built around the state, but are formed to group and abstract some functionality, while the state is embedded in the data sent between the gears. This further alleviates the synchronization problem and pipelined architectures arise naturally, as I intend to show while implementing RISC-V ISA.</span></p>
 <div class="figure">
 <p><img src="../_images/tikz-fb469c944d72dd32a859ee29fb8934cda7c66991.png" alt="\draw[thick] (0, 0) \gear{10}{2}{2.4}{16}{2}{prod}{Producer};
 \draw[thick,xshift=120mm] \gear{10}{2}{2.4}{16}{2}{cons}{Consumer};
@@ -98,7 +99,7 @@
 \draw[-Triangle,line width=0.5mm] (3, -0.5) -- node[above] {Valid} ++(6, 0);
 \draw[Triangle-,line width=0.5mm] (3, -1.5) -- node[above] {Ready} ++(6, 0);
 \node (A) [cylinder, draw,minimum height=6.8cm,minimum width=3.8cm, label=below:DTI] at (6,0) {};" /></p>
-<p class="caption">DTI - Data Transfer Interface</p></div><p><span>Gears are also assigned </span><a class="reference external" href="https://bogdanvuk.github.io/pygears/gears.html#powerful-type-system">data types</a><span> for their interfaces, which dramatically eases their composition. If gears are easily </span><strong>composable</strong><span>, then they can be used in wider variety of situations, hence they are </span><strong>reusable</strong><span>. It makes sense then to create well-thought-out and well-tested </span><strong>libraries of gears</strong><span> (like </span><a class="reference external" href="https://github.com/bogdanvuk/pygears/tree/master/pygears/cookbook">cookbook</a><span> and </span><a class="reference external" href="https://github.com/bogdanvuk/pygears/tree/master/pygears/common">common</a><span> libraries shipped with PyGears), which pays off in the long run by reducing the design time and reducing the number of bugs. </span><span data-verbosity="2" hidden="true"> Absence of such libraries in other HDLs, speaks for itself.</span></p>
+<p class="caption">DTI - Data Transfer Interface</p></div><p><span>Gears are also assigned </span><a class="reference external" href="https://www.pygears.org/gears.html#powerful-type-system">data types</a><span> for their interfaces, which dramatically eases their composition. If gears are easily </span><strong>composable</strong><span>, then they can be used in wider variety of situations, hence they are </span><strong>reusable</strong><span>. It makes sense then to create well-thought-out and well-tested </span><strong>libraries of gears</strong><span> (like </span><a class="reference external" href="https://github.com/bogdanvuk/pygears/tree/master/pygears/cookbook">cookbook</a><span> and </span><a class="reference external" href="https://github.com/bogdanvuk/pygears/tree/master/pygears/common">common</a><span> libraries shipped with PyGears), which pays off in the long run by reducing the design time and reducing the number of bugs. </span><span data-verbosity="2" hidden="true"> Absence of such libraries in other HDLs, speaks for itself.</span></p>
 <p data-verbosity="2" hidden="true"> Paradigm shift the PyGears framework offers over traditional HDLs is analog to the difference in paradigm between <a class="reference external" data-verbosity="2" hidden="true" href="https://en.wikipedia.org/wiki/Object-oriented_programming">OOP</a> (Object Oriented Programming) and <a class="reference external" data-verbosity="2" hidden="true" href="https://en.wikipedia.org/wiki/Functional_programming">Functional programming</a>. In OOP, you program in terms of objects, which are in turn formed to enclose certain state and provide operations that depend on that state and can change it. This is very similar to how HDL modules are formed, as discussed earlier in this chapter. On the other hand, in functional programming, you program in terms of functions and types of the data passed between them, which is exactly how you describe hardware with PyGears. It is widely considered that parallel software designs are easier described using functional programming paradigm, so my aim is to show in this blog series that the same holds for the hardware design.</p>
 <p><span data-verbosity="2" hidden="true">Furthermore, PyGears is written in Python and offers a way to run RTL simulation together with asynchronous Python functions, in which arbitrary functionality for stimulus generation, value checking, logging and gathering statistics. </span><span data-verbosity="2" hidden="true"> Some advantages over SystemVerilog are that Python is open-sourced, much more popular, has huge library of packages and has cleaner syntax.</span></p>
 </div>
@@ -128,7 +129,7 @@
 </div>
 <div class="section" id="setup">
 <span id="riscv-introduction-setup"></span><h2>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
-<p>For this series I’ll be working on Ubuntu 18.04. For the detailed description of the tools I’m going to use and how to set them up, please refer to <a class="reference external" href="https://bogdanvuk.github.io/pygears/setup.html#setup-pygears-tools">PyGears tools setup</a>. You can of course choose an alternative to all these tools (except for the PyGears framework itself I hope). Furthermore, PyGears has been tested to work on Windows and openSUSE as well, so feel free to use the OS of your choice. In short you will need:</p>
+<p>For this series I’ll be working on Ubuntu 18.04. For the detailed description of the tools I’m going to use and how to set them up, please refer to <a class="reference external" href="https://www.pygears.org/setup.html#setup-pygears-tools">PyGears tools setup</a>. You can of course choose an alternative to all these tools (except for the PyGears framework itself I hope). Furthermore, PyGears has been tested to work on Windows and openSUSE as well, so feel free to use the OS of your choice. In short you will need:</p>
 <ol class="arabic simple">
 <li><p>PyGears,</p></li>
 <li><p>An RTL simulator: I’ll be using mostly Verilator since it is open-source, but I will try to provide an option in the code to run Questa or Cadence simulators as well,</p></li>
@@ -180,7 +181,7 @@
         var disqus_shortname = 'pygears';
         var disqus_identifier = '/riscv/introduction/';
         var disqus_title = 'RISC-V Blog Series Introduction';
-        var disqus_url = 'https://bogdanvuk.github.io/pygears/riscv/introduction';
+        var disqus_url = 'https://www.pygears.org/riscv/introduction';
 
         (function() {
             var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
@@ -200,7 +201,7 @@
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="https://bogdanvuk.github.io/pygears">PyGears</a></h1>
+<h1 class="logo"><a href="https://www.pygears.org">PyGears</a></h1>
 
 
 
@@ -352,7 +353,7 @@
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2018, Bogdan Vukobratović.
+      &copy;2018, Bogdan Vukobratovic.
       
       |
       Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.0</a>

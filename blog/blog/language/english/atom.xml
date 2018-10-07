@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
   <title type="text">PyGears - Posts in English</title>
-  <id>https://bogdanvuk.github.io/pygears/blog/language/english/atom.xml</id>
+  <id>https://www.pygears.org/blog/language/english/atom.xml</id>
   <updated>2018-10-07T00:00:00Z</updated>
-  <link href="https://bogdanvuk.github.io/pygears/" />
-  <link href="https://bogdanvuk.github.io/pygears/blog/language/english/atom.xml" rel="self" />
+  <link href="https://www.pygears.org/" />
+  <link href="https://www.pygears.org/blog/language/english/atom.xml" rel="self" />
   <generator uri="http://ablog.readthedocs.org" version="0.9.2">ABlog</generator>
-  <entry xml:base="https://bogdanvuk.github.io/pygears/blog/language/english/atom.xml">
+  <entry xml:base="https://www.pygears.org/blog/language/english/atom.xml">
     <title type="text">RISC-V Tools Setup</title>
-    <id>https://bogdanvuk.github.io/pygears/riscv/setup.html</id>
+    <id>https://www.pygears.org/riscv/setup.html</id>
     <updated>2018-10-07T00:00:00Z</updated>
     <published>2018-10-07T00:00:00Z</published>
-    <link href="https://bogdanvuk.github.io/pygears/riscv/setup.html" />
+    <link href="https://www.pygears.org/riscv/setup.html" />
     <author>
       <name>Bogdan Vukobratović</name>
     </author>
@@ -233,12 +233,12 @@ core   &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;: 0xffffffff80000000 &lt;sp
 &lt;/div&gt;
 </content>
   </entry>
-  <entry xml:base="https://bogdanvuk.github.io/pygears/blog/language/english/atom.xml">
+  <entry xml:base="https://www.pygears.org/blog/language/english/atom.xml">
     <title type="text">PyGears 0.1.1 released</title>
-    <id>https://bogdanvuk.github.io/pygears/release/v0.1.1.html</id>
+    <id>https://www.pygears.org/release/v0.1.1.html</id>
     <updated>2018-10-07T00:00:00Z</updated>
     <published>2018-10-07T00:00:00Z</published>
-    <link href="https://bogdanvuk.github.io/pygears/release/v0.1.1.html" />
+    <link href="https://www.pygears.org/release/v0.1.1.html" />
     <author>
       <name>Bogdan Vukobratović</name>
     </author>
@@ -265,7 +265,7 @@ core   &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;: 0xffffffff80000000 &lt;sp
 &lt;h2&gt;Bug-fixes&lt;/h2&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;p&gt;Echo example can now be simulated completely in Python without an RTL simulator. Simulator is still in experimental stage, since not all gears from the libraries are supported.&lt;/p&gt;
-&lt;p&gt;This mode can be invoked when running &lt;a class=&quot;reference external&quot; href=&quot;https://bogdanvuk.github.io/pygears/echo.html#running-simulation&quot;&gt;plop_test_wav_echo_sim&lt;/a&gt; by setting &lt;code class=&quot;docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;cosim=False&lt;/span&gt;&lt;/code&gt;:&lt;/p&gt;
+&lt;p&gt;This mode can be invoked when running &lt;a class=&quot;reference external&quot; href=&quot;https://www.pygears.org/echo.html#running-simulation&quot;&gt;plop_test_wav_echo_sim&lt;/a&gt; by setting &lt;code class=&quot;docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;cosim=False&lt;/span&gt;&lt;/code&gt;:&lt;/p&gt;
 &lt;div class=&quot;highlight-default notranslate&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;wav_echo_sim&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;
     &lt;span class=&quot;n&quot;&gt;os&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;join&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;os&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;dirname&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;vm&quot;&gt;__file__&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&amp;#39;plop.wav&amp;#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt;
     &lt;span class=&quot;n&quot;&gt;os&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;join&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;&amp;#39;build&amp;#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&amp;#39;plop_echo.wav&amp;#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt;
@@ -284,12 +284,12 @@ core   &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;: 0xffffffff80000000 &lt;sp
 &lt;/div&gt;
 </content>
   </entry>
-  <entry xml:base="https://bogdanvuk.github.io/pygears/blog/language/english/atom.xml">
+  <entry xml:base="https://www.pygears.org/blog/language/english/atom.xml">
     <title type="text">RISC-V Blog Series Introduction</title>
-    <id>https://bogdanvuk.github.io/pygears/riscv/introduction.html</id>
+    <id>https://www.pygears.org/riscv/introduction.html</id>
     <updated>2018-10-06T00:00:00Z</updated>
     <published>2018-10-06T00:00:00Z</published>
-    <link href="https://bogdanvuk.github.io/pygears/riscv/introduction.html" />
+    <link href="https://www.pygears.org/riscv/introduction.html" />
     <author>
       <name>Bogdan Vukobratović</name>
     </author>
@@ -320,7 +320,7 @@ core   &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;: 0xffffffff80000000 &lt;sp
     &amp;ensp;
     &lt;input type=&quot;number&quot; maxlength=&quot;1&quot; id=&quot;verbosity_value&quot; min=&quot;1&quot; max=&quot;2&quot; value=&quot;1&quot; oninput=&quot;changeVerbosity(this.value);&quot; style=&quot;font-weight: bold&quot;/&gt;
 &lt;/form&gt;
-&lt;p&gt;Welcome to the blog series in which I’ll be implementing the &lt;a class=&quot;reference external&quot; href=&quot;https://riscv.org/risc-v-isa/&quot;&gt;RISC-V ISA&lt;/a&gt; (Instruction Set Architecture) in hardware using functional approach with &lt;a class=&quot;reference external&quot; href=&quot;https://bogdanvuk.github.io/pygears/index.html&quot;&gt;PyGears&lt;/a&gt;. My aim is to show how PyGears offers a way to build hardware in an incremental, evolutionary fashion, where the architecture, implementation and the verification environment evolve together, as opposed to the standard approach where these steps mostly happen in sequence. Developing hardware in such an &lt;a class=&quot;reference external&quot; href=&quot;https://en.wikipedia.org/wiki/Agile_software_development&quot;&gt;agile&lt;/a&gt; way offers many benefits to the hardware design process, with some of them being that:&lt;/p&gt;
+&lt;p&gt;Welcome to the blog series in which I’ll be implementing the &lt;a class=&quot;reference external&quot; href=&quot;https://riscv.org/risc-v-isa/&quot;&gt;RISC-V ISA&lt;/a&gt; (Instruction Set Architecture) in hardware using functional approach with &lt;a class=&quot;reference external&quot; href=&quot;https://www.pygears.org/index.html&quot;&gt;PyGears&lt;/a&gt;. My aim is to show how PyGears offers a way to build hardware in an incremental, evolutionary fashion, where the architecture, implementation and the verification environment evolve together, as opposed to the standard approach where these steps mostly happen in sequence. Developing hardware in such an &lt;a class=&quot;reference external&quot; href=&quot;https://en.wikipedia.org/wiki/Agile_software_development&quot;&gt;agile&lt;/a&gt; way offers many benefits to the hardware design process, with some of them being that:&lt;/p&gt;
 &lt;ul class=&quot;simple&quot;&gt;
 &lt;li&gt;&lt;p&gt;I don’t need to take into the account all the requirements from the start in order to design the architecture before I start the implementation. &lt;span data-verbosity=&quot;2&quot; hidden=&quot;true&quot;&gt; This means that I will sooner start the implementation and have feedback about my architectural choices and thus avoid catching architectural errors late, which are then most expensive to fix.&lt;/span&gt;&lt;/p&gt;&lt;/li&gt;
 &lt;li&gt;&lt;p&gt;I can get an &lt;a class=&quot;reference external&quot; href=&quot;https://en.wikipedia.org/wiki/Minimum_viable_product&quot;&gt;MVP&lt;/a&gt; (Minimum Viable Product) early, which means that I can start &lt;a class=&quot;reference external&quot; href=&quot;http://softwaretestingfundamentals.com/system-testing/&quot;&gt;system testing&lt;/a&gt; early and try to catch errors in the design’s &lt;a class=&quot;reference external&quot; href=&quot;https://en.wikipedia.org/wiki/Functional_requirement&quot;&gt;functional requirements&lt;/a&gt; as early as possible.&lt;/p&gt;&lt;/li&gt;
@@ -335,7 +335,7 @@ core   &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;: 0xffffffff80000000 &lt;sp
 &lt;p class=&quot;caption&quot; data-verbosity=&quot;2&quot; hidden=&quot;true&quot;&gt;&lt;span class=&quot;caption-text&quot; data-verbosity=&quot;2&quot; hidden=&quot;true&quot;&gt;Image from &lt;a class=&quot;reference external&quot; data-verbosity=&quot;2&quot; hidden=&quot;true&quot; href=&quot;http://ece-research.unm.edu/jimp/codesign/slides/microprogramming.pdf&quot;&gt;&amp;lt;http://ece-research.unm.edu/jimp/codesign/slides/microprogramming.pdf&amp;gt;&lt;/a&gt;&lt;/span&gt;&lt;/p&gt;
 &lt;/div&gt;
 &lt;p data-verbosity=&quot;2&quot; hidden=&quot;true&quot;&gt;Each of these outputs is probably computed by a functionality that deserves its own module, its own little abstraction. Why are they than being sucked into state machine module monsters? Usually because we either believe that it leads to a more optimized design, or we are afraid of synchronization issues. But wire is a wire even if it leaves the module boundaries, and decent hardware synthesis tools offer inter-module optimization, so we lose next to nothing by factoring out the functionality. As for the synchronization, putting everything in a single module just offers a false sense of security and sweeps the problem under the rug until later when functionality piles up inside the module and pipelining becomes a nightmare, not to mention dealing with synchronization issues between such complex modules.&lt;/p&gt;
-&lt;p&gt;&lt;span&gt;Since the biggest issue with maintaining a large hardware design is synchronization (as with any other massively parallel system: think multithreading in software), PyGears tries to face it upfront by forcing each module to implement a &lt;/span&gt;&lt;a class=&quot;reference external&quot; href=&quot;https://bogdanvuk.github.io/pygears/gears.html#one-interface&quot;&gt;flow-controlled interface&lt;/a&gt;&lt;span&gt;, which turns modules into “gears” in PyGears terminology (checkout this &lt;/span&gt;&lt;a class=&quot;reference external&quot; href=&quot;https://bogdanvuk.github.io/pygears/gears.html&quot;&gt;quick introduction to gears&lt;/a&gt;&lt;span&gt;). &lt;/span&gt;&lt;span data-verbosity=&quot;2&quot; hidden=&quot;true&quot;&gt; As much as it may seem as an overkill in the beginning, it usually pays-off later, and is easily optimized-away by the hardware synthesis tools if not really needed. &lt;/span&gt;&lt;span&gt; Gears are not built around the state, but are formed to group and abstract some functionality, while the state is embedded in the data sent between the gears. This further alleviates the synchronization problem and pipelined architectures arise naturally, as I intend to show while implementing RISC-V ISA.&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span&gt;Since the biggest issue with maintaining a large hardware design is synchronization (as with any other massively parallel system: think multithreading in software), PyGears tries to face it upfront by forcing each module to implement a &lt;/span&gt;&lt;a class=&quot;reference external&quot; href=&quot;https://www.pygears.org/gears.html#one-interface&quot;&gt;flow-controlled interface&lt;/a&gt;&lt;span&gt;, which turns modules into “gears” in PyGears terminology (checkout this &lt;/span&gt;&lt;a class=&quot;reference external&quot; href=&quot;https://www.pygears.org/gears.html&quot;&gt;quick introduction to gears&lt;/a&gt;&lt;span&gt;). &lt;/span&gt;&lt;span data-verbosity=&quot;2&quot; hidden=&quot;true&quot;&gt; As much as it may seem as an overkill in the beginning, it usually pays-off later, and is easily optimized-away by the hardware synthesis tools if not really needed. &lt;/span&gt;&lt;span&gt; Gears are not built around the state, but are formed to group and abstract some functionality, while the state is embedded in the data sent between the gears. This further alleviates the synchronization problem and pipelined architectures arise naturally, as I intend to show while implementing RISC-V ISA.&lt;/span&gt;&lt;/p&gt;
 &lt;div class=&quot;figure&quot;&gt;
 &lt;p&gt;&lt;img src=&quot;../../_images/tikz-fb469c944d72dd32a859ee29fb8934cda7c66991.png&quot; alt=&quot;\draw[thick] (0, 0) \gear{10}{2}{2.4}{16}{2}{prod}{Producer};
 \draw[thick,xshift=120mm] \gear{10}{2}{2.4}{16}{2}{cons}{Consumer};
@@ -343,7 +343,7 @@ core   &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;: 0xffffffff80000000 &lt;sp
 \draw[-Triangle,line width=0.5mm] (3, -0.5) -- node[above] {Valid} ++(6, 0);
 \draw[Triangle-,line width=0.5mm] (3, -1.5) -- node[above] {Ready} ++(6, 0);
 \node (A) [cylinder, draw,minimum height=6.8cm,minimum width=3.8cm, label=below:DTI] at (6,0) {};&quot; /&gt;&lt;/p&gt;
-&lt;p class=&quot;caption&quot;&gt;DTI - Data Transfer Interface&lt;/p&gt;&lt;/div&gt;&lt;p&gt;&lt;span&gt;Gears are also assigned &lt;/span&gt;&lt;a class=&quot;reference external&quot; href=&quot;https://bogdanvuk.github.io/pygears/gears.html#powerful-type-system&quot;&gt;data types&lt;/a&gt;&lt;span&gt; for their interfaces, which dramatically eases their composition. If gears are easily &lt;/span&gt;&lt;strong&gt;composable&lt;/strong&gt;&lt;span&gt;, then they can be used in wider variety of situations, hence they are &lt;/span&gt;&lt;strong&gt;reusable&lt;/strong&gt;&lt;span&gt;. It makes sense then to create well-thought-out and well-tested &lt;/span&gt;&lt;strong&gt;libraries of gears&lt;/strong&gt;&lt;span&gt; (like &lt;/span&gt;&lt;a class=&quot;reference external&quot; href=&quot;https://github.com/bogdanvuk/pygears/tree/master/pygears/cookbook&quot;&gt;cookbook&lt;/a&gt;&lt;span&gt; and &lt;/span&gt;&lt;a class=&quot;reference external&quot; href=&quot;https://github.com/bogdanvuk/pygears/tree/master/pygears/common&quot;&gt;common&lt;/a&gt;&lt;span&gt; libraries shipped with PyGears), which pays off in the long run by reducing the design time and reducing the number of bugs. &lt;/span&gt;&lt;span data-verbosity=&quot;2&quot; hidden=&quot;true&quot;&gt; Absence of such libraries in other HDLs, speaks for itself.&lt;/span&gt;&lt;/p&gt;
+&lt;p class=&quot;caption&quot;&gt;DTI - Data Transfer Interface&lt;/p&gt;&lt;/div&gt;&lt;p&gt;&lt;span&gt;Gears are also assigned &lt;/span&gt;&lt;a class=&quot;reference external&quot; href=&quot;https://www.pygears.org/gears.html#powerful-type-system&quot;&gt;data types&lt;/a&gt;&lt;span&gt; for their interfaces, which dramatically eases their composition. If gears are easily &lt;/span&gt;&lt;strong&gt;composable&lt;/strong&gt;&lt;span&gt;, then they can be used in wider variety of situations, hence they are &lt;/span&gt;&lt;strong&gt;reusable&lt;/strong&gt;&lt;span&gt;. It makes sense then to create well-thought-out and well-tested &lt;/span&gt;&lt;strong&gt;libraries of gears&lt;/strong&gt;&lt;span&gt; (like &lt;/span&gt;&lt;a class=&quot;reference external&quot; href=&quot;https://github.com/bogdanvuk/pygears/tree/master/pygears/cookbook&quot;&gt;cookbook&lt;/a&gt;&lt;span&gt; and &lt;/span&gt;&lt;a class=&quot;reference external&quot; href=&quot;https://github.com/bogdanvuk/pygears/tree/master/pygears/common&quot;&gt;common&lt;/a&gt;&lt;span&gt; libraries shipped with PyGears), which pays off in the long run by reducing the design time and reducing the number of bugs. &lt;/span&gt;&lt;span data-verbosity=&quot;2&quot; hidden=&quot;true&quot;&gt; Absence of such libraries in other HDLs, speaks for itself.&lt;/span&gt;&lt;/p&gt;
 &lt;p data-verbosity=&quot;2&quot; hidden=&quot;true&quot;&gt; Paradigm shift the PyGears framework offers over traditional HDLs is analog to the difference in paradigm between &lt;a class=&quot;reference external&quot; data-verbosity=&quot;2&quot; hidden=&quot;true&quot; href=&quot;https://en.wikipedia.org/wiki/Object-oriented_programming&quot;&gt;OOP&lt;/a&gt; (Object Oriented Programming) and &lt;a class=&quot;reference external&quot; data-verbosity=&quot;2&quot; hidden=&quot;true&quot; href=&quot;https://en.wikipedia.org/wiki/Functional_programming&quot;&gt;Functional programming&lt;/a&gt;. In OOP, you program in terms of objects, which are in turn formed to enclose certain state and provide operations that depend on that state and can change it. This is very similar to how HDL modules are formed, as discussed earlier in this chapter. On the other hand, in functional programming, you program in terms of functions and types of the data passed between them, which is exactly how you describe hardware with PyGears. It is widely considered that parallel software designs are easier described using functional programming paradigm, so my aim is to show in this blog series that the same holds for the hardware design.&lt;/p&gt;
 &lt;p&gt;&lt;span data-verbosity=&quot;2&quot; hidden=&quot;true&quot;&gt;Furthermore, PyGears is written in Python and offers a way to run RTL simulation together with asynchronous Python functions, in which arbitrary functionality for stimulus generation, value checking, logging and gathering statistics. &lt;/span&gt;&lt;span data-verbosity=&quot;2&quot; hidden=&quot;true&quot;&gt; Some advantages over SystemVerilog are that Python is open-sourced, much more popular, has huge library of packages and has cleaner syntax.&lt;/span&gt;&lt;/p&gt;
 &lt;/div&gt;
@@ -373,7 +373,7 @@ core   &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;: 0xffffffff80000000 &lt;sp
 &lt;/div&gt;
 &lt;div class=&quot;section&quot; id=&quot;setup&quot;&gt;
 &lt;span id=&quot;riscv-introduction-setup&quot;&gt;&lt;/span&gt;&lt;h2&gt;Setup&lt;/h2&gt;
-&lt;p&gt;For this series I’ll be working on Ubuntu 18.04. For the detailed description of the tools I’m going to use and how to set them up, please refer to &lt;a class=&quot;reference external&quot; href=&quot;https://bogdanvuk.github.io/pygears/setup.html#setup-pygears-tools&quot;&gt;PyGears tools setup&lt;/a&gt;. You can of course choose an alternative to all these tools (except for the PyGears framework itself I hope). Furthermore, PyGears has been tested to work on Windows and openSUSE as well, so feel free to use the OS of your choice. In short you will need:&lt;/p&gt;
+&lt;p&gt;For this series I’ll be working on Ubuntu 18.04. For the detailed description of the tools I’m going to use and how to set them up, please refer to &lt;a class=&quot;reference external&quot; href=&quot;https://www.pygears.org/setup.html#setup-pygears-tools&quot;&gt;PyGears tools setup&lt;/a&gt;. You can of course choose an alternative to all these tools (except for the PyGears framework itself I hope). Furthermore, PyGears has been tested to work on Windows and openSUSE as well, so feel free to use the OS of your choice. In short you will need:&lt;/p&gt;
 &lt;ol class=&quot;arabic simple&quot;&gt;
 &lt;li&gt;&lt;p&gt;PyGears,&lt;/p&gt;&lt;/li&gt;
 &lt;li&gt;&lt;p&gt;An RTL simulator: I’ll be using mostly Verilator since it is open-source, but I will try to provide an option in the code to run Questa or Cadence simulators as well,&lt;/p&gt;&lt;/li&gt;

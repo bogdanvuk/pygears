@@ -25,7 +25,7 @@ Bug-fixes
 
 - Echo example can now be simulated completely in Python without an RTL simulator. Simulator is still in experimental stage, since not all gears from the libraries are supported.
 
-  This mode can be invoked when running `plop_test_wav_echo_sim <https://bogdanvuk.github.io/pygears/echo.html#running-simulation>`_ by setting ``cosim=False``::
+  This mode can be invoked when running `plop_test_wav_echo_sim <https://www.pygears.org/echo.html#running-simulation>`_ by setting ``cosim=False``::
 
     wav_echo_sim(
         os.path.join(os.path.dirname(__file__), 'plop.wav'),
