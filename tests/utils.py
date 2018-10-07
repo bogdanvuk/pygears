@@ -3,7 +3,7 @@ import os
 import inspect
 import shutil
 
-from pygears.svgen import svgen
+from pygears.svgen import svgen, register_sv_paths
 from pygears.sim import sim
 from functools import wraps
 
@@ -94,6 +94,8 @@ def svgen_check(files, **kwds):
         def wrapper():
             func()
             filename, outdir = get_test_res_ref_dir_pair(func)
+            register_sv_paths(outdir)
+
             svgen(outdir=outdir, **kwds)
 
             for fn in files:

@@ -15,10 +15,10 @@ class TupleMeta(EnumerableGenericMeta):
             cls.args = args
             return cls
 
-    def without(self, index):
+    def without(self, *index):
         return Tuple[{
             k: v
-            for k, v in zip(self.fields, self.args) if k != index
+            for k, v in zip(self.fields, self.args) if k not in index
         }]
 
     def __add__(self, other):

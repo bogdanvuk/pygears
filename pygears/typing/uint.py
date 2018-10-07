@@ -6,6 +6,8 @@ Objects of these classes can also be instantiated and they provide some integer 
 from pygears.typing.base import EnumerableGenericMeta, GenericMeta, typeof
 from pygears.typing.tuple import Tuple
 from pygears.typing.bool import Bool
+from pygears.typing.bitw import bitw
+from pygears.core.log import typing_log
 
 
 class IntegerMeta(EnumerableGenericMeta):
@@ -101,6 +103,20 @@ class IntegerMeta(EnumerableGenericMeta):
         return self.base[width]
 
 
+def check_width(val, res):
+    if not isinstance(val, tuple):
+        val = (val, )
+
+    total_width = 0
+    for v in val:
+        total_width += bitw(v)
+
+    if (total_width > res.width):
+        typing_log().warning(
+            f'Value overflow - value {val} cannot be represented with {res.width} bits'
+        )
+
+
 class Integer(int, metaclass=IntegerMeta):
     """Base type for both :class:`Int` [N] and :class:`Uint` [N] generic types. Corresponds to HDL logic vector types. For an example Integer[9] translates to :sv:`logic [8:0]`.
     """
@@ -109,8 +125,10 @@ class Integer(int, metaclass=IntegerMeta):
         if type(val) == cls:
             return val
 
-        return super(Integer, cls).__new__(cls,
-                                           int(val) & ((1 << len(cls)) - 1))
+        res = super(Integer, cls).__new__(cls,
+                                          int(val) & ((1 << len(cls)) - 1))
+        check_width(val, res)
+        return res
 
     @property
     def width(self):
@@ -130,10 +148,16 @@ class Integer(int, metaclass=IntegerMeta):
         return self.width
 
     def __add__(self, other):
-        if isinstance(other, int):
-            return type(self)(int(self) + other)
-        else:
+        if isinstance(other, Integer):
             return (type(self) + type(other))(int(self) + int(other))
+        else:
+            return type(self)(int(self) + other)
+
+    def __mul__(self, other):
+        if isinstance(other, Integer):
+            return (type(self) * type(other))(int(self) * int(other))
+        else:
+            return type(self)(int(self) * other)
 
     def __str__(self):
         return f'{str(type(self))}({int(self)})'

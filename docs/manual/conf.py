@@ -1,35 +1,19 @@
-# -*- coding: utf-8 -*-
-#
-# Configuration file for the Sphinx documentation builder.
-#
-# This file does only contain a selection of the most common options. For a
-# full list see the documentation:
-# http://www.sphinx-doc.org/en/master/config
-
-# -- Path setup --------------------------------------------------------------
-
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-#
+import pkg_resources
+import datetime
 import os
 import sys
 sys.path.insert(0, os.path.abspath('../..'))
 sys.path.insert(0, os.path.abspath('../../examples/echo'))
 
-print(os.path.abspath('../../pygears'))
-import pygears.typing.uint
-
 # -- Project information -----------------------------------------------------
 
-project = 'pygears'
-copyright = '2018, Bogdan Vukobratovic'
+project = 'PyGears'
+this_year = datetime.date.today().year
+copyright = f'{this_year}, Bogdan Vukobratovic'
 author = 'Bogdan Vukobratovic'
 
-# The short X.Y version
-version = ''
-# The full version, including alpha/beta/rc tags
-release = '0.1b'
+version = pkg_resources.get_distribution("pygears").version
+release = version
 
 # -- General configuration ---------------------------------------------------
 
@@ -41,10 +25,18 @@ release = '0.1b'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc', 'sphinx.ext.githubpages', 'sphinxcontrib.tikz',
-    'sphinxcontrib.wavedrom', 'bdp.sphinxext.bdpfigure', 'sphinx.ext.napoleon'
+    'sphinx_verboser.verboser', 'sphinxarg.ext', 'sphinx.ext.autodoc',
+    'sphinx.ext.githubpages', 'sphinxcontrib.tikz', 'sphinxcontrib.wavedrom',
+    'bdp.sphinxext.bdpfigure', 'sphinx.ext.napoleon', 'sphinx_sitemap'
 ]
-autodoc_default_flags = ['show-inheritance', 'members', 'special-members']
+
+site_url = "https://www.pygears.org/"
+
+autodoc_default_options = {
+    'show-inheritance': None,
+    'members': None,
+    'special-members': None
+}
 autoclass_content = "class"
 add_module_names = False
 
@@ -135,27 +127,33 @@ pygments_style = 'sphinx'
 # a list of builtin themes.
 #
 html_theme = 'alabaster'
+html_title = "PyGears - HW Design: A Functional Approach"
+html_short_title = "PyGears"
+html_baseurl = "https://www.pygears.org"
+html_favicon = '_static/pygears.ico'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-# html_theme_options = {}
+html_theme_options = {
+    'travis_button': False,
+    'github_user': 'bogdanvuk',
+    'github_repo': 'pygears',
+    'github_banner': True,
+    'description': 'HW Design: A Functional Approach',
+    'logo': 'logo.png',
+    'sidebar_width': '230px'
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-# Custom sidebar templates, must be a dictionary that maps document names
-# to template names.
-#
-# The default sidebars (for documents that don't match any pattern) are
-# defined by theme itself.  Builtin themes are using these templates by
-# default: ``['localtoc.html', 'relations.html', 'sourcelink.html',
-# 'searchbox.html']``.
-#
-# html_sidebars = {}
+html_sidebars = {
+    '**': ['about.html', 'blog_link.html', 'globaltoc.html', 'searchbox.html']
+}
 
 # -- Options for HTMLHelp output ---------------------------------------------
 

@@ -17,16 +17,14 @@ def test_skip():
 
 @with_setup(clear)
 def test_skip_sim():
-    seq = [[list(range(1))], \
-           [list(range(1)), list(range(2))], \
-           [list(range(1)), list(range(2)), list(range(3))]]
+    seq = [[list(range(1))], [list(range(1)), list(range(2))],
+           [list(range(1)), list(range(2)),
+            list(range(3))]]
 
-    ref = [[Unit()], \
-           [Unit(), Unit()], \
-           [Unit(), Unit(), Unit()]]
+    ref = [[Unit()], [Unit(), Unit()], [Unit(), Unit(), Unit()]]
 
     directed(
-        drv(t=Queue[Uint[1], 3], seq=[seq]), f=quenvelope(lvl=2), ref=[ref])
+        drv(t=Queue[Uint[2], 3], seq=[seq]), f=quenvelope(lvl=2), ref=[ref])
 
     sim()
 

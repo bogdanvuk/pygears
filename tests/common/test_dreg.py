@@ -19,7 +19,7 @@ def test_pygears_sim():
 
     sim()
 
-    assert timestep() == (len(seq) + 1)
+    assert timestep() == (len(seq) + 2)
 
 
 @with_setup(clear)

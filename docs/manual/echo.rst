@@ -1,4 +1,4 @@
-..  _examples-echo:
+..  _echo-examples:
 
 Echo
 ====
@@ -26,7 +26,7 @@ If you have `Vivado <https://www.xilinx.com/products/design-tools/vivado.html>`_
 Running Simulation
 ------------------
 
-Run the script `examples/echo/plop_test_wav_echo_sim.py <https://github.com/bogdanvuk/pygears/tree/develop/examples/echo/plop_test_wav_echo_sim.py>`_ to run a simulation of the ``echo`` module. The simulation is run with the help of the Verilator tool, so please checkout the :ref:`installation instructions <installation>` if you need help with installing the Verilator. Furthermore, if you would like to see plots of the audio waves, you need to install `matplotlib <https://matplotlib.org/>`_. You can run the echo example like this:
+Run the script `examples/echo/plop_test_wav_echo_sim.py <https://github.com/bogdanvuk/pygears/tree/develop/examples/echo/plop_test_wav_echo_sim.py>`_ to run a simulation of the ``echo`` module. The simulation is run with the help of the Verilator tool, so please checkout the :ref:`installation instructions <install>` if you need help with installing the Verilator. Furthermore, if you would like to see plots of the audio waves, you need to install `matplotlib <https://matplotlib.org/>`_. You can run the echo example like this:
 
 .. code-block:: bash
 

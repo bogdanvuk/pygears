@@ -13,6 +13,7 @@ from .intf import Intf
 from .partial import Partial
 from .port import InPort, OutPort
 from .util import doublewrap
+from .log import core_log
 
 code_map = {}
 
@@ -354,7 +355,7 @@ class Gear(NamedHierNode):
             for p in c.out_ports:
                 intf = p.consumer
                 if intf not in self.intfs and not intf.consumers:
-                    print(f'Warning: {c.name}.{p.basename} left dangling.')
+                    core_log().warning(f'{c.name}.{p.basename} left dangling.')
 
         if len(out_intfs) > 1:
             return tuple(out_intfs)
@@ -421,6 +422,7 @@ def alternative(*base_gear_defs):
 def gear(func, gear_cls=Gear, **meta_kwds):
     from pygears.core.funcutils import FunctionBuilder
     fb = FunctionBuilder.from_func(func)
+    fb.filename = '<string>'
 
     # Add defaults from GearExtraParams registry
     for k, v in registry('GearExtraParams').items():

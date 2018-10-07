@@ -4,60 +4,60 @@ from pygears import clear
 
 from pygears import gear
 from pygears.cookbook.verif import verif
-from pygears.sim.modules.dtype_rnd_seq import dtype_rnd_seq
+# from pygears.sim.modules.dtype_rnd_seq import dtype_rnd_seq
 from pygears.sim.modules.seqr import seqr
-from pygears.sim.scv import create_type_cons
+# from pygears.sim.scv import create_type_cons
 from pygears.typing import Queue, Uint, Tuple, TLM, Int
 from pygears.cookbook.rng import rng
 
 skip_ifndef('INCLUDE_SLOW_TESTS', 'VERILATOR_ROOT', 'SYSTEMC_HOME', 'SCV_HOME')
 
 
-@with_setup(clear)
-@sim_check()
-def test_cnt_svgen_unsigned():
-    t_cfg = Tuple[Uint[4], Uint[4], Uint[2]]
-    params = dict(cnt_steps=False, incr_steps=False, cnt_one_more=False)
+# @with_setup(clear)
+# @sim_check()
+# def test_cnt_svgen_unsigned():
+#     t_cfg = Tuple[Uint[4], Uint[4], Uint[2]]
+#     params = dict(cnt_steps=False, incr_steps=False, cnt_one_more=False)
 
-    cons = create_type_cons(
-        t_cfg,
-        scale=Uint[4],
-        cons=['scale > 0', 'f1 > f0', 'f1 - f0 == scale*f2'])
+#     cons = create_type_cons(
+#         t_cfg,
+#         scale=Uint[4],
+#         cons=['scale > 0', 'f1 > f0', 'f1 - f0 == scale*f2'])
 
-    @gear
-    async def ref(din: TLM[t_cfg], *, cnt_steps, incr_steps,
-                  cnt_one_more) -> TLM[Queue[t_cfg[0]]]:
-        cfg = await din.get()
-        din.task_done()
+#     @gear
+#     async def ref(din: TLM[t_cfg], *, cnt_steps, incr_steps,
+#                   cnt_one_more) -> TLM[Queue[t_cfg[0]]]:
+#         cfg = await din.get()
+#         din.task_done()
 
-        cfg = list(cfg)
-        cfg[1] += 1
-        yield list(range(*cfg))
+#         cfg = list(cfg)
+#         cfg[1] += 1
+#         yield list(range(*cfg))
 
-    return verif(
-        seqr(t=t_cfg, seq=dtype_rnd_seq(t=t_cfg, cons=cons)),
-        f=rng(**params),
-        ref=ref(**params))
+#     return verif(
+#         seqr(t=t_cfg, seq=dtype_rnd_seq(t=t_cfg, cons=cons)),
+#         f=rng(**params),
+#         ref=ref(**params))
 
 
-@with_setup(clear)
-@sim_check()
-def test_cnt_svgen_stop_only():
-    t_cfg = Uint[8]
-    params = dict(cnt_steps=False, incr_steps=False, cnt_one_more=False)
+# @with_setup(clear)
+# @sim_check()
+# def test_cnt_svgen_stop_only():
+#     t_cfg = Uint[8]
+#     params = dict(cnt_steps=False, incr_steps=False, cnt_one_more=False)
 
-    @gear
-    async def ref(din: TLM[t_cfg], *, cnt_steps, incr_steps,
-                  cnt_one_more) -> TLM[Queue[t_cfg]]:
-        cfg = await din.get()
-        din.task_done()
+#     @gear
+#     async def ref(din: TLM[t_cfg], *, cnt_steps, incr_steps,
+#                   cnt_one_more) -> TLM[Queue[t_cfg]]:
+#         cfg = await din.get()
+#         din.task_done()
 
-        yield list(range(cfg + 1))
+#         yield list(range(cfg + 1))
 
-    return verif(
-        seqr(t=t_cfg, seq=dtype_rnd_seq(t=t_cfg)),
-        f=rng(**params),
-        ref=ref(**params))
+#     return verif(
+#         seqr(t=t_cfg, seq=dtype_rnd_seq(t=t_cfg)),
+#         f=rng(**params),
+#         ref=ref(**params))
 
 
 # @with_setup(clear)
