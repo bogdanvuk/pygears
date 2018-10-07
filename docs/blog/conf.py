@@ -1,3 +1,5 @@
+import datetime
+import pkg_resources
 import alabaster
 import ablog
 
@@ -5,20 +7,19 @@ ablog_builder = 'dirhtml'
 ablog_website = '_website'
 
 project = 'PyGears'
-copyright = '2018, Bogdan Vukobratović'
+this_year = datetime.date.today().year
+copyright = f'{this_year}, Bogdan Vukobratovic'
 author = 'Bogdan Vukobratović'
 
-# The short X.Y version
-version = ''
-# The full version, including alpha/beta/rc tags
-release = ''
+version = pkg_resources.get_distribution("pygears").version
+release = version
 
 extensions = [
     'sphinxarg.ext', 'sphinx_verboser.verboser', 'sphinxcontrib.tikz',
     'alabaster', 'ablog', 'sphinx_sitemap'
 ]
 
-site_url = "https://bogdanvuk.github.io/pygears/blog/"
+site_url = "https://www.pygears.org/blog/"
 
 # Add any paths that contain templates here, relative to this directory.
 source_suffix = '.rst'
@@ -29,9 +30,11 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 pygments_style = 'sphinx'
 
 html_theme = 'alabaster'
-html_title = "PyGears"
+html_title = "PyGears - HW Design: A Functional Approach"
+html_short_title = "PyGears"
 html_static_path = ['_static']
 html_use_index = True
+html_baseurl = "https://www.pygears.org"
 html_domain_indices = False
 html_show_sourcelink = True
 # html_favicon = '_static/ablog.ico'
@@ -61,7 +64,7 @@ def link_posts_within_category(posts):
 
 ablog.blog.link_posts = link_posts_within_category
 blog_title = 'PyGears'
-blog_baseurl = 'https://bogdanvuk.github.io/pygears/'
+blog_baseurl = 'https://www.pygears.org/'
 blog_languages = {
     'en': ('English', None),
 }
@@ -95,7 +98,7 @@ html_theme_options = {
     'travis_button': False,
     'github_user': 'bogdanvuk',
     'github_repo': 'pygears',
-    'description': 'PyGears blog',
+    'description': 'HW Design: A Functional Approach',
     # 'logo': 'ablog.png',
 }
 

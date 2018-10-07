@@ -4,12 +4,12 @@
 Welcome to PyGears 
 ==================
 
-HW Design - a Functional Approach
+HW Design: A Functional Approach
 ---------------------------------
 
 **PyGears** is an ambitious attempt to create a Python framework that facilitates describing digital hardware. It aims to augment current RTL methodology to drastically increase **composability** of hardware modules. Ease of composition leads to better **reusability**, since modules that compose better can be used in a wider variety of contexts. Set of reusable components can then form a well-tested and documented library that significantly speeds up the development process.  
 
-For a guide through **PyGears** methodology, checkout `blog series on implementing RISC-V in PyGears <https://bogdanvuk.github.io/pygears/blog/riscv/introduction.html>`_. 
+For a guide through **PyGears** methodology, checkout `blog series on implementing RISC-V in PyGears <https://www.pygears.org/blog/riscv/introduction.html>`_. 
 
 For an introductory **PyGears** example, checkout :ref:`echo <echo-examples>`. A snippet is given below: 
 
@@ -50,14 +50,14 @@ For the instruction checkout :ref:`Installation <install>` page.
 Read the documentation
 ----------------------
 
-`PyGears documentation <https://bogdanvuk.github.io/pygears/>`_
+`PyGears documentation <https://www.pygears.org/>`_
 
 Checkout the examples
 ---------------------
 
 :ref:`Echo <echo-examples>`: Hardware module that applies echo audio effect to a continuous audio stream.
 
-`RISC-V Blog <https://bogdanvuk.github.io/pygears/blog/riscv/introduction.html>`_: Blog series on implementing RISC-V processor with **PyGears**
+`RISC-V Blog <https://www.pygears.org/blog/riscv/introduction.html>`_: Blog series on implementing RISC-V processor with **PyGears**
 
 `Tests <https://github.com/bogdanvuk/pygears/tree/master/tests>`_: Contain many examples on how individual **PyGears** components operate
 

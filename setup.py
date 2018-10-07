@@ -40,12 +40,12 @@ def readme():
 
 setup(
     name='pygears',
-    version='0.1.1a3',
+    version='0.1.1a4',
     description='Framework for functional hardware design approach',
     long_description=readme(),
 
     # The project's main homepage.
-    url='https://bogdanvuk.github.io/pygears',
+    url='https://www.pygears.org',
     # download_url = '',
 
     # Author details

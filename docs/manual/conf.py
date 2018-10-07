@@ -5,8 +5,6 @@ import sys
 sys.path.insert(0, os.path.abspath('../..'))
 sys.path.insert(0, os.path.abspath('../../examples/echo'))
 
-print(os.path.abspath('../../pygears'))
-
 # -- Project information -----------------------------------------------------
 
 project = 'PyGears'
@@ -32,7 +30,7 @@ extensions = [
     'bdp.sphinxext.bdpfigure', 'sphinx.ext.napoleon', 'sphinx_sitemap'
 ]
 
-site_url = "https://bogdanvuk.github.io/pygears/"
+site_url = "https://www.pygears.org/"
 
 autodoc_default_options = {
     'show-inheritance': None,
@@ -129,6 +127,9 @@ pygments_style = 'sphinx'
 # a list of builtin themes.
 #
 html_theme = 'alabaster'
+html_title = "PyGears - HW Design: A Functional Approach"
+html_short_title = "PyGears"
+html_baseurl = "https://www.pygears.org"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -139,7 +140,7 @@ html_theme_options = {
     'github_user': 'bogdanvuk',
     'github_repo': 'pygears',
     'github_banner': True,
-    'description': 'HW design - a functional approach',
+    'description': 'HW Design: A Functional Approach',
     # 'logo': 'ablog.png',
 }
 
