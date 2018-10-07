@@ -24,6 +24,7 @@ mkdir blog
 mv ./docs/blog/_build/html/{.,}* ./blog
 
 printf "tools/\ndocs/\npygears/\nexamples/\ntests/\ndeploy/\n" > .gitignore
+printf "www.pygears.org" > CNAME
 
 git add -A
 git commit -m "publishing updated docs..."
