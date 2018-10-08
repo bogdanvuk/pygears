@@ -23,10 +23,8 @@ import sys
 import tempfile
 from string import Template
 
-from pygears import bind, registry
-from pygears.registry import PluginBase
-
 from .err import enum_stacktrace
+from .registry import PluginBase, bind, registry
 
 registry_log_name = Template('${name}Log')
 
@@ -147,6 +145,7 @@ class LogPlugin(PluginBase):
         CustomLog('typing', logging.WARNING)
         CustomLog('util', logging.WARNING)
         CustomLog('gear', logging.WARNING)
+        CustomLog('conf', logging.WARNING)
 
 
 def core_log():
@@ -163,3 +162,7 @@ def util_log():
 
 def gear_log():
     return logging.getLogger('gear')
+
+
+def conf_log():
+    return logging.getLogger('conf')

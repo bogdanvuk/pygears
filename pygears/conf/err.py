@@ -5,7 +5,7 @@ from functools import partial
 from traceback import (extract_stack, extract_tb, format_exception_only,
                        format_list, walk_stack, walk_tb)
 
-from pygears.registry import PluginBase, registry
+from .registry import PluginBase, registry
 
 
 class ErrReportLevel(IntEnum):
@@ -73,7 +73,7 @@ def pygears_excepthook(exception_type,
 
         # print traceback for LogException only if appropriate
         # 'print_traceback' in registry is set
-        from pygears.core.log import LogException, registry_log_name
+        from pygears.conf.log import LogException, registry_log_name
         print_traceback = (exception_type is not LogException)
         if not print_traceback:
             print_traceback = registry(

@@ -1,7 +1,10 @@
+import fnmatch
 import importlib
 import os
 import re
 import sys
+
+from .utils import dict_generator, nested_set
 
 
 class PluginBase:
@@ -37,8 +40,18 @@ def registry(key):
     return PluginBase.registry[key]
 
 
-def bind(key, val):
-    PluginBase.registry[key] = val
+def bind(key_pattern, value):
+    matched = False
+    reg = PluginBase.registry
+    for reg_list in dict_generator(reg):
+        as_path = '/'.join([str(x) for x in reg_list])
+        if fnmatch.fnmatch(as_path, key_pattern):
+            nested_set(reg, value, *reg_list[:-1])
+            matched = True
+
+    # set new key if pattern was not matched
+    if not matched:
+        reg[key_pattern] = value
 
 
 def clear():

@@ -2,7 +2,7 @@ import functools
 import inspect
 import sys
 import traceback
-from .err import enum_traceback
+from pygears.conf import enum_traceback
 
 
 class MultiAlternativeError(Exception):

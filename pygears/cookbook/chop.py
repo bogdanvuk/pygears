@@ -1,5 +1,5 @@
 from pygears import gear, module
-from pygears.core.log import gear_log
+from pygears.conf import gear_log
 from pygears.typing import Queue, Uint
 
 
