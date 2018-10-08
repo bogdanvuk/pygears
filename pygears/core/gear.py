@@ -62,6 +62,17 @@ def check_arg_specified(args):
     return tuple(args_res), const_args_gears
 
 
+def find_current_gear_frame():
+    import inspect
+    code_map = registry('GearCodeMap')
+
+    for frame, *_ in inspect.stack():
+        if frame.f_code is code_map[-1].func.__code__:
+            return frame
+    else:
+        return None
+
+
 class create_hier:
     def __init__(self, gear):
         self.gear = gear
@@ -104,7 +115,8 @@ class Gear(NamedHierNode):
 
         return gear.resolve()
 
-    def __init__(self, func, *args, name=None, intfs=None, outnames=[], **kwds):
+    def __init__(self, func, *args, name=None, intfs=None, outnames=[],
+                 **kwds):
         super().__init__(name, registry('CurrentModule'))
 
         self.in_ports = []
@@ -375,13 +387,13 @@ class Gear(NamedHierNode):
 
             self.func_locals = {}
             code_map = registry('GearCodeMap')
-            code_map[self.func.__code__] = self
+            code_map.append(self)
 
             def tracer(frame, event, arg):
                 if event == 'return':
-                    if frame.f_code in code_map:
-                        code_map[
-                            frame.f_code].func_locals = frame.f_locals.copy()
+                    for cm in code_map:
+                        if frame.f_code is cm.func.__code__:
+                            cm.func_locals = frame.f_locals.copy()
 
             # tracer is activated on next call, return or exception
             if registry('CurrentModule').parent == registry('HierRoot'):
@@ -389,6 +401,7 @@ class Gear(NamedHierNode):
 
             ret = self.func(*func_args, **func_kwds)
 
+            code_map.pop()
             if registry('CurrentModule').parent == registry('HierRoot'):
                 sys.setprofile(None)
 
@@ -477,7 +490,7 @@ class GearPlugin(PluginBase):
     def bind(cls):
         cls.registry['HierRoot'] = NamedHierNode('')
         cls.registry['CurrentModule'] = cls.registry['HierRoot']
-        cls.registry['GearCodeMap'] = {}
+        cls.registry['GearCodeMap'] = []
         cls.registry['GearMetaParams'] = {'enablement': True}
         cls.registry['GearExtraParams'] = {
             'name': None,
@@ -490,4 +503,4 @@ class GearPlugin(PluginBase):
     def reset(cls):
         bind('HierRoot', NamedHierNode(''))
         bind('CurrentModule', cls.registry['HierRoot'])
-        bind('GearCodeMap', {})
+        bind('GearCodeMap', [])
