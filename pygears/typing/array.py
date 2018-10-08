@@ -72,7 +72,10 @@ class ArrayMeta(EnumerableGenericMeta):
             return Array[self.args[0], width]
 
     def __str__(self):
-        return f'Array[{str(self.args[0])}, {len(self)}]'
+        if self.args:
+            return f'Array[{str(self.args[0])}, {len(self)}]'
+        else:
+            return super().__str__()
 
 
 class Array(tuple, metaclass=ArrayMeta):
