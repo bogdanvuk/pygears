@@ -79,7 +79,6 @@ class TupleMeta(EnumerableGenericMeta):
 
 
 class Tuple(tuple, metaclass=TupleMeta):
-    # def __new__(self, val: tuple):
     def __new__(cls, val):
         if not cls.is_specified():
             raise TemplatedTypeUnspecified
@@ -107,6 +106,10 @@ class Tuple(tuple, metaclass=TupleMeta):
                 subtypes.extend(subt if isinstance(i, slice) else [subt])
 
             return tout(tuple(subtypes))
+
+    def replace(self, **kwds):
+        map_dict = {f: kwds.get(f, self[f]) for f in type(self).fields}
+        return type(self)(map_dict)
 
     @class_and_instance_method
     def get(self, key, default=None):

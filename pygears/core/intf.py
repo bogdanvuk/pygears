@@ -206,7 +206,7 @@ class Intf:
         if self._data is None:
             self._data = self.in_queue.get_nowait()
 
-        return self._data
+        return self.dtype(self._data)
 
     def get_nb(self):
         val = self.pull_nb()
@@ -228,7 +228,7 @@ class Intf:
         if e:
             e(self)
 
-        return self._data
+        return self.dtype(self._data)
 
     def ack(self):
         e = self.events['ack']
