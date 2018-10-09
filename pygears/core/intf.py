@@ -43,9 +43,8 @@ def get_consumer_tree(intf):
 @operator_methods_gen
 class Intf:
     OPERATOR_SUPPORT = [
-        '__getitem__', '__neg__', '__add__', '__sub__', '__mul__',
-        '__div__', '__floordiv__', '__mod__', '__invert__', '__rshift__',
-        '__lt__'
+        '__getitem__', '__neg__', '__add__', '__sub__', '__mul__', '__div__',
+        '__floordiv__', '__mod__', '__invert__', '__rshift__', '__lt__'
     ]
 
     def __init__(self, dtype):
@@ -65,7 +64,7 @@ class Intf:
             'ack_in': SimEvent(),
             'pull_start': SimEvent(),
             'pull_done': SimEvent(),
-            'cancel': SimEvent()
+            'finish': SimEvent()
         }
 
     def __ior__(self, iout):
@@ -158,14 +157,20 @@ class Intf:
         if any(registry('SimMap')[c.gear].done for c in self.end_consumers):
             raise GearDone
 
-        e = self.events['put']
+        put_event = self.events['put']
 
-        if e:
-            e(self, val)
+        if self.dtype is not type(val):
+            try:
+                val = self.dtype(val)
+            except TypeError:
+                pass
+
+        if put_event:
+            put_event(self, val)
 
         for q, c in zip(self.out_queues, self.end_consumers):
-            if e:
-                e(c.consumer, val)
+            if put_event:
+                put_event(c.consumer, val)
 
             q.put_nowait(val)
 
@@ -192,14 +197,15 @@ class Intf:
         '''Mark the interface as done, i.e. no more data will be transmitted.
 
         Informs also all consumer ports. If any task is waiting for this
-        interface's data it is cancelled. This is how the end of simulation
+        interface's data it is finishled. This is how the end of simulation
         propagates from the producers to the consumers.
         '''
+
+        self.events['finish'](self)
         self._done = True
         for q, c in zip(self.out_queues, self.end_consumers):
             c.finish()
             for task in q._getters:
-                self.events['cancel'](self, c)
                 task.cancel()
 
     @property
@@ -213,7 +219,13 @@ class Intf:
         if self._data is None:
             self._data = self.in_queue.get_nowait()
 
-        return self.dtype(self._data)
+        if self.dtype is type(self._data):
+            return self._data
+
+        try:
+            return self.dtype(self._data)
+        except TypeError:
+            return self._data
 
     def get_nb(self):
         val = self.pull_nb()
@@ -234,6 +246,9 @@ class Intf:
         e = self.events['pull_done']
         if e:
             e(self)
+
+        if self.dtype is type(self._data):
+            return self._data
 
         try:
             return self.dtype(self._data)

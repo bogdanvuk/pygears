@@ -26,3 +26,9 @@ I had to consult `Chapter 19 <https://content.riscv.org/wp-content/uploads/2017/
     ``addi`` instruction format, from `RISC-V ISA Specification`_
 
 
+.. figure:: images/addi-timelapse.gif
+    :align: center
+
+    ``addi`` instruction simulation timelapse. Each frame is a single delta cycle.
+
+
