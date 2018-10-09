@@ -7,9 +7,27 @@ import sys
 from .utils import dict_generator, nested_set
 
 
+class RegistryHook(dict):
+    def __init__(self, **kwds):
+        super().__init__()
+        for k, v in kwds.items():
+            self[k] = v
+
+    def __getitem__(self, key):
+        return dict.__getitem__(self, key)
+
+    def __setitem__(self, key, value):
+        if not hasattr(self, f'_get_{key}'):
+            dict.__setitem__(self, key, value)
+
+        if hasattr(self, f'_set_{key}'):
+            getattr(self, f'_set_{key}')(value)
+
+
 class PluginBase:
     subclasses = []
     registry = {}
+    cb = {}
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
@@ -40,13 +58,21 @@ def registry(key):
     return PluginBase.registry[key]
 
 
+def set_cb(key, cb):
+    PluginBase.cb[key] = cb
+
+
 def bind(key_pattern, value):
     matched = False
     reg = PluginBase.registry
+    cb = PluginBase.cb
+
     for reg_list in dict_generator(reg):
         as_path = '/'.join([str(x) for x in reg_list[:-1]])
         if fnmatch.fnmatch(as_path, key_pattern):
             nested_set(reg, value, *reg_list[:-1])
+            if as_path in cb:
+                cb[as_path](value)
             matched = True
 
     # set new key if pattern was not matched

@@ -1,52 +1,29 @@
-import os
 import sys
-from enum import IntEnum
 from functools import partial
-from traceback import (extract_stack, extract_tb, format_exception_only,
-                       format_list, walk_stack, walk_tb)
+from traceback import format_exception_only
 
-from .registry import PluginBase, registry
+from .pdb_patch import patch_pdb, unpatch_pdb
+from .registry import PluginBase, RegistryHook, registry
+from .trace import ErrReportLevel, enum_traceback
 
 
-class ErrReportLevel(IntEnum):
-    debug = 0
-    user = 1
+class ErrReport(RegistryHook):
+    def _set_level(self, val):
+        if val == ErrReportLevel.user:
+            patch_pdb()
+        else:
+            unpatch_pdb()
 
 
 class ErrReportPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        # cls.registry['ErrReportLevel'] = ErrReportLevel.user
-        # from .pdb_patch import patch_pdb
-        # patch_pdb()
-
-        cls.registry['ErrReportLevel'] = ErrReportLevel.debug
+        cls.registry['ErrReport'] = ErrReport(level=ErrReportLevel.debug)
         cls.registry['ExitHooks'] = []
 
 
 def register_exit_hook(hook, *args, **kwds):
     registry('ExitHooks').append(partial(hook, *args, **kwds))
-
-
-def parse_trace(s, t):
-    if registry("ErrReportLevel") == ErrReportLevel.debug:
-        yield s
-    else:
-        is_internal = t[0].f_code.co_filename.startswith(
-            os.path.dirname(__file__))
-        is_boltons = 'boltons' in t[0].f_code.co_filename
-        if not is_internal and not is_boltons:
-            yield s
-
-
-def enum_traceback(tr):
-    for s, t in zip(format_list(extract_tb(tr)), walk_tb(tr)):
-        yield from parse_trace(s, t)
-
-
-def enum_stacktrace():
-    for s, t in zip(format_list(extract_stack()), walk_stack(f=None)):
-        yield from parse_trace(s, t)
 
 
 def pygears_excepthook(exception_type,

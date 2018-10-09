@@ -1,7 +1,8 @@
-from .err import ErrReportLevel, enum_traceback, pygears_excepthook
+from .err import pygears_excepthook
 from .log import (CustomLog, LogFmtFilter, conf_log, core_log, gear_log,
-                  typing_log, util_log, set_log_level)
+                  set_log_level, typing_log, util_log)
 from .registry import PluginBase, bind, clear, load_plugin_folder, registry
+from .trace import ErrReportLevel, enum_traceback
 
 __all__ = [
     'PluginBase', 'bind', 'registry', 'clear', 'load_plugin_folder',
