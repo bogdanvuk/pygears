@@ -1,7 +1,7 @@
 from pygears import gear
 from pygears.sim import clk
 from pygears.sim.utils import SimDelay
-from pygears.typing import TLM
+from pygears.typing import Any
 
 
 class Partial:
@@ -70,7 +70,7 @@ class TypeMonitorVisitor:
 
 
 @gear
-async def mon(din, *, t=b'din') -> TLM['din']:
+async def mon(din, *, t=b'din') -> Any:
     v = TypeMonitorVisitor(t)
     while 1:
         data = None

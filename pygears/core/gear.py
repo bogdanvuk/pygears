@@ -62,9 +62,40 @@ def check_arg_specified(args):
     return tuple(args_res), const_args_gears
 
 
+def get_obj_var_name(frame, obj):
+    for var_name, var_obj in frame.f_locals.items():
+        if obj is var_obj:
+            return var_name
+    else:
+        None
+
+
+# def assign_intf_var_name(intf):
+#     import os
+
+#     if getattr(intf, 'var_name', None) is not None:
+#         return
+
+#     for frame, *_ in reversed(inspect.stack()):
+#         is_internal = frame.f_code.co_filename.startswith(
+#             os.path.dirname(__file__))
+#         is_boltons = 'boltons' in frame.f_code.co_filename
+
+#         if not is_internal and not is_boltons:
+#             var_name = get_obj_var_name(frame, intf)
+#             if var_name is not None:
+#                 print(f'{intf}: {var_name} in {frame.f_code.co_filename}')
+#                 intf.var_name = var_name
+#                 return
+#     else:
+#         intf.var_name = None
+
+
 def find_current_gear_frame():
     import inspect
     code_map = registry('GearCodeMap')
+    if not code_map:
+        return None
 
     for frame, *_ in inspect.stack():
         if frame.f_code is code_map[-1].func.__code__:
@@ -153,6 +184,9 @@ class Gear(NamedHierNode):
         except GearArgsNotSpecified as e:
             raise GearArgsNotSpecified(
                 f'{str(e)}, when instantiating {self.name}')
+
+        # for intf in self.args:
+        #     assign_intf_var_name(intf)
 
         self.params = {}
         if isinstance(argspec.kwonlydefaults, dict):

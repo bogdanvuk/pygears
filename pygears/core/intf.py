@@ -189,6 +189,12 @@ class Intf:
             return self.in_queue.empty()
 
     def finish(self):
+        '''Mark the interface as done, i.e. no more data will be transmitted.
+
+        Informs also all consumer ports. If any task is waiting for this
+        interface's data it is cancelled. This is how the end of simulation
+        propagates from the producers to the consumers.
+        '''
         self._done = True
         for q, c in zip(self.out_queues, self.end_consumers):
             c.finish()
@@ -196,6 +202,7 @@ class Intf:
                 self.events['cancel'](self, c)
                 task.cancel()
 
+    @property
     def done(self):
         return self._done
 
@@ -228,7 +235,10 @@ class Intf:
         if e:
             e(self)
 
-        return self.dtype(self._data)
+        try:
+            return self.dtype(self._data)
+        except TypeError:
+            return self._data
 
     def ack(self):
         e = self.events['ack']

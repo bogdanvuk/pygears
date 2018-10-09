@@ -107,6 +107,10 @@ class Tuple(tuple, metaclass=TupleMeta):
 
             return tout(tuple(subtypes))
 
+    @class_and_instance_method
+    def __str__(self):
+        return '(%s)' % ', '.join([type_str(a) for a in self])
+
     def replace(self, **kwds):
         map_dict = {f: kwds.get(f, self[f]) for f in type(self).fields}
         return type(self)(map_dict)

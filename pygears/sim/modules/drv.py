@@ -1,10 +1,7 @@
 import inspect
 
-from pygears import gear, GearDone, alternative
-from pygears.sim import clk, sim_log
-from pygears.typing import TLM
+from pygears import GearDone, gear
 from pygears.util.utils import quiter
-from pygears.sim.utils import SimDelay
 
 # from pygears.sim.extens.svrand import get_rand_data
 

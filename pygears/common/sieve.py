@@ -21,11 +21,14 @@ def get_obj_var_name(frame, obj):
         if obj is var_obj:
             return var_name
     else:
-        None
+        return None
 
 
 def maybe_obtain_intf_var_name(intf):
     frame = find_current_gear_frame()
+    if frame is None:
+        return None
+
     return get_obj_var_name(frame, intf)
 
 
