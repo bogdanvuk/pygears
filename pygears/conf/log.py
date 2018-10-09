@@ -13,7 +13,7 @@
 #  - to print traceback on fail: registry(<name>Log)['print_traceback'] = True
 #
 # To change verbosity of displayed messages set the desired level:
-#   For example: core_log().level = logging.ERROR
+#   For example: set_log_level('core', logging.INFO)
 #
 # ===========================================================================
 
@@ -27,6 +27,14 @@ from .err import enum_stacktrace
 from .registry import PluginBase, bind, registry
 
 registry_log_name = Template('${name}Log')
+
+
+def set_log_level(name, level):
+    log = logging.getLogger(name)
+    if log.level != level:
+        log.setLevel(level)
+        for h in log.handlers:
+            h.setLevel(level)
 
 
 class LogException(Exception):

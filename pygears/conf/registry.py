@@ -44,7 +44,7 @@ def bind(key_pattern, value):
     matched = False
     reg = PluginBase.registry
     for reg_list in dict_generator(reg):
-        as_path = '/'.join([str(x) for x in reg_list])
+        as_path = '/'.join([str(x) for x in reg_list[:-1]])
         if fnmatch.fnmatch(as_path, key_pattern):
             nested_set(reg, value, *reg_list[:-1])
             matched = True
