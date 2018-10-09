@@ -1,4 +1,5 @@
 import sys
+import importlib
 import pdb
 import fnmatch
 
@@ -109,4 +110,4 @@ def patch_pdb():
 
 
 def unpatch_pdb():
-    pass
+    importlib.reload(pdb)
