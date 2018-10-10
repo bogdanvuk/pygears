@@ -13,7 +13,8 @@
 #  - to print traceback on fail: registry(<name>Log)['print_traceback'] = True
 #
 # To change verbosity of displayed messages set the desired level:
-#   For example: core_log().level = logging.ERROR
+#   For example: set_log_level('core', logging.INFO) or
+#     registry(<name>Log)['level'] = logging.INFO
 #
 # ===========================================================================
 
@@ -21,14 +22,22 @@ import copy
 import logging
 import sys
 import tempfile
+from functools import partial
 from string import Template
 
-from pygears import bind, registry
-from pygears.registry import PluginBase
-
-from .err import enum_stacktrace
+from .registry import PluginBase, bind, registry, set_cb
+from .trace import enum_stacktrace
 
 registry_log_name = Template('${name}Log')
+
+
+def set_log_level(name, level):
+    log = logging.getLogger(name)
+    if log.level != level:
+        log.setLevel(level)
+        for h in log.handlers:
+            h.setLevel(level)
+    conf_log().info(f'Setting log level {name}, {level}')
 
 
 class LogException(Exception):
@@ -97,17 +106,21 @@ class CustomLog:
     dflt_severity = {
         'print_traceback': True,
         'warning': copy.deepcopy(dflt_action),
-        'error': copy.deepcopy(dflt_action)
+        'error': copy.deepcopy(dflt_action),
+        'level': logging.WARNING
     }
 
     def __init__(self, name, verbosity=logging.INFO):
         self.name = name
+        reg_name = registry_log_name.substitute(name=name)
         self.verbosity = verbosity
 
         self.set_default_logger()
-        bind(
-            registry_log_name.substitute(name=name),
-            copy.deepcopy(self.dflt_severity))
+
+        bind_val = copy.deepcopy(self.dflt_severity)
+        bind_val['level'] = verbosity
+        bind(reg_name, bind_val)
+        set_cb(f'{reg_name}/level', partial(set_log_level, name))
 
         self.logger = logging.getLogger(name)
 
@@ -147,6 +160,7 @@ class LogPlugin(PluginBase):
         CustomLog('typing', logging.WARNING)
         CustomLog('util', logging.WARNING)
         CustomLog('gear', logging.WARNING)
+        CustomLog('conf', logging.WARNING)
 
 
 def core_log():
@@ -163,3 +177,7 @@ def util_log():
 
 def gear_log():
     return logging.getLogger('gear')
+
+
+def conf_log():
+    return logging.getLogger('conf')

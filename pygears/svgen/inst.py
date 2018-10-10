@@ -3,7 +3,7 @@ import logging
 
 from pygears import PluginBase, registry
 from pygears.core.hier_node import HierVisitorBase
-from pygears.core.log import CustomLog
+from pygears.conf import CustomLog
 from pygears.definitions import USER_SVLIB_DIR
 from pygears.svgen.intf import SVIntfGen
 

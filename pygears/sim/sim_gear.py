@@ -1,7 +1,7 @@
 import inspect
 import asyncio
 import atexit
-from pygears.core.err import register_exit_hook
+from pygears.conf.err import register_exit_hook
 from pygears import registry, GearDone
 from pygears.sim import clk, timestep, delta, sim_log, sim_phase
 from pygears.sim.sim import cancel
@@ -76,7 +76,7 @@ class SimGear:
 
         try:
             if is_async_gen(self.func):
-                while(1):
+                while (1):
                     if sim.phase != 'forward':
                         await clk()
 
