@@ -61,6 +61,48 @@ def check_arg_specified(args):
     return tuple(args_res), const_args_gears
 
 
+def get_obj_var_name(frame, obj):
+    for var_name, var_obj in frame.f_locals.items():
+        if obj is var_obj:
+            return var_name
+    else:
+        None
+
+
+# def assign_intf_var_name(intf):
+#     import os
+
+#     if getattr(intf, 'var_name', None) is not None:
+#         return
+
+#     for frame, *_ in reversed(inspect.stack()):
+#         is_internal = frame.f_code.co_filename.startswith(
+#             os.path.dirname(__file__))
+#         is_boltons = 'boltons' in frame.f_code.co_filename
+
+#         if not is_internal and not is_boltons:
+#             var_name = get_obj_var_name(frame, intf)
+#             if var_name is not None:
+#                 print(f'{intf}: {var_name} in {frame.f_code.co_filename}')
+#                 intf.var_name = var_name
+#                 return
+#     else:
+#         intf.var_name = None
+
+
+def find_current_gear_frame():
+    import inspect
+    code_map = registry('GearCodeMap')
+    if not code_map:
+        return None
+
+    for frame, *_ in inspect.stack():
+        if frame.f_code is code_map[-1].func.__code__:
+            return frame
+    else:
+        return None
+
+
 class create_hier:
     def __init__(self, gear):
         self.gear = gear
@@ -103,7 +145,8 @@ class Gear(NamedHierNode):
 
         return gear.resolve()
 
-    def __init__(self, func, *args, name=None, intfs=None, outnames=[], **kwds):
+    def __init__(self, func, *args, name=None, intfs=None, outnames=[],
+                 **kwds):
         super().__init__(name, registry('CurrentModule'))
 
         self.in_ports = []
@@ -140,6 +183,9 @@ class Gear(NamedHierNode):
         except GearArgsNotSpecified as e:
             raise GearArgsNotSpecified(
                 f'{str(e)}, when instantiating {self.name}')
+
+        # for intf in self.args:
+        #     assign_intf_var_name(intf)
 
         self.params = {}
         if isinstance(argspec.kwonlydefaults, dict):
@@ -374,13 +420,13 @@ class Gear(NamedHierNode):
 
             self.func_locals = {}
             code_map = registry('GearCodeMap')
-            code_map[self.func.__code__] = self
+            code_map.append(self)
 
             def tracer(frame, event, arg):
                 if event == 'return':
-                    if frame.f_code in code_map:
-                        code_map[
-                            frame.f_code].func_locals = frame.f_locals.copy()
+                    for cm in code_map:
+                        if frame.f_code is cm.func.__code__:
+                            cm.func_locals = frame.f_locals.copy()
 
             # tracer is activated on next call, return or exception
             if registry('CurrentModule').parent == registry('HierRoot'):
@@ -388,6 +434,7 @@ class Gear(NamedHierNode):
 
             ret = self.func(*func_args, **func_kwds)
 
+            code_map.pop()
             if registry('CurrentModule').parent == registry('HierRoot'):
                 sys.setprofile(None)
 
@@ -476,7 +523,7 @@ class GearPlugin(PluginBase):
     def bind(cls):
         cls.registry['HierRoot'] = NamedHierNode('')
         cls.registry['CurrentModule'] = cls.registry['HierRoot']
-        cls.registry['GearCodeMap'] = {}
+        cls.registry['GearCodeMap'] = []
         cls.registry['GearMetaParams'] = {'enablement': True}
         cls.registry['GearExtraParams'] = {
             'name': None,
@@ -489,4 +536,4 @@ class GearPlugin(PluginBase):
     def reset(cls):
         bind('HierRoot', NamedHierNode(''))
         bind('CurrentModule', cls.registry['HierRoot'])
-        bind('GearCodeMap', {})
+        bind('GearCodeMap', [])

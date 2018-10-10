@@ -51,7 +51,7 @@ class SimVerilated(CosimBase):
             os.path.join(self.objdir, f'V{self.wrap_name}'))
 
         self.finished = False
-        atexit.register(self.finish)
+        atexit.register(self._finish)
         self.verilib.init()
 
         self.handlers = {}
@@ -113,8 +113,8 @@ class SimVerilated(CosimBase):
 
         sim_log().info(f'Verilator VCD dump to "{self.outdir}/vlt_dump.vcd"')
 
-    def finish(self):
+    def _finish(self):
         if not self.finished:
             self.finished = True
-            super().finish()
+            super()._finish()
             self.verilib.final()

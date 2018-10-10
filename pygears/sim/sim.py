@@ -39,14 +39,14 @@ def artifacts_dir():
     return registry('SimArtifactDir')
 
 
-def cancel(gear):
+def schedule_to_finish(gear):
     sim = registry('Simulator')
-    sim.cancelled.add(registry('SimMap')[gear])
+    sim.schedule_to_finish(registry('SimMap')[gear])
 
 
 class SimFuture(asyncio.Future):
     # def _schedule_callbacks(self):
-    #     self._loop.fut_done(self)
+    #     self._loop.future_done(self)
 
     def coro_iter(self):
         yield self
@@ -105,7 +105,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             'before_timestep': SimEvent(),
             'after_timestep': SimEvent(),
             'after_cleanup': SimEvent(),
-            'after_cancel': SimEvent(),
+            'after_finish': SimEvent(),
             'at_exit': SimEvent()
         }
 
@@ -123,6 +123,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
                     [port.gear for port in get_consumer_tree(p.producer)])
 
         gear_order = topo_sort(dag)
+        # print("-"*60)
         # print("Topological order:")
         # for g in gear_order:
         #     print(g.name)
@@ -136,27 +137,31 @@ class EventLoop(asyncio.events.AbstractEventLoop):
     def call_soon(self, callback, fut):
         callback(fut)
 
-    def fut_done(self, fut):
+    def future_done(self, fut):
         sim_gear, join = self.wait_list.pop(fut)
         if fut.cancelled():
-            self.cancelled.add(sim_gear)
-            # print(f'Future cancelled: {sim_gear.gear.name} {join}.')
+            # Interface that sim_gear waited on is done, so we need to finish
+            # the sim_gear too
+            self.schedule_to_finish(sim_gear)
         else:
+            # If sim_gear was waiting for ack
             if join:
                 self.back_ready.add(sim_gear)
             else:
                 self.forward_ready.add(sim_gear)
 
-            # print(f'Future done: {sim_gear.gear.name} ready.')
-
     def create_future(self):
         """Create a Future object attached to the loop."""
         fut = SimFuture()
-        fut.add_done_callback(self.fut_done)
+        fut.add_done_callback(self.future_done)
 
         return fut
 
-    def cancel(self, sim_gear):
+    def schedule_to_finish(self, sim_gear):
+        '''Schedule module to be finished during next back phase.'''
+        self._schedule_to_finish.add(sim_gear)
+
+    def _finish(self, sim_gear):
         try:
             self.cur_gear = sim_gear.gear
             bind('CurrentModule', self.cur_gear)
@@ -164,36 +169,31 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         except (StopIteration, GearDone):
             pass
         else:
-            sim_log().error("Gear didn't stop on cancel!")
+            sim_log().error("Gear didn't stop on finish!")
         finally:
             self.done.add(sim_gear)
-            self.events['after_cancel'](self, sim_gear)
+            self.events['after_finish'](self, sim_gear)
             self.cur_gear = registry('HierRoot')
             self.back_ready.discard(sim_gear)
             self.forward_ready.discard(sim_gear)
             bind('CurrentModule', self.cur_gear)
 
     def run_gear(self, sim_gear, ready):
+
+        self.cur_gear.phase = 'forward'
+
+        if ready is self.forward_ready:
+            before_event = self.events['before_call_forward']
+            after_event = self.events['after_call_forward']
+        else:
+            before_event = self.events['before_call_back']
+            after_event = self.events['after_call_back']
+
+        if before_event:
+            before_event(self, sim_gear)
+
         try:
-            self.cur_gear.phase = 'forward'
-
-            if ready is self.forward_ready:
-                ebef = self.events['before_call_forward']
-            else:
-                ebef = self.events['before_call_back']
-
-            if ebef:
-                ebef(self, sim_gear)
-
             data = self.tasks[sim_gear].send(self.task_data[sim_gear])
-
-            if ready is self.forward_ready:
-                eafter = self.events['after_call_forward']
-            else:
-                eafter = self.events['after_call_back']
-
-            if eafter:
-                eafter(self, sim_gear)
         except (StopIteration, GearDone):
             self.done.add(sim_gear)
         else:
@@ -202,6 +202,9 @@ class EventLoop(asyncio.events.AbstractEventLoop):
                                         self.cur_gear.phase == 'back')
 
             self.task_data[sim_gear] = data
+        finally:
+            if after_event:
+                after_event(self, sim_gear)
 
     def maybe_run_gear(self, sim_gear, ready):
         if sim_gear not in ready:
@@ -225,7 +228,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         start_time = time.time()
 
         sim_log().info("-------------- Simulation start --------------")
-        while self.forward_ready or self.back_ready or self.cancelled:
+        while self.forward_ready or self.back_ready or self._schedule_to_finish:
             self.phase = 'forward'
             for sim_gear in self.sim_gears:
                 if sim_gear in self.forward_ready:
@@ -238,9 +241,9 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             self.phase = 'back'
 
             for sim_gear in reversed(self.sim_gears):
-                if sim_gear in self.cancelled:
-                    self.cancel(sim_gear)
-                    self.cancelled.remove(sim_gear)
+                if sim_gear in self._schedule_to_finish:
+                    self._finish(sim_gear)
+                    self._schedule_to_finish.remove(sim_gear)
 
                 if sim_gear in self.back_ready:
                     self.maybe_run_gear(sim_gear, self.back_ready)
@@ -266,17 +269,17 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         sim_log().info(f"----------- Simulation done ---------------")
         sim_log().info(f'Elapsed: {time.time() - start_time:.2f}')
 
-        # while self.cancelled:
+        # while self.schedule_to_finish:
         #     # print(f'Canceling {sim_gear.gear.name}')
-        #     sim_gear = self.cancelled.pop()
-        #     self.cancel(sim_gear)
+        #     sim_gear = self.schedule_to_finish.pop()
+        #     self.finish(sim_gear)
 
     def run(self, timeout=None):
         self.get_tasks()
         self.wait_list = {}
         self.forward_ready = set(self.sim_gears)
         self.back_ready = set()
-        self.cancelled = set()
+        self._schedule_to_finish = set()
         self.done = set()
 
         bind('ClkEvent', asyncio.Event())
@@ -306,8 +309,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         if not sim_exception:
             for sim_gear in self.sim_gears:
                 if sim_gear not in self.done:
-                    # sim_log().debug(f"Canceling {sim_gear.gear.name}")
-                    self.cancel(sim_gear)
+                    self._finish(sim_gear)
 
         self.events['after_cleanup'](self)
         self.events['at_exit'](self)
