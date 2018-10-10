@@ -2,7 +2,7 @@ import asyncio
 
 from pygears import registry, GearDone
 from pygears.core.port import InPort, OutPort
-from pygears.registry import PluginBase
+from pygears.conf import PluginBase
 from pygears.core.sim_event import SimEvent
 from pygears.typing.base import TypingMeta
 

@@ -1,4 +1,5 @@
 import sys
+import importlib
 import pdb
 import fnmatch
 
@@ -109,4 +110,13 @@ def patch_pdb():
 
 
 def unpatch_pdb():
-    pass
+    importlib.reload(pdb)
+
+    if sys.gettrace():
+        p = sys.gettrace().__self__
+        p.stop_here = pdb.stop_here.__get__(p, pdb.Pdb)
+        p.do_up = pdb.do_up.__get__(p, pdb.Pdb)
+        p.do_down = pdb.do_down.__get__(p, pdb.Pdb)
+        p.do_u = pdb.do_up.__get__(p, pdb.Pdb)
+        p.do_d = pdb.do_down.__get__(p, pdb.Pdb)
+        p.print_stack_trace = pdb.print_stack_trace.__get__(p, pdb.Pdb)
