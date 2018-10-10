@@ -37,7 +37,7 @@ def pygears_excepthook(exception_type,
         except:
             pass
 
-    if registry("ErrReportLevel") == ErrReportLevel.debug:
+    if registry("ErrReport")['level'] == ErrReportLevel.debug:
         debug_hook(exception_type, exception, tr)
     else:
         from pygears.util.print_hier import print_hier

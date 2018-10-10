@@ -12,7 +12,7 @@ class ErrReportLevel(IntEnum):
 
 
 def parse_trace(s, t):
-    if registry("ErrReportLevel") == ErrReportLevel.debug:
+    if registry("ErrReport")['level'] == ErrReportLevel.debug:
         yield s
     else:
         is_internal = t[0].f_code.co_filename.startswith(
