@@ -66,6 +66,12 @@ def bind(key_pattern, value):
     matched = False
     reg = PluginBase.registry
     cb = PluginBase.cb
+    match_list = ['/', '*', '?', '[', ']']
+
+    # if there is no need to match anything
+    if not any(c in key_pattern for c in match_list):
+        reg[key_pattern] = value
+        return
 
     for reg_list in dict_generator(reg):
         as_path = '/'.join([str(x) for x in reg_list[:-1]])
