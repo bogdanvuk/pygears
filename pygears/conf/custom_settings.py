@@ -37,6 +37,7 @@ class RCSettings:
             search_dirs.append(dirname)
 
         search_dirs.append(home_path)
+        search_dirs.append(os.path.join(home_path, '.pygears'))
 
         return search_dirs
 
