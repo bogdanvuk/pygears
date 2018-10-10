@@ -7,7 +7,7 @@ from pygears.typing.base import EnumerableGenericMeta, GenericMeta, typeof
 from pygears.typing.tuple import Tuple
 from pygears.typing.bool import Bool
 from pygears.typing.bitw import bitw
-from pygears.core.log import typing_log
+from pygears.conf import typing_log
 
 
 class IntegerMeta(EnumerableGenericMeta):

@@ -8,9 +8,9 @@ import tempfile
 import time
 
 from pygears import GearDone, bind, find, registry
+from pygears.conf import CustomLog, LogFmtFilter
 from pygears.core.gear import GearPlugin
 from pygears.core.intf import get_consumer_tree
-from pygears.core.log import CustomLog, LogFmtFilter
 from pygears.core.sim_event import SimEvent
 
 

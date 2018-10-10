@@ -4,7 +4,7 @@ import functools
 import asyncio
 import sys
 
-from pygears.registry import PluginBase, bind, registry
+from pygears.conf import PluginBase, bind, registry, core_log
 from pygears.typing import Any
 
 from .hier_node import NamedHierNode
@@ -13,7 +13,6 @@ from .intf import Intf
 from .partial import Partial
 from .port import InPort, OutPort
 from .util import doublewrap
-from .log import core_log
 
 code_map = {}
 

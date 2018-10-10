@@ -1,7 +1,7 @@
 import collections
 import copy
 
-from pygears.registry import registry
+from pygears.conf import registry
 from pygears.typing.base import GenericMeta, param_subs, TypingMeta
 
 from .type_match import TypeMatchError, type_match

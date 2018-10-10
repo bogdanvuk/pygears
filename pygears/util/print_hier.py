@@ -2,7 +2,7 @@ import pprint
 from pygears import registry
 from pygears.core.hier_node import HierVisitorBase
 import textwrap
-from pygears.core.log import util_log
+from pygears.conf import util_log
 
 
 def module_signature(module, fullname, params):
