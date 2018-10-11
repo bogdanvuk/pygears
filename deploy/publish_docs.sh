@@ -26,6 +26,8 @@ mv ./docs/blog/_build/html/{.,}* ./blog
 printf "tools/\ndocs/\npygears/\nexamples/\ntests/\ndeploy/\ndist/\n*.egg-info/\n" > .gitignore
 printf "www.pygears.org" > CNAME
 
+printf "# www.robotstxt.org/\n\n# Allow crawling of all content\nUser-agent: *\nDisallow:\nSitemap: https://www.pygears.org/sitemap.xml\nSitemap: https://www.pygears.org/blog/sitemap.xml" > robots.txt
+
 git add -A
 git commit -m "publishing updated docs..."
 git push origin gh-pages
