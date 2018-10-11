@@ -6,9 +6,9 @@ from .sim import sim, artifacts_dir, sim_assert, timestep, clk, delta, sim_log, 
 
 from . import inst
 
-from .sim import SimPlugin
+from .sim import SimPlugin, schedule_to_finish
 
 __all__ = [
     'sim', 'artifacts_dir', 'sim_assert', 'clk', 'delta', 'timestep',
-    'sim_log', 'sim_phase'
+    'sim_log', 'sim_phase', 'schedule_to_finish'
 ]

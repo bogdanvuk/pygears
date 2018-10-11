@@ -33,13 +33,16 @@ def maybe_obtain_intf_var_name(intf):
 
 
 def getitem(self, index):
+    naming = registry('PrettySieveNaming')
     norm_index = self.dtype.index_norm(index)
 
     # Try to obtain variable to which interface was assigned to form a better
     # name for the sieve
-    name = maybe_obtain_intf_var_name(self)
-    if name is None:
-        name = 'sieve'
+    name = 'sieve'
+    if naming:
+        name = maybe_obtain_intf_var_name(self)
+        if name is None:
+            name = 'sieve'
 
     if not isinstance(index, tuple):
         index = (index, )
@@ -49,12 +52,13 @@ def getitem(self, index):
         if isinstance(ind, slice):
             name_appendices.append(f'{ind.start}v{ind.stop}')
         else:
-            try:
-                # Try to obtain original index name to form a better name for
-                # the sieve
-                ind = index[ind_id]
-            except IndexError:
-                pass
+            if naming:
+                try:
+                    # Try to obtain original index name to form a better name
+                    # for the sieve
+                    ind = index[ind_id]
+                except IndexError:
+                    pass
 
             name_appendices.append(f'{ind}')
 
@@ -66,3 +70,4 @@ class GetitemIntfOperPlugin(IntfOperPlugin):
     @classmethod
     def bind(cls):
         cls.registry['IntfOperNamespace']['__getitem__'] = getitem
+        cls.registry['PrettySieveNaming'] = False
