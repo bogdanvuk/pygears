@@ -132,7 +132,7 @@ I'd like to have at least one test per RISC-V instruction I implement and run th
 
 Let's do the Spike class the right way, by using the `Context Manager <https://docs.python.org/3/reference/datamodel.html#context-managers>`_ pattern. This pattern asks us to define initialization and cleanup code inside ``__enter__`` and ``__exit__`` methods respectively. During the initialization, I'd like to start the Spike simulator, setup some communication parameters and let the simulator run until it reaches the beginning of my set of instructions (first few instructions are injected by the simulator).  
 
-.. literalinclude:: ~/pygears_riscv/pygears_riscv/spike.py
+.. literalinclude:: files/setup_spike.py
    :pyobject: Spike
    :lines: 1-16
 
@@ -148,7 +148,7 @@ This allows me to invoke Spike using ``with`` Python statement::
 
 Also, let's implement some high-level commands that will be used often: 
 
-.. literalinclude:: ~/pygears_riscv/pygears_riscv/spike.py
+.. literalinclude:: files/setup_spike.py
    :pyobject: Spike
    :lines: 23-33
 

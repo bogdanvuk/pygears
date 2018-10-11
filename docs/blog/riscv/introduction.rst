@@ -99,9 +99,17 @@ I'll be using Spacemacs for editing files and running Python scripts, but I'll t
 Logistics
 ---------
 
-All the files related to the RISC-V implementation will be placed in ``examples/riscv`` folder of the PyGears git repository. At the beginning of each blog post, I will state which exact git commit contains code relevant to that post, so that you can get back in history and inspect files at that development stage. 
+All the files related to the RISC-V implementation will be pyblished inside `pygears_riscv <https://github.com/bogdanvuk/pygears_riscv>`__ git repository. At the beginning of each blog post, I will state which exact git commit contains code relevant to that post, so that you can get back in history and inspect files at that development stage. Before you can run the scripts from the ``pygears_riscv`` repository, you need to set it up: 
 
-Notice also a slider at the beginning of the post. It allows you to choose verbosity of the text. I plan to use it for all future posts in a fashion similar to this:
+.. code-block:: bash
+
+    git clone https://github.com/bogdanvuk/pygears_riscv.git
+
+    cd pygears_riscv
+
+    python setup.py develop
+
+Notice also a slider at the beginning of the post. It allows you to choose the verbosity of the text. I plan to use it for all future posts in a fashion similar to this:
 
 - Verbosity level 1: Only as much information as needed to reproduce the results the post is discussing,
 - Verbosity level 2: Additional details and explanations about each of the steps involved in the discussed procedure,
