@@ -1,0 +1,239 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>My First Instruction &#8212; PyGears - HW Design: A Functional Approach</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="canonical" href="https://www.pygears.org/riscv/my_first_instruction.html" />
+    <link rel="shortcut icon" href="../_static/pygears.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="RISC-V Tools Setup" href="setup.html" />
+    <link rel="prev" title="RISC-V Blog Series Introduction" href="introduction.html" />
+  
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  
+  <link rel="alternate" type="application/atom+xml"  href="../blog/atom.xml" title="PyGears">
+  
+  
+  <style type="text/css">
+    ul.ablog-archive {list-style: none; overflow: auto; margin-left: 0px}
+    ul.ablog-archive li {float: left; margin-right: 5px; font-size: 80%}
+    ul.postlist a {font-style: italic;}
+    ul.postlist-style-disc {list-style-type: disc;}
+    ul.postlist-style-none {list-style-type: none;}
+    ul.postlist-style-circle {list-style-type: circle;}
+  </style>
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="my-first-instruction">
+<h1>My First Instruction<a class="headerlink" href="#my-first-instruction" title="Permalink to this headline">¶</a></h1>
+<p>First instruction is probably going to be unlike any other in the amount of work that I’ll need to put into implementing it, so it deserves a post on its own. Let’s start from the RV32I description in the (currently) latest version of the <a class="reference external" href="https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf">RISC-V ISA Specification</a>, which is given in the <a class="reference external" href="https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf#page=21">Chapter 2</a>. First instruction explained in the specification is the <code class="docutils literal notranslate"><span class="pre">addi</span></code> instruction in the <a class="reference external" href="https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf#page=25">Chapter 2.4</a></p>
+<p>The ISA specification defines the <code class="docutils literal notranslate"><span class="pre">XLEN</span></code> parameter which represents the width of the registers in number of bits: either 32 or 64, so I’ll try to keep it as a design parameter.</p>
+<div class="figure align-center" id="id1">
+<img alt="../_images/integer-register-immediate-instruction.png" src="../_images/integer-register-immediate-instruction.png" />
+<p class="caption"><span class="caption-text">Integer register-immediate instruction format, aka the “I-type”, from <a class="reference external" href="https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf">RISC-V ISA Specification</a></span></p>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">addi</span></code> instruction adds the value of the immediate field to the value in the <code class="docutils literal notranslate"><span class="pre">rs1</span></code> register, truncates it to <code class="docutils literal notranslate"><span class="pre">XLEN</span></code> bits and stores it into the <code class="docutils literal notranslate"><span class="pre">rd1</span></code> register.</p>
+<p>I had to consult <a class="reference external" href="https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf#page=115">Chapter 19</a> in order to get the correct values of the <code class="docutils literal notranslate"><span class="pre">opcode=0x13</span></code> and <code class="docutils literal notranslate"><span class="pre">funct3=0x0</span></code> instruction fields for the <code class="docutils literal notranslate"><span class="pre">addi</span></code>.</p>
+<div class="figure align-center" id="id2">
+<img alt="../_images/addi-instruction-field-value.png" src="../_images/addi-instruction-field-value.png" />
+<p class="caption"><span class="caption-text"><code class="docutils literal notranslate"><span class="pre">addi</span></code> instruction format, from <a class="reference external" href="https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf">RISC-V ISA Specification</a></span></p>
+</div>
+<div class="figure align-center" id="id3">
+<img alt="../_images/addi-timelapse.gif" src="../_images/addi-timelapse.gif" />
+<p class="caption"><span class="caption-text"><code class="docutils literal notranslate"><span class="pre">addi</span></code> instruction simulation timelapse. Each frame is a single delta cycle.</span></p>
+</div>
+<p>I had to consult <a class="reference external" href="https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf#page=121">Chapter 20</a> in order to find the mapping from the <code class="docutils literal notranslate"><span class="pre">x*</span></code> register names to their <a class="reference external" href="https://en.wikipedia.org/wiki/Application_binary_interface">ABI</a> equivalents which are used by the Spike simulator. This chapter also gives examples of the assembly syntaxes for the instructions. Also <a class="reference external" href="https://github.com/riscv/riscv-elf-psabi-doc/blob/master/riscv-elf.md">psABI</a></p>
+</div>
+
+  <div class="section">
+  
+    
+
+
+  
+  
+  </div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+    <a href="https://www.pygears.org">
+        <img class="logo" src="../_static/logo.png" alt="Logo"/>
+        
+    </a>
+</p>
+
+
+
+<p class="blurb">HW Design: A Functional Approach</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=bogdanvuk&repo=pygears&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+
+  
+  
+  <h2>
+  
+    
+     Draft 
+  
+  </h2>
+
+  <ul>
+    
+
+  
+  <li id="author"><span>Author:</span>
+    
+      
+      <a href="../blog/author/bogdan-vukobratovic.html">Bogdan Vukobratović</a>
+      
+    </li>
+  
+
+  
+
+  
+
+  
+  <li id="category"><span>Category:</span>
+    
+      
+      <a href="../blog/category/risc-v.html">RISC-V</a>
+      
+    </li>
+  
+
+  
+  
+  </ul>
+
+
+
+  <h3><a href="../blog.html">Recent Posts</a></h3>
+  <ul>
+    
+    
+      <li><a href="setup.html">07 October - RISC-V Tools Setup</a></li>
+    
+      <li><a href="../release/v0.1.1.html">07 October - PyGears 0.1.1 released</a></li>
+    
+      <li><a href="introduction.html">06 October - RISC-V Blog Series Introduction</a></li>
+    
+  </ul>
+
+  <h3><a href="../blog/tag.html">Tags</a></h3>
+  <style type="text/css">
+    ul.ablog-cloud {list-style: none; overflow: auto;}
+    ul.ablog-cloud li {float: left; height: 20pt; line-height: 18pt; margin-right: 5px;}
+    ul.ablog-cloud a {text-decoration: none; vertical-align: middle;}
+    li.ablog-cloud-1{font-size: 80%;}
+    li.ablog-cloud-2{font-size: 95%;}
+    li.ablog-cloud-3{font-size: 110%;}
+    li.ablog-cloud-4{font-size: 125%;}
+    li.ablog-cloud-5{font-size: 140%;}
+  </style>
+  <ul class="ablog-cloud">
+    
+      
+      <li class="ablog-cloud ablog-cloud-3">
+        <a href="../blog/tag/setup.html">setup</a></li>
+      
+    
+  </ul>
+
+  <h3><a href="../blog/category.html">Categories</a></h3>
+  <ul>
+  
+    
+    <li><a href="../blog/category/risc-v.html">RISC-V (2)</a></li>
+    
+  
+    
+    <li><a href="../blog/category/release.html">Release (1)</a></li>
+    
+  
+  </ul>
+
+  <h3><a href="../blog/archive.html">Archives</a></h3>
+  <ul>
+  
+    
+    <li><a href="../blog/2018.html">2018 (3)</a></li>
+    
+  
+  </ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Bogdan Vukobratovic.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+      |
+      <a href="../_sources/riscv/my_first_instruction.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
