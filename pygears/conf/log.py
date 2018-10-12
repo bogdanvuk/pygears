@@ -23,12 +23,9 @@ import logging
 import sys
 import tempfile
 from functools import partial
-from string import Template
 
 from .registry import PluginBase, bind, registry, set_cb
 from .trace import enum_stacktrace
-
-registry_log_name = Template('${name}Log')
 
 
 def set_log_level(name, level):
@@ -52,7 +49,7 @@ class LogWrap:
         self.name = logger.name
 
     def severity_action(self, severity, message):
-        log_cfg = registry(registry_log_name.substitute(name=self.name))
+        log_cfg = registry('logger')[self.name]
         if log_cfg[severity]['exception']:
             raise LogException(message, self.name)
         elif log_cfg[severity]['debug']:
@@ -112,13 +109,13 @@ class CustomLog:
 
     def __init__(self, name, verbosity=logging.INFO):
         self.name = name
-        reg_name = registry_log_name.substitute(name=name)
         self.verbosity = verbosity
 
         self.set_default_logger()
 
         bind_val = copy.deepcopy(self.dflt_severity)
         bind_val['level'] = verbosity
+        reg_name = f'logger/{name}'
         bind(reg_name, bind_val)
         set_cb(f'{reg_name}/level', partial(set_log_level, name))
 
@@ -155,6 +152,7 @@ class LogPlugin(PluginBase):
     def bind(cls):
         tf = tempfile.NamedTemporaryFile(delete=False)
         bind('StackTracebackFn', tf.name)
+        bind('logger', {})  # init
 
         CustomLog('core', logging.WARNING)
         CustomLog('typing', logging.WARNING)

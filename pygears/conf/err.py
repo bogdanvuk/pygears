@@ -50,12 +50,11 @@ def pygears_excepthook(exception_type,
 
         # print traceback for LogException only if appropriate
         # 'print_traceback' in registry is set
-        from pygears.conf.log import LogException, registry_log_name
+        from pygears.conf.log import LogException
         print_traceback = (exception_type is not LogException)
         if not print_traceback:
-            print_traceback = registry(
-                registry_log_name.substitute(
-                    name=exception.name))['print_traceback']
+            print_traceback = registry('logger')[exception.name][
+                'print_traceback']
         if print_traceback:
             for s in enum_traceback(tr):
                 print(s, end='')
