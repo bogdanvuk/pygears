@@ -43,24 +43,24 @@
    assign cnt_data = (cfg.data + CHUNK_SIZE - 1) / CHUNK_SIZE;
 
   if (PAD) begin
-     dti #(.W_DATA(DIN_NUM)) vu_meter_in();
-     dti #(.W_DATA(DIN_NUM)) vu_meter_out();
+     dti #(.W_DATA(DIN_NUM)) unary_in();
+     dti #(.W_DATA(DIN_NUM)) unary_out();
 
-     assign vu_meter_in.data = cfg.data;
-     assign vu_meter_in.valid = cfg.valid;
-     assign vu_meter_out.ready = cfg.ready;
+     assign unary_in.data = cfg.data;
+     assign unary_in.valid = cfg.valid;
+     assign unary_out.ready = cfg.ready;
 
-     vu_meter #(
+     unary #(
          .W_DATA($clog2(DIN_NUM)+1)
      ) vu
      (
          .clk(clk),
          .rst(rst),
-         .din(vu_meter_in),
-         .dout(vu_meter_out)
+         .din(unary_in),
+         .dout(unary_out)
      );
 
-     assign sel_array = vu_meter_out.data;
+     assign sel_array = unary_out.data;
   end else
      assign sel_array = '1;
 
@@ -73,7 +73,7 @@
 {% endfor %}
 
    generate
-      for (genvar i = 0; i < DIN_NUM; i++) begin
+      for (genvar i = 0; i < (DIN_NUM/CHUNK_SIZE); i++) begin
          assign dout_valid_array[i] = &valid_array[(i + 1) * CHUNK_SIZE - 1 : i * CHUNK_SIZE];
          assign dout_array[i].data = sel_data_array[(i + 1) * CHUNK_SIZE - 1 : i * CHUNK_SIZE];
          assign dout_array[i].eot[0] = din_eot_array[(i + 1) * CHUNK_SIZE - 1 : i * CHUNK_SIZE];

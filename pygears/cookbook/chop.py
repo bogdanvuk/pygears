@@ -1,4 +1,5 @@
-from pygears import gear
+from pygears import gear, module
+from pygears.conf import gear_log
 from pygears.typing import Queue, Uint
 
 
@@ -12,4 +13,7 @@ async def chop(din: Queue['data_t'], cfg: Uint['w_cfg']) -> Queue['data_t', 2]:
         while (val.eot == 0):
             i += 1
             async with din as val:
-                yield (val.data, val.eot or (i % size == 0), val.eot)
+                dout = module().tout((val.data, val.eot or (i % size == 0),
+                                      val.eot))
+                gear_log().debug(f'Chop yielding {dout}')
+                yield dout

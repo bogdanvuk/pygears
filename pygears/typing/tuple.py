@@ -15,10 +15,10 @@ class TupleMeta(EnumerableGenericMeta):
             cls.args = args
             return cls
 
-    def without(self, index):
+    def without(self, *index):
         return Tuple[{
             k: v
-            for k, v in zip(self.fields, self.args) if k != index
+            for k, v in zip(self.fields, self.args) if k not in index
         }]
 
     def __add__(self, other):
@@ -79,7 +79,6 @@ class TupleMeta(EnumerableGenericMeta):
 
 
 class Tuple(tuple, metaclass=TupleMeta):
-    # def __new__(self, val: tuple):
     def __new__(cls, val):
         if not cls.is_specified():
             raise TemplatedTypeUnspecified
@@ -107,6 +106,15 @@ class Tuple(tuple, metaclass=TupleMeta):
                 subtypes.extend(subt if isinstance(i, slice) else [subt])
 
             return tout(tuple(subtypes))
+
+    @class_and_instance_method
+    def __str__(self):
+        return '(%s)' % ', '.join([type_str(a) for a in self])
+
+    @class_and_instance_method
+    def replace(self, **kwds):
+        map_dict = {f: kwds.get(f, self[f]) for f in type(self).fields}
+        return type(self)(map_dict)
 
     @class_and_instance_method
     def get(self, key, default=None):

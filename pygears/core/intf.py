@@ -2,17 +2,18 @@ import asyncio
 
 from pygears import registry, GearDone
 from pygears.core.port import InPort, OutPort
-from pygears.registry import PluginBase
+from pygears.conf import PluginBase
 from pygears.core.sim_event import SimEvent
+from pygears.typing.base import TypingMeta
 
 
 def operator_func_from_namespace(cls, name):
     def wrapper(self, *args, **kwargs):
-        try:
-            operator_func = registry('IntfOperNamespace')[name]
-            return operator_func(self, *args, **kwargs)
-        except KeyError as e:
+        if name not in registry('IntfOperNamespace'):
             raise Exception(f'Operator {name} is not supported.')
+
+        operator_func = registry('IntfOperNamespace')[name]
+        return operator_func(self, *args, **kwargs)
 
     return wrapper
 
@@ -42,8 +43,8 @@ def get_consumer_tree(intf):
 @operator_methods_gen
 class Intf:
     OPERATOR_SUPPORT = [
-        '__or__', '__getitem__', '__neg__', '__add__', '__sub__', '__mul__',
-        '__div__', '__floordiv__', '__mod__', '__invert__', '__rshift__'
+        '__getitem__', '__neg__', '__add__', '__sub__', '__mul__', '__div__',
+        '__floordiv__', '__mod__', '__invert__', '__rshift__', '__lt__'
     ]
 
     def __init__(self, dtype):
@@ -63,11 +64,18 @@ class Intf:
             'ack_in': SimEvent(),
             'pull_start': SimEvent(),
             'pull_done': SimEvent(),
-            'cancel': SimEvent()
+            'finish': SimEvent()
         }
 
     def __ior__(self, iout):
         return iout.__matmul__(self)
+
+    def __or__(self, other):
+        if not isinstance(other, (str, TypingMeta)):
+            return other.__ror__(self)
+
+        operator_func = registry('IntfOperNamespace')['__or__']
+        return operator_func(self, other)
 
     def __matmul__(self, iout):
         self.producer.consumer = iout
@@ -149,9 +157,21 @@ class Intf:
         if any(registry('SimMap')[c.gear].done for c in self.end_consumers):
             raise GearDone
 
-        self.events['put'](self, val)
+        put_event = self.events['put']
+
+        if self.dtype is not type(val):
+            try:
+                val = self.dtype(val)
+            except TypeError:
+                pass
+
+        if put_event:
+            put_event(self, val)
+
         for q, c in zip(self.out_queues, self.end_consumers):
-            self.events['put'](c.consumer, val)
+            if put_event:
+                put_event(c.consumer, val)
+
             q.put_nowait(val)
 
     async def ready(self):
@@ -159,17 +179,9 @@ class Intf:
             for q, c in zip(self.out_queues, self.end_consumers):
                 registry('CurrentModule').phase = 'back'
                 await q.join()
-                # self.events['ack'](c.consumer)
-
-            # self.events['ack'](self)
-        # print(f"All acks received")
 
     def ready_nb(self):
         return all(not q._unfinished_tasks for q in self.out_queues)
-        # if ready:
-        #     self.events['ack'](self)
-
-        # return ready
 
     async def put(self, val):
         self.put_nb(val)
@@ -180,17 +192,23 @@ class Intf:
             return False
         else:
             return self.in_queue.empty()
-        # intf, index = self.in_queue
-        # return intf.out_queues[index].empty()
 
     def finish(self):
+        '''Mark the interface as done, i.e. no more data will be transmitted.
+
+        Informs also all consumer ports. If any task is waiting for this
+        interface's data it is finishled. This is how the end of simulation
+        propagates from the producers to the consumers.
+        '''
+
+        self.events['finish'](self)
         self._done = True
         for q, c in zip(self.out_queues, self.end_consumers):
             c.finish()
             for task in q._getters:
-                self.events['cancel'](self, c)
                 task.cancel()
 
+    @property
     def done(self):
         return self._done
 
@@ -201,7 +219,13 @@ class Intf:
         if self._data is None:
             self._data = self.in_queue.get_nowait()
 
-        return self._data
+        if self.dtype is type(self._data):
+            return self._data
+
+        try:
+            return self.dtype(self._data)
+        except TypeError:
+            return self._data
 
     def get_nb(self):
         val = self.pull_nb()
@@ -209,21 +233,36 @@ class Intf:
         return val
 
     async def pull(self):
-        self.events['pull_start'](self)
+        e = self.events['pull_start']
+        if e:
+            e(self)
+
         if self._done:
             raise GearDone
 
         if self._data is None:
             self._data = await self.in_queue.get()
 
-        self.events['pull_done'](self)
-        return self._data
+        e = self.events['pull_done']
+        if e:
+            e(self)
+
+        if self.dtype is type(self._data):
+            return self._data
+
+        try:
+            return self.dtype(self._data)
+        except TypeError:
+            return self._data
 
     def ack(self):
-        self.events['ack'](self)
+        e = self.events['ack']
+        if e:
+            e(self)
+
         ret = self.in_queue.task_done()
         if self.in_queue.intf.ready_nb():
-            self.events['ack'](self.in_queue.intf)
+            e(self.in_queue.intf)
 
         self._data = None
         return ret

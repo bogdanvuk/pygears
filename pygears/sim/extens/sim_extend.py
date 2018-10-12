@@ -3,7 +3,7 @@ import atexit
 
 
 class SimExtend:
-    def __init__(self):
+    def __init__(self, top=None):
         self.sim = registry('Simulator')
         for name, event in self.sim.events.items():
             try:

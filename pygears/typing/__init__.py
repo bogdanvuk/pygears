@@ -1,4 +1,4 @@
-from pygears.registry import PluginBase
+from pygears.conf import PluginBase
 
 from .bool import Bool
 from .queue import Queue

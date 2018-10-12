@@ -1,4 +1,4 @@
-from pygears.registry import PluginBase, bind, registry
+from pygears.conf import PluginBase, bind, registry
 from pygears.rtl.inst import rtl_inst
 from pygears.rtl.connect import rtl_connect
 from pygears.rtl.channel import RTLChannelVisitor, RTLOutChannelVisitor

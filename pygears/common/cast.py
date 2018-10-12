@@ -8,9 +8,6 @@ from pygears.typing import Int, Tuple, Queue, Uint, Union
 @gear
 async def cast(din, *, cast_type) -> b'cast(din, cast_type)':
     async with din as d:
-        # if module().name == '/rd_addrgen/fmap1/cast_dout':
-        #     import pdb; pdb.set_trace()
-
         if typeof(cast_type,
                   Int) and (not cast_type.is_specified()) and typeof(
                       din.dtype, (Uint, Int)):
@@ -28,15 +25,12 @@ async def cast(din, *, cast_type) -> b'cast(din, cast_type)':
 
 
 def pipe(self, other):
-    if isinstance(other, (str, TypingMeta)):
-        if self.producer is not None:
-            name = f'cast_{self.producer.basename}'
-        else:
-            name = 'cast'
-
-        return cast(self, cast_type=other, name=name)
+    if self.producer is not None:
+        name = f'cast_{self.producer.basename}'
     else:
-        return other.__ror__(self)
+        name = 'cast'
+
+    return cast(self, cast_type=other, name=name)
 
 
 class PipeIntfOperPlugin(IntfOperPlugin):

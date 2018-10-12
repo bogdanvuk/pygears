@@ -1,4 +1,4 @@
-from pygears import gear
+from pygears import gear, GearDone
 from pygears.sim import sim_assert
 from pygears.sim.modules import delay_mon, drv, mon, scoreboard
 from pygears.sim.utils import SimDelay
@@ -11,7 +11,7 @@ async def check(din, *, ref):
         items = []
         while (1):
             items.append(await din.get())
-    finally:
+    except GearDone:
         # print(f"Here: {items}")
         # print(f"{ref}")
         # print(f"{items == ref}")

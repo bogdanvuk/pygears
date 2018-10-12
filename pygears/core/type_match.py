@@ -1,6 +1,6 @@
 import re
 
-from pygears.registry import registry
+from pygears.conf import registry
 from pygears.typing.base import Any, GenericMeta, type_repr
 
 

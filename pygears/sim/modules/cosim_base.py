@@ -15,9 +15,6 @@ class CosimBase(SimGear):
         super().__init__(gear)
         self.timeout = timeout
 
-    def finish(self):
-        super().finish()
-
     async def func(self, *args, **kwds):
         activity_monitor = 0
         din_pulled = set()
@@ -37,7 +34,7 @@ class CosimBase(SimGear):
 
                     hin = self.handlers[p.basename]
 
-                    if intf.done():
+                    if intf.done:
                         hin.close()
                         del self.handlers[p.basename]
 
@@ -93,5 +90,5 @@ class CosimBase(SimGear):
             for p in self.gear.out_ports:
                 p.producer.finish()
 
-            self.finish()
+            self._finish()
             raise e

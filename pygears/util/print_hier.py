@@ -2,6 +2,7 @@ import pprint
 from pygears import registry
 from pygears.core.hier_node import HierVisitorBase
 import textwrap
+from pygears.conf import util_log
 
 
 def module_signature(module, fullname, params):
@@ -83,4 +84,4 @@ def print_hier(root=None, params=False, fullname=False):
 
     v = Visitor(params, fullname)
     v.visit(root)
-    print('\n'.join(v.res))
+    util_log().info('\n'.join(v.res))

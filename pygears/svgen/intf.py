@@ -126,4 +126,5 @@ class SVIntfGen:
 class SVGenIntfPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        cls.registry['SVGenDebugIntfs'] = []
+        if 'SVGenDebugIntfs' not in cls.registry:
+            cls.registry['SVGenDebugIntfs'] = []

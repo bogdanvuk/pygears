@@ -238,11 +238,7 @@ class SimSocket(CosimBase):
 
         registry('SimConfig')['SimSocket'] = self
 
-    def finish(self):
-        sim_log().debug(f'Closing socket server')
-        super().finish()
-
-    def cleanup(self):
+    def _cleanup(self):
         if self.sock:
             sim_log().info(f'Done. Closing the socket...')
             time.sleep(3)
@@ -252,7 +248,7 @@ class SimSocket(CosimBase):
             if self.cosim_pid is not None:
                 self.cosim_pid.terminate()
 
-        super().cleanup()
+        super()._cleanup()
 
     def send_req(self, req, dtype):
         # print('SimSocket sending request...')

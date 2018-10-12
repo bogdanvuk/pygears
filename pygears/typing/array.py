@@ -72,7 +72,10 @@ class ArrayMeta(EnumerableGenericMeta):
             return Array[self.args[0], width]
 
     def __str__(self):
-        return f'Array[{str(self.args[0])}, {len(self)}]'
+        if self.args:
+            return f'Array[{str(self.args[0])}, {len(self)}]'
+        else:
+            return super().__str__()
 
 
 class Array(tuple, metaclass=ArrayMeta):
@@ -106,8 +109,9 @@ class Array(tuple, metaclass=ArrayMeta):
     @classmethod
     def decode(cls, val):
         ret = []
+        mask = int(len(cls[0]) * '1', 2)
         for t in cls:
-            ret.append(t.decode(val))
+            ret.append(t.decode(val & mask))
             val >>= int(t)
 
         return cls(tuple(ret))

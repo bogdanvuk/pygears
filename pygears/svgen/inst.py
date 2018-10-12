@@ -1,7 +1,9 @@
 import os
+import logging
 
 from pygears import PluginBase, registry
 from pygears.core.hier_node import HierVisitorBase
+from pygears.conf import CustomLog
 from pygears.definitions import USER_SVLIB_DIR
 from pygears.svgen.intf import SVIntfGen
 
@@ -41,12 +43,17 @@ def register_sv_paths(*paths):
             os.path.abspath(os.path.expandvars(os.path.expanduser(p))))
 
 
+def svgen_log():
+    return logging.getLogger('svgen')
+
+
 class SVGenInstPlugin(PluginBase):
     @classmethod
     def bind(cls):
         cls.registry['SVGenModuleNamespace'] = {}
         cls.registry['SVGenMap'] = {}
         cls.registry['SVGenSystemVerilogPaths'] = [USER_SVLIB_DIR]
+        CustomLog('svgen', logging.WARNING)
 
     @classmethod
     def reset(cls):
