@@ -7,6 +7,10 @@ import sys
 from .utils import dict_generator, nested_set
 
 
+class RegistryException(Exception):
+    pass
+
+
 class RegistryHook(dict):
     def __init__(self, **kwds):
         super().__init__()
@@ -62,28 +66,33 @@ def set_cb(key, cb):
     PluginBase.cb[key] = cb
 
 
-def bind(key_pattern, value):
-    matched = False
+def bind_by_path(key_path, value, delimiter='/'):
     reg = PluginBase.registry
     cb = PluginBase.cb
-    match_list = ['/', '*', '?', '[', ']']
+    nested_set(reg, value, *key_path.split(delimiter))
+    if key_path in cb:
+        cb[key_path](value)
 
-    # if there is no need to match anything
-    if not any(c in key_pattern for c in match_list):
-        reg[key_pattern] = value
+
+def bind(key_pattern, value):
+    reg = PluginBase.registry
+
+    delimiter = '/'
+    wildcard_list = ['*', '?', '[', ']']
+
+    # if there is no need to match anything (no wildcards)
+    if not any(c in key_pattern for c in wildcard_list):
+        bind_by_path(key_path=key_pattern, value=value, delimiter=delimiter)
         return
 
+    matched = False
     for reg_list in dict_generator(reg):
-        as_path = '/'.join([str(x) for x in reg_list[:-1]])
+        as_path = delimiter.join([str(x) for x in reg_list[:-1]])
         if fnmatch.fnmatch(as_path, key_pattern):
-            nested_set(reg, value, *reg_list[:-1])
-            if as_path in cb:
-                cb[as_path](value)
+            bind_by_path(key_path=as_path, value=value, delimiter=delimiter)
             matched = True
-
-    # set new key if pattern was not matched
     if not matched:
-        reg[key_pattern] = value
+        raise RegistryException(f'Bind not successful for {key_pattern}')
 
 
 def clear():

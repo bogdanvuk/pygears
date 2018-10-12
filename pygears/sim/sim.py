@@ -369,8 +369,8 @@ class SimLog(CustomLog):
         super().__init__(name, verbosity)
 
         # change default for error
-        registry('simLog')['error']['exception'] = True
-        registry('simLog')['print_traceback'] = False
+        bind('logger/sim/error/exception', True)
+        bind('logger/sim/print_traceback', False)
 
     def get_format(self):
         return logging.Formatter(

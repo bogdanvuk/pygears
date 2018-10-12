@@ -107,12 +107,13 @@ def set_blocking_node(g, module):
 
 
 class ActivityReporter:
-    def __init__(self, top, draw_graph=True):
+    def __init__(self, top, draw_graph=True, cosim_check=False):
         sim = registry('Simulator')
         sim.events['before_run'].append(self.before_run)
         sim.events['after_run'].append(self.after_run)
         self.blockers = {}
         self.draw_graph = draw_graph
+        self.cosim_check = cosim_check
 
     def intf_pull_start(self, intf):
         consumer = intf.producer
@@ -148,7 +149,7 @@ class ActivityReporter:
             if isinstance(sim_gear, SimSocket):
                 cosim_name = sim_gear.gear.name
                 break
-        if cosim_name:
+        if cosim_name and self.cosim_check:
             self.cosim_activity(g, cosim_name)
         self.sim_gears_activity(g, sim, blocking_gears)
 
