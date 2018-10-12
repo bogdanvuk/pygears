@@ -13,6 +13,9 @@ class TypingVisitorBase:
     def visit_int(self, type_, field, **kwds):
         pass
 
+    def visit_integer(self, type_, field, **kwds):
+        pass
+
     def visit_bool(self, type_, field, **kwds):
         pass
 
@@ -27,8 +30,6 @@ class TypingVisitorBase:
             }
         else:
             try:
-                return tuple(
-                    self.visit(t, **kwds)
-                    for t in type_)
+                return tuple(self.visit(t, **kwds) for t in type_)
             except TypeError:
                 pass

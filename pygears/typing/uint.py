@@ -17,9 +17,9 @@ class IntegerMeta(EnumerableGenericMeta):
     def __str__(self):
         if self.args:
             if isinstance(self.args[0], int):
-                return f'Z{self.args[0]}'
+                return f'z{self.args[0]}'
             else:
-                return f'Z({self.args[0]})'
+                return f'z({self.args[0]})'
         else:
             return super().__str__()
 

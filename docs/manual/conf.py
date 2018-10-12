@@ -35,7 +35,8 @@ site_url = "https://www.pygears.org/"
 autodoc_default_options = {
     'show-inheritance': None,
     'members': None,
-    'special-members': None
+    'no-special-members': None,
+    'exclude-members': 'mro, __weakref__,  __new__, __str__, __repr__',
 }
 autoclass_content = "class"
 add_module_names = False
@@ -53,19 +54,20 @@ offline_wavedrom_js_path = r"wavedrom.js"
 from sphinx.ext.autodoc import ClassDocumenter, _
 
 
-def autodoc_skip_member(app, what, name, obj, skip, options):
-    exclusions = (
-        '__weakref__',  # special-members
-        '__new__',
-        '__str__',
-        '__repr__',  # undoc-members
-    )
-    exclude = name in exclusions
-    return skip or exclude
+# def autodoc_skip_member(app, what, name, obj, skip, options):
+#     exclusions = (
+#         '__weakref__',  # special-members
+#         '__new__',
+#         '__str__',
+#         '__repr__',  # undoc-members
+#         '__init__'
+#     )
+#     exclude = name in exclusions
+#     return skip or exclude
 
 
-def setup(app):
-    app.connect('autodoc-skip-member', autodoc_skip_member)
+# def setup(app):
+#     app.connect('autodoc-skip-member', autodoc_skip_member)
 
 
 add_line = ClassDocumenter.add_line

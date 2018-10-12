@@ -85,6 +85,7 @@ def type_str(obj):
 class class_and_instance_method:
     def __init__(self, func):
         self.func = func
+        self.__doc__ = func.__doc__
 
     def __get__(self, instance, cls=None):
         if instance is None:
@@ -133,12 +134,12 @@ class GenericMeta(TypingMeta):
             return param_subs(bases[0], tmpl_map, {})
 
     def is_generic(self):
-        """Return True if no generic parameter of the type was supplied a value.
+        """Return True if no values have been supplied for the generic parameters.
 
         >>> Uint.is_generic()
         True
 
-        >>> Uint[16].is_generic()
+        >>> Uint['template'].is_generic()
         False
         """
 

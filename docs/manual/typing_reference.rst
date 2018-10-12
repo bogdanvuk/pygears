@@ -1,3 +1,6 @@
+.. role:: sv(code)
+   :language: systemverilog
+
 Typing
 ------
 

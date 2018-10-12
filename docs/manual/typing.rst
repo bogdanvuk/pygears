@@ -127,6 +127,11 @@ The RTL implementation of the "example" module can be also parameterized in this
 Types overview
 --------------
 
+.. toctree::
+   :maxdepth: 2
+
+   typing/tuple
+
 .. autoclass:: pygears.typing.uint.Integer
    :no-members:
    :no-special-members:

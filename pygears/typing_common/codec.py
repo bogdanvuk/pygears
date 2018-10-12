@@ -7,6 +7,9 @@ def dtype_mask(dtype):
 
 
 class TypeCode(TypingVisitorBase):
+    def visit_integer(self, dtype, field=None, data=None):
+        return data & dtype_mask(dtype)
+
     def visit_uint(self, dtype, field=None, data=None):
         return data & dtype_mask(dtype)
 
@@ -49,6 +52,9 @@ class TypeDecode(TypingVisitorBase):
 
     def visit_bool(self, dtype, field=None, data=None):
         return dtype(data)
+
+    def visit_integer(self, dtype, field=None, data=None):
+        return dtype(data & dtype_mask(dtype))
 
     def visit_uint(self, dtype, field=None, data=None):
         return dtype(data & dtype_mask(dtype))
