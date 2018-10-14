@@ -25,7 +25,7 @@ The ``addi`` instruction has an "Integer Register-Immediate" format, aka the "I-
 
    "Integer Register-Immediate" instruction format, aka the "I-type" format, from the `RISC-V ISA Specification`_
 
-For representing instructions in PyGears, I will use the :class:`Tuple` type with named fields that correspond to the ones in the RISC-V ISA specification. For the "I-type" instructions, I have a following definition in PyGears::
+Since the instruction encodings have fields that serve different purposes from one another, I'll represent the instruction with the :any:`typing/tuple` PyGears type. The :any:`typing/tuple` type represents a generic heterogenous container type akin to records and structs in other HDLs, and I can specify the names and types of the fields by providing in square brackets a Python dict where field names are mapped to the field types. For the "I-type" instructions, I ended-up with a following definition in PyGears::
 
   TInstructionI = Tuple[{
       'opcode': Uint[7],
@@ -35,14 +35,52 @@ For representing instructions in PyGears, I will use the :class:`Tuple` type wit
       'imm'   : Int[12]
   }]
 
-Values of the ``rs1`` and ``rd`` fields contain the IDs of the registers involved, hence they are 5 bit wide so that they can encode all 32 register IDs. The values in the ``imm`` field are encoded as signed integers. As
+The ``opcode`` and ``funct3`` fields determine the function to be executed, and ``rd``, ``rs1`` and ``imm`` fields carry the function arguments. The ``opcode`` and ``funct3`` fields store the ID of the function, so I can represent them with an unsigned number, i.e the :any:`typing/uint` PyGears type. Some enumerated type might constrain this fields better, since not all function IDs might be available in a specific processor implementation (after this blog post I will have implemented only one function - ``addi``). However, PyGears does't yet have enumerated types, so I'll use the :any:`typing/uint` type as the second best.
 
-I had to consult `Chapter 19: RV32/64G Instruction Set Listings <https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf#page=115>`_ in order to get the correct values of the ``opcode=0x13`` and ``funct3=0x0`` instruction fields for the ``addi``. 
+Values of the ``rs1`` and ``rd`` fields contain the IDs of the registers involved, hence they are 5 bit wide so that they can encode all 32 register IDs, hence they are represented by the :any:`Uint[5] <typing/uint>` type. ISA specifies that ``addi`` as a signed operation, and that the values in the ``imm`` field are encoded as signed integers, so I'll use :any:`Int[12] <typing/int>` type here.
+
+Now any gear that operates on the ``imm`` field can, if needed, automatically adjust its operation to handle the signed numbers correctly, and I don't have to worry about it for every gear excplicitely. This is a major advantage of the typing system, since I can express my intents using the type (like with :any:`Int <typing/uint>` here) in a single place in the code, and this intent will propagate automatically throughout the design. Traditional HDLs offer only rudimentary typing support, so you need to follow you signals around and explictely. However, just specifying the type is only a half of the story. The other half lies in providing the Polymorphic behavior for the modules, so that they automatically accomadate for different data types.
+
+OK, so now we have the ``TInstructionI`` type, that describes the general format for the "I-type" instructions, and my ``addi`` instruction will be an instance of this type. As I said, ``opcode`` and ``funct3`` will have unique, specific value for the ``addi`` instruction which is specified by ISA. I had to consult `Chapter 19: RV32/64G Instruction Set Listings <https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf#page=115>`_ in order to get the correct values for the function ID fields: ``opcode=0x13`` and ``funct3=0x0``. 
 
 .. figure:: images/addi-instruction-field-value.png
     :align: center
 
     ``addi`` instruction format, from `RISC-V ISA Specification`_
+
+Other instruction fields: ``rd``, ``rs1`` and ``imm``, can take arbitrary values, so I can't fix those in advance. This gives me the following template for the ``addi`` instruction:: 
+
+  OPCODE_IMM = 0x13
+  FUNCT3_ADDI = 0x0
+
+  ADDI = TInstructionI({
+      'opcode': OPCODE_IMM,
+      'rd'    : 0,
+      'funct3': FUNCT3_ADDI,
+      'rs1'   : 0,
+      'imm'   : 0
+  })
+
+Since PyGears doesn't have templates for type instances, all I can do is assign some default values to the fields whose values can change. Maybe its worth considering whether true generic templates (with generic parameters) for the type instances would add anything of value (or researching if there are languages that support these). In that case, instead of zeros above, the fields would be assigned some template placeholder names, that would need to be assigned values later. Prolog does something like that?
+
+Processor implementation
+------------------------
+
+Since the idea of this blog series is to show how one can evolve a complex hardware design using PyGears without wasted effort, by implementing one feature at a time, I will turn a blind eye to the fact that RISC-V processor needs to support multiple instructions at this moment. I will exclude the PC manipulation functionality, which gets important once jump instructions get into play, and the interface to the data memory, which gets important once load and store instructions git into play. For now I will move the `register file <https://github.com/bogdanvuk/pygears_riscv/blob/afb23407150fe43d53c3df1340a93e2f2644d741/pygears_riscv/verif/register_file.py>`__ outside the processor into a separate module and implement it in pure Python to ease reading and writing for the verification purposes. Later, I'll provide an RTL implementation of the register file, but it is a simple module and it should be a straightforward design process, so I don't feel like cheating for postponing it. Without further ado, this single-instruction capable RISC-V processor written in PyGears looks like this::
+
+  @gear
+  def riscv(instruction: TInstructionI, reg_data: Uint['xlen']):
+
+      reg_file_rd_req = instruction['rs1']
+
+      add_res = ((reg_data | Int) + instruction['imm']) | reg_data.dtype
+      reg_file_wr_req = ccat(instruction['rd'], add_res)
+
+      return reg_file_rd_req, reg_file_wr_req
+
+Let's dig deeper into those 6 lines of code. The ``@gear`` statement is called a decorator in Python terminology. If it is placed in front of the function definition it can wrap it with some additional code. The ``@gear`` decorator is where most of the magic happens in PyGears. It makes a function composable via  '|' (pipe) operator, it performs type checking and matching, it instantiates a new hardware module each time the function is called, it takes care about module hierarchy, etc.
+
+Next, the `function prototype <https://en.wikipedia.org/wiki/Function_prototype>`__  declares the types of input interfaces the ``riscv`` gear accepts, namely: ``instruction: TInstructionI`` and ``reg_data: Uint['xlen']``. 
 
 
 .. figure:: images/addi-timelapse.gif
@@ -50,5 +88,10 @@ I had to consult `Chapter 19: RV32/64G Instruction Set Listings <https://content
 
     ``addi`` instruction simulation timelapse. Each frame is a single delta cycle.
 
-
 I had to consult `Chapter 20 <https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf#page=121>`_ in order to find the mapping from the ``x*`` register names to their `ABI <https://en.wikipedia.org/wiki/Application_binary_interface>`__ equivalents which are used by the Spike simulator. This chapter also gives examples of the assembly syntaxes for the instructions. Also `psABI <https://github.com/riscv/riscv-elf-psabi-doc/blob/master/riscv-elf.md>`__ 
+
+Tried ``li`` approach, but failed with::
+  terminate called after throwing an instance of 'std::runtime_error'
+    what():  misaligned address
+
+`this guide <https://github.com/riscv/riscv-asm-manual/blob/master/riscv-asm.md>`__, finally succeeded with "Constant".

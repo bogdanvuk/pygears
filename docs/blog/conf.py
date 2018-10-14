@@ -19,6 +19,7 @@ extensions = [
     'alabaster', 'ablog', 'sphinx_sitemap', 'sphinx.ext.intersphinx'
 ]
 
+# intersphinx_mapping = {'pygears': ('https://www.pygears.org', None)}
 intersphinx_mapping = {'pygears': ('https://www.pygears.org', None)}
 
 site_url = "https://www.pygears.org/blog/"

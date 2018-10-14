@@ -14,17 +14,3 @@ Integer
 .. autoclass:: pygears.typing.uint.Integer
    :special-members: __len__, __int__, __getitem__
 
-Uint
-----
-
-.. autoclass:: pygears.typing.uint.UintType
-   :special-members: __sub__
-
-.. autoclass:: pygears.typing.uint.Uint
-
-Int
----
-
-.. autoclass:: pygears.typing.uint.IntType
-
-.. autoclass:: pygears.typing.uint.Int

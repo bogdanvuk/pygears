@@ -1,4 +1,4 @@
-"""Implements a generic heterogenous container type akin to records and structs
+"""Represents a generic heterogenous container type akin to records and structs
 in other HDLs.
 
 A concrete :class:`Tuple` type is created by describing the fields it consists

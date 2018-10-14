@@ -2,6 +2,7 @@ import sys
 import importlib
 import pdb
 import fnmatch
+import inspect
 
 fn_skip = ['<*', f'{sys.prefix}/lib/*']
 
@@ -114,9 +115,11 @@ def unpatch_pdb():
 
     if sys.gettrace():
         p = sys.gettrace().__self__
-        p.stop_here = pdb.stop_here.__get__(p, pdb.Pdb)
-        p.do_up = pdb.do_up.__get__(p, pdb.Pdb)
-        p.do_down = pdb.do_down.__get__(p, pdb.Pdb)
-        p.do_u = pdb.do_up.__get__(p, pdb.Pdb)
-        p.do_d = pdb.do_down.__get__(p, pdb.Pdb)
-        p.print_stack_trace = pdb.print_stack_trace.__get__(p, pdb.Pdb)
+
+        if inspect.getfile(p.stop_here) == __file__:
+            p.stop_here = pdb.Pdb.stop_here.__get__(p, pdb.Pdb)
+            p.do_up = pdb.Pdb.do_up.__get__(p, pdb.Pdb)
+            p.do_down = pdb.Pdb.do_down.__get__(p, pdb.Pdb)
+            p.do_u = pdb.Pdb.do_up.__get__(p, pdb.Pdb)
+            p.do_d = pdb.Pdb.do_down.__get__(p, pdb.Pdb)
+            p.print_stack_trace = pdb.Pdb.print_stack_trace.__get__(p, pdb.Pdb)

@@ -132,5 +132,7 @@ Types reference
 
    typing/base
    typing/integer
+   typing/uint
+   typing/int
    typing/tuple
    typing/array
