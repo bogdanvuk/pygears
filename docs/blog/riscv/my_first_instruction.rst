@@ -15,6 +15,9 @@ All RV32I instructions are encoded with 32 bits using several formats (although 
 
 For RV32I, a set of 32 registers is needed, named ``x0`` - ``x31``, where ``x0`` is different from the others in that it has a fixed value of 0, i.e it's value cannot be changed. The ISA specification defines the ``XLEN`` parameter to represent the width of the registers in number of bits: either 32 or 64. I'll try to keep ``XLEN`` a design parameter of the processor implementation, but I'll first focus on a version with ``XLEN=32``, i.e with the processor version with 32 bit wide registers.
 
+Instruction format
+------------------
+
 The ``addi`` instruction has an "Integer Register-Immediate" format, aka the "I-type" format shown on the image below. The instruction is executed by adding the value of the 12 bit immediate field ``imm`` to the value read from the register specified by the ``rs1`` field. The result is then truncated to ``XLEN`` bits and stored into the register specified by the ``rd`` field. 
 
 .. figure:: images/integer-register-immediate-instruction.png
@@ -22,7 +25,7 @@ The ``addi`` instruction has an "Integer Register-Immediate" format, aka the "I-
 
    "Integer Register-Immediate" instruction format, aka the "I-type" format, from the `RISC-V ISA Specification`_
 
-In order to represent the instructions in PyGears, I will use the ``Tuple`` type with named fields that correspond to the ones in the RISC-V ISA specification. For the "I-type" instructions, I have a following definition in PyGears::
+For representing instructions in PyGears, I will use the :class:`Tuple` type with named fields that correspond to the ones in the RISC-V ISA specification. For the "I-type" instructions, I have a following definition in PyGears::
 
   TInstructionI = Tuple[{
       'opcode': Uint[7],

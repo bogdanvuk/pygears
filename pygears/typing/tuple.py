@@ -91,11 +91,11 @@ from .base import TemplatedTypeUnspecified
 from .base import class_and_instance_method
 
 
-class TupleMeta(EnumerableGenericMeta):
+class TupleType(EnumerableGenericMeta):
     """Implements the :class:`Tuple` generic type.
 
     All operations on the :class:`Tuple` type are implemented here in the
-    :class:`TupleMeta` class. Operations on the :class:`Tuple` type instances
+    :class:`TupleType` class. Operations on the :class:`Tuple` type instances
     are defined in the :class:`Tuple` class.
     """
     def __new__(cls, name, bases, namespace, args=[]):
@@ -185,8 +185,8 @@ class TupleMeta(EnumerableGenericMeta):
         return '(%s)' % ', '.join([type_str(a) for a in self.args])
 
 
-class Tuple(tuple, metaclass=TupleMeta):
-    """Implements a :class:`Tuple` type instance.
+class Tuple(tuple, metaclass=TupleType):
+    """Implements the :class:`Tuple` type instance.
 
     The :class:`Tuple` type intance can be initialized either with a dict that
     maps the field names to the desired values::

@@ -16,8 +16,10 @@ release = version
 
 extensions = [
     'sphinxarg.ext', 'sphinx_verboser.verboser', 'sphinxcontrib.tikz',
-    'alabaster', 'ablog', 'sphinx_sitemap'
+    'alabaster', 'ablog', 'sphinx_sitemap', 'sphinx.ext.intersphinx'
 ]
+
+intersphinx_mapping = {'pygears': ('https://www.pygears.org', None)}
 
 site_url = "https://www.pygears.org/blog/"
 

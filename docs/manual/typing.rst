@@ -124,34 +124,13 @@ The RTL implementation of the "example" module can be also parameterized in this
 
   endmodule
 
-Types overview
---------------
+Types reference
+---------------
 
 .. toctree::
    :maxdepth: 2
 
+   typing/base
+   typing/integer
    typing/tuple
-
-.. autoclass:: pygears.typing.uint.Integer
-   :no-members:
-   :no-special-members:
-   :no-show-inheritance:
-   :noindex:
-
-.. autoclass:: pygears.typing.uint.Uint
-   :no-members:
-   :no-special-members:
-   :no-show-inheritance:
-   :noindex:
-
-.. autoclass:: pygears.typing.uint.Int
-   :no-members:
-   :no-special-members:
-   :no-show-inheritance:
-   :noindex:
-
-.. autoclass:: pygears.typing.array.Array
-   :no-members:
-   :no-special-members:
-   :no-show-inheritance:
-   :noindex:
+   typing/array

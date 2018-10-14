@@ -4,7 +4,7 @@ Tuple
 .. automodule:: pygears.typing.tuple
    :no-members:
 
-.. autoclass:: pygears.typing.tuple.TupleMeta
+.. autoclass:: pygears.typing.tuple.TupleType
    :inherited-members:
    :special-members: __add__, __int__
 
