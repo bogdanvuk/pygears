@@ -52,12 +52,52 @@
             
   <div class="section" id="my-first-instruction">
 <h1>My First Instruction<a class="headerlink" href="#my-first-instruction" title="Permalink to this headline">¶</a></h1>
+
+<script>
+ function changeVerbosity(verbosity) {
+
+     document.getElementById("verbosity_value").value = verbosity;
+     document.getElementById("verbosity_slider").value = verbosity;
+
+     var a = document.querySelectorAll('[data-verbosity]');
+
+     for (var i in a) if (a.hasOwnProperty(i)) {
+         if (a[i].getAttribute('data-verbosity') <= verbosity) {
+             a[i].removeAttribute("hidden")
+         } else {
+             a[i].setAttribute("hidden", "true")
+         }
+     }
+ }
+</script>
+
+<form class="slidecontainer">
+    <b>Slide to adjust verbosity level&ensp;</b>
+    <input type="range" min="1" max="2" value="1" name="verbositySlider" id="verbosity_slider" onchange="changeVerbosity(this.value);">
+    &ensp;
+    <input type="number" maxlength="1" id="verbosity_value" min="1" max="2" value="1" oninput="changeVerbosity(this.value);" style="font-weight: bold"/>
+</form>
 <p><span data-verbosity="2" hidden="true"> First instruction is probably going to be unlike any other in the amount of work that I’ll need to put into implementing it, so it deserves a post on its own. </span><span> Let’s start from the RV32I description in the (currently) latest version of the </span><a class="reference external" href="https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf">RISC-V ISA Specification</a><span>, which is given in the </span><a class="reference external" href="https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf#page=21">Chapter 2: RV32I Base Integer Instruction Set</a><span>. The specification first goes on to describe </span><a class="reference external" href="https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf#page=25">Integer Computational Instructions (Chapter 2.4)</a><span>, of which the </span><code class="docutils literal notranslate"><span class="pre">addi</span></code><span> instruction is explained first, so let’s start with that one.</span></p>
-<p>The <code class="docutils literal notranslate"><span class="pre">addi</span></code> instruction has an “Integer Register-Immediate” format, akka the “I-type” format. The <code class="docutils literal notranslate"><span class="pre">addi</span></code> instruction adds the value of the immediate field to the value in the <code class="docutils literal notranslate"><span class="pre">rs1</span></code> register, truncates it to <code class="docutils literal notranslate"><span class="pre">XLEN</span></code> bits and stores it into the <code class="docutils literal notranslate"><span class="pre">rd</span></code> register. The ISA specification defines the <code class="docutils literal notranslate"><span class="pre">XLEN</span></code> parameter to represent the width of the registers in number of bits: either 32 or 64. I’ll try to keep <code class="docutils literal notranslate"><span class="pre">XLEN</span></code> a design parameter, but will first focus on a version with <code class="docutils literal notranslate"><span class="pre">XLEN=32</span></code>, i.e with the 32 bit registers.</p>
+<p>All RV32I instructions are encoded with 32 bits using several formats (although there is also a <a class="reference external" href="https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf#page=81">Compressed Instruction Formats (Chapter 12.2)</a> but I’ll leave that for later). All the information needed for the instruction execution have to be encoded in 32 bits and formats specify where exactly is each peace of information located within these 32 bits. Usually the instruction needs to specify which operation to perform, which registers are involved (<code class="docutils literal notranslate"><span class="pre">rs</span></code> - register source or <code class="docutils literal notranslate"><span class="pre">rd</span></code> - register destination), and usually provides some immediate values as arguments (<code class="docutils literal notranslate"><span class="pre">imm</span></code> fields). One of the key advantages of the RISC-V ISA is that peaces of information of the same type (like <code class="docutils literal notranslate"><span class="pre">rd</span></code> field) are usually located at the same position within the 32 bit encoding for different formats, which proved to simplify the hardware implementation.</p>
+<p>For RV32I, a set of 32 registers is needed, named <code class="docutils literal notranslate"><span class="pre">x0</span></code> - <code class="docutils literal notranslate"><span class="pre">x31</span></code>, where <code class="docutils literal notranslate"><span class="pre">x0</span></code> is different from the others in that it has a fixed value of 0, i.e it’s value cannot be changed. The ISA specification defines the <code class="docutils literal notranslate"><span class="pre">XLEN</span></code> parameter to represent the width of the registers in number of bits: either 32 or 64. I’ll try to keep <code class="docutils literal notranslate"><span class="pre">XLEN</span></code> a design parameter of the processor implementation, but I’ll first focus on a version with <code class="docutils literal notranslate"><span class="pre">XLEN=32</span></code>, i.e with the processor version with 32 bit wide registers.</p>
+<div class="section" id="instruction-format">
+<h2>Instruction format<a class="headerlink" href="#instruction-format" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">addi</span></code> instruction has an “Integer Register-Immediate” format, aka the “I-type” format shown on the image below. The instruction is executed by adding the value of the 12 bit immediate field <code class="docutils literal notranslate"><span class="pre">imm</span></code> to the value read from the register specified by the <code class="docutils literal notranslate"><span class="pre">rs1</span></code> field. The result is then truncated to <code class="docutils literal notranslate"><span class="pre">XLEN</span></code> bits and stored into the register specified by the <code class="docutils literal notranslate"><span class="pre">rd</span></code> field.</p>
 <div class="figure align-center" id="id1">
 <img alt="../_images/integer-register-immediate-instruction.png" src="../_images/integer-register-immediate-instruction.png" />
-<p class="caption"><span class="caption-text">“Integer Register-Immediate” instruction format, akka the “I-type” format, from the <a class="reference external" href="https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf">RISC-V ISA Specification</a></span></p>
+<p class="caption"><span class="caption-text">“Integer Register-Immediate” instruction format, aka the “I-type” format, from the <a class="reference external" href="https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf">RISC-V ISA Specification</a></span></p>
 </div>
+<p>For representing instructions in PyGears, I will use the <code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code> type with named fields that correspond to the ones in the RISC-V ISA specification. For the “I-type” instructions, I have a following definition in PyGears:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">TInstructionI</span> <span class="o">=</span> <span class="n">Tuple</span><span class="p">[{</span>
+    <span class="s1">&#39;opcode&#39;</span><span class="p">:</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">7</span><span class="p">],</span>
+    <span class="s1">&#39;rd&#39;</span>    <span class="p">:</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span>
+    <span class="s1">&#39;funct3&#39;</span><span class="p">:</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span>
+    <span class="s1">&#39;rs1&#39;</span>   <span class="p">:</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span>
+    <span class="s1">&#39;imm&#39;</span>   <span class="p">:</span> <span class="n">Int</span><span class="p">[</span><span class="mi">12</span><span class="p">]</span>
+<span class="p">}]</span>
+</pre></div>
+</div>
+<p>Values of the <code class="docutils literal notranslate"><span class="pre">rs1</span></code> and <code class="docutils literal notranslate"><span class="pre">rd</span></code> fields contain the IDs of the registers involved, hence they are 5 bit wide so that they can encode all 32 register IDs. The values in the <code class="docutils literal notranslate"><span class="pre">imm</span></code> field are encoded as signed integers. As</p>
 <p>I had to consult <a class="reference external" href="https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf#page=115">Chapter 19: RV32/64G Instruction Set Listings</a> in order to get the correct values of the <code class="docutils literal notranslate"><span class="pre">opcode=0x13</span></code> and <code class="docutils literal notranslate"><span class="pre">funct3=0x0</span></code> instruction fields for the <code class="docutils literal notranslate"><span class="pre">addi</span></code>.</p>
 <div class="figure align-center" id="id2">
 <img alt="../_images/addi-instruction-field-value.png" src="../_images/addi-instruction-field-value.png" />
@@ -68,6 +108,7 @@
 <p class="caption"><span class="caption-text"><code class="docutils literal notranslate"><span class="pre">addi</span></code> instruction simulation timelapse. Each frame is a single delta cycle.</span></p>
 </div>
 <p>I had to consult <a class="reference external" href="https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf#page=121">Chapter 20</a> in order to find the mapping from the <code class="docutils literal notranslate"><span class="pre">x*</span></code> register names to their <a class="reference external" href="https://en.wikipedia.org/wiki/Application_binary_interface">ABI</a> equivalents which are used by the Spike simulator. This chapter also gives examples of the assembly syntaxes for the instructions. Also <a class="reference external" href="https://github.com/riscv/riscv-elf-psabi-doc/blob/master/riscv-elf.md">psABI</a></p>
+</div>
 </div>
 
   <div class="section">
