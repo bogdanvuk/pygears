@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Integer &#8212; PyGears - HW Design: A Functional Approach</title>
+    <title>Uint &#8212; PyGears - HW Design: A Functional Approach</title>
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
@@ -16,12 +16,12 @@
     <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="../_static/default.js"></script>
     <script type="text/javascript" src="../_static/wavedrom.js"></script>
-    <link rel="canonical" href="https://www.pygears.org/typing/integer.html" />
+    <link rel="canonical" href="https://www.pygears.org/typing/uint.html" />
     <link rel="shortcut icon" href="../_static/pygears.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Uint" href="uint.html" />
-    <link rel="prev" title="Typing Base Classes" href="base.html" />
+    <link rel="next" title="Int" href="int.html" />
+    <link rel="prev" title="Integer" href="integer.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   
@@ -38,62 +38,37 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="module-pygears.typing.uint">
-<span id="integer"></span><h1>Integer<a class="headerlink" href="#module-pygears.typing.uint" title="Permalink to this headline">¶</a></h1>
-<p>Implements fixed width integer types: <a class="reference internal" href="uint.html#pygears.typing.uint.Uint" title="pygears.typing.uint.Uint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Uint</span></code></a> - unsigned, <a class="reference internal" href="int.html#pygears.typing.uint.Int" title="pygears.typing.uint.Int"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int</span></code></a>
-- signed and <a class="reference internal" href="#pygears.typing.uint.Integer" title="pygears.typing.uint.Integer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Integer</span></code></a> - sign agnostic type. These types correspond to
-HDL logic vector types.</p>
-<p>Objects of these classes can also be instantiated and they provide some integer
-arithmetic capabilities.</p>
+  <div class="section" id="uint">
+<h1>Uint<a class="headerlink" href="#uint" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
-<dt id="pygears.typing.uint.IntegerType">
-<em class="property">class </em><code class="descname">IntegerType</code><a class="headerlink" href="#pygears.typing.uint.IntegerType" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="base.html#pygears.typing.base.EnumerableGenericMeta" title="pygears.typing.base.EnumerableGenericMeta"><code class="xref py py-class docutils literal notranslate"><span class="pre">pygears.typing.base.EnumerableGenericMeta</span></code></a></p>
-<p>Defines common methods for all Integer based classes.</p>
-<dl class="method">
-<dt id="pygears.typing.uint.IntegerType.__add__">
-<code class="descname">__add__</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.IntegerType.__add__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the same type, but one bit wider to accomodate potential overflow.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span> <span class="o">+</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span>
-<span class="go">Uint[9]</span>
+<dt id="pygears.typing.uint.UintType">
+<em class="property">class </em><code class="descname">UintType</code><a class="headerlink" href="#pygears.typing.uint.UintType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="integer.html#pygears.typing.uint.IntegerType" title="pygears.typing.uint.IntegerType"><code class="xref py py-class docutils literal notranslate"><span class="pre">pygears.typing.uint.IntegerType</span></code></a></p>
+<p>Fixed width generic unsigned integer data type.</p>
+<dl class="simple">
+<dt>Generic parameters:</dt>
+<dd><p>N: Bit width of the <a class="reference internal" href="#pygears.typing.uint.Uint" title="pygears.typing.uint.Uint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Uint</span></code></a> representation</p>
+</dd>
+</dl>
+<p><a class="reference internal" href="#pygears.typing.uint.Uint" title="pygears.typing.uint.Uint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Uint</span></code></a> is a generic datatype derived from <a class="reference internal" href="integer.html#pygears.typing.uint.Integer" title="pygears.typing.uint.Integer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Integer</span></code></a>. It
+represents unsigned integers with fixed width binary representation.
+Concrete data type is obtained by indexing:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">u16</span> <span class="o">=</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">]</span>
 </pre></div>
 </div>
-</dd></dl>
-
 <dl class="method">
-<dt id="pygears.typing.uint.IntegerType.__int__">
-<code class="descname">__int__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.IntegerType.__int__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculates the bit width of the type.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">int</span><span class="p">(</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">2</span><span class="p">]])</span>
-<span class="go">3</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="method">
-<dt id="pygears.typing.uint.IntegerType.__mul__">
-<code class="descname">__mul__</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.IntegerType.__mul__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the same type, whose width is equal to the sum of operand widths.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span> <span class="o">+</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span>
-<span class="go">Uint[16]</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="method">
-<dt id="pygears.typing.uint.IntegerType.__sub__">
-<code class="descname">__sub__</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.IntegerType.__sub__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the signed Int type, but one bit wider to accomodate
-potential overflow.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span> <span class="o">+</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span>
-<span class="go">Int[9]</span>
+<dt id="pygears.typing.uint.UintType.__sub__">
+<code class="descname">__sub__</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.UintType.__sub__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a Tuple of the result type and overflow bit.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">]</span> <span class="o">-</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span>
+<span class="go">Tuple(Uint[16], Bool)</span>
 </pre></div>
 </div>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pygears.typing.uint.IntegerType.args">
-<code class="descname">args</code><a class="headerlink" href="#pygears.typing.uint.IntegerType.args" title="Permalink to this definition">¶</a></dt>
+<dt id="pygears.typing.uint.UintType.args">
+<code class="descname">args</code><a class="headerlink" href="#pygears.typing.uint.UintType.args" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a list of values supplied for each generic parameter.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Tuple</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span><span class="o">.</span><span class="n">args</span>
 <span class="go">[Uint[1], Uint[2]]</span>
@@ -102,8 +77,8 @@ potential overflow.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pygears.typing.uint.IntegerType.base">
-<code class="descname">base</code><a class="headerlink" href="#pygears.typing.uint.IntegerType.base" title="Permalink to this definition">¶</a></dt>
+<dt id="pygears.typing.uint.UintType.base">
+<code class="descname">base</code><a class="headerlink" href="#pygears.typing.uint.UintType.base" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns base generic class of the type.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">]</span><span class="o">.</span><span class="n">base</span> <span class="o">==</span> <span class="n">Uint</span>
 </pre></div>
@@ -111,8 +86,8 @@ potential overflow.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pygears.typing.uint.IntegerType.fields">
-<code class="descname">fields</code><a class="headerlink" href="#pygears.typing.uint.IntegerType.fields" title="Permalink to this definition">¶</a></dt>
+<dt id="pygears.typing.uint.UintType.fields">
+<code class="descname">fields</code><a class="headerlink" href="#pygears.typing.uint.UintType.fields" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the names of the generic parameters.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Tuple</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span><span class="o">.</span><span class="n">fields</span>
 <span class="go">(&#39;f0&#39;, &#39;f1&#39;)</span>
@@ -125,8 +100,8 @@ potential overflow.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pygears.typing.uint.IntegerType.is_generic">
-<code class="descname">is_generic</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.IntegerType.is_generic" title="Permalink to this definition">¶</a></dt>
+<dt id="pygears.typing.uint.UintType.is_generic">
+<code class="descname">is_generic</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.UintType.is_generic" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return True if no values have been supplied for the generic parameters.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Uint</span><span class="o">.</span><span class="n">is_generic</span><span class="p">()</span>
 <span class="go">True</span>
@@ -139,8 +114,8 @@ potential overflow.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pygears.typing.uint.IntegerType.is_specified">
-<code class="descname">is_specified</code><a class="headerlink" href="#pygears.typing.uint.IntegerType.is_specified" title="Permalink to this definition">¶</a></dt>
+<dt id="pygears.typing.uint.UintType.is_specified">
+<code class="descname">is_specified</code><a class="headerlink" href="#pygears.typing.uint.UintType.is_specified" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return True if all generic parameters were supplied concrete values.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Uint</span><span class="p">[</span><span class="s1">&#39;template&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">is_specified</span><span class="p">()</span>
 <span class="go">False</span>
@@ -153,14 +128,14 @@ potential overflow.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pygears.typing.uint.IntegerType.items">
-<code class="descname">items</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.IntegerType.items" title="Permalink to this definition">¶</a></dt>
+<dt id="pygears.typing.uint.UintType.items">
+<code class="descname">items</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.UintType.items" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generator that yields (key, element) pairs.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pygears.typing.uint.IntegerType.keys">
-<code class="descname">keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.IntegerType.keys" title="Permalink to this definition">¶</a></dt>
+<dt id="pygears.typing.uint.UintType.keys">
+<code class="descname">keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.UintType.keys" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a list of keys that can be used for indexing the type.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Int</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
 <span class="go">[0, 1, 2, 3, 4, 5, 6, 7]</span>
@@ -169,8 +144,8 @@ potential overflow.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pygears.typing.uint.IntegerType.templates">
-<code class="descname">templates</code><a class="headerlink" href="#pygears.typing.uint.IntegerType.templates" title="Permalink to this definition">¶</a></dt>
+<dt id="pygears.typing.uint.UintType.templates">
+<code class="descname">templates</code><a class="headerlink" href="#pygears.typing.uint.UintType.templates" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a list of templated generic variables within the type. The type is
 searched recursively. Each template is reported only once.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="s1">&#39;T1&#39;</span><span class="p">,</span> <span class="s1">&#39;T2&#39;</span><span class="p">],</span> <span class="s1">&#39;T1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">templates</span>
@@ -182,15 +157,24 @@ searched recursively. Each template is reported only once.</p>
 </dd></dl>
 
 <dl class="class">
-<dt id="pygears.typing.uint.Integer">
-<em class="property">class </em><code class="descname">Integer</code><a class="headerlink" href="#pygears.typing.uint.Integer" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
-<p>Base type for both <a class="reference internal" href="int.html#pygears.typing.uint.Int" title="pygears.typing.uint.Int"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int</span></code></a> and <a class="reference internal" href="uint.html#pygears.typing.uint.Uint" title="pygears.typing.uint.Uint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Uint</span></code></a> generic types.
-Corresponds to HDL logic vector types. For an example Integer[9] translates
-to <code class="code sv systemverilog docutils literal notranslate"><span class="keyword"><span class="pre">logic</span></span> <span class="punctuation"><span class="pre">[</span></span><span class="literal number hex"><span class="pre">8</span></span><span class="operator"><span class="pre">:</span></span><span class="literal number hex"><span class="pre">0</span></span><span class="punctuation"><span class="pre">]</span></span></code>.</p>
+<dt id="pygears.typing.uint.Uint">
+<em class="property">class </em><code class="descname">Uint</code><a class="headerlink" href="#pygears.typing.uint.Uint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="integer.html#pygears.typing.uint.Integer" title="pygears.typing.uint.Integer"><code class="xref py py-class docutils literal notranslate"><span class="pre">pygears.typing.uint.Integer</span></code></a></p>
+<p>Implements the <a class="reference internal" href="#pygears.typing.uint.Uint" title="pygears.typing.uint.Uint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Uint</span></code></a> type instance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>val</strong> – Integer value to convert to <a class="reference internal" href="#pygears.typing.uint.Uint" title="pygears.typing.uint.Uint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Uint</span></code></a></p>
+</dd>
+</dl>
+<p><a class="reference internal" href="#pygears.typing.uint.Uint" title="pygears.typing.uint.Uint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Uint</span></code></a> is a generic datatype derived from <a class="reference internal" href="integer.html#pygears.typing.uint.Integer" title="pygears.typing.uint.Integer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Integer</span></code></a>. It
+represents unsigned integers with fixed width binary representation.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">](</span><span class="mh">0xffff</span><span class="p">)</span>
+<span class="go">Uint[16](65535)</span>
+</pre></div>
+</div>
 <dl class="method">
-<dt id="pygears.typing.uint.Integer.__getitem__">
-<code class="descname">__getitem__</code><span class="sig-paren">(</span><em>index</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Integer.__getitem__" title="Permalink to this definition">¶</a></dt>
+<dt id="pygears.typing.uint.Uint.__getitem__">
+<code class="descname">__getitem__</code><span class="sig-paren">(</span><em>index</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Uint.__getitem__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the value of the indexth bit in the number representation.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Integer</span><span class="p">[</span><span class="mi">8</span><span class="p">](</span><span class="mb">0b10101010</span><span class="p">)[</span><span class="mi">5</span><span class="p">]</span>
 <span class="go">1</span>
@@ -199,8 +183,8 @@ to <code class="code sv systemverilog docutils literal notranslate"><span class=
 </dd></dl>
 
 <dl class="method">
-<dt id="pygears.typing.uint.Integer.__int__">
-<code class="descname">__int__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Integer.__int__" title="Permalink to this definition">¶</a></dt>
+<dt id="pygears.typing.uint.Uint.__int__">
+<code class="descname">__int__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Uint.__int__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns builtin integer type</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">type</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">Integer</span><span class="p">[</span><span class="mi">8</span><span class="p">](</span><span class="mi">0</span><span class="p">)))</span>
 <span class="go">&lt;class &#39;int&#39;&gt;</span>
@@ -209,8 +193,8 @@ to <code class="code sv systemverilog docutils literal notranslate"><span class=
 </dd></dl>
 
 <dl class="method">
-<dt id="pygears.typing.uint.Integer.__len__">
-<code class="descname">__len__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Integer.__len__" title="Permalink to this definition">¶</a></dt>
+<dt id="pygears.typing.uint.Uint.__len__">
+<code class="descname">__len__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Uint.__len__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the number of bits used for the representation</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">Integer</span><span class="p">[</span><span class="mi">8</span><span class="p">](</span><span class="mi">0</span><span class="p">))</span>
 <span class="go">8</span>
@@ -218,9 +202,25 @@ to <code class="code sv systemverilog docutils literal notranslate"><span class=
 </div>
 </dd></dl>
 
-<dl class="classmethod">
-<dt id="pygears.typing.uint.Integer.decode">
-<em class="property">classmethod </em><code class="descname">decode</code><span class="sig-paren">(</span><em>val</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Integer.decode" title="Permalink to this definition">¶</a></dt>
+<dl class="method">
+<dt id="pygears.typing.uint.Uint.bit_length">
+<code class="descname">bit_length</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; int<a class="headerlink" href="#pygears.typing.uint.Uint.bit_length" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of bits necessary to represent self in binary.
+&gt;&gt;&gt; bin(37)
+‘0b100101’
+&gt;&gt;&gt; (37).bit_length()
+6</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pygears.typing.uint.Uint.conjugate">
+<code class="descname">conjugate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Uint.conjugate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns self, the complex conjugate of any int.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pygears.typing.uint.Uint.decode">
+<code class="descname">decode</code><span class="sig-paren">(</span><em>val</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Uint.decode" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates Integer object from any int-convertible object val.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Integer</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="mh">0xffff</span><span class="p">)</span>
 <span class="go">Integer[8](255)</span>
@@ -229,8 +229,63 @@ to <code class="code sv systemverilog docutils literal notranslate"><span class=
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pygears.typing.uint.Integer.width">
-<code class="descname">width</code><a class="headerlink" href="#pygears.typing.uint.Integer.width" title="Permalink to this definition">¶</a></dt>
+<dt id="pygears.typing.uint.Uint.denominator">
+<code class="descname">denominator</code><a class="headerlink" href="#pygears.typing.uint.Uint.denominator" title="Permalink to this definition">¶</a></dt>
+<dd><p>the denominator of a rational number in lowest terms</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pygears.typing.uint.Uint.from_bytes">
+<code class="descname">from_bytes</code><span class="sig-paren">(</span><em>bytes</em>, <em>byteorder</em>, <em>*</em>, <em>signed=False</em><span class="sig-paren">)</span> &#x2192; int<a class="headerlink" href="#pygears.typing.uint.Uint.from_bytes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the integer represented by the given array of bytes.</p>
+<p>The bytes argument must be a bytes-like object (e.g. bytes or bytearray).</p>
+<p>The byteorder argument determines the byte order used to represent the
+integer.  If byteorder is ‘big’, the most significant byte is at the
+beginning of the byte array.  If byteorder is ‘little’, the most
+significant byte is at the end of the byte array.  To request the native
+byte order of the host system, use <a href="#id1"><span class="problematic" id="id2">`</span></a>sys.byteorder’ as the byte order value.</p>
+<p>The signed keyword-only argument indicates whether two’s complement is
+used to represent the integer.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pygears.typing.uint.Uint.imag">
+<code class="descname">imag</code><a class="headerlink" href="#pygears.typing.uint.Uint.imag" title="Permalink to this definition">¶</a></dt>
+<dd><p>the imaginary part of a complex number</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pygears.typing.uint.Uint.numerator">
+<code class="descname">numerator</code><a class="headerlink" href="#pygears.typing.uint.Uint.numerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>the numerator of a rational number in lowest terms</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pygears.typing.uint.Uint.real">
+<code class="descname">real</code><a class="headerlink" href="#pygears.typing.uint.Uint.real" title="Permalink to this definition">¶</a></dt>
+<dd><p>the real part of a complex number</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pygears.typing.uint.Uint.to_bytes">
+<code class="descname">to_bytes</code><span class="sig-paren">(</span><em>length</em>, <em>byteorder</em>, <em>*</em>, <em>signed=False</em><span class="sig-paren">)</span> &#x2192; bytes<a class="headerlink" href="#pygears.typing.uint.Uint.to_bytes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an array of bytes representing an integer.</p>
+<p>The integer is represented using length bytes.  An OverflowError is
+raised if the integer is not representable with the given number of
+bytes.</p>
+<p>The byteorder argument determines the byte order used to represent the
+integer.  If byteorder is ‘big’, the most significant byte is at the
+beginning of the byte array.  If byteorder is ‘little’, the most
+significant byte is at the end of the byte array.  To request the native
+byte order of the host system, use <a href="#id3"><span class="problematic" id="id4">`</span></a>sys.byteorder’ as the byte order value.</p>
+<p>The signed keyword-only argument determines whether two’s complement is
+used to represent the integer.  If signed is False and a negative integer
+is given, an OverflowError is raised.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pygears.typing.uint.Uint.width">
+<code class="descname">width</code><a class="headerlink" href="#pygears.typing.uint.Uint.width" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the number of bits used for the representation</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Integer</span><span class="p">[</span><span class="mi">8</span><span class="p">](</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">width</span>
 <span class="go">8</span>
@@ -328,7 +383,7 @@ to <code class="code sv systemverilog docutils literal notranslate"><span class=
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
       
       |
-      <a href="../_sources/typing/integer.rst.txt"
+      <a href="../_sources/typing/uint.rst.txt"
           rel="nofollow">Page source</a>
     </div>
 

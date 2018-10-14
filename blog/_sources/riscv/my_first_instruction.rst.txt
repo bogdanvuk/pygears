@@ -25,7 +25,7 @@ The ``addi`` instruction has an "Integer Register-Immediate" format, aka the "I-
 
    "Integer Register-Immediate" instruction format, aka the "I-type" format, from the `RISC-V ISA Specification`_
 
-For representing instructions in PyGears, I will use the :class:`Tuple` type with named fields that correspond to the ones in the RISC-V ISA specification. For the "I-type" instructions, I have a following definition in PyGears::
+Since the instruction encodings have fields that serve different purposes from one another, I'll represent the instruction with the :any:`typing/tuple` PyGears type. The :any:`typing/tuple` type represents a generic heterogenous container type akin to records and structs in other HDLs. For the "I-type" instructions, I have a following definition in PyGears::
 
   TInstructionI = Tuple[{
       'opcode': Uint[7],
@@ -34,6 +34,8 @@ For representing instructions in PyGears, I will use the :class:`Tuple` type wit
       'rs1'   : Uint[5],
       'imm'   : Int[12]
   }]
+
+The ``opcode`` and ``funct3`` fields determine the function to be executed, and ``rd``, ``rs1`` and ``imm`` fields carry the function arguments. Hence in ``opcode`` and ``funct3`` fields the ID of the function is stored, so I can represent it with an unsigned number :any:`typing/uint`. Some enumerated type might constrain this fields better, since not all function IDs might be available in a specific processor implementation (after this blog post I will have implemented only one function - ``addi``). However, PyGears does not yet support enumerated types, so I'll use the :any:`Uint[N] <typing/uint>` type as the second best.
 
 Values of the ``rs1`` and ``rd`` fields contain the IDs of the registers involved, hence they are 5 bit wide so that they can encode all 32 register IDs. The values in the ``imm`` field are encoded as signed integers. As
 
