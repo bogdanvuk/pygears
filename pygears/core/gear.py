@@ -92,7 +92,7 @@ def get_obj_var_name(frame, obj):
 
 def find_current_gear_frame():
     import inspect
-    code_map = registry('GearCodeMap')
+    code_map = registry('gear/code_map')
     if not code_map:
         return None
 
@@ -108,11 +108,11 @@ class create_hier:
         self.gear = gear
 
     def __enter__(self):
-        bind('CurrentModule', self.gear)
+        bind('gear/current_module', self.gear)
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
-        bind('CurrentModule', self.gear.parent)
+        bind('gear/current_module', self.gear.parent)
         if exception_type is not None:
             self.gear.clear()
 
@@ -147,7 +147,7 @@ class Gear(NamedHierNode):
 
     def __init__(self, func, *args, name=None, intfs=None, outnames=[],
                  **kwds):
-        super().__init__(name, registry('CurrentModule'))
+        super().__init__(name, registry('gear/current_module'))
 
         self.in_ports = []
         self.out_ports = []
@@ -419,7 +419,7 @@ class Gear(NamedHierNode):
             }
 
             self.func_locals = {}
-            code_map = registry('GearCodeMap')
+            code_map = registry('gear/code_map')
             code_map.append(self)
 
             def tracer(frame, event, arg):
@@ -429,13 +429,15 @@ class Gear(NamedHierNode):
                             cm.func_locals = frame.f_locals.copy()
 
             # tracer is activated on next call, return or exception
-            if registry('CurrentModule').parent == registry('HierRoot'):
+            if registry('gear/current_module').parent == registry(
+                    'gear/hier_root'):
                 sys.setprofile(tracer)
 
             ret = self.func(*func_args, **func_kwds)
 
             code_map.pop()
-            if registry('CurrentModule').parent == registry('HierRoot'):
+            if registry('gear/current_module').parent == registry(
+                    'gear/hier_root'):
                 sys.setprofile(None)
 
             for name, val in self.func_locals.items():
@@ -471,7 +473,7 @@ def gear(func, gear_cls=Gear, **meta_kwds):
     fb.filename = '<string>'
 
     # Add defaults from GearExtraParams registry
-    for k, v in registry('GearExtraParams').items():
+    for k, v in registry('gear/params/extra').items():
         if k not in fb.kwonlyargs:
             fb.kwonlyargs.append(k)
             fb.kwonlydefaults[k] = copy.copy(v)
@@ -480,7 +482,7 @@ def gear(func, gear_cls=Gear, **meta_kwds):
                f"{fb.get_invocation_str()})")
 
     # Add defaults from GearMetaParams registry
-    for k, v in registry('GearMetaParams').items():
+    for k, v in registry('gear/params/meta').items():
         if k not in meta_kwds:
             meta_kwds[k] = copy.copy(v)
 
@@ -515,17 +517,21 @@ def gear(func, gear_cls=Gear, **meta_kwds):
 
 
 def module():
-    return registry('CurrentModule')
+    return registry('gear/current_module')
 
 
 class GearPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        cls.registry['HierRoot'] = NamedHierNode('')
-        cls.registry['CurrentModule'] = cls.registry['HierRoot']
-        cls.registry['GearCodeMap'] = []
-        cls.registry['GearMetaParams'] = {'enablement': True}
-        cls.registry['GearExtraParams'] = {
+        cls.registry['gear'] = {}
+        cls.registry['gear']['naming'] = {}
+        cls.registry['gear']['hier_root'] = NamedHierNode('')
+        cls.registry['gear']['current_module'] = cls.registry['gear'][
+            'hier_root']
+        cls.registry['gear']['code_map'] = []
+        cls.registry['gear']['params'] = {}
+        cls.registry['gear']['params']['meta'] = {'enablement': True}
+        cls.registry['gear']['params']['extra'] = {
             'name': None,
             'intfs': [],
             'outnames': [],
@@ -534,6 +540,7 @@ class GearPlugin(PluginBase):
 
     @classmethod
     def reset(cls):
-        bind('HierRoot', NamedHierNode(''))
-        bind('CurrentModule', cls.registry['HierRoot'])
-        bind('GearCodeMap', [])
+        cls.registry['gear']['hier_root'] = NamedHierNode('')
+        cls.registry['gear']['current_module'] = cls.registry['gear'][
+            'hier_root']
+        cls.registry['gear']['code_map'] = []

@@ -8,7 +8,7 @@ from pygears.rtl.channel import RTLChannelVisitor, RTLOutChannelVisitor
 def rtlgen(top=None, **conf):
 
     if top is None:
-        top = registry('HierRoot')
+        top = registry('gear/hier_root')
     elif isinstance(top, str):
         top = find(top)
 

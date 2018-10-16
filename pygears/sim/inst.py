@@ -43,7 +43,7 @@ class SimInstPlugin(SimPlugin, GearPlugin):
         cls.registry['sim']['flow'].append(sim_inst)
         cls.registry['sim']['module_namespace'] = {}
         cls.registry['sim']['map'] = {}
-        cls.registry['GearExtraParams']['sim_cls'] = None
+        cls.registry['gear']['params']['extra']['sim_cls'] = None
 
     @classmethod
     def reset(cls):

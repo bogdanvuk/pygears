@@ -26,12 +26,12 @@ def sim_phase():
 
 
 def clk():
-    registry('CurrentModule').phase = 'forward'
+    registry('gear/current_module').phase = 'forward'
     return registry('ClkEvent').wait()
 
 
 def delta():
-    registry('CurrentModule').phase = 'back'
+    registry('gear/current_module').phase = 'back'
     return registry('DeltaEvent').wait()
 
 
@@ -164,7 +164,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
     def _finish(self, sim_gear):
         try:
             self.cur_gear = sim_gear.gear
-            bind('CurrentModule', self.cur_gear)
+            bind('gear/current_module', self.cur_gear)
             self.tasks[sim_gear].throw(GearDone)
         except (StopIteration, GearDone):
             pass
@@ -173,10 +173,10 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         finally:
             self.done.add(sim_gear)
             self.events['after_finish'](self, sim_gear)
-            self.cur_gear = registry('HierRoot')
+            self.cur_gear = registry('gear/hier_root')
             self.back_ready.discard(sim_gear)
             self.forward_ready.discard(sim_gear)
-            bind('CurrentModule', self.cur_gear)
+            bind('gear/current_module', self.cur_gear)
 
     def run_gear(self, sim_gear, ready):
 
@@ -213,12 +213,12 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         ready.remove(sim_gear)
 
         self.cur_gear = sim_gear.gear
-        bind('CurrentModule', self.cur_gear)
+        bind('gear/current_module', self.cur_gear)
 
         self.run_gear(sim_gear, ready)
 
-        self.cur_gear = registry('HierRoot')
-        bind('CurrentModule', self.cur_gear)
+        self.cur_gear = registry('gear/hier_root')
+        bind('gear/current_module', self.cur_gear)
 
     def sim_loop(self, timeout):
         clk = registry('ClkEvent')
@@ -290,10 +290,10 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
         for sim_gear in self.sim_gears:
             self.cur_gear = sim_gear.gear
-            bind('CurrentModule', self.cur_gear)
+            bind('gear/current_module', self.cur_gear)
             sim_gear.setup()
-            self.cur_gear = registry('HierRoot')
-            bind('CurrentModule', self.cur_gear)
+            self.cur_gear = registry('gear/hier_root')
+            bind('gear/current_module', self.cur_gear)
 
         self.events['before_run'](self)
 
@@ -354,7 +354,7 @@ class SimFmtFilter(LogFmtFilter):
     def filter(self, record):
         super().filter(record)
 
-        m = registry('CurrentModule')
+        m = registry('gear/current_module')
 
         record.module = m.name
         record.timestep = timestep()
@@ -392,7 +392,7 @@ class SimPlugin(GearPlugin):
         cls.registry['sim']['config'] = {}
         cls.registry['sim']['flow'] = []
         cls.registry['sim']['tasks'] = {}
-        cls.registry['GearExtraParams']['sim_setup'] = None
+        cls.registry['gear']['params']['extra']['sim_setup'] = None
         SimLog('sim')
 
     @classmethod

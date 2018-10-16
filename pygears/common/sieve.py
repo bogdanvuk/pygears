@@ -33,7 +33,7 @@ def maybe_obtain_intf_var_name(intf):
 
 
 def getitem(self, index):
-    naming = registry('PrettySieveNaming')
+    naming = registry('gear/naming/pretty_sieve')
     norm_index = self.dtype.index_norm(index)
 
     # Try to obtain variable to which interface was assigned to form a better
@@ -70,4 +70,4 @@ class GetitemIntfOperPlugin(IntfOperPlugin):
     @classmethod
     def bind(cls):
         cls.registry['IntfOperNamespace']['__getitem__'] = getitem
-        cls.registry['PrettySieveNaming'] = False
+        cls.registry['gear']['naming']['pretty_sieve'] = False

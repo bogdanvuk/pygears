@@ -10,7 +10,7 @@ from .inst import svgen_inst
 def svgen(top=None, **conf):
 
     if top is None:
-        top = registry('HierRoot')
+        top = registry('gear/hier_root')
     elif isinstance(top, str):
         top = find(top)
 
