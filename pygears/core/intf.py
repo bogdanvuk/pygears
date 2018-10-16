@@ -27,7 +27,7 @@ def operator_methods_gen(cls):
 def _get_consumer_tree_rec(intf, consumers):
     for port in intf.consumers:
         cons_intf = port.consumer
-        if (port.gear in registry('SimMap')) and (isinstance(port, InPort)):
+        if (port.gear in registry('sim/map')) and (isinstance(port, InPort)):
             # if not cons_intf.consumers:
             consumers.append(port)
         else:
@@ -116,7 +116,7 @@ class Intf:
 
     def get_consumer_queue(self, port):
         for pout in self.consumers:
-            if pout.gear in registry('SimMap') and (isinstance(pout, OutPort)):
+            if pout.gear in registry('sim/map') and (isinstance(pout, OutPort)):
                 out_queues = self.out_queues
                 try:
                     i = self.end_consumers.index(port)
@@ -154,7 +154,7 @@ class Intf:
         return self._out_queues
 
     def put_nb(self, val):
-        if any(registry('SimMap')[c.gear].done for c in self.end_consumers):
+        if any(registry('sim/map')[c.gear].done for c in self.end_consumers):
             raise GearDone
 
         put_event = self.events['put']

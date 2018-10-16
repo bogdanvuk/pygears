@@ -57,7 +57,7 @@ class LogWrap:
             pdb.set_trace()
 
     def stack_trace(self, verbosity, message):
-        stack_traceback_fn = registry('StackTracebackFn')
+        stack_traceback_fn = registry('logger/StackTracebackFn')
         with open(stack_traceback_fn, 'a') as f:
             delim = '-' * 50 + '\n'
             f.write(delim)
@@ -90,7 +90,7 @@ class LogFmtFilter(logging.Filter):
         record.err_file = ''
 
         if record.levelno > 20:  # > INFO
-            stack_traceback_fn = registry('StackTracebackFn')
+            stack_traceback_fn = registry('logger/StackTracebackFn')
             stack_num = sum(1 for line in open(stack_traceback_fn))
             record.stack_file = f'\n\t File "{stack_traceback_fn}", line {stack_num}, for stacktrace'
             record.err_file = f'\n\t File "{record.pathname}", line {record.lineno}, in {record.funcName}'
@@ -151,8 +151,8 @@ class LogPlugin(PluginBase):
     @classmethod
     def bind(cls):
         tf = tempfile.NamedTemporaryFile(delete=False)
-        bind('StackTracebackFn', tf.name)
         bind('logger', {})  # init
+        bind('logger/StackTracebackFn', tf.name)
 
         CustomLog('core', logging.WARNING)
         CustomLog('typing', logging.WARNING)

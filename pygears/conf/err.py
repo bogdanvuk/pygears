@@ -18,12 +18,12 @@ class ErrReport(RegistryHook):
 class ErrReportPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        cls.registry['ErrReport'] = ErrReport(level=ErrReportLevel.debug)
-        cls.registry['ExitHooks'] = []
+        cls.registry['err'] = ErrReport(level=ErrReportLevel.debug)
+        cls.registry['err']['hooks'] = []
 
 
 def register_exit_hook(hook, *args, **kwds):
-    registry('ExitHooks').append(partial(hook, *args, **kwds))
+    registry('err/hooks').append(partial(hook, *args, **kwds))
 
 
 def pygears_excepthook(exception_type,
@@ -31,13 +31,13 @@ def pygears_excepthook(exception_type,
                        tr,
                        debug_hook=sys.excepthook):
 
-    for hook in registry('ExitHooks'):
+    for hook in registry('err/hooks'):
         try:
             hook()
         except:
             pass
 
-    if registry("ErrReport")['level'] == ErrReportLevel.debug:
+    if registry('err/level') == ErrReportLevel.debug:
         debug_hook(exception_type, exception, tr)
     else:
         from pygears.util.print_hier import print_hier
@@ -53,8 +53,8 @@ def pygears_excepthook(exception_type,
         from pygears.conf.log import LogException
         print_traceback = (exception_type is not LogException)
         if not print_traceback:
-            print_traceback = registry('logger')[exception.name][
-                'print_traceback']
+            print_traceback = registry(
+                f'logger/{exception.name}/print_traceback')
         if print_traceback:
             for s in enum_traceback(tr):
                 print(s, end='')

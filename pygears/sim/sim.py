@@ -36,12 +36,12 @@ def delta():
 
 
 def artifacts_dir():
-    return registry('SimArtifactDir')
+    return registry('sim/artifact_dir')
 
 
 def schedule_to_finish(gear):
     sim = registry('Simulator')
-    sim.schedule_to_finish(registry('SimMap')[gear])
+    sim.schedule_to_finish(registry('sim/map')[gear])
 
 
 class SimFuture(asyncio.Future):
@@ -113,7 +113,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         return False
 
     def get_tasks(self):
-        self.sim_map = registry('SimMap')
+        self.sim_map = registry('sim/map')
         dag = {}
 
         for g in self.sim_map:
@@ -328,12 +328,12 @@ def sim(outdir=None,
     if outdir is None:
         outdir = tempfile.mkdtemp()
     os.makedirs(outdir, exist_ok=True)
-    bind('SimArtifactDir', outdir)
+    bind('sim/artifact_dir', outdir)
 
     if not seed:
         seed = int(time.time())
     random.seed(seed)
-    bind('SimRandSeed', seed)
+    bind('sim/rand_seed', seed)
     sim_log().info(f'Running sim with seed: {seed}')
 
     loop = EventLoop()
@@ -341,7 +341,7 @@ def sim(outdir=None,
     bind('Simulator', loop)
 
     top = find('/')
-    for oper in itertools.chain(registry('SimFlow'), extens):
+    for oper in itertools.chain(registry('sim/flow'), extens):
         oper(top)
 
     if run:
@@ -388,15 +388,16 @@ def sim_log():
 class SimPlugin(GearPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['SimFlow'] = []
-        cls.registry['SimTasks'] = {}
-        cls.registry['SimConfig'] = {}
+        cls.registry['sim'] = {}
+        cls.registry['sim']['config'] = {}
+        cls.registry['sim']['flow'] = []
+        cls.registry['sim']['tasks'] = {}
         cls.registry['GearExtraParams']['sim_setup'] = None
         SimLog('sim')
 
     @classmethod
     def reset(cls):
-        bind('SimTasks', {})
+        bind('sim/tasks', {})
 
 
 def sim_assert(cond, msg=None):

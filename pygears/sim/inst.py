@@ -7,8 +7,8 @@ from pygears.core.hier_node import HierVisitorBase
 
 class SimInstVisitor(HierVisitorBase):
     def __init__(self):
-        self.namespace = registry('SimModuleNamespace')
-        self.sim_map = registry('SimMap')
+        self.namespace = registry('sim/module_namespace')
+        self.sim_map = registry('sim/map')
 
     def Gear(self, module):
         sim_cls = module.params.get('sim_cls', None)
@@ -39,11 +39,12 @@ def sim_inst(top):
 class SimInstPlugin(SimPlugin, GearPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['SimFlow'].append(sim_inst)
-        cls.registry['SimModuleNamespace'] = {}
-        cls.registry['SimMap'] = {}
+        # cls.registry['SimFlow'].append(sim_inst)
+        cls.registry['sim']['flow'].append(sim_inst)
+        cls.registry['sim']['module_namespace'] = {}
+        cls.registry['sim']['map'] = {}
         cls.registry['GearExtraParams']['sim_cls'] = None
 
     @classmethod
     def reset(cls):
-        cls.registry['SimMap'] = {}
+        cls.registry['sim']['map'] = {}

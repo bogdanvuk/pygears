@@ -127,7 +127,7 @@ class ActivityReporter:
         return True
 
     def before_run(self, sim):
-        sim_map = registry('SimMap')
+        sim_map = registry('sim/map')
 
         for module, sim_gear in sim_map.items():
             for p in module.in_ports:
@@ -138,7 +138,7 @@ class ActivityReporter:
 
         if self.draw_graph:
             g = graph(
-                outdir=registry('SimArtifactDir'),
+                outdir=registry('sim/artifact_dir'),
                 node_filter=lambda g: not g.child)
         else:
             g = None
@@ -154,7 +154,7 @@ class ActivityReporter:
         self.sim_gears_activity(g, sim, blocking_gears)
 
         if self.draw_graph:
-            outdir = registry('SimArtifactDir')
+            outdir = registry('sim/artifact_dir')
             g.graph.write_svg(os.path.join(outdir, 'proba.svg'))
 
         try:
@@ -207,7 +207,7 @@ class ActivityReporter:
                     )
 
     def cosim_activity(self, g, top_name):
-        outdir = registry('SimArtifactDir')
+        outdir = registry('sim/artifact_dir')
         activity_path = os.path.join(outdir, 'activity.log')
 
         if not os.path.isfile(activity_path):

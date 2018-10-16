@@ -33,7 +33,7 @@ class SimVerilated(CosimBase):
         super().__init__(gear, timeout=100)
         self.name = gear.name[1:].replace('/', '_')
         self.outdir = os.path.abspath(
-            os.path.join(registry('SimArtifactDir'), self.name))
+            os.path.join(registry('sim/artifact_dir'), self.name))
         self.objdir = os.path.join(self.outdir, 'obj_dir')
         self.svnode = svgen(gear, outdir=self.outdir, wrapper=True)
         self.svmod = registry('SVGenMap')[self.svnode]
