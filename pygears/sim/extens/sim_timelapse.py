@@ -11,6 +11,7 @@ class SimTimelapse(SimExtend):
     }
 
     edge_state_color_map = {
+        'new': 'black',
         'forward': 'green',
         'back': 'orange',
         'finished': 'red'

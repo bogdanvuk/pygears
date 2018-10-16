@@ -6,11 +6,7 @@ from pygears.util.find import find
 
 class Visitor(HierVisitorBase):
     def __init__(self, node_filter):
-        self.dot = pydot.Dot(graph_type='digraph', rankdir='TB', overlap=True)
-        self.dot.node_map = {}
-        self.dot.cluster_map = {}
-        self.dot.prod_edge_map = {}
-        self.dot.cons_edge_map = {}
+        self.dot = GearGraph(graph_type='digraph', rankdir='TB', overlap=True)
 
         self.hier = [self.dot]
         self.node_filter = node_filter
@@ -50,6 +46,31 @@ class Visitor(HierVisitorBase):
             self.exit_hier(module)
 
         return True
+
+
+class GearGraph(pydot.Dot):
+    def __init__(self, *argsl, **argsd):
+        super().__init__(*argsl, **argsd)
+        self._node_map = {}
+        self._cluster_map = {}
+        self._prod_edge_map = {}
+        self._cons_edge_map = {}
+
+    @property
+    def node_map(self):
+        return self._node_map
+
+    @property
+    def cluster_map(self):
+        return self._cluster_map
+
+    @property
+    def prod_edge_map(self):
+        return self._prod_edge_map
+
+    @property
+    def cons_edge_map(self):
+        return self._cons_edge_map
 
 
 def _get_consumer_tree_rec(intf, consumers, node_filter):
