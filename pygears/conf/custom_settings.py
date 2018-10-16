@@ -14,6 +14,9 @@ PYGEARSRC = '.pygears'
 
 
 def print_registry():
+    # monkey patch sorting
+    pprint._safe_key.__lt__ = lambda x, y: True
+
     reg = pprint.pformat(PluginBase.registry)
     conf_log().info(f'Registry settings:\n{reg}')
 
