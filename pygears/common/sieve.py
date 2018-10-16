@@ -5,6 +5,29 @@ from pygears import module, registry
 
 @gear
 async def sieve(din, *, index) -> b'din[index]':
+    """Outputs a slice of the ``din`` input interface.
+
+    Args:
+        index: A single key or a sequence of keys with which to slice the input
+          interface.
+
+    Returns:
+        Data of the type ``t``
+
+    Which keys are exactly supported depends on the type of the ``din`` input interface.
+
+    >>> drv(t=Uint[8], seq=range(10))
+
+    If ``t`` is a :class:`Queue` type of certain level, then ``seq`` should
+    generate nested iterables of the same level::
+
+        q1 = ((11, 12), (21, 22, 23))
+        q2 = ((11, 12, 13))
+
+    >>> drv(t=Queue[Uint[8], 2], seq=[q1, q2])
+
+    """
+
     async with din as d:
         dout = []
         for i in index:

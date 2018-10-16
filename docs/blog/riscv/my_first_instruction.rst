@@ -100,7 +100,7 @@ The read and write requests are output from the ``riscv`` gear by outputting the
 Verification environment
 ------------------------
 
-For testing the ISA implementation, I've envisioned a following test:
+For testing the ISA implementation, I've envisioned the following test:
 
 #. Initialize the register file
 #. Send a stream of instructions to the processor
@@ -108,7 +108,20 @@ For testing the ISA implementation, I've envisioned a following test:
 
 I've vriten an environment that supports these kinds of tests in `verif/env.py <https://github.com/bogdanvuk/pygears_riscv/blob/afb23407150fe43d53c3df1340a93e2f2644d741/pygears_riscv/verif/env.py>`__. This is a regular Python function (not a gear) that instantiates the ``riscv`` and ``register_file`` gears and wires them properly::
 
-  def riscv_instr_seq_env(instr_seq, xlen, reg_file_mem={}):
+  def riscv_instr_seq_env(instr_seq, xlen=32, reg_file_mem={}):
+      """Drives riscv with an instruction sequence.
+
+      Args:
+        instr_seq: Sequence of instructions to send to riscv
+
+      Keyword Args:
+        xlen (int): Width of the riscv registers in bits
+        reg_file_mem (dict): Initial register file dictionary that maps
+              register IDs to their initial values
+
+      Returns:
+        reg_file_mem
+      """
 
       instruction = drv(t=TInstructionI, seq=instr_seq)
 
@@ -121,8 +134,7 @@ I've vriten an environment that supports these kinds of tests in `verif/env.py <
 
       return reg_file_mem
 
-
-
+The :py:func:`drv() <pygears.sim.modules.drv>` bla
 
 Spike interface
 ~~~~~~~~~~~~~~~
@@ -131,7 +143,7 @@ In my previous blog post :ref:`setup`, I showed how to implement a rudimentary i
 
 First, I was surprised to find that issuing the read register command didn't return any value in Spike simulator if the registers were named with prefix "x" (``x*``). I started digging and found out that even though all registers ``x1`` - ``x31`` were created equal in the ISA specification, in order to cooperate better with C compilers additional rules were created, namely the ABI. `Chapter 20: RISC-V Assembly Programmer’s Handbook <https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf#page=121>`_ provides the table that maps the native ``x*`` register names to their ABI equivalents, and specifies special purpose for each of the registers. It turns out that the Spike simulator understands only the ABI register names. Some additional information on the ABI, together with the examples of the assembly instruction syntax, is also given on `riscv/riscv-elf-psabi-doc github <https://github.com/riscv/riscv-elf-psabi-doc/blob/master/riscv-elf.md>`__. 
 
-I created a wrapper class around my Spike interface inside `verif/spike_instr_test.py <https://github.com/bogdanvuk/pygears_riscv/blob/afb23407150fe43d53c3df1340a93e2f2644d741/pygears_riscv/verif/spike_instr_test.py>`__, which automates all the tasks I did manually in the :ref:`previous blog post <setup>`, namely: writting the assembly file, running the gcc, and calling Spike interface with the correct parameters. I also added the possibility to easily initialize the register values which will come in handy for thourough verification.
+I created a wrapper class around my Spike interface inside `verif/spike_instr_test.py <https://github.com/bogdanvuk/pygears_riscv/blob/afb23407150fe43d53c3df1340a93e2f2644d741/pygears_riscv/verif/spike_instr_test.py>`__, which automates all the tasks I did manually in the :ref:`previous blog post <pygears:setup>`, namely: writting the assembly file, running the gcc, and calling Spike interface with the correct parameters. I also added the possibility to easily initialize the register values which will come in handy for thourough verification.
 
 
 .. figure:: images/addi-timelapse.gif

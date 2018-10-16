@@ -138,44 +138,64 @@ class TupleType(EnumerableGenericMeta):
             ])
 
     def get(self, name, default=None):
-        """Get the type of the field by name.
+        """Calls :py:meth:`__getitem__` and returns the ``default`` value if it
+        fails.
 
         Args:
-            default: Type to return if field does not exist in :class:`Tuple`
-
-        >>> Tuple[{'x': Uint[8], 'y': Uint[8]}].get('x')
-        Uint[8]
-
-        If the method is called on the :class:`Tuple` instance, it returns the
-        value of the field by name.
-
-        Args:
-            default: Value to return if field does not exist
-
-        ::
-
-            Point = Tuple[{'x': Uint[8], 'y': Uint[8]}]
-
-        >>> Point((1, 0)).get('x')
-        Uint[8](1)
-
+            default: Type to return if :py:meth:`__getitem__` fails
         """
         try:
             return self[name]
         except KeyError:
             return default
 
-    def __getitem__(self, index):
+    def __getitem__(self, key):
+        """Get the type of the field or fields specified by the ``key``.
+
+        ::
+
+            Point3 = Tuple[{'x': Uint[8], 'y': Uint[8], 'z': Uint[16]}]
+
+        The key can be a name of the field:
+
+        >>> Point3['x']
+        Uint[8]
+
+        The key can be a number that represents the index of the field within
+        the :class:`Tuple`:
+
+        >>> Point3[2]
+        Uint[16]
+
+        Negative keys are accepted to index from the end of the :class:`Tuple`:
+
+        >>> Point3[-1]
+        Uint[16]
+
+        Slices are accepted to return a new :class:`Tuple` with a subset of
+        fields:
+
+        >>> Point3[:2]
+        Tuple[Uint[8], Uint[8]]
+
+        The key can be a sequence of the names, number indexes or slices, where
+        a new :class:`Tuple` is return with a subset of fields given by the
+        keys in the sequence:
+
+        >>> Point3['x', -1]
+        Tuple[Uint[8], Uint[16]]
+
+        """
         if not self.is_specified():
-            return super().__getitem__(index)
+            return super().__getitem__(key)
 
-        index = self.index_norm(index)
+        key_norm = self.index_norm(key)
 
-        if (len(index) == 1) and (not isinstance(index[0], slice)):
-            return self.__args__[index[0]]
+        if (len(key_norm) == 1) and (not isinstance(key_norm[0], slice)):
+            return self.__args__[key_norm[0]]
         else:
             subtypes = []
-            for i in index:
+            for i in key_norm:
                 subt = self.__args__[i]
                 subtypes.extend(subt if isinstance(i, slice) else [subt])
 
@@ -218,6 +238,16 @@ class Tuple(tuple, metaclass=TupleType):
         return super(Tuple, cls).__new__(cls, tpl_val)
 
     def __getitem__(self, index):
+        """Returns the value of the field by name.
+
+        ::
+
+            Point = Tuple[{'x': Uint[8], 'y': Uint[8]}]
+
+        >>> Point((1, 0)).get('x')
+        Uint[8](1)
+        """
+
         index = type(self).index_norm(index)
 
         if (len(index) == 1) and (not isinstance(index[0], slice)):
