@@ -20,4 +20,4 @@ class SVGenFilt(SVModuleGen):
 class SVGenFiltPlugin(SVGenInstPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['SVGenModuleNamespace'][filt] = SVGenFilt
+        cls.registry['svgen']['module_namespace'][filt] = SVGenFilt

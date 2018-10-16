@@ -42,4 +42,4 @@ class SVGenDemux(SVModuleGen):
 class SVGenDemuxPlugin(SVGenInstPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['SVGenModuleNamespace'][demux] = SVGenDemux
+        cls.registry['svgen']['module_namespace'][demux] = SVGenDemux

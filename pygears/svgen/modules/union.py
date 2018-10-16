@@ -53,4 +53,4 @@ class SVGenUnionSync(SVGenUnionSyncBase):
 class SVGenUnionPlugin(SVGenInstPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['SVGenModuleNamespace'][union_sync] = SVGenUnionSync
+        cls.registry['svgen']['module_namespace'][union_sync] = SVGenUnionSync

@@ -33,4 +33,4 @@ class SVGenTrr(SVModuleGen):
 class SVGenTrrPlugin(SVGenInstPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['SVGenModuleNamespace'][trr] = SVGenTrr
+        cls.registry['svgen']['module_namespace'][trr] = SVGenTrr

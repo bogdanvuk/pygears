@@ -36,7 +36,7 @@ class SimVerilated(CosimBase):
             os.path.join(registry('sim/artifact_dir'), self.name))
         self.objdir = os.path.join(self.outdir, 'obj_dir')
         self.svnode = svgen(gear, outdir=self.outdir, wrapper=True)
-        self.svmod = registry('SVGenMap')[self.svnode]
+        self.svmod = registry('svgen/map')[self.svnode]
         self.wrap_name = f'wrap_{self.svmod.sv_module_name}'
 
     def setup(self):
@@ -73,10 +73,8 @@ class SimVerilated(CosimBase):
             'outdir': self.outdir
         }
 
-        include = ' '.join([
-            f'-I{os.path.abspath(p)}'
-            for p in registry('SVGenSystemVerilogPaths')
-        ])
+        include = ' '.join(
+            [f'-I{os.path.abspath(p)}' for p in registry('svgen/sv_paths')])
 
         jenv = jinja2.Environment(trim_blocks=True, lstrip_blocks=True)
         jenv.globals.update(int=int)

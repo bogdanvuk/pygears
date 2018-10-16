@@ -10,8 +10,8 @@ from pygears.svgen.intf import SVIntfGen
 
 class SVGenInstVisitor(HierVisitorBase):
     def __init__(self):
-        self.namespace = registry('SVGenModuleNamespace')
-        self.svgen_map = registry('SVGenMap')
+        self.namespace = registry('svgen/module_namespace')
+        self.svgen_map = registry('svgen/map')
 
     def RTLNode(self, node):
         svgen_cls = node.params['svgen']['svgen_cls']
@@ -39,7 +39,7 @@ def svgen_inst(top, conf):
 
 def register_sv_paths(*paths):
     for p in paths:
-        registry('SVGenSystemVerilogPaths').append(
+        registry('svgen/sv_paths').append(
             os.path.abspath(os.path.expandvars(os.path.expanduser(p))))
 
 
@@ -50,11 +50,13 @@ def svgen_log():
 class SVGenInstPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        cls.registry['SVGenModuleNamespace'] = {}
-        cls.registry['SVGenMap'] = {}
-        cls.registry['SVGenSystemVerilogPaths'] = [USER_SVLIB_DIR]
+        if 'svgen' not in cls.registry:
+            cls.registry['svgen'] = {}
+        cls.registry['svgen']['map'] = {}
+        cls.registry['svgen']['module_namespace'] = {}
+        cls.registry['svgen']['sv_paths'] = [USER_SVLIB_DIR]
         CustomLog('svgen', logging.WARNING)
 
     @classmethod
     def reset(cls):
-        cls.registry['SVGenMap'] = {}
+        cls.registry['svgen']['map'] = {}

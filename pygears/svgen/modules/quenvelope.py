@@ -45,4 +45,4 @@ class SVGenQuEnvelope(SVModuleGen):
 class SVGenQuEnvelopePlugin(SVGenInstPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['SVGenModuleNamespace'][quenvelope] = SVGenQuEnvelope
+        cls.registry['svgen']['module_namespace'][quenvelope] = SVGenQuEnvelope

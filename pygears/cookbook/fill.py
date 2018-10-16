@@ -39,4 +39,4 @@ class SVGenFill(SVModuleGen):
 class SVGenFillPlugin(SVGenInstPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['SVGenModuleNamespace'][fill] = SVGenFill
+        cls.registry['svgen']['module_namespace'][fill] = SVGenFill

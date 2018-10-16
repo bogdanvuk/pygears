@@ -30,4 +30,4 @@ class SVGenAlign(SVModuleGen):
 class SVGenAlignPlugin(SVGenInstPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['SVGenModuleNamespace'][align] = SVGenAlign
+        cls.registry['svgen']['module_namespace'][align] = SVGenAlign

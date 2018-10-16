@@ -87,7 +87,7 @@ def find_target_intf(gear_name, intf_name):
 
     intf_name = intf_name[1:]  # spy name always starts with _
     for i in rtl_node.local_interfaces():
-        if registry('SVGenMap')[i].basename == intf_name:
+        if registry('svgen/map')[i].basename == intf_name:
             return i
 
 
@@ -108,7 +108,7 @@ def set_blocking_node(g, module):
 
 class ActivityReporter:
     def __init__(self, top, draw_graph=True, cosim_check=False):
-        sim = registry('Simulator')
+        sim = registry('sim/simulator')
         sim.events['before_run'].append(self.before_run)
         sim.events['after_run'].append(self.after_run)
         self.blockers = {}

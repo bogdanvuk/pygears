@@ -81,7 +81,7 @@ def sv_cosim_gen(gear, tcp_port=1234):
 
     srcdir = os.path.join(outdir, 'src_gen')
     rtl_node = svgen(gear, outdir=srcdir)
-    sv_node = registry('SVGenMap')[rtl_node]
+    sv_node = registry('svgen/map')[rtl_node]
 
     port_map = {
         port.basename: port.basename
@@ -118,7 +118,7 @@ def sv_cosim_gen(gear, tcp_port=1234):
 
     inc_paths = []
     context['includes'] = []
-    for path in registry('SVGenSystemVerilogPaths'):
+    for path in registry('svgen/sv_paths'):
         inc_paths.append(path)
     inc_paths.append(srcdir)
     inc_paths.append(outdir)

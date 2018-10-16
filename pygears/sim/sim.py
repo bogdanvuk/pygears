@@ -16,23 +16,23 @@ from pygears.core.sim_event import SimEvent
 
 def timestep():
     try:
-        return registry('Timestep')
+        return registry('sim/timestep')
     except KeyError:
         return None
 
 
 def sim_phase():
-    return registry('Simulator').phase
+    return registry('sim/simulator').phase
 
 
 def clk():
     registry('gear/current_module').phase = 'forward'
-    return registry('ClkEvent').wait()
+    return registry('sim/clk_event').wait()
 
 
 def delta():
     registry('gear/current_module').phase = 'back'
-    return registry('DeltaEvent').wait()
+    return registry('sim/delta_event').wait()
 
 
 def artifacts_dir():
@@ -40,7 +40,7 @@ def artifacts_dir():
 
 
 def schedule_to_finish(gear):
-    sim = registry('Simulator')
+    sim = registry('sim/simulator')
     sim.schedule_to_finish(registry('sim/map')[gear])
 
 
@@ -221,8 +221,8 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         bind('gear/current_module', self.cur_gear)
 
     def sim_loop(self, timeout):
-        clk = registry('ClkEvent')
-        delta = registry('DeltaEvent')
+        clk = registry('sim/clk_event')
+        delta = registry('sim/delta_event')
         timestep = 0
 
         start_time = time.time()
@@ -255,7 +255,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             clk.set()
             clk.clear()
             timestep += 1
-            bind('Timestep', timestep)
+            bind('sim/timestep', timestep)
 
             # if (timestep % 1000) == 0:
             #     sim_log().info("-------------- Simulation cycle --------------")
@@ -282,9 +282,9 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         self._schedule_to_finish = set()
         self.done = set()
 
-        bind('ClkEvent', asyncio.Event())
-        bind('DeltaEvent', asyncio.Event())
-        bind('Timestep', 0)
+        bind('sim/clk_event', asyncio.Event())
+        bind('sim/delta_event', asyncio.Event())
+        bind('sim/timestep', 0)
 
         self.events['before_setup'](self)
 
@@ -338,7 +338,7 @@ def sim(outdir=None,
 
     loop = EventLoop()
     asyncio.set_event_loop(loop)
-    bind('Simulator', loop)
+    bind('sim/simulator', loop)
 
     top = find('/')
     for oper in itertools.chain(registry('sim/flow'), extens):

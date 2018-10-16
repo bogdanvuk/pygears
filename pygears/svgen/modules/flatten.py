@@ -1,6 +1,5 @@
-from pygears.svgen.inst import SVGenInstPlugin
-from pygears.svgen.inst import svgen_inst
-from pygears.rtl.gear import RTLGearHierVisitor, is_gear_instance
+from pygears.rtl.gear import RTLGearHierVisitor
+from pygears.svgen.inst import SVGenInstPlugin, svgen_inst
 from pygears.svgen.util import svgen_visitor
 
 
@@ -13,6 +12,6 @@ class RemoveTupleFlattenVisitor(RTLGearHierVisitor):
 class SVGenFlattenPlugin(SVGenInstPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['SVGenFlow'].insert(
-            cls.registry['SVGenFlow'].index(svgen_inst),
+        cls.registry['svgen']['flow'].insert(
+            cls.registry['svgen']['flow'].index(svgen_inst),
             RemoveTupleFlattenVisitor)

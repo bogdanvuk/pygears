@@ -34,7 +34,7 @@ class SVIntfGen:
 
         gen_dbg_intf = any(
             fnmatch.fnmatch(self.intf.parent.gear.name, p)
-            for p in registry('SVGenDebugIntfs'))
+            for p in registry('svgen/debug_intfs'))
 
         if self.intf.is_broadcast:
             inst.extend([
@@ -104,7 +104,7 @@ class SVIntfGen:
         if inst_name.endswith('_if_s'):
             inst_name = inst_name[:-len('_if_s')]
 
-        rst_name = 'local_rst' if registry("SVGenMap")[
+        rst_name = 'local_rst' if registry("svgen/map")[
             self.intf.parent].has_local_rst else 'rst'
 
         bc_context = {
@@ -126,5 +126,6 @@ class SVIntfGen:
 class SVGenIntfPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        if 'SVGenDebugIntfs' not in cls.registry:
-            cls.registry['SVGenDebugIntfs'] = []
+        if 'svgen' not in cls.registry:
+            cls.registry['svgen'] = {}
+        cls.registry['svgen']['debug_intfs'] = []

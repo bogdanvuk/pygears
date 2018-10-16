@@ -21,7 +21,7 @@ def find_in_dirs(fn, dirs):
 class SVModuleGen:
     def __init__(self, node):
         self.node = node
-        self.svgen_map = registry("SVGenMap")
+        self.svgen_map = registry("svgen/map")
         self._sv_module_name = None
         self.sv_module_path = None
         self.sv_params = {}
@@ -34,8 +34,7 @@ class SVModuleGen:
                 svgen_log().warning(
                     f'SystemVerilog file not found for {self.node.name}')
         elif self.is_hierarchical:
-            if find_in_dirs(self.sv_file_name,
-                            registry('SVGenSystemVerilogPaths')):
+            if find_in_dirs(self.sv_file_name, registry('svgen/sv_paths')):
                 self.sv_module_path = None
                 self._sv_module_name = self.hier_sv_path_name + '_hier'
 
@@ -66,8 +65,7 @@ class SVModuleGen:
     def get_sv_module_info(self):
         svmod_fn = self.sv_file_name
         if svmod_fn:
-            svmod_path = find_in_dirs(svmod_fn,
-                                      registry('SVGenSystemVerilogPaths'))
+            svmod_path = find_in_dirs(svmod_fn, registry('svgen/sv_paths'))
             if svmod_path:
                 with open(svmod_path, 'r') as f:
                     name, _, _, svparams = parse(f.read())
@@ -143,7 +141,7 @@ class SVModuleGen:
 
     def get_module(self, template_env):
         if self.is_hierarchical:
-            self.svgen_map = registry('SVGenMap')
+            self.svgen_map = registry('svgen/map')
 
             context = {
                 'module_name': self.sv_module_name,
@@ -210,8 +208,11 @@ class SVTopGen(SVModuleGen):
 class SVGenSVModPlugin(SVGenInstPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['SVGenModuleNamespace']['Gear'] = SVModuleGen
-        cls.registry['SVGenModuleNamespace']['RTLNodeDesign'] = SVTopGen
+        cls.registry['svgen']['module_namespace']['Gear'] = SVModuleGen
+        cls.registry['svgen']['module_namespace']['RTLNodeDesign'] = SVTopGen
 
-        cls.registry['SVGenSystemVerilogPaths'].extend(
+        if 'sv_paths' not in cls.registry['svgen']:
+            cls.registry['svgen']['sv_paths'] = []
+
+        cls.registry['svgen']['sv_paths'].extend(
             [COMMON_SVLIB_DIR, COOKBOOK_SVLIB_DIR])

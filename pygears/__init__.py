@@ -27,6 +27,9 @@ import pygears.typing_common
 # from pygears.registry import load_plugin_folder
 # load_plugin_folder(os.path.join(os.path.dirname(__file__), 'common'))
 
+# TODO
+import pygears.svgen
+
 from pygears.conf.custom_settings import RCSettings, print_registry
 settings = RCSettings()
 print_registry()

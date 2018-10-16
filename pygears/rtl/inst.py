@@ -23,7 +23,7 @@ class RTLNodeGearRoot(RTLGearNodeGen):
         self.node = RTLNodeDesign()
         self.gear = GearHierRoot(module)
 
-        namespace = registry('SVGenModuleNamespace')
+        namespace = registry('svgen/module_namespace')
         self.node.params['svgen'] = {'svgen_cls': namespace['RTLNodeDesign']}
         self.module = module
 

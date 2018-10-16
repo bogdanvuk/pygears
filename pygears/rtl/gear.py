@@ -51,7 +51,7 @@ class RTLGearNodeGen(HierNode):
         self.gear = gear
         self.node = RTLGear(gear, getattr(parent, "node", None))
 
-        namespace = registry('SVGenModuleNamespace')
+        namespace = registry('svgen/module_namespace')
 
         if 'svgen' not in self.node.params:
             self.node.params['svgen'] = {}

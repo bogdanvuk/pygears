@@ -14,8 +14,8 @@ def svgen(top=None, **conf):
     elif isinstance(top, str):
         top = find(top)
 
-    bind('SVGenConf', conf)
-    for oper in registry('SVGenFlow'):
+    bind('svgen/conf', conf)
+    for oper in registry('svgen/flow'):
         top = oper(top, conf)
 
     return top
@@ -24,8 +24,12 @@ def svgen(top=None, **conf):
 class SVGenPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        cls.registry['SVGenConf'] = {}
-        cls.registry['SVGenFlow'] = [
-            rtl_inst, rtl_connect, RTLChannelVisitor, RTLOutChannelVisitor, svgen_inst,
-            svgen_generate
+        if 'svgen' not in cls.registry:
+            cls.registry['svgen'] = {}
+        cls.registry['svgen']['conf'] = {}
+        cls.registry['svgen']['flow'] = [
+            rtl_inst, rtl_connect, RTLChannelVisitor, RTLOutChannelVisitor,
+            svgen_inst, svgen_generate
         ]
+        cls.registry['svgen']['module_namespace'] = {}
+        cls.registry['svgen']['map'] = {}
