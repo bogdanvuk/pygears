@@ -1,4 +1,4 @@
-from pygears.registry import PluginBase
+from pygears import PluginBase
 from pygears import registry, find
 from pygears.rtl.inst import rtl_inst
 from pygears.rtl.connect import rtl_connect
