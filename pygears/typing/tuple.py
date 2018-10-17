@@ -237,25 +237,52 @@ class Tuple(tuple, metaclass=TupleType):
 
         return super(Tuple, cls).__new__(cls, tpl_val)
 
-    def __getitem__(self, index):
-        """Returns the value of the field by name.
+    def __getitem__(self, key):
+        """Returns the value of the field or fields specified by the ``key``.
 
         ::
 
-            Point = Tuple[{'x': Uint[8], 'y': Uint[8]}]
+            Point3 = Tuple[{'x': Uint[8], 'y': Uint[8], 'z': Uint[16]}]
+            point_a = Point3((1, 2, 3))
 
-        >>> Point((1, 0)).get('x')
+        The key can be a name of the field:
+
+        >>> point_a['x']
         Uint[8](1)
+
+        The key can be a number that represents the index of the field within
+        the :class:`Tuple`:
+
+        >>> point_a[2]
+        Uint[16](3)
+
+        Negative keys are accepted to index from the end of the :class:`Tuple`:
+
+        >>> point_a[-1]
+        Uint[16](3)
+
+        Slices are accepted to return a new :class:`Tuple` with a subset of
+        fields:
+
+        >>> point_a[:2]
+        (Uint[8](1), Uint[8](2))
+
+        The key can be a sequence of the names, number indexes or slices, where
+        a new :class:`Tuple` is return with a subset of fields given by the
+        keys in the sequence:
+
+        >>> point_a['x', -1]
+        (Uint[8](1), Uint[16](3))
         """
 
-        index = type(self).index_norm(index)
+        key_norm = type(self).index_norm(key)
 
-        if (len(index) == 1) and (not isinstance(index[0], slice)):
-            return super(Tuple, self).__getitem__(index[0])
+        if (len(key_norm) == 1) and (not isinstance(key_norm[0], slice)):
+            return super(Tuple, self).__getitem__(key_norm[0])
         else:
-            tout = type(self)[index]
+            tout = type(self)[key_norm]
             subtypes = []
-            for i in index:
+            for i in key_norm:
                 subt = super(Tuple, self).__getitem__(i)
                 subtypes.extend(subt if isinstance(i, slice) else [subt])
 

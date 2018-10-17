@@ -1,3 +1,4 @@
+import inspect
 import pkg_resources
 import datetime
 import os
@@ -54,20 +55,32 @@ offline_wavedrom_js_path = r"wavedrom.js"
 from sphinx.ext.autodoc import ClassDocumenter, _
 
 
-# def autodoc_skip_member(app, what, name, obj, skip, options):
-#     exclusions = (
-#         '__weakref__',  # special-members
-#         '__new__',
-#         '__str__',
-#         '__repr__',  # undoc-members
-#         '__init__'
-#     )
-#     exclude = name in exclusions
-#     return skip or exclude
+def autodoc_skip_member(app, what, name, obj, skip, options):
+    exclusions = (
+        'from_bytes',
+        'to_bytes',
+        'real',
+        'imag',
+        'real',
+        'conjugate',
+        'denominator',
+        'numerator',
+    )
+
+    exclude = False
+    try:
+        cls_name = obj.__qualname__.split('.')[0]
+        if cls_name in ('int', 'Int', 'Integer', 'IntType', 'Uint',
+                        'UintType'):
+            exclude = name in exclusions
+    except AttributeError:
+        pass
+
+    return skip or exclude
 
 
-# def setup(app):
-#     app.connect('autodoc-skip-member', autodoc_skip_member)
+def setup(app):
+    app.connect('autodoc-skip-member', autodoc_skip_member)
 
 
 add_line = ClassDocumenter.add_line

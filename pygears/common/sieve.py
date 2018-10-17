@@ -4,19 +4,25 @@ from pygears import module, registry
 
 
 @gear
-async def sieve(din, *, index) -> b'din[index]':
-    """Outputs a slice of the ``din`` input interface.
+async def sieve(din, *, key) -> b'din[key]':
+    """Outputs a slice of the ``din`` input interface. Can be instantiated with
+    the slicing statement: ``din[key]``.
 
     Args:
-        index: A single key or a sequence of keys with which to slice the input
+        key: A single key or a sequence of keys with which to slice the input
           interface.
 
     Returns:
-        Data of the type ``t``
+        A sliced interface
 
-    Which keys are exactly supported depends on the type of the ``din`` input interface.
+    Which keys are exactly supported depends on the type of the ``din`` input
+    interface, so checkout the __getitem__ method of the specific type::
 
-    >>> drv(t=Uint[8], seq=range(10))
+        din = Intf(Uint[8])
+
+    >>> dout = din[4:]
+
+    >>> dout = sieve(din, key=slice(4, None, None))
 
     If ``t`` is a :class:`Queue` type of certain level, then ``seq`` should
     generate nested iterables of the same level::
@@ -30,10 +36,10 @@ async def sieve(din, *, index) -> b'din[index]':
 
     async with din as d:
         dout = []
-        for i in index:
+        for i in key:
             dout.append(d[i])
 
-        if len(index) == 1:
+        if len(key) == 1:
             dout = dout[0]
 
         yield module().tout(dout)
@@ -86,7 +92,7 @@ def getitem(self, index):
             name_appendices.append(f'{ind}')
 
     return self | sieve(
-        index=norm_index, name='_'.join([name] + name_appendices))
+        key=norm_index, name='_'.join([name] + name_appendices))
 
 
 class GetitemIntfOperPlugin(IntfOperPlugin):

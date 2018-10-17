@@ -184,6 +184,9 @@ class Integer(int, metaclass=IntegerType):
 
         >>> Integer[8](0b10101010)[5]
         1
+
+        >>> Integer[8](0b10101010)[1::2]
+        Uint[4](15)
         """
         if isinstance(index, slice):
             bits = tuple(

@@ -1,4 +1,4 @@
-from pygears.registry import PluginBase
+from pygears.conf.registry import PluginBase
 
 
 def test_subclasses_registry():

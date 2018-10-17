@@ -7,7 +7,7 @@ from pygears.common import sieve
 
 @with_setup(clear)
 def test_explicit_tuple_single():
-    iout = sieve(Intf(Tuple[Uint[1], Uint[2], Uint[3], Uint[4]]), index=0)
+    iout = sieve(Intf(Tuple[Uint[1], Uint[2], Uint[3], Uint[4]]), key=0)
 
     assert iout.dtype == Uint[1]
 
@@ -15,7 +15,7 @@ def test_explicit_tuple_single():
 @with_setup(clear)
 def test_explicit_tuple_slice():
     iout = sieve(
-        Intf(Tuple[Uint[1], Uint[2], Uint[3], Uint[4]]), index=slice(1, 3))
+        Intf(Tuple[Uint[1], Uint[2], Uint[3], Uint[4]]), key=slice(1, 3))
 
     assert iout.dtype == Tuple[Uint[2], Uint[3]]
 
@@ -24,7 +24,7 @@ def test_explicit_tuple_slice():
 def test_explicit_tuple_multi_slice():
     iout = sieve(
         Intf(Tuple[Uint[1], Uint[2], Uint[3], Uint[4]]),
-        index=(slice(0, 2), 3))
+        key=(slice(0, 2), 3))
 
     assert iout.dtype == Tuple[Uint[1], Uint[2], Uint[4]]
 

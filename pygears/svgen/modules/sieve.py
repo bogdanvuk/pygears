@@ -11,16 +11,16 @@ from pygears.svgen.inst import svgen_inst
 from pygears.rtl.gear import RTLGearHierVisitor, is_gear_instance
 
 
-def index_to_sv_slice(dtype, index):
-    subtype = dtype[index]
+def index_to_sv_slice(dtype, key):
+    subtype = dtype[key]
 
-    if isinstance(index, slice):
-        index = index.start
+    if isinstance(key, slice):
+        key = key.start
 
-    if index is None or index == 0:
+    if key is None or key == 0:
         low_pos = 0
     else:
-        low_pos = int(dtype[:index])
+        low_pos = int(dtype[:key])
 
     high_pos = low_pos + int(subtype) - 1
 
@@ -35,7 +35,7 @@ class SVGenSieve(SVModuleGen):
     def get_module(self, template_env):
         def get_stages():
             for s in itertools.chain(self.node.pre_sieves, [self.node]):
-                indexes = s.params['index']
+                indexes = s.params['key']
                 if not isinstance(indexes, tuple):
                     indexes = (indexes, )
 
@@ -96,7 +96,7 @@ class CollapseSievesVisitor(RTLGearHierVisitor):
                 consumer = cons_pin.node
                 if is_gear_instance(consumer, sieve):
                     # print(f'Merging {node.name} to {consumer.name}')
-                    # print(consumer.params['index'])
+                    # print(consumer.params['key'])
                     # If the consumer is a Sieve, just register this Sieve with
                     # it, and short circuit this one
                     consumer.pre_sieves = node.pre_sieves + [node]
@@ -121,5 +121,5 @@ class SVGenSievePlugin(SVGenInstPlugin, SVGenPlugin):
             cls.registry['SVGenFlow'].index(svgen_inst),
             CollapseSievesVisitor)
         # cls.registry['SVGenFlow'].insert(
-        #     cls.registry['SVGenFlow'].index(CollapseSievesVisitor),
+        #     cls.registry['SVGenFlow'].key(CollapseSievesVisitor),
         #     RemoveEqualReprSieveVisitor)

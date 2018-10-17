@@ -20,4 +20,5 @@ Gears
 .. toctree::
    :maxdepth: 2
 
+   gears/common
    gears/simulation_gears
