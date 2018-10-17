@@ -1,4 +1,4 @@
-from pygears import registry
+from pygears import registry, safe_bind
 from pygears.sim.sim_gear import SimGear, is_simgear_func
 from pygears.sim.sim import SimPlugin
 from pygears.core.gear import GearPlugin
@@ -41,10 +41,10 @@ class SimInstPlugin(SimPlugin, GearPlugin):
     def bind(cls):
         # cls.registry['SimFlow'].append(sim_inst)
         cls.registry['sim']['flow'].append(sim_inst)
-        cls.registry['sim']['module_namespace'] = {}
-        cls.registry['sim']['map'] = {}
-        cls.registry['gear']['params']['extra']['sim_cls'] = None
+        safe_bind('sim/module_namespace', {})
+        safe_bind('sim/map', {})
+        safe_bind('gear/params/extra/sim_cls', None)
 
     @classmethod
     def reset(cls):
-        cls.registry['sim']['map'] = {}
+        cls.bind_val('sim/map', {})

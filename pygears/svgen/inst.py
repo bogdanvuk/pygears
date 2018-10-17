@@ -1,9 +1,9 @@
-import os
 import logging
+import os
 
-from pygears import PluginBase, registry
-from pygears.core.hier_node import HierVisitorBase
+from pygears import PluginBase, registry, safe_bind
 from pygears.conf import CustomLog
+from pygears.core.hier_node import HierVisitorBase
 from pygears.definitions import USER_SVLIB_DIR
 from pygears.svgen.intf import SVIntfGen
 
@@ -50,13 +50,11 @@ def svgen_log():
 class SVGenInstPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        if 'svgen' not in cls.registry:
-            cls.registry['svgen'] = {}
-        cls.registry['svgen']['map'] = {}
-        cls.registry['svgen']['module_namespace'] = {}
-        cls.registry['svgen']['sv_paths'] = [USER_SVLIB_DIR]
+        safe_bind('svgen/map', {})
+        safe_bind('svgen/module_namespace', {})
+        safe_bind('svgen/sv_paths', [USER_SVLIB_DIR])
         CustomLog('svgen', logging.WARNING)
 
     @classmethod
     def reset(cls):
-        cls.registry['svgen']['map'] = {}
+        safe_bind('svgen/map', {})

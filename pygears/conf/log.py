@@ -24,7 +24,7 @@ import sys
 import tempfile
 from functools import partial
 
-from .registry import PluginBase, bind, registry, set_cb
+from .registry import PluginBase, safe_bind, registry, set_cb
 from .trace import enum_stacktrace
 
 
@@ -57,7 +57,7 @@ class LogWrap:
             pdb.set_trace()
 
     def stack_trace(self, verbosity, message):
-        stack_traceback_fn = registry('logger/StackTracebackFn')
+        stack_traceback_fn = registry('logger/stack_traceback_fn')
         with open(stack_traceback_fn, 'a') as f:
             delim = '-' * 50 + '\n'
             f.write(delim)
@@ -90,7 +90,7 @@ class LogFmtFilter(logging.Filter):
         record.err_file = ''
 
         if record.levelno > 20:  # > INFO
-            stack_traceback_fn = registry('logger/StackTracebackFn')
+            stack_traceback_fn = registry('logger/stack_traceback_fn')
             stack_num = sum(1 for line in open(stack_traceback_fn))
             record.stack_file = f'\n\t File "{stack_traceback_fn}", line {stack_num}, for stacktrace'
             record.err_file = f'\n\t File "{record.pathname}", line {record.lineno}, in {record.funcName}'
@@ -116,7 +116,7 @@ class CustomLog:
         bind_val = copy.deepcopy(self.dflt_severity)
         bind_val['level'] = verbosity
         reg_name = f'logger/{name}'
-        bind(reg_name, bind_val)
+        safe_bind(reg_name, bind_val)
         set_cb(f'{reg_name}/level', partial(set_log_level, name))
 
         self.logger = logging.getLogger(name)
@@ -151,8 +151,7 @@ class LogPlugin(PluginBase):
     @classmethod
     def bind(cls):
         tf = tempfile.NamedTemporaryFile(delete=False)
-        bind('logger', {})  # init
-        bind('logger/StackTracebackFn', tf.name)
+        safe_bind('logger/stack_traceback_fn', tf.name)
 
         CustomLog('core', logging.WARNING)
         CustomLog('typing', logging.WARNING)

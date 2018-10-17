@@ -1,4 +1,4 @@
-from pygears.conf import PluginBase, bind, registry
+from pygears.conf import PluginBase, bind, registry, safe_bind
 from pygears.rtl.inst import rtl_inst
 from pygears.rtl.connect import rtl_connect
 from pygears.rtl.channel import RTLChannelVisitor, RTLOutChannelVisitor
@@ -24,12 +24,10 @@ def svgen(top=None, **conf):
 class SVGenPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        if 'svgen' not in cls.registry:
-            cls.registry['svgen'] = {}
-        cls.registry['svgen']['conf'] = {}
-        cls.registry['svgen']['flow'] = [
+        safe_bind('svgen/conf', {})
+        safe_bind('svgen/flow', [
             rtl_inst, rtl_connect, RTLChannelVisitor, RTLOutChannelVisitor,
             svgen_inst, svgen_generate
-        ]
-        cls.registry['svgen']['module_namespace'] = {}
-        cls.registry['svgen']['map'] = {}
+        ])
+        safe_bind('svgen/module_namespace', {})
+        safe_bind('svgen/map', {})

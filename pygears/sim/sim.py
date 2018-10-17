@@ -3,11 +3,10 @@ import itertools
 import logging
 import os
 import random
-import sys
 import tempfile
 import time
 
-from pygears import GearDone, bind, find, registry
+from pygears import GearDone, bind, find, registry, safe_bind
 from pygears.conf import CustomLog, LogFmtFilter
 from pygears.core.gear import GearPlugin
 from pygears.core.intf import get_consumer_tree
@@ -388,16 +387,15 @@ def sim_log():
 class SimPlugin(GearPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['sim'] = {}
-        cls.registry['sim']['config'] = {}
-        cls.registry['sim']['flow'] = []
-        cls.registry['sim']['tasks'] = {}
-        cls.registry['gear']['params']['extra']['sim_setup'] = None
+        safe_bind('sim/config', {})
+        safe_bind('sim/flow', [])
+        safe_bind('sim/tasks', {})
+        safe_bind('gear/params/extra/sim_setup', None)
         SimLog('sim')
 
     @classmethod
     def reset(cls):
-        bind('sim/tasks', {})
+        safe_bind('sim/tasks', {})
 
 
 def sim_assert(cond, msg=None):

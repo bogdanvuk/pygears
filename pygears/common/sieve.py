@@ -1,6 +1,6 @@
 from pygears.core.gear import gear, find_current_gear_frame
 from pygears.core.intf import IntfOperPlugin
-from pygears import module, registry
+from pygears import module, registry, safe_bind
 
 
 @gear
@@ -70,4 +70,4 @@ class GetitemIntfOperPlugin(IntfOperPlugin):
     @classmethod
     def bind(cls):
         cls.registry['IntfOperNamespace']['__getitem__'] = getitem
-        cls.registry['gear']['naming']['pretty_sieve'] = False
+        safe_bind('gear/naming/pretty_sieve', False)

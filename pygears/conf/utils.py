@@ -2,6 +2,17 @@ import operator
 from functools import reduce
 
 
+def safe_nested_set(dictionary, value, *keys):
+    '''sets empty dict if there is no key'''
+    for i, key in enumerate(keys):
+        try:
+            reduce(operator.getitem, keys[:i], dictionary)
+        except KeyError:
+            nested_set(dictionary, {}, *keys[:i])
+
+    nested_set(dictionary, value, *keys)
+
+
 def nested_get(dictionary, *keys):
     return reduce(operator.getitem, keys, dictionary)
 

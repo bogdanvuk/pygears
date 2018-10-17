@@ -1,4 +1,4 @@
-from pygears import PluginBase, registry
+from pygears import PluginBase, registry, safe_bind
 from pygears.core.hier_node import HierVisitorBase, NamedHierNode, HierNode
 from pygears.rtl.gear import RTLGearNodeGen, RTLNode
 import inspect
@@ -38,8 +38,8 @@ class RTLNodeInstVisitor(HierVisitorBase):
     def __init__(self):
         self.cur_hier = None
         self.design = None
-        self.namespace = registry('RTLGearGenNamespace')
-        self.svgen_map = registry('RTLNodeMap')
+        self.namespace = registry('rtl/namespace/gear_gen')
+        self.svgen_map = registry('rtl/map/node')
 
     def NamedHierNode(self, module):
         self.design = RTLNodeGearRoot(module)
@@ -91,12 +91,10 @@ def rtl_inst(top, conf):
 class RTLNodeInstPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        cls.registry['RTLNodeNamespace'] = {}
-        cls.registry['RTLGearGenNamespace'] = {
-            'Gear': RTLGearNodeGen,
-        }
-        cls.registry['RTLNodeMap'] = {}
+        safe_bind('rtl/namespace/node', {})
+        safe_bind('rtl/namespace/gear_gen', {'Gear': RTLGearNodeGen})
+        safe_bind('rtl/map/node', {})
 
     @classmethod
     def reset(cls):
-        cls.registry['RTLNodeMap'] = {}
+        safe_bind('rtl/namespace/node', {})

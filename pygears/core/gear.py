@@ -1,10 +1,9 @@
 import copy
 import inspect
 import functools
-import asyncio
 import sys
 
-from pygears.conf import PluginBase, bind, registry, core_log
+from pygears.conf import PluginBase, bind, registry, core_log, safe_bind
 from pygears.typing import Any
 
 from .hier_node import NamedHierNode
@@ -523,24 +522,20 @@ def module():
 class GearPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        cls.registry['gear'] = {}
-        cls.registry['gear']['naming'] = {}
-        cls.registry['gear']['hier_root'] = NamedHierNode('')
-        cls.registry['gear']['current_module'] = cls.registry['gear'][
-            'hier_root']
-        cls.registry['gear']['code_map'] = []
-        cls.registry['gear']['params'] = {}
-        cls.registry['gear']['params']['meta'] = {'enablement': True}
-        cls.registry['gear']['params']['extra'] = {
+        safe_bind('gear/naming', {})
+        safe_bind('gear/hier_root', NamedHierNode(''))
+        safe_bind('gear/current_module', cls.registry['gear']['hier_root'])
+        safe_bind('gear/code_map', [])
+        safe_bind('gear/params/meta', {'enablement': True})
+        safe_bind('gear/params/extra', {
             'name': None,
             'intfs': [],
             'outnames': [],
             '__base__': None
-        }
+        })
 
     @classmethod
     def reset(cls):
-        cls.registry['gear']['hier_root'] = NamedHierNode('')
-        cls.registry['gear']['current_module'] = cls.registry['gear'][
-            'hier_root']
-        cls.registry['gear']['code_map'] = []
+        safe_bind('gear/hier_root', NamedHierNode(''))
+        safe_bind('gear/current_module', cls.registry['gear']['hier_root'])
+        safe_bind('gear/code_map', [])

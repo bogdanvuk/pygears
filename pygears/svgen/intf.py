@@ -1,7 +1,7 @@
 import fnmatch
 from string import Template
 
-from pygears import PluginBase, registry
+from pygears import PluginBase, registry, safe_bind
 from pygears.rtl.port import InPort, OutPort
 from pygears.svgen.util import svgen_typedef
 
@@ -126,6 +126,4 @@ class SVIntfGen:
 class SVGenIntfPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        if 'svgen' not in cls.registry:
-            cls.registry['svgen'] = {}
-        cls.registry['svgen']['debug_intfs'] = []
+        safe_bind('svgen/debug_intfs', [])

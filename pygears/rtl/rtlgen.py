@@ -1,8 +1,7 @@
-from pygears import PluginBase
-from pygears import registry, find
-from pygears.rtl.inst import rtl_inst
-from pygears.rtl.connect import rtl_connect
+from pygears import PluginBase, find, registry, safe_bind
 from pygears.rtl.channel import RTLChannelVisitor, RTLOutChannelVisitor
+from pygears.rtl.connect import rtl_connect
+from pygears.rtl.inst import rtl_inst
 
 
 def rtlgen(top=None, **conf):
@@ -12,7 +11,7 @@ def rtlgen(top=None, **conf):
     elif isinstance(top, str):
         top = find(top)
 
-    for oper in registry('RTLFlow'):
+    for oper in registry('rtl/flow'):
         top = oper(top, conf)
 
     return top
@@ -21,6 +20,6 @@ def rtlgen(top=None, **conf):
 class RTLPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        cls.registry['RTLFlow'] = [
-            rtl_inst, rtl_connect, RTLChannelVisitor, RTLOutChannelVisitor
-        ]
+        safe_bind(
+            'rtl/flow',
+            [rtl_inst, rtl_connect, RTLChannelVisitor, RTLOutChannelVisitor])
