@@ -1,5 +1,6 @@
 import operator
 
+from pygears.conf import safe_bind
 from pygears.core.gear import alternative, gear
 from pygears.typing import Integer, Int, Uint, Bool, Tuple
 from pygears.core.intf import IntfOperPlugin
@@ -37,4 +38,4 @@ def sub_vararg(*din: Integer, enablement=b'len(din) > 2') -> b'sub_type(din)':
 class SubIntfOperPlugin(IntfOperPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['IntfOperNamespace']['__sub__'] = sub
+        safe_bind('gear/intf_oper/__sub__', sub)

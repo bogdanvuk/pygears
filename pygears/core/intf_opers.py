@@ -11,12 +11,13 @@
 # class SieveError(Exception):
 #     pass
 from pygears.core.intf import IntfOperPlugin
+from pygears.conf import safe_bind
 
 
 class PipeIntfOperPlugin(IntfOperPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['IntfOperNamespace']['__or__'] = pipe
+        safe_bind('gear/intf_oper/__or__', pipe)
 
 
 def pipe(self, other):

@@ -30,7 +30,7 @@ def test_expand_queue_tuple():
 
 def test_expand_queue_union_str_subs():
     a = param_subs('expand(Queue[Union[1, 2], 6])', {},
-                   registry('TypeArithNamespace'))
+                   registry('gear/type_arith'))
 
     assert a == Union[Queue[1, 6], Queue[2, 6]]
 

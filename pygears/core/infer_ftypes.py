@@ -61,7 +61,7 @@ def infer_ftypes(params, args, namespace={}, allow_incomplete=False):
 
     # Add all registered objects (types and transformations) to the namespace
     namespace = dict(namespace)
-    namespace.update(registry('TypeArithNamespace'))
+    namespace.update(registry('gear/type_arith'))
 
     def is_postponed(name, val):
         if isinstance(val, bytes):

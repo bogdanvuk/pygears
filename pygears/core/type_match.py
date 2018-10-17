@@ -24,7 +24,7 @@ def _type_match_rec(t, pat, matches, allow_incomplete):
                     f"and {type_repr(matches[pat])}")
         else:
             try:
-                res = eval(pat, registry('TypeArithNamespace'), matches)
+                res = eval(pat, registry('gear/type_arith'), matches)
                 if repr(t) != repr(res):
                     raise TypeMatchError(
                         f"{type_repr(t)} cannot be matched to {type_repr(res)}"

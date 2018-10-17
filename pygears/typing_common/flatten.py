@@ -1,3 +1,4 @@
+from pygears.conf import safe_bind
 from pygears.typing import Queue, Tuple, Unit, TypingNamespacePlugin
 
 
@@ -30,4 +31,4 @@ def flatten(dtype, lvl=1):
 class TypeFlattenPlugin(TypingNamespacePlugin):
     @classmethod
     def bind(cls):
-        cls.registry['TypeArithNamespace']['flatten'] = flatten
+        safe_bind('gear/type_arith/flatten', flatten)

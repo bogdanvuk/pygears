@@ -1,11 +1,12 @@
 import operator
+from functools import reduce
 
 from pygears import alternative, gear, module
-from pygears.typing import Integer, Int, Uint
+from pygears.conf import safe_bind
 from pygears.core.intf import IntfOperPlugin
+from pygears.typing import Int, Integer, Uint
 from pygears.util.hof import oper_tree
 from pygears.util.utils import gather
-from functools import reduce
 
 
 def add_type(dtypes):
@@ -35,4 +36,4 @@ def add_vararg(*din, enablement=b'len(din) > 2') -> b'add_type(din)':
 class AddIntfOperPlugin(IntfOperPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['IntfOperNamespace']['__add__'] = add
+        safe_bind('gear/intf_oper/__add__', add)

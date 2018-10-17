@@ -4,11 +4,16 @@ from functools import reduce
 
 def safe_nested_set(dictionary, value, *keys):
     '''sets empty dict if there is no key'''
-    for i, key in enumerate(keys):
-        try:
-            reduce(operator.getitem, keys[:i], dictionary)
-        except KeyError:
-            nested_set(dictionary, {}, *keys[:i])
+    try:
+        # check if path already exists
+        reduce(operator.getitem, keys[:-1], dictionary)
+    except KeyError:
+        for i, key in enumerate(keys[:-1]):
+            # set empty dict for missing keys
+            try:
+                reduce(operator.getitem, keys[:i + 1], dictionary)
+            except KeyError:
+                nested_set(dictionary, {}, *keys[:i + 1])
 
     nested_set(dictionary, value, *keys)
 

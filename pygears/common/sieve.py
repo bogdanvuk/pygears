@@ -69,5 +69,5 @@ def getitem(self, index):
 class GetitemIntfOperPlugin(IntfOperPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['IntfOperNamespace']['__getitem__'] = getitem
+        safe_bind('gear/intf_oper/__getitem__', getitem)
         safe_bind('gear/naming/pretty_sieve', False)
