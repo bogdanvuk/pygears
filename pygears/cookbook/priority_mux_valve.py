@@ -25,5 +25,5 @@ class SVGenPriorityMuxValve(SVModuleGen):
 class SVGenPriorityMuxValvePlugin(SVGenInstPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['SVGenModuleNamespace'][
+        cls.registry['svgen']['module_namespace'][
             priority_mux_valve] = SVGenPriorityMuxValve

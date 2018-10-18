@@ -1,3 +1,4 @@
+from pygears.conf import safe_bind
 from pygears.typing import TypingNamespacePlugin, Queue, Tuple, Union, typeof
 
 
@@ -49,4 +50,4 @@ def expand(type_):
 class TypeExpandPlugin(TypingNamespacePlugin):
     @classmethod
     def bind(cls):
-        cls.registry['TypeArithNamespace']['expand'] = expand
+        safe_bind('gear/type_arith/expand', expand)

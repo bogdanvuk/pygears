@@ -3,11 +3,10 @@ import itertools
 import logging
 import os
 import random
-import sys
 import tempfile
 import time
 
-from pygears import GearDone, bind, find, registry
+from pygears import GearDone, bind, find, registry, safe_bind
 from pygears.conf import CustomLog, LogFmtFilter
 from pygears.core.gear import GearPlugin
 from pygears.core.intf import get_consumer_tree
@@ -16,32 +15,32 @@ from pygears.core.sim_event import SimEvent
 
 def timestep():
     try:
-        return registry('Timestep')
+        return registry('sim/timestep')
     except KeyError:
         return None
 
 
 def sim_phase():
-    return registry('Simulator').phase
+    return registry('sim/simulator').phase
 
 
 def clk():
-    registry('CurrentModule').phase = 'forward'
-    return registry('ClkEvent').wait()
+    registry('gear/current_module').phase = 'forward'
+    return registry('sim/clk_event').wait()
 
 
 def delta():
-    registry('CurrentModule').phase = 'back'
-    return registry('DeltaEvent').wait()
+    registry('gear/current_module').phase = 'back'
+    return registry('sim/delta_event').wait()
 
 
 def artifacts_dir():
-    return registry('SimArtifactDir')
+    return registry('sim/artifact_dir')
 
 
 def schedule_to_finish(gear):
-    sim = registry('Simulator')
-    sim.schedule_to_finish(registry('SimMap')[gear])
+    sim = registry('sim/simulator')
+    sim.schedule_to_finish(registry('sim/map')[gear])
 
 
 class SimFuture(asyncio.Future):
@@ -113,7 +112,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         return False
 
     def get_tasks(self):
-        self.sim_map = registry('SimMap')
+        self.sim_map = registry('sim/map')
         dag = {}
 
         for g in self.sim_map:
@@ -164,7 +163,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
     def _finish(self, sim_gear):
         try:
             self.cur_gear = sim_gear.gear
-            bind('CurrentModule', self.cur_gear)
+            bind('gear/current_module', self.cur_gear)
             self.tasks[sim_gear].throw(GearDone)
         except (StopIteration, GearDone):
             pass
@@ -173,10 +172,10 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         finally:
             self.done.add(sim_gear)
             self.events['after_finish'](self, sim_gear)
-            self.cur_gear = registry('HierRoot')
+            self.cur_gear = registry('gear/hier_root')
             self.back_ready.discard(sim_gear)
             self.forward_ready.discard(sim_gear)
-            bind('CurrentModule', self.cur_gear)
+            bind('gear/current_module', self.cur_gear)
 
     def run_gear(self, sim_gear, ready):
 
@@ -213,16 +212,16 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         ready.remove(sim_gear)
 
         self.cur_gear = sim_gear.gear
-        bind('CurrentModule', self.cur_gear)
+        bind('gear/current_module', self.cur_gear)
 
         self.run_gear(sim_gear, ready)
 
-        self.cur_gear = registry('HierRoot')
-        bind('CurrentModule', self.cur_gear)
+        self.cur_gear = registry('gear/hier_root')
+        bind('gear/current_module', self.cur_gear)
 
     def sim_loop(self, timeout):
-        clk = registry('ClkEvent')
-        delta = registry('DeltaEvent')
+        clk = registry('sim/clk_event')
+        delta = registry('sim/delta_event')
         timestep = 0
 
         start_time = time.time()
@@ -255,7 +254,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             clk.set()
             clk.clear()
             timestep += 1
-            bind('Timestep', timestep)
+            bind('sim/timestep', timestep)
 
             # if (timestep % 1000) == 0:
             #     sim_log().info("-------------- Simulation cycle --------------")
@@ -282,18 +281,18 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         self._schedule_to_finish = set()
         self.done = set()
 
-        bind('ClkEvent', asyncio.Event())
-        bind('DeltaEvent', asyncio.Event())
-        bind('Timestep', 0)
+        bind('sim/clk_event', asyncio.Event())
+        bind('sim/delta_event', asyncio.Event())
+        bind('sim/timestep', 0)
 
         self.events['before_setup'](self)
 
         for sim_gear in self.sim_gears:
             self.cur_gear = sim_gear.gear
-            bind('CurrentModule', self.cur_gear)
+            bind('gear/current_module', self.cur_gear)
             sim_gear.setup()
-            self.cur_gear = registry('HierRoot')
-            bind('CurrentModule', self.cur_gear)
+            self.cur_gear = registry('gear/hier_root')
+            bind('gear/current_module', self.cur_gear)
 
         self.events['before_run'](self)
 
@@ -328,20 +327,20 @@ def sim(outdir=None,
     if outdir is None:
         outdir = tempfile.mkdtemp()
     os.makedirs(outdir, exist_ok=True)
-    bind('SimArtifactDir', outdir)
+    bind('sim/artifact_dir', outdir)
 
     if not seed:
         seed = int(time.time())
     random.seed(seed)
-    bind('SimRandSeed', seed)
+    bind('sim/rand_seed', seed)
     sim_log().info(f'Running sim with seed: {seed}')
 
     loop = EventLoop()
     asyncio.set_event_loop(loop)
-    bind('Simulator', loop)
+    bind('sim/simulator', loop)
 
     top = find('/')
-    for oper in itertools.chain(registry('SimFlow'), extens):
+    for oper in itertools.chain(registry('sim/flow'), extens):
         oper(top)
 
     if run:
@@ -354,7 +353,7 @@ class SimFmtFilter(LogFmtFilter):
     def filter(self, record):
         super().filter(record)
 
-        m = registry('CurrentModule')
+        m = registry('gear/current_module')
 
         record.module = m.name
         record.timestep = timestep()
@@ -388,15 +387,15 @@ def sim_log():
 class SimPlugin(GearPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['SimFlow'] = []
-        cls.registry['SimTasks'] = {}
-        cls.registry['SimConfig'] = {}
-        cls.registry['GearExtraParams']['sim_setup'] = None
+        safe_bind('sim/config', {})
+        safe_bind('sim/flow', [])
+        safe_bind('sim/tasks', {})
+        safe_bind('gear/params/extra/sim_setup', None)
         SimLog('sim')
 
     @classmethod
     def reset(cls):
-        bind('SimTasks', {})
+        safe_bind('sim/tasks', {})
 
 
 def sim_assert(cond, msg=None):

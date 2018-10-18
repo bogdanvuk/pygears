@@ -54,7 +54,7 @@ class RemoveEqualReprCastVisitor(RTLGearHierVisitor):
 class SVGenSievePlugin(RTLNodeInstPlugin, SVGenPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['SVGenModuleNamespace'][cast] = SVGenCast
-        cls.registry['SVGenFlow'].insert(
-            cls.registry['SVGenFlow'].index(rtl_connect) + 1,
+        cls.registry['svgen']['module_namespace'][cast] = SVGenCast
+        cls.registry['svgen']['flow'].insert(
+            cls.registry['svgen']['flow'].index(rtl_connect) + 1,
             RemoveEqualReprCastVisitor)

@@ -1,7 +1,8 @@
-from pygears.core.gear import gear
-from pygears.typing import Integer, Int
-from pygears.core.intf import IntfOperPlugin
 from pygears import module
+from pygears.conf import safe_bind
+from pygears.core.gear import gear
+from pygears.core.intf import IntfOperPlugin
+from pygears.typing import Int, Integer
 
 
 def neg_type(dtype):
@@ -10,7 +11,6 @@ def neg_type(dtype):
 
 @gear(svgen={'svmod_fn': 'neg.sv'})
 async def neg(din: Integer) -> b'neg_type(din)':
-
     async with din as d:
         yield module().tout(-d)
 
@@ -18,4 +18,4 @@ async def neg(din: Integer) -> b'neg_type(din)':
 class NegIntfOperPlugin(IntfOperPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['IntfOperNamespace']['__neg__'] = neg
+        safe_bind('gear/intf_oper/__neg__', neg)

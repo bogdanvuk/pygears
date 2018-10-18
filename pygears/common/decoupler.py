@@ -25,7 +25,7 @@ def decoupler_dout_setup(module):
 async def decoupler_dout(*, t, depth) -> b't':
     queue = module().decoupler_din.queue
     while queue.empty():
-        if registry('SimMap')[module().decoupler_din].done:
+        if registry('sim/map')[module().decoupler_din].done:
             raise GearDone
 
         await clk()

@@ -138,8 +138,8 @@ def restart_wave(sim, outdir, address):
 
 def activity_wave(top):
 
-    sim = registry('Simulator')
-    outdir = os.path.abspath(registry('SimArtifactDir'))
+    sim = registry('sim/simulator')
+    outdir = os.path.abspath(registry('sim/artifact_dir'))
     sim.events['at_exit'].append(
         partial(restart_wave, outdir=outdir, address=('localhost', 5000)))
 

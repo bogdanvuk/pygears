@@ -22,4 +22,4 @@ class SVGenMux(SVModuleGen):
 class SVGenMuxPlugin(SVGenInstPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['SVGenModuleNamespace'][mux] = SVGenMux
+        cls.registry['svgen']['module_namespace'][mux] = SVGenMux

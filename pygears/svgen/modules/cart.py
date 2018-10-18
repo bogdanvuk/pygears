@@ -90,5 +90,5 @@ class SVGenCartSync(SVGenCartSyncBase):
 class SVGenCartPlugin(SVGenInstPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['SVGenModuleNamespace'][cart_sync] = SVGenCartSync
-        cls.registry['SVGenModuleNamespace'][cart] = SVGenCart
+        cls.registry['svgen']['module_namespace'][cart_sync] = SVGenCartSync
+        cls.registry['svgen']['module_namespace'][cart] = SVGenCart

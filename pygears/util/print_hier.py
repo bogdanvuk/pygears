@@ -80,7 +80,7 @@ class Visitor(HierVisitorBase):
 
 def print_hier(root=None, params=False, fullname=False):
     if root is None:
-        root = registry('HierRoot')
+        root = registry('gear/hier_root')
 
     v = Visitor(params, fullname)
     v.visit(root)

@@ -4,7 +4,10 @@ import os
 import re
 import sys
 
-from .utils import dict_generator, nested_set
+from .utils import dict_generator, nested_set, nested_get, safe_nested_set
+
+delimiter = '/'
+wildcard_list = ['*', '?', '[', ']']
 
 
 class RegistryException(Exception):
@@ -58,15 +61,33 @@ class PluginBase:
         pass
 
 
-def registry(key):
-    return PluginBase.registry[key]
+def registry(key_path):
+    # if there is no need to match anything (no wildcards)
+    if not any(c in key_path for c in wildcard_list):
+        return nested_get(PluginBase.registry, *key_path.split(delimiter))
+
+    for reg_list in dict_generator(PluginBase.registry):
+        as_path = delimiter.join([str(x) for x in reg_list[:-1]])
+        if fnmatch.fnmatch(as_path, key_path):
+            return nested_get(PluginBase.registry, *key_path.split(delimiter))
+
+    raise RegistryException(f'Registry not successful for {key_path}')
 
 
 def set_cb(key, cb):
     PluginBase.cb[key] = cb
 
 
-def bind_by_path(key_path, value, delimiter='/'):
+def safe_bind(key_path, value):
+    if any(c in key_path for c in wildcard_list):
+        raise RegistryException(
+            f'Safe bind not supported for wildcards (attempted {key_path})')
+    safe_nested_set(PluginBase.registry, value, *key_path.split(delimiter))
+    if key_path in PluginBase.cb:
+        PluginBase.cb[key_path](value)
+
+
+def bind_by_path(key_path, value):
     reg = PluginBase.registry
     cb = PluginBase.cb
     nested_set(reg, value, *key_path.split(delimiter))
@@ -77,19 +98,16 @@ def bind_by_path(key_path, value, delimiter='/'):
 def bind(key_pattern, value):
     reg = PluginBase.registry
 
-    delimiter = '/'
-    wildcard_list = ['*', '?', '[', ']']
-
     # if there is no need to match anything (no wildcards)
     if not any(c in key_pattern for c in wildcard_list):
-        bind_by_path(key_path=key_pattern, value=value, delimiter=delimiter)
+        bind_by_path(key_path=key_pattern, value=value)
         return
 
     matched = False
     for reg_list in dict_generator(reg):
         as_path = delimiter.join([str(x) for x in reg_list[:-1]])
         if fnmatch.fnmatch(as_path, key_pattern):
-            bind_by_path(key_path=as_path, value=value, delimiter=delimiter)
+            bind_by_path(key_path=as_path, value=value)
             matched = True
     if not matched:
         raise RegistryException(f'Bind not successful for {key_pattern}')

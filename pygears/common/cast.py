@@ -1,8 +1,9 @@
-from pygears import module, gear
-from pygears.typing.base import TypingMeta, typeof
+from pygears import gear, module
+from pygears.conf import safe_bind
 from pygears.core.intf import IntfOperPlugin
+from pygears.typing import Int, Queue, Tuple, Uint, Union
+from pygears.typing.base import typeof
 from pygears.typing_common.codec import code, decode
-from pygears.typing import Int, Tuple, Queue, Uint, Union
 
 
 @gear
@@ -36,4 +37,4 @@ def pipe(self, other):
 class PipeIntfOperPlugin(IntfOperPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['IntfOperNamespace']['__or__'] = pipe
+        safe_bind('gear/intf_oper/__or__', pipe)

@@ -1,6 +1,6 @@
 from pygears.core.gear import gear, find_current_gear_frame
 from pygears.core.intf import IntfOperPlugin
-from pygears import module, registry
+from pygears import module, registry, safe_bind
 
 
 @gear
@@ -62,7 +62,7 @@ def maybe_obtain_intf_var_name(intf):
 
 
 def getitem(self, index):
-    naming = registry('PrettySieveNaming')
+    naming = registry('gear/naming/pretty_sieve')
     norm_index = self.dtype.index_norm(index)
 
     # Try to obtain variable to which interface was assigned to form a better
@@ -98,5 +98,5 @@ def getitem(self, index):
 class GetitemIntfOperPlugin(IntfOperPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['IntfOperNamespace']['__getitem__'] = getitem
-        cls.registry['PrettySieveNaming'] = False
+        safe_bind('gear/intf_oper/__getitem__', getitem)
+        safe_bind('gear/naming/pretty_sieve', False)

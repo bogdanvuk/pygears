@@ -10,14 +10,14 @@ from pygears.typing.queue import QueueMeta
 
 
 def get_rand(name, cnt=None):
-    randomizator = registry('SimConfig')['Randomizator']
+    randomizator = registry('sim/config/randomizator')
 
     if isinstance(randomizator, SVRandSocket):
         if randomizator.open_sock:
             rand_func = perpetum(randomizator.get_rand, name)
         else:
             req, dtype = randomizator.parse_name(name)
-            simsoc = registry('SimConfig')['SimSocket']
+            simsoc = registry('sim/config/socket')
             rand_func = perpetum(simsoc.send_req, req, dtype)
     elif isinstance(randomizator, SCVRand):
         rand_func = perpetum(randomizator.get_rand, name)
@@ -32,7 +32,7 @@ def get_rand(name, cnt=None):
 
 
 def rand_seq(name, cnt=None):
-    randomizator = registry('SimConfig')['Randomizator']
+    randomizator = registry('sim/config/randomizator')
     dtype = randomizator.get_dtype_by_name(name)
 
     if isinstance(dtype, Queue) or isinstance(dtype, QueueMeta):

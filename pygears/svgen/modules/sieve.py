@@ -116,9 +116,9 @@ class CollapseSievesVisitor(RTLGearHierVisitor):
 class SVGenSievePlugin(SVGenInstPlugin, SVGenPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['SVGenModuleNamespace'][sieve] = SVGenSieve
-        cls.registry['SVGenFlow'].insert(
-            cls.registry['SVGenFlow'].index(svgen_inst),
+        cls.registry['svgen']['module_namespace'][sieve] = SVGenSieve
+        cls.registry['svgen']['flow'].insert(
+            cls.registry['svgen']['flow'].index(svgen_inst),
             CollapseSievesVisitor)
         # cls.registry['SVGenFlow'].insert(
         #     cls.registry['SVGenFlow'].key(CollapseSievesVisitor),

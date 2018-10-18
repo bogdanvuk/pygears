@@ -31,4 +31,4 @@ class SVGenDemuxZip(SVModuleGen):
 class SVGenDemuxZipPlugin(SVGenInstPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['SVGenModuleNamespace'][demux_zip] = SVGenDemuxZip
+        cls.registry['svgen']['module_namespace'][demux_zip] = SVGenDemuxZip

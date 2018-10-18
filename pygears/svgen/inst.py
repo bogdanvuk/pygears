@@ -1,17 +1,17 @@
-import os
 import logging
+import os
 
-from pygears import PluginBase, registry
-from pygears.core.hier_node import HierVisitorBase
+from pygears import PluginBase, registry, safe_bind
 from pygears.conf import CustomLog
+from pygears.core.hier_node import HierVisitorBase
 from pygears.definitions import USER_SVLIB_DIR
 from pygears.svgen.intf import SVIntfGen
 
 
 class SVGenInstVisitor(HierVisitorBase):
     def __init__(self):
-        self.namespace = registry('SVGenModuleNamespace')
-        self.svgen_map = registry('SVGenMap')
+        self.namespace = registry('svgen/module_namespace')
+        self.svgen_map = registry('svgen/map')
 
     def RTLNode(self, node):
         svgen_cls = node.params['svgen']['svgen_cls']
@@ -39,7 +39,7 @@ def svgen_inst(top, conf):
 
 def register_sv_paths(*paths):
     for p in paths:
-        registry('SVGenSystemVerilogPaths').append(
+        registry('svgen/sv_paths').append(
             os.path.abspath(os.path.expandvars(os.path.expanduser(p))))
 
 
@@ -50,11 +50,11 @@ def svgen_log():
 class SVGenInstPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        cls.registry['SVGenModuleNamespace'] = {}
-        cls.registry['SVGenMap'] = {}
-        cls.registry['SVGenSystemVerilogPaths'] = [USER_SVLIB_DIR]
+        safe_bind('svgen/map', {})
+        safe_bind('svgen/module_namespace', {})
+        safe_bind('svgen/sv_paths', [USER_SVLIB_DIR])
         CustomLog('svgen', logging.WARNING)
 
     @classmethod
     def reset(cls):
-        cls.registry['SVGenMap'] = {}
+        safe_bind('svgen/map', {})

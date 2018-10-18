@@ -46,4 +46,4 @@ class SVGenTrrDist(SVModuleGen):
 class SVGenTrrDistPlugin(SVGenInstPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['SVGenModuleNamespace'][trr_dist] = SVGenTrrDist
+        cls.registry['svgen']['module_namespace'][trr_dist] = SVGenTrrDist

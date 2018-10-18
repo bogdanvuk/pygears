@@ -1,4 +1,4 @@
-from pygears import registry
+from pygears import registry, safe_bind
 from pygears.sim.sim_gear import SimGear, is_simgear_func
 from pygears.sim.sim import SimPlugin
 from pygears.core.gear import GearPlugin
@@ -7,8 +7,8 @@ from pygears.core.hier_node import HierVisitorBase
 
 class SimInstVisitor(HierVisitorBase):
     def __init__(self):
-        self.namespace = registry('SimModuleNamespace')
-        self.sim_map = registry('SimMap')
+        self.namespace = registry('sim/module_namespace')
+        self.sim_map = registry('sim/map')
 
     def Gear(self, module):
         sim_cls = module.params.get('sim_cls', None)
@@ -39,11 +39,12 @@ def sim_inst(top):
 class SimInstPlugin(SimPlugin, GearPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['SimFlow'].append(sim_inst)
-        cls.registry['SimModuleNamespace'] = {}
-        cls.registry['SimMap'] = {}
-        cls.registry['GearExtraParams']['sim_cls'] = None
+        # cls.registry['SimFlow'].append(sim_inst)
+        cls.registry['sim']['flow'].append(sim_inst)
+        safe_bind('sim/module_namespace', {})
+        safe_bind('sim/map', {})
+        safe_bind('gear/params/extra/sim_cls', None)
 
     @classmethod
     def reset(cls):
-        cls.registry['SimMap'] = {}
+        cls.bind_val('sim/map', {})

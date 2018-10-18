@@ -134,7 +134,7 @@ class VCDHierVisitor(HierVisitorBase):
     def __init__(self, gtkw, writer, include, vcd_tlm):
         self.include = include
         self.vcd_tlm = vcd_tlm
-        self.sim_map = registry('SimMap')
+        self.sim_map = registry('sim/map')
         self.gtkw = gtkw
         self.vcd_vars = {}
         self.writer = writer
@@ -188,7 +188,7 @@ class VCD(SimExtend):
         self.finished = False
         atexit.register(self.finish)
 
-        outdir = registry('SimArtifactDir')
+        outdir = registry('sim/artifact_dir')
 
         vcd_file = open(os.path.join(outdir, fn), 'w')
 
@@ -214,14 +214,14 @@ class VCD(SimExtend):
                 intf.events['put'].append(self.intf_put)
                 intf.events['ack'].append(self.intf_ack)
 
-        sim_map = registry('SimMap')
+        sim_map = registry('sim/map')
         for module in sim_map:
             gear_fn = module.name.replace('/', '_')
             with open(os.path.join(outdir, f'{gear_fn}.gtkw'), 'w') as f:
                 gtkw = GTKWSave(f)
                 module_sav(gtkw, module, self.vcd_vars)
 
-        # sim_map = registry('SimMap')
+        # sim_map = registry('sim/map')
         # for module, sim_gear in sim_map.items():
         #     gear_vcd_scope = module.name[1:].replace('/', '.')
 
@@ -286,4 +286,4 @@ class VCD(SimExtend):
 # class SimVCDPlugin(SimPlugin):
 #     @classmethod
 #     def bind(cls):
-#         cls.registry['SimFlow'].append(VCD)
+#         cls.registry['sim']['flow'].append(VCD)

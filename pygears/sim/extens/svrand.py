@@ -6,7 +6,7 @@ from subprocess import DEVNULL, Popen
 
 import jinja2
 
-from pygears import registry
+from pygears import registry, bind
 from pygears.definitions import ROOT_DIR
 from pygears.sim import sim_log
 from pygears.sim.extens.rand_base import RandBase
@@ -61,7 +61,7 @@ class SVRandSocket(RandBase):
         return tcons
 
     def before_setup(self, sim):
-        sim_map = registry('SimMap')
+        sim_map = registry('sim/map')
         for module, sim_gear in sim_map.items():
             if isinstance(sim_gear, SimSocket):
                 self.open_sock = False
@@ -71,16 +71,16 @@ class SVRandSocket(RandBase):
         if self.open_sock:
             self.cosim_pid = None
             if self.run_cosim:
-                outdir = registry('SimArtifactDir')
+                outdir = registry('sim/artifact_dir')
                 args = ' '.join(f'-{k} {v if not isinstance(v, bool) else ""}'
                                 for k, v in self.kwds.items()
                                 if not isinstance(v, bool) or v)
                 if 'seed' in self.kwds:
                     sim_log().warning(
-                        'Separately set seed for cosimulator. Ignoring SimRandSeed.'
+                        'Separately set seed for cosimulator. Ignoring sim/rand_seed.'
                     )
                 else:
-                    args += f' -seed {registry("SimRandSeed")}'
+                    args += f' -seed {registry("sim/rand_seed")}'
 
                 if sim_log().isEnabledFor(logging.DEBUG):
                     stdout = None
@@ -102,7 +102,7 @@ class SVRandSocket(RandBase):
             data_rng = [x for x in range(1, len(self.constraints) + 1)]
             hooks[
                 'synchro_req'] = f'if (data inside {{{", ".join(str(x) for x in data_rng)}}}) ret = rand_i.get_rand(synchro_handle, data);'
-            registry('SimConfig')['SimSocketHooks'] = hooks
+            bind('sim/config/socket_hooks', hooks)
 
     def connect(self):
         # Create a TCP/IP socket

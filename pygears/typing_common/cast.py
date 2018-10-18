@@ -1,3 +1,4 @@
+from pygears.conf import safe_bind
 from pygears.typing import TypingNamespacePlugin, typeof
 from pygears.typing import Int, Uint, Queue, Tuple, Union, Array
 
@@ -32,4 +33,4 @@ def cast(dtype, cast_type):
 class CastTypePlugin(TypingNamespacePlugin):
     @classmethod
     def bind(cls):
-        cls.registry['TypeArithNamespace']['cast'] = cast
+        safe_bind('gear/type_arith/cast', cast)
