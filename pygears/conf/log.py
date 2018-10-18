@@ -18,6 +18,7 @@
 #
 # ===========================================================================
 
+import os
 import copy
 import logging
 import sys
@@ -91,7 +92,10 @@ class LogFmtFilter(logging.Filter):
 
         if record.levelno > 20:  # > INFO
             stack_traceback_fn = registry('logger/stack_traceback_fn')
-            stack_num = sum(1 for line in open(stack_traceback_fn))
+            if os.path.exists(stack_traceback_fn):
+                stack_num = sum(1 for line in open(stack_traceback_fn))
+            else:
+                stack_num = 0
             record.stack_file = f'\n\t File "{stack_traceback_fn}", line {stack_num}, for stacktrace'
             record.err_file = f'\n\t File "{record.pathname}", line {record.lineno}, in {record.funcName}'
 
