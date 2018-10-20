@@ -113,16 +113,35 @@ For testing the ISA implementation, I've envisioned the following test:
 #. Send a stream of instructions to the processor
 #. Check the final register values to the reference design
 
-I've vriten an environment that supports these kinds of tests in `verif/env.py <https://github.com/bogdanvuk/pygears_riscv/blob/afb2/pygears_riscv/verif/env.py>`__. This is a regular Python function (not a gear) that instantiates the ``riscv`` and ``register_file`` gears and wires them properly
+I've vriten an environment that supports these kinds of tests in `verif/env.py <https://github.com/bogdanvuk/pygears_riscv/blob/afb2/pygears_riscv/verif/env.py>`__. This is a regular Python function (not a gear) that instantiates the ``riscv`` and ``register_file`` gears and wires them properly in the following manner:
 
-.. urlfunction:: riscv_instr_seq_env
+.. bdp:: images/addi-env-block-diagram.py
+    :align: center
+    :width: 80%
+
+Relevant part of the :func:`riscv_instr_seq_env` function is given below:
 
 .. literalinclude:: pygears_riscv/verif/env.py
    :github: bogdanvuk/pygears_riscv
    :pyobject: riscv_instr_seq_env
    :lines: 1, 15-
 
-The :func:`drv <pygears.sim.modules.drv>` gear can be used to 
+Here you can see the signature of the function and description of its arguments:
+
+.. py:function:: riscv_instr_seq_env(instr_seq, xlen=32, reg_file_mem={})
+
+    Drives riscv with an instruction sequence.
+
+    :parameter instr_seq: Sequence of instructions to send to riscv
+    :parameter xlen: Width of the riscv registers in bits
+    :parameter reg_file_mem: Initial register file dictionary that maps register IDs to their initial values
+    :return: reg_file_mem
+
+The :func:`drv <pygears.sim.modules.drv>` gear can be used to drive a sequence of values to an input interface of a gear. In this case it will drive the sequence of instructions, passed via ``instr_seq`` argument: :py:`instruction = drv(t=TInstructionI, seq=instr_seq)`. As you can see, the ``t`` and ``seq`` arguments to the :func:`drv <pygears.sim.modules.drv>` gear need to be specified using keywords. The reason is that the current implementation of the PyGears needs to distinguish between gear input interfaces and gear parameters, so only input interfaces are allowed to be passed as positional argments(without argument names). 
+
+Next, I hook up the ``riscv`` and ``register_file`` gears in the manner shown on the block diagram. You can see from the diagram that these two gears form a kind of a loop, so their connection cannot be expressed in a forward only manner. In these cases, we need to break the loop somewhere, connect the gears in a forward manner and then reconnect the loop at the point where it was broken. I decided to brake the loop at the ``reg_rd_data`` interface (as shown on the block diagram), so I explicitly instantiated the interface object with the desired type for the ``reg_rd_data`` interface: :py:`reg_rd_data = Intf(Uint[xlen])`. This way we can feed it to the ``riscv`` gear, together with the ``instruction`` interface, and the ``riscv`` gear will have all the information needed to resolve itself and produce the output interfaces: :py:`reg_file_rd_req, reg_file_wr_req = riscv(instruction, reg_rd_data)`
+
+Finally, I connect ``riscv`` read and write request interfaces to the ``register_file`` gear, which gets instantiated and returns its output interface. Instead of it being fed to another gear or assigned to a variable, I use the pipe assign operator ``|=`` to instruct PyGears that this output interface is in fact the ``reg_rd_data`` interface I defined before. This closes the loop and everything is connected as shown on the block diagram.  
 
 Spike interface
 ~~~~~~~~~~~~~~~
@@ -132,6 +151,11 @@ In my previous blog post :doc:`pygears:setup`, I showed how to implement a rudim
 First, I was surprised to find that issuing the read register command didn't return any value in Spike simulator if the registers were named with prefix "x" (``x*``). I started digging and found out that even though all registers ``x1`` - ``x31`` were created equal in the ISA specification, in order to cooperate better with C compilers additional rules were created, namely the ABI. `Chapter 20: RISC-V Assembly Programmer’s Handbook <https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf#page=121>`_ provides the table that maps the native ``x*`` register names to their ABI equivalents, and specifies special purpose for each of the registers. It turns out that the Spike simulator understands only the ABI register names. Some additional information on the ABI, together with the examples of the assembly instruction syntax, is also given on `riscv/riscv-elf-psabi-doc github <https://github.com/riscv/riscv-elf-psabi-doc/blob/master/riscv-elf.md>`__. 
 
 I created a wrapper class around my Spike interface inside `verif/spike_instr_test.py <https://github.com/bogdanvuk/pygears_riscv/blob/afb2/pygears_riscv/verif/spike_instr_test.py>`__, which automates all the tasks I did manually in the :doc:`previous blog post <pygears:setup>`, namely: writting the assembly file, running the gcc, and calling Spike interface with the correct parameters. I also added the possibility to easily initialize the register values which will come in handy for thourough verification.
+
+.. literalinclude:: pygears_riscv/verif/spike_instr_test.py
+   :github: bogdanvuk/pygears_riscv
+   :lines: 27-61
+   :language: jinja
 
 
 .. figure:: images/addi-timelapse.gif

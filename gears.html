@@ -238,7 +238,7 @@ head:{
 </div>
 <p>Suppose we would like to implement a module that doubles the complex numbers, and we already have a module that doubles 16-bit unsigned numbers that we would like to reuse. We could than make use of the Tuple functor structure to achieve this.</p>
 <div class="figure align-center">
-<img alt="tuple_functor.png" src="tuple_functor.png" />
+<img alt="_images/tuple_functor.png" src="_images/tuple_functor.png" />
 </div>
 <p>Within Tuple functor, input Tuple data is first split into two, fed to individual functions and then recombined into a Tuple. <strong>PyGears</strong> can automatically generate such a structure based on the input type and gears that are to be used inside a functor.</p>
 </div>
@@ -250,7 +250,7 @@ head:{
 </div>
 <p>Suppose we would like to implement a module that decrements the number, and we already have a module that decrements 16-bit unsigned integers and a module that decrements Q8.8 fixed point numbers that we would like to reuse. We could than make use of the Union functor structure to achieve this.</p>
 <div class="figure align-center">
-<img alt="union_functor.png" src="union_functor.png" />
+<img alt="_images/union_functor.png" src="_images/union_functor.png" />
 </div>
 <p>Within Union functor, input Union data is routed to one of two gears by the <strong>Demux</strong> gear, depending on which data type the Union data carries, i.e by the  value of the <strong>ctrl</strong> field. After processing by the gears, output data is wrapped in Union data type again by the <strong>Mux</strong> gear. <strong>PyGears</strong> can automatically generate such a structure based on the input type and gears that are to be used inside a functor.</p>
 </div>
@@ -266,7 +266,7 @@ head:{
 </div>
 <p>Suppose we would like to implement a module that multiplies each number in the Queue by 2, and we already have a module that multiplies single numbers that we would like to reuse. We could than make use of the Queue functor structure to achieve this.</p>
 <div class="figure align-center">
-<img alt="queue_functor.png" src="queue_functor.png" />
+<img alt="_images/queue_functor.png" src="_images/queue_functor.png" />
 </div>
 <p>Within Queue functor, input Queue data is first split into the individual data and the Queue structure, also called the envelope. Queue structure is defined by the pattern of its <strong>eot</strong> field. The individual data is fed to the function and is then recombined with the envelope to produce the output Queue. <strong>PyGears</strong> can automatically generate such a structure based on the input type and gears that are to be used inside a functor.</p>
 </div>

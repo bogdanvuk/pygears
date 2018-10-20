@@ -154,7 +154,11 @@
 <li><p>Send a stream of instructions to the processor</p></li>
 <li><p>Check the final register values to the reference design</p></li>
 </ol>
-<p>I’ve vriten an environment that supports these kinds of tests in <a class="reference external" href="https://github.com/bogdanvuk/pygears_riscv/blob/afb2/pygears_riscv/verif/env.py">verif/env.py</a>. This is a regular Python function (not a gear) that instantiates the <code class="docutils literal notranslate"><span class="pre">riscv</span></code> and <code class="docutils literal notranslate"><span class="pre">register_file</span></code> gears and wires them properly</p>
+<p>I’ve vriten an environment that supports these kinds of tests in <a class="reference external" href="https://github.com/bogdanvuk/pygears_riscv/blob/afb2/pygears_riscv/verif/env.py">verif/env.py</a>. This is a regular Python function (not a gear) that instantiates the <code class="docutils literal notranslate"><span class="pre">riscv</span></code> and <code class="docutils literal notranslate"><span class="pre">register_file</span></code> gears and wires them properly in the following manner:</p>
+<div class="figure align-center">
+<a class="reference internal image-reference" href="../_images/addi-env-block-diagram.png"><img alt="../_images/addi-env-block-diagram.png" src="../_images/addi-env-block-diagram.png" style="width: 80%;" /></a>
+</div>
+<p>Relevant part of the <a class="reference internal" href="#riscv_instr_seq_env" title="riscv_instr_seq_env"><code class="xref py py-func docutils literal notranslate"><span class="pre">riscv_instr_seq_env()</span></code></a> function is given below:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">riscv_instr_seq_env</span><span class="p">(</span><span class="n">instr_seq</span><span class="p">,</span> <span class="n">xlen</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">reg_file_mem</span><span class="o">=</span><span class="p">{}):</span>
 
     <span class="n">instruction</span> <span class="o">=</span> <span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">TInstructionI</span><span class="p">,</span> <span class="n">seq</span><span class="o">=</span><span class="n">instr_seq</span><span class="p">)</span>
@@ -169,12 +173,70 @@
     <span class="k">return</span> <span class="n">reg_file_mem</span>
 </pre></div>
 </div>
-<p>The <a class="reference external" href="/tools/home/pygears/docs/manual/_build/html/gears/simulation_gears.html#pygears.sim.modules.drv" title="(in PyGears v0.1.1)"><code class="xref py py-func docutils literal notranslate"><span class="pre">drv</span></code></a> gear can be used to</p>
+<p>Here you can see the signature of the function and description of its arguments:</p>
+<dl class="function">
+<dt id="riscv_instr_seq_env">
+<code class="descname">riscv_instr_seq_env</code><span class="sig-paren">(</span><em>instr_seq</em>, <em>xlen=32</em>, <em>reg_file_mem={}</em><span class="sig-paren">)</span><a class="headerlink" href="#riscv_instr_seq_env" title="Permalink to this definition">¶</a></dt>
+<dd><p>Drives riscv with an instruction sequence.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>instr_seq</strong> – Sequence of instructions to send to riscv</p></li>
+<li><p><strong>xlen</strong> – Width of the riscv registers in bits</p></li>
+<li><p><strong>reg_file_mem</strong> – Initial register file dictionary that maps register IDs to their initial values</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>reg_file_mem</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p>The <a class="reference external" href="/tools/home/pygears/docs/manual/_build/html/gears/simulation_gears.html#pygears.sim.modules.drv" title="(in PyGears v0.1.1)"><code class="xref py py-func docutils literal notranslate"><span class="pre">drv</span></code></a> gear can be used to drive a sequence of values to an input interface of a gear. In this case it will drive the sequence of instructions, passed via <code class="docutils literal notranslate"><span class="pre">instr_seq</span></code> argument: <code class="code highlight py docutils literal notranslate"><span class="n"><span class="pre">instruction</span></span> <span class="o"><span class="pre">=</span></span> <span class="n"><span class="pre">drv</span></span><span class="p"><span class="pre">(</span></span><span class="n"><span class="pre">t</span></span><span class="o"><span class="pre">=</span></span><span class="n"><span class="pre">TInstructionI</span></span><span class="p"><span class="pre">,</span></span> <span class="n"><span class="pre">seq</span></span><span class="o"><span class="pre">=</span></span><span class="n"><span class="pre">instr_seq</span></span><span class="p"><span class="pre">)</span></span></code>. As you can see, the <code class="docutils literal notranslate"><span class="pre">t</span></code> and <code class="docutils literal notranslate"><span class="pre">seq</span></code> arguments to the <a class="reference external" href="/tools/home/pygears/docs/manual/_build/html/gears/simulation_gears.html#pygears.sim.modules.drv" title="(in PyGears v0.1.1)"><code class="xref py py-func docutils literal notranslate"><span class="pre">drv</span></code></a> gear need to be specified using keywords. The reason is that the current implementation of the PyGears needs to distinguish between gear input interfaces and gear parameters, so only input interfaces are allowed to be passed as positional argments(without argument names).</p>
+<p>Next, I hook up the <code class="docutils literal notranslate"><span class="pre">riscv</span></code> and <code class="docutils literal notranslate"><span class="pre">register_file</span></code> gears in the manner shown on the block diagram. You can see from the diagram that these two gears form a kind of a loop, so their connection cannot be expressed in a forward only manner. In these cases, we need to break the loop somewhere, connect the gears in a forward manner and then reconnect the loop at the point where it was broken. I decided to brake the loop at the <code class="docutils literal notranslate"><span class="pre">reg_rd_data</span></code> interface (as shown on the block diagram), so I explicitly instantiated the interface object with the desired type for the <code class="docutils literal notranslate"><span class="pre">reg_rd_data</span></code> interface: <code class="code highlight py docutils literal notranslate"><span class="n"><span class="pre">reg_rd_data</span></span> <span class="o"><span class="pre">=</span></span> <span class="n"><span class="pre">Intf</span></span><span class="p"><span class="pre">(</span></span><span class="n"><span class="pre">Uint</span></span><span class="p"><span class="pre">[</span></span><span class="n"><span class="pre">xlen</span></span><span class="p"><span class="pre">])</span></span></code>. This way we can feed it to the <code class="docutils literal notranslate"><span class="pre">riscv</span></code> gear, together with the <code class="docutils literal notranslate"><span class="pre">instruction</span></code> interface, and the <code class="docutils literal notranslate"><span class="pre">riscv</span></code> gear will have all the information needed to resolve itself and produce the output interfaces: <code class="code highlight py docutils literal notranslate"><span class="n"><span class="pre">reg_file_rd_req</span></span><span class="p"><span class="pre">,</span></span> <span class="n"><span class="pre">reg_file_wr_req</span></span> <span class="o"><span class="pre">=</span></span> <span class="n"><span class="pre">riscv</span></span><span class="p"><span class="pre">(</span></span><span class="n"><span class="pre">instruction</span></span><span class="p"><span class="pre">,</span></span> <span class="n"><span class="pre">reg_rd_data</span></span><span class="p"><span class="pre">)</span></span></code></p>
+<p>Finally, I connect <code class="docutils literal notranslate"><span class="pre">riscv</span></code> read and write request interfaces to the <code class="docutils literal notranslate"><span class="pre">register_file</span></code> gear, which gets instantiated and returns its output interface. Instead of it being fed to another gear or assigned to a variable, I use the pipe assign operator <code class="docutils literal notranslate"><span class="pre">|=</span></code> to instruct PyGears that this output interface is in fact the <code class="docutils literal notranslate"><span class="pre">reg_rd_data</span></code> interface I defined before. This closes the loop and everything is connected as shown on the block diagram.</p>
 <div class="section" id="spike-interface">
 <h3>Spike interface<a class="headerlink" href="#spike-interface" title="Permalink to this headline">¶</a></h3>
 <p>In my previous blog post <a class="reference external" href="/tools/home/pygears/docs/manual/_build/html/setup.html" title="(in PyGears v0.1.1)"><span>PyGears Tools Setup for Linux</span></a>, I showed how to implement a rudimentary interface for the <a class="reference external" href="https://github.com/riscv/riscv-isa-sim/">Spike</a> simulator that I plan to use as a reference ISA design. Now, I’ll show how to put it to action for verifying the <code class="docutils literal notranslate"><span class="pre">addi</span></code> instruction implementation. I relocated the Spike interface class to <a class="reference external" href="https://github.com/bogdanvuk/pygears_riscv/blob/afb2/pygears_riscv/verif/spike.py">verif/spike.py</a> and had to make one major change to accomodate for the RISC-V <a class="reference external" href="https://en.wikipedia.org/wiki/Application_binary_interface">ABI (Application Binary Interface)</a>.</p>
 <p>First, I was surprised to find that issuing the read register command didn’t return any value in Spike simulator if the registers were named with prefix “x” (<code class="docutils literal notranslate"><span class="pre">x*</span></code>). I started digging and found out that even though all registers <code class="docutils literal notranslate"><span class="pre">x1</span></code> - <code class="docutils literal notranslate"><span class="pre">x31</span></code> were created equal in the ISA specification, in order to cooperate better with C compilers additional rules were created, namely the ABI. <a class="reference external" href="https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf#page=121">Chapter 20: RISC-V Assembly Programmer’s Handbook</a> provides the table that maps the native <code class="docutils literal notranslate"><span class="pre">x*</span></code> register names to their ABI equivalents, and specifies special purpose for each of the registers. It turns out that the Spike simulator understands only the ABI register names. Some additional information on the ABI, together with the examples of the assembly instruction syntax, is also given on <a class="reference external" href="https://github.com/riscv/riscv-elf-psabi-doc/blob/master/riscv-elf.md">riscv/riscv-elf-psabi-doc github</a>.</p>
 <p>I created a wrapper class around my Spike interface inside <a class="reference external" href="https://github.com/bogdanvuk/pygears_riscv/blob/afb2/pygears_riscv/verif/spike_instr_test.py">verif/spike_instr_test.py</a>, which automates all the tasks I did manually in the <a class="reference external" href="/tools/home/pygears/docs/manual/_build/html/setup.html" title="(in PyGears v0.1.1)"><span class="xref std std-doc">previous blog post</span></a>, namely: writting the assembly file, running the gcc, and calling Spike interface with the correct parameters. I also added the possibility to easily initialize the register values which will come in handy for thourough verification.</p>
+<div class="highlight-jinja notranslate"><div class="highlight"><pre><span></span><span class="x">;; # Assembly program template.</span>
+
+<span class="x">.text</span>
+<span class="x">  .global _start</span>
+
+<span class="x">_start:</span>
+<span class="cp">{%</span> <span class="k">for</span> <span class="nv">reg</span><span class="o">,</span> <span class="nv">value</span> <span class="k">in</span> <span class="nv">reg_set_init.items</span><span class="o">()</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">.equ X</span><span class="cp">{{</span> <span class="nv">reg</span> <span class="cp">}}</span><span class="x">_INIT_VALUE, </span><span class="cp">{{</span> <span class="nv">value</span> <span class="cp">}}</span><span class="x"></span>
+<span class="cp">{%</span>- <span class="k">endfor</span> <span class="cp">%}</span><span class="x"></span>
+
+<span class="x">  ;; # Optional preloading of initial register values.</span>
+<span class="cp">{%</span> <span class="k">for</span> <span class="nv">reg</span> <span class="k">in</span> <span class="nv">reg_set_init</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">  lui x</span><span class="cp">{{</span> <span class="nv">reg</span> <span class="cp">}}</span><span class="x">,      %hi(X</span><span class="cp">{{</span> <span class="nv">reg</span> <span class="cp">}}</span><span class="x">_INIT_VALUE)</span>
+<span class="x">  addi x</span><span class="cp">{{</span> <span class="nv">reg</span> <span class="cp">}}</span><span class="x">, x</span><span class="cp">{{</span> <span class="nv">reg</span> <span class="cp">}}</span><span class="x">, %lo(X</span><span class="cp">{{</span> <span class="nv">reg</span> <span class="cp">}}</span><span class="x">_INIT_VALUE)</span>
+<span class="cp">{%</span>- <span class="k">endfor</span> <span class="cp">%}</span><span class="x"></span>
+
+<span class="x">  ;; # The actual instructions I&#39;d like to test.</span>
+<span class="cp">{%</span> <span class="k">for</span> <span class="nv">instruction</span> <span class="k">in</span> <span class="nv">instructions</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">  </span><span class="cp">{{</span> <span class="nv">disassemble</span><span class="o">(</span><span class="nv">instruction</span><span class="o">)</span> <span class="cp">}}</span><span class="x"></span>
+<span class="cp">{%</span>- <span class="k">endfor</span> <span class="cp">%}</span><span class="x"></span>
+
+<span class="x">  ;; # Write the value 1 to tohost, telling Spike to quit with 0 exit code.</span>
+<span class="x">  li t0, 1</span>
+<span class="x">  la t1, tohost</span>
+<span class="x">  sw t0, 0(t1)</span>
+
+<span class="x">  ;; # Spin until Spike terminates the simulation.</span>
+<span class="x">  1: j 1b</span>
+
+<span class="x">;; # Expose tohost and fromhost to Spike so we can communicate with it.</span>
+<span class="x">.data</span>
+<span class="x">  .global tohost</span>
+<span class="x">tohost:   .dword 0</span>
+<span class="x">  .global fromhost</span>
+<span class="x">fromhost: .dword 0&quot;&quot;&quot;</span>
+</pre></div>
+</div>
 <div class="figure align-center" id="id4">
 <img alt="../_images/addi-timelapse.gif" src="../_images/addi-timelapse.gif" />
 <p class="caption"><span class="caption-text"><code class="docutils literal notranslate"><span class="pre">addi</span></code> instruction simulation timelapse. Each frame is a single delta cycle.</span></p>
