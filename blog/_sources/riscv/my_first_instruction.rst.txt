@@ -152,6 +152,15 @@ First, I was surprised to find that issuing the read register command didn't ret
 
 I created a wrapper class around my Spike interface inside `verif/spike_instr_test.py <https://github.com/bogdanvuk/pygears_riscv/blob/afb2/pygears_riscv/verif/spike_instr_test.py>`__, which automates all the tasks I did manually in the :doc:`previous blog post <pygears:setup>`, namely: writting the assembly file, running the gcc, and calling Spike interface with the correct parameters. I also added the possibility to easily initialize the register values which will come in handy for thourough verification.
 
+.. py:function:: run_all(instructions, outdir='.', reg_set_init=None)
+
+    Runs a set of instructions on Spike simulator and returns the resulting register map state
+
+    :parameter instructions: Sequence of instructions to execute in Spike
+    :parameter outdir: Directory in which to store the intermediate files
+    :parameter reg_set_init: Initial register file dictionary that maps register IDs to their initial values
+    :return: Returns the initial and the resulting register map states
+
 .. literalinclude:: pygears_riscv/verif/spike_instr_test.py
    :github: bogdanvuk/pygears_riscv
    :lines: 27-61

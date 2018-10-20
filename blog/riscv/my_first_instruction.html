@@ -200,6 +200,24 @@
 <p>In my previous blog post <a class="reference external" href="/tools/home/pygears/docs/manual/_build/html/setup.html" title="(in PyGears v0.1.1)"><span>PyGears Tools Setup for Linux</span></a>, I showed how to implement a rudimentary interface for the <a class="reference external" href="https://github.com/riscv/riscv-isa-sim/">Spike</a> simulator that I plan to use as a reference ISA design. Now, I’ll show how to put it to action for verifying the <code class="docutils literal notranslate"><span class="pre">addi</span></code> instruction implementation. I relocated the Spike interface class to <a class="reference external" href="https://github.com/bogdanvuk/pygears_riscv/blob/afb2/pygears_riscv/verif/spike.py">verif/spike.py</a> and had to make one major change to accomodate for the RISC-V <a class="reference external" href="https://en.wikipedia.org/wiki/Application_binary_interface">ABI (Application Binary Interface)</a>.</p>
 <p>First, I was surprised to find that issuing the read register command didn’t return any value in Spike simulator if the registers were named with prefix “x” (<code class="docutils literal notranslate"><span class="pre">x*</span></code>). I started digging and found out that even though all registers <code class="docutils literal notranslate"><span class="pre">x1</span></code> - <code class="docutils literal notranslate"><span class="pre">x31</span></code> were created equal in the ISA specification, in order to cooperate better with C compilers additional rules were created, namely the ABI. <a class="reference external" href="https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf#page=121">Chapter 20: RISC-V Assembly Programmer’s Handbook</a> provides the table that maps the native <code class="docutils literal notranslate"><span class="pre">x*</span></code> register names to their ABI equivalents, and specifies special purpose for each of the registers. It turns out that the Spike simulator understands only the ABI register names. Some additional information on the ABI, together with the examples of the assembly instruction syntax, is also given on <a class="reference external" href="https://github.com/riscv/riscv-elf-psabi-doc/blob/master/riscv-elf.md">riscv/riscv-elf-psabi-doc github</a>.</p>
 <p>I created a wrapper class around my Spike interface inside <a class="reference external" href="https://github.com/bogdanvuk/pygears_riscv/blob/afb2/pygears_riscv/verif/spike_instr_test.py">verif/spike_instr_test.py</a>, which automates all the tasks I did manually in the <a class="reference external" href="/tools/home/pygears/docs/manual/_build/html/setup.html" title="(in PyGears v0.1.1)"><span class="xref std std-doc">previous blog post</span></a>, namely: writting the assembly file, running the gcc, and calling Spike interface with the correct parameters. I also added the possibility to easily initialize the register values which will come in handy for thourough verification.</p>
+<dl class="function">
+<dt id="run_all">
+<code class="descname">run_all</code><span class="sig-paren">(</span><em>instructions</em>, <em>outdir='.'</em>, <em>reg_set_init=None</em><span class="sig-paren">)</span><a class="headerlink" href="#run_all" title="Permalink to this definition">¶</a></dt>
+<dd><p>Runs a set of instructions on Spike simulator and returns the resulting register map state</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>instructions</strong> – Sequence of instructions to execute in Spike</p></li>
+<li><p><strong>outdir</strong> – Directory in which to store the intermediate files</p></li>
+<li><p><strong>reg_set_init</strong> – Initial register file dictionary that maps register IDs to their initial values</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Returns the initial and the resulting register map states</p>
+</dd>
+</dl>
+</dd></dl>
+
 <div class="highlight-jinja notranslate"><div class="highlight"><pre><span></span><span class="x">;; # Assembly program template.</span>
 
 <span class="x">.text</span>
