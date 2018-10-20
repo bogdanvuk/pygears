@@ -1,4 +1,4 @@
-"""Represents a generic heterogenous container type akin to records and structs
+"""Represents a generic heterogeneous container type akin to records and structs
 in other HDLs.
 
 A concrete :class:`Tuple` type is created by describing the fields it consists
@@ -44,7 +44,7 @@ We can also be explicit which template parameter is assigned a concrete type::
 
     PointU8 = Point[{'coord_t': Uint[8]}]
 
-Tuples can have any other types for their fields, meaining they can be nested
+Tuples can have any other types for their fields, meaning they can be nested
 to create more complex structures::
 
     Line = Tuple[Point, Point]
@@ -73,7 +73,7 @@ Tuple[Tuple[{'x': 'coord1_t', 'y': 'coord1_t'}], Tuple[{'x': 'coord2_t', 'y': 'c
 >>> LineU8_U16
 Tuple[Tuple[{'x': Uint[8], 'y': Uint[8]}], Tuple[{'x': Uint[16], 'y': Uint[16]}]]
 
-Once a concrete type has been formed it can be instantiated which is usefull
+Once a concrete type has been formed it can be instantiated which is useful
 for the verification. Type instance is obtained by specifying the values for
 the :class:`Tuple` fields in parenthesis, grouped in the Python tuple (can be
 any iterable really)::
@@ -208,7 +208,7 @@ class TupleType(EnumerableGenericMeta):
 class Tuple(tuple, metaclass=TupleType):
     """Implements the :class:`Tuple` type instance.
 
-    The :class:`Tuple` type intance can be initialized either with a dict that
+    The :class:`Tuple` type instance can be initialized either with a dict that
     maps the field names to the desired values::
 
         Point = Tuple[{'x': Uint[8], 'y': Uint[8]}]

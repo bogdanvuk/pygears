@@ -16,22 +16,21 @@ async def sieve(din, *, key) -> b'din[key]':
         A sliced interface
 
     Which keys are exactly supported depends on the type of the ``din`` input
-    interface, so checkout the __getitem__ method of the specific type::
+    interface, so checkout the __getitem__ method of the specific type. If for
+    an example we have an interface of the type :class:`Uint[8] <Uint>` ::
 
         din = Intf(Uint[8])
 
-    >>> dout = din[4:]
+    we could slice it using Python index operator to obtain a high nibble:
 
-    >>> dout = sieve(din, key=slice(4, None, None))
+    >>> din[4:]
+    Intf(Uint[4])
 
-    If ``t`` is a :class:`Queue` type of certain level, then ``seq`` should
-    generate nested iterables of the same level::
+    which outputs an interface of the type :class:`Uint[4] <Uint>`. The same
+    would be achieved if the ``sieve`` gear were instantiated explicitly:
 
-        q1 = ((11, 12), (21, 22, 23))
-        q2 = ((11, 12, 13))
-
-    >>> drv(t=Queue[Uint[8], 2], seq=[q1, q2])
-
+    >>> sieve(din, key=slice(4, None, None))
+    Intf(Uint[4])
     """
 
     async with din as d:

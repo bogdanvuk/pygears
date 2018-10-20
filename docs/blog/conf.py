@@ -15,11 +15,20 @@ version = pkg_resources.get_distribution("pygears").version
 release = version
 
 extensions = [
-    'sphinxarg.ext', 'sphinx_verboser.verboser', 'sphinxcontrib.tikz',
-    'alabaster', 'ablog', 'sphinx_sitemap', 'sphinx.ext.intersphinx'
+    'sphinx.ext.autodoc',
+    'sphinxarg.ext',
+    'sphinx_verboser.verboser',
+    'sphinx_urlinclude.urlinclude',
+    'sphinxcontrib.tikz',
+    'alabaster',
+    'ablog',
+    'sphinx_sitemap',
+    'sphinx.ext.intersphinx',
 ]
 
-intersphinx_mapping = {'pygears': ('/tools/home/pygears/docs/manual/_build/html/', None)}
+intersphinx_mapping = {
+    'pygears': ('/tools/home/pygears/docs/manual/_build/html/', None)
+}
 # intersphinx_mapping = {'pygears': ('https://www.pygears.org', None)}
 
 site_url = "https://www.pygears.org/blog/"

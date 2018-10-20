@@ -99,6 +99,12 @@ class Intf:
         self.consumers.append(port)
         port.producer = self
 
+    def __repr__(self):
+        return f'Intf({repr(self.dtype)})'
+
+    def __str__(self):
+        return f'Intf({self.dtype})'
+
     @property
     def end_consumers(self):
         if self._end_consumers is None:
