@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Simulation gears &#8212; PyGears - HW Design: A Functional Approach</title>
+    <title>Common &#8212; PyGears - HW Design: A Functional Approach</title>
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
@@ -16,11 +16,12 @@
     <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="../_static/default.js"></script>
     <script type="text/javascript" src="../_static/wavedrom.js"></script>
-    <link rel="canonical" href="https://www.pygears.org/gears/simulation_gears.html" />
+    <link rel="canonical" href="https://www.pygears.org/gears/common.html" />
     <link rel="shortcut icon" href="../_static/pygears.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="prev" title="Common" href="common.html" />
+    <link rel="next" title="Simulation gears" href="simulation_gears.html" />
+    <link rel="prev" title="Reference" href="../reference.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   
@@ -37,35 +38,54 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="simulation-gears">
-<h1>Simulation gears<a class="headerlink" href="#simulation-gears" title="Permalink to this headline">¶</a></h1>
-<p>Implemented in <code class="xref py py-mod docutils literal notranslate"><span class="pre">pygears.sim.modules</span></code></p>
+  <div class="section" id="common">
+<h1>Common<a class="headerlink" href="#common" title="Permalink to this headline">¶</a></h1>
+<p>Implemented in <code class="xref py py-mod docutils literal notranslate"><span class="pre">pygears.common</span></code></p>
 <dl class="function">
-<dt id="pygears.sim.modules.drv">
-<code class="descname">drv</code><span class="sig-paren">(</span><em>*</em>, <em>t</em>, <em>seq</em><span class="sig-paren">)</span> &#x2192; b't'<a class="headerlink" href="#pygears.sim.modules.drv" title="Permalink to this definition">¶</a></dt>
-<dd><p>Outputs one data at the time from the iterable <code class="docutils literal notranslate"><span class="pre">seq</span></code> cast to the type
-<code class="docutils literal notranslate"><span class="pre">t</span></code>.</p>
+<dt id="pygears.common.sieve">
+<code class="descname">sieve</code><span class="sig-paren">(</span><em>din</em>, <em>*</em>, <em>key</em><span class="sig-paren">)</span> &#x2192; b'din[key]'<a class="headerlink" href="#pygears.common.sieve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Outputs a slice of the <code class="docutils literal notranslate"><span class="pre">din</span></code> input interface. Can be instantiated with
+the slicing statement: <code class="docutils literal notranslate"><span class="pre">din[key]</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>t</strong> – Type of the data to output</p></li>
-<li><p><strong>seq</strong> – An iterable generating data to be output</p></li>
-</ul>
+<dd class="field-odd"><p><strong>key</strong> – A single key or a sequence of keys with which to slice the input
+interface.</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Data of the type <code class="docutils literal notranslate"><span class="pre">t</span></code></p>
+<dd class="field-even"><p>A sliced interface</p>
 </dd>
 </dl>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="n">seq</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span>
+<p>Which keys are exactly supported depends on the type of the <code class="docutils literal notranslate"><span class="pre">din</span></code> input
+interface, so checkout the __getitem__ method of the specific type. If for
+an example we have an interface of the type <code class="xref py py-class docutils literal notranslate"><span class="pre">Uint[8]</span></code></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">din</span> <span class="o">=</span> <span class="n">Intf</span><span class="p">(</span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">])</span>
 </pre></div>
 </div>
-<p>If <code class="docutils literal notranslate"><span class="pre">t</span></code> is a <code class="xref py py-class docutils literal notranslate"><span class="pre">Queue</span></code> type of certain level, then <code class="docutils literal notranslate"><span class="pre">seq</span></code> should
-generate nested iterables of the same level:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">q1</span> <span class="o">=</span> <span class="p">((</span><span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">),</span> <span class="p">(</span><span class="mi">21</span><span class="p">,</span> <span class="mi">22</span><span class="p">,</span> <span class="mi">23</span><span class="p">))</span>
-<span class="n">q2</span> <span class="o">=</span> <span class="p">((</span><span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">))</span>
+<p>we could slice it using Python index operator to obtain a high nibble:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">din</span><span class="p">[</span><span class="mi">4</span><span class="p">:]</span>
+<span class="go">Intf(Uint[4])</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Queue</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="mi">2</span><span class="p">],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[</span><span class="n">q1</span><span class="p">,</span> <span class="n">q2</span><span class="p">])</span>
+<p>which outputs an interface of the type <code class="xref py py-class docutils literal notranslate"><span class="pre">Uint[4]</span></code>. The same
+would be achieved if the <code class="docutils literal notranslate"><span class="pre">sieve</span></code> gear were instantiated explicitly:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sieve</span><span class="p">(</span><span class="n">din</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="nb">slice</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+<span class="go">Intf(Uint[4])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="pygears.common.ccat">
+<code class="descname">ccat</code><span class="sig-paren">(</span><em>*din</em><span class="sig-paren">)</span> &#x2192; b'Tuple[din]'<a class="headerlink" href="#pygears.common.ccat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Short for concat, combines multiple interfaces into a single interface whose
+type is a <code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code> of the input interface types. One output data is
+formed by combining one data from each of the inputs:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">din0</span> <span class="o">=</span> <span class="n">Intf</span><span class="p">(</span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">])</span>
+<span class="n">din1</span> <span class="o">=</span> <span class="n">Intf</span><span class="p">(</span><span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">ccat</span><span class="p">(</span><span class="n">din0</span><span class="p">,</span> <span class="n">din1</span><span class="p">)</span>
+<span class="go">Intf(Tuple[Uint[8], Uint[16]])</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -157,7 +177,7 @@ generate nested iterables of the same level:</p>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
       
       |
-      <a href="../_sources/gears/simulation_gears.rst.txt"
+      <a href="../_sources/gears/common.rst.txt"
           rel="nofollow">Page source</a>
     </div>
 

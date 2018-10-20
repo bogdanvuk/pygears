@@ -1,3 +1,10 @@
+.. role:: py(code)
+   :language: py
+   :class: highlight
+
+.. urlinclude::
+   :branch: 1a09dae
+
 My First Instruction
 ====================
 
@@ -41,7 +48,7 @@ Values of the ``rs1`` and ``rd`` fields contain the IDs of the registers involve
 
 Now any gear that operates on the ``imm`` field can, if needed, automatically adjust its operation to handle the signed numbers correctly, and I don't have to worry about it for every gear excplicitely. This is a major advantage of the typing system, since I can express my intents using the type (like with :any:`Int <typing/uint>` here) in a single place in the code, and this intent will propagate automatically throughout the design. Traditional HDLs offer only rudimentary typing support, so you need to follow you signals around and explictely. However, just specifying the type is only a half of the story. The other half lies in providing the Polymorphic behavior for the modules, so that they automatically accomadate for different data types.
 
-OK, so now we have the ``TInstructionI`` type, that describes the general format for the "I-type" instructions, and my ``addi`` instruction will be an instance of this type. As I said, ``opcode`` and ``funct3`` will have unique, specific value for the ``addi`` instruction which is specified by ISA. I had to consult `Chapter 19: RV32/64G Instruction Set Listings <https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf#page=115>`_ in order to get the correct values for the function ID fields: ``opcode=0x13`` and ``funct3=0x0``. 
+OK, so now we have the ``TInstructionI`` type, that describes the general format for the "I-type" instructions, and my ``addi`` instruction will be an instance of this type. As I said, ``opcode`` and ``funct3`` will have unique, specific value for the ``addi`` instruction which is specified by ISA. I had to consult `Chapter 19: RV32/64G Instruction Set Listings <https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf#page=115>`_ in order to get the correct values for the function ID fields: :py:`opcode=0x13` and ``funct3=0x0``. 
 
 .. figure:: images/addi-instruction-field-value.png
     :align: center
@@ -66,7 +73,7 @@ Since PyGears doesn't have templates for type instances, all I can do is assign 
 Processor implementation
 ------------------------
 
-Since the idea of this blog series is to show how one can evolve a complex hardware design using PyGears without wasted effort, by implementing one feature at a time, I will turn a blind eye to the fact that RISC-V processor needs to support multiple instructions at this moment. I will exclude the PC manipulation functionality, which gets important once jump instructions get into play, and the interface to the data memory, which gets important once load and store instructions git into play. For now I will move the `register file <https://github.com/bogdanvuk/pygears_riscv/blob/afb23407150fe43d53c3df1340a93e2f2644d741/pygears_riscv/verif/register_file.py>`__ outside the processor into a separate module and implement it in pure Python to ease reading and writing for the verification purposes. Later, I'll provide an RTL implementation of the register file, but it is a simple module and it should be a straightforward design process, so I don't feel like cheating for postponing it. Important concepts for describing gears are sketched-out in this :ref:`Quick Introduction <pygears:introduction>` documentation page. Without further ado, this single-instruction capable RISC-V processor written in PyGears looks like this::
+Since the idea of this blog series is to show how one can evolve a complex hardware design using PyGears without wasted effort, by implementing one feature at a time, I will turn a blind eye to the fact that RISC-V processor needs to support multiple instructions at this moment. I will exclude the PC manipulation functionality, which gets important once jump instructions get into play, and the interface to the data memory, which gets important once load and store instructions git into play. For now I will move the `register file <https://github.com/bogdanvuk/pygears_riscv/blob/afb2/pygears_riscv/verif/register_file.py>`__ outside the processor into a separate module and implement it in pure Python to ease reading and writing for the verification purposes. Later, I'll provide an RTL implementation of the register file, but it is a simple module and it should be a straightforward design process, so I don't feel like cheating for postponing it. Important concepts for describing gears are sketched-out in this :ref:`Quick Introduction <pygears:introduction>` documentation page. Without further ado, this single-instruction capable RISC-V processor written in PyGears looks like this::
 
   @gear
   def riscv(instruction: TInstructionI, reg_data: Uint['xlen']):
@@ -78,22 +85,22 @@ Since the idea of this blog series is to show how one can evolve a complex hardw
 
       return reg_file_rd_req, reg_file_wr_req
 
-Let's dig deeper into those 6 lines of code. The ``@gear`` statement is called a decorator in Python terminology. If it is placed in front of the function definition it can wrap it with some additional code. The ``@gear`` decorator is where most of the magic happens in PyGears. It makes a function composable via  '|' (pipe) operator, it performs type checking and matching, it instantiates a new hardware module each time the function is called, it takes care about module hierarchy, etc.
+Let's dig deeper into those 6 lines of code. The :py:`@gear` statement is called a decorator in Python terminology. If it is placed in front of the function definition it can wrap it with some additional code. The :py:`@gear` decorator is where most of the magic happens in PyGears. It makes a function composable via  '|' (pipe) operator, it performs type checking and matching, it instantiates a new hardware module each time the function is called, it takes care about module hierarchy, etc.
 
-Next, the `function prototype <https://en.wikipedia.org/wiki/Function_prototype>`__  declares the types of input interfaces the ``riscv`` gear accepts, namely: ``instruction: TInstructionI`` and ``reg_data: Uint['xlen']``. So on the first interface ``riscv`` expects to see a flow of instructions of the "I-type" format, and on the second, the operation argument read from the register determined by the ``rs1`` field (``riscv`` gear will issue this read request as we'll see in the moment). For the details on how PyGears implements interfaces in HDL, checkout the PyGears documentation section :ref:`One Interface <pygears:gears-interface>`. The ``riscv`` gear is implemented via gear composition, so I needn't specify the output interfaces since they will be determined by which interfaces are returned by the function.
+Next, the `function prototype <https://en.wikipedia.org/wiki/Function_prototype>`__  declares the types of input interfaces the ``riscv`` gear accepts, namely: :py:`instruction: TInstructionI` and :py:`reg_data: Uint['xlen']`. So on the first interface ``riscv`` expects to see a flow of instructions of the "I-type" format, and on the second, the operation argument read from the register determined by the ``rs1`` field (``riscv`` gear will issue this read request as we'll see in the moment). For the details on how PyGears implements interfaces in HDL, checkout the PyGears documentation section :ref:`One Interface <pygears:gears-interface>`. The ``riscv`` gear is implemented via gear composition, so I needn't specify the output interfaces since they will be determined by which interfaces are returned by the function.
 
-In order to instantiate the ``riscv`` gear, all the input interfaces need to be specified as arguments to the ``riscv`` gear function. Inside the ``gear`` function, ``instruction`` and ``reg_data`` become local variables that bring the interface objects from the outside and distribute them to the internal gears. Image below shows the resulting processor structure and connection with its environment. The graph was autogenerated with the `riscv_graph.py script <https://github.com/bogdanvuk/pygears_riscv/blob/afb23407150fe43d53c3df1340a93e2f2644d741/pygears_riscv/script/riscv_graph.py>`__. 
+In order to instantiate the ``riscv`` gear, all the input interfaces need to be specified as arguments to the ``riscv`` gear function. Inside the ``gear`` function, ``instruction`` and ``reg_data`` become local variables that bring the interface objects from the outside and distribute them to the internal gears. Image below shows the resulting processor structure and connection with its environment. The graph was autogenerated with the `riscv_graph.py script <https://github.com/bogdanvuk/pygears_riscv/blob/afb2/pygears_riscv/script/riscv_graph.py>`__. 
 
 .. figure:: images/riscv_graph_addi.png
     :align: center
 
     Graph of the single-instruction RISC-V processor implementation in PyGears. The gears are drown as octagons and hierarchical modules are drawn as boxes.
 
-First line of the function: ``reg_file_rd_req = instruction['rs1']``, forms a read request for the register file and results in the ``instruction_rs1`` gear shown in the graph above. The request consists only of the register ID from which to read the data, which is given in the ``rs1`` instruction field. Simply by indexing the ``instruction`` interface with the field name, I can tell PyGears to extract the desired part of the incoming data. This a zero-overhead abstraction and results in nothing but wiring in generated SystemVerilog. After Python executes this statement, the variable ``reg_file_rd_req`` containes the output interface of the ``instruction_rs1`` gear, which is later lead out of the ``riscv`` gear by returning the variable value: ``return reg_file_rd_req, reg_file_wr_req``.  
+First line of the function: :py:`reg_file_rd_req = instruction['rs1']`, forms a read request for the register file and results in the ``instruction_rs1`` gear shown in the graph above. The request consists only of the register ID from which to read the data, which is given in the ``rs1`` instruction field. Simply by slicing the ``instruction`` interface with the field name, I can tell PyGears to extract the desired part of the incoming data. For more information about slicing the :any:`typing/tuple` type, checkout :meth:`Tuple.__getitem__() <pygears:pygears.typing.tuple.TupleType.__getitem__>`. This a zero-overhead abstraction and results in nothing but wiring in generated SystemVerilog. After Python executes this statement, the variable ``reg_file_rd_req`` containes the output interface of the ``instruction_rs1`` gear (this is a :any:`sieve <pygears.common.sieve>` gear, automatically generated whenever interfaces are sliced), which is later lead out of the ``riscv`` gear by returning the variable value: :py:`return reg_file_rd_req, reg_file_wr_req`.  
 
 Next, the signed addition is performed. First, the data read from the register ``rs1`` is cast to be interpreted as a signed value: ``(reg_data | Int)``, which results in the ``cast_reg_data`` gear shown in the graph. Then, the addition is performed with the ``imm`` instruction field, resulting in the ``add`` gear in the graph. Finally, the addition result is cast back to the type of the ``reg_data`` interface: ``reg_data.dtype``, which truncates the result by 1 bit and changes it type back to unsigned integer. The interface carrying the result of these operations is stored in the variable ``add_res``. 
 
-Next, the write request ``reg_file_wr_req = ccat(instruction['rd'], add_res)`` is formed, with which the register file is instructed to store the result of the addition (variable ``add_res``) into the register specified by the ``rd`` instruction field. These two pieces of information are combined in a :any:`typing/tuple` by using ``ccat`` (short for concat) gear from the ``pygears.common`` library. 
+Next, the write request :py:`reg_file_wr_req = ccat(instruction['rd'], add_res)` is formed, with which the register file is instructed to store the result of the addition (variable ``add_res``) into the register specified by the ``rd`` instruction field. These two pieces of information are combined in a :any:`typing/tuple` by using :any:`ccat <pygears.common.ccat>` (short for concat) gear from the :any:`pygears.common <gears/common>` library. 
 
 The read and write requests are output from the ``riscv`` gear by outputting them from the function, and will be connected to the inputs of the register file module in a higher hierarchy level.
 
@@ -106,44 +113,25 @@ For testing the ISA implementation, I've envisioned the following test:
 #. Send a stream of instructions to the processor
 #. Check the final register values to the reference design
 
-I've vriten an environment that supports these kinds of tests in `verif/env.py <https://github.com/bogdanvuk/pygears_riscv/blob/afb23407150fe43d53c3df1340a93e2f2644d741/pygears_riscv/verif/env.py>`__. This is a regular Python function (not a gear) that instantiates the ``riscv`` and ``register_file`` gears and wires them properly::
+I've vriten an environment that supports these kinds of tests in `verif/env.py <https://github.com/bogdanvuk/pygears_riscv/blob/afb2/pygears_riscv/verif/env.py>`__. This is a regular Python function (not a gear) that instantiates the ``riscv`` and ``register_file`` gears and wires them properly
 
-  def riscv_instr_seq_env(instr_seq, xlen=32, reg_file_mem={}):
-      """Drives riscv with an instruction sequence.
+.. urlfunction:: riscv_instr_seq_env
 
-      Args:
-        instr_seq: Sequence of instructions to send to riscv
+.. literalinclude:: pygears_riscv/verif/env.py
+   :github: bogdanvuk/pygears_riscv
+   :pyobject: riscv_instr_seq_env
+   :lines: 1, 15-
 
-      Keyword Args:
-        xlen (int): Width of the riscv registers in bits
-        reg_file_mem (dict): Initial register file dictionary that maps
-              register IDs to their initial values
-
-      Returns:
-        reg_file_mem
-      """
-
-      instruction = drv(t=TInstructionI, seq=instr_seq)
-
-      reg_rd_data = Intf(Uint[xlen])
-
-      reg_file_rd_req, reg_file_wr_req = riscv(instruction, reg_rd_data)
-
-      reg_rd_data |= \
-          register_file(reg_file_rd_req, reg_file_wr_req, storage=reg_file_mem)
-
-      return reg_file_mem
-
-The :py:func:`pygears.sim.modules.drv` bla
+The :func:`drv <pygears.sim.modules.drv>` gear can be used to 
 
 Spike interface
 ~~~~~~~~~~~~~~~
 
-In my previous blog post :ref:`setup`, I showed how to implement a rudimentary interface for the `Spike <https://github.com/riscv/riscv-isa-sim/>`__ simulator that I plan to use as a reference ISA design. Now, I'll show how to put it to action for verifying the ``addi`` instruction implementation. I relocated the Spike interface class to `verif/spike.py <https://github.com/bogdanvuk/pygears_riscv/blob/afb23407150fe43d53c3df1340a93e2f2644d741/pygears_riscv/verif/spike.py>`__ and had to make one major change to accomodate for the RISC-V `ABI (Application Binary Interface) <https://en.wikipedia.org/wiki/Application_binary_interface>`__.
+In my previous blog post :doc:`pygears:setup`, I showed how to implement a rudimentary interface for the `Spike <https://github.com/riscv/riscv-isa-sim/>`__ simulator that I plan to use as a reference ISA design. Now, I'll show how to put it to action for verifying the ``addi`` instruction implementation. I relocated the Spike interface class to `verif/spike.py <https://github.com/bogdanvuk/pygears_riscv/blob/afb2/pygears_riscv/verif/spike.py>`__ and had to make one major change to accomodate for the RISC-V `ABI (Application Binary Interface) <https://en.wikipedia.org/wiki/Application_binary_interface>`__.
 
 First, I was surprised to find that issuing the read register command didn't return any value in Spike simulator if the registers were named with prefix "x" (``x*``). I started digging and found out that even though all registers ``x1`` - ``x31`` were created equal in the ISA specification, in order to cooperate better with C compilers additional rules were created, namely the ABI. `Chapter 20: RISC-V Assembly Programmer’s Handbook <https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf#page=121>`_ provides the table that maps the native ``x*`` register names to their ABI equivalents, and specifies special purpose for each of the registers. It turns out that the Spike simulator understands only the ABI register names. Some additional information on the ABI, together with the examples of the assembly instruction syntax, is also given on `riscv/riscv-elf-psabi-doc github <https://github.com/riscv/riscv-elf-psabi-doc/blob/master/riscv-elf.md>`__. 
 
-I created a wrapper class around my Spike interface inside `verif/spike_instr_test.py <https://github.com/bogdanvuk/pygears_riscv/blob/afb23407150fe43d53c3df1340a93e2f2644d741/pygears_riscv/verif/spike_instr_test.py>`__, which automates all the tasks I did manually in the :ref:`previous blog post <setup>`, namely: writting the assembly file, running the gcc, and calling Spike interface with the correct parameters. I also added the possibility to easily initialize the register values which will come in handy for thourough verification.
+I created a wrapper class around my Spike interface inside `verif/spike_instr_test.py <https://github.com/bogdanvuk/pygears_riscv/blob/afb2/pygears_riscv/verif/spike_instr_test.py>`__, which automates all the tasks I did manually in the :doc:`previous blog post <pygears:setup>`, namely: writting the assembly file, running the gcc, and calling Spike interface with the correct parameters. I also added the possibility to easily initialize the register values which will come in handy for thourough verification.
 
 
 .. figure:: images/addi-timelapse.gif

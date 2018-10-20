@@ -40,7 +40,7 @@
             
   <div class="section" id="module-pygears.typing.tuple">
 <span id="tuple"></span><h1>Tuple<a class="headerlink" href="#module-pygears.typing.tuple" title="Permalink to this headline">¶</a></h1>
-<p>Represents a generic heterogenous container type akin to records and structs
+<p>Represents a generic heterogeneous container type akin to records and structs
 in other HDLs.</p>
 <p>A concrete <a class="reference internal" href="#pygears.typing.tuple.Tuple" title="pygears.typing.tuple.Tuple"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code></a> type is created by describing the fields it consists
 of. There are two ways of creating a concrete <a class="reference internal" href="#pygears.typing.tuple.Tuple" title="pygears.typing.tuple.Tuple"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code></a> type: with or
@@ -85,7 +85,7 @@ can write:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">PointU8</span> <span class="o">=</span> <span class="n">Point</span><span class="p">[{</span><span class="s1">&#39;coord_t&#39;</span><span class="p">:</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">]}]</span>
 </pre></div>
 </div>
-<p>Tuples can have any other types for their fields, meaining they can be nested
+<p>Tuples can have any other types for their fields, meaning they can be nested
 to create more complex structures:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Line</span> <span class="o">=</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Point</span><span class="p">,</span> <span class="n">Point</span><span class="p">]</span>
 <span class="n">LineU8</span> <span class="o">=</span> <span class="n">Line</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">]]</span>
@@ -116,7 +116,7 @@ specifying a string instead of the concrete type for the template parameter:</p>
 <span class="go">Tuple[Tuple[{&#39;x&#39;: Uint[8], &#39;y&#39;: Uint[8]}], Tuple[{&#39;x&#39;: Uint[16], &#39;y&#39;: Uint[16]}]]</span>
 </pre></div>
 </div>
-<p>Once a concrete type has been formed it can be instantiated which is usefull
+<p>Once a concrete type has been formed it can be instantiated which is useful
 for the verification. Type instance is obtained by specifying the values for
 the <a class="reference internal" href="#pygears.typing.tuple.Tuple" title="pygears.typing.tuple.Tuple"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code></a> fields in parenthesis, grouped in the Python tuple (can be
 any iterable really):</p>
@@ -143,6 +143,44 @@ are defined in the <a class="reference internal" href="#pygears.typing.tuple.Tup
 <dd><p>Combines the fields of two <a class="reference internal" href="#pygears.typing.tuple.Tuple" title="pygears.typing.tuple.Tuple"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code></a> types.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Tuple</span><span class="p">[{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">]}]</span> <span class="o">+</span> <span class="n">Tuple</span><span class="p">[{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">]}]</span>
 <span class="go">Tuple[{&#39;x&#39;: Uint[8], &#39;y&#39;: Uint[8], &#39;z&#39;: Uint[8]}]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pygears.typing.tuple.TupleType.__getitem__">
+<code class="descname">__getitem__</code><span class="sig-paren">(</span><em>key</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.tuple.TupleType.__getitem__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the type of the field or fields specified by the <code class="docutils literal notranslate"><span class="pre">key</span></code>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Point3</span> <span class="o">=</span> <span class="n">Tuple</span><span class="p">[{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">]}]</span>
+</pre></div>
+</div>
+<p>The key can be a name of the field:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Point3</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span>
+<span class="go">Uint[8]</span>
+</pre></div>
+</div>
+<p>The key can be a number that represents the index of the field within
+the <a class="reference internal" href="#pygears.typing.tuple.Tuple" title="pygears.typing.tuple.Tuple"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code></a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Point3</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+<span class="go">Uint[16]</span>
+</pre></div>
+</div>
+<p>Negative keys are accepted to index from the end of the <a class="reference internal" href="#pygears.typing.tuple.Tuple" title="pygears.typing.tuple.Tuple"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code></a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Point3</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="go">Uint[16]</span>
+</pre></div>
+</div>
+<p>Slices are accepted to return a new <a class="reference internal" href="#pygears.typing.tuple.Tuple" title="pygears.typing.tuple.Tuple"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code></a> with a subset of
+fields:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Point3</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
+<span class="go">Tuple[Uint[8], Uint[8]]</span>
+</pre></div>
+</div>
+<p>The key can be a sequence of the names, number indexes or slices, where
+a new <a class="reference internal" href="#pygears.typing.tuple.Tuple" title="pygears.typing.tuple.Tuple"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code></a> is return with a subset of fields given by the
+keys in the sequence:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Point3</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="go">Tuple[Uint[8], Uint[16]]</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -193,30 +231,13 @@ are defined in the <a class="reference internal" href="#pygears.typing.tuple.Tup
 <dl class="method">
 <dt id="pygears.typing.tuple.TupleType.get">
 <code class="descname">get</code><span class="sig-paren">(</span><em>name</em>, <em>default=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.tuple.TupleType.get" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the type of the field by name.</p>
+<dd><p>Calls <a class="reference internal" href="#pygears.typing.tuple.TupleType.__getitem__" title="pygears.typing.tuple.TupleType.__getitem__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">__getitem__()</span></code></a> and returns the <code class="docutils literal notranslate"><span class="pre">default</span></code> value if it
+fails.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>default</strong> – Type to return if field does not exist in <a class="reference internal" href="#pygears.typing.tuple.Tuple" title="pygears.typing.tuple.Tuple"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code></a></p>
+<dd class="field-odd"><p><strong>default</strong> – Type to return if <a class="reference internal" href="#pygears.typing.tuple.TupleType.__getitem__" title="pygears.typing.tuple.TupleType.__getitem__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">__getitem__()</span></code></a> fails</p>
 </dd>
 </dl>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Tuple</span><span class="p">[{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">]}]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
-<span class="go">Uint[8]</span>
-</pre></div>
-</div>
-<p>If the method is called on the <a class="reference internal" href="#pygears.typing.tuple.Tuple" title="pygears.typing.tuple.Tuple"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code></a> instance, it returns the
-value of the field by name.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>default</strong> – Value to return if field does not exist</p>
-</dd>
-</dl>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Point</span> <span class="o">=</span> <span class="n">Tuple</span><span class="p">[{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">]}]</span>
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Point</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
-<span class="go">Uint[8](1)</span>
-</pre></div>
-</div>
 </dd></dl>
 
 <dl class="method">
@@ -277,7 +298,7 @@ searched recursively. Each template is reported only once.</p>
 <em class="property">class </em><code class="descname">Tuple</code><a class="headerlink" href="#pygears.typing.tuple.Tuple" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></p>
 <p>Implements the <a class="reference internal" href="#pygears.typing.tuple.Tuple" title="pygears.typing.tuple.Tuple"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code></a> type instance.</p>
-<p>The <a class="reference internal" href="#pygears.typing.tuple.Tuple" title="pygears.typing.tuple.Tuple"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code></a> type intance can be initialized either with a dict that
+<p>The <a class="reference internal" href="#pygears.typing.tuple.Tuple" title="pygears.typing.tuple.Tuple"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code></a> type instance can be initialized either with a dict that
 maps the field names to the desired values:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Point</span> <span class="o">=</span> <span class="n">Tuple</span><span class="p">[{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">]}]</span>
 </pre></div>
@@ -292,6 +313,45 @@ fields in order:</p>
 <span class="go">(Uint[8](1), Uint[8](0))</span>
 </pre></div>
 </div>
+<dl class="method">
+<dt id="pygears.typing.tuple.Tuple.__getitem__">
+<code class="descname">__getitem__</code><span class="sig-paren">(</span><em>key</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.tuple.Tuple.__getitem__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the value of the field or fields specified by the <code class="docutils literal notranslate"><span class="pre">key</span></code>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Point3</span> <span class="o">=</span> <span class="n">Tuple</span><span class="p">[{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">]}]</span>
+<span class="n">point_a</span> <span class="o">=</span> <span class="n">Point3</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>The key can be a name of the field:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">point_a</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span>
+<span class="go">Uint[8](1)</span>
+</pre></div>
+</div>
+<p>The key can be a number that represents the index of the field within
+the <a class="reference internal" href="#pygears.typing.tuple.Tuple" title="pygears.typing.tuple.Tuple"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code></a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">point_a</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+<span class="go">Uint[16](3)</span>
+</pre></div>
+</div>
+<p>Negative keys are accepted to index from the end of the <a class="reference internal" href="#pygears.typing.tuple.Tuple" title="pygears.typing.tuple.Tuple"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code></a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">point_a</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="go">Uint[16](3)</span>
+</pre></div>
+</div>
+<p>Slices are accepted to return a new <a class="reference internal" href="#pygears.typing.tuple.Tuple" title="pygears.typing.tuple.Tuple"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code></a> with a subset of
+fields:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">point_a</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
+<span class="go">(Uint[8](1), Uint[8](2))</span>
+</pre></div>
+</div>
+<p>The key can be a sequence of the names, number indexes or slices, where
+a new <a class="reference internal" href="#pygears.typing.tuple.Tuple" title="pygears.typing.tuple.Tuple"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code></a> is return with a subset of fields given by the
+keys in the sequence:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">point_a</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="go">(Uint[8](1), Uint[16](3))</span>
+</pre></div>
+</div>
+</dd></dl>
+
 <dl class="method">
 <dt id="pygears.typing.tuple.Tuple.__int__">
 <code class="descname">__int__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.tuple.Tuple.__int__" title="Permalink to this definition">¶</a></dt>
@@ -323,30 +383,13 @@ fields in order:</p>
 <dl class="method">
 <dt id="pygears.typing.tuple.Tuple.get">
 <code class="descname">get</code><span class="sig-paren">(</span><em>name</em>, <em>default=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.tuple.Tuple.get" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the type of the field by name.</p>
+<dd><p>Calls <a class="reference internal" href="#pygears.typing.tuple.Tuple.__getitem__" title="pygears.typing.tuple.Tuple.__getitem__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">__getitem__()</span></code></a> and returns the <code class="docutils literal notranslate"><span class="pre">default</span></code> value if it
+fails.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>default</strong> – Type to return if field does not exist in <a class="reference internal" href="#pygears.typing.tuple.Tuple" title="pygears.typing.tuple.Tuple"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code></a></p>
+<dd class="field-odd"><p><strong>default</strong> – Type to return if <a class="reference internal" href="#pygears.typing.tuple.Tuple.__getitem__" title="pygears.typing.tuple.Tuple.__getitem__"><code class="xref py py-meth docutils literal notranslate"><span class="pre">__getitem__()</span></code></a> fails</p>
 </dd>
 </dl>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Tuple</span><span class="p">[{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">]}]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
-<span class="go">Uint[8]</span>
-</pre></div>
-</div>
-<p>If the method is called on the <a class="reference internal" href="#pygears.typing.tuple.Tuple" title="pygears.typing.tuple.Tuple"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code></a> instance, it returns the
-value of the field by name.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>default</strong> – Value to return if field does not exist</p>
-</dd>
-</dl>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Point</span> <span class="o">=</span> <span class="n">Tuple</span><span class="p">[{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">]}]</span>
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Point</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
-<span class="go">Uint[8](1)</span>
-</pre></div>
-</div>
 </dd></dl>
 
 </dd></dl>
