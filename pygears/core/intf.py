@@ -1,18 +1,18 @@
 import asyncio
 
-from pygears import registry, GearDone
+from pygears import GearDone
+from pygears.conf import PluginBase, registry, safe_bind
 from pygears.core.port import InPort, OutPort
-from pygears.conf import PluginBase
 from pygears.core.sim_event import SimEvent
 from pygears.typing.base import TypingMeta
 
 
 def operator_func_from_namespace(cls, name):
     def wrapper(self, *args, **kwargs):
-        if name not in registry('IntfOperNamespace'):
+        if name not in registry('gear/intf_oper'):
             raise Exception(f'Operator {name} is not supported.')
 
-        operator_func = registry('IntfOperNamespace')[name]
+        operator_func = registry(f'gear/intf_oper/{name}')
         return operator_func(self, *args, **kwargs)
 
     return wrapper
@@ -27,7 +27,7 @@ def operator_methods_gen(cls):
 def _get_consumer_tree_rec(intf, consumers):
     for port in intf.consumers:
         cons_intf = port.consumer
-        if (port.gear in registry('SimMap')) and (isinstance(port, InPort)):
+        if (port.gear in registry('sim/map')) and (isinstance(port, InPort)):
             # if not cons_intf.consumers:
             consumers.append(port)
         else:
@@ -74,7 +74,7 @@ class Intf:
         if not isinstance(other, (str, TypingMeta)):
             return other.__ror__(self)
 
-        operator_func = registry('IntfOperNamespace')['__or__']
+        operator_func = registry('gear/intf_oper/__or__')
         return operator_func(self, other)
 
     def __matmul__(self, iout):
@@ -122,7 +122,8 @@ class Intf:
 
     def get_consumer_queue(self, port):
         for pout in self.consumers:
-            if pout.gear in registry('SimMap') and (isinstance(pout, OutPort)):
+            if pout.gear in registry('sim/map') and (isinstance(pout,
+                                                                OutPort)):
                 out_queues = self.out_queues
                 try:
                     i = self.end_consumers.index(port)
@@ -160,7 +161,7 @@ class Intf:
         return self._out_queues
 
     def put_nb(self, val):
-        if any(registry('SimMap')[c.gear].done for c in self.end_consumers):
+        if any(registry('sim/map')[c.gear].done for c in self.end_consumers):
             raise GearDone
 
         put_event = self.events['put']
@@ -183,7 +184,7 @@ class Intf:
     async def ready(self):
         if not self.ready_nb():
             for q, c in zip(self.out_queues, self.end_consumers):
-                registry('CurrentModule').phase = 'back'
+                registry('gear/current_module').phase = 'back'
                 await q.join()
 
     def ready_nb(self):
@@ -292,4 +293,4 @@ class Intf:
 class IntfOperPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        cls.registry['IntfOperNamespace'] = {}
+        safe_bind('gear/intf_oper', {})

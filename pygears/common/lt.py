@@ -1,6 +1,7 @@
+from pygears.conf import safe_bind
 from pygears.core.gear import gear
-from pygears.typing import Uint
 from pygears.core.intf import IntfOperPlugin
+from pygears.typing import Uint
 
 
 @gear
@@ -13,4 +14,4 @@ def lt(*din,
 class MulIntfOperPlugin(IntfOperPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['IntfOperNamespace']['__lt__'] = lt
+        safe_bind('gear/intf_oper/__lt__', lt)

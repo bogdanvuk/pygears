@@ -12,7 +12,7 @@ from subprocess import DEVNULL, Popen
 
 import jinja2
 
-from pygears import GearDone, registry
+from pygears import GearDone, registry, bind
 from pygears.definitions import ROOT_DIR
 from pygears.sim import clk, sim_log
 from pygears.sim.modules.cosim_base import CosimBase, CosimNoData
@@ -28,7 +28,7 @@ class CosimulatorStartError(Exception):
 
 
 async def drive_reset(duration):
-    simsoc = registry('SimConfig')['SimSocket']
+    simsoc = registry('sim/config/socket')
     await clk()
     data = simsoc.send_req(duration | (1 << 31), Uint[4])
     for i in range(duration):
@@ -73,15 +73,15 @@ def sv_cosim_gen(gear, tcp_port=1234):
     #     from pygearslib import sv_src_path
     #     registry('SVGenSystemVerilogPaths').append(sv_src_path)
 
-    outdir = registry('SimArtifactDir')
-    if 'SimSocketHooks' in registry('SimConfig'):
-        hooks = registry('SimConfig')['SimSocketHooks']
+    outdir = registry('sim/artifact_dir')
+    if 'socket_hooks' in registry('sim/config'):
+        hooks = registry('sim/config/socket_hooks')
     else:
         hooks = {}
 
     srcdir = os.path.join(outdir, 'src_gen')
     rtl_node = svgen(gear, outdir=srcdir)
-    sv_node = registry('SVGenMap')[rtl_node]
+    sv_node = registry('svgen/map')[rtl_node]
 
     port_map = {
         port.basename: port.basename
@@ -118,7 +118,7 @@ def sv_cosim_gen(gear, tcp_port=1234):
 
     inc_paths = []
     context['includes'] = []
-    for path in registry('SVGenSystemVerilogPaths'):
+    for path in registry('svgen/sv_paths'):
         inc_paths.append(path)
     inc_paths.append(srcdir)
     inc_paths.append(outdir)
@@ -236,7 +236,7 @@ class SimSocket(CosimBase):
         self.server_address = ('localhost', tcp_port)
         self.handlers = {}
 
-        registry('SimConfig')['SimSocket'] = self
+        bind('sim/config/socket', self)
 
     def _cleanup(self):
         if self.sock:
@@ -295,16 +295,16 @@ class SimSocket(CosimBase):
 
             self.sock.settimeout(1)
 
-            outdir = registry('SimArtifactDir')
+            outdir = registry('sim/artifact_dir')
             args = ' '.join(f'-{k} {v if not isinstance(v, bool) else ""}'
                             for k, v in self.kwds.items()
                             if not isinstance(v, bool) or v)
             if 'seed' in self.kwds:
                 sim_log().warning(
-                    'Separately set seed for cosimulator. Ignoring SimRandSeed.'
+                    'Separately set seed for cosimulator. Ignoring sim/rand_seed.'
                 )
             else:
-                args += f' -seed {registry("SimRandSeed")}'
+                args += f' -seed {registry("sim/rand_seed")}'
             if sim_log().isEnabledFor(logging.DEBUG):
                 stdout = None
             else:

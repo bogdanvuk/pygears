@@ -69,7 +69,7 @@ class TemplateEnv:
 class SVGenGenerateVisitor(HierYielderBase):
     def __init__(self, top, wrapper=False):
         self.template_env = TemplateEnv()
-        self.svgen_map = registry('SVGenMap')
+        self.svgen_map = registry('svgen/map')
         self.wrapper = wrapper
         self.top = top
 

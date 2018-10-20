@@ -85,5 +85,5 @@ class SVGenZipSync(SVGenZipSyncBase):
 class SVGenCZipPlugin(SVGenInstPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['SVGenModuleNamespace'][zip_sync] = SVGenZipSync
-        cls.registry['SVGenModuleNamespace'][zip_cat] = SVGenZipCat
+        cls.registry['svgen']['module_namespace'][zip_sync] = SVGenZipSync
+        cls.registry['svgen']['module_namespace'][zip_cat] = SVGenZipCat

@@ -39,7 +39,7 @@ class SimGear:
         if single_output:
             out_prods = out_prods[0]
 
-        sim = registry('Simulator')
+        sim = registry('sim/simulator')
 
         try:
             if is_async_gen(self.func):

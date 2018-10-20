@@ -23,12 +23,12 @@ def _find_rec(path, root):
 def find(path, root=None):
     if path.startswith('/'):
         path = path[1:]
-        root = registry('HierRoot')
+        root = registry('gear/hier_root')
     else:
         if path.startswith('./'):
             path = path[2:]
 
-        root = registry('CurrentModule')
+        root = registry('gear/current_module')
 
     if path == '':
         return root

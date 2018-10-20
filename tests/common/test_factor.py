@@ -22,7 +22,7 @@ def test_factor_tuple_queue():
 
 def test_factor_union_queue_str_subs():
     a = param_subs('factor(Union[Queue[1, 6], Queue[2, 6]])', {},
-                   registry('TypeArithNamespace'))
+                   registry('gear/type_arith'))
 
     assert a == Queue[Union[1, 2], 6]
 

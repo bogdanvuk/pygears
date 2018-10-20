@@ -36,4 +36,4 @@ class SVGenQcnt(SVModuleGen):
 class SVGenQcntPlugin(SVGenInstPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['SVGenModuleNamespace'][qcnt] = SVGenQcnt
+        cls.registry['svgen']['module_namespace'][qcnt] = SVGenQcnt
