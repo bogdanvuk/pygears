@@ -17,12 +17,13 @@ class SimTimelapse(SimExtend):
         'finished': 'red'
     }
 
-    def __init__(self, top, outdir='timelapse'):
+    def __init__(self, top, outdir='timelapse', dpi=60):
         super().__init__(top)
         self.outdir = os.path.abspath(
             os.path.expandvars(os.path.expanduser(outdir)))
         os.makedirs(self.outdir, exist_ok=True)
         self.g = graphviz.graph(top, edge_fmt='{prod_gear} -> {cons_gear}')
+        self.g.set_dpi(dpi)
         self.img_cnt = 0
 
         for out_port in self.g.prod_edge_map:

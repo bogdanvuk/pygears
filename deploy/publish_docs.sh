@@ -23,10 +23,28 @@ rm -rf blog
 mkdir blog
 mv ./docs/blog/_build/html/{.,}* ./blog
 
-printf "tools/\ndocs/\npygears/\nexamples/\ntests/\ndeploy/\ndist/\n*.egg-info/\n" > .gitignore
-printf "www.pygears.org" > CNAME
+gitignore="tools/
+docs/
+pygears/
+examples/
+tests/
+deploy/
+dist/
+*.egg-info/
+*_bdpfigure/
+"
+robots="# www.robotstxt.org/
 
-printf "# www.robotstxt.org/\n\n# Allow crawling of all content\nUser-agent: *\nDisallow:\nSitemap: https://www.pygears.org/sitemap.xml\nSitemap: https://www.pygears.org/blog/sitemap.xml" > robots.txt
+# Allow crawling of all content
+User-agent: *
+Disallow:
+Sitemap: https://www.pygears.org/sitemap.xml
+Sitemap: https://www.pygears.org/blog/sitemap.xml
+"
+
+printf "$gitignore" > .gitignore
+printf "www.pygears.org" > CNAME
+printf "$robots" > robots.txt
 
 git add -A
 git commit -m "publishing updated docs..."

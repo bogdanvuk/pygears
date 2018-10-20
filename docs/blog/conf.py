@@ -19,17 +19,21 @@ extensions = [
     'sphinxarg.ext',
     'sphinx_verboser.verboser',
     'sphinx_urlinclude.urlinclude',
+    'sphinx_gifplayer.gifplayer',
     'sphinxcontrib.tikz',
     'alabaster',
     'ablog',
     'sphinx_sitemap',
     'sphinx.ext.intersphinx',
+    'sphinx.ext.napoleon',
+    'bdp.sphinxext.bdpfigure',
 ]
 
 intersphinx_mapping = {
     'pygears': ('/tools/home/pygears/docs/manual/_build/html/', None)
 }
 # intersphinx_mapping = {'pygears': ('https://www.pygears.org', None)}
+# intersphinx_timeout = 10
 
 site_url = "https://www.pygears.org/blog/"
 

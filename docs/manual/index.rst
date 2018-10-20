@@ -1,5 +1,10 @@
 .. meta::
    :google-site-verification: AjhRHQh3VrfjkedIiaUazWGgzaSBonwmXT_Kf5sPD0I
+   :msvalidate.01: 256433631B2CD469BD8EC0137A9943AA
+
+.. meta::
+   :google-site-verification: ORBOCceo-a1e6Je5tI-KUua73jJ2f5DjYTOVD4v8tz4
+
 
 
 Welcome to PyGears 
