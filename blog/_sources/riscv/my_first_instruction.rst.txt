@@ -1,16 +1,19 @@
+.. role:: html(raw)
+   :format: html
+
 .. role:: py(code)
    :language: py
    :class: highlight
 
 .. urlinclude::
-   :branch: 1c48a43
+   :branch: 91599d6
    :github: bogdanvuk/pygears_riscv
 
 My First Instruction
 ====================
 
 .. post::
-   :author: Bogdan
+   :author: Bogyman
    :category: RISC-V
 
 .. _RISC-V ISA Specification: https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf
@@ -33,7 +36,7 @@ The ``addi`` instruction has an "Integer Register-Immediate" format, aka the "I-
 
    "Integer Register-Immediate" instruction format, aka the "I-type" format, from the `RISC-V ISA Specification`_
 
-Since the instruction encodings have fields that serve different purposes from one another, I'll represent the instruction with the :any:`typing/tuple` PyGears type. The :any:`typing/tuple` type represents a generic heterogenous container type akin to records and structs in other HDLs, and I can specify the names and types of the fields by providing in square brackets a Python dict where field names are mapped to the field types. For the "I-type" instructions, I ended-up with a following definition in PyGears, given in :giturl:`pygears_riscv/riscv/riscv.py`:
+Since the instruction encodings have fields that serve different purposes from one another, I'll represent the instruction with the :any:`typing/tuple` PyGears type. The :any:`typing/tuple` type represents a generic heterogeneous container type akin to records and structs in other HDLs, and I can specify the names and types of the fields by providing in square brackets a Python dict where field names are mapped to the field types. For the "I-type" instructions, I ended-up with a following definition in PyGears, given in :giturl:`pygears_riscv/riscv/riscv.py`:
 
 .. data:: TInstructionI
 
@@ -52,7 +55,7 @@ The ``opcode`` and ``funct3`` fields determine the function to be executed, and 
 
 Values of the ``rs1`` and ``rd`` fields contain the IDs of the registers involved, hence they are 5 bit wide so that they can encode all 32 register IDs, hence they are represented by the :any:`Uint[5] <typing/uint>` type. ISA specifies that ``addi`` as a signed operation, and that the values in the ``imm`` field are encoded as signed integers, so I'll use :any:`Int[12] <typing/int>` type here.
 
-Now any gear that operates on the ``imm`` field can, if needed, automatically adjust its operation to handle the signed numbers correctly, and I don't have to worry about it for every gear excplicitely. This is a major advantage of the typing system, since I can express my intents using the type (like with :any:`Int <typing/uint>` here) in a single place in the code, and this intent will propagate automatically throughout the design. Traditional HDLs offer only rudimentary typing support, so you need to follow you signals around and explictely. However, just specifying the type is only a half of the story. The other half lies in providing the Polymorphic behavior for the modules, so that they automatically accomadate for different data types.
+Now any gear that operates on the ``imm`` field can, if needed, automatically adjust its operation to handle the signed numbers correctly, and I don't have to worry about it for every gear explicitly. This is a major advantage of the typing system, since I can express my intents using the type (like with :any:`Int <typing/uint>` here) in a single place in the code, and this intent will propagate automatically throughout the design. Traditional HDLs offer only rudimentary typing support, so you need to follow you signals around and explicitly. However, just specifying the type is only a half of the story. The other half lies in providing the Polymorphic behavior for the modules, so that they automatically accommodate for different data types.
 
 OK, so now we have the :py:data:`TInstructionI` type, that describes the general format for the "I-type" instructions, and my ``addi`` instruction will be an instance of this type. As I said, ``opcode`` and ``funct3`` will have unique, specific value for the ``addi`` instruction which is specified by ISA. I had to consult `Chapter 19: RV32/64G Instruction Set Listings <https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf#page=115>`_ in order to get the correct values for the function ID fields: :py:`opcode=0x13` and ``funct3=0x0``. 
 
@@ -89,34 +92,28 @@ Since PyGears doesn't have templates for type instances, all I can do is assign 
 Processor implementation
 ------------------------
 
-Since the idea of this blog series is to show how one can evolve a complex hardware design using PyGears without wasted effort, by implementing one feature at a time, I will turn a blind eye to the fact that RISC-V processor needs to support multiple instructions at this moment. I will exclude the PC manipulation functionality, which gets important once jump instructions get into play, and the interface to the data memory, which gets important once load and store instructions git into play. For now I will move the :giturl:`register file <pygears_riscv/verif/register_file.py>` outside the processor into a separate module and implement it in pure Python to ease reading and writing for the verification purposes. Later, I'll provide an RTL implementation of the register file, but it is a simple module and it should be a straightforward design process, so I don't feel like cheating for postponing it. Important concepts for describing gears are sketched-out in this :ref:`Quick Introduction <pygears:introduction>` documentation page. Without further ado, this single-instruction capable RISC-V processor written in PyGears looks like this::
+Since the idea of this blog series is to show how one can evolve a complex hardware design using PyGears without wasted effort, by implementing one feature at a time, I will turn a blind eye to the fact that RISC-V processor needs to support multiple instructions at this moment. I will exclude the PC manipulation functionality, which gets important once jump instructions get into play, and the interface to the data memory, which gets important once load and store instructions git into play. For now I will move the :giturl:`register file <pygears_riscv/verif/register_file.py>` outside the processor into a separate module and implement it in pure Python to ease reading and writing for the verification purposes. Later, I'll provide an RTL implementation of the register file, but it is a simple module and it should be a straightforward design process, so I don't feel like cheating for postponing it. Important concepts for describing gears are sketched-out in this :ref:`Quick Introduction <pygears:introduction>` documentation page. Without further ado, this single-instruction capable RISC-V processor written in PyGears looks like this:
 
-  @gear
-  def riscv(instruction: TInstructionI, reg_data: Uint['xlen']):
-
-      reg_file_rd_req = instruction['rs1']
-
-      add_res = ((reg_data | Int) + instruction['imm']) | reg_data.dtype
-      reg_file_wr_req = ccat(instruction['rd'], add_res)
-
-      return reg_file_rd_req, reg_file_wr_req
+.. literalinclude:: pygears_riscv/riscv/riscv.py
+   :github: bogdanvuk/pygears_riscv
+   :pyobject: riscv
 
 Let's dig deeper into those 6 lines of code. The :py:`@gear` statement is called a decorator in Python terminology. If it is placed in front of the function definition it can wrap it with some additional code. The :py:`@gear` decorator is where most of the magic happens in PyGears. It makes a function composable via  '|' (pipe) operator, it performs type checking and matching, it instantiates a new hardware module each time the function is called, it takes care about module hierarchy, etc.
 
 Next, the `function prototype <https://en.wikipedia.org/wiki/Function_prototype>`__  declares the types of input interfaces the ``riscv`` gear accepts, namely: :py:`instruction: TInstructionI` and :py:`reg_data: Uint['xlen']`. So on the first interface ``riscv`` expects to see a flow of instructions of the "I-type" format, and on the second, the operation argument read from the register determined by the ``rs1`` field (``riscv`` gear will issue this read request as we'll see in the moment). For the details on how PyGears implements interfaces in HDL, checkout the PyGears documentation section :ref:`One Interface <pygears:gears-interface>`. The ``riscv`` gear is implemented via gear composition, so I needn't specify the output interfaces since they will be determined by which interfaces are returned by the function.
 
-In order to instantiate the ``riscv`` gear, all the input interfaces need to be specified as arguments to the ``riscv`` gear function. Inside the ``gear`` function, ``instruction`` and ``reg_data`` become local variables that bring the interface objects from the outside and distribute them to the internal gears. Image below shows the resulting processor structure and connection with its environment. The graph was autogenerated with the :giturl:`riscv_graph.py script <pygears_riscv/script/riscv_graph.py>`. 
+In order to instantiate the ``riscv`` gear, all the input interfaces need to be specified as arguments to the ``riscv`` gear function. Inside the ``gear`` function, ``instruction`` and ``reg_data`` become local variables that bring the interface objects from the outside and distribute them to the internal gears. Image below shows the resulting processor structure and connection with its environment. The graph was auto-generated with the :giturl:`riscv_graph.py script <pygears_riscv/script/riscv_graph.py>`. 
 
 .. figure:: images/riscv_graph_addi.png
     :align: center
 
     Graph of the single-instruction RISC-V processor implementation in PyGears. The gears are drown as octagons and hierarchical modules are drawn as boxes.
 
-First line of the function: :py:`reg_file_rd_req = instruction['rs1']`, forms a read request for the register file and results in the ``instruction_rs1`` gear shown in the graph above. The request consists only of the register ID from which to read the data, which is given in the ``rs1`` instruction field. Simply by slicing the ``instruction`` interface with the field name, I can tell PyGears to extract the desired part of the incoming data. For more information about slicing the :any:`typing/tuple` type, checkout :meth:`Tuple.__getitem__() <pygears:pygears.typing.tuple.TupleType.__getitem__>`. This a zero-overhead abstraction and results in nothing but wiring in generated SystemVerilog. After Python executes this statement, the variable ``reg_file_rd_req`` containes the output interface of the ``instruction_rs1`` gear (this is a :any:`sieve <pygears.common.sieve>` gear, automatically generated whenever interfaces are sliced), which is later lead out of the ``riscv`` gear by returning the variable value: :py:`return reg_file_rd_req, reg_file_wr_req`.  
+First line of the function: :py:`reg_file_rd_req = instruction['rs1']`, forms a read request for the register file and results in the ``instruction_rs1`` gear shown in the graph above. The request consists only of the register ID from which to read the data, which is given in the ``rs1`` instruction field. Simply by slicing the ``instruction`` interface with the field name, I can tell PyGears to extract the desired part of the incoming data. For more information about slicing the :any:`typing/tuple` type, checkout :meth:`Tuple.__getitem__() <pygears:pygears.typing.tuple.TupleType.__getitem__>`. This a zero-overhead abstraction and results in nothing but wiring in generated SystemVerilog. After Python executes this statement, the variable ``reg_file_rd_req`` contains the output interface of the ``instruction_rs1`` gear (this is a :any:`sieve <pygears.common.sieve>` gear, automatically generated whenever interfaces are sliced), which is later lead out of the ``riscv`` gear by returning the variable value: :py:`return reg_file_rd_req, reg_file_wr_req`.  
 
 Next, the signed addition is performed. First, the data read from the register ``rs1`` is cast to be interpreted as a signed value: ``(reg_data | Int)``, which results in the ``cast_reg_data`` gear shown in the graph. Then, the addition is performed with the ``imm`` instruction field, resulting in the ``add`` gear in the graph. Finally, the addition result is cast back to the type of the ``reg_data`` interface: ``reg_data.dtype``, which truncates the result by 1 bit and changes it type back to unsigned integer. The interface carrying the result of these operations is stored in the variable ``add_res``. 
 
-Next, the write request :py:`reg_file_wr_req = ccat(instruction['rd'], add_res)` is formed, with which the register file is instructed to store the result of the addition (variable ``add_res``) into the register specified by the ``rd`` instruction field. These two pieces of information are combined in a :any:`typing/tuple` by using :any:`ccat <pygears.common.ccat>` (short for concat) gear from the :any:`pygears.common <gears/common>` library. 
+Next, the write request :py:`reg_file_wr_req = ccat(instruction['rd'], add_res)` is formed, with which the register file is instructed to store the result of the addition (variable ``add_res``) into the register specified by the ``rd`` instruction field. These two pieces of information are combined in a :any:`typing/tuple` by using :any:`ccat <pygears.common.ccat>` (short for concatenation) gear from the :any:`pygears.common <gears/common>` library. 
 
 The read and write requests are output from the ``riscv`` gear by outputting them from the function, and will be connected to the inputs of the register file module in a higher hierarchy level.
 
@@ -129,7 +126,7 @@ For testing the ISA implementation, I've envisioned the following test:
 #. Send a stream of instructions to the processor
 #. Check the final register values to the reference design
 
-I've vriten an environment that supports these kinds of tests in :giturl:`pygears_riscv/verif/env.py`. This is a regular Python function (not a gear) that instantiates the ``riscv`` and ``register_file`` gears and wires them properly in the following manner:
+I've written an environment that supports these kinds of tests in :giturl:`pygears_riscv/verif/env.py`. This is a regular Python function (not a gear) that instantiates the ``riscv`` and ``register_file`` gears and wires them properly in the following manner:
 
 .. bdp:: images/addi-env-block-diagram.py
     :align: center
@@ -192,7 +189,7 @@ Besides the boilerplate code explained in :doc:`pygears:setup`, there are three 
 #. Loads the constants to the registers. It requires two commands to load a 32 bit value to the register, since RISC-V instructions have fixed size of 32 bits, so they cannot contain a 32 bit immediate value besides the ``opcode`` field.
 #. Executes the instructions passed via the ``instructions`` argument. The ``dissasemble`` function generates the assembly language statements from their :py:data:`TInstructionI` encodings.
 
-The first idea was to use the `li <https://github.com/riscv/riscv-asm-manual/blob/master/riscv-asm.md#load-immediate>`__ pseudo instruction, but I just couldn't get it to work, and the following error kept poping up::
+The first idea was to use the `li <https://github.com/riscv/riscv-asm-manual/blob/master/riscv-asm.md#load-immediate>`__ pseudo instruction, but I just couldn't get it to work, and the following error kept popping up::
 
   terminate called after throwing an instance of 'std::runtime_error'
     what():  misaligned address
@@ -221,7 +218,7 @@ Finally, I check whether the resulting register file state of my design matches 
 Running the test
 ~~~~~~~~~~~~~~~~
 
-For running the tests for the PyGears framework, I've been using `nose <https://nose.readthedocs.io>`__. I use a test runner since it allows me to run all my tests with a single command. It automatically searches the files in order to discover the test functions, and generates a nice report telling me how many tests passed and which of them failed. There are also options for running only a specific group of tests, run all tests from a single file or run a single test. While writing this blog post I discovered that nose is in maintenance mode, i.e it is not actively developed, and `pytest <https://docs.pytest.org>`__ is recommended as an alternative. Nevertheless, for now I'll continue using nose for this project too, since it has served me well and in order to switch to pytest, I would need to update some of my tests that invoke nose-specific API. I might revisit this decision in future if I find a compeling reason to switch to pytest.
+For running the tests for the PyGears framework, I've been using `nose <https://nose.readthedocs.io>`__. I use a test runner since it allows me to run all my tests with a single command. It automatically searches the files in order to discover the test functions, and generates a nice report telling me how many tests passed and which of them failed. There are also options for running only a specific group of tests, run all tests from a single file or run a single test. While writing this blog post I discovered that nose is in maintenance mode, i.e it is not actively developed, and `pytest <https://docs.pytest.org>`__ is recommended as an alternative. Nevertheless, for now I'll continue using nose for this project too, since it has served me well and in order to switch to pytest, I would need to update some of my tests that invoke nose-specific API. I might revisit this decision in future if I find a compelling reason to switch to pytest.
 
 Before running the tests with nose, you'll need to install it with pip:
 
@@ -255,9 +252,9 @@ Which prints the following:
 
 .. code-block:: python
 
-  -                      [INFO]: Running sim with seed: 1540149208  
+  -                      [INFO]: Running sim with seed: 1540239478  
   0                      [INFO]: -------------- Simulation start --------------  
-  0 /register_file/register_file_write [INFO]: Writting u32(4294966062) to 1  
+  0 /register_file/register_file_write [INFO]: Writing u32(4294966062) to x1  
   2                      [INFO]: ----------- Simulation done ---------------  
   2                      [INFO]: Elapsed: 0.00  
   Resulting value of the register x1: i32(-1234)
@@ -272,21 +269,39 @@ I profiled the test a bit and found out that the majority of the test run time i
 PyGears pure-Python simulator
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-I haven't yet found time to thouroughly document the PyGears built-in pure-Python simulator, so I'll just write a quick introduction here. Furthermore, there are still lots of gears in the libraries shipped with PyGears that do not have their implementation in pure Python, so I'll wait with describing the simulator until all the gears are supported and I've learned all the lessons from implementing them.
+I haven't yet found time to thoroughly document the PyGears built-in pure-Python simulator, so I'll just write a quick introduction here. Furthermore, there are still lots of gears in the libraries shipped with PyGears that do not have their implementation in pure Python, so I'll wait with describing the simulator until all the gears are supported and I've learned all the lessons from implementing them.
 
-You may wonder what is the point of simulating the design with a custom Python simulator instead of using a well-tested RTL simulator, when anyways our target is to produce a working RTL description of the design? Well the point is that by designing hardware in PyGears we can reason about the design on a higher level of abstraction than it is possible with the RTL. PyGears allows us to view the design completely in terms of the dataflow, and the PyGears simulator utilises this to abstract away all unnecessary details.    
+You may wonder what is the point of simulating the design with a custom Python simulator instead of using a well-tested RTL simulator, when anyways our target is to produce a working RTL description of the design? Well the point is that by designing hardware in PyGears we can reason about the design on a higher level of abstraction than it is possible with the RTL. PyGears allows us to view the design completely in terms of the dataflow, and the PyGears simulator utilizes this to abstract away all unnecessary details.    
 
-RTL simulators are event-driven, i.e. the processes they simulate are executed to recalculate their outputs each time one of their input signals (called the sensitivity list) change in value. The change in signal value is considered an event and all processes sensitive to that event are triggered by it and their outputs are recalculated, which now in turn triggers other processes sensitive to these outputs, and so on. So whenever a signal changes in value, it can send waves of process reevaluation (called delta cycles) throughout the design, where depending on the interprocess connectivity a single process can be run multiple times, which makes it hard to reason about what's happening at that level. 
+RTL simulators are event-driven, i.e. the processes they simulate are executed to recalculate their outputs each time one of their input signals (called the sensitivity list) change in value. The change in signal value is considered an event and all processes sensitive to that event are triggered by it and their outputs are recalculated, which now in turn triggers other processes sensitive to these outputs, and so on. So whenever a signal changes in value, it can send waves of process reevaluation (called delta cycles) throughout the design, where depending on the inter-process connectivity a single process can be run multiple times, which makes it hard to reason about what's happening at that level. 
 
-I learned a lot about event-driven simulator from the `SystemC: From the Ground Up, Section 6: Concurrency <https://www.springer.com/gp/book/9780387699578>`__, but I had a hard time finding a free succint explanation on the web to reference here. `This informal article <https://users.isy.liu.se/da/petka86/Delta_cycle.pdf>`__ came close, so you might want to take a look at it. 
+I learned a lot about event-driven simulator from the `SystemC: From the Ground Up, Section 6: Concurrency <https://www.springer.com/gp/book/9780387699578>`__, but I had a hard time finding a free succinct explanation on the web to reference here. `This informal article <https://users.isy.liu.se/da/petka86/Delta_cycle.pdf>`__ came close, so you might want to take a look at it. 
 
-While the signals travel to and fro between the processes in the RTL simulator, in PyGears design, the data has a clear direction of propagation, namely from the producer to the consumer. This puts a heavy contraint on the order in which gears need to be simulated, where a consumer is always run only after all of its producers were executed and decided whether they want to offer a new piece of data to the consumer. In other words, the gears form a `DAG <https://en.wikipedia.org/wiki/Directed_acyclic_graph>`__ (Directed Acyclic Graph), where there is a clear order of gear execution (check `Topological sorting <https://en.wikipedia.org/wiki/Topological_sorting>`__).
+While the signals travel to and fro between the processes in the RTL simulator, in PyGears design, the data has a clear direction of propagation, namely from the producer to the consumer. This puts a heavy constraint on the order in which gears need to be simulated, where a consumer is always run only after all of its producers were executed and decided whether they want to offer a new piece of data to the consumer. In other words, the gears form a `DAG <https://en.wikipedia.org/wiki/Directed_acyclic_graph>`__ (Directed Acyclic Graph), where there is a clear order of gear execution (check `Topological sorting <https://en.wikipedia.org/wiki/Topological_sorting>`__).
 
 Furthermore, in PyGears simulation, the signals comprising the :ref:`DTI interface <pygears:gears-interface>` are abstracted away and higher level events are used to trigger gears to execute, of which two are most important:
 
-#. **Put**: Event issued by the producer when it outputs new data. That signals the consumers that new data is available and they need to run.
-#. **Acknowledge**: Event issued by the consumer that it is done using the data from the producer. This signals the producer that it can dispose of the acknowledged data and output some new values. 
+#. **put**: Event issued by the producer when it outputs new data. This signals the consumers that new data is available, i.e they have new task to work on.
+#. **ack**: Event issued by the consumer signaling that it is done using the data from the producer. This signals the producer that it can dispose of the acknowledged data and it is free to output a new value. 
+#. **done**: Event issued by the producer when it is finished producing new data. This usually happens when the producer receives the **done** event on one of its inputs (it is slightly more complicated than that, but it'll suffice for now).
+
+This all means that for each clock cycle, PyGears simulator makes two passes through a DAG of gears:
+
+#. **Forward pass**: Producers are executed first and gears are triggered by the **put** events. 
+#. **Backward pass**: The order of execution is reversed and consumers are executed first. Gears are triggered by the **ack** event in the backward pass.
+
+Throughout the blog, I'll predominantly debug the design using the PyGears simulator, since it abstracts away the unnecessary details, its flow is easier to follow, it allows me to work with complex data types, it allows me to use the Python debugger during the simulation, etc.  
+
+The animation below shows the timelapse of the PyGears pure-Python simulation of the RISC-V design on a single ``addi`` command (same one used for the test explained in the section `Writing the first test`_). The python script that generates this gif animation is located in :giturl:`script/addi_timelapse.py`. The animation shows the graph of the RISC-V verification environment and shows the process of the simulation in the following manner:  
+
+- Gear is painted :html:`<font color="green">GREEN</font>` if it is being executed as part of the "forward pass", :html:`<font color="orange">ORANGE</font>` if it is being executed as part of the "backward pass", and :html:`<font color="red">RED</font>` if it received the **done** event.  
+- Interface is painted in :html:`<font color="orange">GREEN</font>` if a **put** event was issued over it, :html:`<font color="orange">ORANGE</font>` for an **ack** event, and :html:`<font color="red">RED</font>` for a **done** event. 
+- Transmitted values are printed in **bold** over the interfaces.
 
 .. gifplayer::
 
    .. image:: images/addi-timelapse.gif
+
+As you can see, the simulation starts with the ``drv`` module which has no inputs and is thus a "source node" of the DAG. ``drv`` generates the test instruction and its consumers are triggered. The simulation continues until a "sink node" of the DAG is reached, namely ``register_file_write``, which marks the end of the "forward pass". The "backward pass" begins and the wave of **ack** events trigger the gears in reverse order, until ``drv`` is reached and the timestep is completed.
+
+In the next timestep, ``drv`` realizes that there is no more data to produce, so it issues a **done** event. The **done** event then propagates throughout the design, since no gear in the current design can operate when ``drv`` stops issuing the instructions. 
