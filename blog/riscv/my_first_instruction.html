@@ -371,55 +371,8 @@
 <li><p><strong>Put</strong>: Event issued by the producer when it outputs new data. That signals the consumers that new data is available and they need to run.</p></li>
 <li><p><strong>Acknowledge</strong>: Event issued by the consumer that it is done using the data from the producer. This signals the producer that it can dispose of the acknowledged data and output some new values.</p></li>
 </ol>
-<div class="gifplayer">
+
 <img alt="../_images/addi-timelapse.gif" src="../_images/addi-timelapse.gif" />
-
-<div id="controller-bar" style="text-align:center;">
-    <button id="backward" href="#">|< Step back </button>&nbsp;&nbsp;
-    <button id="play" href="#"> Play | Pause </button>&nbsp;&nbsp;
-    <button id="forward" href="#"> Step forward >|</button>
-</div>
-
-<script type="text/javascript" src="../_static/libgif.js"></script>
-<script>
-
-var gif = new SuperGif({
-    gif: $("div.gifplayer").find("img")[0],
-    max_width: $("div.gifplayer").find("img")[0],
-    loop_mode: 'auto',
-    auto_play: false,
-    draw_while_loading: false,
-});
-
-
-gif.load();
-gif.pause();
-
-$('button#backward').click(function(){
-    var total_frames = gif.get_length();
-    gif.pause();
-    if(gif.get_current_frame() == 0) {
-        gif.move_to(total_frames-1);
-    } else {
-        gif.move_relative(-1);
-    }
-})
-
-
-$('button#play').click(function(){
-    console.log(gif.get_playing());
-    if(gif.get_playing()){
-        gif.pause();
-    } else {
-        gif.play();
-    }
-})
-
-$('button#forward').click(function(){
-    gif.pause();
-    gif.move_relative(1);
-})</script>
-</div>
 </div>
 </div>
 </div>
