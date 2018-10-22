@@ -1,4 +1,4 @@
-module width_reductor
+module active_serialize
   #(
     W_DATA = 16,
     NO = 4,
@@ -47,4 +47,4 @@ module width_reductor
    assign dout.data = {last, din_s.data[cnt]};
    assign din.ready = last && dout_handshake;
 
-   endmodule : width_reductor
+endmodule

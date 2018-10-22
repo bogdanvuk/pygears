@@ -3,7 +3,7 @@ from functools import partial
 from nose import with_setup
 
 from pygears import clear
-from pygears.common.serialize import serialize
+from pygears.common.serialize import serialize, TDin
 from pygears.cookbook.verif import directed, verif
 from pygears.sim import sim
 from pygears.sim.modules.drv import drv
@@ -22,6 +22,17 @@ def test_pygears_sim():
             seq=[(i, ) * brick_size for i in seq_list]),
         f=serialize,
         ref=sorted(seq_list * brick_size))
+
+    sim()
+
+
+@with_setup(clear)
+def test_pygears_sim_active():
+    no = 4
+    directed(
+        drv(t=TDin[16, no, 4], seq=[((3, ) * no, 7)]),
+        f=serialize,
+        ref=[[3, 3, 3]])
 
     sim()
 
