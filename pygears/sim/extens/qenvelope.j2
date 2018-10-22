@@ -3,7 +3,7 @@
 
 class qenvelope_{{tcon.name}} #(int lvl={{int(tcon.dtype)}});
 
-   rand int data_size;
+   rand int unsigned data_size;
    int num_trans[lvl-1:0][$];
 
 {% for i in range(int(tcon.dtype)) %}
@@ -26,7 +26,7 @@ class qenvelope_{{tcon.name}} #(int lvl={{int(tcon.dtype)}});
     {% if i == (int(tcon.dtype) - 1) %}
 
    constraint c_trans_lvl0 {
-      trans_lvl0[0] inside {[1:data_size]};
+      trans_lvl0[0] == data_size;
    }
 
     {% else %}
