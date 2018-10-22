@@ -3,5 +3,6 @@ from pygears import gear
 
 
 @gear(svgen={'svmod_fn': 'iceil.sv'})
-def iceil(din: Uint['T'], *, div=4) -> Uint['T']:
-    pass
+async def iceil(din: Uint['T'], *, div=4) -> Uint['T']:
+    async with din as val:
+        yield (val + div - 1) // div
