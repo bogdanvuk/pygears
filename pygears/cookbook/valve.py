@@ -3,5 +3,7 @@ from pygears.typing import Union, Unit
 
 
 @gear
-def valve(din: Union['Tdin', Unit]) -> b'Tdin':
-    pass
+async def valve(din: Union['Tdin', Unit]) -> b'Tdin':
+    async with din as val:
+        if not val[-1]:
+            yield val[0]

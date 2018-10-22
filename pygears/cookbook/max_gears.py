@@ -5,4 +5,14 @@ from pygears import gear
 async def max2(*din,
                din0_signed=b'issubclass(din0, Int)',
                din1_signed=b'issubclass(din1, Int)') -> b'din[0]':
-    pass
+
+    res = []
+
+    for d in din:
+        val = await d.pull()
+        res.append(val)
+
+    yield max(res)
+
+    for d in din:
+        d.ack()

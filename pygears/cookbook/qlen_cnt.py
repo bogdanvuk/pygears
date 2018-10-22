@@ -9,4 +9,15 @@ async def qlen_cnt(din: Queue['tdin', 'din_lvl'],
                    cnt_one_more=False,
                    w_out=16) -> Uint['w_out']:
     '''Outputs only one value when input eots'''
-    pass
+
+    cnt = 0
+    val = din.dtype((0, 0))
+
+    while not all(val.eot):
+        async with din as val:
+            if all(val.eot[:cnt_lvl]):
+                cnt += 1
+
+    if not cnt_one_more:
+        cnt -= 1
+    yield cnt

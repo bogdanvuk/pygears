@@ -113,6 +113,7 @@ def sv_cosim_gen(gear, tcp_port=1234):
         'hooks': hooks,
         'rst_mask': "32'h8000_0000",
         'port': tcp_port,
+        'top_name': 'top',
         'activity_timeout': 1000  # in clk cycles
     }
 

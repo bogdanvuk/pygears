@@ -221,9 +221,13 @@ class SVRandSocket(RandBase):
             os.path.abspath(os.path.join(ROOT_DIR, 'sim', 'dpi')),
             'out_path':
             os.path.abspath(self.outdir),
-            'includes': [os.path.abspath(os.path.join(self.outdir, '*.sv'))]
+            'includes': [os.path.abspath(os.path.join(self.outdir, '*.sv'))],
+            'top_name':
+            'svrand_top'
         }
 
+        env.loader = jinja2.FileSystemLoader(
+            os.path.join(ROOT_DIR, 'sim', 'modules'))
         res = env.get_template('runsim.j2').render(context)
         fname = save_file('svrand_runsim.sh', self.outdir, res)
         os.chmod(fname, 0o777)

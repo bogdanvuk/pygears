@@ -24,7 +24,6 @@ usage() {
     echo "  -seed  : random | <integer value> (default = 1)"
     echo "  -sim   : cadence | questa"
     echo "  -clean : removed sim. files"
-    echo "  -top_path : /tools/home by default"
     echo "  + any other args to pass to sim:"
     echo " for example: -define VERBOSITY=<0, 1, ...>"
     echo ""
@@ -71,13 +70,42 @@ if [ $simulator == "cadence" ]; then
     {% for i in includes %}
     "{{i|indent(4, True)}}" \
     {% endfor %}
-        {{out_path}}/top.sv \
-        -top top \
+        {{out_path}}/{{top_name}}.sv \
+        -top {{top_name}} \
         +svseed=$seed \
         -logfile log.log -v93 -ALLOWREDEFINITION \
         -access rwc \
         $other_args $gui \
         "$@"
+elif [ $simulator == "questa" ]; then
+    vlib work
+    vlog +acc -sv \
+         +incdir+{{dti_verif_path}} \
+         +incdir+{{out_path}} \
+         {{dti_verif_path}}/sock.sv \
+         {{dti_verif_path}}/socket_pkg.sv \
+         {{dti_verif_path}}/sock.c \
+         {% for i in includes %}
+    {{i|indent(4, True)}} \
+        {% endfor %}
+         {{out_path}}/{{top_name}}.sv
+
+     if [ "$gui" == "" ]; then
+         vsim {{top_name}} \
+              -permit_unmatched_virtual_intf \
+              -sv_seed $seed \
+              -onfinish final \
+              $other_args \
+              -c -do "run -all; quit"
+     else
+         vsim {{top_name}} \
+              -permit_unmatched_virtual_intf \
+              -sv_seed $seed \
+              -onfinish final \
+              $other_args
+     fi
+
+     mv transcript log.log
 else
     echo "Not supported yet..."
 fi
