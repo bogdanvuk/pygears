@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2018.10.12)  20 OCT 2018 17:14
+This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2018.10.12)  22 OCT 2018 15:34
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -430,33 +430,33 @@ File: pgflibraryshapes.multipart.code.tex 2010/01/07 v3.0.1a (rcs-revision 1.2)
 \pgfnodepartsixbox=\box56
 \pgfnodepartfivebox=\box57
 )))
-(/usr/share/texlive/texmf-dist/tex/generic/pgf/libraries/pgflibraryarrows.meta.
-code.tex
-File: pgflibraryarrows.meta.code.tex 2015/05/13 v3.0.1a (rcs-revision 1.13)
-\pgfarrowinset=\dimen151
-\pgfarrowlength=\dimen152
-\pgfarrowwidth=\dimen153
-\pgfarrowlinewidth=\dimen154
-)
 (/usr/share/texlive/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tik
 zlibrarydecorations.markings.code.tex
 (/usr/share/texlive/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tik
 zlibrarydecorations.code.tex
 (/usr/share/texlive/texmf-dist/tex/generic/pgf/modules/pgfmoduledecorations.cod
 e.tex
-\pgfdecoratedcompleteddistance=\dimen155
-\pgfdecoratedremainingdistance=\dimen156
-\pgfdecoratedinputsegmentcompleteddistance=\dimen157
-\pgfdecoratedinputsegmentremainingdistance=\dimen158
-\pgf@decorate@distancetomove=\dimen159
+\pgfdecoratedcompleteddistance=\dimen151
+\pgfdecoratedremainingdistance=\dimen152
+\pgfdecoratedinputsegmentcompleteddistance=\dimen153
+\pgfdecoratedinputsegmentremainingdistance=\dimen154
+\pgf@decorate@distancetomove=\dimen155
 \pgf@decorate@repeatstate=\count109
-\pgfdecorationsegmentamplitude=\dimen160
-\pgfdecorationsegmentlength=\dimen161
+\pgfdecorationsegmentamplitude=\dimen156
+\pgfdecorationsegmentlength=\dimen157
 )
 \tikz@lib@dec@box=\box58
 )
 (/usr/share/texlive/texmf-dist/tex/generic/pgf/libraries/decorations/pgflibrary
 decorations.markings.code.tex))
+(/usr/share/texlive/texmf-dist/tex/generic/pgf/libraries/pgflibraryarrows.meta.
+code.tex
+File: pgflibraryarrows.meta.code.tex 2015/05/13 v3.0.1a (rcs-revision 1.13)
+\pgfarrowinset=\dimen158
+\pgfarrowlength=\dimen159
+\pgfarrowwidth=\dimen160
+\pgfarrowlinewidth=\dimen161
+)
 (/usr/share/texlive/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tik
 zlibrarydecorations.pathreplacing.code.tex
 (/usr/share/texlive/texmf-dist/tex/generic/pgf/libraries/decorations/pgflibrary
