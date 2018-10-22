@@ -287,59 +287,6 @@ Furthermore, in PyGears simulation, the signals comprising the :ref:`DTI interfa
 #. **Put**: Event issued by the producer when it outputs new data. That signals the consumers that new data is available and they need to run.
 #. **Acknowledge**: Event issued by the consumer that it is done using the data from the producer. This signals the producer that it can dispose of the acknowledged data and output some new values. 
 
+.. gifplayer::
 
-.. raw:: html
-
-  <img id="example" src="../_images/addi-timelapse.gif" style="width: 100%;">
-
-  <div id="controller-bar" style="text-align:center;">
-      <button id="backward" href="#">|< Step back </button>&nbsp;&nbsp;
-      <button id="play" href="#"> Play | Pause </button>&nbsp;&nbsp;
-      <button id="forward" href="#"> Step forward >|</button>
-  </div>
-
-  <script type="text/javascript" src="../_static/libgif.js"></script>
-  <script>
-
-  var gif = new SuperGif({
-      gif: document.getElementById('example'),
-      max_width: document.getElementById('example').offsetWidth,
-      loop_mode: 'auto',
-      auto_play: false,
-      draw_while_loading: false,
-  });
-
-
-  gif.load();
-  gif.pause();
-
-  $('button#backward').click(function(){
-      var total_frames = gif.get_length();
-      gif.pause();
-      if(gif.get_current_frame() == 0) {
-          gif.move_to(total_frames-1);
-      } else {
-          gif.move_relative(-1);
-      }
-  })
-
-
-  $('button#play').click(function(){
-      console.log(gif.get_playing());
-      if(gif.get_playing()){
-          gif.pause();
-      } else {
-          gif.play();
-      }
-  })
-
-  $('button#forward').click(function(){
-      gif.pause();
-      gif.move_relative(1);
-  })</script>
-
-..
-   .. figure:: images/addi-timelapse.gif
-       :align: center
-
-       ``addi`` instruction simulation timelapse. Each frame is a single delta cycle.
+   .. image:: images/addi-timelapse.gif
