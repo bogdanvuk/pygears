@@ -295,13 +295,80 @@ Throughout the blog, I'll predominantly debug the design using the PyGears simul
 The animation below shows the timelapse of the PyGears pure-Python simulation of the RISC-V design on a single ``addi`` command (same one used for the test explained in the section `Writing the first test`_). The python script that generates this gif animation is located in :giturl:`script/addi_timelapse.py`. The animation shows the graph of the RISC-V verification environment and shows the process of the simulation in the following manner:  
 
 - Gear is painted :html:`<font color="green">GREEN</font>` if it is being executed as part of the "forward pass", :html:`<font color="orange">ORANGE</font>` if it is being executed as part of the "backward pass", and :html:`<font color="red">RED</font>` if it received the **done** event.  
-- Interface is painted in :html:`<font color="orange">GREEN</font>` if a **put** event was issued over it, :html:`<font color="orange">ORANGE</font>` for an **ack** event, and :html:`<font color="red">RED</font>` for a **done** event. 
+- Interface is painted in :html:`<font color="green">GREEN</font>` if a **put** event was issued over it, :html:`<font color="orange">ORANGE</font>` for an **ack** event, and :html:`<font color="red">RED</font>` for a **done** event. 
 - Transmitted values are printed in **bold** over the interfaces.
 
 .. gifplayer::
 
    .. image:: images/addi-timelapse.gif
+      :width: 100%
 
 As you can see, the simulation starts with the ``drv`` module which has no inputs and is thus a "source node" of the DAG. ``drv`` generates the test instruction and its consumers are triggered. The simulation continues until a "sink node" of the DAG is reached, namely ``register_file_write``, which marks the end of the "forward pass". The "backward pass" begins and the wave of **ack** events trigger the gears in reverse order, until ``drv`` is reached and the timestep is completed.
 
-In the next timestep, ``drv`` realizes that there is no more data to produce, so it issues a **done** event. The **done** event then propagates throughout the design, since no gear in the current design can operate when ``drv`` stops issuing the instructions. 
+In the next timestep, ``drv`` realizes that there is no more data to produce, so it issues a **done** event. The **done** event then propagates throughout the design, since no gear in the current design can operate when ``drv`` stops issuing the instructions.
+
+Since this post is already too long, I'll show in some other post how the PyGears simulator can create waveforms, diagnose issues, how to use it with the Python debugger, etc.
+
+Simulating with Verilator
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+One last section and I promise to let you go. I've written one more test in order to check whether the generated RTL code for the processor produces the correct results as well. I've placed the test in :giturl:`tests/test_instructions/test_addi.py`, inside ``test_addi_verilator()`` function. The test is identical to the ``test_addi()`` described in the section `Writing the first test`_, excepts that it set a ``sim_cls`` parameter for the ``riscv`` gear to ``SimVerilated``: :py:`find('/riscv').params['sim_cls'] = SimVerilated`. This instructs the PyGears simulator to use Verilator interface for ``riscv`` gear, which generates the RTL code, invokes Verilator to simulate it and makes it play well with the PyGears simulator. The last bit is important since the rest of the gears (``drv`` and ``register_file``) will still be simulated in pure Python.
+
+If I navigate to the :giturl:`tests/test_instructions` directory, I can run only the ``test_addi_verilator()`` test with the following command:
+
+.. code-block:: bash
+
+   nosetests -s "test_addi.py:test_addi_verilator"
+
+If there is some issue with running the Verilator, an error report will be printed, telling me which log file to check for the Verilator errors:
+
+.. code-block:: python
+
+  -                      [INFO]: Running sim with seed: 1540290124  
+  0               /riscv [INFO]: Verilating...  
+    File "test_addi.py", line 56, in <module>
+      test_addi_verilator()
+    File "test_addi.py", line 48, in test_addi_verilator
+      sim()
+    File "/tools/home/pygears/pygears/sim/sim.py", line 347, in sim
+      loop.run(timeout)
+    File "/tools/home/pygears/pygears/sim/sim.py", line 293, in run
+      sim_gear.setup()
+    File "/tools/home/pygears/pygears/sim/modules/verilator.py", line 47, in setup
+      self.build()
+    File "/tools/home/pygears/pygears/sim/modules/verilator.py", line 91, in build
+      f'Verilator compile error: {ret}. '
+  pygears.sim.modules.verilator.VerilatorCompileError: Verilator compile error: 32512. Please inspect "/tmp/tmpx6yqczmv/riscv/verilate.log"
+
+In my case, I forgot to :ref:`install Verilator <pygears:install:Installing Verilator>` and add it to the path, so my ``verilate.log`` showed that I had no ``verilator`` executable on the path:
+
+.. code-block:: bash
+
+  sh: 1: verilator: not found
+
+Once I fixed this, I got almost identical print-out
+
+.. code-block:: python
+
+  -                      [INFO]: Running sim with seed: 1540323568  
+  0               /riscv [INFO]: Verilating...  
+  0               /riscv [INFO]: Verilator VCD dump to "/tmp/tmpjqofyvux/riscv/vlt_dump.vcd"  
+  0               /riscv [INFO]: Done  
+  0                      [INFO]: -------------- Simulation start --------------  
+  1 /register_file/register_file_write [INFO]: Writing u32(4294966062) to x1  
+  103                      [INFO]: ----------- Simulation done ---------------  
+  103                      [INFO]: Elapsed: 0.01  
+  Resulting value of the register x1: i32(-1234)
+  .
+  ----------------------------------------------------------------------
+  Ran 1 test in 5.051s
+
+  OK
+
+
+Conclusion
+~~~~~~~~~~
+
+Hey, I have my single-instruction RISC-V processor implemented in PyGears and verified with a simple test. It may seem that much needed to happen in order for the processor to support this one instruction. But most of the effort went into building the verification environment that I think is now really powerfull and I don't think much additional effort needs to be poured into it, besides adding the data and instruction memory modules. In fact, with only 4 lines of code, the RISC-V implementation decodes the instruction, performs the ALU operation and interfaces the register file, not bad for a 4-liner.    
+
+I left some topics for later blog posts, like: refactoring of the tests, simulation with Cadence or Questa simulators, . So stay tuned!

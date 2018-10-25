@@ -28,8 +28,11 @@ release = version
 extensions = [
     'sphinx_verboser.verboser', 'sphinxarg.ext', 'sphinx.ext.autodoc',
     'sphinx.ext.githubpages', 'sphinxcontrib.tikz', 'sphinxcontrib.wavedrom',
-    'bdp.sphinxext.bdpfigure', 'sphinx.ext.napoleon', 'sphinx_sitemap'
+    'bdp.sphinxext.bdpfigure', 'sphinx.ext.napoleon', 'sphinx_sitemap',
+    'sphinx.ext.autosectionlabel'
 ]
+
+autosectionlabel_prefix_document = True
 
 site_url = "https://www.pygears.org/"
 

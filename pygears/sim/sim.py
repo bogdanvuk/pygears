@@ -29,9 +29,10 @@ def clk():
     return registry('sim/clk_event').wait()
 
 
-def delta():
+async def delta():
     registry('gear/current_module').phase = 'back'
-    return registry('sim/delta_event').wait()
+    await asyncio.sleep(0)
+    return sim_phase()
 
 
 def artifacts_dir():
@@ -56,26 +57,48 @@ class SimFuture(asyncio.Future):
     __await__ = __iter__
 
 
+def is_on_loopy_path(cur_path, g, consumer):
+    if (g, consumer) in cur_path:
+        return False
+
+    for _, consumer in cur_path:
+        if consumer == g:
+            return True
+    else:
+        return False
+
+
 # A recursive function used by topo_sort
-def topo_sort_util(v, g, dag, visited, stack):
+def topo_sort_util(g, dag, visited, stack, cur_path):
 
+    # print(f'{topo_sort_util.indent}Visiting: {g.name}')
     # Mark the current node as visited.
-    visited[v] = True
+    visited.add(g)
 
+    topo_sort_util.indent = topo_sort_util.indent + "    "
     # Recur for all the vertices adjacent to this vertex
     for consumer in dag[g]:
-        i = list(dag.keys()).index(consumer)
-        if not visited[i]:
-            topo_sort_util(i, consumer, dag, visited, stack)
+        # print(f'{topo_sort_util.indent}Adjasent: {consumer.name}')
+        if ((consumer not in visited)
+                or is_on_loopy_path(cur_path, g, consumer)):
+            cur_path.append((g, consumer))
+            topo_sort_util(consumer, dag, visited, stack, cur_path)
+            cur_path.pop()
 
+    topo_sort_util.indent = topo_sort_util.indent[:-4]
     # Push current vertex to stack which stores result
+    # print(f'{topo_sort_util.indent}Stack: {g.name}')
     stack.insert(0, g)
+
+
+topo_sort_util.indent = ""
 
 
 def topo_sort(dag):
     # Mark all the vertices as not visited
-    visited = [False] * len(dag)
     stack = []
+    visited = set()
+    cur_path = []
 
     # for i, g in enumerate(dag):
     #     if not g.in_ports:
@@ -84,9 +107,9 @@ def topo_sort(dag):
 
     # Call the recursive helper function to store Topological
     # Sort starting from all vertices one by one
-    for i, g in enumerate(dag):
-        if not visited[i]:
-            topo_sort_util(i, g, dag, visited, stack)
+    for g in dag:
+        if g not in visited:
+            topo_sort_util(g, dag, visited, stack, cur_path)
 
     return stack
 
@@ -117,34 +140,37 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
         for g in self.sim_map:
             dag[g] = []
+            g.phase = 'forward'
             for p in g.out_ports:
                 dag[g].extend(
                     [port.gear for port in get_consumer_tree(p.producer)])
 
         gear_order = topo_sort(dag)
-        # print("-"*60)
+        # print("-" * 60)
         # print("Topological order:")
         # for g in gear_order:
         #     print(g.name)
 
-        # print("-"*60)
+        # print("-" * 60)
+
+        # raise
 
         self.sim_gears = [self.sim_map[g] for g in gear_order]
-        self.tasks = {g: g.run() for g in self.sim_gears}
-        self.task_data = {g: None for g in self.sim_gears}
+        self.tasks = {g: g.run() for g in set(self.sim_gears)}
+        self.task_data = {g: None for g in set(self.sim_gears)}
 
     def call_soon(self, callback, fut):
         callback(fut)
 
     def future_done(self, fut):
-        sim_gear, join = self.wait_list.pop(fut)
+        sim_gear, phase = self.wait_list.pop(fut)
         if fut.cancelled():
             # Interface that sim_gear waited on is done, so we need to finish
             # the sim_gear too
             self.schedule_to_finish(sim_gear)
         else:
             # If sim_gear was waiting for ack
-            if join:
+            if phase == 'back':
                 self.back_ready.add(sim_gear)
             else:
                 self.forward_ready.add(sim_gear)
@@ -175,11 +201,12 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             self.cur_gear = registry('gear/hier_root')
             self.back_ready.discard(sim_gear)
             self.forward_ready.discard(sim_gear)
+            self.delta_ready.discard(sim_gear)
             bind('gear/current_module', self.cur_gear)
 
     def run_gear(self, sim_gear, ready):
 
-        self.cur_gear.phase = 'forward'
+        # self.cur_gear.phase = 'forward'
 
         if ready is self.forward_ready:
             before_event = self.events['before_call_forward']
@@ -197,8 +224,9 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             self.done.add(sim_gear)
         else:
             if isinstance(data, SimFuture):
-                self.wait_list[data] = (sim_gear,
-                                        self.cur_gear.phase == 'back')
+                self.wait_list[data] = (sim_gear, self.cur_gear.phase)
+            else:
+                self.delta_ready.add(sim_gear)
 
             self.task_data[sim_gear] = data
         finally:
@@ -206,14 +234,13 @@ class EventLoop(asyncio.events.AbstractEventLoop):
                 after_event(self, sim_gear)
 
     def maybe_run_gear(self, sim_gear, ready):
-        if sim_gear not in ready:
-            return
-
-        ready.remove(sim_gear)
+        ready.discard(sim_gear)
+        self.delta_ready.discard(sim_gear)
 
         self.cur_gear = sim_gear.gear
         bind('gear/current_module', self.cur_gear)
 
+        # print(f'{self.phase}: {sim_gear.gear.name}')
         self.run_gear(sim_gear, ready)
 
         self.cur_gear = registry('gear/hier_root')
@@ -227,10 +254,12 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         start_time = time.time()
 
         sim_log().info("-------------- Simulation start --------------")
-        while self.forward_ready or self.back_ready or self._schedule_to_finish:
+        while (self.forward_ready or self.back_ready or self.delta_ready
+               or self._schedule_to_finish):
             self.phase = 'forward'
             for sim_gear in self.sim_gears:
-                if sim_gear in self.forward_ready:
+                if ((sim_gear in self.forward_ready)
+                        or (sim_gear in self.delta_ready)):
                     self.maybe_run_gear(sim_gear, self.forward_ready)
 
             self.phase = 'delta'
@@ -244,7 +273,8 @@ class EventLoop(asyncio.events.AbstractEventLoop):
                     self._finish(sim_gear)
                     self._schedule_to_finish.remove(sim_gear)
 
-                if sim_gear in self.back_ready:
+                if ((sim_gear in self.back_ready)
+                        or (sim_gear in self.delta_ready)):
                     self.maybe_run_gear(sim_gear, self.back_ready)
 
             self.phase = 'cycle'
@@ -278,6 +308,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         self.wait_list = {}
         self.forward_ready = set(self.sim_gears)
         self.back_ready = set()
+        self.delta_ready = set()
         self._schedule_to_finish = set()
         self.done = set()
 
@@ -287,7 +318,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
         self.events['before_setup'](self)
 
-        for sim_gear in self.sim_gears:
+        for sim_gear in set(self.sim_gears):
             self.cur_gear = sim_gear.gear
             bind('gear/current_module', self.cur_gear)
             sim_gear.setup()
