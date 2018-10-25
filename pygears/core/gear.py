@@ -346,11 +346,14 @@ class Gear(NamedHierNode):
             else:
                 out_dtype = self.params['return']
 
-        if (len(self.outnames) == 0) and (len(out_dtype) == 1):
-            self.outnames.append('dout')
-        else:
-            for i in range(len(self.outnames), len(out_dtype)):
-                self.outnames.append(f'dout{i}')
+        dflt_dout_name = registry('gear/naming/default_out_name')
+        for i in range(len(self.outnames), len(out_dtype)):
+            if func_ret and hasattr(func_ret[i], 'var_name'):
+                self.outnames.append(func_ret[i].var_name)
+            else:
+                self.outnames.append(
+                    dflt_dout_name
+                    if len(out_dtype) == 1 else f'{dflt_dout_name}{i}')
 
         self.out_ports = [
             OutPort(self, i, name) for i, name in enumerate(self.outnames)
@@ -522,7 +525,7 @@ def module():
 class GearPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        safe_bind('gear/naming', {})
+        safe_bind('gear/naming', {'default_out_name': 'dout'})
         safe_bind('gear/hier_root', NamedHierNode(''))
         safe_bind('gear/current_module', cls.registry['gear']['hier_root'])
         safe_bind('gear/code_map', [])
