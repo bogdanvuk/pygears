@@ -422,7 +422,7 @@
 if (window.location.protocol != "file:") {
     var gif = new SuperGif({
         gif: $("div.gifplayer").find("img")[0],
-        max_width: $("div.gifplayer").find("img")[0],
+        max_width: $("div.gifplayer").find("img")[0].offsetWidth,
         loop_mode: 'auto',
         auto_play: false,
         draw_while_loading: false,
