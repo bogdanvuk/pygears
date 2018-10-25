@@ -420,9 +420,17 @@
 <script type="text/javascript" src="../_static/libgif.js"></script>
 <script>
 if (window.location.protocol != "file:") {
+
+     var img_elem = $("div.gifplayer").find("img");
+
+     var img_clone = img_elem.clone().appendTo('.section:first');
+     img_clone.show();
+     var width = img_clone[0].offsetWidth;
+     img_clone.remove();
+
     var gif = new SuperGif({
-        gif: $("div.gifplayer").find("img")[0],
-        max_width: $("div.gifplayer").find("img")[0].offsetWidth,
+        gif: img_elem[0],
+        max_width: width,
         loop_mode: 'auto',
         auto_play: false,
         draw_while_loading: false,
@@ -494,7 +502,7 @@ if (window.location.protocol != "file:") {
 </pre></div>
 </div>
 
-</div><p data-verbosity="3" hidden="true">In my case, I forgot to <span class="xref std std-ref" data-verbosity="3" hidden="true">install Verilator</span> and add it to the path, so my <code class="docutils literal notranslate" data-verbosity="3" hidden="true"><span class="pre">verilate.log</span></code> showed that I had no <code class="docutils literal notranslate" data-verbosity="3" hidden="true"><span class="pre">verilator</span></code> executable on the path, which I needed to amend:</p>
+</div><p data-verbosity="3" hidden="true">In my case, I forgot to <a class="reference external" data-verbosity="3" hidden="true" href="https://www.pygears.org/install.html#installing-verilator" title="(in PyGears v0.1.1)"><span class="xref std std-ref" data-verbosity="3" hidden="true">install Verilator</span></a> and add it to the path, so my <code class="docutils literal notranslate" data-verbosity="3" hidden="true"><span class="pre">verilate.log</span></code> showed that I had no <code class="docutils literal notranslate" data-verbosity="3" hidden="true"><span class="pre">verilator</span></code> executable on the path, which I needed to amend:</p>
 <div hidden data-verbosity=3>
 <div class="highlight-bash notranslate" data-verbosity="3" hidden="true"><div class="highlight"><pre><span></span>sh: <span class="m">1</span>: verilator: not found
 </pre></div>
