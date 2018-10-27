@@ -1,26 +1,47 @@
-# ===========================================================================
-# Logger usage:
-#
-# To add new logger:
-#  - create CustomLog instance
-#  - create <name>_log() wrapper function
-#
-# To overwrite default behaviour:
-#  - change appropriate values in registry(<name>Log)[verbosity][action]
-#    - verbosity: error or warning
-#    - action: exception or debug
-#    For example: registry('coreLog')['error']['exception'] = False
-#  - to print traceback on fail: registry(<name>Log)['print_traceback'] = True
-#
-# To change verbosity of displayed messages set the desired level:
-#   For example: set_log_level('core', logging.INFO) or
-#     registry(<name>Log)['level'] = logging.INFO
-#
-# ===========================================================================
+"""This module implements various logging facilities for the PyGears framework.
+It is a wrapper around standard Python `logging
+<https://docs.python.org/library/logging.html>`__ but provides some additional
+features like:
+
+- automatic exception raising when logging errors and warnings,
+- customized stack trace printing
+- logging to temporary files
+- integration with PyGears registry for configuration
+
+To register a new logger create a :class:`CustomLog` instance by specifying the
+logger name and the default logging level:
+
+>>> CustomLog('core', log.WARNING)
+
+.. _levels:
+
+Logging Levels
+--------------
+
+The numeric values of logging levels are given in the following table.
+
++--------------+---------------+
+| Level        | Numeric value |
++==============+===============+
+| ``CRITICAL`` | 50            |
++--------------+---------------+
+| ``ERROR``    | 40            |
++--------------+---------------+
+| ``WARNING``  | 30            |
++--------------+---------------+
+| ``INFO``     | 20            |
++--------------+---------------+
+| ``DEBUG``    | 10            |
++--------------+---------------+
+| ``NOTSET``   | 0             |
++--------------+---------------+
+
+"""
 
 import os
 import copy
 import logging
+from logging import INFO, WARNING, ERROR, DEBUG
 import sys
 import tempfile
 from functools import partial
@@ -71,9 +92,9 @@ class LogWrap:
             f.write(delim)
 
     def warning(self, message, *args, **kws):
-        if self.logger.isEnabledFor(logging.WARNING):
+        if self.logger.isEnabledFor(WARNING):
             severity = 'warning'
-            self.logger._log(logging.WARNING, message, args, **kws)
+            self.logger._log(WARNING, message, args, **kws)
             self.stack_trace(severity, message)
             self.severity_action(severity, message)
 
@@ -90,7 +111,7 @@ class LogFmtFilter(logging.Filter):
         record.stack_file = ''
         record.err_file = ''
 
-        if record.levelno > 20:  # > INFO
+        if record.levelno > INFO:
             stack_traceback_fn = registry('logger/stack_traceback_fn')
             if os.path.exists(stack_traceback_fn):
                 stack_num = sum(1 for line in open(stack_traceback_fn))
@@ -103,15 +124,58 @@ class LogFmtFilter(logging.Filter):
 
 
 class CustomLog:
+    '''PyGears integrated logger class.
+
+    Args:
+        name: logger name
+        verbosity: default logging level:
+
+    CustomLog instances are customizable via :samp:`logger/{logger_name}`
+    :ref:`registry <registry:registry>` subtree. The logger instance registry subtree
+    contains the following configuration variables:
+
+    - ``level`` (int): All messages that are logged with a verbosity level
+      below this configured ``level`` value will be discarded. See
+      :ref:`levels` for a list of levels.
+    - ``warning``: Configuration for logging at ``WARNING`` level
+
+      - ``warning/exception`` (bool): If set to ``True``, an exception will be
+        raised whenever logging the message at ``WARNING`` level
+
+      - ``warning/debug`` (bool): If set to ``True``, whenever logging the
+        message at ``WARNING`` level the debugger will be started and execution
+        paused
+
+    - ``error``: Configuration for logging at ``ERROR`` level.
+
+      - ``error/exception`` (bool): If set to ``True``, an exception will be
+        raised whenever logging the message at ``ERROR`` level
+
+      - ``error/debug`` (bool): If set to ``True``, whenever logging the
+        message at ``ERROR`` level the debugger will be started and execution
+        paused
+
+    - ``print_traceback`` (bool): If set to ``True``, the traceback will be
+      printed along with the log message.
+
+    Sets the verbosity level for the ``core`` logger at ``INFO`` level:
+
+    >>> bind('logger/core/level', INFO)
+
+    Configures the ``typing`` logger to throw exception on warnings:
+
+    >>> bind('logger/typing/warning/exception', True)
+
+    '''
     dflt_action = {'debug': False, 'exception': False}
     dflt_severity = {
         'print_traceback': True,
         'warning': copy.deepcopy(dflt_action),
         'error': copy.deepcopy(dflt_action),
-        'level': logging.WARNING
+        'level': WARNING
     }
 
-    def __init__(self, name, verbosity=logging.INFO):
+    def __init__(self, name, verbosity=INFO):
         self.name = name
         self.verbosity = verbosity
 
@@ -157,11 +221,11 @@ class LogPlugin(PluginBase):
         tf = tempfile.NamedTemporaryFile(delete=False)
         safe_bind('logger/stack_traceback_fn', tf.name)
 
-        CustomLog('core', logging.WARNING)
-        CustomLog('typing', logging.WARNING)
-        CustomLog('util', logging.WARNING)
-        CustomLog('gear', logging.WARNING)
-        CustomLog('conf', logging.WARNING)
+        CustomLog('core', WARNING)
+        CustomLog('typing', WARNING)
+        CustomLog('util', WARNING)
+        CustomLog('gear', WARNING)
+        CustomLog('conf', WARNING)
 
 
 def core_log():

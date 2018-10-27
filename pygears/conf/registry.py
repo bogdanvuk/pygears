@@ -62,6 +62,19 @@ class PluginBase:
 
 
 def registry(key_path):
+    """Retrieves a value from registry at the location designated by ``key_path``.
+
+    Args:
+       key_path: a UNIX style path without leading '/'
+
+    **Example** - Obtain a list of directory paths where SystemVerilog
+    generator will look for the SystemVerilog implementations of the gears:
+
+    >>> registry('svgen/sv_paths')
+    ['/tools/home/.pygears/svlib', '/tools/home/pygears/pygears/common/svlib', '/tools/home/pygears/pygears/cookbook/svlib']
+
+    """
+
     # if there is no need to match anything (no wildcards)
     if not any(c in key_path for c in wildcard_list):
         return nested_get(PluginBase.registry, *key_path.split(delimiter))
@@ -96,6 +109,19 @@ def bind_by_path(key_path, value):
 
 
 def bind(key_pattern, value):
+    """Sets a new ``value`` for the registry location designated by ``key_path``.
+
+    Args:
+       key_path: a UNIX style path without leading '/'
+       value: value to set
+
+    **Example** - configure the simulator not to throw exeptions on simulation
+    errors::
+
+        bind('logger/sim/error/exception', False)
+
+    """
+
     reg = PluginBase.registry
 
     # if there is no need to match anything (no wildcards)

@@ -29,10 +29,10 @@ extensions = [
     'bdp.sphinxext.bdpfigure',
 ]
 
-# intersphinx_mapping = {
-#     'pygears': ('/tools/home/pygears/docs/manual/_build/html/', None)
-# }
-intersphinx_mapping = {'pygears': ('https://www.pygears.org', None)}
+intersphinx_mapping = {
+    'pygears': ('../', '/tools/home/pygears/docs/manual/_build/html/objects.inv')
+}
+# intersphinx_mapping = {'pygears': ('https://www.pygears.org', None)}
 # intersphinx_timeout = 10
 
 site_url = "https://www.pygears.org/blog/"
@@ -204,3 +204,7 @@ node {#7}
   }
 }
 '''
+
+
+def setup(app):
+    app.add_stylesheet('custom.css')

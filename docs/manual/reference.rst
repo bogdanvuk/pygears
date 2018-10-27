@@ -1,6 +1,17 @@
 Reference
 =========
 
+Core
+----
+
+Infrastructure
+--------------
+
+.. toctree::
+   :maxdepth: 2
+
+   conf/log
+
 Typing
 ------
 

@@ -1,7 +1,7 @@
 import inspect
 import asyncio
 import atexit
-from pygears.conf.err import register_exit_hook
+from pygears.conf.trace import register_exit_hook
 from pygears import registry, GearDone
 from pygears.sim import clk
 from pygears.sim.sim import schedule_to_finish

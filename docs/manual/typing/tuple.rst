@@ -1,5 +1,5 @@
 Tuple
------
+=====
 
 .. automodule:: pygears.typing.tuple
    :no-members:

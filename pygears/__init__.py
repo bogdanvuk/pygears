@@ -7,7 +7,8 @@ from asyncio import CancelledError as GearDone
 from asyncio.queues import QueueEmpty
 
 # form pygears.conf import only for legacy compatibility
-from pygears.conf import PluginBase, bind, registry, clear, pygears_excepthook, ErrReportLevel, safe_bind
+from pygears.conf import PluginBase, bind, registry, clear
+from pygears.conf import pygears_excepthook, TraceLevel, safe_bind
 import pygears.conf
 
 from pygears.util.find import find
@@ -37,7 +38,7 @@ print_registry()
 sys.excepthook = pygears_excepthook
 
 __all__ = [
-    'registry', 'ErrReportLevel', 'bind', 'gear', 'clear', 'Intf',
+    'registry', 'TraceLevel', 'bind', 'gear', 'clear', 'Intf',
     'PluginBase', 'find', 'MultiAlternativeError', 'GearDone', 'QueueEmpty',
     'module', 'safe_bind'
 ]

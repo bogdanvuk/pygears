@@ -101,6 +101,7 @@ Contents
    install
    introduction
    typing
+   registry
    setup
    examples
    reference
