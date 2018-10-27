@@ -4,8 +4,6 @@ import os
 import pprint
 import runpy
 
-import yaml
-
 from .log import conf_log
 from .registry import PluginBase, bind
 from .utils import dict_generator
@@ -45,18 +43,25 @@ class RCSettings:
         return search_dirs
 
     def find_rc(self, dirname):
-        rc_path = os.path.join(dirname, PYGEARSRC + '.py')
+        rc_path = os.path.join(dirname, f'{PYGEARSRC}.py')
         if (os.path.exists(rc_path)):
             runpy.run_path(rc_path)
             return
 
         conf = None
-        rc_path = os.path.join(dirname, PYGEARSRC + '.yaml')
+        rc_path = os.path.join(dirname, f'{PYGEARSRC}.yaml')
         if (os.path.exists(rc_path)):
             with open(rc_path) as f:
-                conf = yaml.safe_load(f)
+                try:
+                    import yaml
+                    conf = yaml.safe_load(f)
+                except ImportError:
+                    conf_log().warning(
+                        f'PyGears YAML configuration file found'
+                        f'at "{rc_path}", but yaml python package not '
+                        f'installed')
 
-        rc_path = os.path.join(dirname, PYGEARSRC + '.json')
+        rc_path = os.path.join(dirname, f'{PYGEARSRC}.json')
         if (os.path.exists(rc_path)):
             with open(rc_path) as f:
                 conf = json.load(f)
