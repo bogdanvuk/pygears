@@ -2,10 +2,66 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
   <title type="text">PyGears - Posts in Release</title>
   <id>https://www.pygears.org/blog/category/release/atom.xml</id>
-  <updated>2018-10-07T00:00:00Z</updated>
+  <updated>2018-10-28T00:00:00Z</updated>
   <link href="https://www.pygears.org/" />
   <link href="https://www.pygears.org/blog/category/release/atom.xml" rel="self" />
   <generator uri="http://ablog.readthedocs.org" version="0.9.2">ABlog</generator>
+  <entry xml:base="https://www.pygears.org/blog/category/release/atom.xml">
+    <title type="text">PyGears 0.1.2 released</title>
+    <id>https://www.pygears.org/release/v0.1.2.html</id>
+    <updated>2018-10-28T00:00:00Z</updated>
+    <published>2018-10-28T00:00:00Z</published>
+    <link href="https://www.pygears.org/release/v0.1.2.html" />
+    <author>
+      <name>Bogdan Vukobratović</name>
+    </author>
+    <content type="html">&lt;div class=&quot;section&quot; id=&quot;pygears-0-1-2-released&quot;&gt;
+
+&lt;div class=&quot;section&quot; id=&quot;features&quot;&gt;
+&lt;h2&gt;Features&lt;/h2&gt;
+&lt;ul class=&quot;simple&quot;&gt;
+&lt;li&gt;&lt;p&gt;Add support for user configuration &lt;code class=&quot;docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;.pygears.py&lt;/span&gt;&lt;/code&gt; files that are loaded at startup. These files can be local to the project or located in &lt;code class=&quot;docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;~/.pygears.py&lt;/span&gt;&lt;/code&gt; and active globally.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;Registry paths can be accessed by Unix path strings (e.g. &lt;code class=&quot;docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;logger/svgen/print_traceback&lt;/span&gt;&lt;/code&gt;), take a look at &lt;a class=&quot;reference external&quot; href=&quot;../../../registry.html#registry&quot; title=&quot;(in PyGears v0.1.2)&quot;&gt;&lt;span class=&quot;xref std std-ref&quot;&gt;registry&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;Wildcards can be used in registry paths, e.g. &lt;code class=&quot;docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;logger/*/print_traceback&lt;/span&gt;&lt;/code&gt;&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;Add support for user configuration files in JSON and YAML formats&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;Loggers are organized better and are configured more easily. Checkout docs for &lt;a class=&quot;reference external&quot; href=&quot;../../../conf/log.html#module-pygears.conf.log&quot; title=&quot;(in PyGears v0.1.2)&quot;&gt;&lt;span class=&quot;xref std std-ref&quot;&gt;Logger&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;Added generation of Questa run script in SystemVerilog generation subsystem&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;Added Python implementation for the following gears from the gear library: &lt;code class=&quot;docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;accumulator&lt;/span&gt;&lt;/code&gt;, &lt;code class=&quot;docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;clip&lt;/span&gt;&lt;/code&gt;, &lt;code class=&quot;docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;iceil&lt;/span&gt;&lt;/code&gt;, &lt;code class=&quot;docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;max_gears&lt;/span&gt;&lt;/code&gt;, &lt;code class=&quot;docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;qlen_cnt&lt;/span&gt;&lt;/code&gt;, &lt;code class=&quot;docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;reverse&lt;/span&gt;&lt;/code&gt;, &lt;code class=&quot;docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;take&lt;/span&gt;&lt;/code&gt;, &lt;code class=&quot;docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;tr_cnt&lt;/span&gt;&lt;/code&gt;, &lt;code class=&quot;docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;unary&lt;/span&gt;&lt;/code&gt; and &lt;code class=&quot;docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;valve&lt;/span&gt;&lt;/code&gt;&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;code class=&quot;docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;width_reductor&lt;/span&gt;&lt;/code&gt; is now version of &lt;code class=&quot;docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;serialize&lt;/span&gt;&lt;/code&gt; gear when active field is supplied&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;Gears can now be scheduled multiple times within forward/backward phases, which handles the problems with fictive cycles in simulation graph when multiple gears are combined to be simulated in external RTL simulator.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;Output interfaces are now named after the returned variable names in hierarchical gears&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class=&quot;section&quot; id=&quot;infrastructure&quot;&gt;
+&lt;h2&gt;Infrastructure&lt;/h2&gt;
+&lt;ul class=&quot;simple&quot;&gt;
+&lt;li&gt;&lt;p&gt;Move infrastructure modules to &lt;code class=&quot;docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;conf&lt;/span&gt;&lt;/code&gt; subpackage.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;Allow for modules to specify callbacks to be triggered when their configuration is changed in registry&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;Module &lt;code class=&quot;docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;err.py&lt;/span&gt;&lt;/code&gt; has been removed and its functionality has been moved to &lt;code class=&quot;docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;trace.py&lt;/span&gt;&lt;/code&gt;&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class=&quot;section&quot; id=&quot;bug-fixes&quot;&gt;
+&lt;h2&gt;Bug-fixes&lt;/h2&gt;
+&lt;ul class=&quot;simple&quot;&gt;
+&lt;li&gt;&lt;p&gt;Fix __str__ for generic Queue and Array.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;Correct unpatch-ing of PDB when &lt;code class=&quot;docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;trace/level&lt;/span&gt;&lt;/code&gt; is set from &lt;code class=&quot;docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;TraceLevel.user&lt;/span&gt;&lt;/code&gt; to &lt;code class=&quot;docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;TraceLevel.debug&lt;/span&gt;&lt;/code&gt;&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;Fix clashing between class and instance methods &lt;code class=&quot;xref py py-meth docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;Tuple.replace&lt;/span&gt;&lt;/code&gt;&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;Turn-off pretty sieve naming by default since it creates performance issues for large designs&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;Make importing of &lt;code class=&quot;docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;yaml&lt;/span&gt;&lt;/code&gt; package optional, since the package doesn’t come with Python and needs to be installed separately.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class=&quot;section&quot; id=&quot;documentation&quot;&gt;
+&lt;h2&gt;Documentation&lt;/h2&gt;
+&lt;ul class=&quot;simple&quot;&gt;
+&lt;li&gt;&lt;p&gt;Document PyGears &lt;a class=&quot;reference external&quot; href=&quot;../../../registry.html#registry&quot; title=&quot;(in PyGears v0.1.2)&quot;&gt;&lt;span class=&quot;xref std std-ref&quot;&gt;registry&lt;/span&gt;&lt;/a&gt;.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a class=&quot;reference external&quot; href=&quot;../../../typing/tuple.html&quot; title=&quot;(in PyGears v0.1.2)&quot;&gt;&lt;code class=&quot;docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;Tuple&lt;/span&gt;&lt;/code&gt;&lt;/a&gt; documented.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;Separate pages and additional documentation for &lt;a class=&quot;reference external&quot; href=&quot;../../../typing/integer.html&quot; title=&quot;(in PyGears v0.1.2)&quot;&gt;&lt;code class=&quot;docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;Integer&lt;/span&gt;&lt;/code&gt;&lt;/a&gt;, &lt;a class=&quot;reference external&quot; href=&quot;../../../typing/uint.html&quot; title=&quot;(in PyGears v0.1.2)&quot;&gt;&lt;code class=&quot;docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;Uint&lt;/span&gt;&lt;/code&gt;&lt;/a&gt; and &lt;a class=&quot;reference external&quot; href=&quot;../../../typing/int.html&quot; title=&quot;(in PyGears v0.1.2)&quot;&gt;&lt;code class=&quot;docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;Int&lt;/span&gt;&lt;/code&gt;&lt;/a&gt; types.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;Document &lt;a class=&quot;reference external&quot; href=&quot;../../../gears/simulation_gears.html#pygears.sim.modules.drv&quot; title=&quot;(in PyGears v0.1.2)&quot;&gt;&lt;code class=&quot;xref py py-func docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;drv&lt;/span&gt;&lt;/code&gt;&lt;/a&gt; gear.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+</content>
+  </entry>
   <entry xml:base="https://www.pygears.org/blog/category/release/atom.xml">
     <title type="text">PyGears 0.1.1 released</title>
     <id>https://www.pygears.org/release/v0.1.1.html</id>

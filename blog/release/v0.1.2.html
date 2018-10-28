@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>PyGears 0.1.1 released &#8212; PyGears - HW Design: A Functional Approach</title>
+    <title>PyGears 0.1.2 released &#8212; PyGears - HW Design: A Functional Approach</title>
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
@@ -15,12 +15,12 @@
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="canonical" href="https://www.pygears.org/release/v0.1.1.html" />
+    <link rel="canonical" href="https://www.pygears.org/release/v0.1.2.html" />
     <link rel="shortcut icon" href="../_static/pygears.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="PyGears 0.1.2 released" href="v0.1.2.html" />
-    <link rel="prev" title="PyGears blog" href="../index.html" />
+    <link rel="next" title="RISC-V Blog Series Introduction" href="../riscv/introduction.html" />
+    <link rel="prev" title="PyGears 0.1.1 released" href="v0.1.1.html" />
   
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
@@ -51,43 +51,48 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="pygears-0-1-1-released">
-<h1>PyGears 0.1.1 released<a class="headerlink" href="#pygears-0-1-1-released" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="pygears-0-1-2-released">
+<h1>PyGears 0.1.2 released<a class="headerlink" href="#pygears-0-1-2-released" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="features">
 <h2>Features<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>Add less-then ‘&lt;’ operator</p></li>
-<li><p>Offer standardized solution for various logging needs</p></li>
-<li><p>Provide option to skip all PyGears framework related frames in PDB debugger</p></li>
-<li><p>Add <a class="reference external" href="https://github.com/bogdanvuk/pygears/blob/master/pygears/cookbook/unary.py">unary</a> gear to the cookbook library, which returns the unary representation of a binary number.</p></li>
-<li><p>Speed-up the PyGears simulator by using asycio.future</p></li>
+<li><p>Add support for user configuration <code class="docutils literal notranslate"><span class="pre">.pygears.py</span></code> files that are loaded at startup. These files can be local to the project or located in <code class="docutils literal notranslate"><span class="pre">~/.pygears.py</span></code> and active globally.</p></li>
+<li><p>Registry paths can be accessed by Unix path strings (e.g. <code class="docutils literal notranslate"><span class="pre">logger/svgen/print_traceback</span></code>), take a look at <a class="reference external" href="../../registry.html#registry" title="(in PyGears v0.1.2)"><span class="xref std std-ref">registry</span></a></p></li>
+<li><p>Wildcards can be used in registry paths, e.g. <code class="docutils literal notranslate"><span class="pre">logger/*/print_traceback</span></code></p></li>
+<li><p>Add support for user configuration files in JSON and YAML formats</p></li>
+<li><p>Loggers are organized better and are configured more easily. Checkout docs for <a class="reference external" href="../../conf/log.html#module-pygears.conf.log" title="(in PyGears v0.1.2)"><span class="xref std std-ref">Logger</span></a></p></li>
+<li><p>Added generation of Questa run script in SystemVerilog generation subsystem</p></li>
+<li><p>Added Python implementation for the following gears from the gear library: <code class="docutils literal notranslate"><span class="pre">accumulator</span></code>, <code class="docutils literal notranslate"><span class="pre">clip</span></code>, <code class="docutils literal notranslate"><span class="pre">iceil</span></code>, <code class="docutils literal notranslate"><span class="pre">max_gears</span></code>, <code class="docutils literal notranslate"><span class="pre">qlen_cnt</span></code>, <code class="docutils literal notranslate"><span class="pre">reverse</span></code>, <code class="docutils literal notranslate"><span class="pre">take</span></code>, <code class="docutils literal notranslate"><span class="pre">tr_cnt</span></code>, <code class="docutils literal notranslate"><span class="pre">unary</span></code> and <code class="docutils literal notranslate"><span class="pre">valve</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">width_reductor</span></code> is now version of <code class="docutils literal notranslate"><span class="pre">serialize</span></code> gear when active field is supplied</p></li>
+<li><p>Gears can now be scheduled multiple times within forward/backward phases, which handles the problems with fictive cycles in simulation graph when multiple gears are combined to be simulated in external RTL simulator.</p></li>
+<li><p>Output interfaces are now named after the returned variable names in hierarchical gears</p></li>
 </ul>
 </div>
 <div class="section" id="infrastructure">
 <h2>Infrastructure<a class="headerlink" href="#infrastructure" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>Factor-out pygears-tools to a <a class="reference external" href="https://github.com/bogdanvuk/pygears-tools">separate repository</a></p></li>
-<li><p>Add <a class="reference external" href="https://www.vagrantup.com/">Vagrant</a> scripts for testing different PyGears installation methods on different supported OSs</p></li>
+<li><p>Move infrastructure modules to <code class="docutils literal notranslate"><span class="pre">conf</span></code> subpackage.</p></li>
+<li><p>Allow for modules to specify callbacks to be triggered when their configuration is changed in registry</p></li>
+<li><p>Module <code class="docutils literal notranslate"><span class="pre">err.py</span></code> has been removed and its functionality has been moved to <code class="docutils literal notranslate"><span class="pre">trace.py</span></code></p></li>
 </ul>
 </div>
 <div class="section" id="bug-fixes">
 <h2>Bug-fixes<a class="headerlink" href="#bug-fixes" title="Permalink to this headline">¶</a></h2>
-<ul>
-<li><p>Echo example can now be simulated completely in Python without an RTL simulator. Simulator is still in experimental stage, since not all gears from the libraries are supported.</p>
-<p>This mode can be invoked when running <a class="reference external" href="https://www.pygears.org/echo.html#running-simulation">plop_test_wav_echo_sim</a> by setting <code class="docutils literal notranslate"><span class="pre">cosim=False</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">wav_echo_sim</span><span class="p">(</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s1">&#39;plop.wav&#39;</span><span class="p">),</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;build&#39;</span><span class="p">,</span> <span class="s1">&#39;plop_echo.wav&#39;</span><span class="p">),</span>
-    <span class="n">feedback_gain</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span>
-    <span class="n">delay</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span>
-    <span class="n">cosim</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="n">stereo</span><span class="o">=</span><span class="kc">False</span>
-<span class="p">)</span>
-</pre></div>
+<ul class="simple">
+<li><p>Fix __str__ for generic Queue and Array.</p></li>
+<li><p>Correct unpatch-ing of PDB when <code class="docutils literal notranslate"><span class="pre">trace/level</span></code> is set from <code class="docutils literal notranslate"><span class="pre">TraceLevel.user</span></code> to <code class="docutils literal notranslate"><span class="pre">TraceLevel.debug</span></code></p></li>
+<li><p>Fix clashing between class and instance methods <code class="xref py py-meth docutils literal notranslate"><span class="pre">Tuple.replace</span></code></p></li>
+<li><p>Turn-off pretty sieve naming by default since it creates performance issues for large designs</p></li>
+<li><p>Make importing of <code class="docutils literal notranslate"><span class="pre">yaml</span></code> package optional, since the package doesn’t come with Python and needs to be installed separately.</p></li>
+</ul>
 </div>
-</li>
-<li><p>Fix <a class="reference external" href="https://github.com/bogdanvuk/pygears/blob/master/pygears/cookbook/rng.py">rng</a> for irregular cases where the counting range is not divisible by the step.</p></li>
-<li><p>Fix ‘*’ and ‘+’ operations for Integer types</p></li>
+<div class="section" id="documentation">
+<h2>Documentation<a class="headerlink" href="#documentation" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Document PyGears <a class="reference external" href="../../registry.html#registry" title="(in PyGears v0.1.2)"><span class="xref std std-ref">registry</span></a>.</p></li>
+<li><p><a class="reference external" href="../../typing/tuple.html" title="(in PyGears v0.1.2)"><code class="docutils literal notranslate"><span class="pre">Tuple</span></code></a> documented.</p></li>
+<li><p>Separate pages and additional documentation for <a class="reference external" href="../../typing/integer.html" title="(in PyGears v0.1.2)"><code class="docutils literal notranslate"><span class="pre">Integer</span></code></a>, <a class="reference external" href="../../typing/uint.html" title="(in PyGears v0.1.2)"><code class="docutils literal notranslate"><span class="pre">Uint</span></code></a> and <a class="reference external" href="../../typing/int.html" title="(in PyGears v0.1.2)"><code class="docutils literal notranslate"><span class="pre">Int</span></code></a> types.</p></li>
+<li><p>Document <a class="reference external" href="../../gears/simulation_gears.html#pygears.sim.modules.drv" title="(in PyGears v0.1.2)"><code class="xref py py-func docutils literal notranslate"><span class="pre">drv</span></code></a> gear.</p></li>
 </ul>
 </div>
 </div>
@@ -100,16 +105,15 @@
 <div class="section">
   <span style="float: left;">
   
+  Previous: 
+  <a href="v0.1.1.html">
+    
+    PyGears 0.1.1 released
+  </a>
+  
   </span>
   <span>&nbsp;</span>
   <span style="float: right;">
-  
-  Next: 
-  <a href="v0.1.2.html">
-    PyGears 0.1.2 released
-    
-  </a>
-  </span>
   
 </div>
 
@@ -120,9 +124,9 @@
     <div id="disqus_thread"></div>
     <script type="text/javascript">
         var disqus_shortname = 'pygears';
-        var disqus_identifier = '/release/v0.1.1/';
-        var disqus_title = 'PyGears 0.1.1 released';
-        var disqus_url = 'https://www.pygears.org/release/v0.1.1';
+        var disqus_identifier = '/release/v0.1.2/';
+        var disqus_title = 'PyGears 0.1.2 released';
+        var disqus_url = 'https://www.pygears.org/release/v0.1.2';
 
         (function() {
             var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
@@ -171,7 +175,7 @@
   <h2>
   
   
-    07 October 2018
+    28 October 2018
   
   </h2>
 
@@ -223,7 +227,7 @@
     }());
     </script>
     
-    <a href="#disqus_thread" data-disqus-identifier="/release/v0.1.1/"> Comments</a>
+    <a href="#disqus_thread" data-disqus-identifier="/release/v0.1.2/"> Comments</a>
   </li>
   
   </ul>
@@ -234,9 +238,9 @@
   <ul>
     
     
-      <li><a href="v0.1.2.html">28 October - PyGears 0.1.2 released</a></li>
-    
       <li><a href="../riscv/setup.html">07 October - RISC-V Tools Setup</a></li>
+    
+      <li><a href="v0.1.1.html">07 October - PyGears 0.1.1 released</a></li>
     
       <li><a href="../riscv/introduction.html">06 October - RISC-V Blog Series Introduction</a></li>
     
@@ -308,7 +312,7 @@
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
       
       |
-      <a href="../_sources/release/v0.1.1.rst.txt"
+      <a href="../_sources/release/v0.1.2.rst.txt"
           rel="nofollow">Page source</a>
     </div>
 
