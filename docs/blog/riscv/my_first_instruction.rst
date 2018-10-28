@@ -6,7 +6,7 @@
    :class: highlight
 
 .. urlinclude::
-   :branch: 4b3c39d
+   :branch: a05abf3
    :github: bogdanvuk/pygears_riscv
 
 My First Instruction
@@ -33,7 +33,7 @@ For RV32I, a set of 32 registers is needed, named ``x0`` - ``x31``, where ``x0``
 Instruction format
 ------------------
 
-The ``addi`` instruction has an "Integer Register-Immediate" format, aka the "I-type" format shown on the image below. :v:`2` The instruction is executed by adding the value of the 12 bit immediate field ``imm`` to the value read from the register specified by the ``rs1`` field. The result is then truncated to ``XLEN`` bits and stored into the register specified by the ``rd`` field. 
+The ``addi`` instruction has an "Integer Register-Immediate" format, aka the "I-type" format shown below. :v:`2` The instruction is executed by adding the value of the 12 bit immediate field ``imm`` to the value read from the register specified by the ``rs1`` field. The result is then truncated to ``XLEN`` bits and stored into the register specified by the ``rd`` field. 
 
 .. figure:: images/integer-register-immediate-instruction.png
    :align: center
@@ -112,6 +112,7 @@ Let's dig deeper into those 6 lines of code. The :py:`@gear` statement is called
 Next, the `function prototype <https://en.wikipedia.org/wiki/Function_prototype>`__  declares the types of input interfaces the ``riscv`` gear accepts, namely: :py:`instruction: TInstructionI` and :py:`reg_data: Uint['xlen']`. So on the first interface ``riscv`` expects to see a flow of instructions of the "I-type" format, and on the second, the operation argument read from the register determined by the ``rs1`` field (``riscv`` gear will issue these read requests as we'll see in the moment). For the details on how PyGears implements interfaces in HDL, checkout the PyGears documentation section :ref:`One Interface <pygears:gears-interface>`. The ``riscv`` gear is implemented via the gear composition, so I needn't specify the output interface types since they will be determined by the interfaces returned from the ``riscv()`` function.
 
 In order to instantiate the ``riscv`` gear, all the input interfaces need to be specified as arguments to the ``riscv`` gear function. Inside the ``gear`` function, ``instruction`` and ``reg_data`` become local variables that bring the interface objects from the outside and distribute them to the internal gears. :v:`1` Image below shows the resulting processor structure and connection with its environment. :v:`2` The graph was auto-generated with the :giturl:`riscv_graph.py script <pygears_riscv/script/riscv_graph.py>`. 
+
 .. verbosity:: 1
 
 .. figure:: images/riscv_graph_addi.png
@@ -180,10 +181,8 @@ Next, I hook up the ``riscv`` and ``register_file`` gears in the manner shown on
 
 Finally, I connect ``riscv`` read and write request interfaces to the ``register_file`` gear, which gets instantiated and returns its output interface. Instead of it being fed to another gear or assigned to a variable, I use the pipe assign operator ``|=`` to instruct PyGears that this output interface is in fact the ``reg_rd_data`` interface I defined before. This closes the loop and everything is connected as shown on the block diagram.  
 
-.. verbosity:: 1
-
 Spike interface
-~~~~~~~~~~~~~~~
+---------------
 
 :v:`2` In my previous blog post :doc:`pygears:setup`, I showed how to implement a rudimentary interface for the `Spike <https://github.com/riscv/riscv-isa-sim/>`__ simulator that I plan to use as a reference ISA design. Now, I'll show how to put it to action for verifying the ``addi`` instruction implementation. :v:`1` I relocated the Spike interface class to :giturl:`pygears_riscv/verif/spike.py` and had to make one major change to accomodate for the RISC-V `ABI (Application Binary Interface) <https://en.wikipedia.org/wiki/Application_binary_interface>`__.
 
@@ -226,10 +225,8 @@ The first idea was to use the `li <https://github.com/riscv/riscv-asm-manual/blo
 
 So, I went with the approach described in the `Absolute Addressing <https://github.com/riscv/riscv-asm-manual/blob/master/riscv-asm.md#absolute-addressing>`__ section of the RISC-V assembly guide.
 
-.. verbosity:: 1
-
 Writing the first test
-~~~~~~~~~~~~~~~~~~~~~~
+----------------------
 
 For the start, I'll create one simple test as a proof of concept. To make it a bit more serious I'll use negative numbers as arguments to see whether sign extension works properly too.
 
@@ -248,10 +245,9 @@ Next, the :py:func:`riscv_instr_seq_env` function is called to create the verifi
 After the simulation is done, I print the resulting value of the register ``x1``, by casting its value to the :any:`Int[32] <typing/int>` type in order to print its signed representation. :v:`3` This is of course an ptional step and is useful to me only now at the beginning for the purpose of debugging the verification environment. I'll remove it later when I gain trust in my tests.
 
 Finally, I check whether the resulting register file state of my design matches the state Spike reported. If the register value mismatch is found, the ``assert`` exception will be raised and the test will fail. 
-.. verbosity:: 1
 
 Running the test
-~~~~~~~~~~~~~~~~
+----------------
 
 For running the tests for the PyGears framework, I've been using `nose <https://nose.readthedocs.io>`__, so I'll use it here too. :v:`2` I use a test runner since it allows me to run all my tests with a single command. It automatically searches the files in order to discover the test functions, and generates a nice report telling me how many tests passed and which of them failed. :v:`3` There are also options for running only a specific group of tests, run all tests from a single file or run a single test. While writing this blog post I discovered that nose is in maintenance mode, i.e it is not actively developed, and `pytest <https://docs.pytest.org>`__ is recommended as an alternative. Nevertheless, for now I'll continue using nose for this project too, since it has served me well and in order to switch to pytest, I would need to update some of my tests that invoke nose-specific API. I might revisit this decision in future if I find a compelling reason to switch to pytest.
 
@@ -269,9 +265,9 @@ In order to invoke the test with nose, you can navigate to the :giturl:`tests/te
 
 .. code-block:: bash
 
-   nosetests
+   nosetests "test_addi.py:test_addi"
 
-Nose should automatically discover ``test_addi()`` test function, run it and print the report:
+Nose should automatically find the ``test_addi()`` test function, run it and print the report:
 
 .. code-block:: python
 
@@ -287,7 +283,7 @@ Et voila! My RISC-V design is completely aligned with the Spike simulator! :v:`2
 
 .. code-block:: bash
 
-   nosetests -s
+   nosetests -s "test_addi.py:test_addi"
 
 Which prints the following:
 
@@ -307,10 +303,8 @@ Which prints the following:
 
 :v:`3` I profiled the test a bit and found out that the majority of the test run time is spent in retrieving the register file state from Spike, so I'll need to optimize it soon if I want to have an elaborate regression suit that runs in a reasonable amount of time. 
 
-.. verbosity:: 2
-
-PyGears pure-Python simulator
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:v:`2` PyGears pure-Python simulator
+------------------------------------
 
 .. verbosity:: 3
 
@@ -356,8 +350,8 @@ In the next timestep, ``drv`` realizes that there is no more data to produce, so
 
 :v:`3` Since this post is already too long, I'll show in some other post how the PyGears simulator can create waveforms, diagnose issues, how to use it with the Python debugger, etc.
 
-Simulating with Verilator
-~~~~~~~~~~~~~~~~~~~~~~~~~
+:v:`2` Simulating with Verilator
+--------------------------------
 
 One last section and I promise to let you go. I've written one more test in order to check whether the generated RTL code for the processor produces the correct results as well. I've placed the test in :giturl:`tests/test_instructions/test_addi.py`, inside ``test_addi_verilator()`` function. The test is identical to the ``test_addi()`` described in the section `Writing the first test`_, excepts that it set a ``sim_cls`` parameter for the ``riscv`` gear to ``SimVerilated``: :py:`find('/riscv').params['sim_cls'] = SimVerilated`. This instructs the PyGears simulator to use Verilator interface for ``riscv`` gear, which generates the RTL code, invokes Verilator to simulate it and makes it play well with the PyGears simulator. The last bit is important since the rest of the gears (``drv`` and ``register_file``) will still be simulated in pure Python.
 
@@ -512,7 +506,7 @@ Generated SystemVerilog can be found in the ``/tmp`` folder, since no output dir
   endmodule
 
 Conclusion
-~~~~~~~~~~
+----------
 
 Hey, I have my single-instruction RISC-V processor implemented in PyGears and verified with a simple test. It may seem that much needed to happen in order for the processor to support this one instruction. But most of the effort went into building the verification environment that I think is now really powerfull and I don't think much additional effort needs to be poured into it, besides adding the data and instruction memory modules. In fact, with only 5 lines of code, the RISC-V implementation decodes the instruction, performs the ALU operation and interfaces the register file, not bad for a 5-liner.    
 

@@ -70,9 +70,9 @@ def test_verilator_cosim():
     verilator_cosim(clip_stop=0)
 
 
-@with_setup(clear)
-def test_verilator_cosim_stop():
-    verilator_cosim(clip_stop=1)
+# @with_setup(clear)
+# def test_verilator_cosim_stop():
+#     verilator_cosim(clip_stop=1)
 
 
 def socket_cosim(clip_stop):

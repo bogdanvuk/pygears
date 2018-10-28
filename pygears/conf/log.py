@@ -210,6 +210,7 @@ class CustomLog:
 
     def set_default_logger(self):
         logger = logging.getLogger(self.name)
+        logger.handlers.clear()
         logger.setLevel(self.verbosity)
         ch = self.get_logger_handler()
         logger.addHandler(ch)

@@ -43,9 +43,7 @@ class PluginBase:
 
     @classmethod
     def clear(cls):
-        cls.registry.clear()
-        for subc in cls.subclasses:
-            subc.bind()
+        pass
 
     @classmethod
     def purge(cls):
@@ -140,7 +138,13 @@ def bind(key_pattern, value):
 
 
 def clear():
-    PluginBase.clear()
+    for subc in PluginBase.subclasses:
+        subc.clear()
+
+    PluginBase.registry.clear()
+
+    for subc in PluginBase.subclasses:
+        subc.bind()
 
 
 def load_plugin_folder(path):
