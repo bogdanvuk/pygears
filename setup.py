@@ -40,22 +40,17 @@ def readme():
 
 setup(
     name='pygears',
-    version='0.1.1',
+    version='0.1.2',
     description='Framework for functional hardware design approach',
     long_description=readme(),
-
-    # The project's main homepage.
     url='https://www.pygears.org',
     # download_url = '',
 
-    # Author details
     author='Bogdan Vukobratovic',
     author_email='bogdan.vukobratovic@gmail.com',
 
-    # Choose your license
     license='MIT',
 
-    # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
         'Development Status :: 4 - Beta',
         'Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)',

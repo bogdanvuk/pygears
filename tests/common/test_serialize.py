@@ -1,14 +1,16 @@
+from functools import partial
+
 from nose import with_setup
 
 from pygears import clear
-from pygears.common.serialize import serialize
+from pygears.common.serialize import serialize, TDin
 from pygears.cookbook.verif import directed, verif
 from pygears.sim import sim
 from pygears.sim.modules.drv import drv
 from pygears.sim.modules.sim_socket import SimSocket
 from pygears.sim.modules.verilator import SimVerilated
 from pygears.typing import Array, Uint
-from utils import skip_ifndef, prepare_result_dir
+from utils import prepare_result_dir, skip_ifndef
 
 
 @with_setup(clear)
@@ -25,6 +27,17 @@ def test_pygears_sim():
 
 
 @with_setup(clear)
+def test_pygears_sim_active():
+    no = 4
+    directed(
+        drv(t=TDin[16, no, 4], seq=[((3, ) * no, 7)]),
+        f=serialize,
+        ref=[[3, 3, 3]])
+
+    sim()
+
+
+@with_setup(clear)
 def test_socket_sim():
     skip_ifndef('SIM_SOCKET_TEST')
     brick_size = 4
@@ -32,7 +45,7 @@ def test_socket_sim():
     directed(
         drv(t=Array[Uint[16], brick_size],
             seq=[(i, ) * brick_size for i in seq_list]),
-        f=serialize(sim_cls=SimSocket),
+        f=serialize(sim_cls=partial(SimSocket, run=True)),
         ref=sorted(seq_list * brick_size))
 
     sim()
@@ -60,7 +73,7 @@ def test_socket_cosim():
     verif(
         drv(t=Array[Uint[16], brick_size],
             seq=[(i, ) * brick_size for i in seq_list]),
-        f=serialize(sim_cls=SimSocket),
+        f=serialize(sim_cls=partial(SimSocket, run=True)),
         ref=serialize(name='ref_model'))
 
     sim()

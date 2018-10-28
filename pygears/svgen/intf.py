@@ -1,7 +1,7 @@
 import fnmatch
 from string import Template
 
-from pygears import PluginBase, registry
+from pygears import PluginBase, registry, safe_bind
 from pygears.rtl.port import InPort, OutPort
 from pygears.svgen.util import svgen_typedef
 
@@ -34,7 +34,7 @@ class SVIntfGen:
 
         gen_dbg_intf = any(
             fnmatch.fnmatch(self.intf.parent.gear.name, p)
-            for p in registry('SVGenDebugIntfs'))
+            for p in registry('svgen/debug_intfs'))
 
         if self.intf.is_broadcast:
             inst.extend([
@@ -104,7 +104,7 @@ class SVIntfGen:
         if inst_name.endswith('_if_s'):
             inst_name = inst_name[:-len('_if_s')]
 
-        rst_name = 'local_rst' if registry("SVGenMap")[
+        rst_name = 'local_rst' if registry("svgen/map")[
             self.intf.parent].has_local_rst else 'rst'
 
         bc_context = {
@@ -126,4 +126,4 @@ class SVIntfGen:
 class SVGenIntfPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        cls.registry['SVGenDebugIntfs'] = []
+        safe_bind('svgen/debug_intfs', [])

@@ -1,4 +1,4 @@
-from pygears.registry import PluginBase
+from pygears.conf import PluginBase, safe_bind
 
 from .bool import Bool
 from .queue import Queue
@@ -20,23 +20,23 @@ __all__ = [
 class TypingNamespacePlugin(PluginBase):
     @classmethod
     def bind(cls):
-        cls.registry['TypeArithNamespace'] = {}
+        safe_bind('gear/type_arith', {})
 
 
 class CoreTypesPlugin(TypingNamespacePlugin):
     @classmethod
     def bind(cls):
-        cls.registry['TypeArithNamespace']['Union'] = Union
-        cls.registry['TypeArithNamespace']['Tuple'] = Tuple
-        cls.registry['TypeArithNamespace']['Uint'] = Uint
-        cls.registry['TypeArithNamespace']['Int'] = Int
-        cls.registry['TypeArithNamespace']['Integer'] = Integer
-        cls.registry['TypeArithNamespace']['Unit'] = Unit
-        cls.registry['TypeArithNamespace']['Bool'] = Bool
-        cls.registry['TypeArithNamespace']['Queue'] = Queue
-        cls.registry['TypeArithNamespace']['Array'] = Array
-        cls.registry['TypeArithNamespace']['bitw'] = bitw
-        cls.registry['TypeArithNamespace']['ceil_pow2'] = ceil_pow2
-        cls.registry['TypeArithNamespace']['typeof'] = typeof
-        cls.registry['TypeArithNamespace']['Any'] = Any
-        cls.registry['TypeArithNamespace']['TLM'] = TLM
+        safe_bind('gear/type_arith/Union', Union)
+        safe_bind('gear/type_arith/Tuple', Tuple)
+        safe_bind('gear/type_arith/Uint', Uint)
+        safe_bind('gear/type_arith/Int', Int)
+        safe_bind('gear/type_arith/Integer', Integer)
+        safe_bind('gear/type_arith/Unit', Unit)
+        safe_bind('gear/type_arith/Bool', Bool)
+        safe_bind('gear/type_arith/Queue', Queue)
+        safe_bind('gear/type_arith/Array', Array)
+        safe_bind('gear/type_arith/bitw', bitw)
+        safe_bind('gear/type_arith/ceil_pow2', ceil_pow2)
+        safe_bind('gear/type_arith/typeof', typeof)
+        safe_bind('gear/type_arith/Any', Any)
+        safe_bind('gear/type_arith/TLM', TLM)

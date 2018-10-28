@@ -1,3 +1,4 @@
+import inspect
 import pkg_resources
 import datetime
 import os
@@ -27,15 +28,19 @@ release = version
 extensions = [
     'sphinx_verboser.verboser', 'sphinxarg.ext', 'sphinx.ext.autodoc',
     'sphinx.ext.githubpages', 'sphinxcontrib.tikz', 'sphinxcontrib.wavedrom',
-    'bdp.sphinxext.bdpfigure', 'sphinx.ext.napoleon', 'sphinx_sitemap'
+    'bdp.sphinxext.bdpfigure', 'sphinx.ext.napoleon', 'sphinx_sitemap',
+    'sphinx.ext.autosectionlabel'
 ]
+
+autosectionlabel_prefix_document = True
 
 site_url = "https://www.pygears.org/"
 
 autodoc_default_options = {
     'show-inheritance': None,
     'members': None,
-    'special-members': None
+    'no-special-members': None,
+    'exclude-members': 'mro, __weakref__,  __new__, __str__, __repr__',
 }
 autoclass_content = "class"
 add_module_names = False
@@ -55,12 +60,25 @@ from sphinx.ext.autodoc import ClassDocumenter, _
 
 def autodoc_skip_member(app, what, name, obj, skip, options):
     exclusions = (
-        '__weakref__',  # special-members
-        '__new__',
-        '__str__',
-        '__repr__',  # undoc-members
+        'from_bytes',
+        'to_bytes',
+        'real',
+        'imag',
+        'real',
+        'conjugate',
+        'denominator',
+        'numerator',
     )
-    exclude = name in exclusions
+
+    exclude = False
+    try:
+        cls_name = obj.__qualname__.split('.')[0]
+        if cls_name in ('int', 'Int', 'Integer', 'IntType', 'Uint',
+                        'UintType'):
+            exclude = name in exclusions
+    except AttributeError:
+        pass
+
     return skip or exclude
 
 

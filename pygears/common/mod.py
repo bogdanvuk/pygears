@@ -1,6 +1,7 @@
+from pygears.conf import safe_bind
 from pygears.core.gear import alternative, gear
-from pygears.typing import Integer, Int, Uint
 from pygears.core.intf import IntfOperPlugin
+from pygears.typing import Integer, Uint
 from pygears.util.hof import oper_reduce
 
 
@@ -11,7 +12,8 @@ def mod_type(dtypes):
 
 
 @gear(svgen={'svmod_fn': 'mod.sv'}, enablement=b'len(din) == 2')
-def mod(*din: Integer, din0_signed=b'typeof(din0, Int)',
+def mod(*din: Integer,
+        din0_signed=b'typeof(din0, Int)',
         din1_signed=b'typeof(din1, Int)') -> b'mod_type(din)':
     pass
 
@@ -25,4 +27,4 @@ def mod_vararg(*din: Integer, enablement=b'len(din) > 2') -> b'mod_type(din)':
 class ModIntfOperPlugin(IntfOperPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['IntfOperNamespace']['__mod__'] = mod
+        safe_bind('gear/intf_oper/__mod__', mod)

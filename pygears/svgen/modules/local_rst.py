@@ -19,4 +19,4 @@ class SVGenLocalRst(SVModuleGen):
 class SVGenAlignPlugin(SVGenInstPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['SVGenModuleNamespace'][local_rst] = SVGenLocalRst
+        cls.registry['svgen']['module_namespace'][local_rst] = SVGenLocalRst

@@ -1,25 +1,28 @@
-"""Implements fixed width integer types: :class:`Uint` [N] - unsigned, :class:`Int` [N] - signed and :class:`Integer` [N] - sign agnostic type. These types correspond to HDL logic vector types.
+"""Implements fixed width integer types: :class:`Uint` - unsigned, :class:`Int`
+- signed and :class:`Integer` - sign agnostic type. These types correspond to
+HDL logic vector types.
 
-Objects of these classes can also be instantiated and they provide some integer arithmetic capabilities.
+Objects of these classes can also be instantiated and they provide some integer
+arithmetic capabilities.
 """
 
-from pygears.typing.base import EnumerableGenericMeta, GenericMeta, typeof
+from pygears.typing.base import EnumerableGenericMeta, typeof
 from pygears.typing.tuple import Tuple
 from pygears.typing.bool import Bool
 from pygears.typing.bitw import bitw
-from pygears.core.log import typing_log
+from pygears.conf import typing_log
 
 
-class IntegerMeta(EnumerableGenericMeta):
+class IntegerType(EnumerableGenericMeta):
     """Defines common methods for all Integer based classes.
     """
 
     def __str__(self):
         if self.args:
             if isinstance(self.args[0], int):
-                return f'Z{self.args[0]}'
+                return f'z{self.args[0]}'
             else:
-                return f'Z({self.args[0]})'
+                return f'z({self.args[0]})'
         else:
             return super().__str__()
 
@@ -48,7 +51,8 @@ class IntegerMeta(EnumerableGenericMeta):
     __radd__ = __add__
 
     def __sub__(self, other):
-        """Returns the signed Int type, but one bit wider to accomodate potential overflow.
+        """Returns the signed Int type, but one bit wider to accomodate
+        potential overflow.
 
         >>> Uint[8] + Uint[8]
         Int[9]
@@ -117,8 +121,10 @@ def check_width(val, res):
         )
 
 
-class Integer(int, metaclass=IntegerMeta):
-    """Base type for both :class:`Int` [N] and :class:`Uint` [N] generic types. Corresponds to HDL logic vector types. For an example Integer[9] translates to :sv:`logic [8:0]`.
+class Integer(int, metaclass=IntegerType):
+    """Base type for both :class:`Int` and :class:`Uint` generic types.
+    Corresponds to HDL logic vector types. For an example Integer[9] translates
+    to :sv:`logic [8:0]`.
     """
 
     def __new__(cls, val: int = 0):
@@ -178,6 +184,9 @@ class Integer(int, metaclass=IntegerMeta):
 
         >>> Integer[8](0b10101010)[5]
         1
+
+        >>> Integer[8](0b10101010)[1::2]
+        Uint[4](15)
         """
         if isinstance(index, slice):
             bits = tuple(
@@ -200,7 +209,7 @@ class Integer(int, metaclass=IntegerMeta):
         return cls(int(val))
 
 
-class IntMeta(IntegerMeta):
+class IntType(IntegerType):
     def __str__(self):
         if self.args:
             if isinstance(self.args[0], int):
@@ -211,16 +220,18 @@ class IntMeta(IntegerMeta):
             return super().__str__()
 
 
-class Int(Integer, metaclass=IntMeta):
+class Int(Integer, metaclass=IntType):
     """Fixed width generic signed integer data type.
 
     Generic parameters:
-       N: Bit width of the :class:`Int` [N] representation
+       N: Bit width of the :class:`Int` representation
 
     Args:
-       val: Integer value to convert to :class:`Int` [N]
+       val: Integer value to convert to :class:`Int`
 
-    :class:`Int` [N] is a generic datatype derived from :class:`Integer` [N]. It represents signed integers with fixed width binary representation. Concrete data type is obtained by indexing:
+    :class:`Int` is a generic datatype derived from :class:`Integer`. It
+    represents signed integers with fixed width binary representation. Concrete
+    data type is obtained by indexing:
 
     >>> i16 = Int[16]
 
@@ -251,7 +262,20 @@ class Int(Integer, metaclass=IntMeta):
         return int(self) == int(other)
 
 
-class UintMeta(IntegerMeta):
+class UintType(IntegerType):
+    """Fixed width generic unsigned integer data type.
+
+    Generic parameters:
+       N: Bit width of the :class:`Uint` representation
+
+    :class:`Uint` is a generic datatype derived from :class:`Integer`. It
+    represents unsigned integers with fixed width binary representation.
+    Concrete data type is obtained by indexing:
+
+    >>> u16 = Uint[16]
+
+    """
+
     def __sub__(self, other):
         """Returns a Tuple of the result type and overflow bit.
 
@@ -272,18 +296,17 @@ class UintMeta(IntegerMeta):
             return f'u({self.args[0]})'
 
 
-class Uint(Integer, metaclass=UintMeta):
-    """Fixed width generic unsigned integer data type.
-
-    Generic parameters:
-       N: Bit width of the :class:`Uint` [N] representation
+class Uint(Integer, metaclass=UintType):
+    """Implements the :class:`Uint` type instance.
 
     Args:
-       val: Integer value to convert to :class:`Uint` [N]
+       val: Integer value to convert to :class:`Uint`
 
-    :class:`Uint` [N] is a generic datatype derived from :class:`Integer` [N]. It represents unsigned integers with fixed width binary representation. Concrete data type is obtained by indexing:
+    :class:`Uint` is a generic datatype derived from :class:`Integer`. It
+    represents unsigned integers with fixed width binary representation.
 
-    >>> u16 = Uint[16]
+    >>> Uint[16](0xffff)
+    Uint[16](65535)
 
     """
     __parameters__ = ['N']

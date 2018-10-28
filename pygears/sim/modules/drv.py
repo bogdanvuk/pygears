@@ -1,10 +1,7 @@
 import inspect
 
-from pygears import gear, GearDone, alternative
-from pygears.sim import clk, sim_log
-from pygears.typing import TLM
+from pygears import GearDone, gear
 from pygears.util.utils import quiter
-from pygears.sim.utils import SimDelay
 
 # from pygears.sim.extens.svrand import get_rand_data
 
@@ -36,6 +33,27 @@ class TypeDrvVisitor(TypingYieldVisitorBase):
 
 @gear
 async def drv(*, t, seq) -> b't':
+    """Outputs one data at the time from the iterable ``seq`` cast to the type
+    ``t``.
+
+    Args:
+        t: Type of the data to output
+        seq: An iterable generating data to be output
+
+    Returns:
+        Data of the type ``t``
+
+    >>> drv(t=Uint[8], seq=range(10))
+
+    If ``t`` is a :class:`Queue` type of certain level, then ``seq`` should
+    generate nested iterables of the same level::
+
+        q1 = ((11, 12), (21, 22, 23))
+        q2 = ((11, 12, 13))
+
+    >>> drv(t=Queue[Uint[8], 2], seq=[q1, q2])
+    """
+
     for val in seq:
         if type(val) == t:
             yield val

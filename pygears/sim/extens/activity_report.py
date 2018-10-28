@@ -83,11 +83,11 @@ def find_target_cons(intf):
 
 def find_target_intf(gear_name, intf_name):
     gear_mod = find(gear_name)
-    rtl_node = registry('RTLNodeMap')[gear_mod].node
+    rtl_node = registry('rtl/map/node')[gear_mod].node
 
     intf_name = intf_name[1:]  # spy name always starts with _
     for i in rtl_node.local_interfaces():
-        if registry('SVGenMap')[i].basename == intf_name:
+        if registry('svgen/map')[i].basename == intf_name:
             return i
 
 
@@ -107,12 +107,13 @@ def set_blocking_node(g, module):
 
 
 class ActivityReporter:
-    def __init__(self, top, draw_graph=True):
-        sim = registry('Simulator')
+    def __init__(self, top, draw_graph=True, cosim_check=False):
+        sim = registry('sim/simulator')
         sim.events['before_run'].append(self.before_run)
         sim.events['after_run'].append(self.after_run)
         self.blockers = {}
         self.draw_graph = draw_graph
+        self.cosim_check = cosim_check
 
     def intf_pull_start(self, intf):
         consumer = intf.producer
@@ -126,7 +127,7 @@ class ActivityReporter:
         return True
 
     def before_run(self, sim):
-        sim_map = registry('SimMap')
+        sim_map = registry('sim/map')
 
         for module, sim_gear in sim_map.items():
             for p in module.in_ports:
@@ -137,7 +138,7 @@ class ActivityReporter:
 
         if self.draw_graph:
             g = graph(
-                outdir=registry('SimArtifactDir'),
+                outdir=registry('sim/artifact_dir'),
                 node_filter=lambda g: not g.child)
         else:
             g = None
@@ -148,12 +149,12 @@ class ActivityReporter:
             if isinstance(sim_gear, SimSocket):
                 cosim_name = sim_gear.gear.name
                 break
-        if cosim_name:
+        if cosim_name and self.cosim_check:
             self.cosim_activity(g, cosim_name)
         self.sim_gears_activity(g, sim, blocking_gears)
 
         if self.draw_graph:
-            outdir = registry('SimArtifactDir')
+            outdir = registry('sim/artifact_dir')
             g.graph.write_svg(os.path.join(outdir, 'proba.svg'))
 
         try:
@@ -206,7 +207,7 @@ class ActivityReporter:
                     )
 
     def cosim_activity(self, g, top_name):
-        outdir = registry('SimArtifactDir')
+        outdir = registry('sim/artifact_dir')
         activity_path = os.path.join(outdir, 'activity.log')
 
         if not os.path.isfile(activity_path):

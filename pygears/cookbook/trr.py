@@ -1,6 +1,6 @@
 from pygears import module
 from pygears.core.gear import gear
-from pygears.core.log import gear_log
+from pygears.conf import gear_log
 from pygears.svgen.inst import SVGenInstPlugin
 from pygears.svgen.svmod import SVModuleGen
 from pygears.typing import Queue
@@ -33,4 +33,4 @@ class SVGenTrr(SVModuleGen):
 class SVGenTrrPlugin(SVGenInstPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['SVGenModuleNamespace'][trr] = SVGenTrr
+        cls.registry['svgen']['module_namespace'][trr] = SVGenTrr

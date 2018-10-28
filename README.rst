@@ -54,7 +54,7 @@ Checkout the examples
 
 `Echo <https://www.pygears.org/echo.html#echo-examples>`_: Hardware module that applies echo audio effect to a continuous audio stream.
 
-`RISC-V Blog <https://www.pygears.org/blog/riscv/introduction.html>`_: Blog series on implementing RISC-V processor with **PyGears**
+`RISC-V processor <https://github.com/bogdanvuk/pygears_riscv>`__: **PyGears** implementation. Checkout also the `RISC-V implementation blog series <https://www.pygears.org/blog/riscv/introduction.html>`_.
 
 `Tests <https://github.com/bogdanvuk/pygears/tree/master/tests>`_: Contain many examples on how individual **PyGears** components operate
 

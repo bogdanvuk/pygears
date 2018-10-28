@@ -1,5 +1,5 @@
-from pygears.core.gear import alternative, gear
-from pygears.typing import Integer, Int, Uint
+from pygears.conf import safe_bind
+from pygears.core.gear import gear
 from pygears.core.intf import IntfOperPlugin
 
 
@@ -11,4 +11,4 @@ def invert(din) -> b'din':
 class InvertIntfOperPlugin(IntfOperPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['IntfOperNamespace']['__invert__'] = invert
+        safe_bind('gear/intf_oper/__invert__', invert)

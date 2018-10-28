@@ -27,7 +27,7 @@ class activity_monitor#(type DATA_T = bit [15:0], parameter int ACTIVITY_TIMEOUT
          end
 
          if (cnt == ACTIVITY_TIMEOUT) begin
-            $display("Activiti monitor %s timedout", name);
+            $display("Activity monitor %s timedout", name);
             break;
          end
       end

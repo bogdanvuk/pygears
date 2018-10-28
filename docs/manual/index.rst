@@ -1,3 +1,10 @@
+.. meta::
+   :google-site-verification: AjhRHQh3VrfjkedIiaUazWGgzaSBonwmXT_Kf5sPD0I
+   :msvalidate.01: 256433631B2CD469BD8EC0137A9943AA
+
+.. meta::
+   :google-site-verification: ORBOCceo-a1e6Je5tI-KUua73jJ2f5DjYTOVD4v8tz4
+
 Welcome to PyGears 
 ==================
 
@@ -54,7 +61,7 @@ Checkout the examples
 
 :ref:`Echo <echo-examples>`: Hardware module that applies echo audio effect to a continuous audio stream.
 
-`RISC-V Blog <https://www.pygears.org/blog/riscv/introduction.html>`_: Blog series on implementing RISC-V processor with **PyGears**
+`RISC-V processor <https://github.com/bogdanvuk/pygears_riscv>`__: **PyGears** implementation. Checkout also the `RISC-V implementation blog series <https://www.pygears.org/blog/riscv/introduction.html>`_.
 
 `Tests <https://github.com/bogdanvuk/pygears/tree/master/tests>`_: Contain many examples on how individual **PyGears** components operate
 
@@ -92,6 +99,7 @@ Contents
    install
    introduction
    typing
+   registry
    setup
    examples
    reference

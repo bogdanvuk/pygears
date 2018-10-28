@@ -85,7 +85,7 @@ If you would like to run cosimulations with the Verilator, you need to make sure
    # sudo apt install build-essential
    # sudo apt install autoconf flex bison
 
-   pygears_tools_install verilator
+   pygears-tools-install verilator
 
 The script will create ``tools.sh`` bash file that should be sourced prior to running the cosimulation: 
 

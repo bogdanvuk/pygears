@@ -22,4 +22,4 @@ class SVGenMuxZip(SVModuleGen):
 class SVGenMuxZipPlugin(SVGenInstPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['SVGenModuleNamespace'][mux_zip] = SVGenMuxZip
+        cls.registry['svgen']['module_namespace'][mux_zip] = SVGenMuxZip

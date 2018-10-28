@@ -20,4 +20,4 @@ class SVGenCCat(SVModuleGen):
 class SVGenCCatPlugin(SVGenInstPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['SVGenModuleNamespace'][ccat] = SVGenCCat
+        cls.registry['svgen']['module_namespace'][ccat] = SVGenCCat

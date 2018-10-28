@@ -1,4 +1,4 @@
-from pygears.typing.uint import IntMeta, UintMeta
+from pygears.typing.uint import IntType, UintType
 from pygears.typing import Queue
 from pygears.svgen.svgen import SVGenPlugin
 from pygears.svgen.util import svgen_visitor
@@ -19,8 +19,8 @@ class SVGenCast(SVModuleGen):
         intype = self.node.in_ports[0].dtype
         out_width = int(outtype)
 
-        if isinstance(outtype, IntMeta):
-            if isinstance(intype, UintMeta):
+        if isinstance(outtype, IntType):
+            if isinstance(intype, UintType):
                 data_expr = f"{out_width}'(din.data)"
             else:
                 data_expr = f"{out_width}'(signed'(din.data))"
@@ -54,7 +54,7 @@ class RemoveEqualReprCastVisitor(RTLGearHierVisitor):
 class SVGenSievePlugin(RTLNodeInstPlugin, SVGenPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['SVGenModuleNamespace'][cast] = SVGenCast
-        cls.registry['SVGenFlow'].insert(
-            cls.registry['SVGenFlow'].index(rtl_connect) + 1,
+        cls.registry['svgen']['module_namespace'][cast] = SVGenCast
+        cls.registry['svgen']['flow'].insert(
+            cls.registry['svgen']['flow'].index(rtl_connect) + 1,
             RemoveEqualReprCastVisitor)

@@ -39,4 +39,5 @@ class SVGenChunkConcat(SVModuleGen):
 class SVGenChunkConcatPlugin(SVGenInstPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['SVGenModuleNamespace'][chunk_concat] = SVGenChunkConcat
+        cls.registry['svgen']['module_namespace'][
+            chunk_concat] = SVGenChunkConcat

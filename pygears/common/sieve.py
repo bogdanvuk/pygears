@@ -1,34 +1,101 @@
-from pygears.core.gear import gear
+from pygears.core.gear import gear, find_current_gear_frame
 from pygears.core.intf import IntfOperPlugin
-from pygears import module
+from pygears import module, registry, safe_bind
 
 
 @gear
-async def sieve(din, *, index) -> b'din[index]':
+async def sieve(din, *, key) -> b'din[key]':
+    """Outputs a slice of the ``din`` input interface. Can be instantiated with
+    the slicing statement: ``din[key]``.
+
+    Args:
+        key: A single key or a sequence of keys with which to slice the input
+          interface.
+
+    Returns:
+        A sliced interface
+
+    Which keys are exactly supported depends on the type of the ``din`` input
+    interface, so checkout the __getitem__ method of the specific type. If for
+    an example we have an interface of the type :class:`Uint[8] <Uint>` ::
+
+        din = Intf(Uint[8])
+
+    we could slice it using Python index operator to obtain a high nibble:
+
+    >>> din[4:]
+    Intf(Uint[4])
+
+    which outputs an interface of the type :class:`Uint[4] <Uint>`. The same
+    would be achieved if the ``sieve`` gear were instantiated explicitly:
+
+    >>> sieve(din, key=slice(4, None, None))
+    Intf(Uint[4])
+    """
+
     async with din as d:
         dout = []
-        for i in index:
+        for i in key:
             dout.append(d[i])
 
-        if len(index) == 1:
+        if len(key) == 1:
             dout = dout[0]
 
         yield module().tout(dout)
 
 
-def getitem(self, index):
-    index = self.dtype.index_norm(index)
-    name_appendices = []
-    for i in index:
-        if isinstance(i, slice):
-            name_appendices.append(f'{i.start}v{i.stop}')
-        else:
-            name_appendices.append(f'{i}')
+def get_obj_var_name(frame, obj):
+    for var_name, var_obj in frame.f_locals.items():
+        if obj is var_obj:
+            return var_name
+    else:
+        return None
 
-    return self | sieve(index=index, name='sieve_' + '_'.join(name_appendices))
+
+def maybe_obtain_intf_var_name(intf):
+    frame = find_current_gear_frame()
+    if frame is None:
+        return None
+
+    return get_obj_var_name(frame, intf)
+
+
+def getitem(self, index):
+    naming = registry('gear/naming/pretty_sieve')
+    norm_index = self.dtype.index_norm(index)
+
+    # Try to obtain variable to which interface was assigned to form a better
+    # name for the sieve
+    name = 'sieve'
+    if naming:
+        name = maybe_obtain_intf_var_name(self)
+        if name is None:
+            name = 'sieve'
+
+    if not isinstance(index, tuple):
+        index = (index, )
+
+    name_appendices = []
+    for ind_id, ind in enumerate(norm_index):
+        if isinstance(ind, slice):
+            name_appendices.append(f'{ind.start}v{ind.stop}')
+        else:
+            if naming:
+                try:
+                    # Try to obtain original index name to form a better name
+                    # for the sieve
+                    ind = index[ind_id]
+                except IndexError:
+                    pass
+
+            name_appendices.append(f'{ind}')
+
+    return self | sieve(
+        key=norm_index, name='_'.join([name] + name_appendices))
 
 
 class GetitemIntfOperPlugin(IntfOperPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['IntfOperNamespace']['__getitem__'] = getitem
+        safe_bind('gear/intf_oper/__getitem__', getitem)
+        safe_bind('gear/naming/pretty_sieve', False)

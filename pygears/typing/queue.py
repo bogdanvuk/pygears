@@ -67,10 +67,13 @@ class QueueMeta(EnumerableGenericMeta):
         return Uint[self.lvl]
 
     def __str__(self):
-        if self.lvl == 1:
-            return '[%s]' % type_str(self.args[0])
+        if self.args:
+            if self.lvl == 1:
+                return '[%s]' % type_str(self.args[0])
+            else:
+                return '[{}]^{}'.format(type_str(self.args[0]), self.lvl)
         else:
-            return '[{}]^{}'.format(type_str(self.args[0]), self.lvl)
+            return super().__str__()
 
 
 class Queue(tuple, metaclass=QueueMeta):

@@ -1,35 +1,38 @@
 import os
 import sys
+
 from enum import IntEnum
+from traceback import (extract_stack, extract_tb, format_list, walk_stack,
+                       walk_tb)
 from functools import partial
-from traceback import (extract_stack, extract_tb, format_exception_only,
-                       format_list, walk_stack, walk_tb)
+from traceback import format_exception_only
 
-from pygears.registry import PluginBase, registry
+from .pdb_patch import patch_pdb, unpatch_pdb
+from .registry import PluginBase, RegistryHook, registry
 
 
-class ErrReportLevel(IntEnum):
+class TraceLevel(IntEnum):
     debug = 0
     user = 1
 
 
-class ErrReportPlugin(PluginBase):
+class TraceConfig(RegistryHook):
+    def _set_level(self, val):
+        if val == TraceLevel.user:
+            patch_pdb()
+        else:
+            unpatch_pdb()
+
+
+class TraceConfigPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        # cls.registry['ErrReportLevel'] = ErrReportLevel.user
-        # from .pdb_patch import patch_pdb
-        # patch_pdb()
-
-        cls.registry['ErrReportLevel'] = ErrReportLevel.debug
-        cls.registry['ExitHooks'] = []
-
-
-def register_exit_hook(hook, *args, **kwds):
-    registry('ExitHooks').append(partial(hook, *args, **kwds))
+        cls.registry['trace'] = TraceConfig(level=TraceLevel.debug)
+        cls.registry['trace']['hooks'] = []
 
 
 def parse_trace(s, t):
-    if registry("ErrReportLevel") == ErrReportLevel.debug:
+    if registry('trace/level') == TraceLevel.debug:
         yield s
     else:
         is_internal = t[0].f_code.co_filename.startswith(
@@ -49,18 +52,22 @@ def enum_stacktrace():
         yield from parse_trace(s, t)
 
 
+def register_exit_hook(hook, *args, **kwds):
+    registry('trace/hooks').append(partial(hook, *args, **kwds))
+
+
 def pygears_excepthook(exception_type,
                        exception,
                        tr,
                        debug_hook=sys.excepthook):
 
-    for hook in registry('ExitHooks'):
+    for hook in registry('trace/hooks'):
         try:
             hook()
         except:
             pass
 
-    if registry("ErrReportLevel") == ErrReportLevel.debug:
+    if registry('trace/level') == TraceLevel.debug:
         debug_hook(exception_type, exception, tr)
     else:
         from pygears.util.print_hier import print_hier
@@ -73,12 +80,11 @@ def pygears_excepthook(exception_type,
 
         # print traceback for LogException only if appropriate
         # 'print_traceback' in registry is set
-        from pygears.core.log import LogException, registry_log_name
+        from pygears.conf.log import LogException
         print_traceback = (exception_type is not LogException)
         if not print_traceback:
             print_traceback = registry(
-                registry_log_name.substitute(
-                    name=exception.name))['print_traceback']
+                f'logger/{exception.name}/print_traceback')
         if print_traceback:
             for s in enum_traceback(tr):
                 print(s, end='')

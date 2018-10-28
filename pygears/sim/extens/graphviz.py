@@ -1,60 +1,43 @@
 import pydot
-import os
 from pygears.core.port import InPort
 from pygears.core.hier_node import HierVisitorBase
 from pygears.util.find import find
-from pygears import registry
-from pygears.util import print_hier
 
 
 class Visitor(HierVisitorBase):
-    def __init__(self, node_filter, outdir):
-        self.gear_map = {}
-        self.node_map = {}
-        self.graph = pydot.Dot(
-            graph_type='digraph', rankdir='LR', overlap=False)
-        self.hier = [self.graph]
+    def __init__(self, node_filter):
+        self.dot = GearGraph(graph_type='digraph', rankdir='TB', overlap=True)
+
+        self.hier = [self.dot]
         self.node_filter = node_filter
-        self.outdir = outdir
-        os.makedirs(self.outdir, exist_ok=True)
 
     def enter_hier(self, module):
-        self.hier.append(self.gear_map[module])
+        self.hier.append(self.dot.cluster_map[module])
 
     def exit_hier(self, module):
         node = self.hier.pop()
         self.hier[-1].add_subgraph(node)
 
     def Gear(self, module):
-        gear_fn = module.name.replace('/', '_')
-        if self.outdir:
-            gear_stem = os.path.abspath(os.path.join(self.outdir, gear_fn))
-
-            v = print_hier.Visitor(params=True, fullname=True)
-            v.visit(module)
-            with open(f'{gear_stem}.txt', 'w') as f:
-                f.write('\n'.join(v.res))
-
         if self.node_filter(module):
-            self.gear_map[module] = pydot.Node(
+            self.dot.node_map[module] = pydot.Node(
                 module.name,
+                fontsize=18,
+                margin=0.01,
                 tooltip=module.name,
                 label=module.basename,
-                URL=f"localhost:5000/{gear_fn}")
+                shape="doubleoctagon")
 
-            self.node_map[module] = self.gear_map[module]
-            self.hier[-1].add_node(self.gear_map[module])
+            self.hier[-1].add_node(self.dot.node_map[module])
         else:
-            self.gear_map[module] = pydot.Cluster(
+            self.dot.cluster_map[module] = pydot.Cluster(
                 graph_name=module.name,
                 label=module.basename,
                 tooltip=module.name,
                 fontsize=48,
                 fontcolor='blue',
                 labeljust='l',
-                overlap=False,
-                # URL=f"file://{desc_fn}")
-                URL=f"localhost:5000/{gear_fn}")
+                overlap=False)
 
             self.enter_hier(module)
 
@@ -63,6 +46,31 @@ class Visitor(HierVisitorBase):
             self.exit_hier(module)
 
         return True
+
+
+class GearGraph(pydot.Dot):
+    def __init__(self, *argsl, **argsd):
+        super().__init__(*argsl, **argsd)
+        self._node_map = {}
+        self._cluster_map = {}
+        self._prod_edge_map = {}
+        self._cons_edge_map = {}
+
+    @property
+    def node_map(self):
+        return self._node_map
+
+    @property
+    def cluster_map(self):
+        return self._cluster_map
+
+    @property
+    def prod_edge_map(self):
+        return self._prod_edge_map
+
+    @property
+    def cons_edge_map(self):
+        return self._cons_edge_map
 
 
 def _get_consumer_tree_rec(intf, consumers, node_filter):
@@ -80,22 +88,50 @@ def get_consumer_tree(intf, node_filter):
     return consumers
 
 
-def graph(path='/', root=None, node_filter=lambda x: x, outdir=None):
-    top = find(path, root)
-    v = Visitor(node_filter, outdir)
+def graph(top=None,
+          node_filter=lambda x: not x.child,
+          edge_fmt='{prod_gear} -> {cons_gear}'):
+    if top is None:
+        top = find('/')
+
+    v = Visitor(node_filter)
     v.visit(top)
 
-    v.edge_map = {}
+    edge_fmt_dict = {}
 
-    for module, node in v.node_map.items():
+    dot = v.dot
+
+    for module, node in dot.node_map.items():
         for pout in module.out_ports:
+            edge_fmt_dict['prod_port'] = pout.basename
+            edge_fmt_dict['prod_gear'] = pout.gear.basename
+
+            if getattr(pout.consumer, 'var_name', None):
+                edge_fmt_dict['prod_var'] = pout.consumer.var_name
+            else:
+                edge_fmt_dict['prod_var'] = edge_fmt_dict['prod_gear']
+
             edges = get_consumer_tree(pout.producer, node_filter)
 
-            for e in edges:
-                v.edge_map[e] = pydot.Edge(
-                    node,
-                    v.node_map[e.gear],
-                    label=f"{pout.basename} -> {e.basename}")
-                v.graph.add_edge(v.edge_map[e])
+            dot.prod_edge_map[pout] = []
 
-    return v
+            for e in edges:
+                edge_fmt_dict['cons_port'] = e.basename
+                edge_fmt_dict['cons_gear'] = e.gear.basename
+                if getattr(e.producer, 'var_name', None):
+                    edge_fmt_dict['cons_var'] = e.producer.var_name
+                else:
+                    edge_fmt_dict['cons_var'] = edge_fmt_dict['cons_gear']
+
+                dot_edge = pydot.Edge(
+                    node,
+                    dot.node_map[e.gear],
+                    fontsize=20,
+                    decoreate=True,
+                    label=eval(f'f"{edge_fmt}"', globals(), edge_fmt_dict))
+
+                dot.cons_edge_map[e] = dot_edge
+                dot.prod_edge_map[pout].append(dot_edge)
+                dot.add_edge(dot_edge)
+
+    return dot

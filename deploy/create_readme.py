@@ -13,11 +13,23 @@ def ref_replace(matchobj):
 
 os.chdir('../docs/manual')
 
+meta_tag = False
+
 with open('index.rst', 'r') as fin:
     with open('../../README.rst', 'w') as fout:
+
         for line in fin:
             if line == "Contents\n":
                 break
+
+            if line.startswith('.. meta'):
+                meta_tag = True
+
+            if meta_tag:
+                if line == "\n":
+                    meta_tag = False
+
+                continue
 
             line_subs = re.sub(re_ref, ref_replace, line)
             fout.write(line_subs)

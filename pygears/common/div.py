@@ -1,6 +1,7 @@
+from pygears.conf import safe_bind
 from pygears.core.gear import alternative, gear
-from pygears.typing import Integer, Int, Uint
 from pygears.core.intf import IntfOperPlugin
+from pygears.typing import Int, Integer, Uint
 from pygears.util.hof import oper_reduce
 
 
@@ -31,5 +32,5 @@ def div_vararg(*din: Integer, enablement=b'len(din) > 2') -> b'div_type(din)':
 class DivIntfOperPlugin(IntfOperPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['IntfOperNamespace']['__div__'] = div
-        cls.registry['IntfOperNamespace']['__floordiv__'] = div
+        safe_bind('gear/intf_oper/__div__', div)
+        safe_bind('gear/intf_oper/__floordiv__', div)

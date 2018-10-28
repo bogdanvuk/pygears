@@ -11,7 +11,7 @@ async def fifo(din, *, depth=2, threshold=0, regout=False) -> b'din':
     dout = module().dout
 
     while (1):
-        if len(data) <= threshold and din.done():
+        if len(data) <= threshold and din.done:
             raise GearDone
 
         # TODO: Make fifo work correctly in corner case when it is full, but

@@ -1,8 +1,7 @@
 from .base import EnumerableGenericMeta
-from .unit import Unit
 
 
-class ArrayMeta(EnumerableGenericMeta):
+class ArrayType(EnumerableGenericMeta):
     def keys(self):
         """Returns a list of keys that can be used for indexing :class:`Array` [T, N] type. Number of keys equals to the number of elements N.
 
@@ -11,27 +10,6 @@ class ArrayMeta(EnumerableGenericMeta):
         """
 
         return list(range(int(self.args[1])))
-
-    # def __new__(cls, name, bases, namespace, args=[]):
-    #     return super().__new__(cls, name, bases, namespace, args)
-
-        # if len(cls.args) < 2:
-        #     # Generic parameter values have not been supplied
-        #     return cls
-        # else:
-        #     # If Array of Units, return Unit
-        #     if cls.args[0] == Unit:
-        #         return Unit
-
-        #     if cls.args[1] == 1:
-        #         # If Array of length 1, return original type
-        #         return cls.args[0]
-        #     elif cls.args[1] == 0:
-        #         # If Array of length 0, return Unit
-        #         return Unit
-
-        #     # Otherwise, return the Array class
-        #     return cls
 
     @property
     def dtype(self):
@@ -72,10 +50,13 @@ class ArrayMeta(EnumerableGenericMeta):
             return Array[self.args[0], width]
 
     def __str__(self):
-        return f'Array[{str(self.args[0])}, {len(self)}]'
+        if self.args:
+            return f'Array[{str(self.args[0])}, {len(self)}]'
+        else:
+            return super().__str__()
 
 
-class Array(tuple, metaclass=ArrayMeta):
+class Array(tuple, metaclass=ArrayType):
     """Generic container datatype that holds N instances of type T
 
     Generic parameters:
