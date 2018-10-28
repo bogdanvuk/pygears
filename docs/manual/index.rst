@@ -5,8 +5,6 @@
 .. meta::
    :google-site-verification: ORBOCceo-a1e6Je5tI-KUua73jJ2f5DjYTOVD4v8tz4
 
-
-
 Welcome to PyGears 
 ==================
 
