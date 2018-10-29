@@ -3,6 +3,7 @@ module qfilt #(
                parameter W_DOUT = 16,
                parameter LVL = 1,
                parameter SEL = 0,
+               parameter W_CTRL = 1,
                parameter FILT_LVL = 0
               )
   (
@@ -15,8 +16,8 @@ module qfilt #(
    typedef struct packed
                   {
                      logic [LVL-1:0] eot;
-                     logic       ctrl;
-                     logic [W_DIN-1:0] data;
+                     logic [W_CTRL-1:0] ctrl;
+                     logic [W_DIN-1:0]  data;
                   } din_t;
 
    typedef struct packed

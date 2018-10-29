@@ -37,12 +37,13 @@ class UnionMeta(EnumerableGenericMeta):
         index = self.index_norm(parameters)
 
         if isinstance(index[0], slice):
-            if(index[0].start == 0) and (index[0].stop == 1):
+            if (index[0].start == 0) and (index[0].stop == 1):
                 return Uint[max(map(int, self.args))]
-            elif(index[0].start == 1) and (index[0].stop == 2):
+            elif (index[0].start == 1) and (index[0].stop == 2):
                 return Uint[bitw(len(self.args) - 1)]
-            elif(index[0].start == 0) and (index[0].stop == 2):
-                return Uint[max(map(int, self.args))], Uint[bitw(len(self.args) - 1)]
+            elif (index[0].start == 0) and (index[0].stop == 2):
+                return Uint[max(map(
+                    int, self.args))], Uint[bitw(len(self.args) - 1)]
             else:
                 raise IndexError
         else:
@@ -86,6 +87,10 @@ class Union(tuple, metaclass=UnionMeta):
     @property
     def data(self):
         return type(self).types[self[1]].decode(self[0])
+
+    @property
+    def ctrl(self):
+        return self[-1]
 
     @classmethod
     def decode(cls, val):
