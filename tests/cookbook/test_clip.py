@@ -40,7 +40,6 @@ def test_pygears_sim():
              list(range(2, 9)),
              list(range(3)),
              list(range(3, 5))])
-
     sim()
 
 
@@ -51,12 +50,11 @@ def test_pygears_sim_stop():
         drv(t=t_cfg, seq=[2, 3]),
         f=clip(clip_stop=1),
         ref=[[0, 1], list(range(3))])
-
     sim()
 
 
 def verilator_cosim(clip_stop):
-    skip_ifndef('VERILATOR_ROOT')
+    skip_ifndef('VERILATOR_ROOT', 'RANDOM_TEST')
     stim = get_stim()
     verif(
         *stim,
@@ -66,17 +64,17 @@ def verilator_cosim(clip_stop):
 
 
 @with_setup(clear)
-def test_verilator_cosim():
+def test_verilator_rand():
     verilator_cosim(clip_stop=0)
 
 
-# @with_setup(clear)
-# def test_verilator_cosim_stop():
-#     verilator_cosim(clip_stop=1)
+@with_setup(clear)
+def test_verilator_rand_stop():
+    verilator_cosim(clip_stop=1)
 
 
 def socket_cosim(clip_stop):
-    skip_ifndef('SIM_SOCKET_TEST')
+    skip_ifndef('SIM_SOCKET_TEST', 'RANDOM_TEST')
     stim = get_stim()
     verif(
         *stim,
@@ -86,17 +84,17 @@ def socket_cosim(clip_stop):
 
 
 @with_setup(clear)
-def test_socket_cosim():
+def test_socket_rand():
     socket_cosim(clip_stop=0)
 
 
 @with_setup(clear)
-def test_socket_cosim_stop():
+def test_socket_rand_stop():
     socket_cosim(clip_stop=1)
 
 
-def socket_cosim_rand(clip_stop):
-    skip_ifndef('SIM_SOCKET_TEST')
+def socket_cosim_rand_cons(clip_stop):
+    skip_ifndef('SIM_SOCKET_TEST', 'RANDOM_TEST')
 
     cnt = 5
     cons = []
@@ -116,10 +114,10 @@ def socket_cosim_rand(clip_stop):
 
 
 @with_setup(clear)
-def test_socket_cosim_rand():
-    socket_cosim_rand(clip_stop=0)
+def test_socket_rand_cons():
+    socket_cosim_rand_cons(clip_stop=0)
 
 
 @with_setup(clear)
-def test_socket_cosim_rand_stop():
-    socket_cosim_rand(clip_stop=1)
+def test_socket_rand_cons_stop():
+    socket_cosim_rand_cons(clip_stop=1)

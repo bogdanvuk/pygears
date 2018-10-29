@@ -49,7 +49,7 @@ def test_pygears_sim():
 
 @with_setup(clear)
 def test_socket_cosim():
-    skip_ifndef('SIM_SOCKET_TEST')
+    skip_ifndef('SIM_SOCKET_TEST', 'RANDOM_TEST')
 
     din_num = 3
 
@@ -64,7 +64,7 @@ def test_socket_cosim():
 
 @with_setup(clear)
 def test_verilator_cosim():
-    skip_ifndef('VERILATOR_ROOT')
+    skip_ifndef('VERILATOR_ROOT', 'RANDOM_TEST')
 
     din_num = 3
 
@@ -76,7 +76,7 @@ def test_verilator_cosim():
 
 @with_setup(clear)
 def test_socket_cosim_rand():
-    skip_ifndef('SIM_SOCKET_TEST')
+    skip_ifndef('SIM_SOCKET_TEST', 'RANDOM_TEST')
 
     din_num = 3
 

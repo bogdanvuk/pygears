@@ -16,12 +16,18 @@ from pygears.typing import Queue, Uint
 from utils import prepare_result_dir, skip_ifndef
 
 t_trr_dist = Queue[Uint[16], 2]
-seq = [[list(range(random.randint(1, 10))),
-        list(range(random.randint(1, 5)))],
-       [list(range(random.randint(1, 20))),
-        list(range(random.randint(1, 7)))]]
-ref0 = [seq[0][0], seq[1][0]]
-ref1 = [seq[0][1], seq[1][1]]
+random_seq = [[
+    list(range(random.randint(1, 10))),
+    list(range(random.randint(1, 5)))
+], [list(range(random.randint(1, 20))),
+    list(range(random.randint(1, 7)))]]
+dir_seq = [[list(range(8)), list(range(2))], [list(range(1)), list(range(2))]]
+
+
+def get_refs(seq):
+    ref0 = [seq[0][0], seq[1][0]]
+    ref1 = [seq[0][1], seq[1][1]]
+    return [ref0, ref1]
 
 
 def trr_dist_verif(sim_cls, seq, dout_num=2):
@@ -32,29 +38,51 @@ def trr_dist_verif(sim_cls, seq, dout_num=2):
 
 
 @with_setup(clear)
-def test_pygears_sim():
+def test_py_sim_dir(seq=dir_seq):
     directed(
-        drv(t=t_trr_dist, seq=seq), f=trr_dist(dout_num=2), ref=[ref0, ref1])
+        drv(t=t_trr_dist, seq=seq), f=trr_dist(dout_num=2), ref=get_refs(seq))
     sim()
 
 
 @with_setup(clear)
-def test_socket_cosim():
+def test_py_sim_rand(seq=random_seq):
+    skip_ifndef('RANDOM_TEST')
+    directed(
+        drv(t=t_trr_dist, seq=seq), f=trr_dist(dout_num=2), ref=get_refs(seq))
+    sim()
+
+
+@with_setup(clear)
+def test_socket_dir(seq=dir_seq):
     skip_ifndef('SIM_SOCKET_TEST')
     trr_dist_verif(sim_cls=partial(SimSocket, run=True), seq=seq)
     sim(outdir=prepare_result_dir())
 
 
 @with_setup(clear)
-def test_verilator_cosim():
+def test_socket_rand(seq=random_seq):
+    skip_ifndef('SIM_SOCKET_TEST', 'RANDOM_TEST')
+    trr_dist_verif(sim_cls=partial(SimSocket, run=True), seq=seq)
+    sim(outdir=prepare_result_dir())
+
+
+@with_setup(clear)
+def test_verilator_dir(seq=dir_seq):
     skip_ifndef('VERILATOR_ROOT')
     trr_dist_verif(sim_cls=SimVerilated, seq=seq)
     sim(outdir=prepare_result_dir())
 
 
 @with_setup(clear)
-def test_socket_cosim_rand():
-    skip_ifndef('SIM_SOCKET_TEST')
+def test_verilator_rand(seq=rand_seq):
+    skip_ifndef('VERILATOR_ROOT', 'RANDOM_TEST')
+    trr_dist_verif(sim_cls=SimVerilated, seq=seq)
+    sim(outdir=prepare_result_dir())
+
+
+@with_setup(clear)
+def test_socket_rand_cons():
+    skip_ifndef('SIM_SOCKET_TEST', 'RANDOM_TEST')
 
     cons = []
     cons.append(

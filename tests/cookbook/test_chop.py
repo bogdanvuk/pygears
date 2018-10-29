@@ -38,36 +38,31 @@ def test_pygears_sim():
         drv(t=t_cfg, seq=[2, 3]),
         f=chop,
         ref=[[[0, 1], [2, 3], [4, 5], [6, 7], [8]], [[0, 1, 2]]])
-
     sim()
 
 
 @with_setup(clear)
-def test_verilator_cosim():
-    skip_ifndef('VERILATOR_ROOT')
-
+def test_verilator_rand():
+    skip_ifndef('VERILATOR_ROOT', 'RANDOM_TEST')
     stim = get_stim()
     verif(*stim, f=chop(sim_cls=SimVerilated), ref=chop(name='ref_model'))
-
     sim(outdir=prepare_result_dir())
 
 
 @with_setup(clear)
-def test_socket_cosim():
-    skip_ifndef('SIM_SOCKET_TEST')
-
+def test_socket_rand():
+    skip_ifndef('SIM_SOCKET_TEST', 'RANDOM_TEST')
     stim = get_stim()
     verif(
         *stim,
         f=chop(sim_cls=partial(SimSocket, run=True)),
         ref=chop(name='ref_model'))
-
     sim(outdir=prepare_result_dir())
 
 
 @with_setup(clear)
-def test_socket_cosim_rand():
-    skip_ifndef('SIM_SOCKET_TEST')
+def test_socket_rand_cons():
+    skip_ifndef('SIM_SOCKET_TEST', 'RANDOM_TEST')
 
     cnt = 5
 
@@ -89,9 +84,8 @@ def test_socket_cosim_rand():
 
 
 @with_setup(clear)
-def test_open_rand():
-    skip_ifndef('SCV_HOME')
-    skip_ifndef('VERILATOR_ROOT')
+def test_open_rand_cons():
+    skip_ifndef('VERILATOR_ROOT', 'SCV_HOME', 'RANDOM_TEST')
 
     cnt = 5
 
