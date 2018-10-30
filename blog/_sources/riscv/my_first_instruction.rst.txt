@@ -20,9 +20,9 @@ My First Instruction
 
 .. verbosity_slider:: 3
 
-Relevant pygears_riscv git commit: `pygears_riscv@a05abf3 <https://github.com/bogdanvuk/pygears_riscv/tree/a05abf3>`_
-
 :v:`2` First instruction is probably going to be unlike any other in the amount of work that I'll need to put into implementing it, so it deserves a post on its own. :v:`1` Let's start from the RV32I description in the (currently) latest version of the `RISC-V ISA Specification`_, which is given in the `Chapter 2: RV32I Base Integer Instruction Set <https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf#page=21>`_. The specification first goes on to describe `Integer Computational Instructions (Chapter 2.4) <https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf#page=25>`_, of which the ``addi`` instruction is explained first, so let's start with that one.
+
+Relevant pygears_riscv git commit: `pygears_riscv@a05abf3 <https://github.com/bogdanvuk/pygears_riscv/tree/a05abf3>`_
 
 .. verbosity:: 2
 
