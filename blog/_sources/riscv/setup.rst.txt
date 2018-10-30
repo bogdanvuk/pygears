@@ -9,9 +9,9 @@ RISC-V Tools Setup
 
 .. verbosity_slider:: 2
 
-Relevant pygears_riscv git commit: `pygears_riscv@bba9a4a <https://github.com/bogdanvuk/pygears_riscv/tree/bba9a4afe8d20e26f6aef634bc2651fbf8b71c8e>`_
-
 This post only explains the setup procedure for the additional tools needed for the RISC-V development. Installation procedure for the PyGears tools has been discussed in the :ref:`previous post <riscv-introduction-setup>`.
+
+Relevant pygears_riscv git commit: `pygears_riscv@bba9a4a <https://github.com/bogdanvuk/pygears_riscv/tree/bba9a4afe8d20e26f6aef634bc2651fbf8b71c8e>`_
 
 If I want to approach this project the TDD way, I need to be ready to test the design from the start. Hence, I will start by obtaining the "golden design", aka "reference model", aka "test oracle", depending on the terminology, and setting up the infrastructure to it with PyGears. :v:`2` RISC-V foundation github page offers `Spike <https://github.com/riscv/riscv-isa-sim/>`_ - RISC-V instruction set simulator which implements the RISC-V functional model. There are more simulators listed on the RISC-V `website <https://riscv.org/software-status/>`_, but I'd like to start with the official one. Spike is dependent on some other riscv-tool packages, so I'll start from `riscv-tools <https://github.com/riscv/riscv-isa-sim/>`_ repo and its setup instructions.
 
