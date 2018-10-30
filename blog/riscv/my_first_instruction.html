@@ -78,6 +78,7 @@
     &ensp;
     <input type="number" maxlength="1" id="verbosity_value" min="1" max="3" value="1" oninput="changeVerbosity(this.value);" style="font-weight: bold"/>
 </form>
+<p>Relevant pygears_riscv git commit: <a class="reference external" href="https://github.com/bogdanvuk/pygears_riscv/tree/a05abf3">pygears_riscv&#64;a05abf3</a></p>
 <p><span data-verbosity="2" hidden="true"> First instruction is probably going to be unlike any other in the amount of work that I’ll need to put into implementing it, so it deserves a post on its own. </span><span> Let’s start from the RV32I description in the (currently) latest version of the </span><a class="reference external" href="https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf">RISC-V ISA Specification</a><span>, which is given in the </span><a class="reference external" href="https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf#page=21">Chapter 2: RV32I Base Integer Instruction Set</a><span>. The specification first goes on to describe </span><a class="reference external" href="https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf#page=25">Integer Computational Instructions (Chapter 2.4)</a><span>, of which the </span><code class="docutils literal notranslate"><span class="pre">addi</span></code><span> instruction is explained first, so let’s start with that one.</span></p>
 <p><span data-verbosity="2" hidden="true">All RV32I instructions are encoded with 32 bits using several formats (although there is also a </span><a class="reference external" data-verbosity="2" hidden="true" href="https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf#page=81">Compressed Instruction Formats (Chapter 12.2)</a><span data-verbosity="2" hidden="true"> but I’ll leave that for later). All the information needed for the instruction execution has to be encoded in 32 bits and these formats specify where exactly is each peace of information located within these 32 bits. Usually the instruction needs to specify which operation to perform (</span><code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">opcode</span></code><span data-verbosity="2" hidden="true"> and </span><code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">funct</span></code><span data-verbosity="2" hidden="true"> fields), which registers are involved (</span><code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">rs</span></code><span data-verbosity="2" hidden="true"> - register source or </span><code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">rd</span></code><span data-verbosity="2" hidden="true"> - register destination), and usually provides some immediate values as arguments (</span><code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">imm</span></code><span data-verbosity="2" hidden="true"> fields). </span><span data-verbosity="3" hidden="true"> One of the key advantages of the RISC-V ISA is that pieces of information of the same type (like </span><code class="docutils literal notranslate" data-verbosity="3" hidden="true"><span class="pre">rd</span></code><span data-verbosity="3" hidden="true"> field) are usually located at the same position within the 32 bit encoding for different formats, which proved to simplify the hardware implementation.</span></p>
 <p><span data-verbosity="2" hidden="true">For RV32I, a set of 32 registers is needed, named </span><code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">x0</span></code><span data-verbosity="2" hidden="true"> - </span><code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">x31</span></code><span data-verbosity="2" hidden="true">, where </span><code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">x0</span></code><span data-verbosity="2" hidden="true"> is different from the others in that it has a fixed value of 0, i.e it’s value cannot be changed. The ISA specification defines the </span><code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">XLEN</span></code><span data-verbosity="2" hidden="true"> parameter to represent the width of the registers in number of bits: either 32 or 64. </span><span data-verbosity="3" hidden="true"> I’ll try to keep </span><code class="docutils literal notranslate" data-verbosity="3" hidden="true"><span class="pre">XLEN</span></code><span data-verbosity="3" hidden="true"> a design parameter of the processor implementation, but I’ll first focus on a version with </span><code class="docutils literal notranslate" data-verbosity="3" hidden="true"><span class="pre">XLEN=32</span></code><span data-verbosity="3" hidden="true">, i.e with the processor version with 32 bit wide registers.</span></p>
@@ -330,7 +331,7 @@
 </div>
 <p data-verbosity="2" hidden="true">In order to create the test instruction, I’ll use the <a class="reference internal" data-verbosity="2" hidden="true" href="#ADDI" title="ADDI"><code class="xref py py-data docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">ADDI</span></code></a> template and substitute the values of the fields that I’d like to change: <code class="code highlight py docutils literal notranslate" data-verbosity="2" hidden="true"><span class="n" data-verbosity="2" hidden="true"><span class="pre">test_instr</span></span> <span class="o" data-verbosity="2" hidden="true"><span class="pre">=</span></span> <span class="n" data-verbosity="2" hidden="true"><span class="pre">ADDI</span></span><span class="o" data-verbosity="2" hidden="true"><span class="pre">.</span></span><span class="n" data-verbosity="2" hidden="true"><span class="pre">replace</span></span><span class="p" data-verbosity="2" hidden="true"><span class="pre">(</span></span><span class="n" data-verbosity="2" hidden="true"><span class="pre">imm</span></span><span class="o" data-verbosity="2" hidden="true"><span class="pre">=-</span></span><span class="mi" data-verbosity="2" hidden="true"><span class="pre">1233</span></span><span class="p" data-verbosity="2" hidden="true"><span class="pre">,</span></span> <span class="n" data-verbosity="2" hidden="true"><span class="pre">rd</span></span><span class="o" data-verbosity="2" hidden="true"><span class="pre">=</span></span><span class="mi" data-verbosity="2" hidden="true"><span class="pre">1</span></span><span class="p" data-verbosity="2" hidden="true"><span class="pre">,</span></span> <span class="n" data-verbosity="2" hidden="true"><span class="pre">rs1</span></span><span class="o" data-verbosity="2" hidden="true"><span class="pre">=</span></span><span class="mi" data-verbosity="2" hidden="true"><span class="pre">1</span></span><span class="p" data-verbosity="2" hidden="true"><span class="pre">)</span></span></code>. The <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">test_instr</span></code> basically tells the processor to add a value of <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">-1233</span></code> to the current value of the register <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">x1</span></code> (<code class="code highlight py docutils literal notranslate" data-verbosity="2" hidden="true"><span class="n" data-verbosity="2" hidden="true"><span class="pre">rs</span></span><span class="o" data-verbosity="2" hidden="true"><span class="pre">=</span></span><span class="mi" data-verbosity="2" hidden="true"><span class="pre">1</span></span></code>) and store it back into the register <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">x1</span></code> (<code class="code highlight py docutils literal notranslate" data-verbosity="2" hidden="true"><span class="n" data-verbosity="2" hidden="true"><span class="pre">rd</span></span><span class="o" data-verbosity="2" hidden="true"><span class="pre">=</span></span><span class="mi" data-verbosity="2" hidden="true"><span class="pre">1</span></span></code>). I’ll initialize the register <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">x1</span></code> with the value of <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">-1</span></code>, so that both addition operands are negative: <code class="code highlight py docutils literal notranslate" data-verbosity="2" hidden="true"><span class="n" data-verbosity="2" hidden="true"><span class="pre">reg_file_init</span></span> <span class="o" data-verbosity="2" hidden="true"><span class="pre">=</span></span> <span class="p" data-verbosity="2" hidden="true"><span class="pre">{</span></span><span class="mi" data-verbosity="2" hidden="true"><span class="pre">1</span></span><span class="p" data-verbosity="2" hidden="true"><span class="pre">:</span></span> <span class="o" data-verbosity="2" hidden="true"><span class="pre">-</span></span><span class="mi" data-verbosity="2" hidden="true"><span class="pre">1</span></span><span class="p" data-verbosity="2" hidden="true"><span class="pre">}</span></span></code>.</p>
 <p data-verbosity="2" hidden="true">First, the Spike simulator is called via <a class="reference internal" data-verbosity="2" hidden="true" href="#run_all" title="run_all"><code class="xref py py-func docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">run_all()</span></code></a> function to run the <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">test_instr</span></code>, and return the referent initial and resulting states of the register file, as described in the section <a class="reference internal" data-verbosity="2" hidden="true" href="#spike-interface">Spike interface</a>.</p>
-<p data-verbosity="2" hidden="true">Next, the <a class="reference internal" data-verbosity="2" hidden="true" href="#riscv_instr_seq_env" title="riscv_instr_seq_env"><code class="xref py py-func docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">riscv_instr_seq_env()</span></code></a> function is called to create the verification environment, as described in the section <a class="reference internal" data-verbosity="2" hidden="true" href="#verification-environment">Verification environment</a>. The initial register file state obtained from Spike in the form of a <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">list</span></code>, is transformed to a <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">dict</span></code> and provided to the <a class="reference internal" data-verbosity="2" hidden="true" href="#riscv_instr_seq_env" title="riscv_instr_seq_env"><code class="xref py py-func docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">riscv_instr_seq_env()</span></code></a> verbatim. After this statement, all the gears are instantiated and registered with PyGears framework, so when the simulator is invoked via <code class="code highlight py docutils literal notranslate" data-verbosity="2" hidden="true"><span class="n" data-verbosity="2" hidden="true"><span class="pre">sim</span></span><span class="p" data-verbosity="2" hidden="true"><span class="pre">()</span></span></code>, it has all the information it needs to simulate the design. This command invokes the PyGears built-in pure-Python simulator, which I’ll explain a bit in the section <a class="reference internal" data-verbosity="2" hidden="true" href="#pygears-pure-python-simulator">PyGears pure-Python simulator</a>.</p>
+<p data-verbosity="2" hidden="true">Next, the <a class="reference internal" data-verbosity="2" hidden="true" href="#riscv_instr_seq_env" title="riscv_instr_seq_env"><code class="xref py py-func docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">riscv_instr_seq_env()</span></code></a> function is called to create the verification environment, as described in the section <a class="reference internal" data-verbosity="2" hidden="true" href="#verification-environment">Verification environment</a>. The initial register file state obtained from Spike in the form of a <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">list</span></code>, is transformed to a <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">dict</span></code> and provided to the <a class="reference internal" data-verbosity="2" hidden="true" href="#riscv_instr_seq_env" title="riscv_instr_seq_env"><code class="xref py py-func docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">riscv_instr_seq_env()</span></code></a> verbatim. After this statement, all the gears are instantiated and registered with PyGears framework, so when the simulator is invoked via <code class="code highlight py docutils literal notranslate" data-verbosity="2" hidden="true"><span class="n" data-verbosity="2" hidden="true"><span class="pre">sim</span></span><span class="p" data-verbosity="2" hidden="true"><span class="pre">()</span></span></code>, it has all the information it needs to simulate the design. This command invokes the PyGears built-in pure-Python simulator, of which I’ll talk some more in the following blog posts.</p>
 <p><span data-verbosity="2" hidden="true">After the simulation is done, I print the resulting value of the register </span><code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">x1</span></code><span data-verbosity="2" hidden="true">, by casting its value to the </span><a class="reference external" data-verbosity="2" hidden="true" href="../../typing/int.html" title="(in PyGears v0.1.2)"><code class="xref any docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">Int[32]</span></code></a><span data-verbosity="2" hidden="true"> type in order to print its signed representation. </span><span data-verbosity="3" hidden="true"> This is of course an ptional step and is useful to me only now at the beginning for the purpose of debugging the verification environment. I’ll remove it later when I gain trust in my tests.</span></p>
 <p data-verbosity="2" hidden="true">Finally, I check whether the resulting register file state of my design matches the state Spike reported. If the register value mismatch is found, the <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">assert</span></code> exception will be raised and the test will fail.</p>
 </div>
@@ -378,95 +379,6 @@
 </div>
 
 </div><p data-verbosity="3" hidden="true"> I profiled the test a bit and found out that the majority of the test run time is spent in retrieving the register file state from Spike, so I’ll need to optimize it soon if I want to have an elaborate regression suit that runs in a reasonable amount of time.</p>
-</div>
-<div class="section" id="pygears-pure-python-simulator">
-<div hidden data-verbosity=2>
-<h2 data-verbosity="2" hidden="true"> PyGears pure-Python simulator<a class="headerlink" href="#pygears-pure-python-simulator" title="Permalink to this headline">¶</a></h2>
-
-</div><p data-verbosity="3" hidden="true">I haven’t yet found time to thoroughly document the PyGears built-in pure-Python simulator, so I’ll just write a quick introduction here. Furthermore, there are still lots of gears in the libraries shipped with PyGears that do not have their implementation in pure Python, so I’ll wait with describing the simulator until all the gears are supported and I’ve learned all the lessons from implementing them.</p>
-<p data-verbosity="3" hidden="true">You may wonder what is the point of simulating the design with a custom Python simulator instead of using a well-tested RTL simulator, when anyways our target is to produce a working RTL description of the design? Well the point is that by designing hardware in PyGears we can reason about the design on a higher level of abstraction than it is possible with the RTL. PyGears allows us to view the design completely in terms of the dataflow, and the PyGears simulator utilizes this to abstract away all unnecessary details.</p>
-<p data-verbosity="3" hidden="true">RTL simulators are event-driven, i.e. the processes they simulate are executed to recalculate their outputs each time one of their input signals (called the sensitivity list) change in value. The change in signal value is considered an event and all processes sensitive to that event are triggered by it and their outputs are recalculated, which now in turn triggers other processes sensitive to these outputs, and so on. So whenever a signal changes in value, it can send waves of process reevaluation (called delta cycles) throughout the design, where depending on the inter-process connectivity a single process can be run multiple times, which makes it hard to reason about what’s happening at that level.</p>
-<p data-verbosity="3" hidden="true">I learned a lot about event-driven simulator from the <a class="reference external" data-verbosity="3" hidden="true" href="https://www.springer.com/gp/book/9780387699578">SystemC: From the Ground Up, Section 6: Concurrency</a>, but I had a hard time finding a free succinct explanation on the web to reference here. <a class="reference external" data-verbosity="3" hidden="true" href="https://users.isy.liu.se/da/petka86/Delta_cycle.pdf">This informal article</a> came close, so you might want to take a look at it.</p>
-<p data-verbosity="2" hidden="true">While in RTL methodology the signals travel unconstrained to and fro between the processes, in PyGears design, the data has a clear direction of propagation, namely from the producer to the consumer. This puts a heavy constraint on the order in which gears need to be simulated, where a consumer is always run only after all of its producers were executed and they’ve decided whether they want to offer a new piece of data to the said consumer. In other words, the gears form a <a class="reference external" data-verbosity="2" hidden="true" href="https://en.wikipedia.org/wiki/Directed_acyclic_graph">DAG</a> (Directed Acyclic Graph), where there is a clear order of gear execution (check <a class="reference external" data-verbosity="2" hidden="true" href="https://en.wikipedia.org/wiki/Topological_sorting">Topological sorting</a>).</p>
-<p data-verbosity="2" hidden="true">Furthermore, in PyGears simulation, the signals comprising the <a class="reference external" data-verbosity="2" hidden="true" href="../../gears.html#gears-interface" title="(in PyGears v0.1.2)"><span class="xref std std-ref" data-verbosity="2" hidden="true">DTI interface</span></a> are abstracted away and higher level events are used to trigger gears to execute, of which two are most important:</p>
-<ol class="arabic simple" data-verbosity="2" hidden="true">
-<li data-verbosity="2" hidden="true"><p data-verbosity="2" hidden="true"><strong data-verbosity="2" hidden="true">put</strong>: an event issued by the producer when it outputs new data. This signals the consumers that new data is available, i.e they have new task to work on and should be scheduled for execution.</p></li>
-<li data-verbosity="2" hidden="true"><p data-verbosity="2" hidden="true"><strong data-verbosity="2" hidden="true">ack</strong>: an event issued by the consumer signaling that it is done using the data from the producer. This signals the producer that it can dispose of the acknowledged data and it is free to output a new value.</p></li>
-<li data-verbosity="2" hidden="true"><p data-verbosity="2" hidden="true"><strong data-verbosity="2" hidden="true">done</strong>: an event issued by the producer when it is finished producing new data in the current simulation. This usually happens when the producer receives the <strong data-verbosity="2" hidden="true">done</strong> event on one of its inputs (it is slightly more complicated than that, but it’ll suffice for now).</p></li>
-</ol>
-<p data-verbosity="2" hidden="true">This all means that for each clock cycle, PyGears simulator makes two passes through a DAG of gears:</p>
-<ol class="arabic simple" data-verbosity="2" hidden="true">
-<li data-verbosity="2" hidden="true"><p data-verbosity="2" hidden="true"><strong data-verbosity="2" hidden="true">Forward pass</strong>: Producers are executed first and gears are triggered by the <strong data-verbosity="2" hidden="true">put</strong> events.</p></li>
-<li data-verbosity="2" hidden="true"><p data-verbosity="2" hidden="true"><strong data-verbosity="2" hidden="true">Backward pass</strong>: The order of execution is reversed and consumers are executed first. Gears are triggered by the <strong data-verbosity="2" hidden="true">ack</strong> event in the backward pass.</p></li>
-</ol>
-<p data-verbosity="2" hidden="true">Throughout the blog, I’ll predominantly debug the design using the PyGears simulator, since it abstracts away the unnecessary details, its flow is easier to follow, it allows me to work with complex data types, it allows me to use the Python debugger during the simulation, etc.</p>
-<p data-verbosity="2" hidden="true">The animation below shows the timelapse of the PyGears pure-Python simulation of the RISC-V design on a single <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">addi</span></code> command (same one used for the test explained in the section <a class="reference internal" data-verbosity="2" hidden="true" href="#writing-the-first-test">Writing the first test</a>). The python script that generates this gif animation is located in <a class="reference external" data-verbosity="2" hidden="true" href="https://github.com/bogdanvuk/pygears_riscv/blob/a05abf3/script/addi_timelapse.py">script/addi_timelapse.py</a>. The animation shows the graph of the RISC-V verification environment and shows the process of the simulation in the following manner:</p>
-<ul class="simple" data-verbosity="2" hidden="true">
-<li data-verbosity="2" hidden="true"><p data-verbosity="2" hidden="true">Gear is painted <span class="html" data-verbosity="2" hidden="true"><font color="green">GREEN</font></span> if it is being executed as part of the “forward pass”, <span class="html" data-verbosity="2" hidden="true"><font color="orange">ORANGE</font></span> if it is being executed as part of the “backward pass”, and <span class="html" data-verbosity="2" hidden="true"><font color="red">RED</font></span> if it received the <strong data-verbosity="2" hidden="true">done</strong> event.</p></li>
-<li data-verbosity="2" hidden="true"><p data-verbosity="2" hidden="true">Interface is painted in <span class="html" data-verbosity="2" hidden="true"><font color="green">GREEN</font></span> if a <strong data-verbosity="2" hidden="true">put</strong> event was issued over it, <span class="html" data-verbosity="2" hidden="true"><font color="orange">ORANGE</font></span> for an <strong data-verbosity="2" hidden="true">ack</strong> event, and <span class="html" data-verbosity="2" hidden="true"><font color="red">RED</font></span> for a <strong data-verbosity="2" hidden="true">done</strong> event.</p></li>
-<li data-verbosity="2" hidden="true"><p data-verbosity="2" hidden="true">Transmitted values are printed in <strong data-verbosity="2" hidden="true">bold</strong> over the interfaces.</p></li>
-</ul>
-<div class="gifplayer" data-verbosity="2" hidden="true">
-<a class="reference internal image-reference" data-verbosity="2" hidden="true" href="../_images/addi-timelapse.gif"><img alt="../_images/addi-timelapse.gif" data-verbosity="2" hidden="true" src="../_images/addi-timelapse.gif" style="width: 100%;" /></a>
-
-<div id="controller-bar" style="text-align:center;">
-    <button id="backward" href="#">|< Step back </button>&nbsp;&nbsp;
-    <button id="play" href="#"> Play | Pause </button>&nbsp;&nbsp;
-    <button id="forward" href="#"> Step forward >|</button>
-</div>
-
-<script type="text/javascript" src="../_static/libgif.js"></script>
-<script>
-if (window.location.protocol != "file:") {
-
-     var img_elem = $("div.gifplayer").find("img");
-
-     var img_clone = img_elem.clone().appendTo('.section:first');
-     img_clone.show();
-     var width = img_clone[0].offsetWidth;
-     img_clone.remove();
-
-    var gif = new SuperGif({
-        gif: img_elem[0],
-        max_width: width,
-        loop_mode: 'auto',
-        auto_play: false,
-        draw_while_loading: false,
-    });
-
-
-    gif.load();
-    gif.pause();
-
-    $('button#backward').click(function(){
-        var total_frames = gif.get_length();
-        gif.pause();
-        if(gif.get_current_frame() == 0) {
-            gif.move_to(total_frames-1);
-        } else {
-            gif.move_relative(-1);
-        }
-    })
-
-
-    $('button#play').click(function(){
-        if(gif.get_playing()){
-            gif.pause();
-        } else {
-            gif.play();
-        }
-    })
-
-    $('button#forward').click(function(){
-        gif.pause();
-        gif.move_relative(1);
-    })
-}
-</script>
-</div>
-<p data-verbosity="2" hidden="true">As you can see, the simulation starts with the <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">drv</span></code> module which has no inputs and is thus a “source node” of the DAG. <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">drv</span></code> generates the test instruction and its consumers are triggered. The simulation continues until a “sink node” of the DAG is reached, namely <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">register_file_write</span></code>, which marks the end of the “forward pass”. The “backward pass” begins and the wave of <strong data-verbosity="2" hidden="true">ack</strong> events trigger the gears in reverse order, until <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">drv</span></code> is reached and the timestep is completed.</p>
-<p data-verbosity="2" hidden="true">In the next timestep, <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">drv</span></code> realizes that there is no more data to produce, so it issues a <strong data-verbosity="2" hidden="true">done</strong> event. The <strong data-verbosity="2" hidden="true">done</strong> event then propagates throughout the design, since no gear in the current design can operate when <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">drv</span></code> stops issuing the instructions.</p>
-<p data-verbosity="3" hidden="true"> Since this post is already too long, I’ll show in some other post how the PyGears simulator can create waveforms, diagnose issues, how to use it with the Python debugger, etc.</p>
 </div>
 <div class="section" id="simulating-with-verilator">
 <div hidden data-verbosity=2>
@@ -630,7 +542,41 @@ if (window.location.protocol != "file:") {
     
 
 
+<div class="section">
+  <span style="float: left;">
   
+  Previous: 
+  <a href="setup.html">
+    
+    RISC-V Tools Setup
+  </a>
+  
+  </span>
+  <span>&nbsp;</span>
+  <span style="float: right;">
+  
+</div>
+
+  
+  
+    <div class="section">
+    <h2>Comments</h2>
+    <div id="disqus_thread"></div>
+    <script type="text/javascript">
+        var disqus_shortname = 'pygears';
+        var disqus_identifier = '/riscv/my_first_instruction/';
+        var disqus_title = 'My First Instruction';
+        var disqus_url = 'https://www.pygears.org/riscv/my_first_instruction';
+
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    </div>
   
   </div>
 
@@ -668,8 +614,8 @@ if (window.location.protocol != "file:") {
   
   <h2>
   
-    
-     Draft 
+  
+    30 October 2018
   
   </h2>
 
@@ -679,12 +625,21 @@ if (window.location.protocol != "file:") {
   
   <li id="author"><span>Author:</span>
     
-      Bogyman
+      
+      <a href="../blog/author/bogdan-vukobratovic.html">Bogdan Vukobratović</a>
+      
     </li>
   
 
   
 
+  
+  <li id="language"><span>Language:</span>
+    
+      
+      <a href="../blog/language/english.html">English</a>
+      
+    </li>
   
 
   
@@ -697,6 +652,23 @@ if (window.location.protocol != "file:") {
   
 
   
+  
+  <li id="comments">
+    <script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+    var disqus_shortname = 'pygears'; // required: replace example with your forum shortname
+
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function () {
+    var s = document.createElement('script'); s.async = true;
+    s.type = 'text/javascript';
+    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+    </script>
+    
+    <a href="#disqus_thread" data-disqus-identifier="/riscv/my_first_instruction/"> Comments</a>
+  </li>
   
   </ul>
 
@@ -740,7 +712,7 @@ if (window.location.protocol != "file:") {
   <ul>
   
     
-    <li><a href="../blog/category/risc-v.html">RISC-V (2)</a></li>
+    <li><a href="../blog/category/risc-v.html">RISC-V (3)</a></li>
     
   
     
@@ -753,7 +725,7 @@ if (window.location.protocol != "file:") {
   <ul>
   
     
-    <li><a href="../blog/2018.html">2018 (4)</a></li>
+    <li><a href="../blog/2018.html">2018 (5)</a></li>
     
   
   </ul>
