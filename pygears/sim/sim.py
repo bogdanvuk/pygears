@@ -3,6 +3,7 @@ import itertools
 import logging
 import os
 import random
+import sys
 import tempfile
 import time
 
@@ -362,7 +363,7 @@ def sim(outdir=None,
     bind('sim/artifact_dir', outdir)
 
     if not seed:
-        seed = int(time.time())
+        seed = random.randrange(sys.maxsize)
     random.seed(seed)
     bind('sim/rand_seed', seed)
     sim_log().info(f'Running sim with seed: {seed}')

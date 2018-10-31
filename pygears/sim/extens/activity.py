@@ -54,6 +54,6 @@ class ActivityChecker:
                     src_port = self.blockers[p]
                     if 'waiting' in self.hooks:
                         self.hooks['waiting'](module, p)
-                    sim_log().info(
+                    sim_log().debug(
                         f'{p.gear.name}.{p.basename} waiting on {src_port.gear.name}.{src_port.basename}'
                     )
