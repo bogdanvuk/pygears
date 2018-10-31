@@ -353,6 +353,7 @@ def sim(outdir=None,
         extens=[],
         run=True,
         verbosity=logging.INFO,
+        check_activity=True,
         seed=None):
 
     if outdir is None:
@@ -370,6 +371,10 @@ def sim(outdir=None,
     asyncio.set_event_loop(loop)
     bind('sim/simulator', loop)
 
+    if check_activity:
+        from pygears.sim.extens.activity import ActivityChecker
+        if ActivityChecker not in extens:
+            extens.append(ActivityChecker)
     top = find('/')
     for oper in itertools.chain(registry('sim/flow'), extens):
         oper(top)
