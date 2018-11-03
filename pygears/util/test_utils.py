@@ -95,74 +95,74 @@ def get_test_res_ref_dir_pair(func):
 
 def synth_check(expected, **kwds):
     def decorator(func):
-        @wraps(func)
-        def wrapper():
-            func()
-            filename, outdir = get_test_res_ref_dir_pair(func)
-            register_sv_paths(outdir)
-
-            svgen(outdir=outdir, **kwds)
-
-            files = []
-            for svmod in registry("svgen/map").values():
-                if not hasattr(svmod, 'sv_module_path'):
-                    continue
-
-                path = svmod.sv_module_path
-                if not path:
-                    path = os.path.join(outdir, svmod.sv_file_name)
-
-                files.append(path)
-
-            files.append(os.path.join(COMMON_SVLIB_DIR, 'dti.sv'))
-
-            viv_cmd = (
-                f'vivado -mode batch -source {outdir}/synth.tcl -nolog -nojournal'
-            )
-
-            jinja_context = {
-                'res_dir': os.path.join(outdir, 'vivado'),
-                'files': files
-            }
-
-            env = jinja2.Environment(
-                loader=jinja2.FileSystemLoader(
-                    searchpath=os.path.dirname(__file__)))
-
-            env.get_template('synth.j2').stream(jinja_context).dump(
-                f'{outdir}/synth.tcl')
-
-            def row_data(line):
-                return [
-                    row.strip().lower() for row in line.split('|')
-                    if row.strip()
-                ]
-
-            assert os.system(viv_cmd) == 0, "Vivado build failed"
-            with open(f'{outdir}/vivado/utilization.txt') as f:
-                tbl_section = 0
-                for line in f:
-                    if line[0] == '+':
-                        tbl_section += 1
-                    elif tbl_section == 1:
-                        header = row_data(line)[2:]
-                    elif tbl_section == 2:
-                        values = [float(v) for v in row_data(line)[2:]]
-                        break
-
-                util = dict(zip(header, values))
-
-            for param, value in expected.items():
-                assert util[param] == value
-
-        return wrapper
+        return pytest.mark.usefixtures('synth_check_fixt')(
+            pytest.mark.parametrize(
+                'synth_check_fixt', [[expected, kwds]], indirect=True)(func))
 
     return decorator
 
 
-def svgen_check(files, **kwds):
-    return pytest.mark.usefixture('svgen_check_fixt')(pytest.mark.parametrize(
-        'svgen_check_fixt', [[files, kwds]], indirect=True))
+@pytest.fixture
+def synth_check_fixt(tmpdir, request):
+    skip_ifndef('SYNTH_TEST')
+    yield
+
+    outdir = tmpdir
+    register_sv_paths(outdir)
+    svgen(outdir=outdir, **request.param[1])
+
+    files = []
+    for svmod in registry("svgen/map").values():
+        if not hasattr(svmod, 'sv_module_path'):
+            continue
+
+        path = svmod.sv_module_path
+        if not path:
+            path = os.path.join(outdir, svmod.sv_file_name)
+
+        files.append(path)
+
+    files.append(os.path.join(COMMON_SVLIB_DIR, 'dti.sv'))
+
+    viv_cmd = (
+        f'vivado -mode batch -source {outdir}/synth.tcl -nolog -nojournal')
+
+    jinja_context = {'res_dir': os.path.join(outdir, 'vivado'), 'files': files}
+
+    env = jinja2.Environment(
+        loader=jinja2.FileSystemLoader(searchpath=os.path.dirname(__file__)))
+
+    env.get_template('synth.j2').stream(jinja_context).dump(
+        f'{outdir}/synth.tcl')
+
+    def row_data(line):
+        return [row.strip().lower() for row in line.split('|') if row.strip()]
+
+    assert os.system(viv_cmd) == 0, "Vivado build failed"
+    with open(f'{outdir}/vivado/utilization.txt') as f:
+        tbl_section = 0
+        for line in f:
+            if line[0] == '+':
+                tbl_section += 1
+            elif tbl_section == 1:
+                header = row_data(line)[2:]
+            elif tbl_section == 2:
+                values = [float(v) for v in row_data(line)[2:]]
+                break
+
+        util = dict(zip(header, values))
+
+    for param, value in request.param[0].items():
+        assert util[param] == value
+
+
+def svgen_check(expected, **kwds):
+    def decorator(func):
+        return pytest.mark.usefixtures('svgen_check_fixt')(
+            pytest.mark.parametrize(
+                'svgen_check_fixt', [[expected, kwds]], indirect=True)(func))
+
+    return decorator
 
 
 clear = pytest.fixture(autouse=True)(clear)
@@ -181,29 +181,6 @@ def svgen_check_fixt(tmpdir, request):
             os.path.splitext(request.fspath)[0], request.function.__name__, fn)
 
         assert sv_files_equal(res_file, ref_file)
-
-
-# def svgen_check(files, **kwds):
-#     def decorator(func):
-#         @wraps(func)
-#         def wrapper():
-#             func()
-#             filename, outdir = get_test_res_ref_dir_pair(func)
-#             register_sv_paths(outdir)
-
-#             svgen(outdir=outdir, **kwds)
-
-#             for fn in files:
-#                 comp_file_paths = get_sv_file_comparison_pair(
-#                     fn, filename, func.__name__)
-
-#                 assert sv_files_equal(
-#                     *comp_file_paths
-#                 ), f'{comp_file_paths[0]} != {comp_file_paths[1]}'
-
-#         return wrapper
-
-#     return decorator
 
 
 def sim_check(**kwds):
