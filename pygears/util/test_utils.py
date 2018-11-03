@@ -113,10 +113,10 @@ def synth_check_fixt(tmpdir, request):
 
     files = []
     for svmod in registry("svgen/map").values():
-        if not hasattr(svmod, 'sv_module_path'):
+        if not hasattr(svmod, 'sv_impl_path'):
             continue
 
-        path = svmod.sv_module_path
+        path = svmod.sv_impl_path
         if not path:
             path = os.path.join(outdir, svmod.sv_file_name)
 

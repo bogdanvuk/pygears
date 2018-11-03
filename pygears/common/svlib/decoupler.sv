@@ -10,7 +10,44 @@ module decoupler
     dti.producer dout
     );
 
-    if (DEPTH > 1) begin
+    if (DEPTH == 2) begin
+       logic [DIN : 0] memory [0 : 1]; //one bit for valid
+
+       logic           empty;
+       logic           full;
+       logic           active;
+       logic           handshake;
+
+       assign active = memory[0][0];
+
+       assign full = (active == 1) && (memory[1][0] == 1);
+       assign empty = (active == 0);
+
+       always_ff @(posedge clk) begin
+          if(rst) begin
+             for (int i = 0; i < 2; i++) begin
+                memory[i] <= '0;
+             end
+          end else begin
+
+             if (din.valid && !full) begin
+                memory[active][DIN:1] <= din.data;
+             end
+
+             if (din.valid && !full) begin
+                memory[active][0] <= 1'b1;
+             end else if (dout.ready) begin
+                memory[active][0] <= 1'b0;
+             end
+          end
+       end
+
+       assign dout.data = memory[active][DIN:1];
+       assign dout.valid = ~empty;
+
+       assign din.ready = ~full;
+
+    end else if (DEPTH > 1) begin
 
       localparam MSB = $clog2(DEPTH);
       localparam W_DATA = DIN;

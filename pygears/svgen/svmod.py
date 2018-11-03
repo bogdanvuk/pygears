@@ -34,8 +34,11 @@ class SVModuleGen:
     @property
     @functools.lru_cache()
     def sv_impl_path(self):
-        return find_in_dirs(self.sv_module_base_path,
-                            registry('svgen/sv_paths'))
+        if not self.is_generated:
+            return find_in_dirs(self.sv_module_base_path,
+                                registry('svgen/sv_paths'))
+        else:
+            return None
 
     @property
     def is_generated(self):
