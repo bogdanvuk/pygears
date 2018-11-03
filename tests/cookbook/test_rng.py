@@ -101,7 +101,7 @@ def test_cnt_only_sim():
 
     directed(drv(t=Uint[4], seq=seq), f=rng, ref=ref)
 
-    sim(outdir=prepare_result_dir())
+    sim(outdir=prepare_result_dir(), check_activity=False)
 
 
 def test_cnt_only_cosim():
@@ -113,7 +113,7 @@ def test_cnt_only_cosim():
         f=rng(sim_cls=SimVerilated),
         ref=rng(name='ref_model'))
 
-    sim(outdir=prepare_result_dir())
+    sim(outdir=prepare_result_dir(), check_activity=False)
 
 
 def test_cnt_down():
