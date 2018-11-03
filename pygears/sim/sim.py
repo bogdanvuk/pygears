@@ -351,7 +351,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
 def sim(outdir=None,
         timeout=None,
-        extens=[],
+        extens=None,
         run=True,
         verbosity=logging.INFO,
         check_activity=True,
@@ -359,6 +359,10 @@ def sim(outdir=None,
 
     if outdir is None:
         outdir = tempfile.mkdtemp()
+
+    if extens is None:
+        extens = []
+
     os.makedirs(outdir, exist_ok=True)
     bind('sim/artifact_dir', outdir)
 
@@ -376,6 +380,7 @@ def sim(outdir=None,
         from pygears.sim.extens.activity import ActivityChecker
         if ActivityChecker not in extens:
             extens.append(ActivityChecker)
+
     top = find('/')
     for oper in itertools.chain(registry('sim/flow'), extens):
         oper(top)
