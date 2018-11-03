@@ -1,6 +1,7 @@
 import os
 from collections import OrderedDict
 
+import pygears
 from pygears import registry, safe_bind
 from pygears.definitions import COMMON_SVLIB_DIR, COOKBOOK_SVLIB_DIR
 from pygears.svgen.inst import SVGenInstPlugin
@@ -24,7 +25,16 @@ class SVModuleGen:
         self.svgen_map = registry("svgen/map")
         self._sv_module_name = None
         self.sv_module_path = None
+        self.svmod_template_path = None
         self.sv_params = {}
+
+        svmod_fn = self.sv_file_name
+        if svmod_fn:
+            self.svmod_template_path = find_in_dirs(svmod_fn + 't',
+                                                    registry('svgen/sv_paths'))
+            if self.svmod_template_path:
+                self._sv_module_name = self.hier_sv_path_name
+                return
 
         if not self.is_generated:
             try:
@@ -166,6 +176,20 @@ class SVModuleGen:
 
             return template_env.render_local(__file__, "hier_module.j2",
                                              context)
+        elif self.svmod_template_path:
+            context = {
+                'pygears': pygears,
+                'module_name': self.sv_module_name,
+                'intfs': list(self.sv_port_configs()),
+                'params': self.params
+            }
+
+            for intf in context['intfs']:
+                context[intf['name']] = intf
+
+            return template_env.render_local(
+                self.svmod_template_path,
+                os.path.basename(self.svmod_template_path), context)
 
     def update_port_name(self, port, name):
         port['name'] = name

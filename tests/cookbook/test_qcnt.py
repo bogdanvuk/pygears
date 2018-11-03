@@ -1,9 +1,7 @@
 import random
 from functools import partial
 
-from nose import with_setup
 
-from pygears import clear
 from pygears.cookbook.qcnt import qcnt
 from pygears.cookbook.verif import directed, verif
 from pygears.sim import sim
@@ -13,7 +11,7 @@ from pygears.sim.modules.drv import drv
 from pygears.sim.modules.sim_socket import SimSocket
 from pygears.sim.modules.verilator import SimVerilated
 from pygears.typing import Queue, Uint
-from utils import prepare_result_dir, skip_ifndef
+from pygears.util.test_utils import prepare_result_dir, skip_ifndef
 
 t_din = Queue[Uint[16], 3]
 random_seq = [[[
@@ -34,20 +32,17 @@ def get_ref(seq):
     ]
 
 
-@with_setup(clear)
 def test_py_sim_dir(seq=dir_seq):
     directed(drv(t=t_din, seq=seq), f=qcnt(lvl=t_din.lvl), ref=get_ref(seq))
     sim()
 
 
-@with_setup(clear)
 def test_py_sim_rand(seq=random_seq):
     skip_ifndef('RANDOM_TEST')
     directed(drv(t=t_din, seq=seq), f=qcnt(lvl=t_din.lvl), ref=get_ref(seq))
     sim()
 
 
-@with_setup(clear)
 def test_socket_dir(seq=dir_seq):
     skip_ifndef('SIM_SOCKET_TEST')
     verif(
@@ -57,7 +52,6 @@ def test_socket_dir(seq=dir_seq):
     sim(outdir=prepare_result_dir())
 
 
-@with_setup(clear)
 def test_socket_rand(seq=random_seq):
     skip_ifndef('SIM_SOCKET_TEST', 'RANDOM_TEST')
     verif(
@@ -67,7 +61,6 @@ def test_socket_rand(seq=random_seq):
     sim(outdir=prepare_result_dir())
 
 
-@with_setup(clear)
 def test_verilate_dir(seq=dir_seq):
     skip_ifndef('VERILATOR_ROOT')
     verif(
@@ -77,7 +70,6 @@ def test_verilate_dir(seq=dir_seq):
     sim(outdir=prepare_result_dir())
 
 
-@with_setup(clear)
 def test_verilate_rand(seq=random_seq):
     skip_ifndef('VERILATOR_ROOT', 'RANDOM_TEST')
     verif(
@@ -87,7 +79,6 @@ def test_verilate_rand(seq=random_seq):
     sim(outdir=prepare_result_dir())
 
 
-@with_setup(clear)
 def test_socket_rand_cons():
     skip_ifndef('SIM_SOCKET_TEST', 'RANDOM_TEST')
 

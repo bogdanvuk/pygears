@@ -159,6 +159,23 @@ endmodule
     assign {{i['name']}}_s = {{i['name']}}.data;
     {% endif %}
   {%- endfor %}
+
+  {% for i in struct_intfs|isoutput -%}
+    {% if i['width'] > 0 %}
+    assign {{i['name']}}.data = {{i['name']}}_s;
+    {% endif %}
+  {%- endfor %}
+
 {{ caller_() }}
 {% endcall %}
+{%- endmacro %}
+
+{% macro data_func_gear(module_name, intfs, comment) -%}
+{% set caller_ = caller %}
+{% call module_with_intf_structs(module_name, intfs, intfs, comment) %}
+    assign {{intfs[0]['name']}}.ready = {{intfs[1]['name']}}.ready;
+    assign {{intfs[1]['name']}}.valid = {{intfs[0]['name']}}.valid;
+{{ caller_() }}
+{% endcall %}
+
 {%- endmacro %}

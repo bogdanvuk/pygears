@@ -1,10 +1,8 @@
-from pygears import Intf, clear, gear
+from pygears import Intf, gear
 from pygears.typing import Uint
-from nose import with_setup
-from utils import svgen_check
+from pygears.util.test_utils import svgen_check
 
 
-@with_setup(clear)
 @svgen_check(['top.sv'])
 def test_hier_module_gen():
     @gear

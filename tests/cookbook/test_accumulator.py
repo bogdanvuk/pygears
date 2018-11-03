@@ -1,6 +1,4 @@
-from nose import with_setup
 
-from pygears import clear
 from pygears.cookbook import accumulator
 from pygears.cookbook.delay import delay_rng
 from pygears.cookbook.verif import directed, verif
@@ -8,7 +6,7 @@ from pygears.sim import sim
 from pygears.sim.modules.drv import drv
 from pygears.sim.modules.verilator import SimVerilated
 from pygears.typing import Int, Queue, Tuple, Uint
-from utils import prepare_result_dir, skip_ifndef
+from pygears.util.test_utils import prepare_result_dir, skip_ifndef
 
 seq_uint = [[(1, 2), (5, 2), (8, 2)], [(3, 8), (1, 8)], [(0, 12), (4, 12),
                                                          (2, 12), (99, 12)]]
@@ -20,19 +18,16 @@ ref_int = [0, -21]
 t_din_int = Queue[Tuple[Int[8], Int[8]]]
 
 
-@with_setup(clear)
 def test_pysim_uint():
     directed(drv(t=t_din_uint, seq=seq_uint), f=accumulator, ref=ref_uint)
     sim()
 
 
-@with_setup(clear)
 def test_pysim_int():
     directed(drv(t=t_din_int, seq=seq_int), f=accumulator, ref=ref_int)
     sim()
 
 
-@with_setup(clear)
 def test_verilator_uint():
     skip_ifndef('VERILATOR_ROOT')
     verif(
@@ -42,7 +37,6 @@ def test_verilator_uint():
     sim(outdir=prepare_result_dir())
 
 
-@with_setup(clear)
 def test_verilator_int():
     skip_ifndef('VERILATOR_ROOT')
     verif(
@@ -52,7 +46,6 @@ def test_verilator_int():
     sim(outdir=prepare_result_dir())
 
 
-@with_setup(clear)
 def test_verilator_delay():
     skip_ifndef('VERILATOR_ROOT')
     verif(

@@ -1,5 +1,5 @@
 from pygears.typing import Tuple, Unit, TemplateArgumentsError, Uint
-from nose.tools import raises
+import pytest
 
 
 def test_inheritance():
@@ -17,7 +17,8 @@ def test_equality():
 
 def test_repr():
     a = Tuple[Tuple['T1', 2, 'T2', Tuple[3, Tuple['T3', 'T4']]]]
-    assert repr(a) == "Tuple[Tuple['T1', 2, 'T2', Tuple[3, Tuple['T3', 'T4']]]]"
+    assert repr(
+        a) == "Tuple[Tuple['T1', 2, 'T2', Tuple[3, Tuple['T3', 'T4']]]]"
 
 
 def test_named_repr():
@@ -31,10 +32,9 @@ def test_named_repr():
         }]
     }]
 
-    assert repr(a) == (
-        "Tuple[{'f0': "
-        "Tuple[{'f0': 'T1', 'f1': 2, 'f2': 'T2', 'f3': "
-        "Tuple[3, Tuple['T3', 'T4']]}]}]")
+    assert repr(a) == ("Tuple[{'f0': "
+                       "Tuple[{'f0': 'T1', 'f1': 2, 'f2': 'T2', 'f3': "
+                       "Tuple[3, Tuple['T3', 'T4']]}]}]")
 
 
 def test_str():
@@ -75,7 +75,7 @@ def test_multi_level_template_all_subs():
     assert b == Tuple[Tuple[1, 2, 2, Tuple[3, Tuple[3, 4]]]]
 
 
-@raises(TemplateArgumentsError)
+@pytest.mark.xfail(raises=TemplateArgumentsError)
 def test_multi_level_template_excessive_subs():
     a = Tuple[Tuple['T1', 2, 'T2', Tuple[3, Tuple['T3', 'T4']]]]
     a[1, 2, 3, 4, 5]
@@ -100,7 +100,7 @@ def test_indexing():
 #     assert a == 1
 
 
-@raises(IndexError)
+@pytest.mark.xfail(raises=IndexError)
 def test_indexing_exception():
     a = Tuple[1, 2]
     a[3]
@@ -122,6 +122,7 @@ def test_multi_tmpl_make_same():
 
     assert a == Tuple[TCoord[Uint[8], Uint[8]], TCoord[Uint[9], Uint[9]]]
 
+
 def test_named_subs():
     a = Tuple[{'F1': 'T1', 'F2': 'T2'}]
     b = a[{'T1': 1, 'T2': 2}]
@@ -131,7 +132,7 @@ def test_named_subs():
     assert b['F2'] == 2
 
 
-@raises(TemplateArgumentsError)
+@pytest.mark.xfail(raises=TemplateArgumentsError)
 def test_named_subs_wrong_params():
     a = Tuple[{'F1': 'T1', 'F2': 'T2'}]
     a[{'F1': 1, 'F2': 2}]

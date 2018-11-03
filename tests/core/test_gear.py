@@ -1,10 +1,8 @@
-from nose import with_setup
 
-from pygears import Intf, clear, gear, registry, alternative
+from pygears import Intf, alternative, gear, registry
 from pygears.typing import Queue, Tuple, Uint
 
 
-@with_setup(clear)
 def test_simple():
     @gear
     def func1(arg1, arg2, arg3) -> Uint[4]:
@@ -31,7 +29,6 @@ def test_simple():
     assert iout2.producer == root['func2'].out_ports[0]
 
 
-@with_setup(clear)
 def test_hier():
     @gear
     def func1(arg1, arg2, arg3) -> Uint[4]:
@@ -68,7 +65,6 @@ def test_hier():
     assert iout2.producer == root['func_hier/func2'].out_ports[0]
 
 
-@with_setup(clear)
 def test_hier_hierarchy():
     @gear
     def fgear(arg1) -> Uint[2]:
@@ -110,7 +106,6 @@ def test_hier_hierarchy():
         'fhier1/fhier2/fhier3/fgear'].args[0]
 
 
-@with_setup(clear)
 def test_alternatives():
     @gear(version=0)
     def fgear(arg1: Queue['T', 3], *, lvl=3) -> Tuple['T', Uint['lvl']]:

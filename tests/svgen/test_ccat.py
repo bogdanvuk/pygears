@@ -1,12 +1,10 @@
-from nose import with_setup
 
-from pygears import Intf, clear
+from pygears import Intf
 from pygears.common import ccat
 from pygears.typing import Queue, Uint, Unit
-from utils import svgen_check
+from pygears.util.test_utils import svgen_check
 
 
-@with_setup(clear)
 @svgen_check(['ccat.sv'])
 def test_general():
     ccat(

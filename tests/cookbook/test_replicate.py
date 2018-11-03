@@ -1,8 +1,6 @@
 from functools import partial
 
-from nose import with_setup
 
-from pygears import clear
 from pygears.cookbook.replicate import replicate
 from pygears.cookbook.verif import directed, verif
 from pygears.sim import sim
@@ -10,7 +8,7 @@ from pygears.sim.modules.drv import drv
 from pygears.sim.modules.sim_socket import SimSocket
 from pygears.sim.modules.verilator import SimVerilated
 from pygears.typing import Tuple, Uint
-from utils import prepare_result_dir, skip_ifndef
+from pygears.util.test_utils import prepare_result_dir, skip_ifndef
 
 sequence = [(2, 3), (5, 5), (3, 9), (8, 1)]
 ref = list([x[1]] * x[0] for x in sequence)
@@ -18,13 +16,11 @@ ref = list([x[1]] * x[0] for x in sequence)
 t_din = Tuple[Uint[16], Uint[16]]
 
 
-@with_setup(clear)
 def test_pygears_sim():
     directed(drv(t=t_din, seq=sequence), f=replicate, ref=ref)
     sim()
 
 
-@with_setup(clear)
 def test_socket_sim():
     skip_ifndef('SIM_SOCKET_TEST')
     directed(
@@ -35,7 +31,6 @@ def test_socket_sim():
     sim(outdir=prepare_result_dir())
 
 
-@with_setup(clear)
 def test_verilate_sim():
     skip_ifndef('VERILATOR_ROOT')
     directed(
@@ -44,7 +39,6 @@ def test_verilate_sim():
     sim(outdir=prepare_result_dir())
 
 
-@with_setup(clear)
 def test_socket_cosim():
     skip_ifndef('SIM_SOCKET_TEST')
     verif(
@@ -55,7 +49,6 @@ def test_socket_cosim():
     sim(outdir=prepare_result_dir())
 
 
-@with_setup(clear)
 def test_verilate_cosim():
     skip_ifndef('VERILATOR_ROOT')
     verif(

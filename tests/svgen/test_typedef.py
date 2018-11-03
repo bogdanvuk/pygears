@@ -1,6 +1,6 @@
 from pygears.svgen.util import svgen_typedef
 from pygears.typing import Uint, Int, Bool, Tuple, Queue, Union, Array, Unit
-from utils import equal_on_nonspace
+from pygears.util.test_utils import equal_on_nonspace
 
 
 def test_uint():

@@ -1,4 +1,4 @@
-from nose.tools import raises
+import pytest
 
 from pygears.typing import Tuple, Uint
 from pygears.core.type_match import type_match, TypeMatchError
@@ -18,7 +18,7 @@ def test_uint_specified():
     assert match == {}
 
 
-@raises(TypeMatchError)
+@pytest.mark.xfail(raises=TypeMatchError)
 def test_uint_fail():
     type_ = Uint[1]
     templ = Uint[2]
@@ -39,7 +39,7 @@ def test_tuple_single_lvl_related_templates():
     assert match == {'T1': 2}
 
 
-@raises(TypeMatchError)
+@pytest.mark.xfail(raises=TypeMatchError)
 def test_tuple_single_lvl_related_templates_fail():
     type_ = Tuple[1, 2, 3, 2]
     templ = Tuple[1, 'T1', 'T1', 'T1']
@@ -60,7 +60,7 @@ def test_tuple_multi_lvl_single_related_template():
     assert match == {'T1': 2}
 
 
-@raises(TypeMatchError)
+@pytest.mark.xfail(raises=TypeMatchError)
 def test_tuple_multi_lvl_single_related_template_fail():
     type_ = Tuple[1, Uint[2], 3]
     templ = Tuple[1, Uint['T1'], 'T1']
@@ -83,7 +83,7 @@ def test_tuple_deep_related_templates():
     assert match == {'T1': 1, 'T2': 2}
 
 
-@raises(TypeMatchError)
+@pytest.mark.xfail(raises=TypeMatchError)
 def test_tuple_deep_related_templates_fail():
     type_ = Tuple[Tuple[1, 1], Uint[1], Tuple[Tuple[3, 4], Tuple[1, 2]]]
     templ = Tuple[Tuple['T1', 1], Uint['T2'], Tuple[Tuple[3, 4], Tuple[
@@ -98,7 +98,7 @@ def test_tuple_namedtuple():
     assert match == {'T1': 1, 'T2': 2, 'T3': 3}
 
 
-@raises(TypeMatchError)
+@pytest.mark.xfail(raises=TypeMatchError)
 def test_tuple_namedtuple_fail():
     type_ = Tuple[1, 2, 1]
     templ = Tuple[{'F1': 'T1', 'F2': 'T2', 'F3': 'T2'}]
@@ -112,7 +112,7 @@ def test_namedtuple_tuple():
     assert match == {'T1': 1, 'T2': 2, 'T3': 3}
 
 
-@raises(TypeMatchError)
+@pytest.mark.xfail(raises=TypeMatchError)
 def test_namedtuple_tuple_fail():
     type_ = Tuple[{'F1': 1, 'F2': 2, 'F3': 3}]
     templ = Tuple['T1', 'T2', 'T2']

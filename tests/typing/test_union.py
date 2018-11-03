@@ -1,4 +1,4 @@
-from nose.tools import raises
+import pytest
 
 from pygears.typing import TemplateArgumentsError, Uint, Union, Unit
 
@@ -52,7 +52,7 @@ def test_all_subs():
     assert b == Union[1, 2, 2, 3, 3, 4]
 
 
-@raises(TemplateArgumentsError)
+@pytest.mark.xfail(raises=TemplateArgumentsError)
 def test_excessive_subs():
     a = Union['T1', 2, 'T2', 3, 'T3', 'T4']
     a[1, 2, 3, 4, 5]
