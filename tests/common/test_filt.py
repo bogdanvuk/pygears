@@ -53,25 +53,25 @@ def test_pysim_rand_q(seq=rand_seq, sel=1):
     sim()
 
 
-def test_socket_dir(seq=dir_seq, sel=0):
+def test_socket_dir(tmpdir, seq=dir_seq, sel=0):
     skip_ifndef('SIM_SOCKET_TEST')
     verif(
         drv(t=din_t, seq=seq),
         f=filt(sim_cls=partial(SimSocket, run=True), sel=sel),
         ref=filt(name='ref_model', sel=sel))
-    sim(outdir=prepare_result_dir())
+    sim(outdir=tmpdir)
 
 
-def test_socket_rand(seq=rand_seq, sel=0):
+def test_socket_rand(tmpdir, seq=rand_seq, sel=0):
     skip_ifndef('SIM_SOCKET_TEST', 'RANDOM_TEST')
     verif(
         drv(t=din_t, seq=seq),
         f=filt(sim_cls=partial(SimSocket, run=True), sel=sel),
         ref=filt(name='ref_model', sel=sel))
-    sim(outdir=prepare_result_dir())
+    sim(outdir=tmpdir)
 
 
-def test_socket_dir_q(seq=dir_seq, sel=0):
+def test_socket_dir_q(tmpdir, seq=dir_seq, sel=0):
     skip_ifndef('SIM_SOCKET_TEST')
     verif(
         drv(t=qdin_t, seq=[seq]),
@@ -80,10 +80,10 @@ def test_socket_dir_q(seq=dir_seq, sel=0):
             sel=sel,
         ),
         ref=filt(name='ref_model', sel=sel))
-    sim(outdir=prepare_result_dir())
+    sim(outdir=tmpdir)
 
 
-def test_socket_rand_q(seq=rand_seq, sel=0):
+def test_socket_rand_q(tmpdir, seq=rand_seq, sel=0):
     skip_ifndef('SIM_SOCKET_TEST', 'RANDOM_TEST')
     verif(
         drv(t=qdin_t, seq=[seq]),
@@ -92,22 +92,22 @@ def test_socket_rand_q(seq=rand_seq, sel=0):
             sel=sel,
         ),
         ref=filt(name='ref_model', sel=sel))
-    sim(outdir=prepare_result_dir())
+    sim(outdir=tmpdir)
 
 
-def test_verilator_dir(seq=dir_seq, sel=0):
+def test_verilator_dir(tmpdir, seq=dir_seq, sel=0):
     skip_ifndef('VERILATOR_ROOT')
     verif(
         drv(t=din_t, seq=seq),
         f=filt(sim_cls=SimVerilated, sel=sel),
         ref=filt(name='ref_model', sel=sel))
-    sim(outdir=prepare_result_dir())
+    sim(outdir=tmpdir)
 
 
-def test_verilator_rand(seq=rand_seq, sel=0):
+def test_verilator_rand(tmpdir, seq=rand_seq, sel=0):
     skip_ifndef('VERILATOR_ROOT', 'RANDOM_TEST')
     verif(
         drv(t=din_t, seq=seq),
         f=filt(sim_cls=SimVerilated, sel=sel),
         ref=filt(name='ref_model', sel=sel))
-    sim(outdir=prepare_result_dir())
+    sim(outdir=tmpdir)

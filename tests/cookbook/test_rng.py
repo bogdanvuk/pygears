@@ -21,16 +21,16 @@ def test_basic_unsigned():
     assert not rng_gear.params['signed']
 
 
-def test_basic_unsigned_sim():
+def test_basic_unsigned_sim(tmpdir):
     seq = [(2, 8, 2)]
     ref = [list(range(*seq[0]))]
 
     directed(drv(t=Tuple[Uint[4], Uint[4], Uint[2]], seq=seq), f=rng, ref=ref)
 
-    sim(outdir=prepare_result_dir())
+    sim(outdir=tmpdir)
 
 
-def test_basic_unsigned_cosim():
+def test_basic_unsigned_cosim(tmpdir):
     skip_ifndef('VERILATOR_ROOT')
     seq = [(2, 8, 2)]
 
@@ -39,7 +39,7 @@ def test_basic_unsigned_cosim():
         f=rng(sim_cls=SimVerilated),
         ref=rng(name='ref_model'))
 
-    sim(outdir=prepare_result_dir())
+    sim(outdir=tmpdir)
 
 
 def test_basic_signed():
@@ -51,16 +51,16 @@ def test_basic_signed():
     assert rng_gear.params['signed']
 
 
-def test_basic_signed_sim():
+def test_basic_signed_sim(tmpdir):
     seq = [(-15, -3, 2)]
     ref = [list(range(*seq[0]))]
 
     directed(drv(t=Tuple[Int[5], Int[6], Uint[2]], seq=seq), f=rng, ref=ref)
 
-    sim(outdir=prepare_result_dir())
+    sim(outdir=tmpdir)
 
 
-def test_basic_signed_cosim():
+def test_basic_signed_cosim(tmpdir):
     skip_ifndef('VERILATOR_ROOT')
     seq = [(-15, -3, 2)]
 
@@ -69,7 +69,7 @@ def test_basic_signed_cosim():
         f=rng(sim_cls=SimVerilated),
         ref=rng(name='ref_model'))
 
-    sim(outdir=prepare_result_dir())
+    sim(outdir=tmpdir)
 
 
 def test_supply_constant():
@@ -95,16 +95,16 @@ def test_cnt_only():
     assert rng_gear.params['cfg'] == Tuple[Uint[1], Uint[4], Uint[1]]
 
 
-def test_cnt_only_sim():
+def test_cnt_only_sim(tmpdir):
     seq = [8]
     ref = [list(range(8))]
 
     directed(drv(t=Uint[4], seq=seq), f=rng, ref=ref)
 
-    sim(outdir=prepare_result_dir(), check_activity=False)
+    sim(outdir=tmpdir, check_activity=False)
 
 
-def test_cnt_only_cosim():
+def test_cnt_only_cosim(tmpdir):
     skip_ifndef('VERILATOR_ROOT')
     seq = [8]
 
@@ -113,7 +113,7 @@ def test_cnt_only_cosim():
         f=rng(sim_cls=SimVerilated),
         ref=rng(name='ref_model'))
 
-    sim(outdir=prepare_result_dir(), check_activity=False)
+    sim(outdir=tmpdir, check_activity=False)
 
 
 def test_cnt_down():

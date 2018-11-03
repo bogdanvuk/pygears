@@ -8,7 +8,7 @@ from pygears.sim.modules.drv import drv
 from pygears.sim.modules.sim_socket import SimSocket
 from pygears.sim.modules.verilator import SimVerilated
 from pygears.typing import Tuple, Uint
-from pygears.util.test_utils import prepare_result_dir, skip_ifndef
+from pygears.util.test_utils import skip_ifndef
 
 sequence = [(2, 3), (5, 5), (3, 9), (8, 1)]
 ref = list([x[1]] * x[0] for x in sequence)
@@ -21,39 +21,39 @@ def test_pygears_sim():
     sim()
 
 
-def test_socket_sim():
+def test_socket_sim(tmpdir):
     skip_ifndef('SIM_SOCKET_TEST')
     directed(
         drv(t=t_din, seq=sequence),
         f=replicate(sim_cls=partial(SimSocket, run=True)),
         ref=ref)
 
-    sim(outdir=prepare_result_dir())
+    sim(outdir=tmpdir)
 
 
-def test_verilate_sim():
+def test_verilate_sim(tmpdir):
     skip_ifndef('VERILATOR_ROOT')
     directed(
         drv(t=t_din, seq=sequence), f=replicate(sim_cls=SimVerilated), ref=ref)
 
-    sim(outdir=prepare_result_dir())
+    sim(outdir=tmpdir)
 
 
-def test_socket_cosim():
+def test_socket_cosim(tmpdir):
     skip_ifndef('SIM_SOCKET_TEST')
     verif(
         drv(t=t_din, seq=sequence),
         f=replicate(sim_cls=partial(SimSocket, run=True)),
         ref=replicate(name='ref_model'))
 
-    sim(outdir=prepare_result_dir())
+    sim(outdir=tmpdir)
 
 
-def test_verilate_cosim():
+def test_verilate_cosim(tmpdir):
     skip_ifndef('VERILATOR_ROOT')
     verif(
         drv(t=t_din, seq=sequence),
         f=replicate(sim_cls=SimVerilated),
         ref=replicate(name='ref_model'))
 
-    sim(outdir=prepare_result_dir())
+    sim(outdir=tmpdir)

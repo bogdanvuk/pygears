@@ -1,4 +1,4 @@
-module top(
+module hier(
     input clk,
     input rst,
     dti.consumer top_din1, // u1 (1)

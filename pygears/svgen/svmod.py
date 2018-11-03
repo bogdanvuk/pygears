@@ -1,4 +1,5 @@
 import os
+import functools
 from collections import OrderedDict
 
 import pygears
@@ -23,45 +24,55 @@ class SVModuleGen:
     def __init__(self, node):
         self.node = node
         self.svgen_map = registry("svgen/map")
-        self._sv_module_name = None
-        self.sv_module_path = None
-        self.svmod_template_path = None
-        self.sv_params = {}
 
-        svmod_fn = self.sv_file_name
-        if svmod_fn:
-            self.svmod_template_path = find_in_dirs(svmod_fn + 't',
-                                                    registry('svgen/sv_paths'))
-            if self.svmod_template_path:
-                self._sv_module_name = self.hier_sv_path_name
-                return
+    @property
+    @functools.lru_cache()
+    def sv_template_path(self):
+        return find_in_dirs(self.sv_module_basename + '.svt',
+                            registry('svgen/sv_paths'))
 
-        if not self.is_generated:
-            try:
-                self.sv_module_path, self._sv_module_name, self.sv_params = self.get_sv_module_info(
-                )
-            except FileNotFoundError:
-                svgen_log().warning(
-                    f'SystemVerilog file not found for {self.node.name}')
-        elif self.is_hierarchical:
-            if find_in_dirs(self.sv_file_name, registry('svgen/sv_paths')):
-                self.sv_module_path = None
-                self._sv_module_name = self.hier_sv_path_name + '_hier'
+    @property
+    @functools.lru_cache()
+    def sv_impl_path(self):
+        return find_in_dirs(self.sv_module_base_path,
+                            registry('svgen/sv_paths'))
 
     @property
     def is_generated(self):
-        return self.is_hierarchical
+        return getattr(self.node, 'gear', None) in registry('svgen/module_namespace') \
+            or self.sv_template_path \
+            or self.is_hierarchical
 
     @property
     def is_hierarchical(self):
         return self.node.is_hierarchical
 
     @property
-    def sv_module_name(self):
-        if self.is_generated:
-            return self._sv_module_name or self.hier_sv_path_name
+    def sv_module_basename(self):
+        if hasattr(self.node, 'gear'):
+            return self.node.gear.definition.__name__
         else:
-            return self._sv_module_name or self.node.gear.definition.__name__
+            return self.node.name
+
+    @property
+    def sv_module_base_path(self):
+        svgen_params = self.node.params.get('svgen', {})
+        return svgen_params.get('svmod_fn', self.sv_module_basename + ".sv")
+
+    @property
+    def sv_module_name(self):
+        if self.is_hierarchical:
+            # if there is a module with the same name as this hierarchical
+            # module, append "_hier" to disambiguate
+            if find_in_dirs(self.hier_sv_path_name + '.sv',
+                            registry('svgen/sv_paths')):
+                return self.hier_sv_path_name + '_hier'
+            else:
+                return self.hier_sv_path_name
+        elif self.is_generated:
+            return self.hier_sv_path_name
+        else:
+            return self.sv_impl_module_name
 
     @property
     def sv_inst_name(self):
@@ -72,27 +83,43 @@ class SVModuleGen:
         svgen_params = self.node.params.get('svgen', {})
         return svgen_params.get('svmod_fn', self.sv_module_name + ".sv")
 
-    def get_sv_module_info(self):
-        svmod_fn = self.sv_file_name
-        if svmod_fn:
-            svmod_path = find_in_dirs(svmod_fn, registry('svgen/sv_paths'))
-            if svmod_path:
-                with open(svmod_path, 'r') as f:
-                    name, _, _, svparams = parse(f.read())
+    @functools.lru_cache()
+    def sv_impl_parse(self):
+        if self.sv_impl_path:
+            with open(self.sv_impl_path, 'r') as f:
+                return parse(f.read())
+        else:
+            svgen_log().warning(
+                f'SystemVerilog file not found for {self.node.name}')
 
-                return svmod_path, name, svparams
+    @property
+    @functools.lru_cache()
+    def sv_impl_module_name(self):
+        parse_res = self.sv_impl_parse()
+        if parse_res:
+            return parse_res[0]
+        else:
+            return self.sv_module_basename
 
-        raise FileNotFoundError(
-            f'SystemVerilog file not found for {self.node.name}')
+    @property
+    def sv_params(self):
+        parse_res = self.sv_impl_parse()
+        if parse_res:
+            return parse_res[-1]
+        else:
+            return {}
 
     @property
     def params(self):
-        return {
-            k.upper(): int(v)
-            for k, v in self.node.params.items()
-            if (k.upper() in self.sv_params) and (
-                int(v) != int(self.sv_params[k.upper()]['val']))
-        }
+        if not self.is_generated:
+            return {
+                k.upper(): int(v)
+                for k, v in self.node.params.items()
+                if (k.upper() in self.sv_params) and (
+                    int(v) != int(self.sv_params[k.upper()]['val']))
+            }
+        else:
+            return {}
 
     def sv_port_configs(self):
         for p in self.node.in_ports:
@@ -176,7 +203,7 @@ class SVModuleGen:
 
             return template_env.render_local(__file__, "hier_module.j2",
                                              context)
-        elif self.svmod_template_path:
+        elif self.sv_template_path:
             context = {
                 'pygears': pygears,
                 'module_name': self.sv_module_name,
@@ -188,8 +215,8 @@ class SVModuleGen:
                 context[intf['name']] = intf
 
             return template_env.render_local(
-                self.svmod_template_path,
-                os.path.basename(self.svmod_template_path), context)
+                self.sv_template_path, os.path.basename(self.sv_template_path),
+                context)
 
     def update_port_name(self, port, name):
         port['name'] = name

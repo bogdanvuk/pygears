@@ -46,7 +46,7 @@ def test_socket_sim():
     sim()
 
 
-def test_verilate_sim():
+def test_verilate_sim(tmpdir):
     skip_ifndef('VERILATOR_ROOT')
     brick_size = 4
     seq_list = [1, 2, 3, 4]
@@ -56,7 +56,7 @@ def test_verilate_sim():
         f=serialize(sim_cls=SimVerilated),
         ref=sorted(seq_list * brick_size))
 
-    sim(outdir=prepare_result_dir())
+    sim(outdir=tmpdir)
 
 
 def test_socket_cosim():

@@ -48,31 +48,31 @@ def test_py_sim_rand(seq=random_seq):
     sim()
 
 
-def test_socket_dir(seq=dir_seq):
+def test_socket_dir(tmpdir, seq=dir_seq):
     skip_ifndef('SIM_SOCKET_TEST')
     trr_dist_verif(sim_cls=partial(SimSocket, run=True), seq=seq)
-    sim(outdir=prepare_result_dir())
+    sim(outdir=tmpdir)
 
 
-def test_socket_rand(seq=random_seq):
+def test_socket_rand(tmpdir, seq=random_seq):
     skip_ifndef('SIM_SOCKET_TEST', 'RANDOM_TEST')
     trr_dist_verif(sim_cls=partial(SimSocket, run=True), seq=seq)
-    sim(outdir=prepare_result_dir())
+    sim(outdir=tmpdir)
 
 
-def test_verilator_dir(seq=dir_seq):
+def test_verilator_dir(tmpdir, seq=dir_seq):
     skip_ifndef('VERILATOR_ROOT')
     trr_dist_verif(sim_cls=SimVerilated, seq=seq)
-    sim(outdir=prepare_result_dir())
+    sim(outdir=tmpdir)
 
 
-def test_verilator_rand(seq=rand_seq):
+def test_verilator_rand(tmpdir, seq=rand_seq):
     skip_ifndef('VERILATOR_ROOT', 'RANDOM_TEST')
     trr_dist_verif(sim_cls=SimVerilated, seq=seq)
-    sim(outdir=prepare_result_dir())
+    sim(outdir=tmpdir)
 
 
-def test_socket_rand_cons():
+def test_socket_rand_cons(tmpdir):
     skip_ifndef('SIM_SOCKET_TEST', 'RANDOM_TEST')
 
     cons = []
@@ -85,4 +85,4 @@ def test_socket_rand_cons():
     trr_dist_verif(
         sim_cls=partial(SimSocket, run=True), seq=rand_seq('din', 30))
 
-    sim(outdir=prepare_result_dir(), extens=[partial(SVRandSocket, cons=cons)])
+    sim(outdir=tmpdir, extens=[partial(SVRandSocket, cons=cons)])

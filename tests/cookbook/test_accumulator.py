@@ -6,7 +6,7 @@ from pygears.sim import sim
 from pygears.sim.modules.drv import drv
 from pygears.sim.modules.verilator import SimVerilated
 from pygears.typing import Int, Queue, Tuple, Uint
-from pygears.util.test_utils import prepare_result_dir, skip_ifndef
+from pygears.util.test_utils import skip_ifndef
 
 seq_uint = [[(1, 2), (5, 2), (8, 2)], [(3, 8), (1, 8)], [(0, 12), (4, 12),
                                                          (2, 12), (99, 12)]]
@@ -28,29 +28,29 @@ def test_pysim_int():
     sim()
 
 
-def test_verilator_uint():
+def test_verilator_uint(tmpdir):
     skip_ifndef('VERILATOR_ROOT')
     verif(
         drv(t=t_din_uint, seq=seq_uint),
         f=accumulator(sim_cls=SimVerilated),
         ref=accumulator(name='ref_model'))
-    sim(outdir=prepare_result_dir())
+    sim(outdir=tmpdir)
 
 
-def test_verilator_int():
+def test_verilator_int(tmpdir):
     skip_ifndef('VERILATOR_ROOT')
     verif(
         drv(t=t_din_int, seq=seq_int),
         f=accumulator(sim_cls=SimVerilated),
         ref=accumulator(name='ref_model'))
-    sim(outdir=prepare_result_dir())
+    sim(outdir=tmpdir)
 
 
-def test_verilator_delay():
+def test_verilator_delay(tmpdir):
     skip_ifndef('VERILATOR_ROOT')
     verif(
         drv(t=t_din_uint, seq=seq_uint) | delay_rng(2, 2),
         f=accumulator(sim_cls=SimVerilated),
         ref=accumulator(name='ref_model'),
         delays=[delay_rng(5, 5)])
-    sim(outdir=prepare_result_dir())
+    sim(outdir=tmpdir)
