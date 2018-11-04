@@ -8,6 +8,7 @@ from pygears.definitions import COMMON_SVLIB_DIR, COOKBOOK_SVLIB_DIR
 from pygears.svgen.inst import SVGenInstPlugin
 from pygears.svgen.svparse import parse
 
+from .svtranspile import transpile_gear
 from .inst import svgen_log
 
 
@@ -41,8 +42,13 @@ class SVModuleGen:
             return None
 
     @property
+    def is_transpiled(self):
+        return self.node.params.get('svgen', {}).get('transpile', False)
+
+    @property
     def is_generated(self):
         return getattr(self.node, 'gear', None) in registry('svgen/module_namespace') \
+            or self.is_transpiled \
             or self.sv_template_path \
             or self.is_hierarchical
 
@@ -180,16 +186,20 @@ class SVModuleGen:
         return trimmed_name.replace('/', '_')
 
     def get_module(self, template_env):
+        if not self.is_generated:
+            return None
+
+        context = {
+            'pygears': pygears,
+            'module_name': self.sv_module_name,
+            'intfs': list(self.sv_port_configs()),
+            'params': self.params,
+            'inst': [],
+            'has_local_rst': self.has_local_rst
+        }
+
         if self.is_hierarchical:
             self.svgen_map = registry('svgen/map')
-
-            context = {
-                'module_name': self.sv_module_name,
-                'generics': [],
-                'intfs': list(self.sv_port_configs()),
-                'inst': [],
-                'has_local_rst': self.has_local_rst
-            }
 
             for child in self.node.local_interfaces():
                 svgen = self.svgen_map[child]
@@ -207,12 +217,6 @@ class SVModuleGen:
             return template_env.render_local(__file__, "hier_module.j2",
                                              context)
         elif self.sv_template_path:
-            context = {
-                'pygears': pygears,
-                'module_name': self.sv_module_name,
-                'intfs': list(self.sv_port_configs()),
-                'params': self.params
-            }
 
             for intf in context['intfs']:
                 context[intf['name']] = intf
@@ -220,6 +224,13 @@ class SVModuleGen:
             return template_env.render_local(
                 self.sv_template_path, os.path.basename(self.sv_template_path),
                 context)
+
+        elif self.is_transpiled:
+            return transpile_gear(self.node.gear, template_env, context)
+        else:
+            svgen_log().warning(
+                f'No method for generating the gear {self.node.name}')
+            return None
 
     def update_port_name(self, port, name):
         port['name'] = name

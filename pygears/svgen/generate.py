@@ -59,6 +59,9 @@ class TemplateEnv:
 
         return self.templates[key]
 
+    def render_string(self, string, context):
+        return self.jenv.from_string(string).render(context)
+
     def render_local(self, fn, tmplt_fn, context):
         return self.render(os.path.dirname(fn), tmplt_fn, context)
 

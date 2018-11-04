@@ -58,7 +58,6 @@ def get_result_dir(filename=None, function_name=None):
     if not filename:
         filename, function_name = get_cur_test_name()
 
-    print(os.getcwd())
     test_dir = os.path.dirname(__file__)
 
     return os.path.join(test_dir, 'result', os.path.relpath(
@@ -108,8 +107,7 @@ def synth_check_fixt(tmpdir, request):
     yield
 
     outdir = tmpdir
-    register_sv_paths(outdir)
-    svgen(outdir=outdir, **request.param[1])
+    svgen(outdir=outdir, wrapper=True, **request.param[1])
 
     files = []
     for svmod in registry("svgen/map").values():
@@ -123,6 +121,7 @@ def synth_check_fixt(tmpdir, request):
         files.append(path)
 
     files.append(os.path.join(COMMON_SVLIB_DIR, 'dti.sv'))
+    files.append(os.path.join(outdir, 'wrap_top.sv'))
 
     viv_cmd = (
         f'vivado -mode batch -source {outdir}/synth.tcl -nolog -nojournal')

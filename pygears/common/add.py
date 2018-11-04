@@ -1,35 +1,26 @@
-import operator
-from functools import reduce
-
-from pygears import alternative, gear, module
+from pygears import alternative, gear
 from pygears.conf import safe_bind
 from pygears.core.intf import IntfOperPlugin
-from pygears.typing import Int, Integer, Uint
+from pygears.typing import Integer, Tuple
 from pygears.util.hof import oper_tree
-from pygears.util.utils import gather
+from . import ccat
 
 
-def add_type(dtypes):
-    max_len = max(int(d) for d in dtypes)
-    length = max_len + len(dtypes) - 1
-
-    if (all(issubclass(d, Uint) for d in dtypes)):
-        return Uint[length]
-
-    return Int[length]
-
-
-@gear(svgen={'svmod_fn': 'add.sv'}, enablement=b'len(din) == 2')
-async def add(*din: Integer,
-              din0_signed=b'typeof(din0, Int)',
-              din1_signed=b'typeof(din1, Int)') -> b'add_type(din)':
-    async with gather(*din) as dout:
-        yield module().tout(reduce(operator.add, dout))
+@gear(svgen={'transpile': True})
+async def add(din: Tuple[Integer['N1'], Integer['N2']]) -> b'din[0] + din[1]':
+    async with din as data:
+        yield data[0] + data[1]
 
 
 @alternative(add)
 @gear
-def add_vararg(*din, enablement=b'len(din) > 2') -> b'add_type(din)':
+def add2(din0: Integer, din1: Integer):
+    return ccat(din0, din1) | add
+
+
+@alternative(add)
+@gear
+def add_vararg(*din: Integer, enablement=b'len(din) > 2'):
     return oper_tree(din, add)
 
 

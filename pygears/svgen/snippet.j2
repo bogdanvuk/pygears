@@ -147,19 +147,15 @@ endmodule
 {% call gear_module(module_name, intfs, comment) %}
   {% for i in struct_intfs %}
     {{ svgen_typedef(i['local_type'], i['name'])|indent(4, False) }}
-
   {% endfor %}
-
   {% for i in struct_intfs %}
     {{i['name']}}_t {{i['name']}}_s;
   {% endfor %}
-
   {% for i in struct_intfs|isinput -%}
     {% if i['width'] > 0 %}
     assign {{i['name']}}_s = {{i['name']}}.data;
     {% endif %}
   {%- endfor %}
-
   {% for i in struct_intfs|isoutput -%}
     {% if i['width'] > 0 %}
     assign {{i['name']}}.data = {{i['name']}}_s;

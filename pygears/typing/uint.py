@@ -6,11 +6,10 @@ Objects of these classes can also be instantiated and they provide some integer
 arithmetic capabilities.
 """
 
-from pygears.typing.base import EnumerableGenericMeta, typeof
-from pygears.typing.tuple import Tuple
-from pygears.typing.bool import Bool
-from pygears.typing.bitw import bitw
-from pygears.conf import typing_log
+from .base import EnumerableGenericMeta, typeof
+from .tuple import Tuple
+from .bool import Bool
+from .bitw import bitw
 
 
 class IntegerType(EnumerableGenericMeta):
@@ -46,7 +45,18 @@ class IntegerType(EnumerableGenericMeta):
         >>> Uint[8] + Uint[8]
         Uint[9]
         """
-        return self.base[max(int(self), int(other)) + 1]
+
+        ops = [self, other]
+
+        signed = any(typeof(op, Int) for op in ops)
+
+        if signed:
+            ops = [Int[int(op) + 1] if typeof(op, Uint) else op for op in ops]
+            res_type = Int
+        else:
+            res_type = Uint
+
+        return res_type[max(int(op) for op in ops) + 1]
 
     __radd__ = __add__
 
@@ -116,6 +126,8 @@ def check_width(val, res):
         total_width += bitw(v)
 
     if (total_width > res.width):
+        from pygears.conf import typing_log
+
         typing_log().warning(
             f'Value overflow - value {val} cannot be represented with {res.width} bits'
         )
