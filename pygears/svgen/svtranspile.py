@@ -22,6 +22,9 @@ class SVTranspiler(ast.NodeVisitor):
     def visit_Add(self, node):
         return '+'
 
+    def visit_Sub(self, node):
+        return '-'
+
     def visit_Mul(self, node):
         return '*'
 

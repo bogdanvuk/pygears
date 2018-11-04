@@ -6,6 +6,7 @@ Objects of these classes can also be instantiated and they provide some integer
 arithmetic capabilities.
 """
 
+from .base import class_and_instance_method
 from .base import EnumerableGenericMeta, typeof
 from .tuple import Tuple
 from .bool import Bool
@@ -67,7 +68,17 @@ class IntegerType(EnumerableGenericMeta):
         >>> Uint[8] + Uint[8]
         Int[9]
         """
-        return Int[max(int(self), int(other)) + 1]
+        ops = [self, other]
+
+        signed = any(typeof(op, Int) for op in ops)
+
+        if signed:
+            ops = [Int[int(op) + 1] if typeof(op, Uint) else op for op in ops]
+            res_type = Int
+        else:
+            res_type = Uint
+
+        return res_type[max(int(op) for op in ops) + 1]
 
     def __mul__(self, other):
         """Returns the same type, whose width is equal to the sum of operand widths.
@@ -170,6 +181,12 @@ class Integer(int, metaclass=IntegerType):
             return (type(self) + type(other))(int(self) + int(other))
         else:
             return type(self)(int(self) + other)
+
+    def __sub__(self, other):
+        if isinstance(other, Integer):
+            return (type(self) - type(other))(int(self) - int(other))
+        else:
+            return type(self)(int(self) - other)
 
     def __mul__(self, other):
         if isinstance(other, Integer):
@@ -297,7 +314,7 @@ class UintType(IntegerType):
         if (issubclass(other, Uint)):
             return Tuple[Uint[max(int(self), int(other))], Bool]
         else:
-            return super().__sub__(self, other)
+            return super().__sub__(other)
 
     def __str__(self):
         if not self.args:
@@ -323,6 +340,7 @@ class Uint(Integer, metaclass=UintType):
     """
     __parameters__ = ['N']
 
+    @class_and_instance_method
     def __sub__(self, other):
         if (typeof(type(other), Uint)):
             res = int(self) - int(other)

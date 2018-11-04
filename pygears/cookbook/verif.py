@@ -33,13 +33,6 @@ def tlm_verif(*seq, f, ref):
 
 def verif(*stim, f, ref, delays=None):
     '''Using ref. model'''
-    # if delays is None:
-    #     delays = [SimDelay(0, 0)] * (len(seq) + 1)
-    # else:
-    #     assert len(seq) + 1 == len(delays), print(
-    #         'Not enough delays specified')
-
-    # stim = tuple(s | drv(delay=delays[i]) for i, s in enumerate(seq))
 
     res_tlm = stim | f
     ref_tlm = stim | ref

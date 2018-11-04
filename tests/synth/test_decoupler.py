@@ -1,7 +1,7 @@
 from pygears import Intf
 from pygears.common import decoupler
 from pygears.typing import Uint
-from pygears.util.test_utils import synth_check, skip_ifndef
+from pygears.util.test_utils import synth_check
 
 
 @synth_check({'logic luts': 4, 'ffs': 4})
