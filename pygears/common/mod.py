@@ -1,26 +1,26 @@
+from pygears import alternative, gear
 from pygears.conf import safe_bind
-from pygears.core.gear import alternative, gear
 from pygears.core.intf import IntfOperPlugin
-from pygears.typing import Integer, Uint
+from pygears.typing import Integer, Tuple
 from pygears.util.hof import oper_reduce
+from . import ccat
 
 
-def mod_type(dtypes):
-    length = int(dtypes[1])
-
-    return Uint[length]
-
-
-@gear(svgen={'svmod_fn': 'mod.sv'}, enablement=b'len(din) == 2')
-def mod(*din: Integer,
-        din0_signed=b'typeof(din0, Int)',
-        din1_signed=b'typeof(din1, Int)') -> b'mod_type(din)':
-    pass
+@gear(svgen={'transpile': True})
+async def mod(din: Tuple[Integer['N1'], Integer['N2']]) -> b'din[0] % din[1]':
+    async with din as data:
+        yield data[0] % data[1]
 
 
 @alternative(mod)
 @gear
-def mod_vararg(*din: Integer, enablement=b'len(din) > 2') -> b'mod_type(din)':
+def mod2(din0: Integer, din1: Integer):
+    return ccat(din0, din1) | mod
+
+
+@alternative(mod)
+@gear
+def mod_vararg(*din: Integer, enablement=b'len(din) > 2'):
     return oper_reduce(din, mod)
 
 

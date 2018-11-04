@@ -101,10 +101,10 @@ class IntegerType(EnumerableGenericMeta):
         return self.base[int(other) - int(self) + 1]
 
     def __mod__(self, other):
-        return self.base[int(self) % int(other)]
+        return other
 
     def __rmod__(self, other):
-        return self.base[int(other) % int(self)]
+        return self
 
     __rmul__ = __mul__
 

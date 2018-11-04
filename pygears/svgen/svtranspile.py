@@ -25,7 +25,7 @@ class SVTranspiler(ast.NodeVisitor):
     def visit_Sub(self, node):
         return '-'
 
-    def visit_Mul(self, node):
+    def visit_Mult(self, node):
         return '*'
 
     def visit_Div(self, node):
@@ -60,7 +60,11 @@ class SVTranspiler(ast.NodeVisitor):
             'op2': operands[1][1]
         })
 
-        return f"{int(res_type)}'({operands[0][0]}) {operator} {int(res_type)}'({operands[1][0]})", res_type
+        for op in operands:
+            if int(res_type) > int(op[1]):
+                op[0] = f"{int(res_type)}'({op[0]})"
+
+        return f"{operands[0][0]} {operator} {operands[1][0]}", res_type
 
     def visit_Yield(self, node):
         expr, expr_type = super().visit(node.value)

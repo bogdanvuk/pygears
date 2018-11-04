@@ -9,6 +9,7 @@ from pygears.svgen import svgen, register_sv_paths
 from pygears.sim import sim
 from pygears import registry, clear
 from functools import wraps
+from itertools import islice
 from pygears.definitions import COMMON_SVLIB_DIR
 
 re_trailing_space_rem = re.compile(r"\s+$", re.MULTILINE)
@@ -151,8 +152,15 @@ def synth_check_fixt(tmpdir, request):
 
         util = dict(zip(header, values))
 
+    with open(f'{outdir}/vivado/timing.txt') as f:
+        line = next(islice(f, 2, None))
+        util['path delay'] = float(line.split()[1])
+
     for param, value in request.param[0].items():
-        assert util[param] == value
+        if callable(value):
+            assert value(util[param])
+        else:
+            assert util[param] == value
 
 
 def svgen_check(expected, **kwds):

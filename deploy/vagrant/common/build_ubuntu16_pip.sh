@@ -8,4 +8,4 @@ sudo ln -fs /usr/bin/python3.6 /usr/bin/python3
 
 curl https://bootstrap.pypa.io/get-pip.py | sudo python3.6
 
-sudo pip3 install -U --pre pygears nose
+sudo pip3 install -U --pre pygears pytest
