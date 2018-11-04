@@ -9,7 +9,7 @@ from pygears.cookbook.verif import directed, verif
 from pygears.sim import sim
 from pygears.sim.modules.drv import drv
 
-from pygears.util.test_utils import svgen_check, prepare_result_dir, skip_ifndef
+from pygears.util.test_utils import svgen_check, skip_ifndef
 
 
 def test_basic_unsigned():
