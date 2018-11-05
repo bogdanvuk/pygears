@@ -3,6 +3,5 @@
 
     assign dout.valid = din.valid & (din_s.ctrl == {{sel}});
     assign din.ready = (dout.ready || (din_s.ctrl != {{sel}})) & din.valid;
-    assign dout.data = din_s.data;
 
 {% endcall %}

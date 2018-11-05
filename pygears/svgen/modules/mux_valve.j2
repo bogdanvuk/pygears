@@ -23,6 +23,5 @@
 
     assign dout_s.ctrl = ctrl_s;
     assign dout.valid = ctrl.valid & din_valid_sel;
-    assign dout.data = dout_s;
 
 {% endcall %}
