@@ -1,10 +1,9 @@
 import inspect
 
-from pygears.typing.uint import Uint
-
 from .base import EnumerableGenericMeta, type_str
 from .bitw import bitw
 from .unit import Unit
+from .uint import Uint
 
 
 class UnionMeta(EnumerableGenericMeta):

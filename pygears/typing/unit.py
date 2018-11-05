@@ -1,4 +1,4 @@
-from pygears.typing.base import TypingMeta
+from .base import TypingMeta
 
 
 class UnitMeta(TypingMeta):
