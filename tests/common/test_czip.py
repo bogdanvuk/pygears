@@ -1,11 +1,9 @@
-from nose import with_setup
 
-from pygears import clear, Intf
+from pygears import Intf
 from pygears.typing import Queue, Tuple, Uint
 from pygears.common import czip
 
 
-@with_setup(clear)
 def test_general():
     iout = czip(
         Intf(Uint[1]), Intf(Queue[Uint[2], 1]), Intf(Queue[Uint[3], 3]),

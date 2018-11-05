@@ -1,8 +1,6 @@
 from functools import partial
 
-from nose import with_setup
 
-from pygears import clear
 from pygears.common.serialize import serialize, TDin
 from pygears.cookbook.verif import directed, verif
 from pygears.sim import sim
@@ -10,10 +8,9 @@ from pygears.sim.modules.drv import drv
 from pygears.sim.modules.sim_socket import SimSocket
 from pygears.sim.modules.verilator import SimVerilated
 from pygears.typing import Array, Uint
-from utils import prepare_result_dir, skip_ifndef
+from pygears.util.test_utils import prepare_result_dir, skip_ifndef
 
 
-@with_setup(clear)
 def test_pygears_sim():
     brick_size = 4
     seq_list = [1, 2, 3, 4]
@@ -26,7 +23,6 @@ def test_pygears_sim():
     sim()
 
 
-@with_setup(clear)
 def test_pygears_sim_active():
     no = 4
     directed(
@@ -37,7 +33,6 @@ def test_pygears_sim_active():
     sim()
 
 
-@with_setup(clear)
 def test_socket_sim():
     skip_ifndef('SIM_SOCKET_TEST')
     brick_size = 4
@@ -51,8 +46,7 @@ def test_socket_sim():
     sim()
 
 
-@with_setup(clear)
-def test_verilate_sim():
+def test_verilate_sim(tmpdir):
     skip_ifndef('VERILATOR_ROOT')
     brick_size = 4
     seq_list = [1, 2, 3, 4]
@@ -62,10 +56,9 @@ def test_verilate_sim():
         f=serialize(sim_cls=SimVerilated),
         ref=sorted(seq_list * brick_size))
 
-    sim(outdir=prepare_result_dir())
+    sim(outdir=tmpdir)
 
 
-@with_setup(clear)
 def test_socket_cosim():
     skip_ifndef('SIM_SOCKET_TEST')
     brick_size = 4

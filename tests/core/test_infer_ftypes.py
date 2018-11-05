@@ -1,4 +1,4 @@
-from nose.tools import raises
+import pytest
 
 from pygears.typing import Int, Tuple, Uint
 from pygears.core.infer_ftypes import TypeMatchError, infer_ftypes
@@ -54,7 +54,7 @@ def test_templated_type_deduction_multi_related_templates():
     assert params['T2'] == 2
 
 
-@raises(TypeMatchError)
+@pytest.mark.xfail(raises=TypeMatchError)
 def test_templated_type_deduction_multi_related_templates_fail():
     params = {
         'din': Tuple['T1', Uint['T2'], 'T1'],

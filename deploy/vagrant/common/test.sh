@@ -6,6 +6,6 @@ cd ~/pygears
 git checkout develop
 git pull
 
-nosetests -w ~/pygears/tests
+pytest ~/pygears/tests
 
 exit $?

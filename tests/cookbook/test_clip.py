@@ -1,9 +1,7 @@
 import random
 from functools import partial
 
-from nose import with_setup
 
-from pygears import clear
 from pygears.cookbook.clip import clip
 from pygears.cookbook.verif import directed, verif
 from pygears.sim import sim
@@ -13,7 +11,7 @@ from pygears.sim.modules.drv import drv
 from pygears.sim.modules.sim_socket import SimSocket
 from pygears.sim.modules.verilator import SimVerilated
 from pygears.typing import Queue, Uint
-from utils import prepare_result_dir, skip_ifndef
+from pygears.util.test_utils import prepare_result_dir, skip_ifndef
 
 t_din = Queue[Uint[16]]
 t_cfg = Uint[16]
@@ -30,7 +28,6 @@ def get_stim():
     return [drv(t=t_din, seq=din_seq), drv(t=t_cfg, seq=cfg_seq)]
 
 
-@with_setup(clear)
 def test_pygears_sim():
     directed(
         drv(t=t_din, seq=[list(range(9)), list(range(5))]),
@@ -43,7 +40,6 @@ def test_pygears_sim():
     sim()
 
 
-@with_setup(clear)
 def test_pygears_sim_stop():
     directed(
         drv(t=t_din, seq=[list(range(9)), list(range(5))]),
@@ -63,12 +59,10 @@ def verilator_cosim(clip_stop):
     sim(outdir=prepare_result_dir())
 
 
-@with_setup(clear)
 def test_verilator_rand():
     verilator_cosim(clip_stop=0)
 
 
-@with_setup(clear)
 def test_verilator_rand_stop():
     verilator_cosim(clip_stop=1)
 
@@ -83,12 +77,10 @@ def socket_cosim(clip_stop):
     sim(outdir=prepare_result_dir())
 
 
-@with_setup(clear)
 def test_socket_rand():
     socket_cosim(clip_stop=0)
 
 
-@with_setup(clear)
 def test_socket_rand_stop():
     socket_cosim(clip_stop=1)
 
@@ -113,11 +105,9 @@ def socket_cosim_rand_cons(clip_stop):
     sim(outdir=prepare_result_dir(), extens=[partial(SVRandSocket, cons=cons)])
 
 
-@with_setup(clear)
 def test_socket_rand_cons():
     socket_cosim_rand_cons(clip_stop=0)
 
 
-@with_setup(clear)
 def test_socket_rand_cons_stop():
     socket_cosim_rand_cons(clip_stop=1)

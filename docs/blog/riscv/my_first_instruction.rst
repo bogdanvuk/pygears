@@ -251,57 +251,63 @@ Finally, I check whether the resulting register file state of my design matches 
 Running the test
 ----------------
 
-For running the tests for the PyGears framework, I've been using `nose <https://nose.readthedocs.io>`__, so I'll use it here too. :v:`2` I use a test runner since it allows me to run all my tests with a single command. It automatically searches the files in order to discover the test functions, and generates a nice report telling me how many tests passed and which of them failed. :v:`3` There are also options for running only a specific group of tests, run all tests from a single file or run a single test. While writing this blog post I discovered that nose is in maintenance mode, i.e it is not actively developed, and `pytest <https://docs.pytest.org>`__ is recommended as an alternative. Nevertheless, for now I'll continue using nose for this project too, since it has served me well and in order to switch to pytest, I would need to update some of my tests that invoke nose-specific API. I might revisit this decision in future if I find a compelling reason to switch to pytest.
+For running the tests for the PyGears framework, I've been using `pytest <https://pytest.org>`__, so I'll use it here too. :v:`2` I use a test runner since it allows me to run all my tests with a single command. It automatically searches the files in order to discover the test functions, and generates a nice report telling me how many tests passed and which of them failed. :v:`3` There are also options for running only a specific group of tests, run all tests from a single file or run a single test.
 
 .. verbosity:: 2
 
-Before running the tests with nose, you'll need to install it with pip:
+Before running the tests with pytest, you'll need to install it with pip:
 
 .. code-block:: bash
 
-   pip3 install pygears
+   pip3 install pytest
 
 .. verbosity:: 1
 
-In order to invoke the test with nose, you can navigate to the :giturl:`tests/test_instructions` folder in your terminal and run the test by invoking: 
+In order to invoke the test with pytest, you can navigate to the :giturl:`tests/test_instructions` folder in your terminal and run the test by invoking: 
 
 .. code-block:: bash
 
-   nosetests "test_addi.py:test_addi"
+   pytest "test_addi.py::test_addi"
 
-Nose should automatically find the ``test_addi()`` test function, run it and print the report:
+The pytest runner should automatically find the ``test_addi()`` test function, run it and print the report:
 
 .. code-block:: python
 
-  .
-  ----------------------------------------------------------------------
-  Ran 1 test in 3.674s
+  ========================================== test session starts ==========================================
+  platform linux -- Python 3.6.6, pytest-3.9.3, py-1.7.0, pluggy-0.8.0
+  rootdir: /tools/home/pygears_riscv/tests, inifile: setup.cfg
+  collected 1 item                                                                                        
 
-  OK
+  test_addi.py .                                                                                    [100%]
 
-Et voila! My RISC-V design is completely aligned with the Spike simulator! :v:`2` By default, nose hides all console output from the tests in order to provide a cleaner report. If I want to see the output, I need to invoke nose with the ``-s`` option: 
+  ======================================= 1 passed in 3.57 seconds ========================================
+
+Et voila! My RISC-V design is completely aligned with the Spike simulator! :v:`2` By default, pytest hides all console output from the tests in order to provide a cleaner report. If I want to see the output, I need to invoke pytest with the ``-s`` option: 
 
 .. verbosity:: 2
 
 .. code-block:: bash
 
-   nosetests -s "test_addi.py:test_addi"
+   pytest -s "test_addi.py::test_addi"
 
 Which prints the following:
 
 .. code-block:: python
 
-  -                      [INFO]: Running sim with seed: 1540239478  
+  ========================================== test session starts ==========================================
+  platform linux -- Python 3.6.6, pytest-3.9.3, py-1.7.0, pluggy-0.8.0
+  rootdir: /tools/home/pygears_riscv/tests, inifile: setup.cfg
+  collected 1 item                                                                                        
+
+  test_addi.py -                      [INFO]: Running sim with seed: 6084884924426910478  
   0                      [INFO]: -------------- Simulation start --------------  
   0 /register_file/register_file_write [INFO]: Writing u32(4294966062) to x1  
-  2                      [INFO]: ----------- Simulation done ---------------  
-  2                      [INFO]: Elapsed: 0.00  
+  3                      [INFO]: ----------- Simulation done ---------------  
+  3                      [INFO]: Elapsed: 0.00  
   Resulting value of the register x1: i32(-1234)
   .
-  ----------------------------------------------------------------------
-  Ran 1 test in 3.717s
 
-  OK
+  ======================================= 1 passed in 3.58 seconds ========================================
 
 :v:`3` I profiled the test a bit and found out that the majority of the test run time is spent in retrieving the register file state from Spike, so I'll need to optimize it soon if I want to have an elaborate regression suit that runs in a reasonable amount of time. 
 
@@ -314,7 +320,7 @@ If I navigate to the :giturl:`tests/test_instructions` directory, I can run only
 
 .. code-block:: bash
 
-   nosetests -s "test_addi.py:test_addi_verilator"
+   pytest -s "test_addi.py::test_addi_verilator"
 
 .. verbosity:: 3
 

@@ -1,4 +1,4 @@
-from nose.tools import raises
+import pytest
 
 from pygears.typing import Array, Uint, Unit, TemplateArgumentsError
 
@@ -47,7 +47,7 @@ def test_multilevel_subs():
     assert b == Array[Uint[1], 2]
 
 
-@raises(TemplateArgumentsError)
+@pytest.mark.xfail(raises=TemplateArgumentsError)
 def test_excessive_subs():
     a = Array[Uint['T1']]
     a[1, 2]
@@ -69,7 +69,7 @@ def test_multiple_indexing():
     assert a[:2, 5:] == Array[Uint[1], 3]
 
 
-@raises(IndexError)
+@pytest.mark.xfail(raises=IndexError)
 def test_index_error():
     a = Array[Uint[1], 6]
     a[6]

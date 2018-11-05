@@ -27,7 +27,7 @@ module quenvelope
     dout_t dout_s;
 
     assign din_s = din.data;
-
+    assign dout.data = dout_s;
 
     logic  handshake;
     logic  handshake_reg;
@@ -36,7 +36,6 @@ module quenvelope
     logic [1:0] eots_reg;
 
     assign dout_s.out_eot = valid_reg ? eots_reg : din_s.out_eot;
-    assign dout.data = dout_s;
 
     assign subelem_done = &din_s.subenvelope && din.valid;
     assign din.ready = (dout.ready || handshake_reg || (!subelem_done));

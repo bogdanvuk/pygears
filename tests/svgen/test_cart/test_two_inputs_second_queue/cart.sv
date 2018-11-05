@@ -36,6 +36,7 @@ module cart
     assign din0_s = din0.data;
     assign din1_s = din1.data;
 
+    assign dout.data = dout_s;
 
     assign dout_s.eot = { din1_s.eot };
     assign dout_s.data = { din1_s.data, din0_s };
@@ -43,7 +44,6 @@ module cart
     logic  handshake;
     assign dout.valid = din0.valid & din1.valid;
     assign handshake = dout.valid && dout.ready;
-    assign dout.data = dout_s;
 
     assign din0.ready = handshake && (&din1_s.eot);
     assign din1.ready = handshake && 1;

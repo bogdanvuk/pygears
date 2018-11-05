@@ -1,5 +1,4 @@
-from nose import with_setup
-from utils import sim_check, skip_ifndef
+from pygears.util.test_utils import sim_check, skip_ifndef
 from pygears import clear
 
 from pygears import gear

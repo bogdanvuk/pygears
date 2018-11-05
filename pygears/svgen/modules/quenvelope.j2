@@ -9,7 +9,6 @@
     assign din.ready = dout.ready;
     assign dout.valid = din.valid;
     assign dout_s.out_eot = din_s.out_eot;
-    assign dout.data = dout_s;
   {% else %}
     logic  handshake;
     logic  handshake_reg;
@@ -18,7 +17,6 @@
     logic [{{lvl-1}}:0] eots_reg;
 
     assign dout_s.out_eot = valid_reg ? eots_reg : din_s.out_eot;
-    assign dout.data = dout_s;
 
     assign subelem_done = {{dout_align}} && din.valid;
     assign din.ready = (dout.ready || handshake_reg || (!subelem_done));

@@ -6,11 +6,11 @@ Objects of these classes can also be instantiated and they provide some integer
 arithmetic capabilities.
 """
 
-from pygears.typing.base import EnumerableGenericMeta, typeof
-from pygears.typing.tuple import Tuple
-from pygears.typing.bool import Bool
-from pygears.typing.bitw import bitw
-from pygears.conf import typing_log
+from .base import class_and_instance_method
+from .base import EnumerableGenericMeta, typeof
+from .tuple import Tuple
+from .bool import Bool
+from .bitw import bitw
 
 
 class IntegerType(EnumerableGenericMeta):
@@ -46,7 +46,18 @@ class IntegerType(EnumerableGenericMeta):
         >>> Uint[8] + Uint[8]
         Uint[9]
         """
-        return self.base[max(int(self), int(other)) + 1]
+
+        ops = [self, other]
+
+        signed = any(typeof(op, Int) for op in ops)
+
+        if signed:
+            ops = [Int[int(op) + 1] if typeof(op, Uint) else op for op in ops]
+            res_type = Int
+        else:
+            res_type = Uint
+
+        return res_type[max(int(op) for op in ops) + 1]
 
     __radd__ = __add__
 
@@ -57,7 +68,17 @@ class IntegerType(EnumerableGenericMeta):
         >>> Uint[8] + Uint[8]
         Int[9]
         """
-        return Int[max(int(self), int(other)) + 1]
+        ops = [self, other]
+
+        signed = any(typeof(op, Int) for op in ops)
+
+        if signed:
+            ops = [Int[int(op) + 1] if typeof(op, Uint) else op for op in ops]
+            res_type = Int
+        else:
+            res_type = Uint
+
+        return res_type[max(int(op) for op in ops) + 1]
 
     def __mul__(self, other):
         """Returns the same type, whose width is equal to the sum of operand widths.
@@ -80,10 +101,10 @@ class IntegerType(EnumerableGenericMeta):
         return self.base[int(other) - int(self) + 1]
 
     def __mod__(self, other):
-        return self.base[int(self) % int(other)]
+        return other
 
     def __rmod__(self, other):
-        return self.base[int(other) % int(self)]
+        return self
 
     __rmul__ = __mul__
 
@@ -116,6 +137,8 @@ def check_width(val, res):
         total_width += bitw(v)
 
     if (total_width > res.width):
+        from pygears.conf import typing_log
+
         typing_log().warning(
             f'Value overflow - value {val} cannot be represented with {res.width} bits'
         )
@@ -158,6 +181,12 @@ class Integer(int, metaclass=IntegerType):
             return (type(self) + type(other))(int(self) + int(other))
         else:
             return type(self)(int(self) + other)
+
+    def __sub__(self, other):
+        if isinstance(other, Integer):
+            return (type(self) - type(other))(int(self) - int(other))
+        else:
+            return type(self)(int(self) - other)
 
     def __mul__(self, other):
         if isinstance(other, Integer):
@@ -285,7 +314,7 @@ class UintType(IntegerType):
         if (issubclass(other, Uint)):
             return Tuple[Uint[max(int(self), int(other))], Bool]
         else:
-            return super().__sub__(self, other)
+            return super().__sub__(other)
 
     def __str__(self):
         if not self.args:
@@ -311,6 +340,7 @@ class Uint(Integer, metaclass=UintType):
     """
     __parameters__ = ['N']
 
+    @class_and_instance_method
     def __sub__(self, other):
         if (typeof(type(other), Uint)):
             res = int(self) - int(other)

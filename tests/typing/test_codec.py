@@ -1,5 +1,4 @@
-from nose.tools import raises
-
+import pytest
 from pygears.typing_common.codec import code, decode
 from pygears.typing import Queue, Uint, Tuple, Array
 
@@ -30,7 +29,7 @@ def test_array():
                                                     0x6, 0x7)
 
 
-@raises(ValueError)
+@pytest.mark.xfail(raises=ValueError)
 def test_queue_code_fail():
     code(Queue[Uint[16], 2], (0, 1))
 
@@ -49,6 +48,6 @@ def test_tuple():
     assert decode(Tuple[Uint[2], Uint[3], Uint[1]], 0x2b) == (3, 2, 1)
 
 
-@raises(ValueError)
+@pytest.mark.xfail(raises=ValueError)
 def test_tuple_fail():
     code(Tuple[Uint[16], Uint[8], Uint[8]], (1, 2))

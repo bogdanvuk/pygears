@@ -1,6 +1,8 @@
 #include "V{{top_name}}.h"
 #include "verilated.h"
+{% if tracing %}
 #include "verilated_vcd_c.h"
+{% endif %}
 #include "stdio.h"
 
 extern "C" {

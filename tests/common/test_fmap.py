@@ -1,14 +1,12 @@
-from nose import with_setup
-from nose.tools import raises
+import pytest
 
-from pygears import Intf, clear, gear, MultiAlternativeError
+from pygears import Intf, MultiAlternativeError, gear
 from pygears.typing import Queue, Uint, Tuple, Union
 from pygears.common import fmap
 # from pygears.core.gear import GearMatchError
 
 
-@raises(MultiAlternativeError)
-@with_setup(clear)
+@pytest.mark.xfail(raises=MultiAlternativeError)
 def test_queuemap_simple_fail():
     @gear
     def test(din: Uint[4]) -> Uint[2]:
@@ -17,7 +15,6 @@ def test_queuemap_simple_fail():
     fmap(Intf(Queue[Uint[4], 2]), f=test)
 
 
-@with_setup(clear)
 def test_queuemap_simple():
     @gear
     def test(din: Uint[4]) -> Uint[2]:
@@ -27,7 +24,6 @@ def test_queuemap_simple():
     assert iout.dtype == Queue[Uint[2], 2]
 
 
-@with_setup(clear)
 def test_queuemap_balance():
     @gear
     def bal(din: 'tdin') -> b'tdin':
@@ -41,8 +37,7 @@ def test_queuemap_balance():
     assert iout.dtype == Queue[Uint[3], 2]
 
 
-@raises(MultiAlternativeError)
-@with_setup(clear)
+@pytest.mark.xfail(raises=MultiAlternativeError)
 def test_tuplemap_simple_fail():
     @gear
     def test(din: Uint['size']) -> Uint['size+1']:
@@ -51,7 +46,6 @@ def test_tuplemap_simple_fail():
     fmap(Intf(Tuple[Uint[1], Uint[2]]), f=test)
 
 
-@with_setup(clear)
 def test_tuplemap_simple():
     @gear
     def test(din: Uint['size']) -> Uint['size+1']:
@@ -61,7 +55,6 @@ def test_tuplemap_simple():
     assert iout.dtype == Tuple[Uint[2], Uint[3]]
 
 
-@with_setup(clear)
 def test_tuplemap_balance():
     @gear
     def bal(din: 'tdin') -> b'tdin':
@@ -76,8 +69,7 @@ def test_tuplemap_balance():
     assert iout.dtype == Tuple[Uint[2], Uint[3], Uint[4]]
 
 
-@raises(MultiAlternativeError)
-@with_setup(clear)
+@pytest.mark.xfail(raises=MultiAlternativeError)
 def test_unionmap_simple_fail():
     @gear
     def test(din: Uint['size']) -> Uint['size+1']:
@@ -87,7 +79,6 @@ def test_unionmap_simple_fail():
     assert iout.dtype == Union[Uint[2], Uint[3]]
 
 
-@with_setup(clear)
 def test_unionmap_simple():
     @gear
     def test(din: Uint['size']) -> Uint['size+1']:
@@ -97,7 +88,6 @@ def test_unionmap_simple():
     assert iout.dtype == Union[Uint[2], Uint[3]]
 
 
-@with_setup(clear)
 def test_unionmap_simple_asymmetric():
     @gear
     def test(din: Uint['size']) -> Uint['size+1']:
@@ -107,7 +97,6 @@ def test_unionmap_simple_asymmetric():
     assert iout.dtype == Union[Uint[9], Uint[8]]
 
 
-@with_setup(clear)
 def test_unionmap_balance():
     @gear
     def bal(din: 'tdin') -> b'tdin':
@@ -122,7 +111,6 @@ def test_unionmap_balance():
     assert iout.dtype == Union[Uint[2], Uint[3]]
 
 
-@with_setup(clear)
 def test_queuemap_tuplemap():
     @gear
     def test(din: Uint['size']) -> Uint['size+1']:

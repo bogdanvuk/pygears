@@ -3,6 +3,7 @@ import itertools
 import logging
 import os
 import random
+import sys
 import tempfile
 import time
 
@@ -350,18 +351,23 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
 def sim(outdir=None,
         timeout=None,
-        extens=[],
+        extens=None,
         run=True,
         verbosity=logging.INFO,
+        check_activity=True,
         seed=None):
 
     if outdir is None:
         outdir = tempfile.mkdtemp()
+
+    if extens is None:
+        extens = []
+
     os.makedirs(outdir, exist_ok=True)
     bind('sim/artifact_dir', outdir)
 
     if not seed:
-        seed = int(time.time())
+        seed = random.randrange(sys.maxsize)
     random.seed(seed)
     bind('sim/rand_seed', seed)
     sim_log().info(f'Running sim with seed: {seed}')
@@ -369,6 +375,11 @@ def sim(outdir=None,
     loop = EventLoop()
     asyncio.set_event_loop(loop)
     bind('sim/simulator', loop)
+
+    if check_activity:
+        from pygears.sim.extens.activity import ActivityChecker
+        if ActivityChecker not in extens:
+            extens.append(ActivityChecker)
 
     top = find('/')
     for oper in itertools.chain(registry('sim/flow'), extens):

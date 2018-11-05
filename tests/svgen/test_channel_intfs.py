@@ -1,10 +1,8 @@
-from nose import with_setup
-from pygears import gear, Intf, clear
+from pygears import gear, Intf
 from pygears.typing import Uint, Tuple
-from utils import svgen_check
+from pygears.util.test_utils import svgen_check
 
 
-@with_setup(clear)
 @svgen_check(['hier.sv'])
 def test_consumer_lower():
     @gear
@@ -18,7 +16,6 @@ def test_consumer_lower():
     hier(Intf(Uint[2]), f=func(channeled=Intf(Uint[1])))
 
 
-@with_setup(clear)
 @svgen_check(['hier0.sv', 'hier0_hier1.sv'])
 def test_consumer_lower_multilevel():
     @gear

@@ -22,7 +22,6 @@
     logic  handshake;
     assign dout.valid = {{input_intf_names|format_list("%s.valid")|join(" & ")}};
     assign handshake = dout.valid && dout.ready;
-    assign dout.data = dout_s;
 
     {% if intfs[0]['lvl'] > 0 and intfs[1]['lvl'] > 0 %}
     assign din0.ready = handshake && {{intfs[1]['data_eot']}};

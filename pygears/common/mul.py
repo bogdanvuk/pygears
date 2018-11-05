@@ -1,36 +1,26 @@
-import operator
-from functools import reduce
-
-from pygears import alternative, gear, module
+from pygears import alternative, gear
 from pygears.conf import safe_bind
 from pygears.core.intf import IntfOperPlugin
-from pygears.typing import Int, Integer, Uint
 from pygears.util.hof import oper_tree
-from pygears.util.utils import gather
+from pygears.typing import Integer, Tuple
+from . import ccat
 
 
-def mul_type(dtypes):
-    length = 0
-    for d in dtypes:
-        length += int(d)
-
-    if any(issubclass(d, Int) for d in dtypes):
-        return Int[length]
-
-    return Uint[length]
-
-
-@gear(svgen={'svmod_fn': 'mul.sv'}, enablement=b'len(din) == 2')
-async def mul(*din: Integer,
-              din0_signed=b'typeof(din0, Int)',
-              din1_signed=b'typeof(din1, Int)') -> b'mul_type(din)':
-    async with gather(*din) as dout:
-        yield module().tout(reduce(operator.mul, dout))
+@gear(svgen={'transpile': True})
+async def mul(din: Tuple[Integer['N1'], Integer['N2']]) -> b'din[0] * din[1]':
+    async with din as data:
+        yield data[0] * data[1]
 
 
 @alternative(mul)
 @gear
-def mul_vararg(*din: Integer, enablement=b'len(din) > 2') -> b'mul_type(din)':
+def mul2(din0: Integer, din1: Integer):
+    return ccat(din0, din1) | mul
+
+
+@alternative(mul)
+@gear
+def mul_vararg(*din: Integer, enablement=b'len(din) > 2'):
     return oper_tree(din, mul)
 
 

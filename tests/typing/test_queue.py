@@ -1,4 +1,4 @@
-from nose.tools import raises
+import pytest
 
 from pygears.typing import Bool, Queue, Tuple, Uint, TemplateArgumentsError
 
@@ -51,7 +51,7 @@ def test_multilevel_subs():
     assert b == Queue[Uint[1]]
 
 
-@raises(TemplateArgumentsError)
+@pytest.mark.xfail(raises=TemplateArgumentsError)
 def test_excessive_subs():
     a = Queue[Uint['T1']]
     a[1, 2]

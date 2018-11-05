@@ -1,9 +1,6 @@
 import random
 from functools import partial
 
-from nose import with_setup
-
-from pygears import clear
 from pygears.cookbook.trr import trr
 from pygears.cookbook.verif import directed, verif
 from pygears.sim import sim
@@ -13,7 +10,7 @@ from pygears.sim.modules.drv import drv
 from pygears.sim.modules.sim_socket import SimSocket
 from pygears.sim.modules.verilator import SimVerilated
 from pygears.typing import Queue, Uint
-from utils import prepare_result_dir, skip_ifndef
+from pygears.util.test_utils import prepare_result_dir, skip_ifndef
 
 t_din = Queue[Uint[16]]
 
@@ -34,7 +31,6 @@ def get_stim(num=2):
     return stim
 
 
-@with_setup(clear)
 def test_pygears_sim():
     directed(
         drv(t=t_din, seq=[list(range(9)), list(range(3))]),
@@ -47,7 +43,6 @@ def test_pygears_sim():
     sim()
 
 
-@with_setup(clear)
 def test_socket_cosim():
     skip_ifndef('SIM_SOCKET_TEST', 'RANDOM_TEST')
 
@@ -62,7 +57,6 @@ def test_socket_cosim():
     sim(outdir=prepare_result_dir())
 
 
-@with_setup(clear)
 def test_verilator_cosim():
     skip_ifndef('VERILATOR_ROOT', 'RANDOM_TEST')
 
@@ -74,7 +68,6 @@ def test_verilator_cosim():
     sim(outdir=prepare_result_dir())
 
 
-@with_setup(clear)
 def test_socket_cosim_rand():
     skip_ifndef('SIM_SOCKET_TEST', 'RANDOM_TEST')
 

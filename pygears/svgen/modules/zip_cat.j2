@@ -13,7 +13,6 @@
     assign all_valid = {{input_intf_names|format_list("%s.valid")|join(" && ")}};
     assign handshake = dout.valid & dout.ready;
     assign dout.valid = all_valid;
-    assign dout.data = dout_s;
 
   {% for i in intfs|isinput %}
     assign {{i['name']}}.ready = handshake;

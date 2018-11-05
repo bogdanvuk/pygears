@@ -25,11 +25,11 @@ module quenvelope
 
     assign din_s = din.data;
 
+   assign dout.data = dout_s;
 
    assign din.ready = dout.ready;
    assign dout.valid = din.valid;
    assign dout_s.out_eot = din_s.out_eot;
-   assign dout.data = dout_s;
 
 
 endmodule

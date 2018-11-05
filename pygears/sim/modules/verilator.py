@@ -65,11 +65,12 @@ class SimVerilated(CosimBase):
             self.verilib)
 
     def build(self):
+        tracing_enabled = bool(registry('svgen/debug_intfs'))
         context = {
             'in_ports': self.svnode.in_ports,
             'out_ports': self.svnode.out_ports,
             'top_name': self.wrap_name,
-            'tracing': True,
+            'tracing': tracing_enabled,
             'outdir': self.outdir
         }
 
@@ -82,9 +83,18 @@ class SimVerilated(CosimBase):
         c = jenv.get_template('sim_veriwrap.j2').render(context)
         save_file('sim_main.cpp', self.outdir, c)
 
-        ret = os.system(
-            f"cd {self.outdir}; verilator -cc -CFLAGS -fpic -LDFLAGS -shared --exe {include} -clk clk --trace --trace-structs --top-module {self.wrap_name} {self.outdir}/*.sv dti.sv sim_main.cpp -Wno-fatal > verilate.log 2>&1"
-        )
+        verilate_cmd = [
+            f'cd {self.outdir};',
+            'verilator -cc -CFLAGS -fpic -LDFLAGS -shared --exe', '-Wno-fatal',
+            include,
+            '-clk clk',
+            f'--top-module {self.wrap_name}',
+            '--trace --trace-structs' if tracing_enabled else '',
+            f'{self.outdir}/*.sv dti.sv',
+            'sim_main.cpp'
+        ]  # yapf: disable
+
+        ret = os.system(f'{" ".join(verilate_cmd)} > verilate.log 2>&1')
 
         if ret != 0:
             raise VerilatorCompileError(
@@ -109,7 +119,9 @@ class SimVerilated(CosimBase):
                 f'Verilator compile error: {ret}. '
                 f'Please inspect "{self.outdir}/make.log"')
 
-        sim_log().info(f'Verilator VCD dump to "{self.outdir}/vlt_dump.vcd"')
+        if tracing_enabled:
+            sim_log().info(
+                f'Verilator VCD dump to "{self.outdir}/vlt_dump.vcd"')
 
     def _finish(self):
         if not self.finished:

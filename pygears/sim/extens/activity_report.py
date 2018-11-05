@@ -4,13 +4,13 @@ import re
 from vcd.gtkw import GTKWSave
 
 from pygears import find, registry
-from pygears.common.decoupler import decoupler_din
 from pygears.core.port import OutPort as GearOutPort
 from pygears.rtl.port import InPort, OutPort
 from pygears.sim import sim_log
 from pygears.sim.extens.graphviz import graph
 from pygears.sim.extens.vcd import module_sav
 from pygears.sim.modules.sim_socket import SimSocket
+from .activity import ActivityChecker
 
 
 def _get_end_consumer_rec(intf, consumers):
@@ -106,36 +106,13 @@ def set_blocking_node(g, module):
     g.node_map[module].set_style('filled')
 
 
-class ActivityReporter:
+class ActivityReporter(ActivityChecker):
     def __init__(self, top, draw_graph=True, cosim_check=False):
-        sim = registry('sim/simulator')
-        sim.events['before_run'].append(self.before_run)
-        sim.events['after_run'].append(self.after_run)
-        self.blockers = {}
+        super().__init__(top)
         self.draw_graph = draw_graph
         self.cosim_check = cosim_check
 
-    def intf_pull_start(self, intf):
-        consumer = intf.producer
-        producer = intf.in_queue.intf.consumers[0]
-        self.blockers[consumer] = producer
-        return True
-
-    def intf_pull_done(self, intf):
-        consumer = intf.producer
-        del self.blockers[consumer]
-        return True
-
-    def before_run(self, sim):
-        sim_map = registry('sim/map')
-
-        for module, sim_gear in sim_map.items():
-            for p in module.in_ports:
-                p.consumer.events['pull_start'].append(self.intf_pull_start)
-                p.consumer.events['pull_done'].append(self.intf_pull_done)
-
     def after_run(self, sim):
-
         if self.draw_graph:
             g = graph(
                 outdir=registry('sim/artifact_dir'),
@@ -171,40 +148,30 @@ class ActivityReporter:
         for sim_gear in sim.sim_gears:
             if isinstance(sim_gear, SimSocket):
                 continue
-
             module = sim_gear.gear
-
             if self.draw_graph:
                 g.node_map[module].set_style('filled')
                 if sim_gear not in sim.done:
                     g.node_map[module].set_fillcolor('yellow')
 
-            if module.definition == decoupler_din:
-                if not module.queue.empty():
-                    if self.draw_graph:
-                        set_blocking_node(g, module)
-                    blocking_gears.add(module)
-                    sim_log().error(f'Data left in decoupler: {module.name}')
+        def data_in_decoupler(module):
+            if self.draw_graph:
+                set_blocking_node(g, module)
+            blocking_gears.add(module)
 
-            for p in module.in_ports:
-                q = p.get_queue()
-                # print(f'{module.name}.{p.basename} queue empty: {q.empty()}')
-                if q._unfinished_tasks:
-                    src_port = q.intf.consumers[0]
-                    if self.draw_graph:
-                        set_blocking_edge(g, p)
-                    blocking_gears.add(module)
-                    sim_log().error(
-                        f'{src_port.gear.name}.{src_port.basename} -> {module.name}.{p.basename} was not acknowledged'
-                    )
+        def not_ack(module, p):
+            if self.draw_graph:
+                set_blocking_edge(g, p)
+            blocking_gears.add(module)
 
-                if p in self.blockers:
-                    if self.draw_graph:
-                        set_waiting_edge(g, p)
-                    src_port = self.blockers[p]
-                    sim_log().info(
-                        f'{p.gear.name}.{p.basename} waiting on {src_port.gear.name}.{src_port.basename}'
-                    )
+        def waiting(module, p):
+            if self.draw_graph:
+                set_waiting_edge(g, p)
+
+        self.hooks['data_in_decoupler'] = data_in_decoupler
+        self.hooks['not_ack'] = not_ack
+        self.hooks['waiting'] = waiting
+        super().after_run(sim)
 
     def cosim_activity(self, g, top_name):
         outdir = registry('sim/artifact_dir')

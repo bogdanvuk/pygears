@@ -1,19 +1,17 @@
-from nose import with_setup
-from nose.tools import raises
+import pytest
 
-from pygears import Intf, MultiAlternativeError, clear, find
+from pygears import Intf, MultiAlternativeError, find
 from pygears.typing import Queue, Tuple, Uint, Int
-from pygears.cookbook.rng import rng, TCfg
+from pygears.cookbook.rng import rng
 from pygears.sim.modules.verilator import SimVerilated
 
 from pygears.cookbook.verif import directed, verif
 from pygears.sim import sim
 from pygears.sim.modules.drv import drv
 
-from utils import svgen_check, prepare_result_dir, skip_ifndef
+from pygears.util.test_utils import svgen_check, skip_ifndef
 
 
-@with_setup(clear)
 def test_basic_unsigned():
     iout = rng(Intf(Tuple[Uint[4], Uint[4], Uint[2]]))
 
@@ -23,18 +21,16 @@ def test_basic_unsigned():
     assert not rng_gear.params['signed']
 
 
-@with_setup(clear)
-def test_basic_unsigned_sim():
+def test_basic_unsigned_sim(tmpdir):
     seq = [(2, 8, 2)]
     ref = [list(range(*seq[0]))]
 
     directed(drv(t=Tuple[Uint[4], Uint[4], Uint[2]], seq=seq), f=rng, ref=ref)
 
-    sim(outdir=prepare_result_dir())
+    sim(outdir=tmpdir)
 
 
-@with_setup(clear)
-def test_basic_unsigned_cosim():
+def test_basic_unsigned_cosim(tmpdir):
     skip_ifndef('VERILATOR_ROOT')
     seq = [(2, 8, 2)]
 
@@ -43,10 +39,9 @@ def test_basic_unsigned_cosim():
         f=rng(sim_cls=SimVerilated),
         ref=rng(name='ref_model'))
 
-    sim(outdir=prepare_result_dir())
+    sim(outdir=tmpdir)
 
 
-@with_setup(clear)
 def test_basic_signed():
     iout = rng(Intf(Tuple[Int[4], Int[6], Uint[2]]))
 
@@ -56,18 +51,16 @@ def test_basic_signed():
     assert rng_gear.params['signed']
 
 
-@with_setup(clear)
-def test_basic_signed_sim():
+def test_basic_signed_sim(tmpdir):
     seq = [(-15, -3, 2)]
     ref = [list(range(*seq[0]))]
 
     directed(drv(t=Tuple[Int[5], Int[6], Uint[2]], seq=seq), f=rng, ref=ref)
 
-    sim(outdir=prepare_result_dir())
+    sim(outdir=tmpdir)
 
 
-@with_setup(clear)
-def test_basic_signed_cosim():
+def test_basic_signed_cosim(tmpdir):
     skip_ifndef('VERILATOR_ROOT')
     seq = [(-15, -3, 2)]
 
@@ -76,10 +69,9 @@ def test_basic_signed_cosim():
         f=rng(sim_cls=SimVerilated),
         ref=rng(name='ref_model'))
 
-    sim(outdir=prepare_result_dir())
+    sim(outdir=tmpdir)
 
 
-@with_setup(clear)
 def test_supply_constant():
     iout = rng((Uint[4](0), 8, 1))
 
@@ -94,7 +86,6 @@ def test_supply_constant():
     assert not rng_gear.params['signed']
 
 
-@with_setup(clear)
 def test_cnt_only():
     iout = rng(8)
 
@@ -104,18 +95,16 @@ def test_cnt_only():
     assert rng_gear.params['cfg'] == Tuple[Uint[1], Uint[4], Uint[1]]
 
 
-@with_setup(clear)
-def test_cnt_only_sim():
+def test_cnt_only_sim(tmpdir):
     seq = [8]
     ref = [list(range(8))]
 
     directed(drv(t=Uint[4], seq=seq), f=rng, ref=ref)
 
-    sim(outdir=prepare_result_dir())
+    sim(outdir=tmpdir, check_activity=False)
 
 
-@with_setup(clear)
-def test_cnt_only_cosim():
+def test_cnt_only_cosim(tmpdir):
     skip_ifndef('VERILATOR_ROOT')
     seq = [8]
 
@@ -124,10 +113,9 @@ def test_cnt_only_cosim():
         f=rng(sim_cls=SimVerilated),
         ref=rng(name='ref_model'))
 
-    sim(outdir=prepare_result_dir())
+    sim(outdir=tmpdir, check_activity=False)
 
 
-@with_setup(clear)
 def test_cnt_down():
     iout = rng((7, 0, -1))
 
@@ -138,20 +126,17 @@ def test_cnt_down():
     assert iout.dtype == Queue[Int[4]]
 
 
-@raises(MultiAlternativeError)
-@with_setup(clear)
+@pytest.mark.xfail(raises=MultiAlternativeError)
 def test_multi_lvl():
     iout = rng((1, 2, 3), lvl=2)
     print(iout.dtype)
 
 
-@with_setup(clear)
 @svgen_check(['rng_hier.sv'])
 def test_basic_unsigned_svgen():
     rng(Intf(Tuple[Uint[4], Uint[2], Uint[2]]))
 
 
-@with_setup(clear)
 @svgen_check(['rng_rng.sv', 'rng_ccat.sv', 'rng_hier.sv'])
 def test_cnt_svgen():
     rng(8)
