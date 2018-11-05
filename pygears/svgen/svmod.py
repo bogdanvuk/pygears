@@ -198,6 +198,10 @@ class SVModuleGen:
             'has_local_rst': self.has_local_rst
         }
 
+        for port in context['intfs']:
+            context[f'_{port["name"]}'] = port
+            context[f'_{port["name"]}_t'] = port['type']
+
         if self.is_hierarchical:
             self.svgen_map = registry('svgen/map')
 

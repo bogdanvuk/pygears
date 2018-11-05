@@ -28,18 +28,28 @@ def startswith(field, s):
     return field.startswith(s)
 
 
+import importlib
+
+
+def import_from(module, name):
+    module = importlib.import_module(module)
+    return getattr(module, name)
+
+
 class TemplateEnv:
     def __init__(self):
         self.basedir = os.path.dirname(__file__)
         self.templates = {}
         self.jenv = jinja2.Environment(
             extensions=['jinja2.ext.do'], trim_blocks=True, lstrip_blocks=True)
+
         self.jenv.globals.update(
             zip=zip,
             len=len,
             int=int,
             bitw=bitw,
             enumerate=enumerate,
+            import_from=import_from,
             svgen_typedef=svgen_typedef)
 
         self.jenv.filters['format_list'] = format_list
@@ -53,7 +63,8 @@ class TemplateEnv:
     def load(self, tmplt_dir, tmplt_fn):
         key = os.path.join(self.basedir, tmplt_dir, tmplt_fn)
         if key not in self.templates:
-            self.jenv.loader = jinja2.FileSystemLoader([self.basedir, tmplt_dir])
+            self.jenv.loader = jinja2.FileSystemLoader(
+                [self.basedir, tmplt_dir])
             template = self.jenv.get_template(tmplt_fn)
             self.templates[key] = template
 

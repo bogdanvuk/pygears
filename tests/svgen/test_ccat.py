@@ -1,4 +1,3 @@
-
 from pygears import Intf
 from pygears.common import ccat
 from pygears.typing import Queue, Uint, Unit

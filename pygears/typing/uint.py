@@ -128,19 +128,12 @@ class IntegerType(EnumerableGenericMeta):
         return self.base[width]
 
 
-def check_width(val, res):
-    if not isinstance(val, tuple):
-        val = (val, )
-
-    total_width = 0
-    for v in val:
-        total_width += bitw(v)
-
-    if (total_width > res.width):
+def check_width(val, width):
+    if (bitw(val) > width):
         from pygears.conf import typing_log
 
         typing_log().warning(
-            f'Value overflow - value {val} cannot be represented with {res.width} bits'
+            f'Value overflow - value {val} cannot be represented with {width} bits'
         )
 
 
@@ -156,7 +149,7 @@ class Integer(int, metaclass=IntegerType):
 
         res = super(Integer, cls).__new__(cls,
                                           int(val) & ((1 << len(cls)) - 1))
-        check_width(val, res)
+        check_width(val, res.width)
         return res
 
     @property
@@ -273,12 +266,15 @@ class Int(Integer, metaclass=IntType):
 
         if cls.is_generic():
             if isinstance(val, Uint):
-                return cls[val.width + 1](int(val))
+                res = cls[val.width + 1](int(val))
             else:
-                return cls[val.bit_length() + 1](int(val))
+                res = cls[val.bit_length() + 1](int(val))
         else:
-            return super(Int, cls).__new__(cls,
-                                           int(val) & ((1 << len(cls)) - 1))
+            res = super(Int, cls).__new__(cls,
+                                          int(val) & ((1 << len(cls)) - 1))
+
+        check_width(val, res.width if val < 0 else res.width - 1)
+        return res
 
     def __int__(self):
         val = super(Int, self).__int__()
