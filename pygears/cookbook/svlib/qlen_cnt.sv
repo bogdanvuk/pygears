@@ -34,7 +34,11 @@ module qlen_cnt #(
    assign dout.valid = din.valid && last;
    assign din.ready = handshake || !last;
 
-   assign part_last = &din_s.eot[CNT_LVL-1:0];
+   if (CNT_LVL == 0)
+     assign part_last = 1;
+   else
+     assign part_last = &din_s.eot[CNT_LVL-1:0];
+
    assign last = &din_s.eot;
    assign cnt_next = cnt_reg + 1;
 
