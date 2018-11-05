@@ -6,7 +6,7 @@
    :class: highlight
 
 .. urlinclude::
-   :branch: a05abf3
+   :branch: a7d98ec
    :github: bogdanvuk/pygears_riscv
 
 My First Instruction
@@ -22,7 +22,7 @@ My First Instruction
 
 :v:`2` First instruction is probably going to be unlike any other in the amount of work that I'll need to put into implementing it, so it deserves a post on its own. :v:`1` Let's start from the RV32I description in the (currently) latest version of the `RISC-V ISA Specification`_, which is given in the `Chapter 2: RV32I Base Integer Instruction Set <https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf#page=21>`_. The specification first goes on to describe `Integer Computational Instructions (Chapter 2.4) <https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf#page=25>`_, of which the ``addi`` instruction is explained first, so let's start with that one.
 
-Relevant pygears_riscv git commit: `pygears_riscv@a05abf3 <https://github.com/bogdanvuk/pygears_riscv/tree/a05abf3>`_
+Relevant pygears_riscv git commit: `pygears_riscv@a7d98ec <https://github.com/bogdanvuk/pygears_riscv/tree/a7d98ec>`_
 
 .. verbosity:: 2
 
@@ -328,21 +328,26 @@ If there is some issue with running the Verilator, an error report will be print
 
 .. code-block:: python
 
-  -                      [INFO]: Running sim with seed: 1540290124  
+  ========================================= test session starts ==========================================
+  platform linux -- Python 3.6.6, pytest-3.9.3, py-1.7.0, pluggy-0.8.0
+  rootdir: /tools/home/pygears_riscv/tests, inifile: setup.cfg
+  collected 1 item                                                                                       
+
+  test_addi.py -                      [INFO]: Running sim with seed: 4987822489491942249  
   0               /riscv [INFO]: Verilating...  
-    File "test_addi.py", line 56, in <module>
-      test_addi_verilator()
-    File "test_addi.py", line 48, in test_addi_verilator
-      sim()
-    File "/tools/home/pygears/pygears/sim/sim.py", line 347, in sim
-      loop.run(timeout)
-    File "/tools/home/pygears/pygears/sim/sim.py", line 293, in run
-      sim_gear.setup()
-    File "/tools/home/pygears/pygears/sim/modules/verilator.py", line 47, in setup
-      self.build()
-    File "/tools/home/pygears/pygears/sim/modules/verilator.py", line 91, in build
-      f'Verilator compile error: {ret}. '
-  pygears.sim.modules.verilator.VerilatorCompileError: Verilator compile error: 32512. Please inspect "/tmp/tmpx6yqczmv/riscv/verilate.log"
+  F
+
+  =================================== FAILURES ===================================
+
+.. code-block:: python
+
+  E           pygears.sim.modules.verilator.VerilatorCompileError: Verilator compile error: 32512. Please inspect "/tools/home/pygears_riscv/tests/test_instructions/build/riscv/verilate.log"
+
+  ../../../pygears/pygears/sim/modules/verilator.py:101: VerilatorCompileError
+  ------------------------------ Captured log call -------------------------------
+  sim.py                     373 INFO     Running sim with seed: 4755614176382389150
+  verilator.py                46 INFO     Verilating...
+  =========================== 1 failed in 3.89 seconds ===========================
 
 In my case, I forgot to :ref:`install Verilator <pygears:install:Installing Verilator>` and add it to the path, so my ``verilate.log`` showed that I had no ``verilator`` executable on the path, which I needed to amend:
 
@@ -356,9 +361,13 @@ The test gave me an almost identical report to the pure-Python simulation. :v:`3
 
 .. code-block:: python
 
-  -                      [INFO]: Running sim with seed: 1540456453  
+  ========================================= test session starts ==========================================
+  platform linux -- Python 3.6.6, pytest-3.9.3, py-1.7.0, pluggy-0.8.0
+  rootdir: /tools/home/pygears_riscv/tests, inifile: setup.cfg
+  collected 1 item                                                                                       
+
+  test_addi.py -                      [INFO]: Running sim with seed: 4987822489491942249  
   0               /riscv [INFO]: Verilating...  
-  0               /riscv [INFO]: Verilator VCD dump to "/tmp/tmp72ngbynw/riscv/vlt_dump.vcd"  
   0               /riscv [INFO]: Done  
   0                      [INFO]: -------------- Simulation start --------------  
   0 /register_file/register_file_write [INFO]: Writing u32(4294966062) to x1  
@@ -366,10 +375,6 @@ The test gave me an almost identical report to the pure-Python simulation. :v:`3
   51                      [INFO]: Elapsed: 0.01  
   Resulting value of the register x1: i32(-1234)
   .
-  ----------------------------------------------------------------------
-  Ran 1 test in 4.999s
-
-  OK
 
 .. verbosity:: 3
 
