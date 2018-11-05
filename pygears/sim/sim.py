@@ -1,11 +1,12 @@
 import asyncio
-import itertools
 import logging
 import os
 import random
 import sys
 import tempfile
 import time
+import pluggy
+from . import hookspecs
 
 from pygears import GearDone, bind, find, registry, safe_bind
 from pygears.conf import CustomLog, LogFmtFilter
@@ -116,7 +117,8 @@ def topo_sort(dag):
 
 
 class EventLoop(asyncio.events.AbstractEventLoop):
-    def __init__(self):
+    def __init__(self, hook):
+        self.hook = hook
         self.events = {
             'before_setup': SimEvent(),
             'before_run': SimEvent(),
@@ -318,6 +320,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         bind('sim/timestep', 0)
 
         self.events['before_setup'](self)
+        self.hook.sim_before_setup(sim=self)
 
         for sim_gear in set(self.sim_gears):
             self.cur_gear = sim_gear.gear
@@ -327,6 +330,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             bind('gear/current_module', self.cur_gear)
 
         self.events['before_run'](self)
+        self.hook.sim_before_run(sim=self)
 
         sim_exception = None
         try:
@@ -336,6 +340,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
         # print(f"----------- After run ---------------")
         self.events['after_run'](self)
+        self.hook.sim_after_run(sim=self)
 
         if not sim_exception:
             for sim_gear in self.sim_gears:
@@ -347,6 +352,13 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
         if sim_exception:
             raise sim_exception
+
+
+def get_plugin_manager():
+    pm = pluggy.PluginManager('sim')
+    pm.add_hookspecs(hookspecs)
+    pm.load_setuptools_entrypoints('sim')
+    return pm
 
 
 def sim(outdir=None,
@@ -372,7 +384,8 @@ def sim(outdir=None,
     bind('sim/rand_seed', seed)
     sim_log().info(f'Running sim with seed: {seed}')
 
-    loop = EventLoop()
+    pm = get_plugin_manager()
+    loop = EventLoop(hook=pm.hook)
     asyncio.set_event_loop(loop)
     bind('sim/simulator', loop)
 
@@ -382,8 +395,11 @@ def sim(outdir=None,
             extens.append(ActivityChecker)
 
     top = find('/')
-    for oper in itertools.chain(registry('sim/flow'), extens):
+    for oper in registry('sim/flow'):
         oper(top)
+
+    for oper in extens:
+        pm.register(oper(top))
 
     if run:
         loop.run(timeout)
