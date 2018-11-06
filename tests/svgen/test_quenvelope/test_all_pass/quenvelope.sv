@@ -16,7 +16,7 @@ module quenvelope
     } din_t;
 
     typedef struct packed { // [()]^2
-        logic [1:0] out_eot; // u2
+        logic [1:0] eot; // u2
     } dout_t;
 
 
@@ -29,7 +29,7 @@ module quenvelope
 
    assign din.ready = dout.ready;
    assign dout.valid = din.valid;
-   assign dout_s.out_eot = din_s.out_eot;
+   assign dout_s.eot = din_s.out_eot;
 
 
 endmodule
