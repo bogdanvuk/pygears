@@ -49,7 +49,7 @@ from functools import partial
 from .registry import PluginBase, safe_bind, registry, set_cb
 
 from . import log_pm, log_hookspec
-from .log_plugin import LoggerRegistryHook
+from .log_plugin import LoggerRegistryHook, HOOKABLE_LOG_METHODS
 from .trace import enum_stacktrace
 
 
@@ -76,43 +76,42 @@ def stack_trace(name, verbosity, message):
         f.write(delim)
 
 
+def log_parent(cls, severity):
+    def wrapper(self, msg, *args, **kwargs):
+        '''Wrapper around logger methods from HOOKABLE_LOG_METHODS
+        for calling hooks'''
+        getattr(super(CustomLogger, self), severity)(msg, *args, **kwargs)
+
+        if severity in ['error', 'warning']:
+            stack_trace(self.name, severity, msg)
+        getattr(self, f'{severity}_hook')(name=self.name, msg=msg)
+
+    return wrapper
+
+
+def log_hook(cls, severity):
+    @log_hookspec
+    def wrapper(self, msg, name):
+        '''Custom <severity>_hook methods for HOOKABLE_LOG_METHODS.
+        Needed for changing prototype'''
+        getattr(log_pm.hook, f'{severity}_hook')(name=self.name, msg=msg)
+
+    return wrapper
+
+
+def hookable_methods_gen(cls):
+    for severity in HOOKABLE_LOG_METHODS:
+        setattr(cls, severity, log_parent(cls, severity))
+        setattr(cls, f'{severity}_hook', log_hook(cls, severity))
+    return cls
+
+
+@hookable_methods_gen
 class CustomLogger(logging.Logger):
+    '''Inherits from Logger and adds hooks to methods from HOOKABLE_LOG_METHODS'''
+
     def __init__(self, name):
         super(CustomLogger, self).__init__(name)
-
-    @log_hookspec
-    def debug(self, msg, *args, **kwargs):
-        super(CustomLogger, self).debug(msg, *args, **kwargs)
-        log_pm.hook.debug(name=self.name, msg=msg)
-
-    @log_hookspec
-    def info(self, msg, *args, **kwargs):
-        super(CustomLogger, self).info(msg, *args, **kwargs)
-        log_pm.hook.info(name=self.name, msg=msg)
-
-    @log_hookspec
-    def warning(self, msg, *args, **kwargs):
-        super(CustomLogger, self).warning(msg, *args, **kwargs)
-        stack_trace(self.name, 'warning', msg)
-        log_pm.hook.warning(msg=msg, name=self.name)
-
-    @log_hookspec
-    def error(self, msg, *args, **kwargs):
-        super(CustomLogger, self).error(msg, *args, **kwargs)
-        stack_trace(self.name, 'error', msg)
-        log_pm.hook.error(name=self.name, msg=msg)
-
-    @log_hookspec
-    def exception(self, msg, *args, **kwargs):
-        super(CustomLogger, self).exception(msg, *args, **kwargs)
-        stack_trace(self.name, 'exception', msg)
-        log_pm.hook.exception(name=self.name, msg=msg)
-
-    @log_hookspec
-    def critical(self, msg, *args, **kwargs):
-        super(CustomLogger, self).critical(msg, *args, **kwargs)
-        stack_trace(self.name, 'critical', msg)
-        log_pm.hook.critical(name=self.name, msg=msg)
 
 
 class LogFmtFilter(logging.Filter):
@@ -179,8 +178,6 @@ class CustomLog:
         safe_bind(reg_name, bind_val)
         set_cb(f'{reg_name}/level', partial(set_log_level, name))
         safe_bind(f'{reg_name}', LoggerRegistryHook(name))
-
-        self.logger = logging.getLogger(name)
 
     def get_format(self):
         return logging.Formatter(

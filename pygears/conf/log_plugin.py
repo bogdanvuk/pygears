@@ -1,6 +1,10 @@
 from .registry import registry, RegistryHook
 from . import log_pm, log_hookimpl
 
+HOOKABLE_LOG_METHODS = [
+    'critical', 'exception', 'error', 'warning', 'info', 'debug'
+]
+
 
 class LogException(Exception):
     def __init__(self, message, name):
@@ -17,18 +21,54 @@ def log_action_debug():
     pdb.set_trace()
 
 
+def log_pm_register(cls, name):
+    def wrapper(self, val):
+        '''Register hook if any value set in registy'''
+        if val:
+            log_pm.register(self.hook)
+        else:
+            log_pm.unregister(self.hook)
+
+    return wrapper
+
+
+def register_methods_gen(cls):
+    for name in HOOKABLE_LOG_METHODS:
+        setattr(cls, f'_set_{name}', log_pm_register(cls, name))
+    return cls
+
+
+@register_methods_gen
 class LoggerRegistryHook(RegistryHook):
+    '''Auto register/unregister hooks based on registry values
+    contains _set_<verbosity> method for every HOOKABLE_LOG_METHODS
+    '''
+
     def __init__(self, name):
         self.name = name
-
-    def _set_error(self, val):
-        log_pm.register(LoggerPlugin(name=self.name))
-
-    def _set_warning(self, val):
-        log_pm.register(LoggerPlugin(name=self.name))
+        self.hook = LoggerPlugin(name=self.name)
 
 
+def log_plugin(cls, severity):
+    @log_hookimpl
+    def wrapper(self, msg, name):
+        '''Perform custom action only if msg sent from appropriate logger'''
+        if self.name == name:
+            self.custom_action(msg, severity)
+
+    return wrapper
+
+
+def plugin_methods_gen(cls):
+    for severity in HOOKABLE_LOG_METHODS:
+        setattr(cls, f'{severity}_hook', log_plugin(cls, severity))
+    return cls
+
+
+@plugin_methods_gen
 class LoggerPlugin(object):
+    '''Hook impl. methods for every HOOKABLE_LOG_METHODS'''
+
     def __init__(self, name):
         self.name = name
 
@@ -42,11 +82,3 @@ class LoggerPlugin(object):
             else:
                 # custom function in registry
                 log_cfg[severity](self.name, msg)
-
-    @log_hookimpl
-    def warning(self, msg):
-        self.custom_action(msg, self.warning.__name__)
-
-    @log_hookimpl
-    def error(self, msg):
-        self.custom_action(msg, self.error.__name__)
