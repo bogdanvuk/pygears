@@ -80,7 +80,7 @@ def pygears_excepthook(exception_type,
 
         # print traceback for LogException only if appropriate
         # 'print_traceback' in registry is set
-        from pygears.conf.log import LogException
+        from pygears.conf.log_plugin import LogException
         print_traceback = (exception_type is not LogException)
         if not print_traceback:
             print_traceback = registry(

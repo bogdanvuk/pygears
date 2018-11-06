@@ -426,7 +426,7 @@ class SimLog(CustomLog):
         super().__init__(name, verbosity)
 
         # change default for error
-        bind('logger/sim/error/exception', True)
+        bind('logger/sim/error', 'exception')
         bind('logger/sim/print_traceback', False)
 
     def get_format(self):

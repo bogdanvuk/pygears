@@ -1,3 +1,10 @@
+import pluggy
+
+pluggy_log_name = 'log'
+log_pm = pluggy.PluginManager(pluggy_log_name)
+log_hookspec = pluggy.HookspecMarker(pluggy_log_name)
+log_hookimpl = pluggy.HookimplMarker(pluggy_log_name)
+
 from .log import (CustomLog, LogFmtFilter, conf_log, core_log, gear_log,
                   set_log_level, typing_log, util_log)
 from .registry import (PluginBase, bind, clear, load_plugin_folder, registry,

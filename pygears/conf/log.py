@@ -3,7 +3,7 @@ It is a wrapper around standard Python `logging
 <https://docs.python.org/library/logging.html>`__ but provides some additional
 features like:
 
-- automatic exception raising when logging errors and warnings,
+- automatic exception raising when logging at any level
 - customized stack trace printing
 - logging to temporary files
 - integration with PyGears registry for configuration
@@ -41,12 +41,15 @@ The numeric values of logging levels are given in the following table.
 import os
 import copy
 import logging
-from logging import INFO, WARNING, ERROR, DEBUG
+from logging import INFO, WARNING, ERROR, DEBUG, CRITICAL, NOTSET
 import sys
 import tempfile
 from functools import partial
 
 from .registry import PluginBase, safe_bind, registry, set_cb
+
+from . import log_pm, log_hookspec
+from .log_plugin import LoggerRegistryHook
 from .trace import enum_stacktrace
 
 
@@ -59,51 +62,57 @@ def set_log_level(name, level):
     conf_log().info(f'Setting log level {name}, {level}')
 
 
-class LogException(Exception):
-    def __init__(self, message, name):
-        super().__init__(message)
-        self.name = name
+def stack_trace(name, verbosity, message):
+    stack_traceback_fn = registry('logger/stack_traceback_fn')
+    with open(stack_traceback_fn, 'a') as f:
+        delim = '-' * 50 + '\n'
+        f.write(delim)
+        f.write(f'{name} [{verbosity.upper()}] {message}\n\n')
+        tr = ''
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        for s in enum_stacktrace():
+            tr += s
+        f.write(tr)
+        f.write(delim)
 
 
-class LogWrap:
-    def __init__(self, logger):
-        self.logger = logger
-        self.name = logger.name
+class CustomLogger(logging.Logger):
+    def __init__(self, name):
+        super(CustomLogger, self).__init__(name)
 
-    def severity_action(self, severity, message):
-        log_cfg = registry('logger')[self.name]
-        if log_cfg[severity]['exception']:
-            raise LogException(message, self.name)
-        elif log_cfg[severity]['debug']:
-            import pdb
-            pdb.set_trace()
+    @log_hookspec
+    def debug(self, msg, *args, **kwargs):
+        super(CustomLogger, self).debug(msg, *args, **kwargs)
+        log_pm.hook.debug(name=self.name, msg=msg)
 
-    def stack_trace(self, verbosity, message):
-        stack_traceback_fn = registry('logger/stack_traceback_fn')
-        with open(stack_traceback_fn, 'a') as f:
-            delim = '-' * 50 + '\n'
-            f.write(delim)
-            f.write(f'{self.name} [{verbosity.upper()}] {message}\n\n')
-            tr = ''
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            for s in enum_stacktrace():
-                tr += s
-            f.write(tr)
-            f.write(delim)
+    @log_hookspec
+    def info(self, msg, *args, **kwargs):
+        super(CustomLogger, self).info(msg, *args, **kwargs)
+        log_pm.hook.info(name=self.name, msg=msg)
 
-    def warning(self, message, *args, **kws):
-        if self.logger.isEnabledFor(WARNING):
-            severity = 'warning'
-            self.logger._log(WARNING, message, args, **kws)
-            self.stack_trace(severity, message)
-            self.severity_action(severity, message)
+    @log_hookspec
+    def warning(self, msg, *args, **kwargs):
+        super(CustomLogger, self).warning(msg, *args, **kwargs)
+        stack_trace(self.name, 'warning', msg)
+        log_pm.hook.warning(msg=msg, name=self.name)
 
-    def error(self, message, *args, **kws):
-        if self.logger.isEnabledFor(logging.ERROR):
-            severity = 'error'
-            self.logger._log(logging.ERROR, message, args, **kws)
-            self.stack_trace(severity, message)
-            self.severity_action(severity, message)
+    @log_hookspec
+    def error(self, msg, *args, **kwargs):
+        super(CustomLogger, self).error(msg, *args, **kwargs)
+        stack_trace(self.name, 'error', msg)
+        log_pm.hook.error(name=self.name, msg=msg)
+
+    @log_hookspec
+    def exception(self, msg, *args, **kwargs):
+        super(CustomLogger, self).exception(msg, *args, **kwargs)
+        stack_trace(self.name, 'exception', msg)
+        log_pm.hook.exception(name=self.name, msg=msg)
+
+    @log_hookspec
+    def critical(self, msg, *args, **kwargs):
+        super(CustomLogger, self).critical(msg, *args, **kwargs)
+        stack_trace(self.name, 'critical', msg)
+        log_pm.hook.critical(name=self.name, msg=msg)
 
 
 class LogFmtFilter(logging.Filter):
@@ -137,26 +146,15 @@ class CustomLog:
     - ``level`` (int): All messages that are logged with a verbosity level
       below this configured ``level`` value will be discarded. See
       :ref:`levels` for a list of levels.
-    - ``warning``: Configuration for logging at ``WARNING`` level
-
-      - ``warning/exception`` (bool): If set to ``True``, an exception will be
-        raised whenever logging the message at ``WARNING`` level
-
-      - ``warning/debug`` (bool): If set to ``True``, whenever logging the
-        message at ``WARNING`` level the debugger will be started and execution
-        paused
-
-    - ``error``: Configuration for logging at ``ERROR`` level.
-
-      - ``error/exception`` (bool): If set to ``True``, an exception will be
-        raised whenever logging the message at ``ERROR`` level
-
-      - ``error/debug`` (bool): If set to ``True``, whenever logging the
-        message at ``ERROR`` level the debugger will be started and execution
-        paused
-
     - ``print_traceback`` (bool): If set to ``True``, the traceback will be
       printed along with the log message.
+
+    - optional level name with desired action. Custom actions can be set for
+      any verbosity level by passing the function or any already supported
+      action to the appropriate registry subtree. Supported actions are:
+      - ``exception``: if set, an exception will be raised whenever logging the
+        message at the desired level
+      - ``debug``: if set, the debugger will be started and execution paused
 
     Sets the verbosity level for the ``core`` logger at ``INFO`` level:
 
@@ -164,16 +162,10 @@ class CustomLog:
 
     Configures the ``typing`` logger to throw exception on warnings:
 
-    >>> bind('logger/typing/warning/exception', True)
+    >>> bind('logger/typing/warning', 'exception')
 
     '''
-    dflt_action = {'debug': False, 'exception': False}
-    dflt_severity = {
-        'print_traceback': True,
-        'warning': copy.deepcopy(dflt_action),
-        'error': copy.deepcopy(dflt_action),
-        'level': WARNING
-    }
+    dflt_severity = {'print_traceback': True, 'level': WARNING}
 
     def __init__(self, name, verbosity=INFO):
         self.name = name
@@ -186,12 +178,9 @@ class CustomLog:
         reg_name = f'logger/{name}'
         safe_bind(reg_name, bind_val)
         set_cb(f'{reg_name}/level', partial(set_log_level, name))
+        safe_bind(f'{reg_name}', LoggerRegistryHook(name))
 
         self.logger = logging.getLogger(name)
-
-        self.wrap = LogWrap(self.logger)
-        self.logger.warning = self.wrap.warning
-        self.logger.error = self.wrap.error
 
     def get_format(self):
         return logging.Formatter(
@@ -221,6 +210,9 @@ class LogPlugin(PluginBase):
     def bind(cls):
         tf = tempfile.NamedTemporaryFile(delete=False)
         safe_bind('logger/stack_traceback_fn', tf.name)
+
+        logging.setLoggerClass(CustomLogger)
+        log_pm.add_hookspecs(CustomLogger)
 
         CustomLog('core', WARNING)
         CustomLog('typing', WARNING)
