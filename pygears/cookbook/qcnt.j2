@@ -20,7 +20,6 @@
 
     assign dout_s.data = cnt_reg;
     assign dout_s.eot = eot_internal_cond;
-    assign dout.data = dout_s;
     assign dout.valid = din.valid & cnt_mode;
 
     always_ff @(posedge clk) begin

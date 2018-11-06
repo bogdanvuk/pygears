@@ -63,11 +63,11 @@
   {% endif %}
 {% endfor %}
 
-{% for i in intfs[2:] %}
-  assign {{i['name']}}.data = {{i['name']}}_s;
-{% endfor %}
+{# {% for i in intfs[2:] %}   #}
+{#   assign {{i['name']}}.data = {{i['name']}}_s;   #}
+{# {% endfor %}   #}
 
-   assign {{(intfs|isoutput)[0]['name']}}.data = ctrl_eot_sync.data;
+   assign {{(intfs|isoutput)[0]['name']}}_s = ctrl_eot_sync.data; 
    assign {{(intfs|isoutput)[0]['name']}}.valid = ctrl_eot_sync.valid;
    assign ctrl_eot_sync.ready = {{(intfs|isoutput)[0]['name']}}.ready;
 
