@@ -3,13 +3,13 @@
 
 {%- macro generic_list(generics) -%}
   {% for g in generics %}
-    {{g['name']}} = {{g['value']}}{{ "," if not loop.last }}
+    {{g['name']}} = {{g['value']}}{{ "" if loop.last else "," }}
   {%- endfor -%}
 {%- endmacro -%}
 
 {% macro intf_list(intfs) -%}
   {% for i in intfs -%}
-    dti.{{i['modport']}} {{i['name']}}{{ "," if not loop.last }} // {{i['type']}} ({{i['width']}})
+    dti.{{i['modport']}} {{i['name']}}{{ "" if loop.last else "," }} // {{i['type']}} ({{i['width']}})
   {% endfor -%}
 {%- endmacro %}
 
@@ -20,9 +20,9 @@
  #(
     {% for name,value in param_map.items() -%}
       {%- if name %}
-        {{"."|indent(4,True)}}{{name}}({{value.bit_length()}}'d{{value}}){{ "," if not loop.last }}
+        {{"."|indent(4,True)}}{{name}}({{value.bit_length()}}'d{{value}}){{ "" if loop.last else "," }}
       {% else -%}
-        {{value|indent(4,True)}}{{ "," if not loop.last }}
+        {{value|indent(4,True)}}{{ "" if loop.last else "," }}
       {% endif -%}
     {% endfor -%}
     )
@@ -32,7 +32,7 @@
     .rst({{rst_name}}),
   {% if port_map -%}
     {% for name,value in port_map.items() -%}
-      {{"."|indent(4,True)}}{{name}}({{value}}){{ "," if not loop.last }}
+      {{"."|indent(4,True)}}{{name}}({{value}}){{ "" if loop.last else "," }}
     {% endfor -%}
   {% else -%}
     .*
@@ -44,7 +44,7 @@
   {% if width == 0 %}
 	{% set width = 1 %}
   {% endif %}
-  dti #(.W_DATA({{width}})) {{name}}{{ "[%d:0]"|format(size-1) if size>1 }}(); // {{type}} ({{width}})
+  dti #(.W_DATA({{width}})) {{name}}{{ "[%d:0]"|format(size-1) if size>1 else "" }}(); // {{type}} ({{width}})
 {%- endmacro %}
 
 {% macro assign(name, value) -%}
@@ -84,9 +84,9 @@ output logic [{{intf['width']-1}}:0] {{intf['name']}}_data
 {% macro signal_intf_list(intfs) -%}
   {% for i in intfs -%}
     {% if i['modport'] == 'consumer' %}
-{{ cons_signal_intf(i) }}{{ "," if not loop.last }}
+{{ cons_signal_intf(i) }}{{ "" if loop.last else "," }}
     {% else %}
-{{ prod_signal_intf(i) }}{{ "," if not loop.last }}
+{{ prod_signal_intf(i) }}{{ "" if loop.last else "," }}
     {% endif %}
   {% endfor %}
 {%- endmacro %}

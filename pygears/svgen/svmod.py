@@ -193,8 +193,9 @@ class SVModuleGen:
             'pygears': pygears,
             'module_name': self.sv_module_name,
             'intfs': list(self.sv_port_configs()),
-            'params': self.params,
+            'params': self.node.params,
             'inst': [],
+            'generics': [],
             'has_local_rst': self.has_local_rst
         }
 

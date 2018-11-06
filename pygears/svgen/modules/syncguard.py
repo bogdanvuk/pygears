@@ -13,7 +13,12 @@ class SVGenSyncGuard:
         return self.basename + ".sv"
 
     def add_port(self, modport, name):
-        self.intf_ports.append({'modport': modport, 'name': name})
+        self.intf_ports.append({
+            'modport': modport,
+            'name': name,
+            'type': None,
+            'width': None
+        })
 
     def get_module(self, template_env):
         context = {'module_name': self.basename, 'intfs': self.intf_ports}

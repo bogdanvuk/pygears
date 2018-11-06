@@ -56,7 +56,6 @@ class RemoveEqualReprCastVisitor(RTLGearHierVisitor):
         pout = node.out_ports[0]
         pin = node.in_ports[0]
 
-        print(f'Equal repr: {node.name}')
         if int(pin.dtype) == int(pout.dtype):
             node.bypass()
 
