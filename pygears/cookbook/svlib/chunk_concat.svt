@@ -2,14 +2,14 @@
 
 {% call snippet.gear_module(module_name, intfs, comment) %}
 
-   localparam CNT_TYPE = {{cnt_type}}; // 0 = #(cnt + 1) items; 1 = #cnt items
+   localparam CNT_TYPE = {{params['cnt_type']}}; // 0 = #(cnt + 1) items; 1 = #cnt items
    localparam CFG_WIDTH = {{intfs[0]['width']}};
    localparam DIN0_WIDTH = {{intfs[1]['width']}};
    localparam DOUT_WIDTH = {{intfs[-1]['width']}};
    localparam DIN_NUM = {{intfs|length - 2}};
    {# localparam CHUNK_SIZE = ((DOUT_WIDTH-3)/(DIN0_WIDTH-2)); #}
-   localparam CHUNK_SIZE = {{chunk_size}};
-   localparam PAD = {{pad}};
+   localparam CHUNK_SIZE = {{params['chunk_size']}};
+   localparam PAD = {{params['pad']}};
 
    typedef struct packed {
       logic eot;
