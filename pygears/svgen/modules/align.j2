@@ -1,10 +1,6 @@
 {%- import 'snippet.j2' as snippet -%}
 
-module {{module_name}} #(
-{% for i in intfs|selectattr('param') %}
-    parameter {{i['param']}}     = {{i['width']}}{{ "," if not loop.last }}
-{% endfor -%}
-)
+module {{module_name}}
 (
     input clk,
     input rst,
