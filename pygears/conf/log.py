@@ -41,16 +41,24 @@ The numeric values of logging levels are given in the following table.
 import os
 import copy
 import logging
-from logging import INFO, WARNING, ERROR, DEBUG, CRITICAL, NOTSET
 import sys
 import tempfile
+
 from functools import partial
+from logging import INFO, WARNING, ERROR, DEBUG, CRITICAL, NOTSET
 
 from .registry import PluginBase, safe_bind, registry, set_cb
-
-from . import log_pm, log_hookspec
-from .log_plugin import LoggerRegistryHook, HOOKABLE_LOG_METHODS
 from .trace import enum_stacktrace
+
+HOOKABLE_LOG_METHODS = [
+    'critical', 'exception', 'error', 'warning', 'info', 'debug'
+]
+
+
+class LogException(Exception):
+    def __init__(self, message, name):
+        super().__init__(message)
+        self.name = name
 
 
 def set_log_level(name, level):
@@ -84,17 +92,36 @@ def log_parent(cls, severity):
 
         if severity in ['error', 'warning']:
             stack_trace(self.name, severity, msg)
-        getattr(self, f'{severity}_hook')(name=self.name, msg=msg)
+        getattr(self, f'{severity}_hook')(logger_name=self.name, message=msg)
 
     return wrapper
 
 
+def log_action_exception(name, message):
+    raise LogException(message, name)
+
+
+def log_action_debug():
+    import pdb
+    pdb.set_trace()
+
+
+def custom_action(logger_name, message, severity):
+    log_cfg = registry('logger')[logger_name]
+    if severity in log_cfg:
+        if log_cfg[severity] == 'exception':
+            log_action_exception(logger_name, message)
+        elif log_cfg[severity] == 'debug':
+            log_action_debug()
+        else:
+            # custom function in registry
+            log_cfg[severity](logger_name, message)
+
+
 def log_hook(cls, severity):
-    @log_hookspec
-    def wrapper(self, msg, name):
-        '''Custom <severity>_hook methods for HOOKABLE_LOG_METHODS.
-        Needed for changing prototype'''
-        getattr(log_pm.hook, f'{severity}_hook')(name=self.name, msg=msg)
+    def wrapper(self, logger_name, message):
+        '''Custom <severity>_hook methods for HOOKABLE_LOG_METHODS.'''
+        custom_action(logger_name, message, severity)
 
     return wrapper
 
@@ -108,7 +135,7 @@ def hookable_methods_gen(cls):
 
 @hookable_methods_gen
 class CustomLogger(logging.Logger):
-    '''Inherits from Logger and adds hooks to methods from HOOKABLE_LOG_METHODS'''
+    '''Inherits from Logger and adds hook methods to HOOKABLE_LOG_METHODS'''
 
     def __init__(self, name):
         super(CustomLogger, self).__init__(name)
@@ -163,8 +190,11 @@ class CustomLog:
 
     >>> bind('logger/typing/warning', 'exception')
 
+    Configures the ``conf`` logger to use custom function on errors:
+
+    >>> bind('logger/conf/errors', custom_func)
     '''
-    dflt_severity = {'print_traceback': True, 'level': WARNING}
+    dflt_settings = {'print_traceback': True, 'level': WARNING}
 
     def __init__(self, name, verbosity=INFO):
         self.name = name
@@ -172,12 +202,11 @@ class CustomLog:
 
         self.set_default_logger()
 
-        bind_val = copy.deepcopy(self.dflt_severity)
+        bind_val = copy.deepcopy(self.dflt_settings)
         bind_val['level'] = verbosity
         reg_name = f'logger/{name}'
         safe_bind(reg_name, bind_val)
         set_cb(f'{reg_name}/level', partial(set_log_level, name))
-        safe_bind(f'{reg_name}', LoggerRegistryHook(name))
 
     def get_format(self):
         return logging.Formatter(
@@ -209,7 +238,6 @@ class LogPlugin(PluginBase):
         safe_bind('logger/stack_traceback_fn', tf.name)
 
         logging.setLoggerClass(CustomLogger)
-        log_pm.add_hookspecs(CustomLogger)
 
         CustomLog('core', WARNING)
         CustomLog('typing', WARNING)
