@@ -10,7 +10,7 @@ module decoupler
     dti.producer dout
     );
 
-    if (DEPTH == 2) begin
+    if (DEPTH == -1) begin
        logic [DIN : 0] memory [0 : 1]; //one bit for valid
 
        logic           empty;
