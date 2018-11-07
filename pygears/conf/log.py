@@ -115,7 +115,7 @@ def custom_action(logger_name, message, severity):
             log_action_debug()
         else:
             # custom function in registry
-            log_cfg[severity](logger_name, message)
+            log_cfg[severity](message)
 
 
 def log_hook(cls, severity):
