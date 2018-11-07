@@ -44,7 +44,7 @@
 It is a wrapper around standard Python <a class="reference external" href="https://docs.python.org/library/logging.html">logging</a> but provides some additional
 features like:</p>
 <ul class="simple">
-<li><p>automatic exception raising when logging errors and warnings,</p></li>
+<li><p>automatic exception raising when logging at any level</p></li>
 <li><p>customized stack trace printing</p></li>
 <li><p>logging to temporary files</p></li>
 <li><p>integration with PyGears registry for configuration</p></li>
@@ -106,37 +106,34 @@ logger name and the default logging level:</p>
 <p>CustomLog instances are customizable via <code class="samp docutils literal notranslate"><span class="pre">logger/</span><em><span class="pre">logger_name</span></em></code>
 <a class="reference internal" href="../registry.html#registry"><span class="std std-ref">registry</span></a> subtree. The logger instance registry subtree
 contains the following configuration variables:</p>
-<ul class="simple">
+<ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">level</span></code> (int): All messages that are logged with a verbosity level
 below this configured <code class="docutils literal notranslate"><span class="pre">level</span></code> value will be discarded. See
 <a class="reference internal" href="#levels"><span class="std std-ref">Logging Levels</span></a> for a list of levels.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">warning</span></code>: Configuration for logging at <code class="docutils literal notranslate"><span class="pre">WARNING</span></code> level</p>
-<ul>
-<li><p><code class="docutils literal notranslate"><span class="pre">warning/exception</span></code> (bool): If set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, an exception will be
-raised whenever logging the message at <code class="docutils literal notranslate"><span class="pre">WARNING</span></code> level</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">warning/debug</span></code> (bool): If set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, whenever logging the
-message at <code class="docutils literal notranslate"><span class="pre">WARNING</span></code> level the debugger will be started and execution
-paused</p></li>
-</ul>
-</li>
-<li><p><code class="docutils literal notranslate"><span class="pre">error</span></code>: Configuration for logging at <code class="docutils literal notranslate"><span class="pre">ERROR</span></code> level.</p>
-<ul>
-<li><p><code class="docutils literal notranslate"><span class="pre">error/exception</span></code> (bool): If set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, an exception will be
-raised whenever logging the message at <code class="docutils literal notranslate"><span class="pre">ERROR</span></code> level</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">error/debug</span></code> (bool): If set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, whenever logging the
-message at <code class="docutils literal notranslate"><span class="pre">ERROR</span></code> level the debugger will be started and execution
-paused</p></li>
-</ul>
-</li>
 <li><p><code class="docutils literal notranslate"><span class="pre">print_traceback</span></code> (bool): If set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, the traceback will be
 printed along with the log message.</p></li>
+<li><p>optional level name with desired action. Custom actions can be set for
+any verbosity level by passing the function or any already supported
+action to the appropriate registry subtree. Supported actions are:
+- <code class="docutils literal notranslate"><span class="pre">exception</span></code>: if set, an exception will be raised whenever logging the</p>
+<blockquote>
+<div><p>message at the desired level</p>
+</div></blockquote>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">debug</span></code>: if set, the debugger will be started and execution paused</p></li>
+</ul>
+</li>
 </ul>
 <p>Sets the verbosity level for the <code class="docutils literal notranslate"><span class="pre">core</span></code> logger at <code class="docutils literal notranslate"><span class="pre">INFO</span></code> level:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">bind</span><span class="p">(</span><span class="s1">&#39;logger/core/level&#39;</span><span class="p">,</span> <span class="n">INFO</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Configures the <code class="docutils literal notranslate"><span class="pre">typing</span></code> logger to throw exception on warnings:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">bind</span><span class="p">(</span><span class="s1">&#39;logger/typing/warning/exception&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">bind</span><span class="p">(</span><span class="s1">&#39;logger/typing/warning&#39;</span><span class="p">,</span> <span class="s1">&#39;exception&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Configures the <code class="docutils literal notranslate"><span class="pre">conf</span></code> logger to use custom function on errors:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">bind</span><span class="p">(</span><span class="s1">&#39;logger/conf/errors&#39;</span><span class="p">,</span> <span class="n">custom_func</span><span class="p">)</span>
 </pre></div>
 </div>
 </dd></dl>
