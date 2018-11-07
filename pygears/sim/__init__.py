@@ -9,10 +9,7 @@ from . import inst
 
 from .sim import SimPlugin, schedule_to_finish
 
-import pluggy
-hookimpl = pluggy.HookimplMarker('sim')
-
 __all__ = [
     'sim', 'artifacts_dir', 'sim_assert', 'clk', 'delta', 'timestep',
-    'sim_log', 'sim_phase', 'schedule_to_finish', 'hookimpl'
+    'sim_log', 'sim_phase', 'schedule_to_finish'
 ]
