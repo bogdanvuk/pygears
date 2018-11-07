@@ -41,7 +41,10 @@ class TemplateEnv:
         self.basedir = os.path.dirname(__file__)
         self.templates = {}
         self.jenv = jinja2.Environment(
-            extensions=['jinja2.ext.do'], trim_blocks=True, lstrip_blocks=True)
+            extensions=['jinja2.ext.do'],
+            trim_blocks=True,
+            lstrip_blocks=True,
+            undefined=jinja2.StrictUndefined)
 
         self.jenv.globals.update(
             zip=zip,

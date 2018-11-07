@@ -11,13 +11,12 @@ def test_unsigned_overflow_cosim(tmpdir):
     skip_ifndef('VERILATOR_ROOT')
     seq = [(0x1, 0x2), (0x1, 0x1), (0xf, 0x1)]
 
-    report = verif(
+    verif(
         drv(t=Tuple[Uint[4], Uint[2]], seq=seq),
         f=sub(sim_cls=SimVerilated),
         ref=sub(name='ref_model'))
 
     sim(outdir=tmpdir)
-    print(report)
 
 
 def test_signed_unsigned_cosim(tmpdir):

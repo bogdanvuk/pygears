@@ -10,7 +10,7 @@ def get_int_type(val):
     elif val > 0:
         return Uint[bitw(val)]
     else:
-        return Int[bitw(val) + 1]
+        return Int[bitw(val)]
 
 
 def get_literal_type(val):

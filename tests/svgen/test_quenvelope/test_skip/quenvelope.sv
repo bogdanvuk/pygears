@@ -18,7 +18,7 @@ module quenvelope
 
 
     typedef struct packed { // ((), u0, u2)
-        logic [1:0] out_eot; // u2
+        logic [1:0] eot; // u2
     } dout_t;
 
 
@@ -35,7 +35,7 @@ module quenvelope
     logic  subelem_done;
     logic [1:0] eots_reg;
 
-    assign dout_s.out_eot = valid_reg ? eots_reg : din_s.out_eot;
+    assign dout_s.eot = valid_reg ? eots_reg : din_s.out_eot;
 
     assign subelem_done = &din_s.subenvelope && din.valid;
     assign din.ready = (dout.ready || handshake_reg || (!subelem_done));

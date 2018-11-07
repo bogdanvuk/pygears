@@ -11,7 +11,6 @@ from pygears.sim.modules.drv import drv
 
 from pygears.util.test_utils import svgen_check, skip_ifndef
 
-
 def test_basic_unsigned():
     iout = rng(Intf(Tuple[Uint[4], Uint[4], Uint[2]]))
 

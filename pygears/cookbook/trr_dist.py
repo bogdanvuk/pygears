@@ -1,7 +1,5 @@
 from pygears import gear
 from pygears.conf import gear_log
-from pygears.svgen.inst import SVGenInstPlugin
-from pygears.svgen.svmod import SVModuleGen
 from pygears.typing import Queue
 
 
@@ -28,22 +26,3 @@ async def trr_dist(din: Queue, *,
         if val.eot == int('1' * t_din.lvl, 2):
             gear_log().debug(f'Trr_dist reset to first output')
             break
-
-
-class SVGenTrrDist(SVModuleGen):
-    @property
-    def is_generated(self):
-        return True
-
-    def get_module(self, template_env):
-        context = {
-            'module_name': self.sv_module_name,
-            'intfs': list(self.sv_port_configs())
-        }
-        return template_env.render_local(__file__, "trr_dist.j2", context)
-
-
-class SVGenTrrDistPlugin(SVGenInstPlugin):
-    @classmethod
-    def bind(cls):
-        cls.registry['svgen']['module_namespace'][trr_dist] = SVGenTrrDist

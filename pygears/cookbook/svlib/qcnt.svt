@@ -10,10 +10,10 @@
     assign handshake = dout.valid & dout.ready;
 
     assign cnt_next = cnt_reg + 1;
-{% if lvl == intfs[0]['type'].lvl %}
+{% if params['lvl'] == intfs[0]['type'].lvl %}
     assign cnt_mode = 1;
 {% else %}
-    assign cnt_mode = &din_s.eot[$bits(din_s.eot) - {{lvl}} - 1 : 0]; // lvl = {{lvl}}
+    assign cnt_mode = &din_s.eot[$bits(din_s.eot) - {{params['lvl']}} - 1 : 0]; // lvl = {{params['lvl']}}
 {% endif %}
 
     assign eot_internal_cond = &din_s.eot;

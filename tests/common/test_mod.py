@@ -11,10 +11,9 @@ def test_unsigned_cosim(tmpdir):
     skip_ifndef('VERILATOR_ROOT')
     seq = [(0x6, 0x2), (0x5, 0x2), (0x4, 0x3)]
 
-    report = verif(
+    verif(
         drv(t=Tuple[Uint[4], Uint[2]], seq=seq),
         f=mod(sim_cls=SimVerilated),
         ref=mod(name='ref_model'))
 
     sim(outdir=tmpdir)
-    print(report)
