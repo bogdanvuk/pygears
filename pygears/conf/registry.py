@@ -4,10 +4,27 @@ import os
 import re
 import sys
 
-from .utils import dict_generator, nested_set, nested_get, safe_nested_set
+from .utils import (dict_generator, intercept_arguments, nested_get,
+                    nested_set, safe_nested_set)
 
 delimiter = '/'
 wildcard_list = ['*', '?', '[', ']']
+
+
+class RegistryFuncArg:
+    def __init__(self, path):
+        self.path = path
+
+
+def get_args_from_registry(arg_dict):
+    for k, v in arg_dict.items():
+        if isinstance(v, RegistryFuncArg):
+            arg_dict[k] = registry(v.path)
+
+
+def registry_args(func):
+    return intercept_arguments(
+        func, cb_named=get_args_from_registry, cb_kwds=get_args_from_registry)
 
 
 class RegistryException(Exception):
