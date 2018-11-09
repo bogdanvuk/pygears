@@ -1,5 +1,8 @@
+import copy
+import inspect
+import itertools
 import operator
-from functools import reduce
+from functools import reduce, wraps
 
 
 def safe_nested_set(dictionary, value, *keys):
@@ -46,3 +49,76 @@ def dict_generator(indict, pre=None):
             yield indict
         except TypeError:
             yield [indict]
+
+
+def intercept_arguments(func, cb_named=None, cb_kwds=None, cb_pos=None):
+    sig = inspect.signature(func)
+    # default values in func definition
+    dflt_args = {
+        k: v.default
+        for k, v in sig.parameters.items()
+        if v.default is not inspect.Parameter.empty
+    }
+    # *args in func definition
+    positional = {
+        k: None
+        for k, v in sig.parameters.items()
+        if v.kind is inspect.Parameter.VAR_POSITIONAL
+    }
+    # **kwargs in func definition
+    keyword = {
+        k: None
+        for k, v in sig.parameters.items() if v.kind in
+        [inspect.Parameter.VAR_KEYWORD, inspect.Parameter.KEYWORD_ONLY]
+    }
+    # named parameters in func definition
+    named = {
+        k: None
+        for k, v in sig.parameters.items()
+        if (k not in positional) and (k not in keyword)
+    }
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        pos_args = []
+        kw_args = {}
+        named_args = copy.deepcopy(named)
+
+        # get all passed arguments
+        passed_args = list(
+            itertools.zip_longest(
+                named, args, fillvalue=inspect.Parameter.empty))
+
+        # get all named and keyword arguments
+        for k, v in passed_args:
+            if inspect.Parameter.empty not in [k, v]:
+                kwargs[k] = v
+
+        # find passed positional arguments
+        pos_args = [
+            val for name, val in passed_args if name is inspect.Parameter.empty
+        ]
+
+        # use default values if none are passed
+        for k, v in dflt_args.items():
+            if (k not in kwargs) or (kwargs[k] is inspect.Parameter.empty):
+                kwargs[k] = v
+
+        # split named and keyword arguments
+        for k, v in kwargs.items():
+            if k in named_args:
+                named_args[k] = v
+            else:
+                kw_args[k] = v
+
+        # callbacks
+        if cb_named:
+            cb_named(named_args)
+        if cb_kwds:
+            cb_kwds(kw_args)
+        if cb_pos:
+            cb_pos(pos_args)
+
+        return func(*named_args.values(), *pos_args, **kw_args)
+
+    return wrapper
