@@ -408,3 +408,7 @@ def typeof(obj, t):
         return issubclass(obj, t)
     except TypeError:
         return False
+
+
+def is_type(obj):
+    return isinstance(obj, TypingMeta)

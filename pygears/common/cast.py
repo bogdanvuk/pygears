@@ -1,9 +1,6 @@
 from pygears import gear, module
 from pygears.conf import safe_bind
 from pygears.core.intf import IntfOperPlugin
-from pygears.typing import Int, Queue, Tuple, Uint, Union, Integer
-from pygears.typing.base import typeof
-from pygears.typing_common.codec import code, decode
 from pygears.rtl.connect import rtl_connect
 from pygears.rtl.inst import RTLNodeInstPlugin
 from pygears.typing_common import cast as type_cast
@@ -15,30 +12,7 @@ from pygears.svgen.util import svgen_visitor
 @gear
 async def cast(din, *, cast_type) -> b'type_cast(din, cast_type)':
     async with din as d:
-        if typeof(cast_type,
-                  Int) and (not cast_type.is_specified()) and typeof(
-                      din.dtype, (Uint, Int)):
-            dout = module().tout(d)
-        elif typeof(module().tout, Integer) and typeof(din.dtype, Integer):
-            tout_range = (1 << int(module().tout))
-            val = int(d) & (tout_range - 1)
-
-            if typeof(module().tout, Int):
-                max_uint = tout_range / 2 - 1
-                if val > max_uint:
-                    val -= tout_range
-
-            dout = module().tout(val)
-        elif typeof(cast_type, Tuple) and typeof(
-                din.dtype, Queue) and not cast_type.is_specified():
-            dout = module().tout((d[0], d[1:]))
-        elif (typeof(cast_type, Union) and typeof(din.dtype, Tuple)
-              and len(din.dtype) == 2 and not cast_type.is_specified()):
-            pass
-        else:
-            dout = decode(module().tout, code(din.dtype, d))
-
-        yield dout
+        yield type_cast(d, module().tout)
 
 
 def pipe(self, other):

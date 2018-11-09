@@ -3,7 +3,7 @@ from pygears.conf import PluginBase, safe_bind
 from .bool import Bool
 from .queue import Queue
 from .array import Array
-from .base import TemplateArgumentsError, typeof, Any
+from .base import TemplateArgumentsError, typeof, Any, is_type
 from .tuple import Tuple
 from .uint import Int, Uint, Integer
 from .unit import Unit
@@ -13,7 +13,7 @@ from .tlm import TLM
 
 __all__ = [
     'Bool', 'Queue', 'TemplateArgumentsError', 'Tuple', 'Int', 'Uint', 'Unit',
-    'Union', 'Array', 'bitw', 'typeof', 'Any', 'TLM', 'ceil_pow2'
+    'Union', 'Array', 'bitw', 'typeof', 'Any', 'TLM', 'ceil_pow2', 'is_type'
 ]
 
 

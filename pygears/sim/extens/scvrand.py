@@ -160,7 +160,7 @@ class SCVRand(RandBase):
                     else:
                         return matchobj.group(0)
 
-                return re.sub('([^\d\W]\w*)', add_parens, cons)
+                return re.sub(r'([^\d\W]\w*)', add_parens, cons)
 
             scv_cons = [
                 add_parens_for_vars(c, constraint.cvars)
