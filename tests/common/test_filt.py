@@ -10,6 +10,8 @@ from pygears.sim.modules.sim_socket import SimSocket
 from pygears.sim.modules.verilator import SimVerilated
 from pygears.typing import Uint, Union, Queue, typeof
 from pygears.util.test_utils import skip_ifndef
+from pygears import Intf
+from pygears.util.test_utils import synth_check
 
 plain_din = Uint[8]
 union_din = Union[Uint[8], Uint[8], Uint[8]]
@@ -68,3 +70,8 @@ def test_pysim_dir(sel, din_t, seq, sim_cls):
         filt_test(din_t, seq, sel, sim_cls)
     else:
         filt_by_test(din_t, seq, sel, sim_cls)
+
+
+@synth_check({'logic luts': 1, 'ffs': 0})
+def test_filt_synth():
+    filt(Intf(union_din), sel=0)
