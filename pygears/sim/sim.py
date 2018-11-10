@@ -334,19 +334,20 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         except Exception as e:
             sim_exception = e
 
-        # print(f"----------- After run ---------------")
-        self.events['after_run'](self)
+        try:
+            # print(f"----------- After run ---------------")
+            self.events['after_run'](self)
 
-        if not sim_exception:
-            for sim_gear in self.sim_gears:
-                if sim_gear not in self.done:
-                    self._finish(sim_gear)
+            if not sim_exception:
+                for sim_gear in self.sim_gears:
+                    if sim_gear not in self.done:
+                        self._finish(sim_gear)
 
-        self.events['after_cleanup'](self)
-        self.events['at_exit'](self)
-
-        if sim_exception:
-            raise sim_exception
+            self.events['after_cleanup'](self)
+            self.events['at_exit'](self)
+        finally:
+            if sim_exception:
+                raise sim_exception
 
 
 def sim(outdir=None,
