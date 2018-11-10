@@ -1,5 +1,6 @@
 from pygears import alternative, gear, module
-from pygears.typing import Queue, Union
+from pygears.typing import Queue, Union, Uint
+from pygears.common.ccat import ccat
 
 
 def filt_type(din, lvl, sel):
@@ -13,6 +14,13 @@ async def filt(din: Union, *, sel) -> b'din.types[sel]':
             yield d.data
 
 
+@gear
+def filt_by(ctrl: Uint, din, *, sel, fcat=ccat):
+    return fcat(din, ctrl) \
+        | Union \
+        | filt(sel=sel)
+
+
 def setup(module):
     module.data = module.tout[0](0)
     module.eot = module.tout[1:](0)
@@ -22,7 +30,7 @@ def setup(module):
 @alternative(filt)
 @gear(sim_setup=setup, svgen={'svmod_fn': 'qfilt.sv'})
 async def qfilt(
-        din: Queue['TUnion', 'lvl'],
+        din: Queue[Union, 'lvl'],
         *,
         sel=0,
         filt_lvl=1,

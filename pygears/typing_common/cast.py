@@ -51,7 +51,7 @@ def value_cast(val, cast_type):
           and len(type(val)) == 2 and not cast_type.is_specified()):
         pass
     else:
-        dout = cast_type.decode(cast_type, int(val))
+        dout = cast_type.decode(int(val))
 
     return dout
 
