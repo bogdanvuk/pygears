@@ -1,5 +1,6 @@
 from pygears import registry
 from pygears.common.decoupler import decoupler_din
+from pygears.common import const
 from pygears.sim import sim_log
 
 
@@ -44,6 +45,11 @@ class ActivityChecker:
                 q = p.get_queue()
                 if q._unfinished_tasks:
                     src_port = q.intf.consumers[0]
+
+                    if src_port.gear.definition == const:
+                        # Skip constants since they are never done
+                        continue
+
                     if 'not_ack' in self.hooks:
                         self.hooks['not_ack'](module, p)
                     sim_log().error(
