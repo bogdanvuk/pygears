@@ -1,6 +1,6 @@
 from pygears import alternative, gear, module
-from pygears.typing import Queue, Union, Uint
-from pygears.common.ccat import ccat
+from pygears.typing import Queue, Union, Uint, Tuple
+from .ccat import ccat
 
 
 def filt_type(din, lvl, sel):
@@ -8,17 +8,24 @@ def filt_type(din, lvl, sel):
 
 
 @gear
-async def filt(din: Union, *, sel) -> b'din.types[sel]':
-    async with din as d:
+async def filt(din: Tuple[Union, Uint]) -> b'din[0]':
+    '''Filter incoming data of the Union type by the '''
+    async with din as (d, sel):
         if d.ctrl == sel:
-            yield d.data
+            yield d
 
 
+@alternative(filt)
 @gear
-def filt_by(ctrl: Uint, din, *, sel, fcat=ccat):
-    return fcat(din, ctrl) \
-        | Union \
-        | filt(sel=sel)
+def filt_fix(din: Union, *, sel) -> b'din.types[sel]':
+    return (ccat(din, din.dtype[1](sel)) | filt)[0] | din.dtype.types[sel]
+
+
+# @gear
+# async def filt(din: Union, *, sel) -> b'din.types[sel]':
+#     async with din as d:
+#         if d.ctrl == sel:
+#             yield d.data
 
 
 def setup(module):
@@ -58,3 +65,10 @@ async def qfilt(
             module().data = udata.data
             module().eot = d.eot
             module().empty = False
+
+
+@gear
+def filt_by(ctrl: Uint, din, *, sel, fcat=ccat):
+    return fcat(din, ctrl) \
+        | Union \
+        | filt(sel=sel)
