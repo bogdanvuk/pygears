@@ -95,7 +95,9 @@ class Union(tuple, metaclass=UnionMeta):
     def decode(cls, val):
         ret = []
         for t in cls:
-            ret.append(t.decode(val))
-            val >>= int(t)
+            t_width = int(t)
+            t_mask = (1 << t_width) - 1
+            ret.append(t.decode(val & t_mask))
+            val >>= t_width
 
         return cls(tuple(ret))
