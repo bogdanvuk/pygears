@@ -1,8 +1,0 @@
-{%- import 'snippet.j2' as snippet -%}
-{% call snippet.module_with_intf_structs(module_name, intfs, intfs, comment) %}
-
-    assign dout.valid = din.valid & (din_s.f0.ctrl == din_s.f1);
-    assign din.ready = (dout.ready || (din_s.f0.ctrl != din_s.f1)) & din.valid;
-    assign dout_s = din_s.f0;
-
-{% endcall %}

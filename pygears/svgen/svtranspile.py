@@ -74,8 +74,8 @@ class SVTranspiler(ast.NodeVisitor):
         intf, dtype = self.get_context_var(header.context_expr.id)
         variables = node.items[0].optional_vars
         if isinstance(variables, ast.Tuple):
-            for i, v in enumerate(variables[0].elts):
-                scope[v.id] = intf
+            for i, v in enumerate(variables.elts):
+                scope[v.id] = ContextVar(f'{intf}_s.{dtype.fields[i]}', dtype[i])
         else:
             scope[variables.id] = ContextVar(f'{intf}_s', dtype)
 
@@ -95,11 +95,19 @@ class SVTranspiler(ast.NodeVisitor):
 
         return f'{svname}.{dtype.fields[index]}', dtype[index]
 
+    def visit_Name(self, node):
+        return self.get_context_var(node.id)
+
     def visit_BinOp(self, node):
-        operands = [
-            list(self.visit(child)) for child in (node.left, node.right)
-        ]
-        operator = opmap[type(node.op)]
+        operands = []
+        operands.append(list(self.visit(node.left)))
+
+        if isinstance(node, ast.BinOp):
+            operands.append(list(self.visit(node.right)))
+            operator = opmap[type(node.op)]
+        elif isinstance(node, ast.Compare):
+            operands.append(list(self.visit(node.comparators[0])))
+            operator = opmap[type(node.ops[0])]
 
         res_type = eval(f'op1 {operator} op2', {
             'op1': operands[0][1],
@@ -111,6 +119,25 @@ class SVTranspiler(ast.NodeVisitor):
                 op[0] = f"{int(res_type)}'({op[0]})"
 
         return f"{operands[0][0]} {operator} {operands[1][0]}", res_type
+
+    def visit_Attribute(self, node):
+        svname, dtype = self.get_context_var(node.value.id)
+
+        return f'{svname}.{node.attr}', getattr(dtype, node.attr)
+
+    def visit_Compare(self, node):
+        return self.visit_BinOp(node)
+
+    def visit_If(self, node):
+        expr, expr_type = self.visit(node.test)
+        self.write_svline(f'if ({expr}) begin')
+        self.enter_block()
+
+        for stmt in node.body:
+            self.visit(stmt)
+
+        self.exit_block()
+        self.write_svline(f'end')
 
     def visit_Yield(self, node):
         expr, expr_type = super().visit(node.value)
@@ -130,7 +157,7 @@ data_func_gear = """
     always_comb
     begin
 {% for i in intfs|isinput %}
-        {{i['name']}}.ready = 0;
+        {{i['name']}}.ready = 1;
 {% endfor %}
 {% for i in intfs|isoutput %}
         {{i['name']}}.valid = 0;

@@ -72,6 +72,6 @@ def test_pysim_dir(sel, din_t, seq, sim_cls):
         filt_by_test(din_t, seq, sel, sim_cls)
 
 
-@synth_check({'logic luts': 1, 'ffs': 0})
+@synth_check({'logic luts': 2, 'ffs': 0})
 def test_filt_synth():
     filt(Intf(union_din), sel=0)

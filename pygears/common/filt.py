@@ -7,9 +7,8 @@ def filt_type(din, lvl, sel):
     return Queue[(din[0].types)[sel], lvl]
 
 
-@gear
+@gear(svgen={'transpile': True})
 async def filt(din: Tuple[Union, Uint]) -> b'din[0]':
-    '''Filter incoming data of the Union type by the '''
     async with din as (d, sel):
         if d.ctrl == sel:
             yield d
