@@ -1,6 +1,6 @@
 import inspect
 
-from .base import EnumerableGenericMeta, type_str
+from .base import EnumerableGenericMeta, type_str, class_and_instance_method
 from .bitw import bitw
 from .unit import Unit
 from .uint import Uint
@@ -57,6 +57,14 @@ class UnionMeta(EnumerableGenericMeta):
         return [0, 1]
 
     @property
+    def data(self):
+        return self[0]
+
+    @property
+    def ctrl(self):
+        return self[-1]
+
+    @property
     def types(self):
         return self.args
 
@@ -83,10 +91,12 @@ class Union(tuple, metaclass=UnionMeta):
     #         else:
     #             return val
 
+    @class_and_instance_method
     @property
     def data(self):
         return type(self).types[self[1]].decode(self[0])
 
+    @class_and_instance_method
     @property
     def ctrl(self):
         return self[-1]
