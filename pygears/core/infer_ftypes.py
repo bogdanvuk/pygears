@@ -74,6 +74,13 @@ def infer_ftypes(params, args, namespace={}, allow_incomplete=False):
 
         return False
 
+    # print(repr(params['return']))
+    # print(repr(params['arg1']))
+    # if (repr(params['return']) == "Tuple['T', Uint['lvl']]") and (repr(
+    #         params['arg1']) == "Queue['T', 3]"):
+    #     import pdb
+    #     pdb.set_trace()
+
     postponed = {
         name: val
         for name, val in params.items() if is_postponed(name, val)
@@ -112,11 +119,21 @@ def infer_ftypes(params, args, namespace={}, allow_incomplete=False):
                         f"'{name}'")
             try:
                 substituted, new_p = resolve_param(val, match, namespace)
+                # if (name == 'return'):
+                #     import pdb
+                #     pdb.set_trace()
+
                 if name in args:
                     new_p = args[name]
                     substituted = type_is_specified(new_p)
 
+                if substituted and (name == 'return'):
+                    substituted = type_is_specified(new_p)
+
                 if substituted:
+                    if name == 'return':
+                        substituted = type_is_specified(new_p)
+
                     if name in args:
                         new_p = copy_field_names(new_p, params[name])
 

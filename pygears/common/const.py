@@ -1,6 +1,6 @@
-from pygears import gear, alternative
+from pygears import gear
 from pygears.core.gear import GearTypeNotSpecified
-from pygears.typing import Uint, Int, Tuple, bitw, Integer
+from pygears.typing import Int, Tuple, Uint, bitw
 from pygears.typing.base import TypingMeta
 
 
