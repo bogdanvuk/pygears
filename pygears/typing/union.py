@@ -1,33 +1,93 @@
-import inspect
+""":class:`Union` is a generic type somewhat similar to the unions in other
+HDLs and C language for an example, with an important differences. Unions in
+these languages only act as different views to the underlying data, allowing
+user to read the same data in different formats, called subtypes here. However,
+the data of the PyGears :class:`Union` type can represent only one of its
+subtypes, and it carries the information which of the subtypes it represents.
 
-from .base import EnumerableGenericMeta, type_str, class_and_instance_method
+A concrete :class:`Union` type is created by listing the subtypes that it can
+represent. For an example a :class:`Union` type that represents either a
+an integer or a fixed-point number can be specified like this::
+
+    FixpInt = Union[Uint[16], Tuple[Uint[8], Uint[8]]]
+
+This is same as if the tuple of types were supplied::
+
+    fields = (Uint[16], Tuple[Uint[8], Uint[8]])
+    FixpInt = Union[fields]
+
+If we want to create a type that is generic in terms of the integer width, we
+can provide a template parameter name instead of the concrete widths::
+
+    FixpInt = Union[Uint['w_int'], Tuple[Uint['w_fixp_q'], Uint['w_fixp_p']]]
+
+
+``FixpInt`` is now a generic template type, represented by a :class:`Union`
+with two subtypes, which is not yet fully specified. The ``FixpInt`` template
+has a three parameters (``w_int``, ``w_fixp_q`` and ``w_fixp_p``), which need
+to be specified to get a concrete type. So if we want to obtain a ``FixpInt``
+with 16 bit integer type and Q8.8 fixed-point type, we can write::
+
+    FixpIntQ8_8 = FixpInt[16, 8, 8]
+
+We can also be explicit which template parameter is assigned a concrete type::
+
+    FixpIntQ8_8 = FixpInt[{
+        'w_int':    16,
+        'w_fixp_q': 8,
+        'w_fixp_p': 8
+    }]
+
+Once a concrete type has been formed it can be instantiated, which is useful
+for the verification. Type instance is obtained by specifying two arguments: a
+value and and the ID of the active subtype. The ID of the subtypes is its index
+in the subtype list provided when defining the :class:`Union`::
+
+    uint_val = FixpIntQ8_8(0xbeef, 0)
+    fixp_val = FixpIntQ8_8((0xbe, 0xef), 1)
+
+We can now check the contents of the created data, via their ``data`` and
+``ctrl`` fields:
+
+>>> uint_val.data
+Uint[16](48879)
+>>> uint_val.ctrl
+Uint[1](0)
+
+>>> fixp_val.data
+(Uint[8](190), Uint[8](239))
+>>> fixp_val.ctrl
+Uint[1](1)
+
+"""
+
+from .base import EnumerableGenericMeta, type_str
+from .base import class_and_instance_method, TemplatedTypeUnspecified
 from .bitw import bitw
 from .unit import Unit
 from .uint import Uint
 
 
-class UnionMeta(EnumerableGenericMeta):
+class UnionType(EnumerableGenericMeta):
+    """Implements the :class:`Union` generic type.
+
+    All operations on the :class:`Union` type are implemented here in the
+    :class:`UnionType` class. Operations on the :class:`Union` type instances
+    are defined in the :class:`Union` class.
+    """
+
     def __new__(cls, name, bases, namespace, args=[]):
         cls = super().__new__(cls, name, bases, namespace, args)
 
         args = cls.args
         if not args:
             return cls
+        elif len(args) == 0:
+            return Unit
+        elif len(args) == 1:
+            return args[0]
         else:
-            # flat_params = []
-            # for a in args:
-            #     if inspect.isclass(a) and issubclass(a, Union):
-            #         flat_params.extend(a.args)
-            #     else:
-            #         flat_params.append(a)
-
-            if len(args) == 0:
-                return Unit
-            elif len(args) == 1:
-                return args[0]
-            else:
-                # cls.args = flat_params
-                return cls
+            return cls
 
     def __getitem__(self, parameters):
         if not self.is_specified():
@@ -58,51 +118,78 @@ class UnionMeta(EnumerableGenericMeta):
 
     @property
     def data(self):
+        '''Returns the type of the :class:`Union` ``data`` field. This field is of type
+        :class:`Uint`, large enough to contain the largest subtype of the
+        :class:`Union`.
+
+        '''
         return self[0]
 
     @property
     def ctrl(self):
+        '''Returns the type of the :class:`Union` ``ctrl`` field, which contains the
+        index of the subtype represented by a :class:`Union` instance. This
+        field is of type :class:`Uint`, large enough to contain the all
+        :class:`Union` subtype indices.
+
+        '''
         return self[-1]
 
     @property
     def types(self):
+        '''Returns a list of subtypes.'''
         return self.args
 
     def __str__(self):
         return '%s' % ' | '.join([type_str(a) for a in self.args])
 
 
-class Union(tuple, metaclass=UnionMeta):
-    def __new__(cls, val: tuple):
-        return super(Union, cls).__new__(cls, (cls[0](val[0]), val[1]))
+class Union(tuple, metaclass=UnionType):
+    def __new__(cls, val, ctrl=None):
+        if type(val) == cls:
+            return val
 
-    # def __getitem__(self, index):
-    #     index = type(self).index_norm(index)
-    #     if len(index) == 2:
-    #         return self
-    #     else:
-    #         index = index[0]
-    #         val = super().__getitem__(index)
+        if not cls.is_specified():
+            raise TemplatedTypeUnspecified
 
-    #         if index == 0:
-    #             type(self).decode(val)
-    #             select = super().__getitem__(1)
-    #             return type(self).types[select].decode(val)
-    #         else:
-    #             return val
+        if ctrl is None:
+            val, ctrl = val
+
+        subtype = cls.types[ctrl]
+
+        return super(Union, cls).__new__(
+            cls, (cls[0](int(subtype(val))), cls[1](ctrl)))
+
+    def __int__(self):
+        """Returns a packed integer representation of the :class:`Union` instance.
+        """
+        ret = 0
+
+        for d, t in zip(reversed(self), reversed(type(self))):
+            ret <<= int(t)
+            ret |= int(d)
+
+        return ret
 
     @class_and_instance_method
     @property
     def data(self):
+        """Returns the data carried by the :class:`Union` instance, converted to the
+        represented subtype."""
         return type(self).types[self[1]].decode(self[0])
 
     @class_and_instance_method
     @property
     def ctrl(self):
+        """Returns the index of the subtype represented by a :class:`Union`
+        instance."""
         return self[-1]
 
     @classmethod
     def decode(cls, val):
+        """Returns a :class:`Union` instance from its packed integer representation.
+        """
+
         ret = []
         for t in cls:
             t_width = int(t)
@@ -110,4 +197,4 @@ class Union(tuple, metaclass=UnionMeta):
             ret.append(t.decode(val & t_mask))
             val >>= t_width
 
-        return cls(tuple(ret))
+        return cls(*ret)
