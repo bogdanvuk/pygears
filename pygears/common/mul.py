@@ -6,7 +6,7 @@ from pygears.typing import Integer, Tuple
 from . import ccat
 
 
-@gear(svgen={'transpile': True})
+@gear(svgen={'compile': True})
 async def mul(din: Tuple[Integer['N1'], Integer['N2']]) -> b'din[0] * din[1]':
     async with din as data:
         yield data[0] * data[1]

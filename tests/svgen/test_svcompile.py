@@ -1,6 +1,6 @@
 from pygears import gear, Intf, find
 from pygears.typing import Integer, Tuple, Uint, Union
-from pygears.svgen.svtranspile import transpile_gear_body
+from pygears.svgen.svcompile import compile_gear_body
 
 
 @gear
@@ -19,7 +19,7 @@ end"""
 def test_simple_add():
     add(Intf(Tuple[Uint[8], Uint[10]]))
 
-    res = transpile_gear_body(find('/add'))
+    res = compile_gear_body(find('/add'))
     assert res == simple_add_res
 
 
@@ -41,5 +41,5 @@ end"""
 def test_simple_filt():
     filt(Intf(Tuple[Union[Uint[1], Uint[8], Uint[10]], Uint[2]]))
 
-    res = transpile_gear_body(find('/filt'))
+    res = compile_gear_body(find('/filt'))
     assert res == simple_filt_res

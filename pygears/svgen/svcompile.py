@@ -34,7 +34,7 @@ InPort = namedtuple('InPort', ['svname', 'dtype'])
 OutPort = namedtuple('OutPort', ['svname', 'dtype'])
 
 
-class SVTranspiler(ast.NodeVisitor):
+class SVCompiler(ast.NodeVisitor):
     def __init__(self, gear):
         self.in_ports = [InPort(p.basename, p.dtype) for p in gear.in_ports]
         self.out_ports = [OutPort(p.basename, p.dtype) for p in gear.out_ports]
@@ -174,15 +174,15 @@ data_func_gear = """
 """
 
 
-def transpile_gear_body(gear):
-    v = SVTranspiler(gear)
+def compile_gear_body(gear):
+    v = SVCompiler(gear)
     v.visit(ast.parse(inspect.getsource(gear.func)).body[0])
 
     return '\n'.join(v.svlines)
 
 
-def transpile_gear(gear, template_env, context):
-    context['svlines'] = transpile_gear_body(gear)
+def compile_gear(gear, template_env, context):
+    context['svlines'] = compile_gear_body(gear)
 
     return template_env.render_string(data_func_gear, context)
 

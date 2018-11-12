@@ -8,7 +8,7 @@ from pygears.definitions import COMMON_SVLIB_DIR, COOKBOOK_SVLIB_DIR
 from pygears.svgen.inst import SVGenInstPlugin
 from pygears.svgen.svparse import parse
 
-from .svtranspile import transpile_gear
+from .svcompile import compile_gear
 from .inst import svgen_log
 
 
@@ -42,13 +42,13 @@ class SVModuleGen:
             return None
 
     @property
-    def is_transpiled(self):
-        return self.node.params.get('svgen', {}).get('transpile', False)
+    def is_compiled(self):
+        return self.node.params.get('svgen', {}).get('compile', False)
 
     @property
     def is_generated(self):
         return getattr(self.node, 'gear', None) in registry('svgen/module_namespace') \
-            or self.is_transpiled \
+            or self.is_compiled \
             or self.sv_template_path \
             or self.is_hierarchical
 
@@ -230,8 +230,8 @@ class SVModuleGen:
                 self.sv_template_path, os.path.basename(self.sv_template_path),
                 context)
 
-        elif self.is_transpiled:
-            return transpile_gear(self.node.gear, template_env, context)
+        elif self.is_compiled:
+            return compile_gear(self.node.gear, template_env, context)
         else:
             svgen_log().warning(
                 f'No method for generating the gear {self.node.name}')
