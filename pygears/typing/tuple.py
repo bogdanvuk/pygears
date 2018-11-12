@@ -73,7 +73,7 @@ Tuple[Tuple[{'x': 'coord1_t', 'y': 'coord1_t'}], Tuple[{'x': 'coord2_t', 'y': 'c
 >>> LineU8_U16
 Tuple[Tuple[{'x': Uint[8], 'y': Uint[8]}], Tuple[{'x': Uint[16], 'y': Uint[16]}]]
 
-Once a concrete type has been formed it can be instantiated which is useful
+Once a concrete type has been formed it can be instantiated, which is useful
 for the verification. Type instance is obtained by specifying the values for
 the :class:`Tuple` fields in parenthesis, grouped in the Python tuple (can be
 any iterable really)::
@@ -226,16 +226,20 @@ class Tuple(tuple, metaclass=TupleType):
     """
 
     def __new__(cls, val):
-        if not cls.is_specified():
-            raise TemplatedTypeUnspecified
-
         if type(val) == cls:
             return val
+
+        if not cls.is_specified():
+            raise TemplatedTypeUnspecified
 
         if isinstance(val, dict):
             tpl_val = tuple(t(val[f]) for t, f in zip(cls, cls.fields))
         else:
             tpl_val = tuple(t(v) for t, v in zip(cls, val))
+
+        if len(tpl_val) != len(cls):
+            raise TypeError(f'{repr(cls)}() takes {len(cls)} arguments'
+                            f' ({len(tpl_val)} given)')
 
         return super(Tuple, cls).__new__(cls, tpl_val)
 
