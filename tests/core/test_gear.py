@@ -21,10 +21,10 @@ def test_simple():
     root = registry('gear/hier_root')
     assert len(root.child) == 2
 
-    assert root['func1'].get_type() == Uint[4]
+    assert root['func1'].tout == Uint[4]
     assert iout1.producer == root['func1'].out_ports[0]
 
-    assert root['func2'].get_type() == Uint[2]
+    assert root['func2'].tout == Uint[2]
     assert iout1.consumers == [root['func2'].in_ports[0]]
     assert iout2.producer == root['func2'].out_ports[0]
 
@@ -50,17 +50,17 @@ def test_hier():
     root = registry('gear/hier_root')
     assert len(root.child) == 1
 
-    assert root['func_hier'].get_type() == Uint[2]
+    assert root['func_hier'].tout == Uint[2]
     for i in range(3):
         arg_intf = root['func_hier'].in_ports[i].consumer
         assert arg_intf.consumers[0] == root['func_hier/func1'].in_ports[i]
 
-    assert root['func_hier/func1'].get_type() == Uint[4]
-    iout1 = root['func_hier/func1'].intfs[0]
+    assert root['func_hier/func1'].tout == Uint[4]
+    iout1 = root['func_hier/func1'].outputs[0]
     assert iout1.producer == root['func_hier/func1'].out_ports[0]
 
-    assert root['func_hier/func2'].get_type() == Uint[2]
-    iout2 = root['func_hier/func2'].intfs[0]
+    assert root['func_hier/func2'].tout == Uint[2]
+    iout2 = root['func_hier/func2'].outputs[0]
     assert iout1.consumers == [root['func_hier/func2'].in_ports[0]]
     assert iout2.producer == root['func_hier/func2'].out_ports[0]
 
@@ -90,20 +90,20 @@ def test_hier_hierarchy():
     root = registry('gear/hier_root')
     assert len(root.child) == 1
 
-    assert root['fhier1'].get_type() == Uint[2]
-    assert root['fhier1/fhier2'].get_type() == Uint[2]
-    assert root['fhier1/fhier2/fhier3'].get_type() == Uint[2]
-    assert root['fhier1/fhier2/fhier3/fgear'].get_type() == Uint[2]
+    assert root['fhier1'].tout == Uint[2]
+    assert root['fhier1/fhier2'].tout == Uint[2]
+    assert root['fhier1/fhier2/fhier3'].tout == Uint[2]
+    assert root['fhier1/fhier2/fhier3/fgear'].tout == Uint[2]
 
-    assert root['fhier1'].in_ports[0].consumer == root['fhier1/fhier2'].args[0]
+    assert root['fhier1'].in_ports[0].consumer == root['fhier1/fhier2'].inputs[0]
     assert root['fhier1'].in_ports[0].consumer == root[
         'fhier1/fhier2'].in_ports[0].producer
     assert root['fhier1/fhier2'].in_ports[0].consumer == root[
-        'fhier1/fhier2/fhier3'].args[0]
+        'fhier1/fhier2/fhier3'].inputs[0]
     assert root['fhier1/fhier2'].in_ports[0].consumer == root[
         'fhier1/fhier2/fhier3'].in_ports[0].producer
     assert root['fhier1/fhier2/fhier3'].in_ports[0].consumer == root[
-        'fhier1/fhier2/fhier3/fgear'].args[0]
+        'fhier1/fhier2/fhier3/fgear'].inputs[0]
 
 
 def test_alternatives():

@@ -6,7 +6,7 @@ from pygears.conf import util_log
 
 
 def module_signature(module, fullname, params):
-    t = module.get_type()
+    t = module.tout
     if t is None:
         types = "None"
         sizes = ""
@@ -49,7 +49,7 @@ class Visitor(HierVisitorBase):
             except TypeError:
                 return '?'
 
-        t = module.get_type()
+        t = module.tout
         if t is None:
             types = "None"
             sizes = ""

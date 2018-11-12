@@ -92,12 +92,7 @@ class SimGear:
         for p in self.gear.in_ports:
             args.append(p.consumer)
 
-        kwds = {
-            k: self.gear.params[k]
-            for k in self.gear.kwdnames if k in self.gear.params
-        }
-
-        return args, kwds
+        return args, self.gear.explicit_params
 
     def _finish(self):
         self.done = True
