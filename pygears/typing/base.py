@@ -292,15 +292,19 @@ searched recursively. Each template is reported only once.
 
         return self.base[args]
 
+    @functools.lru_cache(maxsize=None)
+    def _arg_eq(self, other):
+        if len(self.args) != len(other.args):
+            return False
+        return all([s == o for s, o in zip(self.args, other.args)])
+
     def __eq__(self, other):
         if not isinstance(other, GenericMeta):
             return False
         elif self.base is not other.base:
             return False
         else:
-            if len(self.args) != len(other.args):
-                return False
-            return all([s == o for s, o in zip(self.args, other.args)])
+            return self._arg_eq(other)
 
 
 def param_subs(t, matches, namespace):
