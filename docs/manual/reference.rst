@@ -23,6 +23,7 @@ Typing
    typing/uint
    typing/int
    typing/tuple
+   typing/union
    typing/array
 
 Gears

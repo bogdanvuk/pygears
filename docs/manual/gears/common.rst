@@ -3,6 +3,9 @@ Common
 
 Implemented in :py:mod:`pygears.common`
 
-.. autofunction:: pygears.common.sieve(din, *, key) -> b'din[key]'
+.. toctree::
+   :maxdepth: 2
 
-.. autofunction:: pygears.common.ccat
+   sieve
+   ccat
+   filt
