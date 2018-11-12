@@ -8,7 +8,7 @@ from pygears.sim import sim
 from pygears.sim.modules.drv import drv
 from pygears.sim.modules.sim_socket import SimSocket
 from pygears.sim.modules.verilator import SimVerilated
-from pygears.typing import Uint, Union, Queue, typeof
+from pygears.typing import Uint, Union, Queue, typeof, Tuple
 from pygears.util.test_utils import skip_ifndef
 from pygears import Intf
 from pygears.util.test_utils import synth_check
@@ -17,7 +17,7 @@ plain_din = Uint[8]
 union_din = Union[Uint[8], Uint[8], Uint[8]]
 queue_din = Queue[Union[Uint[8], Uint[8], Uint[8]]]
 
-directed_seq = [(v, v % 2) for v in range(50)]
+directed_seq = [union_din(v, v % 2) for v in range(50)]
 
 
 def pysim_env(din_t, seq, sel, ref, sim_cls):
@@ -70,6 +70,22 @@ def test_pysim_dir(sel, din_t, seq, sim_cls):
         filt_test(din_t, seq, sel, sim_cls)
     else:
         filt_by_test(din_t, seq, sel, sim_cls)
+
+
+def test_filt_base():
+    data_t = Union[Uint[1], Uint[2], Uint[3]]
+    data = [
+        data_t(Uint[1](0), 0),
+        data_t(Uint[2](3), 1),
+        data_t(Uint[3](7), 2)
+    ]
+    sel = [1, 1, 1]
+
+    seq = list(zip(data, sel))
+    ref = [data for data, sel in seq if data.ctrl == sel]
+
+    directed(drv(t=Tuple[data_t, Uint[2]], seq=seq), f=filt, ref=ref)
+    sim()
 
 
 @synth_check({'logic luts': 2, 'ffs': 0})

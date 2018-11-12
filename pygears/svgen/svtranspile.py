@@ -75,7 +75,8 @@ class SVTranspiler(ast.NodeVisitor):
         variables = node.items[0].optional_vars
         if isinstance(variables, ast.Tuple):
             for i, v in enumerate(variables.elts):
-                scope[v.id] = ContextVar(f'{intf}_s.{dtype.fields[i]}', dtype[i])
+                scope[v.id] = ContextVar(f'{intf}_s.{dtype.fields[i]}',
+                                         dtype[i])
         else:
             scope[variables.id] = ContextVar(f'{intf}_s', dtype)
 
@@ -89,7 +90,7 @@ class SVTranspiler(ast.NodeVisitor):
         self.write_svline(f'end')
 
     def visit_Subscript(self, node):
-        svname, dtype = self.get_context_var(node.value.id)
+        svname, dtype = self.visit(node.value)
 
         index = eval(compile(ast.Expression(node.slice.value), '', 'eval'))
 
@@ -121,7 +122,7 @@ class SVTranspiler(ast.NodeVisitor):
         return f"{operands[0][0]} {operator} {operands[1][0]}", res_type
 
     def visit_Attribute(self, node):
-        svname, dtype = self.get_context_var(node.value.id)
+        svname, dtype = self.visit(node.value)
 
         return f'{svname}.{node.attr}', getattr(dtype, node.attr)
 
@@ -148,6 +149,10 @@ class SVTranspiler(ast.NodeVisitor):
         self.write_svline(f'{self.out_ports[0].svname}.valid = 1;')
         self.write_svline(f'{self.out_ports[0].svname}_s = {expr};')
 
+    def visit_AsyncFunctionDef(self, node):
+        for stmt in node.body:
+            self.visit(stmt)
+
 
 data_func_gear = """
 {%- import 'snippet.j2' as snippet -%}
@@ -171,7 +176,7 @@ data_func_gear = """
 
 def transpile_gear_body(gear):
     v = SVTranspiler(gear)
-    v.visit(ast.parse(inspect.getsource(gear.func)).body[0].body[0])
+    v.visit(ast.parse(inspect.getsource(gear.func)).body[0])
 
     return '\n'.join(v.svlines)
 
