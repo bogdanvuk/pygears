@@ -1,4 +1,4 @@
-from pygears import registry, bind
+from pygears import bind
 from pygears.core.port import OutPort
 from pygears.sim import timestep
 from pygears.typing_common.codec import code
@@ -12,6 +12,7 @@ import os
 import fnmatch
 import itertools
 import atexit
+from pygears.conf import reg_inject, Inject
 
 
 def match(val, include_pattern):
@@ -131,10 +132,16 @@ def module_sav(gtkw, module, vcd_vars):
 
 
 class VCDHierVisitor(HierVisitorBase):
-    def __init__(self, gtkw, writer, include, vcd_tlm):
+    @reg_inject
+    def __init__(self,
+                 gtkw,
+                 writer,
+                 include,
+                 vcd_tlm,
+                 sim_map=Inject('sim/map')):
         self.include = include
         self.vcd_tlm = vcd_tlm
-        self.sim_map = registry('sim/map')
+        self.sim_map = sim_map
         self.gtkw = gtkw
         self.vcd_vars = {}
         self.writer = writer
@@ -183,12 +190,17 @@ class VCDHierVisitor(HierVisitorBase):
 
 
 class VCD(SimExtend):
-    def __init__(self, top, fn='pygears.vcd', include=['*'], tlm=False):
+    @reg_inject
+    def __init__(self,
+                 top,
+                 fn='pygears.vcd',
+                 include=['*'],
+                 tlm=False,
+                 outdir=Inject('sim/artifact_dir'),
+                 sim_map=Inject('sim/map')):
         super().__init__()
         self.finished = False
         atexit.register(self.finish)
-
-        outdir = registry('sim/artifact_dir')
 
         vcd_file = open(os.path.join(outdir, fn), 'w')
 
@@ -214,7 +226,6 @@ class VCD(SimExtend):
                 intf.events['put'].append(self.intf_put)
                 intf.events['ack'].append(self.intf_ack)
 
-        sim_map = registry('sim/map')
         for module in sim_map:
             gear_fn = module.name.replace('/', '_')
             with open(os.path.join(outdir, f'{gear_fn}.gtkw'), 'w') as f:

@@ -1,13 +1,15 @@
-from pygears import registry, bind
+from pygears import bind
 from pygears.sim import sim_log
 from pygears.sim.extens.sim_extend import SimExtend
 from pygears.typing import Queue
+from pygears.conf import reg_inject, Inject
 
 
 class RandBase(SimExtend):
-    def __init__(self, top, cons, **kwds):
+    @reg_inject
+    def __init__(self, top, cons, outdir=Inject('sim/artifact_dir'), **kwds):
         super().__init__()
-        self.outdir = registry('sim/artifact_dir')
+        self.outdir = outdir
         self.constraints = self.create_constraints(cons)
         bind('sim/config/randomizator', self)
 

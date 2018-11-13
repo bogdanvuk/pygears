@@ -2,11 +2,12 @@ from pygears import registry
 from pygears.common.decoupler import decoupler_din
 from pygears.common import const
 from pygears.sim import sim_log
+from pygears.conf import reg_inject, Inject
 
 
 class ActivityChecker:
-    def __init__(self, top):
-        sim = registry('sim/simulator')
+    @reg_inject
+    def __init__(self, top, sim=Inject('sim/simulator')):
         sim.events['before_run'].append(self.before_run)
         sim.events['after_run'].append(self.after_run)
         self.blockers = {}
@@ -23,9 +24,8 @@ class ActivityChecker:
         del self.blockers[consumer]
         return True
 
-    def before_run(self, sim):
-        sim_map = registry('sim/map')
-
+    @reg_inject
+    def before_run(self, sim, sim_map=Inject('sim/map')):
         for module, sim_gear in sim_map.items():
             for p in module.in_ports:
                 p.consumer.events['pull_start'].append(self.intf_pull_start)
