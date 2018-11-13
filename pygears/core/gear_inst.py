@@ -166,8 +166,8 @@ class Gear(NamedHierNode):
                 self.outnames.append(out_intfs[i].var_name)
             else:
                 self.outnames.append(
-                    dflt_dout_name
-                    if len(out_dtypes) == 1 else f'{dflt_dout_name}{i}')
+                    dflt_dout_name if len(out_dtypes) ==
+                    1 else f'{dflt_dout_name}{i}')
 
         self.out_ports = [
             OutPort(self, i, name) for i, name in enumerate(self.outnames)
@@ -347,13 +347,13 @@ def resolve_gear(gear_inst, fix_intfs):
             gear_inst.outnames.append(out_intfs[i].var_name)
         else:
             gear_inst.outnames.append(
-                dflt_dout_name
-                if len(out_dtype) == 1 else f'{dflt_dout_name}{i}')
+                dflt_dout_name if len(out_dtype) ==
+                1 else f'{dflt_dout_name}{i}')
 
     gear_inst.connect_output(out_intfs, out_dtype)
 
     # Connect output interfaces
-    out_intfs = []
+    intfs = []
     out_intfs = []
     if isinstance(fix_intfs, dict):
         for i, (name, dt) in enumerate(zip(gear_inst.outnames, out_dtype)):
@@ -363,16 +363,16 @@ def resolve_gear(gear_inst, fix_intfs):
                 intf = Intf(dt)
                 out_intfs.append(intf)
 
-            out_intfs.append(intf)
+            intfs.append(intf)
 
     elif fix_intfs:
-        out_intfs = fix_intfs
+        intfs = fix_intfs
     else:
-        out_intfs = [Intf(dt) for dt in out_dtype]
-        out_intfs = out_intfs
+        intfs = [Intf(dt) for dt in out_dtype]
+        out_intfs = intfs
 
-    assert len(out_intfs) == len(gear_inst.out_port_intfs)
-    for intf, port in zip(out_intfs, gear_inst.out_ports):
+    assert len(intfs) == len(gear_inst.out_port_intfs)
+    for intf, port in zip(intfs, gear_inst.out_ports):
         intf.source(port)
 
     if any(not type_is_specified(i.dtype) for i in out_intfs):
@@ -383,7 +383,7 @@ def resolve_gear(gear_inst, fix_intfs):
     for c in gear_inst.child:
         for p in c.out_ports:
             intf = p.consumer
-            if intf not in out_intfs and not intf.consumers:
+            if intf not in intfs and not intf.consumers:
                 core_log().warning(f'{c.name}.{p.basename} left dangling.')
 
     if len(out_intfs) > 1:

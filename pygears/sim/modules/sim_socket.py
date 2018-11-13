@@ -327,7 +327,7 @@ class SimSocket(CosimBase):
 
         self.loop = asyncio.get_event_loop()
 
-        total_conn_num = len(self.gear.argnames) + len(self.gear.outnames) + 1
+        total_conn_num = len(self.gear.args) + len(self.gear.outnames) + 1
 
         sim_log().info(f'Waiting on {self.sock.getsockname()}')
         while len(self.handlers) != total_conn_num:
