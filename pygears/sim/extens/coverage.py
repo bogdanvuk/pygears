@@ -10,58 +10,60 @@ from pygears.typing.visitor import TypingVisitorBase
 class CoverBin:
     '''Holds count for specific value or values defined by enablement'''
 
-    def __init__(self, name, enablement=lambda x: True):
+    def __init__(self, name, threshold=None, enablement=lambda x: True):
         self.name = name
+        self.threshold = threshold
         self.enablement = enablement
         self.cover_cnt = 0
+
+    @property
+    def hit(self):
+        if self.threshold:
+            return self.cover_cnt >= self.threshold
+        else:
+            return self.cover_cnt > 0
 
     def sample(self, val):
         if self.enablement(val):
             self.cover_cnt += 1
 
     def report(self):
-        return f'bin {self.name}: {self.cover_cnt}'
+        return f'bin {self.name}: {self.cover_cnt} (hit = {self.hit}, threshold = {self.threshold})'
 
 
-class CoverBinSeen:
-    '''Holds count every value seen'''
-
-    def __init__(self, name):
-        self.name = name
-        self.cover_cnt = 0
-        self.cover_vals = {}
-
-    def sample(self, val):
-        self.cover_cnt += 1
-        if val in self.cover_vals:
-            self.cover_vals[val] += 1
-        else:
-            self.cover_vals[val] = 1
-
-    def report(self):
-        return f'bin {self.name}: {self.cover_vals}'
-
-
-class CoverType:
-    '''Cover by type.
-    Bins can be set as list of CoverBins or CoverBinSeen.
-    If left as None one auto_bin is created for all values.
+class CoverPoint:
+    '''Cover point for one type.
+    Bins can be set as list of CoverBins or left as None
     '''
 
-    def __init__(self, name, bins=None):
+    def __init__(self,
+                 name,
+                 dtype=None,
+                 bins=None,
+                 threshold=None,
+                 bind_field_name=None,
+                 bind_dtype=False):
         self.name = name
+        self.dtype = dtype
+        self.bind_field_name = bind_field_name
+        self.bind_dtype = bind_dtype
         if bins:
-            self.set_default_bin(bins)
             self.bins = bins
+            self.set_default_bin()
         else:
-            self.bins = [CoverBin('auto_bin')]
+            self.bins = self.set_auto_bin()
 
-    def set_default_bin(self, bins):
+        # set sub threshold only if not already set
+        for b in self.bins:
+            if not b.threshold:
+                b.threshold = threshold
+
+    def set_default_bin(self):
         '''Bin for holding all values which are not covered by other bins'''
-        for i, b in enumerate(bins):
+        for i, b in enumerate(self.bins):
             if b.name == 'default':
                 other = [
-                    sub.enablement for j, sub in enumerate(bins) if j != i
+                    sub.enablement for j, sub in enumerate(self.bins) if j != i
                 ]
 
                 def default_enablement(val, other=other):
@@ -72,6 +74,15 @@ class CoverType:
 
                 b.enablement = default_enablement
                 break
+
+    def set_auto_bin(self):
+        assert self.dtype, f'dtype must be set for CoverPoint if bins set as None'
+        bins = []
+        for i in range(2**len(self.dtype)):
+            bins.append(
+                CoverBin(
+                    f'auto_bin{i}',
+                    enablement=(lambda y: (lambda x: (y == x)))(i)))
         return bins
 
     def sample(self, val):
@@ -80,17 +91,19 @@ class CoverType:
 
     def report(self):
         report = f'Cover type {self.name}\n'
-        report += f'Total hits: {sum([b.cover_cnt for b in self.bins])}\n'
+        report += f'Total hits: {self.cover_cnt}\n'
+        report += f'Hit percent: {100 * self.hit / len(self.bins)}\n'
         for b in self.bins:
             report += f'\t{b.report()}\n'
         return report
 
+    @property
+    def cover_cnt(self):
+        return sum([b.cover_cnt for b in self.bins])
 
-class CoverTypeBind(CoverType):
-    def __init__(self, name, bins=None, bind_field_name=None, bind_dtype=None):
-        super(CoverTypeBind, self).__init__(name, bins)
-        self.bind_field_name = bind_field_name
-        self.bind_dtype = bind_dtype
+    @property
+    def hit(self):
+        return sum([b.hit for b in self.bins])
 
 
 class CoverageTypeVisitor(TypingVisitorBase):
@@ -100,8 +113,13 @@ class CoverageTypeVisitor(TypingVisitorBase):
 
     def sample(self, dtype, field, data):
         for cp in self.cover_points:
-            if cp.bind_field_name in [field, None
-                                      ] and cp.bind_dtype in [dtype, None]:
+            if cp.bind_field_name:
+                if cp.bind_field_name == field:
+                    cp.sample(data)
+            elif cp.bind_dtype:
+                if cp.dtype == dtype:
+                    cp.sample(data)
+            elif not cp.bind_field_name and not cp.bind_dtype:
                 cp.sample(data)
 
     def visit_queue(self, dtype, field=None, data=None):

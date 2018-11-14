@@ -1,9 +1,8 @@
 from pygears.cookbook import accumulator, chop
 from pygears.cookbook.verif import directed
 from pygears.sim import sim
-from pygears.sim.extens.coverage import (CoverBin, CoverBinSeen, CoverGroup,
-                                         CoverTypeBind, cover_func,
-                                         CoverIterator)
+from pygears.sim.extens.coverage import (CoverBin, CoverGroup, CoverPoint,
+                                         cover_func, CoverIterator)
 from pygears.sim.modules.drv import drv
 from pygears.typing import Queue, Tuple, Uint
 
@@ -12,22 +11,26 @@ def test_accumulator(enable_coverage=True):
     seq = [[(1, 2), (5, 2), (8, 2)], [(3, 8), (1, 8)],
            [(0, 12), (4, 12), (2, 12), (99, 12)]]
     ref = [16, 12, 117]
-    t_din = Queue[Tuple[{'val': Uint[16], 'offset': Uint[16]}]]
+    t_din = Queue[Tuple[{'val': Uint[8], 'offset': Uint[8]}]]
 
-    val_bins = [CoverBin('one', lambda x: x == 1), CoverBin('default')]
+    val_bins = [
+        CoverBin('one', enablement=lambda x: x == 1, threshold=8),
+        CoverBin('default')
+    ]
     cross_bins = [
-        CoverBin('one_two', lambda x: x[0] == 1 and x[1] == 2),
-        CoverBin('three_eight', lambda x: x[0] == 3 and x[1] == 8),
+        CoverBin('one_two', enablement=lambda x: x[0] == 1 and x[1] == 2),
+        CoverBin('three_eight', enablement=lambda x: x[0] == 3 and x[1] == 8),
         CoverBin('default')
     ]
     points = [
-        CoverTypeBind('val_cp', bins=val_bins, bind_field_name='val'),
-        CoverTypeBind(
-            'offset_cp', bins=[CoverBinSeen('seen')],
-            bind_field_name='offset'),
-        CoverTypeBind(
-            'tuple_cp', bins=cross_bins, bind_dtype=Tuple[Uint[16], Uint[16]]),
-        CoverTypeBind('qlen_cp', bind_dtype=t_din)
+        CoverPoint(
+            'val_cp', bins=val_bins, bind_field_name='val', threshold=11),
+        CoverPoint(
+            'offset_cp', bins=None, dtype=Uint[8], bind_field_name='offset'),
+        CoverPoint(
+            'tuple_cp', bins=cross_bins, dtype=t_din[0], bind_dtype=True),
+        CoverPoint(
+            'qlen_cp', bins=[CoverBin('all')], bind_dtype=True, dtype=t_din)
     ]
     cg = CoverGroup('din_cg', t_din, cover_points=points)
 
@@ -45,7 +48,7 @@ def test_accumulator(enable_coverage=True):
     assert cg.visitor.cover_points[0].bins[0].cover_cnt == 2
     assert cg.visitor.cover_points[0].bins[1].cover_cnt == 7
     # offset
-    assert cg.visitor.cover_points[1].bins[0].cover_cnt == 9
+    assert cg.visitor.cover_points[1].cover_cnt == 9
     # tuple
     assert cg.visitor.cover_points[2].bins[0].cover_cnt == 1
     assert cg.visitor.cover_points[2].bins[1].cover_cnt == 1
@@ -55,21 +58,22 @@ def test_accumulator(enable_coverage=True):
 
 
 def test_chop(enable_coverage=True):
-    t_din = Queue[Uint[16]]
+    t_din = Queue[Uint[4]]
     t_cfg = Uint[16]
 
     din_cp = [
-        CoverTypeBind('val', bins=[CoverBinSeen('val')], bind_dtype=Uint[16]),
-        CoverTypeBind('qlen_cp', bind_dtype=t_din)
+        CoverPoint('val', dtype=t_din[0], bind_dtype=True),
+        CoverPoint(
+            'qlen_cp', bins=[CoverBin('all')], bind_dtype=True, dtype=t_din)
     ]
     din_cg = CoverGroup('din_cg', t_din, cover_points=din_cp)
     cfg_cp = [
-        CoverTypeBind(
+        CoverPoint(
             'cfg_cp',
             bins=[
-                CoverBin('two', lambda x: x == 2),
-                CoverBin('three', lambda x: x == 3),
-                CoverBin('four', lambda x: x == 4)
+                CoverBin('two', enablement=lambda x: x == 2),
+                CoverBin('three', enablement=lambda x: x == 3),
+                CoverBin('four', enablement=lambda x: x == 4)
             ])
     ]
     cfg_cg = CoverGroup('cfg_cg', t_cfg, cover_points=cfg_cp)
@@ -92,5 +96,8 @@ def test_chop(enable_coverage=True):
     assert cfg_cg.visitor.cover_points[0].bins[2].cover_cnt == 0
 
     # din
-    assert din_cg.visitor.cover_points[0].bins[0].cover_cnt == 12
+    assert din_cg.visitor.cover_points[0].cover_cnt == 12
     assert din_cg.visitor.cover_points[1].bins[0].cover_cnt == 2
+
+
+test_chop()
