@@ -94,6 +94,8 @@ class Gear(NamedHierNode):
         ret = self.out_port_intfs
         if len(ret) == 1:
             return ret[0]
+        else:
+            return ret
 
     @property
     def in_port_intfs(self):
@@ -129,7 +131,7 @@ class Gear(NamedHierNode):
                 except ValueError:
                     pass
 
-        for p in self.out_ports:
+        for p in getattr(self, 'out_ports', []):
             if p.producer is not None:
                 p.producer.disconnect(p)
 

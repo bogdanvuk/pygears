@@ -1,8 +1,9 @@
 import inspect
 
-from .base import EnumerableGenericMeta, type_str
+from .base import EnumerableGenericMeta, type_str, typeof
 from .base import TemplatedTypeUnspecified, class_and_instance_method
 from .uint import Uint
+from .unit import Unit
 
 
 class QueueMeta(EnumerableGenericMeta):
@@ -30,19 +31,31 @@ class QueueMeta(EnumerableGenericMeta):
                 return super().__getitem__(index)
 
         key_norm = self.index_norm(index)
+        if (len(key_norm) > 1):
+            raise IndexError
 
-        if (len(key_norm) == 1) and (not isinstance(key_norm[0], slice)):
-            if key_norm[0] == 0:
+        key_norm = key_norm[0]
+
+        if not isinstance(key_norm, slice):
+            key_norm = slice(key_norm, key_norm + 1)
+
+        if key_norm.start == key_norm.stop:
+            return Unit
+        elif key_norm.start == 0:
+            if key_norm.stop == 1:
                 return self.data
-            elif key_norm[0] == 1:
-                return self.eot
             else:
-                raise IndexError
+                return self
+        elif key_norm.start == 1:
+            return self.eot
         else:
             raise IndexError
 
-    def sub(self, lvl=1):
-        return Queue[self.data, self.lvl - lvl]
+    def sub(self, lvl=None):
+        if lvl is None:
+            lvl = self.lvl - 1
+
+        return Queue[self.data, lvl]
 
     def wrap(self, lvl=1):
         return Queue[self.data, self.lvl + lvl]
@@ -98,11 +111,12 @@ class Queue(tuple, metaclass=QueueMeta):
         return int(self.data) | (int(self.eot) << int(type(self).data))
 
     @class_and_instance_method
-    def sub(self, lvl=1):
-        if self.lvl > lvl:
-            return type(self).sub(lvl)(self.data, self.eot[:-lvl])
+    def sub(self, lvl=None):
+        cls_ret = type(self).sub(lvl)
+        if typeof(cls_ret, Queue):
+            return type(self).sub(lvl)(self.data, self.eot[:cls_ret.lvl])
         else:
-            return type(self).sub(lvl)(self.data)
+            return self.data
 
     @class_and_instance_method
     def wrap(self, eot):

@@ -111,7 +111,7 @@ def log_action_debug():
 
 @reg_inject
 def custom_action(logger_name, message, severity, log_cfgs=Inject('logger')):
-    if logger_name not in log_cfgs('logger'):
+    if logger_name not in log_cfgs:
         return
 
     log_cfg = log_cfgs[logger_name]

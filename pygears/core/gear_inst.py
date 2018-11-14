@@ -6,10 +6,8 @@ from pygears.typing import Any
 
 from .intf import Intf
 from .infer_ftypes import TypeMatchError, infer_ftypes, type_is_specified
-from .port import InPort, OutPort
-from .hier_node import NamedHierNode
 from .gear import TooManyArguments, GearTypeNotSpecified, GearArgsNotSpecified
-from .gear import GearPlugin
+from .gear import GearPlugin, Gear
 
 
 def get_obj_var_name(frame, obj):
@@ -144,118 +142,6 @@ def infer_params(args, params, context):
         params, arg_types, namespace=context, allow_incomplete=False)
 
 
-class Gear(NamedHierNode):
-    def __init__(self, func, args, params):
-        super().__init__(params['name'], registry('gear/current_module'))
-        self.args = args
-        self.params = params
-        self.func = func
-
-        self.in_ports = []
-        for i, (name, intf) in enumerate(args.items()):
-            port = InPort(self, i, name)
-            intf.connect(port)
-            Intf(port.dtype).source(port)
-            self.in_ports.append(port)
-
-    def connect_output(self, out_intfs, out_dtypes):
-
-        dflt_dout_name = registry('gear/naming/default_out_name')
-        for i in range(len(self.outnames), len(out_dtypes)):
-            if out_intfs and hasattr(out_intfs[i], 'var_name'):
-                self.outnames.append(out_intfs[i].var_name)
-            else:
-                self.outnames.append(
-                    dflt_dout_name if len(out_dtypes) ==
-                    1 else f'{dflt_dout_name}{i}')
-
-        self.out_ports = [
-            OutPort(self, i, name) for i, name in enumerate(self.outnames)
-        ]
-
-        # Connect internal interfaces
-        if out_intfs:
-            for i, r in enumerate(out_intfs):
-                r.connect(self.out_ports[i])
-        else:
-            for dtype, port in zip(out_dtypes, self.out_ports):
-                Intf(dtype).connect(port)
-
-        for name, dtype in zip(self.outnames, out_dtypes):
-            self.params[name] = dtype
-
-    @property
-    def hierarchical(self):
-        is_async_gen = bool(
-            self.func.__code__.co_flags & inspect.CO_ASYNC_GENERATOR)
-        return not (inspect.iscoroutinefunction(self.func)
-                    or inspect.isgeneratorfunction(self.func) or is_async_gen)
-
-    @property
-    def definition(self):
-        return self.params['definition']
-
-    @property
-    def outnames(self):
-        return self.params['outnames']
-
-    @property
-    def tout(self):
-        if len(self.out_ports) > 1:
-            return tuple(i.dtype for i in self.out_ports)
-        else:
-            return self.out_ports[0].dtype
-
-    @property
-    def dout(self):
-        ret = self.out_port_intfs
-        if len(ret) == 1:
-            return ret[0]
-
-    @property
-    def in_port_intfs(self):
-        return tuple(p.consumer for p in self.in_ports)
-
-    @property
-    def out_port_intfs(self):
-        return tuple(p.producer for p in self.out_ports)
-
-    @property
-    def inputs(self):
-        return tuple(p.producer for p in self.in_ports)
-
-    @property
-    def outputs(self):
-        return tuple(p.consumer for p in self.out_ports)
-
-    @property
-    def explicit_params(self):
-        paramspec = inspect.getfullargspec(self.func)
-        explicit_param_names = paramspec.kwonlyargs or []
-
-        return {
-            name: self.params[name]
-            for name in explicit_param_names if name in self.params
-        }
-
-    def remove(self):
-        for p in self.in_ports:
-            if p.producer is not None:
-                try:
-                    p.producer.disconnect(p)
-                except ValueError:
-                    pass
-
-        for p in self.out_ports:
-            if p.producer is not None:
-                p.producer.disconnect(p)
-
-        try:
-            super().remove()
-        except ValueError:
-            pass
-
-
 class create_hier:
     def __init__(self, gear):
         self.gear = gear
@@ -347,8 +233,8 @@ def resolve_gear(gear_inst, fix_intfs):
             gear_inst.outnames.append(out_intfs[i].var_name)
         else:
             gear_inst.outnames.append(
-                dflt_dout_name if len(out_dtype) ==
-                1 else f'{dflt_dout_name}{i}')
+                dflt_dout_name
+                if len(out_dtype) == 1 else f'{dflt_dout_name}{i}')
 
     gear_inst.connect_output(out_intfs, out_dtype)
 

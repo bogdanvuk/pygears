@@ -28,7 +28,7 @@ correctly used within cartesian concatenations.
             dout.put_nb(out_data)
 
         if sub_lvl > 0:
-            subelem = data.sub(lvl)
+            subelem = data.sub(sub_lvl)
             if subelem.last:
                 out_data = None
         else:

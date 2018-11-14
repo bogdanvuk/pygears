@@ -233,6 +233,7 @@ class SimSocket(CosimBase):
         kwds['batch'] = batch
         self.kwds = kwds
         self.sock = None
+        self.cosim_pid = None
 
         self.server_address = ('localhost', tcp_port)
         self.handlers = {}
@@ -291,7 +292,6 @@ class SimSocket(CosimBase):
         if self.rebuild:
             sv_cosim_gen(self.gear, self.server_address[1])
 
-        self.cosim_pid = None
         if self.run_cosim:
 
             self.sock.settimeout(1)

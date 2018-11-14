@@ -28,7 +28,7 @@ def index_norm_hashable_single(i, size):
         if i < 0:
             i = size + i
 
-        if i > size:
+        if i >= size:
             raise IndexError
 
         return i
