@@ -34,6 +34,22 @@ InPort = namedtuple('InPort', ['svname', 'dtype'])
 OutPort = namedtuple('OutPort', ['svname', 'dtype'])
 
 
+def gather_control_stmt_vars(variables, intf, dtype):
+    scope = {}
+    if isinstance(variables, ast.Tuple):
+        for i, v in enumerate(variables.elts):
+            if isinstance(v, ast.Name):
+                scope[v.id] = ContextVar(f'{intf}_s.{dtype.fields[i]}',
+                                         dtype[i])
+            elif isinstance(v, ast.Starred):
+                scope[v.id] = ContextVar(f'{intf}_s.{dtype.fields[i]}',
+                                         dtype[i])
+    else:
+        scope[variables.id] = ContextVar(f'{intf}_s', dtype)
+
+    return scope
+
+
 class SVCompiler(ast.NodeVisitor):
     def __init__(self, gear):
         self.in_ports = [InPort(p.basename, p.dtype) for p in gear.in_ports]
@@ -67,24 +83,27 @@ class SVCompiler(ast.NodeVisitor):
         else:
             return None
 
-    def visit_AsyncWith(self, node):
+    def visit_AsyncFor(self, node):
         scope = {}
+
+        intf, dtype = self.visit(node.iter)
+        scope = gather_control_stmt_vars(node.target, intf, dtype)
+
+    def visit_AsyncWith(self, node):
         header = node.items[0]
 
-        intf, dtype = self.get_context_var(header.context_expr.id)
-        variables = node.items[0].optional_vars
-        if isinstance(variables, ast.Tuple):
-            for i, v in enumerate(variables.elts):
-                scope[v.id] = ContextVar(f'{intf}_s.{dtype.fields[i]}',
-                                         dtype[i])
-        else:
-            scope[variables.id] = ContextVar(f'{intf}_s', dtype)
+        intf, dtype = self.visit(header.context_expr)
+        scope = gather_control_stmt_vars(node.items[0].optional_vars, intf,
+                                         dtype)
 
         self.write_svline(f'if ({intf}.valid) begin')
         self.enter_block(scope)
 
         for stmt in node.body:
-            self.visit(stmt)
+            try:
+                self.visit(stmt)
+            except Exception as e:
+                pass
 
         self.exit_block()
         self.write_svline(f'end')
@@ -176,7 +195,10 @@ data_func_gear = """
 
 def compile_gear_body(gear):
     v = SVCompiler(gear)
-    v.visit(ast.parse(inspect.getsource(gear.func)).body[0])
+    body_ast = ast.parse(inspect.getsource(gear.func)).body[0]
+    # import astpretty
+    # astpretty.pprint(body_ast)
+    v.visit(body_ast)
 
     return '\n'.join(v.svlines)
 

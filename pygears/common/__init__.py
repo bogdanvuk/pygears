@@ -39,6 +39,7 @@ from .shr import shr
 from .align import align
 
 import pygears.common.fmaps
+import pygears.common.hls
 
 __all__ = [
     'expand', 'czip', 'ccat', 'cart', 'cast', 'quenvelope', 'zip_sync',

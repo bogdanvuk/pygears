@@ -47,7 +47,7 @@ class TypeMonitorVisitor:
         if dtype.lvl == 1:
             sub_elem = elem[0]
         else:
-            sub_elem = elem[:-1]
+            sub_elem = elem.sub()
 
         if not data:
             sub_data = None
@@ -59,10 +59,10 @@ class TypeMonitorVisitor:
             else:
                 sub_data = None
 
-        sub_data = self.visit(sub_data, sub_elem, dtype[:-1])
+        sub_data = self.visit(sub_data, sub_elem, dtype.sub())
         data.append(sub_data)
 
-        eot = elem[-1]
+        eot = all(elem.eot)
         if eot and (not isinstance(sub_data, Partial)):
             return data
         else:

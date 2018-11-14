@@ -19,8 +19,8 @@ def index_norm_hashable_single(i, size):
         elif stop > size:
             raise IndexError
 
-        if start == stop:
-            raise IndexError
+        # if start == stop:
+        #     raise IndexError
 
         return slice(start, stop, incr)
 

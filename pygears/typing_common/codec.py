@@ -20,21 +20,13 @@ class TypeCode(TypingVisitorBase):
         return data & dtype_mask(dtype)
 
     def visit_queue(self, dtype, field=None, data=None):
-        return self.visit_tuple(
-            Tuple[(dtype[0], ) + (Uint[1], ) * dtype.lvl], data=data)
+        return int(dtype(data))
 
     def visit_tuple(self, dtype, field=None, data=None):
-        ret = 0
         if len(dtype) != len(data):
             raise ValueError
 
-        for d, t in zip(reversed(data), reversed(dtype)):
-            field_data = self.visit(t, data=d)
-            if field_data is not None:
-                ret <<= int(t)
-                ret |= field_data
-
-        return ret
+        return int(dtype(data))
 
     def visit_array(self, dtype, field=None, data=None):
         return self.visit_tuple(Tuple[(dtype[0], ) * len(dtype)], data=data)
@@ -71,17 +63,7 @@ class TypeDecode(TypingVisitorBase):
         return None
 
     def visit_queue(self, dtype, field=None, data=None):
-        sub_data_mask = ((1 << (int(dtype) - 1)) - 1)
-        sub_data = data & sub_data_mask
-
-        ret = self.visit(dtype[:-1], data=sub_data)
-
-        eot = bool(data & (1 << (int(dtype) - 1)))
-
-        if dtype.lvl == 1:
-            return dtype((ret, eot))
-        else:
-            return dtype((ret[0], *ret[1:], eot))
+        return dtype.decode(data)
 
     def visit_array(self, dtype, field=None, data=None):
         ret = []

@@ -11,6 +11,7 @@ from .base import EnumerableGenericMeta, typeof
 from .tuple import Tuple
 from .bool import Bool
 from .bitw import bitw
+from .unit import Unit
 
 
 class IntegerType(EnumerableGenericMeta):
@@ -117,7 +118,9 @@ class IntegerType(EnumerableGenericMeta):
         width = 0
         for i in index:
             if isinstance(i, slice):
-                if (i.stop == 0) or (i.stop - i.start > len(self)):
+                if i.stop == 0:
+                    return Unit
+                elif i.stop - i.start > len(self):
                     raise IndexError
                 width += i.stop - i.start
             else:
@@ -147,8 +150,12 @@ class Integer(int, metaclass=IntegerType):
         if type(val) == cls:
             return val
 
-        res = super(Integer, cls).__new__(cls,
-                                          int(val) & ((1 << len(cls)) - 1))
+        if cls.is_generic():
+            res = cls[bitw(val)](int(val))
+        else:
+            res = super(Integer, cls).__new__(cls,
+                                              int(val) & ((1 << len(cls)) - 1))
+
         check_width(val, res.width)
         return res
 
@@ -215,7 +222,11 @@ class Integer(int, metaclass=IntegerType):
                 Bool(int(self) & (1 << i))
                 for i in range(*index.indices(self.width)))
 
-            return Uint[len(bits)](Tuple[(Bool, ) * len(bits)](bits))
+            if bits:
+                return Uint[len(bits)](Tuple[(Bool, ) * len(bits)](bits))
+            else:
+                return Unit()
+
         elif index < self.width:
             return Bool(int(self) & (1 << index))
         else:
@@ -277,7 +288,7 @@ class Int(Integer, metaclass=IntType):
         return res
 
     def __int__(self):
-        val = super(Int, self).__int__()
+        val = super(Integer, self).__int__()
         if val >= (1 << (self.width - 1)):
             val -= 1 << self.width
 

@@ -44,7 +44,8 @@ def get_consumer_tree(intf):
 class Intf:
     OPERATOR_SUPPORT = [
         '__getitem__', '__neg__', '__add__', '__sub__', '__mul__', '__div__',
-        '__floordiv__', '__mod__', '__invert__', '__rshift__', '__lt__'
+        '__floordiv__', '__mod__', '__invert__', '__rshift__', '__lt__',
+        '__aiter__'
     ]
 
     def __init__(self, dtype):

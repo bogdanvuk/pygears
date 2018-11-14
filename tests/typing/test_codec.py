@@ -35,9 +35,9 @@ def test_queue_code_fail():
 
 
 def test_multiqueue():
-    assert code(Queue[Uint[16], 6], (0xebaba, 1, 0, 1, 0, 1, 0)) == 0x15baba
+    assert code(Queue[Uint[16], 6], (0xebaba, Uint[6](0x15))) == 0x15baba
 
-    assert decode(Queue[Uint[16], 6], 0x15baba) == (0xbaba, 1, 0, 1, 0, 1, 0)
+    assert decode(Queue[Uint[16], 6], 0x15baba) == (0xbaba, Uint[6](0x15))
 
 
 def test_tuple():

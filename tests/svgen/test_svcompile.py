@@ -29,6 +29,7 @@ async def filt(din: Tuple[Union, Uint]) -> b'din[0]':
         if d.ctrl == sel:
             yield d
 
+
 simple_filt_res = """if (din.valid) begin
     if (din_s.f0.ctrl == din_s.f1) begin
         din.ready = dout.ready;
@@ -43,3 +44,19 @@ def test_simple_filt():
 
     res = compile_gear_body(find('/filt'))
     assert res == simple_filt_res
+
+
+# from pygears.typing import Queue
+
+# @gear
+# async def qcnt_test(din: Queue, *, lvl=1, w_out=16) -> Queue[Uint['w_out']]:
+#     cnt = 0
+#     async for (data, *eot) in din:
+#         if all(eot[:din.dtype.lvl - lvl]):
+#             yield (cnt, all(eot))
+#             cnt += 1
+
+
+# qcnt_test(Intf(Queue[Uint[2]]))
+# res = compile_gear_body(find('/qcnt_test'))
+# print(res)

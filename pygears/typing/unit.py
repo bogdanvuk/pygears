@@ -14,6 +14,9 @@ class Unit(metaclass=UnitMeta):
         if (v is not None) and (not isinstance(v, Unit)):
             raise TypeError
 
+    def __getitem__(self, key):
+        raise IndexError
+
     def __str__(self):
         return '()'
 

@@ -1,13 +1,13 @@
 import inspect
 
 from .base import EnumerableGenericMeta, type_str
+from .base import TemplatedTypeUnspecified, class_and_instance_method
 from .uint import Uint
-from .bool import Bool
 
 
 class QueueMeta(EnumerableGenericMeta):
     def keys(self):
-        return list(range(self.lvl + 1))
+        return (0, 1)
 
     def __new__(cls, name, bases, namespace, args=[]):
         if isinstance(args, dict) and (list(args.values())[1] == 0):
@@ -29,38 +29,31 @@ class QueueMeta(EnumerableGenericMeta):
             else:
                 return super().__getitem__(index)
 
-        index = self.index_norm(index)
+        key_norm = self.index_norm(index)
 
-        lvl = 0
-        data_incl = False
-        for i in index:
-            if isinstance(i, slice):
-                if (i.stop == 0) or (i.stop - i.start > self.lvl):
-                    raise IndexError
-                elif i.start == 0 and i.stop == 1:
-                    data_incl = True
-                elif i.start == 0 and i.stop > 1:
-                    data_incl = True
-                    lvl += i.stop - 1
-                else:
-                    lvl += (i.stop - i.start)
-            elif i == 0:
-                data_incl = True
-            elif i <= self.lvl:
-                lvl += 1
+        if (len(key_norm) == 1) and (not isinstance(key_norm[0], slice)):
+            if key_norm[0] == 0:
+                return self.data
+            elif key_norm[0] == 1:
+                return self.eot
             else:
                 raise IndexError
-
-        if data_incl and lvl > 0:
-            return Queue[self.args[0], lvl]
-        elif lvl > 0:
-            return Uint[lvl]
         else:
-            return self.args[0]
+            raise IndexError
+
+    def sub(self, lvl=1):
+        return Queue[self.data, self.lvl - lvl]
+
+    def wrap(self, lvl=1):
+        return Queue[self.data, self.lvl + lvl]
 
     @property
     def lvl(self):
         return self.args[1]
+
+    @property
+    def data(self):
+        return self.args[0]
 
     @property
     def eot(self):
@@ -80,79 +73,73 @@ class Queue(tuple, metaclass=QueueMeta):
     __default__ = [1]
     __parameters__ = ['data', 'eot']
 
-    def __new__(cls, val: tuple):
+    def __new__(cls, val, eot=None):
         if type(val) == cls:
             return val
 
-        queue_tpl = (cls[0](val[0]), *(Bool(v) for v in val[1:]))
+        if not cls.is_specified():
+            raise TemplatedTypeUnspecified
+
+        if eot is None:
+            val, eot = val
+
+        queue_tpl = (cls[0](val), cls[1](eot))
         return super(Queue, cls).__new__(cls, queue_tpl)
+
+    def __int__(self):
+        """Returns a packed integer representation of the :class:`Queue` instance.
+        """
+        ret = 0
+
+        for d, t in zip(reversed(self), reversed(type(self))):
+            ret <<= int(t)
+            ret |= int(d)
+
+        return int(self.data) | (int(self.eot) << int(type(self).data))
+
+    @class_and_instance_method
+    def sub(self, lvl=1):
+        if self.lvl > lvl:
+            return type(self).sub(lvl)(self.data, self.eot[:-lvl])
+        else:
+            return type(self).sub(lvl)(self.data)
+
+    @class_and_instance_method
+    def wrap(self, eot):
+        if not isinstance(eot, Uint):
+            eot = Uint(eot)
+
+        wrap_cls = type(self).wrap(eot.width)
+        wrap_eot = wrap_cls.eot(self.eot) | (eot << self.lvl)
+
+        return wrap_cls(self.data, wrap_eot)
 
     @property
     def last(self):
-        return self[1:] == ((1 << type(self).lvl) - 1)
+        return all(self.eot)
 
+    @class_and_instance_method
     @property
     def eot(self):
-        return self[1:]
+        return self[1]
 
-    @property
-    def lvl(self):
-        return len(self) - 1
-
+    @class_and_instance_method
     @property
     def data(self):
         return self[0]
 
-    def __getitem__(self, index):
-        index = type(self).index_norm(index)
-
-        lvl = 0
-        data_incl = False
-
-        dout = []
-        outtype = type(self)[index]
-        for i in index:
-            if isinstance(i, slice):
-                if (i.stop == 0) or (i.stop - i.start > type(self).lvl):
-                    raise IndexError
-                elif i.start == 0 and i.stop == 1:
-                    data_incl = True
-                elif i.start == 0 and i.stop > 1:
-                    lvl += i.stop - 1
-                    data_incl = True
-                else:
-                    lvl += (i.stop - i.start)
-
-                dout.extend(super().__getitem__(i))
-            elif i == 0:
-                data_incl = True
-                dout.append(super().__getitem__(i))
-            elif i <= type(self).lvl:
-                lvl += 1
-                dout.append(super().__getitem__(i))
-            else:
-                raise IndexError
-
-        if lvl > 0:
-            if data_incl:
-                return outtype(tuple(dout))
-            else:
-                eot = 0
-                for d in reversed(dout):
-                    eot <<= 1
-                    eot |= d
-
-                return outtype(eot)
-        else:
-            return type(self)[0](dout[0])
+    @class_and_instance_method
+    @property
+    def lvl(self):
+        return type(self).lvl
 
     @classmethod
     def decode(cls, val):
-        data = [cls[0].decode(val)]
+        ret = []
+        for t in cls:
+            t_width = int(t)
+            t_mask = (1 << t_width) - 1
+            ret.append(t.decode(val & t_mask))
+            val >>= t_width
 
-        eot_mask = 1 << int(cls[0])
-        for i in range(cls.lvl):
-            data.append(Bool(val & eot_mask))
-            eot_mask <<= 1
-
-        return cls(tuple(data))
+        return cls(*ret)

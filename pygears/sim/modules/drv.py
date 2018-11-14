@@ -2,6 +2,7 @@ import inspect
 
 from pygears import GearDone, gear
 from pygears.util.utils import quiter
+from pygears.typing import Uint
 
 # from pygears.sim.extens.svrand import get_rand_data
 
@@ -24,11 +25,13 @@ class TypingYieldVisitorBase:
 class TypeDrvVisitor(TypingYieldVisitorBase):
     def visit_queue(self, data, dtype):
         for (i, d), eot in quiter(enumerate(data)):
-            for ret in self.visit(d, dtype[:-1]):
+            for ret in self.visit(d, dtype.sub()):
                 if dtype.lvl == 1:
-                    yield (ret, eot)
+                    yield (ret, Uint[1](eot))
                 else:
-                    yield (ret[0], *ret[1:], eot)
+                    yield (
+                        ret[0],
+                        Uint[ret[1].width + 1](ret[1]) + (eot << ret[1].width))
 
 
 @gear
