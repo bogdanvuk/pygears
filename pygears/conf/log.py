@@ -111,7 +111,11 @@ def log_action_debug():
 
 @reg_inject
 def custom_action(logger_name, message, severity, log_cfgs=Inject('logger')):
+    if logger_name not in log_cfgs('logger'):
+        return
+
     log_cfg = log_cfgs[logger_name]
+
     if severity in log_cfg:
         if log_cfg[severity] == 'exception':
             log_action_exception(logger_name, message)

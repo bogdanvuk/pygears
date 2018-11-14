@@ -1,3 +1,4 @@
+import importlib
 from pygears.core.hier_node import HierVisitorBase, HierYielderBase
 import os
 import jinja2
@@ -26,9 +27,6 @@ def isoutput(list_):
 
 def startswith(field, s):
     return field.startswith(s)
-
-
-import importlib
 
 
 def import_from(module, name):
