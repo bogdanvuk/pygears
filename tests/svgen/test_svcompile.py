@@ -46,17 +46,35 @@ def test_simple_filt():
     assert res == simple_filt_res
 
 
-# from pygears.typing import Queue
-
-# @gear
-# async def qcnt_test(din: Queue, *, lvl=1, w_out=16) -> Queue[Uint['w_out']]:
-#     cnt = 0
-#     async for (data, *eot) in din:
-#         if all(eot[:din.dtype.lvl - lvl]):
-#             yield (cnt, all(eot))
-#             cnt += 1
+from pygears.typing import Queue
+from pygears.cookbook import qcnt
+from pygears.svgen import svgen
 
 
-# qcnt_test(Intf(Queue[Uint[2]]))
-# res = compile_gear_body(find('/qcnt_test'))
-# print(res)
+@gear(svgen={'compile': True})
+async def svctest(din: Queue[Uint['T']], *, upper) -> Uint['T']:
+    cnt = Uint[8](0)
+    async for (data, eot) in din:
+        if data > upper * 2:
+            yield data
+            cnt = cnt + 1
+
+svctest(Intf(Queue[Uint[8]]), upper=2)
+# res = compile_gear_body(find('/svctest'))
+svgen('/svctest', outdir='/tools/home/tmp')
+
+# from pygears.sim import sim
+# from pygears.cookbook.verif import verif
+# from pygears.sim.modules.drv import drv
+# from pygears.sim.modules.verilator import SimVerilated
+
+# seq = [list(range(10))]
+
+# report = verif(
+#     drv(t=Queue[Uint[8]], seq=seq),
+#     f=svctest(sim_cls=SimVerilated, upper=2),
+#     ref=svctest(name='ref_model', upper=2))
+
+# sim(outdir='/tools/home/tmp')
+
+# print(report)
