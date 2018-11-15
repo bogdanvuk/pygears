@@ -1,3 +1,4 @@
+import os
 from pygears import registry
 
 
@@ -33,13 +34,7 @@ def find(path, root=None):
     if path == '':
         return root
 
-    split_path = path.split('.')
-    module_path = split_path[0]
-    intf_name = None
-    if len(split_path) > 1:
-        intf_name = split_path[1]
-        if len(split_path) != 2:
-            raise ModuleNotFoundError(f'Invalid path {path}')
+    module_path, intf_name = os.path.splitext(path)
 
     try:
         module = _find_rec(module_path, root)
@@ -49,6 +44,7 @@ def find(path, root=None):
     if not intf_name:
         return module
     else:
+        intf_name = intf_name[1:]
         for i, p in enumerate(module.in_ports):
             if p.basename == intf_name:
                 return module.in_ports[i]

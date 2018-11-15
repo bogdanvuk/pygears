@@ -42,7 +42,7 @@ def test_accumulator(enable_coverage=True):
 
     directed(drv(t=t_din, seq=test_sample()), f=accumulator, ref=ref)
     sim()
-    print(cg.report())
+    # print(cg.report())
 
     # checks
     # val
@@ -88,8 +88,8 @@ def test_chop(enable_coverage=True):
         ref=[[[0, 1], [2, 3], [4, 5], [6, 7], [8]], [[0, 1, 2]]])
     sim()
 
-    print(cfg_cg.report())
-    print(din_cg.report())
+    # print(cfg_cg.report())
+    # print(din_cg.report())
 
     # cfg
     assert cfg_cg.visitor.cover_points[0].bins[0].cover_cnt == 1
@@ -133,8 +133,8 @@ def test_intf(enable_coverage=True):
 
     sim()
 
-    print(cfg_cg.report())
-    print(din_cg.report())
+    # print(cfg_cg.report())
+    # print(din_cg.report())
 
     # cfg
     assert cfg_cg.visitor.cover_points[0].bins[0].cover_cnt == 1
