@@ -5,6 +5,7 @@ import itertools
 from enum import IntEnum
 
 from pygears.typing.visitor import TypingVisitorBase
+from pygears.sim.modules.mon import TypeMonitorVisitor, Partial
 
 
 class CoverBin:
@@ -168,6 +169,23 @@ class CoverGroup:
         return report
 
 
+class CoverSingleValue():
+    '''Coverage of single unpacked values. Combine before sampling'''
+
+    def __init__(self, cg=None, en=True):
+        self.cg = cg
+        self.en = en
+        self.data = None
+        self.v = TypeMonitorVisitor(self.cg.dtype)
+
+    def sample(self, item):
+        self.data = self.v.visit(self.data, item, self.cg.dtype)
+        if not (isinstance(self.data, Partial) or self.data is None):
+            if self.en:
+                self.cg.sample(self.data)
+            self.data = None
+
+
 class CoverIterator(collections.Iterator):
     '''Coverage of iterators.
     Wraps around the iterator and copies the values'''
@@ -196,7 +214,25 @@ class FuncSampleType(IntEnum):
     args = 1
 
 
-class CoverFunction:
+class CoverBase:
+    def __init__(self, cg=None, en=True):
+        self.cg = cg
+        self.en = en
+        self.cover_single = None
+
+    def sample(self, val):
+        if self.en:
+            if inspect.isgenerator(val):
+                return CoverIterator(it=val, cg=self.cg, en=self.en)
+            else:
+                if not self.cover_single:
+                    self.cover_single = CoverSingleValue(
+                        cg=self.cg, en=self.en)
+                self.cover_single.sample(val)
+        return val
+
+
+class CoverFunction(CoverBase):
     '''Wrapper around functions that need to be covered'''
 
     def __init__(self,
@@ -204,22 +240,17 @@ class CoverFunction:
                  cg=None,
                  en=True,
                  sample_type=FuncSampleType.result):
+        super(CoverFunction, self).__init__(cg, en)
         functools.update_wrapper(self, func)
         self.func = func
-        self.cg = cg
-        self.en = en
         self.sample_type = sample_type
 
     def __call__(self, *arg, **kw):
         result = self.func(*arg, **kw)
-        if self.en:
-            if self.sample_type == FuncSampleType.result:
-                if inspect.isgenerator(result):
-                    return CoverIterator(it=result, cg=self.cg, en=self.en)
-                else:
-                    self.cg.sample(result)
-            else:
-                self.cg.sample(*arg, **kw)
+        if self.sample_type == FuncSampleType.result:
+            result = self.sample(result)
+        else:
+            self.sample(*arg, **kw)
         return result
 
 
@@ -230,3 +261,22 @@ def cover_func(cg, en=True, sample_type=FuncSampleType.result):
         return CoverFunction(func=func, cg=cg, en=en, sample_type=sample_type)
 
     return cover
+
+
+class CoverIntf(CoverBase):
+    def __init__(self, intf, cg=None, en=True):
+        super(CoverIntf, self).__init__(cg, en)
+        self.intf = intf
+
+    def event(self, intf, val):
+        if intf == self.intf:
+            self.sample(val)
+        return True
+
+
+def cover_intf(intf, cg, en=True):
+    while intf.producer:
+        intf = intf.producer
+
+    c = CoverIntf(intf, cg=cg, en=en)
+    intf.events['put'].append(c.event)

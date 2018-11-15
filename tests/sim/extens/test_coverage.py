@@ -2,9 +2,10 @@ from pygears.cookbook import accumulator, chop
 from pygears.cookbook.verif import directed
 from pygears.sim import sim
 from pygears.sim.extens.coverage import (CoverBin, CoverGroup, CoverPoint,
-                                         cover_func, CoverIterator)
+                                         cover_func, CoverIterator, cover_intf)
 from pygears.sim.modules.drv import drv
 from pygears.typing import Queue, Tuple, Uint
+from pygears import find
 
 
 def test_accumulator(enable_coverage=True):
@@ -100,4 +101,46 @@ def test_chop(enable_coverage=True):
     assert din_cg.visitor.cover_points[1].bins[0].cover_cnt == 2
 
 
-test_chop()
+def test_intf(enable_coverage=True):
+    t_din = Queue[Uint[4]]
+    t_cfg = Uint[16]
+
+    din_cp = [
+        CoverPoint('val', dtype=t_din[0], bind_dtype=True),
+        CoverPoint(
+            'qlen_cp', bins=[CoverBin('all')], bind_dtype=True, dtype=t_din)
+    ]
+    din_cg = CoverGroup('din_cg', t_din, cover_points=din_cp)
+    cfg_cp = [
+        CoverPoint(
+            'cfg_cp',
+            bins=[
+                CoverBin('two', enablement=lambda x: x == 2),
+                CoverBin('three', enablement=lambda x: x == 3),
+                CoverBin('four', enablement=lambda x: x == 4)
+            ])
+    ]
+    cfg_cg = CoverGroup('cfg_cg', t_cfg, cover_points=cfg_cp)
+
+    directed(
+        drv(t=t_din, seq=[list(range(9)), list(range(3))]),
+        drv(t=t_cfg, seq=[2, 3]),
+        f=chop,
+        ref=[[[0, 1], [2, 3], [4, 5], [6, 7], [8]], [[0, 1, 2]]])
+
+    cover_intf(find('/chop.cfg').consumer, cg=cfg_cg)
+    cover_intf(find('/chop.din').consumer, cg=din_cg)
+
+    sim()
+
+    print(cfg_cg.report())
+    print(din_cg.report())
+
+    # cfg
+    assert cfg_cg.visitor.cover_points[0].bins[0].cover_cnt == 1
+    assert cfg_cg.visitor.cover_points[0].bins[1].cover_cnt == 1
+    assert cfg_cg.visitor.cover_points[0].bins[2].cover_cnt == 0
+
+    # din
+    assert din_cg.visitor.cover_points[0].cover_cnt == 12
+    assert din_cg.visitor.cover_points[1].bins[0].cover_cnt == 2
