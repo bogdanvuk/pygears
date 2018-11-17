@@ -19,10 +19,10 @@ class SimVerilatorSynchro:
         self.verilib = verilib
 
     def cycle(self):
-        self.verilib.trig()
+        self.verilib.cycle()
 
     def forward(self):
-        self.verilib.eval()
+        self.verilib.forward()
 
     def back(self):
         self.verilib.back()

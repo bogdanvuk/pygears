@@ -40,24 +40,26 @@ class CosimBase(SimGear):
 
         for p in self.gear.out_ports:
             intf = p.producer
-            hout = self.handlers[p.basename]
             if intf.ready_nb():
                 try:
+                    hout = self.handlers[p.basename]
                     intf.put_nb(hout.read())
+                    # print(f'Put {hout.read()} -> {p.basename}')
                     self.dout_put.add(p)
                     self.activity_monitor = 0
                 except CosimNoData:
                     pass
-            else:
-                hout.reset()
 
     def _back(self):
         for p in self.dout_put.copy():
             intf = p.producer
+            hout = self.handlers[p.basename]
             if intf.ready_nb():
-                hout = self.handlers[p.basename]
+                # print(f'Put ACK -> {p.basename}')
                 hout.ack()
                 self.dout_put.remove(p)
+            else:
+                hout.reset()
 
         self.handlers[self.SYNCHRO_HANDLE_NAME].back()
 

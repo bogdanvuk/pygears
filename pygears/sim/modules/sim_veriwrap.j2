@@ -4,6 +4,7 @@
 #include "verilated_vcd_c.h"
 {% endif %}
 #include "stdio.h"
+{# #define DEBUG #}
 
 extern "C" {
 
@@ -14,22 +15,21 @@ vluint64_t main_time = 0;
 VerilatedVcdC* tfp = NULL;
 {% endif %}
 
-void eval(void) {
+void forward(void) {
 #ifdef DEBUG
-    printf("eval\n");
-#endif
-    top->eval();
-}
-
-void back(void) {
-#ifdef DEBUG
-    printf("back\n");
+    printf("---- forward ----\n");
 #endif
     top->eval();
 {% if tracing %}
     if (tfp) tfp->dump (main_time);
 {% endif %}
     main_time+=5;
+}
+
+void back(void) {
+#ifdef DEBUG
+    printf("---- back    ----\n");
+#endif
     top->clk = 0;
     top->rst = 0;
     top->eval();
@@ -39,9 +39,9 @@ void back(void) {
     main_time+=5;
 }
 
-void trig(void) {
+void cycle(void) {
 #ifdef DEBUG
-    printf("trig\n");
+    printf("---- cycle   ----\n");
 #endif
     top->clk = 1;
     top->eval();
