@@ -1,6 +1,6 @@
 import ast
+import typing as pytypes
 from collections import namedtuple
-from typing import NamedTuple, List, Any, Dict
 from pygears.typing import Uint, Int, is_type, Bool
 from pygears.typing.base import TypingMeta
 
@@ -32,58 +32,58 @@ opmap = {
 }
 
 
-class Expr(NamedTuple):
+class Expr(pytypes.NamedTuple):
     svrepr: str
     dtype: TypingMeta
 
 
-class ResExpr(Expr, NamedTuple):
-    val: Any
+class ResExpr(Expr, pytypes.NamedTuple):
+    val: pytypes.Any
     svrepr: str
     dtype: TypingMeta
 
 
-class RegDef(NamedTuple):
-    val: Any
+class RegDef(pytypes.NamedTuple):
+    val: pytypes.Any
     svrepr: str
     dtype: TypingMeta
 
 
-class RegNextExpr(Expr, NamedTuple):
+class RegNextExpr(Expr, pytypes.NamedTuple):
     reg: RegDef
     svrepr: str
     dtype: TypingMeta
 
 
-class Yield(NamedTuple):
+class Yield(pytypes.NamedTuple):
     expr: Expr
 
 
-class RegVal(Expr, NamedTuple):
+class RegVal(Expr, pytypes.NamedTuple):
     reg: RegDef
     svrepr: str
     dtype: TypingMeta
 
 
-class Block(NamedTuple):
+class Block(pytypes.NamedTuple):
     in_cond: Expr
-    stmts: List
-    out_cond: List
+    stmts: pytypes.List
+    out_cond: pytypes.List
 
 
-class Loop(Block, NamedTuple):
+class Loop(Block, pytypes.NamedTuple):
     in_cond: Expr
-    stmts: List
-    out_cond: List
+    stmts: pytypes.List
+    out_cond: pytypes.List
     multicycle: bool = False
 
 
-class Module(NamedTuple):
-    in_ports: List
-    out_ports: List
-    locals: Dict
-    regs: Dict
-    stmts: List = []
+class Module(pytypes.NamedTuple):
+    in_ports: pytypes.List
+    out_ports: pytypes.List
+    locals: pytypes.Dict
+    regs: pytypes.Dict
+    stmts: pytypes.List
 
 
 TExpr = namedtuple('TExpr', ['val', 'svrepr', 'dtype'])
@@ -116,11 +116,11 @@ def gather_control_stmt_vars(variables, intf, dtype):
     if isinstance(variables, ast.Tuple):
         for i, v in enumerate(variables.elts):
             if isinstance(v, ast.Name):
-                scope[v.id] = TExpr(v, f'{intf}_s.{dtype.fields[i]}', dtype[i])
+                scope[v.id] = Expr(f'{intf}_s.{dtype.fields[i]}', dtype[i])
             elif isinstance(v, ast.Starred):
-                scope[v.id] = TExpr(v, f'{intf}_s.{dtype.fields[i]}', dtype[i])
+                scope[v.id] = Expr(f'{intf}_s.{dtype.fields[i]}', dtype[i])
     else:
-        scope[variables.id] = TExpr(v, f'{intf}_s', dtype)
+        scope[variables.id] = Expr(f'{intf}_s', dtype)
 
     return scope
 
@@ -221,7 +221,7 @@ class HdlAst(ast.NodeVisitor):
     def visit_AsyncWith(self, node):
         header = node.items[0]
 
-        intf = self.visit_Expression(header.context_expr)
+        intf = self.visit_NameExpression(header.context_expr)
         scope = gather_control_stmt_vars(node.items[0].optional_vars,
                                          intf.svrepr, intf.dtype)
         self.svlocals.update(scope)
@@ -336,7 +336,8 @@ class HdlAst(ast.NodeVisitor):
             in_ports=self.in_ports,
             out_ports=self.out_ports,
             locals=self.svlocals,
-            regs=self.regs)
+            regs=self.regs,
+            stmts=[])
         return self.visit_block(svnode, node.body)
 
 
