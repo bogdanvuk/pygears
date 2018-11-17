@@ -24,7 +24,7 @@
 
     always_ff @(posedge clk) begin
       if(rst | (eot_internal_cond & din.valid & handshake)) begin
-        cnt_reg <= '0;
+        cnt_reg <= 1;
       end else if (handshake) begin
         cnt_reg <= cnt_next;
       end

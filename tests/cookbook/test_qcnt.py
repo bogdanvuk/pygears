@@ -24,12 +24,12 @@ dir_seq = [[[list(range(3)), list(range(5))], [list(range(1)),
 
 
 def get_ref(seq):
-    return [
-        list(
-            range(
-                sum(len(x)
-                    for x in seq[0][0]) + sum(len(x) for x in seq[0][1])))
-    ]
+    num = 0
+    for subseq in seq[0]:
+        for subsubseq in subseq:
+            num += len(subsubseq)
+
+    return [list(range(1, num+1))]
 
 
 def test_py_sim_dir(seq=dir_seq):
