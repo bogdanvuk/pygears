@@ -6,9 +6,9 @@ from .hdl_ast import HdlAst, RegFinder, pprint, Loop, Module
 reg_template = """
 always_ff @(posedge clk) begin
     if(rst | {0}_rst) begin
-        {0}_reg <= {1};
+        {0}_reg = {1};
     end else if ({0}_en) begin
-        {0}_reg <= {0}_next;
+        {0}_reg = {0}_next;
     end
 end
 """
@@ -60,15 +60,15 @@ class SVCompiler(ast.NodeVisitor):
         self.write_svline('// Gear idle states')
 
         for port in node.in_ports:
-            self.write_svline(f'{port.svrepr}.ready <= 1;')
+            self.write_svline(f'{port.svrepr}.ready = 1;')
 
         for port in node.out_ports:
-            self.write_svline(f'{port.svrepr}.valid <= 0;')
+            self.write_svline(f'{port.svrepr}.valid = 0;')
 
         for name in node.regs:
-            self.write_svline(f'{name}_en <= 1;')
-            self.write_svline(f'{name}_rst <= 0;')
-            self.write_svline(f'{name}_next <= {name}_reg;')
+            self.write_svline(f'{name}_en = 1;')
+            self.write_svline(f'{name}_rst = 0;')
+            self.write_svline(f'{name}_next = {name}_reg;')
 
         self.write_svline()
 
@@ -81,25 +81,30 @@ class SVCompiler(ast.NodeVisitor):
     def find_out_conds(self, halt_on):
         out_cond = []
         for block in reversed(self.scope):
-            if isinstance(block, halt_on):
+            if isinstance(block, Module):
                 break
 
-            out_cond += getattr(block, 'out_cond', [])
+            out_cond += getattr(block, 'cycle_cond', [])
+
+            if (halt_on == 'cycle') and getattr(block, 'exit_cond', []):
+                break
+
+            out_cond += getattr(block, 'exit_cond', [])
 
         out_cond_svrepr = ' && '.join(cond.svrepr for cond in out_cond)
 
         return out_cond_svrepr
 
-    def find_cycle_out_cond(self):
-        return self.find_out_conds((Loop, ))
+    def find_cycle_cond(self):
+        return self.find_out_conds(halt_on='cycle')
 
-    def find_func_out_cond(self):
-        return self.find_out_conds((Module, ))
+    def find_exit_cond(self):
+        return self.find_out_conds(halt_on='exit')
 
     def visit_Yield(self, node):
         for port in self.module.out_ports:
-            self.write_svline(f'{port.svrepr}.valid <= 1;')
-            self.write_svline(f'{port.svrepr}_s <= {node.expr.svrepr};')
+            self.write_svline(f'{port.svrepr}.valid = 1;')
+            self.write_svline(f'{port.svrepr}_s = {node.expr.svrepr};')
 
     def visit_RegNextExpr(self, node):
         self.write_svline(f'{node.reg.svrepr}_next = {node.svrepr};')
@@ -108,25 +113,25 @@ class SVCompiler(ast.NodeVisitor):
         self.write_svline(f'if ({node.in_cond.svrepr}) begin')
         self.enter_block(node)
 
-        if node.out_cond:
-            cycle_out_cond = self.find_cycle_out_cond()
-            func_out_cond = self.find_func_out_cond()
+        if node.cycle_cond or getattr(node, 'exit_cond', []):
+            cycle_cond = self.find_cycle_cond()
+            exit_cond = self.find_exit_cond()
 
-            if func_out_cond:
+            if exit_cond:
                 self.write_svline('// Gear reset conditions')
                 for name in self.module.regs:
-                    self.write_svline(f'{name}_rst <= {func_out_cond};')
+                    self.write_svline(f'{name}_rst = {exit_cond};')
 
                 self.write_svline()
 
-            if cycle_out_cond:
+            if cycle_cond:
                 self.write_svline('// Cycle done conditions')
                 for port in self.module.in_ports:
                     self.write_svline(
-                        f'{port.svrepr}.ready <= {cycle_out_cond};')
+                        f'{port.svrepr}.ready = {cycle_cond};')
 
                 for name in self.module.regs:
-                    self.write_svline(f'{name}_en <= {cycle_out_cond};')
+                    self.write_svline(f'{name}_en = {cycle_cond};')
 
                 self.write_svline()
 
@@ -161,7 +166,7 @@ def compile_gear_body(gear):
     v = RegFinder(gear)
     v.visit(body_ast)
 
-    hdl_ast = HdlAst(gear, v.regs).visit(body_ast)
+    hdl_ast = HdlAst(gear, v.regs, v.variables).visit(body_ast)
     # pprint(hdl_ast)
 
     v = SVCompiler()
