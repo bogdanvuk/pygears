@@ -67,7 +67,7 @@ class SVCompiler(ast.NodeVisitor):
 
         for name in node.regs:
             self.write_svline(f'{name}_en <= 1;')
-            self.write_svline(f'{name}_rst <= 1;')
+            self.write_svline(f'{name}_rst <= 0;')
             self.write_svline(f'{name}_next <= {name}_reg;')
 
         self.write_svline()
@@ -156,13 +156,13 @@ data_func_gear = """
 
 def compile_gear_body(gear):
     body_ast = ast.parse(inspect.getsource(gear.func)).body[0]
-    import astpretty
-    astpretty.pprint(body_ast)
+    # import astpretty
+    # astpretty.pprint(body_ast)
     v = RegFinder(gear)
     v.visit(body_ast)
 
     hdl_ast = HdlAst(gear, v.regs).visit(body_ast)
-    pprint(hdl_ast)
+    # pprint(hdl_ast)
 
     v = SVCompiler()
     v.visit(hdl_ast)

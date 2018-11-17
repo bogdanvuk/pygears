@@ -1,7 +1,7 @@
 import ast
 import typing as pytypes
 from collections import namedtuple
-from pygears.typing import Uint, Int, is_type, Bool
+from pygears.typing import Uint, Int, is_type, Bool, Tuple
 from pygears.typing.base import TypingMeta
 
 opmap = {
@@ -280,6 +280,25 @@ class HdlAst(ast.NodeVisitor):
         return eval(
             compile(ast.Expression(node), filename="<ast>", mode="eval"),
             self.locals, globals())
+
+    def visit_Call_all(self, arg):
+        arg_node = self.visit_DataExpression(arg)
+        print(arg_node)
+        return Expr(f'&({arg_node.svrepr})', Bool)
+
+    def visit_Call(self, node):
+        func_dispatch = getattr(self, f'visit_Call_{node.func.id}')
+        if func_dispatch:
+            return func_dispatch(*node.args)
+
+    def visit_Tuple(self, node):
+        items = [self.visit_DataExpression(item) for item in node.elts]
+
+        tuple_dtype = Tuple[tuple(item.dtype for item in items)]
+        tuple_svrepr = (
+            '{' + ', '.join(item.svrepr for item in reversed(items)) + '}')
+
+        return Expr(tuple_svrepr, tuple_dtype)
 
     def visit_BinOp(self, node):
         op1 = self.visit_DataExpression(node.left)
