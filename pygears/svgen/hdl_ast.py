@@ -1,7 +1,7 @@
 import ast
 import typing as pytypes
 from collections import namedtuple
-from pygears.typing import Uint, Int, is_type, Bool, Tuple
+from pygears.typing import Uint, Int, is_type, Bool, Tuple, Any, Unit, typeof
 from pygears.typing.base import TypingMeta
 
 opmap = {
@@ -68,13 +68,14 @@ class RegVal(Expr, pytypes.NamedTuple):
 class Block(pytypes.NamedTuple):
     in_cond: Expr
     stmts: pytypes.List
-    out_cond: pytypes.List
+    cycle_cond: pytypes.List
 
 
 class Loop(Block, pytypes.NamedTuple):
     in_cond: Expr
     stmts: pytypes.List
-    out_cond: pytypes.List
+    cycle_cond: pytypes.List
+    exit_cond: pytypes.List
     multicycle: bool = False
 
 
@@ -95,8 +96,10 @@ OutPort = namedtuple('OutPort', ['svrepr', 'dtype'])
 
 def eval_expression(node, local_namespace):
     return eval(
-        compile(ast.Expression(node), filename="<ast>", mode="eval"),
-        local_namespace, globals())
+        compile(
+            ast.Expression(ast.fix_missing_locations(node)),
+            filename="<ast>",
+            mode="eval"), local_namespace, globals())
 
 
 def eval_data_expr(node, local_namespace):
@@ -108,7 +111,7 @@ def eval_data_expr(node, local_namespace):
         else:
             ret = Uint(ret)
 
-    return TExpr(ret, str(int(ret)), type(ret))
+    return ResExpr(ret, str(int(ret)), type(ret))
 
 
 def gather_control_stmt_vars(variables, intf, dtype):
@@ -128,23 +131,38 @@ def gather_control_stmt_vars(variables, intf, dtype):
 class RegFinder(ast.NodeVisitor):
     def __init__(self, gear):
         self.regs = {}
-        self.locals = {}
+        self.variables = {}
         self.local_params = {
             **{p.basename: p.consumer
                for p in gear.in_ports},
             **gear.explicit_params
         }
 
+    def promote_var_to_reg(self, name):
+        val = self.variables.pop(name)
+
+        if not is_type(type(val)):
+            if val < 0:
+                val = Int(val)
+            else:
+                val = Uint(val)
+
+        self.regs[name] = ResExpr(val, str(int(val)), type(val))
+
+    def visit_AugAssign(self, node):
+        self.promote_var_to_reg(node.target.id)
+
     def visit_Assign(self, node):
         name = node.targets[0].id
-        if name not in self.locals:
-            self.locals[name] = eval_data_expr(node.value, self.local_params)
+        if name not in self.variables:
+            self.variables[name] = eval_expression(node.value,
+                                                   self.local_params)
         else:
-            self.regs[name] = self.locals[name]
+            self.promote_var_to_reg(name)
 
 
 class HdlAst(ast.NodeVisitor):
-    def __init__(self, gear, regs):
+    def __init__(self, gear, regs, variables):
         self.in_ports = [TExpr(p, p.basename, p.dtype) for p in gear.in_ports]
         self.out_ports = [
             TExpr(p, p.basename, p.dtype) for p in gear.out_ports
@@ -153,7 +171,8 @@ class HdlAst(ast.NodeVisitor):
         self.locals = {
             **{p.basename: p.consumer
                for p in gear.in_ports},
-            **gear.explicit_params
+            **gear.explicit_params,
+            **variables
         }
         self.regs = regs
         self.scope = []
@@ -196,7 +215,8 @@ class HdlAst(ast.NodeVisitor):
         svnode = Loop(
             in_cond=Expr(f'{intf.svrepr}.valid', Bool),
             stmts=[],
-            out_cond=[Expr(f'&{intf.svrepr}_s.eot', Bool)])
+            cycle_cond=[],
+            exit_cond=[Expr(f'&{intf.svrepr}_s.eot', Bool)])
 
         self.visit_block(svnode, node.body)
 
@@ -227,7 +247,9 @@ class HdlAst(ast.NodeVisitor):
         self.svlocals.update(scope)
 
         svnode = Block(
-            in_cond=Expr(f'{intf.svrepr}.valid', Bool), stmts=[], out_cond=[])
+            in_cond=Expr(f'{intf.svrepr}.valid', Bool),
+            stmts=[],
+            cycle_cond=[])
 
         self.visit_block(svnode, node.body)
 
@@ -236,9 +258,25 @@ class HdlAst(ast.NodeVisitor):
     def visit_Subscript(self, node):
         svrepr, dtype = self.visit(node.value)
 
-        index = eval(compile(ast.Expression(node.slice.value), '', 'eval'))
+        if hasattr(node.slice, 'value'):
+            index = self.eval_expression(node.slice.value)
+            return Expr(f'{svrepr}.{dtype.fields[index]}', dtype[index])
+        else:
+            slice_args = [
+                self.visit_DataExpression(getattr(node.slice, field))
+                for field in ['lower', 'upper']
+            ]
 
-        return Expr(f'{svrepr}.{dtype.fields[index]}', dtype[index])
+            index = slice(*tuple(arg.val for arg in slice_args))
+
+            res_dtype = dtype.__getitem__(index)
+
+            if typeof(res_dtype, Unit):
+                return ResExpr(val=Unit(), svrepr='()', dtype=Unit)
+            else:
+                index = dtype.index_norm(index)[0]
+                return Expr(f'{svrepr}[{int(index.stop) - 1}:{index.start}]',
+                            res_dtype)
 
     def visit_Name(self, node):
         return self.get_context_var(node.id)
@@ -250,6 +288,12 @@ class HdlAst(ast.NodeVisitor):
             dtype = type(Uint(node.n))
 
         return dtype, node.n
+
+    def visit_AugAssign(self, node):
+        target_load = ast.Name(node.target.id, ast.Load())
+        expr = ast.BinOp(target_load, node.op, node.value)
+        assign_node = ast.Assign([node.target], expr)
+        return self.visit_Assign(assign_node)
 
     def visit_Assign(self, node):
         name_node = node.targets[0]
@@ -271,6 +315,9 @@ class HdlAst(ast.NodeVisitor):
         return self.get_context_var(name)
 
     def visit_DataExpression(self, node):
+        if not isinstance(node, ast.AST):
+            return ResExpr(val=node, svrepr=str(node), dtype=Any)
+
         try:
             return eval_data_expr(node, self.locals)
         except NameError:
@@ -282,14 +329,19 @@ class HdlAst(ast.NodeVisitor):
             self.locals, globals())
 
     def visit_Call_all(self, arg):
-        arg_node = self.visit_DataExpression(arg)
-        print(arg_node)
-        return Expr(f'&({arg_node.svrepr})', Bool)
+        return Expr(f'&({arg.svrepr})', Bool)
 
     def visit_Call(self, node):
-        func_dispatch = getattr(self, f'visit_Call_{node.func.id}')
-        if func_dispatch:
-            return func_dispatch(*node.args)
+        arg_nodes = [self.visit_DataExpression(arg) for arg in node.args]
+
+        if all(isinstance(node, ResExpr) for node in arg_nodes):
+            ret = eval(
+                f'{node.func.id}({", ".join(str(n.val) for n in arg_nodes)})')
+            return ResExpr(ret, str(ret), Any)
+        else:
+            func_dispatch = getattr(self, f'visit_Call_{node.func.id}')
+            if func_dispatch:
+                return func_dispatch(*arg_nodes)
 
     def visit_Tuple(self, node):
         items = [self.visit_DataExpression(item) for item in node.elts]
@@ -335,10 +387,21 @@ class HdlAst(ast.NodeVisitor):
     def visit_If(self, node):
         expr = self.visit(node.test)
 
-        svnode = Block(in_cond=expr, stmts=[], out_cond=[])
-        self.visit_block(svnode, node.body)
+        if isinstance(expr, ResExpr):
+            if bool(expr):
+                for stmt in node.body:
+                    # try:
+                    svstmt = self.visit(stmt)
+                    if svstmt is not None:
+                        self.scope[-1].stmts.append(svstmt)
+                    # except Exception as e:
+                    #     pass
 
-        return svnode
+            return None
+        else:
+            svnode = Block(in_cond=expr, stmts=[], cycle_cond=[])
+            self.visit_block(svnode, node.body)
+            return svnode
 
     def visit_Expr(self, node):
         if isinstance(node.value, ast.Yield):
@@ -347,7 +410,7 @@ class HdlAst(ast.NodeVisitor):
             self.generic_visit(node)
 
     def visit_Yield(self, node):
-        self.scope[-1].out_cond.append(Expr('dout.ready', Bool))
+        self.scope[-1].cycle_cond.append(Expr('dout.ready', Bool))
         return Yield(super().visit(node.value))
 
     def visit_AsyncFunctionDef(self, node):
