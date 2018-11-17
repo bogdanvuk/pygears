@@ -208,6 +208,7 @@ class Integer(int, metaclass=IntegerType):
         """
         return super(Integer, self).__int__()
 
+    @class_and_instance_method
     def __getitem__(self, index):
         """Returns the value of the indexth bit in the number representation.
 

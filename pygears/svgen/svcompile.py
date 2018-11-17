@@ -1,176 +1,151 @@
 import ast
 import inspect
-from collections import namedtuple
+from .util import svgen_typedef
+from .hdl_ast import HdlAst, RegFinder, pprint, Loop, Module
 
-opmap = {
-    ast.Add: '+',
-    ast.Sub: '-',
-    ast.Mult: '*',
-    ast.Div: '/',
-    ast.Mod: '%',
-    ast.Pow: '**',
-    ast.LShift: '<<',
-    ast.RShift: '>>>',
-    ast.BitOr: '|',
-    ast.BitAnd: '&',
-    ast.BitXor: '^',
-    ast.FloorDiv: '/',
-    ast.Invert: '~',
-    ast.Not: '!',
-    ast.UAdd: '+',
-    ast.USub: '-',
-    ast.Eq: '==',
-    ast.Gt: '>',
-    ast.GtE: '>=',
-    ast.Lt: '<',
-    ast.LtE: '<=',
-    ast.NotEq: '!=',
-    ast.And: '&&',
-    ast.Or: '||',
-}
-
-ContextVar = namedtuple('ContextVar', ['svname', 'dtype'])
-InPort = namedtuple('InPort', ['svname', 'dtype'])
-OutPort = namedtuple('OutPort', ['svname', 'dtype'])
-
-
-def gather_control_stmt_vars(variables, intf, dtype):
-    scope = {}
-    if isinstance(variables, ast.Tuple):
-        for i, v in enumerate(variables.elts):
-            if isinstance(v, ast.Name):
-                scope[v.id] = ContextVar(f'{intf}_s.{dtype.fields[i]}',
-                                         dtype[i])
-            elif isinstance(v, ast.Starred):
-                scope[v.id] = ContextVar(f'{intf}_s.{dtype.fields[i]}',
-                                         dtype[i])
-    else:
-        scope[variables.id] = ContextVar(f'{intf}_s', dtype)
-
-    return scope
+reg_template = """
+always_ff @(posedge clk) begin
+    if(rst | {0}_rst) begin
+        {0}_reg = {1};
+    end else if ({0}_en) begin
+        {0}_reg = {0}_next;
+    end
+end
+"""
 
 
 class SVCompiler(ast.NodeVisitor):
-    def __init__(self, gear):
-        self.in_ports = [InPort(p.basename, p.dtype) for p in gear.in_ports]
-        self.out_ports = [OutPort(p.basename, p.dtype) for p in gear.out_ports]
-
-        self.scope = [{p.svname: p for p in self.in_ports}]
-
-        # self.gear = gear
+    def __init__(self):
         self.indent = 0
         self.svlines = []
+        self.scope = []
 
-    def enter_block(self, scope=None):
-        if scope is None:
-            scope = {}
-
-        self.scope.append(scope)
+    def enter_block(self, block):
+        self.scope.append(block)
         self.indent += 4
 
     def exit_block(self):
         self.scope.pop()
         self.indent -= 4
 
-    def write_svline(self, line):
-        self.svlines.append(f'{" "*self.indent}{line}')
-
-    def get_context_var(self, pyname):
-        for scope in reversed(self.scope):
-            if pyname in scope:
-                return scope[pyname]
-
+    def write_svline(self, line=''):
+        if not line:
+            self.svlines.append('')
         else:
-            return None
+            self.svlines.append(f'{" "*self.indent}{line}')
 
-    def visit_AsyncFor(self, node):
-        scope = {}
+    def write_svblock(self, block):
+        for line in block.split('\n'):
+            self.write_svline(line)
 
-        intf, dtype = self.visit(node.iter)
-        scope = gather_control_stmt_vars(node.target, intf, dtype)
+    def add_svline_default(self, line):
+        self.svlines.insert(1, f'{" "*self.indent}{line}')
 
-    def visit_AsyncWith(self, node):
-        header = node.items[0]
+    def visit_Module(self, node):
+        self.module = node
 
-        intf, dtype = self.visit(header.context_expr)
-        scope = gather_control_stmt_vars(node.items[0].optional_vars, intf,
-                                         dtype)
+        for name, expr in node.regs.items():
+            self.write_svblock(svgen_typedef(expr.dtype, name))
+            self.write_svline(f'logic {name}_en;')
+            self.write_svline(f'logic {name}_rst;')
+            self.write_svline(f'{name}_t {name}_reg, {name}_next;')
+            self.write_svline()
 
-        self.write_svline(f'if ({intf}.valid) begin')
-        self.enter_block(scope)
+        for name, expr in node.regs.items():
+            self.write_svblock(reg_template.format(name, expr.svrepr))
 
-        for stmt in node.body:
-            try:
-                self.visit(stmt)
-            except Exception as e:
-                pass
+        self.write_svline(f'always_comb begin')
+        self.enter_block(node)
 
-        self.exit_block()
-        self.write_svline(f'end')
+        self.write_svline('// Gear idle states')
 
-    def visit_Subscript(self, node):
-        svname, dtype = self.visit(node.value)
+        for port in node.in_ports:
+            self.write_svline(f'{port.svrepr}.ready = 1;')
 
-        index = eval(compile(ast.Expression(node.slice.value), '', 'eval'))
+        for port in node.out_ports:
+            self.write_svline(f'{port.svrepr}.valid = 0;')
 
-        return f'{svname}.{dtype.fields[index]}', dtype[index]
+        for name in node.regs:
+            self.write_svline(f'{name}_en = 1;')
+            self.write_svline(f'{name}_rst = 0;')
+            self.write_svline(f'{name}_next = {name}_reg;')
 
-    def visit_Name(self, node):
-        return self.get_context_var(node.id)
+        self.write_svline()
 
-    def visit_BinOp(self, node):
-        operands = []
-        operands.append(list(self.visit(node.left)))
-
-        if isinstance(node, ast.BinOp):
-            operands.append(list(self.visit(node.right)))
-            operator = opmap[type(node.op)]
-        elif isinstance(node, ast.Compare):
-            operands.append(list(self.visit(node.comparators[0])))
-            operator = opmap[type(node.ops[0])]
-
-        res_type = eval(f'op1 {operator} op2', {
-            'op1': operands[0][1],
-            'op2': operands[1][1]
-        })
-
-        for op in operands:
-            if int(res_type) > int(op[1]):
-                op[0] = f"{int(res_type)}'({op[0]})"
-
-        return f"{operands[0][0]} {operator} {operands[1][0]}", res_type
-
-    def visit_Attribute(self, node):
-        svname, dtype = self.visit(node.value)
-
-        return f'{svname}.{node.attr}', getattr(dtype, node.attr)
-
-    def visit_Compare(self, node):
-        return self.visit_BinOp(node)
-
-    def visit_If(self, node):
-        expr, expr_type = self.visit(node.test)
-        self.write_svline(f'if ({expr}) begin')
-        self.enter_block()
-
-        for stmt in node.body:
+        for stmt in node.stmts:
             self.visit(stmt)
 
         self.exit_block()
         self.write_svline(f'end')
+
+    def find_out_conds(self, halt_on):
+        out_cond = []
+        for block in reversed(self.scope):
+            if isinstance(block, Module):
+                break
+
+            out_cond += getattr(block, 'cycle_cond', [])
+
+            if (halt_on == 'cycle') and getattr(block, 'exit_cond', []):
+                break
+
+            out_cond += getattr(block, 'exit_cond', [])
+
+        out_cond_svrepr = ' && '.join(cond.svrepr for cond in out_cond)
+
+        return out_cond_svrepr
+
+    def find_cycle_cond(self):
+        return self.find_out_conds(halt_on='cycle')
+
+    def find_exit_cond(self):
+        return self.find_out_conds(halt_on='exit')
 
     def visit_Yield(self, node):
-        expr, expr_type = super().visit(node.value)
+        for port in self.module.out_ports:
+            self.write_svline(f'{port.svrepr}.valid = 1;')
+            self.write_svline(f'{port.svrepr}_s = {node.expr.svrepr};')
 
-        self.write_svline(
-            f'{self.in_ports[0].svname}.ready = {self.out_ports[0].svname}.ready;'
-        )
-        self.write_svline(f'{self.out_ports[0].svname}.valid = 1;')
-        self.write_svline(f'{self.out_ports[0].svname}_s = {expr};')
+    def visit_RegNextExpr(self, node):
+        self.write_svline(f'{node.reg.svrepr}_next = {node.svrepr};')
 
-    def visit_AsyncFunctionDef(self, node):
-        for stmt in node.body:
+    def visit_Block(self, node):
+        self.write_svline(f'if ({node.in_cond.svrepr}) begin')
+        self.enter_block(node)
+
+        if node.cycle_cond or getattr(node, 'exit_cond', []):
+            cycle_cond = self.find_cycle_cond()
+            exit_cond = self.find_exit_cond()
+
+            if exit_cond:
+                self.write_svline('// Gear reset conditions')
+                for name in self.module.regs:
+                    self.write_svline(f'{name}_rst = {exit_cond};')
+
+                self.write_svline()
+
+            if cycle_cond:
+                self.write_svline('// Cycle done conditions')
+                for port in self.module.in_ports:
+                    self.write_svline(
+                        f'{port.svrepr}.ready = {cycle_cond};')
+
+                for name in self.module.regs:
+                    self.write_svline(f'{name}_en = {cycle_cond};')
+
+                self.write_svline()
+
+        for stmt in node.stmts:
+            # try:
             self.visit(stmt)
+            # except Exception as e:
+            #     pass
+
+        self.exit_block()
+        self.write_svline(f'end')
+
+    def visit_Loop(self, node):
+        self.visit_Block(node)
 
 
 data_func_gear = """
@@ -178,27 +153,24 @@ data_func_gear = """
 
 {% call snippet.module_with_intf_structs(module_name, intfs, intfs, comment) %}
 
-    always_comb
-    begin
-{% for i in intfs|isinput %}
-        {{i['name']}}.ready = 1;
-{% endfor %}
-{% for i in intfs|isoutput %}
-        {{i['name']}}.valid = 0;
-{% endfor %}
+{{svlines|indent(4,True)}}
 
-{{svlines|indent(8,True)}}
-    end
 {%- endcall %}
 """
 
 
 def compile_gear_body(gear):
-    v = SVCompiler(gear)
     body_ast = ast.parse(inspect.getsource(gear.func)).body[0]
     # import astpretty
     # astpretty.pprint(body_ast)
+    v = RegFinder(gear)
     v.visit(body_ast)
+
+    hdl_ast = HdlAst(gear, v.regs, v.variables).visit(body_ast)
+    # pprint(hdl_ast)
+
+    v = SVCompiler()
+    v.visit(hdl_ast)
 
     return '\n'.join(v.svlines)
 

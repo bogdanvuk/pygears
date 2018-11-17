@@ -68,7 +68,7 @@ class VCDValVisitor(TypingVisitorBase):
     def visit_queue(self, type_, field, val=None):
         val = type_(val)
         self.visit(type_[0], f'{field}/data', val=val[0])
-        self.visit(type_[1:], f'{field}/eot', val=val[1:])
+        self.visit(type_[1:], f'{field}/eot', val=val[1])
 
     def visit_uint(self, type_, field, val=None):
         self.change(type_, field, val)
