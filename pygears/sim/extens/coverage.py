@@ -7,8 +7,13 @@ import time
 import os
 from enum import IntEnum
 
+from pygears.typing import Integer
 from pygears.typing.visitor import TypingVisitorBase
 from pygears.sim.modules.mon import TypeMonitorVisitor, Partial
+
+
+class CoverError(Exception):
+    pass
 
 
 class CoverBin:
@@ -20,19 +25,26 @@ class CoverBin:
         self.enablement = enablement
         self.cover_cnt = 0
 
+    def sample(self, val):
+        if self.enablement(val):
+            self.cover_cnt += 1
+
     @property
-    def hit(self):
+    def covered(self):
         if self.threshold:
             return self.cover_cnt >= self.threshold
         else:
             return self.cover_cnt > 0
 
-    def sample(self, val):
-        if self.enablement(val):
-            self.cover_cnt += 1
-
-    def report(self):
-        return f'bin {self.name}: {self.cover_cnt} (hit = {self.hit}, threshold = {self.threshold})'
+    @property
+    def hit_percent(self):
+        if self.covered:
+            return 100
+        else:
+            if self.threshold:
+                return 100 * (self.cover_cnt) / self.threshold
+            else:
+                return 0
 
 
 class CoverPoint:
@@ -44,6 +56,7 @@ class CoverPoint:
                  name,
                  dtype=None,
                  bins=None,
+                 ignore_bins=None,
                  threshold=None,
                  bind_field_name=None,
                  bind_dtype=False,
@@ -53,6 +66,8 @@ class CoverPoint:
         self.bind_field_name = bind_field_name
         self.bind_dtype = bind_dtype
         self.auto_bin_max = auto_bin_max
+        self.ignore_bins = ignore_bins if ignore_bins else []
+        self.threshold = threshold
         if bins:
             self.bins = bins
             self.set_default_bin()
@@ -62,7 +77,7 @@ class CoverPoint:
         # set sub threshold only if not already set
         for b in self.bins:
             if not b.threshold:
-                b.threshold = threshold
+                b.threshold = self.threshold
 
     def set_default_bin(self):
         '''Bin for holding all values which are not covered by other bins'''
@@ -71,6 +86,10 @@ class CoverPoint:
                 other = [
                     sub.enablement for j, sub in enumerate(self.bins) if j != i
                 ]
+                other.extend([
+                    sub.enablement for j, sub in enumerate(self.ignore_bins)
+                    if j != i
+                ])
 
                 def default_enablement(val, other=other):
                     for func in other:
@@ -82,7 +101,20 @@ class CoverPoint:
                 break
 
     def set_auto_bin(self):
-        assert self.dtype, f'dtype must be set for CoverPoint if bins set as None'
+        '''Creates automatic (explicit) bins
+        The number of bins created is set by auto_bin_max and
+        the enablement is if a value bellongs to the bin range
+        '''
+        if not self.dtype:
+            raise CoverError(
+                f'dtype must be set for CoverPoint if bins set as None')
+        if not issubclass(self.dtype, Integer):
+            raise CoverError(
+                f'Automatic (implicit) bins only supported for integers')
+        if self.ignore_bins:
+            raise CoverError(
+                'Automatic bins do not support ignore bins for now')
+
         bins = []
         if self.auto_bin_max < 2**len(self.dtype):
             bin_num = self.auto_bin_max
@@ -104,21 +136,17 @@ class CoverPoint:
         for b in self.bins:
             b.sample(val)
 
-    def report(self):
-        report = f'Cover type {self.name}\n'
-        report += f'Total hits: {self.cover_cnt}\n'
-        report += f'Hit percent: {100 * self.hit / len(self.bins)}\n'
-        for b in self.bins:
-            report += f'\t{b.report()}\n'
-        return report
-
     @property
     def cover_cnt(self):
         return sum([b.cover_cnt for b in self.bins])
 
     @property
-    def hit(self):
-        return sum([b.hit for b in self.bins])
+    def covered(self):
+        return all([b.covered for b in self.bins])
+
+    @property
+    def hit_percent(self):
+        return 100 * sum([b.covered for b in self.bins]) / len(self.bins)
 
 
 class CoverageTypeVisitor(TypingVisitorBase):
@@ -137,21 +165,45 @@ class CoverageTypeVisitor(TypingVisitorBase):
             elif not cp.bind_field_name and not cp.bind_dtype:
                 cp.sample(data)
 
+    def set_field_prefix(self, field):
+        if field:
+            return field + '.'
+        else:
+            return ''
+
+    def visit_union(self, dtype, field=None, data=None):
+        self.sample(dtype, field, data)
+        field = self.set_field_prefix(field)
+        self.visit(dtype[0], f'{field}data', data=data.data)
+        self.visit(dtype[-1], f'{field}ctrl', data=data.ctrl)
+
     def visit_queue(self, dtype, field=None, data=None):
         self.sample(dtype, field, data)
+        field = self.set_field_prefix(field)
+        # self.visit(dtype[-1], f'{field}eot', data=data[-1])
         for d in data:
-            self.visit(dtype[0], 'data', data=d)
+            self.visit(dtype[0], f'{field}data', data=d)
 
     def visit_tuple(self, dtype, field=None, data=None):
         self.sample(dtype, field, data)
+        field_p = self.set_field_prefix(field)
         for i, d in enumerate(data):
             if hasattr(dtype, '__parameters__'):
-                field = dtype.__parameters__[i]
+                field = field_p + dtype.__parameters__[i]
             else:
-                field = f'f{i}'
+                field = field_p + f'f{i}'
             self.visit(dtype[i], field, data=d)
 
+    def visit_array(self, dtype, field=None, data=None):
+        self.sample(dtype, field, data)
+        field = self.set_field_prefix(field)
+        for i, d in enumerate(data):
+            self.visit(dtype[i], f'{field}f{i}', data=d)
+
     def visit_uint(self, dtype, field=None, data=None):
+        self.sample(dtype, field, data)
+
+    def visit_int(self, dtype, field=None, data=None):
         self.sample(dtype, field, data)
 
 
@@ -170,14 +222,18 @@ class CoverGroup:
         self.visitor.visit(self.dtype, data=val)
 
     def report(self):
-        report = '-' * 80
-        report += f'\nCoverge report for group {self.name}\n'
-        report += '-' * 80
-        report += '\n'
+        r = '=' * 80 + '\n'
+        r += f'Coverge report for group {self.name}\n'
+        r += '=' * 80 + '\n'
         for p in self.cover_points:
-            report += f'{p.report()}\n'
-        report += '-' * 80
-        return report
+            r += f'Cover point: {p.name}'
+            r += f' ({p.hit_percent:.2f}%, cover_cnt: {p.cover_cnt}, threshold: {p.threshold})\n'
+            r += 'Bins\n'
+            for b in p.bins:
+                r += f'\t{b.name}: {b.hit_percent:.2f}%, cover_cnt: {b.cover_cnt}, threshold: {b.threshold}\n'
+            r += '-' * 80 + '\n'
+        r += '=' * 80 + '\n'
+        return r
 
 
 class CoverSingleValue:

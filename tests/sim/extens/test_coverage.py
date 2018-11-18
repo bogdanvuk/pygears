@@ -25,9 +25,16 @@ def test_accumulator(enable_coverage=True):
     ]
     points = [
         CoverPoint(
-            'val_cp', bins=val_bins, bind_field_name='val', threshold=11),
+            'val_cp',
+            bins=val_bins,
+            ignore_bins=[CoverBin('ignore', enablement=lambda x: x == 5)],
+            bind_field_name='data.val',
+            threshold=11),
         CoverPoint(
-            'offset_cp', bins=None, dtype=Uint[8], bind_field_name='offset'),
+            'offset_cp',
+            bins=None,
+            dtype=Uint[8],
+            bind_field_name='data.offset'),
         CoverPoint(
             'tuple_cp', bins=cross_bins, dtype=t_din[0], bind_dtype=True),
         CoverPoint(
@@ -47,7 +54,7 @@ def test_accumulator(enable_coverage=True):
     # checks
     # val
     assert cg.visitor.cover_points[0].bins[0].cover_cnt == 2
-    assert cg.visitor.cover_points[0].bins[1].cover_cnt == 7
+    assert cg.visitor.cover_points[0].bins[1].cover_cnt == 6
     # offset
     assert cg.visitor.cover_points[1].cover_cnt == 9
     # tuple
