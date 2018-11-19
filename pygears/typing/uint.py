@@ -298,6 +298,14 @@ class Int(Integer, metaclass=IntType):
     def __eq__(self, other):
         return int(self) == int(other)
 
+    @classmethod
+    def decode(cls, val):
+        val = int(val)
+        if val >= (1 << (int(cls) - 1)):
+            val -= 1 << int(cls)
+
+        return cls(val)
+
 
 class UintType(IntegerType):
     """Fixed width generic unsigned integer data type.

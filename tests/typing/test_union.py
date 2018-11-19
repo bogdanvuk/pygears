@@ -1,6 +1,6 @@
 import pytest
 
-from pygears.typing import TemplateArgumentsError, Uint, Union, Unit
+from pygears.typing import TemplateArgumentsError, Uint, Union, Unit, Int, Tuple
 
 
 def test_inheritance():
@@ -67,3 +67,21 @@ def test_indexing():
 def test_unit():
     a = Union[Unit]
     assert a == Unit
+
+
+def test_decode_int():
+    subt0 = Tuple[Int[8], Int[4]]
+    subt1 = Tuple[Int[4], Int[8]]
+    dtype = Union[subt0, subt1]
+
+    dtype_tuple0 = Tuple[subt0, Uint[1]]
+    dtype_tuple1 = Tuple[subt1, Uint[1]]
+
+    val0 = (-128, -8)
+    code0 = int(dtype_tuple0((subt0(val0), 0)))
+
+    val1 = (-8, -128)
+    code1 = int(dtype_tuple1((subt1(val1), 1)))
+
+    assert(dtype.decode(code0).data == val0)
+    assert(dtype.decode(code1).data == val1)

@@ -194,7 +194,10 @@ class Union(tuple, metaclass=UnionType):
         for t in cls:
             t_width = int(t)
             t_mask = (1 << t_width) - 1
-            ret.append(t.decode(val & t_mask))
+            ret.append(val & t_mask)
             val >>= t_width
 
-        return cls(*ret)
+        data, ctrl = ret
+        subtype = cls.types[ctrl]
+
+        return cls(subtype.decode(data), cls[1].decode(ctrl))
