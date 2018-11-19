@@ -47,7 +47,7 @@ class Intf:
     OPERATOR_SUPPORT = [
         '__getitem__', '__neg__', '__add__', '__sub__', '__mul__', '__div__',
         '__floordiv__', '__mod__', '__invert__', '__rshift__', '__lt__',
-        '__aiter__'
+        '__aiter__', '__eq__'
     ]
 
     def __init__(self, dtype):
