@@ -18,7 +18,7 @@ def type_cast(dtype, cast_type):
             return Uint[int(dtype)]
     elif typeof(cast_type, Tuple) and (not cast_type.is_specified()):
         if typeof(dtype, Queue) or typeof(dtype, Union):
-            return Tuple[dtype[0], dtype[1:]]
+            return Tuple[dtype[0], dtype[1]]
         elif typeof(dtype, Tuple):
             return dtype
         elif typeof(dtype, Array):

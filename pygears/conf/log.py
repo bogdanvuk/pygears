@@ -47,7 +47,7 @@ import tempfile
 from functools import partial
 from logging import INFO, WARNING, ERROR, DEBUG, CRITICAL, NOTSET
 
-from .registry import PluginBase, safe_bind, registry, set_cb
+from .registry import PluginBase, safe_bind, set_cb, reg_inject, Inject
 from .trace import enum_stacktrace
 
 HOOKABLE_LOG_METHODS = [
@@ -70,8 +70,11 @@ def set_log_level(name, level):
     conf_log().info(f'Setting log level {name}, {level}')
 
 
-def stack_trace(name, verbosity, message):
-    stack_traceback_fn = registry('logger/stack_traceback_fn')
+@reg_inject
+def stack_trace(name,
+                verbosity,
+                message,
+                stack_traceback_fn=Inject('logger/stack_traceback_fn')):
     with open(stack_traceback_fn, 'a') as f:
         delim = '-' * 50 + '\n'
         f.write(delim)
@@ -106,8 +109,13 @@ def log_action_debug():
     pdb.set_trace()
 
 
-def custom_action(logger_name, message, severity):
-    log_cfg = registry('logger')[logger_name]
+@reg_inject
+def custom_action(logger_name, message, severity, log_cfgs=Inject('logger')):
+    if logger_name not in log_cfgs:
+        return
+
+    log_cfg = log_cfgs[logger_name]
+
     if severity in log_cfg:
         if log_cfg[severity] == 'exception':
             log_action_exception(logger_name, message)
@@ -142,17 +150,23 @@ class CustomLogger(logging.Logger):
 
 
 class LogFmtFilter(logging.Filter):
+    @reg_inject
+    def __init__(self,
+                 name='',
+                 stack_traceback_fn=Inject('logger/stack_traceback_fn')):
+        super(LogFmtFilter, self).__init__(name)
+        self.stack_traceback_fn = stack_traceback_fn
+
     def filter(self, record):
         record.stack_file = ''
         record.err_file = ''
 
         if record.levelno > INFO:
-            stack_traceback_fn = registry('logger/stack_traceback_fn')
-            if os.path.exists(stack_traceback_fn):
-                stack_num = sum(1 for line in open(stack_traceback_fn))
+            if os.path.exists(self.stack_traceback_fn):
+                stack_num = sum(1 for line in open(self.stack_traceback_fn))
             else:
                 stack_num = 0
-            record.stack_file = f'\n\t File "{stack_traceback_fn}", line {stack_num}, for stacktrace'
+            record.stack_file = f'\n\t File "{self.stack_traceback_fn}", line {stack_num}, for stacktrace'
             record.err_file = f'\n\t File "{record.pathname}", line {record.lineno}, in {record.funcName}'
 
         return True

@@ -14,7 +14,7 @@ from .quenvelope import quenvelope
 from .sieve import sieve
 from .fmap import fmap
 from .permute import permuted_apply
-from .const import const
+from .const import const, const_ping
 from .add import add
 from .sub import sub
 from .mul import mul
@@ -39,6 +39,7 @@ from .shr import shr
 from .align import align
 
 import pygears.common.fmaps
+import pygears.common.hls
 
 __all__ = [
     'expand', 'czip', 'ccat', 'cart', 'cast', 'quenvelope', 'zip_sync',
@@ -48,5 +49,5 @@ __all__ = [
     'mux_valve', 'demux_zip', 'data_dly', 'eq', 'union_sync', 'union_collapse',
     'filt', 'buff', 'local_rst', 'mod', 'invert', 'shr', 'queue_wrap_from',
     'demux_by', 'align', 'lt', 'neq', 'cart_sync_with', 'do_if', 'filt_by',
-    'union_sync_with', 'pick_by'
+    'union_sync_with', 'pick_by', 'const_ping'
 ]

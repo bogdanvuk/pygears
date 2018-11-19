@@ -81,7 +81,7 @@ def filt_fix_sel(din: Union, *, sel) -> b'din.types[sel]':
 
 def setup(module):
     module.data = module.tout[0](0)
-    module.eot = module.tout[1:](0)
+    module.eot = module.tout[1](0)
     module.empty = True
 
 
@@ -102,15 +102,15 @@ async def qfilt(
         if all(d.eot[:filt_lvl]):
             if valid_data:
                 if not module().empty:
-                    yield module().tout((module().data, *module().eot))
-                    yield module().tout((udata.data, *d.eot))
+                    yield module().tout((module().data, module().eot))
+                    yield module().tout((udata.data, d.eot))
             else:
-                yield module().tout((module().data, *d.eot))
+                yield module().tout((module().data, d.eot))
             module().empty = True
 
         elif valid_data:
             if not module().empty:
-                yield module().tout((module().data, *module().eot))
+                yield module().tout((module().data, module().eot))
 
             # register
             module().data = udata.data

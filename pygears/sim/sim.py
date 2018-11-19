@@ -336,9 +336,10 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
         try:
             # print(f"----------- After run ---------------")
-            self.events['after_run'](self)
 
             if not sim_exception:
+                self.events['after_run'](self)
+
                 for sim_gear in self.sim_gears:
                     if sim_gear not in self.done:
                         self._finish(sim_gear)

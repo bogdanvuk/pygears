@@ -16,17 +16,15 @@ def quiter(iterable):
 
 
 async def quiter_async(intf):
-
-    teot = intf.dtype[1:]
-    eot = 0
-
-    while (eot != ((1 << len(teot)) - 1)):
+    while True:
         data = await intf.pull()
-        eot = data[1:]
 
         yield data
 
         intf.ack()
+
+        if all(data.eot):
+            break
 
 
 class gather:

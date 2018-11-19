@@ -1,6 +1,6 @@
 from pygears import alternative, gear
 from pygears.typing import Queue
-from pygears.common import quenvelope, cart
+from pygears.common import quenvelope, cart, project
 from pygears.common import fmap as common_fmap
 
 
@@ -12,7 +12,7 @@ def fmap(din, *, f, lvl=1, fcat=cart, balance=None, common_balance=True):
     lvl -= fmap_lvl
 
     env = din | quenvelope(lvl=fmap_lvl)
-    data = din[0:queue_lvl - fmap_lvl + 1]
+    data = din | project(lvl=fmap_lvl)
 
     if lvl > 0:
         f = common_fmap(f=f, lvl=lvl, fcat=fcat, balance=balance)

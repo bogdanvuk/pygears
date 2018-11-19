@@ -10,7 +10,7 @@ def test_uint():
     assert iout.dtype == Uint[5]
 
 
-@svgen_check(['sieve_0v2_3_5v7.sv'])
-def test_queue():
-    iout = Intf(Queue[Uint[2], 6])[:2, 3, 5:]
-    assert iout.dtype == Queue[Uint[2], 4]
+# @svgen_check(['sieve_0v2_3_5v7.sv'])
+# def test_queue():
+#     iout = Intf(Queue[Uint[2], 6])[:2, 3, 5:]
+#     assert iout.dtype == Queue[Uint[2], 4]

@@ -1,3 +1,4 @@
+import pytest
 import random
 from functools import partial
 
@@ -24,12 +25,12 @@ dir_seq = [[[list(range(3)), list(range(5))], [list(range(1)),
 
 
 def get_ref(seq):
-    return [
-        list(
-            range(
-                sum(len(x)
-                    for x in seq[0][0]) + sum(len(x) for x in seq[0][1])))
-    ]
+    num = 0
+    for subseq in seq[0]:
+        for subsubseq in subseq:
+            num += len(subsubseq)
+
+    return [list(range(1, num+1))]
 
 
 def test_py_sim_dir(seq=dir_seq):
@@ -61,12 +62,13 @@ def test_socket_rand(tmpdir, seq=random_seq):
     sim(outdir=tmpdir)
 
 
-def test_verilate_dir(tmpdir, seq=dir_seq):
+@pytest.mark.parametrize('lvl', range(1, t_din.lvl))
+def test_verilate_dir(tmpdir, lvl, seq=dir_seq):
     skip_ifndef('VERILATOR_ROOT')
     verif(
         drv(t=t_din, seq=seq),
-        f=qcnt(sim_cls=SimVerilated, lvl=t_din.lvl),
-        ref=qcnt(name='ref_model', lvl=t_din.lvl))
+        f=qcnt(sim_cls=SimVerilated, lvl=lvl),
+        ref=qcnt(name='ref_model', lvl=lvl))
     sim(outdir=tmpdir)
 
 

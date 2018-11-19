@@ -77,8 +77,7 @@ def czip_vararg(*din):
 
 @gear
 def unzip(din, *, dtypes):
-    zdata = din[0]
-    zlast = din[1:]
+    zdata, zlast = din
 
     def split():
         for i, d in enumerate(dtypes):
@@ -98,13 +97,14 @@ async def zip_sync(*din, outsync=True) -> b'din':
 
     eot_aligned = (1, 1)
 
-    while(1):
+    while (1):
 
         din_data = tuple(await d.pull() for d in din)
 
-        eot_overlap = [d[:overlap_lvl] for d in din_data]
+        eot_overlap = [d.sub(overlap_lvl) for d in din_data]
 
-        eot_aligned = (eot_overlap[0] >= eot_overlap[1], eot_overlap[1] >= eot_overlap[0])
+        eot_aligned = (eot_overlap[0] >= eot_overlap[1],
+                       eot_overlap[1] >= eot_overlap[0])
 
         if all(eot_aligned):
             yield din_data

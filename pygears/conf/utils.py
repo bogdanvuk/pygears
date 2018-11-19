@@ -52,6 +52,11 @@ def dict_generator(indict, pre=None):
 
 
 def intercept_arguments(func, cb_named=None, cb_kwds=None, cb_pos=None):
+    if inspect.isgeneratorfunction(func):
+        from .log import conf_log
+        conf_log().warning('Intercepting arguments for generator function '
+                           'could result in callbacks beeing called to soon')
+
     sig = inspect.signature(func)
     # default values in func definition
     dflt_args = {

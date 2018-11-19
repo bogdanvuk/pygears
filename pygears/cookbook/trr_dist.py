@@ -14,15 +14,15 @@ async def trr_dist(din: Queue, *,
 
     for i in range(dout_num):
         out_res = [None] * dout_num
-        val = t_din((0, 0, 0))
+        val = t_din(0, 0)
 
         while (val.eot[0] == 0):
             async with din as val:
-                out_res[i] = val[:-1]
+                out_res[i] = val.sub()
                 gear_log().debug(
                     f'Trr_dist yielding on output {i} value {out_res[i]}')
                 yield tuple(out_res)
 
-        if val.eot == int('1' * t_din.lvl, 2):
+        if all(val.eot):
             gear_log().debug(f'Trr_dist reset to first output')
             break

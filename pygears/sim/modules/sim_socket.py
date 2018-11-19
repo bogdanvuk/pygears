@@ -233,6 +233,7 @@ class SimSocket(CosimBase):
         kwds['batch'] = batch
         self.kwds = kwds
         self.sock = None
+        self.cosim_pid = None
 
         self.server_address = ('localhost', tcp_port)
         self.handlers = {}
@@ -291,7 +292,6 @@ class SimSocket(CosimBase):
         if self.rebuild:
             sv_cosim_gen(self.gear, self.server_address[1])
 
-        self.cosim_pid = None
         if self.run_cosim:
 
             self.sock.settimeout(1)
@@ -327,7 +327,7 @@ class SimSocket(CosimBase):
 
         self.loop = asyncio.get_event_loop()
 
-        total_conn_num = len(self.gear.argnames) + len(self.gear.outnames) + 1
+        total_conn_num = len(self.gear.args) + len(self.gear.outnames) + 1
 
         sim_log().info(f'Waiting on {self.sock.getsockname()}')
         while len(self.handlers) != total_conn_num:

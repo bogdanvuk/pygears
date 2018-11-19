@@ -326,7 +326,7 @@ class Tuple(tuple, metaclass=TupleType):
 
         for d, t in zip(reversed(self), reversed(type(self))):
             ret <<= int(t)
-            ret |= int(d)
+            ret |= int(d) & ((1 << int(t)) - 1)
 
         return ret
 

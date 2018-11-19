@@ -4,6 +4,8 @@ from pygears import GearDone
 from pygears.conf import PluginBase, registry, safe_bind
 from pygears.core.port import InPort, OutPort
 from pygears.core.sim_event import SimEvent
+from .type_match import TypeMatchError
+from pygears.typing import typeof, Any
 from pygears.typing.base import TypingMeta
 
 
@@ -44,7 +46,8 @@ def get_consumer_tree(intf):
 class Intf:
     OPERATOR_SUPPORT = [
         '__getitem__', '__neg__', '__add__', '__sub__', '__mul__', '__div__',
-        '__floordiv__', '__mod__', '__invert__', '__rshift__', '__lt__'
+        '__floordiv__', '__mod__', '__invert__', '__rshift__', '__lt__',
+        '__aiter__'
     ]
 
     def __init__(self, dtype):
@@ -168,9 +171,15 @@ class Intf:
 
         if self.dtype is not type(val):
             try:
-                val = self.dtype(val)
+                if not typeof(self.dtype, Any):
+                    val = self.dtype(val)
             except TypeError:
-                pass
+                raise TypeMatchError(
+                    f'Output data "{repr(val)}" from the'
+                    f' "{registry("gear/current_module").name}"'
+                    f' module cannot be converted to the type'
+                    f' {repr(self.dtype)}'
+                )
 
         if put_event:
             put_event(self, val)

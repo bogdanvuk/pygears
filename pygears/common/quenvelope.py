@@ -24,11 +24,11 @@ correctly used within cartesian concatenations.
 
     async for data in quiter_async(din):
         if out_data is None:
-            out_data = module().tout((Unit(), *data[-lvl:]))
+            out_data = module().tout((Unit(), data.eot[-lvl:]))
             dout.put_nb(out_data)
 
         if sub_lvl > 0:
-            subelem = data[:len(data)-lvl]
+            subelem = data.sub(sub_lvl)
             if subelem.last:
                 out_data = None
         else:

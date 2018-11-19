@@ -8,7 +8,7 @@ module {{module_name}}
 );
 
 {% for i in intfs|selectattr('modport', 'equalto', 'consumer') %}
-{{snippet.intf_inst(i['name']+"_if", width=i['param'], size=1, type="")|indent(4,True)}}
+{{snippet.intf_inst(i['name']+"_if", width=i['width'], size=1, type="")|indent(4,True)}}
 {% endfor %}
 
 {% for p, v in params.items() %}

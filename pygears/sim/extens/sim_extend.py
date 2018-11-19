@@ -1,10 +1,12 @@
-from pygears import registry
 import atexit
+
+from pygears.conf import reg_inject, Inject
 
 
 class SimExtend:
-    def __init__(self, top=None):
-        self.sim = registry('sim/simulator')
+    @reg_inject
+    def __init__(self, top=None, sim=Inject('sim/simulator')):
+        self.sim = sim
         for name, event in self.sim.events.items():
             try:
                 event.append(getattr(self, name))

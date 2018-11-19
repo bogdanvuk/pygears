@@ -82,5 +82,3 @@ def test_gear_expand_queue_tuple():
     iout = expand(Intf(a))
 
     assert iout.dtype == expand_type(a)
-
-test_gear_expand_tuple_union_complex()

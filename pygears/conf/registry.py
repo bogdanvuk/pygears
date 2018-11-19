@@ -11,18 +11,19 @@ delimiter = '/'
 wildcard_list = ['*', '?', '[', ']']
 
 
-class RegistryFuncArg:
-    def __init__(self, path):
-        self.path = path
+class Inject:
+    def __init__(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
 
 
 def get_args_from_registry(arg_dict):
     for k, v in arg_dict.items():
-        if isinstance(v, RegistryFuncArg):
-            arg_dict[k] = registry(v.path)
+        if isinstance(v, Inject):
+            arg_dict[k] = registry(v.args[0])
 
 
-def registry_args(func):
+def reg_inject(func):
     return intercept_arguments(
         func, cb_named=get_args_from_registry, cb_kwds=get_args_from_registry)
 
