@@ -12,6 +12,6 @@ async def accumulator(din: Queue[Tuple[Integer['w_data'], Integer['w_data']]]
     while not val.eot:
         async with din as val:
             data, offset = val.data
-            acc += data
+            acc += int(data)
 
     yield acc + offset
