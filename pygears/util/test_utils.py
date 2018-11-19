@@ -11,6 +11,10 @@ from pygears import registry, clear
 from functools import wraps
 from itertools import islice
 from pygears.definitions import COMMON_SVLIB_DIR
+from pygears.sim.modules.sim_socket import SimSocket
+from pygears.sim.modules.verilator import SimVerilated
+
+from functools import partial
 
 re_trailing_space_rem = re.compile(r"\s+$", re.MULTILINE)
 re_multispace_rem = re.compile(r"\s+", re.MULTILINE)
@@ -220,3 +224,15 @@ def skip_sim_if_no_tools():
                 'SCV_HOME' not in os.environ):
         raise unittest.SkipTest(
             "Such-and-such failed. Skipping all tests in foo.py")
+
+
+@pytest.fixture(params=[None, SimVerilated, SimSocket])
+def sim_cls(request):
+    sim_cls = request.param
+    if sim_cls is SimVerilated:
+        skip_ifndef('VERILATOR_ROOT')
+    elif sim_cls is SimSocket:
+        skip_ifndef('SIM_SOCKET_TEST')
+        sim_cls = partial(SimSocket, run=True)
+
+    yield sim_cls

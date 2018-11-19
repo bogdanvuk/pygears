@@ -51,7 +51,6 @@ def queue_filt_test(din_t, seq, sel, sim_cls):
 @pytest.mark.parametrize('sel', [0, 1])
 @pytest.mark.parametrize('din_t', [union_din, queue_din, plain_din])
 @pytest.mark.parametrize('seq', [directed_seq, 'rand'])
-@pytest.mark.parametrize('sim_cls', [None, SimVerilated, SimSocket])
 def test_pysim_dir(sel, din_t, seq, sim_cls):
     if seq == 'rand':
         skip_ifndef('RANDOM_TEST')
