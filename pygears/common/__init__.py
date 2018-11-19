@@ -6,8 +6,7 @@ from .project import project
 from .czip import czip, zip_sync, unzip
 from .ccat import ccat
 from .cart import cart, cart_sync, cart_sync_with
-from .union import (union_sync, union_collapse, union_sync_with, pick_by,
-                    do_if)
+from .union import (union_sync, union_collapse, union_sync_with, case, when)
 from .queue import queue_wrap_from
 from .cast import cast
 from .quenvelope import quenvelope
@@ -48,6 +47,6 @@ __all__ = [
     'unzip', 'serialize', 'project', 'fifo', 'factor', 'fill', 'mux_zip',
     'mux_valve', 'demux_zip', 'data_dly', 'eq', 'union_sync', 'union_collapse',
     'filt', 'buff', 'local_rst', 'mod', 'invert', 'shr', 'queue_wrap_from',
-    'demux_by', 'align', 'lt', 'neq', 'cart_sync_with', 'do_if', 'filt_by',
-    'union_sync_with', 'pick_by', 'const_ping'
+    'demux_by', 'align', 'lt', 'neq', 'cart_sync_with', 'when', 'filt_by',
+    'union_sync_with', 'case', 'const_ping'
 ]

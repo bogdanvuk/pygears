@@ -30,30 +30,30 @@ def filt_by(din, ctrl, *, sel, fcat=ccat):
 
 
 @gear
-def pick_by(din, ctrl, *, f, fcat=ccat, **kwds):
+def case(cond, din, *, f, fcat=ccat, tout=None, **kwds):
     try:
         len(f)
     except TypeError:
         f = (None, f)
 
-    return fcat(din, ctrl) \
+    return fcat(din, cond) \
         | Union \
         | fmap(f=f, **kwds) \
-        | union_collapse
+        | union_collapse(t=tout)
 
 
 @gear
-def do_if(cond, din, *, f, fe=None, fcat=ccat, **kwds):
-    return fcat(din, cond) \
-        | Union \
-        | fmap(f=(fe, f), **kwds) \
-        | union_collapse
+def when(cond, din, *, f, fe=None, fcat=ccat, tout=None, **kwds):
+    return din | case(cond, f=(fe, f), fcat=fcat, tout=tout, **kwds)
 
 
 def all_same(din):
     return din.types.count(din.types[0]) == len(din.types)
 
 
-@gear(enablement=b'all_same(din)')
-def union_collapse(din: Union) -> b'din.types[0]':
-    return din[0] | din.dtype.types[0]
+@gear(enablement=b'all_same(din) or t')
+def union_collapse(din: Union, *, t=None):
+    if t is None:
+        t = din.dtype.types[0]
+
+    return din[0] | t
