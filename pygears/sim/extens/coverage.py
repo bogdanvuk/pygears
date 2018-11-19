@@ -7,9 +7,9 @@ import time
 import os
 from enum import IntEnum
 
-from pygears.typing import Integer
-from pygears.typing.visitor import TypingVisitorBase
+from pygears.typing import Integer, Uint
 from pygears.sim.modules.mon import TypeMonitorVisitor, Partial
+from pygears.util.utils import quiter
 
 
 class CoverError(Exception):
@@ -149,9 +149,8 @@ class CoverPoint:
         return 100 * sum([b.covered for b in self.bins]) / len(self.bins)
 
 
-class CoverageTypeVisitor(TypingVisitorBase):
-    def __init__(self, name, cover_points):
-        self.name = name
+class CoverageTypeVisitor:
+    def __init__(self, cover_points):
         self.cover_points = cover_points
 
     def sample(self, dtype, field, data):
@@ -171,18 +170,45 @@ class CoverageTypeVisitor(TypingVisitorBase):
         else:
             return ''
 
+    def visit(self, dtype, field=None, data=None):
+        visit_func_name = f'visit_{dtype.__name__.lower()}'
+
+        visit_func = getattr(self, visit_func_name, self.visit_default)
+        ret = visit_func(dtype, field, data)
+        if inspect.isgenerator(ret):
+            yield from ret
+        else:
+            yield ret
+
+    def visit_default(self, dtype, field=None, data=None):
+        self.sample(dtype, field, data)
+        yield data
+
     def visit_union(self, dtype, field=None, data=None):
         self.sample(dtype, field, data)
         field = self.set_field_prefix(field)
-        self.visit(dtype[0], f'{field}data', data=data.data)
-        self.visit(dtype[-1], f'{field}ctrl', data=data.ctrl)
+        for _ in self.visit(dtype[0], f'{field}data', data=data.data):
+            pass
+        for _ in self.visit(dtype[-1], f'{field}ctrl', data=data.ctrl):
+            pass
+        yield data
 
     def visit_queue(self, dtype, field=None, data=None):
         self.sample(dtype, field, data)
         field = self.set_field_prefix(field)
-        # self.visit(dtype[-1], f'{field}eot', data=data[-1])
-        for d in data:
-            self.visit(dtype[0], f'{field}data', data=d)
+        for (i, d), eot in quiter(enumerate(data)):
+            for ret in self.visit(dtype.sub(), f'{field}data', data=d):
+                if dtype.lvl == 1:
+                    self.sample(Uint[1], 'eot', data=eot)
+                    yield (ret, Uint[1](eot))
+                else:
+                    self.sample(
+                        dtype.eot,
+                        'eot',
+                        data=(int(ret[1]) + (eot << ret[1].width)))
+                    yield (
+                        ret[0],
+                        Uint[ret[1].width + 1](ret[1]) + (eot << ret[1].width))
 
     def visit_tuple(self, dtype, field=None, data=None):
         self.sample(dtype, field, data)
@@ -192,19 +218,18 @@ class CoverageTypeVisitor(TypingVisitorBase):
                 field = field_p + dtype.__parameters__[i]
             else:
                 field = field_p + f'f{i}'
-            self.visit(dtype[i], field, data=d)
+            t = dtype[i]
+            for _ in self.visit(t, field, data=d):
+                pass
+        yield data
 
     def visit_array(self, dtype, field=None, data=None):
         self.sample(dtype, field, data)
         field = self.set_field_prefix(field)
         for i, d in enumerate(data):
-            self.visit(dtype[i], f'{field}f{i}', data=d)
-
-    def visit_uint(self, dtype, field=None, data=None):
-        self.sample(dtype, field, data)
-
-    def visit_int(self, dtype, field=None, data=None):
-        self.sample(dtype, field, data)
+            for _ in self.visit(dtype[i], f'{field}f{i}', data=d):
+                pass
+        yield data
 
 
 class CoverGroup:
@@ -215,11 +240,11 @@ class CoverGroup:
         self.name = name
         self.dtype = dtype
         self.cover_points = cover_points
-        self.visitor = CoverageTypeVisitor(
-            'coverage_visitor', cover_points=cover_points)
 
     def sample(self, val):
-        self.visitor.visit(self.dtype, data=val)
+        for _ in CoverageTypeVisitor(cover_points=self.cover_points).visit(
+                self.dtype, data=val):
+            pass
 
     def report(self):
         r = '=' * 80 + '\n'
@@ -342,6 +367,7 @@ class CoverIntf(CoverBase):
 
 
 def cover_intf(intf, cg, en=True):
+    '''Function to register which interface needs to be covered'''
     while intf.producer:
         intf = intf.producer
 

@@ -53,16 +53,16 @@ def test_accumulator(enable_coverage=True):
 
     # checks
     # val
-    assert cg.visitor.cover_points[0].bins[0].cover_cnt == 2
-    assert cg.visitor.cover_points[0].bins[1].cover_cnt == 6
+    assert cg.cover_points[0].bins[0].cover_cnt == 2
+    assert cg.cover_points[0].bins[1].cover_cnt == 6
     # offset
-    assert cg.visitor.cover_points[1].cover_cnt == 9
+    assert cg.cover_points[1].cover_cnt == 9
     # tuple
-    assert cg.visitor.cover_points[2].bins[0].cover_cnt == 1
-    assert cg.visitor.cover_points[2].bins[1].cover_cnt == 1
-    assert cg.visitor.cover_points[2].bins[2].cover_cnt == 7
+    assert cg.cover_points[2].bins[0].cover_cnt == 1
+    assert cg.cover_points[2].bins[1].cover_cnt == 1
+    assert cg.cover_points[2].bins[2].cover_cnt == 7
     # qlen
-    assert cg.visitor.cover_points[3].bins[0].cover_cnt == 3
+    assert cg.cover_points[3].bins[0].cover_cnt == 3
 
 
 def test_chop(enable_coverage=True):
@@ -99,13 +99,13 @@ def test_chop(enable_coverage=True):
     # print(din_cg.report())
 
     # cfg
-    assert cfg_cg.visitor.cover_points[0].bins[0].cover_cnt == 1
-    assert cfg_cg.visitor.cover_points[0].bins[1].cover_cnt == 1
-    assert cfg_cg.visitor.cover_points[0].bins[2].cover_cnt == 0
+    assert cfg_cg.cover_points[0].bins[0].cover_cnt == 1
+    assert cfg_cg.cover_points[0].bins[1].cover_cnt == 1
+    assert cfg_cg.cover_points[0].bins[2].cover_cnt == 0
 
     # din
-    assert din_cg.visitor.cover_points[0].cover_cnt == 12
-    assert din_cg.visitor.cover_points[1].bins[0].cover_cnt == 2
+    assert din_cg.cover_points[0].cover_cnt == 12
+    assert din_cg.cover_points[1].bins[0].cover_cnt == 2
 
 
 def test_intf(enable_coverage=True):
@@ -144,10 +144,10 @@ def test_intf(enable_coverage=True):
     # print(din_cg.report())
 
     # cfg
-    assert cfg_cg.visitor.cover_points[0].bins[0].cover_cnt == 1
-    assert cfg_cg.visitor.cover_points[0].bins[1].cover_cnt == 1
-    assert cfg_cg.visitor.cover_points[0].bins[2].cover_cnt == 0
+    assert cfg_cg.cover_points[0].bins[0].cover_cnt == 1
+    assert cfg_cg.cover_points[0].bins[1].cover_cnt == 1
+    assert cfg_cg.cover_points[0].bins[2].cover_cnt == 0
 
     # din
-    assert din_cg.visitor.cover_points[0].cover_cnt == 12
-    assert din_cg.visitor.cover_points[1].bins[0].cover_cnt == 2
+    assert din_cg.cover_points[0].cover_cnt == 12
+    assert din_cg.cover_points[1].bins[0].cover_cnt == 2
