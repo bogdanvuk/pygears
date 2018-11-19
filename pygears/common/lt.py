@@ -1,14 +1,21 @@
+from pygears import alternative, gear
+
 from pygears.conf import safe_bind
-from pygears.core.gear import gear
 from pygears.core.intf import IntfOperPlugin
-from pygears.typing import Uint
+from pygears.typing import Tuple, Any, Uint
+from . import ccat
 
 
+@gear(svgen={'compile': True})
+async def lt(din: Tuple[Any, Any]) -> Uint[1]:
+    async with din as data:
+        yield data[0] < data[1]
+
+
+@alternative(lt)
 @gear
-def lt(*din,
-       din0_signed=b'typeof(din0, Int)',
-       din1_signed=b'typeof(din1, Int)') -> Uint[1]:
-    pass
+def lt2(din0: Any, din1: Any):
+    return ccat(din0, din1) | lt
 
 
 class MulIntfOperPlugin(IntfOperPlugin):
