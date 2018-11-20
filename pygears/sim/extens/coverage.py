@@ -361,7 +361,7 @@ class CoverIntf(CoverBase):
         self.intf = intf
 
     def event(self, intf, val):
-        if intf == self.intf:
+        if intf is self.intf:
             self.sample(val)
         return True
 
