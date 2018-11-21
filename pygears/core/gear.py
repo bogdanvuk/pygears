@@ -2,7 +2,7 @@ import functools
 import copy
 import inspect
 
-from pygears.conf import registry, safe_bind, PluginBase
+from pygears.conf import registry, safe_bind, PluginBase, reg_inject, Inject
 
 from .intf import Intf
 from .port import InPort, OutPort
@@ -153,6 +153,30 @@ def alternative(*base_gear_defs):
     return gear_decorator
 
 
+@reg_inject
+def find_invocation(func, extra_params=Inject('gear/params/extra')):
+    invocation = []
+    sig = inspect.signature(func)
+
+    for name, param in sig.parameters.items():
+        if param.kind == param.KEYWORD_ONLY:
+            invocation.append(f'{name}={name}')
+        elif param.kind == param.VAR_POSITIONAL:
+            invocation.append(f'*{name}')
+        elif param.kind != param.VAR_KEYWORD:
+            invocation.append(name)
+
+    if extra_params:
+        for k, v in extra_params.items():
+            invocation.append(f'{k}={k}')
+
+    for name, param in sig.parameters.items():
+        if param.kind == param.VAR_KEYWORD:
+            invocation.append(f'**{name}')
+
+    return ','.join(invocation)
+
+
 @doublewrap
 def gear(func, gear_resolver=None, **meta_kwds):
 
@@ -171,30 +195,15 @@ def gear(func, gear_resolver=None, **meta_kwds):
     }
     execdict.update(func.__globals__)
 
-    # Find invocation string
-    sig = inspect.signature(func)
-    invocation_str = []
-    for name, param in sig.parameters.items():
-        if param.kind == param.KEYWORD_ONLY:
-            invocation_str.append(f'{name}={name}')
-        elif param.kind == param.VAR_POSITIONAL:
-            invocation_str.append(f'*{name}')
-        elif param.kind != param.VAR_KEYWORD:
-            invocation_str.append(name)
+    invocation = find_invocation(func)
+    body = f'return gear_resolver(gear_func, meta_kwds, {invocation})'
 
-    for k, v in registry('gear/params/extra').items():
-        invocation_str.append(f'{k}={k}')
-
-    for name, param in sig.parameters.items():
-        if param.kind == param.VAR_KEYWORD:
-            invocation_str.append(f'**{name}')
-    invocation_str = ','.join(invocation_str)
-
-    body = f'return gear_resolver(gear_func, meta_kwds, {invocation_str})'
-
-    fm = FunctionMaker(func=func, extra_kwds=registry('gear/params/extra'))
-
-    gear_func = fm.make(body, evaldict=execdict, addsource=True)
+    gear_func = FunctionMaker.create(
+        obj=func,
+        body=body,
+        evaldict=execdict,
+        addsource=True,
+        extra_kwds=registry('gear/params/extra'))
 
     functools.update_wrapper(gear_func, func)
 
