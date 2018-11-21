@@ -2,7 +2,6 @@ import pytest
 import random
 from functools import partial
 
-
 from pygears.cookbook.qcnt import qcnt
 from pygears.cookbook.verif import directed, verif
 from pygears.sim import sim
@@ -10,7 +9,6 @@ from pygears.sim.extens.randomization import create_constraint, rand_seq
 from pygears.sim.extens.svrand import SVRandSocket
 from pygears.sim.modules.drv import drv
 from pygears.sim.modules.sim_socket import SimSocket
-from pygears.sim.modules.verilator import SimVerilated
 from pygears.typing import Queue, Uint
 from pygears.util.test_utils import skip_ifndef
 
@@ -30,53 +28,41 @@ def get_ref(seq):
         for subsubseq in subseq:
             num += len(subsubseq)
 
-    return [list(range(1, num+1))]
+    return [list(range(1, num + 1))]
 
 
-def test_py_sim_dir(seq=dir_seq):
-    directed(drv(t=t_din, seq=seq), f=qcnt(lvl=t_din.lvl), ref=get_ref(seq))
-    sim()
-
-
-def test_py_sim_rand(seq=random_seq):
-    skip_ifndef('RANDOM_TEST')
-    directed(drv(t=t_din, seq=seq), f=qcnt(lvl=t_din.lvl), ref=get_ref(seq))
-    sim()
-
-
-def test_socket_dir(tmpdir, seq=dir_seq):
-    skip_ifndef('SIM_SOCKET_TEST')
-    verif(
+def test_directed_golden(tmpdir, sim_cls):
+    seq = dir_seq
+    directed(
         drv(t=t_din, seq=seq),
-        f=qcnt(sim_cls=partial(SimSocket, run=True), lvl=t_din.lvl),
-        ref=qcnt(name='ref_model', lvl=t_din.lvl))
+        f=qcnt(sim_cls=sim_cls, lvl=t_din.lvl),
+        ref=get_ref(seq))
     sim(outdir=tmpdir)
 
 
-def test_socket_rand(tmpdir, seq=random_seq):
-    skip_ifndef('SIM_SOCKET_TEST', 'RANDOM_TEST')
-    verif(
-        drv(t=t_din, seq=seq),
-        f=qcnt(sim_cls=partial(SimSocket, run=True), lvl=t_din.lvl),
-        ref=qcnt(name='ref_model', lvl=t_din.lvl))
+def test_random_golden(tmpdir, sim_cls):
+    skip_ifndef('RANDOM_TEST')
+    seq = random_seq
+    directed(drv(t=t_din, seq=seq), f=qcnt(lvl=t_din.lvl), ref=get_ref(seq))
     sim(outdir=tmpdir)
 
 
 @pytest.mark.parametrize('lvl', range(1, t_din.lvl))
-def test_verilate_dir(tmpdir, lvl, seq=dir_seq):
-    skip_ifndef('VERILATOR_ROOT')
+def test_directed_cosim(tmpdir, sim_cls, lvl):
+    seq = dir_seq
     verif(
         drv(t=t_din, seq=seq),
-        f=qcnt(sim_cls=SimVerilated, lvl=lvl),
+        f=qcnt(sim_cls=sim_cls, lvl=lvl),
         ref=qcnt(name='ref_model', lvl=lvl))
     sim(outdir=tmpdir)
 
 
-def test_verilate_rand(tmpdir, seq=random_seq):
-    skip_ifndef('VERILATOR_ROOT', 'RANDOM_TEST')
+def test_random_cosim(tmpdir, sim_cls):
+    skip_ifndef('RANDOM_TEST')
+    seq = random_seq
     verif(
         drv(t=t_din, seq=seq),
-        f=qcnt(sim_cls=SimVerilated, lvl=t_din.lvl),
+        f=qcnt(sim_cls=sim_cls, lvl=t_din.lvl),
         ref=qcnt(name='ref_model', lvl=t_din.lvl))
     sim(outdir=tmpdir)
 

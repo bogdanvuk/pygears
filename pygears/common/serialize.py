@@ -23,6 +23,6 @@ async def active_serialize(din: TDin,
                            w_active=b'w_active') -> TOut:
     async with din as val:
         data, active = val
-        active_out = [data[i] for i in range(len(data)) if active[i]]
+        active_out = [data[i] for i in range(len(data)) if i < active]
         for d, last in quiter(active_out):
             yield module().tout((d, last))

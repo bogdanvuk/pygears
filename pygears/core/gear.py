@@ -2,13 +2,14 @@ import functools
 import copy
 import inspect
 
-from pygears.conf import registry, safe_bind, PluginBase
+from pygears.conf import registry, safe_bind, PluginBase, reg_inject, Inject
 
 from .intf import Intf
 from .port import InPort, OutPort
 from .hier_node import NamedHierNode
 from .util import doublewrap
 from .partial import Partial
+from .funcutils import FunctionMaker
 
 
 class TooManyArguments(Exception):
@@ -49,8 +50,8 @@ class Gear(NamedHierNode):
                 self.outnames.append(out_intfs[i].var_name)
             else:
                 self.outnames.append(
-                    dflt_dout_name
-                    if len(out_dtypes) == 1 else f'{dflt_dout_name}{i}')
+                    dflt_dout_name if len(out_dtypes) ==
+                    1 else f'{dflt_dout_name}{i}')
 
         self.out_ports = [
             OutPort(self, i, name) for i, name in enumerate(self.outnames)
@@ -154,23 +155,35 @@ def alternative(*base_gear_defs):
     return gear_decorator
 
 
+@reg_inject
+def find_invocation(func, extra_params=Inject('gear/params/extra')):
+    invocation = []
+    sig = inspect.signature(func)
+
+    for name, param in sig.parameters.items():
+        if param.kind == param.KEYWORD_ONLY:
+            invocation.append(f'{name}={name}')
+        elif param.kind == param.VAR_POSITIONAL:
+            invocation.append(f'*{name}')
+        elif param.kind != param.VAR_KEYWORD:
+            invocation.append(name)
+
+    if extra_params:
+        for k, v in extra_params.items():
+            invocation.append(f'{k}={k}')
+
+    for name, param in sig.parameters.items():
+        if param.kind == param.VAR_KEYWORD:
+            invocation.append(f'**{name}')
+
+    return ','.join(invocation)
+
+
 @doublewrap
 def gear(func, gear_resolver=None, **meta_kwds):
+
     if gear_resolver is None:
         gear_resolver = registry('gear/gear_dflt_resolver')
-
-    from pygears.core.funcutils import FunctionBuilder
-    fb = FunctionBuilder.from_func(func)
-    fb.filename = '<string>'
-
-    # Add defaults from GearExtraParams registry
-    for k, v in registry('gear/params/extra').items():
-        if k not in fb.kwonlyargs:
-            fb.kwonlyargs.append(k)
-            fb.kwonlydefaults[k] = copy.copy(v)
-
-    fb.body = (f"return gear_resolver(gear_func, meta_kwds, "
-               f"{fb.get_invocation_str()})")
 
     # Add defaults from GearMetaParams registry
     for k, v in registry('gear/params/meta').items():
@@ -183,20 +196,16 @@ def gear(func, gear_resolver=None, **meta_kwds):
         'gear_func': func
     }
     execdict.update(func.__globals__)
-    execdict_keys = list(execdict.keys())
-    execdict_values = list(execdict.values())
 
-    def formatannotation(annotation, base_module=None):
-        try:
-            return execdict_keys[execdict_values.index(annotation)]
-        except ValueError:
-            if not isinstance(str, bytes):
-                return '"b' + repr(annotation) + '"'
-            else:
-                return annotation
+    invocation = find_invocation(func)
+    body = f'return gear_resolver(gear_func, meta_kwds, {invocation})'
 
-    gear_func = fb.get_func(
-        execdict=execdict, formatannotation=formatannotation)
+    gear_func = FunctionMaker.create(
+        obj=func,
+        body=body,
+        evaldict=execdict,
+        addsource=True,
+        extra_kwds=registry('gear/params/extra'))
 
     functools.update_wrapper(gear_func, func)
 
