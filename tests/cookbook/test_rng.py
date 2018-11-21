@@ -3,13 +3,13 @@ import pytest
 from pygears import Intf, MultiAlternativeError, find
 from pygears.typing import Queue, Tuple, Uint, Int
 from pygears.cookbook.rng import rng
-from pygears.sim.modules.verilator import SimVerilated
 
 from pygears.cookbook.verif import directed, verif
 from pygears.sim import sim
 from pygears.sim.modules.drv import drv
 
 from pygears.util.test_utils import svgen_check, skip_ifndef
+
 
 def test_basic_unsigned():
     iout = rng(Intf(Tuple[Uint[4], Uint[4], Uint[2]]))
@@ -29,13 +29,12 @@ def test_basic_unsigned_sim(tmpdir):
     sim(outdir=tmpdir)
 
 
-def test_basic_unsigned_cosim(tmpdir):
-    skip_ifndef('VERILATOR_ROOT')
+def test_basic_unsigned_cosim(tmpdir, sim_cls):
     seq = [(2, 8, 2)]
 
     verif(
         drv(t=Tuple[Uint[4], Uint[4], Uint[2]], seq=seq),
-        f=rng(sim_cls=SimVerilated),
+        f=rng(sim_cls=sim_cls),
         ref=rng(name='ref_model'))
 
     sim(outdir=tmpdir)
@@ -59,13 +58,13 @@ def test_basic_signed_sim(tmpdir):
     sim(outdir=tmpdir)
 
 
-def test_basic_signed_cosim(tmpdir):
+def test_basic_signed_cosim(tmpdir, sim_cls):
     skip_ifndef('VERILATOR_ROOT')
     seq = [(-15, -3, 2)]
 
     verif(
         drv(t=Tuple[Int[5], Int[6], Uint[2]], seq=seq),
-        f=rng(sim_cls=SimVerilated),
+        f=rng(sim_cls=sim_cls),
         ref=rng(name='ref_model'))
 
     sim(outdir=tmpdir)
@@ -103,13 +102,13 @@ def test_cnt_only_sim(tmpdir):
     sim(outdir=tmpdir, check_activity=False)
 
 
-def test_cnt_only_cosim(tmpdir):
+def test_cnt_only_cosim(tmpdir, sim_cls):
     skip_ifndef('VERILATOR_ROOT')
     seq = [8]
 
     verif(
         drv(t=Uint[4], seq=seq),
-        f=rng(sim_cls=SimVerilated),
+        f=rng(sim_cls=sim_cls),
         ref=rng(name='ref_model'))
 
     sim(outdir=tmpdir, check_activity=False)
