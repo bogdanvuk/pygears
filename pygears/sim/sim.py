@@ -160,8 +160,8 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         self.tasks = {g: g.run() for g in set(self.sim_gears)}
         self.task_data = {g: None for g in set(self.sim_gears)}
 
-    def call_soon(self, callback, fut):
-        callback(fut)
+    def call_soon(self, callback, *fut, context=None):
+        callback(fut[0])
 
     def future_done(self, fut):
         sim_gear, phase = self.wait_list.pop(fut)

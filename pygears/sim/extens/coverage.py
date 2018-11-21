@@ -278,7 +278,7 @@ class CoverSingleValue:
             self.data = None
 
 
-class CoverIterator(collections.Iterator):
+class CoverIterator(collections.abc.Iterator):
     '''Coverage of iterators.
     Wraps around the iterator and copies the values'''
 

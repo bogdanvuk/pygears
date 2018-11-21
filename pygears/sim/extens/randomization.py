@@ -45,7 +45,7 @@ def rand_seq(name, cnt=None):
             if tout is None:
                 tout = Queue[type(data), len(eot)]
 
-            yield tout((data, *eot))
+            yield tout((data, eot))
             if cnt is not None:
                 if eot == int('1' * len(eot), 2):
                     cnt -= 1

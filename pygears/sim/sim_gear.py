@@ -31,7 +31,6 @@ class SimGear:
             self.gear.params['sim_setup'](self.gear)
 
     async def run(self):
-        self.task = asyncio.Task.current_task()
         args, kwds = self.sim_func_args
 
         out_prods = [p.producer for p in self.gear.out_ports]

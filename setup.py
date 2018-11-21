@@ -56,6 +56,7 @@ setup(
         'Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
     python_requires='>=3.6.0',
     package_data={'': ['*.j2', '*.sv']},
