@@ -158,7 +158,6 @@ class create_hier:
 
 class intf_name_tracer:
     def __init__(self, gear):
-        self.func_locals = {}
         self.code_map = registry('gear/code_map')
         self.gear = gear
 
@@ -183,10 +182,10 @@ class intf_name_tracer:
                 'gear/hier_root'):
             sys.setprofile(None)
 
-        self.code_map.pop()
+        cm = self.code_map.pop()
 
-        if exception_type is not None:
-            for name, val in self.func_locals.items():
+        if exception_type is None:
+            for name, val in cm.func_locals.items():
                 if isinstance(val, Intf):
                     val.var_name = name
 

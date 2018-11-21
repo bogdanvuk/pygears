@@ -1,5 +1,4 @@
-
-from pygears import Intf, alternative, gear, registry
+from pygears import Intf, alternative, gear, registry, find
 from pygears.typing import Queue, Tuple, Uint
 
 
@@ -95,7 +94,8 @@ def test_hier_hierarchy():
     assert root['fhier1/fhier2/fhier3'].tout == Uint[2]
     assert root['fhier1/fhier2/fhier3/fgear'].tout == Uint[2]
 
-    assert root['fhier1'].in_ports[0].consumer == root['fhier1/fhier2'].inputs[0]
+    assert root['fhier1'].in_ports[0].consumer == root['fhier1/fhier2'].inputs[
+        0]
     assert root['fhier1'].in_ports[0].consumer == root[
         'fhier1/fhier2'].in_ports[0].producer
     assert root['fhier1/fhier2'].in_ports[0].consumer == root[
@@ -155,3 +155,28 @@ def test_alternatives():
     assert root['fgear4'].params['version'] == 4
 
     assert len(root.child) == 5
+
+
+def test_intf_name_inference():
+    @gear
+    def fsub1(din1, din2) -> Tuple['din1', 'din2']:
+        pass
+
+    @gear
+    def fsub2(din) -> b'din':
+        pass
+
+    @gear
+    def fgear(din1, din2):
+        var1 = fsub1(din1, din2)
+        var2 = fsub2(var1)
+
+        return var2
+
+    fgear(Intf(Uint[1]), Intf(Uint[2]))
+
+    fsub1_inst = find('/fgear/fsub1')
+    fsub2_inst = find('/fgear/fsub2')
+
+    assert fsub1_inst.outputs[0].var_name == 'var1'
+    assert fsub2_inst.outputs[0].var_name == 'var2'

@@ -86,8 +86,10 @@ class Gear(NamedHierNode):
     def tout(self):
         if len(self.out_ports) > 1:
             return tuple(i.dtype for i in self.out_ports)
-        else:
+        elif len(self.out_ports) == 1:
             return self.out_ports[0].dtype
+        else:
+            return None
 
     @property
     def dout(self):
