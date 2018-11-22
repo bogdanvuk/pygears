@@ -119,11 +119,15 @@ def gather_control_stmt_vars(variables, intf, dtype):
     if isinstance(variables, ast.Tuple):
         for i, v in enumerate(variables.elts):
             if isinstance(v, ast.Name):
-                scope[v.id] = Expr(f'{intf}_s.{dtype.fields[i]}', dtype[i])
+                scope[v.id] = Expr(f'{intf}.{dtype.fields[i]}', dtype[i])
             elif isinstance(v, ast.Starred):
-                scope[v.id] = Expr(f'{intf}_s.{dtype.fields[i]}', dtype[i])
+                scope[v.id] = Expr(f'{intf}.{dtype.fields[i]}', dtype[i])
+            elif isinstance(v, ast.Tuple):
+                scope.update(
+                    gather_control_stmt_vars(v, f'{intf}.{dtype.fields[i]}',
+                                             dtype[i]))
     else:
-        scope[variables.id] = Expr(f'{intf}_s', dtype)
+        scope[variables.id] = Expr(intf, dtype)
 
     return scope
 
@@ -209,7 +213,8 @@ class HdlAst(ast.NodeVisitor):
 
     def visit_AsyncFor(self, node):
         intf = self.visit_NameExpression(node.iter)
-        scope = gather_control_stmt_vars(node.target, intf.svrepr, intf.dtype)
+        scope = gather_control_stmt_vars(node.target, f'{intf.svrepr}_s',
+                                         intf.dtype)
         self.svlocals.update(scope)
 
         svnode = Loop(
@@ -243,7 +248,7 @@ class HdlAst(ast.NodeVisitor):
 
         intf = self.visit_NameExpression(header.context_expr)
         scope = gather_control_stmt_vars(node.items[0].optional_vars,
-                                         intf.svrepr, intf.dtype)
+                                         f'{intf.svrepr}_s', intf.dtype)
         self.svlocals.update(scope)
 
         svnode = Block(
@@ -353,14 +358,17 @@ class HdlAst(ast.NodeVisitor):
         return Expr(tuple_svrepr, tuple_dtype)
 
     def visit_BinOp(self, node):
-        op1 = self.visit_DataExpression(node.left)
-
+        left = node.left
         if isinstance(node, ast.BinOp):
-            op2 = self.visit_DataExpression(node.right)
-            operator = opmap[type(node.op)]
+            right = node.right
+            op = node.op
         elif isinstance(node, ast.Compare):
-            op2 = self.visit_DataExpression(node.comparators[0])
-            operator = opmap[type(node.ops[0])]
+            right = node.comparators[0]
+            op = node.ops[0]
+
+        op1 = self.visit_DataExpression(left)
+        op2 = self.visit_DataExpression(right)
+        operator = opmap[type(op)]
 
         res_type = eval(f'op1 {operator} op2', {
             'op1': op1.dtype,
@@ -383,6 +391,13 @@ class HdlAst(ast.NodeVisitor):
 
     def visit_Compare(self, node):
         return self.visit_BinOp(node)
+
+    def visit_BoolOp(self, node):
+        op1 = self.visit_DataExpression(node.values[0])
+        op2 = self.visit_DataExpression(node.values[1])
+        operator = opmap[type(node.op)]
+
+        return Expr(f"{op1.svrepr} {operator} {op2.svrepr}", Uint[1])
 
     def visit_If(self, node):
         expr = self.visit(node.test)
