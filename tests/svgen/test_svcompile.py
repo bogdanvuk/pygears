@@ -1,6 +1,6 @@
 from pygears import gear, Intf, find
 from pygears.typing import Integer, Tuple, Uint, Union, Queue
-from pygears.common import add, filt
+from pygears.common import add, filt, invert
 from pygears.cookbook import qcnt
 from pygears.svgen.svcompile import compile_gear_body
 from pygears.util.test_utils import equal_on_nonspace
@@ -27,6 +27,7 @@ def test_simple_add():
 simple_filt_res = """always_comb begin
     din.ready = 1;
     dout.valid = 0;
+    dout_s = din_s.data;
 
     if (din.valid) begin
         if (din_s.data.ctrl == din_s.sel) begin
@@ -65,6 +66,7 @@ always_comb begin
     // Gear idle states
     din.ready = 1;
     dout.valid = 0;
+    dout_s = {&(din_s.eot), cnt_reg};
     cnt_en = 1;
     cnt_rst = 0;
     cnt_next = cnt_reg;
@@ -89,6 +91,32 @@ def test_simple_qcnt():
     qcnt(Intf(Queue[Uint[8]]))
     res = compile_gear_body(find('/qcnt'))
     assert equal_on_nonspace(res, simple_qcnt_res)
+
+
+simple_invert_res = """
+    always_comb begin
+        // Gear idle states
+        din.ready = 1;
+        dout.valid = 0;
+        dout_s = ~ din_s;
+
+        if (din.valid) begin
+            // Gear reset conditions
+
+            // Cycle done conditions
+            din.ready = dout.ready;
+
+            dout.valid = 1;
+            dout_s = ~ din_s;
+        end
+    end
+"""
+
+
+def test_simple_invert():
+    invert(Intf(Uint[4]))
+    res = compile_gear_body(find('/invert'))
+    assert equal_on_nonspace(res, simple_invert_res)
 
 
 # from pygears.typing import Queue, Uint
