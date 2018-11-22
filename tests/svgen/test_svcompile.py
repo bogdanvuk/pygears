@@ -55,7 +55,7 @@ cnt_t cnt_reg, cnt_next;
 
 always_ff @(posedge clk) begin
     if(rst | cnt_rst) begin
-        cnt_reg = 0;
+        cnt_reg = 1;
     end else if (cnt_en) begin
         cnt_reg = cnt_next;
     end
@@ -77,9 +77,9 @@ always_comb begin
         din.ready = dout.ready;
         cnt_en = dout.ready;
 
-        cnt_next = 17'(cnt_reg) + 17'(1);
         dout.valid = 1;
-        dout_s = {&(din_s.eot), cnt_next};
+        dout_s = {&(din_s.eot), cnt_reg};
+        cnt_next = 17'(cnt_reg) + 17'(1);
     end
 end
 """
