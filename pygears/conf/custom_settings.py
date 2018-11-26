@@ -1,4 +1,5 @@
 import inspect
+import sys
 import json
 import os
 import pprint
@@ -29,7 +30,13 @@ class RCSettings:
         search_dirs = []
         home_path = os.environ.get('HOME')
 
-        _, filename, _, function_name, _, _ = inspect.stack()[-1]
+        if hasattr(sys.modules['__main__'], '__file__'):
+            filename = sys.modules['__main__'].__file__
+        else:
+            conf_log().warning(
+                'Searching for .py files: main does not have __file__, inspecting stack instead'
+            )
+            _, filename, _, function_name, _, _ = inspect.stack()[-1]
         dirname = os.path.dirname(filename)
         search_dirs.append(dirname)
 
