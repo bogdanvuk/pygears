@@ -1,7 +1,7 @@
 import ast
 import inspect
 from .util import svgen_typedef
-from .hdl_ast import HdlAst, RegFinder, pprint, Loop, Module, Block, Yield
+from .hdl_ast import Block, HdlAst, Loop, Module, RegFinder, RegNextExpr, Yield
 
 reg_template = """
 always_ff @(posedge clk) begin
@@ -67,9 +67,8 @@ class SVCompiler(ast.NodeVisitor):
             self.find_defaults(node)
 
         for name in node.regs:
-            self.write_svline(f'{name}_en = 1;')
+            self.write_svline(f'{name}_en = 0;')
             self.write_svline(f'{name}_rst = 0;')
-            self.write_svline(f'{name}_next = {name}_reg;')
 
         self.write_svline()
 
@@ -80,7 +79,7 @@ class SVCompiler(ast.NodeVisitor):
         self.write_svline(f'end')
 
     def find_defaults(self, node):
-        for stmt in node.stmts:
+        for stmt in list(node.stmts):
             if isinstance(stmt, Block):
                 self.find_defaults(stmt)
             elif isinstance(stmt, Loop):
@@ -88,6 +87,8 @@ class SVCompiler(ast.NodeVisitor):
             elif isinstance(stmt, Yield):
                 for port in self.module.out_ports:
                     self.write_svline(f'{port.svrepr}_s = {stmt.expr.svrepr};')
+            elif isinstance(stmt, RegNextExpr):
+                self.visit(stmt)
 
     def find_out_conds(self, halt_on):
         out_cond = []
@@ -138,7 +139,11 @@ class SVCompiler(ast.NodeVisitor):
             if cycle_cond:
                 self.write_svline('// Cycle done conditions')
                 for port in self.module.in_ports:
-                    self.write_svline(f'{port.svrepr}.ready = {cycle_cond};')
+                    if getattr(node, 'multicycle', None) and exit_cond:
+                        cond = exit_cond
+                    else:
+                        cond = cycle_cond
+                    self.write_svline(f'{port.svrepr}.ready = {cond};')
 
                 for name in self.module.regs:
                     self.write_svline(f'{name}_en = {cycle_cond};')

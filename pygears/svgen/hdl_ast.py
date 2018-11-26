@@ -156,6 +156,14 @@ class RegFinder(ast.NodeVisitor):
     def visit_AugAssign(self, node):
         self.promote_var_to_reg(node.target.id)
 
+    def visit_For(self, node):
+        if isinstance(node.target, ast.Tuple):
+            for el in node.target.elts:
+                if el.id in self.variables:
+                    self.promote_var_to_reg(el.id)
+        else:
+            self.promote_var_to_reg(node.target.id)
+
     def visit_Assign(self, node):
         name = node.targets[0].id
         if name not in self.variables:
@@ -333,6 +341,21 @@ class HdlAst(ast.NodeVisitor):
             compile(ast.Expression(node), filename="<ast>", mode="eval"),
             self.locals, globals())
 
+    def visit_Call_range(self, arg):
+        if isinstance(arg, Expr):
+            start = Expr('0', arg.dtype)
+            stop = arg
+            step = ast.Num(1)
+        else:
+            start = arg[0]
+            stop = arg[1]
+            step = ast.Num(1) if len(arg) == 2 else arg[2]
+
+        return start, stop, step
+
+    def visit_Call_qrange(self, arg):
+        return self.visit_Call_range(arg)
+
     def visit_Call_all(self, arg):
         return Expr(f'&({arg.svrepr})', Bool)
 
@@ -423,6 +446,39 @@ class HdlAst(ast.NodeVisitor):
             svnode = Block(in_cond=expr, stmts=[], cycle_cond=[])
             self.visit_block(svnode, node.body)
             return svnode
+
+    def visit_For(self, node):
+        start, stop, step = self.visit_DataExpression(node.iter)
+
+        if isinstance(node.target, ast.Tuple):
+            names = [x.id for x in node.target.elts]
+        else:
+            names = [node.target.id]
+
+        exit_cond = [Expr(f'({names[0]}_next == {stop.svrepr})', Bool)]
+
+        if node.iter.func.id is 'qrange':
+            val = Uint[1](0)
+            scope = gather_control_stmt_vars(
+                node.target.elts[-1], f'{exit_cond[0].svrepr}', type(val))
+            self.svlocals.update(scope)
+
+        svnode = Loop(
+            in_cond=Expr('1', Bool),
+            stmts=[],
+            cycle_cond=[],
+            exit_cond=exit_cond,
+            multicycle=True)
+
+        self.visit_block(svnode, node.body)
+
+        # increment
+        expr = ast.BinOp(ast.Name(names[0], ast.Load()), ast.Add(), step)
+        target = node.target if len(names) == 1 else node.target.elts[0]
+        assign_iter = ast.Assign([target], expr)
+        svnode.stmts.append(self.visit_Assign(assign_iter))
+
+        return svnode
 
     def visit_Expr(self, node):
         if isinstance(node.value, ast.Yield):
