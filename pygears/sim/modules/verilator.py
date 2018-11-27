@@ -38,6 +38,7 @@ class SimVerilated(CosimBase):
         self.svnode = svgen(gear, outdir=self.outdir, wrapper=True)
         self.svmod = registry('svgen/map')[self.svnode]
         self.wrap_name = f'wrap_{self.svmod.sv_module_name}'
+        self.trace_fn = None
 
     def setup(self):
         rebuild = True
@@ -89,7 +90,7 @@ class SimVerilated(CosimBase):
             include,
             '-clk clk',
             f'--top-module {self.wrap_name}',
-            '--trace --trace-structs' if tracing_enabled else '',
+            '--trace -no-trace-params --trace-structs' if tracing_enabled else '',
             f'{self.outdir}/*.sv dti.sv',
             'sim_main.cpp'
         ]  # yapf: disable
@@ -120,6 +121,7 @@ class SimVerilated(CosimBase):
                 f'Please inspect "{self.outdir}/make.log"')
 
         if tracing_enabled:
+            self.trace_fn = f'{self.outdir}/vlt_dump.vcd'
             sim_log().info(
                 f'Verilator VCD dump to "{self.outdir}/vlt_dump.vcd"')
 

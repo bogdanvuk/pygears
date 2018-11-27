@@ -152,6 +152,7 @@ class SVModuleGen:
 
         context = {
             'module_name': self.sv_module_name,
+            'inst_name': self.sv_inst_name,
             'intfs': list(self.sv_port_configs()),
             'param_map': self.params
         }
