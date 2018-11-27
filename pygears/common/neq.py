@@ -9,6 +9,6 @@ def neq(*din) -> Uint[1]:
 
 
 @alternative(neq)
-@gear
-def neq_vararg(*din, enablement=b'len(din) > 2') -> Uint[1]:
+@gear(enablement=b'len(din) > 2')
+def neq_vararg(*din) -> Uint[1]:
     return oper_tree(din, neq)

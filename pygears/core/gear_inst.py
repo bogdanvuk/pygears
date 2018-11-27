@@ -7,7 +7,7 @@ from pygears.typing import Any
 from .intf import Intf
 from .infer_ftypes import TypeMatchError, infer_ftypes, type_is_specified
 from .gear import TooManyArguments, GearTypeNotSpecified, GearArgsNotSpecified
-from .gear import GearPlugin, Gear
+from .gear import GearPlugin, Gear, module
 
 
 def get_obj_var_name(frame, obj):

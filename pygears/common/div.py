@@ -24,8 +24,8 @@ def div(*din: Integer, din0_signed=b'typeof(din0, Int)',
 
 
 @alternative(div)
-@gear
-def div_vararg(*din: Integer, enablement=b'len(din) > 2') -> b'div_type(din)':
+@gear(enablement=b'len(din) > 2')
+def div_vararg(*din: Integer) -> b'div_type(din)':
     return oper_reduce(din, div)
 
 

@@ -19,8 +19,8 @@ def add2(din0: Integer, din1: Integer):
 
 
 @alternative(add)
-@gear
-def add_vararg(*din: Integer, enablement=b'len(din) > 2'):
+@gear(enablement=b'len(din) > 2')
+def add_vararg(*din: Integer):
     return oper_tree(din, add)
 
 

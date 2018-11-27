@@ -52,8 +52,8 @@ async def cart(*din) -> b'cart_type(din)':
 
 
 @alternative(cart)
-@gear
-def cart_vararg(*din, enablement=b'len(din) > 2'):
+@gear(enablement=b'len(din) > 2')
+def cart_vararg(*din):
     ret = cart(din[0], din[1])
     for d in din[2:]:
         ret = cart(ret, d)
