@@ -1,13 +1,14 @@
-from pygears import gear, Intf, find
-from pygears.typing import Integer, Tuple, Uint, Union, Queue
+from pygears import Intf, find
+from pygears.typing import Queue, Tuple, Uint, Union
 from pygears.common import add, filt, invert
-from pygears.cookbook import qcnt
+from pygears.cookbook import qcnt, replicate
 from pygears.svgen.svcompile import compile_gear_body
 from pygears.util.test_utils import equal_on_nonspace
 
 simple_add_res = """always_comb begin
     din.ready = 1;
     dout.valid = 0;
+    dout_s = 11'(din_s.f0) + 11'(din_s.f1);
 
     if (din.valid) begin
         din.ready = dout.ready;
@@ -67,9 +68,9 @@ always_comb begin
     din.ready = 1;
     dout.valid = 0;
     dout_s = {&(din_s.eot), cnt_reg};
-    cnt_en = 1;
+    cnt_next = 17'(cnt_reg) + 17'(1);
+    cnt_en = 0;
     cnt_rst = 0;
-    cnt_next = cnt_reg;
 
     if (din.valid) begin
         // Gear reset conditions
@@ -117,6 +118,53 @@ def test_simple_invert():
     invert(Intf(Uint[4]))
     res = compile_gear_body(find('/invert'))
     assert equal_on_nonspace(res, simple_invert_res)
+
+
+simple_replicate_res = """
+    typedef logic [15:0] i_t; // u16
+
+    logic i_en;
+    logic i_rst;
+    i_t i_reg, i_next;
+
+
+    always_ff @(posedge clk) begin
+        if(rst | i_rst) begin
+            i_reg = 0;
+        end else if (i_en) begin
+            i_reg = i_next;
+        end
+    end
+
+    always_comb begin
+        // Gear idle states
+        din.ready = 1;
+        dout.valid = 0;
+        dout_s = {(i_next == din_s.f0), din_s.f1};
+        i_next = 17'(i_reg) + 17'(1);
+        i_en = 0;
+        i_rst = 0;
+
+        if (din.valid) begin
+                // Gear reset conditions
+                i_rst = dout.ready && (i_next == din_s.f0);
+
+                // Cycle done conditions
+                din.ready = dout.ready && (i_next == din_s.f0);
+                i_en = dout.ready;
+
+                dout.valid = 1;
+                dout_s = {(i_next == din_s.f0), din_s.f1};
+                i_next = 17'(i_reg) + 17'(1);
+        end
+    end
+"""
+
+
+def test_simple_replicate():
+    replicate(Intf(Tuple[Uint[16], Uint[16]]))
+    res = compile_gear_body(find('/replicate'))
+    assert equal_on_nonspace(res, simple_replicate_res)
 
 
 # from pygears.typing import Queue, Uint

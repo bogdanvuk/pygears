@@ -464,7 +464,7 @@ class HdlAst(ast.NodeVisitor):
             self.svlocals.update(scope)
 
         svnode = Loop(
-            in_cond=Expr('1', Bool),
+            in_cond=None,
             stmts=[],
             cycle_cond=[],
             exit_cond=exit_cond,

@@ -122,7 +122,8 @@ class SVCompiler(ast.NodeVisitor):
         self.write_svline(f'{node.reg.svrepr}_next = {node.svrepr};')
 
     def visit_Block(self, node):
-        self.write_svline(f'if ({node.in_cond.svrepr}) begin')
+        if node.in_cond:
+            self.write_svline(f'if ({node.in_cond.svrepr}) begin')
         self.enter_block(node)
 
         if node.cycle_cond or getattr(node, 'exit_cond', []):
@@ -157,7 +158,8 @@ class SVCompiler(ast.NodeVisitor):
             #     pass
 
         self.exit_block()
-        self.write_svline(f'end')
+        if node.in_cond:
+            self.write_svline(f'end')
 
     def visit_Loop(self, node):
         self.visit_Block(node)
