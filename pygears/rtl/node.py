@@ -80,6 +80,10 @@ class RTLNode(NamedHierNode):
         super().remove()
 
     @property
+    def inst_basename(self):
+        return f'{self.basename}_i'
+
+    @property
     def is_hierarchical(self):
         return any([isinstance(c, RTLNode) for c in self.child])
 

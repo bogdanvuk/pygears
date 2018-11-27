@@ -3,6 +3,7 @@ from pygears.rtl.intf import RTLIntf
 from pygears.core.port import InPort
 from pygears.core.hier_node import HierNode
 from pygears import registry, PluginBase, safe_bind
+from pygears.conf import reg_inject, Inject
 from pygears.core.hier_node import HierVisitorBase
 import inspect
 
@@ -27,12 +28,11 @@ class RTLGearHierVisitor(HierVisitorBase):
             return getattr(self, gear.definition.__name__)(node)
 
 
-def rtl_from_gear_port(gear_port):
-    node_gen = registry('rtl/map/node').get(gear_port.gear, None)
+@reg_inject
+def rtl_from_gear_port(gear_port, rtl_map=Inject('rtl/gear_node_map')):
+    node = rtl_map.get(gear_port.gear, None)
     rtl_port = None
-    if node_gen:
-        node = node_gen.node
-
+    if node:
         if isinstance(gear_port, InPort):
             port_group = node.in_ports
         else:
@@ -44,10 +44,13 @@ def rtl_from_gear_port(gear_port):
 
 
 class RTLGearNodeGen(HierNode):
-    def __init__(self, gear, parent):
+    @reg_inject
+    def __init__(self, gear, parent, rtl_map=Inject('rtl/gear_node_map')):
         super().__init__(parent)
         self.gear = gear
         self.node = RTLGear(gear, getattr(parent, "node", None))
+        self.rtl_map = rtl_map
+        self.rtl_map[gear] = self.node
 
         namespace = registry('svgen/module_namespace')
 
@@ -72,8 +75,6 @@ class RTLGearNodeGen(HierNode):
             self.node.add_out_port(p.basename, p.producer, p.consumer, p.dtype)
 
     def connect(self):
-        self.rtl_map = registry('rtl/map/node')
-
         for p, gear_p in zip(self.node.in_ports, self.gear.in_ports):
             self.create_intf(p, gear_p, domain=self.node)
             prod_intf = gear_p.producer
@@ -84,14 +85,11 @@ class RTLGearNodeGen(HierNode):
         for p, gear_p in zip(self.node.out_ports, self.gear.out_ports):
             self.create_intf(p, gear_p, domain=self.node.parent)
             gear_intf = gear_p.consumer
-            if self.node.parent is not None and gear_intf is not None and not gear_intf.consumers:
-                # intf_inst = RTLIntf(
-                #     self.node.root(), gear_intf.dtype)
+
+            if (self.node.parent is not None and gear_intf is not None
+                    and not gear_intf.consumers):
 
                 self.node.root().add_out_port(p.basename, dtype=p.dtype)
-
-                # intf_inst.producer = self.node.root().out_ports[-1]
-
                 self.rtl_map[gear_intf].connect(self.node.root().out_ports[-1])
 
     def create_unsourced_intf(self, port, gear_port):
@@ -135,10 +133,3 @@ class RTLGearNodeGen(HierNode):
 
             self.rtl_map[gear_intf] = intf_inst
             port.consumer = intf_inst
-
-
-class RTLInstPlugin(PluginBase):
-    @classmethod
-    def bind(cls):
-        safe_bind('rtl/map/cls', {})
-        safe_bind('rtl/namespace/module', {})

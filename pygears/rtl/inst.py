@@ -39,7 +39,6 @@ class RTLNodeInstVisitor(HierVisitorBase):
         self.cur_hier = None
         self.design = None
         self.namespace = registry('rtl/namespace/gear_gen')
-        self.svgen_map = registry('rtl/map/node')
 
     def NamedHierNode(self, module):
         self.design = RTLNodeGearRoot(module)
@@ -47,7 +46,6 @@ class RTLNodeInstVisitor(HierVisitorBase):
 
     def instantiate(self, module):
         svgen = module.params.get('svgen', {})
-        # node_cls = svgen.get('node_cls', None)
         if 'node_cls' in svgen:
             node_cls = svgen['node_cls']
         else:
@@ -61,7 +59,6 @@ class RTLNodeInstVisitor(HierVisitorBase):
 
         if node_cls:
             svgen_inst = node_cls(module, parent=self.cur_hier)
-            self.svgen_map[module] = svgen_inst
         else:
             svgen_inst = None
 
@@ -93,7 +90,7 @@ class RTLNodeInstPlugin(PluginBase):
     def bind(cls):
         safe_bind('rtl/namespace/node', {})
         safe_bind('rtl/namespace/gear_gen', {'Gear': RTLGearNodeGen})
-        safe_bind('rtl/map/node', {})
+        safe_bind('rtl/gear_node_map', {})
 
     @classmethod
     def reset(cls):

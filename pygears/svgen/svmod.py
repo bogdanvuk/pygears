@@ -85,7 +85,7 @@ class SVModuleGen:
 
     @property
     def sv_inst_name(self):
-        return f'{self.node.basename}_i'
+        return self.node.inst_basename
 
     @property
     def sv_file_name(self):
