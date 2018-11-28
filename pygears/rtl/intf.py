@@ -37,6 +37,16 @@ class RTLIntf(NamedHierNode):
             return self.basename
 
     @property
+    def name(self):
+        parent = self.parent
+        hier = [self.basename]
+        while parent:
+            hier.append(parent.inst_basename)
+            parent = parent.parent
+
+        return '.'.join(reversed(hier))
+
+    @property
     def sole_intf(self):
         if self.producer:
             return len(self.producer.node.out_ports) == 1
