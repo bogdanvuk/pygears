@@ -1,7 +1,8 @@
 import ast
 import typing as pytypes
 from collections import namedtuple
-from pygears.typing import Uint, Int, is_type, Bool, Tuple, Any, Unit, typeof
+from pygears.typing import (Uint, Int, is_type, Bool, Tuple, Any, Unit, typeof,
+                            bitw)
 from pygears.typing.base import TypingMeta
 
 opmap = {
@@ -132,6 +133,13 @@ def gather_control_stmt_vars(variables, intf, dtype):
     return scope
 
 
+def increment_reg(name, val=ast.Num(1), target=None):
+    if not target:
+        target = ast.Name(name, ast.Store())
+    expr = ast.BinOp(ast.Name(name, ast.Load()), ast.Add(), val)
+    return ast.Assign([target], expr)
+
+
 class RegFinder(ast.NodeVisitor):
     def __init__(self, gear):
         self.regs = {}
@@ -143,7 +151,7 @@ class RegFinder(ast.NodeVisitor):
         }
 
     def promote_var_to_reg(self, name):
-        val = self.variables.pop(name)
+        val = self.variables[name]
 
         if not is_type(type(val)):
             if val < 0:
@@ -341,6 +349,10 @@ class HdlAst(ast.NodeVisitor):
             compile(ast.Expression(node), filename="<ast>", mode="eval"),
             self.locals, globals())
 
+    def visit_Call_int(self, arg):
+        # ignore cast
+        return arg
+
     def visit_Call_range(self, arg):
         if isinstance(arg, Expr):
             start = Expr('0', arg.dtype)
@@ -440,12 +452,26 @@ class HdlAst(ast.NodeVisitor):
                         self.scope[-1].stmts.append(svstmt)
                     # except Exception as e:
                     #     pass
-
+            elif hasattr(node, 'orelse'):
+                for stmt in node.orelse:
+                    svstmt = self.visit(stmt)
+                    if svstmt is not None:
+                        self.scope[-1].stmts.append(svstmt)
             return None
         else:
             svnode = Block(in_cond=expr, stmts=[], cycle_cond=[])
             self.visit_block(svnode, node.body)
-            return svnode
+            if hasattr(node, 'orelse'):
+                fields = expr._asdict()
+                fields.pop('svrepr')
+                else_expr = type(expr)(svrepr=f'!({expr.svrepr})', **fields)
+                svnode_else = Block(in_cond=else_expr, stmts=[], cycle_cond=[])
+                self.visit_block(svnode_else, node.orelse)
+                top = Block(
+                    in_cond=None, stmts=[svnode, svnode_else], cycle_cond=[])
+                return top
+            else:
+                return svnode
 
     def visit_For(self, node):
         start, stop, step = self.visit_DataExpression(node.iter)
@@ -472,11 +498,9 @@ class HdlAst(ast.NodeVisitor):
 
         self.visit_block(svnode, node.body)
 
-        # increment
-        expr = ast.BinOp(ast.Name(names[0], ast.Load()), ast.Add(), step)
         target = node.target if len(names) == 1 else node.target.elts[0]
-        assign_iter = ast.Assign([target], expr)
-        svnode.stmts.append(self.visit_Assign(assign_iter))
+        svnode.stmts.append(
+            self.visit(increment_reg(names[0], val=step, target=target)))
 
         return svnode
 
@@ -497,7 +521,74 @@ class HdlAst(ast.NodeVisitor):
             locals=self.svlocals,
             regs=self.regs,
             stmts=[])
-        return self.visit_block(svnode, node.body)
+
+        hier_blocks = [
+            stmt for stmt in node.body if not isinstance(stmt, ast.Assign)
+        ]
+
+        if len(hier_blocks) is 1:
+            return self.visit_block(svnode, node.body)
+
+        self.create_state_reg(len(hier_blocks))
+        svnode.regs.update(self.regs)
+
+        # register initializations
+        for stmt in node.body:
+            if isinstance(stmt, ast.Assign):
+                self.visit(stmt)
+            else:
+                break
+
+        # sub blocks
+        for i, stmt in enumerate(hier_blocks):
+            sub = Loop(in_cond=None, stmts=[], cycle_cond=[], exit_cond=None)
+            self.enter_block(sub)
+            sub_block = self.visit(stmt)
+            self.exit_block()
+
+            if isinstance(sub_block, Loop):
+                # merge sub
+                in_cond = Expr(
+                    f'(state_reg == {i}) && ({sub_block.in_cond.svrepr})',
+                    Bool)
+                cycle_cond = sub_block.cycle_cond
+                assert len(sub.cycle_cond) == 0
+                stmts = sub_block.stmts
+            else:
+                in_cond = Expr(f'(state_reg == {i})', Bool)
+                cycle_cond = sub.cycle_cond
+                stmts = [sub_block]
+
+            # exit conditions different if not last
+            if getattr(sub_block, 'exit_cond', []):
+                exit_cond = sub_block.exit_cond
+            else:
+                exit_cond = None
+            if exit_cond and i != (len(hier_blocks) - 1):
+                assert len(exit_cond) == 1  # temporary guard
+                check_state = Block(
+                    in_cond=exit_cond[0],
+                    cycle_cond=[],
+                    stmts=[self.visit(increment_reg('state'))])
+                stmts.insert(0, check_state)
+                exit_cond = None
+
+            sub_cpy = Loop(
+                in_cond=in_cond,
+                stmts=stmts,
+                cycle_cond=cycle_cond,
+                exit_cond=exit_cond,
+                multicycle=True)
+
+            svnode.stmts.append(sub_cpy)
+
+        return svnode
+
+    def create_state_reg(self, state_num):
+        if state_num > 1:
+            val = Uint[bitw(state_num)](0)
+            self.regs['state'] = ResExpr(val, str(int(val)), type(val))
+            self.svlocals['state'] = RegDef(val, 'state', type(val))
 
 
 class HdlAstVisitor:
