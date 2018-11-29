@@ -92,9 +92,6 @@ class SVCompiler(InstanceVisitor):
                     break
             if en:
                 self.write_if_not_default(f'{name}_en', cond, comment)
-                # if comment:
-                #     self.write_svline(comment)
-                # self.write_svline(f'{name}_en = {cond};')
 
     def add_svline_default(self, line):
         self.svlines.insert(1, f'{" "*self.indent}{line}')

@@ -3,8 +3,10 @@ from pygears.typing import Array, Queue, Tuple, Uint
 from pygears.util.utils import quiter
 
 
-@gear
+@gear(svgen={'compile': True})
 async def serialize(din: Array) -> b'din.dtype':
+    i = din.dtype[0](0)
+
     async with din as val:
         for i in range(len(val)):
             yield val[i]

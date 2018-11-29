@@ -2,7 +2,7 @@ import ast
 import typing as pytypes
 from collections import namedtuple
 from pygears.typing import (Uint, Int, is_type, Bool, Tuple, Any, Unit, typeof,
-                            bitw)
+                            bitw, Array)
 from pygears.typing.base import TypingMeta
 
 opmap = {
@@ -297,8 +297,12 @@ class HdlAst(ast.NodeVisitor):
         svrepr, dtype = self.visit(node.value)
 
         if hasattr(node.slice, 'value'):
-            index = self.eval_expression(node.slice.value)
-            return Expr(f'{svrepr}.{dtype.fields[index]}', dtype[index])
+            if typeof(dtype, Array):
+                index = self.visit_DataExpression(node.slice.value)
+                return Expr(f'{svrepr}[{index.svrepr}]', dtype[0])
+            else:
+                index = self.eval_expression(node.slice.value)
+                return Expr(f'{svrepr}.{dtype.fields[index]}', dtype[index])
         else:
             slice_args = [
                 self.visit_DataExpression(getattr(node.slice, field))
@@ -365,6 +369,9 @@ class HdlAst(ast.NodeVisitor):
         return eval(
             compile(ast.Expression(node), filename="<ast>", mode="eval"),
             self.locals, globals())
+
+    def visit_Call_len(self, arg):
+        return Expr(len(arg.dtype), dtype=Any)
 
     def visit_Call_int(self, arg):
         # ignore cast
