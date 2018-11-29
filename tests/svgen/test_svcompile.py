@@ -1,21 +1,26 @@
 from pygears import Intf, find
 from pygears.typing import Queue, Tuple, Uint, Union
 from pygears.common import add, filt, invert
-from pygears.cookbook import qcnt, replicate
+from pygears.cookbook import qcnt, replicate, accumulator
 from pygears.svgen.svcompile import compile_gear_body
 from pygears.util.test_utils import equal_on_nonspace
 
-simple_add_res = """always_comb begin
-    din.ready = 1;
-    dout.valid = 0;
+simple_add_res = """
+always_comb begin
     dout_s = 11'(din_s.f0) + 11'(din_s.f1);
-
+    dout.valid = 0;
     if (din.valid) begin
-        din.ready = dout.ready;
         dout.valid = 1;
         dout_s = 11'(din_s.f0) + 11'(din_s.f1);
     end
-end"""
+end
+always_comb begin
+    din.ready = 0;
+    if (din.valid) begin
+        din.ready = dout.ready;
+    end
+end
+"""
 
 
 def test_simple_add():
@@ -25,17 +30,21 @@ def test_simple_add():
     assert equal_on_nonspace(res, simple_add_res)
 
 
-simple_filt_res = """always_comb begin
-    din.ready = 1;
-    dout.valid = 0;
+simple_filt_res = """
+always_comb begin
     dout_s = din_s.data;
-
+    dout.valid = 0;
     if (din.valid) begin
         if (din_s.data.ctrl == din_s.sel) begin
-            din.ready = dout.ready;
             dout.valid = 1;
             dout_s = din_s.data;
         end
+    end
+end
+always_comb begin
+    din.ready = 0;
+    if (din.valid) begin
+        din.ready = 1;
     end
 end
 """
@@ -54,7 +63,6 @@ logic cnt_en;
 logic cnt_rst;
 cnt_t cnt_reg, cnt_next;
 
-
 always_ff @(posedge clk) begin
     if(rst | cnt_rst) begin
         cnt_reg = 1;
@@ -64,25 +72,29 @@ always_ff @(posedge clk) begin
 end
 
 always_comb begin
-    // Gear idle states
-    din.ready = 1;
-    dout.valid = 0;
-    dout_s = {&(din_s.eot), cnt_reg};
     cnt_next = 17'(cnt_reg) + 17'(1);
     cnt_en = 0;
     cnt_rst = 0;
-
     if (din.valid) begin
-        // Gear reset conditions
         cnt_rst = dout.ready && &din_s.eot;
-
-        // Cycle done conditions
-        din.ready = dout.ready;
         cnt_en = dout.ready;
+        cnt_next = 17'(cnt_reg) + 17'(1);
+    end
+end
 
+always_comb begin
+    dout_s = {&(din_s.eot), cnt_reg};
+    dout.valid = 0;
+    if (din.valid) begin
         dout.valid = 1;
         dout_s = {&(din_s.eot), cnt_reg};
-        cnt_next = 17'(cnt_reg) + 17'(1);
+    end
+end
+
+always_comb begin
+    din.ready = 0;
+    if (din.valid) begin
+        din.ready = dout.ready;
     end
 end
 """
@@ -95,22 +107,21 @@ def test_simple_qcnt():
 
 
 simple_invert_res = """
-    always_comb begin
-        // Gear idle states
-        din.ready = 1;
-        dout.valid = 0;
+always_comb begin
+    dout_s = ~ din_s;
+    dout.valid = 0;
+    if (din.valid) begin
+        dout.valid = 1;
         dout_s = ~ din_s;
-
-        if (din.valid) begin
-            // Gear reset conditions
-
-            // Cycle done conditions
-            din.ready = dout.ready;
-
-            dout.valid = 1;
-            dout_s = ~ din_s;
-        end
     end
+end
+
+always_comb begin
+    din.ready = 0;
+    if (din.valid) begin
+        din.ready = dout.ready;
+    end
+end
 """
 
 
@@ -121,43 +132,47 @@ def test_simple_invert():
 
 
 simple_replicate_res = """
-    typedef logic [15:0] i_t; // u16
+typedef logic [15:0] i_t; // u16
 
-    logic i_en;
-    logic i_rst;
-    i_t i_reg, i_next;
+logic i_en;
+logic i_rst;
+i_t i_reg, i_next;
 
-
-    always_ff @(posedge clk) begin
-        if(rst | i_rst) begin
-            i_reg = 0;
-        end else if (i_en) begin
-            i_reg = i_next;
-        end
+always_ff @(posedge clk) begin
+    if(rst | i_rst) begin
+        i_reg = 0;
+    end else if (i_en) begin
+        i_reg = i_next;
     end
+end
 
-    always_comb begin
-        // Gear idle states
-        din.ready = 1;
-        dout.valid = 0;
-        dout_s = {(i_next == din_s.f0), din_s.f1};
+always_comb begin
+    i_next = 17'(i_reg) + 17'(1);
+    i_en = 0;
+    i_rst = 0;
+    if (din.valid) begin
+        i_rst = dout.ready && (i_next == din_s.f0);
+        i_en = dout.ready;
         i_next = 17'(i_reg) + 17'(1);
-        i_en = 0;
-        i_rst = 0;
-
-        if (din.valid) begin
-                // Gear reset conditions
-                i_rst = dout.ready && (i_next == din_s.f0);
-
-                // Cycle done conditions
-                din.ready = dout.ready && (i_next == din_s.f0);
-                i_en = dout.ready;
-
-                dout.valid = 1;
-                dout_s = {(i_next == din_s.f0), din_s.f1};
-                i_next = 17'(i_reg) + 17'(1);
-        end
     end
+end
+
+always_comb begin
+    dout_s = {(i_next == din_s.f0), din_s.f1};
+    dout.valid = 0;
+    if (din.valid) begin
+        dout.valid = 1;
+        dout_s = {(i_next == din_s.f0), din_s.f1};
+    end
+end
+
+always_comb begin
+    din.ready = 0;
+    if (din.valid) begin
+        din.ready = 1;
+        din.ready = dout.ready && (i_next == din_s.f0);
+    end
+end
 """
 
 
@@ -165,6 +180,121 @@ def test_simple_replicate():
     replicate(Intf(Tuple[Uint[16], Uint[16]]))
     res = compile_gear_body(find('/replicate'))
     assert equal_on_nonspace(res, simple_replicate_res)
+
+
+simple_accumulator_res = """
+typedef logic [15:0] acc_t; // u16
+
+logic acc_en;
+logic acc_rst;
+acc_t acc_reg, acc_next;
+
+typedef logic [0:0] offset_added_t;
+logic offset_added_en;
+logic offset_added_rst;
+offset_added_t offset_added_reg, offset_added_next;
+
+typedef logic [1:0] state_t; // u2
+
+logic state_en;
+logic state_rst;
+state_t state_reg, state_next;
+
+always_ff @(posedge clk) begin
+    if(rst | acc_rst) begin
+        acc_reg = 0;
+    end else if (acc_en) begin
+        acc_reg = acc_next;
+    end
+end
+
+always_ff @(posedge clk) begin
+    if(rst | offset_added_rst) begin
+        offset_added_reg = 0;
+    end else if (offset_added_en) begin
+        offset_added_reg = offset_added_next;
+    end
+end
+
+always_ff @(posedge clk) begin
+    if(rst | state_rst) begin
+        state_reg = 0;
+    end else if (state_en) begin
+        state_reg = state_next;
+    end
+end
+
+always_comb begin
+    acc_next = 17'(acc_reg) + 17'(din_s.data.f0);
+    acc_en = 0;
+    acc_rst = 0;
+    if ((state_reg == 0) && (din.valid)) begin
+            if (offset_added_reg) begin
+                acc_en = 1;
+                acc_next = 17'(acc_reg) + 17'(din_s.data.f0);
+            end
+            if (!(offset_added_reg)) begin
+                acc_en = 1;
+                acc_next = 17'(din_s.data.f1) + 17'(din_s.data.f0);
+            end
+    end
+    if ((state_reg == 1)) begin
+        acc_rst = dout.ready;
+    end
+end
+
+always_comb begin
+    offset_added_next = 1;
+    offset_added_en = 0;
+    offset_added_rst = 0;
+    if ((state_reg == 0) && (din.valid)) begin
+            if (!(offset_added_reg)) begin
+                offset_added_en = 1;
+                offset_added_next = 1;
+            end
+    end
+    if ((state_reg == 1)) begin
+        offset_added_rst = dout.ready;
+    end
+end
+
+always_comb begin
+    state_next = 3'(state_reg) + 3'(1);
+    state_en = 0;
+    state_rst = 0;
+    if ((state_reg == 0) && (din.valid)) begin
+        if (&din_s.eot) begin
+            state_en = 1;
+            state_next = 3'(state_reg) + 3'(1);
+        end
+    end
+    if ((state_reg == 1)) begin
+        state_rst = dout.ready;
+    end
+end
+
+always_comb begin
+    dout_s = acc_reg;
+    dout.valid = 0;
+    if ((state_reg == 1)) begin
+        dout.valid = 1;
+        dout_s = acc_reg;
+    end
+end
+
+always_comb begin
+    din.ready = 0;
+    if ((state_reg == 0) && (din.valid)) begin
+        din.ready = 1;
+    end
+end
+"""
+
+
+def test_simple_accumulator():
+    accumulator(Intf(Queue[Tuple[Uint[16], Uint[16]]]))
+    res = compile_gear_body(find('/accumulator'))
+    assert equal_on_nonspace(res, simple_accumulator_res)
 
 
 # from pygears.typing import Queue, Uint
