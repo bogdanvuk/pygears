@@ -94,6 +94,23 @@ TAssignExpr = namedtuple('TAssignExpr', TExpr._fields + ('init', ))
 InPort = namedtuple('InPort', ['svrepr', 'dtype'])
 OutPort = namedtuple('OutPort', ['svrepr', 'dtype'])
 
+block_types = [ast.For, ast.While, ast.If]
+async_types = [
+    ast.AsyncFor, ast.AsyncFunctionDef, ast.AsyncWith, ast.Yield, ast.YieldFrom
+]
+
+
+def check_if_hier(stmt):
+    if type(stmt) is ast.Expr:
+        stmt = stmt.value
+
+    if type(stmt) in async_types:
+        return True
+    elif type(stmt) in block_types:
+        return check_if_hier(stmt)
+    else:
+        return False
+
 
 def eval_expression(node, local_namespace):
     return eval(
@@ -522,9 +539,7 @@ class HdlAst(ast.NodeVisitor):
             regs=self.regs,
             stmts=[])
 
-        hier_blocks = [
-            stmt for stmt in node.body if not isinstance(stmt, ast.Assign)
-        ]
+        hier_blocks = [stmt for stmt in node.body if check_if_hier(stmt)]
 
         if len(hier_blocks) is 1:
             return self.visit_block(svnode, node.body)
