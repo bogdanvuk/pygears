@@ -19,6 +19,10 @@ idle_cmt = '// Gear idle states'
 rst_cmt = '// Gear reset conditions'
 
 
+class DefaultFound(Exception):
+    pass
+
+
 class InstanceVisitor:
     def visit(self, node, visit_var):
         method = 'visit_' + node.__class__.__name__
@@ -40,13 +44,16 @@ class SVCompiler(InstanceVisitor):
         self.indent = 0
         self.svlines = []
         self.scope = []
+        self.block_dflt = []
 
     def enter_block(self, block):
         self.scope.append(block)
+        self.block_dflt.append({})
         self.indent += 4
 
     def exit_block(self):
         self.scope.pop()
+        self.block_dflt.pop()
         self.indent -= 4
 
     def write_svline(self, line=''):
@@ -59,6 +66,22 @@ class SVCompiler(InstanceVisitor):
         for line in block.split('\n'):
             self.write_svline(line)
 
+    def write_if_not_default(self, name, cond, comment):
+        en = True
+        for scope in reversed(self.block_dflt):
+            if name not in scope:
+                continue
+            elif scope[name] == cond:
+                en = False
+                break
+            else:
+                break
+        if en:
+            if comment:
+                self.write_svline(comment)
+            self.write_svline(f'{name} = {cond};')
+            self.block_dflt[-1][name] = cond
+
     def write_reg_enable(self, name, node, cond=1, comment=None):
         if name in self.module.regs:
             # register is enabled if it is assigned in the current block
@@ -68,9 +91,10 @@ class SVCompiler(InstanceVisitor):
                     en = 1
                     break
             if en:
-                if comment:
-                    self.write_svline(comment)
-                self.write_svline(f'{name}_en = {cond};')
+                self.write_if_not_default(f'{name}_en', cond, comment)
+                # if comment:
+                #     self.write_svline(comment)
+                # self.write_svline(f'{name}_en = {cond};')
 
     def add_svline_default(self, line):
         self.svlines.insert(1, f'{" "*self.indent}{line}')
@@ -104,7 +128,10 @@ class SVCompiler(InstanceVisitor):
 
         self.write_svline(idle_cmt)
 
-        self.find_defaults(name, node)
+        try:
+            self.find_defaults(name, node)
+        except DefaultFound:
+            pass
 
         for d in dflts:
             self.write_svline(f'{name}_{d} = 0;')
@@ -122,7 +149,7 @@ class SVCompiler(InstanceVisitor):
         for port in self.module.in_ports:
             if name == port.svrepr:
                 self.write_svline(f'{name}.ready = 0;')
-                return
+                raise DefaultFound
 
         for stmt in node.stmts:
             self.find_default_in_stmt(name, stmt)
@@ -137,11 +164,11 @@ class SVCompiler(InstanceVisitor):
                 if port.svrepr == name:
                     self.write_svline(f'{port.svrepr}_s = {stmt.expr.svrepr};')
                     self.write_svline(f'{port.svrepr}.valid = 0;')
-                    return
+                    raise DefaultFound
         elif isinstance(stmt, RegNextExpr):
             if stmt.reg.svrepr == name:
                 self.visit(stmt, name)
-                return
+                raise DefaultFound
 
     def find_out_conds(self, halt_on):
         out_cond = []
@@ -206,8 +233,11 @@ class SVCompiler(InstanceVisitor):
                 if var_is_port:
                     if not node.in_cond or (
                             f'{visit_var}.valid' in node.in_cond.svrepr):
-                        self.write_svline(cycle_done_cmt)
-                        self.write_svline(f'{visit_var}.ready = {cond};')
+
+                        self.write_if_not_default(f'{visit_var}.ready', cond,
+                                                  cycle_done_cmt)
+                        # self.write_svline(cycle_done_cmt)
+                        # self.write_svline(f'{visit_var}.ready = {cond};')
 
                 if var_is_reg:
                     self.write_reg_enable(
@@ -218,8 +248,10 @@ class SVCompiler(InstanceVisitor):
         if not node.cycle_cond or not self.find_cycle_cond():
             # TODO : since default is 0, is this always ok?
             if var_is_port:
-                self.write_svline(no_cycle_cmt)
-                self.write_svline(f'{visit_var}.ready = 1;')
+                self.write_if_not_default(f'{visit_var}.ready', 1,
+                                          no_cycle_cmt)
+                # self.write_svline(no_cycle_cmt)
+                # self.write_svline(f'{visit_var}.ready = 1;')
             if var_is_reg:
                 self.write_reg_enable(visit_var, node, 1, no_cycle_cmt)
 
