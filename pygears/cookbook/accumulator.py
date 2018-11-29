@@ -1,4 +1,5 @@
-from pygears import gear
+from pygears import alternative, gear
+from pygears.common import cart
 from pygears.typing import Queue, Tuple, Integer
 
 
@@ -17,3 +18,9 @@ async def accumulator(din: Queue[Tuple[Integer['w_data'], Integer['w_data']]]
             offset_added = True
 
     yield acc
+
+
+@alternative(accumulator)
+@gear
+def accumulator2(din: Queue[Integer['w_data']], cfg: Integer['w_data']):
+    return cart(din, cfg) | accumulator

@@ -77,7 +77,7 @@ class Loop(Block, pytypes.NamedTuple):
     stmts: pytypes.List
     cycle_cond: pytypes.List
     exit_cond: pytypes.List
-    multicycle: bool = False
+    multicycle: pytypes.List = []
 
 
 class Module(pytypes.NamedTuple):
@@ -494,7 +494,7 @@ class HdlAst(ast.NodeVisitor):
             stmts=[],
             cycle_cond=[],
             exit_cond=exit_cond,
-            multicycle=True)
+            multicycle=names)
 
         self.visit_block(svnode, node.body)
 
@@ -577,8 +577,7 @@ class HdlAst(ast.NodeVisitor):
                 in_cond=in_cond,
                 stmts=stmts,
                 cycle_cond=cycle_cond,
-                exit_cond=exit_cond,
-                multicycle=True)
+                exit_cond=exit_cond)
 
             svnode.stmts.append(sub_cpy)
 

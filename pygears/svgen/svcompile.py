@@ -13,6 +13,11 @@ always_ff @(posedge clk) begin
 end
 """
 
+cycle_done_cmt = '// Cycle done conditions'
+no_cycle_cmt = '// No cycle conditions, default:'
+idle_cmt = '// Gear idle states'
+rst_cmt = '// Gear reset conditions'
+
 
 class InstanceVisitor:
     def visit(self, node, visit_var):
@@ -54,7 +59,7 @@ class SVCompiler(InstanceVisitor):
         for line in block.split('\n'):
             self.write_svline(line)
 
-    def write_reg_enable(self, name, node, cond=1):
+    def write_reg_enable(self, name, node, cond=1, comment=None):
         if name in self.module.regs:
             # register is enabled if it is assigned in the current block
             en = 0
@@ -63,6 +68,8 @@ class SVCompiler(InstanceVisitor):
                     en = 1
                     break
             if en:
+                if comment:
+                    self.write_svline(comment)
                 self.write_svline(f'{name}_en = {cond};')
 
     def add_svline_default(self, line):
@@ -82,38 +89,25 @@ class SVCompiler(InstanceVisitor):
             self.write_svblock(reg_template.format(name, expr.svrepr))
 
         for name in node.regs:
-            self.write_reg_block(node, name)
+            self.write_comb_block(node, name, ['en', 'rst'])
 
         for name in node.out_ports:
-            self.write_port_block(node, name.svrepr)
+            self.write_comb_block(node, name.svrepr)
 
         for name in node.in_ports:
-            self.write_port_block(node, name.svrepr)
+            self.write_comb_block(node, name.svrepr)
 
-    def write_port_block(self, node, name):
+    def write_comb_block(self, node, name, dflts=[]):
+        self.write_svline(f'// Comb block for: {name}')
         self.write_svline(f'always_comb begin')
         self.enter_block(node)
 
-        self.write_svline('// Gear idle states')
+        self.write_svline(idle_cmt)
 
         self.find_defaults(name, node)
 
-        for stmt in node.stmts:
-            self.visit(stmt, name)
-
-        self.exit_block()
-        self.write_svline(f'end')
-
-    def write_reg_block(self, node, name):
-        self.write_svline(f'always_comb begin')
-        self.enter_block(node)
-
-        self.write_svline('// Gear idle states')
-
-        self.find_defaults(name, node)
-
-        self.write_svline(f'{name}_en = 0;')
-        self.write_svline(f'{name}_rst = 0;')
+        for d in dflts:
+            self.write_svline(f'{name}_{d} = 0;')
 
         self.write_svline()
 
@@ -184,6 +178,12 @@ class SVCompiler(InstanceVisitor):
             self.write_svline(f'{visit_var}_next = {node.svrepr};')
 
     def visit_Block(self, node, visit_var):
+        var_is_reg = (visit_var in self.module.regs)
+        var_is_port = False
+        for port in self.module.in_ports:
+            if visit_var == port.svrepr:
+                var_is_port = True
+
         if node.in_cond:
             self.write_svline(f'if ({node.in_cond.svrepr}) begin')
         self.enter_block(node)
@@ -192,36 +192,36 @@ class SVCompiler(InstanceVisitor):
             cycle_cond = self.find_cycle_cond()
             exit_cond = self.find_exit_cond()
 
-            if exit_cond:
-                self.write_svline('// Gear reset conditions')
-                if visit_var in self.module.regs:
-                    self.write_svline(f'{visit_var}_rst = {exit_cond};')
-
+            if exit_cond and var_is_reg:
+                self.write_svline(rst_cmt)
+                self.write_svline(f'{visit_var}_rst = {exit_cond};')
                 self.write_svline()
 
             if cycle_cond:
-                self.write_svline('// Cycle done conditions')
-
                 cond = cycle_cond
                 if getattr(node, 'multicycle', None) and exit_cond:
-                    cond = exit_cond
+                    if visit_var not in node.multicycle:
+                        cond = exit_cond
 
-                for port in self.module.in_ports:
-                    if visit_var == port.svrepr:
-                        if not node.in_cond or (
-                                f'{visit_var}.valid' in node.in_cond.svrepr):
-                            self.write_svline(f'{port.svrepr}.ready = {cond};')
+                if var_is_port:
+                    if not node.in_cond or (
+                            f'{visit_var}.valid' in node.in_cond.svrepr):
+                        self.write_svline(cycle_done_cmt)
+                        self.write_svline(f'{visit_var}.ready = {cond};')
 
-                self.write_reg_enable(visit_var, node, cond)
+                if var_is_reg:
+                    self.write_reg_enable(
+                        visit_var, node, cond, comment=cycle_done_cmt)
 
                 self.write_svline()
 
         if not node.cycle_cond or not self.find_cycle_cond():
             # TODO : since default is 0, is this always ok?
-            for port in self.module.in_ports:
-                if visit_var == port.svrepr:
-                    self.write_svline(f'{port.svrepr}.ready = 1;')
-            self.write_reg_enable(visit_var, node, 1)
+            if var_is_port:
+                self.write_svline(no_cycle_cmt)
+                self.write_svline(f'{visit_var}.ready = 1;')
+            if var_is_reg:
+                self.write_reg_enable(visit_var, node, 1, no_cycle_cmt)
 
             self.write_svline()
 
@@ -274,7 +274,27 @@ def remove_empty_blocks(code):
         for line in reversed(rng):
             del code[line]
 
+    if to_remove:
+        # for nested
+        return remove_empty_blocks(code)
+    else:
+        return code
+
+
+def remove_empty_lines(code):
+    i = len(code)
+    for line in reversed(code):
+        i -= 1
+        if line == '':
+            if i != 1:
+                if code[i - 1] == '':
+                    del code[i]
     return code
+
+
+def code_cleanup(code):
+    flat = remove_empty_blocks(code)
+    return remove_empty_lines(flat)
 
 
 def compile_gear_body(gear):
@@ -293,7 +313,7 @@ def compile_gear_body(gear):
     v = SVCompiler()
     v.visit(hdl_ast, None)
     res = v.svlines
-    clean = remove_empty_blocks(res)
+    clean = code_cleanup(res)
     return '\n'.join(clean)
 
 
