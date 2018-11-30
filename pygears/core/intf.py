@@ -47,7 +47,7 @@ class Intf:
     OPERATOR_SUPPORT = [
         '__getitem__', '__neg__', '__add__', '__sub__', '__mul__', '__div__',
         '__floordiv__', '__mod__', '__invert__', '__rshift__', '__lt__',
-        '__aiter__', '__eq__'
+        '__gt__', '__aiter__', '__eq__'
     ]
 
     def __init__(self, dtype):
@@ -178,8 +178,7 @@ class Intf:
                     f'Output data "{repr(val)}" from the'
                     f' "{registry("gear/current_module").name}"'
                     f' module cannot be converted to the type'
-                    f' {repr(self.dtype)}'
-                )
+                    f' {repr(self.dtype)}')
 
         if put_event:
             put_event(self, val)
