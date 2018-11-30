@@ -8,9 +8,14 @@ from pygears.util.test_utils import equal_on_nonspace
 simple_add_res = """always_comb begin
     din.ready = 1;
     dout.valid = 0;
+    dout_s = 11'(din_s.f0) + 11'(din_s.f1);
 
     if (din.valid) begin
+        // Gear reset conditions
+
+        // Cycle done conditions
         din.ready = dout.ready;
+
         dout.valid = 1;
         dout_s = 11'(din_s.f0) + 11'(din_s.f1);
     end
