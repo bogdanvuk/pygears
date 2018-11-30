@@ -11,6 +11,16 @@ assign _${intf_name}.data = ${conn_name}.data;
 assign _${intf_name}.valid = ${conn_name}.valid;
 assign _${intf_name}.ready = ${conn_name}.ready;""")
 
+# spy_connect_t = Template("""
+# ${intf_name}_t ${intf_name}_data;
+# logic ${intf_name}_valid;
+# logic ${intf_name}_ready;
+
+# assign ${intf_name}_data = ${conn_name}.data;
+# assign ${intf_name}_valid = ${conn_name}.valid;
+# assign ${intf_name}_ready = ${conn_name}.ready;
+# assign ${intf_name}_handshake = ${conn_name}.ready & ${conn_name}.valid;""")
+
 
 class SVIntfGen:
     def __init__(self, intf):
