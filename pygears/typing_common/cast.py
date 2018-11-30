@@ -1,6 +1,7 @@
 from pygears.conf import safe_bind
 from pygears.typing import TypingNamespacePlugin, typeof, is_type
 from pygears.typing import Int, Uint, Queue, Tuple, Union, Array, Integer
+from pygears.conf.log import gear_log
 
 
 def type_cast(dtype, cast_type):
@@ -25,7 +26,17 @@ def type_cast(dtype, cast_type):
             return Tuple[(dtype[0], ) * len(dtype)]
     elif (typeof(cast_type, Union) and typeof(dtype, Tuple) and len(dtype) == 2
           and not cast_type.is_specified()):
-        return Union[(dtype[0], ) * (2**int(dtype[1]))]
+
+        res = Union[(dtype[0], ) * (2**int(dtype[1]))]
+
+        if int(dtype[1]) > 6:
+            gear_log().warning(
+                f'Casting to large Union with {2**int(dtype[1])}'
+                f' subtypes from {dtype}'
+            )
+
+        return res
+
     else:
         return cast_type
 
