@@ -1,19 +1,28 @@
 from pygears import alternative, gear
-from pygears.typing import Queue, Uint
+from pygears.common import cart
+from pygears.typing import Queue, Tuple, Uint
 
 
+@gear(svgen={'compile': True})
+async def take(din: Queue[Tuple['t_data', Uint]], *,
+               init=1) -> Queue['t_data']:
+
+    cnt = din.dtype[0][1](init)
+    pass_eot = True
+
+    async for ((data, size), eot) in din:
+        last = (cnt == size) and pass_eot
+        if cnt <= size:
+            yield (data, eot or last)
+        if last:
+            pass_eot = 0
+        cnt += 1
+
+
+@alternative(take)
 @gear
-async def take(din: Queue['T'], cfg: Uint['N']) -> b'Queue[T]':
-
-    cnt = 0
-    val = din.dtype((0, 0))
-
-    async with cfg as c:
-        while not val.eot:
-            async with din as val:
-                cnt += 1
-                if cnt <= c:
-                    yield din.dtype((val.data, val.eot or (cnt == c)))
+def take2(din: Queue['t_data'], cfg: Uint):
+    return cart(din, cfg) | take
 
 
 @alternative(take)
