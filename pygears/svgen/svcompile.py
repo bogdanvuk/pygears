@@ -2,7 +2,7 @@ import ast
 import inspect
 import typing as pytypes
 from .util import svgen_typedef
-from .hdl_ast import Block, HdlAst, Loop, Module, RegFinder, RegNextExpr, Yield
+from .hdl_ast import HdlAst, Module, RegFinder, RegNextExpr
 
 reg_template = """
 always_ff @(posedge clk) begin
@@ -21,12 +21,13 @@ class AssignValue(pytypes.NamedTuple):
 
 
 class CombBlock(pytypes.NamedTuple):
-    name: str
     stmts: pytypes.List
+    dflts: pytypes.Dict
 
 
 class SVBlock(pytypes.NamedTuple):
     stmts: pytypes.List
+    dflts: pytypes.Dict
     in_cond: str = None
 
 
@@ -54,72 +55,43 @@ class SVCompilerPreprocess(InstanceVisitor):
     def __init__(self):
         self.svlines = []
         self.scope = []
-        self.block_dflt = []
 
     def enter_block(self, block):
         self.scope.append(block)
-        self.block_dflt.append({})
 
     def exit_block(self):
         self.scope.pop()
-        self.block_dflt.pop()
-
-    def write_if_not_default(self, name, cond):
-        en = True
-        for scope in reversed(self.block_dflt):
-            if name not in scope:
-                continue
-            elif scope[name] == cond:
-                en = False
-                break
-            else:
-                break
-        if en:
-            self.block_dflt[-1][name] = cond
-            return AssignValue(target=f'{name}', val=cond)
 
     def write_reg_enable(self, name, node, cond):
         if name in self.module.regs:
             # register is enabled if it is assigned in the current block
             for stmt in node.stmts:
                 if isinstance(stmt, RegNextExpr) and (stmt.reg.svrepr == name):
-                    return self.write_if_not_default(f'{name}_en', cond)
+                    return AssignValue(target=f'{name}_en', val=cond)
 
     def visit_Module(self, node, visit_var=None):
         self.module = node
         res = {}
 
         for name in node.regs:
-            r = self.write_comb_block(node, name, ['en', 'rst'])
-            res[name] = r
+            res[name] = self.write_comb_block(node, name, ['_en', '_rst'])
 
         for name in node.out_ports:
-            r = self.write_comb_block(node, name.svrepr)
-            res[name.svrepr] = r
+            res[name.svrepr] = self.write_comb_block(node, name.svrepr,
+                                                     ['.valid'])
 
         for name in node.in_ports:
-            r = self.write_comb_block(node, name.svrepr)
-            res[name.svrepr] = r
+            res[name.svrepr] = self.write_comb_block(node, name.svrepr,
+                                                     ['.ready'])
 
         return res
 
     def write_comb_block(self, node, visit_var, dflts=[]):
-        comb_block = CombBlock(name=visit_var, stmts=[])
+        comb_block = CombBlock(stmts=[], dflts={})
         self.enter_block(node)
 
-        ret = []
-        try:
-            self.find_defaults(visit_var, node, ret)
-        except DefaultFound:
-            pass
-        dflt_block = SVBlock(in_cond=None, stmts=[])
-        dflt_block.stmts.extend(ret)
-
         for d in dflts:
-            dflt_block.stmts.append(
-                AssignValue(target=f'{visit_var}_{d}', val=0))
-
-        comb_block.stmts.append(dflt_block)
+            comb_block.dflts[f'{visit_var}{d}'] = 0
 
         for stmt in node.stmts:
             s = self.visit(stmt, visit_var)
@@ -127,33 +99,8 @@ class SVCompilerPreprocess(InstanceVisitor):
                 comb_block.stmts.append(s)
 
         self.exit_block()
+        self.update_defaults(comb_block)
         return comb_block
-
-    def find_defaults(self, name, node, ret=[]):
-        for port in self.module.in_ports:
-            if name == port.svrepr:
-                ret.append(AssignValue(target=f'{name}.ready', val=0))
-                raise DefaultFound
-
-        for stmt in node.stmts:
-            self.find_default_in_stmt(name, stmt, ret)
-
-    def find_default_in_stmt(self, name, stmt, ret=[]):
-        if isinstance(stmt, Block):
-            self.find_defaults(name, stmt, ret)
-        elif isinstance(stmt, Loop):
-            self.find_defaults(name, stmt, ret)
-        elif isinstance(stmt, Yield):
-            for port in self.module.out_ports:
-                if port.svrepr == name:
-                    ret.append(
-                        AssignValue(target=f'{name}_s', val=stmt.expr.svrepr))
-                    ret.append(AssignValue(target=f'{name}.valid', val=0))
-                    raise DefaultFound
-        elif isinstance(stmt, RegNextExpr):
-            if stmt.reg.svrepr == name:
-                ret.append(self.visit(stmt, name))
-                raise DefaultFound
 
     def find_out_conds(self, halt_on):
         out_cond = []
@@ -182,10 +129,12 @@ class SVCompilerPreprocess(InstanceVisitor):
     def visit_Yield(self, node, visit_var):
         for port in self.module.out_ports:
             if port.svrepr == visit_var:
-                return SVBlock(stmts=[
-                    AssignValue(target=f'{visit_var}.valid', val=1),
-                    AssignValue(target=f'{visit_var}_s', val=node.expr.svrepr)
-                ])
+                return SVBlock(
+                    dflts={
+                        f'{visit_var}.valid': 1,
+                        f'{visit_var}_s': node.expr.svrepr
+                    },
+                    stmts=[])
 
     def visit_RegNextExpr(self, node, visit_var):
         if node.reg.svrepr == visit_var:
@@ -199,7 +148,9 @@ class SVCompilerPreprocess(InstanceVisitor):
                 var_is_port = True
 
         svblock = SVBlock(
-            in_cond=node.in_cond.svrepr if node.in_cond else None, stmts=[])
+            in_cond=node.in_cond.svrepr if node.in_cond else None,
+            stmts=[],
+            dflts={})
 
         self.enter_block(node)
 
@@ -217,24 +168,23 @@ class SVCompilerPreprocess(InstanceVisitor):
                     if visit_var not in node.multicycle:
                         cond = exit_cond
 
-                s = None
                 if var_is_port:
                     if not node.in_cond or (visit_var in node.in_cond.svrepr):
-                        s = self.write_if_not_default(f'{visit_var}.ready',
-                                                      cond)
+                        svblock.stmts.append(
+                            AssignValue(target=f'{visit_var}.ready', val=cond))
                 elif var_is_reg:
                     s = self.write_reg_enable(visit_var, node, cond)
-                if s:
-                    svblock.stmts.append(s)
+                    if s:
+                        svblock.stmts.append(s)
 
         if not node.cycle_cond or not self.find_cycle_cond():
-            s = None
             if var_is_port:
-                s = self.write_if_not_default(f'{visit_var}.ready', 1)
+                svblock.stmts.append(
+                    AssignValue(target=f'{visit_var}.ready', val=1))
             elif var_is_reg:
                 s = self.write_reg_enable(visit_var, node, 1)
-            if s:
-                svblock.stmts.append(s)
+                if s:
+                    svblock.stmts.append(s)
 
         for stmt in node.stmts:
             s = self.visit(stmt, visit_var)
@@ -245,10 +195,64 @@ class SVCompilerPreprocess(InstanceVisitor):
 
         # if block isn't empty
         if svblock.stmts:
+            self.update_defaults(svblock)
             return svblock
 
     def visit_Loop(self, node, visit_var):
         return self.visit_Block(node, visit_var)
+
+    def is_control_var(self, name):
+        control_suffix = ['_en', '_rst', '.valid', '.ready']
+        for suff in control_suffix:
+            if name.endswith(suff):
+                return True
+        return False
+
+    def update_defaults(self, block):
+        # bottom up
+        # popagate defaulf values from sub statements to top
+        for i, stmt in enumerate(block.stmts):
+            if hasattr(stmt, 'dflts'):
+                for d in stmt.dflts:
+                    # control cannot propagate pass in conditions
+                    if not self.is_control_var(d) or not stmt.in_cond:
+                        if d in block.dflts:
+                            if block.dflts[d] is stmt.dflts[d]:
+                                stmt.dflts[d] = None
+                        else:
+                            block.dflts[d] = stmt.dflts[d]
+                            stmt.dflts[d] = None
+            elif isinstance(stmt, AssignValue):
+                if stmt.target in block.dflts:
+                    if block.dflts[stmt.target] is stmt.val:
+                        stmt.val = None
+                else:
+                    block.dflts[stmt.target] = stmt.val
+                    block.stmts[i] = AssignValue(target=stmt.target, val=None)
+
+        self.block_cleanup(block)
+
+        # top down
+        # if there are multiple stmts with different in_conds, but same dflt
+        for d in block.dflts:
+            for stmt in block.stmts:
+                if hasattr(stmt, 'dflts') and d in stmt.dflts:
+                    if block.dflts[d] is stmt.dflts[d]:
+                        stmt.dflts[d] = None
+
+        self.block_cleanup(block)
+
+    def block_cleanup(self, block):
+        # cleanup None statements
+        for i, stmt in reversed(list(enumerate(block.stmts))):
+            if hasattr(stmt, 'val') and stmt.val is None:
+                del block.stmts[i]
+            if hasattr(stmt, 'dflts'):
+                for name in list(stmt.dflts.keys()):
+                    if stmt.dflts[name] is None:
+                        del stmt.dflts[name]
+                if (not stmt.dflts) and (not stmt.stmts):
+                    del block.stmts[i]
 
 
 class SVCompiler(InstanceVisitor):
@@ -305,19 +309,18 @@ class SVCompiler(InstanceVisitor):
         self.write_svline(f'{node.target} = {node.val};')
 
     def visit_CombBlock(self, node, visit_var=None):
-        self.write_svline(f'// Comb block for: {node.name}')
+        self.write_svline(f'// Comb block for: {visit_var}')
         self.write_svline(f'always_comb begin')
 
-        self.enter_block(node)
+        self.visit_SVBlock(node, visit_var)
 
-        for stmt in node.stmts:
-            self.visit(stmt, node.name)
-
-        self.exit_block()
         self.write_svline('')
 
     def visit_SVBlock(self, node, visit_var):
         self.enter_block(node)
+
+        for name, val in node.dflts.items():
+            self.write_svline(f'{name} = {val};')
 
         for stmt in node.stmts:
             self.visit(stmt, visit_var)
@@ -362,23 +365,3 @@ def compile_gear(gear, template_env, context):
     context['svlines'] = compile_gear_body(gear)
 
     return template_env.render_string(data_func_gear, context)
-
-
-def test(func):
-    tree = ast.parse(inspect.getsource(func)).body[0].body[1]
-    import astpretty
-    astpretty.pprint(tree, indent='  ')
-    # v.visit(ast.parse(inspect.getsource(gear.func)).body[0].body[0])
-
-    # return '\n'.join(v.svlines)
-
-
-# from pygears.typing import Queue, Union, Uint, Tuple
-
-# async def func(din: Tuple[Union, Uint]) -> b'din[0]':
-#     '''Filter incoming data of the Union type by the '''
-#     async with din as (d, sel):
-#         if d.ctrl == sel:
-#             yield d
-
-# test(func)
