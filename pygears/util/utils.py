@@ -15,6 +15,10 @@ def quiter(iterable):
     yield last, True
 
 
+def qrange(*args):
+    return quiter(range(*args))
+
+
 async def quiter_async(intf):
     while True:
         data = await intf.pull()

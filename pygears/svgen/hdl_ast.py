@@ -1,7 +1,8 @@
 import ast
 import typing as pytypes
 from collections import namedtuple
-from pygears.typing import Uint, Int, is_type, Bool, Tuple, Any, Unit, typeof
+from pygears.typing import (Uint, Int, is_type, Bool, Tuple, Any, Unit, typeof,
+                            bitw, Array)
 from pygears.typing.base import TypingMeta
 
 opmap = {
@@ -30,6 +31,10 @@ opmap = {
     ast.And: '&&',
     ast.Or: '||',
 }
+
+
+class AstTypeError(Exception):
+    pass
 
 
 class Expr(pytypes.NamedTuple):
@@ -76,7 +81,7 @@ class Loop(Block, pytypes.NamedTuple):
     stmts: pytypes.List
     cycle_cond: pytypes.List
     exit_cond: pytypes.List
-    multicycle: bool = False
+    multicycle: pytypes.List = []
 
 
 class Module(pytypes.NamedTuple):
@@ -84,6 +89,7 @@ class Module(pytypes.NamedTuple):
     out_ports: pytypes.List
     locals: pytypes.Dict
     regs: pytypes.Dict
+    wires: pytypes.Dict
     stmts: pytypes.List
 
 
@@ -92,6 +98,23 @@ TExpr = namedtuple('TExpr', ['val', 'svrepr', 'dtype'])
 TAssignExpr = namedtuple('TAssignExpr', TExpr._fields + ('init', ))
 InPort = namedtuple('InPort', ['svrepr', 'dtype'])
 OutPort = namedtuple('OutPort', ['svrepr', 'dtype'])
+
+block_types = [ast.For, ast.While, ast.If]
+async_types = [
+    ast.AsyncFor, ast.AsyncFunctionDef, ast.AsyncWith, ast.Yield, ast.YieldFrom
+]
+
+
+def check_if_hier(stmt):
+    if type(stmt) is ast.Expr:
+        stmt = stmt.value
+
+    if type(stmt) in async_types:
+        return True
+    elif type(stmt) in block_types:
+        return check_if_hier(stmt)
+    else:
+        return False
 
 
 def eval_expression(node, local_namespace):
@@ -104,6 +127,9 @@ def eval_expression(node, local_namespace):
 
 def eval_data_expr(node, local_namespace):
     ret = eval_expression(node, local_namespace)
+
+    if isinstance(ret, ast.AST):
+        raise AstTypeError
 
     if not is_type(type(ret)):
         if ret < 0:
@@ -132,6 +158,13 @@ def gather_control_stmt_vars(variables, intf, dtype):
     return scope
 
 
+def increment_reg(name, val=ast.Num(1), target=None):
+    if not target:
+        target = ast.Name(name, ast.Store())
+    expr = ast.BinOp(ast.Name(name, ast.Load()), ast.Add(), val)
+    return ast.Assign([target], expr)
+
+
 class RegFinder(ast.NodeVisitor):
     def __init__(self, gear):
         self.regs = {}
@@ -143,7 +176,11 @@ class RegFinder(ast.NodeVisitor):
         }
 
     def promote_var_to_reg(self, name):
-        val = self.variables.pop(name)
+        val = self.variables[name]
+
+        # wire, not register
+        if val is None:
+            return
 
         if not is_type(type(val)):
             if val < 0:
@@ -153,14 +190,30 @@ class RegFinder(ast.NodeVisitor):
 
         self.regs[name] = ResExpr(val, str(int(val)), type(val))
 
+    def clean_variables(self):
+        for r in self.regs:
+            del self.variables[r]
+
     def visit_AugAssign(self, node):
         self.promote_var_to_reg(node.target.id)
+
+    def visit_For(self, node):
+        if isinstance(node.target, ast.Tuple):
+            for el in node.target.elts:
+                if el.id in self.variables:
+                    self.promote_var_to_reg(el.id)
+        else:
+            self.promote_var_to_reg(node.target.id)
 
     def visit_Assign(self, node):
         name = node.targets[0].id
         if name not in self.variables:
-            self.variables[name] = eval_expression(node.value,
-                                                   self.local_params)
+            try:
+                self.variables[name] = eval_expression(node.value,
+                                                       self.local_params)
+            except NameError:
+                # wires are not defined previously
+                self.variables[name] = node.value
         else:
             self.promote_var_to_reg(name)
 
@@ -178,6 +231,7 @@ class HdlAst(ast.NodeVisitor):
             **gear.explicit_params,
             **variables
         }
+        self.wires = variables.keys()
         self.regs = regs
         self.scope = []
 
@@ -207,8 +261,11 @@ class HdlAst(ast.NodeVisitor):
                     var = RegVal(var, f'{var.svrepr}_next', var.dtype)
                     break
             else:
-                var = RegVal(var, f'{var.svrepr}_reg', var.dtype)
-
+                if var.svrepr in self.regs:
+                    svrepr = f'{var.svrepr}_reg'
+                else:
+                    svrepr = f'{var.svrepr}_s'
+                var = RegVal(var, svrepr, var.dtype)
         return var
 
     def visit_AsyncFor(self, node):
@@ -264,8 +321,12 @@ class HdlAst(ast.NodeVisitor):
         svrepr, dtype = self.visit(node.value)
 
         if hasattr(node.slice, 'value'):
-            index = self.eval_expression(node.slice.value)
-            return Expr(f'{svrepr}.{dtype.fields[index]}', dtype[index])
+            if typeof(dtype, Array):
+                index = self.visit_DataExpression(node.slice.value)
+                return Expr(f'{svrepr}[{index.svrepr}]', dtype[0])
+            else:
+                index = self.eval_expression(node.slice.value)
+                return Expr(f'{svrepr}.{dtype.fields[index]}', dtype[index])
         else:
             slice_args = [
                 self.visit_DataExpression(getattr(node.slice, field))
@@ -325,13 +386,35 @@ class HdlAst(ast.NodeVisitor):
 
         try:
             return eval_data_expr(node, self.locals)
-        except NameError:
+        except (NameError, AstTypeError):
             return self.visit(node)
 
     def eval_expression(self, node):
         return eval(
             compile(ast.Expression(node), filename="<ast>", mode="eval"),
             self.locals, globals())
+
+    def visit_Call_len(self, arg):
+        return Expr(len(arg.dtype), dtype=Any)
+
+    def visit_Call_int(self, arg):
+        # ignore cast
+        return arg
+
+    def visit_Call_range(self, arg):
+        if isinstance(arg, Expr):
+            start = Expr('0', arg.dtype)
+            stop = arg
+            step = ast.Num(1)
+        else:
+            start = arg[0]
+            stop = arg[1]
+            step = ast.Num(1) if len(arg) == 2 else arg[2]
+
+        return start, stop, step
+
+    def visit_Call_qrange(self, arg):
+        return self.visit_Call_range(arg)
 
     def visit_Call_all(self, arg):
         return Expr(f'&({arg.svrepr})', Bool)
@@ -417,12 +500,57 @@ class HdlAst(ast.NodeVisitor):
                         self.scope[-1].stmts.append(svstmt)
                     # except Exception as e:
                     #     pass
-
+            elif hasattr(node, 'orelse'):
+                for stmt in node.orelse:
+                    svstmt = self.visit(stmt)
+                    if svstmt is not None:
+                        self.scope[-1].stmts.append(svstmt)
             return None
         else:
             svnode = Block(in_cond=expr, stmts=[], cycle_cond=[])
             self.visit_block(svnode, node.body)
-            return svnode
+            if hasattr(node, 'orelse'):
+                fields = expr._asdict()
+                fields.pop('svrepr')
+                else_expr = type(expr)(svrepr=f'!({expr.svrepr})', **fields)
+                svnode_else = Block(in_cond=else_expr, stmts=[], cycle_cond=[])
+                self.visit_block(svnode_else, node.orelse)
+                top = Block(
+                    in_cond=None, stmts=[svnode, svnode_else], cycle_cond=[])
+                return top
+            else:
+                return svnode
+
+    def visit_For(self, node):
+        start, stop, step = self.visit_DataExpression(node.iter)
+
+        if isinstance(node.target, ast.Tuple):
+            names = [x.id for x in node.target.elts]
+        else:
+            names = [node.target.id]
+
+        exit_cond = [Expr(f'({names[0]}_next == {stop.svrepr})', Bool)]
+
+        if node.iter.func.id is 'qrange':
+            val = Uint[1](0)
+            scope = gather_control_stmt_vars(
+                node.target.elts[-1], f'{exit_cond[0].svrepr}', type(val))
+            self.svlocals.update(scope)
+
+        svnode = Loop(
+            in_cond=None,
+            stmts=[],
+            cycle_cond=[],
+            exit_cond=exit_cond,
+            multicycle=names)
+
+        self.visit_block(svnode, node.body)
+
+        target = node.target if len(names) == 1 else node.target.elts[0]
+        svnode.stmts.append(
+            self.visit(increment_reg(names[0], val=step, target=target)))
+
+        return svnode
 
     def visit_Expr(self, node):
         if isinstance(node.value, ast.Yield):
@@ -440,8 +568,73 @@ class HdlAst(ast.NodeVisitor):
             out_ports=self.out_ports,
             locals=self.svlocals,
             regs=self.regs,
+            wires=self.wires,
             stmts=[])
-        return self.visit_block(svnode, node.body)
+
+        hier_blocks = [stmt for stmt in node.body if check_if_hier(stmt)]
+
+        if len(hier_blocks) is 1:
+            return self.visit_block(svnode, node.body)
+
+        self.create_state_reg(len(hier_blocks))
+        svnode.regs.update(self.regs)
+
+        # register initializations
+        for stmt in node.body:
+            if isinstance(stmt, ast.Assign):
+                self.visit(stmt)
+            else:
+                break
+
+        # sub blocks
+        for i, stmt in enumerate(hier_blocks):
+            sub = Loop(in_cond=None, stmts=[], cycle_cond=[], exit_cond=None)
+            self.enter_block(sub)
+            sub_block = self.visit(stmt)
+            self.exit_block()
+
+            if isinstance(sub_block, Loop):
+                # merge sub
+                in_cond = Expr(
+                    f'(state_reg == {i}) && ({sub_block.in_cond.svrepr})',
+                    Bool)
+                cycle_cond = sub_block.cycle_cond
+                assert len(sub.cycle_cond) == 0
+                stmts = sub_block.stmts
+            else:
+                in_cond = Expr(f'(state_reg == {i})', Bool)
+                cycle_cond = sub.cycle_cond
+                stmts = [sub_block]
+
+            # exit conditions different if not last
+            if getattr(sub_block, 'exit_cond', []):
+                exit_cond = sub_block.exit_cond
+            else:
+                exit_cond = None
+            if exit_cond and i != (len(hier_blocks) - 1):
+                assert len(exit_cond) == 1  # temporary guard
+                check_state = Block(
+                    in_cond=exit_cond[0],
+                    cycle_cond=[],
+                    stmts=[self.visit(increment_reg('state'))])
+                stmts.insert(0, check_state)
+                exit_cond = None
+
+            sub_cpy = Loop(
+                in_cond=in_cond,
+                stmts=stmts,
+                cycle_cond=cycle_cond,
+                exit_cond=exit_cond)
+
+            svnode.stmts.append(sub_cpy)
+
+        return svnode
+
+    def create_state_reg(self, state_num):
+        if state_num > 1:
+            val = Uint[bitw(state_num)](0)
+            self.regs['state'] = ResExpr(val, str(int(val)), type(val))
+            self.svlocals['state'] = RegDef(val, 'state', type(val))
 
 
 class HdlAstVisitor:
