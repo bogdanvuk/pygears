@@ -3,7 +3,6 @@ import inspect
 import typing as pytypes
 from .util import svgen_typedef
 from .hdl_ast import Block, HdlAst, Loop, Module, RegFinder, RegNextExpr, Yield
-from .inst import svgen_log
 
 reg_template = """
 always_ff @(posedge clk) begin
@@ -14,10 +13,6 @@ always_ff @(posedge clk) begin
     end
 end
 """
-
-cycle_cmt = '// Cycle done conditions'
-idle_cmt = '// Gear idle states'
-rst_cmt = '// Gear reset conditions'
 
 
 class AssignValue(pytypes.NamedTuple):
@@ -86,13 +81,9 @@ class SVCompilerPreprocess(InstanceVisitor):
     def write_reg_enable(self, name, node, cond):
         if name in self.module.regs:
             # register is enabled if it is assigned in the current block
-            en = 0
             for stmt in node.stmts:
                 if isinstance(stmt, RegNextExpr) and (stmt.reg.svrepr == name):
-                    en = 1
-                    break
-            if en:
-                return self.write_if_not_default(f'{name}_en', cond)
+                    return self.write_if_not_default(f'{name}_en', cond)
 
     def visit_Module(self, node, visit_var=None):
         self.module = node
@@ -131,7 +122,9 @@ class SVCompilerPreprocess(InstanceVisitor):
         comb_block.stmts.append(dflt_block)
 
         for stmt in node.stmts:
-            comb_block.stmts.append(self.visit(stmt, visit_var))
+            s = self.visit(stmt, visit_var)
+            if s:
+                comb_block.stmts.append(s)
 
         self.exit_block()
         return comb_block
@@ -199,14 +192,14 @@ class SVCompilerPreprocess(InstanceVisitor):
             return AssignValue(target=f'{visit_var}_next', val=node.svrepr)
 
     def visit_Block(self, node, visit_var):
-        svblock = SVBlock(
-            in_cond=node.in_cond.svrepr if node.in_cond else None, stmts=[])
-
         var_is_reg = (visit_var in self.module.regs)
         var_is_port = False
         for port in self.module.in_ports:
             if visit_var == port.svrepr:
                 var_is_port = True
+
+        svblock = SVBlock(
+            in_cond=node.in_cond.svrepr if node.in_cond else None, stmts=[])
 
         self.enter_block(node)
 
@@ -224,30 +217,35 @@ class SVCompilerPreprocess(InstanceVisitor):
                     if visit_var not in node.multicycle:
                         cond = exit_cond
 
+                s = None
                 if var_is_port:
                     if not node.in_cond or (visit_var in node.in_cond.svrepr):
-                        svblock.stmts.append(
-                            self.write_if_not_default(f'{visit_var}.ready',
-                                                      cond))
-
-                if var_is_reg:
-                    svblock.stmts.append(
-                        self.write_reg_enable(visit_var, node, cond))
+                        s = self.write_if_not_default(f'{visit_var}.ready',
+                                                      cond)
+                elif var_is_reg:
+                    s = self.write_reg_enable(visit_var, node, cond)
+                if s:
+                    svblock.stmts.append(s)
 
         if not node.cycle_cond or not self.find_cycle_cond():
-            # TODO : since default is 0, is this always ok?
+            s = None
             if var_is_port:
-                svblock.stmts.append(
-                    self.write_if_not_default(f'{visit_var}.ready', 1))
-            if var_is_reg:
-                svblock.stmts.append(self.write_reg_enable(visit_var, node, 1))
+                s = self.write_if_not_default(f'{visit_var}.ready', 1)
+            elif var_is_reg:
+                s = self.write_reg_enable(visit_var, node, 1)
+            if s:
+                svblock.stmts.append(s)
 
         for stmt in node.stmts:
-            svblock.stmts.append(self.visit(stmt, visit_var))
+            s = self.visit(stmt, visit_var)
+            if s:
+                svblock.stmts.append(s)
 
         self.exit_block()
 
-        return svblock
+        # if block isn't empty
+        if svblock.stmts:
+            return svblock
 
     def visit_Loop(self, node, visit_var):
         return self.visit_Block(node, visit_var)
@@ -319,9 +317,6 @@ class SVCompiler(InstanceVisitor):
         self.write_svline('')
 
     def visit_SVBlock(self, node, visit_var):
-        if not node.stmts:
-            return
-
         self.enter_block(node)
 
         for stmt in node.stmts:
@@ -341,16 +336,6 @@ data_func_gear = """
 """
 
 
-def remove_empty(body):
-    i = len(body.stmts)
-    for stmt in reversed(body.stmts):
-        i -= 1
-        if stmt is None:
-            del body.stmts[i]
-        elif hasattr(stmt, 'stmts'):
-            remove_empty(stmt)
-
-
 def compile_gear_body(gear):
     body_ast = ast.parse(inspect.getsource(gear.func)).body[0]
     # import astpretty
@@ -366,8 +351,6 @@ def compile_gear_body(gear):
 
     # preprocess hdl ast for each variable
     svpre = SVCompilerPreprocess().visit(hdl_ast, None)
-    for name, body in svpre.items():
-        remove_empty(body)
 
     # generate systemVerilog
     v = SVCompiler(hdl_ast=hdl_ast, sv_stmts=svpre)
