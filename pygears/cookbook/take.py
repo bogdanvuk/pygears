@@ -12,7 +12,7 @@ async def take(din: Queue[Tuple['t_data', Uint]], *,
 
     async for ((data, size), eot) in din:
         last = (cnt == size) and pass_eot
-        if cnt <= size:
+        if (cnt <= size) and pass_eot:
             yield (data, eot or last)
         if last:
             pass_eot = 0
