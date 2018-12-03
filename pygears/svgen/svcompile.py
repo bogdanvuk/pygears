@@ -1,7 +1,9 @@
 import ast
 import inspect
+import typing as pytypes
 from .util import svgen_typedef
 from .hdl_ast import Block, HdlAst, Loop, Module, RegFinder, RegNextExpr, Yield
+from .inst import svgen_log
 
 reg_template = """
 always_ff @(posedge clk) begin
@@ -13,10 +15,24 @@ always_ff @(posedge clk) begin
 end
 """
 
-cycle_done_cmt = '// Cycle done conditions'
-no_cycle_cmt = '// No cycle conditions, default:'
+cycle_cmt = '// Cycle done conditions'
 idle_cmt = '// Gear idle states'
 rst_cmt = '// Gear reset conditions'
+
+
+class AssignValue(pytypes.NamedTuple):
+    target: pytypes.Any
+    val: pytypes.Any
+
+
+class CombBlock(pytypes.NamedTuple):
+    name: str
+    stmts: pytypes.List
+
+
+class SVBlock(pytypes.NamedTuple):
+    stmts: pytypes.List
+    in_cond: str = None
 
 
 class DefaultFound(Exception):
@@ -39,9 +55,8 @@ class InstanceVisitor:
                 self.visit(value, visit_var)
 
 
-class SVCompiler(InstanceVisitor):
+class SVCompilerPreprocess(InstanceVisitor):
     def __init__(self):
-        self.indent = 0
         self.svlines = []
         self.scope = []
         self.block_dflt = []
@@ -49,24 +64,12 @@ class SVCompiler(InstanceVisitor):
     def enter_block(self, block):
         self.scope.append(block)
         self.block_dflt.append({})
-        self.indent += 4
 
     def exit_block(self):
         self.scope.pop()
         self.block_dflt.pop()
-        self.indent -= 4
 
-    def write_svline(self, line=''):
-        if not line:
-            self.svlines.append('')
-        else:
-            self.svlines.append(f'{" "*self.indent}{line}')
-
-    def write_svblock(self, block):
-        for line in block.split('\n'):
-            self.write_svline(line)
-
-    def write_if_not_default(self, name, cond, comment):
+    def write_if_not_default(self, name, cond):
         en = True
         for scope in reversed(self.block_dflt):
             if name not in scope:
@@ -77,12 +80,10 @@ class SVCompiler(InstanceVisitor):
             else:
                 break
         if en:
-            if comment:
-                self.write_svline(comment)
-            self.write_svline(f'{name} = {cond};')
             self.block_dflt[-1][name] = cond
+            return AssignValue(target=f'{name}', val=cond)
 
-    def write_reg_enable(self, name, node, cond=1, comment=None):
+    def write_reg_enable(self, name, node, cond):
         if name in self.module.regs:
             # register is enabled if it is assigned in the current block
             en = 0
@@ -91,85 +92,74 @@ class SVCompiler(InstanceVisitor):
                     en = 1
                     break
             if en:
-                self.write_if_not_default(f'{name}_en', cond, comment)
-
-    def add_svline_default(self, line):
-        self.svlines.insert(1, f'{" "*self.indent}{line}')
+                return self.write_if_not_default(f'{name}_en', cond)
 
     def visit_Module(self, node, visit_var=None):
         self.module = node
-
-        for name, expr in node.regs.items():
-            self.write_svblock(svgen_typedef(expr.dtype, name))
-            self.write_svline(f'logic {name}_en;')
-            self.write_svline(f'logic {name}_rst;')
-            self.write_svline(f'{name}_t {name}_reg, {name}_next;')
-            self.write_svline()
-
-        for name in node.wires:
-            expr = node.locals[name].val.svrepr
-            self.write_svline(f'assign {name}_s = ({expr});')
-            self.write_svline()
-
-        for name, expr in node.regs.items():
-            self.write_svblock(reg_template.format(name, expr.svrepr))
+        res = {}
 
         for name in node.regs:
-            self.write_comb_block(node, name, ['en', 'rst'])
+            r = self.write_comb_block(node, name, ['en', 'rst'])
+            res[name] = r
 
         for name in node.out_ports:
-            self.write_comb_block(node, name.svrepr)
+            r = self.write_comb_block(node, name.svrepr)
+            res[name.svrepr] = r
 
         for name in node.in_ports:
-            self.write_comb_block(node, name.svrepr)
+            r = self.write_comb_block(node, name.svrepr)
+            res[name.svrepr] = r
 
-    def write_comb_block(self, node, name, dflts=[]):
-        self.write_svline(f'// Comb block for: {name}')
-        self.write_svline(f'always_comb begin')
+        return res
+
+    def write_comb_block(self, node, visit_var, dflts=[]):
+        comb_block = CombBlock(name=visit_var, stmts=[])
         self.enter_block(node)
 
-        self.write_svline(idle_cmt)
-
+        ret = []
         try:
-            self.find_defaults(name, node)
+            self.find_defaults(visit_var, node, ret)
         except DefaultFound:
             pass
+        dflt_block = SVBlock(in_cond=None, stmts=[])
+        dflt_block.stmts.extend(ret)
 
         for d in dflts:
-            self.write_svline(f'{name}_{d} = 0;')
+            dflt_block.stmts.append(
+                AssignValue(target=f'{visit_var}_{d}', val=0))
 
-        self.write_svline()
+        comb_block.stmts.append(dflt_block)
 
         for stmt in node.stmts:
-            self.visit(stmt, name)
+            comb_block.stmts.append(self.visit(stmt, visit_var))
 
         self.exit_block()
-        self.write_svline(f'end')
-        self.write_svline()
+        return comb_block
 
-    def find_defaults(self, name, node):
+    def find_defaults(self, name, node, ret=[]):
         for port in self.module.in_ports:
             if name == port.svrepr:
-                self.write_svline(f'{name}.ready = 0;')
+                ret.append(AssignValue(target=f'{name}.ready', val=0))
                 raise DefaultFound
 
         for stmt in node.stmts:
-            self.find_default_in_stmt(name, stmt)
+            self.find_default_in_stmt(name, stmt, ret)
 
-    def find_default_in_stmt(self, name, stmt):
+    def find_default_in_stmt(self, name, stmt, ret=[]):
         if isinstance(stmt, Block):
-            self.find_defaults(name, stmt)
+            self.find_defaults(name, stmt, ret)
         elif isinstance(stmt, Loop):
-            self.find_defaults(name, stmt)
+            self.find_defaults(name, stmt, ret)
         elif isinstance(stmt, Yield):
             for port in self.module.out_ports:
                 if port.svrepr == name:
-                    self.write_svline(f'{port.svrepr}_s = {stmt.expr.svrepr};')
-                    self.write_svline(f'{port.svrepr}.valid = 0;')
+                    ret.append(
+                        AssignValue(target=f'{name}_s', val=stmt.expr.svrepr))
+                    ret.append(AssignValue(target=f'{name}.valid', val=0))
                     raise DefaultFound
         elif isinstance(stmt, RegNextExpr):
             if stmt.reg.svrepr == name:
-                self.visit(stmt, name)
+                ret.append(self.visit(stmt, name))
                 raise DefaultFound
 
     def find_out_conds(self, halt_on):
@@ -199,22 +189,25 @@ class SVCompiler(InstanceVisitor):
     def visit_Yield(self, node, visit_var):
         for port in self.module.out_ports:
             if port.svrepr == visit_var:
-                self.write_svline(f'{visit_var}.valid = 1;')
-                self.write_svline(f'{visit_var}_s = {node.expr.svrepr};')
+                return SVBlock(stmts=[
+                    AssignValue(target=f'{visit_var}.valid', val=1),
+                    AssignValue(target=f'{visit_var}_s', val=node.expr.svrepr)
+                ])
 
     def visit_RegNextExpr(self, node, visit_var):
         if node.reg.svrepr == visit_var:
-            self.write_svline(f'{visit_var}_next = {node.svrepr};')
+            return AssignValue(target=f'{visit_var}_next', val=node.svrepr)
 
     def visit_Block(self, node, visit_var):
+        svblock = SVBlock(
+            in_cond=node.in_cond.svrepr if node.in_cond else None, stmts=[])
+
         var_is_reg = (visit_var in self.module.regs)
         var_is_port = False
         for port in self.module.in_ports:
             if visit_var == port.svrepr:
                 var_is_port = True
 
-        if node.in_cond:
-            self.write_svline(f'if ({node.in_cond.svrepr}) begin')
         self.enter_block(node)
 
         if node.cycle_cond or getattr(node, 'exit_cond', []):
@@ -222,9 +215,8 @@ class SVCompiler(InstanceVisitor):
             exit_cond = self.find_exit_cond()
 
             if exit_cond and var_is_reg:
-                self.write_svline(rst_cmt)
-                self.write_svline(f'{visit_var}_rst = {exit_cond};')
-                self.write_svline()
+                svblock.stmts.append(
+                    AssignValue(target=f'{visit_var}_rst', val=exit_cond))
 
             if cycle_cond:
                 cond = cycle_cond
@@ -234,37 +226,108 @@ class SVCompiler(InstanceVisitor):
 
                 if var_is_port:
                     if not node.in_cond or (visit_var in node.in_cond.svrepr):
-                        self.write_if_not_default(f'{visit_var}.ready', cond,
-                                                  cycle_done_cmt)
+                        svblock.stmts.append(
+                            self.write_if_not_default(f'{visit_var}.ready',
+                                                      cond))
 
                 if var_is_reg:
-                    self.write_reg_enable(
-                        visit_var, node, cond, comment=cycle_done_cmt)
-
-                self.write_svline()
+                    svblock.stmts.append(
+                        self.write_reg_enable(visit_var, node, cond))
 
         if not node.cycle_cond or not self.find_cycle_cond():
             # TODO : since default is 0, is this always ok?
             if var_is_port:
-                self.write_if_not_default(f'{visit_var}.ready', 1,
-                                          no_cycle_cmt)
+                svblock.stmts.append(
+                    self.write_if_not_default(f'{visit_var}.ready', 1))
             if var_is_reg:
-                self.write_reg_enable(visit_var, node, 1, no_cycle_cmt)
-
-            self.write_svline()
+                svblock.stmts.append(self.write_reg_enable(visit_var, node, 1))
 
         for stmt in node.stmts:
-            # try:
-            self.visit(stmt, visit_var)
-            # except Exception as e:
-            #     pass
+            svblock.stmts.append(self.visit(stmt, visit_var))
 
         self.exit_block()
-        if node.in_cond:
-            self.write_svline(f'end')
+
+        return svblock
 
     def visit_Loop(self, node, visit_var):
-        self.visit_Block(node, visit_var)
+        return self.visit_Block(node, visit_var)
+
+
+class SVCompiler(InstanceVisitor):
+    def __init__(self, hdl_ast, sv_stmts):
+        self.indent = 0
+        self.svlines = []
+
+        self.write_module(node=hdl_ast, sv_stmts=sv_stmts)
+
+    def enter_block(self, block):
+        if getattr(block, 'in_cond', False):
+            self.write_svline(f'if ({block.in_cond}) begin')
+
+        if getattr(block, 'in_cond', True):
+            self.indent += 4
+
+    def exit_block(self, block=None):
+        if getattr(block, 'in_cond', True):
+            self.indent -= 4
+            self.write_svline(f'end')
+
+    def write_svline(self, line=''):
+        if not line:
+            self.svlines.append('')
+        else:
+            self.svlines.append(f'{" "*self.indent}{line}')
+
+    def write_svblock(self, block):
+        for line in block.split('\n'):
+            self.write_svline(line)
+
+    def write_module(self, node, sv_stmts):
+        self.module = node
+
+        for name, expr in node.regs.items():
+            self.write_svblock(svgen_typedef(expr.dtype, name))
+            self.write_svline(f'logic {name}_en;')
+            self.write_svline(f'logic {name}_rst;')
+            self.write_svline(f'{name}_t {name}_reg, {name}_next;')
+            self.write_svline()
+
+        for name in node.wires:
+            expr = node.locals[name].val.svrepr
+            self.write_svline(f'assign {name}_s = ({expr});')
+            self.write_svline()
+
+        for name, expr in node.regs.items():
+            self.write_svblock(reg_template.format(name, expr.svrepr))
+
+        for name, val in sv_stmts.items():
+            self.visit(val, name)
+
+    def visit_AssignValue(self, node, visit_var):
+        self.write_svline(f'{node.target} = {node.val};')
+
+    def visit_CombBlock(self, node, visit_var=None):
+        self.write_svline(f'// Comb block for: {node.name}')
+        self.write_svline(f'always_comb begin')
+
+        self.enter_block(node)
+
+        for stmt in node.stmts:
+            self.visit(stmt, node.name)
+
+        self.exit_block()
+        self.write_svline('')
+
+    def visit_SVBlock(self, node, visit_var):
+        if not node.stmts:
+            return
+
+        self.enter_block(node)
+
+        for stmt in node.stmts:
+            self.visit(stmt, visit_var)
+
+        self.exit_block(node)
 
 
 data_func_gear = """
@@ -278,71 +341,38 @@ data_func_gear = """
 """
 
 
-def remove_empty_blocks(code):
-    to_remove = []
-    for i, line in enumerate(code):
-        if line:
-            words = line.split()
-            if words[-1] == 'begin':
-                j = i
-                while True:
-                    j += 1
-                    next_line = code[j].replace(' ', '')
-                    if next_line == 'end':
-                        to_remove.append((i, j))
-                        break
-                    elif next_line == '':
-                        continue
-                    elif next_line.startswith('//'):
-                        continue
-                    else:
-                        break
-
-    for rng in reversed(to_remove):
-        for line in reversed(rng):
-            del code[line]
-
-    if to_remove:
-        # for nested
-        return remove_empty_blocks(code)
-    else:
-        return code
-
-
-def remove_empty_lines(code):
-    i = len(code)
-    for line in reversed(code):
+def remove_empty(body):
+    i = len(body.stmts)
+    for stmt in reversed(body.stmts):
         i -= 1
-        if line == '':
-            if i != 1:
-                if code[i - 1] == '':
-                    del code[i]
-    return code
-
-
-def code_cleanup(code):
-    flat = remove_empty_blocks(code)
-    return remove_empty_lines(flat)
+        if stmt is None:
+            del body.stmts[i]
+        elif hasattr(stmt, 'stmts'):
+            remove_empty(stmt)
 
 
 def compile_gear_body(gear):
     body_ast = ast.parse(inspect.getsource(gear.func)).body[0]
     # import astpretty
     # astpretty.pprint(body_ast)
+
+    # find registers and wires
     v = RegFinder(gear)
     v.visit(body_ast)
+    v.clean_variables()
 
-    for r in v.regs:
-        del v.variables[r]
-
+    # py ast to hdl ast
     hdl_ast = HdlAst(gear, v.regs, v.variables).visit(body_ast)
-    # pprint(hdl_ast)
 
-    v = SVCompiler()
-    v.visit(hdl_ast, None)
-    res = v.svlines
-    clean = code_cleanup(res)
-    return '\n'.join(clean)
+    # preprocess hdl ast for each variable
+    svpre = SVCompilerPreprocess().visit(hdl_ast, None)
+    for name, body in svpre.items():
+        remove_empty(body)
+
+    # generate systemVerilog
+    v = SVCompiler(hdl_ast=hdl_ast, sv_stmts=svpre)
+
+    return '\n'.join(v.svlines)
 
 
 def compile_gear(gear, template_env, context):

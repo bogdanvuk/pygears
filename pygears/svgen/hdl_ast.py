@@ -190,6 +190,10 @@ class RegFinder(ast.NodeVisitor):
 
         self.regs[name] = ResExpr(val, str(int(val)), type(val))
 
+    def clean_variables(self):
+        for r in self.regs:
+            del self.variables[r]
+
     def visit_AugAssign(self, node):
         self.promote_var_to_reg(node.target.id)
 
