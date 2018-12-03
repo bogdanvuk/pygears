@@ -83,7 +83,7 @@ def find_target_cons(intf):
 
 def find_target_intf(gear_name, intf_name):
     gear_mod = find(gear_name)
-    rtl_node = registry('rtl/map/node')[gear_mod].node
+    rtl_node = registry('rtl/gear_node_map')[gear_mod].node
 
     intf_name = intf_name[1:]  # spy name always starts with _
     for i in rtl_node.local_interfaces():

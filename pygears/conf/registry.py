@@ -17,10 +17,21 @@ class Inject:
         self.kwargs = kwargs
 
 
+class MayInject:
+    def __init__(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
+
+
 def get_args_from_registry(arg_dict):
     for k, v in arg_dict.items():
         if isinstance(v, Inject):
             arg_dict[k] = registry(v.args[0])
+        elif isinstance(v, MayInject):
+            try:
+                arg_dict[k] = registry(v.args[0])
+            except KeyError:
+                arg_dict[k] = None
 
 
 def reg_inject(func):

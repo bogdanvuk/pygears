@@ -35,7 +35,8 @@ class RTLNode(NamedHierNode):
                 dtype=dtype))
 
         port_names = [p.basename for p in self.in_ports]
-        for port, new_name in zip(self.in_ports, find_unique_names(port_names)):
+        for port, new_name in zip(self.in_ports,
+                                  find_unique_names(port_names)):
             if new_name:
                 port.basename = new_name
 
@@ -50,7 +51,8 @@ class RTLNode(NamedHierNode):
                 dtype=dtype))
 
         port_names = [p.basename for p in self.out_ports]
-        for port, new_name in zip(self.out_ports, find_unique_names(port_names)):
+        for port, new_name in zip(self.out_ports,
+                                  find_unique_names(port_names)):
             if new_name:
                 port.basename = new_name
 
@@ -78,6 +80,20 @@ class RTLNode(NamedHierNode):
             p.consumer.producer = None
 
         super().remove()
+
+    @property
+    def inst_basename(self):
+        return f'{self.basename}_i'
+
+    @property
+    def inst_name(self):
+        parent = self.parent
+        hier = [self.inst_basename]
+        while parent:
+            hier.append(parent.inst_basename)
+            parent = parent.parent
+
+        return '.'.join(reversed(hier))
 
     @property
     def is_hierarchical(self):

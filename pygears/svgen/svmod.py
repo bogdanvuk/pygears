@@ -85,7 +85,7 @@ class SVModuleGen:
 
     @property
     def sv_inst_name(self):
-        return f'{self.node.basename}_i'
+        return self.node.inst_basename
 
     @property
     def sv_file_name(self):
@@ -152,6 +152,7 @@ class SVModuleGen:
 
         context = {
             'module_name': self.sv_module_name,
+            'inst_name': self.sv_inst_name,
             'intfs': list(self.sv_port_configs()),
             'param_map': self.params
         }

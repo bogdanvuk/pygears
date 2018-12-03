@@ -19,8 +19,8 @@ def sub2(din0: Integer, din1: Integer):
 
 
 @alternative(sub)
-@gear
-def sub_vararg(*din: Integer, enablement=b'len(din) > 2'):
+@gear(enablement=b'len(din) > 2')
+def sub_vararg(*din: Integer):
     return oper_reduce(din, sub)
 
 

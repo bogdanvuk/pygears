@@ -11,6 +11,6 @@ module wrap_{{module_name}}
 
 {{snippet.signal_intf_connect(intfs)|indent(4, True)}}
 
-{{snippet.module_inst(module_name, param_map, module_name+"_i")|indent(4, True)}}
+{{snippet.module_inst(module_name, param_map, inst_name)|indent(4, True)}}
 
 endmodule
