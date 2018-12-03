@@ -33,6 +33,10 @@ opmap = {
 }
 
 
+class AstTypeError(Exception):
+    pass
+
+
 class Expr(pytypes.NamedTuple):
     svrepr: str
     dtype: TypingMeta
@@ -85,6 +89,7 @@ class Module(pytypes.NamedTuple):
     out_ports: pytypes.List
     locals: pytypes.Dict
     regs: pytypes.Dict
+    wires: pytypes.Dict
     stmts: pytypes.List
 
 
@@ -122,6 +127,9 @@ def eval_expression(node, local_namespace):
 
 def eval_data_expr(node, local_namespace):
     ret = eval_expression(node, local_namespace)
+
+    if isinstance(ret, ast.AST):
+        raise AstTypeError
 
     if not is_type(type(ret)):
         if ret < 0:
@@ -170,6 +178,10 @@ class RegFinder(ast.NodeVisitor):
     def promote_var_to_reg(self, name):
         val = self.variables[name]
 
+        # wire, not register
+        if val is None:
+            return
+
         if not is_type(type(val)):
             if val < 0:
                 val = Int(val)
@@ -192,8 +204,12 @@ class RegFinder(ast.NodeVisitor):
     def visit_Assign(self, node):
         name = node.targets[0].id
         if name not in self.variables:
-            self.variables[name] = eval_expression(node.value,
-                                                   self.local_params)
+            try:
+                self.variables[name] = eval_expression(node.value,
+                                                       self.local_params)
+            except NameError:
+                # wires are not defined previously
+                self.variables[name] = node.value
         else:
             self.promote_var_to_reg(name)
 
@@ -211,6 +227,7 @@ class HdlAst(ast.NodeVisitor):
             **gear.explicit_params,
             **variables
         }
+        self.wires = variables.keys()
         self.regs = regs
         self.scope = []
 
@@ -240,8 +257,11 @@ class HdlAst(ast.NodeVisitor):
                     var = RegVal(var, f'{var.svrepr}_next', var.dtype)
                     break
             else:
-                var = RegVal(var, f'{var.svrepr}_reg', var.dtype)
-
+                if var.svrepr in self.regs:
+                    svrepr = f'{var.svrepr}_reg'
+                else:
+                    svrepr = f'{var.svrepr}_s'
+                var = RegVal(var, svrepr, var.dtype)
         return var
 
     def visit_AsyncFor(self, node):
@@ -362,7 +382,7 @@ class HdlAst(ast.NodeVisitor):
 
         try:
             return eval_data_expr(node, self.locals)
-        except NameError:
+        except (NameError, AstTypeError):
             return self.visit(node)
 
     def eval_expression(self, node):
@@ -544,6 +564,7 @@ class HdlAst(ast.NodeVisitor):
             out_ports=self.out_ports,
             locals=self.svlocals,
             regs=self.regs,
+            wires=self.wires,
             stmts=[])
 
         hier_blocks = [stmt for stmt in node.body if check_if_hier(stmt)]

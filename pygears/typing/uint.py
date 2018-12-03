@@ -33,6 +33,9 @@ class IntegerType(EnumerableGenericMeta):
     def __gt__(self, others):
         return int(self) > int(others)
 
+    def __ge__(self, others):
+        return int(self) >= int(others)
+
     def keys(self):
         """Returns a list of keys that can be used for indexing the type.
 

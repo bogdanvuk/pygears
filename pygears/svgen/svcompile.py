@@ -106,6 +106,11 @@ class SVCompiler(InstanceVisitor):
             self.write_svline(f'{name}_t {name}_reg, {name}_next;')
             self.write_svline()
 
+        for name in node.wires:
+            expr = node.locals[name].val.svrepr
+            self.write_svline(f'assign {name}_s = ({expr});')
+            self.write_svline()
+
         for name, expr in node.regs.items():
             self.write_svblock(reg_template.format(name, expr.svrepr))
 
@@ -228,13 +233,9 @@ class SVCompiler(InstanceVisitor):
                         cond = exit_cond
 
                 if var_is_port:
-                    if not node.in_cond or (
-                            f'{visit_var}.valid' in node.in_cond.svrepr):
-
+                    if not node.in_cond or (visit_var in node.in_cond.svrepr):
                         self.write_if_not_default(f'{visit_var}.ready', cond,
                                                   cycle_done_cmt)
-                        # self.write_svline(cycle_done_cmt)
-                        # self.write_svline(f'{visit_var}.ready = {cond};')
 
                 if var_is_reg:
                     self.write_reg_enable(
@@ -247,8 +248,6 @@ class SVCompiler(InstanceVisitor):
             if var_is_port:
                 self.write_if_not_default(f'{visit_var}.ready', 1,
                                           no_cycle_cmt)
-                # self.write_svline(no_cycle_cmt)
-                # self.write_svline(f'{visit_var}.ready = 1;')
             if var_is_reg:
                 self.write_reg_enable(visit_var, node, 1, no_cycle_cmt)
 
