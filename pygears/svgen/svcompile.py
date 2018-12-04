@@ -76,6 +76,13 @@ class SVCompilerPreprocess(InstanceVisitor):
         for name in node.regs:
             res[name] = self.write_comb_block(node, name, ['_en', '_rst'])
 
+        for name in node.variables:
+            r = self.write_comb_block(node, name)
+            # variable default propagation must be forced to avoid latches
+            # or mux for 0 as default
+            self.update_defaults(r, force_propagate=True)
+            res[name] = r
+
         for name in node.out_ports:
             res[name.svrepr] = self.write_comb_block(node, name.svrepr,
                                                      ['.valid'])
@@ -140,6 +147,10 @@ class SVCompilerPreprocess(InstanceVisitor):
         if node.reg.svrepr == visit_var:
             return AssignValue(target=f'{visit_var}_next', val=node.svrepr)
 
+    def visit_VariableExpr(self, node, visit_var):
+        if node.variable.svrepr == visit_var:
+            return AssignValue(target=f'{visit_var}_v', val=node.svrepr)
+
     def visit_Block(self, node, visit_var):
         var_is_reg = (visit_var in self.module.regs)
         var_is_port = False
@@ -202,20 +213,21 @@ class SVCompilerPreprocess(InstanceVisitor):
         return self.visit_Block(node, visit_var)
 
     def is_control_var(self, name):
-        control_suffix = ['_en', '_rst', '.valid', '.ready']
+        control_suffix = ['_en', '_rst', '.valid', '.ready', '_v']
         for suff in control_suffix:
             if name.endswith(suff):
                 return True
         return False
 
-    def update_defaults(self, block):
+    def update_defaults(self, block, force_propagate=False):
         # bottom up
         # popagate defaulf values from sub statements to top
         for i, stmt in enumerate(block.stmts):
             if hasattr(stmt, 'dflts'):
                 for d in stmt.dflts:
-                    # control cannot propagate pass in conditions
-                    if not self.is_control_var(d) or not stmt.in_cond:
+                    # control cannot propagate past in conditions
+                    if (not self.is_control_var(d)
+                            or force_propagate) or not stmt.in_cond:
                         if d in block.dflts:
                             if block.dflts[d] is stmt.dflts[d]:
                                 stmt.dflts[d] = None
@@ -294,9 +306,9 @@ class SVCompiler(InstanceVisitor):
             self.write_svline(f'{name}_t {name}_reg, {name}_next;')
             self.write_svline()
 
-        for name in node.wires:
-            expr = node.locals[name].val.svrepr
-            self.write_svline(f'assign {name}_s = ({expr});')
+        for name, expr in node.variables.items():
+            self.write_svblock(svgen_typedef(expr.dtype, name))
+            self.write_svline(f'{name}_t {name}_v;')
             self.write_svline()
 
         for name, expr in node.regs.items():
@@ -344,7 +356,7 @@ def compile_gear_body(gear):
     # import astpretty
     # astpretty.pprint(body_ast)
 
-    # find registers and wires
+    # find registers and variables
     v = RegFinder(gear)
     v.visit(body_ast)
     v.clean_variables()

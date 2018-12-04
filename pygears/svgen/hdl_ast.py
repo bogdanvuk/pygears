@@ -60,6 +60,18 @@ class RegNextExpr(Expr, pytypes.NamedTuple):
     dtype: TypingMeta
 
 
+class VariableDef(pytypes.NamedTuple):
+    val: pytypes.Any
+    svrepr: str
+    dtype: TypingMeta
+
+
+class VariableExpr(Expr, pytypes.NamedTuple):
+    variable: RegDef
+    svrepr: str
+    dtype: TypingMeta
+
+
 class Yield(pytypes.NamedTuple):
     expr: Expr
 
@@ -89,7 +101,7 @@ class Module(pytypes.NamedTuple):
     out_ports: pytypes.List
     locals: pytypes.Dict
     regs: pytypes.Dict
-    wires: pytypes.Dict
+    variables: pytypes.Dict
     stmts: pytypes.List
 
 
@@ -179,7 +191,7 @@ class RegFinder(ast.NodeVisitor):
         val = self.variables[name]
 
         # wire, not register
-        if val is None:
+        if isinstance(val, ast.AST):
             return
 
         if not is_type(type(val)):
@@ -212,7 +224,7 @@ class RegFinder(ast.NodeVisitor):
                 self.variables[name] = eval_expression(node.value,
                                                        self.local_params)
             except NameError:
-                # wires are not defined previously
+                # wires/variables are not defined previously
                 self.variables[name] = node.value
         else:
             self.promote_var_to_reg(name)
@@ -231,7 +243,7 @@ class HdlAst(ast.NodeVisitor):
             **gear.explicit_params,
             **variables
         }
-        self.wires = variables.keys()
+        self.variables = variables
         self.regs = regs
         self.scope = []
 
@@ -263,6 +275,8 @@ class HdlAst(ast.NodeVisitor):
             else:
                 if var.svrepr in self.regs:
                     svrepr = f'{var.svrepr}_reg'
+                elif var.svrepr in self.variables:
+                    svrepr = f'{var.svrepr}_v'
                 else:
                     svrepr = f'{var.svrepr}_s'
                 var = RegVal(var, svrepr, var.dtype)
@@ -366,10 +380,18 @@ class HdlAst(ast.NodeVisitor):
         name = name_node.id
         val = self.visit_DataExpression(node.value)
 
+        for var in self.variables:
+            if var == name:
+                self.variables[name] = ResExpr(val, val.svrepr, val.dtype)
+
         if name not in self.svlocals:
             self.svlocals[name] = RegDef(val, name, val.dtype)
+            if name in self.variables:
+                return VariableExpr(self.svlocals[name], val.svrepr, val.dtype)
         elif name in self.regs:
             return RegNextExpr(self.svlocals[name], val.svrepr, val.dtype)
+        elif name in self.variables:
+            return VariableExpr(self.svlocals[name], val.svrepr, val.dtype)
 
     def visit_NameExpression(self, node):
         ret = eval_expression(node, self.locals)
@@ -568,7 +590,7 @@ class HdlAst(ast.NodeVisitor):
             out_ports=self.out_ports,
             locals=self.svlocals,
             regs=self.regs,
-            wires=self.wires,
+            variables=self.variables,
             stmts=[])
 
         hier_blocks = [stmt for stmt in node.body if check_if_hier(stmt)]

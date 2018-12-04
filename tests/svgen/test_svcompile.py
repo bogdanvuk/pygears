@@ -298,8 +298,9 @@ typedef logic [15:0] cnt_t; // u16
 logic cnt_en;
 logic cnt_rst;
 cnt_t cnt_reg, cnt_next;
+typedef logic [0:0] last_t; // u1
+last_t last_v;
 
-assign last_s = (cnt_reg == din_s.data.f1 && pass_eot_reg);
 
 always_ff @(posedge clk) begin
     if(rst | pass_eot_rst) begin
@@ -326,7 +327,7 @@ always_comb begin
         if (cnt_reg <= din_s.data.f1 && pass_eot_reg) begin
             pass_eot_rst = dout.ready && &din_s.eot;
         end
-        if (last_s) begin
+        if (last_v) begin
             pass_eot_en = 1;
         end
     end
@@ -346,8 +347,12 @@ always_comb begin
 end
 
 always_comb begin
+    last_v = cnt_reg == din_s.data.f1 && pass_eot_reg;
+end
+
+always_comb begin
     dout.valid = 0;
-    dout_s = {din_s.eot || last_s, din_s.data.f0};
+    dout_s = {din_s.eot || last_v, din_s.data.f0};
     if (din.valid) begin
         if (cnt_reg <= din_s.data.f1 && pass_eot_reg) begin
             dout.valid = 1;
