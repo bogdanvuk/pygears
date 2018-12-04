@@ -37,3 +37,31 @@ def test_directed_two_inputs(tmpdir, sim_cls):
         ref=take(name='ref_model'))
 
     sim(outdir=tmpdir)
+
+
+def test_q_directed(tmpdir, sim_cls):
+    t_qdin = Queue[Tuple[Uint[16], Uint[16]], 2]
+
+    seq = []
+    tmp = []
+    for i in range(9):
+        sub = []
+        for j in range(3):
+            sub.append((j, 2))
+        tmp.append(sub)
+    seq.append(tmp)
+
+    tmp = []
+    for i in range(5):
+        sub = []
+        for j in range(6):
+            sub.append((j, 3))
+        tmp.append(sub)
+    seq.append(tmp)
+
+    directed(
+        drv(t=t_qdin, seq=seq),
+        f=take(sim_cls=sim_cls),
+        ref=[[list(range(3))] * 2, [list(range(6))] * 3])
+
+    sim(outdir=tmpdir)

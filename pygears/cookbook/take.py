@@ -26,20 +26,27 @@ def take2(din: Queue['t_data'], cfg: Uint):
 
 
 @alternative(take)
-@gear(svgen={'svmod_fn': 'qtake.sv'})
-async def qtake(din: Queue['Tdin', 2], cfg: Uint['N']) -> Queue['Tdin', 2]:
+@gear(svgen={'compile': True})
+async def qtake(din: Queue[Tuple['t_data', Uint], 2], *,
+                init=0) -> Queue['t_data', 2]:
     '''
     Takes given number of queues. Number given by cfg.
     Counts lower eot. Higher eot resets.
     '''
 
-    cnt = 0
-    val = din.dtype((0, 0))
+    cnt = din.dtype[0][1](init)
+    pass_eot = True
 
-    async with cfg as c:
-        while not all(val.eot):
-            async with din as val:
-                if cnt <= c:
-                    yield din.dtype((val.data, val.eot[0], val.eot[1]
-                                     or (cnt == (c - 1))))
-                cnt += val.eot[0]
+    async for ((data, size), eot) in din:
+        cnt += eot[0]
+        last = (cnt == size) and pass_eot
+        if (cnt <= size) and pass_eot:
+            yield (data, eot | (last << 1))
+        if last:
+            pass_eot = 0
+
+
+@alternative(take)
+@gear
+async def qtake2(din: Queue['t_data', 2], cfg: Uint) -> Queue['t_data', 2]:
+    return cart(din, cfg) | qtake

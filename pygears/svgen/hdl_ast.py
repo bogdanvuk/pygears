@@ -2,7 +2,7 @@ import ast
 import typing as pytypes
 from collections import namedtuple
 from pygears.typing import (Uint, Int, is_type, Bool, Tuple, Any, Unit, typeof,
-                            bitw, Array)
+                            bitw, Array, Integer)
 from pygears.typing.base import TypingMeta
 
 opmap = {
@@ -67,7 +67,7 @@ class VariableDef(pytypes.NamedTuple):
 
 
 class VariableExpr(Expr, pytypes.NamedTuple):
-    variable: RegDef
+    variable: VariableDef
     svrepr: str
     dtype: TypingMeta
 
@@ -78,6 +78,12 @@ class Yield(pytypes.NamedTuple):
 
 class RegVal(Expr, pytypes.NamedTuple):
     reg: RegDef
+    svrepr: str
+    dtype: TypingMeta
+
+
+class VariableVal(Expr, pytypes.NamedTuple):
+    reg: VariableDef
     svrepr: str
     dtype: TypingMeta
 
@@ -240,8 +246,7 @@ class HdlAst(ast.NodeVisitor):
         self.locals = {
             **{p.basename: p.consumer
                for p in gear.in_ports},
-            **gear.explicit_params,
-            **variables
+            **gear.explicit_params
         }
         self.variables = variables
         self.regs = regs
@@ -270,15 +275,22 @@ class HdlAst(ast.NodeVisitor):
         if isinstance(var, RegDef):
             for stmt in self.walk_up_block_hier():
                 if isinstance(stmt, RegNextExpr):
-                    var = RegVal(var, f'{var.svrepr}_next', var.dtype)
-                    break
+                    if stmt.reg.svrepr == pyname:
+                        var = RegVal(var, f'{var.svrepr}_next', var.dtype)
+                        break
             else:
                 if var.svrepr in self.regs:
                     svrepr = f'{var.svrepr}_reg'
-                elif var.svrepr in self.variables:
-                    svrepr = f'{var.svrepr}_v'
                 else:
                     svrepr = f'{var.svrepr}_s'
+                var = RegVal(var, svrepr, var.dtype)
+        elif isinstance(var, VariableDef):
+            for stmt in self.walk_up_block_hier():
+                if isinstance(stmt, VariableExpr):
+                    var = VariableVal(var, f'{var.svrepr}_v', var.dtype)
+                    break
+            else:
+                svrepr = f'{var.svrepr}_v'
                 var = RegVal(var, svrepr, var.dtype)
         return var
 
@@ -335,7 +347,7 @@ class HdlAst(ast.NodeVisitor):
         svrepr, dtype = self.visit(node.value)
 
         if hasattr(node.slice, 'value'):
-            if typeof(dtype, Array):
+            if typeof(dtype, Array) or typeof(dtype, Integer):
                 index = self.visit_DataExpression(node.slice.value)
                 return Expr(f'{svrepr}[{index.svrepr}]', dtype[0])
             else:
@@ -385,9 +397,11 @@ class HdlAst(ast.NodeVisitor):
                 self.variables[name] = ResExpr(val, val.svrepr, val.dtype)
 
         if name not in self.svlocals:
-            self.svlocals[name] = RegDef(val, name, val.dtype)
             if name in self.variables:
+                self.svlocals[name] = VariableDef(val, name, val.dtype)
                 return VariableExpr(self.svlocals[name], val.svrepr, val.dtype)
+            else:
+                self.svlocals[name] = RegDef(val, name, val.dtype)
         elif name in self.regs:
             return RegNextExpr(self.svlocals[name], val.svrepr, val.dtype)
         elif name in self.variables:
