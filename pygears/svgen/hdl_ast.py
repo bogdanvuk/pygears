@@ -4,6 +4,7 @@ from collections import namedtuple
 from pygears.typing import (Uint, Int, is_type, Bool, Tuple, Any, Unit, typeof,
                             bitw, Array, Integer)
 from pygears.typing.base import TypingMeta
+from svcompile_snippets import qrange
 
 opmap = {
     ast.Add: '+',
@@ -89,6 +90,12 @@ class VariableVal(Expr, pytypes.NamedTuple):
 
 
 class Block(pytypes.NamedTuple):
+    in_cond: Expr
+    stmts: pytypes.List
+    cycle_cond: pytypes.List
+
+
+class IfElseBlock(pytypes.NamedTuple):
     in_cond: Expr
     stmts: pytypes.List
     cycle_cond: pytypes.List
@@ -291,7 +298,7 @@ class HdlAst(ast.NodeVisitor):
                     break
             else:
                 svrepr = f'{var.svrepr}_v'
-                var = RegVal(var, svrepr, var.dtype)
+                var = VariableVal(var, svrepr, var.dtype)
         return var
 
     def visit_AsyncFor(self, node):
@@ -418,11 +425,14 @@ class HdlAst(ast.NodeVisitor):
 
     def visit_DataExpression(self, node):
         if not isinstance(node, ast.AST):
+            if hasattr(node, 'dtype'):
+                # TODO
+                return node
             return ResExpr(val=node, svrepr=str(node), dtype=Any)
 
         try:
             return eval_data_expr(node, self.locals)
-        except (NameError, AstTypeError):
+        except (NameError, AstTypeError, TypeError):
             return self.visit(node)
 
     def eval_expression(self, node):
@@ -437,10 +447,10 @@ class HdlAst(ast.NodeVisitor):
         # ignore cast
         return arg
 
-    def visit_Call_range(self, arg):
-        if isinstance(arg, Expr):
-            start = Expr('0', arg.dtype)
-            stop = arg
+    def visit_Call_range(self, *arg):
+        if len(arg) == 1:
+            start = Expr('0', arg[0].dtype)
+            stop = arg[0]
             step = ast.Num(1)
         else:
             start = arg[0]
@@ -449,8 +459,8 @@ class HdlAst(ast.NodeVisitor):
 
         return start, stop, step
 
-    def visit_Call_qrange(self, arg):
-        return self.visit_Call_range(arg)
+    def visit_Call_qrange(self, *arg):
+        return self.visit_Call_range(*arg)
 
     def visit_Call_all(self, arg):
         return Expr(f'&({arg.svrepr})', Bool)
@@ -519,10 +529,7 @@ class HdlAst(ast.NodeVisitor):
         return Expr(f"{op1.svrepr} {operator} {op2.svrepr}", Uint[1])
 
     def visit_UnaryOp(self, node):
-        operand = self.visit_DataExpression(node.operand)
-        operator = opmap[type(node.op)]
-        res_type = Uint[1] if isinstance(node.op, ast.Not) else operand.dtype
-        return Expr(f"{operator} {operand.svrepr}", res_type)
+        return self.visit_DataExpression(node)
 
     def visit_If(self, node):
         expr = self.visit(node.test)
@@ -551,7 +558,7 @@ class HdlAst(ast.NodeVisitor):
                 else_expr = type(expr)(svrepr=f'!({expr.svrepr})', **fields)
                 svnode_else = Block(in_cond=else_expr, stmts=[], cycle_cond=[])
                 self.visit_block(svnode_else, node.orelse)
-                top = Block(
+                top = IfElseBlock(
                     in_cond=None, stmts=[svnode, svnode_else], cycle_cond=[])
                 return top
             else:
@@ -560,14 +567,22 @@ class HdlAst(ast.NodeVisitor):
     def visit_For(self, node):
         start, stop, step = self.visit_DataExpression(node.iter)
 
+        is_qrange = node.iter.func.id is 'qrange'
+        is_start = start.svrepr != '0'
+
         if isinstance(node.target, ast.Tuple):
             names = [x.id for x in node.target.elts]
         else:
             names = [node.target.id]
 
-        exit_cond = [Expr(f'({names[0]}_next == {stop.svrepr})', Bool)]
+        exit_cond = [Expr(f'({names[0]}_next >= {stop.svrepr})', Bool)]
 
-        if node.iter.func.id is 'qrange':
+        if is_qrange:
+            if is_start:
+                exit_cond = [
+                    Expr(f'({names[0]}_switch_next >= {stop.svrepr})', Bool)
+                ]
+
             val = Uint[1](0)
             scope = gather_control_stmt_vars(
                 node.target.elts[-1], f'{exit_cond[0].svrepr}', type(val))
@@ -580,13 +595,71 @@ class HdlAst(ast.NodeVisitor):
             exit_cond=exit_cond,
             multicycle=names)
 
-        self.visit_block(svnode, node.body)
+        if is_qrange and is_start:
+            loop_stmts = self.qrange_impl(
+                name=names[0],
+                node=node,
+                svnode=svnode,
+                rng=[start, stop, step])
 
-        target = node.target if len(names) == 1 else node.target.elts[0]
-        svnode.stmts.append(
-            self.visit(increment_reg(names[0], val=step, target=target)))
+            self.visit_block(svnode, node.body)
+
+            svnode.stmts.extend(loop_stmts)
+
+        else:
+            self.visit_block(svnode, node.body)
+
+            target = node.target if len(names) == 1 else node.target.elts[0]
+            svnode.stmts.append(
+                self.visit(increment_reg(names[0], val=step, target=target)))
 
         return svnode
+
+    def switch_reg_and_var(self, name):
+        switch_name = f'{name}_switch'
+
+        if name in self.regs:
+            switch_reg = self.regs[name]
+            self.variables[name] = None
+            self.regs[switch_name] = switch_reg
+            self.svlocals[switch_name] = RegDef(switch_reg.val, switch_name,
+                                                type(switch_reg.val))
+            self.regs.pop(name)
+            self.svlocals.pop(name)
+            if switch_name in self.variables:
+                self.variables.pop(switch_name)
+            return
+
+    def qrange_impl(self, name, node, svnode, rng):
+        # implementation with flag register and mux
+
+        # flag register
+        flag_reg = 'qrange_flag'
+        val = Uint[1](0)
+        self.regs[flag_reg] = ResExpr(val, str(int(val)), type(val))
+        self.svlocals[flag_reg] = RegDef(val, flag_reg, type(val))
+        svnode.multicycle.append(flag_reg)
+
+        switch_reg = f'{name}_switch'
+        svnode.multicycle.append(switch_reg)
+
+        self.switch_reg_and_var(name)
+
+        # impl.
+        args = [x.id for x in node.iter.args]
+        if len(args) == 1:
+            args.insert(0, '0')  # start
+        if len(args) == 2:
+            args.append('1')  # step
+
+        snip = qrange(name, switch_reg, flag_reg, args)
+        qrange_body = ast.parse(snip).body
+
+        loop_stmts = []
+        for stmt in qrange_body:
+            loop_stmts.append(self.visit(stmt))
+
+        return loop_stmts
 
     def visit_Expr(self, node):
         if isinstance(node.value, ast.Yield):

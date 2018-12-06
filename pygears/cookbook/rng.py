@@ -1,5 +1,6 @@
-from pygears.typing import Integer, Tuple, Queue, Int, typeof, Uint
+from pygears.typing import Int, Integer, Queue, Tuple, typeof
 from pygears import gear, alternative
+from pygears.util.utils import qrange
 from pygears.common import ccat, fmap, cart, permuted_apply
 from pygears import module
 from pygears.util.utils import quiter
@@ -16,6 +17,23 @@ def rng_out_type(cfg, cnt_steps):
         return cfg[0] + cfg[1] + cfg[2]
     else:
         return max(cfg[0], cfg[1])
+
+
+@gear(svgen={'compile': True})
+async def py_rng(cfg: TCfg, *, signed=b'typeof(cfg[0], Int)',
+                 cnt_steps=False) -> Queue['rng_out_type(cfg, cnt_steps)']:
+
+    data = cfg.dtype[1](0)
+
+    async with cfg as (start, cnt, incr):
+
+        if not cnt_steps:
+            stop = int(cnt)
+        else:
+            stop = int(start) + int(cnt) * int(incr),
+
+        for data, last in qrange(start, stop, incr):
+            yield (data, last)
 
 
 @gear(svgen={'svmod_fn': 'rng.sv'})
@@ -53,11 +71,14 @@ def rng(cfg: TCfg, *, cnt_steps=False, incr_steps=False, cnt_one_more=False):
     if any_signed and not all_signed:
         cfg = cfg | fmap(f=(Int, ) * len(cfg.dtype))
 
-    return cfg | sv_rng(
-        signed=any_signed,
-        cnt_steps=cnt_steps,
-        incr_steps=incr_steps,
-        cnt_one_more=cnt_one_more)
+    if incr_steps or cnt_one_more:
+        return cfg | sv_rng(
+            signed=any_signed,
+            cnt_steps=cnt_steps,
+            incr_steps=incr_steps,
+            cnt_one_more=cnt_one_more)
+    else:
+        return cfg | py_rng(signed=any_signed, cnt_steps=cnt_steps)
 
 
 @alternative(rng)

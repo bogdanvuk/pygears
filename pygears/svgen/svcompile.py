@@ -29,6 +29,7 @@ class SVBlock(pytypes.NamedTuple):
     stmts: pytypes.List
     dflts: pytypes.Dict
     in_cond: str = None
+    else_cond: str = None
 
 
 class DefaultFound(Exception):
@@ -77,11 +78,7 @@ class SVCompilerPreprocess(InstanceVisitor):
             res[name] = self.write_comb_block(node, name, ['_en', '_rst'])
 
         for name in node.variables:
-            r = self.write_comb_block(node, name)
-            # variable default propagation must be forced to avoid latches
-            # or mux for 0 as default
-            self.update_defaults(r, force_propagate=True)
-            res[name] = r
+            res[name] = self.write_comb_block(node, name)
 
         for name in node.out_ports:
             res[name.svrepr] = self.write_comb_block(node, name.svrepr,
@@ -189,10 +186,7 @@ class SVCompilerPreprocess(InstanceVisitor):
                         svblock.stmts.append(s)
 
         if not node.cycle_cond or not self.find_cycle_cond():
-            if var_is_port:
-                svblock.stmts.append(
-                    AssignValue(target=f'{visit_var}.ready', val=1))
-            elif var_is_reg:
+            if var_is_reg:
                 s = self.write_reg_enable(visit_var, node, 1)
                 if s:
                     svblock.stmts.append(s)
@@ -209,25 +203,73 @@ class SVCompilerPreprocess(InstanceVisitor):
             self.update_defaults(svblock)
             return svblock
 
+        return None
+
+    def visit_IfElseBlock(self, node, visit_var):
+        assert len(node.stmts) == 2
+        blocks = []
+        for stmt in node.stmts:
+            blocks.append(self.visit_Block(stmt, visit_var))
+
+        # both blocks empty
+        if all(b is None for b in blocks):
+            return None
+
+        # only one branch
+        if any(b is None for b in blocks):
+            for b in blocks:
+                if b is not None:
+                    return b
+
+        svblock = SVBlock(
+            in_cond=blocks[0].in_cond,
+            else_cond=blocks[1].in_cond,
+            stmts=[],
+            dflts={})
+
+        for b in blocks:
+            svblock.stmts.append(b)
+
+        self.update_defaults(svblock)
+
+        if len(svblock.stmts) != 2:
+            # updating defaults can result in removing branches
+            if len(svblock.stmts):
+                in_cond = svblock.stmts[0].in_cond
+            else:
+                in_cond = None
+
+            svblock = SVBlock(
+                in_cond=in_cond,
+                else_cond=None,
+                stmts=svblock.stmts,
+                dflts=svblock.dflts)
+
+        for i, stmt in enumerate(svblock.stmts):
+            tmp = b._asdict()
+            tmp.pop('in_cond')
+            svblock.stmts[i] = SVBlock(in_cond=None, **tmp)
+
+        return svblock
+
     def visit_Loop(self, node, visit_var):
         return self.visit_Block(node, visit_var)
 
     def is_control_var(self, name):
-        control_suffix = ['_en', '_rst', '.valid', '.ready', '_v']
+        control_suffix = ['_en', '_rst', '.valid', '.ready']
         for suff in control_suffix:
             if name.endswith(suff):
                 return True
         return False
 
-    def update_defaults(self, block, force_propagate=False):
+    def update_defaults(self, block):
         # bottom up
         # popagate defaulf values from sub statements to top
         for i, stmt in enumerate(block.stmts):
             if hasattr(stmt, 'dflts'):
                 for d in stmt.dflts:
                     # control cannot propagate past in conditions
-                    if (not self.is_control_var(d)
-                            or force_propagate) or not stmt.in_cond:
+                    if (not self.is_control_var(d)) or not stmt.in_cond:
                         if d in block.dflts:
                             if block.dflts[d] is stmt.dflts[d]:
                                 stmt.dflts[d] = None
@@ -280,6 +322,10 @@ class SVCompiler(InstanceVisitor):
 
         if getattr(block, 'in_cond', True):
             self.indent += 4
+
+    def enter_else_block(self, block):
+        self.write_svline(f'else begin')
+        self.indent += 4
 
     def exit_block(self, block=None):
         if getattr(block, 'in_cond', True):
@@ -334,10 +380,21 @@ class SVCompiler(InstanceVisitor):
         for name, val in node.dflts.items():
             self.write_svline(f'{name} = {val};')
 
-        for stmt in node.stmts:
-            self.visit(stmt, visit_var)
+        if not hasattr(node, 'else_cond') or node.else_cond is None:
+            for stmt in node.stmts:
+                self.visit(stmt, visit_var)
 
-        self.exit_block(node)
+            self.exit_block(node)
+
+        else:
+            assert len(node.stmts) == 2
+
+            self.visit(node.stmts[0], visit_var)
+            self.exit_block(node)
+
+            self.enter_else_block(node)
+            self.visit(node.stmts[1], visit_var)
+            self.exit_block(node)
 
 
 data_func_gear = """
