@@ -34,6 +34,10 @@ opmap = {
 }
 
 
+class VisitError(Exception):
+    pass
+
+
 class AstTypeError(Exception):
     pass
 
@@ -160,7 +164,10 @@ def eval_data_expr(node, local_namespace):
         if ret < 0:
             ret = Int(ret)
         else:
-            ret = Uint(ret)
+            if isinstance(ret, bool):
+                ret = Uint[1](ret)
+            else:
+                ret = Uint(ret)
 
     return ResExpr(ret, str(int(ret)), type(ret))
 
@@ -211,7 +218,10 @@ class RegFinder(ast.NodeVisitor):
             if val < 0:
                 val = Int(val)
             else:
-                val = Uint(val)
+                if isinstance(val, bool):
+                    val = Uint[1](val)
+                else:
+                    val = Uint(val)
 
         self.regs[name] = ResExpr(val, str(int(val)), type(val))
 
@@ -400,7 +410,7 @@ class HdlAst(ast.NodeVisitor):
         val = self.visit_DataExpression(node.value)
 
         for var in self.variables:
-            if var == name:
+            if var == name and isinstance(self.variables[name], ast.AST):
                 self.variables[name] = ResExpr(val, val.svrepr, val.dtype)
 
         if name not in self.svlocals:
@@ -473,9 +483,20 @@ class HdlAst(ast.NodeVisitor):
                 f'{node.func.id}({", ".join(str(n.val) for n in arg_nodes)})')
             return ResExpr(ret, str(ret), Any)
         else:
-            func_dispatch = getattr(self, f'visit_Call_{node.func.id}')
-            if func_dispatch:
-                return func_dispatch(*arg_nodes)
+            if hasattr(node.func, 'id'):
+                func_dispatch = getattr(self, f'visit_Call_{node.func.id}')
+                if func_dispatch:
+                    return func_dispatch(*arg_nodes)
+
+            if hasattr(node.func, 'attr'):
+                if node.func.attr is 'tout':
+                    assert len(arg_nodes) == 1  # assumtion for this to work
+                    return arg_nodes[0]
+
+                # safe guard
+                raise VisitError('Unrecognized func in call')
+            # safe guard
+            raise VisitError('Unrecognized func in call')
 
     def visit_Tuple(self, node):
         items = [self.visit_DataExpression(item) for item in node.elts]
@@ -620,10 +641,11 @@ class HdlAst(ast.NodeVisitor):
 
         if name in self.regs:
             switch_reg = self.regs[name]
-            self.variables[name] = None
+            self.variables[name] = ResExpr(switch_reg.val, name,
+                                           switch_reg.dtype)
             self.regs[switch_name] = switch_reg
             self.svlocals[switch_name] = RegDef(switch_reg.val, switch_name,
-                                                type(switch_reg.val))
+                                                switch_reg.dtype)
             self.regs.pop(name)
             self.svlocals.pop(name)
             if switch_name in self.variables:
@@ -646,7 +668,12 @@ class HdlAst(ast.NodeVisitor):
         self.switch_reg_and_var(name)
 
         # impl.
-        args = [x.id for x in node.iter.args]
+        args = []
+        for arg in node.iter.args:
+            try:
+                args.append(arg.id)
+            except AttributeError:
+                args.append(arg.args[0].id)
         if len(args) == 1:
             args.insert(0, '0')  # start
         if len(args) == 2:

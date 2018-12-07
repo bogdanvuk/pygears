@@ -14,7 +14,7 @@ from pygears.util.test_utils import svgen_check, skip_ifndef
 def test_basic_unsigned():
     iout = rng(Intf(Tuple[Uint[4], Uint[4], Uint[2]]))
 
-    rng_gear = find('/rng/sv_rng')
+    rng_gear = find('/rng/py_rng')
 
     assert iout.dtype == Queue[Uint[4]]
     assert not rng_gear.params['signed']
@@ -43,7 +43,7 @@ def test_basic_unsigned_cosim(tmpdir, sim_cls):
 def test_basic_signed():
     iout = rng(Intf(Tuple[Int[4], Int[6], Uint[2]]))
 
-    rng_gear = find('/rng/sv_rng')
+    rng_gear = find('/rng/py_rng')
 
     assert iout.dtype == Queue[Int[6]]
     assert rng_gear.params['signed']
@@ -59,7 +59,6 @@ def test_basic_signed_sim(tmpdir):
 
 
 def test_basic_signed_cosim(tmpdir, sim_cls):
-    skip_ifndef('VERILATOR_ROOT')
     seq = [(-15, -3, 2)]
 
     verif(
@@ -73,7 +72,7 @@ def test_basic_signed_cosim(tmpdir, sim_cls):
 def test_supply_constant():
     iout = rng((Uint[4](0), 8, 1))
 
-    rng_gear = find('/rng/sv_rng')
+    rng_gear = find('/rng/py_rng')
 
     assert iout.dtype == Queue[Uint[4]]
     assert rng_gear.params['cfg'] == Tuple[{
@@ -89,7 +88,7 @@ def test_cnt_only():
 
     assert iout.dtype == Queue[Uint[4]]
 
-    rng_gear = find('/rng/rng/sv_rng')
+    rng_gear = find('/rng/rng/py_rng')
     assert rng_gear.params['cfg'] == Tuple[Uint[1], Uint[4], Uint[1]]
 
 
@@ -117,7 +116,7 @@ def test_cnt_only_cosim(tmpdir, sim_cls):
 def test_cnt_down():
     iout = rng((7, 0, -1))
 
-    rng_gear = find('/rng/sv_rng')
+    rng_gear = find('/rng/py_rng')
 
     assert rng_gear.params['signed']
     assert rng_gear.params['cfg'] == Tuple[Int[4], Int[2], Int[1]]

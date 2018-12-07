@@ -1,8 +1,11 @@
 import ast
 import inspect
 import typing as pytypes
-from .util import svgen_typedef
+
+from pygears.typing.base import TypingMeta
+
 from .hdl_ast import HdlAst, Module, RegFinder, RegNextExpr
+from .util import svgen_typedef
 
 reg_template = """
 always_ff @(posedge clk) begin
@@ -18,6 +21,7 @@ end
 class AssignValue(pytypes.NamedTuple):
     target: pytypes.Any
     val: pytypes.Any
+    width: TypingMeta
 
 
 class CombBlock(pytypes.NamedTuple):
@@ -68,7 +72,7 @@ class SVCompilerPreprocess(InstanceVisitor):
             # register is enabled if it is assigned in the current block
             for stmt in node.stmts:
                 if isinstance(stmt, RegNextExpr) and (stmt.reg.svrepr == name):
-                    return AssignValue(target=f'{name}_en', val=cond)
+                    return AssignValue(target=f'{name}_en', val=cond, width=1)
 
     def visit_Module(self, node, visit_var=None):
         self.module = node
@@ -95,8 +99,8 @@ class SVCompilerPreprocess(InstanceVisitor):
         self.enter_block(node)
 
         for d in dflts:
-            comb_block.dflts[f'{visit_var}{d}'] = 0
-
+            comb_block.dflts[f'{visit_var}{d}'] = AssignValue(
+                f'{visit_var}{d}', 0, 1)
         for stmt in node.stmts:
             s = self.visit(stmt, visit_var)
             if s:
@@ -135,18 +139,27 @@ class SVCompilerPreprocess(InstanceVisitor):
             if port.svrepr == visit_var:
                 return SVBlock(
                     dflts={
-                        f'{visit_var}.valid': 1,
-                        f'{visit_var}_s': node.expr.svrepr
+                        f'{visit_var}.valid':
+                        AssignValue(f'{visit_var}.valid', 1, 1),
+                        f'{visit_var}_s':
+                        AssignValue(f'{visit_var}_s', node.expr.svrepr,
+                                    int(node.expr.dtype))
                     },
                     stmts=[])
 
     def visit_RegNextExpr(self, node, visit_var):
         if node.reg.svrepr == visit_var:
-            return AssignValue(target=f'{visit_var}_next', val=node.svrepr)
+            return AssignValue(
+                target=f'{visit_var}_next',
+                val=node.svrepr,
+                width=int(node.reg.dtype))
 
     def visit_VariableExpr(self, node, visit_var):
         if node.variable.svrepr == visit_var:
-            return AssignValue(target=f'{visit_var}_v', val=node.svrepr)
+            return AssignValue(
+                target=f'{visit_var}_v',
+                val=node.svrepr,
+                width=int(node.variable.dtype))
 
     def visit_Block(self, node, visit_var):
         var_is_reg = (visit_var in self.module.regs)
@@ -168,7 +181,8 @@ class SVCompilerPreprocess(InstanceVisitor):
 
             if exit_cond and var_is_reg:
                 svblock.stmts.append(
-                    AssignValue(target=f'{visit_var}_rst', val=exit_cond))
+                    AssignValue(
+                        target=f'{visit_var}_rst', val=exit_cond, width=1))
 
             if cycle_cond:
                 cond = cycle_cond
@@ -179,7 +193,9 @@ class SVCompilerPreprocess(InstanceVisitor):
                 if var_is_port:
                     if not node.in_cond or (visit_var in node.in_cond.svrepr):
                         svblock.stmts.append(
-                            AssignValue(target=f'{visit_var}.ready', val=cond))
+                            AssignValue(
+                                target=f'{visit_var}.ready', val=cond,
+                                width=1))
                 elif var_is_reg:
                     s = self.write_reg_enable(visit_var, node, cond)
                     if s:
@@ -281,8 +297,9 @@ class SVCompilerPreprocess(InstanceVisitor):
                     if block.dflts[stmt.target] is stmt.val:
                         stmt.val = None
                 else:
-                    block.dflts[stmt.target] = stmt.val
-                    block.stmts[i] = AssignValue(target=stmt.target, val=None)
+                    block.dflts[stmt.target] = stmt
+                    block.stmts[i] = AssignValue(
+                        target=stmt.target, val=None, width=stmt.width)
 
         self.block_cleanup(block)
 
@@ -364,7 +381,7 @@ class SVCompiler(InstanceVisitor):
             self.visit(val, name)
 
     def visit_AssignValue(self, node, visit_var):
-        self.write_svline(f'{node.target} = {node.val};')
+        self.write_svline(f"{node.target} = {node.width}'({node.val});")
 
     def visit_CombBlock(self, node, visit_var=None):
         self.write_svline(f'// Comb block for: {visit_var}')
@@ -378,7 +395,7 @@ class SVCompiler(InstanceVisitor):
         self.enter_block(node)
 
         for name, val in node.dflts.items():
-            self.write_svline(f'{name} = {val};')
+            self.write_svline(f"{name} = {val.width}'({val.val});")
 
         if not hasattr(node, 'else_cond') or node.else_cond is None:
             for stmt in node.stmts:

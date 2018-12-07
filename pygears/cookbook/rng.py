@@ -32,8 +32,8 @@ async def py_rng(cfg: TCfg, *, signed=b'typeof(cfg[0], Int)',
         else:
             stop = int(start) + int(cnt) * int(incr),
 
-        for data, last in qrange(start, stop, incr):
-            yield (data, last)
+        for data, last in qrange(int(start), stop, int(incr)):
+            yield module().tout((data, last))
 
 
 @gear(svgen={'svmod_fn': 'rng.sv'})
