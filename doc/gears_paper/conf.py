@@ -36,7 +36,7 @@ release = ''
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = []
+extensions = ['sphinxcontrib.bibtex', 'sphinxcontrib.tikz']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -100,29 +100,67 @@ htmlhelp_basename = 'gears_paperdoc'
 
 # -- Options for LaTeX output ------------------------------------------------
 
+# Gear takes five parameters:
+# 1. Number of cogs
+# 2. Radius of center
+# 3. Radius of the gear
+# 4. Width of the cog
+# 5. Slope of the cog
+# 6. Gear node
+# 7. Gear text
+
+# tikz_libraries = r"""
+# \usetikzlibrary{arrows.meta}
+# \usetikzlibrary{shapes}
+# """
+
+tikz_latex_preamble = r'''
+\usetikzlibrary{arrows.meta}
+\usetikzlibrary{shapes}
+\newcommand{\gear}[7]{%
+node {#7}
+\foreach \i in {1,...,#1} {%
+  [rotate=(\i-1)*360/#1]  (0:#2)  arc (0:#4:#2) {[rounded corners=1.5pt]
+            -- (#4+#5:#3)  arc (#4+#5:360/#1-#5:#3)} --  (360/#1:#2)
+}}
+\tikzset{
+  pics/mynode/.style args={#1}{
+     code={
+       \draw[thick] \gear{10}{2}{2.4}{14}{1}{prod}{#1};
+     }
+  }
+}
+'''
+
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     #
     # 'papersize': 'letterpaper',
 
+    'sphinxsetup': 'hmargin={0.8in,0.8in}, vmargin={1in,1in}, marginpar=1in',
+
     # The font size ('10pt', '11pt' or '12pt').
     #
     # 'pointsize': '10pt',
-
-    # Additional stuff for the LaTeX preamble.
-    #
-    # 'preamble': '',
+    # 'preamble': r'\twocolumn',
+#     'maketitle': r'''
+# \maketitle
+# \twocolumn''',
+    # 'tableofcontents': ''
 
     # Latex figure (float) alignment
     #
     # 'figure_align': 'htbp',
 }
 
+# latex_additional_files = ["IEEEtran.cls"]
+# latex_additional_files = ['tex/preamble._tex']
+
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'gears_paper.tex',
-     'GEARS: A Cathegory Theory Inspired Hardware Design Methodology',
-     ur'Bogdan Vukobratović \and Andrea Erdeljan', 'manual'),
+     'PyGears: A Functional Approach to Hardware Design',
+     ur'Bogdan Vukobratović, Andrea Erdeljan and Damjan Rakanović', 'howto'),
 ]

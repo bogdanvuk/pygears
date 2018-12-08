@@ -1,8 +1,16 @@
-.. include:: abstract.rst
-.. include:: introduction.rst
-.. include:: zreferences.rst
+=====
+Paper
+=====
 
-..
-    .. include:: abstract.rst
-    .. include:: introduction.rst
-    .. include:: zreferences.rst
+.. raw:: latex
+
+   \twocolumn
+
+.. toctree::
+   :hidden:
+
+   abstract.rst
+   introduction.rst
+   gears.rst
+   pygears.rst
+   zreferences.rst
