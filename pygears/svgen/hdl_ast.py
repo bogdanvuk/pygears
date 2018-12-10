@@ -164,7 +164,7 @@ def eval_data_expr(node, local_namespace):
         if ret < 0:
             ret = Int(ret)
         else:
-            if isinstance(ret, bool):
+            if isinstance(ret, bool) or ret == 0:
                 ret = Uint[1](ret)
             else:
                 ret = Uint(ret)
@@ -453,6 +453,9 @@ class HdlAst(ast.NodeVisitor):
     def visit_Call_len(self, arg):
         return Expr(len(arg.dtype), dtype=Any)
 
+    def visit_Call_print(self, arg):
+        pass
+
     def visit_Call_int(self, arg):
         # ignore cast
         return arg
@@ -563,10 +566,10 @@ class HdlAst(ast.NodeVisitor):
         return self.visit_DataExpression(node)
 
     def visit_If(self, node):
-        expr = self.visit(node.test)
+        expr = self.visit_DataExpression(node.test)
 
         if isinstance(expr, ResExpr):
-            if bool(expr):
+            if bool(expr.val):
                 for stmt in node.body:
                     # try:
                     svstmt = self.visit(stmt)
