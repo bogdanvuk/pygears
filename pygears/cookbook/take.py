@@ -48,5 +48,5 @@ async def qtake(din: Queue[Tuple['t_data', Uint], 2], *,
 
 @alternative(take)
 @gear
-async def qtake2(din: Queue['t_data', 2], cfg: Uint) -> Queue['t_data', 2]:
-    return cart(din, cfg) | qtake
+def qtake2(din: Queue['t_data', 2], cfg: Uint):
+    return cart(din, cfg) | take

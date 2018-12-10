@@ -47,8 +47,7 @@ async def cart(*din) -> b'cart_type(din)':
             out_data[queue_id] = queue_data.data
             out_data[single_id] = single_data
 
-            yield module().tout((tuple(out_data), *queue_data.eot,
-                                 *single_eot))
+            yield module().tout((tuple(out_data), queue_data.eot, single_eot))
 
 
 @alternative(cart)

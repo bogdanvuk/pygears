@@ -65,3 +65,32 @@ def test_q_directed(tmpdir, sim_cls):
         ref=[[list(range(3))] * 2, [list(range(6))] * 3])
 
     sim(outdir=tmpdir)
+
+
+def test_q_directed_two_inputs(tmpdir, sim_cls):
+    t_din_sep = Queue[Uint[16], 2]
+    t_cfg = Uint[16]
+    seq = []
+    tmp = []
+    for i in range(9):
+        sub = []
+        for j in range(3):
+            sub.append(j)
+        tmp.append(sub)
+    seq.append(tmp)
+
+    tmp = []
+    for i in range(5):
+        sub = []
+        for j in range(6):
+            sub.append(j)
+        tmp.append(sub)
+    seq.append(tmp)
+
+    directed(
+        drv(t=t_din_sep, seq=seq),
+        drv(t=t_cfg, seq=[2, 3]),
+        f=take(sim_cls=sim_cls),
+        ref=[[list(range(3))] * 2, [list(range(6))] * 3])
+
+    sim(outdir=tmpdir)
