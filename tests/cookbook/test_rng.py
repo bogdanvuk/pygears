@@ -102,7 +102,6 @@ def test_cnt_only_sim(tmpdir):
 
 
 def test_cnt_only_cosim(tmpdir, sim_cls):
-    skip_ifndef('VERILATOR_ROOT')
     seq = [8]
 
     verif(
