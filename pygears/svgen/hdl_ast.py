@@ -550,6 +550,16 @@ class HdlAst(ast.NodeVisitor):
         return Expr(f"{op1.svrepr} {operator} {op2.svrepr}", Uint[1])
 
     def visit_UnaryOp(self, node):
+        operand = self.visit_DataExpression(node.operand)
+
+        if isinstance(operand, ResExpr):
+            return self.visit_DataExpression(node)
+        else:
+            operator = opmap[type(node.op)]
+            res_type = Uint[1] if isinstance(node.op,
+                                             ast.Not) else operand.dtype
+            return Expr(f"{operator} {operand.svrepr}", res_type)
+
         return self.visit_DataExpression(node)
 
     def visit_If(self, node):
