@@ -202,6 +202,13 @@ class SVCompilerPreprocess(InstanceVisitor):
                         svblock.stmts.append(s)
 
         if not node.cycle_cond or not self.find_cycle_cond():
+            # TODO ?
+            if var_is_port:
+                if not node.in_cond or (visit_var in node.in_cond.svrepr):
+                    svblock.stmts.append(
+                        AssignValue(
+                            target=f'{visit_var}.ready', val=1, width=1))
+
             if var_is_reg:
                 s = self.write_reg_enable(visit_var, node, 1)
                 if s:
@@ -262,7 +269,7 @@ class SVCompilerPreprocess(InstanceVisitor):
                 dflts=svblock.dflts)
 
         for i, stmt in enumerate(svblock.stmts):
-            tmp = b._asdict()
+            tmp = stmt._asdict()
             tmp.pop('in_cond')
             svblock.stmts[i] = SVBlock(in_cond=None, **tmp)
 
@@ -287,14 +294,14 @@ class SVCompilerPreprocess(InstanceVisitor):
                     # control cannot propagate past in conditions
                     if (not self.is_control_var(d)) or not stmt.in_cond:
                         if d in block.dflts:
-                            if block.dflts[d] is stmt.dflts[d]:
+                            if block.dflts[d].val is stmt.dflts[d].val:
                                 stmt.dflts[d] = None
                         else:
                             block.dflts[d] = stmt.dflts[d]
                             stmt.dflts[d] = None
             elif isinstance(stmt, AssignValue):
                 if stmt.target in block.dflts:
-                    if block.dflts[stmt.target] is stmt.val:
+                    if block.dflts[stmt.target].val is stmt.val:
                         stmt.val = None
                 else:
                     block.dflts[stmt.target] = stmt
@@ -308,7 +315,7 @@ class SVCompilerPreprocess(InstanceVisitor):
         for d in block.dflts:
             for stmt in block.stmts:
                 if hasattr(stmt, 'dflts') and d in stmt.dflts:
-                    if block.dflts[d] is stmt.dflts[d]:
+                    if block.dflts[d].val is stmt.dflts[d].val:
                         stmt.dflts[d] = None
 
         self.block_cleanup(block)
