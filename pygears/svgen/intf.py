@@ -2,24 +2,15 @@ import fnmatch
 from string import Template
 
 from pygears import PluginBase, registry, safe_bind
+from pygears.conf import Inject, reg_inject
 from pygears.rtl.port import InPort, OutPort
 from pygears.svgen.util import svgen_typedef
 
-spy_connect_t = Template("""
+dti_spy_connect_t = Template("""
 dti_spy #(${intf_name}_t) _${intf_name}(clk, rst);
 assign _${intf_name}.data = ${conn_name}.data;
 assign _${intf_name}.valid = ${conn_name}.valid;
 assign _${intf_name}.ready = ${conn_name}.ready;""")
-
-# spy_connect_t = Template("""
-# ${intf_name}_t ${intf_name}_data;
-# logic ${intf_name}_valid;
-# logic ${intf_name}_ready;
-
-# assign ${intf_name}_data = ${conn_name}.data;
-# assign ${intf_name}_valid = ${conn_name}.valid;
-# assign ${intf_name}_ready = ${conn_name}.ready;
-# assign ${intf_name}_handshake = ${conn_name}.ready & ${conn_name}.valid;""")
 
 
 class SVIntfGen:
@@ -34,7 +25,11 @@ class SVIntfGen:
     def outname(self):
         return self.intf.outname
 
-    def get_inst(self, template_env):
+    @reg_inject
+    def get_inst(self,
+                 template_env,
+                 spy_connect_t=Inject('svgen/spy_connection_template')):
+
         if self.intf.producer is None:
             return
 
@@ -137,3 +132,4 @@ class SVGenIntfPlugin(PluginBase):
     @classmethod
     def bind(cls):
         safe_bind('svgen/debug_intfs', [])
+        safe_bind('svgen/spy_connection_template', dti_spy_connect_t)
