@@ -38,19 +38,100 @@ class VisitError(Exception):
     pass
 
 
+class DeprecatedError(Exception):
+    pass
+
+
 class AstTypeError(Exception):
     pass
 
 
-class Expr(pytypes.NamedTuple):
-    svrepr: str
-    dtype: TypingMeta
+class Expr:
+    @property
+    def dtype(self):
+        pass
 
 
 class ResExpr(Expr, pytypes.NamedTuple):
     val: pytypes.Any
-    svrepr: str
-    dtype: TypingMeta
+
+    @property
+    def dtype(self):
+        return type(self.val)
+
+
+class IntfExpr(Expr, pytypes.NamedTuple):
+    intf: pytypes.Any
+
+    @property
+    def name(self):
+        return self.intf.basename
+
+    @property
+    def dtype(self):
+        return self.intf.dtype
+
+
+class BinOpExpr(Expr, pytypes.NamedTuple):
+    operands: tuple
+    operator: str
+
+    @property
+    def dtype(self):
+        return eval(f'op1 {self.operator} op2', {
+            'op1': self.operands[0].dtype,
+            'op2': self.operands[1].dtype
+        })
+
+
+class SubscriptExpr(Expr, pytypes.NamedTuple):
+    val: Expr
+    index: pytypes.Any
+
+    @property
+    def dtype(self):
+        if not isinstance(self.index, slice):
+            return self.val.dtype[self.index]
+        else:
+            return self.val.dtype.__getitem__(self.index)
+
+
+class Block:
+    @property
+    def in_cond(self):
+        pass
+
+    @property
+    def cycle_cond(self):
+        pass
+
+    @property
+    def exit_cond(self):
+        pass
+
+
+class IntfBlock(Block, pytypes.NamedTuple):
+    intf: pytypes.Any
+    stmts: list
+
+    @property
+    def in_cond(self):
+        return self.intf
+
+    @property
+    def cycle_cond(self):
+        cond = []
+        for stmt in self.stmts:
+            if hasattr(stmt, 'cycle_cond'):
+                cond.append(stmt.cycle_cond)
+            else:
+                if check_if_blocking(stmt):
+                    cond.append(stmt)
+        return cond
+
+    @property
+    def exit_cond(self):
+        return None
 
 
 class RegDef(pytypes.NamedTuple):
@@ -93,10 +174,10 @@ class VariableVal(Expr, pytypes.NamedTuple):
     dtype: TypingMeta
 
 
-class Block(pytypes.NamedTuple):
-    in_cond: Expr
-    stmts: pytypes.List
-    cycle_cond: pytypes.List
+# class Block(pytypes.NamedTuple):
+#     in_cond: Expr
+#     stmts: pytypes.List
+#     cycle_cond: pytypes.List
 
 
 class IfElseBlock(pytypes.NamedTuple):
@@ -134,14 +215,14 @@ async_types = [
 ]
 
 
-def check_if_hier(stmt):
+def check_if_blocking(stmt):
     if type(stmt) is ast.Expr:
         stmt = stmt.value
 
     if type(stmt) in async_types:
         return True
     elif type(stmt) in block_types:
-        return check_if_hier(stmt)
+        return check_if_blocking(stmt)
     else:
         return False
 
@@ -169,23 +250,30 @@ def eval_data_expr(node, local_namespace):
             else:
                 ret = Uint(ret)
 
-    return ResExpr(ret, str(int(ret)), type(ret))
+    return ResExpr(ret)
 
 
-def gather_control_stmt_vars(variables, intf, dtype):
+def gather_control_stmt_vars(variables, intf, dtype=None):
+    name = intf
+    if isinstance(intf, IntfExpr):
+        name = f'{intf.name}_s'
+        dtype = intf.intf.dtype
     scope = {}
     if isinstance(variables, ast.Tuple):
         for i, v in enumerate(variables.elts):
             if isinstance(v, ast.Name):
-                scope[v.id] = Expr(f'{intf}.{dtype.fields[i]}', dtype[i])
+                scope[v.id] = Expr(f'{name}.{dtype.fields[i]}', dtype[i])
             elif isinstance(v, ast.Starred):
-                scope[v.id] = Expr(f'{intf}.{dtype.fields[i]}', dtype[i])
+                scope[v.id] = Expr(f'{name}.{dtype.fields[i]}', dtype[i])
             elif isinstance(v, ast.Tuple):
                 scope.update(
-                    gather_control_stmt_vars(v, f'{intf}.{dtype.fields[i]}',
+                    gather_control_stmt_vars(v, f'{name}.{dtype.fields[i]}',
                                              dtype[i]))
     else:
-        scope[variables.id] = Expr(intf, dtype)
+        if isinstance(intf, IntfExpr):
+            scope[variables.id] = intf
+        else:
+            raise DeprecatedError
 
     return scope
 
@@ -255,9 +343,13 @@ class RegFinder(ast.NodeVisitor):
 
 class HdlAst(ast.NodeVisitor):
     def __init__(self, gear, regs, variables):
-        self.in_ports = [TExpr(p, p.basename, p.dtype) for p in gear.in_ports]
+        # self.in_ports = [TExpr(p, p.basename, p.dtype) for p in gear.in_ports]
+        self.in_ports = [IntfExpr(p) for p in gear.in_ports]
+        # self.out_ports = [
+        #     TExpr(p, p.basename, p.dtype) for p in gear.out_ports
+        # ]
         self.out_ports = [
-            TExpr(p, p.basename, p.dtype) for p in gear.out_ports
+            IntfExpr(p) for p in gear.out_ports
         ]
 
         self.locals = {
@@ -269,7 +361,8 @@ class HdlAst(ast.NodeVisitor):
         self.regs = regs
         self.scope = []
 
-        self.svlocals = {p.svrepr: p for p in self.in_ports}
+        # self.svlocals = {p.svrepr: p for p in self.in_ports}
+        self.svlocals = {p.name: p for p in self.in_ports}
 
         self.gear = gear
         self.indent = 0
@@ -313,8 +406,7 @@ class HdlAst(ast.NodeVisitor):
 
     def visit_AsyncFor(self, node):
         intf = self.visit_NameExpression(node.iter)
-        scope = gather_control_stmt_vars(node.target, f'{intf.svrepr}_s',
-                                         intf.dtype)
+        scope = gather_control_stmt_vars(node.target, intf)
         self.svlocals.update(scope)
 
         svnode = Loop(
@@ -347,45 +439,43 @@ class HdlAst(ast.NodeVisitor):
         header = node.items[0]
 
         intf = self.visit_NameExpression(header.context_expr)
-        scope = gather_control_stmt_vars(node.items[0].optional_vars,
-                                         f'{intf.svrepr}_s', intf.dtype)
+        scope = gather_control_stmt_vars(node.items[0].optional_vars, intf)
         self.svlocals.update(scope)
 
-        svnode = Block(
-            in_cond=Expr(f'{intf.svrepr}.valid', Bool),
-            stmts=[],
-            cycle_cond=[])
+        svnode = IntfBlock(intf, [])
 
         self.visit_block(svnode, node.body)
 
         return svnode
 
     def visit_Subscript(self, node):
-        svrepr, dtype = self.visit(node.value)
+        val_expr = self.visit(node.value)
+        # svrepr, dtype = self.visit(node.value)
+
+        # if not hasattr(node.slice, 'value'):
+        #     res_dtype = val_expr.dtype.__getitem__(index)
+
+        #     if typeof(res_dtype, Unit):
+        #         return ResExpr(val=Unit(), svrepr='()', dtype=Unit)
 
         if hasattr(node.slice, 'value'):
-            if typeof(dtype, Array) or typeof(dtype, Integer):
-                index = self.visit_DataExpression(node.slice.value)
-                return Expr(f'{svrepr}[{index.svrepr}]', dtype[0])
-            else:
-                index = self.eval_expression(node.slice.value)
-                return Expr(f'{svrepr}.{dtype.fields[index]}', dtype[index])
+            index = self.eval_expression(node.slice.value)
         else:
             slice_args = [
-                self.visit_DataExpression(getattr(node.slice, field))
+                self.eval_expression(getattr(node.slice, field))
                 for field in ['lower', 'upper']
             ]
 
-            index = slice(*tuple(arg.val for arg in slice_args))
+            index = slice(*tuple(arg for arg in slice_args))
 
-            res_dtype = dtype.__getitem__(index)
+            # index = self.val.dtype.index_norm(self.index)[0]
 
-            if typeof(res_dtype, Unit):
-                return ResExpr(val=Unit(), svrepr='()', dtype=Unit)
-            else:
-                index = dtype.index_norm(index)[0]
-                return Expr(f'{svrepr}[{int(index.stop) - 1}:{index.start}]',
-                            res_dtype)
+        hdl_node = SubscriptExpr(val_expr, index)
+
+        if hdl_node.dtype is Unit:
+            return ResExpr(Unit())
+        else:
+            return hdl_node
 
     def visit_Name(self, node):
         return self.get_context_var(node.id)
@@ -438,7 +528,7 @@ class HdlAst(ast.NodeVisitor):
             if hasattr(node, 'dtype'):
                 # TODO
                 return node
-            return ResExpr(val=node, svrepr=str(node), dtype=Any)
+            return ResExpr(node)
 
         try:
             return eval_data_expr(node, self.locals)
@@ -523,18 +613,20 @@ class HdlAst(ast.NodeVisitor):
         op2 = self.visit_DataExpression(right)
         operator = opmap[type(op)]
 
-        res_type = eval(f'op1 {operator} op2', {
-            'op1': op1.dtype,
-            'op2': op2.dtype
-        })
+        return BinOpExpr((op1, op2), operator)
 
-        if int(res_type) > int(op1.dtype):
-            op1 = op1._replace(svrepr=f"{int(res_type)}'({op1.svrepr})")
+        # res_type = eval(f'op1 {operator} op2', {
+        #     'op1': op1.dtype,
+        #     'op2': op2.dtype
+        # })
 
-        if int(res_type) > int(op2.dtype):
-            op2 = op2._replace(svrepr=f"{int(res_type)}'({op2.svrepr})")
+        # if int(res_type) > int(op1.dtype):
+        #     op1 = op1._replace(svrepr=f"{int(res_type)}'({op1.svrepr})")
 
-        return Expr(f"{op1.svrepr} {operator} {op2.svrepr}", res_type)
+        # if int(res_type) > int(op2.dtype):
+        #     op2 = op2._replace(svrepr=f"{int(res_type)}'({op2.svrepr})")
+
+        # return Expr(f"{op1.svrepr} {operator} {op2.svrepr}", res_type)
 
     def visit_Attribute(self, node):
         expr = self.visit(node.value)
@@ -708,8 +800,9 @@ class HdlAst(ast.NodeVisitor):
             self.generic_visit(node)
 
     def visit_Yield(self, node):
-        self.scope[-1].cycle_cond.append(Expr('dout.ready', Bool))
         return Yield(super().visit(node.value))
+        # self.scope[-1].cycle_cond.append(hdl_node)
+        # return hdl_node
 
     def visit_AsyncFunctionDef(self, node):
         svnode = Module(
@@ -720,7 +813,7 @@ class HdlAst(ast.NodeVisitor):
             variables=self.variables,
             stmts=[])
 
-        hier_blocks = [stmt for stmt in node.body if check_if_hier(stmt)]
+        hier_blocks = [stmt for stmt in node.body if check_if_blocking(stmt)]
 
         if len(hier_blocks) is 1:
             return self.visit_block(svnode, node.body)
