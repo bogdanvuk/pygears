@@ -40,6 +40,28 @@ def test_basic_unsigned_cosim(tmpdir, sim_cls):
     sim(outdir=tmpdir)
 
 
+def test_cnt_steps_unsigned_cosim(tmpdir, sim_cls):
+    seq = [(2, 8, 2)]
+
+    verif(
+        drv(t=Tuple[Uint[4], Uint[4], Uint[2]], seq=seq),
+        f=rng(cnt_steps=True, sim_cls=sim_cls),
+        ref=rng(cnt_steps=True, name='ref_model'))
+
+    sim(outdir=tmpdir)
+
+
+def test_incr_steps_unsigned_cosim(tmpdir, sim_cls):
+    seq = [(2, 8, 2)]
+
+    verif(
+        drv(t=Tuple[Uint[4], Uint[4], Uint[2]], seq=seq),
+        f=rng(cnt_steps=True, incr_steps=True, sim_cls=sim_cls),
+        ref=rng(cnt_steps=True, incr_steps=True, name='ref_model'))
+
+    sim(outdir=tmpdir)
+
+
 def test_basic_signed():
     iout = rng(Intf(Tuple[Int[4], Int[6], Uint[2]]))
 
@@ -122,17 +144,21 @@ def test_cnt_down():
     assert iout.dtype == Queue[Int[4]]
 
 
-@pytest.mark.xfail(raises=MultiAlternativeError)
-def test_multi_lvl():
-    iout = rng((1, 2, 3), lvl=2)
-    print(iout.dtype)
+# @pytest.mark.xfail(raises=MultiAlternativeError)
+# def test_multi_lvl():
+#     iout = rng((1, 2, 3), lvl=2)
+#     print(iout.dtype)
 
 
-@svgen_check(['rng_hier.sv'])
-def test_basic_unsigned_svgen():
-    rng(Intf(Tuple[Uint[4], Uint[2], Uint[2]]))
+# @svgen_check(['rng_hier.sv'])
+# def test_basic_unsigned_svgen():
+#     rng(Intf(Tuple[Uint[4], Uint[2], Uint[2]]))
 
 
-@svgen_check(['rng_rng.sv', 'rng_ccat.sv', 'rng_hier.sv'])
-def test_cnt_svgen():
-    rng(8)
+# @svgen_check(['rng_rng.sv', 'rng_ccat.sv', 'rng_hier.sv'])
+# def test_cnt_svgen():
+#     rng(8)
+
+
+from pygears.sim.modules.sim_socket import SimSocket
+test_incr_steps_unsigned_cosim('/tools/home/tmp', SimSocket)
