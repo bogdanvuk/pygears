@@ -1,6 +1,6 @@
 import typing as pytypes
 from pygears.typing.base import TypingMeta
-from .hdl_ast import Module, RegNextExpr
+from .hdl_ast import Module, RegNextExpr, Yield
 from pygears.typing import Array, typeof, Integer
 
 
@@ -90,7 +90,9 @@ class SVCompilerPreprocess(InstanceVisitor):
             if getattr(block, 'exit_cond', []):
                 out_cond += getattr(block, 'exit_cond', [])
 
-        out_cond_svrepr = ' && '.join(cond.svrepr for cond in out_cond)
+        out_cond_svrepr = ' && '.join(
+            'dout.ready' if isinstance(cond, Yield) else cond.svrepr
+            for cond in out_cond)
 
         return out_cond_svrepr
 
@@ -103,9 +105,9 @@ class SVCompilerPreprocess(InstanceVisitor):
     def visit_BinOpExpr(self, node):
         ops = [self.visit(op) for op in node.operands]
 
-        svrepr = (f"({int(node.dtype)})'({ops[0]})"
+        svrepr = (f"{int(node.dtype)}'({ops[0]})"
                   f" {node.operator} "
-                  f"({int(node.dtype)})'({ops[1]})")
+                  f"{int(node.dtype)}'({ops[1]})")
         return svrepr
 
     def visit_SubscriptExpr(self, node):
@@ -153,7 +155,7 @@ class SVCompilerPreprocess(InstanceVisitor):
 
     def visit_IntfBlock(self, node):
         svblock = SVBlock(
-            in_cond=f'{self.visit(node.in_cond)}.valid', stmts=[], dflts={})
+            in_cond=f'{node.in_cond.intf.basename}.valid', stmts=[], dflts={})
         return self.traverse_block(svblock, node)
 
     def visit_Block(self, node):
@@ -189,8 +191,8 @@ class SVCompilerPreprocess(InstanceVisitor):
                         cond = exit_cond
 
                 if var_is_port:
-                    if not node.in_cond or (
-                            self.visit_var in node.in_cond.svrepr):
+                    if not node.in_cond or (self.visit_var in self.visit(
+                            node.in_cond)):
                         svblock.stmts.append(
                             AssignValue(
                                 target=f'{self.visit_var}.ready',

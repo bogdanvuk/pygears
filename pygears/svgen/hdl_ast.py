@@ -125,7 +125,8 @@ class IntfBlock(Block, pytypes.NamedTuple):
             if hasattr(stmt, 'cycle_cond'):
                 cond.append(stmt.cycle_cond)
             else:
-                if check_if_blocking(stmt):
+                # TODO
+                if isinstance(stmt, Yield):
                     cond.append(stmt)
         return cond
 
@@ -348,9 +349,7 @@ class HdlAst(ast.NodeVisitor):
         # self.out_ports = [
         #     TExpr(p, p.basename, p.dtype) for p in gear.out_ports
         # ]
-        self.out_ports = [
-            IntfExpr(p) for p in gear.out_ports
-        ]
+        self.out_ports = [IntfExpr(p) for p in gear.out_ports]
 
         self.locals = {
             **{p.basename: p.consumer
