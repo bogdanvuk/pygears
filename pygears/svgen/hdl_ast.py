@@ -46,24 +46,6 @@ class AstTypeError(Exception):
     pass
 
 
-class VariableDef(pytypes.NamedTuple):
-    val: pytypes.Any
-    svrepr: str
-    dtype: TypingMeta
-
-
-class VariableExpr(ht.Expr, pytypes.NamedTuple):
-    variable: VariableDef
-    svrepr: str
-    dtype: TypingMeta
-
-
-class VariableVal(ht.Expr, pytypes.NamedTuple):
-    reg: VariableDef
-    svrepr: str
-    dtype: TypingMeta
-
-
 block_types = [ast.For, ast.While, ast.If]
 async_types = [
     ast.AsyncFor, ast.AsyncFunctionDef, ast.AsyncWith, ast.Yield, ast.YieldFrom
@@ -244,14 +226,13 @@ class HdlAst(ast.NodeVisitor):
                 else:
                     name = f'{var.name}_s'
                 var = ht.RegVal(var, name)
-        elif isinstance(var, VariableDef):
+        elif isinstance(var, ht.VariableDef):
             for stmt in self.walk_up_block_hier():
-                if isinstance(stmt, VariableExpr):
-                    var = VariableVal(var, f'{var.svrepr}_v', var.dtype)
+                if isinstance(stmt, ht.VariableExpr):
+                    var = ht.VariableVal(var, f'{var.svrepr}_v')
                     break
             else:
-                svrepr = f'{var.svrepr}_v'
-                var = VariableVal(var, svrepr, var.dtype)
+                var = ht.VariableVal(var, f'{var.svrepr}_v')
         return var
 
     def visit_AsyncFor(self, node):
@@ -389,7 +370,7 @@ class HdlAst(ast.NodeVisitor):
 
     def visit_Call_range(self, *arg):
         if len(arg) == 1:
-            start = ht.Expr('0', arg[0].dtype)
+            start = ht.ResExpr(arg[0].dtype(0))
             stop = arg[0]
             step = ast.Num(1)
         else:
@@ -511,14 +492,16 @@ class HdlAst(ast.NodeVisitor):
         start, stop, step = self.visit_DataExpression(node.iter)
 
         is_qrange = node.iter.func.id is 'qrange'
-        is_start = start.svrepr != '0'
+        is_start = start.val != 0
 
         if isinstance(node.target, ast.Tuple):
             names = [x.id for x in node.target.elts]
         else:
             names = [node.target.id]
 
-        exit_cond = [ht.Expr(f'({names[0]}_next >= {stop.svrepr})', Bool)]
+        op1 = self.regs[names[0]]
+        exit_cond = ht.BinOpExpr((ht.RegVal(op1, f'{names[0]}_next'), stop),
+                                 '>=')
 
         if is_qrange:
             if is_start:
@@ -526,17 +509,13 @@ class HdlAst(ast.NodeVisitor):
                     ht.Expr(f'({names[0]}_switch_next >= {stop.svrepr})', Bool)
                 ]
 
-            val = Uint[1](0)
-            scope = gather_control_stmt_vars(
-                node.target.elts[-1], f'{exit_cond[0].svrepr}', type(val))
-            self.svlocals.update(scope)
+            name = node.target.elts[-1].id
+            self.variables[name] = ht.VariableVal(exit_cond, name)
+            # scope = gather_control_stmt_vars(node.target.elts[-1], exit_cond)
+            self.svlocals.update({name: self.variables[name]})
 
         svnode = ht.Loop(
-            in_cond=None,
-            stmts=[],
-            cycle_cond=[],
-            exit_cond=exit_cond,
-            multicycle=names)
+            in_cond=None, stmts=[], exit_cond=exit_cond, multicycle=names)
 
         if is_qrange and is_start:
             loop_stmts = self.qrange_impl(

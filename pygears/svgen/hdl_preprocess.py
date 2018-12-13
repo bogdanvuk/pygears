@@ -49,7 +49,7 @@ class SVCompilerPreprocess(InstanceVisitor):
     def __init__(self, visit_var, dflts=None):
         self.svlines = []
         self.scope = []
-        self.dflts = dflts
+        self.dflts = dflts if dflts else {}
         self.visit_var = visit_var
 
     def enter_block(self, block):
@@ -103,6 +103,9 @@ class SVCompilerPreprocess(InstanceVisitor):
             exit_conds += node.exit_cond
 
         return self.find_conditions(exit_conds)
+
+    def visit_VariableVal(self, node):
+        return node.name
 
     def visit_RegVal(self, node):
         return node.name
@@ -307,7 +310,11 @@ class SVCompilerPreprocess(InstanceVisitor):
         return svblock
 
     def visit_Loop(self, node):
-        return self.visit_Block(node)
+        in_cond = None
+        if node.in_cond:
+            in_cond = self.visit(node.in_cond)
+        svblock = SVBlock(in_cond=in_cond, stmts=[], dflts={})
+        return self.traverse_block(svblock, node)
 
     def is_control_var(self, name):
         control_suffix = ['_en', '_rst', '.valid', '.ready']

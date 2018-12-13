@@ -59,6 +59,33 @@ class RegVal(Expr, pytypes.NamedTuple):
         return self.reg.dtype
 
 
+class VariableDef(pytypes.NamedTuple):
+    val: pytypes.Any
+    name: str
+
+    @property
+    def dtype(self):
+        return self.val.dtype
+
+
+class VariableExpr(Expr, pytypes.NamedTuple):
+    variable: VariableDef
+    val: Expr
+
+    @property
+    def dtype(self):
+        return self.variable.dtype
+
+
+class VariableVal(Expr, pytypes.NamedTuple):
+    variable: VariableDef
+    name: str
+
+    @property
+    def dtype(self):
+        return self.variable.dtype
+
+
 class IntfExpr(Expr, pytypes.NamedTuple):
     intf: pytypes.Any
 
@@ -201,15 +228,15 @@ class IfBlock(Block, pytypes.NamedTuple):
         return find_cycle_cond(self.stmts)
 
 
-# class Loop(Block, pytypes.NamedTuple):
-#     in_cond: Expr
-#     stmts: list
-#     exit_cond: Expr
-#     multicycle: list = None
+class Loop(Block, pytypes.NamedTuple):
+    in_cond: Expr
+    stmts: list
+    exit_cond: Expr
+    multicycle: list = None
 
-#     @property
-#     def cycle_cond(self):
-#         return find_cycle_cond(self.stmts)
+    @property
+    def cycle_cond(self):
+        return find_cycle_cond(self.stmts)
 
 
 class Module(pytypes.NamedTuple):
