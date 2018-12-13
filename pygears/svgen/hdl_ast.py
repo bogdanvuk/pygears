@@ -1,9 +1,7 @@
 import ast
-import typing as pytypes
 
 import hdl_types as ht
 from pygears.typing import Any, Bool, Int, Uint, Unit, bitw, is_type
-from pygears.typing.base import TypingMeta
 from svcompile_snippets import qrange
 
 opmap = {
@@ -229,10 +227,10 @@ class HdlAst(ast.NodeVisitor):
         elif isinstance(var, ht.VariableDef):
             for stmt in self.walk_up_block_hier():
                 if isinstance(stmt, ht.VariableExpr):
-                    var = ht.VariableVal(var, f'{var.svrepr}_v')
+                    var = ht.VariableVal(var, f'{var.name}_v')
                     break
             else:
-                var = ht.VariableVal(var, f'{var.svrepr}_v')
+                var = ht.VariableVal(var, f'{var.name}_v')
         return var
 
     def visit_AsyncFor(self, node):
@@ -499,6 +497,7 @@ class HdlAst(ast.NodeVisitor):
         else:
             names = [node.target.id]
 
+        # stmts = []
         op1 = self.regs[names[0]]
         exit_cond = ht.BinOpExpr((ht.RegVal(op1, f'{names[0]}_next'), stop),
                                  '>=')
@@ -506,16 +505,19 @@ class HdlAst(ast.NodeVisitor):
         if is_qrange:
             if is_start:
                 exit_cond = [
-                    ht.Expr(f'({names[0]}_switch_next >= {stop.svrepr})', Bool)
+                    ht.Expr(f'({names[0]}_switch_next >= {stop.svrepr})',
+                            Uint[1])
                 ]
 
             name = node.target.elts[-1].id
-            self.variables[name] = ht.VariableVal(exit_cond, name)
-            # scope = gather_control_stmt_vars(node.target.elts[-1], exit_cond)
-            self.svlocals.update({name: self.variables[name]})
+            var = ht.VariableDef(exit_cond, name)
+            self.variables[name] = ht.VariableVal(var, name)
+            self.svlocals[name] = var
+            exit_cond = var
+            # stmts.append(exit_cond)
 
         svnode = ht.Loop(
-            in_cond=None, stmts=[], exit_cond=exit_cond, multicycle=names)
+            in_cond=None, stmts=[], exit_c=exit_cond, multicycle=names)
 
         if is_qrange and is_start:
             loop_stmts = self.qrange_impl(

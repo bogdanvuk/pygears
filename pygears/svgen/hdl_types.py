@@ -3,6 +3,14 @@ import typing as pytypes
 from pygears.typing import Tuple, typeof, Uint
 
 
+def find_exit_cond(statements):
+    cond = []
+    for stmt in statements:
+        if hasattr(stmt, 'exit_cond'):
+            cond.extend(stmt.exit_cond)
+    return cond
+
+
 def find_cycle_cond(statements):
     cond = []
     for stmt in statements:
@@ -121,10 +129,14 @@ class BinOpExpr(Expr, pytypes.NamedTuple):
 
     @property
     def dtype(self):
-        return eval(f'op1 {self.operator} op2', {
+        t = eval(f'op1 {self.operator} op2', {
             'op1': self.operands[0].dtype,
             'op2': self.operands[1].dtype
         })
+        if isinstance(t, bool):
+            return Uint[1]
+        else:
+            return t
 
 
 class ArrayOpExpr(Expr, pytypes.NamedTuple):
@@ -216,7 +228,9 @@ class IntfLoop(Block, pytypes.NamedTuple):
 
     @property
     def exit_cond(self):
-        return self.intf
+        conds = self.cycle_cond
+        conds.append(self.intf.intf)
+        return conds + find_exit_cond(self.stmts)
 
 
 class IfBlock(Block, pytypes.NamedTuple):
@@ -231,12 +245,19 @@ class IfBlock(Block, pytypes.NamedTuple):
 class Loop(Block, pytypes.NamedTuple):
     in_cond: Expr
     stmts: list
-    exit_cond: Expr
+    exit_c: Expr
     multicycle: list = None
 
     @property
     def cycle_cond(self):
         return find_cycle_cond(self.stmts)
+
+    @property
+    def exit_cond(self):
+        conds = self.cycle_cond
+        if self.exit_c:
+            conds.append(self.exit_c)
+        return conds + find_exit_cond(self.stmts)
 
 
 class Module(pytypes.NamedTuple):

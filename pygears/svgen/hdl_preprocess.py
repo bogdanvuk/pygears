@@ -76,6 +76,7 @@ class SVCompilerPreprocess(InstanceVisitor):
         for d in self.dflts:
             comb_block.dflts[f'{self.visit_var}{d}'] = AssignValue(
                 f'{self.visit_var}{d}', 0, 1)
+
         for stmt in node.stmts:
             s = self.visit(stmt)
             if s:
@@ -83,6 +84,17 @@ class SVCompilerPreprocess(InstanceVisitor):
 
         self.exit_block()
         self.update_defaults(comb_block)
+
+        if not comb_block.stmts and not comb_block.dflts:
+            # variable isn't always assigned
+            # it can be implicit in a loop
+            if self.visit_var in node.variables:
+                var = node.variables[self.visit_var]
+                value = self.visit(var.variable.val)
+                name = f'{self.visit_var}_v'
+                comb_block.dflts[name] = AssignValue(name, value,
+                                                     int(var.dtype))
+
         return comb_block
 
     def find_conditions(self, conditions):
@@ -92,17 +104,20 @@ class SVCompilerPreprocess(InstanceVisitor):
                 c.append('dout.ready')
             elif isinstance(cond, InPort):
                 c.append(f'&{cond.basename}_s.eot')
+            elif isinstance(cond, ht.VariableDef):
+                c.append(f'{cond.name}_v')
+            elif isinstance(cond, ht.RegDef):
+                c.append(f'{cond.name}_reg')
+            else:
+                c.append(self.visit(cond))
         return ' && '.join(c)
 
     def find_cycle_cond(self, node):
         return self.find_conditions(node.cycle_cond)
 
     def find_exit_cond(self, node):
-        exit_conds = node.cycle_cond
         if hasattr(node, 'exit_cond') and node.exit_cond:
-            exit_conds += node.exit_cond
-
-        return self.find_conditions(exit_conds)
+            return self.find_conditions(node.exit_cond)
 
     def visit_VariableVal(self, node):
         return node.name

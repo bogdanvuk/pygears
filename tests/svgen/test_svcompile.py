@@ -136,6 +136,9 @@ logic i_en;
 logic i_rst;
 i_t i_reg, i_next;
 
+typedef logic [0:0] last_t; // u1
+last_t last_v;
+
 always_ff @(posedge clk) begin
     if(rst | i_rst) begin
         i_reg = 0;
@@ -149,14 +152,18 @@ always_comb begin
     i_rst = 1'(0);
     i_next = 16'(17'(i_reg) + 17'(1));
     if (din.valid) begin
-        i_rst = 1'(dout.ready && (i_next >= din_s.f0));
+        i_rst = 1'(dout.ready && last_v);
         i_en = 1'(dout.ready);
     end
 end
 
 always_comb begin
+    last_v = 1'(i_next >= din_s.f0);
+end
+
+always_comb begin
     dout.valid = 1'(0);
-    dout_s = 17'({(i_next >= din_s.f0), din_s.f1});
+    dout_s = 17'({last_v, din_s.f1});
     if (din.valid) begin
         dout.valid = 1'(1);
     end
@@ -165,8 +172,8 @@ end
 always_comb begin
     din.ready = 1'(0);
     if (din.valid) begin
-        din.ready = 1'(1);
-        din.ready = 1'(dout.ready && (i_next >= din_s.f0));
+        din.ready = 1'(dout.ready);
+        din.ready = 1'(dout.ready && last_v);
     end
 end
 """
