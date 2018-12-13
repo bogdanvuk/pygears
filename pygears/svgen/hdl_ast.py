@@ -1,8 +1,8 @@
 import ast
 import typing as pytypes
-from collections import namedtuple
-from pygears.typing import (Uint, Int, is_type, Bool, Tuple, Any, Unit, typeof,
-                            bitw)
+
+import hdl_types as ht
+from pygears.typing import Any, Bool, Int, Uint, Unit, bitw, is_type
 from pygears.typing.base import TypingMeta
 from svcompile_snippets import qrange
 
@@ -34,18 +34,6 @@ opmap = {
 }
 
 
-def find_cycle_cond(statements):
-    cond = []
-    for stmt in statements:
-        if hasattr(stmt, 'cycle_cond') and not stmt.in_cond:
-            cond.extend(stmt.cycle_cond)
-        else:
-            # TODO
-            if isinstance(stmt, Yield):
-                cond.append(stmt)
-    return cond
-
-
 class VisitError(Exception):
     pass
 
@@ -58,184 +46,23 @@ class AstTypeError(Exception):
     pass
 
 
-class Expr:
-    @property
-    def dtype(self):
-        pass
-
-
-class ResExpr(Expr, pytypes.NamedTuple):
-    val: pytypes.Any
-
-    @property
-    def dtype(self):
-        return type(self.val)
-
-
-class IntfExpr(Expr, pytypes.NamedTuple):
-    intf: pytypes.Any
-
-    @property
-    def name(self):
-        return self.intf.basename
-
-    @property
-    def dtype(self):
-        return self.intf.dtype
-
-
-class BinOpExpr(Expr, pytypes.NamedTuple):
-    operands: tuple
-    operator: str
-
-    @property
-    def dtype(self):
-        return eval(f'op1 {self.operator} op2', {
-            'op1': self.operands[0].dtype,
-            'op2': self.operands[1].dtype
-        })
-
-
-class SubscriptExpr(Expr, pytypes.NamedTuple):
-    val: Expr
-    index: pytypes.Any
-
-    @property
-    def dtype(self):
-        if not isinstance(self.index, slice):
-            return self.val.dtype[self.index]
-        else:
-            return self.val.dtype.__getitem__(self.index)
-
-
-class AttrExpr(Expr, pytypes.NamedTuple):
-    val: Expr
-    attr: list
-
-    @property
-    def dtype(self):
-        t = self.val.dtype
-        for attr in self.attr:
-            if typeof(t, Tuple):
-                t = t[attr]
-            else:
-                t = getattr(t, attr, None)
-        return t
-
-
-class Block:
-    @property
-    def in_cond(self):
-        pass
-
-    @property
-    def cycle_cond(self):
-        pass
-
-    @property
-    def exit_cond(self):
-        pass
-
-
-class IntfBlock(Block, pytypes.NamedTuple):
-    intf: pytypes.Any
-    stmts: list
-
-    @property
-    def in_cond(self):
-        return self.intf
-
-    @property
-    def cycle_cond(self):
-        return find_cycle_cond(self.stmts)
-
-    @property
-    def exit_cond(self):
-        return None
-
-
-class IfBlock(Block, pytypes.NamedTuple):
-    in_cond: Expr
-    stmts: list
-
-    @property
-    def cycle_cond(self):
-        return find_cycle_cond(self.stmts)
-
-
-class RegDef(pytypes.NamedTuple):
-    val: pytypes.Any
-    svrepr: str
-    dtype: TypingMeta
-
-
-class RegNextExpr(Expr, pytypes.NamedTuple):
-    reg: RegDef
-    svrepr: str
-    dtype: TypingMeta
-
-
 class VariableDef(pytypes.NamedTuple):
     val: pytypes.Any
     svrepr: str
     dtype: TypingMeta
 
 
-class VariableExpr(Expr, pytypes.NamedTuple):
+class VariableExpr(ht.Expr, pytypes.NamedTuple):
     variable: VariableDef
     svrepr: str
     dtype: TypingMeta
 
 
-class Yield(pytypes.NamedTuple):
-    expr: Expr
-
-
-class RegVal(Expr, pytypes.NamedTuple):
-    reg: RegDef
-    svrepr: str
-    dtype: TypingMeta
-
-
-class VariableVal(Expr, pytypes.NamedTuple):
+class VariableVal(ht.Expr, pytypes.NamedTuple):
     reg: VariableDef
     svrepr: str
     dtype: TypingMeta
 
-
-# class Block(pytypes.NamedTuple):
-#     in_cond: Expr
-#     stmts: pytypes.List
-#     cycle_cond: pytypes.List
-
-# class IfElseBlock(pytypes.NamedTuple):
-#     in_cond: Expr
-#     stmts: pytypes.List
-#     cycle_cond: pytypes.List
-
-
-class Loop(Block, pytypes.NamedTuple):
-    in_cond: Expr
-    stmts: pytypes.List
-    cycle_cond: pytypes.List
-    exit_cond: pytypes.List
-    multicycle: pytypes.List = []
-
-
-class Module(pytypes.NamedTuple):
-    in_ports: pytypes.List
-    out_ports: pytypes.List
-    locals: pytypes.Dict
-    regs: pytypes.Dict
-    variables: pytypes.Dict
-    stmts: pytypes.List
-
-
-TExpr = namedtuple('TExpr', ['val', 'svrepr', 'dtype'])
-
-TAssignExpr = namedtuple('TAssignExpr', TExpr._fields + ('init', ))
-InPort = namedtuple('InPort', ['svrepr', 'dtype'])
-OutPort = namedtuple('OutPort', ['svrepr', 'dtype'])
 
 block_types = [ast.For, ast.While, ast.If]
 async_types = [
@@ -278,7 +105,7 @@ def eval_data_expr(node, local_namespace):
             else:
                 ret = Uint(ret)
 
-    return ResExpr(ret)
+    return ht.ResExpr(ret)
 
 
 def gather_control_stmt_vars(variables, intf, name=None, dtype=None):
@@ -291,17 +118,15 @@ def gather_control_stmt_vars(variables, intf, name=None, dtype=None):
     if isinstance(variables, ast.Tuple):
         for i, v in enumerate(variables.elts):
             if isinstance(v, ast.Name):
-                # scope[v.id] = Expr(f'{name}.{dtype.fields[i]}', dtype[i])
-                scope[v.id] = AttrExpr(intf, [dtype.fields[i]])
+                scope[v.id] = ht.AttrExpr(intf, [dtype.fields[i]])
             elif isinstance(v, ast.Starred):
-                # scope[v.id] = SubscriptExpr(intf, i)
-                scope[v.id] = AttrExpr(intf, [dtype.fields[i]])
+                scope[v.id] = ht.AttrExpr(intf, [dtype.fields[i]])
             elif isinstance(v, ast.Tuple):
                 scope.update(
                     gather_control_stmt_vars(
                         v, intf, f'{name}.{dtype.fields[i]}', dtype[i]))
     else:
-        if isinstance(intf, IntfExpr):
+        if isinstance(intf, ht.IntfExpr):
             scope[variables.id] = intf
         else:
             raise DeprecatedError
@@ -342,7 +167,7 @@ class RegFinder(ast.NodeVisitor):
                 else:
                     val = Uint(val)
 
-        self.regs[name] = ResExpr(val, str(int(val)), type(val))
+        self.regs[name] = ht.ResExpr(val)
 
     def clean_variables(self):
         for r in self.regs:
@@ -374,12 +199,8 @@ class RegFinder(ast.NodeVisitor):
 
 class HdlAst(ast.NodeVisitor):
     def __init__(self, gear, regs, variables):
-        # self.in_ports = [TExpr(p, p.basename, p.dtype) for p in gear.in_ports]
-        self.in_ports = [IntfExpr(p) for p in gear.in_ports]
-        # self.out_ports = [
-        #     TExpr(p, p.basename, p.dtype) for p in gear.out_ports
-        # ]
-        self.out_ports = [IntfExpr(p) for p in gear.out_ports]
+        self.in_ports = [ht.IntfExpr(p) for p in gear.in_ports]
+        self.out_ports = [ht.IntfExpr(p) for p in gear.out_ports]
 
         self.locals = {
             **{p.basename: p.consumer
@@ -411,18 +232,18 @@ class HdlAst(ast.NodeVisitor):
     def get_context_var(self, pyname):
         var = self.svlocals.get(pyname, None)
 
-        if isinstance(var, RegDef):
+        if isinstance(var, ht.RegDef):
             for stmt in self.walk_up_block_hier():
-                if isinstance(stmt, RegNextExpr):
-                    if stmt.reg.svrepr == pyname:
-                        var = RegVal(var, f'{var.svrepr}_next', var.dtype)
+                if isinstance(stmt, ht.RegNextExpr):
+                    if stmt.reg.name == pyname:
+                        var = ht.RegVal(var, f'{var.name}_next')
                         break
             else:
-                if var.svrepr in self.regs:
-                    svrepr = f'{var.svrepr}_reg'
+                if var.name in self.regs:
+                    name = f'{var.name}_reg'
                 else:
-                    svrepr = f'{var.svrepr}_s'
-                var = RegVal(var, svrepr, var.dtype)
+                    name = f'{var.name}_s'
+                var = ht.RegVal(var, name)
         elif isinstance(var, VariableDef):
             for stmt in self.walk_up_block_hier():
                 if isinstance(stmt, VariableExpr):
@@ -438,11 +259,7 @@ class HdlAst(ast.NodeVisitor):
         scope = gather_control_stmt_vars(node.target, intf)
         self.svlocals.update(scope)
 
-        svnode = Loop(
-            in_cond=Expr(f'{intf.svrepr}.valid', Bool),
-            stmts=[],
-            cycle_cond=[],
-            exit_cond=[Expr(f'&{intf.svrepr}_s.eot', Bool)])
+        svnode = ht.IntfLoop(intf, [])
 
         self.visit_block(svnode, node.body)
 
@@ -471,7 +288,7 @@ class HdlAst(ast.NodeVisitor):
         scope = gather_control_stmt_vars(node.items[0].optional_vars, intf)
         self.svlocals.update(scope)
 
-        svnode = IntfBlock(intf, [])
+        svnode = ht.IntfBlock(intf, [])
 
         self.visit_block(svnode, node.body)
 
@@ -479,30 +296,21 @@ class HdlAst(ast.NodeVisitor):
 
     def visit_Subscript(self, node):
         val_expr = self.visit(node.value)
-        # svrepr, dtype = self.visit(node.value)
-
-        # if not hasattr(node.slice, 'value'):
-        #     res_dtype = val_expr.dtype.__getitem__(index)
-
-        #     if typeof(res_dtype, Unit):
-        #         return ResExpr(val=Unit(), svrepr='()', dtype=Unit)
 
         if hasattr(node.slice, 'value'):
             index = self.eval_expression(node.slice.value)
         else:
             slice_args = [
                 self.eval_expression(getattr(node.slice, field))
-                for field in ['lower', 'upper']
+                for field in ['lower', 'upper'] if getattr(node.slice, field)
             ]
 
             index = slice(*tuple(arg for arg in slice_args))
 
-            # index = self.val.dtype.index_norm(self.index)[0]
-
-        hdl_node = SubscriptExpr(val_expr, index)
+        hdl_node = ht.SubscriptExpr(val_expr, index)
 
         if hdl_node.dtype is Unit:
-            return ResExpr(Unit())
+            return ht.ResExpr(Unit())
         else:
             return hdl_node
 
@@ -530,16 +338,16 @@ class HdlAst(ast.NodeVisitor):
 
         for var in self.variables:
             if var == name and isinstance(self.variables[name], ast.AST):
-                self.variables[name] = ResExpr(val, val.svrepr, val.dtype)
+                self.variables[name] = ht.ResExpr(val)
 
         if name not in self.svlocals:
             if name in self.variables:
                 self.svlocals[name] = VariableDef(val, name, val.dtype)
                 return VariableExpr(self.svlocals[name], val.svrepr, val.dtype)
             else:
-                self.svlocals[name] = RegDef(val, name, val.dtype)
+                self.svlocals[name] = ht.RegDef(val, name)
         elif name in self.regs:
-            return RegNextExpr(self.svlocals[name], val.svrepr, val.dtype)
+            return ht.RegNextExpr(self.svlocals[name], val)
         elif name in self.variables:
             return VariableExpr(self.svlocals[name], val.svrepr, val.dtype)
 
@@ -557,7 +365,7 @@ class HdlAst(ast.NodeVisitor):
             if hasattr(node, 'dtype'):
                 # TODO
                 return node
-            return ResExpr(node)
+            return ht.ResExpr(node)
 
         try:
             return eval_data_expr(node, self.locals)
@@ -570,7 +378,7 @@ class HdlAst(ast.NodeVisitor):
             self.locals, globals())
 
     def visit_Call_len(self, arg):
-        return Expr(len(arg.dtype), dtype=Any)
+        return ht.Expr(len(arg.dtype), dtype=Any)
 
     def visit_Call_print(self, arg):
         pass
@@ -581,7 +389,7 @@ class HdlAst(ast.NodeVisitor):
 
     def visit_Call_range(self, *arg):
         if len(arg) == 1:
-            start = Expr('0', arg[0].dtype)
+            start = ht.Expr('0', arg[0].dtype)
             stop = arg[0]
             step = ast.Num(1)
         else:
@@ -595,15 +403,15 @@ class HdlAst(ast.NodeVisitor):
         return self.visit_Call_range(*arg)
 
     def visit_Call_all(self, arg):
-        return Expr(f'&({arg.svrepr})', Bool)
+        return ht.ArrayOpExpr(arg, '&')
 
     def visit_Call(self, node):
         arg_nodes = [self.visit_DataExpression(arg) for arg in node.args]
 
-        if all(isinstance(node, ResExpr) for node in arg_nodes):
+        if all(isinstance(node, ht.ResExpr) for node in arg_nodes):
             ret = eval(
                 f'{node.func.id}({", ".join(str(n.val) for n in arg_nodes)})')
-            return ResExpr(ret, str(ret), Any)
+            return ht.ResExpr(ret)
         else:
             if hasattr(node.func, 'id'):
                 func_dispatch = getattr(self, f'visit_Call_{node.func.id}')
@@ -622,12 +430,7 @@ class HdlAst(ast.NodeVisitor):
 
     def visit_Tuple(self, node):
         items = [self.visit_DataExpression(item) for item in node.elts]
-
-        tuple_dtype = Tuple[tuple(item.dtype for item in items)]
-        tuple_svrepr = (
-            '{' + ', '.join(item.svrepr for item in reversed(items)) + '}')
-
-        return Expr(tuple_svrepr, tuple_dtype)
+        return ht.ConcatExpr(items)
 
     def visit_BinOp(self, node):
         left = node.left
@@ -642,27 +445,12 @@ class HdlAst(ast.NodeVisitor):
         op2 = self.visit_DataExpression(right)
         operator = opmap[type(op)]
 
-        return BinOpExpr((op1, op2), operator)
-
-        # res_type = eval(f'op1 {operator} op2', {
-        #     'op1': op1.dtype,
-        #     'op2': op2.dtype
-        # })
-
-        # if int(res_type) > int(op1.dtype):
-        #     op1 = op1._replace(svrepr=f"{int(res_type)}'({op1.svrepr})")
-
-        # if int(res_type) > int(op2.dtype):
-        #     op2 = op2._replace(svrepr=f"{int(res_type)}'({op2.svrepr})")
-
-        # return Expr(f"{op1.svrepr} {operator} {op2.svrepr}", res_type)
+        return ht.BinOpExpr((op1, op2), operator)
 
     def visit_Attribute(self, node):
         expr = self.visit(node.value)
 
-        return AttrExpr(expr.val, expr.attr + [node.attr])
-        # return Expr(f'{expr.svrepr}.{node.attr}', getattr(
-        #     expr.dtype, node.attr))
+        return ht.AttrExpr(expr.val, expr.attr + [node.attr])
 
     def visit_Compare(self, node):
         return self.visit_BinOp(node)
@@ -672,25 +460,23 @@ class HdlAst(ast.NodeVisitor):
         op2 = self.visit_DataExpression(node.values[1])
         operator = opmap[type(node.op)]
 
-        return Expr(f"{op1.svrepr} {operator} {op2.svrepr}", Uint[1])
+        return ht.Expr(f"{op1.svrepr} {operator} {op2.svrepr}", Uint[1])
 
     def visit_UnaryOp(self, node):
         operand = self.visit_DataExpression(node.operand)
 
-        if isinstance(operand, ResExpr):
+        if isinstance(operand, ht.ResExpr):
             return self.visit_DataExpression(node)
         else:
             operator = opmap[type(node.op)]
-            res_type = Uint[1] if isinstance(node.op,
-                                             ast.Not) else operand.dtype
-            return Expr(f"{operator} {operand.svrepr}", res_type)
+            return ht.UnaryOpExpr(operand, operator)
 
         return self.visit_DataExpression(node)
 
     def visit_If(self, node):
         expr = self.visit_DataExpression(node.test)
 
-        if isinstance(expr, ResExpr):
+        if isinstance(expr, ht.ResExpr):
             if bool(expr.val):
                 for stmt in node.body:
                     # try:
@@ -706,15 +492,16 @@ class HdlAst(ast.NodeVisitor):
                         self.scope[-1].stmts.append(svstmt)
             return None
         else:
-            svnode = IfBlock(expr, [])
+            svnode = ht.IfBlock(expr, [])
             self.visit_block(svnode, node.body)
             if hasattr(node, 'orelse') and node.orelse:
                 fields = expr._asdict()
                 fields.pop('svrepr')
                 else_expr = type(expr)(svrepr=f'!({expr.svrepr})', **fields)
-                svnode_else = Block(in_cond=else_expr, stmts=[], cycle_cond=[])
+                svnode_else = ht.Block(
+                    in_cond=else_expr, stmts=[], cycle_cond=[])
                 self.visit_block(svnode_else, node.orelse)
-                top = IfElseBlock(
+                top = ht.IfElseBlock(
                     in_cond=None, stmts=[svnode, svnode_else], cycle_cond=[])
                 return top
             else:
@@ -731,12 +518,12 @@ class HdlAst(ast.NodeVisitor):
         else:
             names = [node.target.id]
 
-        exit_cond = [Expr(f'({names[0]}_next >= {stop.svrepr})', Bool)]
+        exit_cond = [ht.Expr(f'({names[0]}_next >= {stop.svrepr})', Bool)]
 
         if is_qrange:
             if is_start:
                 exit_cond = [
-                    Expr(f'({names[0]}_switch_next >= {stop.svrepr})', Bool)
+                    ht.Expr(f'({names[0]}_switch_next >= {stop.svrepr})', Bool)
                 ]
 
             val = Uint[1](0)
@@ -744,7 +531,7 @@ class HdlAst(ast.NodeVisitor):
                 node.target.elts[-1], f'{exit_cond[0].svrepr}', type(val))
             self.svlocals.update(scope)
 
-        svnode = Loop(
+        svnode = ht.Loop(
             in_cond=None,
             stmts=[],
             cycle_cond=[],
@@ -776,11 +563,11 @@ class HdlAst(ast.NodeVisitor):
 
         if name in self.regs:
             switch_reg = self.regs[name]
-            self.variables[name] = ResExpr(switch_reg.val, name,
-                                           switch_reg.dtype)
+            self.variables[name] = ht.ResExpr(switch_reg.val, name,
+                                              switch_reg.dtype)
             self.regs[switch_name] = switch_reg
-            self.svlocals[switch_name] = RegDef(switch_reg.val, switch_name,
-                                                switch_reg.dtype)
+            self.svlocals[switch_name] = ht.RegDef(switch_reg.val, switch_name,
+                                                   switch_reg.dtype)
             self.regs.pop(name)
             self.svlocals.pop(name)
             if switch_name in self.variables:
@@ -793,8 +580,8 @@ class HdlAst(ast.NodeVisitor):
         # flag register
         flag_reg = 'qrange_flag'
         val = Uint[1](0)
-        self.regs[flag_reg] = ResExpr(val, str(int(val)), type(val))
-        self.svlocals[flag_reg] = RegDef(val, flag_reg, type(val))
+        self.regs[flag_reg] = ht.ResExpr(val, str(int(val)), type(val))
+        self.svlocals[flag_reg] = ht.RegDef(val, flag_reg, type(val))
         svnode.multicycle.append(flag_reg)
 
         switch_reg = f'{name}_switch'
@@ -830,12 +617,12 @@ class HdlAst(ast.NodeVisitor):
             self.generic_visit(node)
 
     def visit_Yield(self, node):
-        return Yield(super().visit(node.value))
+        return ht.Yield(super().visit(node.value))
         # self.scope[-1].cycle_cond.append(hdl_node)
         # return hdl_node
 
     def visit_AsyncFunctionDef(self, node):
-        svnode = Module(
+        svnode = ht.Module(
             in_ports=self.in_ports,
             out_ports=self.out_ports,
             locals=self.svlocals,
@@ -860,21 +647,22 @@ class HdlAst(ast.NodeVisitor):
 
         # sub blocks
         for i, stmt in enumerate(hier_blocks):
-            sub = Loop(in_cond=None, stmts=[], cycle_cond=[], exit_cond=None)
+            sub = ht.Loop(
+                in_cond=None, stmts=[], cycle_cond=[], exit_cond=None)
             self.enter_block(sub)
             sub_block = self.visit(stmt)
             self.exit_block()
 
-            if isinstance(sub_block, Loop):
+            if isinstance(sub_block, ht.Loop):
                 # merge sub
-                in_cond = Expr(
+                in_cond = ht.Expr(
                     f'(state_reg == {i}) && ({sub_block.in_cond.svrepr})',
                     Bool)
                 cycle_cond = sub_block.cycle_cond
                 assert len(sub.cycle_cond) == 0
                 stmts = sub_block.stmts
             else:
-                in_cond = Expr(f'(state_reg == {i})', Bool)
+                in_cond = ht.Expr(f'(state_reg == {i})', Bool)
                 cycle_cond = sub.cycle_cond
                 stmts = [sub_block]
 
@@ -885,14 +673,14 @@ class HdlAst(ast.NodeVisitor):
                 exit_cond = None
             if exit_cond and i != (len(hier_blocks) - 1):
                 assert len(exit_cond) == 1  # temporary guard
-                check_state = Block(
+                check_state = ht.Block(
                     in_cond=exit_cond[0],
                     cycle_cond=[],
                     stmts=[self.visit(increment_reg('state'))])
                 stmts.insert(0, check_state)
                 exit_cond = None
 
-            sub_cpy = Loop(
+            sub_cpy = ht.Loop(
                 in_cond=in_cond,
                 stmts=stmts,
                 cycle_cond=cycle_cond,
@@ -905,8 +693,8 @@ class HdlAst(ast.NodeVisitor):
     def create_state_reg(self, state_num):
         if state_num > 1:
             val = Uint[bitw(state_num)](0)
-            self.regs['state'] = ResExpr(val, str(int(val)), type(val))
-            self.svlocals['state'] = RegDef(val, 'state', type(val))
+            self.regs['state'] = ht.ResExpr(val, str(int(val)), type(val))
+            self.svlocals['state'] = ht.RegDef(val, 'state', type(val))
 
 
 class HdlAstVisitor:

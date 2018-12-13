@@ -1,7 +1,9 @@
 import typing as pytypes
+
+import hdl_types as ht
+from pygears.core.port import InPort
+from pygears.typing import Array, Integer, typeof
 from pygears.typing.base import TypingMeta
-from .hdl_ast import RegNextExpr, Yield
-from pygears.typing import Array, typeof, Integer
 
 extendable_operators = [
     '+', '-', '*', '/', '%', '**', '<<', '>>>', '|', '&', '^', '/', '~', '!'
@@ -56,12 +58,15 @@ class SVCompilerPreprocess(InstanceVisitor):
     def exit_block(self):
         self.scope.pop()
 
-    def write_reg_enable(self, name, node, cond):
-        if name in self.module.regs:
+    def write_reg_enable(self, node, cond):
+        if self.visit_var in self.module.regs:
             # register is enabled if it is assigned in the current block
             for stmt in node.stmts:
-                if isinstance(stmt, RegNextExpr) and (stmt.reg.svrepr == name):
-                    return AssignValue(target=f'{name}_en', val=cond, width=1)
+                if isinstance(
+                        stmt,
+                        ht.RegNextExpr) and (stmt.reg.name == self.visit_var):
+                    return AssignValue(
+                        target=f'{self.visit_var}_en', val=cond, width=1)
 
     def visit_Module(self, node):
         self.module = node
@@ -81,9 +86,13 @@ class SVCompilerPreprocess(InstanceVisitor):
         return comb_block
 
     def find_conditions(self, conditions):
-        return ' && '.join(
-            'dout.ready' if isinstance(cond, Yield) else cond.svrepr
-            for cond in conditions)
+        c = []
+        for cond in conditions:
+            if isinstance(cond, ht.Yield):
+                c.append('dout.ready')
+            elif isinstance(cond, InPort):
+                c.append(f'&{cond.basename}_s.eot')
+        return ' && '.join(c)
 
     def find_cycle_cond(self, node):
         return self.find_conditions(node.cycle_cond)
@@ -95,9 +104,28 @@ class SVCompilerPreprocess(InstanceVisitor):
 
         return self.find_conditions(exit_conds)
 
+    def visit_RegVal(self, node):
+        return node.name
+
+    def visit_ResExpr(self, node):
+        return int(node.val)
+
     def visit_AttrExpr(self, node):
         val = self.visit(node.val)
         return '.'.join([val] + node.attr)
+
+    def visit_ConcatExpr(self, node):
+        return (
+            '{' + ', '.join(self.visit(op)
+                            for op in reversed(node.operands)) + '}')
+
+    def visit_ArrayOpExpr(self, node):
+        val = self.visit(node.array)
+        return f'{node.operator}({val})'
+
+    def visit_UnaryOpExpr(self, node):
+        val = self.visit(node.operand)
+        return f'{node.operator} {val}'
 
     def visit_BinOpExpr(self, node):
         ops = [self.visit(op) for op in node.operands]
@@ -140,10 +168,10 @@ class SVCompilerPreprocess(InstanceVisitor):
                     stmts=[])
 
     def visit_RegNextExpr(self, node):
-        if node.reg.svrepr == self.visit_var:
+        if node.reg.name == self.visit_var:
             return AssignValue(
                 target=f'{self.visit_var}_next',
-                val=node.svrepr,
+                val=self.visit(node.val),
                 width=int(node.reg.dtype))
 
     def visit_VariableExpr(self, node):
@@ -162,6 +190,9 @@ class SVCompilerPreprocess(InstanceVisitor):
         svblock = SVBlock(
             in_cond=f'{node.in_cond.intf.basename}.valid', stmts=[], dflts={})
         return self.traverse_block(svblock, node)
+
+    def visit_IntfLoop(self, node):
+        return self.visit_IntfBlock(node)
 
     def traverse_block(self, svblock, node):
         var_is_reg = (self.visit_var in self.module.regs)
@@ -197,7 +228,7 @@ class SVCompilerPreprocess(InstanceVisitor):
                                 val=cond,
                                 width=1))
                 elif var_is_reg:
-                    s = self.write_reg_enable(self.visit_var, node, cond)
+                    s = self.write_reg_enable(node, cond)
                     if s:
                         svblock.stmts.append(s)
 
@@ -210,7 +241,7 @@ class SVCompilerPreprocess(InstanceVisitor):
                             target=f'{self.visit_var}.ready', val=1, width=1))
 
             if var_is_reg:
-                s = self.write_reg_enable(self.visit_var, node, 1)
+                s = self.write_reg_enable(node, 1)
                 if s:
                     svblock.stmts.append(s)
 

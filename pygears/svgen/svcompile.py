@@ -1,7 +1,7 @@
 import ast
 import inspect
 
-from .hdl_ast import HdlAst, RegFinder, pprint
+from .hdl_ast import HdlAst, RegFinder
 from .util import svgen_typedef
 from .hdl_preprocess import InstanceVisitor, SVCompilerPreprocess
 
@@ -59,8 +59,7 @@ class SVCompiler(InstanceVisitor):
 
     def visit_AssignValue(self, node):
         self.writer.line(
-            f"{node.target} = {node.width}'({self.visit(node.val)});"
-        )
+            f"{node.target} = {node.width}'({self.visit(node.val)});")
 
     def visit_CombBlock(self, node):
         self.writer.line(f'// Comb block for: {self.visit_var}')
@@ -118,7 +117,7 @@ def write_module(node, sv_stmts, writer):
         writer.line()
 
     for name, expr in node.regs.items():
-        writer.block(reg_template.format(name, expr.svrepr))
+        writer.block(reg_template.format(name, int(expr.val)))
 
     for name, val in sv_stmts.items():
         SVCompiler(name, writer).visit(val)
