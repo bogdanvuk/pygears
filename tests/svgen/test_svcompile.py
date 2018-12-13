@@ -46,9 +46,6 @@ always_comb begin
         if (din_s.data.ctrl == din_s.sel) begin
             din.ready = 1'(dout.ready);
         end
-        else begin
-            din.ready = 1'(1);
-        end
     end
 end
 """

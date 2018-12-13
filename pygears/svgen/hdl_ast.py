@@ -2,7 +2,7 @@ import ast
 import typing as pytypes
 from collections import namedtuple
 from pygears.typing import (Uint, Int, is_type, Bool, Tuple, Any, Unit, typeof,
-                            bitw, Array, Integer)
+                            bitw)
 from pygears.typing.base import TypingMeta
 from svcompile_snippets import qrange
 
@@ -32,6 +32,18 @@ opmap = {
     ast.And: '&&',
     ast.Or: '||',
 }
+
+
+def find_cycle_cond(statements):
+    cond = []
+    for stmt in statements:
+        if hasattr(stmt, 'cycle_cond') and not stmt.in_cond:
+            cond.extend(stmt.cycle_cond)
+        else:
+            # TODO
+            if isinstance(stmt, Yield):
+                cond.append(stmt)
+    return cond
 
 
 class VisitError(Exception):
@@ -96,6 +108,21 @@ class SubscriptExpr(Expr, pytypes.NamedTuple):
             return self.val.dtype.__getitem__(self.index)
 
 
+class AttrExpr(Expr, pytypes.NamedTuple):
+    val: Expr
+    attr: list
+
+    @property
+    def dtype(self):
+        t = self.val.dtype
+        for attr in self.attr:
+            if typeof(t, Tuple):
+                t = t[attr]
+            else:
+                t = getattr(t, attr, None)
+        return t
+
+
 class Block:
     @property
     def in_cond(self):
@@ -120,19 +147,20 @@ class IntfBlock(Block, pytypes.NamedTuple):
 
     @property
     def cycle_cond(self):
-        cond = []
-        for stmt in self.stmts:
-            if hasattr(stmt, 'cycle_cond'):
-                cond.append(stmt.cycle_cond)
-            else:
-                # TODO
-                if isinstance(stmt, Yield):
-                    cond.append(stmt)
-        return cond
+        return find_cycle_cond(self.stmts)
 
     @property
     def exit_cond(self):
         return None
+
+
+class IfBlock(Block, pytypes.NamedTuple):
+    in_cond: Expr
+    stmts: list
+
+    @property
+    def cycle_cond(self):
+        return find_cycle_cond(self.stmts)
 
 
 class RegDef(pytypes.NamedTuple):
@@ -180,11 +208,10 @@ class VariableVal(Expr, pytypes.NamedTuple):
 #     stmts: pytypes.List
 #     cycle_cond: pytypes.List
 
-
-class IfElseBlock(pytypes.NamedTuple):
-    in_cond: Expr
-    stmts: pytypes.List
-    cycle_cond: pytypes.List
+# class IfElseBlock(pytypes.NamedTuple):
+#     in_cond: Expr
+#     stmts: pytypes.List
+#     cycle_cond: pytypes.List
 
 
 class Loop(Block, pytypes.NamedTuple):
@@ -254,22 +281,25 @@ def eval_data_expr(node, local_namespace):
     return ResExpr(ret)
 
 
-def gather_control_stmt_vars(variables, intf, dtype=None):
-    name = intf
-    if isinstance(intf, IntfExpr):
+def gather_control_stmt_vars(variables, intf, name=None, dtype=None):
+    if not name:
         name = f'{intf.name}_s'
+    if not dtype:
         dtype = intf.intf.dtype
+
     scope = {}
     if isinstance(variables, ast.Tuple):
         for i, v in enumerate(variables.elts):
             if isinstance(v, ast.Name):
-                scope[v.id] = Expr(f'{name}.{dtype.fields[i]}', dtype[i])
+                # scope[v.id] = Expr(f'{name}.{dtype.fields[i]}', dtype[i])
+                scope[v.id] = AttrExpr(intf, [dtype.fields[i]])
             elif isinstance(v, ast.Starred):
-                scope[v.id] = Expr(f'{name}.{dtype.fields[i]}', dtype[i])
+                # scope[v.id] = SubscriptExpr(intf, i)
+                scope[v.id] = AttrExpr(intf, [dtype.fields[i]])
             elif isinstance(v, ast.Tuple):
                 scope.update(
-                    gather_control_stmt_vars(v, f'{name}.{dtype.fields[i]}',
-                                             dtype[i]))
+                    gather_control_stmt_vars(
+                        v, intf, f'{name}.{dtype.fields[i]}', dtype[i]))
     else:
         if isinstance(intf, IntfExpr):
             scope[variables.id] = intf
@@ -630,8 +660,9 @@ class HdlAst(ast.NodeVisitor):
     def visit_Attribute(self, node):
         expr = self.visit(node.value)
 
-        return Expr(f'{expr.svrepr}.{node.attr}', getattr(
-            expr.dtype, node.attr))
+        return AttrExpr(expr.val, expr.attr + [node.attr])
+        # return Expr(f'{expr.svrepr}.{node.attr}', getattr(
+        #     expr.dtype, node.attr))
 
     def visit_Compare(self, node):
         return self.visit_BinOp(node)
@@ -675,9 +706,9 @@ class HdlAst(ast.NodeVisitor):
                         self.scope[-1].stmts.append(svstmt)
             return None
         else:
-            svnode = Block(in_cond=expr, stmts=[], cycle_cond=[])
+            svnode = IfBlock(expr, [])
             self.visit_block(svnode, node.body)
-            if hasattr(node, 'orelse'):
+            if hasattr(node, 'orelse') and node.orelse:
                 fields = expr._asdict()
                 fields.pop('svrepr')
                 else_expr = type(expr)(svrepr=f'!({expr.svrepr})', **fields)

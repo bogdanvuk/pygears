@@ -137,7 +137,7 @@ def compile_gear_body(gear):
     # py ast to hdl ast
     hdl_ast = HdlAst(gear, v.regs, v.variables).visit(body_ast)
 
-    pprint(hdl_ast)
+    # pprint(hdl_ast)
 
     res = {}
 

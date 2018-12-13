@@ -1,7 +1,11 @@
 import typing as pytypes
 from pygears.typing.base import TypingMeta
-from .hdl_ast import Module, RegNextExpr, Yield
+from .hdl_ast import RegNextExpr, Yield
 from pygears.typing import Array, typeof, Integer
+
+extendable_operators = [
+    '+', '-', '*', '/', '%', '**', '<<', '>>>', '|', '&', '^', '/', '~', '!'
+]
 
 
 class AssignValue(pytypes.NamedTuple):
@@ -76,38 +80,34 @@ class SVCompilerPreprocess(InstanceVisitor):
         self.update_defaults(comb_block)
         return comb_block
 
-    def find_out_conds(self, halt_on):
-        out_cond = []
-        for block in reversed(self.scope):
-            if isinstance(block, Module):
-                break
-
-            out_cond += getattr(block, 'cycle_cond', [])
-
-            if (halt_on == 'cycle') and getattr(block, 'exit_cond', []):
-                break
-
-            if getattr(block, 'exit_cond', []):
-                out_cond += getattr(block, 'exit_cond', [])
-
-        out_cond_svrepr = ' && '.join(
+    def find_conditions(self, conditions):
+        return ' && '.join(
             'dout.ready' if isinstance(cond, Yield) else cond.svrepr
-            for cond in out_cond)
+            for cond in conditions)
 
-        return out_cond_svrepr
+    def find_cycle_cond(self, node):
+        return self.find_conditions(node.cycle_cond)
 
-    def find_cycle_cond(self):
-        return self.find_out_conds(halt_on='cycle')
+    def find_exit_cond(self, node):
+        exit_conds = node.cycle_cond
+        if hasattr(node, 'exit_cond') and node.exit_cond:
+            exit_conds += node.exit_cond
 
-    def find_exit_cond(self):
-        return self.find_out_conds(halt_on='exit')
+        return self.find_conditions(exit_conds)
+
+    def visit_AttrExpr(self, node):
+        val = self.visit(node.val)
+        return '.'.join([val] + node.attr)
 
     def visit_BinOpExpr(self, node):
         ops = [self.visit(op) for op in node.operands]
 
-        svrepr = (f"{int(node.dtype)}'({ops[0]})"
-                  f" {node.operator} "
-                  f"{int(node.dtype)}'({ops[1]})")
+        if node.operator in extendable_operators:
+            svrepr = (f"{int(node.dtype)}'({ops[0]})"
+                      f" {node.operator} "
+                      f"{int(node.dtype)}'({ops[1]})")
+        else:
+            svrepr = f'{ops[0]} {node.operator} {ops[1]}'
         return svrepr
 
     def visit_SubscriptExpr(self, node):
@@ -153,16 +153,14 @@ class SVCompilerPreprocess(InstanceVisitor):
                 val=node.svrepr,
                 width=int(node.variable.dtype))
 
+    def visit_IfBlock(self, node):
+        in_cond = self.visit(node.in_cond)
+        svblock = SVBlock(in_cond=in_cond, stmts=[], dflts={})
+        return self.traverse_block(svblock, node)
+
     def visit_IntfBlock(self, node):
         svblock = SVBlock(
             in_cond=f'{node.in_cond.intf.basename}.valid', stmts=[], dflts={})
-        return self.traverse_block(svblock, node)
-
-    def visit_Block(self, node):
-        svblock = SVBlock(
-            in_cond=node.in_cond.svrepr if node.in_cond else None,
-            stmts=[],
-            dflts={})
         return self.traverse_block(svblock, node)
 
     def traverse_block(self, svblock, node):
@@ -175,8 +173,8 @@ class SVCompilerPreprocess(InstanceVisitor):
         self.enter_block(node)
 
         if node.cycle_cond or getattr(node, 'exit_cond', []):
-            cycle_cond = self.find_cycle_cond()
-            exit_cond = self.find_exit_cond()
+            cycle_cond = self.find_cycle_cond(node)
+            exit_cond = self.find_exit_cond(node)
 
             if exit_cond and var_is_reg:
                 svblock.stmts.append(
@@ -203,7 +201,7 @@ class SVCompilerPreprocess(InstanceVisitor):
                     if s:
                         svblock.stmts.append(s)
 
-        if not node.cycle_cond or not self.find_cycle_cond():
+        if not node.cycle_cond or not self.find_cycle_cond(node):
             # TODO ?
             if var_is_port:
                 if not node.in_cond or (self.visit_var in node.in_cond.name):
