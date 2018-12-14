@@ -40,11 +40,18 @@ Each data sample is first scaled by the average coeficient.
 Since each element of the Queue needs to be multiplied, we first create a Queue of Tuples by replicating the average coeficient.
 This replication is done using the cart gear where the needed operation is performed automatically based on the input data types.
 This is then sent to the scale_input gear which multiplies the elements and shifts the data.
+In PyGears the connection between gears can be described using pipe ‘|’ operator.
+In terms of the HDLs, this corresponds to one module's producer interface being connected to the second modules consumer interface as described in section :cite: TODO.
 The scale_input gear operates on Tuple data types, not on the Queue data type therefore an fmap operation must be performed.
+Fmap applies the scale_input function to each sample of the data akin to the Python’s map function operating on a list (TODO cite).
 This functor splits the end of transaction information from the data and only sends the data sample and the coeficient value the scale_input gear.
 After the operation the the types are merged again and the scaled_input signal is still of the Queue data type.
 This is show on image TODO.
 Usage of this functor allows the scale_input to be an independent gear with single responsibility which can be easily reused.
+Functors are powerful patterns for gear composition that significantly improve possibilities for gear reuse.
+There is one functor for each complex data type.
+Functors allow for gears that operate on simpler data types to be used in context where a more complex data type is needed.
+PyGears can automatically generate such a structure based on the input type and gears that are to be used inside a functor.
 
 .. code-block:: py
 
@@ -112,3 +119,17 @@ To ensure proper synchronization, zero values are substracted from every sample 
                 | priority_mux \
                 | union_collapse
 
+Based on the python description of the moving_average gear, PyGears generates a SystemVerilog description.
+Implementation of developed IP core was done using Xilinx's Vivado tool.
+Target FPGA device for the implementation was Zynq-7020.
+The most interesting implementation results, regarding used hardware resources, are presented in Table TODO
+
+..
+   TODO recosource utilization table
++----------------------+------------+------------+---------+------+-----+--------+--------+--------------+
+|       Instance       | Total LUTs | Logic LUTs | LUTRAMs | SRLs | FFs | RAMB36 | RAMB18 | DSP48 Blocks |
++----------------------+------------+------------+---------+------+-----+--------+--------+--------------+
+| moving_average       |            |            |         |      |     |        |        |              |
++----------------------+------------+------------+---------+------+-----+--------+--------+--------------+
+| - tmp_i              |            |            |         |      |     |        |        |              |
++----------------------+------------+------------+---------+------+-----+--------+--------+--------------+
