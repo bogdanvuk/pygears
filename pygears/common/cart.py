@@ -1,5 +1,5 @@
 from pygears.core.gear import alternative, gear
-from pygears.typing import Queue, Tuple, typeof
+from pygears.typing import Queue, Tuple, typeof, Unit
 from pygears.common.shred import shred
 from pygears.common.ccat import ccat
 from pygears.util.utils import quiter_async
@@ -40,14 +40,14 @@ async def cart(*din) -> b'cart_type(din)':
             single_eot = single_data.eot
             single_data = single_data.data
         else:
-            single_eot = []
+            single_eot = Unit()
 
         async for queue_data in quiter_async(din[queue_id]):
             out_data = [0, 0]
             out_data[queue_id] = queue_data.data
             out_data[single_id] = single_data
 
-            yield module().tout((tuple(out_data), queue_data.eot, single_eot))
+            yield (out_data, queue_data.eot @ single_eot)
 
 
 @alternative(cart)

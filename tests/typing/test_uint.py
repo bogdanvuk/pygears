@@ -1,4 +1,4 @@
-from pygears.typing import Int, Integer, Uint, Unit
+from pygears.typing import Int, Integer, Uint, Unit, Bool
 
 
 def test_autowidth():
@@ -32,3 +32,13 @@ def type_hierarchy():
     assert issubclass(b, Int)
     assert issubclass(b, Integer)
     assert not issubclass(b, Uint)
+
+
+def test_concat():
+    assert Uint[2](0x1) @ Uint[4](0xf) == Uint[6](0x1f)
+
+
+def test_bool():
+    assert Bool(2) == Uint[1](1)
+    assert Bool(0) == Uint[1](0)
+    assert type(Bool(0)) == Uint[1]

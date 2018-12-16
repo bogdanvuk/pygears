@@ -24,7 +24,7 @@ correctly used within cartesian concatenations.
 
     async for data in quiter_async(din):
         if out_data is None:
-            out_data = module().tout((Unit(), data.eot[-lvl:]))
+            out_data = (Unit(), data.eot[-lvl:])
             dout.put_nb(out_data)
 
         if sub_lvl > 0:
