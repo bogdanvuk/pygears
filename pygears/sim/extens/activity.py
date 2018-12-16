@@ -3,6 +3,7 @@ from pygears.common.decoupler import decoupler_din
 from pygears.common import const
 from pygears.sim import sim_log
 from pygears.conf import reg_inject, Inject
+from pygears.core.graph import get_producer_queue, get_end_producer
 
 
 class ActivityChecker:
@@ -33,8 +34,7 @@ class ActivityChecker:
                 p.consumer.events['pull_done'].append(self.intf_pull_done)
 
     def get_port_status(self, port):
-        print("Get port status")
-        q = port.get_queue()
+        q = get_producer_queue(port)
         if q._unfinished_tasks:
             return "active"
 
@@ -57,7 +57,7 @@ class ActivityChecker:
                 status = self.get_port_status(p)
 
                 if status == "active":
-                    src_port = p.get_queue().intf.consumers[0]
+                    src_port = get_end_producer(p).consumers[0]
 
                     if src_port.gear.definition == const:
                         # Skip constants since they are never done
