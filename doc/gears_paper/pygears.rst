@@ -5,8 +5,9 @@ Although a design process in any hardware-description language could benefit fro
 
 A gear is defined in PyGears using a function construct in the following way:
 
-.. code-block:: py
+.. raw:: latex
 
+    \begin{lstlisting}[language=python]
     @gear
     def gear_name(
             in1: T1, ..., inN: TN,
@@ -15,6 +16,7 @@ A gear is defined in PyGears using a function construct in the following way:
             ) -> ReturnType:
 
         Implementation
+    \end{lstlisting}
 
 The statement ``@gear`` is the Python decorator statement that informs PyGears that this is a gear definition and not a regular Python function definition ``def`` is a Python keyword for function definition, and the ``gear_name`` is where the name of the gear is stated (akin to module/entity names in Verilog/VHDL), and it will be used later to make instances of the gear.
 
@@ -26,11 +28,13 @@ Gears that are described in terms of the composition of lower-level gears are of
 
 Once defined, a gear can be instantiated as many times as needed in the design using different set of input interfaces and parameter value combination. Gear instantiation is written in form of a Python function call by supplying the input interfaces and parameters as function arguments.    
 
-.. code-block:: py
+.. raw:: latex
 
+    \begin{lstlisting}[language=python]
     outputs = gear_name(
         in1, ..., inN,
         p1=val1, ..., pM=valM)
+    \end{lstlisting}
 
 For a gear with a single output interface, the function call returns a Python object that represents that output interface. For a gear with multiple outputs, a tuple of interface objects is returned. Returned output interface objects can then be supplied when instantiating other gears, which then establishes connections between the gear instances.
 

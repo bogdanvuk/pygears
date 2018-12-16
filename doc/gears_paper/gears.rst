@@ -12,13 +12,17 @@ Traditional methodologies put no constraints on the interfaces a hardware module
    :include: dti.tex
 
 
-DTI interface is used to connect two modules called Producer and Consumer, and transfers data from the Producer to the Consumer. It consists of three signals:
+DTI interface is used to connect two modules called Producer and Consumer, and transfers data from the Producer to the Consumer. It consists of three signals as shown in the :numref:`dti-wave`:
 
-- **Data** - Variable width signal, driven by the Producer, which carries the actual data.
-- **Valid** - Single bit wide signal, driven by the Producer, which signals when valid data is available on Data signal.
-- **Ready** - Single bit wide signal, driven by the Consumer, which signals when the data provided by the Producer has been consumed.
+- Data - Variable width signal, driven by the Producer, which carries the actual data.
+- Valid - Single bit wide signal, driven by the Producer, which signals when valid data is available on Data signal.
+- Ready - Single bit wide signal, driven by the Consumer, which signals when the data provided by the Producer has been consumed.
 
-.. image:: dti_wave.png
+.. figure:: dti_wave.png
+   :name: dti-wave
+   :width: 100%
+
+   DTI interface
 
 The protocol employed over the DTI interface was designed to help a designer reason about the hardware system at a higher level of abstraction, namely in terms of the data exchange, not in terms of manipulating individual signals. Handshake mechanism helps avoid race-conditions and ensures the proper transfer of data between asynchronous modules. The modules that adher to the DTI protocol are called *gears*. Communication over DTI entails the following procedure: 
 

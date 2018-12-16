@@ -135,17 +135,20 @@ node {#7}
 }
 '''
 
+latex_toplevel_sectioning = 'section'
+
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     #
     # 'papersize': 'letterpaper',
 
     'sphinxsetup': 'hmargin={0.8in,0.8in}, vmargin={1in,1in}, marginpar=1in',
+    'extraclassoptions': 'conference',
 
     # The font size ('10pt', '11pt' or '12pt').
     #
     # 'pointsize': '10pt',
-    # 'preamble': r'\twocolumn',
+
 #     'maketitle': r'''
 # \maketitle
 # \twocolumn''',
@@ -156,7 +159,7 @@ latex_elements = {
     # 'figure_align': 'htbp',
 }
 
-# latex_additional_files = ["IEEEtran.cls"]
+latex_additional_files = ["IEEEtran.cls"]
 # latex_additional_files = ['tex/preamble._tex']
 
 # Grouping the document tree into LaTeX files. List of tuples
@@ -165,5 +168,6 @@ latex_elements = {
 latex_documents = [
     (master_doc, 'gears_paper.tex',
      'PyGears: A Functional Approach to Hardware Design',
-     ur'Bogdan Vukobratović, Andrea Erdeljan and Damjan Rakanović', 'howto'),
+     # ur'Bogdan Vukobratović, Andrea Erdeljan and Damjan Rakanović', 'howto'),
+     ur'Bogdan Vukobratović, Andrea Erdeljan and Damjan Rakanović', 'IEEEtran'),
 ]
