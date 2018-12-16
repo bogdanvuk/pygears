@@ -8,10 +8,10 @@ The filter operates by averaging a number of points from the input signal to pro
 .. math:: y[i] = \frac{1}{M} \sum_{j = 0}^{M - 1}x[i + j]
    :label: filt_formula
 
-The block diagram of the developed module is given on fig. TODO.
+The simplified block diagram of the developed core is given on fig. TODO.
 
-..
-   TODO add image of block diagram
+.. image:: moving_average.png
+   :scale: 60%
 
 The filter has two input interfaces (one used for configuration and the other for data) and has a single output interface.
 As with every gear, the interfaces are typed.
@@ -22,6 +22,7 @@ Queue is a data type which describes a transaction and spans multiple cycles.
 It has a data field as well as an end of a transaction field.
 The compile time parameters are the data width, shift amount and the maximum filter order.
 The definition of the moving_avreage gear using PyGears is given in TODO.
+Since this is a hierarchical gear the interface type of the output will be determined by the return statement and is not specified here.
 
 .. code-block:: py
 
@@ -41,95 +42,122 @@ Since each element of the Queue needs to be multiplied, we first create a Queue 
 This replication is done using the cart gear where the needed operation is performed automatically based on the input data types.
 This is then sent to the scale_input gear which multiplies the elements and shifts the data.
 In PyGears the connection between gears can be described using pipe ‘|’ operator.
-In terms of the HDLs, this corresponds to one module's producer interface being connected to the second modules consumer interface as described in section :cite: TODO.
-The scale_input gear operates on Tuple data types, not on the Queue data type therefore an fmap operation must be performed.
-Fmap applies the scale_input function to each sample of the data akin to the Python’s map function operating on a list (TODO cite).
+This corresponds to one module's producer interface being connected to the second modules consumer interface as described in section TODO.
+The scale_input gear operates on Tuple data types, not on the Queue data type therefore an fmap operation must be performed (TODO).
+Fmap applies the scale_input function to each sample of the data akin to the Python’s map function operating on a list (TODO).
 This functor splits the end of transaction information from the data and only sends the data sample and the coeficient value the scale_input gear.
 After the operation the the types are merged again and the scaled_input signal is still of the Queue data type.
-This is show on image TODO.
 Usage of this functor allows the scale_input to be an independent gear with single responsibility which can be easily reused.
 Functors are powerful patterns for gear composition that significantly improve possibilities for gear reuse.
 There is one functor for each complex data type.
 Functors allow for gears that operate on simpler data types to be used in context where a more complex data type is needed.
-PyGears can automatically generate such a structure based on the input type and gears that are to be used inside a functor.
+PyGears can automatically generate such a structure based on the input type and gears that are to used inside a functor.
 
 .. code-block:: py
 
-   scaled_input = cart(cfg['average_coef'], din) \
-        | fmap(f=scale_input(shamt=shamt, w_data=w_data),
+   scaled_input = cart(cfg['average_coef'],
+                       din) \
+        | fmap(f=scale_input(shamt=shamt,
+                             w_data=w_data),
                lvl=1,
                fcat=czip)
 
-After the input has been scaled, the accumulation takes place.
-The samples are added together and output to the average output.
-An fmap is used once more to reroute the end of transaction information as shown in TODO.
+After the input has been scaled, the accumulation takes place in the following maner.
+Each new sample is added to the sum and outputed.
+When the current window is finished, the first sample, which is no longer in the window, needs to be removed from the accumulated sum and the calculation resumes in the same manner.
+The accumulation takes place in the accumulator gear, while the delay_sample gear is used for appropriate generation of the substracted value.
+This is implemented in the body of the moving_average gear, as shown in TODO.
+Since the scaled_input needs to be used for in both the accumulator and the delay_sample gears broadcast logic is needed to ensure correct synchronization between the gears and that each sample is sent to both gears.
+In PyGears this is done automatically.
 
 .. code-block:: py
-   average = scaled_input \
-     | fmap(f=accumulator(
-                second_operand,
-                delayed_din,
-                w_data=w_data),
-            lvl=din.dtype.lvl,
-            fcat=czip)
+
+    delayed_din = (scaled_input,
+                   cfg['average_window']) \
+        | delay_sample(w_data=w_data,
+                       max_filter_ord=max_filter_ord)
+
+    return (scaled_input, delayed_din) \
+        | accumulator(w_data=w_data)
+
+In the accumulator gear, shown in TODO, containts a feedback loop that cannot be described as a plain gear composition since it forms a cycle.
+This cycle needs to be cut at one spot, described as the gear composition and then stitched together as shown in TODO.
+The second_operand interface is first defined and passed to the sample_calc gear and is later assigned from the decoupled accumulator output.
+
+.. code-block:: py
+
+   @gear
+   def accumulator(din, delayed_din, *, w_data):
+       second_operand = Intf(dtype=Int[w_data])
+   
+       average = din \
+           | fmap(f=sample_calc(second_operand,
+                                delayed_din,
+                                w_data=w_data),
+                  lvl=1,
+                  fcat=czip)
+   
+       average_reg = average \
+           | project \
+           | decoupler
+   
+       second_operand |= priority_mux(
+                average_reg,
+                const(val=0, tout=Int[w_data])) \
+           | union_collapse
+   
+       return average
+
+The sample_calc gear is a calculation gear where the addition and substraction takes place.
+All arithmetic operators are supported by PyGears and automatically generated.
+
+.. code-block:: py
+
+   @gear
+   def sample_calc(din, add_op, sub_op):
+      return (din + add_op - sub_op)
+
+Similarly to the scale_input gear, an fmap is used.
+The result of the calculation is broadcasted to the output and to the second_operand calculation.
+The value is first sent to the project and decoupler gears, which discard the Queue information and register the data.
+The priority mux and const gears are used to either pass a zero value (for the first sample) or the registered value.
 
 ..
-   TODO accumulator mozda da se ne zove accumulator ili da se ovo sa second_operand ubaci u taj gear
-The accumulator gear has three inputs and performs the following operation (figure TODO).
-The current data sample is added with the previous (named second_operand) and outputed.
-When the current window is finished the first value which is no longer in the window needs to be removed from the sum and this value is routed through the delayed_din input.
+   long version
+..
+   As for the delayed sample that needs to be substracted from the accumulated sum, the information about the size of the window, which is the number of samples in the window, is needed and sent to the configuration input.
+   This configuration is used to decide whether the actual substraction needs to take place or neutral zero values are sent instead.
+   To ensure proper synchronization, zero values are substracted from every sample in the window and the scaled_input value is stored in a fifo and sent to the accumulator gear when the window completes.
 
-.. code-block:: py
-   @gear
-   def accumulator(din, second_operand, delayed_din, *, w_data=16):
-       return (din + second_operand - delayed_din)
+   .. code-block:: py
 
-The feedback loop, present in the design, cannot be described as a plain gear composition since it forms a cycle.
-This cycle needs to be cut at one spot, described as the gear composition and then stitched together.
-The second_operand interface is defined as:
+      @gear
+      def delay_sample(din, cfg, *, w_data, max_filter_ord):
+          din_window = din \
+              | project \
+              | fifo(depth=2**bitw(max_filter_ord))
 
-.. code-block:: py
+          initial_load = ccat(cfg,
+              const(val=0, tout=Int[w_data])) \
+              | replicate \
+              | project
 
-   second_operand = Intf(dtype=Int[w_data])
+          return (initial_load, din_window) \
+              | priority_mux \
+              | union_collapse
 
-This value is passed as an input to the accumulator (fig. TODO) and is later assigned from the decoupled accumulator output as:
-
-.. code-block:: py
-   average_reg = average \
-                | project \
-                | decoupler
-   second_operand |= priority_mux(average_reg, const(val=0, tout=Int[w_data])) \
-                | union_collapse
-
-As for the delayed sample that needs to be substracted from the accumulated sum, the information about the size of the window, which is the number of samples in the window, is needed and sent to the configuration input.
-This configuration is used to decide whether the substraction needs to take place.
-To ensure proper synchronization, zero values are substracted from every sample in the window and the scaled_input value is stored in a fifo and sent to the accumulator gear when the window completes.
-
-.. code-block:: py
-
-   din_window = scaled_input \
-                | project \
-                | fifo(depth=2**bitw(max_filter_ord))
-
-   initial_load = ccat(cfg['average_window'], const(val=0, tout=Int[w_data])) \
-                | replicate \
-                | project
-
-   delayed_din = (initial_load, din_window) \
-                | priority_mux \
-                | union_collapse
+..
+   short version
+As for the delayed sample gear a FIFO gear is used to store the passed sample values.
+The configuration will determine weather the value from the FIFO or a zero value will be sent to the accumulator gear.
 
 Based on the python description of the moving_average gear, PyGears generates a SystemVerilog description.
 Implementation of developed IP core was done using Xilinx's Vivado tool.
 Target FPGA device for the implementation was Zynq-7020.
-The most interesting implementation results, regarding used hardware resources, are presented in Table TODO
+The most interesting implementation results, regarding used hardware resources for the sample width of 16 bits and the maximum filter order of 1024, are presented in Table TODO.
 
-..
-   TODO recosource utilization table
-+----------------------+------------+------------+---------+------+-----+--------+--------+--------------+
-|       Instance       | Total LUTs | Logic LUTs | LUTRAMs | SRLs | FFs | RAMB36 | RAMB18 | DSP48 Blocks |
-+----------------------+------------+------------+---------+------+-----+--------+--------+--------------+
-| moving_average       |            |            |         |      |     |        |        |              |
-+----------------------+------------+------------+---------+------+-----+--------+--------+--------------+
-| - tmp_i              |            |            |         |      |     |        |        |              |
-+----------------------+------------+------------+---------+------+-----+--------+--------+--------------+
++------------+------------+---------+-----+------+
+| Total LUTs | Logic LUTs | LUTRAMs | FFs | DSPs |
++------------+------------+---------+-----+------+
+| 970        | 266        | 704     | 135 | 1    |
++------------+------------+---------+-----+------+
