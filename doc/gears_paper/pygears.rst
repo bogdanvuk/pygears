@@ -20,7 +20,7 @@ The statement ``@gear`` is the Python decorator statement that informs PyGears t
 
 In brackets, the input DTI interfaces and compile-time parameters are declared, where the character ``*`` delimits between the two. Each input interface, ``in1`` - ``inN``, can have a type declared too: ``T1``  - ``TN``. Input types will be used by PyGears at compile time to perform type checking as well as to automatically infer some connectivity logic between the gears to facilitate the composition. A gear can optionally support compile time parameters, ``p1`` - ``pM``, with their default values ``dflt1`` - ``dfltM``, that can be used to configure the gear instance. Finally the ``ReturnType`` specifies the type of the output interface or interfaces.
 
-The body of the function (``Implementation``) is used to describe the gear implementation in one of the two ways depending on the type of the gear being described. Gears that implement the smallest functional units belong to the first type, and are described in SystemVerilog following the Gears methodology. These gears need not have a description in Python, i.e. the body of their function definitions can be left empty since they are fully defined by their SystemVerilog descriptions. However, their behaviour can be described in Python as well so that they can be simulated completely in Python environment, which has some benefits as discussed below.
+The body of the function (``Implementation``) is used to describe the gear implementation in one of the two ways depending on the type of the gear being described. Gears that implement the smallest functional units belong to the first type, and are described in SystemVerilog following the Gears methodology. These gears need not have a description in Python, i.e. the body of their function definitions can be left empty since they are fully defined by their SystemVerilog descriptions.
 
 Gears that are described in terms of the composition of lower-level gears are of the second type, and are analogous to the hierarchical modules of traditional HDLs. They do not have a SystemVerilog implementation because it is generated automatically by PyGears given their Python description.
 
@@ -30,11 +30,11 @@ Once defined, a gear can be instantiated as many times as needed in the design u
 
     outputs = gear_name(
         in1, ..., inN,
-        p1=value1, ..., pM=valueM)
+        p1=val1, ..., pM=valM)
 
-For a gear with a single output interface, the function call returns a Python object that represents that interface. For a gear with multiple outputs, a tuple of interface objects is returned. Returned output interface objects can then be supplied when instantiating other gears, which in turn establishes the connections between the gear instances. A graph of interconnected gears obtained in this way can then be translated to syntesizable SystemVerilog code by PyGears.
+For a gear with a single output interface, the function call returns a Python object that represents that output interface. For a gear with multiple outputs, a tuple of interface objects is returned. Returned output interface objects can then be supplied when instantiating other gears, which then establishes connections between the gear instances.
 
-Furthermore, PyGears features a simulator, built on top of the Python asyncio framework :cite:`asyncio`, for simulating the design described in this way. Each gear can be simulated in one of the two basic ways: either using an external HDL simulator (like Verilator :cite:`snyder2013verilator`), or in pure Python for the gears that have a Python description. Describing a gear and simulating it in pure Python has an advantage: better data representation using python objects (types), operation in terms of data exchange
+A graph of interconnected gears described using python function calls in a manner described above can then be translated to syntesizable SystemVerilog code by PyGears. Furthermore, PyGears features a simulator built on top of the Python asyncio framework :cite:`asyncio` that can connect to an external HDL simulator (like Verilator :cite:`snyder2013verilator`) to simulate the design together with its verification environment. Components of the verification environment can be also written as gears with their functionality described in pure Python, but the details of this process are out of the scope of this paper.
 
 Choosing Python as a description language has many benefits:
 
