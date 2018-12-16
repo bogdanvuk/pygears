@@ -9,18 +9,18 @@ A gear is defined in PyGears using a function construct in the following way:
 
     @gear
     def gear_name(
-            in1: In1Type, ..., inN: InNType,
+            in1: T1, ..., inN: TN,
             *,
-            param1=dflt1, ..., paramM=dfltM
+            p1=dflt1, ..., pM=dfltM
             ) -> ReturnType:
 
-        gear_functional_implementation
+        Implementation
 
-The statement ``@gear`` is the Python decorator statement that informs PyGears that this is a gear definition and not a regular Python function definition, and ``def`` is a Python keyword for function definition. The ``gear_name`` is where the name of the gear is stated (akin to module/entity names in Verilog/VHDL), and it will be used later to make instances of the gear.
+The statement ``@gear`` is the Python decorator statement that informs PyGears that this is a gear definition and not a regular Python function definition ``def`` is a Python keyword for function definition, and the ``gear_name`` is where the name of the gear is stated (akin to module/entity names in Verilog/VHDL), and it will be used later to make instances of the gear.
 
-In brackets, first the input DTI interfaces and then the compile-time parameters are declared, where the character ``*`` delimits between the two. Each input interface, ``in1`` - ``inN``, can have a type declared too: ``In1Type``  - ``InNType``. Input types will be used by PyGears at compile time to perform type checking as well as to automatically infer some connectivity logic between the gears to facilitate the composition. A gear can optionally support compile time parameters, ``param1`` - ``paramM``, that can be used configure the gear instance. Finally the ``ReturnType`` specifies the type of the output interface or interfaces.
+In brackets, the input DTI interfaces and compile-time parameters are declared, where the character ``*`` delimits between the two. Each input interface, ``in1`` - ``inN``, can have a type declared too: ``T1``  - ``TN``. Input types will be used by PyGears at compile time to perform type checking as well as to automatically infer some connectivity logic between the gears to facilitate the composition. A gear can optionally support compile time parameters, ``p1`` - ``pM``, with their default values ``dflt1`` - ``dfltM``, that can be used to configure the gear instance. Finally the ``ReturnType`` specifies the type of the output interface or interfaces.
 
-The body of the function (``gear_functional_implementation``) is used to describe the gear implementation in one of the two ways depending on the type of the gear being described. Gears that implement the smallest functional units belong to the first type, and are described in SystemVerilog following the Gears methodology. These gears need not have a description in Python, i.e. the body of their function definitions can be left empty, since they are fully defined by their SystemVerilog descriptions. However, their behaviour can be described in Python as well so that they can be simulated completely in Python environment, which has some benefits as discussed below.
+The body of the function (``Implementation``) is used to describe the gear implementation in one of the two ways depending on the type of the gear being described. Gears that implement the smallest functional units belong to the first type, and are described in SystemVerilog following the Gears methodology. These gears need not have a description in Python, i.e. the body of their function definitions can be left empty since they are fully defined by their SystemVerilog descriptions. However, their behaviour can be described in Python as well so that they can be simulated completely in Python environment, which has some benefits as discussed below.
 
 Gears that are described in terms of the composition of lower-level gears are of the second type, and are analogous to the hierarchical modules of traditional HDLs. They do not have a SystemVerilog implementation because it is generated automatically by PyGears given their Python description.
 
@@ -30,7 +30,7 @@ Once defined, a gear can be instantiated as many times as needed in the design u
 
     outputs = gear_name(
         in1, ..., inN,
-        param1=value1, ..., paramM=valueM)
+        p1=value1, ..., pM=valueM)
 
 For a gear with a single output interface, the function call returns a Python object that represents that interface. For a gear with multiple outputs, a tuple of interface objects is returned. Returned output interface objects can then be supplied when instantiating other gears, which in turn establishes the connections between the gear instances. A graph of interconnected gears obtained in this way can then be translated to syntesizable SystemVerilog code by PyGears.
 

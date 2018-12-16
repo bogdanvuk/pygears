@@ -1,5 +1,5 @@
 An example: Moving Average Filter
-=================
+=================================
 
 To illustrate the Gears methodology and PyGears framework we show how a moving average filter can be implemented.
 The moving average filter is a simple Low Pass FIR filter commonly used for reducing random noise while retaining a sharp step response.

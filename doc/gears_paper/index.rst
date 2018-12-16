@@ -13,5 +13,6 @@ Paper
    introduction.rst
    gears.rst
    pygears.rst
+   example.rst
    conclusion.rst
    zreferences.rst

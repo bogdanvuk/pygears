@@ -38,6 +38,8 @@ release = ''
 # ones.
 extensions = ['sphinxcontrib.bibtex', 'sphinxcontrib.tikz']
 
+numfig = True
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -116,6 +118,7 @@ htmlhelp_basename = 'gears_paperdoc'
 
 tikz_latex_preamble = r'''
 \usetikzlibrary{arrows.meta}
+\usetikzlibrary{positioning}
 \usetikzlibrary{shapes}
 \newcommand{\gear}[7]{%
 node {#7}
