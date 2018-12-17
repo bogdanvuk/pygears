@@ -2,17 +2,10 @@
 Paper
 =====
 
-.. raw:: latex
-
-   \twocolumn
-
-.. toctree::
-   :hidden:
-
-   abstract.rst
-   introduction.rst
-   gears.rst
-   pygears.rst
-   example.rst
-   conclusion.rst
-   zreferences.rst
+.. include:: abstract.rst
+.. include:: introduction.rst
+.. include:: gears.rst
+.. include:: pygears.rst
+.. include:: example.rst
+.. include:: conclusion.rst
+.. include:: zreferences.rst
