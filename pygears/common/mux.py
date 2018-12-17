@@ -25,6 +25,6 @@ def mux_valve(ctrl, *din) -> b'mux_type(din)':
     pass
 
 
-# @gear
-# def mux_by(ctrl, *din, fmux=mux):
-#     return fmux(ctrl, *din) | union_collapse
+@gear
+def mux_by(ctrl, *din, fmux=mux):
+    return fmux(ctrl, *din) | union_collapse
