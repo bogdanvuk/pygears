@@ -1,5 +1,6 @@
 import asyncio
 
+from .graph import get_consumer_tree, get_producer_queue
 from pygears import GearDone
 from pygears.conf import PluginBase, registry, safe_bind
 from pygears.core.port import InPort, OutPort
@@ -24,22 +25,6 @@ def operator_methods_gen(cls):
     for name in cls.OPERATOR_SUPPORT:
         setattr(cls, name, operator_func_from_namespace(cls, name))
     return cls
-
-
-def _get_consumer_tree_rec(intf, consumers):
-    for port in intf.consumers:
-        cons_intf = port.consumer
-        if (port.gear in registry('sim/map')) and (isinstance(port, InPort)):
-            # if not cons_intf.consumers:
-            consumers.append(port)
-        else:
-            _get_consumer_tree_rec(cons_intf, consumers)
-
-
-def get_consumer_tree(intf):
-    consumers = []
-    _get_consumer_tree_rec(intf, consumers)
-    return consumers
 
 
 @operator_methods_gen
@@ -119,30 +104,33 @@ class Intf:
     def in_queue(self):
         if self._in_queue is None:
             if self.producer is not None:
-                self._in_queue = self.producer.get_queue()
+                # self._in_queue = self.producer.get_queue()
+                self._in_queue = get_producer_queue(self)
 
         return self._in_queue
 
-    def get_consumer_queue(self, port):
-        for pout in self.consumers:
-            if pout.gear in registry('sim/map') and (isinstance(pout,
-                                                                OutPort)):
-                out_queues = self.out_queues
-                try:
-                    i = self.end_consumers.index(port)
-                except Exception as e:
-                    print(
-                        f'Port {port.gear.name}.{port.basename} not in end consumer list of {self.consumers[0].gear.name}.{self.consumers[0].basename}'
-                    )
-                    raise e
-                return out_queues[i]
-        else:
-            if self.producer:
-                return self.producer.get_queue(port)
-            else:
-                raise Exception(
-                    f'Interface path does not end with a simulation gear at {pout.gear.name}.{pout.basename}'
-                )
+    # def get_consumer_queue(self, port):
+    #     for pout in self.consumers:
+    #         if pout.gear in registry('sim/map') and (isinstance(pout,
+    #                                                             OutPort)):
+    #             out_queues = self.out_queues
+    #             try:
+    #                 i = self.end_consumers.index(port)
+    #             except Exception as e:
+    #                 import pdb
+    #                 pdb.set_trace()
+    #                 print(
+    #                     f'Port {port.gear.name}.{port.basename} not in end consumer list of {self.consumers[0].gear.name}.{self.consumers[0].basename}'
+    #                 )
+    #                 raise e
+    #             return out_queues[i]
+    #     else:
+    #         if self.producer:
+    #             return self.producer.get_queue(port)
+    #         else:
+    #             raise Exception(
+    #                 f'Interface path does not end with a simulation gear at {pout.gear.name}.{pout.basename}'
+    #             )
 
     @property
     def out_queues(self):
@@ -154,7 +142,8 @@ class Intf:
         #     return [self.in_queue]
         # else:
         self._out_queues = [
-            asyncio.Queue(maxsize=1) for _ in self.end_consumers
+            asyncio.Queue(maxsize=1, loop=registry('sim/simulator'))
+            for _ in self.end_consumers
         ]
 
         for i, q in enumerate(self._out_queues):

@@ -3,26 +3,26 @@ from pygears.common import cart
 from pygears.typing import Queue, Tuple, Uint
 
 
-@gear(svgen={'compile': True})
-async def take(din: Queue[Tuple['t_data', Uint]], *,
-               init=1) -> Queue['t_data']:
+# @gear(svgen={'compile': True})
+# async def take(din: Queue[Tuple['t_data', Uint]], *,
+#                init=1) -> Queue['t_data']:
 
-    cnt = din.dtype[0][1](init)
-    pass_eot = True
+#     cnt = din.dtype[0][1](init)
+#     pass_eot = True
 
-    async for ((data, size), eot) in din:
-        last = (cnt == size) and pass_eot
-        if (cnt <= size) and pass_eot:
-            yield (data, eot or last)
-        if last:
-            pass_eot = 0
-        cnt += 1
+#     async for ((data, size), eot) in din:
+#         last = (cnt == size) and pass_eot
+#         if (cnt <= size) and pass_eot:
+#             yield (data, eot or last)
+#         if last:
+#             pass_eot = 0
+#         cnt += 1
 
 
-@alternative(take)
+# @alternative(take)
 @gear
-def take2(din: Queue['t_data'], cfg: Uint):
-    return cart(din, cfg) | take
+async def take(din: Queue['t_data'], cfg: Uint) -> Queue['t_data']:
+    pass
 
 
 @alternative(take)
@@ -48,5 +48,5 @@ async def qtake(din: Queue[Tuple['t_data', Uint], 2], *,
 
 @alternative(take)
 @gear
-async def qtake2(din: Queue['t_data', 2], cfg: Uint) -> Queue['t_data', 2]:
-    return cart(din, cfg) | qtake
+def qtake2(din: Queue['t_data', 2], cfg: Uint):
+    return cart(din, cfg) | take

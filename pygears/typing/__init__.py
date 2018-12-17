@@ -1,11 +1,11 @@
 from pygears.conf import PluginBase, safe_bind
 
-from .bool import Bool
+# from .bool import Bool
 from .queue import Queue
 from .array import Array
 from .base import TemplateArgumentsError, typeof, Any, is_type
 from .tuple import Tuple
-from .uint import Int, Uint, Integer
+from .uint import Int, Uint, Integer, Bool
 from .unit import Unit
 from .union import Union
 from .bitw import bitw, ceil_pow2

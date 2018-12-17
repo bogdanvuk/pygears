@@ -1,13 +1,24 @@
 import jinja2
 import os
 import ctypes
+from string import Template
 from pygears.util.fileio import save_file
-from pygears import registry
+from pygears import registry, bind
 from pygears.svgen import svgen
 from pygears.sim.modules.cosim_base import CosimBase
 from pygears.sim.c_drv import CInputDrv, COutputDrv
 from pygears.sim import sim_log
 import atexit
+
+signal_spy_connect_t = Template("""
+${intf_name}_t ${intf_name}_data;
+logic ${intf_name}_valid;
+logic ${intf_name}_ready;
+
+assign ${intf_name}_data = ${conn_name}.data;
+assign ${intf_name}_valid = ${conn_name}.valid;
+assign ${intf_name}_ready = ${conn_name}.ready;
+assign ${intf_name}_handshake = ${conn_name}.ready & ${conn_name}.valid;""")
 
 
 class VerilatorCompileError(Exception):
@@ -35,6 +46,7 @@ class SimVerilated(CosimBase):
         self.outdir = os.path.abspath(
             os.path.join(registry('sim/artifact_dir'), self.name))
         self.objdir = os.path.join(self.outdir, 'obj_dir')
+        bind('svgen/spy_connection_template', signal_spy_connect_t)
         self.svnode = svgen(gear, outdir=self.outdir, wrapper=True)
         self.svmod = registry('svgen/map')[self.svnode]
         self.wrap_name = f'wrap_{self.svmod.sv_module_name}'

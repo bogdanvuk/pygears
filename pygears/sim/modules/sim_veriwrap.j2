@@ -65,6 +65,7 @@ int init(void) {
 #endif
     tfp->open("{{outdir}}/vlt_dump.vcd");  // Open the dump file
     tfp->flush();
+    tfp->dump(0);
 #ifdef DEBUG
     printf("tfp->open\n");
 #endif

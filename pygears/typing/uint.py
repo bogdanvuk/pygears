@@ -9,7 +9,7 @@ arithmetic capabilities.
 from .base import class_and_instance_method
 from .base import EnumerableGenericMeta, typeof
 from .tuple import Tuple
-from .bool import Bool
+# from .bool import Bool
 from .bitw import bitw
 from .unit import Unit
 
@@ -229,7 +229,7 @@ class Integer(int, metaclass=IntegerType):
         """
         if isinstance(index, slice):
             bits = tuple(
-                Bool(int(self) & (1 << i))
+                Bool(bool(int(self) & (1 << i)))
                 for i in range(*index.indices(self.width)))
 
             if bits:
@@ -373,3 +373,27 @@ class Uint(Integer, metaclass=UintType):
             return tout((res, res < 0))
         else:
             return super().__sub__(other)
+
+    def __matmul__(self, other):
+        if isinstance(other, Unit):
+            return self
+
+        if not typeof(other, Uint):
+            other = Uint(other)
+
+        return Uint[self.width + other.width]((int(self) << other.width) +
+                                              int(other))
+
+
+class BoolMeta(UintType):
+    def __new__(cls, name, bases, namespace):
+        spec_cls = super().__new__(cls, name, bases, namespace, args=[1])
+        return spec_cls
+
+
+class Bool(Uint, metaclass=BoolMeta):
+    def __new__(cls, val):
+        return Uint[1](bool(val))
+
+
+# Bool = Uint[1]
