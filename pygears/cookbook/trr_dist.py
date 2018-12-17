@@ -3,13 +3,13 @@ from pygears.conf import gear_log
 from pygears.typing import Queue
 
 
-def trr_dist_type(dtype):
-    return Queue[dtype[0]]
+def trr_dist_type(dtype, rr_type):
+    return Queue[dtype[0], dtype.lvl]
 
 
 @gear
-async def trr_dist(din: Queue, *,
-                   dout_num) -> b'(trr_dist_type(din), ) * dout_num':
+async def trr_dist(din: Queue, *, lvl=1, dout_num
+                   ) -> b'(Queue[din.data, din.lvl - 1], ) * dout_num':
     t_din = din.dtype
 
     for i in range(dout_num):

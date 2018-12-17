@@ -58,48 +58,26 @@ class SimFuture(asyncio.Future):
     __await__ = __iter__
 
 
-def is_on_loopy_path(cur_path, g, consumer):
-    if (g, consumer) in cur_path:
-        return False
-
-    for _, consumer in cur_path:
-        if consumer == g:
-            return True
-    else:
-        return False
-
-
 # A recursive function used by topo_sort
-def topo_sort_util(g, dag, visited, stack, cur_path):
+def topo_sort_util(v, g, dag, visited, stack):
 
-    # print(f'{topo_sort_util.indent}Visiting: {g.name}')
     # Mark the current node as visited.
-    visited.add(g)
+    visited[v] = True
 
-    topo_sort_util.indent = topo_sort_util.indent + "    "
     # Recur for all the vertices adjacent to this vertex
     for consumer in dag[g]:
-        # print(f'{topo_sort_util.indent}Adjasent: {consumer.name}')
-        if ((consumer not in visited)
-                or is_on_loopy_path(cur_path, g, consumer)):
-            cur_path.append((g, consumer))
-            topo_sort_util(consumer, dag, visited, stack, cur_path)
-            cur_path.pop()
+        i = list(dag.keys()).index(consumer)
+        if not visited[i]:
+            topo_sort_util(i, consumer, dag, visited, stack)
 
-    topo_sort_util.indent = topo_sort_util.indent[:-4]
     # Push current vertex to stack which stores result
-    # print(f'{topo_sort_util.indent}Stack: {g.name}')
     stack.insert(0, g)
-
-
-topo_sort_util.indent = ""
 
 
 def topo_sort(dag):
     # Mark all the vertices as not visited
+    visited = [False] * len(dag)
     stack = []
-    visited = set()
-    cur_path = []
 
     # for i, g in enumerate(dag):
     #     if not g.in_ports:
@@ -108,9 +86,9 @@ def topo_sort(dag):
 
     # Call the recursive helper function to store Topological
     # Sort starting from all vertices one by one
-    for g in dag:
-        if g not in visited:
-            topo_sort_util(g, dag, visited, stack, cur_path)
+    for i, g in enumerate(dag):
+        if not visited[i]:
+            topo_sort_util(i, g, dag, visited, stack)
 
     return stack
 
