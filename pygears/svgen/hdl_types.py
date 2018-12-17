@@ -1,12 +1,17 @@
 import typing as pytypes
 
-from pygears.typing import Tuple, typeof, Uint
+from pygears.typing import Tuple, typeof, Uint, Queue, is_type
+
+bin_operators = ['!', '==', '>', '>=', '<', '<=', '!=', '&&', '||']
+extendable_operators = [
+    '+', '-', '*', '/', '%', '**', '<<', '>>>', '|', '&', '^', '/', '~', '!'
+]
 
 
 def find_exit_cond(statements):
     cond = []
     for stmt in statements:
-        if hasattr(stmt, 'exit_cond'):
+        if getattr(stmt, 'exit_cond', None):
             cond.extend(stmt.exit_cond)
     return cond
 
@@ -46,7 +51,10 @@ class RegDef(Expr, pytypes.NamedTuple):
 
     @property
     def dtype(self):
-        return self.val.dtype
+        if is_type(type(self.val)):
+            return type(self.val)
+        else:
+            return self.val.dtype
 
 
 class RegNextExpr(Expr, pytypes.NamedTuple):
@@ -96,6 +104,7 @@ class VariableVal(Expr, pytypes.NamedTuple):
 
 class IntfExpr(Expr, pytypes.NamedTuple):
     intf: pytypes.Any
+    context: str = None
 
     @property
     def name(self):
@@ -129,6 +138,9 @@ class BinOpExpr(Expr, pytypes.NamedTuple):
 
     @property
     def dtype(self):
+        if self.operator in bin_operators:
+            return Uint[1]
+
         t = eval(f'op1 {self.operator} op2', {
             'op1': self.operands[0].dtype,
             'op2': self.operands[1].dtype
@@ -166,10 +178,17 @@ class AttrExpr(Expr, pytypes.NamedTuple):
 
     @property
     def dtype(self):
-        t = self.val.dtype
+        return self.get_attr_dtype(self.val.dtype)
+
+    def get_attr_dtype(self, t):
         for attr in self.attr:
             if typeof(t, Tuple):
                 t = t[attr]
+            elif typeof(t, Queue):
+                try:
+                    t = t[attr]
+                except KeyError:
+                    t = self.get_attr_dtype(t[0])
             else:
                 t = getattr(t, attr, None)
         return t
@@ -242,6 +261,16 @@ class IfBlock(Block, pytypes.NamedTuple):
         return find_cycle_cond(self.stmts)
 
 
+class IfElseBlock(Block, pytypes.NamedTuple):
+    in_cond: Expr
+    if_block: Block
+    else_block: Block
+
+    @property
+    def cycle_cond(self):
+        return find_cycle_cond(self.stmts)
+
+
 class Loop(Block, pytypes.NamedTuple):
     in_cond: Expr
     stmts: list
@@ -267,3 +296,7 @@ class Module(pytypes.NamedTuple):
     regs: pytypes.Dict
     variables: pytypes.Dict
     stmts: pytypes.List
+
+
+def isloop(block):
+    return isinstance(block, Loop) or isinstance(block, IntfLoop)

@@ -231,7 +231,7 @@ always_comb begin
     acc_en = 1'(0);
     acc_rst = 1'(0);
     acc_next = 16'(17'(acc_reg) + 17'(din_s.data.f0));
-    if ((state_reg == 0) && (din.valid)) begin
+    if (state_reg == 0 && din.valid) begin
         if (offset_added_reg) begin
             acc_en = 1'(1);
         end
@@ -240,7 +240,7 @@ always_comb begin
             acc_next = 16'(17'(din_s.data.f1) + 17'(din_s.data.f0));
         end
     end
-    if ((state_reg == 1)) begin
+    if (state_reg == 1) begin
         acc_rst = 1'(dout.ready);
     end
 end
@@ -249,12 +249,12 @@ always_comb begin
     offset_added_en = 1'(0);
     offset_added_rst = 1'(0);
     offset_added_next = 1'(1);
-    if ((state_reg == 0) && (din.valid)) begin
-        if (!(offset_added_reg)) begin
+    if (state_reg == 0 && din.valid) begin
+        if (! offset_added_reg) begin
             offset_added_en = 1'(1);
         end
     end
-    if ((state_reg == 1)) begin
+    if (state_reg == 1) begin
         offset_added_rst = 1'(dout.ready);
     end
 end
@@ -263,12 +263,12 @@ always_comb begin
     state_en = 1'(0);
     state_rst = 1'(0);
     state_next = 2'(3'(state_reg) + 3'(1));
-    if ((state_reg == 0) && (din.valid)) begin
+    if (state_reg == 0 && din.valid) begin
         if (&din_s.eot) begin
             state_en = 1'(1);
         end
     end
-    if ((state_reg == 1)) begin
+    if (state_reg == 1) begin
         state_rst = 1'(dout.ready);
     end
 end
@@ -276,14 +276,14 @@ end
 always_comb begin
     dout.valid = 1'(0);
     dout_s = 16'(acc_reg);
-    if ((state_reg == 1)) begin
+    if (state_reg == 1) begin
         dout.valid = 1'(1);
     end
 end
 
 always_comb begin
     din.ready = 1'(0);
-    if ((state_reg == 0) && (din.valid)) begin
+    if (state_reg == 0 && din.valid) begin
         din.ready = 1'(1);
     end
 end
@@ -307,7 +307,6 @@ logic cnt_rst;
 cnt_t cnt_reg, cnt_next;
 typedef logic [0:0] last_t; // u1
 last_t last_v;
-
 
 always_ff @(posedge clk) begin
     if(rst | pass_eot_rst) begin
@@ -385,46 +384,5 @@ end
 def test_simple_take():
     take(Intf(Queue[Tuple[Uint[16], Uint[16]]]))
     res = compile_gear_body(find('/take'))
+    print(res)
     assert equal_on_nonspace(res, simple_take_res)
-
-
-# from pygears.typing import Queue, Uint
-# from pygears.cookbook import qcnt
-# from pygears.svgen import svgen
-
-# @gear(svgen={'compile': True})
-# async def svctest(din: Queue, *, lvl=1, w_out=16) -> Queue[Uint['w_out']]:
-#     cnt = Uint[w_out](0)
-#     async for (data, eot) in din:
-#         if all(eot[:din.dtype.lvl - lvl]):
-#             cnt = cnt + 1
-#             yield (cnt, all(eot))
-
-# svctest(Intf(Queue[Uint[8]]))
-# res = compile_gear_body(find('/svctest'))
-# print(res)
-# svgen('/svctest', outdir='/tools/home/tmp')
-
-# from pygears.sim import sim
-# from pygears.cookbook.verif import verif
-# from pygears.sim.modules.drv import drv
-# from pygears.sim.modules.verilator import SimVerilated
-# from pygears.cookbook.delay import delay_rng
-# from pygears.sim.extens.vcd import VCD
-# from pygears import bind
-
-# seq = [list(range(10)), list(range(5))]
-
-# bind('svgen/debug_intfs', ['*'])
-# bind('logger/sim/error', lambda x: x)
-
-# report = verif(
-#     drv(t=Queue[Uint[8]], seq=seq) | delay_rng(2, 2),
-#     f=svctest(sim_cls=SimVerilated, lvl=1),
-#     ref=svctest(name='ref_model', upper=2),
-#     delays=[delay_rng(5, 5)]
-#     )
-
-# sim(outdir='/tools/home/tmp', extens=[])
-
-# print(report)

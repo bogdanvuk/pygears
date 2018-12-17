@@ -2,12 +2,8 @@ import typing as pytypes
 
 import hdl_types as ht
 from pygears.core.port import InPort
-from pygears.typing import Array, Integer, typeof
+from pygears.typing import Array, Integer, typeof, Queue
 from pygears.typing.base import TypingMeta
-
-extendable_operators = [
-    '+', '-', '*', '/', '%', '**', '<<', '>>>', '|', '&', '^', '/', '~', '!'
-]
 
 
 class AssignValue(pytypes.NamedTuple):
@@ -129,8 +125,13 @@ class SVCompilerPreprocess(InstanceVisitor):
         return int(node.val)
 
     def visit_AttrExpr(self, node):
-        val = self.visit(node.val)
-        return '.'.join([val] + node.attr)
+        val = [self.visit(node.val)]
+        if typeof(node.val.dtype, Queue):
+            try:
+                node.val.dtype[node.attr[0]]
+            except KeyError:
+                val.append('data')
+        return '.'.join(val + node.attr)
 
     def visit_ConcatExpr(self, node):
         return (
@@ -148,7 +149,7 @@ class SVCompilerPreprocess(InstanceVisitor):
     def visit_BinOpExpr(self, node):
         ops = [self.visit(op) for op in node.operands]
 
-        if node.operator in extendable_operators:
+        if node.operator in ht.extendable_operators:
             svrepr = (f"{int(node.dtype)}'({ops[0]})"
                       f" {node.operator} "
                       f"{int(node.dtype)}'({ops[1]})")
@@ -169,7 +170,13 @@ class SVCompilerPreprocess(InstanceVisitor):
                 return f'{val}.{node.val.dtype.fields[node.index]}'
 
     def visit_IntfExpr(self, node):
-        return f'{node.intf.basename}_s'
+        if node.context:
+            if node.context is 'eot':
+                return f'&{node.intf.basename}_s.{node.context}'
+            else:
+                return f'{node.intf.basename}.{node.context}'
+        else:
+            return f'{node.intf.basename}_s'
 
     def visit_Yield(self, node):
         for port in self.module.out_ports:
@@ -193,10 +200,10 @@ class SVCompilerPreprocess(InstanceVisitor):
                 width=int(node.reg.dtype))
 
     def visit_VariableExpr(self, node):
-        if node.variable.svrepr == self.visit_var:
+        if node.variable.name == self.visit_var:
             return AssignValue(
                 target=f'{self.visit_var}_v',
-                val=node.svrepr,
+                val=self.visit(node.val),
                 width=int(node.variable.dtype))
 
     def visit_IfBlock(self, node):
@@ -205,8 +212,7 @@ class SVCompilerPreprocess(InstanceVisitor):
         return self.traverse_block(svblock, node)
 
     def visit_IntfBlock(self, node):
-        svblock = SVBlock(
-            in_cond=f'{node.in_cond.intf.basename}.valid', stmts=[], dflts={})
+        svblock = SVBlock(in_cond=self.visit(node.in_cond), stmts=[], dflts={})
         return self.traverse_block(svblock, node)
 
     def visit_IntfLoop(self, node):
@@ -253,7 +259,9 @@ class SVCompilerPreprocess(InstanceVisitor):
         if not node.cycle_cond or not self.find_cycle_cond(node):
             # TODO ?
             if var_is_port:
-                if not node.in_cond or (self.visit_var in node.in_cond.name):
+                # if not node.in_cond or (self.visit_var in node.in_cond.name):
+                if not node.in_cond or (self.visit_var in self.visit(
+                        node.in_cond)):
                     svblock.stmts.append(
                         AssignValue(
                             target=f'{self.visit_var}.ready', val=1, width=1))
@@ -278,29 +286,25 @@ class SVCompilerPreprocess(InstanceVisitor):
         return None
 
     def visit_IfElseBlock(self, node):
-        assert len(node.stmts) == 2
-        blocks = []
-        for stmt in node.stmts:
-            blocks.append(self.visit_Block(stmt))
+        if_block = self.visit(node.if_block)
+        else_block = self.visit(node.else_block)
 
         # both blocks empty
-        if all(b is None for b in blocks):
+        if if_block is None and else_block is None:
             return None
 
         # only one branch
-        if any(b is None for b in blocks):
-            for b in blocks:
-                if b is not None:
-                    return b
+        if if_block is None or else_block is None:
+            if if_block:
+                return if_block
+            else:
+                return else_block
 
         svblock = SVBlock(
-            in_cond=blocks[0].in_cond,
-            else_cond=blocks[1].in_cond,
-            stmts=[],
+            in_cond=if_block.in_cond,
+            else_cond=else_block.in_cond,
+            stmts=[if_block, else_block],
             dflts={})
-
-        for b in blocks:
-            svblock.stmts.append(b)
 
         self.update_defaults(svblock)
 

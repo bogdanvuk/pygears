@@ -1,7 +1,8 @@
 import ast
 
 import hdl_types as ht
-from pygears.typing import Any, Bool, Int, Uint, Unit, bitw, is_type
+from pygears.core.port import InPort
+from pygears.typing import Any, Int, Uint, Unit, bitw, is_type
 from svcompile_snippets import qrange
 
 opmap = {
@@ -55,11 +56,19 @@ def check_if_blocking(stmt):
         stmt = stmt.value
 
     if type(stmt) in async_types:
-        return True
+        return stmt
     elif type(stmt) in block_types:
-        return check_if_blocking(stmt)
+        return find_hier_blocks(stmt.body)
     else:
-        return False
+        return None
+
+
+def find_hier_blocks(body):
+    hier = []
+    for stmt in body:
+        hier.append(check_if_blocking(stmt))
+
+    return [b for b in hier if b]
 
 
 def eval_expression(node, local_namespace):
@@ -80,10 +89,7 @@ def eval_data_expr(node, local_namespace):
         if ret < 0:
             ret = Int(ret)
         else:
-            if isinstance(ret, bool) or ret == 0:
-                ret = Uint[1](ret)
-            else:
-                ret = Uint(ret)
+            ret = Uint(ret)
 
     return ht.ResExpr(ret)
 
@@ -142,10 +148,7 @@ class RegFinder(ast.NodeVisitor):
             if val < 0:
                 val = Int(val)
             else:
-                if isinstance(val, bool):
-                    val = Uint[1](val)
-                else:
-                    val = Uint(val)
+                val = Uint(val)
 
         self.regs[name] = ht.ResExpr(val)
 
@@ -238,11 +241,12 @@ class HdlAst(ast.NodeVisitor):
         scope = gather_control_stmt_vars(node.target, intf)
         self.svlocals.update(scope)
 
-        svnode = ht.IntfLoop(intf, [])
+        hdl_node = ht.IntfLoop(intf._replace(context='valid'), [])
 
-        self.visit_block(svnode, node.body)
+        return self.visit_hier(node, hdl_node)
+        # self.visit_block(svnode, node.body)
 
-        return svnode
+        # return svnode
 
     def visit_block(self, svnode, body):
 
@@ -267,7 +271,7 @@ class HdlAst(ast.NodeVisitor):
         scope = gather_control_stmt_vars(node.items[0].optional_vars, intf)
         self.svlocals.update(scope)
 
-        svnode = ht.IntfBlock(intf, [])
+        svnode = ht.IntfBlock(intf._replace(context='valid'), [])
 
         self.visit_block(svnode, node.body)
 
@@ -317,18 +321,18 @@ class HdlAst(ast.NodeVisitor):
 
         for var in self.variables:
             if var == name and isinstance(self.variables[name], ast.AST):
-                self.variables[name] = ht.ResExpr(val)
+                self.variables[name] = ht.VariableDef(val, name)
 
         if name not in self.svlocals:
             if name in self.variables:
-                self.svlocals[name] = VariableDef(val, name, val.dtype)
-                return VariableExpr(self.svlocals[name], val.svrepr, val.dtype)
+                self.svlocals[name] = ht.VariableDef(val, name)
+                return ht.VariableExpr(self.svlocals[name], val)
             else:
                 self.svlocals[name] = ht.RegDef(val, name)
         elif name in self.regs:
             return ht.RegNextExpr(self.svlocals[name], val)
         elif name in self.variables:
-            return VariableExpr(self.svlocals[name], val.svrepr, val.dtype)
+            return ht.VariableExpr(self.svlocals[name], val)
 
     def visit_NameExpression(self, node):
         ret = eval_expression(node, self.locals)
@@ -411,35 +415,24 @@ class HdlAst(ast.NodeVisitor):
         items = [self.visit_DataExpression(item) for item in node.elts]
         return ht.ConcatExpr(items)
 
-    def visit_BinOp(self, node):
-        left = node.left
-        if isinstance(node, ast.BinOp):
-            right = node.right
-            op = node.op
-        elif isinstance(node, ast.Compare):
-            right = node.comparators[0]
-            op = node.ops[0]
-
-        op1 = self.visit_DataExpression(left)
-        op2 = self.visit_DataExpression(right)
+    def get_bin_expr(self, op, operand1, operand2):
+        op1 = self.visit_DataExpression(operand1)
+        op2 = self.visit_DataExpression(operand2)
         operator = opmap[type(op)]
-
         return ht.BinOpExpr((op1, op2), operator)
+
+    def visit_BinOp(self, node):
+        return self.get_bin_expr(node.op, node.left, node.right)
 
     def visit_Attribute(self, node):
         expr = self.visit(node.value)
-
         return ht.AttrExpr(expr.val, expr.attr + [node.attr])
 
     def visit_Compare(self, node):
-        return self.visit_BinOp(node)
+        return self.get_bin_expr(node.ops[0], node.left, node.comparators[0])
 
     def visit_BoolOp(self, node):
-        op1 = self.visit_DataExpression(node.values[0])
-        op2 = self.visit_DataExpression(node.values[1])
-        operator = opmap[type(node.op)]
-
-        return ht.Expr(f"{op1.svrepr} {operator} {op2.svrepr}", Uint[1])
+        return self.get_bin_expr(node.op, node.values[0], node.values[1])
 
     def visit_UnaryOp(self, node):
         operand = self.visit_DataExpression(node.operand)
@@ -474,14 +467,11 @@ class HdlAst(ast.NodeVisitor):
             svnode = ht.IfBlock(expr, [])
             self.visit_block(svnode, node.body)
             if hasattr(node, 'orelse') and node.orelse:
-                fields = expr._asdict()
-                fields.pop('svrepr')
-                else_expr = type(expr)(svrepr=f'!({expr.svrepr})', **fields)
-                svnode_else = ht.Block(
-                    in_cond=else_expr, stmts=[], cycle_cond=[])
+                else_expr = ht.UnaryOpExpr(expr, '!')
+                svnode_else = ht.IfBlock(in_cond=else_expr, stmts=[])
                 self.visit_block(svnode_else, node.orelse)
                 top = ht.IfElseBlock(
-                    in_cond=None, stmts=[svnode, svnode_else], cycle_cond=[])
+                    in_cond=expr, if_block=svnode, else_block=svnode_else)
                 return top
             else:
                 return svnode
@@ -599,25 +589,17 @@ class HdlAst(ast.NodeVisitor):
 
     def visit_Yield(self, node):
         return ht.Yield(super().visit(node.value))
-        # self.scope[-1].cycle_cond.append(hdl_node)
-        # return hdl_node
 
-    def visit_AsyncFunctionDef(self, node):
-        svnode = ht.Module(
-            in_ports=self.in_ports,
-            out_ports=self.out_ports,
-            locals=self.svlocals,
-            regs=self.regs,
-            variables=self.variables,
-            stmts=[])
+    def visit_hier(self, node, hdl_node):
 
-        hier_blocks = [stmt for stmt in node.body if check_if_blocking(stmt)]
+        hier_blocks = find_hier_blocks(node.body)
 
-        if len(hier_blocks) is 1:
-            return self.visit_block(svnode, node.body)
+        if not hier_blocks or len(hier_blocks) == 1:
+            return self.visit_block(hdl_node, node.body)
 
+        # state needed, more than 1 hier block
         self.create_state_reg(len(hier_blocks))
-        svnode.regs.update(self.regs)
+        hdl_node.regs.update(self.regs)
 
         # register initializations
         for stmt in node.body:
@@ -628,54 +610,59 @@ class HdlAst(ast.NodeVisitor):
 
         # sub blocks
         for i, stmt in enumerate(hier_blocks):
-            sub = ht.Loop(
-                in_cond=None, stmts=[], cycle_cond=[], exit_cond=None)
+            sub = ht.Loop(in_cond=None, stmts=[], exit_c=None)
             self.enter_block(sub)
             sub_block = self.visit(stmt)
             self.exit_block()
 
-            if isinstance(sub_block, ht.Loop):
-                # merge sub
-                in_cond = ht.Expr(
-                    f'(state_reg == {i}) && ({sub_block.in_cond.svrepr})',
-                    Bool)
-                cycle_cond = sub_block.cycle_cond
-                assert len(sub.cycle_cond) == 0
+            t = type(self.svlocals['state'].val)
+            in_cond = ht.BinOpExpr(
+                (ht.RegVal(self.svlocals['state'], 'state_reg'),
+                 ht.ResExpr(t(i))), '==')
+
+            if ht.isloop(sub_block):
+                in_cond = ht.BinOpExpr((in_cond, sub_block.in_cond), '&&')
                 stmts = sub_block.stmts
             else:
-                in_cond = ht.Expr(f'(state_reg == {i})', Bool)
-                cycle_cond = sub.cycle_cond
                 stmts = [sub_block]
 
             # exit conditions different if not last
-            if getattr(sub_block, 'exit_cond', []):
-                exit_cond = sub_block.exit_cond
-            else:
-                exit_cond = None
+            exit_cond = getattr(sub_block, 'exit_cond', None)
             if exit_cond and i != (len(hier_blocks) - 1):
                 assert len(exit_cond) == 1  # temporary guard
-                check_state = ht.Block(
-                    in_cond=exit_cond[0],
-                    cycle_cond=[],
-                    stmts=[self.visit(increment_reg('state'))])
+                if isinstance(exit_cond[0], InPort):
+                    check_state = ht.IntfBlock(
+                        intf=ht.IntfExpr(exit_cond[0], 'eot'),
+                        stmts=[self.visit(increment_reg('state'))])
+                else:
+                    check_state = ht.IfBlock(
+                        in_cond=exit_cond[0],
+                        stmts=[self.visit(increment_reg('state'))])
                 stmts.insert(0, check_state)
                 exit_cond = None
 
-            sub_cpy = ht.Loop(
-                in_cond=in_cond,
-                stmts=stmts,
-                cycle_cond=cycle_cond,
-                exit_cond=exit_cond)
+            sub_cpy = ht.Loop(in_cond=in_cond, stmts=stmts, exit_c=exit_cond)
 
-            svnode.stmts.append(sub_cpy)
+            hdl_node.stmts.append(sub_cpy)
 
-        return svnode
+        return hdl_node
+
+    def visit_AsyncFunctionDef(self, node):
+        hdl_node = ht.Module(
+            in_ports=self.in_ports,
+            out_ports=self.out_ports,
+            locals=self.svlocals,
+            regs=self.regs,
+            variables=self.variables,
+            stmts=[])
+
+        return self.visit_hier(node, hdl_node)
 
     def create_state_reg(self, state_num):
         if state_num > 1:
             val = Uint[bitw(state_num)](0)
-            self.regs['state'] = ht.ResExpr(val, str(int(val)), type(val))
-            self.svlocals['state'] = ht.RegDef(val, 'state', type(val))
+            self.regs['state'] = ht.ResExpr(val)
+            self.svlocals['state'] = ht.RegDef(val, 'state')
 
 
 class HdlAstVisitor:
