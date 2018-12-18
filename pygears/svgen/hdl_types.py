@@ -11,8 +11,10 @@ extendable_operators = [
 def find_exit_cond(statements):
     cond = []
     for stmt in statements:
-        if getattr(stmt, 'exit_cond', None):
-            cond.extend(stmt.exit_cond)
+        if hasattr(stmt, 'exit_cond'):
+            stmt_cond = stmt.exit_cond
+            if stmt_cond is not None:
+                cond.append(stmt_cond)
     return cond
 
 
@@ -23,7 +25,7 @@ def find_cycle_cond(statements):
         if hasattr(stmt, 'cycle_cond'):
             stmt_cond = stmt.cycle_cond
             if stmt_cond is not None:
-                cond.append(stmt.cycle_cond)
+                cond.append(stmt_cond)
 
     return cond
 
@@ -257,9 +259,31 @@ class IntfLoop(Block, pytypes.NamedTuple):
 
     @property
     def exit_cond(self):
-        conds = self.cycle_cond
-        conds.append(self.intf.intf)
-        return conds + find_exit_cond(self.stmts)
+        conditions = [self.cycle_cond]
+        if len(conditions) == 0:
+            pass
+        elif len(conditions) > 1:
+            raise Exception
+
+        exit_conditions = find_exit_cond(self.stmts)
+        if len(exit_conditions) == 0:
+            pass
+        elif len(exit_conditions) > 1:
+            raise Exception
+        else:
+            conditions.append(exit_conditions[0])
+
+        op1 = None
+        if len(conditions) == 1:
+            op1 = conditions[0]
+        elif len(conditions) == 2:
+            op1 = BinOpExpr((conditions[0], conditions[1]), '&&')
+
+        intf_expr = IntfExpr(self.intf.intf, context='eot')
+        if op1 is not None:
+            return BinOpExpr((intf_expr, op1), '&&')
+        else:
+            return intf_expr
 
 
 class IfBlock(Block, pytypes.NamedTuple):
@@ -268,8 +292,7 @@ class IfBlock(Block, pytypes.NamedTuple):
 
     @property
     def cycle_cond(self):
-        # return find_cycle_cond(self.stmts)
-        conditions = find_cycle_cond(self.stmts)  # -> Expr or None
+        conditions = find_cycle_cond(self.stmts)
         if len(conditions) == 0:
             return None
         elif len(conditions) > 1:

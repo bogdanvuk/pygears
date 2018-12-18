@@ -93,41 +93,18 @@ class SVCompilerPreprocess(InstanceVisitor):
 
         return comb_block
 
-    def find_conditions(self, conditions):
-        c = []
-        for cond in conditions:
-            if isinstance(cond, ht.Yield):
-                c.append('dout.ready')
-            elif isinstance(cond, InPort):
-                c.append(f'&{cond.basename}_s.eot')
-            elif isinstance(cond, ht.VariableDef):
-                c.append(f'{cond.name}_v')
-            elif isinstance(cond, ht.RegDef):
-                c.append(f'{cond.name}_reg')
-            else:
-                c.append(self.visit(cond))
-        return ' && '.join(c)
-
     def find_cycle_cond(self, node):
-        node_cond = None
-        if node.cycle_cond is not None:
-            node_cond = self.visit(node.cycle_cond)
-
-        if node_cond:
-            # for if with yield
-            return node_cond
-        else:
-            for block in reversed(self.scope):
-                if isinstance(block, ht.Module):
-                    return None
-                if block.cycle_cond:
-                    parent_cond = self.visit(block.cycle_cond)
-                    if parent_cond:
-                        return parent_cond
+        for block in reversed(self.scope):
+            if isinstance(block, ht.Module):
+                return None
+            if block.cycle_cond is not None:
+                parent_cond = self.visit(block.cycle_cond)
+                if parent_cond:
+                    return parent_cond
 
     def find_exit_cond(self, node):
         if hasattr(node, 'exit_cond') and node.exit_cond:
-            return self.find_conditions(node.exit_cond)
+            return self.visit(node.exit_cond)
 
     def visit_VariableVal(self, node):
         return node.name
