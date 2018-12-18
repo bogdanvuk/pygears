@@ -58,8 +58,7 @@ class SVCompiler(InstanceVisitor):
             self.writer.line(f'end')
 
     def visit_AssignValue(self, node):
-        self.writer.line(
-            f"{node.target} = {node.width}'({self.visit(node.val)});")
+        self.writer.line(f"{node.target} = {node.width}'({node.val});")
 
     def visit_CombBlock(self, node):
         self.writer.line(f'// Comb block for: {self.visit_var}')
@@ -156,12 +155,6 @@ def compile_gear_body(gear):
 
     writer = SVWriter()
     write_module(hdl_ast, res, writer)
-
-    # preprocess hdl ast for each variable
-    # svpre = SVCompilerPreprocess().visit(hdl_ast, None)
-
-    # generate systemVerilog
-    # v = SVCompiler(hdl_ast=hdl_ast, sv_stmts=res)
 
     return '\n'.join(writer.svlines)
 

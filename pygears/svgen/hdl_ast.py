@@ -56,19 +56,26 @@ def check_if_blocking(stmt):
         stmt = stmt.value
 
     if type(stmt) in async_types:
-        return stmt
+        return stmt, None
     elif type(stmt) in block_types:
         return find_hier_blocks(stmt.body)
     else:
-        return None
+        return None, stmt
 
 
 def find_hier_blocks(body):
     hier = []
+    non_blocking = []
     for stmt in body:
-        hier.append(check_if_blocking(stmt))
+        b, nb = check_if_blocking(stmt)
+        if b:
+            hier.append(b)
+        if nb:
+            non_blocking.append(nb)
 
-    return [b for b in hier if b]
+    hier = [b for b in hier if b]
+    non_blocking = [b for b in non_blocking if b]
+    return hier, non_blocking
 
 
 def eval_expression(node, local_namespace):
@@ -592,9 +599,12 @@ class HdlAst(ast.NodeVisitor):
 
     def visit_hier(self, node, hdl_node):
 
-        hier_blocks = find_hier_blocks(node.body)
+        hier_blocks, non_blocking = find_hier_blocks(node.body)
 
-        if not hier_blocks or len(hier_blocks) == 1:
+        if not hier_blocks:
+            return self.visit_block(hdl_node, node.body)
+
+        if len(hier_blocks) == 1:
             return self.visit_block(hdl_node, node.body)
 
         # state needed, more than 1 hier block

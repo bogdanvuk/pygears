@@ -109,7 +109,21 @@ class SVCompilerPreprocess(InstanceVisitor):
         return ' && '.join(c)
 
     def find_cycle_cond(self, node):
-        return self.find_conditions(node.cycle_cond)
+        node_cond = None
+        if node.cycle_cond is not None:
+            node_cond = self.visit(node.cycle_cond)
+
+        if node_cond:
+            # for if with yield
+            return node_cond
+        else:
+            for block in reversed(self.scope):
+                if isinstance(block, ht.Module):
+                    return None
+                if block.cycle_cond:
+                    parent_cond = self.visit(block.cycle_cond)
+                    if parent_cond:
+                        return parent_cond
 
     def find_exit_cond(self, node):
         if hasattr(node, 'exit_cond') and node.exit_cond:
@@ -123,6 +137,9 @@ class SVCompilerPreprocess(InstanceVisitor):
 
     def visit_ResExpr(self, node):
         return int(node.val)
+
+    def visit_IntfReadyExpr(self, node):
+        return 'dout.ready'
 
     def visit_AttrExpr(self, node):
         val = [self.visit(node.val)]
@@ -144,10 +161,13 @@ class SVCompilerPreprocess(InstanceVisitor):
 
     def visit_UnaryOpExpr(self, node):
         val = self.visit(node.operand)
-        return f'{node.operator} {val}'
+        return f'{node.operator}({val})'
 
     def visit_BinOpExpr(self, node):
         ops = [self.visit(op) for op in node.operands]
+        for i, op in enumerate(node.operands):
+            if isinstance(op, ht.BinOpExpr):
+                ops[i] = f'({ops[i]})'
 
         if node.operator in ht.extendable_operators:
             svrepr = (f"{int(node.dtype)}'({ops[0]})"
@@ -227,9 +247,11 @@ class SVCompilerPreprocess(InstanceVisitor):
 
         self.enter_block(node)
 
-        if node.cycle_cond or getattr(node, 'exit_cond', []):
-            cycle_cond = self.find_cycle_cond(node)
-            exit_cond = self.find_exit_cond(node)
+        cycle_cond = self.find_cycle_cond(node)
+        exit_cond = self.find_exit_cond(node)
+        if cycle_cond or getattr(node, 'exit_cond', []):
+            # cycle_cond = self.find_cycle_cond(node)
+            # exit_cond = self.find_exit_cond(node)
 
             if exit_cond and var_is_reg:
                 svblock.stmts.append(
@@ -256,20 +278,20 @@ class SVCompilerPreprocess(InstanceVisitor):
                     if s:
                         svblock.stmts.append(s)
 
-        if not node.cycle_cond or not self.find_cycle_cond(node):
-            # TODO ?
-            if var_is_port:
-                # if not node.in_cond or (self.visit_var in node.in_cond.name):
-                if not node.in_cond or (self.visit_var in self.visit(
-                        node.in_cond)):
-                    svblock.stmts.append(
-                        AssignValue(
-                            target=f'{self.visit_var}.ready', val=1, width=1))
+        # if not node.cycle_cond or not self.find_cycle_cond(node):
+        #     # TODO ?
+        #     if var_is_port:
+        #         # if not node.in_cond or (self.visit_var in node.in_cond.name):
+        #         if not node.in_cond or (self.visit_var in self.visit(
+        #                 node.in_cond)):
+        #             svblock.stmts.append(
+        #                 AssignValue(
+        #                     target=f'{self.visit_var}.ready', val=1, width=1))
 
-            if var_is_reg:
-                s = self.write_reg_enable(node, 1)
-                if s:
-                    svblock.stmts.append(s)
+        #     if var_is_reg:
+        #         s = self.write_reg_enable(node, 1)
+        #         if s:
+        #             svblock.stmts.append(s)
 
         for stmt in node.stmts:
             s = self.visit(stmt)

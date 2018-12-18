@@ -1,6 +1,6 @@
 import typing as pytypes
 
-from pygears.typing import Tuple, typeof, Uint, Queue, is_type
+from pygears.typing import Tuple, typeof, Uint, Queue, is_type, Bool
 
 bin_operators = ['!', '==', '>', '>=', '<', '<=', '!=', '&&', '||']
 extendable_operators = [
@@ -19,12 +19,12 @@ def find_exit_cond(statements):
 def find_cycle_cond(statements):
     cond = []
     for stmt in statements:
-        if hasattr(stmt, 'cycle_cond') and not stmt.in_cond:
-            cond.extend(stmt.cycle_cond)
-        else:
-            # TODO
-            if isinstance(stmt, Yield):
-                cond.append(stmt)
+        # if hasattr(stmt, 'cycle_cond') and not stmt.in_cond:
+        if hasattr(stmt, 'cycle_cond'):
+            stmt_cond = stmt.cycle_cond
+            if stmt_cond is not None:
+                cond.append(stmt.cycle_cond)
+
     return cond
 
 
@@ -35,6 +35,12 @@ class Expr:
     @property
     def dtype(self):
         pass
+
+
+class IntfReadyExpr(Expr, pytypes.NamedTuple):
+    @property
+    def dtype(self):
+        return Bool
 
 
 class ResExpr(Expr, pytypes.NamedTuple):
@@ -197,6 +203,10 @@ class AttrExpr(Expr, pytypes.NamedTuple):
 class Yield(pytypes.NamedTuple):
     expr: Expr
 
+    @property
+    def cycle_cond(self):
+        return IntfReadyExpr()
+
 
 # Blocks
 
@@ -225,7 +235,7 @@ class IntfBlock(Block, pytypes.NamedTuple):
 
     @property
     def cycle_cond(self):
-        return find_cycle_cond(self.stmts)
+        return find_cycle_cond(self.stmts)[0]
 
     @property
     def exit_cond(self):
@@ -243,7 +253,7 @@ class IntfLoop(Block, pytypes.NamedTuple):
 
     @property
     def cycle_cond(self):
-        return find_cycle_cond(self.stmts)
+        return find_cycle_cond(self.stmts)[0]
 
     @property
     def exit_cond(self):
@@ -258,7 +268,18 @@ class IfBlock(Block, pytypes.NamedTuple):
 
     @property
     def cycle_cond(self):
-        return find_cycle_cond(self.stmts)
+        # return find_cycle_cond(self.stmts)
+        conditions = find_cycle_cond(self.stmts)  # -> Expr or None
+        if len(conditions) == 0:
+            return None
+        elif len(conditions) > 1:
+            raise Exception
+        else:
+            condition = conditions[0]
+
+        return BinOpExpr((UnaryOpExpr(self.in_cond, '!'),
+                          BinOpExpr((self.in_cond, condition), '&&')),
+                         operator='||')
 
 
 class IfElseBlock(Block, pytypes.NamedTuple):
