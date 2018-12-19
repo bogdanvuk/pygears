@@ -619,7 +619,7 @@ class HdlAst(ast.NodeVisitor):
 
         # sub blocks
         for i, stmt in enumerate(hier_blocks):
-            sub = ht.Loop(in_cond=None, stmts=[], exit_c=None)
+            sub = ht.Stage(in_cond=None, stmts=[], exit_c=None)
             self.enter_block(sub)
             sub_block = self.visit(stmt)
             self.exit_block()

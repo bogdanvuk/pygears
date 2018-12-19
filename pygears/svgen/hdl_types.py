@@ -335,6 +335,36 @@ class Loop(Block, pytypes.NamedTuple):
             return self.exit_c
 
 
+class Stage(Block, pytypes.NamedTuple):
+    state_var: RegVal
+    state_id: int
+
+    @property
+    def in_cond(self):
+        return BinOpExpr(
+            (self.state_var, ResExpr(self.state_var.dtype(self.state_id))),
+            '==')
+
+    @property
+    def cycle_cond(self):
+        return find_cycle_cond(self.stmts)[0]
+
+    @property
+    def exit_cond(self):
+        exit_conditions = find_exit_cond(self.stmts)
+        if len(exit_conditions) == 0:
+            exit_c = None
+        elif len(exit_conditions) > 1:
+            raise Exception
+        else:
+            exit_c = exit_conditions[0]
+
+        if exit_c is not None:
+            return BinOpExpr((self.in_cond, exit_c), '&&')
+        else:
+            return self.in_cond
+
+
 class Module(pytypes.NamedTuple):
     in_ports: pytypes.List
     out_ports: pytypes.List
