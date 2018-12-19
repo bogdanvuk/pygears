@@ -3,11 +3,12 @@ import inspect
 
 from .hdl_ast import HdlAst, RegFinder
 from .util import svgen_typedef
-from .hdl_preprocess import InstanceVisitor, SVCompilerPreprocess, svexpr
+from .hdl_preprocess import InstanceVisitor, SVCompilerPreprocess, svexpr, AssignValue
+import hdl_types as ht
 
 reg_template = """
 always_ff @(posedge clk) begin
-    if(rst | {1}) begin
+    if(rst | rst_condition) begin
         {0}_reg = {1};
     end else if ({0}_en) begin
         {0}_reg = {0}_next;
@@ -121,35 +122,88 @@ def write_module(node, sv_stmts, writer):
         writer.line(f'{name}_t {name}_v;')
         writer.line()
 
-    for i, stage in enumerate(node.stages):
+    for stage in node.stages:
         if stage.cycle_cond is not None:
-            writer.line(f'logic cycle_cond_stage_{i};')
+            writer.line(f'logic cycle_cond_stage_{stage.stage_id};')
 
         if stage.exit_cond is not None:
-            writer.line(f'logic exit_cond_stage_{i};')
+            writer.line(f'logic exit_cond_stage_{stage.stage_id};')
 
-    for i, stage in enumerate(node.stages):
-        stage_id = ''.join([str(s.state_id) for s in node.stages[1:]])
-
-        if stage.cycle_cond is not None:
-            writer.line(f'assign cycle_cond_stage_{stage_id} ='
-                        f' {svexpr(stage.cycle_cond)};')
-
-        if stage.exit_cond is not None:
-            if stage.cycle_cond is not None:
-                writer.line((f'assign exit_cond_stage_{stage_id} ='
-                             f' ({svexpr(stage.exit_cond)})'
-                             f'&& cycle_cond_stage_{stage_id};'))
-            else:
-                writer.line((f'assign exit_cond_stage_{stage_id} ='
-                             f' {svexpr(stage.exit_cond)};'))
+    if node.exit_cond is not None:
+        writer.line(f'assign rst_cond = {svexpr(node.exit_cond)};')
+    else:
+        writer.line(f'assign rst_cond = 1;')
 
     for name, expr in node.regs.items():
-        writer.block(
-            reg_template.format(name, int(expr.val), svexpr(node.exit_cond)))
+        writer.block(reg_template.format(name, int(expr.val)))
 
     for name, val in sv_stmts.items():
         SVCompiler(name, writer).visit(val)
+
+
+class RegEnVisitor(SVCompilerPreprocess):
+    def enter_block(self, block):
+        super().enter_block(block)
+        if isinstance(block, ht.Module):
+            return [AssignValue(f'{reg}_en', 0) for reg in block.regs]
+
+    def visit_RegNextStmt(self, node):
+        return [
+            AssignValue(target=f'{node.reg.name}_en', val=self.cycle_cond),
+            AssignValue(
+                target=f'{node.reg.name}_next',
+                val=svexpr(node.val),
+                width=int(node.reg.dtype))
+        ]
+
+
+class VariableVisitor(SVCompilerPreprocess):
+    def visit_VariableStmt(self, node):
+        return AssignValue(
+            target=f'{node.variable.name}_v',
+            val=svexpr(node.val),
+            width=int(node.variable.dtype))
+
+
+class OutputVisitor(SVCompilerPreprocess):
+    def enter_block(self, block):
+        super().enter_block(block)
+        if isinstance(block, ht.Module):
+            return AssignValue(f'dout.valid', 0)
+
+    def visit_Yield(self, node):
+        return [
+            AssignValue(f'dout.valid', 1),
+            AssignValue(f'dout_s', svexpr(node.expr), int(node.expr.dtype))
+        ]
+
+
+class InputVisitor(SVCompilerPreprocess):
+    def enter_block(self, block):
+        super().enter_block(block)
+        if isinstance(block, ht.Module):
+            return [
+                AssignValue(f'{port.name}.ready', 0) for port in block.in_ports
+            ]
+        elif hasattr(block, 'intf'):
+            return AssignValue(
+                target=f'{block.intf.name}.ready', val=self.cycle_cond)
+
+
+class StageConditionsVisitor(SVCompilerPreprocess):
+    def enter_block(self, block):
+        super().enter_block(block)
+        if isinstance(block, ht.Module):
+            return [
+                AssignValue(f'cycle_cond_stage_{stage.stage_id}', 1)
+                for stage in block.stages
+            ]
+
+    def generic_visit(self, node):
+        if hasattr(node, 'cycle_cond') and node.cycle_cond is not None:
+            return AssignValue(
+                target=f'cycle_cond_stage_{self.current_stage.stage_id}',
+                val=svexpr(node.cycle_cond))
 
 
 def compile_gear_body(gear):
@@ -169,20 +223,11 @@ def compile_gear_body(gear):
 
     res = {}
 
-    for name in hdl_ast.regs:
-        # res[name] = SVCompilerPreprocess(name, ['_en', '_rst']).visit(hdl_ast)
-        res[name] = SVCompilerPreprocess(name, ['_en']).visit(hdl_ast)
-
-    for name in hdl_ast.variables:
-        res[name] = SVCompilerPreprocess(name).visit(hdl_ast)
-
-    for port in hdl_ast.out_ports:
-        res[port.name] = SVCompilerPreprocess(port.name,
-                                              ['.valid']).visit(hdl_ast)
-
-    for port in hdl_ast.in_ports:
-        res[port.name] = SVCompilerPreprocess(port.name,
-                                              ['.ready']).visit(hdl_ast)
+    res['register_next_state'] = RegEnVisitor().visit(hdl_ast)
+    res['variables'] = VariableVisitor().visit(hdl_ast)
+    res['outputs'] = OutputVisitor().visit(hdl_ast)
+    res['inputs'] = InputVisitor().visit(hdl_ast)
+    res['stages'] = StageConditionsVisitor().visit(hdl_ast)
 
     writer = SVWriter()
     write_module(hdl_ast, res, writer)

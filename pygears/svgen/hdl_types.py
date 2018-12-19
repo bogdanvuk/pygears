@@ -291,9 +291,10 @@ class IfBlock(Block, pytypes.NamedTuple):
         if condition is None:
             return None
 
-        return BinOpExpr((UnaryOpExpr(self.in_cond, '!'),
-                          and_expr(self.in_cond, condition)),
-                         operator='||')
+        return BinOpExpr(
+            (UnaryOpExpr(self.in_cond, '!'), and_expr(self.in_cond,
+                                                      condition)),
+            operator='||')
 
     @property
     def exit_cond(self):
@@ -301,9 +302,10 @@ class IfBlock(Block, pytypes.NamedTuple):
         if condition is None:
             return None
 
-        return BinOpExpr((UnaryOpExpr(self.in_cond, '!'),
-                          and_expr(self.in_cond, condition)),
-                         operator='||')
+        return BinOpExpr(
+            (UnaryOpExpr(self.in_cond, '!'), and_expr(self.in_cond,
+                                                      condition)),
+            operator='||')
 
 
 class IfElseBlock(Block, pytypes.NamedTuple):
@@ -337,9 +339,17 @@ class Loop(Block, pytypes.NamedTuple):
 
 
 class Stage(Block, pytypes.NamedTuple):
+    parent: pytypes.Any
     state_var: RegVal
     state_id: int
     stmts: list
+
+    @property
+    def stage_id(self):
+        if self.parent is None:
+            return str(self.state_id)
+        else:
+            return f'{self.parent.stage_id}_{self.state_id}'
 
     @property
     def in_cond(self):
@@ -367,9 +377,11 @@ class Module(pytypes.NamedTuple):
     stmts: pytypes.List
 
     @property
+    def cycle_cond(self):
+        return find_cycle_cond(self.stmts)
+
+    @property
     def exit_cond(self):
-        import pdb
-        pdb.set_trace()
         return find_exit_cond(self.stmts)
 
 

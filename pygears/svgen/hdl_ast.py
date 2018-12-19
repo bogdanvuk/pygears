@@ -200,6 +200,7 @@ class HdlAst(ast.NodeVisitor):
         self.variables = variables
         self.regs = regs
         self.scope = []
+        self.stage_hier = []
         self.stages = []
 
         # self.svlocals = {p.svrepr: p for p in self.in_ports}
@@ -250,7 +251,6 @@ class HdlAst(ast.NodeVisitor):
         self.svlocals.update(scope)
 
         hdl_node = ht.IntfLoop(intf._replace(context='valid'), [])
-        self.stages.append(hdl_node)
 
         return self.visit_hier(node, hdl_node)
 
@@ -278,8 +278,6 @@ class HdlAst(ast.NodeVisitor):
         self.svlocals.update(scope)
 
         hdl_node = ht.IntfBlock(intf._replace(context='valid'), [])
-
-        self.stages.append(hdl_node)
 
         return self.visit_block(hdl_node, node.body)
 
@@ -620,10 +618,19 @@ class HdlAst(ast.NodeVisitor):
 
         # sub blocks
         for i, stmt in enumerate(hier_blocks):
-            sub = ht.Stage(state_var=state_reg, state_id=i, stmts=[])
+
+            sub = ht.Stage(
+                parent=self.stage_hier[-1] if self.stage_hier else None,
+                state_var=state_reg,
+                state_id=i,
+                stmts=[])
+
+            self.stages.append(sub)
+            self.stage_hier.append(sub)
             self.enter_block(sub)
             sub.stmts.append(self.visit(stmt))
             self.exit_block()
+            self.stage_hier.pop()
 
             # t = type(self.svlocals['state'].val)
             # in_cond = ht.BinOpExpr((state_reg, ht.ResExpr(t(i))), '==')
@@ -655,8 +662,8 @@ class HdlAst(ast.NodeVisitor):
             out_ports=self.out_ports,
             locals=self.svlocals,
             regs=self.regs,
-            variables=self.variables,
             stages=self.stages,
+            variables=self.variables,
             stmts=[])
 
         return self.visit_hier(node, hdl_node)
