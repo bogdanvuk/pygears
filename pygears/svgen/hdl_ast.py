@@ -609,6 +609,7 @@ class HdlAst(ast.NodeVisitor):
         # state needed, more than 1 hier block
         self.create_state_reg(len(hier_blocks))
         hdl_node.regs.update(self.regs)
+        state_reg = ht.RegVal(self.svlocals['state'], 'state_reg')
 
         # register initializations
         for stmt in node.body:
@@ -619,40 +620,32 @@ class HdlAst(ast.NodeVisitor):
 
         # sub blocks
         for i, stmt in enumerate(hier_blocks):
-            sub = ht.Stage(in_cond=None, stmts=[], exit_c=None)
+            sub = ht.Stage(state_var=state_reg, state_id=i, stmts=[])
             self.enter_block(sub)
-            sub_block = self.visit(stmt)
+            sub.stmts.append(self.visit(stmt))
             self.exit_block()
 
-            t = type(self.svlocals['state'].val)
-            in_cond = ht.BinOpExpr(
-                (ht.RegVal(self.svlocals['state'], 'state_reg'),
-                 ht.ResExpr(t(i))), '==')
+            # t = type(self.svlocals['state'].val)
+            # in_cond = ht.BinOpExpr((state_reg, ht.ResExpr(t(i))), '==')
 
-            if ht.isloop(sub_block):
-                in_cond = ht.BinOpExpr((in_cond, sub_block.in_cond), '&&')
-                stmts = sub_block.stmts
-            else:
-                stmts = [sub_block]
+            # # exit conditions different if not last
+            # exit_cond = getattr(sub_block, 'exit_cond', None)
+            # if exit_cond and i != (len(hier_blocks) - 1):
+            #     assert len(exit_cond) == 1  # temporary guard
+            #     if isinstance(exit_cond[0], InPort):
+            #         check_state = ht.IntfBlock(
+            #             intf=ht.IntfExpr(exit_cond[0], 'eot'),
+            #             stmts=[self.visit(increment_reg('state'))])
+            #     else:
+            #         check_state = ht.IfBlock(
+            #             in_cond=exit_cond[0],
+            #             stmts=[self.visit(increment_reg('state'))])
+            #     stmts.insert(0, check_state)
+            #     exit_cond = None
 
-            # exit conditions different if not last
-            exit_cond = getattr(sub_block, 'exit_cond', None)
-            if exit_cond and i != (len(hier_blocks) - 1):
-                assert len(exit_cond) == 1  # temporary guard
-                if isinstance(exit_cond[0], InPort):
-                    check_state = ht.IntfBlock(
-                        intf=ht.IntfExpr(exit_cond[0], 'eot'),
-                        stmts=[self.visit(increment_reg('state'))])
-                else:
-                    check_state = ht.IfBlock(
-                        in_cond=exit_cond[0],
-                        stmts=[self.visit(increment_reg('state'))])
-                stmts.insert(0, check_state)
-                exit_cond = None
+            # sub_cpy = ht.Loop(in_cond=in_cond, stmts=stmts, exit_c=exit_cond)
 
-            sub_cpy = ht.Loop(in_cond=in_cond, stmts=stmts, exit_c=exit_cond)
-
-            hdl_node.stmts.append(sub_cpy)
+            hdl_node.stmts.append(sub)
 
         return hdl_node
 

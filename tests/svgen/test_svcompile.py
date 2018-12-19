@@ -312,6 +312,7 @@ def test_simple_accumulator():
     print(res)
     assert equal_on_nonspace(res, simple_accumulator_res)
 
+test_simple_accumulator()
 
 simple_take_res = """
 typedef logic [0:0] pass_eot_t; // u1

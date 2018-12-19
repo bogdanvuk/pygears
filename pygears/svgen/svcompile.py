@@ -7,7 +7,7 @@ from .hdl_preprocess import InstanceVisitor, SVCompilerPreprocess, svexpr
 
 reg_template = """
 always_ff @(posedge clk) begin
-    if(rst | {0}_rst) begin
+    if(rst | {1}) begin
         {0}_reg = {1};
     end else if ({0}_en) begin
         {0}_reg = {0}_next;
@@ -112,7 +112,7 @@ def write_module(node, sv_stmts, writer):
     for name, expr in node.regs.items():
         writer.block(svgen_typedef(expr.dtype, name))
         writer.line(f'logic {name}_en;')
-        writer.line(f'logic {name}_rst;')
+        # writer.line(f'logic {name}_rst;')
         writer.line(f'{name}_t {name}_reg, {name}_next;')
         writer.line()
 
@@ -129,17 +129,24 @@ def write_module(node, sv_stmts, writer):
             writer.line(f'logic exit_cond_stage_{i};')
 
     for i, stage in enumerate(node.stages):
+        stage_id = ''.join([str(s.state_id) for s in node.stages[1:]])
+
         if stage.cycle_cond is not None:
-            writer.line(
-                f'assign cycle_cond_stage_{i} = {svexpr(stage.cycle_cond)};')
+            writer.line(f'assign cycle_cond_stage_{stage_id} ='
+                        f' {svexpr(stage.cycle_cond)};')
 
         if stage.exit_cond is not None:
-            writer.line(
-                f'assign exit_cond_stage_{i} = ({svexpr(stage.exit_cond)}) && cycle_cond_stage_{i};'
-            )
+            if stage.cycle_cond is not None:
+                writer.line((f'assign exit_cond_stage_{stage_id} ='
+                             f' ({svexpr(stage.exit_cond)})'
+                             f'&& cycle_cond_stage_{stage_id};'))
+            else:
+                writer.line((f'assign exit_cond_stage_{stage_id} ='
+                             f' {svexpr(stage.exit_cond)};'))
 
     for name, expr in node.regs.items():
-        writer.block(reg_template.format(name, int(expr.val)))
+        writer.block(
+            reg_template.format(name, int(expr.val), svexpr(node.exit_cond)))
 
     for name, val in sv_stmts.items():
         SVCompiler(name, writer).visit(val)
@@ -163,7 +170,8 @@ def compile_gear_body(gear):
     res = {}
 
     for name in hdl_ast.regs:
-        res[name] = SVCompilerPreprocess(name, ['_en', '_rst']).visit(hdl_ast)
+        # res[name] = SVCompilerPreprocess(name, ['_en', '_rst']).visit(hdl_ast)
+        res[name] = SVCompilerPreprocess(name, ['_en']).visit(hdl_ast)
 
     for name in hdl_ast.variables:
         res[name] = SVCompilerPreprocess(name).visit(hdl_ast)

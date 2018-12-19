@@ -30,7 +30,8 @@ class InstanceVisitor:
         return visitor(node)
 
     def generic_visit(self, node):
-        breakpoint()
+        import pdb
+        pdb.set_trace()
         raise Exception
 
 
@@ -114,20 +115,19 @@ class SVCompilerPreprocess(InstanceVisitor):
     def __init__(self, visit_var, dflts=None):
         self.svlines = []
         self.scope = []
-        self.current_stage = None
+        self.stages = []
         self.dflts = dflts if dflts else {}
         self.visit_var = visit_var
 
     def enter_block(self, block):
-        if block in self.module.stages:
-            self.current_stage = block
-
         self.scope.append(block)
 
     def exit_block(self):
-        block = self.scope.pop()
-        if block is self.current_stage:
-            self.current_stage = None
+        self.scope.pop()
+
+    @property
+    def current_stage(self):
+        return self.stages[-1]
 
     def write_reg_enable(self, node, cond):
         if self.visit_var in self.module.regs:
@@ -141,6 +141,7 @@ class SVCompilerPreprocess(InstanceVisitor):
     def visit_Module(self, node):
         self.module = node
         comb_block = CombBlock(stmts=[], dflts={})
+        self.stages.append(node)
         self.enter_block(node)
 
         for d in self.dflts:
@@ -206,6 +207,12 @@ class SVCompilerPreprocess(InstanceVisitor):
     def visit_IntfLoop(self, node):
         return self.visit_IntfBlock(node)
 
+    def visit_Stage(self, node):
+        self.stages.append(node)
+        res = self.visit_IntfBlock(node)
+        self.stages.pop()
+        return res
+
     def visit_RegNextStmt(self, node):
         if node.reg.name == self.visit_var:
             return AssignValue(
@@ -229,26 +236,35 @@ class SVCompilerPreprocess(InstanceVisitor):
 
         self.enter_block(node)
 
-        if self.current_stage is not None:
-            stage_id = self.module.stages.index(self.current_stage)
-            cycle_cond = None
-            if self.current_stage.cycle_cond is not None:
-                cycle_cond = f'cycle_cond_stage_{stage_id}'
+        stage_id = ''.join([str(s.state_id) for s in self.stages[1:]])
+        cycle_cond = None
+        if self.current_stage.cycle_cond is not None:
+            cycle_cond = f'cycle_cond_stage_{stage_id}'
 
-            exit_cond = None
-            if self.current_stage.exit_cond is not None:
-                exit_cond = f'exit_cond_stage_{stage_id}'
-        else:
-            cycle_cond = self.find_cycle_cond(node)
-            exit_cond = self.find_exit_cond(node)
+        exit_cond = None
+        if self.current_stage.exit_cond is not None:
+            exit_cond = f'exit_cond_stage_{stage_id}'
+
+        # if self.current_stage is not None:
+        #     stage_id = self.module.stages.index(self.current_stage)
+        #     cycle_cond = None
+        #     if self.current_stage.cycle_cond is not None:
+        #         cycle_cond = f'cycle_cond_stage_{stage_id}'
+
+        #     exit_cond = None
+        #     if self.current_stage.exit_cond is not None:
+        #         exit_cond = f'exit_cond_stage_{stage_id}'
+        # else:
+        #     cycle_cond = self.find_cycle_cond(node)
+        #     exit_cond = self.find_exit_cond(node)
 
         if cycle_cond or getattr(node, 'exit_cond', []):
             # cycle_cond = self.find_cycle_cond(node)
             # exit_cond = self.find_exit_cond(node)
 
-            if exit_cond and var_is_reg:
-                svblock.stmts.append(
-                    AssignValue(target=f'{self.visit_var}_rst', val=exit_cond))
+            # if exit_cond and var_is_reg:
+            #     svblock.stmts.append(
+            #         AssignValue(target=f'{self.visit_var}_rst', val=exit_cond))
 
             if cycle_cond:
                 cond = cycle_cond
@@ -347,7 +363,8 @@ class SVCompilerPreprocess(InstanceVisitor):
         return self.traverse_block(svblock, node)
 
     def is_control_var(self, name):
-        control_suffix = ['_en', '_rst', '.valid', '.ready']
+        # control_suffix = ['_en', '_rst', '.valid', '.ready']
+        control_suffix = ['_en', '.valid', '.ready']
         for suff in control_suffix:
             if name.endswith(suff):
                 return True

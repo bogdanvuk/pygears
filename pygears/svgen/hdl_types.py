@@ -1,6 +1,7 @@
 import typing as pytypes
 
 from pygears.typing import Tuple, typeof, Uint, Queue, is_type, Bool
+from functools import reduce
 
 bin_operators = ['!', '==', '>', '>=', '<', '<=', '!=', '&&', '||']
 extendable_operators = [
@@ -9,13 +10,13 @@ extendable_operators = [
 
 
 def find_exit_cond(statements):
-    cond = []
-    for stmt in statements:
+    for stmt in reversed(statements):
         if hasattr(stmt, 'exit_cond'):
             stmt_cond = stmt.exit_cond
             if stmt_cond is not None:
-                cond.append(stmt_cond)
-    return cond
+                return stmt_cond
+
+    return None
 
 
 def find_cycle_cond(statements):
@@ -27,7 +28,18 @@ def find_cycle_cond(statements):
             if stmt_cond is not None:
                 cond.append(stmt_cond)
 
-    return cond
+    return reduce(and_expr, cond, None)
+
+
+def and_expr(expr1, expr2):
+    if expr1 is None:
+        return expr2
+    elif expr2 is None:
+        return expr1
+    elif expr1 is None and expr2 is None:
+        return None
+    else:
+        return BinOpExpr((expr1, expr2), '&&')
 
 
 # Expressions
@@ -209,6 +221,10 @@ class Yield(pytypes.NamedTuple):
     def cycle_cond(self):
         return IntfReadyExpr()
 
+    @property
+    def exit_cond(self):
+        return self.cycle_cond
+
 
 # Blocks
 
@@ -237,17 +253,11 @@ class IntfBlock(Block, pytypes.NamedTuple):
 
     @property
     def cycle_cond(self):
-        return find_cycle_cond(self.stmts)[0]
+        return find_cycle_cond(self.stmts)
 
     @property
     def exit_cond(self):
-        exit_conditions = find_exit_cond(self.stmts)
-        if len(exit_conditions) == 0:
-            return None
-        elif len(exit_conditions) > 1:
-            raise Exception
-        else:
-            return exit_conditions[0]
+        return find_exit_cond(self.stmts)
 
 
 class IntfLoop(Block, pytypes.NamedTuple):
@@ -261,23 +271,14 @@ class IntfLoop(Block, pytypes.NamedTuple):
 
     @property
     def cycle_cond(self):
-        return find_cycle_cond(self.stmts)[0]
+        return and_expr(self.intf, find_cycle_cond(self.stmts))
 
     @property
     def exit_cond(self):
-        exit_conditions = find_exit_cond(self.stmts)
-        if len(exit_conditions) == 0:
-            exit_c = None
-        elif len(exit_conditions) > 1:
-            raise Exception
-        else:
-            exit_c = exit_conditions[0]
-
+        exit_condition = find_exit_cond(self.stmts)
         intf_expr = IntfExpr(self.intf.intf, context='eot')
-        if exit_c is not None:
-            return BinOpExpr((intf_expr, exit_c), '&&')
-        else:
-            return intf_expr
+
+        return and_expr(intf_expr, exit_condition)
 
 
 class IfBlock(Block, pytypes.NamedTuple):
@@ -286,16 +287,22 @@ class IfBlock(Block, pytypes.NamedTuple):
 
     @property
     def cycle_cond(self):
-        conditions = find_cycle_cond(self.stmts)
-        if len(conditions) == 0:
+        condition = find_cycle_cond(self.stmts)
+        if condition is None:
             return None
-        elif len(conditions) > 1:
-            raise Exception
-        else:
-            condition = conditions[0]
 
         return BinOpExpr((UnaryOpExpr(self.in_cond, '!'),
-                          BinOpExpr((self.in_cond, condition), '&&')),
+                          and_expr(self.in_cond, condition)),
+                         operator='||')
+
+    @property
+    def exit_cond(self):
+        condition = find_exit_cond(self.stmts)
+        if condition is None:
+            return None
+
+        return BinOpExpr((UnaryOpExpr(self.in_cond, '!'),
+                          and_expr(self.in_cond, condition)),
                          operator='||')
 
 
@@ -308,6 +315,10 @@ class IfElseBlock(Block, pytypes.NamedTuple):
     def cycle_cond(self):
         return find_cycle_cond(self.stmts)
 
+    @property
+    def exit_cond(self):
+        return find_exit_cond(self.stmts)
+
 
 class Loop(Block, pytypes.NamedTuple):
     in_cond: Expr
@@ -317,27 +328,18 @@ class Loop(Block, pytypes.NamedTuple):
 
     @property
     def cycle_cond(self):
-        return find_cycle_cond(self.stmts)[0]
+        return find_cycle_cond(self.stmts)
 
     @property
     def exit_cond(self):
-        exit_conditions = find_exit_cond(self.stmts)
-        if len(exit_conditions) == 0:
-            exit_c = None
-        elif len(exit_conditions) > 1:
-            raise Exception
-        else:
-            exit_c = exit_conditions[0]
-
-        if exit_c is not None:
-            return BinOpExpr((self.exit_c, exit_c), '&&')
-        else:
-            return self.exit_c
+        return and_expr(self.cycle_cond,
+                        and_expr(self.exit_c, find_exit_cond(self.stmts)))
 
 
 class Stage(Block, pytypes.NamedTuple):
     state_var: RegVal
     state_id: int
+    stmts: list
 
     @property
     def in_cond(self):
@@ -347,22 +349,12 @@ class Stage(Block, pytypes.NamedTuple):
 
     @property
     def cycle_cond(self):
-        return find_cycle_cond(self.stmts)[0]
+        return find_cycle_cond(self.stmts)
 
     @property
     def exit_cond(self):
-        exit_conditions = find_exit_cond(self.stmts)
-        if len(exit_conditions) == 0:
-            exit_c = None
-        elif len(exit_conditions) > 1:
-            raise Exception
-        else:
-            exit_c = exit_conditions[0]
-
-        if exit_c is not None:
-            return BinOpExpr((self.in_cond, exit_c), '&&')
-        else:
-            return self.in_cond
+        exit_condition = find_exit_cond(self.stmts)
+        return and_expr(self.in_cond, exit_condition)
 
 
 class Module(pytypes.NamedTuple):
@@ -373,6 +365,12 @@ class Module(pytypes.NamedTuple):
     stages: pytypes.List
     variables: pytypes.Dict
     stmts: pytypes.List
+
+    @property
+    def exit_cond(self):
+        import pdb
+        pdb.set_trace()
+        return find_exit_cond(self.stmts)
 
 
 def isloop(block):
