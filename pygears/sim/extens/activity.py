@@ -13,6 +13,7 @@ class ActivityChecker:
         sim.events['after_run'].append(self.after_run)
         bind('sim/activity', self)
         self.blockers = {}
+        self.handshakes = set()
         self.hooks = {}
 
     def intf_pull_start(self, intf):
@@ -23,8 +24,13 @@ class ActivityChecker:
 
     def intf_pull_done(self, intf):
         consumer = intf.producer
+        self.handshakes.add(consumer)
+        self.handshakes.add(self.blockers[consumer])
         del self.blockers[consumer]
         return True
+
+    def before_timestep(self):
+        self.handshakes.clear()
 
     @reg_inject
     def before_run(self, sim, sim_map=Inject('sim/map')):
@@ -35,10 +41,15 @@ class ActivityChecker:
 
     def get_port_status(self, port):
         q = get_producer_queue(port)
+
         if q._unfinished_tasks:
             return "active"
 
-        if port in self.blockers:
+        prod_port = get_end_producer(port).consumers[0]
+        if prod_port in self.handshakes:
+            return "handshaked"
+
+        if prod_port in self.blockers.values():
             return "waited"
 
         return "empty"
