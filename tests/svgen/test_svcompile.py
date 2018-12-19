@@ -6,17 +6,19 @@ from pygears.svgen.svcompile import compile_gear_body
 from pygears.util.test_utils import equal_on_nonspace
 
 simple_add_res = """
+logic cycle_cond_stage_0;
+assign cycle_cond_stage_0 = dout.ready;
 always_comb begin
-    dout.valid = 1'(0);
+    dout.valid = 0;
     dout_s = 11'(11'(din_s.f0) + 11'(din_s.f1));
     if (din.valid) begin
-        dout.valid = 1'(1);
+        dout.valid = 1;
     end
 end
 always_comb begin
-    din.ready = 1'(0);
+    din.ready = 0;
     if (din.valid) begin
-        din.ready = 1'(dout.ready);
+        din.ready = cycle_cond_stage_0;
     end
 end
 """
@@ -30,21 +32,23 @@ def test_simple_add():
 
 
 simple_filt_res = """
+logic cycle_cond_stage_0;
+assign cycle_cond_stage_0 = !(din_s.data.ctrl == din_s.sel) || ((din_s.data.ctrl == din_s.sel) && dout.ready);
 always_comb begin
-    dout.valid = 1'(0);
+    dout.valid = 0;
     dout_s = 12'(din_s.data);
     if (din.valid) begin
         if (din_s.data.ctrl == din_s.sel) begin
-            dout.valid = 1'(1);
+            dout.valid = 1;
         end
     end
 end
 always_comb begin
-    din.ready = 1'(0);
+    din.ready = 0;
     if (din.valid) begin
-        din.ready = 1'(1);
+        din.ready = cycle_cond_stage_0;
         if (din_s.data.ctrl == din_s.sel) begin
-            din.ready = 1'(dout.ready);
+            din.ready = cycle_cond_stage_0;
         end
     end
 end
@@ -63,6 +67,10 @@ typedef logic [15:0] cnt_t; // u16
 logic cnt_en;
 logic cnt_rst;
 cnt_t cnt_reg, cnt_next;
+logic cycle_cond_stage_0;
+logic exit_cond_stage_0;
+assign cycle_cond_stage_0 = dout.ready;
+assign exit_cond_stage_0 = (&din_s.eot) && cycle_cond_stage_0;
 
 always_ff @(posedge clk) begin
     if(rst | cnt_rst) begin
@@ -73,27 +81,27 @@ always_ff @(posedge clk) begin
 end
 
 always_comb begin
-    cnt_en = 1'(0);
-    cnt_rst = 1'(0);
+    cnt_en = 0;
+    cnt_rst = 0;
     cnt_next = 16'(17'(cnt_reg) + 17'(1));
     if (din.valid) begin
-        cnt_rst = 1'(dout.ready && &din_s.eot);
-        cnt_en = 1'(dout.ready);
+        cnt_rst = exit_cond_stage_0;
+        cnt_en = cycle_cond_stage_0;
     end
 end
 
 always_comb begin
-    dout.valid = 1'(0);
+    dout.valid = 0;
     dout_s = 17'({&(din_s.eot), cnt_reg});
     if (din.valid) begin
-        dout.valid = 1'(1);
+        dout.valid = 1;
     end
 end
 
 always_comb begin
-    din.ready = 1'(0);
+    din.ready = 0;
     if (din.valid) begin
-        din.ready = 1'(dout.ready);
+        din.ready = cycle_cond_stage_0;
     end
 end
 """
@@ -106,18 +114,20 @@ def test_simple_qcnt():
 
 
 simple_invert_res = """
+logic cycle_cond_stage_0;
+assign cycle_cond_stage_0 = dout.ready;
 always_comb begin
-    dout.valid = 1'(0);
-    dout_s = 4'(~ din_s);
+    dout.valid = 0;
+    dout_s = 4'(~(din_s));
     if (din.valid) begin
-        dout.valid = 1'(1);
+        dout.valid = 1;
     end
 end
 
 always_comb begin
-    din.ready = 1'(0);
+    din.ready = 0;
     if (din.valid) begin
-        din.ready = 1'(dout.ready);
+        din.ready = cycle_cond_stage_0;
     end
 end
 """
@@ -139,6 +149,11 @@ i_t i_reg, i_next;
 typedef logic [0:0] last_t; // u1
 last_t last_v;
 
+logic cycle_cond_stage_0;
+logic exit_cond_stage_0;
+assign cycle_cond_stage_0 = dout.ready;
+assign exit_cond_stage_0 = (last) && cycle_cond_stage_0;
+
 always_ff @(posedge clk) begin
     if(rst | i_rst) begin
         i_reg = 0;
@@ -148,12 +163,13 @@ always_ff @(posedge clk) begin
 end
 
 always_comb begin
-    i_en = 1'(0);
-    i_rst = 1'(0);
+    i_en = 0;
+    i_rst = 0;
     i_next = 16'(17'(i_reg) + 17'(1));
     if (din.valid) begin
-        i_rst = 1'(dout.ready && last_v);
-        i_en = 1'(dout.ready);
+        i_rst = exit_cond_stage_0;
+        i_en = cycle_cond_stage_0;
+        i_rst = exit_cond_stage_0;
     end
 end
 
@@ -162,18 +178,18 @@ always_comb begin
 end
 
 always_comb begin
-    dout.valid = 1'(0);
+    dout.valid = 0;
     dout_s = 17'({last_v, din_s.f1});
     if (din.valid) begin
-        dout.valid = 1'(1);
+        dout.valid = 1;
     end
 end
 
 always_comb begin
-    din.ready = 1'(0);
+    din.ready = 0;
     if (din.valid) begin
-        din.ready = 1'(dout.ready);
-        din.ready = 1'(dout.ready && last_v);
+        din.ready = cycle_cond_stage_0;
+        din.ready = exit_cond_stage_0;
     end
 end
 """
@@ -293,6 +309,7 @@ end
 def test_simple_accumulator():
     accumulator(Intf(Queue[Tuple[Uint[16], Uint[16]]]))
     res = compile_gear_body(find('/accumulator'))
+    print(res)
     assert equal_on_nonspace(res, simple_accumulator_res)
 
 
@@ -302,11 +319,19 @@ logic pass_eot_en;
 logic pass_eot_rst;
 pass_eot_t pass_eot_reg, pass_eot_next;
 typedef logic [15:0] cnt_t; // u16
+
 logic cnt_en;
 logic cnt_rst;
 cnt_t cnt_reg, cnt_next;
+
 typedef logic [0:0] last_t; // u1
+
 last_t last_v;
+
+logic cycle_cond_stage_0;
+logic exit_cond_stage_0;
+assign cycle_cond_stage_0 = !((cnt_reg <= din_s.data.f1) && pass_eot_reg) || (((cnt_reg <= din_s.data.f1) && pass_eot_reg) && dout.ready);
+assign exit_cond_stage_0 = (&din_s.eot) && cycle_cond_stage_0;
 
 always_ff @(posedge clk) begin
     if(rst | pass_eot_rst) begin
@@ -315,6 +340,7 @@ always_ff @(posedge clk) begin
         pass_eot_reg = pass_eot_next;
     end
 end
+
 
 always_ff @(posedge clk) begin
     if(rst | cnt_rst) begin
@@ -325,56 +351,57 @@ always_ff @(posedge clk) begin
 end
 
 always_comb begin
-    pass_eot_en = 1'(0);
-    pass_eot_rst = 1'(0);
+    pass_eot_en = 0;
+    pass_eot_rst = 0;
     pass_eot_next = 1'(0);
     if (din.valid) begin
-        pass_eot_rst = 1'(&din_s.eot);
-        if (cnt_reg <= din_s.data.f1 && pass_eot_reg) begin
-            pass_eot_rst = 1'(dout.ready && &din_s.eot);
+        pass_eot_rst = exit_cond_stage_0;
+        if ((cnt_reg <= din_s.data.f1) && pass_eot_reg) begin
+            pass_eot_rst = exit_cond_stage_0;
         end
         if (last_v) begin
-            pass_eot_en = 1'(1);
+            pass_eot_rst = exit_cond_stage_0;
+            pass_eot_en = cycle_cond_stage_0;
         end
     end
 end
 
 always_comb begin
-    cnt_en = 1'(0);
-    cnt_rst = 1'(0);
+    cnt_en = 0;
+    cnt_rst = 0;
     cnt_next = 16'(17'(cnt_reg) + 17'(1));
     if (din.valid) begin
-        cnt_rst = 1'(&din_s.eot);
-        cnt_en = 1'(1);
-        if (cnt_reg <= din_s.data.f1 && pass_eot_reg) begin
-            cnt_rst = 1'(dout.ready && &din_s.eot);
+        cnt_rst = exit_cond_stage_0;
+        cnt_en = cycle_cond_stage_0;
+        if ((cnt_reg <= din_s.data.f1) && pass_eot_reg) begin
+            cnt_rst = exit_cond_stage_0;
+        end
+        if (last_v) begin
+            cnt_rst = exit_cond_stage_0;
         end
     end
 end
 
 always_comb begin
-    last_v = 1'(cnt_reg == din_s.data.f1 && pass_eot_reg);
+    last_v = 1'((cnt_reg == din_s.data.f1) && pass_eot_reg);
 end
 
 always_comb begin
-    dout.valid = 1'(0);
+    dout.valid = 0;
     dout_s = 17'({din_s.eot || last_v, din_s.data.f0});
     if (din.valid) begin
-        if (cnt_reg <= din_s.data.f1 && pass_eot_reg) begin
-            dout.valid = 1'(1);
+        if ((cnt_reg <= din_s.data.f1) && pass_eot_reg) begin
+            dout.valid = 1;
         end
     end
 end
 
 always_comb begin
-    din.ready = 1'(0);
+    din.ready = 0;
     if (din.valid) begin
-        din.ready = 1'(1);
-        if (cnt_reg <= din_s.data.f1 && pass_eot_reg) begin
-            din.ready = 1'(dout.ready);
-        end
-        else begin
-            din.ready = 1'(1);
+        din.ready = cycle_cond_stage_0;
+        if ((cnt_reg <= din_s.data.f1) && pass_eot_reg) begin
+            din.ready = cycle_cond_stage_0;
         end
     end
 end
@@ -384,5 +411,4 @@ end
 def test_simple_take():
     take(Intf(Queue[Tuple[Uint[16], Uint[16]]]))
     res = compile_gear_body(find('/take'))
-    print(res)
     assert equal_on_nonspace(res, simple_take_res)

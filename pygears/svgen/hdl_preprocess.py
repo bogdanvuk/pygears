@@ -8,7 +8,7 @@ from pygears.typing.base import TypingMeta
 class AssignValue(pytypes.NamedTuple):
     target: pytypes.Any
     val: pytypes.Any
-    width: TypingMeta
+    width: TypingMeta = None
 
 
 class CombBlock(pytypes.NamedTuple):
@@ -34,13 +34,12 @@ class InstanceVisitor:
         raise Exception
 
 
-def svexpr(expr, visit_var=None):
+def svexpr(expr):
     v = SVExpressionVisitor()
     return v.visit(expr)
 
 
 class SVExpressionVisitor(InstanceVisitor):
-
     def visit_VariableVal(self, node):
         return node.name
 
@@ -136,9 +135,8 @@ class SVCompilerPreprocess(InstanceVisitor):
             for stmt in node.stmts:
                 if isinstance(
                         stmt,
-                        ht.RegNextExpr) and (stmt.reg.name == self.visit_var):
-                    return AssignValue(
-                        target=f'{self.visit_var}_en', val=cond, width=1)
+                        ht.RegNextStmt) and (stmt.reg.name == self.visit_var):
+                    return AssignValue(target=f'{self.visit_var}_en', val=cond)
 
     def visit_Module(self, node):
         self.module = node
@@ -147,7 +145,7 @@ class SVCompilerPreprocess(InstanceVisitor):
 
         for d in self.dflts:
             comb_block.dflts[f'{self.visit_var}{d}'] = AssignValue(
-                f'{self.visit_var}{d}', 0, 1)
+                f'{self.visit_var}{d}', 0)
 
         for stmt in node.stmts:
             s = self.visit(stmt)
@@ -162,7 +160,7 @@ class SVCompilerPreprocess(InstanceVisitor):
             # it can be implicit in a loop
             if self.visit_var in node.variables:
                 var = node.variables[self.visit_var]
-                value = self.visit(var.variable.val)
+                value = svexpr(var.variable.val)
                 name = f'{self.visit_var}_v'
                 comb_block.dflts[name] = AssignValue(name, value,
                                                      int(var.dtype))
@@ -189,7 +187,7 @@ class SVCompilerPreprocess(InstanceVisitor):
                 return SVBlock(
                     dflts={
                         f'{self.visit_var}.valid':
-                        AssignValue(f'{self.visit_var}.valid', 1, 1),
+                        AssignValue(f'{self.visit_var}.valid', 1),
                         f'{self.visit_var}_s':
                         AssignValue(f'{self.visit_var}_s', name,
                                     int(node.expr.dtype))
@@ -208,14 +206,14 @@ class SVCompilerPreprocess(InstanceVisitor):
     def visit_IntfLoop(self, node):
         return self.visit_IntfBlock(node)
 
-    def visit_RegNextExpr(self, node):
+    def visit_RegNextStmt(self, node):
         if node.reg.name == self.visit_var:
             return AssignValue(
                 target=f'{self.visit_var}_next',
                 val=svexpr(node.val),
                 width=int(node.reg.dtype))
 
-    def visit_VariableExpr(self, node):
+    def visit_VariableStmt(self, node):
         if node.variable.name == self.visit_var:
             return AssignValue(
                 target=f'{self.visit_var}_v',
@@ -250,9 +248,7 @@ class SVCompilerPreprocess(InstanceVisitor):
 
             if exit_cond and var_is_reg:
                 svblock.stmts.append(
-                    AssignValue(
-                        target=f'{self.visit_var}_rst', val=exit_cond,
-                        width=1))
+                    AssignValue(target=f'{self.visit_var}_rst', val=exit_cond))
 
             if cycle_cond:
                 cond = cycle_cond
@@ -265,9 +261,7 @@ class SVCompilerPreprocess(InstanceVisitor):
                             node.in_cond)):
                         svblock.stmts.append(
                             AssignValue(
-                                target=f'{self.visit_var}.ready',
-                                val=cond,
-                                width=1))
+                                target=f'{self.visit_var}.ready', val=cond))
                 elif var_is_reg:
                     s = self.write_reg_enable(node, cond)
                     if s:

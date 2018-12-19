@@ -65,7 +65,7 @@ class RegDef(Expr, pytypes.NamedTuple):
             return self.val.dtype
 
 
-class RegNextExpr(Expr, pytypes.NamedTuple):
+class RegNextStmt(Expr, pytypes.NamedTuple):
     reg: RegDef
     val: Expr
 
@@ -92,7 +92,7 @@ class VariableDef(pytypes.NamedTuple):
         return self.val.dtype
 
 
-class VariableExpr(Expr, pytypes.NamedTuple):
+class VariableStmt(Expr, pytypes.NamedTuple):
     variable: VariableDef
     val: Expr
 
@@ -241,7 +241,13 @@ class IntfBlock(Block, pytypes.NamedTuple):
 
     @property
     def exit_cond(self):
-        return None
+        exit_conditions = find_exit_cond(self.stmts)
+        if len(exit_conditions) == 0:
+            return None
+        elif len(exit_conditions) > 1:
+            raise Exception
+        else:
+            return exit_conditions[0]
 
 
 class IntfLoop(Block, pytypes.NamedTuple):
@@ -259,29 +265,17 @@ class IntfLoop(Block, pytypes.NamedTuple):
 
     @property
     def exit_cond(self):
-        conditions = [self.cycle_cond]
-        if len(conditions) == 0:
-            pass
-        elif len(conditions) > 1:
-            raise Exception
-
         exit_conditions = find_exit_cond(self.stmts)
         if len(exit_conditions) == 0:
-            pass
+            exit_c = None
         elif len(exit_conditions) > 1:
             raise Exception
         else:
-            conditions.append(exit_conditions[0])
-
-        op1 = None
-        if len(conditions) == 1:
-            op1 = conditions[0]
-        elif len(conditions) == 2:
-            op1 = BinOpExpr((conditions[0], conditions[1]), '&&')
+            exit_c = exit_conditions[0]
 
         intf_expr = IntfExpr(self.intf.intf, context='eot')
-        if op1 is not None:
-            return BinOpExpr((intf_expr, op1), '&&')
+        if exit_c is not None:
+            return BinOpExpr((intf_expr, exit_c), '&&')
         else:
             return intf_expr
 
@@ -323,14 +317,22 @@ class Loop(Block, pytypes.NamedTuple):
 
     @property
     def cycle_cond(self):
-        return find_cycle_cond(self.stmts)
+        return find_cycle_cond(self.stmts)[0]
 
     @property
     def exit_cond(self):
-        conds = self.cycle_cond
-        if self.exit_c:
-            conds.append(self.exit_c)
-        return conds + find_exit_cond(self.stmts)
+        exit_conditions = find_exit_cond(self.stmts)
+        if len(exit_conditions) == 0:
+            exit_c = None
+        elif len(exit_conditions) > 1:
+            raise Exception
+        else:
+            exit_c = exit_conditions[0]
+
+        if exit_c is not None:
+            return BinOpExpr((self.exit_c, exit_c), '&&')
+        else:
+            return self.exit_c
 
 
 class Module(pytypes.NamedTuple):

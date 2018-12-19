@@ -225,7 +225,7 @@ class HdlAst(ast.NodeVisitor):
 
         if isinstance(var, ht.RegDef):
             for stmt in self.walk_up_block_hier():
-                if isinstance(stmt, ht.RegNextExpr):
+                if isinstance(stmt, ht.RegNextStmt):
                     if stmt.reg.name == pyname:
                         var = ht.RegVal(var, f'{var.name}_next')
                         break
@@ -237,7 +237,7 @@ class HdlAst(ast.NodeVisitor):
                 var = ht.RegVal(var, name)
         elif isinstance(var, ht.VariableDef):
             for stmt in self.walk_up_block_hier():
-                if isinstance(stmt, ht.VariableExpr):
+                if isinstance(stmt, ht.VariableStmt):
                     var = ht.VariableVal(var, f'{var.name}_v')
                     break
             else:
@@ -277,11 +277,11 @@ class HdlAst(ast.NodeVisitor):
         scope = gather_control_stmt_vars(node.items[0].optional_vars, intf)
         self.svlocals.update(scope)
 
-        svnode = ht.IntfBlock(intf._replace(context='valid'), [])
+        hdl_node = ht.IntfBlock(intf._replace(context='valid'), [])
 
-        self.visit_block(svnode, node.body)
+        self.stages.append(hdl_node)
 
-        return svnode
+        return self.visit_block(hdl_node, node.body)
 
     def visit_Subscript(self, node):
         val_expr = self.visit(node.value)
@@ -332,13 +332,13 @@ class HdlAst(ast.NodeVisitor):
         if name not in self.svlocals:
             if name in self.variables:
                 self.svlocals[name] = ht.VariableDef(val, name)
-                return ht.VariableExpr(self.svlocals[name], val)
+                return ht.VariableStmt(self.svlocals[name], val)
             else:
                 self.svlocals[name] = ht.RegDef(val, name)
         elif name in self.regs:
-            return ht.RegNextExpr(self.svlocals[name], val)
+            return ht.RegNextStmt(self.svlocals[name], val)
         elif name in self.variables:
-            return ht.VariableExpr(self.svlocals[name], val)
+            return ht.VariableStmt(self.svlocals[name], val)
 
     def visit_NameExpression(self, node):
         ret = eval_expression(node, self.locals)
@@ -509,31 +509,31 @@ class HdlAst(ast.NodeVisitor):
             var = ht.VariableDef(exit_cond, name)
             self.variables[name] = ht.VariableVal(var, name)
             self.svlocals[name] = var
-            exit_cond = var
+            exit_cond = self.variables[name]
             # stmts.append(exit_cond)
 
-        svnode = ht.Loop(
+        hdl_node = ht.Loop(
             in_cond=None, stmts=[], exit_c=exit_cond, multicycle=names)
 
         if is_qrange and is_start:
             loop_stmts = self.qrange_impl(
                 name=names[0],
                 node=node,
-                svnode=svnode,
+                svnode=hdl_node,
                 rng=[start, stop, step])
 
-            self.visit_block(svnode, node.body)
+            self.visit_block(hdl_node, node.body)
 
-            svnode.stmts.extend(loop_stmts)
+            hdl_node.stmts.extend(loop_stmts)
 
         else:
-            self.visit_block(svnode, node.body)
+            self.visit_block(hdl_node, node.body)
 
             target = node.target if len(names) == 1 else node.target.elts[0]
-            svnode.stmts.append(
+            hdl_node.stmts.append(
                 self.visit(increment_reg(names[0], val=step, target=target)))
 
-        return svnode
+        return hdl_node
 
     def switch_reg_and_var(self, name):
         switch_name = f'{name}_switch'

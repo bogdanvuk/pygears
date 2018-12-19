@@ -58,7 +58,10 @@ class SVCompiler(InstanceVisitor):
             self.writer.line(f'end')
 
     def visit_AssignValue(self, node):
-        self.writer.line(f"{node.target} = {node.width}'({node.val});")
+        if node.width:
+            self.writer.line(f"{node.target} = {node.width}'({node.val});")
+        else:
+            self.writer.line(f"{node.target} = {node.val};")
 
     def visit_CombBlock(self, node):
         self.writer.line(f'// Comb block for: {self.visit_var}')
@@ -72,7 +75,10 @@ class SVCompiler(InstanceVisitor):
         self.enter_block(node)
 
         for name, val in node.dflts.items():
-            self.writer.line(f"{name} = {val.width}'({val.val});")
+            if val.width:
+                self.writer.line(f"{name} = {val.width}'({val.val});")
+            else:
+                self.writer.line(f"{name} = {val.val};")
 
         if not hasattr(node, 'else_cond') or node.else_cond is None:
             for stmt in node.stmts:
@@ -129,7 +135,8 @@ def write_module(node, sv_stmts, writer):
 
         if stage.exit_cond is not None:
             writer.line(
-                f'assign exit_cond_stage_{i} = {svexpr(stage.exit_cond)};')
+                f'assign exit_cond_stage_{i} = ({svexpr(stage.exit_cond)}) && cycle_cond_stage_{i};'
+            )
 
     for name, expr in node.regs.items():
         writer.block(reg_template.format(name, int(expr.val)))
