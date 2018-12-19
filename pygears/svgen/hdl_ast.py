@@ -200,6 +200,7 @@ class HdlAst(ast.NodeVisitor):
         self.variables = variables
         self.regs = regs
         self.scope = []
+        self.stages = []
 
         # self.svlocals = {p.svrepr: p for p in self.in_ports}
         self.svlocals = {p.name: p for p in self.in_ports}
@@ -249,11 +250,9 @@ class HdlAst(ast.NodeVisitor):
         self.svlocals.update(scope)
 
         hdl_node = ht.IntfLoop(intf._replace(context='valid'), [])
+        self.stages.append(hdl_node)
 
         return self.visit_hier(node, hdl_node)
-        # self.visit_block(svnode, node.body)
-
-        # return svnode
 
     def visit_block(self, svnode, body):
 
@@ -664,6 +663,7 @@ class HdlAst(ast.NodeVisitor):
             locals=self.svlocals,
             regs=self.regs,
             variables=self.variables,
+            stages=self.stages,
             stmts=[])
 
         return self.visit_hier(node, hdl_node)

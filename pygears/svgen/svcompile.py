@@ -3,7 +3,7 @@ import inspect
 
 from .hdl_ast import HdlAst, RegFinder
 from .util import svgen_typedef
-from .hdl_preprocess import InstanceVisitor, SVCompilerPreprocess
+from .hdl_preprocess import InstanceVisitor, SVCompilerPreprocess, svexpr
 
 reg_template = """
 always_ff @(posedge clk) begin
@@ -114,6 +114,22 @@ def write_module(node, sv_stmts, writer):
         writer.block(svgen_typedef(expr.dtype, name))
         writer.line(f'{name}_t {name}_v;')
         writer.line()
+
+    for i, stage in enumerate(node.stages):
+        if stage.cycle_cond is not None:
+            writer.line(f'logic cycle_cond_stage_{i};')
+
+        if stage.exit_cond is not None:
+            writer.line(f'logic exit_cond_stage_{i};')
+
+    for i, stage in enumerate(node.stages):
+        if stage.cycle_cond is not None:
+            writer.line(
+                f'assign cycle_cond_stage_{i} = {svexpr(stage.cycle_cond)};')
+
+        if stage.exit_cond is not None:
+            writer.line(
+                f'assign exit_cond_stage_{i} = {svexpr(stage.exit_cond)};')
 
     for name, expr in node.regs.items():
         writer.block(reg_template.format(name, int(expr.val)))

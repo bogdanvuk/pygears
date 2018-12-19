@@ -338,6 +338,7 @@ class Module(pytypes.NamedTuple):
     out_ports: pytypes.List
     locals: pytypes.Dict
     regs: pytypes.Dict
+    stages: pytypes.List
     variables: pytypes.Dict
     stmts: pytypes.List
 

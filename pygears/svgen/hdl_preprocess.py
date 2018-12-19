@@ -1,7 +1,6 @@
 import typing as pytypes
 
 import hdl_types as ht
-from pygears.core.port import InPort
 from pygears.typing import Array, Integer, typeof, Queue
 from pygears.typing.base import TypingMeta
 
@@ -31,80 +30,16 @@ class InstanceVisitor:
         return visitor(node)
 
     def generic_visit(self, node):
+        breakpoint()
         raise Exception
-        # for field, value in ast.iter_fields(node):
-        #     if isinstance(value, list):
-        #         for item in value:
-        #             if isinstance(item, ast.AST):
-        #                 self.visit(item)
-        #     elif isinstance(value, ast.AST):
-        #         self.visit(value)
 
 
-class SVCompilerPreprocess(InstanceVisitor):
-    def __init__(self, visit_var, dflts=None):
-        self.svlines = []
-        self.scope = []
-        self.dflts = dflts if dflts else {}
-        self.visit_var = visit_var
+def svexpr(expr, visit_var=None):
+    v = SVExpressionVisitor()
+    return v.visit(expr)
 
-    def enter_block(self, block):
-        self.scope.append(block)
 
-    def exit_block(self):
-        self.scope.pop()
-
-    def write_reg_enable(self, node, cond):
-        if self.visit_var in self.module.regs:
-            # register is enabled if it is assigned in the current block
-            for stmt in node.stmts:
-                if isinstance(
-                        stmt,
-                        ht.RegNextExpr) and (stmt.reg.name == self.visit_var):
-                    return AssignValue(
-                        target=f'{self.visit_var}_en', val=cond, width=1)
-
-    def visit_Module(self, node):
-        self.module = node
-        comb_block = CombBlock(stmts=[], dflts={})
-        self.enter_block(node)
-
-        for d in self.dflts:
-            comb_block.dflts[f'{self.visit_var}{d}'] = AssignValue(
-                f'{self.visit_var}{d}', 0, 1)
-
-        for stmt in node.stmts:
-            s = self.visit(stmt)
-            if s:
-                comb_block.stmts.append(s)
-
-        self.exit_block()
-        self.update_defaults(comb_block)
-
-        if not comb_block.stmts and not comb_block.dflts:
-            # variable isn't always assigned
-            # it can be implicit in a loop
-            if self.visit_var in node.variables:
-                var = node.variables[self.visit_var]
-                value = self.visit(var.variable.val)
-                name = f'{self.visit_var}_v'
-                comb_block.dflts[name] = AssignValue(name, value,
-                                                     int(var.dtype))
-
-        return comb_block
-
-    def find_cycle_cond(self, node):
-        for block in reversed(self.scope):
-            if isinstance(block, ht.Module):
-                return None
-            if block.cycle_cond is not None:
-                parent_cond = self.visit(block.cycle_cond)
-                if parent_cond:
-                    return parent_cond
-
-    def find_exit_cond(self, node):
-        if hasattr(node, 'exit_cond') and node.exit_cond:
-            return self.visit(node.exit_cond)
+class SVExpressionVisitor(InstanceVisitor):
 
     def visit_VariableVal(self, node):
         return node.name
@@ -175,10 +110,82 @@ class SVCompilerPreprocess(InstanceVisitor):
         else:
             return f'{node.intf.basename}_s'
 
+
+class SVCompilerPreprocess(InstanceVisitor):
+    def __init__(self, visit_var, dflts=None):
+        self.svlines = []
+        self.scope = []
+        self.current_stage = None
+        self.dflts = dflts if dflts else {}
+        self.visit_var = visit_var
+
+    def enter_block(self, block):
+        if block in self.module.stages:
+            self.current_stage = block
+
+        self.scope.append(block)
+
+    def exit_block(self):
+        block = self.scope.pop()
+        if block is self.current_stage:
+            self.current_stage = None
+
+    def write_reg_enable(self, node, cond):
+        if self.visit_var in self.module.regs:
+            # register is enabled if it is assigned in the current block
+            for stmt in node.stmts:
+                if isinstance(
+                        stmt,
+                        ht.RegNextExpr) and (stmt.reg.name == self.visit_var):
+                    return AssignValue(
+                        target=f'{self.visit_var}_en', val=cond, width=1)
+
+    def visit_Module(self, node):
+        self.module = node
+        comb_block = CombBlock(stmts=[], dflts={})
+        self.enter_block(node)
+
+        for d in self.dflts:
+            comb_block.dflts[f'{self.visit_var}{d}'] = AssignValue(
+                f'{self.visit_var}{d}', 0, 1)
+
+        for stmt in node.stmts:
+            s = self.visit(stmt)
+            if s:
+                comb_block.stmts.append(s)
+
+        self.exit_block()
+        self.update_defaults(comb_block)
+
+        if not comb_block.stmts and not comb_block.dflts:
+            # variable isn't always assigned
+            # it can be implicit in a loop
+            if self.visit_var in node.variables:
+                var = node.variables[self.visit_var]
+                value = self.visit(var.variable.val)
+                name = f'{self.visit_var}_v'
+                comb_block.dflts[name] = AssignValue(name, value,
+                                                     int(var.dtype))
+
+        return comb_block
+
+    def find_cycle_cond(self, node):
+        for block in reversed(self.scope):
+            if isinstance(block, ht.Module):
+                return None
+            if block.cycle_cond is not None:
+                parent_cond = self.visit(block.cycle_cond)
+                if parent_cond:
+                    return parent_cond
+
+    def find_exit_cond(self, node):
+        if hasattr(node, 'exit_cond') and node.exit_cond:
+            return self.visit(node.exit_cond)
+
     def visit_Yield(self, node):
         for port in self.module.out_ports:
             if port.name == self.visit_var:
-                name = self.visit(node.expr)
+                name = svexpr(node.expr)
                 return SVBlock(
                     dflts={
                         f'{self.visit_var}.valid':
@@ -189,31 +196,31 @@ class SVCompilerPreprocess(InstanceVisitor):
                     },
                     stmts=[])
 
+    def visit_IfBlock(self, node):
+        in_cond = svexpr(node.in_cond)
+        svblock = SVBlock(in_cond=in_cond, stmts=[], dflts={})
+        return self.traverse_block(svblock, node)
+
+    def visit_IntfBlock(self, node):
+        svblock = SVBlock(in_cond=svexpr(node.in_cond), stmts=[], dflts={})
+        return self.traverse_block(svblock, node)
+
+    def visit_IntfLoop(self, node):
+        return self.visit_IntfBlock(node)
+
     def visit_RegNextExpr(self, node):
         if node.reg.name == self.visit_var:
             return AssignValue(
                 target=f'{self.visit_var}_next',
-                val=self.visit(node.val),
+                val=svexpr(node.val),
                 width=int(node.reg.dtype))
 
     def visit_VariableExpr(self, node):
         if node.variable.name == self.visit_var:
             return AssignValue(
                 target=f'{self.visit_var}_v',
-                val=self.visit(node.val),
+                val=svexpr(node.val),
                 width=int(node.variable.dtype))
-
-    def visit_IfBlock(self, node):
-        in_cond = self.visit(node.in_cond)
-        svblock = SVBlock(in_cond=in_cond, stmts=[], dflts={})
-        return self.traverse_block(svblock, node)
-
-    def visit_IntfBlock(self, node):
-        svblock = SVBlock(in_cond=self.visit(node.in_cond), stmts=[], dflts={})
-        return self.traverse_block(svblock, node)
-
-    def visit_IntfLoop(self, node):
-        return self.visit_IntfBlock(node)
 
     def traverse_block(self, svblock, node):
         var_is_reg = (self.visit_var in self.module.regs)
@@ -224,8 +231,19 @@ class SVCompilerPreprocess(InstanceVisitor):
 
         self.enter_block(node)
 
-        cycle_cond = self.find_cycle_cond(node)
-        exit_cond = self.find_exit_cond(node)
+        if self.current_stage is not None:
+            stage_id = self.module.stages.index(self.current_stage)
+            cycle_cond = None
+            if self.current_stage.cycle_cond is not None:
+                cycle_cond = f'cycle_cond_stage_{stage_id}'
+
+            exit_cond = None
+            if self.current_stage.exit_cond is not None:
+                exit_cond = f'exit_cond_stage_{stage_id}'
+        else:
+            cycle_cond = self.find_cycle_cond(node)
+            exit_cond = self.find_exit_cond(node)
+
         if cycle_cond or getattr(node, 'exit_cond', []):
             # cycle_cond = self.find_cycle_cond(node)
             # exit_cond = self.find_exit_cond(node)
@@ -243,7 +261,7 @@ class SVCompilerPreprocess(InstanceVisitor):
                         cond = exit_cond
 
                 if var_is_port:
-                    if not node.in_cond or (self.visit_var in self.visit(
+                    if not node.in_cond or (self.visit_var in svexpr(
                             node.in_cond)):
                         svblock.stmts.append(
                             AssignValue(
@@ -330,7 +348,7 @@ class SVCompilerPreprocess(InstanceVisitor):
     def visit_Loop(self, node):
         in_cond = None
         if node.in_cond:
-            in_cond = self.visit(node.in_cond)
+            in_cond = svexpr(node.in_cond)
         svblock = SVBlock(in_cond=in_cond, stmts=[], dflts={})
         return self.traverse_block(svblock, node)
 
