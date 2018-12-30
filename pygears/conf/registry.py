@@ -34,6 +34,25 @@ def get_args_from_registry(arg_dict):
                 arg_dict[k] = None
 
 
+def inject_async(func):
+    import inspect
+    sig = inspect.signature(func)
+    # default values in func definition
+    injections = tuple(v.default.args[0] for k, v in sig.parameters.items()
+                       if isinstance(v.default, Inject))
+
+    func = intercept_arguments(
+        func, cb_named=get_args_from_registry, cb_kwds=get_args_from_registry)
+
+    try:
+        all(registry(i) for i in injections)
+        func()
+    except KeyError:
+        PluginBase.async_reg[func] = injections
+
+    return func
+
+
 def reg_inject(func):
     return intercept_arguments(
         func, cb_named=get_args_from_registry, cb_kwds=get_args_from_registry)
@@ -64,6 +83,7 @@ class PluginBase:
     subclasses = []
     registry = {}
     cb = {}
+    async_reg = {}
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
@@ -126,6 +146,8 @@ def safe_bind(key_path, value):
     if key_path in PluginBase.cb:
         PluginBase.cb[key_path](value)
 
+    manage_async_regs(key_path)
+
 
 def bind_by_path(key_path, value):
     reg = PluginBase.registry
@@ -133,6 +155,24 @@ def bind_by_path(key_path, value):
     nested_set(reg, value, *key_path.split(delimiter))
     if key_path in cb:
         cb[key_path](value)
+
+
+def manage_async_regs(key_path):
+    resolved = []
+
+    for func, injections in PluginBase.async_reg.items():
+        if key_path not in injections:
+            continue
+
+        try:
+            all(registry(i) for i in injections)
+            resolved.append(func)
+            func()
+        except KeyError:
+            pass
+
+    for r in resolved:
+        PluginBase.async_reg.pop(r)
 
 
 def bind(key_pattern, value):
@@ -154,6 +194,7 @@ def bind(key_pattern, value):
     # if there is no need to match anything (no wildcards)
     if not any(c in key_pattern for c in wildcard_list):
         bind_by_path(key_path=key_pattern, value=value)
+        manage_async_regs(key_pattern)
         return
 
     matched = False
@@ -164,6 +205,8 @@ def bind(key_pattern, value):
             matched = True
     if not matched:
         raise RegistryException(f'Bind not successful for {key_pattern}')
+    else:
+        manage_async_regs(key_pattern)
 
 
 def clear():
