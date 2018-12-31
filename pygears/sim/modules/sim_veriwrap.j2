@@ -37,6 +37,10 @@ void back(void) {
     if (tfp) tfp->dump (main_time);
 {% endif %}
     main_time+=5;
+{% if tracing %}
+    if (tfp) tfp->dump (main_time);
+    tfp->flush();
+{% endif %}
 }
 
 void cycle(void) {
@@ -46,6 +50,7 @@ void cycle(void) {
     top->clk = 1;
     top->eval();
 {% if tracing %}
+    if (tfp) tfp->dump (main_time);
     tfp->flush();
 {% endif %}
 }
@@ -64,8 +69,6 @@ int init(void) {
     printf("%p\n", tfp);
 #endif
     tfp->open("{{outdir}}/vlt_dump.vcd");  // Open the dump file
-    tfp->flush();
-    tfp->dump(0);
 #ifdef DEBUG
     printf("tfp->open\n");
 #endif
@@ -77,6 +80,11 @@ int init(void) {
 
     top->rst = 1;
     top->eval();
+
+{% if tracing %}
+    tfp->dump(0);
+    tfp->flush();
+{% endif %}
 
     return 0;
 }

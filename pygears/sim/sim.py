@@ -187,10 +187,13 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
         # self.cur_gear.phase = 'forward'
 
+        before_event = None
+        after_event = None
+
         if ready is self.forward_ready:
             before_event = self.events['before_call_forward']
             after_event = self.events['after_call_forward']
-        else:
+        elif ready is self.back_ready:
             before_event = self.events['before_call_back']
             after_event = self.events['after_call_back']
 
@@ -228,7 +231,9 @@ class EventLoop(asyncio.events.AbstractEventLoop):
     def sim_loop(self, timeout):
         clk = registry('sim/clk_event')
         delta = registry('sim/delta_event')
+
         timestep = 0
+        bind('sim/timestep', timestep)
 
         start_time = time.time()
 
@@ -262,6 +267,11 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
             clk.set()
             clk.clear()
+
+            for sim_gear in reversed(self.sim_gears):
+                if sim_gear in self.delta_ready:
+                    self.maybe_run_gear(sim_gear, self.delta_ready)
+
             timestep += 1
             bind('sim/timestep', timestep)
 
@@ -293,7 +303,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
         bind('sim/clk_event', asyncio.Event())
         bind('sim/delta_event', asyncio.Event())
-        bind('sim/timestep', 0)
+        bind('sim/timestep', None)
 
         self.events['before_setup'](self)
 

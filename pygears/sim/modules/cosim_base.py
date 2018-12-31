@@ -15,7 +15,6 @@ class CosimBase(SimGear):
         self.timeout = timeout
 
     def _forward(self):
-        self.handlers[self.SYNCHRO_HANDLE_NAME].cycle()
 
         for p in self.gear.in_ports:
             intf = p.consumer
@@ -85,8 +84,10 @@ class CosimBase(SimGear):
                 if phase == 'forward':
                     self.activity_monitor += 1
                     self._forward()
-                else:
+                elif phase == 'back':
                     self._back()
+                elif phase == 'cycle':
+                    self.handlers[self.SYNCHRO_HANDLE_NAME].cycle()
 
                 if self.activity_monitor == self.timeout:
                     raise GearDone

@@ -1,3 +1,4 @@
+import inspect
 import fnmatch
 import importlib
 import os
@@ -35,7 +36,6 @@ def get_args_from_registry(arg_dict):
 
 
 def inject_async(func):
-    import inspect
     sig = inspect.signature(func)
     # default values in func definition
     injections = tuple(v.default.args[0] for k, v in sig.parameters.items()

@@ -12,13 +12,14 @@ import atexit
 
 signal_spy_connect_t = Template("""
 ${intf_name}_t ${intf_name}_data;
+logic [1:0] ${intf_name}_state;
 logic ${intf_name}_valid;
 logic ${intf_name}_ready;
 
 assign ${intf_name}_data = ${conn_name}.data;
 assign ${intf_name}_valid = ${conn_name}.valid;
 assign ${intf_name}_ready = ${conn_name}.ready;
-assign ${intf_name}_handshake = ${conn_name}.ready & ${conn_name}.valid;""")
+assign ${intf_name}_state = {${conn_name}.ready, ${conn_name}.valid};""")
 
 
 class VerilatorCompileError(Exception):
