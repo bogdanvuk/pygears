@@ -10,6 +10,7 @@ from pygears.svgen.svparse import parse
 
 from .svcompile import compile_gear
 from .inst import svgen_log
+from .sv_keywords import sv_keywords
 
 
 def find_in_dirs(fn, dirs):
@@ -85,7 +86,11 @@ class SVModuleGen:
 
     @property
     def sv_inst_name(self):
-        return self.node.inst_basename
+        inst_name = self.node.inst_basename
+        if inst_name in sv_keywords:
+            return f'{inst_name}_i'
+        else:
+            return inst_name
 
     @property
     def sv_file_name(self):

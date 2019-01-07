@@ -18,8 +18,7 @@ logic ${intf_name}_ready;
 
 assign ${intf_name}_data = ${conn_name}.data;
 assign ${intf_name}_valid = ${conn_name}.valid;
-assign ${intf_name}_ready = ${conn_name}.ready;
-assign ${intf_name}_state = {${conn_name}.ready, ${conn_name}.valid};""")
+assign ${intf_name}_ready = ${conn_name}.ready;""")
 
 
 class VerilatorCompileError(Exception):
