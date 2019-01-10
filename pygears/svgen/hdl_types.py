@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import typing as pytypes
 
 from pygears.typing import Tuple, typeof, Uint, Queue, is_type, Bool
@@ -229,6 +230,7 @@ class Yield(pytypes.NamedTuple):
 # Blocks
 
 
+@dataclass
 class Block:
     @property
     def in_cond(self):
@@ -243,7 +245,8 @@ class Block:
         pass
 
 
-class IntfBlock(Block, pytypes.NamedTuple):
+@dataclass
+class IntfBlock(Block):
     intf: pytypes.Any
     stmts: list
 
@@ -291,10 +294,9 @@ class IfBlock(Block, pytypes.NamedTuple):
         if condition is None:
             return None
 
-        return BinOpExpr(
-            (UnaryOpExpr(self.in_cond, '!'), and_expr(self.in_cond,
-                                                      condition)),
-            operator='||')
+        return BinOpExpr((UnaryOpExpr(self.in_cond, '!'),
+                          and_expr(self.in_cond, condition)),
+                         operator='||')
 
     @property
     def exit_cond(self):
@@ -302,10 +304,9 @@ class IfBlock(Block, pytypes.NamedTuple):
         if condition is None:
             return None
 
-        return BinOpExpr(
-            (UnaryOpExpr(self.in_cond, '!'), and_expr(self.in_cond,
-                                                      condition)),
-            operator='||')
+        return BinOpExpr((UnaryOpExpr(self.in_cond, '!'),
+                          and_expr(self.in_cond, condition)),
+                         operator='||')
 
 
 class IfElseBlock(Block, pytypes.NamedTuple):
@@ -338,41 +339,11 @@ class Loop(Block, pytypes.NamedTuple):
                         and_expr(self.exit_c, find_exit_cond(self.stmts)))
 
 
-class Stage(Block, pytypes.NamedTuple):
-    parent: pytypes.Any
-    state_var: RegVal
-    state_id: int
-    stmts: list
-
-    @property
-    def stage_id(self):
-        if self.parent is None:
-            return str(self.state_id)
-        else:
-            return f'{self.parent.stage_id}_{self.state_id}'
-
-    @property
-    def in_cond(self):
-        return BinOpExpr(
-            (self.state_var, ResExpr(self.state_var.dtype(self.state_id))),
-            '==')
-
-    @property
-    def cycle_cond(self):
-        return find_cycle_cond(self.stmts)
-
-    @property
-    def exit_cond(self):
-        exit_condition = find_exit_cond(self.stmts)
-        return and_expr(self.in_cond, exit_condition)
-
-
 class Module(pytypes.NamedTuple):
     in_ports: pytypes.List
     out_ports: pytypes.List
     locals: pytypes.Dict
     regs: pytypes.Dict
-    stages: pytypes.List
     variables: pytypes.Dict
     stmts: pytypes.List
 

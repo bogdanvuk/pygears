@@ -1,9 +1,12 @@
 import ast
 import inspect
 
-from .hdl_ast import HdlAst, RegFinder
+from .hdl_ast import HdlAst
+from .reg_finder import RegFinder
 from .util import svgen_typedef
 from .hdl_preprocess import InstanceVisitor, SVCompilerPreprocess, svexpr, AssignValue
+from .scheduling import Scheduler
+from .state_finder import StateFinder
 import hdl_types as ht
 
 reg_template = """
@@ -218,6 +221,11 @@ def compile_gear_body(gear):
 
     # py ast to hdl ast
     hdl_ast = HdlAst(gear, v.regs, v.variables).visit(body_ast)
+    schedule = Scheduler().visit(hdl_ast)
+    states = StateFinder()
+    states.visit(schedule)
+    import pdb
+    pdb.set_trace()
 
     # pprint(hdl_ast)
 

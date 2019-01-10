@@ -1,7 +1,6 @@
 import ast
 
 import hdl_types as ht
-from pygears.core.port import InPort
 from pygears.typing import Any, Int, Uint, Unit, bitw, is_type
 from svcompile_snippets import qrange
 
@@ -134,59 +133,6 @@ def increment_reg(name, val=ast.Num(1), target=None):
     return ast.Assign([target], expr)
 
 
-class RegFinder(ast.NodeVisitor):
-    def __init__(self, gear):
-        self.regs = {}
-        self.variables = {}
-        self.local_params = {
-            **{p.basename: p.consumer
-               for p in gear.in_ports},
-            **gear.explicit_params
-        }
-
-    def promote_var_to_reg(self, name):
-        val = self.variables[name]
-
-        # wire, not register
-        if isinstance(val, ast.AST):
-            return
-
-        if not is_type(type(val)):
-            if val < 0:
-                val = Int(val)
-            else:
-                val = Uint(val)
-
-        self.regs[name] = ht.ResExpr(val)
-
-    def clean_variables(self):
-        for r in self.regs:
-            del self.variables[r]
-
-    def visit_AugAssign(self, node):
-        self.promote_var_to_reg(node.target.id)
-
-    def visit_For(self, node):
-        if isinstance(node.target, ast.Tuple):
-            for el in node.target.elts:
-                if el.id in self.variables:
-                    self.promote_var_to_reg(el.id)
-        else:
-            self.promote_var_to_reg(node.target.id)
-
-    def visit_Assign(self, node):
-        name = node.targets[0].id
-        if name not in self.variables:
-            try:
-                self.variables[name] = eval_expression(node.value,
-                                                       self.local_params)
-            except NameError:
-                # wires/variables are not defined previously
-                self.variables[name] = node.value
-        else:
-            self.promote_var_to_reg(name)
-
-
 class HdlAst(ast.NodeVisitor):
     def __init__(self, gear, regs, variables):
         self.in_ports = [ht.IntfExpr(p) for p in gear.in_ports]
@@ -201,7 +147,6 @@ class HdlAst(ast.NodeVisitor):
         self.regs = regs
         self.scope = []
         self.stage_hier = []
-        self.stages = []
 
         # self.svlocals = {p.svrepr: p for p in self.in_ports}
         self.svlocals = {p.name: p for p in self.in_ports}
@@ -252,7 +197,7 @@ class HdlAst(ast.NodeVisitor):
 
         hdl_node = ht.IntfLoop(intf._replace(context='valid'), [])
 
-        return self.visit_hier(node, hdl_node)
+        return self.visit_block(hdl_node, node.body)
 
     def visit_block(self, svnode, body):
 
@@ -594,79 +539,16 @@ class HdlAst(ast.NodeVisitor):
     def visit_Yield(self, node):
         return ht.Yield(super().visit(node.value))
 
-    def visit_hier(self, node, hdl_node):
-
-        hier_blocks, non_blocking = find_hier_blocks(node.body)
-
-        if not hier_blocks:
-            return self.visit_block(hdl_node, node.body)
-
-        if len(hier_blocks) == 1:
-            return self.visit_block(hdl_node, node.body)
-
-        # state needed, more than 1 hier block
-        self.create_state_reg(len(hier_blocks))
-        hdl_node.regs.update(self.regs)
-        state_reg = ht.RegVal(self.svlocals['state'], 'state_reg')
-
-        # register initializations
-        for stmt in node.body:
-            if isinstance(stmt, ast.Assign):
-                self.visit(stmt)
-            else:
-                break
-
-        # sub blocks
-        for i, stmt in enumerate(hier_blocks):
-
-            sub = ht.Stage(
-                parent=self.stage_hier[-1] if self.stage_hier else None,
-                state_var=state_reg,
-                state_id=i,
-                stmts=[])
-
-            self.stages.append(sub)
-            self.stage_hier.append(sub)
-            self.enter_block(sub)
-            sub.stmts.append(self.visit(stmt))
-            self.exit_block()
-            self.stage_hier.pop()
-
-            # t = type(self.svlocals['state'].val)
-            # in_cond = ht.BinOpExpr((state_reg, ht.ResExpr(t(i))), '==')
-
-            # # exit conditions different if not last
-            # exit_cond = getattr(sub_block, 'exit_cond', None)
-            # if exit_cond and i != (len(hier_blocks) - 1):
-            #     assert len(exit_cond) == 1  # temporary guard
-            #     if isinstance(exit_cond[0], InPort):
-            #         check_state = ht.IntfBlock(
-            #             intf=ht.IntfExpr(exit_cond[0], 'eot'),
-            #             stmts=[self.visit(increment_reg('state'))])
-            #     else:
-            #         check_state = ht.IfBlock(
-            #             in_cond=exit_cond[0],
-            #             stmts=[self.visit(increment_reg('state'))])
-            #     stmts.insert(0, check_state)
-            #     exit_cond = None
-
-            # sub_cpy = ht.Loop(in_cond=in_cond, stmts=stmts, exit_c=exit_cond)
-
-            hdl_node.stmts.append(sub)
-
-        return hdl_node
-
     def visit_AsyncFunctionDef(self, node):
         hdl_node = ht.Module(
             in_ports=self.in_ports,
             out_ports=self.out_ports,
             locals=self.svlocals,
             regs=self.regs,
-            stages=self.stages,
             variables=self.variables,
             stmts=[])
 
-        return self.visit_hier(node, hdl_node)
+        return self.visit_block(hdl_node, node.body)
 
     def create_state_reg(self, state_num):
         if state_num > 1:
