@@ -1,9 +1,9 @@
 from pygears.rtl.gear import RTLGearHierVisitor
 from pygears.svgen.inst import SVGenInstPlugin, svgen_inst
-from pygears.svgen.util import svgen_visitor
+from pygears.rtl import flow_visitor
 
 
-@svgen_visitor
+@flow_visitor
 class RemoveTupleFlattenVisitor(RTLGearHierVisitor):
     def flatten_tuple(self, node):
         node.bypass()

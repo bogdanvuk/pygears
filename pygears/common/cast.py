@@ -6,7 +6,7 @@ from pygears.rtl.inst import RTLNodeInstPlugin
 from pygears.typing_common import cast as type_cast
 from pygears.rtl.gear import RTLGearHierVisitor
 from pygears.svgen.svgen import SVGenPlugin
-from pygears.svgen.util import svgen_visitor
+from pygears.rtl import flow_visitor
 
 
 @gear
@@ -24,7 +24,7 @@ def pipe(self, other):
     return cast(self, cast_type=other, name=name)
 
 
-@svgen_visitor
+@flow_visitor
 class RemoveEqualReprCastVisitor(RTLGearHierVisitor):
     def cast(self, node):
         pout = node.out_ports[0]

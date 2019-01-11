@@ -5,7 +5,7 @@ from pygears.svgen.inst import SVGenInstPlugin
 from pygears.svgen.svmod import SVModuleGen
 from functools import partial
 from pygears.svgen.svgen import SVGenPlugin
-from pygears.svgen.util import svgen_visitor
+from pygears.rtl import flow_visitor
 from pygears.core.hier_node import HierVisitorBase
 from pygears.svgen.inst import svgen_inst
 from pygears.rtl.gear import RTLGearHierVisitor, is_gear_instance
@@ -62,7 +62,7 @@ class SVGenSieve(SVModuleGen):
         return template_env.render_local(__file__, "sieve.j2", context)
 
 
-@svgen_visitor
+@flow_visitor
 class RemoveEqualReprSieveVisitor(RTLGearHierVisitor):
     def sieve(self, node):
         pout = node.out_ports[0]
@@ -72,7 +72,7 @@ class RemoveEqualReprSieveVisitor(RTLGearHierVisitor):
             node.bypass()
 
 
-@svgen_visitor
+@flow_visitor
 class CollapseSievesVisitor(RTLGearHierVisitor):
     def sieve(self, node):
         if not hasattr(node, 'pre_sieves'):

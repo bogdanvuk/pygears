@@ -130,7 +130,7 @@ class SimVerilated(CosimBase):
         if ret != 0:
             raise VerilatorCompileError(
                 f'Verilator compile error: {ret}. '
-                f'Please inspect "{self.outdir}/make.log"')
+                f'Please inspect "{self.objdir}/make.log"')
 
         if tracing_enabled:
             self.trace_fn = f'{self.outdir}/vlt_dump.vcd'
