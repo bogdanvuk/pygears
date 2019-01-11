@@ -28,6 +28,11 @@ class RTLGearHierVisitor(HierVisitorBase):
             return getattr(self, gear.definition.__name__)(node)
 
 
+def gear_from_rtl_port(rtl_port):
+    node = rtl_port.node
+    return node.gear.in_ports[rtl_port.index]
+
+
 @reg_inject
 def rtl_from_gear_port(gear_port, rtl_map=Inject('rtl/gear_node_map')):
     node = rtl_map.get(gear_port.gear, None)
