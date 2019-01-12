@@ -1,11 +1,10 @@
 from pygears import alternative, gear, module
-from pygears.typing import Array, Queue, Tuple, Uint
+from pygears.typing import Array, Queue, Tuple, Uint, bitw
 from pygears.util.utils import quiter
-
 
 @gear(svgen={'compile': True})
 async def serialize(din: Array) -> b'din.dtype':
-    i = din.dtype[0](0)
+    i = Uint[bitw(len(din.dtype))](0)
 
     async with din as val:
         for i in range(len(val)):
