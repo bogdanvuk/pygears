@@ -1,5 +1,7 @@
 {%- import 'snippet.j2' as snippet -%}
 
+{% set py = import_('builtins') %}
+
 {% call snippet.module_with_intf_structs(module_name, intfs, intfs, comment) %}
 
    logic                          addr_reg_valid;
@@ -16,7 +18,7 @@
         end else if (reg_ready) begin
            addr_reg_valid <= addr.valid;
            case(addr_s)
-{%- if isinstance(params['data'], dict) %} 
+{%- if py.isinstance(params['data'], py.dict) %} 
   {% for key, val in params['data'].items() %}
                {{key}} : dout_s <= {{int(val)}}; 
   {% endfor %}

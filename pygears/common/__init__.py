@@ -14,6 +14,7 @@ from .sieve import sieve
 from .fmap import fmap
 from .permute import permuted_apply
 from .const import const, const_ping
+from .rom import rom
 from .add import add
 from .sub import sub
 from .mul import mul

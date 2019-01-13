@@ -34,6 +34,10 @@ def import_from(module, name):
     return getattr(module, name)
 
 
+def import_(module):
+    return importlib.import_module(module)
+
+
 class TemplateEnv:
     def __init__(self):
         self.basedir = os.path.dirname(__file__)
@@ -44,12 +48,14 @@ class TemplateEnv:
             lstrip_blocks=True,
             undefined=jinja2.StrictUndefined)
 
-        import builtins
-        self.jenv.globals.update(builtins.__dict__)
-
         self.jenv.globals.update(
+            zip=zip,
+            len=len,
+            int=int,
             bitw=bitw,
+            enumerate=enumerate,
             import_from=import_from,
+            import_=import_,
             svgen_typedef=svgen_typedef)
 
         self.jenv.filters['format_list'] = format_list
