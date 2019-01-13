@@ -44,12 +44,11 @@ class TemplateEnv:
             lstrip_blocks=True,
             undefined=jinja2.StrictUndefined)
 
+        import builtins
+        self.jenv.globals.update(builtins.__dict__)
+
         self.jenv.globals.update(
-            zip=zip,
-            len=len,
-            int=int,
             bitw=bitw,
-            enumerate=enumerate,
             import_from=import_from,
             svgen_typedef=svgen_typedef)
 
