@@ -1,6 +1,6 @@
 import ctypes
 from math import ceil
-from pygears.typing_common.codec import code, decode
+# from pygears.typing_common.codec import code, decode
 from pygears.sim.modules.cosim_base import CosimNoData
 
 
@@ -78,7 +78,8 @@ class CInputDrv(CDrv):
         return self.seq.empty()
 
     def send(self, data):
-        self.c_set_api(self.to_c_data(code(self.port.dtype, data)), 1)
+        # self.c_set_api(self.to_c_data(code(self.port.dtype, data)), 1)
+        self.c_set_api(self.to_c_data(self.port.dtype(data).code()), 1)
 
     def ready(self):
         return self.c_get_api()
@@ -117,6 +118,6 @@ class COutputDrv(CDrv):
         #     f'{self.port.basename}: {self.active}, {self.from_c_data(self.dout)}'
         # )
         if self.active:
-            return decode(self.port.dtype, self.from_c_data(self.dout))
+            return self.port.dtype.decode(self.from_c_data(self.dout))
         else:
             raise CosimNoData

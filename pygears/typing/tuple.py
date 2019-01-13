@@ -330,6 +330,26 @@ class Tuple(tuple, metaclass=TupleType):
 
         return ret
 
+    def code(self):
+        """Returns a packed integer representation of the :class:`Tuple` instance.
+
+        ::
+
+            Point = Tuple[{'x': Uint[8], 'y': Uint[8]}]
+
+        >>> int(Point((0xaa, 0xbb)))
+        48042
+        >>> hex(48042)
+        '0xbbaa'
+        """
+        ret = 0
+
+        for d, t in zip(reversed(self), reversed(type(self))):
+            ret <<= int(t)
+            ret |= d.code() & ((1 << int(t)) - 1)
+
+        return ret
+
     @classmethod
     def decode(cls, val):
         """Returns a :class:`Tuple` instance from its packed integer representation.

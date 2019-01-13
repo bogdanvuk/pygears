@@ -171,6 +171,17 @@ class Union(tuple, metaclass=UnionType):
 
         return ret
 
+    def code(self):
+        """Returns a packed integer representation of the :class:`Union` instance.
+        """
+        ret = 0
+
+        for d, t in zip(reversed(self), reversed(type(self))):
+            ret <<= int(t)
+            ret |= d.code()
+
+        return ret
+
     @class_and_instance_method
     @property
     def data(self):

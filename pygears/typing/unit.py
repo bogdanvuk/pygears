@@ -23,5 +23,8 @@ class Unit(metaclass=UnitMeta):
     def __repr__(self):
         return 'Unit()'
 
+    def code(self):
+        return 0
+
     def __eq__(self, other):
         return isinstance(other, Unit)
