@@ -22,11 +22,22 @@ from pygears.typing import Queue, Tuple, Uint
 # @alternative(take)
 @gear
 async def take(din: Queue['t_data'], cfg: Uint) -> Queue['t_data']:
-    pass
+
+    cnt = cfg.dtype(1)
+    pass_eot = True
+
+    async with cfg as size:
+        async for (data, eot) in din:
+            last = (cnt == size) and pass_eot
+            if (cnt <= size) and pass_eot:
+                yield (data, eot or last)
+            if last:
+                pass_eot = 0
+            cnt += 1
 
 
 @alternative(take)
-@gear(svgen={'compile': True})
+@gear
 async def qtake(din: Queue[Tuple['t_data', Uint], 2], *,
                 init=0) -> Queue['t_data', 2]:
     '''

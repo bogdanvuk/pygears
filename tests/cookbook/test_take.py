@@ -8,25 +8,24 @@ t_din = Queue[Tuple[Uint[16], Uint[16]]]
 t_din_sep = Queue[Uint[16]]
 t_cfg = Uint[16]
 
+# def test_directed(tmpdir, sim_cls):
+#     seq = []
+#     tmp = []
+#     for i in range(9):
+#         tmp.append((i, 2))
+#     seq.append(tmp)
 
-def test_directed(tmpdir, sim_cls):
-    seq = []
-    tmp = []
-    for i in range(9):
-        tmp.append((i, 2))
-    seq.append(tmp)
+#     tmp = []
+#     for i in range(5):
+#         tmp.append((i, 3))
+#     seq.append(tmp)
 
-    tmp = []
-    for i in range(5):
-        tmp.append((i, 3))
-    seq.append(tmp)
+#     directed(
+#         drv(t=t_din, seq=seq),
+#         f=take(sim_cls=sim_cls),
+#         ref=[[0, 1], [0, 1, 2]])
 
-    directed(
-        drv(t=t_din, seq=seq),
-        f=take(sim_cls=sim_cls),
-        ref=[[0, 1], [0, 1, 2]])
-
-    sim(outdir=tmpdir)
+#     sim(outdir=tmpdir)
 
 
 def test_directed_two_inputs(tmpdir, sim_cls):

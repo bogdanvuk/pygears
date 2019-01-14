@@ -12,7 +12,7 @@ module rng_hier(
 
    dti #(.W_DATA(1)) const1_s(); // u1 (1)
 
-   rng_ccat ccat_i (
+   rng_ccat ccat (
                     .clk(clk),
                     .rst(rst),
                     .din0(const0_s),
@@ -25,7 +25,7 @@ module rng_hier(
    sustain #(
              .TOUT(1'd1)
              )
-   const0_i (
+   const0 (
              .clk(clk),
              .rst(rst),
              .dout(const0_s)
@@ -36,14 +36,14 @@ module rng_hier(
              .VAL(1'd1),
              .TOUT(1'd1)
              )
-   const1_i (
+   const1 (
              .clk(clk),
              .rst(rst),
              .dout(const1_s)
              );
 
 
-   rng_rng rng_i (
+   rng_rng rng (
                   .clk(clk),
                   .rst(rst),
                   .cfg(ccat_s),
