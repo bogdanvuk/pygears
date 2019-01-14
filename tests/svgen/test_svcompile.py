@@ -372,10 +372,10 @@ end
 """
 
 
-def test_simple_take():
-    take(Intf(Queue[Tuple[Uint[16], Uint[16]]]))
-    res = compile_gear_body(find('/take'))
-    assert equal_on_nonspace(res, simple_take_res)
+# def test_simple_take():
+#     take(Intf(Queue[Tuple[Uint[16], Uint[16]]]))
+#     res = compile_gear_body(find('/take'))
+#     assert equal_on_nonspace(res, simple_take_res)
 
 
 # from pygears.typing import Queue, Uint

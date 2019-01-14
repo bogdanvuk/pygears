@@ -40,7 +40,7 @@ module hier(
     );
 
 
-    fgear fgear0_i (
+    fgear fgear0 (
         .clk(clk),
         .rst(rst),
         .arg1(top_din1),
@@ -49,7 +49,7 @@ module hier(
     );
 
 
-    fgear fgear1_i (
+    fgear fgear1 (
         .clk(clk),
         .rst(rst),
         .arg1(ret1_s_bc[0]),
