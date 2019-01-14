@@ -1,7 +1,6 @@
 from pygears import bind
 from pygears.core.port import OutPort
 from pygears.sim import timestep
-from pygears.typing_common.codec import code
 from pygears.typing import typeof, TLM
 from pygears.typing.visitor import TypingVisitorBase
 from vcd import VCDWriter
@@ -56,7 +55,7 @@ class VCDValVisitor(TypingVisitorBase):
 
     def change(self, dtype, field, val):
         self.writer.change(self.vcd_vars[field],
-                           timestep() * 10, code(dtype, val))
+                           timestep() * 10, dtype(val).code())
 
     def visit_int(self, type_, field, val=None):
         self.change(type_, field, val)

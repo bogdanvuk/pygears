@@ -1,6 +1,5 @@
 import ctypes
 from math import ceil
-# from pygears.typing_common.codec import code, decode
 from pygears.sim.modules.cosim_base import CosimNoData
 
 
