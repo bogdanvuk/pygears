@@ -45,6 +45,6 @@ module take #(
    // assign dout.eot = 0;
    assign dout.valid = cfg.valid & din.valid & pass_in_eot_reg;
    assign din.ready = cfg.valid & (dout.ready || !pass_in_eot_reg);
-   assign cfg.ready = din_s.eot & din.valid & dout.ready;
+   assign cfg.ready = din_s.eot & din.valid & din.ready;
 
 endmodule : take

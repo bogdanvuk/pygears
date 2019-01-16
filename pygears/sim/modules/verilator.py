@@ -40,8 +40,8 @@ class SimVerilatorSynchro:
 
 
 class SimVerilated(CosimBase):
-    def __init__(self, gear):
-        super().__init__(gear, timeout=100)
+    def __init__(self, gear, timeout=100):
+        super().__init__(gear, timeout=timeout)
         self.name = gear.name[1:].replace('/', '_')
         self.outdir = os.path.abspath(
             os.path.join(registry('sim/artifact_dir'), self.name))
@@ -76,6 +76,8 @@ class SimVerilated(CosimBase):
 
         self.handlers[self.SYNCHRO_HANDLE_NAME] = SimVerilatorSynchro(
             self.verilib)
+
+        super().setup()
 
     def build(self):
         tracing_enabled = bool(registry('svgen/debug_intfs'))

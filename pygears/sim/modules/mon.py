@@ -72,16 +72,15 @@ class TypeMonitorVisitor:
 @gear
 async def mon(din, *, t=b'din') -> Any:
     v = TypeMonitorVisitor(t)
-    while 1:
-        data = None
-        while (isinstance(data, Partial) or data is None):
-            # print('Monitor waiting')
-            item = await din.get()
-            # print('Monitor got: ', item)
-            data = v.visit(data, item, t)
+    data = None
+    while (isinstance(data, Partial) or data is None):
+        # print('Monitor waiting')
+        item = await din.get()
+        # print('Monitor got: ', item)
+        data = v.visit(data, item, t)
 
-        # print('Monitor emits: ', data)
-        yield data
+    # print('Monitor emits: ', data)
+    yield data
 
 
 @gear

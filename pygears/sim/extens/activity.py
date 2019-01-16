@@ -3,6 +3,7 @@ from pygears.common.decoupler import decoupler_din
 from pygears.common import const
 from pygears.sim import sim_log
 from pygears.conf import reg_inject, Inject
+from pygears.core.gear import Gear
 from pygears.core.graph import get_producer_queue, get_end_producer
 
 
@@ -35,7 +36,12 @@ class ActivityChecker:
     @reg_inject
     def before_run(self, sim, sim_map=Inject('sim/map')):
         for module, sim_gear in sim_map.items():
-            for p in module.in_ports:
+            if isinstance(module, Gear):
+                ports = module.in_ports
+            else:
+                continue
+
+            for p in ports:
                 p.consumer.events['pull_start'].append(self.intf_pull_start)
                 p.consumer.events['pull_done'].append(self.intf_pull_done)
 

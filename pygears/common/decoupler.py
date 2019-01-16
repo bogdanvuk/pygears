@@ -2,7 +2,7 @@ import asyncio
 
 from pygears import gear, module, GearDone, registry
 from pygears.util.find import find
-from pygears.sim import delta, clk, sim_log
+from pygears.sim import delta, clk
 
 
 def decoupler_din_setup(module):
@@ -10,7 +10,7 @@ def decoupler_din_setup(module):
 
 
 @gear(sim_setup=decoupler_din_setup, svgen={'node_cls': None})
-async def decoupler_din(din: 'tdin', *, depth) -> None:
+async def decoupler_din(din, *, depth) -> None:
     async with din as d:
         await module().queue.put(d)
         while (module().queue.full()):
@@ -37,7 +37,7 @@ async def decoupler_dout(*, t, depth) -> b't':
 
 
 @gear
-def decoupler(din: 'tdin', *, depth=2) -> b'tdin':
+def decoupler(din, *, depth=2) -> b'din':
     din | decoupler_din(depth=depth)
     return decoupler_dout(t=din.dtype, depth=depth)
 

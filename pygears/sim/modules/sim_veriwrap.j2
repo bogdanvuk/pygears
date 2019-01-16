@@ -23,13 +23,24 @@ void forward(void) {
 {% if tracing %}
     if (tfp) tfp->dump (main_time);
 {% endif %}
-    main_time+=5;
+    {# main_time+=5; #}
 }
 
 void back(void) {
 #ifdef DEBUG
     printf("---- back    ----\n");
 #endif
+    top->eval();
+}
+
+void cycle(void) {
+#ifdef DEBUG
+    printf("---- cycle   ----\n");
+#endif
+{% if tracing %}
+    if (tfp) tfp->dump (main_time);
+{% endif %}
+    main_time+=5;
     top->clk = 0;
     top->rst = 0;
     top->eval();
@@ -41,18 +52,14 @@ void back(void) {
     if (tfp) tfp->dump (main_time);
     tfp->flush();
 {% endif %}
-}
-
-void cycle(void) {
-#ifdef DEBUG
-    printf("---- cycle   ----\n");
-#endif
     top->clk = 1;
     top->eval();
+    {# tfp->spTrace()->m_activity_cnt = 0; #}
 {% if tracing %}
     if (tfp) tfp->dump (main_time);
     tfp->flush();
 {% endif %}
+    {# printf("Cycle activity: %d\n", tfp->spTrace()->m_activity_cnt);  #}
 }
 
 int init(void) {

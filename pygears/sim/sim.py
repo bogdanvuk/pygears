@@ -9,9 +9,11 @@ import time
 
 from pygears import GearDone, bind, find, registry, safe_bind
 from pygears.conf import CustomLog, LogFmtFilter
-from pygears.core.gear import GearPlugin
-from pygears.core.intf import get_consumer_tree
+from pygears.core.gear import GearPlugin, Gear
+# from pygears.core.intf import get_consumer_tree as intf_get_consumer_tree
+from pygears.core.port import InPort, OutPort
 from pygears.core.sim_event import SimEvent
+from pygears.core.hier_node import HierVisitorBase
 
 
 def timestep():
@@ -26,12 +28,12 @@ def sim_phase():
 
 
 def clk():
-    registry('gear/current_module').phase = 'forward'
+    registry('gear/current_sim').phase = 'forward'
     return registry('sim/clk_event').wait()
 
 
 async def delta():
-    registry('gear/current_module').phase = 'back'
+    registry('gear/current_sim').phase = 'back'
     await asyncio.sleep(0)
     return sim_phase()
 
@@ -93,6 +95,32 @@ def topo_sort(dag):
     return stack
 
 
+def _get_consumer_tree_rec(root_intf, cur_intf, consumers):
+    for port in cur_intf.consumers:
+        cons_intf = port.consumer
+        if port in registry('sim/map'):
+            consumers.append(port)
+        elif port.gear.hierarchical:
+            _get_consumer_tree_rec(root_intf, cons_intf, consumers)
+        else:
+            consumers.append(port.gear)
+
+
+def get_consumer_tree(intf):
+    consumers = []
+    _get_consumer_tree_rec(intf, intf, consumers)
+    return consumers
+
+
+class GearEnum(HierVisitorBase):
+    def __init__(self):
+        self.gears = []
+
+    def Gear(self, node):
+        if not node.hierarchical:
+            self.gears.append(node)
+
+
 class EventLoop(asyncio.events.AbstractEventLoop):
     def __init__(self):
         self.events = {
@@ -117,24 +145,66 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         self.sim_map = registry('sim/map')
         dag = {}
 
-        for g in self.sim_map:
+        # for g in self.sim_map:
+        #     dag[g] = []
+        #     g.phase = 'forward'
+        #     for p in g.out_ports:
+        #         dag[g].extend(
+        #             [port.gear for port in get_consumer_tree(p.producer)])
+
+        cosim_modules = [
+            g for g in self.sim_map
+            if isinstance(g, Gear) and g.params['sim_cls'] is not None
+        ]
+
+        v = GearEnum()
+        v.visit(registry('gear/hier_root'))
+
+        for g in v.gears:
             dag[g] = []
-            g.phase = 'forward'
             for p in g.out_ports:
-                dag[g].extend(
-                    [port.gear for port in get_consumer_tree(p.producer)])
+                dag[g].extend(get_consumer_tree(p.consumer))
+
+        for g, sim_gear in self.sim_map.items():
+            if isinstance(g, OutPort):
+                if (not g.gear.hierarchical):
+                    dag[g.gear].clear()
+
+        for g, sim_gear in self.sim_map.items():
+            if isinstance(g, InPort):
+                if (not g.gear.hierarchical):
+                    dag[g] = [g.gear]
+                else:
+                    dag[g] = get_consumer_tree(g.consumer)
+
+            elif isinstance(g, OutPort):
+                if (not g.gear.hierarchical):
+                    dag[g.gear].append(g)
+
+                dag[g] = get_consumer_tree(g.consumer)
 
         gear_order = topo_sort(dag)
+
+        gear_multi_order = cosim_modules.copy()
+        for g in gear_order:
+            if (all(not m.is_descendent(g) for m in cosim_modules)
+                    or isinstance(g, (InPort, OutPort))):
+                gear_multi_order.append(g)
+
         # print("-" * 60)
         # print("Topological order:")
-        # for g in gear_order:
-        #     print(g.name)
+        # for g in gear_multi_order:
+        #     print(f'{g.name}: {[c.name for c in dag[g]]}')
 
         # print("-" * 60)
 
         # raise
 
-        self.sim_gears = [self.sim_map[g] for g in gear_order]
+        for g in gear_multi_order:
+            g.phase = 'forward'
+            self.sim_map[g].phase = 'forward'
+
+        self.sim_gears = [self.sim_map[g] for g in gear_multi_order]
         self.tasks = {g: g.run() for g in set(self.sim_gears)}
         self.task_data = {g: None for g in set(self.sim_gears)}
 
@@ -142,14 +212,14 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         callback(fut[0])
 
     def future_done(self, fut):
-        sim_gear, phase = self.wait_list.pop(fut)
+        sim_gear = self.wait_list.pop(fut)
         if fut.cancelled():
             # Interface that sim_gear waited on is done, so we need to finish
             # the sim_gear too
             self.schedule_to_finish(sim_gear)
         else:
             # If sim_gear was waiting for ack
-            if phase == 'back':
+            if sim_gear.phase == 'back':
                 self.back_ready.add(sim_gear)
             else:
                 self.forward_ready.add(sim_gear)
@@ -169,6 +239,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         try:
             self.cur_gear = sim_gear.gear
             bind('gear/current_module', self.cur_gear)
+            bind('gear/current_sim', sim_gear)
             self.tasks[sim_gear].throw(GearDone)
         except (StopIteration, GearDone):
             pass
@@ -182,6 +253,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             self.forward_ready.discard(sim_gear)
             self.delta_ready.discard(sim_gear)
             bind('gear/current_module', self.cur_gear)
+            bind('gear/current_sim', sim_gear)
 
     def run_gear(self, sim_gear, ready):
 
@@ -206,7 +278,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             self.done.add(sim_gear)
         else:
             if isinstance(data, SimFuture):
-                self.wait_list[data] = (sim_gear, self.cur_gear.phase)
+                self.wait_list[data] = sim_gear
             else:
                 self.delta_ready.add(sim_gear)
 
@@ -221,12 +293,14 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
         self.cur_gear = sim_gear.gear
         bind('gear/current_module', self.cur_gear)
+        bind('gear/current_sim', sim_gear)
 
         # print(f'{self.phase}: {sim_gear.gear.name}')
         self.run_gear(sim_gear, ready)
 
         self.cur_gear = registry('gear/hier_root')
         bind('gear/current_module', self.cur_gear)
+        bind('gear/current_sim', sim_gear)
 
     def sim_loop(self, timeout):
         clk = registry('sim/clk_event')
@@ -240,10 +314,14 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         sim_log().info("-------------- Simulation start --------------")
         while (self.forward_ready or self.back_ready or self.delta_ready
                or self._schedule_to_finish):
+
             self.phase = 'forward'
             for sim_gear in self.sim_gears:
                 if ((sim_gear in self.forward_ready)
                         or (sim_gear in self.delta_ready)):
+                    # print(
+                    #     f'Forward: {sim_gear.port.name if hasattr(sim_gear, "port") else sim_gear.gear.name}'
+                    # )
                     self.maybe_run_gear(sim_gear, self.forward_ready)
 
             self.phase = 'delta'
@@ -252,13 +330,17 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
             self.phase = 'back'
 
-            for sim_gear in reversed(self.sim_gears):
-                if sim_gear in self._schedule_to_finish:
+            while self._schedule_to_finish:
+                for sim_gear in self._schedule_to_finish.copy():
                     self._finish(sim_gear)
                     self._schedule_to_finish.remove(sim_gear)
 
+            for sim_gear in reversed(self.sim_gears):
                 if ((sim_gear in self.back_ready)
                         or (sim_gear in self.delta_ready)):
+                    # print(
+                    #     f'Back: {sim_gear.port.name if hasattr(sim_gear, "port") else sim_gear.gear.name}'
+                    # )
                     self.maybe_run_gear(sim_gear, self.back_ready)
 
             self.phase = 'cycle'
@@ -270,6 +352,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
             for sim_gear in reversed(self.sim_gears):
                 if sim_gear in self.delta_ready:
+                    # print(f'Clock: {sim_gear.gear.name}')
                     self.maybe_run_gear(sim_gear, self.delta_ready)
 
             timestep += 1
@@ -310,9 +393,11 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         for sim_gear in set(self.sim_gears):
             self.cur_gear = sim_gear.gear
             bind('gear/current_module', self.cur_gear)
+            bind('gear/current_sim', sim_gear)
             sim_gear.setup()
             self.cur_gear = registry('gear/hier_root')
             bind('gear/current_module', self.cur_gear)
+            bind('gear/current_sim', sim_gear)
 
         self.events['before_run'](self)
 
