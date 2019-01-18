@@ -71,6 +71,8 @@ class SVCompiler(InstanceVisitor):
             self.writer.line(f"{node.target} = {svexpr(node.val)};")
 
     def visit_CombBlock(self, node):
+        if not node.stmts and not node.dflts:
+            return
         self.writer.line(f'// Comb block for: {self.visit_var}')
         self.writer.line(f'always_comb begin')
 
