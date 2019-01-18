@@ -69,6 +69,9 @@ class HDLStmtVisitor(InstanceVisitor):
     def visit_IfBlock(self, node):
         return self.visit_block(node)
 
+    def visit_Loop(self, node):
+        return self.visit_block(node)
+
     def visit_block(self, node):
         block = HDLBlock(in_cond=node.in_cond, stmts=[], dflts={})
         return self.traverse_block(block, node)
@@ -182,7 +185,10 @@ class InputVisitor(HDLStmtVisitor):
             return [
                 AssignValue(f'{port.name}.ready', 0) for port in block.in_ports
             ]
-        elif hasattr(block, 'intf'):
+        elif isinstance(block, ht.IntfBlock):
+            return AssignValue(
+                target=f'{block.intf.name}.ready', val=self.exit_cond)
+        elif isinstance(block, ht.IntfLoop):
             return AssignValue(
                 target=f'{block.intf.name}.ready', val=self.cycle_cond)
 
@@ -193,23 +199,28 @@ class BlockConditionsVisitor(HDLStmtVisitor):
         self.cycle_conds = []
         self.exit_conds = []
 
-    # def enter_block(self, block):
-    #     super().enter_block(block)
-    #     if isinstance(block, ht.Module):
-    #         return [
-    #             AssignValue(f'cycle_cond_stage_{stage.stage_id}', 1)
-    #             for stage in block.stages
-    #         ]
-
-    def generic_visit(self, node):
-        if hasattr(node, 'cycle_cond') and node.cycle_cond is not None:
+    def get_cycle_cond(self):
+        if self.current_scope.id not in self.cycle_conds:
             self.cycle_conds.append(self.current_scope.id)
             return AssignValue(
                 target=f'cycle_cond_block_{self.current_scope.id}',
                 val=self.current_scope.cycle_cond)
 
-        if hasattr(node, 'exit_cond') and node.exit_cond is not None:
+    def get_exit_cond(self):
+        if self.current_scope.id not in self.exit_conds:
             self.exit_conds.append(self.current_scope.id)
             return AssignValue(
                 target=f'exit_cond_block_{self.current_scope.id}',
                 val=self.current_scope.exit_cond)
+
+    def enter_block(self, block):
+        super().enter_block(block)
+
+        if isinstance(block, ht.IntfBlock):
+            return self.get_exit_cond()
+
+        if isinstance(block, ht.IntfLoop):
+            return self.get_cycle_cond()
+
+    def visit_RegNextStmt(self, node):
+        return self.get_cycle_cond()

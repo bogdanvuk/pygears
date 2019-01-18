@@ -67,9 +67,15 @@ class Scheduler(InstanceVisitor):
         # leaf_found = None
 
         for stmt in body:
-            child = self.visit(stmt)
-            if child:
-                cnode.child.append(child)
+            if isinstance(stmt, ht.Block):
+                child = self.visit(stmt)
+                if child:
+                    cnode.child.append(child)
+            else:
+                # all stmts are grouped in leaf
+                cnode.child.append(
+                    Leaf(parent=self.scope[-1], hdl_blocks=body))
+                break
 
             # if isinstance(stmt, (ht.Block, ht.Yield)):
         #     child = self.visit(stmt)
@@ -115,8 +121,17 @@ class Scheduler(InstanceVisitor):
         cblock = MutexCBlock(parent=self.scope[-1], hdl_block=node, child=[])
         return self.visit_block(cblock, node.stmts)
 
-    def visit_Yield(self, node):
-        return Leaf(parent=self.scope[-1], hdl_blocks=[node])
+    def visit_Loop(self, node):
+        hier = find_hier_blocks(node.stmts)
+        if hier:
+            cblock = SeqCBlock(parent=self.scope[-1], hdl_block=node, child=[])
+            return self.visit_block(cblock, node.stmts)
+        else:
+            # TODO: is loop isn't blocking stmts should be merged
+            pass
 
-    def visit_RegNextStmt(self, node):
-        return Leaf(parent=self.scope[-1], hdl_blocks=[node])
+    # def visit_Yield(self, node):
+    #     return Leaf(parent=self.scope[-1], hdl_blocks=[node])
+
+    # def visit_RegNextStmt(self, node):
+    #     return Leaf(parent=self.scope[-1], hdl_blocks=[node])

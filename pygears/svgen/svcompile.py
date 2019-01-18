@@ -1,9 +1,10 @@
 import ast
 import inspect
 
-from .hdl_ast import HdlAst
 from .cblock import CBlockVisitor
-from .hdl_stmt_visit import InputVisitor, OutputVisitor, RegEnVisitor, BlockConditionsVisitor
+from .hdl_ast import HdlAst
+from .hdl_stmt_visit import (BlockConditionsVisitor, InputVisitor,
+                             OutputVisitor, RegEnVisitor, VariableVisitor)
 from .inst_visit import InstanceVisitor
 from .reg_finder import RegFinder
 from .scheduling import Scheduler
@@ -170,6 +171,7 @@ def compile_gear_body(gear):
 
     res = {}
     res['register_next_state'] = CBlockVisitor(RegEnVisitor()).visit(schedule)
+    res['variables'] = CBlockVisitor(VariableVisitor()).visit(schedule)
     res['outputs'] = CBlockVisitor(OutputVisitor()).visit(schedule)
     res['inputs'] = CBlockVisitor(InputVisitor()).visit(schedule)
 

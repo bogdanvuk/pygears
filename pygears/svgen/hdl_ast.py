@@ -436,7 +436,7 @@ class HdlAst(ast.NodeVisitor):
         else:
             names = [node.target.id]
 
-        # stmts = []
+        stmts = []
         op1 = self.regs[names[0]]
         exit_cond = ht.BinOpExpr((ht.RegVal(op1, f'{names[0]}_next'), stop),
                                  '>=')
@@ -452,11 +452,11 @@ class HdlAst(ast.NodeVisitor):
             var = ht.VariableDef(exit_cond, name)
             self.variables[name] = ht.VariableVal(var, name)
             self.svlocals[name] = var
+            stmts.append(ht.VariableStmt(var, exit_cond))
             exit_cond = self.variables[name]
-            # stmts.append(exit_cond)
 
         hdl_node = ht.Loop(
-            in_cond=None, stmts=[], exit_c=exit_cond, multicycle=names)
+            _in_cond=None, stmts=stmts, _exit_cond=exit_cond, multicycle=names)
 
         if is_qrange and is_start:
             loop_stmts = self.qrange_impl(

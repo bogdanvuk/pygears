@@ -334,10 +334,10 @@ class IfElseBlock(Block, pytypes.NamedTuple):
         return find_exit_cond(self.stmts)
 
 
-class Loop(Block, pytypes.NamedTuple):
-    in_cond: Expr
-    stmts: list
-    exit_c: Expr
+@dataclass
+class Loop(Block):
+    _in_cond: Expr
+    _exit_cond: Expr
     multicycle: list = None
 
     @property
@@ -347,7 +347,7 @@ class Loop(Block, pytypes.NamedTuple):
     @property
     def exit_cond(self):
         return and_expr(self.cycle_cond,
-                        and_expr(self.exit_c, find_exit_cond(self.stmts)))
+                        and_expr(self._exit_cond, find_exit_cond(self.stmts)))
 
 
 @dataclass
