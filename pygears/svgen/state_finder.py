@@ -12,8 +12,6 @@ class StateFinder(InstanceVisitor):
 
     def enter_block(self, block):
         self.state.append(self.state[-1])
-        # self.state.append(block)
-        # self.states.append(block)
 
     def exit_block(self):
         self.state.pop()

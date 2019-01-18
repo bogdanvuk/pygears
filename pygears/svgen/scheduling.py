@@ -50,8 +50,8 @@ class SeqCBlock(CBlock):
 @dataclass
 class Leaf:
     parent: pytypes.Any
-    hdl_block: pytypes.Any
-    state_id: pytypes.Any
+    hdl_blocks: pytypes.Any
+    state_id: pytypes.Any = None
 
 
 class Scheduler(InstanceVisitor):
@@ -67,9 +67,37 @@ class Scheduler(InstanceVisitor):
     def visit_block(self, cnode, body):
         self.enter_block(cnode)
 
+        # free_stmts = []
+        # leaf_found = None
+
         for stmt in body:
-            if isinstance(stmt, (ht.Block, ht.Yield)):
-                cnode.child.append(self.visit(stmt))
+            child = self.visit(stmt)
+            if child:
+                cnode.child.append(child)
+
+            # if isinstance(stmt, (ht.Block, ht.Yield)):
+        #     child = self.visit(stmt)
+        #     if child is None:
+        #         if leaf_found:
+        #             leaf_found.hdl_blocks.append(stmt)
+        #         else:
+        #             free_stmts.append(stmt)
+
+        #     else:
+        #         if leaf_found:
+        #             cnode.child.append(leaf_found)
+        #             assert len(free_stmts) == 0
+        #         else:
+        #             child.hdl_blocks = free_stmts + [child.hdl_blocks]
+
+        #         leaf_found = child
+        #         child = None
+
+        #     if child:
+        #         cnode.child.append(child)
+
+        # if leaf_found:
+        #     cnode.child.append(leaf_found)
 
         self.exit_block()
 
@@ -84,4 +112,4 @@ class Scheduler(InstanceVisitor):
         return self.visit_block(cblock, node.stmts)
 
     def visit_Yield(self, node):
-        return Leaf(parent=self.scope[-1], hdl_block=node)
+        return Leaf(parent=self.scope[-1], hdl_blocks=[node])

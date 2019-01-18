@@ -222,7 +222,7 @@ class HdlAst(ast.NodeVisitor):
         scope = gather_control_stmt_vars(node.items[0].optional_vars, intf)
         self.svlocals.update(scope)
 
-        hdl_node = ht.IntfBlock(intf._replace(context='valid'), [])
+        hdl_node = ht.IntfBlock(intf=intf._replace(context='valid'), stmts=[])
 
         return self.visit_block(hdl_node, node.body)
 

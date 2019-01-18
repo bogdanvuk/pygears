@@ -232,6 +232,8 @@ class Yield(pytypes.NamedTuple):
 
 @dataclass
 class Block:
+    stmts: list
+
     @property
     def in_cond(self):
         pass
@@ -248,7 +250,6 @@ class Block:
 @dataclass
 class IntfBlock(Block):
     intf: pytypes.Any
-    stmts: list
 
     @property
     def in_cond(self):
@@ -339,7 +340,8 @@ class Loop(Block, pytypes.NamedTuple):
                         and_expr(self.exit_c, find_exit_cond(self.stmts)))
 
 
-class Module(pytypes.NamedTuple):
+@dataclass
+class Module:
     in_ports: pytypes.List
     out_ports: pytypes.List
     locals: pytypes.Dict
