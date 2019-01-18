@@ -34,9 +34,7 @@ class HDLStmtVisitor(InstanceVisitor):
         self.scope = []
 
     def generic_visit(self, node):
-        # TODO allow all expresions
-        assert isinstance(node, ht.Yield)
-        return None
+        pass
 
     def enter_block(self, block):
         self.scope.append(block)
@@ -49,6 +47,15 @@ class HDLStmtVisitor(InstanceVisitor):
         return self.traverse_block(block, node)
 
     def visit_IntfBlock(self, node):
+        return self.visit_block(node)
+
+    def visit_IntfLoop(self, node):
+        return self.visit_block(node)
+
+    def visit_IfBlock(self, node):
+        return self.visit_block(node)
+
+    def visit_block(self, node):
         block = HDLBlock(in_cond=node.in_cond, stmts=[], dflts={})
         return self.traverse_block(block, node)
 

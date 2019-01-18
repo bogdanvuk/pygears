@@ -3,7 +3,7 @@ import inspect
 
 from .hdl_ast import HdlAst
 from .cblock import CBlockVisitor
-from .hdl_stmt_visit import InputVisitor, OutputVisitor
+from .hdl_stmt_visit import InputVisitor, OutputVisitor, RegEnVisitor
 from .inst_visit import InstanceVisitor
 from .reg_finder import RegFinder
 from .scheduling import Scheduler
@@ -13,7 +13,7 @@ from .util import svgen_typedef
 
 reg_template = """
 always_ff @(posedge clk) begin
-    if(rst | rst_condition) begin
+    if(rst | rst_cond) begin
         {0}_reg = {1};
     end else if ({0}_en) begin
         {0}_reg = {0}_next;
@@ -135,10 +135,7 @@ def write_module(node, sv_stmts, writer):
     #     if stage.exit_cond is not None:
     #         writer.line(f'logic exit_cond_stage_{stage.stage_id};')
 
-    if node.exit_cond is not None:
-        writer.line(f'assign rst_cond = {svexpr(node.exit_cond)};')
-    else:
-        writer.line(f'assign rst_cond = 1;')
+    writer.line(f'assign rst_cond = {svexpr(node.rst_cond)};')
 
     for name, expr in node.regs.items():
         writer.block(reg_template.format(name, int(expr.val)))
@@ -166,6 +163,7 @@ def compile_gear_body(gear):
     # pprint(hdl_ast)
 
     res = {}
+    res['register_next_state'] = CBlockVisitor(RegEnVisitor()).visit(schedule)
     res['outputs'] = CBlockVisitor(OutputVisitor()).visit(schedule)
     res['inputs'] = CBlockVisitor(InputVisitor()).visit(schedule)
 

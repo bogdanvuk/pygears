@@ -2,6 +2,7 @@ import ast
 import hdl_types as ht
 
 from pygears.typing import Int, Uint, is_type
+from .hdl_ast import eval_expression
 
 
 class RegFinder(ast.NodeVisitor):

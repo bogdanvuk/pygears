@@ -10,12 +10,16 @@ extendable_operators = [
 ]
 
 
-def find_exit_cond(statements):
+def find_exit_cond(statements, search_in_cond=False):
     for stmt in reversed(statements):
         if hasattr(stmt, 'exit_cond'):
             stmt_cond = stmt.exit_cond
             if stmt_cond is not None:
-                return stmt_cond
+                if search_in_cond and hasattr(
+                        stmt, 'in_cond') and (stmt.in_cond is not None):
+                    return and_expr(stmt_cond, stmt.in_cond)
+                else:
+                    return stmt_cond
 
     return None
 
@@ -264,7 +268,8 @@ class IntfBlock(Block):
         return find_exit_cond(self.stmts)
 
 
-class IntfLoop(Block, pytypes.NamedTuple):
+@dataclass
+class IntfLoop(Block):
     intf: pytypes.Any
     stmts: list
     multicycle: list = None
@@ -275,7 +280,8 @@ class IntfLoop(Block, pytypes.NamedTuple):
 
     @property
     def cycle_cond(self):
-        return and_expr(self.intf, find_cycle_cond(self.stmts))
+        return find_cycle_cond(self.stmts)
+        # return and_expr(self.intf, find_cycle_cond(self.stmts))
 
     @property
     def exit_cond(self):
@@ -285,7 +291,8 @@ class IntfLoop(Block, pytypes.NamedTuple):
         return and_expr(intf_expr, exit_condition)
 
 
-class IfBlock(Block, pytypes.NamedTuple):
+@dataclass
+class IfBlock(Block):
     in_cond: Expr
     stmts: list
 
@@ -356,6 +363,10 @@ class Module:
     @property
     def exit_cond(self):
         return find_exit_cond(self.stmts)
+
+    @property
+    def rst_cond(self):
+        return find_exit_cond(self.stmts, search_in_cond=True)
 
 
 def isloop(block):

@@ -111,5 +111,16 @@ class Scheduler(InstanceVisitor):
         cblock = SeqCBlock(parent=self.scope[-1], hdl_block=node, child=[])
         return self.visit_block(cblock, node.stmts)
 
+    def visit_IntfLoop(self, node):
+        cblock = SeqCBlock(parent=self.scope[-1], hdl_block=node, child=[])
+        return self.visit_block(cblock, node.stmts)
+
+    def visit_IfBlock(self, node):
+        cblock = MutexCBlock(parent=self.scope[-1], hdl_block=node, child=[])
+        return self.visit_block(cblock, node.stmts)
+
     def visit_Yield(self, node):
+        return Leaf(parent=self.scope[-1], hdl_blocks=[node])
+
+    def visit_RegNextStmt(self, node):
         return Leaf(parent=self.scope[-1], hdl_blocks=[node])
