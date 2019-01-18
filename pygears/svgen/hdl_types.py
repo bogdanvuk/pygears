@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import typing as pytypes
 
 from pygears.typing import Tuple, typeof, Uint, Queue, is_type, Bool
@@ -237,6 +237,7 @@ class Yield(pytypes.NamedTuple):
 @dataclass
 class Block:
     stmts: list
+    id: int = field(init=False, default=None)
 
     @property
     def in_cond(self):
@@ -271,7 +272,6 @@ class IntfBlock(Block):
 @dataclass
 class IntfLoop(Block):
     intf: pytypes.Any
-    stmts: list
     multicycle: list = None
 
     @property
@@ -293,8 +293,11 @@ class IntfLoop(Block):
 
 @dataclass
 class IfBlock(Block):
-    in_cond: Expr
-    stmts: list
+    _in_cond: Expr
+
+    @property
+    def in_cond(self):
+        return self._in_cond
 
     @property
     def cycle_cond(self):

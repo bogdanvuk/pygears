@@ -413,7 +413,7 @@ class HdlAst(ast.NodeVisitor):
                         self.scope[-1].stmts.append(svstmt)
             return None
         else:
-            svnode = ht.IfBlock(expr, [])
+            svnode = ht.IfBlock(_in_cond=expr, stmts=[])
             self.visit_block(svnode, node.body)
             if hasattr(node, 'orelse') and node.orelse:
                 else_expr = ht.UnaryOpExpr(expr, '!')

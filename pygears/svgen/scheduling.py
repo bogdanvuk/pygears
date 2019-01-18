@@ -35,16 +35,12 @@ class CBlock:
 
 @dataclass
 class MutexCBlock(CBlock):
-    parent: pytypes.Any
-    child: list
-    hdl_block: pytypes.Any
+    pass
 
 
 @dataclass
 class SeqCBlock(CBlock):
-    parent: pytypes.Any
-    child: list
-    hdl_block: pytypes.Any
+    pass
 
 
 @dataclass

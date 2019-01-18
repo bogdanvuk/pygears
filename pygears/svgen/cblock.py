@@ -14,16 +14,10 @@ class CBlockVisitor(InstanceVisitor):
 
     def enter_block(self, block):
         self.scope.append(block)
-        if hasattr(block.hdl_block, 'cycle_cond'):
-            self.hdl.cycle_cond = block.hdl_block.cycle_cond
-        if hasattr(block.hdl_block, 'exit_cond'):
-            self.hdl.exit_cond = block.hdl_block.exit_cond
         return self.hdl.visit(block.hdl_block)
 
     def exit_block(self):
         self.scope.pop()
-        self.hdl.cycle_cond = None
-        self.hdl.exit_cond = None
 
     def visit_block(self, node):
         block = self.enter_block(node)

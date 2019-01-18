@@ -33,14 +33,28 @@ class HDLStmtVisitor(InstanceVisitor):
     def __init__(self):
         self.scope = []
 
+    @property
+    def current_scope(self):
+        return self.scope[-1]
+
     def generic_visit(self, node):
         pass
 
+    def set_conditions(self):
+        self.cycle_cond = None
+        if self.current_scope.cycle_cond is not None:
+            self.cycle_cond = f'cycle_cond_block_{self.current_scope.id}'
+        self.exit_cond = None
+        if self.current_scope.exit_cond is not None:
+            self.exit_cond = f'exit_cond_block_{self.current_scope.id}'
+
     def enter_block(self, block):
         self.scope.append(block)
+        self.set_conditions()
 
     def exit_block(self):
         self.scope.pop()
+        self.set_conditions()
 
     def visit_Module(self, node):
         block = CombBlock(stmts=[], dflts={})
@@ -170,20 +184,32 @@ class InputVisitor(HDLStmtVisitor):
             ]
         elif hasattr(block, 'intf'):
             return AssignValue(
-                target=f'{block.intf.name}.ready', val=block.cycle_cond)
+                target=f'{block.intf.name}.ready', val=self.cycle_cond)
 
 
-class StageConditionsVisitor(HDLStmtVisitor):
-    def enter_block(self, block):
-        super().enter_block(block)
-        if isinstance(block, ht.Module):
-            return [
-                AssignValue(f'cycle_cond_stage_{stage.stage_id}', 1)
-                for stage in block.stages
-            ]
+class BlockConditionsVisitor(HDLStmtVisitor):
+    def __init__(self):
+        super().__init__()
+        self.cycle_conds = []
+        self.exit_conds = []
+
+    # def enter_block(self, block):
+    #     super().enter_block(block)
+    #     if isinstance(block, ht.Module):
+    #         return [
+    #             AssignValue(f'cycle_cond_stage_{stage.stage_id}', 1)
+    #             for stage in block.stages
+    #         ]
 
     def generic_visit(self, node):
         if hasattr(node, 'cycle_cond') and node.cycle_cond is not None:
+            self.cycle_conds.append(self.current_scope.id)
             return AssignValue(
-                target=f'cycle_cond_stage_{self.current_stage.stage_id}',
-                val=node.cycle_cond)
+                target=f'cycle_cond_block_{self.current_scope.id}',
+                val=self.current_scope.cycle_cond)
+
+        if hasattr(node, 'exit_cond') and node.exit_cond is not None:
+            self.exit_conds.append(self.current_scope.id)
+            return AssignValue(
+                target=f'exit_cond_block_{self.current_scope.id}',
+                val=self.current_scope.exit_cond)

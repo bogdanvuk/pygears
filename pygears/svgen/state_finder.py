@@ -5,6 +5,7 @@ class StateFinder(InstanceVisitor):
     def __init__(self):
         self.state = [0]
         self.max_state = 0
+        self.block_id = 0
 
     def get_next_state(self):
         self.max_state += 1
@@ -12,6 +13,8 @@ class StateFinder(InstanceVisitor):
 
     def enter_block(self, block):
         self.state.append(self.state[-1])
+        block.hdl_block.id = self.block_id
+        self.block_id += 1
 
     def exit_block(self):
         self.state.pop()

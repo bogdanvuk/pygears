@@ -3,7 +3,7 @@ import inspect
 
 from .hdl_ast import HdlAst
 from .cblock import CBlockVisitor
-from .hdl_stmt_visit import InputVisitor, OutputVisitor, RegEnVisitor
+from .hdl_stmt_visit import InputVisitor, OutputVisitor, RegEnVisitor, BlockConditionsVisitor
 from .inst_visit import InstanceVisitor
 from .reg_finder import RegFinder
 from .scheduling import Scheduler
@@ -117,7 +117,7 @@ data_func_gear = """
 """
 
 
-def write_module(node, sv_stmts, writer):
+def write_module(node, sv_stmts, writer, block_conds):
     for name, expr in node.regs.items():
         writer.block(svgen_typedef(expr.dtype, name))
         writer.line(f'logic {name}_en;')
@@ -130,6 +130,9 @@ def write_module(node, sv_stmts, writer):
         writer.line(f'{name}_t {name}_v;')
         writer.line()
 
+    for cond, values in block_conds.items():
+        for id in values:
+            writer.line(f'logic {cond}_cond_block_{id};')
     # for stage in node.stages:
     #     if stage.cycle_cond is not None:
     #         writer.line(f'logic cycle_cond_stage_{stage.stage_id};')
@@ -137,7 +140,8 @@ def write_module(node, sv_stmts, writer):
     #     if stage.exit_cond is not None:
     #         writer.line(f'logic exit_cond_stage_{stage.stage_id};')
 
-    writer.line(f'assign rst_cond = {svexpr(node.rst_cond)};')
+    if node.regs:
+        writer.line(f'assign rst_cond = {svexpr(node.rst_cond)};')
 
     for name, expr in node.regs.items():
         writer.block(reg_template.format(name, int(expr.val)))
@@ -169,6 +173,13 @@ def compile_gear_body(gear):
     res['outputs'] = CBlockVisitor(OutputVisitor()).visit(schedule)
     res['inputs'] = CBlockVisitor(InputVisitor()).visit(schedule)
 
+    cond_visit = CBlockVisitor(BlockConditionsVisitor())
+    res['block_conditions'] = cond_visit.visit(schedule)
+    block_conds = {
+        'cycle': cond_visit.hdl.cycle_conds,
+        'exit': cond_visit.hdl.exit_conds
+    }
+
     # res['register_next_state'] = RegEnVisitor().visit(hdl_ast)
     # res['variables'] = VariableVisitor().visit(hdl_ast)
     # res['outputs'] = OutputVisitor().visit(hdl_ast)
@@ -176,7 +187,7 @@ def compile_gear_body(gear):
     # res['stages'] = StageConditionsVisitor().visit(hdl_ast)
 
     writer = SVWriter()
-    write_module(hdl_ast, res, writer)
+    write_module(hdl_ast, res, writer, block_conds)
 
     return '\n'.join(writer.svlines)
 
