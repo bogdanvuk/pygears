@@ -280,11 +280,7 @@ class IntfLoop(Block):
 
     @property
     def cycle_cond(self):
-        c = find_cycle_cond(self.stmts)
-        if c:
-            return c
-        else:
-            return 1
+        return find_cycle_cond(self.stmts)
         # return and_expr(self.intf, find_cycle_cond(self.stmts))
 
     @property

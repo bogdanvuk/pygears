@@ -13,9 +13,9 @@ def get_state_cond(id):
     return ht.BinOpExpr(('state_reg', id), '==')
 
 
-def state_expr(block, prev_cond):
-    state_cond = get_state_cond(block.state_ids[0])
-    for id in block.state_ids[1:]:
+def state_expr(state_ids, prev_cond):
+    state_cond = get_state_cond(state_ids[0])
+    for id in state_ids[1:]:
         state_cond = ht.or_expr(state_cond, get_state_cond(id))
 
     if prev_cond is not None:
@@ -40,7 +40,7 @@ class CBlockVisitor(InstanceVisitor):
         b = self.hdl.visit(block.hdl_block)
         if self.state_num > 0 and block.parent:
             if block.state_ids != block.parent.state_ids:
-                b.in_cond = state_expr(block, b.in_cond)
+                b.in_cond = state_expr(block.state_ids, b.in_cond)
         self.hdl_scope.append(b)
         return b
 

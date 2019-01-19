@@ -41,10 +41,10 @@ class HDLStmtVisitor(InstanceVisitor):
         pass
 
     def set_conditions(self):
-        self.cycle_cond = None
+        self.cycle_cond = 1
         if self.current_scope.cycle_cond is not None:
             self.cycle_cond = f'cycle_cond_block_{self.current_scope.id}'
-        self.exit_cond = None
+        self.exit_cond = 1
         if self.current_scope.exit_cond is not None:
             self.exit_cond = f'exit_cond_block_{self.current_scope.id}'
 
@@ -219,16 +219,20 @@ class BlockConditionsVisitor(HDLStmtVisitor):
     def get_cycle_cond(self):
         if self.current_scope.id not in self.cycle_conds:
             self.cycle_conds.append(self.current_scope.id)
+            cond = self.current_scope.cycle_cond
+            if cond is None:
+                cond = 1
             return AssignValue(
-                target=f'cycle_cond_block_{self.current_scope.id}',
-                val=self.current_scope.cycle_cond)
+                target=f'cycle_cond_block_{self.current_scope.id}', val=cond)
 
     def get_exit_cond(self):
         if self.current_scope.id not in self.exit_conds:
             self.exit_conds.append(self.current_scope.id)
+            cond = self.current_scope.exit_cond
+            if cond is None:
+                cond = 1
             return AssignValue(
-                target=f'exit_cond_block_{self.current_scope.id}',
-                val=self.current_scope.exit_cond)
+                target=f'exit_cond_block_{self.current_scope.id}', val=cond)
 
     def enter_block(self, block):
         super().enter_block(block)

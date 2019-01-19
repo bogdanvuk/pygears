@@ -3,7 +3,7 @@ import inspect
 
 from pygears.typing import Uint, bitw
 
-from .cblock import CBlockVisitor
+from .cblock import CBlockVisitor, state_expr
 from .hdl_ast import HdlAst
 from .hdl_stmt_visit import (BlockConditionsVisitor, InputVisitor,
                              OutputVisitor, RegEnVisitor, VariableVisitor)
@@ -143,7 +143,11 @@ def write_module(node, sv_stmts, writer, block_conds, state_num):
             writer.line(f'logic {cond}_cond_block_{id};')
 
     if node.regs:
-        writer.line(f'assign rst_cond = {svexpr(node.rst_cond)};')
+        if state_num > 0:
+            rst_cond = state_expr([state_num], node.rst_cond)
+        else:
+            rst_cond = node.rst_cond
+        writer.line(f'assign rst_cond = {svexpr(rst_cond)};')
 
     for name, expr in node.regs.items():
         writer.block(reg_template.format(name, int(expr.val)))
