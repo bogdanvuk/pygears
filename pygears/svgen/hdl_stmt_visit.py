@@ -1,3 +1,4 @@
+import inspect
 import typing as pytypes
 from dataclasses import dataclass
 
@@ -5,7 +6,6 @@ import hdl_types as ht
 from pygears.typing.base import TypingMeta
 
 from .cblock import add_to_list
-from .inst_visit import InstanceVisitor
 
 
 @dataclass
@@ -29,9 +29,20 @@ class HDLBlock:
     else_cond: str = None
 
 
-class HDLStmtVisitor(InstanceVisitor):
+class HDLStmtVisitor:
     def __init__(self):
         self.scope = []
+
+    def visit(self, node, **kwds):
+        method = 'visit_' + node.__class__.__name__
+        visitor = getattr(self, method, self.generic_visit)
+        if visitor.__name__ is 'generic_visit' and isinstance(node, ht.Block):
+            visitor = getattr(self, 'visit_block', self.generic_visit)
+
+        if kwds and ('kwds' in inspect.getargspec(visitor)):
+            return visitor(node, **kwds)
+        else:
+            return visitor(node)
 
     @property
     def current_scope(self):
@@ -60,15 +71,6 @@ class HDLStmtVisitor(InstanceVisitor):
         block = CombBlock(stmts=[], dflts={})
         return self.traverse_block(block, node)
 
-    def visit_IntfBlock(self, node):
-        return self.visit_block(node)
-
-    def visit_IntfLoop(self, node):
-        return self.visit_block(node)
-
-    def visit_IfBlock(self, node):
-        return self.visit_block(node)
-
     def visit_IfElseBlock(self, node):
         if_block = self.visit(node.if_block)
         else_block = self.visit(node.else_block)
@@ -82,12 +84,6 @@ class HDLStmtVisitor(InstanceVisitor):
         self.update_defaults(block)
 
         return block
-
-    def visit_Loop(self, node):
-        return self.visit_block(node)
-
-    def visit_YieldBlock(self, node):
-        return self.visit_block(node)
 
     def visit_block(self, node):
         block = HDLBlock(in_cond=node.in_cond, stmts=[], dflts={})
@@ -245,3 +241,18 @@ class BlockConditionsVisitor(HDLStmtVisitor):
 
     def visit_RegNextStmt(self, node):
         return self.get_cycle_cond()
+
+
+class StateTransitionVisitor(HDLStmtVisitor):
+    def visit_block(self, node, **kwds):
+        block = super().visit_block(node)
+
+        if 'state_id' in kwds:
+            add_to_list(block.stmts, [
+                AssignValue(target=f'state_en', val=node.exit_cond),
+                AssignValue(target='state_next', val=kwds['state_id'])
+            ])
+            if block.stmts:
+                self.update_defaults(block)
+
+        return block

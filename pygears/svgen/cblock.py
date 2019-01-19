@@ -1,6 +1,6 @@
-from .inst_visit import InstanceVisitor
-from .scheduling import SeqCBlock, MutexCBlock, Leaf
 import hdl_types as ht
+
+from .inst_visit import InstanceVisitor
 
 
 def add_to_list(orig_list, extention):
@@ -29,24 +29,30 @@ class CBlockVisitor(InstanceVisitor):
         self.hdl = hdl_visitor
         self.state_num = state_num
         self.scope = []
-        self.hdl_scope = []
-
-    @property
-    def current_hdl_block(self):
-        return self.hdl_scope[-1]
 
     def enter_block(self, block):
         self.scope.append(block)
-        b = self.hdl.visit(block.hdl_block)
+
+        hdl_block = self.hdl.visit(block.hdl_block)
+
         if self.state_num > 0 and block.parent:
             if block.state_ids != block.parent.state_ids:
-                b.in_cond = state_expr(block.state_ids, b.in_cond)
-        self.hdl_scope.append(b)
-        return b
+                hdl_block.in_cond = state_expr(block.state_ids,
+                                               hdl_block.in_cond)
+
+            # state transition injection
+            state_transition = list(
+                set(block.parent.state_ids) - set(block.state_ids))
+            if state_transition and len(block.state_ids) == 1:
+                state_copy_block = self.hdl.visit(
+                    block.hdl_block, state_id=state_transition[0])
+                state_copy_block.in_cond = None  # already in hdl_block
+                add_to_list(hdl_block.stmts, state_copy_block)
+
+        return hdl_block
 
     def exit_block(self):
         self.scope.pop()
-        self.hdl_scope.pop()
 
     def visit_block(self, node):
         block = self.enter_block(node)

@@ -6,7 +6,8 @@ from pygears.typing import Uint, bitw
 from .cblock import CBlockVisitor, state_expr
 from .hdl_ast import HdlAst
 from .hdl_stmt_visit import (BlockConditionsVisitor, InputVisitor,
-                             OutputVisitor, RegEnVisitor, VariableVisitor)
+                             OutputVisitor, RegEnVisitor, VariableVisitor,
+                             StateTransitionVisitor)
 from .inst_visit import InstanceVisitor
 from .reg_finder import RegFinder
 from .scheduling import Scheduler
@@ -194,6 +195,9 @@ def compile_gear_body(gear):
         'cycle': cond_visit.hdl.cycle_conds,
         'exit': cond_visit.hdl.exit_conds
     }
+    if states.max_state > 0:
+        res['state_transition'] = CBlockVisitor(
+            StateTransitionVisitor(), states.max_state).visit(schedule)
 
     writer = SVWriter()
     write_module(hdl_ast, res, writer, block_conds, states.max_state)
