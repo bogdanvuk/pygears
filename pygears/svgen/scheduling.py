@@ -1,11 +1,11 @@
 import typing as pytypes
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import hdl_types as ht
 
 from .hdl_preprocess import InstanceVisitor
 
-async_types = [ht.Yield]
+async_types = [ht.YieldStmt]
 
 
 def check_if_blocking(stmt):
@@ -31,6 +31,7 @@ class CBlock:
     parent: pytypes.Any
     child: list
     hdl_block: pytypes.Any
+    state_ids: list = field(init=False, default=None)
 
 
 @dataclass
@@ -121,17 +122,22 @@ class Scheduler(InstanceVisitor):
         cblock = MutexCBlock(parent=self.scope[-1], hdl_block=node, child=[])
         return self.visit_block(cblock, node.stmts)
 
+    def visit_IfElseBlock(self, node):
+        cblock = MutexCBlock(parent=self.scope[-1], hdl_block=node, child=[])
+        cblock.child.append(self.visit(node.if_block))
+        cblock.child.append(self.visit(node.else_block))
+        return cblock
+
     def visit_Loop(self, node):
         hier = find_hier_blocks(node.stmts)
         if hier:
             cblock = SeqCBlock(parent=self.scope[-1], hdl_block=node, child=[])
             return self.visit_block(cblock, node.stmts)
         else:
-            # TODO: is loop isn't blocking stmts should be merged
-            pass
+            # safe guard
+            from .hdl_ast import VisitError
+            raise VisitError("If loop isn't blocking stmts should be merged")
 
-    # def visit_Yield(self, node):
-    #     return Leaf(parent=self.scope[-1], hdl_blocks=[node])
-
-    # def visit_RegNextStmt(self, node):
-    #     return Leaf(parent=self.scope[-1], hdl_blocks=[node])
+    def visit_YieldBlock(self, node):
+        cblock = SeqCBlock(parent=self.scope[-1], hdl_block=node, child=[])
+        return self.visit_block(cblock, node.stmts)

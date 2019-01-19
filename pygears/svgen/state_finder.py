@@ -13,6 +13,7 @@ class StateFinder(InstanceVisitor):
 
     def enter_block(self, block):
         self.state.append(self.state[-1])
+        block.state_ids = [self.state[-1]]
         block.hdl_block.id = self.block_id
         self.block_id += 1
 
@@ -26,6 +27,8 @@ class StateFinder(InstanceVisitor):
             self.visit(child)
             if child is not node.child[-1]:
                 self.state[-1] = self.get_next_state()
+                if self.state[-1] not in node.state_ids:
+                    node.state_ids.append(self.state[-1])
 
         self.exit_block()
 

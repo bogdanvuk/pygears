@@ -401,29 +401,29 @@ class HdlAst(ast.NodeVisitor):
             if bool(expr.val):
                 for stmt in node.body:
                     # try:
-                    svstmt = self.visit(stmt)
-                    if svstmt is not None:
-                        self.scope[-1].stmts.append(svstmt)
+                    hdl_stmt = self.visit(stmt)
+                    if hdl_stmt is not None:
+                        self.scope[-1].stmts.append(hdl_stmt)
                     # except Exception as e:
                     #     pass
             elif hasattr(node, 'orelse'):
                 for stmt in node.orelse:
-                    svstmt = self.visit(stmt)
-                    if svstmt is not None:
-                        self.scope[-1].stmts.append(svstmt)
+                    hdl_stmt = self.visit(stmt)
+                    if hdl_stmt is not None:
+                        self.scope[-1].stmts.append(hdl_stmt)
             return None
         else:
-            svnode = ht.IfBlock(_in_cond=expr, stmts=[])
-            self.visit_block(svnode, node.body)
+            hdl_node = ht.IfBlock(_in_cond=expr, stmts=[])
+            self.visit_block(hdl_node, node.body)
             if hasattr(node, 'orelse') and node.orelse:
                 else_expr = ht.UnaryOpExpr(expr, '!')
-                svnode_else = ht.IfBlock(in_cond=else_expr, stmts=[])
-                self.visit_block(svnode_else, node.orelse)
+                hdl_node_else = ht.IfBlock(_in_cond=else_expr, stmts=[])
+                self.visit_block(hdl_node_else, node.orelse)
                 top = ht.IfElseBlock(
-                    in_cond=expr, if_block=svnode, else_block=svnode_else)
+                    _in_cond=expr, if_block=hdl_node, else_block=hdl_node_else)
                 return top
             else:
-                return svnode
+                return hdl_node
 
     def visit_For(self, node):
         start, stop, step = self.visit_DataExpression(node.iter)
@@ -537,7 +537,7 @@ class HdlAst(ast.NodeVisitor):
             self.generic_visit(node)
 
     def visit_Yield(self, node):
-        return ht.Yield(super().visit(node.value))
+        return ht.YieldBlock(stmts=[ht.YieldStmt(super().visit(node.value))])
 
     def visit_AsyncFunctionDef(self, node):
         hdl_node = ht.Module(

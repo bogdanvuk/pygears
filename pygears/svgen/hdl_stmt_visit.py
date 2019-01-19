@@ -69,7 +69,24 @@ class HDLStmtVisitor(InstanceVisitor):
     def visit_IfBlock(self, node):
         return self.visit_block(node)
 
+    def visit_IfElseBlock(self, node):
+        if_block = self.visit(node.if_block)
+        else_block = self.visit(node.else_block)
+
+        block = HDLBlock(
+            in_cond=if_block.in_cond,
+            else_cond=else_block.in_cond,
+            stmts=[if_block, else_block],
+            dflts={})
+
+        self.update_defaults(block)
+
+        return block
+
     def visit_Loop(self, node):
+        return self.visit_block(node)
+
+    def visit_YieldBlock(self, node):
         return self.visit_block(node)
 
     def visit_block(self, node):
@@ -171,7 +188,7 @@ class OutputVisitor(HDLStmtVisitor):
         if isinstance(block, ht.Module):
             return AssignValue(f'dout.valid', 0)
 
-    def visit_Yield(self, node):
+    def visit_YieldStmt(self, node):
         return [
             AssignValue(f'dout.valid', 1),
             AssignValue(f'dout_s', node.expr, int(node.expr.dtype))

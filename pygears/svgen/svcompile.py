@@ -1,6 +1,8 @@
 import ast
 import inspect
 
+from pygears.typing import Uint, bitw
+
 from .cblock import CBlockVisitor
 from .hdl_ast import HdlAst
 from .hdl_stmt_visit import (BlockConditionsVisitor, InputVisitor,
@@ -118,12 +120,17 @@ data_func_gear = """
 """
 
 
-def write_module(node, sv_stmts, writer, block_conds):
+def write_module(node, sv_stmts, writer, block_conds, state_num):
     for name, expr in node.regs.items():
         writer.block(svgen_typedef(expr.dtype, name))
         writer.line(f'logic {name}_en;')
-        # writer.line(f'logic {name}_rst;')
         writer.line(f'{name}_t {name}_reg, {name}_next;')
+        writer.line()
+
+    if state_num > 0:
+        writer.block(svgen_typedef(Uint[bitw(state_num)], 'state'))
+        writer.line(f'logic state_en;')
+        writer.line(f'state_t state_reg, state_next;')
         writer.line()
 
     for name, expr in node.variables.items():
@@ -134,18 +141,15 @@ def write_module(node, sv_stmts, writer, block_conds):
     for cond, values in block_conds.items():
         for id in values:
             writer.line(f'logic {cond}_cond_block_{id};')
-    # for stage in node.stages:
-    #     if stage.cycle_cond is not None:
-    #         writer.line(f'logic cycle_cond_stage_{stage.stage_id};')
-
-    #     if stage.exit_cond is not None:
-    #         writer.line(f'logic exit_cond_stage_{stage.stage_id};')
 
     if node.regs:
         writer.line(f'assign rst_cond = {svexpr(node.rst_cond)};')
 
     for name, expr in node.regs.items():
         writer.block(reg_template.format(name, int(expr.val)))
+
+    if state_num > 0:
+        writer.block(reg_template.format('state', 0))
 
     for name, val in sv_stmts.items():
         SVCompiler(name, writer).visit(val)
@@ -167,29 +171,28 @@ def compile_gear_body(gear):
     states = StateFinder()
     states.visit(schedule)
 
-    # pprint(hdl_ast)
+    # from .cblock import pprint
+    # pprint(schedule)
 
     res = {}
-    res['register_next_state'] = CBlockVisitor(RegEnVisitor()).visit(schedule)
-    res['variables'] = CBlockVisitor(VariableVisitor()).visit(schedule)
-    res['outputs'] = CBlockVisitor(OutputVisitor()).visit(schedule)
-    res['inputs'] = CBlockVisitor(InputVisitor()).visit(schedule)
+    res['register_next_state'] = CBlockVisitor(
+        RegEnVisitor(), states.max_state).visit(schedule)
+    res['variables'] = CBlockVisitor(VariableVisitor(),
+                                     states.max_state).visit(schedule)
+    res['outputs'] = CBlockVisitor(OutputVisitor(),
+                                   states.max_state).visit(schedule)
+    res['inputs'] = CBlockVisitor(InputVisitor(),
+                                  states.max_state).visit(schedule)
 
-    cond_visit = CBlockVisitor(BlockConditionsVisitor())
+    cond_visit = CBlockVisitor(BlockConditionsVisitor(), states.max_state)
     res['block_conditions'] = cond_visit.visit(schedule)
     block_conds = {
         'cycle': cond_visit.hdl.cycle_conds,
         'exit': cond_visit.hdl.exit_conds
     }
 
-    # res['register_next_state'] = RegEnVisitor().visit(hdl_ast)
-    # res['variables'] = VariableVisitor().visit(hdl_ast)
-    # res['outputs'] = OutputVisitor().visit(hdl_ast)
-    # res['inputs'] = InputVisitor().visit(hdl_ast)
-    # res['stages'] = StageConditionsVisitor().visit(hdl_ast)
-
     writer = SVWriter()
-    write_module(hdl_ast, res, writer, block_conds)
+    write_module(hdl_ast, res, writer, block_conds, states.max_state)
 
     return '\n'.join(writer.svlines)
 

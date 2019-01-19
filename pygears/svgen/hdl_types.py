@@ -1,8 +1,8 @@
-from dataclasses import dataclass, field
 import typing as pytypes
-
-from pygears.typing import Tuple, typeof, Uint, Queue, is_type, Bool
+from dataclasses import dataclass, field
 from functools import reduce
+
+from pygears.typing import Bool, Queue, Tuple, Uint, is_type, typeof
 
 bin_operators = ['!', '==', '>', '>=', '<', '<=', '!=', '&&', '||']
 extendable_operators = [
@@ -36,7 +36,7 @@ def find_cycle_cond(statements):
     return reduce(and_expr, cond, None)
 
 
-def and_expr(expr1, expr2):
+def binary_expr(expr1, expr2, operator):
     if expr1 is None:
         return expr2
     elif expr2 is None:
@@ -44,7 +44,15 @@ def and_expr(expr1, expr2):
     elif expr1 is None and expr2 is None:
         return None
     else:
-        return BinOpExpr((expr1, expr2), '&&')
+        return BinOpExpr((expr1, expr2), operator)
+
+
+def and_expr(expr1, expr2):
+    return binary_expr(expr1, expr2, '&&')
+
+
+def or_expr(expr1, expr2):
+    return binary_expr(expr1, expr2, '||')
 
 
 # Expressions
@@ -219,16 +227,8 @@ class AttrExpr(Expr, pytypes.NamedTuple):
         return t
 
 
-class Yield(pytypes.NamedTuple):
+class YieldStmt(pytypes.NamedTuple):
     expr: Expr
-
-    @property
-    def cycle_cond(self):
-        return IntfReadyExpr()
-
-    @property
-    def exit_cond(self):
-        return self.cycle_cond
 
 
 # Blocks
@@ -280,14 +280,17 @@ class IntfLoop(Block):
 
     @property
     def cycle_cond(self):
-        return find_cycle_cond(self.stmts)
+        c = find_cycle_cond(self.stmts)
+        if c:
+            return c
+        else:
+            return 1
         # return and_expr(self.intf, find_cycle_cond(self.stmts))
 
     @property
     def exit_cond(self):
         exit_condition = find_exit_cond(self.stmts)
         intf_expr = IntfExpr(self.intf.intf, context='eot')
-
         return and_expr(intf_expr, exit_condition)
 
 
@@ -305,9 +308,8 @@ class IfBlock(Block):
         if condition is None:
             return None
 
-        return BinOpExpr((UnaryOpExpr(self.in_cond, '!'),
-                          and_expr(self.in_cond, condition)),
-                         operator='||')
+        return or_expr(
+            UnaryOpExpr(self.in_cond, '!'), and_expr(self.in_cond, condition))
 
     @property
     def exit_cond(self):
@@ -315,23 +317,24 @@ class IfBlock(Block):
         if condition is None:
             return None
 
-        return BinOpExpr((UnaryOpExpr(self.in_cond, '!'),
-                          and_expr(self.in_cond, condition)),
-                         operator='||')
+        return or_expr(
+            UnaryOpExpr(self.in_cond, '!'), and_expr(self.in_cond, condition))
 
 
-class IfElseBlock(Block, pytypes.NamedTuple):
-    in_cond: Expr
+@dataclass
+class IfElseBlock(Block):
+    _in_cond: Expr
     if_block: Block
     else_block: Block
+    stmts: list = field(init=False, default=None)
 
     @property
     def cycle_cond(self):
-        return find_cycle_cond(self.stmts)
+        return and_expr(self.if_block.cycle_cond, self.else_block.cycle_cond)
 
     @property
     def exit_cond(self):
-        return find_exit_cond(self.stmts)
+        return and_expr(self.if_block.exit_cond, self.else_block.exit_cond)
 
 
 @dataclass
@@ -348,6 +351,17 @@ class Loop(Block):
     def exit_cond(self):
         return and_expr(self.cycle_cond,
                         and_expr(self._exit_cond, find_exit_cond(self.stmts)))
+
+
+@dataclass
+class YieldBlock(Block):
+    @property
+    def cycle_cond(self):
+        return IntfReadyExpr()
+
+    @property
+    def exit_cond(self):
+        return self.cycle_cond
 
 
 @dataclass
