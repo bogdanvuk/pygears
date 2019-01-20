@@ -46,9 +46,12 @@ class SVExpressionVisitor(InstanceVisitor):
                 ops[i] = f'({ops[i]})'
 
         if node.operator in ht.extendable_operators:
-            svrepr = (f"{int(node.dtype)}'({ops[0]})"
+            width = max(
+                int(node.dtype), int(node.operands[0].dtype),
+                int(node.operands[1].dtype))
+            svrepr = (f"{width}'({ops[0]})"
                       f" {node.operator} "
-                      f"{int(node.dtype)}'({ops[1]})")
+                      f"{width}'({ops[1]})")
         else:
             svrepr = f'{ops[0]} {node.operator} {ops[1]}'
         return svrepr
