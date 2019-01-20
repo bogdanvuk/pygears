@@ -1,4 +1,3 @@
-import inspect
 import typing as pytypes
 from dataclasses import dataclass
 
@@ -29,20 +28,9 @@ class HDLBlock:
 
 
 @dataclass
-class HDLStmtVisitor:
+class HDLStmtVisitor(ht.TypeVisitor):
     def __init__(self):
         self.scope = []
-
-    def visit(self, node, **kwds):
-        method = 'visit_' + node.__class__.__name__
-        visitor = getattr(self, method, self.generic_visit)
-        if visitor.__name__ is 'generic_visit' and isinstance(node, ht.Block):
-            visitor = getattr(self, 'visit_block', self.generic_visit)
-
-        if kwds and ('kwds' in inspect.getargspec(visitor)):
-            return visitor(node, **kwds)
-        else:
-            return visitor(node)
 
     @property
     def current_scope(self):
@@ -74,7 +62,7 @@ class HDLStmtVisitor:
     def visit_ContainerBlock(self, node):
         return HDLBlock(in_cond=None, stmts=[], dflts={})
 
-    def visit_block(self, node):
+    def visit_all_Block(self, node):
         block = HDLBlock(in_cond=node.in_cond, stmts=[], dflts={})
         return self.traverse_block(block, node)
 
@@ -173,11 +161,16 @@ class OutputVisitor(HDLStmtVisitor):
         if isinstance(block, ht.Module):
             return AssignValue(f'dout.valid', 0)
 
-    def visit_YieldStmt(self, node):
-        return [
-            AssignValue(f'dout.valid', 1),
-            AssignValue(f'dout_s', node.expr, int(node.expr.dtype))
-        ]
+    def visit_Yield(self, node):
+        block = HDLBlock(
+            in_cond=None,
+            stmts=[
+                AssignValue(f'dout.valid', 1),
+                AssignValue(f'dout_s', node.expr, int(node.expr.dtype))
+            ],
+            dflts={})
+        self.update_defaults(block)
+        return block
 
 
 class InputVisitor(HDLStmtVisitor):
@@ -233,8 +226,8 @@ class BlockConditionsVisitor(HDLStmtVisitor):
 
 
 class StateTransitionVisitor(HDLStmtVisitor):
-    def visit_block(self, node, **kwds):
-        block = super().visit_block(node)
+    def visit_all_Block(self, node, **kwds):
+        block = super().visit_all_Block(node)
 
         if 'state_id' in kwds:
             add_to_list(block.stmts, [

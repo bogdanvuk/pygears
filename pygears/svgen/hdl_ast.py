@@ -195,7 +195,8 @@ class HdlAst(ast.NodeVisitor):
         scope = gather_control_stmt_vars(node.target, intf)
         self.svlocals.update(scope)
 
-        hdl_node = ht.IntfLoop(intf=intf._replace(context='valid'), stmts=[])
+        intf.context = 'valid'
+        hdl_node = ht.IntfLoop(intf=intf, stmts=[])
 
         return self.visit_block(hdl_node, node.body)
 
@@ -222,7 +223,8 @@ class HdlAst(ast.NodeVisitor):
         scope = gather_control_stmt_vars(node.items[0].optional_vars, intf)
         self.svlocals.update(scope)
 
-        hdl_node = ht.IntfBlock(intf=intf._replace(context='valid'), stmts=[])
+        intf.context = 'valid'
+        hdl_node = ht.IntfBlock(intf=intf, stmts=[])
 
         return self.visit_block(hdl_node, node.body)
 
@@ -536,7 +538,7 @@ class HdlAst(ast.NodeVisitor):
             self.generic_visit(node)
 
     def visit_Yield(self, node):
-        return ht.YieldBlock(stmts=[ht.YieldStmt(super().visit(node.value))])
+        return ht.Yield(expr=super().visit(node.value), stmts=[])
 
     def visit_AsyncFunctionDef(self, node):
         hdl_node = ht.Module(

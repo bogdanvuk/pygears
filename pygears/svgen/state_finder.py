@@ -1,4 +1,5 @@
 from .hdl_preprocess import InstanceVisitor
+import hdl_types as ht
 
 
 class StateFinder(InstanceVisitor):
@@ -42,3 +43,7 @@ class StateFinder(InstanceVisitor):
 
     def visit_Leaf(self, node):
         node.state_id = self.state[-1]
+        for block in node.hdl_blocks:
+            if isinstance(block, ht.Yield):
+                block.id = self.block_id
+                self.block_id += 1

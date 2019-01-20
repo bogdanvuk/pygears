@@ -30,25 +30,33 @@ class CBlockVisitor(InstanceVisitor):
         self.state_num = state_num
         self.scope = []
 
-    def enter_block(self, block):
-        self.scope.append(block)
+    def add_state_conditions(self, cblock, hdl_block, sub_idx=None):
+        if hasattr(cblock, 'state_ids'):
+            # Seq or Mutex
+            current_ids = cblock.state_ids
+            current_hdl = cblock.hdl_block
+        else:
+            # Leaf
+            current_ids = [cblock.state_id]
+            current_hdl = cblock.hdl_blocks[sub_idx]
 
-        hdl_block = self.hdl.visit(block.hdl_block)
-
-        if self.state_num > 0 and block.parent:
-            if block.state_ids != block.parent.state_ids:
-                hdl_block.in_cond = state_expr(block.state_ids,
-                                               hdl_block.in_cond)
+        if self.state_num > 0 and cblock.parent:
+            if current_ids != cblock.parent.state_ids:
+                hdl_block.in_cond = state_expr(current_ids, hdl_block.in_cond)
 
             # state transition injection
             state_transition = list(
-                set(block.parent.state_ids) - set(block.state_ids))
-            if state_transition and len(block.state_ids) == 1:
+                set(cblock.parent.state_ids) - set(current_ids))
+            if state_transition and len(current_ids) == 1:
                 state_copy_block = self.hdl.visit(
-                    block.hdl_block, state_id=state_transition[0])
+                    current_hdl, state_id=state_transition[0])
                 state_copy_block.in_cond = None  # already in hdl_block
                 add_to_list(hdl_block.stmts, state_copy_block)
 
+    def enter_block(self, block):
+        self.scope.append(block)
+        hdl_block = self.hdl.visit(block.hdl_block)
+        self.add_state_conditions(block, hdl_block)
         return hdl_block
 
     def exit_block(self):
@@ -75,8 +83,13 @@ class CBlockVisitor(InstanceVisitor):
 
     def visit_Leaf(self, node):
         hdl_block = []
-        for block in node.hdl_blocks:
-            add_to_list(hdl_block, self.hdl.visit(block))
+        for i, block in enumerate(node.hdl_blocks):
+            curr_block = self.hdl.visit(block)
+            if isinstance(block, ht.Yield):
+                if curr_block.stmts or curr_block.dflts:
+                    self.add_state_conditions(node, curr_block, i)
+                    self.hdl.update_defaults(curr_block)
+            add_to_list(hdl_block, curr_block)
         return hdl_block
 
 

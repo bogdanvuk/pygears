@@ -1,3 +1,4 @@
+import inspect
 import typing as pytypes
 from dataclasses import dataclass, field
 from functools import reduce
@@ -58,19 +59,22 @@ def or_expr(expr1, expr2):
 # Expressions
 
 
+@dataclass
 class Expr:
     @property
     def dtype(self):
         pass
 
 
-class IntfReadyExpr(Expr, pytypes.NamedTuple):
+@dataclass
+class IntfReadyExpr(Expr):
     @property
     def dtype(self):
         return Bool
 
 
-class ResExpr(Expr, pytypes.NamedTuple):
+@dataclass
+class ResExpr(Expr):
     val: pytypes.Any
 
     @property
@@ -78,7 +82,8 @@ class ResExpr(Expr, pytypes.NamedTuple):
         return type(self.val)
 
 
-class RegDef(Expr, pytypes.NamedTuple):
+@dataclass
+class RegDef(Expr):
     val: pytypes.Any
     name: str
 
@@ -90,7 +95,8 @@ class RegDef(Expr, pytypes.NamedTuple):
             return self.val.dtype
 
 
-class RegNextStmt(Expr, pytypes.NamedTuple):
+@dataclass
+class RegNextStmt(Expr):
     reg: RegDef
     val: Expr
 
@@ -99,7 +105,8 @@ class RegNextStmt(Expr, pytypes.NamedTuple):
         return self.reg.dtype
 
 
-class RegVal(Expr, pytypes.NamedTuple):
+@dataclass
+class RegVal(Expr):
     reg: RegDef
     name: str
 
@@ -108,7 +115,8 @@ class RegVal(Expr, pytypes.NamedTuple):
         return self.reg.dtype
 
 
-class VariableDef(pytypes.NamedTuple):
+@dataclass
+class VariableDef(Expr):
     val: pytypes.Any
     name: str
 
@@ -117,7 +125,8 @@ class VariableDef(pytypes.NamedTuple):
         return self.val.dtype
 
 
-class VariableStmt(Expr, pytypes.NamedTuple):
+@dataclass
+class VariableStmt(Expr):
     variable: VariableDef
     val: Expr
 
@@ -126,7 +135,8 @@ class VariableStmt(Expr, pytypes.NamedTuple):
         return self.variable.dtype
 
 
-class VariableVal(Expr, pytypes.NamedTuple):
+@dataclass
+class VariableVal(Expr):
     variable: VariableDef
     name: str
 
@@ -135,7 +145,8 @@ class VariableVal(Expr, pytypes.NamedTuple):
         return self.variable.dtype
 
 
-class IntfExpr(Expr, pytypes.NamedTuple):
+@dataclass
+class IntfExpr(Expr):
     intf: pytypes.Any
     context: str = None
 
@@ -148,7 +159,8 @@ class IntfExpr(Expr, pytypes.NamedTuple):
         return self.intf.dtype
 
 
-class ConcatExpr(Expr, pytypes.NamedTuple):
+@dataclass
+class ConcatExpr(Expr):
     operands: tuple
 
     @property
@@ -156,7 +168,8 @@ class ConcatExpr(Expr, pytypes.NamedTuple):
         return Tuple[tuple(op.dtype for op in self.operands)]
 
 
-class UnaryOpExpr(Expr, pytypes.NamedTuple):
+@dataclass
+class UnaryOpExpr(Expr):
     operand: Expr
     operator: str
 
@@ -165,7 +178,8 @@ class UnaryOpExpr(Expr, pytypes.NamedTuple):
         return Uint[1] if (self.operand is '!') else self.operand.dtype
 
 
-class BinOpExpr(Expr, pytypes.NamedTuple):
+@dataclass
+class BinOpExpr(Expr):
     operands: tuple
     operator: str
 
@@ -184,7 +198,8 @@ class BinOpExpr(Expr, pytypes.NamedTuple):
             return t
 
 
-class ArrayOpExpr(Expr, pytypes.NamedTuple):
+@dataclass
+class ArrayOpExpr(Expr):
     array: Expr
     operator: str
 
@@ -193,7 +208,8 @@ class ArrayOpExpr(Expr, pytypes.NamedTuple):
         return Uint[1]
 
 
-class SubscriptExpr(Expr, pytypes.NamedTuple):
+@dataclass
+class SubscriptExpr(Expr):
     val: Expr
     index: pytypes.Any
 
@@ -205,7 +221,8 @@ class SubscriptExpr(Expr, pytypes.NamedTuple):
             return self.val.dtype.__getitem__(self.index)
 
 
-class AttrExpr(Expr, pytypes.NamedTuple):
+@dataclass
+class AttrExpr(Expr):
     val: Expr
     attr: list
 
@@ -225,10 +242,6 @@ class AttrExpr(Expr, pytypes.NamedTuple):
             else:
                 t = getattr(t, attr, None)
         return t
-
-
-class YieldStmt(pytypes.NamedTuple):
-    expr: Expr
 
 
 # Blocks
@@ -351,7 +364,14 @@ class Loop(Block):
 
 
 @dataclass
-class YieldBlock(Block):
+class Yield(Block):
+    expr: Expr
+    _in_cond: Expr = None
+
+    @property
+    def in_cond(self):
+        return self._in_cond
+
     @property
     def cycle_cond(self):
         return IntfReadyExpr()
@@ -385,3 +405,24 @@ class Module:
 
 def isloop(block):
     return isinstance(block, Loop) or isinstance(block, IntfLoop)
+
+
+class TypeVisitor:
+    def visit(self, node, **kwds):
+        method = 'visit_' + node.__class__.__name__
+        visitor = getattr(self, method, self.generic_visit)
+
+        if visitor.__name__ is 'generic_visit' and isinstance(node, Block):
+            visitor = getattr(self, 'visit_all_Block', self.generic_visit)
+
+        if visitor.__name__ is 'generic_visit' and isinstance(node, Expr):
+            visitor = getattr(self, 'visit_all_Expr', self.generic_visit)
+
+        if kwds and ('kwds' in inspect.getargspec(visitor)):
+            return visitor(node, **kwds)
+        else:
+            return visitor(node)
+
+    def generic_visit(self, node):
+        breakpoint()
+        raise Exception

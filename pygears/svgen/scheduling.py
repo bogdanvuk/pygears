@@ -3,9 +3,7 @@ from dataclasses import dataclass, field
 
 import hdl_types as ht
 
-from .hdl_preprocess import InstanceVisitor
-
-async_types = [ht.YieldStmt]
+async_types = [ht.Yield]
 
 
 def check_if_blocking(stmt):
@@ -51,7 +49,7 @@ class Leaf:
     state_id: pytypes.Any = None
 
 
-class Scheduler(InstanceVisitor):
+class Scheduler(ht.TypeVisitor):
     def __init__(self):
         self.scope = []
 
@@ -64,43 +62,39 @@ class Scheduler(InstanceVisitor):
     def visit_block(self, cnode, body):
         self.enter_block(cnode)
 
-        # free_stmts = []
-        # leaf_found = None
+        free_stmts = []
+        leaf_found = None
 
         for stmt in body:
-            if isinstance(stmt, ht.Block):
-                child = self.visit(stmt)
-                if child:
-                    cnode.child.append(child)
+            child = self.visit(stmt)
+            if child is None:
+                if leaf_found:
+                    leaf_found.hdl_blocks.append(stmt)
+                else:
+                    free_stmts.append(stmt)
             else:
-                # all stmts are grouped in leaf
+                if leaf_found:
+                    cnode.child.append(leaf_found)
+                    assert len(free_stmts) == 0
+                else:
+                    if free_stmts:
+                        if isinstance(child, Leaf):
+                            child.hdl_blocks = free_stmts + [child.hdl_blocks]
+                        else:
+                            # safe guard
+                            from .hdl_ast import VisitError
+                            raise VisitError("Free stmts cannot be here..")
+
+                leaf_found = child
+                child = None
+
+        if leaf_found:
+            cnode.child.append(leaf_found)
+        else:
+            if (not cnode.child) and free_stmts:
+                assert isinstance(cnode, MutexCBlock)
                 cnode.child.append(
-                    Leaf(parent=self.scope[-1], hdl_blocks=body))
-                break
-
-            # if isinstance(stmt, (ht.Block, ht.Yield)):
-        #     child = self.visit(stmt)
-        #     if child is None:
-        #         if leaf_found:
-        #             leaf_found.hdl_blocks.append(stmt)
-        #         else:
-        #             free_stmts.append(stmt)
-
-        #     else:
-        #         if leaf_found:
-        #             cnode.child.append(leaf_found)
-        #             assert len(free_stmts) == 0
-        #         else:
-        #             child.hdl_blocks = free_stmts + [child.hdl_blocks]
-
-        #         leaf_found = child
-        #         child = None
-
-        #     if child:
-        #         cnode.child.append(child)
-
-        # if leaf_found:
-        #     cnode.child.append(leaf_found)
+                    Leaf(parent=self.scope[-1], hdl_blocks=free_stmts))
 
         self.exit_block()
 
@@ -136,6 +130,8 @@ class Scheduler(InstanceVisitor):
             from .hdl_ast import VisitError
             raise VisitError("If loop isn't blocking stmts should be merged")
 
-    def visit_YieldBlock(self, node):
-        cblock = SeqCBlock(parent=self.scope[-1], hdl_block=node, child=[])
-        return self.visit_block(cblock, node.stmts)
+    def visit_Yield(self, node):
+        return Leaf(parent=self.scope[-1], hdl_blocks=[node])
+
+    def visit_all_Expr(self, node):
+        return None
