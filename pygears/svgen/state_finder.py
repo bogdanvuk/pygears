@@ -1,5 +1,6 @@
 from .hdl_preprocess import InstanceVisitor
 import hdl_types as ht
+from .scheduling import MutexCBlock, find_hier_blocks
 
 
 class StateFinder(InstanceVisitor):
@@ -24,7 +25,7 @@ class StateFinder(InstanceVisitor):
     def visit_SeqCBlock(self, node):
         self.enter_block(node)
 
-        for child in node.child:
+        for i, child in enumerate(node.child):
             self.visit(child)
             if child is not node.child[-1]:
                 self.state[-1] = self.get_next_state()

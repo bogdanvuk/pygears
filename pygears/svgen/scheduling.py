@@ -59,6 +59,10 @@ class Scheduler(ht.TypeVisitor):
     def exit_block(self):
         self.scope.pop()
 
+    def non_state_block(self, block):
+        return (isinstance(block, MutexCBlock)
+                and (not find_hier_blocks(block.hdl_block.stmts)))
+
     def visit_block(self, cnode, body):
         self.enter_block(cnode)
 
@@ -67,7 +71,7 @@ class Scheduler(ht.TypeVisitor):
 
         for stmt in body:
             child = self.visit(stmt)
-            if child is None:
+            if (child is None) or self.non_state_block(child):
                 if leaf_found:
                     leaf_found.hdl_blocks.append(stmt)
                 else:
@@ -79,7 +83,7 @@ class Scheduler(ht.TypeVisitor):
                 else:
                     if free_stmts:
                         if isinstance(child, Leaf):
-                            child.hdl_blocks = free_stmts + [child.hdl_blocks]
+                            child.hdl_blocks = free_stmts + child.hdl_blocks
                         else:
                             # safe guard
                             from .hdl_ast import VisitError

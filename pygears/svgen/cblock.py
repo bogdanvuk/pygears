@@ -85,6 +85,9 @@ class CBlockVisitor(InstanceVisitor):
         hdl_block = []
         for i, block in enumerate(node.hdl_blocks):
             curr_block = self.hdl.visit(block)
+            if isinstance(block, ht.Block):
+                for stmt in block.stmts:
+                    add_to_list(curr_block.stmts, self.hdl.visit(stmt))
             if isinstance(block, ht.Yield):
                 if curr_block.stmts or curr_block.dflts:
                     self.add_state_conditions(node, curr_block, i)

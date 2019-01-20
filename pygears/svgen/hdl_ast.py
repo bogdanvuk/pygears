@@ -240,6 +240,8 @@ class HdlAst(ast.NodeVisitor):
             ]
 
             index = slice(*tuple(arg for arg in slice_args))
+            if index.start is None:
+                index = slice(0, index.stop, index.step)
 
         hdl_node = ht.SubscriptExpr(val_expr, index)
 
@@ -454,7 +456,7 @@ class HdlAst(ast.NodeVisitor):
             self.variables[name] = ht.VariableVal(var, name)
             self.svlocals[name] = var
             stmts.append(ht.VariableStmt(var, exit_cond))
-            exit_cond = self.variables[name]
+            exit_cond = ht.VariableVal(var, f'{name}_v')
 
         hdl_node = ht.Loop(
             _in_cond=None, stmts=stmts, _exit_cond=exit_cond, multicycle=names)
