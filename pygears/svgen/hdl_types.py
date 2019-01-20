@@ -318,19 +318,20 @@ class IfBlock(Block):
 
 
 @dataclass
-class IfElseBlock(Block):
-    _in_cond: Expr
-    if_block: Block
-    else_block: Block
-    stmts: list = field(init=False, default=None)
+class ContainerBlock(Block):
+    stmts: pytypes.List[Block]
 
     @property
     def cycle_cond(self):
-        return and_expr(self.if_block.cycle_cond, self.else_block.cycle_cond)
+        cond = None
+        for block in self.stmts:
+            block_cond = and_expr(block.cycle_cond, block.in_cond)
+            cond = or_expr(cond, block_cond)
+        return cond
 
     @property
     def exit_cond(self):
-        return and_expr(self.if_block.exit_cond, self.else_block.exit_cond)
+        return and_expr(self.stmts[-1].exit_cond, self.stmts[-1].in_cond)
 
 
 @dataclass

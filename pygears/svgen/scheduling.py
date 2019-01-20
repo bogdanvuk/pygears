@@ -122,11 +122,9 @@ class Scheduler(InstanceVisitor):
         cblock = MutexCBlock(parent=self.scope[-1], hdl_block=node, child=[])
         return self.visit_block(cblock, node.stmts)
 
-    def visit_IfElseBlock(self, node):
+    def visit_ContainerBlock(self, node):
         cblock = MutexCBlock(parent=self.scope[-1], hdl_block=node, child=[])
-        cblock.child.append(self.visit(node.if_block))
-        cblock.child.append(self.visit(node.else_block))
-        return cblock
+        return self.visit_block(cblock, node.stmts)
 
     def visit_Loop(self, node):
         hier = find_hier_blocks(node.stmts)

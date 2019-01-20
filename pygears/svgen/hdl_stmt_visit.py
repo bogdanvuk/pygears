@@ -26,9 +26,9 @@ class HDLBlock:
     stmts: pytypes.List
     dflts: pytypes.Dict
     in_cond: str = None
-    else_cond: str = None
 
 
+@dataclass
 class HDLStmtVisitor:
     def __init__(self):
         self.scope = []
@@ -71,19 +71,8 @@ class HDLStmtVisitor:
         block = CombBlock(stmts=[], dflts={})
         return self.traverse_block(block, node)
 
-    def visit_IfElseBlock(self, node):
-        if_block = self.visit(node.if_block)
-        else_block = self.visit(node.else_block)
-
-        block = HDLBlock(
-            in_cond=if_block.in_cond,
-            else_cond=else_block.in_cond,
-            stmts=[if_block, else_block],
-            dflts={})
-
-        self.update_defaults(block)
-
-        return block
+    def visit_ContainerBlock(self, node):
+        return HDLBlock(in_cond=None, stmts=[], dflts={})
 
     def visit_block(self, node):
         block = HDLBlock(in_cond=node.in_cond, stmts=[], dflts={})
@@ -136,7 +125,7 @@ class HDLStmtVisitor:
         for d in block.dflts:
             for stmt in block.stmts:
                 if hasattr(stmt, 'dflts') and d in stmt.dflts:
-                    if block.dflts[d].val is stmt.dflts[d].val:
+                    if block.dflts[d].val == stmt.dflts[d].val:
                         stmt.dflts[d] = None
 
         self.block_cleanup(block)

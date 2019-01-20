@@ -419,8 +419,7 @@ class HdlAst(ast.NodeVisitor):
                 else_expr = ht.UnaryOpExpr(expr, '!')
                 hdl_node_else = ht.IfBlock(_in_cond=else_expr, stmts=[])
                 self.visit_block(hdl_node_else, node.orelse)
-                top = ht.IfElseBlock(
-                    _in_cond=expr, if_block=hdl_node, else_block=hdl_node_else)
+                top = ht.ContainerBlock(stmts=[hdl_node, hdl_node_else])
                 return top
             else:
                 return hdl_node

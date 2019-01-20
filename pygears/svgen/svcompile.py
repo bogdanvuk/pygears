@@ -58,10 +58,6 @@ class SVCompiler(InstanceVisitor):
         if getattr(block, 'in_cond', True):
             self.writer.indent += 4
 
-    def enter_else_block(self, block):
-        self.writer.line(f'else begin')
-        self.writer.indent += 4
-
     def exit_block(self, block=None):
         if getattr(block, 'in_cond', True):
             self.writer.indent -= 4
@@ -93,21 +89,10 @@ class SVCompiler(InstanceVisitor):
             else:
                 self.writer.line(f"{name} = {svexpr(val.val)};")
 
-        if not hasattr(node, 'else_cond') or node.else_cond is None:
-            for stmt in node.stmts:
-                self.visit(stmt)
+        for stmt in node.stmts:
+            self.visit(stmt)
 
-            self.exit_block(node)
-
-        else:
-            assert len(node.stmts) == 2
-
-            self.visit(node.stmts[0])
-            self.exit_block(node)
-
-            self.enter_else_block(node)
-            self.visit(node.stmts[1])
-            self.exit_block(node)
+        self.exit_block(node)
 
 
 data_func_gear = """
@@ -176,8 +161,8 @@ def compile_gear_body(gear):
     states = StateFinder()
     states.visit(schedule)
 
-    # from .cblock import pprint
-    # pprint(schedule)
+    from .cblock import pprint
+    pprint(schedule)
 
     res = {}
     res['register_next_state'] = CBlockVisitor(
