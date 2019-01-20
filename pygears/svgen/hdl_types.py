@@ -344,7 +344,12 @@ class ContainerBlock(Block):
 
     @property
     def exit_cond(self):
-        return and_expr(self.stmts[-1].exit_cond, self.stmts[-1].in_cond)
+        # return and_expr(self.stmts[-1].exit_cond, self.stmts[-1].in_cond)
+        cond = None
+        for block in self.stmts:
+            block_cond = and_expr(block.exit_cond, block.in_cond)
+            cond = or_expr(cond, block_cond)
+        return cond
 
 
 @dataclass
@@ -418,7 +423,8 @@ class TypeVisitor:
         if visitor.__name__ is 'generic_visit' and isinstance(node, Expr):
             visitor = getattr(self, 'visit_all_Expr', self.generic_visit)
 
-        if kwds and ('kwds' in inspect.getargspec(visitor)):
+        sig = inspect.signature(visitor)
+        if kwds and ('kwds' in sig.parameters):
             return visitor(node, **kwds)
         else:
             return visitor(node)

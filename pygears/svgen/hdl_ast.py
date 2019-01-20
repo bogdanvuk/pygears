@@ -1,5 +1,4 @@
 import ast
-import copy
 
 import hdl_types as ht
 from pygears.typing import Any, Int, Uint, Unit, bitw, is_type
@@ -196,9 +195,8 @@ class HdlAst(ast.NodeVisitor):
         scope = gather_control_stmt_vars(node.target, intf)
         self.svlocals.update(scope)
 
-        intf_cond = copy.deepcopy(intf)
-        intf_cond.context = 'valid'
-        hdl_node = ht.IntfLoop(intf=intf_cond, stmts=[])
+        hdl_node = ht.IntfLoop(
+            intf=ht.IntfExpr(intf=intf.intf, context='valid'), stmts=[])
 
         return self.visit_block(hdl_node, node.body)
 
@@ -225,9 +223,8 @@ class HdlAst(ast.NodeVisitor):
         scope = gather_control_stmt_vars(node.items[0].optional_vars, intf)
         self.svlocals.update(scope)
 
-        intf_cond = copy.deepcopy(intf)
-        intf_cond.context = 'valid'
-        hdl_node = ht.IntfBlock(intf=intf_cond, stmts=[])
+        hdl_node = ht.IntfBlock(
+            intf=ht.IntfExpr(intf=intf.intf, context='valid'), stmts=[])
 
         return self.visit_block(hdl_node, node.body)
 

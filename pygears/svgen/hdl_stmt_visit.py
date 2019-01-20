@@ -226,6 +226,11 @@ class BlockConditionsVisitor(HDLStmtVisitor):
 
 
 class StateTransitionVisitor(HDLStmtVisitor):
+    def enter_block(self, block):
+        super().enter_block(block)
+        if isinstance(block, ht.Module):
+            return AssignValue(f'state_en', 0)
+
     def visit_all_Block(self, node, **kwds):
         block = super().visit_all_Block(node)
 
