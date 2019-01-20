@@ -64,7 +64,7 @@ class SVExpressionVisitor(InstanceVisitor):
         else:
             if typeof(node.val.dtype, Array) or typeof(node.val.dtype,
                                                        Integer):
-                return f'{val}[{node.index}]'
+                return f'{val}[{self.visit(node.index)}]'
             else:
                 return f'{val}.{node.val.dtype.fields[node.index]}'
 

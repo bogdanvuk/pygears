@@ -161,8 +161,8 @@ def compile_gear_body(gear):
     states = StateFinder()
     states.visit(schedule)
 
-    from .cblock import pprint
-    pprint(schedule)
+    # from .cblock import pprint
+    # pprint(schedule)
 
     res = {}
     res['register_next_state'] = CBlockVisitor(

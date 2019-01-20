@@ -3,7 +3,7 @@ import typing as pytypes
 from dataclasses import dataclass, field
 from functools import reduce
 
-from pygears.typing import Bool, Queue, Tuple, Uint, is_type, typeof
+from pygears.typing import Bool, Queue, Tuple, Uint, is_type, typeof, Integer
 
 bin_operators = ['!', '==', '>', '>=', '<', '<=', '!=', '&&', '||']
 extendable_operators = [
@@ -79,7 +79,10 @@ class ResExpr(Expr):
 
     @property
     def dtype(self):
-        return type(self.val)
+        if is_type(type(self.val)):
+            return type(self.val)
+        else:
+            return Integer(self.val)
 
 
 @dataclass
@@ -215,7 +218,11 @@ class SubscriptExpr(Expr):
 
     @property
     def dtype(self):
-        if not isinstance(self.index, slice):
+        if isinstance(self.index, RegVal):
+            # TODO: for arrays and integers the dtype will always be
+            # the same, but is RegVal check correct?
+            return self.val.dtype[0]
+        elif not isinstance(self.index, slice):
             return self.val.dtype[self.index]
         else:
             return self.val.dtype.__getitem__(self.index)

@@ -1,7 +1,8 @@
 import ast
 
 import hdl_types as ht
-from pygears.typing import Any, Int, Uint, Unit, bitw, is_type
+from pygears.typing import (Array, Int, Integer, Uint, Unit, bitw, is_type,
+                            typeof)
 from svcompile_snippets import qrange
 
 opmap = {
@@ -232,7 +233,11 @@ class HdlAst(ast.NodeVisitor):
         val_expr = self.visit(node.value)
 
         if hasattr(node.slice, 'value'):
-            index = self.eval_expression(node.slice.value)
+            if typeof(val_expr.dtype, Array) or typeof(val_expr.dtype,
+                                                       Integer):
+                index = self.visit_DataExpression(node.slice.value)
+            else:
+                index = self.eval_expression(node.slice.value)
         else:
             slice_args = [
                 self.eval_expression(getattr(node.slice, field))
@@ -301,6 +306,8 @@ class HdlAst(ast.NodeVisitor):
             if hasattr(node, 'dtype'):
                 # TODO
                 return node
+            if isinstance(node, ht.ResExpr):
+                return node
             return ht.ResExpr(node)
 
         try:
@@ -314,7 +321,7 @@ class HdlAst(ast.NodeVisitor):
             self.locals, globals())
 
     def visit_Call_len(self, arg):
-        return ht.Expr(len(arg.dtype), dtype=Any)
+        return ht.ResExpr(len(arg.dtype))
 
     def visit_Call_print(self, arg):
         pass
@@ -429,7 +436,12 @@ class HdlAst(ast.NodeVisitor):
                 return hdl_node
 
     def visit_For(self, node):
-        start, stop, step = self.visit_DataExpression(node.iter)
+        res = self.visit_DataExpression(node.iter)
+        if isinstance(res, ht.ResExpr):
+            start, stop, step = ht.ResExpr(res.val.start), ht.ResExpr(
+                res.val.stop), ht.ResExpr(res.val.step)
+        else:
+            start, stop, step = res
 
         is_qrange = node.iter.func.id is 'qrange'
         is_start = start.val != 0
