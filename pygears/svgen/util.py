@@ -2,16 +2,6 @@ from pygears.typing.visitor import TypingVisitorBase
 from pygears.typing import bitw
 
 
-def svgen_visitor(cls):
-    def svgen_action(top, conf):
-        v = cls()
-        v.conf = conf
-        v.visit(top)
-        return top
-
-    return svgen_action
-
-
 class SVGenTypeVisitor(TypingVisitorBase):
     struct_str = "typedef struct packed {"
     union_str = "typedef union packed {"

@@ -84,6 +84,15 @@ class Array(tuple, metaclass=ArrayType):
 
         return ret
 
+    def code(self):
+        w_dtype = int(type(self).dtype)
+        ret = 0
+        for d in reversed(self):
+            ret <<= w_dtype
+            ret |= d.code()
+
+        return ret
+
     @classmethod
     def decode(cls, val):
         ret = []

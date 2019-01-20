@@ -12,13 +12,13 @@ import atexit
 
 signal_spy_connect_t = Template("""
 ${intf_name}_t ${intf_name}_data;
+logic [1:0] ${intf_name}_state;
 logic ${intf_name}_valid;
 logic ${intf_name}_ready;
 
 assign ${intf_name}_data = ${conn_name}.data;
 assign ${intf_name}_valid = ${conn_name}.valid;
-assign ${intf_name}_ready = ${conn_name}.ready;
-assign ${intf_name}_handshake = ${conn_name}.ready & ${conn_name}.valid;""")
+assign ${intf_name}_ready = ${conn_name}.ready;""")
 
 
 class VerilatorCompileError(Exception):
@@ -40,8 +40,8 @@ class SimVerilatorSynchro:
 
 
 class SimVerilated(CosimBase):
-    def __init__(self, gear):
-        super().__init__(gear, timeout=100)
+    def __init__(self, gear, timeout=100):
+        super().__init__(gear, timeout=timeout)
         self.name = gear.name[1:].replace('/', '_')
         self.outdir = os.path.abspath(
             os.path.join(registry('sim/artifact_dir'), self.name))
@@ -76,6 +76,8 @@ class SimVerilated(CosimBase):
 
         self.handlers[self.SYNCHRO_HANDLE_NAME] = SimVerilatorSynchro(
             self.verilib)
+
+        super().setup()
 
     def build(self):
         tracing_enabled = bool(registry('svgen/debug_intfs'))
@@ -130,7 +132,7 @@ class SimVerilated(CosimBase):
         if ret != 0:
             raise VerilatorCompileError(
                 f'Verilator compile error: {ret}. '
-                f'Please inspect "{self.outdir}/make.log"')
+                f'Please inspect "{self.objdir}/make.log"')
 
         if tracing_enabled:
             self.trace_fn = f'{self.outdir}/vlt_dump.vcd'

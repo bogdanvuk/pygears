@@ -177,6 +177,10 @@ class Integer(int, metaclass=IntegerType):
         """
         return len(type(self))
 
+    @property
+    def mask(self):
+        return (1 << self.width) - 1
+
     def __len__(self):
         """Returns the number of bits used for the representation
 
@@ -241,6 +245,9 @@ class Integer(int, metaclass=IntegerType):
             return Bool(int(self) & (1 << index))
         else:
             raise IndexError
+
+    def code(self):
+        return int(self) & self.mask
 
     @classmethod
     def decode(cls, val):

@@ -8,6 +8,7 @@ from pygears.core.sim_event import SimEvent
 from .type_match import TypeMatchError
 from pygears.typing import typeof, Any
 from pygears.typing.base import TypingMeta
+from pygears.conf import reg_inject, Inject
 
 
 def operator_func_from_namespace(cls, name):
@@ -181,7 +182,7 @@ class Intf:
     async def ready(self):
         if not self.ready_nb():
             for q, c in zip(self.out_queues, self.end_consumers):
-                registry('gear/current_module').phase = 'back'
+                registry('gear/current_sim').phase = 'back'
                 await q.join()
 
     def ready_nb(self):
@@ -223,7 +224,7 @@ class Intf:
         if self._data is None:
             self._data = self.in_queue.get_nowait()
 
-        if self.dtype is type(self._data):
+        if isinstance(self._data, self.dtype):
             return self._data
 
         try:
@@ -245,13 +246,14 @@ class Intf:
             raise GearDone
 
         if self._data is None:
+            registry('gear/current_sim').phase = 'forward'
             self._data = await self.in_queue.get()
 
         e = self.events['pull_done']
         if e:
             e(self)
 
-        if self.dtype is type(self._data):
+        if isinstance(self._data, self.dtype):
             return self._data
 
         try:

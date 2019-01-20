@@ -110,6 +110,11 @@ class Queue(tuple, metaclass=QueueMeta):
 
         return int(self.data) | (int(self.eot) << int(type(self).data))
 
+    def code(self):
+        """Returns a packed integer representation of the :class:`Queue` instance.
+        """
+        return self.data.code() | (self.eot.code() << int(type(self).data))
+
     @class_and_instance_method
     def sub(self, lvl=None):
         cls_ret = type(self).sub(lvl)

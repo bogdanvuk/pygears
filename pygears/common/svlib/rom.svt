@@ -1,0 +1,39 @@
+{%- import 'snippet.j2' as snippet -%}
+
+{% set py = import_('builtins') %}
+
+{% call snippet.module_with_intf_structs(module_name, intfs, intfs, comment) %}
+
+   logic                          addr_reg_valid;
+   logic                          reg_empty;
+   logic                          reg_ready;
+
+   assign reg_ready = reg_empty | dout.ready;
+   assign reg_empty = !addr_reg_valid;
+
+   always_ff @(posedge clk)
+     begin
+        if(rst) begin
+           addr_reg_valid <= '0;
+        end else if (reg_ready) begin
+           addr_reg_valid <= addr.valid;
+           case(addr_s)
+{%- if py.isinstance(params['data'], py.dict) %} 
+  {% for key, val in params['data'].items() %}
+               {{key}} : dout_s <= {{int(val)}}; 
+  {% endfor %}
+{%- else %} 
+  {% for val in params['data'] %}
+               {{loop.index-1}} : dout_s <= {{int(val)}}; 
+  {% endfor %}
+{% endif -%} 
+           default: dout_s <= {{params['dflt']}};
+           endcase
+
+        end
+     end
+
+   assign addr.ready = reg_ready;
+   assign dout.valid = addr_reg_valid;
+
+{% endcall %}

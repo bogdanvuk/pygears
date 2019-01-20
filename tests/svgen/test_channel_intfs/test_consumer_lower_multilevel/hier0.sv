@@ -33,7 +33,7 @@ module hier0(
     );
 
 
-    func func0_i (
+    func func0 (
         .clk(clk),
         .rst(rst),
         .din(din_bc[0]),
@@ -42,7 +42,7 @@ module hier0(
     );
 
 
-    func func1_i (
+    func func1 (
         .clk(clk),
         .rst(rst),
         .din(din_bc[1]),
@@ -51,7 +51,7 @@ module hier0(
     );
 
 
-    hier0_hier1 hier1_i (
+    hier0_hier1 hier1 (
         .clk(clk),
         .rst(rst),
         .din(din_bc[2]),

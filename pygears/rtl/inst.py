@@ -2,6 +2,7 @@ from pygears import PluginBase, registry, safe_bind
 from pygears.core.hier_node import HierVisitorBase, NamedHierNode, HierNode
 from pygears.rtl.gear import RTLGearNodeGen, RTLNode
 import inspect
+from pygears.core.gear import GearPlugin
 
 
 class RTLNodeDesign(RTLNode):
@@ -45,7 +46,12 @@ class RTLNodeInstVisitor(HierVisitorBase):
         self.cur_hier = self.design
 
     def instantiate(self, module):
-        svgen = module.params.get('svgen', {})
+        svgen = module.params.get('svgen')
+
+        if svgen is None:
+            svgen = {}
+            module.params['svgen'] = svgen
+
         if 'node_cls' in svgen:
             node_cls = svgen['node_cls']
         else:
@@ -85,12 +91,13 @@ def rtl_inst(top, conf):
     return v.design
 
 
-class RTLNodeInstPlugin(PluginBase):
+class RTLNodeInstPlugin(GearPlugin):
     @classmethod
     def bind(cls):
         safe_bind('rtl/namespace/node', {})
         safe_bind('rtl/namespace/gear_gen', {'Gear': RTLGearNodeGen})
         safe_bind('rtl/gear_node_map', {})
+        registry('gear/params/extra')['svgen'] = None
 
     @classmethod
     def reset(cls):

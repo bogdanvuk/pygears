@@ -23,13 +23,24 @@ void forward(void) {
 {% if tracing %}
     if (tfp) tfp->dump (main_time);
 {% endif %}
-    main_time+=5;
+    {# main_time+=5; #}
 }
 
 void back(void) {
 #ifdef DEBUG
     printf("---- back    ----\n");
 #endif
+    top->eval();
+}
+
+void cycle(void) {
+#ifdef DEBUG
+    printf("---- cycle   ----\n");
+#endif
+{% if tracing %}
+    if (tfp) tfp->dump (main_time);
+{% endif %}
+    main_time+=5;
     top->clk = 0;
     top->rst = 0;
     top->eval();
@@ -37,17 +48,18 @@ void back(void) {
     if (tfp) tfp->dump (main_time);
 {% endif %}
     main_time+=5;
-}
-
-void cycle(void) {
-#ifdef DEBUG
-    printf("---- cycle   ----\n");
-#endif
-    top->clk = 1;
-    top->eval();
 {% if tracing %}
+    if (tfp) tfp->dump (main_time);
     tfp->flush();
 {% endif %}
+    top->clk = 1;
+    top->eval();
+    {# tfp->spTrace()->m_activity_cnt = 0; #}
+{% if tracing %}
+    if (tfp) tfp->dump (main_time);
+    tfp->flush();
+{% endif %}
+    {# printf("Cycle activity: %d\n", tfp->spTrace()->m_activity_cnt);  #}
 }
 
 int init(void) {
@@ -64,8 +76,6 @@ int init(void) {
     printf("%p\n", tfp);
 #endif
     tfp->open("{{outdir}}/vlt_dump.vcd");  // Open the dump file
-    tfp->flush();
-    tfp->dump(0);
 #ifdef DEBUG
     printf("tfp->open\n");
 #endif
@@ -75,8 +85,14 @@ int init(void) {
     top->{{p.basename}}_ready = 0;
 {% endfor %}
 
+    top->clk = 1;
     top->rst = 1;
     top->eval();
+
+{% if tracing %}
+    tfp->dump(0);
+    tfp->flush();
+{% endif %}
 
     return 0;
 }

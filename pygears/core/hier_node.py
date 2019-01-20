@@ -112,6 +112,12 @@ class NamedHierNode(HierNode):
                 child.basename = new_name
 
     def __getitem__(self, path):
+        if not path:
+            raise KeyError()
+
+        if path[0] == '/':
+            return self.root()[path[1:]]
+
         parts = path.split("/")
 
         for child in self.child:

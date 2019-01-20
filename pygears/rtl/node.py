@@ -83,7 +83,7 @@ class RTLNode(NamedHierNode):
 
     @property
     def inst_basename(self):
-        return f'{self.basename}_i'
+        return self.basename
 
     @property
     def inst_name(self):

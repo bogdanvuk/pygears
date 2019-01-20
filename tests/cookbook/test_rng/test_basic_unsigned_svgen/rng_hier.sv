@@ -11,7 +11,7 @@ module rng_hier(
          .W_CNT(2'd2),
          .W_INCR(2'd2)
          )
-   sv_rng_i (
+   sv_rng (
              .clk(clk),
              .rst(rst),
              .cfg(cfg),

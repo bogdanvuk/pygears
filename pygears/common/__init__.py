@@ -14,6 +14,7 @@ from .sieve import sieve
 from .fmap import fmap
 from .permute import permuted_apply
 from .const import const, const_ping
+from .rom import rom
 from .add import add
 from .sub import sub
 from .mul import mul
@@ -25,7 +26,7 @@ from .neq import neq
 from .lt import lt
 from .gt import gt
 from .invert import invert
-from .mux import mux, mux_zip, mux_valve
+from .mux import mux, mux_zip, mux_valve, mux_by
 from .demux import demux, demux_zip, demux_by
 from .shred import shred
 from .decoupler import decoupler, buff
@@ -48,6 +49,6 @@ __all__ = [
     'unzip', 'serialize', 'project', 'fifo', 'factor', 'fill', 'mux_zip',
     'mux_valve', 'demux_zip', 'data_dly', 'eq', 'union_sync', 'union_collapse',
     'filt', 'buff', 'local_rst', 'mod', 'invert', 'shr', 'queue_wrap_from',
-    'demux_by', 'align', 'gt', 'lt', 'neq', 'cart_sync_with', 'when',
+    'demux_by', 'mux_by', 'align', 'gt', 'lt', 'neq', 'cart_sync_with', 'when',
     'filt_by', 'union_sync_with', 'case', 'const_ping'
 ]

@@ -19,7 +19,6 @@ from pygears.sim.modules.cosim_base import CosimBase, CosimNoData
 from pygears.svgen import svgen
 from pygears.svgen.util import svgen_typedef
 from pygears.typing import Uint
-from pygears.typing_common.codec import code, decode
 from pygears.util.fileio import save_file
 
 
@@ -45,7 +44,7 @@ def u32_repr_gen(data, dtype):
 
 
 def u32_repr(data, dtype):
-    return array.array('I', u32_repr_gen(code(dtype, data), dtype))
+    return array.array('I', u32_repr_gen(dtype(data).code(), dtype))
 
 
 def u32_bytes_to_int(data):
@@ -60,7 +59,7 @@ def u32_bytes_to_int(data):
 
 
 def u32_bytes_decode(data, dtype):
-    return decode(dtype, u32_bytes_to_int(data))
+    return dtype.decode(u32_bytes_to_int(data))
 
 
 j2_templates = ['runsim.j2', 'top.j2']

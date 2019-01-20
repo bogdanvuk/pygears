@@ -1,5 +1,5 @@
 from pygears.core.hier_node import HierVisitorBase
-from pygears.svgen.util import svgen_visitor
+from pygears.rtl import flow_visitor
 from pygears.rtl.intf import RTLIntf
 
 
@@ -21,7 +21,7 @@ def is_in_subbranch(root, node):
         return True
 
 
-@svgen_visitor
+@flow_visitor
 class RTLOutChannelVisitor(HierVisitorBase):
     def RTLNode(self, node):
         super().HierNode(node)
@@ -74,7 +74,7 @@ class RTLOutChannelVisitor(HierVisitorBase):
         return True
 
 
-@svgen_visitor
+@flow_visitor
 class RTLChannelVisitor(HierVisitorBase):
     def RTLNode(self, node):
         for p in node.in_ports:

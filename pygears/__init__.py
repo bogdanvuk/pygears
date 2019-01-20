@@ -26,6 +26,7 @@ from pygears.core.partial import MultiAlternativeError
 import pygears.common
 import pygears.typing
 import pygears.typing_common
+import pygears.typing_common.pprint
 
 # import os
 # from pygears.registry import load_plugin_folder
@@ -36,7 +37,7 @@ import pygears.rtl
 
 from pygears.conf.custom_settings import RCSettings, print_registry
 settings = RCSettings()
-print_registry()
+# print_registry()
 
 sys.excepthook = pygears_excepthook
 
