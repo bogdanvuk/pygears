@@ -52,32 +52,42 @@ class RTLGearNodeGen(HierNode):
     @reg_inject
     def __init__(self, gear, parent, rtl_map=Inject('rtl/gear_node_map')):
         super().__init__(parent)
-        self.gear = gear
-        self.node = RTLGear(gear, getattr(parent, "node", None))
         self.rtl_map = rtl_map
-        self.rtl_map[gear] = self.node
 
-        namespace = registry('svgen/module_namespace')
+        if isinstance(gear, RTLGear):
+            self.gear = gear.gear
+            self.node = gear
+            parent_node = getattr(parent, "node", None)
+            if parent_node:
+                parent_node.add_child(self.node)
+        else:
+            self.gear = gear
+            self.node = RTLGear(gear, getattr(parent, "node", None))
+            self.rtl_map[gear] = self.node
 
-        if 'svgen' not in self.node.params:
-            self.node.params['svgen'] = {}
+            namespace = registry('svgen/module_namespace')
 
-        if 'svgen_cls' not in self.node.params['svgen']:
-            svgen_cls = namespace.get(gear.definition, None)
+            if 'svgen' not in self.node.params:
+                self.node.params['svgen'] = {}
 
-            if svgen_cls is None:
-                for base_class in inspect.getmro(gear.__class__):
-                    if base_class.__name__ in namespace:
-                        svgen_cls = namespace[base_class.__name__]
-                        break
+            if 'svgen_cls' not in self.node.params['svgen']:
+                svgen_cls = namespace.get(gear.definition, None)
 
-            self.node.params['svgen']['svgen_cls'] = svgen_cls
+                if svgen_cls is None:
+                    for base_class in inspect.getmro(gear.__class__):
+                        if base_class.__name__ in namespace:
+                            svgen_cls = namespace[base_class.__name__]
+                            break
 
-        for p in gear.in_ports:
-            self.node.add_in_port(p.basename, p.producer, p.consumer, p.dtype)
+                self.node.params['svgen']['svgen_cls'] = svgen_cls
 
-        for p in gear.out_ports:
-            self.node.add_out_port(p.basename, p.producer, p.consumer, p.dtype)
+            for p in gear.in_ports:
+                self.node.add_in_port(p.basename, p.producer, p.consumer,
+                                      p.dtype)
+
+            for p in gear.out_ports:
+                self.node.add_out_port(p.basename, p.producer, p.consumer,
+                                       p.dtype)
 
     def connect(self):
         for p, gear_p in zip(self.node.in_ports, self.gear.in_ports):
