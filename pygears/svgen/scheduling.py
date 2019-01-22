@@ -10,7 +10,7 @@ def check_if_blocking(stmt):
     if type(stmt) in async_types:
         return stmt
     elif isinstance(stmt, ht.Block):
-        return stmt
+        return find_hier_blocks(stmt.stmts)
     else:
         return None
 

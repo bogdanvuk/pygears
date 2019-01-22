@@ -31,6 +31,8 @@ class HDLBlock:
 class HDLStmtVisitor(ht.TypeVisitor):
     def __init__(self):
         self.scope = []
+        self.cycle_conds = []
+        self.exit_conds = []
 
     @property
     def current_scope(self):
@@ -138,6 +140,8 @@ class RegEnVisitor(HDLStmtVisitor):
             return [AssignValue(f'{reg}_en', 0) for reg in block.regs]
 
     def visit_RegNextStmt(self, node):
+        if self.cycle_cond != 1:
+            self.cycle_conds.append(self.current_scope.id)
         return [
             AssignValue(target=f'{node.reg.name}_en', val=self.cycle_cond),
             AssignValue(
@@ -181,48 +185,48 @@ class InputVisitor(HDLStmtVisitor):
                 AssignValue(f'{port.name}.ready', 0) for port in block.in_ports
             ]
         elif isinstance(block, ht.IntfBlock):
+            if self.exit_cond != 1:
+                self.exit_conds.append(self.current_scope.id)
             return AssignValue(
                 target=f'{block.intf.name}.ready', val=self.exit_cond)
         elif isinstance(block, ht.IntfLoop):
+            if self.cycle_cond != 1:
+                self.cycle_conds.append(self.current_scope.id)
             return AssignValue(
                 target=f'{block.intf.name}.ready', val=self.cycle_cond)
 
 
 class BlockConditionsVisitor(HDLStmtVisitor):
-    def __init__(self):
+    def __init__(self, cycle_conds, exit_conds):
         super().__init__()
-        self.cycle_conds = []
-        self.exit_conds = []
+        self.cycle_conds = cycle_conds
+        self.exit_conds = exit_conds
+        self.condition_assigns = CombBlock(stmts=[], dflts={})
 
     def get_cycle_cond(self):
-        if self.current_scope.id not in self.cycle_conds:
-            self.cycle_conds.append(self.current_scope.id)
+        if self.current_scope.id in self.cycle_conds:
             cond = self.current_scope.cycle_cond
             if cond is None:
                 cond = 1
-            return AssignValue(
-                target=f'cycle_cond_block_{self.current_scope.id}', val=cond)
+            self.condition_assigns.stmts.append(
+                AssignValue(
+                    target=f'cycle_cond_block_{self.current_scope.id}',
+                    val=cond))
 
     def get_exit_cond(self):
-        if self.current_scope.id not in self.exit_conds:
-            self.exit_conds.append(self.current_scope.id)
+        if self.current_scope.id in self.exit_conds:
             cond = self.current_scope.exit_cond
             if cond is None:
                 cond = 1
-            return AssignValue(
-                target=f'exit_cond_block_{self.current_scope.id}', val=cond)
+            self.condition_assigns.stmts.append(
+                AssignValue(
+                    target=f'exit_cond_block_{self.current_scope.id}',
+                    val=cond))
 
     def enter_block(self, block):
         super().enter_block(block)
-
-        if isinstance(block, ht.IntfBlock):
-            return self.get_exit_cond()
-
-        if isinstance(block, ht.IntfLoop):
-            return self.get_cycle_cond()
-
-    def visit_RegNextStmt(self, node):
-        return self.get_cycle_cond()
+        self.get_cycle_cond()
+        self.get_exit_cond()
 
 
 class StateTransitionVisitor(HDLStmtVisitor):

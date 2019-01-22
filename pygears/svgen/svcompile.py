@@ -14,6 +14,7 @@ from .scheduling import Scheduler
 from .state_finder import StateFinder
 from .sv_expression import svexpr
 from .util import svgen_typedef
+from .stmt_vacum import StmtVacum
 
 reg_template = """
 always_ff @(posedge clk) begin
@@ -157,6 +158,7 @@ def compile_gear_body(gear):
 
     # py ast to hdl ast
     hdl_ast = HdlAst(gear, v.regs, v.variables).visit(body_ast)
+    StmtVacum().visit(hdl_ast)
     schedule = Scheduler().visit(hdl_ast)
     states = StateFinder()
     states.visit(schedule)
@@ -165,21 +167,30 @@ def compile_gear_body(gear):
     # pprint(schedule)
 
     res = {}
-    res['register_next_state'] = CBlockVisitor(
-        RegEnVisitor(), states.max_state).visit(schedule)
-    res['variables'] = CBlockVisitor(VariableVisitor(),
-                                     states.max_state).visit(schedule)
-    res['outputs'] = CBlockVisitor(OutputVisitor(),
-                                   states.max_state).visit(schedule)
-    res['inputs'] = CBlockVisitor(InputVisitor(),
-                                  states.max_state).visit(schedule)
+    reg_next_v = CBlockVisitor(RegEnVisitor(), states.max_state)
+    res['register_next_state'] = reg_next_v.visit(schedule)
 
-    cond_visit = CBlockVisitor(BlockConditionsVisitor(), states.max_state)
-    res['block_conditions'] = cond_visit.visit(schedule)
-    block_conds = {
-        'cycle': cond_visit.hdl.cycle_conds,
-        'exit': cond_visit.hdl.exit_conds
-    }
+    var_v = CBlockVisitor(VariableVisitor(), states.max_state)
+    res['variables'] = var_v.visit(schedule)
+
+    output_v = CBlockVisitor(OutputVisitor(), states.max_state)
+    res['outputs'] = output_v.visit(schedule)
+
+    input_v = CBlockVisitor(InputVisitor(), states.max_state)
+    res['inputs'] = input_v.visit(schedule)
+
+    cycle_conds = list(
+        set(reg_next_v.hdl.cycle_conds + var_v.hdl.cycle_conds +
+            output_v.hdl.cycle_conds + input_v.hdl.cycle_conds))
+    exit_conds = list(
+        set(reg_next_v.hdl.exit_conds + var_v.hdl.exit_conds +
+            output_v.hdl.exit_conds + input_v.hdl.exit_conds))
+    cond_visit = CBlockVisitor(
+        BlockConditionsVisitor(cycle_conds, exit_conds), states.max_state)
+    cond_visit.visit(schedule)
+    res['block_conditions'] = cond_visit.hdl.condition_assigns
+
+    block_conds = {'cycle': cycle_conds, 'exit': exit_conds}
     if states.max_state > 0:
         res['state_transition'] = CBlockVisitor(
             StateTransitionVisitor(), states.max_state).visit(schedule)
