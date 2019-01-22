@@ -47,8 +47,8 @@ class SimVerilated(CosimBase):
             os.path.join(registry('sim/artifact_dir'), self.name))
         self.objdir = os.path.join(self.outdir, 'obj_dir')
         bind('svgen/spy_connection_template', signal_spy_connect_t)
-        self.svnode = svgen(gear, outdir=self.outdir, wrapper=True)
-        self.svmod = registry('svgen/map')[self.svnode]
+        self.rtlnode = svgen(gear, outdir=self.outdir, wrapper=True)
+        self.svmod = registry('svgen/map')[self.rtlnode]
         self.wrap_name = f'wrap_{self.svmod.sv_module_name}'
         self.trace_fn = None
 
@@ -82,8 +82,8 @@ class SimVerilated(CosimBase):
     def build(self):
         tracing_enabled = bool(registry('svgen/debug_intfs'))
         context = {
-            'in_ports': self.svnode.in_ports,
-            'out_ports': self.svnode.out_ports,
+            'in_ports': self.rtlnode.in_ports,
+            'out_ports': self.rtlnode.out_ports,
             'top_name': self.wrap_name,
             'tracing': tracing_enabled,
             'outdir': self.outdir
