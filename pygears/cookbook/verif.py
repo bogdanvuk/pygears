@@ -61,14 +61,24 @@ def verif(*stim, f, ref, delays=None):
     return report
 
 
-def directed(*stim, f, ref):
+def directed(*stim, f, ref, delays=None):
     '''Directed test, ref is a list of expected results'''
     res = stim | f
-    if isinstance(res, tuple):
-        for i, r in enumerate(res):
-            r | mon | check(ref=ref[i])
-    else:
-        res | mon | check(ref=ref)
+
+    if not isinstance(res, tuple):
+        res = (res, )
+        ref = (ref, )
+
+    if delays is None:
+        delays = (None, ) * len(res)
+
+    assert len(ref) == len(res)
+    assert len(delays) == len(res)
+
+    for ref_inst, res_inst, delay_inst in zip(ref, res, delays):
+        if delay_inst is not None:
+            res_inst = res_inst | delay_inst
+        res_inst | mon | check(ref=ref_inst)
 
 
 def directed_on_the_fly(*stim, f, refs, delays=None):

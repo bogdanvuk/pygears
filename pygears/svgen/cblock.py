@@ -45,11 +45,20 @@ class CBlockVisitor(InstanceVisitor):
                 hdl_block.in_cond = state_expr(current_ids, hdl_block.in_cond)
 
             # state transition injection
-            state_transition = list(
-                set(cblock.parent.state_ids) - set(current_ids))
-            if state_transition and len(current_ids) == 1:
+            # state_transition = list(
+            #     set(cblock.parent.state_ids) - set(current_ids))
+            parent_ids = list(set(cblock.parent.state_ids))
+            assert len(set(current_ids)) == 1
+            curr_index = parent_ids.index(current_ids[0])
+            if len(parent_ids) > (curr_index) + 1:
+                state_transition = parent_ids[curr_index + 1]
+            else:
+                state_transition = None
+                # for idx in set(cblock.parent.state_ids):
+
+            if state_transition:
                 state_copy_block = self.hdl.visit(
-                    current_hdl, state_id=state_transition[0])
+                    current_hdl, state_id=state_transition)
                 state_copy_block.in_cond = None  # already in hdl_block
                 add_to_list(hdl_block.stmts, state_copy_block)
 
@@ -95,9 +104,9 @@ class CBlockVisitor(InstanceVisitor):
             curr_block = self.hdl.visit(block)
             self._add_sub(block, curr_block)
             if isinstance(block, ht.Yield):
-                if curr_block.stmts or curr_block.dflts:
-                    self.add_state_conditions(node, curr_block, i)
-                    self.hdl.update_defaults(curr_block)
+                # if curr_block.stmts or curr_block.dflts:
+                self.add_state_conditions(node, curr_block, i)
+                self.hdl.update_defaults(curr_block)
             add_to_list(hdl_block, curr_block)
         return hdl_block
 

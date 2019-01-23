@@ -415,10 +415,6 @@ class Module:
         return find_exit_cond(self.stmts, search_in_cond=True)
 
 
-def isloop(block):
-    return isinstance(block, Loop) or isinstance(block, IntfLoop)
-
-
 class TypeVisitor:
     def visit(self, node, **kwds):
         method = 'visit_' + node.__class__.__name__
@@ -439,3 +435,6 @@ class TypeVisitor:
     def generic_visit(self, node):
         breakpoint()
         raise Exception
+
+
+blocking_types = (IntfLoop, IntfBlock, Yield)

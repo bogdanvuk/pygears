@@ -236,6 +236,8 @@ class HdlAst(ast.NodeVisitor):
             if typeof(val_expr.dtype, Array) or typeof(val_expr.dtype,
                                                        Integer):
                 index = self.visit_DataExpression(node.slice.value)
+                if isinstance(index, ht.ResExpr):
+                    index = int(index.val)
             else:
                 index = self.eval_expression(node.slice.value)
         else:

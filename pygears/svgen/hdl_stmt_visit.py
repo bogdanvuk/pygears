@@ -5,6 +5,7 @@ import hdl_types as ht
 from pygears.typing.base import TypingMeta
 
 from .cblock import add_to_list
+from .scheduling import find_hier_blocks
 
 
 @dataclass
@@ -50,12 +51,19 @@ class HDLStmtVisitor(ht.TypeVisitor):
             self.exit_cond = f'exit_cond_block_{self.current_scope.id}'
 
     def enter_block(self, block):
+        # if find_hier_blocks(block.stmts) or isinstance(block,
+                                                       # ht.blocking_types):
+        self.bla = True
         self.scope.append(block)
         self.set_conditions()
+        # else:
+            # self.bla = False
 
     def exit_block(self):
-        self.scope.pop()
-        self.set_conditions()
+        if self.bla:
+            self.scope.pop()
+            self.set_conditions()
+        self.bla = False
 
     def visit_Module(self, node):
         block = CombBlock(stmts=[], dflts={})
@@ -199,12 +207,13 @@ class InputVisitor(HDLStmtVisitor):
 class BlockConditionsVisitor(HDLStmtVisitor):
     def __init__(self, cycle_conds, exit_conds):
         super().__init__()
-        self.cycle_conds = cycle_conds
-        self.exit_conds = exit_conds
+        self.cycle_conds = list(tuple(cycle_conds))
+        self.exit_conds = list(tuple(exit_conds))
         self.condition_assigns = CombBlock(stmts=[], dflts={})
 
     def get_cycle_cond(self):
         if self.current_scope.id in self.cycle_conds:
+            self.cycle_conds.remove(self.current_scope.id)
             cond = self.current_scope.cycle_cond
             if cond is None:
                 cond = 1
@@ -215,6 +224,7 @@ class BlockConditionsVisitor(HDLStmtVisitor):
 
     def get_exit_cond(self):
         if self.current_scope.id in self.exit_conds:
+            self.exit_conds.remove(self.current_scope.id)
             cond = self.current_scope.exit_cond
             if cond is None:
                 cond = 1
@@ -247,3 +257,10 @@ class StateTransitionVisitor(HDLStmtVisitor):
                 self.update_defaults(block)
 
         return block
+
+    # def visit_Yield(self, node, **kwds):
+    #     if 'state_id' in kwds:
+    #         return [
+    #             AssignValue(target=f'state_en', val=node.exit_cond),
+    #             AssignValue(target='state_next', val=kwds['state_id'])
+    #         ]
