@@ -4,10 +4,12 @@ from pygears.typing import Queue, Tuple, Integer
 
 
 @gear(svgen={'compile': True})
-async def accumulator(din: Queue[Tuple[Integer['w_data'], Integer['w_data']]]
-                      ) -> b'din[0][0]':
+async def accumulator(din: Queue[Tuple[{
+        'data': Integer['w_data'],
+        'offset': Integer['w_data']
+}]]) -> b'din.data["data"]':
 
-    acc = din.dtype[0][0](0)
+    acc = din.dtype.data['data'](0)
     offset_added = False
 
     async for ((data, offset), eot) in din:
