@@ -81,13 +81,19 @@ class CBlockVisitor(InstanceVisitor):
     def visit_MutexCBlock(self, node):
         return self.visit_block(node)
 
+    def _add_sub(self, block, curr_block):
+        if isinstance(block, ht.Block):
+            for stmt in block.stmts:
+                sub = self.hdl.visit(stmt)
+                self._add_sub(stmt, sub)
+                add_to_list(curr_block.stmts, sub)
+            self.hdl.update_defaults(curr_block)
+
     def visit_Leaf(self, node):
         hdl_block = []
         for i, block in enumerate(node.hdl_blocks):
             curr_block = self.hdl.visit(block)
-            if isinstance(block, ht.Block):
-                for stmt in block.stmts:
-                    add_to_list(curr_block.stmts, self.hdl.visit(stmt))
+            self._add_sub(block, curr_block)
             if isinstance(block, ht.Yield):
                 if curr_block.stmts or curr_block.dflts:
                     self.add_state_conditions(node, curr_block, i)

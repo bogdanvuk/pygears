@@ -96,7 +96,7 @@ class Scheduler(ht.TypeVisitor):
             cnode.child.append(leaf_found)
         else:
             if (not cnode.child) and free_stmts:
-                assert isinstance(cnode, MutexCBlock)
+                # assert isinstance(cnode, MutexCBlock)
                 cnode.child.append(
                     Leaf(parent=self.scope[-1], hdl_blocks=free_stmts))
 
@@ -122,7 +122,10 @@ class Scheduler(ht.TypeVisitor):
 
     def visit_ContainerBlock(self, node):
         cblock = MutexCBlock(parent=self.scope[-1], hdl_block=node, child=[])
-        return self.visit_block(cblock, node.stmts)
+        for stmt in node.stmts:
+            c = self.visit(stmt)
+            cblock.child.append(c)
+        return cblock
 
     def visit_Loop(self, node):
         hier = find_hier_blocks(node.stmts)

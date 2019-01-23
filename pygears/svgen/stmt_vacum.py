@@ -9,6 +9,11 @@ def sort_stmts(stmts):
     for i, stmt in enumerate(stmts):
         if isinstance(stmt, ht.Expr):
             free_stmts.append(i)
+        elif isinstance(stmt, ht.ContainerBlock):
+            if any([find_hier_blocks(s.stmts) for s in stmt.stmts]):
+                sub_blocks.append(i)
+            else:
+                free_stmts.append(i)
         elif isinstance(stmt, ht.Block):
             if find_hier_blocks(stmt.stmts):
                 sub_blocks.append(i)
@@ -23,9 +28,12 @@ def sort_stmts(stmts):
 
 class StmtVacum(ht.TypeVisitor):
     def visit_all_Block(self, node):
-        free_stmts, sub_blocks = sort_stmts(node.stmts)
+        if isinstance(node, ht.ContainerBlock):
+            free_stmts = []
+            sub_blocks = []
+        else:
+            free_stmts, sub_blocks = sort_stmts(node.stmts)
 
-        to_add = []
         if free_stmts and sub_blocks:
             # add else blocks if needed
             for i in sub_blocks:
@@ -33,19 +41,9 @@ class StmtVacum(ht.TypeVisitor):
                     else_block = ht.IfBlock(
                         _in_cond=ht.UnaryOpExpr(node.stmts[i].in_cond, '!'),
                         stmts=[])
-                    idx = node.stmts.index(node.stmts[i])
-                    to_add.append((idx + 1, else_block))
-
-            if to_add:
-                for add_idx, else_block in to_add:
-                    for i in range(len(free_stmts)):
-                        if free_stmts[i] >= add_idx:
-                            free_stmts[i] += 1
-                    for i in range(len(sub_blocks)):
-                        if sub_blocks[i] >= add_idx:
-                            sub_blocks[i] += 1
-                    node.stmts.insert(add_idx, else_block)
-                    sub_blocks.append(add_idx)
+                    if_block = node.stmts[i]
+                    node.stmts[i] = ht.ContainerBlock(
+                        stmts=[if_block, else_block])
 
             # insert free stmts to sub blocks
             for block_idx in sub_blocks:
@@ -56,9 +54,17 @@ class StmtVacum(ht.TypeVisitor):
                     node.stmts[s] for s in free_stmts if s > block_idx
                 ]
                 for s in reversed(before_stmts):
-                    node.stmts[block_idx].stmts.insert(0, s)
+                    if isinstance(node.stmts[block_idx], ht.ContainerBlock):
+                        for b in range(len(node.stmts[block_idx].stmts)):
+                            node.stmts[block_idx].stmts[b].stmts.insert(0, s)
+                    else:
+                        node.stmts[block_idx].stmts.insert(0, s)
                 for s in after_stmts:
-                    node.stmts[block_idx].stmts.append(s)
+                    if isinstance(node.stmts[block_idx], ht.ContainerBlock):
+                        for b in range(len(node.stmts[block_idx].stmts)):
+                            node.stmts[block_idx].stmts[b].stmts.append(s)
+                    else:
+                        node.stmts[block_idx].stmts.append(s)
 
             for stmt in reversed(free_stmts):
                 # remove original free stmts
