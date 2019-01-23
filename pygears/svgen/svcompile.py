@@ -180,11 +180,11 @@ def compile_gear_body(gear):
     res['inputs'] = input_v.visit(schedule)
 
     cycle_conds = list(
-        set(reg_next_v.hdl.cycle_conds + var_v.hdl.cycle_conds +
-            output_v.hdl.cycle_conds + input_v.hdl.cycle_conds))
+        set(reg_next_v.cycle_conds + var_v.cycle_conds +
+            output_v.cycle_conds + input_v.cycle_conds))
     exit_conds = list(
-        set(reg_next_v.hdl.exit_conds + var_v.hdl.exit_conds +
-            output_v.hdl.exit_conds + input_v.hdl.exit_conds))
+        set(reg_next_v.exit_conds + var_v.exit_conds +
+            output_v.exit_conds + input_v.exit_conds))
     cond_visit = CBlockVisitor(
         BlockConditionsVisitor(cycle_conds, exit_conds), states.max_state)
     cond_visit.visit(schedule)

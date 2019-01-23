@@ -197,7 +197,9 @@ class HdlAst(ast.NodeVisitor):
         self.svlocals.update(scope)
 
         hdl_node = ht.IntfLoop(
-            intf=ht.IntfExpr(intf=intf.intf, context='valid'), stmts=[])
+            intf=ht.IntfExpr(intf=intf.intf, context='valid'),
+            stmts=[],
+            multicycle=scope)
 
         return self.visit_block(hdl_node, node.body)
 

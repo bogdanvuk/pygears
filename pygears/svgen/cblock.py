@@ -1,3 +1,4 @@
+from functools import reduce
 import hdl_types as ht
 
 from .inst_visit import InstanceVisitor
@@ -29,6 +30,8 @@ class CBlockVisitor(InstanceVisitor):
         self.hdl = hdl_visitor
         self.state_num = state_num
         self.scope = []
+        self.cycle_conds = []
+        self.exit_conds = []
 
     def add_state_conditions(self, cblock, hdl_block, sub_idx=None):
         if hasattr(cblock, 'state_ids'):
@@ -56,6 +59,7 @@ class CBlockVisitor(InstanceVisitor):
                 state_transition = None
                 # for idx in set(cblock.parent.state_ids):
 
+            self._set_conds()
             if state_transition:
                 state_copy_block = self.hdl.visit(
                     current_hdl, state_id=state_transition)
@@ -64,6 +68,7 @@ class CBlockVisitor(InstanceVisitor):
 
     def enter_block(self, block):
         self.scope.append(block)
+        self._set_conds()
         hdl_block = self.hdl.visit(block.hdl_block)
         self.add_state_conditions(block, hdl_block)
         return hdl_block
@@ -93,14 +98,48 @@ class CBlockVisitor(InstanceVisitor):
     def _add_sub(self, block, curr_block):
         if isinstance(block, ht.Block):
             for stmt in block.stmts:
+                self._set_conds()
                 sub = self.hdl.visit(stmt)
                 self._add_sub(stmt, sub)
                 add_to_list(curr_block.stmts, sub)
             self.hdl.update_defaults(curr_block)
 
+    def _set_conds(self):
+        cycle_cond = []
+        for c in reversed(self.scope):
+            s = c.hdl_block
+            if isinstance(s, ht.ContainerBlock):
+                continue
+
+            if s.cycle_cond and s.cycle_cond != 1:
+                self.cycle_conds.append(s.id)
+                cycle_cond.append(f'cycle_cond_block_{s.id}')
+
+            if hasattr(s, 'multicycle') and s.multicycle:
+                break
+
+        cycle_cond = reduce(ht.and_expr, cycle_cond, None)
+
+        exit_cond = []
+        for c in reversed(self.scope):
+            s = c.hdl_block
+            if isinstance(s, ht.ContainerBlock):
+                continue
+
+            if s.exit_cond and s.exit_cond != 1:
+                self.exit_conds.append(s.id)
+                exit_cond.append(f'exit_cond_block_{s.id}')
+
+        exit_cond = reduce(ht.and_expr, exit_cond, None)
+
+        self.hdl.cycle_cond = cycle_cond
+        self.hdl.exit_cond = exit_cond
+
     def visit_Leaf(self, node):
         hdl_block = []
         for i, block in enumerate(node.hdl_blocks):
+            self._set_conds()
+
             curr_block = self.hdl.visit(block)
             self._add_sub(block, curr_block)
             if isinstance(block, ht.Yield):

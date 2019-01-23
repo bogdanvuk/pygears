@@ -32,8 +32,8 @@ class HDLBlock:
 class HDLStmtVisitor(ht.TypeVisitor):
     def __init__(self):
         self.scope = []
-        self.cycle_conds = []
-        self.exit_conds = []
+        # self.cycle_conds = []
+        # self.exit_conds = []
 
     @property
     def current_scope(self):
@@ -42,28 +42,28 @@ class HDLStmtVisitor(ht.TypeVisitor):
     def generic_visit(self, node):
         pass
 
-    def set_conditions(self):
-        self.cycle_cond = 1
-        if self.current_scope.cycle_cond is not None:
-            self.cycle_cond = f'cycle_cond_block_{self.current_scope.id}'
-        self.exit_cond = 1
-        if self.current_scope.exit_cond is not None:
-            self.exit_cond = f'exit_cond_block_{self.current_scope.id}'
+    # def set_conditions(self):
+    #     self.cycle_cond = 1
+    #     if self.current_scope.cycle_cond is not None:
+    #         self.cycle_cond = f'cycle_cond_block_{self.current_scope.id}'
+    #     self.exit_cond = 1
+    #     if self.current_scope.exit_cond is not None:
+    #         self.exit_cond = f'exit_cond_block_{self.current_scope.id}'
 
     def enter_block(self, block):
         # if find_hier_blocks(block.stmts) or isinstance(block,
-                                                       # ht.blocking_types):
-        self.bla = True
+        # ht.blocking_types):
+        # self.bla = True
         self.scope.append(block)
-        self.set_conditions()
+        # self.set_conditions()
         # else:
-            # self.bla = False
+        # self.bla = False
 
     def exit_block(self):
-        if self.bla:
-            self.scope.pop()
-            self.set_conditions()
-        self.bla = False
+        # if self.bla:
+        self.scope.pop()
+        # self.set_conditions()
+        # self.bla = False
 
     def visit_Module(self, node):
         block = CombBlock(stmts=[], dflts={})
@@ -148,8 +148,6 @@ class RegEnVisitor(HDLStmtVisitor):
             return [AssignValue(f'{reg}_en', 0) for reg in block.regs]
 
     def visit_RegNextStmt(self, node):
-        if self.cycle_cond != 1:
-            self.cycle_conds.append(self.current_scope.id)
         return [
             AssignValue(target=f'{node.reg.name}_en', val=self.cycle_cond),
             AssignValue(
@@ -193,13 +191,9 @@ class InputVisitor(HDLStmtVisitor):
                 AssignValue(f'{port.name}.ready', 0) for port in block.in_ports
             ]
         elif isinstance(block, ht.IntfBlock):
-            if self.exit_cond != 1:
-                self.exit_conds.append(self.current_scope.id)
             return AssignValue(
                 target=f'{block.intf.name}.ready', val=self.exit_cond)
         elif isinstance(block, ht.IntfLoop):
-            if self.cycle_cond != 1:
-                self.cycle_conds.append(self.current_scope.id)
             return AssignValue(
                 target=f'{block.intf.name}.ready', val=self.cycle_cond)
 
