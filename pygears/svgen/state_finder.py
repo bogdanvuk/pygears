@@ -1,6 +1,6 @@
-from .hdl_preprocess import InstanceVisitor
 import hdl_types as ht
-from .scheduling import MutexCBlock, find_hier_blocks
+
+from .inst_visit import InstanceVisitor
 
 
 class StateFinder(InstanceVisitor):

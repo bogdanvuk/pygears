@@ -45,39 +45,6 @@ class AstTypeError(Exception):
     pass
 
 
-block_types = [ast.For, ast.While, ast.If]
-async_types = [
-    ast.AsyncFor, ast.AsyncFunctionDef, ast.AsyncWith, ast.Yield, ast.YieldFrom
-]
-
-
-def check_if_blocking(stmt):
-    if type(stmt) is ast.Expr:
-        stmt = stmt.value
-
-    if type(stmt) in async_types:
-        return stmt, None
-    elif type(stmt) in block_types:
-        return find_hier_blocks(stmt.body)
-    else:
-        return None, stmt
-
-
-def find_hier_blocks(body):
-    hier = []
-    non_blocking = []
-    for stmt in body:
-        b, nb = check_if_blocking(stmt)
-        if b:
-            hier.append(b)
-        if nb:
-            non_blocking.append(nb)
-
-    hier = [b for b in hier if b]
-    non_blocking = [b for b in non_blocking if b]
-    return hier, non_blocking
-
-
 def eval_expression(node, local_namespace):
     return eval(
         compile(

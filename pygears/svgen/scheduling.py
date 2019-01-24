@@ -3,25 +3,7 @@ from dataclasses import dataclass, field
 
 import hdl_types as ht
 
-async_types = [ht.Yield]
-
-
-def check_if_blocking(stmt):
-    if type(stmt) in async_types:
-        return stmt
-    elif isinstance(stmt, ht.Block):
-        return find_hier_blocks(stmt.stmts)
-    else:
-        return None
-
-
-def find_hier_blocks(body):
-    hier = []
-    for stmt in body:
-        b = check_if_blocking(stmt)
-        if b:
-            hier.append(b)
-    return hier
+from .hdl_utils import find_hier_blocks
 
 
 @dataclass

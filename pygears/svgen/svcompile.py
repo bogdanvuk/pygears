@@ -3,11 +3,11 @@ import inspect
 
 from pygears.typing import Uint, bitw
 
-from .cblock import CBlockVisitor, state_expr
+from .cblock import CBlockVisitor
+from .hdl_utils import state_expr
 from .hdl_ast import HdlAst
-from .hdl_stmt_visit import (BlockConditionsVisitor, InputVisitor,
-                             OutputVisitor, RegEnVisitor, VariableVisitor,
-                             StateTransitionVisitor)
+from .hdl_stmt import (BlockConditionsVisitor, InputVisitor, OutputVisitor,
+                       RegEnVisitor, VariableVisitor, StateTransitionVisitor)
 from .inst_visit import InstanceVisitor
 from .reg_finder import RegFinder
 from .scheduling import Scheduler
@@ -180,11 +180,11 @@ def compile_gear_body(gear):
     res['inputs'] = input_v.visit(schedule)
 
     cycle_conds = list(
-        set(reg_next_v.cycle_conds + var_v.cycle_conds +
-            output_v.cycle_conds + input_v.cycle_conds))
+        set(reg_next_v.cycle_conds + var_v.cycle_conds + output_v.cycle_conds +
+            input_v.cycle_conds))
     exit_conds = list(
-        set(reg_next_v.exit_conds + var_v.exit_conds +
-            output_v.exit_conds + input_v.exit_conds))
+        set(reg_next_v.exit_conds + var_v.exit_conds + output_v.exit_conds +
+            input_v.exit_conds))
     cond_visit = CBlockVisitor(
         BlockConditionsVisitor(cycle_conds, exit_conds), states.max_state)
     cond_visit.visit(schedule)

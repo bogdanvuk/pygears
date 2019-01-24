@@ -3,7 +3,7 @@ import typing as pytypes
 from dataclasses import dataclass, field
 from functools import reduce
 
-from pygears.typing import Bool, Queue, Tuple, Uint, is_type, typeof, Integer
+from pygears.typing import Bool, Integer, Queue, Tuple, Uint, is_type, typeof
 
 bin_operators = ['!', '==', '>', '>=', '<', '<=', '!=', '&&', '||']
 extendable_operators = [
@@ -426,7 +426,8 @@ class TypeVisitor:
         if visitor.__name__ is 'generic_visit' and isinstance(node, Expr):
             visitor = getattr(self, 'visit_all_Expr', self.generic_visit)
 
-        sig = inspect.signature(visitor)
+        if kwds:
+            sig = inspect.signature(visitor)
         if kwds and ('kwds' in sig.parameters):
             return visitor(node, **kwds)
         else:
@@ -437,4 +438,45 @@ class TypeVisitor:
         raise Exception
 
 
-blocking_types = (IntfLoop, IntfBlock, Yield)
+class Conditions:
+    def __init__(self):
+        self.scope = []
+        self.cycle_conds = []
+        self.exit_conds = []
+
+    @property
+    def cycle_cond(self):
+        cond = []
+        for c in reversed(self.scope):
+            s = c.hdl_block
+            if isinstance(s, ContainerBlock):
+                continue
+
+            if s.cycle_cond and s.cycle_cond != 1:
+                self.cycle_conds.append(s.id)
+                cond.append(f'cycle_cond_block_{s.id}')
+
+            if hasattr(s, 'multicycle') and s.multicycle:
+                break
+
+        return reduce(and_expr, cond, None)
+
+    @property
+    def exit_cond(self):
+        cond = []
+        for c in reversed(self.scope):
+            s = c.hdl_block
+            if isinstance(s, ContainerBlock):
+                continue
+
+            if s.exit_cond and s.exit_cond != 1:
+                self.exit_conds.append(s.id)
+                cond.append(f'exit_cond_block_{s.id}')
+
+        return reduce(and_expr, cond, None)
+
+    def enter_block(self, block):
+        self.scope.append(block)
+
+    def exit_block(self):
+        self.scope.pop()

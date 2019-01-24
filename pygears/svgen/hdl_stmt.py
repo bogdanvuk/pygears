@@ -4,8 +4,7 @@ from dataclasses import dataclass
 import hdl_types as ht
 from pygears.typing.base import TypingMeta
 
-from .cblock import add_to_list
-from .scheduling import find_hier_blocks
+from .hdl_utils import add_to_list
 
 
 @dataclass
@@ -29,55 +28,41 @@ class HDLBlock:
 
 
 @dataclass
-class HDLStmtVisitor(ht.TypeVisitor):
-    def __init__(self):
-        self.scope = []
-        # self.cycle_conds = []
-        # self.exit_conds = []
+class HDLStmtVisitor:
+    def visit(self, node, conds, **kwds):
+        method = 'visit_' + node.__class__.__name__
+        visitor = getattr(self, method, self.generic_visit)
 
-    @property
-    def current_scope(self):
-        return self.scope[-1]
+        if visitor.__name__ is 'generic_visit' and isinstance(node, ht.Block):
+            visitor = getattr(self, 'visit_all_Block', self.generic_visit)
 
-    def generic_visit(self, node):
+        if visitor.__name__ is 'generic_visit' and isinstance(node, ht.Expr):
+            visitor = getattr(self, 'visit_all_Expr', self.generic_visit)
+
+        return visitor(node, conds, **kwds)
+
+    def generic_visit(self, node, conds, **kwds):
         pass
 
-    # def set_conditions(self):
-    #     self.cycle_cond = 1
-    #     if self.current_scope.cycle_cond is not None:
-    #         self.cycle_cond = f'cycle_cond_block_{self.current_scope.id}'
-    #     self.exit_cond = 1
-    #     if self.current_scope.exit_cond is not None:
-    #         self.exit_cond = f'exit_cond_block_{self.current_scope.id}'
-
-    def enter_block(self, block):
-        # if find_hier_blocks(block.stmts) or isinstance(block,
-        # ht.blocking_types):
-        # self.bla = True
-        self.scope.append(block)
-        # self.set_conditions()
-        # else:
-        # self.bla = False
+    def enter_block(self, block, conds, **kwds):
+        self.current_scope = block
 
     def exit_block(self):
-        # if self.bla:
-        self.scope.pop()
-        # self.set_conditions()
-        # self.bla = False
+        pass
 
-    def visit_Module(self, node):
+    def visit_Module(self, node, conds, **kwds):
         block = CombBlock(stmts=[], dflts={})
-        return self.traverse_block(block, node)
+        return self.traverse_block(block, node, conds, **kwds)
 
-    def visit_ContainerBlock(self, node):
+    def visit_ContainerBlock(self, node, conds, **kwds):
         return HDLBlock(in_cond=None, stmts=[], dflts={})
 
-    def visit_all_Block(self, node):
+    def visit_all_Block(self, node, conds, **kwds):
         block = HDLBlock(in_cond=node.in_cond, stmts=[], dflts={})
-        return self.traverse_block(block, node)
+        return self.traverse_block(block, node, conds, **kwds)
 
-    def traverse_block(self, block, node):
-        add_to_list(block.stmts, self.enter_block(node))
+    def traverse_block(self, block, node, conds, **kwds):
+        add_to_list(block.stmts, self.enter_block(node, conds, **kwds))
 
         # if block isn't empty
         if block.stmts:
@@ -86,7 +71,6 @@ class HDLStmtVisitor(ht.TypeVisitor):
         return block
 
     def is_control_var(self, name):
-        # control_suffix = ['_en', '_rst', '.valid', '.ready']
         control_suffix = ['_en', '.valid', '.ready']
         for suff in control_suffix:
             if name.endswith(suff):
@@ -142,14 +126,14 @@ class HDLStmtVisitor(ht.TypeVisitor):
 
 
 class RegEnVisitor(HDLStmtVisitor):
-    def enter_block(self, block):
-        super().enter_block(block)
+    def enter_block(self, block, conds, **kwds):
+        super().enter_block(block, conds, **kwds)
         if isinstance(block, ht.Module):
             return [AssignValue(f'{reg}_en', 0) for reg in block.regs]
 
-    def visit_RegNextStmt(self, node):
+    def visit_RegNextStmt(self, node, conds, **kwds):
         return [
-            AssignValue(target=f'{node.reg.name}_en', val=self.cycle_cond),
+            AssignValue(target=f'{node.reg.name}_en', val=conds.cycle_cond),
             AssignValue(
                 target=f'{node.reg.name}_next',
                 val=node.val,
@@ -158,7 +142,7 @@ class RegEnVisitor(HDLStmtVisitor):
 
 
 class VariableVisitor(HDLStmtVisitor):
-    def visit_VariableStmt(self, node):
+    def visit_VariableStmt(self, node, conds, **kwds):
         return AssignValue(
             target=f'{node.variable.name}_v',
             val=node.val,
@@ -166,12 +150,12 @@ class VariableVisitor(HDLStmtVisitor):
 
 
 class OutputVisitor(HDLStmtVisitor):
-    def enter_block(self, block):
-        super().enter_block(block)
+    def enter_block(self, block, conds, **kwds):
+        super().enter_block(block, conds, **kwds)
         if isinstance(block, ht.Module):
             return AssignValue(f'dout.valid', 0)
 
-    def visit_Yield(self, node):
+    def visit_Yield(self, node, conds, **kwds):
         block = HDLBlock(
             in_cond=None,
             stmts=[
@@ -184,18 +168,18 @@ class OutputVisitor(HDLStmtVisitor):
 
 
 class InputVisitor(HDLStmtVisitor):
-    def enter_block(self, block):
-        super().enter_block(block)
+    def enter_block(self, block, conds, **kwds):
+        super().enter_block(block, conds, **kwds)
         if isinstance(block, ht.Module):
             return [
                 AssignValue(f'{port.name}.ready', 0) for port in block.in_ports
             ]
         elif isinstance(block, ht.IntfBlock):
             return AssignValue(
-                target=f'{block.intf.name}.ready', val=self.exit_cond)
+                target=f'{block.intf.name}.ready', val=conds.exit_cond)
         elif isinstance(block, ht.IntfLoop):
             return AssignValue(
-                target=f'{block.intf.name}.ready', val=self.cycle_cond)
+                target=f'{block.intf.name}.ready', val=conds.cycle_cond)
 
 
 class BlockConditionsVisitor(HDLStmtVisitor):
@@ -227,20 +211,20 @@ class BlockConditionsVisitor(HDLStmtVisitor):
                     target=f'exit_cond_block_{self.current_scope.id}',
                     val=cond))
 
-    def enter_block(self, block):
-        super().enter_block(block)
+    def enter_block(self, block, conds, **kwds):
+        super().enter_block(block, conds, **kwds)
         self.get_cycle_cond()
         self.get_exit_cond()
 
 
 class StateTransitionVisitor(HDLStmtVisitor):
-    def enter_block(self, block):
-        super().enter_block(block)
+    def enter_block(self, block, conds, **kwds):
+        super().enter_block(block, conds, **kwds)
         if isinstance(block, ht.Module):
             return AssignValue(f'state_en', 0)
 
-    def visit_all_Block(self, node, **kwds):
-        block = super().visit_all_Block(node)
+    def visit_all_Block(self, node, conds, **kwds):
+        block = super().visit_all_Block(node, conds, **kwds)
 
         if 'state_id' in kwds:
             add_to_list(block.stmts, [
@@ -251,10 +235,3 @@ class StateTransitionVisitor(HDLStmtVisitor):
                 self.update_defaults(block)
 
         return block
-
-    # def visit_Yield(self, node, **kwds):
-    #     if 'state_id' in kwds:
-    #         return [
-    #             AssignValue(target=f'state_en', val=node.exit_cond),
-    #             AssignValue(target='state_next', val=kwds['state_id'])
-    #         ]

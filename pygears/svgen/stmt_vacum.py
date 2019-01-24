@@ -1,5 +1,6 @@
 import hdl_types as ht
-from .scheduling import find_hier_blocks
+
+from .hdl_utils import find_hier_blocks
 
 
 def sort_stmts(stmts):
