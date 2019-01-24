@@ -3,6 +3,7 @@ import ast
 import hdl_types as ht
 from pygears.typing import (Array, Int, Integer, Uint, Unit, bitw, is_type,
                             typeof)
+from pygears.typing.base import TypingMeta
 from svcompile_snippets import qrange
 
 opmap = {
@@ -328,9 +329,20 @@ class HdlAst(ast.NodeVisitor):
             return ht.ResExpr(ret)
         else:
             if hasattr(node.func, 'id'):
-                func_dispatch = getattr(self, f'visit_Call_{node.func.id}')
+                func_dispatch = getattr(self, f'visit_Call_{node.func.id}',
+                                        None)
                 if func_dispatch:
                     return func_dispatch(*arg_nodes)
+                elif node.func.id in self.gear.params:
+                    assert isinstance(self.gear.params[node.func.id],
+                                      TypingMeta)
+                    assert len(arg_nodes) == 1  # TODO: for now...
+                    return ht.CastExpr(
+                        operand=arg_nodes[0],
+                        cast_to=self.gear.params[node.func.id])
+                else:
+                    # safe guard
+                    raise VisitError('Unrecognized func in call')
 
             if hasattr(node.func, 'attr'):
                 if node.func.attr is 'tout':
@@ -343,6 +355,10 @@ class HdlAst(ast.NodeVisitor):
             raise VisitError('Unrecognized func in call')
 
     def visit_Tuple(self, node):
+        for item in node.elts:
+            assert not isinstance(
+                item, (ast.BinOp, ast.Compare
+                       )), f'Cast needed for concat with operations in body'
         items = [self.visit_DataExpression(item) for item in node.elts]
         return ht.ConcatExpr(items)
 
@@ -415,7 +431,10 @@ class HdlAst(ast.NodeVisitor):
             start, stop, step = res
 
         is_qrange = node.iter.func.id is 'qrange'
-        is_start = start.val != 0
+
+        is_start = True
+        if isinstance(start, ht.ResExpr):
+            is_start = start.val != 0
 
         if isinstance(node.target, ast.Tuple):
             names = [x.id for x in node.target.elts]
@@ -429,10 +448,8 @@ class HdlAst(ast.NodeVisitor):
 
         if is_qrange:
             if is_start:
-                exit_cond = [
-                    ht.Expr(f'({names[0]}_switch_next >= {stop.svrepr})',
-                            Uint[1])
-                ]
+                exit_cond = ht.BinOpExpr((f'{names[0]}_switch_next', stop),
+                                         '>=')
 
             name = node.target.elts[-1].id
             var = ht.VariableDef(exit_cond, name)
@@ -469,11 +486,9 @@ class HdlAst(ast.NodeVisitor):
 
         if name in self.regs:
             switch_reg = self.regs[name]
-            self.variables[name] = ht.ResExpr(switch_reg.val, name,
-                                              switch_reg.dtype)
+            self.variables[name] = ht.ResExpr(switch_reg.val)
             self.regs[switch_name] = switch_reg
-            self.svlocals[switch_name] = ht.RegDef(switch_reg.val, switch_name,
-                                                   switch_reg.dtype)
+            self.svlocals[switch_name] = ht.RegDef(switch_reg.val, switch_name)
             self.regs.pop(name)
             self.svlocals.pop(name)
             if switch_name in self.variables:
@@ -486,8 +501,8 @@ class HdlAst(ast.NodeVisitor):
         # flag register
         flag_reg = 'qrange_flag'
         val = Uint[1](0)
-        self.regs[flag_reg] = ht.ResExpr(val, str(int(val)), type(val))
-        self.svlocals[flag_reg] = ht.RegDef(val, flag_reg, type(val))
+        self.regs[flag_reg] = ht.ResExpr(val)
+        self.svlocals[flag_reg] = ht.RegDef(val, flag_reg)
         svnode.multicycle.append(flag_reg)
 
         switch_reg = f'{name}_switch'
@@ -523,7 +538,8 @@ class HdlAst(ast.NodeVisitor):
             self.generic_visit(node)
 
     def visit_Yield(self, node):
-        return ht.Yield(expr=super().visit(node.value), stmts=[])
+        return ht.Yield(
+            expr=super().visit(node.value), stmts=[], intf=self.out_ports[0])
 
     def visit_AsyncFunctionDef(self, node):
         hdl_node = ht.Module(

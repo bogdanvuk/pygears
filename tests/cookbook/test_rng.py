@@ -149,16 +149,10 @@ def test_cnt_down():
 #     iout = rng((1, 2, 3), lvl=2)
 #     print(iout.dtype)
 
-
 # @svgen_check(['rng_hier.sv'])
 # def test_basic_unsigned_svgen():
 #     rng(Intf(Tuple[Uint[4], Uint[2], Uint[2]]))
 
-
 # @svgen_check(['rng_rng.sv', 'rng_ccat.sv', 'rng_hier.sv'])
 # def test_cnt_svgen():
 #     rng(8)
-
-
-from pygears.sim.modules.sim_socket import SimSocket
-test_incr_steps_unsigned_cosim('/tools/home/tmp', SimSocket)

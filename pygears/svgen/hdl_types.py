@@ -182,6 +182,16 @@ class UnaryOpExpr(Expr):
 
 
 @dataclass
+class CastExpr(Expr):
+    operand: Expr
+    cast_to: pytypes.Any
+
+    @property
+    def dtype(self):
+        return self.cast_to
+
+
+@dataclass
 class BinOpExpr(Expr):
     operands: tuple
     operator: str
@@ -384,6 +394,7 @@ class Loop(Block):
 @dataclass
 class Yield(Block):
     expr: Expr
+    intf: pytypes.Any
     _in_cond: Expr = None
 
     @property

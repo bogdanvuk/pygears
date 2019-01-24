@@ -45,6 +45,9 @@ class RegFinder(ast.NodeVisitor):
         else:
             self.promote_var_to_reg(node.target.id)
 
+        for stmt in node.body:
+            self.visit(stmt)
+
     def visit_Assign(self, node):
         name = node.targets[0].id
         if name not in self.variables:

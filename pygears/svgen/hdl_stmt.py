@@ -166,7 +166,7 @@ class OutputVisitor(HDLStmtVisitor):
             in_cond=None,
             stmts=[
                 AssignValue(f'dout.valid', 1),
-                AssignValue(f'dout_s', node.expr, int(node.expr.dtype))
+                AssignValue(f'dout_s', node.expr, int(node.intf.dtype))
             ],
             dflts={})
         self.update_defaults(block)

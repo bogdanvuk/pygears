@@ -1,5 +1,5 @@
-from pygears.typing import Array, Integer, Queue, typeof
 import hdl_types as ht
+from pygears.typing import Array, Integer, Queue, typeof
 
 from .inst_visit import InstanceVisitor
 
@@ -25,6 +25,9 @@ class SVExpressionVisitor(InstanceVisitor):
             except KeyError:
                 val.append('data')
         return '.'.join(val + node.attr)
+
+    def visit_CastExpr(self, node):
+        return f"{int(node.dtype)}'({self.visit(node.operand)})"
 
     def visit_ConcatExpr(self, node):
         return (
