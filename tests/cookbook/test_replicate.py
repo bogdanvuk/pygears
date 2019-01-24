@@ -20,10 +20,10 @@ def test_directed(tmpdir, sim_cls):
 
 @pytest.mark.parametrize('din_delay', [0, 1, 10])
 @pytest.mark.parametrize('dout_delay', [0, 1, 10])
-def test_directed_cosim(tmpdir, sim_cls, din_delay, dout_delay):
+def test_directed_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
     verif(
         drv(t=t_din, seq=sequence) | delay_rng(din_delay, din_delay),
-        f=replicate(sim_cls=sim_cls),
+        f=replicate(sim_cls=cosim_cls),
         ref=replicate(name='ref_model'),
         delays=[delay_rng(dout_delay, dout_delay)])
 

@@ -15,11 +15,11 @@ def test_pygears_sim(tmpdir):
     assert timestep() == (len(seq) + 1)
 
 
-def test_cosim(tmpdir, sim_cls):
+def test_cosim(tmpdir, cosim_cls):
     seq = list(range(10))
     verif(
         drv(t=Uint[16], seq=seq),
-        f=dreg(sim_cls=sim_cls),
+        f=dreg(sim_cls=cosim_cls),
         ref=dreg(name='ref_model'))
 
     sim(outdir=tmpdir)

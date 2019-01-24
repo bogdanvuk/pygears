@@ -35,11 +35,11 @@ def test_directed(tmpdir, sim_cls, din_delay, dout_delay):
     sim(outdir=tmpdir)
 
 
-def test_directed_two_inputs(tmpdir, sim_cls):
+def test_directed_two_inputs(tmpdir, cosim_cls):
     verif(
         drv(t=t_din_sep, seq=[list(range(9)), list(range(5))]),
         drv(t=t_cfg, seq=[2, 3]),
-        f=take(sim_cls=sim_cls),
+        f=take(sim_cls=cosim_cls),
         ref=take(name='ref_model'))
 
     sim(outdir=tmpdir)
