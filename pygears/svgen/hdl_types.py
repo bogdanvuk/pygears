@@ -18,9 +18,9 @@ def find_exit_cond(statements, search_in_cond=False):
             if stmt_cond is not None:
                 if search_in_cond and hasattr(
                         stmt, 'in_cond') and (stmt.in_cond is not None):
-                    return and_expr(stmt_cond, stmt.in_cond)
+                    return and_expr(f'exit_cond_block_{stmt.id}', stmt.in_cond)
                 else:
-                    return stmt_cond
+                    return f'exit_cond_block_{stmt.id}'
 
     return None
 
@@ -32,7 +32,7 @@ def find_cycle_cond(statements):
         if hasattr(stmt, 'cycle_cond'):
             stmt_cond = stmt.cycle_cond
             if stmt_cond is not None:
-                cond.append(stmt_cond)
+                cond.append(f'cycle_cond_block_{stmt.id}')
 
     return reduce(and_expr, cond, None)
 
@@ -343,6 +343,9 @@ class ContainerBlock(Block):
 
     @property
     def cycle_cond(self):
+        if all([s.cycle_cond is None for s in self.stmts]):
+            return None
+
         cond = None
         for block in self.stmts:
             block_cond = and_expr(block.cycle_cond, block.in_cond)
@@ -352,6 +355,9 @@ class ContainerBlock(Block):
     @property
     def exit_cond(self):
         # return and_expr(self.stmts[-1].exit_cond, self.stmts[-1].in_cond)
+        if all([s.exit_cond is None for s in self.stmts]):
+            return None
+
         cond = None
         for block in self.stmts:
             block_cond = and_expr(block.exit_cond, block.in_cond)
@@ -447,7 +453,7 @@ class Conditions:
     @property
     def cycle_cond(self):
         cond = []
-        for c in reversed(self.scope):
+        for c in reversed(self.scope[1:]):
             s = c.hdl_block
             if isinstance(s, ContainerBlock):
                 continue
@@ -464,7 +470,7 @@ class Conditions:
     @property
     def exit_cond(self):
         cond = []
-        for c in reversed(self.scope):
+        for c in reversed(self.scope[1:]):
             s = c.hdl_block
             if isinstance(s, ContainerBlock):
                 continue

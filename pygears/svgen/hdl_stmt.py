@@ -1,3 +1,4 @@
+import re
 import typing as pytypes
 from dataclasses import dataclass
 
@@ -18,6 +19,11 @@ class AssignValue:
 class CombBlock:
     stmts: pytypes.List
     dflts: pytypes.Dict
+
+
+@dataclass
+class CombSeparateStmts:
+    stmts: pytypes.List
 
 
 @dataclass
@@ -53,9 +59,6 @@ class HDLStmtVisitor:
     def visit_Module(self, node, conds, **kwds):
         block = CombBlock(stmts=[], dflts={})
         return self.traverse_block(block, node, conds, **kwds)
-
-    def visit_ContainerBlock(self, node, conds, **kwds):
-        return HDLBlock(in_cond=None, stmts=[], dflts={})
 
     def visit_all_Block(self, node, conds, **kwds):
         block = HDLBlock(in_cond=node.in_cond, stmts=[], dflts={})
@@ -132,8 +135,11 @@ class RegEnVisitor(HDLStmtVisitor):
             return [AssignValue(f'{reg}_en', 0) for reg in block.regs]
 
     def visit_RegNextStmt(self, node, conds, **kwds):
+        cond = conds.cycle_cond
+        if cond is None:
+            cond = 1
         return [
-            AssignValue(target=f'{node.reg.name}_en', val=conds.cycle_cond),
+            AssignValue(target=f'{node.reg.name}_en', val=cond),
             AssignValue(
                 target=f'{node.reg.name}_next',
                 val=node.val,
@@ -175,44 +181,69 @@ class InputVisitor(HDLStmtVisitor):
                 AssignValue(f'{port.name}.ready', 0) for port in block.in_ports
             ]
         elif isinstance(block, ht.IntfBlock):
-            return AssignValue(
-                target=f'{block.intf.name}.ready', val=conds.exit_cond)
+            cond = conds.exit_cond
+            if cond is None:
+                cond = 1
+            return AssignValue(target=f'{block.intf.name}.ready', val=cond)
         elif isinstance(block, ht.IntfLoop):
-            return AssignValue(
-                target=f'{block.intf.name}.ready', val=conds.cycle_cond)
+            cond = conds.cycle_cond
+            if cond is None:
+                cond = 1
+            return AssignValue(target=f'{block.intf.name}.ready', val=cond)
 
 
 class BlockConditionsVisitor(HDLStmtVisitor):
     def __init__(self, cycle_conds, exit_conds):
         super().__init__()
-        self.cycle_conds = list(tuple(cycle_conds))
-        self.exit_conds = list(tuple(exit_conds))
-        self.condition_assigns = CombBlock(stmts=[], dflts={})
+        self.cycle_conds = cycle_conds
+        self.exit_conds = exit_conds
+        self.condition_assigns = CombSeparateStmts(stmts=[])
+
+    def _find_sub_conds(self, block, cond_t='cycle'):
+        cond = getattr(block, cond_t + '_cond', None)
+        if cond:
+            sub_ids = [
+                int(re.findall(r'\d+', m.group(0))[0])
+                for m in re.finditer('cycle_cond_block_\d+', str(cond))
+            ]
+            for sub_id in sub_ids:
+                if sub_id not in self.cycle_conds:
+                    self.cycle_conds.append(sub_id)
+            sub_ids = [
+                int(re.findall(r'\d+', m.group(0))[0])
+                for m in re.finditer('exit_cond_block_\d+', str(cond))
+            ]
+
+            for sub_id in sub_ids:
+                if sub_id not in self.exit_conds:
+                    self.exit_conds.append(sub_id)
 
     def get_cycle_cond(self):
         if self.current_scope.id in self.cycle_conds:
-            self.cycle_conds.remove(self.current_scope.id)
+            self._find_sub_conds(self.current_scope, 'cycle')
             cond = self.current_scope.cycle_cond
             if cond is None:
                 cond = 1
-            self.condition_assigns.stmts.append(
-                AssignValue(
-                    target=f'cycle_cond_block_{self.current_scope.id}',
-                    val=cond))
+            res = AssignValue(
+                target=f'cycle_cond_block_{self.current_scope.id}', val=cond)
+            if res not in self.condition_assigns.stmts:
+                self.condition_assigns.stmts.append(res)
 
     def get_exit_cond(self):
         if self.current_scope.id in self.exit_conds:
-            self.exit_conds.remove(self.current_scope.id)
+            self._find_sub_conds(self.current_scope, 'exit')
             cond = self.current_scope.exit_cond
             if cond is None:
                 cond = 1
-            self.condition_assigns.stmts.append(
-                AssignValue(
-                    target=f'exit_cond_block_{self.current_scope.id}',
-                    val=cond))
+            res = AssignValue(
+                target=f'exit_cond_block_{self.current_scope.id}', val=cond)
+            if res not in self.condition_assigns.stmts:
+                self.condition_assigns.stmts.append(res)
 
     def enter_block(self, block, conds, **kwds):
         super().enter_block(block, conds, **kwds)
+        if isinstance(block, ht.Module):
+            self._find_sub_conds(block, 'rst')
         self.get_cycle_cond()
         self.get_exit_cond()
 
@@ -227,8 +258,11 @@ class StateTransitionVisitor(HDLStmtVisitor):
         block = super().visit_all_Block(node, conds, **kwds)
 
         if 'state_id' in kwds:
+            cond = conds.exit_cond
+            if cond is None:
+                cond = 1
             add_to_list(block.stmts, [
-                AssignValue(target=f'state_en', val=node.exit_cond),
+                AssignValue(target=f'state_en', val=cond),
                 AssignValue(target='state_next', val=kwds['state_id'])
             ])
             if block.stmts:

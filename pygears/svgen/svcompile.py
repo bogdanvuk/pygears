@@ -81,6 +81,17 @@ class SVCompiler(InstanceVisitor):
 
         self.writer.line('')
 
+    def visit_CombSeparateStmts(self, node):
+        self.writer.line(f'// Comb statements for: {self.visit_var}')
+        for stmt in node.stmts:
+            if stmt.width:
+                self.writer.line(
+                    f"assign {stmt.target} = {stmt.width}'({svexpr(stmt.val)});"
+                )
+            else:
+                self.writer.line(f"assign {stmt.target} = {svexpr(stmt.val)};")
+        self.writer.line('')
+
     def visit_HDLBlock(self, node):
         self.enter_block(node)
 
@@ -179,21 +190,23 @@ def compile_gear_body(gear):
     input_v = CBlockVisitor(InputVisitor(), states.max_state)
     res['inputs'] = input_v.visit(schedule)
 
+    state_v = CBlockVisitor(StateTransitionVisitor(), states.max_state)
+    if states.max_state > 0:
+        res['state_transition'] = state_v.visit(schedule)
+
     cycle_conds = list(
         set(reg_next_v.cycle_conds + var_v.cycle_conds + output_v.cycle_conds +
-            input_v.cycle_conds))
+            input_v.cycle_conds + state_v.cycle_conds))
     exit_conds = list(
         set(reg_next_v.exit_conds + var_v.exit_conds + output_v.exit_conds +
-            input_v.exit_conds))
+            input_v.exit_conds + state_v.exit_conds))
+
     cond_visit = CBlockVisitor(
         BlockConditionsVisitor(cycle_conds, exit_conds), states.max_state)
     cond_visit.visit(schedule)
     res['block_conditions'] = cond_visit.hdl.condition_assigns
 
     block_conds = {'cycle': cycle_conds, 'exit': exit_conds}
-    if states.max_state > 0:
-        res['state_transition'] = CBlockVisitor(
-            StateTransitionVisitor(), states.max_state).visit(schedule)
 
     writer = SVWriter()
     write_module(hdl_ast, res, writer, block_conds, states.max_state)
