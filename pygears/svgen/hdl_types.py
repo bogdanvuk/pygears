@@ -394,7 +394,6 @@ class Loop(Block):
 @dataclass
 class Yield(Block):
     expr: Expr
-    intf: pytypes.Any
     _in_cond: Expr = None
 
     @property

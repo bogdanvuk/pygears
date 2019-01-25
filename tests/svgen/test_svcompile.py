@@ -88,7 +88,7 @@ always_comb begin
 end
 always_comb begin
     dout.valid = 0;
-    dout_s = 17'({&(din_s.eot), cnt_reg});
+    dout_s = {1'(&(din_s.eot)), 16'(cnt_reg)};
     if (din.valid) begin
         dout.valid = 1;
     end
@@ -170,7 +170,7 @@ always_comb begin
 end
 always_comb begin
     dout.valid = 0;
-    dout_s = 17'({last_v, din_s.f1});
+    dout_s = {1'(last_v), 16'(din_s.f1)};
     if (din.valid) begin
         dout.valid = 1;
     end
@@ -332,7 +332,7 @@ always_comb begin
 end
 always_comb begin
     dout.valid = 0;
-    dout_s = 17'({din_s.eot || last_v, din_s.data.f0});
+    dout_s = {1'(din_s.eot || last_v), 16'(din_s.data.f0)};
     if (din.valid) begin
         if ((cnt_reg <= din_s.data.f1) && pass_eot_reg) begin
             dout.valid = 1;

@@ -19,7 +19,6 @@ def rng_out_type(cfg, cnt_steps):
         return max(cfg[0], cfg[1])
 
 
-# @gear(svgen={'svmod_fn': 'rng.sv'})
 @gear(svgen={'compile': True})
 async def py_rng(cfg: TCfg,
                  *,

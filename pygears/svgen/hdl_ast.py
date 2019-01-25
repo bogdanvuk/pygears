@@ -2,8 +2,8 @@ import ast
 
 import hdl_types as ht
 from pygears.typing import (Array, Int, Integer, Uint, Unit, bitw, is_type,
-                            typeof)
-from pygears.typing.base import TypingMeta, EnumerableGenericMeta
+                            typeof, Queue, Tuple)
+from pygears.typing.base import TypingMeta
 from svcompile_snippets import qrange
 
 opmap = {
@@ -346,31 +346,40 @@ class HdlAst(ast.NodeVisitor):
 
             if hasattr(node.func, 'attr'):
                 if node.func.attr is 'tout':
-                    assert len(arg_nodes) == len(self.gear.out_ports)
-                    args = []
-                    for arg, port in zip(arg_nodes, self.gear.out_ports):
-                        t = port.dtype
-                        if isinstance(t, EnumerableGenericMeta):
-                            assert isinstance(
-                                arg, ht.ConcatExpr), 'Invalid return type'
-
-                            for i in range(len(arg.operands)):
-                                arg.operands[i] = ht.CastExpr(
-                                    operand=arg.operands[i], cast_to=t[i])
-
-                            args.append(arg)
-                        else:
-                            args.append(ht.CastExpr(operand=arg, cast_to=t))
-
-                    if len(args) == 1:
-                        return args[0]
-                    else:
-                        # safe guard
-                        raise VisitError('Multiple outputs not supported.')
+                    return self.cast_return(arg_nodes)
                 # safe guard
                 raise VisitError('Unrecognized func in call')
             # safe guard
             raise VisitError('Unrecognized func in call')
+
+    def cast_return(self, arg_nodes):
+        if not isinstance(arg_nodes, list):
+            arg_nodes = [arg_nodes]
+        assert len(arg_nodes) == len(self.gear.out_ports)
+        args = []
+        for arg, port in zip(arg_nodes, self.gear.out_ports):
+            t = port.dtype
+            if typeof(t, Queue) or typeof(t, Tuple):
+                assert isinstance(arg, ht.ConcatExpr), 'Invalid return type'
+
+                for i in range(len(arg.operands)):
+                    if isinstance(
+                            arg.operands[i],
+                            ht.CastExpr) and (arg.operands[i].cast_to == t[i]):
+                        pass
+                    else:
+                        arg.operands[i] = ht.CastExpr(
+                            operand=arg.operands[i], cast_to=t[i])
+
+                args.append(arg)
+            else:
+                args.append(ht.CastExpr(operand=arg, cast_to=t))
+
+        if len(args) > 1:
+            # safe guard
+            raise VisitError('Multiple outputs not supported yet')
+
+        return args[0]
 
     def visit_Tuple(self, node):
         items = [self.visit_DataExpression(item) for item in node.elts]
@@ -552,8 +561,8 @@ class HdlAst(ast.NodeVisitor):
             self.generic_visit(node)
 
     def visit_Yield(self, node):
-        return ht.Yield(
-            expr=super().visit(node.value), stmts=[], intf=self.out_ports[0])
+        expr = super().visit(node.value)
+        return ht.Yield(expr=self.cast_return(expr), stmts=[])
 
     def visit_AsyncFunctionDef(self, node):
         hdl_node = ht.Module(
