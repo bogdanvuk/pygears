@@ -1,3 +1,6 @@
+import pytest
+
+from pygears.cookbook.delay import delay_rng
 from pygears.cookbook.replicate import replicate
 from pygears.cookbook.verif import directed, verif
 from pygears.sim import sim
@@ -15,10 +18,13 @@ def test_directed(tmpdir, sim_cls):
     sim(outdir=tmpdir)
 
 
-def test_directed_cosim(tmpdir, sim_cls):
+@pytest.mark.parametrize('din_delay', [0, 1, 10])
+@pytest.mark.parametrize('dout_delay', [0, 1, 10])
+def test_directed_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
     verif(
-        drv(t=t_din, seq=sequence),
-        f=replicate(sim_cls=sim_cls),
-        ref=replicate(name='ref_model'))
+        drv(t=t_din, seq=sequence) | delay_rng(din_delay, din_delay),
+        f=replicate(sim_cls=cosim_cls),
+        ref=replicate(name='ref_model'),
+        delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(outdir=tmpdir)

@@ -1,3 +1,5 @@
+import pytest
+
 from pygears.cookbook import accumulator
 from pygears.cookbook.delay import delay_rng
 from pygears.cookbook.verif import directed, verif
@@ -28,10 +30,12 @@ def test_int_directed(tmpdir, sim_cls):
     sim(outdir=tmpdir)
 
 
-def test_delay(tmpdir, sim_cls):
+@pytest.mark.parametrize('din_delay', [0, 1, 10])
+@pytest.mark.parametrize('dout_delay', [0, 1, 10])
+def test_delay(tmpdir, cosim_cls, din_delay, dout_delay):
     verif(
-        drv(t=t_din_uint, seq=seq_uint) | delay_rng(2, 2),
-        f=accumulator(sim_cls=sim_cls),
+        drv(t=t_din_uint, seq=seq_uint) | delay_rng(din_delay, din_delay),
+        f=accumulator(sim_cls=cosim_cls),
         ref=accumulator(name='ref_model'),
-        delays=[delay_rng(5, 5)])
+        delays=[delay_rng(dout_delay, dout_delay)])
     sim(outdir=tmpdir)

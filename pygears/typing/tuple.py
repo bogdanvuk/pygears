@@ -243,6 +243,7 @@ class Tuple(tuple, metaclass=TupleType):
 
         return super(Tuple, cls).__new__(cls, tpl_val)
 
+    @class_and_instance_method
     def __getitem__(self, key):
         """Returns the value of the field or fields specified by the ``key``.
 

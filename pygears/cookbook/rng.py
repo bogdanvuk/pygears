@@ -1,5 +1,6 @@
-from pygears.typing import Integer, Tuple, Queue, Int, typeof, Uint
+from pygears.typing import Int, Integer, Queue, Tuple, typeof, Uint
 from pygears import gear, alternative
+from pygears.util.utils import qrange
 from pygears.common import ccat, fmap, cart, permuted_apply
 from pygears import module
 from pygears.util.utils import quiter
@@ -16,6 +17,39 @@ def rng_out_type(cfg, cnt_steps):
         return cfg[0] + cfg[1] + cfg[2]
     else:
         return max(cfg[0], cfg[1])
+
+
+@gear(svgen={'compile': True})
+async def py_rng(cfg: TCfg,
+                 *,
+                 signed=b'typeof(cfg[0], Int)',
+                 t_dout=b'rng_out_type(cfg, cnt_steps)',
+                 cnt_steps=False,
+                 incr_steps=False) -> Queue['t_dout']:
+
+    data = t_dout(0)
+
+    async with cfg as (offset, cnt, incr):
+
+        if not cnt_steps:
+            start = int(offset)
+            stop = int(cnt)
+            step = int(incr)
+        else:
+            if incr_steps:
+                start = 0
+                stop = int(cnt)
+                step = 1
+            else:
+                start = int(offset)
+                stop = int(offset) + int(cnt)
+                step = int(incr)
+
+        for data, last in qrange(start, stop, step):
+            if incr_steps:
+                yield module().tout((int(offset) + (data * incr), last))
+            else:
+                yield module().tout((data, last))
 
 
 @gear(svgen={'svmod_fn': 'rng.sv'})
@@ -53,11 +87,15 @@ def rng(cfg: TCfg, *, cnt_steps=False, incr_steps=False, cnt_one_more=False):
     if any_signed and not all_signed:
         cfg = cfg | fmap(f=(Int, ) * len(cfg.dtype))
 
-    return cfg | sv_rng(
-        signed=any_signed,
-        cnt_steps=cnt_steps,
-        incr_steps=incr_steps,
-        cnt_one_more=cnt_one_more)
+    if cnt_one_more:
+        return cfg | sv_rng(
+            signed=any_signed,
+            cnt_steps=cnt_steps,
+            incr_steps=incr_steps,
+            cnt_one_more=cnt_one_more)
+    else:
+        return cfg | py_rng(
+            signed=any_signed, cnt_steps=cnt_steps, incr_steps=incr_steps)
 
 
 @alternative(rng)

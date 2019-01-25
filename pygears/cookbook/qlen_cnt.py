@@ -3,6 +3,7 @@ from pygears.typing import Queue, Uint
 
 
 @gear(svgen={'svmod_fn': 'qlen_cnt.sv'})
+# @gear(svgen={'compile': True})
 async def qlen_cnt(din: Queue['tdin', 'din_lvl'],
                    *,
                    cnt_lvl=1,
@@ -10,14 +11,16 @@ async def qlen_cnt(din: Queue['tdin', 'din_lvl'],
                    w_out=16) -> Uint['w_out']:
     '''Outputs only one value when input eots'''
 
-    cnt = 0
-    val = din.dtype((0, 0))
+    cnt = Uint[w_out](0)
 
-    while not all(val.eot):
-        async with din as val:
-            if all(val.eot[:cnt_lvl]):
+    async for (data, eot) in din:
+        if cnt_one_more:
+            if all(eot[:cnt_lvl]):
                 cnt += 1
 
-    if not cnt_one_more:
-        cnt -= 1
-    yield cnt
+        if all(eot):
+            yield cnt
+
+        if not cnt_one_more:
+            if all(eot[:cnt_lvl]):
+                cnt += 1

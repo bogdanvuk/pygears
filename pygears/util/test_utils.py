@@ -236,3 +236,15 @@ def sim_cls(request):
         sim_cls = partial(SimSocket, run=True)
 
     yield sim_cls
+
+
+@pytest.fixture(params=[SimVerilated, SimSocket])
+def cosim_cls(request):
+    cosim_cls = request.param
+    if cosim_cls is SimVerilated:
+        skip_ifndef('VERILATOR_ROOT')
+    elif cosim_cls is SimSocket:
+        skip_ifndef('SIM_SOCKET_TEST')
+        cosim_cls = partial(SimSocket, run=True)
+
+    yield cosim_cls
