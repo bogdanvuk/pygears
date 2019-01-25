@@ -28,9 +28,25 @@ def module():
     return registry('gear/current_module')
 
 
+import os
+from traceback import (extract_stack, extract_tb, format_list, walk_stack,
+                       walk_tb)
+
+
+def filter_internals(t):
+    is_internal = t[0].f_code.co_filename.startswith(os.path.dirname(__file__))
+    is_boltons = 'decorator-gen' in t[0].f_code.co_filename
+    return not is_internal and not is_boltons
+
+
+def enum_stacktrace():
+    return filter(filter_internals, walk_stack(f=None))
+
+
 class Gear(NamedHierNode):
     def __init__(self, func, args, params):
         super().__init__(params['name'], registry('gear/current_module'))
+        self.trace = list(enum_stacktrace())
         self.args = args
         self.params = params
         self.func = func

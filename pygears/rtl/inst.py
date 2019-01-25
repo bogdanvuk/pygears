@@ -3,6 +3,7 @@ from pygears.core.hier_node import HierVisitorBase, NamedHierNode, HierNode
 from pygears.rtl.gear import RTLGearNodeGen, RTLNode
 import inspect
 from pygears.core.gear import GearPlugin
+from pygears.conf import reg_inject, Inject
 
 
 class RTLNodeDesign(RTLNode):
@@ -73,7 +74,12 @@ class RTLNodeInstVisitor(HierVisitorBase):
 
         return svgen_inst
 
-    def Gear(self, module):
+    @reg_inject
+    def Gear(self, module, rtl_map=Inject('rtl/gear_node_map')):
+        if module in rtl_map:
+            RTLGearNodeGen(rtl_map[module], self.cur_hier)
+            return True
+
         inst = self.instantiate(module)
 
         if inst:
