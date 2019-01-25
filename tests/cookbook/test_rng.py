@@ -1,14 +1,9 @@
-import pytest
-
-from pygears import Intf, MultiAlternativeError, find
-from pygears.typing import Queue, Tuple, Uint, Int
+from pygears import Intf, find
 from pygears.cookbook.rng import rng
-
 from pygears.cookbook.verif import directed, verif
 from pygears.sim import sim
 from pygears.sim.modules.drv import drv
-
-from pygears.util.test_utils import svgen_check, skip_ifndef
+from pygears.typing import Int, Queue, Tuple, Uint
 
 
 def test_basic_unsigned():

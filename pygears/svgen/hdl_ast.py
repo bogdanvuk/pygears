@@ -3,7 +3,7 @@ import ast
 import hdl_types as ht
 from pygears.typing import (Array, Int, Integer, Uint, Unit, bitw, is_type,
                             typeof)
-from pygears.typing.base import TypingMeta
+from pygears.typing.base import TypingMeta, EnumerableGenericMeta
 from svcompile_snippets import qrange
 
 opmap = {
@@ -336,7 +336,7 @@ class HdlAst(ast.NodeVisitor):
                 elif node.func.id in self.gear.params:
                     assert isinstance(self.gear.params[node.func.id],
                                       TypingMeta)
-                    assert len(arg_nodes) == 1  # TODO: for now...
+                    assert len(arg_nodes) == 1, 'Cast with multiple arguments'
                     return ht.CastExpr(
                         operand=arg_nodes[0],
                         cast_to=self.gear.params[node.func.id])
@@ -346,19 +346,33 @@ class HdlAst(ast.NodeVisitor):
 
             if hasattr(node.func, 'attr'):
                 if node.func.attr is 'tout':
-                    assert len(arg_nodes) == 1  # assumtion for this to work
-                    return arg_nodes[0]
+                    assert len(arg_nodes) == len(self.gear.out_ports)
+                    args = []
+                    for arg, port in zip(arg_nodes, self.gear.out_ports):
+                        t = port.dtype
+                        if isinstance(t, EnumerableGenericMeta):
+                            assert isinstance(
+                                arg, ht.ConcatExpr), 'Invalid return type'
 
+                            for i in range(len(arg.operands)):
+                                arg.operands[i] = ht.CastExpr(
+                                    operand=arg.operands[i], cast_to=t[i])
+
+                            args.append(arg)
+                        else:
+                            args.append(ht.CastExpr(operand=arg, cast_to=t))
+
+                    if len(args) == 1:
+                        return args[0]
+                    else:
+                        # safe guard
+                        raise VisitError('Multiple outputs not supported.')
                 # safe guard
                 raise VisitError('Unrecognized func in call')
             # safe guard
             raise VisitError('Unrecognized func in call')
 
     def visit_Tuple(self, node):
-        for item in node.elts:
-            assert not isinstance(
-                item, (ast.BinOp, ast.Compare
-                       )), f'Cast needed for concat with operations in body'
         items = [self.visit_DataExpression(item) for item in node.elts]
         return ht.ConcatExpr(items)
 
