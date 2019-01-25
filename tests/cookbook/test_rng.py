@@ -1,4 +1,6 @@
 from pygears import Intf, find
+import pytest
+from pygears.cookbook.delay import delay_rng
 from pygears.cookbook.rng import rng
 from pygears.cookbook.verif import directed, verif
 from pygears.sim import sim
@@ -24,35 +26,47 @@ def test_basic_unsigned_sim(tmpdir):
     sim(outdir=tmpdir)
 
 
-def test_basic_unsigned_cosim(tmpdir, sim_cls):
+@pytest.mark.parametrize('din_delay', [0, 1, 10])
+@pytest.mark.parametrize('dout_delay', [0, 1, 10])
+def test_basic_unsigned_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
     seq = [(2, 8, 2)]
 
     verif(
-        drv(t=Tuple[Uint[4], Uint[4], Uint[2]], seq=seq),
-        f=rng(sim_cls=sim_cls),
-        ref=rng(name='ref_model'))
+        drv(t=Tuple[Uint[4], Uint[4], Uint[2]], seq=seq)
+        | delay_rng(din_delay, din_delay),
+        f=rng(sim_cls=cosim_cls),
+        ref=rng(name='ref_model'),
+        delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(outdir=tmpdir)
 
 
-def test_cnt_steps_unsigned_cosim(tmpdir, sim_cls):
+@pytest.mark.parametrize('din_delay', [0, 1, 10])
+@pytest.mark.parametrize('dout_delay', [0, 1, 10])
+def test_cnt_steps_unsigned_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
     seq = [(2, 8, 2)]
 
     verif(
-        drv(t=Tuple[Uint[4], Uint[4], Uint[2]], seq=seq),
-        f=rng(cnt_steps=True, sim_cls=sim_cls),
-        ref=rng(cnt_steps=True, name='ref_model'))
+        drv(t=Tuple[Uint[4], Uint[4], Uint[2]], seq=seq)
+        | delay_rng(din_delay, din_delay),
+        f=rng(cnt_steps=True, sim_cls=cosim_cls),
+        ref=rng(cnt_steps=True, name='ref_model'),
+        delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(outdir=tmpdir)
 
 
-def test_incr_steps_unsigned_cosim(tmpdir, sim_cls):
+@pytest.mark.parametrize('din_delay', [0, 1, 10])
+@pytest.mark.parametrize('dout_delay', [0, 1, 10])
+def test_incr_steps_unsigned_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
     seq = [(2, 8, 2)]
 
     verif(
-        drv(t=Tuple[Uint[4], Uint[4], Uint[2]], seq=seq),
-        f=rng(cnt_steps=True, incr_steps=True, sim_cls=sim_cls),
-        ref=rng(cnt_steps=True, incr_steps=True, name='ref_model'))
+        drv(t=Tuple[Uint[4], Uint[4], Uint[2]], seq=seq)
+        | delay_rng(din_delay, din_delay),
+        f=rng(cnt_steps=True, incr_steps=True, sim_cls=cosim_cls),
+        ref=rng(cnt_steps=True, incr_steps=True, name='ref_model'),
+        delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(outdir=tmpdir)
 
@@ -75,13 +89,17 @@ def test_basic_signed_sim(tmpdir):
     sim(outdir=tmpdir)
 
 
-def test_basic_signed_cosim(tmpdir, sim_cls):
+@pytest.mark.parametrize('din_delay', [0, 1, 10])
+@pytest.mark.parametrize('dout_delay', [0, 1, 10])
+def test_basic_signed_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
     seq = [(-15, -3, 2)]
 
     verif(
-        drv(t=Tuple[Int[5], Int[6], Uint[2]], seq=seq),
-        f=rng(sim_cls=sim_cls),
-        ref=rng(name='ref_model'))
+        drv(t=Tuple[Int[5], Int[6], Uint[2]], seq=seq)
+        | delay_rng(din_delay, din_delay),
+        f=rng(sim_cls=cosim_cls),
+        ref=rng(name='ref_model'),
+        delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(outdir=tmpdir)
 
@@ -118,13 +136,17 @@ def test_cnt_only_sim(tmpdir):
     sim(outdir=tmpdir, check_activity=False)
 
 
-def test_cnt_only_cosim(tmpdir, sim_cls):
+@pytest.mark.parametrize('din_delay', [0, 1, 10])
+@pytest.mark.parametrize('dout_delay', [0, 1, 10])
+def test_cnt_only_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
     seq = [8]
 
     verif(
-        drv(t=Uint[4], seq=seq),
-        f=rng(sim_cls=sim_cls),
-        ref=rng(name='ref_model'))
+        drv(t=Uint[4], seq=seq)
+        | delay_rng(din_delay, din_delay),
+        f=rng(sim_cls=cosim_cls),
+        ref=rng(name='ref_model'),
+        delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(outdir=tmpdir, check_activity=False)
 
