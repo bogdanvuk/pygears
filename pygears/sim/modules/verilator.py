@@ -1,3 +1,4 @@
+import subprocess
 import jinja2
 import os
 import ctypes
@@ -40,7 +41,7 @@ class SimVerilatorSynchro:
 
 
 class SimVerilated(CosimBase):
-    def __init__(self, gear, timeout=100):
+    def __init__(self, gear, timeout=100, vcd_fifo=False, shmidcat=False):
         super().__init__(gear, timeout=timeout)
         self.name = gear.name[1:].replace('/', '_')
         self.outdir = os.path.abspath(
@@ -51,6 +52,8 @@ class SimVerilated(CosimBase):
         self.svmod = registry('svgen/map')[self.rtlnode]
         self.wrap_name = f'wrap_{self.svmod.sv_module_name}'
         self.trace_fn = None
+        self.vcd_fifo = vcd_fifo
+        self.shmidcat = shmidcat
 
     def setup(self):
         rebuild = True
@@ -60,12 +63,43 @@ class SimVerilated(CosimBase):
             self.build()
             sim_log().info(f'Done')
 
+        tracing_enabled = bool(registry('svgen/debug_intfs'))
+        if tracing_enabled:
+            self.trace_fn = f'{self.outdir}/vlt_dump.vcd'
+            if self.vcd_fifo:
+                try:
+                    subprocess.call(f"rm -f {self.trace_fn}", shell=True)
+                except OSError:
+                    pass
+                subprocess.call(f"mkfifo {self.trace_fn}", shell=True)
+            else:
+                sim_log().info(
+                    f'Verilator VCD dump to "{self.outdir}/vlt_dump.vcd"')
+
         self.verilib = ctypes.CDLL(
             os.path.join(self.objdir, f'V{self.wrap_name}'))
 
         self.finished = False
         atexit.register(self._finish)
+
+        if self.shmidcat:
+            self.shmid_proc = subprocess.Popen(
+                f'shmidcat {self.trace_fn}',
+                shell=True,
+                stdout=subprocess.PIPE)
+
+            # Wait for shmidcat to actually open the pipe, which is necessary
+            # to happen prior to init of the verilator. If shmidcat does not
+            # open the pipe, verilator will get stuck
+            import time
+            time.sleep(0.1)
+
         self.verilib.init()
+
+        if self.shmidcat:
+            self.shmid = self.shmid_proc.stdout.readline().decode().strip()
+            sim_log().info(
+                f'Verilator VCD dump to shared memory at 0x{self.shmid}')
 
         self.handlers = {}
         for p in self.gear.in_ports:
@@ -134,13 +168,10 @@ class SimVerilated(CosimBase):
                 f'Verilator compile error: {ret}. '
                 f'Please inspect "{self.objdir}/make.log"')
 
-        if tracing_enabled:
-            self.trace_fn = f'{self.outdir}/vlt_dump.vcd'
-            sim_log().info(
-                f'Verilator VCD dump to "{self.outdir}/vlt_dump.vcd"')
-
     def _finish(self):
         if not self.finished:
             self.finished = True
             super()._finish()
             self.verilib.final()
+            if self.shmidcat:
+                self.shmid_proc.terminate()
