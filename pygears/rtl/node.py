@@ -82,6 +82,10 @@ class RTLNode(NamedHierNode):
         super().remove()
 
     @property
+    def _basename(self):
+        return self.basename
+
+    @property
     def inst_basename(self):
         return self.basename
 

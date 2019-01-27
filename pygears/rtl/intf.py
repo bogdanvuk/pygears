@@ -10,24 +10,30 @@ class RTLIntf(NamedHierNode):
         self.dtype = dtype
 
     @property
-    def basename(self):
+    def _basename(self):
         producer_port = self.producer
         port_name = producer_port.basename
-
-        if hasattr(self, 'var_name'):
-            producer_name = self.var_name
-        else:
-            producer_name = producer_port.node.basename
 
         if isinstance(producer_port, InPort):
             return port_name
         elif ((not self.is_broadcast) and self.consumers
               and isinstance(self.consumers[0], OutPort)):
             return self.consumers[0].basename
+        elif hasattr(self, 'var_name'):
+            return self.var_name
         elif self.sole_intf:
-            return f'{producer_name}_s'
+            return f'{producer_port.node.basename}'
         else:
-            return f'{producer_name}_{port_name}_s'
+            return f'{producer_port.node.basename}_{port_name}'
+
+    @property
+    def basename(self):
+        if not self.is_port_intf and (self._basename in [
+                c._basename for c in self.parent.child if c is not self
+        ]):
+            return f'{self._basename}_s'
+        else:
+            return self._basename
 
     @property
     def outname(self):
