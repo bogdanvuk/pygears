@@ -1,4 +1,5 @@
 import fnmatch
+import functools
 from string import Template
 
 from pygears import PluginBase, registry, safe_bind
@@ -25,6 +26,13 @@ class SVIntfGen:
     def outname(self):
         return self.intf.outname
 
+    @property
+    @functools.lru_cache()
+    def traced(self):
+        return any(
+            fnmatch.fnmatch(self.intf.name, p)
+            for p in registry('svgen/debug_intfs'))
+
     @reg_inject
     def get_inst(self,
                  template_env,
@@ -37,10 +45,6 @@ class SVIntfGen:
         if not self.intf.is_port_intf:
             inst.append(self.get_intf_def(self.basename, 1, template_env))
 
-        gen_dbg_intf = any(
-            fnmatch.fnmatch(self.intf.parent.gear.name, p)
-            for p in registry('svgen/debug_intfs'))
-
         if self.intf.is_broadcast:
             inst.extend([
                 self.get_intf_def(self.outname, len(self.intf.consumers),
@@ -52,7 +56,7 @@ class SVIntfGen:
                 if isinstance(cons_port, OutPort):
                     inst.append(self.get_connect_module(i, template_env))
 
-            if gen_dbg_intf:
+            if self.traced:
                 for i in range(len(self.intf.consumers)):
                     intf_name = f'{self.outname}_{i}'
                     conn_name = f'{self.outname}[{i}]'
@@ -64,7 +68,7 @@ class SVIntfGen:
                             intf_name=intf_name,
                             conn_name=conn_name).split('\n'))
 
-        if gen_dbg_intf:
+        if self.traced:
             inst.extend(
                 svgen_typedef(self.intf.dtype, self.basename).split('\n'))
 

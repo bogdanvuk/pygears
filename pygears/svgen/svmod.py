@@ -1,3 +1,4 @@
+import fnmatch
 import os
 import functools
 from collections import OrderedDict
@@ -20,6 +21,13 @@ def find_in_dirs(fn, dirs):
             return full_path
     else:
         return None
+
+
+def sv_path_name(path):
+    if path.startswith('/'):
+        path = path[1:]
+
+    return path.replace('/', '_')
 
 
 class SVModuleGen:
@@ -58,6 +66,21 @@ class SVModuleGen:
         return self.node.is_hierarchical
 
     @property
+    @functools.lru_cache()
+    def traced(self):
+        self_traced = any(
+            fnmatch.fnmatch(self.node.gear.name, p)
+            for p in registry('svgen/debug_intfs'))
+
+        if self.is_hierarchical:
+            children_traced = any(
+                self.svgen_map[child].traced for child in self.node.child)
+        else:
+            children_traced = False
+
+        return self_traced or children_traced
+
+    @property
     def sv_module_basename(self):
         if hasattr(self.node, 'gear'):
             return self.node.gear.definition.__name__
@@ -86,7 +109,7 @@ class SVModuleGen:
 
     @property
     def sv_inst_name(self):
-        inst_name = self.node.inst_basename
+        inst_name = sv_path_name(self.node.inst_basename)
         if inst_name in sv_keywords:
             return f'{inst_name}_i'
         else:
@@ -184,12 +207,7 @@ class SVModuleGen:
 
     @property
     def hier_sv_path_name(self):
-        trimmed_name = self.node.name
-
-        if trimmed_name.startswith('/'):
-            trimmed_name = trimmed_name[1:]
-
-        return trimmed_name.replace('/', '_')
+        return sv_path_name(self.node.name)
 
     def get_module(self, template_env):
         if not self.is_generated:
@@ -223,7 +241,11 @@ class SVModuleGen:
                 if hasattr(svgen, 'get_inst'):
                     contents = svgen.get_inst(template_env)
                     if contents:
+                        if svgen.traced:
+                            context['inst'].append('/*verilator tracing_on*/')
                         context['inst'].append(contents)
+                        if svgen.traced:
+                            context['inst'].append('/*verilator tracing_off*/')
 
             return template_env.render_local(__file__, "hier_module.j2",
                                              context)

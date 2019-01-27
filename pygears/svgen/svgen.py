@@ -1,7 +1,5 @@
 from pygears.conf import PluginBase, bind, registry, safe_bind
-from pygears.rtl.inst import rtl_inst
-from pygears.rtl.connect import rtl_connect
-from pygears.rtl.channel import RTLChannelVisitor, RTLOutChannelVisitor
+from pygears.rtl import rtlgen
 from pygears.util.find import find
 from .generate import svgen_generate
 from .inst import svgen_inst
@@ -14,20 +12,23 @@ def svgen(top=None, **conf):
     elif isinstance(top, str):
         top = find(top)
 
+    rtl_map = registry('rtl/gear_node_map')
+    if top not in rtl_map:
+        rtlgen(**conf)
+
+    rtl_top = rtl_map[top]
+
     bind('svgen/conf', conf)
     for oper in registry('svgen/flow'):
-        top = oper(top, conf)
+        rtl_top = oper(rtl_top, conf)
 
-    return top
+    return rtl_top
 
 
 class SVGenPlugin(PluginBase):
     @classmethod
     def bind(cls):
         safe_bind('svgen/conf', {})
-        safe_bind('svgen/flow', [
-            rtl_inst, rtl_connect, RTLChannelVisitor, RTLOutChannelVisitor,
-            svgen_inst, svgen_generate
-        ])
+        safe_bind('svgen/flow', [svgen_inst, svgen_generate])
         safe_bind('svgen/module_namespace', {})
         safe_bind('svgen/map', {})

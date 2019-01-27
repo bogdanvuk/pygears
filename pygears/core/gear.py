@@ -43,6 +43,13 @@ def enum_stacktrace():
     return filter(filter_internals, walk_stack(f=None))
 
 
+class GearHierRoot(NamedHierNode):
+    def __init__(self, name=''):
+        super().__init__(name)
+        self.in_ports = []
+        self.out_ports = []
+
+
 class Gear(NamedHierNode):
     def __init__(self, func, args, params):
         super().__init__(params['name'], registry('gear/current_module'))
@@ -236,7 +243,7 @@ class GearPlugin(PluginBase):
     @classmethod
     def bind(cls):
         safe_bind('gear/naming', {'default_out_name': 'dout'})
-        safe_bind('gear/hier_root', NamedHierNode(''))
+        safe_bind('gear/hier_root', GearHierRoot(''))
         safe_bind('gear/current_module', cls.registry['gear']['hier_root'])
         safe_bind('gear/gear_dflt_resolver', None)
         safe_bind('gear/params/meta', {'enablement': True})
@@ -249,6 +256,6 @@ class GearPlugin(PluginBase):
 
     @classmethod
     def reset(cls):
-        safe_bind('gear/hier_root', NamedHierNode(''))
+        safe_bind('gear/hier_root', GearHierRoot(''))
         safe_bind('gear/current_module', cls.registry['gear']['hier_root'])
         safe_bind('gear/code_map', [])

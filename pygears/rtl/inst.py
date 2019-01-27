@@ -11,19 +11,14 @@ class RTLNodeDesign(RTLNode):
         super().__init__(None, '')
 
 
-class GearHierRoot(NamedHierNode):
-    def __init__(self, root):
-        super().__init__('')
-        self.in_ports = []
-        self.out_ports = []
-        self.root = root
-
-
 class RTLNodeGearRoot(RTLGearNodeGen):
-    def __init__(self, module):
+    @reg_inject
+    def __init__(self, module, rtl_map=Inject('rtl/gear_node_map')):
         HierNode.__init__(self)
         self.node = RTLNodeDesign()
-        self.gear = GearHierRoot(module)
+        # self.gear = GearHierRoot(module)
+        self.gear = module
+        rtl_map[module] = self.node
 
         namespace = registry('svgen/module_namespace')
         self.node.params['svgen'] = {'svgen_cls': namespace['RTLNodeDesign']}
@@ -42,7 +37,7 @@ class RTLNodeInstVisitor(HierVisitorBase):
         self.design = None
         self.namespace = registry('rtl/namespace/gear_gen')
 
-    def NamedHierNode(self, module):
+    def GearHierRoot(self, module):
         self.design = RTLNodeGearRoot(module)
         self.cur_hier = self.design
 

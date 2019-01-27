@@ -5,7 +5,7 @@ from pygears.svgen.inst import SVGenInstPlugin
 from pygears.svgen.svmod import SVModuleGen
 from functools import partial
 from pygears.svgen.svgen import SVGenPlugin
-from pygears.rtl import flow_visitor
+from pygears.rtl import flow_visitor, RTLPlugin
 from pygears.core.hier_node import HierVisitorBase
 from pygears.svgen.inst import svgen_inst
 from pygears.rtl.gear import RTLGearHierVisitor, is_gear_instance
@@ -113,13 +113,8 @@ class CollapseSievesVisitor(RTLGearHierVisitor):
                 iout.remove()
 
 
-class SVGenSievePlugin(SVGenInstPlugin, SVGenPlugin):
+class RTLSievePlugin(SVGenInstPlugin, RTLPlugin):
     @classmethod
     def bind(cls):
         cls.registry['svgen']['module_namespace'][sieve] = SVGenSieve
-        cls.registry['svgen']['flow'].insert(
-            cls.registry['svgen']['flow'].index(svgen_inst),
-            CollapseSievesVisitor)
-        # cls.registry['SVGenFlow'].insert(
-        #     cls.registry['SVGenFlow'].key(CollapseSievesVisitor),
-        #     RemoveEqualReprSieveVisitor)
+        cls.registry['rtl']['flow'].append(CollapseSievesVisitor)

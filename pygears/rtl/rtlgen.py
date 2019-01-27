@@ -11,6 +11,9 @@ def rtlgen(top=None, **conf):
     elif isinstance(top, str):
         top = find(top)
 
+    if top in registry('rtl/gear_node_map'):
+        return registry('rtl/gear_node_map')[top]
+
     for oper in registry('rtl/flow'):
         top = oper(top, conf)
 
