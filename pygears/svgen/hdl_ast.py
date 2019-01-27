@@ -360,16 +360,16 @@ class HdlAst(ast.NodeVisitor):
         for arg, port in zip(arg_nodes, self.gear.out_ports):
             t = port.dtype
             if typeof(t, Queue) or typeof(t, Tuple):
-                assert isinstance(arg, ht.ConcatExpr), 'Invalid return type'
+                # assert isinstance(arg, ht.ConcatExpr), 'Invalid return type'
 
-                for i in range(len(arg.operands)):
-                    if isinstance(
-                            arg.operands[i],
-                            ht.CastExpr) and (arg.operands[i].cast_to == t[i]):
-                        pass
-                    else:
-                        arg.operands[i] = ht.CastExpr(
-                            operand=arg.operands[i], cast_to=t[i])
+                if isinstance(arg, ht.ConcatExpr):
+                    for i in range(len(arg.operands)):
+                        if isinstance(arg.operands[i], ht.CastExpr) and (
+                                arg.operands[i].cast_to == t[i]):
+                            pass
+                        else:
+                            arg.operands[i] = ht.CastExpr(
+                                operand=arg.operands[i], cast_to=t[i])
 
                 args.append(arg)
             else:

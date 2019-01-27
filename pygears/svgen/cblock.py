@@ -29,8 +29,16 @@ class CBlockVisitor(InstanceVisitor):
             current_hdl = cblock.hdl_blocks[sub_idx]
 
         if self.state_num > 0 and cblock.parent:
-            if current_ids != cblock.parent.state_ids:
-                hdl_block.in_cond = state_expr(current_ids, hdl_block.in_cond)
+
+            if (current_ids != cblock.parent.state_ids):
+                # if in module even exist states other than the ones in this
+                # cblock
+                if (current_ids != list(range(self.state_num + 1))):
+                    hdl_block.in_cond = state_expr(current_ids,
+                                                   hdl_block.in_cond)
+
+            if len(current_ids) > 1:
+                return
 
             parent_ids = list(set(cblock.parent.state_ids))
             assert len(set(current_ids)) == 1
