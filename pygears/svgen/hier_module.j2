@@ -11,6 +11,8 @@ module {{module_name}}
 {{snippet.intf_list(intfs)|indent(4, True)}}
 );
 
+/*verilator tracing_off*/
+
 {% for i in inst %}
 {{i|indent(4,True)}}
 

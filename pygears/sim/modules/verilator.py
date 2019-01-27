@@ -12,14 +12,16 @@ from pygears.sim import sim_log
 import atexit
 
 signal_spy_connect_t = Template("""
+/*verilator tracing_on*/
 ${intf_name}_t ${intf_name}_data;
-logic [1:0] ${intf_name}_state;
 logic ${intf_name}_valid;
 logic ${intf_name}_ready;
+/*verilator tracing_off*/
 
 assign ${intf_name}_data = ${conn_name}.data;
 assign ${intf_name}_valid = ${conn_name}.valid;
-assign ${intf_name}_ready = ${conn_name}.ready;""")
+assign ${intf_name}_ready = ${conn_name}.ready;
+""")
 
 
 class VerilatorCompileError(Exception):
@@ -65,12 +67,14 @@ class SimVerilated(CosimBase):
 
         tracing_enabled = bool(registry('svgen/debug_intfs'))
         if tracing_enabled:
+            print("Debugg: ", registry('svgen/debug_intfs'))
             self.trace_fn = f'{self.outdir}/vlt_dump.vcd'
+            try:
+                subprocess.call(f"rm -f {self.trace_fn}", shell=True)
+            except OSError:
+                pass
+
             if self.vcd_fifo:
-                try:
-                    subprocess.call(f"rm -f {self.trace_fn}", shell=True)
-                except OSError:
-                    pass
                 subprocess.call(f"mkfifo {self.trace_fn}", shell=True)
             else:
                 sim_log().info(
@@ -114,6 +118,7 @@ class SimVerilated(CosimBase):
         super().setup()
 
     def build(self):
+        print('Debugging: ', registry('svgen/debug_intfs'))
         tracing_enabled = bool(registry('svgen/debug_intfs'))
         context = {
             'in_ports': self.rtlnode.in_ports,
@@ -143,6 +148,8 @@ class SimVerilated(CosimBase):
             'sim_main.cpp'
         ]  # yapf: disable
 
+        print("Running verilate: ", " ".join(verilate_cmd))
+
         ret = os.system(f'{" ".join(verilate_cmd)} > verilate.log 2>&1')
 
         if ret != 0:
@@ -159,6 +166,7 @@ class SimVerilated(CosimBase):
             #         f'Verilator compiled with warnings. '
             #         f'Please inspect "{self.outdir}/verilate.log"')
 
+        print("Running make")
         ret = os.system(
             f"cd {self.objdir}; make -j -f V{self.wrap_name}.mk > make.log 2>&1"
         )

@@ -1,5 +1,7 @@
 {%- import 'snippet.j2' as snippet -%}
 
+/*verilator tracing_off*/
+
 module wrap_{{module_name}}
 (
     input clk,
@@ -11,6 +13,8 @@ module wrap_{{module_name}}
 
 {{snippet.signal_intf_connect(intfs)|indent(4, True)}}
 
+/*verilator tracing_on*/
 {{snippet.module_inst(module_name, param_map, inst_name)|indent(4, True)}}
+/*verilator tracing_off*/
 
 endmodule
