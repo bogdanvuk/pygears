@@ -20,10 +20,6 @@ void forward(void) {
     printf("---- forward ----\n");
 #endif
     top->eval();
-{% if tracing %}
-    if (tfp) tfp->dump (main_time);
-{% endif %}
-    {# main_time+=5; #}
 }
 
 void back(void) {
@@ -53,13 +49,6 @@ void cycle(void) {
     tfp->flush();
 {% endif %}
     top->clk = 1;
-    top->eval();
-    {# tfp->spTrace()->m_activity_cnt = 0; #}
-{% if tracing %}
-    if (tfp) tfp->dump (main_time);
-    tfp->flush();
-{% endif %}
-    {# printf("Cycle activity: %d\n", tfp->spTrace()->m_activity_cnt);  #}
 }
 
 int init(void) {

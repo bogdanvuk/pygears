@@ -148,8 +148,6 @@ class SimVerilated(CosimBase):
             'sim_main.cpp'
         ]  # yapf: disable
 
-        print("Running verilate: ", " ".join(verilate_cmd))
-
         ret = os.system(f'{" ".join(verilate_cmd)} > verilate.log 2>&1')
 
         if ret != 0:
