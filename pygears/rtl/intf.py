@@ -28,9 +28,14 @@ class RTLIntf(NamedHierNode):
 
     @property
     def basename(self):
-        if not self.is_port_intf and (self._basename in [
-                c._basename for c in self.parent.child if c is not self
-        ]):
+        sibling_names = [
+            c._basename for c in self.parent.child if c is not self
+        ]
+
+        port_names = [p.basename for p in self.parent.out_ports]
+
+        if not self.is_port_intf and (self._basename in (
+                sibling_names + port_names)):
             return f'{self._basename}_s'
         else:
             return self._basename
