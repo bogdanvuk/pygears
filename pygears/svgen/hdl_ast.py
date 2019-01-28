@@ -69,23 +69,25 @@ def eval_data_expr(node, local_namespace):
     return ht.ResExpr(ret)
 
 
-def gather_control_stmt_vars(variables, intf, name=None, dtype=None):
-    if not name:
-        name = f'{intf.name}_s'
-    if not dtype:
-        dtype = intf.intf.dtype
+def gather_control_stmt_vars(variables, intf, attr=None):
+    dtype = intf.intf.dtype
+    if attr is None:
+        attr = []
+    else:
+        for a in attr:
+            dtype = dtype[a]
 
     scope = {}
     if isinstance(variables, ast.Tuple):
         for i, v in enumerate(variables.elts):
             if isinstance(v, ast.Name):
-                scope[v.id] = ht.AttrExpr(intf, [dtype.fields[i]])
+                scope[v.id] = ht.AttrExpr(intf, attr + [dtype.fields[i]])
             elif isinstance(v, ast.Starred):
-                scope[v.id] = ht.AttrExpr(intf, [dtype.fields[i]])
+                scope[v.id] = ht.AttrExpr(intf, attr + [dtype.fields[i]])
             elif isinstance(v, ast.Tuple):
                 scope.update(
-                    gather_control_stmt_vars(
-                        v, intf, f'{name}.{dtype.fields[i]}', dtype[i]))
+                    gather_control_stmt_vars(v, intf,
+                                             attr + [dtype.fields[i]]))
     else:
         if isinstance(intf, ht.IntfExpr):
             scope[variables.id] = intf

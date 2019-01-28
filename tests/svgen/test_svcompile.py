@@ -232,7 +232,7 @@ end
 always_comb begin
     acc_en = 0;
     offset_added_en = 0;
-    acc_next = 16'(33'(acc_reg) + 33'(din_s.data));
+    acc_next = 16'(17'(acc_reg) + 17'(din_s.data.data));
     offset_added_next = 1'(1);
     if (din.valid && (state_reg == 0)) begin
         if (offset_added_reg) begin
@@ -240,7 +240,7 @@ always_comb begin
         end
         if (!(offset_added_reg)) begin
             acc_en = 1;
-            acc_next = 16'(33'(din_s.data.offset) + 33'(din_s.data));
+            acc_next = 16'(17'(din_s.data.offset) + 17'(din_s.data.data));
             offset_added_en = 1;
         end
     end
