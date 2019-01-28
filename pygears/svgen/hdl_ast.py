@@ -132,33 +132,17 @@ class HdlAst(ast.NodeVisitor):
     def exit_block(self):
         self.scope.pop()
 
-    def walk_up_block_hier(self):
-        for block in reversed(self.scope):
-            for stmt in reversed(block.stmts):
-                yield stmt
-
     def get_context_var(self, pyname):
         var = self.svlocals.get(pyname, None)
 
         if isinstance(var, ht.RegDef):
-            for stmt in self.walk_up_block_hier():
-                if isinstance(stmt, ht.RegNextStmt):
-                    if stmt.reg.name == pyname:
-                        var = ht.RegVal(var, f'{var.name}_next')
-                        break
+            if var.name in self.regs:
+                return ht.OperandVal(var, 'reg')
             else:
-                if var.name in self.regs:
-                    name = f'{var.name}_reg'
-                else:
-                    name = f'{var.name}_s'
-                var = ht.RegVal(var, name)
+                return ht.OperandVal(var, 's')
         elif isinstance(var, ht.VariableDef):
-            for stmt in self.walk_up_block_hier():
-                if isinstance(stmt, ht.VariableStmt):
-                    var = ht.VariableVal(var, f'{var.name}_v')
-                    break
-            else:
-                var = ht.VariableVal(var, f'{var.name}_v')
+            return ht.OperandVal(var, 'v')
+
         return var
 
     def visit_AsyncFor(self, node):
@@ -468,8 +452,8 @@ class HdlAst(ast.NodeVisitor):
 
         stmts = []
         op1 = self.regs[names[0]]
-        exit_cond = ht.BinOpExpr((ht.RegVal(op1, f'{names[0]}_next'), stop),
-                                 '>=')
+        exit_cond = ht.BinOpExpr(
+            (ht.OperandVal(ht.RegDef(op1, names[0]), 'next'), stop), '>=')
 
         if is_qrange:
             if is_start:
@@ -478,10 +462,10 @@ class HdlAst(ast.NodeVisitor):
 
             name = node.target.elts[-1].id
             var = ht.VariableDef(exit_cond, name)
-            self.variables[name] = ht.VariableVal(var, name)
+            self.variables[name] = ht.OperandVal(var, 'v')
             self.svlocals[name] = var
             stmts.append(ht.VariableStmt(var, exit_cond))
-            exit_cond = ht.VariableVal(var, f'{name}_v')
+            exit_cond = ht.OperandVal(var, 'v')
 
         hdl_node = ht.Loop(
             _in_cond=None, stmts=stmts, _exit_cond=exit_cond, multicycle=names)

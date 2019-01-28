@@ -109,16 +109,6 @@ class RegNextStmt(Expr):
 
 
 @dataclass
-class RegVal(Expr):
-    reg: RegDef
-    name: str
-
-    @property
-    def dtype(self):
-        return self.reg.dtype
-
-
-@dataclass
 class VariableDef(Expr):
     val: pytypes.Any
     name: str
@@ -139,13 +129,13 @@ class VariableStmt(Expr):
 
 
 @dataclass
-class VariableVal(Expr):
-    variable: VariableDef
-    name: str
+class OperandVal(Expr):
+    op: pytypes.Union[VariableDef, RegDef]
+    context: str
 
     @property
     def dtype(self):
-        return self.variable.dtype
+        return self.op.dtype
 
 
 @dataclass
@@ -228,9 +218,7 @@ class SubscriptExpr(Expr):
 
     @property
     def dtype(self):
-        if isinstance(self.index, RegVal):
-            # TODO: for arrays and integers the dtype will always be
-            # the same, but is RegVal check correct?
+        if isinstance(self.index, OperandVal):
             return self.val.dtype[0]
         elif not isinstance(self.index, slice):
             return self.val.dtype[self.index]

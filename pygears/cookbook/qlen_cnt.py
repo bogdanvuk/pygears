@@ -2,8 +2,7 @@ from pygears import gear
 from pygears.typing import Queue, Uint
 
 
-@gear(svgen={'svmod_fn': 'qlen_cnt.sv'})
-# @gear(svgen={'compile': True})
+@gear(svgen={'compile': True})
 async def qlen_cnt(din: Queue['tdin', 'din_lvl'],
                    *,
                    cnt_lvl=1,

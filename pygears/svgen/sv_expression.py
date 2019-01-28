@@ -5,11 +5,8 @@ from .inst_visit import InstanceVisitor
 
 
 class SVExpressionVisitor(InstanceVisitor):
-    def visit_VariableVal(self, node):
-        return node.name
-
-    def visit_RegVal(self, node):
-        return node.name
+    def visit_OperandVal(self, node):
+        return f'{node.op.name}_{node.context}'
 
     def visit_ResExpr(self, node):
         return int(node.val)
