@@ -49,6 +49,7 @@ void cycle(void) {
     tfp->flush();
 {% endif %}
     top->clk = 1;
+    top->eval();
 }
 
 int init(void) {
