@@ -22,7 +22,12 @@ class Port:
 
 
 class InPort(Port):
-    pass
+    @property
+    def dtype(self):
+        if self.consumer is not None:
+            return self.consumer.dtype
+        else:
+            return self.producer.dtype
 
 
 class OutPort(Port):

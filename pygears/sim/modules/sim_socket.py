@@ -12,7 +12,7 @@ from subprocess import DEVNULL, Popen
 
 import jinja2
 
-from pygears import GearDone, registry, bind
+from pygears import GearDone, bind, registry
 from pygears.definitions import ROOT_DIR
 from pygears.sim import clk, sim_log
 from pygears.sim.modules.cosim_base import CosimBase, CosimNoData
@@ -20,6 +20,14 @@ from pygears.svgen import svgen
 from pygears.svgen.util import svgen_typedef
 from pygears.typing import Uint
 from pygears.util.fileio import save_file
+
+CMD_SYS_RESET = 0x80000000
+CMD_SET_DATA = 0x40000000
+CMD_RESET = 0x20000000
+CMD_FORWARD = 0x10000000
+CMD_CYCLE = 0x08000000
+CMD_READ = 0x04000000
+CMD_ACK = 0x02000000
 
 
 class CosimulatorStartError(Exception):
@@ -29,15 +37,15 @@ class CosimulatorStartError(Exception):
 async def drive_reset(duration):
     simsoc = registry('sim/config/socket')
     await clk()
-    data = simsoc.send_req(duration | (1 << 31), Uint[4])
+    simsoc.send_cmd(duration | CMD_SYS_RESET)
+    # data = simsoc.send_req(duration | (1 << 31), Uint[4])
     for i in range(duration):
         await clk()
 
-    return data
+    # return data
 
 
 def u32_repr_gen(data, dtype):
-    yield int(dtype)
     for i in range(ceil(int(dtype) / 32)):
         yield data & 0xffffffff
         data >>= 32
@@ -59,7 +67,7 @@ def u32_bytes_to_int(data):
 
 
 def u32_bytes_decode(data, dtype):
-    return dtype.decode(u32_bytes_to_int(data))
+    return dtype.decode(u32_bytes_to_int(data) & ((1 << int(dtype)) - 1))
 
 
 j2_templates = ['runsim.j2', 'top.j2']
@@ -110,7 +118,6 @@ def sv_cosim_gen(gear, tcp_port=1234):
         'port_map': port_map,
         'out_path': os.path.abspath(outdir),
         'hooks': hooks,
-        'rst_mask': "32'h8000_0000",
         'port': tcp_port,
         'top_name': 'top',
         'activity_timeout': 1000  # in clk cycles
@@ -139,8 +146,8 @@ def sv_cosim_gen(gear, tcp_port=1234):
 
 
 class SimSocketDrv:
-    def __init__(self, handler, port):
-        self.handler = handler
+    def __init__(self, main, port):
+        self.main = main
         self.port = port
 
     def reset(self):
@@ -149,66 +156,80 @@ class SimSocketDrv:
 
 class SimSocketInputDrv(SimSocketDrv):
     def close(self):
-        self.handler.sendall(b'\x00\x00\x00\x00')
-        self.handler.close()
-        # del self.handler
+        self.main.sendall(b'\x00\x00\x00\x00')
+        self.main.close()
+        # del self.main
 
     def send(self, data):
-        # print(f'Sending {repr(data)} for {self.port.basename} of type {self.port.dtype}')
+        # print(f'Sending {hex(data.code())},  {repr(data)} for {self.port.basename}')
+        self.main.send_cmd(CMD_SET_DATA | self.port.index)
         pkt = u32_repr(data, self.port.dtype).tobytes()
-        self.handler.sendall(pkt)
+        self.main.sendall(pkt)
+
+    def reset(self):
+        self.main.send_cmd(CMD_RESET | self.port.index)
 
     def ready(self):
-        try:
-            self.handler.recv(4)
-            return True
-        except socket.error:
-            return False
+        self.main.send_cmd(CMD_READ | self.port.index)
+
+        # import os
+        # os.system("date +%s.%N")
+        data = self.main.recv(4)
+        # os.system("date +%s.%N")
+        # print(f'Received status {data}')
+
+        return bool(int.from_bytes(data, byteorder='little'))
 
 
 class SimSocketOutputDrv(SimSocketDrv):
     def read(self):
-        buff_size = math.ceil(int(self.port.dtype) / 8)
-        if buff_size < 4:
-            buff_size = 4
-        if buff_size % 4:
-            buff_size += 4 - (buff_size % 4)
-        try:
-            data = self.handler.recv(buff_size)
+        # print(f'Send read command for {self.index}')
+        self.main.send_cmd(CMD_READ | self.index)
+        data = self.main.recv(4)
+        # print(f'Received status {data}')
+
+        if int.from_bytes(data, byteorder='little'):
+            buff_size = math.ceil(int(self.port.dtype) / 8)
+            if buff_size < 4:
+                buff_size = 4
+            if buff_size % 4:
+                buff_size += 4 - (buff_size % 4)
+
+            data = self.main.recv(buff_size)
             return u32_bytes_decode(data, self.port.dtype)
-        except socket.error:
+        else:
             raise CosimNoData
+
+    def reset(self):
+        self.main.send_cmd(CMD_RESET | self.index)
+
+    @property
+    def index(self):
+        return len(self.port.gear.in_ports) + self.port.index
 
     def ack(self):
         try:
-            self.handler.sendall(b'\x01\x00\x00\x00')
+            self.main.send_cmd(CMD_ACK | self.index)
         except socket.error:
             raise GearDone
 
 
 class SimSocketSynchro:
-    def __init__(self, handler):
+    def __init__(self, main, handler):
+        self.main = main
         self.handler = handler
         self.handler.settimeout(5.0)
 
     def cycle(self):
-        pass
+        self.main.send_cmd(CMD_CYCLE)
 
     def forward(self):
-        data = None
-        while not data:
-            try:
-                self.handler.sendall(b'\x00\x00\x00\x00')
-                data = self.handler.recv(4)
-            except socket.timeout:
-                import pdb
-                pdb.set_trace()
-            except socket.error:
-                raise GearDone
+        self.main.send_cmd(CMD_FORWARD)
 
     back = forward
 
     def sendall(self, pkt):
+        # print(f'Sending: {pkt}')
         self.handler.sendall(pkt)
 
     def recv(self, buff_size):
@@ -241,8 +262,8 @@ class SimSocket(CosimBase):
 
     def _cleanup(self):
         if self.sock:
-            sim_log().info(f'Done. Closing the socket...')
-            time.sleep(3)
+            # sim_log().info(f'Done. Closing the socket...')
+            # time.sleep(3)
             self.sock.close()
             time.sleep(1)
 
@@ -250,6 +271,18 @@ class SimSocket(CosimBase):
                 self.cosim_pid.terminate()
 
         super()._cleanup()
+
+    def sendall(self, pkt):
+        self.handlers[self.SYNCHRO_HANDLE_NAME].sendall(pkt)
+
+    def send_cmd(self, req):
+        # cmd_name = [k for k, v in globals().items() if v == (req & 0xffff0000)][0]
+        # print(f'SimSocket: sending command {cmd_name}')
+        pkt = req.to_bytes(4, byteorder='little')
+        self.handlers[self.SYNCHRO_HANDLE_NAME].sendall(pkt)
+
+    def recv(self, size):
+        return self.handlers[self.SYNCHRO_HANDLE_NAME].recv(size)
 
     def send_req(self, req, dtype):
         # print('SimSocket sending request...')
@@ -277,23 +310,22 @@ class SimSocket(CosimBase):
         return data
 
     def setup(self):
-        super().setup()
+        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # Bind the socket to the port
-        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-
-        self.sock.bind(self.server_address)
+        if os.path.exists("/tmp/socket_test.s"):
+            os.remove("/tmp/socket_test.s")
+        self.sock.bind("/tmp/socket_test.s")
 
         # Listen for incoming connections
-        self.sock.listen(len(self.gear.in_ports) + len(self.gear.out_ports))
+        # self.sock.listen(len(self.gear.in_ports) + len(self.gear.out_ports))
+        self.sock.listen(1)
 
         if self.rebuild:
             sv_cosim_gen(self.gear, self.server_address[1])
 
         if self.run_cosim:
 
-            self.sock.settimeout(1)
+            self.sock.settimeout(10)
 
             outdir = registry('sim/artifact_dir')
             args = ' '.join(f'-{k} {v if not isinstance(v, bool) else ""}'
@@ -319,49 +351,40 @@ class SimSocket(CosimBase):
             time.sleep(0.1)
             ret = self.cosim_pid.poll()
             if ret is not None:
-                sim_log().error(f"Cosimulator error: {ret}")
+                sim_log().error(
+                    f"Cosimulator error: {ret}. Check log file {outdir}/log.log"
+                )
                 raise CosimulatorStartError
             else:
                 sim_log().info(f"Cosimulator started")
 
         self.loop = asyncio.get_event_loop()
 
-        total_conn_num = len(self.gear.args) + len(self.gear.outnames) + 1
-
         sim_log().info(f'Waiting on {self.sock.getsockname()}')
-        while len(self.handlers) != total_conn_num:
-            if self.cosim_pid:
-                ret = None
-                while ret is None:
-                    try:
-                        conn, addr = self.sock.accept()
-                        break
-                    except socket.timeout:
-                        ret = self.cosim_pid.poll()
-                        if ret is not None:
-                            sim_log().error(f"Cosimulator error: {ret}")
-                            raise Exception
-            else:
-                sim_log().debug("Wait for connection")
-                self.sock.listen(1)
-                conn, addr = self.sock.accept()
 
-            msg = conn.recv(1024)
-            port_name = msg.decode()
+        if self.cosim_pid:
+            ret = None
+            while ret is None:
+                try:
+                    conn, addr = self.sock.accept()
+                    break
+                except socket.timeout:
+                    ret = self.cosim_pid.poll()
+                    if ret is not None:
+                        sim_log().error(f"Cosimulator error: {ret}")
+                        raise Exception
+        else:
+            sim_log().debug("Wait for connection")
+            conn, addr = self.sock.accept()
 
-            if port_name == self.SYNCHRO_HANDLE_NAME:
-                self.handlers[self.SYNCHRO_HANDLE_NAME] = SimSocketSynchro(
-                    conn)
-                # conn.setblocking(True)
-            else:
-                for p in self.gear.in_ports:
-                    if p.basename == port_name:
-                        self.handlers[port_name] = SimSocketInputDrv(conn, p)
-                        break
-                for p in self.gear.out_ports:
-                    if p.basename == port_name:
-                        self.handlers[port_name] = SimSocketOutputDrv(conn, p)
-                        break
-                conn.setblocking(False)
+        msg = conn.recv(1024)
+        port_name = msg.decode()
 
-            sim_log().debug(f"Connection received for {port_name}")
+        self.handlers[self.SYNCHRO_HANDLE_NAME] = SimSocketSynchro(self, conn)
+        for p in self.gear.in_ports:
+            self.handlers[p.basename] = SimSocketInputDrv(self, p)
+        for p in self.gear.out_ports:
+            self.handlers[p.basename] = SimSocketOutputDrv(self, p)
+
+        sim_log().debug(f"Connection received for {port_name}")
+        super().setup()

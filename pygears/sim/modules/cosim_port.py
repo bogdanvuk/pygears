@@ -10,7 +10,6 @@ class InCosimPort:
         self.port = port
         self.done = False
         self.main = main
-        # self.cosim_intf = cosim_intf
 
     @property
     def gear(self):
@@ -31,21 +30,29 @@ class InCosimPort:
         intf = self.port.consumer
 
         phase = 'forward'
+        self.active = False
 
         while True:
             if self.main.done:
+                intf.finish()
                 raise GearDone
 
-            if phase == 'forward':
-                self.main.reset_in(self.port)
-                # print(f'Wait for intf -> {self.port.basename}')
-                data = await intf.pull()
-                # print(f'Set {data} -> {self.port.basename}')
-                self.main.write_in(self.port, data)
-            elif phase == 'back':
-                if self.main.ready_in(self.port):
-                    # print(f'Ack {self.port.basename}')
-                    intf.ack()
+            try:
+                if (phase == 'forward') and (not self.active):
+                    self.main.reset_in(self.port)
+                    # print(f'Wait for intf -> {self.port.basename}')
+                    data = await intf.pull()
+                    # print(f'Set {data} -> {self.port.basename}')
+                    self.active = True
+                    self.main.write_in(self.port, data)
+                elif (phase == 'back') and (self.active):
+                    if self.main.ready_in(self.port):
+                        # print(f'Ack {self.port.basename}')
+                        self.active = False
+                        intf.ack()
+            except (BrokenPipeError, ConnectionResetError):
+                intf.finish()
+                raise GearDone
 
             phase = await delta()
 
@@ -55,7 +62,6 @@ class OutCosimPort:
         self.port = port
         self.done = False
         self.main = main
-        # self.cosim_intf = cosim_intf
 
     @property
     def gear(self):
@@ -82,11 +88,15 @@ class OutCosimPort:
                 raise GearDone
 
             try:
+                # print(f'{self.port.basename} read_out')
                 data = self.main.read_out(self.port)
                 # print(f'Put {data} -> {self.port.basename}')
                 await intf.put(data)
                 # print(f'Ack {data} -> {self.port.basename}')
                 self.main.ack_out(self.port)
+            except (BrokenPipeError, ConnectionResetError):
+                intf.finish()
+                raise GearDone
             except CosimNoData:
                 pass
 

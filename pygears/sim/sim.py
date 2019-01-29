@@ -194,7 +194,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         # print("-" * 60)
         # print("Topological order:")
         # for g in gear_multi_order:
-        #     print(f'{g.name}: {[c.name for c in dag[g]]}')
+        #     print(f'{g.name}: {[c.name for c in dag.get(g, [])]}')
 
         # print("-" * 60)
 

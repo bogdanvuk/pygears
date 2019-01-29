@@ -397,6 +397,9 @@ class BoolMeta(UintType):
         spec_cls = super().__new__(cls, name, bases, namespace, args=[1])
         return spec_cls
 
+    def copy(self):
+        return self
+
 
 class Bool(Uint, metaclass=BoolMeta):
     def __new__(cls, val):

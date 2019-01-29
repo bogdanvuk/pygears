@@ -62,7 +62,7 @@ class Gear(NamedHierNode):
         for i, (name, intf) in enumerate(args.items()):
             port = InPort(self, i, name)
             intf.connect(port)
-            Intf(port.dtype).source(port)
+            Intf(params[port.basename]).source(port)
             self.in_ports.append(port)
 
     def connect_output(self, out_intfs, out_dtypes):

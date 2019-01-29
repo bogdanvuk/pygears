@@ -18,12 +18,6 @@ class CosimBase(SimGear):
         for p in (self.in_cosim_ports + self.out_cosim_ports):
             sim_map[p.port] = p
 
-    def setup(self):
-        for p in (self.in_cosim_ports + self.out_cosim_ports):
-            p.cosim_intf = self.handlers[p.port.basename]
-
-        super().setup()
-
     def _forward(self):
 
         for p in self.gear.in_ports:
@@ -168,10 +162,10 @@ class CosimBase(SimGear):
 
                 # phase = await delta()
 
-        except GearDone as e:
+        except (GearDone, BrokenPipeError):
             # print(f"SimGear canceling: {self.gear.name}")
             for p in self.gear.out_ports:
                 p.producer.finish()
 
             self._finish()
-            raise e
+            raise GearDone

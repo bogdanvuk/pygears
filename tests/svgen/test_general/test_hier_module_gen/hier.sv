@@ -8,22 +8,22 @@ module hier(
 
 );
 
-      dti #(.W_DATA(2)) ret1_s(); // u2 (2)
-      dti #(.W_DATA(2)) ret1_s_bc[1:0](); // u2 (2)
+      dti #(.W_DATA(2)) ret1(); // u2 (2)
+      dti #(.W_DATA(2)) ret1_bc[1:0](); // u2 (2)
     bc #(
                 .SIZE(2'd2)
     )
-     bc_ret1_s (
+     bc_ret1 (
         .clk(clk),
         .rst(rst),
-        .din(ret1_s),
-        .dout(ret1_s_bc)
+        .din(ret1),
+        .dout(ret1_bc)
     );
 
-    connect connect_ret1_s_1 (
+    connect connect_ret1_1 (
         .clk(clk),
         .rst(rst),
-        .din(ret1_s_bc[1]),
+        .din(ret1_bc[1]),
         .dout(top_ret1)
     );
 
@@ -45,14 +45,14 @@ module hier(
         .rst(rst),
         .arg1(top_din1),
         .arg2(top_din2_bc[0]),
-        .ret(ret1_s)
+        .ret(ret1)
     );
 
 
     fgear fgear1 (
         .clk(clk),
         .rst(rst),
-        .arg1(ret1_s_bc[0]),
+        .arg1(ret1_bc[0]),
         .arg2(top_din2_bc[1]),
         .ret(top_ret2)
     );

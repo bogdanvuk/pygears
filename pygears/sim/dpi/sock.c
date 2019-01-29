@@ -19,6 +19,7 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <netinet/tcp.h>
 #include <sys/types.h>
 #include <sys/un.h>
 
@@ -123,6 +124,9 @@ void *tcp_sock_open(const char *name, int timeout) {
     tim_str.tv_usec = 0;
     setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tim_str,
                sizeof(tim_str));
+
+    int one = 1;
+    setsockopt(sock, SOL_TCP, TCP_NODELAY, &one, sizeof(one));
   } else if (timeout == 0) {
     if (fcntl(sock, F_SETFL, fcntl(sock, F_GETFL) | O_NONBLOCK) < 0) {
       // printf("Error while putting the socket in non-blocking mode\n");
@@ -217,6 +221,26 @@ int sock_done(void *handle) {
   }
 }
 
+/* int print_time() { */
+/*   FILE *fp; */
+/*   char path[1035]; */
+
+/*   /\* Open the command for reading. *\/ */
+/*   fp = popen("date +%s.%N", "r"); */
+/*   if (fp == NULL) { */
+/*     printf("Failed to run command\n" ); */
+/*     exit(1); */
+/*   } */
+
+/*   /\* Read the output a line at a time - output it. *\/ */
+/*   while (fgets(path, sizeof(path)-1, fp) != NULL) { */
+/*     printf("%s", path); */
+/*   } */
+
+/*   /\* close *\/ */
+/*   pclose(fp); */
+/* } */
+
 extern void pause_sim();
 
 int sock_get_bv(void *handle, svBitVecVal *signal, int width) {
@@ -227,9 +251,17 @@ int sock_get_bv(void *handle, svBitVecVal *signal, int width) {
 
   struct handle *h = handle;
   int ret;
+  int words = SV_PACKED_DATA_NELEMS(width);
 
   do {
-    ret = recv(h->sock, h->rbuf, BUFFER_SIZE, 0);
+    /* ret = recv(h->sock, h->rbuf, BUFFER_SIZE, 0); */
+    /* ret = recv(h->sock, h->rbuf, words * 4, 0); */
+    ret = recv(h->sock, signal, words * 4, 0);
+
+    /* printf("Got: "); */
+    /* print_time(); */
+
+    /* printf("Ret value %d for width %d, errno value %d\n", ret, words*4, errno); */
     if (ret <= 0) {
       if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
         if (h->timeout > 0) {
@@ -246,19 +278,15 @@ int sock_get_bv(void *handle, svBitVecVal *signal, int width) {
     }
   } while (ret <= 0);
 
-  uint32_t *rval = (uint32_t *)h->rbuf;
+  /* uint32_t *rval = (uint32_t *)h->rbuf; */
 
-  // printf("Len: %d, RVAL: 0x%x, 0x%x\n", SV_PACKED_DATA_NELEMS(width),
-  // rval[0],
-  /* rval[1]); */
-  if (rval[0] == 0) {
-    return 1;
-  }
+  /* int i; */
+  /* for (i = 0; i < SV_PACKED_DATA_NELEMS(width); i++) { */
+  /*   /\* printf("%d ", rval[i]) *\/ */
+  /*   signal[i] = rval[i]; */
+  /* } */
 
-  int i;
-  for (i = 0; i < SV_PACKED_DATA_NELEMS(width); i++) {
-    signal[i] = rval[i + 1];
-  }
+  /* printf("\n") */
 
   return 0;
 }
@@ -268,12 +296,15 @@ int sock_get(void *handle, svOpenArrayHandle signal) {
                      svSize(signal, 0));
 }
 
+
 int sock_put(void *handle, const svOpenArrayHandle signal) {
   // Validate input
   if (!handle) {
     return 1;
   }
 
+  /* printf("Put: "); */
+  /* print_time(); */
   struct handle *h = handle;
   int width = svSize(signal, 0);
   const svBitVecVal *ptr = (const svBitVecVal *)svGetArrayPtr(signal);

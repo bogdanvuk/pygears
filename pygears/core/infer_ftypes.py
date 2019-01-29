@@ -23,7 +23,7 @@ def _copy_field_names(t, pat):
 
 
 def copy_field_names(t, pat):
-    t = copy.copy(t)
+    t = t.copy()
     _copy_field_names(t, pat)
     return t
 
@@ -93,6 +93,8 @@ def infer_ftypes(params, args, namespace={}, allow_incomplete=False):
     # print('Postponed: ', postponed)
     # print('Match: ', match)
 
+    # import pdb; pdb.set_trace()
+
     substituted = True
     final_check = False
     # Allow for keyword argument values to be templates and provide
@@ -119,9 +121,6 @@ def infer_ftypes(params, args, namespace={}, allow_incomplete=False):
                         f"'{name}'")
             try:
                 substituted, new_p = resolve_param(val, match, namespace)
-                # if (name == 'return'):
-                #     import pdb
-                #     pdb.set_trace()
 
                 if name in args:
                     new_p = args[name]
@@ -136,6 +135,7 @@ def infer_ftypes(params, args, namespace={}, allow_incomplete=False):
 
                     if name in args:
                         new_p = copy_field_names(new_p, params[name])
+                        args[name] = new_p
 
                     match[name] = new_p
                     del postponed[name]

@@ -1,4 +1,5 @@
 import collections
+import copy
 import functools
 
 
@@ -62,6 +63,9 @@ class TypingMeta(type):
 
     def __hash__(self):
         return hash(self.__name__)
+
+    def copy(self):
+        return self
 
 
 def type_repr(obj):
@@ -289,6 +293,18 @@ searched recursively. Each template is reported only once.
             field_map.get(k, k): arg_map.get(field_map.get(k, k), v)
             for k, v in zip(self.fields, self.args)
         }
+
+        return self.base[args]
+
+    def copy(self):
+        if hasattr(self, '__parameters__'):
+            args = {
+                f: a.copy() if is_type(a) else copy.copy(a)
+                for f, a in zip(self.fields, self.args)
+            }
+        else:
+            args = tuple(
+                a.copy() if is_type(a) else copy.copy(a) for a in self.args)
 
         return self.base[args]
 
