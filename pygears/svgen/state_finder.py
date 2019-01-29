@@ -1,6 +1,75 @@
 import hdl_types as ht
+from functools import partial
 
 from .inst_visit import InstanceVisitor
+
+
+def reg_next_cb(node, stmt, scope):
+    if isinstance(stmt, ht.RegNextStmt):
+        if stmt.reg.name == node.op.name:
+            node.context = 'next'
+
+            if scope and isinstance(scope[-1], ht.IfBlock):
+                curr = scope[-1]
+                else_expr = ht.UnaryOpExpr(curr.in_cond, '!')
+                node_else = ht.IfBlock(
+                    _in_cond=else_expr,
+                    stmts=[
+                        ht.RegNextStmt(
+                            reg=stmt.reg,
+                            val=ht.OperandVal(op=stmt.reg, context='reg'))
+                    ])
+                return ht.ContainerBlock(stmts=[curr, node_else])
+
+
+class ContextFinder(ht.TypeVisitor):
+    def __init__(self):
+        self.scope = []
+        self.hier_scope = []
+        self.hier_idx = []
+
+    def find_context(self, node, scope):
+        self.switch = []
+        self.scope = scope
+        self.visit(node)
+        return self.switch
+
+    def visit_Yield(self, node):
+        self.visit(node.expr)
+
+    def visit_all_Block(self, node):
+        for s in node.stmts:
+            self.visit(s)
+
+    def visit_OperandVal(self, node):
+        if node.context is 'reg':
+            return self.walk_up_block_hier(
+                block=self.scope, cb=partial(reg_next_cb, node=node))
+
+    def visit_ResExpr(self, node):
+        pass
+
+    def visit_all_Expr(self, node):
+        if hasattr(node, 'operands'):
+            for op in node.operands:
+                self.visit(op)
+        elif hasattr(node, 'operand'):
+            self.visit(node.operand)
+        elif hasattr(node, 'val'):
+            self.visit(node.val)
+
+    def walk_up_block_hier(self, block, cb):
+        for i, stmt in enumerate(reversed(block)):
+            if isinstance(stmt, ht.Block):
+                self.hier_scope.append(stmt)
+                self.hier_idx.append(i)
+                self.walk_up_block_hier(stmt.stmts, cb)
+                self.hier_scope.pop()
+                self.hier_idx.pop()
+            else:
+                switch = cb(stmt=stmt, scope=self.hier_scope)
+                if switch:
+                    self.switch.append((tuple(self.hier_idx), switch))
 
 
 class StateFinder(InstanceVisitor):
@@ -8,6 +77,7 @@ class StateFinder(InstanceVisitor):
         self.state = [0]
         self.max_state = 0
         self.block_id = 0
+        self.context = ContextFinder()
 
     def get_next_state(self):
         self.max_state += 1
@@ -48,46 +118,17 @@ class StateFinder(InstanceVisitor):
             if isinstance(block, ht.Yield):
                 block.id = self.block_id
                 self.block_id += 1
+            switch = self.context.find_context(block, node.hdl_blocks[:i])
+            if switch:
+                for orig_idx, new in switch:
+                    if len(orig_idx) == 1:
+                        node.hdl_blocks[orig_idx[0]] = new
+                    else:
+                        self.switch_node(orig_idx[1:],
+                                         node.hdl_blocks[orig_idx[0]], new)
 
-            self.find_context(block, node.hdl_blocks[:i])
-
-    def find_context(self, stmt, scope):
-        if isinstance(stmt, ht.Yield):
-            self.expr_context(stmt.expr, scope)
-
-        elif isinstance(stmt, ht.Block):
-            for s in stmt.stmts:
-                self.find_context(s, scope)
+    def switch_node(self, path, node, new):
+        if len(path) == 1:
+            node.stmts[path[0]] = new
         else:
-            if hasattr(stmt, 'operands'):
-                for op in stmt.operands:
-                    self.expr_context(op, scope)
-            if hasattr(stmt, 'operand'):
-                op = stmt.operand
-                self.expr_context(stmt.operand, scope)
-            if hasattr(stmt, 'val'):
-                self.expr_context(stmt.val, scope)
-
-    def expr_context(self, op, scope):
-        if isinstance(op, ht.OperandVal):
-            if op.context is 'reg':
-                for stmt in self.walk_up_block_hier(scope):
-                    if isinstance(stmt, ht.RegNextStmt):
-                        if stmt.reg.name == op.op.name:
-                            op.context = 'next'
-        else:
-            self.find_context(op, scope)
-
-    def walk_up_block_hier(self, scope):
-        for block in reversed(scope):
-            if isinstance(block, ht.Block):
-                yield from self._walk_up_block_hier(block)
-            else:
-                yield block  # stmt, not block
-
-    def _walk_up_block_hier(self, block):
-        for stmt in reversed(block.stmts):
-            if isinstance(stmt, ht.Block):
-                yield from self._walk_up_block_hier(stmt)
-            else:
-                yield stmt
+            self.switch_node(path[1:], node.stmts[path[0]], new)

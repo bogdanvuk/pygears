@@ -457,8 +457,8 @@ class HdlAst(ast.NodeVisitor):
 
         if is_qrange:
             if is_start:
-                exit_cond = ht.BinOpExpr((f'{names[0]}_switch_next', stop),
-                                         '>=')
+                x = ht.OperandVal(ht.RegDef(op1, f'{names[0]}_switch'), 'next')
+                exit_cond = ht.BinOpExpr((x, stop), '>=')
 
             name = node.target.elts[-1].id
             var = ht.VariableDef(exit_cond, name)
