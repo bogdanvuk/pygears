@@ -91,12 +91,22 @@ class IntegerType(EnumerableGenericMeta):
         return res_type[max(int(op) for op in ops) + 1]
 
     def __mul__(self, other):
-        """Returns the same type, whose width is equal to the sum of operand widths.
+        """Returns the same type, whose width is equal to the sum of operand widths
+        if both operands are unsigned.
+        Returns the signed Int type if other operand is signed.
 
         >>> Uint[8] + Uint[8]
         Uint[16]
+        >>> Uint[8] + Int[8]
+        Int[16]
         """
-        return self.base[int(self) + int(other)]
+        ops = [self, other]
+
+        signed = any(typeof(op, Int) for op in ops)
+        if signed:
+            return Int[int(self) + int(other)]
+        else:
+            return self.base[int(self) + int(other)]
 
     def __truediv__(self, other):
         return self.base[int(self) - int(other) + 1]
@@ -162,8 +172,12 @@ class Integer(int, metaclass=IntegerType):
         if cls.is_generic():
             res = cls[bitw(val)](int(val))
         else:
-            res = super(Integer, cls).__new__(cls,
-                                              int(val) & ((1 << len(cls)) - 1))
+            if typeof(cls, Uint):
+                res = super(Integer, cls).__new__(
+                    cls,
+                    int(val) & ((1 << len(cls)) - 1))
+            else:
+                res = super(Integer, cls).__new__(cls, val)
 
         check_width(val, res.width)
         return res
@@ -298,18 +312,19 @@ class Int(Integer, metaclass=IntType):
             else:
                 res = cls[val.bit_length() + 1](int(val))
         else:
-            res = super(Int, cls).__new__(cls,
-                                          int(val) & ((1 << len(cls)) - 1))
+            res = super(Int, cls).__new__(cls, val)
+            # res = super(Int, cls).__new__(cls,
+            #                               int(val) & ((1 << len(cls)) - 1))
 
         check_width(val, res.width if val < 0 else res.width - 1)
         return res
 
-    def __int__(self):
-        val = super(Integer, self).__int__()
-        if val >= (1 << (self.width - 1)):
-            val -= 1 << self.width
+    # def __int__(self):
+    #     val = super(Integer, self).__int__()
+    #     if val >= (1 << (self.width - 1)):
+    #         val -= 1 << self.width
 
-        return val
+    #     return val
 
     def __eq__(self, other):
         return int(self) == int(other)

@@ -1,18 +1,16 @@
-from pygears import gear
+from pygears import alternative, gear
+from pygears.common import ccat
+from pygears.typing import Integer, Tuple
 
 
-@gear(enablement=b'len(din) == 2')
-async def max2(*din,
-               din0_signed=b'issubclass(din0, Int)',
-               din1_signed=b'issubclass(din1, Int)') -> b'din[0]':
+@gear(svgen={'compile': True})
+async def max2(
+        din: Tuple[Integer['N1'], Integer['N2']]) -> b'max(din[0], din[1])':
+    async with din as data:
+        yield max(data)
 
-    res = []
 
-    for d in din:
-        val = await d.pull()
-        res.append(val)
-
-    yield max(res)
-
-    for d in din:
-        d.ack()
+@alternative(max2)
+@gear
+def max22(din0: Integer, din1: Integer):
+    return ccat(din0, din1) | max2
