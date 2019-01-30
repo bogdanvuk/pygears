@@ -1,10 +1,13 @@
 import ast
 import importlib
+import inspect
+import re
+
 import hdl_types as ht
-from pygears.typing import (Array, Int, Integer, Uint, Unit, bitw, is_type,
-                            typeof, Queue, Tuple)
+from pygears.typing import (Array, Int, Integer, Queue, Tuple, Uint, Unit,
+                            bitw, is_type, typeof)
 from pygears.typing.base import TypingMeta
-from svcompile_snippets import qrange
+from svcompile_snippets import qrange, enumerate_impl
 
 opmap = {
     ast.Add: '+',
@@ -44,6 +47,24 @@ class DeprecatedError(Exception):
 
 class AstTypeError(Exception):
     pass
+
+
+def find_vararg_input(gear):
+    sig = inspect.signature(gear.params['definition'].func)
+    positional = [
+        k for k, v in sig.parameters.items()
+        if v.kind is inspect.Parameter.VAR_POSITIONAL
+    ]
+
+    res = {}
+    for p in positional:
+        args = []
+        for port in gear.in_ports:
+            if re.match(f'^{p}\d+$', port.basename):
+                args.append(port)
+        res[p] = tuple(args)
+
+    return res
 
 
 def eval_expression(node, local_namespace):
@@ -112,18 +133,27 @@ class HdlAst(ast.NodeVisitor):
         self.locals = {
             **{p.basename: p.consumer
                for p in gear.in_ports},
-            **gear.explicit_params
+            **gear.explicit_params,
+            **find_vararg_input(gear)
         }
         self.variables = variables
         self.regs = regs
         self.scope = []
         self.stage_hier = []
 
-        # self.svlocals = {p.svrepr: p for p in self.in_ports}
-        self.svlocals = {p.name: p for p in self.in_ports}
+        self.svlocals = {**{p.name: p for p in self.in_ports}}
+        for name, val in find_vararg_input(gear).items():
+            self.svlocals[name] = tuple([ht.IntfExpr(v) for v in val])
 
         self.gear = gear
-        self.call_paths = call_paths
+
+        self.call_modules = []
+        for path in call_paths:
+            spec = importlib.util.spec_from_file_location('*', path)
+            foo = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(foo)
+            self.call_modules.append(foo)
+
         self.svlines = []
 
     def enter_block(self, block):
@@ -233,7 +263,12 @@ class HdlAst(ast.NodeVisitor):
     def visit_Assign(self, node):
         name_node = node.targets[0]
         name = name_node.id
-        val = self.visit_DataExpression(node.value)
+        try:
+            val = self.visit_DataExpression(node.value)
+        except AttributeError:
+            intf = self.visit_NameExpression(node.value)
+            self.locals[name] = intf.intf.consumer
+            return ht.VariableStmt(self.svlocals[name], intf)
 
         for var in self.variables:
             if var == name and isinstance(self.variables[name], ast.AST):
@@ -292,11 +327,8 @@ class HdlAst(ast.NodeVisitor):
         else:
             if hasattr(node.func, 'id'):
                 func_dispatch = None
-                for path in self.call_paths:
-                    spec = importlib.util.spec_from_file_location('*', path)
-                    foo = importlib.util.module_from_spec(spec)
-                    spec.loader.exec_module(foo)
-                    func_dispatch = getattr(foo, f'Call_{node.func.id}', None)
+                for m in self.call_modules:
+                    func_dispatch = getattr(m, f'Call_{node.func.id}', None)
                     if func_dispatch:
                         break
 
@@ -427,64 +459,138 @@ class HdlAst(ast.NodeVisitor):
 
         return self.visit_block(hdl_node, node.body)
 
-    def visit_For(self, node):
-        res = self.visit_DataExpression(node.iter)
-        if isinstance(res, ht.ResExpr):
-            start, stop, step = ht.ResExpr(res.val.start), ht.ResExpr(
-                res.val.stop), ht.ResExpr(res.val.step)
+    def visit_For_range(self, node, iter_args, target_names):
+        if isinstance(iter_args, ht.ResExpr):
+            start, stop, step = ht.ResExpr(iter_args.val.start), ht.ResExpr(
+                iter_args.val.stop), ht.ResExpr(iter_args.val.step)
         else:
-            start, stop, step = res
+            start, stop, step = iter_args
 
-        is_qrange = node.iter.func.id is 'qrange'
+        assert target_names[0] in self.regs, 'Loop iterator not registered'
+        op1 = self.regs[target_names[0]]
+        exit_cond = ht.BinOpExpr(
+            (ht.OperandVal(ht.RegDef(op1, target_names[0]), 'next'), stop),
+            '>=')
+
+        hdl_node = ht.Loop(
+            _in_cond=None,
+            stmts=[],
+            _exit_cond=exit_cond,
+            multicycle=target_names)
+
+        self.visit_block(hdl_node, node.body)
+
+        target = node.target if len(target_names) == 1 else node.target.elts[0]
+        hdl_node.stmts.append(
+            self.visit(
+                increment_reg(target_names[0], val=step, target=target)))
+
+        return hdl_node
+
+    def visit_For_qrange(self, node, iter_args, target_names):
+        if isinstance(iter_args, ht.ResExpr):
+            start, stop, step = ht.ResExpr(iter_args.val.start), ht.ResExpr(
+                iter_args.val.stop), ht.ResExpr(iter_args.val.step)
+        else:
+            start, stop, step = iter_args
 
         is_start = True
         if isinstance(start, ht.ResExpr):
             is_start = start.val != 0
+
+        assert target_names[0] in self.regs, 'Loop iterator not registered'
+        op1 = self.regs[target_names[0]]
+        exit_cond = ht.BinOpExpr(
+            (ht.OperandVal(ht.RegDef(op1, target_names[0]), 'next'), stop),
+            '>=')
+
+        if is_start:
+            x = ht.OperandVal(
+                ht.RegDef(op1, f'{target_names[0]}_switch'), 'next')
+            exit_cond = ht.BinOpExpr((x, stop), '>=')
+
+        name = node.target.elts[-1].id
+        var = ht.VariableDef(exit_cond, name)
+        self.variables[name] = ht.OperandVal(var, 'v')
+        self.svlocals[name] = var
+        stmts = [ht.VariableStmt(var, exit_cond)]
+        exit_cond = ht.OperandVal(var, 'v')
+
+        hdl_node = ht.Loop(
+            _in_cond=None,
+            stmts=stmts,
+            _exit_cond=exit_cond,
+            multicycle=target_names)
+
+        if is_start:
+            loop_stmts = self.qrange_impl(
+                name=target_names[0],
+                node=node,
+                svnode=hdl_node,
+                rng=[start, stop, step])
+
+        self.visit_block(hdl_node, node.body)
+
+        if is_start:
+            hdl_node.stmts.extend(loop_stmts)
+        else:
+            target = node.target if len(
+                target_names) == 1 else node.target.elts[0]
+            hdl_node.stmts.append(
+                self.visit(
+                    increment_reg(target_names[0], val=step, target=target)))
+
+        return hdl_node
+
+    def visit_For_enumerate(self, node, iter_args, target_names):
+        assert target_names[0] in self.regs, 'Loop iterator not registered'
+        stop = iter_args[0]
+
+        op1 = self.regs[target_names[0]]
+        exit_cond = ht.BinOpExpr(
+            (ht.OperandVal(ht.RegDef(op1, target_names[0]), 'next'), stop),
+            '>=')
+
+        hdl_node = ht.Loop(
+            _in_cond=None,
+            stmts=[],
+            _exit_cond=exit_cond,
+            multicycle=target_names)
+
+        enum_target = node.iter.args[0].id
+        var = ht.VariableDef(self.svlocals[enum_target][0], target_names[-1])
+        self.variables[target_names[-1]] = ht.OperandVal(var, 'v')
+        self.svlocals[target_names[-1]] = var
+        snip = enumerate_impl(target_names[0], target_names[1], enum_target,
+                              range(1, stop.val))
+        enumerate_body = ast.parse(snip).body
+
+        for stmt in enumerate_body:
+            hdl_node.stmts.append(self.visit(stmt))
+
+        self.visit_block(hdl_node, node.body)
+
+        target = node.target if len(target_names) == 1 else node.target.elts[0]
+        hdl_node.stmts.append(
+            self.visit(
+                increment_reg(
+                    target_names[0], val=ht.ResExpr(1), target=target)))
+
+        return hdl_node
+
+    def visit_For(self, node):
+        res = self.visit_DataExpression(node.iter)
 
         if isinstance(node.target, ast.Tuple):
             names = [x.id for x in node.target.elts]
         else:
             names = [node.target.id]
 
-        stmts = []
-        op1 = self.regs[names[0]]
-        exit_cond = ht.BinOpExpr(
-            (ht.OperandVal(ht.RegDef(op1, names[0]), 'next'), stop), '>=')
-
-        if is_qrange:
-            if is_start:
-                x = ht.OperandVal(ht.RegDef(op1, f'{names[0]}_switch'), 'next')
-                exit_cond = ht.BinOpExpr((x, stop), '>=')
-
-            name = node.target.elts[-1].id
-            var = ht.VariableDef(exit_cond, name)
-            self.variables[name] = ht.OperandVal(var, 'v')
-            self.svlocals[name] = var
-            stmts.append(ht.VariableStmt(var, exit_cond))
-            exit_cond = ht.OperandVal(var, 'v')
-
-        hdl_node = ht.Loop(
-            _in_cond=None, stmts=stmts, _exit_cond=exit_cond, multicycle=names)
-
-        if is_qrange and is_start:
-            loop_stmts = self.qrange_impl(
-                name=names[0],
-                node=node,
-                svnode=hdl_node,
-                rng=[start, stop, step])
-
-            self.visit_block(hdl_node, node.body)
-
-            hdl_node.stmts.extend(loop_stmts)
-
+        func_dispatch = getattr(self, f'visit_For_{node.iter.func.id}', None)
+        if func_dispatch:
+            return func_dispatch(node, res, names)
         else:
-            self.visit_block(hdl_node, node.body)
-
-            target = node.target if len(names) == 1 else node.target.elts[0]
-            hdl_node.stmts.append(
-                self.visit(increment_reg(names[0], val=step, target=target)))
-
-        return hdl_node
+            raise VisitError('Unsuported func in for loop')
 
     def switch_reg_and_var(self, name):
         switch_name = f'{name}_switch'

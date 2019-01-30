@@ -68,3 +68,7 @@ def Call_max(*arg):
 
     else:
         return reduce(max_expr, arg)
+
+
+def Call_enumerate(arg):
+    return ht.ResExpr(len(arg)), arg
