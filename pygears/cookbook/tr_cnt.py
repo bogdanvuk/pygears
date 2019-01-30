@@ -1,9 +1,10 @@
-from pygears import gear, module
-from pygears.typing import Queue
+from pygears import gear
+from pygears.typing import Queue, Uint
 
 
-@gear
-async def tr_cnt(din: Queue['TData'], cfg: 'TCfg') -> Queue['TData', 2]:
+@gear(svgen={'compile': True})
+async def tr_cnt(din: Queue['t_data'], cfg: Uint['t_cfg'], *,
+                 init=1) -> Queue['t_data', 2]:
     '''Transaction counter: counts the input eots. Number of eots to count
     given with cfg. When sufficent transactions are seen, returns ready on cfg
     and sets higher eot on output
@@ -14,11 +15,14 @@ async def tr_cnt(din: Queue['TData'], cfg: 'TCfg') -> Queue['TData', 2]:
     transactions were counted
     '''
 
-    cnt = 0
-    val = din.dtype((0, 0))
+    cnt = cfg.dtype(init)
 
     async with cfg as c:
-        while not (val.eot and (cnt == c)):
-            async with din as val:
-                yield module().tout((val.data, val.eot, (cnt == (c - 1))))
-                cnt += val.eot
+        last = (cnt == c)
+        while not last:
+            async for (data, eot) in din:
+                last = (cnt == c)
+                out_eot = last @ eot
+                yield (data, out_eot)
+                if not last:
+                    cnt += int(eot)

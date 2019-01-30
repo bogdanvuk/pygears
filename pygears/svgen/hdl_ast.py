@@ -46,6 +46,13 @@ class AstTypeError(Exception):
     pass
 
 
+def create_oposite(expr):
+    if isinstance(expr, ht.UnaryOpExpr) and expr.operator == '!':
+        return expr.operand
+    else:
+        return ht.UnaryOpExpr(expr, '!')
+
+
 def eval_expression(node, local_namespace):
     return eval(
         compile(
@@ -255,7 +262,11 @@ class HdlAst(ast.NodeVisitor):
 
         local_names = list(self.locals.keys())
         local_objs = list(self.locals.values())
-        name = local_names[local_objs.index(ret)]
+        for i, obj in enumerate(local_objs):
+            if ret is obj:
+                name_idx = i
+                break
+        name = local_names[name_idx]
 
         return self.get_context_var(name)
 
@@ -426,13 +437,23 @@ class HdlAst(ast.NodeVisitor):
             hdl_node = ht.IfBlock(_in_cond=expr, stmts=[])
             self.visit_block(hdl_node, node.body)
             if hasattr(node, 'orelse') and node.orelse:
-                else_expr = ht.UnaryOpExpr(expr, '!')
+                else_expr = create_oposite(expr)
                 hdl_node_else = ht.IfBlock(_in_cond=else_expr, stmts=[])
                 self.visit_block(hdl_node_else, node.orelse)
                 top = ht.ContainerBlock(stmts=[hdl_node, hdl_node_else])
                 return top
             else:
                 return hdl_node
+
+    def visit_While(self, node):
+        test = self.visit_DataExpression(node.test)
+        hdl_node = ht.Loop(
+            _in_cond=test,
+            stmts=[],
+            _exit_cond=create_oposite(test),
+            multicycle=[])
+
+        return self.visit_block(hdl_node, node.body)
 
     def visit_For(self, node):
         res = self.visit_DataExpression(node.iter)
