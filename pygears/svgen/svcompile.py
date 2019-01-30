@@ -1,20 +1,22 @@
 import ast
 import inspect
+import os
 
+from pygears.definitions import ROOT_DIR
 from pygears.typing import Uint, bitw
 
 from .cblock import CBlockVisitor
-from .hdl_utils import state_expr
 from .hdl_ast import HdlAst
 from .hdl_stmt import (BlockConditionsVisitor, InputVisitor, OutputVisitor,
-                       RegEnVisitor, VariableVisitor, StateTransitionVisitor)
+                       RegEnVisitor, StateTransitionVisitor, VariableVisitor)
+from .hdl_utils import state_expr
 from .inst_visit import InstanceVisitor
 from .reg_finder import RegFinder
 from .scheduling import Scheduler
 from .state_finder import StateFinder
+from .stmt_vacum import StmtVacum
 from .sv_expression import svexpr
 from .util import svgen_typedef
-from .stmt_vacum import StmtVacum
 
 reg_template = """
 always_ff @(posedge clk) begin
@@ -157,7 +159,14 @@ def write_module(node, sv_stmts, writer, block_conds, state_num):
         SVCompiler(name, writer).visit(val)
 
 
-def compile_gear_body(gear):
+def compile_gear_body(gear, function_impl_paths=None):
+    common_func_impl = os.path.abspath(
+        os.path.join(ROOT_DIR, 'svgen', 'hdl_ast_functions.py'))
+    if function_impl_paths is None:
+        function_impl_paths = [common_func_impl]
+    else:
+        function_impl_paths.append(common_func_impl)
+
     body_ast = ast.parse(inspect.getsource(gear.func)).body[0]
     # import astpretty
     # astpretty.pprint(body_ast)
@@ -168,7 +177,8 @@ def compile_gear_body(gear):
     v.clean_variables()
 
     # py ast to hdl ast
-    hdl_ast = HdlAst(gear, v.regs, v.variables).visit(body_ast)
+    hdl_ast = HdlAst(gear, v.regs, v.variables,
+                     function_impl_paths).visit(body_ast)
     StmtVacum().visit(hdl_ast)
     schedule = Scheduler().visit(hdl_ast)
     states = StateFinder()
@@ -214,7 +224,7 @@ def compile_gear_body(gear):
     return '\n'.join(writer.svlines)
 
 
-def compile_gear(gear, template_env, context):
-    context['svlines'] = compile_gear_body(gear)
+def compile_gear(gear, template_env, context, function_impl_paths=None):
+    context['svlines'] = compile_gear_body(gear, function_impl_paths)
 
     return template_env.render_string(data_func_gear, context)

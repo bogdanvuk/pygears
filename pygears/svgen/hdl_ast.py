@@ -1,5 +1,5 @@
 import ast
-
+import importlib
 import hdl_types as ht
 from pygears.typing import (Array, Int, Integer, Uint, Unit, bitw, is_type,
                             typeof, Queue, Tuple)
@@ -44,13 +44,6 @@ class DeprecatedError(Exception):
 
 class AstTypeError(Exception):
     pass
-
-
-def create_oposite(expr):
-    if isinstance(expr, ht.UnaryOpExpr) and expr.operator == '!':
-        return expr.operand
-    else:
-        return ht.UnaryOpExpr(expr, '!')
 
 
 def eval_expression(node, local_namespace):
@@ -112,7 +105,7 @@ def increment_reg(name, val=ast.Num(1), target=None):
 
 
 class HdlAst(ast.NodeVisitor):
-    def __init__(self, gear, regs, variables):
+    def __init__(self, gear, regs, variables, call_paths):
         self.in_ports = [ht.IntfExpr(p) for p in gear.in_ports]
         self.out_ports = [ht.IntfExpr(p) for p in gear.out_ports]
 
@@ -130,7 +123,7 @@ class HdlAst(ast.NodeVisitor):
         self.svlocals = {p.name: p for p in self.in_ports}
 
         self.gear = gear
-        self.indent = 0
+        self.call_paths = call_paths
         self.svlines = []
 
     def enter_block(self, block):
@@ -289,34 +282,6 @@ class HdlAst(ast.NodeVisitor):
             compile(ast.Expression(node), filename="<ast>", mode="eval"),
             self.locals, globals())
 
-    def visit_Call_len(self, arg):
-        return ht.ResExpr(len(arg.dtype))
-
-    def visit_Call_print(self, arg):
-        pass
-
-    def visit_Call_int(self, arg):
-        # ignore cast
-        return arg
-
-    def visit_Call_range(self, *arg):
-        if len(arg) == 1:
-            start = ht.ResExpr(arg[0].dtype(0))
-            stop = arg[0]
-            step = ast.Num(1)
-        else:
-            start = arg[0]
-            stop = arg[1]
-            step = ast.Num(1) if len(arg) == 2 else arg[2]
-
-        return start, stop, step
-
-    def visit_Call_qrange(self, *arg):
-        return self.visit_Call_range(*arg)
-
-    def visit_Call_all(self, arg):
-        return ht.ArrayOpExpr(arg, '&')
-
     def visit_Call(self, node):
         arg_nodes = [self.visit_DataExpression(arg) for arg in node.args]
 
@@ -326,8 +291,15 @@ class HdlAst(ast.NodeVisitor):
             return ht.ResExpr(ret)
         else:
             if hasattr(node.func, 'id'):
-                func_dispatch = getattr(self, f'visit_Call_{node.func.id}',
-                                        None)
+                func_dispatch = None
+                for path in self.call_paths:
+                    spec = importlib.util.spec_from_file_location('*', path)
+                    foo = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(foo)
+                    func_dispatch = getattr(foo, f'Call_{node.func.id}', None)
+                    if func_dispatch:
+                        break
+
                 if func_dispatch:
                     return func_dispatch(*arg_nodes)
                 elif node.func.id in self.gear.params:
@@ -437,7 +409,7 @@ class HdlAst(ast.NodeVisitor):
             hdl_node = ht.IfBlock(_in_cond=expr, stmts=[])
             self.visit_block(hdl_node, node.body)
             if hasattr(node, 'orelse') and node.orelse:
-                else_expr = create_oposite(expr)
+                else_expr = ht.create_oposite(expr)
                 hdl_node_else = ht.IfBlock(_in_cond=else_expr, stmts=[])
                 self.visit_block(hdl_node_else, node.orelse)
                 top = ht.ContainerBlock(stmts=[hdl_node, hdl_node_else])
@@ -450,7 +422,7 @@ class HdlAst(ast.NodeVisitor):
         hdl_node = ht.Loop(
             _in_cond=test,
             stmts=[],
-            _exit_cond=create_oposite(test),
+            _exit_cond=ht.create_oposite(test),
             multicycle=[])
 
         return self.visit_block(hdl_node, node.body)

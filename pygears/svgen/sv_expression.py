@@ -1,5 +1,5 @@
 import hdl_types as ht
-from pygears.typing import Array, Integer, Queue, typeof
+from pygears.typing import Array, Integer, Queue, typeof, Int, Uint
 
 from .inst_visit import InstanceVisitor
 
@@ -24,7 +24,10 @@ class SVExpressionVisitor(InstanceVisitor):
         return '.'.join(val + node.attr)
 
     def visit_CastExpr(self, node):
-        return f"{int(node.dtype)}'({self.visit(node.operand)})"
+        if typeof(node.dtype, Int) and typeof(node.operand.dtype, Uint):
+            return f"signed'({int(node.dtype)}'({self.visit(node.operand)}))"
+        else:
+            return f"{int(node.dtype)}'({self.visit(node.operand)})"
 
     def visit_ConcatExpr(self, node):
         return (
@@ -67,6 +70,11 @@ class SVExpressionVisitor(InstanceVisitor):
                 return f'{val}[{self.visit(node.index)}]'
             else:
                 return f'{val}.{node.val.dtype.fields[node.index]}'
+
+    def visit_ConditionalExpr(self, node):
+        cond = self.visit(node.cond)
+        ops = [self.visit(op) for op in node.operands]
+        return f'({cond}) ? ({ops[0]}) : ({ops[1]})'
 
     def visit_IntfExpr(self, node):
         if node.context:

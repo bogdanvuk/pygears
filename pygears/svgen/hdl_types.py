@@ -11,6 +11,13 @@ extendable_operators = [
 ]
 
 
+def create_oposite(expr):
+    if isinstance(expr, UnaryOpExpr) and expr.operator == '!':
+        return expr.operand
+    else:
+        return UnaryOpExpr(expr, '!')
+
+
 def find_exit_cond(statements, search_in_cond=False):
     for stmt in reversed(statements):
         if hasattr(stmt, 'exit_cond'):
@@ -247,6 +254,16 @@ class AttrExpr(Expr):
             else:
                 t = getattr(t, attr, None)
         return t
+
+
+@dataclass
+class ConditionalExpr(Expr):
+    operands: tuple
+    cond: Expr
+
+    @property
+    def dtype(self):
+        return max([op.dtype for op in self.operands])
 
 
 # Blocks
