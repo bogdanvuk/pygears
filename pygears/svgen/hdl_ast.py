@@ -374,8 +374,11 @@ class HdlAst(ast.NodeVisitor):
     def get_bin_expr(self, op, operand1, operand2):
         op1 = self.visit_DataExpression(operand1)
         op2 = self.visit_DataExpression(operand2)
-        operator = opmap[type(op)]
-        return ht.BinOpExpr((op1, op2), operator)
+        if isinstance(op, ast.MatMult):
+            return ht.ConcatExpr((op2, op1))
+        else:
+            operator = opmap[type(op)]
+            return ht.BinOpExpr((op1, op2), operator)
 
     def visit_BinOp(self, node):
         return self.get_bin_expr(node.op, node.left, node.right)

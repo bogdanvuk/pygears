@@ -1,20 +1,29 @@
-from pygears import gear
-from pygears.typing import Queue, Uint
-from pygears.conf import gear_log
+from pygears import alternative, gear
+from pygears.common import cart
+from pygears.typing import Queue, Tuple, Uint
 
 
+@gear(svgen={'compile': True})
+async def chop(din: Queue[Tuple[{
+        'data': 't_data',
+        'size': Uint
+}]], *, init=1) -> Queue['t_data', 2]:
+
+    cnt = din.dtype.data['size'](init)
+
+    async for ((data, size), eot) in din:
+        last = (cnt == size)
+
+        out_eot = eot @ (eot or last)
+        yield (data, out_eot)
+
+        if last:
+            cnt = init
+        else:
+            cnt += 1
+
+
+@alternative(chop)
 @gear
-async def chop(din: Queue['data_t'], cfg: Uint['w_cfg']) -> Queue['data_t', 2]:
-
-    i = 0
-    val = din.dtype((0, 0))
-
-    async with cfg as size:
-        while (val.eot == 0):
-            i += 1
-            async with din as val:
-                dout_sub = din.dtype(val.data, val.eot or (i % size == 0))
-                dout = dout_sub.wrap(val.eot)
-
-                gear_log().debug(f'Chop yielding {dout}')
-                yield dout
+def chop2(din: Queue['t_data'], cfg: Uint):
+    return cart(din, cfg) | chop

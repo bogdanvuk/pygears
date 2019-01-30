@@ -391,6 +391,12 @@ class Uint(Integer, metaclass=UintType):
         return Uint[self.width + other.width]((int(self) << other.width) +
                                               int(other))
 
+    def __rmatmul__(self, other):
+        if isinstance(other, bool):
+            return Bool(other) @ self
+
+        raise NotImplementedError
+
 
 class BoolMeta(UintType):
     def __new__(cls, name, bases, namespace):
