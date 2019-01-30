@@ -141,12 +141,14 @@ def write_module(node, sv_stmts, writer, block_conds, state_num):
     for cond, values in block_conds.items():
         for id in values:
             writer.line(f'logic {cond}_cond_block_{id};')
+            writer.line()
 
     if node.regs:
         if state_num > 0:
             rst_cond = state_expr([state_num], node.rst_cond)
         else:
             rst_cond = node.rst_cond
+        writer.line(f'logic rst_cond;')
         writer.line(f'assign rst_cond = {svexpr(rst_cond)};')
 
     for name, expr in node.regs.items():

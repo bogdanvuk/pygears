@@ -71,6 +71,7 @@ logic cycle_cond_block_1;
 logic cycle_cond_block_2;
 logic exit_cond_block_1;
 logic exit_cond_block_2;
+logic rst_cond;
 assign rst_cond = exit_cond_block_1 && din.valid;
 always_ff @(posedge clk) begin
     if(rst | rst_cond) begin
@@ -150,6 +151,7 @@ logic cycle_cond_block_3;
 logic exit_cond_block_1;
 logic exit_cond_block_2;
 logic exit_cond_block_3;
+logic rst_cond;
 assign rst_cond = exit_cond_block_1 && din.valid;
 always_ff @(posedge clk) begin
     if(rst | rst_cond) begin
@@ -207,6 +209,7 @@ logic state_en;
 state_t state_reg, state_next;
 logic exit_cond_block_1;
 logic exit_cond_block_2;
+logic rst_cond;
 assign rst_cond = exit_cond_block_2 && (state_reg == 1);
 always_ff @(posedge clk) begin
     if(rst | rst_cond) begin
@@ -292,6 +295,7 @@ logic cycle_cond_block_4;
 logic exit_cond_block_1;
 logic exit_cond_block_2;
 logic exit_cond_block_4;
+logic rst_cond;
 assign rst_cond = exit_cond_block_1 && din.valid;
 always_ff @(posedge clk) begin
     if(rst | rst_cond) begin
