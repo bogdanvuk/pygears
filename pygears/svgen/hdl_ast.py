@@ -1,7 +1,5 @@
 import ast
 import importlib
-import inspect
-import re
 
 import hdl_types as ht
 from pygears.typing import (Array, Int, Integer, Queue, Tuple, Uint, Unit,
@@ -49,24 +47,6 @@ class AstTypeError(Exception):
     pass
 
 
-def find_vararg_input(gear):
-    sig = inspect.signature(gear.params['definition'].func)
-    positional = [
-        k for k, v in sig.parameters.items()
-        if v.kind is inspect.Parameter.VAR_POSITIONAL
-    ]
-
-    res = {}
-    for p in positional:
-        args = []
-        for port in gear.in_ports:
-            if re.match(f'^{p}\d+$', port.basename):
-                args.append(port)
-        res[p] = tuple(args)
-
-    return res
-
-
 def eval_expression(node, local_namespace):
     return eval(
         compile(
@@ -90,8 +70,9 @@ def eval_data_expr(node, local_namespace):
     return ht.ResExpr(ret)
 
 
-def gather_control_stmt_vars(variables, intf, attr=None):
-    dtype = intf.intf.dtype
+def gather_control_stmt_vars(variables, intf, attr=None, dtype=None):
+    if dtype is None:
+        dtype = intf.intf.dtype
     if attr is None:
         attr = []
     else:
@@ -126,7 +107,7 @@ def increment_reg(name, val=ast.Num(1), target=None):
 
 
 class HdlAst(ast.NodeVisitor):
-    def __init__(self, gear, regs, variables, call_paths):
+    def __init__(self, gear, regs, variables, intfs, call_paths):
         self.in_ports = [ht.IntfExpr(p) for p in gear.in_ports]
         self.out_ports = [ht.IntfExpr(p) for p in gear.out_ports]
 
@@ -134,16 +115,19 @@ class HdlAst(ast.NodeVisitor):
             **{p.basename: p.consumer
                for p in gear.in_ports},
             **gear.explicit_params,
-            **find_vararg_input(gear)
+            **intfs['varargs']
         }
         self.variables = variables
         self.regs = regs
+        self.intfs = intfs['vars']
         self.scope = []
         self.stage_hier = []
 
-        self.svlocals = {**{p.name: p for p in self.in_ports}}
-        for name, val in find_vararg_input(gear).items():
-            self.svlocals[name] = tuple([ht.IntfExpr(v) for v in val])
+        self.svlocals = {
+            **{p.name: p
+               for p in self.in_ports},
+            **intfs['varargs']
+        }
 
         self.gear = gear
 
@@ -153,8 +137,6 @@ class HdlAst(ast.NodeVisitor):
             foo = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(foo)
             self.call_modules.append(foo)
-
-        self.svlines = []
 
     def enter_block(self, block):
         self.scope.append(block)
@@ -172,18 +154,25 @@ class HdlAst(ast.NodeVisitor):
                 return ht.OperandVal(var, 's')
         elif isinstance(var, ht.VariableDef):
             return ht.OperandVal(var, 'v')
+        elif isinstance(var, ht.IntfDef):
+            return ht.OperandVal(var.intf, 's')
 
         return var
 
     def visit_AsyncFor(self, node):
         intf = self.visit_NameExpression(node.iter)
-        scope = gather_control_stmt_vars(node.target, intf)
+        if not isinstance(intf, ht.IntfDef):
+            loop_intf = ht.IntfExpr(intf=intf.intf, context='valid')
+            scope = gather_control_stmt_vars(node.target, intf)
+        else:
+            scope = gather_control_stmt_vars(
+                node.target, intf, dtype=intf.intf[0].dtype)
+            loop_intf = ht.IntfDef(
+                intf=intf.intf, name=intf.name, context='valid')
+
         self.svlocals.update(scope)
 
-        hdl_node = ht.IntfLoop(
-            intf=ht.IntfExpr(intf=intf.intf, context='valid'),
-            stmts=[],
-            multicycle=scope)
+        hdl_node = ht.IntfLoop(intf=loop_intf, stmts=[], multicycle=scope)
 
         return self.visit_block(hdl_node, node.body)
 
@@ -263,12 +252,8 @@ class HdlAst(ast.NodeVisitor):
     def visit_Assign(self, node):
         name_node = node.targets[0]
         name = name_node.id
-        try:
-            val = self.visit_DataExpression(node.value)
-        except AttributeError:
-            intf = self.visit_NameExpression(node.value)
-            self.locals[name] = intf.intf.consumer
-            return ht.VariableStmt(self.svlocals[name], intf)
+
+        val = self.visit_DataExpression(node.value)
 
         for var in self.variables:
             if var == name and isinstance(self.variables[name], ast.AST):
@@ -278,22 +263,40 @@ class HdlAst(ast.NodeVisitor):
             if name in self.variables:
                 self.svlocals[name] = ht.VariableDef(val, name)
                 return ht.VariableStmt(self.svlocals[name], val)
-            else:
+            elif name in self.regs:
                 self.svlocals[name] = ht.RegDef(val, name)
+            elif name in self.intfs:
+                self.svlocals[name] = ht.IntfDef(val, name)
+                return ht.IntfStmt(self.svlocals[name], val)
+            else:
+                raise VisitError('Unknown assginment type')
         elif name in self.regs:
             return ht.RegNextStmt(self.svlocals[name], val)
         elif name in self.variables:
             return ht.VariableStmt(self.svlocals[name], val)
+        elif name in self.intfs:
+            return ht.IntfStmt(self.svlocals[name], val)
+        else:
+            raise VisitError('Unknown assginment type')
 
     def visit_NameExpression(self, node):
-        ret = eval_expression(node, self.locals)
+        try:
+            ret = eval_expression(node, self.locals)
+        except NameError:
+            if node.id in self.intfs:
+                return self.intfs[node.id]
+            else:
+                raise NameError
 
         local_names = list(self.locals.keys())
         local_objs = list(self.locals.values())
+
+        name_idx = None
         for i, obj in enumerate(local_objs):
             if ret is obj:
                 name_idx = i
                 break
+
         name = local_names[name_idx]
 
         return self.get_context_var(name)
@@ -309,7 +312,7 @@ class HdlAst(ast.NodeVisitor):
 
         try:
             return eval_data_expr(node, self.locals)
-        except (NameError, AstTypeError, TypeError):
+        except (NameError, AstTypeError, TypeError, AttributeError):
             return self.visit(node)
 
     def eval_expression(self, node):
@@ -544,6 +547,8 @@ class HdlAst(ast.NodeVisitor):
 
     def visit_For_enumerate(self, node, iter_args, target_names):
         assert target_names[0] in self.regs, 'Loop iterator not registered'
+        assert target_names[
+            -1] in self.intfs, 'Enumerate iterator not an interface'
         stop = iter_args[0]
 
         op1 = self.regs[target_names[0]]
@@ -558,11 +563,8 @@ class HdlAst(ast.NodeVisitor):
             multicycle=target_names)
 
         enum_target = node.iter.args[0].id
-        var = ht.VariableDef(self.svlocals[enum_target][0], target_names[-1])
-        self.variables[target_names[-1]] = ht.OperandVal(var, 'v')
-        self.svlocals[target_names[-1]] = var
         snip = enumerate_impl(target_names[0], target_names[1], enum_target,
-                              range(1, stop.val))
+                              range(stop.val))
         enumerate_body = ast.parse(snip).body
 
         for stmt in enumerate_body:
@@ -659,6 +661,7 @@ class HdlAst(ast.NodeVisitor):
             locals=self.svlocals,
             regs=self.regs,
             variables=self.variables,
+            intfs=self.intfs,
             stmts=[])
 
         return self.visit_block(hdl_node, node.body)

@@ -2,18 +2,18 @@ import ast
 import hdl_types as ht
 
 from pygears.typing import Int, Uint, is_type
-from .hdl_ast import eval_expression, find_vararg_input
+from .hdl_ast import eval_expression
 
 
 class RegFinder(ast.NodeVisitor):
-    def __init__(self, gear):
+    def __init__(self, gear, intf_args):
         self.regs = {}
         self.variables = {}
         self.local_params = {
             **{p.basename: p.consumer
                for p in gear.in_ports},
             **gear.explicit_params,
-            **find_vararg_input(gear)
+            **intf_args
         }
 
     def promote_var_to_reg(self, name):

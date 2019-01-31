@@ -12,6 +12,7 @@ from .hdl_stmt import (BlockConditionsVisitor, InputVisitor, OutputVisitor,
 from .hdl_utils import state_expr
 from .inst_visit import InstanceVisitor
 from .reg_finder import RegFinder
+from .intf_finder import IntfFinder
 from .scheduling import Scheduler
 from .state_finder import StateFinder
 from .stmt_vacum import StmtVacum
@@ -127,6 +128,13 @@ def write_module(node, sv_stmts, writer, block_conds, state_num):
         writer.line(f'{name}_t {name}_reg, {name}_next;')
         writer.line()
 
+    for name, val in node.intfs.items():
+        writer.line(f'dti#({int(val.dtype)}) {name}();')
+        writer.block(svgen_typedef(val.dtype, name))
+        writer.line(f'{name}_t {name}_s;')
+        writer.line(f"assign {name}.data = {name}_s;")
+    writer.line()
+
     if state_num > 0:
         writer.block(svgen_typedef(Uint[bitw(state_num)], 'state'))
         writer.line(f'logic state_en;')
@@ -141,7 +149,7 @@ def write_module(node, sv_stmts, writer, block_conds, state_num):
     for cond, values in block_conds.items():
         for id in values:
             writer.line(f'logic {cond}_cond_block_{id};')
-            writer.line()
+    writer.line()
 
     if node.regs:
         if state_num > 0:
@@ -173,13 +181,17 @@ def compile_gear_body(gear, function_impl_paths=None):
     # import astpretty
     # astpretty.pprint(body_ast)
 
+    # find interfaces
+    intf = IntfFinder(gear)
+    intf.visit(body_ast)
+
     # find registers and variables
-    v = RegFinder(gear)
+    v = RegFinder(gear, intf.intfs['varargs'])
     v.visit(body_ast)
     v.clean_variables()
 
     # py ast to hdl ast
-    hdl_ast = HdlAst(gear, v.regs, v.variables,
+    hdl_ast = HdlAst(gear, v.regs, v.variables, intf.intfs,
                      function_impl_paths).visit(body_ast)
     StmtVacum().visit(hdl_ast)
     schedule = Scheduler().visit(hdl_ast)

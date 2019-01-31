@@ -160,6 +160,30 @@ class IntfExpr(Expr):
 
 
 @dataclass
+class IntfDef(Expr):
+    intf: pytypes.Any
+    name: str
+    context: str = None
+
+    @property
+    def dtype(self):
+        if isinstance(self.intf, tuple):
+            return self.intf[0].dtype
+        else:
+            return self.intf.dtype
+
+
+@dataclass
+class IntfStmt(Expr):
+    intf: IntfExpr
+    val: Expr
+
+    @property
+    def dtype(self):
+        return self.intf.dtype
+
+
+@dataclass
 class ConcatExpr(Expr):
     operands: tuple
 
@@ -321,7 +345,11 @@ class IntfLoop(Block):
     @property
     def exit_cond(self):
         exit_condition = find_exit_cond(self.stmts)
-        intf_expr = IntfExpr(self.intf.intf, context='eot')
+        if isinstance(self.intf, IntfExpr):
+            intf_expr = IntfExpr(self.intf.intf, context='eot')
+        else:
+            intf_expr = IntfDef(
+                intf=self.intf.intf, name=self.intf.name, context='eot')
         return and_expr(intf_expr, exit_condition)
 
 
@@ -421,6 +449,7 @@ class Module:
     locals: pytypes.Dict
     regs: pytypes.Dict
     variables: pytypes.Dict
+    intfs: pytypes.Dict
     stmts: pytypes.List
 
     @property

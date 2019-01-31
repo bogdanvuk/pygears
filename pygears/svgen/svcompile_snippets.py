@@ -29,10 +29,8 @@ qrange = jenv.from_string(qrange_mux_impl).module.qrange
 enumerate_str = '''
 {% macro enumerate_macro(idx_name, iter_name, var_name, rng) %}
 
-if {{idx_name}} == 0:
-    {{iter_name}} = {{var_name}}0
 {% for i in rng %}
-elif {{idx_name}} == {{i}}:
+if {{idx_name}} == {{i}}:
     {{iter_name}} = {{var_name}}{{i}}
 {% endfor %}
 

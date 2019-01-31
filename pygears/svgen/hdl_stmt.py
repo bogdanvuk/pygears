@@ -177,9 +177,12 @@ class InputVisitor(HDLStmtVisitor):
     def enter_block(self, block, conds, **kwds):
         super().enter_block(block, conds, **kwds)
         if isinstance(block, ht.Module):
-            return [
-                AssignValue(f'{port.name}.ready', 0) for port in block.in_ports
-            ]
+            dflt_ready = []
+            for port in block.in_ports:
+                dflt_ready.append(AssignValue(f'{port.name}.ready', 0))
+            for port in block.intfs:
+                dflt_ready.append(AssignValue(f'{port}.ready', 0))
+            return dflt_ready
         elif isinstance(block, ht.IntfBlock):
             cond = conds.exit_cond
             if cond is None:
@@ -190,6 +193,19 @@ class InputVisitor(HDLStmtVisitor):
             if cond is None:
                 cond = 1
             return AssignValue(target=f'{block.intf.name}.ready', val=cond)
+
+    def visit_IntfStmt(self, node, conds, **kwds):
+        return [
+            AssignValue(
+                target=f'{node.intf.name}_s',
+                val=node.val,
+                width=int(node.dtype)),
+            AssignValue(
+                target=f'{node.intf.name}.valid',
+                val=f'{node.val.name}.valid'),
+            AssignValue(
+                target=f'{node.val.name}.ready', val=f'{node.intf.name}.ready')
+        ]
 
 
 class BlockConditionsVisitor(HDLStmtVisitor):

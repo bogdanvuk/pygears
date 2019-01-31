@@ -79,11 +79,14 @@ class SVExpressionVisitor(InstanceVisitor):
     def visit_IntfExpr(self, node):
         if node.context:
             if node.context is 'eot':
-                return f'&{node.intf.basename}_s.{node.context}'
+                return f'&{node.name}_s.{node.context}'
             else:
-                return f'{node.intf.basename}.{node.context}'
+                return f'{node.name}.{node.context}'
         else:
-            return f'{node.intf.basename}_s'
+            return f'{node.name}_s'
+
+    def visit_IntfDef(self, node):
+        return self.visit_IntfExpr(node)
 
     def generic_visit(self, node):
         return node
