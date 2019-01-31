@@ -182,6 +182,9 @@ class InputVisitor(HDLStmtVisitor):
                 dflt_ready.append(AssignValue(f'{port.name}.ready', 0))
             for port in block.intfs:
                 dflt_ready.append(AssignValue(f'{port}.ready', 0))
+                dflt_ready.append(
+                    AssignValue(f'{port}.valid',
+                                f'{block.intfs[port].intf[0].basename}.valid'))
             return dflt_ready
         elif isinstance(block, ht.IntfBlock):
             cond = conds.exit_cond
