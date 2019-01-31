@@ -306,14 +306,24 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         clk = registry('sim/clk_event')
         delta = registry('sim/delta_event')
 
-        timestep = 0
-        bind('sim/timestep', timestep)
+        bind('sim/timestep', 0)
 
+        timestep = -1
         start_time = time.time()
 
         sim_log().info("-------------- Simulation start --------------")
         while (self.forward_ready or self.back_ready or self.delta_ready
                or self._schedule_to_finish):
+
+            timestep += 1
+            bind('sim/timestep', timestep)
+            if (timeout is not None) and (timestep == timeout):
+                break
+
+            # if (timestep % 1000) == 0:
+            #     sim_log().info("-------------- Simulation cycle --------------")
+
+            # print(f"-------------- {timestep} ------------------")
 
             self.phase = 'forward'
             for sim_gear in self.sim_gears:
@@ -355,17 +365,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
                     # print(f'Clock: {sim_gear.gear.name}')
                     self.maybe_run_gear(sim_gear, self.delta_ready)
 
-            timestep += 1
-            bind('sim/timestep', timestep)
-
-            # if (timestep % 1000) == 0:
-            #     sim_log().info("-------------- Simulation cycle --------------")
-
-            # print(f"-------------- {timestep} ------------------")
-
             self.events['after_timestep'](self, timestep)
-            if (timeout is not None) and (timestep == timeout):
-                break
 
         sim_log().info(f"----------- Simulation done ---------------")
         sim_log().info(f'Elapsed: {time.time() - start_time:.2f}')
