@@ -525,6 +525,11 @@ class Conditions:
 
         return reduce(and_expr, cond, None)
 
+    @property
+    def rst_cond(self):
+        b = [s.hdl_block for s in self.scope[1:]]
+        return find_exit_cond(b, search_in_cond=True)
+
     def enter_block(self, block):
         self.scope.append(block)
 

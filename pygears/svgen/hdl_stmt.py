@@ -177,25 +177,65 @@ class InputVisitor(HDLStmtVisitor):
     def enter_block(self, block, conds, **kwds):
         super().enter_block(block, conds, **kwds)
         if isinstance(block, ht.Module):
+            self.input_names = [port.name for port in block.in_ports]
+            return [
+                AssignValue(f'{port.name}.ready', 0) for port in block.in_ports
+            ]
+        elif isinstance(block, ht.IntfBlock):
+            if block.intf.name in self.input_names:
+                cond = conds.exit_cond
+                if cond is None:
+                    cond = 1
+                return AssignValue(target=f'{block.intf.name}.ready', val=cond)
+        elif isinstance(block, ht.IntfLoop):
+            if block.intf.name in self.input_names:
+                cond = conds.cycle_cond
+                if cond is None:
+                    cond = 1
+                return AssignValue(target=f'{block.intf.name}.ready', val=cond)
+
+    def visit_IntfStmt(self, node, conds, **kwds):
+        if node.val.name in self.input_names:
+            return AssignValue(
+                target=f'{node.val.name}.ready', val=f'{node.intf.name}.ready')
+
+
+class IntfReadyVisitor(HDLStmtVisitor):
+    def enter_block(self, block, conds, **kwds):
+        super().enter_block(block, conds, **kwds)
+        if isinstance(block, ht.Module):
+            self.intf_names = block.intfs.keys()
             dflt_ready = []
-            for port in block.in_ports:
-                dflt_ready.append(AssignValue(f'{port.name}.ready', 0))
             for port in block.intfs:
                 dflt_ready.append(AssignValue(f'{port}.ready', 0))
-                dflt_ready.append(
-                    AssignValue(f'{port}.valid',
-                                f'{block.intfs[port].intf[0].basename}.valid'))
             return dflt_ready
         elif isinstance(block, ht.IntfBlock):
-            cond = conds.exit_cond
-            if cond is None:
-                cond = 1
-            return AssignValue(target=f'{block.intf.name}.ready', val=cond)
+            if block.intf.name in self.intf_names:
+                cond = conds.exit_cond
+                if cond is None:
+                    cond = 1
+                return AssignValue(target=f'{block.intf.name}.ready', val=cond)
         elif isinstance(block, ht.IntfLoop):
-            cond = conds.cycle_cond
-            if cond is None:
-                cond = 1
-            return AssignValue(target=f'{block.intf.name}.ready', val=cond)
+            if block.intf.name in self.intf_names:
+                cond = conds.cycle_cond
+                if cond is None:
+                    cond = 1
+                return AssignValue(target=f'{block.intf.name}.ready', val=cond)
+
+    def visit_IntfStmt(self, node, conds, **kwds):
+        if node.val.name in self.intf_names:
+            return AssignValue(
+                target=f'{node.val.name}.ready', val=f'{node.intf.name}.ready')
+
+
+class IntfValidVisitor(HDLStmtVisitor):
+    def enter_block(self, block, conds, **kwds):
+        super().enter_block(block, conds, **kwds)
+        if isinstance(block, ht.Module):
+            dflt_ready = []
+            for port in block.intfs:
+                dflt_ready.append(AssignValue(f'{port}.valid', 0))
+            return dflt_ready
 
     def visit_IntfStmt(self, node, conds, **kwds):
         return [
@@ -204,10 +244,7 @@ class InputVisitor(HDLStmtVisitor):
                 val=node.val,
                 width=int(node.dtype)),
             AssignValue(
-                target=f'{node.intf.name}.valid',
-                val=f'{node.val.name}.valid'),
-            AssignValue(
-                target=f'{node.val.name}.ready', val=f'{node.intf.name}.ready')
+                target=f'{node.intf.name}.valid', val=f'{node.val.name}.valid')
         ]
 
 

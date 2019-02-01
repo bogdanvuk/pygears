@@ -7,15 +7,16 @@ from pygears.typing import Uint, bitw
 
 from .cblock import CBlockVisitor
 from .hdl_ast import HdlAst
-from .hdl_stmt import (BlockConditionsVisitor, InputVisitor, OutputVisitor,
-                       RegEnVisitor, StateTransitionVisitor, VariableVisitor)
+from .hdl_stmt import (BlockConditionsVisitor, InputVisitor, IntfReadyVisitor,
+                       IntfValidVisitor, OutputVisitor, RegEnVisitor,
+                       StateTransitionVisitor, VariableVisitor)
 from .hdl_utils import state_expr
 from .inst_visit import InstanceVisitor
-from .reg_finder import RegFinder
 from .intf_finder import IntfFinder
+from .reg_finder import RegFinder
 from .scheduling import Scheduler
 from .state_finder import StateFinder
-from .stmt_vacum import StmtVacum
+# from .stmt_vacum import StmtVacum
 from .sv_expression import svexpr
 from .util import svgen_typedef
 
@@ -193,7 +194,7 @@ def compile_gear_body(gear, function_impl_paths=None):
     # py ast to hdl ast
     hdl_ast = HdlAst(gear, v.regs, v.variables, intf.intfs,
                      function_impl_paths).visit(body_ast)
-    StmtVacum().visit(hdl_ast)
+    # StmtVacum().visit(hdl_ast)
     schedule = Scheduler().visit(hdl_ast)
     states = StateFinder()
     states.visit(schedule)
@@ -214,16 +215,24 @@ def compile_gear_body(gear, function_impl_paths=None):
     input_v = CBlockVisitor(InputVisitor(), states.max_state)
     res['inputs'] = input_v.visit(schedule)
 
+    intf_ready_v = CBlockVisitor(IntfReadyVisitor(), states.max_state)
+    res['intf_ready'] = intf_ready_v.visit(schedule)
+
+    intf_valid_v = CBlockVisitor(IntfValidVisitor(), states.max_state)
+    res['intf_valid'] = intf_valid_v.visit(schedule)
+
     state_v = CBlockVisitor(StateTransitionVisitor(), states.max_state)
     if states.max_state > 0:
         res['state_transition'] = state_v.visit(schedule)
 
     cycle_conds = list(
         set(reg_next_v.cycle_conds + var_v.cycle_conds + output_v.cycle_conds +
-            input_v.cycle_conds + state_v.cycle_conds))
+            intf_ready_v.cycle_conds + intf_valid_v.cycle_conds +
+            state_v.cycle_conds))
     exit_conds = list(
         set(reg_next_v.exit_conds + var_v.exit_conds + output_v.exit_conds +
-            input_v.exit_conds + state_v.exit_conds))
+            intf_ready_v.exit_conds + intf_valid_v.exit_conds +
+            state_v.exit_conds))
 
     cond_visit = CBlockVisitor(
         BlockConditionsVisitor(cycle_conds, exit_conds), states.max_state)

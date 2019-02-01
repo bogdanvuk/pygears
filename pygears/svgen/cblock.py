@@ -2,6 +2,7 @@ import hdl_types as ht
 
 from .hdl_utils import add_to_list, state_expr
 from .inst_visit import InstanceVisitor
+from .hdl_stmt import CombBlock, HDLBlock
 
 
 class CBlockVisitor(InstanceVisitor):
@@ -64,17 +65,40 @@ class CBlockVisitor(InstanceVisitor):
         self.conds.exit_block()
 
     def visit_block(self, node):
-        block = self.enter_block(node)
+        top = []
+        if node.prolog:
+            for block in node.prolog:
+                curr_block = self.ping_hdl(block)
+                self._add_sub(block, curr_block)
+                add_to_list(top, curr_block)
+
+        curr_block = self.enter_block(node)
 
         for i, c in enumerate(node.child):
-            add_to_list(block.stmts, self.visit(c))
+            add_to_list(curr_block.stmts, self.visit(c))
 
-        if block.stmts:
-            self.hdl.update_defaults(block)
+        if curr_block.stmts:
+            self.hdl.update_defaults(curr_block)
 
+        exit_cond = self.conds.rst_cond
         self.exit_block()
 
-        return block
+        add_to_list(top, curr_block)
+
+        if node.epilog:
+            epilog_hdl = HDLBlock(in_cond=exit_cond, stmts=[], dflts={})
+            for block in node.epilog:
+                curr_block = self.ping_hdl(block)
+                self._add_sub(block, curr_block)
+                add_to_list(epilog_hdl.stmts, curr_block)
+                self.hdl.update_defaults(epilog_hdl)
+            if epilog_hdl.stmts or epilog_hdl.dflts:
+                add_to_list(top, epilog_hdl)
+
+        if len(top) == 1 and isinstance(top[0], CombBlock):
+            return top[0]
+        else:
+            return top
 
     def visit_SeqCBlock(self, node):
         return self.visit_block(node)
