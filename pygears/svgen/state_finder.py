@@ -102,6 +102,14 @@ class StateFinder(InstanceVisitor):
                 if self.state[-1] not in node.state_ids:
                     node.state_ids.append(self.state[-1])
 
+        if node.prolog:
+            for i, block in enumerate(node.prolog):
+                switch = self.context.find_context(block, node.prolog[:i])
+                self.switch_context(switch, node.prolog[:i])
+
+            switch = self.context.find_context(node.hdl_block, node.prolog)
+            self.switch_context(switch, node.prolog)
+
         self.exit_block()
 
     def visit_MutexCBlock(self, node):
@@ -109,6 +117,14 @@ class StateFinder(InstanceVisitor):
 
         for child in node.child:
             self.visit(child)
+
+        if node.prolog:
+            for i, block in enumerate(node.prolog):
+                switch = self.context.find_context(block, node.prolog[:i])
+                self.switch_context(switch, node.prolog[:i])
+
+            switch = self.context.find_context(node.hdl_block, node.prolog)
+            self.switch_context(switch, node.prolog)
 
         self.exit_block()
 
@@ -119,16 +135,18 @@ class StateFinder(InstanceVisitor):
                 block.id = self.block_id
                 self.block_id += 1
             switch = self.context.find_context(block, node.hdl_blocks[:i])
-            if switch:
-                for orig_idx, new in switch:
-                    if len(orig_idx) == 1:
-                        node.hdl_blocks[orig_idx[0]] = new
-                    else:
-                        self.switch_node(orig_idx[1:],
-                                         node.hdl_blocks[orig_idx[0]], new)
+            self.switch_context(switch, node.hdl_blocks[:i])
 
     def switch_node(self, path, node, new):
         if len(path) == 1:
             node.stmts[path[0]] = new
         else:
             self.switch_node(path[1:], node.stmts[path[0]], new)
+
+    def switch_context(self, switch, body):
+        if switch:
+            for orig_idx, new in switch:
+                if len(orig_idx) == 1:
+                    body[orig_idx[0]] = new
+                else:
+                    self.switch_node(orig_idx[1:], body[orig_idx[0]], new)

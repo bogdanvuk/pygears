@@ -80,20 +80,23 @@ class CBlockVisitor(InstanceVisitor):
         if curr_block.stmts:
             self.hdl.update_defaults(curr_block)
 
-        exit_cond = self.conds.rst_cond
+        # if node.epilog:
+        #     exit_cond = self.conds.rst_cond
+
         self.exit_block()
 
         add_to_list(top, curr_block)
 
         if node.epilog:
-            epilog_hdl = HDLBlock(in_cond=exit_cond, stmts=[], dflts={})
+            # epilog_hdl = HDLBlock(in_cond=exit_cond, stmts=[], dflts={})
             for block in node.epilog:
                 curr_block = self.ping_hdl(block)
                 self._add_sub(block, curr_block)
-                add_to_list(epilog_hdl.stmts, curr_block)
-                self.hdl.update_defaults(epilog_hdl)
-            if epilog_hdl.stmts or epilog_hdl.dflts:
-                add_to_list(top, epilog_hdl)
+                add_to_list(top, curr_block)
+            #     add_to_list(epilog_hdl.stmts, curr_block)
+            #     self.hdl.update_defaults(epilog_hdl)
+            # if epilog_hdl.stmts or epilog_hdl.dflts:
+            #     add_to_list(top, epilog_hdl)
 
         if len(top) == 1 and isinstance(top[0], CombBlock):
             return top[0]
