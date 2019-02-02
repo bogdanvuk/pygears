@@ -1,5 +1,5 @@
 import hdl_types as ht
-from pygears.typing import Array, Integer, Queue, typeof, Int, Uint
+from pygears.typing import Array, Int, Integer, Queue, Uint, typeof
 
 from .inst_visit import InstanceVisitor
 

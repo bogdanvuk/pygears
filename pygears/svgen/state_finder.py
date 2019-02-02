@@ -1,5 +1,6 @@
-import hdl_types as ht
 from functools import partial
+
+import hdl_types as ht
 
 from .inst_visit import InstanceVisitor
 

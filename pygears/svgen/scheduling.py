@@ -75,10 +75,6 @@ class Scheduler(ht.TypeVisitor):
                         if isinstance(child, Leaf):
                             child.hdl_blocks = free_stmts + child.hdl_blocks
                         else:
-                            # safe guard
-                            # from .hdl_ast import VisitError
-                            # raise VisitError("Free stmts cannot be here..")
-
                             if child.prolog:
                                 child.prolog.extend(free_stmts)
                             else:
@@ -92,7 +88,6 @@ class Scheduler(ht.TypeVisitor):
             cnode.child.append(leaf_found)
         else:
             if (not cnode.child) and free_stmts:
-                # assert isinstance(cnode, MutexCBlock)
                 cnode.child.append(
                     Leaf(parent=self.scope[-1], hdl_blocks=free_stmts))
 

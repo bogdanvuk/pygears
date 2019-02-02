@@ -5,7 +5,6 @@ import hdl_types as ht
 from pygears.typing import (Array, Int, Integer, Queue, Tuple, Uint, Unit,
                             bitw, is_type, typeof)
 from pygears.typing.base import TypingMeta
-from svcompile_snippets import enumerate_impl, qrange
 
 opmap = {
     ast.Add: '+',
@@ -99,13 +98,6 @@ def gather_control_stmt_vars(variables, intf, attr=None, dtype=None):
     return scope
 
 
-def increment_reg(name, val=ast.Num(1), target=None):
-    if not target:
-        target = ast.Name(name, ast.Store())
-    expr = ast.BinOp(ast.Name(name, ast.Load()), ast.Add(), val)
-    return ast.Assign([target], expr)
-
-
 class HdlAst(ast.NodeVisitor):
     def __init__(self, gear, regs, variables, intfs, call_paths):
         self.in_ports = [ht.IntfExpr(p) for p in gear.in_ports]
@@ -126,7 +118,7 @@ class HdlAst(ast.NodeVisitor):
         for p in self.in_ports:
             if p.name in intfs['namedargs']:
                 named[p.name] = p
-        self.svlocals = {**named, **intfs['varargs']}
+        self.hdl_locals = {**named, **intfs['varargs']}
 
         self.gear = gear
 
@@ -144,7 +136,7 @@ class HdlAst(ast.NodeVisitor):
         self.scope.pop()
 
     def get_context_var(self, pyname):
-        var = self.svlocals.get(pyname, None)
+        var = self.hdl_locals.get(pyname, None)
 
         if isinstance(var, ht.RegDef):
             if var.name in self.regs:
@@ -163,12 +155,9 @@ class HdlAst(ast.NodeVisitor):
         self.enter_block(svnode)
 
         for stmt in body:
-            # try:
             svstmt = self.visit(stmt)
             if svstmt is not None:
                 svnode.stmts.append(svstmt)
-            # except Exception as e:
-            #     pass
 
         self.exit_block()
 
@@ -191,7 +180,7 @@ class HdlAst(ast.NodeVisitor):
         scope, loop_intf = self.intf_parse(
             intf=intf, node=node, target=node.target)
 
-        self.svlocals.update(scope)
+        self.hdl_locals.update(scope)
 
         hdl_node = ht.IntfLoop(intf=loop_intf, stmts=[], multicycle=scope)
 
@@ -204,7 +193,7 @@ class HdlAst(ast.NodeVisitor):
         scope, block_intf = self.intf_parse(
             intf=intf, node=node, target=node.items[0].optional_vars)
 
-        self.svlocals.update(scope)
+        self.hdl_locals.update(scope)
 
         hdl_node = ht.IntfBlock(intf=block_intf, stmts=[])
 
@@ -280,23 +269,19 @@ class HdlAst(ast.NodeVisitor):
             if var == name and isinstance(self.variables[name], ast.AST):
                 self.variables[name] = ht.VariableDef(val, name)
 
-        if name not in self.svlocals:
-            if name in self.variables:
-                self.svlocals[name] = ht.VariableDef(val, name)
-                return ht.VariableStmt(self.svlocals[name], val)
-            elif name in self.regs:
-                self.svlocals[name] = ht.RegDef(val, name)
-            elif name in self.intfs:
-                self.svlocals[name] = ht.IntfDef(val, name)
-                return ht.IntfStmt(self.svlocals[name], val)
+        if name in self.regs:
+            if name not in self.hdl_locals:
+                self.hdl_locals[name] = ht.RegDef(val, name)
             else:
-                raise VisitError('Unknown assginment type')
-        elif name in self.regs:
-            return ht.RegNextStmt(self.svlocals[name], val)
+                return ht.RegNextStmt(self.hdl_locals[name], val)
         elif name in self.variables:
-            return ht.VariableStmt(self.svlocals[name], val)
+            if name not in self.hdl_locals:
+                self.hdl_locals[name] = ht.VariableDef(val, name)
+            return ht.VariableStmt(self.hdl_locals[name], val)
         elif name in self.intfs:
-            return ht.IntfStmt(self.svlocals[name], val)
+            if name not in self.hdl_locals:
+                self.hdl_locals[name] = ht.IntfDef(val, name)
+            return ht.IntfStmt(self.hdl_locals[name], val)
         else:
             raise VisitError('Unknown assginment type')
 
@@ -321,12 +306,7 @@ class HdlAst(ast.NodeVisitor):
 
     def visit_DataExpression(self, node):
         if not isinstance(node, ast.AST):
-            if hasattr(node, 'dtype'):
-                # TODO
-                return node
-            if isinstance(node, ht.ResExpr):
-                return node
-            return ht.ResExpr(node)
+            return node
 
         try:
             return eval_data_expr(node, self.locals)
@@ -362,17 +342,13 @@ class HdlAst(ast.NodeVisitor):
                     return ht.CastExpr(
                         operand=arg_nodes[0],
                         cast_to=self.gear.params[node.func.id])
-                else:
-                    # safe guard
-                    raise VisitError('Unrecognized func in call')
 
             if hasattr(node.func, 'attr'):
                 if node.func.attr is 'tout':
                     return self.cast_return(arg_nodes)
-                # safe guard
-                raise VisitError('Unrecognized func in call')
-            # safe guard
-            raise VisitError('Unrecognized func in call')
+
+        # safe guard
+        raise VisitError('Unrecognized func in call')
 
     def cast_return(self, arg_nodes):
         if not isinstance(arg_nodes, list):
@@ -382,8 +358,6 @@ class HdlAst(ast.NodeVisitor):
         for arg, port in zip(arg_nodes, self.gear.out_ports):
             t = port.dtype
             if typeof(t, Queue) or typeof(t, Tuple):
-                # assert isinstance(arg, ht.ConcatExpr), 'Invalid return type'
-
                 if isinstance(arg, ht.ConcatExpr):
                     for i in range(len(arg.operands)):
                         if isinstance(arg.operands[i], ht.CastExpr) and (
@@ -446,12 +420,9 @@ class HdlAst(ast.NodeVisitor):
         if isinstance(expr, ht.ResExpr):
             if bool(expr.val):
                 for stmt in node.body:
-                    # try:
                     hdl_stmt = self.visit(stmt)
                     if hdl_stmt is not None:
                         self.scope[-1].stmts.append(hdl_stmt)
-                    # except Exception as e:
-                    #     pass
             elif hasattr(node, 'orelse'):
                 for stmt in node.orelse:
                     hdl_stmt = self.visit(stmt)
@@ -480,124 +451,6 @@ class HdlAst(ast.NodeVisitor):
 
         return self.visit_block(hdl_node, node.body)
 
-    def visit_For_range(self, node, iter_args, target_names):
-        if isinstance(iter_args, ht.ResExpr):
-            start, stop, step = ht.ResExpr(iter_args.val.start), ht.ResExpr(
-                iter_args.val.stop), ht.ResExpr(iter_args.val.step)
-        else:
-            start, stop, step = iter_args
-
-        assert target_names[0] in self.regs, 'Loop iterator not registered'
-        op1 = self.regs[target_names[0]]
-        exit_cond = ht.BinOpExpr(
-            (ht.OperandVal(ht.RegDef(op1, target_names[0]), 'next'), stop),
-            '>=')
-
-        hdl_node = ht.Loop(
-            _in_cond=None,
-            stmts=[],
-            _exit_cond=exit_cond,
-            multicycle=target_names)
-
-        self.visit_block(hdl_node, node.body)
-
-        target = node.target if len(target_names) == 1 else node.target.elts[0]
-        hdl_node.stmts.append(
-            self.visit(
-                increment_reg(target_names[0], val=step, target=target)))
-
-        return hdl_node
-
-    def visit_For_qrange(self, node, iter_args, target_names):
-        if isinstance(iter_args, ht.ResExpr):
-            start, stop, step = ht.ResExpr(iter_args.val.start), ht.ResExpr(
-                iter_args.val.stop), ht.ResExpr(iter_args.val.step)
-        else:
-            start, stop, step = iter_args
-
-        is_start = True
-        if isinstance(start, ht.ResExpr):
-            is_start = start.val != 0
-
-        assert target_names[0] in self.regs, 'Loop iterator not registered'
-        op1 = self.regs[target_names[0]]
-        exit_cond = ht.BinOpExpr(
-            (ht.OperandVal(ht.RegDef(op1, target_names[0]), 'next'), stop),
-            '>=')
-
-        if is_start:
-            x = ht.OperandVal(
-                ht.RegDef(op1, f'{target_names[0]}_switch'), 'next')
-            exit_cond = ht.BinOpExpr((x, stop), '>=')
-
-        name = node.target.elts[-1].id
-        var = ht.VariableDef(exit_cond, name)
-        self.variables[name] = ht.OperandVal(var, 'v')
-        self.svlocals[name] = var
-        stmts = [ht.VariableStmt(var, exit_cond)]
-        exit_cond = ht.OperandVal(var, 'v')
-
-        hdl_node = ht.Loop(
-            _in_cond=None,
-            stmts=stmts,
-            _exit_cond=exit_cond,
-            multicycle=target_names)
-
-        if is_start:
-            loop_stmts = self.qrange_impl(
-                name=target_names[0],
-                node=node,
-                svnode=hdl_node,
-                rng=[start, stop, step])
-
-        self.visit_block(hdl_node, node.body)
-
-        if is_start:
-            hdl_node.stmts.extend(loop_stmts)
-        else:
-            target = node.target if len(
-                target_names) == 1 else node.target.elts[0]
-            hdl_node.stmts.append(
-                self.visit(
-                    increment_reg(target_names[0], val=step, target=target)))
-
-        return hdl_node
-
-    def visit_For_enumerate(self, node, iter_args, target_names):
-        assert target_names[0] in self.regs, 'Loop iterator not registered'
-        assert target_names[
-            -1] in self.intfs, 'Enumerate iterator not an interface'
-        stop = iter_args[0]
-
-        op1 = self.regs[target_names[0]]
-        exit_cond = ht.BinOpExpr(
-            (ht.OperandVal(ht.RegDef(op1, target_names[0]), 'next'), stop),
-            '>=')
-
-        hdl_node = ht.Loop(
-            _in_cond=None,
-            stmts=[],
-            _exit_cond=exit_cond,
-            multicycle=target_names)
-
-        enum_target = node.iter.args[0].id
-        snip = enumerate_impl(target_names[0], target_names[1], enum_target,
-                              range(stop.val))
-        enumerate_body = ast.parse(snip).body
-
-        for stmt in enumerate_body:
-            hdl_node.stmts.append(self.visit(stmt))
-
-        self.visit_block(hdl_node, node.body)
-
-        target = node.target if len(target_names) == 1 else node.target.elts[0]
-        hdl_node.stmts.append(
-            self.visit(
-                increment_reg(
-                    target_names[0], val=ht.ResExpr(1), target=target)))
-
-        return hdl_node
-
     def visit_For(self, node):
         res = self.visit_DataExpression(node.iter)
 
@@ -606,61 +459,16 @@ class HdlAst(ast.NodeVisitor):
         else:
             names = [node.target.id]
 
-        func_dispatch = getattr(self, f'visit_For_{node.iter.func.id}', None)
+        func_dispatch = None
+        for m in self.call_modules:
+            func_dispatch = getattr(m, f'For_{node.iter.func.id}', None)
+            if func_dispatch:
+                break
+
         if func_dispatch:
-            return func_dispatch(node, res, names)
+            return func_dispatch(self, node, res, names)
         else:
             raise VisitError('Unsuported func in for loop')
-
-    def switch_reg_and_var(self, name):
-        switch_name = f'{name}_switch'
-
-        if name in self.regs:
-            switch_reg = self.regs[name]
-            self.variables[name] = ht.ResExpr(switch_reg.val)
-            self.regs[switch_name] = switch_reg
-            self.svlocals[switch_name] = ht.RegDef(switch_reg.val, switch_name)
-            self.regs.pop(name)
-            self.svlocals.pop(name)
-            if switch_name in self.variables:
-                self.variables.pop(switch_name)
-            return
-
-    def qrange_impl(self, name, node, svnode, rng):
-        # implementation with flag register and mux
-
-        # flag register
-        flag_reg = 'qrange_flag'
-        val = Uint[1](0)
-        self.regs[flag_reg] = ht.ResExpr(val)
-        self.svlocals[flag_reg] = ht.RegDef(val, flag_reg)
-        svnode.multicycle.append(flag_reg)
-
-        switch_reg = f'{name}_switch'
-        svnode.multicycle.append(switch_reg)
-
-        self.switch_reg_and_var(name)
-
-        # impl.
-        args = []
-        for arg in node.iter.args:
-            try:
-                args.append(arg.id)
-            except AttributeError:
-                args.append(arg.args[0].id)
-        if len(args) == 1:
-            args.insert(0, '0')  # start
-        if len(args) == 2:
-            args.append('1')  # step
-
-        snip = qrange(name, switch_reg, flag_reg, args)
-        qrange_body = ast.parse(snip).body
-
-        loop_stmts = []
-        for stmt in qrange_body:
-            loop_stmts.append(self.visit(stmt))
-
-        return loop_stmts
 
     def visit_Expr(self, node):
         if isinstance(node.value, ast.Yield):
@@ -676,19 +484,13 @@ class HdlAst(ast.NodeVisitor):
         hdl_node = ht.Module(
             in_ports=self.in_ports,
             out_ports=self.out_ports,
-            locals=self.svlocals,
+            locals=self.hdl_locals,
             regs=self.regs,
             variables=self.variables,
             intfs=self.intfs,
             stmts=[])
 
         return self.visit_block(hdl_node, node.body)
-
-    def create_state_reg(self, state_num):
-        if state_num > 1:
-            val = Uint[bitw(state_num)](0)
-            self.regs['state'] = ht.ResExpr(val)
-            self.svlocals['state'] = ht.RegDef(val, 'state')
 
 
 class HdlAstVisitor:
