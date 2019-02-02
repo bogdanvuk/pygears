@@ -90,7 +90,7 @@ class CBlockVisitor(InstanceVisitor):
         if node.epilog:
             for block in node.epilog:
                 curr_block = self.ping_hdl(block, context_cond=epilog_cond)
-                self._add_sub(block, curr_block)
+                self._add_sub(block, curr_block, context_cond=epilog_cond)
                 add_to_list(top, curr_block)
 
         if len(top) == 1 and isinstance(top[0], CombBlock):
@@ -104,11 +104,11 @@ class CBlockVisitor(InstanceVisitor):
     def visit_MutexCBlock(self, node):
         return self.visit_block(node)
 
-    def _add_sub(self, block, curr_block):
+    def _add_sub(self, block, curr_block, **kwds):
         if isinstance(block, ht.Block):
             for stmt in block.stmts:
-                sub = self.ping_hdl(stmt)
-                self._add_sub(stmt, sub)
+                sub = self.ping_hdl(stmt, **kwds)
+                self._add_sub(stmt, sub, **kwds)
                 add_to_list(curr_block.stmts, sub)
             self.hdl.update_defaults(curr_block)
 

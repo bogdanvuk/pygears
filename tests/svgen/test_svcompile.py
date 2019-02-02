@@ -316,9 +316,9 @@ always_comb begin
     pass_eot_next = 1'(0);
     cnt_next = 16'(17'(cnt_reg) + 17'(1));
     if (din.valid) begin
-        cnt_en = cycle_cond_block_1;
+        cnt_en = cycle_cond_block_1 && exit_cond_block_2;
         if (last_v) begin
-            pass_eot_en = cycle_cond_block_1;
+            pass_eot_en = cycle_cond_block_1 && exit_cond_block_2;
         end
     end
 end

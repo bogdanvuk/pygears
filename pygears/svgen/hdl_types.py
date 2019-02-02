@@ -23,8 +23,9 @@ def find_exit_cond(statements, search_in_cond=False):
         if hasattr(stmt, 'exit_cond'):
             stmt_cond = stmt.exit_cond
             if stmt_cond is not None:
-                if search_in_cond and hasattr(
-                        stmt, 'in_cond') and (stmt.in_cond is not None):
+                if search_in_cond and (not isinstance(
+                        stmt, IfBlock)) and hasattr(
+                            stmt, 'in_cond') and (stmt.in_cond is not None):
                     return and_expr(f'exit_cond_block_{stmt.id}', stmt.in_cond)
                 else:
                     return f'exit_cond_block_{stmt.id}'
