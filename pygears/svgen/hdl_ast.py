@@ -5,7 +5,7 @@ import hdl_types as ht
 from pygears.typing import (Array, Int, Integer, Queue, Tuple, Uint, Unit,
                             bitw, is_type, typeof)
 from pygears.typing.base import TypingMeta
-from svcompile_snippets import qrange, enumerate_impl
+from svcompile_snippets import enumerate_impl, qrange
 
 opmap = {
     ast.Add: '+',
@@ -112,8 +112,7 @@ class HdlAst(ast.NodeVisitor):
         self.out_ports = [ht.IntfExpr(p) for p in gear.out_ports]
 
         self.locals = {
-            **{p.basename: p.consumer
-               for p in gear.in_ports},
+            **intfs['namedargs'],
             **gear.explicit_params,
             **intfs['varargs']
         }
@@ -123,11 +122,11 @@ class HdlAst(ast.NodeVisitor):
         self.scope = []
         self.stage_hier = []
 
-        self.svlocals = {
-            **{p.name: p
-               for p in self.in_ports},
-            **intfs['varargs']
-        }
+        named = {}
+        for p in self.in_ports:
+            if p.name in intfs['namedargs']:
+                named[p.name] = p
+        self.svlocals = {**named, **intfs['varargs']}
 
         self.gear = gear
 
@@ -159,23 +158,6 @@ class HdlAst(ast.NodeVisitor):
 
         return var
 
-    def visit_AsyncFor(self, node):
-        intf = self.visit_NameExpression(node.iter)
-        if not isinstance(intf, ht.IntfDef):
-            loop_intf = ht.IntfExpr(intf=intf.intf, context='valid')
-            scope = gather_control_stmt_vars(node.target, intf)
-        else:
-            scope = gather_control_stmt_vars(
-                node.target, intf, dtype=intf.intf[0].dtype)
-            loop_intf = ht.IntfDef(
-                intf=intf.intf, name=intf.name, context='valid')
-
-        self.svlocals.update(scope)
-
-        hdl_node = ht.IntfLoop(intf=loop_intf, stmts=[], multicycle=scope)
-
-        return self.visit_block(hdl_node, node.body)
-
     def visit_block(self, svnode, body):
 
         self.enter_block(svnode)
@@ -192,15 +174,39 @@ class HdlAst(ast.NodeVisitor):
 
         return svnode
 
+    def intf_parse(self, intf, node, target):
+        if isinstance(intf, ht.IntfDef):
+            scope = gather_control_stmt_vars(
+                node.target, intf, dtype=intf.intf[0].dtype)
+            block_intf = ht.IntfDef(
+                intf=intf.intf, name=intf.name, context='valid')
+        else:
+            block_intf = ht.IntfExpr(intf=intf.intf, context='valid')
+            scope = gather_control_stmt_vars(target, intf)
+
+        return scope, block_intf
+
+    def visit_AsyncFor(self, node):
+        intf = self.visit_NameExpression(node.iter)
+        scope, loop_intf = self.intf_parse(
+            intf=intf, node=node, target=node.target)
+
+        self.svlocals.update(scope)
+
+        hdl_node = ht.IntfLoop(intf=loop_intf, stmts=[], multicycle=scope)
+
+        return self.visit_block(hdl_node, node.body)
+
     def visit_AsyncWith(self, node):
         header = node.items[0]
 
         intf = self.visit_NameExpression(header.context_expr)
-        scope = gather_control_stmt_vars(node.items[0].optional_vars, intf)
+        scope, block_intf = self.intf_parse(
+            intf=intf, node=node, target=node.items[0].optional_vars)
+
         self.svlocals.update(scope)
 
-        hdl_node = ht.IntfBlock(
-            intf=ht.IntfExpr(intf=intf.intf, context='valid'), stmts=[])
+        hdl_node = ht.IntfBlock(intf=block_intf, stmts=[])
 
         return self.visit_block(hdl_node, node.body)
 
@@ -253,7 +259,22 @@ class HdlAst(ast.NodeVisitor):
         name_node = node.targets[0]
         name = name_node.id
 
-        val = self.visit_DataExpression(node.value)
+        val = None
+        if name in self.intfs:
+            # when interfaces are assigned visit_DataExpression is not allowed
+            # because eval will execute the assignment and create extra gears
+            # and connections for them
+            for port in self.in_ports:
+                if node.value.id == port.name:
+                    val = port
+                    break
+            if val is None:
+                for port in self.intfs:
+                    if node.value.id == port:
+                        val = self.intfs[port]
+                        break
+        else:
+            val = self.visit_DataExpression(node.value)
 
         for var in self.variables:
             if var == name and isinstance(self.variables[name], ast.AST):
@@ -280,13 +301,10 @@ class HdlAst(ast.NodeVisitor):
             raise VisitError('Unknown assginment type')
 
     def visit_NameExpression(self, node):
-        try:
-            ret = eval_expression(node, self.locals)
-        except NameError:
-            if node.id in self.intfs:
-                return self.intfs[node.id]
-            else:
-                raise NameError
+        if node.id in self.intfs:
+            return self.intfs[node.id]
+
+        ret = eval_expression(node, self.locals)
 
         local_names = list(self.locals.keys())
         local_objs = list(self.locals.values())
