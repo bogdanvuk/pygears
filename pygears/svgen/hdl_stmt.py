@@ -8,6 +8,22 @@ from pygears.typing.base import TypingMeta
 from .hdl_utils import add_to_list
 
 
+def find_cond(cond, **kwds):
+    if cond is None:
+        cond = 1
+    if 'context_cond' in kwds:
+        cond = ht.and_expr(cond, kwds['context_cond'])
+    return cond
+
+
+def find_cycle_cond(conds, **kwds):
+    return find_cond(cond=conds.cycle_cond, kwds=kwds)
+
+
+def find_exit_cond(conds, **kwds):
+    return find_cond(cond=conds.exit_cond, kwds=kwds)
+
+
 @dataclass
 class AssignValue:
     target: pytypes.Any
@@ -135,9 +151,8 @@ class RegEnVisitor(HDLStmtVisitor):
             return [AssignValue(f'{reg}_en', 0) for reg in block.regs]
 
     def visit_RegNextStmt(self, node, conds, **kwds):
-        cond = conds.cycle_cond
-        if cond is None:
-            cond = 1
+        cond = find_cycle_cond(conds=conds, kwds=kwds)
+
         return [
             AssignValue(target=f'{node.reg.name}_en', val=cond),
             AssignValue(
@@ -183,15 +198,11 @@ class InputVisitor(HDLStmtVisitor):
             ]
         elif isinstance(block, ht.IntfBlock):
             if block.intf.name in self.input_names:
-                cond = conds.exit_cond
-                if cond is None:
-                    cond = 1
+                cond = find_exit_cond(conds=conds, kwds=kwds)
                 return AssignValue(target=f'{block.intf.name}.ready', val=cond)
         elif isinstance(block, ht.IntfLoop):
             if block.intf.name in self.input_names:
-                cond = conds.cycle_cond
-                if cond is None:
-                    cond = 1
+                cond = find_cycle_cond(conds=conds, kwds=kwds)
                 return AssignValue(target=f'{block.intf.name}.ready', val=cond)
 
     def visit_IntfStmt(self, node, conds, **kwds):
@@ -211,15 +222,11 @@ class IntfReadyVisitor(HDLStmtVisitor):
             return dflt_ready
         elif isinstance(block, ht.IntfBlock):
             if block.intf.name in self.intf_names:
-                cond = conds.exit_cond
-                if cond is None:
-                    cond = 1
+                cond = find_exit_cond(conds=conds, kwds=kwds)
                 return AssignValue(target=f'{block.intf.name}.ready', val=cond)
         elif isinstance(block, ht.IntfLoop):
             if block.intf.name in self.intf_names:
-                cond = conds.cycle_cond
-                if cond is None:
-                    cond = 1
+                cond = find_cycle_cond(conds=conds, kwds=kwds)
                 return AssignValue(target=f'{block.intf.name}.ready', val=cond)
 
     def visit_IntfStmt(self, node, conds, **kwds):
@@ -314,9 +321,7 @@ class StateTransitionVisitor(HDLStmtVisitor):
         block = super().visit_all_Block(node, conds, **kwds)
 
         if 'state_id' in kwds:
-            cond = conds.exit_cond
-            if cond is None:
-                cond = 1
+            cond = find_exit_cond(conds=conds, kwds=kwds)
             add_to_list(block.stmts, [
                 AssignValue(target=f'state_en', val=cond),
                 AssignValue(target='state_next', val=kwds['state_id'])
