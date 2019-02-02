@@ -78,36 +78,36 @@ class CosimBase(SimGear):
                 intf.ack()
 
     def read_out(self, port):
-        if self.cur_cycle_data_not_forward:
+        if self.eval_needed:
             self.handlers[self.SYNCHRO_HANDLE_NAME].forward()
-            self.cur_cycle_data_not_forward = False
+            self.eval_needed = False
 
         hout = self.handlers[port.basename]
         hout.reset()
         return hout.read()
 
     def ack_out(self, port):
-        self.cur_cycle_data_not_back = True
+        self.eval_needed = True
         hout = self.handlers[port.basename]
         hout.ack()
         self.activity_monitor = 0
 
     def write_in(self, port, data):
-        self.cur_cycle_data_not_forward = True
+        self.eval_needed = True
 
         hin = self.handlers[port.basename]
         return hin.send(data)
 
     def reset_in(self, port):
-        self.cur_cycle_data_not_forward = True
+        self.eval_needed = True
 
         hin = self.handlers[port.basename]
         hin.reset()
 
     def ready_in(self, port):
-        if self.cur_cycle_data_not_back:
+        if self.eval_needed:
             self.handlers[self.SYNCHRO_HANDLE_NAME].back()
-            self.cur_cycle_data_not_back = False
+            self.eval_needed = False
 
         hin = self.handlers[port.basename]
         if hin.ready():
@@ -121,25 +121,21 @@ class CosimBase(SimGear):
         self.din_pulled = set()
         self.dout_put = set()
         self.prev_timestep = -1
+        self.eval_needed = False
 
         try:
             # phase = 'forward'
 
             while True:
-                # if phase == 'forward':
-                #     # self._forward()
-                #     self.handlers[self.SYNCHRO_HANDLE_NAME].forward()
-                # elif phase == 'back':
-                #     self._back()
-                #     self.handlers[self.SYNCHRO_HANDLE_NAME].back()
-                # elif phase == 'cycle':
 
-                self.cur_cycle_data_not_forward = True
-                self.cur_cycle_data_not_back = True
+                phase = None
+                while phase != 'cycle':
+                    phase = await delta()
 
-                # if self.prev_timestep != timestep():
-                # sim_log().info(f'Activity monitor: {self.activity_monitor}')
-                #     self.prev_timestep = timestep()
+                if self.eval_needed:
+                    self.handlers[self.SYNCHRO_HANDLE_NAME].forward()
+                    self.eval_needed = False
+
                 if self.activity_monitor == self.timeout:
                     raise GearDone
 
@@ -148,15 +144,12 @@ class CosimBase(SimGear):
 
                 # sim_log().info(f'Waiting for a clock')
 
-                phase = None
-                while phase != 'cycle':
-                    phase = await delta()
 
-                if self.cur_cycle_data_not_forward:
-                    self.handlers[self.SYNCHRO_HANDLE_NAME].forward()
+                # if self.eval_needed:
+                #     self.handlers[self.SYNCHRO_HANDLE_NAME].forward()
 
-                if self.cur_cycle_data_not_back:
-                    self.handlers[self.SYNCHRO_HANDLE_NAME].back()
+                # if self.eval_needed:
+                #     self.handlers[self.SYNCHRO_HANDLE_NAME].back()
 
                 # sim_log().info(f'Cycle')
 

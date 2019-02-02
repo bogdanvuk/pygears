@@ -40,16 +40,19 @@ class InCosimPort:
             try:
                 if (phase == 'forward') and (not self.active):
                     self.main.reset_in(self.port)
-                    # print(f'Wait for intf -> {self.port.basename}')
+                    # sim_log().info(f'Wait for intf -> {self.port.basename}')
                     data = await intf.pull()
-                    # print(f'Set {data} -> {self.port.basename}')
+                    # sim_log().info(f'Set {data} -> {self.port.basename}')
                     self.active = True
                     self.main.write_in(self.port, data)
                 elif (phase == 'back') and (self.active):
                     if self.main.ready_in(self.port):
-                        # print(f'Ack {self.port.basename}')
+                        # sim_log().info(f'Ack {self.port.basename}')
                         self.active = False
                         intf.ack()
+                    # else:
+                    #     sim_log().info(f'NAck {self.port.basename}')
+
             except (BrokenPipeError, ConnectionResetError):
                 intf.finish()
                 raise GearDone
@@ -88,11 +91,11 @@ class OutCosimPort:
                 raise GearDone
 
             try:
-                # print(f'{self.port.basename} read_out')
+                # sim_log().info(f'{self.port.basename} read_out')
                 data = self.main.read_out(self.port)
-                # print(f'Put {data} -> {self.port.basename}')
+                # sim_log().info(f'Put {data} -> {self.port.basename}')
                 await intf.put(data)
-                # print(f'Ack {data} -> {self.port.basename}')
+                # sim_log().info(f'Ack {data} -> {self.port.basename}')
                 self.main.ack_out(self.port)
             except (BrokenPipeError, ConnectionResetError):
                 intf.finish()

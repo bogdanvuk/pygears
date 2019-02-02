@@ -36,10 +36,11 @@ void cycle(void) {
 {% if tracing %}
     if (tfp) tfp->dump (main_time);
 {% endif %}
-    main_time+=5;
-    top->clk = 0;
-    top->rst = 0;
-    top->eval();
+    if (main_time > 5) {
+        main_time+=5;
+        top->clk = 0;
+        top->eval();
+    }
 {% if tracing %}
     if (tfp) tfp->dump (main_time);
 {% endif %}
@@ -83,6 +84,11 @@ int init(void) {
     tfp->dump(0);
     tfp->flush();
 {% endif %}
+
+    main_time+=5;
+    top->rst = 0;
+    top->clk = 0;
+    top->eval();
 
     return 0;
 }
