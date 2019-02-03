@@ -174,18 +174,45 @@ class OutputVisitor(HDLStmtVisitor):
     def enter_block(self, block, conds, **kwds):
         super().enter_block(block, conds, **kwds)
         if isinstance(block, ht.Module):
-            return AssignValue(f'dout.valid', 0)
+            self.out_ports = {p.name: p for p in block.out_ports}
+            self.out_intfs = block.out_intfs
+            res = []
+            for p in block.out_ports:
+                res.append(AssignValue(f'{p.name}.valid', 0))
+
+            return res
 
     def visit_Yield(self, node, conds, **kwds):
-        block = HDLBlock(
-            in_cond=None,
-            stmts=[
-                AssignValue(f'dout.valid', 1),
-                AssignValue(f'dout_s', node.expr)
-            ],
-            dflts={})
+        if not isinstance(node.expr, list):
+            exprs = [node.expr]
+        else:
+            exprs = node.expr
+
+        stmts = []
+        assert len(exprs) == len(self.out_ports)
+
+        for expr, port in zip(exprs, self.out_ports):
+            if self.out_ports[port].context:
+                valid = self.out_ports[port].context
+            else:
+                valid = 1
+            stmts.append(AssignValue(f'{port}.valid', valid))
+            if not self.out_intfs:
+                stmts.append(AssignValue(f'{port}_s', node.expr))
+        block = HDLBlock(in_cond=None, stmts=stmts, dflts={})
         self.update_defaults(block)
         return block
+
+    def visit_IntfStmt(self, node, conds, **kwds):
+        if node.intf.name in self.out_intfs:
+            res = []
+            for intf in node.intf.intf:
+                res.append(
+                    AssignValue(
+                        target=f'{intf.name}_s',
+                        val=node.val,
+                        width=int(node.val.dtype)))
+            return res
 
 
 class InputVisitor(HDLStmtVisitor):
@@ -206,9 +233,11 @@ class InputVisitor(HDLStmtVisitor):
                 return AssignValue(target=f'{block.intf.name}.ready', val=cond)
 
     def visit_IntfStmt(self, node, conds, **kwds):
-        if node.val.name in self.input_names:
-            return AssignValue(
-                target=f'{node.val.name}.ready', val=f'{node.intf.name}.ready')
+        if hasattr(node.val, 'name'):
+            if node.val.name in self.input_names:
+                return AssignValue(
+                    target=f'{node.val.name}.ready',
+                    val=f'{node.intf.name}.ready')
 
 
 class IntfReadyVisitor(HDLStmtVisitor):
@@ -230,29 +259,34 @@ class IntfReadyVisitor(HDLStmtVisitor):
                 return AssignValue(target=f'{block.intf.name}.ready', val=cond)
 
     def visit_IntfStmt(self, node, conds, **kwds):
-        if node.val.name in self.intf_names:
-            return AssignValue(
-                target=f'{node.val.name}.ready', val=f'{node.intf.name}.ready')
+        if hasattr(node.val, 'name'):
+            if node.val.name in self.intf_names:
+                return AssignValue(
+                    target=f'{node.val.name}.ready',
+                    val=f'{node.intf.name}.ready')
 
 
 class IntfValidVisitor(HDLStmtVisitor):
     def enter_block(self, block, conds, **kwds):
         super().enter_block(block, conds, **kwds)
         if isinstance(block, ht.Module):
+            self.intf_names = block.intfs.keys()
             dflt_ready = []
             for port in block.intfs:
                 dflt_ready.append(AssignValue(f'{port}.valid', 0))
             return dflt_ready
 
     def visit_IntfStmt(self, node, conds, **kwds):
-        return [
-            AssignValue(
-                target=f'{node.intf.name}_s',
-                val=node.val,
-                width=int(node.dtype)),
-            AssignValue(
-                target=f'{node.intf.name}.valid', val=f'{node.val.name}.valid')
-        ]
+        if node.intf.name in self.intf_names:
+            return [
+                AssignValue(
+                    target=f'{node.intf.name}_s',
+                    val=node.val,
+                    width=int(node.dtype)),
+                AssignValue(
+                    target=f'{node.intf.name}.valid',
+                    val=f'{node.val.name}.valid')
+            ]
 
 
 class BlockConditionsVisitor(HDLStmtVisitor):

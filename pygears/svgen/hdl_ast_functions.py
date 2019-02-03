@@ -37,20 +37,20 @@ def increment_reg(name, val=ast.Num(1), target=None):
     return ast.Assign([target], expr)
 
 
-def Call_len(arg):
+def Call_len(arg, **kwds):
     return ht.ResExpr(len(arg.dtype))
 
 
-def Call_print(arg):
+def Call_print(arg, **kwds):
     pass
 
 
-def Call_int(arg):
+def Call_int(arg, **kwds):
     # ignore cast
     return arg
 
 
-def Call_range(*arg):
+def Call_range(*arg, **kwds):
     if len(arg) == 1:
         start = ht.ResExpr(arg[0].dtype(0))
         stop = arg[0]
@@ -63,11 +63,11 @@ def Call_range(*arg):
     return start, stop, step
 
 
-def Call_qrange(*arg):
+def Call_qrange(*arg, **kwds):
     return Call_range(*arg)
 
 
-def Call_all(arg):
+def Call_all(arg, **kwds):
     return ht.ArrayOpExpr(arg, '&')
 
 
@@ -84,7 +84,7 @@ def max_expr(op1, op2):
     return ht.ConditionalExpr(cond=cond, operands=(op1, op2))
 
 
-def Call_max(*arg):
+def Call_max(*arg, **kwds):
     if len(arg) == 1:
         arg = arg[0]
 
@@ -101,8 +101,14 @@ def Call_max(*arg):
         return reduce(max_expr, arg)
 
 
-def Call_enumerate(arg):
+def Call_enumerate(arg, **kwds):
     return ht.ResExpr(len(arg)), arg
+
+
+def Call_sub(*arg, **kwds):
+    assert not arg, 'Sub should be called without arguments'
+    value = kwds['value']
+    return ht.CastExpr(value, cast_to=value.dtype.sub())
 
 
 def For_range(ast_visitor, node, iter_args, target_names):
@@ -222,7 +228,7 @@ def For_qrange(ast_visitor, node, iter_args, target_names):
 def For_enumerate(ast_visitor, node, iter_args, target_names):
     assert target_names[0] in ast_visitor.regs, 'Loop iterator not registered'
     assert target_names[
-        -1] in ast_visitor.intfs, 'Enumerate iterator not an interface'
+        -1] in ast_visitor.in_intfs, 'Enumerate iterator not an interface'
     stop = iter_args[0]
 
     op1 = ast_visitor.regs[target_names[0]]

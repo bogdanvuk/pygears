@@ -1,13 +1,12 @@
 import ast
 
 import hdl_types as ht
-from pygears.typing import Int, Uint, is_type
 
-from .hdl_ast import eval_expression
+from .hdl_ast import eval_expression, set_pg_type
 
 
 class RegFinder(ast.NodeVisitor):
-    def __init__(self, gear, intf_args):
+    def __init__(self, gear, intf_args, intf_outs):
         self.regs = {}
         self.variables = {}
         self.local_params = {
@@ -16,6 +15,7 @@ class RegFinder(ast.NodeVisitor):
             **gear.explicit_params,
             **intf_args
         }
+        self.intf_outs = intf_outs.keys()
 
     def promote_var_to_reg(self, name):
         val = self.variables[name]
@@ -24,11 +24,7 @@ class RegFinder(ast.NodeVisitor):
         if isinstance(val, ast.AST):
             return
 
-        if not is_type(type(val)):
-            if val < 0:
-                val = Int(val)
-            else:
-                val = Uint(val)
+        val = set_pg_type(val)
 
         self.regs[name] = ht.ResExpr(val)
 
@@ -45,13 +41,23 @@ class RegFinder(ast.NodeVisitor):
                 if el.id in self.variables:
                     self.promote_var_to_reg(el.id)
         else:
+            assert node.target.id in self.variables, 'Loop iterator not registered'
             self.promote_var_to_reg(node.target.id)
 
         for stmt in node.body:
             self.visit(stmt)
 
     def visit_Assign(self, node):
-        name = node.targets[0].id
+        if hasattr(node.targets[0], 'id'):
+            name = node.targets[0].id
+        elif hasattr(node.targets[0], 'value'):
+            name = node.targets[0].value.id
+        else:
+            assert False, 'Unknown assignment type'
+
+        if name in self.intf_outs:
+            return
+
         if name not in self.variables:
             try:
                 self.variables[name] = eval_expression(node.value,

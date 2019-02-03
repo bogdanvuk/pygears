@@ -12,7 +12,15 @@ class SVExpressionVisitor(InstanceVisitor):
         return int(node.val)
 
     def visit_IntfReadyExpr(self, node):
-        return 'dout.ready'
+        res = []
+        for port in node.out_port:
+            if port.context:
+                r = svexpr(
+                    ht.BinOpExpr((f'{port.name}.ready', port.context), '&&'))
+                res.append(f'({r})')
+            else:
+                res.append(f'{port.name}.ready')
+        return ' || '.join(res)
 
     def visit_AttrExpr(self, node):
         val = [self.visit(node.val)]

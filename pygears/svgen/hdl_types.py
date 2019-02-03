@@ -76,6 +76,8 @@ class Expr:
 
 @dataclass
 class IntfReadyExpr(Expr):
+    out_port: pytypes.Any
+
     @property
     def dtype(self):
         return Bool
@@ -90,7 +92,20 @@ class ResExpr(Expr):
         if is_type(type(self.val)):
             return type(self.val)
         else:
-            return Integer(self.val)
+            if isinstance(self.val, (list, tuple)):
+                res = []
+                for v in self.val:
+                    if is_type(type(v)):
+                        res.append(type(v))
+                    else:
+                        if v is not None:
+                            res.append(Integer(v))
+                        else:
+                            res.append(None)
+                return res
+            else:
+                if self.val is not None:
+                    return Integer(self.val)
 
 
 @dataclass
@@ -428,15 +443,11 @@ class Loop(Block):
 @dataclass
 class Yield(Block):
     expr: Expr
-    _in_cond: Expr = None
-
-    @property
-    def in_cond(self):
-        return self._in_cond
+    ports: pytypes.Any
 
     @property
     def cycle_cond(self):
-        return IntfReadyExpr()
+        return IntfReadyExpr(self.ports)
 
     @property
     def exit_cond(self):
@@ -451,6 +462,7 @@ class Module:
     regs: pytypes.Dict
     variables: pytypes.Dict
     intfs: pytypes.Dict
+    out_intfs: pytypes.Dict
     stmts: pytypes.List
 
     @property

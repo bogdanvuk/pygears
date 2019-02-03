@@ -38,6 +38,10 @@ class ContextFinder(ht.TypeVisitor):
     def visit_Yield(self, node):
         self.visit(node.expr)
 
+    def visit_list(self, node):
+        for s in node:
+            self.visit(s)
+
     def visit_all_Block(self, node):
         for s in node.stmts:
             self.visit(s)

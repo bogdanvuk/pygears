@@ -50,7 +50,7 @@ def parse_gear_body(gear, function_impl_paths=None):
     intf.visit(body_ast)
 
     # find registers and variables
-    v = RegFinder(gear, intf.intfs['varargs'])
+    v = RegFinder(gear, intf.intfs['varargs'], intf.intfs['outputs'])
     v.visit(body_ast)
     v.clean_variables()
 

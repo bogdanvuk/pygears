@@ -4,6 +4,8 @@ import re
 
 import hdl_types as ht
 
+from .hdl_ast import eval_expression
+
 
 def find_vararg_input(gear):
     sig = inspect.signature(gear.params['definition'].func)
@@ -50,11 +52,13 @@ class IntfFinder(ast.NodeVisitor):
                for p in gear.in_ports},
             **gear.explicit_params
         }
+        self.out_names = [p.basename for p in gear.out_ports]
         self.namedargs, self.varargs = find_vararg_input(gear)
         self.intfs = {}
         self.intfs['namedargs'] = self.namedargs
         self.intfs['varargs'] = self.varargs
         self.intfs['vars'] = {}
+        self.intfs['outputs'] = {}
 
     def visit_For(self, node):
         for arg in node.iter.args:
@@ -69,3 +73,23 @@ class IntfFinder(ast.NodeVisitor):
 
         for stmt in node.body:
             self.visit(stmt)
+
+    def visit_Assign(self, node):
+        if hasattr(node.targets[0], 'id'):
+            name = node.targets[0].id
+        elif hasattr(node.targets[0], 'value'):
+            name = node.targets[0].value.id
+        else:
+            assert False, 'Unknown assignment type'
+
+        if name not in self.intfs['outputs']:
+            try:
+                val = eval_expression(node.value, self.local_params)
+            except NameError:
+                return
+
+            if val is None:
+                self.intfs['outputs'][name] = self.out_names[0]
+            elif isinstance(val,
+                            (list, tuple)) and all([v is None for v in val]):
+                self.intfs['outputs'][name] = self.out_names
