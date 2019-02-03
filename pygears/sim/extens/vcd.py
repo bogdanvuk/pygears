@@ -1,6 +1,7 @@
+import subprocess
 from pygears import bind
 from pygears.core.port import OutPort
-from pygears.sim import timestep
+from pygears.sim import sim_log, timestep
 from pygears.typing import typeof, TLM
 from pygears.typing.visitor import TypingVisitorBase
 from vcd import VCDWriter
@@ -32,17 +33,17 @@ class VCDTypeVisitor(TypingVisitorBase):
         self.fields[field] = type_
 
     def visit_queue(self, type_, field):
-        self.visit(type_[0], f'{field}/data')
-        self.visit(type_[1:], f'{field}/eot')
+        self.visit(type_[0], f'{field}.data')
+        self.visit(type_[1:], f'{field}.eot')
 
     def visit_union(self, type_, field):
-        self.visit(type_[0], f'{field}/data')
-        self.visit(type_[1], f'{field}/ctrl')
+        self.visit(type_[0], f'{field}.data')
+        self.visit(type_[1], f'{field}.ctrl')
 
     def visit_default(self, type_, field):
         if hasattr(type_, 'fields'):
             for t, f in zip(type_, type_.fields):
-                self.visit(t, f'{field}/{f}')
+                self.visit(t, f'{field}.{f}')
         else:
             super().visit_default(type_, field)
 
@@ -54,20 +55,20 @@ class VCDValVisitor(TypingVisitorBase):
         self.timestep = timestep
 
     def change(self, dtype, field, val):
-        self.writer.change(self.vcd_vars[field],
-                           timestep() * 10, dtype(val).code())
+        self.writer.change(self.vcd_vars[field], self.timestep,
+                           dtype(val).code())
 
     def visit_int(self, type_, field, val=None):
         self.change(type_, field, val)
 
     def visit_union(self, type_, field, val=None):
-        self.visit(type_[0], f'{field}/data', val=val[0])
-        self.visit(type_[1], f'{field}/ctrl', val=val[1])
+        self.visit(type_[0], f'{field}.data', val=val[0])
+        self.visit(type_[1], f'{field}.ctrl', val=val[1])
 
     def visit_queue(self, type_, field, val=None):
         val = type_(val)
-        self.visit(type_[0], f'{field}/data', val=val[0])
-        self.visit(type_[1:], f'{field}/eot', val=val[1])
+        self.visit(type_[0], f'{field}.data', val=val[0])
+        self.visit(type_[1:], f'{field}.eot', val=val[1])
 
     def visit_uint(self, type_, field, val=None):
         self.change(type_, field, val)
@@ -78,7 +79,7 @@ class VCDValVisitor(TypingVisitorBase):
     def visit_default(self, type_, field, val=None):
         if hasattr(type_, 'fields'):
             for t, f, v in zip(type_, type_.fields, val):
-                self.visit(t, f'{field}/{f}', val=v)
+                self.visit(t, f'{field}.{f}', val=v)
 
 
 def register_traces_for_intf(dtype, scope, writer):
@@ -91,8 +92,14 @@ def register_traces_for_intf(dtype, scope, writer):
         v.visit(dtype, 'data')
 
         for name, t in v.fields.items():
+            field_scope, _, basename = name.rpartition('.')
+            if field_scope:
+                field_scope = '.'.join((scope, field_scope))
+            else:
+                field_scope = scope
+
             vcd_vars[name] = writer.register_var(
-                scope, name, 'wire', size=max(int(t), 1))
+                field_scope, basename, 'wire', size=max(int(t), 1))
 
     for sig in ('valid', 'ready'):
         vcd_vars[sig] = writer.register_var(scope, sig, 'wire', size=1, init=0)
@@ -141,18 +148,18 @@ class VCDHierVisitor(HierVisitorBase):
         self.include = include
         self.vcd_tlm = vcd_tlm
         self.sim_map = sim_map
-        self.gtkw = gtkw
+        # self.gtkw = gtkw
         self.vcd_vars = {}
         self.writer = writer
         self.indent = 0
 
     def enter_hier(self, name):
-        self.gtkw.begin_group(f'{" "*self.indent}{name}', closed=True)
+        # self.gtkw.begin_group(f'{" "*self.indent}{name}', closed=True)
         self.indent += 4
 
     def exit_hier(self, name):
         self.indent -= 4
-        self.gtkw.end_group(f'{" "*self.indent}{name}', closed=True)
+        # self.gtkw.end_group(f'{" "*self.indent}{name}', closed=True)
 
     def Gear(self, module):
         self.enter_hier(module.basename)
@@ -178,7 +185,7 @@ class VCDHierVisitor(HierVisitorBase):
                     if var.size > 1:
                         width = f'[{var.size - 1}:0]'
 
-                    self.gtkw.trace(f'{scope}.{name}{width}')
+                    # self.gtkw.trace(f'{scope}.{name}{width}')
                 self.exit_hier(p.basename)
 
         super().HierNode(module)
@@ -192,16 +199,53 @@ class VCD(SimExtend):
     @reg_inject
     def __init__(self,
                  top,
-                 fn='pygears.vcd',
+                 trace_fn='pygears.vcd',
                  include=['*'],
                  tlm=False,
+                 vcd_fifo=False,
+                 shmidcat=False,
+                 sim=Inject('sim/simulator'),
                  outdir=Inject('sim/artifact_dir'),
                  sim_map=Inject('sim/map')):
         super().__init__()
+        self.sim = sim
         self.finished = False
+        self.vcd_fifo = vcd_fifo
+        self.shmidcat = shmidcat
+        self.outdir = outdir
+        self.trace_fn = os.path.abspath(os.path.join(self.outdir, trace_fn))
+
         atexit.register(self.finish)
 
-        vcd_file = open(os.path.join(outdir, fn), 'w')
+        try:
+            subprocess.call(f"rm -f {self.trace_fn}", shell=True)
+        except OSError:
+            pass
+
+        if self.vcd_fifo:
+            subprocess.call(f"mkfifo {self.trace_fn}", shell=True)
+        else:
+            sim_log().info(
+                f'Verilator VCD dump to "{self.outdir}/vlt_dump.vcd"')
+
+        if self.shmidcat:
+            self.shmid_proc = subprocess.Popen(
+                f'shmidcat {self.trace_fn}',
+                shell=True,
+                stdout=subprocess.PIPE)
+
+            # Wait for shmidcat to actually open the pipe, which is necessary
+            # to happen prior to init of the verilator. If shmidcat does not
+            # open the pipe, verilator will get stuck
+            import time
+            time.sleep(0.1)
+
+        vcd_file = open(self.trace_fn, 'w')
+
+        if self.shmidcat:
+            self.shmid = self.shmid_proc.stdout.readline().decode().strip()
+            sim_log().info(
+                f'Verilator VCD dump to shared memory at 0x{self.shmid}')
 
         self.writer = VCDWriter(vcd_file, timescale='1 ns', date='today')
         bind('VCDWriter', self.writer)
@@ -215,41 +259,31 @@ class VCD(SimExtend):
 
         self.handhake = set()
 
-        with open(os.path.join(outdir, 'pygears.gtkw'), 'w') as f:
-            gtkw = GTKWSave(f)
-            v = VCDHierVisitor(gtkw, self.writer, include, tlm)
-            v.visit(top)
-            self.vcd_vars = v.vcd_vars
+        v = VCDHierVisitor(None, self.writer, include, tlm)
+        v.visit(top)
+        self.vcd_vars = v.vcd_vars
 
-            for intf in self.vcd_vars:
-                intf.events['put'].append(self.intf_put)
-                intf.events['ack'].append(self.intf_ack)
+        for intf in self.vcd_vars:
+            intf.events['put'].append(self.intf_put)
+            intf.events['ack'].append(self.intf_ack)
 
-        for module in sim_map:
-            gear_fn = module.name.replace('/', '_')
-            with open(os.path.join(outdir, f'{gear_fn}.gtkw'), 'w') as f:
-                gtkw = GTKWSave(f)
-                module_sav(gtkw, module, self.vcd_vars)
+        self.writer.flush()
 
-        # sim_map = registry('sim/map')
-        # for module, sim_gear in sim_map.items():
-        #     gear_vcd_scope = module.name[1:].replace('/', '.')
+        # with open(os.path.join(self.outdir, 'pygears.gtkw'), 'w') as f:
+        #     gtkw = GTKWSave(f)
+        #     v = VCDHierVisitor(gtkw, self.writer, include, tlm)
+        #     v.visit(top)
+        #     self.vcd_vars = v.vcd_vars
 
-        #     for p in itertools.chain(module.out_ports, module.in_ports):
-        #         if not is_trace_included(p, include, vcd_tlm):
-        #             continue
-
-        #         scope = '.'.join([gear_vcd_scope, p.basename])
-        #         if isinstance(p, OutPort):
-        #             intf = p.producer
-        #         else:
-        #             intf = p.consumer
-
-        #         self.vcd_vars[intf] = register_traces_for_intf(
-        #             p.dtype, scope, self.writer)
-
+        #     for intf in self.vcd_vars:
         #         intf.events['put'].append(self.intf_put)
         #         intf.events['ack'].append(self.intf_ack)
+
+        # for module in sim_map:
+        #     gear_fn = module.name.replace('/', '_')
+        #     with open(os.path.join(outdir, f'{gear_fn}.gtkw'), 'w') as f:
+        #         gtkw = GTKWSave(f)
+        #         module_sav(gtkw, module, self.vcd_vars)
 
     def intf_put(self, intf, val):
         v = self.vcd_vars[intf]
@@ -274,6 +308,7 @@ class VCD(SimExtend):
         return True
 
     def after_timestep(self, sim, timestep):
+        timestep += 1
         self.writer.change(self.timestep_var, timestep * 10, timestep)
         self.writer.change(self.clk_var, timestep * 10, 1)
         for intf, v in self.vcd_vars.items():
@@ -282,12 +317,35 @@ class VCD(SimExtend):
                 self.writer.change(v['valid'], timestep * 10, 0)
                 self.handhake.remove(intf)
 
+        self.writer.flush()
+
         return True
 
     def finish(self):
         if not self.finished:
             self.writer.close()
             self.finished = True
+
+    # def before_run(self, sim):
+    #     sim_map = registry('sim/map')
+    #     for module, sim_gear in sim_map.items():
+    #         gear_vcd_scope = module.name[1:].replace('/', '.')
+
+    #         for p in itertools.chain(module.out_ports, module.in_ports):
+    #             if not is_trace_included(p, include, vcd_tlm):
+    #                 continue
+
+    #             scope = '.'.join([gear_vcd_scope, p.basename])
+    #             if isinstance(p, OutPort):
+    #                 intf = p.producer
+    #             else:
+    #                 intf = p.consumer
+
+    #             self.vcd_vars[intf] = register_traces_for_intf(
+    #                 p.dtype, scope, self.writer)
+
+    #             intf.events['put'].append(self.intf_put)
+    #             intf.events['ack'].append(self.intf_ack)
 
     def after_run(self, sim):
         self.finish()
