@@ -1,5 +1,5 @@
 import hdl_types as ht
-from pygears.typing import Array, Integer, Queue, typeof, Int, Uint
+from pygears.typing import Array, Int, Integer, Queue, Uint, typeof
 
 from .inst_visit import InstanceVisitor
 
@@ -12,7 +12,15 @@ class SVExpressionVisitor(InstanceVisitor):
         return int(node.val)
 
     def visit_IntfReadyExpr(self, node):
-        return 'dout.ready'
+        res = []
+        for port in node.out_port:
+            if port.context:
+                r = svexpr(
+                    ht.BinOpExpr((f'{port.name}.ready', port.context), '&&'))
+                res.append(f'({r})')
+            else:
+                res.append(f'{port.name}.ready')
+        return ' || '.join(res)
 
     def visit_AttrExpr(self, node):
         val = [self.visit(node.val)]
@@ -79,11 +87,14 @@ class SVExpressionVisitor(InstanceVisitor):
     def visit_IntfExpr(self, node):
         if node.context:
             if node.context is 'eot':
-                return f'&{node.intf.basename}_s.{node.context}'
+                return f'&{node.name}_s.{node.context}'
             else:
-                return f'{node.intf.basename}.{node.context}'
+                return f'{node.name}.{node.context}'
         else:
-            return f'{node.intf.basename}_s'
+            return f'{node.name}_s'
+
+    def visit_IntfDef(self, node):
+        return self.visit_IntfExpr(node)
 
     def generic_visit(self, node):
         return node

@@ -12,6 +12,8 @@ class CBlock:
     child: list
     hdl_block: pytypes.Any
     state_ids: list = field(init=False, default=None)
+    prolog: list = None
+    epilog: list = None
 
 
 @dataclass
@@ -55,7 +57,13 @@ class Scheduler(ht.TypeVisitor):
             child = self.visit(stmt)
             if (child is None) or self.non_state_block(child):
                 if leaf_found:
-                    leaf_found.hdl_blocks.append(stmt)
+                    if isinstance(leaf_found, Leaf):
+                        leaf_found.hdl_blocks.append(stmt)
+                    else:
+                        if leaf_found.epilog:
+                            leaf_found.epilog.append(stmt)
+                        else:
+                            leaf_found.epilog = [stmt]
                 else:
                     free_stmts.append(stmt)
             else:
@@ -67,9 +75,11 @@ class Scheduler(ht.TypeVisitor):
                         if isinstance(child, Leaf):
                             child.hdl_blocks = free_stmts + child.hdl_blocks
                         else:
-                            # safe guard
-                            from .hdl_ast import VisitError
-                            raise VisitError("Free stmts cannot be here..")
+                            if child.prolog:
+                                child.prolog.extend(free_stmts)
+                            else:
+                                child.prolog = free_stmts
+                            free_stmts = []
 
                 leaf_found = child
                 child = None
@@ -78,7 +88,6 @@ class Scheduler(ht.TypeVisitor):
             cnode.child.append(leaf_found)
         else:
             if (not cnode.child) and free_stmts:
-                # assert isinstance(cnode, MutexCBlock)
                 cnode.child.append(
                     Leaf(parent=self.scope[-1], hdl_blocks=free_stmts))
 

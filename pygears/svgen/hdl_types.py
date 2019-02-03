@@ -23,8 +23,9 @@ def find_exit_cond(statements, search_in_cond=False):
         if hasattr(stmt, 'exit_cond'):
             stmt_cond = stmt.exit_cond
             if stmt_cond is not None:
-                if search_in_cond and hasattr(
-                        stmt, 'in_cond') and (stmt.in_cond is not None):
+                if search_in_cond and (not isinstance(
+                        stmt, IfBlock)) and hasattr(
+                            stmt, 'in_cond') and (stmt.in_cond is not None):
                     return and_expr(f'exit_cond_block_{stmt.id}', stmt.in_cond)
                 else:
                     return f'exit_cond_block_{stmt.id}'
@@ -75,6 +76,8 @@ class Expr:
 
 @dataclass
 class IntfReadyExpr(Expr):
+    out_port: pytypes.Any
+
     @property
     def dtype(self):
         return Bool
@@ -89,7 +92,20 @@ class ResExpr(Expr):
         if is_type(type(self.val)):
             return type(self.val)
         else:
-            return Integer(self.val)
+            if isinstance(self.val, (list, tuple)):
+                res = []
+                for v in self.val:
+                    if is_type(type(v)):
+                        res.append(type(v))
+                    else:
+                        if v is not None:
+                            res.append(Integer(v))
+                        else:
+                            res.append(None)
+                return res
+            else:
+                if self.val is not None:
+                    return Integer(self.val)
 
 
 @dataclass
@@ -153,6 +169,30 @@ class IntfExpr(Expr):
     @property
     def name(self):
         return self.intf.basename
+
+    @property
+    def dtype(self):
+        return self.intf.dtype
+
+
+@dataclass
+class IntfDef(Expr):
+    intf: pytypes.Any
+    name: str
+    context: str = None
+
+    @property
+    def dtype(self):
+        if isinstance(self.intf, tuple):
+            return self.intf[0].dtype
+        else:
+            return self.intf.dtype
+
+
+@dataclass
+class IntfStmt(Expr):
+    intf: IntfExpr
+    val: Expr
 
     @property
     def dtype(self):
@@ -321,7 +361,11 @@ class IntfLoop(Block):
     @property
     def exit_cond(self):
         exit_condition = find_exit_cond(self.stmts)
-        intf_expr = IntfExpr(self.intf.intf, context='eot')
+        if isinstance(self.intf, IntfExpr):
+            intf_expr = IntfExpr(self.intf.intf, context='eot')
+        else:
+            intf_expr = IntfDef(
+                intf=self.intf.intf, name=self.intf.name, context='eot')
         return and_expr(intf_expr, exit_condition)
 
 
@@ -399,15 +443,11 @@ class Loop(Block):
 @dataclass
 class Yield(Block):
     expr: Expr
-    _in_cond: Expr = None
-
-    @property
-    def in_cond(self):
-        return self._in_cond
+    ports: pytypes.Any
 
     @property
     def cycle_cond(self):
-        return IntfReadyExpr()
+        return IntfReadyExpr(self.ports)
 
     @property
     def exit_cond(self):
@@ -421,6 +461,8 @@ class Module:
     locals: pytypes.Dict
     regs: pytypes.Dict
     variables: pytypes.Dict
+    intfs: pytypes.Dict
+    out_intfs: pytypes.Dict
     stmts: pytypes.List
 
     @property
@@ -495,6 +537,11 @@ class Conditions:
                 cond.append(f'exit_cond_block_{s.id}')
 
         return reduce(and_expr, cond, None)
+
+    @property
+    def rst_cond(self):
+        b = [s.hdl_block for s in self.scope[1:]]
+        return find_exit_cond(b, search_in_cond=True)
 
     def enter_block(self, block):
         self.scope.append(block)
