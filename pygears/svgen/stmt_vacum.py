@@ -38,6 +38,8 @@ class StmtVacum(ht.TypeVisitor):
         if free_stmts and sub_blocks:
             # add else blocks if needed
             for i in sub_blocks:
+                # if hasattr(node.stmts[i],
+                #            'in_cond') and node.stmts[i].in_cond is not None:
                 if isinstance(node.stmts[i], ht.IfBlock):
                     else_block = ht.IfBlock(
                         _in_cond=ht.UnaryOpExpr(node.stmts[i].in_cond, '!'),

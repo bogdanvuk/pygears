@@ -1,6 +1,9 @@
 import random
 from functools import partial
 
+import pytest
+
+from pygears.cookbook.delay import delay_rng
 from pygears.cookbook.trr import trr
 from pygears.cookbook.verif import directed, verif
 from pygears.sim import sim
@@ -14,14 +17,20 @@ from pygears.util.test_utils import prepare_result_dir, skip_ifndef
 t_din = Queue[Uint[16]]
 
 
-def test_directed(tmpdir, sim_cls):
+@pytest.mark.parametrize('din_delay', [0, 1])
+@pytest.mark.parametrize('dout_delay', [0, 1])
+def test_directed(tmpdir, sim_cls, din_delay, dout_delay):
     directed(
-        drv(t=t_din, seq=[list(range(9)), list(range(3))]),
-        drv(t=t_din, seq=[list(range(9)), list(range(3))]),
-        drv(t=t_din, seq=[list(range(9)), list(range(3))]),
+        drv(t=t_din, seq=[list(range(9)), list(range(3))])
+        | delay_rng(din_delay, din_delay),
+        drv(t=t_din, seq=[list(range(9)), list(range(3))])
+        | delay_rng(din_delay, din_delay),
+        drv(t=t_din, seq=[list(range(9)), list(range(3))])
+        | delay_rng(din_delay, din_delay),
         f=trr(sim_cls=sim_cls),
         ref=[[[0, 1, 2, 3, 4, 5, 6, 7, 8], [0, 1, 2, 3, 4, 5, 6, 7, 8],
-              [0, 1, 2, 3, 4, 5, 6, 7, 8]], [[0, 1, 2], [0, 1, 2], [0, 1, 2]]])
+              [0, 1, 2, 3, 4, 5, 6, 7, 8]], [[0, 1, 2], [0, 1, 2], [0, 1, 2]]],
+        delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(outdir=tmpdir)
 
