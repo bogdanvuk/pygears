@@ -56,6 +56,9 @@ class SimVerilated(CosimBase):
         self.trace_fn = None
         self.vcd_fifo = vcd_fifo
         self.shmidcat = shmidcat
+        self.shmid_proc = None
+        self.verilib = None
+        self.finished = False
 
     def setup(self):
         rebuild = True
@@ -86,7 +89,7 @@ class SimVerilated(CosimBase):
         self.finished = False
         atexit.register(self._finish)
 
-        if self.shmidcat:
+        if self.shmidcat and tracing_enabled:
             self.shmid_proc = subprocess.Popen(
                 f'shmidcat {self.trace_fn}',
                 shell=True,
@@ -100,7 +103,7 @@ class SimVerilated(CosimBase):
 
         self.verilib.init()
 
-        if self.shmidcat:
+        if self.shmid_proc:
             self.shmid = self.shmid_proc.stdout.readline().decode().strip()
             sim_log().info(
                 f'Verilator VCD dump to shared memory at 0x{self.shmid}')
@@ -178,6 +181,7 @@ class SimVerilated(CosimBase):
         if not self.finished:
             self.finished = True
             super()._finish()
-            self.verilib.final()
-            if self.shmidcat:
+            if self.verilib:
+                self.verilib.final()
+            if self.shmid_proc:
                 self.shmid_proc.terminate()
