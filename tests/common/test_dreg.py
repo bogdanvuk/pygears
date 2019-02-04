@@ -12,7 +12,7 @@ def test_pygears_sim(tmpdir):
 
     sim(outdir=tmpdir)
 
-    assert timestep() == (len(seq) + 1)
+    assert timestep() == len(seq)
 
 
 def test_cosim(tmpdir, cosim_cls):

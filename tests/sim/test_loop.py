@@ -86,7 +86,7 @@ def multicycle_test_gen(tmpdir, func, latency):
 
     sim(outdir=tmpdir)
 
-    assert registry('sim/timestep') == (data_num + latency)
+    assert registry('sim/timestep') == (data_num + latency - 1)
 
 
 def test_multicycle_thin(tmpdir):

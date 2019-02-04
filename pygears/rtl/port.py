@@ -13,6 +13,10 @@ class Port:
         self.basename = basename
         self.dtype = dtype
 
+    @property
+    def name(self):
+        return f'{self.node.name}.{self.basename}'
+
 
 class InPort(Port):
     pass

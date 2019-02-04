@@ -80,7 +80,8 @@ class CosimBase(SimGear):
     def read_out(self, port):
         if self.eval_needed:
             self.handlers[self.SYNCHRO_HANDLE_NAME].forward()
-            self.eval_needed = False
+
+        self.eval_needed = True
 
         hout = self.handlers[port.basename]
         hout.reset()
@@ -97,6 +98,12 @@ class CosimBase(SimGear):
 
         hin = self.handlers[port.basename]
         return hin.send(data)
+
+    def reset_out(self, port):
+        self.eval_needed = True
+
+        hout = self.handlers[port.basename]
+        hout.reset()
 
     def reset_in(self, port):
         self.eval_needed = True
@@ -141,9 +148,9 @@ class CosimBase(SimGear):
 
                 self.handlers[self.SYNCHRO_HANDLE_NAME].cycle()
                 self.activity_monitor += 1
+                # self.eval_needed = True
 
                 # sim_log().info(f'Waiting for a clock')
-
 
                 # if self.eval_needed:
                 #     self.handlers[self.SYNCHRO_HANDLE_NAME].forward()

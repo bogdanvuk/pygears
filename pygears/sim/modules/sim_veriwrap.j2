@@ -33,6 +33,7 @@ void cycle(void) {
 #ifdef DEBUG
     printf("---- cycle   ----\n");
 #endif
+    top->eval();
 {% if tracing %}
     if (tfp) tfp->dump (main_time);
 {% endif %}
