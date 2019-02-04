@@ -3,7 +3,7 @@ import importlib
 
 import hdl_types as ht
 from pygears.typing import (Array, Int, Integer, Queue, Tuple, Uint, Unit,
-                            bitw, is_type, typeof)
+                            bitw, is_type, typeof, Bool)
 from pygears.typing.base import TypingMeta
 
 opmap = {

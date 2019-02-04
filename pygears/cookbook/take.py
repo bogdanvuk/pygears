@@ -1,6 +1,6 @@
 from pygears import alternative, gear
 from pygears.common import cart
-from pygears.typing import Queue, Tuple, Uint
+from pygears.typing import Queue, Tuple, Uint, Bool
 
 
 @gear(svgen={'compile': True})
@@ -8,7 +8,7 @@ async def take(din: Queue[Tuple['t_data', Uint]], *,
                init=1) -> Queue['t_data']:
 
     cnt = din.dtype[0][1](init)
-    pass_eot = True
+    pass_eot = Bool(True)
 
     async for ((data, size), eot) in din:
         last = (cnt == size) and pass_eot
@@ -35,7 +35,7 @@ async def qtake(din: Queue[Tuple['t_data', Uint], 2], *,
     '''
 
     cnt = din.dtype[0][1](init)
-    pass_eot = True
+    pass_eot = Bool(True)
 
     async for ((data, size), eot) in din:
         cnt += eot[0]

@@ -526,17 +526,20 @@ class Conditions:
 
     @property
     def exit_cond(self):
-        cond = []
-        for c in reversed(self.scope[1:]):
-            s = c.hdl_block
-            if isinstance(s, ContainerBlock):
-                continue
+        # cond = []
+        # for c in reversed(self.scope[1:]):
+        #     s = c.hdl_block
+        #     if isinstance(s, ContainerBlock):
+        #         continue
 
-            if s.exit_cond and s.exit_cond != 1:
-                self.exit_conds.append(s.id)
-                cond.append(f'exit_cond_block_{s.id}')
+        #     if s.exit_cond and s.exit_cond != 1:
+        #         self.exit_conds.append(s.id)
+        #         cond.append(f'exit_cond_block_{s.id}')
 
-        return reduce(and_expr, cond, None)
+        # return reduce(and_expr, cond, None)
+        s = self.scope[-1].hdl_block
+        self.exit_conds.append(s.id)
+        return f'exit_cond_block_{s.id}'
 
     @property
     def rst_cond(self):

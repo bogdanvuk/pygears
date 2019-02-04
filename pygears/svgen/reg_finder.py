@@ -3,6 +3,7 @@ import ast
 import hdl_types as ht
 
 from .hdl_ast import eval_expression, set_pg_type
+from pygears.typing import is_type
 
 
 class RegFinder(ast.NodeVisitor):
@@ -21,7 +22,9 @@ class RegFinder(ast.NodeVisitor):
         val = self.variables[name]
 
         # wire, not register
-        if isinstance(val, ast.AST):
+        # if isinstance(val, ast.AST):
+        # TODO
+        if not is_type(type(val)):
             return
 
         val = set_pg_type(val)

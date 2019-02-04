@@ -51,6 +51,9 @@ class HDLBlock:
 
 @dataclass
 class HDLStmtVisitor:
+    def __init__(self):
+        self.control_suffix = ['_en', '.valid', '.ready']
+
     def visit(self, node, conds, **kwds):
         method = 'visit_' + node.__class__.__name__
         visitor = getattr(self, method, self.generic_visit)
@@ -90,8 +93,7 @@ class HDLStmtVisitor:
         return block
 
     def is_control_var(self, name):
-        control_suffix = ['_en', '.valid', '.ready']
-        for suff in control_suffix:
+        for suff in self.control_suffix:
             if name.endswith(suff):
                 return True
         return False
@@ -163,11 +165,22 @@ class RegEnVisitor(HDLStmtVisitor):
 
 
 class VariableVisitor(HDLStmtVisitor):
+    def __init__(self):
+        super().__init__()
+        self.seen_var = []
+
+    def assign_var(self, name):
+        if name in self.seen_var:
+            if name not in self.control_suffix:
+                self.control_suffix.append(name)
+        else:
+            self.seen_var.append(name)
+
     def visit_VariableStmt(self, node, conds, **kwds):
+        name = f'{node.variable.name}_v'
+        self.assign_var(name)
         return AssignValue(
-            target=f'{node.variable.name}_v',
-            val=node.val,
-            width=int(node.variable.dtype))
+            target=name, val=node.val, width=int(node.variable.dtype))
 
 
 class OutputVisitor(HDLStmtVisitor):
