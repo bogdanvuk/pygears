@@ -1,5 +1,5 @@
 import subprocess
-from pygears import bind
+from pygears import bind, PluginBase, safe_bind
 from pygears.core.port import OutPort
 from pygears.sim import sim_log, timestep
 from pygears.typing import typeof, TLM
@@ -202,8 +202,8 @@ class VCD(SimExtend):
                  trace_fn='pygears.vcd',
                  include=['*'],
                  tlm=False,
-                 vcd_fifo=False,
-                 shmidcat=False,
+                 shmidcat=Inject('sim/extens/vcd/shmidcat'),
+                 vcd_fifo=Inject('sim/extens/vcd/vcd_fifo'),
                  sim=Inject('sim/simulator'),
                  outdir=Inject('sim/artifact_dir'),
                  sim_map=Inject('sim/map')):
@@ -214,6 +214,7 @@ class VCD(SimExtend):
         self.shmidcat = shmidcat
         self.outdir = outdir
         self.trace_fn = os.path.abspath(os.path.join(self.outdir, trace_fn))
+        self.shmid_proc = None
 
         atexit.register(self.finish)
 
@@ -269,22 +270,6 @@ class VCD(SimExtend):
 
         self.writer.flush()
 
-        # with open(os.path.join(self.outdir, 'pygears.gtkw'), 'w') as f:
-        #     gtkw = GTKWSave(f)
-        #     v = VCDHierVisitor(gtkw, self.writer, include, tlm)
-        #     v.visit(top)
-        #     self.vcd_vars = v.vcd_vars
-
-        #     for intf in self.vcd_vars:
-        #         intf.events['put'].append(self.intf_put)
-        #         intf.events['ack'].append(self.intf_ack)
-
-        # for module in sim_map:
-        #     gear_fn = module.name.replace('/', '_')
-        #     with open(os.path.join(outdir, f'{gear_fn}.gtkw'), 'w') as f:
-        #         gtkw = GTKWSave(f)
-        #         module_sav(gtkw, module, self.vcd_vars)
-
     def intf_put(self, intf, val):
         v = self.vcd_vars[intf]
 
@@ -326,32 +311,12 @@ class VCD(SimExtend):
             self.writer.close()
             self.finished = True
 
-    # def before_run(self, sim):
-    #     sim_map = registry('sim/map')
-    #     for module, sim_gear in sim_map.items():
-    #         gear_vcd_scope = module.name[1:].replace('/', '.')
-
-    #         for p in itertools.chain(module.out_ports, module.in_ports):
-    #             if not is_trace_included(p, include, vcd_tlm):
-    #                 continue
-
-    #             scope = '.'.join([gear_vcd_scope, p.basename])
-    #             if isinstance(p, OutPort):
-    #                 intf = p.producer
-    #             else:
-    #                 intf = p.consumer
-
-    #             self.vcd_vars[intf] = register_traces_for_intf(
-    #                 p.dtype, scope, self.writer)
-
-    #             intf.events['put'].append(self.intf_put)
-    #             intf.events['ack'].append(self.intf_ack)
-
     def after_run(self, sim):
         self.finish()
 
 
-# class SimVCDPlugin(SimPlugin):
-#     @classmethod
-#     def bind(cls):
-#         cls.registry['sim']['flow'].append(VCD)
+class SimVCDPlugin(PluginBase):
+    @classmethod
+    def bind(cls):
+        safe_bind('sim/extens/vcd/shmidcat', False)
+        safe_bind('sim/extens/vcd/vcd_fifo', False)
