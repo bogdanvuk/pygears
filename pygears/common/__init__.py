@@ -9,6 +9,7 @@ from .cart import cart, cart_sync, cart_sync_with
 from .union import (union_sync, union_collapse, union_sync_with, case, when)
 from .queue import queue_wrap_from
 from .cast import cast
+from .degen import degen
 from .quenvelope import quenvelope
 from .sieve import sieve
 from .fmap import fmap
