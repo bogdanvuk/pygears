@@ -121,6 +121,8 @@ def custom_action(logger_name, message, severity, log_cfgs=Inject('logger')):
             log_action_exception(logger_name, message)
         elif log_cfg[severity] == 'debug':
             log_action_debug()
+        elif log_cfg[severity] == 'pass':
+            pass
         else:
             # custom function in registry
             log_cfg[severity](message)
@@ -196,6 +198,8 @@ class CustomLog:
       - ``exception``: if set, an exception will be raised whenever logging the
         message at the desired level
       - ``debug``: if set, the debugger will be started and execution paused
+      - ``pass``: if set, the message will be printed and no further action
+        taken; this is usefull for clearing prevously set values
 
     Sets the verbosity level for the ``core`` logger at ``INFO`` level:
 

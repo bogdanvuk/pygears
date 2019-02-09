@@ -31,7 +31,7 @@ def tlm_verif(*seq, f, ref):
     return report
 
 
-def verif(*stim, f, ref, delays=None):
+def verif(*stim, f, ref, delays=None, tolerance=0):
     '''Using ref. model'''
 
     res_tlm = stim | f
@@ -56,7 +56,7 @@ def verif(*stim, f, ref, delays=None):
         res_intf = res_intf | decoupler(depth=0)
         ref_intf = ref_intf | decoupler(depth=0)
 
-        scoreboard(res_intf, ref_intf, report=r)
+        scoreboard(res_intf, ref_intf, report=r, tolerance=tolerance)
 
     return report
 
