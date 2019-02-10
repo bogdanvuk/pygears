@@ -69,11 +69,6 @@ Checkout the examples
 
 `Cookbook library <https://github.com/bogdanvuk/pygears/tree/master/pygears/cookbook>`_
 
-References
-----------
-
-- `Kortiq's <http://www.kortiq.com/>`_ AIScale Deep Learning Processor was completely developed using **PyGears**
-
 Contributions
 =============
 

@@ -15,7 +15,11 @@ A gear is defined in PyGears using a function construct in the following way:
 
 .. raw:: latex
 
-    \begin{lstlisting}[language=python]
+
+   \lstset{language=python,
+           basicstyle=\ttfamily\footnotesize
+           }
+    \begin{lstlisting}
     @gear
     def gear_name(
             in1: T1, ..., inN: TN,
@@ -23,14 +27,14 @@ A gear is defined in PyGears using a function construct in the following way:
             p1=dflt1, ..., pM=dfltM
             ) -> ReturnType:
 
-        Gear Implementation
+        Function body: gear implementation
     \end{lstlisting}
 
 Python decorator statement ``@gear`` informs PyGears that what follows is not a regular Python function definition, but a gear definition. ``def`` is a Python keyword for function definition, and the ``gear_name`` is where the name of the gear is stated (akin to module/entity names in Verilog/VHDL), and it will be used later to make instances of the gear.
 
 In brackets, the input DTI interfaces and compile-time parameters are declared, where the character "``*``" delimits between the two. Each input interface: ``in1``, ... ``inN``, can have a type declared too: ``T1``, ... ``TN``. Input types will be used by PyGears at compile time to perform type checking, to setup the gears which are polymorphic, and to automatically infer some connectivity logic between the gears to facilitate the composition. A gear can optionally support compile time parameters, ``p1``, ... ``pM``, with their default values ``dflt1``, ... ``dfltM``, that can be used to configure the gear instance. Finally the ``ReturnType`` specifies the types of the output interfaces.
 
-The body of the function (``Gear Implementation``) is used to describe the gear implementation in one of the two ways depending on the type of the gear being described. Gears that implement the smallest functional units belong to the first type, and are described in SystemVerilog following the Gears methodology. These gears do not have to have a description in Python, i.e. the body of their function definitions can be left empty since they are fully defined by their SystemVerilog descriptions.
+The body of the function is used to describe the gear implementation in one of the two ways depending on the type of the gear being described. Gears that implement the smallest functional units belong to the first type, and are described in SystemVerilog following the Gears methodology. These gears do not have to have a description in Python, i.e. the body of their function definitions can be left empty since they are fully defined by their SystemVerilog descriptions.
 
 Gears that are described in terms of the composition of lower-level gears are of the second type, and are analogous to the hierarchical modules of traditional HDLs. They do not have a SystemVerilog implementation because it is generated automatically by PyGears given their Python description.
 
@@ -42,9 +46,8 @@ Once defined, a gear can be instantiated as many times as needed in the design u
 .. raw:: latex
 
     \begin{lstlisting}[language=python]
-    outputs = gear_name(
-        in1, ..., inN,
-        p1=val1, ..., pM=valM)
+    outputs = gear_name(in1, ..., inN,
+                        p1=val1, ..., pM=valM)
     \end{lstlisting}
 
 For a gear with a single output interface, the function call returns a Python object that represents that output interface. For a gear with multiple outputs, a tuple of interface objects is returned. Returned output interface objects can then be supplied when instantiating other gears, which then establishes connections between the gear instances.
