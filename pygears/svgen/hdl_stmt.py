@@ -1,4 +1,3 @@
-import re
 import typing as pytypes
 from dataclasses import dataclass
 
@@ -309,51 +308,52 @@ class BlockConditionsVisitor(HDLStmtVisitor):
         self.exit_conds = exit_conds
         self.condition_assigns = CombSeparateStmts(stmts=[])
 
-    def _find_sub_conds(self, block, cond_t='cycle'):
-        cond = getattr(block, cond_t + '_cond', None)
-        if cond:
-            sub_ids = [
-                int(re.findall(r'\d+', m.group(0))[0])
-                for m in re.finditer('cycle_cond_block_\d+', str(cond))
-            ]
-            for sub_id in sub_ids:
-                if sub_id not in self.cycle_conds:
-                    self.cycle_conds.append(sub_id)
-            sub_ids = [
-                int(re.findall(r'\d+', m.group(0))[0])
-                for m in re.finditer('exit_cond_block_\d+', str(cond))
-            ]
-
-            for sub_id in sub_ids:
-                if sub_id not in self.exit_conds:
-                    self.exit_conds.append(sub_id)
+    def find_subconds(self, cond):
+        if not isinstance(cond, str):
+            res = ht.find_sub_cond_ids(cond)
+            if 'exit' in res:
+                for sub_id in res['exit']:
+                    if sub_id not in self.exit_conds:
+                        self.exit_conds.append(sub_id)
+            if 'cycle' in res:
+                for sub_id in res['cycle']:
+                    if sub_id not in self.cycle_conds:
+                        self.cycle_conds.append(sub_id)
 
     def get_cycle_cond(self):
         if self.current_scope.id in self.cycle_conds:
-            self._find_sub_conds(self.current_scope, 'cycle')
             cond = self.current_scope.cycle_cond
+            self.find_subconds(cond)
             if cond is None:
                 cond = 1
             res = AssignValue(
-                target=f'cycle_cond_block_{self.current_scope.id}', val=cond)
+                target=ht.cond_name.substitute(
+                    cond_type='cycle', block_id=self.current_scope.id),
+                val=cond)
             if res not in self.condition_assigns.stmts:
                 self.condition_assigns.stmts.append(res)
 
     def get_exit_cond(self):
         if self.current_scope.id in self.exit_conds:
-            self._find_sub_conds(self.current_scope, 'exit')
             cond = self.current_scope.exit_cond
+            self.find_subconds(cond)
             if cond is None:
                 cond = 1
             res = AssignValue(
-                target=f'exit_cond_block_{self.current_scope.id}', val=cond)
+                target=ht.cond_name.substitute(
+                    cond_type='exit', block_id=self.current_scope.id),
+                val=cond)
             if res not in self.condition_assigns.stmts:
                 self.condition_assigns.stmts.append(res)
 
     def enter_block(self, block, conds, **kwds):
         super().enter_block(block, conds, **kwds)
         if isinstance(block, ht.Module):
-            self._find_sub_conds(block, 'rst')
+            rst_c = self.current_scope.rst_cond
+            if isinstance(rst_c, str):
+                self.exit_conds.append(ht.find_cond_id(rst_c))
+            else:
+                self.find_subconds(rst_c)
         self.get_cycle_cond()
         self.get_exit_cond()
 

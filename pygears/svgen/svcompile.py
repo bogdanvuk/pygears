@@ -1,3 +1,4 @@
+import hdl_types as ht
 from pygears.typing import Uint, bitw
 
 from .hdl_compile import HDLWriter, parse_gear_body
@@ -115,7 +116,8 @@ def write_module(node, sv_stmts, writer, block_conds, state_num):
 
     for cond, values in block_conds.items():
         for id in values:
-            writer.line(f'logic {cond}_cond_block_{id};')
+            c_name = ht.cond_name.substitute(cond_type=cond, block_id=id)
+            writer.line(f'logic {c_name};')
     writer.line()
 
     if node.regs:
