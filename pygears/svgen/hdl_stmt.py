@@ -5,7 +5,7 @@ import hdl_types as ht
 from pygears.typing.base import TypingMeta
 
 from .simplify_expression import simplify_expr
-from .hdl_utils import add_to_list
+from .hdl_utils import add_to_list, state_expr
 
 
 def find_cond(cond, **kwds):
@@ -303,10 +303,12 @@ class IntfValidVisitor(HDLStmtVisitor):
 
 
 class BlockConditionsVisitor(HDLStmtVisitor):
-    def __init__(self, cycle_conds, exit_conds):
+    def __init__(self, cycle_conds, exit_conds, reg_num, state_num):
         super().__init__()
         self.cycle_conds = cycle_conds
         self.exit_conds = exit_conds
+        self.reg_num = reg_num
+        self.state_num = state_num
         self.in_conds = []
         self.condition_assigns = CombSeparateStmts(stmts=[])
 
@@ -367,33 +369,43 @@ class BlockConditionsVisitor(HDLStmtVisitor):
             if res not in self.condition_assigns.stmts:
                 self.condition_assigns.stmts.append(res)
 
+    def get_rst_cond(self):
+        original_cond = self.current_scope.rst_cond
+        cond = simplify_expr(original_cond)
+        if cond is None:
+            cond = 1
+
+        if self.state_num > 0:
+            rst_cond = state_expr([self.state_num], cond)
+        else:
+            rst_cond = cond
+        res = AssignValue(target='rst_cond', val=rst_cond)
+        self.condition_assigns.stmts.append(res)
+
+        if isinstance(cond, str):
+            self.exit_conds.append(ht.find_cond_id(cond))
+        else:
+            self.find_subconds(cond)
+
     def enter_block(self, block, conds, **kwds):
         super().enter_block(block, conds, **kwds)
-        if isinstance(block, ht.Module):
-            rst_c = self.current_scope.rst_cond
-            if isinstance(rst_c, str):
-                self.exit_conds.append(ht.find_cond_id(rst_c))
-            else:
-                self.find_subconds(rst_c)
+        if isinstance(block, ht.Module) and self.reg_num > 0:
+            self.get_rst_cond()
         self.get_cycle_cond()
         self.get_exit_cond()
         self.get_in_cond()  # must be last
 
 
 class StateTransitionVisitor(HDLStmtVisitor):
-    def __init__(self, state_num):
-        super().__init__()
-        self.enable = state_num > 0
-
     def enter_block(self, block, conds, **kwds):
         super().enter_block(block, conds, **kwds)
-        if isinstance(block, ht.Module) and self.enable:
+        if isinstance(block, ht.Module):
             return AssignValue(f'state_en', 0)
 
     def visit_all_Block(self, node, conds, **kwds):
         block = super().visit_all_Block(node, conds, **kwds)
 
-        if ('state_id' in kwds) and self.enable:
+        if ('state_id' in kwds):
             cond = find_exit_cond(conds=conds, **kwds)
             add_to_list(block.stmts, [
                 AssignValue(target=f'state_en', val=cond),

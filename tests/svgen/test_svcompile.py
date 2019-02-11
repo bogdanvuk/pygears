@@ -65,11 +65,10 @@ simple_qcnt_res = """
 typedef logic [15:0] cnt_t; // u16
 logic cnt_en;
 cnt_t cnt_reg, cnt_next;
+logic rst_cond;
 logic exit_cond_block_1;
 logic cycle_cond_block_2;
 logic exit_cond_block_2;
-logic rst_cond;
-assign rst_cond = exit_cond_block_1 && din.valid;
 always_ff @(posedge clk) begin
     if(rst | rst_cond) begin
         cnt_reg = 1;
@@ -97,6 +96,7 @@ always_comb begin
         din.ready = cycle_cond_block_2;
     end
 end
+assign rst_cond = din.valid && exit_cond_block_1;
 assign exit_cond_block_1 = &din_s.eot && exit_cond_block_2;
 assign cycle_cond_block_2 = dout.ready;
 assign exit_cond_block_2 = dout.ready;
@@ -140,11 +140,10 @@ logic i_en;
 i_t i_reg, i_next;
 typedef logic [0:0] last_t; // u1
 last_t last_v;
+logic rst_cond;
 logic exit_cond_block_2;
 logic cycle_cond_block_3;
 logic exit_cond_block_3;
-logic rst_cond;
-assign rst_cond = exit_cond_block_2 && din.valid;
 always_ff @(posedge clk) begin
     if(rst | rst_cond) begin
         i_reg = 0;
@@ -175,6 +174,7 @@ always_comb begin
         din.ready = exit_cond_block_2;
     end
 end
+assign rst_cond = din.valid && exit_cond_block_2;
 assign exit_cond_block_2 = (last_v && exit_cond_block_3) && cycle_cond_block_3;
 assign cycle_cond_block_3 = dout.ready;
 assign exit_cond_block_3 = dout.ready;
@@ -197,10 +197,9 @@ offset_added_t offset_added_reg, offset_added_next;
 typedef logic [0:0] state_t; // u1
 logic state_en;
 state_t state_reg, state_next;
+logic rst_cond;
 logic exit_cond_block_1;
 logic exit_cond_block_2;
-logic rst_cond;
-assign rst_cond = exit_cond_block_2 && (state_reg == 1);
 always_ff @(posedge clk) begin
     if(rst | rst_cond) begin
         acc_reg = 0;
@@ -258,6 +257,7 @@ always_comb begin
         state_en = exit_cond_block_1;
     end
 end
+assign rst_cond = exit_cond_block_2 && (state_reg == 1);
 assign exit_cond_block_1 = &din_s.eot;
 assign exit_cond_block_2 = dout.ready;
 """
@@ -278,14 +278,13 @@ logic cnt_en;
 cnt_t cnt_reg, cnt_next;
 typedef logic [0:0] last_t; // u1
 last_t last_v;
+logic rst_cond;
 logic exit_cond_block_1;
 logic cycle_cond_block_2;
 logic exit_cond_block_2;
 logic in_cond_block_2;
 logic cycle_cond_block_3;
 logic exit_cond_block_3;
-logic rst_cond;
-assign rst_cond = exit_cond_block_1 && din.valid;
 always_ff @(posedge clk) begin
     if(rst | rst_cond) begin
         pass_eot_reg = 1;
@@ -330,6 +329,7 @@ always_comb begin
         din.ready = cycle_cond_block_2;
     end
 end
+assign rst_cond = din.valid && exit_cond_block_1;
 assign exit_cond_block_1 = &din_s.eot && exit_cond_block_2;
 assign cycle_cond_block_2 = !(in_cond_block_2) || cycle_cond_block_3;
 assign exit_cond_block_2 = !(in_cond_block_2) || exit_cond_block_3;
