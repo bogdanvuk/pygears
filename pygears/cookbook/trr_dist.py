@@ -1,28 +1,24 @@
 from pygears import gear
-from pygears.conf import gear_log
-from pygears.typing import Queue
+from pygears.typing import Queue, Uint, bitw
 
 
-def trr_dist_type(dtype, rr_type):
-    return Queue[dtype[0], dtype.lvl]
+@gear(svgen={'compile': True})
+async def trr_dist(din: Queue, *, lvl=1,
+                   dout_num) -> b'(Queue[din.data, din.lvl - 1], ) * dout_num':
 
+    i = Uint[bitw(dout_num)](0)
 
-@gear
-async def trr_dist(din: Queue, *, lvl=1, dout_num
-                   ) -> b'(Queue[din.data, din.lvl - 1], ) * dout_num':
-    t_din = din.dtype
+    while (1):
+        async with din as val:
 
-    for i in range(dout_num):
-        out_res = [None] * dout_num
-        val = t_din(0, 0)
+            out_res = [None] * dout_num
+            out_res[i] = val.sub()
+            yield out_res
 
-        while (val.eot[0] == 0):
-            async with din as val:
-                out_res[i] = val.sub()
-                gear_log().debug(
-                    f'Trr_dist yielding on output {i} value {out_res[i]}')
-                yield tuple(out_res)
-
-        if all(val.eot):
-            gear_log().debug(f'Trr_dist reset to first output')
-            break
+            if all(val.eot):
+                i = 0
+            elif all(val.eot[:lvl]):
+                if (i == (dout_num - 1)):
+                    i = 0
+                else:
+                    i += 1

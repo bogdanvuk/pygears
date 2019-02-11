@@ -1,6 +1,8 @@
 import random
+import pytest
 from functools import partial
 
+from pygears.cookbook.delay import delay_rng
 from pygears.cookbook.trr_dist import trr_dist
 from pygears.cookbook.verif import directed, verif
 from pygears.sim import sim
@@ -20,13 +22,54 @@ def get_refs(seq):
     return [ref0, ref1]
 
 
-def test_directed(tmpdir, sim_cls):
-    seq = [[list(range(8)), list(range(2))], [list(range(1)), list(range(2))]]
+@pytest.mark.parametrize('din_delay', [0, 5])
+@pytest.mark.parametrize('dout_delay', [0, 5])
+def test_directed(tmpdir, sim_cls, din_delay, dout_delay):
+    seq = [[list(range(8)), list(range(2)),
+            list(range(3))], [list(range(1)), list(range(2))]]
 
+    ref0 = [seq[0][0], seq[0][2], seq[1][0]]
+    ref1 = [seq[0][1], seq[1][1]]
+    ref = [ref0, ref1]
     directed(
         drv(t=t_trr_dist, seq=seq),
         f=trr_dist(sim_cls=sim_cls, dout_num=2),
-        ref=get_refs(seq))
+        ref=ref,
+        delays=[
+            delay_rng(dout_delay, dout_delay),
+            delay_rng(dout_delay, dout_delay)
+        ])
+
+    sim(outdir=tmpdir)
+
+
+@pytest.mark.parametrize('din_delay', [0, 5])
+@pytest.mark.parametrize('dout_delay', [0, 5])
+def test_directed_3in(tmpdir, sim_cls, din_delay, dout_delay):
+    t_trr_dist = Queue[Uint[16], 3]
+    dout_num = 3
+    lvl = 2
+
+    seq = [[[list(range(3)), list(range(5))],
+            [list(range(1)),
+             list(range(4)),
+             list(range(4)),
+             list(range(8))]],
+           [[list(range(3)), list(range(5)),
+             list(range(1))], [list(range(1)), list(range(8))],
+            [list(range(4))]],
+           [[list(range(3)), list(range(1))], [list(range(1))]]]
+
+    ref0 = [seq[0][0], seq[1][0], seq[2][0]]
+    ref1 = [seq[0][1], seq[1][1], seq[2][1]]
+    ref2 = [seq[1][2]]
+    ref = [ref0, ref1, ref2]
+    dout_dly = [delay_rng(dout_delay, dout_delay)] * dout_num
+    directed(
+        drv(t=t_trr_dist, seq=seq) | delay_rng(din_delay, din_delay),
+        f=trr_dist(sim_cls=sim_cls, lvl=lvl, dout_num=dout_num),
+        ref=ref,
+        delays=dout_dly)
 
     sim(outdir=tmpdir)
 
