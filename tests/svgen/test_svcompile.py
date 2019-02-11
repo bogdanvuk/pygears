@@ -49,7 +49,7 @@ always_comb begin
         din.ready = exit_cond_block_2;
     end
 end
-assign exit_cond_block_2 = !(in_cond_block_2) || (in_cond_block_2 && exit_cond_block_3);
+assign exit_cond_block_2 = !(in_cond_block_2) || exit_cond_block_3;
 assign in_cond_block_2 = din_s.data.ctrl == din_s.sel;
 assign exit_cond_block_3 = dout.ready;
 """
@@ -175,7 +175,7 @@ always_comb begin
         din.ready = exit_cond_block_2;
     end
 end
-assign exit_cond_block_2 = cycle_cond_block_3 && (last_v && exit_cond_block_3);
+assign exit_cond_block_2 = (last_v && exit_cond_block_3) && cycle_cond_block_3;
 assign cycle_cond_block_3 = dout.ready;
 assign exit_cond_block_3 = dout.ready;
 """
@@ -331,9 +331,9 @@ always_comb begin
     end
 end
 assign exit_cond_block_1 = &din_s.eot && exit_cond_block_2;
-assign cycle_cond_block_2 = !(in_cond_block_2) || (in_cond_block_2 && cycle_cond_block_3);
-assign exit_cond_block_2 = !(in_cond_block_2) || (in_cond_block_2 && exit_cond_block_3);
-assign in_cond_block_2 = (cnt_reg <= din_s.data.f1) && pass_eot_reg;
+assign cycle_cond_block_2 = !(in_cond_block_2) || cycle_cond_block_3;
+assign exit_cond_block_2 = !(in_cond_block_2) || exit_cond_block_3;
+assign in_cond_block_2 = pass_eot_reg && (cnt_reg <= din_s.data.f1);
 assign cycle_cond_block_3 = dout.ready;
 assign exit_cond_block_3 = dout.ready;
 """

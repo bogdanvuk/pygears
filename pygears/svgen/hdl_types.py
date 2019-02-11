@@ -7,6 +7,8 @@ from string import Template
 
 from pygears.typing import Bool, Integer, Queue, Tuple, Uint, is_type, typeof
 
+boolean_operators = {'|', '&', '^', '~', '!', '&&', '||'}
+
 bin_operators = ['!', '==', '>', '>=', '<', '<=', '!=', '&&', '||']
 extendable_operators = [
     '+', '-', '*', '/', '%', '**', '<<', '>>>', '|', '&', '^', '/', '~', '!'
