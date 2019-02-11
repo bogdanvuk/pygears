@@ -358,6 +358,10 @@ class Block:
         pass
 
     @property
+    def in_cond_id(self):
+        return cond_name.substitute(cond_type='in', block_id=self.id)
+
+    @property
     def cycle_cond(self):
         pass
 
@@ -423,7 +427,8 @@ class IfBlock(Block):
             return None
 
         return or_expr(
-            UnaryOpExpr(self.in_cond, '!'), and_expr(self.in_cond, condition))
+            UnaryOpExpr(self.in_cond_id, '!'),
+            and_expr(self.in_cond_id, condition))
 
     @property
     def exit_cond(self):
@@ -432,7 +437,8 @@ class IfBlock(Block):
             return None
 
         return or_expr(
-            UnaryOpExpr(self.in_cond, '!'), and_expr(self.in_cond, condition))
+            UnaryOpExpr(self.in_cond_id, '!'),
+            and_expr(self.in_cond_id, condition))
 
 
 @dataclass
@@ -446,7 +452,7 @@ class ContainerBlock(Block):
 
         cond = None
         for block in self.stmts:
-            block_cond = and_expr(block.cycle_cond, block.in_cond)
+            block_cond = and_expr(block.cycle_cond, block.in_cond_id)
             cond = or_expr(cond, block_cond)
         return cond
 
@@ -458,7 +464,7 @@ class ContainerBlock(Block):
 
         cond = None
         for block in self.stmts:
-            block_cond = and_expr(block.exit_cond, block.in_cond)
+            block_cond = and_expr(block.exit_cond, block.in_cond_id)
             cond = or_expr(cond, block_cond)
         return cond
 

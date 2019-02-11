@@ -92,6 +92,4 @@ def parse_gear_body(gear, function_impl_paths=None):
     cond_visit.visit(schedule)
     res['block_conditions'] = cond_visit.hdl.condition_assigns
 
-    block_conds = {'cycle': cycle_conds, 'exit': exit_conds}
-
-    return hdl_ast, res, block_conds, state_num
+    return hdl_ast, res, state_num

@@ -306,6 +306,7 @@ class BlockConditionsVisitor(HDLStmtVisitor):
         super().__init__()
         self.cycle_conds = cycle_conds
         self.exit_conds = exit_conds
+        self.in_conds = []
         self.condition_assigns = CombSeparateStmts(stmts=[])
 
     def find_subconds(self, cond):
@@ -319,6 +320,10 @@ class BlockConditionsVisitor(HDLStmtVisitor):
                 for sub_id in res['cycle']:
                     if sub_id not in self.cycle_conds:
                         self.cycle_conds.append(sub_id)
+            if 'in' in res:
+                for sub_id in res['in']:
+                    if sub_id not in self.in_conds:
+                        self.in_conds.append(sub_id)
 
     def get_cycle_cond(self):
         if self.current_scope.id in self.cycle_conds:
@@ -346,6 +351,18 @@ class BlockConditionsVisitor(HDLStmtVisitor):
             if res not in self.condition_assigns.stmts:
                 self.condition_assigns.stmts.append(res)
 
+    def get_in_cond(self):
+        if self.current_scope.id in self.in_conds:
+            cond = self.current_scope.in_cond
+            if cond is None:
+                cond = 1
+            res = AssignValue(
+                target=ht.cond_name.substitute(
+                    cond_type='in', block_id=self.current_scope.id),
+                val=cond)
+            if res not in self.condition_assigns.stmts:
+                self.condition_assigns.stmts.append(res)
+
     def enter_block(self, block, conds, **kwds):
         super().enter_block(block, conds, **kwds)
         if isinstance(block, ht.Module):
@@ -356,6 +373,7 @@ class BlockConditionsVisitor(HDLStmtVisitor):
                 self.find_subconds(rst_c)
         self.get_cycle_cond()
         self.get_exit_cond()
+        self.get_in_cond()  # must be last
 
 
 class StateTransitionVisitor(HDLStmtVisitor):

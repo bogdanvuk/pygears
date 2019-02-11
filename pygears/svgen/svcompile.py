@@ -89,7 +89,7 @@ data_func_gear = """
 """
 
 
-def write_module(node, sv_stmts, writer, block_conds, state_num):
+def write_module(node, sv_stmts, writer, state_num):
     for name, expr in node.regs.items():
         writer.block(svgen_typedef(expr.dtype, name))
         writer.line(f'logic {name}_en;')
@@ -114,11 +114,10 @@ def write_module(node, sv_stmts, writer, block_conds, state_num):
         writer.line(f'{name}_t {name}_v;')
         writer.line()
 
-    for cond, values in block_conds.items():
-        for id in values:
-            c_name = ht.cond_name.substitute(cond_type=cond, block_id=id)
-            writer.line(f'logic {c_name};')
-    writer.line()
+    if 'block_conditions' in sv_stmts:
+        for cond in sv_stmts['block_conditions'].stmts:
+            writer.line(f'logic {cond.target};')
+        writer.line()
 
     if node.regs:
         if state_num > 0:
@@ -139,10 +138,9 @@ def write_module(node, sv_stmts, writer, block_conds, state_num):
 
 
 def compile_gear_body(gear, function_impl_paths=None):
-    hdl_ast, res, block_conds, state_num = parse_gear_body(
-        gear, function_impl_paths)
+    hdl_ast, res, state_num = parse_gear_body(gear, function_impl_paths)
     writer = HDLWriter()
-    write_module(hdl_ast, res, writer, block_conds, state_num)
+    write_module(hdl_ast, res, writer, state_num)
 
     return '\n'.join(writer.svlines)
 
