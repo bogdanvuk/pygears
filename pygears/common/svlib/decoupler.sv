@@ -66,7 +66,7 @@ module decoupler
         if(rst) begin
           w_ptr <= 0;
           for (int i = 0; i < DEPTH; i++) begin
-            memory[i] <= '0;
+            memory[i] = '0;
           end
         end else if(din.valid & ~full) begin
           w_ptr <= w_ptr + 1;
