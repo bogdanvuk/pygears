@@ -14,7 +14,6 @@ from .hdl_stmt import (BlockConditionsVisitor, InputVisitor, IntfReadyVisitor,
 from .intf_finder import IntfFinder
 from .reg_finder import RegFinder
 from .scheduling import Scheduler
-from .simplify_expression import simplify_assigns
 from .state_finder import StateFinder
 
 # from .stmt_vacum import StmtVacum
@@ -105,7 +104,11 @@ def parse_gear_body(gear, function_impl_paths=None):
             reg_num=len(hdl_ast.regs),
             state_num=state_num), state_num)
     cond_visit.visit(schedule)
-    res['conditions'] = simplify_assigns(cond_visit.hdl.condition_assigns)
-    # res['conditions'] = cond_visit.hdl.condition_assigns
+
+    try:
+        from .simplify_expression import simplify_assigns
+        res['conditions'] = simplify_assigns(cond_visit.hdl.condition_assigns)
+    except ImportError:
+        res['conditions'] = cond_visit.hdl.condition_assigns
 
     return hdl_ast, res

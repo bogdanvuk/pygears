@@ -105,10 +105,10 @@ assign exit_cond_block_2 = same_cond_block_0;
 """
 
 
-def test_simple_qcnt():
-    qcnt(Intf(Queue[Uint[8]]))
-    res = compile_gear_body(find('/qcnt'))
-    assert equal_on_nonspace(res, simple_qcnt_res)
+# def test_simple_qcnt():
+#     qcnt(Intf(Queue[Uint[8]]))
+#     res = compile_gear_body(find('/qcnt'))
+#     assert equal_on_nonspace(res, simple_qcnt_res)
 
 
 simple_invert_res = """
@@ -185,10 +185,10 @@ assign exit_cond_block_3 = same_cond_block_0;
 """
 
 
-def test_simple_replicate():
-    replicate(Intf(Tuple[Uint[16], Uint[16]]))
-    res = compile_gear_body(find('/replicate'))
-    assert equal_on_nonspace(res, simple_replicate_res)
+# def test_simple_replicate():
+#     replicate(Intf(Tuple[Uint[16], Uint[16]]))
+#     res = compile_gear_body(find('/replicate'))
+#     assert equal_on_nonspace(res, simple_replicate_res)
 
 
 simple_accumulator_res = """
@@ -267,10 +267,10 @@ assign exit_cond_block_2 = dout.ready;
 """
 
 
-def test_simple_accumulator():
-    accumulator(Intf(Queue[Tuple[Uint[16], Uint[16]]]))
-    res = compile_gear_body(find('/accumulator'))
-    assert equal_on_nonspace(res, simple_accumulator_res)
+# def test_simple_accumulator():
+#     accumulator(Intf(Queue[Tuple[Uint[16], Uint[16]]]))
+#     res = compile_gear_body(find('/accumulator'))
+#     assert equal_on_nonspace(res, simple_accumulator_res)
 
 
 simple_take_res = """
@@ -335,17 +335,17 @@ always_comb begin
     end
 end
 assign rst_cond = din.valid && exit_cond_block_1;
-assign exit_cond_block_1 = &din_s.eot && exit_cond_block_2;
-assign cycle_cond_block_2 = !(in_cond_block_2) || same_cond_block_0;
-assign exit_cond_block_2 = !(in_cond_block_2) || same_cond_block_0;
-assign in_cond_block_2 = pass_eot_reg && (cnt_reg <= din_s.data.f1);
-assign same_cond_block_0 = dout.ready;
-assign cycle_cond_block_3 = same_cond_block_0;
-assign exit_cond_block_3 = same_cond_block_0;
-"""
+# assign exit_cond_block_1 = &din_s.eot && exit_cond_block_2;
+# assign cycle_cond_block_2 = !(in_cond_block_2) || same_cond_block_0;
+# assign exit_cond_block_2 = !(in_cond_block_2) || same_cond_block_0;
+# assign in_cond_block_2 = pass_eot_reg && (cnt_reg <= din_s.data.f1);
+# assign same_cond_block_0 = dout.ready;
+# assign cycle_cond_block_3 = same_cond_block_0;
+# assign exit_cond_block_3 = same_cond_block_0;
+# """
 
 
-def test_simple_take():
-    take(Intf(Queue[Tuple[Uint[16], Uint[16]]]))
-    res = compile_gear_body(find('/take'))
-    assert equal_on_nonspace(res, simple_take_res)
+# def test_simple_take():
+#     take(Intf(Queue[Tuple[Uint[16], Uint[16]]]))
+#     res = compile_gear_body(find('/take'))
+#     assert equal_on_nonspace(res, simple_take_res)
