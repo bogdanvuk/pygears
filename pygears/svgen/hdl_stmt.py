@@ -20,6 +20,10 @@ def find_cycle_cond(conds, **kwds):
     return find_cond(cond=conds.cycle_cond, **kwds)
 
 
+def find_rst_cond(conds, **kwds):
+    return find_cond(cond=conds.rst_cond, **kwds)
+
+
 def find_exit_cond(conds, **kwds):
     return find_cond(cond=conds.exit_cond, **kwds)
 
@@ -369,8 +373,8 @@ class BlockConditionsVisitor(HDLStmtVisitor):
             if res not in self.condition_assigns.stmts:
                 self.condition_assigns.stmts.append(res)
 
-    def get_rst_cond(self):
-        original_cond = self.current_scope.rst_cond
+    def get_rst_cond(self, conds, **kwds):
+        original_cond = find_rst_cond(conds, **kwds)
         cond = simplify_expr(original_cond)
         if cond is None:
             cond = 1
@@ -390,7 +394,7 @@ class BlockConditionsVisitor(HDLStmtVisitor):
     def enter_block(self, block, conds, **kwds):
         super().enter_block(block, conds, **kwds)
         if isinstance(block, ht.Module) and self.reg_num > 0:
-            self.get_rst_cond()
+            self.get_rst_cond(conds, **kwds)
         self.get_cycle_cond()
         self.get_exit_cond()
         self.get_in_cond()  # must be last

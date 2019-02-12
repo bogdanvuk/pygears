@@ -428,9 +428,7 @@ class IfBlock(Block):
         if condition is None:
             return None
 
-        return or_expr(
-            UnaryOpExpr(self.in_cond_id, '!'),
-            and_expr(self.in_cond_id, condition))
+        return or_expr(UnaryOpExpr(self.in_cond_id, '!'), condition)
 
     @property
     def exit_cond(self):
@@ -438,9 +436,7 @@ class IfBlock(Block):
         if condition is None:
             return None
 
-        return or_expr(
-            UnaryOpExpr(self.in_cond_id, '!'),
-            and_expr(self.in_cond_id, condition))
+        return or_expr(UnaryOpExpr(self.in_cond_id, '!'), condition)
 
 
 @dataclass
@@ -520,10 +516,6 @@ class Module:
     def exit_cond(self):
         return find_exit_cond(self.stmts)
 
-    @property
-    def rst_cond(self):
-        return find_exit_cond(self.stmts, search_in_cond=True)
-
 
 class TypeVisitor:
     def visit(self, node, **kwds):
@@ -582,7 +574,11 @@ class Conditions:
 
     @property
     def rst_cond(self):
-        b = [s.hdl_block for s in self.scope[1:]]
+        if len(self.scope) == 1:
+            assert isinstance(self.scope[0].hdl_block, Module)
+            b = self.scope[0].hdl_block.stmts
+        else:
+            b = [s.hdl_block for s in self.scope[1:]]
         return find_exit_cond(b, search_in_cond=True)
 
     def enter_block(self, block):
