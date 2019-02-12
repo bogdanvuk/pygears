@@ -107,7 +107,7 @@ def gather_control_stmt_vars(variables, intf, attr=None, dtype=None):
         if isinstance(intf, ht.IntfExpr):
             scope[variables.id] = intf
         else:
-            raise DeprecatedError
+            scope[variables.id] = ht.AttrExpr(intf, attr)
 
     return scope
 
@@ -335,8 +335,15 @@ class HdlAst(ast.NodeVisitor):
             if index:
                 return ht.IntfStmt(index, val)
             else:
-                if (not hasattr(val, 'val')) or (not all(
-                    [v is None for v in val.val])):
+                ret_stmt = False
+                if (not hasattr(val, 'val')):
+                    ret_stmt = True
+                elif isinstance(val.val, ht.IntfDef):
+                    ret_stmt = True
+                elif (not all([v is None for v in val.val])):
+                    ret_stmt = True
+
+                if ret_stmt:
                     return ht.IntfStmt(self.hdl_locals[name], val)
         else:
             raise VisitError('Unknown assginment type')
