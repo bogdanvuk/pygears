@@ -4,7 +4,6 @@ from dataclasses import dataclass
 import hdl_types as ht
 from pygears.typing.base import TypingMeta
 
-from .simplify_expression import simplify_expr
 from .hdl_utils import add_to_list, state_expr
 
 
@@ -334,8 +333,7 @@ class BlockConditionsVisitor(HDLStmtVisitor):
 
     def get_cycle_cond(self):
         if self.current_scope.id in self.cycle_conds:
-            original_cond = self.current_scope.cycle_cond
-            cond = simplify_expr(original_cond)
+            cond = self.current_scope.cycle_cond
             self.find_subconds(cond)
             if cond is None:
                 cond = 1
@@ -348,8 +346,7 @@ class BlockConditionsVisitor(HDLStmtVisitor):
 
     def get_exit_cond(self):
         if self.current_scope.id in self.exit_conds:
-            original_cond = self.current_scope.exit_cond
-            cond = simplify_expr(original_cond)
+            cond = self.current_scope.exit_cond
             self.find_subconds(cond)
             if cond is None:
                 cond = 1
@@ -362,8 +359,7 @@ class BlockConditionsVisitor(HDLStmtVisitor):
 
     def get_in_cond(self):
         if self.current_scope.id in self.in_conds:
-            original_cond = self.current_scope.in_cond
-            cond = simplify_expr(original_cond)
+            cond = self.current_scope.in_cond
             if cond is None:
                 cond = 1
             res = AssignValue(
@@ -374,8 +370,7 @@ class BlockConditionsVisitor(HDLStmtVisitor):
                 self.condition_assigns.stmts.append(res)
 
     def get_rst_cond(self, conds, **kwds):
-        original_cond = find_rst_cond(conds, **kwds)
-        cond = simplify_expr(original_cond)
+        cond = find_rst_cond(conds, **kwds)
         if cond is None:
             cond = 1
 

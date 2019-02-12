@@ -67,6 +67,7 @@ logic cnt_en;
 cnt_t cnt_reg, cnt_next;
 logic rst_cond;
 logic exit_cond_block_1;
+logic same_cond_block_0;
 logic cycle_cond_block_2;
 logic exit_cond_block_2;
 always_ff @(posedge clk) begin
@@ -97,9 +98,10 @@ always_comb begin
     end
 end
 assign rst_cond = din.valid && exit_cond_block_1;
-assign exit_cond_block_1 = &din_s.eot && exit_cond_block_2;
-assign cycle_cond_block_2 = dout.ready;
-assign exit_cond_block_2 = dout.ready;
+assign exit_cond_block_1 = &din_s.eot && same_cond_block_0;
+assign same_cond_block_0 = dout.ready;
+assign cycle_cond_block_2 = same_cond_block_0;
+assign exit_cond_block_2 = same_cond_block_0;
 """
 
 
@@ -142,6 +144,7 @@ typedef logic [0:0] last_t; // u1
 last_t last_v;
 logic rst_cond;
 logic exit_cond_block_2;
+logic same_cond_block_0;
 logic cycle_cond_block_3;
 logic exit_cond_block_3;
 always_ff @(posedge clk) begin
@@ -175,9 +178,10 @@ always_comb begin
     end
 end
 assign rst_cond = din.valid && exit_cond_block_2;
-assign exit_cond_block_2 = (last_v && exit_cond_block_3) && cycle_cond_block_3;
-assign cycle_cond_block_3 = dout.ready;
-assign exit_cond_block_3 = dout.ready;
+assign exit_cond_block_2 = last_v && same_cond_block_0;
+assign same_cond_block_0 = dout.ready;
+assign cycle_cond_block_3 = same_cond_block_0;
+assign exit_cond_block_3 = same_cond_block_0;
 """
 
 
@@ -257,7 +261,7 @@ always_comb begin
         state_en = exit_cond_block_1;
     end
 end
-assign rst_cond = exit_cond_block_2 && (state_reg == 1);
+assign rst_cond = (state_reg == 1) && exit_cond_block_2;
 assign exit_cond_block_1 = &din_s.eot;
 assign exit_cond_block_2 = dout.ready;
 """
@@ -283,6 +287,7 @@ logic exit_cond_block_1;
 logic cycle_cond_block_2;
 logic exit_cond_block_2;
 logic in_cond_block_2;
+logic same_cond_block_0;
 logic cycle_cond_block_3;
 logic exit_cond_block_3;
 always_ff @(posedge clk) begin
@@ -331,11 +336,12 @@ always_comb begin
 end
 assign rst_cond = din.valid && exit_cond_block_1;
 assign exit_cond_block_1 = &din_s.eot && exit_cond_block_2;
-assign cycle_cond_block_2 = !(in_cond_block_2) || cycle_cond_block_3;
-assign exit_cond_block_2 = !(in_cond_block_2) || exit_cond_block_3;
+assign cycle_cond_block_2 = !(in_cond_block_2) || same_cond_block_0;
+assign exit_cond_block_2 = !(in_cond_block_2) || same_cond_block_0;
 assign in_cond_block_2 = pass_eot_reg && (cnt_reg <= din_s.data.f1);
-assign cycle_cond_block_3 = dout.ready;
-assign exit_cond_block_3 = dout.ready;
+assign same_cond_block_0 = dout.ready;
+assign cycle_cond_block_3 = same_cond_block_0;
+assign exit_cond_block_3 = same_cond_block_0;
 """
 
 
