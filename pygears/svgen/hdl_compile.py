@@ -2,7 +2,9 @@ import ast
 import inspect
 import os
 
+import hdl_types as ht
 from pygears.definitions import ROOT_DIR
+from pygears.typing import Uint, bitw
 
 from .cblock import CBlockVisitor
 from .hdl_ast import HdlAst
@@ -72,9 +74,9 @@ def parse_gear_body(gear, function_impl_paths=None):
         'outputs': OutputVisitor(),
         'inputs': InputVisitor(),
         'intf_ready': IntfReadyVisitor(),
-        'intf_valid': IntfValidVisitor(),
-        'state_transition': StateTransitionVisitor(state_num),
+        'intf_valid': IntfValidVisitor()
     }
+
     res = {}
     cycle_conds = []
     exit_conds = []
@@ -84,14 +86,29 @@ def parse_gear_body(gear, function_impl_paths=None):
         cycle_conds.extend(list(set(sub_v.cycle_conds)))
         exit_conds.extend(list(set(sub_v.exit_conds)))
 
+    if state_num > 0:
+        hdl_ast.regs['state'] = ht.RegDef(
+            name='state', val=Uint[bitw(state_num)](0))
+        sub_v = CBlockVisitor(StateTransitionVisitor(), state_num)
+        res['state_transition'] = sub_v.visit(schedule)
+        cycle_conds.extend(list(set(sub_v.cycle_conds)))
+        exit_conds.extend(list(set(sub_v.exit_conds)))
+
     cycle_conds = list(set(cycle_conds))
     exit_conds = list(set(exit_conds))
 
     cond_visit = CBlockVisitor(
-        BlockConditionsVisitor(cycle_conds, exit_conds), state_num)
+        BlockConditionsVisitor(
+            cycle_conds,
+            exit_conds,
+            reg_num=len(hdl_ast.regs),
+            state_num=state_num), state_num)
     cond_visit.visit(schedule)
-    res['block_conditions'] = cond_visit.hdl.condition_assigns
 
-    block_conds = {'cycle': cycle_conds, 'exit': exit_conds}
+    try:
+        from .simplify_expression import simplify_assigns
+        res['conditions'] = simplify_assigns(cond_visit.hdl.condition_assigns)
+    except ImportError:
+        res['conditions'] = cond_visit.hdl.condition_assigns
 
-    return hdl_ast, res, block_conds, state_num
+    return hdl_ast, res

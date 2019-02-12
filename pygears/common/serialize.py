@@ -1,6 +1,6 @@
-from pygears import alternative, gear, module
-from pygears.typing import Array, Queue, Tuple, Uint, bitw
-from pygears.util.utils import quiter
+from pygears import alternative, gear
+from pygears.typing import Array, Tuple, Uint, bitw
+from pygears.util.utils import qrange
 
 
 @gear(svgen={'compile': True})
@@ -12,19 +12,14 @@ async def serialize(din: Array) -> b'din.dtype':
             yield val[i]
 
 
-TDin = Tuple[Array[Uint['w_data'], 'no'], Uint['w_active']]
-TOut = Queue[Uint['w_data']]
+TDin = Tuple[{'data': Array['t_data', 'no'], 'active': Uint['w_active']}]
 
 
 @alternative(serialize)
-@gear
-async def active_serialize(din: TDin,
-                           *,
-                           w_data=b'w_data',
-                           no=b'no',
-                           w_active=b'w_active') -> TOut:
-    async with din as val:
-        data, active = val
-        active_out = [data[i] for i in range(len(data)) if i < active]
-        for d, last in quiter(active_out):
-            yield module().tout((d, last))
+@gear(svgen={'compile': True})
+async def active_serialize(din: TDin) -> b'Queue[t_data]':
+    i = Uint[din.dtype[1]](0)
+
+    async with din as (data, active):
+        for i, last in qrange(active):
+            yield data[i], last

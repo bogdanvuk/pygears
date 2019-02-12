@@ -83,8 +83,9 @@ class IntfFinder(ast.NodeVisitor):
             assert False, 'Unknown assignment type'
 
         if name not in self.intfs['outputs']:
+            scope = {**self.local_params, **self.intfs['varargs']}
             try:
-                val = eval_expression(node.value, self.local_params)
+                val = eval_expression(node.value, scope)
             except NameError:
                 return
 
