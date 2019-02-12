@@ -436,6 +436,7 @@ class HdlAst(ast.NodeVisitor):
                 input_vars.append(
                     ht.SubscriptExpr(val=arg_nodes.op, index=ht.ResExpr(i)))
         else:
+            assert len(self.out_ports) == 1
             input_vars = [arg_nodes]
 
         args = []
@@ -563,7 +564,12 @@ class HdlAst(ast.NodeVisitor):
             self.generic_visit(node)
 
     def visit_Yield(self, node):
-        expr = super().visit(node.value)
+        if isinstance(node.value, ast.Tuple) and len(self.out_ports) > 1:
+            expr = [
+                self.visit_DataExpression(item) for item in node.value.elts
+            ]
+        else:
+            expr = super().visit(node.value)
         return ht.Yield(
             expr=self.cast_return(expr), stmts=[], ports=self.out_ports)
 

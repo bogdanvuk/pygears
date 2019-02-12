@@ -210,11 +210,13 @@ class OutputVisitor(HDLStmtVisitor):
         for expr, port in zip(exprs, self.out_ports):
             if self.out_ports[port].context:
                 valid = self.out_ports[port].context
+            elif isinstance(expr, ht.ResExpr) and expr.val is None:
+                valid = 0
             else:
                 valid = 1
             stmts.append(AssignValue(f'{port}.valid', valid))
-            if not self.out_intfs:
-                stmts.append(AssignValue(f'{port}_s', node.expr))
+            if (not self.out_intfs) and (valid != 0):
+                stmts.append(AssignValue(f'{port}_s', expr))
         block = HDLBlock(in_cond=None, stmts=stmts, dflts={})
         self.update_defaults(block)
         return block
