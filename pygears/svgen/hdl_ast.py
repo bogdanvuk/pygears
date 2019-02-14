@@ -181,7 +181,7 @@ class HdlAst(ast.NodeVisitor):
     def intf_parse(self, intf, node, target):
         if isinstance(intf, ht.IntfDef):
             scope = gather_control_stmt_vars(
-                node.target, intf, dtype=intf.intf[0].dtype)
+                target, intf, dtype=intf.intf[0].dtype)
             block_intf = ht.IntfDef(
                 intf=intf.intf, name=intf.name, context='valid')
         else:
@@ -324,6 +324,10 @@ class HdlAst(ast.NodeVisitor):
                 self.hdl_locals[name] = ht.IntfDef(val, name)
             if index:
                 return ht.IntfStmt(index, val)
+            elif name in self.in_intfs:
+                # when *din used as din[x], hdl_locals contain all interfaces
+                # but a specific one is needed
+                return ht.IntfStmt(ht.IntfDef(val, name), val)
             else:
                 return ht.IntfStmt(self.hdl_locals[name], val)
         elif name in self.out_intfs:
@@ -349,6 +353,19 @@ class HdlAst(ast.NodeVisitor):
             raise VisitError('Unknown assginment type')
 
     def visit_NameExpression(self, node):
+        if isinstance(node, ast.Subscript):
+            # input interface as array ie din[x]
+            name = node.value.id
+            val_expr = self.get_context_var(name)
+            for i in range(len(val_expr)):
+                py_stmt = f'if {node.slice.value.id} == {i}: {name} = {name}{i}'
+                snip = ast.parse(py_stmt).body[0]
+                stmt = self.visit(snip)
+                self.scope[-1].stmts.append(stmt)
+
+            assert name in self.in_intfs
+            return self.in_intfs[name]
+
         if node.id in self.in_intfs:
             return self.in_intfs[node.id]
 

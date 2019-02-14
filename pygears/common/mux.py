@@ -1,6 +1,6 @@
 from pygears.core.gear import gear
-from pygears.typing import Union
-from pygears import module
+from pygears.typing import Queue, Union, typeof
+
 from .union import union_collapse
 
 
@@ -8,11 +8,15 @@ def mux_type(dtypes):
     return Union[dtypes]
 
 
-@gear
+@gear(svgen={'compile': True})
 async def mux(ctrl, *din) -> b'mux_type(din)':
     async with ctrl as c:
-        async with din[c] as d:
-            yield module().tout((d, c))
+        if typeof(din[0].dtype, Queue):
+            async for d in din[c]:
+                yield (d, c)
+        else:
+            async with din[c] as d:
+                yield (d, c)
 
 
 @gear
