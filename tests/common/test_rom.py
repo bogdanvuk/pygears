@@ -7,17 +7,16 @@ from pygears.typing import Uint
 
 
 # # def test_directed(tmpdir, sim_cls):
-# def test_directed_list(tmpdir):
-#     data = list(range(100, 110))
-#     addr = list(range(10))
+def test_directed_list(tmpdir):
+    data = list(range(100, 110))
+    addr = list(range(10))
 
-#     directed(
-#         drv(t=Uint[8], seq=addr),
-#         f=rom(sim_cls=SimVerilated, data=data, dtype=Uint[8]),
-#         ref=data)
+    directed(
+        drv(t=Uint[5], seq=addr),
+        f=rom(sim_cls=SimVerilated, data=data, dtype=Uint[8]),
+        ref=data)
 
-#     sim(outdir=tmpdir)
-
+    sim(outdir=tmpdir)
 
 # def test_directed_dict(tmpdir):
 #     addr = list(range(0, 20, 2))

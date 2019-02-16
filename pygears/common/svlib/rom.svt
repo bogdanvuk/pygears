@@ -12,7 +12,7 @@
    assign reg_ready = reg_empty | dout.ready;
    assign reg_empty = !addr_reg_valid;
 
-   logic [{{int(_dout_t)-1}}: 0] memory [0:{{bitw(len(params['data']))}}];
+   logic [{{int(_dout_t)-1}}:0] memory [0:{{len(params['data'])-1}}];
 
 
    always_ff @(posedge clk)
