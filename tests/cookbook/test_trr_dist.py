@@ -32,7 +32,7 @@ def test_directed(tmpdir, sim_cls, din_delay, dout_delay):
     ref1 = [seq[0][1], seq[1][1]]
     ref = [ref0, ref1]
     directed(
-        drv(t=t_trr_dist, seq=seq),
+        drv(t=t_trr_dist, seq=seq) | delay_rng(din_delay, din_delay),
         f=trr_dist(sim_cls=sim_cls, dout_num=2),
         ref=ref,
         delays=[

@@ -24,11 +24,12 @@ class SVExpressionVisitor(InstanceVisitor):
 
     def visit_AttrExpr(self, node):
         val = [self.visit(node.val)]
-        if typeof(node.val.dtype, Queue):
-            try:
-                node.val.dtype[node.attr[0]]
-            except KeyError:
-                val.append('data')
+        if node.attr:
+            if typeof(node.val.dtype, Queue):
+                try:
+                    node.val.dtype[node.attr[0]]
+                except KeyError:
+                    val.append('data')
         return '.'.join(val + node.attr)
 
     def visit_CastExpr(self, node):

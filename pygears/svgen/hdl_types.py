@@ -1,14 +1,58 @@
 import inspect
+import re
 import typing as pytypes
 from dataclasses import dataclass, field
 from functools import reduce
+from string import Template
 
 from pygears.typing import Bool, Integer, Queue, Tuple, Uint, is_type, typeof
+
+boolean_operators = {'|', '&', '^', '~', '!', '&&', '||'}
 
 bin_operators = ['!', '==', '>', '>=', '<', '<=', '!=', '&&', '||']
 extendable_operators = [
     '+', '-', '*', '/', '%', '**', '<<', '>>>', '|', '&', '^', '/', '~', '!'
 ]
+
+cond_name = Template('${cond_type}_cond_block_${block_id}')
+
+
+def find_sub_cond_ids(cond):
+    # TODO need to be replaced with expr visitor for operands
+    res = {}
+    if cond:
+        pattern = re.compile('(.*)_cond_block_(.*)')
+        for m in re.finditer('\w+_cond_block_\d+', str(cond)):
+            sub_cond = m.group(0)
+            cond_name, cond_id = pattern.search(sub_cond).groups()
+            if cond_name in res:
+                res[cond_name].append(int(cond_id))
+            else:
+                res[cond_name] = [int(cond_id)]
+
+        return res
+
+
+def find_cond_id(cond):
+    if cond:
+        return int(cond.split('_')[-1])
+
+
+def nested_cond(stmt, cond_type):
+    cond = getattr(stmt, f'{cond_type}_cond', None)
+    if cond is not None:
+        if isinstance(cond, str):
+            return cond
+        else:
+            return cond_name.substitute(cond_type=cond_type, block_id=stmt.id)
+
+
+def nested_cycle_cond(stmt):
+    return nested_cond(stmt, 'cycle')
+
+
+def nested_exit_cond(stmt):
+    return nested_cond(stmt, 'exit')
 
 
 def create_oposite(expr):
@@ -20,15 +64,14 @@ def create_oposite(expr):
 
 def find_exit_cond(statements, search_in_cond=False):
     for stmt in reversed(statements):
-        if hasattr(stmt, 'exit_cond'):
-            stmt_cond = stmt.exit_cond
-            if stmt_cond is not None:
-                if search_in_cond and (not isinstance(
-                        stmt, IfBlock)) and hasattr(
-                            stmt, 'in_cond') and (stmt.in_cond is not None):
-                    return and_expr(f'exit_cond_block_{stmt.id}', stmt.in_cond)
-                else:
-                    return f'exit_cond_block_{stmt.id}'
+        c = getattr(stmt, 'exit_cond', None)
+        if c is not None:
+            exit_c = nested_exit_cond(stmt)
+            if search_in_cond and (not isinstance(stmt, IfBlock)) and hasattr(
+                    stmt, 'in_cond') and (stmt.in_cond is not None):
+                return and_expr(exit_c, stmt.in_cond)
+            else:
+                return exit_c
 
     return None
 
@@ -36,11 +79,9 @@ def find_exit_cond(statements, search_in_cond=False):
 def find_cycle_cond(statements):
     cond = []
     for stmt in statements:
-        # if hasattr(stmt, 'cycle_cond') and not stmt.in_cond:
-        if hasattr(stmt, 'cycle_cond'):
-            stmt_cond = stmt.cycle_cond
-            if stmt_cond is not None:
-                cond.append(f'cycle_cond_block_{stmt.id}')
+        c = getattr(stmt, 'cycle_cond', None)
+        if c is not None:
+            cond.append(nested_cycle_cond(stmt))
 
     return reduce(and_expr, cond, None)
 
@@ -319,6 +360,10 @@ class Block:
         pass
 
     @property
+    def in_cond_id(self):
+        return cond_name.substitute(cond_type='in', block_id=self.id)
+
+    @property
     def cycle_cond(self):
         pass
 
@@ -383,8 +428,7 @@ class IfBlock(Block):
         if condition is None:
             return None
 
-        return or_expr(
-            UnaryOpExpr(self.in_cond, '!'), and_expr(self.in_cond, condition))
+        return or_expr(UnaryOpExpr(self.in_cond_id, '!'), condition)
 
     @property
     def exit_cond(self):
@@ -392,8 +436,7 @@ class IfBlock(Block):
         if condition is None:
             return None
 
-        return or_expr(
-            UnaryOpExpr(self.in_cond, '!'), and_expr(self.in_cond, condition))
+        return or_expr(UnaryOpExpr(self.in_cond_id, '!'), condition)
 
 
 @dataclass
@@ -407,7 +450,7 @@ class ContainerBlock(Block):
 
         cond = None
         for block in self.stmts:
-            block_cond = and_expr(block.cycle_cond, block.in_cond)
+            block_cond = and_expr(block.cycle_cond, block.in_cond_id)
             cond = or_expr(cond, block_cond)
         return cond
 
@@ -419,7 +462,7 @@ class ContainerBlock(Block):
 
         cond = None
         for block in self.stmts:
-            block_cond = and_expr(block.exit_cond, block.in_cond)
+            block_cond = and_expr(block.exit_cond, block.in_cond_id)
             cond = or_expr(cond, block_cond)
         return cond
 
@@ -473,10 +516,6 @@ class Module:
     def exit_cond(self):
         return find_exit_cond(self.stmts)
 
-    @property
-    def rst_cond(self):
-        return find_exit_cond(self.stmts, search_in_cond=True)
-
 
 class TypeVisitor:
     def visit(self, node, **kwds):
@@ -516,34 +555,30 @@ class Conditions:
                 continue
 
             if s.cycle_cond and s.cycle_cond != 1:
-                self.cycle_conds.append(s.id)
-                cond.append(f'cycle_cond_block_{s.id}')
+                cond.append(nested_cycle_cond(s))
+                self.cycle_conds.append(find_cond_id(cond[-1]))
 
             if hasattr(s, 'multicycle') and s.multicycle:
                 break
 
+        cond = set(cond)
         return reduce(and_expr, cond, None)
 
     @property
     def exit_cond(self):
-        # cond = []
-        # for c in reversed(self.scope[1:]):
-        #     s = c.hdl_block
-        #     if isinstance(s, ContainerBlock):
-        #         continue
-
-        #     if s.exit_cond and s.exit_cond != 1:
-        #         self.exit_conds.append(s.id)
-        #         cond.append(f'exit_cond_block_{s.id}')
-
-        # return reduce(and_expr, cond, None)
         s = self.scope[-1].hdl_block
-        self.exit_conds.append(s.id)
-        return f'exit_cond_block_{s.id}'
+        c = nested_exit_cond(s)
+        if c is not None:
+            self.exit_conds.append(find_cond_id(c))
+        return c
 
     @property
     def rst_cond(self):
-        b = [s.hdl_block for s in self.scope[1:]]
+        if len(self.scope) == 1:
+            assert isinstance(self.scope[0].hdl_block, Module)
+            b = self.scope[0].hdl_block.stmts
+        else:
+            b = [s.hdl_block for s in self.scope[1:]]
         return find_exit_cond(b, search_in_cond=True)
 
     def enter_block(self, block):

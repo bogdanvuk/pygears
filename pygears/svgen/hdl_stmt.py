@@ -1,11 +1,10 @@
-import re
 import typing as pytypes
 from dataclasses import dataclass
 
 import hdl_types as ht
 from pygears.typing.base import TypingMeta
 
-from .hdl_utils import add_to_list
+from .hdl_utils import add_to_list, state_expr
 
 
 def find_cond(cond, **kwds):
@@ -18,6 +17,10 @@ def find_cond(cond, **kwds):
 
 def find_cycle_cond(conds, **kwds):
     return find_cond(cond=conds.cycle_cond, **kwds)
+
+
+def find_rst_cond(conds, **kwds):
+    return find_cond(cond=conds.rst_cond, **kwds)
 
 
 def find_exit_cond(conds, **kwds):
@@ -207,11 +210,13 @@ class OutputVisitor(HDLStmtVisitor):
         for expr, port in zip(exprs, self.out_ports):
             if self.out_ports[port].context:
                 valid = self.out_ports[port].context
+            elif isinstance(expr, ht.ResExpr) and expr.val is None:
+                valid = 0
             else:
                 valid = 1
             stmts.append(AssignValue(f'{port}.valid', valid))
-            if not self.out_intfs:
-                stmts.append(AssignValue(f'{port}_s', node.expr))
+            if (not self.out_intfs) and (valid != 0):
+                stmts.append(AssignValue(f'{port}_s', expr))
         block = HDLBlock(in_cond=None, stmts=stmts, dflts={})
         self.update_defaults(block)
         return block
@@ -303,75 +308,105 @@ class IntfValidVisitor(HDLStmtVisitor):
 
 
 class BlockConditionsVisitor(HDLStmtVisitor):
-    def __init__(self, cycle_conds, exit_conds):
+    def __init__(self, cycle_conds, exit_conds, reg_num, state_num):
         super().__init__()
         self.cycle_conds = cycle_conds
         self.exit_conds = exit_conds
+        self.reg_num = reg_num
+        self.state_num = state_num
+        self.in_conds = []
         self.condition_assigns = CombSeparateStmts(stmts=[])
 
-    def _find_sub_conds(self, block, cond_t='cycle'):
-        cond = getattr(block, cond_t + '_cond', None)
-        if cond:
-            sub_ids = [
-                int(re.findall(r'\d+', m.group(0))[0])
-                for m in re.finditer('cycle_cond_block_\d+', str(cond))
-            ]
-            for sub_id in sub_ids:
-                if sub_id not in self.cycle_conds:
-                    self.cycle_conds.append(sub_id)
-            sub_ids = [
-                int(re.findall(r'\d+', m.group(0))[0])
-                for m in re.finditer('exit_cond_block_\d+', str(cond))
-            ]
-
-            for sub_id in sub_ids:
-                if sub_id not in self.exit_conds:
-                    self.exit_conds.append(sub_id)
+    def find_subconds(self, cond):
+        if cond is not None and not isinstance(cond, str):
+            res = ht.find_sub_cond_ids(cond)
+            if 'exit' in res:
+                for sub_id in res['exit']:
+                    if sub_id not in self.exit_conds:
+                        self.exit_conds.append(sub_id)
+            if 'cycle' in res:
+                for sub_id in res['cycle']:
+                    if sub_id not in self.cycle_conds:
+                        self.cycle_conds.append(sub_id)
+            if 'in' in res:
+                for sub_id in res['in']:
+                    if sub_id not in self.in_conds:
+                        self.in_conds.append(sub_id)
 
     def get_cycle_cond(self):
         if self.current_scope.id in self.cycle_conds:
-            self._find_sub_conds(self.current_scope, 'cycle')
             cond = self.current_scope.cycle_cond
+            self.find_subconds(cond)
             if cond is None:
                 cond = 1
             res = AssignValue(
-                target=f'cycle_cond_block_{self.current_scope.id}', val=cond)
+                target=ht.cond_name.substitute(
+                    cond_type='cycle', block_id=self.current_scope.id),
+                val=cond)
             if res not in self.condition_assigns.stmts:
                 self.condition_assigns.stmts.append(res)
 
     def get_exit_cond(self):
         if self.current_scope.id in self.exit_conds:
-            self._find_sub_conds(self.current_scope, 'exit')
             cond = self.current_scope.exit_cond
+            self.find_subconds(cond)
             if cond is None:
                 cond = 1
             res = AssignValue(
-                target=f'exit_cond_block_{self.current_scope.id}', val=cond)
+                target=ht.cond_name.substitute(
+                    cond_type='exit', block_id=self.current_scope.id),
+                val=cond)
             if res not in self.condition_assigns.stmts:
                 self.condition_assigns.stmts.append(res)
 
+    def get_in_cond(self):
+        if self.current_scope.id in self.in_conds:
+            cond = self.current_scope.in_cond
+            if cond is None:
+                cond = 1
+            res = AssignValue(
+                target=ht.cond_name.substitute(
+                    cond_type='in', block_id=self.current_scope.id),
+                val=cond)
+            if res not in self.condition_assigns.stmts:
+                self.condition_assigns.stmts.append(res)
+
+    def get_rst_cond(self, conds, **kwds):
+        cond = find_rst_cond(conds, **kwds)
+        if cond is None:
+            cond = 1
+
+        if self.state_num > 0:
+            rst_cond = state_expr([self.state_num], cond)
+        else:
+            rst_cond = cond
+        res = AssignValue(target='rst_cond', val=rst_cond)
+        self.condition_assigns.stmts.append(res)
+
+        if isinstance(cond, str):
+            self.exit_conds.append(ht.find_cond_id(cond))
+        else:
+            self.find_subconds(cond)
+
     def enter_block(self, block, conds, **kwds):
         super().enter_block(block, conds, **kwds)
-        if isinstance(block, ht.Module):
-            self._find_sub_conds(block, 'rst')
+        if isinstance(block, ht.Module) and self.reg_num > 0:
+            self.get_rst_cond(conds, **kwds)
         self.get_cycle_cond()
         self.get_exit_cond()
+        self.get_in_cond()  # must be last
 
 
 class StateTransitionVisitor(HDLStmtVisitor):
-    def __init__(self, state_num):
-        super().__init__()
-        self.enable = state_num > 0
-
     def enter_block(self, block, conds, **kwds):
         super().enter_block(block, conds, **kwds)
-        if isinstance(block, ht.Module) and self.enable:
+        if isinstance(block, ht.Module):
             return AssignValue(f'state_en', 0)
 
     def visit_all_Block(self, node, conds, **kwds):
         block = super().visit_all_Block(node, conds, **kwds)
 
-        if ('state_id' in kwds) and self.enable:
+        if ('state_id' in kwds):
             cond = find_exit_cond(conds=conds, **kwds)
             add_to_list(block.stmts, [
                 AssignValue(target=f'state_en', val=cond),

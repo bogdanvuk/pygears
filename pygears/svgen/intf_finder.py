@@ -60,6 +60,24 @@ class IntfFinder(ast.NodeVisitor):
         self.intfs['vars'] = {}
         self.intfs['outputs'] = {}
 
+    def visit_AsyncFor(self, node):
+        expr = node.iter
+        if isinstance(expr, ast.Subscript):
+            name = expr.value.id
+            self.intfs['vars'][name] = ht.IntfDef(self.varargs[name], name)
+
+        for stmt in node.body:
+            self.visit(stmt)
+
+    def visit_AsyncWith(self, node):
+        expr = node.items[0].context_expr
+        if isinstance(expr, ast.Subscript):
+            name = expr.value.id
+            self.intfs['vars'][name] = ht.IntfDef(self.varargs[name], name)
+
+        for stmt in node.body:
+            self.visit(stmt)
+
     def visit_For(self, node):
         for arg in node.iter.args:
             if hasattr(arg, 'id') and arg.id in self.varargs:
@@ -83,8 +101,9 @@ class IntfFinder(ast.NodeVisitor):
             assert False, 'Unknown assignment type'
 
         if name not in self.intfs['outputs']:
+            scope = {**self.local_params, **self.intfs['varargs']}
             try:
-                val = eval_expression(node.value, self.local_params)
+                val = eval_expression(node.value, scope)
             except NameError:
                 return
 

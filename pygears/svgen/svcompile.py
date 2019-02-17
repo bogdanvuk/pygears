@@ -1,7 +1,4 @@
-from pygears.typing import Uint, bitw
-
 from .hdl_compile import HDLWriter, parse_gear_body
-from .hdl_utils import state_expr
 from .inst_visit import InstanceVisitor
 from .sv_expression import svexpr
 from .util import svgen_typedef
@@ -88,7 +85,7 @@ data_func_gear = """
 """
 
 
-def write_module(node, sv_stmts, writer, block_conds, state_num):
+def write_module(node, sv_stmts, writer):
     for name, expr in node.regs.items():
         writer.block(svgen_typedef(expr.dtype, name))
         writer.line(f'logic {name}_en;')
@@ -102,45 +99,27 @@ def write_module(node, sv_stmts, writer, block_conds, state_num):
         writer.line(f"assign {name}.data = {name}_s;")
     writer.line()
 
-    if state_num > 0:
-        writer.block(svgen_typedef(Uint[bitw(state_num)], 'state'))
-        writer.line(f'logic state_en;')
-        writer.line(f'state_t state_reg, state_next;')
-        writer.line()
-
     for name, expr in node.variables.items():
         writer.block(svgen_typedef(expr.dtype, name))
         writer.line(f'{name}_t {name}_v;')
         writer.line()
 
-    for cond, values in block_conds.items():
-        for id in values:
-            writer.line(f'logic {cond}_cond_block_{id};')
-    writer.line()
-
-    if node.regs:
-        if state_num > 0:
-            rst_cond = state_expr([state_num], node.rst_cond)
-        else:
-            rst_cond = node.rst_cond
-        writer.line(f'logic rst_cond;')
-        writer.line(f'assign rst_cond = {svexpr(rst_cond)};')
+    if 'conditions' in sv_stmts:
+        for cond in sv_stmts['conditions'].stmts:
+            writer.line(f'logic {cond.target};')
+        writer.line()
 
     for name, expr in node.regs.items():
         writer.block(reg_template.format(name, int(expr.val)))
-
-    if state_num > 0:
-        writer.block(reg_template.format('state', 0))
 
     for name, val in sv_stmts.items():
         SVCompiler(name, writer).visit(val)
 
 
 def compile_gear_body(gear, function_impl_paths=None):
-    hdl_ast, res, block_conds, state_num = parse_gear_body(
-        gear, function_impl_paths)
+    hdl_ast, res = parse_gear_body(gear, function_impl_paths)
     writer = HDLWriter()
-    write_module(hdl_ast, res, writer, block_conds, state_num)
+    write_module(hdl_ast, res, writer)
 
     return '\n'.join(writer.svlines)
 
