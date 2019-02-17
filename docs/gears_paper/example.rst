@@ -11,13 +11,13 @@ To illustrate the Gears methodology and the PyGears framework we show how a movi
 .. math:: y[i] = \frac{1}{M} \sum_{j = 0}^{M - 1}x[i + j]
    :label: filt_formula
 
-The simplified block diagram of the developed core is given on :numref:`moving-average-bd`.
+The simplified block diagram of the developed gear is given on :numref:`moving-average-bd`.
 
 .. figure:: moving_average.png
    :scale: 60%
    :name: moving-average-bd
 
-   Block diagram of the moving average core
+   Block diagram of the moving average gear
 
 The filter has two input interfaces (one used for configuration and the other for data) and has a single output interface. As with every gear, the interfaces are typed. The configuration carries two values: averaging coefficient and the size of the window, and is represented as a ``Tuple`` data type. The second input is used for streaming the data and is represented as a ``Queue`` data type. Compile time parameters of the moving average gear include the data width, shift amount and the maximum filter order. The interface definition of the ``moving_average`` gear using PyGears is given below. Since this is a hierarchical gear the output interface type is determined by the return statement and need not be specified.
 
@@ -42,7 +42,8 @@ The filter has two input interfaces (one used for configuration and the other fo
             W=W,
             max_filter_ord=max_filter_ord)
 
-        return accumulator(scaled_sample, delayed_din, W=W)
+        return accumulator(
+                   scaled_sample, delayed_din, W=W)
 
     \end{lstlisting}
 
@@ -97,20 +98,37 @@ The ``window_sum`` gear maintains the current window sum by adding a new input s
 Results
 -------
 
-Based on the python description of the ``moving_average`` gear, PyGears generates a SystemVerilog description. The implementation of the developed IP core was done using Xilinx's Vivado 2018.2 tool. The target FPGA device for the implementation was Zynq-7020. The most interesting implementation results, regarding used hardware resources for the sample width of 16 bits (``W = 16``) and the maximum filter order of 1024, are presented in :numref:`tbl-utilization`.
+In this chapter we provide comparison between: PyGears, Vivado HLS and RTL implementations :cite:`MovingAverage`, in terms of the utilization and maximum attainable frequencies. Based on the python description of the ``moving_average`` gear, PyGears generates a SystemVerilog description. All implementations of the developed IP core were done using Xilinx's Vivado 2018.2 tool, with Zynq-7020 as the target FPGA device. The most interesting implementation results, regarding used hardware resources for the sample width of 16 bits (``W = 16``) and the maximum filter order of 1024, are presented in :numref:`tbl-utilization`.
 
-.. tabularcolumns:: |c|c|c|c|c|
+.. tabularcolumns:: |l|r|r|r|r|r|
 
 .. list-table:: FPGA resources required to implement the moving average core
     :name: tbl-utilization
+    :header-rows: 1
 
-    * - Total LUTs
-      - Logic LUTs
-      - LUTRAMs
+    * - Implementation
+      - LUTs
       - FFs
+      - BRAMs
       - DSPs
-    * - 970
-      - 266
-      - 704
-      - 135
+      - Fmax [MHz]
+    * - PyGears
+      - 102
+      - 91
+      - 0.5
       - 1
+      - 168.60
+    * - RTL
+      - 63
+      - 58
+      - 0.5
+      - 1
+      - 155.95
+    * - Vivado HLS
+      - 248
+      - 183
+      - 0.5
+      - 1
+      - 181.79
+
+As expected, the RTL implementation is the most efficient regarding the resource utilization since it builds the most cohesive but also the most coupled system. Nevertheless, PyGears implementation strikes an excelent balance between the RTL and HLS, by providing a convinience of writting at a high level of abstraction without a significant drop in performance. Moreover, the HLS implementation failed to achieve the desired throughput of 1 sample per clock cycle despite the optimization directives that were provided. That is, PyGears offers better controllability over the final result than HLS, which allows achieving performances closer to RTL.  
