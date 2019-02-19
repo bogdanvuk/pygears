@@ -12,29 +12,34 @@
    assign reg_ready = reg_empty | dout.ready;
    assign reg_empty = !addr_reg_valid;
 
-   logic [{{int(_dout_t)-1}}:0] memory [0:{{len(params['data'])-1}}];
-
-
    always_ff @(posedge clk)
      begin
         if(rst) begin
            addr_reg_valid <= '0;
         end else if (reg_ready) begin
            addr_reg_valid <= addr.valid;
+        end
+     end
+
+   logic [{{int(_dout_t)-1}}:0] memory [0:{{len(params['data'])-1}}];
+
+   always_ff @(posedge clk)
+     begin
+        if (reg_ready) begin
            dout_s <= memory[addr_s];
         end
      end
 
    initial begin
-{%- if py.isinstance(params['data'], py.dict) %} 
+{% if py.isinstance(params['data'], py.dict) -%}
   {% for key, val in params['data'].items() %}
-      memory[{{key}}] = {{int(val)}}; 
+      memory[{{key}}] = {{int(val)}};
   {% endfor %}
-{%- else %} 
+{% else -%}
   {% for val in params['data'] %}
-       memory[{{loop.index-1}}] = {{int(val)}}; 
+       memory[{{loop.index-1}}] = {{int(val)}};
   {% endfor %}
-{% endif -%} 
+{% endif -%}
    end
 
    assign addr.ready = reg_ready;
