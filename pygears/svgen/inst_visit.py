@@ -5,6 +5,4 @@ class InstanceVisitor:
         return visitor(node)
 
     def generic_visit(self, node):
-        import pdb
-        pdb.set_trace()
         raise Exception

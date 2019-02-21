@@ -6,21 +6,22 @@ from .inst_visit import InstanceVisitor
 
 
 def reg_next_cb(node, stmt, scope):
-    if isinstance(stmt, ht.RegNextStmt):
-        if stmt.reg.name == node.op.name:
-            node.context = 'next'
+    if isinstance(stmt, ht.RegNextStmt) and (stmt.reg.name == node.op.name):
+        node.context = 'next'
 
-            if scope and isinstance(scope[-1], ht.IfBlock):
-                curr = scope[-1]
-                else_expr = ht.UnaryOpExpr(curr.in_cond, '!')
-                node_else = ht.IfBlock(
-                    _in_cond=else_expr,
-                    stmts=[
-                        ht.RegNextStmt(
-                            reg=stmt.reg,
-                            val=ht.OperandVal(op=stmt.reg, context='reg'))
-                    ])
-                return ht.ContainerBlock(stmts=[curr, node_else])
+        if scope and isinstance(scope[-1], ht.IfBlock):
+            curr = scope[-1]
+            else_expr = ht.UnaryOpExpr(curr.in_cond, '!')
+            node_else = ht.IfBlock(
+                _in_cond=else_expr,
+                stmts=[
+                    ht.RegNextStmt(
+                        reg=stmt.reg,
+                        val=ht.OperandVal(op=stmt.reg, context='reg'))
+                ])
+            return ht.ContainerBlock(stmts=[curr, node_else])
+
+    return None
 
 
 class ContextFinder(ht.TypeVisitor):
@@ -28,6 +29,7 @@ class ContextFinder(ht.TypeVisitor):
         self.scope = []
         self.hier_scope = []
         self.hier_idx = []
+        self.switch = []
 
     def find_context(self, node, scope):
         self.switch = []
@@ -39,17 +41,19 @@ class ContextFinder(ht.TypeVisitor):
         self.visit(node.expr)
 
     def visit_list(self, node):
-        for s in node:
-            self.visit(s)
+        for stmt in node:
+            self.visit(stmt)
 
     def visit_all_Block(self, node):
-        for s in node.stmts:
-            self.visit(s)
+        for stmt in node.stmts:
+            self.visit(stmt)
 
     def visit_OperandVal(self, node):
-        if node.context is 'reg':
+        if node.context == 'reg':
             return self.walk_up_block_hier(
                 block=self.scope, cb=partial(reg_next_cb, node=node))
+
+        return None
 
     def visit_ResExpr(self, node):
         pass
@@ -68,7 +72,9 @@ class ContextFinder(ht.TypeVisitor):
             if isinstance(stmt, ht.Block):
                 self.hier_scope.append(stmt)
                 self.hier_idx.append(i)
+
                 self.walk_up_block_hier(stmt.stmts, cb)
+
                 self.hier_scope.pop()
                 self.hier_idx.pop()
             else:

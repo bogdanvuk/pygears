@@ -3,7 +3,7 @@ from .inst_visit import InstanceVisitor
 from .sv_expression import svexpr
 from .util import svgen_typedef
 
-reg_template = """
+REG_TEMPLATE = """
 always_ff @(posedge clk) begin
     if(rst | rst_cond) begin
         {0}_reg = {1};
@@ -74,7 +74,7 @@ class SVCompiler(InstanceVisitor):
         self.exit_block(node)
 
 
-data_func_gear = """
+DATA_FUNC_GEAR = """
 {%- import 'snippet.j2' as snippet -%}
 
 {% call snippet.module_with_intf_structs(module_name, intfs, intfs, comment) %}
@@ -110,21 +110,21 @@ def write_module(node, sv_stmts, writer):
         writer.line()
 
     for name, expr in node.regs.items():
-        writer.block(reg_template.format(name, int(expr.val)))
+        writer.block(REG_TEMPLATE.format(name, int(expr.val)))
 
     for name, val in sv_stmts.items():
         SVCompiler(name, writer).visit(val)
 
 
-def compile_gear_body(gear, function_impl_paths=None):
-    hdl_ast, res = parse_gear_body(gear, function_impl_paths)
+def compile_gear_body(gear):
+    hdl_ast, res = parse_gear_body(gear)
     writer = HDLWriter()
     write_module(hdl_ast, res, writer)
 
     return '\n'.join(writer.svlines)
 
 
-def compile_gear(gear, template_env, context, function_impl_paths=None):
-    context['svlines'] = compile_gear_body(gear, function_impl_paths)
+def compile_gear(gear, template_env, context):
+    context['svlines'] = compile_gear_body(gear)
 
-    return template_env.render_string(data_func_gear, context)
+    return template_env.render_string(DATA_FUNC_GEAR, context)

@@ -15,9 +15,9 @@ class SVExpressionVisitor(InstanceVisitor):
         res = []
         for port in node.out_port:
             if port.context:
-                r = svexpr(
+                inst = svexpr(
                     ht.BinOpExpr((f'{port.name}.ready', port.context), '&&'))
-                res.append(f'({r})')
+                res.append(f'({inst})')
             else:
                 res.append(f'{port.name}.ready')
         return ' || '.join(res)
@@ -35,8 +35,8 @@ class SVExpressionVisitor(InstanceVisitor):
     def visit_CastExpr(self, node):
         if typeof(node.dtype, Int) and typeof(node.operand.dtype, Uint):
             return f"signed'({int(node.dtype)}'({self.visit(node.operand)}))"
-        else:
-            return f"{int(node.dtype)}'({self.visit(node.operand)})"
+
+        return f"{int(node.dtype)}'({self.visit(node.operand)})"
 
     def visit_ConcatExpr(self, node):
         return (
@@ -57,7 +57,7 @@ class SVExpressionVisitor(InstanceVisitor):
             if isinstance(op, ht.BinOpExpr):
                 ops[i] = f'({ops[i]})'
 
-        if node.operator in ht.extendable_operators:
+        if node.operator in ht.EXTENDABLE_OPERATORS:
             width = max(
                 int(node.dtype), int(node.operands[0].dtype),
                 int(node.operands[1].dtype))
@@ -73,12 +73,11 @@ class SVExpressionVisitor(InstanceVisitor):
 
         if isinstance(node.index, slice):
             return f'{val}[{int(node.index.stop) - 1}:{node.index.start}]'
-        else:
-            if typeof(node.val.dtype, Array) or typeof(node.val.dtype,
-                                                       Integer):
-                return f'{val}[{self.visit(node.index)}]'
-            else:
-                return f'{val}.{node.val.dtype.fields[node.index]}'
+
+        if typeof(node.val.dtype, Array) or typeof(node.val.dtype, Integer):
+            return f'{val}[{self.visit(node.index)}]'
+
+        return f'{val}.{node.val.dtype.fields[node.index]}'
 
     def visit_ConditionalExpr(self, node):
         cond = self.visit(node.cond)
@@ -87,12 +86,12 @@ class SVExpressionVisitor(InstanceVisitor):
 
     def visit_IntfExpr(self, node):
         if node.context:
-            if node.context is 'eot':
+            if node.context == 'eot':
                 return f'&{node.name}_s.{node.context}'
-            else:
-                return f'{node.name}.{node.context}'
-        else:
-            return f'{node.name}_s'
+
+            return f'{node.name}.{node.context}'
+
+        return f'{node.name}_s'
 
     def visit_IntfDef(self, node):
         return self.visit_IntfExpr(node)
@@ -102,5 +101,5 @@ class SVExpressionVisitor(InstanceVisitor):
 
 
 def svexpr(expr):
-    v = SVExpressionVisitor()
-    return v.visit(expr)
+    sv_visit = SVExpressionVisitor()
+    return sv_visit.visit(expr)

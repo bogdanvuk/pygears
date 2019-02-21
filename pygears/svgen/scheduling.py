@@ -1,36 +1,12 @@
-import typing as pytypes
-from dataclasses import dataclass, field
-
 import hdl_types as ht
 
 from .hdl_utils import find_hier_blocks
+from .scheduling_types import Leaf, MutexCBlock, SeqCBlock
 
 
-@dataclass
-class CBlock:
-    parent: pytypes.Any
-    child: list
-    hdl_block: pytypes.Any
-    state_ids: list = field(init=False, default=None)
-    prolog: list = None
-    epilog: list = None
-
-
-@dataclass
-class MutexCBlock(CBlock):
-    pass
-
-
-@dataclass
-class SeqCBlock(CBlock):
-    pass
-
-
-@dataclass
-class Leaf:
-    parent: pytypes.Any
-    hdl_blocks: pytypes.Any
-    state_id: pytypes.Any = None
+def non_state_block(block):
+    return (isinstance(block, MutexCBlock)
+            and (not find_hier_blocks(block.hdl_block.stmts)))
 
 
 class Scheduler(ht.TypeVisitor):
@@ -43,10 +19,6 @@ class Scheduler(ht.TypeVisitor):
     def exit_block(self):
         self.scope.pop()
 
-    def non_state_block(self, block):
-        return (isinstance(block, MutexCBlock)
-                and (not find_hier_blocks(block.hdl_block.stmts)))
-
     def visit_block(self, cnode, body):
         self.enter_block(cnode)
 
@@ -55,7 +27,7 @@ class Scheduler(ht.TypeVisitor):
 
         for stmt in body:
             child = self.visit(stmt)
-            if (child is None) or self.non_state_block(child):
+            if (child is None) or non_state_block(child):
                 if leaf_found:
                     if isinstance(leaf_found, Leaf):
                         leaf_found.hdl_blocks.append(stmt)
@@ -69,7 +41,7 @@ class Scheduler(ht.TypeVisitor):
             else:
                 if leaf_found:
                     cnode.child.append(leaf_found)
-                    assert len(free_stmts) == 0
+                    assert not free_stmts
                 else:
                     if free_stmts:
                         if isinstance(child, Leaf):
@@ -123,10 +95,10 @@ class Scheduler(ht.TypeVisitor):
         if hier:
             cblock = SeqCBlock(parent=self.scope[-1], hdl_block=node, child=[])
             return self.visit_block(cblock, node.stmts)
-        else:
-            # safe guard
-            from .hdl_ast import VisitError
-            raise VisitError("If loop isn't blocking stmts should be merged")
+
+        # safe guard
+        from .hdl_utils import VisitError
+        raise VisitError("If loop isn't blocking stmts should be merged")
 
     def visit_Yield(self, node):
         return Leaf(parent=self.scope[-1], hdl_blocks=[node])

@@ -1,9 +1,11 @@
 import ast
 
 import hdl_types as ht
-
-from .hdl_ast import eval_expression, set_pg_type
 from pygears.typing import is_type
+
+from .hdl_utils import (eval_expression, find_assign_target, find_for_target,
+                        set_pg_type)
+from .inst import svgen_log
 
 
 class RegFinder(ast.NodeVisitor):
@@ -22,7 +24,6 @@ class RegFinder(ast.NodeVisitor):
         val = self.variables[name]
 
         # wire, not register
-        # if isinstance(val, ast.AST):
         # TODO
         if not is_type(type(val)):
             return
@@ -32,41 +33,38 @@ class RegFinder(ast.NodeVisitor):
         self.regs[name] = ht.ResExpr(val)
 
     def clean_variables(self):
-        for r in self.regs:
-            del self.variables[r]
+        for reg in self.regs:
+            del self.variables[reg]
 
     def visit_AugAssign(self, node):
         self.promote_var_to_reg(node.target.id)
 
     def visit_For(self, node):
-        if isinstance(node.target, ast.Tuple):
-            for el in node.target.elts:
-                if el.id in self.variables:
-                    self.promote_var_to_reg(el.id)
-        else:
-            assert node.target.id in self.variables, 'Loop iterator not registered'
-            self.promote_var_to_reg(node.target.id)
+        names = find_for_target(node)
+
+        for name in names:
+            if name in self.variables:
+                self.promote_var_to_reg(name)
+            else:
+                svgen_log().warning(
+                    f'For loop interator {name} not registered')
 
         for stmt in node.body:
             self.visit(stmt)
 
     def visit_Assign(self, node):
-        if hasattr(node.targets[0], 'id'):
-            name = node.targets[0].id
-        elif hasattr(node.targets[0], 'value'):
-            name = node.targets[0].value.id
-        else:
-            assert False, 'Unknown assignment type'
+        names = find_assign_target(node)
 
-        if name in self.intf_outs:
-            return
+        for name in names:
+            if name in self.intf_outs:
+                continue
 
-        if name not in self.variables:
-            try:
-                self.variables[name] = eval_expression(node.value,
-                                                       self.local_params)
-            except NameError:
-                # wires/variables are not defined previously
-                self.variables[name] = node.value
-        else:
-            self.promote_var_to_reg(name)
+            if name not in self.variables:
+                try:
+                    self.variables[name] = eval_expression(
+                        node.value, self.local_params)
+                except NameError:
+                    # wires/variables are not defined previously
+                    self.variables[name] = node.value
+            else:
+                self.promote_var_to_reg(name)

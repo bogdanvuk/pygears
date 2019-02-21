@@ -20,6 +20,9 @@ class CBlockVisitor(InstanceVisitor):
         return self.conds.exit_conds
 
     def add_state_conditions(self, cblock, hdl_block, sub_idx=None):
+        if self.state_num == 0 or (not cblock.parent):
+            return
+
         if hasattr(cblock, 'state_ids'):
             # Seq or Mutex
             current_ids = cblock.state_ids
@@ -29,31 +32,20 @@ class CBlockVisitor(InstanceVisitor):
             current_ids = [cblock.state_id]
             current_hdl = cblock.hdl_blocks[sub_idx]
 
-        if self.state_num > 0 and cblock.parent:
+        # if in module even exist states other than the ones in this
+        # cblock
+        if (current_ids != cblock.parent.state_ids) and (current_ids != list(
+                range(self.state_num + 1))):
+            hdl_block.in_cond = state_expr(current_ids, hdl_block.in_cond)
 
-            if (current_ids != cblock.parent.state_ids):
-                # if in module even exist states other than the ones in this
-                # cblock
-                if (current_ids != list(range(self.state_num + 1))):
-                    hdl_block.in_cond = state_expr(current_ids,
-                                                   hdl_block.in_cond)
-
-            if len(current_ids) > 1:
-                return
-
-            parent_ids = list(set(cblock.parent.state_ids))
-            assert len(set(current_ids)) == 1
-            curr_index = parent_ids.index(current_ids[0])
-            if len(parent_ids) > (curr_index) + 1:
-                state_transition = parent_ids[curr_index + 1]
-            else:
-                state_transition = None
-
-            if state_transition:
-                state_copy_block = self.ping_hdl(
-                    current_hdl, state_id=state_transition)
-                state_copy_block.in_cond = None  # already in hdl_block
-                add_to_list(hdl_block.stmts, state_copy_block)
+        parent_ids = list(set(cblock.parent.state_ids))
+        curr_index = parent_ids.index(current_ids[0]) + 1
+        if (len(current_ids) == 1) and (len(parent_ids) > curr_index):
+            state_transition = parent_ids[curr_index]
+            state_copy_block = self.ping_hdl(
+                current_hdl, state_id=state_transition)
+            state_copy_block.in_cond = None  # already in hdl_block
+            add_to_list(hdl_block.stmts, state_copy_block)
 
     def enter_block(self, block):
         self.conds.enter_block(block)
@@ -64,39 +56,49 @@ class CBlockVisitor(InstanceVisitor):
     def exit_block(self):
         self.conds.exit_block()
 
-    def visit_block(self, node):
-        top = []
+    def visit_prolog(self, node):
+        prolog = []
         if node.prolog:
             for block in node.prolog:
                 curr_block = self.ping_hdl(block)
                 self._add_sub(block, curr_block)
-                add_to_list(top, curr_block)
+                add_to_list(prolog, curr_block)
+        return prolog
+
+    def visit_epilog(self, node, epilog_cond):
+        epilog = []
+        if node.epilog:
+            for block in node.epilog:
+                curr_block = self.ping_hdl(block, context_cond=epilog_cond)
+                self._add_sub(block, curr_block, context_cond=epilog_cond)
+                add_to_list(epilog, curr_block)
+        return epilog
+
+    def visit_block(self, node):
+        top = []
+
+        add_to_list(top, self.visit_prolog(node))
 
         curr_block = self.enter_block(node)
 
-        for i, c in enumerate(node.child):
-            add_to_list(curr_block.stmts, self.visit(c))
+        for child in node.child:
+            add_to_list(curr_block.stmts, self.visit(child))
 
         if curr_block.stmts:
             self.hdl.update_defaults(curr_block)
 
-        if node.epilog:
-            epilog_cond = self.conds.rst_cond
+        epilog_cond = self.conds.rst_cond if node.epilog else None
 
         self.exit_block()
 
         add_to_list(top, curr_block)
 
-        if node.epilog:
-            for block in node.epilog:
-                curr_block = self.ping_hdl(block, context_cond=epilog_cond)
-                self._add_sub(block, curr_block, context_cond=epilog_cond)
-                add_to_list(top, curr_block)
+        add_to_list(top, self.visit_epilog(node, epilog_cond))
 
         if len(top) == 1 and isinstance(top[0], CombBlock):
             return top[0]
-        else:
-            return top
+
+        return top
 
     def visit_SeqCBlock(self, node):
         return self.visit_block(node)
@@ -132,7 +134,7 @@ class CBlockPrinter(InstanceVisitor):
     def __init__(self):
         self.indent = 0
 
-    def enter_block(self, block):
+    def enter_block(self):
         self.indent += 4
 
     def exit_block(self):
@@ -147,17 +149,17 @@ class CBlockPrinter(InstanceVisitor):
             for block in node.hdl_blocks:
                 hdl.append(block.__class__.__name__)
             return hdl
-        else:
-            return node.hdl_block.__class__.__name__
+
+        return node.hdl_block.__class__.__name__
 
     def generic_visit(self, node):
         if hasattr(node, 'child'):
             self.write_line(
                 f'{node.__class__.__name__}: states: {node.state_ids}, ({self.get_hdl(node)})'
             )
-            self.enter_block(node)
-            for c in node.child:
-                self.visit(c)
+            self.enter_block()
+            for child in node.child:
+                self.visit(child)
             self.exit_block()
         else:
             self.write_line(

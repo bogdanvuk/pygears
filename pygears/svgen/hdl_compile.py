@@ -1,9 +1,7 @@
 import ast
 import inspect
-import os
 
 import hdl_types as ht
-from pygears.definitions import ROOT_DIR
 from pygears.typing import Uint, bitw
 
 from .cblock import CBlockVisitor
@@ -35,14 +33,7 @@ class HDLWriter:
             self.line(line)
 
 
-def parse_gear_body(gear, function_impl_paths=None):
-    common_func_impl = os.path.abspath(
-        os.path.join(ROOT_DIR, 'svgen', 'hdl_ast_functions.py'))
-    if function_impl_paths is None:
-        function_impl_paths = [common_func_impl]
-    else:
-        function_impl_paths.append(common_func_impl)
-
+def parse_gear_body(gear):
     body_ast = ast.parse(inspect.getsource(gear.func)).body[0]
     # import astpretty
     # astpretty.pprint(body_ast)
@@ -52,13 +43,13 @@ def parse_gear_body(gear, function_impl_paths=None):
     intf.visit(body_ast)
 
     # find registers and variables
-    v = RegFinder(gear, intf.intfs['varargs'], intf.intfs['outputs'])
-    v.visit(body_ast)
-    v.clean_variables()
+    reg_v = RegFinder(gear, intf.intfs['varargs'], intf.intfs['outputs'])
+    reg_v.visit(body_ast)
+    reg_v.clean_variables()
 
     # py ast to hdl ast
-    hdl_ast = HdlAst(gear, v.regs, v.variables, intf.intfs,
-                     function_impl_paths).visit(body_ast)
+    hdl_ast = HdlAst(gear, reg_v.regs, reg_v.variables,
+                     intf.intfs).visit(body_ast)
     # StmtVacum().visit(hdl_ast)
     schedule = Scheduler().visit(hdl_ast)
     states = StateFinder()

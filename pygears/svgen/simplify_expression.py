@@ -5,7 +5,8 @@ import sympy
 import hdl_types as ht
 from pygears.typing import Bool
 
-from .hdl_stmt import AssignValue, CombSeparateStmts
+from .hdl_stmt_types import AssignValue, CombSeparateStmts
+from .hdl_utils import VisitError
 from .inst_visit import InstanceVisitor
 
 
@@ -21,11 +22,11 @@ class SameConditions:
         self.find_same_names()
 
     def set_conditions(self, stmts):
-        for s in stmts:
-            if s.val in self.unique_values:
-                self.set_same_cond(s)
+        for stmt in stmts:
+            if stmt.val in self.unique_values:
+                self.set_same_cond(stmt)
             else:
-                self.set_new_cond(s)
+                self.set_new_cond(stmt)
 
     def set_same_cond(self, cond):
         idx = self.unique_values.index(cond.val)
@@ -37,14 +38,14 @@ class SameConditions:
 
     def find_same_names(self):
         cnt = 0
-        for n in self.names:
-            if len(n) == 1:
-                self.unique_names[n[0]] = n
+        for name in self.names:
+            if len(name) == 1:
+                self.unique_names[name[0]] = name
             else:
-                new_name = ht.cond_name.substitute(
+                new_name = ht.COND_NAME.substitute(
                     cond_type='same', block_id=cnt)
                 cnt += 1
-                self.unique_names[new_name] = n
+                self.unique_names[new_name] = name
 
     def get_clean_conds(self):
         stmts = []
@@ -54,8 +55,8 @@ class SameConditions:
 
         for same, names in self.unique_names.items():
             if len(names) > 1:
-                for n in names:
-                    stmts.append(AssignValue(target=n, val=same))
+                for name in names:
+                    stmts.append(AssignValue(target=name, val=same))
 
         return CombSeparateStmts(stmts=stmts)
 
@@ -70,11 +71,12 @@ class Hdl2Sym(ht.TypeVisitor):
             for name, val in self.special_symbols.items():
                 if val == node:
                     return sympy.symbols(name)
-        else:
-            id = len(self.special_symbols.keys())
-            name = f'spec_{id}'
-            self.special_symbols[name] = node
-            return sympy.symbols(name)
+            return None
+
+        symbol_id = len(self.special_symbols.keys())
+        name = f'spec_{symbol_id}'
+        self.special_symbols[name] = node
+        return sympy.symbols(name)
 
     def visit_int(self, node):
         return node
@@ -100,8 +102,10 @@ class Hdl2Sym(ht.TypeVisitor):
         if node.operator == '!':
             return sympy.Not(operand)
 
+        return None
+
     def visit_BinOpExpr(self, node):
-        if node.operator not in ht.boolean_operators:
+        if node.operator not in ht.BOOLEAN_OPERATORS:
             return self.get_special(node)
 
         operands = []
@@ -114,7 +118,7 @@ class Hdl2Sym(ht.TypeVisitor):
         if node.operator == '||':
             return sympy.Or(*operands)
 
-        assert False, f'Operator not supported, {node.operator}'
+        raise VisitError(f'Operator not supported, {node.operator}')
 
 
 class Sym2Hdl(InstanceVisitor):
@@ -122,11 +126,12 @@ class Sym2Hdl(InstanceVisitor):
         self.special_symbols = special_symbols
 
     def visit_Symbol(self, node):
-        s = str(node)
-        if s in self.special_symbols:
-            return self.special_symbols[s]
-        else:
-            return s
+        sym = str(node)
+
+        if sym in self.special_symbols:
+            return self.special_symbols[sym]
+
+        return sym
 
     def visit_BooleanFalse(self, node):
         return ht.ResExpr(Bool(False))
@@ -148,8 +153,8 @@ class Sym2Hdl(InstanceVisitor):
         if len(operands) > 1:
             return reduce(
                 partial(ht.binary_expr, operator=operator), operands, None)
-        else:
-            return ht.UnaryOpExpr(operands[0], operator)
+
+        return ht.UnaryOpExpr(operands[0], operator)
 
 
 def simplify_expr(expr, same_names=None):

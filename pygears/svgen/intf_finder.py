@@ -4,7 +4,7 @@ import re
 
 import hdl_types as ht
 
-from .hdl_ast import eval_expression
+from .hdl_utils import eval_expression, find_assign_target
 
 
 def find_vararg_input(gear):
@@ -28,12 +28,12 @@ def find_vararg_input(gear):
     }
 
     pos_in_ports = {}
-    for p in positional:
+    for pos in positional:
         args = []
         for port in gear.in_ports:
-            if re.match(f'^{p}\d+$', port.basename):
+            if re.match(f'^{pos}\d+$', port.basename):
                 args.append(port)
-        pos_in_ports[p] = tuple(args)
+        pos_in_ports[pos] = tuple(args)
 
     named_in_ports = {
         p.basename: p.consumer
@@ -93,22 +93,18 @@ class IntfFinder(ast.NodeVisitor):
             self.visit(stmt)
 
     def visit_Assign(self, node):
-        if hasattr(node.targets[0], 'id'):
-            name = node.targets[0].id
-        elif hasattr(node.targets[0], 'value'):
-            name = node.targets[0].value.id
-        else:
-            assert False, 'Unknown assignment type'
+        names = find_assign_target(node)
 
-        if name not in self.intfs['outputs']:
-            scope = {**self.local_params, **self.intfs['varargs']}
-            try:
-                val = eval_expression(node.value, scope)
-            except NameError:
-                return
+        for name in names:
+            if name not in self.intfs['outputs']:
+                scope = {**self.local_params, **self.intfs['varargs']}
+                try:
+                    val = eval_expression(node.value, scope)
+                except NameError:
+                    return
 
-            if val is None:
-                self.intfs['outputs'][name] = self.out_names[0]
-            elif isinstance(val,
-                            (list, tuple)) and all([v is None for v in val]):
-                self.intfs['outputs'][name] = self.out_names
+                if val is None:
+                    self.intfs['outputs'][name] = self.out_names[0]
+                elif isinstance(val, (list, tuple)) and all(
+                    [v is None for v in val]):
+                    self.intfs['outputs'][name] = self.out_names

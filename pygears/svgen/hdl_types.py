@@ -7,14 +7,13 @@ from string import Template
 
 from pygears.typing import Bool, Integer, Queue, Tuple, Uint, is_type, typeof
 
-boolean_operators = {'|', '&', '^', '~', '!', '&&', '||'}
-
-bin_operators = ['!', '==', '>', '>=', '<', '<=', '!=', '&&', '||']
-extendable_operators = [
+BOOLEAN_OPERATORS = {'|', '&', '^', '~', '!', '&&', '||'}
+BIN_OPERATORS = ['!', '==', '>', '>=', '<', '<=', '!=', '&&', '||']
+EXTENDABLE_OPERATORS = [
     '+', '-', '*', '/', '%', '**', '<<', '>>>', '|', '&', '^', '/', '~', '!'
 ]
 
-cond_name = Template('${cond_type}_cond_block_${block_id}')
+COND_NAME = Template('${cond_type}_cond_block_${block_id}')
 
 
 def find_sub_cond_ids(cond):
@@ -22,8 +21,8 @@ def find_sub_cond_ids(cond):
     res = {}
     if cond:
         pattern = re.compile('(.*)_cond_block_(.*)')
-        for m in re.finditer('\w+_cond_block_\d+', str(cond)):
-            sub_cond = m.group(0)
+        for match in re.finditer('\w+_cond_block_\d+', str(cond)):
+            sub_cond = match.group(0)
             cond_name, cond_id = pattern.search(sub_cond).groups()
             if cond_name in res:
                 res[cond_name].append(int(cond_id))
@@ -32,19 +31,26 @@ def find_sub_cond_ids(cond):
 
         return res
 
+    return None
+
 
 def find_cond_id(cond):
     if cond:
         return int(cond.split('_')[-1])
 
+    return None
+
 
 def nested_cond(stmt, cond_type):
     cond = getattr(stmt, f'{cond_type}_cond', None)
-    if cond is not None:
-        if isinstance(cond, str):
-            return cond
-        else:
-            return cond_name.substitute(cond_type=cond_type, block_id=stmt.id)
+
+    if cond is None:
+        return None
+
+    if isinstance(cond, str):
+        return cond
+
+    return COND_NAME.substitute(cond_type=cond_type, block_id=stmt.id)
 
 
 def nested_cycle_cond(stmt):
@@ -58,20 +64,20 @@ def nested_exit_cond(stmt):
 def create_oposite(expr):
     if isinstance(expr, UnaryOpExpr) and expr.operator == '!':
         return expr.operand
-    else:
-        return UnaryOpExpr(expr, '!')
+
+    return UnaryOpExpr(expr, '!')
 
 
 def find_exit_cond(statements, search_in_cond=False):
     for stmt in reversed(statements):
-        c = getattr(stmt, 'exit_cond', None)
-        if c is not None:
+        cond = getattr(stmt, 'exit_cond', None)
+        if cond is not None:
             exit_c = nested_exit_cond(stmt)
             if search_in_cond and (not isinstance(stmt, IfBlock)) and hasattr(
                     stmt, 'in_cond') and (stmt.in_cond is not None):
                 return and_expr(exit_c, stmt.in_cond)
-            else:
-                return exit_c
+
+            return exit_c
 
     return None
 
@@ -79,8 +85,8 @@ def find_exit_cond(statements, search_in_cond=False):
 def find_cycle_cond(statements):
     cond = []
     for stmt in statements:
-        c = getattr(stmt, 'cycle_cond', None)
-        if c is not None:
+        cycle_c = getattr(stmt, 'cycle_cond', None)
+        if cycle_c is not None:
             cond.append(nested_cycle_cond(stmt))
 
     return reduce(and_expr, cond, None)
@@ -89,12 +95,14 @@ def find_cycle_cond(statements):
 def binary_expr(expr1, expr2, operator):
     if expr1 is None:
         return expr2
-    elif expr2 is None:
+
+    if expr2 is None:
         return expr1
-    elif expr1 is None and expr2 is None:
+
+    if expr1 is None and expr2 is None:
         return None
-    else:
-        return BinOpExpr((expr1, expr2), operator)
+
+    return BinOpExpr((expr1, expr2), operator)
 
 
 def and_expr(expr1, expr2):
@@ -132,21 +140,23 @@ class ResExpr(Expr):
     def dtype(self):
         if is_type(type(self.val)):
             return type(self.val)
-        else:
-            if isinstance(self.val, (list, tuple)):
-                res = []
-                for v in self.val:
-                    if is_type(type(v)):
-                        res.append(type(v))
+
+        if isinstance(self.val, (list, tuple)):
+            res = []
+            for val in self.val:
+                if is_type(type(val)):
+                    res.append(type(val))
+                else:
+                    if val is not None:
+                        res.append(Integer(val))
                     else:
-                        if v is not None:
-                            res.append(Integer(v))
-                        else:
-                            res.append(None)
-                return res
-            else:
-                if self.val is not None:
-                    return Integer(self.val)
+                        res.append(None)
+            return res
+
+        if self.val is not None:
+            return Integer(self.val)
+
+        return None
 
 
 @dataclass
@@ -158,8 +168,8 @@ class RegDef(Expr):
     def dtype(self):
         if is_type(type(self.val)):
             return type(self.val)
-        else:
-            return self.val.dtype
+
+        return self.val.dtype
 
 
 @dataclass
@@ -226,8 +236,8 @@ class IntfDef(Expr):
     def dtype(self):
         if isinstance(self.intf, tuple):
             return self.intf[0].dtype
-        else:
-            return self.intf.dtype
+
+        return self.intf.dtype
 
 
 @dataclass
@@ -256,7 +266,7 @@ class UnaryOpExpr(Expr):
 
     @property
     def dtype(self):
-        return Uint[1] if (self.operand is '!') else self.operand.dtype
+        return Uint[1] if (self.operand == '!') else self.operand.dtype
 
 
 @dataclass
@@ -276,17 +286,18 @@ class BinOpExpr(Expr):
 
     @property
     def dtype(self):
-        if self.operator in bin_operators:
+        if self.operator in BIN_OPERATORS:
             return Uint[1]
 
-        t = eval(f'op1 {self.operator} op2', {
+        res_t = eval(f'op1 {self.operator} op2', {
             'op1': self.operands[0].dtype,
             'op2': self.operands[1].dtype
         })
-        if isinstance(t, bool):
+
+        if isinstance(res_t, bool):
             return Uint[1]
-        else:
-            return t
+
+        return res_t
 
 
 @dataclass
@@ -308,10 +319,11 @@ class SubscriptExpr(Expr):
     def dtype(self):
         if isinstance(self.index, OperandVal):
             return self.val.dtype[0]
-        elif not isinstance(self.index, slice):
+
+        if not isinstance(self.index, slice):
             return self.val.dtype[self.index]
-        else:
-            return self.val.dtype.__getitem__(self.index)
+
+        return self.val.dtype.__getitem__(self.index)
 
 
 @dataclass
@@ -323,18 +335,18 @@ class AttrExpr(Expr):
     def dtype(self):
         return self.get_attr_dtype(self.val.dtype)
 
-    def get_attr_dtype(self, t):
+    def get_attr_dtype(self, val_type):
         for attr in self.attr:
-            if typeof(t, Tuple):
-                t = t[attr]
-            elif typeof(t, Queue):
+            if typeof(val_type, Tuple):
+                val_type = val_type[attr]
+            elif typeof(val_type, Queue):
                 try:
-                    t = t[attr]
+                    val_type = val_type[attr]
                 except KeyError:
-                    t = self.get_attr_dtype(t[0])
+                    val_type = self.get_attr_dtype(val_type[0])
             else:
-                t = getattr(t, attr, None)
-        return t
+                val_type = getattr(val_type, attr, None)
+        return val_type
 
 
 @dataclass
@@ -361,7 +373,7 @@ class Block:
 
     @property
     def in_cond_id(self):
-        return cond_name.substitute(cond_type='in', block_id=self.id)
+        return COND_NAME.substitute(cond_type='in', block_id=self.id)
 
     @property
     def cycle_cond(self):
@@ -522,21 +534,21 @@ class TypeVisitor:
         method = 'visit_' + node.__class__.__name__
         visitor = getattr(self, method, self.generic_visit)
 
-        if visitor.__name__ is 'generic_visit' and isinstance(node, Block):
+        if visitor.__name__ == 'generic_visit' and isinstance(node, Block):
             visitor = getattr(self, 'visit_all_Block', self.generic_visit)
 
-        if visitor.__name__ is 'generic_visit' and isinstance(node, Expr):
+        if visitor.__name__ == 'generic_visit' and isinstance(node, Expr):
             visitor = getattr(self, 'visit_all_Expr', self.generic_visit)
 
         if kwds:
             sig = inspect.signature(visitor)
+
         if kwds and ('kwds' in sig.parameters):
             return visitor(node, **kwds)
-        else:
-            return visitor(node)
+
+        return visitor(node)
 
     def generic_visit(self, node):
-        breakpoint()
         raise Exception
 
 
@@ -549,16 +561,16 @@ class Conditions:
     @property
     def cycle_cond(self):
         cond = []
-        for c in reversed(self.scope[1:]):
-            s = c.hdl_block
-            if isinstance(s, ContainerBlock):
+        for c_block in reversed(self.scope[1:]):
+            block = c_block.hdl_block
+            if isinstance(block, ContainerBlock):
                 continue
 
-            if s.cycle_cond and s.cycle_cond != 1:
-                cond.append(nested_cycle_cond(s))
+            if block.cycle_cond and block.cycle_cond != 1:
+                cond.append(nested_cycle_cond(block))
                 self.cycle_conds.append(find_cond_id(cond[-1]))
 
-            if hasattr(s, 'multicycle') and s.multicycle:
+            if hasattr(block, 'multicycle') and block.multicycle:
                 break
 
         cond = set(cond)
@@ -566,20 +578,20 @@ class Conditions:
 
     @property
     def exit_cond(self):
-        s = self.scope[-1].hdl_block
-        c = nested_exit_cond(s)
-        if c is not None:
-            self.exit_conds.append(find_cond_id(c))
-        return c
+        block = self.scope[-1].hdl_block
+        cond = nested_exit_cond(block)
+        if cond is not None:
+            self.exit_conds.append(find_cond_id(cond))
+        return cond
 
     @property
     def rst_cond(self):
         if len(self.scope) == 1:
             assert isinstance(self.scope[0].hdl_block, Module)
-            b = self.scope[0].hdl_block.stmts
+            block = self.scope[0].hdl_block.stmts
         else:
-            b = [s.hdl_block for s in self.scope[1:]]
-        return find_exit_cond(b, search_in_cond=True)
+            block = [s.hdl_block for s in self.scope[1:]]
+        return find_exit_cond(block, search_in_cond=True)
 
     def enter_block(self, block):
         self.scope.append(block)
