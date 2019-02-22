@@ -1,24 +1,49 @@
 import ast
 
 import hdl_types as ht
-from pygears.typing import is_type
+from pygears.typing import Uint, bitw, is_type
 
 from .hdl_utils import (eval_expression, find_assign_target, find_for_target,
                         set_pg_type)
 from .inst import svgen_log
 
 
+class AstAyncFinder(ast.NodeVisitor):
+    def __init__(self):
+        self.blocking = False
+
+    def visit_Yield(self, node):
+        self.blocking = True
+
+    def visit_YieldFrom(self, node):
+        self.blocking = True
+
+    def visit_AsyncFor(self, node):
+        self.blocking = True
+
+    def visit_AsyncWith(self, node):
+        self.blocking = True
+
+
+def find_async(node):
+    async_visit = AstAyncFinder()
+    async_visit.visit(node)
+    return async_visit.blocking
+
+
 class RegFinder(ast.NodeVisitor):
-    def __init__(self, gear, intf_args, intf_outs):
+    def __init__(self, gear, intfs):
         self.regs = {}
         self.variables = {}
         self.local_params = {
             **{p.basename: p.consumer
                for p in gear.in_ports},
             **gear.explicit_params,
-            **intf_args
+            **intfs['varargs']
         }
-        self.intf_outs = intf_outs.keys()
+        self.intf_outs = intfs['outputs'].keys()
+        nested = [list(val.keys()) for intf, val in intfs.items()]
+        self.intfs = [item for sublist in nested for item in sublist]
 
     def promote_var_to_reg(self, name):
         val = self.variables[name]
@@ -34,7 +59,8 @@ class RegFinder(ast.NodeVisitor):
 
     def clean_variables(self):
         for reg in self.regs:
-            del self.variables[reg]
+            if reg in self.variables:
+                del self.variables[reg]
 
     def visit_AugAssign(self, node):
         self.promote_var_to_reg(node.target.id)
@@ -42,12 +68,27 @@ class RegFinder(ast.NodeVisitor):
     def visit_For(self, node):
         names = find_for_target(node)
 
-        for name in names:
+        blocking = find_async(node)
+
+        for i, name in enumerate(names):
             if name in self.variables:
                 self.promote_var_to_reg(name)
             else:
-                svgen_log().warning(
-                    f'For loop interator {name} not registered')
+                if blocking and (name not in self.intfs):
+                    if i == 0:
+                        try:
+                            rng = eval_expression(node.iter, self.local_params)
+                            length = len([v for v in rng])
+                        except NameError:
+                            length = 2**32 - 1
+
+                        self.regs[name] = ht.ResExpr(Uint[bitw(length)](0))
+                        svgen_log().debug(
+                            f'For loop iterator {name} registered with width {bitw(length)}'
+                        )
+                    else:
+                        svgen_log().debug(
+                            f'For loop iterator {name} not registered')
 
         for stmt in node.body:
             self.visit(stmt)

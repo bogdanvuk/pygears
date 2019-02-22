@@ -40,7 +40,7 @@ def test_3_inputs(tmpdir, sim_cls, din_delay, dout_delay):
 
     t_din = Queue[Uint[8]]
     seq = []
-    for i in range(din_num):
+    for _ in range(din_num):
         seq.append([list(range(4)), list(range(3)), list(range(2))])
     ref = seq
 

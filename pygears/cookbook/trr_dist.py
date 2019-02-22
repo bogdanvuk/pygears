@@ -8,7 +8,7 @@ async def trr_dist(din: Queue, *, lvl=1,
 
     i = Uint[bitw(dout_num)](0)
 
-    while (1):
+    while 1:
         async with din as val:
 
             out_res = [None] * dout_num
@@ -18,7 +18,7 @@ async def trr_dist(din: Queue, *, lvl=1,
             if all(val.eot):
                 i = 0
             elif all(val.eot[:lvl]):
-                if (i == (dout_num - 1)):
+                if i == (dout_num - 1):
                     i = 0
                 else:
                     i += 1

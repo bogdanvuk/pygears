@@ -622,6 +622,16 @@ class HdlAst(ast.NodeVisitor):
             out_intfs=self.out_intfs,
             stmts=[])
 
+        # initialization for register without explicit assign in code
+        reg_names = list(self.regs.keys())
+        assign_names = [
+            stmt.targets[0].id for stmt in node.body
+            if isinstance(stmt, ast.Assign)
+        ]
+        missing_reg = [name for name in reg_names if name not in assign_names]
+        for name in missing_reg:
+            self.hdl_locals[name] = ht.RegDef(self.regs[name], name)
+
         return self.visit_block(hdl_node, node.body)
 
 

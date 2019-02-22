@@ -13,10 +13,8 @@ async def alternate_queues(din0: Queue, din1: Queue) -> b'(din0, din1)':
 @alternative(alternate_queues)
 @gear(svgen={'compile': True})
 async def alternate_queues_multi(*din: Queue) -> b'(din[0], ) * len(din)':
-    i = Uint[bitw(len(din))](0)
-
     for i, d in enumerate(din):
+        out_res = [None] * len(din)
         async for data in d:
-            out_res = [None] * len(din)
             out_res[i] = data
             yield out_res

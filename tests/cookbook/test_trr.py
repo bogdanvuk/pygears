@@ -14,18 +14,18 @@ from pygears.sim.modules.sim_socket import SimSocket
 from pygears.typing import Queue, Uint
 from pygears.util.test_utils import prepare_result_dir, skip_ifndef
 
-t_din = Queue[Uint[16]]
+T_DIN = Queue[Uint[16]]
 
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_directed(tmpdir, sim_cls, din_delay, dout_delay):
     directed(
-        drv(t=t_din, seq=[list(range(9)), list(range(3))])
+        drv(t=T_DIN, seq=[list(range(9)), list(range(3))])
         | delay_rng(din_delay, din_delay),
-        drv(t=t_din, seq=[list(range(9)), list(range(3))])
+        drv(t=T_DIN, seq=[list(range(9)), list(range(3))])
         | delay_rng(din_delay, din_delay),
-        drv(t=t_din, seq=[list(range(9)), list(range(3))])
+        drv(t=T_DIN, seq=[list(range(9)), list(range(3))])
         | delay_rng(din_delay, din_delay),
         f=trr(sim_cls=sim_cls),
         ref=[[[0, 1, 2, 3, 4, 5, 6, 7, 8], [0, 1, 2, 3, 4, 5, 6, 7, 8],
@@ -41,9 +41,9 @@ def test_random(tmpdir, sim_cls):
     din_num = 3
 
     stim = []
-    for i in range(din_num):
+    for _ in range(din_num):
         stim.append(
-            drv(t=t_din,
+            drv(t=T_DIN,
                 seq=[
                     list(range(random.randint(1, 10))),
                     list(range(random.randint(1, 10)))
@@ -62,11 +62,11 @@ def test_socket_cosim_rand():
     cons = []
     for i in range(din_num):
         cons.append(
-            create_constraint(t_din, f'din{i}', eot_cons=['data_size == 10']))
+            create_constraint(T_DIN, f'din{i}', eot_cons=['data_size == 10']))
 
     stim = []
     for i in range(din_num):
-        stim.append(drv(t=t_din, seq=rand_seq(f'din{i}', 30)))
+        stim.append(drv(t=T_DIN, seq=rand_seq(f'din{i}', 30)))
 
     verif(
         *stim,
