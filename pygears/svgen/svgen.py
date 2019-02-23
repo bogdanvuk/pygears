@@ -1,12 +1,12 @@
 from pygears.conf import PluginBase, bind, registry, safe_bind
 from pygears.rtl import rtlgen
 from pygears.util.find import find
+
 from .generate import svgen_generate
 from .inst import svgen_inst
 
 
-def svgen(top=None, **conf):
-
+def find_rtl_top(top, **conf):
     if top is None:
         top = registry('gear/hier_root')
     elif isinstance(top, str):
@@ -16,7 +16,11 @@ def svgen(top=None, **conf):
     if top not in rtl_map:
         rtlgen(**conf)
 
-    rtl_top = rtl_map[top]
+    return rtl_map[top]
+
+
+def svgen(top=None, **conf):
+    rtl_top = find_rtl_top(top, **conf)
 
     bind('svgen/conf', conf)
     for oper in registry('svgen/flow'):

@@ -1,6 +1,6 @@
 from pygears.hls import HDLWriter, InstanceVisitor, parse_gear_body
 
-from .util import vgen_intf, vgen_reg, vgen_wire
+from .util import vgen_intf, vgen_reg
 from .v_expression import vexpr
 
 REG_TEMPLATE = """
@@ -77,7 +77,7 @@ class VCompiler(InstanceVisitor):
 
 
 DATA_FUNC_GEAR = """
-{%- import 'verilog_snippet.j2' as snippet -%}
+{%- import 'snippet.j2' as snippet -%}
 
 {% call snippet.module_with_intf(module_name, intfs, intfs, comment) %}
 
@@ -124,32 +124,6 @@ def compile_gear_body(gear):
     return '\n'.join(writer.lines)
 
 
-def intercept_svgen_jenv(template_env):
-    # TODO : TESTING ONLY!!! REMOVE!!!
-    import os
-    import jinja2
-
-    jenv = jinja2.Environment(
-        extensions=['jinja2.ext.do'],
-        trim_blocks=True,
-        lstrip_blocks=True,
-        undefined=jinja2.StrictUndefined)
-    jenv.loader = jinja2.FileSystemLoader(os.path.dirname(__file__))
-    jenv.globals.update(template_env.jenv.globals)
-    jenv.globals.update(
-        vgen_intf=vgen_intf, vgen_wire=vgen_wire, vgen_reg=vgen_reg)
-
-    for key, val in template_env.jenv.filters.items():
-        jenv.filters[key] = val
-
-    return jenv
-
-
 def compile_gear(gear, template_env, context):
     context['vlines'] = compile_gear_body(gear)
-
-    # TODO : TESTING ONLY!!! REMOVE!!!
-    jenv = intercept_svgen_jenv(template_env)
-    return jenv.from_string(DATA_FUNC_GEAR).render(context)
-
-    # return template_env.render_string(DATA_FUNC_GEAR, context)
+    return template_env.render_string(DATA_FUNC_GEAR, context)
