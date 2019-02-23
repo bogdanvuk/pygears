@@ -1,0 +1,158 @@
+{%- set RBR = "{" %}
+{%- set LBR = "}" %}
+
+{%- macro generic_list(generics) -%}
+  {% for g in generics %}
+    {{g['name']}} = {{g['value']}}{{ "" if loop.last else "," }}
+  {%- endfor -%}
+{%- endmacro -%}
+
+{% macro module_inst(module_name, param_map, inst_name, port_map=None, rst_name="rst") -%}
+
+  {{module_name}}
+  {%- if param_map|length > 0 %}
+ #(
+    {% for name,value in param_map.items() -%}
+      {%- if name %}
+        {{"."|indent(4,True)}}{{name}}({{value.bit_length()}}'d{{value}}){{ "" if loop.last else "," }}
+      {% else -%}
+        {{value|indent(4,True)}}{{ "" if loop.last else "," }}
+      {% endif -%}
+    {% endfor -%}
+    )
+  {% endif %}
+ {{inst_name}} (
+    .clk(clk),
+    .rst({{rst_name}}),
+  {% if port_map -%}
+    {% for name,value in port_map.items() -%}
+      {{"."|indent(4,True)}}{{name}}({{value}}){{ "" if loop.last else "," }}
+    {% endfor -%}
+  {% else -%}
+    .*
+  {% endif -%}
+  );
+{% endmacro %}
+
+{% macro intf_inst(name, width, size, type) -%}
+  {% if width == 0 %}
+	{% set width = 1 %}
+  {% endif %}
+  reg {{name}}{{ "[%d:0]"|format(size-1) if size>1 else "" }}_ready;
+  reg {{name}}{{ "[%d:0]"|format(size-1) if size>1 else "" }}_valid;
+  reg [{{width-1}}:0] {{name}}{{ "[%d:0]"|format(size-1) if size>1 else "" }}_data;
+{%- endmacro %}
+
+{% macro assign(name, value) -%}
+  assign {{name}} = {{value}};
+{%- endmacro %}
+
+{% macro range(name, high, low=0) -%}
+  {{name}}[{{high}}:{{low}}]
+{%- endmacro %}
+
+{% macro concat(values) -%}
+  {{RBR}}{{ values|join(', ') }}{{LBR}}
+{%- endmacro %}
+
+{% macro reg(name, high=none, low=0) -%}
+  {%- if high is not none %}
+reg [{{high}}:{{low}}] {{name}};
+  {%- else -%}
+reg {{name}};
+  {% endif -%}
+{%- endmacro %}
+
+{% macro wire(name, high=none, low=0) -%}
+  {%- if high is not none %}
+wire [{{high}}:{{low}}] {{name}};
+  {%- else -%}
+wire {{name}};
+  {% endif -%}
+{%- endmacro %}
+
+{% macro cons_signal_intf(intf) -%}
+output reg         {{intf['name']}}_ready,
+input  wire         {{intf['name']}}_valid,
+input  wire [{{intf['width']-1}}:0] {{intf['name']}}_data
+{%- endmacro %}
+
+{% macro prod_signal_intf(intf) -%}
+input  wire         {{intf['name']}}_ready,
+output reg          {{intf['name']}}_valid,
+output reg  [{{intf['width']-1}}:0] {{intf['name']}}_data
+{%- endmacro %}
+
+{% macro signal_intf_list(intfs) -%}
+  {% for i in intfs -%}
+    {% if i['modport'] == 'consumer' %}
+{{ cons_signal_intf(i) }}{{ "" if loop.last else "," }}
+    {% else %}
+{{ prod_signal_intf(i) }}{{ "" if loop.last else "," }}
+    {% endif %}
+  {% endfor %}
+{%- endmacro %}
+
+{% macro intf_list_inst(intfs) -%}
+  {% for i in intfs -%}
+{{ intf_inst(i['name'], i['width'], 1, i['type']) }}
+  {% endfor %}
+{%- endmacro %}
+
+{% macro cons_signal_intf_connect(intf) -%}
+output logic         {{intf['name']}}_ready,
+input  logic         {{intf['name']}}_valid,
+input  logic [{{intf['width']}}:0] {{intf['name']}}_data
+{%- endmacro %}
+
+{% macro gear_module(module_name, intfs, comment) -%}
+  {% if comment is defined -%}
+/*
+    {{ comment }}
+*/
+  {% endif %}
+
+module {{module_name}}
+(
+    input clk,
+    input rst,
+{{ signal_intf_list(intfs)|indent(4, True) }}
+);
+{{ caller() }}
+endmodule
+{%- endmacro %}
+
+{% macro module_with_intf(module_name, intfs, struct_intfs, comment) -%}
+{% set caller_ = caller %}
+{% call gear_module(module_name, intfs, comment) %}
+  {% for i in struct_intfs|isinput -%}
+    {% if i['width'] > 0 %}
+    assign {{i['name']}}_s = {{i['name']}}_data;
+    {% endif %}
+  {%- endfor %}
+  {% for i in struct_intfs %}
+    {% if i['modport'] == 'consumer' %}
+    {{ vgen_wire(i['local_type'], i['name'] + '_s')|indent(4, False) }}
+    {% else %}
+    {{ vgen_reg(i['local_type'], i['name'] + '_s')|indent(4, False) }}
+    {% endif %}
+
+  {% endfor %}
+  {% for i in struct_intfs|isoutput -%}
+    {% if i['width'] > 0 %}
+    assign {{i['name']}}_data = {{i['name']}}_s;
+    {% endif %}
+  {% endfor %}
+{{ caller_() }}
+{% endcall %}
+{%- endmacro %}
+
+{% macro data_func_gear(module_name, intfs, comment) -%}
+{% set caller_ = caller %}
+{% call module_with_intf(module_name, intfs, intfs, comment) %}
+    assign {{intfs[0]['name']}}_ready = {{intfs[1]['name']}}_ready;
+    assign {{intfs[1]['name']}}_valid = {{intfs[0]['name']}}_valid;
+{{ caller_() }}
+{% endcall %}
+
+{%- endmacro %}
