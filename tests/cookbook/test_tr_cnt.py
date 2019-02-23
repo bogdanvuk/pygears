@@ -7,14 +7,14 @@ from pygears.sim import sim
 from pygears.sim.modules.drv import drv
 from pygears.typing import Queue, Uint
 
-t_din = Queue[Uint[16]]
-t_cfg = Uint[16]
 
-
-@pytest.mark.parametrize('din_delay', [0, 1, 5])
-@pytest.mark.parametrize('dout_delay', [0, 1, 5])
-@pytest.mark.parametrize('cfg_delay', [0, 1, 5])
+@pytest.mark.parametrize('din_delay', [0, 5])
+@pytest.mark.parametrize('dout_delay', [0, 5])
+@pytest.mark.parametrize('cfg_delay', [0, 5])
 def test_directed(tmpdir, sim_cls, din_delay, dout_delay, cfg_delay):
+    t_din = Queue[Uint[16]]
+    t_cfg = Uint[16]
+
     directed(
         drv(t=t_din,
             seq=[
