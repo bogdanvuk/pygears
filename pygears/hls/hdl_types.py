@@ -128,8 +128,37 @@ class IntfReadyExpr(Expr):
     out_port: pytypes.Any
 
     @property
+    def name(self):
+        if isinstance(self.out_port, str):
+            return self.out_port
+
+        return self.out_port.name
+
+    @property
     def dtype(self):
         return Bool
+
+    def __hash__(self):
+        return hash(self.name)
+
+
+@dataclass
+class IntfValidExpr(Expr):
+    port: pytypes.Any
+
+    @property
+    def name(self):
+        if isinstance(self.port, str):
+            return self.port
+
+        return self.port.name
+
+    @property
+    def dtype(self):
+        return Bool
+
+    def __hash__(self):
+        return hash(self.name)
 
 
 @dataclass

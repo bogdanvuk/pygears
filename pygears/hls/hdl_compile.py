@@ -1,7 +1,7 @@
 import ast
 import inspect
 
-import hdl_types as ht
+import pygears.hls.hdl_types as ht
 from pygears.typing import Uint, bitw
 
 from .cblock import CBlockVisitor
@@ -20,13 +20,13 @@ from .state_finder import StateFinder
 class HDLWriter:
     def __init__(self):
         self.indent = 0
-        self.svlines = []
+        self.lines = []
 
     def line(self, line=''):
         if not line:
-            self.svlines.append('')
+            self.lines.append('')
         else:
-            self.svlines.append(f'{" "*self.indent}{line}')
+            self.lines.append(f'{" "*self.indent}{line}')
 
     def block(self, block):
         for line in block.split('\n'):

@@ -1,8 +1,9 @@
 import ast
 
-import hdl_types as ht
-from compile_snippets import enumerate_impl, qrange_mux_impl
+import pygears.hls.hdl_types as ht
 from pygears.typing import Uint
+
+from .compile_snippets import enumerate_impl, qrange_mux_impl
 
 
 def increment_reg(name, val=ast.Num(1), target=None):

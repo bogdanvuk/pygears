@@ -1,6 +1,4 @@
-import hdl_types as ht
-
-from .hdl_utils import find_hier_blocks
+import pygears.hls.hdl_types as ht
 
 
 def sort_stmts(stmts):
