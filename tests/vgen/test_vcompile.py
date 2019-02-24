@@ -8,7 +8,7 @@ SIMPLE_ADD_RES = """
 wire exit_cond_block_2;
 always @(*) begin
     dout_valid = 0;
-    dout_s = 11'(11'(din_s_f0) + 11'(din_s_f1));
+    dout_s = $unsigned($unsigned({3'b0, din_s_f0}) + $unsigned({1'b0, din_s_f1}));
     if (din_valid) begin
         dout_valid = 1;
     end
@@ -35,7 +35,7 @@ wire in_cond_block_2;
 wire exit_cond_block_3;
 always @(*) begin
     dout_valid = 0;
-    dout_s = 12'(din_s_data);
+    dout_s = (din_s_data);
     if (din_valid) begin
         if (din_s_data_ctrl == din_s_sel) begin
             dout_valid = 1;

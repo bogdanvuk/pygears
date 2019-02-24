@@ -2,41 +2,70 @@ import pygears.hls.hdl_types as ht
 from pygears.svgen.sv_expression import SVExpressionVisitor
 from pygears.typing import Array, Int, Integer, Queue, Uint, typeof
 
+TRUNC_FUNC_TEMPLATE = """
+function [{1}:0] {0}(input [{2}:0] tmp);
+    return tmp[{1}:0];
+endfunction
+"""
+
+
+def get_truncate_func(res_dtype, op_dtype):
+    name = f'trunc_{int(op_dtype)}_to_{int(res_dtype)}'
+    val = TRUNC_FUNC_TEMPLATE.format(name,
+                                     int(res_dtype) - 1,
+                                     int(op_dtype) - 1)
+    return name, val
+
+
+def update_functions(all_functions, addition):
+    if addition:
+        for key, value in addition.items():
+            if key:
+                all_functions[key] = value
+
 
 def cast(res_dtype, op_dtype, op_value):
-    turncate = int(op_dtype) - int(res_dtype)
-    if turncate < 0:
-        turncate = 0
+    truncate_func = None
+    truncate_impl = None
+
+    if isinstance(op_value, int):
+        return str(op_value), {truncate_func: truncate_impl}
+
+    if (int(op_dtype) - int(res_dtype)) > 0:
+        truncate_func, truncate_impl = get_truncate_func(res_dtype, op_dtype)
 
     extend = int(res_dtype) - int(op_dtype)
     if extend < 0:
         extend = 0
 
-    if typeof(res_dtype, Int) and typeof(op_dtype, Uint):
-        if extend:
-            return f"$signed({{{extend}'b0, {op_value}}})"
-        if turncate:
-            return f"$signed({op_value}[{turncate-1}:0])"
-        return f"$signed({op_value})"
-
     if typeof(res_dtype, Int):
-        if extend:
-            return f"$signed({{{extend}'b1, {op_value}}})"
-        if turncate:
-            return f"$signed({op_value}[{turncate-1}:0])"
-        return f"$signed({op_value})"
+        sign = '$signed'
+    elif typeof(res_dtype, Uint):
+        sign = '$unsigned'
+    else:
+        sign = ''
 
-    if typeof(res_dtype, Uint):
-        if extend:
-            return f"$unsigned({{{extend}'b0, {op_value}}})"
-        if turncate:
-            return f"$unsigned({op_value}[{turncate-1}:0])"
-        return f"$unsigned({op_value})"
+    if extend:
+        if typeof(res_dtype, Int) and typeof(op_dtype, Uint):
+            res = f"{sign}({{{extend}'b0, {op_value}}})"
+        elif typeof(res_dtype, Int):
+            sel = f'{op_value}[{int(op_dtype) - 1}]'
+            ex = f'{{{extend}{{{sel}}}}}'
+            res = f"{sign}({{{ex}, {op_value}}})"
+        else:
+            res = f"{sign}({{{extend}'b0, {op_value}}})"
+    elif truncate_func:
+        res = f"{sign}({truncate_func}({op_value}))"
+    else:
+        res = f"{sign}({op_value})"
 
-    return f"{op_value}"
+    return res, {truncate_func: truncate_impl}
 
 
 class VExpressionVisitor(SVExpressionVisitor):
+    def __init__(self):
+        self.functions = {}
+
     def visit_IntfValidExpr(self, node):
         return f'{node.name}_valid'
 
@@ -65,7 +94,10 @@ class VExpressionVisitor(SVExpressionVisitor):
         return '_'.join(val + node.attr)
 
     def visit_CastExpr(self, node):
-        return cast(node.dtype, node.operand.dtype, self.visit(node.operand))
+        val, func = cast(node.dtype, node.operand.dtype,
+                         self.visit(node.operand))
+        update_functions(self.functions, func)
+        return val
 
     def visit_BinOpExpr(self, node):
         ops = [self.visit(op) for op in node.operands]
@@ -82,9 +114,12 @@ class VExpressionVisitor(SVExpressionVisitor):
         if int(node.operands[1].dtype) > int(res_dtype):
             res_dtype = node.operands[1].dtype
 
-        return cast(res_dtype, node.operands[0].dtype,
-                    ops[0]) + f" {node.operator} " + cast(
-                        res_dtype, node.operands[1].dtype, ops[1])
+        val0, func = cast(res_dtype, node.operands[0].dtype, ops[0])
+        update_functions(self.functions, func)
+        val1, func = cast(res_dtype, node.operands[1].dtype, ops[1])
+        update_functions(self.functions, func)
+
+        return val0 + f" {node.operator} " + val1
 
     def visit_SubscriptExpr(self, node):
         val = self.visit(node.val)
@@ -107,6 +142,9 @@ class VExpressionVisitor(SVExpressionVisitor):
         return f'{node.name}_s'
 
 
-def vexpr(expr):
+def vexpr(expr, functions=None):
     v_visit = VExpressionVisitor()
-    return v_visit.visit(expr)
+    res = v_visit.visit(expr)
+    if functions is not None:
+        update_functions(functions, v_visit.functions)
+    return res
