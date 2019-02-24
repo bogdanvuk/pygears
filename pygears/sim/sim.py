@@ -16,6 +16,10 @@ from pygears.core.sim_event import SimEvent
 from pygears.core.hier_node import HierVisitorBase
 
 
+class SimFinish(Exception):
+    pass
+
+
 def timestep():
     try:
         return registry('sim/timestep')
@@ -399,11 +403,12 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             bind('gear/current_module', self.cur_gear)
             bind('gear/current_sim', sim_gear)
 
-        self.events['before_run'](self)
-
         sim_exception = None
         try:
+            self.events['before_run'](self)
             self.sim_loop(timeout)
+        except SimFinish:
+            pass
         except Exception as e:
             sim_exception = e
 
@@ -429,7 +434,7 @@ def sim(outdir=None,
         extens=None,
         run=True,
         verbosity=logging.INFO,
-        check_activity=True,
+        check_activity=False,
         seed=None):
 
     if outdir is None:
@@ -445,6 +450,7 @@ def sim(outdir=None,
         seed = random.randrange(sys.maxsize)
     random.seed(seed)
     bind('sim/rand_seed', seed)
+
     sim_log().info(f'Running sim with seed: {seed}')
 
     loop = EventLoop()

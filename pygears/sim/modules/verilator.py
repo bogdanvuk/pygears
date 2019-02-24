@@ -180,8 +180,12 @@ class SimVerilated(CosimBase):
     def _finish(self):
         if not self.finished:
             self.finished = True
+            self.handlers.clear()
             super()._finish()
-            if self.verilib:
-                self.verilib.final()
             if self.shmid_proc:
                 self.shmid_proc.terminate()
+
+            if self.verilib:
+                self.verilib.final()
+
+            self.verilib = None

@@ -62,7 +62,7 @@ int init(void) {
     tfp = new VerilatedVcdC;
     top->trace(tfp, 99);  // Trace 99 levels of hierarchy
     {# mkdir("logs", 0777); #}
-
+    main_time = 0;
 
 #ifdef DEBUG
     printf("%p\n", tfp);
@@ -97,7 +97,9 @@ int init(void) {
 void final() {
     top->final();
 {% if tracing %}
-    if (tfp) { tfp->close(); tfp = NULL; }
+    if (tfp) {
+        tfp->close(); tfp = NULL;
+    }
 {% endif %}
     delete top; top = NULL;
 }

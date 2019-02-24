@@ -227,7 +227,7 @@ class VCD(SimExtend):
             subprocess.call(f"mkfifo {self.trace_fn}", shell=True)
         else:
             sim_log().info(
-                f'Verilator VCD dump to "{self.outdir}/vlt_dump.vcd"')
+                f'Main VCD dump to "{self.outdir}/vlt_dump.vcd"')
 
         if self.shmidcat:
             self.shmid_proc = subprocess.Popen(
@@ -241,14 +241,14 @@ class VCD(SimExtend):
             import time
             time.sleep(0.1)
 
-        vcd_file = open(self.trace_fn, 'w')
+        self.vcd_file = open(self.trace_fn, 'w')
 
         if self.shmidcat:
             self.shmid = self.shmid_proc.stdout.readline().decode().strip()
             sim_log().info(
-                f'Verilator VCD dump to shared memory at 0x{self.shmid}')
+                f'Main VCD dump to shared memory at 0x{self.shmid}')
 
-        self.writer = VCDWriter(vcd_file, timescale='1 ns', date='today')
+        self.writer = VCDWriter(self.vcd_file, timescale='1 ns', date='today')
         bind('VCDWriter', self.writer)
         bind('VCD', self)
 
@@ -309,7 +309,11 @@ class VCD(SimExtend):
     def finish(self):
         if not self.finished:
             self.writer.close()
+            self.vcd_file.close()
             self.finished = True
+
+            if self.shmid_proc:
+                self.shmid_proc.terminate()
 
     def after_run(self, sim):
         self.finish()

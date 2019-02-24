@@ -26,36 +26,6 @@ class MayInject:
         self.kwargs = kwargs
 
 
-@dataclass
-class ConfigVariable:
-    path: str
-    default: Any
-    docs: str = None
-    setter: Callable = None
-
-    @property
-    def val(self):
-        return registry(self.path)
-
-    @property
-    def changed(self):
-        return registry(self.path) != self.default
-
-
-def config_def(path, default=None, docs=None, setter=None):
-    safe_bind(path, default)
-    var = ConfigVariable(path, default=default, docs=docs, setter=setter)
-    PluginBase.config[path] = var
-    return var
-
-
-def configure(path, val):
-    var = PluginBase.config[path]
-    bind(path, val)
-    if var.setter:
-        var.setter(var, val)
-
-
 def get_args_from_registry(arg_dict):
     for k, v in arg_dict.items():
         if isinstance(v, Inject):
@@ -111,10 +81,52 @@ class RegistryHook(dict):
             getattr(self, f'_set_{key}')(value)
 
 
+@dataclass
+class ConfigVariable:
+    path: str
+    default: Any
+    docs: str = None
+    setter: Callable = None
+
+    @property
+    def val(self):
+        return registry(self.path)
+
+    @property
+    def changed(self):
+        return registry(self.path) != self.default
+
+
+class Configure:
+    def __init__(self):
+        self.definitions = {}
+
+    def define(self, path, default=None, docs=None, setter=None):
+        safe_bind(path, default)
+        var = ConfigVariable(path, default=default, docs=docs, setter=setter)
+        self.definitions[path] = var
+        return var
+
+    def changed(self, path):
+        return self.definitions[path].changed
+
+    def clear(self):
+        self.definitions.clear()
+
+    def __getitem__(self, path):
+        return registry(path)
+
+    def __setitem__(self, path, value):
+        var = self.definitions[path]
+        bind(path, value)
+        if var.setter:
+            var.setter(var, value)
+
+
 class PluginBase:
     subclasses = []
     registry = {}
-    config = {}
+    config = Configure()
     cb = {}
     async_reg = {}
 
@@ -139,6 +151,9 @@ class PluginBase:
     @classmethod
     def reset(cls):
         pass
+
+
+config = PluginBase.config
 
 
 def registry(key_path):
@@ -247,6 +262,7 @@ def clear():
         subc.clear()
 
     PluginBase.registry.clear()
+    PluginBase.config.clear()
 
     for subc in PluginBase.subclasses:
         subc.bind()
