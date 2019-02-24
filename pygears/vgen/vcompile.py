@@ -1,10 +1,12 @@
-from pygears.conf import registry
 import os
+
 import jinja2
+
+from pygears.conf import registry
 from pygears.hls import HDLWriter, InstanceVisitor, parse_gear_body
 from pygears.typing import Queue, typeof
 
-from .util import vgen_intf, vgen_reg
+from .util import vgen_intf, vgen_reg, vgen_wire
 from .v_expression import cast, vexpr
 
 REG_TEMPLATE = """
@@ -103,19 +105,21 @@ DATA_FUNC_GEAR = """
 
 def write_module(node, v_stmts, writer):
     for name, expr in node.regs.items():
-        writer.line(vgen_reg(expr.dtype, f'{name}_reg'))
-        writer.line(vgen_reg(expr.dtype, f'{name}_next'))
+        writer.line(vgen_reg(expr.dtype, f'{name}_reg', False))
+        writer.line(vgen_reg(expr.dtype, f'{name}_next', False))
         writer.line(f'reg {name}_en;')
         writer.line()
 
     for name, val in node.intfs.items():
-        writer.line(vgen_intf(val.dtype, name))
-        writer.line(vgen_reg(val.dtype, f'{name}_s'))
-        writer.line(f"assign {name}_data = {name}_s;")
+        writer.line(vgen_intf(val.dtype, name, False))
+        writer.line(vgen_reg(val.dtype, f'{name}_s', False))
+        tmp = vgen_wire(val.dtype, f'{name}_s')
+        writer.line(tmp.split(';', 1)[1])
+        writer.line(f"assign {name} = {name}_s;")
     writer.line()
 
     for name, expr in node.variables.items():
-        writer.block(vgen_reg(expr.dtype, f'{name}_v'))
+        writer.block(vgen_reg(expr.dtype, f'{name}_v', False))
         writer.line()
 
     if 'conditions' in v_stmts:

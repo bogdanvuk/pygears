@@ -3,8 +3,11 @@ from pygears.svgen.sv_expression import SVExpressionVisitor
 from pygears.typing import Array, Int, Integer, Queue, Uint, typeof
 
 TRUNC_FUNC_TEMPLATE = """
-function [{1}:0] {0}(input [{2}:0] tmp);
-    return tmp[{1}:0];
+function [{1}:0] {0};
+    input [{2}:0] tmp;
+    begin
+        {0} = tmp[{1}:0];
+    end
 endfunction
 """
 
