@@ -144,26 +144,42 @@ def synth_check(expected, **kwds):
 
 
 @pytest.fixture
-def synth_check_fixt(tmpdir, request):
+def synth_check_fixt(tmpdir, language, request):
     skip_ifndef('SYNTH_TEST')
     yield
 
     outdir = tmpdir
-    svgen(outdir=outdir, wrapper=True, **request.param[1])
+    if language == 'sv':
+        svgen(outdir=outdir, wrapper=True, **request.param[1])
 
-    files = []
-    for svmod in registry("svgen/map").values():
-        if not hasattr(svmod, 'sv_impl_path'):
-            continue
+        files = []
+        for svmod in registry("svgen/map").values():
+            if not hasattr(svmod, 'sv_impl_path'):
+                continue
 
-        path = svmod.sv_impl_path
-        if not path:
-            path = os.path.join(outdir, svmod.sv_file_name)
+            path = svmod.sv_impl_path
+            if not path:
+                path = os.path.join(outdir, svmod.sv_file_name)
 
-        files.append(path)
+            files.append(path)
 
-    files.append(os.path.join(COMMON_SVLIB_DIR, 'dti.sv'))
-    files.append(os.path.join(outdir, 'wrap_top.sv'))
+        files.append(os.path.join(COMMON_SVLIB_DIR, 'dti.sv'))
+        files.append(os.path.join(outdir, 'wrap_top.sv'))
+
+    elif language == 'v':
+        vgen(outdir=outdir, wrapper=False, **request.param[1])
+
+        files = []
+        for svmod in registry("svgen/map").values():
+            # TODO : vgen only supports compiled modules for now..
+            if hasattr(svmod, 'is_compiled') and svmod.is_compiled:
+                path = svmod.sv_impl_path
+                if not path:
+                    path = os.path.join(outdir, svmod.sv_file_name)
+
+                files.append(path)
+    else:
+        raise Exception(f"Synth test unknown language: {language}")
 
     viv_cmd = (
         f'vivado -mode batch -source {outdir}/synth.tcl -nolog -nojournal')
@@ -285,3 +301,11 @@ def cosim_cls(request):
         cosim_cls = partial(SimSocket, run=True)
 
     yield cosim_cls
+
+
+@pytest.fixture(params=['sv', 'v'])
+def language(request):
+    language = request.param
+    if language is 'v':
+        skip_ifndef('VERILOG_TEST')
+    yield language

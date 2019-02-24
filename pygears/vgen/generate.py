@@ -48,6 +48,7 @@ class VGenGenerateVisitor(SVGenGenerateVisitor):
         if svgen is not None:
             if svgen.is_compiled:
                 svgen = VModuleGen(node)  # replace default SVModuleGen
+                self.svgen_map[node] = svgen
                 contents = svgen.get_module(self.template_env)
                 yield svgen.sv_file_name, contents
             # wrappers not needed for verilog, hence no else
