@@ -5,7 +5,7 @@ from pygears.util.test_utils import synth_check
 
 
 @synth_check({
-    'logic luts': 42,
+    'logic luts': 43,
     'ffs': 0,
     'path delay': lambda delay: delay < 8.0
 })
