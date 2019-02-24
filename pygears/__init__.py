@@ -36,7 +36,7 @@ import pygears.svgen
 import pygears.rtl
 
 from pygears.conf.custom_settings import RCSettings, print_registry
-settings = RCSettings()
+settings = RCSettings(rc_fn='.pygears')
 # print_registry()
 
 sys.excepthook = pygears_excepthook

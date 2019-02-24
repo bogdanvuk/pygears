@@ -4,6 +4,8 @@ import importlib
 import os
 import re
 import sys
+from dataclasses import dataclass
+from typing import Any, Callable
 
 from .utils import (dict_generator, intercept_arguments, nested_get,
                     nested_set, safe_nested_set)
@@ -22,6 +24,36 @@ class MayInject:
     def __init__(self, *args, **kwargs):
         self.args = args
         self.kwargs = kwargs
+
+
+@dataclass
+class ConfigVariable:
+    path: str
+    default: Any
+    docs: str = None
+    setter: Callable = None
+
+    @property
+    def val(self):
+        return registry(self.path)
+
+    @property
+    def changed(self):
+        return registry(self.path) != self.default
+
+
+def config_def(path, default=None, docs=None, setter=None):
+    safe_bind(path, default)
+    var = ConfigVariable(path, default=default, docs=docs, setter=setter)
+    PluginBase.config[path] = var
+    return var
+
+
+def configure(path, val):
+    var = PluginBase.config[path]
+    bind(path, val)
+    if var.setter:
+        var.setter(var, val)
 
 
 def get_args_from_registry(arg_dict):
@@ -82,6 +114,7 @@ class RegistryHook(dict):
 class PluginBase:
     subclasses = []
     registry = {}
+    config = {}
     cb = {}
     async_reg = {}
 

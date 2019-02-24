@@ -9,8 +9,6 @@ from .log import conf_log
 from .registry import PluginBase, bind
 from .utils import dict_generator
 
-PYGEARSRC = '.pygears'
-
 
 def print_registry():
     # monkey patch sorting
@@ -21,9 +19,11 @@ def print_registry():
 
 
 class RCSettings:
-    def __init__(self):
+    def __init__(self, rc_fn):
+        self.rc_fn = rc_fn
         search_dirs = self.find_seach_dirs()
-        for path in reversed(search_dirs):
+        unique_search_dirs = list(dict.fromkeys(search_dirs))
+        for path in reversed(unique_search_dirs):
             self.find_rc(path)
 
     def find_seach_dirs(self):
@@ -50,13 +50,13 @@ class RCSettings:
         return search_dirs
 
     def find_rc(self, dirname):
-        rc_path = os.path.join(dirname, f'{PYGEARSRC}.py')
+        rc_path = os.path.join(dirname, f'{self.rc_fn}.py')
         if (os.path.exists(rc_path)):
             runpy.run_path(rc_path)
             return
 
         conf = None
-        rc_path = os.path.join(dirname, f'{PYGEARSRC}.yaml')
+        rc_path = os.path.join(dirname, f'{self.rc_fn}.yaml')
         if (os.path.exists(rc_path)):
             with open(rc_path) as f:
                 try:
@@ -68,7 +68,7 @@ class RCSettings:
                         f'at "{rc_path}", but yaml python package not '
                         f'installed')
 
-        rc_path = os.path.join(dirname, f'{PYGEARSRC}.json')
+        rc_path = os.path.join(dirname, f'{self.rc_fn}.json')
         if (os.path.exists(rc_path)):
             with open(rc_path) as f:
                 conf = json.load(f)

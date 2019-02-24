@@ -1,7 +1,8 @@
 from .log import (CustomLog, LogFmtFilter, conf_log, core_log, gear_log,
                   set_log_level, typing_log, util_log)
 from .registry import (PluginBase, bind, clear, load_plugin_folder, registry,
-                       set_cb, safe_bind, reg_inject, Inject, MayInject, inject_async)
+                       set_cb, safe_bind, reg_inject, Inject, MayInject,
+                       inject_async, config_def, configure)
 from .trace import TraceLevel, enum_traceback, pygears_excepthook
 
 __all__ = [
