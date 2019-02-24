@@ -1,8 +1,11 @@
 from pygears.conf import registry
+import os
+import jinja2
 from pygears.hls import HDLWriter, InstanceVisitor, parse_gear_body
+from pygears.typing import Queue, typeof
 
 from .util import vgen_intf, vgen_reg
-from .v_expression import vexpr
+from .v_expression import cast, vexpr
 
 REG_TEMPLATE = """
 always @(posedge clk) begin
@@ -16,9 +19,31 @@ end
 
 
 class VCompiler(InstanceVisitor):
-    def __init__(self, visit_var, writer):
+    def __init__(self, visit_var, writer, hdl_locals):
         self.writer = writer
         self.visit_var = visit_var
+        self.hdl_locals = hdl_locals
+
+    def find_width(self, node, target=None):
+        if target is None:
+            target = vexpr(node.target)
+        else:
+            target = vexpr(target)
+
+        rhs = vexpr(node.val)
+
+        var = None
+        if target in self.hdl_locals:
+            var = self.hdl_locals[target]
+
+        if node.width or var is None:
+            return f'{target} = {rhs};'
+
+        if int(var.dtype) == node.width:
+            return f'{target} = {cast(var.dtype, node.val.dtype, rhs)};'
+
+        assert False, 'node.width diff from hdl local width'
+        return None
 
     def enter_block(self, block):
         if getattr(block, 'in_cond', False):
@@ -33,11 +58,7 @@ class VCompiler(InstanceVisitor):
             self.writer.line(f'end')
 
     def visit_AssignValue(self, node):
-        if node.width:
-            self.writer.line(
-                f"{vexpr(node.target)} = {node.width}'({vexpr(node.val)});")
-        else:
-            self.writer.line(f"{vexpr(node.target)} = {vexpr(node.val)};")
+        self.writer.line(self.find_width(node))
 
     def visit_CombBlock(self, node):
         if not node.stmts and not node.dflts:
@@ -52,24 +73,14 @@ class VCompiler(InstanceVisitor):
     def visit_CombSeparateStmts(self, node):
         self.writer.line(f'// Comb statements for: {self.visit_var}')
         for stmt in node.stmts:
-            if stmt.width:
-                self.writer.line(
-                    f"assign {vexpr(stmt.target)} = {stmt.width}'({vexpr(stmt.val)});"
-                )
-            else:
-                self.writer.line(
-                    f"assign {vexpr(stmt.target)} = {vexpr(stmt.val)};")
+            self.writer.line(f'assign {self.find_width(stmt)}')
         self.writer.line('')
 
     def visit_HDLBlock(self, node):
         self.enter_block(node)
 
         for name, val in node.dflts.items():
-            if val.width:
-                self.writer.line(
-                    f"{vexpr(name)} = {val.width}'({vexpr(val.val)});")
-            else:
-                self.writer.line(f"{vexpr(name)} = {vexpr(val.val)};")
+            self.writer.line(self.find_width(val, target=name))
 
         for stmt in node.stmts:
             self.visit(stmt)
@@ -114,66 +125,29 @@ def write_module(node, v_stmts, writer):
         writer.block(REG_TEMPLATE.format(name, int(expr.val)))
 
     for name, val in v_stmts.items():
-        VCompiler(name, writer).visit(val)
-
-
-def enter_block(writer, cond):
-    writer.line(cond)
-    writer.indent += 4
-
-
-def exit_block(writer):
-    writer.indent -= 4
-    writer.line('end')
-    writer.line()
+        VCompiler(name, writer, node.locals).visit(val)
 
 
 def write_assertions(gear, writer):
-    in_names = [x.basename for x in gear.in_ports]
+    in_context = []
+    for port in gear.in_ports:
+        if typeof(port.dtype, Queue):
+            in_context.append((port.basename, True))
+        else:
+            in_context.append((port.basename, False))
+
     out_names = [x.basename for x in gear.out_ports]
 
-    writer.line('`ifdef FORMAL')
-    writer.line()
+    base_addr = os.path.dirname(__file__)
+    jenv = jinja2.Environment(
+        loader=jinja2.FileSystemLoader(base_addr),
+        trim_blocks=True,
+        lstrip_blocks=True)
 
-    enter_block(writer, 'initial begin')
+    context = {'in_context': in_context, 'out_names': out_names}
+    res = jenv.get_template('formal.j2').render(context)
 
-    writer.line('assume (rst);')
-    for name in in_names:
-        writer.line(f'assume ({name}_valid == 0);')
-    for name in out_names:
-        writer.line(f'assume ({name}_ready == 0);')
-
-    exit_block(writer)
-
-    enter_block(writer, 'always @(posedge clk) begin')
-    enter_block(writer, 'if (!rst) begin')
-    for name in in_names:
-        writer.line(f'// Assumtions: {name}')
-        enter_block(writer,
-                    f'if ($past({name}_valid) && !$past({name}_ready)) begin')
-        writer.line(f'assume ({name}_valid);')
-        writer.line(f'assume($stable({name}_data));')
-        exit_block(writer)
-
-        writer.line(f'// Checks: {name}')
-        enter_block(writer, f'if ({name}_valid) begin')
-        writer.line(f'assert (s_eventually {name}_ready);')
-        exit_block(writer)
-
-    for name in out_names:
-        writer.line(f'// Checks: {name}')
-        enter_block(
-            writer,
-            f'if ($past({name}_valid) && !$past({name}_ready) && !$past(rst)) begin'
-        )
-        writer.line(f'assert ({name}_valid);')
-        writer.line(f'assert ($stable({name}_data));')
-        exit_block(writer)
-
-    exit_block(writer)
-    exit_block(writer)
-
-    writer.line('`endif')
+    writer.block(res)
 
 
 def compile_gear_body(gear):

@@ -1,0 +1,41 @@
+`ifdef FORMAL
+    initial  begin
+        assume(rst);
+{% for name, eot in in_context %}
+        assume({{name}}_valid == 0);
+{% endfor %}
+{% for name in out_names %}
+        assume({{name}}_ready == 0);
+{% endfor %}
+    end
+    always @(posedge clk) begin
+        if (!rst) begin
+
+{% for name, eot in in_context %}
+            // Assumptions: {{name}}
+            if ($past({{name}}_valid) && !$past({{name}}_ready)) begin
+                assume ({{name}}_valid);
+                assume($stable({{name}}_data));
+            end
+            // Checks: {{name}}
+            if ({{name}}_valid) begin
+  {% if eot %}
+                assume (s_eventually &{{name}}_s_eot);
+  {% endif %}
+                assert (s_eventually {{name}}_ready);
+            end
+{% endfor %}
+
+{% for name in out_names %}
+            // Assumptions: {{name}}
+            if ({{name}}_valid)
+                assume (s_eventually {{name}}_ready);
+            // Checks: {{name}}
+            if ($past({{name}}_valid) && !$past({{name}}_ready) && !$past(rst)) begin
+                assert ({{name}}_valid);
+                assert ($stable({{name}}_data));
+            end
+        end
+{% endfor %}
+    end
+`endif

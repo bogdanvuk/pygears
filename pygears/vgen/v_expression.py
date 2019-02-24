@@ -1,6 +1,39 @@
 import pygears.hls.hdl_types as ht
 from pygears.svgen.sv_expression import SVExpressionVisitor
-from pygears.typing import Array, Integer, Queue, typeof
+from pygears.typing import Array, Int, Integer, Queue, Uint, typeof
+
+
+def cast(res_dtype, op_dtype, op_value):
+    turncate = int(op_dtype) - int(res_dtype)
+    if turncate < 0:
+        turncate = 0
+
+    extend = int(res_dtype) - int(op_dtype)
+    if extend < 0:
+        extend = 0
+
+    if typeof(res_dtype, Int) and typeof(op_dtype, Uint):
+        if extend:
+            return f"$signed({{{extend}'b0, {op_value}}})"
+        if turncate:
+            return f"$signed({op_value}[{turncate-1}:0])"
+        return f"$signed({op_value})"
+
+    if typeof(res_dtype, Int):
+        if extend:
+            return f"$signed({{{extend}'b1, {op_value}}})"
+        if turncate:
+            return f"$signed({op_value}[{turncate-1}:0])"
+        return f"$signed({op_value})"
+
+    if typeof(res_dtype, Uint):
+        if extend:
+            return f"$unsigned({{{extend}'b0, {op_value}}})"
+        if turncate:
+            return f"$unsigned({op_value}[{turncate-1}:0])"
+        return f"$unsigned({op_value})"
+
+    return f"{op_value}"
 
 
 class VExpressionVisitor(SVExpressionVisitor):
@@ -30,6 +63,28 @@ class VExpressionVisitor(SVExpressionVisitor):
                 except KeyError:
                     val.append('data')
         return '_'.join(val + node.attr)
+
+    def visit_CastExpr(self, node):
+        return cast(node.dtype, node.operand.dtype, self.visit(node.operand))
+
+    def visit_BinOpExpr(self, node):
+        ops = [self.visit(op) for op in node.operands]
+        for i, op in enumerate(node.operands):
+            if isinstance(op, ht.BinOpExpr):
+                ops[i] = f'({ops[i]})'
+
+        if node.operator not in ht.EXTENDABLE_OPERATORS:
+            return f'{ops[0]} {node.operator} {ops[1]}'
+
+        res_dtype = node.dtype
+        if int(node.operands[0].dtype) > int(res_dtype):
+            res_dtype = node.operands[0].dtype
+        if int(node.operands[1].dtype) > int(res_dtype):
+            res_dtype = node.operands[1].dtype
+
+        return cast(res_dtype, node.operands[0].dtype,
+                    ops[0]) + f" {node.operator} " + cast(
+                        res_dtype, node.operands[1].dtype, ops[1])
 
     def visit_SubscriptExpr(self, node):
         val = self.visit(node.val)
