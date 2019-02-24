@@ -43,15 +43,17 @@ class VGenGenerateVisitor(SVGenGenerateVisitor):
         super(VGenGenerateVisitor, self).__init__(top, wrapper)
         self.template_env = VTemplateEnv()
 
+    def RTLNode(self, node):
+        svgen = self.svgen_map.get(node, None)
+        if svgen is not None:
+            if svgen.is_compiled:
+                svgen = VModuleGen(node)  # replace default SVModuleGen
+                contents = svgen.get_module(self.template_env)
+                yield svgen.sv_file_name, contents
+            # wrappers not needed for verilog, hence no else
+
 
 def vgen_generate(top, conf):
-    # TODO : for now use svgen and force compile for verilog
-    svgen_map = registry('svgen/map')
-    assert top in svgen_map
-    assert isinstance(svgen_map[top], SVModuleGen)
-    assert svgen_map[top].is_compiled
-    svgen_map[top] = VModuleGen(top)
-
     v = VGenGenerateVisitor(top, conf.get('wrapper', False))
     for file_names, contents in v.visit(top):
         if contents:

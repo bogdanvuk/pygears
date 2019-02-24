@@ -1,0 +1,18 @@
+[tasks]
+task_prove
+task_live
+
+[options]
+task_prove: mode prove
+task_live: mode live
+
+[engines]
+task_prove: smtbmc
+task_live: aiger suprove
+
+[script]
+read -formal {{outdir}}/{{name}}.v
+prep -top {{name}}
+
+[files]
+{{outdir}}/{{name}}.v

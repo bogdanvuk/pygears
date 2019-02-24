@@ -80,7 +80,7 @@ input  wire [{{intf['width']-1}}:0] {{intf['name']}}_data
 {% macro prod_signal_intf(intf) -%}
 input  wire         {{intf['name']}}_ready,
 output reg          {{intf['name']}}_valid,
-output reg  [{{intf['width']-1}}:0] {{intf['name']}}_data
+output wire  [{{intf['width']-1}}:0] {{intf['name']}}_data
 {%- endmacro %}
 
 {% macro signal_intf_list(intfs) -%}

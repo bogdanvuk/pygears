@@ -6,6 +6,7 @@ import inspect
 import shutil
 
 from pygears.svgen import svgen, register_sv_paths
+from pygears.vgen import vgen
 from pygears.sim import sim
 from pygears import registry, clear
 from functools import wraps
@@ -15,6 +16,7 @@ from pygears.sim.modules.sim_socket import SimSocket
 from pygears.sim.modules.verilator import SimVerilated
 
 from functools import partial
+from pygears.util.find import find
 
 re_trailing_space_rem = re.compile(r"\s+$", re.MULTILINE)
 re_multispace_rem = re.compile(r"\s+", re.MULTILINE)
@@ -95,6 +97,41 @@ def get_test_res_ref_dir_pair(func):
     outdir = prepare_result_dir(filename, func.__name__)
 
     return filename, outdir
+
+
+def formal_check(name, **kwds):
+    def decorator(func):
+        return pytest.mark.usefixtures('formal_check_fixt')(
+            pytest.mark.parametrize(
+                'formal_check_fixt', [[name, kwds]], indirect=True)(func))
+
+    return decorator
+
+
+@pytest.fixture
+def formal_check_fixt(tmpdir, request):
+    skip_ifndef('FORMAL_TEST')
+    yield
+
+    outdir = tmpdir
+
+    vgen(
+        outdir=outdir,
+        wrapper=False,
+        assertions=[request.param[0]],
+        **request.param[1])
+
+    yosis_cmd = f'sby {outdir}/top.sby'
+
+    jinja_context = {'name': request.param[0], 'outdir': outdir}
+
+    env = jinja2.Environment(
+        loader=jinja2.FileSystemLoader(searchpath=os.path.dirname(__file__)))
+
+    env.get_template('formal.j2').stream(jinja_context).dump(
+        f'{outdir}/top.sby')
+
+    assert os.system(yosis_cmd) == 0, "Yosis failed"
 
 
 def synth_check(expected, **kwds):

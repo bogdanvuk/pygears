@@ -1,3 +1,4 @@
+from pygears.conf import registry
 from pygears.hls import HDLWriter, InstanceVisitor, parse_gear_body
 
 from .util import vgen_intf, vgen_reg
@@ -116,10 +117,74 @@ def write_module(node, v_stmts, writer):
         VCompiler(name, writer).visit(val)
 
 
+def enter_block(writer, cond):
+    writer.line(cond)
+    writer.indent += 4
+
+
+def exit_block(writer):
+    writer.indent -= 4
+    writer.line('end')
+    writer.line()
+
+
+def write_assertions(gear, writer):
+    in_names = [x.basename for x in gear.in_ports]
+    out_names = [x.basename for x in gear.out_ports]
+
+    writer.line('`ifdef FORMAL')
+    writer.line()
+
+    enter_block(writer, 'initial begin')
+
+    writer.line('assume (rst);')
+    for name in in_names:
+        writer.line(f'assume ({name}_valid == 0);')
+    for name in out_names:
+        writer.line(f'assume ({name}_ready == 0);')
+
+    exit_block(writer)
+
+    enter_block(writer, 'always @(posedge clk) begin')
+    enter_block(writer, 'if (!rst) begin')
+    for name in in_names:
+        writer.line(f'// Assumtions: {name}')
+        enter_block(writer,
+                    f'if ($past({name}_valid) && !$past({name}_ready)) begin')
+        writer.line(f'assume ({name}_valid);')
+        writer.line(f'assume($stable({name}_data));')
+        exit_block(writer)
+
+        writer.line(f'// Checks: {name}')
+        enter_block(writer, f'if ({name}_valid) begin')
+        writer.line(f'assert (s_eventually {name}_ready);')
+        exit_block(writer)
+
+    for name in out_names:
+        writer.line(f'// Checks: {name}')
+        enter_block(
+            writer,
+            f'if ($past({name}_valid) && !$past({name}_ready) && !$past(rst)) begin'
+        )
+        writer.line(f'assert ({name}_valid);')
+        writer.line(f'assert ($stable({name}_data));')
+        exit_block(writer)
+
+    exit_block(writer)
+    exit_block(writer)
+
+    writer.line('`endif')
+
+
 def compile_gear_body(gear):
     hdl_ast, res = parse_gear_body(gear)
     writer = HDLWriter()
     write_module(hdl_ast, res, writer)
+
+    conf = registry('svgen/conf')
+    if 'assertions' in conf:
+        if gear.basename in conf['assertions']:
+            write_assertions(gear, writer)
 
     return '\n'.join(writer.lines)
 
