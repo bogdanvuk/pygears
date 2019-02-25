@@ -1,17 +1,23 @@
 [tasks]
 task_prove
+{% if live_task %}
 task_live
+{% endif %}
 
 [options]
 task_prove: mode prove
+{% if live_task %}
 task_live: mode live
+{% endif %}
 
 [engines]
 task_prove: smtbmc
+{% if live_task %}
 task_live: aiger suprove
+{% endif %}
 
 [script]
-read -formal {{outdir}}/{{name}}.v
+read -formal -D{{if_name}}_CHECK {{outdir}}/{{name}}.v
 prep -top {{name}}
 
 [files]

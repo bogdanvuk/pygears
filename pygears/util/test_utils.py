@@ -99,11 +99,11 @@ def get_test_res_ref_dir_pair(func):
     return filename, outdir
 
 
-def formal_check(name, **kwds):
+def formal_check(**kwds):
     def decorator(func):
         return pytest.mark.usefixtures('formal_check_fixt')(
             pytest.mark.parametrize(
-                'formal_check_fixt', [[name, kwds]], indirect=True)(func))
+                'formal_check_fixt', [[kwds]], indirect=True)(func))
 
     return decorator
 
@@ -115,23 +115,34 @@ def formal_check_fixt(tmpdir, request):
 
     outdir = tmpdir
 
-    vgen(
-        outdir=outdir,
-        wrapper=False,
-        assertions=[request.param[0]],
-        **request.param[1])
+    vgen(outdir=outdir, wrapper=False, assertions=True, **request.param[0])
 
-    yosis_cmd = f'sby {outdir}/top.sby'
+    # TODO : hack to find gear
+    for svmod in registry("svgen/map").values():
+        if hasattr(svmod, 'is_compiled') and svmod.is_compiled:
+            gear = svmod.node.gear
 
-    jinja_context = {'name': request.param[0], 'outdir': outdir}
-
+    yosis_cmds = []
     env = jinja2.Environment(
         loader=jinja2.FileSystemLoader(searchpath=os.path.dirname(__file__)))
+    jinja_context = {'name': gear.basename, 'outdir': outdir}
 
-    env.get_template('formal.j2').stream(jinja_context).dump(
-        f'{outdir}/top.sby')
+    def find_yosis_cmd(name):
+        script_path = f'{outdir}/top_{name}.sby'
+        jinja_context['if_name'] = name.upper()
+        env.get_template('formal.j2').stream(jinja_context).dump(script_path)
+        yosis_cmds.append(f'sby {script_path}')
 
-    assert os.system(yosis_cmd) == 0, "Yosis failed"
+    jinja_context['live_task'] = True
+    for port in gear.in_ports:
+        find_yosis_cmd(port.basename)
+
+    jinja_context['live_task'] = False
+    for port in gear.out_ports:
+        find_yosis_cmd(port.basename)
+
+    for cmd in yosis_cmds:
+        assert os.system(cmd) == 0, f'Yosis failed. Cmd: {cmd}'
 
 
 def synth_check(expected, **kwds):

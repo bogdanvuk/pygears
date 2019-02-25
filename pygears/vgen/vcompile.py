@@ -148,7 +148,12 @@ def write_assertions(gear, writer):
         else:
             in_context.append((port.basename, False))
 
-    out_names = [x.basename for x in gear.out_ports]
+    out_context = []
+    for port in gear.out_ports:
+        if typeof(port.dtype, Queue):
+            out_context.append((port.basename, True))
+        else:
+            out_context.append((port.basename, False))
 
     base_addr = os.path.dirname(__file__)
     jenv = jinja2.Environment(
@@ -156,7 +161,7 @@ def write_assertions(gear, writer):
         trim_blocks=True,
         lstrip_blocks=True)
 
-    context = {'in_context': in_context, 'out_names': out_names}
+    context = {'in_context': in_context, 'out_context': out_context}
     res = jenv.get_template('formal.j2').render(context)
 
     writer.block(res)
@@ -168,9 +173,8 @@ def compile_gear_body(gear):
     write_module(hdl_ast, res, writer)
 
     conf = registry('svgen/conf')
-    if 'assertions' in conf:
-        if gear.basename in conf['assertions']:
-            write_assertions(gear, writer)
+    if 'assertions' in conf and conf['assertions']:
+        write_assertions(gear, writer)
 
     return '\n'.join(writer.lines)
 

@@ -4,7 +4,7 @@
 {% for name, eot in in_context %}
         assume({{name}}_valid == 0);
 {% endfor %}
-{% for name in out_names %}
+{% for name, eot in out_context %}
         assume({{name}}_ready == 0);
 {% endfor %}
     end
@@ -17,24 +17,32 @@
                 assume ({{name}}_valid);
                 assume($stable({{name}}_data));
             end
+  {% if eot %}
+            assume (s_eventually (&{{name}}_s_eot && {{name}}_valid));
+  {% endif %}
+
+   `ifdef {{name|upper}}_CHECK
             // Checks: {{name}}
             if ({{name}}_valid) begin
-  {% if eot %}
-                assume (s_eventually &{{name}}_s_eot);
-  {% endif %}
-                assert (s_eventually {{name}}_ready);
+                assert (s_eventually ({{name}}_ready | rst));
             end
+    `endif
+
 {% endfor %}
 
-{% for name in out_names %}
+{% for name, eot in out_context %}
             // Assumptions: {{name}}
             if ({{name}}_valid)
                 assume (s_eventually {{name}}_ready);
+
+   `ifdef {{name|upper}}_CHECK
             // Checks: {{name}}
             if ($past({{name}}_valid) && !$past({{name}}_ready) && !$past(rst)) begin
                 assert ({{name}}_valid);
                 assert ($stable({{name}}_data));
             end
+    `endif
+
         end
 {% endfor %}
     end
