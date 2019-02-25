@@ -603,13 +603,17 @@ class HdlAst(ast.NodeVisitor):
 
     def visit_Yield(self, node):
         if isinstance(node.value, ast.Tuple) and len(self.out_ports) > 1:
+            ports = []
             expr = [
                 self.visit_DataExpression(item) for item in node.value.elts
             ]
+            for i, val in enumerate(expr):
+                if not (isinstance(val, ht.ResExpr) and val.val is None):
+                    ports.append(self.out_ports[i])
         else:
             expr = super().visit(node.value)
-        return ht.Yield(
-            expr=self.cast_return(expr), stmts=[], ports=self.out_ports)
+            ports = self.out_ports
+        return ht.Yield(expr=self.cast_return(expr), stmts=[], ports=ports)
 
     def visit_AsyncFunctionDef(self, node):
         hdl_node = ht.Module(

@@ -144,16 +144,16 @@ def write_assertions(gear, writer):
     in_context = []
     for port in gear.in_ports:
         if typeof(port.dtype, Queue):
-            in_context.append((port.basename, True))
+            in_context.append((port.basename, port.dtype.lvl))
         else:
-            in_context.append((port.basename, False))
+            in_context.append((port.basename, 0))
 
     out_context = []
     for port in gear.out_ports:
         if typeof(port.dtype, Queue):
-            out_context.append((port.basename, True))
+            out_context.append((port.basename, port.dtype.lvl))
         else:
-            out_context.append((port.basename, False))
+            out_context.append((port.basename, 0))
 
     base_addr = os.path.dirname(__file__)
     jenv = jinja2.Environment(

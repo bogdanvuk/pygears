@@ -30,54 +30,6 @@ class VGenTypeVisitor(TypingVisitorBase):
     def visit_union(self, type_, field, **kwds):
         assert False, f'Unions not supported in Verilog'
 
-    #     struct_fields = []
-    #     max_len = 0
-    #     high_parent_context = self.context
-    #     middle_parent_context = f'{high_parent_context}_data'
-    #     low_parent_context = f'{middle_parent_context}_data'
-
-    #     for sub_t in type_.types:
-    #         if int(sub_t) > max_len:
-    #             max_len = int(sub_t)
-
-    #     for i, sub_t in reversed(list(enumerate(type_.args))):
-    #         field_tmp = f'f{i}'
-    #         struct_fields.append(f'{self.struct_str} // ({sub_t}, u?)')
-    #         self.context = f'{low_parent_context}_{field_tmp}'
-    #         type_declaration = self.visit(sub_t, field_tmp)
-    #         if int(sub_t) < max_len:
-    #             struct_fields.append(
-    #                 f'    {self.basic_type} [{max_len-int(sub_t)-1}:0] dummy; // u{max_len-int(sub_t)}'
-    #             )
-    #         if type_declaration is not None:
-    #             struct_fields.append(
-    #                 f'    {type_declaration} {field_tmp}; // {sub_t}')
-    #         struct_fields.append(
-    #             f'}} {middle_parent_context}_{field_tmp}_t;\n')
-
-    #     # create union
-    #     struct_fields.append(f'{self.union_str} // {type_}')
-    #     for i, sub_t in reversed(list(enumerate(type_.args))):
-    #         field_tmp = f'f{i}'
-    #         struct_fields.append(
-    #             f'    {middle_parent_context}_{field_tmp}_t {field_tmp}; // ({sub_t}, u?)'
-    #         )
-    #     struct_fields.append(f'}} {middle_parent_context}_t;\n')
-
-    #     # create struct
-    #     struct_fields.append(f'{self.struct_str} // {type_}')
-    #     struct_fields.append(
-    #         f'    {self.basic_type} [{bitw(len(type_.args)-1)-1}:0] ctrl; // u{bitw(len(type_.args)-1)}'
-    #     )
-    #     struct_fields.append(f'    {middle_parent_context}_t data; // {type_}')
-    #     struct_fields.append(f'}} {high_parent_context}_t;\n')
-
-    #     self.res.append('\n'.join(struct_fields))
-
-    #     self.context = high_parent_context
-
-    #     return f'{high_parent_context}_t'
-
     def visit_queue(self, type_, field, **kwds):
         res = []
         parent_context = self.context
@@ -139,16 +91,18 @@ class VGenTypeVisitor(TypingVisitorBase):
         return res
 
     def visit_array(self, type_, field, **kwds):
-        sub = self.visit(type_.args[0], type_.fields[0])
-        if sub:
-            assert len(sub) == 1
-            split_type = sub[0].split(' ', 1)
-            split_type.insert(1, f'[{type_.args[1]-1}:0]')
-            type_declaration = ' '.join(split_type)
-            res = type_declaration.split('//')[0]
-            return [f'{res} // {type_}']
+        assert False, f'Arrays not supported in Verilog'
+        # TODO : below is systemverilog syntax, not pure verilog..
+        # sub = self.visit(type_.args[0], type_.fields[0])
+        # if sub:
+        #     assert len(sub) == 1
+        #     split_type = sub[0].split(' ', 1)
+        #     split_type.insert(1, f'[{type_.args[1]-1}:0]')
+        #     type_declaration = ' '.join(split_type)
+        #     res = type_declaration.split('//')[0]
+        #     return [f'{res} // {type_}']
 
-        return None
+        # return None
 
 
 def vgen_intf(dtype, name, hier=True):

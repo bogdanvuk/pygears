@@ -28,6 +28,7 @@ class HDLStmtVisitor:
     def __init__(self):
         self.control_suffix = ['_en']
         self.control_expr = (ht.IntfReadyExpr, ht.IntfValidExpr)
+        self.non_control_pairs = []
         self.current_scope = None
 
     def visit(self, node, conds, **kwds):
@@ -65,19 +66,28 @@ class HDLStmtVisitor:
 
         return block
 
-    def is_control_var(self, name):
+    def is_control_var(self, name, val):
         if isinstance(name, self.control_expr):
             return True
 
         for suff in self.control_suffix:
             if name.endswith(suff):
                 return True
+
+        if isinstance(val, AssignValue):
+            val = val.val
+        for ctrl_name, ctrl_val in self.non_control_pairs:
+            if name == ctrl_name:
+                if val != ctrl_val:
+                    return True
+
         return False
 
     def find_stmt_dflt(self, stmt, block):
         for dflt in stmt.dflts:
             # control cannot propagate past in conditions
-            if (not self.is_control_var(dflt)) or not stmt.in_cond:
+            if (not self.is_control_var(dflt,
+                                        stmt.dflts[dflt])) or not stmt.in_cond:
                 if dflt in block.dflts:
                     if block.dflts[dflt].val is stmt.dflts[dflt].val:
                         stmt.dflts[dflt] = None
@@ -153,16 +163,14 @@ class VariableVisitor(HDLStmtVisitor):
         super().__init__()
         self.seen_var = []
 
-    def assign_var(self, name):
-        if name in self.seen_var:
-            if name not in self.control_suffix:
-                self.control_suffix.append(name)
-        else:
+    def assign_var(self, name, value):
+        if name not in self.seen_var:
+            self.non_control_pairs.append((name, value))
             self.seen_var.append(name)
 
     def visit_VariableStmt(self, node, conds, **kwds):
         name = f'{node.variable.name}_v'
-        self.assign_var(name)
+        self.assign_var(name, node.val)
         return AssignValue(
             target=name, val=node.val, width=int(node.variable.dtype))
 
