@@ -1,7 +1,6 @@
-import hdl_types as ht
+import pygears.hls.hdl_types as ht
+from pygears.hls import InstanceVisitor
 from pygears.typing import Array, Int, Integer, Queue, Uint, typeof
-
-from .inst_visit import InstanceVisitor
 
 
 class SVExpressionVisitor(InstanceVisitor):
@@ -11,8 +10,14 @@ class SVExpressionVisitor(InstanceVisitor):
     def visit_ResExpr(self, node):
         return int(node.val)
 
+    def visit_IntfValidExpr(self, node):
+        return f'{node.name}.valid'
+
     def visit_IntfReadyExpr(self, node):
         res = []
+        if not isinstance(node.out_port, (list, tuple)):
+            return f'{node.name}.ready'
+
         for port in node.out_port:
             if port.context:
                 inst = svexpr(

@@ -209,10 +209,7 @@ class SVModuleGen:
     def hier_sv_path_name(self):
         return sv_path_name(self.node.name)
 
-    def get_module(self, template_env):
-        if not self.is_generated:
-            return None
-
+    def get_module_context(self):
         context = {
             'pygears': pygears,
             'module_name': self.sv_module_name,
@@ -226,6 +223,14 @@ class SVModuleGen:
         for port in context['intfs']:
             context[f'_{port["name"]}'] = port
             context[f'_{port["name"]}_t'] = port['type']
+
+        return context
+
+    def get_module(self, template_env):
+        if not self.is_generated:
+            return None
+
+        context = self.get_module_context()
 
         if self.is_hierarchical:
             self.svgen_map = registry('svgen/map')

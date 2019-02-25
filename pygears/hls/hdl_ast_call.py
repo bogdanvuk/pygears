@@ -1,7 +1,7 @@
 import ast
 from functools import reduce
 
-import hdl_types as ht
+import pygears.hls.hdl_types as ht
 from pygears.typing import Int, Tuple, Uint, typeof
 
 

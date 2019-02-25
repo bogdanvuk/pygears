@@ -14,13 +14,13 @@ from pygears.sim.modules.sim_socket import SimSocket
 from pygears.typing import Queue, Tuple, Uint
 from pygears.util.test_utils import prepare_result_dir, skip_ifndef
 
-t_din = Queue[Tuple[Uint[16], Uint[16]]]
-t_din_sep = Queue[Uint[16]]
-t_cfg = Uint[16]
+T_DIN = Queue[Tuple[Uint[16], Uint[16]]]
+T_DIN_SEP = Queue[Uint[16]]
+T_CFG = Uint[16]
 
 
-@pytest.mark.parametrize('din_delay', [0, 1, 10])
-@pytest.mark.parametrize('dout_delay', [0, 1, 10])
+@pytest.mark.parametrize('din_delay', [0, 5])
+@pytest.mark.parametrize('dout_delay', [0, 5])
 def test_directed(tmpdir, sim_cls, din_delay, dout_delay):
     seq = []
     tmp = []
@@ -34,7 +34,7 @@ def test_directed(tmpdir, sim_cls, din_delay, dout_delay):
     seq.append(tmp)
 
     directed(
-        drv(t=t_din, seq=seq) | delay_rng(din_delay, din_delay),
+        drv(t=T_DIN, seq=seq) | delay_rng(din_delay, din_delay),
         f=clip(sim_cls=sim_cls),
         ref=[[0, 1],
              list(range(2, 9)),
@@ -47,8 +47,8 @@ def test_directed(tmpdir, sim_cls, din_delay, dout_delay):
 
 def test_directed_two_inputs(tmpdir, cosim_cls):
     verif(
-        drv(t=t_din_sep, seq=[list(range(9)), list(range(5))]),
-        drv(t=t_cfg, seq=[2, 3]),
+        drv(t=T_DIN_SEP, seq=[list(range(9)), list(range(5))]),
+        drv(t=T_CFG, seq=[2, 3]),
         f=clip(sim_cls=cosim_cls),
         ref=clip(name='ref_model'))
 
@@ -66,8 +66,8 @@ def test_random(tmpdir, cosim_cls):
         din_seq.append(list(range(random.randint(1, 10))))
 
     verif(
-        drv(t=t_din_sep, seq=din_seq),
-        drv(t=t_cfg, seq=cfg_seq),
+        drv(t=T_DIN_SEP, seq=din_seq),
+        drv(t=T_CFG, seq=cfg_seq),
         f=clip(sim_cls=cosim_cls),
         ref=clip(name='ref_model'))
 
@@ -80,12 +80,12 @@ def test_random_constrained(tmpdir):
     cnt = 5
     cons = []
     cons.append(
-        create_constraint(t_din_sep, 'din', eot_cons=['data_size == 20']))
-    cons.append(create_constraint(t_cfg, 'cfg', cons=['cfg < 20', 'cfg > 0']))
+        create_constraint(T_DIN_SEP, 'din', eot_cons=['data_size == 20']))
+    cons.append(create_constraint(T_CFG, 'cfg', cons=['cfg < 20', 'cfg > 0']))
 
     stim = []
-    stim.append(drv(t=t_din_sep, seq=rand_seq('din', cnt)))
-    stim.append(drv(t=t_cfg, seq=rand_seq('cfg', cnt)))
+    stim.append(drv(t=T_DIN_SEP, seq=rand_seq('din', cnt)))
+    stim.append(drv(t=T_CFG, seq=rand_seq('cfg', cnt)))
 
     verif(
         *stim,

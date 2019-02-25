@@ -1,7 +1,9 @@
 import ast
+import logging
 
-import hdl_types as ht
-from pygears.conf import registry
+import pygears.hls.hdl_types as ht
+from pygears import PluginBase
+from pygears.conf import CustomLog, registry
 from pygears.typing import Int, Uint, is_type
 
 ASYNC_TYPES = (ht.Yield, )
@@ -101,3 +103,13 @@ def state_expr(state_ids, prev_cond):
         return ht.and_expr(prev_cond, state_cond)
 
     return state_cond
+
+
+def hls_log():
+    return logging.getLogger('svgen')
+
+
+class HLSPlugin(PluginBase):
+    @classmethod
+    def bind(cls):
+        CustomLog('svgen', logging.WARNING)

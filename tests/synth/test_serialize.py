@@ -1,7 +1,7 @@
 from pygears import Intf
-from pygears.typing import Uint, Array
-from pygears.util.test_utils import synth_check
 from pygears.common.serialize import TDin, serialize
+from pygears.typing import Array, Uint
+from pygears.util.test_utils import synth_check
 
 
 @synth_check({'logic luts': 19, 'ffs': 3})

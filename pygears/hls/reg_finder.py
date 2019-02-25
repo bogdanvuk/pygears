@@ -1,11 +1,10 @@
 import ast
 
-import hdl_types as ht
+import pygears.hls.hdl_types as ht
 from pygears.typing import Uint, bitw, is_type
 
 from .hdl_utils import (eval_expression, find_assign_target, find_for_target,
-                        set_pg_type)
-from .inst import svgen_log
+                        hls_log, set_pg_type)
 
 
 class AstAyncFinder(ast.NodeVisitor):
@@ -83,11 +82,11 @@ class RegFinder(ast.NodeVisitor):
                             length = 2**32 - 1
 
                         self.regs[name] = ht.ResExpr(Uint[bitw(length)](0))
-                        svgen_log().debug(
+                        hls_log().debug(
                             f'For loop iterator {name} registered with width {bitw(length)}'
                         )
                     else:
-                        svgen_log().debug(
+                        hls_log().debug(
                             f'For loop iterator {name} not registered')
 
         for stmt in node.body:

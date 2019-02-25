@@ -2,7 +2,7 @@ from functools import partial, reduce
 
 import sympy
 
-import hdl_types as ht
+import pygears.hls.hdl_types as ht
 from pygears.typing import Bool
 
 from .hdl_stmt_types import AssignValue, CombSeparateStmts

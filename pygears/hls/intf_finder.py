@@ -2,7 +2,7 @@ import ast
 import inspect
 import re
 
-import hdl_types as ht
+import pygears.hls.hdl_types as ht
 
 from .hdl_utils import eval_expression, find_assign_target
 

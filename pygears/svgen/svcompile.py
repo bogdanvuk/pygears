@@ -1,5 +1,5 @@
-from .hdl_compile import HDLWriter, parse_gear_body
-from .inst_visit import InstanceVisitor
+from pygears.hls import HDLWriter, InstanceVisitor, parse_gear_body
+
 from .sv_expression import svexpr
 from .util import svgen_typedef
 
@@ -34,9 +34,9 @@ class SVCompiler(InstanceVisitor):
     def visit_AssignValue(self, node):
         if node.width:
             self.writer.line(
-                f"{node.target} = {node.width}'({svexpr(node.val)});")
+                f"{svexpr(node.target)} = {node.width}'({svexpr(node.val)});")
         else:
-            self.writer.line(f"{node.target} = {svexpr(node.val)};")
+            self.writer.line(f"{svexpr(node.target)} = {svexpr(node.val)};")
 
     def visit_CombBlock(self, node):
         if not node.stmts and not node.dflts:
@@ -53,10 +53,11 @@ class SVCompiler(InstanceVisitor):
         for stmt in node.stmts:
             if stmt.width:
                 self.writer.line(
-                    f"assign {stmt.target} = {stmt.width}'({svexpr(stmt.val)});"
+                    f"assign {svexpr(stmt.target)} = {stmt.width}'({svexpr(stmt.val)});"
                 )
             else:
-                self.writer.line(f"assign {stmt.target} = {svexpr(stmt.val)};")
+                self.writer.line(
+                    f"assign {svexpr(stmt.target)} = {svexpr(stmt.val)};")
         self.writer.line('')
 
     def visit_HDLBlock(self, node):
@@ -64,9 +65,10 @@ class SVCompiler(InstanceVisitor):
 
         for name, val in node.dflts.items():
             if val.width:
-                self.writer.line(f"{name} = {val.width}'({svexpr(val.val)});")
+                self.writer.line(
+                    f"{svexpr(name)} = {val.width}'({svexpr(val.val)});")
             else:
-                self.writer.line(f"{name} = {svexpr(val.val)};")
+                self.writer.line(f"{svexpr(name)} = {svexpr(val.val)};")
 
         for stmt in node.stmts:
             self.visit(stmt)
@@ -121,7 +123,7 @@ def compile_gear_body(gear):
     writer = HDLWriter()
     write_module(hdl_ast, res, writer)
 
-    return '\n'.join(writer.svlines)
+    return '\n'.join(writer.lines)
 
 
 def compile_gear(gear, template_env, context):

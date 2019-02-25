@@ -6,6 +6,7 @@ import inspect
 import shutil
 
 from pygears.svgen import svgen, register_sv_paths
+from pygears.vgen import vgen
 from pygears.sim import sim
 from pygears import registry, clear
 from functools import wraps
@@ -15,6 +16,7 @@ from pygears.sim.modules.sim_socket import SimSocket
 from pygears.sim.modules.verilator import SimVerilated
 
 from functools import partial
+from pygears.util.find import find
 
 re_trailing_space_rem = re.compile(r"\s+$", re.MULTILINE)
 re_multispace_rem = re.compile(r"\s+", re.MULTILINE)
@@ -97,6 +99,58 @@ def get_test_res_ref_dir_pair(func):
     return filename, outdir
 
 
+def formal_check(disable=None, **kwds):
+    def decorator(func):
+        return pytest.mark.usefixtures('formal_check_fixt')(
+            pytest.mark.parametrize(
+                'formal_check_fixt', [[disable, kwds]], indirect=True)(func))
+
+    return decorator
+
+
+@pytest.fixture
+def formal_check_fixt(tmpdir, request):
+    skip_ifndef('FORMAL_TEST')
+    yield
+
+    outdir = tmpdir
+
+    vgen(outdir=outdir, wrapper=False, assertions=True, **request.param[1])
+
+    # TODO : hack to find gear
+    for svmod in registry("svgen/map").values():
+        if hasattr(svmod, 'is_compiled') and svmod.is_compiled:
+            gear = svmod.node.gear
+
+    disable = request.param[0] if request.param[0] is not None else {}
+    yosis_cmds = []
+    env = jinja2.Environment(
+        loader=jinja2.FileSystemLoader(searchpath=os.path.dirname(__file__)))
+    jinja_context = {'name': gear.basename, 'outdir': outdir}
+
+    def find_yosis_cmd(name):
+        if name in disable:
+            if disable[name] == 'all':
+                return
+            if disable[name] == 'live':
+                jinja_context['live_task'] = False
+        script_path = f'{outdir}/top_{name}.sby'
+        jinja_context['if_name'] = name.upper()
+        env.get_template('formal.j2').stream(jinja_context).dump(script_path)
+        yosis_cmds.append(f'sby {script_path}')
+
+    for port in gear.in_ports:
+        jinja_context['live_task'] = True
+        find_yosis_cmd(port.basename)
+
+    for port in gear.out_ports:
+        jinja_context['live_task'] = False
+        find_yosis_cmd(port.basename)
+
+    for cmd in yosis_cmds:
+        assert os.system(cmd) == 0, f'Yosis failed. Cmd: {cmd}'
+
+
 def synth_check(expected, **kwds):
     def decorator(func):
         return pytest.mark.usefixtures('synth_check_fixt')(
@@ -107,26 +161,42 @@ def synth_check(expected, **kwds):
 
 
 @pytest.fixture
-def synth_check_fixt(tmpdir, request):
+def synth_check_fixt(tmpdir, language, request):
     skip_ifndef('SYNTH_TEST')
     yield
 
     outdir = tmpdir
-    svgen(outdir=outdir, wrapper=True, **request.param[1])
+    if language == 'sv':
+        svgen(outdir=outdir, wrapper=True, **request.param[1])
 
-    files = []
-    for svmod in registry("svgen/map").values():
-        if not hasattr(svmod, 'sv_impl_path'):
-            continue
+        files = []
+        for svmod in registry("svgen/map").values():
+            if not hasattr(svmod, 'sv_impl_path'):
+                continue
 
-        path = svmod.sv_impl_path
-        if not path:
-            path = os.path.join(outdir, svmod.sv_file_name)
+            path = svmod.sv_impl_path
+            if not path:
+                path = os.path.join(outdir, svmod.sv_file_name)
 
-        files.append(path)
+            files.append(path)
 
-    files.append(os.path.join(COMMON_SVLIB_DIR, 'dti.sv'))
-    files.append(os.path.join(outdir, 'wrap_top.sv'))
+        files.append(os.path.join(COMMON_SVLIB_DIR, 'dti.sv'))
+        files.append(os.path.join(outdir, 'wrap_top.sv'))
+
+    elif language == 'v':
+        vgen(outdir=outdir, wrapper=False, **request.param[1])
+
+        files = []
+        for svmod in registry("svgen/map").values():
+            # TODO : vgen only supports compiled modules for now..
+            if hasattr(svmod, 'is_compiled') and svmod.is_compiled:
+                path = svmod.sv_impl_path
+                if not path:
+                    path = os.path.join(outdir, svmod.sv_file_name)
+
+                files.append(path)
+    else:
+        raise Exception(f"Synth test unknown language: {language}")
 
     viv_cmd = (
         f'vivado -mode batch -source {outdir}/synth.tcl -nolog -nojournal')
@@ -248,3 +318,11 @@ def cosim_cls(request):
         cosim_cls = partial(SimSocket, run=True)
 
     yield cosim_cls
+
+
+@pytest.fixture(params=['sv', 'v'])
+def language(request):
+    language = request.param
+    if language is 'v':
+        skip_ifndef('VERILOG_TEST')
+    yield language

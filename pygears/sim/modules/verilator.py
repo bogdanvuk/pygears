@@ -1,15 +1,18 @@
-import subprocess
-import jinja2
-import os
-import ctypes
-from string import Template
-from pygears.util.fileio import save_file
-from pygears import registry, bind
-from pygears.svgen import svgen
-from pygears.sim.modules.cosim_base import CosimBase
-from pygears.sim.c_drv import CInputDrv, COutputDrv
-from pygears.sim import sim_log
 import atexit
+import ctypes
+import os
+import subprocess
+from string import Template
+
+import jinja2
+
+from pygears import bind, registry
+from pygears.sim import sim_log
+from pygears.sim.c_drv import CInputDrv, COutputDrv
+from pygears.sim.modules.cosim_base import CosimBase
+from pygears.svgen import svgen
+from pygears.util.fileio import save_file
+from pygears.vgen import vgen
 
 signal_spy_connect_t = Template("""
 /*verilator tracing_on*/
@@ -43,16 +46,33 @@ class SimVerilatorSynchro:
 
 
 class SimVerilated(CosimBase):
-    def __init__(self, gear, timeout=100, vcd_fifo=False, shmidcat=False):
+    def __init__(self,
+                 gear,
+                 timeout=100,
+                 vcd_fifo=False,
+                 shmidcat=False,
+                 language='sv'):
         super().__init__(gear, timeout=timeout)
         self.name = gear.name[1:].replace('/', '_')
         self.outdir = os.path.abspath(
             os.path.join(registry('sim/artifact_dir'), self.name))
         self.objdir = os.path.join(self.outdir, 'obj_dir')
         bind('svgen/spy_connection_template', signal_spy_connect_t)
-        self.rtlnode = svgen(gear, outdir=self.outdir, wrapper=True)
+
+        self.language = language
+
+        if self.language == 'v':
+            self.rtlnode = vgen(gear, outdir=self.outdir, wrapper=False)
+        else:
+            self.rtlnode = svgen(gear, outdir=self.outdir, wrapper=True)
+
         self.svmod = registry('svgen/map')[self.rtlnode]
-        self.wrap_name = f'wrap_{self.svmod.sv_module_name}'
+
+        if self.language == 'v':
+            self.wrap_name = f'{self.svmod.sv_module_name}'
+        else:
+            self.wrap_name = f'wrap_{self.svmod.sv_module_name}'
+
         self.trace_fn = None
         self.vcd_fifo = vcd_fifo
         self.shmidcat = shmidcat
@@ -140,6 +160,10 @@ class SimVerilated(CosimBase):
         c = jenv.get_template('sim_veriwrap.j2').render(context)
         save_file('sim_main.cpp', self.outdir, c)
 
+        if self.language == 'v':
+            files = f'{self.outdir}/*.v'
+        else:
+            files = f'{self.outdir}/*.sv dti.sv'
         verilate_cmd = [
             f'cd {self.outdir};',
             'verilator -cc -CFLAGS -fpic -LDFLAGS -shared --exe', '-Wno-fatal',
@@ -147,7 +171,7 @@ class SimVerilated(CosimBase):
             '-clk clk',
             f'--top-module {self.wrap_name}',
             '--trace -no-trace-params --trace-structs' if tracing_enabled else '',
-            f'{self.outdir}/*.sv dti.sv',
+            files,
             'sim_main.cpp'
         ]  # yapf: disable
 

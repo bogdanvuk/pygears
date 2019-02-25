@@ -1,4 +1,4 @@
-import hdl_types as ht
+import pygears.hls.hdl_types as ht
 
 from .hdl_stmt import CombBlock
 from .hdl_utils import add_to_list, state_expr
