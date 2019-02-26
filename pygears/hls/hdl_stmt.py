@@ -1,5 +1,4 @@
-import pygears.hls.hdl_types as ht
-
+from . import hdl_types as ht
 from .hdl_stmt_types import AssignValue, CombBlock, CombSeparateStmts, HDLBlock
 from .hdl_utils import add_to_list, state_expr
 

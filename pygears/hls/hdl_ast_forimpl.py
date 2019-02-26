@@ -1,6 +1,6 @@
 import ast
 
-import pygears.hls.hdl_types as ht
+from . import hdl_types as ht
 from pygears.typing import Uint
 
 from .compile_snippets import enumerate_impl, qrange_mux_impl

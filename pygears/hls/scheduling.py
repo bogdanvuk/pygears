@@ -1,5 +1,4 @@
-import pygears.hls.hdl_types as ht
-
+from . import hdl_types as ht
 from .hdl_utils import find_hier_blocks
 from .scheduling_types import Leaf, MutexCBlock, SeqCBlock
 

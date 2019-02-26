@@ -1,6 +1,6 @@
 import ast
 
-import pygears.hls.hdl_types as ht
+from . import hdl_types as ht
 from pygears.typing import (Array, Int, Integer, Queue, Tuple, Uint, Unit,
                             is_type, typeof)
 from pygears.typing.base import TypingMeta

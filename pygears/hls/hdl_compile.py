@@ -1,7 +1,7 @@
 import ast
 import inspect
 
-import pygears.hls.hdl_types as ht
+from . import hdl_types as ht
 from pygears.typing import Uint, bitw
 
 from .cblock import CBlockVisitor

@@ -1,7 +1,7 @@
 import ast
 import logging
 
-import pygears.hls.hdl_types as ht
+from . import hdl_types as ht
 from pygears import PluginBase
 from pygears.conf import CustomLog, registry
 from pygears.typing import Int, Uint, is_type

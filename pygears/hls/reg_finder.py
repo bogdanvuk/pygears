@@ -1,6 +1,6 @@
 import ast
 
-import pygears.hls.hdl_types as ht
+from . import hdl_types as ht
 from pygears.typing import Uint, bitw, is_type
 
 from .hdl_utils import (eval_expression, find_assign_target, find_for_target,

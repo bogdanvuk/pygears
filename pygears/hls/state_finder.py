@@ -1,7 +1,6 @@
 from functools import partial
 
-import pygears.hls.hdl_types as ht
-
+from . import hdl_types as ht
 from .inst_visit import InstanceVisitor
 
 
