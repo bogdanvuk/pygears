@@ -38,17 +38,15 @@ The numeric values of logging levels are given in the following table.
 
 """
 
-import os
 import copy
 import logging
+import os
 import sys
 import tempfile
-
 from functools import partial
-from logging import INFO, WARNING, ERROR, DEBUG, CRITICAL, NOTSET
+from logging import CRITICAL, DEBUG, ERROR, INFO, NOTSET, WARNING
 
-from .registry import PluginBase, safe_bind, set_cb, reg_inject, Inject
-from .trace import enum_stacktrace
+from .registry import Inject, PluginBase, reg_inject, safe_bind, set_cb
 
 HOOKABLE_LOG_METHODS = [
     'critical', 'exception', 'error', 'warning', 'info', 'debug'
@@ -70,31 +68,11 @@ def set_log_level(name, level):
     conf_log().info(f'Setting log level {name}, {level}')
 
 
-@reg_inject
-def stack_trace(name,
-                verbosity,
-                message,
-                stack_traceback_fn=Inject('logger/stack_traceback_fn')):
-    with open(stack_traceback_fn, 'a') as f:
-        delim = '-' * 50 + '\n'
-        f.write(delim)
-        f.write(f'{name} [{verbosity.upper()}] {message}\n\n')
-        tr = ''
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-        for s in enum_stacktrace():
-            tr += s
-        f.write(tr)
-        f.write(delim)
-
-
 def log_parent(cls, severity):
     def wrapper(self, msg, *args, **kwargs):
         '''Wrapper around logger methods from HOOKABLE_LOG_METHODS
         for calling hooks'''
         getattr(super(CustomLogger, self), severity)(msg, *args, **kwargs)
-
-        if severity in ['error', 'warning']:
-            stack_trace(self.name, severity, msg)
         getattr(self, f'{severity}_hook')(logger_name=self.name, message=msg)
 
     return wrapper
@@ -111,9 +89,6 @@ def log_action_debug():
 
 @reg_inject
 def custom_action(logger_name, message, severity, log_cfgs=Inject('logger')):
-    if logger_name not in log_cfgs:
-        return
-
     log_cfg = log_cfgs[logger_name]
 
     if severity in log_cfg:
@@ -129,9 +104,12 @@ def custom_action(logger_name, message, severity, log_cfgs=Inject('logger')):
 
 
 def log_hook(cls, severity):
-    def wrapper(self, logger_name, message):
+    @reg_inject
+    def wrapper(self, logger_name, message, hooks=Inject('logger/hooks')):
         '''Custom <severity>_hook methods for HOOKABLE_LOG_METHODS.'''
         custom_action(logger_name, message, severity)
+        for hook in hooks:
+            hook(logger_name, severity, message)
 
     return wrapper
 
@@ -165,7 +143,8 @@ class LogFmtFilter(logging.Filter):
 
         if record.levelno > INFO:
             if os.path.exists(self.stack_traceback_fn):
-                stack_num = sum(1 for line in open(self.stack_traceback_fn))
+                with open(self.stack_traceback_fn) as f:
+                    stack_num = sum(1 for _ in f)
             else:
                 stack_num = 0
             record.stack_file = f'\n\t File "{self.stack_traceback_fn}", line {stack_num}, for stacktrace'
@@ -219,10 +198,14 @@ class CustomLog:
         self.name = name
         self.verbosity = verbosity
 
+        log_cls = logging.getLoggerClass()
+        logging.setLoggerClass(CustomLogger)
         self.set_default_logger()
+        logging.setLoggerClass(log_cls)
 
         bind_val = copy.deepcopy(self.dflt_settings)
         bind_val['level'] = verbosity
+        bind_val['hooks'] = []
         reg_name = f'logger/{name}'
         safe_bind(reg_name, bind_val)
         set_cb(f'{reg_name}/level', partial(set_log_level, name))
@@ -235,11 +218,16 @@ class CustomLog:
     def get_filter(self):
         return LogFmtFilter()
 
-    def get_logger_handler(self):
-        ch = logging.StreamHandler(sys.stdout)
+    def get_logger_handler(self,
+                           handler=partial(logging.StreamHandler, sys.stdout)):
+        ch = handler()
         ch.setLevel(self.verbosity)
         ch.setFormatter(self.get_format())
-        ch.addFilter(self.get_filter())
+
+        filt = self.get_filter()
+        if filt is not None:
+            ch.addFilter(filt)
+
         return ch
 
     def set_default_logger(self):
@@ -255,8 +243,7 @@ class LogPlugin(PluginBase):
     def bind(cls):
         tf = tempfile.NamedTemporaryFile(delete=False)
         safe_bind('logger/stack_traceback_fn', tf.name)
-
-        logging.setLoggerClass(CustomLogger)
+        safe_bind('logger/hooks', [])
 
         CustomLog('core', WARNING)
         CustomLog('typing', WARNING)
