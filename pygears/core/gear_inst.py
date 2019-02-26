@@ -232,8 +232,8 @@ def resolve_gear(gear_inst, fix_intfs):
             gear_inst.outnames.append(out_intfs[i].var_name)
         else:
             gear_inst.outnames.append(
-                dflt_dout_name
-                if len(out_dtype) == 1 else f'{dflt_dout_name}{i}')
+                dflt_dout_name if len(out_dtype) ==
+                1 else f'{dflt_dout_name}{i}')
 
     gear_inst.connect_output(out_intfs, out_dtype)
 
@@ -316,10 +316,14 @@ def gear_base_resolver(func,
         **annotations
     }
 
+    err = None
     try:
         params = infer_params(args, param_templates, context=func.__globals__)
     except TypeMatchError as e:
-        raise TypeMatchError(f'{str(e)}, of the module "{name}"')
+        err = e
+
+    if err is not None:
+        raise TypeMatchError(f'{str(err)}, of the module "{name}"')
 
     if not params.pop('enablement'):
         raise TypeMatchError(

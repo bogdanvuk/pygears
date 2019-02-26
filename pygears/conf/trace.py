@@ -1,6 +1,7 @@
 import os
 import sys
 
+from pygears.definitions import ROOT_DIR
 from enum import IntEnum
 from traceback import (extract_stack, extract_tb, format_list, walk_stack,
                        walk_tb)
@@ -8,7 +9,7 @@ from functools import partial
 from traceback import format_exception_only
 
 from .pdb_patch import patch_pdb, unpatch_pdb
-from .registry import PluginBase, RegistryHook, registry
+from .registry import PluginBase, RegistryHook, registry, config
 
 
 class TraceLevel(IntEnum):
@@ -27,17 +28,24 @@ class TraceConfig(RegistryHook):
 class TraceConfigPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        cls.registry['trace'] = TraceConfig(level=TraceLevel.debug)
+        cls.registry['trace'] = TraceConfig(level=TraceLevel.user)
         cls.registry['trace']['hooks'] = []
+
+        config.define(
+            'trace/ignore',
+            default=[os.path.join(ROOT_DIR, d) for d in ['core', 'conf']])
 
 
 def parse_trace(s, t):
     if registry('trace/level') == TraceLevel.debug:
         yield s
     else:
-        is_internal = t[0].f_code.co_filename.startswith(
-            os.path.dirname(__file__))
-        is_boltons = 'boltons' in t[0].f_code.co_filename
+
+        trace_fn = t[0].f_code.co_filename
+        is_internal = any(
+            trace_fn.startswith(d) for d in config['trace/ignore'])
+
+        is_boltons = 'boltons' in trace_fn
         if not is_internal and not is_boltons:
             yield s
 

@@ -4,6 +4,7 @@ import importlib
 import os
 import re
 import sys
+import copy
 from dataclasses import dataclass
 from typing import Any, Callable
 
@@ -102,7 +103,7 @@ class Configure:
         self.definitions = {}
 
     def define(self, path, default=None, docs=None, setter=None):
-        safe_bind(path, default)
+        safe_bind(path, copy.copy(default))
         var = ConfigVariable(path, default=default, docs=docs, setter=setter)
         self.definitions[path] = var
         return var

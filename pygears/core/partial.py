@@ -2,6 +2,7 @@ import functools
 import inspect
 import sys
 import traceback
+import textwrap
 from pygears.conf import enum_traceback
 
 
@@ -16,12 +17,13 @@ class MultiAlternativeError(Exception):
                 func, stop=(lambda f: hasattr(f, "__signature__")))
             fn = inspect.getfile(uwrp)
             _, ln = inspect.getsourcelines(uwrp)
-            ret.extend(enum_traceback(info[2]))
+            # ret.extend(enum_traceback(info[2]))
             # ret.extend(traceback.format_tb(info[2]))
+            ret.append('\n')
             ret.append(f'  File "{fn}", line {ln}, in {uwrp.__name__}\n')
             ret.extend(traceback.format_exception_only(*info[:2]))
-            ret.append('\n')
-        return str(''.join(ret))
+        return textwrap.indent(str(''.join(ret)), 8*' ')
+        # return str(''.join(ret))
 
 
 def argspec_unwrap(func):
