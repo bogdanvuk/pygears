@@ -20,11 +20,11 @@ def get_truncate_func(res_dtype, op_dtype):
     return name, val
 
 
-def update_functions(all_functions, addition):
+def update_extras(all_extras, addition):
     if addition:
         for key, value in addition.items():
             if key:
-                all_functions[key] = value
+                all_extras[key] = value
 
 
 def cast(res_dtype, op_dtype, op_value):
@@ -67,7 +67,7 @@ def cast(res_dtype, op_dtype, op_value):
 
 class VExpressionVisitor(SVExpressionVisitor):
     def __init__(self):
-        self.functions = {}
+        self.extras = {}
 
     def visit_IntfValidExpr(self, node):
         return f'{node.name}_valid'
@@ -99,7 +99,7 @@ class VExpressionVisitor(SVExpressionVisitor):
     def visit_CastExpr(self, node):
         val, func = cast(node.dtype, node.operand.dtype,
                          self.visit(node.operand))
-        update_functions(self.functions, func)
+        update_extras(self.extras, func)
         return val
 
     def visit_BinOpExpr(self, node):
@@ -118,9 +118,9 @@ class VExpressionVisitor(SVExpressionVisitor):
             res_dtype = node.operands[1].dtype
 
         val0, func = cast(res_dtype, node.operands[0].dtype, ops[0])
-        update_functions(self.functions, func)
+        update_extras(self.extras, func)
         val1, func = cast(res_dtype, node.operands[1].dtype, ops[1])
-        update_functions(self.functions, func)
+        update_extras(self.extras, func)
 
         return val0 + f" {node.operator} " + val1
 
@@ -130,10 +130,31 @@ class VExpressionVisitor(SVExpressionVisitor):
         if isinstance(node.index, slice):
             return f'{val}[{int(node.index.stop) - 1}:{node.index.start}]'
 
-        if typeof(node.val.dtype, Array) or typeof(node.val.dtype, Integer):
+        dtype = node.val.dtype
+        if typeof(dtype, Array):
+            sub_name = f'{val}_array'
+            idx = self.visit(node.index)
+
+            array_assignment = []
+            sub_indexes = [f'{val}_{i}' for i in range(len(dtype))]
+            vals = ', '.join(sub_indexes)
+            sign = 'signed' if typeof(dtype[0], Int) else ''
+            array_assignment.append(
+                f'reg {sign} [{int(dtype)-1}:0] {sub_name};')
+            array_assignment.append(f'always @({idx}, {vals}) begin')
+            array_assignment.append(f'    {sub_name} = {val}_{0};')
+            for i in range(len(dtype)):
+                array_assignment.append(f'    if ({idx} == {i})')
+                array_assignment.append(f'        {sub_name} = {val}_{i};')
+            array_assignment.append(f'end')
+
+            update_extras(self.extras, {sub_name: '\n'.join(array_assignment)})
+            return f'{sub_name}'
+
+        if typeof(dtype, Integer):
             return f'{val}[{self.visit(node.index)}]'
 
-        return f'{val}_{node.val.dtype.fields[node.index]}'
+        return f'{val}_{dtype.fields[node.index]}'
 
     def visit_IntfExpr(self, node):
         if node.context:
@@ -145,9 +166,9 @@ class VExpressionVisitor(SVExpressionVisitor):
         return f'{node.name}_s'
 
 
-def vexpr(expr, functions=None):
+def vexpr(expr, extras=None):
     v_visit = VExpressionVisitor()
     res = v_visit.visit(expr)
-    if functions is not None:
-        update_functions(functions, v_visit.functions)
+    if extras is not None:
+        update_extras(extras, v_visit.extras)
     return res

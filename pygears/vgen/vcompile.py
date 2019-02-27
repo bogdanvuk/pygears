@@ -25,15 +25,15 @@ class VCompiler(InstanceVisitor):
         self.writer = writer
         self.visit_var = visit_var
         self.hdl_locals = hdl_locals
-        self.functions = {}
+        self.extras = {}
 
     def find_width(self, node, target=None):
         if target is None:
-            target = vexpr(node.target, self.functions)
+            target = vexpr(node.target, self.extras)
         else:
-            target = vexpr(target, self.functions)
+            target = vexpr(target, self.extras)
 
-        rhs = vexpr(node.val, self.functions)
+        rhs = vexpr(node.val, self.extras)
 
         var = None
         if target in self.hdl_locals:
@@ -50,8 +50,7 @@ class VCompiler(InstanceVisitor):
 
     def enter_block(self, block):
         if getattr(block, 'in_cond', False):
-            self.writer.line(
-                f'if ({vexpr(block.in_cond, self.functions)}) begin')
+            self.writer.line(f'if ({vexpr(block.in_cond, self.extras)}) begin')
 
         if getattr(block, 'in_cond', True):
             self.writer.indent += 4
@@ -130,13 +129,13 @@ def write_module(node, v_stmts, writer):
     for name, expr in node.regs.items():
         writer.block(REG_TEMPLATE.format(name, int(expr.val)))
 
-    functions = {}
+    extras = {}
     for name, val in v_stmts.items():
         compiler = VCompiler(name, writer, node.locals)
         compiler.visit(val)
-        functions.update(compiler.functions)
+        extras.update(compiler.extras)
 
-    for func_impl in functions.values():
+    for func_impl in extras.values():
         writer.block(func_impl)
 
 
