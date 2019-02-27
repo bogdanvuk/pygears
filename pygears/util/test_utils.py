@@ -1,22 +1,20 @@
-import pytest
-import jinja2
-import re
-import os
 import inspect
+import os
+import re
 import shutil
-
-from pygears.svgen import svgen, register_sv_paths
-from pygears.vgen import vgen
-from pygears.sim import sim
-from pygears import registry, clear
-from functools import wraps
+from functools import partial, wraps
 from itertools import islice
+
+import jinja2
+import pytest
+
+from pygears import clear, registry
 from pygears.definitions import COMMON_SVLIB_DIR
+from pygears.sim import sim
 from pygears.sim.modules.sim_socket import SimSocket
 from pygears.sim.modules.verilator import SimVerilated
-
-from functools import partial
-from pygears.util.find import find
+from pygears.svgen import register_sv_paths, svgen
+from pygears.vgen import vgen
 
 re_trailing_space_rem = re.compile(r"\s+$", re.MULTILINE)
 re_multispace_rem = re.compile(r"\s+", re.MULTILINE)
@@ -115,7 +113,7 @@ def formal_check_fixt(tmpdir, request):
 
     outdir = tmpdir
 
-    vgen(outdir=outdir, wrapper=False, assertions=True, **request.param[1])
+    vgen(outdir=outdir, wrapper=False, formal=True, **request.param[1])
 
     # TODO : hack to find gear
     for svmod in registry("svgen/map").values():

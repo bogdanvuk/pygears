@@ -30,6 +30,9 @@ async def py_rng(cfg: TCfg,
     data = t_dout(0)
 
     async with cfg as (offset, cnt, incr):
+        if not incr_steps:
+            assert cnt != 0, 'py_rng: cnt cannot be 0'
+            assert (offset + cnt) % incr == 0, 'py_rng: stop not reached'
 
         if not cnt_steps:
             start = int(offset)

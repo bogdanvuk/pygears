@@ -21,11 +21,12 @@ end
 
 
 class VCompiler(InstanceVisitor):
-    def __init__(self, visit_var, writer, hdl_locals):
+    def __init__(self, visit_var, writer, hdl_locals, **kwds):
         self.writer = writer
         self.visit_var = visit_var
         self.hdl_locals = hdl_locals
         self.extras = {}
+        self.kwds = kwds
 
     def find_width(self, node, target=None):
         if target is None:
@@ -57,6 +58,17 @@ class VCompiler(InstanceVisitor):
 
     def exit_block(self, block=None):
         if getattr(block, 'in_cond', True):
+            self.writer.indent -= 4
+            self.writer.line(f'end')
+
+    def visit_AssertValue(self, node):
+        if 'formal' in self.kwds and self.kwds['formal']:
+            self.writer.line(f'assume ({vexpr(node.val.test)});')
+        else:
+            self.writer.line(f'if (!({vexpr(node.val.test)})) begin')
+            self.writer.indent += 4
+            self.writer.line(f'$display("{node.val.msg}");')
+            self.writer.line(f'$finish;')
             self.writer.indent -= 4
             self.writer.line(f'end')
 
@@ -102,7 +114,7 @@ DATA_FUNC_GEAR = """
 """
 
 
-def write_module(node, v_stmts, writer):
+def write_module(node, v_stmts, writer, **kwds):
     for name, expr in node.regs.items():
         writer.line(vgen_reg(expr.dtype, f'{name}_reg', False))
         writer.line(vgen_reg(expr.dtype, f'{name}_next', False))
@@ -131,7 +143,7 @@ def write_module(node, v_stmts, writer):
 
     extras = {}
     for name, val in v_stmts.items():
-        compiler = VCompiler(name, writer, node.locals)
+        compiler = VCompiler(name, writer, node.locals, **kwds)
         compiler.visit(val)
         extras.update(compiler.extras)
 
@@ -167,12 +179,17 @@ def write_assertions(gear, writer):
 
 
 def compile_gear_body(gear):
+    conf = registry('svgen/conf')
+
+    formal = False
+    if 'formal' in conf:
+        formal = conf['formal']
+
     hdl_ast, res = parse_gear_body(gear)
     writer = HDLWriter()
-    write_module(hdl_ast, res, writer)
+    write_module(hdl_ast, res, writer, formal=formal)
 
-    conf = registry('svgen/conf')
-    if 'assertions' in conf and conf['assertions']:
+    if formal:
         write_assertions(gear, writer)
 
     return '\n'.join(writer.lines)

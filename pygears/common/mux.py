@@ -11,6 +11,7 @@ def mux_type(dtypes):
 @gear(svgen={'compile': True})
 async def mux(ctrl, *din) -> b'mux_type(din)':
     async with ctrl as c:
+        assert c < len(din), 'mux: incorrect selection value'
         if typeof(din[0].dtype, Queue):
             async for d in din[c]:
                 yield (d, c)
