@@ -8,7 +8,8 @@ from .cblock import CBlockVisitor
 from .hdl_ast import HdlAst
 from .hdl_stmt import (BlockConditionsVisitor, InputVisitor, IntfReadyVisitor,
                        IntfValidVisitor, OutputVisitor, RegEnVisitor,
-                       StateTransitionVisitor, VariableVisitor)
+                       StateTransitionVisitor, VariableVisitor,
+                       AssertionVisitor)
 from .intf_finder import IntfFinder
 from .reg_finder import RegFinder
 from .scheduling import Scheduler
@@ -65,7 +66,8 @@ def parse_gear_body(gear):
         'outputs': OutputVisitor(),
         'inputs': InputVisitor(),
         'intf_ready': IntfReadyVisitor(),
-        'intf_valid': IntfValidVisitor()
+        'intf_valid': IntfValidVisitor(),
+        'asssertions': AssertionVisitor(),
     }
 
     res = {}

@@ -152,6 +152,11 @@ class HdlAst(ast.NodeVisitor):
 
         return hdl_node
 
+    def visit_Assert(self, node):
+        test = self.visit(node.test)
+        msg = node.msg.s if node.msg else 'Assertion failed.'
+        return ht.AssertExpr(test=test, msg=msg)
+
     def visit_AsyncFor(self, node):
         intf = self.visit_NameExpression(node.iter)
         scope, loop_intf = intf_parse(intf=intf, target=node.target)

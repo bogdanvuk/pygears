@@ -4,6 +4,6 @@ from pygears.typing import Queue, Uint
 from pygears.util.test_utils import formal_check
 
 
-@formal_check(disable={'din': 'live', 'cfg': 'live'})
+@formal_check()
 def test_tr_cnt():
-    tr_cnt(Intf(Queue[Uint[16]]), Intf(Uint[16]))
+    tr_cnt(Intf(Queue[Uint[8]]), Intf(Uint[3]))

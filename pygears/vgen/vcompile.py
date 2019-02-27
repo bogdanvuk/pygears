@@ -21,19 +21,20 @@ end
 
 
 class VCompiler(InstanceVisitor):
-    def __init__(self, visit_var, writer, hdl_locals):
+    def __init__(self, visit_var, writer, hdl_locals, **kwds):
         self.writer = writer
         self.visit_var = visit_var
         self.hdl_locals = hdl_locals
-        self.functions = {}
+        self.extras = {}
+        self.kwds = kwds
 
     def find_width(self, node, target=None):
         if target is None:
-            target = vexpr(node.target, self.functions)
+            target = vexpr(node.target, self.extras)
         else:
-            target = vexpr(target, self.functions)
+            target = vexpr(target, self.extras)
 
-        rhs = vexpr(node.val, self.functions)
+        rhs = vexpr(node.val, self.extras)
 
         var = None
         if target in self.hdl_locals:
@@ -50,14 +51,24 @@ class VCompiler(InstanceVisitor):
 
     def enter_block(self, block):
         if getattr(block, 'in_cond', False):
-            self.writer.line(
-                f'if ({vexpr(block.in_cond, self.functions)}) begin')
+            self.writer.line(f'if ({vexpr(block.in_cond, self.extras)}) begin')
 
         if getattr(block, 'in_cond', True):
             self.writer.indent += 4
 
     def exit_block(self, block=None):
         if getattr(block, 'in_cond', True):
+            self.writer.indent -= 4
+            self.writer.line(f'end')
+
+    def visit_AssertValue(self, node):
+        if 'formal' in self.kwds and self.kwds['formal']:
+            self.writer.line(f'assume ({vexpr(node.val.test)});')
+        else:
+            self.writer.line(f'if (!({vexpr(node.val.test)})) begin')
+            self.writer.indent += 4
+            self.writer.line(f'$display("{node.val.msg}");')
+            self.writer.line(f'$finish;')
             self.writer.indent -= 4
             self.writer.line(f'end')
 
@@ -103,7 +114,7 @@ DATA_FUNC_GEAR = """
 """
 
 
-def write_module(node, v_stmts, writer):
+def write_module(node, v_stmts, writer, **kwds):
     for name, expr in node.regs.items():
         writer.line(vgen_reg(expr.dtype, f'{name}_reg', False))
         writer.line(vgen_reg(expr.dtype, f'{name}_next', False))
@@ -130,30 +141,40 @@ def write_module(node, v_stmts, writer):
     for name, expr in node.regs.items():
         writer.block(REG_TEMPLATE.format(name, int(expr.val)))
 
-    functions = {}
+    extras = {}
     for name, val in v_stmts.items():
-        compiler = VCompiler(name, writer, node.locals)
+        compiler = VCompiler(name, writer, node.locals, **kwds)
         compiler.visit(val)
-        functions.update(compiler.functions)
+        extras.update(compiler.extras)
 
-    for func_impl in functions.values():
+    for func_impl in extras.values():
         writer.block(func_impl)
 
 
-def write_assertions(gear, writer):
+def write_assertions(gear, writer, cfg):
+    asserts = cfg['asserts'] if 'asserts' in cfg else {}
+    assumes = cfg['assumes'] if 'assumes' in cfg else []
+
+    def append_to_context(context, port):
+        if typeof(port.dtype, Queue):
+            lvl = port.dtype.lvl
+        else:
+            lvl = 0
+
+        tmp_asrt = []
+        for key, val in asserts.items():
+            if port.basename == key:
+                tmp_asrt.append(val)
+
+        context.append((port.basename, lvl, tmp_asrt))
+
     in_context = []
     for port in gear.in_ports:
-        if typeof(port.dtype, Queue):
-            in_context.append((port.basename, port.dtype.lvl))
-        else:
-            in_context.append((port.basename, 0))
+        append_to_context(in_context, port)
 
     out_context = []
     for port in gear.out_ports:
-        if typeof(port.dtype, Queue):
-            out_context.append((port.basename, port.dtype.lvl))
-        else:
-            out_context.append((port.basename, 0))
+        append_to_context(out_context, port)
 
     base_addr = os.path.dirname(__file__)
     jenv = jinja2.Environment(
@@ -161,20 +182,28 @@ def write_assertions(gear, writer):
         trim_blocks=True,
         lstrip_blocks=True)
 
-    context = {'in_context': in_context, 'out_context': out_context}
+    context = {
+        'in_context': in_context,
+        'out_context': out_context,
+        'assumes': assumes
+    }
     res = jenv.get_template('formal.j2').render(context)
 
     writer.block(res)
 
 
 def compile_gear_body(gear):
+    formal = False
+    conf = registry('svgen')
+    if 'formal' in conf:
+        formal = conf['formal']
+
     hdl_ast, res = parse_gear_body(gear)
     writer = HDLWriter()
-    write_module(hdl_ast, res, writer)
+    write_module(hdl_ast, res, writer, formal=formal)
 
-    conf = registry('svgen/conf')
-    if 'assertions' in conf and conf['assertions']:
-        write_assertions(gear, writer)
+    if formal:
+        write_assertions(gear, writer, formal)
 
     return '\n'.join(writer.lines)
 
