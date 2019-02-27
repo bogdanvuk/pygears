@@ -1,5 +1,5 @@
 from pygears import alternative, gear
-from pygears.typing import Queue, Uint, bitw
+from pygears.typing import Queue
 
 
 @gear(svgen={'compile': True})

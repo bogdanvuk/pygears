@@ -18,6 +18,7 @@ async def tr_cnt(din: Queue['t_data'], cfg: Uint['t_cfg'], *,
     cnt = cfg.dtype(init)
 
     async with cfg as c:
+        assert c >= init, 'tr_cnt: incorrect configuration'
         last = (cnt == c)
         while not last:
             async for (data, eot) in din:
