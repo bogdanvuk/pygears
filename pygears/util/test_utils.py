@@ -9,6 +9,7 @@ import jinja2
 import pytest
 
 from pygears import clear, registry
+from pygears.conf import safe_bind
 from pygears.definitions import COMMON_SVLIB_DIR
 from pygears.sim import sim
 from pygears.sim.modules.sim_socket import SimSocket
@@ -97,11 +98,12 @@ def get_test_res_ref_dir_pair(func):
     return filename, outdir
 
 
-def formal_check(disable=None, **kwds):
+def formal_check(disable=None, asserts=None, assumes=None, **kwds):
     def decorator(func):
         return pytest.mark.usefixtures('formal_check_fixt')(
             pytest.mark.parametrize(
-                'formal_check_fixt', [[disable, kwds]], indirect=True)(func))
+                'formal_check_fixt', [[disable, asserts, assumes, kwds]],
+                indirect=True)(func))
 
     return decorator
 
@@ -112,15 +114,19 @@ def formal_check_fixt(tmpdir, request):
     yield
 
     outdir = tmpdir
+    disable = request.param[0] if request.param[0] is not None else {}
+    asserts = request.param[1] if request.param[1] is not None else {}
+    assumes = request.param[2] if request.param[2] is not None else []
+    safe_bind('svgen/formal/asserts', asserts)
+    safe_bind('svgen/formal/assumes', assumes)
 
-    vgen(outdir=outdir, wrapper=False, formal=True, **request.param[1])
+    vgen(outdir=outdir, wrapper=False, **request.param[3])
 
     # TODO : hack to find gear
     for svmod in registry("svgen/map").values():
         if hasattr(svmod, 'is_compiled') and svmod.is_compiled:
             gear = svmod.node.gear
 
-    disable = request.param[0] if request.param[0] is not None else {}
     yosis_cmds = []
     env = jinja2.Environment(
         loader=jinja2.FileSystemLoader(searchpath=os.path.dirname(__file__)))

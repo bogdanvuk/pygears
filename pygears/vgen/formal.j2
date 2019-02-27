@@ -1,15 +1,18 @@
 initial  begin
     assume(rst);
-{% for name, eot in in_context %}
+{% for name, eot, asrt in in_context %}
     assume({{name}}_valid == 0);
 {% endfor %}
-{% for name, eot in out_context %}
+{% for name, eot, asrt in out_context %}
     assume({{name}}_ready == 0);
 {% endfor %}
 end
 always @(posedge clk) begin
+{% for val in assumes %}
+    assume ({{val}});
+{% endfor %}
     if (!rst) begin
-{% for name, eot in in_context %}
+{% for name, eot, asrt in in_context %}
         // Assumptions: {{name}}
         if ($past({{name}}_valid) && !$past({{name}}_ready)) begin
             assume ({{name}}_valid);
@@ -25,11 +28,14 @@ always @(posedge clk) begin
         if ({{name}}_valid) begin
            assert (s_eventually ({{name}}_ready | rst));
         end
+  {% for a in asrt %}
+        assert ({{a}});
+  {% endfor %}
 `endif
 
 {% endfor %}
 
-{% for name, eot in out_context %}
+{% for name, eot, asrt in out_context %}
         // Assumptions: {{name}}
         if ({{name}}_valid)
             assume (s_eventually {{name}}_ready);
@@ -40,6 +46,9 @@ always @(posedge clk) begin
             assert ({{name}}_valid);
             assert ($stable({{name}}_data));
         end
+  {% for a in asrt %}
+        assert ({{a}});
+  {% endfor %}
 `endif
 
 {% endfor %}
