@@ -1,8 +1,9 @@
 import ast
 from functools import reduce
 
-from . import hdl_types as ht
 from pygears.typing import Int, Tuple, Uint, typeof
+
+from . import hdl_types as ht
 
 
 def max_expr(op1, op2):
@@ -69,3 +70,9 @@ class HdlAstCall:
         assert not arg, 'Sub should be called without arguments'
         value = kwds['value']
         return ht.CastExpr(value, cast_to=value.dtype.sub())
+
+    def call_get(self, *args, **kwds):
+        return kwds['value']
+
+    def call_get_nb(self, *args, **kwds):
+        return kwds['value']

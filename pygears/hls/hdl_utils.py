@@ -1,12 +1,14 @@
 import ast
 import logging
 
-from . import hdl_types as ht
 from pygears import PluginBase
 from pygears.conf import CustomLog, registry
 from pygears.typing import Int, Uint, is_type
 
+from . import hdl_types as ht
+
 ASYNC_TYPES = (ht.Yield, )
+INTF_METHODS = ('get_nb', 'get', 'put', 'put_nb')
 
 
 class VisitError(Exception):
@@ -33,9 +35,26 @@ def set_pg_type(ret):
     return ret
 
 
+def interface_operations(node):
+    if isinstance(node, ast.Await):
+        return True, None
+
+    if isinstance(node, ast.Call):
+        if hasattr(node.func, 'value'):
+            if hasattr(node.func, 'attr'):
+                if node.func.attr in INTF_METHODS:
+                    return True, (node.func.value.id, node.func.attr)
+
+    return False, None
+
+
 def eval_expression(node, local_namespace):
     types = registry('gear/type_arith').copy()
     types.update(local_namespace)
+
+    flag, _ = interface_operations(node)
+    if flag:
+        raise NameError
 
     return eval(
         compile(
