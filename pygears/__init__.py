@@ -7,7 +7,7 @@ from asyncio import CancelledError as GearDone
 from asyncio.queues import QueueEmpty
 
 # form pygears.conf import only for legacy compatibility
-from pygears.conf import PluginBase, bind, registry, clear
+from pygears.conf import PluginBase, bind, registry, clear, MultiAlternativeError
 from pygears.conf import pygears_excepthook, TraceLevel, safe_bind
 import pygears.conf
 
@@ -21,7 +21,6 @@ from pygears.core.gear import gear, alternative, module
 import pygears.core.gear_inst
 
 from pygears.core.intf import Intf
-from pygears.core.partial import MultiAlternativeError
 
 import pygears.common
 import pygears.typing

@@ -59,11 +59,15 @@ class Gear(NamedHierNode):
         self.func = func
 
         self.in_ports = []
+        self.out_ports = []
         for i, (name, intf) in enumerate(args.items()):
             port = InPort(self, i, name)
             intf.connect(port)
-            Intf(params[port.basename]).source(port)
             self.in_ports.append(port)
+
+    def connect_input(self):
+        for port in self.in_ports:
+            Intf(self.params[port.basename]).source(port)
 
     def connect_output(self, out_intfs, out_dtypes):
 
@@ -172,6 +176,11 @@ def alternative(*base_gear_defs):
         for d in base_gear_defs:
             alternatives = getattr(d.func, 'alternatives', [])
             alternatives.append(gear_def.func)
+            gear_func = gear_def.func.__wrapped__
+            gear_func_to = d.func.__wrapped__
+
+            gear_func.alternative_to = gear_func_to
+            gear_func_to.alternatives = alternatives
             d.func.alternatives = alternatives
         return gear_def
 
