@@ -69,15 +69,23 @@ def create_oposite(expr):
 
 
 def find_exit_cond(statements, search_in_cond=False):
+    def has_in_cond(stmt):
+        if search_in_cond and (not isinstance(stmt, IfBlock)) and hasattr(
+                stmt, 'in_cond') and (stmt.in_cond is not None):
+            return True
+        return False
+
     for stmt in reversed(statements):
         cond = getattr(stmt, 'exit_cond', None)
         if cond is not None:
             exit_c = nested_exit_cond(stmt)
-            if search_in_cond and (not isinstance(stmt, IfBlock)) and hasattr(
-                    stmt, 'in_cond') and (stmt.in_cond is not None):
+            if has_in_cond(stmt):
                 return and_expr(exit_c, stmt.in_cond)
 
             return exit_c
+
+        if has_in_cond(stmt):
+            return stmt.in_cond
 
     return None
 
@@ -406,9 +414,9 @@ class Block:
     def in_cond(self):
         pass
 
-    @property
-    def in_cond_id(self):
-        return COND_NAME.substitute(cond_type='in', block_id=self.id)
+    # @property
+    # def in_cond_id(self):
+    #     return COND_NAME.substitute(cond_type='in', block_id=self.id)
 
     @property
     def cycle_cond(self):
@@ -475,7 +483,8 @@ class IfBlock(Block):
         if condition is None:
             return None
 
-        return or_expr(UnaryOpExpr(self.in_cond_id, '!'), condition)
+        # return or_expr(UnaryOpExpr(self.in_cond_id, '!'), condition)
+        return or_expr(UnaryOpExpr(self.in_cond, '!'), condition)
 
     @property
     def exit_cond(self):
@@ -483,7 +492,8 @@ class IfBlock(Block):
         if condition is None:
             return None
 
-        return or_expr(UnaryOpExpr(self.in_cond_id, '!'), condition)
+        # return or_expr(UnaryOpExpr(self.in_cond_id, '!'), condition)
+        return or_expr(UnaryOpExpr(self.in_cond, '!'), condition)
 
 
 @dataclass
@@ -497,7 +507,8 @@ class ContainerBlock(Block):
 
         cond = None
         for block in self.stmts:
-            block_cond = and_expr(block.cycle_cond, block.in_cond_id)
+            # block_cond = and_expr(block.cycle_cond, block.in_cond_id)
+            block_cond = and_expr(block.cycle_cond, block.in_cond)
             cond = or_expr(cond, block_cond)
         return cond
 
@@ -509,7 +520,8 @@ class ContainerBlock(Block):
 
         cond = None
         for block in self.stmts:
-            block_cond = and_expr(block.exit_cond, block.in_cond_id)
+            # block_cond = and_expr(block.exit_cond, block.in_cond_id)
+            block_cond = and_expr(block.exit_cond, block.in_cond)
             cond = or_expr(cond, block_cond)
         return cond
 

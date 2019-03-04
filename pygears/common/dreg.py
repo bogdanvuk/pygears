@@ -17,6 +17,5 @@ async def dreg(din: 'tdin') -> b'tdin':
             except QueueEmpty:
                 valid = False
         else:
-            async with din as d:
-                data = d
-                valid = True
+            data = await din.get()
+            valid = True
