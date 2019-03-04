@@ -414,10 +414,6 @@ class Block:
     def in_cond(self):
         pass
 
-    # @property
-    # def in_cond_id(self):
-    #     return COND_NAME.substitute(cond_type='in', block_id=self.id)
-
     @property
     def cycle_cond(self):
         pass
@@ -483,7 +479,6 @@ class IfBlock(Block):
         if condition is None:
             return None
 
-        # return or_expr(UnaryOpExpr(self.in_cond_id, '!'), condition)
         return or_expr(UnaryOpExpr(self.in_cond, '!'), condition)
 
     @property
@@ -492,7 +487,6 @@ class IfBlock(Block):
         if condition is None:
             return None
 
-        # return or_expr(UnaryOpExpr(self.in_cond_id, '!'), condition)
         return or_expr(UnaryOpExpr(self.in_cond, '!'), condition)
 
 
@@ -507,7 +501,6 @@ class ContainerBlock(Block):
 
         cond = None
         for block in self.stmts:
-            # block_cond = and_expr(block.cycle_cond, block.in_cond_id)
             block_cond = and_expr(block.cycle_cond, block.in_cond)
             cond = or_expr(cond, block_cond)
         return cond
@@ -520,7 +513,6 @@ class ContainerBlock(Block):
 
         cond = None
         for block in self.stmts:
-            # block_cond = and_expr(block.exit_cond, block.in_cond_id)
             block_cond = and_expr(block.exit_cond, block.in_cond)
             cond = or_expr(cond, block_cond)
         return cond
@@ -544,8 +536,12 @@ class Loop(Block):
 
 @dataclass
 class Yield(Block):
-    expr: Expr
     ports: pytypes.Any
+
+    @property
+    def expr(self):
+        assert len(self.stmts) == 1, 'Yield block can only have 1 stmt'
+        return self.stmts[0]
 
     @property
     def cycle_cond(self):
@@ -609,6 +605,10 @@ class Conditions:
     def cycle_cond(self):
         cond = []
         for c_block in reversed(self.scope[1:]):
+            # state changes break the cycle
+            if len(c_block.state_ids) > len(self.scope[-1].state_ids):
+                break
+
             block = c_block.hdl_block
             if isinstance(block, ContainerBlock):
                 continue

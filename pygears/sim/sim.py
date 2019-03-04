@@ -433,8 +433,7 @@ def sim(outdir=None,
         timeout=None,
         extens=None,
         run=True,
-        verbosity=logging.INFO,
-        check_activity=False,
+        check_activity=True,
         seed=None):
 
     if outdir is None:

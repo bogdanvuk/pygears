@@ -80,6 +80,10 @@ class Scheduler(ht.TypeVisitor):
 
     def visit_IfBlock(self, node):
         cblock = MutexCBlock(parent=self.scope[-1], hdl_block=node, child=[])
+        hier = find_hier_blocks(node.stmts)
+        if len(hier) > 1:
+            cblock = SeqCBlock(parent=self.scope[-1], hdl_block=node, child=[])
+
         return self.visit_block(cblock, node.stmts)
 
     def visit_ContainerBlock(self, node):
@@ -100,7 +104,9 @@ class Scheduler(ht.TypeVisitor):
         raise VisitError("If loop isn't blocking stmts should be merged")
 
     def visit_Yield(self, node):
-        return Leaf(parent=self.scope[-1], hdl_blocks=[node])
+        cblock = SeqCBlock(parent=self.scope[-1], hdl_block=node, child=[])
+        cblock.child.append(Leaf(parent=cblock, hdl_blocks=node.stmts))
+        return cblock
 
     def visit_all_Expr(self, node):
         return None

@@ -603,11 +603,14 @@ class HdlAst(ast.NodeVisitor):
 
     def visit_While(self, node):
         test = self.visit_DataExpression(node.test)
+        multi = []
+        if isinstance(test, ht.ResExpr) and test.val:
+            multi = True
         hdl_node = ht.Loop(
             _in_cond=test,
             stmts=[],
             _exit_cond=ht.create_oposite(test),
-            multicycle=[])
+            multicycle=multi)
 
         return self.visit_block(hdl_node, node.body)
 
@@ -642,7 +645,7 @@ class HdlAst(ast.NodeVisitor):
         else:
             expr = super().visit(node.value)
             ports = self.out_ports
-        return ht.Yield(expr=self.cast_return(expr), stmts=[], ports=ports)
+        return ht.Yield(stmts=[self.cast_return(expr)], ports=ports)
 
     def visit_Await(self, node):
         flag, intf_val = interface_operations(node.value)
