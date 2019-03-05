@@ -4,12 +4,15 @@ from pygears.rtl.connect import rtl_connect
 from pygears.rtl.inst import rtl_inst
 
 
-def rtlgen(top=None, **conf):
+def rtlgen(top=None, force=False, **conf):
 
     if top is None:
         top = registry('gear/hier_root')
     elif isinstance(top, str):
         top = find(top)
+
+    if force:
+        registry('rtl/gear_node_map').clear()
 
     if top in registry('rtl/gear_node_map'):
         return registry('rtl/gear_node_map')[top]

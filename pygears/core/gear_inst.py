@@ -341,6 +341,7 @@ def gear_base_resolver(func,
 
     if err:
         err.gear = gear_inst
+        err.root_gear = gear_inst
 
     if not err:
         gear_inst.connect_input()
@@ -349,20 +350,20 @@ def gear_base_resolver(func,
         except (TooManyArguments, GearTypeNotSpecified, GearArgsNotSpecified,
                 TypeError, TypeMatchError, MultiAlternativeError) as e:
             err = e
-            err.gear = gear_inst
+            if hasattr(func, 'alternatives') or hasattr(func, 'alternative_to'):
+                err.root_gear = gear_inst
+
+    for name, val in const_args.items():
+        from pygears.common import const
+        const(val=val, intfs=[args[name]])
 
     if err:
         if hasattr(func, 'alternatives') or hasattr(func, 'alternative_to'):
-            print(f'Alternative: {gear_inst.name}')
             gear_inst.parent.child.remove(gear_inst)
             for port in gear_inst.in_ports:
                 port.producer.consumers.remove(port)
 
         raise err
-
-    for name, val in const_args.items():
-        from pygears.common import const
-        const(val=val, intfs=[args[name]])
 
     return out_intfs
 

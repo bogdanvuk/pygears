@@ -95,11 +95,6 @@ def rtl_inst(top, conf):
 class RTLNodeInstPlugin(GearPlugin):
     @classmethod
     def bind(cls):
-        safe_bind('rtl/namespace/node', {})
         safe_bind('rtl/namespace/gear_gen', {'Gear': RTLGearNodeGen})
         safe_bind('rtl/gear_node_map', {})
         registry('gear/params/extra')['svgen'] = None
-
-    @classmethod
-    def reset(cls):
-        safe_bind('rtl/namespace/node', {})
