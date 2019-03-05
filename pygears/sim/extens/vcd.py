@@ -205,7 +205,7 @@ class VCD(SimExtend):
                  shmidcat=Inject('sim/extens/vcd/shmidcat'),
                  vcd_fifo=Inject('sim/extens/vcd/vcd_fifo'),
                  sim=Inject('sim/simulator'),
-                 outdir=Inject('sim/artifact_dir'),
+                 outdir=Inject('sim/artifacts_dir'),
                  sim_map=Inject('sim/map')):
         super().__init__()
         self.sim = sim
