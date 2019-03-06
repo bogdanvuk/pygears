@@ -1,8 +1,9 @@
 import inspect
 import sys
 
-from pygears.conf import bind, core_log, registry, safe_bind
+from pygears.conf import bind, core_log, registry, safe_bind, MultiAlternativeError
 from pygears.typing import Any
+from pygears.core.hier_node import HierNode
 
 from .intf import Intf
 from .infer_ftypes import TypeMatchError, infer_ftypes, type_is_specified
@@ -152,8 +153,8 @@ class create_hier:
 
     def __exit__(self, exception_type, exception_value, traceback):
         bind('gear/current_module', self.gear.parent)
-        if exception_type is not None:
-            self.gear.clear()
+        # if exception_type is not None:
+        #     self.gear.clear()
 
 
 class intf_name_tracer:
@@ -291,11 +292,15 @@ def gear_base_resolver(func,
 
     paramspec = inspect.getfullargspec(func)
 
+    err = None
     try:
         args, annotations, const_args, ret_outnames = resolve_args(
             args, paramspec.args, paramspec.annotations, paramspec.varargs)
     except (TooManyArguments, GearArgsNotSpecified) as e:
-        raise type(e)(f'{str(e)}, when instantiating {name}')
+        err = type(e)(f'{str(e)}, when instantiating {name}')
+
+    if err:
+        raise err
 
     if intfs is None:
         fix_intfs = []
@@ -316,29 +321,49 @@ def gear_base_resolver(func,
         **annotations
     }
 
-    err = None
     try:
         params = infer_params(args, param_templates, context=func.__globals__)
     except TypeMatchError as e:
-        err = e
+        err = TypeMatchError(f'{str(e)}, of the module "{name}"')
+        print(f'{str(e)}, of the module "{name}"')
+        params = e.params
+        print(params)
 
-    if err is not None:
-        raise TypeMatchError(f'{str(err)}, of the module "{name}"')
-
-    if not params.pop('enablement'):
-        raise TypeMatchError(
-            f'Enablement condition failed for "{name}" alternative'
-            f' "{meta_kwds["definition"].__module__}.'
-            f'{meta_kwds["definition"].__name__}": '
-            f'{meta_kwds["enablement"]}')
+    if not err:
+        if not params.pop('enablement'):
+            err = TypeMatchError(
+                f'Enablement condition failed for "{name}" alternative'
+                f' "{meta_kwds["definition"].__module__}.'
+                f'{meta_kwds["definition"].__name__}": '
+                f'{meta_kwds["enablement"]}')
 
     gear_inst = Gear(func, args, params)
 
-    out_intfs = resolve_gear(gear_inst, fix_intfs)
+    if err:
+        err.gear = gear_inst
+        err.root_gear = gear_inst
+
+    if not err:
+        gear_inst.connect_input()
+        try:
+            out_intfs = resolve_gear(gear_inst, fix_intfs)
+        except (TooManyArguments, GearTypeNotSpecified, GearArgsNotSpecified,
+                TypeError, TypeMatchError, MultiAlternativeError) as e:
+            err = e
+            if hasattr(func, 'alternatives') or hasattr(func, 'alternative_to'):
+                err.root_gear = gear_inst
 
     for name, val in const_args.items():
         from pygears.common import const
         const(val=val, intfs=[args[name]])
+
+    if err:
+        if hasattr(func, 'alternatives') or hasattr(func, 'alternative_to'):
+            gear_inst.parent.child.remove(gear_inst)
+            for port in gear_inst.in_ports:
+                port.producer.consumers.remove(port)
+
+        raise err
 
     return out_intfs
 

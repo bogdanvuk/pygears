@@ -55,7 +55,7 @@ class SimVerilated(CosimBase):
         super().__init__(gear, timeout=timeout)
         self.name = gear.name[1:].replace('/', '_')
         self.outdir = os.path.abspath(
-            os.path.join(registry('sim/artifact_dir'), self.name))
+            os.path.join(registry('sim/artifacts_dir'), self.name))
         self.objdir = os.path.join(self.outdir, 'obj_dir')
         bind('svgen/spy_connection_template', signal_spy_connect_t)
 

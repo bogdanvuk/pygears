@@ -7,7 +7,7 @@ from pygears.conf import reg_inject, Inject
 
 class RandBase(SimExtend):
     @reg_inject
-    def __init__(self, top, cons, outdir=Inject('sim/artifact_dir'), **kwds):
+    def __init__(self, top, cons, outdir=Inject('sim/artifacts_dir'), **kwds):
         super().__init__()
         self.outdir = outdir
         self.constraints = self.create_constraints(cons)

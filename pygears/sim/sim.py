@@ -43,7 +43,7 @@ async def delta():
 
 
 def artifacts_dir():
-    return registry('sim/artifact_dir')
+    return registry('sim/artifacts_dir')
 
 
 def schedule_to_finish(gear):
@@ -437,13 +437,15 @@ def sim(outdir=None,
         seed=None):
 
     if outdir is None:
-        outdir = tempfile.mkdtemp()
+        outdir = registry('sim/artifacts_dir')
+        if outdir is None:
+            outdir = tempfile.mkdtemp()
+            bind('sim/artifacts_dir', outdir)
 
     if extens is None:
         extens = []
 
     os.makedirs(outdir, exist_ok=True)
-    bind('sim/artifact_dir', outdir)
 
     if not seed:
         seed = random.randrange(sys.maxsize)
@@ -512,6 +514,7 @@ class SimPlugin(GearPlugin):
         safe_bind('sim/config', {})
         safe_bind('sim/flow', [])
         safe_bind('sim/tasks', {})
+        safe_bind('sim/artifacts_dir', None)
         safe_bind('gear/params/extra/sim_setup', None)
         SimLog('sim')
 
