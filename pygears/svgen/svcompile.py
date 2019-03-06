@@ -31,6 +31,10 @@ class SVCompiler(InstanceVisitor):
             self.writer.indent -= 4
             self.writer.line(f'end')
 
+    def visit_AssertValue(self, node):
+        self.writer.line(f'assert ({svexpr(node.val.test)})')
+        self.writer.line(f'else $error("{node.val.msg}");')
+
     def visit_AssignValue(self, node):
         if node.width:
             self.writer.line(

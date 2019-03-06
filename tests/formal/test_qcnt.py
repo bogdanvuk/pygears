@@ -5,5 +5,10 @@ from pygears.util.test_utils import formal_check
 
 
 @formal_check()
-def test_qnct():
+def test_lvl_1():
     qcnt(Intf(Queue[Uint[8], 3]))
+
+
+@formal_check()
+def test_lvl_2():
+    qcnt(Intf(Queue[Uint[8], 3]), lvl=2)

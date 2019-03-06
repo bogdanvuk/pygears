@@ -1,5 +1,6 @@
-from pygears import Intf, find
 import pytest
+
+from pygears import Intf, find
 from pygears.cookbook.delay import delay_rng
 from pygears.cookbook.rng import rng
 from pygears.cookbook.verif import directed, verif
@@ -11,10 +12,10 @@ from pygears.typing import Int, Queue, Tuple, Uint
 def test_basic_unsigned():
     iout = rng(Intf(Tuple[Uint[4], Uint[4], Uint[2]]))
 
-    rng_gear = find('/rng/py_rng')
+    # rng_gear = find('/rng/py_rng')
 
     assert iout.dtype == Queue[Uint[4]]
-    assert not rng_gear.params['signed']
+    # assert not rng_gear.params['signed']
 
 
 def test_basic_unsigned_sim(tmpdir):
@@ -74,10 +75,10 @@ def test_incr_steps_unsigned_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
 def test_basic_signed():
     iout = rng(Intf(Tuple[Int[4], Int[6], Uint[2]]))
 
-    rng_gear = find('/rng/py_rng')
+    # rng_gear = find('/rng/py_rng')
 
     assert iout.dtype == Queue[Int[6]]
-    assert rng_gear.params['signed']
+    # assert rng_gear.params['signed']
 
 
 def test_basic_signed_sim(tmpdir):
@@ -115,7 +116,7 @@ def test_supply_constant():
         'cnt': Uint[4],
         'incr': Uint[1]
     }]
-    assert not rng_gear.params['signed']
+    # assert not rng_gear.params['signed']
 
 
 def test_cnt_only():
@@ -156,7 +157,7 @@ def test_cnt_down():
 
     rng_gear = find('/rng/py_rng')
 
-    assert rng_gear.params['signed']
+    # assert rng_gear.params['signed']
     assert rng_gear.params['cfg'] == Tuple[Int[4], Int[2], Int[1]]
     assert iout.dtype == Queue[Int[4]]
 

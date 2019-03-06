@@ -12,6 +12,11 @@ class AssignValue:
 
 
 @dataclass
+class AssertValue:
+    val: pytypes.Any
+
+
+@dataclass
 class CombBlock:
     stmts: pytypes.List
     dflts: pytypes.Dict

@@ -1,29 +1,7 @@
 import functools
 import inspect
 import sys
-import traceback
-import textwrap
-from pygears.conf import enum_traceback
-
-
-class MultiAlternativeError(Exception):
-    def __init__(self, errors):
-        self.errors = errors
-
-    def __str__(self):
-        ret = ['\n']
-        for func, e, info in self.errors:
-            uwrp = inspect.unwrap(
-                func, stop=(lambda f: hasattr(f, "__signature__")))
-            fn = inspect.getfile(uwrp)
-            _, ln = inspect.getsourcelines(uwrp)
-            # ret.extend(enum_traceback(info[2]))
-            # ret.extend(traceback.format_tb(info[2]))
-            ret.append('\n')
-            ret.append(f'  File "{fn}", line {ln}, in {uwrp.__name__}\n')
-            ret.extend(traceback.format_exception_only(*info[:2]))
-        return textwrap.indent(str(''.join(ret)), 8*' ')
-        # return str(''.join(ret))
+from pygears.conf import MultiAlternativeError
 
 
 def argspec_unwrap(func):
@@ -136,7 +114,8 @@ class Partial:
                 if len(alternatives) == 1:
                     raise e
                 else:
-                    errors.append((func, e, sys.exc_info()))
+                    # errors.append((func, e, sys.exc_info()))
+                    errors.append((func, *sys.exc_info()))
         else:
             if len(errors) == len(alternatives):
                 raise MultiAlternativeError(errors)

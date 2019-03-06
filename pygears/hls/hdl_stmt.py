@@ -1,5 +1,5 @@
 from . import hdl_types as ht
-from .hdl_stmt_types import AssignValue, CombBlock, CombSeparateStmts, HDLBlock
+from .hdl_stmt_types import AssignValue, CombBlock, CombSeparateStmts, HDLBlock, AssertValue
 from .hdl_utils import add_to_list, state_expr
 
 
@@ -429,3 +429,8 @@ class StateTransitionVisitor(HDLStmtVisitor):
                 self.update_defaults(block)
 
         return block
+
+
+class AssertionVisitor(HDLStmtVisitor):
+    def visit_AssertExpr(self, node, conds, **kwds):
+        return AssertValue(node)

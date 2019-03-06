@@ -1,4 +1,5 @@
 from pygears.hls.hdl_utils import add_to_list
+from pygears.typing import Int, Uint, typeof
 from pygears.typing.visitor import TypingVisitorBase
 
 
@@ -28,7 +29,37 @@ class VGenTypeVisitor(TypingVisitorBase):
         return None
 
     def visit_union(self, type_, field, **kwds):
-        assert False, f'Unions not supported in Verilog'
+        res = []
+        parent_context = self.context
+
+        # top
+        res.append(
+            f'{self.basic_type} [{int(type_)-1}:0] {parent_context}; // {type_}'
+        )
+
+        if self.hier:
+            # ctrl
+            res.append(
+                f'{self.basic_type} [{type_.args[1]-1}:0] {parent_context}_ctrl; // u{type_.args[1]}'
+            )
+            ctrl_low = int(type_) - int(type_.args[1])
+            ctrl_high = int(type_) - 1
+            res.append(
+                f'assign {parent_context}_ctrl = {parent_context}[{ctrl_high}:{ctrl_low}];'
+            )
+
+            # data
+            self.context = f'{parent_context}_data'
+
+            sub = self.visit(type_.args[0], type_.fields[0])
+            if sub:
+                add_to_list(res, sub)
+                res.append(
+                    f'assign {self.context} = {parent_context}[{ctrl_low-1}:0];'
+                )
+
+        self.context = parent_context
+        return res
 
     def visit_queue(self, type_, field, **kwds):
         res = []
@@ -91,18 +122,33 @@ class VGenTypeVisitor(TypingVisitorBase):
         return res
 
     def visit_array(self, type_, field, **kwds):
-        assert False, f'Arrays not supported in Verilog'
-        # TODO : below is systemverilog syntax, not pure verilog..
-        # sub = self.visit(type_.args[0], type_.fields[0])
-        # if sub:
-        #     assert len(sub) == 1
-        #     split_type = sub[0].split(' ', 1)
-        #     split_type.insert(1, f'[{type_.args[1]-1}:0]')
-        #     type_declaration = ' '.join(split_type)
-        #     res = type_declaration.split('//')[0]
-        #     return [f'{res} // {type_}']
+        if typeof(type_.args[0], Int):
+            merge_t = Int[int(type_.args[0]) * len(type_)]
+        elif typeof(type_.args[0], Uint):
+            merge_t = Uint[int(type_.args[0]) * len(type_)]
+        else:
+            raise Exception('Array subtype can only be Uint or Int in Verilog')
+        merge = self.visit(merge_t, type_.fields[0])
+        assert len(merge) == 1
 
-        # return None
+        res = []
+        high = 0
+        low = 0
+        res.append(f'{merge[0]} // from {type_}')
+        for i in range(len(type_)):
+            name = f'{self.context}_{i}'
+            high += int(type_.args[0])
+
+            sub = self.visit(type_.args[0], type_.fields[0])
+            assert len(sub) == 1
+            sub_var = sub[0].split(';', 1)[0]  # remove ; // comment
+            sub_var = sub_var.rsplit(' ', 1)[0]  # remove name
+            sub_var += f' {name}; // {type_.args[0]}'
+            res.append(sub_var)
+            res.append(f'assign {name} = {self.context}[{high - 1}:{low}];')
+            low += int(type_.args[0])
+
+        return res
 
 
 def vgen_intf(dtype, name, hier=True):

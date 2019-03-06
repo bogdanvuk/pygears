@@ -1,9 +1,7 @@
-from pygears.typing import Int, Integer, Queue, Tuple, typeof, Uint
-from pygears import gear, alternative
-from pygears.util.utils import qrange
-from pygears.common import ccat, fmap, cart, permuted_apply
-from pygears import module
-from pygears.util.utils import quiter
+from pygears import alternative, gear, module
+from pygears.common import cart, ccat, fmap, permuted_apply
+from pygears.typing import Int, Integer, Queue, Tuple, typeof
+from pygears.util.utils import qrange, quiter
 
 TCfg = Tuple[{
     'start': Integer['w_start'],
@@ -15,14 +13,13 @@ TCfg = Tuple[{
 def rng_out_type(cfg, cnt_steps):
     if cnt_steps:
         return cfg[0] + cfg[1] + cfg[2]
-    else:
-        return max(cfg[0], cfg[1])
+
+    return max(cfg[0], cfg[1])
 
 
 @gear(svgen={'compile': True})
 async def py_rng(cfg: TCfg,
                  *,
-                 signed=b'typeof(cfg[0], Int)',
                  t_dout=b'rng_out_type(cfg, cnt_steps)',
                  cnt_steps=False,
                  incr_steps=False) -> Queue['t_dout']:
@@ -30,7 +27,6 @@ async def py_rng(cfg: TCfg,
     data = t_dout(0)
 
     async with cfg as (offset, cnt, incr):
-
         if not cnt_steps:
             start = int(offset)
             stop = int(cnt)
@@ -44,6 +40,9 @@ async def py_rng(cfg: TCfg,
                 start = int(offset)
                 stop = int(offset) + int(cnt)
                 step = int(incr)
+
+        assert stop != 0, 'py_rng: range stop cannot be 0'
+        assert (stop - start) % step == 0, 'py_rng: stop not reachable'
 
         for data, last in qrange(start, stop, step):
             if incr_steps:
@@ -94,8 +93,7 @@ def rng(cfg: TCfg, *, cnt_steps=False, incr_steps=False, cnt_one_more=False):
             incr_steps=incr_steps,
             cnt_one_more=cnt_one_more)
     else:
-        return cfg | py_rng(
-            signed=any_signed, cnt_steps=cnt_steps, incr_steps=incr_steps)
+        return cfg | py_rng(cnt_steps=cnt_steps, incr_steps=incr_steps)
 
 
 @alternative(rng)

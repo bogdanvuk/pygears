@@ -388,6 +388,12 @@ class ConditionalExpr(Expr):
         return max([op.dtype for op in self.operands])
 
 
+@dataclass
+class AssertExpr(Expr):
+    test: Expr
+    msg: str
+
+
 # Blocks
 
 

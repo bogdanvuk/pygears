@@ -80,7 +80,7 @@ def sv_cosim_gen(gear, tcp_port=1234):
     #     from pygearslib import sv_src_path
     #     registry('SVGenSystemVerilogPaths').append(sv_src_path)
 
-    outdir = registry('sim/artifact_dir')
+    outdir = registry('sim/artifacts_dir')
     if 'socket_hooks' in registry('sim/config'):
         hooks = registry('sim/config/socket_hooks')
     else:
@@ -327,7 +327,7 @@ class SimSocket(CosimBase):
 
             self.sock.settimeout(10)
 
-            outdir = registry('sim/artifact_dir')
+            outdir = registry('sim/artifacts_dir')
             args = ' '.join(f'-{k} {v if not isinstance(v, bool) else ""}'
                             for k, v in self.kwds.items()
                             if not isinstance(v, bool) or v)
