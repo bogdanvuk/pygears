@@ -13,16 +13,16 @@ def find_cond(cond, **kwds):
     return cond
 
 
-def find_cycle_cond(conds, **kwds):
-    return find_cond(cond=conds.cycle_cond, **kwds)
+def find_cycle_cond(conds, hdl_stmt, **kwds):
+    return find_cond(cond=conds.cycle_cond(hdl_stmt), **kwds)
 
 
 def find_rst_cond(conds, **kwds):
     return find_cond(cond=conds.rst_cond, **kwds)
 
 
-def find_exit_cond(conds, **kwds):
-    return find_cond(cond=conds.exit_cond, **kwds)
+def find_exit_cond(conds, hdl_stmt, **kwds):
+    return find_cond(cond=conds.exit_cond(hdl_stmt), **kwds)
 
 
 class HDLStmtVisitor:
@@ -31,8 +31,9 @@ class HDLStmtVisitor:
         self.control_expr = (ht.IntfReadyExpr, ht.IntfValidExpr)
         self.non_control_pairs = []
         self.current_scope = None
+        self.conds = None
 
-    def visit(self, node, conds, **kwds):
+    def visit(self, node, **kwds):
         method = 'visit_' + node.__class__.__name__
         visitor = getattr(self, method, self.generic_visit)
 
@@ -42,24 +43,24 @@ class HDLStmtVisitor:
         if visitor.__name__ == 'generic_visit' and isinstance(node, ht.Expr):
             visitor = getattr(self, 'visit_all_Expr', self.generic_visit)
 
-        return visitor(node, conds, **kwds)
+        return visitor(node, **kwds)
 
-    def generic_visit(self, node, conds, **kwds):
+    def generic_visit(self, node, **kwds):
         pass
 
-    def enter_block(self, block, conds, **kwds):
+    def enter_block(self, block, **kwds):
         self.current_scope = block
 
-    def visit_Module(self, node, conds, **kwds):
+    def visit_Module(self, node, **kwds):
         block = CombBlock(stmts=[], dflts={})
-        return self.traverse_block(block, node, conds, **kwds)
+        return self.traverse_block(block, node, **kwds)
 
-    def visit_all_Block(self, node, conds, **kwds):
+    def visit_all_Block(self, node, **kwds):
         block = HDLBlock(in_cond=node.in_cond, stmts=[], dflts={})
-        return self.traverse_block(block, node, conds, **kwds)
+        return self.traverse_block(block, node, **kwds)
 
-    def traverse_block(self, block, node, conds, **kwds):
-        add_to_list(block.stmts, self.enter_block(node, conds, **kwds))
+    def traverse_block(self, block, node, **kwds):
+        add_to_list(block.stmts, self.enter_block(node, **kwds))
 
         # if block isn't empty
         if block.stmts:
@@ -140,15 +141,15 @@ class HDLStmtVisitor:
 
 
 class RegEnVisitor(HDLStmtVisitor):
-    def enter_block(self, block, conds, **kwds):
-        super().enter_block(block, conds, **kwds)
+    def enter_block(self, block, **kwds):
+        super().enter_block(block, **kwds)
         if isinstance(block, ht.Module):
             return [AssignValue(f'{reg}_en', 0) for reg in block.regs]
 
         return None
 
-    def visit_RegNextStmt(self, node, conds, **kwds):
-        cond = find_cycle_cond(conds=conds, **kwds)
+    def visit_RegNextStmt(self, node, **kwds):
+        cond = find_cycle_cond(self.conds, node, **kwds)
 
         return [
             AssignValue(target=f'{node.reg.name}_en', val=cond),
@@ -169,7 +170,7 @@ class VariableVisitor(HDLStmtVisitor):
             self.non_control_pairs.append((name, value))
             self.seen_var.append(name)
 
-    def visit_VariableStmt(self, node, conds, **kwds):
+    def visit_VariableStmt(self, node, **kwds):
         name = f'{node.variable.name}_v'
         self.assign_var(name, node.val)
         return AssignValue(
@@ -177,8 +178,8 @@ class VariableVisitor(HDLStmtVisitor):
 
 
 class OutputVisitor(HDLStmtVisitor):
-    def enter_block(self, block, conds, **kwds):
-        super().enter_block(block, conds, **kwds)
+    def enter_block(self, block, **kwds):
+        super().enter_block(block, **kwds)
         if isinstance(block, ht.Module):
             self.out_ports = {p.name: p for p in block.out_ports}
             self.out_intfs = block.out_intfs
@@ -190,7 +191,7 @@ class OutputVisitor(HDLStmtVisitor):
 
         return None
 
-    def visit_Yield(self, node, conds, **kwds):
+    def visit_Yield(self, node, **kwds):
         if not isinstance(node.expr, list):
             exprs = [node.expr]
         else:
@@ -213,7 +214,7 @@ class OutputVisitor(HDLStmtVisitor):
         self.update_defaults(block)
         return block
 
-    def visit_IntfStmt(self, node, conds, **kwds):
+    def visit_IntfStmt(self, node, **kwds):
         if node.intf.name not in self.out_intfs:
             return None
 
@@ -228,8 +229,8 @@ class OutputVisitor(HDLStmtVisitor):
 
 
 class InputVisitor(HDLStmtVisitor):
-    def enter_block(self, block, conds, **kwds):
-        super().enter_block(block, conds, **kwds)
+    def enter_block(self, block, **kwds):
+        super().enter_block(block, **kwds)
         if isinstance(block, ht.Module):
             self.input_names = [port.name for port in block.in_ports]
             return [
@@ -239,19 +240,19 @@ class InputVisitor(HDLStmtVisitor):
 
         if isinstance(block, ht.IntfBlock):
             if block.intf.name in self.input_names:
-                cond = find_exit_cond(conds=conds, **kwds)
+                cond = find_exit_cond(self.conds, block, **kwds)
                 return AssignValue(
                     target=ht.IntfReadyExpr(block.intf), val=cond)
 
         if isinstance(block, ht.IntfLoop):
             if block.intf.name in self.input_names:
-                cond = find_cycle_cond(conds=conds, **kwds)
+                cond = find_cycle_cond(self.conds, block, **kwds)
                 return AssignValue(
                     target=ht.IntfReadyExpr(block.intf), val=cond)
 
         return None
 
-    def visit_IntfStmt(self, node, conds, **kwds):
+    def visit_IntfStmt(self, node, **kwds):
         if hasattr(node.val, 'name') and (node.val.name in self.input_names):
             return AssignValue(
                 target=ht.IntfReadyExpr(node.val),
@@ -261,8 +262,8 @@ class InputVisitor(HDLStmtVisitor):
 
 
 class IntfReadyVisitor(HDLStmtVisitor):
-    def enter_block(self, block, conds, **kwds):
-        super().enter_block(block, conds, **kwds)
+    def enter_block(self, block, **kwds):
+        super().enter_block(block, **kwds)
         if isinstance(block, ht.Module):
             self.intf_names = block.intfs.keys()
             dflt_ready = []
@@ -272,19 +273,19 @@ class IntfReadyVisitor(HDLStmtVisitor):
 
         if isinstance(block, ht.IntfBlock):
             if block.intf.name in self.intf_names:
-                cond = find_exit_cond(conds=conds, **kwds)
+                cond = find_exit_cond(self.conds, block, **kwds)
                 return AssignValue(
                     target=ht.IntfReadyExpr(block.intf), val=cond)
 
         if isinstance(block, ht.IntfLoop):
             if block.intf.name in self.intf_names:
-                cond = find_cycle_cond(conds=conds, **kwds)
+                cond = find_cycle_cond(self.conds, block, **kwds)
                 return AssignValue(
                     target=ht.IntfReadyExpr(block.intf), val=cond)
 
         return None
 
-    def visit_IntfStmt(self, node, conds, **kwds):
+    def visit_IntfStmt(self, node, **kwds):
         if hasattr(node.val, 'name') and (node.val.name in self.intf_names):
             return AssignValue(
                 target=ht.IntfReadyExpr(node.val),
@@ -294,8 +295,8 @@ class IntfReadyVisitor(HDLStmtVisitor):
 
 
 class IntfValidVisitor(HDLStmtVisitor):
-    def enter_block(self, block, conds, **kwds):
-        super().enter_block(block, conds, **kwds)
+    def enter_block(self, block, **kwds):
+        super().enter_block(block, **kwds)
         if isinstance(block, ht.Module):
             self.intf_names = block.intfs.keys()
             dflt_ready = []
@@ -305,7 +306,7 @@ class IntfValidVisitor(HDLStmtVisitor):
 
         return None
 
-    def visit_IntfStmt(self, node, conds, **kwds):
+    def visit_IntfStmt(self, node, **kwds):
         if node.intf.name in self.intf_names:
             return [
                 AssignValue(
@@ -331,27 +332,27 @@ class BlockConditionsVisitor(HDLStmtVisitor):
         if stmt not in self.condition_assigns.stmts:
             self.condition_assigns.stmts.append(stmt)
 
-    def get_combined(self, conds):
-        for name, val in conds.combined_cycle_conds.items():
+    def get_combined(self):
+        for name, val in self.conds.combined_cycle_conds.items():
             self._add_stmt(AssignValue(target=name, val=val))
 
-        for name, val in conds.combined_exit_conds.items():
+        for name, val in self.conds.combined_exit_conds.items():
             self._add_stmt(AssignValue(target=name, val=val))
 
-    def find_subconds(self, conds, curr_cond):
+    def find_subconds(self, curr_cond):
         if curr_cond is not None and not isinstance(curr_cond, str):
             res = find_sub_cond_ids(curr_cond)
             if 'exit' in res:
                 for sub_id in res['exit']:
-                    conds.add_exit_cond(sub_id)
+                    self.conds.add_exit_cond(sub_id)
             if 'cycle' in res:
                 for sub_id in res['cycle']:
-                    conds.add_cycle_cond(sub_id)
+                    self.conds.add_cycle_cond(sub_id)
 
-    def get_cycle_cond(self, conds, **kwds):
-        if self.current_scope.id in conds.cycle_conds:
-            curr_cond = conds.block_cycle_cond(self.current_scope)
-            self.find_subconds(conds, curr_cond)
+    def get_cycle_cond(self, **kwds):
+        if self.current_scope.id in self.conds.cycle_conds:
+            curr_cond = self.conds.block_cycle_cond(self.current_scope)
+            self.find_subconds(curr_cond)
             if curr_cond is None:
                 curr_cond = 1
             res = AssignValue(
@@ -360,10 +361,10 @@ class BlockConditionsVisitor(HDLStmtVisitor):
                 val=curr_cond)
             self._add_stmt(res)
 
-    def get_exit_cond(self, conds, **kwds):
-        if self.current_scope.id in conds.exit_conds:
-            curr_cond = conds.block_exit_cond(self.current_scope)
-            self.find_subconds(conds, curr_cond)
+    def get_exit_cond(self, **kwds):
+        if self.current_scope.id in self.conds.exit_conds:
+            curr_cond = self.conds.block_exit_cond(self.current_scope)
+            self.find_subconds(curr_cond)
             if curr_cond is None:
                 curr_cond = 1
             res = AssignValue(
@@ -372,8 +373,8 @@ class BlockConditionsVisitor(HDLStmtVisitor):
                 val=curr_cond)
             self._add_stmt(res)
 
-    def get_rst_cond(self, conds, **kwds):
-        curr_cond = find_rst_cond(conds, **kwds)
+    def get_rst_cond(self, **kwds):
+        curr_cond = find_rst_cond(self.conds, **kwds)
         if curr_cond is None:
             curr_cond = 1
 
@@ -384,39 +385,39 @@ class BlockConditionsVisitor(HDLStmtVisitor):
         self._add_stmt(AssignValue(target='rst_cond', val=rst_cond))
 
         if isinstance(curr_cond, str):
-            conds.add_exit_cond(find_cond_id(curr_cond))
+            self.conds.add_exit_cond(find_cond_id(curr_cond))
         else:
-            self.find_subconds(conds, curr_cond)
+            self.find_subconds(curr_cond)
 
-    def enter_block(self, block, conds, **kwds):
-        super().enter_block(block, conds, **kwds)
+    def enter_block(self, block, **kwds):
+        super().enter_block(block, **kwds)
         if isinstance(block, ht.Module) and self.reg_num > 0:
-            self.get_rst_cond(conds, **kwds)
-            self.get_combined(conds)
+            self.get_rst_cond(**kwds)
+            self.get_combined()
 
-        self.get_cycle_cond(conds, **kwds)
-        self.get_exit_cond(conds, **kwds)
+        self.get_cycle_cond(**kwds)
+        self.get_exit_cond(**kwds)
 
 
 class StateTransitionVisitor(HDLStmtVisitor):
-    def enter_block(self, block, conds, **kwds):
-        super().enter_block(block, conds, **kwds)
+    def enter_block(self, block, **kwds):
+        super().enter_block(block, **kwds)
         if isinstance(block, ht.Module):
             return AssignValue(f'state_en', 0)
 
         return None
 
-    def visit_all_Block(self, node, conds, **kwds):
-        block = super().visit_all_Block(node, conds, **kwds)
+    def visit_all_Block(self, node, **kwds):
+        block = super().visit_all_Block(node, **kwds)
         if 'state_id' not in kwds:
             return block
 
-        return self.assign_states(block, conds, **kwds)
+        return self.assign_states(block, **kwds)
 
-    def assign_states(self, block, conds, **kwds):
+    def assign_states(self, block, **kwds):
         state_tr = kwds['state_id']
 
-        cond = conds.get_exit_cond_by_scope(state_tr.scope)
+        cond = self.conds.get_exit_cond_by_scope(state_tr.scope)
         if cond is None:
             cond = 1
 
@@ -435,5 +436,5 @@ class StateTransitionVisitor(HDLStmtVisitor):
 
 
 class AssertionVisitor(HDLStmtVisitor):
-    def visit_AssertExpr(self, node, conds, **kwds):
+    def visit_AssertExpr(self, node, **kwds):
         return AssertValue(node)

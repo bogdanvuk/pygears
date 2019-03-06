@@ -1,10 +1,11 @@
 from dataclasses import dataclass
 
 from . import hdl_types as ht
-from .hdl_stmt import CombBlock, HDLBlock
+from .conditions import Conditions
+from .hdl_stmt import CombBlock
 from .hdl_utils import add_to_list, state_expr
 from .inst_visit import InstanceVisitor
-from .conditions import Conditions
+from .scheduling_types import MutexCBlock
 
 
 @dataclass
@@ -25,60 +26,90 @@ class StateTransitions:
             self.cycle_state is not None) or (self.done_state is not None)
 
 
-class CBlockVisitor(InstanceVisitor):
-    def __init__(self, hdl_visitor, state_num):
-        self.hdl = hdl_visitor
-        self.state_num = state_num
-        self.conds = Conditions()
+def find_done_seqcblock(cblock):
+    parent = cblock.parent.parent
+    scope = -3  # first parent at -1, last to first is -2
+    curr_id = cblock.state_ids[0]
 
-    def ping_state_transitions(self, cblock, hdl_block, tr):
-        if tr.next_state is not None:
-            state_copy_block = self.ping_hdl(
-                cblock.hdl_block, state_id=tr.next_state)
-            state_copy_block.in_cond = None  # already in hdl_block
-            add_to_list(hdl_block.stmts, state_copy_block)
-        if tr.cycle_state is not None:
-            state_copy_block = self.ping_hdl(
-                cblock.hdl_block, state_id=tr.cycle_state)
-            state_copy_block.in_cond = None  # already in hdl_block
-            add_to_list(hdl_block.stmts, state_copy_block)
-        if tr.done_state is not None:
-            state_copy_block = self.ping_hdl(
-                cblock.hdl_block, state_id=tr.done_state)
-            state_copy_block.in_cond = None  # already in hdl_block
-            add_to_list(hdl_block.stmts, state_copy_block)
-
-    def find_state_transition(self, cblock):
-        curr_id = cblock.state_ids[0]
-        parent = cblock.parent
-        scope = -1
-
-        trans = StateTransitions()
-
+    while parent:
         parent_ids = list(set(parent.state_ids))
         curr_index = parent_ids.index(curr_id) + 1
         if len(parent_ids) > curr_index:
-            trans.next_state = StateTransition(parent_ids[curr_index], scope)
-        elif curr_id == parent_ids[-1] and len(
-                parent_ids) > 1:  # last to first
-            scope -= 1
-            trans.cycle_state = StateTransition(parent_ids[0], scope)
+            return StateTransition(parent_ids[curr_index], scope)
 
-        if trans.cycle_state is not None:
+        parent = parent.parent
+        scope -= 1
+
+
+def find_done_mutexcblock(cblock):
+    parent = cblock.parent
+    scope = -1
+    parent_ids = list(set(parent.state_ids))
+
+    if (len(parent_ids) == 1) and isinstance(parent, MutexCBlock):
+        while isinstance(parent, MutexCBlock):
+            last_mutex_parent = parent
             parent = parent.parent
             scope -= 1
-            while parent:
-                parent_ids = list(set(parent.state_ids))
-                curr_index = parent_ids.index(curr_id) + 1
-                if len(parent_ids) > curr_index:
-                    trans.done_state = StateTransition(parent_ids[curr_index],
-                                                       scope)
-                    break
 
-                parent = parent.parent
-                scope -= 1
+        last_mutex_parent = parent
+        parent = parent.parent
+        scope -= 1
 
-        return trans
+        seq_parent_ids = list(set(parent.state_ids))
+        mutex_parent_ids = list(set(last_mutex_parent.state_ids))
+        diff_ids = set(seq_parent_ids).symmetric_difference(
+            set(mutex_parent_ids))
+        diff_ids = list(diff_ids)
+
+        if diff_ids:
+            return StateTransition(diff_ids[0], scope - 1)
+
+
+def find_state_transition(cblock):
+    trans = StateTransitions()
+
+    curr_id = cblock.state_ids[0]
+    parent = cblock.parent
+    scope = -1
+
+    parent_ids = list(set(parent.state_ids))
+    curr_index = parent_ids.index(curr_id) + 1
+
+    if len(parent_ids) > curr_index:
+        trans.next_state = StateTransition(parent_ids[curr_index], scope)
+    elif curr_id == parent_ids[-1] and len(parent_ids) > 1:  # last to first
+        scope -= 1
+        trans.cycle_state = StateTransition(parent_ids[0], scope)
+
+    if trans.cycle_state is not None:
+        trans.done_state = find_done_seqcblock(cblock)
+
+    if not trans.found:
+        trans.done_state = find_done_mutexcblock(cblock)
+
+    return trans
+
+
+class CBlockVisitor(InstanceVisitor):
+    def __init__(self, hdl_visitor, state_num):
+        self.state_num = state_num
+        self.conds = Conditions()
+        hdl_visitor.conds = self.conds
+        self.hdl = hdl_visitor
+
+    def _add_state_block(self, cblock, hdl_block, state_tr):
+        state_copy_block = self.ping_hdl(cblock.hdl_block, state_id=state_tr)
+        state_copy_block.in_cond = None  # already in hdl_block
+        add_to_list(hdl_block.stmts, state_copy_block)
+
+    def _ping_state_transitions(self, cblock, hdl_block, tr):
+        if tr.next_state is not None:
+            self._add_state_block(cblock, hdl_block, tr.next_state)
+        if tr.cycle_state is not None:
+            self._add_state_block(cblock, hdl_block, tr.cycle_state)
+        if tr.done_state is not None:
+            self._add_state_block(cblock, hdl_block, tr.done_state)
 
     def add_state_conditions(self, cblock, hdl_block):
         if self.state_num == 0 or (not cblock.parent):
@@ -93,10 +124,10 @@ class CBlockVisitor(InstanceVisitor):
             hdl_block.in_cond = state_expr(current_ids, hdl_block.in_cond)
 
         if len(current_ids) == 1:
-            state_transition = self.find_state_transition(cblock)
+            state_transition = find_state_transition(cblock)
             if state_transition.found:
-                self.ping_state_transitions(cblock, hdl_block,
-                                            state_transition)
+                self._ping_state_transitions(cblock, hdl_block,
+                                             state_transition)
 
     def enter_block(self, block, state):
         self.conds.enter_block(block)
@@ -110,24 +141,11 @@ class CBlockVisitor(InstanceVisitor):
 
     def visit_prolog(self, node):
         prolog_stmts = []
-        prolog_block = None
         if node.prolog:
-            if node.parent and len(node.parent.state_ids) > len(
-                    node.state_ids):
-                prolog_block = HDLBlock(
-                    in_cond=state_expr(node.state_ids, None),
-                    stmts=[],
-                    dflts={})
-
             for block in node.prolog:
                 curr_block = self.ping_hdl(block)
                 self._add_sub(block, curr_block)
                 add_to_list(prolog_stmts, curr_block)
-
-        if prolog_block is not None:
-            prolog_block.stmts = prolog_stmts
-            return prolog_block
-
         return prolog_stmts
 
     def visit_epilog(self, node, epilog_cond):
@@ -188,7 +206,7 @@ class CBlockVisitor(InstanceVisitor):
         return hdl_block
 
     def ping_hdl(self, block, **kwds):
-        return self.hdl.visit(block, conds=self.conds, **kwds)
+        return self.hdl.visit(block, **kwds)
 
 
 class CBlockPrinter(InstanceVisitor):
