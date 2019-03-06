@@ -437,15 +437,15 @@ def sim(outdir=None,
         check_activity=False,
         seed=None):
 
+    if extens is None:
+        extens = []
+
     if outdir is None:
         outdir = registry('sim/artifacts_dir')
         if outdir is None:
             outdir = tempfile.mkdtemp()
-            bind('sim/artifacts_dir', outdir)
 
-    if extens is None:
-        extens = []
-
+    bind('sim/artifacts_dir', outdir)
     os.makedirs(outdir, exist_ok=True)
 
     if not seed:
