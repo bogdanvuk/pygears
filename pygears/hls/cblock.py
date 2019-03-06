@@ -1,10 +1,10 @@
 from dataclasses import dataclass
-from functools import reduce
 
 from . import hdl_types as ht
 from .hdl_stmt import CombBlock, HDLBlock
 from .hdl_utils import add_to_list, state_expr
 from .inst_visit import InstanceVisitor
+from .conditions import Conditions
 
 
 @dataclass
@@ -25,78 +25,11 @@ class StateTransitions:
             self.cycle_state is not None) or (self.done_state is not None)
 
 
-class Conditions:
-    def __init__(self):
-        self.scope = []
-        self.cycle_conds = []
-        self.exit_conds = []
-
-    @property
-    def cycle_cond(self):
-        cond = []
-        for c_block in reversed(self.scope[1:]):
-            # state changes break the cycle
-            if len(c_block.state_ids) > len(self.scope[-1].state_ids):
-                break
-
-            block = c_block.hdl_block
-            if isinstance(block, ht.ContainerBlock):
-                continue
-
-            if block.cycle_cond and block.cycle_cond != 1:
-                cond.append(ht.nested_cycle_cond(block))
-                self.cycle_conds.append(ht.find_cond_id(cond[-1]))
-
-            if hasattr(block, 'multicycle') and block.multicycle:
-                break
-
-        cond = set(cond)
-        return reduce(ht.and_expr, cond, None)
-
-    def _exit_cond(self, block):
-        cond = ht.nested_exit_cond(block)
-        if cond is not None:
-            self.exit_conds.append(ht.find_cond_id(cond))
-        return cond
-
-    @property
-    def exit_cond(self):
-        block = self.scope[-1].hdl_block
-        return self._exit_cond(block)
-
-    def get_exit_cond_by_scope(self, scope_id=-1):
-        block = self.scope[scope_id].hdl_block
-        return self._exit_cond(block)
-
-    @property
-    def rst_cond(self):
-        if len(self.scope) == 1:
-            assert isinstance(self.scope[0].hdl_block, ht.Module)
-            block = self.scope[0].hdl_block.stmts
-        else:
-            block = [s.hdl_block for s in self.scope[1:]]
-        return ht.find_exit_cond(block, search_in_cond=True)
-
-    def enter_block(self, block):
-        self.scope.append(block)
-
-    def exit_block(self):
-        self.scope.pop()
-
-
 class CBlockVisitor(InstanceVisitor):
     def __init__(self, hdl_visitor, state_num):
         self.hdl = hdl_visitor
         self.state_num = state_num
         self.conds = Conditions()
-
-    @property
-    def cycle_conds(self):
-        return self.conds.cycle_conds
-
-    @property
-    def exit_conds(self):
-        return self.conds.exit_conds
 
     def ping_state_transitions(self, cblock, hdl_block, tr):
         if tr.next_state is not None:

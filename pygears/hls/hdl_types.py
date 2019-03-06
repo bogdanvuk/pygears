@@ -1,9 +1,6 @@
 import inspect
-import re
 import typing as pytypes
 from dataclasses import dataclass, field
-from functools import reduce
-from string import Template
 
 from pygears.typing import Bool, Integer, Queue, Tuple, Uint, is_type, typeof
 
@@ -13,91 +10,12 @@ EXTENDABLE_OPERATORS = [
     '+', '-', '*', '/', '%', '**', '<<', '>>>', '|', '&', '^', '/', '~', '!'
 ]
 
-COND_NAME = Template('${cond_type}_cond_block_${block_id}')
-
-
-def find_sub_cond_ids(cond):
-    # TODO need to be replaced with expr visitor for operands
-    res = {}
-    if cond:
-        pattern = re.compile('(.*)_cond_block_(.*)')
-        for match in re.finditer('\w+_cond_block_\d+', str(cond)):
-            sub_cond = match.group(0)
-            cond_name, cond_id = pattern.search(sub_cond).groups()
-            if cond_name in res:
-                res[cond_name].append(int(cond_id))
-            else:
-                res[cond_name] = [int(cond_id)]
-
-        return res
-
-    return None
-
-
-def find_cond_id(cond):
-    if cond:
-        return int(cond.split('_')[-1])
-
-    return None
-
-
-def nested_cond(stmt, cond_type):
-    cond = getattr(stmt, f'{cond_type}_cond', None)
-
-    if cond is None:
-        return None
-
-    if isinstance(cond, str):
-        return cond
-
-    return COND_NAME.substitute(cond_type=cond_type, block_id=stmt.id)
-
-
-def nested_cycle_cond(stmt):
-    return nested_cond(stmt, 'cycle')
-
-
-def nested_exit_cond(stmt):
-    return nested_cond(stmt, 'exit')
-
 
 def create_oposite(expr):
     if isinstance(expr, UnaryOpExpr) and expr.operator == '!':
         return expr.operand
 
     return UnaryOpExpr(expr, '!')
-
-
-def find_exit_cond(statements, search_in_cond=False):
-    def has_in_cond(stmt):
-        if search_in_cond and (not isinstance(stmt, IfBlock)) and hasattr(
-                stmt, 'in_cond') and (stmt.in_cond is not None):
-            return True
-        return False
-
-    for stmt in reversed(statements):
-        cond = getattr(stmt, 'exit_cond', None)
-        if cond is not None:
-            exit_c = nested_exit_cond(stmt)
-            if has_in_cond(stmt):
-                return and_expr(exit_c, stmt.in_cond)
-
-            return exit_c
-
-        if has_in_cond(stmt):
-            return stmt.in_cond
-
-    return None
-
-
-def find_cycle_cond(statements):
-    cond = []
-    for stmt in statements:
-        cycle_c = getattr(stmt, 'cycle_cond', None)
-        if cycle_c is not None:
-            cond.append(nested_cycle_cond(stmt))
-
-    return reduce(and_expr, cond, None)
 
 
 def binary_expr(expr1, expr2, operator):
@@ -402,6 +320,25 @@ class AssertExpr(Expr):
     msg: str
 
 
+# Conditions
+
+
+@dataclass
+class SubConditions:
+    expr: Expr = None
+    operator: str = None
+
+
+@dataclass
+class CycleSubCond(SubConditions):
+    pass
+
+
+@dataclass
+class ExitSubCond(SubConditions):
+    pass
+
+
 # Blocks
 
 
@@ -433,11 +370,11 @@ class IntfBlock(Block):
 
     @property
     def cycle_cond(self):
-        return find_cycle_cond(self.stmts)
+        return CycleSubCond()
 
     @property
     def exit_cond(self):
-        return find_exit_cond(self.stmts)
+        return ExitSubCond()
 
 
 @dataclass
@@ -451,18 +388,17 @@ class IntfLoop(Block):
 
     @property
     def cycle_cond(self):
-        return find_cycle_cond(self.stmts)
-        # return and_expr(self.intf, find_cycle_cond(self.stmts))
+        return CycleSubCond()
 
     @property
     def exit_cond(self):
-        exit_condition = find_exit_cond(self.stmts)
         if isinstance(self.intf, IntfExpr):
             intf_expr = IntfExpr(self.intf.intf, context='eot')
         else:
             intf_expr = IntfDef(
                 intf=self.intf.intf, name=self.intf.name, context='eot')
-        return and_expr(intf_expr, exit_condition)
+
+        return ExitSubCond(intf_expr, '&&')
 
 
 @dataclass
@@ -475,19 +411,11 @@ class IfBlock(Block):
 
     @property
     def cycle_cond(self):
-        condition = find_cycle_cond(self.stmts)
-        if condition is None:
-            return None
-
-        return or_expr(UnaryOpExpr(self.in_cond, '!'), condition)
+        return CycleSubCond(UnaryOpExpr(self.in_cond, '!'), '||')
 
     @property
     def exit_cond(self):
-        condition = find_exit_cond(self.stmts)
-        if condition is None:
-            return None
-
-        return or_expr(UnaryOpExpr(self.in_cond, '!'), condition)
+        return ExitSubCond(UnaryOpExpr(self.in_cond, '!'), '||')
 
 
 @dataclass
@@ -526,12 +454,11 @@ class Loop(Block):
 
     @property
     def cycle_cond(self):
-        return find_cycle_cond(self.stmts)
+        return CycleSubCond()
 
     @property
     def exit_cond(self):
-        return and_expr(self.cycle_cond,
-                        and_expr(self._exit_cond, find_exit_cond(self.stmts)))
+        return ExitSubCond(and_expr(self.cycle_cond, self._exit_cond), '&&')
 
 
 @dataclass
@@ -565,11 +492,11 @@ class Module:
 
     @property
     def cycle_cond(self):
-        return find_cycle_cond(self.stmts)
+        return CycleSubCond()
 
     @property
     def exit_cond(self):
-        return find_exit_cond(self.stmts)
+        return ExitSubCond()
 
 
 class TypeVisitor:

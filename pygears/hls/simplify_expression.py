@@ -2,9 +2,10 @@ from functools import partial, reduce
 
 import sympy
 
-import pygears.hls.hdl_types as ht
 from pygears.typing import Bool
 
+from . import hdl_types as ht
+from .conditions import COND_NAME
 from .hdl_stmt_types import AssignValue, CombSeparateStmts
 from .hdl_utils import VisitError
 from .inst_visit import InstanceVisitor
@@ -42,8 +43,7 @@ class SameConditions:
             if len(name) == 1:
                 self.unique_names[name[0]] = name
             else:
-                new_name = ht.COND_NAME.substitute(
-                    cond_type='same', block_id=cnt)
+                new_name = COND_NAME.substitute(cond_type='same', block_id=cnt)
                 cnt += 1
                 self.unique_names[new_name] = name
 

@@ -70,31 +70,19 @@ def parse_gear_body(gear):
     }
 
     res = {}
-    cycle_conds = []
-    exit_conds = []
     for name, visitor in block_visitors.items():
         sub_v = CBlockVisitor(visitor, state_num)
         res[name] = sub_v.visit(schedule)
-        cycle_conds.extend(list(set(sub_v.cycle_conds)))
-        exit_conds.extend(list(set(sub_v.exit_conds)))
 
     if state_num > 0:
         hdl_ast.regs['state'] = ht.RegDef(
             name='state', val=Uint[bitw(state_num)](0))
         sub_v = CBlockVisitor(StateTransitionVisitor(), state_num)
         res['state_transition'] = sub_v.visit(schedule)
-        cycle_conds.extend(list(set(sub_v.cycle_conds)))
-        exit_conds.extend(list(set(sub_v.exit_conds)))
-
-    cycle_conds = list(set(cycle_conds))
-    exit_conds = list(set(exit_conds))
 
     cond_visit = CBlockVisitor(
-        BlockConditionsVisitor(
-            cycle_conds,
-            exit_conds,
-            reg_num=len(hdl_ast.regs),
-            state_num=state_num), state_num)
+        BlockConditionsVisitor(reg_num=len(hdl_ast.regs), state_num=state_num),
+        state_num)
     cond_visit.visit(schedule)
 
     try:
