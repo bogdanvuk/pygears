@@ -3,6 +3,8 @@ from functools import reduce
 from string import Template
 
 from . import hdl_types as ht
+from .hdl_utils import state_expr
+from .scheduling_types import SeqCBlock
 
 COND_NAME = Template('${cond_type}_cond_block_${block_id}')
 COMBINED_COND_NAME = Template('combined_cond_${cond_id}')
@@ -96,46 +98,88 @@ class Conditions:
         if cond not in self.exit_conds:
             self.exit_conds.append(cond)
 
+    def _eval_cyclesubcond(self, cond, cblock):
+        if isinstance(cblock, SeqCBlock) and len(cblock.state_ids) > 1:
+            curr_child = cblock.child[-1]
+            sub_conds = curr_child.hdl_block.cycle_cond
+            if sub_conds is not None:
+                sub_conds = state_expr(curr_child.state_ids, sub_conds)
+                self.add_cycle_cond(curr_child.hdl_block.id)
+        else:
+            conds = []
+            for child in cblock.child:
+                if child.hdl_block.cycle_cond is not None:
+                    conds.append(nested_cycle_cond(child.hdl_block))
+                    self.add_cycle_cond(child.hdl_block.id)
+            sub_conds = reduce(ht.and_expr, conds, None)
+
+        if cond.expr is not None:
+            return ht.binary_expr(cond.expr, sub_conds, cond.operator)
+
+        return sub_conds
+
+    def _eval_exitsubcond(self, cond, block):
+        exit_c = None
+        for child in reversed(block.child):
+            child_exit_cond = getattr(child.hdl_block, 'exit_cond', None)
+            if child_exit_cond is not None:
+                exit_c = nested_exit_cond(child.hdl_block)
+                self.add_exit_cond(child.hdl_block.id)
+                break
+
+        if cond.expr is not None:
+            if exit_c is not None:
+                return ht.binary_expr(cond.expr, exit_c, cond.operator)
+            return cond.expr
+
+        return exit_c
+
+    def _eval_subcond(self, cond, cond_type, block):
+        if cond_type == 'cycle':
+            return self._eval_cyclesubcond(cond, block)
+
+        return self._eval_exitsubcond(cond, block)
+
+    def _merge_conds(self, top, cond_type):
+        if all([
+                getattr(child.hdl_block, f'{cond_type}_cond') is None
+                for child in top.child
+        ]):
+            return None
+
+        cond = None
+        for child in top.child:
+            curr_block = child.hdl_block
+            sub_cond = getattr(curr_block, f'{cond_type}_cond', None)
+            if sub_cond is not None:
+                sub_cond = self._eval_subcond(sub_cond, cond_type, child)
+            block_cond = ht.and_expr(sub_cond, curr_block.in_cond)
+            cond = ht.or_expr(cond, block_cond)
+        return cond
+
     def block_cycle_cond(self, block):
+        assert block == self.scope[-1].hdl_block
+
+        if isinstance(block, ht.ContainerBlock):
+            return self._merge_conds(self.scope[-1], 'cycle')
+
         curr_cond = block.cycle_cond
         if not isinstance(curr_cond, ht.CycleSubCond):
             return curr_cond
 
-        assert block == self.scope[-1].hdl_block
-
-        conds = []
-        for child in self.scope[-1].child:
-            if child.hdl_block.cycle_cond is not None:
-                conds.append(nested_cycle_cond(child.hdl_block))
-        sub_conds = reduce(ht.and_expr, conds, None)
-
-        if curr_cond.expr is not None:
-            return ht.binary_expr(curr_cond.expr, sub_conds,
-                                  curr_cond.operator)
-
-        return sub_conds
+        return self._eval_cyclesubcond(curr_cond, self.scope[-1])
 
     def block_exit_cond(self, block):
+        assert block == self.scope[-1].hdl_block
+
+        if isinstance(block, ht.ContainerBlock):
+            return self._merge_conds(self.scope[-1], 'exit')
+
         curr_cond = block.exit_cond
         if not isinstance(curr_cond, ht.ExitSubCond):
             return curr_cond
 
-        assert block == self.scope[-1].hdl_block
-
-        exit_c = None
-        for child in reversed(self.scope[-1].child):
-            child_exit_cond = getattr(child.hdl_block, 'exit_cond', None)
-            if child_exit_cond is not None:
-                exit_c = nested_exit_cond(child.hdl_block)
-                break
-
-        if curr_cond.expr is not None:
-            if exit_c is not None:
-                return ht.binary_expr(curr_cond.expr, exit_c,
-                                      curr_cond.operator)
-            return curr_cond.expr
-
-        return exit_c
+        return self._eval_exitsubcond(curr_cond, self.scope[-1])
 
     @property
     def cycle_cond(self):

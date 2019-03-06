@@ -327,6 +327,17 @@ class BlockConditionsVisitor(HDLStmtVisitor):
         self.state_num = state_num
         self.condition_assigns = CombSeparateStmts(stmts=[])
 
+    def _add_stmt(self, stmt):
+        if stmt not in self.condition_assigns.stmts:
+            self.condition_assigns.stmts.append(stmt)
+
+    def get_combined(self, conds):
+        for name, val in conds.combined_cycle_conds.items():
+            self._add_stmt(AssignValue(target=name, val=val))
+
+        for name, val in conds.combined_exit_conds.items():
+            self._add_stmt(AssignValue(target=name, val=val))
+
     def find_subconds(self, conds, curr_cond):
         if curr_cond is not None and not isinstance(curr_cond, str):
             res = find_sub_cond_ids(curr_cond)
@@ -347,8 +358,7 @@ class BlockConditionsVisitor(HDLStmtVisitor):
                 target=COND_NAME.substitute(
                     cond_type='cycle', block_id=self.current_scope.id),
                 val=curr_cond)
-            if res not in self.condition_assigns.stmts:
-                self.condition_assigns.stmts.append(res)
+            self._add_stmt(res)
 
     def get_exit_cond(self, conds, **kwds):
         if self.current_scope.id in conds.exit_conds:
@@ -360,8 +370,7 @@ class BlockConditionsVisitor(HDLStmtVisitor):
                 target=COND_NAME.substitute(
                     cond_type='exit', block_id=self.current_scope.id),
                 val=curr_cond)
-            if res not in self.condition_assigns.stmts:
-                self.condition_assigns.stmts.append(res)
+            self._add_stmt(res)
 
     def get_rst_cond(self, conds, **kwds):
         curr_cond = find_rst_cond(conds, **kwds)
@@ -372,9 +381,7 @@ class BlockConditionsVisitor(HDLStmtVisitor):
             rst_cond = state_expr([self.state_num], curr_cond)
         else:
             rst_cond = curr_cond
-        res = AssignValue(target='rst_cond', val=rst_cond)
-        if res not in self.condition_assigns.stmts:
-            self.condition_assigns.stmts.append(res)
+        self._add_stmt(AssignValue(target='rst_cond', val=rst_cond))
 
         if isinstance(curr_cond, str):
             conds.add_exit_cond(find_cond_id(curr_cond))
@@ -385,6 +392,8 @@ class BlockConditionsVisitor(HDLStmtVisitor):
         super().enter_block(block, conds, **kwds)
         if isinstance(block, ht.Module) and self.reg_num > 0:
             self.get_rst_cond(conds, **kwds)
+            self.get_combined(conds)
+
         self.get_cycle_cond(conds, **kwds)
         self.get_exit_cond(conds, **kwds)
 

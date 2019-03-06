@@ -424,26 +424,13 @@ class ContainerBlock(Block):
 
     @property
     def cycle_cond(self):
-        if all([s.cycle_cond is None for s in self.stmts]):
-            return None
-
-        cond = None
-        for block in self.stmts:
-            block_cond = and_expr(block.cycle_cond, block.in_cond)
-            cond = or_expr(cond, block_cond)
-        return cond
+        from .conditions import COND_NAME
+        return COND_NAME.substitute(cond_type='cycle', block_id=self.id)
 
     @property
     def exit_cond(self):
-        # return and_expr(self.stmts[-1].exit_cond, self.stmts[-1].in_cond)
-        if all([s.exit_cond is None for s in self.stmts]):
-            return None
-
-        cond = None
-        for block in self.stmts:
-            block_cond = and_expr(block.exit_cond, block.in_cond)
-            cond = or_expr(cond, block_cond)
-        return cond
+        from .conditions import COND_NAME
+        return COND_NAME.substitute(cond_type='exit', block_id=self.id)
 
 
 @dataclass
