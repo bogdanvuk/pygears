@@ -75,15 +75,18 @@ class SVGenTypeVisitor(TypingVisitorBase):
                     f'    {self.basic_type} [{max_len-int(t)-1}:0] dummy; // u{max_len-int(t)}'
                 )
             if (type_declaration is not None):
-                struct_fields.append(f'    {type_declaration} {field_tmp}; // {t}')
-            struct_fields.append(f'}} {middle_parent_context}_{field_tmp}_t;\n')
+                struct_fields.append(
+                    f'    {type_declaration} {field_tmp}; // {t}')
+            struct_fields.append(
+                f'}} {middle_parent_context}_{field_tmp}_t;\n')
 
         # create union
         struct_fields.append(f'{self.union_str} // {type_}')
         for i, t in reversed(list(enumerate(type_.args))):
             field_tmp = f'f{i}'
             struct_fields.append(
-                f'    {middle_parent_context}_{field_tmp}_t {field_tmp}; // ({t}, u?)')
+                f'    {middle_parent_context}_{field_tmp}_t {field_tmp}; // ({t}, u?)'
+            )
         struct_fields.append(f'}} {middle_parent_context}_t;\n')
 
         # create struct
@@ -145,9 +148,9 @@ class SVGenTypeVisitor(TypingVisitorBase):
             self.context = f'{parent_context}_data'
 
         type_declaration = self.visit(type_.args[0], type_.fields[0])
-        split_type = type_declaration.split(" ", 1)
-        split_type.insert(1, f'[{type_.args[1]-1}:0]')
-        type_declaration = ' '.join(split_type)
+        split_type = type_declaration.rpartition(" ")
+        type_declaration = ' '.join((split_type[0], f'[{type_.args[1]-1}:0]',
+                                     split_type[-1]))
 
         if (not self.depth):
             struct_fields.append(
