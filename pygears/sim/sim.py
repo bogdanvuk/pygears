@@ -421,6 +421,8 @@ class EventLoop(asyncio.events.AbstractEventLoop):
                 for sim_gear in self.sim_gears:
                     if sim_gear not in self.done:
                         self._finish(sim_gear)
+            else:
+                self.events['after_run'](self)
 
             self.events['after_cleanup'](self)
             self.events['at_exit'](self)

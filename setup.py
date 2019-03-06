@@ -45,12 +45,9 @@ setup(
     long_description=readme(),
     url='https://www.pygears.org',
     # download_url = '',
-
     author='Bogdan Vukobratovic',
     author_email='bogdan.vukobratovic@gmail.com',
-
     license='MIT',
-
     classifiers=[
         'Development Status :: 4 - Beta',
         'Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)',
@@ -62,7 +59,7 @@ setup(
     package_data={'': ['*.j2', '*.sv']},
     include_package_data=True,
     keywords='functional hardware design Python simulator HDL ASIC FPGA Gears',
-    install_requires=['jinja2>=2.10', 'pygears-tools', 'dataclasses'],
+    install_requires=['jinja2>=2.10', 'pygears-tools', 'dataclasses', 'pyvcd'],
     packages=find_packages(exclude=['examples*', 'docs']),
     entry_points={
         'console_scripts': [
