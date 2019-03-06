@@ -1,5 +1,6 @@
 from . import hdl_types as ht
-from .hdl_stmt_types import AssignValue, CombBlock, CombSeparateStmts, HDLBlock, AssertValue
+from .hdl_stmt_types import (AssertValue, AssignValue, CombBlock,
+                             CombSeparateStmts, HDLBlock)
 from .hdl_utils import add_to_list, state_expr
 
 
@@ -401,15 +402,28 @@ class StateTransitionVisitor(HDLStmtVisitor):
 
     def visit_all_Block(self, node, conds, **kwds):
         block = super().visit_all_Block(node, conds, **kwds)
+        if 'state_id' not in kwds:
+            return block
 
-        if 'state_id' in kwds:
-            cond = find_exit_cond(conds=conds, **kwds)
-            add_to_list(block.stmts, [
-                AssignValue(target=f'state_en', val=cond),
-                AssignValue(target='state_next', val=kwds['state_id'])
-            ])
-            if block.stmts:
-                self.update_defaults(block)
+        return self.assign_states(block, conds, **kwds)
+
+    def assign_states(self, block, conds, **kwds):
+        state_tr = kwds['state_id']
+
+        cond = conds.get_exit_cond_by_scope(state_tr.scope)
+        if cond is None:
+            cond = 1
+
+        curr_stmts = [
+            AssignValue(target=f'state_en', val=1),
+            AssignValue(target='state_next', val=state_tr.next_state)
+        ]
+
+        add_to_list(block.stmts,
+                    HDLBlock(in_cond=cond, stmts=curr_stmts, dflts={}))
+
+        if block.stmts:
+            self.update_defaults(block)
 
         return block
 

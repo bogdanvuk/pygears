@@ -1,15 +1,14 @@
 import ast
 import inspect
 
-from . import hdl_types as ht
 from pygears.typing import Uint, bitw
 
+from . import hdl_types as ht
 from .cblock import CBlockVisitor
 from .hdl_ast import HdlAst
-from .hdl_stmt import (BlockConditionsVisitor, InputVisitor, IntfReadyVisitor,
-                       IntfValidVisitor, OutputVisitor, RegEnVisitor,
-                       StateTransitionVisitor, VariableVisitor,
-                       AssertionVisitor)
+from .hdl_stmt import (AssertionVisitor, BlockConditionsVisitor, InputVisitor,
+                       IntfReadyVisitor, IntfValidVisitor, OutputVisitor,
+                       RegEnVisitor, StateTransitionVisitor, VariableVisitor)
 from .intf_finder import IntfFinder
 from .reg_finder import RegFinder
 from .scheduling import Scheduler
