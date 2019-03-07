@@ -280,9 +280,7 @@ class ConditionsEval(ConditionsBase):
                 if child_exit_cond is not None:
                     exit_c = nested_exit_cond(hdl_stmt)
                     self.add_exit_cond(hdl_stmt.id)
-                    break
-
-        return ht.subcond_expr(cond, exit_c)
+                    return ht.subcond_expr(cond, exit_c)
 
     def _cblock_subconds(self, cond, cblock, cond_type):
         if cond_type == 'cycle':

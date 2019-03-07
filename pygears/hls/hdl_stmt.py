@@ -421,13 +421,15 @@ class StateTransitionVisitor(HDLStmtVisitor):
         if cond is None:
             cond = 1
 
-        curr_stmts = [
-            AssignValue(target=f'state_en', val=1),
-            AssignValue(target='state_next', val=state_tr.next_state)
-        ]
-
-        add_to_list(block.stmts,
-                    HDLBlock(in_cond=cond, stmts=curr_stmts, dflts={}))
+        add_to_list(
+            block.stmts,
+            HDLBlock(
+                in_cond=cond,
+                stmts=[AssignValue(target=f'state_en', val=1)],
+                dflts={
+                    'state_next':
+                    AssignValue(target='state_next', val=state_tr.next_state)
+                }))
 
         if block.stmts:
             self.update_defaults(block)
