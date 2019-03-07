@@ -2,7 +2,7 @@ import logging
 import os
 
 from pygears import PluginBase, registry, safe_bind
-from pygears.conf import CustomLog
+from pygears.conf import register_custom_log
 from pygears.core.hier_node import HierVisitorBase
 from pygears.definitions import USER_SVLIB_DIR
 from pygears.svgen.intf import SVIntfGen
@@ -53,7 +53,7 @@ class SVGenInstPlugin(PluginBase):
         safe_bind('svgen/map', {})
         safe_bind('svgen/module_namespace', {})
         safe_bind('svgen/sv_paths', [USER_SVLIB_DIR])
-        CustomLog('svgen', logging.WARNING)
+        register_custom_log('svgen', logging.WARNING)
 
     @classmethod
     def reset(cls):

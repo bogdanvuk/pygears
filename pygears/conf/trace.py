@@ -10,7 +10,7 @@ from traceback import (extract_stack, extract_tb, format_exception_only,
 
 from pygears.definitions import ROOT_DIR
 
-from .log import CustomLog, LogPlugin, core_log
+from .log import register_custom_log, CustomLogger, LogPlugin, core_log
 from .pdb_patch import patch_pdb, unpatch_pdb
 from .registry import (Inject, PluginBase, RegistryHook, config, reg_inject,
                        registry, bind)
@@ -61,7 +61,7 @@ class TraceConfig(RegistryHook):
 class TraceConfigPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        cls.registry['trace'] = TraceConfig(level=TraceLevel.user)
+        cls.registry['trace'] = TraceConfig(level=TraceLevel.debug)
         cls.registry['trace']['hooks'] = []
 
         config.define(
@@ -173,7 +173,7 @@ def log_error_to_file(name, severity, msg):
         stack_trace(name, severity, msg)
 
 
-class TraceLog(CustomLog):
+class TraceLog(CustomLogger):
     # def __init__(self, name, verbosity=logging.INFO):
     #     super().__init__(name, verbosity)
 
@@ -191,6 +191,6 @@ class TraceLog(CustomLog):
 class TracePlugin(LogPlugin):
     @classmethod
     def bind(cls):
-        TraceLog('trace')
+        register_custom_log('trace', cls=TraceLog)
         registry('logger/hooks').append(log_error_to_file)
         bind('trace/issues', [])

@@ -8,7 +8,7 @@ import tempfile
 import time
 
 from pygears import GearDone, bind, find, registry, safe_bind
-from pygears.conf import CustomLog, LogFmtFilter
+from pygears.conf import CustomLogger, LogFmtFilter, register_custom_log
 from pygears.core.gear import GearPlugin, Gear
 # from pygears.core.intf import get_consumer_tree as intf_get_consumer_tree
 from pygears.core.port import InPort, OutPort
@@ -490,7 +490,7 @@ class SimFmtFilter(LogFmtFilter):
         return True
 
 
-class SimLog(CustomLog):
+class SimLog(CustomLogger):
     def __init__(self, name, verbosity=logging.INFO):
         super().__init__(name, verbosity)
 
@@ -519,7 +519,7 @@ class SimPlugin(GearPlugin):
         safe_bind('sim/tasks', {})
         safe_bind('sim/artifacts_dir', None)
         safe_bind('gear/params/extra/sim_setup', None)
-        SimLog('sim')
+        register_custom_log('sim', cls=SimLog)
 
     @classmethod
     def reset(cls):
@@ -528,4 +528,5 @@ class SimPlugin(GearPlugin):
 
 def sim_assert(cond, msg=None):
     if not cond:
+        import pdb; pdb.set_trace()
         sim_log().error(f'Assertion failed: {msg}')

@@ -14,6 +14,7 @@ class CosimBase(SimGear):
         self.timeout = timeout
         self.in_cosim_ports = [InCosimPort(self, p) for p in gear.in_ports]
         self.out_cosim_ports = [OutCosimPort(self, p) for p in gear.out_ports]
+        self.eval_needed = False
 
         for p in (self.in_cosim_ports + self.out_cosim_ports):
             sim_map[p.port] = p

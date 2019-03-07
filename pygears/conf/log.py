@@ -121,14 +121,6 @@ def hookable_methods_gen(cls):
     return cls
 
 
-@hookable_methods_gen
-class CustomLogger(logging.Logger):
-    '''Inherits from Logger and adds hook methods to HOOKABLE_LOG_METHODS'''
-
-    def __init__(self, name):
-        super(CustomLogger, self).__init__(name)
-
-
 class LogFmtFilter(logging.Filter):
     @reg_inject
     def __init__(self,
@@ -153,7 +145,36 @@ class LogFmtFilter(logging.Filter):
         return True
 
 
-class CustomLog:
+@hookable_methods_gen
+class CustomLogger(logging.Logger):
+    '''Inherits from Logger and adds hook methods to HOOKABLE_LOG_METHODS'''
+
+    def __init__(self, name, level=INFO):
+        super(CustomLogger, self).__init__(name, level)
+
+    def get_format(self):
+        return logging.Formatter(
+            '%(name)s [%(levelname)s]: %(message)s %(err_file)s %(stack_file)s'
+        )
+
+    def get_filter(self):
+        return LogFmtFilter()
+
+    def get_logger_handler(self, handler=None):
+        if handler is None:
+            handler = logging.StreamHandler(sys.stdout)
+
+        handler.setLevel(self.level)
+        handler.setFormatter(self.get_format())
+
+        filt = self.get_filter()
+        if filt is not None:
+            handler.addFilter(filt)
+
+        return handler
+
+
+def register_custom_log(name, level=INFO, cls=CustomLogger):
     '''PyGears integrated logger class.
 
     Args:
@@ -194,48 +215,22 @@ class CustomLog:
     '''
     dflt_settings = {'print_traceback': True, 'level': WARNING}
 
-    def __init__(self, name, verbosity=INFO):
-        self.name = name
-        self.verbosity = verbosity
+    log_cls = logging.getLoggerClass()
+    logging.setLoggerClass(cls)
 
-        log_cls = logging.getLoggerClass()
-        logging.setLoggerClass(CustomLogger)
-        self.set_default_logger()
-        logging.setLoggerClass(log_cls)
+    bind_val = copy.deepcopy(dflt_settings)
+    bind_val['level'] = level
+    bind_val['hooks'] = []
+    reg_name = f'logger/{name}'
+    safe_bind(reg_name, bind_val)
+    set_cb(f'{reg_name}/level', partial(set_log_level, name))
 
-        bind_val = copy.deepcopy(self.dflt_settings)
-        bind_val['level'] = verbosity
-        bind_val['hooks'] = []
-        reg_name = f'logger/{name}'
-        safe_bind(reg_name, bind_val)
-        set_cb(f'{reg_name}/level', partial(set_log_level, name))
+    logger = logging.getLogger(name)
+    logger.handlers.clear()
+    logger.setLevel(level)
+    logger.addHandler(logger.get_logger_handler())
 
-    def get_format(self):
-        return logging.Formatter(
-            '%(name)s [%(levelname)s]: %(message)s %(err_file)s %(stack_file)s'
-        )
-
-    def get_filter(self):
-        return LogFmtFilter()
-
-    def get_logger_handler(self,
-                           handler=partial(logging.StreamHandler, sys.stdout)):
-        ch = handler()
-        ch.setLevel(self.verbosity)
-        ch.setFormatter(self.get_format())
-
-        filt = self.get_filter()
-        if filt is not None:
-            ch.addFilter(filt)
-
-        return ch
-
-    def set_default_logger(self):
-        logger = logging.getLogger(self.name)
-        logger.handlers.clear()
-        logger.setLevel(self.verbosity)
-        ch = self.get_logger_handler()
-        logger.addHandler(ch)
+    logging.setLoggerClass(log_cls)
 
 
 class LogPlugin(PluginBase):
@@ -245,11 +240,11 @@ class LogPlugin(PluginBase):
         safe_bind('logger/stack_traceback_fn', tf.name)
         safe_bind('logger/hooks', [])
 
-        CustomLog('core', WARNING)
-        CustomLog('typing', WARNING)
-        CustomLog('util', WARNING)
-        CustomLog('gear', WARNING)
-        CustomLog('conf', WARNING)
+        register_custom_log('core', WARNING)
+        register_custom_log('typing', WARNING)
+        register_custom_log('util', WARNING)
+        register_custom_log('gear', WARNING)
+        register_custom_log('conf', WARNING)
 
 
 def core_log():

@@ -203,6 +203,11 @@ class SimVerilated(CosimBase):
 
     def _finish(self):
         if not self.finished:
+
+            if self.eval_needed:
+                self.handlers[self.SYNCHRO_HANDLE_NAME].forward()
+            self.handlers[self.SYNCHRO_HANDLE_NAME].cycle()
+
             self.finished = True
             self.handlers.clear()
             super()._finish()

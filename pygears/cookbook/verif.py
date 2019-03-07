@@ -11,6 +11,7 @@ async def check(din, *, ref):
         items = []
         while (1):
             items.append(await din.get())
+            sim_assert(items == ref, f'mismatch. Got: {items}, expected: {ref}')
     except GearDone:
         # print(f"Here: {items}")
         # print(f"{ref}")
