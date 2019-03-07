@@ -133,6 +133,9 @@ class Sym2Hdl(InstanceVisitor):
 
         return sym
 
+    def visit_One(self, node):
+        return ht.ResExpr(Bool(True))
+
     def visit_BooleanFalse(self, node):
         return ht.ResExpr(Bool(False))
 

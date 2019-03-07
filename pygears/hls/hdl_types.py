@@ -349,6 +349,11 @@ class ExitSubCond(SubConditions):
     pass
 
 
+@dataclass
+class BothSubCond(SubConditions):
+    pass
+
+
 # Blocks
 
 
@@ -455,7 +460,7 @@ class Loop(Block):
 
     @property
     def exit_cond(self):
-        return ExitSubCond(and_expr(self.cycle_cond, self._exit_cond), '&&')
+        return BothSubCond(self._exit_cond, '&&')
 
 
 @dataclass

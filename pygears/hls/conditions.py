@@ -244,7 +244,7 @@ class ConditionsEval(ConditionsBase):
         conds = []
         for child in get_cblock_child(cblock):
             for hdl_stmt in get_cblock_hdl_stmts(child):
-                if hdl_stmt.cycle_cond is not None:
+                if getattr(hdl_stmt, 'cycle_cond', None) is not None:
                     conds.append(nested_cycle_cond(hdl_stmt))
                     self.add_cycle_cond(hdl_stmt.id)
 
@@ -308,8 +308,12 @@ class ConditionsEval(ConditionsBase):
     def _subcond_expr(self, cond, block):
         if isinstance(cond, ht.CycleSubCond):
             sub_c = self._hdl_stmt_cycle_cond(block)
-        else:
+        elif isinstance(cond, ht.ExitSubCond):
             sub_c = self._hdl_stmt_exit_cond(block)
+        else:
+            sub_c = ht.BinOpExpr(
+                self._hdl_stmt_cycle_cond(block),
+                self._hdl_stmt_exit_cond(block), cond.operator)
 
         return ht.subcond_expr(cond, sub_c)
 
@@ -345,7 +349,7 @@ class ConditionsEval(ConditionsBase):
             return self._merge_cblock_conds(scope, 'cycle')
 
         curr_cond = block.cycle_cond
-        if not isinstance(curr_cond, ht.CycleSubCond):
+        if not isinstance(curr_cond, ht.SubConditions):
             return curr_cond
 
         return self._cblock_cycle_subconds(curr_cond, scope)
@@ -359,7 +363,7 @@ class ConditionsEval(ConditionsBase):
             return self._merge_cblock_conds(scope, 'exit')
 
         curr_cond = block.exit_cond
-        if not isinstance(curr_cond, ht.ExitSubCond):
+        if not isinstance(curr_cond, ht.SubConditions):
             return curr_cond
 
         return self._cblock_exit_subconds(curr_cond, scope)
