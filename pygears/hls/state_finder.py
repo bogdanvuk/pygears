@@ -96,6 +96,10 @@ class StateFinder(InstanceVisitor):
         self.block_id = 0
         self.context = ContextFinder()
 
+    def set_block_id(self, block):
+        block.id = self.block_id
+        self.block_id += 1
+
     def get_next_state(self):
         self.max_state += 1
         return self.max_state
@@ -103,8 +107,7 @@ class StateFinder(InstanceVisitor):
     def enter_block(self, block):
         self.state.append(self.state[-1])
         block.state_ids = [self.state[-1]]
-        block.hdl_block.id = self.block_id
-        self.block_id += 1
+        self.set_block_id(block.hdl_block)
 
     def exit_block(self):
         self.state.pop()
@@ -150,6 +153,8 @@ class StateFinder(InstanceVisitor):
         for i, block in enumerate(node.hdl_blocks):
             switch = self.context.find_context(block, node.hdl_blocks[:i])
             self.switch_context(switch, node.hdl_blocks[:i])
+            if isinstance(block, ht.Block):
+                self.set_block_id(block)
 
     def switch_node(self, path, node, new):
         if len(path) == 1:

@@ -77,112 +77,32 @@ def find_exit_cond(statements, search_in_cond=False):
     return None
 
 
-class Conditions:
+class ConditionsBase:
     # shared across all visitors
     cycle_conds = []
     exit_conds = []
     combined_cycle_conds = {}
     combined_exit_conds = {}
 
-    def __init__(self):
-        self.scope = []
-
     def add_cycle_cond(self, cond):
+        assert cond is not None, 'Attempting to add None id to cycle conditions'
+
         if cond not in self.cycle_conds:
             self.cycle_conds.append(cond)
 
     def add_exit_cond(self, cond):
-        if cond is None:
-            return
+        assert cond is not None, 'Attempting to add None id to exit conditions'
 
         if cond not in self.exit_conds:
             self.exit_conds.append(cond)
 
-    def _eval_cyclesubcond(self, cond, cblock):
-        if isinstance(cblock, SeqCBlock) and len(cblock.state_ids) > 1:
-            curr_child = cblock.child[-1]
-            sub_conds = curr_child.hdl_block.cycle_cond
-            if sub_conds is not None:
-                sub_conds = state_expr(curr_child.state_ids, sub_conds)
-                self.add_cycle_cond(curr_child.hdl_block.id)
-        else:
-            conds = []
-            for child in cblock.child:
-                if child.hdl_block.cycle_cond is not None:
-                    conds.append(nested_cycle_cond(child.hdl_block))
-                    self.add_cycle_cond(child.hdl_block.id)
-            sub_conds = reduce(ht.and_expr, conds, None)
 
-        if cond.expr is not None:
-            return ht.binary_expr(cond.expr, sub_conds, cond.operator)
-
-        return sub_conds
-
-    def _eval_exitsubcond(self, cond, block):
-        exit_c = None
-        for child in reversed(block.child):
-            child_exit_cond = getattr(child.hdl_block, 'exit_cond', None)
-            if child_exit_cond is not None:
-                exit_c = nested_exit_cond(child.hdl_block)
-                self.add_exit_cond(child.hdl_block.id)
-                break
-
-        if cond.expr is not None:
-            if exit_c is not None:
-                return ht.binary_expr(cond.expr, exit_c, cond.operator)
-            return cond.expr
-
-        return exit_c
-
-    def _eval_subcond(self, cond, cond_type, block):
-        if cond_type == 'cycle':
-            return self._eval_cyclesubcond(cond, block)
-
-        return self._eval_exitsubcond(cond, block)
-
-    def _merge_conds(self, top, cond_type):
-        if all([
-                getattr(child.hdl_block, f'{cond_type}_cond') is None
-                for child in top.child
-        ]):
-            return None
-
-        cond = None
-        for child in top.child:
-            curr_block = child.hdl_block
-            sub_cond = getattr(curr_block, f'{cond_type}_cond', None)
-            if sub_cond is not None:
-                sub_cond = self._eval_subcond(sub_cond, cond_type, child)
-            block_cond = ht.and_expr(sub_cond, curr_block.in_cond)
-            cond = ht.or_expr(cond, block_cond)
-        return cond
-
-    def block_cycle_cond(self, block):
-        assert block == self.scope[-1].hdl_block
-
-        if isinstance(block, ht.ContainerBlock):
-            return self._merge_conds(self.scope[-1], 'cycle')
-
-        curr_cond = block.cycle_cond
-        if not isinstance(curr_cond, ht.CycleSubCond):
-            return curr_cond
-
-        return self._eval_cyclesubcond(curr_cond, self.scope[-1])
-
-    def block_exit_cond(self, block):
-        assert block == self.scope[-1].hdl_block
-
-        if isinstance(block, ht.ContainerBlock):
-            return self._merge_conds(self.scope[-1], 'exit')
-
-        curr_cond = block.exit_cond
-        if not isinstance(curr_cond, ht.ExitSubCond):
-            return curr_cond
-
-        return self._eval_exitsubcond(curr_cond, self.scope[-1])
+class ConditionsFinder(ConditionsBase):
+    def __init__(self):
+        self.scope = []
 
     def _create_state_cycle_cond(self, child):
-        child_cond = nested_cycle_cond(child.hdl_block.cycle_cond)
+        child_cond = nested_cycle_cond(child.hdl_block)
         self.add_cycle_cond(find_cond_id(child_cond))
         return state_expr(child.state_ids, child_cond)
 
@@ -249,7 +169,7 @@ class Conditions:
         block = self.scope[-1].hdl_block
         return self._exit_cond(block)
 
-    def get_exit_cond_by_scope(self, scope_id=-1):
+    def exit_cond_by_scope(self, scope_id=-1):
         block = self.scope[scope_id].hdl_block
         return self._exit_cond(block)
 
@@ -267,3 +187,213 @@ class Conditions:
 
     def exit_block(self):
         self.scope.pop()
+
+
+def get_cblock_child(cblock):
+    if hasattr(cblock, 'child'):
+        yield from cblock.child
+    else:
+        yield cblock  # Leaf
+
+
+def get_cblock_hdl_stmts(cblock):
+    if hasattr(cblock, 'hdl_block'):
+        yield cblock.hdl_block
+    else:
+        yield from cblock.hdl_blocks
+
+
+class ConditionsEval(ConditionsBase):
+    def _merge_hdl_conds(self, top, cond_type):
+        if all(
+            [getattr(stmt, f'{cond_type}_cond') is None
+             for stmt in top.stmts]):
+            return None
+
+        cond = None
+        for stmt in top.stmts:
+            sub_cond = None
+            if getattr(stmt, f'{cond_type}_cond', None):
+                sub_cond = self._hdl_subconds(stmt, cond_type)
+            block_cond = ht.and_expr(sub_cond, stmt.in_cond)
+            cond = ht.or_expr(cond, block_cond)
+        return cond
+
+    def _merge_cblock_conds(self, top, cond_type):
+        cblocks = [x for x in get_cblock_child(top)]
+
+        if all([
+                getattr(hdl_stmt, f'{cond_type}_cond') is None
+                for child in cblocks
+                for hdl_stmt in get_cblock_hdl_stmts(child)
+        ]):
+            return None
+
+        cond = None
+        for child in cblocks:
+            for curr_block in get_cblock_hdl_stmts(child):
+                sub_cond = getattr(curr_block, f'{cond_type}_cond', None)
+                if sub_cond is not None:
+                    sub_cond = self._cblock_subconds(sub_cond, child,
+                                                     cond_type)
+                block_cond = ht.and_expr(sub_cond, curr_block.in_cond)
+                cond = ht.or_expr(cond, block_cond)
+        return cond
+
+    def _cblock_simple_cycle_subconds(self, cblock):
+        conds = []
+        for child in get_cblock_child(cblock):
+            for hdl_stmt in get_cblock_hdl_stmts(child):
+                if hdl_stmt.cycle_cond is not None:
+                    conds.append(nested_cycle_cond(hdl_stmt))
+                    self.add_cycle_cond(hdl_stmt.id)
+
+        return reduce(ht.and_expr, conds, None)
+
+    def _cblock_state_cycle_subconds(self, cblock):
+        curr_child = cblock.child[-1]
+        sub_conds = curr_child.hdl_block.cycle_cond
+        if sub_conds is not None:
+            self.add_cycle_cond(curr_child.hdl_block.id)
+            sub_conds = state_expr(curr_child.state_ids, sub_conds)
+
+        return sub_conds
+
+    def _cblock_cycle_subconds(self, cond, cblock):
+        if isinstance(cblock, SeqCBlock) and len(cblock.state_ids) > 1:
+            sub_conds = self._cblock_state_cycle_subconds(cblock)
+        else:
+            sub_conds = self._cblock_simple_cycle_subconds(cblock)
+
+        return ht.subcond_expr(cond, sub_conds)
+
+    def _cblock_exit_subconds(self, cond, cblock):
+        exit_c = None
+        children = [x for x in get_cblock_child(cblock)]
+        for child in reversed(children):
+            hdl_stmts = [x for x in get_cblock_hdl_stmts(child)]
+            for hdl_stmt in reversed(hdl_stmts):
+                if isinstance(hdl_stmt, ht.ContainerBlock):
+                    child_exit_cond = self._merge_hdl_conds(hdl_stmt, 'exit')
+                else:
+                    child_exit_cond = getattr(hdl_stmt, 'exit_cond', None)
+                if child_exit_cond is not None:
+                    exit_c = nested_exit_cond(hdl_stmt)
+                    self.add_exit_cond(hdl_stmt.id)
+                    break
+
+        return ht.subcond_expr(cond, exit_c)
+
+    def _cblock_subconds(self, cond, cblock, cond_type):
+        if cond_type == 'cycle':
+            return self._cblock_cycle_subconds(cond, cblock)
+
+        return self._cblock_exit_subconds(cond, cblock)
+
+    def _hdl_stmt_cycle_cond(self, block):
+        conds = []
+        for stmt in block.stmts:
+            sub_cond = self._hdl_cycle_subconds(stmt)
+            if sub_cond is not None:
+                conds.append(nested_cycle_cond(stmt))
+        return reduce(ht.and_expr, conds, None)
+
+    def _hdl_stmt_exit_cond(self, block):
+        for stmt in reversed(block.stmts):
+            exit_c = self._hdl_exit_subconds(stmt)
+            if exit_c is not None:
+                return exit_c
+        return None
+
+    def _subcond_expr(self, cond, block):
+        if isinstance(cond, ht.CycleSubCond):
+            sub_c = self._hdl_stmt_cycle_cond(block)
+        else:
+            sub_c = self._hdl_stmt_exit_cond(block)
+
+        return ht.subcond_expr(cond, sub_c)
+
+    def _hdl_cycle_subconds(self, block):
+        if isinstance(block, ht.ContainerBlock):
+            return self._merge_hdl_conds(block, 'cycle')
+
+        cond = getattr(block, 'cycle_cond', None)
+        if isinstance(cond, ht.SubConditions):
+            return self._subcond_expr(cond, block)
+        return cond
+
+    def _hdl_exit_subconds(self, block):
+        if isinstance(block, ht.ContainerBlock):
+            return self._merge_hdl_conds(block, 'exit')
+
+        cond = getattr(block, 'exit_cond', None)
+        if isinstance(cond, ht.SubConditions):
+            return self._subcond_expr(cond, block)
+        return cond
+
+    def _hdl_subconds(self, block, cond_type):
+        if cond_type == 'cycle':
+            return self._hdl_cycle_subconds(block)
+        return self._hdl_exit_subconds(block)
+
+    def cycle_cond(self, block, scope):
+        if block != scope.hdl_block:
+            # leaf
+            return self._hdl_cycle_subconds(block)
+
+        if isinstance(block, ht.ContainerBlock):
+            return self._merge_cblock_conds(scope, 'cycle')
+
+        curr_cond = block.cycle_cond
+        if not isinstance(curr_cond, ht.CycleSubCond):
+            return curr_cond
+
+        return self._cblock_cycle_subconds(curr_cond, scope)
+
+    def exit_cond(self, block, scope):
+        if block != scope.hdl_block:
+            # leaf
+            return self._hdl_exit_subconds(block)
+
+        if isinstance(block, ht.ContainerBlock):
+            return self._merge_cblock_conds(scope, 'exit')
+
+        curr_cond = block.exit_cond
+        if not isinstance(curr_cond, ht.ExitSubCond):
+            return curr_cond
+
+        return self._cblock_exit_subconds(curr_cond, scope)
+
+
+class Conditions(ConditionsBase):
+    def __init__(self):
+        self.scope = []
+        self.cond_finder = ConditionsFinder()
+        self.cond_eval = ConditionsEval()
+
+    def enter_block(self, block):
+        self.scope.append(block)
+        self.cond_finder.enter_block(block)
+
+    def exit_block(self):
+        self.cond_finder.exit_block()
+        self.scope.pop()
+
+    @property
+    def rst_cond(self):
+        return self.cond_finder.rst_cond
+
+    def find_cycle_cond(self, hdl_block):
+        return self.cond_finder.cycle_cond(hdl_block)
+
+    def find_exit_cond(self, hdl_block):
+        return self.cond_finder.exit_cond(hdl_block)
+
+    def find_exit_cond_by_scope(self, scope_id=-1):
+        return self.cond_finder.exit_cond_by_scope(scope_id)
+
+    def eval_cycle_cond(self, block):
+        return self.cond_eval.cycle_cond(block, self.scope[-1])
+
+    def eval_exit_cond(self, block):
+        return self.cond_eval.exit_cond(block, self.scope[-1])

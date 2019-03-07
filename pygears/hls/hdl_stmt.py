@@ -14,7 +14,7 @@ def find_cond(cond, **kwds):
 
 
 def find_cycle_cond(conds, hdl_stmt, **kwds):
-    return find_cond(cond=conds.cycle_cond(hdl_stmt), **kwds)
+    return find_cond(cond=conds.find_cycle_cond(hdl_stmt), **kwds)
 
 
 def find_rst_cond(conds, **kwds):
@@ -22,7 +22,7 @@ def find_rst_cond(conds, **kwds):
 
 
 def find_exit_cond(conds, hdl_stmt, **kwds):
-    return find_cond(cond=conds.exit_cond(hdl_stmt), **kwds)
+    return find_cond(cond=conds.find_exit_cond(hdl_stmt), **kwds)
 
 
 class HDLStmtVisitor:
@@ -351,7 +351,7 @@ class BlockConditionsVisitor(HDLStmtVisitor):
 
     def get_cycle_cond(self, **kwds):
         if self.current_scope.id in self.conds.cycle_conds:
-            curr_cond = self.conds.block_cycle_cond(self.current_scope)
+            curr_cond = self.conds.eval_cycle_cond(self.current_scope)
             self.find_subconds(curr_cond)
             if curr_cond is None:
                 curr_cond = 1
@@ -363,7 +363,7 @@ class BlockConditionsVisitor(HDLStmtVisitor):
 
     def get_exit_cond(self, **kwds):
         if self.current_scope.id in self.conds.exit_conds:
-            curr_cond = self.conds.block_exit_cond(self.current_scope)
+            curr_cond = self.conds.eval_exit_cond(self.current_scope)
             self.find_subconds(curr_cond)
             if curr_cond is None:
                 curr_cond = 1
@@ -417,7 +417,7 @@ class StateTransitionVisitor(HDLStmtVisitor):
     def assign_states(self, block, **kwds):
         state_tr = kwds['state_id']
 
-        cond = self.conds.get_exit_cond_by_scope(state_tr.scope)
+        cond = self.conds.find_exit_cond_by_scope(state_tr.scope)
         if cond is None:
             cond = 1
 
