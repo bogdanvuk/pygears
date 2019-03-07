@@ -40,10 +40,12 @@ def or_expr(expr1, expr2):
 
 
 def subcond_expr(cond, other=None):
+    if other is None:
+        return None
+
     if cond.expr is not None:
-        if other is not None:
-            return binary_expr(cond.expr, other, cond.operator)
-        return cond.expr
+        return binary_expr(cond.expr, other, cond.operator)
+
     return other
 
 
