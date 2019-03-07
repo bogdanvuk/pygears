@@ -32,7 +32,6 @@ def test_simple_add():
 
 simple_filt_res = """
 logic exit_cond_block_2;
-logic in_cond_block_2;
 logic exit_cond_block_3;
 always_comb begin
     dout.valid = 0;
@@ -49,8 +48,7 @@ always_comb begin
         din.ready = exit_cond_block_2;
     end
 end
-assign exit_cond_block_2 = !(in_cond_block_2) || exit_cond_block_3;
-assign in_cond_block_2 = din_s.data.ctrl == din_s.sel;
+assign exit_cond_block_2 = !(din_s.data.ctrl == din_s.sel) || exit_cond_block_3;
 assign exit_cond_block_3 = dout.ready;
 """
 
@@ -59,7 +57,6 @@ def test_simple_filt():
     filt(Intf(Tuple[Union[Uint[1], Uint[8], Uint[10]], Uint[2]]))
     res = compile_gear_body(find('/filt'))
     assert equal_on_nonspace(res, simple_filt_res)
-
 
 simple_qcnt_res = """
 typedef logic [15:0] cnt_t; // u16

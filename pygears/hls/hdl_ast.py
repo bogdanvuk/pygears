@@ -1,14 +1,16 @@
 import ast
 
-from . import hdl_types as ht
 from pygears.typing import (Array, Int, Integer, Queue, Tuple, Uint, Unit,
                             is_type, typeof)
 from pygears.typing.base import TypingMeta
 
+from . import hdl_types as ht
 from .hdl_ast_call import HdlAstCall
 from .hdl_ast_forimpl import HdlAstForImpl
+from .hdl_ast_try_except import HdlAstTryExcept
 from .hdl_utils import (AstTypeError, VisitError, eval_expression,
-                        find_assign_target, find_for_target, set_pg_type)
+                        find_assign_target, find_for_target, set_pg_type,
+                        interface_operations)
 
 OPMAP = {
     ast.Add: '+',
@@ -118,6 +120,9 @@ class HdlAst(ast.NodeVisitor):
 
         self.call_functions = HdlAstCall()
         self.for_impl = HdlAstForImpl(self)
+        self.try_except = HdlAstTryExcept(self)
+
+        self.await_found = None
 
     def enter_block(self, block):
         self.scope.append(block)
@@ -144,9 +149,15 @@ class HdlAst(ast.NodeVisitor):
         self.enter_block(hdl_node)
 
         for stmt in body:
-            svstmt = self.visit(stmt)
-            if svstmt is not None:
-                hdl_node.stmts.append(svstmt)
+            res_stmt = self.visit(stmt)
+            if res_stmt is not None:
+                if self.await_found:
+                    await_node = ht.IntfBlock(
+                        intf=self.await_found, stmts=[res_stmt])
+                    self.await_found = None
+                    hdl_node.stmts.append(await_node)
+                else:
+                    hdl_node.stmts.append(res_stmt)
 
         self.exit_block()
 
@@ -319,22 +330,6 @@ class HdlAst(ast.NodeVisitor):
             1:] == intf_assigns[:
                                 -1], f'Mixed assignment of interfaces and variables not allowed'
 
-        if all(intf_assigns):
-            # when interfaces are assigned visit_DataExpression is not allowed
-            # because eval will execute the assignment and create extra gears
-            # and connections for them
-            val = None
-            for port in self.in_ports:
-                if node.value.id == port.name:
-                    val = port
-                    break
-            if val is None:
-                for port in self.in_intfs:
-                    if node.value.id == port:
-                        val = self.in_intfs[port]
-                        break
-            return [val]
-
         vals = self.visit_DataExpression(node.value)
 
         if len(names) == 1:
@@ -404,9 +399,38 @@ class HdlAst(ast.NodeVisitor):
 
         return self.get_context_var(name)
 
+    def find_intf_by_name(self, name):
+        val = None
+
+        for port in self.in_ports:
+            if name == port.name:
+                val = port
+                break
+        if val is None:
+            for port in self.in_intfs:
+                if name == port:
+                    val = self.in_intfs[port]
+                    break
+
+        return val
+
     def visit_DataExpression(self, node):
         if not isinstance(node, ast.AST):
             return node
+
+        # when interfaces are assigned visit_DataExpression is not allowed
+        # because eval will execute the assignment and create extra gears
+        # and connections for them
+        name = None
+        if hasattr(node, 'value') and hasattr(node.value, 'id'):
+            name = node.value.id
+        elif hasattr(node, 'id'):
+            name = node.id
+
+        if name is not None:
+            val = self.find_intf_by_name(name)
+            if val is not None:
+                return val
 
         try:
             return eval_data_expr(node, self.locals)
@@ -579,11 +603,14 @@ class HdlAst(ast.NodeVisitor):
 
     def visit_While(self, node):
         test = self.visit_DataExpression(node.test)
+        multi = []
+        if isinstance(test, ht.ResExpr) and test.val:
+            multi = True
         hdl_node = ht.Loop(
             _in_cond=test,
             stmts=[],
             _exit_cond=ht.create_oposite(test),
-            multicycle=[])
+            multicycle=multi)
 
         return self.visit_block(hdl_node, node.body)
 
@@ -618,7 +645,36 @@ class HdlAst(ast.NodeVisitor):
         else:
             expr = super().visit(node.value)
             ports = self.out_ports
-        return ht.Yield(expr=self.cast_return(expr), stmts=[], ports=ports)
+        return ht.Yield(stmts=[self.cast_return(expr)], ports=ports)
+
+    def visit_Await(self, node):
+        flag, intf_val = interface_operations(node.value)
+        if flag:
+            intf_name, intf_method = intf_val
+            if intf_method == 'get':
+                intf = self.get_context_var(intf_name)
+                assert isinstance(intf, ht.IntfExpr)
+                self.await_found = ht.IntfExpr(intf=intf.intf, context='valid')
+            else:
+                raise VisitError('Await only supports interface get method')
+
+        return self.visit(node.value)
+
+    def visit_Try(self, node):
+        assert len(
+            node.
+            handlers) == 1, f'Try/except block must only except one exception'
+        try_block = self.try_except.find_condition(node)
+        if try_block is None:
+            raise VisitError('No condition found for try/except block')
+
+        self.visit_block(try_block, node.body)
+
+        except_block = ht.IfBlock(
+            _in_cond=ht.create_oposite(try_block.in_cond), stmts=[])
+        self.visit_block(except_block, node.handlers[0].body)
+
+        return ht.ContainerBlock(stmts=[try_block, except_block])
 
     def visit_AsyncFunctionDef(self, node):
         hdl_node = ht.Module(

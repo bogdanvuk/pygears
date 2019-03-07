@@ -36,9 +36,6 @@ class ContextFinder(ht.TypeVisitor):
         self.visit(node)
         return self.switch
 
-    def visit_Yield(self, node):
-        self.visit(node.expr)
-
     def visit_list(self, node):
         for stmt in node:
             self.visit(stmt)
@@ -82,12 +79,26 @@ class ContextFinder(ht.TypeVisitor):
                     self.switch.append((tuple(self.hier_idx), switch))
 
 
+def update_state_ids(node, child):
+    if hasattr(child, 'state_ids'):
+        for s_id in child.state_ids:
+            if s_id not in node.state_ids:
+                node.state_ids.append(s_id)
+    else:
+        if child.state_id not in node.state_ids:
+            node.state_ids.append(child.state_id)
+
+
 class StateFinder(InstanceVisitor):
     def __init__(self):
         self.state = [0]
         self.max_state = 0
         self.block_id = 0
         self.context = ContextFinder()
+
+    def set_block_id(self, block):
+        block.id = self.block_id
+        self.block_id += 1
 
     def get_next_state(self):
         self.max_state += 1
@@ -96,8 +107,7 @@ class StateFinder(InstanceVisitor):
     def enter_block(self, block):
         self.state.append(self.state[-1])
         block.state_ids = [self.state[-1]]
-        block.hdl_block.id = self.block_id
-        self.block_id += 1
+        self.set_block_id(block.hdl_block)
 
     def exit_block(self):
         self.state.pop()
@@ -109,8 +119,7 @@ class StateFinder(InstanceVisitor):
             self.visit(child)
             if child is not node.child[-1]:
                 self.state[-1] = self.get_next_state()
-                if self.state[-1] not in node.state_ids:
-                    node.state_ids.append(self.state[-1])
+            update_state_ids(node, child)
 
         if node.prolog:
             for i, block in enumerate(node.prolog):
@@ -127,6 +136,7 @@ class StateFinder(InstanceVisitor):
 
         for child in node.child:
             self.visit(child)
+            update_state_ids(node, child)
 
         if node.prolog:
             for i, block in enumerate(node.prolog):
@@ -141,11 +151,10 @@ class StateFinder(InstanceVisitor):
     def visit_Leaf(self, node):
         node.state_id = self.state[-1]
         for i, block in enumerate(node.hdl_blocks):
-            if isinstance(block, ht.Yield):
-                block.id = self.block_id
-                self.block_id += 1
             switch = self.context.find_context(block, node.hdl_blocks[:i])
             self.switch_context(switch, node.hdl_blocks[:i])
+            if isinstance(block, ht.Block):
+                self.set_block_id(block)
 
     def switch_node(self, path, node, new):
         if len(path) == 1:
