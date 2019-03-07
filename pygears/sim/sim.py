@@ -527,5 +527,4 @@ class SimPlugin(GearPlugin):
 
 def sim_assert(cond, msg=None):
     if not cond:
-        import pdb; pdb.set_trace()
         sim_log().error(f'Assertion failed: {msg}')

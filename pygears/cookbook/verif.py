@@ -1,21 +1,20 @@
-from pygears import gear, GearDone
-from pygears.sim import sim_assert
-from pygears.sim.modules import delay_mon, drv, mon, scoreboard
-from pygears.sim.utils import SimDelay
+from pygears import GearDone, gear
 from pygears.common import decoupler
+from pygears.sim import sim_assert
+from pygears.sim.modules import drv, mon, scoreboard
 
 
 @gear
 async def check(din, *, ref):
+    iter_ref = iter(ref)
     try:
         items = []
-        while (1):
-            items.append(await din.get())
-            sim_assert(items == ref, f'mismatch. Got: {items}, expected: {ref}')
-    except GearDone:
-        # print(f"Here: {items}")
-        # print(f"{ref}")
-        # print(f"{items == ref}")
+        while True:
+            data = await din.get()
+            items.append(data)
+            sim_assert(data == next(iter_ref),
+                       f'mismatch. Got: {items}, expected: {ref}')
+    except (GearDone, StopIteration):
         sim_assert(items == ref, f'mismatch. Got: {items}, expected: {ref}')
 
 
