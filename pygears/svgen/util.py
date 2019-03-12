@@ -142,24 +142,29 @@ class SVGenTypeVisitor(TypingVisitorBase):
         return f'{parent_context}_t'
 
     def visit_array(self, type_, field):
-        if (not self.depth):
+        if not self.depth:
             struct_fields = []
             parent_context = self.context
             self.context = f'{parent_context}_data'
 
         type_declaration = self.visit(type_.args[0], type_.fields[0])
-        split_type = type_declaration.rpartition(" ")
-        type_declaration = ' '.join((split_type[0], f'[{type_.args[1]-1}:0]',
-                                     split_type[-1]))
+        split_type = type_declaration.split(" ")
+        if 'signed' in split_type:
+            insert_idx = split_type.index('signed') + 1
+        else:
+            insert_idx = 1
 
-        if (not self.depth):
+        split_type.insert(insert_idx, f'[{type_.args[1]-1}:0]')
+        type_declaration = ' '.join(split_type)
+
+        if not self.depth:
             struct_fields.append(
                 f'typedef {type_declaration} {parent_context}_t; // {type_}\n')
             self.struct_array.append('\n'.join(struct_fields))
             self.context = parent_context
             return f'{parent_context}_t'
-        else:
-            return f'{type_declaration}'
+
+        return f'{type_declaration}'
 
 
 def svgen_typedef(dtype, name):

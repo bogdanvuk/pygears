@@ -1,5 +1,5 @@
 from pygears.svgen.util import svgen_typedef
-from pygears.typing import Uint, Int, Bool, Tuple, Queue, Union, Array, Unit
+from pygears.typing import Array, Int, Queue, Tuple, Uint, Union, Unit
 from pygears.util.test_utils import equal_on_nonspace
 
 
@@ -25,8 +25,30 @@ def test_array():
     assert equal_on_nonspace(svtype, test_ref)
 
 
+def test_array_signed():
+    test_ref = "typedef logic signed [3:0] [15:0] data_t; // Array[i16, 4]"
+    svtype = svgen_typedef(Array[Int[16], 4], 'data')
+
+    assert equal_on_nonspace(svtype, test_ref)
+
+
+def test_array_subtype():
+    test_ref = '''
+typedef struct packed { // (u1, u3)
+    logic [2:0] f1; // u3
+    logic [0:0] f0; // u1
+} data_data_t;
+typedef data_data_t [3:0] data_t; // Array[(u1, u3), 4]
+'''
+
+    svtype = svgen_typedef(Array[Tuple[Uint[1], Uint[3]], 4], 'data')
+
+    assert equal_on_nonspace(svtype, test_ref)
+
+
 def test_multiarray():
     test_ref = "typedef logic [3:0] [1:0] [15:0] data_t; // Array[Array[u16, 2], 4]"
+
     svtype = svgen_typedef(Array[Array[Uint[16], 2], 4], 'data')
 
     assert equal_on_nonspace(svtype, test_ref)
