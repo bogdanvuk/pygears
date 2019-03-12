@@ -4,7 +4,7 @@ from pygears.typing import Bool
 
 @gear(svgen={'compile': True})
 async def dreg(din: 'tdin') -> b'tdin':
-    data = din.dtype(0)
+    data = din.dtype.decode(0)
     valid = Bool(False)
 
     while True:

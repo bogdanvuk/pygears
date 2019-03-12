@@ -5,7 +5,7 @@ from pygears.cookbook.delay import delay_rng
 from pygears.cookbook.verif import directed, verif
 from pygears.sim import sim, timestep
 from pygears.sim.modules.drv import drv
-from pygears.typing import Uint
+from pygears.typing import Int, Queue, Tuple, Uint
 
 
 def test_pygears_sim(tmpdir):
@@ -24,6 +24,20 @@ def test_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
     seq = list(range(10))
     verif(
         drv(t=Uint[16], seq=seq) | delay_rng(din_delay, din_delay),
+        f=dreg(sim_cls=cosim_cls),
+        ref=dreg(name='ref_model'),
+        delays=[delay_rng(dout_delay, dout_delay)])
+
+    sim(outdir=tmpdir)
+
+
+@pytest.mark.parametrize('din_delay', [0, 5])
+@pytest.mark.parametrize('dout_delay', [0, 5])
+def test_queue_tuple(tmpdir, cosim_cls, din_delay, dout_delay):
+    seq = [[(0, 1), (4, 0), (1, 1)], [(1, 1), (2, 0), (3, 1), (4, 0)]]
+    verif(
+        drv(t=Queue[Tuple[Uint[16], Int[2]]], seq=seq)
+        | delay_rng(din_delay, din_delay),
         f=dreg(sim_cls=cosim_cls),
         ref=dreg(name='ref_model'),
         delays=[delay_rng(dout_delay, dout_delay)])
