@@ -46,7 +46,7 @@ import tempfile
 from functools import partial
 from logging import CRITICAL, DEBUG, ERROR, INFO, NOTSET, WARNING
 
-from .registry import Inject, PluginBase, config, reg_inject, safe_bind, set_cb
+from .registry import Inject, PluginBase, config, reg_inject, safe_bind
 
 HOOKABLE_LOG_METHODS = [
     'critical', 'exception', 'error', 'warning', 'info', 'debug'

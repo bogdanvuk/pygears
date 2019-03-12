@@ -8,7 +8,7 @@ from asyncio.queues import QueueEmpty
 
 # form pygears.conf import only for legacy compatibility
 from pygears.conf import PluginBase, bind, registry, clear, MultiAlternativeError
-from pygears.conf import pygears_excepthook, TraceLevel, safe_bind
+from pygears.conf import pygears_excepthook, TraceLevel, safe_bind, config
 import pygears.conf
 
 from pygears.util.find import find

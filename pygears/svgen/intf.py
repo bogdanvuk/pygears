@@ -3,7 +3,7 @@ import functools
 from string import Template
 
 from pygears import PluginBase, registry, safe_bind
-from pygears.conf import Inject, reg_inject
+from pygears.conf import Inject, reg_inject, config
 from pygears.rtl.port import InPort, OutPort
 from pygears.svgen.util import svgen_typedef
 
@@ -135,5 +135,8 @@ class SVIntfGen:
 class SVGenIntfPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        safe_bind('svgen/debug_intfs', [])
+        config.define(
+            'svgen/debug_intfs',
+            default=[])
+
         safe_bind('svgen/spy_connection_template', dti_spy_connect_t)
