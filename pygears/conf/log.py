@@ -46,7 +46,7 @@ import tempfile
 from functools import partial
 from logging import CRITICAL, DEBUG, ERROR, INFO, NOTSET, WARNING
 
-from .registry import Inject, PluginBase, reg_inject, safe_bind, set_cb
+from .registry import Inject, PluginBase, config, reg_inject, safe_bind, set_cb
 
 HOOKABLE_LOG_METHODS = [
     'critical', 'exception', 'error', 'warning', 'info', 'debug'
@@ -213,17 +213,19 @@ def register_custom_log(name, level=INFO, cls=CustomLogger):
 
     >>> bind('logger/conf/errors', custom_func)
     '''
-    dflt_settings = {'print_traceback': True, 'level': WARNING}
-
     log_cls = logging.getLoggerClass()
     logging.setLoggerClass(cls)
 
-    bind_val = copy.deepcopy(dflt_settings)
-    bind_val['level'] = level
-    bind_val['hooks'] = []
     reg_name = f'logger/{name}'
-    safe_bind(reg_name, bind_val)
-    set_cb(f'{reg_name}/level', partial(set_log_level, name))
+
+    config.define(
+        f'{reg_name}/level',
+        default=level,
+        setter=partial(set_log_level, name))
+
+    config.define(
+        f'{reg_name}/print_traceback',
+        default=True)
 
     logger = logging.getLogger(name)
     logger.handlers.clear()
