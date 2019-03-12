@@ -23,10 +23,10 @@ def set_pg_type(ret):
     if ret is None:
         return ret
 
-    if isinstance(ret, (list, tuple)):
-        return tuple([set_pg_type(r) for r in ret])
-
     if not is_type(type(ret)):
+        if isinstance(ret, (list, tuple)):
+            return tuple([set_pg_type(r) for r in ret])
+
         if ret < 0:
             ret = Int(ret)
         else:

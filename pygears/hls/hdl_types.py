@@ -106,18 +106,6 @@ class ResExpr(Expr):
         if is_type(type(self.val)):
             return type(self.val)
 
-        if isinstance(self.val, (list, tuple)):
-            res = []
-            for val in self.val:
-                if is_type(type(val)):
-                    res.append(type(val))
-                else:
-                    if val is not None:
-                        res.append(Integer(val))
-                    else:
-                        res.append(None)
-            return res
-
         if self.val is not None:
             return Integer(self.val)
 
