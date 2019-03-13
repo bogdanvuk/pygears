@@ -5,6 +5,7 @@ from pygears.typing import Uint, bitw
 
 from . import hdl_types as ht
 from .cblock import CBlockVisitor
+from .conditions import Conditions
 from .hdl_ast import HdlAst
 from .hdl_stmt import (AssertionVisitor, BlockConditionsVisitor, InputVisitor,
                        IntfReadyVisitor, IntfValidVisitor, OutputVisitor,
@@ -58,6 +59,9 @@ def parse_gear_body(gear):
 
     # from .cblock import pprint
     # pprint(schedule)
+
+    # clear combined conditions from previous run, if any
+    Conditions().init()
 
     block_visitors = {
         'register_next_state': RegEnVisitor(),

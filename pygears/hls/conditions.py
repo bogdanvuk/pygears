@@ -84,6 +84,12 @@ class ConditionsBase:
     combined_cycle_conds = {}
     combined_exit_conds = {}
 
+    def init(self):
+        self.cycle_conds.clear()
+        self.exit_conds.clear()
+        self.combined_cycle_conds.clear()
+        self.combined_exit_conds.clear()
+
     def add_cycle_cond(self, cond):
         assert cond is not None, 'Attempting to add None id to cycle conditions'
 
