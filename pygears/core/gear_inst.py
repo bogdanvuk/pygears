@@ -325,9 +325,7 @@ def gear_base_resolver(func,
         params = infer_params(args, param_templates, context=func.__globals__)
     except TypeMatchError as e:
         err = TypeMatchError(f'{str(e)}, of the module "{name}"')
-        print(f'{str(e)}, of the module "{name}"')
         params = e.params
-        print(params)
 
     if not err:
         if not params.pop('enablement'):

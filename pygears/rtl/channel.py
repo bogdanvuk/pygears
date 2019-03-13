@@ -28,11 +28,6 @@ class RTLOutChannelVisitor(HierVisitorBase):
         if node.parent is None:
             return True
 
-        # print(node.name)
-        # if node.name == 'is_ifm_mover/do_if/fmap':
-        #     import pdb
-        #     pdb.set_trace()
-
         for p in node.out_ports:
             cons_intf = p.consumer
             consumers_at_same_level_or_sublevel = [
@@ -40,13 +35,6 @@ class RTLOutChannelVisitor(HierVisitorBase):
                 for cons_p in cons_intf.consumers
             ]
             if not all(consumers_at_same_level_or_sublevel) or (not cons_intf):
-                # print(f'Node: {node.name}')
-                # print(f'    {consumers_at_same_level_or_sublevel}')
-
-                # import pdb
-                # pdb.set_trace()
-                # print("Here!")
-
                 cons_intf.parent.child.remove(cons_intf)
                 cons_intf.parent.parent.add_child(cons_intf)
 
