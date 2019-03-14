@@ -77,8 +77,9 @@ int init(void) {
     top->{{p.basename}}_ready = 0;
 {% endfor %}
 
-    top->clk = 1;
     top->rst = 1;
+    top->eval();
+    top->clk = 1;
     top->eval();
 
 {% if tracing %}
