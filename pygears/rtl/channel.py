@@ -31,9 +31,12 @@ class RTLOutChannelVisitor(HierVisitorBase):
         for p in node.out_ports:
             cons_intf = p.consumer
             consumers_at_same_level_or_sublevel = [
-                cons_p in node.parent.out_ports or is_in_subbranch(cons_intf.parent, cons_p.node.parent)
+                # cons_p in node.parent.out_ports or is_in_subbranch(cons_intf.parent, cons_p.node.parent)
+                cons_p in node.parent.out_ports
+                or cons_intf.parent.is_descendent(cons_p.node)
                 for cons_p in cons_intf.consumers
             ]
+
             if not all(consumers_at_same_level_or_sublevel) or (not cons_intf):
                 cons_intf.parent.child.remove(cons_intf)
                 cons_intf.parent.parent.add_child(cons_intf)

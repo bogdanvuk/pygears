@@ -1,4 +1,4 @@
-from pygears.core.gear import alternative, gear
+from pygears import alternative, gear
 from pygears.typing import Queue, Tuple, typeof, Unit
 from pygears.common.shred import shred
 from pygears.common.ccat import ccat

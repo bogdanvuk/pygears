@@ -1,5 +1,5 @@
 from pygears.conf import safe_bind
-from pygears.core.gear import alternative, gear
+from pygears import alternative, gear
 from pygears.typing import Integer, Tuple
 from pygears.core.intf import IntfOperPlugin
 from pygears.util.hof import oper_reduce

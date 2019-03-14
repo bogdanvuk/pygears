@@ -1,7 +1,7 @@
 from pygears import module
 from pygears.sim import delta
 from pygears.typing import Queue, Tuple, typeof
-from pygears.core.gear import gear, alternative
+from pygears import gear, alternative
 from .ccat import ccat
 from .permute import permuted_apply
 from functools import reduce

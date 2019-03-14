@@ -9,6 +9,7 @@ from .intf import Intf
 from .infer_ftypes import TypeMatchError, infer_ftypes, type_is_specified
 from .gear import TooManyArguments, GearTypeNotSpecified, GearArgsNotSpecified
 from .gear import GearPlugin, Gear, module
+from .gear_decorator import GearDecoratorPlugin
 
 
 def get_obj_var_name(frame, obj):
@@ -335,7 +336,7 @@ def gear_base_resolver(func,
                 f'{meta_kwds["definition"].__name__}": '
                 f'{meta_kwds["enablement"]}')
 
-    gear_inst = Gear(func, args, params)
+    gear_inst = Gear(func, args, params, const_args)
 
     if err:
         err.gear = gear_inst
@@ -351,22 +352,21 @@ def gear_base_resolver(func,
             if hasattr(func, 'alternatives') or hasattr(func, 'alternative_to'):
                 err.root_gear = gear_inst
 
-    for name, val in const_args.items():
-        from pygears.common import const
-        const(val=val, intfs=[args[name]])
-
     if err:
         if hasattr(func, 'alternatives') or hasattr(func, 'alternative_to'):
             gear_inst.parent.child.remove(gear_inst)
             for port in gear_inst.in_ports:
-                port.producer.consumers.remove(port)
+                if port.basename not in gear_inst.const_args:
+                    port.producer.consumers.remove(port)
+                else:
+                    gear_inst.parent.child.remove(port.producer.producer.gear)
 
         raise err
 
     return out_intfs
 
 
-class GearInstPlugin(GearPlugin):
+class GearInstPlugin(GearDecoratorPlugin):
     @classmethod
     def bind(cls):
         safe_bind('gear/code_map', [])

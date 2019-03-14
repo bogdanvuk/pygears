@@ -1,4 +1,4 @@
-from pygears.core.gear import gear
+from pygears import gear
 from pygears.core.gear_inst import find_current_gear_frame
 from pygears.core.intf import IntfOperPlugin
 from pygears import module, registry, safe_bind

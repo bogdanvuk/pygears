@@ -1,6 +1,6 @@
 from pygears import module
 from pygears.conf import safe_bind
-from pygears.core.gear import gear
+from pygears import gear
 from pygears.core.intf import IntfOperPlugin
 from pygears.typing import Int, Integer
 

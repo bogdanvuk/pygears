@@ -1,4 +1,4 @@
-from pygears.core.gear import gear
+from pygears import gear
 from pygears.typing import Queue, Union, typeof
 
 from .union import union_collapse

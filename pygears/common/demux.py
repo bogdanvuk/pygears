@@ -1,4 +1,4 @@
-from pygears.core.gear import gear
+from pygears import gear
 from pygears.typing import Union
 from pygears.common.ccat import ccat
 

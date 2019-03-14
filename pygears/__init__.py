@@ -16,7 +16,8 @@ from pygears.util.find import find
 import pygears.sim
 
 from pygears.core.type_match import TypeMatchError
-from pygears.core.gear import gear, alternative, module
+from pygears.core.gear import module
+from pygears.core.gear_decorator import gear, alternative
 
 import pygears.core.gear_inst
 

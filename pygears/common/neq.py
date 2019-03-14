@@ -1,4 +1,4 @@
-from pygears.core.gear import alternative, gear
+from pygears import alternative, gear
 from pygears.typing import Uint
 from pygears.util.hof import oper_tree
 
