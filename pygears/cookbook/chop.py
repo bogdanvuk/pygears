@@ -8,7 +8,17 @@ async def chop(din: Queue[Tuple[{
         'data': 't_data',
         'size': Uint
 }]], *, init=1) -> Queue['t_data', 2]:
+    """Chops the input transaction into sub-transactions by sending the lower
+    ``eot`` after a given number of data has passed (specified by the ``size``
+    field of the :class:`Tuple`)
 
+    Args:
+        init: Initialization value for the counter
+
+    Returns:
+        A level 2 :class:`Queue` type whose data consists of the ``data`` field
+          of the :class:`Tuple` input
+    """
     cnt = din.dtype.data['size'](init)
 
     async for ((data, size), eot) in din:

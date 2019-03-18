@@ -6,6 +6,7 @@ from pygears.typing import Integer, Tuple
 @gear(svgen={'compile': True})
 async def max2(
         din: Tuple[Integer['N1'], Integer['N2']]) -> b'max(din[0], din[1])':
+    """Finds the highest of the two values"""
     async with din as data:
         yield max(data)
 

@@ -6,6 +6,17 @@ from pygears.sim.modules import drv, mon, scoreboard
 
 @gear
 async def check(din, *, ref):
+    """Checks equality of input data with expected.
+
+    Args:
+        ref: A list of expected values
+
+    Returns:
+        None
+
+    If type ``din`` is a :class:`Queue` of certain level, then ``ref`` should
+    generate nested iterables of the same level
+    """
     iter_ref = iter(ref)
     try:
         items = []
@@ -32,7 +43,23 @@ def tlm_verif(*seq, f, ref):
 
 
 def verif(*stim, f, ref, delays=None, tolerance=0):
-    '''Using ref. model'''
+    """Verification environment for comparing DUV results with reference model.
+    The environment instantiates the DUV and reference model and drives the
+    passed stimulus to both. The outpus are passed to the scoreboard which
+    compares the results. Outputs are decoupled to ensure there is no connection
+    between the DUV and the environment. Optional delays can be added to all
+    input and output interfaces.
+
+    Args:
+        stim: Input stimulus
+        f: Gear to be verified
+        ref: Gear used as reference model
+        delays: List of delays for all inputs and outputs
+        tolerance: Tolerance window when performing equality checks
+
+    Returns:
+        A report dictionary with pass/fail statistics
+    """
 
     res_tlm = stim | f
     ref_tlm = stim | ref
@@ -62,7 +89,7 @@ def verif(*stim, f, ref, delays=None, tolerance=0):
 
 
 def directed(*stim, f, ref, delays=None):
-    '''Directed test, ref is a list of expected results'''
+    """Similar to ``verif`` function, except ``ref`` is a list of expected results"""
     res = stim | f
 
     if not isinstance(res, tuple):
@@ -82,7 +109,8 @@ def directed(*stim, f, ref, delays=None):
 
 
 def directed_on_the_fly(*stim, f, refs, delays=None):
-    '''Directed test, but checking done on-the-fly (from generators)'''
+    """Similar to ``directed`` function, except ``ref`` is a generator and
+    checking is done `on-the-fly`"""
     res_tlm = stim | f
 
     if not isinstance(res_tlm, tuple):

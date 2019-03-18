@@ -1,17 +1,14 @@
-import pytest
 import random
-from functools import partial
 
+import pytest
+
+from pygears import Intf
 from pygears.common import filt, filt_by
 from pygears.cookbook.verif import directed
 from pygears.sim import sim
 from pygears.sim.modules.drv import drv
-from pygears.sim.modules.sim_socket import SimSocket
-from pygears.sim.modules.verilator import SimVerilated
-from pygears.typing import Uint, Union, Queue, typeof, Tuple
-from pygears.util.test_utils import skip_ifndef
-from pygears import Intf
-from pygears.util.test_utils import synth_check
+from pygears.typing import Queue, Tuple, Uint, Union, typeof
+from pygears.util.test_utils import skip_ifndef, synth_check
 
 plain_din = Uint[8]
 union_din = Union[Uint[8], Uint[8], Uint[8]]
@@ -56,12 +53,6 @@ def test_pysim_dir(sel, din_t, seq, sim_cls):
         skip_ifndef('RANDOM_TEST')
         seq = [(random.randint(1, 100), random.randint(0, 2))
                for _ in range(random.randint(10, 50))]
-
-    if sim_cls is SimVerilated:
-        skip_ifndef('VERILATOR_ROOT')
-    elif sim_cls is SimSocket:
-        skip_ifndef('SIM_SOCKET_TEST')
-        sim_cls = partial(SimSocket, run=True)
 
     if typeof(din_t, Queue):
         queue_filt_test(din_t, seq, sel, sim_cls)

@@ -4,6 +4,7 @@ from pygears.typing import Queue
 
 @gear(svgen={'compile': True})
 async def alternate_queues(din0: Queue, din1: Queue) -> b'(din0, din1)':
+    """Alternates the propagation of input transactions to their output pairs"""
     async for d in din0:
         yield d, None
     async for d in din1:

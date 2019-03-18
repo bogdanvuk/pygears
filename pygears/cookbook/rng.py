@@ -23,7 +23,6 @@ async def py_rng(cfg: TCfg,
                  t_dout=b'rng_out_type(cfg, cnt_steps)',
                  cnt_steps=False,
                  incr_steps=False) -> Queue['t_dout']:
-
     data = t_dout(0)
 
     async with cfg as (offset, cnt, incr):
@@ -46,9 +45,9 @@ async def py_rng(cfg: TCfg,
 
         for data, last in qrange(start, stop, step):
             if incr_steps:
-                yield module().tout((int(offset) + (data * incr), last))
+                yield int(offset) + (data * incr), last
             else:
-                yield module().tout((data, last))
+                yield data, last
 
 
 @gear(svgen={'svmod_fn': 'rng.sv'})
@@ -80,7 +79,22 @@ async def sv_rng(cfg: TCfg,
 
 @gear
 def rng(cfg: TCfg, *, cnt_steps=False, incr_steps=False, cnt_one_more=False):
+    """Short for range, similar to python range function generates a sequence of
+    numbers. The ``start``, ``cnt`` and ``incr`` fields of the :class:`Tuple`
+    input type are used for the start, stop and step values.
 
+    Args:
+        cnt_steps: Whether the ``cnt`` field represents the how many steps need
+          to be counted or the `stop` position for the range generator
+        incr_steps: Optimization for specific cases. If set increments steps by 1
+          and multiplies the final result
+        cnt_one_more: If set count one value more than specified i.e. include the
+          stop value
+
+    Returns:
+        A :class:`Queue` type whose data consists of the generated values and the
+          `eot` signalizes the last element in the range.
+    """
     any_signed = any([typeof(d, Int) for d in cfg.dtype])
     all_signed = all([typeof(d, Int) for d in cfg.dtype])
     if any_signed and not all_signed:
@@ -92,17 +106,13 @@ def rng(cfg: TCfg, *, cnt_steps=False, incr_steps=False, cnt_one_more=False):
             cnt_steps=cnt_steps,
             incr_steps=incr_steps,
             cnt_one_more=cnt_one_more)
-    else:
-        return cfg | py_rng(cnt_steps=cnt_steps, incr_steps=incr_steps)
+
+    return cfg | py_rng(cnt_steps=cnt_steps, incr_steps=incr_steps)
 
 
 @alternative(rng)
 @gear
-def rng_cnt_only(cfg: Integer['w_cnt'],
-                 *,
-                 cnt_steps=False,
-                 incr_steps=False,
-                 cnt_one_more=False):
+def rng_cnt_only(cfg: Integer['w_cnt']):
     return ccat(0, cfg, 1) | rng
 
 

@@ -11,11 +11,7 @@ from pygears.typing import Int, Queue, Tuple, Uint
 
 def test_basic_unsigned():
     iout = rng(Intf(Tuple[Uint[4], Uint[4], Uint[2]]))
-
-    # rng_gear = find('/rng/py_rng')
-
     assert iout.dtype == Queue[Uint[4]]
-    # assert not rng_gear.params['signed']
 
 
 def test_basic_unsigned_sim(tmpdir):
@@ -27,46 +23,19 @@ def test_basic_unsigned_sim(tmpdir):
     sim(outdir=tmpdir)
 
 
-@pytest.mark.parametrize('din_delay', [0, 1, 10])
-@pytest.mark.parametrize('dout_delay', [0, 1, 10])
-def test_basic_unsigned_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
+@pytest.mark.parametrize('din_delay', [0, 5])
+@pytest.mark.parametrize('dout_delay', [0, 5])
+@pytest.mark.parametrize('cnt_steps', [True, False])
+@pytest.mark.parametrize('incr_steps', [True, False])
+def test_unsigned_cosim(tmpdir, cosim_cls, din_delay, dout_delay, cnt_steps,
+                        incr_steps):
     seq = [(2, 8, 2)]
 
     verif(
         drv(t=Tuple[Uint[4], Uint[4], Uint[2]], seq=seq)
         | delay_rng(din_delay, din_delay),
-        f=rng(sim_cls=cosim_cls),
-        ref=rng(name='ref_model'),
-        delays=[delay_rng(dout_delay, dout_delay)])
-
-    sim(outdir=tmpdir)
-
-
-@pytest.mark.parametrize('din_delay', [0, 1, 10])
-@pytest.mark.parametrize('dout_delay', [0, 1, 10])
-def test_cnt_steps_unsigned_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
-    seq = [(2, 8, 2)]
-
-    verif(
-        drv(t=Tuple[Uint[4], Uint[4], Uint[2]], seq=seq)
-        | delay_rng(din_delay, din_delay),
-        f=rng(cnt_steps=True, sim_cls=cosim_cls),
-        ref=rng(cnt_steps=True, name='ref_model'),
-        delays=[delay_rng(dout_delay, dout_delay)])
-
-    sim(outdir=tmpdir)
-
-
-@pytest.mark.parametrize('din_delay', [0, 1, 10])
-@pytest.mark.parametrize('dout_delay', [0, 1, 10])
-def test_incr_steps_unsigned_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
-    seq = [(2, 8, 2)]
-
-    verif(
-        drv(t=Tuple[Uint[4], Uint[4], Uint[2]], seq=seq)
-        | delay_rng(din_delay, din_delay),
-        f=rng(cnt_steps=True, incr_steps=True, sim_cls=cosim_cls),
-        ref=rng(cnt_steps=True, incr_steps=True, name='ref_model'),
+        f=rng(sim_cls=cosim_cls, cnt_steps=cnt_steps, incr_steps=incr_steps),
+        ref=rng(name='ref_model', cnt_steps=cnt_steps, incr_steps=incr_steps),
         delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(outdir=tmpdir)
@@ -74,11 +43,7 @@ def test_incr_steps_unsigned_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
 
 def test_basic_signed():
     iout = rng(Intf(Tuple[Int[4], Int[6], Uint[2]]))
-
-    # rng_gear = find('/rng/py_rng')
-
     assert iout.dtype == Queue[Int[6]]
-    # assert rng_gear.params['signed']
 
 
 def test_basic_signed_sim(tmpdir):
@@ -90,9 +55,9 @@ def test_basic_signed_sim(tmpdir):
     sim(outdir=tmpdir)
 
 
-@pytest.mark.parametrize('din_delay', [0, 1, 10])
-@pytest.mark.parametrize('dout_delay', [0, 1, 10])
-def test_basic_signed_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
+@pytest.mark.parametrize('din_delay', [0, 5])
+@pytest.mark.parametrize('dout_delay', [0, 5])
+def test_signed_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
     seq = [(-15, -3, 2)]
 
     verif(
@@ -116,7 +81,6 @@ def test_supply_constant():
         'cnt': Uint[4],
         'incr': Uint[1]
     }]
-    # assert not rng_gear.params['signed']
 
 
 def test_cnt_only():
@@ -134,11 +98,11 @@ def test_cnt_only_sim(tmpdir):
 
     directed(drv(t=Uint[4], seq=seq), f=rng, ref=ref)
 
-    sim(outdir=tmpdir, check_activity=False)
+    sim(outdir=tmpdir)
 
 
-@pytest.mark.parametrize('din_delay', [0, 1, 10])
-@pytest.mark.parametrize('dout_delay', [0, 1, 10])
+@pytest.mark.parametrize('din_delay', [0, 5])
+@pytest.mark.parametrize('dout_delay', [0, 5])
 def test_cnt_only_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
     seq = [8]
 
@@ -149,7 +113,7 @@ def test_cnt_only_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
         ref=rng(name='ref_model'),
         delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(outdir=tmpdir, check_activity=False)
+    sim(outdir=tmpdir)
 
 
 def test_cnt_down():
@@ -157,7 +121,6 @@ def test_cnt_down():
 
     rng_gear = find('/rng/py_rng')
 
-    # assert rng_gear.params['signed']
     assert rng_gear.params['cfg'] == Tuple[Int[4], Int[2], Int[1]]
     assert iout.dtype == Queue[Int[4]]
 

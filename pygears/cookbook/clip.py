@@ -4,12 +4,21 @@ from pygears.typing import Queue, Uint, Tuple
 
 
 @gear(svgen={'compile': True})
-async def clip(din: Queue[Tuple['t_data', Uint]], *,
-               init=1) -> Queue['t_data']:
-    ''' Clips the input transaction into two separate transactions by
-sending eot after a given number of data has passed (specified by
-configuration). The second eot is passed from input.
-    '''
+async def clip(din: Queue[Tuple[{
+        'data': 't_data',
+        'size': Uint
+}]], *, init=1) -> Queue['t_data']:
+    """Clips the input transaction into two separate transactions by
+    sending the ``eot`` after a given number of data has passed (specified by
+    the ``size`` field of the :class:`Tuple`)
+
+    Args:
+        init: Initialization value for the counter
+
+    Returns:
+        A :class:`Queue` type whose data consists of the ``data`` field of
+          the :class:`Tuple` input
+    """
     cnt = din.dtype[0][1](init)
     pass_eot = Uint[1](1)
 
