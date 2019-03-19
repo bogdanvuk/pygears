@@ -1,14 +1,21 @@
-from pygears.svgen.svmod import SVModuleGen
-from pygears.svgen.inst import SVGenInstPlugin
-from pygears import gear
-from pygears import module, alternative
+from pygears import alternative, gear, module
 from pygears.sim import clk
+from pygears.svgen.inst import SVGenInstPlugin
+from pygears.svgen.svmod import SVModuleGen
 from pygears.typing import Queue, Union
 
 
-# TODO: why is b' necessary in return expression?
 @gear(enablement=b'not all(typeof(d, Queue) for d in din)')
 async def priority_mux(*din) -> b'Union[din]':
+    """Takes in a tuple of interfaces and passes any active one to the output. If
+    two or more inputs are given at the same time, the input having the highest
+    priority (higher in the list of inputs) will take precedence and will be
+    passed to the output.
+
+    Returns:
+        A :class:`Union` type where the ``ctrl`` field signalizes which input was
+          passed.
+    """
     for i, d in enumerate(din):
         if not d.empty():
             async with d as item:

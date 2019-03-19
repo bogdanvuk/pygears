@@ -8,7 +8,7 @@ async def take(din: Queue[Tuple[{
         'data': 't_data',
         'size': Uint
 }]], *, init=1) -> Queue['t_data']:
-    """Takes the requested number of  input data. The rest are consumed.
+    """Takes the requested number of input data. The rest are consumed.
     The ``data`` field of the :class:`Tuple` type is passed to output, while the
     ``size`` field specifies the requested count. The module resets when the
     input transaction is finished.

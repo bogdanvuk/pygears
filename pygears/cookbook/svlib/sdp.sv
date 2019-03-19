@@ -8,15 +8,15 @@ module sdp
    (
     input clk,
     input rst,
-    dti.consumer wr_addr_data_if,
-    dti.consumer rd_addr_if,
-    dti.producer rd_data_if
+    dti.consumer wr_addr_data,
+    dti.consumer rd_addr,
+    dti.producer rd_data
     );
 
    logic  wr_en_s;
    logic [W_ADDR-1:0] wr_addr_s;
    logic [W_DATA-1:0] wr_data_s;
-   logic                  rd_en_s;
+   logic              rd_en_s;
    logic [W_ADDR-1:0] rd_addr_s;
    logic [W_DATA-1:0] rd_data_s;
 
@@ -29,7 +29,7 @@ module sdp
      (
       .clk(clk),
       .rst(rst),
-      .addr_data_if(wr_addr_data_if),
+      .addr_data_if(wr_addr_data),
       .en_o(wr_en_s),
       .addr_o(wr_addr_s),
       .data_o(wr_data_s)
@@ -44,8 +44,8 @@ module sdp
      (
       .clk(clk),
       .rst(rst),
-      .addr_if(rd_addr_if),
-      .data_if(rd_data_if),
+      .addr_if(rd_addr),
+      .data_if(rd_data),
       .en_o(rd_en_s),
       .addr_o(rd_addr_s),
       .data_i(rd_data_s)
