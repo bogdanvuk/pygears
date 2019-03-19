@@ -520,6 +520,10 @@ class SimPlugin(GearPlugin):
         safe_bind('gear/params/extra/sim_setup', None)
         register_custom_log('sim', cls=SimLog)
 
+        # temporary hack for pytest logger reset issue
+        bind('logger/sim/error', 'exception')
+        bind('logger/sim/print_traceback', False)
+
     @classmethod
     def reset(cls):
         safe_bind('sim/tasks', {})
