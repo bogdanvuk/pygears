@@ -42,3 +42,15 @@ def test_delay(tmpdir, cosim_cls, din_delay, dout_delay):
         ref=accumulator(name='ref_model'),
         delays=[delay_rng(dout_delay, dout_delay)])
     sim(outdir=tmpdir)
+
+
+@pytest.mark.parametrize('din_delay', [0, 1, 10])
+@pytest.mark.parametrize('dout_delay', [0, 1, 10])
+def test_no_offset(tmpdir, cosim_cls, din_delay, dout_delay):
+    verif(
+        drv(t=Queue[Uint[8]], seq=[list(
+            range(3)), list(range(8))]) | delay_rng(din_delay, din_delay),
+        f=accumulator(sim_cls=cosim_cls),
+        ref=accumulator(name='ref_model'),
+        delays=[delay_rng(dout_delay, dout_delay)])
+    sim(outdir=tmpdir)

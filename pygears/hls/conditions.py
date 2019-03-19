@@ -288,6 +288,8 @@ class ConditionsEval(ConditionsBase):
                     self.add_exit_cond(hdl_stmt.id)
                     return ht.subcond_expr(cond, exit_c)
 
+        return ht.subcond_expr(cond, 1)
+
     def _cblock_subconds(self, cond, cblock, cond_type):
         if cond_type == 'cycle':
             return self._cblock_cycle_subconds(cond, cblock)
