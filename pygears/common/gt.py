@@ -14,7 +14,7 @@ async def gt(din: Tuple[Any, Any]) -> Uint[1]:
 
 @alternative(gt)
 @gear
-def lt2(din0: Any, din1: Any):
+def gt2(din0: Any, din1: Any):
     return ccat(din0, din1) | gt
 
 
