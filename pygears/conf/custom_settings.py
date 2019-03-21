@@ -36,28 +36,29 @@ class RCSettings:
             # conf_log().warning(
             #     'Searching for .py files: main does not have __file__, inspecting stack instead'
             # )
-            _, filename, _, function_name, _, _ = inspect.stack()[-1]
+            _, filename, _, _, _, _ = inspect.stack()[-1]
         dirname = os.path.dirname(filename)
         search_dirs.append(dirname)
 
-        while dirname not in ('/', home_path):
-            dirname = os.path.abspath(os.path.join(dirname, '..'))
-            search_dirs.append(dirname)
+        if home_path is not None:
+            while dirname not in ('/', home_path):
+                dirname = os.path.abspath(os.path.join(dirname, '..'))
+                search_dirs.append(dirname)
 
-        search_dirs.append(home_path)
-        search_dirs.append(os.path.join(home_path, '.pygears'))
+            search_dirs.append(home_path)
+            search_dirs.append(os.path.join(home_path, '.pygears'))
 
         return search_dirs
 
     def find_rc(self, dirname):
         rc_path = os.path.join(dirname, f'{self.rc_fn}.py')
-        if (os.path.exists(rc_path)):
+        if os.path.exists(rc_path):
             runpy.run_path(rc_path)
             return
 
         conf = None
         rc_path = os.path.join(dirname, f'{self.rc_fn}.yaml')
-        if (os.path.exists(rc_path)):
+        if os.path.exists(rc_path):
             with open(rc_path) as f:
                 try:
                     import yaml
@@ -69,7 +70,7 @@ class RCSettings:
                         f'installed')
 
         rc_path = os.path.join(dirname, f'{self.rc_fn}.json')
-        if (os.path.exists(rc_path)):
+        if os.path.exists(rc_path):
             with open(rc_path) as f:
                 conf = json.load(f)
 

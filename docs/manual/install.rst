@@ -6,7 +6,10 @@ Installation
 Windows
 -------
 
-PyGears has been tested to work on Windows 7 with `Python 3.6.6 <https://www.python.org/ftp/python/3.6.6/python-3.6.6.exe>`_ and installed via `PyCharm <https://www.jetbrains.com/pycharm/>`_. Currently PyGears does not support co-simulation with third-party RTL simulators on Windows.
+PyGears has been tested to work on Windows 7 and Windows 10 with `Python 3.6.6 <https://www.python.org/ftp/python/3.6.6/python-3.6.6.exe>`_ and installed via `PyCharm <https://www.jetbrains.com/pycharm/>`_. Currently PyGears does not support co-simulation with third-party RTL simulators on Windows.
+
+However co-simulation with Verilator can be achived using `CygWin <https://cygwin.com/>`_. Installing open-source tools Verilator and GTKWave using `CygWin <https://cygwin.com/>`_ is explained on the ``ZipCPU blog <https://zipcpu.com/blog/2017/07/28/cygwin-fpga.html>`_. Depending on the version you might need to add ``gcc-g++`` to CygWin packages as well as the appropriate Python version and need not prefix some commands with ``sudo``. Important: co-simulation tests must be ran with Python from the CygWin environment, not from Windows.
+
 
 Linux
 -----

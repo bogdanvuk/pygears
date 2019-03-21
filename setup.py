@@ -59,7 +59,10 @@ setup(
     package_data={'': ['*.j2', '*.sv']},
     include_package_data=True,
     keywords='functional hardware design Python simulator HDL ASIC FPGA Gears',
-    install_requires=['jinja2>=2.10', 'pygears-tools', 'dataclasses', 'pyvcd'],
+    install_requires=[
+        'jinja2>=2.10', 'pygears-tools', 'dataclasses;python_version<"3.7"',
+        'pyvcd'
+    ],
     packages=find_packages(exclude=['examples*', 'docs']),
     entry_points={
         'console_scripts': [

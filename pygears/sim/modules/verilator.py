@@ -90,7 +90,7 @@ class SimVerilated(CosimBase):
 
         tracing_enabled = bool(registry('svgen/debug_intfs'))
         if tracing_enabled:
-            print("Debugg: ", registry('svgen/debug_intfs'))
+            sim_log().info(f"Debugg: {registry('svgen/debug_intfs')}")
             self.trace_fn = f'{self.outdir}/vlt_dump.vcd'
             try:
                 subprocess.call(f"rm -f {self.trace_fn}", shell=True)
@@ -103,8 +103,11 @@ class SimVerilated(CosimBase):
                 sim_log().info(
                     f'Verilator VCD dump to "{self.outdir}/vlt_dump.vcd"')
 
-        self.verilib = ctypes.CDLL(
-            os.path.join(self.objdir, f'V{self.wrap_name}'))
+        dll_path = os.path.join(self.objdir, f'V{self.wrap_name}')
+        try:
+            self.verilib = ctypes.CDLL(dll_path)
+        except OSError:
+            self.verilib = ctypes.CDLL(dll_path + '.exe')
 
         self.finished = False
         atexit.register(self._finish)
