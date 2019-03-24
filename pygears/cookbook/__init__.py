@@ -22,6 +22,8 @@ from .priority_mux_valve import priority_mux_valve
 from .max_gears import max2
 from .unary import unary
 from .alternate_queues import alternate_queues
+from .delay import delay, delay_rng
+from .verif import directed, verif
 
 # hier. blocks
 from .reduce2 import reduce2
@@ -30,5 +32,6 @@ __all__ = [
     'rng', 'iceil', 'priority_mux', 'qcnt', 'sdp', 'chop', 'trr', 'replicate',
     'trr_dist', 'clip', 'din_cat', 'take', 'release_after_eot', 'reverse',
     'valve', 'form_sub_cfg', 'reduce2', 'accumulator', 'tr_cnt', 'repack',
-    'priority_mux_valve', 'max2', 'qlen_cnt', 'unary', 'alternate_queues'
+    'priority_mux_valve', 'max2', 'qlen_cnt', 'unary', 'alternate_queues',
+    'delay', 'delay_rng', 'directed', 'verif'
 ]
