@@ -139,4 +139,13 @@ class NamedHierNode(HierNode):
             return self.basename
 
     def is_descendent(self, node):
-        return node.name.startswith(self.name)
+        if not self.name or node.name == self.name:
+            return True
+
+        if not node.name.startswith(self.name):
+            return False
+
+        # make sure that the node is an actual descendent
+        # not a different gear with the same prefix in its name
+        child_part = node.name.split(self.name, 1)[1]
+        return child_part.startswith(('/', '.'))
