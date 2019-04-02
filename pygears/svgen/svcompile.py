@@ -6,9 +6,9 @@ from .util import svgen_typedef
 REG_TEMPLATE = """
 always_ff @(posedge clk) begin
     if(rst | rst_cond) begin
-        {0}_reg = {1};
+        {0}_reg <= {1};
     end else if ({0}_en) begin
-        {0}_reg = {0}_next;
+        {0}_reg <= {0}_next;
     end
 end
 """
