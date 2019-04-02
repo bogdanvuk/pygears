@@ -5,7 +5,6 @@ from collections import OrderedDict
 
 import pygears
 from pygears import registry, safe_bind
-from pygears.definitions import COMMON_SVLIB_DIR, COOKBOOK_SVLIB_DIR
 from pygears.svgen.inst import SVGenInstPlugin
 from pygears.svgen.svparse import parse
 
@@ -313,8 +312,3 @@ class SVGenSVModPlugin(SVGenInstPlugin):
     def bind(cls):
         safe_bind('svgen/module_namespace/Gear', SVModuleGen)
         safe_bind('svgen/module_namespace/RTLNodeDesign', SVTopGen)
-
-        if 'sv_paths' not in cls.registry['svgen']:
-            cls.registry['svgen']['sv_paths'] = []
-        cls.registry['svgen']['sv_paths'].extend(
-            [COMMON_SVLIB_DIR, COOKBOOK_SVLIB_DIR])

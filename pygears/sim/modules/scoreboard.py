@@ -10,6 +10,8 @@ def match_check(data, ref, tolerance):
 
 
 def tolerance_check(items, tolerance):
+    match = False
+
     if typeof(type(items[0]), Queue):
         for val in items:
             match = match_check(val.data, items[0].data, tolerance)
@@ -23,6 +25,8 @@ def tolerance_check(items, tolerance):
             match = match_check(val, items[0], tolerance)
             if not match:
                 break
+
+    return match
 
 
 @gear
@@ -51,7 +55,7 @@ async def scoreboard(*din: b't', report, tolerance=0) -> None:
                 items.append(await d.get())
 
             if tolerance != 0:
-                tolerance_check(items, tolerance)
+                match = tolerance_check(items, tolerance)
             else:
                 match = all(v == items[0] for v in items)
 

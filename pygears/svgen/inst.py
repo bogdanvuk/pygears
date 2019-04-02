@@ -4,6 +4,7 @@ import os
 from pygears import PluginBase, registry, safe_bind, config
 from pygears.conf import register_custom_log
 from pygears.core.hier_node import HierVisitorBase
+from pygears.definitions import COMMON_SVLIB_DIR, COOKBOOK_SVLIB_DIR
 from pygears.definitions import USER_SVLIB_DIR
 from pygears.svgen.intf import SVIntfGen
 
@@ -52,7 +53,9 @@ class SVGenInstPlugin(PluginBase):
     def bind(cls):
         safe_bind('svgen/map', {})
         safe_bind('svgen/module_namespace', {})
-        config.define('svgen/sv_paths', default=[USER_SVLIB_DIR])
+        config.define(
+            'svgen/sv_paths',
+            default=[USER_SVLIB_DIR, COMMON_SVLIB_DIR, COOKBOOK_SVLIB_DIR])
         register_custom_log('svgen', logging.WARNING)
 
     @classmethod

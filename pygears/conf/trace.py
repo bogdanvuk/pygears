@@ -13,7 +13,7 @@ from pygears.definitions import ROOT_DIR
 from .log import register_custom_log, CustomLogger, LogPlugin, core_log
 from .pdb_patch import patch_pdb, unpatch_pdb
 from .registry import (Inject, PluginBase, RegistryHook, config, reg_inject,
-                       registry, bind)
+                       registry, bind, safe_bind)
 
 
 class MultiAlternativeError(Exception):
@@ -50,19 +50,20 @@ class TraceLevel(IntEnum):
     user = 1
 
 
-class TraceConfig(RegistryHook):
-    def _set_level(self, val):
-        if val == TraceLevel.user:
-            patch_pdb()
-        else:
-            unpatch_pdb()
+def set_trace_level(var, val):
+    if val == TraceLevel.user:
+        patch_pdb()
+    else:
+        unpatch_pdb()
 
 
 class TraceConfigPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        cls.registry['trace'] = TraceConfig(level=TraceLevel.debug)
-        cls.registry['trace']['hooks'] = []
+        safe_bind('trace/hooks', [])
+
+        config.define(
+            'trace/level', setter=set_trace_level, default=TraceLevel.user)
 
         config.define(
             'trace/ignore',
