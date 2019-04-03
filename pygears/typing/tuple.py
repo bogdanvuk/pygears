@@ -226,7 +226,7 @@ class Tuple(tuple, metaclass=TupleType):
     """
 
     def __new__(cls, val):
-        if type(val) == cls:
+        if isinstance(val, cls):
             return val
 
         if not cls.is_specified():
