@@ -1,5 +1,5 @@
 from pygears import gear, Intf
-from pygears.common import fifo, union_collapse, fmap, decoupler
+from pygears.common import fifo, union_collapse, fmap, decoupler, filt
 from pygears.typing import Int, ceil_pow2
 from pygears.cookbook import priority_mux
 

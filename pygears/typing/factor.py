@@ -1,5 +1,5 @@
 from pygears.conf import safe_bind
-from pygears.typing import TypingNamespacePlugin, Queue, Tuple, Union, typeof
+from . import Queue, Tuple, Union, typeof
 
 
 def factor(type_):
@@ -20,9 +20,3 @@ def factor(type_):
             return Queue[Tuple[tuple(tuple_types)], type_[0].lvl]
     else:
         return type_
-
-
-class TypeFactorPlugin(TypingNamespacePlugin):
-    @classmethod
-    def bind(cls):
-        safe_bind('gear/type_arith/factor', factor)

@@ -1,6 +1,6 @@
 from pygears import gear, alternative, module
 from pygears.typing import Queue
-from pygears.typing_common.flatten import flatten as type_flatten
+from pygears.typing.flatten import flatten as type_flatten
 from operator import and_
 
 from functools import reduce

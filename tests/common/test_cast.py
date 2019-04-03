@@ -1,4 +1,4 @@
-from pygears.typing_common import cast
+from pygears.typing import cast
 from pygears.common import cast as cast_gear
 from pygears.typing import Tuple, Uint, Queue, Int
 from pygears import Intf

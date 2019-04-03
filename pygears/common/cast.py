@@ -2,7 +2,7 @@ from pygears import gear, module
 from pygears.conf import safe_bind
 from pygears.core.intf import IntfOperPlugin
 from pygears.rtl.connect import rtl_connect
-from pygears.typing_common import cast as type_cast
+from pygears.typing import cast as type_cast
 from pygears.rtl.gear import RTLGearHierVisitor
 from pygears.rtl import flow_visitor, RTLPlugin
 

@@ -1,5 +1,5 @@
 from pygears.conf import safe_bind
-from pygears.typing import TypingNamespacePlugin, Queue, Tuple, Union, typeof
+from . import Queue, Tuple, Union, typeof
 
 
 def next_pos(type_list, comb, t):
@@ -45,9 +45,3 @@ def expand(type_):
             return Union[tuple(utypes)]
     else:
         return type_
-
-
-class TypeExpandPlugin(TypingNamespacePlugin):
-    @classmethod
-    def bind(cls):
-        safe_bind('gear/type_arith/expand', expand)

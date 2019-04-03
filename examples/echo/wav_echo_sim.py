@@ -36,14 +36,14 @@ def wav_echo_sim(ifn,
         feedback_gain=feedback_gain,
         delay=delay)
 
-    print(f'Result length: {len(res)}')
+    # print(f'Result length: {len(res)}')
 
-    wav_utils.dump_wav(ofn, res, params, stereo=stereo)
+    # wav_utils.dump_wav(ofn, res, params, stereo=stereo)
 
-    try:
-        wav_utils.plot_wavs(samples, res, stereo=stereo)
-    except:
-        pass
+    # try:
+    #     wav_utils.plot_wavs(samples, res, stereo=stereo)
+    # except:
+    #     pass
 
 
 @gear
@@ -80,7 +80,7 @@ def mono_echo_sim(seq,
                sim_cls=SimVerilated if cosim else None) \
         | collect(result=result, samples_num=len(seq))
 
-    sim(outdir='./build')
+    # sim(outdir='./build')
 
     return result
 

@@ -1,4 +1,4 @@
-from pygears.typing_common import flatten
+from pygears.typing import flatten
 from pygears.typing import Tuple, Unit, Uint
 
 

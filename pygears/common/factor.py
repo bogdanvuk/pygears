@@ -2,7 +2,7 @@ from pygears import gear, alternative
 from pygears.common.fmap import fmap
 from pygears.common.flatten import flatten
 from pygears.typing import Tuple, typeof, Queue, Union, Uint
-from pygears.typing_common import factor as factor_type
+from pygears.typing import factor as factor_type
 
 
 def is_union_of_queues_with_equal_len(din):

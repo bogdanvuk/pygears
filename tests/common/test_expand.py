@@ -2,7 +2,7 @@ from pygears import Intf
 from pygears import registry
 from pygears.typing import Queue, Tuple, Union, Uint
 from pygears.typing.base import param_subs
-from pygears.typing_common.expand import expand as expand_type
+from pygears.typing.expand import expand as expand_type
 from pygears.common import expand
 
 

@@ -2,7 +2,7 @@ from pygears import registry, Intf
 from pygears.common import factor
 from pygears.typing import Queue, Tuple, Union, Uint
 from pygears.typing.base import param_subs
-from pygears.typing_common.factor import factor as factor_type
+from pygears.typing.factor import factor as factor_type
 
 
 # Tests for out type resolve function

@@ -25,8 +25,7 @@ from pygears.core.intf import Intf
 
 import pygears.common
 import pygears.typing
-import pygears.typing_common
-import pygears.typing_common.pprint
+import pygears.typing.pprint
 
 # import os
 # from pygears.registry import load_plugin_folder

@@ -8,7 +8,7 @@ from .mux import mux_zip, mux_valve
 from .ccat import ccat
 from .demux import demux_zip
 from pygears.typing import Tuple, Union, Uint, typeof
-from pygears.typing_common import expand as expand_type
+from pygears.typing import expand as expand_type
 
 # TODO: add implementation for arbitrary depth
 

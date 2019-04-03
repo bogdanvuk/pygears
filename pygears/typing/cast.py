@@ -1,6 +1,6 @@
 from pygears.conf import safe_bind
-from pygears.typing import TypingNamespacePlugin, typeof, is_type
-from pygears.typing import Int, Uint, Queue, Tuple, Union, Array, Integer
+from .base import typeof, is_type
+from . import Int, Uint, Queue, Tuple, Union, Array, Integer
 from pygears.conf.log import gear_log
 
 
@@ -72,9 +72,3 @@ def cast(data, cast_type):
         return type_cast(data, cast_type)
     else:
         return value_cast(data, cast_type)
-
-
-class CastTypePlugin(TypingNamespacePlugin):
-    @classmethod
-    def bind(cls):
-        safe_bind('gear/type_arith/cast', cast)

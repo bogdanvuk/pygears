@@ -1,5 +1,5 @@
 from pygears.conf import safe_bind
-from pygears.typing import Queue, Tuple, Unit, TypingNamespacePlugin
+from . import Queue, Tuple, Unit
 
 
 def flatten(dtype, lvl=1):
@@ -26,9 +26,3 @@ def flatten(dtype, lvl=1):
             return Tuple[tuple(out_args)]
     else:
         return dtype
-
-
-class TypeFlattenPlugin(TypingNamespacePlugin):
-    @classmethod
-    def bind(cls):
-        safe_bind('gear/type_arith/flatten', flatten)
