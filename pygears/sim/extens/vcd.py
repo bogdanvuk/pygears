@@ -315,7 +315,7 @@ class VCD(SimExtend):
             if self.shmid_proc:
                 self.shmid_proc.terminate()
 
-    def after_run(self, sim):
+    def after_cleanup(self, sim):
         self.finish()
 
 
