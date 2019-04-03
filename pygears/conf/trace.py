@@ -70,11 +70,11 @@ class TraceConfigPlugin(PluginBase):
             default=[os.path.join(ROOT_DIR, d) for d in ['core', 'conf']])
 
 
-def parse_trace(s, t):
+def parse_trace(s):
     if registry('trace/level') == TraceLevel.debug:
         return s
     else:
-        trace_fn = t[0].f_code.co_filename
+        trace_fn = os.path.abspath(s.filename)
         is_internal = any(
             trace_fn.startswith(d) for d in config['trace/ignore'])
 
@@ -99,16 +99,18 @@ def register_issue(err_cls, err, issues=Inject('trace/issues')):
     return issue
 
 
+def enum_formated_stack_frames(summary):
+    for frame, display in zip(summary, summary.format()):
+        if parse_trace(frame):
+            yield display
+
+
 def enum_traceback(tr):
-    for s, t in zip(format_list(extract_tb(tr)), walk_tb(tr)):
-        if parse_trace(s, t):
-            yield s
+    yield from enum_formated_stack_frames(extract_tb(tr))
 
 
 def enum_stacktrace():
-    for s, t in zip(format_list(extract_stack()), walk_stack(f=None)):
-        if parse_trace(s, t):
-            yield s
+    yield from enum_formated_stack_frames(extract_stack())
 
 
 def register_exit_hook(hook, *args, **kwds):
@@ -162,7 +164,6 @@ def stack_trace(name,
         f.write(delim)
         f.write(f'{name} [{verbosity.upper()}] {message}\n\n')
         tr = ''
-        exc_type, exc_value, exc_traceback = sys.exc_info()
         for s in enum_stacktrace():
             tr += s
         f.write(tr)
