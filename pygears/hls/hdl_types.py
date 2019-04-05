@@ -188,7 +188,8 @@ class IntfDef(Expr):
     @property
     def dtype(self):
         if isinstance(self.intf, tuple):
-            return self.intf[0].dtype
+            intf = max(self.intf, key=lambda x: int(getattr(x, 'dtype')))
+            return intf.dtype
 
         return self.intf.dtype
 
