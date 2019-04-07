@@ -1,16 +1,16 @@
 import ast
+import itertools
 
 from pygears.typing import (Array, Int, Integer, Queue, Tuple, Uint, Unit,
-                            is_type, typeof)
-from pygears.typing.base import TypingMeta
+                            typeof)
 
 from . import hdl_types as ht
+from .hdl_ast_assign import HdlAstAssign
 from .hdl_ast_call import HdlAstCall
 from .hdl_ast_forimpl import HdlAstForImpl
 from .hdl_ast_try_except import HdlAstTryExcept
 from .hdl_utils import (AstTypeError, VisitError, eval_expression,
-                        find_assign_target, find_for_target, set_pg_type,
-                        interface_operations)
+                        find_assign_target, interface_operations, set_pg_type)
 
 OPMAP = {
     ast.Add: '+',
@@ -42,8 +42,7 @@ OPMAP = {
 
 def intf_parse(intf, target):
     if isinstance(intf, ht.IntfDef):
-        scope = gather_control_stmt_vars(
-            target, intf, dtype=intf.intf[0].dtype)
+        scope = gather_control_stmt_vars(target, intf, dtype=intf.dtype)
         block_intf = ht.IntfDef(
             intf=intf.intf, name=intf.name, context='valid')
     else:
@@ -95,34 +94,31 @@ def gather_control_stmt_vars(variables, intf, attr=None, dtype=None):
 
 class HdlAst(ast.NodeVisitor):
     def __init__(self, gear, regs, variables, intfs):
-        self.in_ports = [ht.IntfExpr(p) for p in gear.in_ports]
-        self.out_ports = [ht.IntfExpr(p) for p in gear.out_ports]
-
         self.locals = {
             **intfs['namedargs'],
             **gear.explicit_params,
             **intfs['varargs']
         }
-        self.variables = variables
-        self.regs = regs
-        self.in_intfs = intfs['vars']
-        self.out_intfs = intfs['outputs']
         self.scope = []
         self.stage_hier = []
+        self.gear = gear
+        self.await_found = None
 
+        in_ports = [ht.IntfExpr(p) for p in gear.in_ports]
         named = {}
-        for port in self.in_ports:
+        for port in in_ports:
             if port.name in intfs['namedargs']:
                 named[port.name] = port
-        self.hdl_locals = {**named, **intfs['varargs']}
+        hdl_locals = {**named, **intfs['varargs']}
 
-        self.gear = gear
-
-        self.call_functions = HdlAstCall()
-        self.for_impl = HdlAstForImpl(self)
-        self.try_except = HdlAstTryExcept(self)
-
-        self.await_found = None
+        self.data = ht.ModuleDataContainer(
+            in_ports=in_ports,
+            out_ports=[ht.IntfExpr(p) for p in gear.out_ports],
+            hdl_locals=hdl_locals,
+            regs=regs,
+            variables=variables,
+            in_intfs=intfs['vars'],
+            out_intfs=intfs['outputs'])
 
     def enter_block(self, block):
         self.scope.append(block)
@@ -131,7 +127,7 @@ class HdlAst(ast.NodeVisitor):
         self.scope.pop()
 
     def get_context_var(self, pyname):
-        var = self.hdl_locals.get(pyname, None)
+        var = self.data.hdl_locals.get(pyname, None)
 
         if isinstance(var, ht.RegDef):
             return ht.OperandVal(var, 'reg')
@@ -172,7 +168,7 @@ class HdlAst(ast.NodeVisitor):
         intf = self.visit_NameExpression(node.iter)
         scope, loop_intf = intf_parse(intf=intf, target=node.target)
 
-        self.hdl_locals.update(scope)
+        self.data.hdl_locals.update(scope)
 
         hdl_node = ht.IntfLoop(intf=loop_intf, stmts=[], multicycle=scope)
 
@@ -185,7 +181,7 @@ class HdlAst(ast.NodeVisitor):
         scope, block_intf = intf_parse(
             intf=intf, target=node.items[0].optional_vars)
 
-        self.hdl_locals.update(scope)
+        self.data.hdl_locals.update(scope)
 
         hdl_node = ht.IntfBlock(intf=block_intf, stmts=[])
 
@@ -217,10 +213,10 @@ class HdlAst(ast.NodeVisitor):
             if index.start is None:
                 index = slice(0, index.stop, index.step)
 
-        if hasattr(node.value, 'id') and node.value.id in self.out_intfs:
+        if hasattr(node.value, 'id') and node.value.id in self.data.out_intfs:
             # conditional assginment, not subscript
             for i in range(len(val_expr.op)):
-                self.out_ports[i].context = ht.BinOpExpr(
+                self.data.out_ports[i].context = ht.BinOpExpr(
                     (index, ht.ResExpr(i)), '==')
             return None
 
@@ -248,124 +244,8 @@ class HdlAst(ast.NodeVisitor):
         assign_node = ast.Assign([node.target], expr)
         return self.visit_Assign(assign_node)
 
-    def assign_reg(self, name, index, val):
-        if name not in self.hdl_locals:
-            self.hdl_locals[name] = ht.RegDef(val, name)
-            return None
-
-        if index:
-            return ht.RegNextStmt(index, val)
-
-        return ht.RegNextStmt(self.hdl_locals[name], val)
-
-    def assign_variable(self, name, index, val):
-        if name not in self.hdl_locals:
-            self.hdl_locals[name] = ht.VariableDef(val, name)
-
-        if index:
-            return ht.VariableStmt(index, val)
-
-        return ht.VariableStmt(self.hdl_locals[name], val)
-
-    def assign_in_intf(self, name, index, val):
-        if name not in self.hdl_locals:
-            self.hdl_locals[name] = ht.IntfDef(val, name)
-
-        if index:
-            return ht.IntfStmt(index, val)
-
-        if name in self.in_intfs:
-            # when *din used as din[x], hdl_locals contain all interfaces
-            # but a specific one is needed
-            return ht.IntfStmt(ht.IntfDef(val, name), val)
-
-        return ht.IntfStmt(self.hdl_locals[name], val)
-
-    def assign_out_intf(self, name, index, val):
-        if name not in self.hdl_locals:
-            if not all([v is None for v in val.val]):
-                self.hdl_locals[name] = ht.IntfDef(val, name)
-            else:
-                self.hdl_locals[name] = ht.IntfDef(self.out_ports, name)
-
-        if index:
-            return ht.IntfStmt(index, val)
-
-        ret_stmt = False
-        if not hasattr(val, 'val'):
-            ret_stmt = True
-        elif isinstance(val.val, ht.IntfDef):
-            ret_stmt = True
-        elif not all([v is None for v in val.val]):
-            ret_stmt = True
-
-        if ret_stmt:
-            return ht.IntfStmt(self.hdl_locals[name], val)
-
-        return None
-
-    def assign(self, name, index, val):
-        for var in self.variables:
-            if var == name and not isinstance(self.variables[name], ht.Expr):
-                self.variables[name] = ht.VariableDef(val, name)
-                break
-
-        if name in self.regs:
-            return self.assign_reg(name, index, val)
-
-        if name in self.variables:
-            return self.assign_variable(name, index, val)
-
-        if name in self.in_intfs:
-            return self.assign_in_intf(name, index, val)
-
-        if name in self.out_intfs:
-            return self.assign_out_intf(name, index, val)
-
-        raise VisitError('Unknown assginment type')
-
-    def find_assign_value(self, node, names):
-        intf_assigns = [n in self.in_intfs for n in names]
-        assert intf_assigns[
-            1:] == intf_assigns[:
-                                -1], f'Mixed assignment of interfaces and variables not allowed'
-
-        vals = self.visit_DataExpression(node.value)
-
-        if len(names) == 1:
-            return [vals]
-
-        if isinstance(vals, ht.ConcatExpr):
-            return vals.operands
-
-        if isinstance(vals, ht.ResExpr):
-            return [ht.ResExpr(v) for v in vals.val]
-
-        raise VisitError('Unknown assginment value')
-
     def visit_Assign(self, node):
-        names = find_assign_target(node)
-        indexes = [None] * len(names)
-
-        for i, name_node in enumerate(node.targets):
-            if hasattr(name_node, 'value'):
-                indexes[i] = self.visit(name_node)
-
-        vals = self.find_assign_value(node, names)
-
-        res = []
-        assert len(names) == len(indexes) == len(
-            vals), 'Assign lenght mismatch'
-        for name, index, val in zip(names, indexes, vals):
-            res.append(self.assign(name, index, val))
-
-        assert len(names) == len(
-            res), 'Assign target and result lenght mismatch'
-
-        if len(names) == 1:
-            return res[0]
-
-        return ht.ContainerBlock(stmts=res)
+        return HdlAstAssign(self).analyze(node)
 
     def visit_NameExpression(self, node):
         if isinstance(node, ast.Subscript):
@@ -378,11 +258,11 @@ class HdlAst(ast.NodeVisitor):
                 stmt = self.visit(snip)
                 self.scope[-1].stmts.append(stmt)
 
-            assert name in self.in_intfs
-            return self.in_intfs[name]
+            assert name in self.data.in_intfs
+            return self.data.in_intfs[name]
 
-        if node.id in self.in_intfs:
-            return self.in_intfs[node.id]
+        if node.id in self.data.in_intfs:
+            return self.data.in_intfs[node.id]
 
         ret = eval_expression(node, self.locals)
 
@@ -402,14 +282,14 @@ class HdlAst(ast.NodeVisitor):
     def find_intf_by_name(self, name):
         val = None
 
-        for port in self.in_ports:
+        for port in self.data.in_ports:
             if name == port.name:
                 val = port
                 break
         if val is None:
-            for port in self.in_intfs:
+            for port in self.data.in_intfs:
                 if name == port:
-                    val = self.in_intfs[port]
+                    val = self.data.in_intfs[port]
                     break
 
         return val
@@ -443,55 +323,7 @@ class HdlAst(ast.NodeVisitor):
             self.locals, globals())
 
     def visit_Call(self, node):
-        arg_nodes = [self.visit_DataExpression(arg) for arg in node.args]
-
-        func_args = arg_nodes
-        if all(isinstance(node, ht.ResExpr) for node in arg_nodes):
-            func_args = []
-            for arg in arg_nodes:
-                if is_type(type(arg.val)) and not typeof(type(arg.val), Unit):
-                    func_args.append(str(int(arg.val)))
-                else:
-                    func_args.append(str(arg.val))
-
-        try:
-            ret = eval(f'{node.func.id}({", ".join(func_args)})')
-            return ht.ResExpr(ret)
-        except:
-            return self.call_func(node, func_args)
-
-    def call_func(self, node, func_args):
-        if hasattr(node.func, 'attr'):
-            if node.func.attr == 'dtype':
-                func = eval_expression(node.func, self.hdl_locals)
-                ret = eval(f'func({", ".join(func_args)})')
-                return ht.ResExpr(ret)
-
-            if node.func.attr == 'tout':
-                return self.cast_return(func_args)
-
-        kwds = {}
-        if hasattr(node.func, 'attr'):
-            kwds['value'] = self.visit_DataExpression(node.func.value)
-            func = node.func.attr
-        elif hasattr(node.func, 'id'):
-            func = node.func.id
-        else:
-            # safe guard
-            raise VisitError('Unrecognized func node in call')
-
-        func_dispatch = getattr(self.call_functions, f'call_{func}', None)
-        if func_dispatch:
-            return func_dispatch(*func_args, **kwds)
-
-        if func in self.gear.params:
-            assert isinstance(self.gear.params[func], TypingMeta)
-            assert len(func_args) == 1, 'Cast with multiple arguments'
-            return ht.CastExpr(
-                operand=func_args[0], cast_to=self.gear.params[func])
-
-        # safe guard
-        raise VisitError('Unrecognized func in call')
+        return HdlAstCall(self).analyze(node)
 
     def cast_return(self, arg_nodes):
         if isinstance(arg_nodes, list):
@@ -505,7 +337,7 @@ class HdlAst(ast.NodeVisitor):
                 input_vars.append(
                     ht.SubscriptExpr(val=arg_nodes.op, index=ht.ResExpr(i)))
         else:
-            assert len(self.out_ports) == 1
+            assert len(self.data.out_ports) == 1
             input_vars = [arg_nodes]
 
         args = []
@@ -615,16 +447,7 @@ class HdlAst(ast.NodeVisitor):
         return self.visit_block(hdl_node, node.body)
 
     def visit_For(self, node):
-        res = self.visit_DataExpression(node.iter)
-
-        names = find_for_target(node)
-
-        func_dispatch = getattr(self.for_impl, f'for_{node.iter.func.id}',
-                                None)
-        if func_dispatch:
-            return func_dispatch(node, res, names)
-
-        raise VisitError('Unsuported func in for loop')
+        return HdlAstForImpl(self).analyze(node)
 
     def visit_Expr(self, node):
         if isinstance(node.value, ast.Yield):
@@ -634,17 +457,17 @@ class HdlAst(ast.NodeVisitor):
         return None
 
     def visit_Yield(self, node):
-        if isinstance(node.value, ast.Tuple) and len(self.out_ports) > 1:
+        if isinstance(node.value, ast.Tuple) and len(self.data.out_ports) > 1:
             ports = []
             expr = [
                 self.visit_DataExpression(item) for item in node.value.elts
             ]
             for i, val in enumerate(expr):
                 if not (isinstance(val, ht.ResExpr) and val.val is None):
-                    ports.append(self.out_ports[i])
+                    ports.append(self.data.out_ports[i])
         else:
             expr = super().visit(node.value)
-            ports = self.out_ports
+            ports = self.data.out_ports
         return ht.Yield(stmts=[self.cast_return(expr)], ports=ports)
 
     def visit_Await(self, node):
@@ -661,92 +484,19 @@ class HdlAst(ast.NodeVisitor):
         return self.visit(node.value)
 
     def visit_Try(self, node):
-        assert len(
-            node.
-            handlers) == 1, f'Try/except block must only except one exception'
-        try_block = self.try_except.find_condition(node)
-        if try_block is None:
-            raise VisitError('No condition found for try/except block')
-
-        self.visit_block(try_block, node.body)
-
-        except_block = ht.IfBlock(
-            _in_cond=ht.create_oposite(try_block.in_cond), stmts=[])
-        self.visit_block(except_block, node.handlers[0].body)
-
-        return ht.ContainerBlock(stmts=[try_block, except_block])
+        return HdlAstTryExcept(self).analyze(node)
 
     def visit_AsyncFunctionDef(self, node):
-        hdl_node = ht.Module(
-            in_ports=self.in_ports,
-            out_ports=self.out_ports,
-            locals=self.hdl_locals,
-            regs=self.regs,
-            variables=self.variables,
-            intfs=self.in_intfs,
-            out_intfs=self.out_intfs,
-            stmts=[])
+        hdl_node = ht.Module(data=self.data, stmts=[])
 
         # initialization for register without explicit assign in code
-        reg_names = list(self.regs.keys())
-        assign_names = [
-            stmt.targets[0].id for stmt in node.body
-            if isinstance(stmt, ast.Assign)
-        ]
+        reg_names = list(self.data.regs.keys())
+        assign_names = list(
+            itertools.chain.from_iterable(
+                find_assign_target(stmt) for stmt in node.body
+                if isinstance(stmt, ast.Assign)))
         missing_reg = [name for name in reg_names if name not in assign_names]
         for name in missing_reg:
-            self.hdl_locals[name] = ht.RegDef(self.regs[name], name)
+            self.data.hdl_locals[name] = ht.RegDef(self.data.regs[name], name)
 
         return self.visit_block(hdl_node, node.body)
-
-
-class HdlAstVisitor:
-    def visit(self, node):
-        """Visit a node."""
-        method = 'visit_' + node.__class__.__name__
-        visitor = getattr(self, method, self.generic_visit)
-        return visitor(node)
-
-    def generic_visit(self, node):
-        """Called if no explicit visitor function exists for a node."""
-        if hasattr(node, 'stmts'):
-            for stmt in node.stmts:
-                self.visit(stmt)
-
-
-class PrintVisitor(HdlAstVisitor):
-    def __init__(self):
-        self.indent = 0
-
-    def enter_block(self):
-        self.indent += 4
-
-    def exit_block(self):
-        self.indent -= 4
-
-    def write_line(self, line):
-        print(f'{" "*self.indent}{line}')
-
-    def generic_visit(self, node):
-        if hasattr(node, 'stmts'):
-            line = f'{node.__class__.__name__}('
-            for field, value in ast.iter_fields(node):
-                if field == 'stmts':
-                    continue
-
-                line += f'{field}={repr(value)}, '
-
-            self.write_line(f'{line}stmts=[')
-            self.enter_block()
-
-            for stmt in node.stmts:
-                self.visit(stmt)
-
-            self.exit_block()
-            self.write_line(f']')
-        else:
-            self.write_line(repr(node))
-
-
-def pprint(node):
-    PrintVisitor().visit(node)

@@ -79,13 +79,13 @@ def parse_gear_body(gear):
         res[name] = sub_v.visit(schedule)
 
     if state_num > 0:
-        hdl_ast.regs['state'] = ht.RegDef(
+        hdl_ast.data.regs['state'] = ht.RegDef(
             name='state', val=Uint[bitw(state_num)](0))
         sub_v = CBlockVisitor(StateTransitionVisitor(), state_num)
         res['state_transition'] = sub_v.visit(schedule)
 
     cond_visit = CBlockVisitor(
-        BlockConditionsVisitor(reg_num=len(hdl_ast.regs), state_num=state_num),
+        BlockConditionsVisitor(reg_num=len(hdl_ast.data.regs), state_num=state_num),
         state_num)
     cond_visit.visit(schedule)
 

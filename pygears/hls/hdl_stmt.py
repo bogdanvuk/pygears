@@ -144,7 +144,7 @@ class RegEnVisitor(HDLStmtVisitor):
     def enter_block(self, block, **kwds):
         super().enter_block(block, **kwds)
         if isinstance(block, ht.Module):
-            return [AssignValue(f'{reg}_en', 0) for reg in block.regs]
+            return [AssignValue(f'{reg}_en', 0) for reg in block.data.regs]
 
         return None
 
@@ -181,10 +181,10 @@ class OutputVisitor(HDLStmtVisitor):
     def enter_block(self, block, **kwds):
         super().enter_block(block, **kwds)
         if isinstance(block, ht.Module):
-            self.out_ports = {p.name: p for p in block.out_ports}
-            self.out_intfs = block.out_intfs
+            self.out_ports = {p.name: p for p in block.data.out_ports}
+            self.out_intfs = block.data.out_intfs
             res = []
-            for port in block.out_ports:
+            for port in block.data.out_ports:
                 res.append(AssignValue(ht.IntfValidExpr(port), 0))
 
             return res
@@ -232,10 +232,10 @@ class InputVisitor(HDLStmtVisitor):
     def enter_block(self, block, **kwds):
         super().enter_block(block, **kwds)
         if isinstance(block, ht.Module):
-            self.input_names = [port.name for port in block.in_ports]
+            self.input_names = [port.name for port in block.data.in_ports]
             return [
                 AssignValue(ht.IntfReadyExpr(port), 0)
-                for port in block.in_ports
+                for port in block.data.in_ports
             ]
 
         if isinstance(block, ht.IntfBlock):
@@ -265,9 +265,9 @@ class IntfReadyVisitor(HDLStmtVisitor):
     def enter_block(self, block, **kwds):
         super().enter_block(block, **kwds)
         if isinstance(block, ht.Module):
-            self.intf_names = block.intfs.keys()
+            self.intf_names = block.data.in_intfs.keys()
             dflt_ready = []
-            for port in block.intfs:
+            for port in block.data.in_intfs:
                 dflt_ready.append(AssignValue(ht.IntfReadyExpr(port), 0))
             return dflt_ready
 
@@ -298,9 +298,9 @@ class IntfValidVisitor(HDLStmtVisitor):
     def enter_block(self, block, **kwds):
         super().enter_block(block, **kwds)
         if isinstance(block, ht.Module):
-            self.intf_names = block.intfs.keys()
+            self.intf_names = block.data.in_intfs.keys()
             dflt_ready = []
-            for port in block.intfs:
+            for port in block.data.in_intfs:
                 dflt_ready.append(AssignValue(ht.IntfValidExpr(port), 0))
             return dflt_ready
 

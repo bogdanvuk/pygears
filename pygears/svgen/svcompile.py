@@ -92,20 +92,20 @@ DATA_FUNC_GEAR = """
 
 
 def write_module(node, sv_stmts, writer):
-    for name, expr in node.regs.items():
+    for name, expr in node.data.regs.items():
         writer.block(svgen_typedef(expr.dtype, name))
         writer.line(f'logic {name}_en;')
         writer.line(f'{name}_t {name}_reg, {name}_next;')
         writer.line()
 
-    for name, val in node.intfs.items():
+    for name, val in node.data.in_intfs.items():
         writer.line(f'dti#({int(val.dtype)}) {name}();')
         writer.block(svgen_typedef(val.dtype, name))
         writer.line(f'{name}_t {name}_s;')
         writer.line(f"assign {name}.data = {name}_s;")
     writer.line()
 
-    for name, expr in node.variables.items():
+    for name, expr in node.data.variables.items():
         writer.block(svgen_typedef(expr.dtype, name))
         writer.line(f'{name}_t {name}_v;')
         writer.line()
@@ -115,7 +115,7 @@ def write_module(node, sv_stmts, writer):
             writer.line(f'logic {cond.target};')
         writer.line()
 
-    for name, expr in node.regs.items():
+    for name, expr in node.data.regs.items():
         writer.block(REG_TEMPLATE.format(name, int(expr.val)))
 
     for name, val in sv_stmts.items():

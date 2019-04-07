@@ -2,6 +2,7 @@ import inspect
 import typing as pytypes
 from dataclasses import dataclass, field
 
+from pygears.core.port import InPort, OutPort
 from pygears.typing import Bool, Integer, Queue, Tuple, Uint, is_type, typeof
 
 BOOLEAN_OPERATORS = {'|', '&', '^', '~', '!', '&&', '||'}
@@ -167,7 +168,7 @@ class OperandVal(Expr):
 
 @dataclass
 class IntfExpr(Expr):
-    intf: pytypes.Any
+    intf: pytypes.Union[InPort, OutPort]
     context: str = None
 
     @property
@@ -181,7 +182,7 @@ class IntfExpr(Expr):
 
 @dataclass
 class IntfDef(Expr):
-    intf: pytypes.Any
+    intf: pytypes.Union[InPort, OutPort]
     name: str
     context: str = None
 
@@ -471,14 +472,19 @@ class Yield(Block):
 
 
 @dataclass
-class Module:
+class ModuleDataContainer:
     in_ports: pytypes.List
     out_ports: pytypes.List
-    locals: pytypes.Dict
+    hdl_locals: pytypes.Dict
     regs: pytypes.Dict
     variables: pytypes.Dict
-    intfs: pytypes.Dict
+    in_intfs: pytypes.Dict
     out_intfs: pytypes.Dict
+
+
+@dataclass
+class Module:
+    data: ModuleDataContainer
     stmts: pytypes.List
 
     @property
