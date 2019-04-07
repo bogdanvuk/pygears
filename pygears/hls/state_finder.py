@@ -2,6 +2,7 @@ from functools import partial
 
 from . import hdl_types as ht
 from .inst_visit import InstanceVisitor
+from .scheduling_types import MutexCBlock
 
 
 def reg_next_cb(node, stmt, scope):
@@ -117,7 +118,8 @@ class StateFinder(InstanceVisitor):
 
         for i, child in enumerate(node.child):
             self.visit(child)
-            if child is not node.child[-1]:
+            if child is not node.child[-1] and not all(
+                [isinstance(c, MutexCBlock) for c in node.child]):
                 self.state[-1] = self.get_next_state()
             update_state_ids(node, child)
 

@@ -366,6 +366,16 @@ class Block:
 
 
 @dataclass
+class BaseLoop(Block):
+    multicycle: list
+    break_cond: list = field(init=False, default=None)
+
+    @property
+    def cycle_cond(self):
+        return CycleSubCond()
+
+
+@dataclass
 class IntfBlock(Block):
     intf: pytypes.Any
 
@@ -383,17 +393,12 @@ class IntfBlock(Block):
 
 
 @dataclass
-class IntfLoop(Block):
+class IntfLoop(BaseLoop):
     intf: pytypes.Any
-    multicycle: list = None
 
     @property
     def in_cond(self):
         return self.intf
-
-    @property
-    def cycle_cond(self):
-        return CycleSubCond()
 
     @property
     def exit_cond(self):
@@ -439,14 +444,9 @@ class ContainerBlock(Block):
 
 
 @dataclass
-class Loop(Block):
+class Loop(BaseLoop):
     _in_cond: Expr
     _exit_cond: Expr
-    multicycle: list = None
-
-    @property
-    def cycle_cond(self):
-        return CycleSubCond()
 
     @property
     def exit_cond(self):
@@ -480,6 +480,22 @@ class ModuleDataContainer:
     variables: pytypes.Dict
     in_intfs: pytypes.Dict
     out_intfs: pytypes.Dict
+
+    def get_container(self, name):
+        for attr in ['regs', 'variables', 'in_intfs', 'out_intfs']:
+            data_inst = getattr(self, attr)
+            if name in data_inst:
+                return data_inst
+        # hdl_locals is last because it contain others
+        if name in self.hdl_locals:
+            return self.hdl_locals
+        return None
+
+    def get(self, name):
+        data_container = self.get_container(name)
+        if data_container is not None:
+            return data_container[name]
+        return None
 
 
 @dataclass

@@ -1,8 +1,8 @@
 import ast
 
-from . import hdl_types as ht
 from pygears.typing import Uint, bitw, is_type
 
+from . import hdl_types as ht
 from .hdl_utils import (eval_expression, find_assign_target, find_for_target,
                         hls_log, set_pg_type)
 
@@ -28,6 +28,19 @@ def find_async(node):
     async_visit = AstAyncFinder()
     async_visit.visit(node)
     return async_visit.blocking
+
+
+def find_comb_loop(node):
+    comb_loop = False
+    if hasattr(node, 'orelse'):
+        try:
+            val = node.orelse[0].value
+            comb_loop = isinstance(val,
+                                   ast.Await) and (val.value.func.id == 'clk')
+        except (AttributeError, IndexError):
+            pass
+
+    return comb_loop
 
 
 class RegFinder(ast.NodeVisitor):
@@ -67,13 +80,15 @@ class RegFinder(ast.NodeVisitor):
     def visit_For(self, node):
         names = find_for_target(node)
 
-        blocking = find_async(node)
+        register_var = False
+        if not find_comb_loop(node):
+            register_var = find_async(node)
 
         for i, name in enumerate(names):
             if name in self.variables:
                 self.promote_var_to_reg(name)
             else:
-                if blocking and (name not in self.intfs):
+                if name not in self.intfs:
                     if i == 0:
                         try:
                             rng = eval_expression(node.iter, self.local_params)
@@ -81,10 +96,17 @@ class RegFinder(ast.NodeVisitor):
                         except NameError:
                             length = 2**32 - 1
 
-                        self.regs[name] = ht.ResExpr(Uint[bitw(length)](0))
-                        hls_log().debug(
-                            f'For loop iterator {name} registered with width {bitw(length)}'
-                        )
+                        if register_var:
+                            self.regs[name] = ht.ResExpr(Uint[bitw(length)](0))
+                            hls_log().debug(
+                                f'For loop iterator {name} registered with width {bitw(length)}'
+                            )
+                        else:
+                            self.variables[name] = ht.ResExpr(
+                                Uint[bitw(length)](0))
+                            hls_log().debug(
+                                f'For loop iterator {name} unrolled with width {bitw(length)}'
+                            )
                     else:
                         hls_log().debug(
                             f'For loop iterator {name} not registered')

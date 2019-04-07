@@ -4,6 +4,7 @@ from pygears.typing import Uint
 from pygears.util.utils import qrange
 
 from . import hdl_types as ht
+from .ast_modifications import unroll_statements
 from .compile_snippets import enumerate_impl, qrange_mux_impl
 from .hdl_utils import VisitError, find_for_target
 
@@ -211,4 +212,18 @@ class HdlAstForImpl:
         return hdl_node
 
     def _comb_enumerate(self, node, target_names, stop, enum_target):
-        raise VisitError('Not supported yet...')
+        hdl_node = ht.Loop(
+            _in_cond=None, stmts=[], _exit_cond=None, multicycle=None)
+
+        all_stmts = []
+        for i, last in qrange(stop.val):
+            py_stmt = f'{target_names[0]} = {i}; {target_names[1]} = {enum_target}{i}'
+            stmts = ast.parse(py_stmt).body + node.body
+
+            unrolled = unroll_statements(self.data, stmts, i, target_names,
+                                         last)
+            all_stmts.extend(unrolled)
+
+        self.ast_v.visit_block(hdl_node, all_stmts)
+
+        return hdl_node
