@@ -5,6 +5,7 @@ from pygears.typing import Uint, bitw
 
 from . import hdl_types as ht
 from .cblock import CBlockVisitor
+from .cleanup import condition_cleanup
 from .conditions import Conditions
 from .hdl_ast import HdlAst
 from .hdl_stmt import (AssertionVisitor, BlockConditionsVisitor, InputVisitor,
@@ -13,7 +14,7 @@ from .hdl_stmt import (AssertionVisitor, BlockConditionsVisitor, InputVisitor,
 from .intf_finder import IntfFinder
 from .reg_finder import RegFinder
 from .scheduling import Scheduler
-from .state_finder import StateFinder
+from .state_finder import StateFinder, BlockId
 
 # from .stmt_vacum import StmtVacum
 
@@ -56,6 +57,7 @@ def parse_gear_body(gear):
     states = StateFinder()
     states.visit(schedule)
     state_num = states.max_state
+    BlockId().visit(schedule)
 
     # from .cblock import pprint
     # pprint(schedule)
@@ -85,14 +87,20 @@ def parse_gear_body(gear):
         res['state_transition'] = sub_v.visit(schedule)
 
     cond_visit = CBlockVisitor(
-        BlockConditionsVisitor(reg_num=len(hdl_ast.data.regs), state_num=state_num),
-        state_num)
+        BlockConditionsVisitor(
+            reg_num=len(hdl_ast.data.regs), state_num=state_num), state_num)
     cond_visit.visit(schedule)
 
+    res['conditions'] = cond_visit.hdl.conditions()
     try:
         from .simplify_expression import simplify_assigns
-        res['conditions'] = simplify_assigns(cond_visit.hdl.condition_assigns)
     except ImportError:
-        res['conditions'] = cond_visit.hdl.condition_assigns
+        pass
+    else:
+        cnt = 3
+        while cnt:
+            res['conditions'] = simplify_assigns(res['conditions'])
+            res = condition_cleanup(res)
+            cnt -= 1
 
     return hdl_ast, res

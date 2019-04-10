@@ -5,24 +5,25 @@ from .hdl_stmt_types import (AssertValue, AssignValue, CombBlock,
 from .hdl_utils import add_to_list, state_expr
 
 
-def find_cond(cond, **kwds):
-    if cond is None:
-        cond = 1
-    if 'context_cond' in kwds:
-        cond = ht.and_expr(cond, kwds['context_cond'])
-    return cond
+def find_in_cond(conds, hdl_stmt, **kwds):
+    if len(str(hdl_stmt.in_cond)) > 150:  # major hack for code readability
+        return conds.find_in_cond(hdl_stmt, **kwds)
+
+    if hdl_stmt.in_cond is not None:
+        conds.add_in_cond(hdl_stmt.id)
+    return hdl_stmt.in_cond
 
 
 def find_cycle_cond(conds, hdl_stmt, **kwds):
-    return find_cond(cond=conds.find_cycle_cond(hdl_stmt), **kwds)
+    return conds.find_cycle_cond(hdl_stmt, **kwds)
 
 
 def find_rst_cond(conds, **kwds):
-    return find_cond(cond=conds.rst_cond, **kwds)
+    return conds.find_rst_cond(**kwds)
 
 
 def find_exit_cond(conds, hdl_stmt, **kwds):
-    return find_cond(cond=conds.find_exit_cond(hdl_stmt), **kwds)
+    return conds.find_exit_cond(hdl_stmt, **kwds)
 
 
 class HDLStmtVisitor:
@@ -56,7 +57,8 @@ class HDLStmtVisitor:
         return self.traverse_block(block, node, **kwds)
 
     def visit_all_Block(self, node, **kwds):
-        block = HDLBlock(in_cond=node.in_cond, stmts=[], dflts={})
+        in_cond = find_in_cond(self.conds, node, **kwds)
+        block = HDLBlock(in_cond=in_cond, stmts=[], dflts={})
         return self.traverse_block(block, node, **kwds)
 
     def traverse_block(self, block, node, **kwds):
@@ -327,49 +329,38 @@ class BlockConditionsVisitor(HDLStmtVisitor):
         self.reg_num = reg_num
         self.state_num = state_num
         self.condition_assigns = CombSeparateStmts(stmts=[])
+        self.cond_types = ['in', 'cycle', 'exit']
+
+    def conditions(self):
+        self.get_combined()
+        return self.condition_assigns
 
     def _add_stmt(self, stmt):
         if stmt not in self.condition_assigns.stmts:
             self.condition_assigns.stmts.append(stmt)
 
     def get_combined(self):
-        for name, val in self.conds.combined_cycle_conds.items():
-            self._add_stmt(AssignValue(target=name, val=val))
-
-        for name, val in self.conds.combined_exit_conds.items():
+        for name, val in self.conds.combined_conds.items():
             self._add_stmt(AssignValue(target=name, val=val))
 
     def find_subconds(self, curr_cond):
         if curr_cond is not None and not isinstance(curr_cond, str):
             res = find_sub_cond_ids(curr_cond)
-            if 'exit' in res:
-                for sub_id in res['exit']:
-                    self.conds.add_exit_cond(sub_id)
-            if 'cycle' in res:
-                for sub_id in res['cycle']:
-                    self.conds.add_cycle_cond(sub_id)
+            for cond_t in self.cond_types:
+                if cond_t in res:
+                    for sub_id in res[cond_t]:
+                        self.conds.add_cond(sub_id, cond_t)
 
-    def get_cycle_cond(self, **kwds):
-        if self.current_scope.id in self.conds.cycle_conds:
-            curr_cond = self.conds.eval_cycle_cond(self.current_scope)
+    def get_cond_by_type(self, cond_type, **kwds):
+        all_conds = getattr(self.conds, f'{cond_type}_conds')
+        if self.current_scope.id in all_conds:
+            curr_cond = self.conds.eval_cond(self.current_scope, cond_type)
             self.find_subconds(curr_cond)
             if curr_cond is None:
                 curr_cond = 1
             res = AssignValue(
                 target=COND_NAME.substitute(
-                    cond_type='cycle', block_id=self.current_scope.id),
-                val=curr_cond)
-            self._add_stmt(res)
-
-    def get_exit_cond(self, **kwds):
-        if self.current_scope.id in self.conds.exit_conds:
-            curr_cond = self.conds.eval_exit_cond(self.current_scope)
-            self.find_subconds(curr_cond)
-            if curr_cond is None:
-                curr_cond = 1
-            res = AssignValue(
-                target=COND_NAME.substitute(
-                    cond_type='exit', block_id=self.current_scope.id),
+                    cond_type=cond_type, block_id=self.current_scope.id),
                 val=curr_cond)
             self._add_stmt(res)
 
@@ -393,10 +384,9 @@ class BlockConditionsVisitor(HDLStmtVisitor):
         super().enter_block(block, **kwds)
         if isinstance(block, ht.Module) and self.reg_num > 0:
             self.get_rst_cond(**kwds)
-            self.get_combined()
 
-        self.get_cycle_cond(**kwds)
-        self.get_exit_cond(**kwds)
+        for cond_t in self.cond_types:
+            self.get_cond_by_type(cond_t, **kwds)
 
 
 class StateTransitionVisitor(HDLStmtVisitor):

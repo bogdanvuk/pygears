@@ -31,16 +31,22 @@ class SVCompiler(InstanceVisitor):
             self.writer.indent -= 4
             self.writer.line(f'end')
 
+    def _assign_value(self, stmt, name=None):
+        if name is None:
+            name = stmt.target
+
+        if stmt.width:
+            return f"{svexpr(stmt.target)} = {stmt.width}'({svexpr(stmt.val)})"
+
+        return f"{svexpr(stmt.target)} = {svexpr(stmt.val)}"
+
     def visit_AssertValue(self, node):
         self.writer.line(f'assert ({svexpr(node.val.test)})')
         self.writer.line(f'else $error("{node.val.msg}");')
 
     def visit_AssignValue(self, node):
-        if node.width:
-            self.writer.line(
-                f"{svexpr(node.target)} = {node.width}'({svexpr(node.val)});")
-        else:
-            self.writer.line(f"{svexpr(node.target)} = {svexpr(node.val)};")
+        assign_stmt = self._assign_value(node)
+        self.writer.line(f'{assign_stmt};')
 
     def visit_CombBlock(self, node):
         if not node.stmts and not node.dflts:
@@ -55,24 +61,17 @@ class SVCompiler(InstanceVisitor):
     def visit_CombSeparateStmts(self, node):
         self.writer.line(f'// Comb statements for: {self.visit_var}')
         for stmt in node.stmts:
-            if stmt.width:
-                self.writer.line(
-                    f"assign {svexpr(stmt.target)} = {stmt.width}'({svexpr(stmt.val)});"
-                )
-            else:
-                self.writer.line(
-                    f"assign {svexpr(stmt.target)} = {svexpr(stmt.val)};")
+            assign_stmt = self._assign_value(stmt)
+            if assign_stmt is not None:
+                self.writer.line(f'assign {assign_stmt};')
         self.writer.line('')
 
     def visit_HDLBlock(self, node):
         self.enter_block(node)
 
         for name, val in node.dflts.items():
-            if val.width:
-                self.writer.line(
-                    f"{svexpr(name)} = {val.width}'({svexpr(val.val)});")
-            else:
-                self.writer.line(f"{svexpr(name)} = {svexpr(val.val)};")
+            assign_stmt = self._assign_value(val, name)
+            self.writer.line(f'{assign_stmt};')
 
         for stmt in node.stmts:
             self.visit(stmt)

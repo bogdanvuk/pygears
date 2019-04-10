@@ -5,26 +5,34 @@ import sympy
 from pygears.typing import Bool
 
 from . import hdl_types as ht
-from .conditions import COND_NAME
+from .conditions import COND_NAME, cond_name_match_by_type
 from .hdl_stmt_types import AssignValue, CombSeparateStmts
 from .hdl_utils import VisitError
 from .inst_visit import InstanceVisitor
 
 
+def same_cond(name):
+    return cond_name_match_by_type(name, 'same')
+
+
 class SameConditions:
     def __init__(self, block):
-        self.same_num = 0
+        self.same_cnt = sum(
+            [same_cond(stmt.target) is not None for stmt in block.stmts])
         self.conditions = {}
         self.names = []
         self.unique_values = []
         self.unique_names = {}
+        self.unchanged = []
 
         self.set_conditions(block.stmts)
         self.find_same_names()
 
     def set_conditions(self, stmts):
         for stmt in stmts:
-            if stmt.val in self.unique_values:
+            if same_cond(stmt.val):
+                self.unchanged.append(stmt)
+            elif stmt.val in self.unique_values:
                 self.set_same_cond(stmt)
             else:
                 self.set_new_cond(stmt)
@@ -38,13 +46,13 @@ class SameConditions:
         self.names.append([cond.target])
 
     def find_same_names(self):
-        cnt = 0
         for name in self.names:
             if len(name) == 1:
                 self.unique_names[name[0]] = name
             else:
-                new_name = COND_NAME.substitute(cond_type='same', block_id=cnt)
-                cnt += 1
+                new_name = COND_NAME.substitute(
+                    cond_type='same', block_id=self.same_cnt)
+                self.same_cnt += 1
                 self.unique_names[new_name] = name
 
     def get_clean_conds(self):
@@ -57,6 +65,9 @@ class SameConditions:
             if len(names) > 1:
                 for name in names:
                     stmts.append(AssignValue(target=name, val=same))
+
+        for stmt in self.unchanged:
+            stmts.append(stmt)
 
         return CombSeparateStmts(stmts=stmts)
 
@@ -132,6 +143,9 @@ class Sym2Hdl(InstanceVisitor):
             return self.special_symbols[sym]
 
         return sym
+
+    def visit_Zero(self, node):
+        return ht.ResExpr(Bool(False))
 
     def visit_One(self, node):
         return ht.ResExpr(Bool(True))

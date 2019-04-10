@@ -421,11 +421,15 @@ class IfBlock(Block):
 
     @property
     def cycle_cond(self):
-        return CycleSubCond(UnaryOpExpr(self.in_cond, '!'), '||')
+        from .conditions import COND_NAME
+        in_c = COND_NAME.substitute(cond_type='in', block_id=self.id)
+        return CycleSubCond(UnaryOpExpr(in_c, '!'), '||')
 
     @property
     def exit_cond(self):
-        return ExitSubCond(UnaryOpExpr(self.in_cond, '!'), '||')
+        from .conditions import COND_NAME
+        in_c = COND_NAME.substitute(cond_type='in', block_id=self.id)
+        return ExitSubCond(UnaryOpExpr(in_c, '!'), '||')
 
 
 @dataclass
@@ -502,6 +506,7 @@ class ModuleDataContainer:
 class Module:
     data: ModuleDataContainer
     stmts: pytypes.List
+    id: int = field(init=False, default=0)
 
     @property
     def cycle_cond(self):

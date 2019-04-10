@@ -1,3 +1,6 @@
+from .hdl_utils import VisitError
+
+
 class InstanceVisitor:
     def visit(self, node):
         method = 'visit_' + node.__class__.__name__
@@ -5,4 +8,6 @@ class InstanceVisitor:
         return visitor(node)
 
     def generic_visit(self, node):
-        raise Exception
+        raise VisitError(
+            f'Method "{node.__class__.__name__}" not implemented in "{self.__class__.__name__}" visitor'
+        )

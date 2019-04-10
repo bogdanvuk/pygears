@@ -1,5 +1,5 @@
 import re
-from functools import reduce
+from functools import reduce, partial
 from string import Template
 
 from . import hdl_types as ht
@@ -8,6 +8,26 @@ from .scheduling_types import SeqCBlock
 
 COND_NAME = Template('${cond_type}_cond_block_${block_id}')
 COMBINED_COND_NAME = Template('combined_cond_${cond_id}')
+
+def cond_name_match_by_type(name, cond_type):
+    if not isinstance(name, str):
+        return None
+
+    pattern = re.compile(f'^{cond_type}_cond_block_\d+$')
+    res = pattern.match(name)
+    return res
+
+def cond_name_match(name):
+    if not isinstance(name, str):
+        return None
+
+    pattern = re.compile(f'^\w+_cond_block_\d+$')
+    res = pattern.match(name)
+    if res is not None:
+        return res
+
+    pattern = re.compile(f'^combined_cond_\d+$')
+    return pattern.match(name)
 
 
 def find_sub_cond_ids(cond):
@@ -47,6 +67,10 @@ def nested_cond(stmt, cond_type):
     return COND_NAME.substitute(cond_type=cond_type, block_id=stmt.id)
 
 
+def nested_in_cond(stmt):
+    return nested_cond(stmt, 'in')
+
+
 def nested_cycle_cond(stmt):
     return nested_cond(stmt, 'cycle')
 
@@ -67,45 +91,67 @@ def find_exit_cond(statements, search_in_cond=False):
         if cond is not None:
             exit_c = nested_exit_cond(stmt)
             if has_in_cond(stmt):
-                return ht.and_expr(exit_c, stmt.in_cond)
+                in_c = nested_in_cond(stmt)
+                return ht.and_expr(exit_c, in_c)
 
             return exit_c
 
         if has_in_cond(stmt):
-            return stmt.in_cond
+            return nested_in_cond(stmt)
 
     return None
 
 
 class ConditionsBase:
     # shared across all visitors
+    in_conds = []
     cycle_conds = []
     exit_conds = []
-    combined_cycle_conds = {}
-    combined_exit_conds = {}
+    combined_conds = {}
 
     def init(self):
+        self.in_conds.clear()
         self.cycle_conds.clear()
         self.exit_conds.clear()
-        self.combined_cycle_conds.clear()
-        self.combined_exit_conds.clear()
+        self.combined_conds.clear()
+
+    def add_cond(self, cond, cond_type):
+        assert cond is not None, f'Attempting to add None id to {cond_type} conditions'
+        conds = getattr(self, f'{cond_type}_conds')
+        if cond not in conds:
+            conds.append(cond)
+
+    def add_in_cond(self, cond):
+        self.add_cond(cond, 'in')
 
     def add_cycle_cond(self, cond):
-        assert cond is not None, 'Attempting to add None id to cycle conditions'
-
-        if cond not in self.cycle_conds:
-            self.cycle_conds.append(cond)
+        self.add_cond(cond, 'cycle')
 
     def add_exit_cond(self, cond):
-        assert cond is not None, 'Attempting to add None id to exit conditions'
+        self.add_cond(cond, 'exit')
 
-        if cond not in self.exit_conds:
-            self.exit_conds.append(cond)
+    def combine_conditions(self, conds, operator='&&'):
+        if not conds:
+            return None
+
+        if len(conds) == 1:
+            return conds[0]
+
+        name = COMBINED_COND_NAME.substitute(cond_id=len(self.combined_conds))
+        self.combined_conds[name] = reduce(
+            partial(ht.binary_expr, operator=operator), conds, None)
+        return name
 
 
 class ConditionsFinder(ConditionsBase):
     def __init__(self):
         self.scope = []
+
+    def in_cond(self, hdl_block):
+        cond = nested_in_cond(hdl_block)
+        if cond is not None:
+            self.add_in_cond(find_cond_id(cond))
+        return cond
 
     def _create_state_cycle_cond(self, child):
         child_cond = nested_cycle_cond(child.hdl_block)
@@ -158,13 +204,7 @@ class ConditionsFinder(ConditionsBase):
                 break
 
         cond = list(set(cond))
-        if len(cond) > 1:
-            name = COMBINED_COND_NAME.substitute(
-                cond_id=len(self.combined_cycle_conds))
-            self.combined_cycle_conds[name] = reduce(ht.and_expr, cond, None)
-            return name
-
-        return cond[0]
+        return self.combine_conditions(cond)
 
     def _exit_cond(self, block):
         cond = nested_exit_cond(block)
@@ -210,6 +250,18 @@ def get_cblock_hdl_stmts(cblock):
 
 
 class ConditionsEval(ConditionsBase):
+    def _create_combined(self, sub_cond, stmt, cond):
+        if stmt.in_cond is None:
+            block_cond = sub_cond
+        else:
+            block_cond = self.combine_conditions((sub_cond, stmt.in_cond),
+                                                 '&&')
+
+        if cond is None:
+            return block_cond
+
+        return self.combine_conditions((cond, block_cond), '||')
+
     def _merge_hdl_conds(self, top, cond_type):
         if all(
             [getattr(stmt, f'{cond_type}_cond') is None
@@ -221,8 +273,7 @@ class ConditionsEval(ConditionsBase):
             sub_cond = None
             if getattr(stmt, f'{cond_type}_cond', None):
                 sub_cond = self._hdl_subconds(stmt, cond_type)
-            block_cond = ht.and_expr(sub_cond, stmt.in_cond)
-            cond = ht.or_expr(cond, block_cond)
+            cond = self._create_combined(sub_cond, stmt, cond)
         return cond
 
     def _merge_cblock_conds(self, top, cond_type):
@@ -242,8 +293,7 @@ class ConditionsEval(ConditionsBase):
                 if sub_cond is not None:
                     sub_cond = self._cblock_subconds(sub_cond, child,
                                                      cond_type)
-                block_cond = ht.and_expr(sub_cond, curr_block.in_cond)
-                cond = ht.or_expr(cond, block_cond)
+                cond = self._create_combined(sub_cond, curr_block, cond)
         return cond
 
     def _cblock_simple_cycle_subconds(self, cblock):
@@ -254,7 +304,7 @@ class ConditionsEval(ConditionsBase):
                     conds.append(nested_cycle_cond(hdl_stmt))
                     self.add_cycle_cond(hdl_stmt.id)
 
-        return reduce(ht.and_expr, conds, None)
+        return self.combine_conditions(conds)
 
     def _cblock_state_cycle_subconds(self, cblock):
         curr_child = cblock.child[-1]
@@ -302,7 +352,7 @@ class ConditionsEval(ConditionsBase):
             sub_cond = self._hdl_cycle_subconds(stmt)
             if sub_cond is not None:
                 conds.append(nested_cycle_cond(stmt))
-        return reduce(ht.and_expr, conds, None)
+        return self.combine_conditions(conds)
 
     def _hdl_stmt_exit_cond(self, block):
         for stmt in reversed(block.stmts):
@@ -345,6 +395,9 @@ class ConditionsEval(ConditionsBase):
         if cond_type == 'cycle':
             return self._hdl_cycle_subconds(block)
         return self._hdl_exit_subconds(block)
+
+    def in_cond(self, block, scope):
+        return block.in_cond
 
     def cycle_cond(self, block, scope):
         if block != scope.hdl_block:
@@ -393,17 +446,37 @@ class Conditions(ConditionsBase):
     def rst_cond(self):
         return self.cond_finder.rst_cond
 
-    def find_cycle_cond(self, hdl_block):
-        return self.cond_finder.cycle_cond(hdl_block)
+    def find_rst_cond(self, **kwds):
+        cond = self.cond_finder.rst_cond
+        return self._find_cond(cond, **kwds)
 
-    def find_exit_cond(self, hdl_block):
-        return self.cond_finder.exit_cond(hdl_block)
+    def find_in_cond(self, hdl_block, **kwds):
+        cond = self.cond_finder.in_cond(hdl_block)
+        return self._find_cond(cond, **kwds)
+
+    def find_cycle_cond(self, hdl_block, **kwds):
+        cond = self.cond_finder.cycle_cond(hdl_block)
+        return self._find_cond(cond, **kwds)
+
+    def find_exit_cond(self, hdl_block, **kwds):
+        cond = self.cond_finder.exit_cond(hdl_block)
+        return self._find_cond(cond, **kwds)
+
+    def _find_cond(self, cond, **kwds):
+        if cond is None:
+            cond = 1
+
+        if 'context_cond' in kwds:
+            if cond == 1:
+                return kwds['context_cond']
+
+            cond = self.combine_conditions((cond, kwds['context_cond']), '&&')
+
+        return cond
 
     def find_exit_cond_by_scope(self, scope_id=-1):
         return self.cond_finder.exit_cond_by_scope(scope_id)
 
-    def eval_cycle_cond(self, block):
-        return self.cond_eval.cycle_cond(block, self.scope[-1])
-
-    def eval_exit_cond(self, block):
-        return self.cond_eval.exit_cond(block, self.scope[-1])
+    def eval_cond(self, block, cond_type):
+        func = getattr(self.cond_eval, f'{cond_type}_cond')
+        return func(block, self.scope[-1])
