@@ -34,8 +34,8 @@ import pygears.typing.pprint
 import pygears.svgen
 import pygears.rtl
 
-from pygears.conf.custom_settings import RCSettings, print_registry
-settings = RCSettings(rc_fn='.pygears')
+from pygears.conf.custom_settings import load_rc, print_registry
+load_rc('.pygears')
 # print_registry()
 
 sys.excepthook = pygears_excepthook
