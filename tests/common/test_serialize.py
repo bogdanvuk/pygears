@@ -1,11 +1,13 @@
 import pytest
 
+from pygears import Intf
 from pygears.common.serialize import TDin, serialize
 from pygears.cookbook.delay import delay_rng
 from pygears.cookbook.verif import directed, verif
 from pygears.sim import sim
 from pygears.sim.modules.drv import drv
 from pygears.typing import Array, Uint
+from pygears.util.test_utils import formal_check, synth_check
 
 
 def test_directed(tmpdir, sim_cls):
@@ -61,3 +63,23 @@ def test_cosim_active(tmpdir, cosim_cls, din_delay, dout_delay):
         delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(outdir=tmpdir)
+
+
+@formal_check()
+def test_formal():
+    serialize(Intf(Array[Uint[16], 4]))
+
+
+@formal_check()
+def test_formal_active():
+    serialize(Intf(TDin[Uint[8], 4, 4]))
+
+
+@synth_check({'logic luts': 19, 'ffs': 3})
+def test_synth():
+    serialize(Intf(Array[Uint[16], 4]))
+
+
+@synth_check({'logic luts': 15, 'ffs': 4})
+def test_synth_active():
+    serialize(Intf(TDin[Uint[8], 4, 4]))

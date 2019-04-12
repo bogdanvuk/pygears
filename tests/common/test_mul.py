@@ -1,8 +1,10 @@
+from pygears import Intf
+from pygears.common import mul
 from pygears.cookbook.verif import verif
 from pygears.sim import sim
 from pygears.sim.modules.drv import drv
-from pygears.typing import Tuple, Uint, Int
-from pygears.common import mul
+from pygears.typing import Int, Tuple, Uint
+from pygears.util.test_utils import synth_check
 
 
 def test_unsigned_overflow_cosim(tmpdir, cosim_cls):
@@ -47,3 +49,12 @@ def test_signed_cosim(tmpdir, cosim_cls):
         ref=mul(name='ref_model'))
 
     sim(outdir=tmpdir)
+
+
+@synth_check({
+    'logic luts': 43,
+    'ffs': 0,
+    'path delay': lambda delay: delay < 8.0
+})
+def test_unsigned_synth():
+    mul(Intf(Tuple[Uint[10], Uint[4]]))

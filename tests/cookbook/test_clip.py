@@ -3,6 +3,7 @@ from functools import partial
 
 import pytest
 
+from pygears import Intf
 from pygears.cookbook.clip import clip
 from pygears.cookbook.delay import delay_rng
 from pygears.cookbook.verif import directed, verif
@@ -12,7 +13,7 @@ from pygears.sim.extens.svrand import SVRandSocket
 from pygears.sim.modules.drv import drv
 from pygears.sim.modules.sim_socket import SimSocket
 from pygears.typing import Queue, Tuple, Uint
-from pygears.util.test_utils import prepare_result_dir, skip_ifndef
+from pygears.util.test_utils import formal_check, skip_ifndef, synth_check
 
 T_DIN = Queue[Tuple[Uint[16], Uint[16]]]
 T_DIN_SEP = Queue[Uint[16]]
@@ -61,7 +62,7 @@ def test_random(tmpdir, cosim_cls):
     cfg_seq = []
     din_seq = []
     cfg_num = random.randint(2, 10)
-    for i in range(cfg_num):
+    for _ in range(cfg_num):
         cfg_seq.append(random.randint(1, 10))
         din_seq.append(list(range(random.randint(1, 10))))
 
@@ -92,4 +93,14 @@ def test_random_constrained(tmpdir):
         f=clip(sim_cls=partial(SimSocket, run=True)),
         ref=clip(name='ref_model'))
 
-    sim(outdir=prepare_result_dir(), extens=[partial(SVRandSocket, cons=cons)])
+    sim(outdir=tmpdir, extens=[partial(SVRandSocket, cons=cons)])
+
+
+@formal_check()
+def test_formal():
+    clip(Intf(T_DIN))
+
+
+@synth_check({'logic luts': 11, 'ffs': 17})
+def test_synth():
+    clip(Intf(T_DIN))

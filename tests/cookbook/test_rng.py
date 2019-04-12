@@ -2,11 +2,12 @@ import pytest
 
 from pygears import Intf, find
 from pygears.cookbook.delay import delay_rng
-from pygears.cookbook.rng import rng
+from pygears.cookbook.rng import py_rng, rng
 from pygears.cookbook.verif import directed, verif
 from pygears.sim import sim
 from pygears.sim.modules.drv import drv
 from pygears.typing import Int, Queue, Tuple, Uint
+from pygears.util.test_utils import formal_check
 
 
 def test_basic_unsigned():
@@ -137,3 +138,23 @@ def test_cnt_down():
 # @svgen_check(['rng_rng.sv', 'rng_ccat.sv', 'rng_hier.sv'])
 # def test_cnt_svgen():
 #     rng(8)
+
+# TODO : hierarchy must be avoided for verilog (so py_rng, not rng)
+
+
+@formal_check()
+def test_basic_formal():
+    py_rng(Intf(Tuple[Uint[4], Uint[4], Uint[2]]))
+
+
+@formal_check()
+def test_cnt_steps_formal():
+    py_rng(Intf(Tuple[Uint[4], Uint[4], Uint[2]]), cnt_steps=True)
+
+
+@formal_check()
+def test_incr_cnt_steps_formal():
+    py_rng(
+        Intf(Tuple[Uint[4], Uint[4], Uint[2]]),
+        cnt_steps=True,
+        incr_steps=True)

@@ -1,15 +1,19 @@
 import pytest
 
+from pygears import Intf
 from pygears.cookbook import take
 from pygears.cookbook.delay import delay_rng
 from pygears.cookbook.verif import directed, verif
 from pygears.sim import sim
 from pygears.sim.modules.drv import drv
 from pygears.typing import Queue, Tuple, Uint
+from pygears.util.test_utils import formal_check, synth_check
 
 T_DIN = Queue[Tuple[Uint[16], Uint[16]]]
 T_DIN_SEP = Queue[Uint[16]]
+T_QDIN_SEP = Queue[Uint[16], 2]
 T_CFG = Uint[16]
+T_QDIN = Queue[Tuple[Uint[16], Uint[16]], 2]
 
 
 @pytest.mark.parametrize('din_delay', [0, 5])
@@ -47,8 +51,6 @@ def test_directed_two_inputs(tmpdir, cosim_cls):
 
 @pytest.mark.parametrize('delay', [0, 5])
 def test_q_directed(tmpdir, sim_cls, delay):
-    t_qdin = Queue[Tuple[Uint[16], Uint[16]], 2]
-
     seq = []
     tmp = []
     for _ in range(9):
@@ -59,7 +61,7 @@ def test_q_directed(tmpdir, sim_cls, delay):
     seq.append(tmp)
 
     tmp = []
-    for i in range(5):
+    for _ in range(5):
         sub = []
         for j in range(6):
             sub.append((j, 3))
@@ -67,7 +69,7 @@ def test_q_directed(tmpdir, sim_cls, delay):
     seq.append(tmp)
 
     directed(
-        drv(t=t_qdin, seq=seq) | delay_rng(delay, delay),
+        drv(t=T_QDIN, seq=seq) | delay_rng(delay, delay),
         f=take(sim_cls=sim_cls),
         ref=[[list(range(3))] * 2, [list(range(6))] * 3])
 
@@ -77,8 +79,6 @@ def test_q_directed(tmpdir, sim_cls, delay):
 @pytest.mark.parametrize('din_delay', [0, 5])
 @pytest.mark.parametrize('cfg_delay', [0, 5])
 def test_q_directed_two_inputs(tmpdir, sim_cls, din_delay, cfg_delay):
-    t_din_sep = Queue[Uint[16], 2]
-    t_cfg = Uint[16]
     seq = []
     tmp = []
     for _ in range(9):
@@ -97,9 +97,24 @@ def test_q_directed_two_inputs(tmpdir, sim_cls, din_delay, cfg_delay):
     seq.append(tmp)
 
     directed(
-        drv(t=t_din_sep, seq=seq) | delay_rng(din_delay, din_delay),
-        drv(t=t_cfg, seq=[2, 3]) | delay_rng(cfg_delay, cfg_delay),
+        drv(t=T_QDIN_SEP, seq=seq) | delay_rng(din_delay, din_delay),
+        drv(t=T_CFG, seq=[2, 3]) | delay_rng(cfg_delay, cfg_delay),
         f=take(sim_cls=sim_cls),
         ref=[[list(range(3))] * 2, [list(range(6))] * 3])
 
     sim(outdir=tmpdir)
+
+
+@formal_check()
+def test_take_formal():
+    take(Intf(T_DIN))
+
+
+@formal_check()
+def test_qtake_formal():
+    take(Intf(T_QDIN))
+
+
+@synth_check({'logic luts': 20, 'ffs': 17})
+def test_take():
+    take(Intf(T_DIN))

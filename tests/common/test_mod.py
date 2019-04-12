@@ -1,8 +1,10 @@
+from pygears import Intf
+from pygears.common import mod
 from pygears.cookbook.verif import verif
 from pygears.sim import sim
 from pygears.sim.modules.drv import drv
 from pygears.typing import Tuple, Uint
-from pygears.common import mod
+from pygears.util.test_utils import formal_check, synth_check
 
 
 def test_unsigned_cosim(tmpdir, cosim_cls):
@@ -14,3 +16,13 @@ def test_unsigned_cosim(tmpdir, cosim_cls):
         ref=mod(name='ref_model'))
 
     sim(outdir=tmpdir)
+
+
+@formal_check()
+def test_unsigned_formal():
+    mod(Intf(Tuple[Uint[10], Uint[4]]))
+
+
+@synth_check({'logic luts': 54, 'ffs': 0})
+def test_unsigned_synth():
+    mod(Intf(Tuple[Uint[10], Uint[4]]))
