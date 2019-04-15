@@ -1,8 +1,8 @@
 from . import hdl_types as ht
-from .conditions import COND_NAME, find_cond_id, find_sub_cond_ids
+from .conditions_utils import COND_NAME, find_cond_id, find_sub_cond_ids
 from .hdl_stmt_types import (AssertValue, AssignValue, CombBlock,
                              CombSeparateStmts, HDLBlock)
-from .hdl_utils import add_to_list, state_expr
+from .hdl_utils import VisitError, add_to_list, state_expr
 
 
 def find_in_cond(conds, hdl_stmt, **kwds):
@@ -29,7 +29,6 @@ def find_exit_cond(conds, hdl_stmt, **kwds):
 class HDLStmtVisitor:
     def __init__(self):
         self.control_suffix = ['_en']
-        self.control_expr = (ht.IntfReadyExpr, ht.IntfValidExpr)
         self.non_control_pairs = []
         self.current_scope = None
         self.conds = None
@@ -71,7 +70,7 @@ class HDLStmtVisitor:
         return block
 
     def is_control_var(self, name, val):
-        if isinstance(name, self.control_expr):
+        if isinstance(name, ht.Expr):
             return True
 
         for suff in self.control_suffix:
@@ -154,12 +153,29 @@ class RegEnVisitor(HDLStmtVisitor):
         cond = find_cycle_cond(self.conds, node, **kwds)
 
         return [
-            AssignValue(target=f'{node.reg.name}_en', val=cond),
-            AssignValue(
-                target=f'{node.reg.name}_next',
-                val=node.val,
-                width=int(node.reg.dtype))
+            AssignValue(target=f'{node.name}_en', val=cond),
+            parse_stmt_target(node, 'next')
         ]
+
+
+def parse_stmt_target(node, context):
+    if context in ['reg', 'next']:
+        node_var = node.reg
+    elif context == 'v':
+        node_var = node.variable
+
+    if isinstance(node_var, (ht.RegDef, ht.VariableDef)):
+        next_target = f'{node.name}_{context}'
+    elif isinstance(node_var, ht.SubscriptExpr):
+        sub_val = node_var.val
+        next_target = ht.SubscriptExpr(
+            val=ht.OperandVal(op=sub_val.op, context=context),
+            index=node_var.index)
+    else:
+        raise VisitError('Unknown assignment type')
+
+    return AssignValue(
+        target=next_target, val=node.val, width=int(node_var.dtype))
 
 
 class VariableVisitor(HDLStmtVisitor):
@@ -173,10 +189,8 @@ class VariableVisitor(HDLStmtVisitor):
             self.seen_var.append(name)
 
     def visit_VariableStmt(self, node, **kwds):
-        name = f'{node.variable.name}_v'
-        self.assign_var(name, node.val)
-        return AssignValue(
-            target=name, val=node.val, width=int(node.variable.dtype))
+        self.assign_var(f'{node.name}_v', node.val)
+        return parse_stmt_target(node, 'v')
 
 
 class OutputVisitor(HDLStmtVisitor):

@@ -8,7 +8,6 @@ class AstUnroll(ast.NodeTransformer):
     def __init__(self, idx, targets):
         self.idx = idx
         self.targets = targets
-        self.found_yield = False
 
     def visit_Name(self, node):
         if node.id in self.targets:

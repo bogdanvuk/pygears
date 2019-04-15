@@ -50,6 +50,20 @@ def subcond_expr(cond, other=None):
     return other
 
 
+def find_name(node):
+    name = getattr(node, 'name', None)
+    if name is not None:
+        return name
+
+    if hasattr(node, 'val'):
+        return find_name(node.val)
+
+    if hasattr(node, 'op'):
+        return find_name(node.op)
+
+    return None
+
+
 # Expressions
 
 
@@ -135,6 +149,10 @@ class RegNextStmt(Expr):
     def dtype(self):
         return self.reg.dtype
 
+    @property
+    def name(self):
+        return find_name(self.reg)
+
 
 @dataclass
 class VariableDef(Expr):
@@ -154,6 +172,10 @@ class VariableStmt(Expr):
     @property
     def dtype(self):
         return self.variable.dtype
+
+    @property
+    def name(self):
+        return find_name(self.variable)
 
 
 @dataclass
@@ -280,6 +302,9 @@ class SubscriptExpr(Expr):
 
         return self.val.dtype.__getitem__(self.index)
 
+    def __hash__(self):
+        return hash(find_name(self.val))
+
 
 @dataclass
 class AttrExpr(Expr):
@@ -351,6 +376,7 @@ class BothSubCond(SubConditions):
 class Block:
     stmts: list
     id: int = field(init=False, default=None)
+    break_cond: list = field(init=False, default=None)
 
     @property
     def in_cond(self):
@@ -368,7 +394,6 @@ class Block:
 @dataclass
 class BaseLoop(Block):
     multicycle: list
-    break_cond: list = field(init=False, default=None)
 
     @property
     def cycle_cond(self):
@@ -421,15 +446,19 @@ class IfBlock(Block):
 
     @property
     def cycle_cond(self):
-        from .conditions import COND_NAME
-        in_c = COND_NAME.substitute(cond_type='in', block_id=self.id)
-        return CycleSubCond(UnaryOpExpr(in_c, '!'), '||')
+        if self.in_cond is not None:
+            from .conditions_utils import COND_NAME
+            in_c = COND_NAME.substitute(cond_type='in', block_id=self.id)
+            return CycleSubCond(UnaryOpExpr(in_c, '!'), '||')
+        return CycleSubCond()
 
     @property
     def exit_cond(self):
-        from .conditions import COND_NAME
-        in_c = COND_NAME.substitute(cond_type='in', block_id=self.id)
-        return ExitSubCond(UnaryOpExpr(in_c, '!'), '||')
+        if self.in_cond is not None:
+            from .conditions_utils import COND_NAME
+            in_c = COND_NAME.substitute(cond_type='in', block_id=self.id)
+            return ExitSubCond(UnaryOpExpr(in_c, '!'), '||')
+        return ExitSubCond()
 
 
 @dataclass
@@ -438,12 +467,12 @@ class ContainerBlock(Block):
 
     @property
     def cycle_cond(self):
-        from .conditions import COND_NAME
+        from .conditions_utils import COND_NAME
         return COND_NAME.substitute(cond_type='cycle', block_id=self.id)
 
     @property
     def exit_cond(self):
-        from .conditions import COND_NAME
+        from .conditions_utils import COND_NAME
         return COND_NAME.substitute(cond_type='exit', block_id=self.id)
 
 

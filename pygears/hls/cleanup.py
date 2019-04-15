@@ -1,4 +1,4 @@
-from .conditions import cond_name_match
+from .conditions_utils import cond_name_match
 from .inst_visit import InstanceVisitor
 
 
@@ -28,7 +28,6 @@ class ConditionExprCleanup(InstanceVisitor):
     def visit_UnaryOpExpr(self, node):
         operand = self.visit(node.operand)
         if operand is not None:
-            breakpoint()
             node.operand = operand
             return node
         return None
