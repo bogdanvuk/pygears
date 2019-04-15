@@ -64,6 +64,14 @@ def find_name(node):
     return None
 
 
+def find_sub_dtype(val):
+    if isinstance(val, (tuple, list)):
+        sub = max(val, key=lambda x: int(getattr(x, 'dtype')))
+        return sub.dtype
+
+    return val.dtype
+
+
 # Expressions
 
 
@@ -185,7 +193,7 @@ class OperandVal(Expr):
 
     @property
     def dtype(self):
-        return self.op.dtype
+        return find_sub_dtype(self.op)
 
 
 @dataclass
@@ -210,11 +218,7 @@ class IntfDef(Expr):
 
     @property
     def dtype(self):
-        if isinstance(self.intf, tuple):
-            intf = max(self.intf, key=lambda x: int(getattr(x, 'dtype')))
-            return intf.dtype
-
-        return self.intf.dtype
+        return find_sub_dtype(self.intf)
 
 
 @dataclass

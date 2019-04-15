@@ -192,11 +192,13 @@ class HdlAst(ast.NodeVisitor):
         val_expr = self.visit(node.value)
 
         if hasattr(node.slice, 'value'):
-            data_index = False
-            if isinstance(val_expr, ht.OperandVal) and (len(val_expr.op) > 1):
-                data_index = True
-            else:
-                data_index = typeof(val_expr.dtype, (Array, Integer))
+            data_index = typeof(val_expr.dtype, (Array, Integer))
+            if not data_index:
+                try:
+                    data_index = isinstance(
+                        val_expr, ht.OperandVal) and (len(val_expr.op) > 1)
+                except TypeError:
+                    pass
 
             if data_index:
                 index = self.visit_DataExpression(node.slice.value)
@@ -396,6 +398,8 @@ class HdlAst(ast.NodeVisitor):
 
     def visit_UnaryOp(self, node):
         operand = self.visit_DataExpression(node.operand)
+        if operand is None:
+            return None
 
         if isinstance(operand, ht.ResExpr):
             return self.visit_DataExpression(node)
