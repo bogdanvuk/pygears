@@ -1,11 +1,13 @@
 import pytest
 
+from pygears import Intf
 from pygears.common.dreg import dreg
 from pygears.cookbook.delay import delay_rng
 from pygears.cookbook.verif import directed, verif
 from pygears.sim import sim, timestep
 from pygears.sim.modules.drv import drv
 from pygears.typing import Int, Queue, Tuple, Uint
+from pygears.util.test_utils import formal_check, synth_check
 
 
 def test_pygears_sim(tmpdir):
@@ -43,3 +45,13 @@ def test_queue_tuple(tmpdir, cosim_cls, din_delay, dout_delay):
         delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(outdir=tmpdir)
+
+
+@formal_check()
+def test_formal():
+    dreg(Intf(Uint[16]))
+
+
+@synth_check({'logic luts': 2, 'ffs': 17})
+def test_synth():
+    dreg(Intf(Uint[16]))

@@ -3,6 +3,7 @@ from functools import partial
 
 import pytest
 
+from pygears import Intf
 from pygears.cookbook.delay import delay_rng
 from pygears.cookbook.trr import trr
 from pygears.cookbook.verif import directed, verif
@@ -12,7 +13,7 @@ from pygears.sim.extens.svrand import SVRandSocket
 from pygears.sim.modules.drv import drv
 from pygears.sim.modules.sim_socket import SimSocket
 from pygears.typing import Queue, Uint
-from pygears.util.test_utils import prepare_result_dir, skip_ifndef
+from pygears.util.test_utils import formal_check, skip_ifndef, synth_check
 
 T_DIN = Queue[Uint[16]]
 
@@ -54,7 +55,7 @@ def test_random(tmpdir, sim_cls):
     sim(outdir=tmpdir)
 
 
-def test_socket_cosim_rand():
+def test_socket_cosim_rand(tmpdir):
     skip_ifndef('SIM_SOCKET_TEST', 'RANDOM_TEST')
 
     din_num = 3
@@ -73,4 +74,14 @@ def test_socket_cosim_rand():
         f=trr(sim_cls=partial(SimSocket, run=True)),
         ref=trr(name='ref_model'))
 
-    sim(outdir=prepare_result_dir(), extens=[partial(SVRandSocket, cons=cons)])
+    sim(outdir=tmpdir, extens=[partial(SVRandSocket, cons=cons)])
+
+
+@formal_check()
+def test_formal():
+    trr(Intf(T_DIN), Intf(T_DIN), Intf(T_DIN))
+
+
+@synth_check({'logic luts': 24, 'ffs': 2})
+def test_trr():
+    trr(Intf(T_DIN), Intf(T_DIN), Intf(T_DIN))

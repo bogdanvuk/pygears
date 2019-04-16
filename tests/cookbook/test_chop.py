@@ -1,7 +1,9 @@
 import random
-import pytest
 from functools import partial
 
+import pytest
+
+from pygears import Intf
 from pygears.cookbook.chop import chop
 from pygears.cookbook.delay import delay_rng
 from pygears.cookbook.verif import directed, verif
@@ -13,7 +15,7 @@ from pygears.sim.modules.drv import drv
 from pygears.sim.modules.sim_socket import SimSocket
 from pygears.sim.modules.verilator import SimVerilated
 from pygears.typing import Queue, Uint
-from pygears.util.test_utils import skip_ifndef
+from pygears.util.test_utils import formal_check, skip_ifndef
 
 t_din = Queue[Uint[16]]
 t_cfg = Uint[16]
@@ -94,3 +96,8 @@ def test_open_rand_cons(tmpdir):
     verif(*stim, f=chop(sim_cls=SimVerilated), ref=chop(name='ref_model'))
 
     sim(outdir=tmpdir, extens=[partial(SCVRand, cons=cons)])
+
+
+@formal_check()
+def test_formal():
+    chop(Intf(Queue[Tuple[Uint[16], Uint[16]]]))

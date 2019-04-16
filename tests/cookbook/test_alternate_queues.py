@@ -1,10 +1,12 @@
-from pygears.cookbook import alternate_queues
-from pygears.cookbook.delay import delay_rng
-from pygears.cookbook.verif import directed
 import pytest
+
+from pygears import Intf
+from pygears.cookbook import alternate_queues, delay_rng
+from pygears.cookbook.verif import directed
 from pygears.sim import sim
 from pygears.sim.modules.drv import drv
 from pygears.typing import Int, Queue, Uint
+from pygears.util.test_utils import formal_check, synth_check
 
 
 @pytest.mark.parametrize('din_delay', [0, 5])
@@ -53,3 +55,23 @@ def test_3_inputs(tmpdir, sim_cls, din_delay, dout_delay):
         delays=[delay_rng(dout_delay, dout_delay)] * din_num)
 
     sim(outdir=tmpdir)
+
+
+@formal_check(asserts={
+    'dout0': 'dout0_data == din0_data',
+    'dout1': 'dout1_data == din1_data'
+})
+def test_2_inputs_formal():
+    alternate_queues(Intf(Queue[Uint[8], 2]), Intf(Queue[Uint[8], 2]))
+
+
+@formal_check()
+def test_multi_inputs():
+    alternate_queues(
+        Intf(Queue[Uint[8], 3]), Intf(Queue[Uint[8], 3]),
+        Intf(Queue[Uint[8], 3]))
+
+
+@synth_check({'logic luts': 4, 'ffs': 1})
+def test_2_inputs_synth():
+    alternate_queues(Intf(Queue[Uint[8], 2]), Intf(Queue[Uint[8], 2]))

@@ -1,11 +1,13 @@
 import pytest
 
+from pygears import Intf
 from pygears.cookbook.delay import delay_rng
 from pygears.cookbook.replicate import replicate
 from pygears.cookbook.verif import directed, verif
 from pygears.sim import sim
 from pygears.sim.modules.drv import drv
 from pygears.typing import Tuple, Uint
+from pygears.util.test_utils import formal_check, synth_check
 
 SEQUENCE = [(2, 3), (5, 5), (3, 9), (8, 1)]
 REF = list([x[1]] * x[0] for x in SEQUENCE)
@@ -28,3 +30,13 @@ def test_directed_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
         delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(outdir=tmpdir)
+
+
+@formal_check()
+def test_formal():
+    replicate(Intf(T_DIN))
+
+
+@synth_check({'logic luts': 12, 'ffs': 16})
+def test_synth():
+    replicate(Intf(T_DIN))

@@ -2,6 +2,7 @@ import inspect
 import typing as pytypes
 from dataclasses import dataclass, field
 
+from pygears.core.port import InPort, OutPort
 from pygears.typing import Bool, Integer, Queue, Tuple, Uint, is_type, typeof
 
 BOOLEAN_OPERATORS = {'|', '&', '^', '~', '!', '&&', '||'}
@@ -47,6 +48,28 @@ def subcond_expr(cond, other=None):
         return binary_expr(cond.expr, other, cond.operator)
 
     return other
+
+
+def find_name(node):
+    name = getattr(node, 'name', None)
+    if name is not None:
+        return name
+
+    if hasattr(node, 'val'):
+        return find_name(node.val)
+
+    if hasattr(node, 'op'):
+        return find_name(node.op)
+
+    return None
+
+
+def find_sub_dtype(val):
+    if isinstance(val, (tuple, list)):
+        sub = max(val, key=lambda x: int(getattr(x, 'dtype')))
+        return sub.dtype
+
+    return val.dtype
 
 
 # Expressions
@@ -134,6 +157,10 @@ class RegNextStmt(Expr):
     def dtype(self):
         return self.reg.dtype
 
+    @property
+    def name(self):
+        return find_name(self.reg)
+
 
 @dataclass
 class VariableDef(Expr):
@@ -154,6 +181,10 @@ class VariableStmt(Expr):
     def dtype(self):
         return self.variable.dtype
 
+    @property
+    def name(self):
+        return find_name(self.variable)
+
 
 @dataclass
 class OperandVal(Expr):
@@ -162,41 +193,29 @@ class OperandVal(Expr):
 
     @property
     def dtype(self):
-        return self.op.dtype
-
-
-@dataclass
-class IntfExpr(Expr):
-    intf: pytypes.Any
-    context: str = None
-
-    @property
-    def name(self):
-        return self.intf.basename
-
-    @property
-    def dtype(self):
-        return self.intf.dtype
+        return find_sub_dtype(self.op)
 
 
 @dataclass
 class IntfDef(Expr):
-    intf: pytypes.Any
-    name: str
+    intf: pytypes.Union[InPort, OutPort]
+    _name: str = None
     context: str = None
 
     @property
-    def dtype(self):
-        if isinstance(self.intf, tuple):
-            intf = max(self.intf, key=lambda x: int(getattr(x, 'dtype')))
-            return intf.dtype
+    def name(self):
+        if self._name:
+            return self._name
+        return self.intf.basename
 
-        return self.intf.dtype
+    @property
+    def dtype(self):
+        return find_sub_dtype(self.intf)
 
 
 @dataclass
 class IntfStmt(Expr):
-    intf: IntfExpr
+    intf: IntfDef
     val: Expr
 
     @property
@@ -279,6 +298,9 @@ class SubscriptExpr(Expr):
 
         return self.val.dtype.__getitem__(self.index)
 
+    def __hash__(self):
+        return hash(find_name(self.val))
+
 
 @dataclass
 class AttrExpr(Expr):
@@ -350,6 +372,7 @@ class BothSubCond(SubConditions):
 class Block:
     stmts: list
     id: int = field(init=False, default=None)
+    break_cond: list = field(init=False, default=None)
 
     @property
     def in_cond(self):
@@ -362,6 +385,15 @@ class Block:
     @property
     def exit_cond(self):
         pass
+
+
+@dataclass
+class BaseLoop(Block):
+    multicycle: list
+
+    @property
+    def cycle_cond(self):
+        return CycleSubCond()
 
 
 @dataclass
@@ -382,25 +414,17 @@ class IntfBlock(Block):
 
 
 @dataclass
-class IntfLoop(Block):
+class IntfLoop(BaseLoop):
     intf: pytypes.Any
-    multicycle: list = None
 
     @property
     def in_cond(self):
         return self.intf
 
     @property
-    def cycle_cond(self):
-        return CycleSubCond()
-
-    @property
     def exit_cond(self):
-        if isinstance(self.intf, IntfExpr):
-            intf_expr = IntfExpr(self.intf.intf, context='eot')
-        else:
-            intf_expr = IntfDef(
-                intf=self.intf.intf, name=self.intf.name, context='eot')
+        intf_expr = IntfDef(
+            intf=self.intf.intf, _name=self.intf.name, context='eot')
 
         return ExitSubCond(intf_expr, '&&')
 
@@ -415,11 +439,19 @@ class IfBlock(Block):
 
     @property
     def cycle_cond(self):
-        return CycleSubCond(UnaryOpExpr(self.in_cond, '!'), '||')
+        if self.in_cond is not None:
+            from .conditions_utils import COND_NAME
+            in_c = COND_NAME.substitute(cond_type='in', block_id=self.id)
+            return CycleSubCond(UnaryOpExpr(in_c, '!'), '||')
+        return CycleSubCond()
 
     @property
     def exit_cond(self):
-        return ExitSubCond(UnaryOpExpr(self.in_cond, '!'), '||')
+        if self.in_cond is not None:
+            from .conditions_utils import COND_NAME
+            in_c = COND_NAME.substitute(cond_type='in', block_id=self.id)
+            return ExitSubCond(UnaryOpExpr(in_c, '!'), '||')
+        return ExitSubCond()
 
 
 @dataclass
@@ -428,24 +460,19 @@ class ContainerBlock(Block):
 
     @property
     def cycle_cond(self):
-        from .conditions import COND_NAME
+        from .conditions_utils import COND_NAME
         return COND_NAME.substitute(cond_type='cycle', block_id=self.id)
 
     @property
     def exit_cond(self):
-        from .conditions import COND_NAME
+        from .conditions_utils import COND_NAME
         return COND_NAME.substitute(cond_type='exit', block_id=self.id)
 
 
 @dataclass
-class Loop(Block):
+class Loop(BaseLoop):
     _in_cond: Expr
     _exit_cond: Expr
-    multicycle: list = None
-
-    @property
-    def cycle_cond(self):
-        return CycleSubCond()
 
     @property
     def exit_cond(self):
@@ -471,15 +498,37 @@ class Yield(Block):
 
 
 @dataclass
-class Module:
+class ModuleDataContainer:
     in_ports: pytypes.List
     out_ports: pytypes.List
-    locals: pytypes.Dict
+    hdl_locals: pytypes.Dict
     regs: pytypes.Dict
     variables: pytypes.Dict
-    intfs: pytypes.Dict
+    in_intfs: pytypes.Dict
     out_intfs: pytypes.Dict
+
+    def get_container(self, name):
+        for attr in ['regs', 'variables', 'in_intfs', 'out_intfs']:
+            data_inst = getattr(self, attr)
+            if name in data_inst:
+                return data_inst
+        # hdl_locals is last because it contain others
+        if name in self.hdl_locals:
+            return self.hdl_locals
+        return None
+
+    def get(self, name):
+        data_container = self.get_container(name)
+        if data_container is not None:
+            return data_container[name]
+        return None
+
+
+@dataclass
+class Module:
+    data: ModuleDataContainer
     stmts: pytypes.List
+    id: int = field(init=False, default=0)
 
     @property
     def cycle_cond(self):

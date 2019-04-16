@@ -1,11 +1,13 @@
 import pytest
 
+from pygears import Intf
 from pygears.cookbook import accumulator
 from pygears.cookbook.delay import delay_rng
 from pygears.cookbook.verif import directed, verif
 from pygears.sim import sim
 from pygears.sim.modules.drv import drv
 from pygears.typing import Int, Queue, Tuple, Uint
+from pygears.util.test_utils import formal_check, synth_check
 
 SEQ_UINT = [[(1, 2), (5, 2), (8, 2)], [(3, 8), (1, 8)],
             [(0, 12), (4, 12), (2, 12), (99, 12)]]
@@ -54,3 +56,13 @@ def test_no_offset(tmpdir, cosim_cls, din_delay, dout_delay):
         ref=accumulator(name='ref_model'),
         delays=[delay_rng(dout_delay, dout_delay)])
     sim(outdir=tmpdir)
+
+
+@formal_check()
+def test_unsigned():
+    accumulator(Intf(Queue[Tuple[Uint[8], Uint[8]]]))
+
+
+@synth_check({'logic luts': 20, 'ffs': 18})
+def test_unsigned():
+    accumulator(Intf(Queue[Tuple[Uint[16], Uint[16]]]))

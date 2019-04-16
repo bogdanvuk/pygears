@@ -1,11 +1,25 @@
 from . import hdl_types as ht
-from .hdl_utils import find_hier_blocks
+from .hdl_utils import find_hier_blocks, VisitError
 from .scheduling_types import Leaf, MutexCBlock, SeqCBlock
 
 
 def non_state_block(block):
     return (isinstance(block, MutexCBlock)
             and (not find_hier_blocks(block.hdl_block.stmts)))
+
+
+def add_prolog(child, stmts):
+    if child.prolog:
+        child.prolog.extend(stmts)
+    else:
+        child.prolog = stmts
+
+
+def add_epilog(child, stmts):
+    if child.epilog:
+        child.epilog.extend(stmts)
+    else:
+        child.epilog = stmts
 
 
 class Scheduler(ht.TypeVisitor):
@@ -46,10 +60,7 @@ class Scheduler(ht.TypeVisitor):
                         if isinstance(child, Leaf):
                             child.hdl_blocks = free_stmts + child.hdl_blocks
                         else:
-                            if child.prolog:
-                                child.prolog.extend(free_stmts)
-                            else:
-                                child.prolog = free_stmts
+                            add_prolog(child, free_stmts)
                             free_stmts = []
 
                 leaf_found = child
@@ -88,9 +99,23 @@ class Scheduler(ht.TypeVisitor):
 
     def visit_ContainerBlock(self, node):
         cblock = MutexCBlock(parent=self.scope[-1], hdl_block=node, child=[])
+        free_stmts = []
         for stmt in node.stmts:
-            c = self.visit(stmt)
-            cblock.child.append(c)
+            child = self.visit(stmt)
+            if child is not None:
+                cblock.child.append(child)
+                if free_stmts:
+                    add_prolog(child, free_stmts)
+                    free_stmts = []
+            else:
+                free_stmts.append(stmt)
+
+        if free_stmts:
+            if cblock.child:
+                add_epilog(cblock.child[-1], free_stmts)
+            else:
+                raise VisitError(
+                    "Free stmts in container block with no children")
         return cblock
 
     def visit_Loop(self, node):
@@ -99,8 +124,6 @@ class Scheduler(ht.TypeVisitor):
             cblock = SeqCBlock(parent=self.scope[-1], hdl_block=node, child=[])
             return self.visit_block(cblock, node.stmts)
 
-        # safe guard
-        from .hdl_utils import VisitError
         raise VisitError("If loop isn't blocking stmts should be merged")
 
     def visit_Yield(self, node):

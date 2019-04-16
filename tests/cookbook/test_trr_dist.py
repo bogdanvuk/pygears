@@ -3,6 +3,7 @@ from functools import partial
 
 import pytest
 
+from pygears import Intf
 from pygears.cookbook.delay import delay_rng
 from pygears.cookbook.trr_dist import trr_dist
 from pygears.cookbook.verif import directed, verif
@@ -12,7 +13,7 @@ from pygears.sim.extens.svrand import SVRandSocket
 from pygears.sim.modules.drv import drv
 from pygears.sim.modules.sim_socket import SimSocket
 from pygears.typing import Queue, Uint
-from pygears.util.test_utils import skip_ifndef
+from pygears.util.test_utils import formal_check, skip_ifndef, synth_check
 
 T_TRR_DIST = Queue[Uint[16], 2]
 
@@ -108,3 +109,18 @@ def test_socket_rand_cons(tmpdir):
         ref=trr_dist(name='ref_model', dout_num=2))
 
     sim(outdir=tmpdir, extens=[partial(SVRandSocket, cons=cons)])
+
+
+@formal_check()
+def test_formal():
+    trr_dist(Intf(T_TRR_DIST), dout_num=2)
+
+
+@formal_check()
+def test_lvl_2_formal():
+    trr_dist(Intf(Queue[Uint[16], 3]), dout_num=3, lvl=2)
+
+
+@synth_check({'logic luts': 3, 'ffs': 1})
+def test_synth():
+    trr_dist(Intf(T_TRR_DIST), dout_num=2)

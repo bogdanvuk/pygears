@@ -21,9 +21,10 @@ def find_exception(ex_type, method_name):
 class HdlAstTryExcept(ast.NodeVisitor):
     def __init__(self, ast_v):
         self.ast_v = ast_v
+        self.data = ast_v.data
         self.exception_names = []
 
-    def find_condition(self, node):
+    def _find_condition(self, node):
         self.exception_names = [handler.type.id for handler in node.handlers]
 
         cond = None
@@ -42,12 +43,29 @@ class HdlAstTryExcept(ast.NodeVisitor):
             for curr_ex in self.exception_names:
                 block = find_exception(curr_ex, intf_method)
                 if block is not None:
-                    name = self.ast_v.get_context_var(intf_name)
-                    if isinstance(name, ht.IntfExpr):
-                        intf = ht.IntfExpr(intf=name.intf, context='valid')
-                        return block(intf=intf, stmts=[])
+                    intf = self.data.hdl_locals.get(intf_name, None)
+                    if isinstance(intf, ht.IntfDef):
+                        new_intf = ht.IntfDef(
+                            intf=intf.intf, _name=intf.name, context='valid')
+                        return block(intf=new_intf, stmts=[])
 
                     raise VisitError(
                         'Exceptions only supported for interfaces for now..')
 
         return None
+
+    def analyze(self, node):
+        assert len(
+            node.
+            handlers) == 1, f'Try/except block must only except one exception'
+        try_block = self._find_condition(node)
+        if try_block is None:
+            raise VisitError('No condition found for try/except block')
+
+        self.ast_v.visit_block(try_block, node.body)
+
+        except_block = ht.IfBlock(
+            _in_cond=ht.create_oposite(try_block.in_cond), stmts=[])
+        self.ast_v.visit_block(except_block, node.handlers[0].body)
+
+        return ht.ContainerBlock(stmts=[try_block, except_block])

@@ -1,9 +1,11 @@
 import ast
 from functools import reduce
 
-from pygears.typing import Int, Tuple, Uint, typeof
+from pygears.typing import Int, Tuple, Uint, Unit, is_type, typeof
+from pygears.typing.base import TypingMeta
 
 from . import hdl_types as ht
+from .hdl_utils import VisitError, eval_expression
 
 
 def max_expr(op1, op2):
@@ -20,6 +22,61 @@ def max_expr(op1, op2):
 
 
 class HdlAstCall:
+    def __init__(self, ast_v):
+        self.ast_v = ast_v
+        self.data = ast_v.data
+
+    def analyze(self, node):
+        arg_nodes = [self.ast_v.visit_DataExpression(arg) for arg in node.args]
+
+        func_args = arg_nodes
+        if all(isinstance(node, ht.ResExpr) for node in arg_nodes):
+            func_args = []
+            for arg in arg_nodes:
+                if is_type(type(arg.val)) and not typeof(type(arg.val), Unit):
+                    func_args.append(str(int(arg.val)))
+                else:
+                    func_args.append(str(arg.val))
+
+        try:
+            ret = eval(f'{node.func.id}({", ".join(func_args)})')
+            return ht.ResExpr(ret)
+        except:
+            return self._call_func(node, func_args)
+
+    def _call_func(self, node, func_args):
+        if hasattr(node.func, 'attr'):
+            if node.func.attr == 'dtype':
+                func = eval_expression(node.func, self.data.hdl_locals)
+                ret = eval(f'func({", ".join(func_args)})')
+                return ht.ResExpr(ret)
+
+            if node.func.attr == 'tout':
+                return self.ast_v.cast_return(func_args)
+
+        kwds = {}
+        if hasattr(node.func, 'attr'):
+            kwds['value'] = self.ast_v.visit_DataExpression(node.func.value)
+            func = node.func.attr
+        elif hasattr(node.func, 'id'):
+            func = node.func.id
+        else:
+            # safe guard
+            raise VisitError('Unrecognized func node in call')
+
+        func_dispatch = getattr(self, f'call_{func}', None)
+        if func_dispatch:
+            return func_dispatch(*func_args, **kwds)
+
+        if func in self.ast_v.gear.params:
+            assert isinstance(self.ast_v.gear.params[func], TypingMeta)
+            assert len(func_args) == 1, 'Cast with multiple arguments'
+            return ht.CastExpr(
+                operand=func_args[0], cast_to=self.ast_v.gear.params[func])
+
+        # safe guard
+        raise VisitError('Unrecognized func in call')
+
     def call_len(self, arg, **kwds):
         return ht.ResExpr(len(arg.dtype))
 
@@ -54,12 +111,12 @@ class HdlAstCall:
 
         arg = arg[0]
 
-        assert isinstance(arg, ht.IntfExpr), 'Not supported yet...'
+        assert isinstance(arg.op, ht.IntfDef), 'Not supported yet...'
         assert typeof(arg.dtype, Tuple), 'Not supported yet...'
 
         op = []
         for field in arg.dtype.fields:
-            op.append(ht.AttrExpr(arg, [field]))
+            op.append(ht.AttrExpr(arg.op, [field]))
 
         return reduce(max_expr, op)
 
@@ -76,3 +133,12 @@ class HdlAstCall:
 
     def call_get_nb(self, *args, **kwds):
         return kwds['value']
+
+    def call_clk(self, *arg, **kwds):
+        return None
+
+    def call_empty(self, *arg, **kwds):
+        assert not arg, 'Empty should be called without arguments'
+        value = kwds['value']
+        expr = ht.IntfDef(intf=value.intf, _name=value.name, context='valid')
+        return ht.UnaryOpExpr(expr, '!')

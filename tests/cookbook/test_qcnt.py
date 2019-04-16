@@ -3,6 +3,7 @@ from functools import partial
 
 import pytest
 
+from pygears import Intf
 from pygears.cookbook.delay import delay_rng
 from pygears.cookbook.qcnt import qcnt
 from pygears.cookbook.verif import directed, verif
@@ -12,7 +13,7 @@ from pygears.sim.extens.svrand import SVRandSocket
 from pygears.sim.modules.drv import drv
 from pygears.sim.modules.sim_socket import SimSocket
 from pygears.typing import Queue, Uint
-from pygears.util.test_utils import skip_ifndef
+from pygears.util.test_utils import formal_check, skip_ifndef, synth_check
 
 T_DIN = Queue[Uint[16], 3]
 RANDOM_SEQ = [[[
@@ -98,3 +99,18 @@ def test_socket_rand_cons(tmpdir):
         ref=qcnt(name='ref_model', lvl=T_DIN.lvl))
 
     sim(outdir=tmpdir, extens=[partial(SVRandSocket, cons=cons)])
+
+
+@formal_check()
+def test_lvl_1():
+    qcnt(Intf(Queue[Uint[8], 3]))
+
+
+@formal_check()
+def test_lvl_2():
+    qcnt(Intf(Queue[Uint[8], 3]), lvl=2)
+
+
+@synth_check({'logic luts': 5, 'ffs': 16})
+def test_synth():
+    qcnt(Intf(Queue[Uint[8], 3]))

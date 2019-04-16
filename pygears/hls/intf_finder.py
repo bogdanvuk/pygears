@@ -3,7 +3,6 @@ import inspect
 import re
 
 from . import hdl_types as ht
-
 from .hdl_utils import eval_expression, find_assign_target
 
 
@@ -64,7 +63,8 @@ class IntfFinder(ast.NodeVisitor):
         expr = node.iter
         if isinstance(expr, ast.Subscript):
             name = expr.value.id
-            self.intfs['vars'][name] = ht.IntfDef(self.varargs[name], name)
+            self.intfs['vars'][name] = ht.IntfDef(
+                intf=self.varargs[name], _name=name)
 
         for stmt in node.body:
             self.visit(stmt)
@@ -73,7 +73,8 @@ class IntfFinder(ast.NodeVisitor):
         expr = node.items[0].context_expr
         if isinstance(expr, ast.Subscript):
             name = expr.value.id
-            self.intfs['vars'][name] = ht.IntfDef(self.varargs[name], name)
+            self.intfs['vars'][name] = ht.IntfDef(
+                intf=self.varargs[name], _name=name)
 
         for stmt in node.body:
             self.visit(stmt)
@@ -82,11 +83,12 @@ class IntfFinder(ast.NodeVisitor):
         for arg in node.iter.args:
             if hasattr(arg, 'id') and arg.id in self.varargs:
                 if isinstance(node.target, ast.Tuple):
-                    self.intfs['vars'][node.target.elts[-1].id] = ht.IntfDef(
-                        self.varargs[arg.id], node.target.elts[-1].id)
+                    name = node.target.elts[-1].id
                 else:
-                    self.intfs['vars'][node.target.id] = ht.IntfDef(
-                        self.varargs[arg.id], node.target.elts[-1].id)
+                    name = node.target.id
+
+                self.intfs['vars'][name] = ht.IntfDef(
+                    intf=self.varargs[arg.id], _name=node.target.elts[-1].id)
                 break
 
         for stmt in node.body:

@@ -40,13 +40,13 @@ class VCompiler(InstanceVisitor):
         if target in self.hdl_locals:
             var = self.hdl_locals[target]
 
-        if node.width or var is None:
+        if node.dtype or var is None:
             return f'{target} = {rhs};'
 
-        if int(var.dtype) == node.width:
+        if int(var.dtype) == int(node.dtype):
             return f'{target} = {cast(var.dtype, node.val.dtype, rhs)};'
 
-        assert False, 'node.width diff from hdl local width'
+        assert False, 'node.dtype diff from hdl local width'
         return None
 
     def enter_block(self, block):
@@ -115,13 +115,13 @@ DATA_FUNC_GEAR = """
 
 
 def write_module(node, v_stmts, writer, **kwds):
-    for name, expr in node.regs.items():
+    for name, expr in node.data.regs.items():
         writer.line(vgen_reg(expr.dtype, f'{name}_reg', False))
         writer.line(vgen_reg(expr.dtype, f'{name}_next', False))
         writer.line(f'reg {name}_en;')
         writer.line()
 
-    for name, val in node.intfs.items():
+    for name, val in node.data.in_intfs.items():
         writer.line(vgen_intf(val.dtype, name, False))
         writer.line(vgen_reg(val.dtype, f'{name}_s', False))
         tmp = vgen_wire(val.dtype, f'{name}_s')
@@ -129,7 +129,7 @@ def write_module(node, v_stmts, writer, **kwds):
         writer.line(f"assign {name} = {name}_s;")
     writer.line()
 
-    for name, expr in node.variables.items():
+    for name, expr in node.data.variables.items():
         writer.block(vgen_reg(expr.dtype, f'{name}_v', False))
         writer.line()
 
@@ -138,12 +138,12 @@ def write_module(node, v_stmts, writer, **kwds):
             writer.line(f'wire {cond.target};')
         writer.line()
 
-    for name, expr in node.regs.items():
+    for name, expr in node.data.regs.items():
         writer.block(REG_TEMPLATE.format(name, int(expr.val)))
 
     extras = {}
     for name, val in v_stmts.items():
-        compiler = VCompiler(name, writer, node.locals, **kwds)
+        compiler = VCompiler(name, writer, node.data.hdl_locals, **kwds)
         compiler.visit(val)
         extras.update(compiler.extras)
 

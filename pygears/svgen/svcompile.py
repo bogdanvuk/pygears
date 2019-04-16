@@ -31,16 +31,22 @@ class SVCompiler(InstanceVisitor):
             self.writer.indent -= 4
             self.writer.line(f'end')
 
+    def _assign_value(self, stmt, name=None):
+        if name is None:
+            name = stmt.target
+
+        if stmt.dtype:
+            return f"{svexpr(stmt.target)} = {svexpr(stmt.val, stmt.dtype)}"
+
+        return f"{svexpr(stmt.target)} = {svexpr(stmt.val)}"
+
     def visit_AssertValue(self, node):
         self.writer.line(f'assert ({svexpr(node.val.test)})')
         self.writer.line(f'else $error("{node.val.msg}");')
 
     def visit_AssignValue(self, node):
-        if node.width:
-            self.writer.line(
-                f"{svexpr(node.target)} = {node.width}'({svexpr(node.val)});")
-        else:
-            self.writer.line(f"{svexpr(node.target)} = {svexpr(node.val)};")
+        assign_stmt = self._assign_value(node)
+        self.writer.line(f'{assign_stmt};')
 
     def visit_CombBlock(self, node):
         if not node.stmts and not node.dflts:
@@ -55,24 +61,17 @@ class SVCompiler(InstanceVisitor):
     def visit_CombSeparateStmts(self, node):
         self.writer.line(f'// Comb statements for: {self.visit_var}')
         for stmt in node.stmts:
-            if stmt.width:
-                self.writer.line(
-                    f"assign {svexpr(stmt.target)} = {stmt.width}'({svexpr(stmt.val)});"
-                )
-            else:
-                self.writer.line(
-                    f"assign {svexpr(stmt.target)} = {svexpr(stmt.val)};")
+            assign_stmt = self._assign_value(stmt)
+            if assign_stmt is not None:
+                self.writer.line(f'assign {assign_stmt};')
         self.writer.line('')
 
     def visit_HDLBlock(self, node):
         self.enter_block(node)
 
         for name, val in node.dflts.items():
-            if val.width:
-                self.writer.line(
-                    f"{svexpr(name)} = {val.width}'({svexpr(val.val)});")
-            else:
-                self.writer.line(f"{svexpr(name)} = {svexpr(val.val)};")
+            assign_stmt = self._assign_value(val, name)
+            self.writer.line(f'{assign_stmt};')
 
         for stmt in node.stmts:
             self.visit(stmt)
@@ -92,20 +91,20 @@ DATA_FUNC_GEAR = """
 
 
 def write_module(node, sv_stmts, writer):
-    for name, expr in node.regs.items():
+    for name, expr in node.data.regs.items():
         writer.block(svgen_typedef(expr.dtype, name))
         writer.line(f'logic {name}_en;')
         writer.line(f'{name}_t {name}_reg, {name}_next;')
         writer.line()
 
-    for name, val in node.intfs.items():
+    for name, val in node.data.in_intfs.items():
         writer.line(f'dti#({int(val.dtype)}) {name}();')
         writer.block(svgen_typedef(val.dtype, name))
         writer.line(f'{name}_t {name}_s;')
         writer.line(f"assign {name}.data = {name}_s;")
     writer.line()
 
-    for name, expr in node.variables.items():
+    for name, expr in node.data.variables.items():
         writer.block(svgen_typedef(expr.dtype, name))
         writer.line(f'{name}_t {name}_v;')
         writer.line()
@@ -115,7 +114,7 @@ def write_module(node, sv_stmts, writer):
             writer.line(f'logic {cond.target};')
         writer.line()
 
-    for name, expr in node.regs.items():
+    for name, expr in node.data.regs.items():
         writer.block(REG_TEMPLATE.format(name, int(expr.val)))
 
     for name, val in sv_stmts.items():
