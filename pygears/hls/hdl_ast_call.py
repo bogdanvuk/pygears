@@ -140,5 +140,9 @@ class HdlAstCall:
     def call_empty(self, *arg, **kwds):
         assert not arg, 'Empty should be called without arguments'
         value = kwds['value']
-        expr = ht.IntfExpr(intf=value.intf, context='valid')
+        if isinstance(value, ht.IntfDef):
+            expr = ht.IntfDef(
+                intf=value.intf, name=value.name, context='valid')
+        else:
+            expr = ht.IntfExpr(intf=value.intf, context='valid')
         return ht.UnaryOpExpr(expr, '!')

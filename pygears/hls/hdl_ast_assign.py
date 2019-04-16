@@ -52,7 +52,7 @@ class HdlAstAssign:
 
     def _assign_in_intf(self, name, index, val):
         if name not in self.data.hdl_locals:
-            self.data.hdl_locals[name] = ht.IntfDef(val, name)
+            self.data.hdl_locals[name] = ht.IntfDef(val.intf, name)
 
         if index:
             return ht.IntfStmt(index, val)

@@ -1,14 +1,15 @@
+from pygears import Intf
 from pygears.cookbook import priority_mux
 from pygears.cookbook.delay import delay_rng
 from pygears.cookbook.verif import verif
 from pygears.sim import sim
 from pygears.sim.modules.drv import drv
 from pygears.typing import Uint
-from pygears.util.test_utils import skip_ifndef
+from pygears.util.test_utils import formal_check, skip_ifndef
 
 
-def test_directed(tmpdir, cosim_cls):
-    # skip_ifndef('RANDOM_TEST')
+def test_2_inputs(tmpdir, cosim_cls):
+    skip_ifndef('RANDOM_TEST')
     # din0_delay = (0, 5)
     # din1_delay = (0, 5)
     din0_delay = (1, 1)
@@ -31,3 +32,8 @@ def test_directed(tmpdir, cosim_cls):
         delays=[delay_rng(*dout_delay)])
 
     sim(outdir=tmpdir)
+
+
+@formal_check()
+def test_uint():
+    priority_mux(Intf(Uint[8]), Intf(Uint[8]))

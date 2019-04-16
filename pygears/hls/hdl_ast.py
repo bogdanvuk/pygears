@@ -1,6 +1,5 @@
 import ast
 import itertools
-from functools import reduce
 
 from pygears.typing import (Array, Int, Integer, Queue, Tuple, Uint, Unit,
                             typeof)
@@ -492,26 +491,15 @@ class HdlAst(ast.NodeVisitor):
         return HdlAstTryExcept(self).analyze(node)
 
     def visit_Break(self, node):
-        curr_loop = next(
+        loop_to_break = next(
             block for block in reversed(self.scope)
-            if isinstance(block, ht.BaseLoop))
-        loop_idx = self.scope.index(curr_loop)
+            if isinstance(block, ht.BaseLoop)
+            or getattr(block, 'break_func', None))
 
-        block_idx = loop_idx + 1
-        sub_conds = [
-            getattr(block, 'in_cond', None) for block in self.scope[block_idx:]
-        ]
-        in_cond = ht.create_oposite(reduce(ht.and_expr, sub_conds, None))
+        if getattr(loop_to_break, 'break_func', None):
+            return loop_to_break.break_func(self, loop_to_break)
 
-        if curr_loop.break_cond:
-            break_conds = reduce(ht.and_expr, curr_loop.break_cond, None)
-
-            if_block = self.scope[block_idx]
-            if_block._in_cond = ht.and_expr(if_block._in_cond, break_conds)
-
-            curr_loop.break_cond.append(in_cond)
-        else:
-            curr_loop.break_cond = [in_cond]
+        raise VisitError('Not implemented yet...')
 
     def visit_AsyncFunctionDef(self, node):
         hdl_node = ht.Module(data=self.data, stmts=[])

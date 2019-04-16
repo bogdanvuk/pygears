@@ -212,18 +212,19 @@ class HdlAstForImpl:
         return hdl_node
 
     def _comb_enumerate(self, node, target_names, stop, enum_target):
-        hdl_node = ht.Loop(
-            _in_cond=None, stmts=[], _exit_cond=None, multicycle=None)
+        hdl_node = ht.ContainerBlock(stmts=[])
 
-        all_stmts = []
+        hdl_node.break_func = node.break_func
+        for stmt in node.hdl_stmts:
+            hdl_node.stmts.append(self.ast_v.visit(stmt))
+
         for i, last in qrange(stop.val):
             py_stmt = f'{target_names[0]} = {i}; {target_names[1]} = {enum_target}{i}'
             stmts = ast.parse(py_stmt).body + node.body
 
             unrolled = unroll_statements(self.data, stmts, i, target_names,
                                          last)
-            all_stmts.extend(unrolled)
 
-        self.ast_v.visit_block(hdl_node, all_stmts)
+            self.ast_v.visit_block(hdl_node, unrolled)
 
         return hdl_node

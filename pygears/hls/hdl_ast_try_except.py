@@ -43,10 +43,14 @@ class HdlAstTryExcept(ast.NodeVisitor):
             for curr_ex in self.exception_names:
                 block = find_exception(curr_ex, intf_method)
                 if block is not None:
-                    name = self.ast_v.get_context_var(intf_name)
-                    if isinstance(name, ht.IntfExpr):
-                        intf = ht.IntfExpr(intf=name.intf, context='valid')
-                        return block(intf=intf, stmts=[])
+                    intf = self.data.hdl_locals.get(intf_name, None)
+                    if isinstance(intf, ht.IntfExpr):
+                        new_intf = ht.IntfExpr(intf=intf.intf, context='valid')
+                        return block(intf=new_intf, stmts=[])
+                    if isinstance(intf, ht.IntfDef):
+                        new_intf = ht.IntfDef(
+                            intf=intf.intf, name=intf.name, context='valid')
+                        return block(intf=new_intf, stmts=[])
 
                     raise VisitError(
                         'Exceptions only supported for interfaces for now..')
