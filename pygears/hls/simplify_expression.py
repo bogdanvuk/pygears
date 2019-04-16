@@ -179,7 +179,10 @@ def simplify_expr(expr, same_names=None):
     sym_expr = hdl_v.visit(expr)
 
     # TODO : takes to long...
-    if len(sym_expr.atoms(sympy.Symbol)) > 8:
+    try:
+        if len(sym_expr.atoms(sympy.Symbol)) > 8:
+            return expr
+    except AttributeError:
         return expr
 
     res = sympy.simplify_logic(sym_expr)
