@@ -105,7 +105,7 @@ class HDLStmtVisitor:
         else:
             block.dflts[stmt.target] = stmt
             block.stmts[idx] = AssignValue(
-                target=stmt.target, val=None, width=stmt.width)
+                target=stmt.target, val=None, dtype=stmt.dtype)
 
     def update_defaults(self, block):
         # bottom up
@@ -174,8 +174,7 @@ def parse_stmt_target(node, context):
     else:
         raise VisitError('Unknown assignment type')
 
-    return AssignValue(
-        target=next_target, val=node.val, width=int(node_var.dtype))
+    return AssignValue(target=next_target, val=node.val, dtype=node_var.dtype)
 
 
 class VariableVisitor(HDLStmtVisitor):
@@ -225,7 +224,11 @@ class OutputVisitor(HDLStmtVisitor):
                 valid = 1
             stmts.append(AssignValue(ht.IntfValidExpr(port), valid))
             if (not self.out_intfs) and (valid != 0):
-                stmts.append(AssignValue(f'{port}_s', expr))
+                stmts.append(
+                    AssignValue(
+                        target=f'{port}_s',
+                        val=expr,
+                        dtype=self.out_ports[port].dtype))
         block = HDLBlock(in_cond=None, stmts=stmts, dflts={})
         self.update_defaults(block)
         return block
@@ -240,7 +243,7 @@ class OutputVisitor(HDLStmtVisitor):
                 AssignValue(
                     target=f'{intf.basename}_s',
                     val=node.val,
-                    width=int(node.val.dtype)))
+                    dtype=node.val.dtype))
         return res
 
 
@@ -328,7 +331,7 @@ class IntfValidVisitor(HDLStmtVisitor):
                 AssignValue(
                     target=f'{node.intf.name}_s',
                     val=node.val,
-                    width=int(node.dtype)),
+                    dtype=node.dtype),
                 AssignValue(
                     target=ht.IntfValidExpr(node.intf),
                     val=ht.IntfValidExpr(node.val))

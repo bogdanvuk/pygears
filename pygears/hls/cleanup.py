@@ -61,7 +61,7 @@ class ConditionCleanup(InstanceVisitor):
         if name is None:
             name = stmt.target
 
-        if stmt.width:
+        if stmt.dtype:
             return
 
         cond = self.clean_expr(stmt.val)

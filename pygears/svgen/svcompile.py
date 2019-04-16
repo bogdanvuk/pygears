@@ -35,8 +35,8 @@ class SVCompiler(InstanceVisitor):
         if name is None:
             name = stmt.target
 
-        if stmt.width:
-            return f"{svexpr(stmt.target)} = {stmt.width}'({svexpr(stmt.val)})"
+        if stmt.dtype:
+            return f"{svexpr(stmt.target)} = {svexpr(stmt.val, stmt.dtype)}"
 
         return f"{svexpr(stmt.target)} = {svexpr(stmt.val)}"
 

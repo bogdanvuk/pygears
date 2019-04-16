@@ -53,7 +53,7 @@ def find_comb_loop(node, reg_finder):
     if comb_loop:
         length = find_var_length(node.iter, reg_finder.local_params)
 
-        res = ht.ResExpr(Uint[bitw(length)](0))
+        res = ht.ResExpr(Uint[length](0))
         reg_name, reg_val = reg_finder.auto.new_auto_reg(res)
         reg_finder.regs[reg_name] = reg_val
 
@@ -63,7 +63,7 @@ def find_comb_loop(node, reg_finder):
         node.break_func = partial(
             break_comb_loop, reg_name=reg_name, var_name=var_name)
         node.hdl_stmts = [
-            ast.parse(f'{var_name} = Uint[bitw({length})](0)').body[0],
+            ast.parse(f'{var_name} = Uint[{length}](0)').body[0],
             ast.parse(f'{reg_name} = {var_name}').body[0]
         ]
 

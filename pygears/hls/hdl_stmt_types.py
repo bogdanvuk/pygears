@@ -8,7 +8,7 @@ from pygears.typing.base import TypingMeta
 class AssignValue:
     target: pytypes.Any
     val: pytypes.Any
-    width: TypingMeta = None
+    dtype: TypingMeta = None
 
 
 @dataclass

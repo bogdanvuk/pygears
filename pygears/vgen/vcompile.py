@@ -40,13 +40,13 @@ class VCompiler(InstanceVisitor):
         if target in self.hdl_locals:
             var = self.hdl_locals[target]
 
-        if node.width or var is None:
+        if node.dtype or var is None:
             return f'{target} = {rhs};'
 
-        if int(var.dtype) == node.width:
+        if int(var.dtype) == int(node.dtype):
             return f'{target} = {cast(var.dtype, node.val.dtype, rhs)};'
 
-        assert False, 'node.width diff from hdl local width'
+        assert False, 'node.dtype diff from hdl local width'
         return None
 
     def enter_block(self, block):
