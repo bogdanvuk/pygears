@@ -219,7 +219,7 @@ class HdlAstForImpl:
             hdl_node.stmts.append(self.ast_v.visit(stmt))
 
         for i, last in qrange(stop.val):
-            py_stmt = f'{target_names[0]} = {i}; {target_names[1]} = {enum_target}{i}'
+            py_stmt = f'{target_names[0]} = Uint[bitw({stop.val})]({i}); {target_names[1]} = {enum_target}{i}'
             stmts = ast.parse(py_stmt).body + node.body
 
             unrolled = unroll_statements(self.data, stmts, i, target_names,

@@ -177,6 +177,11 @@ class Sym2Hdl(InstanceVisitor):
 def simplify_expr(expr, same_names=None):
     hdl_v = Hdl2Sym(same_names)
     sym_expr = hdl_v.visit(expr)
+
+    # TODO : takes to long...
+    if len(sym_expr.atoms(sympy.Symbol)) > 8:
+        return expr
+
     res = sympy.simplify_logic(sym_expr)
     sym_v = Sym2Hdl(hdl_v.special_symbols)
     res_expr = sym_v.visit(res)
