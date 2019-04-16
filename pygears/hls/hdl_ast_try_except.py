@@ -44,12 +44,9 @@ class HdlAstTryExcept(ast.NodeVisitor):
                 block = find_exception(curr_ex, intf_method)
                 if block is not None:
                     intf = self.data.hdl_locals.get(intf_name, None)
-                    if isinstance(intf, ht.IntfExpr):
-                        new_intf = ht.IntfExpr(intf=intf.intf, context='valid')
-                        return block(intf=new_intf, stmts=[])
                     if isinstance(intf, ht.IntfDef):
                         new_intf = ht.IntfDef(
-                            intf=intf.intf, name=intf.name, context='valid')
+                            intf=intf.intf, _name=intf.name, context='valid')
                         return block(intf=new_intf, stmts=[])
 
                     raise VisitError(

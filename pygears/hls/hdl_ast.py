@@ -41,14 +41,8 @@ OPMAP = {
 
 
 def intf_parse(intf, target):
-    if isinstance(intf, ht.IntfDef):
-        scope = gather_control_stmt_vars(target, intf, dtype=intf.dtype)
-        block_intf = ht.IntfDef(
-            intf=intf.intf, name=intf.name, context='valid')
-    else:
-        block_intf = ht.IntfExpr(intf=intf.intf, context='valid')
-        scope = gather_control_stmt_vars(target, intf)
-
+    scope = gather_control_stmt_vars(target, intf)
+    block_intf = ht.IntfDef(intf=intf.intf, _name=intf.name, context='valid')
     return scope, block_intf
 
 
@@ -65,7 +59,7 @@ def eval_data_expr(node, local_namespace):
 
 def gather_control_stmt_vars(variables, intf, attr=None, dtype=None):
     if dtype is None:
-        dtype = intf.intf.dtype
+        dtype = intf.dtype
     if attr is None:
         attr = []
     else:
@@ -84,7 +78,7 @@ def gather_control_stmt_vars(variables, intf, attr=None, dtype=None):
                     gather_control_stmt_vars(var, intf,
                                              attr + [dtype.fields[i]]))
     else:
-        if isinstance(intf, ht.IntfExpr):
+        if isinstance(intf, ht.IntfDef):
             scope[variables.id] = intf
         else:
             scope[variables.id] = ht.AttrExpr(intf, attr)
@@ -104,7 +98,7 @@ class HdlAst(ast.NodeVisitor):
         self.gear = gear
         self.await_found = None
 
-        in_ports = [ht.IntfExpr(p) for p in gear.in_ports]
+        in_ports = [ht.IntfDef(p) for p in gear.in_ports]
         named = {}
         for port in in_ports:
             if port.name in intfs['namedargs']:
@@ -113,7 +107,7 @@ class HdlAst(ast.NodeVisitor):
 
         self.data = ht.ModuleDataContainer(
             in_ports=in_ports,
-            out_ports=[ht.IntfExpr(p) for p in gear.out_ports],
+            out_ports=[ht.IntfDef(p) for p in gear.out_ports],
             hdl_locals=hdl_locals,
             regs=regs,
             variables=variables,
@@ -136,7 +130,7 @@ class HdlAst(ast.NodeVisitor):
             return ht.OperandVal(var, 'v')
 
         if isinstance(var, ht.IntfDef):
-            return ht.OperandVal(var.intf, 's')
+            return ht.OperandVal(var, 's')
 
         return var
 
@@ -195,7 +189,8 @@ class HdlAst(ast.NodeVisitor):
             if not data_index:
                 try:
                     data_index = isinstance(
-                        val_expr, ht.OperandVal) and (len(val_expr.op) > 1)
+                        val_expr,
+                        ht.OperandVal) and (len(val_expr.op.intf) > 1)
                 except TypeError:
                     pass
 
@@ -217,7 +212,7 @@ class HdlAst(ast.NodeVisitor):
 
         if hasattr(node.value, 'id') and node.value.id in self.data.out_intfs:
             # conditional assginment, not subscript
-            for i in range(len(val_expr.op)):
+            for i in range(len(val_expr.op.intf)):
                 self.data.out_ports[i].context = ht.BinOpExpr(
                     (index, ht.ResExpr(i)), '==')
             return None
@@ -279,7 +274,7 @@ class HdlAst(ast.NodeVisitor):
 
         name = local_names[name_idx]
 
-        return self.get_context_var(name)
+        return self.data.hdl_locals.get(name, None)
 
     def find_intf_by_name(self, name):
         val = None
@@ -333,11 +328,12 @@ class HdlAst(ast.NodeVisitor):
             input_vars = arg_nodes
         elif isinstance(arg_nodes,
                         ht.OperandVal) and len(self.gear.out_ports) > 1:
-            assert len(arg_nodes.op) == len(self.gear.out_ports)
+            intf = arg_nodes.op
+            assert len(intf.intf) == len(self.gear.out_ports)
             input_vars = []
-            for i in range(len(arg_nodes.op)):
+            for i in range(len(intf.intf)):
                 input_vars.append(
-                    ht.SubscriptExpr(val=arg_nodes.op, index=ht.ResExpr(i)))
+                    ht.SubscriptExpr(val=intf, index=ht.ResExpr(i)))
         else:
             assert len(self.data.out_ports) == 1
             input_vars = [arg_nodes]
@@ -479,9 +475,10 @@ class HdlAst(ast.NodeVisitor):
         if flag:
             intf_name, intf_method = intf_val
             if intf_method == 'get':
-                intf = self.get_context_var(intf_name)
-                assert isinstance(intf, ht.IntfExpr)
-                self.await_found = ht.IntfExpr(intf=intf.intf, context='valid')
+                intf = self.data.hdl_locals.get(intf_name, None)
+                assert isinstance(intf, ht.IntfDef)
+                self.await_found = ht.IntfDef(
+                    intf=intf.intf, _name=intf.name, context='valid')
             else:
                 raise VisitError('Await only supports interface get method')
 

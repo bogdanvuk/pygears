@@ -156,7 +156,7 @@ class VExpressionVisitor(SVExpressionVisitor):
 
         return f'{val}_{dtype.fields[node.index]}'
 
-    def visit_IntfExpr(self, node):
+    def visit_IntfDef(self, node):
         if node.context:
             if node.context == 'eot':
                 return f'&{node.name}_s_{node.context}'

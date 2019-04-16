@@ -25,7 +25,7 @@ def unroll_statements(data, stmts, idx, targets, clean=False):
         assert data_contained is not None, f'Unroll statement: unknown target'
 
         if target in data.in_intfs and isinstance(target_val.intf, tuple):
-            target_val = ht.IntfDef(intf=target_val.intf[idx], name=curr_name)
+            target_val = ht.IntfDef(intf=target_val.intf[idx], _name=curr_name)
 
         data_contained[curr_name] = target_val
         if clean:

@@ -238,7 +238,7 @@ class OutputVisitor(HDLStmtVisitor):
         for intf in node.intf.intf:
             res.append(
                 AssignValue(
-                    target=f'{intf.name}_s',
+                    target=f'{intf.basename}_s',
                     val=node.val,
                     width=int(node.val.dtype)))
         return res

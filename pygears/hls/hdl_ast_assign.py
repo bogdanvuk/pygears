@@ -52,7 +52,7 @@ class HdlAstAssign:
 
     def _assign_in_intf(self, name, index, val):
         if name not in self.data.hdl_locals:
-            self.data.hdl_locals[name] = ht.IntfDef(val.intf, name)
+            self.data.hdl_locals[name] = ht.IntfDef(intf=val.intf, _name=name)
 
         if index:
             return ht.IntfStmt(index, val)
@@ -60,17 +60,18 @@ class HdlAstAssign:
         if name in self.data.in_intfs:
             # when *din used as din[x], hdl_locals contain all interfaces
             # but a specific one is needed
-            return ht.IntfStmt(ht.IntfDef(val, name), val)
+            return ht.IntfStmt(ht.IntfDef(intf=val.intf, _name=name), val)
 
         return ht.IntfStmt(self.data.hdl_locals[name], val)
 
     def _assign_out_intf(self, name, index, val):
         if name not in self.data.hdl_locals:
             if not all([v is None for v in val.val]):
-                self.data.hdl_locals[name] = ht.IntfDef(val, name)
+                self.data.hdl_locals[name] = ht.IntfDef(intf=val, _name=name)
             else:
                 self.data.hdl_locals[name] = ht.IntfDef(
-                    self.data.out_ports, name)
+                    intf=tuple([intf.intf for intf in self.data.out_ports]),
+                    _name=name)
 
         if index:
             return ht.IntfStmt(index, val)

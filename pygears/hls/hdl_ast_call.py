@@ -111,12 +111,12 @@ class HdlAstCall:
 
         arg = arg[0]
 
-        assert isinstance(arg, ht.IntfExpr), 'Not supported yet...'
+        assert isinstance(arg.op, ht.IntfDef), 'Not supported yet...'
         assert typeof(arg.dtype, Tuple), 'Not supported yet...'
 
         op = []
         for field in arg.dtype.fields:
-            op.append(ht.AttrExpr(arg, [field]))
+            op.append(ht.AttrExpr(arg.op, [field]))
 
         return reduce(max_expr, op)
 
@@ -140,9 +140,5 @@ class HdlAstCall:
     def call_empty(self, *arg, **kwds):
         assert not arg, 'Empty should be called without arguments'
         value = kwds['value']
-        if isinstance(value, ht.IntfDef):
-            expr = ht.IntfDef(
-                intf=value.intf, name=value.name, context='valid')
-        else:
-            expr = ht.IntfExpr(intf=value.intf, context='valid')
+        expr = ht.IntfDef(intf=value.intf, _name=value.name, context='valid')
         return ht.UnaryOpExpr(expr, '!')

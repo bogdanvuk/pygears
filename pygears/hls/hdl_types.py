@@ -197,24 +197,16 @@ class OperandVal(Expr):
 
 
 @dataclass
-class IntfExpr(Expr):
+class IntfDef(Expr):
     intf: pytypes.Union[InPort, OutPort]
+    _name: str = None
     context: str = None
 
     @property
     def name(self):
+        if self._name:
+            return self._name
         return self.intf.basename
-
-    @property
-    def dtype(self):
-        return self.intf.dtype
-
-
-@dataclass
-class IntfDef(Expr):
-    intf: pytypes.Union[InPort, OutPort]
-    name: str
-    context: str = None
 
     @property
     def dtype(self):
@@ -223,7 +215,7 @@ class IntfDef(Expr):
 
 @dataclass
 class IntfStmt(Expr):
-    intf: IntfExpr
+    intf: IntfDef
     val: Expr
 
     @property
@@ -431,11 +423,8 @@ class IntfLoop(BaseLoop):
 
     @property
     def exit_cond(self):
-        if isinstance(self.intf, IntfExpr):
-            intf_expr = IntfExpr(self.intf.intf, context='eot')
-        else:
-            intf_expr = IntfDef(
-                intf=self.intf.intf, name=self.intf.name, context='eot')
+        intf_expr = IntfDef(
+            intf=self.intf.intf, _name=self.intf.name, context='eot')
 
         return ExitSubCond(intf_expr, '&&')
 
