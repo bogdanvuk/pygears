@@ -28,11 +28,8 @@ class VCompiler(InstanceVisitor):
         self.extras = {}
         self.kwds = kwds
 
-    def find_width(self, node, target=None):
-        if target is None:
-            target = vexpr(node.target, self.extras)
-        else:
-            target = vexpr(target, self.extras)
+    def find_width(self, node):
+        target = vexpr(node.target, self.extras)
 
         rhs = vexpr(node.val, self.extras)
 
@@ -94,8 +91,8 @@ class VCompiler(InstanceVisitor):
     def visit_HDLBlock(self, node):
         self.enter_block(node)
 
-        for name, val in node.dflts.items():
-            self.writer.line(self.find_width(val, target=name))
+        for stmt in node.dflt_stmts:
+            self.writer.line(self.find_width(stmt))
 
         for stmt in node.stmts:
             self.visit(stmt)

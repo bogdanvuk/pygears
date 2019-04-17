@@ -31,10 +31,7 @@ class SVCompiler(InstanceVisitor):
             self.writer.indent -= 4
             self.writer.line(f'end')
 
-    def _assign_value(self, stmt, name=None):
-        if name is None:
-            name = stmt.target
-
+    def _assign_value(self, stmt):
         if stmt.dtype:
             return f"{svexpr(stmt.target)} = {svexpr(stmt.val, stmt.dtype)}"
 
@@ -69,8 +66,8 @@ class SVCompiler(InstanceVisitor):
     def visit_HDLBlock(self, node):
         self.enter_block(node)
 
-        for name, val in node.dflts.items():
-            assign_stmt = self._assign_value(val, name)
+        for stmt in node.dflt_stmts:
+            assign_stmt = self._assign_value(stmt)
             self.writer.line(f'{assign_stmt};')
 
         for stmt in node.stmts:
