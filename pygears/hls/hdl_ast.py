@@ -233,7 +233,7 @@ class HdlAst(ast.NodeVisitor):
         else:
             dtype = type(Uint(node.n))
 
-        return dtype, node.n
+        return ht.ResExpr(dtype(node.n))
 
     def visit_AugAssign(self, node):
         target_load = ast.Name(node.target.id, ast.Load())
