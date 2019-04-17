@@ -498,9 +498,9 @@ class Yield(Block):
 
 
 @dataclass
-class ModuleDataContainer:
-    in_ports: pytypes.List
-    out_ports: pytypes.List
+class ModuleData:
+    in_ports: pytypes.Dict
+    out_ports: pytypes.Dict
     hdl_locals: pytypes.Dict
     regs: pytypes.Dict
     variables: pytypes.Dict
@@ -526,7 +526,6 @@ class ModuleDataContainer:
 
 @dataclass
 class Module:
-    data: ModuleDataContainer
     stmts: pytypes.List
     id: int = field(init=False, default=0)
 

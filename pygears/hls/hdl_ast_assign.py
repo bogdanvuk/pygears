@@ -70,7 +70,8 @@ class HdlAstAssign:
                 self.data.hdl_locals[name] = ht.IntfDef(intf=val, _name=name)
             else:
                 self.data.hdl_locals[name] = ht.IntfDef(
-                    intf=tuple([intf.intf for intf in self.data.out_ports]),
+                    intf=tuple(
+                        [intf.intf for intf in self.data.out_ports.values()]),
                     _name=name)
 
         if index:

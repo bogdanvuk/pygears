@@ -27,7 +27,8 @@ def find_exit_cond(conds, hdl_stmt, **kwds):
 
 
 class HDLStmtVisitor:
-    def __init__(self):
+    def __init__(self, hdl_data):
+        self.hdl_data = hdl_data
         self.control_suffix = ['_en']
         self.non_control_pairs = []
         self.current_scope = None
@@ -50,6 +51,12 @@ class HDLStmtVisitor:
 
     def enter_block(self, block, **kwds):
         self.current_scope = block
+        method = 'enter_' + block.__class__.__name__
+        enter_visitor = getattr(self, method, self.generic_enter)
+        return enter_visitor(block, **kwds)
+
+    def generic_enter(self, block, **kwds):
+        pass
 
     def visit_Module(self, node, **kwds):
         block = CombBlock(stmts=[], dflts={})
@@ -142,12 +149,8 @@ class HDLStmtVisitor:
 
 
 class RegEnVisitor(HDLStmtVisitor):
-    def enter_block(self, block, **kwds):
-        super().enter_block(block, **kwds)
-        if isinstance(block, ht.Module):
-            return [AssignValue(f'{reg}_en', 0) for reg in block.data.regs]
-
-        return None
+    def enter_Module(self, block, **kwds):
+        return [AssignValue(f'{reg}_en', 0) for reg in self.hdl_data.regs]
 
     def visit_RegNextStmt(self, node, **kwds):
         cond = find_cycle_cond(self.conds, node, **kwds)
@@ -178,8 +181,8 @@ def parse_stmt_target(node, context):
 
 
 class VariableVisitor(HDLStmtVisitor):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, hdl_data):
+        super().__init__(hdl_data)
         self.seen_var = []
 
     def assign_var(self, name, value):
@@ -193,18 +196,11 @@ class VariableVisitor(HDLStmtVisitor):
 
 
 class OutputVisitor(HDLStmtVisitor):
-    def enter_block(self, block, **kwds):
-        super().enter_block(block, **kwds)
-        if isinstance(block, ht.Module):
-            self.out_ports = {p.name: p for p in block.data.out_ports}
-            self.out_intfs = block.data.out_intfs
-            res = []
-            for port in block.data.out_ports:
-                res.append(AssignValue(ht.IntfValidExpr(port), 0))
-
-            return res
-
-        return None
+    def enter_Module(self, block, **kwds):
+        return [
+            AssignValue(ht.IntfValidExpr(port), 0)
+            for port in self.hdl_data.out_ports.values()
+        ]
 
     def visit_Yield(self, node, **kwds):
         if not isinstance(node.expr, list):
@@ -213,28 +209,27 @@ class OutputVisitor(HDLStmtVisitor):
             exprs = node.expr
 
         stmts = []
-        assert len(exprs) == len(self.out_ports)
+        assert len(exprs) == len(self.hdl_data.out_ports)
 
-        for expr, port in zip(exprs, self.out_ports):
-            if self.out_ports[port].context:
-                valid = self.out_ports[port].context
+        for expr, (port_name, port) in zip(exprs,
+                                           self.hdl_data.out_ports.items()):
+            if port.context:
+                valid = port.context
             elif isinstance(expr, ht.ResExpr) and expr.val is None:
                 valid = 0
             else:
                 valid = 1
-            stmts.append(AssignValue(ht.IntfValidExpr(port), valid))
-            if (not self.out_intfs) and (valid != 0):
+            stmts.append(AssignValue(ht.IntfValidExpr(port_name), valid))
+            if (not self.hdl_data.out_intfs) and (valid != 0):
                 stmts.append(
                     AssignValue(
-                        target=f'{port}_s',
-                        val=expr,
-                        dtype=self.out_ports[port].dtype))
+                        target=f'{port_name}_s', val=expr, dtype=port.dtype))
         block = HDLBlock(in_cond=None, stmts=stmts, dflts={})
         self.update_defaults(block)
         return block
 
     def visit_IntfStmt(self, node, **kwds):
-        if node.intf.name not in self.out_intfs:
+        if node.intf.name not in self.hdl_data.out_intfs:
             return None
 
         res = []
@@ -247,86 +242,55 @@ class OutputVisitor(HDLStmtVisitor):
         return res
 
 
-class InputVisitor(HDLStmtVisitor):
-    def enter_block(self, block, **kwds):
-        super().enter_block(block, **kwds)
-        if isinstance(block, ht.Module):
-            self.input_names = [port.name for port in block.data.in_ports]
-            return [
-                AssignValue(ht.IntfReadyExpr(port), 0)
-                for port in block.data.in_ports
-            ]
+class ReadyBase(HDLStmtVisitor):
+    @property
+    def input_target(self):
+        raise NotImplementedError('Input target not set')
 
-        if isinstance(block, ht.IntfBlock):
-            if block.intf.name in self.input_names:
-                cond = find_exit_cond(self.conds, block, **kwds)
-                return AssignValue(
-                    target=ht.IntfReadyExpr(block.intf), val=cond)
+    def enter_Module(self, block, **kwds):
+        return [
+            AssignValue(ht.IntfReadyExpr(port), 0)
+            for port in self.input_target.values()
+        ]
 
-        if isinstance(block, ht.IntfLoop):
-            if block.intf.name in self.input_names:
-                cond = find_cycle_cond(self.conds, block, **kwds)
-                return AssignValue(
-                    target=ht.IntfReadyExpr(block.intf), val=cond)
+    def enter_IntfBlock(self, block, **kwds):
+        if block.intf.name in self.input_target:
+            cond = find_exit_cond(self.conds, block, **kwds)
+            return AssignValue(target=ht.IntfReadyExpr(block.intf), val=cond)
 
-        return None
+    def enter_IntfLoop(self, block, **kwds):
+        if block.intf.name in self.input_target:
+            cond = find_cycle_cond(self.conds, block, **kwds)
+            return AssignValue(target=ht.IntfReadyExpr(block.intf), val=cond)
 
     def visit_IntfStmt(self, node, **kwds):
-        if hasattr(node.val, 'name') and (node.val.name in self.input_names):
+        if hasattr(node.val, 'name') and (node.val.name in self.input_target):
             return AssignValue(
                 target=ht.IntfReadyExpr(node.val),
                 val=ht.IntfReadyExpr(node.intf))
 
-        return None
+
+class InputVisitor(ReadyBase):
+    @property
+    def input_target(self):
+        return self.hdl_data.in_ports
 
 
-class IntfReadyVisitor(HDLStmtVisitor):
-    def enter_block(self, block, **kwds):
-        super().enter_block(block, **kwds)
-        if isinstance(block, ht.Module):
-            self.intf_names = block.data.in_intfs.keys()
-            dflt_ready = []
-            for port in block.data.in_intfs:
-                dflt_ready.append(AssignValue(ht.IntfReadyExpr(port), 0))
-            return dflt_ready
-
-        if isinstance(block, ht.IntfBlock):
-            if block.intf.name in self.intf_names:
-                cond = find_exit_cond(self.conds, block, **kwds)
-                return AssignValue(
-                    target=ht.IntfReadyExpr(block.intf), val=cond)
-
-        if isinstance(block, ht.IntfLoop):
-            if block.intf.name in self.intf_names:
-                cond = find_cycle_cond(self.conds, block, **kwds)
-                return AssignValue(
-                    target=ht.IntfReadyExpr(block.intf), val=cond)
-
-        return None
-
-    def visit_IntfStmt(self, node, **kwds):
-        if hasattr(node.val, 'name') and (node.val.name in self.intf_names):
-            return AssignValue(
-                target=ht.IntfReadyExpr(node.val),
-                val=ht.IntfReadyExpr(node.intf))
-
-        return None
+class IntfReadyVisitor(ReadyBase):
+    @property
+    def input_target(self):
+        return self.hdl_data.in_intfs
 
 
 class IntfValidVisitor(HDLStmtVisitor):
-    def enter_block(self, block, **kwds):
-        super().enter_block(block, **kwds)
-        if isinstance(block, ht.Module):
-            self.intf_names = block.data.in_intfs.keys()
-            dflt_ready = []
-            for port in block.data.in_intfs:
-                dflt_ready.append(AssignValue(ht.IntfValidExpr(port), 0))
-            return dflt_ready
-
-        return None
+    def enter_Module(self, block, **kwds):
+        return [
+            AssignValue(ht.IntfReadyExpr(port), 0)
+            for port in self.hdl_data.in_intfs
+        ]
 
     def visit_IntfStmt(self, node, **kwds):
-        if node.intf.name in self.intf_names:
+        if node.intf.name in self.hdl_data.in_intfs:
             return [
                 AssignValue(
                     target=f'{node.intf.name}_s',
@@ -341,9 +305,9 @@ class IntfValidVisitor(HDLStmtVisitor):
 
 
 class BlockConditionsVisitor(HDLStmtVisitor):
-    def __init__(self, reg_num, state_num):
-        super().__init__()
-        self.reg_num = reg_num
+    def __init__(self, hdl_data, state_num):
+        super().__init__(hdl_data)
+        self.has_registers = len(hdl_data.regs) > 0
         self.state_num = state_num
         self.condition_assigns = CombSeparateStmts(stmts=[])
         self.cond_types = ['in', 'cycle', 'exit']
@@ -397,9 +361,8 @@ class BlockConditionsVisitor(HDLStmtVisitor):
         else:
             self.find_subconds(curr_cond)
 
-    def enter_block(self, block, **kwds):
-        super().enter_block(block, **kwds)
-        if isinstance(block, ht.Module) and self.reg_num > 0:
+    def generic_enter(self, block, **kwds):
+        if isinstance(block, ht.Module) and self.has_registers:
             self.get_rst_cond(**kwds)
 
         for cond_t in self.cond_types:
@@ -407,12 +370,8 @@ class BlockConditionsVisitor(HDLStmtVisitor):
 
 
 class StateTransitionVisitor(HDLStmtVisitor):
-    def enter_block(self, block, **kwds):
-        super().enter_block(block, **kwds)
-        if isinstance(block, ht.Module):
-            return AssignValue(f'state_en', 0)
-
-        return None
+    def enter_Module(self, block, **kwds):
+        return AssignValue(f'state_en', 0)
 
     def visit_all_Block(self, node, **kwds):
         block = super().visit_all_Block(node, **kwds)

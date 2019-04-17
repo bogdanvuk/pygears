@@ -87,7 +87,7 @@ def gather_control_stmt_vars(variables, intf, attr=None, dtype=None):
 
 
 class HdlAst(ast.NodeVisitor):
-    def __init__(self, gear, regs, variables, intfs):
+    def __init__(self, gear, intfs, data):
         self.locals = {
             **intfs['namedargs'],
             **gear.explicit_params,
@@ -98,21 +98,7 @@ class HdlAst(ast.NodeVisitor):
         self.gear = gear
         self.await_found = None
 
-        in_ports = [ht.IntfDef(p) for p in gear.in_ports]
-        named = {}
-        for port in in_ports:
-            if port.name in intfs['namedargs']:
-                named[port.name] = port
-        hdl_locals = {**named, **intfs['varargs']}
-
-        self.data = ht.ModuleDataContainer(
-            in_ports=in_ports,
-            out_ports=[ht.IntfDef(p) for p in gear.out_ports],
-            hdl_locals=hdl_locals,
-            regs=regs,
-            variables=variables,
-            in_intfs=intfs['vars'],
-            out_intfs=intfs['outputs'])
+        self.data = data
 
     def enter_block(self, block):
         self.scope.append(block)
@@ -212,9 +198,10 @@ class HdlAst(ast.NodeVisitor):
 
         if hasattr(node.value, 'id') and node.value.id in self.data.out_intfs:
             # conditional assginment, not subscript
-            for i in range(len(val_expr.op.intf)):
-                self.data.out_ports[i].context = ht.BinOpExpr(
-                    (index, ht.ResExpr(i)), '==')
+            for i, port in zip(
+                    range(len(val_expr.op.intf)),
+                    self.data.out_ports.values()):
+                port.context = ht.BinOpExpr((index, ht.ResExpr(i)), '==')
             return None
 
         hdl_node = ht.SubscriptExpr(val_expr, index)
@@ -280,8 +267,8 @@ class HdlAst(ast.NodeVisitor):
         val = None
 
         for port in self.data.in_ports:
-            if name == port.name:
-                val = port
+            if name == port:
+                val = self.data.in_ports[port]
                 break
         if val is None:
             for port in self.data.in_intfs:
@@ -464,10 +451,10 @@ class HdlAst(ast.NodeVisitor):
             ]
             for i, val in enumerate(expr):
                 if not (isinstance(val, ht.ResExpr) and val.val is None):
-                    ports.append(self.data.out_ports[i])
+                    ports.append(list(self.data.out_ports.values())[i])
         else:
             expr = super().visit(node.value)
-            ports = self.data.out_ports
+            ports = list(self.data.out_ports.values())
         return ht.Yield(stmts=[self.cast_return(expr)], ports=ports)
 
     def visit_Await(self, node):
@@ -499,7 +486,7 @@ class HdlAst(ast.NodeVisitor):
         raise VisitError('Not implemented yet...')
 
     def visit_AsyncFunctionDef(self, node):
-        hdl_node = ht.Module(data=self.data, stmts=[])
+        hdl_node = ht.Module(stmts=[])
 
         # initialization for register without explicit assign in code
         reg_names = list(self.data.regs.keys())
