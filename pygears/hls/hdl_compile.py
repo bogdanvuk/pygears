@@ -4,10 +4,10 @@ import inspect
 from pygears.typing import Uint, bitw
 
 from . import hdl_types as ht
+from .ast_parse import parse_ast
 from .cblock import CBlockVisitor
 from .cleanup import condition_cleanup
 from .conditions import Conditions
-from .hdl_ast import HdlAst
 from .hdl_stmt import (AssertionVisitor, BlockConditionsVisitor, InputVisitor,
                        IntfReadyVisitor, IntfValidVisitor, OutputVisitor,
                        RegEnVisitor, StateTransitionVisitor, VariableVisitor)
@@ -42,6 +42,7 @@ def compose_data(gear, regs, variables, intfs):
         if port in intfs['namedargs']:
             named[port] = in_ports[port]
     hdl_locals = {**named, **intfs['varargs']}
+
     return ht.ModuleData(
         in_ports=in_ports,
         out_ports={p.basename: ht.IntfDef(p)
@@ -50,7 +51,12 @@ def compose_data(gear, regs, variables, intfs):
         regs=regs,
         variables=variables,
         in_intfs=intfs['vars'],
-        out_intfs=intfs['outputs'])
+        out_intfs=intfs['outputs'],
+        local_namespace={
+            **intfs['namedargs'],
+            **gear.explicit_params,
+            **intfs['varargs']
+        })
 
 
 def parse_gear_body(gear):
@@ -70,7 +76,7 @@ def parse_gear_body(gear):
     hdl_data = compose_data(gear, reg_v.regs, reg_v.variables, intf.intfs)
 
     # py ast to hdl ast
-    hdl_ast = HdlAst(gear, intf.intfs, hdl_data).visit(body_ast)
+    hdl_ast = parse_ast(body_ast, hdl_data)
     # StmtVacum().visit(hdl_ast)
     schedule = Scheduler().visit(hdl_ast)
     states = StateFinder()

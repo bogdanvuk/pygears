@@ -64,6 +64,12 @@ def eval_expression(node, local_namespace):
             mode="eval"), types, globals())
 
 
+def eval_local_expression(node, local_namespace):
+    return eval(
+        compile(ast.Expression(node), filename="<ast>", mode="eval"),
+        local_namespace, globals())
+
+
 def find_assign_target(node):
     names = []
 

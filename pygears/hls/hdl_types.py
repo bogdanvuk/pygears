@@ -1,3 +1,4 @@
+import ast
 import inspect
 import typing as pytypes
 from dataclasses import dataclass, field
@@ -10,6 +11,33 @@ BIN_OPERATORS = ['!', '==', '>', '>=', '<', '<=', '!=', '&&', '||']
 EXTENDABLE_OPERATORS = [
     '+', '-', '*', '/', '%', '**', '<<', '>>>', '|', '&', '^', '/', '~', '!'
 ]
+
+OPMAP = {
+    ast.Add: '+',
+    ast.Sub: '-',
+    ast.Mult: '*',
+    ast.Div: '/',
+    ast.Mod: '%',
+    ast.Pow: '**',
+    ast.LShift: '<<',
+    ast.RShift: '>>>',
+    ast.BitOr: '|',
+    ast.BitAnd: '&',
+    ast.BitXor: '^',
+    ast.FloorDiv: '/',
+    ast.Invert: '~',
+    ast.Not: '!',
+    ast.UAdd: '+',
+    ast.USub: '-',
+    ast.Eq: '==',
+    ast.Gt: '>',
+    ast.GtE: '>=',
+    ast.Lt: '<',
+    ast.LtE: '<=',
+    ast.NotEq: '!=',
+    ast.And: '&&',
+    ast.Or: '||',
+}
 
 
 def create_oposite(expr):
@@ -506,6 +534,7 @@ class ModuleData:
     variables: pytypes.Dict
     in_intfs: pytypes.Dict
     out_intfs: pytypes.Dict
+    local_namespace: pytypes.Dict
 
     def get_container(self, name):
         for attr in ['regs', 'variables', 'in_intfs', 'out_intfs']:
