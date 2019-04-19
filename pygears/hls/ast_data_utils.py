@@ -1,7 +1,7 @@
 import ast
 
 from . import hdl_types as ht
-from .hdl_utils import AstTypeError, eval_expression, set_pg_type, VisitError
+from .hdl_utils import AstTypeError, eval_expression, set_pg_type
 
 
 def find_intf_by_name(data, name):
@@ -74,17 +74,7 @@ def find_data_expression(node, module_data):
 def find_name_expression(node, module_data):
     if isinstance(node, ast.Subscript):
         # input interface as array ie din[x]
-        name = node.value.id
-        val_expr = get_context_var(name, module_data)
-        for i in range(len(val_expr)):
-            py_stmt = f'if {node.slice.value.id} == {i}: {name} = {name}{i}'
-            snip = ast.parse(py_stmt).body[0]
-            raise VisitError('Must propagate scope')
-            # stmt = self.visit(snip)
-            # self.scope[-1].stmts.append(stmt)
-
-        assert name in module_data.in_intfs
-        return module_data.in_intfs[name]
+        return module_data.in_intfs[node.value.id]
 
     if node.id in module_data.in_intfs:
         return module_data.in_intfs[node.id]

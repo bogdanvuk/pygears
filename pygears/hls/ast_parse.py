@@ -8,7 +8,7 @@ from . import hdl_types as ht
 from .ast_data_utils import (find_data_expression, find_name_expression,
                              get_context_var)
 from .ast_utils import cast_return, get_bin_expr, intf_parse
-from .hdl_utils import eval_local_expression, find_assign_target, add_to_list
+from .hdl_utils import add_to_list, eval_local_expression, find_assign_target
 
 
 @singledispatch
@@ -128,6 +128,21 @@ def parse_augassign(node, module_data):
     return parse_assign_wrapper(assign_node, module_data)
 
 
+def find_subscript_expression(node, module_data):
+    if not isinstance(node, ast.Subscript):
+        return None
+
+    # input interface as array ie din[x]
+    name = node.value.id
+    val_expr = get_context_var(name, module_data)
+    stmts = []
+    for i in range(len(val_expr)):
+        py_stmt = f'if {node.slice.value.id} == {i}: {name} = {name}{i}'
+        snip = ast.parse(py_stmt).body[0]
+        add_to_list(stmts, parse_ast(snip, module_data))
+    return stmts
+
+
 @parse_ast.register(ast.AsyncFor)
 def parse_asyncfor(node, module_data):
     intf = find_name_expression(node.iter, module_data)
@@ -137,14 +152,20 @@ def parse_asyncfor(node, module_data):
 
     hdl_node = ht.IntfLoop(intf=loop_intf, stmts=[], multicycle=scope)
 
-    return parse_block(hdl_node, node.body, module_data)
+    assign_stmts = find_subscript_expression(node.iter, module_data)
+    parse_block(hdl_node, node.body, module_data)
+
+    if not assign_stmts:
+        return hdl_node
+
+    return assign_stmts + [hdl_node]
 
 
 @parse_ast.register(ast.AsyncWith)
 def parse_asyncwith(node, module_data):
-    header = node.items[0]
+    context_expr = node.items[0].context_expr
 
-    intf = find_name_expression(header.context_expr, module_data)
+    intf = find_name_expression(context_expr, module_data)
     scope, block_intf = intf_parse(
         intf=intf, target=node.items[0].optional_vars)
 
@@ -152,7 +173,13 @@ def parse_asyncwith(node, module_data):
 
     hdl_node = ht.IntfBlock(intf=block_intf, stmts=[])
 
-    return parse_block(hdl_node, node.body, module_data)
+    assign_stmts = find_subscript_expression(context_expr, module_data)
+    parse_block(hdl_node, node.body, module_data)
+
+    if not assign_stmts:
+        return hdl_node
+
+    return assign_stmts + [hdl_node]
 
 
 @parse_ast.register(ast.If)
