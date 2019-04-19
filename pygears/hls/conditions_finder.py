@@ -1,7 +1,8 @@
 from . import hdl_types as ht
 from .conditions_utils import (ConditionsBase, find_cond_id, find_exit_cond,
-                         nested_cycle_cond, nested_exit_cond, nested_in_cond)
-from .hdl_utils import state_expr
+                               nested_cycle_cond, nested_exit_cond,
+                               nested_in_cond)
+from .utils import state_expr
 
 
 class ConditionsFinder(ConditionsBase):

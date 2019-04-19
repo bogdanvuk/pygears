@@ -1,4 +1,4 @@
-from .hdl_utils import VisitError
+from .utils import VisitError
 
 
 class InstanceVisitor:

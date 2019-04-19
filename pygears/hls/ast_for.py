@@ -4,11 +4,11 @@ from pygears.typing import Uint
 from pygears.util.utils import qrange
 
 from . import hdl_types as ht
-from .ast_data_utils import find_data_expression
 from .ast_modifications import unroll_statements
 from .ast_parse import parse_ast, parse_block
 from .compile_snippets import enumerate_impl, qrange_mux_impl
-from .hdl_utils import VisitError, add_to_list, find_for_target
+from .utils import (VisitError, add_to_list, find_data_expression,
+                    find_for_target)
 
 
 def parse_for(node, module_data):

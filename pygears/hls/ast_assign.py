@@ -1,7 +1,6 @@
 from . import hdl_types as ht
-from .ast_data_utils import find_data_expression
 from .ast_parse import parse_ast
-from .hdl_utils import VisitError, find_assign_target
+from .utils import VisitError, find_assign_target, find_data_expression
 
 
 def parse_assign(node, module_data):

@@ -3,7 +3,7 @@ import inspect
 import re
 
 from . import hdl_types as ht
-from .hdl_utils import eval_expression, find_assign_target
+from .utils import eval_expression, find_assign_target
 
 
 def find_vararg_input(gear):

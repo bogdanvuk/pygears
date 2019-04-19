@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from . import hdl_types as ht
 from .conditions import Conditions
 from .hdl_stmt import CombBlock
-from .hdl_utils import add_to_list, state_expr
+from .utils import add_to_list, state_expr
 from .inst_visit import InstanceVisitor
 from .scheduling_types import MutexCBlock
 

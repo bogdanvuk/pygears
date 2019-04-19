@@ -2,7 +2,7 @@ from . import hdl_types as ht
 from .conditions_utils import COND_NAME, find_cond_id, find_sub_cond_ids
 from .hdl_stmt_types import (AssertValue, AssignValue, CombBlock,
                              CombSeparateStmts, HDLBlock)
-from .hdl_utils import VisitError, add_to_list, state_expr
+from .utils import VisitError, add_to_list, state_expr
 
 
 def find_in_cond(conds, hdl_stmt, **kwds):

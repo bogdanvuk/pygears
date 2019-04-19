@@ -5,10 +5,10 @@ from functools import singledispatch
 from pygears.typing import Array, Int, Integer, Uint, Unit, typeof
 
 from . import hdl_types as ht
-from .ast_data_utils import (find_data_expression, find_name_expression,
-                             get_context_var)
-from .ast_utils import cast_return, get_bin_expr, intf_parse
-from .hdl_utils import add_to_list, eval_local_expression, find_assign_target
+from .utils import (add_to_list, cast_return, eval_local_expression,
+                    find_assign_target, find_data_expression,
+                    find_name_expression, get_bin_expr, get_context_var,
+                    intf_parse)
 
 
 @singledispatch

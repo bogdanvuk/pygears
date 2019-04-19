@@ -1,7 +1,7 @@
 from . import hdl_types as ht
 from .conditions_utils import (ConditionsBase, nested_cycle_cond,
                                nested_exit_cond)
-from .hdl_utils import state_expr
+from .utils import state_expr
 from .scheduling_types import SeqCBlock
 
 

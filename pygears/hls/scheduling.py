@@ -1,5 +1,5 @@
 from . import hdl_types as ht
-from .hdl_utils import find_hier_blocks, VisitError
+from .utils import find_hier_blocks, VisitError
 from .scheduling_types import Leaf, MutexCBlock, SeqCBlock
 
 

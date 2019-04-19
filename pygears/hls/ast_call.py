@@ -4,9 +4,8 @@ from functools import reduce
 from pygears.typing import Int, Tuple, Uint, Unit, is_type, typeof
 
 from . import hdl_types as ht
-from .ast_data_utils import find_data_expression
-from .ast_utils import cast_return
-from .hdl_utils import VisitError, eval_expression
+from .utils import (VisitError, cast_return, eval_expression,
+                    find_data_expression)
 
 
 def parse_call(node, module_data):

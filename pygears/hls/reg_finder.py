@@ -4,8 +4,8 @@ from functools import partial
 from pygears.typing import Uint, bitw, is_type
 
 from . import hdl_types as ht
-from .hdl_utils import (break_comb_loop, eval_expression, find_assign_target,
-                        find_for_target, hls_log, set_pg_type)
+from .utils import (break_comb_loop, eval_expression, find_assign_target,
+                    find_for_target, hls_log, set_pg_type)
 
 
 class AstAyncFinder(ast.NodeVisitor):
