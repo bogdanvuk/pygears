@@ -83,8 +83,9 @@ def parse_yield(node, module_data):
     else:
         expr = parse_ast(node.value, module_data)
         ports = list(module_data.out_ports.values())
-    return ht.Yield(
-        stmts=[cast_return(expr, module_data.out_ports)], ports=ports)
+    stmts = []
+    add_to_list(stmts, cast_return(expr, module_data.out_ports))
+    return ht.Yield(stmts=stmts, ports=ports)
 
 
 @parse_ast.register(ast.Call)

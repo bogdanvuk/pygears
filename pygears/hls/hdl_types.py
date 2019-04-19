@@ -513,8 +513,9 @@ class Yield(Block):
 
     @property
     def expr(self):
-        assert len(self.stmts) == 1, 'Yield block can only have 1 stmt'
-        return self.stmts[0]
+        if len(self.stmts) == 1:
+            return self.stmts[0]
+        return self.stmts
 
     @property
     def cycle_cond(self):
@@ -554,8 +555,7 @@ class ModuleData:
 
 
 @dataclass
-class Module:
-    stmts: pytypes.List
+class Module(Block):
     id: int = field(init=False, default=0)
 
     @property
