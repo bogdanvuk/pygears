@@ -1,8 +1,11 @@
+import ast
+
 from .ast_parse import parse_ast
-from .hls_blocks import ContainerBlock
+from .hls_blocks import IntfBlock
 from .hls_expressions import (ConcatExpr, Expr, IntfDef, IntfStmt, RegDef,
                               RegNextStmt, ResExpr, VariableDef, VariableStmt)
-from .utils import VisitError, find_assign_target, find_data_expression
+from .utils import (VisitError, add_to_list, find_assign_target,
+                    find_data_expression, interface_operations)
 
 
 def parse_assign(node, module_data):
@@ -13,7 +16,7 @@ def parse_assign(node, module_data):
         if hasattr(name_node, 'value'):
             indexes[i] = parse_ast(name_node, module_data)
 
-    vals = find_assign_value(node, module_data, names)
+    vals, block = find_assign_value(node, module_data, names)
 
     res = []
     assert len(names) == len(indexes) == len(vals), 'Assign lenght mismatch'
@@ -22,10 +25,14 @@ def parse_assign(node, module_data):
 
     assert len(names) == len(res), 'Assign target and result lenght mismatch'
 
+    if block:
+        add_to_list(block.stmts, res)
+        return block
+
     if len(names) == 1:
         return res[0]
 
-    return ContainerBlock(stmts=res)
+    return res
 
 
 def find_assign_value(node, module_data, names):
@@ -34,18 +41,39 @@ def find_assign_value(node, module_data, names):
         1:] == intf_assigns[:
                             -1], f'Mixed assignment of interfaces and variables not allowed'
 
-    vals = find_data_expression(node.value, module_data)
+    if isinstance(node.value, ast.Await):
+        vals, block = find_await_value(node.value, module_data)
+    else:
+        vals = find_data_expression(node.value, module_data)
+        block = None
 
     if len(names) == 1:
-        return [vals]
+        return [vals], block
 
     if isinstance(vals, ConcatExpr):
-        return vals.operands
+        return vals.operands, block
 
     if isinstance(vals, ResExpr):
-        return [ResExpr(v) for v in vals.val]
+        return [ResExpr(v) for v in vals.val], block
 
     raise VisitError('Unknown assginment value')
+
+
+def find_await_value(node, module_data):
+    _, (intf_name, intf_method) = interface_operations(node.value)
+
+    if intf_method == 'get':
+        intf = module_data.hdl_locals.get(intf_name, None)
+        assert isinstance(intf, IntfDef)
+        intf_to_await = IntfDef(
+            intf=intf.intf, _name=intf.name, context='valid')
+    else:
+        raise VisitError('Await only supports interface get method')
+
+    await_node = IntfBlock(intf=intf_to_await, stmts=[])
+    assign_value = parse_ast(node.value, module_data)
+
+    return assign_value, await_node
 
 
 def assign(name, module_data, index, val):

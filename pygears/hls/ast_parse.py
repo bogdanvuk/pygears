@@ -6,10 +6,10 @@ from pygears.typing import Array, Int, Integer, Uint, Unit, typeof
 
 from . import hls_blocks as blocks
 from . import hls_expressions as expr
-from .utils import (add_to_list, cast_return, eval_local_expression,
-                    find_assign_target, find_data_expression,
-                    find_name_expression, get_bin_expr, get_context_var,
-                    intf_parse)
+from .utils import (VisitError, add_to_list, cast_return,
+                    eval_local_expression, find_assign_target,
+                    find_data_expression, find_name_expression, get_bin_expr,
+                    get_context_var, interface_operations, intf_parse)
 
 
 @singledispatch
@@ -25,22 +25,9 @@ def parse_ast(node, module_data):
 
 
 def parse_block(hdl_node, body, module_data):
-
-    # self.enter_block(hdl_node)
-
     for stmt in body:
         res_stmt = parse_ast(stmt, module_data)
-        if res_stmt is not None:
-            # if self.await_found:
-            #     await_node = blocks.IntfBlock(
-            #         intf=self.await_found, stmts=[res_stmt])
-            #     self.await_found = None
-            #     hdl_node.stmts.append(await_node)
-            # else:
-            #     hdl_node.stmts.append(res_stmt)
-            add_to_list(hdl_node.stmts, res_stmt)
-
-    # self.exit_block()
+        add_to_list(hdl_node.stmts, res_stmt)
 
     return hdl_node
 
@@ -93,6 +80,12 @@ def parse_yield(node, module_data):
 def parse_call_wrapper(node, module_data):
     from .ast_call import parse_call
     return parse_call(node, module_data)
+
+
+@parse_ast.register(ast.Try)
+def parse_try_wrapper(node, module_data):
+    from .ast_try_except import parse_try
+    return parse_try(node, module_data)
 
 
 @parse_ast.register(ast.For)
