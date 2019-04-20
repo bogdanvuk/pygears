@@ -1,8 +1,10 @@
-from . import hdl_types as ht
 from .conditions_utils import (ConditionsBase, nested_cycle_cond,
                                nested_exit_cond)
-from .utils import state_expr
+from .hls_blocks import (ContainerBlock, CycleSubCond, ExitSubCond,
+                         SubConditions, subcond_expr)
+from .hls_expressions import BinOpExpr
 from .scheduling_types import SeqCBlock
+from .utils import state_expr
 
 
 def get_cblock_child(cblock):
@@ -91,7 +93,7 @@ class ConditionsEval(ConditionsBase):
         else:
             sub_conds = self._cblock_simple_cycle_subconds(cblock)
 
-        return ht.subcond_expr(cond, sub_conds)
+        return subcond_expr(cond, sub_conds)
 
     def _cblock_exit_subconds(self, cond, cblock):
         exit_c = None
@@ -99,16 +101,16 @@ class ConditionsEval(ConditionsBase):
         for child in reversed(children):
             hdl_stmts = [x for x in get_cblock_hdl_stmts(child)]
             for hdl_stmt in reversed(hdl_stmts):
-                if isinstance(hdl_stmt, ht.ContainerBlock):
+                if isinstance(hdl_stmt, ContainerBlock):
                     child_exit_cond = self._merge_hdl_conds(hdl_stmt, 'exit')
                 else:
                     child_exit_cond = getattr(hdl_stmt, 'exit_cond', None)
                 if child_exit_cond is not None:
                     exit_c = nested_exit_cond(hdl_stmt)
                     self.add_exit_cond(hdl_stmt.id)
-                    return ht.subcond_expr(cond, exit_c)
+                    return subcond_expr(cond, exit_c)
 
-        return ht.subcond_expr(cond, 1)
+        return subcond_expr(cond, 1)
 
     def _cblock_subconds(self, cond, cblock, cond_type):
         if cond_type == 'cycle':
@@ -132,32 +134,32 @@ class ConditionsEval(ConditionsBase):
         return None
 
     def _subcond_expr(self, cond, block):
-        if isinstance(cond, ht.CycleSubCond):
+        if isinstance(cond, CycleSubCond):
             sub_c = self._hdl_stmt_cycle_cond(block)
-        elif isinstance(cond, ht.ExitSubCond):
+        elif isinstance(cond, ExitSubCond):
             sub_c = self._hdl_stmt_exit_cond(block)
         else:
-            sub_c = ht.BinOpExpr(
+            sub_c = BinOpExpr(
                 self._hdl_stmt_cycle_cond(block),
                 self._hdl_stmt_exit_cond(block), cond.operator)
 
-        return ht.subcond_expr(cond, sub_c)
+        return subcond_expr(cond, sub_c)
 
     def _hdl_cycle_subconds(self, block):
-        if isinstance(block, ht.ContainerBlock):
+        if isinstance(block, ContainerBlock):
             return self._merge_hdl_conds(block, 'cycle')
 
         cond = getattr(block, 'cycle_cond', None)
-        if isinstance(cond, ht.SubConditions):
+        if isinstance(cond, SubConditions):
             return self._subcond_expr(cond, block)
         return cond
 
     def _hdl_exit_subconds(self, block):
-        if isinstance(block, ht.ContainerBlock):
+        if isinstance(block, ContainerBlock):
             return self._merge_hdl_conds(block, 'exit')
 
         cond = getattr(block, 'exit_cond', None)
-        if isinstance(cond, ht.SubConditions):
+        if isinstance(cond, SubConditions):
             return self._subcond_expr(cond, block)
         return cond
 
@@ -174,11 +176,11 @@ class ConditionsEval(ConditionsBase):
             # leaf
             return self._hdl_cycle_subconds(block)
 
-        if isinstance(block, ht.ContainerBlock):
+        if isinstance(block, ContainerBlock):
             return self._merge_cblock_conds(scope, 'cycle')
 
         curr_cond = block.cycle_cond
-        if not isinstance(curr_cond, ht.SubConditions):
+        if not isinstance(curr_cond, SubConditions):
             return curr_cond
 
         return self._cblock_cycle_subconds(curr_cond, scope)
@@ -188,11 +190,11 @@ class ConditionsEval(ConditionsBase):
             # leaf
             return self._hdl_exit_subconds(block)
 
-        if isinstance(block, ht.ContainerBlock):
+        if isinstance(block, ContainerBlock):
             return self._merge_cblock_conds(scope, 'exit')
 
         curr_cond = block.exit_cond
-        if not isinstance(curr_cond, ht.SubConditions):
+        if not isinstance(curr_cond, SubConditions):
             return curr_cond
 
         return self._cblock_exit_subconds(curr_cond, scope)

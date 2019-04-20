@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 
-from . import hdl_types as ht
 from .conditions import Conditions
 from .hdl_stmt import CombBlock
-from .utils import add_to_list, state_expr
+from .hls_blocks import Block
 from .inst_visit import InstanceVisitor
 from .scheduling_types import MutexCBlock
+from .utils import add_to_list, state_expr
 
 
 @dataclass
@@ -190,7 +190,7 @@ class CBlockVisitor(InstanceVisitor):
         return self.visit_block(node, False)
 
     def _add_sub(self, block, curr_block, **kwds):
-        if isinstance(block, ht.Block):
+        if isinstance(block, Block):
             for stmt in block.stmts:
                 sub = self.ping_hdl(stmt, **kwds)
                 self._add_sub(stmt, sub, **kwds)

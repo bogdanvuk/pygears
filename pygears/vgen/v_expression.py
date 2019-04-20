@@ -1,4 +1,4 @@
-import pygears.hls.hdl_types as ht
+from pygears.hls.hls_expressions import EXTENDABLE_OPERATORS, BinOpExpr
 from pygears.svgen.sv_expression import SVExpressionVisitor
 from pygears.typing import Array, Int, Integer, Queue, Uint, typeof
 
@@ -74,13 +74,13 @@ class VExpressionVisitor(SVExpressionVisitor):
 
     def visit_IntfReadyExpr(self, node):
         res = []
-        if not isinstance(node.out_port, (list, tuple)):
+        if not isinstance(node.port, (list, tuple)):
             return f'{node.name}_ready'
 
-        for port in node.out_port:
+        for port in node.port:
             if port.context:
                 inst = vexpr(
-                    ht.BinOpExpr((f'{port.name}_ready', port.context), '&&'))
+                    BinOpExpr((f'{port.name}_ready', port.context), '&&'))
                 res.append(f'({inst})')
             else:
                 res.append(f'{port.name}_ready')
@@ -105,10 +105,10 @@ class VExpressionVisitor(SVExpressionVisitor):
     def visit_BinOpExpr(self, node):
         ops = [self.visit(op) for op in node.operands]
         for i, op in enumerate(node.operands):
-            if isinstance(op, ht.BinOpExpr):
+            if isinstance(op, BinOpExpr):
                 ops[i] = f'({ops[i]})'
 
-        if node.operator not in ht.EXTENDABLE_OPERATORS:
+        if node.operator not in EXTENDABLE_OPERATORS:
             return f'{ops[0]} {node.operator} {ops[1]}'
 
         res_dtype = node.dtype

@@ -6,9 +6,10 @@ from pygears import PluginBase
 from pygears.conf import register_custom_log, registry
 from pygears.typing import Int, Queue, Tuple, Uint, is_type, typeof
 
-from . import hdl_types as ht
+from . import hls_expressions as expr
+from .hls_blocks import Block, IfBlock, Yield
 
-ASYNC_TYPES = (ht.Yield, )
+ASYNC_TYPES = (Yield, )
 INTF_METHODS = ('get_nb', 'get', 'put', 'put_nb')
 
 
@@ -96,7 +97,7 @@ def find_for_target(node):
 def check_if_blocking(stmt):
     if isinstance(stmt, ASYNC_TYPES):
         return stmt
-    if isinstance(stmt, ht.Block):
+    if isinstance(stmt, Block):
         return find_hier_blocks(stmt.stmts)
     return None
 
@@ -117,16 +118,16 @@ def add_to_list(orig_list, extention):
 
 
 def get_state_cond(state_id):
-    return ht.BinOpExpr(('state_reg', state_id), '==')
+    return expr.BinOpExpr(('state_reg', state_id), '==')
 
 
 def state_expr(state_ids, prev_cond):
     state_cond = get_state_cond(state_ids[0])
     for state_id in state_ids[1:]:
-        state_cond = ht.or_expr(state_cond, get_state_cond(state_id))
+        state_cond = expr.or_expr(state_cond, get_state_cond(state_id))
 
     if prev_cond is not None:
-        return ht.and_expr(prev_cond, state_cond)
+        return expr.and_expr(prev_cond, state_cond)
 
     return state_cond
 
@@ -140,7 +141,7 @@ def break_comb_loop(visitor, loop_to_break, reg_name, var_name):
 
     # all sub conditions that lead to break
     if_block = next(block for block in visitor.scope[loop_to_break_idx:]
-                    if isinstance(block, ht.IfBlock))
+                    if isinstance(block, IfBlock))
     block_idx = visitor.scope.index(if_block)
 
     sub_conds = [
@@ -154,16 +155,16 @@ def break_comb_loop(visitor, loop_to_break, reg_name, var_name):
     sub_conds.append(loop_reg_cond)
 
     # merged in condition for current iteration
-    in_cond = ht.create_oposite(reduce(ht.and_expr, sub_conds, None))
+    in_cond = expr.create_oposite(reduce(expr.and_expr, sub_conds, None))
 
     if loop_to_break.break_cond:
-        break_conds = reduce(ht.and_expr,
+        break_conds = reduce(expr.and_expr,
                              loop_to_break.break_cond + [loop_reg_cond], None)
     else:
         break_conds = loop_reg_cond
         loop_to_break.break_cond = []
 
-    if_block._in_cond = ht.and_expr(if_block._in_cond, break_conds)
+    if_block._in_cond = expr.and_expr(if_block._in_cond, break_conds)
 
     loop_to_break.break_cond.append(in_cond)
 
@@ -178,15 +179,15 @@ def get_bin_expr(op, operand1, operand2, module_data):
     op2 = find_data_expression(operand2, module_data)
 
     if isinstance(op, ast.MatMult):
-        return ht.ConcatExpr((op2, op1))
+        return expr.ConcatExpr((op2, op1))
 
-    operator = ht.OPMAP[type(op)]
-    return ht.BinOpExpr((op1, op2), operator)
+    operator = expr.OPMAP[type(op)]
+    return expr.BinOpExpr((op1, op2), operator)
 
 
 def intf_parse(intf, target):
     scope = gather_control_stmt_vars(target, intf)
-    block_intf = ht.IntfDef(intf=intf.intf, _name=intf.name, context='valid')
+    block_intf = expr.IntfDef(intf=intf.intf, _name=intf.name, context='valid')
     return scope, block_intf
 
 
@@ -203,18 +204,18 @@ def gather_control_stmt_vars(variables, intf, attr=None, dtype=None):
     if isinstance(variables, ast.Tuple):
         for i, var in enumerate(variables.elts):
             if isinstance(var, ast.Name):
-                scope[var.id] = ht.AttrExpr(intf, attr + [dtype.fields[i]])
+                scope[var.id] = expr.AttrExpr(intf, attr + [dtype.fields[i]])
             elif isinstance(var, ast.Starred):
-                scope[var.id] = ht.AttrExpr(intf, attr + [dtype.fields[i]])
+                scope[var.id] = expr.AttrExpr(intf, attr + [dtype.fields[i]])
             elif isinstance(var, ast.Tuple):
                 scope.update(
                     gather_control_stmt_vars(var, intf,
                                              attr + [dtype.fields[i]]))
     else:
-        if isinstance(intf, ht.IntfDef):
+        if isinstance(intf, expr.IntfDef):
             scope[variables.id] = intf
         else:
-            scope[variables.id] = ht.AttrExpr(intf, attr)
+            scope[variables.id] = expr.AttrExpr(intf, attr)
 
     return scope
 
@@ -224,12 +225,13 @@ def cast_return(arg_nodes, out_ports):
     if isinstance(arg_nodes, list):
         assert len(arg_nodes) == out_num
         input_vars = arg_nodes
-    elif isinstance(arg_nodes, ht.OperandVal) and out_num > 1:
+    elif isinstance(arg_nodes, expr.OperandVal) and out_num > 1:
         intf = arg_nodes.op
         assert len(intf.intf) == out_num
         input_vars = []
         for i in range(len(intf.intf)):
-            input_vars.append(ht.SubscriptExpr(val=intf, index=ht.ResExpr(i)))
+            input_vars.append(
+                expr.SubscriptExpr(val=intf, index=expr.ResExpr(i)))
     else:
         assert out_num == 1
         input_vars = [arg_nodes]
@@ -238,18 +240,18 @@ def cast_return(arg_nodes, out_ports):
     for arg, intf in zip(input_vars, out_ports.values()):
         port_t = intf.dtype
         if typeof(port_t, Queue) or typeof(port_t, Tuple):
-            if isinstance(arg, ht.ConcatExpr):
+            if isinstance(arg, expr.ConcatExpr):
                 for i in range(len(arg.operands)):
-                    if isinstance(arg.operands[i], ht.CastExpr) and (
+                    if isinstance(arg.operands[i], expr.CastExpr) and (
                             arg.operands[i].cast_to == port_t[i]):
                         pass
                     else:
-                        arg.operands[i] = ht.CastExpr(
+                        arg.operands[i] = expr.CastExpr(
                             operand=arg.operands[i], cast_to=port_t[i])
 
             args.append(arg)
         else:
-            args.append(ht.CastExpr(operand=arg, cast_to=port_t))
+            args.append(expr.CastExpr(operand=arg, cast_to=port_t))
 
     if len(args) == 1:
         return args[0]
@@ -276,14 +278,14 @@ def find_intf_by_name(data, name):
 def get_context_var(pyname, module_data):
     var = module_data.hdl_locals.get(pyname, None)
 
-    if isinstance(var, ht.RegDef):
-        return ht.OperandVal(var, 'reg')
+    if isinstance(var, expr.RegDef):
+        return expr.OperandVal(var, 'reg')
 
-    if isinstance(var, ht.VariableDef):
-        return ht.OperandVal(var, 'v')
+    if isinstance(var, expr.VariableDef):
+        return expr.OperandVal(var, 'v')
 
-    if isinstance(var, ht.IntfDef):
-        return ht.OperandVal(var, 's')
+    if isinstance(var, expr.IntfDef):
+        return expr.OperandVal(var, 's')
 
     return var
 
@@ -296,7 +298,7 @@ def eval_data_expr(node, local_namespace):
 
     ret = set_pg_type(ret)
 
-    return ht.ResExpr(ret)
+    return expr.ResExpr(ret)
 
 
 def find_data_expression(node, module_data):

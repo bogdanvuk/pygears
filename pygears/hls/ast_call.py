@@ -3,7 +3,8 @@ from functools import reduce
 
 from pygears.typing import Int, Tuple, Uint, Unit, is_type, typeof
 
-from . import hdl_types as ht
+from .hls_expressions import (ArrayOpExpr, AttrExpr, BinOpExpr, CastExpr,
+                              ConditionalExpr, IntfDef, ResExpr, UnaryOpExpr)
 from .utils import (VisitError, cast_return, eval_expression,
                     find_data_expression)
 
@@ -12,7 +13,7 @@ def parse_call(node, module_data):
     arg_nodes = [find_data_expression(arg, module_data) for arg in node.args]
 
     func_args = arg_nodes
-    if all(isinstance(node, ht.ResExpr) for node in arg_nodes):
+    if all(isinstance(node, ResExpr) for node in arg_nodes):
         func_args = []
         for arg in arg_nodes:
             if is_type(type(arg.val)) and not typeof(type(arg.val), Unit):
@@ -22,7 +23,7 @@ def parse_call(node, module_data):
 
     try:
         ret = eval(f'{node.func.id}({", ".join(func_args)})')
-        return ht.ResExpr(ret)
+        return ResExpr(ret)
     except:
         return call_func(node, func_args, module_data)
 
@@ -32,12 +33,12 @@ def max_expr(op1, op2):
     op2_compare = op2
     signed = typeof(op1.dtype, Int) or typeof(op2.dtype, Int)
     if signed and typeof(op1.dtype, Uint):
-        op1_compare = ht.CastExpr(op1, Int[int(op1.dtype) + 1])
+        op1_compare = CastExpr(op1, Int[int(op1.dtype) + 1])
     if signed and typeof(op2.dtype, Uint):
-        op2_compare = ht.CastExpr(op2, Int[int(op2.dtype) + 1])
+        op2_compare = CastExpr(op2, Int[int(op2.dtype) + 1])
 
-    cond = ht.BinOpExpr((op1_compare, op2_compare), '>')
-    return ht.ConditionalExpr(cond=cond, operands=(op1, op2))
+    cond = BinOpExpr((op1_compare, op2_compare), '>')
+    return ConditionalExpr(cond=cond, operands=(op1, op2))
 
 
 def call_func(node, func_args, module_data):
@@ -45,7 +46,7 @@ def call_func(node, func_args, module_data):
         if node.func.attr == 'dtype':
             func = eval_expression(node.func, module_data.hdl_locals)
             ret = eval(f'func({", ".join(func_args)})')
-            return ht.ResExpr(ret)
+            return ResExpr(ret)
 
         if node.func.attr == 'tout':
             return cast_return(func_args, module_data.out_ports)
@@ -67,7 +68,7 @@ def call_func(node, func_args, module_data):
     # if func in self.ast_v.gear.params:
     #     assert isinstance(self.ast_v.gear.params[func], TypingMeta)
     #     assert len(func_args) == 1, 'Cast with multiple arguments'
-    #     return ht.CastExpr(
+    #     return CastExpr(
     #         operand=func_args[0], cast_to=self.ast_v.gear.params[func])
 
     # safe guard
@@ -75,7 +76,7 @@ def call_func(node, func_args, module_data):
 
 
 def call_len(arg, **kwds):
-    return ht.ResExpr(len(arg.dtype))
+    return ResExpr(len(arg.dtype))
 
 
 def call_print(arg, **kwds):
@@ -89,7 +90,7 @@ def call_int(arg, **kwds):
 
 def call_range(*arg, **kwds):
     if len(arg) == 1:
-        start = ht.ResExpr(arg[0].dtype(0))
+        start = ResExpr(arg[0].dtype(0))
         stop = arg[0]
         step = ast.Num(1)
     else:
@@ -105,7 +106,7 @@ def call_qrange(*arg, **kwds):
 
 
 def call_all(arg, **kwds):
-    return ht.ArrayOpExpr(arg, '&')
+    return ArrayOpExpr(arg, '&')
 
 
 def call_max(*arg, **kwds):
@@ -114,24 +115,24 @@ def call_max(*arg, **kwds):
 
     arg = arg[0]
 
-    assert isinstance(arg.op, ht.IntfDef), 'Not supported yet...'
+    assert isinstance(arg.op, IntfDef), 'Not supported yet...'
     assert typeof(arg.dtype, Tuple), 'Not supported yet...'
 
     op = []
     for field in arg.dtype.fields:
-        op.append(ht.AttrExpr(arg.op, [field]))
+        op.append(AttrExpr(arg.op, [field]))
 
     return reduce(max_expr, op)
 
 
 def call_enumerate(arg, **kwds):
-    return ht.ResExpr(len(arg)), arg
+    return ResExpr(len(arg)), arg
 
 
 def call_sub(*arg, **kwds):
     assert not arg, 'Sub should be called without arguments'
     value = kwds['value']
-    return ht.CastExpr(value, cast_to=value.dtype.sub())
+    return CastExpr(value, cast_to=value.dtype.sub())
 
 
 def call_get(*args, **kwds):
@@ -149,5 +150,5 @@ def call_clk(*arg, **kwds):
 def call_empty(*arg, **kwds):
     assert not arg, 'Empty should be called without arguments'
     value = kwds['value']
-    expr = ht.IntfDef(intf=value.intf, _name=value.name, context='valid')
-    return ht.UnaryOpExpr(expr, '!')
+    expr = IntfDef(intf=value.intf, _name=value.name, context='valid')
+    return UnaryOpExpr(expr, '!')

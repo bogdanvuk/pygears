@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Union
 
 from pygears.typing.base import TypingMeta
 
-from .hdl_types import Expr
+from .hls_expressions import Expr
 
 
 @dataclass

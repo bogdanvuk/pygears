@@ -1,4 +1,4 @@
-import pygears.hls.hdl_types as ht
+from pygears.hls.hls_expressions import EXTENDABLE_OPERATORS, BinOpExpr
 from pygears.typing import Array, Int, Integer, Queue, Uint, typeof
 
 
@@ -31,13 +31,13 @@ class SVExpressionVisitor:
 
     def visit_IntfReadyExpr(self, node, cast_to):
         res = []
-        if not isinstance(node.out_port, (list, tuple)):
+        if not isinstance(node.port, (list, tuple)):
             return f'{node.name}.ready'
 
-        for port in node.out_port:
+        for port in node.port:
             if port.context:
                 inst = svexpr(
-                    ht.BinOpExpr((f'{port.name}.ready', port.context), '&&'))
+                    BinOpExpr((f'{port.name}.ready', port.context), '&&'))
                 res.append(f'({inst})')
             else:
                 res.append(f'{port.name}.ready')
@@ -83,10 +83,10 @@ class SVExpressionVisitor:
     def visit_BinOpExpr(self, node, cast_to):
         ops = [self.visit(op) for op in node.operands]
         for i, op in enumerate(node.operands):
-            if isinstance(op, ht.BinOpExpr):
+            if isinstance(op, BinOpExpr):
                 ops[i] = f'({ops[i]})'
 
-        if node.operator in ht.EXTENDABLE_OPERATORS:
+        if node.operator in EXTENDABLE_OPERATORS:
             width = max(
                 int(node.dtype), int(node.operands[0].dtype),
                 int(node.operands[1].dtype))

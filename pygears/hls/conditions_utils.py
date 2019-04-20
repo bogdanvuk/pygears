@@ -2,7 +2,8 @@ import re
 from functools import partial, reduce
 from string import Template
 
-from . import hdl_types as ht
+from .hls_blocks import IfBlock
+from .hls_expressions import and_expr, binary_expr
 
 COND_NAME = Template('${cond_type}_cond_block_${block_id}')
 COMBINED_COND_NAME = Template('combined_cond_${cond_id}')
@@ -81,7 +82,7 @@ def find_cond_id(cond):
 
 def find_exit_cond(statements, search_in_cond=False):
     def has_in_cond(stmt):
-        if search_in_cond and (not isinstance(stmt, ht.IfBlock)) and hasattr(
+        if search_in_cond and (not isinstance(stmt, IfBlock)) and hasattr(
                 stmt, 'in_cond') and (stmt.in_cond is not None):
             return True
         return False
@@ -92,7 +93,7 @@ def find_exit_cond(statements, search_in_cond=False):
             exit_c = nested_exit_cond(stmt)
             if has_in_cond(stmt):
                 in_c = nested_in_cond(stmt)
-                return ht.and_expr(exit_c, in_c)
+                return and_expr(exit_c, in_c)
 
             return exit_c
 
@@ -139,5 +140,5 @@ class ConditionsBase:
 
         name = COMBINED_COND_NAME.substitute(cond_id=len(self.combined_conds))
         self.combined_conds[name] = reduce(
-            partial(ht.binary_expr, operator=operator), conds, None)
+            partial(binary_expr, operator=operator), conds, None)
         return name

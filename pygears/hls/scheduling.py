@@ -1,6 +1,6 @@
-from . import hdl_types as ht
-from .utils import find_hier_blocks, VisitError
+from .inst_visit import TypeVisitor
 from .scheduling_types import Leaf, MutexCBlock, SeqCBlock
+from .utils import VisitError, find_hier_blocks
 
 
 def non_state_block(block):
@@ -22,7 +22,7 @@ def add_epilog(child, stmts):
         child.epilog = stmts
 
 
-class Scheduler(ht.TypeVisitor):
+class Scheduler(TypeVisitor):
     def __init__(self):
         self.scope = []
 

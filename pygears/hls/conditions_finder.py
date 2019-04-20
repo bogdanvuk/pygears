@@ -1,7 +1,7 @@
-from . import hdl_types as ht
 from .conditions_utils import (ConditionsBase, find_cond_id, find_exit_cond,
                                nested_cycle_cond, nested_exit_cond,
                                nested_in_cond)
+from .hls_blocks import ContainerBlock, Module
 from .utils import state_expr
 
 
@@ -55,7 +55,7 @@ class ConditionsFinder(ConditionsBase):
                 return self._state_depend_cycle_cond(hdl_block)
 
             block = c_block.hdl_block
-            if isinstance(block, ht.ContainerBlock):
+            if isinstance(block, ContainerBlock):
                 continue
 
             if block.cycle_cond and block.cycle_cond != 1:
@@ -84,7 +84,7 @@ class ConditionsFinder(ConditionsBase):
     @property
     def rst_cond(self):
         if len(self.scope) == 1:
-            assert isinstance(self.scope[0].hdl_block, ht.Module)
+            assert isinstance(self.scope[0].hdl_block, Module)
             block = self.scope[0].hdl_block.stmts
         else:
             block = [s.hdl_block for s in self.scope[1:]]

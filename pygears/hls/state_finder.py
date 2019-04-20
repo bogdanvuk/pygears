@@ -1,30 +1,31 @@
 from functools import partial
 
-from . import hdl_types as ht
-from .inst_visit import InstanceVisitor
+from .hls_blocks import Block, ContainerBlock, IfBlock
+from .hls_expressions import OperandVal, RegNextStmt, UnaryOpExpr
+from .inst_visit import InstanceVisitor, TypeVisitor
 from .scheduling_types import MutexCBlock
 
 
 def reg_next_cb(node, stmt, scope):
-    if isinstance(stmt, ht.RegNextStmt) and (stmt.reg.name == node.op.name):
+    if isinstance(stmt, RegNextStmt) and (stmt.reg.name == node.op.name):
         node.context = 'next'
 
-        if scope and isinstance(scope[-1], ht.IfBlock):
+        if scope and isinstance(scope[-1], IfBlock):
             curr = scope[-1]
-            else_expr = ht.UnaryOpExpr(curr.in_cond, '!')
-            node_else = ht.IfBlock(
+            else_expr = UnaryOpExpr(curr.in_cond, '!')
+            node_else = IfBlock(
                 _in_cond=else_expr,
                 stmts=[
-                    ht.RegNextStmt(
+                    RegNextStmt(
                         reg=stmt.reg,
-                        val=ht.OperandVal(op=stmt.reg, context='reg'))
+                        val=OperandVal(op=stmt.reg, context='reg'))
                 ])
-            return ht.ContainerBlock(stmts=[curr, node_else])
+            return ContainerBlock(stmts=[curr, node_else])
 
     return None
 
 
-class ContextFinder(ht.TypeVisitor):
+class ContextFinder(TypeVisitor):
     def __init__(self):
         self.scope = []
         self.hier_scope = []
@@ -66,7 +67,7 @@ class ContextFinder(ht.TypeVisitor):
 
     def walk_up_block_hier(self, block, cb):
         for i, stmt in enumerate(reversed(block)):
-            if isinstance(stmt, ht.Block):
+            if isinstance(stmt, Block):
                 self.hier_scope.append(stmt)
                 self.hier_idx.append(i)
 
@@ -174,7 +175,7 @@ class BlockId(InstanceVisitor):
 
     def set_stmts_ids(self, stmts):
         for stmt in stmts:
-            if isinstance(stmt, ht.Block):
+            if isinstance(stmt, Block):
                 self.set_block_id(stmt)
                 self.set_stmts_ids(stmt.stmts)
 

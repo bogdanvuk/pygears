@@ -1,9 +1,10 @@
 import ast
 import inspect
+import typing
+from dataclasses import dataclass
 
 from pygears.typing import Uint, bitw
 
-from . import hdl_types as ht
 from .ast_parse import parse_ast
 from .cblock import CBlockVisitor
 from .cleanup import condition_cleanup
@@ -11,12 +12,39 @@ from .conditions import Conditions
 from .hdl_stmt import (AssertionVisitor, BlockConditionsVisitor, InputVisitor,
                        IntfReadyVisitor, IntfValidVisitor, OutputVisitor,
                        RegEnVisitor, StateTransitionVisitor, VariableVisitor)
+from .hls_expressions import IntfDef, RegDef
 from .intf_finder import IntfFinder
 from .reg_finder import RegFinder
 from .scheduling import Scheduler
 from .state_finder import BlockId, StateFinder
 
-# from .stmt_vacum import StmtVacum
+
+@dataclass
+class ModuleData:
+    in_ports: typing.Dict
+    out_ports: typing.Dict
+    hdl_locals: typing.Dict
+    regs: typing.Dict
+    variables: typing.Dict
+    in_intfs: typing.Dict
+    out_intfs: typing.Dict
+    local_namespace: typing.Dict
+
+    def get_container(self, name):
+        for attr in ['regs', 'variables', 'in_intfs', 'out_intfs']:
+            data_inst = getattr(self, attr)
+            if name in data_inst:
+                return data_inst
+        # hdl_locals is last because it contain others
+        if name in self.hdl_locals:
+            return self.hdl_locals
+        return None
+
+    def get(self, name):
+        data_container = self.get_container(name)
+        if data_container is not None:
+            return data_container[name]
+        return None
 
 
 class HDLWriter:
@@ -36,16 +64,16 @@ class HDLWriter:
 
 
 def compose_data(gear, regs, variables, intfs):
-    in_ports = {p.basename: ht.IntfDef(p) for p in gear.in_ports}
+    in_ports = {p.basename: IntfDef(p) for p in gear.in_ports}
     named = {}
     for port in in_ports:
         if port in intfs['namedargs']:
             named[port] = in_ports[port]
     hdl_locals = {**named, **intfs['varargs']}
 
-    return ht.ModuleData(
+    return ModuleData(
         in_ports=in_ports,
-        out_ports={p.basename: ht.IntfDef(p)
+        out_ports={p.basename: IntfDef(p)
                    for p in gear.out_ports},
         hdl_locals=hdl_locals,
         regs=regs,
@@ -77,7 +105,6 @@ def parse_gear_body(gear):
 
     # py ast to hdl ast
     hdl_ast = parse_ast(body_ast, hdl_data)
-    # StmtVacum().visit(hdl_ast)
     schedule = Scheduler().visit(hdl_ast)
     states = StateFinder()
     states.visit(schedule)
@@ -106,7 +133,7 @@ def parse_gear_body(gear):
         res[name] = sub_v.visit(schedule)
 
     if state_num > 0:
-        hdl_data.regs['state'] = ht.RegDef(
+        hdl_data.regs['state'] = RegDef(
             name='state', val=Uint[bitw(state_num)](0))
         sub_v = CBlockVisitor(StateTransitionVisitor(hdl_data), state_num)
         res['state_transition'] = sub_v.visit(schedule)

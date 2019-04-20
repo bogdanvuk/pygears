@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
 from typing import List, Union
 
-from .hdl_types import Block, Expr
+from .hls_blocks import Block
+from .hls_expressions import Expr
 
 
 @dataclass
