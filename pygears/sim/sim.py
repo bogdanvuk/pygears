@@ -366,7 +366,11 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
             for sim_gear in reversed(self.sim_gears):
                 if sim_gear in self.delta_ready:
-                    # print(f'Clock: {sim_gear.gear.name}')
+                    # if hasattr(sim_gear, 'port'):
+                    #     print(f'Clock: {sim_gear.gear.name}.{sim_gear.port.basename}')
+                    # else:
+                    #     print(f'Clock: {sim_gear.gear.name}')
+
                     self.maybe_run_gear(sim_gear, self.delta_ready)
 
             self.events['after_timestep'](self, timestep)

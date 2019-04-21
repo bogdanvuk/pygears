@@ -1,3 +1,5 @@
+import functools
+
 from pygears.core.hier_node import NamedHierNode
 from pygears.rtl.port import InPort, OutPort
 
@@ -10,6 +12,7 @@ class RTLIntf(NamedHierNode):
         self.dtype = dtype
 
     @property
+    @functools.lru_cache(maxsize=None)
     def _basename(self):
         producer_port = self.producer
         port_name = producer_port.basename
@@ -27,18 +30,34 @@ class RTLIntf(NamedHierNode):
             return f'{producer_port.node.basename}_{port_name}'
 
     @property
+    @functools.lru_cache(maxsize=None)
     def basename(self):
-        sibling_names = [
-            c._basename for c in self.parent.child if c is not self
-        ]
+        basename = self._basename
+        if self.is_port_intf:
+            return basename
 
-        port_names = [p.basename for p in self.parent.out_ports]
+        for c in self.parent.child:
+            if c is not self and c._basename == basename:
+                return f'{self._basename}_s'
 
-        if not self.is_port_intf and (self._basename in (
-                sibling_names + port_names)):
-            return f'{self._basename}_s'
-        else:
-            return self._basename
+        for p in self.parent.out_ports:
+            if p.basename == basename:
+                return f'{self._basename}_s'
+
+        return basename
+
+
+        # sibling_names = [
+        #     c._basename for c in self.parent.child if c is not self
+        # ]
+
+        # port_names = [p.basename for p in self.parent.out_ports]
+
+        # if not self.is_port_intf and (self._basename in (
+        #         sibling_names + port_names)):
+        #     return f'{self._basename}_s'
+        # else:
+        #     return self._basename
 
     @property
     def outname(self):

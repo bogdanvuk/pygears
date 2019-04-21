@@ -1,6 +1,7 @@
 from pygears.core.hier_node import NamedHierNode, find_unique_names
 from pygears.rtl.port import InPort, OutPort
 from pygears.rtl.intf import RTLIntf
+import functools
 
 
 def is_in_subbranch(root, node):
@@ -100,8 +101,9 @@ class RTLNode(NamedHierNode):
         return '.'.join(reversed(hier))
 
     @property
+    @functools.lru_cache(maxsize=None)
     def is_hierarchical(self):
-        return any([isinstance(c, RTLNode) for c in self.child])
+        return any(isinstance(c, RTLNode) for c in self.child)
 
     def local_interfaces(self):
         for child in self.child:

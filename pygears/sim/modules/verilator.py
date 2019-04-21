@@ -104,10 +104,15 @@ class SimVerilated(CosimBase):
                     f'Verilator VCD dump to "{self.outdir}/vlt_dump.vcd"')
 
         dll_path = os.path.join(self.objdir, f'V{self.wrap_name}')
+        if os.name == 'nt':
+            dll_path += '.exe'
+
         try:
             self.verilib = ctypes.CDLL(dll_path)
         except OSError:
-            self.verilib = ctypes.CDLL(dll_path + '.exe')
+            raise VerilatorCompileError(
+                f'Verilator compiled library for the gear "{self.gear.name}"'
+                f' not found at: "{dll_path}"')
 
         self.finished = False
         atexit.register(self._finish)

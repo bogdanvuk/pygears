@@ -118,18 +118,18 @@ class NamedHierNode(HierNode):
         if path[0] == '/':
             return self.root()[path[1:]]
 
-        parts = path.split("/")
+        part, multi, rest = path.partition("/")
 
         for child in self.child:
-            if hasattr(child, 'basename') and child.basename == parts[0]:
+            if child.basename == part:
                 break
         else:
             raise KeyError()
 
-        if len(parts) == 1:
+        if not multi:
             return child
         else:
-            return child["/".join(parts[1:])]
+            return child[rest]
 
     @property
     def name(self):
