@@ -6,10 +6,10 @@ from pygears.typing import Array, Int, Integer, Uint, Unit, typeof
 
 from . import hls_blocks as blocks
 from . import hls_expressions as expr
-from .utils import (VisitError, add_to_list, cast_return,
-                    eval_local_expression, find_assign_target,
-                    find_data_expression, find_name_expression, get_bin_expr,
-                    get_context_var, interface_operations, intf_parse)
+from .utils import (add_to_list, cast_return, eval_local_expression,
+                    find_assign_target, find_data_expression,
+                    find_name_expression, get_bin_expr, get_context_var,
+                    intf_parse)
 
 
 @singledispatch

@@ -1,7 +1,8 @@
 import typing
 from dataclasses import dataclass, field
 
-from .hls_expressions import binary_expr, Expr, IntfDef, UnaryOpExpr, IntfReadyExpr
+from .hls_expressions import (Expr, IntfDef, IntfReadyExpr, OpType,
+                              UnaryOpExpr, binary_expr)
 
 # Conditions
 
@@ -18,7 +19,7 @@ def subcond_expr(cond, other=None):
 
 @dataclass
 class SubConditions:
-    expr: Expr = None
+    expr: OpType = None
     operator: str = None
 
 
@@ -45,7 +46,6 @@ class Block:
     # TODO : newer versions of Python will not need the string
     stmts: typing.List[typing.Union['Block', Expr]]
     id: int = field(init=False, default=None)
-    # break_cond: list = field(init=False, default=None)
 
     @property
     def in_cond(self):
@@ -144,8 +144,8 @@ class ContainerBlock(Block):
 
 @dataclass
 class Loop(BaseLoop):
-    _in_cond: Expr
-    _exit_cond: Expr
+    _in_cond: typing.Union[Expr, None]
+    _exit_cond: typing.Union[Expr, None]
 
     @property
     def exit_cond(self):

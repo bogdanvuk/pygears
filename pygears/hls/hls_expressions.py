@@ -3,7 +3,8 @@ import typing
 from dataclasses import dataclass
 
 from pygears.core.port import InPort, OutPort
-from pygears.typing import Bool, Integer, Queue, Tuple, Uint, is_type, typeof
+from pygears.typing import (Bool, Integer, Queue, Tuple, Uint, Unit, is_type,
+                            typeof)
 from pygears.typing.base import TypingMeta
 
 BOOLEAN_OPERATORS = {'|', '&', '^', '~', '!', '&&', '||'}
@@ -96,12 +97,17 @@ class Expr:
         pass
 
 
+# Type aliases
+
+PgType = typing.Union[TypingMeta, Unit, int]
+OpType = typing.Union[Expr, PgType, str]
+
 # Type definitions
 
 
 @dataclass
 class ResExpr(Expr):
-    val: typing.Union[TypingMeta, int, None]
+    val: typing.Union[PgType, typing.Sequence, None]
 
     @property
     def dtype(self):
@@ -116,7 +122,7 @@ class ResExpr(Expr):
 
 @dataclass
 class DefBase(Expr):
-    val: TypingMeta
+    val: typing.Union[PgType, Expr]
     name: str
 
     @property
@@ -210,7 +216,7 @@ class OperandVal(Expr):
 
 @dataclass
 class IntfOpExpr(Expr):
-    port: IntfDef
+    port: typing.Union[IntfDef, str, typing.Sequence]
 
     @property
     def name(self):
@@ -241,7 +247,7 @@ class IntfValidExpr(IntfOpExpr):
 
 @dataclass
 class ConcatExpr(Expr):
-    operands: typing.Tuple[typing.Union[Expr]]
+    operands: typing.Sequence[OpType]
 
     @property
     def dtype(self):
@@ -250,7 +256,7 @@ class ConcatExpr(Expr):
 
 @dataclass
 class UnaryOpExpr(Expr):
-    operand: Expr
+    operand: OpType
     operator: str
 
     @property
@@ -260,8 +266,8 @@ class UnaryOpExpr(Expr):
 
 @dataclass
 class CastExpr(Expr):
-    operand: Expr
-    cast_to: typing.Any
+    operand: OpType
+    cast_to: PgType
 
     @property
     def dtype(self):
@@ -270,7 +276,7 @@ class CastExpr(Expr):
 
 @dataclass
 class BinOpExpr(Expr):
-    operands: typing.Tuple[Expr]
+    operands: typing.Tuple[OpType]
     operator: str
 
     @property
@@ -291,7 +297,7 @@ class BinOpExpr(Expr):
 
 @dataclass
 class ArrayOpExpr(Expr):
-    array: Expr
+    array: OpType
     operator: str
 
     @property
@@ -301,7 +307,7 @@ class ArrayOpExpr(Expr):
 
 @dataclass
 class SubscriptExpr(Expr):
-    val: Expr
+    val: OpType
     index: typing.Union[Expr, int, slice]
 
     @property
@@ -343,7 +349,7 @@ class AttrExpr(Expr):
 
 @dataclass
 class ConditionalExpr(Expr):
-    operands: typing.Tuple[Expr]
+    operands: typing.Sequence[OpType]
     cond: Expr
 
     @property
