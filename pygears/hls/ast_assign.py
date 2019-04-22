@@ -8,6 +8,15 @@ from .utils import (VisitError, add_to_list, find_assign_target,
                     find_data_expression, interface_operations)
 
 
+@parse_ast.register(ast.AugAssign)
+def parse_augassign(node, module_data):
+    target_load = ast.Name(node.target.id, ast.Load())
+    val = ast.BinOp(target_load, node.op, node.value)
+    assign_node = ast.Assign([node.target], val)
+    return parse_assign(assign_node, module_data)
+
+
+@parse_ast.register(ast.Assign)
 def parse_assign(node, module_data):
     names = find_assign_target(node)
     indexes = [None] * len(names)

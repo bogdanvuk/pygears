@@ -13,6 +13,7 @@ from .utils import (VisitError, add_to_list, find_data_expression,
                     find_for_target)
 
 
+@parse_ast.register(ast.For)
 def parse_for(node, module_data):
 
     res = find_data_expression(node.iter, module_data)

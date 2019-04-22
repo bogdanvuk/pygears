@@ -3,12 +3,14 @@ from functools import reduce
 
 from pygears.typing import Int, Tuple, Uint, Unit, is_type, typeof
 
+from .ast_parse import parse_ast
 from .hls_expressions import (ArrayOpExpr, AttrExpr, BinOpExpr, CastExpr,
                               ConditionalExpr, IntfDef, ResExpr, UnaryOpExpr)
 from .utils import (VisitError, cast_return, eval_expression,
                     find_data_expression)
 
 
+@parse_ast.register(ast.Call)
 def parse_call(node, module_data):
     arg_nodes = [find_data_expression(arg, module_data) for arg in node.args]
 

@@ -76,24 +76,6 @@ def parse_yield(node, module_data):
     return blocks.Yield(stmts=stmts, ports=ports)
 
 
-@parse_ast.register(ast.Call)
-def parse_call_wrapper(node, module_data):
-    from .ast_call import parse_call
-    return parse_call(node, module_data)
-
-
-@parse_ast.register(ast.Try)
-def parse_try_wrapper(node, module_data):
-    from .ast_try_except import parse_try
-    return parse_try(node, module_data)
-
-
-@parse_ast.register(ast.For)
-def parse_for_wrapper(node, module_data):
-    from .ast_for import parse_for
-    return parse_for(node, module_data)
-
-
 @parse_ast.register(ast.While)
 def parse_while(node, module_data):
     test = find_data_expression(node.test, module_data)
@@ -107,20 +89,6 @@ def parse_while(node, module_data):
         multicycle=multi)
 
     return parse_block(hdl_node, node.body, module_data)
-
-
-@parse_ast.register(ast.Assign)
-def parse_assign_wrapper(node, module_data):
-    from .ast_assign import parse_assign
-    return parse_assign(node, module_data)
-
-
-@parse_ast.register(ast.AugAssign)
-def parse_augassign(node, module_data):
-    target_load = ast.Name(node.target.id, ast.Load())
-    val = ast.BinOp(target_load, node.op, node.value)
-    assign_node = ast.Assign([node.target], val)
-    return parse_assign_wrapper(assign_node, module_data)
 
 
 def find_subscript_expression(node, module_data):
