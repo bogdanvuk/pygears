@@ -1,10 +1,9 @@
-from .conditions_utils import COND_NAME, find_cond_id, find_sub_cond_ids
 from .hdl_stmt_types import (AssertValue, AssignValue, CombBlock,
                              CombSeparateStmts, HDLBlock)
-from .hls_blocks import Block, Module
+from .hls_blocks import Block
 from .hls_expressions import (Expr, IntfReadyExpr, IntfValidExpr, OperandVal,
                               RegDef, ResExpr, SubscriptExpr, VariableDef)
-from .utils import VisitError, add_to_list, state_expr
+from .utils import VisitError, add_to_list
 
 
 def find_in_cond(conds, hdl_stmt, **kwds):
@@ -303,71 +302,6 @@ class IntfValidVisitor(HDLStmtVisitor):
             ]
 
         return None
-
-
-class BlockConditionsVisitor(HDLStmtVisitor):
-    def __init__(self, hdl_data, state_num):
-        super().__init__(hdl_data)
-        self.has_registers = len(hdl_data.regs) > 0
-        self.state_num = state_num
-        self.condition_assigns = CombSeparateStmts(stmts=[])
-        self.cond_types = ['in', 'cycle', 'exit']
-
-    def conditions(self):
-        self.get_combined()
-        return self.condition_assigns
-
-    def _add_stmt(self, stmt):
-        if stmt not in self.condition_assigns.stmts:
-            self.condition_assigns.stmts.append(stmt)
-
-    def get_combined(self):
-        for name, val in self.conds.combined_conds.items():
-            self._add_stmt(AssignValue(target=name, val=val))
-
-    def find_subconds(self, curr_cond):
-        if curr_cond is not None and not isinstance(curr_cond, str):
-            res = find_sub_cond_ids(curr_cond)
-            for cond_t in self.cond_types:
-                if cond_t in res:
-                    for sub_id in res[cond_t]:
-                        self.conds.add_cond(sub_id, cond_t)
-
-    def get_cond_by_type(self, cond_type, **kwds):
-        all_conds = getattr(self.conds, f'{cond_type}_conds')
-        if self.current_scope.id in all_conds:
-            curr_cond = self.conds.eval_cond(self.current_scope, cond_type)
-            self.find_subconds(curr_cond)
-            if curr_cond is None:
-                curr_cond = 1
-            res = AssignValue(
-                target=COND_NAME.substitute(
-                    cond_type=cond_type, block_id=self.current_scope.id),
-                val=curr_cond)
-            self._add_stmt(res)
-
-    def get_rst_cond(self, **kwds):
-        curr_cond = find_rst_cond(self.conds, **kwds)
-        if curr_cond is None:
-            curr_cond = 1
-
-        if self.state_num > 0:
-            rst_cond = state_expr([self.state_num], curr_cond)
-        else:
-            rst_cond = curr_cond
-        self._add_stmt(AssignValue(target='rst_cond', val=rst_cond))
-
-        if isinstance(curr_cond, str):
-            self.conds.add_exit_cond(find_cond_id(curr_cond))
-        else:
-            self.find_subconds(curr_cond)
-
-    def generic_enter(self, block, **kwds):
-        if isinstance(block, Module) and self.has_registers:
-            self.get_rst_cond(**kwds)
-
-        for cond_t in self.cond_types:
-            self.get_cond_by_type(cond_t, **kwds)
 
 
 class AssertionVisitor(HDLStmtVisitor):

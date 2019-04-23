@@ -5,13 +5,14 @@ from dataclasses import dataclass
 
 from pygears.typing import Uint, bitw
 
+from .assign_conditions import AssignConditions
 from .ast_parse import parse_ast
 from .cblock import CBlockVisitor
 from .cleanup import condition_cleanup
 from .conditions import Conditions
-from .hdl_stmt import (AssertionVisitor, BlockConditionsVisitor, InputVisitor,
-                       IntfReadyVisitor, IntfValidVisitor, OutputVisitor,
-                       RegEnVisitor, VariableVisitor)
+from .hdl_stmt import (AssertionVisitor, InputVisitor, IntfReadyVisitor,
+                       IntfValidVisitor, OutputVisitor, RegEnVisitor,
+                       VariableVisitor)
 from .hls_expressions import IntfDef, RegDef
 from .intf_finder import IntfFinder
 from .reg_finder import RegFinder
@@ -139,12 +140,10 @@ def parse_gear_body(gear):
         res['state_transition'] = CBlockStateTransition(
             hdl_data, state_num).visit(schedule)
 
-    cond_visit = CBlockVisitor(
-        BlockConditionsVisitor(hdl_data=hdl_data, state_num=state_num),
-        state_num)
+    cond_visit = AssignConditions(hdl_data, state_num)
     cond_visit.visit(schedule)
 
-    res['conditions'] = cond_visit.hdl.conditions()
+    res['conditions'] = cond_visit.conditions()
     try:
         from .simplify_expression import simplify_assigns
     except ImportError:

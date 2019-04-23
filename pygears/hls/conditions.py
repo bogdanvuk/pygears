@@ -1,4 +1,3 @@
-from .conditions_evaluate import ConditionsEval
 from .conditions_finder import ConditionsFinder
 from .conditions_utils import ConditionsBase
 
@@ -7,7 +6,6 @@ class Conditions(ConditionsBase):
     def __init__(self):
         self.scope = []
         self.cond_finder = ConditionsFinder()
-        self.cond_eval = ConditionsEval()
 
     def enter_block(self, block):
         self.scope.append(block)
@@ -51,7 +49,3 @@ class Conditions(ConditionsBase):
 
     def find_exit_cond_by_scope(self, scope_id=-1):
         return self.cond_finder.exit_cond_by_scope(scope_id)
-
-    def eval_cond(self, block, cond_type):
-        func = getattr(self.cond_eval, f'{cond_type}_cond')
-        return func(block, self.scope[-1])
