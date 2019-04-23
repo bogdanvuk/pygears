@@ -11,12 +11,13 @@ from .cleanup import condition_cleanup
 from .conditions import Conditions
 from .hdl_stmt import (AssertionVisitor, BlockConditionsVisitor, InputVisitor,
                        IntfReadyVisitor, IntfValidVisitor, OutputVisitor,
-                       RegEnVisitor, StateTransitionVisitor, VariableVisitor)
+                       RegEnVisitor, VariableVisitor)
 from .hls_expressions import IntfDef, RegDef
 from .intf_finder import IntfFinder
 from .reg_finder import RegFinder
 from .scheduling import Scheduler
 from .state_finder import BlockId, StateFinder
+from .state_transition import CBlockStateTransition
 
 
 @dataclass
@@ -135,8 +136,8 @@ def parse_gear_body(gear):
     if state_num > 0:
         hdl_data.regs['state'] = RegDef(
             name='state', val=Uint[bitw(state_num)](0))
-        sub_v = CBlockVisitor(StateTransitionVisitor(hdl_data), state_num)
-        res['state_transition'] = sub_v.visit(schedule)
+        res['state_transition'] = CBlockStateTransition(
+            hdl_data, state_num).visit(schedule)
 
     cond_visit = CBlockVisitor(
         BlockConditionsVisitor(hdl_data=hdl_data, state_num=state_num),

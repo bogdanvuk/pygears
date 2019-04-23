@@ -370,40 +370,6 @@ class BlockConditionsVisitor(HDLStmtVisitor):
             self.get_cond_by_type(cond_t, **kwds)
 
 
-class StateTransitionVisitor(HDLStmtVisitor):
-    def enter_Module(self, block, **kwds):
-        return AssignValue(f'state_en', 0)
-
-    def visit_all_Block(self, node, **kwds):
-        block = super().visit_all_Block(node, **kwds)
-        if 'state_id' not in kwds:
-            return block
-
-        return self.assign_states(block, **kwds)
-
-    def assign_states(self, block, **kwds):
-        state_tr = kwds['state_id']
-
-        cond = self.conds.find_exit_cond_by_scope(state_tr.scope)
-        if cond is None:
-            cond = 1
-
-        add_to_list(
-            block.stmts,
-            HDLBlock(
-                in_cond=cond,
-                stmts=[AssignValue(target=f'state_en', val=1)],
-                dflts={
-                    'state_next':
-                    AssignValue(target='state_next', val=state_tr.next_state)
-                }))
-
-        if block.stmts:
-            self.update_defaults(block)
-
-        return block
-
-
 class AssertionVisitor(HDLStmtVisitor):
     def visit_AssertExpr(self, node, **kwds):
         return AssertValue(node)
