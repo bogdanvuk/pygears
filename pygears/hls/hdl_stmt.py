@@ -5,6 +5,8 @@ from .hls_expressions import (Expr, IntfReadyExpr, IntfValidExpr, OperandVal,
                               RegDef, ResExpr, SubscriptExpr, VariableDef)
 from .utils import VisitError, add_to_list
 
+CONTROL_SUFFIX = ['_en']
+
 
 def find_in_cond(block):
     if len(str(block.in_cond)) > 150:  # major hack for code readability
@@ -32,12 +34,87 @@ def find_exit_cond(cond):
     return curr_cond
 
 
+def is_control_var(name, val, non_control_pairs=None):
+    if isinstance(name, Expr):
+        return True
+
+    for suff in CONTROL_SUFFIX:
+        if name.endswith(suff):
+            return True
+
+    if non_control_pairs is not None:
+        if isinstance(val, AssignValue):
+            val = val.val
+        for ctrl_name, ctrl_val in non_control_pairs:
+            if name == ctrl_name:
+                if val != ctrl_val:
+                    return True
+
+    return False
+
+
+def find_stmt_dflt(stmt, block, non_control_pairs=None):
+    for dflt in stmt.dflts:
+        # control cannot propagate past in conditions
+        if (not is_control_var(dflt, stmt.dflts[dflt],
+                               non_control_pairs)) or not stmt.in_cond:
+            if dflt in block.dflts:
+                if block.dflts[dflt].val is stmt.dflts[dflt].val:
+                    stmt.dflts[dflt] = None
+            else:
+                block.dflts[dflt] = stmt.dflts[dflt]
+                stmt.dflts[dflt] = None
+
+
+def find_assign_dflt(stmt, block, idx):
+    if stmt.target in block.dflts:
+        if block.dflts[stmt.target].val is stmt.val:
+            stmt.val = None
+    else:
+        block.dflts[stmt.target] = stmt
+        block.stmts[idx] = AssignValue(
+            target=stmt.target, val=None, dtype=stmt.dtype)
+
+
+def block_cleanup(block):
+    # cleanup None statements
+    for i, stmt in reversed(list(enumerate(block.stmts))):
+        if hasattr(stmt, 'val') and stmt.val is None:
+            del block.stmts[i]
+        if hasattr(stmt, 'dflts'):
+            for name in list(stmt.dflts.keys()):
+                if stmt.dflts[name] is None:
+                    del stmt.dflts[name]
+            if (not stmt.dflts) and (not stmt.stmts):
+                del block.stmts[i]
+
+
+def update_hdl_block(block, non_control_pairs=None):
+    # bottom up
+    # popagate defaulf values from sub statements to top
+    for i, stmt in enumerate(block.stmts):
+        if hasattr(stmt, 'dflts'):
+            find_stmt_dflt(stmt, block, non_control_pairs)
+        elif isinstance(stmt, AssignValue):
+            find_assign_dflt(stmt, block, i)
+
+    block_cleanup(block)
+
+    # top down
+    # if there are multiple stmts with different in_conds, but same dflt
+    for dflt in block.dflts:
+        for stmt in block.stmts:
+            if hasattr(stmt, 'dflts') and dflt in stmt.dflts:
+                if block.dflts[dflt].val == stmt.dflts[dflt].val:
+                    stmt.dflts[dflt] = None
+
+    block_cleanup(block)
+
+
 class HDLStmtVisitor:
     def __init__(self, hdl_data):
         self.hdl_data = hdl_data
-        self.control_suffix = ['_en']
         self.non_control_pairs = []
-        self.current_scope = None
 
     def visit(self, node, cond, **kwds):
         method = 'visit_' + node.__class__.__name__
@@ -55,7 +132,6 @@ class HDLStmtVisitor:
         pass
 
     def enter_block(self, block, cond):
-        self.current_scope = block
         method = 'enter_' + block.__class__.__name__
         enter_visitor = getattr(self, method, self.generic_enter)
         return enter_visitor(block, cond)
@@ -81,76 +157,8 @@ class HDLStmtVisitor:
 
         return block
 
-    def is_control_var(self, name, val):
-        if isinstance(name, Expr):
-            return True
-
-        for suff in self.control_suffix:
-            if name.endswith(suff):
-                return True
-
-        if isinstance(val, AssignValue):
-            val = val.val
-        for ctrl_name, ctrl_val in self.non_control_pairs:
-            if name == ctrl_name:
-                if val != ctrl_val:
-                    return True
-
-        return False
-
-    def find_stmt_dflt(self, stmt, block):
-        for dflt in stmt.dflts:
-            # control cannot propagate past in conditions
-            if (not self.is_control_var(dflt,
-                                        stmt.dflts[dflt])) or not stmt.in_cond:
-                if dflt in block.dflts:
-                    if block.dflts[dflt].val is stmt.dflts[dflt].val:
-                        stmt.dflts[dflt] = None
-                else:
-                    block.dflts[dflt] = stmt.dflts[dflt]
-                    stmt.dflts[dflt] = None
-
-    def find_assign_dflt(self, stmt, block, idx):
-        if stmt.target in block.dflts:
-            if block.dflts[stmt.target].val is stmt.val:
-                stmt.val = None
-        else:
-            block.dflts[stmt.target] = stmt
-            block.stmts[idx] = AssignValue(
-                target=stmt.target, val=None, dtype=stmt.dtype)
-
     def update_defaults(self, block):
-        # bottom up
-        # popagate defaulf values from sub statements to top
-        for i, stmt in enumerate(block.stmts):
-            if hasattr(stmt, 'dflts'):
-                self.find_stmt_dflt(stmt, block)
-            elif isinstance(stmt, AssignValue):
-                self.find_assign_dflt(stmt, block, i)
-
-        self.block_cleanup(block)
-
-        # top down
-        # if there are multiple stmts with different in_conds, but same dflt
-        for dflt in block.dflts:
-            for stmt in block.stmts:
-                if hasattr(stmt, 'dflts') and dflt in stmt.dflts:
-                    if block.dflts[dflt].val == stmt.dflts[dflt].val:
-                        stmt.dflts[dflt] = None
-
-        self.block_cleanup(block)
-
-    def block_cleanup(self, block):
-        # cleanup None statements
-        for i, stmt in reversed(list(enumerate(block.stmts))):
-            if hasattr(stmt, 'val') and stmt.val is None:
-                del block.stmts[i]
-            if hasattr(stmt, 'dflts'):
-                for name in list(stmt.dflts.keys()):
-                    if stmt.dflts[name] is None:
-                        del stmt.dflts[name]
-                if (not stmt.dflts) and (not stmt.stmts):
-                    del block.stmts[i]
+        update_hdl_block(block, self.non_control_pairs)
 
 
 class RegEnVisitor(HDLStmtVisitor):

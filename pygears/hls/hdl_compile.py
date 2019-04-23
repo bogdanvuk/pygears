@@ -19,7 +19,7 @@ from .intf_finder import IntfFinder
 from .reg_finder import RegFinder
 from .scheduling import Scheduler
 from .state_finder import BlockId, StateFinder
-from .state_transition import CBlockStateTransition
+from .state_transition import HdlStmtStateTransition
 
 
 @dataclass
@@ -141,8 +141,8 @@ def parse_gear_body(gear):
     if state_num > 0:
         hdl_data.regs['state'] = RegDef(
             name='state', val=Uint[bitw(state_num)](0))
-        res['state_transition'] = CBlockStateTransition(
-            hdl_data, state_num).visit(schedule)
+        res['state_transition'] = HdlStmtStateTransition(state_num).visit(
+            schedule)
 
     cond_visit = AssignConditions(hdl_data, state_num)
     cond_visit.visit(schedule)

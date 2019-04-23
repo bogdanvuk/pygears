@@ -1,48 +1,12 @@
 from dataclasses import dataclass
 
 from .conditions_utils import add_cond
-from .hdl_stmt import HDLStmtVisitor
-from .hdl_stmt_types import AssignValue, HDLBlock
+from .hdl_stmt import find_in_cond, update_hdl_block
+from .hdl_stmt_types import AssignValue, CombBlock, HDLBlock
+from .hls_blocks import Module
 from .inst_visit import InstanceVisitor
 from .scheduling_types import MutexCBlock
 from .utils import add_to_list, state_expr
-
-
-class HdlStateTransition(HDLStmtVisitor):
-    def enter_Module(self, block, cond):
-        return AssignValue(f'state_en', 0)
-
-    def visit_all_Block(self, node, cond, **kwds):
-        block = super().visit_all_Block(node, cond, **kwds)
-        if 'state_id' not in kwds:
-            return block
-
-        return self.assign_states(block, cond, **kwds)
-
-    def assign_states(self, block, cond, **kwds):
-        state_tr = kwds['state_id']
-
-        # cond = self.conds.find_exit_cond_by_scope(state_tr.scope)
-        cond = state_tr.scope_exit_cond
-        if cond is not None:
-            add_cond(cond)
-        else:
-            cond = 1
-
-        add_to_list(
-            block.stmts,
-            HDLBlock(
-                in_cond=cond,
-                stmts=[AssignValue(target=f'state_en', val=1)],
-                dflts={
-                    'state_next':
-                    AssignValue(target='state_next', val=state_tr.next_state)
-                }))
-
-        if block.stmts:
-            self.update_defaults(block)
-
-        return block
 
 
 @dataclass
@@ -143,35 +107,61 @@ def find_state_transition(cblock):
     return trans
 
 
-class CBlockStateTransition(InstanceVisitor):
-    def __init__(self, module_data, state_num):
+def create_hdl_block(node):
+    return HDLBlock(in_cond=find_in_cond(node), stmts=[], dflts={})
+
+
+def create_state_hdl_block(block, state_tr):
+    hdl_block = create_hdl_block(block)
+
+    cond = state_tr.scope_exit_cond
+    if cond is not None:
+        add_cond(cond)
+
+    add_to_list(
+        hdl_block.stmts,
+        HDLBlock(
+            in_cond=cond,
+            stmts=[AssignValue(target=f'state_en', val=1)],
+            dflts={
+                'state_next':
+                AssignValue(target='state_next', val=state_tr.next_state)
+            }))
+
+    if hdl_block.stmts:
+        update_hdl_block(hdl_block)
+
+    return hdl_block
+
+
+class HdlStmtStateTransition(InstanceVisitor):
+    def __init__(self, state_num):
         self.state_num = state_num
-        self.module_data = module_data
-        self.hdl = HdlStateTransition(module_data)
 
     def visit_Leaf(self, node):
         pass
 
     def visit_SeqCBlock(self, node):
-        hdl_block = self.ping_hdl(node.hdl_block)
+        if isinstance(node.hdl_block, Module):
+            hdl_block = CombBlock(
+                stmts=[], dflts={'state_en': AssignValue(f'state_en', 0)})
+        else:
+            hdl_block = create_hdl_block(node.hdl_block)
         self.add_state_conditions(node, hdl_block)
         for child in node.child:
             add_to_list(hdl_block.stmts, self.visit(child))
         return hdl_block
 
     def visit_MutexCBlock(self, node):
-        hdl_block = self.ping_hdl(node.hdl_block)
+        hdl_block = create_hdl_block(node.hdl_block)
         for child in node.child:
             add_to_list(hdl_block.stmts, self.visit(child))
         return hdl_block
 
-    def ping_hdl(self, block, **kwds):
-        return self.hdl.visit(block, cond=None, **kwds)
-
     def _add_state_block(self, cblock, hdl_block, state_tr):
         state_tr.scope_exit_cond = find_exit_cond_by_scope(
             cblock, state_tr.scope)
-        state_copy_block = self.ping_hdl(cblock.hdl_block, state_id=state_tr)
+        state_copy_block = create_state_hdl_block(cblock.hdl_block, state_tr)
         state_copy_block.in_cond = None  # already in hdl_block
         add_to_list(hdl_block.stmts, state_copy_block)
 
