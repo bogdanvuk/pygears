@@ -77,10 +77,6 @@ class ConditionsFinder(ConditionsBase):
         block = self.scope[-1].hdl_block
         return self._exit_cond(block)
 
-    def exit_cond_by_scope(self, scope_id=-1):
-        block = self.scope[scope_id].hdl_block
-        return self._exit_cond(block)
-
     @property
     def rst_cond(self):
         if len(self.scope) == 1:
@@ -95,3 +91,35 @@ class ConditionsFinder(ConditionsBase):
 
     def exit_block(self):
         self.scope.pop()
+
+    def _find_cond(self, cond, **kwds):
+        if cond is None:
+            cond = 1
+
+        if 'context_cond' in kwds:
+            if cond == 1:
+                return kwds['context_cond']
+
+            cond = self.combine_conditions((cond, kwds['context_cond']), '&&')
+
+        return cond
+
+    def find_rst_cond(self, **kwds):
+        cond = self.rst_cond
+        return self._find_cond(cond, **kwds)
+
+    def find_in_cond(self, hdl_block, **kwds):
+        cond = self.in_cond(hdl_block)
+        return self._find_cond(cond, **kwds)
+
+    def find_cycle_cond(self, hdl_block, **kwds):
+        cond = self.cycle_cond(hdl_block)
+        return self._find_cond(cond, **kwds)
+
+    def find_exit_cond(self, hdl_block, **kwds):
+        cond = self.exit_cond(hdl_block)
+        return self._find_cond(cond, **kwds)
+
+    def find_exit_cond_by_scope(self, scope_id=-1):
+        block = self.scope[scope_id].hdl_block
+        return self._exit_cond(block)

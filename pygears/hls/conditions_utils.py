@@ -2,7 +2,7 @@ import re
 from functools import partial, reduce
 from string import Template
 
-from .hls_blocks import IfBlock
+from .hls_blocks import IfBlock, Module
 from .hls_expressions import and_expr, binary_expr
 
 COND_NAME = Template('${cond_type}_cond_block_${block_id}')
@@ -101,6 +101,11 @@ def find_exit_cond(statements, search_in_cond=False):
             return nested_in_cond(stmt)
 
     return None
+
+
+def find_rst_cond(module):
+    assert isinstance(module, Module)
+    return find_exit_cond(module.stmts, search_in_cond=True)
 
 
 class ConditionsBase:

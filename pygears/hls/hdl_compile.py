@@ -9,7 +9,7 @@ from .assign_conditions import AssignConditions
 from .ast_parse import parse_ast
 from .cblock import CBlockVisitor
 from .cleanup import condition_cleanup
-from .conditions import Conditions
+from .conditions_utils import ConditionsBase
 from .hdl_stmt import (AssertionVisitor, InputVisitor, IntfReadyVisitor,
                        IntfValidVisitor, OutputVisitor, RegEnVisitor,
                        VariableVisitor)
@@ -117,7 +117,7 @@ def parse_gear_body(gear):
     # pprint(schedule)
 
     # clear combined conditions from previous run, if any
-    Conditions().init()
+    ConditionsBase().init()
 
     block_visitors = {
         'register_next_state': RegEnVisitor(hdl_data),
@@ -143,7 +143,7 @@ def parse_gear_body(gear):
     cond_visit = AssignConditions(hdl_data, state_num)
     cond_visit.visit(schedule)
 
-    res['conditions'] = cond_visit.conditions()
+    res['conditions'] = cond_visit.get_condition_block()
     try:
         from .simplify_expression import simplify_assigns
     except ImportError:

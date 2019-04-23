@@ -1,4 +1,4 @@
-from .conditions import Conditions
+from .conditions_finder import ConditionsFinder
 from .hdl_stmt import CombBlock
 from .hls_blocks import Block
 from .inst_visit import InstanceVisitor
@@ -8,7 +8,7 @@ from .utils import add_to_list, state_expr
 class CBlockVisitor(InstanceVisitor):
     def __init__(self, hdl_visitor, state_num):
         self.state_num = state_num
-        self.conds = Conditions()
+        self.conds = ConditionsFinder()
         hdl_visitor.conds = self.conds
         self.hdl = hdl_visitor
 

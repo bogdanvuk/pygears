@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from .conditions import Conditions
+from .conditions_finder import ConditionsFinder
 from .hdl_stmt import HDLStmtVisitor
 from .hdl_stmt_types import AssignValue, HDLBlock
 from .inst_visit import InstanceVisitor
@@ -134,7 +134,7 @@ class CBlockStateTransition(InstanceVisitor):
         self.hdl = HdlStateTransition(module_data)
 
         # TODO : remove after refactor
-        self.conds = Conditions()
+        self.conds = ConditionsFinder()
         self.hdl.conds = self.conds
 
     def visit_Leaf(self, node):
