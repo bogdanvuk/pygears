@@ -26,5 +26,12 @@ class Unit(metaclass=UnitMeta):
     def code(self):
         return 0
 
+    def __int__(self):
+        return 0
+
     def __eq__(self, other):
         return isinstance(other, Unit)
+
+    @classmethod
+    def decode(cls, val):
+        return cls()
