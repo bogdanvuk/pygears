@@ -2,6 +2,7 @@ import subprocess
 from pygears import bind, PluginBase, safe_bind
 from pygears.core.port import OutPort
 from pygears.sim import sim_log, timestep
+from pygears.sim.sim_gear import SimGear
 from pygears.typing import typeof, TLM
 from pygears.typing.visitor import TypingVisitorBase
 from vcd import VCDWriter
@@ -40,6 +41,10 @@ class VCDTypeVisitor(TypingVisitorBase):
         self.visit(type_[0], f'{field}.data')
         self.visit(type_[1], f'{field}.ctrl')
 
+    def visit_array(self, type_, field):
+        for i, t in enumerate(type_):
+            self.visit(t, f'{field}.({i})')
+
     def visit_default(self, type_, field):
         if hasattr(type_, 'fields'):
             for t, f in zip(type_, type_.fields):
@@ -70,6 +75,10 @@ class VCDValVisitor(TypingVisitorBase):
         self.visit(type_[0], f'{field}.data', val=val[0])
         self.visit(type_[1:], f'{field}.eot', val=val[1])
 
+    def visit_array(self, type_, field, val):
+        for i, t in enumerate(type_):
+            self.visit(t, f'{field}.({i})', val=val[i])
+
     def visit_uint(self, type_, field, val=None):
         self.change(type_, field, val)
 
@@ -98,8 +107,10 @@ def register_traces_for_intf(dtype, scope, writer):
             else:
                 field_scope = scope
 
-            vcd_vars[name] = writer.register_var(
-                field_scope, basename, 'wire', size=max(int(t), 1))
+            vcd_vars[name] = writer.register_var(field_scope,
+                                                 basename,
+                                                 'wire',
+                                                 size=max(int(t), 1))
 
     for sig in ('valid', 'ready'):
         vcd_vars[sig] = writer.register_var(scope, sig, 'wire', size=1, init=0)
@@ -164,7 +175,7 @@ class VCDHierVisitor(HierVisitorBase):
     def Gear(self, module):
         self.enter_hier(module.basename)
 
-        if module in self.sim_map:
+        if module in self.sim_map and module.params['sim_cls'] is None:
             gear_vcd_scope = module.name[1:].replace('/', '.')
             for p in itertools.chain(module.out_ports, module.in_ports):
                 if not is_trace_included(p, self.include, self.vcd_tlm):
@@ -226,14 +237,12 @@ class VCD(SimExtend):
         if self.vcd_fifo:
             subprocess.call(f"mkfifo {self.trace_fn}", shell=True)
         else:
-            sim_log().info(
-                f'Main VCD dump to "{self.outdir}/vlt_dump.vcd"')
+            sim_log().info(f'Main VCD dump to "{self.outdir}/vlt_dump.vcd"')
 
         if self.shmidcat:
-            self.shmid_proc = subprocess.Popen(
-                f'shmidcat {self.trace_fn}',
-                shell=True,
-                stdout=subprocess.PIPE)
+            self.shmid_proc = subprocess.Popen(f'shmidcat {self.trace_fn}',
+                                               shell=True,
+                                               stdout=subprocess.PIPE)
 
             # Wait for shmidcat to actually open the pipe, which is necessary
             # to happen prior to init of the verilator. If shmidcat does not
@@ -245,18 +254,22 @@ class VCD(SimExtend):
 
         if self.shmidcat:
             self.shmid = self.shmid_proc.stdout.readline().decode().strip()
-            sim_log().info(
-                f'Main VCD dump to shared memory at 0x{self.shmid}')
+            sim_log().info(f'Main VCD dump to shared memory at 0x{self.shmid}')
 
         self.writer = VCDWriter(self.vcd_file, timescale='1 ns', date='today')
         bind('VCDWriter', self.writer)
         bind('VCD', self)
 
-        self.clk_var = self.writer.register_var(
-            '', 'clk', 'wire', size=1, init=1)
+        self.clk_var = self.writer.register_var('',
+                                                'clk',
+                                                'wire',
+                                                size=1,
+                                                init=1)
 
-        self.timestep_var = self.writer.register_var(
-            '', 'timestep', 'integer', init=0)
+        self.timestep_var = self.writer.register_var('',
+                                                     'timestep',
+                                                     'integer',
+                                                     init=0)
 
         self.handhake = set()
 
@@ -271,6 +284,10 @@ class VCD(SimExtend):
         self.writer.flush()
 
     def intf_put(self, intf, val):
+        if intf not in self.vcd_vars:
+            breakpoint()
+            return True
+
         v = self.vcd_vars[intf]
 
         if typeof(intf.dtype, TLM):
@@ -283,6 +300,9 @@ class VCD(SimExtend):
         return True
 
     def intf_ack(self, intf):
+        if intf not in self.vcd_vars:
+            return True
+
         v = self.vcd_vars[intf]
         self.writer.change(v['ready'], timestep() * 10, 1)
         self.handhake.add(intf)

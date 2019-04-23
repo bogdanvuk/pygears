@@ -174,6 +174,7 @@ class Intf:
             put_event(self, val)
 
         for q, c in zip(self.out_queues, self.end_consumers):
+            put_event = c.consumer.events['put']
             if put_event:
                 put_event(c.consumer, val)
 
@@ -268,6 +269,7 @@ class Intf:
 
         ret = self.in_queue.task_done()
         if self.in_queue.intf.ready_nb():
+            e = self.in_queue.intf.events['ack']
             e(self.in_queue.intf)
 
         self._data = None
