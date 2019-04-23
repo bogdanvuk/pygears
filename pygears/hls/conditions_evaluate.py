@@ -1,5 +1,6 @@
-from .conditions_utils import (ConditionsBase, nested_cycle_cond,
-                               nested_exit_cond)
+from .conditions_utils import (add_cond_expr_operands, add_cycle_cond,
+                               add_exit_cond, combine_conditions,
+                               nested_cycle_cond, nested_exit_cond)
 from .hls_blocks import (ContainerBlock, CycleSubCond, ExitSubCond,
                          SubConditions, subcond_expr)
 from .hls_expressions import BinOpExpr
@@ -21,18 +22,24 @@ def get_cblock_hdl_stmts(cblock):
         yield from cblock.hdl_blocks
 
 
-class ConditionsEval(ConditionsBase):
+class ConditionsEval:
     def _create_combined(self, sub_cond, stmt, cond):
         if stmt.in_cond is None:
             block_cond = sub_cond
         else:
-            block_cond = self.combine_conditions((sub_cond, stmt.in_cond),
-                                                 '&&')
+            if sub_cond is None:
+                block_cond = None
+            else:
+                add_cond_expr_operands(sub_cond)
+                block_cond = combine_conditions((sub_cond, stmt.in_cond), '&&')
 
         if cond is None:
             return block_cond
 
-        return self.combine_conditions((cond, block_cond), '||')
+        if block_cond is None:
+            return cond
+
+        return combine_conditions((cond, block_cond), '||')
 
     def _merge_hdl_conds(self, top, cond_type):
         if all(
@@ -74,15 +81,15 @@ class ConditionsEval(ConditionsBase):
             for hdl_stmt in get_cblock_hdl_stmts(child):
                 if getattr(hdl_stmt, 'cycle_cond', None) is not None:
                     conds.append(nested_cycle_cond(hdl_stmt))
-                    self.add_cycle_cond(hdl_stmt.id)
+                    add_cycle_cond(hdl_stmt.id)
 
-        return self.combine_conditions(conds)
+        return combine_conditions(conds)
 
     def _cblock_state_cycle_subconds(self, cblock):
         curr_child = cblock.child[-1]
         sub_conds = curr_child.hdl_block.cycle_cond
         if sub_conds is not None:
-            self.add_cycle_cond(curr_child.hdl_block.id)
+            add_cycle_cond(curr_child.hdl_block.id)
             sub_conds = state_expr(curr_child.state_ids, sub_conds)
 
         return sub_conds
@@ -107,7 +114,7 @@ class ConditionsEval(ConditionsBase):
                     child_exit_cond = getattr(hdl_stmt, 'exit_cond', None)
                 if child_exit_cond is not None:
                     exit_c = nested_exit_cond(hdl_stmt)
-                    self.add_exit_cond(hdl_stmt.id)
+                    add_exit_cond(hdl_stmt.id)
                     return subcond_expr(cond, exit_c)
 
         return subcond_expr(cond, 1)
@@ -124,7 +131,7 @@ class ConditionsEval(ConditionsBase):
             sub_cond = self._hdl_cycle_subconds(stmt)
             if sub_cond is not None:
                 conds.append(nested_cycle_cond(stmt))
-        return self.combine_conditions(conds)
+        return combine_conditions(conds)
 
     def _hdl_stmt_exit_cond(self, block):
         for stmt in reversed(block.stmts):

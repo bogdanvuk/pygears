@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from .conditions_finder import ConditionsFinder
+from .conditions_utils import add_cond
 from .hdl_stmt import HDLStmtVisitor
 from .hdl_stmt_types import AssignValue, HDLBlock
 from .inst_visit import InstanceVisitor
@@ -9,21 +9,24 @@ from .utils import add_to_list, state_expr
 
 
 class HdlStateTransition(HDLStmtVisitor):
-    def enter_Module(self, block, **kwds):
+    def enter_Module(self, block, cond):
         return AssignValue(f'state_en', 0)
 
-    def visit_all_Block(self, node, **kwds):
-        block = super().visit_all_Block(node, **kwds)
+    def visit_all_Block(self, node, cond, **kwds):
+        block = super().visit_all_Block(node, cond, **kwds)
         if 'state_id' not in kwds:
             return block
 
-        return self.assign_states(block, **kwds)
+        return self.assign_states(block, cond, **kwds)
 
-    def assign_states(self, block, **kwds):
+    def assign_states(self, block, cond, **kwds):
         state_tr = kwds['state_id']
 
-        cond = self.conds.find_exit_cond_by_scope(state_tr.scope)
-        if cond is None:
+        # cond = self.conds.find_exit_cond_by_scope(state_tr.scope)
+        cond = state_tr.scope_exit_cond
+        if cond is not None:
+            add_cond(cond)
+        else:
             cond = 1
 
         add_to_list(
@@ -58,6 +61,19 @@ class StateTransitions:
     def found(self):
         return (self.next_state is not None) or (
             self.cycle_state is not None) or (self.done_state is not None)
+
+
+def find_exit_cond_by_scope(node, scope):
+    curr_node = node
+    cnt = scope + 1
+    while cnt:
+        curr_node = curr_node.parent
+        cnt += 1
+
+    if hasattr(curr_node, 'conditions'):
+        return curr_node.conditions['block'].exit_cond
+
+    return None
 
 
 def find_done_seqcblock(cblock):
@@ -133,40 +149,28 @@ class CBlockStateTransition(InstanceVisitor):
         self.module_data = module_data
         self.hdl = HdlStateTransition(module_data)
 
-        # TODO : remove after refactor
-        self.conds = ConditionsFinder()
-        self.hdl.conds = self.conds
-
     def visit_Leaf(self, node):
         pass
 
     def visit_SeqCBlock(self, node):
-        self.conds.enter_block(node)  # TODO
-
         hdl_block = self.ping_hdl(node.hdl_block)
         self.add_state_conditions(node, hdl_block)
         for child in node.child:
             add_to_list(hdl_block.stmts, self.visit(child))
-
-        self.conds.exit_block()  # TODO
-
         return hdl_block
 
     def visit_MutexCBlock(self, node):
-        self.conds.enter_block(node)  # TODO
-
         hdl_block = self.ping_hdl(node.hdl_block)
         for child in node.child:
             add_to_list(hdl_block.stmts, self.visit(child))
-
-        self.conds.exit_block()  # TODO
-
         return hdl_block
 
     def ping_hdl(self, block, **kwds):
-        return self.hdl.visit(block, **kwds)
+        return self.hdl.visit(block, cond=None, **kwds)
 
     def _add_state_block(self, cblock, hdl_block, state_tr):
+        state_tr.scope_exit_cond = find_exit_cond_by_scope(
+            cblock, state_tr.scope)
         state_copy_block = self.ping_hdl(cblock.hdl_block, state_id=state_tr)
         state_copy_block.in_cond = None  # already in hdl_block
         add_to_list(hdl_block.stmts, state_copy_block)

@@ -9,7 +9,8 @@ from .assign_conditions import AssignConditions
 from .ast_parse import parse_ast
 from .cblock import CBlockVisitor
 from .cleanup import condition_cleanup
-from .conditions_utils import ConditionsBase
+from .conditions_finder import ConditionsFinder
+from .conditions_utils import init_conditions
 from .hdl_stmt import (AssertionVisitor, InputVisitor, IntfReadyVisitor,
                        IntfValidVisitor, OutputVisitor, RegEnVisitor,
                        VariableVisitor)
@@ -117,7 +118,10 @@ def parse_gear_body(gear):
     # pprint(schedule)
 
     # clear combined conditions from previous run, if any
-    ConditionsBase().init()
+    init_conditions()
+
+    cond_finder = ConditionsFinder(state_num)
+    cond_finder.visit(schedule)
 
     block_visitors = {
         'register_next_state': RegEnVisitor(hdl_data),
