@@ -6,7 +6,7 @@ from pygears.cookbook.delay import delay_rng
 from pygears.cookbook.verif import directed, verif
 from pygears.sim import sim, timestep
 from pygears.sim.modules.drv import drv
-from pygears.typing import Int, Queue, Tuple, Uint
+from pygears.typing import Int, Queue, Tuple, Uint, Unit
 from pygears.util.test_utils import formal_check, synth_check
 
 
@@ -43,6 +43,20 @@ def test_queue_tuple(tmpdir, cosim_cls, din_delay, dout_delay):
         f=dreg(sim_cls=cosim_cls),
         ref=dreg(name='ref_model'),
         delays=[delay_rng(dout_delay, dout_delay)])
+
+    sim(outdir=tmpdir)
+
+
+@pytest.mark.parametrize('lvl', [1, 2, 5])
+def test_queue_unit(tmpdir, cosim_cls, lvl):
+    # sequence represents eot values
+    # cast to Queue[Unit] after driver
+    seq = [0, 0, 1, 2, 1, 2, 3]
+
+    verif(
+        drv(t=Uint[8], seq=seq) | Queue[Unit, lvl],
+        f=dreg(sim_cls=cosim_cls),
+        ref=dreg(name='ref_model'))
 
     sim(outdir=tmpdir)
 
