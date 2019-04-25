@@ -292,3 +292,8 @@ def parse_subscript(node, module_data):
 def parse_tuple(node, module_data):
     items = [find_data_expression(item, module_data) for item in node.elts]
     return expr.ConcatExpr(items)
+
+
+@parse_ast.register(ast.Break)
+def parse_break(node, module_data):
+    return expr.BreakExpr()

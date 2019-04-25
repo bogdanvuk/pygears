@@ -24,6 +24,8 @@ def find_cycle_cond(cond):
     curr_cond = cond.cycle_cond
     if curr_cond is not None:
         add_cond(curr_cond)
+    else:
+        curr_cond = 1
     return curr_cond
 
 
@@ -31,6 +33,8 @@ def find_exit_cond(cond):
     curr_cond = cond.exit_cond
     if curr_cond is not None:
         add_cond(curr_cond)
+    else:
+        curr_cond = 1
     return curr_cond
 
 

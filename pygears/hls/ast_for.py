@@ -221,11 +221,12 @@ def registered_enumerate(node, target_names, stop, enum_target, module_data):
 
 
 def comb_enumerate(node, target_names, stop, enum_target, module_data):
-    hdl_node = ContainerBlock(stmts=[])
+    pydl_node = ContainerBlock(stmts=[])
+    if getattr(node, 'break_func', None):
+        pydl_node.break_cond = []
 
-    hdl_node.break_func = node.break_func
     for stmt in node.hdl_stmts:
-        add_to_list(hdl_node.stmts, parse_ast(stmt, module_data))
+        add_to_list(pydl_node.stmts, parse_ast(stmt, module_data))
 
     for i, last in qrange(stop.val):
         py_stmt = f'{target_names[0]} = Uint[bitw({stop.val})]({i}); {target_names[1]} = {enum_target}{i}'
@@ -233,6 +234,9 @@ def comb_enumerate(node, target_names, stop, enum_target, module_data):
 
         unrolled = unroll_statements(module_data, stmts, i, target_names, last)
 
-        parse_block(hdl_node, unrolled, module_data)
+        parse_block(pydl_node, unrolled, module_data)
 
-    return hdl_node
+        if getattr(node, 'break_func', None):
+            node.break_func(pydl_node, module_data)
+
+    return pydl_node

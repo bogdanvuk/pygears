@@ -361,3 +361,8 @@ class ConditionalExpr(Expr):
 class AssertExpr(Expr):
     test: Expr
     msg: str
+
+
+@dataclass
+class BreakExpr(Expr):
+    pass
