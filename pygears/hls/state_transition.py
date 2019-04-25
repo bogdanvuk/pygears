@@ -141,22 +141,29 @@ class HdlStmtStateTransition(InstanceVisitor):
     def visit_Leaf(self, node):
         pass
 
+    def visit_children(self, node, hdl_block):
+        for child in node.child:
+            add_to_list(hdl_block.stmts, self.visit(child))
+
+        if hdl_block.stmts:
+            update_hdl_block(hdl_block)
+
+        return hdl_block
+
     def visit_SeqCBlock(self, node):
         if isinstance(node.pydl_block, Module):
             hdl_block = CombBlock(
                 stmts=[], dflts={'state_en': AssignValue(f'state_en', 0)})
         else:
             hdl_block = create_hdl_block(node.pydl_block)
+
         self.add_state_conditions(node, hdl_block)
-        for child in node.child:
-            add_to_list(hdl_block.stmts, self.visit(child))
-        return hdl_block
+
+        return self.visit_children(node, hdl_block)
 
     def visit_MutexCBlock(self, node):
         hdl_block = create_hdl_block(node.pydl_block)
-        for child in node.child:
-            add_to_list(hdl_block.stmts, self.visit(child))
-        return hdl_block
+        return self.visit_children(node, hdl_block)
 
     def _add_state_block(self, cblock, hdl_block, state_tr):
         state_tr.scope_exit_cond = find_exit_cond_by_scope(

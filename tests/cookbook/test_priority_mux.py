@@ -62,6 +62,6 @@ def test_diff_types(tmpdir, cosim_cls):
     sim(outdir=tmpdir)
 
 
-@formal_check()
+@formal_check(assumes=['s_eventually (din0_valid == 0)'])
 def test_uint():
     priority_mux(Intf(Uint[8]), Intf(Uint[8]))

@@ -13,6 +13,10 @@ def simple_cast(func):
 
 
 class SVExpressionVisitor:
+    def __init__(self):
+        self.merge_with = '.'
+        self.expr = svexpr
+
     def visit(self, node, cast_to=None):
         method = 'visit_' + node.__class__.__name__
         visitor = getattr(self, method, self.generic_visit)
@@ -27,20 +31,22 @@ class SVExpressionVisitor:
         return int(node.val)
 
     def visit_IntfValidExpr(self, node, cast_to):
-        return f'{node.name}.valid'
+        return f'{node.name}{self.merge_with}valid'
 
     def visit_IntfReadyExpr(self, node, cast_to):
         res = []
         if not isinstance(node.port, (list, tuple)):
-            return f'{node.name}.ready'
+            return f'{node.name}{self.merge_with}ready'
 
         for port in node.port:
             if port.context:
-                inst = svexpr(
-                    BinOpExpr((f'{port.name}.ready', port.context), '&&'))
+                inst = self.expr(
+                    BinOpExpr(
+                        (f'{port.name}{self.merge_with}ready', port.context),
+                        '&&'))
                 res.append(f'({inst})')
             else:
-                res.append(f'{port.name}.ready')
+                res.append(f'{port.name}{self.merge_with}ready')
         return ' || '.join(res)
 
     @simple_cast
@@ -52,7 +58,7 @@ class SVExpressionVisitor:
                     node.val.dtype[node.attr[0]]
                 except KeyError:
                     val.append('data')
-        return '.'.join(val + node.attr)
+        return self.merge_with.join(val + node.attr)
 
     def visit_CastExpr(self, node, cast_to):
         if typeof(node.dtype, Int) and typeof(node.operand.dtype, Uint):
@@ -119,9 +125,9 @@ class SVExpressionVisitor:
     def visit_IntfDef(self, node, cast_to):
         if node.context:
             if node.context == 'eot':
-                return f'&{node.name}_s.{node.context}'
+                return f'&{node.name}_s{self.merge_with}{node.context}'
 
-            return f'{node.name}.{node.context}'
+            return f'{node.name}{self.merge_with}{node.context}'
 
         return f'{node.name}_s'
 

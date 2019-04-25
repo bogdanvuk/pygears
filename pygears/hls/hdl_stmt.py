@@ -302,7 +302,7 @@ class IntfReadyVisitor(ReadyBase):
 class IntfValidVisitor(HDLStmtVisitor):
     def enter_Module(self, block, cond):
         return [
-            AssignValue(IntfReadyExpr(port), 0)
+            AssignValue(IntfValidExpr(port), 0)
             for port in self.hdl_data.in_intfs
         ]
 

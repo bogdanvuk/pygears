@@ -4,9 +4,7 @@ from functools import partial
 import pytest
 
 from pygears import Intf
-from pygears.cookbook.chop import chop
-from pygears.cookbook.delay import delay_rng
-from pygears.cookbook.verif import directed, verif
+from pygears.cookbook import chop, delay_rng, directed, verif
 from pygears.sim import sim
 from pygears.sim.extens.randomization import create_constraint, rand_seq
 from pygears.sim.extens.scvrand import SCVRand
@@ -14,7 +12,7 @@ from pygears.sim.extens.svrand import SVRandSocket
 from pygears.sim.modules.drv import drv
 from pygears.sim.modules.sim_socket import SimSocket
 from pygears.sim.modules.verilator import SimVerilated
-from pygears.typing import Queue, Uint
+from pygears.typing import Queue, Tuple, Uint
 from pygears.util.test_utils import formal_check, skip_ifndef
 
 t_din = Queue[Uint[16]]
@@ -25,7 +23,7 @@ def get_stim():
     cfg_seq = []
     din_seq = []
     cfg_num = random.randint(2, 10)
-    for i in range(cfg_num):
+    for _ in range(cfg_num):
         cfg_seq.append(random.randint(1, 10))
         din_seq.append(list(range(random.randint(1, 10))))
 
