@@ -4,8 +4,8 @@ from functools import singledispatch
 
 from pygears.typing import Array, Int, Integer, Uint, Unit, typeof
 
-from . import hls_blocks as blocks
 from . import hls_expressions as expr
+from . import pydl_types as blocks
 from .utils import (add_to_list, cast_return, eval_local_expression,
                     find_assign_target, find_data_expression,
                     find_name_expression, get_bin_expr, get_context_var,
@@ -24,17 +24,17 @@ def parse_ast(node, module_data):
             parse_ast(value, module_data)
 
 
-def parse_block(hdl_node, body, module_data):
+def parse_block(pydl_node, body, module_data):
     for stmt in body:
         res_stmt = parse_ast(stmt, module_data)
-        add_to_list(hdl_node.stmts, res_stmt)
+        add_to_list(pydl_node.stmts, res_stmt)
 
-    return hdl_node
+    return pydl_node
 
 
 @parse_ast.register(ast.AsyncFunctionDef)
 def parse_async_func(node, module_data):
-    hdl_node = blocks.Module(stmts=[])
+    pydl_node = blocks.Module(stmts=[])
 
     # initialization for register without explicit assign in code
     reg_names = list(module_data.regs.keys())
@@ -47,7 +47,7 @@ def parse_async_func(node, module_data):
         module_data.hdl_locals[name] = expr.RegDef(module_data.regs[name],
                                                    name)
 
-    return parse_block(hdl_node, node.body, module_data)
+    return parse_block(pydl_node, node.body, module_data)
 
 
 @parse_ast.register(ast.Expr)
@@ -82,13 +82,13 @@ def parse_while(node, module_data):
     multi = []
     if isinstance(test, expr.ResExpr) and test.val:
         multi = True
-    hdl_node = blocks.Loop(
+    pydl_node = blocks.Loop(
         _in_cond=test,
         stmts=[],
         _exit_cond=expr.create_oposite(test),
         multicycle=multi)
 
-    return parse_block(hdl_node, node.body, module_data)
+    return parse_block(pydl_node, node.body, module_data)
 
 
 def find_subscript_expression(node, module_data):
@@ -113,15 +113,15 @@ def parse_asyncfor(node, module_data):
 
     module_data.hdl_locals.update(scope)
 
-    hdl_node = blocks.IntfLoop(intf=loop_intf, stmts=[], multicycle=scope)
+    pydl_node = blocks.IntfLoop(intf=loop_intf, stmts=[], multicycle=scope)
 
     assign_stmts = find_subscript_expression(node.iter, module_data)
-    parse_block(hdl_node, node.body, module_data)
+    parse_block(pydl_node, node.body, module_data)
 
     if not assign_stmts:
-        return hdl_node
+        return pydl_node
 
-    return assign_stmts + [hdl_node]
+    return assign_stmts + [pydl_node]
 
 
 @parse_ast.register(ast.AsyncWith)
@@ -134,15 +134,15 @@ def parse_asyncwith(node, module_data):
 
     module_data.hdl_locals.update(scope)
 
-    hdl_node = blocks.IntfBlock(intf=block_intf, stmts=[])
+    pydl_node = blocks.IntfBlock(intf=block_intf, stmts=[])
 
     assign_stmts = find_subscript_expression(context_expr, module_data)
-    parse_block(hdl_node, node.body, module_data)
+    parse_block(pydl_node, node.body, module_data)
 
     if not assign_stmts:
-        return hdl_node
+        return pydl_node
 
-    return assign_stmts + [hdl_node]
+    return assign_stmts + [pydl_node]
 
 
 @parse_ast.register(ast.If)
@@ -153,28 +153,28 @@ def parse_if(node, module_data):
         body_stmts = []
         if bool(test_expr.val):
             for stmt in node.body:
-                hdl_stmt = parse_ast(stmt, module_data)
-                add_to_list(body_stmts, hdl_stmt)
+                pydl_stmt = parse_ast(stmt, module_data)
+                add_to_list(body_stmts, pydl_stmt)
         elif hasattr(node, 'orelse'):
             for stmt in node.orelse:
-                hdl_stmt = parse_ast(stmt, module_data)
-                add_to_list(body_stmts, hdl_stmt)
+                pydl_stmt = parse_ast(stmt, module_data)
+                add_to_list(body_stmts, pydl_stmt)
 
         if body_stmts:
             return body_stmts
 
         return None
     else:
-        hdl_node = blocks.IfBlock(_in_cond=test_expr, stmts=[])
-        parse_block(hdl_node, node.body, module_data)
+        pydl_node = blocks.IfBlock(_in_cond=test_expr, stmts=[])
+        parse_block(pydl_node, node.body, module_data)
         if hasattr(node, 'orelse') and node.orelse:
             else_expr = expr.create_oposite(test_expr)
-            hdl_node_else = blocks.IfBlock(_in_cond=else_expr, stmts=[])
-            parse_block(hdl_node_else, node.orelse, module_data)
-            top = blocks.ContainerBlock(stmts=[hdl_node, hdl_node_else])
+            pydl_node_else = blocks.IfBlock(_in_cond=else_expr, stmts=[])
+            parse_block(pydl_node_else, node.orelse, module_data)
+            top = blocks.ContainerBlock(stmts=[pydl_node, pydl_node_else])
             return top
 
-        return hdl_node
+        return pydl_node
 
 
 @parse_ast.register(ast.Assert)
@@ -280,12 +280,12 @@ def parse_subscript(node, module_data):
             port.context = expr.BinOpExpr((index, expr.ResExpr(i)), '==')
         return None
 
-    hdl_node = expr.SubscriptExpr(val_expr, index)
+    pydl_node = expr.SubscriptExpr(val_expr, index)
 
-    if hdl_node.dtype is Unit:
+    if pydl_node.dtype is Unit:
         return expr.ResExpr(Unit())
 
-    return hdl_node
+    return pydl_node
 
 
 @parse_ast.register(ast.Tuple)

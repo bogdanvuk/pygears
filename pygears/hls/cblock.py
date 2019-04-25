@@ -1,6 +1,6 @@
 from .hdl_stmt import CombBlock
-from .hls_blocks import Block
 from .inst_visit import InstanceVisitor
+from .pydl_types import Block
 from .utils import add_to_list, state_expr
 
 
@@ -22,7 +22,7 @@ class CBlockVisitor(InstanceVisitor):
             hdl_block.in_cond = state_expr(current_ids, hdl_block.in_cond)
 
     def enter_block(self, block, state):
-        hdl_block = self.ping_hdl(block.hdl_block, block.conditions['block'])
+        hdl_block = self.ping_hdl(block.pydl_block, block.conditions['block'])
         if state:
             self.add_state_conditions(block, hdl_block)
         return hdl_block
@@ -91,7 +91,7 @@ class CBlockVisitor(InstanceVisitor):
     def visit_Leaf(self, node):
         hdl_block = []
         cond = node.conditions['leaf']
-        for block in node.hdl_blocks:
+        for block in node.pydl_blocks:
             curr_block = self.ping_hdl(block, cond)
             self._add_sub(block, curr_block, cond)
             add_to_list(hdl_block, curr_block)
@@ -114,19 +114,19 @@ class CBlockPrinter(InstanceVisitor):
     def write_line(self, line):
         print(f'{" "*self.indent}{line}')
 
-    def get_hdl(self, node):
-        if hasattr(node, 'hdl_blocks'):
-            hdl = []
-            for block in node.hdl_blocks:
-                hdl.append(block.__class__.__name__)
-            return hdl
+    def get_pydl(self, node):
+        if hasattr(node, 'pydl_blocks'):
+            pydl = []
+            for block in node.pydl_blocks:
+                pydl.append(block.__class__.__name__)
+            return pydl
 
-        return node.hdl_block.__class__.__name__
+        return node.pydl_block.__class__.__name__
 
     def generic_visit(self, node):
         if hasattr(node, 'child'):
             self.write_line(
-                f'{node.__class__.__name__}: states: {node.state_ids}, ({self.get_hdl(node)})'
+                f'{node.__class__.__name__}: states: {node.state_ids}, ({self.get_pydl(node)})'
             )
             self.enter_block()
             for child in node.child:
@@ -134,7 +134,7 @@ class CBlockPrinter(InstanceVisitor):
             self.exit_block()
         else:
             self.write_line(
-                f'Leaf: state {node.state_id}, {self.get_hdl(node)}')
+                f'Leaf: state {node.state_id}, {self.get_pydl(node)}')
 
 
 def pprint(node):

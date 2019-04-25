@@ -3,7 +3,7 @@ from functools import partial, reduce
 from string import Template
 
 from . import hls_expressions as expr
-from .hls_blocks import IfBlock, Module
+from .pydl_types import IfBlock, Module
 
 COND_NAME = Template('${cond_type}_cond_block_${block_id}')
 COMBINED_COND_NAME = Template('combined_cond_${cond_id}')

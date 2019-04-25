@@ -1,9 +1,9 @@
 import ast
 
 from .ast_parse import parse_ast
-from .hls_blocks import IntfBlock
 from .hls_expressions import (ConcatExpr, Expr, IntfDef, IntfStmt, RegDef,
                               RegNextStmt, ResExpr, VariableDef, VariableStmt)
+from .pydl_types import IntfBlock
 from .utils import (VisitError, add_to_list, find_assign_target,
                     find_data_expression, interface_operations)
 

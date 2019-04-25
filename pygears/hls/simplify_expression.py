@@ -5,7 +5,7 @@ import sympy
 from pygears.typing import Bool
 
 from .conditions_utils import COND_NAME, cond_name_match_by_type
-from .hdl_stmt_types import AssignValue, CombSeparateStmts
+from .hdl_types import AssignValue, CombSeparateStmts
 from .hls_expressions import (BOOLEAN_OPERATORS, ResExpr, UnaryOpExpr,
                               binary_expr)
 from .inst_visit import InstanceVisitor, TypeVisitor

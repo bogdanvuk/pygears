@@ -7,7 +7,7 @@ from pygears.conf import register_custom_log, registry
 from pygears.typing import Int, Queue, Tuple, Uint, is_type, typeof
 
 from . import hls_expressions as expr
-from .hls_blocks import Block, IfBlock, Yield
+from .pydl_types import Block, IfBlock, Yield
 
 ASYNC_TYPES = (Yield, )
 INTF_METHODS = ('get_nb', 'get', 'put', 'put_nb')

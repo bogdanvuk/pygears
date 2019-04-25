@@ -2,9 +2,9 @@ from dataclasses import dataclass
 
 from .conditions_utils import add_cond
 from .hdl_stmt import find_in_cond, update_hdl_block
-from .hdl_stmt_types import AssignValue, CombBlock, HDLBlock
-from .hls_blocks import Module
+from .hdl_types import AssignValue, CombBlock, HDLBlock
 from .inst_visit import InstanceVisitor
+from .pydl_types import Module
 from .scheduling_types import MutexCBlock
 from .utils import add_to_list, state_expr
 
@@ -142,18 +142,18 @@ class HdlStmtStateTransition(InstanceVisitor):
         pass
 
     def visit_SeqCBlock(self, node):
-        if isinstance(node.hdl_block, Module):
+        if isinstance(node.pydl_block, Module):
             hdl_block = CombBlock(
                 stmts=[], dflts={'state_en': AssignValue(f'state_en', 0)})
         else:
-            hdl_block = create_hdl_block(node.hdl_block)
+            hdl_block = create_hdl_block(node.pydl_block)
         self.add_state_conditions(node, hdl_block)
         for child in node.child:
             add_to_list(hdl_block.stmts, self.visit(child))
         return hdl_block
 
     def visit_MutexCBlock(self, node):
-        hdl_block = create_hdl_block(node.hdl_block)
+        hdl_block = create_hdl_block(node.pydl_block)
         for child in node.child:
             add_to_list(hdl_block.stmts, self.visit(child))
         return hdl_block
@@ -161,7 +161,7 @@ class HdlStmtStateTransition(InstanceVisitor):
     def _add_state_block(self, cblock, hdl_block, state_tr):
         state_tr.scope_exit_cond = find_exit_cond_by_scope(
             cblock, state_tr.scope)
-        state_copy_block = create_state_hdl_block(cblock.hdl_block, state_tr)
+        state_copy_block = create_state_hdl_block(cblock.pydl_block, state_tr)
         state_copy_block.in_cond = None  # already in hdl_block
         add_to_list(hdl_block.stmts, state_copy_block)
 

@@ -1,9 +1,9 @@
 from .conditions_evaluate import ConditionsEval
 from .conditions_utils import (COMBINED_COND_NAME, COND_NAME, UsedConditions,
                                add_cond, add_cond_expr_operands, find_rst_cond)
-from .hdl_stmt_types import AssignValue, CombSeparateStmts
-from .hls_blocks import Block, Module
+from .hdl_types import AssignValue, CombSeparateStmts
 from .inst_visit import InstanceVisitor
+from .pydl_types import Block, Module
 from .utils import state_expr
 
 
@@ -31,22 +31,22 @@ class AssignConditions(InstanceVisitor):
         if stmt not in self.condition_assigns.stmts:
             self.condition_assigns.stmts.append(stmt)
 
-    def _get_cond_by_type(self, cond_type, cnode, hdl_block):
+    def _get_cond_by_type(self, cond_type, cnode, pydl_block):
         all_conds = getattr(UsedConditions, f'{cond_type}_conds')
-        if hdl_block.id in all_conds:
+        if pydl_block.id in all_conds:
             func = getattr(self.cond_eval, f'{cond_type}_cond')
-            curr_cond = func(hdl_block, cnode)
+            curr_cond = func(pydl_block, cnode)
             add_cond_expr_operands(curr_cond)
             if curr_cond is None:
                 curr_cond = 1
             res = AssignValue(
                 target=COND_NAME.substitute(
-                    cond_type=cond_type, block_id=hdl_block.id),
+                    cond_type=cond_type, block_id=pydl_block.id),
                 val=curr_cond)
             self._add_stmt(res)
 
     def _get_rst_cond(self, cnode):
-        curr_cond = find_rst_cond(cnode.hdl_block)
+        curr_cond = find_rst_cond(cnode.pydl_block)
 
         if curr_cond is None:
             curr_cond = 1
@@ -62,19 +62,19 @@ class AssignConditions(InstanceVisitor):
         else:
             add_cond_expr_operands(curr_cond)
 
-    def _get_hdl_stmt(self, cnode, block):
-        if isinstance(block, Module) and self.has_registers:
+    def _get_hdl_stmt(self, cnode, pydl_block):
+        if isinstance(pydl_block, Module) and self.has_registers:
             self._get_rst_cond(cnode)
 
-        if isinstance(block, Block):
+        if isinstance(pydl_block, Block):
             for cond_t in self.cond_types:
-                self._get_cond_by_type(cond_t, cnode, block)
+                self._get_cond_by_type(cond_t, cnode, pydl_block)
 
-    def visit_sub(self, cnode, hdl_block):
-        if isinstance(hdl_block, Block):
-            self._get_hdl_stmt(cnode, hdl_block)
+    def visit_sub(self, cnode, pydl_block):
+        if isinstance(pydl_block, Block):
+            self._get_hdl_stmt(cnode, pydl_block)
 
-            for stmt in hdl_block.stmts:
+            for stmt in pydl_block.stmts:
                 self.visit_sub(cnode, stmt)
 
     def visit_block(self, node):
@@ -82,7 +82,7 @@ class AssignConditions(InstanceVisitor):
             for block in node.prolog:
                 self.visit_sub(node.parent, block)
 
-        self._get_hdl_stmt(node, node.hdl_block)
+        self._get_hdl_stmt(node, node.pydl_block)
 
         for child in node.child:
             self.visit(child)
@@ -98,5 +98,5 @@ class AssignConditions(InstanceVisitor):
         return self.visit_block(node)
 
     def visit_Leaf(self, node):
-        for hdl_block in node.hdl_blocks:
-            self.visit_sub(node.parent, hdl_block)
+        for pydl_block in node.pydl_blocks:
+            self.visit_sub(node.parent, pydl_block)

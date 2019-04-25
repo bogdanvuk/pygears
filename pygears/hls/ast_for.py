@@ -6,9 +6,9 @@ from pygears.util.utils import qrange
 from .ast_modifications import unroll_statements
 from .ast_parse import parse_ast, parse_block
 from .compile_snippets import enumerate_impl, qrange_mux_impl
-from .hls_blocks import ContainerBlock, Loop
 from .hls_expressions import (BinOpExpr, OperandVal, RegDef, ResExpr,
                               VariableDef, VariableStmt)
+from .pydl_types import ContainerBlock, Loop
 from .utils import (VisitError, add_to_list, find_data_expression,
                     find_for_target)
 

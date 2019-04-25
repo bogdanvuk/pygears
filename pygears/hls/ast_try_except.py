@@ -1,8 +1,8 @@
 import ast
 
 from .ast_parse import parse_ast, parse_block
-from .hls_blocks import ContainerBlock, IfBlock, IntfBlock
 from .hls_expressions import IntfDef, create_oposite
+from .pydl_types import ContainerBlock, IfBlock, IntfBlock
 from .utils import VisitError, interface_operations
 
 # 1st key: exception type

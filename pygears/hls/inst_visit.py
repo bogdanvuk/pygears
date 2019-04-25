@@ -1,7 +1,7 @@
 import inspect
 
-from .hls_blocks import Block
 from .hls_expressions import Expr
+from .pydl_types import Block
 from .utils import VisitError
 
 

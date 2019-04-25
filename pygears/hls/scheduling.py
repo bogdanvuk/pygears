@@ -5,7 +5,7 @@ from .utils import VisitError, find_hier_blocks
 
 def non_state_block(block):
     return (isinstance(block, MutexCBlock)
-            and (not find_hier_blocks(block.hdl_block.stmts)))
+            and (not find_hier_blocks(block.pydl_block.stmts)))
 
 
 def add_prolog(child, stmts):
@@ -43,7 +43,7 @@ class Scheduler(TypeVisitor):
             if (child is None) or non_state_block(child):
                 if leaf_found:
                     if isinstance(leaf_found, Leaf):
-                        leaf_found.hdl_blocks.append(stmt)
+                        leaf_found.pydl_blocks.append(stmt)
                     else:
                         if leaf_found.epilog:
                             leaf_found.epilog.append(stmt)
@@ -58,7 +58,7 @@ class Scheduler(TypeVisitor):
                 else:
                     if free_stmts:
                         if isinstance(child, Leaf):
-                            child.hdl_blocks = free_stmts + child.hdl_blocks
+                            child.pydl_blocks = free_stmts + child.pydl_blocks
                         else:
                             add_prolog(child, free_stmts)
                             free_stmts = []
@@ -71,34 +71,35 @@ class Scheduler(TypeVisitor):
         else:
             if (not cnode.child) and free_stmts:
                 cnode.child.append(
-                    Leaf(parent=self.scope[-1], hdl_blocks=free_stmts))
+                    Leaf(parent=self.scope[-1], pydl_blocks=free_stmts))
 
         self.exit_block()
 
         return cnode
 
     def visit_Module(self, node):
-        cblock = SeqCBlock(parent=None, hdl_block=node, child=[])
+        cblock = SeqCBlock(parent=None, pydl_block=node, child=[])
         return self.visit_block(cblock, node.stmts)
 
     def visit_IntfBlock(self, node):
-        cblock = SeqCBlock(parent=self.scope[-1], hdl_block=node, child=[])
+        cblock = SeqCBlock(parent=self.scope[-1], pydl_block=node, child=[])
         return self.visit_block(cblock, node.stmts)
 
     def visit_IntfLoop(self, node):
-        cblock = SeqCBlock(parent=self.scope[-1], hdl_block=node, child=[])
+        cblock = SeqCBlock(parent=self.scope[-1], pydl_block=node, child=[])
         return self.visit_block(cblock, node.stmts)
 
     def visit_IfBlock(self, node):
-        cblock = MutexCBlock(parent=self.scope[-1], hdl_block=node, child=[])
+        cblock = MutexCBlock(parent=self.scope[-1], pydl_block=node, child=[])
         hier = find_hier_blocks(node.stmts)
         if len(hier) > 1:
-            cblock = SeqCBlock(parent=self.scope[-1], hdl_block=node, child=[])
+            cblock = SeqCBlock(
+                parent=self.scope[-1], pydl_block=node, child=[])
 
         return self.visit_block(cblock, node.stmts)
 
     def visit_ContainerBlock(self, node):
-        cblock = MutexCBlock(parent=self.scope[-1], hdl_block=node, child=[])
+        cblock = MutexCBlock(parent=self.scope[-1], pydl_block=node, child=[])
         free_stmts = []
         for stmt in node.stmts:
             child = self.visit(stmt)
@@ -121,14 +122,15 @@ class Scheduler(TypeVisitor):
     def visit_Loop(self, node):
         hier = find_hier_blocks(node.stmts)
         if hier:
-            cblock = SeqCBlock(parent=self.scope[-1], hdl_block=node, child=[])
+            cblock = SeqCBlock(
+                parent=self.scope[-1], pydl_block=node, child=[])
             return self.visit_block(cblock, node.stmts)
 
         raise VisitError("If loop isn't blocking stmts should be merged")
 
     def visit_Yield(self, node):
-        cblock = SeqCBlock(parent=self.scope[-1], hdl_block=node, child=[])
-        cblock.child.append(Leaf(parent=cblock, hdl_blocks=node.stmts))
+        cblock = SeqCBlock(parent=self.scope[-1], pydl_block=node, child=[])
+        cblock.child.append(Leaf(parent=cblock, pydl_blocks=node.stmts))
         return cblock
 
     def visit_all_Expr(self, node):

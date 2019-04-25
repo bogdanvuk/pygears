@@ -1,8 +1,8 @@
 from .conditions_utils import add_cond, add_in_cond, nested_in_cond
-from .hdl_stmt_types import AssertValue, AssignValue, CombBlock, HDLBlock
-from .hls_blocks import Block
+from .hdl_types import AssertValue, AssignValue, CombBlock, HDLBlock
 from .hls_expressions import (Expr, IntfReadyExpr, IntfValidExpr, OperandVal,
                               RegDef, ResExpr, SubscriptExpr, VariableDef)
+from .pydl_types import Block
 from .utils import VisitError, add_to_list
 
 CONTROL_SUFFIX = ['_en']

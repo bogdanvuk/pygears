@@ -1,8 +1,8 @@
 from functools import partial
 
-from .hls_blocks import Block, ContainerBlock, IfBlock
 from .hls_expressions import OperandVal, RegNextStmt, UnaryOpExpr
 from .inst_visit import InstanceVisitor, TypeVisitor
+from .pydl_types import Block, ContainerBlock, IfBlock
 from .scheduling_types import MutexCBlock
 
 
@@ -113,7 +113,7 @@ class StateFinder(InstanceVisitor):
             switch = self.context.find_context(block, node.prolog[:i])
             self.switch_context(switch, node.prolog[:i])
 
-        switch = self.context.find_context(node.hdl_block, node.prolog)
+        switch = self.context.find_context(node.pydl_block, node.prolog)
         self.switch_context(switch, node.prolog)
 
     def visit_SeqCBlock(self, node):
@@ -145,9 +145,9 @@ class StateFinder(InstanceVisitor):
 
     def visit_Leaf(self, node):
         node.state_id = self.state[-1]
-        for i, block in enumerate(node.hdl_blocks):
-            switch = self.context.find_context(block, node.hdl_blocks[:i])
-            self.switch_context(switch, node.hdl_blocks[:i])
+        for i, block in enumerate(node.pydl_blocks):
+            switch = self.context.find_context(block, node.pydl_blocks[:i])
+            self.switch_context(switch, node.pydl_blocks[:i])
 
     def switch_node(self, path, node, new):
         if len(path) == 1:
@@ -180,7 +180,7 @@ class BlockId(InstanceVisitor):
                 self.set_stmts_ids(stmt.stmts)
 
     def visit_cblock(self, node):
-        self.set_block_id(node.hdl_block)
+        self.set_block_id(node.pydl_block)
 
         if node.prolog:
             self.set_stmts_ids(node.prolog)
@@ -198,4 +198,4 @@ class BlockId(InstanceVisitor):
         self.visit_cblock(node)
 
     def visit_Leaf(self, node):
-        self.set_stmts_ids(node.hdl_blocks)
+        self.set_stmts_ids(node.pydl_blocks)

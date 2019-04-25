@@ -3,8 +3,8 @@ from enum import IntEnum
 
 from .conditions_utils import (combine_conditions, find_exit_cond,
                                nested_cycle_cond, nested_exit_cond)
-from .hls_blocks import ContainerBlock, Module
 from .inst_visit import InstanceVisitor
+from .pydl_types import ContainerBlock, Module
 from .utils import state_expr
 
 
@@ -22,7 +22,7 @@ class BlockType(IntEnum):
 
 
 def create_state_cycle_cond(child):
-    child_cond = nested_cycle_cond(child.hdl_block)
+    child_cond = nested_cycle_cond(child.pydl_block)
     return state_expr(child.state_ids, child_cond)
 
 
@@ -91,7 +91,7 @@ class ConditionsFinder(InstanceVisitor):
             if block_type != BlockType.block and len(c_block.state_ids) > 1:
                 return self._state_depend_cycle_cond(block_type)
 
-            block = c_block.hdl_block
+            block = c_block.pydl_block
             if isinstance(block, ContainerBlock):
                 continue
 
@@ -105,14 +105,14 @@ class ConditionsFinder(InstanceVisitor):
         return combine_conditions(cond)
 
     def get_exit_cond(self):
-        return nested_exit_cond(self.scope[-1].hdl_block)
+        return nested_exit_cond(self.scope[-1].pydl_block)
 
     def get_rst_cond(self):
         if len(self.scope) == 1:
-            assert isinstance(self.scope[0].hdl_block, Module)
-            block = self.scope[0].hdl_block.stmts
+            assert isinstance(self.scope[0].pydl_block, Module)
+            block = self.scope[0].pydl_block.stmts
         else:
-            block = [s.hdl_block for s in self.scope[1:]]
+            block = [s.pydl_block for s in self.scope[1:]]
         return find_exit_cond(block, search_in_cond=True)
 
     def _state_depend_cycle_cond(self, block_type):
