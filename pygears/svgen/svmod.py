@@ -68,12 +68,12 @@ class SVModuleGen:
     @functools.lru_cache()
     def traced(self):
         self_traced = any(
-            fnmatch.fnmatch(self.node.gear.name, p)
+            fnmatch.fnmatch(self.node.name, p)
             for p in registry('svgen/debug_intfs'))
 
         if self.is_hierarchical:
-            children_traced = any(
-                self.svgen_map[child].traced for child in self.node.child)
+            children_traced = any(self.svgen_map[child].traced
+                                  for child in self.node.child)
         else:
             children_traced = False
 
@@ -93,7 +93,9 @@ class SVModuleGen:
 
     @property
     def sv_module_name(self):
-        if self.is_hierarchical:
+        if self.hier_sv_path_name == '':
+            return "top"
+        elif self.is_hierarchical:
             # if there is a module with the same name as this hierarchical
             # module, append "_hier" to disambiguate
             if find_in_dirs(self.hier_sv_path_name + '.sv',
@@ -159,12 +161,14 @@ class SVModuleGen:
 
     def sv_port_configs(self):
         for p in self.node.in_ports:
-            yield self.get_sv_port_config(
-                'consumer', type_=p.dtype, name=p.basename)
+            yield self.get_sv_port_config('consumer',
+                                          type_=p.dtype,
+                                          name=p.basename)
 
         for p in self.node.out_ports:
-            yield self.get_sv_port_config(
-                'producer', type_=p.dtype, name=p.basename)
+            yield self.get_sv_port_config('producer',
+                                          type_=p.dtype,
+                                          name=p.basename)
 
     def get_sv_port_config(self, modport, type_, name):
         return {
@@ -301,14 +305,7 @@ class SVModuleGen:
         return template_env.snippets.module_inst(**context)
 
 
-class SVTopGen(SVModuleGen):
-    @property
-    def sv_module_name(self):
-        return "top"
-
-
 class SVGenSVModPlugin(SVGenInstPlugin):
     @classmethod
     def bind(cls):
         safe_bind('svgen/module_namespace/Gear', SVModuleGen)
-        safe_bind('svgen/module_namespace/RTLNodeDesign', SVTopGen)

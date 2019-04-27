@@ -1,3 +1,4 @@
+import inspect
 import logging
 import os
 
@@ -13,6 +14,21 @@ class SVGenInstVisitor(HierVisitorBase):
     def __init__(self):
         self.namespace = registry('svgen/module_namespace')
         self.svgen_map = registry('svgen/map')
+
+    def RTLGear(self, node):
+        if 'svgen' not in node.params:
+            node.params['svgen'] = {}
+
+        if 'svgen_cls' not in node.params['svgen']:
+            svgen_cls = self.namespace.get(node.gear.definition, None)
+
+            if svgen_cls is None:
+                for base_class in inspect.getmro(node.gear.__class__):
+                    if base_class.__name__ in self.namespace:
+                        svgen_cls = self.namespace[base_class.__name__]
+                        break
+
+            node.params['svgen']['svgen_cls'] = svgen_cls
 
     def RTLNode(self, node):
         svgen_cls = node.params['svgen']['svgen_cls']

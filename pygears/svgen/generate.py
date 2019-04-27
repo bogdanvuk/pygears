@@ -1,11 +1,10 @@
 import importlib
-from pygears.core.hier_node import HierVisitorBase, HierYielderBase
+from pygears.core.hier_node import HierYielderBase
 import os
 import jinja2
 from pygears.util.fileio import save_file
 from pygears import registry
 from pygears.svgen.util import svgen_typedef
-from pygears.rtl.inst import RTLNodeDesign
 from pygears.typing import bitw
 
 

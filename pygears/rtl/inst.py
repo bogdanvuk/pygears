@@ -1,45 +1,44 @@
-from pygears import PluginBase, registry, safe_bind
-from pygears.core.hier_node import HierVisitorBase, NamedHierNode, HierNode
-from pygears.rtl.gear import RTLGearNodeGen, RTLNode
+from pygears import registry, safe_bind
+from pygears.core.hier_node import HierVisitorBase
+from pygears.rtl.gear import RTLGear
 import inspect
 from pygears.core.gear import GearPlugin
 from pygears.conf import reg_inject, Inject
 
 
-class RTLNodeDesign(RTLNode):
-    def __init__(self):
-        super().__init__(None, '')
-
-
-class RTLNodeGearRoot(RTLGearNodeGen):
-    @reg_inject
-    def __init__(self, module, rtl_map=Inject('rtl/gear_node_map')):
-        HierNode.__init__(self)
-        self.node = RTLNodeDesign()
-        # self.gear = GearHierRoot(module)
-        self.gear = module
-        rtl_map[module] = self.node
-
-        namespace = registry('svgen/module_namespace')
-        self.node.params['svgen'] = {'svgen_cls': namespace['RTLNodeDesign']}
-        self.module = module
-
-        for p in self.gear.in_ports:
-            self.node.add_in_port(p.basename, p.producer, p.consumer, p.dtype)
-
-        for p in self.gear.out_ports:
-            self.node.add_out_port(p.basename, p.producer, p.consumer, p.dtype)
-
-
 class RTLNodeInstVisitor(HierVisitorBase):
-    def __init__(self):
+    @reg_inject
+    def __init__(self,
+                 namespace=Inject('rtl/namespace/gear_gen'),
+                 rtl_map=Inject('rtl/gear_node_map')):
+
         self.cur_hier = None
         self.design = None
-        self.namespace = registry('rtl/namespace/gear_gen')
+        self.namespace = namespace
+        self.rtl_map = rtl_map
+
+    def Gear(self, module):
+        if module in self.rtl_map:
+            self.cur_hier.add_child(module)
+            return True
+
+        node = self.instantiate(module)
+        self.rtl_map[module] = node
+
+        if self.cur_hier is None:
+            self.design = node
+
+        if node:
+            self.cur_hier = node
+            super().HierNode(module)
+            self.cur_hier = self.cur_hier.parent
+
+        return True
 
     def GearHierRoot(self, module):
-        self.design = RTLNodeGearRoot(module)
+        self.design = self.instantiate(module)
         self.cur_hier = self.design
+        self.rtl_map[module] = self.design
 
     def instantiate(self, module):
         svgen = module.params.get('svgen')
@@ -59,30 +58,18 @@ class RTLNodeInstVisitor(HierVisitorBase):
                         node_cls = self.namespace[base_class.__name__]
                         break
 
-        if node_cls:
-            svgen_inst = node_cls(module, parent=self.cur_hier)
-        else:
-            svgen_inst = None
+        if not node_cls:
+            return None
 
-        if self.cur_hier is None:
-            self.design = svgen_inst
+        node = node_cls(module, parent=self.cur_hier)
 
-        return svgen_inst
+        for p in module.in_ports:
+            node.add_in_port(p.basename, p.producer, p.consumer, p.dtype)
 
-    @reg_inject
-    def Gear(self, module, rtl_map=Inject('rtl/gear_node_map')):
-        if module in rtl_map:
-            RTLGearNodeGen(rtl_map[module], self.cur_hier)
-            return True
+        for p in module.out_ports:
+            node.add_out_port(p.basename, p.producer, p.consumer, p.dtype)
 
-        inst = self.instantiate(module)
-
-        if inst:
-            self.cur_hier = inst
-            super().HierNode(module)
-            self.cur_hier = self.cur_hier.parent
-
-        return True
+        return node
 
 
 def rtl_inst(top, conf):
@@ -95,6 +82,9 @@ def rtl_inst(top, conf):
 class RTLNodeInstPlugin(GearPlugin):
     @classmethod
     def bind(cls):
-        safe_bind('rtl/namespace/gear_gen', {'Gear': RTLGearNodeGen})
+        safe_bind('rtl/namespace/gear_gen', {
+            'Gear': RTLGear,
+            'GearHierRoot': RTLGear
+        })
         safe_bind('rtl/gear_node_map', {})
         registry('gear/params/extra')['svgen'] = None
