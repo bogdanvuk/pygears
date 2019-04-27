@@ -43,6 +43,16 @@ class GearHierRoot(NamedHierNode):
         super().__init__(name)
         self.in_ports = []
         self.out_ports = []
+        self.params = {}
+        self.func = None
+        self.const_args = []
+        self.args = []
+        self.trace = None
+
+        def __main():
+            pass
+
+        self.definition = __main
 
 
 class Gear(NamedHierNode):
@@ -76,9 +86,8 @@ class Gear(NamedHierNode):
             if out_intfs and hasattr(out_intfs[i], 'var_name'):
                 self.outnames.append(out_intfs[i].var_name)
             else:
-                self.outnames.append(
-                    dflt_dout_name if len(out_dtypes) ==
-                    1 else f'{dflt_dout_name}{i}')
+                self.outnames.append(dflt_dout_name if len(out_dtypes) ==
+                                     1 else f'{dflt_dout_name}{i}')
 
         self.out_ports = [
             OutPort(self, i, name) for i, name in enumerate(self.outnames)
@@ -97,8 +106,8 @@ class Gear(NamedHierNode):
 
     @property
     def hierarchical(self):
-        is_async_gen = bool(
-            self.func.__code__.co_flags & inspect.CO_ASYNC_GENERATOR)
+        is_async_gen = bool(self.func.__code__.co_flags
+                            & inspect.CO_ASYNC_GENERATOR)
         return not (inspect.iscoroutinefunction(self.func)
                     or inspect.isgeneratorfunction(self.func) or is_async_gen)
 
