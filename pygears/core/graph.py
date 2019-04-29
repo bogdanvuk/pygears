@@ -1,4 +1,4 @@
-from pygears.conf import registry, safe_bind, PluginBase, Inject, reg_inject
+from pygears.conf import registry, safe_bind, PluginBase, Inject, inject
 from pygears.core.port import InPort, OutPort, Port
 
 
@@ -20,6 +20,68 @@ def _get_consumer_tree_rec(root_intf, cur_intf, consumers, end_producer):
                 end_producer[port] = (root_intf, start)
 
         end_producer[port.consumer] = end_producer[port]
+
+
+def hier_dfs(root):
+    yield root
+    for c in root.child:
+        yield from hier_dfs(c)
+
+
+from pygears.core.hier_node import HierNode
+
+
+@inject
+def rtl_from_gear_port(gear_port, rtl_map=Inject('rtl/gear_node_map')):
+    node = rtl_map.get(gear_port.gear, None)
+    rtl_port = None
+    if node:
+        if isinstance(gear_port, InPort):
+            port_group = node.in_ports
+        else:
+            port_group = node.out_ports
+
+        rtl_port = port_group[gear_port.index]
+
+    return rtl_port
+
+
+def closest_rtl_from_gear_port(gear_port):
+    rtl_port = None
+
+    while not rtl_port and gear_port:
+        rtl_port = rtl_from_gear_port(gear_port)
+        if not rtl_port:
+            if isinstance(gear_port, InPort):
+                gear_port = gear_port.producer.producer
+            else:
+                gear_port = gear_port.consumer.consumers[0]
+
+    return rtl_port
+
+
+def _interface_tree_rec(node):
+    for c in node.intf.consumers:
+        child = HierNode(node)
+        child.port = c
+        child.intf = c.consumer
+        _interface_tree_rec(child)
+
+
+def interface_tree(intf):
+    root_intf = intf
+
+    while root_intf.producer is not None:
+        root_intf = root_intf.producer.producer
+
+    tree = HierNode()
+    tree.intf = root_intf
+    tree.port = root_intf.producer
+    _interface_tree_rec(tree)
+
+    for node in hier_dfs(tree):
+        if node.intf is intf:
+            return node
 
 
 def get_consumer_tree(intf):

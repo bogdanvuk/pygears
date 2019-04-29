@@ -6,7 +6,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from http.client import HTTPConnection
 from functools import partial
 from traceback import extract_tb, format_list
-from pygears.conf import reg_inject, Inject
+from pygears.conf import inject, Inject
 
 
 def finish():
@@ -134,7 +134,7 @@ def restart_wave(sim, outdir, address):
                 pass
 
 
-@reg_inject
+@inject
 def activity_wave(top,
                   sim=Inject('sim/simulator'),
                   outdir=Inject('sim/artifacts_dir')):

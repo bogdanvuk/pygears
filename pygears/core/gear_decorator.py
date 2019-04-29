@@ -2,7 +2,7 @@ import copy
 import functools
 import inspect
 
-from pygears.conf import Inject, reg_inject, registry, PluginBase, safe_bind
+from pygears.conf import Inject, inject, registry, PluginBase, safe_bind
 
 from .funcutils import FunctionMaker
 from .partial import Partial
@@ -25,7 +25,7 @@ def alternative(*base_gear_defs):
     return gear_decorator
 
 
-@reg_inject
+@inject
 def find_invocation(func, extra_params=Inject('gear/params/extra')):
     invocation = []
     sig = inspect.signature(func)

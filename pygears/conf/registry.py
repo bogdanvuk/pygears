@@ -56,7 +56,7 @@ def inject_async(func):
     return func
 
 
-def reg_inject(func):
+def inject(func):
     return intercept_arguments(
         func, cb_named=get_args_from_registry, cb_kwds=get_args_from_registry)
 

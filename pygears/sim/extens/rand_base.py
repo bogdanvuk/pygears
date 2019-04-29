@@ -2,11 +2,11 @@ from pygears import bind
 from pygears.sim import sim_log
 from pygears.sim.extens.sim_extend import SimExtend
 from pygears.typing import Queue
-from pygears.conf import reg_inject, Inject
+from pygears.conf import inject, Inject
 
 
 class RandBase(SimExtend):
-    @reg_inject
+    @inject
     def __init__(self, top, cons, outdir=Inject('sim/artifacts_dir'), **kwds):
         super().__init__()
         self.outdir = outdir

@@ -1,10 +1,10 @@
 import atexit
 
-from pygears.conf import reg_inject, Inject
+from pygears.conf import inject, Inject
 
 
 class SimExtend:
-    @reg_inject
+    @inject
     def __init__(self, top=None, sim=Inject('sim/simulator')):
         self.sim = sim
         for name, event in self.sim.events.items():

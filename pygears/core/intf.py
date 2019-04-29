@@ -8,7 +8,7 @@ from pygears.core.sim_event import SimEvent
 from .type_match import TypeMatchError
 from pygears.typing import typeof, Any
 from pygears.typing.base import TypingMeta
-from pygears.conf import reg_inject, Inject
+from pygears.conf import inject, Inject
 
 
 def operator_func_from_namespace(cls, name):

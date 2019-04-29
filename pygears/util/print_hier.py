@@ -2,7 +2,7 @@ import pprint
 from pygears import registry
 from pygears.core.hier_node import HierVisitorBase
 import textwrap
-from pygears.conf import util_log, reg_inject, Inject
+from pygears.conf import util_log, inject, Inject
 
 
 def module_signature(module, fullname, params):
@@ -78,7 +78,7 @@ class Visitor(HierVisitorBase):
             # self.res.append(f'{self.indent}    {p}')
 
 
-@reg_inject
+@inject
 def print_hier(root=Inject('gear/hier_root'), params=False, fullname=False):
     v = Visitor(params, fullname)
     v.visit(root)

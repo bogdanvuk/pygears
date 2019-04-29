@@ -12,7 +12,7 @@ from pygears.definitions import ROOT_DIR
 
 from .log import register_custom_log, CustomLogger, LogPlugin, core_log
 from .pdb_patch import patch_pdb, unpatch_pdb
-from .registry import (Inject, PluginBase, RegistryHook, config, reg_inject,
+from .registry import (Inject, PluginBase, RegistryHook, config, inject,
                        registry, bind, safe_bind)
 
 
@@ -86,7 +86,7 @@ def parse_trace(s):
         return s
 
 
-@reg_inject
+@inject
 def register_issue(err_cls, err, issues=Inject('trace/issues')):
     tr_exc = TracebackException(err_cls, err, None)
     issue_id = len(issues)
@@ -154,7 +154,7 @@ def pygears_excepthook(exception_type,
             register_issue(exception_type, exception))
 
 
-@reg_inject
+@inject
 def stack_trace(name,
                 verbosity,
                 message,

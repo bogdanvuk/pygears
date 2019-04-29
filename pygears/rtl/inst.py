@@ -3,11 +3,11 @@ from pygears.core.hier_node import HierVisitorBase
 from pygears.rtl.gear import RTLGear
 import inspect
 from pygears.core.gear import GearPlugin
-from pygears.conf import reg_inject, Inject
+from pygears.conf import inject, Inject
 
 
 class RTLNodeInstVisitor(HierVisitorBase):
-    @reg_inject
+    @inject
     def __init__(self,
                  namespace=Inject('rtl/namespace/gear_gen'),
                  rtl_map=Inject('rtl/gear_node_map')):

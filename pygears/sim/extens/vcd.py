@@ -13,7 +13,7 @@ import os
 import fnmatch
 import itertools
 import atexit
-from pygears.conf import reg_inject, Inject
+from pygears.conf import inject, Inject
 
 
 def match(val, include_pattern):
@@ -149,7 +149,7 @@ def module_sav(gtkw, module, vcd_vars):
 
 
 class VCDHierVisitor(HierVisitorBase):
-    @reg_inject
+    @inject
     def __init__(self,
                  gtkw,
                  writer,
@@ -207,7 +207,7 @@ class VCDHierVisitor(HierVisitorBase):
 
 
 class VCD(SimExtend):
-    @reg_inject
+    @inject
     def __init__(self,
                  top,
                  trace_fn='pygears.vcd',

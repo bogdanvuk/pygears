@@ -46,7 +46,7 @@ import tempfile
 from functools import partial
 from logging import CRITICAL, DEBUG, ERROR, INFO, NOTSET, WARNING
 
-from .registry import Inject, PluginBase, config, reg_inject, safe_bind
+from .registry import Inject, PluginBase, config, inject, safe_bind
 
 HOOKABLE_LOG_METHODS = [
     'critical', 'exception', 'error', 'warning', 'info', 'debug'
@@ -87,7 +87,7 @@ def log_action_debug():
     pdb.set_trace()
 
 
-@reg_inject
+@inject
 def custom_action(logger_name, message, severity, log_cfgs=Inject('logger')):
     log_cfg = log_cfgs[logger_name]
 
@@ -104,7 +104,7 @@ def custom_action(logger_name, message, severity, log_cfgs=Inject('logger')):
 
 
 def log_hook(cls, severity):
-    @reg_inject
+    @inject
     def wrapper(self, logger_name, message, hooks=Inject('logger/hooks')):
         '''Custom <severity>_hook methods for HOOKABLE_LOG_METHODS.'''
         custom_action(logger_name, message, severity)
@@ -122,7 +122,7 @@ def hookable_methods_gen(cls):
 
 
 class LogFmtFilter(logging.Filter):
-    @reg_inject
+    @inject
     def __init__(self,
                  name='',
                  stack_traceback_fn=Inject('logger/stack_traceback_fn')):

@@ -336,7 +336,7 @@ def param_subs(t, matches, namespace):
             # raise Exception(
             #     f"{str(e)}\n - while evaluating parameter string '{t}'")
 
-    elif isinstance(t, collections.Iterable):
+    elif isinstance(t, collections.abc.Iterable):
         return type(t)(param_subs(tt, matches, namespace) for tt in t)
     else:
         if isinstance(t, GenericMeta) and (not t.is_specified()):

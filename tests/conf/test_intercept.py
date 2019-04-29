@@ -1,5 +1,5 @@
 from pygears.conf.utils import intercept_arguments
-from pygears.conf.registry import reg_inject, Inject
+from pygears.conf.registry import inject, Inject
 
 
 @intercept_arguments
@@ -70,7 +70,7 @@ def test_named_dflt():
     assert named_dflt(a=1, b=2) == (1, 2, 3, 2)
 
 
-@reg_inject
+@inject
 def get_from_reg(x=5, sim_lvl=Inject('logger/sim/level')):
     return (x, sim_lvl)
 

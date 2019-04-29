@@ -1,7 +1,8 @@
 from pygears.core.port import InPort
-from pygears.conf import reg_inject, Inject
+from pygears.conf import inject, Inject
 from pygears.rtl.intf import RTLIntf
 from pygears.core.hier_node import HierVisitorBase
+from pygears.core.graph import rtl_from_gear_port
 
 
 def gear_from_rtl_port(rtl_port):
@@ -9,25 +10,14 @@ def gear_from_rtl_port(rtl_port):
     return node.gear.in_ports[rtl_port.index]
 
 
-@reg_inject
-def rtl_from_gear_port(gear_port, rtl_map=Inject('rtl/gear_node_map')):
-    node = rtl_map.get(gear_port.gear, None)
-    rtl_port = None
-    if node:
-        if isinstance(gear_port, InPort):
-            port_group = node.in_ports
-        else:
-            port_group = node.out_ports
-
-        rtl_port = port_group[gear_port.index]
-
-    return rtl_port
-
-
-@reg_inject
+@inject
 def connect(node, rtl_map=Inject('rtl/gear_node_map')):
     for p, gear_p in zip(node.in_ports, node.gear.in_ports):
-        create_intf(p, gear_p, domain=node)
+        if not node.is_hierarchical:
+            p.consumer = None
+        else:
+            create_intf(p, gear_p, domain=node)
+
         prod_intf = gear_p.producer
         if (node.parent is not None and prod_intf is not None
                 and prod_intf.producer is None):
@@ -35,6 +25,9 @@ def connect(node, rtl_map=Inject('rtl/gear_node_map')):
 
     for p, gear_p in zip(node.out_ports, node.gear.out_ports):
         create_intf(p, gear_p, domain=node.parent)
+        if not node.is_hierarchical:
+            p.producer = None
+
         gear_intf = gear_p.consumer
 
         if (node.parent is not None and gear_intf is not None
@@ -44,7 +37,7 @@ def connect(node, rtl_map=Inject('rtl/gear_node_map')):
             rtl_map[gear_intf].connect(node.root().out_ports[-1])
 
 
-@reg_inject
+@inject
 def create_unsourced_intf(node,
                           port,
                           gear_port,
@@ -70,7 +63,7 @@ def create_unsourced_intf(node,
     rtl_map[gear_intf] = intf_inst
 
 
-@reg_inject
+@inject
 def create_intf(port, gear_port, domain, rtl_map=Inject('rtl/gear_node_map')):
     gear_intf = gear_port.consumer
     if gear_intf is not None:

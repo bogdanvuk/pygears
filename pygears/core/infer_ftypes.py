@@ -9,7 +9,7 @@ from .type_match import TypeMatchError, type_match
 
 def is_type_iterable(t):
     return (not isinstance(t, (str, bytes))) and isinstance(
-        t, collections.Iterable)
+        t, collections.abc.Iterable)
 
 
 def _copy_field_names(t, pat):

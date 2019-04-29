@@ -3,7 +3,7 @@ import functools
 from string import Template
 
 from pygears import PluginBase, registry, safe_bind
-from pygears.conf import Inject, reg_inject, config
+from pygears.conf import Inject, inject, config
 from pygears.rtl.port import InPort, OutPort
 from pygears.svgen.util import svgen_typedef
 
@@ -33,7 +33,7 @@ class SVIntfGen:
             fnmatch.fnmatch(self.intf.name, p)
             for p in registry('svgen/debug_intfs'))
 
-    @reg_inject
+    @inject
     def get_inst(self,
                  template_env,
                  spy_connect_t=Inject('svgen/spy_connection_template')):

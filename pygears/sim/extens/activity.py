@@ -2,13 +2,13 @@ from pygears import bind
 from pygears.common.decoupler import decoupler_din
 from pygears.common import const
 from pygears.sim import sim_log
-from pygears.conf import reg_inject, Inject
+from pygears.conf import inject, Inject
 from pygears.core.gear import Gear
 from pygears.core.graph import get_producer_queue, get_end_producer
 
 
 class ActivityChecker:
-    @reg_inject
+    @inject
     def __init__(self, top, sim=Inject('sim/simulator')):
         sim.events['before_run'].append(self.before_run)
         sim.events['after_run'].append(self.after_run)
@@ -33,7 +33,7 @@ class ActivityChecker:
     def before_timestep(self):
         self.handshakes.clear()
 
-    @reg_inject
+    @inject
     def before_run(self, sim, sim_map=Inject('sim/map')):
         for module, sim_gear in sim_map.items():
             if isinstance(module, Gear):

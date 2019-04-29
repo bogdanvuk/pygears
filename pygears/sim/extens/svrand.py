@@ -13,7 +13,7 @@ from pygears.sim.extens.rand_base import RandBase
 from pygears.sim.modules.sim_socket import SimSocket, u32_bytes_decode
 from pygears.svgen.util import svgen_typedef
 from pygears.util.fileio import save_file
-from pygears.conf import reg_inject, Inject
+from pygears.conf import inject, Inject
 
 
 class SVRandConstraints:
@@ -38,7 +38,7 @@ class SVRandConstraints:
 class SVRandSocket(RandBase):
     SVRAND_CONN_NAME = "_svrand"
 
-    @reg_inject
+    @inject
     def __init__(self,
                  top,
                  cons,
@@ -69,7 +69,7 @@ class SVRandSocket(RandBase):
 
         return tcons
 
-    @reg_inject
+    @inject
     def before_setup(self,
                      sim,
                      sim_map=Inject('sim/map'),

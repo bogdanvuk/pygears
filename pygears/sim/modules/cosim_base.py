@@ -1,6 +1,6 @@
 from pygears.sim.sim_gear import SimGear
 from pygears.sim import delta, timestep, sim_log, clk
-from pygears.conf import Inject, reg_inject
+from pygears.conf import Inject, inject
 from pygears import GearDone
 from .cosim_port import CosimNoData, InCosimPort, OutCosimPort
 
@@ -8,7 +8,7 @@ from .cosim_port import CosimNoData, InCosimPort, OutCosimPort
 class CosimBase(SimGear):
     SYNCHRO_HANDLE_NAME = "_synchro"
 
-    @reg_inject
+    @inject
     def __init__(self, gear, timeout=-1, sim_map=Inject('sim/map')):
         super().__init__(gear)
         self.timeout = timeout
