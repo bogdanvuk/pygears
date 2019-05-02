@@ -186,6 +186,7 @@ class SVModuleGen:
             'module_name': self.sv_module_name,
             'inst_name': self.sv_inst_name,
             'intfs': list(self.sv_port_configs()),
+            'sigs': self.node.params['signals'],
             'param_map': self.params
         }
         return template_env.render_local(__file__, "module_synth_wrap.j2",
