@@ -75,7 +75,10 @@ def gear(func, gear_resolver=None, **meta_kwds):
         body=body,
         evaldict=execdict,
         addsource=True,
-        extra_kwds=registry('gear/params/extra'))
+        extra_kwds={
+            k: copy.copy(v)
+            for k, v in registry('gear/params/extra').items()
+        })
 
     functools.update_wrapper(gear_func, func)
 

@@ -1,6 +1,6 @@
 module add_sig
    (
-    output [15:0] din_sig,
+    input  [15:0] din_sig,
 	                dti.consumer din,
 	                dti.producer dout
     );

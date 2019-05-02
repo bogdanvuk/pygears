@@ -218,6 +218,8 @@ class SVModuleGen:
             'pygears': pygears,
             'module_name': self.sv_module_name,
             'intfs': list(self.sv_port_configs()),
+            # 'sigs': [s.name for s in self.node.params['signals']],
+            'sigs': self.node.params['signals'],
             'params': self.node.params,
             'inst': [],
             'generics': [],

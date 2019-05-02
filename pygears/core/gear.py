@@ -1,3 +1,4 @@
+import copy
 import inspect
 
 from pygears.conf import PluginBase, registry, safe_bind
@@ -44,6 +45,8 @@ class GearHierRoot(NamedHierNode):
         self.in_ports = []
         self.out_ports = []
         self.params = {}
+        self.params.update(copy.deepcopy(registry('gear/params/meta')))
+        self.params.update(copy.deepcopy(registry('gear/params/extra')))
         self.func = None
         self.const_args = []
         self.args = []
@@ -184,20 +187,20 @@ from dataclasses import dataclass
 class InSig:
     name: str
     width: int
+    modport: str = 'input'
 
 
 @dataclass
 class OutSig:
     name: str
     width: int
+    modport: str = 'output'
 
 
 class GearPlugin(PluginBase):
     @classmethod
     def bind(cls):
         safe_bind('gear/naming', {'default_out_name': 'dout'})
-        safe_bind('gear/hier_root', GearHierRoot(''))
-        safe_bind('gear/current_module', cls.registry['gear']['hier_root'])
 
         safe_bind('gear/params/meta', {
             'enablement': True,
@@ -209,12 +212,12 @@ class GearPlugin(PluginBase):
                 'name': None,
                 'intfs': [],
                 'outnames': [],
-                'sigmap': {
-                    'clk': 'clk',
-                    'rst': 'rst'
-                },
+                'sigmap': {},
                 '__base__': None
             })
+
+        safe_bind('gear/hier_root', GearHierRoot(''))
+        safe_bind('gear/current_module', cls.registry['gear']['hier_root'])
 
     @classmethod
     def reset(cls):

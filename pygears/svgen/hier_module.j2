@@ -6,8 +6,12 @@ module {{module_name}}
 )
 {%- endif %}
 (
+  {% if sigs == None -%}
     input clk,
     input rst,
+  {% else %}
+{{snippet.sig_list(sigs)|indent(4, True) }}
+  {% endif %}
 {{snippet.intf_list(intfs)|indent(4, True)}}
 );
 

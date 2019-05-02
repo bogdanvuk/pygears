@@ -22,6 +22,3 @@ def test_basic(tmpdir, cosim_cls):
         ref=eq(name='ref_model'))
 
     sim(outdir=tmpdir)
-
-from pygears.sim.modules import drv, SimVerilated
-test_basic(tmpdir='/tools/home/tmp', cosim_cls=SimVerilated)
