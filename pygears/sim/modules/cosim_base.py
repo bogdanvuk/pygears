@@ -19,65 +19,6 @@ class CosimBase(SimGear):
         for p in (self.in_cosim_ports + self.out_cosim_ports):
             sim_map[p.port] = p
 
-    def _forward(self):
-
-        for p in self.gear.in_ports:
-            intf = p.consumer
-            if p.basename not in self.handlers:
-                continue
-
-            hin = self.handlers[p.basename]
-
-            if intf.done:
-                hin.close()
-                del self.handlers[p.basename]
-
-            if p not in self.din_pulled:
-                if not intf.empty():
-                    data = intf.pull_nb()
-                    self.din_pulled.add(p)
-                    hin.send(data)
-                else:
-                    hin.reset()
-
-        self.handlers[self.SYNCHRO_HANDLE_NAME].forward()
-
-        for p in self.gear.out_ports:
-            intf = p.producer
-            if intf.ready_nb():
-                try:
-                    hout = self.handlers[p.basename]
-                    intf.put_nb(hout.read())
-                    # print(f'Put {hout.read()} -> {p.basename}')
-                    self.dout_put.add(p)
-                    self.activity_monitor = 0
-                except CosimNoData:
-                    pass
-
-    def _back(self):
-        for p in self.dout_put.copy():
-            intf = p.producer
-            hout = self.handlers[p.basename]
-            if intf.ready_nb():
-                # print(f'Put ACK -> {p.basename}')
-                hout.ack()
-                self.dout_put.remove(p)
-            else:
-                hout.reset()
-
-        self.handlers[self.SYNCHRO_HANDLE_NAME].back()
-
-        for p in self.din_pulled.copy():
-            if p.basename not in self.handlers:
-                continue
-
-            hin = self.handlers[p.basename]
-            if hin.ready():
-                self.activity_monitor = 0
-                self.din_pulled.remove(p)
-                intf = p.consumer
-                intf.ack()
-
     def read_out(self, port):
         if self.eval_needed:
             self.handlers[self.SYNCHRO_HANDLE_NAME].forward()
@@ -132,8 +73,6 @@ class CosimBase(SimGear):
         self.eval_needed = False
 
         try:
-            # phase = 'forward'
-
             while True:
 
                 phase = None
@@ -149,19 +88,6 @@ class CosimBase(SimGear):
 
                 self.handlers[self.SYNCHRO_HANDLE_NAME].cycle()
                 self.activity_monitor += 1
-                # self.eval_needed = True
-
-                # sim_log().info(f'Waiting for a clock')
-
-                # if self.eval_needed:
-                #     self.handlers[self.SYNCHRO_HANDLE_NAME].forward()
-
-                # if self.eval_needed:
-                #     self.handlers[self.SYNCHRO_HANDLE_NAME].back()
-
-                # sim_log().info(f'Cycle')
-
-                # phase = await delta()
 
         except (GearDone, BrokenPipeError):
             # print(f"SimGear canceling: {self.gear.name}")

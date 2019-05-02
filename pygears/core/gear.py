@@ -106,10 +106,7 @@ class Gear(NamedHierNode):
 
     @property
     def hierarchical(self):
-        is_async_gen = bool(self.func.__code__.co_flags
-                            & inspect.CO_ASYNC_GENERATOR)
-        return not (inspect.iscoroutinefunction(self.func)
-                    or inspect.isgeneratorfunction(self.func) or is_async_gen)
+        return bool(self.child)
 
     @property
     def definition(self):
@@ -180,19 +177,44 @@ class Gear(NamedHierNode):
             pass
 
 
+from dataclasses import dataclass
+
+
+@dataclass
+class InSig:
+    name: str
+    width: int
+
+
+@dataclass
+class OutSig:
+    name: str
+    width: int
+
+
 class GearPlugin(PluginBase):
     @classmethod
     def bind(cls):
         safe_bind('gear/naming', {'default_out_name': 'dout'})
         safe_bind('gear/hier_root', GearHierRoot(''))
         safe_bind('gear/current_module', cls.registry['gear']['hier_root'])
-        safe_bind('gear/params/meta', {'enablement': True})
-        safe_bind('gear/params/extra', {
-            'name': None,
-            'intfs': [],
-            'outnames': [],
-            '__base__': None
+
+        safe_bind('gear/params/meta', {
+            'enablement': True,
+            'signals': (InSig('clk', 1), InSig('rst', 1))
         })
+
+        safe_bind(
+            'gear/params/extra', {
+                'name': None,
+                'intfs': [],
+                'outnames': [],
+                'sigmap': {
+                    'clk': 'clk',
+                    'rst': 'rst'
+                },
+                '__base__': None
+            })
 
     @classmethod
     def reset(cls):

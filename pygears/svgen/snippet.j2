@@ -7,13 +7,23 @@
   {%- endfor -%}
 {%- endmacro -%}
 
+{% macro sig_list(sigs) -%}
+  {% for i in sigs -%}
+    {% if i['width'] == 1 -%}
+      {{i['modport']}} {{i['name']}}{{ "" if loop.last else "," }}
+    {% else -%}
+      {{i['modport']}} [{{i['width']-1}}:0] {{i['name']}}{{ "" if loop.last else "," }} // {{i['type']}}
+    {% endif -%}
+  {% endfor -%}
+{%- endmacro %}
+
 {% macro intf_list(intfs) -%}
   {% for i in intfs -%}
     dti.{{i['modport']}} {{i['name']}}{{ "" if loop.last else "," }} // {{i['type']}} ({{i['width']}})
   {% endfor -%}
 {%- endmacro %}
 
-{% macro module_inst(module_name, param_map, inst_name, port_map=None, rst_name="rst") -%}
+{% macro module_inst(module_name, param_map, inst_name, port_map=None, sig_map=None, rst_name="rst") -%}
 
   {{module_name}}
   {%- if param_map|length > 0 %}
@@ -28,8 +38,14 @@
     )
   {% endif %}
  {{inst_name}} (
+  {% if sig_map == None %}
     .clk(clk),
     .rst({{rst_name}}),
+  {% else %}
+    {% for name,value in sig_map.items() -%}
+      {{"."|indent(4,True)}}{{name}}({{value}}){{ "" if loop.last and (not port_map) else "," }}
+    {% endfor -%}
+  {% endif %}
   {% if port_map -%}
     {% for name,value in port_map.items() -%}
       {{"."|indent(4,True)}}{{name}}({{value}}){{ "" if loop.last else "," }}
@@ -125,7 +141,7 @@ assign {{intf['name']}}.ready = {{intf['name']}}_ready;
   {% endfor %}
 {%- endmacro %}
 
-{% macro gear_module(module_name, intfs, comment) -%}
+{% macro gear_module(module_name, intfs, comment, sigs=None) -%}
   {% if comment is defined -%}
 /*
     {{ comment }}
@@ -134,8 +150,12 @@ assign {{intf['name']}}.ready = {{intf['name']}}_ready;
 
 module {{module_name}}
 (
+  {% if sigs == None -%}
     input clk,
     input rst,
+  {% else %}
+{{ sig_list(sigs)|indent(4, True) }}
+  {% endif %}
 {{ intf_list(intfs)|indent(4, True) }}
 );
 {{ caller() }}

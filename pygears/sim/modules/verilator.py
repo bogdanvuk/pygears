@@ -90,7 +90,7 @@ class SimVerilated(CosimBase):
 
         tracing_enabled = bool(registry('svgen/debug_intfs'))
         if tracing_enabled:
-            sim_log().info(f"Debugg: {registry('svgen/debug_intfs')}")
+            sim_log().info(f"Debug: {registry('svgen/debug_intfs')}")
             self.trace_fn = f'{self.outdir}/vlt_dump.vcd'
             try:
                 subprocess.call(f"rm -f {self.trace_fn}", shell=True)
