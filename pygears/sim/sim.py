@@ -407,19 +407,19 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             bind('gear/current_module', self.cur_gear)
             bind('gear/current_sim', sim_gear)
 
-        sim_exception = None
+        bind('sim/exception', None)
         try:
             self.events['before_run'](self)
             self.sim_loop(timeout)
         except SimFinish:
             pass
         except Exception as e:
-            sim_exception = e
+            bind('sim/exception', e)
 
         try:
             # print(f"----------- After run ---------------")
 
-            if not sim_exception:
+            if not registry('sim/exception'):
                 self.events['after_run'](self)
 
                 for sim_gear in self.sim_gears:
@@ -429,8 +429,8 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             self.events['after_cleanup'](self)
             self.events['at_exit'](self)
         finally:
-            if sim_exception:
-                raise sim_exception
+            if registry('sim/exception'):
+                raise registry('sim/exception')
 
 
 def sim(outdir=None,
