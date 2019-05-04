@@ -34,23 +34,23 @@ def find(path, root=None):
     if path == '':
         return root
 
-    module_path, intf_name = os.path.splitext(path)
+    module_path, port_name = os.path.splitext(path)
 
     try:
         module = _find_rec(module_path, root)
     except ModuleNotFoundError:
         raise ModuleNotFoundError(f'No module found on path "{module_path}"')
 
-    if not intf_name:
+    if not port_name:
         return module
     else:
-        intf_name = intf_name[1:]
+        port_name = port_name[1:]
         for i, p in enumerate(module.in_ports):
-            if p.basename == intf_name:
+            if p.basename == port_name:
                 return module.in_ports[i]
 
         for i, p in enumerate(module.out_ports):
-            if p.basename == intf_name:
+            if p.basename == port_name:
                 return module.out_ports[i]
 
         raise ModuleNotFoundError(f'No module found on path "{path}"')
