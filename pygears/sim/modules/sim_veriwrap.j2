@@ -34,6 +34,7 @@ void cycle(void) {
     printf("---- cycle   ----\n");
 #endif
     top->eval();
+
 {% if tracing %}
     if (tfp) tfp->dump (main_time);
 {% endif %}
@@ -51,7 +52,23 @@ void cycle(void) {
     tfp->flush();
 {% endif %}
     top->clk = 1;
+
+{% if aux_clock %}
+    top->{{aux_clock[0].name}} = 1;
+{%- endif %}
+
     top->eval();
+
+{% if aux_clock %}
+    top->{{aux_clock[0].name}} = 0;
+    top->eval();
+  {% for i in range(aux_clock[0].frequency-1) %}
+    top->{{aux_clock[0].name}} = 1;
+    top->eval();
+    top->{{aux_clock[0].name}} = 0;
+    top->eval();
+  {% endfor %}
+{%- endif %}
 }
 
 int init(void) {
@@ -80,12 +97,26 @@ int init(void) {
     top->rst = 1;
     top->eval();
     top->clk = 1;
+{% if aux_clock %}
+    top->{{aux_clock[0].name}} = 1;
+{% endif %}
     top->eval();
 
 {% if tracing %}
     tfp->dump(0);
     tfp->flush();
-{% endif %}
+{%- endif %}
+
+{% if aux_clock %}
+    top->{{aux_clock[0].name}} = 0;
+    top->eval();
+  {% for i in range(aux_clock[0].frequency-1) %}
+    top->{{aux_clock[0].name}} = 1;
+    top->eval();
+    top->{{aux_clock[0].name}} = 0;
+    top->eval();
+  {% endfor %}
+{%- endif %}
 
     main_time+=5;
     top->rst = 0;

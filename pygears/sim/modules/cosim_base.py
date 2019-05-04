@@ -1,7 +1,9 @@
+from dataclasses import dataclass
 from pygears.sim.sim_gear import SimGear
 from pygears.sim import delta, timestep, sim_log, clk
+from pygears.sim.sim import SimPlugin
 from pygears.conf import Inject, inject
-from pygears import GearDone
+from pygears import GearDone, config
 from .cosim_port import CosimNoData, InCosimPort, OutCosimPort
 
 
@@ -96,3 +98,15 @@ class CosimBase(SimGear):
 
             self._finish()
             raise GearDone
+
+
+@dataclass
+class AuxClock:
+    name: str
+    frequency: int
+
+
+class CosimPlugin(SimPlugin):
+    @classmethod
+    def bind(cls):
+        config.define('sim/aux_clock', default=[])
