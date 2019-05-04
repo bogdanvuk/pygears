@@ -2,8 +2,8 @@ from .conditions_utils import (add_cond_expr_operands, add_cycle_cond,
                                add_exit_cond, combine_conditions,
                                nested_cycle_cond, nested_exit_cond)
 from .hls_expressions import BinOpExpr
-from .pydl_types import (ContainerBlock, CycleSubCond, ExitSubCond,
-                         SubConditions, subcond_expr)
+from .pydl_types import (CycleSubCond, ExitSubCond, SubConditions,
+                         is_container, subcond_expr)
 from .scheduling_types import SeqCBlock
 from .utils import state_expr
 
@@ -108,7 +108,7 @@ class ConditionsEval:
         for child in reversed(children):
             pydl_stmts = [x for x in get_cblock_pydl_stmts(child)]
             for pydl_stmt in reversed(pydl_stmts):
-                if isinstance(pydl_stmt, ContainerBlock):
+                if is_container(pydl_stmt):
                     child_exit_cond = self._merge_pydl_conds(pydl_stmt, 'exit')
                 else:
                     child_exit_cond = getattr(pydl_stmt, 'exit_cond', None)
@@ -153,7 +153,7 @@ class ConditionsEval:
         return subcond_expr(cond, sub_c)
 
     def _pydl_cycle_subconds(self, block):
-        if isinstance(block, ContainerBlock):
+        if is_container(block):
             return self._merge_pydl_conds(block, 'cycle')
 
         cond = getattr(block, 'cycle_cond', None)
@@ -162,7 +162,7 @@ class ConditionsEval:
         return cond
 
     def _pydl_exit_subconds(self, block):
-        if isinstance(block, ContainerBlock):
+        if is_container(block):
             return self._merge_pydl_conds(block, 'exit')
 
         cond = getattr(block, 'exit_cond', None)
@@ -183,7 +183,7 @@ class ConditionsEval:
             # leaf
             return self._pydl_cycle_subconds(block)
 
-        if isinstance(block, ContainerBlock):
+        if is_container(block):
             return self._merge_cblock_conds(scope, 'cycle')
 
         curr_cond = block.cycle_cond
@@ -197,7 +197,7 @@ class ConditionsEval:
             # leaf
             return self._pydl_exit_subconds(block)
 
-        if isinstance(block, ContainerBlock):
+        if is_container(block):
             return self._merge_cblock_conds(scope, 'exit')
 
         curr_cond = block.exit_cond

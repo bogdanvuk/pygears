@@ -98,25 +98,14 @@ class Scheduler(TypeVisitor):
 
         return self.visit_block(cblock, node.stmts)
 
+    def visit_CombBlock(self, node):
+        cblock = MutexCBlock(parent=self.scope[-1], pydl_block=node, child=[])
+        return self.visit_block(cblock, node.stmts)
+
     def visit_ContainerBlock(self, node):
         cblock = MutexCBlock(parent=self.scope[-1], pydl_block=node, child=[])
-        free_stmts = []
         for stmt in node.stmts:
-            child = self.visit(stmt)
-            if child is not None and find_hier_blocks(child.pydl_block):
-                cblock.child.append(child)
-                if free_stmts:
-                    add_prolog(child, free_stmts)
-                    free_stmts = []
-            else:
-                free_stmts.append(stmt)
-
-        if free_stmts:
-            if cblock.child:
-                add_epilog(cblock.child[-1], free_stmts)
-            else:
-                cblock.child.append(
-                    Leaf(parent=cblock, pydl_blocks=free_stmts))
+            cblock.child.append(self.visit(stmt))
         return cblock
 
     def visit_Loop(self, node):

@@ -10,7 +10,7 @@ from .compile_snippets import enumerate_impl, qrange_mux_impl
 from .hls_expressions import (BinOpExpr, BreakExpr, OperandVal, RegDef,
                               ResExpr, VariableDef, VariableStmt, and_expr,
                               create_oposite, or_expr)
-from .pydl_types import Block, ContainerBlock, IfBlock, Loop
+from .pydl_types import Block, CombBlock, IfBlock, Loop
 from .utils import (VisitError, add_to_list, find_data_expression,
                     find_for_target)
 
@@ -223,7 +223,7 @@ def registered_enumerate(node, target_names, stop, enum_target, module_data):
 
 
 def comb_enumerate(node, target_names, stop, enum_target, module_data):
-    pydl_node = ContainerBlock(stmts=[])
+    pydl_node = CombBlock(stmts=[])
     pydl_node.break_cond = []
     pydl_node.loop_iter_in_cond = []
 

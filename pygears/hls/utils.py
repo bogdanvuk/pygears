@@ -6,9 +6,9 @@ from pygears.conf import register_custom_log, registry
 from pygears.typing import Int, Queue, Tuple, Uint, is_type, typeof
 
 from . import hls_expressions as expr
-from .pydl_types import Block, IntfBlock, IntfLoop, Yield
+from .pydl_types import Block, Yield, IntfBlock, IntfLoop
 
-ASYNC_TYPES = (Yield, IntfBlock, IntfLoop)
+ASYNC_TYPES = (Yield, )
 INTF_METHODS = ('get_nb', 'get', 'put', 'put_nb')
 
 
@@ -103,16 +103,10 @@ def check_if_blocking(stmt):
 
 def find_hier_blocks(body):
     hier = []
-
-    if not isinstance(body, list):
-        block = check_if_blocking(body)
+    for stmt in body:
+        block = check_if_blocking(stmt)
         if block:
             hier.append(block)
-    else:
-        for stmt in body:
-            block = check_if_blocking(stmt)
-            if block:
-                hier.append(block)
     return hier
 
 

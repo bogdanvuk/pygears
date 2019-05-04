@@ -17,6 +17,10 @@ def subcond_expr(cond, other=None):
     return other
 
 
+def is_container(block):
+    return isinstance(block, (ContainerBlock, CombBlock))
+
+
 @dataclass
 class SubConditions:
     expr: OpType = None
@@ -140,6 +144,11 @@ class ContainerBlock(Block):
     def exit_cond(self):
         from .conditions_utils import COND_NAME
         return COND_NAME.substitute(cond_type='exit', block_id=self.id)
+
+
+@dataclass
+class CombBlock(ContainerBlock):
+    pass
 
 
 @dataclass

@@ -4,7 +4,7 @@ from enum import IntEnum
 from .conditions_utils import (combine_conditions, find_exit_cond,
                                nested_cycle_cond, nested_exit_cond)
 from .inst_visit import InstanceVisitor
-from .pydl_types import ContainerBlock, Module
+from .pydl_types import Module, is_container
 from .utils import state_expr
 
 
@@ -92,7 +92,7 @@ class ConditionsFinder(InstanceVisitor):
                 return self._state_depend_cycle_cond(block_type)
 
             block = c_block.pydl_block
-            if isinstance(block, ContainerBlock):
+            if is_container(block):
                 continue
 
             if block.cycle_cond and block.cycle_cond != 1:
