@@ -2,8 +2,8 @@ import ast
 import inspect
 import re
 
-from . import hdl_types as ht
-from .hdl_utils import eval_expression, find_assign_target
+from .hls_expressions import IntfDef
+from .utils import eval_expression, find_assign_target
 
 
 def find_vararg_input(gear):
@@ -63,7 +63,7 @@ class IntfFinder(ast.NodeVisitor):
         expr = node.iter
         if isinstance(expr, ast.Subscript):
             name = expr.value.id
-            self.intfs['vars'][name] = ht.IntfDef(
+            self.intfs['vars'][name] = IntfDef(
                 intf=self.varargs[name], _name=name)
 
         for stmt in node.body:
@@ -73,7 +73,7 @@ class IntfFinder(ast.NodeVisitor):
         expr = node.items[0].context_expr
         if isinstance(expr, ast.Subscript):
             name = expr.value.id
-            self.intfs['vars'][name] = ht.IntfDef(
+            self.intfs['vars'][name] = IntfDef(
                 intf=self.varargs[name], _name=name)
 
         for stmt in node.body:
@@ -87,7 +87,7 @@ class IntfFinder(ast.NodeVisitor):
                 else:
                     name = node.target.id
 
-                self.intfs['vars'][name] = ht.IntfDef(
+                self.intfs['vars'][name] = IntfDef(
                     intf=self.varargs[arg.id], _name=node.target.elts[-1].id)
                 break
 

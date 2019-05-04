@@ -4,11 +4,12 @@ import sympy
 
 from pygears.typing import Bool
 
-from . import hdl_types as ht
 from .conditions_utils import COND_NAME, cond_name_match_by_type
-from .hdl_stmt_types import AssignValue, CombSeparateStmts
-from .hdl_utils import VisitError
-from .inst_visit import InstanceVisitor
+from .hdl_types import AssignValue, CombSeparateStmts
+from .hls_expressions import (BOOLEAN_OPERATORS, ResExpr, UnaryOpExpr,
+                              binary_expr)
+from .inst_visit import InstanceVisitor, TypeVisitor
+from .utils import VisitError
 
 
 def same_cond(name):
@@ -72,7 +73,7 @@ class SameConditions:
         return CombSeparateStmts(stmts=stmts)
 
 
-class Hdl2Sym(ht.TypeVisitor):
+class Hdl2Sym(TypeVisitor):
     def __init__(self, same_names=None):
         self.same_names = same_names
         self.special_symbols = {}
@@ -116,7 +117,7 @@ class Hdl2Sym(ht.TypeVisitor):
         return None
 
     def visit_BinOpExpr(self, node):
-        if node.operator not in ht.BOOLEAN_OPERATORS:
+        if node.operator not in BOOLEAN_OPERATORS:
             return self.get_special(node)
 
         operands = []
@@ -145,16 +146,16 @@ class Sym2Hdl(InstanceVisitor):
         return sym
 
     def visit_Zero(self, node):
-        return ht.ResExpr(Bool(False))
+        return ResExpr(Bool(False))
 
     def visit_One(self, node):
-        return ht.ResExpr(Bool(True))
+        return ResExpr(Bool(True))
 
     def visit_BooleanFalse(self, node):
-        return ht.ResExpr(Bool(False))
+        return ResExpr(Bool(False))
 
     def visit_BooleanTrue(self, node):
-        return ht.ResExpr(Bool(True))
+        return ResExpr(Bool(True))
 
     def visit_Not(self, node):
         return self.visit_opexpr(node, '!')
@@ -169,9 +170,9 @@ class Sym2Hdl(InstanceVisitor):
         operands = [self.visit(arg) for arg in reversed(node.args)]
         if len(operands) > 1:
             return reduce(
-                partial(ht.binary_expr, operator=operator), operands, None)
+                partial(binary_expr, operator=operator), operands, None)
 
-        return ht.UnaryOpExpr(operands[0], operator)
+        return UnaryOpExpr(operands[0], operator)
 
 
 def simplify_expr(expr, same_names=None):

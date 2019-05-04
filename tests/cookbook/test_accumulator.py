@@ -59,10 +59,10 @@ def test_no_offset(tmpdir, cosim_cls, din_delay, dout_delay):
 
 
 @formal_check()
-def test_unsigned():
+def test_formal():
     accumulator(Intf(Queue[Tuple[Uint[8], Uint[8]]]))
 
 
 @synth_check({'logic luts': 20, 'ffs': 18})
-def test_unsigned():
+def test_synth():
     accumulator(Intf(Queue[Tuple[Uint[16], Uint[16]]]))

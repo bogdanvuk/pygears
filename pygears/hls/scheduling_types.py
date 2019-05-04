@@ -1,15 +1,19 @@
-import typing as pytypes
 from dataclasses import dataclass, field
+from typing import List, Union
+
+from .hls_expressions import Expr
+from .pydl_types import Block
 
 
 @dataclass
 class CBlock:
-    parent: pytypes.Any
-    child: list
-    hdl_block: pytypes.Any
-    state_ids: list = field(init=False, default=None)
-    prolog: list = None
-    epilog: list = None
+    # TODO : newer versions of Python will not need the string
+    parent: Union['CBlock', None]
+    child: List[Union['CBlock', 'Leaf']]
+    pydl_block: Block
+    state_ids: List[int] = field(init=False, default=None)
+    prolog: List[Union[Block, Expr]] = None
+    epilog: List[Union[Block, Expr]] = None
 
 
 @dataclass
@@ -24,6 +28,6 @@ class SeqCBlock(CBlock):
 
 @dataclass
 class Leaf:
-    parent: pytypes.Any
-    hdl_blocks: pytypes.Any
-    state_id: pytypes.Any = None
+    parent: CBlock
+    pydl_blocks: List[Union[Block, Expr]]
+    state_id: int = None

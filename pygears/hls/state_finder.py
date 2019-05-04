@@ -1,30 +1,31 @@
 from functools import partial
 
-from . import hdl_types as ht
-from .inst_visit import InstanceVisitor
+from .hls_expressions import OperandVal, RegNextStmt, UnaryOpExpr
+from .inst_visit import InstanceVisitor, TypeVisitor
+from .pydl_types import Block, ContainerBlock, IfBlock
 from .scheduling_types import MutexCBlock
 
 
 def reg_next_cb(node, stmt, scope):
-    if isinstance(stmt, ht.RegNextStmt) and (stmt.reg.name == node.op.name):
+    if isinstance(stmt, RegNextStmt) and (stmt.reg.name == node.op.name):
         node.context = 'next'
 
-        if scope and isinstance(scope[-1], ht.IfBlock):
+        if scope and isinstance(scope[-1], IfBlock):
             curr = scope[-1]
-            else_expr = ht.UnaryOpExpr(curr.in_cond, '!')
-            node_else = ht.IfBlock(
+            else_expr = UnaryOpExpr(curr.in_cond, '!')
+            node_else = IfBlock(
                 _in_cond=else_expr,
                 stmts=[
-                    ht.RegNextStmt(
+                    RegNextStmt(
                         reg=stmt.reg,
-                        val=ht.OperandVal(op=stmt.reg, context='reg'))
+                        val=OperandVal(op=stmt.reg, context='reg'))
                 ])
-            return ht.ContainerBlock(stmts=[curr, node_else])
+            return ContainerBlock(stmts=[curr, node_else])
 
     return None
 
 
-class ContextFinder(ht.TypeVisitor):
+class ContextFinder(TypeVisitor):
     def __init__(self):
         self.scope = []
         self.hier_scope = []
@@ -66,7 +67,7 @@ class ContextFinder(ht.TypeVisitor):
 
     def walk_up_block_hier(self, block, cb):
         for i, stmt in enumerate(reversed(block)):
-            if isinstance(stmt, ht.Block):
+            if isinstance(stmt, Block):
                 self.hier_scope.append(stmt)
                 self.hier_idx.append(i)
 
@@ -112,7 +113,7 @@ class StateFinder(InstanceVisitor):
             switch = self.context.find_context(block, node.prolog[:i])
             self.switch_context(switch, node.prolog[:i])
 
-        switch = self.context.find_context(node.hdl_block, node.prolog)
+        switch = self.context.find_context(node.pydl_block, node.prolog)
         self.switch_context(switch, node.prolog)
 
     def visit_SeqCBlock(self, node):
@@ -144,9 +145,9 @@ class StateFinder(InstanceVisitor):
 
     def visit_Leaf(self, node):
         node.state_id = self.state[-1]
-        for i, block in enumerate(node.hdl_blocks):
-            switch = self.context.find_context(block, node.hdl_blocks[:i])
-            self.switch_context(switch, node.hdl_blocks[:i])
+        for i, block in enumerate(node.pydl_blocks):
+            switch = self.context.find_context(block, node.pydl_blocks[:i])
+            self.switch_context(switch, node.pydl_blocks[:i])
 
     def switch_node(self, path, node, new):
         if len(path) == 1:
@@ -174,12 +175,12 @@ class BlockId(InstanceVisitor):
 
     def set_stmts_ids(self, stmts):
         for stmt in stmts:
-            if isinstance(stmt, ht.Block):
+            if isinstance(stmt, Block):
                 self.set_block_id(stmt)
                 self.set_stmts_ids(stmt.stmts)
 
     def visit_cblock(self, node):
-        self.set_block_id(node.hdl_block)
+        self.set_block_id(node.pydl_block)
 
         if node.prolog:
             self.set_stmts_ids(node.prolog)
@@ -197,4 +198,4 @@ class BlockId(InstanceVisitor):
         self.visit_cblock(node)
 
     def visit_Leaf(self, node):
-        self.set_stmts_ids(node.hdl_blocks)
+        self.set_stmts_ids(node.pydl_blocks)

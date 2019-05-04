@@ -1,22 +1,53 @@
 import ast
 import inspect
+import typing
+from dataclasses import dataclass
 
 from pygears.typing import Uint, bitw
 
-from . import hdl_types as ht
+from .assign_conditions import AssignConditions
+from .ast_parse import parse_ast
 from .cblock import CBlockVisitor
 from .cleanup import condition_cleanup
-from .conditions import Conditions
-from .hdl_ast import HdlAst
-from .hdl_stmt import (AssertionVisitor, BlockConditionsVisitor, InputVisitor,
-                       IntfReadyVisitor, IntfValidVisitor, OutputVisitor,
-                       RegEnVisitor, StateTransitionVisitor, VariableVisitor)
+from .conditions_finder import ConditionsFinder
+from .conditions_utils import init_conditions
+from .hdl_stmt import (AssertionVisitor, InputVisitor, IntfReadyVisitor,
+                       IntfValidVisitor, OutputVisitor, RegEnVisitor,
+                       VariableVisitor)
+from .hls_expressions import IntfDef, RegDef
 from .intf_finder import IntfFinder
 from .reg_finder import RegFinder
 from .scheduling import Scheduler
-from .state_finder import StateFinder, BlockId
+from .state_finder import BlockId, StateFinder
+from .state_transition import HdlStmtStateTransition
 
-# from .stmt_vacum import StmtVacum
+
+@dataclass
+class ModuleData:
+    in_ports: typing.Dict
+    out_ports: typing.Dict
+    hdl_locals: typing.Dict
+    regs: typing.Dict
+    variables: typing.Dict
+    in_intfs: typing.Dict
+    out_intfs: typing.Dict
+    local_namespace: typing.Dict
+
+    def get_container(self, name):
+        for attr in ['regs', 'variables', 'in_intfs', 'out_intfs']:
+            data_inst = getattr(self, attr)
+            if name in data_inst:
+                return data_inst
+        # hdl_locals is last because it contain others
+        if name in self.hdl_locals:
+            return self.hdl_locals
+        return None
+
+    def get(self, name):
+        data_container = self.get_container(name)
+        if data_container is not None:
+            return data_container[name]
+        return None
 
 
 class HDLWriter:
@@ -35,6 +66,30 @@ class HDLWriter:
             self.line(line)
 
 
+def compose_data(gear, regs, variables, intfs):
+    in_ports = {p.basename: IntfDef(p) for p in gear.in_ports}
+    named = {}
+    for port in in_ports:
+        if port in intfs['namedargs']:
+            named[port] = in_ports[port]
+    hdl_locals = {**named, **intfs['varargs']}
+
+    return ModuleData(
+        in_ports=in_ports,
+        out_ports={p.basename: IntfDef(p)
+                   for p in gear.out_ports},
+        hdl_locals=hdl_locals,
+        regs=regs,
+        variables=variables,
+        in_intfs=intfs['vars'],
+        out_intfs=intfs['outputs'],
+        local_namespace={
+            **intfs['namedargs'],
+            **gear.explicit_params,
+            **intfs['varargs']
+        })
+
+
 def parse_gear_body(gear):
     body_ast = ast.parse(inspect.getsource(gear.func)).body[0]
     # import astpretty
@@ -49,10 +104,10 @@ def parse_gear_body(gear):
     reg_v.visit(body_ast)
     reg_v.clean_variables()
 
+    hdl_data = compose_data(gear, reg_v.regs, reg_v.variables, intf.intfs)
+
     # py ast to hdl ast
-    hdl_ast = HdlAst(gear, reg_v.regs, reg_v.variables,
-                     intf.intfs).visit(body_ast)
-    # StmtVacum().visit(hdl_ast)
+    hdl_ast = parse_ast(body_ast, hdl_data)
     schedule = Scheduler().visit(hdl_ast)
     states = StateFinder()
     states.visit(schedule)
@@ -63,16 +118,19 @@ def parse_gear_body(gear):
     # pprint(schedule)
 
     # clear combined conditions from previous run, if any
-    Conditions().init()
+    init_conditions()
+
+    cond_finder = ConditionsFinder(state_num)
+    cond_finder.visit(schedule)
 
     block_visitors = {
-        'register_next_state': RegEnVisitor(),
-        'variables': VariableVisitor(),
-        'outputs': OutputVisitor(),
-        'inputs': InputVisitor(),
-        'intf_ready': IntfReadyVisitor(),
-        'intf_valid': IntfValidVisitor(),
-        'asssertions': AssertionVisitor(),
+        'register_next_state': RegEnVisitor(hdl_data),
+        'variables': VariableVisitor(hdl_data),
+        'outputs': OutputVisitor(hdl_data),
+        'inputs': InputVisitor(hdl_data),
+        'intf_ready': IntfReadyVisitor(hdl_data),
+        'intf_valid': IntfValidVisitor(hdl_data),
+        'asssertions': AssertionVisitor(hdl_data),
     }
 
     res = {}
@@ -81,17 +139,15 @@ def parse_gear_body(gear):
         res[name] = sub_v.visit(schedule)
 
     if state_num > 0:
-        hdl_ast.data.regs['state'] = ht.RegDef(
+        hdl_data.regs['state'] = RegDef(
             name='state', val=Uint[bitw(state_num)](0))
-        sub_v = CBlockVisitor(StateTransitionVisitor(), state_num)
-        res['state_transition'] = sub_v.visit(schedule)
+        res['state_transition'] = HdlStmtStateTransition(state_num).visit(
+            schedule)
 
-    cond_visit = CBlockVisitor(
-        BlockConditionsVisitor(
-            reg_num=len(hdl_ast.data.regs), state_num=state_num), state_num)
+    cond_visit = AssignConditions(hdl_data, state_num)
     cond_visit.visit(schedule)
 
-    res['conditions'] = cond_visit.hdl.conditions()
+    res['conditions'] = cond_visit.get_condition_block()
     try:
         from .simplify_expression import simplify_assigns
     except ImportError:
@@ -103,4 +159,4 @@ def parse_gear_body(gear):
             res = condition_cleanup(res)
             cnt -= 1
 
-    return hdl_ast, res
+    return hdl_data, res

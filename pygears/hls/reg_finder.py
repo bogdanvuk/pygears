@@ -1,11 +1,10 @@
 import ast
-from functools import partial
 
 from pygears.typing import Uint, bitw, is_type
 
-from . import hdl_types as ht
-from .hdl_utils import (break_comb_loop, eval_expression, find_assign_target,
-                        find_for_target, hls_log, set_pg_type)
+from .hls_expressions import ResExpr
+from .utils import (eval_expression, find_assign_target, find_for_target,
+                    hls_log, set_pg_type)
 
 
 class AstAyncFinder(ast.NodeVisitor):
@@ -53,19 +52,11 @@ def find_comb_loop(node, reg_finder):
     if comb_loop:
         length = find_var_length(node.iter, reg_finder.local_params)
 
-        res = ht.ResExpr(Uint[length](0))
+        res = ResExpr(Uint[length](0))
         reg_name, reg_val = reg_finder.auto.new_auto_reg(res)
         reg_finder.regs[reg_name] = reg_val
 
-        var_name, var_val = reg_finder.auto.new_auto_var(res)
-        reg_finder.variables[var_name] = var_val
-
-        node.break_func = partial(
-            break_comb_loop, reg_name=reg_name, var_name=var_name)
-        node.hdl_stmts = [
-            ast.parse(f'{var_name} = Uint[{length}](0)').body[0],
-            ast.parse(f'{reg_name} = {var_name}').body[0]
-        ]
+        node.break_func = {'length': length, 'reg': reg_name}
 
     return comb_loop
 
@@ -113,7 +104,7 @@ class RegFinder(ast.NodeVisitor):
 
         val = set_pg_type(val)
 
-        self.regs[name] = ht.ResExpr(val)
+        self.regs[name] = ResExpr(val)
 
     def clean_variables(self):
         for reg in self.regs:
@@ -139,12 +130,12 @@ class RegFinder(ast.NodeVisitor):
                         length = find_var_length(node.iter, self.local_params)
 
                         if register_var:
-                            self.regs[name] = ht.ResExpr(Uint[bitw(length)](0))
+                            self.regs[name] = ResExpr(Uint[bitw(length)](0))
                             hls_log().debug(
                                 f'For loop iterator {name} registered with width {bitw(length)}'
                             )
                         else:
-                            self.variables[name] = ht.ResExpr(
+                            self.variables[name] = ResExpr(
                                 Uint[bitw(length)](0))
                             hls_log().debug(
                                 f'For loop iterator {name} unrolled with width {bitw(length)}'
