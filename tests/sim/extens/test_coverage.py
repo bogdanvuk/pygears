@@ -3,7 +3,7 @@ from pygears.cookbook.verif import directed
 from pygears.sim import sim
 from pygears.sim.extens.coverage import (CoverBin, CoverGroup, CoverPoint,
                                          cover_func, CoverIterator, cover_intf)
-from pygears.sim.modules.drv import drv
+from pygears.cookbook.verif import drv
 from pygears.typing import Queue, Tuple, Uint
 from pygears import find
 

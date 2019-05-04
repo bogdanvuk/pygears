@@ -6,7 +6,7 @@ from pygears.cookbook import priority_mux
 from pygears.svgen import svgen
 from pygears.sim.modules.verilator import SimVerilated
 from pygears.sim import sim
-from pygears.sim.modules.drv import drv
+from pygears.cookbook.verif import drv
 
 from math import *
 import numpy as np

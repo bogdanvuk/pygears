@@ -3,7 +3,8 @@ import wav_utils
 from echo import echo, stereo_echo
 from pygears import gear
 from pygears.sim import sim
-from pygears.sim.modules import drv, SimVerilated
+from pygears.cookbook.verif import drv
+from pygears.sim.modules import SimVerilated
 from pygears.typing import Tuple, Int, typeof
 
 

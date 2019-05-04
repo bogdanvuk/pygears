@@ -62,8 +62,9 @@ class TraceConfigPlugin(PluginBase):
     def bind(cls):
         safe_bind('trace/hooks', [])
 
-        config.define(
-            'trace/level', setter=set_trace_level, default=TraceLevel.user)
+        config.define('trace/level',
+                      setter=set_trace_level,
+                      default=TraceLevel.user)
 
         config.define(
             'trace/ignore',
@@ -117,6 +118,21 @@ def register_exit_hook(hook, *args, **kwds):
     registry('trace/hooks').append(partial(hook, *args, **kwds))
 
 
+def log_exception(exception):
+    exception_type = type(exception)
+    tr = exception.__traceback__
+
+    from pygears.conf.log import LogException
+    print_traceback = (exception_type is not LogException)
+    if not print_traceback:
+        print_traceback = registry(f'logger/{exception.name}/print_traceback')
+    if print_traceback:
+        for s in enum_traceback(tr):
+            logging.getLogger('trace').error(s[:-1])
+
+    logging.getLogger('trace').error(register_issue(exception_type, exception))
+
+
 def pygears_excepthook(exception_type,
                        exception,
                        tr,
@@ -139,19 +155,7 @@ def pygears_excepthook(exception_type,
         except Exception as e:
             pass
 
-        # print traceback for LogException only if appropriate
-        # 'print_traceback' in registry is set
-        from pygears.conf.log import LogException
-        print_traceback = (exception_type is not LogException)
-        if not print_traceback:
-            print_traceback = registry(
-                f'logger/{exception.name}/print_traceback')
-        if print_traceback:
-            for s in enum_traceback(tr):
-                logging.getLogger('trace').error(s[:-1])
-
-        logging.getLogger('trace').error(
-            register_issue(exception_type, exception))
+        log_exception(exception.with_traceback(tr))
 
 
 @inject

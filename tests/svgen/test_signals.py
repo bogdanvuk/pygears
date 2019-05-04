@@ -1,10 +1,10 @@
 import os
 import pytest
-from pygears import gear, config, TraceLevel, sim, Intf
+from pygears import Intf, config, gear, sim
 from pygears.rtl import rtlgen
 from pygears.typing import Uint
-from pygears.sim.modules import drv, SimVerilated
-from pygears.cookbook.verif import check, directed
+from pygears.sim.modules import SimVerilated
+from pygears.cookbook.verif import directed, drv
 from pygears.core.gear import InSig, OutSig
 
 
@@ -73,6 +73,7 @@ def test_clk_channeling():
     rtltop = rtlgen()
 
     assert InSig('clk2', 1) in rtltop['/dut'].params['signals']
+
 
 # config['svgen/sv_paths'].append(
 #     os.path.join(os.path.dirname(__file__), 'test_signals'))

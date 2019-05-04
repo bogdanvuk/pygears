@@ -10,7 +10,7 @@ from pygears.cookbook.verif import directed, verif
 from pygears.sim import sim
 from pygears.sim.extens.randomization import create_constraint, rand_seq
 from pygears.sim.extens.svrand import SVRandSocket
-from pygears.sim.modules.drv import drv
+from pygears.cookbook.verif import drv
 from pygears.sim.modules.sim_socket import SimSocket
 from pygears.typing import Queue, Uint
 from pygears.util.test_utils import formal_check, skip_ifndef, synth_check

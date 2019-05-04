@@ -1,7 +1,7 @@
 from pygears import module, Intf, gear, registry
 from pygears.cookbook.verif import directed
 from pygears.sim import sim
-from pygears.sim.modules.drv import drv
+from pygears.cookbook.verif import drv
 from pygears.sim.modules import SimVerilated
 from pygears.typing import Uint, Tuple
 from pygears.common import add, fmap, decoupler
@@ -9,7 +9,7 @@ from functools import partial
 
 # from pygears.sim import delta, sim
 # from pygears.typing import Uint
-# from pygears.sim.modules import drv
+# from pygears.cookbook.verif import drv
 # from pygears.common import shred
 
 # @gear

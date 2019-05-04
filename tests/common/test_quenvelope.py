@@ -3,7 +3,7 @@ from pygears import Intf
 from pygears.typing import Uint, Queue, Unit
 from pygears.common import quenvelope
 from pygears.cookbook.verif import directed
-from pygears.sim.modules.drv import drv
+from pygears.cookbook.verif import drv
 from pygears.sim import sim
 
 
