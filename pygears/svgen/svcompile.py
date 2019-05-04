@@ -31,10 +31,7 @@ class SVCompiler(InstanceVisitor):
             self.writer.indent -= 4
             self.writer.line(f'end')
 
-    def _assign_value(self, stmt, name=None):
-        if name is None:
-            name = stmt.target
-
+    def _assign_value(self, stmt):
         if stmt.dtype:
             return f"{svexpr(stmt.target)} = {svexpr(stmt.val, stmt.dtype)}"
 
@@ -69,8 +66,8 @@ class SVCompiler(InstanceVisitor):
     def visit_HDLBlock(self, node):
         self.enter_block(node)
 
-        for name, val in node.dflts.items():
-            assign_stmt = self._assign_value(val, name)
+        for stmt in node.dflt_stmts:
+            assign_stmt = self._assign_value(stmt)
             self.writer.line(f'{assign_stmt};')
 
         for stmt in node.stmts:
@@ -90,21 +87,21 @@ DATA_FUNC_GEAR = """
 """
 
 
-def write_module(node, sv_stmts, writer):
-    for name, expr in node.data.regs.items():
+def write_module(hdl_data, sv_stmts, writer):
+    for name, expr in hdl_data.regs.items():
         writer.block(svgen_typedef(expr.dtype, name))
         writer.line(f'logic {name}_en;')
         writer.line(f'{name}_t {name}_reg, {name}_next;')
         writer.line()
 
-    for name, val in node.data.in_intfs.items():
+    for name, val in hdl_data.in_intfs.items():
         writer.line(f'dti#({int(val.dtype)}) {name}();')
         writer.block(svgen_typedef(val.dtype, name))
         writer.line(f'{name}_t {name}_s;')
         writer.line(f"assign {name}.data = {name}_s;")
     writer.line()
 
-    for name, expr in node.data.variables.items():
+    for name, expr in hdl_data.variables.items():
         writer.block(svgen_typedef(expr.dtype, name))
         writer.line(f'{name}_t {name}_v;')
         writer.line()
@@ -114,7 +111,7 @@ def write_module(node, sv_stmts, writer):
             writer.line(f'logic {cond.target};')
         writer.line()
 
-    for name, expr in node.data.regs.items():
+    for name, expr in hdl_data.regs.items():
         writer.block(REG_TEMPLATE.format(name, int(expr.val)))
 
     for name, val in sv_stmts.items():
@@ -122,9 +119,9 @@ def write_module(node, sv_stmts, writer):
 
 
 def compile_gear_body(gear):
-    hdl_ast, res = parse_gear_body(gear)
+    hdl_data, hdl_ast = parse_gear_body(gear)
     writer = HDLWriter()
-    write_module(hdl_ast, res, writer)
+    write_module(hdl_data, hdl_ast, writer)
 
     return '\n'.join(writer.lines)
 

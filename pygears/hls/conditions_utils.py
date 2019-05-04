@@ -2,7 +2,8 @@ import re
 from functools import partial, reduce
 from string import Template
 
-from . import hdl_types as ht
+from . import hls_expressions as expr
+from .pydl_types import IfBlock, Module
 
 COND_NAME = Template('${cond_type}_cond_block_${block_id}')
 COMBINED_COND_NAME = Template('combined_cond_${cond_id}')
@@ -54,34 +55,9 @@ def nested_exit_cond(stmt):
     return nested_cond(stmt, 'exit')
 
 
-def find_sub_cond_ids(cond):
-    # TODO need to be replaced with expr visitor for operands
-    res = {}
-    if cond:
-        pattern = re.compile('(.*)_cond_block_(.*)')
-        for match in re.finditer('\w+_cond_block_\d+', str(cond)):
-            sub_cond = match.group(0)
-            cond_name, cond_id = pattern.search(sub_cond).groups()
-            if cond_name in res:
-                res[cond_name].append(int(cond_id))
-            else:
-                res[cond_name] = [int(cond_id)]
-
-        return res
-
-    return None
-
-
-def find_cond_id(cond):
-    if cond:
-        return int(cond.split('_')[-1])
-
-    return None
-
-
 def find_exit_cond(statements, search_in_cond=False):
     def has_in_cond(stmt):
-        if search_in_cond and (not isinstance(stmt, ht.IfBlock)) and hasattr(
+        if search_in_cond and (not isinstance(stmt, IfBlock)) and hasattr(
                 stmt, 'in_cond') and (stmt.in_cond is not None):
             return True
         return False
@@ -92,7 +68,7 @@ def find_exit_cond(statements, search_in_cond=False):
             exit_c = nested_exit_cond(stmt)
             if has_in_cond(stmt):
                 in_c = nested_in_cond(stmt)
-                return ht.and_expr(exit_c, in_c)
+                return expr.and_expr(exit_c, in_c)
 
             return exit_c
 
@@ -102,42 +78,89 @@ def find_exit_cond(statements, search_in_cond=False):
     return None
 
 
-class ConditionsBase:
+def find_rst_cond(module):
+    assert isinstance(module, Module)
+    return find_exit_cond(module.stmts, search_in_cond=True)
+
+
+class UsedConditions:
     # shared across all visitors
     in_conds = []
     cycle_conds = []
     exit_conds = []
-    combined_conds = {}
+    combined_conds = []
+    values_of_combined = []
 
-    def init(self):
-        self.in_conds.clear()
-        self.cycle_conds.clear()
-        self.exit_conds.clear()
-        self.combined_conds.clear()
 
-    def add_cond(self, cond, cond_type):
-        assert cond is not None, f'Attempting to add None id to {cond_type} conditions'
-        conds = getattr(self, f'{cond_type}_conds')
-        if cond not in conds:
-            conds.append(cond)
+def init_conditions():
+    UsedConditions.in_conds.clear()
+    UsedConditions.cycle_conds.clear()
+    UsedConditions.exit_conds.clear()
+    UsedConditions.combined_conds.clear()
+    UsedConditions.values_of_combined.clear()
 
-    def add_in_cond(self, cond):
-        self.add_cond(cond, 'in')
 
-    def add_cycle_cond(self, cond):
-        self.add_cond(cond, 'cycle')
+def add_found_cond(cond, cond_type):
+    assert cond is not None, f'Attempting to add None id to {cond_type} conditions'
+    conds = getattr(UsedConditions, f'{cond_type}_conds')
+    if cond not in conds:
+        conds.append(cond)
 
-    def add_exit_cond(self, cond):
-        self.add_cond(cond, 'exit')
 
-    def combine_conditions(self, conds, operator='&&'):
-        if not conds:
-            return None
+def add_in_cond(cond):
+    add_found_cond(cond, 'in')
 
-        if len(conds) == 1:
-            return conds[0]
 
-        name = COMBINED_COND_NAME.substitute(cond_id=len(self.combined_conds))
-        self.combined_conds[name] = reduce(
-            partial(ht.binary_expr, operator=operator), conds, None)
-        return name
+def add_cycle_cond(cond):
+    add_found_cond(cond, 'cycle')
+
+
+def add_exit_cond(cond):
+    add_found_cond(cond, 'exit')
+
+
+def add_cond(cond):
+    cond_id, cond_t = find_cond_id_and_type(cond)
+    add_found_cond(cond_id, cond_t)
+
+
+def find_cond_id_and_type(cond):
+    if cond:
+        res = cond.split('_')
+        return int(res[-1]), res[0]
+
+    return None, None
+
+
+def add_cond_expr_operands(cond):
+    if cond is None:
+        return
+
+    if isinstance(cond, str):
+        if cond_name_match(cond):
+            cond_id, cond_t = find_cond_id_and_type(cond)
+            add_found_cond(cond_id, cond_t)
+            if cond_t == 'combined':
+                add_cond_expr_operands(
+                    UsedConditions.values_of_combined[cond_id])
+
+    elif isinstance(cond, (expr.ConcatExpr, expr.BinOpExpr)):
+        for op in cond.operands:
+            add_cond_expr_operands(op)
+
+    elif isinstance(cond, (expr.UnaryOpExpr, expr.CastExpr)):
+        add_cond_expr_operands(cond.operand)
+
+
+def combine_conditions(conds, operator='&&'):
+    if not conds:
+        return None
+
+    if len(conds) == 1:
+        return conds[0]
+
+    name = COMBINED_COND_NAME.substitute(
+        cond_id=len(UsedConditions.values_of_combined))
+    UsedConditions.values_of_combined.append(
+        reduce(partial(expr.binary_expr, operator=operator), conds, None))
+    return name

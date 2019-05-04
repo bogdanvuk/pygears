@@ -28,11 +28,8 @@ class VCompiler(InstanceVisitor):
         self.extras = {}
         self.kwds = kwds
 
-    def find_width(self, node, target=None):
-        if target is None:
-            target = vexpr(node.target, self.extras)
-        else:
-            target = vexpr(target, self.extras)
+    def find_width(self, node):
+        target = vexpr(node.target, self.extras)
 
         rhs = vexpr(node.val, self.extras)
 
@@ -94,8 +91,8 @@ class VCompiler(InstanceVisitor):
     def visit_HDLBlock(self, node):
         self.enter_block(node)
 
-        for name, val in node.dflts.items():
-            self.writer.line(self.find_width(val, target=name))
+        for stmt in node.dflt_stmts:
+            self.writer.line(self.find_width(stmt))
 
         for stmt in node.stmts:
             self.visit(stmt)
@@ -114,14 +111,14 @@ DATA_FUNC_GEAR = """
 """
 
 
-def write_module(node, v_stmts, writer, **kwds):
-    for name, expr in node.data.regs.items():
+def write_module(hdl_data, v_stmts, writer, **kwds):
+    for name, expr in hdl_data.regs.items():
         writer.line(vgen_reg(expr.dtype, f'{name}_reg', False))
         writer.line(vgen_reg(expr.dtype, f'{name}_next', False))
         writer.line(f'reg {name}_en;')
         writer.line()
 
-    for name, val in node.data.in_intfs.items():
+    for name, val in hdl_data.in_intfs.items():
         writer.line(vgen_intf(val.dtype, name, False))
         writer.line(vgen_reg(val.dtype, f'{name}_s', False))
         tmp = vgen_wire(val.dtype, f'{name}_s')
@@ -129,7 +126,7 @@ def write_module(node, v_stmts, writer, **kwds):
         writer.line(f"assign {name} = {name}_s;")
     writer.line()
 
-    for name, expr in node.data.variables.items():
+    for name, expr in hdl_data.variables.items():
         writer.block(vgen_reg(expr.dtype, f'{name}_v', False))
         writer.line()
 
@@ -138,12 +135,12 @@ def write_module(node, v_stmts, writer, **kwds):
             writer.line(f'wire {cond.target};')
         writer.line()
 
-    for name, expr in node.data.regs.items():
+    for name, expr in hdl_data.regs.items():
         writer.block(REG_TEMPLATE.format(name, int(expr.val)))
 
     extras = {}
     for name, val in v_stmts.items():
-        compiler = VCompiler(name, writer, node.data.hdl_locals, **kwds)
+        compiler = VCompiler(name, writer, hdl_data.hdl_locals, **kwds)
         compiler.visit(val)
         extras.update(compiler.extras)
 
@@ -198,9 +195,9 @@ def compile_gear_body(gear):
     if 'formal' in conf:
         formal = conf['formal']
 
-    hdl_ast, res = parse_gear_body(gear)
+    hdl_data, res = parse_gear_body(gear)
     writer = HDLWriter()
-    write_module(hdl_ast, res, writer, formal=formal)
+    write_module(hdl_data, res, writer, formal=formal)
 
     if formal:
         write_assertions(gear, writer, formal)

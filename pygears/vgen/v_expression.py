@@ -1,6 +1,6 @@
-import pygears.hls.hdl_types as ht
+from pygears.hls.hls_expressions import EXTENDABLE_OPERATORS, BinOpExpr
 from pygears.svgen.sv_expression import SVExpressionVisitor
-from pygears.typing import Array, Int, Integer, Queue, Uint, typeof
+from pygears.typing import Array, Int, Integer, Uint, typeof
 
 TRUNC_FUNC_TEMPLATE = """
 function [{1}:0] {0};
@@ -67,48 +67,24 @@ def cast(res_dtype, op_dtype, op_value):
 
 class VExpressionVisitor(SVExpressionVisitor):
     def __init__(self):
+        super(VExpressionVisitor, self).__init__()
+        self.merge_with = '_'
+        self.expr = vexpr
         self.extras = {}
 
-    def visit_IntfValidExpr(self, node):
-        return f'{node.name}_valid'
-
-    def visit_IntfReadyExpr(self, node):
-        res = []
-        if not isinstance(node.out_port, (list, tuple)):
-            return f'{node.name}_ready'
-
-        for port in node.out_port:
-            if port.context:
-                inst = vexpr(
-                    ht.BinOpExpr((f'{port.name}_ready', port.context), '&&'))
-                res.append(f'({inst})')
-            else:
-                res.append(f'{port.name}_ready')
-        return ' || '.join(res)
-
-    def visit_AttrExpr(self, node):
-        val = [self.visit(node.val)]
-        if node.attr:
-            if typeof(node.val.dtype, Queue):
-                try:
-                    node.val.dtype[node.attr[0]]
-                except KeyError:
-                    val.append('data')
-        return '_'.join(val + node.attr)
-
-    def visit_CastExpr(self, node):
+    def visit_CastExpr(self, node, cast_to):
         val, func = cast(node.dtype, node.operand.dtype,
                          self.visit(node.operand))
         update_extras(self.extras, func)
         return val
 
-    def visit_BinOpExpr(self, node):
+    def visit_BinOpExpr(self, node, cast_to):
         ops = [self.visit(op) for op in node.operands]
         for i, op in enumerate(node.operands):
-            if isinstance(op, ht.BinOpExpr):
+            if isinstance(op, BinOpExpr):
                 ops[i] = f'({ops[i]})'
 
-        if node.operator not in ht.EXTENDABLE_OPERATORS:
+        if node.operator not in EXTENDABLE_OPERATORS:
             return f'{ops[0]} {node.operator} {ops[1]}'
 
         res_dtype = node.dtype
@@ -124,7 +100,7 @@ class VExpressionVisitor(SVExpressionVisitor):
 
         return val0 + f" {node.operator} " + val1
 
-    def visit_SubscriptExpr(self, node):
+    def visit_SubscriptExpr(self, node, cast_to):
         val = self.visit(node.val)
 
         if isinstance(node.index, slice):
@@ -156,19 +132,10 @@ class VExpressionVisitor(SVExpressionVisitor):
 
         return f'{val}_{dtype.fields[node.index]}'
 
-    def visit_IntfDef(self, node):
-        if node.context:
-            if node.context == 'eot':
-                return f'&{node.name}_s_{node.context}'
-
-            return f'{node.name}_{node.context}'
-
-        return f'{node.name}_s'
-
 
 def vexpr(expr, extras=None):
     v_visit = VExpressionVisitor()
-    res = v_visit.visit(expr)
+    res = v_visit.visit(expr, None)
     if extras is not None:
         update_extras(extras, v_visit.extras)
     return res
