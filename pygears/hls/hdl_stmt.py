@@ -170,10 +170,12 @@ class RegEnVisitor(HDLStmtVisitor):
         return [AssignValue(f'{reg}_en', 0) for reg in self.hdl_data.regs]
 
     def visit_RegNextStmt(self, node, cond, **kwds):
-        cycle_cond = find_cycle_cond(cond)
+        en_cond = getattr(node.reg, 'en_cond', False)
+        if not en_cond:
+            en_cond = find_cycle_cond(cond)
 
         return [
-            AssignValue(target=f'{node.name}_en', val=cycle_cond),
+            AssignValue(target=f'{node.name}_en', val=en_cond),
             parse_stmt_target(node, 'next')
         ]
 

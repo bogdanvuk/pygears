@@ -1,11 +1,10 @@
 import ast
-from functools import partial
 
 from pygears.typing import Uint, bitw, is_type
 
 from .hls_expressions import ResExpr
-from .utils import (break_comb_loop, eval_expression, find_assign_target,
-                    find_for_target, hls_log, set_pg_type)
+from .utils import (eval_expression, find_assign_target, find_for_target,
+                    hls_log, set_pg_type)
 
 
 class AstAyncFinder(ast.NodeVisitor):
@@ -57,15 +56,7 @@ def find_comb_loop(node, reg_finder):
         reg_name, reg_val = reg_finder.auto.new_auto_reg(res)
         reg_finder.regs[reg_name] = reg_val
 
-        var_name, var_val = reg_finder.auto.new_auto_var(res)
-        reg_finder.variables[var_name] = var_val
-
-        node.break_func = partial(
-            break_comb_loop, reg_name=reg_name, var_name=var_name)
-        node.hdl_stmts = [
-            ast.parse(f'{var_name} = Uint[{length}](0)').body[0],
-            ast.parse(f'{reg_name} = {var_name}').body[0]
-        ]
+        node.break_func = {'length': length, 'reg': reg_name}
 
     return comb_loop
 

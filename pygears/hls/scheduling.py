@@ -103,7 +103,7 @@ class Scheduler(TypeVisitor):
         free_stmts = []
         for stmt in node.stmts:
             child = self.visit(stmt)
-            if child is not None:
+            if child is not None and find_hier_blocks(child.pydl_block.stmts):
                 cblock.child.append(child)
                 if free_stmts:
                     add_prolog(child, free_stmts)

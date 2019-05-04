@@ -132,65 +132,6 @@ def state_expr(state_ids, prev_cond):
     return state_cond
 
 
-def find_break_path(node, break_num, scope, found_num=0):
-    found_num = found_num
-    for stmt in node.stmts:
-        if isinstance(stmt, Block):
-            found_num = find_break_path(stmt, break_num, scope, found_num)
-            if found_num == (break_num + 1):
-                break
-        elif isinstance(stmt, expr.BreakExpr):
-            found_num += 1
-
-    if found_num == (break_num + 1):
-        if isinstance(node, Block):
-            scope.append(node)
-
-    return found_num
-
-
-def break_comb_loop(loop_to_break, module_data, reg_name, var_name):
-    from .ast_parse import parse_ast
-
-    # current loop iteration
-    break_num = len(loop_to_break.break_cond)
-
-    # all sub conditions that lead to break
-    scope = []
-    find_break_path(loop_to_break, break_num, scope)
-    sub_conds = [
-        block.in_cond for block in scope
-        if hasattr(block, 'in_cond') and block.in_cond is not None
-    ]
-
-    # added reg. condition in case inputs change
-    loop_cond_stmt = ast.parse(
-        f'({reg_name} == 0) or {reg_name}[{break_num}]').body[0]
-    loop_reg_cond = parse_ast(loop_cond_stmt.value, module_data)
-    sub_conds.append(loop_reg_cond)
-
-    # merged in condition for current iteration
-    in_cond = expr.create_oposite(reduce(expr.and_expr, sub_conds, None))
-
-    if loop_to_break.break_cond:
-        break_conds = reduce(expr.and_expr,
-                             loop_to_break.break_cond + [loop_reg_cond], None)
-    else:
-        break_conds = loop_reg_cond
-        loop_to_break.break_cond = []
-
-    assert scope[-1] == loop_to_break
-    if_block = scope[-2]
-    if_block._in_cond = expr.and_expr(if_block._in_cond, break_conds)
-
-    loop_to_break.break_cond.append(in_cond)
-
-    # register current loop iteration
-    loop_stmt = parse_ast(
-        ast.parse(f'{var_name}[{break_num}] = 1').body[0], module_data)
-    if_block.stmts.insert(0, loop_stmt)
-
-
 def get_bin_expr(op, operand1, operand2, module_data):
     op1 = find_data_expression(operand1, module_data)
     op2 = find_data_expression(operand2, module_data)

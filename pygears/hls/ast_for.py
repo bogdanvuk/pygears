@@ -1,4 +1,5 @@
 import ast
+from functools import reduce
 
 from pygears.typing import Uint
 from pygears.util.utils import qrange
@@ -6,9 +7,10 @@ from pygears.util.utils import qrange
 from .ast_modifications import unroll_statements
 from .ast_parse import parse_ast, parse_block
 from .compile_snippets import enumerate_impl, qrange_mux_impl
-from .hls_expressions import (BinOpExpr, OperandVal, RegDef, ResExpr,
-                              VariableDef, VariableStmt)
-from .pydl_types import ContainerBlock, Loop
+from .hls_expressions import (BinOpExpr, BreakExpr, OperandVal, RegDef,
+                              ResExpr, VariableDef, VariableStmt, and_expr,
+                              create_oposite, or_expr)
+from .pydl_types import Block, ContainerBlock, IfBlock, Loop
 from .utils import (VisitError, add_to_list, find_data_expression,
                     find_for_target)
 
@@ -222,21 +224,88 @@ def registered_enumerate(node, target_names, stop, enum_target, module_data):
 
 def comb_enumerate(node, target_names, stop, enum_target, module_data):
     pydl_node = ContainerBlock(stmts=[])
-    if getattr(node, 'break_func', None):
-        pydl_node.break_cond = []
+    pydl_node.break_cond = []
+    pydl_node.loop_iter_in_cond = []
 
-    for stmt in node.hdl_stmts:
-        add_to_list(pydl_node.stmts, parse_ast(stmt, module_data))
+    reg_name = node.break_func['reg']
+    init_reg_stmt = ast.parse(
+        f"{reg_name} = Uint[{node.break_func['length']}](0)").body[0]
+    add_to_list(pydl_node.stmts, parse_ast(init_reg_stmt, module_data))
+    module_data.hdl_locals[reg_name].en_cond = 1
 
     for i, last in qrange(stop.val):
-        py_stmt = f'{target_names[0]} = Uint[bitw({stop.val})]({i}); {target_names[1]} = {enum_target}{i}'
+        py_stmt = (f'{target_names[0]} = Uint[bitw({stop.val})]({i}); '
+                   f'{target_names[1]} = {enum_target}{i}')
         stmts = ast.parse(py_stmt).body + node.body
 
         unrolled = unroll_statements(module_data, stmts, i, target_names, last)
 
         parse_block(pydl_node, unrolled, module_data)
 
-        if getattr(node, 'break_func', None):
-            node.break_func(pydl_node, module_data)
+        break_comb_loop(pydl_node, module_data, reg_name)
 
+    assign_reg_stmt = ast.parse(f'{reg_name} = {reg_name}').body[0]
+    reg_dflt_block = IfBlock(
+        _in_cond=create_oposite(
+            reduce(or_expr, pydl_node.loop_iter_in_cond, None)),
+        stmts=[parse_ast(assign_reg_stmt, module_data)])
+    pydl_node.stmts.append(reg_dflt_block)
     return pydl_node
+
+
+def find_break_path(node, break_num, scope, found_num=0):
+    found_num = found_num
+    for stmt in node.stmts:
+        if isinstance(stmt, Block):
+            found_num = find_break_path(stmt, break_num, scope, found_num)
+            if found_num == (break_num + 1):
+                break
+        elif isinstance(stmt, BreakExpr):
+            found_num += 1
+
+    if found_num == (break_num + 1):
+        if isinstance(node, Block):
+            scope.append(node)
+
+    return found_num
+
+
+def break_comb_loop(loop_to_break, module_data, reg_name):
+    # current loop iteration
+    break_num = len(loop_to_break.break_cond)
+
+    # all sub conditions that lead to break
+    scope = []
+    find_break_path(loop_to_break, break_num, scope)
+    sub_conds = [
+        block.in_cond for block in scope
+        if hasattr(block, 'in_cond') and block.in_cond is not None
+    ]
+
+    # added reg. condition in case inputs change
+    loop_cond_stmt = ast.parse(
+        f'({reg_name} == 0) or {reg_name}[{break_num}]').body[0]
+    loop_reg_cond = parse_ast(loop_cond_stmt.value, module_data)
+    sub_conds.append(loop_reg_cond)
+
+    # merged in condition for current iteration
+    in_cond = create_oposite(reduce(and_expr, sub_conds, None))
+
+    if loop_to_break.break_cond:
+        break_conds = reduce(and_expr,
+                             loop_to_break.break_cond + [loop_reg_cond], None)
+    else:
+        break_conds = loop_reg_cond
+        loop_to_break.break_cond = []
+
+    assert scope[-1] == loop_to_break
+    if_block = scope[-2]
+    if_block._in_cond = and_expr(if_block._in_cond, break_conds)
+
+    loop_to_break.break_cond.append(in_cond)
+    loop_to_break.loop_iter_in_cond.append(if_block.in_cond)
+
+    # register current loop iteration
+    loop_stmt = parse_ast(
+        ast.parse(f'{reg_name}[{break_num}] = 1').body[0], module_data)
+    if_block.stmts.insert(0, loop_stmt)
