@@ -8,7 +8,7 @@ def pipeline(port_name):
 
 
 def decouple(port_name, depth=2):
-    insert_module(port_name, _decoupler)
+    insert_module(port_name, _decoupler(depth=depth))
 
 
 def insert_module(port_name, module):
