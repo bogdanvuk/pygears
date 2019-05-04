@@ -103,7 +103,7 @@ class Scheduler(TypeVisitor):
         free_stmts = []
         for stmt in node.stmts:
             child = self.visit(stmt)
-            if child is not None and find_hier_blocks(child.pydl_block.stmts):
+            if child is not None and find_hier_blocks(child.pydl_block):
                 cblock.child.append(child)
                 if free_stmts:
                     add_prolog(child, free_stmts)
@@ -115,8 +115,8 @@ class Scheduler(TypeVisitor):
             if cblock.child:
                 add_epilog(cblock.child[-1], free_stmts)
             else:
-                raise VisitError(
-                    "Free stmts in container block with no children")
+                cblock.child.append(
+                    Leaf(parent=cblock, pydl_blocks=free_stmts))
         return cblock
 
     def visit_Loop(self, node):

@@ -5,7 +5,7 @@ from pygears.cookbook.verif import directed, verif
 from pygears.sim import sim
 from pygears.sim.modules.drv import drv
 from pygears.typing import Int, Queue, Tuple, Uint
-from pygears.util.test_utils import formal_check
+from pygears.util.test_utils import formal_check, skip_ifndef
 
 
 def test_2_inputs(tmpdir, cosim_cls):
