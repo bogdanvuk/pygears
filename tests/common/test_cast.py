@@ -5,7 +5,7 @@ from pygears import Intf
 from pygears.util.test_utils import skip_ifndef
 from pygears.cookbook.verif import verif
 from pygears.sim import sim
-from pygears.sim.modules.drv import drv
+from pygears.cookbook.verif import drv
 from pygears.sim.modules.verilator import SimVerilated
 
 

@@ -2,7 +2,7 @@ import time
 import cProfile, pstats, io
 from pygears import gear
 from pygears.typing import Uint
-from pygears.sim.modules import drv
+from pygears.cookbook.verif import drv
 from pygears.sim import sim
 from pygears.sim.extens.sim_extend import SimExtend
 from pygears.common import shred

@@ -6,7 +6,7 @@ from string import Template
 
 import jinja2
 
-from pygears import bind, registry
+from pygears import bind, registry, config
 from pygears.sim import sim_log
 from pygears.sim.c_drv import CInputDrv, COutputDrv
 from pygears.sim.modules.cosim_base import CosimBase
@@ -90,7 +90,7 @@ class SimVerilated(CosimBase):
 
         tracing_enabled = bool(registry('svgen/debug_intfs'))
         if tracing_enabled:
-            sim_log().info(f"Debugg: {registry('svgen/debug_intfs')}")
+            sim_log().info(f"Debug: {registry('svgen/debug_intfs')}")
             self.trace_fn = f'{self.outdir}/vlt_dump.vcd'
             try:
                 subprocess.call(f"rm -f {self.trace_fn}", shell=True)
@@ -156,6 +156,7 @@ class SimVerilated(CosimBase):
             'out_ports': self.rtlnode.out_ports,
             'top_name': self.wrap_name,
             'tracing': tracing_enabled,
+            'aux_clock': config['sim/aux_clock'],
             'outdir': self.outdir
         }
 

@@ -5,7 +5,7 @@ from pygears.cookbook import tr_cnt
 from pygears.cookbook.delay import delay_rng
 from pygears.cookbook.verif import directed
 from pygears.sim import sim
-from pygears.sim.modules.drv import drv
+from pygears.cookbook.verif import drv
 from pygears.typing import Queue, Uint
 from pygears.util.test_utils import formal_check, synth_check
 

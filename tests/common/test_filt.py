@@ -6,7 +6,7 @@ from pygears import Intf
 from pygears.common import filt, filt_by
 from pygears.cookbook.verif import directed
 from pygears.sim import sim
-from pygears.sim.modules.drv import drv
+from pygears.cookbook.verif import drv
 from pygears.typing import Queue, Tuple, Uint, Union, typeof
 from pygears.util.test_utils import skip_ifndef, synth_check
 

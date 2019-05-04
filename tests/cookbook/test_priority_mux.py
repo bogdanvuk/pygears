@@ -3,7 +3,7 @@ from pygears.cookbook import priority_mux
 from pygears.cookbook.delay import delay_rng
 from pygears.cookbook.verif import verif
 from pygears.sim import sim
-from pygears.sim.modules.drv import drv
+from pygears.cookbook.verif import drv
 from pygears.typing import Uint, Int, Tuple
 from pygears.util.test_utils import formal_check, skip_ifndef
 

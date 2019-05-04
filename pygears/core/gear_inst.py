@@ -140,8 +140,10 @@ def resolve_args(args, argnames, annotations, varargs):
 def infer_params(args, params, context):
     arg_types = {name: arg.dtype for name, arg in args.items()}
 
-    return infer_ftypes(
-        params, arg_types, namespace=context, allow_incomplete=False)
+    return infer_ftypes(params,
+                        arg_types,
+                        namespace=context,
+                        allow_incomplete=False)
 
 
 class create_hier:
@@ -192,8 +194,14 @@ class intf_name_tracer:
                     val.var_name = name
 
 
+def is_hls_impl_func(func):
+    is_async_gen = bool(func.__code__.co_flags & inspect.CO_ASYNC_GENERATOR)
+    return not (inspect.iscoroutinefunction(func)
+                or inspect.isgeneratorfunction(func) or is_async_gen)
+
+
 def resolve_func(gear_inst):
-    if not gear_inst.hierarchical:
+    if not is_hls_impl_func(gear_inst.func):
         return tuple()
 
     with create_hier(gear_inst):
@@ -233,9 +241,8 @@ def resolve_gear(gear_inst, fix_intfs):
         if out_intfs and hasattr(out_intfs[i], 'var_name'):
             gear_inst.outnames.append(out_intfs[i].var_name)
         else:
-            gear_inst.outnames.append(
-                dflt_dout_name if len(out_dtype) ==
-                1 else f'{dflt_dout_name}{i}')
+            gear_inst.outnames.append(dflt_dout_name if len(out_dtype) ==
+                                      1 else f'{dflt_dout_name}{i}')
 
     gear_inst.connect_output(out_intfs, out_dtype)
 
@@ -312,10 +319,9 @@ def gear_base_resolver(func,
 
     kwddefaults = paramspec.kwonlydefaults or {}
     param_templates = {
-        **dict(
-            outnames=outnames or ret_outnames or [],
-            name=name,
-            intfs=fix_intfs),
+        **dict(outnames=outnames or ret_outnames or [],
+               name=name,
+               intfs=fix_intfs),
         **kwddefaults,
         **kwds,
         **meta_kwds,
@@ -349,7 +355,8 @@ def gear_base_resolver(func,
         except (TooManyArguments, GearTypeNotSpecified, GearArgsNotSpecified,
                 TypeError, TypeMatchError, MultiAlternativeError) as e:
             err = e
-            if hasattr(func, 'alternatives') or hasattr(func, 'alternative_to'):
+            if hasattr(func, 'alternatives') or hasattr(
+                    func, 'alternative_to'):
                 err.root_gear = gear_inst
 
     if err:

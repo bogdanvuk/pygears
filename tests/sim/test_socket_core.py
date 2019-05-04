@@ -7,7 +7,7 @@ from pygears import gear
 from pygears.cookbook.verif import directed
 from pygears.definitions import ROOT_DIR
 from pygears.sim import sim
-from pygears.sim.modules import drv
+from pygears.cookbook.verif import drv
 from pygears.sim.modules.sim_socket import SimSocket
 from pygears.typing import Queue, Tuple, Uint
 # import sys

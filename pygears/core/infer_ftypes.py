@@ -157,7 +157,8 @@ def infer_ftypes(params, args, namespace={}, allow_incomplete=False):
 
     if postponed:
         name, value = next(iter(postponed.items()))
-        print(match)
-        raise TypeMatchError(f'Parameter "{name}" unresolved: {value}')
+        err = TypeMatchError(f'Parameter "{name}" unresolved: {value}')
+        err.params = match
+        raise err
 
     return match

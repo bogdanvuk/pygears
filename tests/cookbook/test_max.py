@@ -1,6 +1,6 @@
 from pygears.cookbook.verif import directed
 from pygears.sim import sim
-from pygears.sim.modules.drv import drv
+from pygears.cookbook.verif import drv
 from pygears.typing import Tuple, Uint, Int
 from pygears.cookbook import max2
 

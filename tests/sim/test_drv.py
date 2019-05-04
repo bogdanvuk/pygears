@@ -1,4 +1,4 @@
-from pygears.sim.modules.drv import TypeDrvVisitor
+from pygears.cookbook.verif import TypeDrvVisitor
 from pygears.typing import Queue, Uint
 
 

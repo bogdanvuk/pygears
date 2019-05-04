@@ -4,7 +4,7 @@ from pygears import Intf
 from pygears.cookbook import alternate_queues, delay_rng
 from pygears.cookbook.verif import directed
 from pygears.sim import sim
-from pygears.sim.modules.drv import drv
+from pygears.cookbook.verif import drv
 from pygears.typing import Int, Queue, Uint
 from pygears.util.test_utils import formal_check, synth_check
 

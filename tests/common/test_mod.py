@@ -2,7 +2,7 @@ from pygears import Intf
 from pygears.common import mod
 from pygears.cookbook.verif import verif
 from pygears.sim import sim
-from pygears.sim.modules.drv import drv
+from pygears.cookbook.verif import drv
 from pygears.typing import Tuple, Uint
 from pygears.util.test_utils import formal_check, synth_check
 

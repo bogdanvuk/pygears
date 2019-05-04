@@ -8,7 +8,7 @@ import os
 from enum import IntEnum
 
 from pygears.typing import Integer, Uint
-from pygears.sim.modules.mon import TypeMonitorVisitor, Partial
+from pygears.cookbook.verif import TypeMonitorVisitor, Partial
 from pygears.util.utils import quiter
 
 

@@ -5,6 +5,7 @@ from collections import OrderedDict
 
 import pygears
 from pygears import registry, safe_bind
+from pygears.core.gear import OutSig
 from pygears.svgen.inst import SVGenInstPlugin
 from pygears.svgen.svparse import parse
 
@@ -185,6 +186,7 @@ class SVModuleGen:
             'module_name': self.sv_module_name,
             'inst_name': self.sv_inst_name,
             'intfs': list(self.sv_port_configs()),
+            'sigs': self.node.params['signals'],
             'param_map': self.params
         }
         return template_env.render_local(__file__, "module_synth_wrap.j2",
@@ -217,6 +219,8 @@ class SVModuleGen:
             'pygears': pygears,
             'module_name': self.sv_module_name,
             'intfs': list(self.sv_port_configs()),
+            # 'sigs': [s.name for s in self.node.params['signals']],
+            'sigs': self.node.params['signals'],
             'params': self.node.params,
             'inst': [],
             'generics': [],
@@ -245,6 +249,12 @@ class SVModuleGen:
                     context['inst'].append(contents)
 
             for child in self.node.local_modules():
+                for s in child.params['signals']:
+                    if isinstance(s, OutSig):
+                        name = child.params['sigmap'][s.name]
+                        context['inst'].append(
+                            f'logic [{s.width-1}:0] {name};')
+
                 svgen = self.svgen_map[child]
                 if hasattr(svgen, 'get_inst'):
                     contents = svgen.get_inst(template_env)
@@ -299,7 +309,8 @@ class SVModuleGen:
             'module_name': self.sv_module_name,
             'inst_name': self.sv_inst_name,
             'param_map': param_map,
-            'port_map': OrderedDict(in_port_map + out_port_map)
+            'port_map': OrderedDict(in_port_map + out_port_map),
+            'sig_map': self.node.params['sigmap']
         }
 
         return template_env.snippets.module_inst(**context)

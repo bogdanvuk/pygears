@@ -4,7 +4,7 @@ from pygears import clear
 from pygears import gear
 from pygears.cookbook.verif import verif
 # from pygears.sim.modules.dtype_rnd_seq import dtype_rnd_seq
-from pygears.sim.modules.seqr import seqr
+# from pygears.sim.modules.seqr import seqr
 # from pygears.sim.scv import create_type_cons
 from pygears.typing import Queue, Uint, Tuple, TLM, Int
 from pygears.cookbook.rng import rng
