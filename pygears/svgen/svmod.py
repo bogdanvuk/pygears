@@ -320,3 +320,4 @@ class SVGenSVModPlugin(SVGenInstPlugin):
     @classmethod
     def bind(cls):
         safe_bind('svgen/module_namespace/Gear', SVModuleGen)
+        safe_bind('svgen/module_namespace/GearHierRoot', SVModuleGen)

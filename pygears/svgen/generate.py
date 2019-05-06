@@ -99,7 +99,7 @@ class SVGenGenerateVisitor(HierYielderBase):
             # print(f'Generating {svgen.sv_file_name}')
             yield svgen.sv_file_name, contents
 
-            if (self.wrapper) and (node == self.top):
+            if (self.wrapper) and (node is self.top):
                 yield f'wrap_{svgen.sv_file_name}', svgen.get_synth_wrap(
                     self.template_env)
 

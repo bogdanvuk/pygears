@@ -66,8 +66,8 @@ def get_result_dir(filename=None, function_name=None):
 
     test_dir = os.path.dirname(__file__)
 
-    return os.path.join(test_dir, 'result', os.path.relpath(
-        filename, test_dir), function_name)
+    return os.path.join(test_dir, 'result',
+                        os.path.relpath(filename, test_dir), function_name)
 
 
 def prepare_result_dir(filename=None, function_name=None):
@@ -101,9 +101,9 @@ def get_test_res_ref_dir_pair(func):
 def formal_check(disable=None, asserts=None, assumes=None, **kwds):
     def decorator(func):
         return pytest.mark.usefixtures('formal_check_fixt')(
-            pytest.mark.parametrize(
-                'formal_check_fixt', [[disable, asserts, assumes, kwds]],
-                indirect=True)(func))
+            pytest.mark.parametrize('formal_check_fixt',
+                                    [[disable, asserts, assumes, kwds]],
+                                    indirect=True)(func))
 
     return decorator
 
@@ -128,8 +128,8 @@ def formal_check_fixt(tmpdir, request):
             gear = svmod.node.gear
 
     yosis_cmds = []
-    env = jinja2.Environment(
-        loader=jinja2.FileSystemLoader(searchpath=os.path.dirname(__file__)))
+    env = jinja2.Environment(loader=jinja2.FileSystemLoader(
+        searchpath=os.path.dirname(__file__)))
     jinja_context = {'name': gear.basename, 'outdir': outdir}
 
     def find_yosis_cmd(name):
@@ -158,20 +158,18 @@ def formal_check_fixt(tmpdir, request):
 def synth_check(expected, **kwds):
     def decorator(func):
         return pytest.mark.usefixtures('synth_check_fixt')(
-            pytest.mark.parametrize(
-                'synth_check_fixt', [[expected, kwds]], indirect=True)(func))
+            pytest.mark.parametrize('synth_check_fixt', [[expected, kwds]],
+                                    indirect=True)(func))
 
     return decorator
 
 
-@pytest.fixture
-def synth_check_fixt(tmpdir, language, request):
-    skip_ifndef('SYNTH_TEST')
-    yield
+def vivado_synth(outdir, language, params=None):
+    if params is None:
+        params = {}
 
-    outdir = tmpdir
     if language == 'sv':
-        svgen(outdir=outdir, wrapper=True, **request.param[1])
+        svgen(outdir=outdir, wrapper=True, **params)
 
         files = []
         for svmod in registry("svgen/map").values():
@@ -188,7 +186,7 @@ def synth_check_fixt(tmpdir, language, request):
         files.append(os.path.join(outdir, 'wrap_top.sv'))
 
     elif language == 'v':
-        vgen(outdir=outdir, wrapper=False, **request.param[1])
+        vgen(outdir=outdir, wrapper=False, **params)
 
         files = []
         for svmod in registry("svgen/map").values():
@@ -207,8 +205,8 @@ def synth_check_fixt(tmpdir, language, request):
 
     jinja_context = {'res_dir': os.path.join(outdir, 'vivado'), 'files': files}
 
-    env = jinja2.Environment(
-        loader=jinja2.FileSystemLoader(searchpath=os.path.dirname(__file__)))
+    env = jinja2.Environment(loader=jinja2.FileSystemLoader(
+        searchpath=os.path.dirname(__file__)))
 
     env.get_template('synth.j2').stream(jinja_context).dump(
         f'{outdir}/synth.tcl')
@@ -234,6 +232,16 @@ def synth_check_fixt(tmpdir, language, request):
         line = next(islice(f, 2, None))
         util['path delay'] = float(line.split()[1])
 
+    return util
+
+
+@pytest.fixture
+def synth_check_fixt(tmpdir, language, request):
+    skip_ifndef('SYNTH_TEST')
+    yield
+
+    util = vivado_synth(tmpdir, request.param[1])
+
     for param, value in request.param[0].items():
         if callable(value):
             assert value(util[param])
@@ -244,8 +252,8 @@ def synth_check_fixt(tmpdir, language, request):
 def svgen_check(expected, **kwds):
     def decorator(func):
         return pytest.mark.usefixtures('svgen_check_fixt')(
-            pytest.mark.parametrize(
-                'svgen_check_fixt', [[expected, kwds]], indirect=True)(func))
+            pytest.mark.parametrize('svgen_check_fixt', [[expected, kwds]],
+                                    indirect=True)(func))
 
     return decorator
 

@@ -123,27 +123,31 @@ def infer_ftypes(params, args, namespace={}, allow_incomplete=False):
                     raise err
             try:
                 substituted, new_p = resolve_param(val, match, namespace)
-
-                if name in args:
-                    new_p = args[name]
-                    substituted = type_is_specified(new_p)
-
-                if substituted and (name == 'return'):
-                    substituted = type_is_specified(new_p)
-
-                if substituted:
-                    if name == 'return':
-                        substituted = type_is_specified(new_p)
-
-                    if name in args:
-                        new_p = copy_field_names(new_p, params[name])
-                        args[name] = new_p
-
-                    match[name] = new_p
-                    del postponed[name]
-                    break
             except Exception as e:
                 if final_check:
+                    raise type(e)(f'{str(e)} - when resolving '
+                                  f'parameter {name}: {val}')
+            else:
+                try:
+                    if name in args:
+                        new_p = args[name]
+                        substituted = type_is_specified(new_p)
+
+                    if substituted and (name == 'return'):
+                        substituted = type_is_specified(new_p)
+
+                    if substituted:
+                        if name == 'return':
+                            substituted = type_is_specified(new_p)
+
+                        if name in args:
+                            new_p = copy_field_names(new_p, params[name])
+                            args[name] = new_p
+
+                        match[name] = new_p
+                        del postponed[name]
+                        break
+                except Exception as e:
                     raise type(e)(f'{str(e)} - when resolving '
                                   f'parameter {name}: {val}')
 
