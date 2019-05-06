@@ -16,6 +16,7 @@ from .hdl_stmt import (AssertionVisitor, InputVisitor, IntfReadyVisitor,
                        VariableVisitor)
 from .hls_expressions import IntfDef, RegDef
 from .intf_finder import IntfFinder
+from .optimizations import pipeline_ast
 from .reg_finder import RegFinder
 from .scheduling import Scheduler
 from .state_finder import BlockId, StateFinder
@@ -108,6 +109,11 @@ def parse_gear_body(gear):
 
     # py ast to hdl ast
     hdl_ast = parse_ast(body_ast, hdl_data)
+
+    pipeline = gear.params['svgen'].get('pipeline', False)
+    if pipeline:
+        hdl_ast = pipeline_ast(hdl_ast, hdl_data)
+
     schedule = Scheduler().visit(hdl_ast)
     states = StateFinder()
     states.visit(schedule)

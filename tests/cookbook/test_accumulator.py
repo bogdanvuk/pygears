@@ -3,9 +3,8 @@ import pytest
 from pygears import Intf
 from pygears.cookbook import accumulator
 from pygears.cookbook.delay import delay_rng
-from pygears.cookbook.verif import directed, verif
+from pygears.cookbook.verif import directed, drv, verif
 from pygears.sim import sim
-from pygears.cookbook.verif import drv
 from pygears.typing import Int, Queue, Tuple, Uint
 from pygears.util.test_utils import formal_check, synth_check
 

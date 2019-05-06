@@ -153,7 +153,7 @@ class RegFinder(ast.NodeVisitor):
         try:
             is_async = node.value.func.attr in ['get_nb', 'get']
         except AttributeError:
-            is_async = False
+            is_async = isinstance(node.value, ast.Await)
 
         for name in names:
             if name in self.intf_outs:
