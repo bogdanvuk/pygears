@@ -99,6 +99,7 @@ class RTLSigChannelVisitor(HierVisitorBase):
         if node.parent:
             for s in node.params['signals']:
                 if s.name not in node.params['sigmap']:
+                    node.params['sigmap'] = node.params['sigmap'].copy()
                     node.params['sigmap'][s.name] = s.name
 
             for s in node.params['signals']:
@@ -110,6 +111,8 @@ class RTLSigChannelVisitor(HierVisitorBase):
                             node.parent.params['signals'] = list(
                                 node.parent.params['signals'])
 
+                        node.parent.params['signals'] = node.parent.params[
+                            'signals'].copy()
                         node.parent.params['signals'].append(s)
 
         return True
