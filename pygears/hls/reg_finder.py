@@ -150,11 +150,21 @@ class RegFinder(ast.NodeVisitor):
     def visit_Assign(self, node):
         names = find_assign_target(node)
 
+        try:
+            is_async = node.value.func.attr in ['get_nb', 'get']
+        except AttributeError:
+            is_async = False
+
         for name in names:
             if name in self.intf_outs:
                 continue
 
             if name not in self.variables:
+                if is_async:
+                    hls_log().debug(
+                        f'Assign to {name} not registered. Explicit initialization needed when using interface statements'
+                    )
+                    continue
                 try:
                     self.variables[name] = eval_expression(
                         node.value, self.local_params)
