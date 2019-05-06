@@ -2,12 +2,11 @@ from pygears import alternative, gear
 from pygears.common import cart
 from pygears.typing import Bool, Integer, Queue, Tuple
 
+t_din = Queue[Tuple[{'data': Integer['w_data'], 'offset': Integer['w_data']}]]
 
-@gear(svgen={'compile': True})
-async def accumulator(din: Queue[Tuple[{
-        'data': Integer['w_data'],
-        'offset': Integer['w_data']
-}]]) -> b'din.data["data"]':
+
+@gear(svgen={'compile': True, 'pipeline': True})
+async def accumulator(din: t_din) -> b'din.data["data"]':
     """Accumulates i.e. sums up the values from the input. The ``data`` field
     values of the input :class:`Tuple` type are accumulated and an initial offset
     can be added via the ``offset`` field. The accumulated sum is returned when
@@ -37,7 +36,7 @@ def accumulator2(din: Queue[Integer['w_data']], cfg: Integer['w_data']):
 
 
 @alternative(accumulator)
-@gear(svgen={'compile': True})
+@gear(svgen={'compile': True, 'pipeline': True})
 async def accumulator_no_offset(din: Queue[Integer['w_data']]) -> b'din.data':
     acc = din.dtype.data(0)
 

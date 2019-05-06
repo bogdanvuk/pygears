@@ -308,10 +308,10 @@ def find_name_expression(node, module_data):
 
 
 def hls_log():
-    return logging.getLogger('svgen')
+    return logging.getLogger('hls')
 
 
 class HLSPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        register_custom_log('svgen', logging.WARNING)
+        register_custom_log('hls', logging.WARNING)
