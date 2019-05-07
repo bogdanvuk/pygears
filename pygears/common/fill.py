@@ -1,6 +1,6 @@
 from pygears import gear, registry
 from pygears.typing import Union
-from pygears.common.demux import demux
+from pygears.common.demux import demux_ctrl
 from pygears.common.mux import mux
 from pygears.common.shred import shred
 
@@ -16,7 +16,7 @@ def fill_type(din_t, union_t, sel):
 def fill(din,
          union_din: Union,
          *,
-         fdemux=demux(ctrl_out=True),
+         fdemux=demux_ctrl,
          fmux=mux,
          sel) -> b'fill_type(din, union_din, sel)':
     fields = union_din | fdemux

@@ -1,32 +1,32 @@
 {%- import 'snippet.j2' as snippet -%}
 {% call snippet.module_with_intf_structs(module_name, intfs, intfs|isinput, comment) %}
 
-{% for i in intfs[1:] %}
+{% for i in (intfs|isoutput) %}
     assign {{i['name']}}.data = din.data;
 {% endfor %}
 
     always_comb
     begin
         case(din_s.ctrl)
-{% for i in intfs[1:] %}
+{% for i in (intfs|isoutput) %}
             {{loop.index-1}} : begin
                 din.ready = {{i['name']}}.ready;
             end
 {% endfor %}
             default: begin
-                din.ready = 0;
+                din.ready = {{(intfs|isoutput)[0]['name']}}.ready;
             end
         endcase
     end
 
     always_comb
     begin
-{% for i in intfs[1:] %}
+{% for i in (intfs|isoutput) %}
         {{i['name']}}.valid = 0;
 {% endfor %}
 
         case(din_s.ctrl)
-{% for i in intfs[1:] %}
+{% for i in (intfs|isoutput) %}
             {{loop.index-1}} : begin
                 {{i['name']}}.valid = din.valid;
             end

@@ -28,7 +28,7 @@ from .lt import lt
 from .gt import gt
 from .invert import invert
 from .mux import mux, mux_zip, mux_valve, mux_by
-from .demux import demux, demux_zip, demux_by
+from .demux import demux, demux_zip, demux_by, demux_ctrl
 from .shred import shred
 from .decoupler import decoupler, buff
 from .fifo import fifo

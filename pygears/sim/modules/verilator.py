@@ -183,7 +183,6 @@ class SimVerilated(CosimBase):
             files,
             'sim_main.cpp'
         ]  # yapf: disable
-        print(f'{" ".join(verilate_cmd)}')
 
         ret = os.system(f'{" ".join(verilate_cmd)} > verilate.log 2>&1')
 
