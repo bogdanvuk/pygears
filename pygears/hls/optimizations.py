@@ -8,12 +8,18 @@ from .hls_expressions import (OperandVal, RegDef, RegNextStmt, ResExpr,
                               create_oposite)
 from .pydl_types import (ContainerBlock, IfBlock, IntfBlock, IntfLoop, Loop,
                          Module, Yield)
-from .utils import add_to_list
+from .utils import add_to_list, hls_log
 
 FLAG_NAME = 'pipeline_flag'
 
 
 def pipeline_ast(pydl_ast, module_data):
+    if not (len(pydl_ast.stmts) == 2 and isinstance(pydl_ast.stmts[0],
+                                                    (IntfBlock, IntfLoop))
+            and isinstance(pydl_ast.stmts[-1], Yield)):
+        hls_log().debug('Pipeline optimization not supported...')
+        return pydl_ast
+
     # this optimization can only be used for the following situation:
     # two blocks: async for/with is first, yield is second
     # pipeline optimization merges the operations so that the yield and
@@ -38,11 +44,6 @@ def pipeline_ast(pydl_ast, module_data):
     #        else:
     #            async ..
     #               some stmts
-
-    assert len(pydl_ast.stmts) == 2 and isinstance(
-        pydl_ast.stmts[0], (IntfBlock, IntfLoop)) and isinstance(
-            pydl_ast.stmts[-1],
-            Yield), 'Pipeline optimization not supported...'
 
     flag_val = ResExpr(val=Uint[1](0))
 

@@ -6,7 +6,7 @@ from pygears.conf import register_custom_log, registry
 from pygears.typing import Int, Queue, Tuple, Uint, is_type, typeof
 
 from . import hls_expressions as expr
-from .pydl_types import Block, Yield, IntfBlock, IntfLoop
+from .pydl_types import Block, Yield
 
 ASYNC_TYPES = (Yield, )
 INTF_METHODS = ('get_nb', 'get', 'put', 'put_nb')
@@ -70,18 +70,24 @@ def eval_local_expression(node, local_namespace):
         local_namespace, globals())
 
 
+def find_target(node):
+    if hasattr(node, 'id'):
+        return node.id
+
+    if hasattr(node, 'value'):
+        return node.value.id
+
+    if isinstance(node, ast.Tuple):
+        return [el.id for el in node.elts]
+
+    raise VisitError('Unknown target type')
+
+
 def find_assign_target(node):
     names = []
 
     for target in node.targets:
-        if hasattr(target, 'id'):
-            names.append(target.id)
-        elif hasattr(target, 'value'):
-            names.append(target.value.id)
-        elif isinstance(target, ast.Tuple):
-            names.extend([el.id for el in target.elts])
-        else:
-            assert False, 'Unknown assignment type'
+        add_to_list(names, find_target(target))
 
     return names
 

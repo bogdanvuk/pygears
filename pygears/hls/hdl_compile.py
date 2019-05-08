@@ -2,6 +2,7 @@ import ast
 import inspect
 import typing
 from dataclasses import dataclass
+from types import FunctionType
 
 from pygears.typing import Uint, bitw
 
@@ -33,6 +34,7 @@ class ModuleData:
     in_intfs: typing.Dict
     out_intfs: typing.Dict
     local_namespace: typing.Dict
+    gear: typing.Any
 
     def get_container(self, name):
         for attr in ['regs', 'variables', 'in_intfs', 'out_intfs']:
@@ -49,6 +51,18 @@ class ModuleData:
         if data_container is not None:
             return data_container[name]
         return None
+
+    @property
+    def optimize(self):
+        return self.gear.params['svgen'].get('pipeline', False)
+
+    @property
+    def functions(self):
+        glob = self.gear.func.__globals__
+        return {
+            name: value
+            for name, value in glob.items() if isinstance(value, FunctionType)
+        }
 
 
 class HDLWriter:
@@ -88,7 +102,8 @@ def compose_data(gear, regs, variables, intfs):
             **intfs['namedargs'],
             **gear.explicit_params,
             **intfs['varargs']
-        })
+        },
+        gear=gear)
 
 
 def parse_gear_body(gear):
@@ -110,8 +125,7 @@ def parse_gear_body(gear):
     # py ast to hdl ast
     hdl_ast = parse_ast(body_ast, hdl_data)
 
-    pipeline = gear.params['svgen'].get('pipeline', False)
-    if pipeline:
+    if hdl_data.optimize:
         hdl_ast = pipeline_ast(hdl_ast, hdl_data)
 
     schedule = Scheduler().visit(hdl_ast)
