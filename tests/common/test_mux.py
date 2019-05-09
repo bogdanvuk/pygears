@@ -9,6 +9,10 @@ from pygears.cookbook.verif import drv
 from pygears.typing import Int, Queue, Uint
 from pygears.util.test_utils import formal_check
 
+from pygears import gear
+from pygears.sim.modules import SimVerilated
+from pygears.common import decoupler
+
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('cfg_delay', [0, 1])
@@ -17,18 +21,34 @@ def test_uint_directed(tmpdir, sim_cls, din_delay, cfg_delay, dout_delay):
     t_ctrl = Uint[4]
     t_din = Uint[8]
 
-    directed(
-        drv(t=t_ctrl, seq=[0, 1, 2])
-        | delay_rng(cfg_delay, cfg_delay),
-        drv(t=t_din, seq=[5])
-        | delay_rng(din_delay, din_delay),
-        drv(t=t_din, seq=[6])
-        | delay_rng(din_delay, din_delay),
-        drv(t=t_din, seq=[7])
-        | delay_rng(din_delay, din_delay),
-        f=mux(sim_cls=sim_cls),
-        ref=[(5, 0), (6, 1), (7, 2)],
-        delays=[delay_rng(dout_delay, dout_delay)])
+    directed(drv(t=t_ctrl, seq=[0, 1, 2])
+             | delay_rng(cfg_delay, cfg_delay),
+             drv(t=t_din, seq=[5])
+             | delay_rng(din_delay, din_delay),
+             drv(t=t_din, seq=[6])
+             | delay_rng(din_delay, din_delay),
+             drv(t=t_din, seq=[7])
+             | delay_rng(din_delay, din_delay),
+             f=mux(sim_cls=sim_cls),
+             ref=[(5, 0), (6, 1), (7, 2)],
+             delays=[delay_rng(dout_delay, dout_delay)])
+
+    sim(outdir=tmpdir)
+
+
+def test_out_ready_issue(tmpdir):
+    t_ctrl = Uint[1]
+    t_din = Uint[1]
+
+    @gear
+    def mux_out_ready(*din):
+        return din | mux | decoupler
+
+    directed(drv(t=t_ctrl, seq=[0]),
+             drv(t=t_din, seq=[0]) | delay_rng(2, 2),
+             drv(t=t_din, seq=[1]) | delay_rng(2, 2),
+             f=mux_out_ready(sim_cls=SimVerilated),
+             ref=[(0, 0)])
 
     sim(outdir=tmpdir)
 
@@ -40,19 +60,18 @@ def test_queue_directed(tmpdir, sim_cls, din_delay, cfg_delay, dout_delay):
     t_ctrl = Uint[2]
     t_din = Queue[Uint[8]]
 
-    directed(
-        drv(t=t_ctrl, seq=[2, 1, 0, 0, 2, 1])
-        | delay_rng(cfg_delay, cfg_delay),
-        drv(t=t_din, seq=[[1, 2, 3], [4, 5, 6]])
-        | delay_rng(din_delay, din_delay),
-        drv(t=t_din, seq=[[7, 8], [1, 2]])
-        | delay_rng(din_delay, din_delay),
-        drv(t=t_din, seq=[[2], [3]])
-        | delay_rng(din_delay, din_delay),
-        f=mux(sim_cls=sim_cls),
-        ref=[(258, 2), (7, 1), (264, 1), (1, 0), (2, 0), (259, 0), (4, 0),
-             (5, 0), (262, 0), (259, 2), (1, 1), (258, 1)],
-        delays=[delay_rng(dout_delay, dout_delay)])
+    directed(drv(t=t_ctrl, seq=[2, 1, 0, 0, 2, 1])
+             | delay_rng(cfg_delay, cfg_delay),
+             drv(t=t_din, seq=[[1, 2, 3], [4, 5, 6]])
+             | delay_rng(din_delay, din_delay),
+             drv(t=t_din, seq=[[7, 8], [1, 2]])
+             | delay_rng(din_delay, din_delay),
+             drv(t=t_din, seq=[[2], [3]])
+             | delay_rng(din_delay, din_delay),
+             f=mux(sim_cls=sim_cls),
+             ref=[(258, 2), (7, 1), (264, 1), (1, 0), (2, 0), (259, 0), (4, 0),
+                  (5, 0), (262, 0), (259, 2), (1, 1), (258, 1)],
+             delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(outdir=tmpdir)
 
@@ -66,18 +85,17 @@ def test_diff_inputs(tmpdir, sim_cls, din_delay, cfg_delay, dout_delay):
     t_din1 = Int[10]
     t_din2 = Queue[Uint[8]]
 
-    directed(
-        drv(t=t_ctrl, seq=[0, 1, 2])
-        | delay_rng(cfg_delay, cfg_delay),
-        drv(t=t_din0, seq=[5])
-        | delay_rng(din_delay, din_delay),
-        drv(t=t_din1, seq=[6])
-        | delay_rng(din_delay, din_delay),
-        drv(t=t_din2, seq=[[8]])
-        | delay_rng(din_delay, din_delay),
-        f=mux(sim_cls=sim_cls),
-        ref=[(5, 0), (6, 1), (264, 2)],
-        delays=[delay_rng(dout_delay, dout_delay)])
+    directed(drv(t=t_ctrl, seq=[0, 1, 2])
+             | delay_rng(cfg_delay, cfg_delay),
+             drv(t=t_din0, seq=[5])
+             | delay_rng(din_delay, din_delay),
+             drv(t=t_din1, seq=[6])
+             | delay_rng(din_delay, din_delay),
+             drv(t=t_din2, seq=[[8]])
+             | delay_rng(din_delay, din_delay),
+             f=mux(sim_cls=sim_cls),
+             ref=[(5, 0), (6, 1), (264, 2)],
+             delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(outdir=tmpdir)
 
