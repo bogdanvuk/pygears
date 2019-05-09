@@ -44,11 +44,12 @@ def test_out_ready_issue(tmpdir):
     def mux_out_ready(*din):
         return din | mux | decoupler
 
-    directed(drv(t=t_ctrl, seq=[0]),
-             drv(t=t_din, seq=[0]) | delay_rng(2, 2),
-             drv(t=t_din, seq=[1]) | delay_rng(2, 2),
-             f=mux_out_ready(sim_cls=SimVerilated),
-             ref=[(0, 0)])
+    directed(
+        drv(t=t_ctrl, seq=[0, 1]),
+        drv(t=t_din, seq=[0]) | delay_rng(2, 2),
+        drv(t=t_din, seq=[1]) | delay_rng(2, 2),
+        f=mux_out_ready(sim_cls=SimVerilated),
+        ref=[(0, 0), (1, 1)])
 
     sim(outdir=tmpdir)
 

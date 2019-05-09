@@ -1,9 +1,9 @@
 from .conditions_utils import (add_cond_expr_operands, add_cycle_cond,
                                add_exit_cond, combine_conditions,
                                nested_cycle_cond, nested_exit_cond)
-from .hls_expressions import BinOpExpr
+from .hls_expressions import BinOpExpr, and_expr
 from .pydl_types import (CycleSubCond, ExitSubCond, SubConditions,
-                         is_container, subcond_expr)
+                         is_container, is_intftype, subcond_expr)
 from .scheduling_types import SeqCBlock
 from .utils import state_expr
 
@@ -115,6 +115,9 @@ class ConditionsEval:
                 if child_exit_cond is not None:
                     exit_c = nested_exit_cond(pydl_stmt)
                     add_exit_cond(pydl_stmt.id)
+                    if is_intftype(
+                            pydl_stmt) and pydl_stmt.in_cond is not None:
+                        exit_c = and_expr(exit_c, pydl_stmt.in_cond)
                     return subcond_expr(cond, exit_c)
 
         return subcond_expr(cond, 1)

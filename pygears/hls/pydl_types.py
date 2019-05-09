@@ -21,6 +21,10 @@ def is_container(block):
     return isinstance(block, (ContainerBlock, CombBlock))
 
 
+def is_intftype(block):
+    return isinstance(block, (IntfBlock, IntfLoop))
+
+
 @dataclass
 class SubConditions:
     expr: OpType = None
