@@ -1,11 +1,11 @@
 import pytest
 
-from pygears import Intf, find
+from pygears import Intf, find, gear
+from pygears.common import decoupler
 from pygears.cookbook.delay import delay_rng
 from pygears.cookbook.rng import py_rng, rng
-from pygears.cookbook.verif import directed, verif
+from pygears.cookbook.verif import directed, drv, verif
 from pygears.sim import sim
-from pygears.cookbook.verif import drv
 from pygears.typing import Int, Queue, Tuple, Uint
 from pygears.util.test_utils import formal_check
 
@@ -24,6 +24,17 @@ def test_basic_unsigned_sim(tmpdir):
     sim(outdir=tmpdir)
 
 
+def get_dut(dout_delay):
+    @gear
+    def decoupled(din, *, cnt_steps=False, incr_steps=False):
+        return din | rng(
+            cnt_steps=cnt_steps, incr_steps=incr_steps) | decoupler
+
+    if dout_delay == 0:
+        return decoupled
+    return rng
+
+
 @pytest.mark.parametrize('din_delay', [0, 5])
 @pytest.mark.parametrize('dout_delay', [0, 5])
 @pytest.mark.parametrize('cnt_steps', [True, False])
@@ -32,10 +43,11 @@ def test_unsigned_cosim(tmpdir, cosim_cls, din_delay, dout_delay, cnt_steps,
                         incr_steps):
     seq = [(2, 8, 2)]
 
+    dut = get_dut(dout_delay)
     verif(
         drv(t=Tuple[Uint[4], Uint[4], Uint[2]], seq=seq)
         | delay_rng(din_delay, din_delay),
-        f=rng(sim_cls=cosim_cls, cnt_steps=cnt_steps, incr_steps=incr_steps),
+        f=dut(sim_cls=cosim_cls, cnt_steps=cnt_steps, incr_steps=incr_steps),
         ref=rng(name='ref_model', cnt_steps=cnt_steps, incr_steps=incr_steps),
         delays=[delay_rng(dout_delay, dout_delay)])
 
@@ -61,10 +73,11 @@ def test_basic_signed_sim(tmpdir):
 def test_signed_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
     seq = [(-15, -3, 2)]
 
+    dut = get_dut(dout_delay)
     verif(
         drv(t=Tuple[Int[5], Int[6], Uint[2]], seq=seq)
         | delay_rng(din_delay, din_delay),
-        f=rng(sim_cls=cosim_cls),
+        f=dut(sim_cls=cosim_cls),
         ref=rng(name='ref_model'),
         delays=[delay_rng(dout_delay, dout_delay)])
 

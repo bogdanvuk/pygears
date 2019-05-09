@@ -1,13 +1,23 @@
 import pytest
 
-from pygears import Intf
+from pygears import Intf, gear
+from pygears.common import decoupler
 from pygears.cookbook import tr_cnt
 from pygears.cookbook.delay import delay_rng
-from pygears.cookbook.verif import directed
+from pygears.cookbook.verif import directed, drv
 from pygears.sim import sim
-from pygears.cookbook.verif import drv
 from pygears.typing import Queue, Uint
 from pygears.util.test_utils import formal_check, synth_check
+
+
+def get_dut(dout_delay):
+    @gear
+    def decoupled(*din):
+        return din | tr_cnt | decoupler
+
+    if dout_delay == 0:
+        return decoupled
+    return tr_cnt
 
 
 @pytest.mark.parametrize('din_delay', [0, 5])
@@ -17,6 +27,7 @@ def test_directed(tmpdir, sim_cls, din_delay, dout_delay, cfg_delay):
     t_din = Queue[Uint[16]]
     t_cfg = Uint[16]
 
+    dut = get_dut(dout_delay)
     directed(
         drv(t=t_din,
             seq=[
@@ -28,7 +39,7 @@ def test_directed(tmpdir, sim_cls, din_delay, dout_delay, cfg_delay):
             ])
         | delay_rng(din_delay, din_delay),
         drv(t=t_cfg, seq=[2, 3]) | delay_rng(cfg_delay, cfg_delay),
-        f=tr_cnt(sim_cls=sim_cls),
+        f=dut(sim_cls=sim_cls),
         ref=[[list(range(5)), list(range(3))],
              [list(range(2)), list(range(3)),
               list(range(8))]],

@@ -3,14 +3,14 @@ from functools import partial
 
 import pytest
 
-from pygears import Intf
+from pygears import Intf, gear
+from pygears.common import decoupler
 from pygears.cookbook.clip import clip
 from pygears.cookbook.delay import delay_rng
-from pygears.cookbook.verif import directed, verif
+from pygears.cookbook.verif import directed, drv, verif
 from pygears.sim import sim
 from pygears.sim.extens.randomization import create_constraint, rand_seq
 from pygears.sim.extens.svrand import SVRandSocket
-from pygears.cookbook.verif import drv
 from pygears.sim.modules.sim_socket import SimSocket
 from pygears.typing import Queue, Tuple, Uint
 from pygears.util.test_utils import formal_check, skip_ifndef, synth_check
@@ -18,6 +18,16 @@ from pygears.util.test_utils import formal_check, skip_ifndef, synth_check
 T_DIN = Queue[Tuple[Uint[16], Uint[16]]]
 T_DIN_SEP = Queue[Uint[16]]
 T_CFG = Uint[16]
+
+
+def get_dut(dout_delay):
+    @gear
+    def decoupled(*din):
+        return din | clip | decoupler
+
+    if dout_delay == 0:
+        return decoupled
+    return clip
 
 
 @pytest.mark.parametrize('din_delay', [0, 5])
@@ -34,9 +44,10 @@ def test_directed(tmpdir, sim_cls, din_delay, dout_delay):
         tmp.append((i, 3))
     seq.append(tmp)
 
+    dut = get_dut(dout_delay)
     directed(
         drv(t=T_DIN, seq=seq) | delay_rng(din_delay, din_delay),
-        f=clip(sim_cls=sim_cls),
+        f=dut(sim_cls=sim_cls),
         ref=[[0, 1],
              list(range(2, 9)),
              list(range(3)),

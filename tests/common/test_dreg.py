@@ -1,11 +1,10 @@
 import pytest
 
-from pygears import Intf
-from pygears.common.dreg import dreg
+from pygears import Intf, gear
+from pygears.common import decoupler, dreg
 from pygears.cookbook.delay import delay_rng
-from pygears.cookbook.verif import directed, verif
+from pygears.cookbook.verif import directed, drv, verif
 from pygears.sim import sim, timestep
-from pygears.cookbook.verif import drv
 from pygears.typing import Int, Queue, Tuple, Uint, Unit
 from pygears.util.test_utils import formal_check, synth_check
 
@@ -20,13 +19,24 @@ def test_pygears_sim(tmpdir):
     assert timestep() == len(seq)
 
 
+def get_dut(dout_delay):
+    @gear
+    def decoupled(din):
+        return din | dreg | decoupler
+
+    if dout_delay == 0:
+        return decoupled
+    return dreg
+
+
 @pytest.mark.parametrize('din_delay', [0, 5])
 @pytest.mark.parametrize('dout_delay', [0, 5])
 def test_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
     seq = list(range(10))
+    dut = get_dut(dout_delay)
     verif(
         drv(t=Uint[16], seq=seq) | delay_rng(din_delay, din_delay),
-        f=dreg(sim_cls=cosim_cls),
+        f=dut(sim_cls=cosim_cls),
         ref=dreg(name='ref_model'),
         delays=[delay_rng(dout_delay, dout_delay)])
 
@@ -37,10 +47,11 @@ def test_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
 @pytest.mark.parametrize('dout_delay', [0, 5])
 def test_queue_tuple(tmpdir, cosim_cls, din_delay, dout_delay):
     seq = [[(0, 1), (4, 0), (1, 1)], [(1, 1), (2, 0), (3, 1), (4, 0)]]
+    dut = get_dut(dout_delay)
     verif(
         drv(t=Queue[Tuple[Uint[16], Int[2]]], seq=seq)
         | delay_rng(din_delay, din_delay),
-        f=dreg(sim_cls=cosim_cls),
+        f=dut(sim_cls=cosim_cls),
         ref=dreg(name='ref_model'),
         delays=[delay_rng(dout_delay, dout_delay)])
 

@@ -1,6 +1,7 @@
 import pytest
 
-from pygears import Intf
+from pygears import Intf, gear
+from pygears.common import decoupler
 from pygears.cookbook import accumulator
 from pygears.cookbook.delay import delay_rng
 from pygears.cookbook.verif import directed, drv, verif
@@ -16,6 +17,16 @@ T_DIN_UINT = Queue[Tuple[Uint[16], Uint[16]]]
 SEQ_INT = [[(1, 2), (5, 2), (-8, 2)], [(-30, 8), (1, 8)]]
 REF_INT = [0, -21]
 T_DIN_INT = Queue[Tuple[Int[8], Int[8]]]
+
+
+def get_dut(dout_delay):
+    @gear
+    def decoupled(din):
+        return din | accumulator | decoupler
+
+    if dout_delay == 0:
+        return decoupled
+    return accumulator
 
 
 def test_uint_directed(tmpdir, sim_cls):
@@ -37,9 +48,10 @@ def test_int_directed(tmpdir, sim_cls):
 @pytest.mark.parametrize('din_delay', [0, 1, 10])
 @pytest.mark.parametrize('dout_delay', [0, 1, 10])
 def test_delay(tmpdir, cosim_cls, din_delay, dout_delay):
+    dut = get_dut(dout_delay)
     verif(
         drv(t=T_DIN_UINT, seq=SEQ_UINT) | delay_rng(din_delay, din_delay),
-        f=accumulator(sim_cls=cosim_cls),
+        f=dut(sim_cls=cosim_cls),
         ref=accumulator(name='ref_model'),
         delays=[delay_rng(dout_delay, dout_delay)])
     sim(outdir=tmpdir)
@@ -48,10 +60,11 @@ def test_delay(tmpdir, cosim_cls, din_delay, dout_delay):
 @pytest.mark.parametrize('din_delay', [0, 1, 10])
 @pytest.mark.parametrize('dout_delay', [0, 1, 10])
 def test_no_offset(tmpdir, cosim_cls, din_delay, dout_delay):
+    dut = get_dut(dout_delay)
     verif(
         drv(t=Queue[Uint[8]], seq=[list(
             range(3)), list(range(8))]) | delay_rng(din_delay, din_delay),
-        f=accumulator(sim_cls=cosim_cls),
+        f=dut(sim_cls=cosim_cls),
         ref=accumulator(name='ref_model'),
         delays=[delay_rng(dout_delay, dout_delay)])
     sim(outdir=tmpdir)

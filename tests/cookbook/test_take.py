@@ -1,11 +1,11 @@
 import pytest
 
-from pygears import Intf
+from pygears import Intf, gear
+from pygears.common import decoupler
 from pygears.cookbook import take
 from pygears.cookbook.delay import delay_rng
-from pygears.cookbook.verif import directed, verif
+from pygears.cookbook.verif import directed, drv, verif
 from pygears.sim import sim
-from pygears.cookbook.verif import drv
 from pygears.typing import Queue, Tuple, Uint
 from pygears.util.test_utils import formal_check, synth_check
 
@@ -14,6 +14,16 @@ T_DIN_SEP = Queue[Uint[16]]
 T_QDIN_SEP = Queue[Uint[16], 2]
 T_CFG = Uint[16]
 T_QDIN = Queue[Tuple[Uint[16], Uint[16]], 2]
+
+
+def get_dut(dout_delay):
+    @gear
+    def decoupled(din):
+        return din | take | decoupler
+
+    if dout_delay == 0:
+        return decoupled
+    return take
 
 
 @pytest.mark.parametrize('din_delay', [0, 5])
@@ -30,9 +40,10 @@ def test_directed(tmpdir, sim_cls, din_delay, dout_delay):
         tmp.append((i, 3))
     seq.append(tmp)
 
+    dut = get_dut(dout_delay)
     directed(
         drv(t=T_DIN, seq=seq) | delay_rng(din_delay, din_delay),
-        f=take(sim_cls=sim_cls),
+        f=dut(sim_cls=sim_cls),
         ref=[[0, 1], [0, 1, 2]],
         delays=[delay_rng(dout_delay, dout_delay)])
 
@@ -50,7 +61,8 @@ def test_directed_two_inputs(tmpdir, cosim_cls):
 
 
 @pytest.mark.parametrize('delay', [0, 5])
-def test_q_directed(tmpdir, sim_cls, delay):
+@pytest.mark.parametrize('dout_delay', [0, 5])
+def test_q_directed(tmpdir, sim_cls, delay, dout_delay):
     seq = []
     tmp = []
     for _ in range(9):
@@ -68,10 +80,12 @@ def test_q_directed(tmpdir, sim_cls, delay):
         tmp.append(sub)
     seq.append(tmp)
 
+    dut = get_dut(dout_delay)
     directed(
         drv(t=T_QDIN, seq=seq) | delay_rng(delay, delay),
-        f=take(sim_cls=sim_cls),
-        ref=[[list(range(3))] * 2, [list(range(6))] * 3])
+        f=dut(sim_cls=sim_cls),
+        ref=[[list(range(3))] * 2, [list(range(6))] * 3],
+        delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(outdir=tmpdir)
 

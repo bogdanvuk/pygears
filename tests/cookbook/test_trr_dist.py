@@ -3,19 +3,33 @@ from functools import partial
 
 import pytest
 
-from pygears import Intf
+from pygears import Intf, gear
+from pygears.common import decoupler
 from pygears.cookbook.delay import delay_rng
 from pygears.cookbook.trr_dist import trr_dist
-from pygears.cookbook.verif import directed, verif
+from pygears.cookbook.verif import directed, drv, verif
 from pygears.sim import sim
 from pygears.sim.extens.randomization import create_constraint, rand_seq
 from pygears.sim.extens.svrand import SVRandSocket
-from pygears.cookbook.verif import drv
 from pygears.sim.modules.sim_socket import SimSocket
 from pygears.typing import Queue, Uint
 from pygears.util.test_utils import formal_check, skip_ifndef, synth_check
 
 T_TRR_DIST = Queue[Uint[16], 2]
+
+
+def get_dut(dout_delay):
+    @gear
+    def decoupled(din, *, lvl=1, dout_num):
+        res = din | trr_dist(dout_num=dout_num, lvl=lvl)
+        dout = []
+        for r in res:
+            dout.append(r | decoupler)
+        return tuple(dout)
+
+    if dout_delay == 0:
+        return decoupled
+    return trr_dist
 
 
 def get_refs(seq):
@@ -33,9 +47,10 @@ def test_directed(tmpdir, sim_cls, din_delay, dout_delay):
     ref0 = [seq[0][0], seq[0][2], seq[1][0]]
     ref1 = [seq[0][1], seq[1][1]]
     ref = [ref0, ref1]
+    dut = get_dut(dout_delay)
     directed(
         drv(t=T_TRR_DIST, seq=seq) | delay_rng(din_delay, din_delay),
-        f=trr_dist(sim_cls=sim_cls, dout_num=2),
+        f=dut(sim_cls=sim_cls, dout_num=2),
         ref=ref,
         delays=[
             delay_rng(dout_delay, dout_delay),
@@ -67,9 +82,11 @@ def test_directed_3in(tmpdir, sim_cls, din_delay, dout_delay):
     ref2 = [seq[1][2]]
     ref = [ref0, ref1, ref2]
     dout_dly = [delay_rng(dout_delay, dout_delay)] * dout_num
+
+    dut = get_dut(dout_delay)
     directed(
         drv(t=t_trr_dist, seq=seq) | delay_rng(din_delay, din_delay),
-        f=trr_dist(sim_cls=sim_cls, lvl=lvl, dout_num=dout_num),
+        f=dut(sim_cls=sim_cls, lvl=lvl, dout_num=dout_num),
         ref=ref,
         delays=dout_dly)
 
