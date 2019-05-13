@@ -2,7 +2,7 @@ import pytest
 
 from pygears.util.test_utils import synth_check
 from pygears.typing import Union, Uint
-from pygears.common import demux
+from pygears.common import demux, mux, demux_ctrl
 from pygears.cookbook.delay import delay_rng
 from pygears.cookbook.verif import drv, directed
 from pygears.sim import sim
@@ -34,18 +34,19 @@ def test_simple_directed(tmpdir, sim_cls, din_delay, dout_delay, branches):
 
 # 3 -> 3, 10 -> 9, 11 -> 10
 
-# def test_simple_synth(branches):
-#     TDin = Union[tuple(Uint[i] for i in range(1, branches + 1))]
+def test_simple_synth(branches):
+    # TDin = Union[tuple(Uint[i] for i in range(1, branches + 1))]
+    TDin = Union[Uint[1], Uint[1]]
 
-#     demux(Intf(TDin))
+    demux_ctrl(Intf(TDin)) | mux
 
-#     util = vivado_synth('/tools/home/tmp', language='sv')
-#     print(util)
-#     assert util['total luts'] == branches
+    # util = vivado_synth('/tools/home/tmp', language='sv')
+    # print(util)
+    # assert util['total luts'] == branches
 
 
 # # test_simple_directed('/tools/home/tmp', SimVerilated, 0, 0, 3)
-# test_simple_synth(10)
+test_simple_synth(2)
 
 # config['trace/level'] = 1
 # sim('/tools/home/tmp')
