@@ -19,16 +19,10 @@ module bc #(
          assign dout[i].data   = din.data;
 
          always_ff @(posedge clk) begin
-            if (rst) begin
+            if (rst || (!din.valid) || din.ready) begin
                ready_reg[i] <= 1'b0;
-            end
-            else begin
-               if (din.ready) begin
-                  ready_reg[i] <= 1'b0;
-               end
-               else begin
-                  ready_reg[i] <= ready_reg[i] | (dout[i].valid & dout[i].ready);
-               end
+            end else if (dout[i].ready) begin
+               ready_reg[i] <= 1'b1;
             end
          end
       end
