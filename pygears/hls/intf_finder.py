@@ -43,41 +43,45 @@ def find_vararg_input(gear):
 
 
 class IntfFinder(ast.NodeVisitor):
-    def __init__(self, gear):
-        self.regs = {}
-        self.variables = {}
-        self.local_params = {
-            **{p.basename: p.consumer
-               for p in gear.in_ports},
-            **gear.explicit_params
-        }
-        self.out_names = [p.basename for p in gear.out_ports]
+    def __init__(self, module_data):
+        self.module_data = module_data
+        gear = module_data.gear
+
         self.namedargs, self.varargs = find_vararg_input(gear)
-        self.intfs = {}
-        self.intfs['namedargs'] = self.namedargs
-        self.intfs['varargs'] = self.varargs
-        self.intfs['vars'] = {}
-        self.intfs['outputs'] = {}
+
+        self.module_data.local_namespace.update(self.namedargs)
+        self.module_data.local_namespace.update(self.varargs)
+
+        named = {}
+        for port in self.module_data.in_ports:
+            if port in self.namedargs:
+                named[port] = self.module_data.in_ports[port]
+        self.module_data.hdl_locals.update(named)
+        self.module_data.hdl_locals.update(self.varargs)
+
+        self.out_names = [p.basename for p in gear.out_ports]
+
+    def _set_in_intf(self, name, arg_name=None, target_name=None):
+        if arg_name is None:
+            arg_name = name
+        if target_name is None:
+            target_name = name
+
+        self.module_data.in_intfs[name] = IntfDef(
+            intf=self.varargs[arg_name], _name=target_name)
+
+    def visit_async(self, node, expr):
+        if isinstance(expr, ast.Subscript):
+            self._set_in_intf(expr.value.id)
+
+        for stmt in node.body:
+            self.visit(stmt)
 
     def visit_AsyncFor(self, node):
-        expr = node.iter
-        if isinstance(expr, ast.Subscript):
-            name = expr.value.id
-            self.intfs['vars'][name] = IntfDef(
-                intf=self.varargs[name], _name=name)
-
-        for stmt in node.body:
-            self.visit(stmt)
+        self.visit_async(node, node.iter)
 
     def visit_AsyncWith(self, node):
-        expr = node.items[0].context_expr
-        if isinstance(expr, ast.Subscript):
-            name = expr.value.id
-            self.intfs['vars'][name] = IntfDef(
-                intf=self.varargs[name], _name=name)
-
-        for stmt in node.body:
-            self.visit(stmt)
+        self.visit_async(node, node.items[0].context_expr)
 
     def visit_For(self, node):
         for arg in node.iter.args:
@@ -87,8 +91,7 @@ class IntfFinder(ast.NodeVisitor):
                 else:
                     name = node.target.id
 
-                self.intfs['vars'][name] = IntfDef(
-                    intf=self.varargs[arg.id], _name=node.target.elts[-1].id)
+                self._set_in_intf(name, arg.id, node.target.elts[-1].id)
                 break
 
         for stmt in node.body:
@@ -98,15 +101,15 @@ class IntfFinder(ast.NodeVisitor):
         names = find_assign_target(node)
 
         for name in names:
-            if name not in self.intfs['outputs']:
-                scope = {**self.local_params, **self.intfs['varargs']}
+            if name not in self.out_names:
                 try:
-                    val = eval_expression(node.value, scope)
+                    val = eval_expression(node.value,
+                                          self.module_data.local_namespace)
                 except NameError:
                     return
 
                 if val is None:
-                    self.intfs['outputs'][name] = self.out_names[0]
+                    self.module_data.out_intfs[name] = self.out_names[0]
                 elif isinstance(val, (list, tuple)) and all(
                     [v is None for v in val]):
-                    self.intfs['outputs'][name] = self.out_names
+                    self.module_data.out_intfs[name] = self.out_names

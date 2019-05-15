@@ -297,20 +297,10 @@ def find_name_expression(node, module_data):
     if node.id in module_data.in_intfs:
         return module_data.in_intfs[node.id]
 
-    ret = eval_expression(node, module_data.local_namespace)
+    if node.id in module_data.in_ports:
+        return module_data.in_ports[node.id]
 
-    local_names = list(module_data.local_namespace.keys())
-    local_objs = list(module_data.local_namespace.values())
-
-    name_idx = None
-    for i, obj in enumerate(local_objs):
-        if ret is obj:
-            name_idx = i
-            break
-
-    name = local_names[name_idx]
-
-    return module_data.hdl_locals.get(name, None)
+    raise VisitError('Unknown name expression')
 
 
 def hls_log():

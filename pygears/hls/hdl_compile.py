@@ -81,29 +81,28 @@ class HDLWriter:
             self.line(line)
 
 
-def compose_data(gear, regs, variables, intfs):
-    in_ports = {p.basename: IntfDef(p) for p in gear.in_ports}
-    named = {}
-    for port in in_ports:
-        if port in intfs['namedargs']:
-            named[port] = in_ports[port]
-    hdl_locals = {**named, **intfs['varargs']}
+# def compose_data(gear, regs, variables, intfs):
+#     named = {}
+#     for port in in_ports:
+#         if port in intfs['namedargs']:
+#             named[port] = in_ports[port]
+#     hdl_locals = {**named, **intfs['varargs']}
 
-    return ModuleData(
-        in_ports=in_ports,
-        out_ports={p.basename: IntfDef(p)
-                   for p in gear.out_ports},
-        hdl_locals=hdl_locals,
-        regs=regs,
-        variables=variables,
-        in_intfs=intfs['vars'],
-        out_intfs=intfs['outputs'],
-        local_namespace={
-            **intfs['namedargs'],
-            **gear.explicit_params,
-            **intfs['varargs']
-        },
-        gear=gear)
+#     return ModuleData(
+#         # in_ports=in_ports,
+#         # out_ports={p.basename: IntfDef(p)
+#         #            for p in gear.out_ports},
+#         hdl_locals=hdl_locals,
+#         regs=regs,
+#         variables=variables,
+#         # in_intfs=intfs['vars'],
+#         # out_intfs=intfs['outputs'],
+#         local_namespace={
+#             **intfs['namedargs'],
+#             **gear.explicit_params,
+#             **intfs['varargs']
+#         },
+#         gear=gear)
 
 
 def parse_gear_body(gear):
@@ -111,16 +110,31 @@ def parse_gear_body(gear):
     # import astpretty
     # astpretty.pprint(body_ast)
 
+    in_ports = {p.basename: IntfDef(p) for p in gear.in_ports}
+    hdl_data = ModuleData(
+        gear=gear,
+        in_ports=in_ports,
+        out_ports={p.basename: IntfDef(p)
+                   for p in gear.out_ports},
+        hdl_locals={},
+        regs={},
+        variables={},
+        in_intfs={},
+        out_intfs={},
+        local_namespace={
+            **{p.basename: p.consumer
+               for p in gear.in_ports},
+            **gear.explicit_params
+        })
+
     # find interfaces
-    intf = IntfFinder(gear)
+    intf = IntfFinder(hdl_data)
     intf.visit(body_ast)
 
     # find registers and variables
-    reg_v = RegFinder(gear, intf.intfs)
+    reg_v = RegFinder(hdl_data)
     reg_v.visit(body_ast)
     reg_v.clean_variables()
-
-    hdl_data = compose_data(gear, reg_v.regs, reg_v.variables, intf.intfs)
 
     # py ast to hdl ast
     hdl_ast = parse_ast(body_ast, hdl_data)
