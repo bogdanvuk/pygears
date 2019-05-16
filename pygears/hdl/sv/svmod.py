@@ -44,7 +44,6 @@ class SVModuleGen(HDLModuleInst):
 
     @functools.lru_cache()
     def impl_parse(self):
-        breakpoint()
         if self.impl_path:
             with open(self.impl_path, 'r') as f:
                 return parse(f.read())

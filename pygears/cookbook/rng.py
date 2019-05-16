@@ -50,7 +50,7 @@ async def py_rng(cfg: TCfg,
                 yield data, last
 
 
-@gear(svgen={'svmod_fn': 'rng.sv'})
+@gear(hdl={'hdl_fn': 'rng'})
 async def sv_rng(cfg: TCfg,
                  *,
                  signed=b'typeof(cfg[0], Int)',

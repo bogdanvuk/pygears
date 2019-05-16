@@ -56,8 +56,6 @@ class TemplateEnv:
         self.jenv.filters['isoutput'] = isoutput
         self.jenv.tests['startswith'] = startswith
 
-        self.snippets = self.load(self.basedir, 'snippet.j2').module
-
     def load(self, tmplt_dir, tmplt_fn):
         key = os.path.join(self.basedir, tmplt_dir, tmplt_fn)
         if key not in self.templates:

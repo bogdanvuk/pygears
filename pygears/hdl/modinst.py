@@ -29,16 +29,19 @@ class HDLModuleInst:
         self.extension = extension
 
     @property
+    def hdl_path_list(self):
+        return registry(f'{self.extension}gen/{self.extension}_paths')
+
+    @property
     @functools.lru_cache()
     def template_path(self):
-        return find_in_dirs(f'{self.module_basename}.{self.extension}t',
-                            registry('hdl/paths'))
+        return find_in_dirs(f'{self.module_base_path}t', self.hdl_path_list)
 
     @property
     @functools.lru_cache()
     def impl_path(self):
         if not self.is_generated:
-            return find_in_dirs(self.module_base_path, registry('hdl/paths'))
+            return find_in_dirs(self.module_base_path, self.hdl_path_list)
         else:
             return None
 
@@ -66,8 +69,8 @@ class HDLModuleInst:
     @property
     def module_base_path(self):
         hdl_params = self.node.params.get('hdl', {})
-        return hdl_params.get('hdl_fn',
-                              f'{self.module_basename}.{self.extension}')
+        hdl_module_name = hdl_params.get('hdl_fn', self.module_basename)
+        return f'{hdl_module_name}.{self.extension}'
 
     @property
     def module_name(self):
@@ -77,7 +80,7 @@ class HDLModuleInst:
             # if there is a module with the same name as this hierarchical
             # module, append "_hier" to disambiguate
             if find_in_dirs(f'{self.hier_path_name}.{self.extension}',
-                            registry('hdl/paths')):
+                            self.hdl_path_list):
                 return self.hier_path_name + '_hier'
             else:
                 return self.hier_path_name
@@ -93,7 +96,8 @@ class HDLModuleInst:
     @property
     def file_name(self):
         hdl_params = self.node.params.get('hdl', {})
-        return hdl_params.get('hdl_fn', f'{self.module_name}.{self.extension}')
+        hdl_module_name = hdl_params.get('hdl_fn', self.module_name)
+        return f'{hdl_module_name}.{self.extension}'
 
     def impl_parse():
         pass

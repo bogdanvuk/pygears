@@ -86,7 +86,7 @@ def setup(module):
 
 
 @alternative(filt)
-@gear(sim_setup=setup, svgen={'svmod_fn': 'qfilt.sv'})
+@gear(sim_setup=setup, hdl={'hdl_fn': 'qfilt'})
 async def qfilt(
         din: Queue[Union, 'lvl'],
         *,

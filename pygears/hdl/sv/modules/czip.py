@@ -11,8 +11,8 @@ class SVGenCZipBase(SVModuleGen):
     def is_generated(self):
         return True
 
-    def get_sv_port_config(self, modport, type_, name):
-        cfg = super().get_sv_port_config(modport, type_, name)
+    def get_port_config(self, modport, type_, name):
+        cfg = super().get_port_config(modport, type_, name)
 
         if issubclass(type_, Queue):
             cfg['lvl'] = type_.lvl

@@ -9,7 +9,7 @@ def neg_type(dtype):
     return Int[int(dtype)]
 
 
-@gear(svgen={'svmod_fn': 'neg.sv'})
+@gear(hdl={'hdl_fn': 'neg'})
 async def neg(din: Integer) -> b'neg_type(din)':
     async with din as d:
         yield module().tout(-d)
