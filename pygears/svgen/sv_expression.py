@@ -1,4 +1,6 @@
-from pygears.hls.hls_expressions import EXTENDABLE_OPERATORS, BinOpExpr
+from pygears.hls.hls_expressions import (EXTENDABLE_OPERATORS, BinOpExpr,
+                                         ConcatExpr)
+from pygears.hls.utils import VisitError
 from pygears.typing import Array, Int, Integer, Queue, Uint, typeof
 
 
@@ -31,6 +33,14 @@ class SVExpressionVisitor:
         return int(node.val)
 
     def visit_IntfValidExpr(self, node, cast_to):
+        if getattr(node.port, 'has_subop', None):
+            if isinstance(node.intf, ConcatExpr):
+                return ' && '.join([
+                    f'{op.name}{self.merge_with}valid'
+                    for op in node.port.intf.operands
+                ])
+            raise VisitError('Unsupported expression type in IntfDef')
+
         return f'{node.name}{self.merge_with}valid'
 
     def visit_IntfReadyExpr(self, node, cast_to):
@@ -121,15 +131,29 @@ class SVExpressionVisitor:
         ops = [self.visit(op) for op in node.operands]
         return f'({cond}) ? ({ops[0]}) : ({ops[1]})'
 
-    @simple_cast
-    def visit_IntfDef(self, node, cast_to):
-        if node.context:
-            if node.context == 'eot':
-                return f'&{node.name}_s{self.merge_with}{node.context}'
+    def _parse_intf(self, node, context=None):
+        if context is None:
+            context = getattr(node, 'context', None)
 
-            return f'{node.name}{self.merge_with}{node.context}'
+        if context:
+            if context == 'eot':
+                return f'&{node.name}_s{self.merge_with}{context}'
+
+            return f'{node.name}{self.merge_with}{context}'
 
         return f'{node.name}_s'
+
+    @simple_cast
+    def visit_IntfDef(self, node, cast_to):
+        if node.has_subop:
+            if isinstance(node.intf, ConcatExpr):
+                return ' && '.join([
+                    self._parse_intf(op, node.context)
+                    for op in node.intf.operands
+                ])
+            raise VisitError('Unsupported expression type in IntfDef')
+        else:
+            return self._parse_intf(node)
 
     @simple_cast
     def generic_visit(self, node, cast_to):

@@ -1,7 +1,8 @@
 from .conditions_utils import add_cond, add_in_cond, nested_in_cond
 from .hdl_types import AssertValue, AssignValue, CombBlock, HDLBlock
-from .hls_expressions import (Expr, IntfReadyExpr, IntfValidExpr, OperandVal,
-                              RegDef, ResExpr, SubscriptExpr, VariableDef)
+from .hls_expressions import (ConcatExpr, Expr, IntfReadyExpr, IntfValidExpr,
+                              OperandVal, RegDef, ResExpr, SubscriptExpr,
+                              VariableDef)
 from .pydl_types import Block
 from .utils import VisitError, add_to_list
 
@@ -267,26 +268,58 @@ class ReadyBase(HDLStmtVisitor):
         raise NotImplementedError('Input target not set')
 
     def enter_Module(self, block, cond):
-        return [
-            AssignValue(IntfReadyExpr(port), 0)
-            for port in self.input_target.values()
-        ]
+        res = []
+        for port in self.input_target.values():
+            if port.has_subop:
+                if isinstance(port.intf, ConcatExpr):
+                    res.extend([
+                        AssignValue(IntfReadyExpr(op), 0)
+                        for op in port.intf.operands
+                        if op.name in self.input_target
+                    ])
+                raise VisitError('Unsupported expression type in IntfDef')
+            else:
+                res.append(AssignValue(IntfReadyExpr(port), 0))
+        return res
+
+    def _enter_intf(self, block, cond, cond_func):
+        if block.intf.name in self.input_target:
+            val = cond_func(cond)
+            return AssignValue(target=IntfReadyExpr(block.intf), val=val)
+
+        if block.intf.has_subop:
+            intf_def = block.intf.intf
+            if isinstance(intf_def, ConcatExpr):
+                val = cond_func(cond)
+                return [
+                    AssignValue(target=IntfReadyExpr(op), val=val)
+                    for op in intf_def.operands if op.name in self.input_target
+                ]
+            raise VisitError('Unsupported expression type in IntfDef')
 
     def enter_IntfBlock(self, block, cond):
-        if block.intf.name in self.input_target:
-            exit_cond = find_exit_cond(cond)
-            return AssignValue(target=IntfReadyExpr(block.intf), val=exit_cond)
+        return self._enter_intf(block, cond, find_exit_cond)
 
     def enter_IntfLoop(self, block, cond):
-        if block.intf.name in self.input_target:
-            cycle_cond = find_cycle_cond(cond)
-            return AssignValue(
-                target=IntfReadyExpr(block.intf), val=cycle_cond)
+        return self._enter_intf(block, cond, find_cycle_cond)
 
-    def visit_IntfStmt(self, node, cond, **kwds):
-        if hasattr(node.val, 'name') and (node.val.name in self.input_target):
-            return AssignValue(
-                target=IntfReadyExpr(node.val), val=IntfReadyExpr(node.intf))
+    def visit_IntfStmt(self, node, cond):
+        if hasattr(node.val, 'name'):
+            if node.val.name in self.input_target:
+                return AssignValue(
+                    target=IntfReadyExpr(node.val),
+                    val=IntfReadyExpr(node.intf))
+
+            if node.intf.has_subop:
+                if isinstance(node.val, ConcatExpr):
+                    return [
+                        AssignValue(
+                            target=IntfReadyExpr(op),
+                            val=IntfReadyExpr(node.intf))
+                        for op in node.val.operands
+                        if op.name in self.input_target
+                    ]
+                raise VisitError('Unsupported expression type in IntfDef')
 
 
 class InputVisitor(ReadyBase):

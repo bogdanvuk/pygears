@@ -81,30 +81,6 @@ class HDLWriter:
             self.line(line)
 
 
-# def compose_data(gear, regs, variables, intfs):
-#     named = {}
-#     for port in in_ports:
-#         if port in intfs['namedargs']:
-#             named[port] = in_ports[port]
-#     hdl_locals = {**named, **intfs['varargs']}
-
-#     return ModuleData(
-#         # in_ports=in_ports,
-#         # out_ports={p.basename: IntfDef(p)
-#         #            for p in gear.out_ports},
-#         hdl_locals=hdl_locals,
-#         regs=regs,
-#         variables=variables,
-#         # in_intfs=intfs['vars'],
-#         # out_intfs=intfs['outputs'],
-#         local_namespace={
-#             **intfs['namedargs'],
-#             **gear.explicit_params,
-#             **intfs['varargs']
-#         },
-#         gear=gear)
-
-
 def parse_gear_body(gear):
     body_ast = ast.parse(inspect.getsource(gear.func)).body[0]
     # import astpretty

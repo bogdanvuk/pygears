@@ -70,9 +70,16 @@ class IntfFinder(ast.NodeVisitor):
         self.module_data.in_intfs[name] = IntfDef(
             intf=self.varargs[arg_name], _name=target_name)
 
-    def visit_async(self, node, expr):
+    def _parse_expr(self, expr):
         if isinstance(expr, ast.Subscript):
             self._set_in_intf(expr.value.id)
+
+    def visit_async(self, node, expr):
+        self._parse_expr(expr)
+
+        if isinstance(expr, ast.Call):
+            for arg in expr.args:
+                self._parse_expr(arg)
 
         for stmt in node.body:
             self.visit(stmt)

@@ -150,7 +150,11 @@ def get_bin_expr(op, operand1, operand2, module_data):
 
 def intf_parse(intf, target):
     scope = gather_control_stmt_vars(target, intf)
-    block_intf = expr.IntfDef(intf=intf.intf, _name=intf.name, context='valid')
+    if isinstance(intf, expr.IntfDef):
+        block_intf = expr.IntfDef(
+            intf=intf.intf, _name=intf.name, context='valid')
+    else:
+        block_intf = expr.IntfDef(intf=intf, _name=None, context='valid')
     return scope, block_intf
 
 
@@ -175,10 +179,10 @@ def gather_control_stmt_vars(variables, intf, attr=None, dtype=None):
                     gather_control_stmt_vars(var, intf,
                                              attr + [dtype.fields[i]]))
     else:
-        if isinstance(intf, expr.IntfDef):
-            scope[variables.id] = intf
-        else:
+        if attr:
             scope[variables.id] = expr.AttrExpr(intf, attr)
+        else:
+            scope[variables.id] = intf
 
     return scope
 
@@ -203,7 +207,7 @@ def cast_return(arg_nodes, out_ports):
     for arg, intf in zip(input_vars, out_ports.values()):
         port_t = intf.dtype
         if typeof(port_t, Queue) or typeof(port_t, Tuple):
-            if isinstance(arg, expr.ConcatExpr):
+            if isinstance(arg, expr.ConcatExpr) and arg.dtype != port_t:
                 for i in range(len(arg.operands)):
                     if isinstance(arg.operands[i], expr.CastExpr) and (
                             arg.operands[i].cast_to == port_t[i]):
@@ -289,16 +293,41 @@ def find_data_expression(node, module_data):
         return parse_ast(node, module_data)
 
 
+def find_intf(name, module_data):
+    if name in module_data.in_intfs:
+        return module_data.in_intfs[name]
+
+    if name in module_data.in_ports:
+        return module_data.in_ports[name]
+
+    raise VisitError('Unknown name expression')
+
+
 def find_name_expression(node, module_data):
-    if isinstance(node, ast.Subscript):
-        # input interface as array ie din[x]
-        return module_data.in_intfs[node.value.id]
+    if isinstance(node, ast.Call):
+        arg_nodes = []
+        for arg in node.args:
+            add_to_list(arg_nodes, find_name_expression(arg, module_data))
 
-    if node.id in module_data.in_intfs:
-        return module_data.in_intfs[node.id]
+        from .ast_call import call_func
+        return call_func(node, arg_nodes, module_data)
 
-    if node.id in module_data.in_ports:
-        return module_data.in_ports[node.id]
+    try:
+        name = node.id
+    except AttributeError:
+        try:
+            name = node.value.id
+        except AttributeError:
+            name = None
+
+    if isinstance(node, ast.Starred):
+        name = [p.basename for p in module_data.hdl_locals[name]]
+
+    if name is not None:
+        if not isinstance(name, list):
+            return find_intf(name, module_data)
+
+        return [find_intf(n, module_data) for n in name]
 
     raise VisitError('Unknown name expression')
 

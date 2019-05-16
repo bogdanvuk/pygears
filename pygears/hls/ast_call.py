@@ -6,7 +6,8 @@ from pygears.typing import Int, Tuple, Uint, Unit, is_type, typeof
 
 from .ast_parse import parse_ast
 from .hls_expressions import (ArrayOpExpr, AttrExpr, BinOpExpr, CastExpr,
-                              ConditionalExpr, IntfDef, ResExpr, UnaryOpExpr)
+                              ConcatExpr, ConditionalExpr, IntfDef, ResExpr,
+                              UnaryOpExpr)
 from .utils import (VisitError, add_to_list, cast_return, eval_expression,
                     find_data_expression, find_target)
 
@@ -216,3 +217,7 @@ def call_empty(*arg, **kwds):
     value = kwds['value']
     expr = IntfDef(intf=value.intf, _name=value.name, context='valid')
     return UnaryOpExpr(expr, '!')
+
+
+def call_gather(*arg, **kwds):
+    return ConcatExpr(operands=list(arg))
