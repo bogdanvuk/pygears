@@ -51,7 +51,7 @@ def filt_type(din, lvl, sel):
     return Queue[(din[0].types)[sel], lvl]
 
 
-@gear(svgen={'compile': True})
+@gear(hdl={'compile': True})
 async def filt(din: Tuple[{'data': Union, 'sel': Uint}]) -> b'din[0]':
     '''Filters the ``data`` field of :class:`Union` type, by passing it forward
     only if it carries the ``data`` :class:`Union` subtype whose index is equal

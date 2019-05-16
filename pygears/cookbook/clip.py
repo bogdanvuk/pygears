@@ -3,7 +3,7 @@ from pygears.common import cart
 from pygears.typing import Queue, Uint, Tuple
 
 
-@gear(svgen={'compile': True})
+@gear(hdl={'compile': True})
 async def clip(din: Queue[Tuple[{
         'data': 't_data',
         'size': Uint

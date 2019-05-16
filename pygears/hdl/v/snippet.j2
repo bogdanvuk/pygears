@@ -1,0 +1,183 @@
+{%- set RBR = "{" %}
+{%- set LBR = "}" %}
+
+{%- macro generic_list(generics) -%}
+  {% for g in generics %}
+    {{g['name']}} = {{g['value']}}{{ "" if loop.last else "," }}
+  {%- endfor -%}
+{%- endmacro -%}
+
+{% macro sig_list(sigs) -%}
+  {% for i in sigs -%}
+    {% if i['width'] == 1 -%}
+      {{i['modport']}} {{i['name']}},
+    {% else -%}
+      {# {{i['modport']}} [{{i['width']-1}}:0] {{i['name']}}{{ "" if loop.last else "," }} // {{i['type']}} #}
+      {{i['modport']}} [{{i['width']-1}}:0] {{i['name']}},
+    {% endif -%}
+  {% endfor -%}
+{%- endmacro %}
+
+{% macro module_inst(module_name, param_map, inst_name, port_map=None, sig_map=None, rst_name="rst") -%}
+
+  {{module_name}}
+  {%- if param_map|length > 0 %}
+ #(
+    {% for name,value in param_map.items() -%}
+      {%- if name %}
+        {{"."|indent(4,True)}}{{name}}({{value.bit_length()}}'d{{value}}){{ "" if loop.last else "," }}
+      {% else -%}
+        {{value|indent(4,True)}}{{ "" if loop.last else "," }}
+      {% endif -%}
+    {% endfor -%}
+    )
+  {% endif %}
+ {{inst_name}} (
+  {% if sig_map == None %}
+    .clk(clk),
+    .rst({{rst_name}}),
+  {% else %}
+    {% for name,value in sig_map.items() -%}
+      {{"."|indent(4,True)}}{{name}}({{value}}){{ "" if loop.last and (not port_map) else "," }}
+    {% endfor -%}
+  {% endif %}
+  {% if port_map -%}
+    {% for name, (value, index, width) in port_map.items() %}
+      {% set hs_indexing = "[%d]"|format(index) if index != None else "" %}
+      {% set data_indexing = "[%d:%d]"|format((index+1)*width-1, index*width) if index != None else "" %}
+
+     .{{name}}_valid({{value}}_valid{{hs_indexing}}),
+     .{{name}}_ready({{value}}_ready{{hs_indexing}}),
+     .{{name}}_data({{value}}_data{{data_indexing}}){{ "" if loop.last else "," }}
+    {% endfor -%}
+  {% else -%}
+    .*
+  {% endif -%}
+  );
+{% endmacro %}
+
+{% macro intf_inst(name, width, size, type) -%}
+  {% set unpacked = "[%d:0]"|format(size-1) if size>1 else "" %}
+  {% if width == 0 %}
+	{% set width = 1 %}
+  {% endif %}
+  reg {{unpacked}}{{name}}_ready;
+  reg {{unpacked}}{{name}}_valid;
+  reg [{{width*size-1}}:0] {{name}}_data;
+{%- endmacro %}
+
+{% macro assign(name, value) -%}
+  assign {{name}} = {{value}};
+{%- endmacro %}
+
+{% macro range(name, high, low=0) -%}
+  {{name}}[{{high}}:{{low}}]
+{%- endmacro %}
+
+{% macro concat(values) -%}
+  {{RBR}}{{ values|join(', ') }}{{LBR}}
+{%- endmacro %}
+
+{% macro reg(name, high=none, low=0) -%}
+  {%- if high is not none %}
+reg [{{high}}:{{low}}] {{name}};
+  {%- else -%}
+reg {{name}};
+  {% endif -%}
+{%- endmacro %}
+
+{% macro wire(name, high=none, low=0) -%}
+  {%- if high is not none %}
+wire [{{high}}:{{low}}] {{name}};
+  {%- else -%}
+wire {{name}};
+  {% endif -%}
+{%- endmacro %}
+
+{% macro cons_signal_intf(intf) -%}
+  {% set unpacked = "[%d:0]"|format(intf['size']-1) if intf['size']>1 else "" %}
+output reg  {{unpacked}}{{intf['name']}}_ready,
+input  wire {{unpacked}}{{intf['name']}}_valid,
+input  wire [{{intf['width']*intf['size']-1}}:0] {{intf['name']}}_data
+{%- endmacro %}
+
+{% macro prod_signal_intf(intf) -%}
+  {% set unpacked = "[%d:0]"|format(intf['size']-1) if intf['size']>1 else "" %}
+input  wire         {{unpacked}}{{intf['name']}}_ready,
+output reg          {{unpacked}}{{intf['name']}}_valid,
+output wire  [{{intf['width']*intf['size']-1}}:0] {{intf['name']}}_data
+{%- endmacro %}
+
+{% macro signal_intf_list(intfs) -%}
+  {% for i in intfs -%}
+    {% if i['modport'] == 'consumer' %}
+{{ cons_signal_intf(i) }}{{ "" if loop.last else "," }}
+    {% else %}
+{{ prod_signal_intf(i) }}{{ "" if loop.last else "," }}
+    {% endif %}
+  {% endfor %}
+{%- endmacro %}
+
+{% macro intf_list_inst(intfs) -%}
+  {% for i in intfs -%}
+{{ intf_inst(i['name'], i['width'], 1, i['type']) }}
+  {% endfor %}
+{%- endmacro %}
+
+{% macro cons_signal_intf_connect(intf) -%}
+output logic         {{intf['name']}}_ready,
+input  logic         {{intf['name']}}_valid,
+input  logic [{{intf['width']}}:0] {{intf['name']}}_data
+{%- endmacro %}
+
+{% macro gear_module(module_name, intfs, comment) -%}
+  {% if comment is defined -%}
+/*
+    {{ comment }}
+*/
+  {% endif %}
+
+module {{module_name}}
+(
+    input clk,
+    input rst,
+{{ signal_intf_list(intfs)|indent(4, True) }}
+);
+{{ caller() }}
+endmodule
+{%- endmacro %}
+
+{% macro module_with_intf_structs(module_name, intfs, struct_intfs, comment) -%}
+{% set caller_ = caller %}
+{% call gear_module(module_name, intfs, comment) %}
+  {% for i in struct_intfs|isinput -%}
+    {% if i['width'] > 0 %}
+    assign {{i['name']}}_s = {{i['name']}}_data;
+    {% endif %}
+  {%- endfor %}
+  {% for i in struct_intfs %}
+    {% if i['modport'] == 'consumer' %}
+    {{ vgen_wire(i['local_type'], i['name'] + '_s')|indent(4, False) }}
+    {% else %}
+    {{ vgen_reg(i['local_type'], i['name'] + '_s', False)|indent(4, False) }}
+    {% endif %}
+
+  {% endfor %}
+  {% for i in struct_intfs|isoutput -%}
+    {% if i['width'] > 0 %}
+    assign {{i['name']}}_data = {{i['name']}}_s;
+    {% endif %}
+  {% endfor %}
+{{ caller_() }}
+{% endcall %}
+{%- endmacro %}
+
+{% macro data_func_gear(module_name, intfs, comment) -%}
+{% set caller_ = caller %}
+{% call module_with_intf(module_name, intfs, intfs, comment) %}
+    assign {{intfs[0]['name']}}_ready = {{intfs[1]['name']}}_ready;
+    assign {{intfs[1]['name']}}_valid = {{intfs[0]['name']}}_valid;
+{{ caller_() }}
+{% endcall %}
+
+{%- endmacro %}

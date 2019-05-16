@@ -11,7 +11,7 @@ from pygears.definitions import ROOT_DIR
 from pygears.sim import sim_log
 from pygears.sim.extens.rand_base import RandBase
 from pygears.sim.modules.sim_socket import SimSocket, u32_bytes_decode
-from pygears.svgen.util import svgen_typedef
+from pygears.hdl.sv.util import svgen_typedef
 from pygears.util.fileio import save_file
 from pygears.conf import inject, Inject
 

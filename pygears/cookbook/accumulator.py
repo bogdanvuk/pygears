@@ -3,7 +3,7 @@ from pygears.common import cart
 from pygears.typing import Bool, Integer, Queue, Tuple
 
 
-@gear(svgen={'compile': True})
+@gear(hdl={'compile': True})
 async def accumulator(din: Queue[Tuple[{
         'data': Integer['w_data'],
         'offset': Integer['w_data']
@@ -37,7 +37,7 @@ def accumulator2(din: Queue[Integer['w_data']], cfg: Integer['w_data']):
 
 
 @alternative(accumulator)
-@gear(svgen={'compile': True})
+@gear(hdl={'compile': True})
 async def accumulator_no_offset(din: Queue[Integer['w_data']]) -> b'din.data':
     acc = din.dtype.data(0)
 

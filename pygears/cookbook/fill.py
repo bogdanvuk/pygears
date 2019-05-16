@@ -1,5 +1,5 @@
-from pygears.svgen.svmod import SVModuleGen
-from pygears.svgen.inst import SVGenInstPlugin
+from pygears.hdl.sv.svmod import SVModuleGen
+from pygears.hdl.sv import SVGenPlugin
 from pygears import gear
 from pygears.typing import Union
 
@@ -29,14 +29,14 @@ class SVGenFill(SVModuleGen):
 
     def get_module(self, template_env):
         context = {
-            'module_name': self.sv_module_name,
-            'intfs': list(self.sv_port_configs()),
+            'module_name': self.module_name,
+            'intfs': list(self.port_configs),
             'field_sel': self.node.params['field_sel']
         }
         return template_env.render_local(__file__, "fill.j2", context)
 
 
-class SVGenFillPlugin(SVGenInstPlugin):
+class SVGenFillPlugin(SVGenPlugin):
     @classmethod
     def bind(cls):
         cls.registry['svgen']['module_namespace'][fill] = SVGenFill

@@ -2,7 +2,7 @@ from pygears import gear, QueueEmpty
 from pygears.typing import Bool
 
 
-@gear(svgen={'compile': True})
+@gear(hdl={'compile': True})
 async def dreg(din) -> b'din':
     data = din.dtype.decode(0)
     valid = Bool(False)

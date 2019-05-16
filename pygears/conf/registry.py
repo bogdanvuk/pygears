@@ -44,8 +44,9 @@ def inject_async(func):
     injections = tuple(v.default.args[0] for k, v in sig.parameters.items()
                        if isinstance(v.default, Inject))
 
-    func = intercept_arguments(
-        func, cb_named=get_args_from_registry, cb_kwds=get_args_from_registry)
+    func = intercept_arguments(func,
+                               cb_named=get_args_from_registry,
+                               cb_kwds=get_args_from_registry)
 
     try:
         all(registry(i) for i in injections)
@@ -57,8 +58,9 @@ def inject_async(func):
 
 
 def inject(func):
-    return intercept_arguments(
-        func, cb_named=get_args_from_registry, cb_kwds=get_args_from_registry)
+    return intercept_arguments(func,
+                               cb_named=get_args_from_registry,
+                               cb_kwds=get_args_from_registry)
 
 
 class RegistryException(Exception):
@@ -269,17 +271,28 @@ def clear():
         subc.bind()
 
 
-def load_plugin_folder(path):
+def load_plugin_folder(path, package=None):
     plugin_parent_dir, plugin_dir = os.path.split(path)
     sys.path.insert(0, plugin_parent_dir)
     pysearchre = re.compile('.py$', re.IGNORECASE)
     pluginfiles = filter(pysearchre.search, os.listdir(path))
     plugins = map(lambda fp: '.' + os.path.splitext(fp)[0], pluginfiles)
     # import parent module / namespace
-    importlib.import_module(plugin_dir)
+    if package:
+        importlib.import_module(plugin_dir, package=package)
+    else:
+        importlib.import_module(plugin_dir)
+
     modules = []
     for plugin in plugins:
         if not plugin.endswith('__'):
-            modules.append(importlib.import_module(plugin, package=plugin_dir))
+            if package:
+                ret = importlib.import_module(
+                    plugin, package=f'{package}.{plugin_dir}')
+            else:
+                ret = importlib.import_module(
+                    plugin, package=plugin_dir)
+
+            modules.append(ret)
 
     return modules

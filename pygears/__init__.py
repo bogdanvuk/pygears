@@ -32,7 +32,7 @@ import pygears.typing.pprint
 # from pygears.registry import load_plugin_folder
 # load_plugin_folder(os.path.join(os.path.dirname(__file__), 'common'))
 
-import pygears.svgen
+import pygears.hdl
 import pygears.rtl
 
 from pygears.conf.custom_settings import load_rc, print_registry

@@ -4,7 +4,7 @@ import shutil
 from echo import echo
 from pygears import Intf
 from pygears.definitions import COMMON_SVLIB_DIR
-from pygears.svgen import svgen
+from pygears.hdl.sv import svgen
 from pygears.typing import Int
 from pygears.util.print_hier import print_hier
 

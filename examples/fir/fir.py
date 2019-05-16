@@ -3,7 +3,7 @@ from pygears.typing import Int, Uint, typeof, Array, Tuple
 from pygears.common import dreg, const, union_collapse
 from pygears.cookbook import priority_mux
 
-from pygears.svgen import svgen
+from pygears.hdl.sv import svgen
 from pygears.sim.modules.verilator import SimVerilated
 from pygears.sim import sim
 from pygears.cookbook.verif import drv

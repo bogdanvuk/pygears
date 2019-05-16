@@ -12,6 +12,10 @@ module bc #(
    logic [SIZE-1 : 0] ready_reg;
    logic [SIZE-1 : 0] ready_all;
 
+   initial begin
+      ready_reg = 0;
+   end
+
    generate
       for (genvar i = 0; i < SIZE; i++) begin
          assign ready_all[i]    = dout[i].ready | ready_reg[i];

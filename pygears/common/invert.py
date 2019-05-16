@@ -3,7 +3,7 @@ from pygears import gear
 from pygears.core.intf import IntfOperPlugin
 
 
-@gear(svgen={'compile': True})
+@gear(hdl={'compile': True})
 async def invert(din) -> b'din':
     async with din as data:
         yield ~data

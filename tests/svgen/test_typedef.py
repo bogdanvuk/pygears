@@ -1,4 +1,4 @@
-from pygears.svgen.util import svgen_typedef
+from pygears.hdl.sv.util import svgen_typedef
 from pygears.typing import Array, Int, Queue, Tuple, Uint, Union, Unit
 from pygears.util.test_utils import equal_on_nonspace
 

@@ -10,9 +10,8 @@ from pygears import bind, registry, config
 from pygears.sim import sim_log
 from pygears.sim.c_drv import CInputDrv, COutputDrv
 from pygears.sim.modules.cosim_base import CosimBase
-from pygears.svgen import svgen
+from pygears.hdl import hdlgen
 from pygears.util.fileio import save_file
-from pygears.vgen import vgen
 
 signal_spy_connect_t = Template("""
 /*verilator tracing_on*/
@@ -62,16 +61,22 @@ class SimVerilated(CosimBase):
         self.language = language
 
         if self.language == 'v':
-            self.rtlnode = vgen(gear, outdir=self.outdir, wrapper=False)
+            self.rtlnode = hdlgen(gear,
+                                  outdir=self.outdir,
+                                  wrapper=False,
+                                  language='v')
         else:
-            self.rtlnode = svgen(gear, outdir=self.outdir, wrapper=True)
+            self.rtlnode = hdlgen(gear,
+                                  outdir=self.outdir,
+                                  wrapper=True,
+                                  language='sv')
 
         self.svmod = registry('svgen/map')[self.rtlnode]
 
         if self.language == 'v':
-            self.wrap_name = f'{self.svmod.sv_module_name}'
+            self.wrap_name = f'{self.svmod.module_name}'
         else:
-            self.wrap_name = f'wrap_{self.svmod.sv_module_name}'
+            self.wrap_name = f'wrap_{self.svmod.module_name}'
 
         self.trace_fn = None
         self.vcd_fifo = vcd_fifo
@@ -118,10 +123,9 @@ class SimVerilated(CosimBase):
         atexit.register(self._finish)
 
         if self.shmidcat and tracing_enabled:
-            self.shmid_proc = subprocess.Popen(
-                f'shmidcat {self.trace_fn}',
-                shell=True,
-                stdout=subprocess.PIPE)
+            self.shmid_proc = subprocess.Popen(f'shmidcat {self.trace_fn}',
+                                               shell=True,
+                                               stdout=subprocess.PIPE)
 
             # Wait for shmidcat to actually open the pipe, which is necessary
             # to happen prior to init of the verilator. If shmidcat does not

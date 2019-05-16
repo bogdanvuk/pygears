@@ -5,7 +5,7 @@ from pygears.typing import Queue, Union
 
 @gear(
     enablement=b'not all(typeof(d, Queue) for d in din)',
-    svgen={'compile': True})
+    hdl={'compile': True})
 async def priority_mux(*din) -> b'Union[din]':
     """Takes in a tuple of interfaces and passes any active one to the output. If
     two or more inputs are given at the same time, the input having the highest
@@ -32,7 +32,7 @@ def prio_mux_queue_type(dtypes):
 
 @alternative(priority_mux)
 @gear(
-    enablement=b'all(typeof(d, Queue) for d in din)', svgen={'compile': True})
+    enablement=b'all(typeof(d, Queue) for d in din)', hdl={'compile': True})
 async def priority_mux_queue(*din) -> b'prio_mux_queue_type(din)':
     """Priority mux alternative which operates on queues"""
     for i, d in enumerate(din):

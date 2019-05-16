@@ -14,8 +14,8 @@ from pygears.definitions import COMMON_SVLIB_DIR
 from pygears.sim import sim
 from pygears.sim.modules.sim_socket import SimSocket
 from pygears.sim.modules.verilator import SimVerilated
-from pygears.svgen import register_sv_paths, svgen
-from pygears.vgen import vgen
+from pygears.hdl.sv import register_sv_paths
+from pygears.hdl import hdlgen
 
 re_trailing_space_rem = re.compile(r"\s+$", re.MULTILINE)
 re_multispace_rem = re.compile(r"\s+", re.MULTILINE)
@@ -120,7 +120,7 @@ def formal_check_fixt(tmpdir, request):
     safe_bind('svgen/formal/asserts', asserts)
     safe_bind('svgen/formal/assumes', assumes)
 
-    vgen(outdir=outdir, wrapper=False, **request.param[3])
+    hdlgen(language='v', outdir=outdir, wrapper=False, **request.param[3])
 
     # TODO : hack to find gear
     for svmod in registry("svgen/map").values():
@@ -169,7 +169,7 @@ def vivado_synth(outdir, language, params=None):
         params = {}
 
     if language == 'sv':
-        svgen(outdir=outdir, wrapper=True, **params)
+        hdlgen(language='sv', outdir=outdir, wrapper=True, **params)
 
         files = []
         for svmod in registry("svgen/map").values():
@@ -178,7 +178,7 @@ def vivado_synth(outdir, language, params=None):
 
             path = svmod.sv_impl_path
             if not path:
-                path = os.path.join(outdir, svmod.sv_file_name)
+                path = os.path.join(outdir, svmod.file_name)
 
             files.append(path)
 
@@ -186,7 +186,7 @@ def vivado_synth(outdir, language, params=None):
         files.append(os.path.join(outdir, 'wrap_top.sv'))
 
     elif language == 'v':
-        vgen(outdir=outdir, wrapper=False, **params)
+        hdlgen(language='v', outdir=outdir, wrapper=False, **params)
 
         files = []
         for svmod in registry("svgen/map").values():
@@ -194,7 +194,7 @@ def vivado_synth(outdir, language, params=None):
             if hasattr(svmod, 'is_compiled') and svmod.is_compiled:
                 path = svmod.sv_impl_path
                 if not path:
-                    path = os.path.join(outdir, svmod.sv_file_name)
+                    path = os.path.join(outdir, svmod.file_name)
 
                 files.append(path)
     else:
@@ -266,7 +266,7 @@ def svgen_check_fixt(tmpdir, request):
     yield
 
     register_sv_paths(tmpdir)
-    svgen(outdir=tmpdir, **request.param[1])
+    hdlgen(language='sv', outdir=tmpdir, **request.param[1])
 
     for fn in request.param[0]:
         res_file = os.path.join(tmpdir, fn)
