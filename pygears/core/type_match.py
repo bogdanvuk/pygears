@@ -1,5 +1,3 @@
-import re
-
 from pygears.conf import registry
 from pygears.typing.base import Any, GenericMeta, type_repr
 
@@ -8,13 +6,20 @@ class TypeMatchError(Exception):
     pass
 
 
-def _type_match_rec(t, pat, matches, allow_incomplete):
+def _type_match_rec(t, pat, matches):
 
-    # Ignore parameter names in type
+    # Ignore type template arguments, i.e.: 'T2' in Tuple[1, 2, 3, 'T2']
     if isinstance(t, str):
-        pass
+        return t
+
+    if (t == Any) or (pat == Any):
+        return t
+
+    if t == pat:
+        return t
+
     # Did we reach the parameter name?
-    elif isinstance(pat, str):
+    if isinstance(pat, str):
         if pat in matches:
             # If the parameter name is already bound, check if two deductions
             # are same
@@ -32,27 +37,39 @@ def _type_match_rec(t, pat, matches, allow_incomplete):
                     )
             except Exception as e:
                 matches[pat] = t
-                # if not allow_incomplete:
-                # raise TypeMatchError(f"Cannot evaluate {type_repr(pat)}")
-    elif (t == Any) or (pat == Any):
-        pass
-    elif isinstance(t, GenericMeta) and isinstance(
+
+        return t
+
+    if isinstance(t, GenericMeta) and isinstance(
             pat, GenericMeta) and (issubclass(t.base, pat.base)):
-        for ta, pa in zip(t.args, pat.args):
-            try:
-                _type_match_rec(
-                    ta, pa, matches, allow_incomplete=allow_incomplete)
-            except TypeMatchError as e:
-                raise TypeMatchError(
-                    f'{str(e)}\n - when matching {repr(t)} to {repr(pat)}')
-    elif t == pat:
-        pass
+
+        if pat.args:
+            args = []
+            for ta, pa in zip(t.args, pat.args):
+                try:
+                    res = _type_match_rec(ta, pa, matches)
+                    args.append(res)
+                except TypeMatchError as e:
+                    raise TypeMatchError(
+                        f'{str(e)}\n - when matching {repr(t)} to {repr(pat)}')
+
+            # if hasattr(pat, '__parameters__'):
+            args = {name: a for name, a in zip(pat.fields, args)}
+        else:
+            args = t.args
+
+        return t.__class__(
+            t.__name__, t.__bases__, dict(t.__dict__), args=args)
+
+    raise TypeMatchError("{} cannot be matched to {}".format(
+        type_repr(t), type_repr(pat)))
+
+
+def type_match(t, pat, matches=None):
+    if matches is None:
+        matches = {}
     else:
-        raise TypeMatchError("{} cannot be matched to {}".format(
-            type_repr(t), type_repr(pat)))
+        matches = dict(matches)
 
-
-def type_match(t, pat, matches={}, allow_incomplete=False):
-    matches = dict(matches)
-    _type_match_rec(t, pat, matches, allow_incomplete=allow_incomplete)
-    return matches
+    res = _type_match_rec(t, pat, matches)
+    return matches, res

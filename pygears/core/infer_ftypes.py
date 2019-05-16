@@ -1,8 +1,7 @@
 import collections
-import copy
 
 from pygears.conf import registry
-from pygears.typing.base import GenericMeta, param_subs, TypingMeta
+from pygears.typing.base import GenericMeta, param_subs
 
 from .type_match import TypeMatchError, type_match
 
@@ -103,49 +102,75 @@ def infer_ftypes(params, args, namespace={}, allow_incomplete=False):
         substituted = False
         # Loops until none of the parameters has been additionally resolved
         for name, val in postponed.copy().items():
+
             if name in args:
                 try:
                     templ = val
                     if isinstance(val, bytes):
                         templ = templ.decode()
 
-                    match.update(
-                        type_match(
-                            args[name],
-                            templ,
-                            match,
-                            allow_incomplete=(not final_check)))
+                    match_update, res = type_match(args[name], templ, match)
+                    match.update(match_update)
+                    args[name] = res
+
+                    if type_is_specified(res):
+                        match[name] = res
+                        del postponed[name]
+                        substituted = True
+                        break
+                    else:
+                        postponed[name] = res
+
                 except Exception as e:
                     err = TypeMatchError(
                         f"{str(e)}\n - when deducing type for argument "
                         f"'{name}'")
                     err.params = match
                     raise err
-            try:
-                substituted, new_p = resolve_param(val, match, namespace)
-
-                if name in args:
-                    new_p = args[name]
-                    substituted = type_is_specified(new_p)
-
-                if substituted and (name == 'return'):
-                    substituted = type_is_specified(new_p)
-
-                if substituted:
-                    if name == 'return':
+            else:
+                try:
+                    substituted, new_p = resolve_param(val, match, namespace)
+                    if substituted and (name == 'return'):
                         substituted = type_is_specified(new_p)
 
-                    if name in args:
-                        new_p = copy_field_names(new_p, params[name])
-                        args[name] = new_p
+                    if substituted:
+                        if name == 'return':
+                            substituted = type_is_specified(new_p)
 
-                    match[name] = new_p
-                    del postponed[name]
-                    break
-            except Exception as e:
-                if final_check:
-                    raise type(e)(f'{str(e)} - when resolving '
-                                  f'parameter {name}: {val}')
+                        match[name] = new_p
+                        del postponed[name]
+                        break
+
+                except Exception as e:
+                    if final_check:
+                        raise type(e)(f'{str(e)} - when resolving '
+                                      f'parameter {name}: {val}')
+
+            # try:
+            #     substituted, new_p = resolve_param(val, match, namespace)
+
+            #     if name in args:
+            #         new_p = args[name]
+            #         substituted = type_is_specified(new_p)
+
+            #     if substituted and (name == 'return'):
+            #         substituted = type_is_specified(new_p)
+
+            #     if substituted:
+            #         if name == 'return':
+            #             substituted = type_is_specified(new_p)
+
+            #         if name in args:
+            #             new_p = copy_field_names(new_p, params[name])
+            #             args[name] = new_p
+
+            #         match[name] = new_p
+            #         del postponed[name]
+            #         break
+            # except Exception as e:
+            #     if final_check:
+            #         raise type(e)(f'{str(e)} - when resolving '
+            #                       f'parameter {name}: {val}')
 
         final_check = not substituted and not final_check
 

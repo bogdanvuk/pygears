@@ -414,7 +414,7 @@ class Uint(Integer, metaclass=UintType):
 
 
 class BoolMeta(UintType):
-    def __new__(cls, name, bases, namespace):
+    def __new__(cls, name, bases, namespace, args=[]):
         spec_cls = super().__new__(cls, name, bases, namespace, args=[1])
         return spec_cls
 
