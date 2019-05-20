@@ -103,6 +103,23 @@ class ConditionsEval:
         return subcond_expr(cond, sub_conds)
 
     def _cblock_exit_subconds(self, cond, cblock):
+        if isinstance(cblock, SeqCBlock) and len(cblock.state_ids) > 1:
+            sub_conds = self._cblock_state_exit_subconds(cblock)
+        else:
+            sub_conds = self._cblock_simple_exit_subconds(cblock)
+        return subcond_expr(cond, sub_conds)
+
+    def _cblock_state_exit_subconds(self, cblock):
+        curr_child = cblock.child[-1]
+        sub_conds = curr_child.pydl_block.exit_cond
+        if sub_conds is not None:
+            add_exit_cond(curr_child.pydl_block.id)
+            sub_conds = state_expr(curr_child.state_ids,
+                                   nested_exit_cond(curr_child.pydl_block))
+
+        return sub_conds
+
+    def _cblock_simple_exit_subconds(self, cblock):
         exit_c = None
         children = [x for x in get_cblock_child(cblock)]
         for child in reversed(children):
@@ -118,9 +135,10 @@ class ConditionsEval:
                     if is_intftype(
                             pydl_stmt) and pydl_stmt.in_cond is not None:
                         exit_c = and_expr(exit_c, pydl_stmt.in_cond)
-                    return subcond_expr(cond, exit_c)
-
-        return subcond_expr(cond, 1)
+                    # return subcond_expr(cond, exit_c)
+                    return exit_c
+        # return subcond_expr(cond, 1)
+        return None
 
     def _cblock_subconds(self, cond, cblock, cond_type):
         if cond_type == 'cycle':

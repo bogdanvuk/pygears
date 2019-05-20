@@ -42,8 +42,8 @@ Alternatives
 
 """
 
-from pygears import alternative, gear, module
-from pygears.typing import Queue, Union, Uint, Tuple
+from pygears import alternative, gear
+from pygears.typing import Queue, Union, Uint, Tuple, Bool
 from .ccat import ccat
 
 
@@ -79,43 +79,37 @@ def filt_fix_sel(din: Union, *, sel) -> b'din.types[sel]':
     return (ccat(din, din.dtype[1](sel)) | filt)[0] | din.dtype.types[sel]
 
 
-def setup(module):
-    module.data = module.tout[0](0)
-    module.eot = module.tout[1](0)
-    module.empty = True
-
-
 @alternative(filt)
-@gear(sim_setup=setup, svgen={'svmod_fn': 'qfilt.sv'})
-async def qfilt(
-        din: Queue[Union, 'lvl'],
-        *,
-        sel=0,
-        filt_lvl=1,
-        w_ctrl=b'int(din[0][-1])',
-        w_din=b'int(din[0][0])',
-        w_dout=b'int((din[0].types)[sel])') -> b'filt_type(din, lvl, sel)':
-    async with din as d:
-        udata = d.data
-        valid_data = (udata.ctrl == sel)
+@gear(svgen={'compile': True})
+async def qfilt(din: Queue[Union, 'lvl'], *, sel=0,
+                filt_lvl=1) -> b'filt_type(din, lvl, sel)':
 
-        if all(d.eot[:filt_lvl]):
-            if valid_data:
-                if not module().empty:
-                    yield module().tout((module().data, module().eot))
-                    yield module().tout((udata.data, d.eot))
-            else:
-                yield module().tout((module().data, d.eot))
-            module().empty = True
+    data_reg = din.dtype.data.data(0)  # TODO
+    eot_reg = Uint[din.dtype.lvl](0)
+    empty_reg = Bool(True)
 
-        elif valid_data:
-            if not module().empty:
-                yield module().tout((module().data, module().eot))
+    while True:
+        async with din as d:
+            curr_data = d.data.data
+            field_sel = (d.data.ctrl == sel)
 
-            # register
-            module().data = udata.data
-            module().eot = d.eot
-            module().empty = False
+            if all(d.eot[:filt_lvl]):
+                if field_sel:
+                    if not empty_reg:
+                        yield (data_reg, eot_reg)
+                        yield (curr_data, d.eot)
+                else:
+                    yield (data_reg, d.eot)
+                empty_reg = True
+
+            elif field_sel:
+                if not empty_reg:
+                    yield (data_reg, eot_reg)
+
+                # register
+                data_reg = curr_data
+                eot_reg = d.eot
+                empty_reg = False
 
 
 @gear

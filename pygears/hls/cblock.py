@@ -78,7 +78,7 @@ class CBlockVisitor(InstanceVisitor):
         return self.visit_block(node, True)
 
     def visit_MutexCBlock(self, node):
-        return self.visit_block(node, False)
+        return self.visit_block(node, True)
 
     def _add_sub(self, block, curr_block, cond):
         if isinstance(block, Block):
