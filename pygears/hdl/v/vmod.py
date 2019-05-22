@@ -10,7 +10,8 @@ from pygears.hdl.modinst import HDLModuleInst
 from pygears.hdl import hdl_log
 
 from .vcompile import compile_gear
-# from .sv_keywords import sv_keywords
+from ..sv.svparse import parse
+from ..sv.sv_keywords import sv_keywords as keywords
 
 
 class VModuleInst(HDLModuleInst):
@@ -21,12 +22,11 @@ class VModuleInst(HDLModuleInst):
     @property
     def inst_name(self):
         inst_name = super().inst_name
-        return inst_name
 
-        # if inst_name in sv_keywords:
-        #     return f'{inst_name}_i'
-        # else:
-        #     return inst_name
+        if inst_name in keywords:
+            return f'{inst_name}_i'
+        else:
+            return inst_name
 
     @property
     @functools.lru_cache()
@@ -46,12 +46,13 @@ class VModuleInst(HDLModuleInst):
     @functools.lru_cache()
     def impl_parse(self):
         if self.impl_path:
-            raise Exception('parse not implemented')
-            # with open(self.impl_path, 'r') as f:
-            #     return parse(f.read())
+            # raise Exception('parse not implemented')
+            with open(self.impl_path, 'r') as f:
+                return parse(f.read())
         else:
+            breakpoint()
             hdl_log().warning(
-                f'SystemVerilog file not found for {self.node.name}')
+                f'Verilog file not found for {self.node.name}')
 
     def get_out_port_map_intf_name(self, port):
         return self.vgen_map[port.consumer].basename, None, None

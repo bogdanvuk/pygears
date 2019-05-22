@@ -12,7 +12,7 @@ module {{module_name}}
   {% else %}
 {{snippet.sig_list(sigs)|indent(4, True) }}
   {% endif %}
-{{snippet.signal_intf_list(intfs)|indent(4, True)}}
+{{snippet.signal_intf_list(intfs, outtype="wire")|indent(4, True)}}
 );
 
 /*verilator tracing_off*/

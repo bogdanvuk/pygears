@@ -8,7 +8,8 @@ def mux_type(dtypes):
     return Union[dtypes]
 
 
-@gear(hdl={'compile': True})
+# @gear(hdl={'compile': True})
+@gear
 async def mux(ctrl, *din) -> b'mux_type(din)':
     async with ctrl as c:
         assert c < len(din), 'mux: incorrect selection value'

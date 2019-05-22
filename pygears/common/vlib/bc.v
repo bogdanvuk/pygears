@@ -6,9 +6,11 @@ module bc #(
    (
     input                        clk,
     input                        rst,
+
     output wire                  din_ready,
     input wire                   din_valid,
     input wire [WIDTH-1:0]       din_data,
+
     input wire [SIZE-1:0]        dout_ready,
     output wire [SIZE-1:0]       dout_valid,
     output wire [WIDTH*SIZE-1:0] dout_data

@@ -1,0 +1,39 @@
+{%- import 'snippet.j2' as snippet -%}
+{% call snippet.module_with_intf_structs(module_name, intfs, intfs, comment) %}
+
+    wire handshake;
+    reg din_valid_sel;
+
+    assign handshake = dout_valid && dout_ready;
+
+    always @*
+    begin
+{% for i in intfs[1:-1] %}
+        {{i['name']}}_ready = 0;
+{% endfor %}
+        dout_s_data = { {{int(_dout_t.data)}} {1'bx}};
+        din_valid_sel = 0;
+        if (ctrl_valid) begin
+            case( ctrl_data )
+{% for i in intfs[1:-1] %}
+                {{loop.index-1}} : begin
+                    din_valid_sel = {{i['name']}}_valid;
+                    dout_s_data[{{i['width']-1}}:0] = {{i['name']}}_s;
+                    {{i['name']}}_ready = handshake;
+                end
+{% endfor %}
+                default: begin
+{% for i in intfs[1:-1] %}
+                    {{i['name']}}_ready = 1'bx;
+{% endfor %}
+                    din_valid_sel = 1'bx;
+                end
+            endcase
+        end
+    end
+
+    assign ctrl_ready = handshake;
+    assign dout_s_ctrl = ctrl_s;
+    assign dout_valid = ctrl_valid && din_valid_sel;
+
+{% endcall %}

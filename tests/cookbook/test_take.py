@@ -30,21 +30,19 @@ def test_directed(tmpdir, sim_cls, din_delay, dout_delay):
         tmp.append((i, 3))
     seq.append(tmp)
 
-    directed(
-        drv(t=T_DIN, seq=seq) | delay_rng(din_delay, din_delay),
-        f=take(sim_cls=sim_cls),
-        ref=[[0, 1], [0, 1, 2]],
-        delays=[delay_rng(dout_delay, dout_delay)])
+    directed(drv(t=T_DIN, seq=seq) | delay_rng(din_delay, din_delay),
+             f=take(sim_cls=sim_cls),
+             ref=[[0, 1], [0, 1, 2]],
+             delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(outdir=tmpdir)
 
 
 def test_directed_two_inputs(tmpdir, cosim_cls):
-    verif(
-        drv(t=T_DIN_SEP, seq=[list(range(9)), list(range(5))]),
-        drv(t=T_CFG, seq=[2, 3]),
-        f=take(sim_cls=cosim_cls),
-        ref=take(name='ref_model'))
+    verif(drv(t=T_DIN_SEP, seq=[list(range(9)), list(range(5))]),
+          drv(t=T_CFG, seq=[2, 3]),
+          f=take(sim_cls=cosim_cls),
+          ref=take(name='ref_model'))
 
     sim(outdir=tmpdir)
 
@@ -68,10 +66,9 @@ def test_q_directed(tmpdir, sim_cls, delay):
         tmp.append(sub)
     seq.append(tmp)
 
-    directed(
-        drv(t=T_QDIN, seq=seq) | delay_rng(delay, delay),
-        f=take(sim_cls=sim_cls),
-        ref=[[list(range(3))] * 2, [list(range(6))] * 3])
+    directed(drv(t=T_QDIN, seq=seq) | delay_rng(delay, delay),
+             f=take(sim_cls=sim_cls),
+             ref=[[list(range(3))] * 2, [list(range(6))] * 3])
 
     sim(outdir=tmpdir)
 
@@ -96,11 +93,10 @@ def test_q_directed_two_inputs(tmpdir, sim_cls, din_delay, cfg_delay):
         tmp.append(sub)
     seq.append(tmp)
 
-    directed(
-        drv(t=T_QDIN_SEP, seq=seq) | delay_rng(din_delay, din_delay),
-        drv(t=T_CFG, seq=[2, 3]) | delay_rng(cfg_delay, cfg_delay),
-        f=take(sim_cls=sim_cls),
-        ref=[[list(range(3))] * 2, [list(range(6))] * 3])
+    directed(drv(t=T_QDIN_SEP, seq=seq) | delay_rng(din_delay, din_delay),
+             drv(t=T_CFG, seq=[2, 3]) | delay_rng(cfg_delay, cfg_delay),
+             f=take(sim_cls=sim_cls),
+             ref=[[list(range(3))] * 2, [list(range(6))] * 3])
 
     sim(outdir=tmpdir)
 
@@ -115,6 +111,11 @@ def test_qtake_formal():
     take(Intf(T_QDIN))
 
 
-@synth_check({'logic luts': 20, 'ffs': 17})
-def test_take():
+@synth_check({'logic luts': 20, 'ffs': 17}, tool='vivado')
+def test_take_vivado():
+    take(Intf(T_DIN))
+
+
+@synth_check({'logic luts': 82, 'ffs': 17}, tool='yosys')
+def test_take_yosys():
     take(Intf(T_DIN))

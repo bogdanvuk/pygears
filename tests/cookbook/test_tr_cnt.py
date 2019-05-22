@@ -17,22 +17,22 @@ def test_directed(tmpdir, sim_cls, din_delay, dout_delay, cfg_delay):
     t_din = Queue[Uint[16]]
     t_cfg = Uint[16]
 
-    directed(
-        drv(t=t_din,
-            seq=[
-                list(range(5)),
-                list(range(3)),
-                list(range(2)),
-                list(range(3)),
-                list(range(8))
-            ])
-        | delay_rng(din_delay, din_delay),
-        drv(t=t_cfg, seq=[2, 3]) | delay_rng(cfg_delay, cfg_delay),
-        f=tr_cnt(sim_cls=sim_cls),
-        ref=[[list(range(5)), list(range(3))],
-             [list(range(2)), list(range(3)),
-              list(range(8))]],
-        delays=[delay_rng(dout_delay, dout_delay)])
+    directed(drv(t=t_din,
+                 seq=[
+                     list(range(5)),
+                     list(range(3)),
+                     list(range(2)),
+                     list(range(3)),
+                     list(range(8))
+                 ])
+             | delay_rng(din_delay, din_delay),
+             drv(t=t_cfg, seq=[2, 3]) | delay_rng(cfg_delay, cfg_delay),
+             f=tr_cnt(sim_cls=sim_cls),
+             ref=[[list(range(5)), list(range(3))],
+                  [list(range(2)),
+                   list(range(3)),
+                   list(range(8))]],
+             delays=[delay_rng(dout_delay, dout_delay)])
     sim(outdir=tmpdir)
 
 
@@ -41,6 +41,11 @@ def test_formal():
     tr_cnt(Intf(Queue[Uint[8]]), Intf(Uint[3]))
 
 
-@synth_check({'logic luts': 11, 'ffs': 16})
-def test_synth():
+@synth_check({'logic luts': 11, 'ffs': 16}, tool='vivado')
+def test_synth_vivado():
+    tr_cnt(Intf(Queue[Uint[16]]), Intf(Uint[16]))
+
+
+@synth_check({'logic luts': 51, 'ffs': 16}, tool='yosys')
+def test_synth_yosys():
     tr_cnt(Intf(Queue[Uint[16]]), Intf(Uint[16]))

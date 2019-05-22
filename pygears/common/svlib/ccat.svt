@@ -7,7 +7,7 @@
     logic  all_valid;
     logic  handshake;
     assign all_valid = {{input_intf_names|format_list("%s.valid")|join(" && ")}};
-    assign handshake = dout.valid & dout.ready;
+    assign handshake = dout.valid && dout.ready;
 
     assign dout.valid = all_valid;
     assign dout.data = { {{input_intf_names|reverse|format_list("%s.data")|join(", ")}} };

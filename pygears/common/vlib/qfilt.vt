@@ -1,0 +1,48 @@
+{%- import 'snippet.j2' as snippet -%}
+{% call snippet.module_with_intf_structs(module_name, intfs, intfs, comment) %}
+
+   reg valid_reg;
+   wire reg_empty;
+   wire eot_load;
+   wire field_sel;
+   wire dout_eot_next;
+   wire eot_merge;
+   wire data_load;
+   wire handshake;
+   wire din_sel_valid;
+
+   assign field_sel = (din_s_data_ctrl == {{params['sel']}});
+
+   assign dout_eot_next = &dout_s_eot[{{params['filt_lvl']-1}}:0];
+
+   assign handshake = dout_valid && dout_ready;
+   assign din_sel_valid = din_valid && field_sel;
+
+   assign data_load = din_sel_valid && (reg_empty || handshake);
+   assign dout_valid = !reg_empty && (din_sel_valid || dout_eot_next);
+
+   assign eot_merge = din_valid && din_s_eot[0] && !field_sel && (!dout_valid || handshake);
+
+   assign reg_empty = !valid_reg;
+   assign eot_load = data_load || eot_merge;
+
+   always @(posedge clk) begin
+      if (rst || (handshake && !data_load)) begin
+         dout_s_eot <= 0;
+         dout_s_data <= 0;
+         valid_reg <= 0;
+      end else begin
+         if (eot_load) begin
+            dout_s_eot <= din_s_eot;
+         end
+
+         if (data_load) begin
+            valid_reg <= 1;
+            dout_s_data <= din_s_data;
+         end
+      end
+   end
+
+   assign din_ready = eot_load || (!field_sel && !din_s_eot[0] && din_valid);
+
+{% endcall %}

@@ -38,11 +38,10 @@ def get_ref(seq):
 @pytest.mark.parametrize('dout_delay', [0, 5])
 def test_directed_golden(tmpdir, sim_cls, din_delay, dout_delay):
     seq = DIR_SEQ
-    directed(
-        drv(t=T_DIN, seq=seq) | delay_rng(din_delay, din_delay),
-        f=qcnt(sim_cls=sim_cls, lvl=T_DIN.lvl),
-        ref=get_ref(seq),
-        delays=[delay_rng(dout_delay, dout_delay)])
+    directed(drv(t=T_DIN, seq=seq) | delay_rng(din_delay, din_delay),
+             f=qcnt(sim_cls=sim_cls, lvl=T_DIN.lvl),
+             ref=get_ref(seq),
+             delays=[delay_rng(dout_delay, dout_delay)])
     sim(outdir=tmpdir)
 
 
@@ -51,11 +50,10 @@ def test_directed_golden(tmpdir, sim_cls, din_delay, dout_delay):
 def test_random_golden(tmpdir, sim_cls, din_delay, dout_delay):
     skip_ifndef('RANDOM_TEST')
     seq = RANDOM_SEQ
-    directed(
-        drv(t=T_DIN, seq=seq) | delay_rng(din_delay, din_delay),
-        f=qcnt(lvl=T_DIN.lvl, sim_cls=sim_cls),
-        ref=get_ref(seq),
-        delays=[delay_rng(dout_delay, dout_delay)])
+    directed(drv(t=T_DIN, seq=seq) | delay_rng(din_delay, din_delay),
+             f=qcnt(lvl=T_DIN.lvl, sim_cls=sim_cls),
+             ref=get_ref(seq),
+             delays=[delay_rng(dout_delay, dout_delay)])
     sim(outdir=tmpdir)
 
 
@@ -64,11 +62,10 @@ def test_random_golden(tmpdir, sim_cls, din_delay, dout_delay):
 @pytest.mark.parametrize('dout_delay', [0, 1, 10])
 def test_directed_cosim(tmpdir, cosim_cls, lvl, din_delay, dout_delay):
     seq = DIR_SEQ
-    verif(
-        drv(t=T_DIN, seq=seq) | delay_rng(din_delay, din_delay),
-        f=qcnt(sim_cls=cosim_cls, lvl=lvl),
-        ref=qcnt(name='ref_model', lvl=lvl),
-        delays=[delay_rng(dout_delay, dout_delay)])
+    verif(drv(t=T_DIN, seq=seq) | delay_rng(din_delay, din_delay),
+          f=qcnt(sim_cls=cosim_cls, lvl=lvl),
+          ref=qcnt(name='ref_model', lvl=lvl),
+          delays=[delay_rng(dout_delay, dout_delay)])
     sim(outdir=tmpdir)
 
 
@@ -77,11 +74,10 @@ def test_directed_cosim(tmpdir, cosim_cls, lvl, din_delay, dout_delay):
 def test_random_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
     skip_ifndef('RANDOM_TEST')
     seq = RANDOM_SEQ
-    verif(
-        drv(t=T_DIN, seq=seq) | delay_rng(din_delay, din_delay),
-        f=qcnt(sim_cls=cosim_cls, lvl=T_DIN.lvl),
-        ref=qcnt(name='ref_model', lvl=T_DIN.lvl),
-        delays=[delay_rng(dout_delay, dout_delay)])
+    verif(drv(t=T_DIN, seq=seq) | delay_rng(din_delay, din_delay),
+          f=qcnt(sim_cls=cosim_cls, lvl=T_DIN.lvl),
+          ref=qcnt(name='ref_model', lvl=T_DIN.lvl),
+          delays=[delay_rng(dout_delay, dout_delay)])
     sim(outdir=tmpdir)
 
 
@@ -90,13 +86,13 @@ def test_socket_rand_cons(tmpdir):
 
     cons = []
     cons.append(
-        create_constraint(
-            T_DIN, 'din', eot_cons=['data_size == 50', 'trans_lvl1[0] == 4']))
+        create_constraint(T_DIN,
+                          'din',
+                          eot_cons=['data_size == 50', 'trans_lvl1[0] == 4']))
 
-    verif(
-        drv(t=T_DIN, seq=rand_seq('din', 30)),
-        f=qcnt(sim_cls=partial(SimSocket, run=True), lvl=T_DIN.lvl),
-        ref=qcnt(name='ref_model', lvl=T_DIN.lvl))
+    verif(drv(t=T_DIN, seq=rand_seq('din', 30)),
+          f=qcnt(sim_cls=partial(SimSocket, run=True), lvl=T_DIN.lvl),
+          ref=qcnt(name='ref_model', lvl=T_DIN.lvl))
 
     sim(outdir=tmpdir, extens=[partial(SVRandSocket, cons=cons)])
 
@@ -111,6 +107,11 @@ def test_lvl_2():
     qcnt(Intf(Queue[Uint[8], 3]), lvl=2)
 
 
-@synth_check({'logic luts': 5, 'ffs': 16})
-def test_synth():
+@synth_check({'logic luts': 5, 'ffs': 16}, tool='vivado')
+def test_synth_vivado():
+    qcnt(Intf(Queue[Uint[8], 3]))
+
+
+@synth_check({'logic luts': 37, 'ffs': 16}, tool='yosys')
+def test_synth_yosys():
     qcnt(Intf(Queue[Uint[8], 3]))

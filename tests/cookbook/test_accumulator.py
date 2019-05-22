@@ -20,41 +20,37 @@ T_DIN_INT = Queue[Tuple[Int[8], Int[8]]]
 
 
 def test_uint_directed(tmpdir, sim_cls):
-    directed(
-        drv(t=T_DIN_UINT, seq=SEQ_UINT),
-        f=accumulator(sim_cls=sim_cls),
-        ref=REF_UINT)
+    directed(drv(t=T_DIN_UINT, seq=SEQ_UINT),
+             f=accumulator(sim_cls=sim_cls),
+             ref=REF_UINT)
     sim(outdir=tmpdir)
 
 
 def test_int_directed(tmpdir, sim_cls):
-    directed(
-        drv(t=T_DIN_INT, seq=SEQ_INT),
-        f=accumulator(sim_cls=sim_cls),
-        ref=REF_INT)
+    directed(drv(t=T_DIN_INT, seq=SEQ_INT),
+             f=accumulator(sim_cls=sim_cls),
+             ref=REF_INT)
     sim(outdir=tmpdir)
 
 
 @pytest.mark.parametrize('din_delay', [0, 1, 10])
 @pytest.mark.parametrize('dout_delay', [0, 1, 10])
 def test_delay(tmpdir, cosim_cls, din_delay, dout_delay):
-    verif(
-        drv(t=T_DIN_UINT, seq=SEQ_UINT) | delay_rng(din_delay, din_delay),
-        f=accumulator(sim_cls=cosim_cls),
-        ref=accumulator(name='ref_model'),
-        delays=[delay_rng(dout_delay, dout_delay)])
+    verif(drv(t=T_DIN_UINT, seq=SEQ_UINT) | delay_rng(din_delay, din_delay),
+          f=accumulator(sim_cls=cosim_cls),
+          ref=accumulator(name='ref_model'),
+          delays=[delay_rng(dout_delay, dout_delay)])
     sim(outdir=tmpdir)
 
 
 @pytest.mark.parametrize('din_delay', [0, 1, 10])
 @pytest.mark.parametrize('dout_delay', [0, 1, 10])
 def test_no_offset(tmpdir, cosim_cls, din_delay, dout_delay):
-    verif(
-        drv(t=Queue[Uint[8]], seq=[list(
-            range(3)), list(range(8))]) | delay_rng(din_delay, din_delay),
-        f=accumulator(sim_cls=cosim_cls),
-        ref=accumulator(name='ref_model'),
-        delays=[delay_rng(dout_delay, dout_delay)])
+    verif(drv(t=Queue[Uint[8]], seq=[list(
+        range(3)), list(range(8))]) | delay_rng(din_delay, din_delay),
+          f=accumulator(sim_cls=cosim_cls),
+          ref=accumulator(name='ref_model'),
+          delays=[delay_rng(dout_delay, dout_delay)])
     sim(outdir=tmpdir)
 
 
@@ -63,6 +59,11 @@ def test_formal():
     accumulator(Intf(Queue[Tuple[Uint[8], Uint[8]]]))
 
 
-@synth_check({'logic luts': 20, 'ffs': 18})
-def test_synth():
+@synth_check({'logic luts': 20, 'ffs': 18}, tool='vivado')
+def test_synth_vivado():
+    accumulator(Intf(Queue[Tuple[Uint[16], Uint[16]]]))
+
+
+@synth_check({'logic luts': 67, 'ffs': 18}, tool='yosys')
+def test_synth_yosys():
     accumulator(Intf(Queue[Tuple[Uint[16], Uint[16]]]))

@@ -76,7 +76,7 @@ class VCompiler(InstanceVisitor):
         if not node.stmts and not node.dflts:
             return
         self.writer.line(f'// Comb block for: {self.visit_var}')
-        self.writer.line(f'always @(*) begin')
+        self.writer.line(f'always @* begin')
 
         self.visit_HDLBlock(node)
 
@@ -113,27 +113,33 @@ DATA_FUNC_GEAR = """
 
 def write_module(hdl_data, v_stmts, writer, **kwds):
     for name, expr in hdl_data.regs.items():
-        writer.line(vgen_reg(expr.dtype, f'{name}_reg', False))
-        writer.line(vgen_reg(expr.dtype, f'{name}_next', False))
+        writer.line(vgen_reg(expr.dtype, f'{name}_reg', 'input', False))
+        writer.line(vgen_reg(expr.dtype, f'{name}_next', 'input', False))
         writer.line(f'reg {name}_en;')
         writer.line()
 
     for name, val in hdl_data.in_intfs.items():
-        writer.line(vgen_intf(val.dtype, name, False))
-        writer.line(vgen_reg(val.dtype, f'{name}_s', False))
-        tmp = vgen_wire(val.dtype, f'{name}_s')
+        writer.line(vgen_intf(val.dtype, name, 'input', False))
+        writer.line(vgen_reg(val.dtype, f'{name}_s', 'input', False))
+        tmp = vgen_wire(val.dtype, f'{name}_s', 'input')
         writer.line(tmp.split(';', 1)[1])
         writer.line(f"assign {name} = {name}_s;")
     writer.line()
 
     for name, expr in hdl_data.variables.items():
-        writer.block(vgen_reg(expr.dtype, f'{name}_v', False))
+        writer.block(vgen_reg(expr.dtype, f'{name}_v', 'input', False))
         writer.line()
 
     if 'conditions' in v_stmts:
         for cond in v_stmts['conditions'].stmts:
             writer.line(f'wire {cond.target};')
         writer.line()
+
+    writer.line(f'initial begin')
+    for name, expr in hdl_data.regs.items():
+        writer.line(f"    {name}_reg = {int(expr.val)};")
+
+    writer.line(f'end')
 
     for name, expr in hdl_data.regs.items():
         writer.block(REG_TEMPLATE.format(name, int(expr.val)))

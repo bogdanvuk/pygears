@@ -61,9 +61,9 @@
   {% if width == 0 %}
 	{% set width = 1 %}
   {% endif %}
-  reg {{unpacked}}{{name}}_ready;
-  reg {{unpacked}}{{name}}_valid;
-  reg [{{width*size-1}}:0] {{name}}_data;
+  wire {{unpacked}}{{name}}_ready;
+  wire {{unpacked}}{{name}}_valid;
+  wire [{{width*size-1}}:0] {{name}}_data;
 {%- endmacro %}
 
 {% macro assign(name, value) -%}
@@ -94,26 +94,26 @@ wire {{name}};
   {% endif -%}
 {%- endmacro %}
 
-{% macro cons_signal_intf(intf) -%}
+{% macro cons_signal_intf(intf, outtype) -%}
   {% set unpacked = "[%d:0]"|format(intf['size']-1) if intf['size']>1 else "" %}
-output reg  {{unpacked}}{{intf['name']}}_ready,
+output {{outtype}}  {{unpacked}}{{intf['name']}}_ready,
 input  wire {{unpacked}}{{intf['name']}}_valid,
 input  wire [{{intf['width']*intf['size']-1}}:0] {{intf['name']}}_data
 {%- endmacro %}
 
-{% macro prod_signal_intf(intf) -%}
+{% macro prod_signal_intf(intf, outtype) -%}
   {% set unpacked = "[%d:0]"|format(intf['size']-1) if intf['size']>1 else "" %}
 input  wire         {{unpacked}}{{intf['name']}}_ready,
-output reg          {{unpacked}}{{intf['name']}}_valid,
+output {{outtype}}          {{unpacked}}{{intf['name']}}_valid,
 output wire  [{{intf['width']*intf['size']-1}}:0] {{intf['name']}}_data
 {%- endmacro %}
 
-{% macro signal_intf_list(intfs) -%}
+{% macro signal_intf_list(intfs, outtype="reg") -%}
   {% for i in intfs -%}
     {% if i['modport'] == 'consumer' %}
-{{ cons_signal_intf(i) }}{{ "" if loop.last else "," }}
+{{ cons_signal_intf(i, outtype) }}{{ "" if loop.last else "," }}
     {% else %}
-{{ prod_signal_intf(i) }}{{ "" if loop.last else "," }}
+{{ prod_signal_intf(i, outtype) }}{{ "" if loop.last else "," }}
     {% endif %}
   {% endfor %}
 {%- endmacro %}
@@ -150,19 +150,21 @@ endmodule
 {% macro module_with_intf_structs(module_name, intfs, struct_intfs, comment) -%}
 {% set caller_ = caller %}
 {% call gear_module(module_name, intfs, comment) %}
+  {% for i in struct_intfs %}
+    {% if i['modport'] == 'consumer' %}
+    {{ vgen_wire(i['local_type'], i['name'] + '_s', 'input')|indent(4, False) }}
+    {% else %}
+    {{ vgen_reg(i['local_type'], i['name'] + '_s', 'output', False)|indent(4, False) }}
+    {% endif %}
+
+  {% endfor %}
+
   {% for i in struct_intfs|isinput -%}
     {% if i['width'] > 0 %}
     assign {{i['name']}}_s = {{i['name']}}_data;
     {% endif %}
   {%- endfor %}
-  {% for i in struct_intfs %}
-    {% if i['modport'] == 'consumer' %}
-    {{ vgen_wire(i['local_type'], i['name'] + '_s')|indent(4, False) }}
-    {% else %}
-    {{ vgen_reg(i['local_type'], i['name'] + '_s', False)|indent(4, False) }}
-    {% endif %}
 
-  {% endfor %}
   {% for i in struct_intfs|isoutput -%}
     {% if i['width'] > 0 %}
     assign {{i['name']}}_data = {{i['name']}}_s;

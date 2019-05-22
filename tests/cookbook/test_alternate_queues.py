@@ -22,15 +22,14 @@ def test_2_inputs(tmpdir, sim_cls, din_delay, dout_delay):
              list(range(3)),
              list(range(4))], [list(range(5))]]
 
-    directed(
-        drv(t=t_din0, seq=seq0) | delay_rng(din_delay, din_delay),
-        drv(t=t_din1, seq=seq1) | delay_rng(din_delay, din_delay),
-        f=alternate_queues(sim_cls=sim_cls),
-        ref=[seq0, seq1],
-        delays=[
-            delay_rng(dout_delay, dout_delay),
-            delay_rng(dout_delay, dout_delay)
-        ])
+    directed(drv(t=t_din0, seq=seq0) | delay_rng(din_delay, din_delay),
+             drv(t=t_din1, seq=seq1) | delay_rng(din_delay, din_delay),
+             f=alternate_queues(sim_cls=sim_cls),
+             ref=[seq0, seq1],
+             delays=[
+                 delay_rng(dout_delay, dout_delay),
+                 delay_rng(dout_delay, dout_delay)
+             ])
 
     sim(outdir=tmpdir)
 
@@ -46,13 +45,12 @@ def test_3_inputs(tmpdir, sim_cls, din_delay, dout_delay):
         seq.append([list(range(4)), list(range(3)), list(range(2))])
     ref = seq
 
-    directed(
-        drv(t=t_din, seq=seq[0]) | delay_rng(din_delay, din_delay),
-        drv(t=t_din, seq=seq[1]) | delay_rng(din_delay, din_delay),
-        drv(t=t_din, seq=seq[2]) | delay_rng(din_delay, din_delay),
-        f=alternate_queues(sim_cls=sim_cls),
-        ref=ref,
-        delays=[delay_rng(dout_delay, dout_delay)] * din_num)
+    directed(drv(t=t_din, seq=seq[0]) | delay_rng(din_delay, din_delay),
+             drv(t=t_din, seq=seq[1]) | delay_rng(din_delay, din_delay),
+             drv(t=t_din, seq=seq[2]) | delay_rng(din_delay, din_delay),
+             f=alternate_queues(sim_cls=sim_cls),
+             ref=ref,
+             delays=[delay_rng(dout_delay, dout_delay)] * din_num)
 
     sim(outdir=tmpdir)
 
@@ -67,11 +65,15 @@ def test_2_inputs_formal():
 
 @formal_check()
 def test_multi_inputs():
-    alternate_queues(
-        Intf(Queue[Uint[8], 3]), Intf(Queue[Uint[8], 3]),
-        Intf(Queue[Uint[8], 3]))
+    alternate_queues(Intf(Queue[Uint[8], 3]), Intf(Queue[Uint[8], 3]),
+                     Intf(Queue[Uint[8], 3]))
 
 
-@synth_check({'logic luts': 4, 'ffs': 1})
-def test_2_inputs_synth():
+@synth_check({'logic luts': 4, 'ffs': 1}, tool='vivado')
+def test_2_inputs_synth_vivado():
+    alternate_queues(Intf(Queue[Uint[8], 2]), Intf(Queue[Uint[8], 2]))
+
+
+@synth_check({'logic luts': 7, 'ffs': 1}, tool='yosys')
+def test_2_inputs_synth_yosys():
     alternate_queues(Intf(Queue[Uint[8], 2]), Intf(Queue[Uint[8], 2]))

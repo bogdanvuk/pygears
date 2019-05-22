@@ -21,11 +21,10 @@ def test_directed_lvl1(tmpdir, sim_cls, din_delay, dout_delay, cnt_one_more):
         ref = [1, 1, 1]
     else:
         ref = [0, 0, 0]
-    directed(
-        drv(t=t_din, seq=seq) | delay_rng(din_delay, din_delay),
-        f=qlen_cnt(sim_cls=sim_cls, cnt_one_more=cnt_one_more),
-        ref=ref,
-        delays=[delay_rng(dout_delay, dout_delay)])
+    directed(drv(t=t_din, seq=seq) | delay_rng(din_delay, din_delay),
+             f=qlen_cnt(sim_cls=sim_cls, cnt_one_more=cnt_one_more),
+             ref=ref,
+             delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(outdir=tmpdir)
 
@@ -41,11 +40,10 @@ def test_directed_lvl2(tmpdir, sim_cls, din_delay, dout_delay, cnt_one_more):
         ref = [2, 1]
     else:
         ref = [1, 0]
-    directed(
-        drv(t=t_din, seq=seq) | delay_rng(din_delay, din_delay),
-        f=qlen_cnt(sim_cls=sim_cls, cnt_one_more=cnt_one_more),
-        ref=ref,
-        delays=[delay_rng(dout_delay, dout_delay)])
+    directed(drv(t=t_din, seq=seq) | delay_rng(din_delay, din_delay),
+             f=qlen_cnt(sim_cls=sim_cls, cnt_one_more=cnt_one_more),
+             ref=ref,
+             delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(outdir=tmpdir)
 
@@ -62,11 +60,10 @@ def test_directed_lvl3_2(tmpdir, sim_cls, din_delay, dout_delay, cnt_one_more):
         ref = [2, 1]
     else:
         ref = [1, 0]
-    directed(
-        drv(t=t_din, seq=seq) | delay_rng(din_delay, din_delay),
-        f=qlen_cnt(sim_cls=sim_cls, cnt_one_more=cnt_one_more, cnt_lvl=2),
-        ref=ref,
-        delays=[delay_rng(dout_delay, dout_delay)])
+    directed(drv(t=t_din, seq=seq) | delay_rng(din_delay, din_delay),
+             f=qlen_cnt(sim_cls=sim_cls, cnt_one_more=cnt_one_more, cnt_lvl=2),
+             ref=ref,
+             delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(outdir=tmpdir)
 
@@ -91,6 +88,11 @@ def test_cnt_lvl_2_cnt_more():
     qlen_cnt(Intf(Queue[Uint[16], 3]), cnt_lvl=2, cnt_one_more=True)
 
 
-@synth_check({'logic luts': 4, 'ffs': 16})
-def test_synth():
+@synth_check({'logic luts': 4, 'ffs': 16}, tool='vivado')
+def test_synth_vivado():
+    qlen_cnt(Intf(Queue[Uint[16], 3]))
+
+
+@synth_check({'logic luts': 36, 'ffs': 16}, tool='yosys')
+def test_synth_yosys():
     qlen_cnt(Intf(Queue[Uint[16], 3]))

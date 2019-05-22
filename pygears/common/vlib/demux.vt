@@ -7,33 +7,27 @@
 
     always @*
     begin
-        case(din_s_ctrl)
-{% for i in (intfs|isoutput) %}
-            {{loop.index-1}} : begin
-                din_ready = {{i['name']}}_ready;
-            end
-{% endfor %}
-            default: begin
-                din_ready = {{(intfs|isoutput)[0]['name']}}_ready;
-            end
-        endcase
-    end
-
-    always @*
-    begin
+        din_ready = 0;
 {% for i in (intfs|isoutput) %}
         {{i['name']}}_valid = 0;
 {% endfor %}
 
-        case(din_s_ctrl)
+        if (din_valid) begin
+            case(din_s_ctrl)
 {% for i in (intfs|isoutput) %}
-            {{loop.index-1}} : begin
-                {{i['name']}}_valid = din_valid;
-            end
+                {{loop.index-1}} : begin
+                    din_ready = {{i['name']}}_ready;
+                    {{i['name']}}_valid = din_valid;
+                end
 {% endfor %}
-            default: begin
-            end
-        endcase
+                default: begin
+                    din_ready = 1'bx;
+{% for i in (intfs|isoutput) %}
+                    {{i['name']}}_valid = 1'bx;
+{% endfor %}
+                end
+            endcase
+        end
     end
 
 {% endcall %}

@@ -112,12 +112,13 @@ class VExpressionVisitor(SVExpressionVisitor):
             idx = self.visit(node.index)
 
             array_assignment = []
-            sub_indexes = [f'{val}_{i}' for i in range(len(dtype))]
-            vals = ', '.join(sub_indexes)
+            # sub_indexes = [f'{val}_{i}' for i in range(len(dtype))]
+            # vals = ', '.join(sub_indexes)
             sign = 'signed' if typeof(dtype[0], Int) else ''
             array_assignment.append(
                 f'reg {sign} [{int(dtype)-1}:0] {sub_name};')
-            array_assignment.append(f'always @({idx}, {vals}) begin')
+            # array_assignment.append(f'always @({idx}, {vals}) begin')
+            array_assignment.append(f'always @* begin')
             array_assignment.append(f'    {sub_name} = {val}_{0};')
             for i in range(len(dtype)):
                 array_assignment.append(f'    if ({idx} == {i})')

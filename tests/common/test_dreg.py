@@ -24,11 +24,10 @@ def test_pygears_sim(tmpdir):
 @pytest.mark.parametrize('dout_delay', [0, 5])
 def test_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
     seq = list(range(10))
-    verif(
-        drv(t=Uint[16], seq=seq) | delay_rng(din_delay, din_delay),
-        f=dreg(sim_cls=cosim_cls),
-        ref=dreg(name='ref_model'),
-        delays=[delay_rng(dout_delay, dout_delay)])
+    verif(drv(t=Uint[16], seq=seq) | delay_rng(din_delay, din_delay),
+          f=dreg(sim_cls=cosim_cls),
+          ref=dreg(name='ref_model'),
+          delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(outdir=tmpdir)
 
@@ -37,12 +36,11 @@ def test_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
 @pytest.mark.parametrize('dout_delay', [0, 5])
 def test_queue_tuple(tmpdir, cosim_cls, din_delay, dout_delay):
     seq = [[(0, 1), (4, 0), (1, 1)], [(1, 1), (2, 0), (3, 1), (4, 0)]]
-    verif(
-        drv(t=Queue[Tuple[Uint[16], Int[2]]], seq=seq)
-        | delay_rng(din_delay, din_delay),
-        f=dreg(sim_cls=cosim_cls),
-        ref=dreg(name='ref_model'),
-        delays=[delay_rng(dout_delay, dout_delay)])
+    verif(drv(t=Queue[Tuple[Uint[16], Int[2]]], seq=seq)
+          | delay_rng(din_delay, din_delay),
+          f=dreg(sim_cls=cosim_cls),
+          ref=dreg(name='ref_model'),
+          delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(outdir=tmpdir)
 
@@ -53,10 +51,9 @@ def test_queue_unit(tmpdir, cosim_cls, lvl):
     # cast to Queue[Unit] after driver
     seq = [0, 0, 1, 2, 1, 2, 3]
 
-    verif(
-        drv(t=Uint[8], seq=seq) | Queue[Unit, lvl],
-        f=dreg(sim_cls=cosim_cls),
-        ref=dreg(name='ref_model'))
+    verif(drv(t=Uint[8], seq=seq) | Queue[Unit, lvl],
+          f=dreg(sim_cls=cosim_cls),
+          ref=dreg(name='ref_model'))
 
     sim(outdir=tmpdir)
 
@@ -66,6 +63,11 @@ def test_formal():
     dreg(Intf(Uint[16]))
 
 
-@synth_check({'logic luts': 2, 'ffs': 17})
-def test_synth():
+@synth_check({'logic luts': 2, 'ffs': 17}, tool='vivado')
+def test_synth_vivado():
+    dreg(Intf(Uint[16]))
+
+
+@synth_check({'logic luts': 2, 'ffs': 17}, tool='yosys')
+def test_synth_yosys():
     dreg(Intf(Uint[16]))

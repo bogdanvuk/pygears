@@ -1,9 +1,10 @@
+import unittest
+import subprocess
 import inspect
 import os
 import re
 import shutil
 from functools import partial, wraps
-from itertools import islice
 
 import jinja2
 import pytest
@@ -16,6 +17,7 @@ from pygears.sim.modules.sim_socket import SimSocket
 from pygears.sim.modules.verilator import SimVerilated
 from pygears.hdl.sv import register_sv_paths
 from pygears.hdl import hdlgen
+from pygears.synth import yosys, vivado
 
 re_trailing_space_rem = re.compile(r"\s+$", re.MULTILINE)
 re_multispace_rem = re.compile(r"\s+", re.MULTILINE)
@@ -155,94 +157,52 @@ def formal_check_fixt(tmpdir, request):
         assert os.system(cmd) == 0, f'Yosis failed. Cmd: {cmd}'
 
 
-def synth_check(expected, **kwds):
+def synth_check(expected, tool='yosys', **kwds):
     def decorator(func):
         return pytest.mark.usefixtures('synth_check_fixt')(
-            pytest.mark.parametrize('synth_check_fixt', [[expected, kwds]],
+            pytest.mark.parametrize('synth_check_fixt',
+                                    [[expected, kwds, tool]],
                                     indirect=True)(func))
 
     return decorator
 
 
-def vivado_synth(outdir, language, params=None):
-    if params is None:
-        params = {}
-
-    if language == 'sv':
-        hdlgen(language='sv', outdir=outdir, wrapper=True, **params)
-
-        files = []
-        for svmod in registry("svgen/map").values():
-            if not hasattr(svmod, 'sv_impl_path'):
-                continue
-
-            path = svmod.sv_impl_path
-            if not path:
-                path = os.path.join(outdir, svmod.file_name)
-
-            files.append(path)
-
-        files.append(os.path.join(COMMON_SVLIB_DIR, 'dti.sv'))
-        files.append(os.path.join(outdir, 'wrap_top.sv'))
-
-    elif language == 'v':
-        hdlgen(language='v', outdir=outdir, wrapper=False, **params)
-
-        files = []
-        for svmod in registry("svgen/map").values():
-            # TODO : vgen only supports compiled modules for now..
-            if hasattr(svmod, 'is_compiled') and svmod.is_compiled:
-                path = svmod.sv_impl_path
-                if not path:
-                    path = os.path.join(outdir, svmod.file_name)
-
-                files.append(path)
-    else:
-        raise Exception(f"Synth test unknown language: {language}")
-
-    viv_cmd = (
-        f'vivado -mode batch -source {outdir}/synth.tcl -nolog -nojournal')
-
-    jinja_context = {'res_dir': os.path.join(outdir, 'vivado'), 'files': files}
-
-    env = jinja2.Environment(loader=jinja2.FileSystemLoader(
-        searchpath=os.path.dirname(__file__)))
-
-    env.get_template('synth.j2').stream(jinja_context).dump(
-        f'{outdir}/synth.tcl')
-
-    def row_data(line):
-        return [row.strip().lower() for row in line.split('|') if row.strip()]
-
-    assert os.system(viv_cmd) == 0, "Vivado build failed"
-    with open(f'{outdir}/vivado/utilization.txt') as f:
-        tbl_section = 0
-        for line in f:
-            if line[0] == '+':
-                tbl_section += 1
-            elif tbl_section == 1:
-                header = row_data(line)[2:]
-            elif tbl_section == 2:
-                values = [float(v) for v in row_data(line)[2:]]
-                break
-
-        util = dict(zip(header, values))
-
-    with open(f'{outdir}/vivado/timing.txt') as f:
-        line = next(islice(f, 2, None))
-        util['path delay'] = float(line.split()[1])
-
-    return util
-
-
 @pytest.fixture
 def synth_check_fixt(tmpdir, language, request):
-    skip_ifndef('SYNTH_TEST')
+    # skip_ifndef('SYNTH_TEST')
+    # tmpdir = '/tools/home/tmp'
+
+    util_ref = request.param[0]
+    params = request.param[1]
+    tool = request.param[2]
+
+    if tool == 'vivado':
+        retval = subprocess.call('which vivado', shell=True)
+        if retval:
+            raise unittest.SkipTest(f"Skipping test, vivado not found")
+
+        tool = 'vivado'
+
+    elif tool == 'yosys' and language == 'v':
+        if language != 'v':
+            raise unittest.SkipTest(
+                f"Skipping test, unsupported language for yosys")
+
+        retval = subprocess.call('which yosys', shell=True)
+        if retval:
+            raise unittest.SkipTest(f"Skipping test, yosys not found")
+    else:
+        raise unittest.SkipTest(
+            f"Skipping test, not appropriate tool not found")
+
     yield
 
-    util = vivado_synth(tmpdir, request.param[1])
+    if tool == 'vivado':
+        util = vivado.synth(tmpdir, language=language, **params)
+    else:
+        util = yosys.synth(tmpdir, synth_cmd='synth_xilinx')
 
-    for param, value in request.param[0].items():
+    for param, value in util_ref.items():
         if callable(value):
             assert value(util[param])
         else:
@@ -299,8 +259,6 @@ def skip_ifndef(*envars):
 
 
 def skip_sim_if_no_tools():
-    import unittest
-    import os
     if ('VERILATOR_ROOT' not in os.environ) or (
             'SYSTEMC_HOME' not in os.environ) or (
                 'SCV_HOME' not in os.environ):
@@ -308,7 +266,11 @@ def skip_sim_if_no_tools():
             "Such-and-such failed. Skipping all tests in foo.py")
 
 
-@pytest.fixture(params=[None, SimVerilated, SimSocket])
+@pytest.fixture(params=[
+    None,
+    partial(SimVerilated, language='v'),
+    partial(SimVerilated, language='sv'), SimSocket
+])
 def sim_cls(request):
     sim_cls = request.param
     if sim_cls is SimVerilated:
@@ -332,9 +294,9 @@ def cosim_cls(request):
     yield cosim_cls
 
 
-@pytest.fixture(params=['sv', 'v'])
+@pytest.fixture(params=['v', 'sv'])
 def language(request):
     language = request.param
-    if language is 'v':
-        skip_ifndef('VERILOG_TEST')
+    # if language is 'v':
+    #     skip_ifndef('VERILOG_TEST')
     yield language

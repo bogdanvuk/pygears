@@ -65,17 +65,14 @@ class SimVerilated(CosimBase):
                                   outdir=self.outdir,
                                   wrapper=False,
                                   language='v')
+            self.svmod = registry('vgen/map')[self.rtlnode]
+            self.wrap_name = f'{self.svmod.module_name}'
         else:
             self.rtlnode = hdlgen(gear,
                                   outdir=self.outdir,
                                   wrapper=True,
                                   language='sv')
-
-        self.svmod = registry('svgen/map')[self.rtlnode]
-
-        if self.language == 'v':
-            self.wrap_name = f'{self.svmod.module_name}'
-        else:
+            self.svmod = registry('svgen/map')[self.rtlnode]
             self.wrap_name = f'wrap_{self.svmod.module_name}'
 
         self.trace_fn = None
@@ -164,19 +161,20 @@ class SimVerilated(CosimBase):
             'outdir': self.outdir
         }
 
-        include = ' '.join(
-            [f'-I{os.path.abspath(p)}' for p in registry('svgen/sv_paths')])
-
         jenv = jinja2.Environment(trim_blocks=True, lstrip_blocks=True)
         jenv.globals.update(int=int)
         jenv.loader = jinja2.FileSystemLoader([os.path.dirname(__file__)])
         c = jenv.get_template('sim_veriwrap.j2').render(context)
         save_file('sim_main.cpp', self.outdir, c)
+        include = ' '.join([
+            f'-I{os.path.abspath(p)}'
+            for p in registry(f'{self.language}gen/{self.language}_paths')
+        ])
+        files = f'{self.outdir}/*.{self.language}'
 
-        if self.language == 'v':
-            files = f'{self.outdir}/*.v'
-        else:
-            files = f'{self.outdir}/*.sv dti.sv'
+        if self.language == 'sv':
+            files += ' dti.sv'
+
         verilate_cmd = [
             f'cd {self.outdir};',
             'verilator -cc -CFLAGS -fpic -LDFLAGS -shared --exe', '-Wno-fatal',

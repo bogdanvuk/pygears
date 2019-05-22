@@ -82,6 +82,11 @@ def test_formal():
     trr(Intf(T_DIN), Intf(T_DIN), Intf(T_DIN))
 
 
-@synth_check({'logic luts': 24, 'ffs': 2})
-def test_trr():
+@synth_check({'logic luts': 24, 'ffs': 2}, tool='vivado')
+def test_trr_vivado():
+    trr(Intf(T_DIN), Intf(T_DIN), Intf(T_DIN))
+
+
+@synth_check({'logic luts': 26, 'ffs': 2}, tool='yosys')
+def test_trr_yosys():
     trr(Intf(T_DIN), Intf(T_DIN), Intf(T_DIN))

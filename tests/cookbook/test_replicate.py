@@ -23,11 +23,10 @@ def test_directed(tmpdir, sim_cls):
 @pytest.mark.parametrize('din_delay', [0, 5])
 @pytest.mark.parametrize('dout_delay', [0, 5])
 def test_directed_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
-    verif(
-        drv(t=T_DIN, seq=SEQUENCE) | delay_rng(din_delay, din_delay),
-        f=replicate(sim_cls=cosim_cls),
-        ref=replicate(name='ref_model'),
-        delays=[delay_rng(dout_delay, dout_delay)])
+    verif(drv(t=T_DIN, seq=SEQUENCE) | delay_rng(din_delay, din_delay),
+          f=replicate(sim_cls=cosim_cls),
+          ref=replicate(name='ref_model'),
+          delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(outdir=tmpdir)
 
@@ -38,6 +37,11 @@ def test_directed_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
 #     replicate(Intf(T_DIN))
 
 
-@synth_check({'logic luts': 12, 'ffs': 16})
-def test_synth():
+@synth_check({'logic luts': 12, 'ffs': 16}, tool='vivado')
+def test_synth_vivado():
+    replicate(Intf(T_DIN))
+
+
+@synth_check({'logic luts': 117, 'ffs': 16}, tool='yosys')
+def test_synth_yosys():
     replicate(Intf(T_DIN))
