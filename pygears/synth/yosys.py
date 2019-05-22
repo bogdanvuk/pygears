@@ -42,7 +42,7 @@ class Yosys:
     def command(self, cmd):
         self.proc.sendline(cmd)
         try:
-            self.proc.expect(Yosys.PROMPT)
+            self.proc.expect(Yosys.PROMPT, timeout=None)
         except pexpect.EOF:
             print(self.proc.before)
             raise

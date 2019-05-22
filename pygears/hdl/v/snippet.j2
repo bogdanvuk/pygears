@@ -154,7 +154,7 @@ endmodule
     {% if i['modport'] == 'consumer' %}
     {{ vgen_wire(i['local_type'], i['name'] + '_s', 'input')|indent(4, False) }}
     {% else %}
-    {{ vgen_reg(i['local_type'], i['name'] + '_s', 'output', False)|indent(4, False) }}
+    {{ vgen_reg(i['local_type'], i['name'] + '_s', 'output')|indent(4, False) }}
     {% endif %}
 
   {% endfor %}

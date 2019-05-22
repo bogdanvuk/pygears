@@ -64,6 +64,6 @@ def test_synth_vivado():
     accumulator(Intf(Queue[Tuple[Uint[16], Uint[16]]]))
 
 
-@synth_check({'logic luts': 67, 'ffs': 18}, tool='yosys')
+@synth_check({'logic luts': 99, 'ffs': 18}, tool='yosys')
 def test_synth_yosys():
     accumulator(Intf(Queue[Tuple[Uint[16], Uint[16]]]))

@@ -181,7 +181,7 @@ class SimVerilated(CosimBase):
             include,
             '-clk clk',
             f'--top-module {self.wrap_name}',
-            '--trace -no-trace-params --trace-structs' if tracing_enabled else '',
+            '--trace --no-trace-params --trace-structs' if tracing_enabled else '',
             files,
             'sim_main.cpp'
         ]  # yapf: disable

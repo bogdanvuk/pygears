@@ -55,8 +55,8 @@ class VGenTypeVisitor(TypingVisitorBase):
         return res
 
     def _complex_type_iterator(self, subt_enum):
-        # if not self.hier:
-        #     return []
+        if not self.hier:
+            return []
 
         res = []
         parent_context = self.context

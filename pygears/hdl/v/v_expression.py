@@ -116,7 +116,7 @@ class VExpressionVisitor(SVExpressionVisitor):
             # vals = ', '.join(sub_indexes)
             sign = 'signed' if typeof(dtype[0], Int) else ''
             array_assignment.append(
-                f'reg {sign} [{int(dtype)-1}:0] {sub_name};')
+                f'reg {sign} [{int(dtype[0])-1}:0] {sub_name};')
             # array_assignment.append(f'always @({idx}, {vals}) begin')
             array_assignment.append(f'always @* begin')
             array_assignment.append(f'    {sub_name} = {val}_{0};')

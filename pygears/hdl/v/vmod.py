@@ -50,7 +50,6 @@ class VModuleInst(HDLModuleInst):
             with open(self.impl_path, 'r') as f:
                 return parse(f.read())
         else:
-            breakpoint()
             hdl_log().warning(
                 f'Verilog file not found for {self.node.name}')
 
