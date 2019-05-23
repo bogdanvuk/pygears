@@ -1,31 +1,15 @@
 from .hdl_stmt import CombBlock
 from .inst_visit import InstanceVisitor
 from .pydl_types import Block
-from .utils import add_to_list, state_expr
+from .utils import add_to_list
 
 
 class CBlockVisitor(InstanceVisitor):
-    def __init__(self, hdl_visitor, state_num):
-        self.state_num = state_num
+    def __init__(self, hdl_visitor):
         self.hdl = hdl_visitor
 
-    def add_state_conditions(self, cblock, hdl_block):
-        if self.state_num == 0 or (not cblock.parent):
-            return
-
-        current_ids = cblock.state_ids
-
-        # if in module even exist states other than the ones in this
-        # cblock
-        if (current_ids != cblock.parent.state_ids) and (current_ids != list(
-                range(self.state_num + 1))):
-            hdl_block.in_cond = state_expr(current_ids, hdl_block.in_cond)
-
-    def enter_block(self, block, state):
-        hdl_block = self.ping_hdl(block.pydl_block, block.conditions['block'])
-        if state:
-            self.add_state_conditions(block, hdl_block)
-        return hdl_block
+    def enter_block(self, block):
+        return self.ping_hdl(block.pydl_block)
 
     def exit_block(self):
         pass
@@ -33,29 +17,27 @@ class CBlockVisitor(InstanceVisitor):
     def visit_prolog(self, node):
         prolog_stmts = []
         if node.prolog:
-            cond = node.conditions['prolog']
             for block in node.prolog:
-                curr_block = self.ping_hdl(block, cond)
-                self._add_sub(block, curr_block, cond)
+                curr_block = self.ping_hdl(block)
+                self._add_sub(block, curr_block)
                 add_to_list(prolog_stmts, curr_block)
         return prolog_stmts
 
     def visit_epilog(self, node):
         epilog = []
         if node.epilog:
-            cond = node.conditions['epilog']
             for block in node.epilog:
-                curr_block = self.ping_hdl(block, cond)
-                self._add_sub(block, curr_block, cond)
+                curr_block = self.ping_hdl(block)
+                self._add_sub(block, curr_block)
                 add_to_list(epilog, curr_block)
         return epilog
 
-    def visit_block(self, node, state=True):
+    def visit_block(self, node):
         top = []
 
         add_to_list(top, self.visit_prolog(node))
 
-        curr_block = self.enter_block(node, state)
+        curr_block = self.enter_block(node)
 
         for child in node.child:
             add_to_list(curr_block.stmts, self.visit(child))
@@ -75,30 +57,29 @@ class CBlockVisitor(InstanceVisitor):
         return top
 
     def visit_SeqCBlock(self, node):
-        return self.visit_block(node, True)
+        return self.visit_block(node)
 
     def visit_MutexCBlock(self, node):
-        return self.visit_block(node, True)
+        return self.visit_block(node)
 
-    def _add_sub(self, block, curr_block, cond):
+    def _add_sub(self, block, curr_block):
         if isinstance(block, Block):
             for stmt in block.stmts:
-                sub = self.ping_hdl(stmt, cond)
-                self._add_sub(stmt, sub, cond)
+                sub = self.ping_hdl(stmt)
+                self._add_sub(stmt, sub)
                 add_to_list(curr_block.stmts, sub)
             self.hdl.update_defaults(curr_block)
 
     def visit_Leaf(self, node):
         hdl_block = []
-        cond = node.conditions['leaf']
         for block in node.pydl_blocks:
-            curr_block = self.ping_hdl(block, cond)
-            self._add_sub(block, curr_block, cond)
+            curr_block = self.ping_hdl(block)
+            self._add_sub(block, curr_block)
             add_to_list(hdl_block, curr_block)
         return hdl_block
 
-    def ping_hdl(self, block, cond):
-        return self.hdl.visit(block, cond)
+    def ping_hdl(self, block):
+        return self.hdl.visit(block)
 
 
 class CBlockPrinter(InstanceVisitor):

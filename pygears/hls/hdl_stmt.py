@@ -1,4 +1,6 @@
-from .conditions_utils import add_cond, add_in_cond, nested_in_cond
+from functools import partial
+
+from .conditions_utils import COND_NAME, add_found_cond
 from .hdl_types import AssertValue, AssignValue, CombBlock, HDLBlock
 from .hls_expressions import (ConcatExpr, Expr, IntfReadyExpr, IntfValidExpr,
                               OperandVal, RegDef, ResExpr, SubscriptExpr,
@@ -9,34 +11,17 @@ from .utils import VisitError, add_to_list
 CONTROL_SUFFIX = ['_en']
 
 
-def find_in_cond(block):
-    if len(str(block.in_cond)) > 150:  # major hack for code readability
-        cond = nested_in_cond(block)
-        if cond is not None:
-            add_cond(cond)
-        return cond
+def find_cond(block, ctype):
+    curr_cond = getattr(block.cond_val, f'{ctype}_val')
 
-    if block.in_cond is not None:
-        add_in_cond(block.id)
-    return block.in_cond
-
-
-def find_cycle_cond(cond):
-    curr_cond = cond.cycle_cond
     if curr_cond is not None:
-        add_cond(curr_cond)
-    else:
-        curr_cond = 1
-    return curr_cond
+        add_found_cond(block.cond_val.name, ctype)
+        return COND_NAME.substitute(
+            cond_type=ctype, block_id=block.cond_val.name)
 
-
-def find_exit_cond(cond):
-    curr_cond = cond.exit_cond
-    if curr_cond is not None:
-        add_cond(curr_cond)
-    else:
-        curr_cond = 1
-    return curr_cond
+    if ctype == 'in':  # avoid unnecessary if(1) blocks
+        return None
+    return 1
 
 
 def is_control_var(name, val, non_control_pairs=None):
@@ -121,7 +106,7 @@ class HDLStmtVisitor:
         self.hdl_data = hdl_data
         self.non_control_pairs = []
 
-    def visit(self, node, cond, **kwds):
+    def visit(self, node, **kwds):
         method = 'visit_' + node.__class__.__name__
         visitor = getattr(self, method, self.generic_visit)
 
@@ -131,30 +116,30 @@ class HDLStmtVisitor:
         if visitor.__name__ == 'generic_visit' and isinstance(node, Expr):
             visitor = getattr(self, 'visit_all_Expr', self.generic_visit)
 
-        return visitor(node, cond, **kwds)
+        return visitor(node, **kwds)
 
-    def generic_visit(self, node, cond, **kwds):
+    def generic_visit(self, node, **kwds):
         pass
 
-    def enter_block(self, block, cond):
+    def enter_block(self, block):
         method = 'enter_' + block.__class__.__name__
         enter_visitor = getattr(self, method, self.generic_enter)
-        return enter_visitor(block, cond)
+        return enter_visitor(block)
 
-    def generic_enter(self, block, cond):
+    def generic_enter(self, block):
         pass
 
-    def visit_Module(self, node, cond, **kwds):
+    def visit_Module(self, node, **kwds):
         block = CombBlock(stmts=[], dflts={})
-        return self.traverse_block(block, node, cond)
+        return self.traverse_block(block, node)
 
-    def visit_all_Block(self, node, cond, **kwds):
-        in_cond = find_in_cond(node)
+    def visit_all_Block(self, node, **kwds):
+        in_cond = find_cond(node, 'in')
         block = HDLBlock(in_cond=in_cond, stmts=[], dflts={})
-        return self.traverse_block(block, node, cond)
+        return self.traverse_block(block, node)
 
-    def traverse_block(self, block, node, cond):
-        add_to_list(block.stmts, self.enter_block(node, cond))
+    def traverse_block(self, block, node):
+        add_to_list(block.stmts, self.enter_block(node))
 
         # if block isn't empty
         if block.stmts:
@@ -167,13 +152,13 @@ class HDLStmtVisitor:
 
 
 class RegEnVisitor(HDLStmtVisitor):
-    def enter_Module(self, block, cond):
+    def enter_Module(self, block):
         return [AssignValue(f'{reg}_en', 0) for reg in self.hdl_data.regs]
 
-    def visit_RegNextStmt(self, node, cond, **kwds):
+    def visit_RegNextStmt(self, node, **kwds):
         en_cond = getattr(self.hdl_data.hdl_locals[node.name], 'en_cond', None)
         if en_cond is None:
-            en_cond = find_cycle_cond(cond)
+            en_cond = find_cond(node, 'cycle')
 
         return [
             AssignValue(target=f'{node.name}_en', val=en_cond),
@@ -210,19 +195,19 @@ class VariableVisitor(HDLStmtVisitor):
             self.non_control_pairs.append((name, value))
             self.seen_var.append(name)
 
-    def visit_VariableStmt(self, node, cond, **kwds):
+    def visit_VariableStmt(self, node, **kwds):
         self.assign_var(f'{node.name}_v', node.val)
         return parse_stmt_target(node, 'v')
 
 
 class OutputVisitor(HDLStmtVisitor):
-    def enter_Module(self, block, cond):
+    def enter_Module(self, block):
         return [
             AssignValue(IntfValidExpr(port), 0)
             for port in self.hdl_data.out_ports.values()
         ]
 
-    def visit_Yield(self, node, cond, **kwds):
+    def visit_Yield(self, node, **kwds):
         if not isinstance(node.expr, list):
             exprs = [node.expr]
         else:
@@ -248,7 +233,7 @@ class OutputVisitor(HDLStmtVisitor):
         self.update_defaults(block)
         return block
 
-    def visit_IntfStmt(self, node, cond, **kwds):
+    def visit_IntfStmt(self, node, **kwds):
         if node.intf.name not in self.hdl_data.out_intfs:
             return None
 
@@ -267,7 +252,7 @@ class ReadyBase(HDLStmtVisitor):
     def input_target(self):
         raise NotImplementedError('Input target not set')
 
-    def enter_Module(self, block, cond):
+    def enter_Module(self, block):
         res = []
         for port in self.input_target.values():
             if port.has_subop:
@@ -282,28 +267,28 @@ class ReadyBase(HDLStmtVisitor):
                 res.append(AssignValue(IntfReadyExpr(port), 0))
         return res
 
-    def _enter_intf(self, block, cond, cond_func):
+    def _enter_intf(self, block, cond_func):
         if block.intf.name in self.input_target:
-            val = cond_func(cond)
+            val = cond_func(block)
             return AssignValue(target=IntfReadyExpr(block.intf), val=val)
 
         if block.intf.has_subop:
             intf_def = block.intf.intf
             if isinstance(intf_def, ConcatExpr):
-                val = cond_func(cond)
+                val = cond_func(block)
                 return [
                     AssignValue(target=IntfReadyExpr(op), val=val)
                     for op in intf_def.operands if op.name in self.input_target
                 ]
             raise VisitError('Unsupported expression type in IntfDef')
 
-    def enter_IntfBlock(self, block, cond):
-        return self._enter_intf(block, cond, find_exit_cond)
+    def enter_IntfBlock(self, block):
+        return self._enter_intf(block, partial(find_cond, ctype='exit'))
 
-    def enter_IntfLoop(self, block, cond):
-        return self._enter_intf(block, cond, find_cycle_cond)
+    def enter_IntfLoop(self, block):
+        return self._enter_intf(block, partial(find_cond, ctype='cycle'))
 
-    def visit_IntfStmt(self, node, cond):
+    def visit_IntfStmt(self, node):
         if hasattr(node.val, 'name'):
             if node.val.name in self.input_target:
                 return AssignValue(
@@ -335,13 +320,13 @@ class IntfReadyVisitor(ReadyBase):
 
 
 class IntfValidVisitor(HDLStmtVisitor):
-    def enter_Module(self, block, cond):
+    def enter_Module(self, block):
         return [
             AssignValue(IntfValidExpr(port), 0)
             for port in self.hdl_data.in_intfs
         ]
 
-    def visit_IntfStmt(self, node, cond, **kwds):
+    def visit_IntfStmt(self, node, **kwds):
         if node.intf.name in self.hdl_data.in_intfs:
             return [
                 AssignValue(
@@ -357,5 +342,5 @@ class IntfValidVisitor(HDLStmtVisitor):
 
 
 class AssertionVisitor(HDLStmtVisitor):
-    def visit_AssertExpr(self, node, cond, **kwds):
+    def visit_AssertExpr(self, node, **kwds):
         return AssertValue(node)

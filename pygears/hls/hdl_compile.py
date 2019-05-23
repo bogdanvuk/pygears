@@ -10,7 +10,7 @@ from .assign_conditions import AssignConditions
 from .ast_parse import parse_ast
 from .cblock import CBlockVisitor
 from .cleanup import condition_cleanup
-from .conditions_finder import ConditionsFinder
+from .conditions_finder import find_conditions
 from .conditions_utils import init_conditions
 from .hdl_stmt import (AssertionVisitor, InputVisitor, IntfReadyVisitor,
                        IntfValidVisitor, OutputVisitor, RegEnVisitor,
@@ -130,8 +130,7 @@ def parse_gear_body(gear):
     # clear combined conditions from previous run, if any
     init_conditions()
 
-    cond_finder = ConditionsFinder(state_num)
-    cond_finder.visit(schedule)
+    find_conditions(schedule, state_num)
 
     block_visitors = {
         'register_next_state': RegEnVisitor(hdl_data),
@@ -145,7 +144,7 @@ def parse_gear_body(gear):
 
     res = {}
     for name, visitor in block_visitors.items():
-        sub_v = CBlockVisitor(visitor, state_num)
+        sub_v = CBlockVisitor(visitor)
         res[name] = sub_v.visit(schedule)
 
     if state_num > 0:
@@ -155,7 +154,7 @@ def parse_gear_body(gear):
             schedule)
 
     cond_visit = AssignConditions(hdl_data, state_num)
-    cond_visit.visit(schedule)
+    cond_visit.visit(schedule.pydl_block)
 
     res['conditions'] = cond_visit.get_condition_block()
     try:
