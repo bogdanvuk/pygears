@@ -6,7 +6,7 @@ from .hdl_types import AssignValue, CombBlock, HDLBlock
 from .inst_visit import InstanceVisitor
 from .pydl_types import Module
 from .scheduling_types import MutexCBlock
-from .utils import add_to_list, state_expr
+from .utils import add_to_list
 
 
 @dataclass
@@ -183,16 +183,9 @@ class HdlStmtStateTransition(InstanceVisitor):
 
         current_ids = cblock.state_ids
 
-        # if in module even exist states other than the ones in this
-        # cblock
-        if (current_ids != cblock.parent.state_ids) and (current_ids != list(
-                range(self.state_num + 1))):
-            # TODO: check is this necessary
-            # hdl_block.in_cond = state_expr(current_ids, hdl_block.in_cond)
-            add_cond(hdl_block.in_cond)
-
         if len(current_ids) == 1:
             state_transition = find_state_transition(cblock)
             if state_transition.found:
+                add_cond(hdl_block.in_cond)
                 self._ping_state_transitions(cblock, hdl_block,
                                              state_transition)

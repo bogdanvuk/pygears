@@ -229,7 +229,8 @@ class OutputVisitor(HDLStmtVisitor):
                 stmts.append(
                     AssignValue(
                         target=f'{port_name}_s', val=expr, dtype=port.dtype))
-        block = HDLBlock(in_cond=None, stmts=stmts, dflts={})
+        in_cond = find_cond(node, 'in')
+        block = HDLBlock(in_cond=in_cond, stmts=stmts, dflts={})
         self.update_defaults(block)
         return block
 
