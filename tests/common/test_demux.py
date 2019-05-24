@@ -31,13 +31,13 @@ def mux_demux_redux(branches):
     demux_ctrl(Intf(TDin)) | mux
 
 
-@pytest.mark.parametrize('branches', [2, 3, 7, 13, 17, 27, 127])
+@pytest.mark.parametrize('branches', [2, 3, 27, 127])
 @synth_check({'logic luts': 1, 'ffs': 0}, tool='vivado')
 def test_mux_demux_redux_vivado(branches):
     mux_demux_redux(branches)
 
 
-@pytest.mark.parametrize('branches', [2, 3, 7, 13, 17, 27, 127])
+@pytest.mark.parametrize('branches', [2, 3, 27, 127])
 @synth_check({'logic luts': 1, 'ffs': 0}, tool='yosys')
 def test_mux_demux_redux_yosys(branches):
     mux_demux_redux(branches)

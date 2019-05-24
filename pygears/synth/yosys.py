@@ -141,7 +141,7 @@ def synth(outdir,
         # print(ret)
         # # yosys.command('xilinx_synth -flatten')
         ret = yosys.command(f'{synth_cmd} -top {top_name} -flatten')
-        print(ret)
+        # print(ret)
 
         if synth_out:
             yosys.command(f'write_verilog {synth_out}')
