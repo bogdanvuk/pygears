@@ -4,10 +4,7 @@ from pygears.typing import Array, Int, Integer, Queue, Uint, typeof
 
 def simple_cast(func):
     def wrapper(self, node, cast_to):
-        res = func(self, node, cast_to)
-        if cast_to:
-            return f"{int(cast_to)}'({res})"
-        return res
+        return self._simple_cast(func, node, cast_to)
 
     return wrapper
 
@@ -16,6 +13,12 @@ class SVExpressionVisitor:
     def __init__(self):
         self.merge_with = '.'
         self.expr = svexpr
+
+    def _simple_cast(self, func, node, cast_to):
+        res = func(self, node, cast_to)
+        if cast_to:
+            return f"{int(cast_to)}'({res})"
+        return res
 
     def visit(self, node, cast_to=None):
         method = 'visit_' + node.__class__.__name__

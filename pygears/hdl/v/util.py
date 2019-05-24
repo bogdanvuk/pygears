@@ -83,12 +83,11 @@ class VGenTypeVisitor(TypingVisitorBase):
 
     def visit_tuple(self, type_, field, **kwds):
         res = []
-        res.extend(self._complex_type_iterator(zip(type_.fields, type_.args)))
+        res.append(
+            f'{self.basic_type} [{int(type_)-1}:0] {self.context}; // {type_}'
+        )
 
-        if res or (not self.hier):
-            res.append(
-                f'{self.basic_type} [{int(type_)-1}:0] {self.context}; // {type_}'
-            )
+        res.extend(self._complex_type_iterator(zip(type_.fields, type_.args)))
 
         return res
 
@@ -154,10 +153,14 @@ def vgen_reg(dtype, name, direction, hier=True):
     if int(dtype) == 0:
         return f'reg [0:0] {name};'
 
+    if not hier:
+        return f'reg [{int(dtype)-1}:0] {name}; // {dtype}'
+
     vis = VGenTypeVisitor(name,
                           basic_type='reg',
                           direction=direction,
                           hier=hier)
+
     return '\n'.join(vis.visit(type_=dtype, field=name))
 
 
@@ -167,6 +170,9 @@ def vgen_wire(dtype, name, direction, hier=True):
 
     if int(dtype) == 0:
         return f'wire [0:0] {name};'
+
+    if not hier:
+        return f'wire [{int(dtype)-1}:0] {name}; // {dtype}'
 
     vis = VGenTypeVisitor(name,
                           basic_type='wire',

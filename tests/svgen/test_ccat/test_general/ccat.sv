@@ -14,7 +14,7 @@ module ccat
    logic all_valid;
    logic handshake;
    assign all_valid = din0.valid && din1.valid && din2.valid && din3.valid;
-   assign handshake = dout.valid & dout.ready;
+   assign handshake = dout.valid && dout.ready;
 
    assign dout.valid = all_valid;
    assign dout.data = { din3.data, din2.data, din1.data, din0.data };

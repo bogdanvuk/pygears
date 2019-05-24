@@ -29,9 +29,10 @@ class VCompiler(InstanceVisitor):
         self.kwds = kwds
 
     def find_width(self, node):
-        target = vexpr(node.target, self.extras)
+        target = vexpr(node.target, extras=self.extras)
 
-        rhs = vexpr(node.val, self.extras)
+        # rhs = vexpr(node.val, self.extras)
+        rhs = vexpr(node.val, node.dtype, self.extras)
 
         var = None
         if target in self.hdl_locals:
@@ -48,7 +49,7 @@ class VCompiler(InstanceVisitor):
 
     def enter_block(self, block):
         if getattr(block, 'in_cond', False):
-            self.writer.line(f'if ({vexpr(block.in_cond, self.extras)}) begin')
+            self.writer.line(f'if ({vexpr(block.in_cond, extras=self.extras)}) begin')
 
         if getattr(block, 'in_cond', True):
             self.writer.indent += 4

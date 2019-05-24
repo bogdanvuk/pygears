@@ -72,9 +72,16 @@ class VExpressionVisitor(SVExpressionVisitor):
         self.expr = vexpr
         self.extras = {}
 
+    def _simple_cast(self, func, node, cast_to):
+        res = func(self, node, cast_to)
+        if cast_to:
+            res, extra_func = cast(cast_to, node.dtype, res)
+            update_extras(self.extras, extra_func)
+        return res
+
     def visit_CastExpr(self, node, cast_to):
         val, func = cast(node.dtype, node.operand.dtype,
-                         self.visit(node.operand))
+                         self.visit(node.operand, cast_to))
         update_extras(self.extras, func)
         return val
 
@@ -134,9 +141,9 @@ class VExpressionVisitor(SVExpressionVisitor):
         return f'{val}_{dtype.fields[node.index]}'
 
 
-def vexpr(expr, extras=None):
+def vexpr(expr, cast_to=None, extras=None):
     v_visit = VExpressionVisitor()
-    res = v_visit.visit(expr, None)
+    res = v_visit.visit(expr, cast_to)
     if extras is not None:
         update_extras(extras, v_visit.extras)
     return res

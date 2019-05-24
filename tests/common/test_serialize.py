@@ -32,11 +32,6 @@ def test_directed_active(tmpdir, sim_cls):
     sim(outdir=tmpdir)
 
 
-# from pygears.sim.modules import SimVerilated
-# from functools import partial
-# test_directed_active('/tools/home/tmp', partial(SimVerilated, language='v'))
-
-
 @pytest.mark.parametrize('din_delay', [0, 5])
 @pytest.mark.parametrize('dout_delay', [0, 5])
 def test_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
