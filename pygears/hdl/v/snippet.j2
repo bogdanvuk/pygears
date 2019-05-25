@@ -56,6 +56,15 @@
   );
 {% endmacro %}
 
+{% macro bc_to_out_port_connect(intf_name, width, index, port_name) -%}
+  {% set hs_indexing = "[%d]"|format(index) if index != None else "" %}
+  {% set data_indexing = "[%d:%d]"|format((index+1)*width-1, index*width) if index != None else "" %}
+
+  assign {{port_name}}_valid = {{intf_name}}_valid{{hs_indexing}};
+  assign {{intf_name}}_ready{{hs_indexing}} = {{port_name}}_ready;
+  assign {{port_name}}_data = {{intf_name}}_data{{data_indexing}};
+{%- endmacro %}
+
 {% macro intf_inst(name, width, size, type) -%}
   {% set unpacked = "[%d:0]"|format(size-1) if size>1 else "" %}
   {% if width == 0 %}

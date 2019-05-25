@@ -52,10 +52,6 @@ class SVIntfGen:
                 self.get_bc_module(template_env)
             ])
 
-            for i, cons_port in enumerate(self.intf.consumers):
-                if isinstance(cons_port, OutPort):
-                    inst.append(self.get_connect_module(i, template_env))
-
             if self.traced:
                 for i in range(len(self.intf.consumers)):
                     intf_name = f'{self.outname}_{i}'
@@ -68,14 +64,18 @@ class SVIntfGen:
                             intf_name=intf_name,
                             conn_name=conn_name).split('\n'))
 
+        if self.intf.is_port_intf:
+            for i, cons_port in enumerate(self.intf.consumers):
+                if isinstance(cons_port, OutPort):
+                    inst.append(self.get_connect_module(i, template_env))
+
         if self.traced:
             inst.extend(
                 svgen_typedef(self.intf.dtype, self.basename).split('\n'))
 
             inst.extend(
-                spy_connect_t.substitute(
-                    intf_name=self.basename,
-                    conn_name=self.basename).split('\n'))
+                spy_connect_t.substitute(intf_name=self.basename,
+                                         conn_name=self.basename).split('\n'))
 
         return '\n'.join(inst)
 
@@ -135,8 +135,6 @@ class SVIntfGen:
 class SVGenIntfPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        config.define(
-            'svgen/debug_intfs',
-            default=[])
+        config.define('svgen/debug_intfs', default=[])
 
         safe_bind('svgen/spy_connection_template', dti_spy_connect_t)

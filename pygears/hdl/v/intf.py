@@ -52,9 +52,10 @@ class VIntfGen:
                 self.get_bc_module(template_env)
             ])
 
+        if self.intf.is_port_intf:
             for i, cons_port in enumerate(self.intf.consumers):
                 if isinstance(cons_port, OutPort):
-                    inst.append(self.get_connect_module(i, template_env))
+                    inst.append(self.get_connect_module(template_env, index=i))
 
             # if self.traced:
             #     for i in range(len(self.intf.consumers)):
@@ -88,24 +89,20 @@ class VIntfGen:
 
         return template_env.snippets.intf_inst(**ctx)
 
-    def get_connect_module(self, index, template_env):
-        inst_name = f'connect_{self.basename}'
-        din_name = self.outname
+    def get_connect_module(self, template_env, index=None):
         if self.intf.is_broadcast:
-            inst_name += f'_{index}'
-            din_name += f'[{index}]'
+            port_name = self.intf.consumers[index].basename
+        else:
+            port_name = self.intf.consumers[0].basename
 
         connect_context = {
-            'module_name': 'connect',
-            'inst_name': inst_name,
-            'param_map': {},
-            'port_map': {
-                'din': din_name,
-                'dout': self.intf.consumers[index].basename
-            }
+            'intf_name': self.outname,
+            'width': int(self.intf.dtype),
+            'index': index if self.intf.is_broadcast else None,
+            'port_name': port_name
         }
 
-        return template_env.snippets.module_inst(**connect_context)
+        return template_env.snippets.bc_to_out_port_connect(**connect_context)
 
     def get_bc_module(self, template_env):
         inst_name = f'bc_{self.basename}'
