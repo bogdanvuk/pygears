@@ -25,7 +25,7 @@ module bc #(
    end
 
    generate
-      for (i = 0; i < SIZE; i++) begin
+      for (i = 0; i < SIZE; i=i+1) begin
          assign ready_all[i]  = dout_ready[i] | ready_reg[i];
          assign dout_valid[i] = din_valid & !ready_reg[i];
          assign dout_data[(i+1)*WIDTH-1:i*WIDTH]   = din_data;

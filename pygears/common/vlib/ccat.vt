@@ -4,16 +4,14 @@
 
   {%- set input_intf_names = intfs|isinput|keymap("name") %}
 
-    wire  all_valid;
     wire  handshake;
-    assign all_valid = {{input_intf_names|format_list("%s_valid")|join(" && ")}};
     assign handshake = dout_valid && dout_ready;
 
-    assign dout_valid = all_valid;
+    assign dout_valid = {{input_intf_names|format_list("%s_valid")|join(" && ")}};
     assign dout_data = { {{input_intf_names|reverse|format_list("%s_data")|join(", ")}} };
 
   {% for i in input_intf_names %}
-    assign {{i}}_ready = handshake;
+    assign {{i}}_ready = {{i}}_valid ? handshake ? dout_ready;
   {% endfor %}
 
 {% endcall %}

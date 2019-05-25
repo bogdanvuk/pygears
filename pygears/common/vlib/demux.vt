@@ -7,7 +7,7 @@
 
     always @*
     begin
-        din_ready = 0;
+        din_ready = 1'bx;
 {% for i in (intfs|isoutput) %}
         {{i['name']}}_valid = 0;
 {% endfor %}

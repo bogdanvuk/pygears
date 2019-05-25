@@ -200,7 +200,7 @@ def synth_check_fixt(tmpdir, language, request):
     if tool == 'vivado':
         util = vivado.synth(tmpdir, language=language, **params)
     else:
-        util = yosys.synth(tmpdir, synth_cmd='synth_xilinx')
+        util = yosys.synth(tmpdir, synth_cmd='synth_xilinx', **params)
 
     for param, value in util_ref.items():
         if callable(value):

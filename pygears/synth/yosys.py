@@ -47,6 +47,7 @@ class Yosys:
             print(self.proc.before)
             raise
 
+        # print(self.proc.before.strip())
         return self.proc.before.strip()
 
     def enum_registers(self):
@@ -111,6 +112,7 @@ def synth(outdir,
           srcdir=None,
           top=None,
           optimize=True,
+          freduce=False,
           synth_out=None,
           synth_cmd='synth'):
     if not srcdir:
@@ -140,8 +142,25 @@ def synth(outdir,
         # ret = yosys.command("sat -tempinduct -prove demux_ctrl.bc_din.ready_reg[1] 1'b0")
         # print(ret)
         # # yosys.command('xilinx_synth -flatten')
-        ret = yosys.command(f'{synth_cmd} -top {top_name} -flatten')
-        # print(ret)
+        # ret = yosys.command(f'synth -top {top_name} -flatten -noabc')
+
+        yosys.command(f'hierarchy -check -top {top_name}')
+
+        yosys.command(f'proc')
+        yosys.command(f'flatten')
+
+        if optimize:
+            yosys.command(f'opt')
+            yosys.command(f'opt_rmdff -sat')
+            yosys.command(f'opt')
+
+            if freduce:
+                yosys.command(f'freduce')
+                yosys.command(f'opt_clean')
+
+        if synth_cmd:
+            ret = yosys.command(synth_cmd)
+            print(ret)
 
         if synth_out:
             yosys.command(f'write_verilog {synth_out}')
