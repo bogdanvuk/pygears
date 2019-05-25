@@ -5,8 +5,7 @@ from typing import List
 
 from . import hls_expressions as expr
 
-COND_NAME = Template('${cond_type}_cond_block_${block_id}')
-COMBINED_COND_NAME = Template('combined_cond_${cond_id}')
+COND_NAME = Template('${cond_type}_cond_${block_id}')
 
 COND_TYPES = ['in', 'cycle', 'exit']
 
@@ -62,7 +61,7 @@ def cond_name_match_by_type(name, cond_type):
     if not isinstance(name, str):
         return None
 
-    pattern = re.compile(f'^{cond_type}_cond_block_\d+$')
+    pattern = re.compile(f'^{cond_type}_cond_\d+$')
     res = pattern.match(name)
     return res
 
@@ -71,7 +70,7 @@ def cond_name_match(name):
     if not isinstance(name, str):
         return None
 
-    pattern = re.compile(f'^\w+_cond_block_\d+$')
+    pattern = re.compile(f'^\w+_cond_\d+$')
     res = pattern.match(name)
     if res is not None:
         return res

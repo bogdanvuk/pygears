@@ -8,7 +8,7 @@ from .hls_expressions import (BinOpExpr, CastExpr, ConcatExpr, UnaryOpExpr,
                               binary_expr)
 from .inst_visit import InstanceVisitor, TypeVisitor
 from .pydl_types import (Block, CycleSubCond, ExitSubCond, SubConditions,
-                         is_container, is_intftype)
+                         is_container, is_intftype, Module, IfBlock)
 from .scheduling_types import SeqCBlock
 from .utils import VisitError
 
@@ -116,6 +116,7 @@ class ConditionsResolve(TypeVisitor):
     def __init__(self, conds_by_id):
         self.conds_by_id = conds_by_id
         self.resolve_initial()
+        self.cond_cnt = 0
 
     def resolve_initial(self):
         assert len(self.conds_by_id['in']) == len(
@@ -129,13 +130,19 @@ class ConditionsResolve(TypeVisitor):
                 new_cond = find_complex_cond(curr_cond, self.conds_by_id)
                 self.conds_by_id[cond_t][i] = new_cond
 
+    def set_name(self, node):
+        node.cond_val.name = self.cond_cnt
+        self.cond_cnt += 1
+
     def visit_all_Block(self, node):
         resolve_complex_cond(node, self.conds_by_id)
+        self.set_name(node)
         for stmt in node.stmts:
             self.visit(stmt)
 
     def visit_all_Expr(self, node):
         resolve_complex_cond(node, self.conds_by_id)
+        self.set_name(node)
 
 
 class ConditionsFinder(InstanceVisitor):
@@ -163,6 +170,8 @@ class ConditionsFinder(InstanceVisitor):
         if node.prolog:
             prolog_cond = find_top_context_conditions(
                 self.scope, BlockType.prolog, self.state_num)
+            for block in node.prolog:
+                self.set_pydl_cond(block, prolog_cond, node.parent)
 
         self.enter_block(node)
 
@@ -179,17 +188,10 @@ class ConditionsFinder(InstanceVisitor):
         self.exit_block()
 
         if node.epilog:
-            curr_cond = find_top_context_conditions(
+            epilog_cond = find_top_context_conditions(
                 self.scope, BlockType.epilog, self.state_num, epilog_cond)
-
-        # set conditions
-        if node.prolog:
-            for block in node.prolog:
-                self.set_pydl_cond(block, prolog_cond, node.parent)
-
-        if node.epilog:
             for block in node.epilog:
-                self.set_pydl_cond(block, curr_cond, node.parent)
+                self.set_pydl_cond(block, epilog_cond, node.parent)
 
     def visit_SeqCBlock(self, node):
         self.visit_block(node)
@@ -211,7 +213,6 @@ class ConditionsFinder(InstanceVisitor):
                 self.set_pydl_cond(stmt, curr_cond, cblock)
         else:
             val = CondtitionValues()
-            val.name = curr_cond.name
             for cond_t in COND_TYPES:
                 curr_inst = getattr(curr_cond, f'{cond_t}_val', None)
                 setattr(val, f'{cond_t}_val', curr_inst)
@@ -219,13 +220,20 @@ class ConditionsFinder(InstanceVisitor):
 
     def eval_pydl_cond(self, pydl_block, curr_cond, cblock):
         pydl_block.cond_val = CondtitionValues()
-        pydl_block.cond_val.name = pydl_block.id
         bottom_cond = find_bottom_context_conditions(pydl_block, cblock)
 
         for cond_t in COND_TYPES:
             current_cond_inst = getattr(bottom_cond, f'{cond_t}_val', None)
             self.conds_by_id[cond_t][pydl_block.id] = current_cond_inst
             propagated_inst = getattr(curr_cond, f'{cond_t}_val', None)
+            if cond_t == 'in':
+                curr_in_cond = InCond(pydl_block.id)
+                if propagated_inst is not None:
+                    propagated_inst = CombinedCond((propagated_inst,
+                                                    curr_in_cond))
+                else:
+                    propagated_inst = curr_in_cond
+
             setattr(pydl_block.cond_val, f'{cond_t}_val', propagated_inst)
 
 
@@ -236,7 +244,6 @@ class ConditionsFinder(InstanceVisitor):
 
 def find_top_context_conditions(scope, block_type, state_num, added_cond=None):
     curr_cond = CondtitionValues()
-    curr_cond.name = scope[-1].pydl_block.id
 
     in_cond = find_top_context_in_cond(scope, block_type, state_num)
     cycle_cond = find_top_context_cycle_cond(scope, block_type, state_num)
@@ -282,28 +289,22 @@ def find_top_context_exit_cond(scope, block_type, state_num):
 
 def find_top_context_in_cond(scope, block_type, state_num):
     cblock = scope[-1]
-    dflt_val = InCond(cblock.pydl_block.id)
 
     if state_num == 0:
-        return dflt_val
+        return None
     if not cblock.parent:
-        return dflt_val
+        return None
     if block_type == BlockType.leaf:
-        return dflt_val
+        return None
 
     current_ids = cblock.state_ids
     # if in module even exist states other than the ones in this
     # cblock
     if (current_ids != cblock.parent.state_ids) and (current_ids != list(
             range(state_num + 1))):
-        curr_in_cond = cblock.pydl_block.in_cond
-        if curr_in_cond is None:
-            curr_in_cond = []
-        else:
-            curr_in_cond = [dflt_val]
-        return StateCond(id=curr_in_cond, state_ids=current_ids)
+        return StateCond(id=[], state_ids=current_ids)
 
-    return dflt_val
+    return None
 
 
 def find_top_context_rst_cond(scope):

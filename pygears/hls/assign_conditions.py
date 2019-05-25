@@ -19,13 +19,13 @@ class AssignConditions(TypeVisitor):
 
     def _get_cond_by_type(self, cond_type, node):
         all_conds = getattr(UsedConditions, f'{cond_type}_conds')
-        if node.id in all_conds:
+        if node.cond_val.name in all_conds:
             curr_cond = getattr(node.cond_val, f'{cond_type}_val')
             if curr_cond is None:
                 curr_cond = 1
             res = AssignValue(
                 target=COND_NAME.substitute(
-                    cond_type=cond_type, block_id=node.id),
+                    cond_type=cond_type, block_id=node.cond_val.name),
                 val=curr_cond)
             self._add_stmt(res)
 
@@ -41,4 +41,5 @@ class AssignConditions(TypeVisitor):
             self.visit(stmt)
 
     def visit_all_Expr(self, node):
-        pass
+        for cond_t in COND_TYPES:
+            self._get_cond_by_type(cond_t, node)
