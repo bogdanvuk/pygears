@@ -13,8 +13,8 @@ def test_bc_ccat_redux_vivado(branches):
     ((din, ) * branches) | ccat()
 
 
-@pytest.mark.parametrize('branches', [2, 3, 27])
-@synth_check({'logic luts': 0, 'ffs': 0}, tool='yosys')
+@pytest.mark.parametrize('branches', [2, 3, 27, 127])
+@synth_check({'logic luts': 0, 'ffs': 0}, tool='yosys', freduce=True)
 def test_bc_ccat_redux_yosys(branches):
     din = Intf(Uint[8])
     ((din, ) * branches) | ccat()

@@ -24,27 +24,6 @@ class SVGenCartBase(SVModuleGen):
         return cfg
 
 
-class SVGenCart(SVGenCartBase):
-    @property
-    def is_generated(self):
-        return True
-
-    def get_module(self, template_env):
-        intfs = list(self.port_configs)
-        queue_intfs = [
-            i for i in intfs if i['lvl'] > 0 and i['modport'] == 'consumer'
-        ]
-
-        context = {
-            'queue_intfs': queue_intfs,
-            'module_name': self.module_name,
-            'intfs': intfs,
-            'din_data_cat': din_data_cat
-        }
-
-        return template_env.render_local(__file__, "cart.j2", context)
-
-
 class SVGenCartSyncBase(SVGenCartBase):
     def __init__(self, node):
         super().__init__(node)
@@ -91,4 +70,3 @@ class SVGenCartPlugin(SVGenPlugin):
     @classmethod
     def bind(cls):
         cls.registry['svgen']['module_namespace'][cart_sync] = SVGenCartSync
-        cls.registry['svgen']['module_namespace'][cart] = SVGenCart

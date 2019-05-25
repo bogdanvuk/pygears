@@ -31,9 +31,17 @@ def mux_demux_redux(branches):
     demux_ctrl(Intf(TDin)) | mux
 
 
-@pytest.mark.parametrize('branches', [2, 3, 27])
+@pytest.mark.parametrize('language', ['v'])
+@pytest.mark.parametrize('branches', [2, 4])
 @synth_check({'logic luts': 0, 'ffs': 0}, tool='vivado')
-def test_mux_demux_redux_vivado(branches):
+def test_mux_demux_redux_power_two_vivado(branches):
+    mux_demux_redux(branches)
+
+
+@pytest.mark.parametrize('language', ['v'])
+@pytest.mark.parametrize('branches', [3])
+@synth_check({'logic luts': 1, 'ffs': 0}, tool='vivado')
+def test_mux_demux_redux_odd_vivado(branches):
     mux_demux_redux(branches)
 
 

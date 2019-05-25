@@ -17,6 +17,7 @@ def enum_hdl_files(top, outdir, language):
 
     if language == 'sv':
         yield os.path.join(COMMON_SVLIB_DIR, 'dti.sv')
+        yield os.path.join(COMMON_SVLIB_DIR, 'connect.sv')
         yield os.path.join(outdir, 'wrap_top.sv')
 
     for node in NodeYielder().visit(top):

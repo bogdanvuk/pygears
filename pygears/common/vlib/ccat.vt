@@ -11,7 +11,7 @@
     assign dout_data = { {{input_intf_names|reverse|format_list("%s_data")|join(", ")}} };
 
   {% for i in input_intf_names %}
-    assign {{i}}_ready = {{i}}_valid ? handshake ? dout_ready;
+    assign {{i}}_ready = {{i}}_valid ? handshake : 1'bx;
   {% endfor %}
 
 {% endcall %}

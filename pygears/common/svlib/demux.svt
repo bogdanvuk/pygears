@@ -7,33 +7,27 @@
 
     always_comb
     begin
-        case(din_s.ctrl)
-{% for i in (intfs|isoutput) %}
-            {{loop.index-1}} : begin
-                din.ready = {{i['name']}}.ready;
-            end
-{% endfor %}
-            default: begin
-                din.ready = {{(intfs|isoutput)[0]['name']}}.ready;
-            end
-        endcase
-    end
-
-    always_comb
-    begin
+        din.ready = 1'bx;
 {% for i in (intfs|isoutput) %}
         {{i['name']}}.valid = 0;
 {% endfor %}
 
-        case(din_s.ctrl)
+        if (din.valid) begin
+            case(din_s.ctrl)
 {% for i in (intfs|isoutput) %}
-            {{loop.index-1}} : begin
-                {{i['name']}}.valid = din.valid;
-            end
+                {{loop.index-1}} : begin
+                    din.ready = {{i['name']}}.ready;
+                    {{i['name']}}.valid = din.valid;
+                end
 {% endfor %}
-            default: begin
-            end
-        endcase
+                default: begin
+                    din.ready = 1'bx;
+{% for i in (intfs|isoutput) %}
+                    {{i['name']}}.valid = 1'bx;
+{% endfor %}
+                end
+            endcase
+        end
     end
 
 {% endcall %}

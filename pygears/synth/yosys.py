@@ -12,11 +12,11 @@ def create_project(outdir, top=None):
     print(hdl_files)
 
 
-def create_project_script(script_fn, outdir, top):
-    hdl_files = list_hdl_files(top, outdir, language='v')
+def create_project_script(script_fn, outdir, top, language):
+    hdl_files = list_hdl_files(top, outdir, language=language)
     with open(script_fn, 'w') as f:
         for fn in hdl_files:
-            f.write(f'read_verilog {fn}\n')
+            f.write(f'read_verilog {"-sv" if language== "sv" else ""} {fn}\n')
 
 
 class Yosys:
@@ -114,6 +114,7 @@ def synth(outdir,
           optimize=True,
           freduce=False,
           synth_out=None,
+          language='v',
           synth_cmd='synth'):
     if not srcdir:
         srcdir = os.path.join(outdir, 'src')
@@ -122,11 +123,14 @@ def synth(outdir,
 
     # synth_out_fn = os.path.join(outdir, 'synth.v')
 
-    rtl = hdlgen(top, language='v', outdir=srcdir)
-    vgen_map = registry('vgen/map')
+    rtl = hdlgen(top, language=language, outdir=srcdir)
+    vgen_map = registry(f'{language}gen/map')
     top_name = vgen_map[rtl].module_name
 
-    create_project_script(prj_script_fn, outdir=srcdir, top=rtl)
+    create_project_script(prj_script_fn,
+                          outdir=srcdir,
+                          top=rtl,
+                          language=language)
     with Yosys('yosys') as yosys:
 
         yosys.command(f'script {prj_script_fn}')
@@ -152,17 +156,23 @@ def synth(outdir,
         if optimize:
             yosys.command(f'opt')
             yosys.command(f'opt_rmdff -sat')
+            # yosys.command(f'opt_expr -mux_bool -undriven -fine')
+            # yosys.command(f'opt_expr -mux_undef')
+            # yosys.command(f'opt_expr -keepdc -full')
             yosys.command(f'opt')
 
+            print("Started freduce")
             if freduce:
                 yosys.command(f'freduce')
                 yosys.command(f'opt_clean')
 
         if synth_cmd:
             ret = yosys.command(synth_cmd)
-            print(ret)
+            # print(ret)
 
         if synth_out:
             yosys.command(f'write_verilog {synth_out}')
+
+        print(yosys.command('stat'))
 
         return yosys.stats
