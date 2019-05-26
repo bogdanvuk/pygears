@@ -2,7 +2,6 @@
 
 {% set Queue = import_from('pygears.typing', 'Queue') %}
 {% set typeof = import_from('pygears.typing', 'typeof') %}
-{% set din_data_cat = import_from('pygears.common.cat_util', 'din_data_cat') %}
 
 {%- set queue_intfs = [] -%}
 {%- for intf in intfs|isinput if typeof(intf['type'], Queue) -%}

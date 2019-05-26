@@ -4,6 +4,7 @@ from pygears.common.shred import shred
 from pygears.common.ccat import ccat
 from pygears.util.utils import quiter_async
 from pygears import module
+from pygears.util.utils import gather
 
 
 def lvl_if_queue(t):
@@ -16,8 +17,8 @@ def lvl_if_queue(t):
 def cart_type(dtypes):
     arg_queue_lvl = [lvl_if_queue(d) for d in dtypes]
 
-    base_type = Tuple[tuple(
-        d if lvl == 0 else d[0] for d, lvl in zip(dtypes, arg_queue_lvl))]
+    base_type = Tuple[tuple(d if lvl == 0 else d[0]
+                            for d, lvl in zip(dtypes, arg_queue_lvl))]
 
     # If there are no Queues, i.e. sum(arg_queue_lvl) == 0, the type below
     # will resolve to just base_type
@@ -25,29 +26,23 @@ def cart_type(dtypes):
 
 
 @gear(enablement=b'len(din) == 2')
-async def cart(*din) -> b'cart_type(din)':
-    din_t = [d.dtype for d in din]
+async def cart_cat(*din) -> b'cart_type(din)':
+    async with gather(*din) as data:
+        dout_data = []
+        dout_eot = Unit()
+        for d in data:
+            if isinstance(d, Queue):
+                dout_data.append(d.data)
+                dout_eot = d.eot @ dout_eot
+            else:
+                dout_data.append(d)
 
-    if all(typeof(t, Queue) for t in din_t):
-        queue_id, single_id = 1, 0
-    elif typeof(din_t[0], Queue):
-        queue_id, single_id = 0, 1
-    else:
-        queue_id, single_id = 1, 0
+        yield (dout_data, dout_eot)
 
-    async with din[single_id] as single_data:
-        if typeof(din_t[single_id], Queue):
-            single_eot = single_data.eot
-            single_data = single_data.data
-        else:
-            single_eot = Unit()
 
-        async for queue_data in quiter_async(din[queue_id]):
-            out_data = [0, 0]
-            out_data[queue_id] = queue_data.data
-            out_data[single_id] = single_data
-
-            yield (out_data, queue_data.eot @ single_eot)
+@gear(enablement=b'len(din) == 2')
+def cart(*din) -> b'cart_type(din)':
+    return din | cart_sync(outsync=False) | cart_cat
 
 
 @alternative(cart)

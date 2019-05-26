@@ -1,5 +1,4 @@
 import pytest
-from pygears.util.test_utils import synth_check
 
 from pygears import Intf
 from pygears.typing import Uint, Queue, Tuple, Unit
@@ -7,7 +6,7 @@ from pygears.common import cart, cart_sync
 
 from pygears.sim import sim
 from pygears.cookbook.delay import delay_rng
-from pygears.cookbook.verif import directed, verif, drv
+from pygears.cookbook.verif import drv, verif
 
 
 def test_two():

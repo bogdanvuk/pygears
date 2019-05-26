@@ -11,22 +11,15 @@
 
 {%- for intf in intfs -%}
   {%- do intf.update({'lvl': intf['type'].lvl if typeof(intf['type'], Queue) else 0}) -%}
-  {%- do intf.update({'data_eot': '(&%s_s.eot)'|format(intf['name']) if typeof(intf['type'], Queue) else 1}) -%}
 {%- endfor -%}
 
 {% call snippet.module_with_intf_structs(module_name, intfs, intfs, comment) %}
 
   {%- set queue_intf_names = queue_intfs|keymap("name") %}
   {%- set input_intf_names = intfs|isinput|keymap("name") %}
+  {%- set max_lvl = intfs|isinput|keymap("lvl")|max %}
 
-  {% set ns = namespace(queue=False) -%}
-  {% for i in intfs -%}
-    {% if i['lvl'] > 0 -%}
-      {% set ns.queue=True -%}
-    {%- endif %}
-  {%- endfor %}
-
-    {% if not ns.queue %}
+    {% if max_lvl == 0 %}
     assign dout_s = {{din_data_cat(intfs)}};
     {% else %}
     assign dout_s.eot = { {{queue_intf_names|format_list("%s_s.eot")|join(", ")}} };
@@ -37,12 +30,8 @@
     assign dout.valid = {{input_intf_names|format_list("%s.valid")|join(" & ")}};
     assign handshake = dout.valid && dout.ready;
 
-    {% if intfs[0]['lvl'] > 0 and intfs[1]['lvl'] > 0 %}
-    assign din0.ready = din0.valid ? (handshake && {{intfs[1]['data_eot']}}) : dout.ready;
-    assign din1.ready = din1.valid ? handshake : dout.ready;
-    {% else %}
-    assign din0.ready = din0.valid ? (handshake && {{intfs[1]['data_eot']}}) : dout.ready;
-    assign din1.ready = din1.valid ? (handshake && {{intfs[0]['data_eot']}}) : dout.ready;
-    {% endif %}
+  {% for i in intfs|isinput %}
+    assign {{i['name']}}.ready = {{i['name']}}.valid ? handshake : dout.ready;
+  {% endfor %}
 
 {% endcall %}
