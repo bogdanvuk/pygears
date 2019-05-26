@@ -1,7 +1,7 @@
 from pygears import gear
 
 
-@gear(svgen={'compile': True, 'pipeline': True})
+@gear(svgen={'compile': True, 'pipeline': True, 'inline_conditions': True})
 async def dreg(din) -> b'din':
     data = din.dtype.decode(0)
 
