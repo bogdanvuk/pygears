@@ -38,11 +38,11 @@
     assign handshake = dout_valid && dout_ready;
 
     {% if intfs[0]['lvl'] > 0 and intfs[1]['lvl'] > 0 %}
-    assign din0_ready = din0.valid ? (handshake && {{intfs[1]['data_eot']}}) : dout_ready;
-    assign din1_ready = din1.valid ? handshake : dout_ready;
+    assign din0_ready = din0_valid ? (handshake && {{intfs[1]['data_eot']}}) : dout_ready;
+    assign din1_ready = din1_valid ? handshake : dout_ready;
     {% else %}
-    assign din0_ready = din0.valid ? (handshake && {{intfs[1]['data_eot']}}) : dout_ready;
-    assign din1_ready = din1.valid ? (handshake && {{intfs[0]['data_eot']}}) : dout_ready;
+    assign din0_ready = din0_valid ? (handshake && {{intfs[1]['data_eot']}}) : dout_ready;
+    assign din1_ready = din1_valid ? (handshake && {{intfs[0]['data_eot']}}) : dout_ready;
     {% endif %}
 
 {% endcall %}

@@ -116,6 +116,6 @@ def test_take_vivado():
     take(Intf(T_DIN))
 
 
-@synth_check({'logic luts': 80, 'ffs': 17}, tool='yosys')
+@synth_check({'logic luts': 71, 'ffs': 17}, tool='yosys')
 def test_take_yosys():
     take(Intf(T_DIN))

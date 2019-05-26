@@ -4,7 +4,7 @@ from string import Template
 
 from pygears import PluginBase, registry, safe_bind
 from pygears.conf import Inject, inject, config
-from pygears.rtl.port import OutPort
+from pygears.rtl.port import OutPort, InPort
 # from .util import svgen_typedef
 
 dti_spy_connect_t = Template("""
@@ -52,9 +52,9 @@ class VIntfGen:
                 self.get_bc_module(template_env)
             ])
 
-        if self.intf.is_port_intf:
-            for i, cons_port in enumerate(self.intf.consumers):
-                if isinstance(cons_port, OutPort):
+        for i, cons_port in enumerate(self.intf.consumers):
+            if isinstance(cons_port, OutPort):
+                if self.intf.is_broadcast or isinstance(self.intf.producer, InPort):
                     inst.append(self.get_connect_module(template_env, index=i))
 
             # if self.traced:

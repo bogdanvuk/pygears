@@ -151,7 +151,7 @@ assign {{intf['name']}}.ready = {{intf['name']}}_ready;
 
 module {{module_name}}
 (
-  {% if sigs == None -%}
+  {% if sigs == None %}
     input clk,
     input rst,
   {% else %}

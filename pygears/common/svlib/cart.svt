@@ -33,7 +33,7 @@
     assign dout_s.data = {{din_data_cat(intfs)}};
     {% endif %}
 
-    wire  handshake;
+    logic  handshake;
     assign dout.valid = {{input_intf_names|format_list("%s.valid")|join(" & ")}};
     assign handshake = dout.valid && dout.ready;
 

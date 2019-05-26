@@ -11,18 +11,16 @@ module ccat
 
    );
 
-   logic all_valid;
    logic handshake;
-   assign all_valid = din0.valid && din1.valid && din2.valid && din3.valid;
    assign handshake = dout.valid && dout.ready;
 
-   assign dout.valid = all_valid;
+   assign dout.valid = din0.valid && din1.valid && din2.valid && din3.valid;
    assign dout.data = { din3.data, din2.data, din1.data, din0.data };
 
-   assign din0.ready = handshake;
-   assign din1.ready = handshake;
-   assign din2.ready = handshake;
-   assign din3.ready = handshake;
+   assign din0.ready = din0.valid ? handshake : dout.ready;
+   assign din1.ready = din1.valid ? handshake : dout.ready;
+   assign din2.ready = din2.valid ? handshake : dout.ready;
+   assign din3.ready = din3.valid ? handshake : dout.ready;
 
 
 endmodule
