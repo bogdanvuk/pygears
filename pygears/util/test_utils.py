@@ -285,7 +285,10 @@ def sim_cls(request):
     yield sim_cls
 
 
-@pytest.fixture(params=[SimVerilated, SimSocket])
+@pytest.fixture(params=[
+    partial(SimVerilated, language='v'),
+    partial(SimVerilated, language='sv'), SimSocket
+])
 def cosim_cls(request):
     cosim_cls = request.param
     if cosim_cls is SimVerilated:

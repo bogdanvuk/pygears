@@ -1,49 +1,36 @@
-
-module cart
-(
-input clk,
+module cart(
+    input clk,
     input rst,
+
     dti.consumer din0, // [u4]^2 (6)
     dti.consumer din1, // [()] (1)
     dti.producer dout // [(u4, ())]^3 (7)
 
 );
-    typedef struct packed { // [u4]^2
-        logic [1:0] eot; // u2
-        logic [3:0] data; // u4
-    } din0_t;
 
-    typedef struct packed { // [()]
-        logic [0:0] eot; // u1
-    } din1_t;
+/*verilator tracing_off*/
 
-    typedef struct packed { // (u4, ())
-        logic [3:0] f0; // u4
-    } dout_data_t;
+      dti #(.W_DATA(6)) cart_sync_dout0(); // [u4]^2 (6)
 
-    typedef struct packed { // [(u4, ())]^3
-        logic [2:0] eot; // u3
-        dout_data_t data; // (u4, ())
-    } dout_t;
+      dti #(.W_DATA(1)) cart_sync_dout1(); // [()] (1)
 
-    din0_t din0_s;
-    din1_t din1_s;
-    dout_t dout_s;
-    assign din0_s = din0.data;
-    assign din1_s = din1.data;
-    assign dout.data = dout_s;
+    cart_cart_sync cart_sync (
+        .clk(clk),
+        .rst(rst),
+        .din0(din0),
+        .din1(din1),
+        .dout0(cart_sync_dout0),
+        .dout1(cart_sync_dout1)
+    );
 
 
-
-    assign dout_s.eot = { din0_s.eot, din1_s.eot };
-    assign dout_s.data = { din0_s.data };
-
-    logic  handshake;
-    assign dout.valid = din0.valid & din1.valid;
-    assign handshake = dout.valid && dout.ready;
-
-    assign din0.ready = din0.valid ? (handshake && (&din1_s.eot)) : dout.ready;
-    assign din1.ready = din1.valid ? handshake : dout.ready;
+    cart_cart_cat cart_cat (
+        .clk(clk),
+        .rst(rst),
+        .din0(cart_sync_dout0),
+        .din1(cart_sync_dout1),
+        .dout(dout)
+    );
 
 
 
