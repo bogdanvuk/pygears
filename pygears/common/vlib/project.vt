@@ -4,17 +4,14 @@
 {% set Queue = import_from('pygears.typing', 'Queue') %}
 
 {% call snippet.data_func_gear(module_name, intfs, comment) %}
-  {% set din_lvl = _din_t.lvl if typeof(_din_t, Queue) else 0 %}
-  {% set lvl = params['lvl'] %}
+  {% set dout_lvl = _dout_t.lvl if typeof(_dout_t, Queue) else 0 %}
 
-  {% if din_lvl > lvl + 1 %}
-  assign dout_s_eot = {din_s_eot[{{din_lvl-1}}:{{lvl+1}}], &din_s_eot[{{lvl}}:0]};
-  {% elif din_lvl == lvl + 1 %}
-  assign dout_s_eot = &din_s_eot;
+  {% if dout_lvl > 0 %}
+  assign dout_s_eot = din_s_eot[{{dout_lvl-1}}:0];
   {% endif %}
 
   {% if int(_din_t.data) > 0 %}
-    {% if din_lvl > lvl %}
+    {% if dout_lvl > 0 %}
   assign dout_s_data = din_s_data;
     {% else %}
   assign dout_s = din_s_data;
@@ -22,5 +19,3 @@
   {% endif %}
 
 {% endcall %}
-
-
