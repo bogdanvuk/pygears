@@ -3,12 +3,12 @@ from enum import IntEnum
 from functools import partial, reduce
 
 from .conditions_utils import (COND_TYPES, CombinedCond, CondBase, CycleCond,
-                               ExitCond, InCond, StateCond, combine)
+                               ExitCond, InCond, StateCond, SubCond, combine)
 from .hls_expressions import (BinOpExpr, CastExpr, ConcatExpr, UnaryOpExpr,
                               binary_expr)
 from .inst_visit import InstanceVisitor, TypeVisitor
-from .pydl_types import (Block, CycleSubCond, ExitSubCond, SubConditions,
-                         is_container, is_intftype, Module, IfBlock)
+from .pydl_types import (Block, CycleSubCond, ExitSubCond, IfBlock, Module,
+                         SubConditions, is_container, is_intftype)
 from .scheduling_types import SeqCBlock
 from .utils import VisitError
 
@@ -88,6 +88,15 @@ def find_complex_cond(propagated_inst, conds_by_id):
             cond_val = find_complex_cond(expr.operand, conds_by_id)
             expr.operand = cond_val
             return expr
+
+    if propagated_inst.ctype == 'sub':
+        cond = find_complex_cond(propagated_inst.cond, conds_by_id)
+        other = find_complex_cond(propagated_inst.other, conds_by_id)
+        if other is None:
+            return None
+        return reduce(
+            partial(binary_expr, operator=propagated_inst.operator),
+            [cond, other], None)
 
     if propagated_inst.ctype in conds_by_id:
         return conds_by_id[propagated_inst.ctype][propagated_inst.id]
@@ -182,14 +191,15 @@ class ConditionsFinder(InstanceVisitor):
         for child in node.child:
             self.visit(child)
 
-        epilog_cond = find_top_context_rst_cond(
+        added_epilog_cond = find_top_context_rst_cond(
             self.scope) if node.epilog else None
 
         self.exit_block()
 
         if node.epilog:
             epilog_cond = find_top_context_conditions(
-                self.scope, BlockType.epilog, self.state_num, epilog_cond)
+                self.scope, BlockType.epilog, self.state_num,
+                added_epilog_cond)
             for block in node.epilog:
                 self.set_pydl_cond(block, epilog_cond, node.parent)
 
@@ -308,8 +318,34 @@ def find_top_context_in_cond(scope, block_type, state_num):
 
 
 def find_top_context_rst_cond(scope):
-    return ExitCond(scope[-1].pydl_block.id)
+    if len(scope) == 1:
+        assert isinstance(scope[0].pydl_block, Module)
+        block = scope[0].pydl_block.stmts
+    else:
+        block = [s.pydl_block for s in scope[1:]]
+    return find_exit_cond(block, search_in_cond=True)
 
+def find_exit_cond(statements, search_in_cond=False):
+    def has_in_cond(stmt):
+        if search_in_cond and (not isinstance(stmt, IfBlock)) and hasattr(
+                stmt, 'in_cond') and (stmt.in_cond is not None):
+            return True
+        return False
+
+    for stmt in reversed(statements):
+        cond = getattr(stmt, 'exit_cond', None)
+        if cond is not None:
+            exit_c = ExitCond(stmt.id)
+            if has_in_cond(stmt):
+                in_c = InCond(stmt.id)
+                return CombinedCond((exit_c, in_c), '&&')
+
+            return exit_c
+
+        if has_in_cond(stmt):
+            return InCond(stmt.id)
+
+    return None
 
 def state_depend_cycle_cond(scope, block_type):
     c_block = scope[-1]
@@ -421,7 +457,7 @@ def subcond_expr(cond, other=None):
         return None
 
     if cond.expr is not None:
-        return CombinedCond((cond.expr, other), cond.operator)
+        return SubCond(cond=cond.expr, other=other, operator=cond.operator)
 
     return other
 

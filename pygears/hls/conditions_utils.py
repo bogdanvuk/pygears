@@ -44,6 +44,14 @@ class CombinedCond(CondBase):
 
 
 @dataclass
+class SubCond(CondBase):
+    ctype = 'sub'
+    cond: CondBase = None
+    other: CondBase = None
+    operator: str = '&&'
+
+
+@dataclass
 class StateCond(CondBase):
     ctype = 'state'
     id: List[CondBase] = None
