@@ -83,10 +83,11 @@ class VCompiler(InstanceVisitor):
         self.writer.line('')
 
     def visit_CombSeparateStmts(self, node):
-        self.writer.line(f'// Comb statements for: {self.visit_var}')
-        for stmt in node.stmts:
-            self.writer.line(f'assign {self.find_width(stmt)}')
-        self.writer.line('')
+        if node.stmts:
+            self.writer.line(f'// Comb statements for: {self.visit_var}')
+            for stmt in node.stmts:
+                self.writer.line(f'assign {self.find_width(stmt)}')
+            self.writer.line('')
 
     def visit_HDLBlock(self, node):
         self.enter_block(node)

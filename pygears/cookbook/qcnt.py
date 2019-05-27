@@ -2,7 +2,7 @@ from pygears import gear
 from pygears.typing import Queue, Uint
 
 
-@gear(svgen={'compile': True})
+@gear(svgen={'compile': True, 'inline_conditions': True})
 async def qcnt(din: Queue, *, lvl=1, init=1, w_out=16) -> Queue[Uint['w_out']]:
     """Short for Queue Count. Counts the number of sub-transactions in the input
     transaction and outputs the running count.

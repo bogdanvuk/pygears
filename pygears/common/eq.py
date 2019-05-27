@@ -6,7 +6,7 @@ from pygears.typing import Tuple, Any, Uint
 from . import ccat
 
 
-@gear(svgen={'compile': True})
+@gear(svgen={'compile': True, 'inline_conditions': True})
 async def eq(din: Tuple[Any, Any]) -> Uint[1]:
     async with din as data:
         yield data[0] == data[1]
