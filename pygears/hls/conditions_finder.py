@@ -30,12 +30,6 @@ class CondtitionValues:
     exit_val = None
 
 
-@dataclass
-class BlockCondtitions:
-    cycle_cond = None
-    exit_cond = None
-
-
 class BlockType(IntEnum):
     leaf = 0
     prolog = 1
@@ -43,65 +37,61 @@ class BlockType(IntEnum):
     block = 3
 
 
-def get_sub_conds(cond, conds_by_id):
-    sub_conds = []
-    for sub_cond in cond.id:
-        if not isinstance(sub_cond, CondBase):
-            inst = sub_cond
-        elif sub_cond.ctype in conds_by_id:
-            inst = conds_by_id[sub_cond.ctype][sub_cond.id]
-        else:
-            inst = find_complex_cond(sub_cond, conds_by_id)
-        sub_conds.append(inst)
-    return sub_conds
+class ComplexCondResolve:
+    '''Visitor class that resolves complex condtitions (inherited from CondBase)'''
 
+    def visit(self, node, conds_by_id):
+        if node is None or not isinstance(node, CondBase):
+            return node
 
-def find_complex_cond(propagated_inst, conds_by_id):
-    if propagated_inst is None:
-        return None
+        if node.ctype in conds_by_id:
+            return conds_by_id[node.ctype][node.id]
 
-    if not isinstance(propagated_inst, CondBase):
-        return propagated_inst
+        method = 'visit_' + node.ctype
+        visitor = getattr(self, method)
+        return visitor(node, conds_by_id)
 
-    if propagated_inst.ctype == 'combined':
-        sub_conds = get_sub_conds(propagated_inst, conds_by_id)
+    def get_sub_conds(self, cond, conds_by_id):
+        return [self.visit(sub_cond, conds_by_id) for sub_cond in cond.id]
+
+    def visit_combined(self, node, conds_by_id):
+        sub_conds = self.get_sub_conds(node, conds_by_id)
         return reduce(
-            partial(binary_expr, operator=propagated_inst.operator), sub_conds,
-            None)
+            partial(binary_expr, operator=node.operator), sub_conds, None)
 
-    if propagated_inst.ctype == 'state':
-        sub_conds = get_sub_conds(propagated_inst, conds_by_id)
-        return propagated_inst.state_expr(sub_conds)
+    def visit_state(self, node, conds_by_id):
+        sub_conds = self.get_sub_conds(node, conds_by_id)
+        return node.state_expr(sub_conds)
 
-    if propagated_inst.ctype == 'expr':
-        expr = propagated_inst.sub_expr
+    def visit_expr(self, node, conds_by_id):
+        expr = node.sub_expr
         if expr is None:
             return None
 
         if isinstance(expr, (ConcatExpr, BinOpExpr)):
             for i, op in enumerate(expr.operands):
-                cond_val = find_complex_cond(op, conds_by_id)
+                cond_val = self.visit(op, conds_by_id)
                 expr.operands[i] = cond_val
             return expr
 
         if isinstance(expr, (UnaryOpExpr, CastExpr)):
-            cond_val = find_complex_cond(expr.operand, conds_by_id)
+            cond_val = self.visit(expr.operand, conds_by_id)
             expr.operand = cond_val
             return expr
 
-    if propagated_inst.ctype == 'sub':
-        cond = find_complex_cond(propagated_inst.cond, conds_by_id)
-        other = find_complex_cond(propagated_inst.other, conds_by_id)
+        raise VisitError('Unknown sub_expr in ExprCond')
+
+    def visit_sub(self, node, conds_by_id):
+        cond = self.visit(node.cond, conds_by_id)
+        other = self.visit(node.other, conds_by_id)
         if other is None:
             return None
         return reduce(
-            partial(binary_expr, operator=propagated_inst.operator),
-            [cond, other], None)
+            partial(binary_expr, operator=node.operator), [cond, other], None)
 
-    if propagated_inst.ctype in conds_by_id:
-        return conds_by_id[propagated_inst.ctype][propagated_inst.id]
 
-    raise VisitError('Unknown propagated instance in complex condition')
+def find_complex_cond(cond_inst, conds_by_id):
+    return ComplexCondResolve().visit(cond_inst, conds_by_id)
 
 
 def resolve_complex_cond(pydl_block, conds_by_id):
