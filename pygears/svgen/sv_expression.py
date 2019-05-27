@@ -109,6 +109,8 @@ class SVExpressionVisitor:
             svrepr = (f"{width}'({ops[0]})"
                       f" {node.operator} "
                       f"{width}'({ops[1]})")
+        elif any([isinstance(op, BinOpExpr) for op in node.operands]):
+            svrepr = f'({ops[0]}) {node.operator} ({ops[1]})'
         else:
             svrepr = f'{ops[0]} {node.operator} {ops[1]}'
         return svrepr
