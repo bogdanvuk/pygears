@@ -570,7 +570,7 @@ def merge_cblock_conds(top, cond_type):
     cblocks = [x for x in get_cblock_child(top)]
 
     if all([
-            getattr(pydl_stmt, f'{cond_type}_cond') is None
+            getattr(pydl_stmt, f'{cond_type}_cond', None) is None
             for child in cblocks for pydl_stmt in get_cblock_pydl_stmts(child)
     ]):
         return None
@@ -586,7 +586,10 @@ def merge_cblock_conds(top, cond_type):
 
 
 def merge_pydl_conds(top, cond_type):
-    if all([getattr(stmt, f'{cond_type}_cond') is None for stmt in top.stmts]):
+    if all([
+            getattr(stmt, f'{cond_type}_cond', None) is None
+            for stmt in top.stmts
+    ]):
         return None
 
     cond = None
@@ -602,7 +605,7 @@ def merge_pydl_conds(top, cond_type):
 
 
 def combine_block_cond(sub_cond, stmt, cond):
-    if stmt.in_cond is None:
+    if getattr(stmt, 'in_cond', None) is None:
         block_cond = sub_cond
     else:
         if sub_cond is None:
