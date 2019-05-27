@@ -6,7 +6,7 @@ from .conditions_utils import (COND_TYPES, CombinedCond, CondBase, CycleCond,
                                ExitCond, InCond, StateCond, SubCond, combine)
 from .hls_expressions import (BinOpExpr, CastExpr, ConcatExpr, UnaryOpExpr,
                               binary_expr)
-from .inst_visit import InstanceVisitor, TypeVisitor
+from .inst_visit import InstanceVisitor, PydlFromCBlockVisitor
 from .pydl_types import (Block, CycleSubCond, ExitSubCond, IfBlock, Module,
                          SubConditions, is_container, is_intftype)
 from .scheduling_types import SeqCBlock
@@ -19,7 +19,7 @@ def find_conditions(schedule, state_num):
     finder.visit(schedule)
 
     resolver = ConditionsResolve(finder.conds_by_id)
-    resolver.visit(schedule.pydl_block)
+    resolver.visit(schedule)
 
 
 @dataclass
@@ -116,7 +116,7 @@ def create_state_cycle_cond(child):
     return StateCond(id=[child_cond], state_ids=child.state_ids)
 
 
-class ConditionsResolve(TypeVisitor):
+class ConditionsResolve(PydlFromCBlockVisitor):
     '''Visitor class for resolving pydl blocks and stmt conditions.
     Takes the conds_by_id and resolves complex types.
     Takes the pydl block structure and resolves all 'cond_val'
@@ -146,8 +146,6 @@ class ConditionsResolve(TypeVisitor):
     def visit_all_Block(self, node):
         resolve_complex_cond(node, self.conds_by_id)
         self.set_name(node)
-        for stmt in node.stmts:
-            self.visit(stmt)
 
     def visit_all_Expr(self, node):
         resolve_complex_cond(node, self.conds_by_id)
@@ -325,6 +323,7 @@ def find_top_context_rst_cond(scope):
         block = [s.pydl_block for s in scope[1:]]
     return find_exit_cond(block, search_in_cond=True)
 
+
 def find_exit_cond(statements, search_in_cond=False):
     def has_in_cond(stmt):
         if search_in_cond and (not isinstance(stmt, IfBlock)) and hasattr(
@@ -346,6 +345,7 @@ def find_exit_cond(statements, search_in_cond=False):
             return InCond(stmt.id)
 
     return None
+
 
 def state_depend_cycle_cond(scope, block_type):
     c_block = scope[-1]

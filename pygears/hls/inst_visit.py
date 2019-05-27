@@ -40,3 +40,44 @@ class TypeVisitor:
         raise VisitError(
             f'Method "{node.__class__.__name__}" not implemented in "{self.__class__.__name__}" visitor'
         )
+
+
+class PydlFromCBlockVisitor(TypeVisitor):
+    def visit_prolog(self, node):
+        if node.prolog:
+            for block in node.prolog:
+                self.visit(block)
+                self.visit_sub(block)
+
+    def visit_epilog(self, node):
+        if node.epilog:
+            for block in node.epilog:
+                self.visit(block)
+                self.visit_sub(block)
+
+    def visit_block(self, node):
+        self.visit_prolog(node)
+
+        self.visit(node.pydl_block)
+
+        for child in node.child:
+            self.visit(child)
+
+        self.visit_epilog(node)
+
+    def visit_SeqCBlock(self, node):
+        self.visit_block(node)
+
+    def visit_MutexCBlock(self, node):
+        self.visit_block(node)
+
+    def visit_sub(self, node):
+        if isinstance(node, Block):
+            for stmt in node.stmts:
+                self.visit(stmt)
+                self.visit_sub(stmt)
+
+    def visit_Leaf(self, node):
+        for block in node.pydl_blocks:
+            self.visit(block)
+            self.visit_sub(block)

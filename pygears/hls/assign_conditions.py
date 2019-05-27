@@ -1,10 +1,10 @@
 from .conditions_utils import COND_NAME, COND_TYPES, UsedConditions
 from .hdl_types import AssignValue, CombSeparateStmts
-from .inst_visit import TypeVisitor
+from .inst_visit import PydlFromCBlockVisitor
 from .pydl_types import Module
 
 
-class AssignConditions(TypeVisitor):
+class AssignConditions(PydlFromCBlockVisitor):
     def __init__(self, module_data, state_num):
         self.state_num = state_num
         self.has_registers = len(module_data.regs) > 0
@@ -36,9 +36,6 @@ class AssignConditions(TypeVisitor):
 
         for cond_t in COND_TYPES:
             self._get_cond_by_type(cond_t, node)
-
-        for stmt in node.stmts:
-            self.visit(stmt)
 
     def visit_all_Expr(self, node):
         for cond_t in COND_TYPES:

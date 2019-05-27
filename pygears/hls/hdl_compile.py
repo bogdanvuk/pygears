@@ -154,7 +154,7 @@ def parse_gear_body(gear):
             schedule)
 
     cond_visit = AssignConditions(hdl_data, state_num)
-    cond_visit.visit(schedule.pydl_block)
+    cond_visit.visit(schedule)
 
     res['conditions'] = cond_visit.get_condition_block()
     try:
