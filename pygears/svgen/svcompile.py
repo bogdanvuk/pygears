@@ -68,12 +68,13 @@ class SVCompiler(InstanceVisitor):
         self.writer.line('')
 
     def visit_CombSeparateStmts(self, node):
-        self.writer.line(f'// Comb statements for: {self.visit_var}')
-        for stmt in node.stmts:
-            assign_stmt = self._assign_value(stmt)
-            if assign_stmt is not None:
-                self.writer.line(f'assign {assign_stmt};')
-        self.writer.line('')
+        if node.stmts:
+            self.writer.line(f'// Comb statements for: {self.visit_var}')
+            for stmt in node.stmts:
+                assign_stmt = self._assign_value(stmt)
+                if assign_stmt is not None:
+                    self.writer.line(f'assign {assign_stmt};')
+            self.writer.line('')
 
     def visit_HDLBlock(self, node):
         self.enter_block(node)

@@ -2,7 +2,7 @@ from pygears import gear
 from pygears.util.utils import gather
 
 
-@gear(svgen={'compile': True})
+@gear(svgen={'compile': True, 'inline_conditions': True})
 async def ccat(*din) -> b'Tuple[din]':
     """Short for concat, combines multiple interfaces into a single interface whose
     type is a :class:`Tuple` of the input interface types. One output data is
