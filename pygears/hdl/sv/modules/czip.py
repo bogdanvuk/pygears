@@ -1,9 +1,8 @@
 from pygears.hdl.sv.svmod import SVModuleGen
 from pygears.typing.queue import Queue
 from pygears.hdl.sv import SVGenPlugin
-from pygears.common.czip import zip_sync, zip_cat
+from pygears.common.czip import zip_sync
 from .syncguard import SVGenSyncGuard
-from .cat_util import din_data_cat
 
 
 class SVGenCZipBase(SVModuleGen):
@@ -20,23 +19,6 @@ class SVGenCZipBase(SVModuleGen):
             cfg['lvl'] = 0
 
         return cfg
-
-
-class SVGenZipCat(SVGenCZipBase):
-    def get_module(self, template_env):
-        intfs = list(self.port_configs)
-        queue_intfs = [
-            i for i in intfs if i['lvl'] > 0 and i['modport'] == 'consumer'
-        ]
-
-        context = {
-            'queue_intfs': queue_intfs,
-            'module_name': self.module_name,
-            'intfs': list(self.port_configs),
-            'din_data_cat': din_data_cat
-        }
-
-        return template_env.render_local(__file__, "zip_cat.j2", context)
 
 
 class SVGenZipSyncBase(SVGenCZipBase):
@@ -86,4 +68,3 @@ class SVGenCZipPlugin(SVGenPlugin):
     @classmethod
     def bind(cls):
         cls.registry['svgen']['module_namespace'][zip_sync] = SVGenZipSync
-        cls.registry['svgen']['module_namespace'][zip_cat] = SVGenZipCat

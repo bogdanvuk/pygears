@@ -4,6 +4,7 @@ from pygears.typing import Queue, Tuple, typeof
 from pygears import gear, alternative
 from .ccat import ccat
 from .permute import permuted_apply
+from .cat_util import din_data_cat_value
 from functools import reduce
 from pygears.util.utils import gather
 
@@ -38,10 +39,7 @@ async def zip_cat(*din) -> b'zip_type(din)':
         key=lambda p: p[1].dtype.lvl if typeof(p[1].dtype, Queue) else 0)
 
     async with gather(*din) as dout:
-        data = tuple(d.data if typeof(d, Queue) else d for d in dout)
-        eots = dout[id_max_lvl].eot
-
-        yield module().tout((data, *eots))
+        yield (din_data_cat_value(dout), dout[id_max_lvl].eot)
 
 
 def isort(iterable, key=lambda x: x, reverse=False):
@@ -92,28 +90,31 @@ def unzip(din, *, dtypes):
 
 @gear(enablement=b'len(din) == 2')
 async def zip_sync(*din, outsync=True) -> b'din':
-    lvls = (d.dtype.lvl if typeof(d.dtype, Queue) else 0 for d in din)
+    lvls = tuple(d.dtype.lvl if typeof(d.dtype, Queue) else 0 for d in din)
     overlap_lvl = min(lvls)
 
     eot_aligned = (1, 1)
 
     while (1):
+        din_data = [(await d.pull()) for d in din]
 
-        din_data = tuple(await d.pull() for d in din)
+        if overlap_lvl > 0:
+            eot_overlap = [d.sub(overlap_lvl) for d in din_data]
 
-        eot_overlap = [d.sub(overlap_lvl) for d in din_data]
-
-        eot_aligned = (eot_overlap[0] >= eot_overlap[1],
-                       eot_overlap[1] >= eot_overlap[0])
+            eot_aligned = (eot_overlap[0] >= eot_overlap[1],
+                           eot_overlap[1] >= eot_overlap[0])
+        else:
+            eot_aligned = (1, 1)
+            eot_overlap = din_data[0].eot if lvls[0] else din_data[1].eot
 
         if all(eot_aligned):
             yield din_data
         else:
             await delta()
 
-            for d, aligned in zip(din, eot_aligned):
-                if not aligned:
-                    d.ack()
+        for d, aligned in zip(din, eot_aligned):
+            if (not aligned) or all(eot_aligned):
+                d.ack()
 
 
 @alternative(zip_sync)
