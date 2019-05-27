@@ -286,7 +286,7 @@ def sim_cls(request):
 
 
 @pytest.fixture(params=[
-    # partial(SimVerilated, language='v'),
+    partial(SimVerilated, language='v'),
     partial(SimVerilated, language='sv'), SimSocket
 ])
 def cosim_cls(request):

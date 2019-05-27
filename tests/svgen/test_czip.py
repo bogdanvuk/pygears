@@ -19,7 +19,7 @@ def test_two_inputs_simple():
     zip_sync(Intf(Queue[Uint[3], 3]), Intf(Uint[4]))
 
 
-@svgen_check(['zip_sync.sv', 'zip_sync_syncguard.sv'])
+@svgen_check(['zip_sync.sv'])
 def test_two_inputs():
     zip_sync(Intf(Queue[Uint[3], 3]), Intf(Queue[Uint[4], 5]))
 
