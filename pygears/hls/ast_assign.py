@@ -2,7 +2,9 @@ import ast
 
 from .ast_parse import parse_ast
 from .hls_expressions import (ConcatExpr, Expr, IntfDef, IntfStmt, RegDef,
-                              RegNextStmt, ResExpr, VariableDef, VariableStmt)
+                              AttrExpr, RegNextStmt, ResExpr, VariableDef,
+                              VariableStmt)
+from .ast_call import parse_functions
 from .pydl_types import IntfBlock
 from .utils import (VisitError, add_to_list, find_assign_target,
                     find_data_expression, interface_operations)
@@ -26,6 +28,8 @@ def parse_assign(node, module_data):
             indexes[i] = parse_ast(name_node, module_data)
 
     vals, block = find_assign_value(node, module_data, names)
+    if vals is None:
+        return block
 
     res = []
     assert len(names) == len(indexes) == len(vals), 'Assign lenght mismatch'
@@ -52,6 +56,10 @@ def find_assign_value(node, module_data, names):
 
     if isinstance(node.value, ast.Await):
         vals, block = find_await_value(node.value, module_data)
+    elif isinstance(node.value, ast.Call) and getattr(
+            node.value.func, 'id', None) in module_data.functions:
+        block = parse_functions(node.value, module_data, names)
+        return None, block
     else:
         vals = find_data_expression(node.value, module_data)
         block = None
@@ -64,6 +72,22 @@ def find_assign_value(node, module_data, names):
 
     if isinstance(vals, ResExpr):
         return [ResExpr(v) for v in vals.val], block
+
+    if isinstance(vals, IntfDef) and len(names) > 1:
+
+        def find_field(names, intf, dtype, scope):
+            if len(names) > len(dtype.fields):
+                scope[names[-1]] = AttrExpr(intf, [dtype.fields[-1]])
+                find_field(names[:-1], intf, dtype[0], scope)
+            else:
+                for i, name in enumerate(names):
+                    scope[name] = AttrExpr(intf, [dtype.fields[i]])
+
+        scope = {}
+        find_field(names, vals, vals.dtype, scope)
+        module_data.hdl_locals.update(scope)
+
+        return None, None
 
     raise VisitError('Unknown assginment value')
 

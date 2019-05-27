@@ -1,13 +1,25 @@
 import pytest
 
-from pygears import Intf
+from pygears import Intf, gear
+from pygears.common import decoupler
 from pygears.cookbook import qlen_cnt
 from pygears.cookbook.delay import delay_rng
-from pygears.cookbook.verif import directed
+from pygears.cookbook.verif import directed, drv
 from pygears.sim import sim
-from pygears.cookbook.verif import drv
 from pygears.typing import Queue, Uint
 from pygears.util.test_utils import formal_check, synth_check
+
+
+def get_dut(dout_delay):
+    @gear
+    def decoupled(din, *, cnt_lvl=1, cnt_one_more=False, w_out=16):
+        return din | qlen_cnt(
+            cnt_one_more=cnt_one_more, cnt_lvl=cnt_lvl,
+            w_out=w_out) | decoupler
+
+    if dout_delay == 0:
+        return decoupled
+    return qlen_cnt
 
 
 @pytest.mark.parametrize('din_delay', [0, 10])
@@ -21,10 +33,12 @@ def test_directed_lvl1(tmpdir, sim_cls, din_delay, dout_delay, cnt_one_more):
         ref = [1, 1, 1]
     else:
         ref = [0, 0, 0]
-    directed(drv(t=t_din, seq=seq) | delay_rng(din_delay, din_delay),
-             f=qlen_cnt(sim_cls=sim_cls, cnt_one_more=cnt_one_more),
-             ref=ref,
-             delays=[delay_rng(dout_delay, dout_delay)])
+    dut = get_dut(dout_delay)
+    directed(
+        drv(t=t_din, seq=seq) | delay_rng(din_delay, din_delay),
+        f=dut(sim_cls=sim_cls, cnt_one_more=cnt_one_more),
+        ref=ref,
+        delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(outdir=tmpdir)
 
@@ -40,10 +54,12 @@ def test_directed_lvl2(tmpdir, sim_cls, din_delay, dout_delay, cnt_one_more):
         ref = [2, 1]
     else:
         ref = [1, 0]
-    directed(drv(t=t_din, seq=seq) | delay_rng(din_delay, din_delay),
-             f=qlen_cnt(sim_cls=sim_cls, cnt_one_more=cnt_one_more),
-             ref=ref,
-             delays=[delay_rng(dout_delay, dout_delay)])
+    dut = get_dut(dout_delay)
+    directed(
+        drv(t=t_din, seq=seq) | delay_rng(din_delay, din_delay),
+        f=dut(sim_cls=sim_cls, cnt_one_more=cnt_one_more),
+        ref=ref,
+        delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(outdir=tmpdir)
 
@@ -60,10 +76,12 @@ def test_directed_lvl3_2(tmpdir, sim_cls, din_delay, dout_delay, cnt_one_more):
         ref = [2, 1]
     else:
         ref = [1, 0]
-    directed(drv(t=t_din, seq=seq) | delay_rng(din_delay, din_delay),
-             f=qlen_cnt(sim_cls=sim_cls, cnt_one_more=cnt_one_more, cnt_lvl=2),
-             ref=ref,
-             delays=[delay_rng(dout_delay, dout_delay)])
+    dut = get_dut(dout_delay)
+    directed(
+        drv(t=t_din, seq=seq) | delay_rng(din_delay, din_delay),
+        f=dut(sim_cls=sim_cls, cnt_one_more=cnt_one_more, cnt_lvl=2),
+        ref=ref,
+        delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(outdir=tmpdir)
 

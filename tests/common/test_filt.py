@@ -2,11 +2,11 @@ import random
 
 import pytest
 
-from pygears import Intf
-from pygears.common import filt, filt_by
-from pygears.cookbook.verif import directed
+from pygears import Intf, gear
+from pygears.common import decoupler, filt, filt_by
+from pygears.cookbook.delay import delay_rng
+from pygears.cookbook.verif import directed, drv, verif
 from pygears.sim import sim
-from pygears.cookbook.verif import drv
 from pygears.typing import Queue, Tuple, Uint, Union, typeof
 from pygears.util.test_utils import skip_ifndef, synth_check
 
@@ -60,6 +60,30 @@ def test_pysim_dir(sel, din_t, seq, sim_cls):
         filt_test(din_t, seq, sel, sim_cls)
     else:
         filt_by_test(din_t, seq, sel, sim_cls)
+
+
+def get_dut(dout_delay):
+    @gear
+    def decoupled(din, *, sel=0):
+        return din | filt(sel=sel) | decoupler
+
+    if dout_delay == 0:
+        return decoupled
+    return filt
+
+
+@pytest.mark.parametrize('sel', [0, 1])
+@pytest.mark.parametrize('din_delay', [0, 10])
+@pytest.mark.parametrize('dout_delay', [0, 10])
+def test_qfilt_delay(tmpdir, cosim_cls, din_delay, dout_delay, sel):
+    dut = get_dut(dout_delay)
+    verif(
+        drv(t=queue_din, seq=[directed_seq, directed_seq])
+        | delay_rng(din_delay, din_delay),
+        f=dut(sim_cls=cosim_cls, sel=sel),
+        ref=filt(name='ref_model', sel=sel),
+        delays=[delay_rng(dout_delay, dout_delay)])
+    sim(outdir=tmpdir)
 
 
 def test_filt_base():

@@ -3,7 +3,8 @@ from functools import partial
 
 import pytest
 
-from pygears import Intf
+from pygears import Intf, gear
+from pygears.common import decoupler
 from pygears.cookbook import chop, delay_rng, directed, verif
 from pygears.sim import sim
 from pygears.sim.extens.randomization import create_constraint, rand_seq
@@ -17,6 +18,16 @@ from pygears.util.test_utils import formal_check, skip_ifndef
 
 t_din = Queue[Uint[16]]
 t_cfg = Uint[16]
+
+
+def get_dut(dout_delay):
+    @gear
+    def decoupled(*din):
+        return din | chop | decoupler
+
+    if dout_delay == 0:
+        return decoupled
+    return chop
 
 
 def get_stim():
@@ -33,11 +44,12 @@ def get_stim():
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_directed(tmpdir, sim_cls, din_delay, dout_delay):
+    dut = get_dut(dout_delay)
     directed(
         drv(t=t_din, seq=[list(range(9)), list(range(3))])
         | delay_rng(din_delay, din_delay),
         drv(t=t_cfg, seq=[2, 3]) | delay_rng(din_delay, din_delay),
-        f=chop(sim_cls=sim_cls),
+        f=dut(sim_cls=sim_cls),
         ref=[[[0, 1], [2, 3], [4, 5], [6, 7], [8]], [[0, 1, 2]]],
         delays=[delay_rng(dout_delay, dout_delay)])
     sim(outdir=tmpdir)

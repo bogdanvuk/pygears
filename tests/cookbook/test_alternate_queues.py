@@ -1,12 +1,26 @@
 import pytest
 
-from pygears import Intf
+from pygears import Intf, gear
+from pygears.common import decoupler
 from pygears.cookbook import alternate_queues, delay_rng
-from pygears.cookbook.verif import directed
+from pygears.cookbook.verif import directed, drv
 from pygears.sim import sim
-from pygears.cookbook.verif import drv
 from pygears.typing import Int, Queue, Uint
 from pygears.util.test_utils import formal_check, synth_check
+
+
+def get_dut(dout_delay):
+    @gear
+    def decoupled(*din):
+        res = din | alternate_queues
+        dout = []
+        for r in res:
+            dout.append(r | decoupler)
+        return tuple(dout)
+
+    if dout_delay == 0:
+        return decoupled
+    return alternate_queues
 
 
 @pytest.mark.parametrize('din_delay', [0, 5])
@@ -22,14 +36,16 @@ def test_2_inputs(tmpdir, sim_cls, din_delay, dout_delay):
              list(range(3)),
              list(range(4))], [list(range(5))]]
 
-    directed(drv(t=t_din0, seq=seq0) | delay_rng(din_delay, din_delay),
-             drv(t=t_din1, seq=seq1) | delay_rng(din_delay, din_delay),
-             f=alternate_queues(sim_cls=sim_cls),
-             ref=[seq0, seq1],
-             delays=[
-                 delay_rng(dout_delay, dout_delay),
-                 delay_rng(dout_delay, dout_delay)
-             ])
+    dut = get_dut(dout_delay)
+    directed(
+        drv(t=t_din0, seq=seq0) | delay_rng(din_delay, din_delay),
+        drv(t=t_din1, seq=seq1) | delay_rng(din_delay, din_delay),
+        f=dut(sim_cls=sim_cls),
+        ref=[seq0, seq1],
+        delays=[
+            delay_rng(dout_delay, dout_delay),
+            delay_rng(dout_delay, dout_delay)
+        ])
 
     sim(outdir=tmpdir)
 
@@ -45,12 +61,14 @@ def test_3_inputs(tmpdir, sim_cls, din_delay, dout_delay):
         seq.append([list(range(4)), list(range(3)), list(range(2))])
     ref = seq
 
-    directed(drv(t=t_din, seq=seq[0]) | delay_rng(din_delay, din_delay),
-             drv(t=t_din, seq=seq[1]) | delay_rng(din_delay, din_delay),
-             drv(t=t_din, seq=seq[2]) | delay_rng(din_delay, din_delay),
-             f=alternate_queues(sim_cls=sim_cls),
-             ref=ref,
-             delays=[delay_rng(dout_delay, dout_delay)] * din_num)
+    dut = get_dut(dout_delay)
+    directed(
+        drv(t=t_din, seq=seq[0]) | delay_rng(din_delay, din_delay),
+        drv(t=t_din, seq=seq[1]) | delay_rng(din_delay, din_delay),
+        drv(t=t_din, seq=seq[2]) | delay_rng(din_delay, din_delay),
+        f=dut(sim_cls=sim_cls),
+        ref=ref,
+        delays=[delay_rng(dout_delay, dout_delay)] * din_num)
 
     sim(outdir=tmpdir)
 

@@ -286,7 +286,7 @@ searched recursively. Each template is reported only once.
         if hasattr(self, '__parameters__'):
             return self.__parameters__
         else:
-            return [f'f{i}' for i in self.keys()]
+            return [f'f{i}' for i in range(len(self.args))]
 
     def replace(self, field_map, arg_map={}):
         args = {

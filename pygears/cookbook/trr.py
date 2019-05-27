@@ -2,7 +2,7 @@ from pygears import gear
 from pygears.typing import Queue
 
 
-@gear(hdl={'compile': True})
+@gear(hdl={'compile': True, 'inline_conditions': True})
 async def trr(*din: Queue['t_data']) -> b'Queue[t_data, 2]':
     """Short for Trasaction Round Robin, outputs data from one of the input
     interfaces following a `Round Robin` schedule.

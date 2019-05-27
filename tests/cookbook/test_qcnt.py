@@ -3,14 +3,14 @@ from functools import partial
 
 import pytest
 
-from pygears import Intf
+from pygears import Intf, gear
+from pygears.common import decoupler
 from pygears.cookbook.delay import delay_rng
 from pygears.cookbook.qcnt import qcnt
-from pygears.cookbook.verif import directed, verif
+from pygears.cookbook.verif import directed, drv, verif
 from pygears.sim import sim
 from pygears.sim.extens.randomization import create_constraint, rand_seq
 from pygears.sim.extens.svrand import SVRandSocket
-from pygears.cookbook.verif import drv
 from pygears.sim.modules.sim_socket import SimSocket
 from pygears.typing import Queue, Uint
 from pygears.util.test_utils import formal_check, skip_ifndef, synth_check
@@ -23,6 +23,16 @@ RANDOM_SEQ = [[[
     list(range(random.randint(1, 10)))]]]
 DIR_SEQ = [[[list(range(3)), list(range(5))], [list(range(1)),
                                                list(range(8))]]]
+
+
+def get_dut(dout_delay):
+    @gear
+    def decoupled(din, *, lvl=1, init=1, w_out=16):
+        return din | qcnt(lvl=lvl, init=init, w_out=w_out) | decoupler
+
+    if dout_delay == 0:
+        return decoupled
+    return qcnt
 
 
 def get_ref(seq):
@@ -38,10 +48,12 @@ def get_ref(seq):
 @pytest.mark.parametrize('dout_delay', [0, 5])
 def test_directed_golden(tmpdir, sim_cls, din_delay, dout_delay):
     seq = DIR_SEQ
-    directed(drv(t=T_DIN, seq=seq) | delay_rng(din_delay, din_delay),
-             f=qcnt(sim_cls=sim_cls, lvl=T_DIN.lvl),
-             ref=get_ref(seq),
-             delays=[delay_rng(dout_delay, dout_delay)])
+    dut = get_dut(dout_delay)
+    directed(
+        drv(t=T_DIN, seq=seq) | delay_rng(din_delay, din_delay),
+        f=dut(sim_cls=sim_cls, lvl=T_DIN.lvl),
+        ref=get_ref(seq),
+        delays=[delay_rng(dout_delay, dout_delay)])
     sim(outdir=tmpdir)
 
 
@@ -50,10 +62,12 @@ def test_directed_golden(tmpdir, sim_cls, din_delay, dout_delay):
 def test_random_golden(tmpdir, sim_cls, din_delay, dout_delay):
     skip_ifndef('RANDOM_TEST')
     seq = RANDOM_SEQ
-    directed(drv(t=T_DIN, seq=seq) | delay_rng(din_delay, din_delay),
-             f=qcnt(lvl=T_DIN.lvl, sim_cls=sim_cls),
-             ref=get_ref(seq),
-             delays=[delay_rng(dout_delay, dout_delay)])
+    dut = get_dut(dout_delay)
+    directed(
+        drv(t=T_DIN, seq=seq) | delay_rng(din_delay, din_delay),
+        f=dut(lvl=T_DIN.lvl, sim_cls=sim_cls),
+        ref=get_ref(seq),
+        delays=[delay_rng(dout_delay, dout_delay)])
     sim(outdir=tmpdir)
 
 
@@ -62,10 +76,12 @@ def test_random_golden(tmpdir, sim_cls, din_delay, dout_delay):
 @pytest.mark.parametrize('dout_delay', [0, 1, 10])
 def test_directed_cosim(tmpdir, cosim_cls, lvl, din_delay, dout_delay):
     seq = DIR_SEQ
-    verif(drv(t=T_DIN, seq=seq) | delay_rng(din_delay, din_delay),
-          f=qcnt(sim_cls=cosim_cls, lvl=lvl),
-          ref=qcnt(name='ref_model', lvl=lvl),
-          delays=[delay_rng(dout_delay, dout_delay)])
+    dut = get_dut(dout_delay)
+    verif(
+        drv(t=T_DIN, seq=seq) | delay_rng(din_delay, din_delay),
+        f=dut(sim_cls=cosim_cls, lvl=lvl),
+        ref=qcnt(name='ref_model', lvl=lvl),
+        delays=[delay_rng(dout_delay, dout_delay)])
     sim(outdir=tmpdir)
 
 
@@ -74,10 +90,12 @@ def test_directed_cosim(tmpdir, cosim_cls, lvl, din_delay, dout_delay):
 def test_random_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
     skip_ifndef('RANDOM_TEST')
     seq = RANDOM_SEQ
-    verif(drv(t=T_DIN, seq=seq) | delay_rng(din_delay, din_delay),
-          f=qcnt(sim_cls=cosim_cls, lvl=T_DIN.lvl),
-          ref=qcnt(name='ref_model', lvl=T_DIN.lvl),
-          delays=[delay_rng(dout_delay, dout_delay)])
+    dut = get_dut(dout_delay)
+    verif(
+        drv(t=T_DIN, seq=seq) | delay_rng(din_delay, din_delay),
+        f=dut(sim_cls=cosim_cls, lvl=T_DIN.lvl),
+        ref=qcnt(name='ref_model', lvl=T_DIN.lvl),
+        delays=[delay_rng(dout_delay, dout_delay)])
     sim(outdir=tmpdir)
 
 

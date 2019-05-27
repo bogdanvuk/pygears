@@ -145,7 +145,7 @@ class VariableDef(DefBase):
 
 @dataclass
 class IntfDef(Expr):
-    intf: typing.Union[InPort, OutPort]
+    intf: typing.Union[InPort, OutPort, Expr]
     _name: str = None
     context: str = None
 
@@ -153,11 +153,18 @@ class IntfDef(Expr):
     def name(self):
         if self._name:
             return self._name
-        return self.intf.basename
+        try:
+            return self.intf.basename
+        except AttributeError:
+            return find_name(self.intf)
 
     @property
     def dtype(self):
         return find_sub_dtype(self.intf)
+
+    @property
+    def has_subop(self):
+        return isinstance(self.intf, Expr)
 
 
 # Statements

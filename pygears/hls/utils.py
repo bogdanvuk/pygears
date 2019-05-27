@@ -6,7 +6,7 @@ from pygears.conf import register_custom_log, registry
 from pygears.typing import Int, Queue, Tuple, Uint, is_type, typeof
 
 from . import hls_expressions as expr
-from .pydl_types import Block, Yield, IntfBlock, IntfLoop
+from .pydl_types import Block, Yield
 
 ASYNC_TYPES = (Yield, )
 INTF_METHODS = ('get_nb', 'get', 'put', 'put_nb')
@@ -70,18 +70,24 @@ def eval_local_expression(node, local_namespace):
         local_namespace, globals())
 
 
+def find_target(node):
+    if hasattr(node, 'id'):
+        return node.id
+
+    if hasattr(node, 'value'):
+        return node.value.id
+
+    if isinstance(node, ast.Tuple):
+        return [el.id for el in node.elts]
+
+    raise VisitError('Unknown target type')
+
+
 def find_assign_target(node):
     names = []
 
     for target in node.targets:
-        if hasattr(target, 'id'):
-            names.append(target.id)
-        elif hasattr(target, 'value'):
-            names.append(target.value.id)
-        elif isinstance(target, ast.Tuple):
-            names.extend([el.id for el in target.elts])
-        else:
-            assert False, 'Unknown assignment type'
+        add_to_list(names, find_target(target))
 
     return names
 
@@ -144,7 +150,11 @@ def get_bin_expr(op, operand1, operand2, module_data):
 
 def intf_parse(intf, target):
     scope = gather_control_stmt_vars(target, intf)
-    block_intf = expr.IntfDef(intf=intf.intf, _name=intf.name, context='valid')
+    if isinstance(intf, expr.IntfDef):
+        block_intf = expr.IntfDef(
+            intf=intf.intf, _name=intf.name, context='valid')
+    else:
+        block_intf = expr.IntfDef(intf=intf, _name=None, context='valid')
     return scope, block_intf
 
 
@@ -169,10 +179,10 @@ def gather_control_stmt_vars(variables, intf, attr=None, dtype=None):
                     gather_control_stmt_vars(var, intf,
                                              attr + [dtype.fields[i]]))
     else:
-        if isinstance(intf, expr.IntfDef):
-            scope[variables.id] = intf
-        else:
+        if attr:
             scope[variables.id] = expr.AttrExpr(intf, attr)
+        else:
+            scope[variables.id] = intf
 
     return scope
 
@@ -197,7 +207,7 @@ def cast_return(arg_nodes, out_ports):
     for arg, intf in zip(input_vars, out_ports.values()):
         port_t = intf.dtype
         if typeof(port_t, Queue) or typeof(port_t, Tuple):
-            if isinstance(arg, expr.ConcatExpr):
+            if isinstance(arg, expr.ConcatExpr) and arg.dtype != port_t:
                 for i in range(len(arg.operands)):
                     if isinstance(arg.operands[i], expr.CastExpr) and (
                             arg.operands[i].cast_to == port_t[i]):
@@ -283,35 +293,50 @@ def find_data_expression(node, module_data):
         return parse_ast(node, module_data)
 
 
+def find_intf(name, module_data):
+    if name in module_data.in_intfs:
+        return module_data.in_intfs[name]
+
+    if name in module_data.in_ports:
+        return module_data.in_ports[name]
+
+    raise VisitError('Unknown name expression')
+
+
 def find_name_expression(node, module_data):
-    if isinstance(node, ast.Subscript):
-        # input interface as array ie din[x]
-        return module_data.in_intfs[node.value.id]
+    if isinstance(node, ast.Call):
+        arg_nodes = []
+        for arg in node.args:
+            add_to_list(arg_nodes, find_name_expression(arg, module_data))
 
-    if node.id in module_data.in_intfs:
-        return module_data.in_intfs[node.id]
+        from .ast_call import call_func
+        return call_func(node, arg_nodes, module_data)
 
-    ret = eval_expression(node, module_data.local_namespace)
+    try:
+        name = node.id
+    except AttributeError:
+        try:
+            name = node.value.id
+        except AttributeError:
+            name = None
 
-    local_names = list(module_data.local_namespace.keys())
-    local_objs = list(module_data.local_namespace.values())
+    if isinstance(node, ast.Starred):
+        name = [p.basename for p in module_data.hdl_locals[name]]
 
-    name_idx = None
-    for i, obj in enumerate(local_objs):
-        if ret is obj:
-            name_idx = i
-            break
+    if name is not None:
+        if not isinstance(name, list):
+            return find_intf(name, module_data)
 
-    name = local_names[name_idx]
+        return [find_intf(n, module_data) for n in name]
 
-    return module_data.hdl_locals.get(name, None)
+    raise VisitError('Unknown name expression')
 
 
 def hls_log():
-    return logging.getLogger('svgen')
+    return logging.getLogger('hls')
 
 
 class HLSPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        register_custom_log('svgen', logging.WARNING)
+        register_custom_log('hls', logging.WARNING)

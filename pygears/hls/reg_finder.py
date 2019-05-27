@@ -38,7 +38,7 @@ def find_var_length(expr, params):
         return 2**32 - 1
 
 
-def find_comb_loop(node, reg_finder):
+def find_comb_loop(node, module_data, auto_reg):
     comb_loop = False
     if hasattr(node, 'orelse'):
         try:
@@ -50,11 +50,11 @@ def find_comb_loop(node, reg_finder):
             pass
 
     if comb_loop:
-        length = find_var_length(node.iter, reg_finder.local_params)
+        length = find_var_length(node.iter, module_data.local_namespace)
 
         res = ResExpr(Uint[length](0))
-        reg_name, reg_val = reg_finder.auto.new_auto_reg(res)
-        reg_finder.regs[reg_name] = reg_val
+        reg_name, reg_val = auto_reg.new_auto_reg(res)
+        module_data.regs[reg_name] = reg_val
 
         node.break_func = {'length': length, 'reg': reg_name}
 
@@ -78,24 +78,17 @@ class AutoReg:
 
 
 class RegFinder(ast.NodeVisitor):
-    def __init__(self, gear, intfs):
-        self.regs = {}
-        self.variables = {}
-        self.local_params = {
-            **{p.basename: p.consumer
-               for p in gear.in_ports},
-            **gear.explicit_params,
-            **intfs['varargs']
-        }
-        self.intf_outs = intfs['outputs'].keys()
-        nested = [list(val.keys()) for intf, val in intfs.items()]
-        self.intfs = [item for sublist in nested for item in sublist]
+    def __init__(self, module_data):
+        self.module_data = module_data
+        self.intf_outs = module_data.out_intfs.keys()
+
+        self.intfs = list(module_data.in_intfs) + list(module_data.in_ports)
 
         self.auto = AutoReg()
         self.reg_loop_cb = [find_comb_loop]
 
     def promote_var_to_reg(self, name):
-        val = self.variables[name]
+        val = self.module_data.variables[name]
 
         # wire, not register
         # TODO
@@ -104,12 +97,12 @@ class RegFinder(ast.NodeVisitor):
 
         val = set_pg_type(val)
 
-        self.regs[name] = ResExpr(val)
+        self.module_data.regs[name] = ResExpr(val)
 
     def clean_variables(self):
-        for reg in self.regs:
-            if reg in self.variables:
-                del self.variables[reg]
+        for reg in self.module_data.regs:
+            if reg in self.module_data.variables:
+                del self.module_data.variables[reg]
 
     def visit_AugAssign(self, node):
         self.promote_var_to_reg(node.target.id)
@@ -118,24 +111,28 @@ class RegFinder(ast.NodeVisitor):
         names = find_for_target(node)
 
         register_var = False
-        if not any([cb(node, self) for cb in self.reg_loop_cb]):
+        if not any(
+            [cb(node, self.module_data, self.auto)
+             for cb in self.reg_loop_cb]):
             register_var = find_async(node)
 
         for i, name in enumerate(names):
-            if name in self.variables:
+            if name in self.module_data.variables:
                 self.promote_var_to_reg(name)
             else:
                 if name not in self.intfs:
                     if i == 0:
-                        length = find_var_length(node.iter, self.local_params)
+                        length = find_var_length(
+                            node.iter, self.module_data.local_namespace)
 
                         if register_var:
-                            self.regs[name] = ResExpr(Uint[bitw(length)](0))
+                            self.module_data.regs[name] = ResExpr(
+                                Uint[bitw(length)](0))
                             hls_log().debug(
                                 f'For loop iterator {name} registered with width {bitw(length)}'
                             )
                         else:
-                            self.variables[name] = ResExpr(
+                            self.module_data.variables[name] = ResExpr(
                                 Uint[bitw(length)](0))
                             hls_log().debug(
                                 f'For loop iterator {name} unrolled with width {bitw(length)}'
@@ -150,16 +147,26 @@ class RegFinder(ast.NodeVisitor):
     def visit_Assign(self, node):
         names = find_assign_target(node)
 
+        try:
+            is_async = node.value.func.attr in ['get_nb', 'get']
+        except AttributeError:
+            is_async = isinstance(node.value, ast.Await)
+
         for name in names:
             if name in self.intf_outs:
                 continue
 
-            if name not in self.variables:
+            if name not in self.module_data.variables:
+                if is_async:
+                    hls_log().debug(
+                        f'Assign to {name} not registered. Explicit initialization needed when using interface statements'
+                    )
+                    continue
                 try:
-                    self.variables[name] = eval_expression(
-                        node.value, self.local_params)
+                    self.module_data.variables[name] = eval_expression(
+                        node.value, self.module_data.local_namespace)
                 except NameError:
                     # wires/variables are not defined previously
-                    self.variables[name] = node.value
+                    self.module_data.variables[name] = node.value
             else:
                 self.promote_var_to_reg(name)

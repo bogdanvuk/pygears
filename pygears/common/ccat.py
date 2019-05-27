@@ -2,6 +2,7 @@ from pygears import gear
 from pygears.util.utils import gather
 
 
+# @gear(hdl={'compile': True, 'inline_conditions': True})
 @gear
 async def ccat(*din) -> b'Tuple[din]':
     """Short for concat, combines multiple interfaces into a single interface whose

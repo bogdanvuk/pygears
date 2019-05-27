@@ -1,24 +1,17 @@
 import typing
 from dataclasses import dataclass, field
 
-from .hls_expressions import (Expr, IntfDef, IntfReadyExpr, OpType,
-                              UnaryOpExpr, binary_expr)
+from .hls_expressions import Expr, IntfDef, IntfReadyExpr, OpType, UnaryOpExpr
 
 # Conditions
 
 
-def subcond_expr(cond, other=None):
-    if other is None:
-        return None
-
-    if cond.expr is not None:
-        return binary_expr(cond.expr, other, cond.operator)
-
-    return other
-
-
 def is_container(block):
     return isinstance(block, (ContainerBlock, CombBlock))
+
+
+def is_intftype(block):
+    return isinstance(block, (IntfBlock, IntfLoop))
 
 
 @dataclass
@@ -117,17 +110,18 @@ class IfBlock(Block):
     @property
     def cycle_cond(self):
         if self.in_cond is not None:
-            from .conditions_utils import COND_NAME
-            in_c = COND_NAME.substitute(cond_type='in', block_id=self.id)
-            return CycleSubCond(UnaryOpExpr(in_c, '!'), '||')
+            from .conditions_utils import InCond, CondExpr
+            in_c = InCond(self.id)
+            return CycleSubCond(
+                CondExpr(sub_expr=UnaryOpExpr(in_c, '!')), '||')
         return CycleSubCond()
 
     @property
     def exit_cond(self):
         if self.in_cond is not None:
-            from .conditions_utils import COND_NAME
-            in_c = COND_NAME.substitute(cond_type='in', block_id=self.id)
-            return ExitSubCond(UnaryOpExpr(in_c, '!'), '||')
+            from .conditions_utils import InCond, CondExpr
+            in_c = InCond(self.id)
+            return ExitSubCond(CondExpr(sub_expr=UnaryOpExpr(in_c, '!')), '||')
         return ExitSubCond()
 
 
@@ -137,13 +131,13 @@ class ContainerBlock(Block):
 
     @property
     def cycle_cond(self):
-        from .conditions_utils import COND_NAME
-        return COND_NAME.substitute(cond_type='cycle', block_id=self.id)
+        from .conditions_utils import CycleCond
+        return CycleCond(self.id)
 
     @property
     def exit_cond(self):
-        from .conditions_utils import COND_NAME
-        return COND_NAME.substitute(cond_type='exit', block_id=self.id)
+        from .conditions_utils import ExitCond
+        return ExitCond(self.id)
 
 
 @dataclass

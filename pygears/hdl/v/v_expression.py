@@ -92,6 +92,8 @@ class VExpressionVisitor(SVExpressionVisitor):
                 ops[i] = f'({ops[i]})'
 
         if node.operator not in EXTENDABLE_OPERATORS:
+            if any([isinstance(op, BinOpExpr) for op in node.operands]):
+                return f'({ops[0]}) {node.operator} ({ops[1]})'
             return f'{ops[0]} {node.operator} {ops[1]}'
 
         res_dtype = node.dtype

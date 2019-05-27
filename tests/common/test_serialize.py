@@ -1,13 +1,23 @@
 import pytest
 
-from pygears import Intf
+from pygears import Intf, gear
+from pygears.common import decoupler
 from pygears.common.serialize import TDin, serialize
 from pygears.cookbook.delay import delay_rng
-from pygears.cookbook.verif import directed, verif
+from pygears.cookbook.verif import directed, drv, verif
 from pygears.sim import sim
-from pygears.cookbook.verif import drv
 from pygears.typing import Array, Uint
 from pygears.util.test_utils import formal_check, synth_check
+
+
+def get_dut(dout_delay):
+    @gear
+    def decoupled(din):
+        return din | serialize | decoupler
+
+    if dout_delay == 0:
+        return decoupled
+    return serialize
 
 
 def test_directed(tmpdir, sim_cls):
@@ -37,12 +47,15 @@ def test_directed_active(tmpdir, sim_cls):
 def test_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
     brick_size = 4
     seq_list = [1, 2, 3, 4]
-    verif(drv(t=Array[Uint[16], brick_size],
-              seq=[(i, ) * brick_size
-                   for i in seq_list]) | delay_rng(din_delay, din_delay),
-          f=serialize(sim_cls=cosim_cls),
-          ref=serialize(name='ref_model'),
-          delays=[delay_rng(dout_delay, dout_delay)])
+
+    dut = get_dut(dout_delay)
+    verif(
+        drv(t=Array[Uint[16], brick_size],
+            seq=[(i, ) * brick_size
+                 for i in seq_list]) | delay_rng(din_delay, din_delay),
+        f=dut(sim_cls=cosim_cls),
+        ref=serialize(name='ref_model'),
+        delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(outdir=tmpdir)
 
@@ -51,12 +64,14 @@ def test_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
 @pytest.mark.parametrize('dout_delay', [0, 5])
 def test_cosim_active(tmpdir, cosim_cls, din_delay, dout_delay):
     no = 4
-    verif(drv(t=TDin[Uint[8], no, 4],
-              seq=[((8, ) * no, 3), ((2, ) * no, 4),
-                   ((1, ) * no, 1)]) | delay_rng(din_delay, din_delay),
-          f=serialize(sim_cls=cosim_cls),
-          ref=serialize(name='ref_model'),
-          delays=[delay_rng(dout_delay, dout_delay)])
+    dut = get_dut(dout_delay)
+    verif(
+        drv(t=TDin[Uint[8], no, 4],
+            seq=[((8, ) * no, 3), ((2, ) * no, 4),
+                 ((1, ) * no, 1)]) | delay_rng(din_delay, din_delay),
+        f=dut(sim_cls=cosim_cls),
+        ref=serialize(name='ref_model'),
+        delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(outdir=tmpdir)
 

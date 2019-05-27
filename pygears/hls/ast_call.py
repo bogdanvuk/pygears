@@ -1,13 +1,15 @@
 import ast
+import inspect
 from functools import reduce
 
 from pygears.typing import Int, Tuple, Uint, Unit, is_type, typeof
 
 from .ast_parse import parse_ast
 from .hls_expressions import (ArrayOpExpr, AttrExpr, BinOpExpr, CastExpr,
-                              ConditionalExpr, IntfDef, ResExpr, UnaryOpExpr)
-from .utils import (VisitError, cast_return, eval_expression,
-                    find_data_expression)
+                              ConcatExpr, ConditionalExpr, IntfDef, ResExpr,
+                              UnaryOpExpr)
+from .utils import (VisitError, add_to_list, cast_return, eval_expression,
+                    find_data_expression, find_target)
 
 
 @parse_ast.register(ast.Call)
@@ -28,6 +30,67 @@ def parse_call(node, module_data):
         return ResExpr(ret)
     except:
         return call_func(node, func_args, module_data)
+
+
+def parse_functions(node, module_data, returns=None):
+    curr_func = module_data.functions[node.func.id]
+    func_ast = ast.parse(inspect.getsource(curr_func)).body[0]
+
+    replace_args = [n.id for n in node.args]
+    replace_kwds = {n.arg: n.value.id for n in node.keywords}
+    arguments = find_original_arguments(func_ast.args, replace_args,
+                                        replace_kwds)
+
+    AstFunctionReplace(arguments, returns).visit(func_ast)
+
+    res = []
+    for stmt in func_ast.body:
+        res_stmt = parse_ast(stmt, module_data)
+        add_to_list(res, res_stmt)
+    return res
+
+
+def find_original_arguments(args, new_names, kwargs):
+    arg_names = {}
+    arg_names.update(kwargs)  # passed as keyword arguments
+
+    # passed arguments
+    for arg, replace in zip(args.args, new_names):
+        arg_names[arg.arg] = replace
+
+    # default values
+    for arg, dflt in zip(reversed(args.args), reversed(args.defaults)):
+        if arg.arg not in arg_names:
+            arg_names[arg.arg] = dflt
+
+    return arg_names
+
+
+class AstFunctionReplace(ast.NodeTransformer):
+    def __init__(self, args, returns):
+        self.args = args
+        self.returns = returns
+
+    def visit_Name(self, node):
+        if node.id in self.args:
+            switch_val = self.args[node.id]
+            if not isinstance(switch_val, str):
+                return switch_val
+            node.id = switch_val
+        return node
+
+    def visit_Return(self, node):
+        self.visit(node.value)
+
+        try:
+            targets = find_target(node.value)
+            if targets == self.returns:
+                return None
+        except AttributeError:
+            pass
+
+        ret_targets = [ast.Name(name, ast.Load()) for name in self.returns]
+        return ast.Assign(ret_targets, node.value)
 
 
 def max_expr(op1, op2):
@@ -154,3 +217,7 @@ def call_empty(*arg, **kwds):
     value = kwds['value']
     expr = IntfDef(intf=value.intf, _name=value.name, context='valid')
     return UnaryOpExpr(expr, '!')
+
+
+def call_gather(*arg, **kwds):
+    return ConcatExpr(operands=list(arg))

@@ -1,8 +1,8 @@
-from pygears.cookbook.verif import verif
-from pygears.sim import sim
-from pygears.cookbook.verif import drv
-from pygears.typing import Tuple, Uint, Int
+from pygears import gear
 from pygears.common import sub
+from pygears.cookbook.verif import directed, drv, verif
+from pygears.sim import sim
+from pygears.typing import Int, Tuple, Uint
 
 
 def test_unsigned_overflow_cosim(tmpdir, cosim_cls):
@@ -45,5 +45,18 @@ def test_signed_cosim(tmpdir, cosim_cls):
         drv(t=Tuple[Int[2], Int[4]], seq=seq),
         f=sub(sim_cls=cosim_cls),
         ref=sub(name='ref_model'))
+
+    sim(outdir=tmpdir)
+
+
+def test_hier(tmpdir, cosim_cls):
+    @gear
+    def const_sub(din):
+        return din - 1
+
+    directed(
+        drv(t=Uint[4], seq=[1, 2, 3]),
+        f=const_sub(sim_cls=cosim_cls),
+        ref=[(0, 0), (1, 0), (2, 0)])
 
     sim(outdir=tmpdir)
