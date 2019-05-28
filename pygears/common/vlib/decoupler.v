@@ -26,23 +26,28 @@ module decoupler
        reg [W_DATA : 0] memory [0 : DEPTH-1]; //one bit for valid
        wire             empty;
        wire             full;
-       genvar i;
 
        initial begin
           r_ptr = 0;
           w_ptr = 0;
        end
 
-
       assign empty = (w_ptr == r_ptr);
       assign full = (w_ptr[MSB-1:0] == r_ptr[MSB-1:0]) & (w_ptr[MSB]!=r_ptr[MSB]);
 
+      // Because of Verilator issues:
+      //   memory[w_ptr[MSB-1:0]] replaced with for loop
+      //   {din_data, din_valid} first assigned to w_data
+      integer i;
+      wire [W_DATA:0]  w_data = {din_data, din_valid};
       always @(posedge clk) begin
         if(rst) begin
           w_ptr <= 0;
         end else if(din_valid & ~full) begin
           w_ptr <= w_ptr + 1;
-          memory[w_ptr[MSB-1:0]] <= {din_data, din_valid};
+         for(i = 0; i < DEPTH; i=i+1)
+           if (i == w_ptr[MSB-1:0])
+              memory[i] <= w_data;
         end
       end
 
