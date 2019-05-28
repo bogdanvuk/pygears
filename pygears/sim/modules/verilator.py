@@ -10,9 +10,8 @@ from pygears import bind, registry, config
 from pygears.sim import sim_log
 from pygears.sim.c_drv import CInputDrv, COutputDrv
 from pygears.sim.modules.cosim_base import CosimBase
-from pygears.svgen import svgen
+from pygears.hdl import hdlgen
 from pygears.util.fileio import save_file
-from pygears.vgen import vgen
 
 signal_spy_connect_t = Template("""
 /*verilator tracing_on*/
@@ -62,16 +61,19 @@ class SimVerilated(CosimBase):
         self.language = language
 
         if self.language == 'v':
-            self.rtlnode = vgen(gear, outdir=self.outdir, wrapper=False)
+            self.rtlnode = hdlgen(gear,
+                                  outdir=self.outdir,
+                                  wrapper=False,
+                                  language='v')
+            self.svmod = registry('vgen/map')[self.rtlnode]
+            self.wrap_name = f'{self.svmod.module_name}'
         else:
-            self.rtlnode = svgen(gear, outdir=self.outdir, wrapper=True)
-
-        self.svmod = registry('svgen/map')[self.rtlnode]
-
-        if self.language == 'v':
-            self.wrap_name = f'{self.svmod.sv_module_name}'
-        else:
-            self.wrap_name = f'wrap_{self.svmod.sv_module_name}'
+            self.rtlnode = hdlgen(gear,
+                                  outdir=self.outdir,
+                                  wrapper=True,
+                                  language='sv')
+            self.svmod = registry('svgen/map')[self.rtlnode]
+            self.wrap_name = f'wrap_{self.svmod.module_name}'
 
         self.trace_fn = None
         self.vcd_fifo = vcd_fifo
@@ -118,10 +120,9 @@ class SimVerilated(CosimBase):
         atexit.register(self._finish)
 
         if self.shmidcat and tracing_enabled:
-            self.shmid_proc = subprocess.Popen(
-                f'shmidcat {self.trace_fn}',
-                shell=True,
-                stdout=subprocess.PIPE)
+            self.shmid_proc = subprocess.Popen(f'shmidcat {self.trace_fn}',
+                                               shell=True,
+                                               stdout=subprocess.PIPE)
 
             # Wait for shmidcat to actually open the pipe, which is necessary
             # to happen prior to init of the verilator. If shmidcat does not
@@ -160,26 +161,27 @@ class SimVerilated(CosimBase):
             'outdir': self.outdir
         }
 
-        include = ' '.join(
-            [f'-I{os.path.abspath(p)}' for p in registry('svgen/sv_paths')])
-
         jenv = jinja2.Environment(trim_blocks=True, lstrip_blocks=True)
         jenv.globals.update(int=int)
         jenv.loader = jinja2.FileSystemLoader([os.path.dirname(__file__)])
         c = jenv.get_template('sim_veriwrap.j2').render(context)
         save_file('sim_main.cpp', self.outdir, c)
+        include = ' '.join([
+            f'-I{os.path.abspath(p)}'
+            for p in registry(f'{self.language}gen/{self.language}_paths')
+        ])
+        files = f'{self.outdir}/*.{self.language}'
 
-        if self.language == 'v':
-            files = f'{self.outdir}/*.v'
-        else:
-            files = f'{self.outdir}/*.sv dti.sv'
+        if self.language == 'sv':
+            files += ' dti.sv'
+
         verilate_cmd = [
             f'cd {self.outdir};',
             'verilator -cc -CFLAGS -fpic -LDFLAGS -shared --exe', '-Wno-fatal',
             include,
             '-clk clk',
             f'--top-module {self.wrap_name}',
-            '--trace -no-trace-params --trace-structs' if tracing_enabled else '',
+            '--trace --no-trace-params --trace-structs' if tracing_enabled else '',
             files,
             'sim_main.cpp'
         ]  # yapf: disable

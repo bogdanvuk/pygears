@@ -24,22 +24,20 @@ def test_directed(tmpdir, sim_cls):
     brick_size = 4
     seq_list = [1, 2, 3, 4]
 
-    directed(
-        drv(t=Array[Uint[16], brick_size],
-            seq=[(i, ) * brick_size for i in seq_list]),
-        f=serialize(sim_cls=sim_cls),
-        ref=sorted(seq_list * brick_size))
+    directed(drv(t=Array[Uint[16], brick_size],
+                 seq=[(i, ) * brick_size for i in seq_list]),
+             f=serialize(sim_cls=sim_cls),
+             ref=sorted(seq_list * brick_size))
 
     sim(outdir=tmpdir)
 
 
 def test_directed_active(tmpdir, sim_cls):
     no = 4
-    directed(
-        drv(t=TDin[Uint[8], no, 4],
-            seq=[((8, ) * no, 3), ((2, ) * no, 4), ((1, ) * no, 1)]),
-        f=serialize(sim_cls=sim_cls),
-        ref=[[8] * 3, [2] * 4, [1]])
+    directed(drv(t=TDin[Uint[8], no, 4],
+                 seq=[((8, ) * no, 3), ((2, ) * no, 4), ((1, ) * no, 1)]),
+             f=serialize(sim_cls=sim_cls),
+             ref=[[8] * 3, [2] * 4, [1]])
 
     sim(outdir=tmpdir)
 
@@ -88,11 +86,21 @@ def test_formal_active():
     serialize(Intf(TDin[Uint[8], 4, 4]))
 
 
-@synth_check({'logic luts': 19, 'ffs': 3})
-def test_synth():
+@synth_check({'logic luts': 27, 'ffs': 3}, tool='vivado')
+def test_synth_vivado():
     serialize(Intf(Array[Uint[16], 4]))
 
 
-@synth_check({'logic luts': 15, 'ffs': 4})
-def test_synth_active():
+@synth_check({'logic luts': 23, 'ffs': 2}, tool='yosys')
+def test_synth_yosys():
+    serialize(Intf(Array[Uint[16], 4]))
+
+
+@synth_check({'logic luts': 15, 'ffs': 4}, tool='vivado')
+def test_synth_active_vivado():
+    serialize(Intf(TDin[Uint[8], 4, 4]))
+
+
+@synth_check({'logic luts': 38, 'ffs': 4}, tool='yosys')
+def test_synth_active_yosys():
     serialize(Intf(TDin[Uint[8], 4, 4]))

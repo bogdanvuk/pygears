@@ -8,7 +8,8 @@ def mux_type(dtypes):
     return Union[dtypes]
 
 
-@gear(svgen={'compile': True, 'inline_conditions': True})
+# @gear(svgen={'compile': True, 'inline_conditions': True})
+@gear
 async def mux(ctrl, *din) -> b'mux_type(din)':
     async with ctrl as c:
         assert c < len(din), 'mux: incorrect selection value'

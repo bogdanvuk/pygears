@@ -4,11 +4,21 @@ from pygears.typing import Uint
 from pygears.util.test_utils import synth_check
 
 
-@synth_check({'logic luts': 4, 'ffs': 4})
-def test_synth_u1():
+@synth_check({'logic luts': 4, 'ffs': 4}, tool='vivado')
+def test_synth_u1_vivado():
     decoupler(Intf(Uint[1]))
 
 
-@synth_check({'logic luts': 36, 'ffs': 130})
-def test_synth_u64():
+@synth_check({'logic luts': 9, 'ffs': 4}, tool='yosys')
+def test_synth_u1_yosys():
+    decoupler(Intf(Uint[1]))
+
+
+@synth_check({'logic luts': 4, 'ffs': 4}, tool='vivado')
+def test_synth_u64_vivado():
+    decoupler(Intf(Uint[64]))
+
+
+@synth_check({'logic luts': 9, 'ffs': 4}, tool='yosys')
+def test_synth_u64_yosys():
     decoupler(Intf(Uint[64]))

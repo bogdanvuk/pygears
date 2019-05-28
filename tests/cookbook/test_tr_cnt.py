@@ -52,6 +52,11 @@ def test_formal():
     tr_cnt(Intf(Queue[Uint[8]]), Intf(Uint[3]))
 
 
-@synth_check({'logic luts': 11, 'ffs': 16})
-def test_synth():
+@synth_check({'logic luts': 11, 'ffs': 16}, tool='vivado')
+def test_synth_vivado():
+    tr_cnt(Intf(Queue[Uint[16]]), Intf(Uint[16]))
+
+
+@synth_check({'logic luts': 51, 'ffs': 16}, tool='yosys')
+def test_synth_yosys():
     tr_cnt(Intf(Queue[Uint[16]]), Intf(Uint[16]))

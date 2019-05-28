@@ -26,12 +26,12 @@ def get_literal_type(val):
             f"Value {val} not supported for const module")
 
 
-@gear(svgen={'svmod_fn': 'sustain.sv'})
+@gear(hdl={'hdl_fn': 'sustain'})
 async def const(*, val, tout=b'get_literal_type(val)') -> b'tout':
     yield tout(val)
 
 
-@gear(svgen={'svmod_fn': 'sustain_ping.sv'})
+@gear(hdl={'hdl_fn': 'sustain_ping'})
 async def const_ping(ping, *, val, tout=b'get_literal_type(val)') -> b'tout':
     async with ping:
         yield tout(val)

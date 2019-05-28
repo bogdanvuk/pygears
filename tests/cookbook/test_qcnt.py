@@ -104,13 +104,13 @@ def test_socket_rand_cons(tmpdir):
 
     cons = []
     cons.append(
-        create_constraint(
-            T_DIN, 'din', eot_cons=['data_size == 50', 'trans_lvl1[0] == 4']))
+        create_constraint(T_DIN,
+                          'din',
+                          eot_cons=['data_size == 50', 'trans_lvl1[0] == 4']))
 
-    verif(
-        drv(t=T_DIN, seq=rand_seq('din', 30)),
-        f=qcnt(sim_cls=partial(SimSocket, run=True), lvl=T_DIN.lvl),
-        ref=qcnt(name='ref_model', lvl=T_DIN.lvl))
+    verif(drv(t=T_DIN, seq=rand_seq('din', 30)),
+          f=qcnt(sim_cls=partial(SimSocket, run=True), lvl=T_DIN.lvl),
+          ref=qcnt(name='ref_model', lvl=T_DIN.lvl))
 
     sim(outdir=tmpdir, extens=[partial(SVRandSocket, cons=cons)])
 
@@ -125,6 +125,11 @@ def test_lvl_2():
     qcnt(Intf(Queue[Uint[8], 3]), lvl=2)
 
 
-@synth_check({'logic luts': 5, 'ffs': 16})
-def test_synth():
+@synth_check({'logic luts': 5, 'ffs': 16}, tool='vivado')
+def test_synth_vivado():
+    qcnt(Intf(Queue[Uint[8], 3]))
+
+
+@synth_check({'logic luts': 37, 'ffs': 16}, tool='yosys')
+def test_synth_yosys():
     qcnt(Intf(Queue[Uint[8], 3]))

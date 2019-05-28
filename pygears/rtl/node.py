@@ -51,7 +51,7 @@ class RTLNode(NamedHierNode):
                 consumer=consumer,
                 dtype=dtype))
 
-        port_names = [p.basename for p in self.out_ports]
+        port_names = [p.basename for p in (self.out_ports + self.in_ports)]
         for port, new_name in zip(self.out_ports,
                                   find_unique_names(port_names)):
             if new_name:

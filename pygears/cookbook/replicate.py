@@ -3,7 +3,7 @@ from pygears.util.utils import qrange
 from pygears.typing import Queue, Tuple, Uint
 
 
-@gear(svgen={'compile': True, 'inline_conditions': True})
+@gear(hdl={'compile': True, 'inline_conditions': True})
 async def replicate(din: Tuple[{
         'length': Uint['w_len'],
         'value': 'w_val'
@@ -13,8 +13,8 @@ async def replicate(din: Tuple[{
     reproduced.
 
     Returns:
-        A :class:`Queue` type where each element is equal to the ``value`` input
-          field and the `eot` signalizes the last replicated element.
+        A :class:`Queue` type where each element is equal to the ``value``
+           input field and the `eot` signalizes the last replicated element.
     """
     i = din.dtype[0](0)
 

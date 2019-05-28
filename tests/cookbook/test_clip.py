@@ -58,11 +58,10 @@ def test_directed(tmpdir, sim_cls, din_delay, dout_delay):
 
 
 def test_directed_two_inputs(tmpdir, cosim_cls):
-    verif(
-        drv(t=T_DIN_SEP, seq=[list(range(9)), list(range(5))]),
-        drv(t=T_CFG, seq=[2, 3]),
-        f=clip(sim_cls=cosim_cls),
-        ref=clip(name='ref_model'))
+    verif(drv(t=T_DIN_SEP, seq=[list(range(9)), list(range(5))]),
+          drv(t=T_CFG, seq=[2, 3]),
+          f=clip(sim_cls=cosim_cls),
+          ref=clip(name='ref_model'))
 
     sim(outdir=tmpdir)
 
@@ -77,11 +76,10 @@ def test_random(tmpdir, cosim_cls):
         cfg_seq.append(random.randint(1, 10))
         din_seq.append(list(range(random.randint(1, 10))))
 
-    verif(
-        drv(t=T_DIN_SEP, seq=din_seq),
-        drv(t=T_CFG, seq=cfg_seq),
-        f=clip(sim_cls=cosim_cls),
-        ref=clip(name='ref_model'))
+    verif(drv(t=T_DIN_SEP, seq=din_seq),
+          drv(t=T_CFG, seq=cfg_seq),
+          f=clip(sim_cls=cosim_cls),
+          ref=clip(name='ref_model'))
 
     sim(outdir=tmpdir)
 
@@ -99,10 +97,9 @@ def test_random_constrained(tmpdir):
     stim.append(drv(t=T_DIN_SEP, seq=rand_seq('din', cnt)))
     stim.append(drv(t=T_CFG, seq=rand_seq('cfg', cnt)))
 
-    verif(
-        *stim,
-        f=clip(sim_cls=partial(SimSocket, run=True)),
-        ref=clip(name='ref_model'))
+    verif(*stim,
+          f=clip(sim_cls=partial(SimSocket, run=True)),
+          ref=clip(name='ref_model'))
 
     sim(outdir=tmpdir, extens=[partial(SVRandSocket, cons=cons)])
 
@@ -112,6 +109,11 @@ def test_formal():
     clip(Intf(T_DIN))
 
 
-@synth_check({'logic luts': 11, 'ffs': 17})
-def test_synth():
+@synth_check({'logic luts': 11, 'ffs': 17}, tool='vivado')
+def test_synth_vivado():
+    clip(Intf(T_DIN))
+
+
+@synth_check({'logic luts': 37, 'ffs': 17}, tool='yosys')
+def test_synth_yosys():
     clip(Intf(T_DIN))

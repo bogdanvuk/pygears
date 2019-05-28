@@ -410,6 +410,9 @@ class Uint(Integer, metaclass=UintType):
         if isinstance(other, bool):
             return Bool(other) @ self
 
+        if isinstance(other, Unit):
+            return self
+
         raise NotImplementedError
 
 

@@ -17,4 +17,4 @@ interface dti #(
                      input  valid,
                      output ready);
 
-endinterface : dti
+endinterface

@@ -30,18 +30,16 @@ def get_dut(dout_delay):
 
 
 def test_uint_directed(tmpdir, sim_cls):
-    directed(
-        drv(t=T_DIN_UINT, seq=SEQ_UINT),
-        f=accumulator(sim_cls=sim_cls),
-        ref=REF_UINT)
+    directed(drv(t=T_DIN_UINT, seq=SEQ_UINT),
+             f=accumulator(sim_cls=sim_cls),
+             ref=REF_UINT)
     sim(outdir=tmpdir)
 
 
 def test_int_directed(tmpdir, sim_cls):
-    directed(
-        drv(t=T_DIN_INT, seq=SEQ_INT),
-        f=accumulator(sim_cls=sim_cls),
-        ref=REF_INT)
+    directed(drv(t=T_DIN_INT, seq=SEQ_INT),
+             f=accumulator(sim_cls=sim_cls),
+             ref=REF_INT)
     sim(outdir=tmpdir)
 
 
@@ -75,6 +73,11 @@ def test_formal():
     accumulator(Intf(Queue[Tuple[Uint[8], Uint[8]]]))
 
 
-@synth_check({'logic luts': 20, 'ffs': 18})
-def test_synth():
+@synth_check({'logic luts': 20, 'ffs': 18}, tool='vivado')
+def test_synth_vivado():
+    accumulator(Intf(Queue[Tuple[Uint[16], Uint[16]]]))
+
+
+@synth_check({'logic luts': 99, 'ffs': 18}, tool='yosys')
+def test_synth_yosys():
     accumulator(Intf(Queue[Tuple[Uint[16], Uint[16]]]))

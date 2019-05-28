@@ -2,7 +2,7 @@ from pygears import gear
 from pygears.typing import Queue, Uint
 
 
-@gear(svgen={'compile': True, 'inline_conditions': True})
+@gear(hdl={'compile': True, 'inline_conditions': True})
 async def tr_cnt(din: Queue['t_data'], cfg: Uint['t_cfg'], *,
                  init=1) -> Queue['t_data', 2]:
     """Short for transaction counter, counts the input transactions. The number

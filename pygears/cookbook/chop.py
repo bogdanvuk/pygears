@@ -3,7 +3,7 @@ from pygears.common import cart
 from pygears.typing import Queue, Tuple, Uint
 
 
-@gear(svgen={'compile': True, 'inline_conditions': True})
+@gear(hdl={'compile': True, 'inline_conditions': True})
 async def chop(din: Queue[Tuple[{
         'data': 't_data',
         'size': Uint

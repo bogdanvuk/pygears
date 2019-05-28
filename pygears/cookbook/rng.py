@@ -17,7 +17,7 @@ def rng_out_type(cfg, cnt_steps):
     return max(cfg[0], cfg[1])
 
 
-@gear(svgen={'compile': True, 'inline_conditions': True})
+@gear(hdl={'compile': True, 'inline_conditions': True})
 async def py_rng(cfg: TCfg,
                  *,
                  t_dout=b'rng_out_type(cfg, cnt_steps)',
@@ -50,7 +50,7 @@ async def py_rng(cfg: TCfg,
                 yield data, last
 
 
-@gear(svgen={'svmod_fn': 'rng.sv'})
+@gear(hdl={'hdl_fn': 'rng'})
 async def sv_rng(cfg: TCfg,
                  *,
                  signed=b'typeof(cfg[0], Int)',

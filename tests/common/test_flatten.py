@@ -1,33 +1,39 @@
-from pygears.typing import flatten
-from pygears.typing import Tuple, Unit, Uint
+from pygears.common import flatten
+from pygears.typing import Queue, Uint, Unit
+from pygears.cookbook.verif import drv, verif
+from pygears import sim
 
 
-def test_unit_remove_single_level():
-    a = Tuple[Tuple[Uint[1], Unit, Uint[2]], Unit, Uint[3]]
-    assert flatten(a) == Tuple[Uint[1], Unit, Uint[2], Uint[3]]
+def test_full_flat_cosim(tmpdir, cosim_cls):
+    verif(drv(t=Queue[Uint[4], 3], seq=[[[list(range(4))]]]),
+          f=flatten(lvl=3, sim_cls=cosim_cls),
+          ref=flatten(lvl=3, name='ref_model'))
+
+    sim(outdir=tmpdir)
 
 
-def test_unit_remove_multi_level():
-    a = Tuple[Tuple[Uint[1], Unit, Uint[2]], Unit, Uint[3]]
-    assert flatten(a, lvl=2) == Tuple[Uint[1], Uint[2], Uint[3]]
+def test_dout_queue_lvl_1_cosim(tmpdir, cosim_cls):
+    verif(drv(t=Queue[Uint[4], 2], seq=[[list(range(4)) for _ in range(2)]]),
+          f=flatten(sim_cls=cosim_cls),
+          ref=flatten(name='ref_model'))
+
+    sim(outdir=tmpdir)
 
 
-def test_resolve_single_level():
-    a = Tuple[Tuple[Tuple[Uint[1]]]]
-    assert flatten(a) == Tuple[Uint[1]]
+def test_dout_queue_lvl_2_cosim(tmpdir, cosim_cls):
+    verif(drv(t=Queue[Uint[4], 3],
+              seq=[[[list(range(2)) for _ in range(2)] for _ in range(2)]]),
+          f=flatten(sim_cls=cosim_cls),
+          ref=flatten(name='ref_model'))
+
+    sim(outdir=tmpdir)
 
 
-def test_resolve_multi_level():
-    a = Tuple[Tuple[Uint[1]]]
-    assert flatten(a, lvl=2) == Uint[1]
+def test_dout_queue_lvl_2_no_datacosim(tmpdir, cosim_cls):
+    verif(drv(t=Queue[Unit, 3],
+              seq=[[[[Unit() for _ in range(2)] for _ in range(2)]
+                    for _ in range(2)]]),
+          f=flatten(sim_cls=cosim_cls),
+          ref=flatten(name='ref_model'))
 
-
-def test_complex():
-    a = Tuple[Tuple[Uint[1], Unit, Tuple[Tuple[Uint[2]]]], Tuple[Unit], Uint[
-        3]]
-    assert flatten(a, lvl=2) == Tuple[Uint[1], Tuple[Uint[2]], Uint[3]]
-
-
-def test_vanish():
-    a = Tuple[Tuple[Unit, Tuple[Unit]]]
-    assert flatten(a, lvl=2) == Unit
+    sim(outdir=tmpdir)

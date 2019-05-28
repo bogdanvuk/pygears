@@ -1,0 +1,23 @@
+{%- import 'snippet.j2' as snippet -%}
+
+{% call snippet.gear_module(module_name, intfs, comment) %}
+
+  {% if stages %}
+    {% set ns = namespace(prev_name = "din_data") %}
+	  {% for i, (slices, dtype) in enumerate(stages) %}
+	    {% set concat = snippet.concat(slices|reverse|format_list(ns.prev_name + "[%s]")) %}
+	    {%- if loop.last %}
+   assign dout_data = {{ concat }};
+      {% else %}
+   wire [{{int(dtype)-1}}:0] stage{{i}}_data;
+   assign stage{{i}}_data = {{ concat }};
+        {% set ns.prev_name = "stage{}_data".format(i) %}
+      {% endif %}
+    {% endfor %}
+  {% else %}
+   assign dout_data = 0;
+  {% endif %}
+
+   assign dout_valid = din_valid;
+   assign din_ready  = dout_ready;
+{% endcall %}

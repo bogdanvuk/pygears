@@ -2,7 +2,7 @@ from pygears import gear
 from pygears.typing import Queue
 
 
-@gear(svgen={'svmod_fn': 'project.sv'})
+@gear(hdl={'hdl_fn': 'project'})
 async def project(din: Queue['tdin', 'din_lvl'],
                   *,
                   lvl=1,

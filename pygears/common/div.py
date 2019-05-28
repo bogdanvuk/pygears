@@ -17,7 +17,7 @@ def div_type(dtypes):
     return Uint[length]
 
 
-@gear(svgen={'svmod_fn': 'div.sv'}, enablement=b'len(din) == 2')
+@gear(hdl={'hdl_fn': 'div'}, enablement=b'len(din) == 2')
 def div(*din: Integer, din0_signed=b'typeof(din0, Int)',
         din1_signed=b'typeof(din1, Int)') -> b'div_type(din)':
     pass

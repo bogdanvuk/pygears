@@ -102,10 +102,9 @@ def test_random(tmpdir, sim_cls):
     ], [list(range(random.randint(1, 20))),
         list(range(random.randint(1, 7)))]]
 
-    directed(
-        drv(t=T_TRR_DIST, seq=seq),
-        f=trr_dist(sim_cls=sim_cls, dout_num=2),
-        ref=get_refs(seq))
+    directed(drv(t=T_TRR_DIST, seq=seq),
+             f=trr_dist(sim_cls=sim_cls, dout_num=2),
+             ref=get_refs(seq))
 
     sim(outdir=tmpdir)
 
@@ -115,15 +114,13 @@ def test_socket_rand_cons(tmpdir):
 
     cons = []
     cons.append(
-        create_constraint(
-            T_TRR_DIST,
-            'din',
-            eot_cons=['data_size == 50', 'trans_lvl1[0] == 4']))
+        create_constraint(T_TRR_DIST,
+                          'din',
+                          eot_cons=['data_size == 50', 'trans_lvl1[0] == 4']))
 
-    verif(
-        drv(t=Queue[Uint[16], 2], seq=rand_seq('din', 30)),
-        f=trr_dist(sim_cls=partial(SimSocket, run=True), dout_num=2),
-        ref=trr_dist(name='ref_model', dout_num=2))
+    verif(drv(t=Queue[Uint[16], 2], seq=rand_seq('din', 30)),
+          f=trr_dist(sim_cls=partial(SimSocket, run=True), dout_num=2),
+          ref=trr_dist(name='ref_model', dout_num=2))
 
     sim(outdir=tmpdir, extens=[partial(SVRandSocket, cons=cons)])
 
@@ -138,6 +135,11 @@ def test_lvl_2_formal():
     trr_dist(Intf(Queue[Uint[16], 3]), dout_num=3, lvl=2)
 
 
-@synth_check({'logic luts': 3, 'ffs': 1})
-def test_synth():
+@synth_check({'logic luts': 3, 'ffs': 1}, tool='vivado')
+def test_synth_vivado():
+    trr_dist(Intf(T_TRR_DIST), dout_num=2)
+
+
+@synth_check({'logic luts': 5, 'ffs': 1}, tool='yosys')
+def test_synth_yosys():
     trr_dist(Intf(T_TRR_DIST), dout_num=2)

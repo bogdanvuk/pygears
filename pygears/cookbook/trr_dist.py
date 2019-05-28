@@ -2,7 +2,7 @@ from pygears import gear
 from pygears.typing import Queue, Uint, bitw
 
 
-@gear(svgen={'compile': True})
+@gear(hdl={'compile': True})
 async def trr_dist(din: Queue, *, lvl=1,
                    dout_num) -> b'(Queue[din.data, din.lvl - 1], ) * dout_num':
     """Short for Trasaction Round Robin Distributed, outputs data to one of the

@@ -1,0 +1,60 @@
+{%- import 'snippet.j2' as snippet -%}
+
+{% set Uint = import_from('pygears.typing', 'Uint') %}
+{% set Tuple = import_from('pygears.typing', 'Tuple') %}
+
+{% set fields = {
+            'data': _din_t[0],
+            'subenvelope': Uint[_din_t.lvl - params['lvl']],
+            'out_eot': Uint[params['lvl']]
+        }
+%}
+
+{% do intfs[0].update({'local_type': Tuple[fields]}) %}
+
+{% call snippet.module_with_intf_structs(module_name, intfs, intfs, comment) %}
+
+  {% set input_intf_names = intfs|isinput|keymap("name") %}
+
+  {% if _din_t.lvl <= params['lvl'] %}
+    assign din_ready = dout_ready;
+    assign dout_valid = din_valid;
+    assign dout_s_eot = din_s_out_eot;
+  {% else %}
+    wire  handshake;
+    reg  handshake_reg;
+    reg  valid_reg;
+    wire  subelem_done;
+    reg [{{params['lvl']-1}}:0] eots_reg;
+
+    assign dout_s_eot = valid_reg ? eots_reg : din_s_out_eot;
+
+    assign subelem_done = {{'&din_s_subenvelope' if _din_t.lvl > params['lvl'] else 1}} && din_valid;
+    assign din_ready = (dout_ready || handshake_reg || (!subelem_done));
+    assign dout_valid = (din_valid || valid_reg) && (!handshake_reg);
+
+    assign handshake = dout_valid & dout_ready;
+
+    always_ff @(posedge clk) begin
+       if (rst) begin
+         handshake_reg <= 1'b0;
+         valid_reg <= 1'b0;
+         eots_reg <= 0;
+       end
+       else begin
+         if (subelem_done && (handshake || handshake_reg)) begin
+             handshake_reg <= 1'b0;
+             valid_reg <= 1'b0;
+             eots_reg <= 0;
+         end
+         else begin
+             handshake_reg <= handshake_reg || handshake;
+             if (!valid_reg && din_valid) begin
+                  eots_reg <= din_s_out_eot;
+                  valid_reg <= 1;
+             end
+          end
+       end
+    end
+  {% endif %}
+{% endcall %}

@@ -3,7 +3,7 @@ from pygears.common import cart
 from pygears.typing import Bool, Queue, Tuple, Uint
 
 
-@gear(svgen={'compile': True})
+@gear(hdl={'compile': True})
 async def take(din: Queue[Tuple[{
         'data': 't_data',
         'size': Uint
@@ -39,7 +39,7 @@ def take2(din: Queue['t_data'], cfg: Uint):
 
 
 @alternative(take)
-@gear(svgen={'compile': True})
+@gear(hdl={'compile': True})
 async def qtake(din: Queue[Tuple[{
         'data': 't_data',
         'size': Uint

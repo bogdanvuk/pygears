@@ -83,11 +83,15 @@ def test_2_inputs_formal():
 
 @formal_check()
 def test_multi_inputs():
-    alternate_queues(
-        Intf(Queue[Uint[8], 3]), Intf(Queue[Uint[8], 3]),
-        Intf(Queue[Uint[8], 3]))
+    alternate_queues(Intf(Queue[Uint[8], 3]), Intf(Queue[Uint[8], 3]),
+                     Intf(Queue[Uint[8], 3]))
 
 
-@synth_check({'logic luts': 4, 'ffs': 1})
-def test_2_inputs_synth():
+@synth_check({'logic luts': 4, 'ffs': 1}, tool='vivado')
+def test_2_inputs_synth_vivado():
+    alternate_queues(Intf(Queue[Uint[8], 2]), Intf(Queue[Uint[8], 2]))
+
+
+@synth_check({'logic luts': 7, 'ffs': 1}, tool='yosys')
+def test_2_inputs_synth_yosys():
     alternate_queues(Intf(Queue[Uint[8], 2]), Intf(Queue[Uint[8], 2]))

@@ -19,6 +19,12 @@ def connect(node, rtl_map=Inject('rtl/gear_node_map')):
             create_intf(p, gear_p, domain=node)
 
         prod_intf = gear_p.producer
+
+        # If this port was already connected while processing other ports (it
+        # shares an interface with them)
+        if isinstance(p.producer, RTLIntf):
+            continue
+
         if (node.parent is not None and prod_intf is not None
                 and prod_intf.producer is None):
             create_unsourced_intf(node, p, gear_p)
@@ -43,22 +49,18 @@ def create_unsourced_intf(node,
                           gear_port,
                           rtl_map=Inject('rtl/gear_node_map')):
     gear_intf = gear_port.producer
-    consumers = []
+
+    intf_inst = RTLIntf(node.root(), gear_intf.dtype)
     for cons_port in gear_intf.consumers:
         rtl_port = rtl_from_gear_port(cons_port)
         if rtl_port:
-            consumers.append(rtl_port)
-
-    intf_inst = RTLIntf(node.root(), gear_intf.dtype, consumers=consumers)
+            intf_inst.connect(rtl_port)
 
     node.root().add_in_port(port.basename,
                             dtype=intf_inst.dtype,
                             consumer=intf_inst)
 
     intf_inst.producer = node.root().in_ports[-1]
-
-    for cons_port in consumers:
-        cons_port.producer = intf_inst
 
     rtl_map[gear_intf] = intf_inst
 
@@ -67,22 +69,15 @@ def create_unsourced_intf(node,
 def create_intf(port, gear_port, domain, rtl_map=Inject('rtl/gear_node_map')):
     gear_intf = gear_port.consumer
     if gear_intf is not None:
-        consumers = []
+        intf_inst = RTLIntf(domain, gear_intf.dtype, producer=port)
+
         for cons_port in gear_intf.consumers:
             rtl_port = rtl_from_gear_port(cons_port)
             if rtl_port:
-                consumers.append(rtl_port)
-
-        intf_inst = RTLIntf(domain,
-                            gear_intf.dtype,
-                            producer=port,
-                            consumers=consumers)
+                intf_inst.connect(rtl_port)
 
         if hasattr(gear_intf, 'var_name'):
             intf_inst.var_name = gear_intf.var_name
-
-        for cons_port in consumers:
-            cons_port.producer = intf_inst
 
         rtl_map[gear_intf] = intf_inst
         port.consumer = intf_inst

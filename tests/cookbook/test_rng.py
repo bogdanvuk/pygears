@@ -68,6 +68,10 @@ def test_basic_signed_sim(tmpdir):
     sim(outdir=tmpdir)
 
 
+# tmpdir = local('/tmp/pytest-of-bogdan/pytest-1/popen-gw0/test_signed_cosim_cosim_cls0_00')
+# cosim_cls = functools.partial(<class 'pygears.sim.modules.verilator.SimVerilated'>, language='v')
+# din_delay = 0, dout_delay = 0
+
 @pytest.mark.parametrize('din_delay', [0, 5])
 @pytest.mark.parametrize('dout_delay', [0, 5])
 def test_signed_cosim(tmpdir, cosim_cls, din_delay, dout_delay):

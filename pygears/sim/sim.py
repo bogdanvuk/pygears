@@ -240,6 +240,9 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         self._schedule_to_finish.add(sim_gear)
 
     def _finish(self, sim_gear):
+        if sim_gear.done:
+            return
+
         try:
             self.cur_gear = sim_gear.gear
             bind('gear/current_module', self.cur_gear)

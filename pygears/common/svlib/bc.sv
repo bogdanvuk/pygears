@@ -12,6 +12,10 @@ module bc #(
    logic [SIZE-1 : 0] ready_reg;
    logic [SIZE-1 : 0] ready_all;
 
+   initial begin
+      ready_reg = 0;
+   end
+
    generate
       for (genvar i = 0; i < SIZE; i++) begin
          assign ready_all[i]    = dout[i].ready | ready_reg[i];
@@ -19,16 +23,10 @@ module bc #(
          assign dout[i].data   = din.data;
 
          always_ff @(posedge clk) begin
-            if (rst) begin
+            if (rst || (!din.valid) || din.ready) begin
                ready_reg[i] <= 1'b0;
-            end
-            else begin
-               if (din.ready) begin
-                  ready_reg[i] <= 1'b0;
-               end
-               else begin
-                  ready_reg[i] <= ready_reg[i] | (dout[i].valid & dout[i].ready);
-               end
+            end else if (dout[i].ready) begin
+               ready_reg[i] <= 1'b1;
             end
          end
       end

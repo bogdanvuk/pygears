@@ -64,10 +64,9 @@ def test_queue_unit(tmpdir, cosim_cls, lvl):
     # cast to Queue[Unit] after driver
     seq = [0, 0, 1, 2, 1, 2, 3]
 
-    verif(
-        drv(t=Uint[8], seq=seq) | Queue[Unit, lvl],
-        f=dreg(sim_cls=cosim_cls),
-        ref=dreg(name='ref_model'))
+    verif(drv(t=Uint[8], seq=seq) | Queue[Unit, lvl],
+          f=dreg(sim_cls=cosim_cls),
+          ref=dreg(name='ref_model'))
 
     sim(outdir=tmpdir)
 
@@ -77,6 +76,11 @@ def test_formal():
     dreg(Intf(Uint[16]))
 
 
-@synth_check({'logic luts': 2, 'ffs': 17})
-def test_synth():
+@synth_check({'logic luts': 2, 'ffs': 17}, tool='vivado')
+def test_synth_vivado():
+    dreg(Intf(Uint[16]))
+
+
+@synth_check({'logic luts': 20, 'ffs': 17}, tool='yosys')
+def test_synth_yosys():
     dreg(Intf(Uint[16]))

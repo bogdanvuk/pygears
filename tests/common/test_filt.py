@@ -102,6 +102,11 @@ def test_filt_base():
     sim()
 
 
-@synth_check({'logic luts': 2, 'ffs': 0})
-def test_filt_synth():
+@synth_check({'logic luts': 2, 'ffs': 0}, tool='vivado')
+def test_filt_synth_vivado():
+    filt(Intf(union_din), sel=0)
+
+
+@synth_check({'logic luts': 2, 'ffs': 0}, tool='yosys')
+def test_filt_synth_yosys():
     filt(Intf(union_din), sel=0)

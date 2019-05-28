@@ -16,8 +16,8 @@ from pygears import GearDone, bind, registry
 from pygears.definitions import ROOT_DIR
 from pygears.sim import clk, sim_log
 from pygears.sim.modules.cosim_base import CosimBase, CosimNoData
-from pygears.svgen import svgen
-from pygears.svgen.util import svgen_typedef
+from pygears.hdl import hdlgen
+from pygears.hdl.sv.util import svgen_typedef
 from pygears.typing import Uint
 from pygears.util.fileio import save_file
 
@@ -87,7 +87,7 @@ def sv_cosim_gen(gear, tcp_port=1234):
         hooks = {}
 
     srcdir = os.path.join(outdir, 'src_gen')
-    rtl_node = svgen(gear, outdir=srcdir)
+    rtl_node = hdlgen(gear, outdir=srcdir, language='sv')
     sv_node = registry('svgen/map')[rtl_node]
 
     port_map = {
@@ -108,9 +108,9 @@ def sv_cosim_gen(gear, tcp_port=1234):
     env.globals.update(zip=zip, int=int, print=print, issubclass=issubclass)
 
     context = {
-        'intfs': list(sv_node.sv_port_configs()),
-        'module_name': sv_node.sv_module_name,
-        'dut_name': sv_node.sv_module_name,
+        'intfs': list(sv_node.port_configs),
+        'module_name': sv_node.module_name,
+        'dut_name': sv_node.module_name,
         'dti_verif_path': os.path.abspath(
             os.path.join(ROOT_DIR, 'sim', 'dpi')),
         'param_map': sv_node.params,

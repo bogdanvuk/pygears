@@ -106,6 +106,11 @@ def test_cnt_lvl_2_cnt_more():
     qlen_cnt(Intf(Queue[Uint[16], 3]), cnt_lvl=2, cnt_one_more=True)
 
 
-@synth_check({'logic luts': 4, 'ffs': 16})
-def test_synth():
+@synth_check({'logic luts': 4, 'ffs': 16}, tool='vivado')
+def test_synth_vivado():
+    qlen_cnt(Intf(Queue[Uint[16], 3]))
+
+
+@synth_check({'logic luts': 36, 'ffs': 16}, tool='yosys')
+def test_synth_yosys():
     qlen_cnt(Intf(Queue[Uint[16], 3]))
