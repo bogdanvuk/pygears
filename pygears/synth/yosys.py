@@ -161,8 +161,8 @@ def synth(outdir,
             # yosys.command(f'opt_expr -keepdc -full')
             yosys.command(f'opt')
 
-            print("Started freduce")
             if freduce:
+                print("Started freduce")
                 yosys.command(f'freduce')
                 yosys.command(f'opt_clean')
 

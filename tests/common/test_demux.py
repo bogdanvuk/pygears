@@ -49,3 +49,9 @@ def test_mux_demux_redux_odd_vivado(branches):
 @synth_check({'logic luts': 0, 'ffs': 0}, tool='yosys', freduce=True)
 def test_mux_demux_redux_yosys(branches):
     mux_demux_redux(branches)
+
+
+@pytest.mark.parametrize('branches', [3, 27])
+@synth_check({'logic luts': 2, 'ffs': 0}, tool='yosys')
+def test_mux_demux_redux_no_freduce_yosys(branches):
+    mux_demux_redux(branches)
