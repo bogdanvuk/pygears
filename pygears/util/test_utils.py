@@ -9,9 +9,8 @@ from functools import partial, wraps
 import jinja2
 import pytest
 
-from pygears import clear, registry
+from pygears import clear, find
 from pygears.conf import safe_bind
-from pygears.definitions import COMMON_SVLIB_DIR
 from pygears.sim import sim
 from pygears.sim.modules.sim_socket import SimSocket
 from pygears.sim.modules.verilator import SimVerilated
@@ -68,8 +67,8 @@ def get_result_dir(filename=None, function_name=None):
 
     test_dir = os.path.dirname(__file__)
 
-    return os.path.join(test_dir, 'result',
-                        os.path.relpath(filename, test_dir), function_name)
+    return os.path.join(test_dir, 'result', os.path.relpath(
+        filename, test_dir), function_name)
 
 
 def prepare_result_dir(filename=None, function_name=None):
@@ -103,9 +102,9 @@ def get_test_res_ref_dir_pair(func):
 def formal_check(disable=None, asserts=None, assumes=None, **kwds):
     def decorator(func):
         return pytest.mark.usefixtures('formal_check_fixt')(
-            pytest.mark.parametrize('formal_check_fixt',
-                                    [[disable, asserts, assumes, kwds]],
-                                    indirect=True)(func))
+            pytest.mark.parametrize(
+                'formal_check_fixt', [[disable, asserts, assumes, kwds]],
+                indirect=True)(func))
 
     return decorator
 
@@ -119,20 +118,21 @@ def formal_check_fixt(tmpdir, request):
     disable = request.param[0] if request.param[0] is not None else {}
     asserts = request.param[1] if request.param[1] is not None else {}
     assumes = request.param[2] if request.param[2] is not None else []
-    safe_bind('svgen/formal/asserts', asserts)
-    safe_bind('svgen/formal/assumes', assumes)
+    safe_bind('vgen/formal/asserts', asserts)
+    safe_bind('vgen/formal/assumes', assumes)
 
-    hdlgen(language='v', outdir=outdir, wrapper=False, **request.param[3])
-
-    # TODO : hack to find gear
-    for svmod in registry("svgen/map").values():
-        if hasattr(svmod, 'is_compiled') and svmod.is_compiled:
-            gear = svmod.node.gear
+    root = find('/')
+    rtlgen = hdlgen(
+        root.child[0],
+        language='v',
+        outdir=outdir,
+        wrapper=False,
+        **request.param[3])
 
     yosis_cmds = []
-    env = jinja2.Environment(loader=jinja2.FileSystemLoader(
-        searchpath=os.path.dirname(__file__)))
-    jinja_context = {'name': gear.basename, 'outdir': outdir}
+    env = jinja2.Environment(
+        loader=jinja2.FileSystemLoader(searchpath=os.path.dirname(__file__)))
+    jinja_context = {'name': rtlgen.basename, 'outdir': outdir}
 
     def find_yosis_cmd(name):
         if name in disable:
@@ -145,11 +145,11 @@ def formal_check_fixt(tmpdir, request):
         env.get_template('formal.j2').stream(jinja_context).dump(script_path)
         yosis_cmds.append(f'sby {script_path}')
 
-    for port in gear.in_ports:
+    for port in rtlgen.in_ports:
         jinja_context['live_task'] = True
         find_yosis_cmd(port.basename)
 
-    for port in gear.out_ports:
+    for port in rtlgen.out_ports:
         jinja_context['live_task'] = False
         find_yosis_cmd(port.basename)
 
@@ -160,9 +160,9 @@ def formal_check_fixt(tmpdir, request):
 def synth_check(expected, tool='yosys', **kwds):
     def decorator(func):
         return pytest.mark.usefixtures('synth_check_fixt')(
-            pytest.mark.parametrize('synth_check_fixt',
-                                    [[expected, kwds, tool]],
-                                    indirect=True)(func))
+            pytest.mark.parametrize(
+                'synth_check_fixt', [[expected, kwds, tool]],
+                indirect=True)(func))
 
     return decorator
 
@@ -199,10 +199,8 @@ def synth_check_fixt(tmpdir, language, request):
     if tool == 'vivado':
         util = vivado.synth(tmpdir, language=language, **params)
     else:
-        util = yosys.synth(tmpdir,
-                           synth_cmd='synth_xilinx',
-                           language=language,
-                           **params)
+        util = yosys.synth(
+            tmpdir, synth_cmd='synth_xilinx', language=language, **params)
 
     for param, value in util_ref.items():
         if callable(value):
@@ -214,8 +212,8 @@ def synth_check_fixt(tmpdir, language, request):
 def svgen_check(expected, **kwds):
     def decorator(func):
         return pytest.mark.usefixtures('svgen_check_fixt')(
-            pytest.mark.parametrize('svgen_check_fixt', [[expected, kwds]],
-                                    indirect=True)(func))
+            pytest.mark.parametrize(
+                'svgen_check_fixt', [[expected, kwds]], indirect=True)(func))
 
     return decorator
 
