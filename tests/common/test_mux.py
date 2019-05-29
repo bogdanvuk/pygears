@@ -94,17 +94,17 @@ def test_diff_inputs(tmpdir, sim_cls, din_delay, cfg_delay, dout_delay):
     sim(outdir=tmpdir)
 
 
-@formal_check(assumes=[
-    's_eventually (din0_valid == ctrl_valid && (ctrl_data == 0))',
-    's_eventually (din1_valid == ctrl_valid && (ctrl_data == 1))'
-])
-def test_formal():
-    mux(Intf(Uint[4]), Intf(Uint[8]), Intf(Uint[8]))
+# @formal_check(assumes=[
+#     's_eventually (din0_valid == ctrl_valid && (ctrl_data == 0))',
+#     's_eventually (din1_valid == ctrl_valid && (ctrl_data == 1))'
+# ])
+# def test_formal():
+#     mux(Intf(Uint[4]), Intf(Uint[8]), Intf(Uint[8]))
 
 
-@formal_check(assumes=[
-    's_eventually (din0_valid == ctrl_valid && (ctrl_data == 0))',
-    's_eventually (din1_valid == ctrl_valid && (ctrl_data == 1))'
-])
-def test_queue_formal():
-    mux(Intf(Uint[4]), Intf(Queue[Uint[8], 3]), Intf(Queue[Uint[8], 3]))
+# @formal_check(assumes=[
+#     's_eventually (din0_valid == ctrl_valid && (ctrl_data == 0))',
+#     's_eventually (din1_valid == ctrl_valid && (ctrl_data == 1))'
+# ])
+# def test_queue_formal():
+#     mux(Intf(Uint[4]), Intf(Queue[Uint[8], 3]), Intf(Queue[Uint[8], 3]))
