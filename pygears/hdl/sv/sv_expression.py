@@ -60,7 +60,8 @@ class SVExpressionVisitor:
                 res.append(f'({inst})')
             else:
                 res.append(f'{port.name}{self.merge_with}ready')
-        return ' || '.join(res)
+        res = ' || '.join(res)
+        return f'({res})'
 
     @simple_cast
     def visit_AttrExpr(self, node, cast_to):
@@ -112,8 +113,6 @@ class SVExpressionVisitor:
             svrepr = (f"{width}'({ops[0]})"
                       f" {node.operator} "
                       f"{width}'({ops[1]})")
-        elif any([isinstance(op, BinOpExpr) for op in node.operands]):
-            svrepr = f'({ops[0]}) {node.operator} ({ops[1]})'
         else:
             svrepr = f'{ops[0]} {node.operator} {ops[1]}'
         return svrepr
