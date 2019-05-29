@@ -20,7 +20,7 @@ module decoupler
       logic empty;
       logic full;
 
-      logic [W_DATA : 0] memory [0 : DEPTH-1]; //one bit for valid
+      logic [W_DATA-1 : 0] memory [0 : DEPTH-1]; //one bit for valid
 
       assign empty = (w_ptr == r_ptr);
       assign full = (w_ptr[MSB-1:0] == r_ptr[MSB-1:0]) & (w_ptr[MSB]!=r_ptr[MSB]);
@@ -30,7 +30,7 @@ module decoupler
           w_ptr <= 0;
         end else if(din.valid & ~full) begin
           w_ptr <= w_ptr + 1;
-          memory[w_ptr[MSB-1:0]] <= {din.data, din.valid};
+          memory[w_ptr[MSB-1:0]] <= din.data;
         end
       end
 
@@ -42,8 +42,8 @@ module decoupler
         end
       end
 
-      assign dout.data = memory[r_ptr[MSB-1:0]][W_DATA:1];
-      assign dout.valid = memory[r_ptr[MSB-1:0]][0] & ~empty;
+      assign dout.data = memory[r_ptr[MSB-1:0]];
+      assign dout.valid = ~empty;
 
       assign din.ready = ~full;
 

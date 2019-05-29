@@ -32,13 +32,12 @@ def get_dut(dout_delay):
 @pytest.mark.parametrize('din_delay', [0, 5])
 @pytest.mark.parametrize('dout_delay', [0, 5])
 def test_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
-    seq = list(range(10))
+    seq = list(range(1, 10))
     dut = get_dut(dout_delay)
-    verif(
-        drv(t=Uint[16], seq=seq) | delay_rng(din_delay, din_delay),
-        f=dut(sim_cls=cosim_cls),
-        ref=dreg(name='ref_model'),
-        delays=[delay_rng(dout_delay, dout_delay)])
+    directed(drv(t=Uint[16], seq=seq) | delay_rng(din_delay, din_delay),
+             f=dut(sim_cls=cosim_cls),
+             ref=seq,
+             delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(outdir=tmpdir)
 
@@ -48,12 +47,11 @@ def test_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
 def test_queue_tuple(tmpdir, cosim_cls, din_delay, dout_delay):
     seq = [[(0, 1), (4, 0), (1, 1)], [(1, 1), (2, 0), (3, 1), (4, 0)]]
     dut = get_dut(dout_delay)
-    verif(
-        drv(t=Queue[Tuple[Uint[16], Int[2]]], seq=seq)
-        | delay_rng(din_delay, din_delay),
-        f=dut(sim_cls=cosim_cls),
-        ref=dreg(name='ref_model'),
-        delays=[delay_rng(dout_delay, dout_delay)])
+    verif(drv(t=Queue[Tuple[Uint[16], Int[2]]], seq=seq)
+          | delay_rng(din_delay, din_delay),
+          f=dut(sim_cls=cosim_cls),
+          ref=dreg(name='ref_model'),
+          delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(outdir=tmpdir)
 

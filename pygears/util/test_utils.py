@@ -170,14 +170,14 @@ def synth_check(expected, tool='yosys', **kwds):
 @pytest.fixture
 def synth_check_fixt(tmpdir, language, request):
     skip_ifndef('SYNTH_TEST')
+    # tmpdir = '/tools/home/tmp'
 
     util_ref = request.param[0]
     params = request.param[1]
     tool = request.param[2]
 
     if tool == 'vivado':
-        retval = subprocess.call('which vivado', shell=True)
-        if retval:
+        if not shutil.which('vivado'):
             raise unittest.SkipTest(f"Skipping test, vivado not found")
 
         tool = 'vivado'
@@ -187,8 +187,7 @@ def synth_check_fixt(tmpdir, language, request):
             raise unittest.SkipTest(
                 f"Skipping test, unsupported language for yosys")
 
-        retval = subprocess.call('which yosys', shell=True)
-        if retval:
+        if not shutil.which('yosys'):
             raise unittest.SkipTest(f"Skipping test, yosys not found")
     else:
         raise unittest.SkipTest(

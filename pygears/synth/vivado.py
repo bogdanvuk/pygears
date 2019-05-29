@@ -1,3 +1,4 @@
+import shutil
 from itertools import islice
 import jinja2
 import os
@@ -16,7 +17,7 @@ def synth(outdir, language, yosys_preproc=True, **params):
 
     vivado_prj_path = os.path.join(outdir, 'vivado')
 
-    if language == 'sv' or not yosys_preproc:
+    if language == 'sv' or not yosys_preproc or not shutil.which('yosys'):
         rtl = hdlgen(language=language,
                      outdir=outdir,
                      wrapper=(language == 'sv'),

@@ -26,6 +26,7 @@ class Yosys:
 
     RE_STATS_LUT = re.compile(r"LUT(\d)\s+(\d+)")
     RE_STATS_FDRE = re.compile(r"FDRE\s+(\d+)")
+    RE_STATS_DRAM = re.compile(r"RAM64X1D\s+(\d+)")
 
     def __init__(self, cmd_line):
         self.cmd_line = cmd_line
@@ -91,7 +92,7 @@ class Yosys:
 
     @property
     def stats(self):
-        res = {'logic luts': 0, 'ffs': 0}
+        res = {'logic luts': 0, 'ffs': 0, 'lutrams': 0}
 
         ret = self.command('stat')
         for line in ret.strip().split('\n'):
@@ -103,6 +104,11 @@ class Yosys:
             ret = Yosys.RE_STATS_FDRE.search(line)
             if ret:
                 res['ffs'] += int(ret.groups(0)[0])
+                continue
+
+            ret = Yosys.RE_STATS_DRAM.search(line)
+            if ret:
+                res['lutrams'] += int(ret.groups(0)[0])
                 continue
 
         return res
