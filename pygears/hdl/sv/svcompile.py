@@ -153,8 +153,7 @@ def write_module(hdl_data, sv_stmts, writer, config=None):
 def compile_gear_body(gear):
     hdl_data, hdl_ast = parse_gear_body(gear)
     writer = HDLWriter()
-    write_module(
-        hdl_data, hdl_ast, writer, config=gear.params.get('svgen', {}))
+    write_module(hdl_data, hdl_ast, writer, config=gear.params.get('hdl', {}))
 
     return '\n'.join(writer.lines)
 

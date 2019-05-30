@@ -28,11 +28,20 @@ class VCompiler(InstanceVisitor):
         self.extras = {}
         self.kwds = kwds
 
+        inline = kwds.get('inline_conditions', False)
+        self.condtitions = {}
+        if inline:
+            self.condtitions = kwds['conditions']
+
     def find_width(self, node):
         target = vexpr(node.target, extras=self.extras)
 
         # rhs = vexpr(node.val, self.extras)
-        rhs = vexpr(node.val, node.dtype, self.extras)
+        val = node.val
+        if isinstance(val, str) and val in self.condtitions:
+            val = self.condtitions[val]
+
+        rhs = vexpr(val, node.dtype, self.extras)
 
         var = None
         if target in self.hdl_locals:
@@ -49,7 +58,11 @@ class VCompiler(InstanceVisitor):
 
     def enter_block(self, block):
         if getattr(block, 'in_cond', False):
-            self.writer.line(f'if ({vexpr(block.in_cond, extras=self.extras)}) begin')
+            in_cond = block.in_cond
+            if isinstance(in_cond, str) and in_cond in self.condtitions:
+                in_cond = self.condtitions[in_cond]
+            self.writer.line(
+                f'if ({vexpr(in_cond, extras=self.extras)}) begin')
 
         if getattr(block, 'in_cond', True):
             self.writer.indent += 4
@@ -114,6 +127,20 @@ DATA_FUNC_GEAR = """
 
 
 def write_module(hdl_data, v_stmts, writer, **kwds):
+    if 'config' not in kwds:
+        kwds['config'] = {}
+
+    inline_conditions = kwds['config'].get('inline_conditions', False)
+    if inline_conditions and 'conditions' in v_stmts:
+        kwds['inline_conditions'] = inline_conditions
+        kwds['conditions'] = {
+            x.target: x.val
+            for x in v_stmts['conditions'].stmts if x.target != 'rst_cond'
+        }
+        v_stmts['conditions'].stmts = [
+            x for x in v_stmts['conditions'].stmts if x.target == 'rst_cond'
+        ]
+
     for name, expr in hdl_data.regs.items():
         writer.line(vgen_reg(expr.dtype, f'{name}_reg', 'input', False))
         writer.line(vgen_reg(expr.dtype, f'{name}_next', 'input', False))
@@ -205,7 +232,12 @@ def compile_gear_body(gear):
 
     hdl_data, res = parse_gear_body(gear)
     writer = HDLWriter()
-    write_module(hdl_data, res, writer, formal=formal)
+    write_module(
+        hdl_data,
+        res,
+        writer,
+        formal=formal,
+        config=gear.params.get('hdl', {}))
 
     if formal:
         write_assertions(gear, writer, formal)
