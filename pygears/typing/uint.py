@@ -39,6 +39,9 @@ class IntegerType(EnumerableGenericMeta):
     def __or__(self, others):
         return int(self) | int(others)
 
+    def __xor__(self, others):
+        return int(self) ^ int(others)
+
     def __lshift__(self, others):
         return self.base[int(self) + int(others)]
 

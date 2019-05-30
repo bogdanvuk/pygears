@@ -23,6 +23,7 @@ from .div import div
 from .mod import mod
 from .neg import neg
 from .eq import eq
+from .xor import xor
 from .neq import neq
 from .lt import lt
 from .gt import gt
@@ -54,5 +55,5 @@ __all__ = [
     'filt', 'buff', 'local_rst', 'mod', 'invert', 'shr', 'shl', 'extender',
     'queue_wrap_from', 'demux_by', 'mux_by', 'align', 'gt', 'lt', 'neq',
     'cart_sync_with', 'when', 'filt_by', 'union_sync_with', 'case',
-    'const_ping'
+    'const_ping', 'xor'
 ]
