@@ -40,7 +40,7 @@ class IntegerType(EnumerableGenericMeta):
         return int(self) | int(others)
 
     def __xor__(self, others):
-        return self.base[int(self) ^ int(others)]
+        return self.base[max(int(op) for op in (self, others))]
 
     def __lshift__(self, others):
         return self.base[int(self) + int(others)]
