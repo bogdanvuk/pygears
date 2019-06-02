@@ -137,11 +137,12 @@ def write_module(hdl_data, sv_stmts, writer, config=None):
             writer.line(f'logic {cond.target};')
         writer.line()
 
-    writer.line(f'initial begin')
-    for name, expr in hdl_data.regs.items():
-        writer.line(f"    {name}_reg = {int(expr.val)};")
+    if hdl_data.regs:
+        writer.line(f'initial begin')
+        for name, expr in hdl_data.regs.items():
+            writer.line(f"    {name}_reg = {int(expr.val)};")
 
-    writer.line(f'end')
+        writer.line(f'end')
 
     for name, expr in hdl_data.regs.items():
         writer.block(REG_TEMPLATE.format(name, int(expr.val)))
