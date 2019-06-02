@@ -104,6 +104,26 @@ class RegFinder(ast.NodeVisitor):
             if reg in self.module_data.variables:
                 del self.module_data.variables[reg]
 
+        self.check_names()
+
+    def check_names(self):
+        for reg in self.module_data.regs:
+            if reg in (*self.module_data.local_namespace,
+                       *self.module_data.in_intfs, *self.module_data.out_intfs,
+                       *self.module_data.in_ports,
+                       *self.module_data.out_ports):
+                hls_log().error(
+                    f'Duplicated regiter name: {reg} ({self.module_data.gear.name}). Please rename.'
+                )
+        for var in self.module_data.variables:
+            if var in (*self.module_data.local_namespace,
+                       *self.module_data.in_intfs, *self.module_data.out_intfs,
+                       *self.module_data.in_ports,
+                       *self.module_data.out_ports):
+                hls_log().error(
+                    f'Duplicated variable name: {var} ({self.module_data.gear.name}). Please rename.'
+                )
+
     def visit_AugAssign(self, node):
         self.promote_var_to_reg(node.target.id)
 

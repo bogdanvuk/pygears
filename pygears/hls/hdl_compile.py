@@ -100,7 +100,8 @@ def parse_gear_body(gear):
         local_namespace={
             **{p.basename: p.consumer
                for p in gear.in_ports},
-            **gear.explicit_params
+            **gear.explicit_params,
+            **gear.func.__globals__
         })
 
     # find interfaces
