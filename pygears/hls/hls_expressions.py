@@ -10,7 +10,7 @@ from pygears.typing.base import TypingMeta
 BOOLEAN_OPERATORS = {'|', '&', '^', '~', '!', '&&', '||'}
 BIN_OPERATORS = ['!', '==', '>', '>=', '<', '<=', '!=', '&&', '||']
 EXTENDABLE_OPERATORS = [
-    '+', '-', '*', '/', '%', '**', '<<', '>>>', '|', '&', '^', '/', '~', '!'
+    '+', '-', '*', '/', '%', '**', '<<', '>>', '|', '&', '^', '/', '~', '!'
 ]
 OPMAP = {
     ast.Add: '+',
@@ -20,7 +20,7 @@ OPMAP = {
     ast.Mod: '%',
     ast.Pow: '**',
     ast.LShift: '<<',
-    ast.RShift: '>>>',
+    ast.RShift: '>>',
     ast.BitOr: '|',
     ast.BitAnd: '&',
     ast.BitXor: '^',

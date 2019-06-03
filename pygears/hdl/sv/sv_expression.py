@@ -81,7 +81,7 @@ class SVExpressionVisitor:
         return f"{int(node.dtype)}'({self.visit(node.operand, cast_to)})"
 
     def visit_ConcatExpr(self, node, cast_to):
-        if cast_to is None:
+        if cast_to is None or typeof(cast_to, Integer):
             cast_to = [None] * len(node.operands)
 
         return ('{' + ', '.join(

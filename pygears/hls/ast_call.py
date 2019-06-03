@@ -9,7 +9,7 @@ from .hls_expressions import (ArrayOpExpr, AttrExpr, BinOpExpr, CastExpr,
                               ConcatExpr, ConditionalExpr, IntfDef, ResExpr,
                               UnaryOpExpr)
 from .utils import (VisitError, add_to_list, cast_return, eval_expression,
-                    find_data_expression, find_target)
+                    find_data_expression, find_target, set_pg_type)
 
 
 @parse_ast.register(ast.Call)
@@ -36,7 +36,20 @@ def parse_functions(node, module_data, returns=None):
     curr_func = module_data.functions[node.func.id]
     func_ast = ast.parse(inspect.getsource(curr_func)).body[0]
 
-    replace_args = [n.id for n in node.args]
+    replace_args = []
+    for arg in node.args:
+        try:
+            replace_args.append(arg.id)
+        except AttributeError:
+            try:
+                replace_args.append(arg.value.id)
+            except AttributeError:
+                try:
+                    replace_args.append(ResExpr(val=set_pg_type(arg.n)))
+                except:
+                    raise VisitError(f'Unknown replace arg in function')
+
+    # replace_args = [n.id for n in node.args]
     replace_kwds = {n.arg: n.value.id for n in node.keywords}
     arguments = find_original_arguments(func_ast.args, replace_args,
                                         replace_kwds)
@@ -77,6 +90,7 @@ class AstFunctionReplace(ast.NodeTransformer):
             if not isinstance(switch_val, str):
                 return switch_val
             node.id = switch_val
+
         return node
 
     def visit_Return(self, node):
@@ -86,7 +100,7 @@ class AstFunctionReplace(ast.NodeTransformer):
             targets = find_target(node.value)
             if targets == self.returns:
                 return None
-        except AttributeError:
+        except (AttributeError, VisitError):
             pass
 
         ret_targets = [ast.Name(name, ast.Load()) for name in self.returns]
@@ -110,8 +124,12 @@ def call_func(node, func_args, module_data):
     if hasattr(node.func, 'attr'):
         if node.func.attr == 'dtype':
             func = eval_expression(node.func, module_data.hdl_locals)
-            ret = eval(f'func({", ".join(func_args)})')
-            return ResExpr(ret)
+            try:
+                ret = eval(f'func({", ".join(func_args)})')
+                return ResExpr(ret)
+            except TypeError:
+                assert len(func_args) == 1
+                return CastExpr(operand=func_args[0], cast_to=func)
 
         if node.func.attr == 'tout':
             return cast_return(func_args, module_data.out_ports)
