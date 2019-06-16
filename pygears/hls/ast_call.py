@@ -2,6 +2,7 @@ import ast
 import inspect
 from functools import reduce
 
+from pygears import registry
 from pygears.typing import Int, Tuple, Uint, Unit, is_type, typeof
 
 from .ast_parse import parse_ast
@@ -141,7 +142,20 @@ def call_func(node, func_args, module_data):
     elif hasattr(node.func, 'id'):
         func = node.func.id
     else:
-        # safe guard
+        try:
+            pg_type = node.func.value.id
+            width = node.func.slice.value.n
+        except AttributeError:
+            raise VisitError('Unrecognized func node in call')
+
+        pg_types = registry('gear/type_arith')
+        if pg_type in pg_types:
+            assert len(
+                func_args
+            ) == 1, f'Type casting supported for simple types for now'
+            return CastExpr(
+                operand=func_args[0], cast_to=pg_types[pg_type][width])
+
         raise VisitError('Unrecognized func node in call')
 
     if f'call_{func}' in globals():

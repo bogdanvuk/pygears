@@ -19,6 +19,7 @@ class SVCompiler(InstanceVisitor):
         self.writer = writer
         self.visit_var = visit_var
 
+        self.separated = cfg.get('separated_visit', False)
         inline = cfg.get('inline_conditions', False)
         self.condtitions = {}
         if inline:
@@ -40,6 +41,10 @@ class SVCompiler(InstanceVisitor):
             self.writer.line(f'end')
 
     def _assign_value(self, stmt):
+        if self.separated:
+            if stmt.target != self.visit_var:
+                return
+
         val = stmt.val
         if isinstance(stmt.val, str) and stmt.val in self.condtitions:
             val = self.condtitions[stmt.val]
@@ -55,7 +60,8 @@ class SVCompiler(InstanceVisitor):
 
     def visit_AssignValue(self, node):
         assign_stmt = self._assign_value(node)
-        self.writer.line(f'{assign_stmt};')
+        if assign_stmt is not None:
+            self.writer.line(f'{assign_stmt};')
 
     def visit_CombBlock(self, node):
         if not node.stmts and not node.dflts:
@@ -81,7 +87,8 @@ class SVCompiler(InstanceVisitor):
 
         for stmt in node.dflt_stmts:
             assign_stmt = self._assign_value(stmt)
-            self.writer.line(f'{assign_stmt};')
+            if assign_stmt is not None:
+                self.writer.line(f'{assign_stmt};')
 
         for stmt in node.stmts:
             self.visit(stmt)
@@ -148,7 +155,13 @@ def write_module(hdl_data, sv_stmts, writer, config=None):
         writer.block(REG_TEMPLATE.format(name, int(expr.val)))
 
     for name, val in sv_stmts.items():
-        SVCompiler(name, writer, **config).visit(val)
+        if name != 'variables':
+            SVCompiler(name, writer, **config).visit(val)
+        else:
+            config['separated_visit'] = True
+            for var_name in hdl_data.variables:
+                SVCompiler(f'{var_name}_v', writer, **config).visit(val)
+            config['separated_visit'] = False
 
 
 def compile_gear_body(gear):

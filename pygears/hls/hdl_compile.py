@@ -65,6 +65,16 @@ class ModuleData:
         }
 
 
+def clean_variables(hdl_data):
+    # removes unused variables
+    # for instance: variable in an if False block
+    hdl_data.variables = {
+        key: val
+        for key, val in hdl_data.variables.items()
+        if not isinstance(val, ast.AST)
+    }
+
+
 class HDLWriter:
     def __init__(self):
         self.indent = 0
@@ -115,6 +125,7 @@ def parse_gear_body(gear):
 
     # py ast to hdl ast
     hdl_ast = parse_ast(body_ast, hdl_data)
+    clean_variables(hdl_data)
 
     if hdl_data.optimize:
         hdl_ast = pipeline_ast(hdl_ast, hdl_data)

@@ -28,6 +28,7 @@ class VCompiler(InstanceVisitor):
         self.extras = {}
         self.kwds = kwds
 
+        self.separated = kwds.get('separated_visit', False)
         inline = kwds.get('inline_conditions', False)
         self.condtitions = {}
         if inline:
@@ -35,6 +36,10 @@ class VCompiler(InstanceVisitor):
 
     def find_width(self, node):
         target = vexpr(node.target, extras=self.extras)
+
+        if self.separated:
+            if target != self.visit_var:
+                return
 
         # rhs = vexpr(node.val, self.extras)
         val = node.val
@@ -84,7 +89,9 @@ class VCompiler(InstanceVisitor):
             self.writer.line(f'end')
 
     def visit_AssignValue(self, node):
-        self.writer.line(self.find_width(node))
+        val = self.find_width(node)
+        if val is not None:
+            self.writer.line(val)
 
     def visit_CombBlock(self, node):
         if not node.stmts and not node.dflts:
@@ -100,14 +107,18 @@ class VCompiler(InstanceVisitor):
         if node.stmts:
             self.writer.line(f'// Comb statements for: {self.visit_var}')
             for stmt in node.stmts:
-                self.writer.line(f'assign {self.find_width(stmt)}')
+                val = self.find_width(stmt)
+                if val is not None:
+                    self.writer.line(f'assign {val}')
             self.writer.line('')
 
     def visit_HDLBlock(self, node):
         self.enter_block(node)
 
         for stmt in node.dflt_stmts:
-            self.writer.line(self.find_width(stmt))
+            val = self.find_width(stmt)
+            if val is not None:
+                self.writer.line(val)
 
         for stmt in node.stmts:
             self.visit(stmt)
@@ -176,9 +187,18 @@ def write_module(hdl_data, v_stmts, writer, **kwds):
 
     extras = {}
     for name, val in v_stmts.items():
-        compiler = VCompiler(name, writer, hdl_data.hdl_locals, **kwds)
-        compiler.visit(val)
-        extras.update(compiler.extras)
+        if name != 'variables':
+            compiler = VCompiler(name, writer, hdl_data.hdl_locals, **kwds)
+            compiler.visit(val)
+            extras.update(compiler.extras)
+        else:
+            kwds['separated_visit'] = True
+            for var_name in hdl_data.variables:
+                compiler = VCompiler(f'{var_name}_v', writer,
+                                     hdl_data.hdl_locals, **kwds)
+                compiler.visit(val)
+                extras.update(compiler.extras)
+            kwds['separated_visit'] = False
 
     for func_impl in extras.values():
         writer.block(func_impl)
