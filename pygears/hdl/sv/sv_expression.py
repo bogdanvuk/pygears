@@ -61,7 +61,11 @@ class SVExpressionVisitor:
             else:
                 res.append(f'{port.name}{self.merge_with}ready')
         res = ' || '.join(res)
-        return f'({res})'
+
+        if len(node.port) > 1:
+            return f'({res})'
+
+        return f'{res}'
 
     @simple_cast
     def visit_AttrExpr(self, node, cast_to):

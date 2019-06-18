@@ -6,6 +6,7 @@ from pygears.conf import registry
 from pygears.hls import HDLWriter, InstanceVisitor, parse_gear_body
 from pygears.typing import Queue, typeof
 
+from ..util import separate_conditions
 from .util import vgen_intf, vgen_reg, vgen_wire
 from .v_expression import cast, vexpr
 
@@ -29,10 +30,7 @@ class VCompiler(InstanceVisitor):
         self.kwds = kwds
 
         self.separated = kwds.get('separated_visit', False)
-        inline = kwds.get('inline_conditions', False)
-        self.condtitions = {}
-        if inline:
-            self.condtitions = kwds['conditions']
+        self.condtitions = kwds['conditions']
 
     def find_width(self, node):
         target = vexpr(node.target, extras=self.extras)
@@ -141,16 +139,7 @@ def write_module(hdl_data, v_stmts, writer, **kwds):
     if 'config' not in kwds:
         kwds['config'] = {}
 
-    inline_conditions = kwds['config'].get('inline_conditions', False)
-    if inline_conditions and 'conditions' in v_stmts:
-        kwds['inline_conditions'] = inline_conditions
-        kwds['conditions'] = {
-            x.target: x.val
-            for x in v_stmts['conditions'].stmts if x.target != 'rst_cond'
-        }
-        v_stmts['conditions'].stmts = [
-            x for x in v_stmts['conditions'].stmts if x.target == 'rst_cond'
-        ]
+    separate_conditions(v_stmts, kwds, vexpr)
 
     for name, expr in hdl_data.regs.items():
         writer.line(vgen_reg(expr.dtype, f'{name}_reg', 'input', False))

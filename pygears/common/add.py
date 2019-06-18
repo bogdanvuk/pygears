@@ -6,7 +6,7 @@ from pygears.util.hof import oper_tree
 from . import ccat
 
 
-@gear(hdl={'compile': True, 'inline_conditions': True})
+@gear(hdl={'compile': True})
 async def add(din: Tuple[Integer['N1'], Integer['N2']]) -> b'din[0] + din[1]':
     async with din as data:
         yield data[0] + data[1]

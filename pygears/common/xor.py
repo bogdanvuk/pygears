@@ -6,7 +6,7 @@ from pygears.typing import Any, Tuple
 from . import ccat
 
 
-@gear(hdl={'compile': True, 'inline_conditions': True})
+@gear(hdl={'compile': True})
 async def xor(din: Tuple[Any, Any]) -> b'din[0]':
     async with din as data:
         yield data[0] ^ data[1]
