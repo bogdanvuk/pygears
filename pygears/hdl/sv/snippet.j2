@@ -163,6 +163,23 @@ module {{module_name}}
 endmodule
 {%- endmacro %}
 
+{% macro intf_typedef(intf, depth=4) -%}
+  {{ svgen_typedef(intf['local_type'], intf['name'], depth=depth)|indent(4, False) }}
+
+    {{intf['name']}}_t {{intf['name']}}_s;
+
+  {% if intf['modport'] == "consumer" -%}
+    {% if intf['width'] > 0 %}
+    assign {{intf['name']}}_s = {{intf['name']}}.data;
+    {% endif -%}
+  {% else -%}
+    {% if intf['width'] > 0 -%}
+    assign {{intf['name']}}.data = {{intf['name']}}_s;
+    {% endif -%}
+  {%- endif -%}
+
+{%- endmacro -%}
+
 {% macro module_with_intf_structs(module_name, intfs, struct_intfs, comment) -%}
 {% set caller_ = caller %}
 {% call gear_module(module_name, intfs, comment) %}

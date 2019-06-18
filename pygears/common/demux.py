@@ -1,22 +1,36 @@
-from pygears import gear
+from pygears import gear, module
 from pygears.typing import Union
 from pygears.common.ccat import ccat
 
 
 def demux_type(dtypes, mapping):
     if mapping:
-        return (dtypes[1], ) + tuple(t for t in dtypes.types)
+        tout = [None] * (max(mapping.values()) + 1)
+        for idin, idout in mapping.items():
+            if tout[idout] is not None:
+                assert dtypes[idin] == tout[idout]
+            else:
+                tout[idout] = dtypes.types[idin]
+
+        assert not any(t is None for t in tout)
+
+        return tuple(tout)
     else:
         return tuple(t for t in dtypes.types)
 
 
-@gear
-# async def demux(din: Union, *, mapping=None) -> b'tuple(t for t in din.types)':
-async def demux(din: Union, *, mapping=None) -> b'demux_type(din, mapping)':
-    async with din as item:
-        dout = [None] * len(din.dtype.types)
+def dflt_map(dtypes):
+    return {i: i for i in range(len(dtypes.types))}
 
-        dout[item[1]] = item.data
+
+@gear
+async def demux(din: Union, *,
+                mapping=b'dflt_map(din)') -> b'demux_type(din, mapping)':
+
+    async with din as (data, ctrl):
+        dout = [None] * len(module().tout)
+
+        dout[mapping[ctrl]] = data
 
         yield tuple(dout)
 
@@ -39,5 +53,5 @@ def demux_by(ctrl, din, *, fcat=ccat, out_num=None):
 
 
 @gear
-def demux_zip(din: Union) -> b'demux_type(din, True)':
+def demux_zip(din: Union) -> b'(din[1], ) + tuple(t for t in din.types)':
     pass

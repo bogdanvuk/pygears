@@ -165,6 +165,24 @@ typedef struct packed { // u1 | u2
     assert equal_on_nonspace(svtype, test_ref)
 
 
+def test_union_shallow():
+    test_ref = """
+typedef struct packed { // u1 | u2
+    logic [0:0] ctrl; // u1
+    logic [1:0] data; // u1 | u2
+} data_t;
+"""
+
+    svtype = svgen_typedef(Union[{
+        'alt1': Uint[1],
+        'alt2': Uint[2]
+    }],
+                           'data',
+                           depth=0)
+
+    assert equal_on_nonspace(svtype, test_ref)
+
+
 def test_union_unit():
     test_ref = """
 typedef struct packed { // ((), u?)
@@ -243,6 +261,6 @@ typedef data_data_t [2:0] data_t; // Array[Array[(u16, u16), 2] | [(Array[Array[
     dtype_q = Queue[dtype_dict, 5]
     dtype_union = Union[{'un1': dtype_arr, 'un2': dtype_q}]
     dtype_arr_union = Array[dtype_union, 3]
-    svtype = svgen_typedef(dtype_arr_union, 'data')
+    svtype = svgen_typedef(dtype_arr_union, 'data', depth=8)
 
     assert equal_on_nonspace(svtype, test_ref)

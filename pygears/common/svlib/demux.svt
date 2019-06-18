@@ -1,9 +1,13 @@
 {%- import 'snippet.j2' as snippet -%}
-{% call snippet.module_with_intf_structs(module_name, intfs, intfs|isinput, comment) %}
+{% call snippet.gear_module(module_name, intfs, comment) %}
+
+    {{snippet.intf_typedef(_din, depth=0)}}
 
 {% for i in (intfs|isoutput) %}
-    assign {{i['name']}}.data = din.data;
+    assign {{i['name']}}.data = din_s.data;
 {% endfor %}
+
+{%- set output_intfs = intfs|isoutput %}
 
     always_comb
     begin
@@ -14,10 +18,10 @@
 
         if (din.valid) begin
             case(din_s.ctrl)
-{% for i in (intfs|isoutput) %}
-                {{loop.index-1}} : begin
-                    din.ready = {{i['name']}}.ready;
-                    {{i['name']}}.valid = din.valid;
+{% for key, iout in params['mapping'].items() %}
+                {{key}} : begin
+                    din.ready = {{output_intfs[iout]['name']}}.ready;
+                    {{output_intfs[iout]['name']}}.valid = din.valid;
                 end
 {% endfor %}
                 default: begin

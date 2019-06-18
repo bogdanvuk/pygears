@@ -6,13 +6,17 @@ class SVGenTypeVisitor(TypingVisitorBase):
     struct_str = "typedef struct packed {"
     union_str = "typedef union packed {"
 
-    def __init__(self, name, basic_type='logic'):
+    def __init__(self, name, basic_type='logic', depth=4):
         self.struct_array = []
         self.context = name
         self.basic_type = basic_type
+        self.max_depth = depth
         self.depth = -1
 
     def visit(self, type_, field):
+        if self.depth >= self.max_depth:
+            return None
+
         self.depth += 1
         type_declaration = super().visit(type_, field)
         self.depth -= 1
@@ -55,46 +59,44 @@ class SVGenTypeVisitor(TypingVisitorBase):
             if (int(t) > max_len):
                 max_len = int(t)
 
-        # for t, f in zip(reversed(type_.args), reversed(type_.fields)):
-        #     middle_type = Tuple[{f: t, 'dummy': Uint[max_len-int(t)]}]
-        #     struct_fields.append(f'{self.struct_str}')
-        #     for tp, fd in zip(reversed(middle_type.args), reversed(middle_type.fields)):
-        #         self.context = f'{low_parent_context}_{fd}'
-        #         type_declaration = self.visit(tp, fd)
-        #         if (type_declaration is not None):
-        #             struct_fields.append(f'    {type_declaration} {fd}; // {tp}')
-        #     struct_fields.append(f'}} {middle_parent_context}_{f}_t;\n')
-
-        for i, t in reversed(list(enumerate(type_.args))):
-            field_tmp = f'f{i}'
-            struct_fields.append(f'{self.struct_str} // ({t}, u?)')
-            self.context = f'{low_parent_context}_{field_tmp}'
-            type_declaration = self.visit(t, field_tmp)
-            if (int(t) < max_len):
+        if self.depth < self.max_depth:
+            for i, t in reversed(list(enumerate(type_.args))):
+                field_tmp = f'f{i}'
+                struct_fields.append(f'{self.struct_str} // ({t}, u?)')
+                self.context = f'{low_parent_context}_{field_tmp}'
+                type_declaration = self.visit(t, field_tmp)
+                if (int(t) < max_len):
+                    struct_fields.append(
+                        f'    {self.basic_type} [{max_len-int(t)-1}:0] dummy; // u{max_len-int(t)}'
+                    )
+                if (type_declaration is not None):
+                    struct_fields.append(
+                        f'    {type_declaration} {field_tmp}; // {t}')
                 struct_fields.append(
-                    f'    {self.basic_type} [{max_len-int(t)-1}:0] dummy; // u{max_len-int(t)}'
+                    f'}} {middle_parent_context}_{field_tmp}_t;\n')
+
+            # create union
+            struct_fields.append(f'{self.union_str} // {type_}')
+            for i, t in reversed(list(enumerate(type_.args))):
+                field_tmp = f'f{i}'
+                struct_fields.append(
+                    f'    {middle_parent_context}_{field_tmp}_t {field_tmp}; // ({t}, u?)'
                 )
-            if (type_declaration is not None):
-                struct_fields.append(
-                    f'    {type_declaration} {field_tmp}; // {t}')
-            struct_fields.append(
-                f'}} {middle_parent_context}_{field_tmp}_t;\n')
-
-        # create union
-        struct_fields.append(f'{self.union_str} // {type_}')
-        for i, t in reversed(list(enumerate(type_.args))):
-            field_tmp = f'f{i}'
-            struct_fields.append(
-                f'    {middle_parent_context}_{field_tmp}_t {field_tmp}; // ({t}, u?)'
-            )
-        struct_fields.append(f'}} {middle_parent_context}_t;\n')
+            struct_fields.append(f'}} {middle_parent_context}_t;\n')
 
         # create struct
         struct_fields.append(f'{self.struct_str} // {type_}')
         struct_fields.append(
             f'    {self.basic_type} [{bitw(len(type_.args)-1)-1}:0] ctrl; // u{bitw(len(type_.args)-1)}'
         )
-        struct_fields.append(f'    {middle_parent_context}_t data; // {type_}')
+
+        if self.depth < self.max_depth:
+            struct_fields.append(f'    {middle_parent_context}_t data; // {type_}')
+        else:
+            struct_fields.append(
+                f'    {self.basic_type} [{int(type_.data)-1}:0] data; // {type_.data}'
+            )
+
         struct_fields.append(f'}} {high_parent_context}_t;\n')
 
         self.struct_array.append('\n'.join(struct_fields))
@@ -167,12 +169,13 @@ class SVGenTypeVisitor(TypingVisitorBase):
         return f'{type_declaration}'
 
 
-def svgen_typedef(dtype, name):
+def svgen_typedef(dtype, name, depth=4):
+    # breakpoint()
     if isinstance(dtype, str):
         return f'typedef {dtype} {name}_t;'
     elif int(dtype) == 0:
         return f'typedef logic [0:0] {name}_t;'
 
-    vis = SVGenTypeVisitor(name)
+    vis = SVGenTypeVisitor(name, depth=depth)
     vis.visit(type_=dtype, field=name)
     return '\n'.join(vis.struct_array)
