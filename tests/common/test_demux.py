@@ -41,14 +41,30 @@ def test_mapped_directed(tmpdir, sim_cls, din_delay, dout_delay, branches):
     ref = [[(i - 1) if (i - 1) >= 0 else (branches - 1)]
            for i in range(branches)]
 
-    print(mapping)
-    print(seq)
-    print(ref)
-
     directed(
         drv(t=TDin, seq=seq) | delay_rng(din_delay, din_delay),
         f=demux(mapping=mapping, sim_cls=sim_cls),
         delays=[delay_rng(dout_delay, dout_delay) for _ in range(branches)],
+        ref=ref)
+
+    sim(outdir=tmpdir)
+
+
+@pytest.mark.parametrize('din_delay', [0, 1])
+@pytest.mark.parametrize('dout_delay', [0, 1])
+def test_mapped_default_directed(tmpdir, sim_cls, din_delay, dout_delay):
+
+    seq = [(i, i) for i in range(8)]
+    TDin = Union[tuple(Uint[i] for i in range(1, 8 + 1))]
+
+    mapping = {3: 0, 4: 0, 7: 1}
+
+    ref = [[3, 4], [7], [0, 1, 2, 5, 6]]
+
+    directed(
+        drv(t=TDin, seq=seq) | delay_rng(din_delay, din_delay),
+        f=demux(mapping=mapping, sim_cls=sim_cls),
+        delays=[delay_rng(dout_delay, dout_delay) for _ in range(3)],
         ref=ref)
 
     sim(outdir=tmpdir)

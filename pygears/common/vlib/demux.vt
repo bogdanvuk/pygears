@@ -16,7 +16,7 @@
 
         if (din_valid) begin
             case(din_s_ctrl)
-{% for key, iout in params['mapping'].items() %}
+{% for key, iout in params['_full_mapping'].items() %}
                 {{key}} : begin
                     din_ready = {{output_intfs[iout]['name']}}_ready;
                     {{output_intfs[iout]['name']}}_valid = din_valid;

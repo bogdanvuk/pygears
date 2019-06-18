@@ -1,22 +1,32 @@
 from pygears import gear, module
-from pygears.typing import Union
+from pygears.typing import Union, Uint
 from pygears.common.ccat import ccat
 
 
 def demux_type(dtypes, mapping):
-    if mapping:
-        tout = [None] * (max(mapping.values()) + 1)
-        for idin, idout in mapping.items():
-            if tout[idout] is not None:
-                assert dtypes[idin] == tout[idout]
-            else:
-                tout[idout] = dtypes.types[idin]
+    tout = [None] * (max(mapping.values()) + 1)
+    for idin, idout in mapping.items():
+        din_t = dtypes.types[idin]
+        if tout[idout] is not None:
+            if tout[idout] != din_t:
+                tout[idout] = Uint[max(int(din_t), int(tout[idout]))]
+        else:
+            tout[idout] = din_t
 
-        assert not any(t is None for t in tout)
+    assert not any(t is None for t in tout)
 
-        return tuple(tout)
-    else:
-        return tuple(t for t in dtypes.types)
+    return tuple(tout)
+
+
+def full_mapping(dtypes, mapping):
+    dout_num = max(mapping.values()) + 1
+    fm = mapping.copy()
+
+    for i in range(len(dtypes.types)):
+        if i not in mapping:
+            fm[i] = dout_num
+
+    return fm
 
 
 def dflt_map(dtypes):
@@ -24,13 +34,17 @@ def dflt_map(dtypes):
 
 
 @gear
-async def demux(din: Union, *,
-                mapping=b'dflt_map(din)') -> b'demux_type(din, mapping)':
+async def demux(
+        din: Union,
+        *,
+        mapping=b'dflt_map(din)',
+        _full_mapping=b'full_mapping(din, mapping)',
+) -> b'demux_type(din, _full_mapping)':
 
     async with din as (data, ctrl):
         dout = [None] * len(module().tout)
 
-        dout[mapping[ctrl]] = data
+        dout[_full_mapping[ctrl]] = data
 
         yield tuple(dout)
 
