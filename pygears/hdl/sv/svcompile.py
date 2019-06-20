@@ -1,5 +1,6 @@
 from pygears.hls import HDLWriter, InstanceVisitor, parse_gear_body
 
+from ..util import separate_conditions
 from .sv_expression import svexpr
 from .util import svgen_typedef
 
@@ -20,17 +21,16 @@ class SVCompiler(InstanceVisitor):
         self.visit_var = visit_var
 
         self.separated = cfg.get('separated_visit', False)
-        inline = cfg.get('inline_conditions', False)
-        self.condtitions = {}
-        if inline:
-            self.condtitions = cfg['conditions']
+        self.condtitions = cfg['conditions']
 
     def enter_block(self, block):
         if getattr(block, 'in_cond', False):
             in_cond = block.in_cond
             if isinstance(in_cond, str) and in_cond in self.condtitions:
-                in_cond = self.condtitions[in_cond]
-            self.writer.line(f'if ({svexpr(in_cond)}) begin')
+                in_cond_val = self.condtitions[in_cond]
+            else:
+                in_cond_val = svexpr(in_cond)
+            self.writer.line(f'if ({in_cond_val}) begin')
 
         if getattr(block, 'in_cond', True):
             self.writer.indent += 4
@@ -111,15 +111,7 @@ def write_module(hdl_data, sv_stmts, writer, config=None):
     if config is None:
         config = {}
 
-    inline_conditions = config.get('inline_conditions', False)
-    if inline_conditions and 'conditions' in sv_stmts:
-        config['conditions'] = {
-            x.target: x.val
-            for x in sv_stmts['conditions'].stmts if x.target != 'rst_cond'
-        }
-        sv_stmts['conditions'].stmts = [
-            x for x in sv_stmts['conditions'].stmts if x.target == 'rst_cond'
-        ]
+    separate_conditions(sv_stmts, config, svexpr)
 
     for name, expr in hdl_data.regs.items():
         writer.block(svgen_typedef(expr.dtype, name))

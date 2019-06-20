@@ -24,7 +24,7 @@ def dflt_map(dtypes):
     return {i: i for i in range(len(dtypes))}
 
 
-# @gear(svgen={'compile': True, 'inline_conditions': True})
+# @gear(svgen={'compile': True})
 @gear
 async def mux(ctrl,
               *din,

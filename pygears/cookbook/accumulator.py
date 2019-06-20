@@ -5,7 +5,7 @@ from pygears.typing import Bool, Integer, Queue, Tuple
 t_din = Queue[Tuple[{'data': Integer['w_data'], 'offset': Integer['w_data']}]]
 
 
-@gear(hdl={'compile': True, 'pipeline': True, 'inline_conditions': True})
+@gear(hdl={'compile': True, 'pipeline': True})
 async def accumulator(din: t_din) -> b'din.data["data"]':
     """Accumulates i.e. sums up the values from the input. The ``data`` field
     values of the input :class:`Tuple` type are accumulated and an initial

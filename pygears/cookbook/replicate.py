@@ -3,7 +3,7 @@ from pygears.util.utils import qrange
 from pygears.typing import Queue, Tuple, Uint
 
 
-@gear(hdl={'compile': True, 'inline_conditions': True})
+@gear(hdl={'compile': True})
 async def replicate(din: Tuple[{
         'length': Uint['w_len'],
         'value': 'w_val'
