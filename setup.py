@@ -33,8 +33,12 @@ class PostInstallCommand(install):
         setup_home()
 
 
+this_directory = os.path.abspath(os.path.dirname(__file__))
+
+
 def readme():
-    with open('README.rst') as f:
+    with open(os.path.join(this_directory, 'README.rst'),
+              encoding='utf-8') as f:
         return f.read()
 
 
