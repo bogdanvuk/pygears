@@ -67,6 +67,10 @@ setup(
         'jinja2>=2.10', 'pygears-tools', 'dataclasses;python_version<"3.7"',
         'pyvcd'
     ],
+    setup_requires=[
+        'jinja2>=2.10', 'pygears-tools', 'dataclasses;python_version<"3.7"',
+        'pyvcd'
+    ],
     packages=find_packages(exclude=['examples*', 'docs']),
     entry_points={
         'console_scripts': [
