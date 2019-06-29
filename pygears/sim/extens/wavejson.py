@@ -135,7 +135,17 @@ class WaveJSONWriter:
             data.append([scope[0]])
             return get_sig_scope(data[-1], scope[1:])
 
-        data = {'signal': []}
+        data = {
+            'signal': [
+                {
+                    'name': 'clk',
+                    'wave': 'p' + '.' * (timestep() - 1)
+                }
+            ],
+            'head': {
+                'tock': 0
+            },
+        }
         for s in self.signals:
             vals = self.values[s]
 
@@ -233,7 +243,6 @@ class WaveJSON(SimExtend):
         if not self.finished:
             with open(self.trace_fn, 'w') as f:
                 data = self.writer.json()
-                print(data)
                 json.dump(data, f)
 
             self.finished = True
