@@ -34,21 +34,21 @@ class VCDTypeVisitor(TypingVisitorBase):
         self.fields[field] = type_
 
     def visit_queue(self, type_, field):
-        self.visit(type_[0], f'{field}.data')
-        self.visit(type_[1:], f'{field}.eot')
+        self.visit(type_[0], f'{field}.data' if field else 'data')
+        self.visit(type_[1:], f'{field}.eot' if field else 'eot')
 
     def visit_union(self, type_, field):
-        self.visit(type_[0], f'{field}.data')
-        self.visit(type_[1], f'{field}.ctrl')
+        self.visit(type_[0], f'{field}.data' if field else 'data')
+        self.visit(type_[1], f'{field}.ctrl' if field else 'ctrl')
 
     def visit_array(self, type_, field):
         for i, t in enumerate(type_):
-            self.visit(t, f'{field}.({i})')
+            self.visit(t, f'{field}.({i})' if field else f'({i})')
 
     def visit_default(self, type_, field):
         if hasattr(type_, 'fields'):
             for t, f in zip(type_, type_.fields):
-                self.visit(t, f'{field}.{f}')
+                self.visit(t, f'{field}.{f}' if field else f)
         else:
             super().visit_default(type_, field)
 
@@ -67,17 +67,17 @@ class VCDValVisitor(TypingVisitorBase):
         self.change(type_, field, val)
 
     def visit_union(self, type_, field, val=None):
-        self.visit(type_[0], f'{field}.data', val=val[0])
-        self.visit(type_[1], f'{field}.ctrl', val=val[1])
+        self.visit(type_[0], f'{field}.data' if field else 'data', val=val[0])
+        self.visit(type_[1], f'{field}.ctrl' if field else 'ctrl', val=val[1])
 
     def visit_queue(self, type_, field, val=None):
         val = type_(val)
-        self.visit(type_[0], f'{field}.data', val=val[0])
-        self.visit(type_[1:], f'{field}.eot', val=val[1])
+        self.visit(type_[0], f'{field}.data' if field else 'data', val=val[0])
+        self.visit(type_[1:], f'{field}.eot' if field else 'eot', val=val[1])
 
     def visit_array(self, type_, field, val):
         for i, t in enumerate(type_):
-            self.visit(t, f'{field}.({i})', val=val[i])
+            self.visit(t, f'{field}.({i})' if field else f'({i})', val=val[i])
 
     def visit_uint(self, type_, field, val=None):
         self.change(type_, field, val)
@@ -88,7 +88,7 @@ class VCDValVisitor(TypingVisitorBase):
     def visit_default(self, type_, field, val=None):
         if hasattr(type_, 'fields'):
             for t, f, v in zip(type_, type_.fields, val):
-                self.visit(t, f'{field}.{f}', val=v)
+                self.visit(t, f'{field}.{f}' if field else f, val=v)
 
 
 def register_traces_for_intf(dtype, scope, writer):
