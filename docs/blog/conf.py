@@ -19,7 +19,6 @@ extensions = [
     'sphinxarg.ext',
     'sphinx_verboser.verboser',
     'sphinx_urlinclude.urlinclude',
-    'sphinx_gifplayer.gifplayer',
     'sphinxcontrib.tikz',
     'alabaster',
     'ablog',
