@@ -1,11 +1,9 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
     <title>Logger &#8212; PyGears - HW Design: A Functional Approach</title>
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -13,14 +11,14 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
     <script type="text/javascript" src="../_static/default.js"></script>
     <script type="text/javascript" src="../_static/wavedrom.js"></script>
     <link rel="canonical" href="https://www.pygears.org/conf/log.html" />
     <link rel="shortcut icon" href="../_static/pygears.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Common" href="../gears/common.html" />
+    <link rel="next" title="Union" href="../typing/union.html" />
     <link rel="prev" title="Reference" href="../reference.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
@@ -49,7 +47,7 @@ features like:</p>
 <li><p>logging to temporary files</p></li>
 <li><p>integration with PyGears registry for configuration</p></li>
 </ul>
-<p>To register a new logger create a <a class="reference internal" href="#pygears.conf.log.CustomLog" title="pygears.conf.log.CustomLog"><code class="xref py py-class docutils literal notranslate"><span class="pre">CustomLog</span></code></a> instance by specifying the
+<p>To register a new logger create a <code class="xref py py-class docutils literal notranslate"><span class="pre">CustomLog</span></code> instance by specifying the
 logger name and the default logging level:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">CustomLog</span><span class="p">(</span><span class="s1">&#39;core&#39;</span><span class="p">,</span> <span class="n">log</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
 </pre></div>
@@ -57,7 +55,7 @@ logger name and the default logging level:</p>
 <div class="section" id="logging-levels">
 <span id="levels"></span><h2>Logging Levels<a class="headerlink" href="#logging-levels" title="Permalink to this headline">¶</a></h2>
 <p>The numeric values of logging levels are given in the following table.</p>
-<table class="docutils">
+<table class="docutils align-center">
 <colgroup>
 <col style="width: 48%" />
 <col style="width: 52%" />
@@ -92,8 +90,8 @@ logger name and the default logging level:</p>
 <div class="section" id="reference">
 <h2>Reference<a class="headerlink" href="#reference" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
-<dt id="pygears.conf.log.CustomLog">
-<em class="property">class </em><code class="descname">CustomLog</code><span class="sig-paren">(</span><em>name</em>, <em>verbosity=20</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.conf.log.CustomLog" title="Permalink to this definition">¶</a></dt>
+<dt id="pygears.conf.log.register_custom_log">
+<em class="property">class </em><code class="descname">register_custom_log</code><a class="headerlink" href="#pygears.conf.log.register_custom_log" title="Permalink to this definition">¶</a></dt>
 <dd><p>PyGears integrated logger class.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -106,7 +104,7 @@ logger name and the default logging level:</p>
 <p>CustomLog instances are customizable via <code class="samp docutils literal notranslate"><span class="pre">logger/</span><em><span class="pre">logger_name</span></em></code>
 <a class="reference internal" href="../registry.html#registry"><span class="std std-ref">registry</span></a> subtree. The logger instance registry subtree
 contains the following configuration variables:</p>
-<ul>
+<ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">level</span></code> (int): All messages that are logged with a verbosity level
 below this configured <code class="docutils literal notranslate"><span class="pre">level</span></code> value will be discarded. See
 <a class="reference internal" href="#levels"><span class="std std-ref">Logging Levels</span></a> for a list of levels.</p></li>
@@ -114,13 +112,13 @@ below this configured <code class="docutils literal notranslate"><span class="pr
 printed along with the log message.</p></li>
 <li><p>optional level name with desired action. Custom actions can be set for
 any verbosity level by passing the function or any already supported
-action to the appropriate registry subtree. Supported actions are:
-- <code class="docutils literal notranslate"><span class="pre">exception</span></code>: if set, an exception will be raised whenever logging the</p>
-<blockquote>
-<div><p>message at the desired level</p>
-</div></blockquote>
-<ul class="simple">
+action to the appropriate registry subtree. Supported actions are:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">exception</span></code>: if set, an exception will be raised whenever logging the
+message at the desired level</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">debug</span></code>: if set, the debugger will be started and execution paused</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pass</span></code>: if set, the message will be printed and no further action
+taken; this is usefull for clearing prevously set values</p></li>
 </ul>
 </li>
 </ul>
@@ -189,9 +187,10 @@ action to the appropriate registry subtree. Supported actions are:
 <hr />
 <h3><a href="../index.html">Table of Contents</a></h3>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="../gears.html">Introduction to Gears</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../live.html">PyGears LIVE!</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../introduction.html">Quick introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gears.html">Introduction to Gears</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../typing.html">Typing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../registry.html">Registry</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../setup.html">PyGears Tools Setup for Linux</a></li>
@@ -211,8 +210,6 @@ action to the appropriate registry subtree. Supported actions are:
     <form class="search" action="../search.html" method="get">
       <input type="text" name="q" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
@@ -222,11 +219,11 @@ action to the appropriate registry subtree. Supported actions are:
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2018, Bogdan Vukobratovic.
+      &copy;2019, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.0</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
       <a href="../_sources/conf/log.rst.txt"

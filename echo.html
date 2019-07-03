@@ -1,11 +1,9 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
     <title>Echo &#8212; PyGears - HW Design: A Functional Approach</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -13,7 +11,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
     <script type="text/javascript" src="_static/default.js"></script>
     <script type="text/javascript" src="_static/wavedrom.js"></script>
     <link rel="canonical" href="https://www.pygears.org/echo.html" />
@@ -133,7 +131,7 @@ Result length: <span class="m">165359</span>
 <p>The <code class="docutils literal notranslate"><span class="pre">echo</span></code> module operates as follows: audio samples arrive at the <code class="docutils literal notranslate"><span class="pre">echo</span></code> module input <code class="docutils literal notranslate"><span class="pre">din</span></code>, echo is added and the resulting samples are output to the module output <code class="docutils literal notranslate"><span class="pre">dout</span></code>. In PyGears terms this is a single-input, single-output gear (function), with the following declaration:</p>
 <dl class="function">
 <dt id="echo.echo">
-<code class="descname">echo</code><span class="sig-paren">(</span><em>din: Int['W'], *, feedback_gain, sample_rate, delay, precision=15, sample_width=b'W'</em><span class="sig-paren">)</span><a class="headerlink" href="#echo.echo" title="Permalink to this definition">¶</a></dt>
+<code class="descname">echo</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwds</em><span class="sig-paren">)</span><a class="headerlink" href="#echo.echo" title="Permalink to this definition">¶</a></dt>
 <dd><p>Performs echo audio effect on the continuous input sample stream</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -176,7 +174,7 @@ Result length: <span class="m">165359</span>
 </span><span class="hll">               <span class="n">sim_cls</span><span class="o">=</span><span class="n">SimVerilated</span> <span class="k">if</span> <span class="n">cosim</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span> \
 </span>        <span class="o">|</span> <span class="n">collect</span><span class="p">(</span><span class="n">result</span><span class="o">=</span><span class="n">result</span><span class="p">,</span> <span class="n">samples_num</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">seq</span><span class="p">))</span>
 
-    <span class="n">sim</span><span class="p">(</span><span class="n">outdir</span><span class="o">=</span><span class="s1">&#39;./build&#39;</span><span class="p">)</span>
+    <span class="c1"># sim(outdir=&#39;./build&#39;)</span>
 
     <span class="k">return</span> <span class="n">result</span>
 </pre></div>
@@ -417,7 +415,7 @@ Result length: <span class="m">165359</span>
 <div class="section" id="resource-utilization">
 <span id="examples-echo-resource-utilization"></span><h2>Resource Utilization<a class="headerlink" href="#resource-utilization" title="Permalink to this headline">¶</a></h2>
 <p>If you have Vivado tool on your path while running the <a class="reference external" href="https://github.com/bogdanvuk/pygears/tree/develop/examples/echo/echo_svgen.py">examples/echo/echo_svgen.py</a> script, the following report will be produced. Some of the <code class="docutils literal notranslate"><span class="pre">echo</span></code> submodules are missing from the list, since Vivado tried to merged the modules in order to reduce the resource utilization.</p>
-<table class="docutils">
+<table class="docutils align-center">
 <colgroup>
 <col style="width: 23%" />
 <col style="width: 13%" />
@@ -631,9 +629,10 @@ Result length: <span class="m">165359</span>
 <hr />
 <h3><a href="index.html">Table of Contents</a></h3>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="gears.html">Introduction to Gears</a></li>
+<li class="toctree-l1"><a class="reference internal" href="live.html">PyGears LIVE!</a></li>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="introduction.html">Quick introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gears.html">Introduction to Gears</a></li>
 <li class="toctree-l1"><a class="reference internal" href="typing.html">Typing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="registry.html">Registry</a></li>
 <li class="toctree-l1"><a class="reference internal" href="setup.html">PyGears Tools Setup for Linux</a></li>
@@ -650,8 +649,6 @@ Result length: <span class="m">165359</span>
     <form class="search" action="search.html" method="get">
       <input type="text" name="q" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
@@ -661,11 +658,11 @@ Result length: <span class="m">165359</span>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2018, Bogdan Vukobratovic.
+      &copy;2019, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.0</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
       <a href="_sources/echo.rst.txt"

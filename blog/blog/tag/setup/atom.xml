@@ -5,7 +5,7 @@
   <updated>2018-10-07T00:00:00Z</updated>
   <link href="https://www.pygears.org/" />
   <link href="https://www.pygears.org/blog/tag/setup/atom.xml" rel="self" />
-  <generator uri="http://ablog.readthedocs.org" version="0.9.2">ABlog</generator>
+  <generator uri="http://ablog.readthedocs.org" version="0.9.4">ABlog</generator>
   <entry xml:base="https://www.pygears.org/blog/tag/setup/atom.xml">
     <title type="text">RISC-V Tools Setup</title>
     <id>https://www.pygears.org/riscv/setup.html</id>

@@ -1,11 +1,9 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
     <title>Array &#8212; PyGears - HW Design: A Functional Approach</title>
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -13,7 +11,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
     <script type="text/javascript" src="../_static/default.js"></script>
     <script type="text/javascript" src="../_static/wavedrom.js"></script>
     <link rel="canonical" href="https://www.pygears.org/typing/array.html" />
@@ -46,8 +44,7 @@
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></p>
 <p>Generic container datatype that holds N instances of type T</p>
 <dl>
-<dt>Generic parameters:</dt>
-<dd><p>T: Type of the <a class="reference internal" href="#pygears.typing.array.Array" title="pygears.typing.array.Array"><code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code></a> [T, N] elements</p>
+<dt>Generic parameters:</dt><dd><p>T: Type of the <a class="reference internal" href="#pygears.typing.array.Array" title="pygears.typing.array.Array"><code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code></a> [T, N] elements</p>
 <p>N: Number of elements in the <a class="reference internal" href="#pygears.typing.array.Array" title="pygears.typing.array.Array"><code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code></a> [T, N]</p>
 </dd>
 </dl>
@@ -123,9 +120,10 @@
 <hr />
 <h3><a href="../index.html">Table of Contents</a></h3>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="../gears.html">Introduction to Gears</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../live.html">PyGears LIVE!</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../introduction.html">Quick introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gears.html">Introduction to Gears</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../typing.html">Typing</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="../typing.html#compile-time-type-checking">Compile time type checking</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../typing.html#polymorphic-modules-and-pattern-matching">Polymorphic modules and pattern matching</a></li>
@@ -144,8 +142,6 @@
     <form class="search" action="../search.html" method="get">
       <input type="text" name="q" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
@@ -155,11 +151,11 @@
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2018, Bogdan Vukobratovic.
+      &copy;2019, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.0</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
       <a href="../_sources/typing/array.rst.txt"

@@ -1,0 +1,196 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Filter &#8212; PyGears - HW Design: A Functional Approach</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script type="text/javascript" src="../_static/default.js"></script>
+    <script type="text/javascript" src="../_static/wavedrom.js"></script>
+    <link rel="canonical" href="https://www.pygears.org/gears/filt.html" />
+    <link rel="shortcut icon" href="../_static/pygears.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Simulation gears" href="simulation_gears.html" />
+    <link rel="prev" title="Concatenation" href="ccat.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="filter">
+<h1>Filter<a class="headerlink" href="#filter" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="pygears.common.filt">
+<code class="descname">filt</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwds</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.common.filt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filters the <code class="docutils literal notranslate"><span class="pre">data</span></code> field of <code class="xref py py-class docutils literal notranslate"><span class="pre">Union</span></code> type, by passing it forward
+only if it carries the <code class="docutils literal notranslate"><span class="pre">data</span></code> <code class="xref py py-class docutils literal notranslate"><span class="pre">Union</span></code> subtype whose index is equal
+to the value supplied to the <code class="docutils literal notranslate"><span class="pre">sel</span></code> field. Index of a <code class="xref py py-class docutils literal notranslate"><span class="pre">Union</span></code>
+subtype is equal to the position of the subtype within the <code class="xref py py-class docutils literal notranslate"><span class="pre">Union</span></code>
+definition.</p>
+</dd></dl>
+
+<p><strong>Example</strong> - Lets make a <code class="xref py py-class docutils literal notranslate"><span class="pre">Union</span></code> of three types:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">data_t</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">3</span><span class="p">]]</span>
+</pre></div>
+</div>
+<p>We are going to send three values to the <code class="docutils literal notranslate"><span class="pre">filt</span></code> gear via <code class="docutils literal notranslate"><span class="pre">data</span></code> field,
+each of them with a different type:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">data</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">data_t</span><span class="p">(</span><span class="n">Uint</span><span class="p">[</span><span class="mi">1</span><span class="p">](</span><span class="mi">0</span><span class="p">),</span> <span class="mi">0</span><span class="p">),</span>
+    <span class="n">data_t</span><span class="p">(</span><span class="n">Uint</span><span class="p">[</span><span class="mi">2</span><span class="p">](</span><span class="mi">3</span><span class="p">),</span> <span class="mi">1</span><span class="p">),</span>
+    <span class="n">data_t</span><span class="p">(</span><span class="n">Uint</span><span class="p">[</span><span class="mi">3</span><span class="p">](</span><span class="mi">7</span><span class="p">),</span> <span class="mi">2</span><span class="p">)</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+<p>For each input data, the <code class="docutils literal notranslate"><span class="pre">sel</span></code> field should contain the index of the
+<code class="xref py py-class docutils literal notranslate"><span class="pre">Union</span></code> subtype which is to be forwarded by the <code class="docutils literal notranslate"><span class="pre">filt</span></code> gear. Other
+subtypes will be filtered (blocked). For an example, if we would like that
+only the data of the subtye Uint[2] is forwarded (subtype index is 1), the
+following values should be passed via <code class="docutils literal notranslate"><span class="pre">sel</span></code> field:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sel</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>We can drive these two fields as a single <code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code> in the following
+way:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Tuple</span><span class="p">[</span><span class="n">data_t</span><span class="p">,</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">2</span><span class="p">]],</span> <span class="n">seq</span><span class="o">=</span><span class="nb">zip</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">sel</span><span class="p">))</span> \
+    <span class="o">|</span> <span class="n">filt</span>
+</pre></div>
+</div>
+<p>The output sequence of the <code class="docutils literal notranslate"><span class="pre">filt</span></code> gear should contain a single element:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[(</span><span class="n">Uint</span><span class="p">[</span><span class="mi">3</span><span class="p">](</span><span class="mi">3</span><span class="p">),</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">2</span><span class="p">](</span><span class="mi">1</span><span class="p">))]</span>
+</pre></div>
+</div>
+<div class="section" id="alternatives">
+<h2>Alternatives<a class="headerlink" href="#alternatives" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pygears.common.filt.filt_fix_sel">
+<code class="descname">filt_fix_sel</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwds</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.common.filt.filt_fix_sel" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pygears.common.filt.qfilt">
+<code class="descname">qfilt</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwds</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.common.filt.qfilt" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+</div>
+
+    <script type="text/javascript">
+        function init() {
+            WaveDrom.ProcessAll();
+        }
+        window.onload = init;
+    </script>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../index.html">
+    <img class="logo" src="../_static/logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+<p class="blurb">HW Design: A Functional Approach</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=bogdanvuk&repo=pygears&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<hr />
+<p>
+    <h3> Blogs </h3>
+    <ul>
+        <li class="toctree-l1"><a href="https://www.pygears.org/blog/blog/category/risc-v.html">RISC-V implementation blog</a></li>
+    </ul>
+</p>
+<hr />
+<h3><a href="https://www.pygears.org/blog/blog/category/release.html">Release notes</a></h3>
+<hr />
+<h3><a href="../index.html">Table of Contents</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../live.html">PyGears LIVE!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Quick introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gears.html">Introduction to Gears</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../typing.html">Typing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../registry.html">Registry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../setup.html">PyGears Tools Setup for Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../reference.html">Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../reference.html#core">Core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference.html#infrastructure">Infrastructure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference.html#typing">Typing</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../reference.html#gears">Gears</a></li>
+</ul>
+</li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Bogdan Vukobratovic.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/gears/filt.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+    <a href="https://github.com/bogdanvuk/pygears" class="github">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>

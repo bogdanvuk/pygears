@@ -1,11 +1,9 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" /><meta content="AjhRHQh3VrfjkedIiaUazWGgzaSBonwmXT_Kf5sPD0I" name="google-site-verification" />
+    <meta charset="utf-8" /><meta content="AjhRHQh3VrfjkedIiaUazWGgzaSBonwmXT_Kf5sPD0I" name="google-site-verification" />
 <meta content="256433631B2CD469BD8EC0137A9943AA" name="msvalidate.01" />
 <meta content="ORBOCceo-a1e6Je5tI-KUua73jJ2f5DjYTOVD4v8tz4" name="google-site-verification" />
 
@@ -16,14 +14,14 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
     <script type="text/javascript" src="_static/default.js"></script>
     <script type="text/javascript" src="_static/wavedrom.js"></script>
     <link rel="canonical" href="https://www.pygears.org/index.html" />
     <link rel="shortcut icon" href="_static/pygears.ico"/>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Introduction to Gears" href="gears.html" />
+    <link rel="next" title="PyGears LIVE!" href="live.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -105,13 +103,7 @@
 <h1>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h1>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="gears.html">Introduction to Gears</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="gears.html#one-interface">One interface</a></li>
-<li class="toctree-l2"><a class="reference internal" href="gears.html#powerful-type-system">Powerful type system</a></li>
-<li class="toctree-l2"><a class="reference internal" href="gears.html#gear-composition">Gear composition</a></li>
-<li class="toctree-l2"><a class="reference internal" href="gears.html#functors">Functors</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="live.html">PyGears LIVE!</a></li>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="install.html#windows">Windows</a></li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#linux">Linux</a></li>
@@ -123,6 +115,13 @@
 <li class="toctree-l2"><a class="reference internal" href="introduction.html#gear-parameters">Gear parameters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="introduction.html#type-casting">Type casting</a></li>
 <li class="toctree-l2"><a class="reference internal" href="introduction.html#systemverilog-generation">SystemVerilog generation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="gears.html">Introduction to Gears</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="gears.html#one-interface">One interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gears.html#powerful-type-system">Powerful type system</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gears.html#gear-composition">Gear composition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gears.html#functors">Functors</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="typing.html">Typing</a><ul>
@@ -210,9 +209,10 @@
 <hr />
 <h3><a href="#">Table of Contents</a></h3>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="gears.html">Introduction to Gears</a></li>
+<li class="toctree-l1"><a class="reference internal" href="live.html">PyGears LIVE!</a></li>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="introduction.html">Quick introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gears.html">Introduction to Gears</a></li>
 <li class="toctree-l1"><a class="reference internal" href="typing.html">Typing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="registry.html">Registry</a></li>
 <li class="toctree-l1"><a class="reference internal" href="setup.html">PyGears Tools Setup for Linux</a></li>
@@ -226,8 +226,6 @@
     <form class="search" action="search.html" method="get">
       <input type="text" name="q" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
@@ -237,11 +235,11 @@
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2018, Bogdan Vukobratovic.
+      &copy;2019, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.0</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
       <a href="_sources/index.rst.txt"

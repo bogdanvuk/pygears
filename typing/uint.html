@@ -1,11 +1,9 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
     <title>Uint &#8212; PyGears - HW Design: A Functional Approach</title>
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -13,7 +11,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
     <script type="text/javascript" src="../_static/default.js"></script>
     <script type="text/javascript" src="../_static/wavedrom.js"></script>
     <link rel="canonical" href="https://www.pygears.org/typing/uint.html" />
@@ -46,8 +44,7 @@
 <dd><p>Bases: <a class="reference internal" href="integer.html#pygears.typing.uint.IntegerType" title="pygears.typing.uint.IntegerType"><code class="xref py py-class docutils literal notranslate"><span class="pre">pygears.typing.uint.IntegerType</span></code></a></p>
 <p>Fixed width generic unsigned integer data type.</p>
 <dl class="simple">
-<dt>Generic parameters:</dt>
-<dd><p>N: Bit width of the <a class="reference internal" href="#pygears.typing.uint.Uint" title="pygears.typing.uint.Uint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Uint</span></code></a> representation</p>
+<dt>Generic parameters:</dt><dd><p>N: Bit width of the <a class="reference internal" href="#pygears.typing.uint.Uint" title="pygears.typing.uint.Uint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Uint</span></code></a> representation</p>
 </dd>
 </dl>
 <p><a class="reference internal" href="#pygears.typing.uint.Uint" title="pygears.typing.uint.Uint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Uint</span></code></a> is a generic datatype derived from <a class="reference internal" href="integer.html#pygears.typing.uint.Integer" title="pygears.typing.uint.Integer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Integer</span></code></a>. It
@@ -173,20 +170,6 @@ represents unsigned integers with fixed width binary representation.</p>
 </pre></div>
 </div>
 <dl class="method">
-<dt id="pygears.typing.uint.Uint.__getitem__">
-<code class="descname">__getitem__</code><span class="sig-paren">(</span><em>index</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Uint.__getitem__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the value of the indexth bit in the number representation.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Integer</span><span class="p">[</span><span class="mi">8</span><span class="p">](</span><span class="mb">0b10101010</span><span class="p">)[</span><span class="mi">5</span><span class="p">]</span>
-<span class="go">1</span>
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Integer</span><span class="p">[</span><span class="mi">8</span><span class="p">](</span><span class="mb">0b10101010</span><span class="p">)[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span>
-<span class="go">Uint[4](15)</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="method">
 <dt id="pygears.typing.uint.Uint.__int__">
 <code class="descname">__int__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Uint.__int__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns builtin integer type</p>
@@ -208,17 +191,19 @@ represents unsigned integers with fixed width binary representation.</p>
 
 <dl class="method">
 <dt id="pygears.typing.uint.Uint.bit_length">
-<code class="descname">bit_length</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; int<a class="headerlink" href="#pygears.typing.uint.Uint.bit_length" title="Permalink to this definition">¶</a></dt>
-<dd><p>Number of bits necessary to represent self in binary.
-&gt;&gt;&gt; bin(37)
-‘0b100101’
-&gt;&gt;&gt; (37).bit_length()
-6</p>
+<code class="descname">bit_length</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Uint.bit_length" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of bits necessary to represent self in binary.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">bin</span><span class="p">(</span><span class="mi">37</span><span class="p">)</span>
+<span class="go">&#39;0b100101&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">(</span><span class="mi">37</span><span class="p">)</span><span class="o">.</span><span class="n">bit_length</span><span class="p">()</span>
+<span class="go">6</span>
+</pre></div>
+</div>
 </dd></dl>
 
-<dl class="method">
+<dl class="classmethod">
 <dt id="pygears.typing.uint.Uint.decode">
-<code class="descname">decode</code><span class="sig-paren">(</span><em>val</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Uint.decode" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod </em><code class="descname">decode</code><span class="sig-paren">(</span><em>val</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Uint.decode" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates Integer object from any int-convertible object val.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Integer</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="mh">0xffff</span><span class="p">)</span>
 <span class="go">Integer[8](255)</span>
@@ -288,9 +273,10 @@ represents unsigned integers with fixed width binary representation.</p>
 <hr />
 <h3><a href="../index.html">Table of Contents</a></h3>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="../gears.html">Introduction to Gears</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../live.html">PyGears LIVE!</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../introduction.html">Quick introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gears.html">Introduction to Gears</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../typing.html">Typing</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="../typing.html#compile-time-type-checking">Compile time type checking</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../typing.html#polymorphic-modules-and-pattern-matching">Polymorphic modules and pattern matching</a></li>
@@ -309,8 +295,6 @@ represents unsigned integers with fixed width binary representation.</p>
     <form class="search" action="../search.html" method="get">
       <input type="text" name="q" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
@@ -320,11 +304,11 @@ represents unsigned integers with fixed width binary representation.</p>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2018, Bogdan Vukobratovic.
+      &copy;2019, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.0</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
       <a href="../_sources/typing/uint.rst.txt"

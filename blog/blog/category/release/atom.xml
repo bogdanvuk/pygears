@@ -5,7 +5,7 @@
   <updated>2018-10-28T00:00:00Z</updated>
   <link href="https://www.pygears.org/" />
   <link href="https://www.pygears.org/blog/category/release/atom.xml" rel="self" />
-  <generator uri="http://ablog.readthedocs.org" version="0.9.2">ABlog</generator>
+  <generator uri="http://ablog.readthedocs.org" version="0.9.4">ABlog</generator>
   <entry xml:base="https://www.pygears.org/blog/category/release/atom.xml">
     <title type="text">PyGears 0.1.2 released</title>
     <id>https://www.pygears.org/release/v0.1.2.html</id>
@@ -56,7 +56,7 @@
 &lt;li&gt;&lt;p&gt;Document PyGears &lt;a class=&quot;reference external&quot; href=&quot;../../../registry.html#registry&quot; title=&quot;(in PyGears v0.1.2)&quot;&gt;&lt;span class=&quot;xref std std-ref&quot;&gt;registry&lt;/span&gt;&lt;/a&gt;.&lt;/p&gt;&lt;/li&gt;
 &lt;li&gt;&lt;p&gt;&lt;a class=&quot;reference external&quot; href=&quot;../../../typing/tuple.html&quot; title=&quot;(in PyGears v0.1.2)&quot;&gt;&lt;code class=&quot;docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;Tuple&lt;/span&gt;&lt;/code&gt;&lt;/a&gt; documented.&lt;/p&gt;&lt;/li&gt;
 &lt;li&gt;&lt;p&gt;Separate pages and additional documentation for &lt;a class=&quot;reference external&quot; href=&quot;../../../typing/integer.html&quot; title=&quot;(in PyGears v0.1.2)&quot;&gt;&lt;code class=&quot;docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;Integer&lt;/span&gt;&lt;/code&gt;&lt;/a&gt;, &lt;a class=&quot;reference external&quot; href=&quot;../../../typing/uint.html&quot; title=&quot;(in PyGears v0.1.2)&quot;&gt;&lt;code class=&quot;docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;Uint&lt;/span&gt;&lt;/code&gt;&lt;/a&gt; and &lt;a class=&quot;reference external&quot; href=&quot;../../../typing/int.html&quot; title=&quot;(in PyGears v0.1.2)&quot;&gt;&lt;code class=&quot;docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;Int&lt;/span&gt;&lt;/code&gt;&lt;/a&gt; types.&lt;/p&gt;&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;Document &lt;a class=&quot;reference external&quot; href=&quot;../../../gears/simulation_gears.html#pygears.sim.modules.drv&quot; title=&quot;(in PyGears v0.1.2)&quot;&gt;&lt;code class=&quot;xref py py-func docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;drv&lt;/span&gt;&lt;/code&gt;&lt;/a&gt; gear.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;Document &lt;code class=&quot;xref py py-func docutils literal notranslate&quot;&gt;&lt;span class=&quot;pre&quot;&gt;drv&lt;/span&gt;&lt;/code&gt; gear.&lt;/p&gt;&lt;/li&gt;
 &lt;/ul&gt;
 &lt;/div&gt;
 &lt;/div&gt;

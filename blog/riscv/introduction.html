@@ -1,11 +1,9 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
     <title>RISC-V Blog Series Introduction &#8212; PyGears - HW Design: A Functional Approach</title>
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +12,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
     <link rel="canonical" href="https://www.pygears.org/riscv/introduction.html" />
     <link rel="shortcut icon" href="../_static/pygears.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
@@ -90,7 +88,7 @@
 <p data-verbosity="2" hidden="true">Traditional HDLs and design methodologies built around them are ill-suited for building larger hardware systems, because they offer very few means of abstraction, besides grouping the implementation into modules. Modules are furthermore quite often formed in the wrong way, by bundling various functionalities together because they operate on the same data, even though they serve different purposes. Think big clunky control path state machines with many outputs which are usually the major source of bugs and a major obstacle for adding new features.</p>
 <div class="figure align-center" data-verbosity="2" hidden="true" id="id1">
 <a class="reference internal image-reference" data-verbosity="2" hidden="true" href="../_images/fsm.png"><img alt="../_images/fsm.png" data-verbosity="2" hidden="true" src="../_images/fsm.png" style="width: 312.0px; height: 326.0px;" /></a>
-<p class="caption" data-verbosity="2" hidden="true"><span class="caption-text" data-verbosity="2" hidden="true">Image from <a class="reference external" data-verbosity="2" hidden="true" href="http://ece-research.unm.edu/jimp/codesign/slides/microprogramming.pdf">&lt;http://ece-research.unm.edu/jimp/codesign/slides/microprogramming.pdf&gt;</a></span></p>
+<p class="caption" data-verbosity="2" hidden="true"><span class="caption-text" data-verbosity="2" hidden="true">Image from <a class="reference external" data-verbosity="2" hidden="true" href="http://ece-research.unm.edu/jimp/codesign/slides/microprogramming.pdf">&lt;http://ece-research.unm.edu/jimp/codesign/slides/microprogramming.pdf&gt;</a></span><a class="headerlink" href="#id1" title="Permalink to this image">¶</a></p>
 </div>
 <p data-verbosity="2" hidden="true">Each of these outputs is probably computed by a functionality that deserves its own module, its own little abstraction. Why are they than being sucked into state machine module monsters? Usually because we either believe that it leads to a more optimized design, or we are afraid of synchronization issues. But wire is a wire even if it leaves the module boundaries, and decent hardware synthesis tools offer inter-module optimization, so we lose next to nothing by factoring out the functionality. As for the synchronization, putting everything in a single module just offers a false sense of security and sweeps the problem under the rug until later when functionality piles up inside the module and pipelining becomes a nightmare, not to mention dealing with synchronization issues between such complex modules.</p>
 <p><span>Since the biggest issue with maintaining a large hardware design is synchronization (as with any other massively parallel system: think multithreading in software), PyGears tries to face it upfront by forcing each module to implement a </span><a class="reference external" href="https://www.pygears.org/gears.html#one-interface">flow-controlled interface</a><span>, which turns modules into “gears” in PyGears terminology (checkout this </span><a class="reference external" href="https://www.pygears.org/gears.html">quick introduction to gears</a><span>). </span><span data-verbosity="2" hidden="true"> As much as it may seem as an overkill in the beginning, it usually pays-off later, and is easily optimized-away by the hardware synthesis tools if not really needed. </span><span> Gears are not built around the state, but are formed to group and abstract some functionality, while the state is embedded in the data sent between the gears. This further alleviates the synchronization problem and pipelined architectures arise naturally, as I intend to show while implementing RISC-V ISA.</span></p>
@@ -360,8 +358,6 @@ python setup.py develop
     <form class="search" action="../search.html" method="get">
       <input type="text" name="q" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
@@ -371,11 +367,11 @@ python setup.py develop
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2018, Bogdan Vukobratovic.
+      &copy;2019, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.0</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
       <a href="../_sources/riscv/introduction.rst.txt"

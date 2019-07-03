@@ -1,12 +1,10 @@
 
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
     <title>Index &#8212; PyGears - HW Design: A Functional Approach</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +12,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
     <script type="text/javascript" src="_static/default.js"></script>
     <script type="text/javascript" src="_static/wavedrom.js"></script>
     <link rel="canonical" href="https://www.pygears.org/genindex.html" />
@@ -52,6 +50,7 @@
  | <a href="#I"><strong>I</strong></a>
  | <a href="#K"><strong>K</strong></a>
  | <a href="#P"><strong>P</strong></a>
+ | <a href="#Q"><strong>Q</strong></a>
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
@@ -68,16 +67,10 @@
         <li><a href="typing/tuple.html#pygears.typing.tuple.TupleType.__add__">(TupleType method)</a>
 </li>
       </ul></li>
-      <li><a href="typing/int.html#pygears.typing.uint.Int.__getitem__">__getitem__() (Int method)</a>
+      <li><a href="typing/tuple.html#pygears.typing.tuple.Tuple.__getitem__">__getitem__() (Tuple method)</a>
 
       <ul>
-        <li><a href="typing/integer.html#pygears.typing.uint.Integer.__getitem__">(Integer method)</a>
-</li>
-        <li><a href="typing/tuple.html#pygears.typing.tuple.Tuple.__getitem__">(Tuple method)</a>
-</li>
         <li><a href="typing/tuple.html#pygears.typing.tuple.TupleType.__getitem__">(TupleType method)</a>
-</li>
-        <li><a href="typing/uint.html#pygears.typing.uint.Uint.__getitem__">(Uint method)</a>
 </li>
       </ul></li>
       <li><a href="typing/int.html#pygears.typing.uint.Int.__int__">__int__() (Int method)</a>
@@ -92,6 +85,10 @@
         <li><a href="typing/tuple.html#pygears.typing.tuple.TupleType.__int__">(TupleType method)</a>
 </li>
         <li><a href="typing/uint.html#pygears.typing.uint.Uint.__int__">(Uint method)</a>
+</li>
+        <li><a href="typing/union.html#pygears.typing.union.Union.__int__">(Union method)</a>
+</li>
+        <li><a href="typing/union.html#pygears.typing.union.UnionType.__int__">(UnionType method)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -129,6 +126,8 @@
 </li>
         <li><a href="typing/uint.html#pygears.typing.uint.UintType.args">(UintType attribute)</a>
 </li>
+        <li><a href="typing/union.html#pygears.typing.union.UnionType.args">(UnionType attribute)</a>
+</li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -151,6 +150,8 @@
 </li>
         <li><a href="typing/uint.html#pygears.typing.uint.UintType.base">(UintType attribute)</a>
 </li>
+        <li><a href="typing/union.html#pygears.typing.union.UnionType.base">(UnionType attribute)</a>
+</li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -168,11 +169,17 @@
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="gears/common.html#pygears.common.ccat">ccat() (in module pygears.common)</a>
+      <li><a href="gears/ccat.html#pygears.common.ccat">ccat() (in module pygears.common)</a>
 </li>
+      <li><a href="typing/tuple.html#pygears.typing.tuple.Tuple.code">code() (Tuple method)</a>
+
+      <ul>
+        <li><a href="typing/union.html#pygears.typing.union.Union.code">(Union method)</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="conf/log.html#pygears.conf.log.CustomLog">CustomLog (class in pygears.conf.log)</a>
+      <li><a href="typing/union.html#pygears.typing.union.UnionType.ctrl">ctrl (UnionType attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -180,19 +187,23 @@
 <h2 id="D">D</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="typing/int.html#pygears.typing.uint.Int.decode">decode() (Int method)</a>
+      <li><a href="typing/union.html#pygears.typing.union.UnionType.data">data (UnionType attribute)</a>
+</li>
+      <li><a href="typing/tuple.html#pygears.typing.tuple.Tuple.decode">decode() (pygears.typing.tuple.Tuple class method)</a>
 
       <ul>
-        <li><a href="typing/uint.html#pygears.typing.uint.Uint.decode">(Uint method)</a>
-</li>
-        <li><a href="typing/tuple.html#pygears.typing.tuple.Tuple.decode">(pygears.typing.tuple.Tuple class method)</a>
+        <li><a href="typing/int.html#pygears.typing.uint.Int.decode">(pygears.typing.uint.Int class method)</a>
 </li>
         <li><a href="typing/integer.html#pygears.typing.uint.Integer.decode">(pygears.typing.uint.Integer class method)</a>
+</li>
+        <li><a href="typing/uint.html#pygears.typing.uint.Uint.decode">(pygears.typing.uint.Uint class method)</a>
+</li>
+        <li><a href="typing/union.html#pygears.typing.union.Union.decode">(pygears.typing.union.Union class method)</a>
 </li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="gears/simulation_gears.html#pygears.sim.modules.drv">drv() (in module pygears.sim.modules)</a>
+      <li><a href="gears/simulation_gears.html#pygears.cookbook.verif.drv">drv() (in module pygears.cookbook.verif)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -221,7 +232,15 @@
 </li>
         <li><a href="typing/uint.html#pygears.typing.uint.UintType.fields">(UintType attribute)</a>
 </li>
+        <li><a href="typing/union.html#pygears.typing.union.UnionType.fields">(UnionType attribute)</a>
+</li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="gears/filt.html#pygears.common.filt">filt() (in module pygears.common)</a>
+</li>
+      <li><a href="gears/filt.html#pygears.common.filt.filt_fix_sel">filt_fix_sel() (in module pygears.common.filt)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -259,9 +278,9 @@
 </li>
         <li><a href="typing/uint.html#pygears.typing.uint.UintType.is_generic">(UintType method)</a>
 </li>
+        <li><a href="typing/union.html#pygears.typing.union.UnionType.is_generic">(UnionType method)</a>
+</li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="typing/base.html#pygears.typing.base.GenericMeta.is_specified">is_specified (GenericMeta attribute)</a>
 
       <ul>
@@ -271,7 +290,11 @@
 </li>
         <li><a href="typing/uint.html#pygears.typing.uint.UintType.is_specified">(UintType attribute)</a>
 </li>
+        <li><a href="typing/union.html#pygears.typing.union.UnionType.is_specified">(UnionType attribute)</a>
+</li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="typing/base.html#pygears.typing.base.EnumerableGenericMeta.items">items() (EnumerableGenericMeta method)</a>
 
       <ul>
@@ -280,6 +303,8 @@
         <li><a href="typing/tuple.html#pygears.typing.tuple.TupleType.items">(TupleType method)</a>
 </li>
         <li><a href="typing/uint.html#pygears.typing.uint.UintType.items">(UintType method)</a>
+</li>
+        <li><a href="typing/union.html#pygears.typing.union.UnionType.items">(UnionType method)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -299,6 +324,8 @@
 </li>
         <li><a href="typing/uint.html#pygears.typing.uint.UintType.keys">(UintType method)</a>
 </li>
+        <li><a href="typing/union.html#pygears.typing.union.UnionType.keys">(UnionType method)</a>
+</li>
       </ul></li>
   </ul></td>
 </tr></table>
@@ -310,19 +337,33 @@
 </li>
       <li><a href="typing/array.html#module-pygears.typing.array">pygears.typing.array (module)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="typing/base.html#module-pygears.typing.base">pygears.typing.base (module)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="typing/tuple.html#module-pygears.typing.tuple">pygears.typing.tuple (module)</a>
 </li>
       <li><a href="typing/integer.html#module-pygears.typing.uint">pygears.typing.uint (module)</a>
+</li>
+      <li><a href="typing/union.html#module-pygears.typing.union">pygears.typing.union (module)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="Q">Q</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="gears/filt.html#pygears.common.filt.qfilt">qfilt() (in module pygears.common.filt)</a>
 </li>
   </ul></td>
 </tr></table>
 
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="conf/log.html#pygears.conf.log.register_custom_log">register_custom_log (class in pygears.conf.log)</a>
+</li>
+  </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="registry.html#pygears.registry">registry() (in module pygears)</a>
 </li>
@@ -332,7 +373,7 @@
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="gears/common.html#pygears.common.sieve">sieve() (in module pygears.common)</a>
+      <li><a href="gears/sieve.html#pygears.common.sieve">sieve() (in module pygears.common)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -353,6 +394,8 @@
 </li>
         <li><a href="typing/uint.html#pygears.typing.uint.UintType.templates">(UintType attribute)</a>
 </li>
+        <li><a href="typing/union.html#pygears.typing.union.UnionType.templates">(UnionType attribute)</a>
+</li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -361,6 +404,8 @@
       <li><a href="typing/tuple.html#pygears.typing.tuple.TupleType">TupleType (class in pygears.typing.tuple)</a>
 </li>
       <li><a href="typing/base.html#pygears.typing.base.typeof">typeof() (in module pygears.typing.base)</a>
+</li>
+      <li><a href="typing/union.html#pygears.typing.union.UnionType.types">types (UnionType attribute)</a>
 </li>
       <li><a href="typing/base.html#pygears.typing.base.TypingMeta">TypingMeta (class in pygears.typing.base)</a>
 </li>
@@ -372,9 +417,13 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="typing/uint.html#pygears.typing.uint.Uint">Uint (class in pygears.typing.uint)</a>
 </li>
+      <li><a href="typing/uint.html#pygears.typing.uint.UintType">UintType (class in pygears.typing.uint)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="typing/uint.html#pygears.typing.uint.UintType">UintType (class in pygears.typing.uint)</a>
+      <li><a href="typing/union.html#pygears.typing.union.Union">Union (class in pygears.typing.union)</a>
+</li>
+      <li><a href="typing/union.html#pygears.typing.union.UnionType">UnionType (class in pygears.typing.union)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -436,9 +485,10 @@
 <hr />
 <h3><a href="index.html">Table of Contents</a></h3>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="gears.html">Introduction to Gears</a></li>
+<li class="toctree-l1"><a class="reference internal" href="live.html">PyGears LIVE!</a></li>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="introduction.html">Quick introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gears.html">Introduction to Gears</a></li>
 <li class="toctree-l1"><a class="reference internal" href="typing.html">Typing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="registry.html">Registry</a></li>
 <li class="toctree-l1"><a class="reference internal" href="setup.html">PyGears Tools Setup for Linux</a></li>
@@ -452,8 +502,6 @@
     <form class="search" action="search.html" method="get">
       <input type="text" name="q" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
@@ -463,11 +511,11 @@
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2018, Bogdan Vukobratovic.
+      &copy;2019, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.0</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
     </div>
 

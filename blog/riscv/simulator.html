@@ -1,11 +1,9 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
     <title>PyGears pure-Python simulator &#8212; PyGears - HW Design: A Functional Approach</title>
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +12,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
     <link rel="canonical" href="https://www.pygears.org/riscv/simulator.html" />
     <link rel="shortcut icon" href="../_static/pygears.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
@@ -77,64 +75,6 @@
 <li data-verbosity="2" hidden="true"><p data-verbosity="2" hidden="true">Interface is painted in <span class="html" data-verbosity="2" hidden="true"><font color="green">GREEN</font></span> if a <strong data-verbosity="2" hidden="true">put</strong> event was issued over it, <span class="html" data-verbosity="2" hidden="true"><font color="orange">ORANGE</font></span> for an <strong data-verbosity="2" hidden="true">ack</strong> event, and <span class="html" data-verbosity="2" hidden="true"><font color="red">RED</font></span> for a <strong data-verbosity="2" hidden="true">done</strong> event.</p></li>
 <li data-verbosity="2" hidden="true"><p data-verbosity="2" hidden="true">Transmitted values are printed in <strong data-verbosity="2" hidden="true">bold</strong> over the interfaces.</p></li>
 </ul>
-<div class="gifplayer" data-verbosity="2" hidden="true">
-<a class="reference internal image-reference" data-verbosity="2" hidden="true" href="../_images/addi-timelapse.gif"><img alt="../_images/addi-timelapse.gif" data-verbosity="2" hidden="true" src="../_images/addi-timelapse.gif" style="width: 100%;" /></a>
-
-<div id="controller-bar" style="text-align:center;">
-    <button id="backward" href="#">|< Step back </button>&nbsp;&nbsp;
-    <button id="play" href="#"> Play | Pause </button>&nbsp;&nbsp;
-    <button id="forward" href="#"> Step forward >|</button>
-</div>
-
-<script type="text/javascript" src="../_static/libgif.js"></script>
-<script>
-if (window.location.protocol != "file:") {
-
-     var img_elem = $("div.gifplayer").find("img");
-
-     var img_clone = img_elem.clone().appendTo('.section:first');
-     img_clone.show();
-     var width = img_clone[0].offsetWidth;
-     img_clone.remove();
-
-    var gif = new SuperGif({
-        gif: img_elem[0],
-        max_width: width,
-        loop_mode: 'auto',
-        auto_play: false,
-        draw_while_loading: false,
-    });
-
-
-    gif.load();
-    gif.pause();
-
-    $('button#backward').click(function(){
-        var total_frames = gif.get_length();
-        gif.pause();
-        if(gif.get_current_frame() == 0) {
-            gif.move_to(total_frames-1);
-        } else {
-            gif.move_relative(-1);
-        }
-    })
-
-
-    $('button#play').click(function(){
-        if(gif.get_playing()){
-            gif.pause();
-        } else {
-            gif.play();
-        }
-    })
-
-    $('button#forward').click(function(){
-        gif.pause();
-        gif.move_relative(1);
-    })
-}
-</script>
-</div>
 <p data-verbosity="2" hidden="true">As you can see, the simulation starts with the <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">drv</span></code> module which has no inputs and is thus a “source node” of the DAG. <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">drv</span></code> generates the test instruction and its consumers are triggered. The simulation continues until a “sink node” of the DAG is reached, namely <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">register_file_write</span></code>, which marks the end of the “forward pass”. The “backward pass” begins and the wave of <strong data-verbosity="2" hidden="true">ack</strong> events trigger the gears in reverse order, until <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">drv</span></code> is reached and the timestep is completed.</p>
 <p data-verbosity="2" hidden="true">In the next timestep, <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">drv</span></code> realizes that there is no more data to produce, so it issues a <strong data-verbosity="2" hidden="true">done</strong> event. The <strong data-verbosity="2" hidden="true">done</strong> event then propagates throughout the design, since no gear in the current design can operate when <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">drv</span></code> stops issuing the instructions.</p>
 <p data-verbosity="3" hidden="true"> Since this post is already too long, I’ll show in some other post how the PyGears simulator can create waveforms, diagnose issues, how to use it with the Python debugger, etc.</p>
@@ -260,8 +200,6 @@ if (window.location.protocol != "file:") {
     <form class="search" action="../search.html" method="get">
       <input type="text" name="q" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
@@ -271,11 +209,11 @@ if (window.location.protocol != "file:") {
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2018, Bogdan Vukobratovic.
+      &copy;2019, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.0</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
       <a href="../_sources/riscv/simulator.rst.txt"
