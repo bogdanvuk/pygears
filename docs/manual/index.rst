@@ -90,9 +90,10 @@ Contents
 .. toctree::
    :maxdepth: 2
 
-   gears
+   live
    install
    introduction
+   gears
    typing
    registry
    setup

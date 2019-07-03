@@ -167,8 +167,6 @@ Proba
       function runScript() {
           var xhttp = new XMLHttpRequest();
           xhttp.onreadystatechange = function() {
-              console.log("Done");
-
               if (this.readyState == 4) {
                   if (this.status != 200) {
                       document.getElementById("cmdrun").innerHTML = 'Run!';
@@ -184,20 +182,20 @@ Proba
 
                   document.getElementById("cmdrun").innerHTML = '<i class="icon-cog-alt"></i> Run!';
                   document.getElementById("btn-result-zip").onclick = download.bind(
-                      null, `http://127.0.0.1:5000/results/${jsonResponse['result_id']}/results.zip`);
+                      null, `${serverName}/results/${jsonResponse['result_id']}/results.zip`);
                   document.getElementById("btn-result-browse").onclick = open_new_tab.bind(
-                      null, `http://127.0.0.1:5000/results/${jsonResponse['result_id']}/`);
+                      null, `${serverName}/results/${jsonResponse['result_id']}/`);
                   document.getElementById("btn-result-wave").onclick = open_new_tab.bind(
-                      null, `http://127.0.0.1:5000/wavedrom/${jsonResponse['result_id']}/sim/pygears`);
+                      null, `${serverName}/wavedrom/${jsonResponse['result_id']}/sim/pygears`);
 
                   document.getElementById("btn-result-zip").disabled = false
                   document.getElementById("btn-result-browse").disabled = false
                   document.getElementById("btn-result-wave").disabled = false
                   document.getElementById("cmdrun").disabled = false;
 
-                  console.log(xhttp.responseText);
-                  console.log("http://127.0.0.1:5000" + jsonResponse['log'])
-                  fetch("http://127.0.0.1:5000" + jsonResponse['log'])
+                  /* console.log(xhttp.responseText); */
+                  /* console.log(serverName + jsonResponse['log']) */
+                  fetch(serverName + jsonResponse['log'])
                         .then(function(response) {
                             return response.text().then(function(text) {
                                 consoleLog.setValue(text, -1);
@@ -221,12 +219,16 @@ Proba
 
           consoleLog.setValue("Uploading script...\n", -1);
 
-          xhttp.open("POST", "http://127.0.0.1:5000/run", true);
+          xhttp.open("POST", `${serverName}/run`, true);
           xhttp.setRequestHeader("Content-Type", "application/json");
           xhttp.send(JSON.stringify({"script": editor.getValue()}));
 
           console.log("Script run");
       }
+
+      /* var serverName = "http://127.0.0.1:5000"; */
+      /* var serverName = "http://167.86.106.32:5000"; */
+      var serverName = "http://167.86.106.32";
 
       document.getElementById("btn-result-zip").disabled = true
       document.getElementById("btn-result-browse").disabled = true

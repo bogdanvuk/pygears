@@ -34,8 +34,6 @@ The output sequence of the ``filt`` gear should contain a single element::
 Alternatives
 ~~~~~~~~~~~~
 
-.. autofunction:: pygears.common.filt.filt2
-
 .. autofunction:: pygears.common.filt.filt_fix_sel
 
 .. autofunction:: pygears.common.filt.qfilt

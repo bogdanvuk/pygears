@@ -318,7 +318,10 @@ def verif(*stim, f, ref, delays=None, tolerance=0):
 
 def directed(*stim, f, ref, delays=None):
     """Similar to ``verif`` function, except ``ref`` is a list of expected results"""
-    res = stim | f
+    if stim:
+        res = stim | f
+    else:
+        res = f
 
     if not isinstance(res, tuple):
         res = (res, )
