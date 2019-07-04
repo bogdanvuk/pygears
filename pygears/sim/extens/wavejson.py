@@ -249,10 +249,3 @@ class WaveJSON(SimExtend):
 
     def after_cleanup(self, sim):
         self.finish()
-
-
-class SimVCDPlugin(PluginBase):
-    @classmethod
-    def bind(cls):
-        safe_bind('sim/extens/vcd/shmidcat', False)
-        safe_bind('sim/extens/vcd/vcd_fifo', False)

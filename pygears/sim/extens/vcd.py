@@ -213,8 +213,8 @@ class VCD(SimExtend):
                  trace_fn='pygears.vcd',
                  include=['*'],
                  tlm=False,
-                 shmidcat=Inject('sim/extens/vcd/shmidcat'),
-                 vcd_fifo=Inject('sim/extens/vcd/vcd_fifo'),
+                 shmidcat=Inject('sim_extens/vcd/shmidcat'),
+                 vcd_fifo=Inject('sim_extens/vcd/vcd_fifo'),
                  sim=Inject('sim/simulator'),
                  outdir=Inject('sim/artifacts_dir'),
                  sim_map=Inject('sim/map')):
@@ -342,5 +342,5 @@ class VCD(SimExtend):
 class SimVCDPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        safe_bind('sim/extens/vcd/shmidcat', False)
-        safe_bind('sim/extens/vcd/vcd_fifo', False)
+        safe_bind('sim_extens/vcd/shmidcat', False)
+        safe_bind('sim_extens/vcd/vcd_fifo', False)

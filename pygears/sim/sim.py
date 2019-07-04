@@ -7,7 +7,7 @@ import sys
 import tempfile
 import time
 
-from pygears import GearDone, bind, find, registry, safe_bind
+from pygears import GearDone, bind, find, registry, safe_bind, config
 from pygears.conf import CustomLogger, LogFmtFilter, register_custom_log
 from pygears.core.gear import GearPlugin, Gear
 # from pygears.core.intf import get_consumer_tree as intf_get_consumer_tree
@@ -446,6 +446,9 @@ def sim(outdir=None,
     if extens is None:
         extens = []
 
+    if config['sim/extens'] is not None:
+        extens.extend(config['sim/extens'])
+
     if outdir is None:
         outdir = registry('sim/artifacts_dir')
         if outdir is None:
@@ -521,7 +524,9 @@ class SimPlugin(GearPlugin):
         safe_bind('sim/config', {})
         safe_bind('sim/flow', [])
         safe_bind('sim/tasks', {})
-        safe_bind('sim/artifacts_dir', None)
+        config.define('sim/artifacts_dir', default=None)
+        config.define('sim/extens', default=[])
+
         safe_bind('gear/params/extra/sim_setup', None)
         register_custom_log('sim', cls=SimLog)
 
