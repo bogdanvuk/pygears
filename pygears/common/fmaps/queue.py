@@ -1,12 +1,12 @@
 from pygears import alternative, gear
 from pygears.typing import Queue
-from pygears.common import quenvelope, cart, project
+from pygears.common import quenvelope, czip, project
 from pygears.common import fmap as common_fmap
 
 
 @alternative(common_fmap)
 @gear(enablement=b'issubclass(din, Queue)')
-def fmap(din, *, f, lvl=1, fcat=cart, balance=None, common_balance=True):
+def fmap(din, *, f, lvl=1, fcat=czip, balance=None, common_balance=True):
     queue_lvl = din.dtype.lvl
     fmap_lvl = min(lvl, queue_lvl)
     lvl -= fmap_lvl
