@@ -1,6 +1,8 @@
 .. raw:: html
 
   <link href="_static/css/fontello.css" type="text/css" rel="stylesheet"/>
+  <script type="text/javascript" src="_static/autocomplete.js"></script>
+
 
   <style type="text/css" media="screen">
     .the-icons {
@@ -103,6 +105,70 @@
         margin-top: 5px;
     }
 
+  * {
+      box-sizing: border-box;
+  }
+
+  /*the container must be positioned relative:*/
+  .autocomplete {
+      position: relative;
+      display: inline-block;
+  }
+
+  input[type=text] {
+      border: 1px solid transparent;
+      background-color: #f1f1f1;
+      padding: 10px;
+      font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+      font-size: 14px;
+      background-color: #f1f1f1;
+      width: 100%;
+  }
+
+  #btn-import-gear {
+      background-color: DodgerBlue;
+      color: #fff;
+      cursor: pointer;
+      padding: 10px;
+  }
+
+  .autocomplete-items {
+      position: absolute;
+      margin-top: 2px;
+      border: 3px solid #d4d4d4;
+      z-index: 99;
+      column-count: 6;
+      /*position the autocomplete items to be the same width as the container:*/
+      left: 0;
+
+  }
+
+  .autocomplete-items div {
+      font-size: 14px;
+      font-family: "Courier New", monospace;
+      white-space: pre;
+      padding: 6px;
+      cursor: pointer;
+      break-inside: avoid-column;
+      background-color: #ffffff;
+  }
+
+  /*when hovering an item:*/
+  .autocomplete-items div:hover {
+      background-color: #e9e9e9; 
+  }
+
+  /*when navigating through the items using the arrow keys:*/
+  .autocomplete-active {
+      background-color: DodgerBlue !important; 
+      color: #ffffff; 
+  }
+
+  #gearsDescriptionPlaceholder {
+      overflow: auto;
+      max-height: 300px;
+      margin-top: 20px;
+  }
   </style>
 
 PyGears LIVE! 
@@ -134,6 +200,12 @@ Proba
             <div id="consoleLog"></div>
         </div>
     </div>
+    <div class="autocomplete" style="width:200px;">
+        <input id="gearSelect" type="text" name="myCountry" placeholder="Search gears" spellcheck="false">
+    </div>
+    <button type="button" id="btn-import-gear" onClick="javascript:importSelectedGear()" title="Import selected gear"><code style="color: #fff; background-color:transparent"><b>import</b></code></button>
+    <div id="gearsDescriptionPlaceholder"></div>
+    <iframe id="iframe" hidden></iframe>
 
 
 .. raw:: html
@@ -226,9 +298,21 @@ Proba
           console.log("Script run");
       }
 
-      /* var serverName = "http://127.0.0.1:5000"; */
+      function importSelectedGear() {
+          var gear = document.getElementById("gearSelect").value;
+          if (!(gear in gears)) {return;}
+
+          editor.session.insert({
+              row: 0,
+              column: 0
+          }, `from pygears.common import ${gear}\n`)
+
+      }
+
+      var serverName = "http://127.0.0.1:5000";
       /* var serverName = "http://167.86.106.32:5000"; */
-      var serverName = "http://167.86.106.32";
+      /* var serverName = "https://167.86.106.32"; */
+      /* var serverName = "https://www.synchord.com"; */
 
       document.getElementById("btn-result-zip").disabled = true
       document.getElementById("btn-result-browse").disabled = true
@@ -248,7 +332,24 @@ Proba
       consoleLog.setOption('showLineNumbers', false);
       consoleLog.setOption('showGutter', false);
       consoleLog.setOption('highlightActiveLine', false);
-      consoleLog.setOption("showPrintMargin", false)
-      consoleLog.setOption("fontSize", 14)
+      consoleLog.setOption("showPrintMargin", false);
+      consoleLog.setOption("fontSize", 14);
+
+      var gears = {
+          "rng": "bla",
+          "filt": "filter",
+          "add": "bla",
+          "ccat": "concatenation",
+      }
+
+      autocomplete(document.getElementById("gearSelect"), Object.keys(gears), function(val) {
+          if (!val) {return};
+          var iframe = document.getElementById("iframe");
+          iframe.src = `gears/${val}.html`;
+          iframe.onload = function() {
+              var div = document.getElementById("gearsDescriptionPlaceholder");
+              div.innerHTML = iframe.contentWindow.document.getElementById(gears[val]).innerHTML;
+          };
+      });
 
     </script>

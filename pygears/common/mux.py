@@ -44,12 +44,20 @@ async def mux(ctrl,
 
 
 @gear
-def mux_zip(ctrl, *din) -> b'mux_type(din)':
+def mux_zip(ctrl,
+            *din,
+            mapping=b'dflt_map(din)',
+            _full_mapping=b'full_mapping(din, mapping)'
+            ) -> b'mux_type(din, _full_mapping)':
     pass
 
 
 @gear
-def mux_valve(ctrl, *din) -> b'mux_type(din)':
+def mux_valve(ctrl,
+              *din,
+              mapping=b'dflt_map(din)',
+              _full_mapping=b'full_mapping(din, mapping)'
+              ) -> b'mux_type(din, _full_mapping)':
     pass
 
 

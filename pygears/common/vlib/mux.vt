@@ -15,8 +15,9 @@
         din_valid_sel = 0;
         if (ctrl_valid) begin
             case( ctrl_data )
-{% for i in intfs[1:-1] %}
-                {{loop.index-1}} : begin
+{% for key, iout in params['_full_mapping'].items() %}
+{% set i = intfs[1:-1][iout] %}
+                {{key}} : begin
                     din_valid_sel = {{i['name']}}_valid;
                     dout_s_data[{{i['width']-1}}:0] = {{i['name']}}_s;
                     {{i['name']}}_ready = {{i['name']}}_valid ? handshake : dout_ready;
