@@ -11,7 +11,7 @@ from .hls_expressions import (ArrayOpExpr, AttrExpr, BinOpExpr, CastExpr,
                               UnaryOpExpr)
 from .utils import (VisitError, add_to_list, cast_return, eval_expression,
                     find_data_expression, find_target, set_pg_type,
-                    get_function_source)
+                    get_function_source, get_context_var)
 
 
 @parse_ast.register(ast.Call)
@@ -35,6 +35,21 @@ def parse_call(node, module_data):
 
 
 def parse_functions(node, module_data, returns=None):
+    def find_original_arguments(args, new_names, kwargs):
+        arg_names = {}
+        arg_names.update(kwargs)  # passed as keyword arguments
+
+        # passed arguments
+        for arg, replace in zip(args.args, new_names):
+            arg_names[arg.arg] = replace
+
+        # default values
+        for arg, dflt in zip(reversed(args.args), reversed(args.defaults)):
+            if arg.arg not in arg_names:
+                arg_names[arg.arg] = dflt
+
+        return arg_names
+
     curr_func = module_data.functions[node.func.id]
     if not is_standard_func(curr_func):
         raise VisitError(f'Only standard functions are supported!')
@@ -42,34 +57,36 @@ def parse_functions(node, module_data, returns=None):
     source = get_function_source(curr_func)
     func_ast = ast.parse(source).body[0]
 
-    # replace_args = [n.id for n in node.args]
     replace_kwds = {n.arg: n.value.id for n in node.keywords}
-    arguments = find_original_arguments(func_ast.args, node.args,
-                                        replace_kwds)
 
-    AstFunctionReplace(arguments, returns).visit(func_ast)
+    arguments = []
+    for arg in node.args:
+        if isinstance(arg, ast.Starred):
+            var = get_context_var(arg.value.id, module_data)
+
+            if not isinstance(var, ConcatExpr):
+                raise VisitError(f'Cannot unpack variable "{arg.value.id}"')
+
+            for i in range(len(var.operands)):
+                arguments.append(
+                    ast.fix_missing_locations(
+                        ast.Subscript(value=arg.value,
+                                      slice=ast.Index(value=ast.Num(i)),
+                                      ctx=ast.Load)))
+        else:
+            arguments.append(arg)
+
+    argument_map = find_original_arguments(func_ast.args, arguments,
+                                           replace_kwds)
+
+    AstFunctionReplace(argument_map, returns).visit(func_ast)
+    func_ast = ast.fix_missing_locations(func_ast)
 
     res = []
     for stmt in func_ast.body:
         res_stmt = parse_ast(stmt, module_data)
         add_to_list(res, res_stmt)
     return res
-
-
-def find_original_arguments(args, new_names, kwargs):
-    arg_names = {}
-    arg_names.update(kwargs)  # passed as keyword arguments
-
-    # passed arguments
-    for arg, replace in zip(args.args, new_names):
-        arg_names[arg.arg] = replace
-
-    # default values
-    for arg, dflt in zip(reversed(args.args), reversed(args.defaults)):
-        if arg.arg not in arg_names:
-            arg_names[arg.arg] = dflt
-
-    return arg_names
 
 
 class AstFunctionReplace(ast.NodeTransformer):

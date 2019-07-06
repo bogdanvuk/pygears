@@ -1,4 +1,5 @@
 import copy
+import inspect
 from pygears.core.gear_decorator import create_gear_definition
 from pygears.core.gear_decorator import find_invocation, FunctionMaker
 from pygears.core.util import doublewrap
@@ -8,8 +9,10 @@ import functools
 
 @doublewrap
 def datagear(func, **meta_kwds):
-    body = '''async with x as data:
-        res = datafunc(data)
+    paramspec = inspect.getfullargspec(func)
+
+    body = f'''async with gather({",".join(paramspec.args)}) as data:
+        res = datafunc(*data)
         yield res'''
 
     execdict = {'datafunc': func}
