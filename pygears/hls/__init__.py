@@ -6,5 +6,6 @@ from .ast_try_except import parse_try
 from .hdl_compile import HDLWriter, parse_gear_body
 from .inst_visit import InstanceVisitor
 from .utils import hls_log
+from .datagear import datagear
 
 __all__ = ['parse_gear_body', 'InstanceVisitor', 'HDLWriter', 'hls_log']

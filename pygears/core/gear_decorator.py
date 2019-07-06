@@ -49,9 +49,7 @@ def find_invocation(func, extra_params=Inject('gear/params/extra')):
     return ','.join(invocation)
 
 
-@doublewrap
-def gear(func, gear_resolver=None, **meta_kwds):
-
+def create_gear_definition(func, gear_resolver=None, **meta_kwds):
     if gear_resolver is None:
         gear_resolver = registry('gear/gear_dflt_resolver')
 
@@ -87,6 +85,9 @@ def gear(func, gear_resolver=None, **meta_kwds):
     p.meta_kwds = meta_kwds
 
     return p
+
+
+gear = doublewrap(create_gear_definition)
 
 
 class GearDecoratorPlugin(PluginBase):

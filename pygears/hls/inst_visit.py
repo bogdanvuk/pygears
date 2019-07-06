@@ -37,6 +37,7 @@ class TypeVisitor:
         return visitor(node)
 
     def generic_visit(self, node):
+        breakpoint()
         raise VisitError(
             f'Method "{node.__class__.__name__}" not implemented in "{self.__class__.__name__}" visitor'
         )

@@ -1,16 +1,17 @@
 import ast
-import inspect
 from functools import reduce
 
 from pygears import registry
 from pygears.typing import Int, Tuple, Uint, Unit, is_type, typeof
+from pygears.core.util import is_standard_func
 
 from .ast_parse import parse_ast
 from .hls_expressions import (ArrayOpExpr, AttrExpr, BinOpExpr, CastExpr,
                               ConcatExpr, ConditionalExpr, IntfDef, ResExpr,
                               UnaryOpExpr)
 from .utils import (VisitError, add_to_list, cast_return, eval_expression,
-                    find_data_expression, find_target, set_pg_type)
+                    find_data_expression, find_target, set_pg_type,
+                    get_function_source)
 
 
 @parse_ast.register(ast.Call)
@@ -30,12 +31,16 @@ def parse_call(node, module_data):
         ret = eval(f'{node.func.id}({", ".join(func_args)})')
         return ResExpr(ret)
     except:
-        return call_func(node, func_args, module_data)
+        return parse_func_call(node, func_args, module_data)
 
 
 def parse_functions(node, module_data, returns=None):
     curr_func = module_data.functions[node.func.id]
-    func_ast = ast.parse(inspect.getsource(curr_func)).body[0]
+    if not is_standard_func(curr_func):
+        raise VisitError(f'Only standard functions are supported!')
+
+    source = get_function_source(curr_func)
+    func_ast = ast.parse(source).body[0]
 
     replace_args = []
     for arg in node.args:
@@ -121,7 +126,7 @@ def max_expr(op1, op2):
     return ConditionalExpr(cond=cond, operands=(op1, op2))
 
 
-def call_func(node, func_args, module_data):
+def parse_func_call(node, func_args, module_data):
     if hasattr(node.func, 'attr'):
         if node.func.attr == 'dtype':
             func = eval_expression(node.func, module_data.hdl_locals)
@@ -153,8 +158,8 @@ def call_func(node, func_args, module_data):
             assert len(
                 func_args
             ) == 1, f'Type casting supported for simple types for now'
-            return CastExpr(
-                operand=func_args[0], cast_to=pg_types[pg_type][width])
+            return CastExpr(operand=func_args[0],
+                            cast_to=pg_types[pg_type][width])
 
         raise VisitError('Unrecognized func node in call')
 

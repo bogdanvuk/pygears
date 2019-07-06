@@ -9,6 +9,8 @@ from pygears.cookbook.verif import directed, drv, verif
 from pygears.sim import sim
 from pygears.typing import Queue, Tuple, Uint, Union, typeof
 from pygears.util.test_utils import skip_ifndef, synth_check
+from pygears.hls import datagear
+from pygears.typing import Integer, Bool
 
 plain_din = Uint[8]
 union_din = Union[Uint[8], Uint[8], Uint[8]]
@@ -75,14 +77,31 @@ def get_dut(dout_delay):
 @pytest.mark.parametrize('sel', [0, 1])
 @pytest.mark.parametrize('din_delay', [0, 10])
 @pytest.mark.parametrize('dout_delay', [0, 10])
-def test_qfilt_delay(tmpdir, cosim_cls, din_delay, dout_delay, sel):
+def test_qfilt_union_delay(tmpdir, cosim_cls, din_delay, dout_delay, sel):
     dut = get_dut(dout_delay)
-    verif(
-        drv(t=queue_din, seq=[directed_seq, directed_seq])
-        | delay_rng(din_delay, din_delay),
-        f=dut(sim_cls=cosim_cls, sel=sel),
-        ref=filt(name='ref_model', sel=sel),
-        delays=[delay_rng(dout_delay, dout_delay)])
+    verif(drv(t=queue_din, seq=[directed_seq, directed_seq])
+          | delay_rng(din_delay, din_delay),
+          f=dut(sim_cls=cosim_cls, sel=sel),
+          ref=filt(name='ref_model', sel=sel),
+          delays=[delay_rng(dout_delay, dout_delay)])
+    sim(outdir=tmpdir)
+
+
+@pytest.mark.parametrize('din_delay', [0, 10])
+@pytest.mark.parametrize('dout_delay', [0, 10])
+def test_qfilt_delay(tmpdir, cosim_cls, din_delay, dout_delay):
+    @datagear
+    def even(x: Integer) -> Bool:
+        return x[0] == 0
+
+    directed(drv(t=Queue[Uint[8]], seq=[list(range(10)),
+                                        list(range(10))])
+             | delay_rng(din_delay, din_delay),
+             f=filt(sim_cls=cosim_cls, f=even),
+             ref=[list(range(0, 10, 2)),
+                  list(range(0, 10, 2))],
+             delays=[delay_rng(dout_delay, dout_delay)])
+
     sim(outdir=tmpdir)
 
 

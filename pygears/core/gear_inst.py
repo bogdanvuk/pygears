@@ -3,12 +3,12 @@ import sys
 
 from pygears.conf import bind, core_log, registry, safe_bind, MultiAlternativeError
 from pygears.typing import Any
-from pygears.core.hier_node import HierNode
+from pygears.core.util import is_standard_func
 
 from .intf import Intf
 from .infer_ftypes import TypeMatchError, infer_ftypes, type_is_specified
 from .gear import TooManyArguments, GearTypeNotSpecified, GearArgsNotSpecified
-from .gear import GearPlugin, Gear, module
+from .gear import Gear
 from .gear_decorator import GearDecoratorPlugin
 
 
@@ -194,14 +194,8 @@ class intf_name_tracer:
                     val.var_name = name
 
 
-def is_hls_impl_func(func):
-    is_async_gen = bool(func.__code__.co_flags & inspect.CO_ASYNC_GENERATOR)
-    return not (inspect.iscoroutinefunction(func)
-                or inspect.isgeneratorfunction(func) or is_async_gen)
-
-
 def resolve_func(gear_inst):
-    if not is_hls_impl_func(gear_inst.func):
+    if not is_standard_func(gear_inst.func):
         return tuple()
 
     with create_hier(gear_inst):

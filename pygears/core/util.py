@@ -1,3 +1,4 @@
+import inspect
 from functools import wraps
 
 
@@ -24,3 +25,9 @@ def doublewrap(f):
 def perpetum(func, *args, **kwds):
     while True:
         yield func(*args, **kwds)
+
+
+def is_standard_func(func):
+    is_async_gen = bool(func.__code__.co_flags & inspect.CO_ASYNC_GENERATOR)
+    return not (inspect.iscoroutinefunction(func)
+                or inspect.isgeneratorfunction(func) or is_async_gen)

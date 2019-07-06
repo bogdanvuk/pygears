@@ -180,6 +180,7 @@ class FunctionMaker(object):
                doc=None,
                module=None,
                addsource=True,
+               isasync=False,
                extra_kwds=None,
                **attrs):
         """
@@ -206,7 +207,7 @@ class FunctionMaker(object):
             extra_kwds=extra_kwds)
         ibody = '\n'.join('    ' + line for line in body.splitlines())
         caller = evaldict.get('_call_')  # when called from `decorate`
-        if caller and inspect.iscoroutinefunction(caller):
+        if isasync or (caller and inspect.iscoroutinefunction(caller)):
             body = ('async def %(name)s(%(signature)s):\n' + ibody).replace(
                 'return', 'return await')
         else:

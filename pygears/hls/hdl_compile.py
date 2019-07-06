@@ -1,11 +1,11 @@
 import ast
-import inspect
 import typing
 from dataclasses import dataclass
 from types import FunctionType
 
 from pygears.typing import Uint, bitw
 
+from .utils import get_function_source
 from .assign_conditions import AssignConditions
 from .ast_parse import parse_ast
 from .cblock import CBlockVisitor
@@ -92,7 +92,9 @@ class HDLWriter:
 
 
 def parse_gear_body(gear):
-    body_ast = ast.parse(inspect.getsource(gear.func)).body[0]
+    source = get_function_source(gear.func)
+    body_ast = ast.parse(source).body[0]
+
     # import astpretty
     # astpretty.pprint(body_ast)
 
@@ -160,8 +162,8 @@ def parse_gear_body(gear):
         res[name] = sub_v.visit(schedule)
 
     if state_num > 0:
-        hdl_data.regs['state'] = RegDef(
-            name='state', val=Uint[bitw(state_num)](0))
+        hdl_data.regs['state'] = RegDef(name='state',
+                                        val=Uint[bitw(state_num)](0))
         res['state_transition'] = HdlStmtStateTransition(state_num).visit(
             schedule)
 

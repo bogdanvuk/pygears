@@ -43,6 +43,7 @@ Alternatives
 from pygears import alternative, gear
 from pygears.typing import Queue, Union, Uint, Tuple, Bool
 from .ccat import ccat
+from .fmap import fmap
 
 
 def filt_type(din, lvl, sel):
@@ -78,9 +79,19 @@ def filt_fix_sel(din: Union, *, sel) -> b'din.types[sel]':
 
 
 @alternative(filt)
+@gear
+def qfilt(din: Queue, *, f):
+    @gear
+    def maybe_out(din, *, f):
+        return ccat(din, din | f) | Union
+
+    return din | fmap(f=maybe_out(f=f)) | qfilt_union(sel=1)
+
+
+@alternative(filt)
 @gear(hdl={'compile': True})
-async def qfilt(din: Queue[Union, 'lvl'], *, sel=0,
-                filt_lvl=1) -> b'filt_type(din, lvl, sel)':
+async def qfilt_union(din: Queue[Union, 'lvl'], *, sel=0,
+                      filt_lvl=1) -> b'filt_type(din, lvl, sel)':
 
     data_reg = din.dtype.data.data(0)  # TODO
     eot_reg = Uint[din.dtype.lvl](0)

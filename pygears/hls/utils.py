@@ -1,5 +1,7 @@
 import ast
 import logging
+import textwrap
+import inspect
 
 from pygears import PluginBase
 from pygears.conf import register_custom_log, registry
@@ -58,16 +60,14 @@ def eval_expression(node, local_namespace):
         raise NameError
 
     return eval(
-        compile(
-            ast.Expression(ast.fix_missing_locations(node)),
-            filename="<ast>",
-            mode="eval"), types, globals())
+        compile(ast.Expression(ast.fix_missing_locations(node)),
+                filename="<ast>",
+                mode="eval"), types, globals())
 
 
 def eval_local_expression(node, local_namespace):
-    return eval(
-        compile(ast.Expression(node), filename="<ast>", mode="eval"),
-        local_namespace, globals())
+    return eval(compile(ast.Expression(node), filename="<ast>", mode="eval"),
+                local_namespace, globals())
 
 
 def find_target(node):
@@ -151,8 +151,9 @@ def get_bin_expr(op, operand1, operand2, module_data):
 def intf_parse(intf, target):
     scope = gather_control_stmt_vars(target, intf)
     if isinstance(intf, expr.IntfDef):
-        block_intf = expr.IntfDef(
-            intf=intf.intf, _name=intf.name, context='valid')
+        block_intf = expr.IntfDef(intf=intf.intf,
+                                  _name=intf.name,
+                                  context='valid')
     else:
         block_intf = expr.IntfDef(intf=intf, _name=None, context='valid')
     return scope, block_intf
@@ -309,8 +310,8 @@ def find_name_expression(node, module_data):
         for arg in node.args:
             add_to_list(arg_nodes, find_name_expression(arg, module_data))
 
-        from .ast_call import call_func
-        return call_func(node, arg_nodes, module_data)
+        from .ast_call import parse_func_call
+        return parse_func_call(node, arg_nodes, module_data)
 
     try:
         name = node.id
@@ -340,3 +341,17 @@ class HLSPlugin(PluginBase):
     @classmethod
     def bind(cls):
         register_custom_log('hls', logging.WARNING)
+
+
+def get_function_source(func):
+    try:
+        source = inspect.getsource(func)
+    except OSError:
+        try:
+            source = func.__source__
+        except AttributeError:
+            raise Exception(
+                f'Cannot obtain source code for the gear {gear.definition.__name__}: {gear}'
+            )
+
+    return textwrap.dedent(source)
