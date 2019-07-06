@@ -63,7 +63,11 @@ async def drv(*, t, seq) -> b't':
             yield val
         else:
             for d in TypeDrvVisitor().visit(val, t):
-                yield t(d)
+                try:
+                    yield t(d)
+                except TypeError:
+                    sim_log().error(
+                        f'Cannot convert value "{d}" to type "{repr(t)}"')
 
     raise GearDone
 
@@ -251,8 +255,12 @@ async def check(din, *, ref):
         while True:
             data = await din.get()
             items.append(data)
-            sim_assert(data == next(iter_ref),
-                       f'mismatch. Got: {items}, expected: {ref}')
+            ref_item = next(iter_ref)
+            sim_assert(
+                data == ref_item,
+                f'mismatch in item {len(items)-1}. Got: {data}, expected: {ref_item}'
+            )
+
     except (GearDone, StopIteration):
         sim_assert(items == ref, f'mismatch. Got: {items}, expected: {ref}')
 
