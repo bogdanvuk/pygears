@@ -6,7 +6,7 @@ from pygears.conf import Inject, inject, registry, PluginBase, safe_bind
 
 from .funcutils import FunctionMaker
 from .partial import Partial
-from .util import doublewrap
+from .util import doublewrap, get_function_context_dict
 
 
 def alternative(*base_gear_defs):
@@ -63,7 +63,7 @@ def create_gear_definition(func, gear_resolver=None, **meta_kwds):
         'meta_kwds': meta_kwds,
         'gear_func': func
     }
-    execdict.update(func.__globals__)
+    execdict.update(get_function_context_dict(func))
 
     invocation = find_invocation(func)
     body = f'return gear_resolver(gear_func, meta_kwds, {invocation})'

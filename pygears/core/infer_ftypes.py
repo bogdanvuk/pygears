@@ -58,14 +58,6 @@ def resolve_param(val, match, namespace):
 
 def infer_ftypes(params, args, namespace={}, allow_incomplete=False):
 
-    for name in args:
-        t = params[name]
-        if not type_is_specified(t):
-            err = TypeMatchError(
-                f"Incomplete type {repr(t)} for argument '{name}'")
-            err.params = params
-            raise err
-
     # Add all registered objects (types and transformations) to the namespace
     namespace = dict(namespace)
     namespace.update(registry('gear/type_arith'))
@@ -119,8 +111,8 @@ def infer_ftypes(params, args, namespace={}, allow_incomplete=False):
 
                 except Exception as e:
                     err = TypeMatchError(
-                        f"{str(e)}\n - when deducing type for argument "
-                        f"'{name}'")
+                        f'{str(e)}\n - when deducing type for argument '
+                        f'"{name}"')
                     err.params = match
                     raise err
             else:
@@ -147,7 +139,7 @@ def infer_ftypes(params, args, namespace={}, allow_incomplete=False):
                 except Exception as e:
                     if final_check:
                         err = type(e)(f'{str(e)}\n - when resolving '
-                                      f'parameter {name}: {val}')
+                                      f'parameter "{name}": {val}')
                         err.params = match
                         raise err
 

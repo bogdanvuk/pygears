@@ -1,8 +1,10 @@
+import os
 import copy
 import inspect
 
+from dataclasses import dataclass
 from pygears.conf import PluginBase, registry, safe_bind
-
+from traceback import walk_stack
 from .intf import Intf
 from .port import InPort, OutPort
 from .hier_node import NamedHierNode
@@ -22,11 +24,6 @@ class GearArgsNotSpecified(Exception):
 
 def module():
     return registry('gear/current_module')
-
-
-import os
-from traceback import (extract_stack, extract_tb, format_list, walk_stack,
-                       walk_tb)
 
 
 def filter_internals(t):
@@ -178,9 +175,6 @@ class Gear(NamedHierNode):
             super().remove()
         except ValueError:
             pass
-
-
-from dataclasses import dataclass
 
 
 @dataclass

@@ -3,7 +3,7 @@ import sys
 
 from pygears.conf import bind, core_log, registry, safe_bind, MultiAlternativeError
 from pygears.typing import Any
-from pygears.core.util import is_standard_func
+from pygears.core.util import is_standard_func, get_function_context_dict
 
 from .intf import Intf
 from .infer_ftypes import TypeMatchError, infer_ftypes, type_is_specified
@@ -45,11 +45,11 @@ def check_args_specified(args):
     for name, intf in args.items():
         if not isinstance(intf, Intf):
             raise GearArgsNotSpecified(
-                f"Unresolved input argument {name}: {repr(intf)}")
+                f'Unresolved input argument "{name}": {repr(intf)}')
 
         if not type_is_specified(intf.dtype):
             raise GearArgsNotSpecified(
-                f"Input argument {name} has unresolved type {repr(intf.dtype)}"
+                f'Input argument "{name}" has unresolved type "{repr(intf.dtype)}"'
             )
 
 
@@ -299,7 +299,7 @@ def gear_base_resolver(func,
         args, annotations, const_args, ret_outnames = resolve_args(
             args, paramspec.args, paramspec.annotations, paramspec.varargs)
     except (TooManyArguments, GearArgsNotSpecified) as e:
-        err = type(e)(f'{str(e)}, when instantiating {name}')
+        err = type(e)(f'{str(e)}, when instantiating "{name}"')
 
     if err:
         raise err
@@ -323,7 +323,9 @@ def gear_base_resolver(func,
     }
 
     try:
-        params = infer_params(args, param_templates, context=func.__globals__)
+        params = infer_params(args,
+                              param_templates,
+                              context=get_function_context_dict(func))
     except TypeMatchError as e:
         err = TypeMatchError(f'{str(e)}, of the module "{name}"')
         params = e.params

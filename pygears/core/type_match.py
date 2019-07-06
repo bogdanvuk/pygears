@@ -26,7 +26,7 @@ def _type_match_rec(t, pat, matches):
             if repr(t) != repr(
                     matches[pat]) and t != Any and matches[pat] != Any:
                 raise TypeMatchError(
-                    f"Ambiguous match for parameter {pat}: {type_repr(t)} "
+                    f'Ambiguous match for parameter "{pat}": {type_repr(t)} '
                     f"and {type_repr(matches[pat])}")
         else:
             try:
