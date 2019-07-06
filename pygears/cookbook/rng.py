@@ -18,12 +18,10 @@ def rng_out_type(cfg, cnt_steps):
 
 
 @gear(hdl={'compile': True})
-async def py_rng(cfg: TCfg,
-                 *,
-                 t_dout=b'rng_out_type(cfg, cnt_steps)',
-                 cnt_steps=False,
-                 incr_steps=False) -> Queue['t_dout']:
-    data = t_dout(0)
+async def py_rng(cfg: TCfg, *, cnt_steps=False,
+                 incr_steps=False) -> Queue['rng_out_type(cfg, cnt_steps)']:
+
+    data = module().tout.data(0)
 
     async with cfg as (offset, cnt, incr):
         if not cnt_steps:
@@ -101,11 +99,10 @@ def rng(cfg: TCfg, *, cnt_steps=False, incr_steps=False, cnt_one_more=False):
         cfg = cfg | fmap(f=(Int, ) * len(cfg.dtype))
 
     if cnt_one_more:
-        return cfg | sv_rng(
-            signed=any_signed,
-            cnt_steps=cnt_steps,
-            incr_steps=incr_steps,
-            cnt_one_more=cnt_one_more)
+        return cfg | sv_rng(signed=any_signed,
+                            cnt_steps=cnt_steps,
+                            incr_steps=incr_steps,
+                            cnt_one_more=cnt_one_more)
 
     return cfg | py_rng(cnt_steps=cnt_steps, incr_steps=incr_steps)
 

@@ -100,6 +100,14 @@ def parse_gear_body(gear):
     # astpretty.pprint(body_ast)
 
     in_ports = {p.basename: IntfDef(p) for p in gear.in_ports}
+    local_namespace = {
+            **{p.basename: p.consumer
+               for p in gear.in_ports},
+            **gear.explicit_params,
+            **get_function_context_dict(gear.func)
+        }
+    local_namespace['module'] = lambda: gear
+
     hdl_data = ModuleData(
         gear=gear,
         in_ports=in_ports,
@@ -110,12 +118,7 @@ def parse_gear_body(gear):
         variables={},
         in_intfs={},
         out_intfs={},
-        local_namespace={
-            **{p.basename: p.consumer
-               for p in gear.in_ports},
-            **gear.explicit_params,
-            **get_function_context_dict(gear.func)
-        })
+        local_namespace=local_namespace)
 
     # find interfaces
     intf = IntfFinder(hdl_data)

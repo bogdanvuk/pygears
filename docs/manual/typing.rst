@@ -136,3 +136,4 @@ Types reference
    typing/int
    typing/tuple
    typing/array
+   typing/queue

@@ -9,3 +9,4 @@ Implemented in :py:mod:`pygears.common`
    sieve
    ccat
    filt
+   rng

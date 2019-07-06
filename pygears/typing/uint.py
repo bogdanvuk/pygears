@@ -293,6 +293,9 @@ class IntType(IntegerType):
         else:
             return super().__str__()
 
+    def is_specified(self):
+        return bool(self.args)
+
 
 class Int(Integer, metaclass=IntType):
     """Fixed width generic signed integer data type.
@@ -328,9 +331,6 @@ class Int(Integer, metaclass=IntType):
 
         check_width(val, res.width if val < 0 else res.width - 1)
         return res
-
-    def is_specified(self):
-        return bool(self.args)
 
     def __eq__(self, other):
         return int(self) == int(other)
