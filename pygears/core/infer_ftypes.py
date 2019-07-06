@@ -58,6 +58,14 @@ def resolve_param(val, match, namespace):
 
 def infer_ftypes(params, args, namespace={}, allow_incomplete=False):
 
+    for name in args:
+        t = params[name]
+        if not type_is_specified(t):
+            err = TypeMatchError(
+                f"Incomplete type {repr(t)} for argument '{name}'")
+            err.params = params
+            raise err
+
     # Add all registered objects (types and transformations) to the namespace
     namespace = dict(namespace)
     namespace.update(registry('gear/type_arith'))
@@ -73,13 +81,6 @@ def infer_ftypes(params, args, namespace={}, allow_incomplete=False):
 
         return False
 
-    # print(repr(params['return']))
-    # print(repr(params['arg1']))
-    # if (repr(params['return']) == "Tuple['T', Uint['lvl']]") and (repr(
-    #         params['arg1']) == "Queue['T', 3]"):
-    #     import pdb
-    #     pdb.set_trace()
-
     postponed = {
         name: val
         for name, val in params.items() if is_postponed(name, val)
@@ -88,11 +89,6 @@ def infer_ftypes(params, args, namespace={}, allow_incomplete=False):
         name: val
         for name, val in params.items() if name not in postponed
     }
-
-    # print('Postponed: ', postponed)
-    # print('Match: ', match)
-
-    # import pdb; pdb.set_trace()
 
     substituted = True
     final_check = False
@@ -140,37 +136,20 @@ def infer_ftypes(params, args, namespace={}, allow_incomplete=False):
                         match[name] = new_p
                         del postponed[name]
                         break
+                    elif final_check:
+                        if new_p is not None:
+                            raise TypeMatchError(
+                                f'Incomplete type: {repr(new_p)}')
+                        else:
+                            raise TypeMatchError(
+                                f'Incomplete type: {repr(val)}')
 
                 except Exception as e:
                     if final_check:
-                        raise type(e)(f'{str(e)} - when resolving '
+                        err = type(e)(f'{str(e)}\n - when resolving '
                                       f'parameter {name}: {val}')
-
-            # try:
-            #     substituted, new_p = resolve_param(val, match, namespace)
-
-            #     if name in args:
-            #         new_p = args[name]
-            #         substituted = type_is_specified(new_p)
-
-            #     if substituted and (name == 'return'):
-            #         substituted = type_is_specified(new_p)
-
-            #     if substituted:
-            #         if name == 'return':
-            #             substituted = type_is_specified(new_p)
-
-            #         if name in args:
-            #             new_p = copy_field_names(new_p, params[name])
-            #             args[name] = new_p
-
-            #         match[name] = new_p
-            #         del postponed[name]
-            #         break
-            # except Exception as e:
-            #     if final_check:
-            #         raise type(e)(f'{str(e)} - when resolving '
-            #                       f'parameter {name}: {val}')
+                        err.params = match
+                        raise err
 
         final_check = not substituted and not final_check
 
