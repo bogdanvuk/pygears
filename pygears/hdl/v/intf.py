@@ -31,7 +31,7 @@ class VIntfGen:
     def traced(self):
         return any(
             fnmatch.fnmatch(self.intf.name, p)
-            for p in registry('svgen/debug_intfs'))
+            for p in registry('hdl/debug_intfs'))
 
     @inject
     def get_inst(self,

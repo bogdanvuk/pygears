@@ -41,11 +41,10 @@ def dualcycle(din0, din1) -> (b'din0[0]', b'din1[0]'):
 def dualcycle_wrap_thin(din) -> b'din[0][0]':
     middle = Intf(din.dtype[0])
 
-    return dualcycle(
-        din,
-        middle,
-        intfs={'dout0': middle},
-        sim_cls=partial(SimVerilated, timeout=1))
+    return dualcycle(din,
+                     middle,
+                     intfs={'dout0': middle},
+                     sim_cls=partial(SimVerilated, timeout=1))
 
 
 @gear
@@ -54,11 +53,10 @@ def dualcycle_wrap_comb_middle(din) -> b'din[0][0]':
 
     middle_back = middle | fmap(f=(add(0), add(0)))
 
-    return dualcycle(
-        din,
-        middle_back,
-        intfs={'dout0': middle},
-        sim_cls=partial(SimVerilated, timeout=1))
+    return dualcycle(din,
+                     middle_back,
+                     intfs={'dout0': middle},
+                     sim_cls=partial(SimVerilated, timeout=1))
 
 
 @gear
@@ -67,11 +65,10 @@ def dualcycle_wrap_decouple_middle(din) -> b'din[0][0]':
 
     middle_back = middle | decoupler
 
-    return dualcycle(
-        din,
-        middle_back,
-        intfs={'dout0': middle},
-        sim_cls=partial(SimVerilated, timeout=1))
+    return dualcycle(din,
+                     middle_back,
+                     intfs={'dout0': middle},
+                     sim_cls=partial(SimVerilated, timeout=1))
 
 
 def multicycle_test_gen(tmpdir, func, latency):
@@ -79,10 +76,9 @@ def multicycle_test_gen(tmpdir, func, latency):
 
     data = [((i, 1), 2) for i in range(data_num)]
 
-    directed(
-        drv(t=Tuple[Tuple[Uint[8], Uint[8]], Uint[8]], seq=data),
-        f=func,
-        ref=list(range(data_num)))
+    directed(drv(t=Tuple[Tuple[Uint[8], Uint[8]], Uint[8]], seq=data),
+             f=func,
+             ref=list(range(data_num)))
 
     sim(outdir=tmpdir)
 
@@ -94,42 +90,11 @@ def test_multicycle_thin(tmpdir):
     multicycle_test_gen(tmpdir, dualcycle_wrap_thin, latency=2)
 
 
-# from pygears import bind
-# bind('svgen/debug_intfs', ['*'])
-# # from pygears.sim.modules import SimVerilated
-# # test_directed('build', SimVerilated)
-# test_multicycle_thin('build')
-
-
 def test_multicycle_comb_middle(tmpdir):
     # One additional cycle is needed for Verilator timeout set above
     multicycle_test_gen(tmpdir, dualcycle_wrap_comb_middle, latency=2)
 
 
-# test_multicycle_comb_middle('build')
-
-
 def test_multicycle_decouple_middle(tmpdir):
     # One additional cycle is needed for Verilator timeout set above
     multicycle_test_gen(tmpdir, dualcycle_wrap_decouple_middle, latency=4)
-
-
-# test_multicycle_decouple_middle('build')
-
-# @gear
-# async def connect(din) -> b'din':
-#     async with din as d:
-#         yield d
-
-# def test_single_cycle():
-#     feedback = Intf(Uint[8])
-#     inp = drv(t=Uint[8], seq=[1])
-
-#     outp = multicycle(inp, feedback)
-
-#     feedback |= outp[0] | connect
-#     outp[1] | shred
-
-#     sim()
-
-# test_single_cycle()

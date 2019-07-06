@@ -92,9 +92,9 @@ class SimVerilated(CosimBase):
             self.build()
             sim_log().info(f'Done')
 
-        tracing_enabled = bool(registry('svgen/debug_intfs'))
+        tracing_enabled = bool(registry('hdl/debug_intfs'))
         if tracing_enabled:
-            sim_log().info(f"Debug: {registry('svgen/debug_intfs')}")
+            sim_log().info(f"Debug: {registry('hdl/debug_intfs')}")
             self.trace_fn = f'{self.outdir}/vlt_dump.vcd'
             try:
                 subprocess.call(f"rm -f {self.trace_fn}", shell=True)
@@ -152,8 +152,8 @@ class SimVerilated(CosimBase):
         super().setup()
 
     def build(self):
-        print('Debugging: ', registry('svgen/debug_intfs'))
-        tracing_enabled = bool(registry('svgen/debug_intfs'))
+        print('Debugging: ', registry('hdl/debug_intfs'))
+        tracing_enabled = bool(registry('hdl/debug_intfs'))
         context = {
             'in_ports': self.rtlnode.in_ports,
             'out_ports': self.rtlnode.out_ports,
