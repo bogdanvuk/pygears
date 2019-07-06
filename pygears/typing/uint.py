@@ -135,6 +135,9 @@ class IntegerType(EnumerableGenericMeta):
 
     __rmul__ = __mul__
 
+    def is_specified(self):
+        return False
+
     def __getitem__(self, index):
         if not self.is_specified():
             return super().__getitem__(index)
@@ -180,9 +183,9 @@ class Integer(int, metaclass=IntegerType):
             res = cls[bitw(val)](int(val))
         else:
             if typeof(cls, Uint):
-                res = super(Integer, cls).__new__(
-                    cls,
-                    int(val) & ((1 << len(cls)) - 1))
+                res = super(Integer,
+                            cls).__new__(cls,
+                                         int(val) & ((1 << len(cls)) - 1))
             else:
                 res = super(Integer, cls).__new__(cls, val)
 
@@ -326,12 +329,8 @@ class Int(Integer, metaclass=IntType):
         check_width(val, res.width if val < 0 else res.width - 1)
         return res
 
-    # def __int__(self):
-    #     val = super(Integer, self).__int__()
-    #     if val >= (1 << (self.width - 1)):
-    #         val -= 1 << self.width
-
-    #     return val
+    def is_specified(self):
+        return bool(self.args)
 
     def __eq__(self, other):
         return int(self) == int(other)
@@ -358,6 +357,9 @@ class UintType(IntegerType):
     >>> u16 = Uint[16]
 
     """
+
+    def is_specified(self):
+        return bool(self.args)
 
     def __sub__(self, other):
         """Returns a Tuple of the result type and overflow bit.

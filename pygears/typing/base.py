@@ -171,16 +171,16 @@ class GenericMeta(TypingMeta):
                 return False
 
         if self.args:
-            spec = True
             for a in self.args:
                 try:
-                    spec &= a.is_specified()
+                    if not a.is_specified():
+                        return False
                 except AttributeError:
                     if isinstance(a, (str, bytes)):
                         return False
                         # spec &= (templ_var_re.search(a) is None)
 
-            return spec
+            return True
         else:
             return False
 
