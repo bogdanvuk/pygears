@@ -1,19 +1,14 @@
 import logging
-import os
 import sys
 import textwrap
 import inspect
-from enum import IntEnum
 from functools import partial
-from traceback import (extract_stack, extract_tb, format_exception_only,
-                       format_list, walk_stack, walk_tb, TracebackException)
+from traceback import TracebackException
 
-from pygears.definitions import ROOT_DIR
+from .log import CustomLogger, LogPlugin, register_custom_log
+from .registry import Inject, bind, inject, registry
 
-from .log import register_custom_log, CustomLogger, LogPlugin, core_log
-from .pdb_patch import patch_pdb, unpatch_pdb
-from .registry import (Inject, PluginBase, RegistryHook, config, inject,
-                       registry, bind, safe_bind)
+from .trace_format import enum_traceback, TraceLevel, enum_stacktrace
 
 
 class MultiAlternativeError(Exception):
@@ -34,57 +29,10 @@ class MultiAlternativeError(Exception):
                 _, ln = inspect.getsourcelines(uwrp)
                 ret.append(f'  File "{fn}", line {ln}, in {uwrp.__name__}\n')
 
-            # ret.append('---------------------------------\n')
-            # ret.extend(traceback.format_tb(info[2]))
-            # exc_msg = '\n'.join(traceback.format_exception_only(err_cls, err))
             exc_msg = register_issue(err_cls, err)
             ret.append(textwrap.indent(exc_msg, 4 * ' '))
-            # ret.append('---------------------------------\n')
-            # ret.append(exc_msg)
+
         return textwrap.indent(str(''.join(ret)), 2 * ' ')
-        # return str(''.join(ret))
-
-
-class TraceLevel(IntEnum):
-    debug = 0
-    user = 1
-
-
-def set_trace_level(var, val):
-    if val == TraceLevel.user:
-        patch_pdb()
-    else:
-        unpatch_pdb()
-
-
-class TraceConfigPlugin(PluginBase):
-    @classmethod
-    def bind(cls):
-        safe_bind('trace/hooks', [])
-
-        config.define('trace/level',
-                      setter=set_trace_level,
-                      default=TraceLevel.user)
-
-        config.define(
-            'trace/ignore',
-            default=[os.path.join(ROOT_DIR, d) for d in ['core', 'conf']])
-
-
-def parse_trace(s):
-    if registry('trace/level') == TraceLevel.debug:
-        return s
-    else:
-        trace_fn = os.path.abspath(s.filename)
-        is_internal = any(
-            trace_fn.startswith(d) for d in config['trace/ignore'])
-
-        is_decorator_gen = trace_fn.startswith('<decorator-gen')
-
-        if is_internal or is_decorator_gen:
-            return None
-
-        return s
 
 
 @inject
@@ -98,20 +46,6 @@ def register_issue(err_cls, err, issues=Inject('trace/issues')):
         issues.append(err)
 
     return issue
-
-
-def enum_formated_stack_frames(summary):
-    for frame, display in zip(summary, summary.format()):
-        if parse_trace(frame):
-            yield display
-
-
-def enum_traceback(tr):
-    yield from enum_formated_stack_frames(extract_tb(tr))
-
-
-def enum_stacktrace():
-    yield from enum_formated_stack_frames(extract_stack())
 
 
 def register_exit_hook(hook, *args, **kwds):
@@ -141,7 +75,7 @@ def pygears_excepthook(exception_type,
     for hook in registry('trace/hooks'):
         try:
             hook()
-        except:
+        except Exception:
             pass
 
     if registry('trace/level') == TraceLevel.debug:
@@ -152,7 +86,7 @@ def pygears_excepthook(exception_type,
 
         try:
             print_hier(find('/'))
-        except Exception as e:
+        except Exception:
             pass
 
         log_exception(exception.with_traceback(tr))
@@ -180,13 +114,6 @@ def log_error_to_file(name, severity, msg):
 
 
 class TraceLog(CustomLogger):
-    # def __init__(self, name, verbosity=logging.INFO):
-    #     super().__init__(name, verbosity)
-
-    #     # change default for error
-    #     bind('logger/sim/error', 'exception')
-    #     bind('logger/sim/print_traceback', False)
-
     def get_format(self):
         return logging.Formatter('%(message)s')
 

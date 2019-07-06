@@ -47,6 +47,7 @@ from functools import partial
 from logging import CRITICAL, DEBUG, ERROR, INFO, NOTSET, WARNING
 
 from .registry import Inject, PluginBase, config, inject, safe_bind
+from .trace_format import enum_stacktrace
 
 HOOKABLE_LOG_METHODS = [
     'critical', 'exception', 'error', 'warning', 'info', 'debug'
@@ -139,8 +140,9 @@ class LogFmtFilter(logging.Filter):
                     stack_num = sum(1 for _ in f)
             else:
                 stack_num = 0
-            record.stack_file = f'\n\t File "{self.stack_traceback_fn}", line {stack_num}, for stacktrace'
-            record.err_file = f'\n\t File "{record.pathname}", line {record.lineno}, in {record.funcName}'
+            record.stack_file = f'\n  File "{self.stack_traceback_fn}", line {stack_num}, for stacktrace'
+            *_, last_frame = enum_stacktrace()
+            record.err_file = f'\n{last_frame}'[:-1]
 
         return True
 

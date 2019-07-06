@@ -91,8 +91,9 @@ def intercept_arguments(func, cb_named=None, cb_kwds=None, cb_pos=None):
 
         # get all passed arguments
         passed_args = list(
-            itertools.zip_longest(
-                named, args, fillvalue=inspect.Parameter.empty))
+            itertools.zip_longest(named,
+                                  args,
+                                  fillvalue=inspect.Parameter.empty))
 
         # get all named and keyword arguments
         for k, v in passed_args:

@@ -3,7 +3,8 @@ from .log import (register_custom_log, CustomLogger, LogFmtFilter, conf_log, cor
 from .registry import (PluginBase, bind, clear, load_plugin_folder, registry,
                        safe_bind, inject, Inject, MayInject,
                        inject_async, config)
-from .trace import TraceLevel, enum_traceback, pygears_excepthook, register_issue, MultiAlternativeError
+from .trace import pygears_excepthook, register_issue, MultiAlternativeError
+from .trace_format import TraceLevel, enum_traceback
 
 __all__ = [
     'PluginBase', 'bind', 'registry', 'clear', 'load_plugin_folder',
