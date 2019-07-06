@@ -285,7 +285,6 @@ class VCD(SimExtend):
 
     def intf_put(self, intf, val):
         if intf not in self.vcd_vars:
-            breakpoint()
             return True
 
         v = self.vcd_vars[intf]

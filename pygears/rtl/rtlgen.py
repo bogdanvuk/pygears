@@ -11,10 +11,6 @@ def rtlgen(top=None, force=False, **conf):
     elif isinstance(top, str):
         top = find(top)
 
-    # if force:
-    #     registry('rtl/gear_node_map').clear()
-
-    # breakpoint()
     if top in registry('rtl/gear_node_map'):
         return registry('rtl/gear_node_map')[top]
 

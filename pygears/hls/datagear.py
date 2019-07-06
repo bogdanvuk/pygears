@@ -19,24 +19,3 @@ def datagear(func, **meta_kwds):
                                      isasync=True,
                                      addsource=True)
     return create_gear_definition(gear_func, hdl={'compile': True})
-
-    # execdict = {
-    #     'create_gear_definition': create_gear_definition,
-    #     'gear_func': wrap_func
-    # }
-    # execdict.update(func.__globals__)
-
-    # invocation = find_invocation(func)
-    # body = f'return create_gear_definition(gear_func, meta_kwds, {invocation})'
-
-    # gear_func = FunctionMaker.create(
-    #     obj=func,
-    #     body=body,
-    #     evaldict=execdict,
-    #     addsource=True,
-    #     extra_kwds={
-    #         k: copy.copy(v)
-    #         for k, v in registry('gear/params/extra').items()
-    #     })
-
-    # functools.update_wrapper(gear_func, func)

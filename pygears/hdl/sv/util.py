@@ -170,7 +170,6 @@ class SVGenTypeVisitor(TypingVisitorBase):
 
 
 def svgen_typedef(dtype, name, depth=4):
-    # breakpoint()
     if isinstance(dtype, str):
         return f'typedef {dtype} {name}_t;'
     elif int(dtype) == 0:

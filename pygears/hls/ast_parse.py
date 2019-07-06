@@ -2,7 +2,7 @@ import ast
 import itertools
 from functools import singledispatch
 
-from pygears.typing import Array, Int, Integer, Uint, Unit, typeof
+from pygears.typing import Array, Int, Integer, Uint, Unit, typeof, Tuple
 
 from . import hls_expressions as expr
 from . import pydl_types as blocks
@@ -82,11 +82,10 @@ def parse_while(node, module_data):
     multi = []
     if isinstance(test, expr.ResExpr) and test.val:
         multi = True
-    pydl_node = blocks.Loop(
-        _in_cond=test,
-        stmts=[],
-        _exit_cond=expr.create_oposite(test),
-        multicycle=multi)
+    pydl_node = blocks.Loop(_in_cond=test,
+                            stmts=[],
+                            _exit_cond=expr.create_oposite(test),
+                            multicycle=multi)
 
     return parse_block(pydl_node, node.body, module_data)
 
@@ -129,8 +128,8 @@ def parse_asyncwith(node, module_data):
     context_expr = node.items[0].context_expr
 
     intf = find_name_expression(context_expr, module_data)
-    scope, block_intf = intf_parse(
-        intf=intf, target=node.items[0].optional_vars)
+    scope, block_intf = intf_parse(intf=intf,
+                                   target=node.items[0].optional_vars)
 
     module_data.hdl_locals.update(scope)
 
@@ -246,41 +245,53 @@ def parse_unaryop(node, module_data):
 def parse_subscript(node, module_data):
     val_expr = parse_ast(node.value, module_data)
 
-    if hasattr(node.slice, 'value'):
-        data_index = typeof(val_expr.dtype, (Array, Integer))
-        if not data_index:
-            try:
-                data_index = isinstance(
-                    val_expr, expr.OperandVal) and (len(val_expr.op.intf) > 1)
-            except TypeError:
-                pass
+    def get_slice(_slice, val_expr):
+        if hasattr(_slice, 'value'):
+            data_index = typeof(val_expr.dtype, (Array, Integer))
+            if not data_index:
+                try:
+                    data_index = isinstance(
+                        val_expr,
+                        expr.OperandVal) and (len(val_expr.op.intf) > 1)
+                except TypeError:
+                    pass
 
-        if data_index:
-            index = find_data_expression(node.slice.value, module_data)
-            if isinstance(index, expr.ResExpr):
-                index = int(index.val)
+            if data_index:
+                index = find_data_expression(_slice.value, module_data)
+                if isinstance(index, expr.ResExpr):
+                    index = int(index.val)
+
+                return index
+            else:
+                return eval_local_expression(_slice.value,
+                                             module_data.local_namespace)
         else:
-            index = eval_local_expression(node.slice.value,
-                                          module_data.local_namespace)
-    else:
-        slice_args = [
-            eval_local_expression(
-                getattr(node.slice, field), module_data.local_namespace)
-            for field in ['lower', 'upper'] if getattr(node.slice, field)
-        ]
+            slice_args = [
+                eval_local_expression(getattr(_slice, field),
+                                      module_data.local_namespace)
+                for field in ['lower', 'upper'] if getattr(_slice, field)
+            ]
 
-        index = slice(*tuple(arg for arg in slice_args))
-        if index.start is None:
-            index = slice(0, index.stop, index.step)
+            index = slice(*tuple(arg for arg in slice_args))
+            if index.start is None:
+                index = slice(0, index.stop, index.step)
+
+            return index
+
+    index = get_slice(node.slice, val_expr)
 
     if hasattr(node.value, 'id') and node.value.id in module_data.out_intfs:
         # conditional assginment, not subscript
-        for i, port in zip(
-                range(len(val_expr.op.intf)), module_data.out_ports.values()):
+        for i, port in zip(range(len(val_expr.op.intf)),
+                           module_data.out_ports.values()):
             port.context = expr.BinOpExpr((index, expr.ResExpr(i)), '==')
         return None
 
-    pydl_node = expr.SubscriptExpr(val_expr, index)
+    if not isinstance(index, slice) and isinstance(val_expr,
+                                                    expr.ConcatExpr):
+        pydl_node = val_expr.operands[index]
+    else:
+        pydl_node = expr.SubscriptExpr(val_expr, index)
 
     if pydl_node.dtype is Unit:
         return expr.ResExpr(Unit())

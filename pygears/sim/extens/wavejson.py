@@ -106,14 +106,9 @@ class WaveJSONWriter:
         return sig
 
     def change(self, sig, value, timestep, state=1):
-        # if sig.scope == ('rng', 'ccat', 'dout', 'data'):
-        #     breakpoint()
         self.values[sig][timestep] = WaveValue(state, value)
 
     def ack(self, sig, timestep):
-        # if sig.scope == ('rng', 'ccat', 'dout', 'data'):
-        #     breakpoint()
-
         vals = self.values[sig]
         if timestep in vals:
             self.values[sig][timestep].state = 3

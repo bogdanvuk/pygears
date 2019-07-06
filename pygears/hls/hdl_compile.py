@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from types import FunctionType
 
 from pygears.typing import Uint, bitw
+from pygears.core.util import get_function_context_dict
 
 from .utils import get_function_source
 from .assign_conditions import AssignConditions
@@ -54,11 +55,11 @@ class ModuleData:
 
     @property
     def optimize(self):
-        return self.gear.params['svgen'].get('pipeline', False)
+        return self.gear.params['hdl'].get('pipeline', False)
 
     @property
     def functions(self):
-        glob = self.gear.func.__globals__
+        glob = get_function_context_dict(self.gear.func)
         return {
             name: value
             for name, value in glob.items() if isinstance(value, FunctionType)
@@ -113,7 +114,7 @@ def parse_gear_body(gear):
             **{p.basename: p.consumer
                for p in gear.in_ports},
             **gear.explicit_params,
-            **gear.func.__globals__
+            **get_function_context_dict(gear.func)
         })
 
     # find interfaces

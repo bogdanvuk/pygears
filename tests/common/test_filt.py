@@ -92,7 +92,7 @@ def test_qfilt_union_delay(tmpdir, cosim_cls, din_delay, dout_delay, sel):
 def test_qfilt_delay(tmpdir, cosim_cls, din_delay, dout_delay):
     @datagear
     def even(x: Integer) -> Bool:
-        return x[0] == 0
+        return not x[0]
 
     directed(drv(t=Queue[Uint[8]], seq=[list(range(10)),
                                         list(range(10))])

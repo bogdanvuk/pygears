@@ -42,22 +42,9 @@ def parse_functions(node, module_data, returns=None):
     source = get_function_source(curr_func)
     func_ast = ast.parse(source).body[0]
 
-    replace_args = []
-    for arg in node.args:
-        try:
-            replace_args.append(arg.id)
-        except AttributeError:
-            try:
-                replace_args.append(arg.value.id)
-            except AttributeError:
-                try:
-                    replace_args.append(ResExpr(val=set_pg_type(arg.n)))
-                except:
-                    raise VisitError(f'Unknown replace arg in function')
-
     # replace_args = [n.id for n in node.args]
     replace_kwds = {n.arg: n.value.id for n in node.keywords}
-    arguments = find_original_arguments(func_ast.args, replace_args,
+    arguments = find_original_arguments(func_ast.args, node.args,
                                         replace_kwds)
 
     AstFunctionReplace(arguments, returns).visit(func_ast)
@@ -110,7 +97,7 @@ class AstFunctionReplace(ast.NodeTransformer):
             pass
 
         ret_targets = [ast.Name(name, ast.Load()) for name in self.returns]
-        return ast.Assign(ret_targets, node.value)
+        return ast.fix_missing_locations(ast.Assign(ret_targets, node.value))
 
 
 def max_expr(op1, op2):

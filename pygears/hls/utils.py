@@ -30,10 +30,13 @@ def set_pg_type(ret):
         if isinstance(ret, (list, tuple)):
             return tuple([set_pg_type(r) for r in ret])
 
-        if ret < 0:
-            ret = Int(ret)
-        else:
-            ret = Uint(ret)
+        if isinstance(ret, int):
+            if ret < 0:
+                return Int(ret)
+            else:
+                return Uint(ret)
+
+        raise AstTypeError('Unknown target type')
 
     return ret
 
