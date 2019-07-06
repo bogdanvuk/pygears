@@ -121,6 +121,9 @@ class WaveJSONWriter:
             self.values[sig][timestep] = WaveValue(3, None)
 
     def json(self):
+        if timestep() is None:
+            return {}
+
         def get_sig_scope(data, scope):
             if not scope:
                 return data

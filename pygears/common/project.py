@@ -2,7 +2,7 @@ from pygears import gear
 from pygears.typing import Queue
 
 
-@gear(hdl={'hdl_fn': 'project'})
+@gear
 async def project(din: Queue['tdin', 'din_lvl'],
                   *,
                   lvl=1,
