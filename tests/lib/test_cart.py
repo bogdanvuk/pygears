@@ -5,8 +5,8 @@ from pygears.typing import Uint, Queue, Tuple, Unit
 from pygears.lib import cart, cart_sync
 
 from pygears.sim import sim
-from pygears.cookbook.delay import delay_rng
-from pygears.cookbook.verif import drv, verif
+from pygears.lib.delay import delay_rng
+from pygears.lib.verif import drv, verif
 
 
 def test_two():

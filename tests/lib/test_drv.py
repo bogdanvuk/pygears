@@ -1,5 +1,5 @@
 import pytest
-from pygears.cookbook.verif import drv
+from pygears.lib.verif import drv
 from pygears.lib import shred
 from pygears.typing import Uint
 from pygears.sim import sim

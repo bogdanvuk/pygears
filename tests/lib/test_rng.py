@@ -2,9 +2,9 @@ import pytest
 
 from pygears import Intf, find, gear
 from pygears.lib import decoupler
-from pygears.cookbook.delay import delay_rng
-from pygears.cookbook.rng import py_rng, rng
-from pygears.cookbook.verif import directed, drv, verif
+from pygears.lib.delay import delay_rng
+from pygears.lib.rng import py_rng, rng
+from pygears.lib.verif import directed, drv, verif
 from pygears.sim import sim
 from pygears.typing import Int, Queue, Tuple, Uint
 from pygears.util.test_utils import formal_check

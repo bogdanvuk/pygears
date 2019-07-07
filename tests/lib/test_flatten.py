@@ -1,6 +1,6 @@
 from pygears.lib import flatten
 from pygears.typing import Queue, Uint, Unit
-from pygears.cookbook.verif import drv, verif
+from pygears.lib.verif import drv, verif
 from pygears import sim
 
 

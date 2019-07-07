@@ -1,8 +1,8 @@
 from pygears import Intf
 from pygears.lib import mul
-from pygears.cookbook.verif import verif
+from pygears.lib.verif import verif
 from pygears.sim import sim
-from pygears.cookbook.verif import drv
+from pygears.lib.verif import drv
 from pygears.typing import Int, Tuple, Uint
 from pygears.util.test_utils import synth_check
 

@@ -1,8 +1,8 @@
-from pygears.cookbook import sdp
-from pygears.cookbook.delay import delay_rng
-from pygears.cookbook.verif import directed
+from pygears.lib import sdp
+from pygears.lib.delay import delay_rng
+from pygears.lib.verif import directed
 from pygears.sim import sim
-from pygears.cookbook.verif import drv
+from pygears.lib.verif import drv
 from pygears.sim.modules.verilator import SimVerilated
 from pygears.typing import Tuple, Uint
 

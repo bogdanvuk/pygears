@@ -1,10 +1,10 @@
 import math
 import pytest
 
-from pygears.cookbook import iceil
-from pygears.cookbook.verif import directed
+from pygears.lib import iceil
+from pygears.lib.verif import directed
 from pygears.sim import sim
-from pygears.cookbook.verif import drv
+from pygears.lib.verif import drv
 from pygears.typing import Uint
 
 

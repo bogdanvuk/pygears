@@ -5,9 +5,9 @@ import pytest
 
 from pygears import Intf, gear
 from pygears.lib import decoupler
-from pygears.cookbook.delay import delay_rng
-from pygears.cookbook.trr import trr
-from pygears.cookbook.verif import directed, drv, verif
+from pygears.lib.delay import delay_rng
+from pygears.lib.trr import trr
+from pygears.lib.verif import directed, drv, verif
 from pygears.sim import sim
 from pygears.sim.extens.randomization import create_constraint, rand_seq
 from pygears.sim.extens.svrand import SVRandSocket

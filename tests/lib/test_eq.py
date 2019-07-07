@@ -1,7 +1,7 @@
 from pygears import gear
-from pygears.cookbook.verif import verif
+from pygears.lib.verif import verif
 from pygears.sim import sim
-from pygears.cookbook.verif import drv
+from pygears.lib.verif import drv
 from pygears.typing import Uint
 from pygears.lib import eq
 

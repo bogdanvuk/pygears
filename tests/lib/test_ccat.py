@@ -5,8 +5,8 @@ from pygears.typing import Uint, Queue
 from pygears.lib import ccat
 from pygears import Intf
 
-from pygears.cookbook.delay import delay_rng
-from pygears.cookbook.verif import directed, drv, verif
+from pygears.lib.delay import delay_rng
+from pygears.lib.verif import directed, drv, verif
 from pygears.sim import sim
 
 

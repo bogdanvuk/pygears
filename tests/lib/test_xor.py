@@ -1,6 +1,6 @@
 from pygears import gear
 from pygears.lib import xor
-from pygears.cookbook.verif import drv, verif
+from pygears.lib.verif import drv, verif
 from pygears.sim import sim
 from pygears.typing import Uint
 

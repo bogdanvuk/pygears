@@ -5,12 +5,12 @@ import pytest
 
 from pygears import Intf, gear
 from pygears.lib import decoupler
-from pygears.cookbook import chop, delay_rng, directed, verif
+from pygears.lib import chop, delay_rng, directed, verif
 from pygears.sim import sim
 from pygears.sim.extens.randomization import create_constraint, rand_seq
 from pygears.sim.extens.scvrand import SCVRand
 from pygears.sim.extens.svrand import SVRandSocket
-from pygears.cookbook.verif import drv
+from pygears.lib.verif import drv
 from pygears.sim.modules.sim_socket import SimSocket
 from pygears.sim.modules.verilator import SimVerilated
 from pygears.typing import Queue, Tuple, Uint

@@ -1,8 +1,8 @@
-from pygears.cookbook.verif import directed
+from pygears.lib.verif import directed
 from pygears.sim import sim
-from pygears.cookbook.verif import drv
+from pygears.lib.verif import drv
 from pygears.typing import Tuple, Uint, Int
-from pygears.cookbook import max2
+from pygears.lib import max2
 
 
 def test_unsigned_overflow(tmpdir, sim_cls):

@@ -1,6 +1,6 @@
 from pygears import gear
 from pygears.lib import sub
-from pygears.cookbook.verif import directed, drv, verif
+from pygears.lib.verif import directed, drv, verif
 from pygears.sim import sim
 from pygears.typing import Int, Tuple, Uint
 

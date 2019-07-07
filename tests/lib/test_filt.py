@@ -4,8 +4,8 @@ import pytest
 
 from pygears import Intf, gear
 from pygears.lib import decoupler, filt, filt_by
-from pygears.cookbook.delay import delay_rng
-from pygears.cookbook.verif import directed, drv, verif
+from pygears.lib.delay import delay_rng
+from pygears.lib.verif import directed, drv, verif
 from pygears.sim import sim
 from pygears.typing import Queue, Tuple, Uint, Union, typeof
 from pygears.util.test_utils import skip_ifndef, synth_check

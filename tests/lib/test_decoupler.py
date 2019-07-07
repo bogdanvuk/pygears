@@ -1,5 +1,5 @@
-from pygears.cookbook.delay import delay_rng
-from pygears.cookbook.verif import directed, drv, verif
+from pygears.lib.delay import delay_rng
+from pygears.lib.verif import directed, drv, verif
 from pygears import Intf, sim
 from pygears.lib import decoupler
 from pygears.typing import Uint

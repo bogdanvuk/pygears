@@ -3,8 +3,8 @@ import pytest
 from pygears.util.test_utils import synth_check
 from pygears.typing import Union, Uint
 from pygears.lib import demux, mux, demux_ctrl
-from pygears.cookbook.delay import delay_rng
-from pygears.cookbook.verif import drv, directed
+from pygears.lib.delay import delay_rng
+from pygears.lib.verif import drv, directed
 from pygears.sim import sim
 from pygears import Intf
 

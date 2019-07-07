@@ -2,7 +2,7 @@ from pygears import gear, Intf
 from pygears.lib import czip
 from pygears.typing import Tuple, Uint, Union, Queue
 from pygears.lib import fmap, demux, decoupler, fifo, union_collapse
-from pygears.cookbook import priority_mux, replicate
+from pygears.lib import priority_mux, replicate
 
 TCfg = Tuple[{'reduce_size': Uint['w_reduce_size'], 'init': 't_acc'}]
 

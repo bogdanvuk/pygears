@@ -1,8 +1,8 @@
 from pygears import Intf
 from pygears.typing import Uint, Queue, Unit
 from pygears.lib import quenvelope
-from pygears.cookbook.verif import directed
-from pygears.cookbook.verif import drv
+from pygears.lib.verif import directed
+from pygears.lib.verif import drv
 from pygears.sim import sim
 
 

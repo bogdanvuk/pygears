@@ -3,9 +3,9 @@ from pygears.lib import cast as cast_gear
 from pygears.typing import Tuple, Uint, Queue, Int
 from pygears import Intf
 from pygears.util.test_utils import skip_ifndef
-from pygears.cookbook.verif import verif
+from pygears.lib.verif import verif
 from pygears.sim import sim
-from pygears.cookbook.verif import drv
+from pygears.lib.verif import drv
 from pygears.sim.modules.verilator import SimVerilated
 
 
