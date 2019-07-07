@@ -1,12 +1,12 @@
 from pygears import gear, Intf
 from pygears.typing import Int, Uint, typeof, Array, Tuple
-from pygears.common import dreg, const, union_collapse
-from pygears.cookbook import priority_mux
+from pygears.lib import dreg, const, union_collapse
+from pygears.lib import priority_mux
 
 from pygears.hdl.sv import svgen
 from pygears.sim.modules.verilator import SimVerilated
 from pygears.sim import sim
-from pygears.cookbook.verif import drv
+from pygears.lib.verif import drv
 
 from math import *
 import numpy as np

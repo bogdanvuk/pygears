@@ -1,6 +1,6 @@
 from pygears.hdl.sv.svmod import SVModuleGen
 from pygears.hdl.sv import SVGenPlugin
-from pygears.common.demux import demux_zip
+from pygears.lib.demux import demux_zip
 from .syncguard import SVGenSyncGuard
 
 

@@ -1,6 +1,6 @@
 from pygears import Intf
 from pygears.typing import Union, Uint, Tuple
-from pygears.common.expand import expand
+from pygears.lib.expand import expand
 
 from pygears.util.test_utils import svgen_check
 

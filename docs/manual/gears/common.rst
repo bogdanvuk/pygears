@@ -1,7 +1,7 @@
 Common
 ======
 
-Implemented in :py:mod:`pygears.common`
+Implemented in :py:mod:`pygears.lib`
 
 .. toctree::
    :maxdepth: 2

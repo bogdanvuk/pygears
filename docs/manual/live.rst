@@ -308,7 +308,7 @@ Proba
           editor.session.insert({
               row: 0,
               column: 0
-          }, `from pygears.common import ${gear}\n`)
+          }, `from pygears.lib import ${gear}\n`)
 
       }
 
@@ -348,9 +348,9 @@ Proba
                   }
               });
       } else {
-          editor.setValue('from pygears.cookbook import rng\n' +
-                          'from pygears.common import shred\n' +
-                          'from pygears.cookbook.verif import drv\n' +
+          editor.setValue('from pygears.lib import rng\n' +
+                          'from pygears.lib import shred\n' +
+                          'from pygears.lib.verif import drv\n' +
                           'from pygears.typing import Uint\n' +
                           '\n' +
                           'drv(t=Uint[4], seq=[10]) | rng | shred', -1);

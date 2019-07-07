@@ -1,16 +1,16 @@
 from pygears import module, Intf, gear, registry
-from pygears.cookbook.verif import directed
+from pygears.lib.verif import directed
 from pygears.sim import sim
-from pygears.cookbook.verif import drv
+from pygears.lib.verif import drv
 from pygears.sim.modules import SimVerilated
 from pygears.typing import Uint, Tuple
-from pygears.common import add, fmap, decoupler
+from pygears.lib import add, fmap, decoupler
 from functools import partial
 
 # from pygears.sim import delta, sim
 # from pygears.typing import Uint
-# from pygears.cookbook.verif import drv
-# from pygears.common import shred
+# from pygears.lib.verif import drv
+# from pygears.lib import shred
 
 # @gear
 # async def multicycle(*din) -> b'din':

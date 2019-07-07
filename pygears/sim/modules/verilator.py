@@ -1,5 +1,4 @@
 import atexit
-import glob
 import ctypes
 import os
 import subprocess
@@ -13,7 +12,6 @@ from pygears.sim.c_drv import CInputDrv, COutputDrv
 from pygears.sim.modules.cosim_base import CosimBase
 from pygears.hdl import hdlgen
 from pygears.util.fileio import save_file
-from pygears.synth.common import enum_hdl_files
 
 signal_spy_connect_t = Template("""
 /*verilator tracing_on*/

@@ -38,7 +38,7 @@ For an introductory **PyGears** example, checkout :ref:`echo <echo-examples>`. A
 
 Furthermore, **PyGears** offers a way to write verification environment in high-level Python language and co-simulate the generated RTL with an external HDL simulator. **PyGears** features a completely free solution using `Verilator <http://www.veripool.org/wiki/verilator>`_ simulator and standard SystemVerilog simulators via the `DPI <https://en.wikipedia.org/wiki/SystemVerilog_DPI>`_ (tested on proprietary Questa and NCSim simulators).
 
-**PyGears** also features a `library of standard modules <https://github.com/bogdanvuk/pygears/tree/master/pygears/common>`_ and the `cookbook library <https://github.com/bogdanvuk/pygears/tree/master/pygears/cookbook>`_ that are ready to be used in a **PyGears** design.
+**PyGears** also features a `library of standard modules <https://github.com/bogdanvuk/pygears/tree/master/pygears/lib>`_ and the `lib library <https://github.com/bogdanvuk/pygears/tree/master/pygears/lib>`_ that are ready to be used in a **PyGears** design.
 
 In **PyGears**, each HDL module is considered a Python function, called the *gear*, hence the design is described in form of a functional (gear) composition. In order for HDL modules to be composable in this way, they need to be designed in accordance with the **Gears** methodology. You should probably :ref:`read a short intro to Gears <gears-introduction-to-gears>` in order to understand this project from the hardware perspective.
 
@@ -65,9 +65,9 @@ Checkout the examples
 
 `Tests <https://github.com/bogdanvuk/pygears/tree/master/tests>`_: Contain many examples on how individual **PyGears** components operate
 
-`Library of standard modules <https://github.com/bogdanvuk/pygears/tree/master/pygears/common>`_
+`Library of standard modules <https://github.com/bogdanvuk/pygears/tree/master/pygears/lib>`_
 
-`Cookbook library <https://github.com/bogdanvuk/pygears/tree/master/pygears/cookbook>`_
+`Cookbook library <https://github.com/bogdanvuk/pygears/tree/master/pygears/lib>`_
 
 Contributions
 =============

@@ -71,5 +71,5 @@ def parse(content):
     return ret["name"], ports, intfs, params
 
 
-# with open('/data/projects/pygears/pygears/cookbook/svlib/rng.sv', 'r') as f:
+# with open('/data/projects/pygears/pygears/lib/svlib/rng.sv', 'r') as f:
 #     print(parse(f.read()))

@@ -2,10 +2,8 @@ import os
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-COMMON_SVLIB_DIR = os.path.join(ROOT_DIR, 'common', 'svlib')
-COOKBOOK_SVLIB_DIR = os.path.join(ROOT_DIR, 'cookbook', 'svlib')
+LIB_SVLIB_DIR = os.path.join(ROOT_DIR, 'lib', 'svlib')
 USER_SVLIB_DIR = os.path.expanduser('~/.pygears/svlib')
 
-COMMON_VLIB_DIR = os.path.join(ROOT_DIR, 'common', 'vlib')
-COOKBOOK_VLIB_DIR = os.path.join(ROOT_DIR, 'cookbook', 'vlib')
+LIB_VLIB_DIR = os.path.join(ROOT_DIR, 'lib', 'vlib')
 USER_VLIB_DIR = os.path.expanduser('~/.pygears/vlib')

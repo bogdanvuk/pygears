@@ -1,0 +1,37 @@
+{%- import 'snippet.j2' as snippet -%}
+
+{% set Queue = import_from('pygears.typing', 'Queue') %}
+{% set typeof = import_from('pygears.typing', 'typeof') %}
+{% set din_data_cat = import_from('pygears.lib.cat_util', 'din_data_cat') %}
+
+{%- set queue_intfs = [] -%}
+{%- for intf in intfs|isinput if typeof(intf['type'], Queue) -%}
+  {%- do queue_intfs.append(intf) -%}
+{%- endfor -%}
+
+{%- for intf in intfs -%}
+  {%- do intf.update({'lvl': intf['type'].lvl if typeof(intf['type'], Queue) else 0}) -%}
+{%- endfor -%}
+
+{% call snippet.module_with_intf_structs(module_name, intfs, intfs, comment) %}
+
+  {%- set queue_intf_names = queue_intfs|keymap("name") %}
+  {%- set input_intf_names = intfs|isinput|keymap("name") %}
+  {%- set max_lvl = intfs|isinput|keymap("lvl")|max %}
+
+    {% if max_lvl == 0 %}
+    assign dout_s = {{din_data_cat(intfs)}};
+    {% else %}
+    assign dout_s.eot = { {{queue_intf_names|format_list("%s_s.eot")|join(", ")}} };
+    assign dout_s.data = {{din_data_cat(intfs)}};
+    {% endif %}
+
+    logic  handshake;
+    assign dout.valid = {{input_intf_names|format_list("%s.valid")|join(" & ")}};
+    assign handshake = dout.valid && dout.ready;
+
+  {% for i in intfs|isinput %}
+    assign {{i['name']}}.ready = {{i['name']}}.valid ? handshake : dout.ready;
+  {% endfor %}
+
+{% endcall %}

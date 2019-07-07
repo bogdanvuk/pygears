@@ -1,6 +1,6 @@
 
 from pygears import Intf
-from pygears.common.mux import mux
+from pygears.lib.mux import mux
 from pygears.typing import Queue, Uint
 from pygears.util.test_utils import svgen_check
 

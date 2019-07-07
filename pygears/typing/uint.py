@@ -15,7 +15,7 @@ from .unit import Unit
 
 
 class IntegerType(EnumerableGenericMeta):
-    """Defines common methods for all Integer based classes.
+    """Defines lib methods for all Integer based classes.
     """
 
     def __str__(self):
@@ -294,7 +294,7 @@ class IntType(IntegerType):
             return super().__str__()
 
     def is_specified(self):
-        return bool(self.args)
+        return EnumerableGenericMeta.is_specified(self)
 
 
 class Int(Integer, metaclass=IntType):
@@ -359,7 +359,7 @@ class UintType(IntegerType):
     """
 
     def is_specified(self):
-        return bool(self.args)
+        return EnumerableGenericMeta.is_specified(self)
 
     def __sub__(self, other):
         """Returns a Tuple of the result type and overflow bit.

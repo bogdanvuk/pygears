@@ -1,7 +1,7 @@
 # from pygears import gear
 # from pygears.typing import Uint
 # from pygears.sim import clk, drv, seqr, sim
-# from pygears.cookbook.verif import check
+# from pygears.lib.verif import check
 
 # from pygears.sim.extens.vcd import VCD
 

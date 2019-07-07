@@ -2,7 +2,7 @@ from pygears import gear
 from pygears.sim import sim
 from pygears.typing import Tuple, Integer, Uint
 from pygears.util.utils import gather
-from pygears.cookbook.verif import directed, drv
+from pygears.lib.verif import directed, drv
 from pygears.sim.modules import SimVerilated
 from pygears.hls import datagear
 

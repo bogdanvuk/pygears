@@ -1,5 +1,5 @@
 from pygears import Intf
-from pygears.common.czip import zip_cat, zip_sync
+from pygears.lib.czip import zip_cat, zip_sync
 from pygears.typing import Queue, Uint, Unit
 from pygears.util.test_utils import svgen_check
 

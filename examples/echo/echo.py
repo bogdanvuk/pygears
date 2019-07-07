@@ -1,7 +1,7 @@
 from pygears import gear, Intf
-from pygears.common import fifo, union_collapse, fmap, decoupler, filt
+from pygears.lib import fifo, union_collapse, fmap, decoupler, filt
 from pygears.typing import Int, ceil_pow2
-from pygears.cookbook import priority_mux
+from pygears.lib import priority_mux
 
 
 def float_to_fixp(number, precision, sample_width):

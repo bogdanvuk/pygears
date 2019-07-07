@@ -24,13 +24,16 @@ import pygears.core.gear_inst
 
 from pygears.core.intf import Intf
 
-import pygears.common
+import time
+start = time.time()
+import pygears.lib
+print(f"Imported lib in {time.time() - start}")
 import pygears.typing
 import pygears.typing.pprint
 
 # import os
 # from pygears.registry import load_plugin_folder
-# load_plugin_folder(os.path.join(os.path.dirname(__file__), 'common'))
+# load_plugin_folder(os.path.join(os.path.dirname(__file__), 'lib'))
 
 import pygears.hdl
 import pygears.rtl

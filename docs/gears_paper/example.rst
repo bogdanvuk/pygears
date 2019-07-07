@@ -6,7 +6,7 @@ An example: Moving Average Filter
 Implementation
 --------------
 
-To illustrate the Gears methodology and the PyGears framework we show how a moving average filter can be implemented. The moving average filter is a simple Low-Pass FIR filter commonly used for reducing random noise while retaining a sharp step response. The filter operates by averaging a number of points from the input signal to produce a single point of the output signal. In other words it performs a convolution of the input sequence :math:`\mathbf{x}` with a rectangular pulse of length :math:`M` and height :math:`1/M` as: 
+[Omitted long line with 1 matches]
 
 .. math:: y[i] = \frac{1}{M} \sum_{j = 0}^{M - 1}x[i + j]
    :label: filt_formula

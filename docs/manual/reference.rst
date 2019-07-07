@@ -32,5 +32,5 @@ Gears
 .. toctree::
    :maxdepth: 2
 
-   gears/common
+   gears/lib
    gears/simulation_gears

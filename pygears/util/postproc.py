@@ -1,6 +1,6 @@
 from .find import find
 from pygears import Intf
-from pygears.common import dreg as _dreg, decoupler as _decoupler
+from pygears.lib import dreg as _dreg, decoupler as _decoupler
 
 
 def pipeline(port_name):

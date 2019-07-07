@@ -4,7 +4,7 @@ from pygears import Intf, config, gear, sim
 from pygears.rtl import rtlgen
 from pygears.typing import Uint
 from pygears.sim.modules import SimVerilated
-from pygears.cookbook.verif import directed, drv
+from pygears.lib.verif import directed, drv
 from pygears.core.gear import InSig, OutSig
 
 

@@ -65,7 +65,7 @@ class Gear(NamedHierNode):
         self.const_args = const_args
 
         for name, val in self.const_args.items():
-            from pygears.common import const
+            from pygears.lib import const
             const(val=val, intfs=[args[name]])
 
         self.in_ports = []

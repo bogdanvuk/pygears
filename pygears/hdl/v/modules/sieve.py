@@ -1,4 +1,4 @@
-from pygears.common.sieve import sieve
+from pygears.lib.sieve import sieve
 from pygears.hdl.v import VGenPlugin
 from pygears.hdl.v.vmod import VModuleInst
 from pygears.hdl.sv.modules.sieve import get_sieve_stages

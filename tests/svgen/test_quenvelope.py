@@ -1,6 +1,6 @@
 from pygears import Intf
 from pygears.typing import Queue, Uint
-from pygears.common import quenvelope
+from pygears.lib import quenvelope
 from pygears.util.test_utils import svgen_check
 
 

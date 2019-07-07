@@ -1,6 +1,6 @@
 from pygears import bind
-from pygears.common.decoupler import decoupler_din
-from pygears.common import const
+from pygears.lib.decoupler import decoupler_din
+from pygears.lib import const
 from pygears.sim import sim_log
 from pygears.conf import inject, Inject
 from pygears.core.gear import Gear

@@ -1,4 +1,4 @@
 Concatenation
 =============
 
-.. autofunction:: pygears.common.ccat
+.. autofunction:: pygears.lib.ccat

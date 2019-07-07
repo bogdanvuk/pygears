@@ -1,6 +1,6 @@
 from pygears.hdl.sv import SVGenPlugin
 from pygears.hdl.sv.svmod import SVModuleGen
-from pygears.common.local_rst import local_rst
+from pygears.lib.local_rst import local_rst
 
 
 class SVGenLocalRst(SVModuleGen):

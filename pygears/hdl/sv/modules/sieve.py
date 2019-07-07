@@ -1,6 +1,6 @@
 import itertools
 
-from pygears.common.sieve import sieve
+from pygears.lib.sieve import sieve
 from pygears.hdl.sv import SVGenPlugin
 from pygears.hdl.sv.svmod import SVModuleGen
 from functools import partial

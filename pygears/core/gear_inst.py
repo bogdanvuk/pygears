@@ -67,7 +67,7 @@ def infer_const_args(args):
     const_args = {}
     for name, intf in args.items():
         if not isinstance(intf, Intf):
-            from pygears.common.const import get_literal_type
+            from pygears.lib.const import get_literal_type
             try:
                 const_args[name] = intf
                 intf = Intf(get_literal_type(intf))

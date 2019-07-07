@@ -158,7 +158,7 @@ At this moment, this interface has no source (producer), which has to be attende
       | fill_void(fill=din.dtype(0)) \
       | decoupler
 
-The FIFO gear is declared in `fifo.py <https://github.com/bogdanvuk/pygears/tree/develop/pygears/common/fifo.py>`_, and its SystemVerilog description is given in `fifo.sv <https://github.com/bogdanvuk/pygears/tree/develop/svlib/fifo.sv>`_. In the ``echo`` gear FIFO is used to delay the output audio samples before adding them back to the input stream. Parameters ``depth=fifo_depth`` and ``threshold=sample_dly_len`` are set using the values whose calculations were described earlier. Parameter ``threshold`` tells the FIFO the number of data it needs to contain before it starts outputting them. When ``threshold=0``, the FIFO outputs the data immediately.
+[Omitted long line with 1 matches]
 
 The function of the Fill Void gear is to supply the feedback loop with zeros until there are enough samples (``sample_dly_len`` of them) in the FIFO, at which moment the FIFO will start outputting the delayed samples. The definition of the Fill Void gear is given in the same file:: 
 

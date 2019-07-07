@@ -1,6 +1,6 @@
 from pygears.hdl.sv import SVGenPlugin
 from pygears.hdl.sv.svmod import SVModuleGen
-from pygears.common.union import union_sync
+from pygears.lib.union import union_sync
 from .syncguard import SVGenSyncGuard
 
 

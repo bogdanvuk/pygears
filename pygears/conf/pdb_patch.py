@@ -8,7 +8,7 @@ fn_skip = ['<*', f'{sys.prefix}/lib/*']
 
 module_skip = [
     'pygears.core.*', 'pygears.registry', 'pygears.util.*', 'inspect', 'enum',
-    'pygears.typing.*', 'pygears.sim.*', '<*', 'pygears.common.const'
+    'pygears.typing.*', 'pygears.sim.*', '<*', 'pygears.lib.const'
 ]
 
 

@@ -1,6 +1,6 @@
 from pygears.hdl.sv import SVGenPlugin
 from pygears.hdl.sv.svmod import SVModuleGen
-from pygears.common.align import align
+from pygears.lib.align import align
 
 
 class SVGenAlign(SVModuleGen):

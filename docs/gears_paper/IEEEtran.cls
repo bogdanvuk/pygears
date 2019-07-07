@@ -3188,7 +3188,7 @@ Using a default centering column instead}%
 \edef\@@IEEEappendNOEXPANDtoksA{\@IEEEtrantmptoksA={\the\@IEEEtrantmptoksA\the\toks8}}%
 \@@IEEEappendNOEXPANDtoksA}
 
-% define some common column types for the user
+% define some common column types for the user
 % math
 \IEEEeqnarraydefcol{l}{$\IEEEeqnarraymathstyle}{$\hfil}
 \IEEEeqnarraydefcol{c}{\hfil$\IEEEeqnarraymathstyle}{$\hfil}
@@ -5044,7 +5044,7 @@ between column types.}%
 % is used before the object, thus an offset of, say -3pt, can be given as a
 % correction.
 
-% Common combinations of these parameters include:
+% Common combinations of these parameters include:
 %
 % top baselineskip:   (and default values for offset, prevdepth, etc.)
 % \topskip            % for objects that appear at the top of a page

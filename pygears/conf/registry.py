@@ -169,7 +169,7 @@ def registry(key_path):
     generator will look for the SystemVerilog implementations of the gears:
 
     >>> registry('svgen/sv_paths')
-    ['/tools/home/.pygears/svlib', '/tools/home/pygears/pygears/common/svlib', '/tools/home/pygears/pygears/cookbook/svlib']
+    ['/tools/home/.pygears/svlib', '/tools/home/pygears/pygears/lib/svlib', '/tools/home/pygears/pygears/lib/svlib']
 
     """
 

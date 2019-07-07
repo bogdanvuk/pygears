@@ -1,4 +1,4 @@
 Sieve
 =====
 
-.. autofunction:: pygears.common.sieve(din, *, key) -> b'din[key]'
+.. autofunction:: pygears.lib.sieve(din, *, key) -> b'din[key]'

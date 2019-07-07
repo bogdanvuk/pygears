@@ -11,7 +11,7 @@ Features
 - Add less-then '<' operator
 - Offer standardized solution for various logging needs 
 - Provide option to skip all PyGears framework related frames in PDB debugger
-- Add `unary <https://github.com/bogdanvuk/pygears/blob/master/pygears/cookbook/unary.py>`_ gear to the cookbook library, which returns the unary representation of a binary number.
+- Add `unary <https://github.com/bogdanvuk/pygears/blob/master/pygears/lib/unary.py>`_ gear to the lib library, which returns the unary representation of a binary number.
 - Speed-up the PyGears simulator by using asycio.future
 
 Infrastructure
@@ -36,6 +36,6 @@ Bug-fixes
         stereo=False
     )
 
-- Fix `rng <https://github.com/bogdanvuk/pygears/blob/master/pygears/cookbook/rng.py>`_ for irregular cases where the counting range is not divisible by the step.
+- Fix `rng <https://github.com/bogdanvuk/pygears/blob/master/pygears/lib/rng.py>`_ for irregular cases where the counting range is not divisible by the step.
 
 - Fix '*' and '+' operations for Integer types

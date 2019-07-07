@@ -124,11 +124,11 @@ In order to instantiate the ``riscv`` gear, all the input interfaces need to be 
 
 .. verbosity:: 2
 
-First line of the function: :py:`reg_file_rd_req = instruction['rs1']`, forms a read request for the register file and results in the ``instruction_rs1`` gear shown in the graph above. The request consists only of the register ID from which to read the data, which is given in the ``rs1`` instruction field. Simply by slicing the ``instruction`` interface with the field name, I can tell PyGears to extract the desired part of the incoming data. For more information about slicing the :any:`typing/tuple` type, checkout :meth:`Tuple.__getitem__() <pygears:pygears.typing.tuple.TupleType.__getitem__>`. This is a zero-overhead abstraction and results in nothing but wiring in generated SystemVerilog. After Python executes this statement, the variable ``reg_file_rd_req`` contains the output interface of the ``instruction_rs1`` gear (this is a :any:`sieve <pygears.common.sieve>` gear, automatically generated whenever interfaces are sliced), which is later lead out of the ``riscv`` gear by returning the variable value: :py:`return reg_file_rd_req, reg_file_wr_req`.  
+[Omitted long line with 1 matches]
 
 .. verbosity:: 3
 
-In order to the get nice names for the automatically generated :any:`sieve <pygears.common.sieve>` gears, I need to set ``gear/naming/pretty_sieve`` configuration variable to ``True``. These configuration variables can be accessed and modified via the PyGears :ref:`registry <pygears:registry:registry>`. PyGears also supports the configuration files that are automatically loaded during the framework initialization. During the initialization, PyGears searches for the file with the name ``.pygears.py`` in the following locations: ``~/.pygears/``, current working directory, and all the parent directories of the current working directory. Current working directory is the location of the user python script being run where PyGears has been imported. I've placed the ``pretty_sieve`` configuration inside :giturl:`.pygears.py`, so that it is loaded for all scripts within ``pygears_riscv`` project. 
+[Omitted long line with 1 matches]
 
 .. verbosity:: 2
 
@@ -136,7 +136,7 @@ Next, data read from the register file is cast to an :any:`Int <typing/int>` to 
 
 Then, the signed addition is performed between the ``reg_data_signed`` and the ``imm`` instruction field, resulting in the ``add`` gear in the graph. Finally, the addition result is cast back to the type of the ``reg_data`` interface: ``reg_data.dtype``, which truncates the result by 1 bit and changes its type back to the unsigned integer. The interface carrying the result of these operations is stored in the variable ``add_res``. 
 
-Next, the write request :py:`reg_file_wr_req = ccat(instruction['rd'], add_res)` is formed, with which the register file is instructed to store the result of the addition (variable ``add_res``) into the register specified by the ``rd`` instruction field. These two pieces of information are combined in a :any:`typing/tuple` by using :any:`ccat <pygears.common.ccat>` (short for concatenation) gear from the :any:`pygears.common <gears/common>` library. 
+Next, the write request :py:`reg_file_wr_req = ccat(instruction['rd'], add_res)` is formed, with which the register file is instructed to store the result of the addition (variable ``add_res``) into the register specified by the ``rd`` instruction field. These two pieces of information are combined in a :any:`typing/tuple` by using :any:`ccat <pygears.lib.ccat>` (short for concatenation) gear from the :any:`pygears.lib <gears/lib>` library. 
 
 .. verbosity:: 1
 

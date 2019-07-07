@@ -24,7 +24,7 @@ Variables
   - ``gear/naming``: 
 
     - ``gear/naming/pretty_sieve`` (bool): Try to obtain a variable which was
-      sliced to form a :any:`sieve <common.sieve>`. Turned off by default
+      sliced to form a :any:`sieve <lib.sieve>`. Turned off by default
       because it impacts performance on large designs.
     - ``gear/naming/default_out_name`` (str): Name to give to gear output interfaces if none is specified. Default: 'dout'
   - ``gear/params``:

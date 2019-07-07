@@ -2,7 +2,6 @@ import shutil
 from itertools import islice
 import jinja2
 import os
-from pygears import registry
 from pygears.hdl import hdlgen
 from .common import list_hdl_files
 from .yosys import synth as yosys_synth

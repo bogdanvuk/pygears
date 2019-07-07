@@ -1,5 +1,5 @@
 Filter
 ======
 
-.. automodule:: pygears.common.filt
+.. automodule:: pygears.lib.filt
    :noindex:

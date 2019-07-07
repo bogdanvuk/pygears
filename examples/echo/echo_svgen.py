@@ -3,7 +3,7 @@ import shutil
 
 from echo import echo
 from pygears import Intf
-from pygears.definitions import COMMON_SVLIB_DIR
+from pygears.definitions import LIB_SVLIB_DIR
 from pygears.hdl.sv import svgen
 from pygears.typing import Int
 from pygears.util.print_hier import print_hier
@@ -22,7 +22,7 @@ print(f'Creating Vivado project inside {os.path.abspath("build/echo/vivado")}')
 shutil.rmtree('build/echo/vivado', ignore_errors=True)
 
 viv_cmd = (f'vivado -mode batch -source echo_synth.tcl -nolog -nojournal'
-           f' -tclargs {COMMON_SVLIB_DIR}')
+           f' -tclargs {LIB_SVLIB_DIR}')
 
 if os.system(viv_cmd) == 0:
     with open('build/echo/echo_utilization.txt') as f:
