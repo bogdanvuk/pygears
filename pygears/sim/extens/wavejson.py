@@ -14,6 +14,12 @@ from dataclasses import dataclass
 from typing import Any
 
 
+@dataclass
+class WaveIntf():
+    waves: dict
+    dtype: Any = None
+
+
 def register_traces_for_intf(dtype, scope, writer):
     vcd_vars = {}
 
@@ -36,7 +42,7 @@ def register_traces_for_intf(dtype, scope, writer):
 
             vcd_vars[name] = writer.register(basename, field_scope)
 
-    return vcd_vars
+    return WaveIntf(vcd_vars, dtype=dtype)
 
 
 class WaveJSONHierVisitor(HierVisitorBase):
@@ -59,20 +65,31 @@ class WaveJSONHierVisitor(HierVisitorBase):
     def Gear(self, module):
         self.enter_hier(module.basename)
 
-        if module in self.sim_map and module.params['sim_cls'] is None:
-            gear_vcd_scope = module.name[1:].replace('/', '.')
-            for p in itertools.chain(module.out_ports, module.in_ports):
-                if not is_trace_included(p, self.include, self.vcd_tlm):
-                    continue
+        # if module in self.sim_map and module.params['sim_cls'] is None:
+        gear_vcd_scope = module.name[1:].replace('/', '.')
+        for p in itertools.chain(module.in_ports, module.out_ports):
+            if not is_trace_included(p, self.include, self.vcd_tlm):
+                continue
 
-                scope = '.'.join([gear_vcd_scope, p.basename])
-                if isinstance(p, OutPort):
-                    intf = p.producer
-                else:
-                    intf = p.consumer
+            scope = '.'.join([gear_vcd_scope, p.basename])
+            if isinstance(p, OutPort):
+                intf = p.producer
+            else:
+                intf = p.consumer
 
-                self.vcd_vars[intf] = register_traces_for_intf(
-                    p.dtype, scope, self.writer)
+            in_queue = intf.in_queue
+            if in_queue:
+                intf = in_queue.intf
+
+            if intf.consumers:
+                print(f'{p.name}: {intf.consumers[0].name}')
+
+            intf_vars = self.vcd_vars.get(intf, [])
+
+            intf_vars.append(
+                register_traces_for_intf(p.dtype, scope, self.writer))
+
+            self.vcd_vars[intf] = intf_vars
 
         super().HierNode(module)
 
@@ -134,12 +151,10 @@ class WaveJSONWriter:
             return get_sig_scope(data[-1], scope[1:])
 
         data = {
-            'signal': [
-                {
-                    'name': 'clk',
-                    'wave': 'p' + '.' * (timestep() - 1)
-                }
-            ],
+            'signal': [{
+                'name': 'clk',
+                'wave': 'p' + '.' * (timestep() - 1)
+            }],
             'head': {
                 'tock': 0
             },
@@ -186,7 +201,7 @@ class WaveJSON(SimExtend):
     def __init__(self,
                  top,
                  trace_fn='pygears.json',
-                 include=['*'],
+                 include=Inject('hdl/debug_intfs'),
                  sim=Inject('sim/simulator'),
                  outdir=Inject('sim/artifacts_dir'),
                  sim_map=Inject('sim/map')):
@@ -216,13 +231,12 @@ class WaveJSON(SimExtend):
         if intf not in self.vcd_vars:
             return True
 
-        v = self.vcd_vars[intf]
-
-        if typeof(intf.dtype, TLM):
-            self.writer.change(v['data'], timestep(), str(val))
-        else:
-            visitor = WaveJSONValVisitor(v, self.writer, timestep())
-            visitor.visit(intf.dtype, '', val=val)
+        for v in self.vcd_vars[intf]:
+            if typeof(intf.dtype, TLM):
+                self.writer.change(v.waves['data'], timestep(), str(val))
+            else:
+                visitor = WaveJSONValVisitor(v.waves, self.writer, timestep())
+                visitor.visit(v.dtype, '', val=val)
 
         return True
 
@@ -231,8 +245,9 @@ class WaveJSON(SimExtend):
             return True
 
         ts = timestep()
-        for sig in self.vcd_vars[intf].values():
-            self.writer.ack(sig, ts)
+        for v in self.vcd_vars[intf]:
+            for sig in v.waves.values():
+                self.writer.ack(sig, ts)
 
         self.handhake.add(intf)
         return True

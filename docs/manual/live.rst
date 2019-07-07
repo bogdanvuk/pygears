@@ -35,24 +35,6 @@
         float: right;
     }
 
-    #cmdrun {
-        padding-left: 25px;
-        padding-right: 25px;
-        background-color: #5bb75b;
-        color: #ffffff;
-        text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
-        padding: 4px 12px;
-        margin-bottom: 0;
-        font-size: 14px;
-        line-height: 20px;
-        text-align: center;
-        vertical-align: middle;
-        cursor: pointer;
-        border: 1px solid #cccccc;
-        border-radius: 4px;
-        box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 1px 2px rgba(0,0,0,.05);
-        font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
-    }
     .loader {
         border: 0.15em solid #f3f3f3; /* Light grey */
         border-top: 0.15em solid #3498db; /* Blue */
@@ -180,7 +162,7 @@ Proba
 
     <div class="code-panel">
         <div class="header">
-            <button id="cmdrun" class="header-item" onClick="javascript:runScript()"><i class="icon-cog-alt"></i> Run!</button>
+            <button id="cmdrun" class="btn-run header-item" onClick="javascript:runScript()"><i class="icon-cog-alt"></i> Run!</button>
             <div id="result-div" class="btn-group header-item">
                 <button type="button" id="btn-result-zip" disabled="disabled" title="Download all result files as an archive"><i class="the-icons icon-download"></i></button>
                 <button type="button" id="btn-result-browse" disabled="disabled" title="Browse result files"><i class="the-icons icon-folder-open-1"></i></button>
@@ -189,12 +171,7 @@ Proba
         </div>
 
         <div id="editorContainer">
-            <div id="editor">from pygears.cookbook import rng
-  from pygears.common import shred
-  from pygears.cookbook.verif import drv
-  from pygears.typing import Uint
-
-  drv(t=Uint[4], seq=[10]) | rng | shred</div>
+            <div id="editor"></div>
         </div>
         <div id="logContainer">
             <div id="consoleLog"></div>
@@ -234,6 +211,32 @@ Proba
 
       function partial(fn /*, rest args */){
           return fn.bind.apply(fn, Array.apply(null, arguments).slice(1));
+      }
+
+      function parseURL(url) {
+          var parser = document.createElement('a'),
+              params = {},
+              queries, split, i;
+
+          // Let the browser do the work
+          parser.href = url;
+
+          // Convert query string to object
+          queries = parser.search.replace(/^\?/, '').split('&');
+          for( i = 0; i < queries.length; i++ ) {
+              split = queries[i].split('=');
+              params[split[0]] = split[1];
+          }
+          return {
+              protocol: parser.protocol,
+              host: parser.host,
+              hostname: parser.hostname,
+              port: parser.port,
+              pathname: parser.pathname,
+              search: parser.search,
+              params: params,
+              hash: parser.hash
+          };
       }
 
       function runScript() {
@@ -320,7 +323,6 @@ Proba
       document.getElementById("cmdrun").disabled = false;
 
       var editor = ace.edit("editor");
-      /* editor.setTheme("ace/theme/chrome"); */
       editor.session.setMode("ace/mode/python");
       editor.setOption("showPrintMargin", false)
       editor.setOption("fontSize", 14)
@@ -335,8 +337,28 @@ Proba
       consoleLog.setOption("showPrintMargin", false);
       consoleLog.setOption("fontSize", 14);
 
+      var url = parseURL(window.location.href);
+      if ('file' in url.params) {
+          fetch(url.params['file'])
+              .then(function(response) {
+                  if (response.status == 200) {
+                    return response.text().then(function(text) {
+                        editor.setValue(text, -1);
+                    });
+                  }
+              });
+      } else {
+          editor.setValue('from pygears.cookbook import rng\n' +
+                          'from pygears.common import shred\n' +
+                          'from pygears.cookbook.verif import drv\n' +
+                          'from pygears.typing import Uint\n' +
+                          '\n' +
+                          'drv(t=Uint[4], seq=[10]) | rng | shred', -1);
+      }
+
+
       var gears = {
-          "rng": "bla",
+          "rng": "module-rng",
           "filt": "filter",
           "add": "bla",
           "ccat": "concatenation",

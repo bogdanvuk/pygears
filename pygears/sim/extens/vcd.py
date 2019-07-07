@@ -211,7 +211,7 @@ class VCD(SimExtend):
     def __init__(self,
                  top,
                  trace_fn='pygears.vcd',
-                 include=['*'],
+                 include=Inject('hdl/debug_intfs'),
                  tlm=False,
                  shmidcat=Inject('sim_extens/vcd/shmidcat'),
                  vcd_fifo=Inject('sim_extens/vcd/vcd_fifo'),
