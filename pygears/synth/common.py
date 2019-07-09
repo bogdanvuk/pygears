@@ -1,5 +1,5 @@
 import os
-from pygears import registry
+from pygears import registry, find
 from pygears.core.hier_node import HierYielderBase
 from pygears.definitions import LIB_VLIB_DIR, LIB_SVLIB_DIR
 
@@ -13,15 +13,23 @@ class NodeYielder(HierYielderBase):
 
 
 def enum_hdl_files(top, outdir, language):
+    if isinstance(top, str):
+        top = find(top)
+
+    rtl_top = registry('rtl/gear_node_map')[top]
+
     vgen_map = registry(f'{language}gen/map')
 
     if language == 'sv':
         yield os.path.join(LIB_SVLIB_DIR, 'dti.sv')
         yield os.path.join(LIB_SVLIB_DIR, 'connect.sv')
-        yield os.path.join(outdir, 'wrap_top.sv')
 
-    for node in NodeYielder().visit(top):
+    for node in NodeYielder().visit(rtl_top):
         vinst = vgen_map[node]
+
+        if (node is rtl_top) and (language == 'sv'):
+            yield os.path.join(outdir, f'wrap_{vinst.file_name}')
+
         if hasattr(vinst, 'file_name'):
             file_name = vinst.impl_path
             if file_name:
