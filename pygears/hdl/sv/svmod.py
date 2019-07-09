@@ -125,6 +125,8 @@ class SVModuleGen(HDLModuleInst):
         except:
             pass
 
+        self.node.params['sigmap']['rst'] = rst_name
+
         context = {
             'rst_name': rst_name,
             'module_name': self.module_name,
