@@ -1,9 +1,10 @@
-tools/
-docs/
-pygears/
-examples/
-tests/
-deploy/
-dist/
+/tools/
+/docs/
+/pygears/
+/examples/
+/tests/
+/deploy/
+/dist/
+/build/
 *.egg-info/
 *_bdpfigure/
