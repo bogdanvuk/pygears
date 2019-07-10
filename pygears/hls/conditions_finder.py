@@ -85,7 +85,11 @@ class ComplexCondResolve:
         cond = self.visit(node.cond, conds_by_id)
         other = self.visit(node.other, conds_by_id)
         if other is None:
-            return None
+            if node.operator == '&&':
+                return cond
+            else:
+                return None
+
         return reduce(
             partial(binary_expr, operator=node.operator), [cond, other], None)
 
