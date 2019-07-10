@@ -1,1 +1,0 @@
-{"signal": [{"name": "clk", "wave": "p....."}, ["filt.din", {"name": "data", "wave": "55555z", "data": ["1", "2", "3", "4", "5"]}, {"name": "ctrl", "wave": "55555z", "data": ["0", "1", "0", "1", "0"]}], ["filt.dout", {"name": "", "wave": "5z5z5z", "data": ["1", "3", "5"]}]], "head": {"tock": 0}}
