@@ -103,7 +103,7 @@ def test_diff_inputs(tmpdir, sim_cls, din_delay, cfg_delay, dout_delay):
              drv(t=t_din2, seq=[[8]])
              | delay_rng(din_delay, din_delay),
              f=dut(sim_cls=sim_cls),
-             ref=[(5, 0), (6, 1), (264, 2)],
+             ref=[(5, 0), (6, 1), ((8, 1), 2)],
              delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(outdir=tmpdir)

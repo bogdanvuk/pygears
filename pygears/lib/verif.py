@@ -35,6 +35,18 @@ class TypeDrvVisitor(TypingYieldVisitorBase):
                            (eot << ret[1].width))
 
 
+def typeseq(t, v):
+    if type(v) == t:
+        yield v
+    else:
+        for d in TypeDrvVisitor().visit(v, t):
+            try:
+                yield t(d)
+            except TypeError:
+                sim_log().error(
+                    f'Cannot convert value "{d}" to type "{repr(t)}"')
+
+
 @gear
 async def drv(*, t, seq) -> b't':
     """Outputs one data at the time from the iterable ``seq`` cast to the type
@@ -58,16 +70,9 @@ async def drv(*, t, seq) -> b't':
     >>> drv(t=Queue[Uint[8], 2], seq=[q1, q2])
     """
 
-    for val in seq:
-        if type(val) == t:
+    for s in seq:
+        for val in typeseq(t, s):
             yield val
-        else:
-            for d in TypeDrvVisitor().visit(val, t):
-                try:
-                    yield t(d)
-                except TypeError:
-                    sim_log().error(
-                        f'Cannot convert value "{d}" to type "{repr(t)}"')
 
     raise GearDone
 
@@ -250,16 +255,37 @@ async def check(din, *, ref):
     generate nested iterables of the same level
     """
     iter_ref = iter(ref)
+    ref_seq = iter(())
+
     try:
         items = []
         while True:
             data = await din.get()
             items.append(data)
-            ref_item = next(iter_ref)
+
+            try:
+                ref_item = next(ref_seq)
+            except StopIteration:
+                ref_seq = typeseq(din.dtype, next(iter_ref))
+                ref_item = next(ref_seq)
+
             sim_assert(
                 data == ref_item,
                 f'mismatch in item {len(items)-1}. Got: {data}, expected: {ref_item}'
             )
+    except GearDone:
+        ref_empty = False
+        try:
+            next(ref_seq)
+        except StopIteration:
+            try:
+                next(iter_ref)
+            except StopIteration:
+                ref_empty = True
+
+        if not ref_empty:
+            sim_assert(items == ref,
+                       f'mismatch. Got: {items}, expected: {ref}')
 
     except (GearDone, StopIteration):
         sim_assert(items == ref, f'mismatch. Got: {items}, expected: {ref}')
@@ -344,7 +370,7 @@ def directed(*stim, f, ref, delays=None):
     for ref_inst, res_inst, delay_inst in zip(ref, res, delays):
         if delay_inst is not None:
             res_inst = res_inst | delay_inst
-        res_inst | mon | check(ref=ref_inst)
+        res_inst | check(ref=ref_inst)
 
 
 def directed_on_the_fly(*stim, f, refs, delays=None):

@@ -24,12 +24,11 @@ import pygears.core.gear_inst
 
 from pygears.core.intf import Intf
 
-import time
-start = time.time()
 import pygears.lib
-print(f"Imported lib in {time.time() - start}")
 import pygears.typing
 import pygears.typing.pprint
+
+from pygears.hls import datagear
 
 # import os
 # from pygears.registry import load_plugin_folder
@@ -47,5 +46,5 @@ sys.excepthook = pygears_excepthook
 __all__ = [
     'registry', 'TraceLevel', 'bind', 'gear', 'alternative', 'clear', 'Intf',
     'PluginBase', 'find', 'MultiAlternativeError', 'GearDone', 'QueueEmpty',
-    'module', 'safe_bind', 'TypeMatchError'
+    'module', 'safe_bind', 'TypeMatchError', 'datagear'
 ]
