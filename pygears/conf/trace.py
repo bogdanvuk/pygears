@@ -26,7 +26,11 @@ class MultiAlternativeError(Exception):
                 uwrp = inspect.unwrap(
                     func, stop=(lambda f: hasattr(f, "__signature__")))
                 fn = inspect.getfile(uwrp)
-                _, ln = inspect.getsourcelines(uwrp)
+                try:
+                    _, ln = inspect.getsourcelines(uwrp)
+                except OSError:
+                    ln = '-'
+
                 ret.append(f'  File "{fn}", line {ln}, in {uwrp.__name__}\n')
 
             exc_msg = register_issue(err_cls, err)

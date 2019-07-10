@@ -1,5 +1,5 @@
 import json
-from pygears import bind, PluginBase, safe_bind
+from pygears import bind, PluginBase, safe_bind, config
 from pygears.core.port import OutPort
 from pygears.sim import timestep
 from pygears.typing import typeof, TLM
@@ -77,12 +77,18 @@ class WaveJSONHierVisitor(HierVisitorBase):
             else:
                 intf = p.consumer
 
-            in_queue = intf.in_queue
+            try:
+                in_queue = intf.in_queue
+            except:
+                continue
+
+            # TODO: support list of in_queues properly, which means that this
+            # port is in front of a broadcast.
+            if isinstance(in_queue, list):
+                in_queue = in_queue[0]
+
             if in_queue:
                 intf = in_queue.intf
-
-            if intf.consumers:
-                print(f'{p.name}: {intf.consumers[0].name}')
 
             intf_vars = self.vcd_vars.get(intf, [])
 
@@ -153,7 +159,7 @@ class WaveJSONWriter:
         data = {
             'signal': [{
                 'name': 'clk',
-                'wave': 'p' + '.' * (timestep() - 1)
+                'wave': 'p' + '.' * (timestep())
             }],
             'head': {
                 'tock': 0
@@ -163,8 +169,8 @@ class WaveJSONWriter:
             vals = self.values[s]
 
             js_sig = {'name': s.name, 'wave': '', 'data': []}
-            state = 0
-            for t in range(timestep()):
+            state = None
+            for t in range(timestep() + 1):
                 if t in vals:
                     val = vals[t]
                     if val.state == 1:
@@ -179,6 +185,9 @@ class WaveJSONWriter:
                         js_sig['data'].append(js_sig['data'][-1])
 
                 elif state == 3:
+                    state = 0
+                    js_sig['wave'] += 'z'
+                elif state is None:
                     state = 0
                     js_sig['wave'] += 'z'
                 else:
@@ -200,7 +209,7 @@ class WaveJSON(SimExtend):
     @inject
     def __init__(self,
                  top,
-                 trace_fn='pygears.json',
+                 trace_fn=Inject('wavejson/trace_fn'),
                  include=Inject('hdl/debug_intfs'),
                  sim=Inject('sim/simulator'),
                  outdir=Inject('sim/artifacts_dir'),
@@ -208,8 +217,13 @@ class WaveJSON(SimExtend):
         super().__init__()
         self.sim = sim
         self.finished = False
+
         self.outdir = outdir
-        self.trace_fn = os.path.abspath(os.path.join(self.outdir, trace_fn))
+        self.trace_fn = trace_fn
+
+        if not os.path.isabs(self.trace_fn):
+            self.trace_fn = os.path.abspath(os.path.join(
+                self.outdir, trace_fn))
 
         atexit.register(self.finish)
 
@@ -262,3 +276,9 @@ class WaveJSON(SimExtend):
 
     def after_cleanup(self, sim):
         self.finish()
+
+
+class WaveJSONPlugin(PluginBase):
+    @classmethod
+    def bind(cls):
+        config.define('wavejson/trace_fn', 'pygears.vcd')
