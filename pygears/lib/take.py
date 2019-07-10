@@ -50,16 +50,20 @@ async def qtake(din: Queue[Tuple[{
     the :class:`Tuple` specifies the number of transactions.
     """
 
-    cnt = din.dtype[0][1](init)
+    cnt = din.dtype.data['size'](init + 1)
     pass_eot = Bool(True)
 
     async for ((data, size), eot) in din:
-        cnt += eot[0]
-        last = (cnt == size) and pass_eot
-        if (cnt <= size) and pass_eot:
-            yield (data, eot | (last << 1))
-        if last:
+        last_trans = (cnt == size) and pass_eot
+        last_item = last_trans and eot[0]
+
+        if pass_eot:
+            yield (data, eot | (last_trans << 1))
+
+        if last_item:
             pass_eot = 0
+
+        cnt += eot[0]
 
 
 @alternative(take)
