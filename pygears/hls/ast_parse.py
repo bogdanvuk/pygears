@@ -210,18 +210,18 @@ def parse_attribute(node, module_data):
 
 @parse_ast.register(ast.BinOp)
 def parse_binop(node, module_data):
-    return get_bin_expr(node.op, node.left, node.right, module_data)
+    return get_bin_expr(node.op, (node.left, node.right), module_data)
 
 
 @parse_ast.register(ast.Compare)
 def parse_compare(node, module_data):
-    return get_bin_expr(node.ops[0], node.left, node.comparators[0],
+    return get_bin_expr(node.ops[0], (node.left, node.comparators[0]),
                         module_data)
 
 
 @parse_ast.register(ast.BoolOp)
 def parse_boolop(node, module_data):
-    return get_bin_expr(node.op, node.values[0], node.values[1], module_data)
+    return get_bin_expr(node.op, node.values, module_data)
 
 
 @parse_ast.register(ast.UnaryOp)
@@ -287,8 +287,7 @@ def parse_subscript(node, module_data):
             port.context = expr.BinOpExpr((index, expr.ResExpr(i)), '==')
         return None
 
-    if not isinstance(index, slice) and isinstance(val_expr,
-                                                    expr.ConcatExpr):
+    if not isinstance(index, slice) and isinstance(val_expr, expr.ConcatExpr):
         pydl_node = val_expr.operands[index]
     else:
         pydl_node = expr.SubscriptExpr(val_expr, index)

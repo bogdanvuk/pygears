@@ -140,15 +140,19 @@ def state_expr(state_ids, prev_cond):
     return state_cond
 
 
-def get_bin_expr(op, operand1, operand2, module_data):
-    op1 = find_data_expression(operand1, module_data)
-    op2 = find_data_expression(operand2, module_data)
+def get_bin_expr(op, operands, module_data):
+    opexp = [find_data_expression(opi, module_data) for opi in operands]
 
     if isinstance(op, ast.MatMult):
-        return expr.ConcatExpr((op2, op1))
+        return expr.ConcatExpr(tuple(reversed(opexp)))
 
     operator = expr.OPMAP[type(op)]
-    return expr.BinOpExpr((op1, op2), operator)
+
+    finexpr = expr.BinOpExpr((opexp[0], opexp[1]), operator)
+    for opi in opexp[2:]:
+        finexpr = expr.BinOpExpr((finexpr, opi), operator)
+
+    return finexpr
 
 
 def intf_parse(intf, target):
