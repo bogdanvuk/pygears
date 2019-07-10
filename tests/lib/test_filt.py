@@ -3,7 +3,7 @@ import random
 import pytest
 
 from pygears import Intf, gear
-from pygears.lib import decoupler, filt, filt_by
+from pygears.lib import decoupler, filt
 from pygears.lib.delay import delay_rng
 from pygears.lib.verif import directed, drv, verif
 from pygears.sim import sim
@@ -20,7 +20,9 @@ directed_seq = [union_din(v, v % 2) for v in range(50)]
 
 
 def pysim_env(din_t, seq, sel, ref, sim_cls):
-    directed(drv(t=din_t, seq=seq), f=filt(sim_cls=sim_cls, sel=sel), ref=ref)
+    directed(drv(t=din_t, seq=seq),
+             f=filt(sim_cls=sim_cls, fixsel=sel),
+             ref=ref)
     sim()
 
 
@@ -35,9 +37,13 @@ def filt_by_test(din_t, seq, sel, sim_cls):
     din_drv = drv(t=din_t, seq=din_seq)
     ctrl_drv = drv(t=Uint[2], seq=ctrl_seq)
 
+    @datagear
+    def cond(ctrl: Uint, din) -> Bool:
+        return ctrl == sel
+
     directed(
         din_drv,
-        f=filt_by(ctrl_drv, sim_cls=sim_cls, sel=sel),
+        f=filt(f=cond(ctrl_drv), sim_cls=sim_cls),
         ref=[val for (val, ctrl) in zip(din_seq, ctrl_seq) if (ctrl == sel)])
     sim()
 
@@ -64,10 +70,21 @@ def test_pysim_dir(sel, din_t, seq, sim_cls):
         filt_by_test(din_t, seq, sel, sim_cls)
 
 
+# from pygears.sim.modules import SimVerilated
+# from pygears import config
+# from pygears.sim.extens.wavejson import WaveJSON
+# from pygears.sim.extens.vcd import VCD
+# config['trace/level'] = 0
+# # config['sim/extens'].append(WaveJSON)
+# config['sim/extens'].append(VCD)
+# config['hdl/debug_intfs'] = ['*']
+# test_pysim_dir(0, din_t=plain_din, seq=directed_seq, sim_cls=SimVerilated)
+
+
 def get_dut(dout_delay):
     @gear
-    def decoupled(din, *, sel=0):
-        return din | filt(sel=sel) | decoupler
+    def decoupled(din, *, fixsel=0):
+        return din | filt(fixsel=fixsel) | decoupler
 
     if dout_delay == 0:
         return decoupled
@@ -81,8 +98,8 @@ def test_qfilt_union_delay(tmpdir, cosim_cls, din_delay, dout_delay, sel):
     dut = get_dut(dout_delay)
     verif(drv(t=queue_din, seq=[directed_seq, directed_seq])
           | delay_rng(din_delay, din_delay),
-          f=dut(sim_cls=cosim_cls, sel=sel),
-          ref=filt(name='ref_model', sel=sel),
+          f=dut(sim_cls=cosim_cls, fixsel=sel),
+          ref=filt(name='ref_model', fixsel=sel),
           delays=[delay_rng(dout_delay, dout_delay)])
     sim(outdir=tmpdir)
 
@@ -123,9 +140,9 @@ def test_filt_base():
 
 @synth_check({'logic luts': 2, 'ffs': 0}, tool='vivado')
 def test_filt_synth_vivado():
-    filt(Intf(union_din), sel=0)
+    filt(Intf(union_din), fixsel=0)
 
 
 @synth_check({'logic luts': 2, 'ffs': 0}, tool='yosys')
 def test_filt_synth_yosys():
-    filt(Intf(union_din), sel=0)
+    filt(Intf(union_din), fixsel=0)

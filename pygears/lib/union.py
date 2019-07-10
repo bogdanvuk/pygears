@@ -3,7 +3,6 @@ from pygears.typing import Union
 from pygears.lib.shred import shred
 from pygears.lib.ccat import ccat
 from pygears.lib.fmap import fmap
-from pygears.lib.filt import filt
 
 
 @gear(enablement=b'len(din) == 2')
@@ -20,13 +19,6 @@ def union_sync_with(din, sync_in, *, ctrl, balance=None):
     sync_in_sync | shred
 
     return din_sync
-
-
-@gear
-def filt_by(din, ctrl, *, sel, fcat=ccat):
-    return fcat(din, ctrl) \
-        | Union \
-        | filt(sel=sel)
 
 
 @gear

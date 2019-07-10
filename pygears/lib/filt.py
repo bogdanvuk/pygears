@@ -51,7 +51,7 @@ def filt_type(din, lvl, sel):
 
 
 @gear(hdl={'compile': True})
-async def filt(din: Tuple[{'data': Union, 'sel': Uint}]) -> b'din[0]':
+async def filt(din: Tuple[{'data': Union, 'sel': Uint}]) -> b'din["data"]':
     '''Filters the ``data`` field of :class:`Union` type, by passing it forward
     only if it carries the ``data`` :class:`Union` subtype whose index is equal
     to the value supplied to the ``sel`` field. Index of a :class:`Union`
@@ -65,33 +65,37 @@ async def filt(din: Tuple[{'data': Union, 'sel': Uint}]) -> b'din[0]':
             yield data
 
 
-# @alternative(filt)
-# @gear
-# def filt2(sel: Uint, din: Union, *, fcat=ccat) -> b'din':
-#     return ccat(din, sel) \
-#         | filt
+@alternative(filt)
+@gear
+def filt_fix_sel(din: Union, *, fixsel) -> b'din.types[fixsel]':
+    return (ccat(din, din.dtype[1](fixsel)) | filt)[0] \
+        | din.dtype.types[fixsel]
 
 
 @alternative(filt)
 @gear
-def filt_fix_sel(din: Union, *, sel) -> b'din.types[sel]':
-    return (ccat(din, din.dtype[1](sel)) | filt)[0] | din.dtype.types[sel]
-
-
-@alternative(filt)
-@gear
-def qfilt(din: Queue, *, f):
+def qfilt_f(din: Queue, *, f):
     @gear
     def maybe_out(din, *, f):
         return ccat(din, din | f) | Union
 
-    return din | fmap(f=maybe_out(f=f)) | qfilt_union(sel=1)
+    return din | fmap(f=maybe_out(f=f)) | qfilt_union(fixsel=1)
+
+
+@alternative(filt)
+@gear(enablement=b'not typeof(din, Queue)')
+def filt_f(din, *, f):
+    @gear
+    def maybe_out(din, *, f):
+        return ccat(din, f(din)) | Union
+
+    return din | maybe_out(f=f) | filt(fixsel=1)
 
 
 @alternative(filt)
 @gear(hdl={'compile': True})
-async def qfilt_union(din: Queue[Union, 'lvl'], *, sel=0,
-                      filt_lvl=1) -> b'filt_type(din, lvl, sel)':
+async def qfilt_union(din: Queue[Union, 'lvl'], *, fixsel=0,
+                      filt_lvl=1) -> b'filt_type(din, lvl, fixsel)':
 
     data_reg = din.dtype.data.data(0)  # TODO
     eot_reg = Uint[din.dtype.lvl](0)
@@ -100,14 +104,14 @@ async def qfilt_union(din: Queue[Union, 'lvl'], *, sel=0,
     while True:
         async with din as d:
             curr_data = d.data.data
-            field_sel = (d.data.ctrl == sel)
+            field_sel = (d.data.ctrl == fixsel)
 
             if all(d.eot[:filt_lvl]):
                 if field_sel:
                     if not empty_reg:
                         yield (data_reg, eot_reg)
                         yield (curr_data, d.eot)
-                else:
+                elif not empty_reg:
                     yield (data_reg, d.eot)
                 empty_reg = True
 
@@ -119,10 +123,3 @@ async def qfilt_union(din: Queue[Union, 'lvl'], *, sel=0,
                 data_reg = curr_data
                 eot_reg = d.eot
                 empty_reg = False
-
-
-@gear
-def filt_by(ctrl: Uint, din, *, sel, fcat=ccat):
-    return fcat(din, ctrl) \
-        | Union \
-        | filt(sel=sel)
