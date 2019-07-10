@@ -2,6 +2,7 @@ import ast
 import typing
 from dataclasses import dataclass
 from types import FunctionType
+from itertools import chain
 
 from pygears.typing import Uint, bitw
 from pygears.core.util import get_function_context_dict
@@ -59,11 +60,15 @@ class ModuleData:
 
     @property
     def functions(self):
-        glob = get_function_context_dict(self.gear.func)
-        return {
-            name: value
-            for name, value in glob.items() if isinstance(value, FunctionType)
-        }
+        funcs = {}
+        for name, value in chain(
+                get_function_context_dict(self.gear.func).items(),
+                self.gear.explicit_params.items()):
+
+            if isinstance(value, FunctionType):
+                funcs[name] = value
+
+        return funcs
 
 
 def clean_variables(hdl_data):
@@ -101,11 +106,11 @@ def parse_gear_body(gear):
 
     in_ports = {p.basename: IntfDef(p) for p in gear.in_ports}
     local_namespace = {
-            **{p.basename: p.consumer
-               for p in gear.in_ports},
-            **gear.explicit_params,
-            **get_function_context_dict(gear.func)
-        }
+        **{p.basename: p.consumer
+           for p in gear.in_ports},
+        **gear.explicit_params,
+        **get_function_context_dict(gear.func)
+    }
     local_namespace['module'] = lambda: gear
 
     hdl_data = ModuleData(
