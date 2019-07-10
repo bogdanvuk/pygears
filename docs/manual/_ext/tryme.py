@@ -26,7 +26,10 @@ def visit_tryme_node(self, node):
 
     rel_file_name = node.rawsource
     file_name = os.path.join(curdir, rel_file_name)
-    shutil.copyfile(file_name, os.path.join(self.builder.outdir, file_name))
+
+    build_fn = os.path.join(self.builder.outdir, file_name)
+    os.makedirs(os.path.dirname(build_fn), exist_ok=True)
+    shutil.copyfile(file_name, build_fn)
 
     self.body.append(self.starttag(node, 'div'))
     self.body.append(f'''
