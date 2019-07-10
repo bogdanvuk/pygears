@@ -48,9 +48,19 @@
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
     }
+    #cmdrun {
+         font-size: 14px;
+         line-height: 24px;
+    }
 
     #cmdrun:disabled,
     #cmdrun[disabled]{
+        padding-left: 27px;
+        padding-right: 27px;
+        padding-top: 6px;
+        padding-bottom: 6px;
+        font-size: 20px;
+        line-height: 24px;
         border: 1px solid #999999;
         background-color: #cccccc;
         color: #666666;
@@ -289,8 +299,7 @@ Proba
           document.getElementById("btn-result-wave").disabled = true
           document.getElementById("cmdrun").disabled = true;
 
-          document.getElementById("cmdrun").innerHTML =
-              '<div style="margin:1px 7px 1px 6px" class="loader"></div>';
+          document.getElementById("cmdrun").innerHTML = '<div class="loader"></div>';
 
           consoleLog.setValue("Uploading script...\n", -1);
 
@@ -298,7 +307,7 @@ Proba
           xhttp.setRequestHeader("Content-Type", "application/json");
           xhttp.send(JSON.stringify({"script": editor.getValue()}));
 
-          console.log("Script run");
+          // console.log("Script run");
       }
 
       function importSelectedGear() {
@@ -312,10 +321,10 @@ Proba
 
       }
 
-      var serverName = "http://127.0.0.1:5000";
+      /* var serverName = "http://127.0.0.1:5000"; */
       /* var serverName = "http://167.86.106.32:5000"; */
       /* var serverName = "https://167.86.106.32"; */
-      /* var serverName = "https://www.synchord.com"; */
+      var serverName = "https://www.synchord.com";
 
       document.getElementById("btn-result-zip").disabled = true
       document.getElementById("btn-result-browse").disabled = true

@@ -281,4 +281,4 @@ class WaveJSON(SimExtend):
 class WaveJSONPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        config.define('wavejson/trace_fn', 'pygears.vcd')
+        config.define('wavejson/trace_fn', 'pygears.json')

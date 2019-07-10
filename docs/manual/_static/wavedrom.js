@@ -1588,14 +1588,10 @@ function renderSignal (index, source, waveSkin) {
 
     parseConfig(source, lane);
     var ret = rec(source.signal, {'x':0, 'y':0, 'xmax':0, 'width':[], 'lanes':[], 'groups':[]});
-    console.log(ret);
     var content = parseWaveLanes(ret.lanes, lane);
 
     var waveLanes = renderWaveLane(content, index, lane);
     var waveGroups = renderGroups(ret.groups, index, lane);
-
-    console.log(waveLanes);
-    console.log(waveGroups.glengths);
 
     var xmax = waveLanes.glengths.reduce(function (res, len, i) {
         return Math.max(res, len + ret.width[i]);
