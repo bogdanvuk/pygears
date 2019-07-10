@@ -85,7 +85,7 @@
         top: 0;
         bottom: 0;
         left: 0;
-        height: 120px;
+        height: 100px;
     }
     #editorContainer {
         border-top: 2px solid #ececec;
@@ -111,7 +111,7 @@
       border: 1px solid transparent;
       background-color: #f1f1f1;
       padding: 10px;
-      font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+      font-family: "Courier New", monospace;
       font-size: 14px;
       background-color: #f1f1f1;
       width: 100%;
@@ -121,7 +121,8 @@
       background-color: DodgerBlue;
       color: #fff;
       cursor: pointer;
-      padding: 10px;
+      padding: 8px;
+      font-size: 16px;
   }
 
   .autocomplete-items {
@@ -165,8 +166,6 @@
 
 PyGears LIVE! 
 =============
-
-Proba
 
 .. raw:: html
 
@@ -368,7 +367,7 @@ Proba
 
       var gears = {
           "rng": "module-rng",
-          "filt": "filter",
+          "filt": "module-filt",
           "add": "bla",
           "ccat": "concatenation",
       }

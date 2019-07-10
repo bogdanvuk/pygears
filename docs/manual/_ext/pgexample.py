@@ -1,9 +1,6 @@
-import os
-import shutil
 from docutils import nodes
 from sphinx.util.docutils import SphinxDirective
 from docutils.parsers.rst import directives
-from docutils import nodes
 from docutils.statemachine import StringList
 
 
