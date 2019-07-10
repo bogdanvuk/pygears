@@ -92,6 +92,12 @@ class COutputDrv(CDrv):
         super().__init__(verilib, port)
         if self.width <= 64:
             self.c_dtype = self.c_dtype * 1
+            if self.c_get_api is None:
+                raise Exception(
+                    f"Unexpected exception, Verilator interface has no handler"
+                    f" for the port: {port.basename}"
+                )
+
             self.c_get_api.argtypes = (self.c_dtype, )
 
         self.active = False

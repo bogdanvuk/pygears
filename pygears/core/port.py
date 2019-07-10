@@ -22,6 +22,8 @@ class Port:
 
 
 class InPort(Port):
+    direction = "in"
+
     @property
     def dtype(self):
         if self.consumer is not None:
@@ -31,4 +33,4 @@ class InPort(Port):
 
 
 class OutPort(Port):
-    pass
+    direction = "out"

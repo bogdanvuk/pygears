@@ -1,12 +1,23 @@
 from pygears.conf import registry, safe_bind, PluginBase, Inject, inject
 from pygears.core.port import InPort, OutPort, Port
+from pygears.core.hier_node import HierNode
+
+
+def get_sim_map_gear(gear):
+    sim_map = registry('sim/map')
+    while gear is not None:
+        if gear in sim_map:
+            return sim_map[gear]
+        gear = gear.parent
+
+    return None
 
 
 def _get_consumer_tree_rec(root_intf, cur_intf, consumers, end_producer):
 
     for port in cur_intf.consumers:
         cons_intf = port.consumer
-        if (port.gear in registry('sim/map')) and (isinstance(port, InPort)):
+        if get_sim_map_gear(port.gear) and (isinstance(port, InPort)):
             # if not cons_intf.consumers:
             end_producer[port] = (root_intf, len(consumers))
             consumers.append(port)
@@ -28,7 +39,21 @@ def hier_dfs(root):
         yield from hier_dfs(c)
 
 
-from pygears.core.hier_node import HierNode
+def gear_from_rtl_port(rtl_port):
+    node = rtl_port.node
+    if not hasattr(node, 'gear'):
+        return None
+
+    if rtl_port.direction == "in":
+        if rtl_port.index >= len(node.gear.in_ports):
+            return None
+
+        return node.gear.in_ports[rtl_port.index]
+    else:
+        if rtl_port.index >= len(node.gear.out_ports):
+            return None
+
+        return node.gear.out_ports[rtl_port.index]
 
 
 @inject
@@ -44,6 +69,20 @@ def rtl_from_gear_port(gear_port, rtl_map=Inject('rtl/gear_node_map')):
         rtl_port = port_group[gear_port.index]
 
     return rtl_port
+
+
+def closest_gear_port_from_rtl(rtl_port, direction):
+    gear_port = None
+
+    while not gear_port and rtl_port:
+        gear_port = gear_from_rtl_port(rtl_port)
+        if not gear_port:
+            if direction == 'in':
+                rtl_port = rtl_port.producer.producer
+            else:
+                rtl_port = rtl_port.consumer.consumers[0]
+
+    return gear_port
 
 
 def closest_rtl_from_gear_port(gear_port):
@@ -124,6 +163,10 @@ def get_producer_queue(obj):
     if obj not in end_producer:
         intf = get_end_producer(obj)
         get_consumer_tree(intf)
+
+    # TODO: investigate why this is necessary
+    if obj not in end_producer:
+        return None
 
     intf, i = end_producer[obj]
     return intf.out_queues[i]

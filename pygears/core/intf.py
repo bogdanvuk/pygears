@@ -9,6 +9,7 @@ from .type_match import TypeMatchError
 from pygears.typing import typeof, Any
 from pygears.typing.base import TypingMeta
 from pygears.conf import inject, Inject
+from .graph import get_sim_map_gear
 
 
 def operator_func_from_namespace(cls, name):
@@ -154,7 +155,7 @@ class Intf:
         return self._out_queues
 
     def put_nb(self, val):
-        if any(registry('sim/map')[c.gear].done for c in self.end_consumers):
+        if any(get_sim_map_gear(c.gear).done for c in self.end_consumers):
             raise GearDone
 
         put_event = self.events['put']

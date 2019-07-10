@@ -19,8 +19,8 @@ class Port:
 
 
 class InPort(Port):
-    pass
+    direction = "in"
 
 
 class OutPort(Port):
-    pass
+    direction = "out"

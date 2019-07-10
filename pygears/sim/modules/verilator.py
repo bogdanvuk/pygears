@@ -12,6 +12,9 @@ from pygears.sim.c_drv import CInputDrv, COutputDrv
 from pygears.sim.modules.cosim_base import CosimBase
 from pygears.hdl import hdlgen
 from pygears.util.fileio import save_file
+from pygears.core.port import InPort
+from .cosim_port import InCosimPort
+from pygears.core.graph import closest_gear_port_from_rtl
 
 signal_spy_connect_t = Template("""
 /*verilator tracing_on*/
@@ -74,6 +77,20 @@ class SimVerilated(CosimBase):
                                   language='sv')
             self.svmod = registry('svgen/map')[self.rtlnode]
             self.wrap_name = f'wrap_{self.svmod.module_name}'
+
+        for p in self.rtlnode.in_ports:
+            if p.index >= len(self.gear.in_ports):
+                driver = closest_gear_port_from_rtl(p, 'in')
+                consumer = closest_gear_port_from_rtl(p, 'out')
+
+                in_port = InPort(self.gear,
+                                 p.index,
+                                 p.basename,
+                                 producer=driver.producer,
+                                 consumer=consumer.consumer)
+
+                self.in_cosim_ports.append(InCosimPort(self, in_port))
+                registry('sim/map')[in_port] = self.in_cosim_ports[-1]
 
         self.trace_fn = None
         self.vcd_fifo = vcd_fifo
@@ -138,8 +155,8 @@ class SimVerilated(CosimBase):
                 f'Verilator VCD dump to shared memory at 0x{self.shmid}')
 
         self.handlers = {}
-        for p in self.gear.in_ports:
-            self.handlers[p.basename] = CInputDrv(self.verilib, p)
+        for cp in self.in_cosim_ports:
+            self.handlers[cp.port.basename] = CInputDrv(self.verilib, cp.port)
 
         for p in self.gear.out_ports:
             self.handlers[p.basename] = COutputDrv(self.verilib, p)

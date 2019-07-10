@@ -9,6 +9,9 @@ class RTLIntf(NamedHierNode):
         super().__init__(basename=None, parent=parent)
         self.consumers = consumers.copy()
         self.producer = producer
+        if producer is not None:
+            self.producer.consumer = self
+
         self.dtype = dtype
 
     @property
