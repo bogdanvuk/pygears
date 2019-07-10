@@ -1,0 +1,333 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>PyGears Tools Setup for Linux &#8212; PyGears - HW Design: A Functional Approach</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script type="text/javascript" src="_static/default.js"></script>
+    <script type="text/javascript" src="_static/wavedrom.js"></script>
+    <link rel="canonical" href="https://www.pygears.org/setup.html" />
+    <link rel="shortcut icon" href="_static/pygears.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Examples" href="examples.html" />
+    <link rel="prev" title="Registry" href="registry.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="pygears-tools-setup-for-linux">
+<span id="setup-pygears-tools"></span><h1>PyGears Tools Setup for Linux<a class="headerlink" href="#pygears-tools-setup-for-linux" title="Permalink to this headline">¶</a></h1>
+
+<script>
+ function changeVerbosity(verbosity) {
+
+     document.getElementById("verbosity_value").value = verbosity;
+     document.getElementById("verbosity_slider").value = verbosity;
+
+     var a = document.querySelectorAll('[data-verbosity]');
+
+     for (var i in a) if (a.hasOwnProperty(i)) {
+         if (a[i].getAttribute('data-verbosity') <= verbosity) {
+             a[i].removeAttribute("hidden")
+         } else {
+             a[i].setAttribute("hidden", "true")
+         }
+     }
+ }
+</script>
+
+<form class="slidecontainer">
+    <b>Slide to adjust verbosity level&ensp;</b>
+    <input type="range" min="1" max="3" value="1" name="verbositySlider" id="verbosity_slider" onchange="changeVerbosity(this.value);">
+    &ensp;
+    <input type="number" maxlength="1" id="verbosity_value" min="1" max="3" value="1" oninput="changeVerbosity(this.value);" style="font-weight: bold"/>
+</form>
+<p data-verbosity="2" hidden="true"> There are so many ways you can approach organizing your tools, especially on Linux, that it can seem really intimidating to a beginner or someone who is used to working within a single IDE. I personally like using the right tool for the task at hand, so my workflow usually involves multiple programs. However, since I am working in a team, we need to maintain some level of consistency between our workflows.</p>
+<p>I will present here the solution for organizing tools on the Linux OS that worked sufficiently well for me and my team:</p>
+<ul class="simple">
+<li><p>All tools are installed in <code class="docutils literal notranslate"><span class="pre">/tools</span></code> folder. <span data-verbosity="2" hidden="true"> Advantages for this are that we all have our tools at the same location, which eases knowledge share, debugging, avoids issues with hard-coded paths in scripts, etc. Also, it avoids the differences in installation paths between different Linux distributions.</span></p></li>
+<li><p>Tools fundamental to the workflow are built manually from source (of course the ones that are open-source). <span data-verbosity="2" hidden="true"> This is because we want to have a high level of control over which versions of the tools we want to install, in order to be on the bleeding edge on one hand and to avoid regressions and incompatibilities between the tools on the other.</span></p></li>
+<li><p>There is a shell script that activates the tools, e.g. <code class="docutils literal notranslate"><span class="pre">/tools/tools.sh</span></code>. <span data-verbosity="2" hidden="true"> Some of the workflow settings might be too opiniated, and you might not want to have them active all the time you use your computer. With this approach, when you want to use the workflow, you first start the terminal, source the script and you can access the tools. But the workflow settings remain local to that terminal session.</span></p></li>
+<li><p>$HOME is set to point to a different folder, e.g. <code class="docutils literal notranslate"><span class="pre">/tools/home</span></code>. <span data-verbosity="2" hidden="true"> Many tools offer a configuration mechanism that involves specifying the configuration options inside a file that should be placed in $HOME folder. One major example is Emacs, that expects its configuration placed inside </span><code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">~/.emacs.d</span></code><span data-verbosity="2" hidden="true">. If we want to load workflow settings at will, the $HOME for the workflow needs to be different from the user $HOME.</span></p></li>
+</ul>
+<p>I’ve compiled a Python script for installing the PyGears workflow on Ubuntu and uploaded it to the PyPI. <span data-verbosity="2" hidden="true"> Source code is available on the </span><a class="reference external" data-verbosity="2" hidden="true" href="https://github.com/bogdanvuk/pygears-tools.git">pygears-tools github repo</a><span data-verbosity="2" hidden="true">. The pygears-tools script can be installed using pip.</span></p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This following procedures were only tested on Ubuntu 18.04, Ubuntu 16.04, Ubuntu 14.04 and openSUSE Leap 15</p>
+</div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo pip3 install pygears-tools
+</pre></div>
+</div>
+<p>Ubuntu distributions didn’t seem to have pip3 installed. In that case you need to install it:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo apt install python3-pip
+</pre></div>
+</div>
+<div class="section" id="minimal-workflow-toolset-installation">
+<h2>Minimal workflow toolset installation<a class="headerlink" href="#minimal-workflow-toolset-installation" title="Permalink to this headline">¶</a></h2>
+<p>Installers for different packages have different dependencies that need to be installed system-wide. By invoking pygears-tools-install with <code class="docutils literal notranslate"><span class="pre">-l</span></code> option, you will get the list of needed depenendencies for all the tools you need to install first. In this process we will install the right Python version (using <code class="docutils literal notranslate"><span class="pre">pyenv</span></code>), PyGears itself and Verilator for RTL simulation.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pygears-tools-install -l pyenv python pygears verilator
+</pre></div>
+</div>
+<p data-verbosity="2" hidden="true">Which outputs on Ubuntu something similar to this:</p>
+<div hidden data-verbosity=2>
+<div class="highlight-bash notranslate" data-verbosity="2" hidden="true"><div class="highlight"><pre><span></span>sudo apt install build-essential
+sudo apt install git libxmlsec1-dev curl libsqlite3-dev libreadline-dev zlib1g-dev libbz2-dev libssl-dev flex bison autoconf wget llvm libncurses5-dev libffi-dev libxml2-dev tk-dev xz-utils
+</pre></div>
+</div>
+
+</div><p data-verbosity="2" hidden="true">and on openSUSE something like this:</p>
+<div hidden data-verbosity=2>
+<div class="highlight-bash notranslate" data-verbosity="2" hidden="true"><div class="highlight"><pre><span></span>sudo zypper install -t pattern devel_basis
+sudo zypper install ncurses-devel flex git libffi-devel zlib-devel tk-devel bison readline-devel openssl-devel
+</pre></div>
+</div>
+
+</div><p>If you want to place your <code class="docutils literal notranslate"><span class="pre">tools</span></code> folder under the root, you need to first create it and change ownership to yourself in sudo mode. Otherwise, you can skip this step.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo mkdir /tools <span class="o">&amp;&amp;</span> sudo chown &lt;username&gt; /tools
+</pre></div>
+</div>
+<p>Finally, invoke the instaler:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pygears-tools-install -o /tools -w /tools/home  pyenv python pygears
+</pre></div>
+</div>
+<p data-verbosity="3" hidden="true">which will produce output similar to this:</p>
+<div hidden data-verbosity=3>
+<div class="highlight-default notranslate" data-verbosity="3" hidden="true"><div class="highlight"><pre><span></span>Installing to: /tools
+17:58:28 [pyenv       ]: Installation started.
+17:58:28 [pyenv       ]: Cloning git repo. Output redirected to git_clone.log .
+17:58:46 [pyenv       ]: Exporting the environment variables.
+17:58:47 [pyenv       ]: Installation finished successfully!
+17:58:47 [python      ]: Installation started.
+17:58:47 [python      ]: Running custom package commands. Output redirected to custom_cmd.log .
+17:58:47 [python      ]: Running command: &quot;pyenv install -s 3.6.6&quot;
+18:00:37 [python      ]: Running command: &quot;pyenv global 3.6.6&quot;
+18:00:37 [python      ]: Running command: &quot;rm -rf /tools/home/.local&quot;
+18:00:37 [python      ]: Installation finished successfully!
+18:00:37 [pygears     ]: Installation started.
+18:00:37 [pygears     ]: Running custom package commands. Output redirected to custom_cmd.log .
+18:00:37 [pygears     ]: Running command: &quot;pip install pygears&quot;
+18:00:41 [pygears     ]: Installation finished successfully!
+Installation finished, before invoking tools, source /tools/tools.sh
+</pre></div>
+</div>
+
+</div><p data-verbosity="3" hidden="true">and create the tools setup script <code class="docutils literal notranslate" data-verbosity="3" hidden="true"><span class="pre">/tools/tools.sh</span></code> similar to this:</p>
+<div hidden data-verbosity=3>
+<div class="highlight-bash notranslate" data-verbosity="3" hidden="true"><div class="highlight"><pre><span></span><span class="ch">#!/bin/bash</span>
+<span class="c1"># Script for setting up the environment for all the tools</span>
+<span class="c1"># Tools installed relative to: /tools</span>
+
+<span class="c1"># Setting new home directory:</span>
+<span class="nb">export</span> <span class="nv">HOME</span><span class="o">=</span>/tools/home
+
+<span class="c1"># Environment for pyenv</span>
+<span class="nb">export</span> <span class="nv">PYENV_ROOT</span><span class="o">=</span>/tools/home/.pyenv
+<span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span>/tools/home/.pyenv/bin:<span class="nv">$PATH</span>
+<span class="nb">eval</span> <span class="s2">&quot;</span><span class="k">$(</span>pyenv init -<span class="k">)</span><span class="s2">&quot;</span>
+<span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span>/tools/home/.pyenv/libexec:<span class="nv">$PATH</span>
+</pre></div>
+</div>
+
+</div></div>
+<div class="section" id="full-workflow-toolset-installation">
+<h2>Full workflow toolset installation<a class="headerlink" href="#full-workflow-toolset-installation" title="Permalink to this headline">¶</a></h2>
+<p>This procedure will install all available tools, see <a class="reference internal" href="#setup-pygears-tools-list">setup-pygears-tools-list</a>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pygears-tools-install -l
+
+<span class="c1"># copy and run the install commands output by &#39;pygears-tools-install -l&#39;, i.e</span>
+<span class="c1"># sudo apt install build-essential</span>
+<span class="c1"># sudo apt install git libxmlsec1-dev curl ...</span>
+
+<span class="c1"># if you are using root location for the tools</span>
+sudo mkdir /tools <span class="o">&amp;&amp;</span> sudo chown &lt;username&gt; /tools
+
+pygears-tools-install -o /tools -w /tools/home
+</pre></div>
+</div>
+</div>
+<div class="section" id="verifying-that-it-works">
+<h2>Verifying that it works<a class="headerlink" href="#verifying-that-it-works" title="Permalink to this headline">¶</a></h2>
+<p>Lets run a PyGears example project to verify that setup is correct. For this example to work, you need to have the Verilator RTL simulator installed. Checkout the <a class="reference internal" href="echo.html#echo-examples"><span class="std std-ref">Echo example guide</span></a> for the details.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span> /tools/tools.sh
+
+git clone https://github.com/bogdanvuk/pygears ~/pygears
+
+python ~/pygears/examples/echo/plop_test_wav_echo_sim.py
+</pre></div>
+</div>
+</div>
+<div class="section" id="complete-list-of-command-line-arguments">
+<div hidden data-verbosity=2>
+<h2 data-verbosity="2" hidden="true"> Complete list of command line arguments<a class="headerlink" href="#complete-list-of-command-line-arguments" title="Permalink to this headline">¶</a></h2>
+
+</div><div hidden data-verbosity=2>
+<div class="highlight-default notranslate" data-verbosity="2" hidden="true"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">pygears</span><span class="o">-</span><span class="n">tools</span><span class="o">-</span><span class="n">install</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">p</span> <span class="n">PKGS_FN</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">o</span> <span class="n">TOOLS_PATH</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">w</span> <span class="n">HOME_PATH</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">l</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">d</span><span class="p">]</span>
+                             <span class="p">[</span><span class="n">pkg_names</span> <span class="p">[</span><span class="n">pkg_names</span> <span class="o">...</span><span class="p">]]</span>
+</pre></div>
+</div>
+
+</div><div class="section" data-verbosity="2" hidden="true" id="Positional Arguments">
+<h3 data-verbosity="2" hidden="true">Positional Arguments<a class="headerlink" href="#Positional Arguments" title="Permalink to this headline">¶</a></h3>
+<dl class="option-list" data-verbosity="2" hidden="true">
+<dt data-verbosity="2" hidden="true"><kbd>pkg_names</kbd></dt>
+<dd data-verbosity="2" hidden="true"><p data-verbosity="2" hidden="true">Names of packages to install. Can be one of: emacs, spacemacs, gtkwave, verilator, systemc, scv, pyenv, python, ripgrep, spacemacs_python, pygears</p>
+</dd>
+</dl>
+</div>
+<div class="section" data-verbosity="2" hidden="true" id="Named Arguments">
+<h3 data-verbosity="2" hidden="true">Named Arguments<a class="headerlink" href="#Named Arguments" title="Permalink to this headline">¶</a></h3>
+<dl class="option-list" data-verbosity="2" hidden="true">
+<dt data-verbosity="2" hidden="true"><kbd>-p</kbd></dt>
+<dd data-verbosity="2" hidden="true"><p data-verbosity="2" hidden="true">Path to packages description file</p>
+</dd>
+<dt data-verbosity="2" hidden="true"><kbd>-o</kbd></dt>
+<dd data-verbosity="2" hidden="true"><p data-verbosity="2" hidden="true">Directory to install tools to</p>
+</dd>
+<dt data-verbosity="2" hidden="true"><kbd>-w</kbd></dt>
+<dd data-verbosity="2" hidden="true"><p data-verbosity="2" hidden="true">Directory to setup home in</p>
+</dd>
+<dt data-verbosity="2" hidden="true"><kbd>-l</kbd></dt>
+<dd data-verbosity="2" hidden="true"><p data-verbosity="2" hidden="true">Only list the package dependencies and exit</p>
+</dd>
+<dt data-verbosity="2" hidden="true"><kbd>-d</kbd></dt>
+<dd data-verbosity="2" hidden="true"><p data-verbosity="2" hidden="true">Automatically install system dependencies. Will require sudo.</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="pygears-tools-list">
+<span id="setup-pygears-tools-list"></span><h2>Pygears Tools List<a class="headerlink" href="#pygears-tools-list" title="Permalink to this headline">¶</a></h2>
+<p>Here’s the list of tools that can be installed using pygears-tools-install.</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://github.com/pyenv/pyenv">Pyenv</a> - a simple Python version management. Pyenv offers a simple way to install specific Python version,</p></li>
+<li><p><a class="reference external" href="https://www.pygears.org/">PyGears</a> - the PyGears itself,</p></li>
+<li><p><a class="reference external" href="https://www.veripool.org/projects/verilator">Verilator</a>: an open-source Verilog/SystemVerilog simulator. PyGears has built-in support for it,</p></li>
+<li><p><a class="reference external" href="https://www.gnu.org/software/emacs/">Emacs</a> with <a class="reference external" href="http://spacemacs.org/">Spacemacs</a> configuration - an open-source editor that can handle all languages needed for using and extending PyGears (Python, SystemVerilog, Bash, Jinja2). <strong>Caution: very steep learning curve, but highly rewarding once mastered</strong>. If you don’t feel like investing in learning Spacemacs right now, at minimum you will need an editor that can handle Python, and any one will really do: <a class="reference external" href="https://www.jetbrains.com/pycharm/">PyCharm</a>, <a class="reference external" href="http://www.pydev.org/">Eclipse with PyDev</a>, etc.</p></li>
+<li><p><a class="reference external" href="http://gtkwave.sourceforge.net/">GtkWave</a> - an open-source waveform viewer.</p></li>
+<li><p><a class="reference external" href="http://www.accellera.org/activities/working-groups/systemc-verification">SCV</a> with <a class="reference external" href="https://en.wikipedia.org/wiki/SystemC">SystemC</a> - an open-source tool that can be used for constrained random stimulus generation by PyGears,</p></li>
+</ul>
+</div>
+</div>
+
+    <script type="text/javascript">
+        function init() {
+            WaveDrom.ProcessAll();
+        }
+        window.onload = init;
+    </script>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="index.html">
+    <img class="logo" src="_static/logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+<p class="blurb">HW Design: A Functional Approach</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=bogdanvuk&repo=pygears&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<hr />
+<p>
+    <h3> Blogs </h3>
+    <ul>
+        <li class="toctree-l1"><a href="https://www.pygears.org/blog/blog/category/risc-v.html">RISC-V implementation blog</a></li>
+    </ul>
+</p>
+<hr />
+<h3><a href="https://www.pygears.org/blog/blog/category/release.html">Release notes</a></h3>
+<hr />
+<h3><a href="index.html">Table of Contents</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="live.html">PyGears LIVE!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Quick introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gears.html">Introduction to Gears</a></li>
+<li class="toctree-l1"><a class="reference internal" href="typing.html">Typing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="registry.html">Registry</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">PyGears Tools Setup for Linux</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#minimal-workflow-toolset-installation">Minimal workflow toolset installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#full-workflow-toolset-installation">Full workflow toolset installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#verifying-that-it-works">Verifying that it works</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#complete-list-of-command-line-arguments"> Complete list of command line arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pygears-tools-list">Pygears Tools List</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference.html">Reference</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Bogdan Vukobratovic.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/setup.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+    <a href="https://github.com/bogdanvuk/pygears" class="github">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,231 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Filter &#8212; PyGears - HW Design: A Functional Approach</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script type="text/javascript" src="../_static/default.js"></script>
+    <script type="text/javascript" src="../_static/wavedrom.js"></script>
+    <link rel="canonical" href="https://www.pygears.org/gears/filt.html" />
+    <link rel="shortcut icon" href="../_static/pygears.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Range generator" href="rng.html" />
+    <link rel="prev" title="Concatenation" href="ccat.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-filt">
+<span id="filter"></span><h1>Filter<a class="headerlink" href="#module-filt" title="Permalink to this headline">¶</a></h1>
+<p>Filters various data types received at its input, by passing forward only certain parts of the data based on some criteria.</p>
+<span class="target" id="filt-var-1"></span><dl class="function">
+<dt id="filt.filt">
+<code class="descname">filt</code><span class="sig-paren">(</span><em>din: Union</em>, <em>*</em>, <em>fixsel</em><span class="sig-paren">)</span> &#x2192; din.types[sel]:<a class="headerlink" href="#filt.filt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Receive data of the <a class="reference internal" href="../typing/union.html#pygears.typing.union.Union" title="pygears.typing.union.Union"><code class="xref py py-class docutils literal notranslate"><span class="pre">Union</span></code></a> type, and passes the data forward only when the <a class="reference internal" href="../typing/union.html#pygears.typing.union.Union" title="pygears.typing.union.Union"><code class="xref py py-class docutils literal notranslate"><span class="pre">Union</span></code></a> carries the data type deisngated by the <code class="docutils literal notranslate"><span class="pre">fixsel</span></code> compile time parameter.</p>
+<p>In the example, the driver <code class="docutils literal notranslate"><span class="pre">drv</span></code> sends data of the type <code class="docutils literal notranslate"><span class="pre">Union[Uint[8],</span> <span class="pre">Int[8]]</span></code>, which means that the data can either be an 8-bit unsigned integer or an 8-bit signed integer. Types in the <code class="xref py py-class docutils literal notranslate"><span class="pre">Union</span></code> are enumerated in the order they are listed, so <code class="docutils literal notranslate"><span class="pre">Uint[8]</span></code> has an ID of <code class="docutils literal notranslate"><span class="pre">0</span></code> and <code class="docutils literal notranslate"><span class="pre">Int[8]</span></code> has an ID of <code class="docutils literal notranslate"><span class="pre">1</span></code>. The driver alternates between sending the unsigned and signed values, but only the unsigned values are passed forward since <a class="reference internal" href="#filt.filt" title="filt.filt"><code class="xref py py-func docutils literal notranslate"><span class="pre">filt()</span></code></a> is configured to pass the values of the type with the ID of <code class="docutils literal notranslate"><span class="pre">0</span></code> (<code class="docutils literal notranslate"><span class="pre">fixsel</span> <span class="pre">=</span> <span class="pre">0</span></code>).</p>
+<div>
+
+      <link href="/_static/css/fontello.css" type="text/css" rel="stylesheet"/>
+      <button id="cmdrun" class="btn-run cls-tryme" style="font-size:16px; font-weight:bold;" onClick="window.open('/live.html?file=gears/examples/filt_fix_sel.py', '_blank');" title="Run this example on PyGears LIVE!"><i class="icon-cog-alt"></i> Try Me!</button></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Union</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="n">Int</span><span class="p">[</span><span class="mi">8</span><span class="p">]],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">0</span><span class="p">)])</span> \
+    <span class="o">|</span> <span class="n">filt</span><span class="p">(</span><span class="n">fixsel</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> \
+    <span class="o">|</span> <span class="n">check</span><span class="p">(</span><span class="n">ref</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">])</span>
+</pre></div>
+</div>
+
+<div style="overflow-x:auto">
+<script type="WaveDrom">
+{"signal": [{"name": "clk", "wave": "p....."}, ["filt.din", {"name": "data", "wave": "55555z", "data": ["1", "2", "3", "4", "5"]}, {"name": "ctrl", "wave": "55555z", "data": ["0", "1", "0", "1", "0"]}], ["filt.dout", {"name": "", "wave": "5z5z5z", "data": ["1", "3", "5"]}]], "head": {"tock": 0}}
+</script>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt>
+<code class="descname">filt</code><span class="sig-paren">(</span><em>din: Queue</em>, <em>*</em>, <em>f</em><span class="sig-paren">)</span> &#x2192; din</dt>
+<dd><p>Receives a <a class="reference internal" href="../typing/queue.html#pygears.typing.queue.Queue" title="pygears.typing.queue.Queue"><code class="xref py py-class docutils literal notranslate"><span class="pre">Queue</span></code></a> and filters-out elements of the <a class="reference internal" href="../typing/queue.html#pygears.typing.queue.Queue" title="pygears.typing.queue.Queue"><code class="xref py py-class docutils literal notranslate"><span class="pre">Queue</span></code></a> based on the decision made by the function <code class="docutils literal notranslate"><span class="pre">f()</span></code> which is received as a parameter. Function <code class="docutils literal notranslate"><span class="pre">f()</span></code> should receive elements of the input <a class="reference internal" href="../typing/queue.html#pygears.typing.queue.Queue" title="pygears.typing.queue.Queue"><code class="xref py py-class docutils literal notranslate"><span class="pre">Queue</span></code></a> and output values of type <code class="xref py py-class docutils literal notranslate"><span class="pre">Bool</span></code>, either <code class="docutils literal notranslate"><span class="pre">0</span></code> if the element should be discarded or <code class="docutils literal notranslate"><span class="pre">1</span></code> if it should be passed forward. It should have a following signature:</p>
+<dl class="function">
+<dt id="filt.f">
+<code class="descname">f</code><span class="sig-paren">(</span><em>x: din.data</em><span class="sig-paren">)</span> &#x2192; Bool<a class="headerlink" href="#filt.f" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>The example shows how <a class="reference internal" href="#filt.filt" title="filt.filt"><code class="xref py py-func docutils literal notranslate"><span class="pre">filt()</span></code></a> can be used to select even numbers from a <a class="reference internal" href="../typing/queue.html#pygears.typing.queue.Queue" title="pygears.typing.queue.Queue"><code class="xref py py-class docutils literal notranslate"><span class="pre">Queue</span></code></a> of numbers <code class="docutils literal notranslate"><span class="pre">0</span></code> to <code class="docutils literal notranslate"><span class="pre">9</span></code> sent by the driver. In order to retain the consistency of the output <a class="reference internal" href="../typing/queue.html#pygears.typing.queue.Queue" title="pygears.typing.queue.Queue"><code class="xref py py-class docutils literal notranslate"><span class="pre">Queue</span></code></a>.</p>
+<div>
+
+      <link href="/_static/css/fontello.css" type="text/css" rel="stylesheet"/>
+      <button id="cmdrun" class="btn-run cls-tryme" style="font-size:16px; font-weight:bold;" onClick="window.open('/live.html?file=gears/examples/qfilt.py', '_blank');" title="Run this example on PyGears LIVE!"><i class="icon-cog-alt"></i> Try Me!</button></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@datagear</span>
+<span class="k">def</span> <span class="nf">even</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Uint</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Bool</span><span class="p">:</span>
+    <span class="k">return</span> <span class="ow">not</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+
+<span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Queue</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">]],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">))])</span> \
+    <span class="o">|</span> <span class="n">filt</span><span class="p">(</span><span class="n">f</span><span class="o">=</span><span class="n">even</span><span class="p">)</span> \
+    <span class="o">|</span> <span class="n">check</span><span class="p">(</span><span class="n">ref</span><span class="o">=</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">2</span><span class="p">))])</span>
+</pre></div>
+</div>
+
+<div style="overflow-x:auto">
+<script type="WaveDrom">
+{"signal": [{"name": "clk", "wave": "p.........."}, ["filt.din", {"name": "data", "wave": "5555555555z", "data": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]}, {"name": "eot", "wave": "5555555555z", "data": ["0", "0", "0", "0", "0", "0", "0", "0", "0", "1"]}], ["filt.dout", {"name": "data", "wave": "z.5z5z5z55z", "data": ["0", "2", "4", "6", "8"]}, {"name": "eot", "wave": "z.5z5z5z55z", "data": ["0", "0", "0", "0", "1"]}]], "head": {"tock": 0}}
+</script>
+</div>
+<p>The <a class="reference internal" href="#filt.filt" title="filt.filt"><code class="xref py py-func docutils literal notranslate"><span class="pre">filt()</span></code></a> gear needs to delay output of the received data in order to maintain the proper <a class="reference internal" href="../typing/queue.html#pygears.typing.queue.Queue" title="pygears.typing.queue.Queue"><code class="xref py py-class docutils literal notranslate"><span class="pre">Queue</span></code></a> formating. In the following example, the first element that is received needs to be kept in the buffer and finally output together with the <code class="docutils literal notranslate"><span class="pre">eot</span></code> (end of transaction) flag.</p>
+<div>
+
+      <link href="/_static/css/fontello.css" type="text/css" rel="stylesheet"/>
+      <button id="cmdrun" class="btn-run cls-tryme" style="font-size:16px; font-weight:bold;" onClick="window.open('/live.html?file=gears/examples/qfilt_delay.py', '_blank');" title="Run this example on PyGears LIVE!"><i class="icon-cog-alt"></i> Try Me!</button></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Queue</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">]],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">9</span><span class="p">]])</span> \
+</pre></div>
+</div>
+
+<div style="overflow-x:auto">
+<script type="WaveDrom">
+{"signal": [{"name": "clk", "wave": "p......"}, ["filt.din", {"name": "data", "wave": "555555z", "data": ["0", "1", "3", "5", "7", "9"]}, {"name": "eot", "wave": "555555z", "data": ["0", "0", "0", "0", "0", "1"]}], ["filt.dout", {"name": "data", "wave": "z....5z", "data": ["0"]}, {"name": "eot", "wave": "z....5z", "data": ["1"]}]], "head": {"tock": 0}}
+</script>
+</div>
+<p>If all elements of the <a class="reference internal" href="../typing/queue.html#pygears.typing.queue.Queue" title="pygears.typing.queue.Queue"><code class="xref py py-class docutils literal notranslate"><span class="pre">Queue</span></code></a> are filtered out, nothing is sent forward:</p>
+<div>
+
+      <link href="/_static/css/fontello.css" type="text/css" rel="stylesheet"/>
+      <button id="cmdrun" class="btn-run cls-tryme" style="font-size:16px; font-weight:bold;" onClick="window.open('/live.html?file=gears/examples/qfilt_empty.py', '_blank');" title="Run this example on PyGears LIVE!"><i class="icon-cog-alt"></i> Try Me!</button></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Queue</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">]],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">9</span><span class="p">]])</span> \
+</pre></div>
+</div>
+
+<div style="overflow-x:auto">
+<script type="WaveDrom">
+{"signal": [{"name": "clk", "wave": "p...."}, ["filt.din", {"name": "data", "wave": "5555z", "data": ["1", "3", "5", "9"]}, {"name": "eot", "wave": "5555z", "data": ["0", "0", "0", "1"]}], ["filt.dout", {"name": "data", "wave": "z....", "data": []}, {"name": "eot", "wave": "z....", "data": []}]], "head": {"tock": 0}}
+</script>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt>
+<code class="descname">filt</code><span class="sig-paren">(</span><em>din: Tuple[{'data': Union, 'sel': Uint}]</em><span class="sig-paren">)</span> &#x2192; din['data']</dt>
+<dd><p>Same functionality as the <a class="reference internal" href="#filt-var-1"><span class="std std-ref">first filt() variant</span></a>, but allows for the <code class="docutils literal notranslate"><span class="pre">sel</span></code> parameter to be specified at run time.</p>
+</dd></dl>
+
+</div>
+
+    <script type="text/javascript">
+        function init() {
+            WaveDrom.ProcessAll();
+        }
+        window.onload = init;
+    </script>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../index.html">
+    <img class="logo" src="../_static/logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+<p class="blurb">HW Design: A Functional Approach</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=bogdanvuk&repo=pygears&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<hr />
+<p>
+    <h3> Blogs </h3>
+    <ul>
+        <li class="toctree-l1"><a href="https://www.pygears.org/blog/blog/category/risc-v.html">RISC-V implementation blog</a></li>
+    </ul>
+</p>
+<hr />
+<h3><a href="https://www.pygears.org/blog/blog/category/release.html">Release notes</a></h3>
+<hr />
+<h3><a href="../index.html">Table of Contents</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../live.html">PyGears LIVE!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Quick introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gears.html">Introduction to Gears</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../typing.html">Typing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../registry.html">Registry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../setup.html">PyGears Tools Setup for Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../reference.html">Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../reference.html#core">Core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference.html#infrastructure">Infrastructure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference.html#typing">Typing</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../reference.html#gears">Gears</a></li>
+</ul>
+</li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Bogdan Vukobratovic.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/gears/filt.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+    <a href="https://github.com/bogdanvuk/pygears" class="github">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>
