@@ -92,7 +92,7 @@ def test_chop(enable_coverage=True):
                               en=enable_coverage)),
         drv(t=t_cfg, seq=CoverIterator([2, 3], cg=cfg_cg, en=enable_coverage)),
         f=chop,
-        ref=[[[0, 1], [2, 3], [4, 5], [6, 7], [8]], [[0, 1, 2]]])
+        ref=[[0, 1], [2, 3], [4, 5], [6, 7], [8], [0, 1, 2]])
     sim()
 
     # print(cfg_cg.report())
@@ -133,7 +133,7 @@ def test_intf(enable_coverage=True):
         drv(t=t_din, seq=[list(range(9)), list(range(3))]),
         drv(t=t_cfg, seq=[2, 3]),
         f=chop,
-        ref=[[[0, 1], [2, 3], [4, 5], [6, 7], [8]], [[0, 1, 2]]])
+        ref=[[0, 1], [2, 3], [4, 5], [6, 7], [8], [0, 1, 2]])
 
     cover_intf(find('/chop.cfg').consumer, cg=cfg_cg)
     cover_intf(find('/chop.din').consumer, cg=din_cg)

@@ -50,7 +50,7 @@ def test_directed(tmpdir, sim_cls, din_delay, dout_delay):
         | delay_rng(din_delay, din_delay),
         drv(t=t_cfg, seq=[2, 3]) | delay_rng(din_delay, din_delay),
         f=dut(sim_cls=sim_cls),
-        ref=[[[0, 1], [2, 3], [4, 5], [6, 7], [8]], [[0, 1, 2]]],
+        ref=[[0, 1], [2, 3], [4, 5], [6, 7], [8], [0, 1, 2]],
         delays=[delay_rng(dout_delay, dout_delay)])
     sim(outdir=tmpdir)
 
