@@ -67,8 +67,8 @@ def get_result_dir(filename=None, function_name=None):
 
     test_dir = os.path.dirname(__file__)
 
-    return os.path.join(test_dir, 'result', os.path.relpath(
-        filename, test_dir), function_name)
+    return os.path.join(test_dir, 'result',
+                        os.path.relpath(filename, test_dir), function_name)
 
 
 def prepare_result_dir(filename=None, function_name=None):
@@ -102,9 +102,9 @@ def get_test_res_ref_dir_pair(func):
 def formal_check(disable=None, asserts=None, assumes=None, **kwds):
     def decorator(func):
         return pytest.mark.usefixtures('formal_check_fixt')(
-            pytest.mark.parametrize(
-                'formal_check_fixt', [[disable, asserts, assumes, kwds]],
-                indirect=True)(func))
+            pytest.mark.parametrize('formal_check_fixt',
+                                    [[disable, asserts, assumes, kwds]],
+                                    indirect=True)(func))
 
     return decorator
 
@@ -122,16 +122,15 @@ def formal_check_fixt(tmpdir, request):
     safe_bind('vgen/formal/assumes', assumes)
 
     root = find('/')
-    rtlgen = hdlgen(
-        root.child[0],
-        language='v',
-        outdir=outdir,
-        wrapper=False,
-        **request.param[3])
+    rtlgen = hdlgen(root.child[0],
+                    language='v',
+                    outdir=outdir,
+                    wrapper=False,
+                    **request.param[3])
 
     yosis_cmds = []
-    env = jinja2.Environment(
-        loader=jinja2.FileSystemLoader(searchpath=os.path.dirname(__file__)))
+    env = jinja2.Environment(loader=jinja2.FileSystemLoader(
+        searchpath=os.path.dirname(__file__)))
     jinja_context = {'name': rtlgen.basename, 'outdir': outdir}
 
     def find_yosis_cmd(name):
@@ -160,9 +159,9 @@ def formal_check_fixt(tmpdir, request):
 def synth_check(expected, tool='yosys', **kwds):
     def decorator(func):
         return pytest.mark.usefixtures('synth_check_fixt')(
-            pytest.mark.parametrize(
-                'synth_check_fixt', [[expected, kwds, tool]],
-                indirect=True)(func))
+            pytest.mark.parametrize('synth_check_fixt',
+                                    [[expected, kwds, tool]],
+                                    indirect=True)(func))
 
     return decorator
 
@@ -198,8 +197,10 @@ def synth_check_fixt(tmpdir, language, request):
     if tool == 'vivado':
         util = vivado.synth(tmpdir, language=language, **params)
     else:
-        util = yosys.synth(
-            tmpdir, synth_cmd='synth_xilinx', language=language, **params)
+        util = yosys.synth(tmpdir,
+                           synth_cmd='synth_xilinx',
+                           language=language,
+                           **params)
 
     for param, value in util_ref.items():
         if callable(value):
@@ -211,8 +212,8 @@ def synth_check_fixt(tmpdir, language, request):
 def svgen_check(expected, **kwds):
     def decorator(func):
         return pytest.mark.usefixtures('svgen_check_fixt')(
-            pytest.mark.parametrize(
-                'svgen_check_fixt', [[expected, kwds]], indirect=True)(func))
+            pytest.mark.parametrize('svgen_check_fixt', [[expected, kwds]],
+                                    indirect=True)(func))
 
     return decorator
 
@@ -302,3 +303,18 @@ def language(request):
     # if language is 'v':
     #     skip_ifndef('VERILOG_TEST')
     yield language
+
+
+from pygears import gear
+from pygears.lib import decoupler
+
+
+def get_decoupled_dut(delay, f):
+    if delay > 0:
+        return f
+
+    @gear
+    def decoupled(din):
+        return din | f | decoupler
+
+    return decoupled

@@ -68,6 +68,7 @@ from .alternate_queues import alternate_queues
 from .delay import delay, delay_rng
 from .verif import directed, verif, drv, check, mon
 from .reduce2 import reduce2
+from .reduce import reduce
 
 import pygears.lib.fmaps
 import pygears.lib.hls
@@ -80,11 +81,11 @@ __all__ = [
     'mux_valve', 'demux_zip', 'demux_ctrl', 'data_dly', 'eq', 'union_sync',
     'union_collapse', 'filt', 'buff', 'local_rst', 'mod', 'invert', 'shr',
     'shl', 'extender', 'queue_wrap_from', 'demux_by', 'mux_by', 'align', 'gt',
-    'lt', 'neq', 'cart_sync_with', 'when', 'filt_by', 'union_sync_with',
-    'case', 'const_ping', 'xor', 'rng', 'iceil', 'priority_mux', 'qcnt', 'sdp',
-    'chop', 'trr', 'replicate', 'trr_dist', 'clip', 'din_cat', 'take',
+    'lt', 'neq', 'cart_sync_with', 'when', 'union_sync_with', 'case',
+    'const_ping', 'xor', 'rng', 'iceil', 'priority_mux', 'qcnt', 'sdp', 'chop',
+    'trr', 'replicate', 'trr_dist', 'clip', 'din_cat', 'take',
     'release_after_eot', 'reverse', 'valve', 'form_sub_cfg', 'reduce2',
     'accumulator', 'tr_cnt', 'repack', 'priority_mux_valve', 'max2',
     'qlen_cnt', 'unary', 'alternate_queues', 'delay', 'delay_rng', 'directed',
-    'verif', 'rom', 'drv', 'check', 'mon'
+    'verif', 'rom', 'drv', 'check', 'mon', 'reduce'
 ]
