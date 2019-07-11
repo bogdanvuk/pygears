@@ -74,7 +74,7 @@
         right: 0;
         bottom: 0;
         left: 0;
-        height: 320px;
+        height: 300px;
     }
     #editor .ace_gutter > .ace_layer{
         background-color: white;
@@ -159,7 +159,7 @@
 
   #gearsDescriptionPlaceholder {
       overflow: auto;
-      max-height: 300px;
+      max-height: 290px;
       margin-top: 20px;
   }
   </style>
@@ -366,19 +366,39 @@ PyGears LIVE!
 
 
       var gears = {
-          "rng": "module-rng",
-          "filt": "module-filt",
-          "add": "bla",
-          "ccat": "concatenation",
+          'accum': {'page': 'gears/reduce.html', 'page-div-id': 'module-reduce', 'view-div-id': 'reduce.accum'},
+          'ccat': {'page-div-id': 'concatenation'},
+          'filt': {},
+          'reduce': {},
+          'rng': {},
       }
 
       autocomplete(document.getElementById("gearSelect"), Object.keys(gears), function(val) {
           if (!val) {return};
           var iframe = document.getElementById("iframe");
-          iframe.src = `gears/${val}.html`;
+          var div_id;
+
+          if ("page" in gears[val]) {
+              iframe.src = gears[val]["page"];
+          } else {
+              iframe.src = `gears/${val}.html`;
+          }
+
+          if ('page-div-id' in gears[val]) {
+              div_id = gears[val]["page-div-id"];
+          } else {
+              div_id = `module-${val}`;
+          }
+
+
           iframe.onload = function() {
               var div = document.getElementById("gearsDescriptionPlaceholder");
-              div.innerHTML = iframe.contentWindow.document.getElementById(gears[val]).innerHTML;
+              div.innerHTML = iframe.contentWindow.document.getElementById(div_id).innerHTML;
+              if ('view-div-id' in gears[val]) {
+                  document.getElementById(gears[val]['view-div-id']).scrollIntoView();
+              } else {
+                  div.scrollTop = 0;
+              }
           };
       });
 

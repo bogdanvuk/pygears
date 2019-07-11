@@ -41,7 +41,6 @@ from .shr import shr
 from .shl import shl
 from .extender import extender
 from .align import align
-from .accumulator import accumulator
 from .replicate import replicate
 from .chop import chop
 from .clip import clip
@@ -68,7 +67,7 @@ from .alternate_queues import alternate_queues
 from .delay import delay, delay_rng
 from .verif import directed, verif, drv, check, mon
 from .reduce2 import reduce2
-from .reduce import reduce
+from .reduce import reduce, accum
 
 import pygears.lib.fmaps
 import pygears.lib.hls
@@ -85,7 +84,7 @@ __all__ = [
     'const_ping', 'xor', 'rng', 'iceil', 'priority_mux', 'qcnt', 'sdp', 'chop',
     'trr', 'replicate', 'trr_dist', 'clip', 'din_cat', 'take',
     'release_after_eot', 'reverse', 'valve', 'form_sub_cfg', 'reduce2',
-    'accumulator', 'tr_cnt', 'repack', 'priority_mux_valve', 'max2',
-    'qlen_cnt', 'unary', 'alternate_queues', 'delay', 'delay_rng', 'directed',
-    'verif', 'rom', 'drv', 'check', 'mon', 'reduce'
+    'tr_cnt', 'repack', 'priority_mux_valve', 'max2', 'qlen_cnt', 'unary',
+    'alternate_queues', 'delay', 'delay_rng', 'directed', 'verif', 'rom',
+    'drv', 'check', 'mon', 'reduce', 'accum'
 ]

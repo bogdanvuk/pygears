@@ -1,0 +1,1 @@
+{"signal": [{"name": "clk", "wave": "p....."}, ["accum.din", {"name": "data", "wave": "55555z", "data": ["0", "1", "2", "3", "4"]}, {"name": "eot", "wave": "55555z", "data": ["0", "0", "0", "0", "1"]}], ["accum.init", {"name": "", "wave": "4...54", "data": ["0", "0", "0"]}], ["accum.dout", {"name": "", "wave": "z...5z", "data": ["10"]}]], "head": {"tock": 0}}

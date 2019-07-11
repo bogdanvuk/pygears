@@ -7,9 +7,9 @@ Filters various data types received at its input, by passing forward only certai
 
 .. _filt-var-1:
 
-.. py:function:: filt(din: Union, *, fixsel) -> din.types[sel]:
+.. py:function:: filt(din: Union, *, fixsel) -> din.types[fixsel]:
 
-   Receive data of the :class:`~.Union` type, and passes the data forward only when the :class:`~.Union` carries the data type deisngated by the ``fixsel`` compile time parameter.
+   Receive data of the :class:`~.Union` type, and passes the data forward only when the :class:`~.Union` carries the data type designated by the ``fixsel`` compile time parameter. Output data type is the :class:`~.Union` type designated by the ``fixsel`` parameter.
 
    In the example, the driver ``drv`` sends data of the type ``Union[Uint[8], Int[8]]``, which means that the data can either be an 8-bit unsigned integer or an 8-bit signed integer. Types in the :class:`~.~.Union` are enumerated in the order they are listed, so ``Uint[8]`` has an ID of ``0`` and ``Int[8]`` has an ID of ``1``. The driver alternates between sending the unsigned and signed values, but only the unsigned values are passed forward since :func:`~.filt` is configured to pass the values of the type with the ID of ``0`` (``fixsel = 0``).   
 
@@ -28,7 +28,7 @@ Filters various data types received at its input, by passing forward only certai
    .. pg-example:: examples/qfilt
       :lines: 6-13
 
-   The :func:`~.filt` gear needs to delay output of the received data in order to maintain the proper :class:`~.Queue` formating. In the following example, the first element that is received needs to be kept in the buffer and finally output together with the ``eot`` (end of transaction) flag.
+   The :func:`~.filt` gear needs to delay output of the received data in order to maintain the proper :class:`~.Queue` formatting. In the following example, the first element that is received needs to be kept in the buffer and finally output together with the ``eot`` (end of transaction) flag.
 
    .. pg-example:: examples/qfilt_delay
       :lines: 11-11
