@@ -6,8 +6,7 @@ TRdDin = Uint['w_addr']
 
 
 @gear(
-    outnames=['rd_data'],
-    sv_submodules=['sdp_mem', 'sdp_rd_port', 'sdp_wr_port'])
+    outnames=['rd_data'])
 def sdp(wr_addr_data: TWrDin,
         rd_addr: TRdDin,
         *,
