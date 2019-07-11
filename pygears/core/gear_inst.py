@@ -5,6 +5,7 @@ from pygears.conf import bind, core_log, registry, safe_bind, MultiAlternativeEr
 from pygears.typing import Any
 from pygears.core.util import is_standard_func, get_function_context_dict
 
+from .partial import Partial
 from .intf import Intf
 from .infer_ftypes import TypeMatchError, infer_ftypes, type_is_specified
 from .gear import TooManyArguments, GearTypeNotSpecified, GearArgsNotSpecified
@@ -72,7 +73,15 @@ def infer_const_args(args):
                 const_args[name] = intf
                 intf = Intf(get_literal_type(intf))
             except GearTypeNotSpecified:
-                raise GearArgsNotSpecified(f"Unresolved input argument {name}")
+                if isinstance(intf, Partial):
+                    raise GearArgsNotSpecified(
+                        f'Unresolved gear "{intf.func.__name__}" with inputs'
+                        f' {intf.args} and parameters {intf.kwds},'
+                        f'connected to the input "{name}"')
+                else:
+                    raise GearArgsNotSpecified(
+                        f'Unresolved argument "{intf}" connected to the input'
+                        f'"{name}"')
 
         args_res[name] = intf
 
@@ -265,14 +274,14 @@ def resolve_gear(gear_inst, fix_intfs):
 
     if any(not type_is_specified(i.dtype) for i in out_intfs):
         raise GearTypeNotSpecified(
-            f"Output type of the module {gear_inst.name}"
-            f" could not be resolved, and resulted in {repr(out_dtype)}")
+            f'Output type of the gear "{gear_inst.name}"'
+            f' could not be resolved, and resulted in "{repr(out_dtype)}"')
 
     for c in gear_inst.child:
         for p in c.out_ports:
             intf = p.consumer
             if intf not in set(intfs) and not intf.consumers:
-                core_log().warning(f'{c.name}.{p.basename} left dangling.')
+                core_log().warning(f'"{c.name}.{p.basename}" left dangling.')
 
     if len(out_intfs) > 1:
         return tuple(out_intfs)

@@ -1,5 +1,4 @@
 import pytest
-import operator
 from pygears.util.test_utils import get_decoupled_dut
 from pygears.lib import reduce, directed, drv, verif, delay_rng
 from pygears.typing import Uint, Queue, Bool
@@ -23,7 +22,6 @@ def test_uint_directed(tmpdir, sim_cls):
 @pytest.mark.parametrize('din_delay', [0, 1, 10])
 @pytest.mark.parametrize('dout_delay', [0, 1, 10])
 def test_delay(tmpdir, cosim_cls, din_delay, dout_delay):
-
     def bitfield(n):
         return [int(digit) for digit in bin(n)[2:]]
 
@@ -31,11 +29,10 @@ def test_delay(tmpdir, cosim_cls, din_delay, dout_delay):
     init = [1, 0]
 
     dut = get_decoupled_dut(dout_delay, reduce(f=lambda x, y: x ^ y))
-    verif(
-        drv(t=Queue[Bool], seq=seq) | delay_rng(din_delay, din_delay),
-        drv(t=Uint[8], seq=init),
-        f=dut(sim_cls=cosim_cls),
-        ref=reduce(name='ref_model', f=lambda x, y: x ^ y),
-        delays=[delay_rng(dout_delay, dout_delay)])
+    verif(drv(t=Queue[Bool], seq=seq) | delay_rng(din_delay, din_delay),
+          drv(t=Uint[8], seq=init),
+          f=dut(sim_cls=cosim_cls),
+          ref=reduce(name='ref_model', f=lambda x, y: x ^ y),
+          delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(outdir=tmpdir)

@@ -1,6 +1,6 @@
 from pygears import alternative, gear
 from pygears.lib import cart
-from pygears.typing import Bool, Integer, Queue, Tuple, Any
+from pygears.typing import Any, Bool, Queue, Tuple
 
 t_din = Queue[Tuple[{'data': Any, 'init': Any}]]
 

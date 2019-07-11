@@ -1,5 +1,5 @@
 import shutil
-from pygears.conf import PluginBase, bind, registry, safe_bind
+from pygears.conf import bind, registry
 from pygears.rtl import rtlgen
 from pygears.util.find import find
 from pygears.synth import list_hdl_files
