@@ -56,8 +56,9 @@ def find_assign_value(node, module_data, names):
 
     if isinstance(node.value, ast.Await):
         vals, block = find_await_value(node.value, module_data)
-    elif isinstance(node.value, ast.Call) and getattr(
-            node.value.func, 'id', None) in module_data.functions:
+    elif (isinstance(node.value, ast.Call) and hasattr(node.value.func, 'id')
+          and node.value.func.id in module_data.functions):
+
         block = parse_functions(node.value, module_data, names)
         return None, block
     else:
@@ -98,8 +99,9 @@ def find_await_value(node, module_data):
     if intf_method == 'get':
         intf = module_data.hdl_locals.get(intf_name, None)
         assert isinstance(intf, IntfDef)
-        intf_to_await = IntfDef(
-            intf=intf.intf, _name=intf.name, context='valid')
+        intf_to_await = IntfDef(intf=intf.intf,
+                                _name=intf.name,
+                                context='valid')
     else:
         raise VisitError('Await only supports interface get method')
 
@@ -171,10 +173,9 @@ def assign_out_intf(name, module_data, index, val):
         if not all([v is None for v in val.val]):
             module_data.hdl_locals[name] = IntfDef(intf=val, _name=name)
         else:
-            module_data.hdl_locals[name] = IntfDef(
-                intf=tuple(
-                    [intf.intf for intf in module_data.out_ports.values()]),
-                _name=name)
+            module_data.hdl_locals[name] = IntfDef(intf=tuple(
+                [intf.intf for intf in module_data.out_ports.values()]),
+                                                   _name=name)
 
     if index:
         return IntfStmt(index, val)

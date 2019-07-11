@@ -314,7 +314,7 @@ def get_decoupled_dut(delay, f):
         return f
 
     @gear
-    def decoupled(din):
+    def decoupled(*din):
         return din | f | decoupler
 
     return decoupled

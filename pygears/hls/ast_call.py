@@ -11,7 +11,7 @@ from .hls_expressions import (ArrayOpExpr, AttrExpr, BinOpExpr, CastExpr,
                               UnaryOpExpr)
 from .utils import (VisitError, add_to_list, cast_return, eval_expression,
                     find_data_expression, find_target, set_pg_type,
-                    get_function_source, get_context_var)
+                    get_function_ast, get_context_var)
 
 
 @parse_ast.register(ast.Call)
@@ -54,8 +54,7 @@ def parse_functions(node, module_data, returns=None):
     if not is_standard_func(curr_func):
         raise VisitError(f'Only standard functions are supported!')
 
-    source = get_function_source(curr_func)
-    func_ast = ast.parse(source).body[0]
+    func_ast = get_function_ast(curr_func)
 
     replace_kwds = {n.arg: n.value.id for n in node.keywords}
 
@@ -82,8 +81,10 @@ def parse_functions(node, module_data, returns=None):
     AstFunctionReplace(argument_map, returns).visit(func_ast)
     func_ast = ast.fix_missing_locations(func_ast)
 
+    body = func_ast.body
+
     res = []
-    for stmt in func_ast.body:
+    for stmt in body:
         res_stmt = parse_ast(stmt, module_data)
         add_to_list(res, res_stmt)
     return res

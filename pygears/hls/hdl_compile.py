@@ -37,6 +37,7 @@ class ModuleData:
     out_intfs: typing.Dict
     local_namespace: typing.Dict
     gear: typing.Any
+    _functions: typing.Dict = None
 
     def get_container(self, name):
         for attr in ['regs', 'variables', 'in_intfs', 'out_intfs']:
@@ -60,15 +61,16 @@ class ModuleData:
 
     @property
     def functions(self):
-        funcs = {}
-        for name, value in chain(
-                get_function_context_dict(self.gear.func).items(),
-                self.gear.explicit_params.items()):
+        if self._functions is None:
+            self._functions = {}
+            for name, value in chain(
+                    get_function_context_dict(self.gear.func).items(),
+                    self.gear.explicit_params.items()):
 
-            if isinstance(value, FunctionType):
-                funcs[name] = value
+                if isinstance(value, FunctionType):
+                    self._functions[name] = value
 
-        return funcs
+        return self._functions
 
 
 def clean_variables(hdl_data):
