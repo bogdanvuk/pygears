@@ -26,6 +26,7 @@ def parse_ast(node, module_data):
 
 def parse_block(pydl_node, body, module_data):
     for stmt in body:
+        module_data.current_block = pydl_node
         res_stmt = parse_ast(stmt, module_data)
         add_to_list(pydl_node.stmts, res_stmt)
 

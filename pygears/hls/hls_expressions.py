@@ -127,7 +127,9 @@ class DefBase(Expr):
 
     @property
     def dtype(self):
-        if is_type(type(self.val)):
+        if is_type(self.val):
+            return self.val
+        elif is_type(type(self.val)):
             return type(self.val)
 
         return self.val.dtype

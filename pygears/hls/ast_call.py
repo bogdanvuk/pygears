@@ -4,14 +4,16 @@ from functools import reduce
 from pygears import registry
 from pygears.typing import Int, Tuple, Uint, Unit, is_type, typeof
 from pygears.core.util import is_standard_func
+from pygears.core.util import get_function_context_dict
 
 from .ast_parse import parse_ast
 from .hls_expressions import (ArrayOpExpr, AttrExpr, BinOpExpr, CastExpr,
                               ConcatExpr, ConditionalExpr, IntfDef, ResExpr,
-                              UnaryOpExpr)
+                              UnaryOpExpr, OperandVal)
 from .utils import (VisitError, add_to_list, cast_return, eval_expression,
                     find_data_expression, find_target, set_pg_type,
-                    get_function_ast, get_context_var)
+                    get_function_ast, get_context_var, hls_debug_header,
+                    hls_debug, get_function_source)
 
 
 @parse_ast.register(ast.Call)
@@ -34,7 +36,14 @@ def parse_call(node, module_data):
         return parse_func_call(node, func_args, module_data)
 
 
-def parse_functions(node, module_data, returns=None):
+def parse_function(func, args, kwds, module_data, returns):
+    hls_debug_header(f'Parsing function call to "{func.__name__}"')
+    source = get_function_source(func)
+    hls_debug(source, title='Function source:')
+
+    if kwds:
+        pass
+
     def find_original_arguments(args, new_names, kwargs):
         arg_names = {}
         arg_names.update(kwargs)  # passed as keyword arguments
@@ -50,16 +59,15 @@ def parse_functions(node, module_data, returns=None):
 
         return arg_names
 
-    curr_func = module_data.functions[node.func.id]
-    if not is_standard_func(curr_func):
+    if not is_standard_func(func):
         raise VisitError(f'Only standard functions are supported!')
 
-    func_ast = get_function_ast(curr_func)
+    func_ast = get_function_ast(func)
 
-    replace_kwds = {n.arg: n.value.id for n in node.keywords}
+    replace_kwds = {n.arg: n.value.id for n in kwds}
 
     arguments = []
-    for arg in node.args:
+    for arg in args:
         if isinstance(arg, ast.Starred):
             var = get_context_var(arg.value.id, module_data)
 
@@ -78,8 +86,17 @@ def parse_functions(node, module_data, returns=None):
     argument_map = find_original_arguments(func_ast.args, arguments,
                                            replace_kwds)
 
-    AstFunctionReplace(argument_map, returns).visit(func_ast)
+    hls_debug_header('Arguments map')
+
+    for name, arg in argument_map.items():
+        hls_debug(f'"{name}"', indent=4)
+        hls_debug(arg, indent=8)
+
+    AstFunctionReplace(argument_map, returns,
+                       get_function_context_dict(func)).visit(func_ast)
     func_ast = ast.fix_missing_locations(func_ast)
+
+    hls_debug(func_ast, title='Function inlined AST:')
 
     body = func_ast.body
 
@@ -91,9 +108,10 @@ def parse_functions(node, module_data, returns=None):
 
 
 class AstFunctionReplace(ast.NodeTransformer):
-    def __init__(self, args, returns):
+    def __init__(self, args, returns, context):
         self.args = args
         self.returns = returns
+        self.context = context
 
     def visit_Name(self, node):
         if node.id in self.args:
@@ -101,6 +119,16 @@ class AstFunctionReplace(ast.NodeTransformer):
             if not isinstance(switch_val, str):
                 return switch_val
             node.id = switch_val
+
+        elif node.id in self.context:
+            val = self.context[node.id]
+            try:
+                return ast.Num(val.code())
+            except (AttributeError, TypeError):
+                pass
+
+            if isinstance(val, int):
+                return ast.Num(int(val))
 
         return node
 
@@ -146,27 +174,55 @@ def parse_func_call(node, func_args, module_data):
             return cast_return(func_args, module_data.out_ports)
 
     kwds = {}
+    pg_types = registry('gear/type_arith')
+
     if hasattr(node.func, 'attr'):
         kwds['value'] = find_data_expression(node.func.value, module_data)
         func = node.func.attr
     elif hasattr(node.func, 'id'):
         func = node.func.id
     else:
-        try:
-            pg_type = node.func.value.id
-            width = node.func.slice.value.n
-        except AttributeError:
-            raise VisitError('Unrecognized func node in call')
+        res = eval_expression(node.func, module_data.local_namespace)
 
-        pg_types = registry('gear/type_arith')
-        if pg_type in pg_types:
-            assert len(
-                func_args
-            ) == 1, f'Type casting supported for simple types for now'
-            return CastExpr(operand=func_args[0],
-                            cast_to=pg_types[pg_type][width])
+        if is_type(res):
+            return CastExpr(operand=func_args[0], cast_to=res)
+
+        # breakpoint()
+        # try:
+        #     pg_type = node.func.value.id
+        #     width = node.func.slice.value.n
+        # except AttributeError:
+        #     raise VisitError('Unrecognized func node in call')
+
+        # if pg_type in pg_types:
+        #     assert len(
+        #         func_args
+        #     ) == 1, f'Type casting supported for simple types for now'
+        #     return CastExpr(operand=func_args[0],
+        #                     cast_to=pg_types[pg_type][width])
 
         raise VisitError('Unrecognized func node in call')
+
+    if func in pg_types:
+        return CastExpr(operand=func_args[0],
+                        cast_to=pg_types['cast'](func_args[0].dtype,
+                                                 pg_types[func]))
+
+    if func in module_data.functions:
+        var_name = f'{func}_res'
+        module_data.variables[var_name] = None
+
+        res = parse_function(module_data.functions[func],
+                             node.args, {},
+                             module_data,
+                             returns=[var_name])
+
+        # module_data.add_variable(var_name, opexp[0].dtype + opexp[1].dtype)
+        module_data.add_variable(var_name, res[0].dtype)
+
+        module_data.current_block.stmts.extend(res)
+
+        return OperandVal(op=module_data.variables[var_name], context='v')
 
     if f'call_{func}' in globals():
         return globals()[f'call_{func}'](*func_args, **kwds)

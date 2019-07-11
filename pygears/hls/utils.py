@@ -4,6 +4,9 @@ import logging
 import textwrap
 import inspect
 import types
+import astpretty
+import textwrap
+import pprint
 
 from pygears import PluginBase
 from pygears.conf import register_custom_log, registry
@@ -143,18 +146,9 @@ def state_expr(state_ids, prev_cond):
 
 
 def get_bin_expr(op, operands, module_data):
+    from .ast_arith import resolve_arith_func
     opexp = [find_data_expression(opi, module_data) for opi in operands]
-
-    if isinstance(op, ast.MatMult):
-        return expr.ConcatExpr(tuple(reversed(opexp)))
-
-    operator = expr.OPMAP[type(op)]
-
-    finexpr = expr.BinOpExpr((opexp[0], opexp[1]), operator)
-    for opi in opexp[2:]:
-        finexpr = expr.BinOpExpr((finexpr, opi), operator)
-
-    return finexpr
+    return resolve_arith_func(op, operands, opexp, module_data)
 
 
 def intf_parse(intf, target):
@@ -342,10 +336,6 @@ def find_name_expression(node, module_data):
     raise VisitError('Unknown name expression')
 
 
-def hls_log():
-    return logging.getLogger('hls')
-
-
 class HLSPlugin(PluginBase):
     @classmethod
     def bind(cls):
@@ -408,3 +398,50 @@ def get_function_ast(func):
         return ast.fix_missing_locations(lambda_ast)
     else:
         return ast.parse(get_function_source(func)).body[0]
+
+
+logger = None
+
+
+def hls_log():
+    global logger
+    if logger is None:
+        import sys
+        logger = logging.getLogger('hls')
+        h = logging.StreamHandler(sys.stdout)
+        h.setLevel(logging.DEBUG)
+        logger.addHandler(h)
+
+    return logger
+
+
+def hls_enable_debug_log():
+    logger = hls_log()
+    logger.setLevel(logging.DEBUG)
+
+
+def hls_debug(msg='', title=None, indent=0):
+    if title is not None:
+        hls_debug_header(title)
+
+    if isinstance(msg, dict):
+        msg = pprint.pformat(msg)
+    elif isinstance(msg, ast.AST):
+        msg = astpretty.pformat(msg)
+
+    if title is not None:
+        msg = textwrap.indent(msg, '    ')
+
+    hls_log().debug(textwrap.indent(msg, ' ' * indent))
+
+
+def hls_debug_header(msg=''):
+    hls_debug()
+    hls_debug('*' * 80)
+    hls_debug('*')
+    for line in msg.split('\n'):
+        hls_debug('* ' + line)
+
+    hls_debug('*')
+    hls_debug('*' * 80)
+    hls_debug()

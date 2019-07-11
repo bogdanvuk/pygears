@@ -180,7 +180,6 @@ def parse_gear_body(gear):
     # py ast to hdl ast
     hdl_ast = parse_ast(body_ast, hdl_data)
     clean_variables(hdl_data)
-    print(hdl_ast)
 
     hls_debug(pydl_pformat(hdl_ast), title='PyDL AST')
 

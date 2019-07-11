@@ -4,7 +4,7 @@ from .ast_parse import parse_ast
 from .hls_expressions import (ConcatExpr, Expr, IntfDef, IntfStmt, RegDef,
                               AttrExpr, RegNextStmt, ResExpr, VariableDef,
                               VariableStmt)
-from .ast_call import parse_functions
+from .ast_call import parse_function
 from .pydl_types import IntfBlock
 from .utils import (VisitError, add_to_list, find_assign_target,
                     find_data_expression, interface_operations)
@@ -59,7 +59,9 @@ def find_assign_value(node, module_data, names):
     elif (isinstance(node.value, ast.Call) and hasattr(node.value.func, 'id')
           and node.value.func.id in module_data.functions):
 
-        block = parse_functions(node.value, module_data, names)
+        func = module_data.functions[node.func.id]
+        block = parse_function(func, node.value.args, node.value.keywords,
+                               module_data, names)
         return None, block
     else:
         vals = find_data_expression(node.value, module_data)
