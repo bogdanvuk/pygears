@@ -14,13 +14,13 @@ from .cast import cast
 from .flatten import flatten
 from .expand import expand
 from .factor import factor
-from .fixp import Fixp, Ufixp
+from .fixp import Fixp, Ufixp, Fixpnumber
 from .number import Number
 
 __all__ = [
     'Bool', 'Queue', 'TemplateArgumentsError', 'Tuple', 'Int', 'Uint', 'Unit',
     'Union', 'Array', 'bitw', 'typeof', 'Any', 'TLM', 'ceil_pow2', 'is_type',
-    'flatten', 'cast', 'expand', 'factor', 'Ufixp', 'Fixp', 'Number'
+    'flatten', 'cast', 'expand', 'factor', 'Ufixp', 'Fixp', 'Number', 'Fixpnumber'
 ]
 
 

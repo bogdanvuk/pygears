@@ -26,6 +26,9 @@ class VGenTypeVisitor(TypingVisitorBase):
 
         return None
 
+    visit_ufixp = visit_uint
+    visit_fixp = visit_uint
+
     def visit_unit(self, type_, field, **kwds):
         return None
 
