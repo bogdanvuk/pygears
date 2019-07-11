@@ -1,5 +1,7 @@
 import ast
 import typing
+import astpretty
+import inspect
 from dataclasses import dataclass
 from types import FunctionType
 from itertools import chain
@@ -7,7 +9,7 @@ from itertools import chain
 from pygears.typing import Uint, bitw
 from pygears.core.util import get_function_context_dict
 
-from .utils import get_function_source
+from .utils import get_function_source, hls_debug, hls_debug_header
 from .assign_conditions import AssignConditions
 from .ast_parse import parse_ast
 from .cblock import CBlockVisitor
@@ -17,13 +19,15 @@ from .conditions_utils import init_conditions
 from .hdl_stmt import (AssertionVisitor, InputVisitor, IntfReadyVisitor,
                        IntfValidVisitor, OutputVisitor, RegEnVisitor,
                        VariableVisitor)
-from .hls_expressions import IntfDef, RegDef
+from .hls_expressions import IntfDef, RegDef, VariableDef, VariableStmt
 from .intf_finder import IntfFinder
 from .optimizations import pipeline_ast
 from .reg_finder import RegFinder
 from .scheduling import Scheduler
 from .state_finder import BlockId, StateFinder
 from .state_transition import HdlStmtStateTransition
+from .pydl_types import pformat as pydl_pformat
+from .cblock import pformat as cblock_pformat
 
 
 @dataclass
@@ -54,6 +58,9 @@ class ModuleData:
         if data_container is not None:
             return data_container[name]
         return None
+
+    def add_variable(self, name, dtype):
+        self.variables[name] = VariableDef(val=dtype, name=name)
 
     @property
     def optimize(self):
@@ -99,12 +106,33 @@ class HDLWriter:
             self.line(line)
 
 
+def print_parse_intro(gear, body_ast, source):
+    hls_debug('*' * 80)
+    hls_debug_header(f'Compiling code for the gear "{gear.name}" of the type '
+                     f'"{gear.definition.__name__}"')
+
+    fn = inspect.getfile(gear.func)
+    try:
+        _, ln = inspect.getsourcelines(gear.func)
+    except OSError:
+        ln = '-'
+
+    hls_debug(
+        source,
+        title=f'Parsing function "{gear.func.__name__}" from "{fn}", line {ln}'
+    )
+
+    hls_debug_header('Function body AST')
+
+    for stmt in body_ast.body:
+        hls_debug(stmt)
+
+
 def parse_gear_body(gear):
     source = get_function_source(gear.func)
     body_ast = ast.parse(source).body[0]
 
-    # import astpretty
-    # astpretty.pprint(body_ast)
+    print_parse_intro(gear, body_ast, source)
 
     in_ports = {p.basename: IntfDef(p) for p in gear.in_ports}
     local_namespace = {
@@ -131,14 +159,30 @@ def parse_gear_body(gear):
     intf = IntfFinder(hdl_data)
     intf.visit(body_ast)
 
+    hls_debug(
+        {
+            k: v
+            for k, v in hdl_data.local_namespace.items() if k != '__builtins__'
+        },
+        title='Function local namespace')
+
     # find registers and variables
     reg_v = RegFinder(hdl_data)
     reg_v.visit(body_ast)
     reg_v.clean_variables()
 
+    if hdl_data.regs:
+        hls_debug(hdl_data.regs, title='Found registers')
+
+    if hdl_data.variables:
+        hls_debug(hdl_data.variables, title='Found Variables')
+
     # py ast to hdl ast
     hdl_ast = parse_ast(body_ast, hdl_data)
     clean_variables(hdl_data)
+    print(hdl_ast)
+
+    hls_debug(pydl_pformat(hdl_ast), title='PyDL AST')
 
     if hdl_data.optimize:
         hdl_ast = pipeline_ast(hdl_ast, hdl_data)
@@ -149,8 +193,7 @@ def parse_gear_body(gear):
     state_num = states.max_state
     BlockId().visit(schedule)
 
-    # from .cblock import pprint
-    # pprint(schedule)
+    hls_debug(cblock_pformat(schedule), title='State Structure')
 
     # clear combined conditions from previous run, if any
     init_conditions()

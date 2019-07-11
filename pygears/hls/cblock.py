@@ -85,6 +85,7 @@ class CBlockVisitor(InstanceVisitor):
 class CBlockPrinter(InstanceVisitor):
     def __init__(self):
         self.indent = 0
+        self.msg = ''
 
     def enter_block(self):
         self.indent += 4
@@ -93,7 +94,7 @@ class CBlockPrinter(InstanceVisitor):
         self.indent -= 4
 
     def write_line(self, line):
-        print(f'{" "*self.indent}{line}')
+        self.msg += f'{" "*self.indent}{line}\n'
 
     def get_pydl(self, node):
         if hasattr(node, 'pydl_blocks'):
@@ -117,6 +118,8 @@ class CBlockPrinter(InstanceVisitor):
             self.write_line(
                 f'Leaf: state {node.state_id}, {self.get_pydl(node)}')
 
+        return self.msg
 
-def pprint(node):
-    CBlockPrinter().visit(node)
+
+def pformat(node):
+    return CBlockPrinter().visit(node)

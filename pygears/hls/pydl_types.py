@@ -93,8 +93,9 @@ class IntfLoop(BaseLoop):
 
     @property
     def exit_cond(self):
-        intf_expr = IntfDef(
-            intf=self.intf.intf, _name=self.intf.name, context='eot')
+        intf_expr = IntfDef(intf=self.intf.intf,
+                            _name=self.intf.name,
+                            context='eot')
 
         return ExitSubCond(intf_expr, '&&')
 
@@ -112,8 +113,8 @@ class IfBlock(Block):
         if self.in_cond is not None:
             from .conditions_utils import InCond, CondExpr
             in_c = InCond(self.id)
-            return CycleSubCond(
-                CondExpr(sub_expr=UnaryOpExpr(in_c, '!')), '||')
+            return CycleSubCond(CondExpr(sub_expr=UnaryOpExpr(in_c, '!')),
+                                '||')
         return CycleSubCond()
 
     @property
@@ -185,3 +186,86 @@ class Module(Block):
     @property
     def exit_cond(self):
         return ExitSubCond()
+
+
+class PydlPrinter:
+    def __init__(self, indent=2):
+        self.indent = 0
+        self.indent_incr = indent
+        self.msg = ''
+        self.fieldname = None
+
+    def enter_block(self):
+        self.indent += self.indent_incr
+
+    def exit_block(self):
+        self.indent -= self.indent_incr
+
+    def write_line(self, line):
+        self.msg += f'{" "*self.indent}{line}\n'
+
+    @property
+    def field_hdr(self):
+        if self.fieldname:
+            return f'{self.fieldname}='
+        else:
+            return ''
+
+    def visit_OperandVal(self, node):
+        # if isinstance(node, expr.RegDef):
+        #     return expr.OperandVal(var, 'reg')
+
+        # if isinstance(var, expr.VariableDef):
+        #     return expr.OperandVal(var, 'v')
+
+        if type(node.op).__name__ == "IntfDef":
+            return self.write_line(f'{self.field_hdr}"{node.op.intf.basename}"')
+
+    def visit_IntfDef(self, node):
+        return self.write_line(f'{self.field_hdr}"{node.intf.basename}"')
+
+    def generic_visit(self, node):
+        if hasattr(node, 'stmts'):
+            if node.stmts:
+                self.write_line(
+                    f'{self.field_hdr}{node.__class__.__name__}[{node.id}](')
+                self.enter_block()
+                for s in node.stmts:
+                    self.visit(s)
+                self.exit_block()
+                self.write_line(')')
+            else:
+                self.write_line(
+                    f'{self.field_hdr}{node.__class__.__name__}[{node.id}]')
+
+        elif hasattr(node, '__dataclass_fields__'):
+            self.write_line(f'{self.field_hdr}{node.__class__.__name__}{{')
+            self.enter_block()
+            for fn in node.__dataclass_fields__:
+                self.fieldname = fn
+                self.visit(getattr(node, fn))
+            self.fieldname = None
+            self.exit_block()
+            self.write_line('}')
+        elif isinstance(node, (tuple, list)):
+            self.write_line(
+                f'{self.field_hdr}(')
+            self.fieldname = None
+            self.enter_block()
+            for elem in node:
+                self.visit(elem)
+            self.exit_block()
+            self.write_line(')')
+        else:
+            self.write_line(f'{self.field_hdr}{node}')
+
+        return self.msg
+
+    def visit(self, node):
+        method = 'visit_' + node.__class__.__name__
+        visitor = getattr(self, method, self.generic_visit)
+        return visitor(node)
+
+
+def pformat(node):
+    return PydlPrinter().visit(node)
