@@ -90,7 +90,7 @@ class UnionType(EnumerableGenericMeta):
             return cls
 
     def __getitem__(self, parameters):
-        if not self.is_specified():
+        if not self.specified:
             return super().__getitem__(parameters)
 
         index = self.index_norm(parameters)
@@ -149,7 +149,7 @@ class Union(tuple, metaclass=UnionType):
         if type(val) == cls:
             return val
 
-        if not cls.is_specified():
+        if not cls.specified:
             raise TemplatedTypeUnspecified
 
         if ctrl is None:

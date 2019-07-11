@@ -7,14 +7,14 @@ arithmetic capabilities.
 """
 
 from .base import class_and_instance_method
-from .base import EnumerableGenericMeta, typeof
+from .base import typeof
+from .number import NumberType, Number
 from .tuple import Tuple
-# from .bool import Bool
 from .bitw import bitw
 from .unit import Unit
 
 
-class IntegerType(EnumerableGenericMeta):
+class IntegerType(NumberType):
     """Defines lib methods for all Integer based classes.
     """
 
@@ -135,11 +135,12 @@ class IntegerType(EnumerableGenericMeta):
 
     __rmul__ = __mul__
 
-    def is_specified(self):
+    @property
+    def specified(self):
         return False
 
     def __getitem__(self, index):
-        if not self.is_specified():
+        if not self.specified:
             return super().__getitem__(index)
 
         index = self.index_norm(index)
@@ -169,7 +170,7 @@ def check_width(val, width):
         )
 
 
-class Integer(int, metaclass=IntegerType):
+class Integer(Number, metaclass=IntegerType):
     """Base type for both :class:`Int` and :class:`Uint` generic types.
     Corresponds to HDL logic vector types. For an example Integer[9] translates
     to :sv:`logic [8:0]`.
@@ -293,8 +294,13 @@ class IntType(IntegerType):
         else:
             return super().__str__()
 
-    def is_specified(self):
-        return EnumerableGenericMeta.is_specified(self)
+    @property
+    def specified(self):
+        return NumberType.specified.fget(self)
+
+    @property
+    def signed(self):
+        return True
 
 
 class Int(Integer, metaclass=IntType):
@@ -314,6 +320,11 @@ class Int(Integer, metaclass=IntType):
 
     """
     __parameters__ = ['N']
+
+    @class_and_instance_method
+    @property
+    def signed(self):
+        return True
 
     def __new__(cls, val: int = 0):
         if type(val) == cls:
@@ -358,8 +369,13 @@ class UintType(IntegerType):
 
     """
 
-    def is_specified(self):
-        return EnumerableGenericMeta.is_specified(self)
+    @property
+    def signed(self):
+        return False
+
+    @property
+    def specified(self):
+        return NumberType.specified.fget(self)
 
     def __sub__(self, other):
         """Returns a Tuple of the result type and overflow bit.
@@ -395,6 +411,11 @@ class Uint(Integer, metaclass=UintType):
 
     """
     __parameters__ = ['N']
+
+    @class_and_instance_method
+    @property
+    def signed(self):
+        return False
 
     @class_and_instance_method
     def __sub__(self, other):

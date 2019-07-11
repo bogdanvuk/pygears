@@ -52,7 +52,8 @@ class TypingMeta(type):
     """Base class all types.
     """
 
-    def is_specified(self):
+    @property
+    def specified(self):
         return True
 
     def __repr__(self):
@@ -150,19 +151,20 @@ class GenericMeta(TypingMeta):
         return len(self.args) == 0
 
     def __bool__(self):
-        return self.is_specified()
+        return self.specified
 
     def __hash__(self):
         return id(self)
 
+    @property
     @functools.lru_cache()
-    def is_specified(self):
+    def specified(self):
         """Return True if all generic parameters were supplied concrete values.
 
-        >>> Uint['template'].is_specified()
+        >>> Uint['template'].specified
         False
 
-        >>> Uint[16].is_specified()
+        >>> Uint[16].specified
         True
         """
 
@@ -173,7 +175,7 @@ class GenericMeta(TypingMeta):
         if self.args:
             for a in self.args:
                 try:
-                    if not a.is_specified():
+                    if not a.specified:
                         return False
                 except AttributeError:
                     if isinstance(a, (str, bytes)):
@@ -339,7 +341,7 @@ def param_subs(t, matches, namespace):
     elif isinstance(t, collections.abc.Iterable):
         return type(t)(param_subs(tt, matches, namespace) for tt in t)
     else:
-        if isinstance(t, GenericMeta) and (not t.is_specified()):
+        if isinstance(t, GenericMeta) and (not t.specified):
             args = [
                 param_subs(t.args[i], matches, namespace)
                 for i in range(len(t.args))
@@ -364,7 +366,7 @@ class EnumerableGenericMeta(GenericMeta):
         >>> int(Tuple[Uint[1], Uint[2]])
         3
         """
-        if self.is_specified():
+        if self.specified:
             return sum(map(int, self))
         else:
             raise Exception(

@@ -14,11 +14,13 @@ from .cast import cast
 from .flatten import flatten
 from .expand import expand
 from .factor import factor
+from .fixp import Fixp, Ufixp
+from .number import Number
 
 __all__ = [
     'Bool', 'Queue', 'TemplateArgumentsError', 'Tuple', 'Int', 'Uint', 'Unit',
     'Union', 'Array', 'bitw', 'typeof', 'Any', 'TLM', 'ceil_pow2', 'is_type',
-    'flatten', 'cast', 'expand', 'factor'
+    'flatten', 'cast', 'expand', 'factor', 'Ufixp', 'Fixp', 'Number'
 ]
 
 
@@ -37,6 +39,8 @@ class CoreTypesPlugin(TypingNamespacePlugin):
         safe_bind('gear/type_arith/Int', Int)
         safe_bind('gear/type_arith/Integer', Integer)
         safe_bind('gear/type_arith/Unit', Unit)
+        safe_bind('gear/type_arith/Fixp', Fixp)
+        safe_bind('gear/type_arith/Ufixp', Ufixp)
         safe_bind('gear/type_arith/Bool', Bool)
         safe_bind('gear/type_arith/Queue', Queue)
         safe_bind('gear/type_arith/Array', Array)

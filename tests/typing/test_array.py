@@ -24,9 +24,9 @@ def test_str():
 
 
 def test_is_specified():
-    assert Array[Uint[1], 2].is_specified() is True
-    assert Array['T1', 3].is_specified() is False
-    assert Array[Uint['T2'], 2].is_specified() is False
+    assert Array[Uint[1], 2].specified is True
+    assert Array['T1', 3].specified is False
+    assert Array[Uint['T2'], 2].specified is False
 
 
 def test_subs():

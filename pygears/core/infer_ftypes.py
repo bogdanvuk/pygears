@@ -29,7 +29,7 @@ def copy_field_names(t, pat):
 
 def type_is_specified(t):
     try:
-        return t.is_specified()
+        return t.specified
     except Exception as e:
         if t is None:
             return True
