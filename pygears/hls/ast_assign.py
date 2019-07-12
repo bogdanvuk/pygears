@@ -59,7 +59,7 @@ def find_assign_value(node, module_data, names):
     elif (isinstance(node.value, ast.Call) and hasattr(node.value.func, 'id')
           and node.value.func.id in module_data.functions):
 
-        func = module_data.functions[node.func.id]
+        func = module_data.functions[node.value.func.id]
         block = parse_function(func, node.value.args, node.value.keywords,
                                module_data, names)
         return None, block

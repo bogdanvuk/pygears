@@ -9,7 +9,7 @@ from itertools import chain
 from pygears.typing import Uint, bitw
 from pygears.core.util import get_function_context_dict
 
-from .utils import get_function_source, hls_debug, hls_debug_header
+from .utils import get_function_source, hls_debug, hls_debug_header, hls_debug_log_enabled
 from .assign_conditions import AssignConditions
 from .ast_parse import parse_ast
 from .cblock import CBlockVisitor
@@ -129,6 +129,9 @@ def print_parse_intro(gear, body_ast, source):
 
 
 def parse_gear_body(gear):
+    # from .utils import hls_enable_debug_log
+    # hls_enable_debug_log()
+
     source = get_function_source(gear.func)
     body_ast = ast.parse(source).body[0]
 
@@ -159,12 +162,14 @@ def parse_gear_body(gear):
     intf = IntfFinder(hdl_data)
     intf.visit(body_ast)
 
-    hls_debug(
-        {
-            k: v
-            for k, v in hdl_data.local_namespace.items() if k != '__builtins__'
-        },
-        title='Function local namespace')
+    if hls_debug_log_enabled():
+        hls_debug(
+            {
+                k: v
+                for k, v in hdl_data.local_namespace.items()
+                if k != '__builtins__'
+            },
+            title='Function local namespace')
 
     # find registers and variables
     reg_v = RegFinder(hdl_data)
@@ -181,7 +186,8 @@ def parse_gear_body(gear):
     hdl_ast = parse_ast(body_ast, hdl_data)
     clean_variables(hdl_data)
 
-    hls_debug(pydl_pformat(hdl_ast), title='PyDL AST')
+    if hls_debug_log_enabled():
+        hls_debug(pydl_pformat(hdl_ast), title='PyDL AST')
 
     if hdl_data.optimize:
         hdl_ast = pipeline_ast(hdl_ast, hdl_data)
@@ -192,7 +198,8 @@ def parse_gear_body(gear):
     state_num = states.max_state
     BlockId().visit(schedule)
 
-    hls_debug(cblock_pformat(schedule), title='State Structure')
+    if hls_debug_log_enabled():
+        hls_debug(cblock_pformat(schedule), title='State Structure')
 
     # clear combined conditions from previous run, if any
     init_conditions()

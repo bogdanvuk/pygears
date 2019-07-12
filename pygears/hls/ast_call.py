@@ -208,6 +208,9 @@ def parse_func_call(node, func_args, module_data):
                         cast_to=pg_types['cast'](func_args[0].dtype,
                                                  pg_types[func]))
 
+    if f'call_{func}' in globals():
+        return globals()[f'call_{func}'](*func_args, **kwds)
+
     if func in module_data.functions:
         var_name = f'{func}_res'
         module_data.variables[var_name] = None
@@ -223,9 +226,6 @@ def parse_func_call(node, func_args, module_data):
         module_data.current_block.stmts.extend(res)
 
         return OperandVal(op=module_data.variables[var_name], context='v')
-
-    if f'call_{func}' in globals():
-        return globals()[f'call_{func}'](*func_args, **kwds)
 
     # TODO : which params are actually needed? Maybe they are already passed
     # if func in self.ast_v.gear.params:

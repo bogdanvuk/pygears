@@ -420,7 +420,14 @@ def hls_enable_debug_log():
     logger.setLevel(logging.DEBUG)
 
 
+def hls_debug_log_enabled():
+    return hls_log().getEffectiveLevel() == logging.DEBUG
+
+
 def hls_debug(msg='', title=None, indent=0):
+    if not hls_debug_log_enabled():
+        return None
+
     if title is not None:
         hls_debug_header(title)
 

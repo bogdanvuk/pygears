@@ -85,8 +85,12 @@ def create_unpacked_tuple_alternative(g):
     {arg} = ccat({",".join(din_type.fields)})
     return {base_func.__name__}({find_invocation(base_func)})'''
 
+    from ..lib import ccat
+    closure = {'ccat': ccat}
+    closure.update(get_function_context_dict(g.func))
+
     unpack_func = f.make(body,
-                         evaldict=get_function_context_dict(g.func),
+                         evaldict=closure,
                          addsource=True)
 
     unpack_func.__kwdefaults__ = paramspec[-1]
