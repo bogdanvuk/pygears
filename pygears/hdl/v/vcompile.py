@@ -101,6 +101,35 @@ class VCompiler(InstanceVisitor):
 
         self.writer.line('')
 
+    def visit_FuncReturn(self, node):
+        self.writer.line(
+            f"{vexpr(node.func.name)} = {vexpr(node.expr, extras=self.extras)};"
+        )
+
+    def visit_FuncBlock(self, node):
+        size = ''
+        if len(node.ret_dtype) > 0:
+            size = f'[{len(node.ret_dtype)-1}:0]'
+
+        self.writer.line(f'function {size} {node.name};')
+
+        for name, arg in node.args.items():
+            size = ''
+            if len(arg.dtype) > 0:
+                size = f'[{len(arg.dtype)-1}:0]'
+
+            self.writer.line(f'    input {size} {vexpr(arg)};')
+
+        if not node.stmts and not node.dflts:
+            return
+
+        self.writer.line(f'begin')
+
+        self.visit_HDLBlock(node)
+
+        self.writer.line(f'endfunction')
+        self.writer.line('')
+
     def visit_CombSeparateStmts(self, node):
         if node.stmts:
             self.writer.line(f'// Comb statements for: {self.visit_var}')
@@ -139,7 +168,14 @@ def write_module(hdl_data, v_stmts, writer, **kwds):
     if 'config' not in kwds:
         kwds['config'] = {}
 
+    extras = {}
+
     separate_conditions(v_stmts, kwds, vexpr)
+
+    for name, expr in hdl_data.hdl_functions.items():
+        compiler = VCompiler(name, writer, hdl_data.hdl_locals, **kwds)
+        compiler.visit(expr)
+        extras.update(compiler.extras)
 
     for name, expr in hdl_data.regs.items():
         writer.line(vgen_reg(expr.dtype, f'{name}_reg', 'input', False))
@@ -174,7 +210,6 @@ def write_module(hdl_data, v_stmts, writer, **kwds):
     for name, expr in hdl_data.regs.items():
         writer.block(REG_TEMPLATE.format(name, int(expr.val)))
 
-    extras = {}
     for name, val in v_stmts.items():
         if name != 'variables':
             compiler = VCompiler(name, writer, hdl_data.hdl_locals, **kwds)
@@ -219,10 +254,9 @@ def write_assertions(gear, writer, cfg):
         append_to_context(out_context, port)
 
     base_addr = os.path.dirname(__file__)
-    jenv = jinja2.Environment(
-        loader=jinja2.FileSystemLoader(base_addr),
-        trim_blocks=True,
-        lstrip_blocks=True)
+    jenv = jinja2.Environment(loader=jinja2.FileSystemLoader(base_addr),
+                              trim_blocks=True,
+                              lstrip_blocks=True)
 
     context = {
         'in_context': in_context,
@@ -242,12 +276,11 @@ def compile_gear_body(gear):
 
     hdl_data, res = parse_gear_body(gear)
     writer = HDLWriter()
-    write_module(
-        hdl_data,
-        res,
-        writer,
-        formal=formal,
-        config=gear.params.get('hdl', {}))
+    write_module(hdl_data,
+                 res,
+                 writer,
+                 formal=formal,
+                 config=gear.params.get('hdl', {}))
 
     if formal:
         write_assertions(gear, writer, formal)

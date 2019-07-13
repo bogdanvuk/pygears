@@ -2,7 +2,7 @@ import ast
 import typing
 import astpretty
 import inspect
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from types import FunctionType
 from itertools import chain
 
@@ -11,15 +11,15 @@ from pygears.core.util import get_function_context_dict
 
 from .utils import get_function_source, hls_debug, hls_debug_header, hls_debug_log_enabled
 from .assign_conditions import AssignConditions
-from .ast_parse import parse_ast
+from .ast_parse import parse_ast, parse_block
 from .cblock import CBlockVisitor
 from .cleanup import condition_cleanup
 from .conditions_finder import find_conditions
 from .conditions_utils import init_conditions
 from .hdl_stmt import (AssertionVisitor, InputVisitor, IntfReadyVisitor,
                        IntfValidVisitor, OutputVisitor, RegEnVisitor,
-                       VariableVisitor)
-from .hls_expressions import IntfDef, RegDef, VariableDef, VariableStmt
+                       VariableVisitor, FunctionVisitor)
+from .hls_expressions import IntfDef, RegDef, VariableDef, VariableStmt, OperandVal, ReturnStmt
 from .intf_finder import IntfFinder
 from .optimizations import pipeline_ast
 from .reg_finder import RegFinder
@@ -27,7 +27,9 @@ from .scheduling import Scheduler
 from .state_finder import BlockId, StateFinder
 from .state_transition import HdlStmtStateTransition
 from .pydl_types import pformat as pydl_pformat
+from .pydl_types import Function
 from .cblock import pformat as cblock_pformat
+from pygears.core.infer_ftypes import infer_ftypes
 
 
 @dataclass
@@ -41,6 +43,8 @@ class ModuleData:
     out_intfs: typing.Dict
     local_namespace: typing.Dict
     gear: typing.Any
+    hdl_functions: typing.Dict
+    context: typing.List = field(default_factory=list)
     _functions: typing.Dict = None
 
     def get_container(self, name):
@@ -61,6 +65,10 @@ class ModuleData:
 
     def add_variable(self, name, dtype):
         self.variables[name] = VariableDef(val=dtype, name=name)
+
+    @property
+    def current_block(self):
+        return self.context[-1]
 
     @property
     def optimize(self):
@@ -128,6 +136,80 @@ def print_parse_intro(gear, body_ast, source):
         hls_debug(stmt)
 
 
+@parse_ast.register(ast.FunctionDef)
+def parse_func(node, module_data):
+    func = module_data.functions[node.name]
+
+    local_namespace = {**get_function_context_dict(func)}
+
+    if hls_debug_log_enabled():
+        hls_debug(
+            {k: v
+             for k, v in local_namespace.items() if k != '__builtins__'},
+            title='Function local namespace')
+
+    inputs = {}
+    hdl_locals = {}
+    for arg in node.args.args:
+        name = arg.arg
+
+        dtype = eval(arg.annotation, local_namespace)
+        var = VariableDef(val=dtype, name=name)
+        inputs[name] = OperandVal(var, 'v')
+        hdl_locals[name] = var
+
+    ret_dtype = None
+    if func.__annotations__:
+        params = {**func.__annotations__}
+        for name, var in inputs.items():
+            if name not in params:
+                params[name] = var.dtype
+
+        res = infer_ftypes(
+            params=params,
+            args={name: var.dtype
+                  for name, var in inputs.items()},
+            namespace=local_namespace)
+
+        ret_dtype = res.get('return', None)
+
+    variables = {**inputs}
+
+    func_hdl_data = ModuleData(gear=module_data.gear,
+                               in_ports={},
+                               out_ports={},
+                               hdl_locals=hdl_locals,
+                               hdl_functions={},
+                               regs={},
+                               variables=variables,
+                               in_intfs={},
+                               out_intfs={},
+                               local_namespace=local_namespace)
+
+    if func_hdl_data.variables:
+        hls_debug(func_hdl_data.variables, title='Found Variables')
+
+    pydl_node = Function(stmts=[],
+                         args=inputs,
+                         name=node.name,
+                         ret_dtype=ret_dtype,
+                         hdl_data=func_hdl_data)
+
+    parse_block(pydl_node, node.body, func_hdl_data)
+
+    if pydl_node.ret_dtype is None:
+        for stmt in pydl_node.stmts:
+            if not isinstance(stmt, ReturnStmt):
+                continue
+
+            pydl_node.ret_dtype = stmt.val.dtype
+
+    if hls_debug_log_enabled():
+        hls_debug(pydl_pformat(pydl_node), title='Function PyDL AST')
+
+    return pydl_node
+
+
 def parse_gear_body(gear):
     # from .utils import hls_enable_debug_log
     # hls_enable_debug_log()
@@ -152,6 +234,7 @@ def parse_gear_body(gear):
         out_ports={p.basename: IntfDef(p)
                    for p in gear.out_ports},
         hdl_locals={},
+        hdl_functions={},
         regs={},
         variables={},
         in_intfs={},
@@ -229,6 +312,10 @@ def parse_gear_body(gear):
 
     cond_visit = AssignConditions(hdl_data, state_num)
     cond_visit.visit(schedule)
+
+    for name, func_block in hdl_data.hdl_functions.items():
+        hdl_data.hdl_functions[name] = FunctionVisitor(
+            func_block.hdl_data).visit(func_block)
 
     res['conditions'] = cond_visit.get_condition_block()
     try:

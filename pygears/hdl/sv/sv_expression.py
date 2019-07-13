@@ -29,11 +29,21 @@ class SVExpressionVisitor:
 
     @simple_cast
     def visit_OperandVal(self, node, cast_to):
-        return f'{node.op.name}_{node.context}'
+        if node.context:
+            return f'{node.op.name}_{node.context}'
 
     @simple_cast
     def visit_ResExpr(self, node, cast_to):
         return int(node.val)
+
+    @simple_cast
+    def visit_FunctionCall(self, node, cast_to):
+        if cast_to is None or typeof(cast_to, Integer):
+            cast_to = [None] * len(node.operands)
+
+        return (f'{node.name}(' + ', '.join(
+            self.visit(op, dtype)
+            for op, dtype in zip(node.operands, cast_to)) + ')')
 
     def visit_IntfValidExpr(self, node, cast_to):
         if getattr(node.port, 'has_subop', None):
@@ -111,9 +121,8 @@ class SVExpressionVisitor:
                 ops[i] = f'({ops[i]})'
 
         if node.operator in EXTENDABLE_OPERATORS:
-            width = max(
-                int(node.dtype), int(node.operands[0].dtype),
-                int(node.operands[1].dtype))
+            width = max(int(node.dtype), int(node.operands[0].dtype),
+                        int(node.operands[1].dtype))
             svrepr = (f"{width}'({ops[0]})"
                       f" {node.operator} "
                       f"{width}'({ops[1]})")

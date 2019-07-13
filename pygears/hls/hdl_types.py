@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Union
 
 from pygears.typing.base import TypingMeta
 
-from .hls_expressions import Expr
+from .hls_expressions import Expr, VariableDef, PgType
 
 
 @dataclass
@@ -37,6 +37,19 @@ class HDLBlock(BaseBlock):
 @dataclass
 class CombBlock(BaseBlock):
     pass
+
+
+@dataclass
+class FuncBlock(BaseBlock):
+    args: List[VariableDef]
+    name: str
+    ret_dtype: PgType
+
+
+@dataclass
+class FuncReturn:
+    func: FuncBlock
+    expr: Expr
 
 
 @dataclass

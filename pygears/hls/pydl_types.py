@@ -1,7 +1,7 @@
 import typing
 from dataclasses import dataclass, field
 
-from .hls_expressions import Expr, IntfDef, IntfReadyExpr, OpType, UnaryOpExpr
+from .hls_expressions import Expr, IntfDef, IntfReadyExpr, OpType, UnaryOpExpr, PgType
 
 # Conditions
 
@@ -176,6 +176,23 @@ class Yield(Block):
 
 
 @dataclass
+class Function(Block):
+    id: int = field(init=False, default=0)
+    args: typing.List[str]
+    name: str
+    ret_dtype: PgType
+    hdl_data: typing.Any
+
+    @property
+    def cycle_cond(self):
+        return CycleSubCond()
+
+    @property
+    def exit_cond(self):
+        return ExitSubCond()
+
+
+@dataclass
 class Module(Block):
     id: int = field(init=False, default=0)
 
@@ -219,7 +236,8 @@ class PydlPrinter:
         #     return expr.OperandVal(var, 'v')
 
         if type(node.op).__name__ == "IntfDef":
-            return self.write_line(f'{self.field_hdr}"{node.op.intf.basename}"')
+            return self.write_line(
+                f'{self.field_hdr}"{node.op.intf.basename}"')
 
     def visit_IntfDef(self, node):
         return self.write_line(f'{self.field_hdr}"{node.intf.basename}"')
@@ -248,8 +266,7 @@ class PydlPrinter:
             self.exit_block()
             self.write_line('}')
         elif isinstance(node, (tuple, list)):
-            self.write_line(
-                f'{self.field_hdr}(')
+            self.write_line(f'{self.field_hdr}(')
             self.fieldname = None
             self.enter_block()
             for elem in node:

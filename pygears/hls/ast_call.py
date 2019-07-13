@@ -9,7 +9,7 @@ from pygears.core.util import get_function_context_dict
 from .ast_parse import parse_ast
 from .hls_expressions import (ArrayOpExpr, AttrExpr, BinOpExpr, CastExpr,
                               ConcatExpr, ConditionalExpr, IntfDef, ResExpr,
-                              UnaryOpExpr, OperandVal)
+                              UnaryOpExpr, OperandVal, FunctionCall)
 from .utils import (VisitError, add_to_list, cast_return, eval_expression,
                     find_data_expression, find_target, set_pg_type,
                     get_function_ast, get_context_var, hls_debug_header,
@@ -18,7 +18,26 @@ from .utils import (VisitError, add_to_list, cast_return, eval_expression,
 
 @parse_ast.register(ast.Call)
 def parse_call(node, module_data):
-    arg_nodes = [find_data_expression(arg, module_data) for arg in node.args]
+    arg_unpacked = []
+    for arg in node.args:
+        if isinstance(arg, ast.Starred):
+            var = get_context_var(arg.value.id, module_data)
+
+            if not isinstance(var, ConcatExpr):
+                raise VisitError(f'Cannot unpack variable "{arg.value.id}"')
+
+            for i in range(len(var.operands)):
+                arg_unpacked.append(
+                    ast.fix_missing_locations(
+                        ast.Subscript(value=arg.value,
+                                      slice=ast.Index(value=ast.Num(i)),
+                                      ctx=ast.Load)))
+        else:
+            arg_unpacked.append(arg)
+
+    arg_nodes = [
+        find_data_expression(arg, module_data) for arg in arg_unpacked
+    ]
 
     func_args = arg_nodes
     if all(isinstance(node, ResExpr) for node in arg_nodes):
@@ -36,8 +55,20 @@ def parse_call(node, module_data):
         return parse_func_call(node, func_args, module_data)
 
 
-def parse_function(func, args, kwds, module_data, returns):
+def parse_function(func, module_data):
     hls_debug_header(f'Parsing function call to "{func.__name__}"')
+    source = get_function_source(func)
+    hls_debug(source, title='Function source:')
+
+    func_ast = get_function_ast(func)
+
+    hls_debug(func_ast, title='Function AST:')
+
+    return func_ast
+
+
+def inline_function(func, args, kwds, module_data, returns):
+    hls_debug_header(f'Inlining function call to "{func.__name__}"')
     source = get_function_source(func)
     hls_debug(source, title='Function source:')
 
@@ -187,20 +218,6 @@ def parse_func_call(node, func_args, module_data):
         if is_type(res):
             return CastExpr(operand=func_args[0], cast_to=res)
 
-        # breakpoint()
-        # try:
-        #     pg_type = node.func.value.id
-        #     width = node.func.slice.value.n
-        # except AttributeError:
-        #     raise VisitError('Unrecognized func node in call')
-
-        # if pg_type in pg_types:
-        #     assert len(
-        #         func_args
-        #     ) == 1, f'Type casting supported for simple types for now'
-        #     return CastExpr(operand=func_args[0],
-        #                     cast_to=pg_types[pg_type][width])
-
         raise VisitError('Unrecognized func node in call')
 
     if func in pg_types:
@@ -212,20 +229,62 @@ def parse_func_call(node, func_args, module_data):
         return globals()[f'call_{func}'](*func_args, **kwds)
 
     if func in module_data.functions:
-        var_name = f'{func}_res'
-        module_data.variables[var_name] = None
+        # if function inlining
+        func_code = module_data.functions[func]
 
-        res = parse_function(module_data.functions[func],
-                             node.args, {},
-                             module_data,
-                             returns=[var_name])
+        arg_unpacked = []
+        for arg in node.args:
+            if isinstance(arg, ast.Starred):
+                var = get_context_var(arg.value.id, module_data)
 
-        # module_data.add_variable(var_name, opexp[0].dtype + opexp[1].dtype)
-        module_data.add_variable(var_name, res[0].dtype)
+                if not isinstance(var, ConcatExpr):
+                    raise VisitError(
+                        f'Cannot unpack variable "{arg.value.id}"')
 
-        module_data.current_block.stmts.extend(res)
+                for i in range(len(var.operands)):
+                    arg_unpacked.append(
+                        ast.fix_missing_locations(
+                            ast.Subscript(value=arg.value,
+                                          slice=ast.Index(value=ast.Num(i)),
+                                          ctx=ast.Load)))
+            else:
+                arg_unpacked.append(arg)
 
-        return OperandVal(op=module_data.variables[var_name], context='v')
+        if func_code.__name__ != '<lambda>':
+            func_ast = parse_function(func_code, module_data)
+            func_ast.name = func
+            func_params = func_ast.args.args
+
+            if len(func_params) != len(func_args):
+                raise VisitError(
+                    f'Wrong number of arguments when calling function "{func}"'
+                )
+
+            for param, arg in zip(func_params, func_args):
+                param.annotation = repr(arg.dtype)
+
+            module_data.hdl_functions[func] = parse_ast(
+                func_ast, module_data)
+
+            return FunctionCall(
+                operands=func_args,
+                ret_dtype=module_data.hdl_functions[func].ret_dtype,
+                name=func)
+
+        else:
+            var_name = f'{func}_res'
+            module_data.variables[var_name] = None
+
+            res = inline_function(func_code,
+                                  arg_unpacked, {},
+                                  module_data,
+                                  returns=[var_name])
+
+            module_data.add_variable(var_name, res[0].dtype)
+
+            module_data.current_block.stmts.extend(res)
+
+            return OperandVal(op=module_data.variables[var_name], context='v')
 
     # TODO : which params are actually needed? Maybe they are already passed
     # if func in self.ast_v.gear.params:

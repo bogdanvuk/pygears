@@ -28,9 +28,7 @@ async def reduce(din: t_din, *, f) -> b'din.data["init"]':
             op2 = init
             init_added = True
 
-        res = f(op2, data)
-
-        acc = res
+        acc = f(op2, data)
 
     yield acc
 

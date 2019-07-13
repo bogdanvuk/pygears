@@ -5,12 +5,13 @@ import textwrap
 import inspect
 import types
 import astpretty
-import textwrap
 import pprint
+from types import FunctionType
 
 from pygears import PluginBase
 from pygears.conf import register_custom_log, registry
 from pygears.typing import Int, Queue, Tuple, Uint, is_type, typeof
+from pygears.core.util import get_function_context_dict
 
 from . import hls_expressions as expr
 from .pydl_types import Block, Yield
@@ -147,8 +148,18 @@ def state_expr(state_ids, prev_cond):
 
 def get_bin_expr(op, operands, module_data):
     from .ast_arith import resolve_arith_func
+    from .ast_parse import parse_ast
+
     opexp = [find_data_expression(opi, module_data) for opi in operands]
-    return resolve_arith_func(op, operands, opexp, module_data)
+    res = resolve_arith_func(op, operands, opexp, module_data)
+    if isinstance(res, FunctionType):
+        module_data.functions[res.__name__] = res
+        node = ast.Call(func=ast.Name(id=res.__name__), args=operands)
+        module_data.local_namespace.update(get_function_context_dict(res))
+
+        return parse_ast(node, module_data)
+    else:
+        return res
 
 
 def intf_parse(intf, target):

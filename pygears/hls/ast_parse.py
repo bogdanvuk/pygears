@@ -3,6 +3,7 @@ import itertools
 from functools import singledispatch
 
 from pygears.typing import Array, Int, Integer, Uint, Unit, typeof, Tuple
+from pygears.core.util import get_function_context_dict
 
 from . import hls_expressions as expr
 from . import pydl_types as blocks
@@ -25,10 +26,12 @@ def parse_ast(node, module_data):
 
 
 def parse_block(pydl_node, body, module_data):
+    module_data.context.append(pydl_node)
     for stmt in body:
-        module_data.current_block = pydl_node
         res_stmt = parse_ast(stmt, module_data)
         add_to_list(pydl_node.stmts, res_stmt)
+
+    module_data.context.pop()
 
     return pydl_node
 
@@ -57,6 +60,23 @@ def parse_expr(node, module_data):
         return parse_yield(node.value, module_data)
 
     return None
+
+
+@parse_ast.register(ast.Return)
+def parse_return(node, module_data):
+    ret_expr = parse_ast(node.value, module_data)
+
+    for func_block in reversed(module_data.context):
+        if isinstance(func_block, blocks.Function):
+            break
+    else:
+        raise Exception('Return found outside function')
+
+    if func_block.ret_dtype:
+        ret_expr = expr.CastExpr(operand=ret_expr,
+                                 cast_to=func_block.ret_dtype)
+
+    return expr.ReturnStmt(ret_expr)
 
 
 @parse_ast.register(ast.Yield)
@@ -254,7 +274,7 @@ def parse_subscript(node, module_data):
                     data_index = isinstance(
                         val_expr,
                         expr.OperandVal) and (len(val_expr.op.intf) > 1)
-                except TypeError:
+                except (TypeError, AttributeError):
                     pass
 
             if data_index:

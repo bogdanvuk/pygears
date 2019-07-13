@@ -187,6 +187,11 @@ class RegNextStmt(Expr):
 
 
 @dataclass
+class ReturnStmt:
+    val: Expr
+
+
+@dataclass
 class VariableStmt(Expr):
     variable: VariableDef
     val: Expr
@@ -218,6 +223,17 @@ class OperandVal(Expr):
     @property
     def dtype(self):
         return find_sub_dtype(self.op)
+
+
+@dataclass
+class FunctionCall(Expr):
+    operands: typing.Tuple[OpType]
+    name: str
+    ret_dtype: PgType = None
+
+    @property
+    def dtype(self):
+        return self.ret_dtype
 
 
 # Inteface operations expressions

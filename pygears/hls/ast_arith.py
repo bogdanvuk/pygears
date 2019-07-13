@@ -2,7 +2,6 @@ import ast
 from pygears.typing import Any, Fixpnumber, Uint
 from . import hls_expressions as expr
 from pygears.core.type_match import type_match, TypeMatchError
-from pygears.core.util import get_function_context_dict
 from pygears.core.funcutils import FunctionMaker
 
 
@@ -12,7 +11,6 @@ def concat_resolver(opreands, opexp, module_data):
 
 
 def fixp_add_resolver(operands, opexp, module_data):
-    from .ast_parse import parse_ast
     op1 = opexp[0].dtype
     op2 = opexp[1].dtype
 
@@ -20,24 +18,27 @@ def fixp_add_resolver(operands, opexp, module_data):
     sh1 = sum_cls.fract - op1.fract
     sh2 = sum_cls.fract - op2.fract
 
-    body = f'''return {repr(sum_cls)}((Uint(x) << {sh1}) + (Uint(y) << {sh2}))'''
+    body = f'''return (Uint(x) << {sh1}) + (Uint(y) << {sh2})'''
 
     if not hasattr(fixp_add_resolver, '_func_cnt'):
         fixp_add_resolver._func_cnt = 0
+        func_name = f'fixp__add__'
+    else:
+        fixp_add_resolver._func_cnt += 1
+        func_name = f'fixp__add__{fixp_add_resolver._func_cnt}'
 
-    fixp_add_resolver._func_cnt += 1
-    func_name = f'fixp__add__{fixp_add_resolver._func_cnt}'
+    annotations = {'return': sum_cls}
 
-    func = FunctionMaker.create(obj=f"func_name(x,y)",
+    func = FunctionMaker.create(obj=f"{func_name}(x,y)",
                                 body=body,
-                                evaldict={'Uint': Uint},
+                                evaldict={
+                                    'Uint': Uint,
+                                    repr(sum_cls.base): sum_cls.base
+                                },
+                                annotations=annotations,
                                 addsource=True)
 
-    module_data.functions[func_name] = func
-    node = ast.Call(func=ast.Name(id=func_name), args=operands)
-    module_data.local_namespace.update(get_function_context_dict(func))
-
-    return parse_ast(node, module_data)
+    return func
 
 
 resolvers = {

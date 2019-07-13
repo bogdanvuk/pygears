@@ -56,13 +56,6 @@ def find_assign_value(node, module_data, names):
 
     if isinstance(node.value, ast.Await):
         vals, block = find_await_value(node.value, module_data)
-    elif (isinstance(node.value, ast.Call) and hasattr(node.value.func, 'id')
-          and node.value.func.id in module_data.functions):
-
-        func = module_data.functions[node.value.func.id]
-        block = parse_function(func, node.value.args, node.value.keywords,
-                               module_data, names)
-        return None, block
     else:
         vals = find_data_expression(node.value, module_data)
         block = None

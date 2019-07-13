@@ -73,6 +73,35 @@ class SVCompiler(InstanceVisitor):
 
         self.writer.line('')
 
+    def visit_FuncReturn(self, node):
+        self.writer.line(f"{svexpr(node.func.name)} = {svexpr(node.expr)};")
+
+    def visit_FuncBlock(self, node):
+        size = ''
+        if len(node.ret_dtype) > 0:
+            size = f'[{len(node.ret_dtype)-1}:0]'
+
+        self.writer.line(f'function {size} {node.name};')
+
+        self.writer.indent += 4
+        for name, arg in node.args.items():
+            self.writer.block(svgen_typedef(arg.dtype, name))
+
+        for name, arg in node.args.items():
+            self.writer.line(f'input {name}_t {svexpr(arg)};')
+
+        if not node.stmts and not node.dflts:
+            return
+
+        self.writer.indent -= 4
+
+        self.writer.line(f'begin')
+
+        self.visit_HDLBlock(node)
+
+        self.writer.line(f'endfunction')
+        self.writer.line('')
+
     def visit_CombSeparateStmts(self, node):
         if node.stmts:
             self.writer.line(f'// Comb statements for: {self.visit_var}')
@@ -112,6 +141,9 @@ def write_module(hdl_data, sv_stmts, writer, config=None):
         config = {}
 
     separate_conditions(sv_stmts, config, svexpr)
+
+    for name, expr in hdl_data.hdl_functions.items():
+        SVCompiler(name, writer, **config).visit(expr)
 
     for name, expr in hdl_data.regs.items():
         writer.block(svgen_typedef(expr.dtype, name))
