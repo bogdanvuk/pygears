@@ -63,17 +63,14 @@ def parse_function(func, module_data):
     hls_debug(source, title='Function source:')
 
     func_ast = get_function_ast(func)
+    func_ast.hash = hash(source)
 
     hls_debug(func_ast, title='Function AST:')
 
     return func_ast
 
 
-def inline_function(func, args, kwds, module_data, returns):
-    hls_debug_header(f'Inlining function call to "{func.__name__}"')
-    source = get_function_source(func)
-    hls_debug(source, title='Function source:')
-
+def inline_function(func, func_ast, args, kwds, module_data, returns):
     if kwds:
         pass
 
@@ -94,8 +91,6 @@ def inline_function(func, args, kwds, module_data, returns):
 
     if not is_standard_func(func):
         raise VisitError(f'Only standard functions are supported!')
-
-    func_ast = get_function_ast(func)
 
     replace_kwds = {n.arg: n.value.id for n in kwds}
 
@@ -213,15 +208,7 @@ def parse_func_call(node, func_args, module_data):
         return func
 
     if not isinstance(func, FunctionType):
-        raise VisitError('Unrecognized func in call')
-
-    if hasattr(node.func, 'id'):
-        func_name = node.func.id
-    else:
-        func_name = func.__name__
-
-    while func_name in module_data.hdl_functions_impl:
-        func_name += '_'
+        raise VisitError(f'Unrecognized func "{func}" in call')
 
     arg_unpacked = []
     for arg in node.args:
@@ -240,37 +227,74 @@ def parse_func_call(node, func_args, module_data):
         else:
             arg_unpacked.append(arg)
 
-    arg_unpacked = arg_unpacked[:len(inspect.getfullargspec(func).args)]
-    func_args = func_args[:len(inspect.getfullargspec(func).args)]
+    if hasattr(node.func, 'id'):
+        func_name = node.func.id
+    else:
+        func_name = func.__name__
+
+    return resolve_func_call(func, func_name, func_args, arg_unpacked,
+                             module_data)
+
+
+def resolve_func_call(func, func_name, args, ast_args, module_data):
+    # arg_unpacked = arg_unpacked[:len(inspect.getfullargspec(func).args)]
+    func_args = args[:len(inspect.getfullargspec(func).args)]
+    func_ast = parse_function(func, module_data)
 
     if func.__name__ != '<lambda>':
-        func_ast = parse_function(func, module_data)
-        func_ast.name = func_name
-        func_ast.func = func
-        func_params = func_ast.args.args
+        func_hash = func_ast.hash ^ hash(tuple(arg.dtype for arg in func_args))
 
-        if len(func_params) != len(func_args):
-            raise VisitError(
-                f'Wrong number of arguments when calling function "{func_name}"'
-            )
+        # input_types = tuple(arg.dtype for arg in func_args)
+        # # import astpretty
+        # # astpretty.pprint(func_ast)
+        # print(f'Input types: {input_types}')
+        # print(
+        #     f'Hash: {func_hash}; func ast: {hash(func_ast.hash)}, args: {hash(tuple(arg.dtype for arg in func_args))}'
+        # )
 
-        for param, arg in zip(func_params, func_args):
-            param.annotation = arg.dtype
+        if (func_name not in module_data.hdl_functions_impl):
+            module_data.hdl_functions_impl[func_name] = []
 
-        module_data.hdl_functions_impl[func_name] = parse_ast(
-            func_ast, module_data)
+        func_alter_impls = module_data.hdl_functions_impl[func_name]
 
-        return FunctionCall(
-            operands=func_args,
-            ret_dtype=module_data.hdl_functions_impl[func_name].ret_dtype,
-            name=func_name)
+        func_impl = None
+        for i, impl in enumerate(func_alter_impls):
+            if impl.hash == func_hash:
+                func_name = f'{func_name}{i if i > 0 else ""}'
+                func_impl = impl
+                break
+        else:
+            i = len(func_alter_impls)
+            func_name = f'{func_name}{i if i > 0 else ""}'
+
+        if not func_impl:
+            func_ast.name = func_name
+            func_ast.func = func
+            func_params = func_ast.args.args
+
+            if len(func_params) != len(func_args):
+                raise VisitError(
+                    f'Wrong number of arguments when calling function "{func_name}"'
+                )
+
+            for param, arg in zip(func_params, func_args):
+                param.annotation = arg.dtype
+
+            func_impl = parse_ast(func_ast, module_data)
+            func_impl.hash = func_hash
+            func_alter_impls.append(func_impl)
+
+        return FunctionCall(operands=func_args,
+                            ret_dtype=func_impl.ret_dtype,
+                            name=func_name)
 
     else:
         var_name = f'{func_name}_res'
         module_data.variables[var_name] = None
 
         res = inline_function(func,
-                              arg_unpacked, {},
+                              func_ast,
+                              ast_args, {},
                               module_data,
                               returns=[var_name])
 

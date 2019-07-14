@@ -154,7 +154,7 @@ class GenericMeta(TypingMeta):
         return self.specified
 
     def __hash__(self):
-        return id(self)
+        return hash(repr(self))
 
     @property
     @functools.lru_cache()
@@ -310,7 +310,7 @@ searched recursively. Each template is reported only once.
 
         return self.base[args]
 
-    @functools.lru_cache(maxsize=None)
+    # @functools.lru_cache(maxsize=None)
     def _arg_eq(self, other):
         if len(self.args) != len(other.args):
             return False

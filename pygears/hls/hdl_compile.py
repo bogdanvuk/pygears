@@ -202,7 +202,14 @@ def parse_func(node, module_data):
                          ret_dtype=ret_dtype,
                          hdl_data=func_hdl_data)
 
+    # find registers and variables
+    reg_v = RegFinder(func_hdl_data)
+    reg_v.visit(node)
+    reg_v.clean_variables()
+
     parse_block(pydl_node, node.body, func_hdl_data)
+
+    clean_variables(func_hdl_data)
 
     if pydl_node.ret_dtype is None:
         for stmt in pydl_node.stmts:
@@ -319,9 +326,10 @@ def parse_gear_body(gear):
     cond_visit = AssignConditions(hdl_data, state_num)
     cond_visit.visit(schedule)
 
-    for name, func_block in hdl_data.hdl_functions_impl.items():
-        hdl_data.hdl_functions[name] = FunctionVisitor(
-            func_block.hdl_data).visit(func_block)
+    for name, func_alter_impls in hdl_data.hdl_functions_impl.items():
+        for func_block in func_alter_impls:
+            hdl_data.hdl_functions[func_block.name] = FunctionVisitor(
+                func_block.hdl_data).visit(func_block)
 
     res['conditions'] = cond_visit.get_condition_block()
     try:

@@ -38,12 +38,8 @@ class SVExpressionVisitor:
 
     @simple_cast
     def visit_FunctionCall(self, node, cast_to):
-        if cast_to is None or typeof(cast_to, Integer):
-            cast_to = [None] * len(node.operands)
-
-        return (f'{node.name}(' + ', '.join(
-            self.visit(op, dtype)
-            for op, dtype in zip(node.operands, cast_to)) + ')')
+        return (f'{node.name}(' +
+                ', '.join(self.visit(op, None) for op in node.operands) + ')')
 
     def visit_IntfValidExpr(self, node, cast_to):
         if getattr(node.port, 'has_subop', None):

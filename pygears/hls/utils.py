@@ -151,16 +151,13 @@ def state_expr(state_ids, prev_cond):
 
 def get_bin_expr(op, operands, module_data):
     from .hdl_arith import resolve_arith_func
-    from .ast_parse import parse_ast
+    from .ast_call import resolve_func_call
 
     opexp = [find_data_expression(opi, module_data) for opi in operands]
     res = resolve_arith_func(op, opexp, module_data)
     if isinstance(res, FunctionType):
-        module_data.hdl_functions[res.__name__] = res
-        node = ast.Call(func=ast.Name(id=res.__name__), args=operands)
-        module_data.local_namespace.update(get_function_context_dict(res))
-
-        return parse_ast(node, module_data)
+        return resolve_func_call(res, res.__name__, opexp, operands,
+                                 module_data)
     else:
         return res
 

@@ -1,6 +1,6 @@
 from pygears import gear
 from pygears.sim import sim
-from pygears.typing import Tuple, Integer, Uint
+from pygears.typing import Tuple, Integer, Uint, Fixpnumber, Fixp, Ufixp
 from pygears.util.utils import gather
 from pygears.lib.verif import directed, drv
 from pygears.sim.modules import SimVerilated
@@ -59,5 +59,33 @@ def test_multiple_arguments_datagear_complex(tmpdir):
              drv(t=complex_t, seq=[(i, 2 * i) for i in range(10)]),
              f=add_real_part_func(sim_cls=SimVerilated),
              ref=[2 * i if i % 2 else 4 * i for i in range(10)])
+
+    sim(tmpdir)
+
+
+def test_fixp_arith(tmpdir, sim_cls):
+    @gear(hdl={'compile': True})
+    async def fixp_arith(x: Fixpnumber, y: Fixpnumber) -> Ufixp[4, 7]:
+        async with gather(x, y) as data:
+            yield (data[0] + data[1]) + (data[0] + data[1])
+
+    directed(drv(t=Ufixp[4, 7], seq=[3.125]),
+             drv(t=Ufixp[4, 7], seq=[2.25]),
+             f=fixp_arith(sim_cls=sim_cls),
+             ref=[Ufixp[4, 7](10.75)])
+
+    sim(tmpdir)
+
+
+def test_fixp_diff_arith(tmpdir, sim_cls):
+    @gear(hdl={'compile': True})
+    async def fixp_arith(x: Fixpnumber, y: Fixpnumber) -> Ufixp[4, 7]:
+        async with gather(x, y) as data:
+            yield (data[0] + data[1]) + (data[0] + data[1])
+
+    directed(drv(t=Ufixp[4, 7], seq=[3.125]),
+             drv(t=Ufixp[4, 6], seq=[2.25]),
+             f=fixp_arith(sim_cls=sim_cls),
+             ref=[Ufixp[4, 7](10.75)])
 
     sim(tmpdir)
