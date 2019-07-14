@@ -1,22 +1,22 @@
-import pytest
+# import pytest
 
-from pygears import Intf, gear
-from pygears.lib import decoupler
-from pygears.lib import accumulator
-from pygears.lib.delay import delay_rng
-from pygears.lib.verif import directed, drv, verif
-from pygears.sim import sim
-from pygears.typing import Int, Queue, Tuple, Uint
-from pygears.util.test_utils import formal_check, synth_check
+# from pygears import Intf, gear
+# from pygears.lib import decoupler
+# from pygears.lib import accumulator
+# from pygears.lib.delay import delay_rng
+# from pygears.lib.verif import directed, drv, verif
+# from pygears.sim import sim
+# from pygears.typing import Int, Queue, Tuple, Uint
+# from pygears.util.test_utils import formal_check, synth_check
 
-SEQ_UINT = [[(1, 2), (5, 2), (8, 2)], [(3, 8), (1, 8)],
-            [(0, 12), (4, 12), (2, 12), (99, 12)]]
-REF_UINT = [16, 12, 117]
-T_DIN_UINT = Queue[Tuple[Uint[16], Uint[16]]]
+# SEQ_UINT = [[(1, 2), (5, 2), (8, 2)], [(3, 8), (1, 8)],
+#             [(0, 12), (4, 12), (2, 12), (99, 12)]]
+# REF_UINT = [16, 12, 117]
+# T_DIN_UINT = Queue[Tuple[Uint[16], Uint[16]]]
 
-SEQ_INT = [[(1, 2), (5, 2), (-8, 2)], [(-30, 8), (1, 8)]]
-REF_INT = [0, -21]
-T_DIN_INT = Queue[Tuple[Int[8], Int[8]]]
+# SEQ_INT = [[(1, 2), (5, 2), (-8, 2)], [(-30, 8), (1, 8)]]
+# REF_INT = [0, -21]
+# T_DIN_INT = Queue[Tuple[Int[8], Int[8]]]
 
 
 # def get_dut(dout_delay):

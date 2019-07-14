@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from pygears.core.port import InPort, OutPort
 from pygears.typing import (Bool, Integer, Queue, Tuple, Uint, Unit, is_type,
-                            typeof)
+                            typeof, Int)
 from pygears.typing.base import TypingMeta
 
 BOOLEAN_OPERATORS = {'|', '&', '^', '~', '!', '&&', '||'}
@@ -114,10 +114,18 @@ class ResExpr(Expr):
         if is_type(type(self.val)):
             return type(self.val)
 
-        if self.val is not None:
-            return Integer(self.val)
+        if isinstance(self.val, int):
+            return Int(self.val)
 
         return None
+
+
+@dataclass
+class TupleExpr(Expr):
+    val: typing.Sequence
+
+    def __getitem__(self, key):
+        return self.val[key]
 
 
 @dataclass
@@ -127,7 +135,9 @@ class DefBase(Expr):
 
     @property
     def dtype(self):
-        if is_type(self.val):
+        if self.val is None:
+            return None
+        elif is_type(self.val):
             return self.val
         elif is_type(type(self.val)):
             return type(self.val)

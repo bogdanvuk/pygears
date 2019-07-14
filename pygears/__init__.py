@@ -19,6 +19,7 @@ from pygears.sim import sim
 from pygears.core.type_match import TypeMatchError
 from pygears.core.gear import module
 from pygears.core.gear_decorator import gear, alternative
+from pygears.core.cast import cast
 
 import pygears.core.gear_inst
 
@@ -46,5 +47,5 @@ sys.excepthook = pygears_excepthook
 __all__ = [
     'registry', 'TraceLevel', 'bind', 'gear', 'alternative', 'clear', 'Intf',
     'PluginBase', 'find', 'MultiAlternativeError', 'GearDone', 'QueueEmpty',
-    'module', 'safe_bind', 'TypeMatchError', 'datagear'
+    'module', 'safe_bind', 'TypeMatchError', 'datagear', 'cast'
 ]

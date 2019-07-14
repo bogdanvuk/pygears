@@ -32,6 +32,9 @@ def set_pg_type(ret):
     if ret is None:
         return ret
 
+    if is_type(ret):
+        return ret
+
     if not is_type(type(ret)):
         if isinstance(ret, (list, tuple)):
             return tuple([set_pg_type(r) for r in ret])
@@ -147,13 +150,13 @@ def state_expr(state_ids, prev_cond):
 
 
 def get_bin_expr(op, operands, module_data):
-    from .ast_arith import resolve_arith_func
+    from .hdl_arith import resolve_arith_func
     from .ast_parse import parse_ast
 
     opexp = [find_data_expression(opi, module_data) for opi in operands]
-    res = resolve_arith_func(op, operands, opexp, module_data)
+    res = resolve_arith_func(op, opexp, module_data)
     if isinstance(res, FunctionType):
-        module_data.functions[res.__name__] = res
+        module_data.hdl_functions[res.__name__] = res
         node = ast.Call(func=ast.Name(id=res.__name__), args=operands)
         module_data.local_namespace.update(get_function_context_dict(res))
 

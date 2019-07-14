@@ -1,19 +1,20 @@
 import ast
-from functools import reduce
+import inspect
 
-from pygears import registry
-from pygears.typing import Int, Tuple, Uint, Unit, is_type, typeof
+from types import FunctionType
+from pygears import Intf
+from pygears.typing import Unit, is_type, typeof
 from pygears.core.util import is_standard_func
 from pygears.core.util import get_function_context_dict
 
+from .hdl_builtins import builtins
 from .ast_parse import parse_ast
-from .hls_expressions import (ArrayOpExpr, AttrExpr, BinOpExpr, CastExpr,
-                              ConcatExpr, ConditionalExpr, IntfDef, ResExpr,
-                              UnaryOpExpr, OperandVal, FunctionCall)
-from .utils import (VisitError, add_to_list, cast_return, eval_expression,
-                    find_data_expression, find_target, set_pg_type,
-                    get_function_ast, get_context_var, hls_debug_header,
-                    hls_debug, get_function_source)
+from .hls_expressions import ConcatExpr, FunctionCall, OperandVal, ResExpr
+from .hls_expressions import Expr, IntfDef
+from .utils import (VisitError, add_to_list, eval_expression,
+                    find_data_expression, find_target, get_context_var,
+                    get_function_ast, get_function_source, hls_debug,
+                    hls_debug_header)
 
 
 @parse_ast.register(ast.Call)
@@ -49,7 +50,8 @@ def parse_call(node, module_data):
                 func_args.append(str(arg.val))
 
     try:
-        ret = eval(f'{node.func.id}({", ".join(func_args)})')
+        ret = eval(f'{node.func.id}({", ".join(func_args)})',
+                   module_data.local_namespace)
         return ResExpr(ret)
     except:
         return parse_func_call(node, func_args, module_data)
@@ -177,204 +179,103 @@ class AstFunctionReplace(ast.NodeTransformer):
         return ast.fix_missing_locations(ast.Assign(ret_targets, node.value))
 
 
-def max_expr(op1, op2):
-    op1_compare = op1
-    op2_compare = op2
-    signed = typeof(op1.dtype, Int) or typeof(op2.dtype, Int)
-    if signed and typeof(op1.dtype, Uint):
-        op1_compare = CastExpr(op1, Int[int(op1.dtype) + 1])
-    if signed and typeof(op2.dtype, Uint):
-        op2_compare = CastExpr(op2, Int[int(op2.dtype) + 1])
-
-    cond = BinOpExpr((op1_compare, op2_compare), '>')
-    return ConditionalExpr(cond=cond, operands=(op1, op2))
-
-
 def parse_func_call(node, func_args, module_data):
-    if hasattr(node.func, 'attr'):
-        if node.func.attr == 'dtype':
-            func = eval_expression(node.func, module_data.hdl_locals)
-            try:
-                ret = eval(f'func({", ".join(func_args)})')
-                return ResExpr(ret)
-            except TypeError:
-                assert len(func_args) == 1
-                return CastExpr(operand=func_args[0], cast_to=func)
-
-        if node.func.attr == 'tout':
-            return cast_return(func_args, module_data.out_ports)
-
-    kwds = {}
-    pg_types = registry('gear/type_arith')
-
-    if hasattr(node.func, 'attr'):
-        kwds['value'] = find_data_expression(node.func.value, module_data)
-        func = node.func.attr
-    elif hasattr(node.func, 'id'):
-        func = node.func.id
-    else:
-        res = eval_expression(node.func, module_data.local_namespace)
-
-        if is_type(res):
-            return CastExpr(operand=func_args[0], cast_to=res)
-
-        raise VisitError('Unrecognized func node in call')
-
-    if func in pg_types:
-        return CastExpr(operand=func_args[0],
-                        cast_to=pg_types['cast'](func_args[0].dtype,
-                                                 pg_types[func]))
-
-    if f'call_{func}' in globals():
-        return globals()[f'call_{func}'](*func_args, **kwds)
-
-    if func in module_data.functions:
-        # if function inlining
-        func_code = module_data.functions[func]
-
-        arg_unpacked = []
-        for arg in node.args:
-            if isinstance(arg, ast.Starred):
-                var = get_context_var(arg.value.id, module_data)
-
-                if not isinstance(var, ConcatExpr):
-                    raise VisitError(
-                        f'Cannot unpack variable "{arg.value.id}"')
-
-                for i in range(len(var.operands)):
-                    arg_unpacked.append(
-                        ast.fix_missing_locations(
-                            ast.Subscript(value=arg.value,
-                                          slice=ast.Index(value=ast.Num(i)),
-                                          ctx=ast.Load)))
+    try:
+        func = eval_expression(node.func, module_data.local_namespace)
+    except:
+        if isinstance(node.func, ast.Attribute):
+            obj = find_data_expression(node.func.value, module_data)
+            if isinstance(obj, IntfDef):
+                func = getattr(Intf, node.func.attr)
             else:
-                arg_unpacked.append(arg)
+                func = getattr(obj.dtype, node.func.attr)
 
-        if func_code.__name__ != '<lambda>':
-            func_ast = parse_function(func_code, module_data)
-            func_ast.name = func
-            func_params = func_ast.args.args
-
-            if len(func_params) != len(func_args):
-                raise VisitError(
-                    f'Wrong number of arguments when calling function "{func}"'
-                )
-
-            for param, arg in zip(func_params, func_args):
-                param.annotation = repr(arg.dtype)
-
-            module_data.hdl_functions[func] = parse_ast(
-                func_ast, module_data)
-
-            return FunctionCall(
-                operands=func_args,
-                ret_dtype=module_data.hdl_functions[func].ret_dtype,
-                name=func)
-
+            func_args = [obj] + func_args
         else:
-            var_name = f'{func}_res'
-            module_data.variables[var_name] = None
+            func = module_data.hdl_functions[node.func.id]
 
-            res = inline_function(func_code,
-                                  arg_unpacked, {},
-                                  module_data,
-                                  returns=[var_name])
+    # If we are dealing with bound methods
+    if not inspect.isbuiltin(func) and hasattr(func, '__self__'):
+        obj = func.__self__
+        if isinstance(func.__self__, Intf):
+            obj = find_data_expression(node.func.value, module_data)
 
-            module_data.add_variable(var_name, res[0].dtype)
+        func_args = [obj] + func_args
+        func = getattr(type(func.__self__), func.__name__)
 
-            module_data.current_block.stmts.extend(res)
+    if func in builtins:
+        func = builtins[func](*func_args)
+    elif is_type(func):
+        from .hdl_arith import resolve_cast_func
+        func = resolve_cast_func(func, func_args[0])
 
-            return OperandVal(op=module_data.variables[var_name], context='v')
+    if func is None or isinstance(func, Expr):
+        return func
 
-    # TODO : which params are actually needed? Maybe they are already passed
-    # if func in self.ast_v.gear.params:
-    #     assert isinstance(self.ast_v.gear.params[func], TypingMeta)
-    #     assert len(func_args) == 1, 'Cast with multiple arguments'
-    #     return CastExpr(
-    #         operand=func_args[0], cast_to=self.ast_v.gear.params[func])
+    if not isinstance(func, FunctionType):
+        raise VisitError('Unrecognized func in call')
 
-    # safe guard
-    raise VisitError('Unrecognized func in call')
-
-
-def call_len(arg, **kwds):
-    return ResExpr(len(arg.dtype))
-
-
-def call_print(arg, **kwds):
-    pass
-
-
-def call_int(arg, **kwds):
-    # ignore cast
-    return arg
-
-
-def call_range(*arg, **kwds):
-    if len(arg) == 1:
-        start = ResExpr(arg[0].dtype(0))
-        stop = arg[0]
-        step = ast.Num(1)
+    if hasattr(node.func, 'id'):
+        func_name = node.func.id
     else:
-        start = arg[0]
-        stop = arg[1]
-        step = ast.Num(1) if len(arg) == 2 else arg[2]
+        func_name = func.__name__
 
-    return start, stop, step
+    while func_name in module_data.hdl_functions_impl:
+        func_name += '_'
 
+    arg_unpacked = []
+    for arg in node.args:
+        if isinstance(arg, ast.Starred):
+            var = get_context_var(arg.value.id, module_data)
 
-def call_qrange(*arg, **kwds):
-    return call_range(*arg)
+            if not isinstance(var, ConcatExpr):
+                raise VisitError(f'Cannot unpack variable "{arg.value.id}"')
 
+            for i in range(len(var.operands)):
+                arg_unpacked.append(
+                    ast.fix_missing_locations(
+                        ast.Subscript(value=arg.value,
+                                      slice=ast.Index(value=ast.Num(i)),
+                                      ctx=ast.Load)))
+        else:
+            arg_unpacked.append(arg)
 
-def call_all(arg, **kwds):
-    return ArrayOpExpr(arg, '&')
+    arg_unpacked = arg_unpacked[:len(inspect.getfullargspec(func).args)]
+    func_args = func_args[:len(inspect.getfullargspec(func).args)]
 
+    if func.__name__ != '<lambda>':
+        func_ast = parse_function(func, module_data)
+        func_ast.name = func_name
+        func_ast.func = func
+        func_params = func_ast.args.args
 
-def call_max(*arg, **kwds):
-    if len(arg) != 1:
-        return reduce(max_expr, arg)
+        if len(func_params) != len(func_args):
+            raise VisitError(
+                f'Wrong number of arguments when calling function "{func_name}"'
+            )
 
-    arg = arg[0]
+        for param, arg in zip(func_params, func_args):
+            param.annotation = arg.dtype
 
-    assert isinstance(arg.op, IntfDef), 'Not supported yet...'
-    assert typeof(arg.dtype, Tuple), 'Not supported yet...'
+        module_data.hdl_functions_impl[func_name] = parse_ast(
+            func_ast, module_data)
 
-    op = []
-    for field in arg.dtype.fields:
-        op.append(AttrExpr(arg.op, [field]))
+        return FunctionCall(
+            operands=func_args,
+            ret_dtype=module_data.hdl_functions_impl[func_name].ret_dtype,
+            name=func_name)
 
-    return reduce(max_expr, op)
+    else:
+        var_name = f'{func_name}_res'
+        module_data.variables[var_name] = None
 
+        res = inline_function(func,
+                              arg_unpacked, {},
+                              module_data,
+                              returns=[var_name])
 
-def call_enumerate(arg, **kwds):
-    return ResExpr(len(arg)), arg
+        module_data.add_variable(var_name, res[0].dtype)
 
+        module_data.current_block.stmts.extend(res)
 
-def call_sub(*arg, **kwds):
-    assert not arg, 'Sub should be called without arguments'
-    value = kwds['value']
-    return CastExpr(value, cast_to=value.dtype.sub())
-
-
-def call_get(*args, **kwds):
-    return kwds['value']
-
-
-def call_get_nb(*args, **kwds):
-    return kwds['value']
-
-
-def call_clk(*arg, **kwds):
-    return None
-
-
-def call_empty(*arg, **kwds):
-    assert not arg, 'Empty should be called without arguments'
-    value = kwds['value']
-    expr = IntfDef(intf=value.intf, _name=value.name, context='valid')
-    return UnaryOpExpr(expr, '!')
-
-
-def call_gather(*arg, **kwds):
-    return ConcatExpr(operands=list(arg))
+        return OperandVal(op=module_data.variables[var_name], context='v')

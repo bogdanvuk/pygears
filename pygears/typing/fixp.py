@@ -97,55 +97,40 @@ class FixpnumberType(NumberType):
 
 
 class Fixpnumber(Number, metaclass=FixpnumberType):
-    def __new__(cls, val=0, fract=None, verbatim=False):
+    def __new__(cls, val=0):
         if type(val) == cls:
             return val
 
         if cls.is_generic():
             #TODO
-            return cls[bitw(val), bitw(val)](int(val))
-        elif verbatim:
-            res = super(Fixpnumber, cls).__new__(cls, val)
-        else:
-            if isinstance(val, float):
-                if cls.fract >= 0:
-                    fract = int(abs(val - int(val)) * (2**cls.fract))
-
-                val = int(val)
-
-            # int_val = val
-            # fract_val = fract if fract else 0
-
-            if cls.fract >= 0:
-                val = int(val) << cls.fract
+            return cls[bitw(val), 0](int(val))
+        elif isinstance(val, float):
+            val = int(val * (2**cls.fract))
+        elif isinstance(val, Fixpnumber):
+            val_fract = type(val).fract
+            if cls.fract > val_fract:
+                val = int(val) << (cls.fract - val_fract)
             else:
-                val = int(val) >> (-cls.fract)
+                val = int(val) >> (val_fract - cls.fract)
 
-            if not cls.signed:
-                val &= ((1 << cls.width) - 1)
+        if not cls.signed:
+            val &= ((1 << cls.width) - 1)
 
-            if fract is not None:
-                fract = fract & ((1 << cls.fract) - 1)
-                val += fract if (val > 0) else -fract
-
-            res = super(Fixpnumber, cls).__new__(cls, val)
-            # res.integer = int_val
-            # res.fract = fract_val
+        res = super(Fixpnumber, cls).__new__(cls, val)
 
         return res
 
     def __add__(self, other):
         sum_cls = type(self) + type(other)
         return sum_cls((int(self) << (sum_cls.fract - type(self).fract)) +
-                       (int(other) << (sum_cls.fract - type(other).fract)),
-                       verbatim=True)
+                       (int(other) << (sum_cls.fract - type(other).fract)))
 
     def code(self):
         return int(self) & ((1 << self.width) - 1)
 
     @classmethod
     def decode(cls, val):
-        return cls(int(val), verbatim=True)
+        return cls(int(val))
 
     @property
     def width(self):

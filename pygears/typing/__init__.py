@@ -10,7 +10,6 @@ from .unit import Unit
 from .union import Union
 from .bitw import bitw, ceil_pow2
 from .tlm import TLM
-from .cast import cast
 from .flatten import flatten
 from .expand import expand
 from .factor import factor
@@ -20,7 +19,7 @@ from .number import Number
 __all__ = [
     'Bool', 'Queue', 'TemplateArgumentsError', 'Tuple', 'Int', 'Uint', 'Unit',
     'Union', 'Array', 'bitw', 'typeof', 'Any', 'TLM', 'ceil_pow2', 'is_type',
-    'flatten', 'cast', 'expand', 'factor', 'Ufixp', 'Fixp', 'Number', 'Fixpnumber'
+    'flatten', 'expand', 'factor', 'Ufixp', 'Fixp', 'Number', 'Fixpnumber'
 ]
 
 
@@ -49,7 +48,6 @@ class CoreTypesPlugin(TypingNamespacePlugin):
         safe_bind('gear/type_arith/typeof', typeof)
         safe_bind('gear/type_arith/Any', Any)
         safe_bind('gear/type_arith/TLM', TLM)
-        safe_bind('gear/type_arith/cast', cast)
         safe_bind('gear/type_arith/flatten', flatten)
         safe_bind('gear/type_arith/expand', expand)
         safe_bind('gear/type_arith/factor', factor)

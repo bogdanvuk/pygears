@@ -41,11 +41,12 @@ class ModuleData:
     variables: typing.Dict
     in_intfs: typing.Dict
     out_intfs: typing.Dict
-    local_namespace: typing.Dict
     gear: typing.Any
+    func: typing.Any
     hdl_functions: typing.Dict
+    hdl_functions_impl: typing.Dict = field(default_factory=dict)
     context: typing.List = field(default_factory=list)
-    _functions: typing.Dict = None
+    _local_namespace: typing.Dict = None
 
     def get_container(self, name):
         for attr in ['regs', 'variables', 'in_intfs', 'out_intfs']:
@@ -75,17 +76,16 @@ class ModuleData:
         return self.gear.params['hdl'].get('pipeline', False)
 
     @property
-    def functions(self):
-        if self._functions is None:
-            self._functions = {}
+    def local_namespace(self):
+        if self._local_namespace is None:
+            self._local_namespace = {}
             for name, value in chain(
-                    get_function_context_dict(self.gear.func).items(),
+                    get_function_context_dict(self.func).items(),
                     self.gear.explicit_params.items()):
 
-                if isinstance(value, FunctionType):
-                    self._functions[name] = value
+                self._local_namespace[name] = value
 
-        return self._functions
+        return self._local_namespace
 
 
 def clean_variables(hdl_data):
@@ -138,25 +138,43 @@ def print_parse_intro(gear, body_ast, source):
 
 @parse_ast.register(ast.FunctionDef)
 def parse_func(node, module_data):
-    func = module_data.functions[node.name]
+    if hasattr(node, 'func'):
+        func = node.func
+    else:
+        func = module_data.local_namespace[node.name]
 
-    local_namespace = {**get_function_context_dict(func)}
+    func_hdl_data = ModuleData(gear=module_data.gear,
+                               func=func,
+                               in_ports={},
+                               out_ports={},
+                               hdl_locals={},
+                               hdl_functions={},
+                               regs={},
+                               variables=None,
+                               in_intfs={},
+                               out_intfs={})
 
     if hls_debug_log_enabled():
         hls_debug(
-            {k: v
-             for k, v in local_namespace.items() if k != '__builtins__'},
+            {
+                k: v
+                for k, v in func_hdl_data.local_namespace.items()
+                if k != '__builtins__'
+            },
             title='Function local namespace')
 
     inputs = {}
-    hdl_locals = {}
+    func_hdl_data.hdl_locals = {}
     for arg in node.args.args:
         name = arg.arg
 
-        dtype = eval(arg.annotation, local_namespace)
+        dtype = arg.annotation
+        if isinstance(dtype, (str, bytes)):
+            dtype = eval(dtype, func_hdl_data.local_namespace)
+
         var = VariableDef(val=dtype, name=name)
         inputs[name] = OperandVal(var, 'v')
-        hdl_locals[name] = var
+        func_hdl_data.hdl_locals[name] = var
 
     ret_dtype = None
     if func.__annotations__:
@@ -169,22 +187,11 @@ def parse_func(node, module_data):
             params=params,
             args={name: var.dtype
                   for name, var in inputs.items()},
-            namespace=local_namespace)
+            namespace=func_hdl_data.local_namespace)
 
         ret_dtype = res.get('return', None)
 
-    variables = {**inputs}
-
-    func_hdl_data = ModuleData(gear=module_data.gear,
-                               in_ports={},
-                               out_ports={},
-                               hdl_locals=hdl_locals,
-                               hdl_functions={},
-                               regs={},
-                               variables=variables,
-                               in_intfs={},
-                               out_intfs={},
-                               local_namespace=local_namespace)
+    func_hdl_data.variables = {**inputs}
 
     if func_hdl_data.variables:
         hls_debug(func_hdl_data.variables, title='Found Variables')
@@ -220,16 +227,10 @@ def parse_gear_body(gear):
     print_parse_intro(gear, body_ast, source)
 
     in_ports = {p.basename: IntfDef(p) for p in gear.in_ports}
-    local_namespace = {
-        **{p.basename: p.consumer
-           for p in gear.in_ports},
-        **gear.explicit_params,
-        **get_function_context_dict(gear.func)
-    }
-    local_namespace['module'] = lambda: gear
 
     hdl_data = ModuleData(
         gear=gear,
+        func=gear.func,
         in_ports=in_ports,
         out_ports={p.basename: IntfDef(p)
                    for p in gear.out_ports},
@@ -238,8 +239,13 @@ def parse_gear_body(gear):
         regs={},
         variables={},
         in_intfs={},
-        out_intfs={},
-        local_namespace=local_namespace)
+        out_intfs={})
+
+    hdl_data.local_namespace.update(
+        {p.basename: p.consumer
+         for p in gear.in_ports})
+    hdl_data.local_namespace.update(gear.explicit_params)
+    hdl_data.local_namespace['module'] = lambda: gear
 
     # find interfaces
     intf = IntfFinder(hdl_data)
@@ -313,7 +319,7 @@ def parse_gear_body(gear):
     cond_visit = AssignConditions(hdl_data, state_num)
     cond_visit.visit(schedule)
 
-    for name, func_block in hdl_data.hdl_functions.items():
+    for name, func_block in hdl_data.hdl_functions_impl.items():
         hdl_data.hdl_functions[name] = FunctionVisitor(
             func_block.hdl_data).visit(func_block)
 

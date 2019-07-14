@@ -28,6 +28,9 @@ class IntegerType(NumberType):
             return super().__str__()
 
     def __int__(self):
+        if not self.__args__:
+            raise TypeError
+
         return int(self.__args__[0])
 
     def __gt__(self, others):

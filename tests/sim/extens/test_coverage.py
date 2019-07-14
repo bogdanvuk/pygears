@@ -1,4 +1,4 @@
-from pygears.lib import accumulator, chop
+from pygears.lib import accum, chop
 from pygears.lib.verif import directed
 from pygears.sim import sim
 from pygears.sim.extens.coverage import (CoverBin, CoverGroup, CoverPoint,
@@ -8,7 +8,7 @@ from pygears.typing import Queue, Tuple, Uint
 from pygears import find
 
 
-def test_accumulator(enable_coverage=True):
+def test_accum(enable_coverage=True):
     seq = [[(1, 2), (5, 2), (8, 2)], [(3, 8), (1, 8)],
            [(0, 12), (4, 12), (2, 12), (99, 12)]]
     ref = [16, 12, 117]
@@ -47,7 +47,7 @@ def test_accumulator(enable_coverage=True):
         for x in seq:
             yield x
 
-    directed(drv(t=t_din, seq=test_sample()), f=accumulator, ref=ref)
+    directed(drv(t=t_din, seq=test_sample()), f=accum, ref=ref)
     sim()
     # print(cg.report())
 

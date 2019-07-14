@@ -40,5 +40,19 @@ def reduce_unpack(din: Queue, init, *, f):
 
 
 @gear
-def accum(din: Queue[Integer], init: Integer) -> b'init':
-    return reduce(din, init, f=lambda x, y: x + y)
+def accum(din: Queue[Tuple[{
+        'data': Integer,
+        'init': Integer
+}]]) -> b'din.data["init"]':
+    return reduce(din, f=lambda x, y: x + y)
+
+
+# @alternative(accumulator)
+# @gear(hdl={'compile': True, 'pipeline': True})
+# async def accumulator_no_offset(din: Queue[Integer['w_data']]) -> b'din.data':
+#     acc = din.dtype.data(0)
+
+#     async for (data, eot) in din:
+#         acc += int(data)
+
+#     yield acc
