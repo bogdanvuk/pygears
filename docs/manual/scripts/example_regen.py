@@ -18,6 +18,9 @@ def run_file(path):
         if c.definition.func.__module__ == 'pygears.lib.verif':
             continue
 
+        if c.basename == 'ccat':
+            continue
+
         gear = c.basename
 
         for inp in find(f'/{gear}').in_ports:
@@ -50,6 +53,6 @@ def run_all():
         run_file(path)
 
 
-example = 'reduce_sum'
+example = 'cart_sync_with'
 run_example(example)
 # run_all()

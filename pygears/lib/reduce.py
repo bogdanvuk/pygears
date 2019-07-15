@@ -47,6 +47,12 @@ def accum(din: Queue[Tuple[{
     return reduce(din, f=lambda x, y: x + y)
 
 
+@alternative(accum)
+@gear
+def accum_unpack(din: Queue[Integer], init: Integer) -> b'init':
+    return cart(din, init) | accum
+
+
 # @alternative(accumulator)
 # @gear(hdl={'compile': True, 'pipeline': True})
 # async def accumulator_no_offset(din: Queue[Integer['w_data']]) -> b'din.data':
