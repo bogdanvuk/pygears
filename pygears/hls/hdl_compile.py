@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from types import FunctionType
 from itertools import chain
 
+from pygears import bind
 from pygears.typing import Uint, bitw
 from pygears.core.util import get_function_context_dict
 
@@ -227,6 +228,9 @@ def parse_func(node, module_data):
 def parse_gear_body(gear):
     # from .utils import hls_enable_debug_log
     # hls_enable_debug_log()
+
+    # For the code that inspects gear via module() call
+    bind('gear/current_module', gear)
 
     source = get_function_source(gear.func)
     body_ast = ast.parse(source).body[0]

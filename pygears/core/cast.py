@@ -7,10 +7,7 @@ from .type_match import type_match, TypeMatchError
 
 def uint_cast_resolver(dtype, cast_type):
     if not cast_type.specified:
-        if typeof(dtype, Int):
-            return Uint[int(dtype) - 1]
-        else:
-            return Uint[int(dtype)]
+        return Uint[int(dtype)]
 
     return cast_type
 
@@ -114,6 +111,9 @@ def value_cast(val, cast_type):
             type(val), (Uint, Int)):
         dout = cast_type(val)
     elif typeof(cast_type, Integer) and typeof(type(val), Integer):
+        if not cast_type.specified:
+            cast_type = cast_type[val.width]
+
         tout_range = (1 << int(cast_type))
         val = int(val) & (tout_range - 1)
 

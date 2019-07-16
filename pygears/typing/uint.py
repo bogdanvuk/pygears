@@ -50,7 +50,7 @@ class IntegerType(NumberType):
         return self.base[int(self) + int(others)]
 
     def __rshift__(self, others):
-        return self.base[int(self) + int(others)]
+        return self.base[int(self) - int(others)]
 
     def keys(self):
         """Returns a list of keys that can be used for indexing the type.
