@@ -319,9 +319,15 @@ class BinOpExpr(Expr):
         if self.operator in BIN_OPERATORS:
             return Uint[1]
 
+        if (self.operator in ('<<', '>>')) and isinstance(
+                self.operands[1], ResExpr):
+            op2 = self.operands[1].val
+        else:
+            op2 = self.operands[1].dtype
+
         res_t = eval(f'op1 {self.operator} op2', {
             'op1': self.operands[0].dtype,
-            'op2': self.operands[1].dtype
+            'op2': op2
         })
 
         if isinstance(res_t, bool):
