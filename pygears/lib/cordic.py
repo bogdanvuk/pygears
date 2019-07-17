@@ -1,0 +1,187 @@
+''' Inspired by https://github.com/ZipCPU/cordic'''
+from pygears import gear
+from pygears.typing import Int, Uint
+from pygears.lib import ccat
+from pygears.lib import dreg
+from pygears.lib import union_collapse
+from pygears.lib import round_to_even
+from pygears.lib.mux import mux_valve
+import math
+
+
+def calc_cordic_angles(nstages, phase_bits):
+    angles = []
+    for k in range(nstages):
+        x = math.atan2(1, math.pow(2, k + 1))
+        deg = x * 180 / math.pi
+
+        x = x * ((4 * (1 << (phase_bits - 2))) / (math.pi * 2))
+        phase_value = math.floor(x)
+
+        angles.append(phase_value)
+
+    return angles
+
+
+def calc_phase_bits(ww):
+    for phase_bits in range(3, 64):
+        a = (2 * math.pi / (1 << phase_bits))
+        ds = math.sin(a)
+        ds *= (1 << ww) - 1
+        if (ds < 0.5):
+            break
+
+    if phase_bits < 3:
+        phase_bits = 3
+
+    return phase_bits
+
+
+def calc_stages(ww, pw):
+    for nstages in range(0, 64):
+        x = math.atan2(1, math.pow(2, nstages + 1))
+        x *= (4 * (1 << (pw - 2))) / (math.pi * 2)
+        phase_value = math.floor(x)
+
+        if phase_value == 0:
+            break
+        if ww <= nstages:
+            break
+
+    return nstages
+
+
+def cordic_params(iw, ow, nxtra=None, pw=None):
+    # if iw <= 0 or ow <= 0 or pw < 3 or nxtra < 1:
+    #     raise ValueError(f"Invalid CORDIC input arguments, iw({iw}), ow({ow}), pw({pw}), nxtra({nxtra})")
+    if nxtra == None:
+        nxtra = 2
+
+    nxtra += 1
+    ww = max(ow, iw) + nxtra
+
+    if pw is None:
+        pw = calc_phase_bits(ww)
+    nstages = calc_stages(ww, pw)
+
+    cordic_angles = calc_cordic_angles(nstages, pw)
+    # print("iw: ", iw, "\now: ", ow, "\nww: ", ww, "\npw: ", pw, "\nnstages: ",
+    # nstages, "\nnxtra: ", nxtra)
+    return pw, ww, nstages, cordic_angles
+
+
+@gear
+def cordic_stages(xv, yv, ph, *, cordic_angles, nstages, ww, pw):
+    stages = []
+    stages.append(ccat(xv, yv, ph))
+    for i in range(nstages):
+        stage = cordic_stage(
+            stages[i][0],
+            stages[i][1],
+            stages[i][2],
+            i=i,
+            cordic_angle=cordic_angles[i],
+            ww=ww,
+            pw=pw)
+
+        stages.append(stage)
+
+    return stages[-1]
+
+
+@gear
+def cordic_stage(xv, yv, ph, *, i, cordic_angle, ww, pw):
+    pol = ph[-1]
+    if i + 1 < ww:
+        xv_shift = (xv >> (i + 1)) | xv.dtype
+        yv_shift = (yv >> (i + 1)) | yv.dtype
+    else:
+        xv_shift = Uint[ww](0)
+        yv_shift = Uint[ww](0)
+
+    xv_neg = xv + yv_shift | Int[ww]
+    yv_neg = yv - xv_shift | Int[ww]
+    ph_neg = ph + cordic_angle | Uint[pw]
+
+    xv_pos = xv - yv_shift | Int[ww]
+    yv_pos = yv + xv_shift | Int[ww]
+    ph_pos = (ph - cordic_angle) | Uint[pw]
+
+    xv_next = mux_valve(pol, xv_pos, xv_neg) | union_collapse | dreg
+    yv_next = mux_valve(pol, yv_pos, yv_neg) | union_collapse | dreg
+    ph_next = mux_valve(pol, ph_pos, ph_neg) | union_collapse | dreg
+
+    return ccat(xv_next, yv_next, ph_next)
+
+
+@gear
+def cordic_first_stage(i_xval, i_yval, i_phase, *, iw, ww, pw):
+    pv_0_mux_1 = (i_phase - Uint[pw](2**pw // 4))[0]
+    pv_0_mux_2 = (i_phase - Uint[pw](2**pw // 2))[0]
+    pv_0_mux_3 = (i_phase - Uint[pw]((2**pw // 2) + (2**pw // 4)))[0]
+
+    e_xval = ccat(Uint[ww - iw - 1](0), i_xval, i_xval[-1]) | Int[ww]
+    e_yval = ccat(Uint[ww - iw - 1](0), i_yval, i_yval[-1]) | Int[ww]
+    n_e_xval = -e_xval
+    n_e_yval = -e_yval
+
+    phase_ctrl = ccat(i_phase[pw - 3], i_phase[pw - 2],
+                      i_phase[pw - 1]) | Uint[3]
+
+    xv_0 = mux_valve(phase_ctrl, e_xval, n_e_yval, n_e_yval, n_e_xval,
+                     n_e_xval, e_yval, e_yval, e_xval) | union_collapse | dreg
+    yv_0 = mux_valve(phase_ctrl, e_yval, e_xval, e_xval, n_e_yval, n_e_yval,
+                     n_e_xval, n_e_xval, e_yval) | union_collapse | dreg
+    ph_0 = mux_valve(phase_ctrl, i_phase, pv_0_mux_1, pv_0_mux_1, pv_0_mux_2,
+                     pv_0_mux_2, pv_0_mux_3, pv_0_mux_3,
+                     i_phase) | union_collapse | dreg
+
+    return xv_0, yv_0, ph_0
+
+
+@gear
+def cordic(i_xval: Uint['iw'],
+           i_yval: Uint['iw'],
+           i_phase: Uint['pw'],
+           *,
+           ow=12,
+           iw=b'iw',
+           pw=b'pw'):
+
+    pw, ww, nstages, cordic_angles_l = cordic_params(iw=iw, ow=ow, pw=pw)
+    cordic_angles = []
+    for val in cordic_angles_l:
+        cordic_angles.append(Uint[pw](val))
+
+    cordic_angles = []
+    for val in cordic_angles_l:
+        cordic_angles.append(Uint[pw](val))
+
+    xv_0, yv_0, ph_0 = cordic_first_stage(
+        i_xval, i_yval, i_phase, iw=iw, ww=ww, pw=pw)
+
+    last_stage = cordic_stages(
+        xv_0,
+        yv_0,
+        ph_0,
+        nstages=nstages,
+        cordic_angles=cordic_angles,
+        pw=pw,
+        ww=ww)
+
+    xv_out = last_stage[0] | round_to_even(nbits=ww - ow)
+    yv_out = last_stage[1] | round_to_even(nbits=ww - ow)
+
+    return ccat(yv_out[ww - ow:ww], xv_out[ww - ow:ww])
+
+
+@gear
+def cordic_sin_cos(phase: Uint['pw'], *, ow, pw=b'pw', iw=12):
+
+    sin_cos = cordic(
+        Uint[iw]((2**iw - 1) - (2**(iw - 1))), Uint[iw](0), phase, ow=ow)
+
+    sin = sin_cos[0]
+    cos = sin_cos[1]
+
+    return sin, cos

@@ -71,6 +71,7 @@ from .reduce import reduce, accum
 from .func_lut import func_lut
 from .pulse import pulse
 from .rounding import truncate, round_half_up, round_to_zero, round_to_even
+from .cordic import cordic, cordic_sin_cos
 
 import pygears.lib.fmaps
 import pygears.lib.hls
@@ -90,5 +91,5 @@ __all__ = [
     'tr_cnt', 'repack', 'priority_mux_valve', 'max2', 'qlen_cnt', 'unary',
     'alternate_queues', 'delay', 'delay_rng', 'directed', 'verif', 'rom',
     'drv', 'check', 'mon', 'reduce', 'accum', 'func_lut', 'pulse', 'truncate',
-    'round_half_up', 'round_to_zero', 'round_to_even'
+    'round_half_up', 'round_to_zero', 'round_to_even', 'cordic', 'cordic_sin_cos'
 ]
