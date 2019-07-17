@@ -68,6 +68,9 @@ from .delay import delay, delay_rng
 from .verif import directed, verif, drv, check, mon
 from .reduce2 import reduce2
 from .reduce import reduce, accum
+from .func_lut import func_lut
+from .pulse import pulse
+from .rounding import truncate, round_half_up, round_to_zero, round_to_even
 
 import pygears.lib.fmaps
 import pygears.lib.hls
@@ -86,5 +89,6 @@ __all__ = [
     'release_after_eot', 'reverse', 'valve', 'form_sub_cfg', 'reduce2',
     'tr_cnt', 'repack', 'priority_mux_valve', 'max2', 'qlen_cnt', 'unary',
     'alternate_queues', 'delay', 'delay_rng', 'directed', 'verif', 'rom',
-    'drv', 'check', 'mon', 'reduce', 'accum'
+    'drv', 'check', 'mon', 'reduce', 'accum', 'func_lut', 'pulse', 'truncate',
+    'round_half_up', 'round_to_zero', 'round_to_even'
 ]
