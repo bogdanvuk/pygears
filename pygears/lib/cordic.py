@@ -51,6 +51,19 @@ def calc_stages(ww, pw):
     return nstages
 
 
+def cordic_gain(nstages):
+    gain = 1
+
+    for i in range(nstages):
+        dgain = 1 + math.pow(2, -2 * (i + 1))
+        dgain = math.sqrt(dgain)
+        gain *= dgain
+
+    gain = round((1 / gain) * (4 * (1 << 30)))
+
+    return gain
+
+
 def cordic_params(iw, ow, nxtra=None, pw=None):
     # if iw <= 0 or ow <= 0 or pw < 3 or nxtra < 1:
     #     raise ValueError(f"Invalid CORDIC input arguments, iw({iw}), ow({ow}), pw({pw}), nxtra({nxtra})")
@@ -63,11 +76,12 @@ def cordic_params(iw, ow, nxtra=None, pw=None):
     if pw is None:
         pw = calc_phase_bits(ww)
     nstages = calc_stages(ww, pw)
+    gain = cordic_gain(nstages)
 
     cordic_angles = calc_cordic_angles(nstages, pw)
     # print("iw: ", iw, "\now: ", ow, "\nww: ", ww, "\npw: ", pw, "\nnstages: ",
-    # nstages, "\nnxtra: ", nxtra)
-    return pw, ww, nstages, cordic_angles
+    #       nstages, "\nnxtra: ", nxtra, "\ngain: ", gain)
+    return pw, ww, nstages, cordic_angles, gain
 
 
 @gear
@@ -146,9 +160,11 @@ def cordic(i_xval: Uint['iw'],
            *,
            ow=12,
            iw=b'iw',
-           pw=b'pw'):
+           pw=b'pw',
+           norm_gain_sin=True,
+           norm_gain_cos=False):
 
-    pw, ww, nstages, cordic_angles_l = cordic_params(iw=iw, ow=ow, pw=pw)
+    pw, ww, nstages, cordic_angles_l, gain = cordic_params(iw=iw, ow=ow, pw=pw)
     cordic_angles = []
     for val in cordic_angles_l:
         cordic_angles.append(Uint[pw](val))
@@ -169,17 +185,33 @@ def cordic(i_xval: Uint['iw'],
         pw=pw,
         ww=ww)
 
-    xv_out = last_stage[0] | round_to_even(nbits=ww - ow)
-    yv_out = last_stage[1] | round_to_even(nbits=ww - ow)
+    xv_out = (last_stage[0] | round_to_even(nbits=ww - ow))[ww - ow:ww]
+    yv_out = (last_stage[1] | round_to_even(nbits=ww - ow))[ww - ow:ww]
 
-    return ccat(yv_out[ww - ow:ww], xv_out[ww - ow:ww])
+    if norm_gain_sin is True:
+        yv_out = ((yv_out * gain) >> 32) | yv_out.dtype
+    if norm_gain_cos is True:
+        xv_out = ((xv_out * gain) >> 32) | xv_out.dtype
+
+    return ccat(yv_out | dreg, xv_out | dreg)
 
 
 @gear
-def cordic_sin_cos(phase: Uint['pw'], *, ow, pw=b'pw', iw=12):
+def cordic_sin_cos(phase: Uint['pw'],
+                   *,
+                   ow,
+                   pw=b'pw',
+                   iw=12,
+                   norm_gain_sin=False,
+                   norm_gain_cos=False):
 
     sin_cos = cordic(
-        Uint[iw]((2**iw - 1) - (2**(iw - 1))), Uint[iw](0), phase, ow=ow)
+        Uint[iw]((2**iw - 1) - (2**(iw - 1))),
+        Uint[iw](0),
+        phase,
+        ow=ow,
+        norm_gain_sin=norm_gain_sin,
+        norm_gain_cos=norm_gain_cos)
 
     sin = sin_cos[0]
     cos = sin_cos[1]
