@@ -3,7 +3,7 @@ cart
 
 .. module:: cart
 
-Short for cartesioan, the :func:`~.cart` gear combines data from its inputs, at least one of which is of the :class:`~.Queue` type. It combines each element of the data received at its second input with whole data value received at its first input. 
+Short for Cartesian, the :func:`~.cart` gear combines data from its inputs, at least one of which is of the :class:`~.Queue` type. It combines each element of the data received at its second input with whole data value received at its first input. 
 
 .. py:function:: cart(*din)
 
@@ -34,7 +34,7 @@ Short for cartesioan, the :func:`~.cart` gear combines data from its inputs, at 
 
 .. py:function:: cart_sync_with(sync_in, din) -> din
 
-   Performs the same operation as the :func:`~.cart` gear regarding the data replication, however it does not combine the data at the output, but outputs only the interface whose data has been replicated. Usefull if we don't need the data combination, just the replication.
+   Performs the same operation as the :func:`~.cart` gear regarding the data replication, however it does not combine the data at the output, but outputs only the interface whose data has been replicated. Useful if we don't need the data combination, just the replication.
 
    .. pg-example:: examples/cart_sync_with
       :lines: 4-8

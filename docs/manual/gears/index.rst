@@ -11,6 +11,8 @@ Implemented in :py:mod:`pygears.lib`
    ccat
    chop
    clip
+   const
+   czip
    filt
    reduce
    rng

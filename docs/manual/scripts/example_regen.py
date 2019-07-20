@@ -56,6 +56,6 @@ def run_all():
         run_file(path)
 
 
-example = 'clip'
+example = 'czip_delay'
 run_example(example)
 # run_all()
