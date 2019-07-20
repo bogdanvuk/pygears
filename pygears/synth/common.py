@@ -1,6 +1,7 @@
 import os
 import shutil
 from pygears import registry, find
+from pygears.rtl.node import RTLNode
 from pygears.core.hier_node import HierYielderBase
 from pygears.definitions import LIB_VLIB_DIR, LIB_SVLIB_DIR
 
@@ -17,7 +18,10 @@ def enum_hdl_files(top, outdir, language, rtl_only=False):
     if isinstance(top, str):
         top = find(top)
 
-    rtl_top = registry('rtl/gear_node_map')[top]
+    if isinstance(top, RTLNode):
+        rtl_top = top
+    else:
+        rtl_top = registry('rtl/gear_node_map')[top]
 
     vgen_map = registry(f'{language}gen/map')
 

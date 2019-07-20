@@ -125,7 +125,7 @@ def sv_cosim_gen(gear, tcp_port=1234):
 
     inc_paths = []
     context['includes'] = []
-    for path in registry('svgen/sv_paths'):
+    for path in registry('hdl/include_paths'):
         inc_paths.append(path)
     inc_paths.append(srcdir)
     inc_paths.append(outdir)

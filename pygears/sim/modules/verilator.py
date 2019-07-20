@@ -185,7 +185,7 @@ class SimVerilated(CosimBase):
         save_file('sim_main.cpp', self.outdir, c)
         include = ' '.join([
             f'-I{os.path.abspath(p)}'
-            for p in registry(f'{self.language}gen/{self.language}_paths')
+            for p in registry(f'hdl/include_paths')
         ])
 
         include += f' -I{self.outdir}'

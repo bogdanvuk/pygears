@@ -1,6 +1,6 @@
 {%- import 'snippet.j2' as snippet -%}
 
-{% call snippet.gear_module(module_name, intfs, comment) %}
+{% call snippet.gear_module(module_name, intfs, comment, outtype="wire") %}
 
   {%- set input_intf_names = intfs|isinput|keymap("name") %}
 

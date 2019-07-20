@@ -14,7 +14,7 @@ from pygears.conf import safe_bind
 from pygears.sim import sim
 from pygears.sim.modules.sim_socket import SimSocket
 from pygears.sim.modules.verilator import SimVerilated
-from pygears.hdl.sv import register_sv_paths
+from pygears.hdl import register_hdl_paths
 from pygears.hdl import hdlgen
 from pygears.synth import yosys, vivado
 
@@ -168,7 +168,7 @@ def synth_check(expected, tool='yosys', **kwds):
 
 @pytest.fixture
 def synth_check_fixt(tmpdir, language, request):
-    skip_ifndef('SYNTH_TEST')
+    # skip_ifndef('SYNTH_TEST')
     # tmpdir = '/tools/home/tmp'
 
     util_ref = request.param[0]
@@ -209,10 +209,10 @@ def synth_check_fixt(tmpdir, language, request):
             assert util[param] == value
 
 
-def svgen_check(expected, **kwds):
+def hdl_check(expected, **kwds):
     def decorator(func):
-        return pytest.mark.usefixtures('svgen_check_fixt')(
-            pytest.mark.parametrize('svgen_check_fixt', [[expected, kwds]],
+        return pytest.mark.usefixtures('hdl_check_fixt')(
+            pytest.mark.parametrize('hdl_check_fixt', [[expected, kwds]],
                                     indirect=True)(func))
 
     return decorator
@@ -222,11 +222,12 @@ clear = pytest.fixture(autouse=True)(clear)
 
 
 @pytest.fixture
-def svgen_check_fixt(tmpdir, request):
+def hdl_check_fixt(tmpdir, request):
     yield
 
-    register_sv_paths(tmpdir)
-    hdlgen(language='sv', outdir=tmpdir, **request.param[1])
+    language = os.path.splitext(request.param[0][0])[1][1:]
+    register_hdl_paths(tmpdir)
+    hdlgen(language=language, outdir=tmpdir, **request.param[1])
 
     for fn in request.param[0]:
         res_file = os.path.join(tmpdir, fn)

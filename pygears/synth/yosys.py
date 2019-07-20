@@ -26,7 +26,7 @@ class Yosys:
 
     RE_STATS_LUT = re.compile(r"LUT(\d)\s+(\d+)")
     RE_STATS_FDRE = re.compile(r"FDRE\s+(\d+)")
-    RE_STATS_DRAM = re.compile(r"RAM64X1D\s+(\d+)")
+    RE_STATS_DRAM = re.compile(r"(?:RAM64X1D|RAM32X1D)\s+(\d+)")
 
     def __init__(self, cmd_line):
         self.cmd_line = cmd_line
@@ -48,7 +48,7 @@ class Yosys:
             print(self.proc.before)
             raise
 
-        # print(self.proc.before.strip())
+        print(self.proc.before.strip())
         return self.proc.before.strip()
 
     def enum_registers(self):
@@ -70,25 +70,6 @@ class Yosys:
                 continue
 
         return regs
-
-    def optimize_registers(self):
-        regs = self.enum_registers()
-        print(regs)
-        for name, (width, init) in regs.items():
-            cmd = f"sat -tempinduct -prove {name} {width}'b{init} -show-all -dump_vcd /tools/home/tmp/proba.vcd"
-            # cmd = f"sat -tempinduct -prove {name} {width}'b{init}"
-            try:
-                ret = self.command(cmd)
-                print(ret)
-            except pexpect.EOF:
-                print(self.proc.before)
-                continue
-
-            if "SUCCESS!" in ret:
-                print(f'Optimizing away: {name}')
-                self.command(f"connect -set {name} {width}'b{init}")
-
-        self.command('opt')
 
     @property
     def stats(self):
@@ -140,19 +121,6 @@ def synth(outdir,
     with Yosys('yosys') as yosys:
 
         yosys.command(f'script {prj_script_fn}')
-        # print(ret)
-        # return yosys.stats
-
-        # if optimize:
-        #     ret = yosys.command(f'prep -top {top_name} -flatten')
-        #     ret = yosys.command(f'opt_rmdff -sat')
-        #     print(ret)
-        #     # yosys.optimize_registers()
-
-        # ret = yosys.command("sat -tempinduct -prove demux_ctrl.bc_din.ready_reg[1] 1'b0")
-        # print(ret)
-        # # yosys.command('xilinx_synth -flatten')
-        # ret = yosys.command(f'synth -top {top_name} -flatten -noabc')
 
         yosys.command(f'hierarchy -check -top {top_name}')
 
@@ -179,6 +147,6 @@ def synth(outdir,
         if synth_out:
             yosys.command(f'write_verilog {synth_out}')
 
-        print(yosys.command('stat'))
+        # print(yosys.command('stat'))
 
         return yosys.stats

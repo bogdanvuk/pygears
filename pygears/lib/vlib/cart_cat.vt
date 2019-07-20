@@ -13,7 +13,7 @@
   {%- do intf.update({'lvl': intf['type'].lvl if typeof(intf['type'], Queue) else 0}) -%}
 {%- endfor -%}
 
-{% call snippet.module_with_intf_structs(module_name, intfs, intfs, comment) %}
+{% call snippet.module_with_intf_structs(module_name, intfs, intfs, comment, outtype="wire") %}
 
   {%- set queue_intf_names = queue_intfs|keymap("name") %}
   {%- set input_intf_names = intfs|isinput|keymap("name") %}

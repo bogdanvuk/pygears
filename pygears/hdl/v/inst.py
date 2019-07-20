@@ -1,9 +1,10 @@
 import inspect
 import os
 
-from pygears import PluginBase, registry, safe_bind
+from pygears import PluginBase, registry, safe_bind, config
 from pygears.core.hier_node import HierVisitorBase
 from .intf import VIntfGen
+from pygears.definitions import LIB_VLIB_DIR, USER_VLIB_DIR
 
 
 class VGenInstVisitor(HierVisitorBase):
@@ -41,19 +42,12 @@ class VGenInstVisitor(HierVisitorBase):
 
 
 def vgen_inst(top, conf):
-    # if 'outdir' in conf:
-    #     registry('SVGenSystemVerilogPaths').append(conf['outdir'])
+    config['hdl/include_paths'].extend([USER_VLIB_DIR, LIB_VLIB_DIR])
 
     v = VGenInstVisitor()
     v.visit(top)
 
     return top
-
-
-def register_sv_paths(*paths):
-    for p in paths:
-        registry('svgen/sv_paths').append(
-            os.path.abspath(os.path.expandvars(os.path.expanduser(p))))
 
 
 class VGenInstPlugin(PluginBase):
