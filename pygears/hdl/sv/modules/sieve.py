@@ -12,7 +12,7 @@ def index_to_sv_slice(dtype, key):
     subtype = dtype[key]
 
     if isinstance(key, slice):
-        key = key.start
+        key = min(key.start, key.stop)
 
     if key is None or key == 0:
         low_pos = 0

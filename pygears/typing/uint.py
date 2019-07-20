@@ -159,9 +159,12 @@ class IntegerType(NumberType):
         width = 0
         for i in index:
             if isinstance(i, slice):
+                if i.stop < i.start:
+                    i = slice(i.stop, i.start + 1)
+
                 if i.stop == 0:
                     return Unit
-                elif i.stop - i.start > len(self):
+                elif i.start > len(self) or i.stop > len(self):
                     raise IndexError
                 width += i.stop - i.start
             else:
