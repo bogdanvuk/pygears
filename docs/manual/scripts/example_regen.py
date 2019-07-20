@@ -18,7 +18,10 @@ def run_file(path):
         if c.definition.func.__module__ == 'pygears.lib.verif':
             continue
 
-        if c.basename == 'ccat':
+        if (c.basename == 'delay_gen'):
+            continue
+
+        if (c.basename == 'ccat') and (not example.startswith('ccat')):
             continue
 
         gear = c.basename
@@ -53,6 +56,6 @@ def run_all():
         run_file(path)
 
 
-example = 'cart_sync_with'
+example = 'clip'
 run_example(example)
 # run_all()

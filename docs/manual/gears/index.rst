@@ -9,6 +9,8 @@ Implemented in :py:mod:`pygears.lib`
    add
    cart
    ccat
+   chop
+   clip
    filt
    reduce
    rng

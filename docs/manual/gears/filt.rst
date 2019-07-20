@@ -1,5 +1,5 @@
-Filter
-======
+filt
+====
 
 .. module:: filt
 

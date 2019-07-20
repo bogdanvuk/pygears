@@ -1,4 +1,4 @@
-Reduce
+reduce
 ======
 
 .. module:: reduce

@@ -3,7 +3,6 @@ from pygears import GearDone, gear
 from pygears.lib import decoupler
 from pygears.util.utils import quiter
 from pygears.typing import Uint
-from pygears.sim.utils import SimDelay
 from pygears.typing import Any
 from pygears.sim import sim_assert, sim_log
 from pygears.typing import Queue, typeof
@@ -165,13 +164,6 @@ async def mon(din, *, t=b'din') -> Any:
 
     # print('Monitor emits: ', data)
     yield data
-
-
-@gear
-async def delay_mon(din, *, t=b'din', delay=SimDelay(0, 0)) -> b'din':
-    async with din as item:
-        await delay.delay
-        yield item
 
 
 def match_check(data, ref, tolerance):
