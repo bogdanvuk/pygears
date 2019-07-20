@@ -1,6 +1,8 @@
-from pygears import find
+import pytest
+
+from pygears import find, Intf
 from pygears.lib import drv, check
-from pygears.typing import Uint, Int
+from pygears.typing import Uint, Int, Unit
 from pygears.sim import sim
 
 
@@ -32,3 +34,16 @@ def test_int_logical(tmpdir, sim_cls):
 
     find('/shr').params['sim_cls'] = sim_cls
     sim(tmpdir)
+
+
+def test_shift_complete():
+    res = Intf(Uint[8]) >> 8
+    assert res.dtype == Unit
+
+    res = Intf(Int[8]) >> 8
+    assert res.dtype == Unit
+
+
+@pytest.mark.xfail(raises=TypeError)
+def test_shift_larger():
+    Intf(Uint[8]) >> 9

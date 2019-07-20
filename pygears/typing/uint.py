@@ -50,7 +50,15 @@ class IntegerType(NumberType):
         return self.base[int(self) + int(others)]
 
     def __rshift__(self, others):
-        return self.base[int(self) - int(others)]
+        shamt = int(others)
+        width = len(self)
+
+        if shamt > width:
+            raise TypeError('Right shift larger than data width')
+        elif shamt == width:
+            return Unit
+        else:
+            return self.base[width - shamt]
 
     def keys(self):
         """Returns a list of keys that can be used for indexing the type.
