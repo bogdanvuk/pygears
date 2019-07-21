@@ -1,4 +1,4 @@
-module decoupler
+module decouple
    #(
 	   parameter DEPTH = 2,
      parameter DIN = 16
@@ -71,4 +71,4 @@ module decoupler
       assign dout.valid = din_reg_valid;
    end
 
-endmodule : decoupler
+endmodule : decouple

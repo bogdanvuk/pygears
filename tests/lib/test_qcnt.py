@@ -4,7 +4,7 @@ from functools import partial
 import pytest
 
 from pygears import Intf, gear
-from pygears.lib import decoupler
+from pygears.lib import decouple
 from pygears.lib.delay import delay_rng
 from pygears.lib.qcnt import qcnt
 from pygears.lib.verif import directed, drv, verif
@@ -28,7 +28,7 @@ DIR_SEQ = [[[list(range(3)), list(range(5))], [list(range(1)),
 def get_dut(dout_delay):
     @gear
     def decoupled(din, *, lvl=1, init=1, w_out=16):
-        return din | qcnt(lvl=lvl, init=init, w_out=w_out) | decoupler
+        return din | qcnt(lvl=lvl, init=init, w_out=w_out) | decouple
 
     if dout_delay == 0:
         return decoupled

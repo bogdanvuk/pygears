@@ -154,7 +154,7 @@ class ActivityReporter(ActivityChecker):
                 if sim_gear not in sim.done:
                     g.node_map[module].set_fillcolor('yellow')
 
-        def data_in_decoupler(module):
+        def data_in_decouple(module):
             if self.draw_graph:
                 set_blocking_node(g, module)
             blocking_gears.add(module)
@@ -168,7 +168,7 @@ class ActivityReporter(ActivityChecker):
             if self.draw_graph:
                 set_waiting_edge(g, p)
 
-        self.hooks['data_in_decoupler'] = data_in_decoupler
+        self.hooks['data_in_decouple'] = data_in_decouple
         self.hooks['not_ack'] = not_ack
         self.hooks['waiting'] = waiting
         super().after_run(sim)

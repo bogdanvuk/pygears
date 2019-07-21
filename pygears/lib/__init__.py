@@ -30,7 +30,7 @@ from .invert import invert
 from .mux import mux, mux_zip, mux_valve, mux_by
 from .demux import demux, demux_zip, demux_by, demux_ctrl
 from .shred import shred
-from .decoupler import decoupler, buff
+from .decouple import decouple, buff
 from .fifo import fifo
 from .fill import fill
 from .dreg import dreg
@@ -79,7 +79,7 @@ import pygears.lib.hls
 __all__ = [
     'expand', 'czip', 'ccat', 'cart', 'cast', 'quenvelope', 'zip_sync',
     'sieve', 'flatten', 'fmap', 'permuted_apply', 'const', 'add', 'sub', 'mul',
-    'div', 'neg', 'mux', 'demux', 'shred', 'cart_sync', 'decoupler', 'dreg',
+    'div', 'neg', 'mux', 'demux', 'shred', 'cart_sync', 'decouple', 'dreg',
     'unzip', 'serialize', 'project', 'fifo', 'factor', 'fill', 'mux_zip',
     'mux_valve', 'demux_zip', 'demux_ctrl', 'data_dly', 'eq', 'union_sync',
     'union_collapse', 'filt', 'buff', 'local_rst', 'mod', 'invert', 'shr',

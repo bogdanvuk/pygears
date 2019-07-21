@@ -1,7 +1,7 @@
 import pytest
 
 from pygears import Intf, gear
-from pygears.lib import decoupler
+from pygears.lib import decouple
 from pygears.lib import qlen_cnt
 from pygears.lib.delay import delay_rng
 from pygears.lib.verif import directed, drv
@@ -15,7 +15,7 @@ def get_dut(dout_delay):
     def decoupled(din, *, cnt_lvl=1, cnt_one_more=False, w_out=16):
         return din | qlen_cnt(
             cnt_one_more=cnt_one_more, cnt_lvl=cnt_lvl,
-            w_out=w_out) | decoupler
+            w_out=w_out) | decouple
 
     if dout_delay == 0:
         return decoupled

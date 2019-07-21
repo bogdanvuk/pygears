@@ -13,6 +13,7 @@ Implemented in :py:mod:`pygears.lib`
    clip
    const
    czip
+   decouple
    filt
    reduce
    rng

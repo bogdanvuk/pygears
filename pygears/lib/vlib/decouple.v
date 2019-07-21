@@ -1,4 +1,4 @@
-module decoupler
+module decouple
    #(
 	   parameter DEPTH = 2,
      parameter DIN = 16

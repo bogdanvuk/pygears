@@ -1,6 +1,6 @@
 from .find import find
 from pygears import Intf
-from pygears.lib import dreg as _dreg, decoupler as _decoupler
+from pygears.lib import dreg as _dreg, decouple as _decouple
 
 
 def pipeline(port_name):
@@ -8,7 +8,7 @@ def pipeline(port_name):
 
 
 def decouple(port_name, depth=2):
-    insert_module(port_name, _decoupler(depth=depth))
+    insert_module(port_name, _decouple(depth=depth))
 
 
 def insert_module(port_name, module):

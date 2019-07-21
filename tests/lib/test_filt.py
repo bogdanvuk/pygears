@@ -3,7 +3,7 @@ import random
 import pytest
 
 from pygears import Intf, gear
-from pygears.lib import decoupler, filt
+from pygears.lib import decouple, filt
 from pygears.lib.delay import delay_rng
 from pygears.lib.verif import directed, drv, verif
 from pygears.sim import sim
@@ -84,7 +84,7 @@ def test_pysim_dir(sel, din_t, seq, sim_cls):
 def get_dut(dout_delay):
     @gear
     def decoupled(din, *, fixsel=0):
-        return din | filt(fixsel=fixsel) | decoupler
+        return din | filt(fixsel=fixsel) | decouple
 
     if dout_delay == 0:
         return decoupled

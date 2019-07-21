@@ -1,5 +1,5 @@
 from pygears import gear, Intf
-from pygears.lib import fifo, union_collapse, fmap, decoupler, filt
+from pygears.lib import fifo, union_collapse, fmap, decouple, filt
 from pygears.typing import Int, ceil_pow2
 from pygears.lib import priority_mux
 
@@ -60,7 +60,7 @@ def echo(din: Int['W'],
     feedback = dout \
         | fifo(depth=fifo_depth, threshold=sample_dly_len, regout=True) \
         | fill_void(fill=din.dtype(0)) \
-        | decoupler
+        | decouple
 
     feedback_attenuated = (feedback * feedback_gain_fixp) >> precision
 

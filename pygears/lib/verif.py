@@ -1,6 +1,6 @@
 import inspect
 from pygears import GearDone, gear
-from pygears.lib import decoupler
+from pygears.lib import decouple
 from pygears.util.utils import quiter
 from pygears.typing import Uint
 from pygears.typing import Any
@@ -334,8 +334,8 @@ def verif(*stim, f, ref, delays=None, tolerance=0):
         if d is not None:
             res_intf = res_intf | d
 
-        res_intf = res_intf | decoupler(depth=0)
-        ref_intf = ref_intf | decoupler(depth=0)
+        res_intf = res_intf | decouple(depth=0)
+        ref_intf = ref_intf | decouple(depth=0)
 
         scoreboard(res_intf, ref_intf, report=r, tolerance=tolerance)
 
@@ -381,8 +381,8 @@ def directed_on_the_fly(*stim, f, refs, delays=None):
         if d is not None:
             res_intf = res_intf | d
 
-        res_intf = res_intf | decoupler(depth=0)
-        # ref = ref | decoupler(depth=0)
+        res_intf = res_intf | decouple(depth=0)
+        # ref = ref | decouple(depth=0)
 
         scoreboard(res_intf, ref, report=r)
 

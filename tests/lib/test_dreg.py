@@ -1,7 +1,7 @@
 import pytest
 
 from pygears import Intf, gear
-from pygears.lib import decoupler, dreg
+from pygears.lib import decouple, dreg
 from pygears.lib.delay import delay_rng
 from pygears.lib.verif import directed, drv, verif
 from pygears.sim import sim, timestep
@@ -22,7 +22,7 @@ def test_pygears_sim(tmpdir):
 def get_dut(dout_delay):
     @gear
     def decoupled(din):
-        return din | dreg | decoupler
+        return din | dreg | decouple
 
     if dout_delay == 0:
         return decoupled

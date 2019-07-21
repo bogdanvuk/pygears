@@ -1,7 +1,7 @@
 import pytest
 
 from pygears import Intf, gear
-from pygears.lib import decoupler
+from pygears.lib import decouple
 from pygears.lib import alternate_queues, delay_rng
 from pygears.lib.verif import directed, drv
 from pygears.sim import sim
@@ -15,7 +15,7 @@ def get_dut(dout_delay):
         res = din | alternate_queues
         dout = []
         for r in res:
-            dout.append(r | decoupler)
+            dout.append(r | decouple)
         return tuple(dout)
 
     if dout_delay == 0:

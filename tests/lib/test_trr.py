@@ -4,7 +4,7 @@ from functools import partial
 import pytest
 
 from pygears import Intf, gear
-from pygears.lib import decoupler
+from pygears.lib import decouple
 from pygears.lib.delay import delay_rng
 from pygears.lib.trr import trr
 from pygears.lib.verif import directed, drv, verif
@@ -21,7 +21,7 @@ T_DIN = Queue[Uint[16]]
 def get_dut(dout_delay):
     @gear
     def decoupled(*din):
-        return din | trr | decoupler
+        return din | trr | decouple
 
     if dout_delay == 0:
         return decoupled

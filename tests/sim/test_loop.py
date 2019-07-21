@@ -4,7 +4,7 @@ from pygears.sim import sim
 from pygears.lib.verif import drv
 from pygears.sim.modules import SimVerilated
 from pygears.typing import Uint, Tuple
-from pygears.lib import add, fmap, decoupler
+from pygears.lib import add, fmap, decouple
 from functools import partial
 
 # from pygears.sim import delta, sim
@@ -63,7 +63,7 @@ def dualcycle_wrap_comb_middle(din) -> b'din[0][0]':
 def dualcycle_wrap_decouple_middle(din) -> b'din[0][0]':
     middle = Intf(din.dtype[0])
 
-    middle_back = middle | decoupler
+    middle_back = middle | decouple
 
     return dualcycle(din,
                      middle_back,
