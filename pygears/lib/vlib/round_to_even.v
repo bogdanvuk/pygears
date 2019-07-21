@@ -3,7 +3,7 @@ module round_to_even #(
                             parameter DIN = 16
                             )
    (
-    input logic           clk,
+    input                 clk,
     input                 rst,
     output wire           din_ready,
     input wire            din_valid,
@@ -17,7 +17,7 @@ module round_to_even #(
    assign dout_valid = din_valid;
    assign din_ready = dout_ready;
 
-   logic [DIN-1:0]        data;
+   wire [DIN-1:0]        data;
 
    assign data = din_data[DIN-1:0] + { {(DIN-NBITS){1'b0}}, din_data[NBITS-1], {(NBITS-1){!din_data[NBITS-1]}}};
    assign dout_data = {{data[DIN-1:NBITS]}, {(NBITS){1'b0}} };
