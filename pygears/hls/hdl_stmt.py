@@ -106,6 +106,8 @@ class HDLStmtVisitor:
     def __init__(self, hdl_data):
         self.hdl_data = hdl_data
         self.non_control_pairs = []
+        self.current_node = None
+        self.current_block = None
 
     def visit(self, node, **kwds):
         method = 'visit_' + node.__class__.__name__
@@ -137,6 +139,8 @@ class HDLStmtVisitor:
     def visit_all_Block(self, node, **kwds):
         in_cond = find_cond(node, 'in')
         block = HDLBlock(in_cond=in_cond, stmts=[], dflts={})
+        self.current_node = node
+        self.current_block = block
         return self.traverse_block(block, node)
 
     def traverse_block(self, block, node):
@@ -309,6 +313,9 @@ class ReadyBase(HDLStmtVisitor):
         return res
 
     def _enter_intf(self, block, cond_func):
+        if self.current_node.cond_val.in_val == block.intf:
+            self.current_block.in_cond = None
+
         if block.intf.name in self.input_target:
             val = cond_func(block)
             return AssignValue(target=IntfReadyExpr(block.intf), val=val)
