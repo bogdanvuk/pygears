@@ -33,6 +33,9 @@ class VGenGenerateVisitor(HierYielderBase):
             yield vgen.file_name, contents
 
             # wrappers not needed for verilog, hence no else
+            if (self.wrapper) and (node is self.top):
+                yield f'wrap_{vgen.file_name}', vgen.get_synth_wrap(
+                    self.template_env)
 
 
 def vgen_generate(top, conf):

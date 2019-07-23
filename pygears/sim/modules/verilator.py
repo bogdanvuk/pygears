@@ -66,10 +66,11 @@ class SimVerilated(CosimBase):
         if self.language == 'v':
             self.rtlnode = hdlgen(gear,
                                   outdir=self.outdir,
-                                  wrapper=False,
+                                  wrapper=True,
                                   language='v')
             self.svmod = registry('vgen/map')[self.rtlnode]
-            self.wrap_name = f'{self.svmod.module_name}'
+            self.wrap_name = f'wrap_{self.svmod.module_name}'
+            # self.wrap_name = f'{self.svmod.module_name}'
         else:
             self.rtlnode = hdlgen(gear,
                                   outdir=self.outdir,
