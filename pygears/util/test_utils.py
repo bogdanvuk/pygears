@@ -307,7 +307,7 @@ def language(request):
 
 
 from pygears import gear
-from pygears.lib import decoupler
+from pygears.lib import decouple
 
 
 def get_decoupled_dut(delay, f):
@@ -316,6 +316,6 @@ def get_decoupled_dut(delay, f):
 
     @gear
     def decoupled(*din):
-        return din | f | decoupler
+        return din | f | decouple
 
     return decoupled

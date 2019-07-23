@@ -48,7 +48,7 @@ class Yosys:
             print(self.proc.before)
             raise
 
-        print(self.proc.before.strip())
+        # print(self.proc.before.strip())
         return self.proc.before.strip()
 
     def enum_registers(self):
@@ -128,25 +128,29 @@ def synth(outdir,
         yosys.command(f'flatten')
 
         if optimize:
-            yosys.command(f'opt')
-            yosys.command(f'opt_rmdff -sat')
-            # yosys.command(f'opt_expr -mux_bool -undriven -fine')
-            # yosys.command(f'opt_expr -mux_undef')
-            # yosys.command(f'opt_expr -keepdc -full')
-            yosys.command(f'opt')
+            yosys.command(f'opt -sat')
 
             if freduce:
                 print("Started freduce")
                 yosys.command(f'freduce')
                 yosys.command(f'opt_clean')
+                yosys.command(f'opt -sat')
+
+        # print(yosys.command('stat'))
 
         if synth_cmd:
             ret = yosys.command(synth_cmd)
             # print(ret)
+        # else:
+        #     yosys.command('synth')
+        #     ret = yosys.command(f'clean')
+        #     print(ret)
+
+        ret = yosys.command(f'clean -purge')
 
         if synth_out:
-            yosys.command(f'write_verilog {synth_out}')
+            yosys.command(f'write_verilog -noattr {synth_out}')
 
-        # print(yosys.command('stat'))
+        # yosys.command(f'show -format svg -prefix {outdir}')
 
         return yosys.stats

@@ -13,3 +13,5 @@ open_run synth_1
 report_utilization -file {{res_dir}}/utilization.txt -hierarchical
 
 report_timing -path_type end -no_header -file {{res_dir}}/timing.txt
+
+write_verilog -force {{res_dir}}/vivado_synth.v
