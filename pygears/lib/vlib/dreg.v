@@ -22,6 +22,10 @@ module dreg #(
    assign reg_ready = reg_empty | dout_ready;
    assign reg_empty = !din_reg_valid;
 
+   initial begin
+      din_reg_valid = 0;
+   end
+
    always @(posedge clk)
      begin
         if(rst) begin
