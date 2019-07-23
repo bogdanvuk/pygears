@@ -1,4 +1,4 @@
-module sieve_7v4
+module sieve_4v8
   (
    input             clk,
    input             rst,

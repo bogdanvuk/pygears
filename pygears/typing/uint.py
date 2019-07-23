@@ -150,6 +150,26 @@ class IntegerType(NumberType):
     def specified(self):
         return False
 
+    def index_norm(self, index):
+        index = super().index_norm(index)
+
+        if not any(i.stop < i.start if isinstance(i, slice) else False
+                   for i in index):
+            return index
+
+        reindex = []
+        for i in index:
+            if isinstance(i, slice):
+                if i.stop < i.start:
+                    i = slice(i.stop, i.start + 1)
+
+                if i.start > len(self) or i.stop > len(self):
+                    raise IndexError
+
+            reindex.append(i)
+
+        return tuple(reindex)
+
     def __getitem__(self, index):
         if not self.specified:
             return super().__getitem__(index)
