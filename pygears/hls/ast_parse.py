@@ -79,6 +79,16 @@ def parse_return(node, module_data):
     return expr.ReturnStmt(ret_expr)
 
 
+@parse_ast.register(ast.IfExp)
+def parse_ifexp(node, module_data):
+    res = {
+        field: find_data_expression(getattr(node, field), module_data)
+        for field in ['test', 'body', 'orelse']
+    }
+    return expr.ConditionalExpr(operands=(res['body'], res['orelse']),
+                                cond=res['test'])
+
+
 @parse_ast.register(ast.Yield)
 def parse_yield(node, module_data):
     if isinstance(node.value, ast.Tuple) and len(module_data.out_ports) > 1:
@@ -311,6 +321,10 @@ def parse_subscript(node, module_data):
     if not isinstance(index, slice) and isinstance(val_expr, expr.ConcatExpr):
         pydl_node = val_expr.operands[index]
     else:
+        if isinstance(index, int) or isinstance(index, slice):
+            index = val_expr.dtype.index_norm(index)[0]
+
+        # TODO: Support array of indices
         pydl_node = expr.SubscriptExpr(val_expr, index)
 
     if pydl_node.dtype is Unit:
