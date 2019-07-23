@@ -98,6 +98,6 @@ def test_trr_vivado():
     trr(Intf(T_DIN), Intf(T_DIN), Intf(T_DIN))
 
 
-@synth_check({'logic luts': 26, 'ffs': 2}, tool='yosys')
+@synth_check({'logic luts': 25, 'ffs': 2}, tool='yosys')
 def test_trr_yosys():
     trr(Intf(T_DIN), Intf(T_DIN), Intf(T_DIN))

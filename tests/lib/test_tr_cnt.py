@@ -46,6 +46,10 @@ def test_directed(tmpdir, sim_cls, din_delay, dout_delay, cfg_delay):
         delays=[delay_rng(dout_delay, dout_delay)])
     sim(outdir=tmpdir)
 
+# from pygears.sim.modules import SimVerilated
+# from functools import partial
+# test_directed('/tools/home/tmp', partial(SimVerilated, language='v'), 0, 0, 5)
+
 
 @formal_check()
 def test_formal():
@@ -57,6 +61,6 @@ def test_synth_vivado():
     tr_cnt(Intf(Queue[Uint[16]]), Intf(Uint[16]))
 
 
-@synth_check({'logic luts': 51, 'ffs': 16}, tool='yosys')
+@synth_check({'logic luts': 37, 'ffs': 16}, tool='yosys')
 def test_synth_yosys():
     tr_cnt(Intf(Queue[Uint[16]]), Intf(Uint[16]))

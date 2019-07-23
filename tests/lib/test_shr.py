@@ -4,6 +4,7 @@ from pygears import find, Intf
 from pygears.lib import drv, check
 from pygears.typing import Uint, Int, Unit
 from pygears.sim import sim
+from pygears.util.test_utils import synth_check
 
 
 def test_uint(tmpdir, sim_cls):
@@ -47,3 +48,8 @@ def test_shift_complete():
 @pytest.mark.xfail(raises=TypeError)
 def test_shift_larger():
     Intf(Uint[8]) >> 9
+
+
+@synth_check({'logic luts': 0, 'ffs': 0}, tool='yosys', freduce=True)
+def test_shr_synth():
+    Intf(Uint[8]) >> 4
