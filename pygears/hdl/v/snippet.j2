@@ -44,11 +44,12 @@
   {% if port_map -%}
     {% for name, (value, index, width) in port_map.items() %}
       {% set hs_indexing = "[%d]"|format(index) if index != None else "" %}
-      {% set data_indexing = "[%d:%d]"|format((index+1)*width-1, index*width) if index != None else "" %}
+      {# {% set data_indexing = "[%d:%d]"|format((index+1)*width-1, index*width) if index != None else "" %} #}
 
      .{{name}}_valid({{value}}_valid{{hs_indexing}}),
      .{{name}}_ready({{value}}_ready{{hs_indexing}}),
-     .{{name}}_data({{value}}_data{{data_indexing}}){{ "" if loop.last else "," }}
+     {# .{{name}}_data({{value}}_data{{data_indexing}}){{ "" if loop.last else "," }} #}
+     .{{name}}_data({{value}}_data){{ "" if loop.last else "," }}
     {% endfor -%}
   {% else -%}
     .*
@@ -58,11 +59,11 @@
 
 {% macro bc_to_out_port_connect(intf_name, width, index, port_name) -%}
   {% set hs_indexing = "[%d]"|format(index) if index != None else "" %}
-  {% set data_indexing = "[%d:%d]"|format((index+1)*width-1, index*width) if index != None else "" %}
+  {# {% set data_indexing = "[%d:%d]"|format((index+1)*width-1, index*width) if index != None else "" %} #}
 
   assign {{port_name}}_valid = {{intf_name}}_valid{{hs_indexing}};
   assign {{intf_name}}_ready{{hs_indexing}} = {{port_name}}_ready;
-  assign {{port_name}}_data = {{intf_name}}_data{{data_indexing}};
+  assign {{port_name}}_data = {{intf_name}}_data;
 {%- endmacro %}
 
 {% macro intf_inst(name, width, size, type) -%}
@@ -72,7 +73,7 @@
   {% endif %}
   wire {{unpacked}}{{name}}_ready;
   wire {{unpacked}}{{name}}_valid;
-  wire [{{width*size-1}}:0] {{name}}_data;
+  wire [{{width-1}}:0] {{name}}_data;
 {%- endmacro %}
 
 {% macro assign(name, value) -%}
