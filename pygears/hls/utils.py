@@ -233,7 +233,10 @@ def cast_return(arg_nodes, out_ports):
 
             args.append(arg)
         else:
-            args.append(expr.CastExpr(operand=arg, cast_to=port_t))
+            if arg.dtype != port_t:
+                args.append(expr.CastExpr(operand=arg, cast_to=port_t))
+            else:
+                args.append(arg)
 
     if len(args) == 1:
         return args[0]
