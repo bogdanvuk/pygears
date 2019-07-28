@@ -98,35 +98,3 @@ def test_mux_demux_redux_yosys(branches):
 @synth_check({'logic luts': 0, 'ffs': 0}, tool='yosys')
 def test_mux_demux_redux_no_freduce_yosys(branches):
     mux_demux_redux(branches)
-
-
-from pygears import gear
-from pygears.typing import Tuple, Int
-from pygears.lib import ccat, mux, union_collapse, mux, when
-
-
-@synth_check({'logic luts': 0, 'ffs': 0}, tool='yosys', freduce=True)
-def test_mux_demux_redux_no_freduce_yosys():
-    xv = Intf(Int[8])
-    pol = xv[-1]
-
-    @gear
-    def xv_pos(xv):
-        return xv + Int[8](2)
-
-    @gear
-    def xv_neg(xv):
-        return xv - Int[8](2)
-
-    xv | when(pol, f=xv_pos, fe=xv_neg)
-
-
-# from pygears.hdl.hdlgen import hdlgen
-
-# test_mux_demux_redux_no_freduce_yosys()
-# # bind('hdl/debug_intfs', [])
-# hdlgen('/',
-#        outdir='/tools/home/tmp/synth_test',
-#        language='sv',
-#        wrapper=True,
-#        copy_files=True)

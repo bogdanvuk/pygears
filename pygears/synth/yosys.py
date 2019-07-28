@@ -98,6 +98,7 @@ class Yosys:
 def synth(outdir,
           srcdir=None,
           top=None,
+          rtl_node=None,
           optimize=True,
           freduce=False,
           synth_out=None,
@@ -110,13 +111,19 @@ def synth(outdir,
 
     # synth_out_fn = os.path.join(outdir, 'synth.v')
 
-    rtl = hdlgen(top, language=language, outdir=srcdir)
+    if rtl_node is None:
+        wrapper = False if top is None else True
+        rtl_node = hdlgen(top,
+                          language=language,
+                          outdir=srcdir,
+                          wrapper=wrapper)
+
     vgen_map = registry(f'{language}gen/map')
-    top_name = vgen_map[rtl].module_name
+    top_name = vgen_map[rtl_node].module_name
 
     create_project_script(prj_script_fn,
                           outdir=srcdir,
-                          top=rtl,
+                          top=rtl_node,
                           language=language)
     with Yosys('yosys') as yosys:
 
@@ -129,28 +136,19 @@ def synth(outdir,
 
         if optimize:
             yosys.command(f'opt -sat')
+            yosys.command(f'alumacc')
+            yosys.command(f'opt_share')
+            yosys.command(f'opt -full')
 
             if freduce:
-                print("Started freduce")
                 yosys.command(f'freduce')
-                yosys.command(f'opt_clean')
-                yosys.command(f'opt -sat')
-
-        # print(yosys.command('stat'))
+                yosys.command(f'opt -full')
 
         if synth_cmd:
-            ret = yosys.command(synth_cmd)
-            # print(ret)
-        # else:
-        #     yosys.command('synth')
-        #     ret = yosys.command(f'clean')
-        #     print(ret)
-
-        ret = yosys.command(f'clean -purge')
+            yosys.command(synth_cmd)
 
         if synth_out:
+            yosys.command(f'clean -purge')
             yosys.command(f'write_verilog -noattr {synth_out}')
-
-        # yosys.command(f'show -format svg -prefix {outdir}')
 
         return yosys.stats

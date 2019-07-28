@@ -24,7 +24,12 @@ def synth(outdir, language, yosys_preproc=True, **params):
         files = list_hdl_files(rtl, outdir, language)
     else:
         files = [os.path.join(outdir, 'synth.v')]
-        yosys_synth(outdir=outdir, synth_out=files[0], synth_cmd=None)
+        files.append(os.path.join(os.path.dirname(__file__), 'yosys_blocks.v'))
+
+        yosys_synth(outdir=outdir,
+                    synth_out=files[0],
+                    synth_cmd=None,
+                    **params)
 
     viv_cmd = (
         f'vivado -mode batch -source {outdir}/synth.tcl -nolog -nojournal')

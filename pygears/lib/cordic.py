@@ -5,7 +5,7 @@ from pygears.lib import ccat, when
 from pygears.lib import dreg
 from pygears.lib import union_collapse
 from pygears.lib import round_to_even
-from pygears.lib.mux import mux
+from pygears.lib.mux import mux_valve
 import math
 
 
@@ -85,19 +85,14 @@ def cordic_params(iw, ow, nxtra=None, pw=None):
 
 
 @gear
-def cordic_stages(xv, yv, ph, *, cordic_angles, nstages, ww, pw):
-    stages = []
-    stages.append(ccat(xv, yv, ph))
+def cordic_stages(din, *, cordic_angles, nstages, ww, pw):
+    stage = din
     for i in range(nstages):
-        stage = cordic_stage(stages[i],
-                             i=i,
-                             cordic_angle=cordic_angles[i],
-                             ww=ww,
-                             pw=pw)
+        stage = stage \
+            | cordic_stage(i=i, cordic_angle=cordic_angles[i], ww=ww, pw=pw) \
+            | dreg
 
-        stages.append(stage)
-
-    return stages[-1]
+    return stage
 
 
 @gear
@@ -139,7 +134,31 @@ def cordic_stage(din, *, i, cordic_angle, ww, pw):
     ph = din[2]
     pol = ph[-1]
 
-    return din | when(pol, f=ph_neg, fe=ph_pos) | dreg
+    return din | when(pol, f=ph_neg, fe=ph_pos)
+
+
+@gear(hdl={'compile': True})
+async def cordic_stage_hls(din, *, i, cordic_angle, ww, pw) -> b'din':
+    async with din as (xv, yv, ph):
+        if i + 1 < ww:
+            xv_shift = (xv >> (i + 1))
+            yv_shift = (yv >> (i + 1))
+        else:
+            xv_shift = Uint[1](0)
+            yv_shift = Uint[1](0)
+
+        pol = ph[-1]
+
+        if pol:
+            xv_next = Int[ww](xv + yv_shift)
+            yv_next = Int[ww](yv - xv_shift)
+            ph_next = Uint[pw](ph + cordic_angle)
+        else:
+            xv_next = Int[ww](xv - yv_shift)
+            yv_next = Int[ww](yv + xv_shift)
+            ph_next = Uint[pw](ph - cordic_angle)
+
+        yield (xv_next, yv_next, ph_next)
 
 
 @gear
@@ -156,15 +175,16 @@ def cordic_first_stage(i_xval, i_yval, i_phase, *, iw, ww, pw):
     phase_ctrl = ccat(i_phase[pw - 3], i_phase[pw - 2],
                       i_phase[pw - 1]) | Uint[3]
 
-    xv_0 = mux(phase_ctrl, e_xval, n_e_yval, n_e_yval, n_e_xval, n_e_xval,
-               e_yval, e_yval, e_xval) | union_collapse | dreg
-    yv_0 = mux(phase_ctrl, e_yval, e_xval, e_xval, n_e_yval, n_e_yval,
-               n_e_xval, n_e_xval, e_yval) | union_collapse | dreg
-    ph_0 = mux(phase_ctrl, i_phase, pv_0_mux_1, pv_0_mux_1, pv_0_mux_2,
-               pv_0_mux_2, pv_0_mux_3, pv_0_mux_3,
-               i_phase) | union_collapse | dreg
+    xv_0 = mux_valve(phase_ctrl, e_xval, n_e_yval, n_e_yval, n_e_xval,
+                     n_e_xval, e_yval, e_yval, e_xval) | union_collapse | dreg
 
-    return xv_0, yv_0, ph_0
+    yv_0 = mux_valve(phase_ctrl, e_yval, e_xval, e_xval, n_e_yval, n_e_yval,
+                     n_e_xval, n_e_xval, e_yval) | union_collapse | dreg
+    ph_0 = mux_valve(phase_ctrl, i_phase, pv_0_mux_1, pv_0_mux_1, pv_0_mux_2,
+                     pv_0_mux_2, pv_0_mux_3, pv_0_mux_3,
+                     i_phase) | union_collapse | dreg
+
+    return ccat(xv_0, yv_0, ph_0)
 
 
 @gear
@@ -187,16 +207,14 @@ def cordic(i_xval: Uint['iw'],
     for val in cordic_angles_l:
         cordic_angles.append(Uint[pw](val))
 
-    xv_0, yv_0, ph_0 = cordic_first_stage(i_xval,
-                                          i_yval,
-                                          i_phase,
-                                          iw=iw,
-                                          ww=ww,
-                                          pw=pw)
+    first_stage = cordic_first_stage(i_xval,
+                                     i_yval,
+                                     i_phase,
+                                     iw=iw,
+                                     ww=ww,
+                                     pw=pw)
 
-    last_stage = cordic_stages(xv_0,
-                               yv_0,
-                               ph_0,
+    last_stage = cordic_stages(first_stage,
                                nstages=nstages,
                                cordic_angles=cordic_angles,
                                pw=pw,

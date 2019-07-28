@@ -1,5 +1,5 @@
-import atexit
 import ctypes
+import atexit
 import os
 import subprocess
 from string import Template
@@ -53,24 +53,39 @@ class SimVerilated(CosimBase):
                  timeout=100,
                  vcd_fifo=False,
                  shmidcat=False,
+                 post_synth=False,
                  language='sv'):
         super().__init__(gear, timeout=timeout)
         self.name = gear.name[1:].replace('/', '_')
         self.outdir = os.path.abspath(
             os.path.join(registry('sim/artifacts_dir'), self.name))
         self.objdir = os.path.join(self.outdir, 'obj_dir')
+        self.post_synth = post_synth
         bind('svgen/spy_connection_template', signal_spy_connect_t)
 
         self.language = language
 
         if self.language == 'v':
-            self.rtlnode = hdlgen(gear,
-                                  outdir=self.outdir,
-                                  wrapper=True,
-                                  language='v')
+
+            synth_src_dir = os.path.join(self.outdir, 'src')
+            self.rtlnode = hdlgen(
+                gear,
+                outdir=synth_src_dir if post_synth else self.outdir,
+                wrapper=True,
+                language='v')
+
             self.svmod = registry('vgen/map')[self.rtlnode]
             self.wrap_name = f'wrap_{self.svmod.module_name}'
-            # self.wrap_name = f'{self.svmod.module_name}'
+            self.top_name = self.svmod.module_name if self.post_synth else self.wrap_name
+
+            if post_synth:
+                from pygears.synth.yosys import synth
+                synth(rtl_node=self.rtlnode,
+                      synth_cmd='synth',
+                      outdir=self.outdir,
+                      srcdir=synth_src_dir,
+                      synth_out=os.path.join(
+                          self.outdir, f'wrap_{self.svmod.module_name}.v'))
         else:
             self.rtlnode = hdlgen(gear,
                                   outdir=self.outdir,
@@ -78,6 +93,7 @@ class SimVerilated(CosimBase):
                                   language='sv')
             self.svmod = registry('svgen/map')[self.rtlnode]
             self.wrap_name = f'wrap_{self.svmod.module_name}'
+            self.top_name = self.wrap_name
 
         for p in self.rtlnode.in_ports:
             if p.index >= len(self.gear.in_ports):
@@ -123,7 +139,7 @@ class SimVerilated(CosimBase):
                 sim_log().info(
                     f'Verilator VCD dump to "{self.outdir}/vlt_dump.vcd"')
 
-        dll_path = os.path.join(self.objdir, f'V{self.wrap_name}')
+        dll_path = os.path.join(self.objdir, f'V{self.top_name}')
         if os.name == 'nt':
             dll_path += '.exe'
 
@@ -173,7 +189,7 @@ class SimVerilated(CosimBase):
         context = {
             'in_ports': self.rtlnode.in_ports,
             'out_ports': self.rtlnode.out_ports,
-            'top_name': self.wrap_name,
+            'top_name': self.top_name,
             'tracing': tracing_enabled,
             'aux_clock': config['sim/aux_clock'],
             'outdir': self.outdir
@@ -185,8 +201,7 @@ class SimVerilated(CosimBase):
         c = jenv.get_template('sim_veriwrap.j2').render(context)
         save_file('sim_main.cpp', self.outdir, c)
         include = ' '.join([
-            f'-I{os.path.abspath(p)}'
-            for p in registry(f'hdl/include_paths')
+            f'-I{os.path.abspath(p)}' for p in registry(f'hdl/include_paths')
         ])
 
         include += f' -I{self.outdir}'
@@ -198,7 +213,7 @@ class SimVerilated(CosimBase):
             'verilator -cc -CFLAGS -fpic -LDFLAGS -shared --exe', '-Wno-fatal',
             include,
             '-clk clk',
-            f'--top-module {self.wrap_name}',
+            f'--top-module {self.top_name}',
             '--trace --no-trace-params --trace-structs' if tracing_enabled else '',
             files,
             'sim_main.cpp'
@@ -222,7 +237,7 @@ class SimVerilated(CosimBase):
 
         print("Running make")
         ret = os.system(
-            f"cd {self.objdir}; make -j -f V{self.wrap_name}.mk > make.log 2>&1"
+            f"cd {self.objdir}; make -j -f V{self.top_name}.mk > make.log 2>&1"
         )
 
         if ret != 0:

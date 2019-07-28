@@ -12,4 +12,4 @@ def test_inline_if(tmpdir, cosim_cls):
 
     directed(drv(t=Bool, seq=[1, 0]), f=inv(sim_cls=cosim_cls), ref=[0, 1])
 
-    sim('/tools/home/tmp')
+    sim(tmpdir)
