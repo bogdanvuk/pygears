@@ -3,19 +3,21 @@ from pygears.conf import safe_bind
 from pygears.core.intf import IntfOperPlugin
 from pygears.util.hof import oper_tree
 from pygears.typing import Integer, Tuple
-from . import ccat
 
 
 @gear(hdl={'compile': True})
-async def mul(din: Tuple[Integer['N1'], Integer['N2']]) -> b'din[0] * din[1]':
+async def mul(din: Tuple[{
+        'a': Integer['N1'],
+        'b': Integer['N2']
+}]) -> b'din[0] * din[1]':
     async with din as data:
         yield data[0] * data[1]
 
 
-@alternative(mul)
-@gear
-def mul2(din0: Integer, din1: Integer):
-    return ccat(din0, din1) | mul
+# @alternative(mul)
+# @gear
+# def mul2(a: Integer, b: Integer):
+#     return ccat(a, b) | mul
 
 
 @alternative(mul)

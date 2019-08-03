@@ -53,6 +53,13 @@ def accum_unpack(din: Queue[Integer], init: Integer) -> b'init':
     return cart(din, init) | accum
 
 
+@alternative(accum)
+@gear
+def accum_fix_init(din: Queue[Integer], *,
+                   init: Integer = b'din.data(0)') -> b'din.data':
+    return cart(din, init) | accum
+
+
 # @alternative(accumulator)
 # @gear(hdl={'compile': True, 'pipeline': True})
 # async def accumulator_no_offset(din: Queue[Integer['w_data']]) -> b'din.data':

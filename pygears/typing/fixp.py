@@ -53,7 +53,7 @@ class FixpnumberType(NumberType):
             integer_part = max(self.integer, other.integer)
             fract_part = max(self.fract, other.fract)
         except AttributeError:
-            integer_part = max(self.integer, other)
+            integer_part = max(self.integer, int(other))
             fract_part = self.fract
 
         integer_part += 1

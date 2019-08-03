@@ -9,7 +9,7 @@ examples_dir = '/tools/home/pygears/docs/manual/gears/examples'
 
 def get_example_gear(example):
     for c in find('/').child:
-        if not example.startswith(example.split('_')[0]):
+        if not c.name.startswith(example.split('_')[0]):
             continue
 
         return c
@@ -30,17 +30,21 @@ def get_example_gear(example):
 def run_file(path):
     print(f'Running example {path}')
     example = os.path.splitext(os.path.basename(path))[0]
+    cfg_fn = os.path.splitext(path)[0] + '_cfg.py'
 
     clear()
     runpy.run_path(path)
 
-    gear = get_example_gear(example).basename
+    if os.path.exists(cfg_fn):
+        runpy.run_path(cfg_fn)
+    else:
+        gear = get_example_gear(example).basename
 
-    for inp in find(f'/{gear}').in_ports:
-        config['hdl/debug_intfs'].append(inp.name)
+        for inp in find(f'/{gear}').in_ports:
+            config['hdl/debug_intfs'].append(inp.name)
 
-    for outp in find(f'/{gear}').out_ports:
-        config['hdl/debug_intfs'].append(outp.name)
+        for outp in find(f'/{gear}').out_ports:
+            config['hdl/debug_intfs'].append(outp.name)
 
     # config['sim/artifacts_dir'] = '/tools/home/tmp'
     config['wavejson/trace_fn'] = os.path.join(examples_dir, f'{example}.json')
@@ -64,6 +68,6 @@ def run_all():
         run_file(path)
 
 
-example = 'czip_delay'
+example = 'fmap_union'
 run_example(example)
 # run_all()

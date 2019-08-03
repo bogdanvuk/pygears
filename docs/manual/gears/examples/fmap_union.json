@@ -1,0 +1,1 @@
+{"signal": [{"name": "clk", "wave": "p.."}, ["fmap.din", {"name": "data", "wave": "554", "data": ["0", "1", "65526"]}, {"name": "ctrl", "wave": "554", "data": ["0", "0", "1"]}], ["fmap.dout", {"name": "data", "wave": "555", "data": ["0", "1", "65525"]}, {"name": "ctrl", "wave": "555", "data": ["0", "0", "1"]}]], "head": {"tock": 0}}

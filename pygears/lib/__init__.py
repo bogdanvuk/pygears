@@ -39,7 +39,6 @@ from .data_dly import data_dly
 from .filt import filt
 from .shr import shr
 from .shl import shl
-from .extender import extender
 from .align import align
 from .replicate import replicate
 from .chop import chop

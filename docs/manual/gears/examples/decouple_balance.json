@@ -1,0 +1,1 @@
+{"signal": [{"name": "clk", "wave": "p....."}, ["ccat2.din0", {"name": "", "wave": "z.555z", "data": ["6", "9", "12"]}], ["ccat2.din1", {"name": "", "wave": "z4555z", "data": ["1", "1", "2", "3"]}], ["ccat2.dout", {"name": "f0", "wave": "z.555z", "data": ["6", "9", "12"]}, {"name": "f1", "wave": "z.555z", "data": ["1", "2", "3"]}]], "head": {"tock": 0}}

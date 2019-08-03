@@ -14,7 +14,11 @@ Implemented in :py:mod:`pygears.lib`
    const
    czip
    decouple
+   demux
+   dreg
    filt
+   flatten
+   fmap
    reduce
    rng
    sieve

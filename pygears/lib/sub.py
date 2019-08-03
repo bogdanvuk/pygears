@@ -3,19 +3,15 @@ from pygears import alternative, gear
 from pygears.typing import Integer, Tuple
 from pygears.core.intf import IntfOperPlugin
 from pygears.util.hof import oper_reduce
-from . import ccat
 
 
 @gear(hdl={'compile': True})
-async def sub(din: Tuple[Integer['N1'], Integer['N2']]) -> b'din[0] - din[1]':
+async def sub(din: Tuple[{
+        'a': Integer['N1'],
+        'b': Integer['N2']
+}]) -> b'din[0] - din[1]':
     async with din as data:
         yield data[0] - data[1]
-
-
-@alternative(sub)
-@gear
-def sub2(din0: Integer, din1: Integer):
-    return ccat(din0, din1) | sub
 
 
 @alternative(sub)

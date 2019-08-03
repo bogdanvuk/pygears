@@ -16,7 +16,7 @@ def test_pygears_sim(tmpdir):
 
     sim(outdir=tmpdir)
 
-    assert timestep() == len(seq)
+    assert timestep() == len(seq) + 1
 
 
 def get_dut(dout_delay):

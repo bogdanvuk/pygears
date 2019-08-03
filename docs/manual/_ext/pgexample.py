@@ -10,6 +10,7 @@ class PgExampleDirective(SphinxDirective):
 
     option_spec = {
         'lines': directives.unchanged,
+        'emphasize-lines': directives.unchanged,
         'sections': directives.unchanged
     }
 
@@ -25,8 +26,10 @@ class PgExampleDirective(SphinxDirective):
         self.state.nested_parse(
             StringList([
                 f'.. literalinclude:: {self.arguments[0]}.py\n',
-                f'    :lines: {self.options["lines"]}'
-                if 'lines' in self.options else ''
+                f'    :lines: {self.options["lines"]}\n'
+                if 'lines' in self.options else '',
+                f'    :emphasize-lines: {self.options["emphasize-lines"]}'
+                if 'emphasize-lines' in self.options else '',
             ]), 0, include_node)
 
         return include_node.children
