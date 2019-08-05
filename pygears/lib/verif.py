@@ -234,7 +234,7 @@ async def scoreboard(*din: b't', report, tolerance=0) -> None:
 
 
 @gear
-async def check(din, *, ref):
+async def check(din, *, ref, cmp=lambda x, y: x == y):
     """Checks equality of input data with expected.
 
     Args:
@@ -262,7 +262,7 @@ async def check(din, *, ref):
                 ref_item = next(ref_seq)
 
             sim_assert(
-                data == ref_item,
+                cmp(data, ref_item),
                 f'mismatch in item {len(items)-1}. Got: {data}, expected: {ref_item}'
             )
     except GearDone:

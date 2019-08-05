@@ -43,7 +43,9 @@ async def demux(
     async with din as (data, ctrl):
         dout = [None] * len(module().tout)
 
-        dout[_full_mapping[ctrl]] = data
+        ctrl = _full_mapping[ctrl]
+
+        dout[ctrl] = module().tout[ctrl].decode(int(data))
 
         yield tuple(dout)
 

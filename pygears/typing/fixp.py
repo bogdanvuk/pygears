@@ -1,5 +1,4 @@
 from .base import class_and_instance_method
-from .base import typeof
 from .unit import Unit
 from .number import NumberType, Number
 from .bitw import bitw
@@ -29,6 +28,21 @@ class FixpnumberType(NumberType):
 
     def __int__(self):
         return self.width
+
+    def __lshift__(self, others):
+        shamt = int(others)
+        return self.base[self.integer + shamt, self.width + shamt]
+
+    def __rshift__(self, others):
+        shamt = int(others)
+        width = len(self)
+
+        if shamt > width:
+            raise TypeError('Right shift larger than data width')
+        elif shamt == width:
+            return Unit
+        else:
+            return self.base[self.integer-shamt, self.width-shamt]
 
     def keys(self):
         """Returns a list of keys that can be used for indexing the type.
@@ -105,7 +119,7 @@ class Fixpnumber(Number, metaclass=FixpnumberType):
             #TODO
             return cls[bitw(val), 0](int(val))
         elif isinstance(val, float):
-            val = int(val * (2**cls.fract))
+            val = round(val * (2**cls.fract))
         elif isinstance(val, Fixpnumber):
             val_fract = type(val).fract
             if cls.fract > val_fract:
@@ -136,11 +150,34 @@ class Fixpnumber(Number, metaclass=FixpnumberType):
     def width(self):
         return type(self).width
 
+    def __float__(self):
+        return int(self) / (2**type(self).fract)
+
 
 class FixpType(FixpnumberType):
     @property
     def signed(self):
         return True
+
+    @property
+    def specified(self):
+        return NumberType.specified.fget(self)
+
+    @property
+    def max(self):
+        return self(2**(self.width - 1) - 1)
+
+    @property
+    def min(self):
+        return self(-2**(self.width - 1))
+
+    @property
+    def fmax(self):
+        return (2**(self.width - 1) - 1) / (2**self.fract)
+
+    @property
+    def fmin(self):
+        return (-2**(self.width - 1)) / (2**self.fract)
 
 
 class Fixp(Fixpnumber, metaclass=FixpType):
@@ -151,6 +188,14 @@ class Fixp(Fixpnumber, metaclass=FixpType):
     def signed(self):
         return True
 
+    @classmethod
+    def decode(cls, val):
+        val = int(val)
+        if val >= (1 << (int(cls) - 1)):
+            val -= 1 << int(cls)
+
+        return cls(val)
+
 
 class UfixpType(FixpnumberType):
     @property
@@ -160,6 +205,22 @@ class UfixpType(FixpnumberType):
     @property
     def specified(self):
         return NumberType.specified.fget(self)
+
+    @property
+    def max(self):
+        return self(2**self.width - 1)
+
+    @property
+    def min(self):
+        return self(0)
+
+    @property
+    def fmax(self):
+        return (2**self.width - 1) / (2**self.fract)
+
+    @property
+    def fmin(self):
+        return float(0)
 
 
 class Ufixp(Fixpnumber, metaclass=UfixpType):

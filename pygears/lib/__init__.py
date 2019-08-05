@@ -67,7 +67,7 @@ from .delay import delay, delay_rng
 from .verif import directed, verif, drv, check, mon
 from .reduce2 import reduce2
 from .reduce import reduce, accum
-from .func_lut import func_lut
+from .funclut import funclut
 from .pulse import pulse
 from .rounding import truncate, round_half_up, round_to_zero, round_to_even
 from .cordic import cordic, cordic_sin_cos
@@ -82,13 +82,13 @@ __all__ = [
     'unzip', 'serialize', 'project', 'fifo', 'factor', 'fill', 'mux_zip',
     'mux_valve', 'demux_zip', 'demux_ctrl', 'data_dly', 'eq', 'union_sync',
     'union_collapse', 'filt', 'buff', 'local_rst', 'mod', 'invert', 'shr',
-    'shl', 'extender', 'queue_wrap_from', 'demux_by', 'mux_by', 'align', 'gt',
+    'shl', 'queue_wrap_from', 'demux_by', 'mux_by', 'align', 'gt',
     'lt', 'neq', 'cart_sync_with', 'when', 'union_sync_with', 'case',
     'const_ping', 'xor', 'rng', 'iceil', 'priority_mux', 'qcnt', 'sdp', 'chop',
     'trr', 'replicate', 'trr_dist', 'clip', 'din_cat', 'take',
     'release_after_eot', 'reverse', 'valve', 'form_sub_cfg', 'reduce2',
     'tr_cnt', 'repack', 'priority_mux_valve', 'max2', 'qlen_cnt', 'unary',
     'alternate_queues', 'delay', 'delay_rng', 'directed', 'verif', 'rom',
-    'drv', 'check', 'mon', 'reduce', 'accum', 'func_lut', 'pulse', 'truncate',
+    'drv', 'check', 'mon', 'reduce', 'accum', 'funclut', 'pulse', 'truncate',
     'round_half_up', 'round_to_zero', 'round_to_even', 'cordic', 'cordic_sin_cos'
 ]
