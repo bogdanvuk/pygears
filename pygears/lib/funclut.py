@@ -38,15 +38,15 @@ def funclut(din: Fixpnumber, *, f, precision=b'len(din)', dtype=None):
 
     if dtype is None:
         float_res_list = list(gen_vals())
-        vmin = min(float_res_list)
-        vmax = max(float_res_list)
-
-        integer = bitw(max(vmin, vmax))
+        vmin = min(map(round, float_res_list))
+        vmax = max(map(round, float_res_list))
 
         if vmin < 0:
-            dtype = Fixp[integer, precision]
+            dtype = Fixp[bitw(
+                max(2 * abs(vmin), 2 * (vmax) +
+                    (1 if vmax > 0 else 0))), precision]
         else:
-            dtype = Ufixp[integer, precision]
+            dtype = Ufixp[bitw(max(vmax, vmin)), precision]
 
         lut_list = [dtype(v) for v in float_res_list]
     else:
