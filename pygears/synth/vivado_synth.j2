@@ -2,6 +2,8 @@ create_project -force synth_test {{res_dir}} -part xc7z020clg484-1
 
 add_files { {{' '.join(files)}} }
 
+set_property top {{top}} [current_fileset]
+
 update_compile_order -fileset sources_1
 
 launch_runs synth_1

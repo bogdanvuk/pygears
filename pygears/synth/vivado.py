@@ -2,6 +2,7 @@ import shutil
 from itertools import islice
 import jinja2
 import os
+from pygears import registry
 from pygears.hdl import hdlgen
 from .common import list_hdl_files
 from .yosys import synth as yosys_synth
@@ -16,17 +17,22 @@ def synth(outdir, language, yosys_preproc=True, **params):
 
     vivado_prj_path = os.path.join(outdir, 'vivado')
 
+    rtl = hdlgen(language=language,
+                 outdir=outdir,
+                 wrapper=(language == 'sv'),
+                 **params)
+
+    vgen_map = registry(f'{language}gen/map')
+    top_name = vgen_map[rtl].module_name
+
     if language == 'sv' or not yosys_preproc or not shutil.which('yosys'):
-        rtl = hdlgen(language=language,
-                     outdir=outdir,
-                     wrapper=(language == 'sv'),
-                     **params)
         files = list_hdl_files(rtl, outdir, language)
     else:
         files = [os.path.join(outdir, 'synth.v')]
         files.append(os.path.join(os.path.dirname(__file__), 'yosys_blocks.v'))
 
         yosys_synth(outdir=outdir,
+                    rtl_node=rtl,
                     synth_out=files[0],
                     synth_cmd=None,
                     **params)
@@ -34,7 +40,11 @@ def synth(outdir, language, yosys_preproc=True, **params):
     viv_cmd = (
         f'vivado -mode batch -source {outdir}/synth.tcl -nolog -nojournal')
 
-    jinja_context = {'res_dir': vivado_prj_path, 'files': files}
+    jinja_context = {
+        'res_dir': vivado_prj_path,
+        'files': files,
+        'top': top_name
+    }
 
     env = jinja2.Environment(loader=jinja2.FileSystemLoader(
         searchpath=os.path.dirname(__file__)))
