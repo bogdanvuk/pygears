@@ -135,10 +135,7 @@ def synth(outdir,
         yosys.command(f'flatten')
 
         if optimize:
-            yosys.command(f'opt -sat')
-            yosys.command(f'alumacc')
-            yosys.command(f'opt_share')
-            yosys.command(f'opt -full')
+            print(yosys.command(f'opt -sat'))
 
             if freduce:
                 yosys.command(f'freduce')
