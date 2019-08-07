@@ -1,12 +1,12 @@
-from pygears.typing import Fixp, Ufixp, Unit, Bool
+from pygears.typing import Fixp, Ufixp
 
 
 def test_float():
     t_a = Ufixp[2, 3]
     t_b = Fixp[3, 4]
 
-    assert (t_a(7) == t_a(3.5))
-    assert (t_b(-9) == t_b(-4.5))
+    assert (t_a.decode(7) == t_a(3.5))
+    assert (t_b.decode(-9) == t_b(-4.5))
 
 
 def test_unsigned_add():

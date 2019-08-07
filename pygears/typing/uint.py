@@ -27,6 +27,10 @@ class IntegerType(NumberType):
         else:
             return super().__str__()
 
+    @property
+    def mask(self):
+        return (1 << len(self)) - 1
+
     def __int__(self):
         if not self.__args__:
             raise TypeError
@@ -196,8 +200,9 @@ class IntegerType(NumberType):
 
 
 def check_width(val, width):
-    if (bitw(val) > width):
+    if ((bitw(val) > width) and (val != 0)):
         from pygears.conf import typing_log
+        breakpoint()
 
         typing_log().warning(
             f'Value overflow - value {val} cannot be represented with {width} bits'
@@ -236,6 +241,7 @@ class Integer(Number, metaclass=IntegerType):
         """
         return len(type(self))
 
+    @class_and_instance_method
     @property
     def mask(self):
         return (1 << self.width) - 1
@@ -456,7 +462,7 @@ class Uint(Integer, metaclass=UintType):
         if (typeof(type(other), Uint)):
             res = int(self) - int(other)
             tout = type(self) - type(other)
-            return tout((res, res < 0))
+            return tout((res & tout[0].mask, res < 0))
         else:
             return super().__sub__(other)
 

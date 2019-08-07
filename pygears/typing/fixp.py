@@ -42,7 +42,7 @@ class FixpnumberType(NumberType):
         elif shamt == width:
             return Unit
         else:
-            return self.base[self.integer-shamt, self.width-shamt]
+            return self.base[self.integer - shamt, self.width - shamt]
 
     def keys(self):
         """Returns a list of keys that can be used for indexing the type.
@@ -118,33 +118,35 @@ class Fixpnumber(Number, metaclass=FixpnumberType):
         if cls.is_generic():
             #TODO
             return cls[bitw(val), 0](int(val))
-        elif isinstance(val, float):
-            val = round(val * (2**cls.fract))
-        elif isinstance(val, Fixpnumber):
+
+        if isinstance(val, Fixpnumber):
             val_fract = type(val).fract
             if cls.fract > val_fract:
                 val = int(val) << (cls.fract - val_fract)
             else:
                 val = int(val) >> (val_fract - cls.fract)
+        elif isinstance(val, (float, int)):
+            val = round(float(val) * (2**cls.fract))
 
         if not cls.signed:
             val &= ((1 << cls.width) - 1)
 
-        res = super(Fixpnumber, cls).__new__(cls, val)
+        res = int.__new__(cls, val)
 
         return res
 
     def __add__(self, other):
         sum_cls = type(self) + type(other)
-        return sum_cls((int(self) << (sum_cls.fract - type(self).fract)) +
-                       (int(other) << (sum_cls.fract - type(other).fract)))
+        return sum_cls.decode(
+            (int(self) << (sum_cls.fract - type(self).fract)) +
+            (int(other) << (sum_cls.fract - type(other).fract)))
 
     def code(self):
         return int(self) & ((1 << self.width) - 1)
 
     @classmethod
     def decode(cls, val):
-        return cls(int(val))
+        return int.__new__(cls, int(val))
 
     @property
     def width(self):
@@ -194,7 +196,7 @@ class Fixp(Fixpnumber, metaclass=FixpType):
         if val >= (1 << (int(cls) - 1)):
             val -= 1 << int(cls)
 
-        return cls(val)
+        return int.__new__(cls, val)
 
 
 class UfixpType(FixpnumberType):
