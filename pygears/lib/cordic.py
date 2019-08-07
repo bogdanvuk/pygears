@@ -127,7 +127,7 @@ def cordic_stage(din, *, i, cordic_angle, ww, pw):
 
         xv_pos = xv - yv_shift | Int[ww]
         yv_pos = yv + xv_shift | Int[ww]
-        ph_pos = (ph - cordic_angle) | Uint[pw]
+        ph_pos = (ph - cordic_angle)[0]
 
         return ccat(xv_pos, yv_pos, ph_pos)
 
@@ -188,8 +188,8 @@ def cordic_first_stage(i_xval, i_yval, i_phase, *, iw, ww, pw):
 
 
 @gear
-def cordic(i_xval: Uint['iw'],
-           i_yval: Uint['iw'],
+def cordic(i_xval: Int['iw'],
+           i_yval: Int['iw'],
            i_phase: Uint['pw'],
            *,
            ow=12,
@@ -220,8 +220,8 @@ def cordic(i_xval: Uint['iw'],
                                pw=pw,
                                ww=ww)
 
-    xv_out = (last_stage[0] | round_to_even(nbits=ww - ow))[ww - ow:ww]
-    yv_out = (last_stage[1] | round_to_even(nbits=ww - ow))[ww - ow:ww]
+    xv_out = (last_stage[0] | round_to_even(nbits=ww - ow)) >> (ww - ow)
+    yv_out = (last_stage[1] | round_to_even(nbits=ww - ow)) >> (ww - ow)
 
     if norm_gain_sin is True:
         yv_out = ((yv_out * gain) >> 32) | yv_out.dtype
@@ -240,8 +240,8 @@ def cordic_sin_cos(phase: Uint['pw'],
                    norm_gain_sin=False,
                    norm_gain_cos=False):
 
-    sin_cos = cordic(Uint[iw]((2**iw - 1) - (2**(iw - 1))),
-                     Uint[iw](0),
+    sin_cos = cordic(Int[iw]((2**iw - 1) - (2**(iw - 1))),
+                     Int[iw](0),
                      phase,
                      ow=ow,
                      norm_gain_sin=norm_gain_sin,

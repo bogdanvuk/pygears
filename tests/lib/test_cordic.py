@@ -1,7 +1,7 @@
 from pygears.lib.cordic import cordic_sin_cos, cordic_stage, cordic_stages, cordic_first_stage, cordic_params
 from pygears.sim import sim
 from pygears.typing import Uint, Tuple, Int
-from pygears.lib import drv, directed
+from pygears.lib import drv, directed, verif
 
 from pygears.util.test_utils import synth_check
 from pygears import Intf
@@ -29,7 +29,7 @@ from pygears import gear
 #     return Intf(Uint[8]) | when(Intf(Uint[1]), f=ph_neg, fe=ph_pos)
 
 
-@synth_check({'logic luts': 181, 'ffs': 0}, tool='vivado', freduce=False)
+@synth_check({'logic luts': 181, 'ffs': 0}, tool='yosys', freduce=False)
 def test_cordic_first_stage_vivado():
     pw = 19
     iw = 12
@@ -37,7 +37,9 @@ def test_cordic_first_stage_vivado():
 
     pw, ww, nstages, cordic_angles_l, gain = cordic_params(iw=iw, ow=ow, pw=pw)
 
-    cordic_first_stage(Intf(Uint[iw]), Intf(Uint[iw]), Intf(Uint[pw]),
+    cordic_first_stage(Intf(Uint[iw]),
+                       Intf(Uint[iw]),
+                       Intf(Uint[pw]),
                        iw=iw,
                        ww=ww,
                        pw=pw)
@@ -69,7 +71,7 @@ def test_cordic_pipeline_freduce_yosys():
                   pw=pw)
 
 
-@synth_check({'logic luts': 901, 'ffs': 0}, tool='vivado', freduce=False)
+@synth_check({'logic luts': 901, 'ffs': 0}, tool='vivado', freduce=True)
 def test_cordic_sin_cos_synth():
     pw = 19
     iw = 12
@@ -119,6 +121,23 @@ def test_directed(tmpdir):
              ref=[ref_seq_sin, ref_seq_cos])
 
     sim(outdir='/tools/home/tmp/verilator')
+    # sim(tmpdir)
+
+
+def test_cordic_stage(tmpdir):
+
+    verif(drv(t=Tuple[Int[15], Int[15], Uint[19]],
+              seq=[(-4768, 1768, 0xbaba)]),
+          f=cordic_stage(i=1,
+                         ww=15,
+                         pw=20,
+                         cordic_angle=Uint[20](0xbaba),
+                         sim_cls=partial(SimVerilated,
+                                         language='v',
+                                         post_synth=True)),
+          ref=cordic_stage(i=1, ww=15, pw=20, cordic_angle=Uint[20](0xbaba)))
+
+    sim(tmpdir)
 
 
 # # pw = 19
