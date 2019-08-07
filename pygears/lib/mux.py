@@ -1,5 +1,6 @@
 from pygears import gear
 from pygears.typing import Queue, Union, typeof
+from pygears.util.utils import gather
 
 from .union import union_collapse
 
@@ -53,12 +54,14 @@ def mux_zip(ctrl,
 
 
 @gear
-def mux_valve(ctrl,
-              *din,
-              mapping=b'dflt_map(din)',
-              _full_mapping=b'full_mapping(din, mapping)'
-              ) -> b'mux_type(din, _full_mapping)':
-    pass
+async def mux_valve(ctrl,
+                    *din,
+                    mapping=b'dflt_map(din)',
+                    _full_mapping=b'full_mapping(din, mapping)'
+                    ) -> b'mux_type(din, _full_mapping)':
+    async with ctrl as c:
+        async with gather(*din) as data:
+            yield (data[c], c)
 
 
 @gear
