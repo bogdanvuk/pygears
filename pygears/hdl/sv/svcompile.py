@@ -49,9 +49,6 @@ class SVCompiler(InstanceVisitor):
         if isinstance(stmt.val, str) and stmt.val in self.condtitions:
             val = self.condtitions[stmt.val]
 
-        if stmt.dtype:
-            return f"{svexpr(stmt.target)} = {svexpr(val, stmt.dtype)}"
-
         return f"{svexpr(stmt.target)} = {svexpr(val)}"
 
     def visit_AssertValue(self, node):
@@ -80,6 +77,9 @@ class SVCompiler(InstanceVisitor):
         size = ''
         if len(node.ret_dtype) > 0:
             size = f'[{len(node.ret_dtype)-1}:0]'
+
+        if getattr(node.ret_dtype, 'signed', False):
+            size = f'signed {size}'
 
         self.writer.line(f'function {size} {node.name};')
 

@@ -30,8 +30,7 @@ class TypeDrvVisitor(TypingYieldVisitorBase):
                 if dtype.lvl == 1:
                     yield (ret, Uint[1](eot))
                 else:
-                    yield (ret[0], Uint[ret[1].width + 1](ret[1]) +
-                           (eot << ret[1].width))
+                    yield (ret[0], eot @ ret[1])
 
 
 def typeseq(t, v):

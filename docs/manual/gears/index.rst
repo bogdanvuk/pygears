@@ -6,7 +6,6 @@ Implemented in :py:mod:`pygears.lib`
 .. toctree::
    :maxdepth: 2
 
-   add
    cart
    ccat
    chop
@@ -19,6 +18,8 @@ Implemented in :py:mod:`pygears.lib`
    filt
    flatten
    fmap
+   funclut
+   operators
    reduce
    rng
    sieve

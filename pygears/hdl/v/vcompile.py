@@ -39,12 +39,11 @@ class VCompiler(InstanceVisitor):
             if target != self.visit_var:
                 return
 
-        # rhs = vexpr(node.val, self.extras)
         val = node.val
         if isinstance(val, str) and val in self.condtitions:
             val = self.condtitions[val]
 
-        rhs = vexpr(val, node.dtype, self.extras)
+        rhs = vexpr(val, extras=self.extras)
 
         var = None
         if target in self.hdl_locals:
@@ -77,9 +76,11 @@ class VCompiler(InstanceVisitor):
 
     def visit_AssertValue(self, node):
         if 'formal' in self.kwds and self.kwds['formal']:
-            self.writer.line(f'assume ({vexpr(node.val.test)});')
+            self.writer.line(
+                f'assume ({vexpr(node.val.test, extras=self.extras)});')
         else:
-            self.writer.line(f'if (!({vexpr(node.val.test)})) begin')
+            self.writer.line(
+                f'if (!({vexpr(node.val.test, extras=self.extras)})) begin')
             self.writer.indent += 4
             self.writer.line(f'$display("{node.val.msg}");')
             # self.writer.line(f'$finish;')
@@ -111,12 +112,18 @@ class VCompiler(InstanceVisitor):
         if len(node.ret_dtype) > 0:
             size = f'[{len(node.ret_dtype)-1}:0]'
 
+        if getattr(node.ret_dtype, 'signed', False):
+            size = f'signed {size}'
+
         self.writer.line(f'function {size} {node.name};')
 
         for name, arg in node.args.items():
             size = ''
             if len(arg.dtype) > 0:
                 size = f'[{len(arg.dtype)-1}:0]'
+
+                if getattr(arg.dtype, 'signed', False):
+                    size = f'signed {size}'
 
             self.writer.line(f'    input {size} {vexpr(arg)};')
 

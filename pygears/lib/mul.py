@@ -14,12 +14,6 @@ async def mul(din: Tuple[{
         yield data[0] * data[1]
 
 
-# @alternative(mul)
-# @gear
-# def mul2(a: Integer, b: Integer):
-#     return ccat(a, b) | mul
-
-
 @alternative(mul)
 @gear(enablement=b'len(din) > 2')
 def mul_vararg(*din: Integer):

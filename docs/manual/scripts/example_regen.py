@@ -9,7 +9,7 @@ examples_dir = '/tools/home/pygears/docs/manual/gears/examples'
 
 def get_example_gear(example):
     for c in find('/').child:
-        if not c.name.startswith(example.split('_')[0]):
+        if not c.basename.startswith(example.split('_')[0]):
             continue
 
         return c
@@ -68,6 +68,6 @@ def run_all():
         run_file(path)
 
 
-example = 'fmap_union'
+example = 'add'
 run_example(example)
 # run_all()

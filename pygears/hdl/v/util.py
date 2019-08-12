@@ -157,7 +157,8 @@ def vgen_reg(dtype, name, direction, hier=True):
         return f'reg [0:0] {name};'
 
     if not hier:
-        return f'reg [{int(dtype)-1}:0] {name}; // {dtype}'
+        sign = 'signed' if getattr(dtype, 'signed', False) else ''
+        return f'reg {sign} [{int(dtype)-1}:0] {name}; // {dtype}'
 
     vis = VGenTypeVisitor(name,
                           basic_type='reg',
@@ -175,7 +176,8 @@ def vgen_wire(dtype, name, direction, hier=True):
         return f'wire [0:0] {name};'
 
     if not hier:
-        return f'wire [{int(dtype)-1}:0] {name}; // {dtype}'
+        sign = 'signed' if getattr(dtype, 'signed', False) else ''
+        return f'wire {sign} [{int(dtype)-1}:0] {name}; // {dtype}'
 
     vis = VGenTypeVisitor(name,
                           basic_type='wire',

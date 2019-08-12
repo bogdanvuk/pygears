@@ -30,6 +30,12 @@ class VCDTypeVisitor(TypingVisitorBase):
     def visit_uint(self, type_, field):
         self.fields[field] = type_
 
+    def visit_fixp(self, type_, field):
+        self.fields[field] = type_
+
+    def visit_ufixp(self, type_, field):
+        self.fields[field] = type_
+
     def visit_unit(self, type_, field):
         self.fields[field] = type_
 
@@ -62,6 +68,12 @@ class VCDValVisitor(TypingVisitorBase):
     def change(self, dtype, field, val):
         self.writer.change(self.vcd_vars[field], self.timestep,
                            dtype(val).code())
+
+    def visit_fixp(self, type_, field, val=None):
+        self.change(type_, field, val)
+
+    def visit_ufixp(self, type_, field, val=None):
+        self.change(type_, field, val)
 
     def visit_int(self, type_, field, val=None):
         self.change(type_, field, val)

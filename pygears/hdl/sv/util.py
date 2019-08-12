@@ -46,7 +46,7 @@ class SVGenTypeVisitor(TypingVisitorBase):
         return f'{self.basic_type} [{int(type_)-1}:0]'
 
     visit_ufixp = visit_uint
-    visit_fixp = visit_uint
+    visit_fixp = visit_int
 
     def visit_unit(self, type_, field):
         return None

@@ -1,22 +1,27 @@
 from pygears.hls.hls_expressions import EXTENDABLE_OPERATORS, BinOpExpr
 from pygears.hdl.sv.sv_expression import SVExpressionVisitor
-from pygears.typing import Array, Int, Integer, Uint, typeof
+from pygears.typing import Array, Number, typeof
 
-TRUNC_FUNC_TEMPLATE = """
-function [{1}:0] {0};
-    input [{2}:0] tmp;
+RESIZE_FUNC_TEMPLATE = """
+function {signed} [{res_size}:0] {name};
+    input {signed} [{op_size}:0] tmp;
     begin
-        {0} = tmp[{1}:0];
+        {name} = tmp;
     end
 endfunction
 """
 
 
-def get_truncate_func(res_dtype, op_dtype):
-    name = f'trunc_{int(op_dtype)}_to_{int(res_dtype)}'
-    val = TRUNC_FUNC_TEMPLATE.format(name,
-                                     int(res_dtype) - 1,
-                                     int(op_dtype) - 1)
+def get_resize_func(res_dtype, op_dtype):
+    res_size = int(res_dtype)
+    op_size = int(op_dtype)
+    signed = 'signed' if getattr(op_dtype, 'signed', False) else ''
+
+    name = f'resize_{op_size}_to_{res_size}_{signed}'
+    val = RESIZE_FUNC_TEMPLATE.format(res_size=res_size-1,
+                                      op_size=op_size-1,
+                                      signed=signed,
+                                      name=name)
     return name, val
 
 
@@ -34,33 +39,18 @@ def cast(res_dtype, op_dtype, op_value):
     if isinstance(op_value, int):
         return str(op_value), {truncate_func: truncate_impl}
 
-    if (int(op_dtype) - int(res_dtype)) > 0:
-        truncate_func, truncate_impl = get_truncate_func(res_dtype, op_dtype)
+    res = op_value
 
-    extend = int(res_dtype) - int(op_dtype)
-    if extend < 0:
-        extend = 0
+    if int(op_dtype) != int(res_dtype):
+        truncate_func, truncate_impl = get_resize_func(res_dtype, op_dtype)
+        res = f'{truncate_func}({res})'
 
-    if typeof(res_dtype, Int):
-        sign = '$signed'
-    elif typeof(res_dtype, Uint):
-        sign = '$unsigned'
-    else:
-        sign = ''
+    res_signed = getattr(res_dtype, 'signed', False)
+    op_signed = getattr(op_dtype, 'signed', False)
 
-    if extend:
-        if typeof(res_dtype, Int) and typeof(op_dtype, Uint):
-            res = f"{sign}({{{extend}'b0, {op_value}}})"
-        elif typeof(res_dtype, Int):
-            sel = f'{op_value}[{int(op_dtype) - 1}]'
-            ex = f'{{{extend}{{{sel}}}}}'
-            res = f"{sign}({{{ex}, {op_value}}})"
-        else:
-            res = f"{sign}({{{extend}'b0, {op_value}}})"
-    elif truncate_func:
-        res = f"{sign}({truncate_func}({op_value}))"
-    else:
-        res = f"{sign}({op_value})"
+    if res_signed != op_signed:
+        sign = '$signed' if res_signed else '$unsigned'
+        res = f'{sign}({res})'
 
     return res, {truncate_func: truncate_impl}
 
@@ -72,20 +62,13 @@ class VExpressionVisitor(SVExpressionVisitor):
         self.expr = vexpr
         self.extras = {}
 
-    def _simple_cast(self, func, node, cast_to):
-        res = func(self, node, cast_to)
-        if cast_to:
-            res, extra_func = cast(cast_to, node.dtype, res)
-            update_extras(self.extras, extra_func)
-        return res
-
-    def visit_CastExpr(self, node, cast_to):
-        val, func = cast(node.dtype, node.operand.dtype,
-                         self.visit(node.operand, cast_to))
+    def visit_CastExpr(self, node):
+        op = self.visit(node.operand)
+        val, func = cast(node.cast_to, node.operand.dtype, op)
         update_extras(self.extras, func)
         return val
 
-    def visit_BinOpExpr(self, node, cast_to):
+    def visit_BinOpExpr(self, node):
         ops = [self.visit(op) for op in node.operands]
         for i, op in enumerate(node.operands):
             if isinstance(op, BinOpExpr):
@@ -107,7 +90,7 @@ class VExpressionVisitor(SVExpressionVisitor):
 
         return val0 + f" {node.operator} " + val1
 
-    def visit_SubscriptExpr(self, node, cast_to):
+    def visit_SubscriptExpr(self, node):
         val = self.visit(node.val)
 
         if isinstance(node.index, slice):
@@ -121,7 +104,7 @@ class VExpressionVisitor(SVExpressionVisitor):
             array_assignment = []
             # sub_indexes = [f'{val}_{i}' for i in range(len(dtype))]
             # vals = ', '.join(sub_indexes)
-            sign = 'signed' if typeof(dtype[0], Int) else ''
+            sign = 'signed' if getattr(dtype[0], 'signed', False) else ''
             array_assignment.append(
                 f'reg {sign} [{int(dtype[0])-1}:0] {sub_name};')
             # array_assignment.append(f'always @({idx}, {vals}) begin')
@@ -135,15 +118,15 @@ class VExpressionVisitor(SVExpressionVisitor):
             update_extras(self.extras, {sub_name: '\n'.join(array_assignment)})
             return f'{sub_name}'
 
-        if typeof(dtype, Integer):
+        if typeof(dtype, Number):
             return f'{val}[{self.visit(node.index)}]'
 
         return f'{val}_{dtype.fields[node.index]}'
 
 
-def vexpr(expr, cast_to=None, extras=None):
+def vexpr(expr, extras=None):
     v_visit = VExpressionVisitor()
-    res = v_visit.visit(expr, cast_to)
+    res = v_visit.visit(expr)
     if extras is not None:
         update_extras(extras, v_visit.extras)
     return res

@@ -304,6 +304,14 @@ class CastExpr(Expr):
     operand: OpType
     cast_to: PgType
 
+    def __post_init__(self):
+        if isinstance(self.operand, ConcatExpr):
+            cast_ops = [
+                CastExpr(op_t, cast_t) if op_t.dtype != cast_t else op_t
+                for op_t, cast_t in zip(self.operand.operands, self.cast_to)
+            ]
+            self.operand = ConcatExpr(cast_ops)
+
     @property
     def dtype(self):
         return self.cast_to

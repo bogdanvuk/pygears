@@ -255,10 +255,10 @@ class Integer(Number, metaclass=IntegerType):
         return self.width
 
     def __add__(self, other):
-        if isinstance(other, Integer):
-            return (type(self) + type(other))(int(self) + int(other))
-        else:
-            return type(self)(int(self) + other)
+        if not isinstance(other, Integer):
+            other = type(self).base(other)
+
+        return (type(self) + type(other))(int(self) + int(other))
 
     def __sub__(self, other):
         if isinstance(other, Integer):
@@ -470,7 +470,7 @@ class Uint(Integer, metaclass=UintType):
         if isinstance(other, Unit):
             return self
 
-        if not typeof(other, Uint):
+        if not isinstance(other, Uint):
             other = Uint(other)
 
         return Uint[self.width + other.width]((int(self) << other.width) +

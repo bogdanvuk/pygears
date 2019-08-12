@@ -1,10 +1,7 @@
-import pytest
 from pygears import Intf
-from pygears.lib import add
-from pygears.lib.verif import verif, directed
+from pygears.lib import add, directed, drv, verif
 from pygears.sim import sim
-from pygears.lib.verif import drv
-from pygears.typing import Int, Tuple, Uint, Ufixp
+from pygears.typing import Int, Tuple, Uint, Ufixp, Fixp
 from pygears.util.test_utils import synth_check
 
 
@@ -69,8 +66,16 @@ def test_signed_unsigned_synth_yosys():
 
 
 def test_ufixp(tmpdir, sim_cls):
-    directed(drv(t=Ufixp[2, 3], seq=[2.5]),
-             drv(t=Ufixp[3, 4], seq=[3.5]),
+    directed(drv(t=Ufixp[2, 3], seq=[2.5, 0]),
+             drv(t=Ufixp[3, 4], seq=[3.5, 0]),
              f=add(sim_cls=sim_cls),
-             ref=[6.0])
+             ref=[6.0, 0.0])
+    sim(outdir=tmpdir)
+
+
+def test_fixp(tmpdir, sim_cls):
+    directed(drv(t=Fixp[2, 4], seq=[1.75, 1.75, 0, -2.0, -2.0]),
+             drv(t=Fixp[3, 6], seq=[3.875, -4.0, 0, 3.875, -4.0]),
+             f=add(sim_cls=sim_cls),
+             ref=[5.625, -2.25, 0, 1.875, -6.0])
     sim(outdir=tmpdir)

@@ -7,8 +7,8 @@ from pygears.util.hof import oper_tree
 
 @gear(hdl={'compile': True})
 async def add(din: Tuple[{
-        'op1': Number,
-        'op2': Number
+        'a': Number,
+        'b': Number
 }]) -> b'din[0] + din[1]':
     async with din as data:
         yield data[0] + data[1]

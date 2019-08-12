@@ -44,10 +44,11 @@ class ModuleData:
     out_intfs: typing.Dict
     gear: typing.Any
     func: typing.Any
-    hdl_functions: typing.Dict
-    hdl_functions_impl: typing.Dict = field(default_factory=dict)
     context: typing.List = field(default_factory=list)
+    parent: typing.Any = None
     _local_namespace: typing.Dict = None
+    _hdl_functions_impl: typing.Dict = None
+    _hdl_functions: typing.Dict = None
 
     def get_container(self, name):
         for attr in ['regs', 'variables', 'in_intfs', 'out_intfs']:
@@ -67,6 +68,33 @@ class ModuleData:
 
     def add_variable(self, name, dtype):
         self.variables[name] = VariableDef(val=dtype, name=name)
+
+    @property
+    def hdl_functions(self):
+        if self.parent is not None:
+            return self.parent.hdl_functions
+
+        if self._hdl_functions is None:
+            self._hdl_functions = {}
+
+        return self._hdl_functions
+
+    @property
+    def hdl_functions_impl(self):
+        if self.parent is not None:
+            return self.parent.hdl_functions_impl
+
+        if self._hdl_functions_impl is None:
+            self._hdl_functions_impl = {}
+
+        return self._hdl_functions_impl
+
+    @property
+    def module(self):
+        if self.parent is not None:
+            return self.parent
+
+        return self
 
     @property
     def current_block(self):
@@ -149,9 +177,9 @@ def parse_func(node, module_data):
                                in_ports={},
                                out_ports={},
                                hdl_locals={},
-                               hdl_functions={},
                                regs={},
                                variables=None,
+                               parent=module_data.module,
                                in_intfs={},
                                out_intfs={})
 
@@ -246,7 +274,6 @@ def parse_gear_body(gear):
         out_ports={p.basename: IntfDef(p)
                    for p in gear.out_ports},
         hdl_locals={},
-        hdl_functions={},
         regs={},
         variables={},
         in_intfs={},

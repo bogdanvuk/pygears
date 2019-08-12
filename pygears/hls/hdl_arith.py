@@ -14,13 +14,14 @@ def fixp_add_resolver(opexp, module_data):
     t_op2 = opexp[1].dtype
 
     t_sum = t_op1 + t_op2
+    t_cast = t_sum.base[t_sum.integer - 1, t_sum.width - 1]
     sh1 = t_sum.fract - t_op1.fract
     sh2 = t_sum.fract - t_op2.fract
 
     if sh1 or sh2:
 
         def fixp__add__(op1: t_op1, op2: t_op2) -> t_sum:
-            return (Uint(op1) << sh1) + (Uint(op2) << sh2)
+            return t_cast(op1) + t_cast(op2)
 
         return fixp__add__
     else:
@@ -31,19 +32,23 @@ def fixp_cast_resolver(cast_to, opexp):
     val_fract = opexp.dtype.fract
     fract = cast_to.fract
 
-    def fixp_cast(val: opexp.dtype) -> cast_to:
-        if fract > val_fract:
-            return int(val) << (fract - val_fract)
-        else:
-            return int(val) >> (val_fract - fract)
+    if fract > val_fract:
+        shift = expr.BinOpExpr(
+            [opexp, expr.ResExpr(Uint(fract - val_fract))], '<<')
+    else:
+        shift = expr.BinOpExpr(
+            [opexp, expr.ResExpr(Uint(val_fract - fract))], '>>')
 
-    return fixp_cast
+    return expr.CastExpr(shift, cast_to)
 
 
 cast_resolvers = {Fixpnumber: fixp_cast_resolver}
 
 
 def resolve_cast_func(dtype, opexp):
+    if opexp.dtype == dtype:
+        return opexp
+
     for templ in cast_resolvers:
         try:
             type_match(dtype, templ)

@@ -5,16 +5,16 @@ from pygears.typing import Fixp, Fixpnumber, Ufixp, Uint, bitw
 
 
 @gear
-def funclut(din: Fixpnumber, *, f, precision=b'len(din)', dtype=None):
+def funclut(x: Fixpnumber, *, f, precision=b'len(x)', dtype=None):
     '''Implement arbitrary 1 input parameter function as Lookup-table for
     integers. f is arbitrary function e.g. math.sqrt, precision is a number of
     bits the function result will be represented with,
 
-    sqrt_lut: din | funclut(f=math.sqrt, precision=4)
+    sqrt_lut: x | funclut(f=math.sqrt, precision=4)
 
     '''
 
-    din_t = din.dtype
+    din_t = x.dtype
 
     step = 2**(-din_t.fract)
     w_din = len(din_t)
@@ -52,5 +52,5 @@ def funclut(din: Fixpnumber, *, f, precision=b'len(din)', dtype=None):
     else:
         lut_list = [dtype(v) for v in gen_vals()]
 
-    dout = din | Uint[w_din] | rom(data=lut_list, dtype=dtype)
+    dout = x | Uint[w_din] | rom(data=lut_list, dtype=dtype)
     return dout
