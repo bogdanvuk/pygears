@@ -65,9 +65,12 @@ def run_all():
         if (not os.path.isfile(path) or os.path.splitext(f)[-1] != '.py'):
             continue
 
+        if f.endswith('_cfg.py'):
+            continue
+
         run_file(path)
 
 
-example = 'add'
-run_example(example)
-# run_all()
+example = 'eq'
+# run_example(example)
+run_all()

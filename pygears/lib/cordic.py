@@ -169,8 +169,8 @@ def cordic_first_stage(i_xval, i_yval, i_phase, *, iw, ww, pw):
 
     e_xval = ccat(Uint[ww - iw - 1](0), i_xval, i_xval[-1]) | Int[ww]
     e_yval = ccat(Uint[ww - iw - 1](0), i_yval, i_yval[-1]) | Int[ww]
-    n_e_xval = -e_xval
-    n_e_yval = -e_yval
+    n_e_xval = -e_xval | Int[ww]
+    n_e_yval = -e_yval | Int[ww]
 
     phase_ctrl = ccat(i_phase[pw - 3], i_phase[pw - 2],
                       i_phase[pw - 1]) | Uint[3]

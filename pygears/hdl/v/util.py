@@ -149,38 +149,20 @@ def vgen_intf(dtype, name, direction, hier=True):
     return data + valid + ready
 
 
-def vgen_reg(dtype, name, direction, hier=True):
+def vgen_signal(dtype, vtype, name, direction, hier=True):
     if isinstance(dtype, str):
         return f'{dtype} {name};'
 
     if int(dtype) == 0:
-        return f'reg [0:0] {name};'
+        return f'{vtype} [0:0] {name};'
 
     if not hier:
         sign = 'signed' if getattr(dtype, 'signed', False) else ''
-        return f'reg {sign} [{int(dtype)-1}:0] {name}; // {dtype}'
+        return f'{vtype} {sign} [{int(dtype)-1}:0] {name}; // {dtype}'
 
     vis = VGenTypeVisitor(name,
-                          basic_type='reg',
+                          basic_type=vtype,
                           direction=direction,
                           hier=hier)
 
-    return '\n'.join(vis.visit(type_=dtype, field=name))
-
-
-def vgen_wire(dtype, name, direction, hier=True):
-    if isinstance(dtype, str):
-        return f'{dtype} {name};'
-
-    if int(dtype) == 0:
-        return f'wire [0:0] {name};'
-
-    if not hier:
-        sign = 'signed' if getattr(dtype, 'signed', False) else ''
-        return f'wire {sign} [{int(dtype)-1}:0] {name}; // {dtype}'
-
-    vis = VGenTypeVisitor(name,
-                          basic_type='wire',
-                          direction=direction,
-                          hier=hier)
     return '\n'.join(vis.visit(type_=dtype, field=name))

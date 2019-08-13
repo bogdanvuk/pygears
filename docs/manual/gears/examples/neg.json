@@ -1,0 +1,1 @@
+{"signal": [{"name": "clk", "wave": "p..."}, ["neg.a", {"name": "", "wave": "555z", "data": ["0", "7", "15"]}], ["neg.dout", {"name": "", "wave": "555z", "data": ["0", "-7", "-15"]}]], "head": {"tock": 0}}

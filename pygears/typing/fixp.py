@@ -29,6 +29,9 @@ class FixpnumberType(NumberType):
     def __int__(self):
         return self.width
 
+    def __neg__(self, others):
+        return Fixp[self.integer + 1, self.width + 1]
+
     def __lshift__(self, others):
         shamt = int(others)
         return self.base[self.integer + shamt, self.width + shamt]
@@ -52,6 +55,44 @@ class FixpnumberType(NumberType):
         """
         return list(range(self.width))
 
+    def __mul__(self, other):
+        ops = [self, other]
+
+        signed = any(op.signed for op in ops)
+
+        try:
+            integer_part = self.integer + other.integer
+            fract_part = self.fract + other.fract
+        except AttributeError:
+            integer_part = self.integer + int(other)
+            fract_part = self.fract
+
+        width = integer_part + fract_part
+
+        if signed:
+            return Fixp[integer_part, width]
+        else:
+            return Ufixp[integer_part, width]
+
+    def __floordiv__(self, other):
+        ops = [self, other]
+
+        signed = any(op.signed for op in ops)
+
+        try:
+            integer_part = self.integer + other.integer
+            fract_part = self.fract + other.fract
+        except AttributeError:
+            integer_part = self.integer + int(other)
+            fract_part = self.fract
+
+        width = integer_part + fract_part
+
+        if signed:
+            return Fixp[integer_part, width]
+        else:
+            return Ufixp[integer_part, width]
+
     def __add__(self, other):
         """Returns the same type, but one bit wider to accomodate potential overflow.
 
@@ -74,10 +115,6 @@ class FixpnumberType(NumberType):
         width = integer_part + fract_part
 
         if signed:
-            # if not self.signed:
-            #     integer_part += 1
-            #     width += 1
-
             return Fixp[integer_part, width]
         else:
             return Ufixp[integer_part, width]
@@ -135,6 +172,19 @@ class Fixpnumber(Number, metaclass=FixpnumberType):
 
         return res
 
+    def __neg__(self):
+        return (-type(self))(-int(self))
+
+    def __mul__(self, other):
+        mul_cls = type(self) * type(other)
+        return mul_cls.decode(int(self) * int(other))
+
+    def __floordiv__(self, other):
+        sum_cls = type(self) // type(other)
+        shift = sum_cls.fract - type(self).fract + type(other).fract
+
+        return sum_cls.decode((int(self) << shift) // int(other))
+
     def __add__(self, other):
         sum_cls = type(self) + type(other)
         return sum_cls.decode(
@@ -167,11 +217,11 @@ class FixpType(FixpnumberType):
 
     @property
     def max(self):
-        return self(2**(self.width - 1) - 1)
+        return self.decode(2**(self.width - 1) - 1)
 
     @property
     def min(self):
-        return self(-2**(self.width - 1))
+        return self.decode(-2**(self.width - 1))
 
     @property
     def fmax(self):
@@ -210,11 +260,11 @@ class UfixpType(FixpnumberType):
 
     @property
     def max(self):
-        return self(2**self.width - 1)
+        return self.decode(2**self.width - 1)
 
     @property
     def min(self):
-        return self(0)
+        return self.decode(0)
 
     @property
     def fmax(self):

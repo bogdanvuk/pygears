@@ -27,6 +27,9 @@ class VCDTypeVisitor(TypingVisitorBase):
     def visit_int(self, type_, field):
         self.fields[field] = type_
 
+    def visit_bool(self, type_, field):
+        self.fields[field] = type_
+
     def visit_uint(self, type_, field):
         self.fields[field] = type_
 
@@ -76,6 +79,9 @@ class VCDValVisitor(TypingVisitorBase):
         self.change(type_, field, val)
 
     def visit_int(self, type_, field, val=None):
+        self.change(type_, field, val)
+
+    def visit_bool(self, type_, field, val=None):
         self.change(type_, field, val)
 
     def visit_union(self, type_, field, val=None):

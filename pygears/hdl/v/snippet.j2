@@ -162,9 +162,9 @@ endmodule
 {% call gear_module(module_name, intfs, comment, outtype=outtype) %}
   {% for i in struct_intfs %}
     {% if i['modport'] == 'consumer' %}
-    {{ vgen_wire(i['local_type'], i['name'] + '_s', 'input')|indent(4, False) }}
+    {{ vgen_signal(i['local_type'], "wire", i['name'] + '_s', 'input')|indent(4, False) }}
     {% else %}
-    {{ vgen_reg(i['local_type'], i['name'] + '_s', 'output')|indent(4, False) }}
+    {{ vgen_signal(i['local_type'], "reg", i['name'] + '_s', 'output')|indent(4, False) }}
     {% endif %}
 
   {% endfor %}

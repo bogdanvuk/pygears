@@ -75,8 +75,8 @@ class SVCompiler(InstanceVisitor):
 
     def visit_FuncBlock(self, node):
         size = ''
-        if len(node.ret_dtype) > 0:
-            size = f'[{len(node.ret_dtype)-1}:0]'
+        if int(node.ret_dtype) > 0:
+            size = f'[{int(node.ret_dtype)-1}:0]'
 
         if getattr(node.ret_dtype, 'signed', False):
             size = f'signed {size}'

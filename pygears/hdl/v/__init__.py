@@ -11,6 +11,7 @@ class VGenPlugin(PluginBase):
     @classmethod
     def bind(cls):
         safe_bind('vgen/flow', [vgen_inst, vgen_generate])
+        # safe_bind('vgen/flow', [vgen_inst])
         safe_bind('vgen/module_namespace', {})
         safe_bind('vgen/module_namespace/Gear', VModuleInst)
         safe_bind('vgen/module_namespace/GearHierRoot', VModuleInst)

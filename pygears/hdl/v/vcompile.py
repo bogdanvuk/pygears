@@ -7,7 +7,7 @@ from pygears.hls import HDLWriter, InstanceVisitor, parse_gear_body
 from pygears.typing import Queue, typeof
 
 from ..util import separate_conditions
-from .util import vgen_intf, vgen_reg, vgen_wire
+from .util import vgen_intf, vgen_signal
 from .v_expression import cast, vexpr
 
 REG_TEMPLATE = """
@@ -109,28 +109,52 @@ class VCompiler(InstanceVisitor):
 
     def visit_FuncBlock(self, node):
         size = ''
-        if len(node.ret_dtype) > 0:
-            size = f'[{len(node.ret_dtype)-1}:0]'
+        if int(node.ret_dtype) > 0:
+            size = f'[{int(node.ret_dtype)-1}:0]'
 
         if getattr(node.ret_dtype, 'signed', False):
             size = f'signed {size}'
 
         self.writer.line(f'function {size} {node.name};')
 
+        sigdef = {}
+
+        self.writer.indent += 4
+
         for name, arg in node.args.items():
-            size = ''
-            if len(arg.dtype) > 0:
-                size = f'[{len(arg.dtype)-1}:0]'
+            # size = ''
+            # if len(arg.dtype) > 0:
+            #     size = f'[{len(arg.dtype)-1}:0]'
 
-                if getattr(arg.dtype, 'signed', False):
-                    size = f'signed {size}'
+            #     if getattr(arg.dtype, 'signed', False):
+            #         size = f'signed {size}'
 
-            self.writer.line(f'    input {size} {vexpr(arg)};')
+            arg_name = vexpr(arg)
+
+            self.writer.line(
+                vgen_signal(arg.dtype, 'input', arg_name, 'input', False))
+
+            sigdef[arg_name] = vgen_signal(arg.dtype, 'reg', arg_name,
+                                           'input', True).split('\n')[1:]
+
+            for l in sigdef[arg_name]:
+                if l.startswith('reg'):
+                    self.writer.line(l)
+
+        self.writer.indent -= 4
 
         if not node.stmts and not node.dflts:
             return
 
         self.writer.line(f'begin')
+
+        self.writer.indent += 4
+        for name, sdef in sigdef.items():
+            for l in sdef:
+                if l.startswith('assign'):
+                    self.writer.line(l[6:])
+
+        self.writer.indent -= 4
 
         self.visit_HDLBlock(node)
 
@@ -185,21 +209,24 @@ def write_module(hdl_data, v_stmts, writer, **kwds):
         extras.update(compiler.extras)
 
     for name, expr in hdl_data.regs.items():
-        writer.line(vgen_reg(expr.dtype, f'{name}_reg', 'input', False))
-        writer.line(vgen_reg(expr.dtype, f'{name}_next', 'input', False))
+        writer.line(
+            vgen_signal(expr.dtype, 'reg', f'{name}_reg', 'input', False))
+        writer.line(
+            vgen_signal(expr.dtype, 'reg', f'{name}_next', 'input', False))
         writer.line(f'reg {name}_en;')
         writer.line()
 
     for name, val in hdl_data.in_intfs.items():
         writer.line(vgen_intf(val.dtype, name, 'input', False))
-        writer.line(vgen_reg(val.dtype, f'{name}_s', 'input', False))
-        tmp = vgen_wire(val.dtype, f'{name}_s', 'input')
+        writer.line(vgen_signal(val.dtype, 'reg', f'{name}_s', 'input', False))
+        tmp = vgen_signal(val.dtype, 'wire', f'{name}_s', 'input')
         writer.line(tmp.split(';', 1)[1])
         writer.line(f"assign {name} = {name}_s;")
     writer.line()
 
     for name, expr in hdl_data.variables.items():
-        writer.block(vgen_reg(expr.dtype, f'{name}_v', 'input', False))
+        writer.block(
+            vgen_signal(expr.dtype, 'reg', f'{name}_v', 'input', False))
         writer.line()
 
     if 'conditions' in v_stmts:

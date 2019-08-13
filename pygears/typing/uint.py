@@ -43,6 +43,12 @@ class IntegerType(NumberType):
     def __ge__(self, others):
         return int(self) >= int(others)
 
+    def __invert__(self):
+        return self
+
+    def __neg__(self):
+        return Int[int(self) + 1]
+
     def __or__(self, others):
         # return int(self) | int(others)
         return self.base[max(int(op) for op in (self, others))]
@@ -253,6 +259,12 @@ class Integer(Number, metaclass=IntegerType):
         8
         """
         return self.width
+
+    def __invert__(self):
+        return type(self)(~int(self) & type(self).mask)
+
+    def __neg__(self):
+        return (-type(self))(-int(self))
 
     def __add__(self, other):
         if not isinstance(other, Integer):

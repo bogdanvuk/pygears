@@ -31,6 +31,42 @@ def test_signed_add():
     assert a + b == Fixp[4, 5](-7.0)
 
 
+def test_unsigned_div():
+    t_a = Ufixp[4, 6]
+    t_b = Ufixp[1, 7]
+
+    assert (t_a // t_b == Ufixp[5, 13])
+
+    assert t_a(15.75) // t_b(1.9375) == Ufixp[5, 13](15.75 / 1.9375)
+
+
+def test_signed_div():
+    t_a = Fixp[4, 6]
+    t_b = Fixp[1, 7]
+
+    assert (t_a // t_b == Fixp[5, 13])
+
+    assert t_a(-8.0) // t_b(0.9375) == Fixp[5, 13]((-8.0) / 0.9375)
+
+
+def test_unsigned_mul():
+    t_a = Ufixp[4, 6]
+    t_b = Ufixp[1, 5]
+
+    assert (t_a * t_b == Ufixp[5, 11])
+
+    assert t_a(15.75) * t_b(1.9375) == Ufixp[5, 11](15.75 * 1.9375)
+
+
+def test_signed_mul():
+    t_a = Fixp[4, 6]
+    t_b = Fixp[1, 5]
+
+    assert (t_a * t_b == Fixp[5, 11])
+
+    assert t_a(-8.0) * t_b(0.9375) == Fixp[5, 11]((-8.0) * 0.9375)
+
+
 def test_signed_unsinged_mix():
     t_a = Ufixp[2, 3]
     t_b = Fixp[3, 4]

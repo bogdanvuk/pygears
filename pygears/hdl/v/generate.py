@@ -5,7 +5,7 @@ from pygears.core.hier_node import HierYielderBase
 from pygears.conf import registry
 from pygears.util.fileio import save_file
 
-from .util import vgen_intf, vgen_reg, vgen_wire
+from .util import vgen_intf, vgen_signal
 
 
 class VTemplateEnv(TemplateEnv):
@@ -13,8 +13,7 @@ class VTemplateEnv(TemplateEnv):
         super().__init__(basedir=os.path.dirname(__file__))
 
         self.jenv.globals.update(vgen_intf=vgen_intf,
-                                 vgen_wire=vgen_wire,
-                                 vgen_reg=vgen_reg)
+                                 vgen_signal=vgen_signal)
 
         self.snippets = self.load(self.basedir, 'snippet.j2').module
 

@@ -5,7 +5,7 @@ operators
 
 Adds two or more :class:`~.Number` -s. The :func:`~.add` gear is automatically instantiated when a "+" operator is used on two interfaces.
 
-.. py:function:: add(op1: Number, op2: Number)
+.. py:function:: add(a: Number, b: Number)
 
 .. py:function:: add(din: Tuple[Number, Number])
 
@@ -18,47 +18,59 @@ Adds two or more :class:`~.Number` -s. The :func:`~.add` gear is automatically i
 
 Divide :class:`~.Number` -s . The :func:`~.div` gear is automatically instantiated when a "//" operator is used on two interfaces.
 
-.. py:function:: div(op1: Number, op2: Number)
+.. py:function:: div(a: Number, b: Number)
 
 .. py:function:: div(din: Tuple[Number, Number])
 
    Divide a :class:`~.Number` by a constant:
 
    .. pg-example:: examples/div
-      :lines: 4-5
+      :lines: 4-6
 
 .. module:: eq
 
-Adds two or more :class:`~.Number` data received from the input interfaces and outputs the result. The :func:`~.add` gear is automatically instantiated when a "+" operator is used on two interfaces.
+Test whether the data from two interfaces is equal. The :func:`~.eq` gear is automatically instantiated when a "==" operator is used on two interfaces.
 
-.. py:function:: add(op1: Number, op2: Number)
+.. py:function:: eq(a, b) -> Bool
 
-.. py:function:: add(din: Tuple[Number, Number])
+.. py:function:: eq(din: Tuple[Any, Any]) -> Bool
 
-   Adds two numbers together:
+   Compare if two values are equal:
 
-   .. pg-example:: examples/add
+   .. pg-example:: examples/eq
       :lines: 4-7
 
 .. module:: gt
 
-Adds two or more :class:`~.Number` data received from the input interfaces and outputs the result. The :func:`~.add` gear is automatically instantiated when a "+" operator is used on two interfaces.
+Test whether a :class:`~.Number` from one interface is greater then a :class:`~.Number` from the other. The :func:`~.gt` gear is automatically instantiated when a ">" operator is used on two interfaces.
 
-.. py:function:: add(op1: Number, op2: Number)
+.. py:function:: gt(a: Number, b: Number)
 
-.. py:function:: add(din: Tuple[Number, Number])
+.. py:function:: gt(din: Tuple[Number, Number])
 
-   Adds two numbers together:
+   Compare if one value is greater than the other:
 
-   .. pg-example:: examples/add
+   .. pg-example:: examples/gt
       :lines: 4-7
 
+.. module:: ge
+
+Test whether a :class:`~.Number` from one interface is greater or equal to the :class:`~.Number` from the other. The :func:`~.ge` gear is automatically instantiated when a ">=" operator is used on two interfaces.
+
+.. py:function:: ge(a: Number, b: Number)
+
+.. py:function:: ge(din: Tuple[Number, Number])
+
+   Compare if one value is greater or equal to the other:
+
+   .. pg-example:: examples/ge
+      :lines: 4-7
 
 .. module:: iceil
 
 Adds two or more :class:`~.Number` data received from the input interfaces and outputs the result. The :func:`~.add` gear is automatically instantiated when a "+" operator is used on two interfaces.
 
-.. py:function:: add(op1: Number, op2: Number)
+.. py:function:: add(a: Number, b: Number)
 
 .. py:function:: add(din: Tuple[Number, Number])
 
@@ -69,80 +81,89 @@ Adds two or more :class:`~.Number` data received from the input interfaces and o
 
 .. module:: invert
 
-Adds two or more :class:`~.Number` data received from the input interfaces and outputs the result. The :func:`~.add` gear is automatically instantiated when a "+" operator is used on two interfaces.
+Bitwise inverts data. The :func:`~.invert` gear is automatically instantiated when a "~" operator is used on an interface.
 
-.. py:function:: add(op1: Number, op2: Number)
+.. py:function:: invert(a)
 
-.. py:function:: add(din: Tuple[Number, Number])
+   Bitwise inverts a number:
 
-   Adds two numbers together:
-
-   .. pg-example:: examples/add
-      :lines: 4-7
+   .. pg-example:: examples/invert
+      :lines: 4-6
 
 .. module:: lt
 
-Adds two or more :class:`~.Number` data received from the input interfaces and outputs the result. The :func:`~.add` gear is automatically instantiated when a "+" operator is used on two interfaces.
+Test whether a :class:`~.Number` from one interface is less then a :class:`~.Number` from the other. The :func:`~.lt` gear is automatically instantiated when a "<" operator is used on two interfaces.
 
-.. py:function:: add(op1: Number, op2: Number)
+.. py:function:: lt(a: Number, b: Number)
 
-.. py:function:: add(din: Tuple[Number, Number])
+.. py:function:: lt(din: Tuple[Number, Number])
 
-   Adds two numbers together:
+   Compare if one value is greater than the other:
 
-   .. pg-example:: examples/add
+   .. pg-example:: examples/lt
+      :lines: 4-7
+
+.. module:: le
+
+Test whether a :class:`~.Number` from one interface is less than or equal to a :class:`~.Number` from the other. The :func:`~.le` lear is automatically instantiated when a "<=" operator is used on two interfaces.
+
+.. py:function:: le(a: Number, b: Number)
+
+.. py:function:: le(din: Tuple[Number, Number])
+
+   Compare if one value is less than or equal to the other:
+
+   .. pg-example:: examples/le
       :lines: 4-7
 
 
 .. module:: mod
 
-Adds two or more :class:`~.Number` data received from the input interfaces and outputs the result. The :func:`~.add` gear is automatically instantiated when a "+" operator is used on two interfaces.
+Performs integer modulo operation. The :func:`~.mod` gear is automatically instantiated when a "%" operator is used on two interfaces.
 
-.. py:function:: add(op1: Number, op2: Number)
+.. py:function:: mod(a: Integer, b: Integer)
 
-.. py:function:: add(din: Tuple[Number, Number])
+.. py:function:: mod(din: Tuple[Integer, Integer])
 
-   Adds two numbers together:
+   Performs integer modulo operation:
 
-   .. pg-example:: examples/add
-      :lines: 4-7
+   .. pg-example:: examples/mod
+      :lines: 4-6
 
 .. module:: mul
 
-Adds two or more :class:`~.Number` data received from the input interfaces and outputs the result. The :func:`~.add` gear is automatically instantiated when a "+" operator is used on two interfaces.
+Multiplies two :class:`~.Number` data received from the input interfaces and outputs the result. The :func:`~.mul` gear is automatically instantiated when a "*" operator is used on two interfaces.
 
-.. py:function:: add(op1: Number, op2: Number)
+.. py:function:: mul(a: Number, b: Number)
 
-.. py:function:: add(din: Tuple[Number, Number])
+.. py:function:: mul(din: Tuple[Number, Number])
 
    Adds two numbers together:
 
-   .. pg-example:: examples/add
+   .. pg-example:: examples/mul
       :lines: 4-7
+
+.. module:: ne
+
+Test whether the data from two interfaces is not equal. The :func:`~.ne` gear is automatically instantiated when a "!=" operator is used on two interfaces.
+
+.. py:function:: ne(a, b) -> Bool
+
+.. py:function:: ne(din: Tuple[Any, Any]) -> Bool
+
+   Compare if two values are not equal:
+
+   .. pg-example:: examples/ne
+      :lines: 4-7
+
 
 .. module:: neg
 
-Adds two or more :class:`~.Number` data received from the input interfaces and outputs the result. The :func:`~.add` gear is automatically instantiated when a "+" operator is used on two interfaces.
+Negates data. The :func:`~.neg` gear is automatically instantiated when unary "-" operator is used on an interface.
 
-.. py:function:: add(op1: Number, op2: Number)
+.. py:function:: neg(a: Number)
 
-.. py:function:: add(din: Tuple[Number, Number])
+   Negates a number:
 
-   Adds two numbers together:
-
-   .. pg-example:: examples/add
-      :lines: 4-7
-
-
-.. module:: neq
-
-Adds two or more :class:`~.Number` data received from the input interfaces and outputs the result. The :func:`~.add` gear is automatically instantiated when a "+" operator is used on two interfaces.
-
-.. py:function:: add(op1: Number, op2: Number)
-
-.. py:function:: add(din: Tuple[Number, Number])
-
-   Adds two numbers together:
-
-   .. pg-example:: examples/add
-      :lines: 4-7
+   .. pg-example:: examples/neg
+      :lines: 4-6
