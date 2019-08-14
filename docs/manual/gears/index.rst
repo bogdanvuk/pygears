@@ -24,5 +24,7 @@ Implemented in :py:mod:`pygears.lib`
    qcnt
    reduce
    replicate
+   rom
    rng
    sieve
+   sdp
