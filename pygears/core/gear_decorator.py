@@ -14,6 +14,10 @@ def add_alternative(base, alter):
     alternatives = getattr(base, 'alternatives', [])
     alternatives.append(alter)
     gear_func = getattr(alter, '__wrapped__', alter)
+
+    if hasattr(gear_func,  'alternatives'):
+        alternatives.extend(gear_func.alternatives)
+
     gear_func_to = getattr(base, '__wrapped__', base)
 
     gear_func.alternative_to = gear_func_to
@@ -79,14 +83,17 @@ def create_unpacked_tuple_alternative(g):
 
     f = FunctionMaker(name=f'{g.func.__name__}_unpack', signature=signature)
 
-    base_func = getattr(g.func, 'alternative_to', g.func)
+    base_func = g.func
+
+    while(hasattr(base_func, 'alternative_to')):
+        base_func = base_func.alternative_to
 
     body = f'''def %(name)s%(signature)s:
     {arg} = ccat({",".join(din_type.fields)})
     return {base_func.__name__}({find_invocation(base_func)})'''
 
-    from ..lib import ccat
-    closure = {'ccat': ccat}
+    from ..lib.ccat import ccat
+    closure = {'ccat': ccat, base_func.__name__: g}
     closure.update(get_function_context_dict(g.func))
 
     unpack_func = f.make(body,
