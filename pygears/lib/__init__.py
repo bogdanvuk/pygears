@@ -17,7 +17,7 @@ from .const import const, const_ping
 from .rom import rom
 from .operators import (add, div, eq, ge, gt, invert, le, lt, mod, mul, ne,
                         neg, sub, shl, shr, xor)
-from .mux import mux, mux_zip, mux_valve, mux_by
+from .mux import mux, mux_zip, mux_by
 from .demux import demux, demux_zip, demux_by, demux_ctrl
 from .shred import shred
 from .decouple import decouple, buff
@@ -67,7 +67,7 @@ __all__ = [
     'expand', 'czip', 'ccat', 'cart', 'cast', 'quenvelope', 'zip_sync',
     'sieve', 'flatten', 'fmap', 'permuted_apply', 'const', 'mux', 'demux',
     'shred', 'cart_sync', 'decouple', 'dreg', 'unzip', 'serialize', 'project',
-    'fifo', 'factor', 'fill', 'mux_zip', 'mux_valve', 'demux_zip',
+    'fifo', 'factor', 'fill', 'mux_zip', 'demux_zip',
     'demux_ctrl', 'data_dly', 'union_sync', 'union_collapse', 'filt', 'buff',
     'local_rst', 'queue_wrap_from', 'demux_by', 'mux_by', 'align',
     'cart_sync_with', 'when', 'union_sync_with', 'case', 'const_ping', 'xor',

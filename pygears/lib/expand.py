@@ -4,7 +4,7 @@ from .flatten import flatten
 from .filt import filt
 from .fill import fill
 from .fifo import fifo
-from .mux import mux_zip, mux_valve
+from .mux import mux_zip, mux
 from .ccat import ccat
 from .demux import demux_zip
 from pygears.typing import Tuple, Union, Uint, typeof
@@ -63,7 +63,7 @@ def expand_tuple(din) -> b'expand(din)':
                 data.append(din[j])
         mux_din.append(ccat(*data))
 
-    return (ctrl, *mux_din) | mux_valve | expand_type(din.dtype)
+    return (ctrl, ccat(*mux_din)) | mux | expand_type(din.dtype)
 
 
 @alternative(expand)

@@ -5,7 +5,7 @@ from pygears.lib import ccat, when
 from pygears.lib import dreg
 from pygears.lib import union_collapse
 from pygears.lib import round_to_even
-from pygears.lib.mux import mux_valve
+from pygears.lib.mux import mux
 import math
 
 
@@ -175,14 +175,19 @@ def cordic_first_stage(i_xval, i_yval, i_phase, *, iw, ww, pw):
     phase_ctrl = ccat(i_phase[pw - 3], i_phase[pw - 2],
                       i_phase[pw - 1]) | Uint[3]
 
-    xv_0 = mux_valve(phase_ctrl, e_xval, n_e_yval, n_e_yval, n_e_xval,
-                     n_e_xval, e_yval, e_yval, e_xval) | union_collapse | dreg
+    xv_0 = mux(
+        phase_ctrl,
+        ccat(e_xval, n_e_yval, n_e_yval, n_e_xval, n_e_xval, e_yval, e_yval,
+             e_xval)) | union_collapse | dreg
 
-    yv_0 = mux_valve(phase_ctrl, e_yval, e_xval, e_xval, n_e_yval, n_e_yval,
-                     n_e_xval, n_e_xval, e_yval) | union_collapse | dreg
-    ph_0 = mux_valve(phase_ctrl, i_phase, pv_0_mux_1, pv_0_mux_1, pv_0_mux_2,
-                     pv_0_mux_2, pv_0_mux_3, pv_0_mux_3,
-                     i_phase) | union_collapse | dreg
+    yv_0 = mux(
+        phase_ctrl,
+        ccat(e_yval, e_xval, e_xval, n_e_yval, n_e_yval, n_e_xval, n_e_xval,
+             e_yval)) | union_collapse | dreg
+    ph_0 = mux(
+        phase_ctrl,
+        ccat(i_phase, pv_0_mux_1, pv_0_mux_1, pv_0_mux_2, pv_0_mux_2,
+             pv_0_mux_3, pv_0_mux_3, i_phase)) | union_collapse | dreg
 
     return ccat(xv_0, yv_0, ph_0)
 
