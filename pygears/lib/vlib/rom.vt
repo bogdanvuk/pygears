@@ -21,7 +21,15 @@
         end
      end
 
-   reg [{{int(_dout_t)-1}}:0] memory [0:{{len(params['data'])-1}}];
+{% if params['dflt'] is none -%}
+  {% if py.isinstance(params['data'], py.dict) %}
+   logic [{{int(_dout_t)-1}}:0] memory [0:{{py.max(params['data'].keys())}}];
+  {% else %}
+   logic [{{int(_dout_t)-1}}:0] memory [0:{{len(params['data'])-1}}];
+  {% endif -%}
+{% else -%}
+   logic [{{int(_dout_t)-1}}:0] memory [0:{{2**int(_addr_t) - 1}}];
+{% endif %}
 
    always @(posedge clk)
      begin
@@ -31,15 +39,40 @@
      end
 
    initial begin
-{% if py.isinstance(params['data'], py.dict) -%}
-  {% for key, val in params['data'].items() %}
+{% if params['dflt'] is none -%}
+
+  {% if py.isinstance(params['data'], py.dict) -%}
+    {% for key, val in params['data'].items() %}
       memory[{{key}}] = {{int(val)}};
-  {% endfor %}
+    {% endfor %}
+  {% else -%}
+    {% for val in params['data'] %}
+      memory[{{loop.index-1}}] = {{int(val)}};
+    {% endfor %}
+  {% endif -%}
+
 {% else -%}
-  {% for val in params['data'] %}
-       memory[{{loop.index-1}}] = {{int(val)}};
-  {% endfor %}
+
+  {% if py.isinstance(params['data'], py.dict) -%}
+    {% for i in range(2**int(_addr_t)) %}
+      {% if i in params['data'] %}
+      memory[{{i}}] = {{int(params['data'][i])}};
+      {% else -%}
+      memory[{{i}}] = {{int(params['dflt'])}};
+      {% endif -%}
+    {% endfor %}
+  {% else -%}
+    {% for i in range(2**int(_addr_t)) %}
+      {% if i < len(params['data']) %}
+      memory[{{i}}] = {{int(params['data'][i])}};
+      {% else -%}
+      memory[{{i}}] = {{int(params['dflt'])}};
+      {% endif -%}
+    {% endfor %}
+  {% endif -%}
+
 {% endif -%}
+
    end
 
    assign addr_ready = reg_ready;

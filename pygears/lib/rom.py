@@ -3,6 +3,14 @@ from pygears.typing import Uint
 
 
 @gear
-async def rom(addr: Uint, *, data, dtype, dflt=0) -> b'dtype':
+async def rom(addr: Uint, *, data, dtype, dflt=None) -> b'dtype':
     async with addr as a:
-        yield data[a]
+        if dflt is None:
+            d = data[a]
+        else:
+            try:
+                d = data[a]
+            except (IndexError, KeyError):
+                d = dflt
+
+        yield d
