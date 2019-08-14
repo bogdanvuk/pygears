@@ -36,7 +36,6 @@ from .form_sub_cfg import form_sub_cfg
 from .iceil import iceil
 from .priority_mux import priority_mux
 from .qcnt import qcnt
-from .qlen_cnt import qlen_cnt
 from .release_after_eot import release_after_eot
 from .reverse import reverse
 from .rng import rng

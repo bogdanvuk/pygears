@@ -19,7 +19,10 @@ Implemented in :py:mod:`pygears.lib`
    flatten
    fmap
    funclut
+   mux
    operators
+   qcnt
    reduce
+   replicate
    rng
    sieve
