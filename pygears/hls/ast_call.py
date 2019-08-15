@@ -17,10 +17,9 @@ from .utils import (VisitError, add_to_list, eval_expression,
                     hls_debug_header)
 
 
-@parse_ast.register(ast.Call)
-def parse_call(node, module_data):
+def parse_func_args(args, module_data):
     arg_unpacked = []
-    for arg in node.args:
+    for arg in args:
         if isinstance(arg, ast.Starred):
             var = get_context_var(arg.value.id, module_data)
 
@@ -36,25 +35,36 @@ def parse_call(node, module_data):
         else:
             arg_unpacked.append(arg)
 
-    arg_nodes = [
+    func_args = [
         find_data_expression(arg, module_data) for arg in arg_unpacked
     ]
 
-    func_args = arg_nodes
-    if all(isinstance(node, ResExpr) for node in arg_nodes):
-        func_args = []
-        for arg in arg_nodes:
-            if is_type(type(arg.val)) and not typeof(type(arg.val), Unit):
-                func_args.append(str(int(arg.val)))
-            else:
-                func_args.append(str(arg.val))
+    return func_args
 
-    try:
-        ret = eval(f'{node.func.id}({", ".join(func_args)})',
-                   module_data.local_namespace)
-        return ResExpr(ret)
-    except:
-        return parse_func_call(node, func_args, module_data)
+
+@parse_ast.register(ast.Call)
+def parse_call(node, module_data):
+
+    func_args = parse_func_args(node.args, module_data)
+
+    # If all arguments are resolved expressions, maybe we can evaluate the
+    # function at compile time
+    if all(isinstance(node, ResExpr) for node in func_args):
+        literal_args = []
+        for arg in func_args:
+            if is_type(type(arg.val)) and not typeof(type(arg.val), Unit):
+                literal_args.append(str(int(arg.val)))
+            else:
+                literal_args.append(str(arg.val))
+
+        try:
+            ret = eval(f'{node.func.id}({", ".join(literal_args)})',
+                       module_data.local_namespace)
+            return ResExpr(ret)
+        except:
+            pass
+
+    return parse_func_call(node, func_args, module_data)
 
 
 def parse_function(func, module_data):

@@ -52,11 +52,10 @@ def get_ref(seq):
 def test_directed_golden(tmpdir, sim_cls, din_delay, dout_delay):
     seq = DIR_SEQ
     dut = get_dut(dout_delay)
-    directed(
-        drv(t=T_DIN, seq=seq) | delay_rng(din_delay, din_delay),
-        f=dut(sim_cls=sim_cls),
-        ref=get_ref(seq),
-        delays=[delay_rng(dout_delay, dout_delay)])
+    directed(drv(t=T_DIN, seq=seq) | delay_rng(din_delay, din_delay),
+             f=dut(sim_cls=sim_cls),
+             ref=get_ref(seq),
+             delays=[delay_rng(dout_delay, dout_delay)])
     sim(outdir=tmpdir)
 
 
@@ -66,11 +65,10 @@ def test_random_golden(tmpdir, sim_cls, din_delay, dout_delay):
     skip_ifndef('RANDOM_TEST')
     seq = RANDOM_SEQ
     dut = get_dut(dout_delay)
-    directed(
-        drv(t=T_DIN, seq=seq) | delay_rng(din_delay, din_delay),
-        f=dut(sim_cls=sim_cls),
-        ref=get_ref(seq),
-        delays=[delay_rng(dout_delay, dout_delay)])
+    directed(drv(t=T_DIN, seq=seq) | delay_rng(din_delay, din_delay),
+             f=dut(sim_cls=sim_cls),
+             ref=get_ref(seq),
+             delays=[delay_rng(dout_delay, dout_delay)])
     sim(outdir=tmpdir)
 
 
@@ -80,11 +78,10 @@ def test_random_golden(tmpdir, sim_cls, din_delay, dout_delay):
 def test_directed_cosim(tmpdir, cosim_cls, lvl, din_delay, dout_delay):
     seq = DIR_SEQ
     dut = get_dut(dout_delay)
-    verif(
-        drv(t=T_DIN, seq=seq) | delay_rng(din_delay, din_delay),
-        f=dut(sim_cls=cosim_cls, lvl=lvl),
-        ref=qcnt(name='ref_model', lvl=lvl),
-        delays=[delay_rng(dout_delay, dout_delay)])
+    verif(drv(t=T_DIN, seq=seq) | delay_rng(din_delay, din_delay),
+          f=dut(sim_cls=cosim_cls, lvl=lvl),
+          ref=qcnt(name='ref_model', lvl=lvl),
+          delays=[delay_rng(dout_delay, dout_delay)])
     sim(outdir=tmpdir)
 
 
@@ -94,11 +91,10 @@ def test_random_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
     skip_ifndef('RANDOM_TEST')
     seq = RANDOM_SEQ
     dut = get_dut(dout_delay)
-    verif(
-        drv(t=T_DIN, seq=seq) | delay_rng(din_delay, din_delay),
-        f=dut(sim_cls=cosim_cls),
-        ref=qcnt(name='ref_model'),
-        delays=[delay_rng(dout_delay, dout_delay)])
+    verif(drv(t=T_DIN, seq=seq) | delay_rng(din_delay, din_delay),
+          f=dut(sim_cls=cosim_cls),
+          ref=qcnt(name='ref_model'),
+          delays=[delay_rng(dout_delay, dout_delay)])
     sim(outdir=tmpdir)
 
 

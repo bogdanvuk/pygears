@@ -47,23 +47,6 @@ def call_int(arg, **kwds):
         return CastExpr(arg, cast_to=Uint[len(arg.dtype)])
 
 
-def call_range(*arg, **kwds):
-    if len(arg) == 1:
-        start = ResExpr(arg[0].dtype(0))
-        stop = arg[0]
-        step = ast.Num(1)
-    else:
-        start = arg[0]
-        stop = arg[1]
-        step = ast.Num(1) if len(arg) == 2 else arg[2]
-
-    return TupleExpr((start, stop, step))
-
-
-def call_qrange(*arg, **kwds):
-    return call_range(*arg)
-
-
 def call_all(arg, **kwds):
     return ArrayOpExpr(arg, '&')
 
@@ -82,10 +65,6 @@ def call_max(*arg, **kwds):
         op.append(AttrExpr(arg.op, [field]))
 
     return reduce(max_expr, op)
-
-
-def call_enumerate(arg, **kwds):
-    return TupleExpr((ResExpr(len(arg)), arg))
 
 
 def call_sub(obj, arg):
@@ -123,15 +102,12 @@ builtins = {
     all: call_all,
     max: call_max,
     clk: call_clk,
-    enumerate: call_enumerate,
     int: call_int,
-    range: call_range,
     len: call_len,
     print: call_print,
     Intf.empty: call_empty,
     Intf.get: call_get,
     Intf.get_nb: call_get_nb,
-    qrange: call_qrange,
     cast: call_cast,
     QueueMeta.sub: call_sub
 }
