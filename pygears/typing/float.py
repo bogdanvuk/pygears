@@ -1,7 +1,7 @@
-from pygears.typing.number import NumberType
+from pygears.typing.base import GenericMeta
 
 
-class FloatType(NumberType):
+class FloatType(GenericMeta):
     @property
     def specified(self):
         return True

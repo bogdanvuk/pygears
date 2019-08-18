@@ -225,14 +225,16 @@ class Tuple(tuple, metaclass=TupleType):
 
     """
 
-    def __new__(cls, val):
+    def __new__(cls, val=None):
         if isinstance(val, cls):
             return val
 
         if not cls.specified:
             raise TemplatedTypeUnspecified
 
-        if isinstance(val, dict):
+        if val is None:
+            tpl_val = tuple(t() for t in cls)
+        elif isinstance(val, dict):
             tpl_val = tuple(t(val[f]) for t, f in zip(cls, cls.fields))
         else:
             tpl_val = tuple(t(v) for t, v in zip(cls, val))

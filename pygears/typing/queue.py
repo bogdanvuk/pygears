@@ -86,12 +86,15 @@ class Queue(tuple, metaclass=QueueMeta):
     __default__ = [1]
     __parameters__ = ['data', 'eot']
 
-    def __new__(cls, val, eot=None):
+    def __new__(cls, val=None, eot=None):
         if type(val) == cls:
             return val
 
         if not cls.specified:
             raise TemplatedTypeUnspecified
+
+        if val is None and eot is None:
+            return super(Queue, cls).__new__(cls, (cls[0](), cls[1]()))
 
         if eot is None:
             val, eot = val
