@@ -297,15 +297,18 @@ def parse_subscript(node, module_data):
                 return eval_local_expression(_slice.value,
                                              module_data.local_namespace)
         else:
-            slice_args = [
-                eval_local_expression(getattr(_slice, field),
-                                      module_data.local_namespace)
-                for field in ['lower', 'upper'] if getattr(_slice, field)
-            ]
+            def slice_eval():
+                for field in ['lower', 'upper', 'step']:
+                    if not getattr(_slice, field):
+                        yield None
+                    else:
+                        yield eval_local_expression(
+                            getattr(_slice, field),
+                            module_data.local_namespace)
 
-            index = slice(*tuple(arg for arg in slice_args))
-            if index.start is None:
-                index = slice(0, index.stop, index.step)
+            slice_args = list(slice_eval())
+
+            index = slice(*slice_args)
 
             return index
 

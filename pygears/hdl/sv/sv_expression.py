@@ -83,9 +83,10 @@ class SVExpressionVisitor:
         return res
 
     def visit_ConcatExpr(self, node):
-        return ('{' +
-                ', '.join(self.visit(op)
-                          for op in reversed(node.operands)) + '}')
+        return (
+            '{' +
+            ', '.join(str(self.visit(op))
+                      for op in reversed(node.operands)) + '}')
 
     def visit_ArrayOpExpr(self, node):
         val = self.visit(node.array)

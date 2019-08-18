@@ -1,12 +1,19 @@
 import ast
-from pygears.typing import Any, Fixpnumber, Uint
+from pygears.typing import Any, Fixpnumber, Uint, Unit
 from pygears import cast
 from . import hls_expressions as expr
 from pygears.core.type_match import type_match, TypeMatchError
 
 
 def concat_resolver(opexp, module_data):
-    return expr.ConcatExpr(tuple(reversed(opexp)))
+    ops = tuple(op for op in reversed(opexp) if int(op.dtype))
+
+    if len(ops) == 0:
+        return expr.ResExpr(Unit())
+    elif len(ops) == 1:
+        return ops[0]
+    else:
+        return expr.ConcatExpr(ops)
 
 
 def fixp_add_resolver(opexp, module_data):

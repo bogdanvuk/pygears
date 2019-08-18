@@ -33,18 +33,18 @@ def combine_arg_kwds(args, kwds, func):
     if varargs:
         return args
 
-    args = list(args)
+    args_unmatched = list(args)
     args_comb = []
     for a in arg_names:
         if a in kwds:
             args_comb.append(kwds[a])
-        elif args:
-            args_comb.append(args.pop(0))
+        elif args_unmatched:
+            args_comb.append(args_unmatched.pop(0))
         else:
             break
 
     # If some args could not be matched to argument names, raise an Exception
-    if args:
+    if args_unmatched:
         raise TypeError(f"Too many positional arguments for {func.__name__}()")
 
     return args_comb
