@@ -77,6 +77,21 @@ def sub(din: Tuple[{'a': Number, 'b': Number}]) -> b'din[0] - din[1]':
     return din[0] - din[1]
 
 
+from pygears.typing import Float
+
+
+@alternative(sub)
+@datagear
+def sub_float(din: Tuple[{'a': Float, 'b': Float}]) -> Float:
+    return din[0] - din[1]
+
+
+@alternative(add)
+@datagear
+def add_float(din: Tuple[{'a': Float, 'b': Float}]) -> Float:
+    return din[0] + din[1]
+
+
 @datagear
 def shl(din: Number, *, shamt) -> b'din << shamt':
     return module().tout(din << shamt)
