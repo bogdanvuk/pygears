@@ -1,11 +1,7 @@
 from pygears.rtl.node import RTLNode
-from pygears.rtl.intf import RTLIntf
 from pygears.core.port import InPort
-from pygears.core.hier_node import HierNode
-from pygears import registry, PluginBase, safe_bind
 from pygears.conf import inject, Inject
 from pygears.core.hier_node import HierVisitorBase
-import inspect
 
 
 class RTLGear(RTLNode):

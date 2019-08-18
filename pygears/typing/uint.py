@@ -31,6 +31,10 @@ class IntegerType(NumberType):
     def mask(self):
         return (1 << len(self)) - 1
 
+    @property
+    def width(self):
+        return int(self)
+
     def __int__(self):
         if not self.__args__:
             raise TypeError
@@ -160,26 +164,6 @@ class IntegerType(NumberType):
     def specified(self):
         return False
 
-    def index_norm(self, index):
-        index = super().index_norm(index)
-
-        if not any(i.stop < i.start if isinstance(i, slice) else False
-                   for i in index):
-            return index
-
-        reindex = []
-        for i in index:
-            if isinstance(i, slice):
-                if i.stop < i.start:
-                    i = slice(i.stop, i.start + 1)
-
-                if i.start > len(self) or i.stop > len(self):
-                    raise IndexError
-
-            reindex.append(i)
-
-        return tuple(reindex)
-
     def __getitem__(self, index):
         if not self.specified:
             return super().__getitem__(index)
@@ -189,13 +173,11 @@ class IntegerType(NumberType):
         width = 0
         for i in index:
             if isinstance(i, slice):
-                if i.stop < i.start:
-                    i = slice(i.stop, i.start + 1)
-
-                if i.stop == 0:
+                if i.stop == 0 or i.start >= len(self):
                     return Unit
-                elif i.start > len(self) or i.stop > len(self):
-                    raise IndexError
+                elif i.stop > len(self):
+                    i.stop = len(self)
+
                 width += i.stop - i.start
             else:
                 if i >= len(self):
@@ -238,6 +220,7 @@ class Integer(Number, metaclass=IntegerType):
         check_width(val, res.width)
         return res
 
+    @class_and_instance_method
     @property
     def width(self):
         """Returns the number of bits used for the representation
@@ -308,20 +291,31 @@ class Integer(Number, metaclass=IntegerType):
         >>> Integer[8](0b10101010)[1::2]
         Uint[4](15)
         """
-        if isinstance(index, slice):
-            bits = tuple(
-                Bool(bool(int(self) & (1 << i)))
-                for i in range(*index.indices(self.width)))
 
-            if bits:
-                return Uint[len(bits)](Tuple[(Bool, ) * len(bits)](bits))
+        index = type(self).index_norm(index)
+
+        base = None
+        for i in index:
+            if isinstance(i, slice):
+                start, stop, _ = i.indices(self.width)
+
+                if stop <= start:
+                    part = Unit()
+                else:
+                    part = Uint[stop - start]((int(self)
+                                               & ((1 << stop) - 1)) >> start)
+
+            elif i < self.width:
+                part = Bool(int(self) & (1 << i))
             else:
-                return Unit()
+                raise IndexError
 
-        elif index < self.width:
-            return Bool(int(self) & (1 << index))
-        else:
-            raise IndexError
+            if base is None:
+                base = part
+            else:
+                base = part @ base
+
+        return base
 
     def code(self):
         return int(self) & self.mask
@@ -345,6 +339,14 @@ class IntType(IntegerType):
                 return f'i({self.args[0]})'
         else:
             return super().__str__()
+
+    @property
+    def max(self):
+        return self.decode(2**(self.width - 1) - 1)
+
+    @property
+    def min(self):
+        return self.decode(-2**(self.width - 1))
 
     @property
     def specified(self):
@@ -439,6 +441,14 @@ class UintType(IntegerType):
             return Tuple[Uint[max(int(self), int(other))], Bool]
         else:
             return super().__sub__(other)
+
+    @property
+    def max(self):
+        return self.decode(2**self.width - 1)
+
+    @property
+    def min(self):
+        return self.decode(0)
 
     def __str__(self):
         if not self.args:

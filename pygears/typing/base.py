@@ -6,24 +6,34 @@ import functools
 @functools.lru_cache(maxsize=None)
 def index_norm_hashable_single(i, size):
     if isinstance(i, tuple):
-        start, stop, incr = i
+        start, stop, step = i
+
+        if step == -1:
+            start, stop = stop, start
+            if stop is not None:
+                if stop == -1:
+                    stop = None
+                else:
+                    stop += 1
+
+            step = 1
 
         if start is None:
             start = 0
         elif start < 0:
-            start = size + start
+            start += size
 
         if stop is None:
             stop = size
         elif stop < 0:
             stop += size
         elif stop > size:
-            raise IndexError
+            stop = size
 
         # if start == stop:
         #     raise IndexError
 
-        return slice(start, stop, incr)
+        return slice(start, stop, step)
 
     else:
         if i < 0:

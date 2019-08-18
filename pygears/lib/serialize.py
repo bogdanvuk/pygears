@@ -6,7 +6,7 @@ from pygears.util.utils import qrange
 @gear(hdl={'compile': True})
 async def serialize(din: Tuple[{
         'data': Any,
-        'active': Uint['w_active']
+        'active': Uint
 }]) -> Queue['din["data"][0]']:
     i = Uint[din.dtype['active']](0)
 
