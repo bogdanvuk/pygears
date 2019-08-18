@@ -6,7 +6,7 @@ import pytest
 from pygears import Intf, gear
 from pygears.lib import decouple
 from pygears.lib.delay import delay_rng
-from pygears.lib.trr import trr
+from pygears.lib.interlace import qinterlace
 from pygears.lib.verif import directed, drv, verif
 from pygears.sim import sim
 from pygears.sim.extens.randomization import create_constraint, rand_seq
@@ -21,11 +21,11 @@ T_DIN = Queue[Uint[16]]
 def get_dut(dout_delay):
     @gear
     def decoupled(*din):
-        return din | trr | decouple
+        return din | qinterlace | decouple
 
     if dout_delay == 0:
         return decoupled
-    return trr
+    return qinterlace
 
 
 @pytest.mark.parametrize('din_delay', [0, 1])
@@ -61,7 +61,7 @@ def test_random(tmpdir, sim_cls):
                     list(range(random.randint(1, 10)))
                 ]))
 
-    verif(*stim, f=trr(sim_cls=sim_cls), ref=trr(name='ref_model'))
+    verif(*stim, f=qinterlace(sim_cls=sim_cls), ref=qinterlace(name='ref_model'))
 
     sim(outdir=tmpdir)
 
@@ -82,22 +82,22 @@ def test_socket_cosim_rand(tmpdir):
 
     verif(
         *stim,
-        f=trr(sim_cls=partial(SimSocket, run=True)),
-        ref=trr(name='ref_model'))
+        f=qinterlace(sim_cls=partial(SimSocket, run=True)),
+        ref=qinterlace(name='ref_model'))
 
     sim(outdir=tmpdir, extens=[partial(SVRandSocket, cons=cons)])
 
 
 @formal_check()
 def test_formal():
-    trr(Intf(T_DIN), Intf(T_DIN), Intf(T_DIN))
+    qinterlace(Intf(T_DIN), Intf(T_DIN), Intf(T_DIN))
 
 
 @synth_check({'logic luts': 24, 'ffs': 2}, tool='vivado')
 def test_trr_vivado():
-    trr(Intf(T_DIN), Intf(T_DIN), Intf(T_DIN))
+    qinterlace(Intf(T_DIN), Intf(T_DIN), Intf(T_DIN))
 
 
 @synth_check({'logic luts': 25, 'ffs': 2}, tool='yosys')
 def test_trr_yosys():
-    trr(Intf(T_DIN), Intf(T_DIN), Intf(T_DIN))
+    qinterlace(Intf(T_DIN), Intf(T_DIN), Intf(T_DIN))

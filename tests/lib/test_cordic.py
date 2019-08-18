@@ -6,8 +6,6 @@ from pygears.lib import drv, directed, verif
 from pygears.util.test_utils import synth_check
 from pygears import Intf
 
-from pygears.lib import when
-from pygears import gear
 
 # @synth_check({
 #     'logic luts': 0,

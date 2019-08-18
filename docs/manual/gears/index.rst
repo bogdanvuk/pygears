@@ -12,6 +12,7 @@ Implemented in :py:mod:`pygears.lib`
    clip
    const
    czip
+   deal
    decouple
    demux
    dreg
@@ -19,6 +20,8 @@ Implemented in :py:mod:`pygears.lib`
    flatten
    fmap
    funclut
+   group
+   interlace
    mux
    operators
    qcnt
@@ -26,5 +29,8 @@ Implemented in :py:mod:`pygears.lib`
    replicate
    rom
    rng
-   sieve
    sdp
+   serialize
+   shred
+   sieve
+   take
