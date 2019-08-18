@@ -37,12 +37,16 @@ def typeseq(t, v):
     if type(v) == t:
         yield v
     else:
-        for d in TypeDrvVisitor().visit(v, t):
-            try:
-                yield t(d)
-            except TypeError:
-                sim_log().error(
-                    f'Cannot convert value "{d}" to type "{repr(t)}"')
+        try:
+            for d in TypeDrvVisitor().visit(v, t):
+                try:
+                    yield t(d)
+                except TypeError:
+                    sim_log().error(
+                        f'Cannot convert value "{d}" to type "{repr(t)}"')
+        except TypeError:
+            sim_log().error(
+                f'Cannot convert sequence "{v}" to the "{repr(t)}"')
 
 
 @gear

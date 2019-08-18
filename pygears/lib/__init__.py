@@ -41,9 +41,9 @@ from .reverse import reverse
 from .rng import rng
 from .sdp import sdp
 from .take import take
-from .tr_cnt import tr_cnt
-from .trr import trr
-from .trr_dist import trr_dist
+from .group import group
+from .interlace import qinterlace
+from .deal import qdeal
 from .valve import valve
 from .repack import repack
 from .priority_mux_valve import priority_mux_valve
@@ -70,10 +70,10 @@ __all__ = [
     'demux_ctrl', 'data_dly', 'union_sync', 'union_collapse', 'filt', 'buff',
     'local_rst', 'queue_wrap_from', 'demux_by', 'mux_by', 'align',
     'cart_sync_with', 'when', 'union_sync_with', 'case', 'const_ping', 'xor',
-    'rng', 'priority_mux', 'qcnt', 'sdp', 'chop', 'trr', 'replicate',
-    'trr_dist', 'clip', 'din_cat', 'take', 'release_after_eot', 'reverse',
-    'valve', 'form_sub_cfg', 'reduce2', 'tr_cnt', 'repack',
-    'priority_mux_valve', 'max2', 'qlen_cnt', 'unary', 'alternate_queues',
+    'rng', 'priority_mux', 'qcnt', 'sdp', 'chop', 'qinterlace', 'replicate',
+    'qdeal', 'clip', 'din_cat', 'take', 'release_after_eot', 'reverse',
+    'valve', 'form_sub_cfg', 'reduce2', 'group', 'repack',
+    'priority_mux_valve', 'max2', 'unary', 'alternate_queues',
     'delay', 'delay_rng', 'directed', 'verif', 'rom', 'drv', 'check', 'mon',
     'reduce', 'accum', 'funclut', 'pulse', 'truncate', 'round_half_up',
     'round_to_zero', 'round_to_even', 'cordic', 'cordic_sin_cos', 'add', 'div',
