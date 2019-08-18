@@ -5,7 +5,7 @@ from pygears.sim import clk
 
 @gear
 async def dreg(din) -> b'din':
-    data = din.dtype.decode(0)
+    data = din.dtype()
     valid = Bool(False)
 
     while True:
