@@ -1,6 +1,7 @@
 import copy
 import functools
 import inspect
+import pygears
 
 from pygears.conf import Inject, inject, registry, PluginBase, safe_bind
 from pygears.typing import Tuple, typeof
@@ -15,7 +16,7 @@ def add_alternative(base, alter):
     alternatives.append(alter)
     gear_func = getattr(alter, '__wrapped__', alter)
 
-    if hasattr(gear_func,  'alternatives'):
+    if hasattr(gear_func, 'alternatives'):
         alternatives.extend(gear_func.alternatives)
 
     gear_func_to = getattr(base, '__wrapped__', base)
@@ -79,26 +80,42 @@ def create_unpacked_tuple_alternative(g):
     if not din_type.fields:
         return
 
-    signature = inspect.formatargspec(din_type.fields, *paramspec, annotations={})
+    unpack_annot = {
+        name: dtype
+        for name, dtype in zip(din_type.fields, din_type.args)
+    }
+
+    signature = inspect.formatargspec(din_type.fields,
+                                      *paramspec,
+                                      annotations=unpack_annot)
 
     f = FunctionMaker(name=f'{g.func.__name__}_unpack', signature=signature)
 
     base_func = g.func
 
-    while(hasattr(base_func, 'alternative_to')):
+    while (hasattr(base_func, 'alternative_to')):
         base_func = base_func.alternative_to
 
     body = f'''def %(name)s%(signature)s:
     {arg} = ccat({",".join(din_type.fields)})
-    return {base_func.__name__}({find_invocation(base_func)})'''
+    try:
+        return {base_func.__name__}({find_invocation(base_func)})
+    except Exception as e:
+        gear_inst = module().child[-1]
+        gear_inst.parent.child.remove(gear_inst)
+        for port in gear_inst.in_ports:
+            if port.basename not in gear_inst.const_args:
+                port.producer.consumers.remove(port)
+            else:
+                gear_inst.parent.child.remove(port.producer.producer.gear)
+        raise e
+    '''
 
     from ..lib.ccat import ccat
-    closure = {'ccat': ccat, base_func.__name__: g}
+    closure = {'ccat': ccat, base_func.__name__: g, 'pygears': pygears}
     closure.update(get_function_context_dict(g.func))
 
-    unpack_func = f.make(body,
-                         evaldict=closure,
-                         addsource=True)
+    unpack_func = f.make(body, evaldict=closure, addsource=True)
 
     unpack_func.__kwdefaults__ = paramspec[-1]
 
