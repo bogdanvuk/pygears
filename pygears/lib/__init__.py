@@ -44,14 +44,13 @@ from .take import take
 from .group import group
 from .interlace import qinterlace
 from .deal import qdeal
-from .valve import valve
 from .repack import repack
 from .priority_mux_valve import priority_mux_valve
 from .max_gears import max2
 from .unary import unary
 from .alternate_queues import alternate_queues
 from .delay import delay, delay_rng
-from .verif import directed, verif, drv, check, mon
+from .verif import directed, verif, drv, check, mon, scoreboard
 from .reduce2 import reduce2
 from .reduce import reduce, accum
 from .funclut import funclut
@@ -72,11 +71,11 @@ __all__ = [
     'cart_sync_with', 'when', 'union_sync_with', 'case', 'const_ping', 'xor',
     'rng', 'priority_mux', 'qcnt', 'sdp', 'chop', 'qinterlace', 'replicate',
     'qdeal', 'clip', 'din_cat', 'take', 'release_after_eot', 'reverse',
-    'valve', 'form_sub_cfg', 'reduce2', 'group', 'repack',
+    'form_sub_cfg', 'reduce2', 'group', 'repack',
     'priority_mux_valve', 'max2', 'unary', 'alternate_queues',
     'delay', 'delay_rng', 'directed', 'verif', 'rom', 'drv', 'check', 'mon',
     'reduce', 'accum', 'funclut', 'pulse', 'truncate', 'round_half_up',
     'round_to_zero', 'round_to_even', 'cordic', 'cordic_sin_cos', 'add', 'div',
     'eq', 'ge', 'gt', 'invert', 'iceil', 'le', 'lt', 'mod', 'mul', 'ne', 'neg',
-    'sub', 'shl', 'shr', 'xor'
+    'sub', 'shl', 'shr', 'xor', 'scoreboard'
 ]
