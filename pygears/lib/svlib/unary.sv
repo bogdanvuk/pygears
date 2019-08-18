@@ -10,19 +10,19 @@ module unary
     dti.producer dout
     );
 
-   assign dout.data  = vu(din.data);
+   assign dout.data  = unary(din.data);
    assign dout.valid = din.valid;
    assign din.ready  = dout.ready;
 
-   function bit[(2**W_DATA)-1 : 0] vu (bit[W_DATA-1 : 0] din_bla);
-      logic [(2**W_DATA)-1 : 0] vu_data;
+   function bit[(2**(W_DATA-1))-1 : 0] unary (bit[W_DATA-1 : 0] binary);
+      logic [(2**W_DATA)-1 : 0] unary_data;
 
-      vu_data = 0;
-      for (int i = 0; i < din_bla; i++) begin
-         vu_data[i] = 1;
+      unary_data = 0;
+      for (int i = 0; i < binary; i++) begin
+         unary_data[i] = 1;
       end
 
-      return vu_data;
+      return unary_data;
    endfunction
 
 endmodule

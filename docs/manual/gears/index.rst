@@ -34,3 +34,4 @@ Implemented in :py:mod:`pygears.lib`
    shred
    sieve
    take
+   unary
