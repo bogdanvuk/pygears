@@ -131,7 +131,7 @@ class RTLNode(NamedHierNode):
 
         for p in self.in_ports():
             if p['intf'].parent != self.parent and (
-                    not self.parent.is_descendent(p['intf'].parent)):
+                    not self.parent.has_descendent(p['intf'].parent)):
                 self.parent.in_port_make(p, self)
 
         for p in self.out_ports():

@@ -33,7 +33,7 @@ class RTLOutChannelVisitor(HierVisitorBase):
             consumers_at_same_level_or_sublevel = [
                 # cons_p in node.parent.out_ports or is_in_subbranch(cons_intf.parent, cons_p.node.parent)
                 cons_p in node.parent.out_ports
-                or cons_intf.parent.is_descendent(cons_p.node)
+                or cons_intf.parent.has_descendent(cons_p.node)
                 for cons_p in cons_intf.consumers
             ]
 
@@ -127,7 +127,7 @@ class RTLChannelVisitor(HierVisitorBase):
             parent = node.parent
             while parent is not None:
                 if (prod_intf is not None and prod_intf.parent != parent
-                        and (not parent.is_descendent(prod_intf.parent))):
+                        and (not parent.has_descendent(prod_intf.parent))):
 
                     parent.add_in_port(p.basename,
                                        producer=prod_intf,
@@ -136,7 +136,7 @@ class RTLChannelVisitor(HierVisitorBase):
 
                     local_cons = [
                         port for port in prod_intf.consumers
-                        if parent.is_descendent(port.node)
+                        if parent.has_descendent(port.node)
                     ]
 
                     local_intf = RTLIntf(parent,

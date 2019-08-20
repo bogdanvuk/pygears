@@ -138,7 +138,7 @@ class NamedHierNode(HierNode):
         else:
             return self.basename
 
-    def is_descendent(self, node):
+    def has_descendent(self, node):
         if not self.name or node.name == self.name:
             return True
 

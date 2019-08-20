@@ -191,7 +191,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
         gear_multi_order = cosim_modules.copy()
         for g in gear_order:
-            if (all(not m.is_descendent(g) for m in cosim_modules)
+            if (all(not m.has_descendent(g) for m in cosim_modules)
                     or isinstance(g, (InPort, OutPort))):
                 gear_multi_order.append(g)
 
