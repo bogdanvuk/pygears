@@ -15,7 +15,7 @@ def uint_type_cast_resolver(dtype, cast_type):
 
 def float_type_cast_resolver(dtype, cast_type):
     if typeof(dtype, Number):
-        return Float
+        return cast_type
 
     raise TypeMatchError
 

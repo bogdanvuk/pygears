@@ -5,7 +5,7 @@ from .queue import Queue
 from .array import Array
 from .base import TemplateArgumentsError, typeof, Any, is_type
 from .tuple import Tuple
-from .uint import Int, Uint, Integer, Bool
+from .uint import Int, Uint, Integer, Bool, Integral
 from .unit import Unit
 from .union import Union
 from .bitw import bitw, ceil_pow2
@@ -21,7 +21,7 @@ __all__ = [
     'Bool', 'Queue', 'TemplateArgumentsError', 'Tuple', 'Int', 'Uint', 'Unit',
     'Union', 'Array', 'Float', 'bitw', 'typeof', 'Any', 'TLM', 'ceil_pow2',
     'is_type', 'flatten', 'expand', 'factor', 'Ufixp', 'Fixp', 'Number',
-    'Fixpnumber'
+    'Fixpnumber', 'Integral'
 ]
 
 
@@ -40,6 +40,7 @@ class CoreTypesPlugin(TypingNamespacePlugin):
         safe_bind('gear/type_arith/Float', Float)
         safe_bind('gear/type_arith/Int', Int)
         safe_bind('gear/type_arith/Integer', Integer)
+        safe_bind('gear/type_arith/Integral', Integral)
         safe_bind('gear/type_arith/Unit', Unit)
         safe_bind('gear/type_arith/Fixp', Fixp)
         safe_bind('gear/type_arith/Ufixp', Ufixp)

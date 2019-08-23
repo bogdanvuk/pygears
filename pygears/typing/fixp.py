@@ -1,10 +1,10 @@
 from .base import class_and_instance_method
 from .unit import Unit
-from .number import NumberType, Number
+from .uint import IntegralType, Integral
 from .bitw import bitw
 
 
-class FixpnumberType(NumberType):
+class FixpnumberType(IntegralType):
     """Defines lib methods for all Integer based classes.
     """
 
@@ -147,7 +147,7 @@ class FixpnumberType(NumberType):
         return self.base[width]
 
 
-class Fixpnumber(Number, metaclass=FixpnumberType):
+class Fixpnumber(Integral, metaclass=FixpnumberType):
     def __new__(cls, val=0):
         if type(val) == cls:
             return val
@@ -213,7 +213,7 @@ class FixpType(FixpnumberType):
 
     @property
     def specified(self):
-        return NumberType.specified.fget(self)
+        return IntegralType.specified.fget(self)
 
     @property
     def max(self):
@@ -256,7 +256,7 @@ class UfixpType(FixpnumberType):
 
     @property
     def specified(self):
-        return NumberType.specified.fget(self)
+        return IntegralType.specified.fget(self)
 
     @property
     def max(self):

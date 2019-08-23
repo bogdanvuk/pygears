@@ -1,5 +1,5 @@
 from pygears.conf import registry
-from pygears.typing.base import Any, GenericMeta, type_repr
+from pygears.typing.base import Any, GenericMeta, type_repr, typeof
 
 
 class TypeMatchError(Exception):
@@ -40,8 +40,8 @@ def _type_match_rec(t, pat, matches):
 
         return t
 
-    if isinstance(t, GenericMeta) and isinstance(
-            pat, GenericMeta) and (issubclass(t.base, pat.base)):
+    if (isinstance(t, GenericMeta) and isinstance(pat, GenericMeta)
+            and (typeof(t.base, pat.base))):
 
         if pat.args:
             args = []
@@ -58,8 +58,16 @@ def _type_match_rec(t, pat, matches):
         else:
             args = t.args
 
-        return t.__class__(
-            t.__name__, t.__bases__, dict(t.__dict__), args=args)
+        # TODO: Revisit this Don't create a new type class when class has no
+        # specified templates, so that we don't end up with multiple different
+        # base class objects, that cannot be correctly tested with "issubclass"
+        if not args and not t.args:
+            return t
+        else:
+            return t.__class__(t.__name__,
+                               t.__bases__,
+                               dict(t.__dict__),
+                               args=args)
 
     raise TypeMatchError("{} cannot be matched to {}".format(
         type_repr(t), type_repr(pat)))

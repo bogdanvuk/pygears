@@ -1,4 +1,9 @@
-from pygears.typing import Fixp, Ufixp
+from pygears.typing import Fixp, Ufixp, typeof, Number
+from pygears.core.type_match import type_match
+
+
+def test_fixp_is_number():
+    type_match(Fixp[1, 2], Number)
 
 
 def test_float():

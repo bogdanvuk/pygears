@@ -7,14 +7,61 @@ arithmetic capabilities.
 """
 
 from .base import class_and_instance_method
-from .base import typeof
+from .base import typeof, EnumerableGenericMeta
 from .number import NumberType, Number
 from .tuple import Tuple
 from .bitw import bitw
 from .unit import Unit
 
 
-class IntegerType(NumberType):
+class IntegralType(EnumerableGenericMeta):
+    @property
+    def mask(self):
+        return (1 << len(self)) - 1
+
+    @property
+    def width(self):
+        return int(self)
+
+    def keys(self):
+        """Returns a list of keys that can be used for indexing the type.
+
+        >>> Int[8].keys()
+        [0, 1, 2, 3, 4, 5, 6, 7]
+        """
+        return list(range(int(self)))
+
+    def __getitem__(self, index):
+        if not self.specified:
+            return super().__getitem__(index)
+
+        index = self.index_norm(index)
+
+        width = 0
+        for i in index:
+            if isinstance(i, slice):
+                if i.stop == 0 or i.start >= len(self):
+                    return Unit
+                elif i.stop > len(self):
+                    i.stop = len(self)
+
+                width += i.stop - i.start
+            else:
+                if i >= len(self):
+                    raise IndexError
+                width += 1
+
+        return self.base[width]
+
+
+class Integral(int, metaclass=IntegralType):
+    pass
+
+
+Number.register(Integral)
+
+
+class IntegerType(IntegralType):
     """Defines lib methods for all Integer based classes.
     """
 
@@ -26,14 +73,6 @@ class IntegerType(NumberType):
                 return f'z({self.args[0]})'
         else:
             return super().__str__()
-
-    @property
-    def mask(self):
-        return (1 << len(self)) - 1
-
-    @property
-    def width(self):
-        return int(self)
 
     def __int__(self):
         if not self.__args__:
@@ -73,14 +112,6 @@ class IntegerType(NumberType):
             return Unit
         else:
             return self.base[width - shamt]
-
-    def keys(self):
-        """Returns a list of keys that can be used for indexing the type.
-
-        >>> Int[8].keys()
-        [0, 1, 2, 3, 4, 5, 6, 7]
-        """
-        return list(range(int(self)))
 
     def __add__(self, other):
         """Returns the same type, but one bit wider to accomodate potential overflow.
@@ -164,28 +195,6 @@ class IntegerType(NumberType):
     def specified(self):
         return False
 
-    def __getitem__(self, index):
-        if not self.specified:
-            return super().__getitem__(index)
-
-        index = self.index_norm(index)
-
-        width = 0
-        for i in index:
-            if isinstance(i, slice):
-                if i.stop == 0 or i.start >= len(self):
-                    return Unit
-                elif i.stop > len(self):
-                    i.stop = len(self)
-
-                width += i.stop - i.start
-            else:
-                if i >= len(self):
-                    raise IndexError
-                width += 1
-
-        return self.base[width]
-
 
 def check_width(val, width):
     if ((bitw(val) > width) and (val != 0)):
@@ -197,7 +206,7 @@ def check_width(val, width):
         )
 
 
-class Integer(Number, metaclass=IntegerType):
+class Integer(Integral, metaclass=IntegerType):
     """Base type for both :class:`Int` and :class:`Uint` generic types.
     Corresponds to HDL logic vector types. For an example Integer[9] translates
     to :sv:`logic [8:0]`.
@@ -350,7 +359,7 @@ class IntType(IntegerType):
 
     @property
     def specified(self):
-        return NumberType.specified.fget(self)
+        return IntegralType.specified.fget(self)
 
     @property
     def signed(self):
@@ -429,7 +438,7 @@ class UintType(IntegerType):
 
     @property
     def specified(self):
-        return NumberType.specified.fget(self)
+        return IntegralType.specified.fget(self)
 
     def __sub__(self, other):
         """Returns a Tuple of the result type and overflow bit.

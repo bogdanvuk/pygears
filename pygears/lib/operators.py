@@ -1,7 +1,7 @@
 from pygears import alternative, gear, module
 from pygears.conf import safe_bind
 from pygears.core.intf import IntfOperPlugin
-from pygears.typing import Integer, Tuple, Number, Any, Bool
+from pygears.typing import Integer, Tuple, Number, Any, Bool, Integral
 from pygears.util.hof import oper_tree
 from pygears.hls import datagear
 
@@ -77,33 +77,18 @@ def sub(din: Tuple[{'a': Number, 'b': Number}]) -> b'din[0] - din[1]':
     return din[0] - din[1]
 
 
-from pygears.typing import Float
-
-
-@alternative(sub)
 @datagear
-def sub_float(din: Tuple[{'a': Float, 'b': Float}]) -> Float:
-    return din[0] - din[1]
-
-
-@alternative(add)
-@datagear
-def add_float(din: Tuple[{'a': Float, 'b': Float}]) -> Float:
-    return din[0] + din[1]
-
-
-@datagear
-def shl(din: Number, *, shamt) -> b'din << shamt':
+def shl(din: Integral, *, shamt) -> b'din << shamt':
     return module().tout(din << shamt)
 
 
 @datagear
-def shr(din: Number, *, shamt) -> b'din >> shamt':
+def shr(din: Integral, *, shamt) -> b'din >> shamt':
     return module().tout(din >> shamt)
 
 
 @datagear
-def xor(din: Tuple[Any, Any]) -> b'din[0] ^ din[1]':
+def xor(din: Tuple[Integral, Integral]) -> b'din[0] ^ din[1]':
     return din[0] ^ din[1]
 
 
