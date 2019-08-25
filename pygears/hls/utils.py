@@ -203,6 +203,7 @@ def gather_control_stmt_vars(variables, intf, attr=None, dtype=None):
 
 
 def cast_return(arg_nodes, out_ports):
+    from .hdl_arith import resolve_cast_func
     out_num = len(out_ports)
     if isinstance(arg_nodes, list):
         assert len(arg_nodes) == out_num
@@ -228,13 +229,13 @@ def cast_return(arg_nodes, out_ports):
                             arg.operands[i].cast_to == port_t[i]):
                         pass
                     else:
-                        arg.operands[i] = expr.CastExpr(
-                            operand=arg.operands[i], cast_to=port_t[i])
+                        arg.operands[i] = resolve_cast_func(
+                            port_t[i], arg.operands[i])
 
             args.append(arg)
         else:
             if arg.dtype != port_t:
-                args.append(expr.CastExpr(operand=arg, cast_to=port_t))
+                args.append(resolve_cast_func(port_t, arg))
             else:
                 args.append(arg)
 

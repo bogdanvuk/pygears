@@ -184,7 +184,6 @@ class SimVerilated(CosimBase):
         super().setup()
 
     def build(self):
-        print('Debugging: ', registry('hdl/debug_intfs'))
         tracing_enabled = bool(registry('hdl/debug_intfs'))
         context = {
             'in_ports': self.rtlnode.in_ports,
@@ -235,7 +234,6 @@ class SimVerilated(CosimBase):
             #         f'Verilator compiled with warnings. '
             #         f'Please inspect "{self.outdir}/verilate.log"')
 
-        print("Running make")
         ret = os.system(
             f"cd {self.objdir}; make -j -f V{self.top_name}.mk > make.log 2>&1"
         )

@@ -6,6 +6,7 @@ from pygears.typing import Array, Int, Integer, Uint, Unit, typeof, Tuple
 from pygears.core.util import get_function_context_dict
 
 from . import hls_expressions as expr
+from .hdl_arith import resolve_cast_func
 from . import pydl_types as blocks
 from .utils import (add_to_list, cast_return, eval_local_expression,
                     find_assign_target, find_data_expression,
@@ -73,8 +74,7 @@ def parse_return(node, module_data):
         raise Exception('Return found outside function')
 
     if func_block.ret_dtype:
-        ret_expr = expr.CastExpr(operand=ret_expr,
-                                 cast_to=func_block.ret_dtype)
+        ret_expr = resolve_cast_func(func_block.ret_dtype, ret_expr)
 
     return expr.ReturnStmt(ret_expr)
 
@@ -297,6 +297,7 @@ def parse_subscript(node, module_data):
                 return eval_local_expression(_slice.value,
                                              module_data.local_namespace)
         else:
+
             def slice_eval():
                 for field in ['lower', 'upper', 'step']:
                     if not getattr(_slice, field):

@@ -130,7 +130,9 @@ def float_value_cast_resolver(val, cast_type):
     if typeof(type(val), (int, float, Number)):
         return cast_type(val)
 
-    raise TypeMatchError
+    raise Exception(
+        f'Only numbers can be converted to Float, not {val} of the type'
+        f' {repr(type(val))}')
 
 
 value_cast_resolvers = {
