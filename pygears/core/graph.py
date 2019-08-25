@@ -14,11 +14,20 @@ def get_sim_map_gear(gear):
 
 
 def _get_consumer_tree_rec(root_intf, cur_intf, consumers, end_producer):
-
     for port in cur_intf.consumers:
         cons_intf = port.consumer
-        if get_sim_map_gear(port.gear) and (isinstance(port, InPort)):
-            # if not cons_intf.consumers:
+        sim_mod = get_sim_map_gear(port.gear)
+
+        # If cur_intf -> port connection goes through the input port of a
+        # Simulation module, we have found the end-point consumer
+        if sim_mod and (isinstance(port, InPort)):
+            # This might be a false-positive when this is a connection within
+            # the simulation module
+            if (cur_intf.producer
+                    and cur_intf.producer.gear is not sim_mod.gear
+                    and sim_mod.gear.has_descendent(cur_intf.producer.gear)):
+                continue
+
             end_producer[port] = (root_intf, len(consumers))
             consumers.append(port)
         else:
