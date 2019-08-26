@@ -59,7 +59,7 @@ Each new sample scaled in this way is then added to the window sum. In order to 
 
 The ``accumulator`` gear, whose block diagram is shown in :numref:`accumulator-bd` and its PyGears implementations shown below, contains a feedback loop that cannot be described as a plain gear composition since it forms a cycle. This cycle needs to be cut at one spot, described as the gear composition, and then joined together. The ``prev_window_sum`` interface is first defined without its producer gear and passed to the ``window_sum`` gear, then later connected to the output of the composition of the ``priority_mux`` and ``union_collapse`` gears.
 
-The ``window_sum`` gear calculates the output average for one input sample at a time, but the data received at ``din`` is a ``Queue`` of samples, so an ``fmap`` needs to be used to connect the two. This is similar to how an ``fmap`` was used to connect the ``scale_input`` gear in ``moving_average``. The result of the ``window_sum`` calculation is both sent to the output and used to form the ``prev_window_sum``. The ``average`` interface is first connected to the ``project`` and ``decoupler`` gears, which discard the ``Queue`` (transaction) information and register the data. The ``priority_mux`` gear and the constant source of zeros: ``Int[W](0)``, are used to either pass a zero value (for the first sample) or the value from the ``average_reg`` interface.
+[Omitted long line with 1 matches]
 
 .. raw:: latex
 
@@ -75,7 +75,7 @@ The ``window_sum`` gear calculates the output average for one input sample at a 
    
        average_reg = average \
            | project \
-           | decoupler
+           | decouple
    
        prev_window_sum |= priority_mux(average_reg,
                                        Int[W](0)) \

@@ -1,5 +1,5 @@
 from pygears import bind
-from pygears.lib.decoupler import decoupler_din
+from pygears.lib.decouple import decouple_din
 from pygears.lib import const
 from pygears.sim import sim_log
 from pygears.conf import inject, Inject
@@ -64,11 +64,11 @@ class ActivityChecker:
         for sim_gear in sim.sim_gears:
             module = sim_gear.gear
 
-            if module.definition == decoupler_din:
+            if module.definition == decouple_din:
                 if not module.queue.empty():
-                    if 'data_in_decoupler' in self.hooks:
-                        self.hooks['data_in_decoupler'](module)
-                    sim_log().error(f'Data left in decoupler: {module.name}')
+                    if 'data_in_decouple' in self.hooks:
+                        self.hooks['data_in_decouple'](module)
+                    sim_log().error(f'Data left in decouple: {module.name}')
 
             for p in module.in_ports:
                 status = self.get_port_status(p)

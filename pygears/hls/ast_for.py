@@ -6,30 +6,41 @@ from pygears.util.utils import qrange
 
 from .ast_modifications import unroll_statements
 from .ast_parse import parse_ast, parse_block
+from .ast_call import parse_func_args
 from .compile_snippets import enumerate_impl, qrange_mux_impl
 from .hls_expressions import (BinOpExpr, BreakExpr, OperandVal, RegDef,
                               ResExpr, VariableDef, VariableStmt, and_expr,
                               create_oposite, or_expr)
 from .pydl_types import Block, CombBlock, IfBlock, Loop
-from .utils import (VisitError, add_to_list, find_data_expression,
-                    find_for_target)
+from .utils import VisitError, add_to_list, find_for_target
 
 
 @parse_ast.register(ast.For)
 def parse_for(node, module_data):
-
-    res = find_data_expression(node.iter, module_data)
-
     names = find_for_target(node)
 
-    if node.iter.func.id == 'range':
-        return for_range(node, res, names, module_data)
+    if node.iter.func.id in ('range', 'qrange', 'enumerate'):
+        func_args = parse_func_args(node.iter.args, module_data)
 
-    if node.iter.func.id == 'qrange':
-        return for_qrange(node, res, names, module_data)
+        if node.iter.func.id == 'enumerate':
+            return for_enumerate(node,
+                                 (ResExpr(len(func_args[0])), func_args[0]),
+                                 names, module_data)
 
-    if node.iter.func.id == 'enumerate':
-        return for_enumerate(node, res, names, module_data)
+        if len(func_args) == 1:
+            start = ResExpr(func_args[0].dtype(0))
+            stop = func_args[0]
+            step = ast.Num(1)
+        else:
+            start = func_args[0]
+            stop = func_args[1]
+            step = ast.Num(1) if len(func_args) == 2 else func_args[2]
+
+        if node.iter.func.id == 'range':
+            return for_range(node, (start, stop, step), names, module_data)
+
+        if node.iter.func.id == 'qrange':
+            return for_qrange(node, (start, stop, step), names, module_data)
 
     raise VisitError('Unsuported func in for loop')
 
@@ -76,17 +87,18 @@ def for_range(node, iter_args, target_names, module_data):
     exit_cond = BinOpExpr(
         (OperandVal(RegDef(op1, target_names[0]), 'next'), stop), '>=')
 
-    hdl_node = Loop(
-        _in_cond=None, stmts=[], _exit_cond=exit_cond, multicycle=target_names)
+    hdl_node = Loop(_in_cond=None,
+                    stmts=[],
+                    _exit_cond=exit_cond,
+                    multicycle=target_names)
 
     parse_block(hdl_node, node.body, module_data)
 
     target = node.target if len(target_names) == 1 else node.target.elts[0]
     add_to_list(
         hdl_node.stmts,
-        parse_ast(
-            increment_reg(target_names[0], val=step, target=target),
-            module_data=module_data))
+        parse_ast(increment_reg(target_names[0], val=step, target=target),
+                  module_data=module_data))
 
     return hdl_node
 
@@ -117,18 +129,16 @@ def for_qrange(node, iter_args, target_names, module_data):
     stmts = [VariableStmt(var, exit_cond)]
     exit_cond = OperandVal(var, 'v')
 
-    hdl_node = Loop(
-        _in_cond=None,
-        stmts=stmts,
-        _exit_cond=exit_cond,
-        multicycle=target_names)
+    hdl_node = Loop(_in_cond=None,
+                    stmts=stmts,
+                    _exit_cond=exit_cond,
+                    multicycle=target_names)
 
     if is_start:
-        qrange_body = qrange_impl(
-            name=target_names[0],
-            node=node,
-            svnode=hdl_node,
-            module_data=module_data)
+        qrange_body = qrange_impl(name=target_names[0],
+                                  node=node,
+                                  svnode=hdl_node,
+                                  module_data=module_data)
 
         loop_stmts = []
         for stmt in qrange_body:
@@ -142,9 +152,8 @@ def for_qrange(node, iter_args, target_names, module_data):
         target = node.target if len(target_names) == 1 else node.target.elts[0]
         add_to_list(
             hdl_node.stmts,
-            parse_ast(
-                increment_reg(target_names[0], val=step, target=target),
-                module_data))
+            parse_ast(increment_reg(target_names[0], val=step, target=target),
+                      module_data))
 
     return hdl_node
 
@@ -200,8 +209,10 @@ def registered_enumerate(node, target_names, stop, enum_target, module_data):
     exit_cond = BinOpExpr(
         (OperandVal(RegDef(op1, target_names[0]), 'next'), stop), '>=')
 
-    hdl_node = Loop(
-        _in_cond=None, stmts=[], _exit_cond=exit_cond, multicycle=target_names)
+    hdl_node = Loop(_in_cond=None,
+                    stmts=[],
+                    _exit_cond=exit_cond,
+                    multicycle=target_names)
 
     snip = enumerate_impl(target_names[0], target_names[1], enum_target,
                           range(stop.val))
@@ -245,10 +256,9 @@ def comb_enumerate(node, target_names, stop, enum_target, module_data):
         break_comb_loop(pydl_node, module_data, reg_name)
 
     assign_reg_stmt = ast.parse(f'{reg_name} = {reg_name}').body[0]
-    reg_dflt_block = IfBlock(
-        _in_cond=create_oposite(
-            reduce(or_expr, pydl_node.loop_iter_in_cond, None)),
-        stmts=[parse_ast(assign_reg_stmt, module_data)])
+    reg_dflt_block = IfBlock(_in_cond=create_oposite(
+        reduce(or_expr, pydl_node.loop_iter_in_cond, None)),
+                             stmts=[parse_ast(assign_reg_stmt, module_data)])
     pydl_node.stmts.append(reg_dflt_block)
     return pydl_node
 

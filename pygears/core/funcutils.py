@@ -182,6 +182,7 @@ class FunctionMaker(object):
                addsource=True,
                isasync=False,
                extra_kwds=None,
+               annotations=None,
                **attrs):
         """
         Create a function from the strings name, signature and body.
@@ -205,6 +206,10 @@ class FunctionMaker(object):
             doc,
             module,
             extra_kwds=extra_kwds)
+
+        if annotations is not None:
+            self.annotations = annotations
+
         ibody = '\n'.join('    ' + line for line in body.splitlines())
         caller = evaldict.get('_call_')  # when called from `decorate`
         if isasync or (caller and inspect.iscoroutinefunction(caller)):

@@ -5,9 +5,9 @@ from pygears.util.utils import gather
 # @gear(hdl={'compile': True})
 @gear
 async def ccat(*din) -> b'Tuple[din]':
-    """Short for concat, combines multiple interfaces into a single interface whose
-    type is a :class:`Tuple` of the input interface types. One output data is
-    formed by combining one data from each of the inputs::
+    """Short for concatenate, combines multiple interfaces into a single interface
+    whose type is a :class:`Tuple` of the input interface types. One output
+    data is formed by combining one data from each of the inputs::
 
         din0 = Intf(Uint[8])
         din1 = Intf(Uint[16])

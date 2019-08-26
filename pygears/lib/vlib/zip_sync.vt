@@ -18,7 +18,7 @@
   {% set base_module_name = module_name %} 
 {% endif %} 
 
-{% call snippet.module_with_intf_structs(base_module_name, intfs, intfs|isinput, comment) %}
+{% call snippet.module_with_intf_structs(base_module_name, intfs, intfs|isinput, comment, outtype="wire") %}
 
   {%- set input_intf_names = intfs|isinput|keymap("name") %}
   {%- set min_lvl = intfs|isinput|keymap("lvl")|min %}

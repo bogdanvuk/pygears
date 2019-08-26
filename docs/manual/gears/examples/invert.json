@@ -1,0 +1,1 @@
+{"signal": [{"name": "clk", "wave": "p..."}, ["invert.a", {"name": "", "wave": "555z", "data": ["1", "15", "255"]}], ["invert.dout", {"name": "", "wave": "555z", "data": ["254", "240", "0"]}]], "head": {"tock": 0}}

@@ -34,5 +34,5 @@ async def chop(din: Queue[Tuple[{
 
 @alternative(chop)
 @gear
-def chop2(din: Queue, cfg: Uint):
-    return cart(din, cfg) | chop
+def chop2(din: Queue, size: Uint) -> b'din':
+    return cart(din, size) | chop

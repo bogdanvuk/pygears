@@ -7,14 +7,61 @@ arithmetic capabilities.
 """
 
 from .base import class_and_instance_method
-from .base import EnumerableGenericMeta, typeof
+from .base import typeof, EnumerableGenericMeta
+from .number import NumberType, Number
 from .tuple import Tuple
-# from .bool import Bool
 from .bitw import bitw
 from .unit import Unit
 
 
-class IntegerType(EnumerableGenericMeta):
+class IntegralType(EnumerableGenericMeta):
+    @property
+    def mask(self):
+        return (1 << len(self)) - 1
+
+    @property
+    def width(self):
+        return int(self)
+
+    def keys(self):
+        """Returns a list of keys that can be used for indexing the type.
+
+        >>> Int[8].keys()
+        [0, 1, 2, 3, 4, 5, 6, 7]
+        """
+        return list(range(int(self)))
+
+    def __getitem__(self, index):
+        if not self.specified:
+            return super().__getitem__(index)
+
+        index = self.index_norm(index)
+
+        width = 0
+        for i in index:
+            if isinstance(i, slice):
+                if i.stop == 0 or i.start >= len(self):
+                    return Unit
+                elif i.stop > len(self):
+                    i.stop = len(self)
+
+                width += i.stop - i.start
+            else:
+                if i >= len(self):
+                    raise IndexError
+                width += 1
+
+        return self.base[width]
+
+
+class Integral(int, metaclass=IntegralType):
+    pass
+
+
+Number.register(Integral)
+
+
+class IntegerType(IntegralType):
     """Defines lib methods for all Integer based classes.
     """
 
@@ -28,6 +75,9 @@ class IntegerType(EnumerableGenericMeta):
             return super().__str__()
 
     def __int__(self):
+        if not self.__args__:
+            raise TypeError
+
         return int(self.__args__[0])
 
     def __gt__(self, others):
@@ -35,6 +85,12 @@ class IntegerType(EnumerableGenericMeta):
 
     def __ge__(self, others):
         return int(self) >= int(others)
+
+    def __invert__(self):
+        return self
+
+    def __neg__(self):
+        return Int[int(self) + 1]
 
     def __or__(self, others):
         # return int(self) | int(others)
@@ -47,15 +103,15 @@ class IntegerType(EnumerableGenericMeta):
         return self.base[int(self) + int(others)]
 
     def __rshift__(self, others):
-        return self.base[int(self) + int(others)]
+        shamt = int(others)
+        width = len(self)
 
-    def keys(self):
-        """Returns a list of keys that can be used for indexing the type.
-
-        >>> Int[8].keys()
-        [0, 1, 2, 3, 4, 5, 6, 7]
-        """
-        return list(range(int(self)))
+        if shamt > width:
+            raise TypeError('Right shift larger than data width')
+        elif shamt == width:
+            return Unit
+        else:
+            return self.base[width - shamt]
 
     def __add__(self, other):
         """Returns the same type, but one bit wider to accomodate potential overflow.
@@ -135,41 +191,22 @@ class IntegerType(EnumerableGenericMeta):
 
     __rmul__ = __mul__
 
-    def is_specified(self):
+    @property
+    def specified(self):
         return False
-
-    def __getitem__(self, index):
-        if not self.is_specified():
-            return super().__getitem__(index)
-
-        index = self.index_norm(index)
-
-        width = 0
-        for i in index:
-            if isinstance(i, slice):
-                if i.stop == 0:
-                    return Unit
-                elif i.stop - i.start > len(self):
-                    raise IndexError
-                width += i.stop - i.start
-            else:
-                if i >= len(self):
-                    raise IndexError
-                width += 1
-
-        return self.base[width]
 
 
 def check_width(val, width):
-    if (bitw(val) > width):
+    if ((bitw(val) > width) and (val != 0)):
         from pygears.conf import typing_log
+        breakpoint()
 
         typing_log().warning(
             f'Value overflow - value {val} cannot be represented with {width} bits'
         )
 
 
-class Integer(int, metaclass=IntegerType):
+class Integer(Integral, metaclass=IntegerType):
     """Base type for both :class:`Int` and :class:`Uint` generic types.
     Corresponds to HDL logic vector types. For an example Integer[9] translates
     to :sv:`logic [8:0]`.
@@ -192,6 +229,7 @@ class Integer(int, metaclass=IntegerType):
         check_width(val, res.width)
         return res
 
+    @class_and_instance_method
     @property
     def width(self):
         """Returns the number of bits used for the representation
@@ -201,6 +239,7 @@ class Integer(int, metaclass=IntegerType):
         """
         return len(type(self))
 
+    @class_and_instance_method
     @property
     def mask(self):
         return (1 << self.width) - 1
@@ -213,11 +252,17 @@ class Integer(int, metaclass=IntegerType):
         """
         return self.width
 
+    def __invert__(self):
+        return type(self)(~int(self) & type(self).mask)
+
+    def __neg__(self):
+        return (-type(self))(-int(self))
+
     def __add__(self, other):
-        if isinstance(other, Integer):
-            return (type(self) + type(other))(int(self) + int(other))
-        else:
-            return type(self)(int(self) + other)
+        if not isinstance(other, Integer):
+            other = type(self).base(other)
+
+        return (type(self) + type(other))(int(self) + int(other))
 
     def __sub__(self, other):
         if isinstance(other, Integer):
@@ -255,20 +300,31 @@ class Integer(int, metaclass=IntegerType):
         >>> Integer[8](0b10101010)[1::2]
         Uint[4](15)
         """
-        if isinstance(index, slice):
-            bits = tuple(
-                Bool(bool(int(self) & (1 << i)))
-                for i in range(*index.indices(self.width)))
 
-            if bits:
-                return Uint[len(bits)](Tuple[(Bool, ) * len(bits)](bits))
+        index = type(self).index_norm(index)
+
+        base = None
+        for i in index:
+            if isinstance(i, slice):
+                start, stop, _ = i.indices(self.width)
+
+                if stop <= start:
+                    part = Unit()
+                else:
+                    part = Uint[stop - start]((int(self)
+                                               & ((1 << stop) - 1)) >> start)
+
+            elif i < self.width:
+                part = Bool(int(self) & (1 << i))
             else:
-                return Unit()
+                raise IndexError
 
-        elif index < self.width:
-            return Bool(int(self) & (1 << index))
-        else:
-            raise IndexError
+            if base is None:
+                base = part
+            else:
+                base = part @ base
+
+        return base
 
     def code(self):
         return int(self) & self.mask
@@ -293,8 +349,21 @@ class IntType(IntegerType):
         else:
             return super().__str__()
 
-    def is_specified(self):
-        return EnumerableGenericMeta.is_specified(self)
+    @property
+    def max(self):
+        return self.decode(2**(self.width - 1) - 1)
+
+    @property
+    def min(self):
+        return self.decode(-2**(self.width - 1))
+
+    @property
+    def specified(self):
+        return IntegralType.specified.fget(self)
+
+    @property
+    def signed(self):
+        return True
 
 
 class Int(Integer, metaclass=IntType):
@@ -314,6 +383,11 @@ class Int(Integer, metaclass=IntType):
 
     """
     __parameters__ = ['N']
+
+    @class_and_instance_method
+    @property
+    def signed(self):
+        return True
 
     def __new__(cls, val: int = 0):
         if type(val) == cls:
@@ -358,8 +432,13 @@ class UintType(IntegerType):
 
     """
 
-    def is_specified(self):
-        return EnumerableGenericMeta.is_specified(self)
+    @property
+    def signed(self):
+        return False
+
+    @property
+    def specified(self):
+        return IntegralType.specified.fget(self)
 
     def __sub__(self, other):
         """Returns a Tuple of the result type and overflow bit.
@@ -371,6 +450,14 @@ class UintType(IntegerType):
             return Tuple[Uint[max(int(self), int(other))], Bool]
         else:
             return super().__sub__(other)
+
+    @property
+    def max(self):
+        return self.decode(2**self.width - 1)
+
+    @property
+    def min(self):
+        return self.decode(0)
 
     def __str__(self):
         if not self.args:
@@ -397,11 +484,16 @@ class Uint(Integer, metaclass=UintType):
     __parameters__ = ['N']
 
     @class_and_instance_method
+    @property
+    def signed(self):
+        return False
+
+    @class_and_instance_method
     def __sub__(self, other):
         if (typeof(type(other), Uint)):
             res = int(self) - int(other)
             tout = type(self) - type(other)
-            return tout((res, res < 0))
+            return tout((res & tout[0].mask, res < 0))
         else:
             return super().__sub__(other)
 
@@ -409,7 +501,7 @@ class Uint(Integer, metaclass=UintType):
         if isinstance(other, Unit):
             return self
 
-        if not typeof(other, Uint):
+        if not isinstance(other, Uint):
             other = Uint(other)
 
         return Uint[self.width + other.width]((int(self) << other.width) +

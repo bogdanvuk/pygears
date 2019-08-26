@@ -50,8 +50,18 @@ class VModuleInst(HDLModuleInst):
             with open(self.impl_path, 'r') as f:
                 return parse(f.read())
         else:
-            hdl_log().warning(
-                f'Verilog file not found for {self.node.name}')
+            hdl_log().warning(f'Verilog file not found for {self.node.name}')
+
+    def get_synth_wrap(self, template_env):
+        context = {
+            'module_name': self.module_name,
+            'inst_name': self.inst_name,
+            'intfs': list(self.port_configs),
+            'sigs': self.node.params['signals'],
+            'param_map': self.params
+        }
+        return template_env.render_local(__file__, "module_synth_wrap.j2",
+                                         context)
 
     def get_out_port_map_intf_name(self, port):
         return self.vgen_map[port.consumer].basename, None, None

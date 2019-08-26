@@ -26,7 +26,7 @@ class Yosys:
 
     RE_STATS_LUT = re.compile(r"LUT(\d)\s+(\d+)")
     RE_STATS_FDRE = re.compile(r"FDRE\s+(\d+)")
-    RE_STATS_DRAM = re.compile(r"RAM64X1D\s+(\d+)")
+    RE_STATS_DRAM = re.compile(r"(?:RAM64X1D|RAM32X1D)\s+(\d+)")
 
     def __init__(self, cmd_line):
         self.cmd_line = cmd_line
@@ -71,25 +71,6 @@ class Yosys:
 
         return regs
 
-    def optimize_registers(self):
-        regs = self.enum_registers()
-        print(regs)
-        for name, (width, init) in regs.items():
-            cmd = f"sat -tempinduct -prove {name} {width}'b{init} -show-all -dump_vcd /tools/home/tmp/proba.vcd"
-            # cmd = f"sat -tempinduct -prove {name} {width}'b{init}"
-            try:
-                ret = self.command(cmd)
-                print(ret)
-            except pexpect.EOF:
-                print(self.proc.before)
-                continue
-
-            if "SUCCESS!" in ret:
-                print(f'Optimizing away: {name}')
-                self.command(f"connect -set {name} {width}'b{init}")
-
-        self.command('opt')
-
     @property
     def stats(self):
         res = {'logic luts': 0, 'ffs': 0, 'lutrams': 0}
@@ -117,6 +98,7 @@ class Yosys:
 def synth(outdir,
           srcdir=None,
           top=None,
+          rtl_node=None,
           optimize=True,
           freduce=False,
           synth_out=None,
@@ -129,30 +111,23 @@ def synth(outdir,
 
     # synth_out_fn = os.path.join(outdir, 'synth.v')
 
-    rtl = hdlgen(top, language=language, outdir=srcdir)
+    if rtl_node is None:
+        wrapper = False if top is None else True
+        rtl_node = hdlgen(top,
+                          language=language,
+                          outdir=srcdir,
+                          wrapper=wrapper)
+
     vgen_map = registry(f'{language}gen/map')
-    top_name = vgen_map[rtl].module_name
+    top_name = vgen_map[rtl_node].module_name
 
     create_project_script(prj_script_fn,
                           outdir=srcdir,
-                          top=rtl,
+                          top=rtl_node,
                           language=language)
     with Yosys('yosys') as yosys:
 
         yosys.command(f'script {prj_script_fn}')
-        # print(ret)
-        # return yosys.stats
-
-        # if optimize:
-        #     ret = yosys.command(f'prep -top {top_name} -flatten')
-        #     ret = yosys.command(f'opt_rmdff -sat')
-        #     print(ret)
-        #     # yosys.optimize_registers()
-
-        # ret = yosys.command("sat -tempinduct -prove demux_ctrl.bc_din.ready_reg[1] 1'b0")
-        # print(ret)
-        # # yosys.command('xilinx_synth -flatten')
-        # ret = yosys.command(f'synth -top {top_name} -flatten -noabc')
 
         yosys.command(f'hierarchy -check -top {top_name}')
 
@@ -160,25 +135,17 @@ def synth(outdir,
         yosys.command(f'flatten')
 
         if optimize:
-            yosys.command(f'opt')
-            yosys.command(f'opt_rmdff -sat')
-            # yosys.command(f'opt_expr -mux_bool -undriven -fine')
-            # yosys.command(f'opt_expr -mux_undef')
-            # yosys.command(f'opt_expr -keepdc -full')
-            yosys.command(f'opt')
+            print(yosys.command(f'opt -sat'))
 
             if freduce:
-                print("Started freduce")
                 yosys.command(f'freduce')
-                yosys.command(f'opt_clean')
+                yosys.command(f'opt -full')
 
         if synth_cmd:
-            ret = yosys.command(synth_cmd)
-            # print(ret)
+            yosys.command(synth_cmd)
 
         if synth_out:
-            yosys.command(f'write_verilog {synth_out}')
-
-        print(yosys.command('stat'))
+            yosys.command(f'clean -purge')
+            yosys.command(f'write_verilog -noattr {synth_out}')
 
         return yosys.stats

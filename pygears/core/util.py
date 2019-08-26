@@ -41,6 +41,10 @@ def get_function_context_dict(func):
     context.update(func.__globals__)
 
     for name, cell in zip(func.__code__.co_freevars, func.__closure__):
-        context[name] = cell.cell_contents
+        try:
+            context[name] = cell.cell_contents
+        except ValueError:
+            # Cell is empty
+            pass
 
     return context

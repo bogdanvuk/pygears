@@ -2,10 +2,11 @@ import inspect
 import logging
 import os
 
-from pygears import PluginBase, registry, safe_bind
+from pygears import PluginBase, registry, safe_bind, config
 from pygears.conf import register_custom_log
 from pygears.core.hier_node import HierVisitorBase
 from .intf import SVIntfGen
+from pygears.definitions import LIB_SVLIB_DIR, USER_SVLIB_DIR
 
 
 class SVGenInstVisitor(HierVisitorBase):
@@ -43,19 +44,12 @@ class SVGenInstVisitor(HierVisitorBase):
 
 
 def svgen_inst(top, conf):
-    # if 'outdir' in conf:
-    #     registry('SVGenSystemVerilogPaths').append(conf['outdir'])
+    config['hdl/include_paths'].extend([USER_SVLIB_DIR, LIB_SVLIB_DIR])
 
     v = SVGenInstVisitor()
     v.visit(top)
 
     return top
-
-
-def register_sv_paths(*paths):
-    for p in paths:
-        registry('svgen/sv_paths').append(
-            os.path.abspath(os.path.expandvars(os.path.expanduser(p))))
 
 
 def svgen_log():

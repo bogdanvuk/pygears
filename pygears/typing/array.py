@@ -25,7 +25,7 @@ class ArrayType(EnumerableGenericMeta):
         Array[Uint[2], 2]
         """
 
-        if not self.is_specified():
+        if not self.specified:
             return super().__getitem__(index)
 
         index = self.index_norm(index)

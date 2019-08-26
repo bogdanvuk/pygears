@@ -14,7 +14,7 @@
   {%- do intf.update({'data_eot': '(&%s_s_eot)'|format(intf['name']) if typeof(intf['type'], Queue) else 1}) -%}
 {%- endfor -%}
 
-{% call snippet.module_with_intf_structs(module_name, intfs, intfs, comment) %}
+{% call snippet.module_with_intf_structs(module_name, intfs, intfs, comment, outtype="wire") %}
 
   {%- set queue_intf_names = queue_intfs|keymap("name") %}
   {%- set input_intf_names = intfs|isinput|keymap("name") %}

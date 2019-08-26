@@ -17,10 +17,10 @@ def flatten_func(d, lvl):
 
 
 @gear
-async def flatten(din: Queue['tdin', 'din_lvl'],
+async def flatten(din: Queue,
                   *,
                   lvl=1,
-                  dout_lvl=b'din_lvl - lvl') -> b'Queue[tdin, dout_lvl]':
+                  dout_lvl=b'din.lvl - lvl') -> b'Queue[din.data, dout_lvl]':
     async with din as d:
         yield flatten_func(d, lvl)
 

@@ -3,8 +3,10 @@ import itertools
 from functools import singledispatch
 
 from pygears.typing import Array, Int, Integer, Uint, Unit, typeof, Tuple
+from pygears.core.util import get_function_context_dict
 
 from . import hls_expressions as expr
+from .hdl_arith import resolve_cast_func
 from . import pydl_types as blocks
 from .utils import (add_to_list, cast_return, eval_local_expression,
                     find_assign_target, find_data_expression,
@@ -25,9 +27,12 @@ def parse_ast(node, module_data):
 
 
 def parse_block(pydl_node, body, module_data):
+    module_data.context.append(pydl_node)
     for stmt in body:
         res_stmt = parse_ast(stmt, module_data)
         add_to_list(pydl_node.stmts, res_stmt)
+
+    module_data.context.pop()
 
     return pydl_node
 
@@ -56,6 +61,32 @@ def parse_expr(node, module_data):
         return parse_yield(node.value, module_data)
 
     return None
+
+
+@parse_ast.register(ast.Return)
+def parse_return(node, module_data):
+    ret_expr = parse_ast(node.value, module_data)
+
+    for func_block in reversed(module_data.context):
+        if isinstance(func_block, blocks.Function):
+            break
+    else:
+        raise Exception('Return found outside function')
+
+    if func_block.ret_dtype:
+        ret_expr = resolve_cast_func(func_block.ret_dtype, ret_expr)
+
+    return expr.ReturnStmt(ret_expr)
+
+
+@parse_ast.register(ast.IfExp)
+def parse_ifexp(node, module_data):
+    res = {
+        field: find_data_expression(getattr(node, field), module_data)
+        for field in ['test', 'body', 'orelse']
+    }
+    return expr.ConditionalExpr(operands=(res['body'], res['orelse']),
+                                cond=res['test'])
 
 
 @parse_ast.register(ast.Yield)
@@ -253,7 +284,7 @@ def parse_subscript(node, module_data):
                     data_index = isinstance(
                         val_expr,
                         expr.OperandVal) and (len(val_expr.op.intf) > 1)
-                except TypeError:
+                except (TypeError, AttributeError):
                     pass
 
             if data_index:
@@ -266,15 +297,19 @@ def parse_subscript(node, module_data):
                 return eval_local_expression(_slice.value,
                                              module_data.local_namespace)
         else:
-            slice_args = [
-                eval_local_expression(getattr(_slice, field),
-                                      module_data.local_namespace)
-                for field in ['lower', 'upper'] if getattr(_slice, field)
-            ]
 
-            index = slice(*tuple(arg for arg in slice_args))
-            if index.start is None:
-                index = slice(0, index.stop, index.step)
+            def slice_eval():
+                for field in ['lower', 'upper', 'step']:
+                    if not getattr(_slice, field):
+                        yield None
+                    else:
+                        yield eval_local_expression(
+                            getattr(_slice, field),
+                            module_data.local_namespace)
+
+            slice_args = list(slice_eval())
+
+            index = slice(*slice_args)
 
             return index
 
@@ -290,6 +325,10 @@ def parse_subscript(node, module_data):
     if not isinstance(index, slice) and isinstance(val_expr, expr.ConcatExpr):
         pydl_node = val_expr.operands[index]
     else:
+        if isinstance(index, int) or isinstance(index, slice):
+            index = val_expr.dtype.index_norm(index)[0]
+
+        # TODO: Support array of indices
         pydl_node = expr.SubscriptExpr(val_expr, index)
 
     if pydl_node.dtype is Unit:

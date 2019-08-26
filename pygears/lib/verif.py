@@ -1,9 +1,8 @@
 import inspect
 from pygears import GearDone, gear
-from pygears.lib import decoupler
+from pygears.lib import decouple
 from pygears.util.utils import quiter
 from pygears.typing import Uint
-from pygears.sim.utils import SimDelay
 from pygears.typing import Any
 from pygears.sim import sim_assert, sim_log
 from pygears.typing import Queue, typeof
@@ -31,20 +30,23 @@ class TypeDrvVisitor(TypingYieldVisitorBase):
                 if dtype.lvl == 1:
                     yield (ret, Uint[1](eot))
                 else:
-                    yield (ret[0], Uint[ret[1].width + 1](ret[1]) +
-                           (eot << ret[1].width))
+                    yield (ret[0], eot @ ret[1])
 
 
 def typeseq(t, v):
     if type(v) == t:
         yield v
     else:
-        for d in TypeDrvVisitor().visit(v, t):
-            try:
-                yield t(d)
-            except TypeError:
-                sim_log().error(
-                    f'Cannot convert value "{d}" to type "{repr(t)}"')
+        try:
+            for d in TypeDrvVisitor().visit(v, t):
+                try:
+                    yield t(d)
+                except TypeError:
+                    sim_log().error(
+                        f'Cannot convert value "{d}" to type "{repr(t)}"')
+        except TypeError:
+            sim_log().error(
+                f'Cannot convert sequence "{v}" to the "{repr(t)}"')
 
 
 @gear
@@ -167,13 +169,6 @@ async def mon(din, *, t=b'din') -> Any:
     yield data
 
 
-@gear
-async def delay_mon(din, *, t=b'din', delay=SimDelay(0, 0)) -> b'din':
-    async with din as item:
-        await delay.delay
-        yield item
-
-
 def match_check(data, ref, tolerance):
     low = ref - tolerance
     high = ref + tolerance
@@ -242,7 +237,7 @@ async def scoreboard(*din: b't', report, tolerance=0) -> None:
 
 
 @gear
-async def check(din, *, ref):
+async def check(din, *, ref, cmp=lambda x, y: x == y):
     """Checks equality of input data with expected.
 
     Args:
@@ -270,7 +265,7 @@ async def check(din, *, ref):
                 ref_item = next(ref_seq)
 
             sim_assert(
-                data == ref_item,
+                cmp(data, ref_item),
                 f'mismatch in item {len(items)-1}. Got: {data}, expected: {ref_item}'
             )
     except GearDone:
@@ -342,8 +337,8 @@ def verif(*stim, f, ref, delays=None, tolerance=0):
         if d is not None:
             res_intf = res_intf | d
 
-        res_intf = res_intf | decoupler(depth=0)
-        ref_intf = ref_intf | decoupler(depth=0)
+        res_intf = res_intf | decouple(depth=0)
+        ref_intf = ref_intf | decouple(depth=0)
 
         scoreboard(res_intf, ref_intf, report=r, tolerance=tolerance)
 
@@ -389,8 +384,8 @@ def directed_on_the_fly(*stim, f, refs, delays=None):
         if d is not None:
             res_intf = res_intf | d
 
-        res_intf = res_intf | decoupler(depth=0)
-        # ref = ref | decoupler(depth=0)
+        res_intf = res_intf | decouple(depth=0)
+        # ref = ref | decouple(depth=0)
 
         scoreboard(res_intf, ref, report=r)
 

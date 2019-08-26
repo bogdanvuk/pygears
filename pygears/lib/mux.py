@@ -1,5 +1,7 @@
-from pygears import gear
-from pygears.typing import Queue, Union, typeof
+from pygears import gear, alternative
+from pygears.hls import datagear
+from pygears.typing import Queue, Union, typeof, Tuple, Uint, Any
+from pygears.util.utils import gather
 
 from .union import union_collapse
 
@@ -25,8 +27,8 @@ def dflt_map(dtypes):
 
 
 # @gear(svgen={'compile': True})
-@gear
-async def mux(ctrl,
+@gear(enablement=b'len(din) >= 2')
+async def mux(ctrl: Uint,
               *din,
               mapping=b'dflt_map(din)',
               _full_mapping=b'full_mapping(din, mapping)'
@@ -52,13 +54,18 @@ def mux_zip(ctrl,
     pass
 
 
-@gear
-def mux_valve(ctrl,
-              *din,
-              mapping=b'dflt_map(din)',
-              _full_mapping=b'full_mapping(din, mapping)'
-              ) -> b'mux_type(din, _full_mapping)':
-    pass
+@alternative(mux)
+@datagear
+def mux_valve(din: Tuple[{
+        'ctrl': Uint,
+        'data': Any
+}],
+              *,
+              mapping=b'dflt_map(din["data"])',
+              _full_mapping=b'full_mapping(din["data"], mapping)'
+              ) -> b'mux_type(din["data"], _full_mapping)':
+    c_map = _full_mapping[din['ctrl']]
+    return (din['data'][c_map], c_map)
 
 
 @gear

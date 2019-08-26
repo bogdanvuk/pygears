@@ -191,7 +191,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
         gear_multi_order = cosim_modules.copy()
         for g in gear_order:
-            if (all(not m.is_descendent(g) for m in cosim_modules)
+            if (all(not m.has_descendent(g) for m in cosim_modules)
                     or isinstance(g, (InPort, OutPort))):
                 gear_multi_order.append(g)
 
@@ -206,6 +206,11 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
         for g in gear_multi_order:
             g.phase = 'forward'
+            if g not in self.sim_map:
+                Exception(
+                    f'Gear {g.name} of type {g.definition.__name__} has no simulation model'
+                )
+
             self.sim_map[g].phase = 'forward'
 
         self.sim_gears = [self.sim_map[g] for g in gear_multi_order]

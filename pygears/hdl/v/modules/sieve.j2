@@ -1,6 +1,6 @@
 {%- import 'snippet.j2' as snippet -%}
 
-{% call snippet.gear_module(module_name, intfs, comment) %}
+{% call snippet.gear_module(module_name, intfs, comment, outtype="wire") %}
 
   {% if stages %}
     {% set ns = namespace(prev_name = "din_data") %}

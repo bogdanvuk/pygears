@@ -23,6 +23,17 @@ def path_name(path):
     return path.replace('/', '_')
 
 
+def get_port_config(modport, type_, name):
+    return {
+        'modport': modport,
+        'name': name,
+        'size': 1,
+        'type': type_,
+        'width': int(type_),
+        'local_type': type_
+    }
+
+
 class HDLModuleInst:
     def __init__(self, node, extension):
         self.node = node
@@ -30,7 +41,7 @@ class HDLModuleInst:
 
     @property
     def hdl_path_list(self):
-        return registry(f'{self.extension}gen/{self.extension}_paths')
+        return registry('hdl/include_paths')
 
     @property
     @functools.lru_cache()
@@ -140,27 +151,13 @@ class HDLModuleInst:
     def hier_path_name(self):
         return path_name(self.node.name)
 
-    def get_port_config(self, modport, type_, name):
-        return {
-            'modport': modport,
-            'name': name,
-            'size': 1,
-            'type': type_,
-            'width': int(type_),
-            'local_type': type_
-        }
-
     @property
     def port_configs(self):
         for p in self.node.in_ports:
-            yield self.get_port_config('consumer',
-                                       type_=p.dtype,
-                                       name=p.basename)
+            yield get_port_config('consumer', type_=p.dtype, name=p.basename)
 
         for p in self.node.out_ports:
-            yield self.get_port_config('producer',
-                                       type_=p.dtype,
-                                       name=p.basename)
+            yield get_port_config('producer', type_=p.dtype, name=p.basename)
 
     @property
     def module_context(self):

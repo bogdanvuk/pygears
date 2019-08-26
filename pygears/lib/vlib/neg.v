@@ -18,6 +18,6 @@ module neg #(
    assign din_ready = dout_ready;
 
    assign dout_valid = din_valid;
-   assign dout_data = -signed'(din_data);
+   assign dout_data = -$signed(din_data);
 
 endmodule

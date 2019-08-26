@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from pygears.core.port import InPort, OutPort
 from pygears.typing import (Bool, Integer, Queue, Tuple, Uint, Unit, is_type,
-                            typeof)
+                            typeof, Int)
 from pygears.typing.base import TypingMeta
 
 BOOLEAN_OPERATORS = {'|', '&', '^', '~', '!', '&&', '||'}
@@ -114,10 +114,18 @@ class ResExpr(Expr):
         if is_type(type(self.val)):
             return type(self.val)
 
-        if self.val is not None:
-            return Integer(self.val)
+        if isinstance(self.val, int):
+            return Int(self.val)
 
         return None
+
+
+@dataclass
+class TupleExpr(Expr):
+    val: typing.Sequence
+
+    def __getitem__(self, key):
+        return self.val[key]
 
 
 @dataclass
@@ -127,7 +135,11 @@ class DefBase(Expr):
 
     @property
     def dtype(self):
-        if is_type(type(self.val)):
+        if self.val is None:
+            return None
+        elif is_type(self.val):
+            return self.val
+        elif is_type(type(self.val)):
             return type(self.val)
 
         return self.val.dtype
@@ -185,6 +197,11 @@ class RegNextStmt(Expr):
 
 
 @dataclass
+class ReturnStmt:
+    val: Expr
+
+
+@dataclass
 class VariableStmt(Expr):
     variable: VariableDef
     val: Expr
@@ -216,6 +233,17 @@ class OperandVal(Expr):
     @property
     def dtype(self):
         return find_sub_dtype(self.op)
+
+
+@dataclass
+class FunctionCall(Expr):
+    operands: typing.Tuple[OpType]
+    name: str
+    ret_dtype: PgType = None
+
+    @property
+    def dtype(self):
+        return self.ret_dtype
 
 
 # Inteface operations expressions
@@ -276,6 +304,14 @@ class CastExpr(Expr):
     operand: OpType
     cast_to: PgType
 
+    def __post_init__(self):
+        if isinstance(self.operand, ConcatExpr):
+            cast_ops = [
+                CastExpr(op_t, cast_t) if op_t.dtype != cast_t else op_t
+                for op_t, cast_t in zip(self.operand.operands, self.cast_to)
+            ]
+            self.operand = ConcatExpr(cast_ops)
+
     @property
     def dtype(self):
         return self.cast_to
@@ -291,9 +327,15 @@ class BinOpExpr(Expr):
         if self.operator in BIN_OPERATORS:
             return Uint[1]
 
+        if (self.operator in ('<<', '>>')) and isinstance(
+                self.operands[1], ResExpr):
+            op2 = self.operands[1].val
+        else:
+            op2 = self.operands[1].dtype
+
         res_t = eval(f'op1 {self.operator} op2', {
             'op1': self.operands[0].dtype,
-            'op2': self.operands[1].dtype
+            'op2': op2
         })
 
         if isinstance(res_t, bool):

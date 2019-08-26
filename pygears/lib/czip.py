@@ -99,7 +99,7 @@ async def zip_sync(*din, outsync=True) -> b'din':
         din_data = [(await d.pull()) for d in din]
 
         if overlap_lvl > 0:
-            eot_overlap = [d.sub(overlap_lvl) for d in din_data]
+            eot_overlap = [d.eot[:overlap_lvl] for d in din_data]
 
             eot_aligned = (eot_overlap[0] >= eot_overlap[1],
                            eot_overlap[1] >= eot_overlap[0])

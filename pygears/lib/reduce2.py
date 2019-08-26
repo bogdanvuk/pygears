@@ -1,7 +1,7 @@
 from pygears import gear, Intf
 from pygears.lib import czip
 from pygears.typing import Tuple, Uint, Union, Queue
-from pygears.lib import fmap, demux, decoupler, fifo, union_collapse
+from pygears.lib import fmap, demux, decouple, fifo, union_collapse
 from pygears.lib import priority_mux, replicate
 
 TCfg = Tuple[{'reduce_size': Uint['w_reduce_size'], 'init': 't_acc'}]
@@ -34,7 +34,7 @@ def reduce2(din, cfg: TCfg, *, f, max_size):
         | priority_mux \
         | fmap(f=union_collapse, fcat=czip, lvl=1)
 
-    result = czip(din, sec_opnd) | decoupler | fmap(f=f, fcat=czip, lvl=2)
+    result = czip(din, sec_opnd) | decouple | fmap(f=f, fcat=czip, lvl=2)
     acc, fin_res = result | Union[qtype, qtype] | demux
     acc | fifo(intfs=[temp_res], depth=max_size)
 

@@ -1,0 +1,1 @@
+{"signal": [{"name": "clk", "wave": "p..."}, ["add.din", {"name": "a", "wave": "555z", "data": ["0", "1", "2"]}, {"name": "b", "wave": "555z", "data": ["0", "1", "2"]}], ["add.dout", {"name": "", "wave": "555z", "data": ["0", "2", "4"]}]], "head": {"tock": 0}}

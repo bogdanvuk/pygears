@@ -32,10 +32,10 @@ def test_str():
 
 
 def test_is_specified():
-    assert Queue[1].is_specified() is True
-    assert Queue['T1'].is_specified() is False
-    assert Queue[Uint['T2']].is_specified() is False
-    assert Queue[Uint[1]].is_specified() is True
+    assert Queue[1].specified is True
+    assert Queue['T1'].specified is False
+    assert Queue[Uint['T2']].specified is False
+    assert Queue[Uint[1]].specified is True
 
 
 def test_subs():

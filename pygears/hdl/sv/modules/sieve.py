@@ -3,6 +3,7 @@ import itertools
 from pygears.lib.sieve import sieve
 from pygears.hdl.sv import SVGenPlugin
 from pygears.hdl.sv.svmod import SVModuleGen
+from pygears.hdl.modinst import get_port_config
 from functools import partial
 from pygears.rtl import flow_visitor, RTLPlugin
 from pygears.rtl.gear import RTLGearHierVisitor, is_gear_instance
@@ -12,7 +13,7 @@ def index_to_sv_slice(dtype, key):
     subtype = dtype[key]
 
     if isinstance(key, slice):
-        key = key.start
+        key = min(key.start, key.stop)
 
     if key is None or key == 0:
         low_pos = 0
@@ -53,7 +54,21 @@ class SVGenSieve(SVModuleGen):
     def is_generated(self):
         return True
 
+    @property
+    def port_configs(self):
+        if self.node.pre_sieves:
+            node = self.node.pre_sieves[0]
+        else:
+            node = self.node
+
+        for p in node.in_ports:
+            yield get_port_config('consumer', type_=p.dtype, name=p.basename)
+
+        for p in node.out_ports:
+            yield get_port_config('producer', type_=p.dtype, name=p.basename)
+
     def get_module(self, template_env):
+
         context = {
             'stages': get_sieve_stages(self.node),
             'module_name': self.module_name,

@@ -81,7 +81,7 @@ def infer_const_args(args):
                 else:
                     raise GearArgsNotSpecified(
                         f'Unresolved argument "{intf}" connected to the input'
-                        f'"{name}"')
+                        f' "{name}"')
 
         args_res[name] = intf
 

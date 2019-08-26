@@ -19,7 +19,7 @@ For an introductory **PyGears** example, checkout `echo <https://www.pygears.org
       feedback = dout \
           | fifo(depth=fifo_depth, threshold=fifo_depth - 1) \
           | fill_void(fill=Int[16](0)) \
-          | decoupler
+          | decouple
 
       feedback_attenuated = (feedback * feedback_gain) >> precision
 

@@ -7,7 +7,7 @@ from pygears.hls import HDLWriter, InstanceVisitor, parse_gear_body
 from pygears.typing import Queue, typeof
 
 from ..util import separate_conditions
-from .util import vgen_intf, vgen_reg, vgen_wire
+from .util import vgen_intf, vgen_signal
 from .v_expression import cast, vexpr
 
 REG_TEMPLATE = """
@@ -39,12 +39,11 @@ class VCompiler(InstanceVisitor):
             if target != self.visit_var:
                 return
 
-        # rhs = vexpr(node.val, self.extras)
         val = node.val
         if isinstance(val, str) and val in self.condtitions:
             val = self.condtitions[val]
 
-        rhs = vexpr(val, node.dtype, self.extras)
+        rhs = vexpr(val, extras=self.extras)
 
         var = None
         if target in self.hdl_locals:
@@ -77,9 +76,11 @@ class VCompiler(InstanceVisitor):
 
     def visit_AssertValue(self, node):
         if 'formal' in self.kwds and self.kwds['formal']:
-            self.writer.line(f'assume ({vexpr(node.val.test)});')
+            self.writer.line(
+                f'assume ({vexpr(node.val.test, extras=self.extras)});')
         else:
-            self.writer.line(f'if (!({vexpr(node.val.test)})) begin')
+            self.writer.line(
+                f'if (!({vexpr(node.val.test, extras=self.extras)})) begin')
             self.writer.indent += 4
             self.writer.line(f'$display("{node.val.msg}");')
             # self.writer.line(f'$finish;')
@@ -99,6 +100,65 @@ class VCompiler(InstanceVisitor):
 
         self.visit_HDLBlock(node)
 
+        self.writer.line('')
+
+    def visit_FuncReturn(self, node):
+        self.writer.line(
+            f"{vexpr(node.func.name)} = {vexpr(node.expr, extras=self.extras)};"
+        )
+
+    def visit_FuncBlock(self, node):
+        size = ''
+        if int(node.ret_dtype) > 0:
+            size = f'[{int(node.ret_dtype)-1}:0]'
+
+        if getattr(node.ret_dtype, 'signed', False):
+            size = f'signed {size}'
+
+        self.writer.line(f'function {size} {node.name};')
+
+        sigdef = {}
+
+        self.writer.indent += 4
+
+        for name, arg in node.args.items():
+            # size = ''
+            # if len(arg.dtype) > 0:
+            #     size = f'[{len(arg.dtype)-1}:0]'
+
+            #     if getattr(arg.dtype, 'signed', False):
+            #         size = f'signed {size}'
+
+            arg_name = vexpr(arg)
+
+            self.writer.line(
+                vgen_signal(arg.dtype, 'input', arg_name, 'input', False))
+
+            sigdef[arg_name] = vgen_signal(arg.dtype, 'reg', arg_name,
+                                           'input', True).split('\n')[1:]
+
+            for l in sigdef[arg_name]:
+                if l.startswith('reg'):
+                    self.writer.line(l)
+
+        self.writer.indent -= 4
+
+        if not node.stmts and not node.dflts:
+            return
+
+        self.writer.line(f'begin')
+
+        self.writer.indent += 4
+        for name, sdef in sigdef.items():
+            for l in sdef:
+                if l.startswith('assign'):
+                    self.writer.line(l[6:])
+
+        self.writer.indent -= 4
+
+        self.visit_HDLBlock(node)
+
+        self.writer.line(f'endfunction')
         self.writer.line('')
 
     def visit_CombSeparateStmts(self, node):
@@ -139,24 +199,34 @@ def write_module(hdl_data, v_stmts, writer, **kwds):
     if 'config' not in kwds:
         kwds['config'] = {}
 
+    extras = {}
+
     separate_conditions(v_stmts, kwds, vexpr)
 
+    for name, expr in hdl_data.hdl_functions.items():
+        compiler = VCompiler(name, writer, hdl_data.hdl_locals, **kwds)
+        compiler.visit(expr)
+        extras.update(compiler.extras)
+
     for name, expr in hdl_data.regs.items():
-        writer.line(vgen_reg(expr.dtype, f'{name}_reg', 'input', False))
-        writer.line(vgen_reg(expr.dtype, f'{name}_next', 'input', False))
+        writer.line(
+            vgen_signal(expr.dtype, 'reg', f'{name}_reg', 'input', False))
+        writer.line(
+            vgen_signal(expr.dtype, 'reg', f'{name}_next', 'input', False))
         writer.line(f'reg {name}_en;')
         writer.line()
 
     for name, val in hdl_data.in_intfs.items():
         writer.line(vgen_intf(val.dtype, name, 'input', False))
-        writer.line(vgen_reg(val.dtype, f'{name}_s', 'input', False))
-        tmp = vgen_wire(val.dtype, f'{name}_s', 'input')
+        writer.line(vgen_signal(val.dtype, 'reg', f'{name}_s', 'input', False))
+        tmp = vgen_signal(val.dtype, 'wire', f'{name}_s', 'input')
         writer.line(tmp.split(';', 1)[1])
         writer.line(f"assign {name} = {name}_s;")
     writer.line()
 
     for name, expr in hdl_data.variables.items():
-        writer.block(vgen_reg(expr.dtype, f'{name}_v', 'input', False))
+        writer.block(
+            vgen_signal(expr.dtype, 'reg', f'{name}_v', 'input', False))
         writer.line()
 
     if 'conditions' in v_stmts:
@@ -174,7 +244,6 @@ def write_module(hdl_data, v_stmts, writer, **kwds):
     for name, expr in hdl_data.regs.items():
         writer.block(REG_TEMPLATE.format(name, int(expr.val)))
 
-    extras = {}
     for name, val in v_stmts.items():
         if name != 'variables':
             compiler = VCompiler(name, writer, hdl_data.hdl_locals, **kwds)
@@ -219,10 +288,9 @@ def write_assertions(gear, writer, cfg):
         append_to_context(out_context, port)
 
     base_addr = os.path.dirname(__file__)
-    jenv = jinja2.Environment(
-        loader=jinja2.FileSystemLoader(base_addr),
-        trim_blocks=True,
-        lstrip_blocks=True)
+    jenv = jinja2.Environment(loader=jinja2.FileSystemLoader(base_addr),
+                              trim_blocks=True,
+                              lstrip_blocks=True)
 
     context = {
         'in_context': in_context,
@@ -242,12 +310,11 @@ def compile_gear_body(gear):
 
     hdl_data, res = parse_gear_body(gear)
     writer = HDLWriter()
-    write_module(
-        hdl_data,
-        res,
-        writer,
-        formal=formal,
-        config=gear.params.get('hdl', {}))
+    write_module(hdl_data,
+                 res,
+                 writer,
+                 formal=formal,
+                 config=gear.params.get('hdl', {}))
 
     if formal:
         write_assertions(gear, writer, formal)

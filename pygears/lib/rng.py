@@ -43,7 +43,7 @@ async def py_rng(cfg: TCfg, *, cnt_steps=False,
 
         for data, last in qrange(start, stop, step):
             if incr_steps:
-                yield int(offset) + (data * incr), last
+                yield offset + (data * incr), last
             else:
                 yield data, last
 

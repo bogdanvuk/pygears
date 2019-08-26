@@ -45,6 +45,9 @@ class SVGenTypeVisitor(TypingVisitorBase):
             )
         return f'{self.basic_type} [{int(type_)-1}:0]'
 
+    visit_ufixp = visit_uint
+    visit_fixp = visit_int
+
     def visit_unit(self, type_, field):
         return None
 
@@ -59,7 +62,8 @@ class SVGenTypeVisitor(TypingVisitorBase):
             if (int(t) > max_len):
                 max_len = int(t)
 
-        if self.depth < self.max_depth:
+        # if self.depth < self.max_depth:
+        if False:
             for i, t in reversed(list(enumerate(type_.args))):
                 field_tmp = f'f{i}'
                 struct_fields.append(f'{self.struct_str} // ({t}, u?)')
@@ -90,7 +94,8 @@ class SVGenTypeVisitor(TypingVisitorBase):
             f'    {self.basic_type} [{bitw(len(type_.args)-1)-1}:0] ctrl; // u{bitw(len(type_.args)-1)}'
         )
 
-        if self.depth < self.max_depth:
+        # if self.depth < self.max_depth:
+        if False:
             struct_fields.append(f'    {middle_parent_context}_t data; // {type_}')
         else:
             struct_fields.append(

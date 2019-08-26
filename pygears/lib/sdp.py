@@ -1,18 +1,39 @@
-from pygears import gear
+from pygears import gear, module, find
 from pygears.typing import Tuple, Uint
 
 TWrDin = Tuple[{'addr': Uint['w_addr'], 'data': 'w_data'}]
 TRdDin = Uint['w_addr']
 
 
-@gear(
-    outnames=['rd_data'])
+def sdp_wr_port_setup(module):
+    module.ram = {}
+
+
+@gear(sim_setup=sdp_wr_port_setup, svgen={'node_cls': None})
+async def sdp_wr_port(din, *, depth) -> None:
+    async with din as (addr, data):
+        module().ram[addr] = data
+
+
+def sdp_rd_port_setup(module):
+    module.sdp_wr_port = find('../sdp_wr_port')
+
+
+@gear(sim_setup=sdp_rd_port_setup, svgen={'node_cls': None})
+async def sdp_rd_port(addr, *, t, depth) -> b't':
+    ram = module().sdp_wr_port.ram
+
+    async with addr as a:
+        yield ram[a]
+
+
+@gear(outnames=['rd_data'])
 def sdp(wr_addr_data: TWrDin,
         rd_addr: TRdDin,
         *,
+        depth=b'2**w_addr',
         w_data=b'w_data',
-        w_addr=b'w_addr',
-        depth=5) -> b'w_data':
+        w_addr=b'w_addr') -> b'w_data':
     """Short for Simple Dual-Port RAM. Supports simultaneous read and write
     operations i.e. ``rd_addr`` interface reads from the RAM while the
     ``wr_addr_data`` interface writes to it. It has a sigle output interface
@@ -42,3 +63,6 @@ def sdp(wr_addr_data: TWrDin,
         Data read from the memory. Same type as the ``data`` field of the
           ``TWrDin`` :class:`Tuple` i.e. the data beeing writen to memory.
     """
+
+    wr_addr_data | sdp_wr_port(depth=depth)
+    return rd_addr | sdp_rd_port(t=wr_addr_data.dtype['data'], depth=depth)

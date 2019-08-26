@@ -5,7 +5,7 @@ from pygears.core.hier_node import HierYielderBase
 from pygears.conf import registry
 from pygears.util.fileio import save_file
 
-from .util import vgen_intf, vgen_reg, vgen_wire
+from .util import vgen_intf, vgen_signal
 
 
 class VTemplateEnv(TemplateEnv):
@@ -13,8 +13,7 @@ class VTemplateEnv(TemplateEnv):
         super().__init__(basedir=os.path.dirname(__file__))
 
         self.jenv.globals.update(vgen_intf=vgen_intf,
-                                 vgen_wire=vgen_wire,
-                                 vgen_reg=vgen_reg)
+                                 vgen_signal=vgen_signal)
 
         self.snippets = self.load(self.basedir, 'snippet.j2').module
 
@@ -33,6 +32,9 @@ class VGenGenerateVisitor(HierYielderBase):
             yield vgen.file_name, contents
 
             # wrappers not needed for verilog, hence no else
+            if (self.wrapper) and (node is self.top):
+                yield f'wrap_{vgen.file_name}', vgen.get_synth_wrap(
+                    self.template_env)
 
 
 def vgen_generate(top, conf):

@@ -32,9 +32,10 @@ def operator_methods_gen(cls):
 @operator_methods_gen
 class Intf:
     OPERATOR_SUPPORT = [
-        '__getitem__', '__neg__', '__add__', '__sub__', '__mul__', '__div__',
-        '__floordiv__', '__mod__', '__invert__', '__rshift__', '__lt__',
-        '__gt__', '__aiter__', '__eq__', '__xor__', '__lshift__'
+        '__getitem__', '__neg__', '__add__', '__div__', '__eq__',
+        '__floordiv__', '__ge__', '__gt__', '__invert__', '__le__', '__lt__',
+        '__mod__', '__mul__', '__ne__', '__neg__', '__lshift__', '__rshift__',
+        '__aiter__', '__sub__', '__xor__'
     ]
 
     def __init__(self, dtype):
@@ -110,29 +111,6 @@ class Intf:
                 self._in_queue = get_producer_queue(self)
 
         return self._in_queue
-
-    # def get_consumer_queue(self, port):
-    #     for pout in self.consumers:
-    #         if pout.gear in registry('sim/map') and (isinstance(pout,
-    #                                                             OutPort)):
-    #             out_queues = self.out_queues
-    #             try:
-    #                 i = self.end_consumers.index(port)
-    #             except Exception as e:
-    #                 import pdb
-    #                 pdb.set_trace()
-    #                 print(
-    #                     f'Port {port.gear.name}.{port.basename} not in end consumer list of {self.consumers[0].gear.name}.{self.consumers[0].basename}'
-    #                 )
-    #                 raise e
-    #             return out_queues[i]
-    #     else:
-    #         if self.producer:
-    #             return self.producer.get_queue(port)
-    #         else:
-    #             raise Exception(
-    #                 f'Interface path does not end with a simulation gear at {pout.gear.name}.{pout.basename}'
-    #             )
 
     @property
     def out_queues(self):

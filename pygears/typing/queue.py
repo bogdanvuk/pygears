@@ -17,7 +17,7 @@ class QueueMeta(EnumerableGenericMeta):
             return super().__new__(cls, name, bases, namespace, args)
 
     def __getitem__(self, index):
-        if not self.is_specified():
+        if not self.specified:
             if inspect.isclass(index) and issubclass(
                     index, Queue) and not self.__args__:
                 return Queue[index.args[0], index.lvl + 1]
@@ -86,12 +86,15 @@ class Queue(tuple, metaclass=QueueMeta):
     __default__ = [1]
     __parameters__ = ['data', 'eot']
 
-    def __new__(cls, val, eot=None):
+    def __new__(cls, val=None, eot=None):
         if type(val) == cls:
             return val
 
-        if not cls.is_specified():
+        if not cls.specified:
             raise TemplatedTypeUnspecified
+
+        if val is None and eot is None:
+            return super(Queue, cls).__new__(cls, (cls[0](), cls[1]()))
 
         if eot is None:
             val, eot = val

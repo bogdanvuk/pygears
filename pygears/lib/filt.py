@@ -1,5 +1,5 @@
 from pygears import alternative, gear
-from pygears.typing import Queue, Union, Uint, Tuple, Bool
+from pygears.typing import Queue, Union, Uint, Tuple, Bool, Unit, Any
 from .ccat import ccat
 from .fmap import fmap
 
@@ -21,6 +21,12 @@ async def filt(din: Tuple[{'data': Union, 'sel': Uint}]) -> b'din["data"]':
     async with din as (data, sel):
         if data.ctrl == sel:
             yield data
+
+
+@alternative(filt)
+@gear
+def filt_unit(din: Union[Any, Unit]) -> b'din.types[0]':
+    return din | filt(fixsel=0)
 
 
 @alternative(filt)

@@ -1,4 +1,4 @@
-from pygears import gear, module
+from pygears import gear, module, alternative
 from pygears.typing import Union, Uint
 from pygears.lib.ccat import ccat
 
@@ -40,11 +40,12 @@ async def demux(
         mapping=b'dflt_map(din)',
         _full_mapping=b'full_mapping(din, mapping)',
 ) -> b'demux_type(din, _full_mapping)':
-
     async with din as (data, ctrl):
         dout = [None] * len(module().tout)
 
-        dout[_full_mapping[ctrl]] = data
+        ctrl = _full_mapping[ctrl]
+
+        dout[ctrl] = module().tout[ctrl].decode(int(data))
 
         yield tuple(dout)
 
@@ -56,13 +57,14 @@ def demux_ctrl(din: Union):
     return (din[1], *dout)
 
 
+@alternative(demux)
 @gear
-def demux_by(ctrl, din, *, fcat=ccat, out_num=None):
-    if out_num is None:
-        out_num = 2**int(ctrl.dtype)
+def demux_by(ctrl: Uint, din, *, fcat=ccat, nout=None):
+    if nout is None:
+        nout = 2**int(ctrl.dtype)
 
     return fcat(din, ctrl) \
-        | Union[(din.dtype, )*out_num] \
+        | Union[(din.dtype, )*nout] \
         | demux
 
 

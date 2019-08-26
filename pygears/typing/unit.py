@@ -5,8 +5,17 @@ class UnitMeta(TypingMeta):
     def __int__(self):
         return 0
 
+    def __len__(self):
+        return 0
+
     def __str__(self):
         return '()'
+
+    def __matmul__(self, other):
+        return other
+
+    def __rmatmul__(self, other):
+        return other
 
 
 class Unit(metaclass=UnitMeta):
@@ -28,6 +37,12 @@ class Unit(metaclass=UnitMeta):
 
     def __int__(self):
         return 0
+
+    def __matmul__(self, other):
+        return other
+
+    def __rmatmul__(self, other):
+        return other
 
     def __eq__(self, other):
         return isinstance(other, Unit)

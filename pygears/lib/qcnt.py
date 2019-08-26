@@ -1,9 +1,36 @@
-from pygears import gear
+from pygears import gear, alternative
 from pygears.typing import Queue, Uint
 
 
-@gear(hdl={'compile': True})
-async def qcnt(din: Queue, *, lvl=1, init=1, w_out=16) -> Queue[Uint['w_out']]:
+@gear(hdl={'compile': True}, enablement=b'running==False')
+async def qcnt(din: Queue, *, running=False, lvl=0, init=1,
+               w_out=16) -> Uint['w_out']:
+    """Short for Queue Length Count. Counts the number of input sub-transactions
+    and outputs the final count when the input transaction finishes.
+
+    Args:
+        lvl: Specifies the level of the input Queue that needs to be counted
+        init: Initialization value for the counter
+        w_out: Width of the counter and the output data bus
+
+    Returns:
+        The number of sub-transactions in the input transaction.
+    """
+
+    cnt = Uint[w_out](init)
+
+    async for (data, eot) in din:
+        if all(eot):
+            yield cnt
+
+        if all(eot[:lvl]):
+            cnt += 1
+
+
+@alternative(qcnt)
+@gear(hdl={'compile': True}, enablement=b'running==True')
+async def qcnt_running(din: Queue, *, running=False, lvl=0, init=1,
+                       w_out=16) -> Queue[Uint['w_out']]:
     """Short for Queue Count. Counts the number of sub-transactions in the input
     transaction and outputs the running count.
 
@@ -18,6 +45,6 @@ async def qcnt(din: Queue, *, lvl=1, init=1, w_out=16) -> Queue[Uint['w_out']]:
     cnt = Uint[w_out](init)
 
     async for (data, eot) in din:
-        if all(eot[:din.dtype.lvl - lvl]):
+        if all(eot[:lvl]):
             yield (cnt, all(eot))
             cnt += 1

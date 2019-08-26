@@ -187,7 +187,7 @@ class TupleType(EnumerableGenericMeta):
         Tuple[Uint[8], Uint[16]]
 
         """
-        if not self.is_specified():
+        if not self.specified:
             return super().__getitem__(key)
 
         key_norm = self.index_norm(key)
@@ -225,14 +225,16 @@ class Tuple(tuple, metaclass=TupleType):
 
     """
 
-    def __new__(cls, val):
+    def __new__(cls, val=None):
         if isinstance(val, cls):
             return val
 
-        if not cls.is_specified():
+        if not cls.specified:
             raise TemplatedTypeUnspecified
 
-        if isinstance(val, dict):
+        if val is None:
+            tpl_val = tuple(t() for t in cls)
+        elif isinstance(val, dict):
             tpl_val = tuple(t(val[f]) for t, f in zip(cls, cls.fields))
         else:
             tpl_val = tuple(t(v) for t, v in zip(cls, val))

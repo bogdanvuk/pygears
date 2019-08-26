@@ -1,10 +1,10 @@
 from functools import partial
 
 from .conditions_utils import COND_NAME, add_found_cond
-from .hdl_types import AssertValue, AssignValue, CombBlock, HDLBlock
+from .hdl_types import AssertValue, AssignValue, CombBlock, HDLBlock, FuncBlock, FuncReturn
 from .hls_expressions import (ConcatExpr, Expr, IntfReadyExpr, IntfValidExpr,
                               OperandVal, RegDef, ResExpr, SubscriptExpr,
-                              VariableDef)
+                              VariableDef, ConditionalExpr)
 from .pydl_types import Block
 from .utils import VisitError, add_to_list
 
@@ -16,8 +16,8 @@ def find_cond(block, ctype):
 
     if curr_cond is not None:
         add_found_cond(block.cond_val.name, ctype)
-        return COND_NAME.substitute(
-            cond_type=ctype, block_id=block.cond_val.name)
+        return COND_NAME.substitute(cond_type=ctype,
+                                    block_id=block.cond_val.name)
 
     if ctype == 'in':  # avoid unnecessary if(1) blocks
         return None
@@ -62,8 +62,9 @@ def find_assign_dflt(stmt, block, idx):
             stmt.val = None
     else:
         block.dflts[stmt.target] = stmt
-        block.stmts[idx] = AssignValue(
-            target=stmt.target, val=None, dtype=stmt.dtype)
+        block.stmts[idx] = AssignValue(target=stmt.target,
+                                       val=None,
+                                       dtype=stmt.dtype)
 
 
 def block_cleanup(block):
@@ -176,9 +177,9 @@ def parse_stmt_target(node, context):
         next_target = f'{node.name}_{context}'
     elif isinstance(node_var, SubscriptExpr):
         sub_val = node_var.val
-        next_target = SubscriptExpr(
-            val=OperandVal(op=sub_val.op, context=context),
-            index=node_var.index)
+        next_target = SubscriptExpr(val=OperandVal(op=sub_val.op,
+                                                   context=context),
+                                    index=node_var.index)
     else:
         raise VisitError('Unknown assignment type')
 
@@ -198,6 +199,45 @@ class VariableVisitor(HDLStmtVisitor):
     def visit_VariableStmt(self, node, **kwds):
         self.assign_var(f'{node.name}_v', node.val)
         return parse_stmt_target(node, 'v')
+
+
+class FunctionVisitor(HDLStmtVisitor):
+    def __init__(self, hdl_data):
+        super().__init__(hdl_data)
+        self.seen_var = []
+
+    def assign_var(self, name, value):
+        if name not in self.seen_var:
+            self.non_control_pairs.append((name, value))
+            self.seen_var.append(name)
+
+    def visit_VariableStmt(self, node, **kwds):
+        self.assign_var(f'{node.name}_v', node.val)
+        return parse_stmt_target(node, 'v')
+
+    def visit_ReturnStmt(self, node, **kwds):
+        return FuncReturn(func=self.func_block, expr=node.val)
+
+    def visit_Function(self, node, **kwds):
+        block = FuncBlock(stmts=[],
+                          dflts={},
+                          args=node.args,
+                          name=node.name,
+                          ret_dtype=node.ret_dtype)
+
+        self.func_block = block
+
+        return self.traverse_block(block, node)
+
+    def traverse_block(self, block, node):
+        for stmt in node.stmts:
+            add_to_list(block.stmts, self.visit(stmt))
+
+        return block
+
+    def visit_all_Block(self, node, **kwds):
+        block = HDLBlock(in_cond=node.in_cond, stmts=[], dflts={})
+        return self.traverse_block(block, node)
 
 
 class OutputVisitor(HDLStmtVisitor):
@@ -227,8 +267,9 @@ class OutputVisitor(HDLStmtVisitor):
             stmts.append(AssignValue(IntfValidExpr(port_name), valid))
             if (not self.hdl_data.out_intfs) and (valid != 0):
                 stmts.append(
-                    AssignValue(
-                        target=f'{port_name}_s', val=expr, dtype=port.dtype))
+                    AssignValue(target=f'{port_name}_s',
+                                val=expr,
+                                dtype=port.dtype))
         in_cond = find_cond(node, 'in')
         block = HDLBlock(in_cond=in_cond, stmts=stmts, dflts={})
         self.update_defaults(block)
@@ -241,10 +282,9 @@ class OutputVisitor(HDLStmtVisitor):
         res = []
         for intf in node.intf.intf:
             res.append(
-                AssignValue(
-                    target=f'{intf.basename}_s',
-                    val=node.val,
-                    dtype=node.val.dtype))
+                AssignValue(target=f'{intf.basename}_s',
+                            val=node.val,
+                            dtype=node.val.dtype))
         return res
 
 
@@ -259,13 +299,18 @@ class ReadyBase(HDLStmtVisitor):
             if port.has_subop:
                 if isinstance(port.intf, ConcatExpr):
                     res.extend([
-                        AssignValue(IntfReadyExpr(op), 0)
+                        AssignValue(
+                            IntfReadyExpr(op),
+                            ConditionalExpr(operands=(0, "1'bx"),
+                                            cond=IntfValidExpr(op)))
                         for op in port.intf.operands
                         if op.name in self.input_target
                     ])
                 raise VisitError('Unsupported expression type in IntfDef')
             else:
-                res.append(AssignValue(IntfReadyExpr(port), 0))
+                val = ConditionalExpr(operands=(0, "1'bx"),
+                                      cond=IntfValidExpr(port))
+                res.append(AssignValue(IntfReadyExpr(port), val))
         return res
 
     def _enter_intf(self, block, cond_func):
@@ -292,16 +337,14 @@ class ReadyBase(HDLStmtVisitor):
     def visit_IntfStmt(self, node):
         if hasattr(node.val, 'name'):
             if node.val.name in self.input_target:
-                return AssignValue(
-                    target=IntfReadyExpr(node.val),
-                    val=IntfReadyExpr(node.intf))
+                return AssignValue(target=IntfReadyExpr(node.val),
+                                   val=IntfReadyExpr(node.intf))
 
             if node.intf.has_subop:
                 if isinstance(node.val, ConcatExpr):
                     return [
-                        AssignValue(
-                            target=IntfReadyExpr(op),
-                            val=IntfReadyExpr(node.intf))
+                        AssignValue(target=IntfReadyExpr(op),
+                                    val=IntfReadyExpr(node.intf))
                         for op in node.val.operands
                         if op.name in self.input_target
                     ]
@@ -330,13 +373,11 @@ class IntfValidVisitor(HDLStmtVisitor):
     def visit_IntfStmt(self, node, **kwds):
         if node.intf.name in self.hdl_data.in_intfs:
             return [
-                AssignValue(
-                    target=f'{node.intf.name}_s',
-                    val=node.val,
-                    dtype=node.dtype),
-                AssignValue(
-                    target=IntfValidExpr(node.intf),
-                    val=IntfValidExpr(node.val))
+                AssignValue(target=f'{node.intf.name}_s',
+                            val=node.val,
+                            dtype=node.dtype),
+                AssignValue(target=IntfValidExpr(node.intf),
+                            val=IntfValidExpr(node.val))
             ]
 
         return None

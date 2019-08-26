@@ -2,6 +2,8 @@ create_project -force synth_test {{res_dir}} -part xc7z020clg484-1
 
 add_files { {{' '.join(files)}} }
 
+set_property top {{top}} [current_fileset]
+
 update_compile_order -fileset sources_1
 
 launch_runs synth_1
@@ -10,6 +12,8 @@ wait_on_run synth_1
 
 open_run synth_1
 
-report_utilization -file {{res_dir}}/utilization.txt -hierarchical
+report_utilization -force -file {{res_dir}}/utilization.txt -hierarchical
 
 report_timing -path_type end -no_header -file {{res_dir}}/timing.txt
+
+write_verilog -force {{res_dir}}/vivado_synth.v

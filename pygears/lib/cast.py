@@ -1,16 +1,17 @@
-from pygears import gear, module
+from pygears import gear, module, cast as type_cast
 from pygears.conf import safe_bind
 from pygears.core.intf import IntfOperPlugin
 from pygears.rtl.connect import rtl_connect
-from pygears.typing import cast as type_cast
 from pygears.rtl.gear import RTLGearHierVisitor
 from pygears.rtl import flow_visitor, RTLPlugin
+from pygears.hdl.sv import SVGenPlugin
+from pygears.hdl.v import VGenPlugin
 
 
-@gear
+@gear(hdl={'compile': True})
 async def cast(din, *, cast_type) -> b'type_cast(din, cast_type)':
     async with din as d:
-        yield type_cast(d, module().tout)
+        yield type_cast(d, cast_type)
 
 
 def pipe(self, other):
@@ -32,10 +33,9 @@ class RemoveEqualReprCastVisitor(RTLGearHierVisitor):
             node.bypass()
 
 
-class RTLCastPlugin(IntfOperPlugin, RTLPlugin):
+class RTLCastPlugin(IntfOperPlugin, VGenPlugin, SVGenPlugin):
     @classmethod
     def bind(cls):
         safe_bind('gear/intf_oper/__or__', pipe)
-        cls.registry['rtl']['flow'].insert(
-            cls.registry['rtl']['flow'].index(rtl_connect) + 1,
-            RemoveEqualReprCastVisitor)
+        cls.registry['vgen']['flow'].insert(0, RemoveEqualReprCastVisitor)
+        cls.registry['svgen']['flow'].insert(0, RemoveEqualReprCastVisitor)

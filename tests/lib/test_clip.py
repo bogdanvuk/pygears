@@ -4,7 +4,7 @@ from functools import partial
 import pytest
 
 from pygears import Intf, gear
-from pygears.lib import decoupler
+from pygears.lib import decouple
 from pygears.lib.clip import clip
 from pygears.lib.delay import delay_rng
 from pygears.lib.verif import directed, drv, verif
@@ -23,7 +23,7 @@ T_CFG = Uint[16]
 def get_dut(dout_delay):
     @gear
     def decoupled(*din):
-        return din | clip | decoupler
+        return din | clip | decouple
 
     if dout_delay == 0:
         return decoupled
@@ -114,6 +114,6 @@ def test_synth_vivado():
     clip(Intf(T_DIN))
 
 
-@synth_check({'logic luts': 37, 'ffs': 17}, tool='yosys')
+@synth_check({'logic luts': 36, 'ffs': 17}, tool='yosys')
 def test_synth_yosys():
     clip(Intf(T_DIN))

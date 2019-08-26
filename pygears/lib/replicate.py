@@ -1,13 +1,13 @@
 from pygears import gear
 from pygears.util.utils import qrange
-from pygears.typing import Queue, Tuple, Uint
+from pygears.typing import Queue, Tuple, Uint, Any
 
 
 @gear(hdl={'compile': True})
 async def replicate(din: Tuple[{
-        'length': Uint['w_len'],
-        'value': 'w_val'
-}]) -> Queue['w_val']:
+        'length': Uint,
+        'val': Any
+}]) -> Queue['din["val"]']:
     """Replicates the input data. The ``length`` field of the :class:`Tuple`
     input type specifies the number of times the ``value`` field needs to be
     reproduced.

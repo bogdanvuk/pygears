@@ -1,7 +1,7 @@
 import pytest
 
 from pygears import Intf, gear
-from pygears.lib import decoupler, dreg
+from pygears.lib import decouple, dreg
 from pygears.lib.delay import delay_rng
 from pygears.lib.verif import directed, drv, verif
 from pygears.sim import sim, timestep
@@ -16,13 +16,13 @@ def test_pygears_sim(tmpdir):
 
     sim(outdir=tmpdir)
 
-    assert timestep() == len(seq)
+    assert timestep() == len(seq) + 1
 
 
 def get_dut(dout_delay):
     @gear
     def decoupled(din):
-        return din | dreg | decoupler
+        return din | dreg | decouple
 
     if dout_delay == 0:
         return decoupled
@@ -79,6 +79,6 @@ def test_synth_vivado():
     dreg(Intf(Uint[16]))
 
 
-@synth_check({'logic luts': 20, 'ffs': 17}, tool='yosys')
+@synth_check({'logic luts': 4, 'ffs': 17}, tool='yosys')
 def test_synth_yosys():
     dreg(Intf(Uint[16]))

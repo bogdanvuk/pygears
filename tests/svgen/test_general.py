@@ -1,9 +1,9 @@
 from pygears import Intf, gear
 from pygears.typing import Uint
-from pygears.util.test_utils import svgen_check
+from pygears.util.test_utils import hdl_check
 
 
-@svgen_check(['hier.sv'])
+@hdl_check(['hier.sv'])
 def test_hier_module_gen():
     @gear
     def fgear(arg1, arg2) -> {'ret': Uint[2]}:

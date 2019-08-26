@@ -10,7 +10,7 @@ from pygears.core.gear import InSig, OutSig
 
 @pytest.fixture(autouse=True)
 def configure():
-    config['svgen/sv_paths'].append(
+    config['hdl/include_paths'].append(
         os.path.join(os.path.dirname(__file__), 'test_signals'))
 
 
@@ -75,6 +75,6 @@ def test_clk_channeling():
     assert InSig('clk2', 1) in rtltop['/dut'].params['signals']
 
 
-# config['svgen/sv_paths'].append(
+# config['hdl/include_paths'].append(
 #     os.path.join(os.path.dirname(__file__), 'test_signals'))
 # test_channeling('/tools/home/tmp')

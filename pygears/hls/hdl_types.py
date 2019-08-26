@@ -3,12 +3,12 @@ from typing import Any, Dict, List, Union
 
 from pygears.typing.base import TypingMeta
 
-from .hls_expressions import Expr
+from .hls_expressions import Expr, VariableDef, PgType, IntfOpExpr
 
 
 @dataclass
 class AssignValue:
-    target: Union[str, Expr]
+    target: Union[str, IntfOpExpr]
     val: Union[str, int, Expr]
     dtype: Union[TypingMeta, None] = None
 
@@ -22,7 +22,7 @@ class AssertValue:
 class BaseBlock:
     # TODO : newer versions of Python will not need the string
     stmts: List[Union[AssignValue, 'HDLBlock']]
-    dflts: Dict  # values are AssignValue, keys target of AssignValue
+    dflts: Dict[Union[str, IntfOpExpr], AssignValue]
 
     @property
     def dflt_stmts(self):
@@ -37,6 +37,19 @@ class HDLBlock(BaseBlock):
 @dataclass
 class CombBlock(BaseBlock):
     pass
+
+
+@dataclass
+class FuncBlock(BaseBlock):
+    args: List[VariableDef]
+    name: str
+    ret_dtype: PgType
+
+
+@dataclass
+class FuncReturn:
+    func: FuncBlock
+    expr: Expr
 
 
 @dataclass

@@ -6,24 +6,34 @@ import functools
 @functools.lru_cache(maxsize=None)
 def index_norm_hashable_single(i, size):
     if isinstance(i, tuple):
-        start, stop, incr = i
+        start, stop, step = i
+
+        if step == -1:
+            start, stop = stop, start
+            if stop is not None:
+                if stop == -1:
+                    stop = None
+                else:
+                    stop += 1
+
+            step = 1
 
         if start is None:
             start = 0
         elif start < 0:
-            start = size + start
+            start += size
 
         if stop is None:
             stop = size
         elif stop < 0:
             stop += size
         elif stop > size:
-            raise IndexError
+            stop = size
 
         # if start == stop:
         #     raise IndexError
 
-        return slice(start, stop, incr)
+        return slice(start, stop, step)
 
     else:
         if i < 0:
@@ -52,7 +62,8 @@ class TypingMeta(type):
     """Base class all types.
     """
 
-    def is_specified(self):
+    @property
+    def specified(self):
         return True
 
     def __repr__(self):
@@ -150,19 +161,20 @@ class GenericMeta(TypingMeta):
         return len(self.args) == 0
 
     def __bool__(self):
-        return self.is_specified()
+        return self.specified
 
     def __hash__(self):
-        return id(self)
+        return hash(repr(self))
 
+    @property
     @functools.lru_cache()
-    def is_specified(self):
+    def specified(self):
         """Return True if all generic parameters were supplied concrete values.
 
-        >>> Uint['template'].is_specified()
+        >>> Uint['template'].specified
         False
 
-        >>> Uint[16].is_specified()
+        >>> Uint[16].specified
         True
         """
 
@@ -173,7 +185,7 @@ class GenericMeta(TypingMeta):
         if self.args:
             for a in self.args:
                 try:
-                    if not a.is_specified():
+                    if not a.specified:
                         return False
                 except AttributeError:
                     if isinstance(a, (str, bytes)):
@@ -308,7 +320,7 @@ searched recursively. Each template is reported only once.
 
         return self.base[args]
 
-    @functools.lru_cache(maxsize=None)
+    # @functools.lru_cache(maxsize=None)
     def _arg_eq(self, other):
         if len(self.args) != len(other.args):
             return False
@@ -339,7 +351,7 @@ def param_subs(t, matches, namespace):
     elif isinstance(t, collections.abc.Iterable):
         return type(t)(param_subs(tt, matches, namespace) for tt in t)
     else:
-        if isinstance(t, GenericMeta) and (not t.is_specified()):
+        if isinstance(t, GenericMeta) and (not t.specified):
             args = [
                 param_subs(t.args[i], matches, namespace)
                 for i in range(len(t.args))
@@ -364,7 +376,7 @@ class EnumerableGenericMeta(GenericMeta):
         >>> int(Tuple[Uint[1], Uint[2]])
         3
         """
-        if self.is_specified():
+        if self.specified:
             return sum(map(int, self))
         else:
             raise Exception(

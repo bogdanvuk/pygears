@@ -57,21 +57,21 @@ def test_multi_level_template():
     a = Tuple[1, 'T2']
     b = a[Tuple['T3', 'T4', Tuple['T5', 2]]]
 
-    assert b.is_specified() is False
+    assert b.specified is False
     assert b == Tuple[1, Tuple['T3', 'T4', Tuple['T5', 2]]]
 
 
 def test_multi_level_template_partial_subs():
     a = Tuple[Tuple['T1', 2, 'T2', Tuple[3, Tuple['T3', 'T4']]]]
     b = a[1, 'T2', 3]
-    assert b.is_specified() is False
+    assert b.specified is False
     assert b == Tuple[Tuple[1, 2, 'T2', Tuple[3, Tuple[3, 'T4']]]]
 
 
 def test_multi_level_template_all_subs():
     a = Tuple[Tuple['T1', 2, 'T2', Tuple[3, Tuple['T3', 'T4']]]]
     b = a[1, 2, 3, 4]
-    assert b.is_specified() is True
+    assert b.specified is True
     assert b == Tuple[Tuple[1, 2, 2, Tuple[3, Tuple[3, 4]]]]
 
 

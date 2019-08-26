@@ -1,7 +1,7 @@
 import pytest
 
 from pygears import Intf, gear
-from pygears.lib import decoupler
+from pygears.lib import decouple
 from pygears.lib import take
 from pygears.lib.delay import delay_rng
 from pygears.lib.verif import directed, drv, verif
@@ -19,7 +19,7 @@ T_QDIN = Queue[Tuple[Uint[16], Uint[16]], 2]
 def get_dut(dout_delay):
     @gear
     def decoupled(din):
-        return din | take | decoupler
+        return din | take | decouple
 
     if dout_delay == 0:
         return decoupled
@@ -132,6 +132,6 @@ def test_take_vivado():
     take(Intf(T_DIN))
 
 
-@synth_check({'logic luts': 71, 'ffs': 17}, tool='yosys')
+@synth_check({'logic luts': 72, 'ffs': 17}, tool='yosys')
 def test_take_yosys():
     take(Intf(T_DIN))

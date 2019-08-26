@@ -1,5 +1,5 @@
-Range generator
-===============
+rng
+===
 
 .. module:: rng
 

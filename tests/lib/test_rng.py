@@ -1,7 +1,7 @@
 import pytest
 
 from pygears import Intf, find, gear
-from pygears.lib import decoupler
+from pygears.lib import decouple
 from pygears.lib.delay import delay_rng
 from pygears.lib.rng import py_rng, rng
 from pygears.lib.verif import directed, drv, verif
@@ -27,8 +27,7 @@ def test_basic_unsigned_sim(tmpdir):
 def get_dut(dout_delay):
     @gear
     def decoupled(din, *, cnt_steps=False, incr_steps=False):
-        return din | rng(
-            cnt_steps=cnt_steps, incr_steps=incr_steps) | decoupler
+        return din | rng(cnt_steps=cnt_steps, incr_steps=incr_steps) | decouple
 
     if dout_delay == 0:
         return decoupled
@@ -44,12 +43,12 @@ def test_unsigned_cosim(tmpdir, cosim_cls, din_delay, dout_delay, cnt_steps,
     seq = [(2, 8, 2)]
 
     dut = get_dut(dout_delay)
-    verif(
-        drv(t=Tuple[Uint[4], Uint[4], Uint[2]], seq=seq)
-        | delay_rng(din_delay, din_delay),
-        f=dut(sim_cls=cosim_cls, cnt_steps=cnt_steps, incr_steps=incr_steps),
-        ref=rng(name='ref_model', cnt_steps=cnt_steps, incr_steps=incr_steps),
-        delays=[delay_rng(dout_delay, dout_delay)])
+    verif(drv(t=Tuple[Uint[4], Uint[4], Uint[2]], seq=seq)
+          | delay_rng(din_delay, din_delay),
+          f=dut(sim_cls=cosim_cls, cnt_steps=cnt_steps, incr_steps=incr_steps),
+          ref=rng(name='ref_model', cnt_steps=cnt_steps,
+                  incr_steps=incr_steps),
+          delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(outdir=tmpdir)
 
@@ -74,12 +73,11 @@ def test_signed_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
     seq = [(-15, -3, 2)]
 
     dut = get_dut(dout_delay)
-    verif(
-        drv(t=Tuple[Int[5], Int[6], Uint[2]], seq=seq)
-        | delay_rng(din_delay, din_delay),
-        f=dut(sim_cls=cosim_cls),
-        ref=rng(name='ref_model'),
-        delays=[delay_rng(dout_delay, dout_delay)])
+    verif(drv(t=Tuple[Int[5], Int[6], Uint[2]], seq=seq)
+          | delay_rng(din_delay, din_delay),
+          f=dut(sim_cls=cosim_cls),
+          ref=rng(name='ref_model'),
+          delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(outdir=tmpdir)
 
@@ -120,12 +118,11 @@ def test_cnt_only_sim(tmpdir):
 def test_cnt_only_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
     seq = [8]
 
-    verif(
-        drv(t=Uint[4], seq=seq)
-        | delay_rng(din_delay, din_delay),
-        f=rng(sim_cls=cosim_cls),
-        ref=rng(name='ref_model'),
-        delays=[delay_rng(dout_delay, dout_delay)])
+    verif(drv(t=Uint[4], seq=seq)
+          | delay_rng(din_delay, din_delay),
+          f=rng(sim_cls=cosim_cls),
+          ref=rng(name='ref_model'),
+          delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(outdir=tmpdir)
 
@@ -144,11 +141,11 @@ def test_cnt_down():
 #     iout = rng((1, 2, 3), lvl=2)
 #     print(iout.dtype)
 
-# @svgen_check(['rng_hier.sv'])
+# @hdl_check(['rng_hier.sv'])
 # def test_basic_unsigned_svgen():
 #     rng(Intf(Tuple[Uint[4], Uint[2], Uint[2]]))
 
-# @svgen_check(['rng_rng.sv', 'rng_ccat.sv', 'rng_hier.sv'])
+# @hdl_check(['rng_rng.sv', 'rng_ccat.sv', 'rng_hier.sv'])
 # def test_cnt_svgen():
 #     rng(8)
 
@@ -167,7 +164,6 @@ def test_cnt_steps_formal():
 
 @formal_check()
 def test_incr_cnt_steps_formal():
-    py_rng(
-        Intf(Tuple[Uint[4], Uint[4], Uint[2]]),
-        cnt_steps=True,
-        incr_steps=True)
+    py_rng(Intf(Tuple[Uint[4], Uint[4], Uint[2]]),
+           cnt_steps=True,
+           incr_steps=True)

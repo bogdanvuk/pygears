@@ -156,7 +156,7 @@ At this moment, this interface has no source (producer), which has to be attende
   feedback = dout \
       | fifo(depth=fifo_depth, threshold=sample_dly_len) \
       | fill_void(fill=din.dtype(0)) \
-      | decoupler
+      | decouple
 
 [Omitted long line with 1 matches]
 
@@ -267,7 +267,7 @@ Generated SystemVerilog
       );
 
 
-      decoupler decoupler_i (
+      decouple decouple_i (
           .clk(clk),
           .rst(rst),
           .din(fill_void_s),
@@ -368,7 +368,7 @@ If you have Vivado tool on your path while running the `examples/echo/echo_svgen
 +----------------------+------------+------------+---------+------+-----+--------+--------+--------------+
 | - - bc_dout_s        |          5 |          5 |       0 |    0 |   2 |      0 |      0 |            0 |
 +----------------------+------------+------------+---------+------+-----+--------+--------+--------------+
-| - - decoupler_i      |         24 |         24 |       0 |    0 |  38 |      0 |      0 |            0 |
+| - - decouple_i       |         24 |         24 |       0 |    0 |  38 |      0 |      0 |            0 |
 +----------------------+------------+------------+---------+------+-----+--------+--------+--------------+
 | - - fifo_i           |         42 |         42 |       0 |    0 |  30 |      8 |      0 |            0 |
 +----------------------+------------+------------+---------+------+-----+--------+--------+--------------+
