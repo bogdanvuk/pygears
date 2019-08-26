@@ -29,7 +29,7 @@ class FixpnumberType(IntegralType):
     def __int__(self):
         return self.width
 
-    def __neg__(self, others):
+    def __neg__(self):
         return Fixp[self.integer + 1, self.width + 1]
 
     def __lshift__(self, others):
