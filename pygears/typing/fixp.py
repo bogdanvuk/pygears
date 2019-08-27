@@ -29,7 +29,7 @@ class FixpnumberType(IntegralType):
     def __int__(self):
         return self.width
 
-    def __neg__(self, others):
+    def __neg__(self):
         return Fixp[self.integer + 1, self.width + 1]
 
     def __lshift__(self, others):
@@ -94,12 +94,26 @@ class FixpnumberType(IntegralType):
             return Ufixp[integer_part, width]
 
     def __add__(self, other):
-        """Returns the same type, but one bit wider to accomodate potential overflow.
+        ops = [self, other]
 
-        >>> Uint[8] + Uint[8]
-        Uint[9]
-        """
+        signed = any(op.signed for op in ops)
 
+        try:
+            integer_part = max(self.integer, other.integer)
+            fract_part = max(self.fract, other.fract)
+        except AttributeError:
+            integer_part = max(self.integer, int(other))
+            fract_part = self.fract
+
+        integer_part += 1
+        width = integer_part + fract_part
+
+        if signed:
+            return Fixp[integer_part, width]
+        else:
+            return Ufixp[integer_part, width]
+
+    def __sub__(self, other):
         ops = [self, other]
 
         signed = any(op.signed for op in ops)
@@ -189,6 +203,12 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
         sum_cls = type(self) + type(other)
         return sum_cls.decode(
             (int(self) << (sum_cls.fract - type(self).fract)) +
+            (int(other) << (sum_cls.fract - type(other).fract)))
+
+    def __sub__(self, other):
+        sum_cls = type(self) - type(other)
+        return sum_cls.decode(
+            (int(self) << (sum_cls.fract - type(self).fract)) -
             (int(other) << (sum_cls.fract - type(other).fract)))
 
     def code(self):

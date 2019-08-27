@@ -36,6 +36,17 @@ def test_signed_add():
     assert a + b == Fixp[4, 5](-7.0)
 
 
+def test_signed_sub():
+    t_a = Fixp[2, 3]
+    t_b = Fixp[3, 4]
+
+    assert (t_a - t_b == Fixp[4, 5])
+
+    a = t_a(-2.5)
+    b = t_b(-4.5)
+    assert a - b == Fixp[4, 5](2.0)
+
+
 def test_unsigned_div():
     t_a = Ufixp[4, 6]
     t_b = Ufixp[1, 7]

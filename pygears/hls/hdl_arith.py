@@ -35,6 +35,25 @@ def fixp_add_resolver(opexp, module_data):
         return expr.BinOpExpr(opexp, '+')
 
 
+def fixp_sub_resolver(opexp, module_data):
+    t_op1 = opexp[0].dtype
+    t_op2 = opexp[1].dtype
+
+    t_sum = t_op1 - t_op2
+    t_cast = t_sum.base[t_sum.integer - 1, t_sum.width - 1]
+    sh1 = t_sum.fract - t_op1.fract
+    sh2 = t_sum.fract - t_op2.fract
+
+    if sh1 or sh2:
+
+        def fixp__sub__(op1: t_op1, op2: t_op2) -> t_sum:
+            return t_cast(op1) - t_cast(op2)
+
+        return fixp__sub__
+    else:
+        return expr.BinOpExpr(opexp, '-')
+
+
 def fixp_cast_resolver(cast_to, opexp):
     val_fract = opexp.dtype.fract
     fract = cast_to.fract
@@ -72,6 +91,9 @@ resolvers = {
     },
     ast.Add: {
         Fixpnumber: fixp_add_resolver
+    },
+    ast.Sub: {
+        Fixpnumber: fixp_sub_resolver
     }
 }
 

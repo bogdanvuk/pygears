@@ -318,8 +318,12 @@ def verif(*stim, f, ref, delays=None, tolerance=0):
         A report dictionary with pass/fail statistics
     """
 
-    res_tlm = stim | f
-    ref_tlm = stim | ref
+    if stim:
+        res_tlm = stim | f
+        ref_tlm = stim | ref
+    else:
+        res_tlm = f
+        ref_tlm = ref
 
     if not isinstance(res_tlm, tuple):
         res_tlm = (res_tlm, )

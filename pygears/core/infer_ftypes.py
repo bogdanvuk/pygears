@@ -33,6 +33,8 @@ def type_is_specified(t):
     except Exception as e:
         if t is None:
             return True
+        elif isinstance(t, dict):
+            return all(type_is_specified(subt) for subt in t.values())
         elif is_type_iterable(t):
             return all(type_is_specified(subt) for subt in t)
         else:
