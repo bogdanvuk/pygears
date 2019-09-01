@@ -4,8 +4,9 @@ from pygears.sim import clk
 
 
 @gear
-async def dreg(din) -> b'din':
-    data = din.dtype()
+async def dreg(din, *, init=None) -> b'din':
+    data = din.dtype() if init is None else din.dtype(init)
+
     valid = Bool(False)
 
     while True:
