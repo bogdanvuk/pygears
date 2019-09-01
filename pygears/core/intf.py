@@ -11,6 +11,8 @@ from pygears.typing.base import TypingMeta
 from pygears.conf import inject, Inject
 from .graph import get_sim_map_gear
 
+gear_reg = {}
+
 
 def operator_func_from_namespace(cls, name):
     def wrapper(self, *args, **kwargs):
@@ -117,10 +119,6 @@ class Intf:
         if self._out_queues:
             return self._out_queues
 
-        # if len(self.consumers) == 1 and self.in_queue:
-        # if self.producer is not None:
-        #     return [self.in_queue]
-        # else:
         self._out_queues = [
             asyncio.Queue(maxsize=1, loop=registry('sim/simulator'))
             for _ in self.end_consumers
@@ -162,7 +160,7 @@ class Intf:
     async def ready(self):
         if not self.ready_nb():
             for q, c in zip(self.out_queues, self.end_consumers):
-                registry('gear/current_sim').phase = 'back'
+                gear_reg['current_sim'].phase = 'back'
                 await q.join()
 
     def ready_nb(self):
@@ -226,7 +224,7 @@ class Intf:
             raise GearDone
 
         if self._data is None:
-            registry('gear/current_sim').phase = 'forward'
+            gear_reg['current_sim'].phase = 'forward'
             self._data = await self.in_queue.get()
 
         e = self.events['pull_done']
@@ -274,3 +272,5 @@ class IntfOperPlugin(PluginBase):
     @classmethod
     def bind(cls):
         safe_bind('gear/intf_oper', {})
+        global gear_reg
+        gear_reg = registry('gear')

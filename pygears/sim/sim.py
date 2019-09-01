@@ -15,6 +15,9 @@ from pygears.core.port import InPort, OutPort
 from pygears.core.sim_event import SimEvent
 from pygears.core.hier_node import HierVisitorBase
 
+gear_reg = {}
+sim_reg = {}
+
 
 class SimFinish(Exception):
     pass
@@ -22,24 +25,24 @@ class SimFinish(Exception):
 
 def timestep():
     try:
-        return registry('sim/timestep')
+        return sim_reg['timestep']
     except KeyError:
         return None
 
 
 def sim_phase():
-    return registry('sim/simulator').phase
+    return sim_reg['simulator'].phase
 
 
 def clk():
-    registry('gear/current_sim').phase = 'forward'
-    return registry('sim/clk_event').wait()
+    gear_reg['current_sim'].phase = 'forward'
+    return sim_reg['clk_event'].wait()
 
 
 async def delta():
-    registry('gear/current_sim').phase = 'back'
+    gear_reg['current_sim'].phase = 'back'
     await asyncio.sleep(0)
-    return sim_phase()
+    return sim_reg['simulator'].phase
 
 
 def artifacts_dir():
@@ -47,14 +50,11 @@ def artifacts_dir():
 
 
 def schedule_to_finish(gear):
-    sim = registry('sim/simulator')
-    sim.schedule_to_finish(registry('sim/map')[gear])
+    sim = sim_reg['simulator']
+    sim.schedule_to_finish(sim_reg['map'][gear])
 
 
 class SimFuture(asyncio.Future):
-    # def _schedule_callbacks(self):
-    #     self._loop.future_done(self)
-
     def coro_iter(self):
         yield self
 
@@ -268,9 +268,6 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             bind('gear/current_sim', sim_gear)
 
     def run_gear(self, sim_gear, ready):
-
-        # self.cur_gear.phase = 'forward'
-
         before_event = None
         after_event = None
 
@@ -304,19 +301,23 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         self.delta_ready.discard(sim_gear)
 
         self.cur_gear = sim_gear.gear
-        bind('gear/current_module', self.cur_gear)
-        bind('gear/current_sim', sim_gear)
+        gear_reg['current_module'] = self.cur_gear
+        gear_reg['current_sim'] = sim_gear
 
         # print(f'{self.phase}: {sim_gear.gear.name}')
         self.run_gear(sim_gear, ready)
 
-        self.cur_gear = registry('gear/hier_root')
-        bind('gear/current_module', self.cur_gear)
-        bind('gear/current_sim', sim_gear)
+        self.cur_gear = gear_reg['hier_root']
+        gear_reg['current_module'] = self.cur_gear
+        gear_reg['current_sim'] = sim_gear
 
     def sim_loop(self, timeout):
         clk = registry('sim/clk_event')
         delta = registry('sim/delta_event')
+
+        global gear_reg, sim_reg
+        gear_reg = registry('gear')
+        sim_reg = registry('sim')
 
         bind('sim/timestep', 0)
 

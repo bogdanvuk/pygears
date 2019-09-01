@@ -178,9 +178,11 @@ class GenericMeta(TypingMeta):
         True
         """
 
-        if hasattr(self, '__parameters__'):
+        try:
             if len(self.args) != len(self.__parameters__):
                 return False
+        except AttributeError:
+            pass
 
         if self.args:
             for a in self.args:
@@ -324,7 +326,7 @@ searched recursively. Each template is reported only once.
     def _arg_eq(self, other):
         if len(self.args) != len(other.args):
             return False
-        return all([s == o for s, o in zip(self.args, other.args)])
+        return all(s == o for s, o in zip(self.args, other.args))
 
     def __eq__(self, other):
         if not isinstance(other, GenericMeta):

@@ -2,9 +2,15 @@ from pygears.conf import registry, safe_bind, PluginBase, Inject, inject
 from pygears.core.port import InPort, OutPort, Port
 from pygears.core.hier_node import HierNode
 
+sim_reg = None
+
 
 def get_sim_map_gear(gear):
-    sim_map = registry('sim/map')
+    global sim_reg
+    if sim_reg is None:
+        sim_reg = registry('sim')
+
+    sim_map = sim_reg['map']
     while gear is not None:
         if gear in sim_map:
             return sim_map[gear]
