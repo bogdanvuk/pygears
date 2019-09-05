@@ -152,6 +152,8 @@ def get_consumer_tree(intf):
 class IntfOperPlugin(PluginBase):
     @classmethod
     def bind(cls):
+        global sim_reg
+        sim_reg = None
         safe_bind('graph/consumer_tree', {})
         safe_bind('graph/end_producer', {})
 

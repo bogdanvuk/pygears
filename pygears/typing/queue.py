@@ -7,6 +7,8 @@ from .unit import Unit
 
 
 class QueueMeta(EnumerableGenericMeta):
+    _eot = None
+
     def keys(self):
         return (0, 1)
 
@@ -29,6 +31,11 @@ class QueueMeta(EnumerableGenericMeta):
                 return index[0]
             else:
                 return super().__getitem__(index)
+
+        if index == 0:
+            return self.args[0]
+        elif index == 1:
+            return self.eot
 
         key_norm = self.index_norm(index)
         if (len(key_norm) > 1):
@@ -70,7 +77,10 @@ class QueueMeta(EnumerableGenericMeta):
 
     @property
     def eot(self):
-        return Uint[self.lvl]
+        if self._eot is None:
+            self._eot = Uint[self.lvl]
+
+        return self._eot
 
     def __str__(self):
         if self.args:
@@ -94,12 +104,12 @@ class Queue(tuple, metaclass=QueueMeta):
             raise TemplatedTypeUnspecified
 
         if val is None and eot is None:
-            return super(Queue, cls).__new__(cls, (cls[0](), cls[1]()))
+            return super(Queue, cls).__new__(cls, (cls.args[0](), cls.eot()))
 
         if eot is None:
             val, eot = val
 
-        queue_tpl = (cls[0](val), cls[1](eot))
+        queue_tpl = (cls.args[0](val), cls.eot(eot))
         return super(Queue, cls).__new__(cls, queue_tpl)
 
     def __int__(self):

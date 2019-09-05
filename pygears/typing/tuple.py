@@ -107,7 +107,7 @@ class TupleType(EnumerableGenericMeta):
             # Generic parameter values have not been supplied
             return cls
         else:
-            cls.args = args
+            cls._args = args
             return cls
 
     def without(self, *index):

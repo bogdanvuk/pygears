@@ -54,7 +54,7 @@ def test_incomplete_argument():
 
 def test_unresolved_partial_err():
 
-    expected_err_text = '''Unresolved gear "consumer" with inputs (Intf(Integer),) and parameters {},connected to the input "din", when instantiating "producer"'''
+    expected_err_text = 'Unresolved gear "consumer" with arguments (Intf(Integer),) and parameters {}, connected to the input "din": \n, when instantiating "producer"'
 
     @gear
     def consumer(din1, din2) -> b'din':

@@ -527,6 +527,10 @@ def sim_log():
 class SimPlugin(GearPlugin):
     @classmethod
     def bind(cls):
+        global gear_reg, sim_reg
+        gear_reg = {}
+        sim_reg = {}
+
         safe_bind('sim/config', {})
         safe_bind('sim/flow', [])
         safe_bind('sim/tasks', {})
