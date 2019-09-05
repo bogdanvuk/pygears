@@ -29,7 +29,7 @@ def parse_trace(s):
         is_internal = any(
             trace_fn.startswith(d) for d in config['trace/ignore'])
 
-        is_decorator_gen = trace_fn.startswith('<decorator-gen')
+        is_decorator_gen = '<decorator-gen' in trace_fn
 
         if is_internal or is_decorator_gen:
             return None

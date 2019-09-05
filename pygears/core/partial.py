@@ -88,6 +88,7 @@ class Partial:
         self.func = func
         self.args = args
         self.kwds = kwds
+        self.errors = []
 
     def __call__(self, *args, **kwds):
         prev_kwds = self.kwds.copy()
@@ -97,7 +98,7 @@ class Partial:
         args = self.args + args
 
         alternatives = [self.func] + getattr(self.func, 'alternatives', [])
-        errors = []
+        self.errors.clear()
 
         for func in alternatives:
             try:
@@ -115,14 +116,16 @@ class Partial:
                     raise e
                 else:
                     # errors.append((func, e, sys.exc_info()))
-                    errors.append((func, *sys.exc_info()))
+                    self.errors.append((func, *sys.exc_info()))
         else:
-            if len(errors) == len(alternatives):
-                raise MultiAlternativeError(errors)
+            if len(self.errors) == len(alternatives):
+                raise MultiAlternativeError(self.errors)
             else:
                 # If some alternative can handle more arguments, try to wait
                 # for it
-                return Partial(self.func, *args, **kwds)
+                p = Partial(self.func, *args, **kwds)
+                p.errors = self.errors[:]
+                return p
 
     def __matmul__(self, iin):
         return self(intfs=iin)

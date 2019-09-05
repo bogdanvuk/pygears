@@ -74,10 +74,15 @@ def infer_const_args(args):
                 intf = Intf(get_literal_type(intf))
             except GearTypeNotSpecified:
                 if isinstance(intf, Partial):
+                    # raise GearArgsNotSpecified(
+                    #     f'Unresolved gear "{intf.func.__name__}" with inputs'
+                    #     f' {intf.args} and parameters {intf.kwds},'
+                    #     f'connected to the input "{name}"')
                     raise GearArgsNotSpecified(
-                        f'Unresolved gear "{intf.func.__name__}" with inputs'
-                        f' {intf.args} and parameters {intf.kwds},'
-                        f'connected to the input "{name}"')
+                        f'Unresolved gear "{intf.func.__name__}" with'
+                        f' arguments {intf.args} and parameters {intf.kwds},'
+                        f' connected to the input "{name}": {str(MultiAlternativeError(intf.errors))}'
+                    )
                 else:
                     raise GearArgsNotSpecified(
                         f'Unresolved argument "{intf}" connected to the input'
