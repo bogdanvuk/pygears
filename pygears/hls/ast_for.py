@@ -135,10 +135,10 @@ def for_qrange(node, iter_args, target_names, module_data):
                     multicycle=target_names)
 
     if is_start:
-        qrange_body = qrange_impl(name=target_names[0],
-                                  node=node,
-                                  svnode=hdl_node,
-                                  module_data=module_data)
+        qrange_init, qrange_body = qrange_impl(name=target_names[0],
+                                               node=node,
+                                               svnode=hdl_node,
+                                               module_data=module_data)
 
         loop_stmts = []
         for stmt in qrange_body:
@@ -147,6 +147,7 @@ def for_qrange(node, iter_args, target_names, module_data):
     parse_block(hdl_node, node.body, module_data)
 
     if is_start:
+        hdl_node.stmts.insert(0, parse_ast(qrange_init, module_data))
         hdl_node.stmts.extend(loop_stmts)
     else:
         target = node.target if len(target_names) == 1 else node.target.elts[0]
@@ -186,7 +187,7 @@ def qrange_impl(name, node, svnode, module_data):
         args.append('1')  # step
 
     snip = qrange_mux_impl(name, switch_reg, flag_reg, args)
-    return ast.parse(snip).body
+    return ast.parse(f'{name} = {args[0]}').body[0], ast.parse(snip).body
 
 
 def for_enumerate(node, iter_args, target_names, module_data):

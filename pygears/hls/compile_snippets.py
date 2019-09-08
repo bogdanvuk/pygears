@@ -18,8 +18,6 @@ def qrange_mux_impl(*args):
 
 if {{flag_name}}:
     {{iter_name}} = {{iter_reg}}
-else:
-    {{iter_name}} = {{rng[0]}}
 
 {{iter_reg}} = {{iter_name}} + {{rng[2]}}
 

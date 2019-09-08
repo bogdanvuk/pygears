@@ -56,8 +56,8 @@ class ComplexCondResolve:
 
     def visit_combined(self, node, conds_by_id):
         sub_conds = self.get_sub_conds(node, conds_by_id)
-        return reduce(
-            partial(binary_expr, operator=node.operator), sub_conds, None)
+        return reduce(partial(binary_expr, operator=node.operator), sub_conds,
+                      None)
 
     def visit_state(self, node, conds_by_id):
         sub_conds = self.get_sub_conds(node, conds_by_id)
@@ -90,8 +90,8 @@ class ComplexCondResolve:
             else:
                 return None
 
-        return reduce(
-            partial(binary_expr, operator=node.operator), [cond, other], None)
+        return reduce(partial(binary_expr, operator=node.operator),
+                      [cond, other], None)
 
 
 def find_complex_cond(cond_inst, conds_by_id):
@@ -169,8 +169,9 @@ class ConditionsFinder(InstanceVisitor):
 
     def visit_block(self, node):
         if node.prolog:
-            prolog_cond = find_top_context_conditions(
-                self.scope, BlockType.prolog, self.state_num)
+            prolog_cond = find_top_context_conditions(self.scope,
+                                                      BlockType.prolog,
+                                                      self.state_num)
             for block in node.prolog:
                 self.set_pydl_cond(block, prolog_cond, node.parent)
 
@@ -189,11 +190,14 @@ class ConditionsFinder(InstanceVisitor):
         self.exit_block()
 
         if node.epilog:
-            epilog_cond = find_top_context_conditions(
-                self.scope, BlockType.epilog, self.state_num,
-                added_epilog_cond)
+            epilog_cond = find_top_context_conditions(self.scope,
+                                                      BlockType.epilog,
+                                                      self.state_num,
+                                                      added_epilog_cond)
             for block in node.epilog:
                 self.set_pydl_cond(block, epilog_cond, node.parent)
+                block.cond_val.in_val = CombinedCond(
+                    (curr_cond.exit_val, block.cond_val.in_val), '&&')
 
     def visit_SeqCBlock(self, node):
         self.visit_block(node)
@@ -231,8 +235,8 @@ class ConditionsFinder(InstanceVisitor):
             if cond_t == 'in':
                 curr_in_cond = InCond(pydl_block.id)
                 if propagated_inst is not None:
-                    propagated_inst = CombinedCond((propagated_inst,
-                                                    curr_in_cond))
+                    propagated_inst = CombinedCond(
+                        (propagated_inst, curr_in_cond))
                 else:
                     propagated_inst = curr_in_cond
 
@@ -519,9 +523,8 @@ def cblock_state_cycle_subconds(cblock):
     curr_child = cblock.child[-1]
     sub_conds = curr_child.pydl_block.cycle_cond
     if sub_conds is not None:
-        sub_conds = StateCond(
-            state_ids=curr_child.state_ids,
-            id=[CycleCond(curr_child.pydl_block.id)])
+        sub_conds = StateCond(state_ids=curr_child.state_ids,
+                              id=[CycleCond(curr_child.pydl_block.id)])
 
     return sub_conds
 
@@ -530,9 +533,8 @@ def cblock_state_exit_subconds(cblock):
     curr_child = cblock.child[-1]
     sub_conds = curr_child.pydl_block.exit_cond
     if sub_conds is not None:
-        sub_conds = StateCond(
-            state_ids=curr_child.state_ids,
-            id=[ExitCond(curr_child.pydl_block.id)])
+        sub_conds = StateCond(state_ids=curr_child.state_ids,
+                              id=[ExitCond(curr_child.pydl_block.id)])
 
     return sub_conds
 
