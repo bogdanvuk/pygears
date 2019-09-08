@@ -128,7 +128,7 @@ class SVCompiler(InstanceVisitor):
 DATA_FUNC_GEAR = """
 {%- import 'snippet.j2' as snippet -%}
 
-{% call snippet.module_with_intf_structs(module_name, intfs, intfs, comment) %}
+{% call snippet.module_with_intf_structs(module_name, intfs, intfs, comment, sigs) %}
 
 {{svlines|indent(4,True)}}
 

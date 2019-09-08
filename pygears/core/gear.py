@@ -126,6 +126,10 @@ class Gear(NamedHierNode):
             return None
 
     @property
+    def signals(self):
+        return {sig.name: sig for sig in self.params['signals']}
+
+    @property
     def dout(self):
         ret = self.out_port_intfs
         if len(ret) == 1:
@@ -189,6 +193,9 @@ class OutSig:
     name: str
     width: int
     modport: str = 'output'
+
+    def write(self, val):
+        pass
 
 
 class GearPlugin(PluginBase):

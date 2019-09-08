@@ -6,11 +6,13 @@ from pygears.typing.queue import QueueMeta
 from pygears.util.utils import gather, qrange
 from pygears.sim import clk
 from pygears import Intf, cast
+from pygears.core.gear import OutSig
 
 from .hls_expressions import ArrayOpExpr, AttrExpr, BinOpExpr, CastExpr
 from .hls_expressions import ConcatExpr, ConditionalExpr, IntfDef, ResExpr
-from .hls_expressions import UnaryOpExpr, TupleExpr
+from .hls_expressions import UnaryOpExpr, TupleExpr, SignalDef, SignalStmt
 from .hdl_arith import resolve_cast_func
+from .ast_assign import assign_out_sig
 
 
 def max_expr(op1, op2):
@@ -71,6 +73,10 @@ def call_sub(obj, arg):
     return CastExpr(arg, cast_to=obj.sub())
 
 
+def outsig_write(obj, arg):
+    return SignalStmt(SignalDef(obj), arg)
+
+
 def call_get(obj, *args, **kwds):
     return obj
 
@@ -109,5 +115,6 @@ builtins = {
     Intf.get: call_get,
     Intf.get_nb: call_get_nb,
     cast: call_cast,
-    QueueMeta.sub: call_sub
+    QueueMeta.sub: call_sub,
+    OutSig.write: outsig_write
 }

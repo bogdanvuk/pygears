@@ -4,10 +4,10 @@ from .ast_parse import parse_ast
 from .hls_expressions import (ConcatExpr, Expr, IntfDef, IntfStmt, RegDef,
                               AttrExpr, RegNextStmt, ResExpr, VariableDef,
                               VariableStmt)
-from .ast_call import parse_function
 from .pydl_types import IntfBlock
 from .utils import (VisitError, add_to_list, find_assign_target,
-                    find_data_expression, interface_operations)
+                    find_data_expression, interface_operations,
+                    eval_expression)
 
 
 @parse_ast.register(ast.AugAssign)
@@ -34,6 +34,11 @@ def parse_assign(node, module_data):
     res = []
     assert len(names) == len(indexes) == len(vals), 'Assign lenght mismatch'
     for name, index, val in zip(names, indexes, vals):
+        from pygears.core.gear import OutSig
+        if (name in module_data.variables) and (isinstance(
+                val, ResExpr)) and (isinstance(val.val, OutSig)):
+            return None
+
         res.append(assign(name, module_data, index, val))
 
     assert len(names) == len(res), 'Assign target and result lenght mismatch'
@@ -57,8 +62,16 @@ def find_assign_value(node, module_data, names):
     if isinstance(node.value, ast.Await):
         vals, block = find_await_value(node.value, module_data)
     else:
-        vals = find_data_expression(node.value, module_data)
-        block = None
+        try:
+            vals = find_data_expression(node.value, module_data)
+            block = None
+        except:
+            vals = eval_expression(node.value, module_data.local_namespace)
+            for n in names:
+                del module_data.variables[n]
+                module_data.pyvars[n] = vals
+                module_data.local_namespace[n] = vals
+                return None, None
 
     if len(names) == 1:
         return [vals], block

@@ -4,7 +4,7 @@ from .conditions_utils import COND_NAME, add_found_cond
 from .hdl_types import AssertValue, AssignValue, CombBlock, HDLBlock, FuncBlock, FuncReturn
 from .hls_expressions import (ConcatExpr, Expr, IntfReadyExpr, IntfValidExpr,
                               OperandVal, RegDef, ResExpr, SubscriptExpr,
-                              VariableDef, ConditionalExpr)
+                              VariableDef, ConditionalExpr, SignalDef)
 from .pydl_types import Block
 from .utils import VisitError, add_to_list
 
@@ -175,12 +175,15 @@ def parse_stmt_target(node, context):
 
     if isinstance(node_var, (RegDef, VariableDef)):
         next_target = f'{node.name}_{context}'
+    elif isinstance(node_var, SignalDef):
+        next_target = node.name
     elif isinstance(node_var, SubscriptExpr):
         sub_val = node_var.val
         next_target = SubscriptExpr(val=OperandVal(op=sub_val.op,
                                                    context=context),
                                     index=node_var.index)
     else:
+        breakpoint()
         raise VisitError('Unknown assignment type')
 
     return AssignValue(target=next_target, val=node.val, dtype=node_var.dtype)
@@ -198,6 +201,21 @@ class VariableVisitor(HDLStmtVisitor):
 
     def visit_VariableStmt(self, node, **kwds):
         self.assign_var(f'{node.name}_v', node.val)
+        return parse_stmt_target(node, 'v')
+
+
+class OutSigVisitor(HDLStmtVisitor):
+    def __init__(self, hdl_data):
+        super().__init__(hdl_data)
+        self.seen_var = []
+
+    def assign_var(self, name, value):
+        if name not in self.seen_var:
+            self.non_control_pairs.append((name, value))
+            self.seen_var.append(name)
+
+    def visit_SignalStmt(self, node, **kwds):
+        self.assign_var(node.name, node.val)
         return parse_stmt_target(node, 'v')
 
 

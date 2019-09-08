@@ -19,7 +19,7 @@ from .conditions_finder import find_conditions
 from .conditions_utils import init_conditions
 from .hdl_stmt import (AssertionVisitor, InputVisitor, IntfReadyVisitor,
                        IntfValidVisitor, OutputVisitor, RegEnVisitor,
-                       VariableVisitor, FunctionVisitor)
+                       VariableVisitor, FunctionVisitor, OutSigVisitor)
 from .hls_expressions import IntfDef, RegDef, VariableDef, VariableStmt, OperandVal, ReturnStmt
 from .intf_finder import IntfFinder
 from .optimizations import pipeline_ast
@@ -35,15 +35,17 @@ from pygears.core.infer_ftypes import infer_ftypes
 
 @dataclass
 class ModuleData:
-    in_ports: typing.Dict
-    out_ports: typing.Dict
-    hdl_locals: typing.Dict
-    regs: typing.Dict
-    variables: typing.Dict
-    in_intfs: typing.Dict
-    out_intfs: typing.Dict
     gear: typing.Any
     func: typing.Any
+    in_ports: typing.Dict = field(default_factory=dict)
+    out_ports: typing.Dict = field(default_factory=dict)
+    out_sigs: typing.Dict = field(default_factory=dict)
+    hdl_locals: typing.Dict = field(default_factory=dict)
+    regs: typing.Dict = field(default_factory=dict)
+    variables: typing.Dict = field(default_factory=dict)
+    pyvars: typing.Dict = field(default_factory=dict)
+    in_intfs: typing.Dict = field(default_factory=dict)
+    out_intfs: typing.Dict = field(default_factory=dict)
     context: typing.List = field(default_factory=list)
     parent: typing.Any = None
     _local_namespace: typing.Dict = None
@@ -174,14 +176,7 @@ def parse_func(node, module_data):
 
     func_hdl_data = ModuleData(gear=module_data.gear,
                                func=func,
-                               in_ports={},
-                               out_ports={},
-                               hdl_locals={},
-                               regs={},
-                               variables=None,
-                               parent=module_data.module,
-                               in_intfs={},
-                               out_intfs={})
+                               parent=module_data.module)
 
     if hls_debug_log_enabled():
         hls_debug(
@@ -273,11 +268,10 @@ def parse_gear_body(gear):
         in_ports=in_ports,
         out_ports={p.basename: IntfDef(p)
                    for p in gear.out_ports},
-        hdl_locals={},
-        regs={},
-        variables={},
-        in_intfs={},
-        out_intfs={})
+        out_sigs={
+            n: s
+            for n, s in gear.signals.items() if s.modport == 'output'
+        })
 
     hdl_data.local_namespace.update(
         {p.basename: p.consumer
@@ -336,6 +330,7 @@ def parse_gear_body(gear):
     block_visitors = {
         'register_next_state': RegEnVisitor(hdl_data),
         'variables': VariableVisitor(hdl_data),
+        'out_sigs': OutSigVisitor(hdl_data),
         'outputs': OutputVisitor(hdl_data),
         'inputs': InputVisitor(hdl_data),
         'intf_ready': IntfReadyVisitor(hdl_data),

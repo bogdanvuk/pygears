@@ -10,7 +10,7 @@ from types import FunctionType
 
 from pygears import PluginBase
 from pygears.conf import register_custom_log, registry
-from pygears.typing import Int, Queue, Tuple, Uint, is_type, typeof
+from pygears.typing import Int, Queue, Tuple, Uint, is_type, typeof, Any
 from pygears.core.util import get_function_context_dict
 
 from . import hls_expressions as expr
@@ -35,19 +35,19 @@ def set_pg_type(ret):
     if is_type(ret):
         return ret
 
-    if not is_type(type(ret)):
-        if isinstance(ret, (list, tuple)):
-            return tuple([set_pg_type(r) for r in ret])
+    if is_type(type(ret)):
+        return ret
 
-        if isinstance(ret, int):
-            if ret < 0:
-                return Int(ret)
-            else:
-                return Uint(ret)
+    if isinstance(ret, (list, tuple)):
+        return tuple([set_pg_type(r) for r in ret])
 
-        raise AstTypeError('Unknown target type')
+    if isinstance(ret, int):
+        if ret < 0:
+            return Int(ret)
+        else:
+            return Uint(ret)
 
-    return ret
+    raise AstTypeError('Unknown target type')
 
 
 def interface_operations(node):

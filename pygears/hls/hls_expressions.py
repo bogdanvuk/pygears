@@ -3,6 +3,7 @@ import typing
 from dataclasses import dataclass
 
 from pygears.core.port import InPort, OutPort
+from pygears.core.gear import InSig, OutSig
 from pygears.typing import (Bool, Integer, Queue, Tuple, Uint, Unit, is_type,
                             typeof, Int)
 from pygears.typing.base import TypingMeta
@@ -117,6 +118,8 @@ class ResExpr(Expr):
         if isinstance(self.val, int):
             return Int(self.val)
 
+        # return type(self.val)
+
         return None
 
 
@@ -177,6 +180,34 @@ class IntfDef(Expr):
     @property
     def has_subop(self):
         return isinstance(self.intf, Expr)
+
+
+@dataclass
+class SignalDef(Expr):
+    sig: typing.Union[InSig, OutSig]
+    context: str = None
+
+    @property
+    def name(self):
+        return self.sig.name
+
+    @property
+    def dtype(self):
+        return Uint[self.sig.width]
+
+
+@dataclass
+class SignalStmt(Expr):
+    variable: SignalDef
+    val: Expr
+
+    @property
+    def dtype(self):
+        return self.variable.dtype
+
+    @property
+    def name(self):
+        return self.variable.name
 
 
 # Statements

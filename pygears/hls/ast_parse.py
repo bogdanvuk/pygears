@@ -60,7 +60,7 @@ def parse_expr(node, module_data):
     if isinstance(node.value, ast.Yield):
         return parse_yield(node.value, module_data)
 
-    return None
+    return parse_ast(node.value, module_data)
 
 
 @parse_ast.register(ast.Return)

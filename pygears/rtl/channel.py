@@ -72,8 +72,12 @@ from pygears.core.gear import OutSig, InSig
 def is_driven_by_node(node, name):
     for s in node.params['signals']:
         if isinstance(s, OutSig):
-            if name == node.params['sigmap'][s.name]:
-                return s
+            if s.name in node.params['sigmap']:
+                if name == node.params['sigmap'][s.name]:
+                    return s
+            else:
+                if name == s.name:
+                    return s
     else:
         return None
 
