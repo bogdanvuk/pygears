@@ -167,10 +167,11 @@ def synth_check(expected, tool='yosys', **kwds):
 
 
 @pytest.fixture
-def synth_check_fixt(tmpdir, language, request):
+def synth_check_fixt(tmpdir, request):
     skip_ifndef('SYNTH_TEST')
     # tmpdir = '/tools/home/tmp'
 
+    language = 'v'
     util_ref = request.param[0]
     params = request.param[1]
     tool = request.param[2]

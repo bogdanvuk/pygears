@@ -124,11 +124,11 @@ def test_lvl_2():
     qcnt(Intf(Queue[Uint[8], 3]), lvl=2)
 
 
-@synth_check({'logic luts': 5, 'ffs': 16}, tool='vivado')
+@synth_check({'logic luts': 4, 'ffs': 16}, tool='vivado')
 def test_synth_vivado():
     qcnt(Intf(Queue[Uint[8], 3]))
 
 
-@synth_check({'logic luts': 37, 'ffs': 16}, tool='yosys')
+@synth_check({'logic luts': 36, 'ffs': 16}, tool='yosys')
 def test_synth_yosys():
     qcnt(Intf(Queue[Uint[8], 3]))

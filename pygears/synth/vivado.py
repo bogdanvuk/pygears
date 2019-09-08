@@ -32,9 +32,10 @@ def synth(outdir, language, yosys_preproc=True, **params):
         files.append(os.path.join(os.path.dirname(__file__), 'yosys_blocks.v'))
 
         yosys_synth(outdir=outdir,
+                    srcdir=outdir,
                     rtl_node=rtl,
                     synth_out=files[0],
-                    synth_cmd=None,
+                    synth_cmd='synth -noalumacc -noabc -run coarse',
                     **params)
 
     viv_cmd = (

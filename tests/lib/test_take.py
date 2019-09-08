@@ -127,11 +127,11 @@ def test_qtake_formal():
     take(Intf(T_QDIN))
 
 
-@synth_check({'logic luts': 20, 'ffs': 17}, tool='vivado')
+@synth_check({'logic luts': 19, 'ffs': 16}, tool='vivado')
 def test_take_vivado():
     take(Intf(T_DIN))
 
 
-@synth_check({'logic luts': 72, 'ffs': 17}, tool='yosys')
+@synth_check({'logic luts': 79, 'ffs': 16}, tool='yosys')
 def test_take_yosys():
     take(Intf(T_DIN))

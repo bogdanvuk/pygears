@@ -44,13 +44,6 @@ def test_queue_3(tmpdir, cosim_cls, din_delay, dout_delay):
     sim(outdir=tmpdir)
 
 
-@pytest.mark.parametrize('branches', [2, 3, 27])
-@synth_check({'logic luts': 0, 'ffs': 0}, tool='vivado')
-def test_bc_ccat_redux_vivado(branches):
-    din = Intf(Uint[8])
-    ((din, ) * branches) | ccat()
-
-
 @pytest.mark.parametrize('branches', [2, 3, 27, 127])
 @synth_check({'logic luts': 0, 'ffs': 0}, tool='yosys', freduce=True)
 def test_bc_ccat_redux_yosys(branches):
@@ -58,7 +51,7 @@ def test_bc_ccat_redux_yosys(branches):
     ((din, ) * branches) | ccat()
 
 
-@synth_check({'logic luts': 2, 'ffs': 0}, tool='yosys')
+@synth_check({'logic luts': 3, 'ffs': 0}, tool='yosys')
 def test_bc_ccat_partial_in_redux_yosys():
     din1 = Intf(Uint[8])
     din0_2 = Intf(Uint[8])

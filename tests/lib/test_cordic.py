@@ -6,7 +6,6 @@ from pygears.lib import drv, directed, verif
 from pygears.util.test_utils import synth_check
 from pygears import Intf
 
-
 # @synth_check({
 #     'logic luts': 0,
 #     'ffs': 0
@@ -27,7 +26,8 @@ from pygears import Intf
 #     return Intf(Uint[8]) | when(Intf(Uint[1]), f=ph_neg, fe=ph_pos)
 
 
-@synth_check({'logic luts': 181, 'ffs': 0}, tool='yosys', freduce=False)
+# TODO: Why SystemVerilog implementation has fewer LUT's?
+@synth_check({'logic luts': 203, 'ffs': 76}, tool='vivado')
 def test_cordic_first_stage_vivado():
     pw = 19
     iw = 12
@@ -35,42 +35,42 @@ def test_cordic_first_stage_vivado():
 
     pw, ww, nstages, cordic_angles_l, gain = cordic_params(iw=iw, ow=ow, pw=pw)
 
-    cordic_first_stage(Intf(Uint[iw]),
-                       Intf(Uint[iw]),
+    cordic_first_stage(Intf(Int[iw]),
+                       Intf(Int[iw]),
                        Intf(Uint[pw]),
                        iw=iw,
                        ww=ww,
                        pw=pw)
 
 
-@synth_check({'logic luts': 72, 'ffs': 0}, tool='vivado', freduce=False)
+@synth_check({'logic luts': 45, 'ffs': 0}, tool='vivado', freduce=False)
 def test_cordic_stage_freduce_vivado():
     pw = 19
     iw = 12
     ow = 12
 
-    cordic_stage(Intf(Tuple[Int[ow], Int[iw], Int[pw]]),
-                 i=0,
-                 cordic_angle=Int[pw](0x4fd9),
+    cordic_stage(Intf(Tuple[Int[ow], Int[iw], Uint[pw]]),
+                 i=10,
+                 cordic_angle=Uint[pw](0x4fd9),
                  ww=iw,
                  pw=pw)
 
 
-@synth_check({'logic luts': 0, 'ffs': 0}, tool='vivado', freduce=True)
-def test_cordic_pipeline_freduce_yosys():
-    pw = 19
-    iw = 12
-    ow = 12
+# @synth_check({'logic luts': 0, 'ffs': 0}, tool='vivado', freduce=True)
+# def test_cordic_pipeline_freduce_yosys():
+#     pw = 19
+#     iw = 12
+#     ow = 12
 
-    cordic_stages(Intf(Tuple[Int[ow], Int[iw], Int[pw]]),
-                  nstages=3,
-                  cordic_angles=[Int[pw](0x4fd9)] * 3,
-                  ww=iw,
-                  pw=pw)
+#     cordic_stages(Intf(Tuple[Int[ow], Int[iw], Uint[pw]]),
+#                   nstages=3,
+#                   cordic_angles=[Uint[pw](0x4fd9)] * 3,
+#                   ww=iw,
+#                   pw=pw)
 
 
-@synth_check({'logic luts': 901, 'ffs': 0}, tool='vivado', freduce=True)
-def test_cordic_sin_cos_synth():
+@synth_check({'logic luts': 936, 'ffs': 776}, tool='vivado')
+def test_cordic_sin_cos_s():
     pw = 19
     iw = 12
     ow = 12
@@ -118,8 +118,11 @@ def test_directed(tmpdir):
                                               post_synth=True)),
              ref=[ref_seq_sin, ref_seq_cos])
 
-    # sim(outdir='/tools/home/tmp/verilator')
-    sim(tmpdir)
+    sim(outdir='/tools/home/tmp/verilator')
+    # sim(tmpdir)
+
+
+# test_directed('')
 
 
 def test_cordic_stage(tmpdir):

@@ -40,6 +40,17 @@ def get_dut(dout_delay):
 @pytest.mark.parametrize('incr_steps', [True, False])
 def test_unsigned_cosim(tmpdir, cosim_cls, din_delay, dout_delay, cnt_steps,
                         incr_steps):
+    # from pygears.sim.modules import SimVerilated
+    # from functools import partial
+    # from pygears import config
+
+    # cosim_cls = partial(SimVerilated, language='v')
+    # tmpdir = '/tools/home/tmp'
+    # config['hdl/debug_intfs'] = ['*']
+    # cnt_steps = False
+    # incr_steps = True
+    # dout_delay = 5
+
     seq = [(2, 8, 2)]
 
     dut = get_dut(dout_delay)
