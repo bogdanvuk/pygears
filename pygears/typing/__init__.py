@@ -25,6 +25,13 @@ __all__ = [
 ]
 
 
+def code(val):
+    if is_type(type(val)):
+        return val.code()
+    else:
+        return int(val)
+
+
 class TypingNamespacePlugin(PluginBase):
     @classmethod
     def bind(cls):

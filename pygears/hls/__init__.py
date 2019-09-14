@@ -8,4 +8,6 @@ from .inst_visit import InstanceVisitor
 from .utils import hls_log
 from .datagear import datagear
 
-__all__ = ['parse_gear_body', 'InstanceVisitor', 'HDLWriter', 'hls_log']
+__all__ = [
+    'parse_gear_body', 'InstanceVisitor', 'HDLWriter', 'hls_log', 'datagear'
+]

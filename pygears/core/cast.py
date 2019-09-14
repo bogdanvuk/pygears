@@ -163,6 +163,15 @@ def cast(data, cast_type):
         return value_cast(data, cast_type)
 
 
+def signed(dtype_or_val):
+    if dtype_or_val.signed:
+        return dtype_or_val
+
+    if is_type(dtype_or_val):
+        if typeof(dtype_or_val, Uint):
+            return cast(dtype_or_val, Int)
+
+
 class CastCoreTypesPlugin(CoreTypesPlugin):
     @classmethod
     def bind(cls):

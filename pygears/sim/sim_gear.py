@@ -12,7 +12,8 @@ def is_async_gen(func):
 
 
 def is_simgear_func(func):
-    return inspect.iscoroutinefunction(func) or is_async_gen(func)
+    return (inspect.isgeneratorfunction(func)
+            or inspect.iscoroutinefunction(func) or is_async_gen(func))
 
 
 class SimGear:
@@ -47,6 +48,31 @@ class SimGear:
                         await clk()
 
                     async for val in self.func(*args, **kwds):
+                        if sim.phase != 'forward':
+                            await clk()
+
+                        if val is not None:
+                            if single_output:
+                                out_prods.put_nb(val)
+                                await out_prods.ready()
+                            else:
+                                for p, v in zip(out_prods, val):
+                                    if v is not None:
+                                        p.put_nb(v)
+
+                                for p, v in zip(out_prods, val):
+                                    if v is not None:
+                                        await p.ready()
+
+                    if args:
+                        if all(a.done for a in args):
+                            raise GearDone
+            elif inspect.isgeneratorfunction(self.func):
+                while (1):
+                    if sim.phase != 'forward':
+                        await clk()
+
+                    for val in self.func(*args, **kwds):
                         if sim.phase != 'forward':
                             await clk()
 

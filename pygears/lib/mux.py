@@ -3,8 +3,6 @@ from pygears.hls import datagear
 from pygears.typing import Queue, Union, typeof, Tuple, Uint, Any
 from pygears.util.utils import gather
 
-from .union import union_collapse
-
 
 def mux_type(dtypes, mapping):
     full_dtypes = tuple(dtypes[mapping[i]] for i in sorted(mapping))
@@ -66,8 +64,3 @@ def mux_valve(din: Tuple[{
               ) -> b'mux_type(din["data"], _full_mapping)':
     c_map = _full_mapping[din['ctrl']]
     return (din['data'][c_map], c_map)
-
-
-@gear
-def mux_by(ctrl, *din, fmux=mux):
-    return fmux(ctrl, *din) | union_collapse

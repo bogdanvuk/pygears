@@ -4,7 +4,7 @@ import jinja2
 
 from pygears.conf import registry
 from pygears.hls import HDLWriter, InstanceVisitor, parse_gear_body
-from pygears.typing import Queue, typeof
+from pygears.typing import Queue, typeof, code
 
 from ..util import separate_conditions
 from .util import vgen_intf, vgen_signal
@@ -237,12 +237,12 @@ def write_module(hdl_data, v_stmts, writer, **kwds):
     if hdl_data.regs:
         writer.line(f'initial begin')
         for name, expr in hdl_data.regs.items():
-            writer.line(f"    {name}_reg = {int(expr.val)};")
+            writer.line(f"    {name}_reg = {code(vexpr(expr.val))};")
 
         writer.line(f'end')
 
     for name, expr in hdl_data.regs.items():
-        writer.block(REG_TEMPLATE.format(name, int(expr.val)))
+        writer.block(REG_TEMPLATE.format(name, code(vexpr(expr.val))))
 
     for name, val in v_stmts.items():
         if name != 'variables':

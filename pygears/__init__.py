@@ -19,17 +19,18 @@ from pygears.sim import sim
 from pygears.core.type_match import TypeMatchError
 from pygears.core.gear import module
 from pygears.core.gear_decorator import gear, alternative
-from pygears.core.cast import cast
+from pygears.core.cast import cast, signed
 
 import pygears.core.gear_inst
 
 from pygears.core.intf import Intf
 
+from pygears.hls import datagear
+
 import pygears.lib
 import pygears.typing
 import pygears.typing.pprint
 
-from pygears.hls import datagear
 
 # import os
 # from pygears.registry import load_plugin_folder

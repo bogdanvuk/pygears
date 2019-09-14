@@ -1,7 +1,7 @@
 from pygears import alternative, gear, module
 from pygears.conf import safe_bind
 from pygears.core.intf import IntfOperPlugin
-from pygears.typing import Integer, Tuple, Number, Any, Bool, Integral
+from pygears.typing import Integer, Tuple, Number, Any, Bool, Integral, Fixpnumber
 from pygears.util.hof import oper_tree
 from pygears.hls import datagear
 
@@ -18,8 +18,16 @@ def add_vararg(*din: Integer):
 
 
 @datagear
-def div(din: Tuple[{'a': Number, 'b': Number}]) -> b'din[0] // din[1]':
+def fdiv(din: Tuple[{'a': Integer, 'b': Integer}]) -> b'din[0] // din[1]':
     return din[0] // din[1]
+
+
+@datagear
+def div(din: Tuple[{
+        'a': Fixpnumber,
+        'b': Fixpnumber
+}], *, subprec) -> b'din[0].div(din[1], subprec)':
+    return din[0].div(din[1], subprec)
 
 
 @datagear
@@ -96,7 +104,8 @@ class AddIntfOperPlugin(IntfOperPlugin):
     @classmethod
     def bind(cls):
         safe_bind('gear/intf_oper/__add__', add)
-        safe_bind('gear/intf_oper/__floordiv__', div)
+        safe_bind('gear/intf_oper/__floordiv__', fdiv)
+        safe_bind('gear/intf_oper/__div__', div)
         safe_bind('gear/intf_oper/__eq__', eq)
         safe_bind('gear/intf_oper/__ge__', ge)
         safe_bind('gear/intf_oper/__gt__', gt)

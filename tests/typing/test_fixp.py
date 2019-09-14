@@ -47,22 +47,48 @@ def test_signed_sub():
     assert a - b == Fixp[4, 5](2.0)
 
 
+def test_unsigned_fdiv():
+    t_a = Ufixp[4, 6]
+    t_b = Ufixp[1, 7]
+
+    assert (t_a // t_b == Ufixp[10, 6])
+
+    assert t_a(15.75) // t_b(0.015625) == Ufixp[10, 6](15.75 / 0.015625)
+
+
+def test_signed_fdiv():
+    t_a = Fixp[4, 6]
+    t_b = Fixp[1, 7]
+
+    assert (t_a // t_b == Fixp[10, 6])
+
+    assert t_a(-8.0) // t_b(0.9375) == Fixp[10, 6]((-8.0) / 0.9375)
+
+
 def test_unsigned_div():
     t_a = Ufixp[4, 6]
     t_b = Ufixp[1, 7]
 
-    assert (t_a // t_b == Ufixp[5, 13])
+    assert t_a(15.75).div(t_b(0.015625), 0) == Ufixp[10, 6](15.75 / 0.015625)
+    assert t_a(0.25).div(t_b(1.984375), 0) == Ufixp[10, 6](0.25 / 1.984375)
+    assert t_a(0.25).div(t_b(1.984375), 7) == Ufixp[10, 13](0.25 / 1.984375)
 
-    assert t_a(15.75) // t_b(1.9375) == Ufixp[5, 13](15.75 / 1.9375)
+    t_c = Ufixp[10, 6]
+    t_d = Ufixp[-2, 12]
+
+    assert t_c.max.div(t_d.lsb,
+                       0) == Ufixp[24, 6](float(t_c.max) / float(t_d.lsb))
+    assert t_c.max.div(t_d.max,
+                       0) == Ufixp[24, 6](float(t_c.max) / float(t_d.max))
 
 
-def test_signed_div():
-    t_a = Fixp[4, 6]
-    t_b = Fixp[1, 7]
+# def test_signed_div():
+#     t_a = Fixp[4, 6]
+#     t_b = Fixp[1, 7]
 
-    assert (t_a // t_b == Fixp[5, 13])
+#     assert (t_a / t_b == Fixp[5, 13])
 
-    assert t_a(-8.0) // t_b(0.9375) == Fixp[5, 13]((-8.0) / 0.9375)
+#     assert t_a(-8.0) // t_b(0.9375) == Fixp[5, 13]((-8.0) / 0.9375)
 
 
 def test_unsigned_mul():

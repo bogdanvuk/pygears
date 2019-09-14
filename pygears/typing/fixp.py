@@ -55,19 +55,13 @@ class FixpnumberType(IntegralType):
         """
         return list(range(self.width))
 
-    def __mul__(self, other):
+    def div(self, other, subprec):
         ops = [self, other]
 
         signed = any(op.signed for op in ops)
 
-        try:
-            integer_part = self.integer + other.integer
-            fract_part = self.fract + other.fract
-        except AttributeError:
-            integer_part = self.integer + int(other)
-            fract_part = self.fract
-
-        width = integer_part + fract_part
+        integer_part = self.integer + other.fract
+        width = self.width + subprec
 
         if signed:
             return Fixp[integer_part, width]
@@ -75,6 +69,9 @@ class FixpnumberType(IntegralType):
             return Ufixp[integer_part, width]
 
     def __floordiv__(self, other):
+        return self.div(other, 0)
+
+    def __mul__(self, other):
         ops = [self, other]
 
         signed = any(op.signed for op in ops)
@@ -177,7 +174,8 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
             else:
                 val = int(val) >> (val_fract - cls.fract)
         elif isinstance(val, (float, int)):
-            val = round(float(val) * (2**cls.fract))
+            # val = round(float(val) * (2**cls.fract))
+            val = int(float(val) * (2**cls.fract))
 
         if not cls.signed:
             val &= ((1 << cls.width) - 1)
@@ -189,15 +187,18 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
     def __neg__(self):
         return (-type(self))(-int(self))
 
+    @class_and_instance_method
+    def div(self, other, subprec):
+        div_cls = type(self).div(type(other), subprec)
+        shift = div_cls.fract - type(self).fract + type(other).fract
+        return div_cls.decode((self.code() << shift) // other.code())
+
     def __mul__(self, other):
         mul_cls = type(self) * type(other)
         return mul_cls.decode(int(self) * int(other))
 
     def __floordiv__(self, other):
-        sum_cls = type(self) // type(other)
-        shift = sum_cls.fract - type(self).fract + type(other).fract
-
-        return sum_cls.decode((int(self) << shift) // int(other))
+        return self.div(other, 0)
 
     def __add__(self, other):
         sum_cls = type(self) + type(other)
@@ -244,6 +245,10 @@ class FixpType(FixpnumberType):
         return self.decode(-2**(self.width - 1))
 
     @property
+    def lsb(self):
+        return self.decode(1)
+
+    @property
     def fmax(self):
         return (2**(self.width - 1) - 1) / (2**self.fract)
 
@@ -287,6 +292,10 @@ class UfixpType(FixpnumberType):
         return self.decode(0)
 
     @property
+    def lsb(self):
+        return self.decode(1)
+
+    @property
     def fmax(self):
         return (2**self.width - 1) / (2**self.fract)
 
@@ -302,3 +311,7 @@ class Ufixp(Fixpnumber, metaclass=UfixpType):
     @property
     def signed(self):
         return False
+
+    @classmethod
+    def decode(cls, val):
+        return int.__new__(cls, int(val) & ((1 << cls.width) - 1))

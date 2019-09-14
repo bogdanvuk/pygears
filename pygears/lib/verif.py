@@ -1,5 +1,5 @@
 import inspect
-from pygears import GearDone, gear
+from pygears import GearDone, gear, datagear
 from pygears.lib import decouple
 from pygears.util.utils import quiter
 from pygears.typing import Uint
@@ -394,3 +394,8 @@ def directed_on_the_fly(*stim, f, refs, delays=None):
         scoreboard(res_intf, ref, report=r)
 
     return report
+
+
+@datagear
+def collect(val, *, result):
+    result.append(val)

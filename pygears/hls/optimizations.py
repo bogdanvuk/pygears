@@ -45,15 +45,15 @@ def pipeline_ast(pydl_ast, module_data):
     #            async ..
     #               some stmts
 
-    flag_val = ResExpr(val=Uint[1](0))
+    flag_val = RegDef(ResExpr(val=Uint[1](0)), FLAG_NAME)
 
     # add pipeline reg
     module_data.regs[FLAG_NAME] = flag_val
-    module_data.hdl_locals[FLAG_NAME] = RegDef(val=flag_val, name=FLAG_NAME)
+    module_data.hdl_locals[FLAG_NAME] = flag_val
 
     # create if/else for pipeline reg
-    if_pipe_cond = OperandVal(
-        op=module_data.hdl_locals[FLAG_NAME], context='reg')
+    if_pipe_cond = OperandVal(op=module_data.hdl_locals[FLAG_NAME],
+                              context='reg')
 
     # if branch starts with yield + tries to get data
     if_block = IfBlock(_in_cond=if_pipe_cond, stmts=[pydl_ast.stmts[-1]])
@@ -61,8 +61,8 @@ def pipeline_ast(pydl_ast, module_data):
     if_block.stmts.append(try_block)
 
     # else branch is the same as original first stmt + flag is assigned
-    else_block = IfBlock(
-        _in_cond=create_oposite(if_pipe_cond), stmts=[pydl_ast.stmts[0]])
+    else_block = IfBlock(_in_cond=create_oposite(if_pipe_cond),
+                         stmts=[pydl_ast.stmts[0]])
     py_stmt = ast.parse(f'{FLAG_NAME} = True').body[0]
     flag_stmt = parse_ast(py_stmt, module_data)
     else_block.stmts.append(flag_stmt)
@@ -71,11 +71,10 @@ def pipeline_ast(pydl_ast, module_data):
 
     # create while True loop
     true_cond = ResExpr(val=Uint[1](1))
-    optimized_loop = Loop(
-        _in_cond=true_cond,
-        _exit_cond=create_oposite(true_cond),
-        multicycle=True,
-        stmts=[container_block])
+    optimized_loop = Loop(_in_cond=true_cond,
+                          _exit_cond=create_oposite(true_cond),
+                          multicycle=True,
+                          stmts=[container_block])
 
     return Module(stmts=[optimized_loop])
 
@@ -83,7 +82,7 @@ def pipeline_ast(pydl_ast, module_data):
 def init_registers(module_data):
     stmts = []
     for reg, val in module_data.regs.items():
-        init_stmt = RegNextStmt(reg=module_data.hdl_locals[reg], val=val)
+        init_stmt = RegNextStmt(reg=module_data.hdl_locals[reg], val=val.val)
         stmts.append(init_stmt)
 
     return stmts
@@ -92,8 +91,8 @@ def init_registers(module_data):
 def get_try_except(pydl_ast, module_data):
     intf = pydl_ast.stmts[0].intf
 
-    except_part = IfBlock(
-        _in_cond=create_oposite(intf), stmts=init_registers(module_data))
+    except_part = IfBlock(_in_cond=create_oposite(intf),
+                          stmts=init_registers(module_data))
 
     # replace registers with their initial values
     try_stmts = replace_context(pydl_ast.stmts[0].stmts, module_data)
@@ -150,7 +149,6 @@ def replace_context(node, module_data):
         return node
 
     if isinstance(node, OperandVal) and isinstance(node.op, RegDef):
-        return ResExpr(
-            module_data.regs[node.op.name].val)  # return initial value
+        return module_data.regs[node.op.name].val  # return initial value
 
     return node

@@ -1,7 +1,7 @@
 import ast
 from functools import reduce
 
-from pygears.typing import Uint
+from pygears.typing import Uint, Bool
 from pygears.util.utils import qrange
 
 from .ast_modifications import unroll_statements
@@ -49,11 +49,11 @@ def switch_reg_and_var(name, module_data):
     switch_name = f'{name}_switch'
 
     switch_reg = module_data.regs[name]
-    module_data.variables[name] = ResExpr(switch_reg.val)
+    module_data.variables[name] = VariableDef(switch_reg.val, name)
     module_data.regs[switch_name] = switch_reg
     module_data.hdl_locals[switch_name] = RegDef(switch_reg.val, switch_name)
     module_data.regs.pop(name)
-    module_data.hdl_locals.pop(name)
+    module_data.hdl_locals[name] = module_data.variables[name]
     if switch_name in module_data.variables:
         module_data.variables.pop(switch_name)
 
@@ -82,6 +82,7 @@ def for_range(node, iter_args, target_names, module_data):
     else:
         _, stop, step = iter_args
 
+    # TODO: loop iterator size according to range
     assert target_names[0] in module_data.regs, 'Loop iterator not registered'
     op1 = module_data.regs[target_names[0]]
     exit_cond = BinOpExpr(
@@ -126,6 +127,8 @@ def for_qrange(node, iter_args, target_names, module_data):
     name = node.target.elts[-1].id
     var = VariableDef(exit_cond, name)
     add_variable(name, var, module_data)
+
+    module_data.hdl_locals[target_names[0]] = op1
     stmts = [VariableStmt(var, exit_cond)]
     exit_cond = OperandVal(var, 'v')
 
@@ -140,15 +143,15 @@ def for_qrange(node, iter_args, target_names, module_data):
                                                svnode=hdl_node,
                                                module_data=module_data)
 
-        loop_stmts = []
-        for stmt in qrange_body:
-            add_to_list(loop_stmts, parse_ast(stmt, module_data))
+        # loop_stmts = []
+        # for stmt in qrange_body:
+        #     add_to_list(loop_stmts, parse_ast(stmt, module_data))
 
     parse_block(hdl_node, node.body, module_data)
 
     if is_start:
-        hdl_node.stmts.insert(0, parse_ast(qrange_init, module_data))
-        hdl_node.stmts.extend(loop_stmts)
+        # init_stmts = [parse_ast(stmt, module_data) for stmt in qrange_init]
+        hdl_node.stmts = qrange_init + hdl_node.stmts + qrange_body
     else:
         target = node.target if len(target_names) == 1 else node.target.elts[0]
         add_to_list(
@@ -156,6 +159,7 @@ def for_qrange(node, iter_args, target_names, module_data):
             parse_ast(increment_reg(target_names[0], val=step, target=target),
                       module_data))
 
+    module_data.hdl_locals.pop(name)
     return hdl_node
 
 
@@ -174,20 +178,40 @@ def qrange_impl(name, node, svnode, module_data):
     switch_reg_and_var(name, module_data)
 
     # impl.
-    args = []
-    for arg in node.iter.args:
-        try:
-            args.append(arg.id)
-        except AttributeError:
-            args.append(arg.args[0].id)
+    # args = []
+    # for arg in node.iter.args:
+    #     try:
+    #         args.append(arg.id)
+    #     except AttributeError:
+    #         args.append(arg.args[0].id)
+    args = [parse_ast(a, module_data) for a in node.iter.args]
 
     if len(args) == 1:
-        args.insert(0, '0')  # start
+        args.insert(0, ResExpr(Uint[1](0)))  # start
     if len(args) == 2:
-        args.append('1')  # step
+        args.append(ResExpr(Uint[1](1)))  # step
 
-    snip = qrange_mux_impl(name, switch_reg, flag_reg, args)
-    return ast.parse(f'{name} = {args[0]}').body[0], ast.parse(snip).body
+    from .ast_assign import assign_variable, assign_reg
+    init_stmt = assign_variable(name, module_data, None, args[0])
+
+    start_snip = f"""if {flag_reg}:
+    {name} = {switch_reg}"""
+    start_stmt = parse_ast(ast.parse(start_snip).body[0], module_data)
+
+    loop_incr_stmt = assign_reg(
+        switch_reg, module_data, None,
+        BinOpExpr((OperandVal(module_data.variables[name], 'v'), args[2]), '+'))
+
+    loop_switch_stmt = assign_reg(flag_reg, module_data, None,
+                                  ResExpr(Bool(True)))
+
+    return [init_stmt, start_stmt], [loop_incr_stmt, loop_switch_stmt]
+
+
+#     loop_snip = f"""{switch_reg} = {name} + {args[2]}
+# {flag_reg} = True"""
+
+#     return [ast_init] + ast.parse(start_snip).body, ast.parse(loop_snip).body
 
 
 def for_enumerate(node, iter_args, target_names, module_data):

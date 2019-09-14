@@ -11,16 +11,17 @@ def argspec_unwrap(func):
 
 
 def extract_arg_kwds(kwds, func):
-    arg_names, _, _, _, kwonlyargs, *_ = argspec_unwrap(func)
+    arg_names, _, varkw, _, kwonlyargs, *_ = argspec_unwrap(func)
 
     arg_kwds = {}
     kwds_only = {}
     for k in list(kwds.keys()):
         if k in arg_names:
             arg_kwds[k] = kwds[k]
-        elif k in kwonlyargs:
+        elif (k in kwonlyargs) or (varkw is not None):
             kwds_only[k] = kwds[k]
         else:
+            kwds_only[k] = kwds[k]
             raise TypeError(
                 f"{func.__name__}() got an unexpected keyword argument '{k}'")
 

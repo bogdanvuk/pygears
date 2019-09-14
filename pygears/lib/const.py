@@ -31,6 +31,14 @@ async def const(*, val, tout=b'get_literal_type(val)') -> b'tout':
     yield tout(val)
 
 
+@gear
+async def once(*, val, tout=b'get_literal_type(val)') -> b'tout':
+    yield tout(val)
+
+    while True:
+        pass
+
+
 @gear(hdl={'hdl_fn': 'sustain_ping'})
 async def const_ping(ping, *, val, tout=b'get_literal_type(val)') -> b'tout':
     async with ping:

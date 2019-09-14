@@ -1,8 +1,15 @@
 import ast
-from pygears.typing import Any, Fixpnumber, Uint, Unit
+from pygears.typing import Any, Fixpnumber, Uint, Unit, Tuple
 from pygears import cast
 from . import hls_expressions as expr
 from pygears.core.type_match import type_match, TypeMatchError
+
+
+def tuple_mul_resolver(opexp, module_data):
+    if not isinstance(opexp[1], expr.ResExpr):
+        raise TypeMatchError
+
+    return expr.ConcatExpr(opexp[0].operands * int(opexp[1].val))
 
 
 def concat_resolver(opexp, module_data):
@@ -89,6 +96,9 @@ resolvers = {
     ast.MatMult: {
         Any: concat_resolver
     },
+    ast.Mult: {
+        Tuple: tuple_mul_resolver
+    },
     ast.Add: {
         Fixpnumber: fixp_add_resolver
     },
@@ -103,7 +113,11 @@ def resolve_arith_func(op, opexp, module_data):
         op_resolvers = resolvers[type(op)]
         for templ in op_resolvers:
             try:
-                type_match(opexp[0].dtype, templ)
+                try:
+                    type_match(opexp[0].dtype, templ)
+                except AttributeError:
+                    breakpoint()
+
                 return op_resolvers[templ](opexp, module_data)
             except TypeMatchError:
                 continue

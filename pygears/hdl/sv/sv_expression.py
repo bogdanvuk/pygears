@@ -121,7 +121,9 @@ class SVExpressionVisitor:
         if typeof(node.val.dtype, Array) or typeof(node.val.dtype, Integer):
             return f'{val}[{self.visit(node.index)}]'
 
-        return f'{val}.{node.val.dtype.fields[node.index]}'
+        index = node.val.dtype.index_norm(node.index)[0]
+
+        return f'{val}.{node.val.dtype.fields[index]}'
 
     def visit_ConditionalExpr(self, node):
         cond = self.visit(node.cond)

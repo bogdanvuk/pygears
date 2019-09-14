@@ -3,7 +3,10 @@ from abc import ABCMeta, abstractmethod
 
 
 class NumberType(ABCMeta, GenericMeta):
-    pass
+    @property
+    @abstractmethod
+    def signed(self):
+        ...
 
 
 class Number(metaclass=NumberType):

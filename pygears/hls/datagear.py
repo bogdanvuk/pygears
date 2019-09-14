@@ -9,7 +9,8 @@ from pygears.util.utils import gather
 @doublewrap
 def datagear(func, **meta_kwds):
     if not is_standard_func(func):
-        raise Exception('Only regular functions can be converted to a @datagear.')
+        raise Exception(
+            'Only regular functions can be converted to a @datagear.')
 
     paramspec = inspect.getfullargspec(func)
 

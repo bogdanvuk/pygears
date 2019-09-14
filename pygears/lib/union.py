@@ -1,8 +1,14 @@
-from pygears import gear
+from pygears import gear, alternative
 from pygears.typing import Union
 from pygears.lib.shred import shred
 from pygears.lib.ccat import ccat
 from pygears.lib.fmap import fmap
+from pygears.lib.mux import mux
+
+
+@gear
+def mux_by(ctrl, *din, fmux=mux):
+    return fmux(ctrl, *din) | union_collapse
 
 
 @gear(enablement=b'len(din) == 2')
@@ -31,6 +37,13 @@ def case(cond, din, *, f, fcat=ccat, tout=None, **kwds):
     return fcat(din, cond) \
         | Union \
         | fmap(f=f, **kwds) \
+        | union_collapse(t=tout)
+
+
+@gear
+def ucase(din: Union, *, f, fcat=ccat, tout=None, fmux=mux):
+    return din \
+        | fmap(f=f, fmux=fmux) \
         | union_collapse(t=tout)
 
 

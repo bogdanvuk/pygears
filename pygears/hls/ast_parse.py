@@ -103,7 +103,13 @@ def parse_yield(node, module_data):
         yield_expr = parse_ast(node.value, module_data)
         ports = list(module_data.out_ports.values())
     stmts = []
-    add_to_list(stmts, cast_return(yield_expr, module_data.out_ports))
+
+    try:
+        ret = cast_return(yield_expr, module_data.out_ports)
+    except Exception as e:
+        raise Exception('Output value incompatible with output type')
+
+    add_to_list(stmts, ret)
     return blocks.Yield(stmts=stmts, ports=ports)
 
 

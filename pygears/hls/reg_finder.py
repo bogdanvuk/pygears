@@ -2,7 +2,7 @@ import ast
 
 from pygears.typing import Uint, bitw, is_type
 
-from .hls_expressions import ResExpr
+from .hls_expressions import ResExpr, RegDef
 from .utils import (eval_expression, find_assign_target, find_for_target,
                     hls_log, set_pg_type)
 
@@ -54,7 +54,7 @@ def find_comb_loop(node, module_data, auto_reg):
 
         res = ResExpr(Uint[length](0))
         reg_name, reg_val = auto_reg.new_auto_reg(res)
-        module_data.regs[reg_name] = reg_val
+        module_data.regs[reg_name] = RegDef(reg_val, reg_name)
 
         node.break_func = {'length': length, 'reg': reg_name}
 
@@ -97,7 +97,7 @@ class RegFinder(ast.NodeVisitor):
 
         val = set_pg_type(val)
 
-        self.module_data.regs[name] = ResExpr(val)
+        self.module_data.regs[name] = RegDef(ResExpr(val), name)
 
     def clean_variables(self):
         for reg in self.module_data.regs:
@@ -146,14 +146,14 @@ class RegFinder(ast.NodeVisitor):
                             node.iter, self.module_data.local_namespace)
 
                         if register_var:
-                            self.module_data.regs[name] = ResExpr(
-                                Uint[bitw(length)](0))
+                            self.module_data.regs[name] = RegDef(
+                                ResExpr(Uint[bitw(length)](0)), name)
                             hls_log().debug(
                                 f'For loop iterator {name} registered with width {bitw(length)}'
                             )
                         else:
-                            self.module_data.variables[name] = ResExpr(
-                                Uint[bitw(length)](0))
+                            self.module_data.variables[name] = RegDef(
+                                ResExpr(Uint[bitw(length)](0)), name)
                             hls_log().debug(
                                 f'For loop iterator {name} unrolled with width {bitw(length)}'
                             )

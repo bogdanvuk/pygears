@@ -1,4 +1,5 @@
 from pygears.hls import HDLWriter, InstanceVisitor, parse_gear_body
+from pygears.typing import code
 
 from ..util import separate_conditions
 from .sv_expression import svexpr
@@ -171,12 +172,12 @@ def write_module(hdl_data, sv_stmts, writer, config=None):
     if hdl_data.regs:
         writer.line(f'initial begin')
         for name, expr in hdl_data.regs.items():
-            writer.line(f"    {name}_reg = {int(expr.val)};")
+            writer.line(f"    {name}_reg = {code(svexpr(expr.val))};")
 
         writer.line(f'end')
 
     for name, expr in hdl_data.regs.items():
-        writer.block(REG_TEMPLATE.format(name, int(expr.val)))
+        writer.block(REG_TEMPLATE.format(name, code(svexpr(expr.val))))
 
     for name, val in sv_stmts.items():
         if name != 'variables':

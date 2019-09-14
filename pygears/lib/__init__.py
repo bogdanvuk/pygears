@@ -6,18 +6,19 @@ from .project import project
 from .czip import czip, zip_sync, unzip
 from .ccat import ccat
 from .cart import cart, cart_sync, cart_sync_with
-from .union import (union_sync, union_collapse, union_sync_with, case, when)
+from .union import (union_sync, union_collapse, union_sync_with, case, when,
+                    mux_by, ucase)
 from .queue import queue_wrap_from
 from .cast import cast
 from .quenvelope import quenvelope
 from .sieve import sieve
 from .fmap import fmap
 from .permute import permuted_apply
-from .const import const, const_ping
+from .const import const, const_ping, once
 from .rom import rom
 from .operators import (add, div, eq, ge, gt, invert, le, lt, mod, mul, ne,
                         neg, sub, shl, shr, xor)
-from .mux import mux, mux_zip, mux_by
+from .mux import mux, mux_zip
 from .demux import demux, demux_zip, demux_by, demux_ctrl
 from .shred import shred
 from .decouple import decouple, buff
@@ -50,7 +51,7 @@ from .max_gears import max2
 from .unary import unary
 from .alternate_queues import alternate_queues
 from .delay import delay, delay_rng
-from .verif import directed, verif, drv, check, mon, scoreboard
+from .verif import directed, verif, drv, check, mon, scoreboard, collect
 from .reduce2 import reduce2
 from .reduce import reduce, accum
 from .funclut import funclut
@@ -63,19 +64,19 @@ import pygears.lib.hls
 
 __all__ = [
     'expand', 'czip', 'ccat', 'cart', 'cast', 'quenvelope', 'zip_sync',
-    'sieve', 'flatten', 'fmap', 'permuted_apply', 'const', 'mux', 'demux',
-    'shred', 'cart_sync', 'decouple', 'dreg', 'unzip', 'serialize', 'project',
-    'fifo', 'factor', 'fill', 'mux_zip', 'demux_zip',
-    'demux_ctrl', 'data_dly', 'union_sync', 'union_collapse', 'filt', 'buff',
+    'sieve', 'flatten', 'fmap', 'permuted_apply', 'const', 'once', 'mux',
+    'demux', 'shred', 'cart_sync', 'decouple', 'dreg', 'unzip', 'serialize',
+    'project', 'fifo', 'factor', 'fill', 'mux_zip', 'demux_zip', 'demux_ctrl',
+    'data_dly', 'union_sync', 'union_collapse', 'ucase', 'filt', 'buff',
     'local_rst', 'queue_wrap_from', 'demux_by', 'mux_by', 'align',
     'cart_sync_with', 'when', 'union_sync_with', 'case', 'const_ping', 'xor',
     'rng', 'priority_mux', 'qcnt', 'sdp', 'chop', 'qinterlace', 'replicate',
     'qdeal', 'clip', 'din_cat', 'take', 'release_after_eot', 'reverse',
-    'form_sub_cfg', 'reduce2', 'group', 'repack',
-    'priority_mux_valve', 'max2', 'unary', 'alternate_queues',
-    'delay', 'delay_rng', 'directed', 'verif', 'rom', 'drv', 'check', 'mon',
-    'reduce', 'accum', 'funclut', 'pulse', 'truncate', 'round_half_up',
-    'round_to_zero', 'round_to_even', 'cordic', 'cordic_sin_cos', 'add', 'div',
-    'eq', 'ge', 'gt', 'invert', 'iceil', 'le', 'lt', 'mod', 'mul', 'ne', 'neg',
-    'sub', 'shl', 'shr', 'xor', 'scoreboard'
+    'form_sub_cfg', 'reduce2', 'group', 'repack', 'priority_mux_valve', 'max2',
+    'unary', 'alternate_queues', 'delay', 'delay_rng', 'directed', 'verif',
+    'collect', 'rom', 'drv', 'check', 'mon', 'reduce', 'accum', 'funclut',
+    'pulse', 'truncate', 'round_half_up', 'round_to_zero', 'round_to_even',
+    'cordic', 'cordic_sin_cos', 'add', 'div', 'eq', 'ge', 'gt', 'invert',
+    'iceil', 'le', 'lt', 'mod', 'mul', 'ne', 'neg', 'sub', 'shl', 'shr', 'xor',
+    'scoreboard'
 ]
