@@ -55,7 +55,6 @@ from .verif import directed, verif, drv, check, mon, scoreboard, collect
 from .reduce2 import reduce2
 from .reduce import reduce, accum
 from .funclut import funclut
-from .pulse import pulse
 from .rounding import truncate, round_half_up, round_to_zero, round_to_even
 from .cordic import cordic, cordic_sin_cos
 
@@ -75,8 +74,7 @@ __all__ = [
     'form_sub_cfg', 'reduce2', 'group', 'repack', 'priority_mux_valve', 'max2',
     'unary', 'alternate_queues', 'delay', 'delay_rng', 'directed', 'verif',
     'collect', 'rom', 'drv', 'check', 'mon', 'reduce', 'accum', 'funclut',
-    'pulse', 'truncate', 'round_half_up', 'round_to_zero', 'round_to_even',
-    'cordic', 'cordic_sin_cos', 'add', 'div', 'eq', 'ge', 'gt', 'invert',
-    'iceil', 'le', 'lt', 'mod', 'mul', 'ne', 'neg', 'sub', 'shl', 'shr', 'xor',
-    'scoreboard'
+    'truncate', 'round_half_up', 'round_to_zero', 'round_to_even', 'cordic',
+    'cordic_sin_cos', 'add', 'div', 'eq', 'ge', 'gt', 'invert', 'iceil', 'le',
+    'lt', 'mod', 'mul', 'ne', 'neg', 'sub', 'shl', 'shr', 'xor', 'scoreboard'
 ]
