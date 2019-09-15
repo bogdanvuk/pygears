@@ -23,6 +23,10 @@ class SimFinish(Exception):
     pass
 
 
+class SimCyclic(Exception):
+    pass
+
+
 def timestep():
     try:
         return sim_reg['timestep']
@@ -65,16 +69,27 @@ class SimFuture(asyncio.Future):
 
 
 # A recursive function used by topo_sort
-def topo_sort_util(v, g, dag, visited, stack):
+def topo_sort_util(v, g, dag, visited, stack, cycle):
 
     # Mark the current node as visited.
     visited[v] = True
+    cycle.append(g)
 
     # Recur for all the vertices adjacent to this vertex
     for consumer in dag[g]:
         i = list(dag.keys()).index(consumer)
+        if consumer in cycle:
+            index = cycle.index(consumer)
+            cycle.append(consumer)
+            raise SimCyclic(
+                'Simulation not possible, gear cycle found:'
+                f' {" - ".join([c.name for c in cycle[index:]])}'
+            )
+
         if not visited[i]:
-            topo_sort_util(i, consumer, dag, visited, stack)
+            topo_sort_util(i, consumer, dag, visited, stack, cycle)
+
+    cycle.pop()
 
     # Push current vertex to stack which stores result
     stack.insert(0, g)
@@ -94,7 +109,7 @@ def topo_sort(dag):
     # Sort starting from all vertices one by one
     for i, g in enumerate(dag):
         if not visited[i]:
-            topo_sort_util(i, g, dag, visited, stack)
+            topo_sort_util(i, g, dag, visited, stack, [])
 
     return stack
 

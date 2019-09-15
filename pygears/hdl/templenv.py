@@ -1,7 +1,7 @@
 import importlib
 import os
 import jinja2
-from pygears.typing import bitw
+from pygears.typing import bitw, code, decode
 
 
 def format_list(list_, pattern):
@@ -48,7 +48,10 @@ class TemplateEnv:
                                  bitw=bitw,
                                  enumerate=enumerate,
                                  import_from=import_from,
-                                 import_=import_)
+                                 import_=import_,
+                                 code=code,
+                                 decode=decode
+                                 )
 
         self.jenv.filters['format_list'] = format_list
         self.jenv.filters['keymap'] = keymap

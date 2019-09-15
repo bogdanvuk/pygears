@@ -3,6 +3,7 @@ import functools
 
 import pygears
 from pygears import registry
+from pygears.typing import code
 
 # from .inst import svgen_log
 
@@ -38,6 +39,7 @@ class HDLModuleInst:
     def __init__(self, node, extension):
         self.node = node
         self.extension = extension
+        self._impl_parse = None
 
     @property
     def hdl_path_list(self):
@@ -124,21 +126,36 @@ class HDLModuleInst:
 
     @property
     def impl_params(self):
-        parse_res = self.impl_parse()
-        if parse_res:
-            return parse_res[-1]
-        else:
-            return {}
+        if self._impl_parse is None:
+            parse_res = self.impl_parse()
+            if parse_res:
+                self._impl_parse = parse_res[-1]
+            else:
+                self._impl_parse = {}
+
+        return self._impl_parse
 
     @property
     def params(self):
         if not self.is_generated:
-            return {
-                k.upper(): int(v)
-                for k, v in self.node.params.items()
-                if (k.upper() in self.impl_params) and (
-                    int(v) != int(self.impl_params[k.upper()]['val']))
-            }
+            params = {}
+            for k, v in self.node.params.items():
+                param_name = k.upper()
+                param_valid_name = f'{param_name}_VALID'
+
+                if (param_name in self.impl_params):
+                    if v is None:
+                        if param_valid_name in self.impl_params:
+                            params[param_valid_name] = 0
+                        continue
+
+                    if (code(v) != int(self.impl_params[param_name]['val'])):
+                        params[param_name] = code(v)
+
+                    if param_valid_name in self.impl_params:
+                        params[param_valid_name] = 1
+
+            return params
         else:
             return {}
 

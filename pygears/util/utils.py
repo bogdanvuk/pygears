@@ -43,5 +43,6 @@ class gather:
         return tuple(din_data)
 
     async def __aexit__(self, exception_type, exception_value, traceback):
-        for d in self.din:
-            d.ack()
+        if exception_type is None:
+            for d in self.din:
+                d.ack()

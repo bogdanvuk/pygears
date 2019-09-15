@@ -3,7 +3,7 @@ from pygears import bind, PluginBase, safe_bind
 from pygears.core.port import OutPort
 from pygears.sim import sim_log, timestep
 from pygears.sim.sim_gear import SimGear
-from pygears.typing import typeof, TLM
+from pygears.typing import typeof, TLM, Float
 from pygears.typing.visitor import TypingVisitorBase
 from vcd import VCDWriter
 from vcd.gtkw import GTKWSave
@@ -34,6 +34,9 @@ class VCDTypeVisitor(TypingVisitorBase):
         self.fields[field] = type_
 
     def visit_fixp(self, type_, field):
+        self.fields[field] = type_
+
+    def visit_float(self, type_, field):
         self.fields[field] = type_
 
     def visit_ufixp(self, type_, field):
@@ -77,6 +80,9 @@ class VCDValVisitor(TypingVisitorBase):
 
     def visit_ufixp(self, type_, field, val=None):
         self.change(type_, field, val)
+
+    def visit_float(self, type_, field, val=None):
+        self.writer.change(self.vcd_vars[field], self.timestep, float(val))
 
     def visit_int(self, type_, field, val=None):
         self.change(type_, field, val)
@@ -125,10 +131,16 @@ def register_traces_for_intf(dtype, scope, writer):
             else:
                 field_scope = scope
 
-            vcd_vars[name] = writer.register_var(field_scope,
-                                                 basename,
-                                                 'wire',
-                                                 size=max(int(t), 1))
+            if typeof(t, Float):
+                vcd_vars['data'] = writer.register_var(field_scope,
+                                                       basename,
+                                                       var_type='real',
+                                                       size=32)
+            else:
+                vcd_vars[name] = writer.register_var(field_scope,
+                                                     basename,
+                                                     var_type='wire',
+                                                     size=max(int(t), 1))
 
     for sig in ('valid', 'ready'):
         vcd_vars[sig] = writer.register_var(scope, sig, 'wire', size=1, init=0)
@@ -322,6 +334,7 @@ class VCD(SimExtend):
 
         v = self.vcd_vars[intf]
         self.writer.change(v['ready'], timestep() * 10, 1)
+
         self.handhake.add(intf)
         return True
 

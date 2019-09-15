@@ -1,7 +1,9 @@
 module decouple
    #(
 	   parameter DEPTH = 2,
-     parameter DIN = 16
+     parameter DIN = 16,
+     parameter INIT = 0,
+     parameter INIT_VALID = 0
 	   )
    (
     input logic clk,
@@ -20,14 +22,24 @@ module decouple
       logic empty;
       logic full;
 
-      logic [W_DATA-1 : 0] memory [0 : DEPTH-1]; //one bit for valid
+      logic [W_DATA-1 : 0] memory [0 : DEPTH-1];
+
+      initial begin
+         if (INIT_VALID) begin
+            memory[0] = INIT;
+            w_ptr = 1;
+         end
+      end
 
       assign empty = (w_ptr == r_ptr);
       assign full = (w_ptr[MSB-1:0] == r_ptr[MSB-1:0]) & (w_ptr[MSB]!=r_ptr[MSB]);
 
       always_ff @(posedge clk) begin
         if(rst) begin
-          w_ptr <= 0;
+           if (INIT_VALID)
+             w_ptr <= 1;
+           else
+             w_ptr <= 0;
         end else if(din.valid & ~full) begin
           w_ptr <= w_ptr + 1;
           memory[w_ptr[MSB-1:0]] <= din.data;

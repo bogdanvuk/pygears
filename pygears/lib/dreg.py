@@ -7,7 +7,7 @@ from pygears.sim import clk
 async def dreg(din, *, init=None) -> b'din':
     data = din.dtype() if init is None else din.dtype(init)
 
-    valid = Bool(False)
+    valid = Bool(False) if init is None else Bool(True)
 
     while True:
         if valid:

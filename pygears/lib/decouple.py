@@ -7,10 +7,12 @@ from pygears.sim import delta, clk
 
 def decouple_din_setup(module):
     module.queue = asyncio.Queue(maxsize=module.params['depth'])
+    if module.params['init'] is not None:
+        module.queue.put_nowait(module.params['init'])
 
 
 @gear(sim_setup=decouple_din_setup, svgen={'node_cls': None})
-async def decouple_din(din, *, depth) -> None:
+async def decouple_din(din, *, depth, init) -> None:
     async with din as d:
         await module().queue.put(d)
         while (module().queue.full()):
@@ -37,8 +39,8 @@ async def decouple_dout(*, t, depth) -> b't':
 
 
 @gear
-def decouple(din, *, depth=2) -> b'din':
-    din | decouple_din(depth=depth)
+def decouple(din, *, depth=2, init=None) -> b'din':
+    din | decouple_din(depth=depth, init=init)
     return decouple_dout(t=din.dtype, depth=depth)
 
 

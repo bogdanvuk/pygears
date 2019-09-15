@@ -16,7 +16,7 @@
            din_reg_valid <= '0;
   {% else %}
            din_reg_valid <= '1;
-           din_reg_data <= {{ params['init'].decode() }};
+           din_reg_data <= {{ code(params['init']) }};
   {% endif -%}
         end else if (reg_ready)begin
            din_reg_valid <= din.valid;

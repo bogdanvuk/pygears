@@ -32,6 +32,13 @@ def code(val):
         return int(val)
 
 
+def decode(val):
+    if is_type(type(val)):
+        return val.decode()
+    else:
+        return val
+
+
 class TypingNamespacePlugin(PluginBase):
     @classmethod
     def bind(cls):
