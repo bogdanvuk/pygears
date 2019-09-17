@@ -1,10 +1,10 @@
 import inspect
 from pygears import GearDone, gear, datagear
 from pygears.lib import decouple
-from pygears.util.utils import quiter
+from pygears.util.utils import quiter, gather
 from pygears.typing import Uint
 from pygears.typing import Any
-from pygears.sim import sim_assert, sim_log
+from pygears.sim import sim_assert, sim_log, clk
 from pygears.typing import Queue, typeof
 
 
@@ -299,7 +299,7 @@ def tlm_verif(*seq, f, ref):
     return report
 
 
-def verif(*stim, f, ref, delays=None, tolerance=0):
+def verif(*stim, f, ref, delays=None, tolerance=0, check_timing=False):
     """Verification environment for comparing DUV results with reference model.
     The environment instantiates the DUV and reference model and drives the
     passed stimulus to both. The outpus are passed to the scoreboard which
@@ -324,6 +324,9 @@ def verif(*stim, f, ref, delays=None, tolerance=0):
     else:
         res_tlm = f
         ref_tlm = ref
+
+    if check_timing:
+        ref_tlm, res_tlm = match_timing(ref_tlm, res_tlm)
 
     if not isinstance(res_tlm, tuple):
         res_tlm = (res_tlm, )
@@ -394,6 +397,18 @@ def directed_on_the_fly(*stim, f, refs, delays=None):
         scoreboard(res_intf, ref, report=r)
 
     return report
+
+
+@gear
+async def match_timing(*din) -> b'din':
+    if any(not d.empty() for d in din):
+        all_valid = all(not d.empty() for d in din)
+        sim_assert(all_valid, f'not all inputs valid at the same time')
+
+        async with gather(*din) as data:
+            yield data
+
+    await clk()
 
 
 @datagear
