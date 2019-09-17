@@ -31,7 +31,7 @@ def filt_test(din_t, seq, sel, sim_cls):
               sim_cls)
 
 
-def filt_by_test(din_t, seq, sel, sim_cls):
+def filt_by_test(tmpdir, din_t, seq, sel, sim_cls):
     din_seq, ctrl_seq = zip(*seq)
 
     din_drv = drv(t=din_t, seq=din_seq)
@@ -45,7 +45,7 @@ def filt_by_test(din_t, seq, sel, sim_cls):
         din_drv,
         f=filt(f=cond(ctrl_drv), sim_cls=sim_cls),
         ref=[val for (val, ctrl) in zip(din_seq, ctrl_seq) if (ctrl == sel)])
-    sim()
+    sim(tmpdir)
 
 
 def queue_filt_test(din_t, seq, sel, sim_cls):
@@ -56,7 +56,7 @@ def queue_filt_test(din_t, seq, sel, sim_cls):
 @pytest.mark.parametrize('sel', [0, 1])
 @pytest.mark.parametrize('din_t', [union_din, queue_din, plain_din])
 @pytest.mark.parametrize('seq', [directed_seq, 'rand'])
-def test_pysim_dir(sel, din_t, seq, sim_cls):
+def test_pysim_dir(tmpdir, sel, din_t, seq, sim_cls):
     if seq == 'rand':
         skip_ifndef('RANDOM_TEST')
         seq = [(random.randint(1, 100), random.randint(0, 2))
@@ -67,18 +67,7 @@ def test_pysim_dir(sel, din_t, seq, sim_cls):
     elif typeof(din_t, Union):
         filt_test(din_t, seq, sel, sim_cls)
     else:
-        filt_by_test(din_t, seq, sel, sim_cls)
-
-
-# from pygears.sim.modules import SimVerilated
-# from pygears import config
-# from pygears.sim.extens.wavejson import WaveJSON
-# from pygears.sim.extens.vcd import VCD
-# config['trace/level'] = 0
-# # config['sim/extens'].append(WaveJSON)
-# config['sim/extens'].append(VCD)
-# config['hdl/debug_intfs'] = ['*']
-# test_pysim_dir(0, din_t=plain_din, seq=directed_seq, sim_cls=SimVerilated)
+        filt_by_test(tmpdir, din_t, seq, sel, sim_cls)
 
 
 def get_dut(dout_delay):

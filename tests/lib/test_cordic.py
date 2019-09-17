@@ -118,8 +118,8 @@ def test_directed(tmpdir):
                                               post_synth=True)),
              ref=[ref_seq_sin, ref_seq_cos])
 
-    sim(outdir='/tools/home/tmp/verilator')
-    # sim(tmpdir)
+    # sim(outdir='/tools/home/tmp/verilator')
+    sim(tmpdir)
 
 
 # test_directed('')

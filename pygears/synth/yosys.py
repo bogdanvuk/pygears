@@ -12,8 +12,8 @@ def create_project(outdir, top=None):
     print(hdl_files)
 
 
-def create_project_script(script_fn, outdir, top, language):
-    hdl_files = list_hdl_files(top, outdir, language=language)
+def create_project_script(script_fn, outdir, top, language, wrapper):
+    hdl_files = list_hdl_files(top, outdir, language=language, wrapper=wrapper)
     with open(script_fn, 'w') as f:
         for fn in hdl_files:
             f.write(f'read_verilog {"-sv" if language== "sv" else ""} {fn}\n')
@@ -111,8 +111,8 @@ def synth(outdir,
 
     # synth_out_fn = os.path.join(outdir, 'synth.v')
 
+    wrapper = False if top is None else True
     if rtl_node is None:
-        wrapper = False if top is None else True
         rtl_node = hdlgen(top,
                           language=language,
                           outdir=srcdir,
@@ -124,7 +124,8 @@ def synth(outdir,
     create_project_script(prj_script_fn,
                           outdir=srcdir,
                           top=rtl_node,
-                          language=language)
+                          language=language,
+                          wrapper=wrapper)
     with Yosys('yosys') as yosys:
 
         yosys.command(f'script {prj_script_fn}')
