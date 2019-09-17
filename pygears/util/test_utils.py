@@ -279,7 +279,7 @@ def sim_cls(request):
         skip_ifndef('VERILATOR_ROOT')
     elif sim_cls is SimSocket:
         skip_ifndef('SIM_SOCKET_TEST')
-        sim_cls = partial(SimSocket, run=True)
+        sim_cls = partial(SimSocket, run=True, sim='xsim')
 
     yield sim_cls
 
@@ -294,7 +294,7 @@ def cosim_cls(request):
         skip_ifndef('VERILATOR_ROOT')
     elif cosim_cls is SimSocket:
         skip_ifndef('SIM_SOCKET_TEST')
-        cosim_cls = partial(SimSocket, run=True)
+        cosim_cls = partial(SimSocket, run=True, sim='xsim')
 
     yield cosim_cls
 
