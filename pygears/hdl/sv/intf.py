@@ -66,8 +66,15 @@ class SVIntfGen:
 
         for i, cons_port in enumerate(self.intf.consumers):
             if isinstance(cons_port, OutPort):
-                if self.intf.is_broadcast or isinstance(self.intf.producer, InPort):
-                    inst.append(self.get_connect_module(i, template_env))
+                if self.intf.is_broadcast or isinstance(
+                        self.intf.producer, InPort):
+                    din_name = self.outname
+                    if self.intf.is_broadcast:
+                        din_name += f'[{i}]'
+
+                    inst.append(
+                        template_env.snippets.intf_intf_connect(
+                            self.intf.consumers[i].basename, din_name))
 
         if self.traced:
             inst.extend(
@@ -88,25 +95,6 @@ class SVIntfGen:
         }
 
         return template_env.snippets.intf_inst(**ctx)
-
-    def get_connect_module(self, index, template_env):
-        inst_name = f'connect_{self.basename}'
-        din_name = self.outname
-        if self.intf.is_broadcast:
-            inst_name += f'_{index}'
-            din_name += f'[{index}]'
-
-        connect_context = {
-            'module_name': 'connect',
-            'inst_name': inst_name,
-            'param_map': {},
-            'port_map': {
-                'din': din_name,
-                'dout': self.intf.consumers[index].basename
-            }
-        }
-
-        return template_env.snippets.module_inst(**connect_context)
 
     def get_bc_module(self, template_env):
         inst_name = f'bc_{self.basename}'
