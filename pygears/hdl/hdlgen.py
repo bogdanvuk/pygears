@@ -26,11 +26,11 @@ def hdlgen(top=None, language='sv', copy_files=False, **conf):
         rtl_top = oper(rtl_top, conf)
 
     if copy_files is True:
-        for fn in list_hdl_files(
-                rtl_top.name,
-                outdir=conf['outdir'],
-                language=language,
-                rtl_only=True):
+        for fn in list_hdl_files(rtl_top.name,
+                                 outdir=conf['outdir'],
+                                 language=language,
+                                 rtl_only=True,
+                                 wrapper=conf.get('wrapper', False)):
             shutil.copy(fn, conf['outdir'])
 
     return rtl_top

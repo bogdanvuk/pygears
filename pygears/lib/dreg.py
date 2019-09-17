@@ -1,4 +1,4 @@
-from pygears import gear, QueueEmpty
+from pygears import gear, IntfEmpty
 from pygears.typing import Bool
 from pygears.sim import clk
 
@@ -16,7 +16,7 @@ async def dreg(din, *, init=None) -> b'din':
             try:
                 data = din.get_nb()
                 valid = True
-            except QueueEmpty:
+            except IntfEmpty:
                 valid = False
         else:
             data = await din.get()

@@ -1,5 +1,7 @@
 module dreg #(
-             parameter DIN = 0
+              parameter DIN = 0,
+              parameter INIT = 0,
+              parameter INIT_VALID = 0
              )
    (
     input                 clk,
@@ -29,7 +31,9 @@ module dreg #(
    always @(posedge clk)
      begin
         if(rst) begin
-           din_reg_valid <= '0;
+           din_reg_valid <= INIT_VALID;
+           if (INIT_VALID)
+             din_reg_data <= INIT;
         end else if (reg_ready)begin
            din_reg_valid <= din_valid;
            din_reg_data <= din_data;

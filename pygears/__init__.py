@@ -4,7 +4,7 @@ __version__ = pkg_resources.get_distribution("pygears").version
 
 import sys
 from asyncio import CancelledError as GearDone
-from asyncio.queues import QueueEmpty
+from asyncio.queues import QueueEmpty as IntfEmpty
 
 # form pygears.conf import only for legacy compatibility
 from pygears.conf import PluginBase, bind, registry, clear, MultiAlternativeError
@@ -47,6 +47,6 @@ sys.excepthook = pygears_excepthook
 
 __all__ = [
     'registry', 'TraceLevel', 'bind', 'gear', 'alternative', 'clear', 'Intf',
-    'PluginBase', 'find', 'MultiAlternativeError', 'GearDone', 'QueueEmpty',
+    'PluginBase', 'find', 'MultiAlternativeError', 'GearDone', 'IntfEmpty',
     'module', 'safe_bind', 'TypeMatchError', 'datagear', 'cast'
 ]
