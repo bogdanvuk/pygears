@@ -53,14 +53,20 @@ class HDLModuleInst:
     @property
     @functools.lru_cache()
     def impl_path(self):
-        if not self.is_generated:
-            return find_in_dirs(self.module_base_path, self.hdl_path_list)
-        else:
-            return None
+        return find_in_dirs(self.module_base_path, self.hdl_path_list)
 
     @property
     def is_compiled(self):
-        return self.node.params.get('hdl', {}).get('compile', False)
+        # Autoinstantiated modules, or hierarchy top
+        if self.node.gear.func is None:
+            return False
+
+        import inspect
+        is_async_gen = bool(self.node.gear.func.__code__.co_flags
+                            & inspect.CO_ASYNC_GENERATOR)
+        return is_async_gen and (not self.template_path) and (
+            not self.impl_path)
+        # return self.node.params.get('hdl', {}).get('compile', False)
 
     @property
     def is_generated(self):
