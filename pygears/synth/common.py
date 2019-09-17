@@ -14,7 +14,7 @@ class NodeYielder(HierYielderBase):
         yield intf
 
 
-def enum_hdl_files(top, outdir, language, rtl_only=False):
+def enum_hdl_files(top, outdir, language, rtl_only=False, wrapper=False):
     if isinstance(top, str):
         top = find(top)
 
@@ -27,13 +27,19 @@ def enum_hdl_files(top, outdir, language, rtl_only=False):
 
     if language == 'sv':
         yield os.path.join(LIB_SVLIB_DIR, 'dti.sv')
-        yield os.path.join(LIB_SVLIB_DIR, 'connect.sv')
 
     for node in NodeYielder().visit(rtl_top):
         vinst = vgen_map[node]
 
-        if (node is rtl_top) and (language == 'sv') and not rtl_only:
+        if ((node is rtl_top) and wrapper and (language == 'sv')
+                and not rtl_only):
             yield os.path.join(outdir, f'wrap_{vinst.file_name}')
+
+        if isinstance(node, RTLNode):
+            if 'hdl' in node.params:
+                if 'files' in node.params['hdl']:
+                    for f in node.params['hdl']['files']:
+                        yield f
 
         if hasattr(vinst, 'file_name'):
             file_name = vinst.impl_path
@@ -49,8 +55,14 @@ def enum_hdl_files(top, outdir, language, rtl_only=False):
                 yield os.path.join(LIB_SVLIB_DIR, 'bc.sv')
 
 
-def list_hdl_files(top, outdir, language, rtl_only=False):
-    return list(set(enum_hdl_files(top, outdir, language, rtl_only=rtl_only)))
+def list_hdl_files(top, outdir, language, rtl_only=False, wrapper=False):
+    seen = set()
+    seen_add = seen.add
+    return [
+        x for x in enum_hdl_files(
+            top, outdir, language, rtl_only=rtl_only, wrapper=wrapper)
+        if not (x in seen or seen_add(x))
+    ]
 
 
 def copy_files(files):

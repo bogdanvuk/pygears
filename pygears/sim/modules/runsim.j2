@@ -1,7 +1,9 @@
 #!/bin/bash
 
+set -e
 # run cadence.tcl only in gui mode
 gui="-gui -input $WORKSPACE/cadence.tcl"
+nobuild="";
 other_args="";
 seed=1
 simulator="cadence"
@@ -21,8 +23,9 @@ usage() {
     echo "Usage:  run_sim.sh"
     echo ""
     echo "  -batch : no gui"
+    echo "  -nobuild : don't rebuild, just run sim"
     echo "  -seed  : random | <integer value> (default = 1)"
-    echo "  -sim   : cadence | questa"
+    echo "  -sim   : cadence | questa | xsim"
     echo "  -clean : removed sim. files"
     echo "  + any other args to pass to sim:"
     echo " for example: -define VERBOSITY=<0, 1, ...>"
@@ -37,6 +40,10 @@ while [ $# -gt 0 ]; do
             ;;
         -batch)
             gui=""
+            shift
+            ;;
+        -nobuild)
+            nobuild=1
             shift
             ;;
         -seed)
@@ -65,7 +72,6 @@ if [ $simulator == "cadence" ]; then
         -incdir {{dti_verif_path}} \
         -incdir {{out_path}} \
         {{dti_verif_path}}/sock.sv \
-        {{dti_verif_path}}/socket_pkg.sv \
         {{dti_verif_path}}/sock.c \
     {% for i in includes %}
     "{{i|indent(4, True)}}" \
@@ -83,7 +89,6 @@ elif [ $simulator == "questa" ]; then
          +incdir+{{dti_verif_path}} \
          +incdir+{{out_path}} \
          {{dti_verif_path}}/sock.sv \
-         {{dti_verif_path}}/socket_pkg.sv \
          {{dti_verif_path}}/sock.c \
          {% for i in includes %}
     {{i|indent(4, True)}} \
@@ -106,6 +111,26 @@ elif [ $simulator == "questa" ]; then
      fi
 
      mv transcript log.log
+elif [ $simulator == "xsim" ]; then
+    {% set switch_lookup = {'sv': '-svlog', 'v': '-vlog', 'vhd': '-vhdl'} %}
+
+     if [ "$nobuild" == "" ]; then
+        xsc {{dti_verif_path}}/sock.c
+        xelab {{top_name}} -s {{top_name}}_sim -sv_lib dpi -debug all \
+            -i {{dti_verif_path}} \
+            -i {{out_path}} \
+            -svlog {{dti_verif_path}}/sock.sv \
+        {% for f in files %}
+            {{ switch_lookup[f.rpartition('.')[-1]] }} {{ f }} \
+        {% endfor %}
+            -svlog {{top_name}}.sv
+     fi
+
+     if [ "$gui" == "" ]; then
+         xsim {{top_name}}_sim -R
+     else
+         xsim {{top_name}}_sim --gui
+     fi
 else
     echo "Not supported yet..."
 fi

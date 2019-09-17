@@ -26,7 +26,9 @@ import "DPI-C" function chandle sock_open(input string uri, input string channel
 import "DPI-C" function void sock_close(input chandle handle);
 
 // Returns 1 on success, 0 on error
-import "DPI-C" context function int sock_get(input chandle handle, output bit[] signal);
+import "DPI-C" context function int sock_get(input chandle handle, input bit[] signal);
+
+import "DPI-C" function int sock_get_bv(input chandle handle, input int width, output bit[31:0] signal);
 
 import "DPI-C" function int sock_done(input chandle handle);
 

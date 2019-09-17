@@ -14,12 +14,16 @@ import jinja2
 
 from pygears import GearDone, bind, registry
 from pygears.definitions import ROOT_DIR
-from pygears.sim import clk, sim_log
+from pygears.sim import clk, sim_log, timestep
 from pygears.sim.modules.cosim_base import CosimBase, CosimNoData
+from .cosim_port import InCosimPort
+from pygears.core.port import InPort
+from pygears.core.graph import closest_gear_port_from_rtl
 from pygears.hdl import hdlgen
 from pygears.hdl.sv.util import svgen_typedef
-from pygears.typing import Uint
 from pygears.util.fileio import save_file
+from pygears.hdl.templenv import isinput, isoutput, keymap
+from pygears.synth.common import list_hdl_files
 
 CMD_SYS_RESET = 0x80000000
 CMD_SET_DATA = 0x40000000
@@ -34,11 +38,14 @@ class CosimulatorStartError(Exception):
     pass
 
 
+def format_list(list_, pattern):
+    return [pattern.format(s) for s in list_]
+
+
 async def drive_reset(duration):
     simsoc = registry('sim/config/socket')
     await clk()
     simsoc.send_cmd(duration | CMD_SYS_RESET)
-    # data = simsoc.send_req(duration | (1 << 31), Uint[4])
     for i in range(duration):
         await clk()
 
@@ -74,77 +81,6 @@ j2_templates = ['runsim.j2', 'top.j2']
 j2_file_names = ['run_sim.sh', 'top.sv']
 
 
-def sv_cosim_gen(gear, tcp_port=1234):
-    # pygearslib = util.find_spec("pygearslib")
-    # if pygearslib is not None:
-    #     from pygearslib import sv_src_path
-    #     registry('SVGenSystemVerilogPaths').append(sv_src_path)
-
-    outdir = registry('sim/artifacts_dir')
-    if 'socket_hooks' in registry('sim/config'):
-        hooks = registry('sim/config/socket_hooks')
-    else:
-        hooks = {}
-
-    srcdir = os.path.join(outdir, 'src_gen')
-    rtl_node = hdlgen(gear, outdir=srcdir, language='sv')
-    sv_node = registry('svgen/map')[rtl_node]
-
-    port_map = {
-        port.basename: port.basename
-        for port in itertools.chain(rtl_node.in_ports, rtl_node.out_ports)
-    }
-
-    structs = [
-        svgen_typedef(port.dtype, f"{port.basename}")
-        for port in itertools.chain(rtl_node.in_ports, rtl_node.out_ports)
-    ]
-
-    base_addr = os.path.dirname(__file__)
-    env = jinja2.Environment(
-        loader=jinja2.FileSystemLoader(base_addr),
-        trim_blocks=True,
-        lstrip_blocks=True)
-    env.globals.update(zip=zip, int=int, print=print, issubclass=issubclass)
-
-    context = {
-        'intfs': list(sv_node.port_configs),
-        'module_name': sv_node.module_name,
-        'dut_name': sv_node.module_name,
-        'dti_verif_path': os.path.abspath(
-            os.path.join(ROOT_DIR, 'sim', 'dpi')),
-        'param_map': sv_node.params,
-        'structs': structs,
-        'port_map': port_map,
-        'out_path': os.path.abspath(outdir),
-        'hooks': hooks,
-        'port': tcp_port,
-        'top_name': 'top',
-        'activity_timeout': 1000  # in clk cycles
-    }
-
-    inc_paths = []
-    context['includes'] = []
-    for path in registry('hdl/include_paths'):
-        inc_paths.append(path)
-    inc_paths.append(srcdir)
-    inc_paths.append(outdir)
-
-    context['includes'] = [
-        os.path.abspath(os.path.join(p, '*.sv')) for p in inc_paths
-        if os.path.exists(p)
-    ]
-
-    # remove empty wildcard imports
-    context['includes'] = [p for p in context['includes'] if glob.glob(p)]
-
-    for templ, tname in zip(j2_templates, j2_file_names):
-        res = env.get_template(templ).render(context)
-        fname = save_file(tname, context['out_path'], res)
-        if os.path.splitext(fname)[1] == '.sh':
-            os.chmod(fname, 0o777)
-
-
 class SimSocketDrv:
     def __init__(self, main, port):
         self.main = main
@@ -161,32 +97,37 @@ class SimSocketInputDrv(SimSocketDrv):
         # del self.main
 
     def send(self, data):
-        # print(f'Sending {hex(data.code())},  {repr(data)} for {self.port.basename}')
+        # print(
+        #     f'{timestep()} [{self.port.name}] Sending {hex(data.code())}, {repr(data)}'
+        # )
         self.main.send_cmd(CMD_SET_DATA | self.port.index)
         pkt = u32_repr(data, self.port.dtype).tobytes()
         self.main.sendall(pkt)
 
     def reset(self):
+        # print(f'{timestep()} [{self.port.name}] Reset valid')
         self.main.send_cmd(CMD_RESET | self.port.index)
 
     def ready(self):
         self.main.send_cmd(CMD_READ | self.port.index)
 
-        # import os
-        # os.system("date +%s.%N")
         data = self.main.recv(4)
-        # os.system("date +%s.%N")
-        # print(f'Received status {data}')
+        res = bool(int.from_bytes(data, byteorder='little'))
 
-        return bool(int.from_bytes(data, byteorder='little'))
+        # print(f'{timestep()} [{self.port.name}] Ready={res}')
+        return res
 
 
 class SimSocketOutputDrv(SimSocketDrv):
     def read(self):
-        # print(f'Send read command for {self.index}')
+        # print(
+        #     f'{timestep()} [{self.port.name}] Send read command for {self.index}'
+        # )
         self.main.send_cmd(CMD_READ | self.index)
         data = self.main.recv(4)
-        # print(f'Received status {data}')
+        # print(
+        #     f'{timestep()} [{self.port.name}] Received valid status for {self.index}: {data}'
+        # )
 
         if int.from_bytes(data, byteorder='little'):
             buff_size = math.ceil(int(self.port.dtype) / 8)
@@ -205,7 +146,7 @@ class SimSocketOutputDrv(SimSocketDrv):
 
     @property
     def index(self):
-        return len(self.port.gear.in_ports) + self.port.index
+        return len(self.main.in_cosim_ports) + self.port.index
 
     def ack(self):
         try:
@@ -218,12 +159,14 @@ class SimSocketSynchro:
     def __init__(self, main, handler):
         self.main = main
         self.handler = handler
-        self.handler.settimeout(5.0)
+        # self.handler.settimeout(5.0)
 
     def cycle(self):
+        # print(f'{timestep()} Cycle')
         self.main.send_cmd(CMD_CYCLE)
 
     def forward(self):
+        # print(f'{timestep()} Forward')
         self.main.send_cmd(CMD_FORWARD)
 
     back = forward
@@ -239,18 +182,25 @@ class SimSocketSynchro:
 class SimSocket(CosimBase):
     def __init__(self,
                  gear,
+                 timeout=100,
                  rebuild=True,
                  run=False,
                  batch=True,
                  tcp_port=1234,
                  **kwds):
-        super().__init__(gear)
+        super().__init__(gear, timeout)
+        self.name = gear.name[1:].replace('/', '_')
+        self.outdir = os.path.abspath(
+            os.path.join(registry('sim/artifacts_dir'), self.name))
 
         self.rebuild = rebuild
 
         # Create a TCP/IP socket
         self.run_cosim = run
-        kwds['batch'] = batch
+
+        if not kwds.get('gui', False):
+            kwds['batch'] = batch
+
         self.kwds = kwds
         self.sock = None
         self.cosim_pid = None
@@ -259,6 +209,24 @@ class SimSocket(CosimBase):
         self.handlers = {}
 
         bind('sim/config/socket', self)
+
+        self.srcdir = os.path.join(self.outdir, 'src_gen')
+        self.rtl_node = hdlgen(gear, outdir=self.srcdir, language='sv')
+        self.svmod = registry('svgen/map')[self.rtl_node]
+
+        for p in self.rtl_node.in_ports:
+            if p.index >= len(gear.in_ports):
+                driver = closest_gear_port_from_rtl(p, 'in')
+                consumer = closest_gear_port_from_rtl(p, 'out')
+
+                in_port = InPort(gear,
+                                 p.index,
+                                 p.basename,
+                                 producer=driver.producer,
+                                 consumer=consumer.consumer)
+
+                self.in_cosim_ports.append(InCosimPort(self, in_port))
+                registry('sim/map')[in_port] = self.in_cosim_ports[-1]
 
     def _cleanup(self):
         if self.sock:
@@ -309,6 +277,81 @@ class SimSocket(CosimBase):
         data = u32_bytes_decode(data, dtype)
         return data
 
+    def build(self):
+        if 'socket_hooks' in registry('sim/config'):
+            hooks = registry('sim/config/socket_hooks')
+        else:
+            hooks = {}
+
+        port_map = {
+            port.basename: port.basename
+            for port in itertools.chain(self.rtl_node.in_ports,
+                                        self.rtl_node.out_ports)
+        }
+
+        structs = [
+            svgen_typedef(port.dtype,
+                          f"{port.basename}") for port in itertools.chain(
+                              self.rtl_node.in_ports, self.rtl_node.out_ports)
+        ]
+
+        base_addr = os.path.dirname(__file__)
+        env = jinja2.Environment(loader=jinja2.FileSystemLoader(base_addr),
+                                 trim_blocks=True,
+                                 lstrip_blocks=True)
+        env.globals.update(zip=zip,
+                           int=int,
+                           print=print,
+                           issubclass=issubclass)
+
+        env.filters['format_list'] = format_list
+        env.filters['isinput'] = isinput
+        env.filters['isoutput'] = isoutput
+        env.filters['keymap'] = keymap
+
+        sv_files = list_hdl_files(self.rtl_node,
+                                  self.srcdir,
+                                  language='sv',
+                                  wrapper=False)
+
+        context = {
+            'intfs': list(self.svmod.port_configs),
+            'files': sv_files,
+            'module_name': self.svmod.module_name,
+            'dut_name': self.svmod.module_name,
+            'dti_verif_path':
+            os.path.abspath(os.path.join(ROOT_DIR, 'sim', 'dpi')),
+            'param_map': self.svmod.params,
+            'structs': structs,
+            'port_map': port_map,
+            'out_path': os.path.abspath(self.outdir),
+            'hooks': hooks,
+            'port': self.server_address[1],
+            'top_name': 'top',
+            'activity_timeout': 1000  # in clk cycles
+        }
+
+        inc_paths = []
+        context['includes'] = []
+        for path in registry('hdl/include_paths'):
+            inc_paths.append(path)
+        inc_paths.append(self.srcdir)
+        inc_paths.append(self.outdir)
+
+        context['includes'] = [
+            os.path.abspath(os.path.join(p, '*.sv')) for p in inc_paths
+            if os.path.exists(p)
+        ]
+
+        # remove empty wildcard imports
+        context['includes'] = [p for p in context['includes'] if glob.glob(p)]
+
+        for templ, tname in zip(j2_templates, j2_file_names):
+            res = env.get_template(templ).render(context)
+            fname = save_file(tname, context['out_path'], res)
+            if os.path.splitext(fname)[1] == '.sh':
+                os.chmod(fname, 0o777)
+
     def setup(self):
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 
@@ -321,13 +364,14 @@ class SimSocket(CosimBase):
         self.sock.listen(1)
 
         if self.rebuild:
-            sv_cosim_gen(self.gear, self.server_address[1])
+            self.build()
+        else:
+            self.kwds['nobuild'] = True
 
         if self.run_cosim:
 
-            self.sock.settimeout(10)
+            self.sock.settimeout(5)
 
-            outdir = registry('sim/artifacts_dir')
             args = ' '.join(f'-{k} {v if not isinstance(v, bool) else ""}'
                             for k, v in self.kwds.items()
                             if not isinstance(v, bool) or v)
@@ -343,16 +387,17 @@ class SimSocket(CosimBase):
                 stdout = DEVNULL
 
             sim_log().info(f'Running cosimulator with: {args}')
-            self.cosim_pid = Popen(
-                [f'./run_sim.sh'] + args.split(' '),
-                stdout=stdout,
-                stderr=stdout,
-                cwd=outdir)
+
+            self.cosim_pid = Popen([f'./run_sim.sh'] + args.split(' '),
+                                   stdout=stdout,
+                                   stderr=stdout,
+                                   cwd=self.outdir)
             time.sleep(0.1)
             ret = self.cosim_pid.poll()
             if ret is not None:
+                breakpoint()
                 sim_log().error(
-                    f"Cosimulator error: {ret}. Check log file {outdir}/log.log"
+                    f"Cosimulator error: {ret}. Check log file {self.outdir}/log.log"
                 )
                 raise CosimulatorStartError
             else:
@@ -381,8 +426,10 @@ class SimSocket(CosimBase):
         port_name = msg.decode()
 
         self.handlers[self.SYNCHRO_HANDLE_NAME] = SimSocketSynchro(self, conn)
-        for p in self.gear.in_ports:
-            self.handlers[p.basename] = SimSocketInputDrv(self, p)
+
+        for cp in self.in_cosim_ports:
+            self.handlers[cp.port.basename] = SimSocketInputDrv(self, cp.port)
+
         for p in self.gear.out_ports:
             self.handlers[p.basename] = SimSocketOutputDrv(self, p)
 

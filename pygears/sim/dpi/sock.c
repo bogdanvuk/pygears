@@ -167,6 +167,7 @@ void *unix_sock_open(const char *name) {
 #endif
 
 void *sock_open(const char *uri, const char *channel) {
+  /* printf("[sock_open] enter\n"); */
   size_t len = strlen(uri);
   struct handle *handle = NULL;
 
@@ -192,6 +193,7 @@ void *sock_open(const char *uri, const char *channel) {
   // printf("Opened socket for %s: %p, timeout=%d\n", channel, handle,
   /* handle->timeout); */
 
+  /* printf("[sock_open] exit\n"); */
   return handle;
 }
 
@@ -243,7 +245,7 @@ int sock_done(void *handle) {
 
 extern void pause_sim();
 
-int sock_get_bv(void *handle, svBitVecVal *signal, int width) {
+int sock_get_bv(void *handle, int width, svBitVecVal *signal) {
   // Validate input
   if (!handle) {
     return 1;
@@ -265,14 +267,14 @@ int sock_get_bv(void *handle, svBitVecVal *signal, int width) {
     if (ret <= 0) {
       if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
         if (h->timeout > 0) {
-          // printf("%p timeout\n", handle);
-          // printf("Ret value %d, errno value %d\n", ret, errno);
+          /* printf("%p timeout\n", handle); */
+          /* printf("Ret value %d, errno value %d\n", ret, errno); */
           pause_sim();
         } else if (h->timeout == 0) {
           return 2;
         }
       } else if (errno != EINTR) {
-        // printf("Ret value %d, errno value %d\n", ret, errno);
+        /* printf("Ret value %d, errno value %d\n", ret, errno); */
         return 1;
       }
     }
@@ -282,18 +284,21 @@ int sock_get_bv(void *handle, svBitVecVal *signal, int width) {
 
   /* int i; */
   /* for (i = 0; i < SV_PACKED_DATA_NELEMS(width); i++) { */
-  /*   /\* printf("%d ", rval[i]) *\/ */
-  /*   signal[i] = rval[i]; */
+  /*   printf("%x ", signal[i]); */
+  /*   /\* printf("%x ", rval[i]); *\/ */
+  /*   /\* signal[i] = rval[i]; *\/ */
   /* } */
 
-  /* printf("\n") */
+  /* printf("\n"); */
 
   return 0;
 }
 
-int sock_get(void *handle, svOpenArrayHandle signal) {
-  return sock_get_bv(handle, (svBitVecVal *)svGetArrayPtr(signal),
-                     svSize(signal, 0));
+int sock_get(void *handle, const svOpenArrayHandle signal) {
+  /* printf("[sock_get] enter\n"); */
+  int ret = sock_get_bv(handle, svSize(signal, 0), (svBitVecVal *) svGetArrayPtr(signal));
+  /* printf("[sock_get] exit with %d\n", ret); */
+  return ret;
 }
 
 
@@ -309,9 +314,8 @@ int sock_put(void *handle, const svOpenArrayHandle signal) {
   int width = svSize(signal, 0);
   const svBitVecVal *ptr = (const svBitVecVal *)svGetArrayPtr(signal);
 
-  // printf("Width: %d\n", width);
-  // printf("Sending %d bytes\n",
-  /* SV_PACKED_DATA_NELEMS(width) * sizeof(svBitVecVal)); */
+  /* printf("Width: %d\n", width); */
+  /* printf("Sending %d bytes\n", SV_PACKED_DATA_NELEMS(width) * sizeof(svBitVecVal)); */
 
   send(h->sock, ptr, SV_PACKED_DATA_NELEMS(width) * sizeof(svBitVecVal), 0);
 
