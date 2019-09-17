@@ -22,7 +22,7 @@ module bc #(
          assign dout[i].valid = din.valid & !ready_reg[i];
          assign dout[i].data   = din.data;
 
-         always_ff @(posedge clk) begin
+         always @(posedge clk) begin
             if (rst || (!din.valid) || din.ready) begin
                ready_reg[i] <= 1'b0;
             end else if (dout[i].ready) begin

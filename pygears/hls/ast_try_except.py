@@ -8,7 +8,7 @@ from .utils import VisitError, interface_operations
 # 1st key: exception type
 # 2nd key: method which can cause the exception
 # value: block type
-INTF_EXCEPTIONS = {'QueueEmpty': {'get_nb': IntfBlock}}
+INTF_EXCEPTIONS = {'IntfEmpty': {'get_nb': IntfBlock}}
 
 
 @parse_ast.register(ast.Try)

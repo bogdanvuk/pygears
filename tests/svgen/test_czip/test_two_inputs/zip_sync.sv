@@ -97,7 +97,7 @@ module zip_sync_syncguard
          assign ready_all[i]  = out_ready[i] || ready_reg[i];
          assign out_valid[i]  = in_valid && !ready_reg[i];
 
-         always_ff @(posedge clk) begin
+         always @(posedge clk) begin
             if (rst || (!in_valid) || in_ready) begin
                ready_reg[i] <= 1'b0;
             end else if (out_ready[i]) begin

@@ -126,6 +126,12 @@ assign {{intf['name']}}.data = {{intf['name']}}_data;
 assign {{intf['name']}}_ready = {{intf['name']}}.ready;
 {%- endmacro %}
 
+{% macro intf_intf_connect(src, dest) -%}
+assign {{dest['name']}}.valid = {{src['name']}}.valid;
+assign {{dest['name']}}.data = {{src['name']}}.data;
+assign {{src['name']}}.ready = {{dest['name']}}.ready;
+{%- endmacro %}
+
 {% macro prod_signal_intf_connect(intf) -%}
 assign {{intf['name']}}_valid = {{intf['name']}}.valid;
 assign {{intf['name']}}_data = {{intf['name']}}.data;
@@ -271,7 +277,7 @@ endmodule
          assign ready_all[i]  = out_ready[i] || ready_reg[i];
          assign out_valid[i]  = in_valid && !ready_reg[i];
 
-         always_ff @(posedge clk) begin
+         always @(posedge clk) begin
             if (rst || (!in_valid) || in_ready) begin
                ready_reg[i] <= 1'b0;
             end else if (out_ready[i]) begin

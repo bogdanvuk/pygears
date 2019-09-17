@@ -27,7 +27,7 @@
       end
    end
 
-   always_ff @(posedge clk) begin
+   always @(posedge clk) begin
       if (rst | handshake) begin
          flag_reg <= 0;
       end else begin

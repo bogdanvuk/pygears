@@ -34,7 +34,7 @@ module decouple
       assign empty = (w_ptr == r_ptr);
       assign full = (w_ptr[MSB-1:0] == r_ptr[MSB-1:0]) & (w_ptr[MSB]!=r_ptr[MSB]);
 
-      always_ff @(posedge clk) begin
+      always @(posedge clk) begin
         if(rst) begin
            if (INIT_VALID)
              w_ptr <= 1;
@@ -46,7 +46,7 @@ module decouple
         end
       end
 
-      always_ff @(posedge clk) begin
+      always @(posedge clk) begin
         if(rst) begin
           r_ptr <= 0;
         end else if(dout.ready & ~empty) begin
@@ -69,7 +69,7 @@ module decouple
       assign reg_ready = reg_empty;
       assign reg_empty = !din_reg_valid;
 
-      always_ff @(posedge clk) begin
+      always @(posedge clk) begin
          if(rst | (!reg_empty && dout.ready)) begin
             din_reg_valid <= '0;
          end else if (reg_ready)begin

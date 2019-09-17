@@ -82,7 +82,7 @@
 
    assign cnt_next = cnt_reg + 1;
 
-   always_ff @(posedge clk) begin
+   always @(posedge clk) begin
       if (rst | (handshake && last_span)) begin
          cnt_reg <= '0;
       end else if (handshake) begin

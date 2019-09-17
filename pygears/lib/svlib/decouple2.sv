@@ -23,7 +23,7 @@ module decouple
        assign full = (active == 1) && (memory[1][0] == 1);
        assign empty = (active == 0);
 
-       always_ff @(posedge clk) begin
+       always @(posedge clk) begin
           if(rst) begin
              for (int i = 0; i < 2; i++) begin
                 memory[i] <= '0;
@@ -63,7 +63,7 @@ module decouple
 
       assign empty = (w_ptr == r_ptr);
       assign full = (w_ptr[MSB-1:0] == r_ptr[MSB-1:0]) & (w_ptr[MSB]!=r_ptr[MSB]);
-       always_ff @(posedge clk) begin
+       always @(posedge clk) begin
           if(rst) begin
              w_ptr <= 0;
           end else if(din.valid & ~full) begin
@@ -71,7 +71,7 @@ module decouple
           end
        end
 
-        always_ff @(posedge clk) begin
+        always @(posedge clk) begin
             if(rst) begin
               r_ptr <= 0;
            end else if(dout.ready & ~empty) begin
@@ -81,7 +81,7 @@ module decouple
 
         assign r_ptr_next = r_ptr + 1;
 
-      always_ff @(posedge clk) begin
+      always @(posedge clk) begin
         if(din.valid & ~full) begin
           memory[w_ptr[MSB-1:0]] <= {din.data, din.valid};
         end
@@ -103,7 +103,7 @@ module decouple
       assign reg_ready = reg_empty;
       assign reg_empty = !din_reg_valid;
 
-      always_ff @(posedge clk) begin
+      always @(posedge clk) begin
          if(rst | (!reg_empty && dout.ready)) begin
             din_reg_valid <= '0;
          end else if (reg_ready)begin

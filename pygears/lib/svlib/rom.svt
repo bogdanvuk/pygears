@@ -12,7 +12,7 @@
    assign reg_ready = reg_empty | dout.ready;
    assign reg_empty = !addr_reg_valid;
 
-   always_ff @(posedge clk)
+   always @(posedge clk)
      begin
         if(rst) begin
            addr_reg_valid <= '0;
@@ -31,7 +31,7 @@
    logic [{{int(_dout_t)-1}}:0] memory [0:{{2**int(_addr_t) - 1}}];
 {% endif %}
 
-   always_ff @(posedge clk)
+   always @(posedge clk)
      begin
         if (reg_ready) begin
            dout_s <= memory[addr_s];

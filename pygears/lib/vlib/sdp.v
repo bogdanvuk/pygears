@@ -104,7 +104,7 @@ module sdp_mem #(
 
    reg [W_DATA-1:0]         ram [DEPTH-1:0];
 
-   always_ff @(posedge clk) begin
+   always @(posedge clk) begin
       if (ena) begin
          if (wea) begin
             ram[addra] <= dia;
@@ -157,7 +157,7 @@ module sdp_rd_port #(
    assign data_valid = data_dvalid_reg;
 
    // valid and eot for data interface are registered
-   always_ff @(posedge clk) begin
+   always @(posedge clk) begin
       if (rst) begin
          data_dvalid_reg <= 1'b0;
       end

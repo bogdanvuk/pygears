@@ -29,7 +29,7 @@ module release_after_eot
 
    assign handshake = pred.valid && pred_s.eot;
 
-     always_ff @(posedge clk) begin
+     always @(posedge clk) begin
         if(rst) begin
            release_reg <= 0;
         end else if (handshake) begin

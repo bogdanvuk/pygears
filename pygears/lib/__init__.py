@@ -51,6 +51,7 @@ from .max_gears import max2
 from .unary import unary
 from .alternate_queues import alternate_queues
 from .delay import delay, delay_rng
+from .pipe import pipe
 from .verif import directed, verif, drv, check, mon, scoreboard, collect
 from .reduce2 import reduce2
 from .reduce import reduce, accum
@@ -73,8 +74,9 @@ __all__ = [
     'qdeal', 'clip', 'din_cat', 'take', 'release_after_eot', 'reverse',
     'form_sub_cfg', 'reduce2', 'group', 'repack', 'priority_mux_valve', 'max2',
     'unary', 'alternate_queues', 'delay', 'delay_rng', 'directed', 'verif',
-    'collect', 'rom', 'drv', 'check', 'mon', 'reduce', 'accum', 'funclut',
-    'truncate', 'round_half_up', 'round_to_zero', 'round_to_even', 'cordic',
-    'cordic_sin_cos', 'add', 'div', 'eq', 'ge', 'gt', 'invert', 'iceil', 'le',
-    'lt', 'mod', 'mul', 'ne', 'neg', 'sub', 'shl', 'shr', 'xor', 'scoreboard'
+    'collect', 'rom', 'drv', 'check', 'mon', 'reduce', 'accum', 'pipe',
+    'funclut', 'truncate', 'round_half_up', 'round_to_zero', 'round_to_even',
+    'cordic', 'cordic_sin_cos', 'add', 'div', 'eq', 'ge', 'gt', 'invert',
+    'iceil', 'le', 'lt', 'mod', 'mul', 'ne', 'neg', 'sub', 'shl', 'shr', 'xor',
+    'scoreboard'
 ]

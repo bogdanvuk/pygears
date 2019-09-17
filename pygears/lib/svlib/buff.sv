@@ -14,7 +14,7 @@ module buff
    assign reg_ready = reg_empty;
    assign reg_empty = !din_reg_valid;
 
-   always_ff @(posedge clk)
+   always @(posedge clk)
      begin
         if(rst | (!reg_empty && dout.ready)) begin
            din_reg_valid <= '0;

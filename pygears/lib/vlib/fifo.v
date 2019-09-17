@@ -65,7 +65,7 @@ module fifo
    assign out_handshake = fifo_valid && out_ready;
 
    if (REGOUT) begin
-      always_ff @(posedge clk)
+      always @(posedge clk)
         begin
             if(rst) begin
               out_valid <= '0;
@@ -76,7 +76,7 @@ module fifo
 
       assign out_ready = (!out_valid) | dout_ready;
 
-      always_ff @(posedge clk) begin
+      always @(posedge clk) begin
          if (out_ready) begin
             out_buff <= ram[raddr_reg[CW-1:0]];
          end
@@ -96,7 +96,7 @@ module fifo
 		   ram[waddr_reg[CW-1:0]] <= in_buff;
 
 
-	 always_ff @(posedge clk)
+	 always @(posedge clk)
 	   if (rst)
 		   begin
 			    raddr_reg <= '0;

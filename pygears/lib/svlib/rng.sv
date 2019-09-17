@@ -72,7 +72,7 @@
    end else begin
       logic cnt_started;
 
-      always_ff @(posedge clk) begin
+      always @(posedge clk) begin
          if (rst | (eot_internal_cond & handshake)) begin
             cnt_started <= 1'b0;
          end else if (handshake) begin
@@ -112,7 +112,7 @@
 
    assign handshake = dout.ready & cfg.valid;
 
-   always_ff@(posedge clk) begin
+   always@(posedge clk) begin
       if (rst | (eot_internal_cond & handshake)) begin
          cnt_reg <= '0;
       end else if (handshake) begin

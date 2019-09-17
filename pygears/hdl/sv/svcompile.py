@@ -6,7 +6,7 @@ from .sv_expression import svexpr
 from .util import svgen_typedef
 
 REG_TEMPLATE = """
-always_ff @(posedge clk) begin
+always @(posedge clk) begin
     if(rst | rst_cond) begin
         {0}_reg <= {1};
     end else if ({0}_en) begin

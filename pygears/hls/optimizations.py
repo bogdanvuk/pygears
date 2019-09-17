@@ -39,7 +39,7 @@ def pipeline_ast(pydl_ast, module_data):
     #            try:
     #                non blocking async
     #                some stmts
-    #            except QueueEmpty:
+    #            except IntfEmpty:
     #                register initialization
     #        else:
     #            async ..

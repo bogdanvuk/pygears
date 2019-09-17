@@ -43,7 +43,7 @@ module quenvelope
 
     assign handshake = dout.valid & dout.ready;
 
-    always_ff @(posedge clk) begin
+    always @(posedge clk) begin
        if (rst) begin
          handshake_reg <= 1'b0;
          valid_reg <= 1'b0;

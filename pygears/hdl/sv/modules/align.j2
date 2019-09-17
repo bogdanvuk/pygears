@@ -51,7 +51,7 @@ module {{module_name}}
           assign out_valid[i] = in_valid[i] && !consumed_reg[i];
           assign in_ready[i] = out_ready[i] && !consumed_reg[i];
 
-         always_ff @(posedge clk) begin
+         always @(posedge clk) begin
             if (rst | all_aligned) begin
                consumed_reg[i] <= 1'b0;
             end

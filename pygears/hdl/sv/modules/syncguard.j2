@@ -48,7 +48,7 @@
          // since the data has been posted
          assign out_valid[i] = in_valid[i] & !channel_open_reg[i];
 
-         always_ff @(posedge clk) begin
+         always @(posedge clk) begin
             if (rst | in_ready) begin
                channel_open_reg[i] <= 1'b0;
             end
