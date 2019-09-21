@@ -104,7 +104,7 @@ class ModuleData:
 
     @property
     def optimize(self):
-        return self.gear.params['hdl'].get('pipeline', False)
+        return self.gear.params.get('hdl', {}).get('pipeline', False)
 
     @property
     def local_namespace(self):

@@ -116,7 +116,7 @@ class ResExpr(Expr):
             return type(self.val)
 
         if isinstance(self.val, int):
-            return Int(self.val)
+            return type(Integer(self.val))
 
         # return type(self.val)
 

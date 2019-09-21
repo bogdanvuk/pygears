@@ -26,13 +26,12 @@ def cosim(top, sim, *args, **kwds):
         if sim in ['cadence', 'xsim', 'questa']:
             from .modules import SimSocket
             sim_cls = SimSocket
+            kwds['sim'] = sim
         elif sim == 'verilator':
             from .modules import SimVerilated
             sim_cls = SimVerilated
         else:
             raise Exception(f"Unsupported simulator: {sim}")
-
-        kwds['sim'] = sim
     else:
         sim_cls = sim
 

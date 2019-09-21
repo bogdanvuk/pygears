@@ -10,7 +10,7 @@ from .ast_call import parse_func_args
 from .compile_snippets import enumerate_impl, qrange_mux_impl
 from .hls_expressions import (BinOpExpr, BreakExpr, OperandVal, RegDef,
                               ResExpr, VariableDef, VariableStmt, and_expr,
-                              create_oposite, or_expr)
+                              create_oposite, or_expr, ConcatExpr)
 from .pydl_types import Block, CombBlock, IfBlock, Loop
 from .utils import VisitError, add_to_list, find_for_target
 
@@ -344,3 +344,16 @@ def break_comb_loop(loop_to_break, module_data, reg_name):
     loop_stmt = parse_ast(
         ast.parse(f'{reg_name}[{break_num}] = 1').body[0], module_data)
     if_block.stmts.insert(0, loop_stmt)
+
+
+@parse_ast.register(ast.ListComp)
+def parse_list_comp(node, module_data):
+    comprehension = node.generators[0]
+    rng = parse_ast(comprehension.iter, module_data)
+    var = comprehension.target.id
+    concat = []
+    for i in rng.val:
+        module_data.hdl_locals[var] = ResExpr(Uint[4](i))
+        concat.append(parse_ast(node.elt, module_data))
+
+    return ConcatExpr(concat)

@@ -15,4 +15,4 @@ async def unary(din: Uint['w_data']) -> Uint['2**(int(w_data)-1)']:
         if val == 0:
             yield 0
         else:
-            yield int('1' * val, 2)
+            yield int('1' * int(val), 2)

@@ -65,7 +65,7 @@ def find_assign_value(node, module_data, names):
         try:
             vals = find_data_expression(node.value, module_data)
             block = None
-        except:
+        except Exception as e:
             vals = eval_expression(node.value, module_data.local_namespace)
             for n in names:
                 del module_data.variables[n]
