@@ -63,7 +63,7 @@ Uint[1](1)
 
 from .base import EnumerableGenericMeta, type_str
 from .base import class_and_instance_method, TemplatedTypeUnspecified
-from .bitw import bitw
+from .math import bitw
 from .unit import Unit
 from .uint import Uint
 

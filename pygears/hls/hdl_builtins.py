@@ -1,6 +1,6 @@
 import ast
 from functools import reduce
-from pygears.typing import Int, Tuple, Uint, typeof, Queue, is_type
+from pygears.typing import Int, Tuple, Uint, typeof, Queue, is_type, div, floor
 from pygears.typing.queue import QueueMeta
 
 from pygears.util.utils import gather, qrange
@@ -12,6 +12,28 @@ from .hls_expressions import ArrayOpExpr, AttrExpr, BinOpExpr, CastExpr
 from .hls_expressions import ConcatExpr, ConditionalExpr, IntfDef, ResExpr
 from .hls_expressions import UnaryOpExpr, TupleExpr, SignalDef, SignalStmt
 from .hdl_arith import resolve_cast_func
+
+
+def call_floor(arg):
+    t_arg = arg.dtype
+    int_cls = Int if t_arg.signed else Uint
+    arg_to_int = CastExpr(arg, int_cls[t_arg.width])
+    if t_arg.fract >= 0:
+        return BinOpExpr((arg_to_int, ResExpr(Uint(t_arg.fract))), '>>')
+    else:
+        return BinOpExpr((arg_to_int, ResExpr(Uint(-t_arg.fract))), '<<')
+
+
+def call_div(a, b, subprec):
+    t_a = a.dtype
+    t_b = b.dtype
+
+    t_div = div(t_a, t_b, int(subprec.val))
+
+    def fixp__div__(op1: t_a, op2: t_b) -> t_div:
+        return t_div(op1) // op2
+
+    return fixp__div__
 
 
 def max_expr(op1, op2):
@@ -120,6 +142,8 @@ builtins = {
     int: call_int,
     len: call_len,
     print: call_print,
+    div: call_div,
+    floor: call_floor,
     Intf.empty: call_empty,
     Intf.get: call_get,
     Intf.get_nb: call_get_nb,

@@ -30,7 +30,7 @@ class SVGenGenerateVisitor(HierYielderBase):
             yield svgen.file_name, contents
 
             if (self.wrapper) and (node is self.top):
-                yield f'wrap_{svgen.file_name}', svgen.get_synth_wrap(
+                yield f'wrap_{os.path.basename(svgen.file_name)}', svgen.get_synth_wrap(
                     self.template_env)
 
 

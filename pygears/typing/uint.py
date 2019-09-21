@@ -7,10 +7,10 @@ arithmetic capabilities.
 """
 
 from .base import class_and_instance_method
-from .base import typeof, EnumerableGenericMeta
+from .base import typeof, EnumerableGenericMeta, is_type
 from .number import NumberType, Number
 from .tuple import Tuple
-from .bitw import bitw
+from .math import bitw
 from .unit import Unit
 
 
@@ -119,6 +119,8 @@ class IntegerType(IntegralType):
         >>> Uint[8] + Uint[8]
         Uint[9]
         """
+        if not issubclass(other, Integer):
+            return NotImplemented
 
         ops = [self, other]
 
@@ -163,6 +165,10 @@ class IntegerType(IntegralType):
         >>> Uint[8] + Int[8]
         Int[16]
         """
+
+        if not issubclass(other, Integer):
+            return NotImplemented
+
         ops = [self, other]
 
         signed = any(typeof(op, Int) for op in ops)
@@ -259,8 +265,11 @@ class Integer(Integral, metaclass=IntegerType):
         return (-type(self))(-int(self))
 
     def __add__(self, other):
-        if not isinstance(other, Integer):
+        if not is_type(type(other)):
             other = type(self).base(other)
+
+        if not isinstance(other, Integer):
+            return NotImplemented
 
         return (type(self) + type(other))(int(self) + int(other))
 
@@ -271,10 +280,15 @@ class Integer(Integral, metaclass=IntegerType):
             return type(self)(int(self) - other)
 
     def __mul__(self, other):
-        if isinstance(other, Integer):
-            return (type(self) * type(other))(int(self) * int(other))
-        else:
-            return type(self)(int(self) * other)
+        if not is_type(type(other)):
+            other = type(self).base(other)
+
+        if not isinstance(other, Integer):
+            return NotImplemented
+
+        return (type(self) * type(other))(int(self) * int(other))
+
+    __rmul__ = __mul__
 
     def __str__(self):
         return f'{str(type(self))}({int(self)})'
@@ -389,6 +403,9 @@ class Int(Integer, metaclass=IntType):
     def signed(self):
         return True
 
+    def is_abstract(self):
+        return False
+
     def __new__(cls, val: int = 0):
         if type(val) == cls:
             return val
@@ -434,6 +451,9 @@ class UintType(IntegerType):
 
     @property
     def signed(self):
+        return False
+
+    def is_abstract(self):
         return False
 
     @property
@@ -514,7 +534,7 @@ class Uint(Integer, metaclass=UintType):
         if isinstance(other, Unit):
             return self
 
-        raise NotImplementedError
+        return NotImplemented
 
 
 class BoolMeta(UintType):

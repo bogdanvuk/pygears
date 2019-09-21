@@ -1,4 +1,5 @@
-from pygears.typing import Fixp, Ufixp, typeof, Number
+from math import floor
+from pygears.typing import Fixp, Ufixp, typeof, Number, Int, Uint, div
 from pygears.core.type_match import type_match
 
 
@@ -69,17 +70,17 @@ def test_unsigned_div():
     t_a = Ufixp[4, 6]
     t_b = Ufixp[1, 7]
 
-    assert t_a(15.75).div(t_b(0.015625), 0) == Ufixp[10, 6](15.75 / 0.015625)
-    assert t_a(0.25).div(t_b(1.984375), 0) == Ufixp[10, 6](0.25 / 1.984375)
-    assert t_a(0.25).div(t_b(1.984375), 7) == Ufixp[10, 13](0.25 / 1.984375)
+    assert div(t_a(15.75), t_b(0.015625), 0) == Ufixp[10, 6](15.75 / 0.015625)
+    assert div(t_a(0.25), t_b(1.984375), 0) == Ufixp[10, 6](0.25 / 1.984375)
+    assert div(t_a(0.25), t_b(1.984375), 7) == Ufixp[10, 13](0.25 / 1.984375)
 
     t_c = Ufixp[10, 6]
     t_d = Ufixp[-2, 12]
 
-    assert t_c.max.div(t_d.lsb,
-                       0) == Ufixp[24, 6](float(t_c.max) / float(t_d.lsb))
-    assert t_c.max.div(t_d.max,
-                       0) == Ufixp[24, 6](float(t_c.max) / float(t_d.max))
+    assert div(t_c.max, t_d.lsb,
+               0) == Ufixp[24, 6](float(t_c.max) / float(t_d.lsb))
+    assert div(t_c.max, t_d.max,
+               0) == Ufixp[24, 6](float(t_c.max) / float(t_d.max))
 
 
 # def test_signed_div():
@@ -130,3 +131,41 @@ def test_cast():
 
     # Overflow
     assert t_a(t_b(7.5)) == t_a(3.5)
+
+
+def test_floor():
+    t_a = Fixp[8, 16]
+
+    assert floor(t_a) == Int[8]
+
+
+def test_add_integer():
+    t_a = Ufixp[8, 16]
+    t_b = Fixp[8, 16]
+    t_c = Uint[16]
+
+    assert t_a + t_c == Ufixp[17, 25]
+    assert t_c + t_a == Ufixp[17, 25]
+
+    assert t_a(2) + t_c(2) == Ufixp[17, 25](4)
+    assert t_c(2) + t_a(2) == Ufixp[17, 25](4)
+
+    assert t_b + t_c == Fixp[17, 25]
+    assert t_c + t_b == Fixp[17, 25]
+
+    assert t_b(-2) + t_c(2) == Fixp[17, 25](0)
+    assert t_c(2) + t_b(-2) == Fixp[17, 25](0)
+
+
+def test_mul_integer():
+    t_a = Ufixp[8, 16]
+    t_b = Uint[16]
+
+    assert t_a * t_b == Ufixp[24, 32]
+    assert t_b * t_a == Ufixp[24, 32]
+
+
+def test_mul_int():
+    a = Ufixp[8, 16](4.0)
+
+    assert type(2 * a) == Fixp[10, 18]

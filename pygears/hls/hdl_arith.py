@@ -1,5 +1,5 @@
 import ast
-from pygears.typing import Any, Fixpnumber, Uint, Unit, Tuple
+from pygears.typing import Any, Fixpnumber, Uint, Unit, Tuple, typeof, Integer, Fixp, Ufixp
 from pygears import cast
 from . import hls_expressions as expr
 from pygears.core.type_match import type_match, TypeMatchError
@@ -62,7 +62,13 @@ def fixp_sub_resolver(opexp, module_data):
 
 
 def fixp_cast_resolver(cast_to, opexp):
-    val_fract = opexp.dtype.fract
+    val_dtype = opexp.dtype
+
+    if typeof(val_dtype, Integer):
+        other_cls = Fixp if val_dtype.signed else Ufixp
+        val_dtype = other_cls[val_dtype.width, val_dtype.width]
+
+    val_fract = val_dtype.fract
     fract = cast_to.fract
 
     if fract > val_fract:

@@ -2,6 +2,7 @@ from pygears import alternative, gear, module
 from pygears.conf import safe_bind
 from pygears.core.intf import IntfOperPlugin
 from pygears.typing import Integer, Tuple, Number, Any, Bool, Integral, Fixpnumber
+from pygears.typing import div as typing_div
 from pygears.util.hof import oper_tree
 from pygears.hls import datagear
 
@@ -24,10 +25,10 @@ def fdiv(din: Tuple[{'a': Integer, 'b': Integer}]) -> b'din[0] // din[1]':
 
 @datagear
 def div(din: Tuple[{
-        'a': Fixpnumber,
-        'b': Fixpnumber
-}], *, subprec) -> b'din[0].div(din[1], subprec)':
-    return din[0].div(din[1], subprec)
+        'a': Number,
+        'b': Number
+}], *, subprec) -> b'typing_div(din[0], din[1], subprec)':
+    return typing_div(din[0], din[1], subprec)
 
 
 @datagear

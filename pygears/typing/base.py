@@ -170,6 +170,9 @@ class GenericMeta(TypingMeta):
 
         return len(self.args) == 0
 
+    def is_abstract(self):
+        return True
+
     def __bool__(self):
         return self.specified
 
