@@ -81,10 +81,8 @@ def topo_sort_util(v, g, dag, visited, stack, cycle):
         if consumer in cycle:
             index = cycle.index(consumer)
             cycle.append(consumer)
-            raise SimCyclic(
-                'Simulation not possible, gear cycle found:'
-                f' {" - ".join([c.name for c in cycle[index:]])}'
-            )
+            raise SimCyclic('Simulation not possible, gear cycle found:'
+                            f' {" - ".join([c.name for c in cycle[index:]])}')
 
         if not visited[i]:
             topo_sort_util(i, consumer, dag, visited, stack, cycle)
@@ -222,7 +220,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         for g in gear_multi_order:
             g.phase = 'forward'
             if g not in self.sim_map:
-                Exception(
+                raise Exception(
                     f'Gear {g.name} of type {g.definition.__name__} has no simulation model'
                 )
 

@@ -127,9 +127,9 @@ assign {{intf['name']}}_ready = {{intf['name']}}.ready;
 {%- endmacro %}
 
 {% macro intf_intf_connect(src, dest) -%}
-assign {{dest['name']}}.valid = {{src['name']}}.valid;
-assign {{dest['name']}}.data = {{src['name']}}.data;
-assign {{src['name']}}.ready = {{dest['name']}}.ready;
+assign {{dest}}.valid = {{src}}.valid;
+assign {{dest}}.data = {{src}}.data;
+assign {{src}}.ready = {{dest}}.ready;
 {%- endmacro %}
 
 {% macro prod_signal_intf_connect(intf) -%}

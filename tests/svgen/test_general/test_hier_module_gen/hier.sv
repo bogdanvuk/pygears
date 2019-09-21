@@ -20,13 +20,9 @@ module hier(
         .dout(ret1_bc)
     );
 
-    connect connect_ret1_1 (
-        .clk(clk),
-        .rst(rst),
-        .din(ret1_bc[1]),
-        .dout(top_ret1)
-    );
-
+    assign ret1_bc[1].valid = top_ret1.valid;
+    assign ret1_bc[1].data = top_ret1.data;
+    assign top_ret1.ready = ret1_bc[1].ready;
 
       dti #(.W_DATA(2)) top_din2_bc[1:0](); // u2 (2)
     bc #(

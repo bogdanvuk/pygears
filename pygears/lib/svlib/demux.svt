@@ -12,6 +12,23 @@
     always_comb
     begin
         din.ready = 1'bx;
+
+        if (din.valid) begin
+            case(din_s.ctrl)
+{% for key, iout in params['_full_mapping'].items() %}
+                {{key}} : begin
+                    din.ready = {{output_intfs[iout]['name']}}.ready;
+                end
+{% endfor %}
+                default: begin
+                    din.ready = 1'bx;
+                end
+            endcase
+        end
+    end
+
+    always_comb
+    begin
 {% for i in (intfs|isoutput) %}
         {{i['name']}}.valid = 0;
 {% endfor %}
@@ -20,12 +37,10 @@
             case(din_s.ctrl)
 {% for key, iout in params['_full_mapping'].items() %}
                 {{key}} : begin
-                    din.ready = {{output_intfs[iout]['name']}}.ready;
                     {{output_intfs[iout]['name']}}.valid = din.valid;
                 end
 {% endfor %}
                 default: begin
-                    din.ready = 1'bx;
 {% for i in (intfs|isoutput) %}
                     {{i['name']}}.valid = 1'bx;
 {% endfor %}
