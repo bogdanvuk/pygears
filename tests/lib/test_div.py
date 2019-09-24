@@ -11,7 +11,7 @@ def test_unsigned(tmpdir, cosim_cls):
           f=add(b=b, sim_cls=cosim_cls),
           ref=add(b=b, name='ref_model'))
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_signed(tmpdir, cosim_cls):
@@ -22,7 +22,7 @@ def test_signed(tmpdir, cosim_cls):
           f=add(b=b, sim_cls=cosim_cls),
           ref=add(b=b, name='ref_model'))
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_fixp(tmpdir, cosim_cls):
@@ -33,4 +33,4 @@ def test_fixp(tmpdir, cosim_cls):
           f=add(b=b, sim_cls=cosim_cls),
           ref=add(b=b, name='ref_model'))
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)

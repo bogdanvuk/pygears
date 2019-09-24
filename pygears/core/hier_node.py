@@ -111,6 +111,13 @@ class NamedHierNode(HierNode):
             if new_name:
                 child.basename = new_name
 
+    def __contains__(self, path):
+        try:
+            self[path]
+            return True
+        except KeyError:
+            return False
+
     def __getitem__(self, path):
         if not path:
             raise KeyError()

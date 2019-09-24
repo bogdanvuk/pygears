@@ -12,7 +12,7 @@ def test_unsigned_overflow(tmpdir, sim_cls):
              f=max2(sim_cls=sim_cls),
              ref=[0xf, 0xe, 0xd])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_signed_unsigned(tmpdir, sim_cls):
@@ -22,7 +22,7 @@ def test_signed_unsigned(tmpdir, sim_cls):
              f=max2(sim_cls=sim_cls),
              ref=[0xf, 0xf, 0x1, 0x0])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_unsigned_signed_cosim(tmpdir, sim_cls):
@@ -32,7 +32,7 @@ def test_unsigned_signed_cosim(tmpdir, sim_cls):
              f=max2(sim_cls=sim_cls),
              ref=[0x7, 0x1, 0x7, 0x2])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_signed_cosim(tmpdir, sim_cls):
@@ -42,4 +42,4 @@ def test_signed_cosim(tmpdir, sim_cls):
              f=max2(sim_cls=sim_cls),
              ref=[0x7, 0x7, 0x1, -0x2])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)

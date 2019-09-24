@@ -1,5 +1,5 @@
 from pygears import config
 
-config['hdl/debug_intfs'].append('/fmap/sub.*')
-config['hdl/debug_intfs'].append('/fmap.din')
-config['hdl/debug_intfs'].append('/fmap.dout')
+config['debug/trace'].append('/fmap/sub.*')
+config['debug/trace'].append('/fmap.din')
+config['debug/trace'].append('/fmap.dout')

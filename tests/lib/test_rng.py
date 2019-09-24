@@ -21,7 +21,7 @@ def test_basic_unsigned_sim(tmpdir):
 
     directed(drv(t=Tuple[Uint[4], Uint[4], Uint[2]], seq=seq), f=rng, ref=ref)
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def get_dut(dout_delay):
@@ -46,7 +46,7 @@ def test_unsigned_cosim(tmpdir, cosim_cls, din_delay, dout_delay, cnt_steps,
 
     # cosim_cls = partial(SimVerilated, language='v')
     # tmpdir = '/tools/home/tmp'
-    # config['hdl/debug_intfs'] = ['*']
+    # config['debug/trace'] = ['*']
     # cnt_steps = False
     # incr_steps = True
     # dout_delay = 5
@@ -61,7 +61,7 @@ def test_unsigned_cosim(tmpdir, cosim_cls, din_delay, dout_delay, cnt_steps,
                   incr_steps=incr_steps),
           delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_basic_signed():
@@ -75,7 +75,7 @@ def test_basic_signed_sim(tmpdir):
 
     directed(drv(t=Tuple[Int[5], Int[6], Uint[2]], seq=seq), f=rng, ref=ref)
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 @pytest.mark.parametrize('din_delay', [0, 5])
@@ -90,7 +90,7 @@ def test_signed_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
           ref=rng(name='ref_model'),
           delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_supply_constant():
@@ -121,7 +121,7 @@ def test_cnt_only_sim(tmpdir):
 
     directed(drv(t=Uint[4], seq=seq), f=rng, ref=ref)
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 @pytest.mark.parametrize('din_delay', [0, 5])
@@ -135,7 +135,7 @@ def test_cnt_only_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
           ref=rng(name='ref_model'),
           delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_cnt_down():

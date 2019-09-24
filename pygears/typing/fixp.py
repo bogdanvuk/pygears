@@ -1,5 +1,6 @@
 from math import floor
 from .base import class_and_instance_method, typeof, is_type
+from .float import Float
 from .unit import Unit
 from .uint import IntegralType, Integral, Uint, Int, Integer
 from .math import bitw
@@ -213,7 +214,7 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
             else:
                 val = int(val) >> (val_fract - cls.fract)
         elif ((not is_type(type(val)) and isinstance(val, (float, int)))
-              or isinstance(val, Integer)):
+              or isinstance(val, (Integer, Float))):
             val = int(float(val) * (2**cls.fract))
         else:
             raise TypeError(f'Unsupported value {val} of type {type(val)}')

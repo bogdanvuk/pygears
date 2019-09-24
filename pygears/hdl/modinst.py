@@ -43,7 +43,7 @@ class HDLModuleInst:
 
     @property
     def hdl_path_list(self):
-        return registry('hdl/include_paths')
+        return registry('hdl/include')
 
     @property
     @functools.lru_cache()

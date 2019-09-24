@@ -16,4 +16,4 @@ def test_directed(tmpdir, sim_cls):
              f=sdp(sim_cls=sim_cls, depth=4),
              ref=rd_data)
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)

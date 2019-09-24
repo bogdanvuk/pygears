@@ -1,10 +1,10 @@
 from pygears import gear
-from pygears.typing import Queue, Uint, bitw
+from pygears.typing import Queue, Uint, bitw, Array
 
 
 @gear(hdl={'compile': True})
-async def qdeal(din: Queue, *, num, lvl=b'din.lvl-1'
-                ) -> b'(Queue[din.data, din.lvl-1], ) * num':
+async def qdeal(din: Queue, *, num,
+                lvl=b'din.lvl-1') -> b'(Queue[din.data, din.lvl-1], ) * num':
     """Short for Trasaction Round Robin Distributed, outputs data to one of the
     outpus interfaces following a `Round Robin` schedule. The outpus are
     switched when the input transaction ends. The ``din`` type is at least a
@@ -32,3 +32,22 @@ async def qdeal(din: Queue, *, num, lvl=b'din.lvl-1'
                     i = 0
                 else:
                     i += 1
+
+
+@gear(hdl={'compile': True})
+async def deal(din, *, num) -> b'(din, ) * num':
+    i = Uint[bitw(num)](0)
+    # out_res: (din.dtype, ) * num
+    out_res: Array[din.dtype, num]
+
+    while True:
+        async with din as val:
+            out_res = [None] * num
+            out_res[i] = val.data
+
+            yield out_res
+
+            if i == (num - 1):
+                i = 0
+            else:
+                i += 1

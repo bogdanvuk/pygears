@@ -10,7 +10,7 @@ from pygears.core.gear import InSig, OutSig
 
 @pytest.fixture(autouse=True)
 def configure():
-    config['hdl/include_paths'].append(
+    config['hdl/include'].append(
         os.path.join(os.path.dirname(__file__), 'test_signals'))
 
 
@@ -35,7 +35,7 @@ def test_local_signal(tmpdir):
              f=dut(sim_cls=SimVerilated),
              ref=(list(range(0, 6, 2))))
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 @gear
@@ -54,7 +54,7 @@ def test_channeling(tmpdir):
              f=dut(sim_cls=SimVerilated),
              ref=(list(range(0, 6, 2))))
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 @gear(signals=[InSig('clk', 1), InSig('rst', 1), InSig('clk2', 1)])
@@ -75,6 +75,6 @@ def test_clk_channeling():
     assert InSig('clk2', 1) in rtltop['/dut'].params['signals']
 
 
-# config['hdl/include_paths'].append(
+# config['hdl/include'].append(
 #     os.path.join(os.path.dirname(__file__), 'test_signals'))
 # test_channeling('/tools/home/tmp')

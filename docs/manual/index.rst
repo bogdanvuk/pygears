@@ -9,7 +9,72 @@ Welcome to PyGears
 ==================
 
 HW Design: A Functional Approach
----------------------------------
+--------------------------------
+
+**PyGears** is a free framework that lets you design hardware using high-level Python constructs and compile it to synthesizable SystemVerilog or Verilog code. There is a built-in simulator that lets you use arbitrary Python code with its vast set of libraries to verify your hardware modules. **PyGears** makes connecting and parametrizing modules easy,
+
+.. code-block:: python
+
+  @gear
+  def echo(samples: Fixp, *, feedback_gain, sample_rate, delay):
+
+      sample_dly_len = round(sample_rate * delay)
+      fifo_depth = ceil_pow2(sample_dly_len)
+      feedback_gain_fixp = samples.dtype(feedback_gain)
+
+      dout = Intf(samples.dtype)
+
+      feedback = decouple(dout, depth=fifo_depth) \
+          | prefill(dtype=samples.dtype, num=sample_dly_len)
+
+      feedback_attenuated = (feedback * feedback_gain_fixp) \
+          | samples.dtype
+
+      dout |= (samples + feedback_attenuated) | samples.dtype
+
+      return dout
+
+Python functions model hardware modules, where function arguments represent module inputs and parameters. Example ``echo`` module has a single input port called ``samples`` where data of arbitrary signed fixed-point type ``Fixp`` can be received. Other three parameters ``fifo_depth``, ``feedback_gain`` and ``precision`` are compile time parameters.
+
+.. code-block:: python
+
+  @gear
+  def echo(samples: Int, *, fifo_depth, feedback_gain, precision):
+      ...
+
+Arbitrary Python code can be used in modules at compile time, for an example to transform input parameters:
+
+.. code-block:: python
+
+    sample_dly_len = round(sample_rate * delay)
+    fifo_depth = ceil_pow2(sample_dly_len)
+    feedback_gain_fixp = samples.dtype(feedback_gain)
+
+Rest of the ``echo`` function code describes the hardware module for applying echo audio effect to the input stream. 
+
+.. bdp:: images/echo.py
+    :align: center
+
+Modules are instantiated using function calls: ``decouple(dout, depth=fifo_depth)``, which return module output interfaces that can in turn be passed as arguments to other module functions in order to make a connection between the modules. For conveniance the pipe ``"|"`` operator can be used to automatically pass output of one function as argument to the next one. This was used to connect the output of ``decouple`` to ``prefill`` (``"\\"`` was used just to split the line visually):
+
+.. code-block:: python
+
+    feedback = decouple(dout, depth=fifo_depth) \
+        | prefill(dtype=samples.dtype, num=sample_dly_len)
+
+Functions return their output interfaces which are then used as arguments to other module funtions to establish a connection:
+
+.. code-block:: python
+
+    return dout
+
+Built-in simulator makes it easy to test and verify the modules while drawing power from the Python vast ecosystem of libraries. For an example, use Python built-in `audioop <https://docs.python.org/3.7/library/audioop.html>`_ library to read WAV files into an input samples stream for the ``echo`` module, and then visualise the input and output waveforms using `matplotlib <https://matplotlib.org/>`_:
+
+.. image:: images/echo_plot.png
+
+Speedup the simulation by telling **PyGears** simulator to use open-source `Verilator <http://www.veripool.org/wiki/verilator>`_ to simulate hardware modules, or some of the proprietary simulators like Questa, NCSim or Xsim. Implement any part of the system in a standard HDL and debug your design by inspecting the waveforms for an example in open-source wave viewer `GTKWave <http://gtkwave.sourceforge.net>`_ 
+
+.. image:: images/echo_vcd.png
 
 **PyGears** is an ambitious attempt to create a Python framework that facilitates describing digital hardware. It aims to augment current RTL methodology to drastically increase **composability** of hardware modules. Ease of composition leads to better **reusability**, since modules that compose better can be used in a wider variety of contexts. Set of reusable components can then form a well-tested and documented library that significantly speeds up the development process.  
 
@@ -17,24 +82,7 @@ For a guide through **PyGears** methodology, checkout `blog series on implementi
 
 For an introductory **PyGears** example, checkout :ref:`echo <echo-examples>`. A snippet is given below: 
 
-.. code-block:: python
-
-  @gear
-  def echo(samples: Int, *, fifo_depth, feedback_gain, precision):
-      dout = Intf(din.dtype)
-
-      feedback = dout \
-          | fifo(depth=fifo_depth, threshold=fifo_depth - 1) \
-          | fill_void(fill=Int[16](0)) \
-          | decouple
-
-      feedback_attenuated = (feedback * feedback_gain) >> precision
-
-      dout |= (din + feedback_attenuated) | dout.dtype
-
-      return dout
-
-**PyGears** proposes a single generic interface for all modules (:ref:`read about the hardware implementation of the interface here <gears-interface>`) and provides a way to use powerful features of Python language to compose modules written in an existing HDL (currently only supports SystemVerilog). Based on the Python description, **PyGears** generates functionally equivalent, synthetizable RTL code.
+**PyGears** proposes a single generic interface for all modules (:ref:`read about the hardware implementation of the interface here <gears-interface>`) and provides a way to use powerful features of Python language to compose modules written in an existing HDL (currently only supports SystemVerilog). Based on the Python description, **PyGears** generates functionally equivalent, synthesizable RTL code.
 
 Furthermore, **PyGears** offers a way to write verification environment in high-level Python language and co-simulate the generated RTL with an external HDL simulator. **PyGears** features a completely free solution using `Verilator <http://www.veripool.org/wiki/verilator>`_ simulator and standard SystemVerilog simulators via the `DPI <https://en.wikipedia.org/wiki/SystemVerilog_DPI>`_ (tested on proprietary Questa and NCSim simulators).
 

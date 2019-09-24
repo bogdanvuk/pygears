@@ -23,7 +23,7 @@ def test_simple_directed(tmpdir, sim_cls, din_delay, dout_delay, branches):
         delays=[delay_rng(dout_delay, dout_delay) for _ in range(branches)],
         ref=[[i] for i in range(branches)])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 @pytest.mark.parametrize('din_delay', [0, 1])
@@ -47,7 +47,7 @@ def test_mapped_directed(tmpdir, sim_cls, din_delay, dout_delay, branches):
         delays=[delay_rng(dout_delay, dout_delay) for _ in range(branches)],
         ref=ref)
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 @pytest.mark.parametrize('din_delay', [0, 1])
@@ -66,7 +66,7 @@ def test_mapped_default_directed(tmpdir, sim_cls, din_delay, dout_delay):
              delays=[delay_rng(dout_delay, dout_delay) for _ in range(3)],
              ref=ref)
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def mux_demux_redux(branches):

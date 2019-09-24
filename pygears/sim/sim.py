@@ -50,7 +50,7 @@ async def delta():
 
 
 def artifacts_dir():
-    return registry('sim/artifacts_dir')
+    return registry('results-dir')
 
 
 def schedule_to_finish(gear):
@@ -455,7 +455,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
                 raise registry('sim/exception')
 
 
-def sim(outdir=None,
+def sim(resdir=None,
         timeout=None,
         extens=None,
         run=True,
@@ -465,16 +465,15 @@ def sim(outdir=None,
     if extens is None:
         extens = []
 
-    if config['sim/extens'] is not None:
-        extens.extend(config['sim/extens'])
+    extens.extend(config['sim/extens'])
 
-    if outdir is None:
-        outdir = registry('sim/artifacts_dir')
-        if outdir is None:
-            outdir = tempfile.mkdtemp()
+    if resdir is None:
+        resdir = config['results-dir']
+        if resdir is None:
+            resdir = tempfile.mkdtemp()
 
-    bind('sim/artifacts_dir', outdir)
-    os.makedirs(outdir, exist_ok=True)
+    config['results-dir'] = resdir
+    os.makedirs(resdir, exist_ok=True)
 
     if not seed:
         seed = random.randrange(sys.maxsize)
@@ -547,8 +546,9 @@ class SimPlugin(GearPlugin):
         safe_bind('sim/config', {})
         safe_bind('sim/flow', [])
         safe_bind('sim/tasks', {})
-        config.define('sim/artifacts_dir', default=None)
+        config.define('results-dir', default=None)
         config.define('sim/extens', default=[])
+        config.define('debug/trace', default=[])
 
         safe_bind('gear/params/extra/sim_setup', None)
         register_custom_log('sim', cls=SimLog)

@@ -1,3 +1,3 @@
 from pygears import config
 
-config['hdl/debug_intfs'].append('/ccat2.*')
+config['debug/trace'].append('/ccat2.*')

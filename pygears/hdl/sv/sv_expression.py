@@ -1,7 +1,7 @@
 from pygears.hls.hls_expressions import (EXTENDABLE_OPERATORS, BinOpExpr,
                                          ConcatExpr)
 from pygears.hls.utils import VisitError
-from pygears.typing import Array, Int, Integer, Queue, Uint, typeof
+from pygears.typing import Array, Integer, Queue, code, typeof
 
 
 class SVExpressionVisitor:
@@ -19,7 +19,7 @@ class SVExpressionVisitor:
             return f'{node.op.name}_{node.context}'
 
     def visit_ResExpr(self, node):
-        return int(node.val)
+        return code(node.val)
 
     def visit_FunctionCall(self, node):
         return (f'{node.name}(' +

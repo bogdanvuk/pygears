@@ -15,7 +15,7 @@ def test_directed_list(tmpdir, sim_cls):
              f=rom(sim_cls=sim_cls, data=data, dtype=Uint[8]),
              ref=data)
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_directed_dict(tmpdir, sim_cls):
@@ -28,7 +28,7 @@ def test_directed_dict(tmpdir, sim_cls):
              f=rom(sim_cls=sim_cls, data=data, dtype=Uint[8]),
              ref=res)
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_directed_list_dflt(tmpdir, sim_cls):
@@ -39,7 +39,7 @@ def test_directed_list_dflt(tmpdir, sim_cls):
              f=rom(sim_cls=sim_cls, data=data, dtype=Uint[8], dflt=0),
              ref=data + [0]*10)
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_directed_dict_dflt(tmpdir, sim_cls):
@@ -52,4 +52,4 @@ def test_directed_dict_dflt(tmpdir, sim_cls):
              f=rom(sim_cls=sim_cls, data=data, dtype=Uint[8], dflt=0),
              ref=res)
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)

@@ -115,7 +115,7 @@ class ActivityReporter(ActivityChecker):
     def after_run(self, sim):
         if self.draw_graph:
             g = graph(
-                outdir=registry('sim/artifacts_dir'),
+                outdir=registry('results-dir'),
                 node_filter=lambda g: not g.child)
         else:
             g = None
@@ -131,7 +131,7 @@ class ActivityReporter(ActivityChecker):
         self.sim_gears_activity(g, sim, blocking_gears)
 
         if self.draw_graph:
-            outdir = registry('sim/artifacts_dir')
+            outdir = registry('results-dir')
             g.graph.write_svg(os.path.join(outdir, 'proba.svg'))
 
         try:
@@ -174,7 +174,7 @@ class ActivityReporter(ActivityChecker):
         super().after_run(sim)
 
     def cosim_activity(self, g, top_name):
-        outdir = registry('sim/artifacts_dir')
+        outdir = registry('results-dir')
         activity_path = os.path.join(outdir, 'activity.log')
 
         if not os.path.isfile(activity_path):

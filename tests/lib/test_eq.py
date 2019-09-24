@@ -21,4 +21,4 @@ def test_basic(tmpdir, cosim_cls):
         f=eq_wrap(sim_cls=cosim_cls),
         ref=eq(name='ref_model'))
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)

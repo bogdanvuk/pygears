@@ -1,6 +1,6 @@
 from pygears.hls.hls_expressions import EXTENDABLE_OPERATORS, BinOpExpr
 from pygears.hdl.sv.sv_expression import SVExpressionVisitor
-from pygears.typing import Array, Number, typeof
+from pygears.typing import Array, Number, typeof, is_type
 
 RESIZE_FUNC_TEMPLATE = """
 function {signed} [{res_size}:0] {name};
@@ -98,30 +98,14 @@ class VExpressionVisitor(SVExpressionVisitor):
 
         dtype = node.val.dtype
         if typeof(dtype, Array):
-            sub_name = f'{val}_array'
-            idx = self.visit(node.index)
-
-            array_assignment = []
-            # sub_indexes = [f'{val}_{i}' for i in range(len(dtype))]
-            # vals = ', '.join(sub_indexes)
-            sign = 'signed' if getattr(dtype[0], 'signed', False) else ''
-            array_assignment.append(
-                f'reg {sign} [{int(dtype[0])-1}:0] {sub_name};')
-            # array_assignment.append(f'always @({idx}, {vals}) begin')
-            array_assignment.append(f'always @* begin')
-            array_assignment.append(f'    {sub_name} = {val}_{0};')
-            for i in range(len(dtype)):
-                array_assignment.append(f'    if ({idx} == {i})')
-                array_assignment.append(f'        {sub_name} = {val}_{i};')
-            array_assignment.append(f'end')
-
-            update_extras(self.extras, {sub_name: '\n'.join(array_assignment)})
-            return f'{sub_name}'
-
-        if typeof(dtype, Number):
+            index = self.visit(node.index)
+            return f'{val}_arr[{index}]'
+        elif typeof(dtype, Number):
             return f'{val}[{self.visit(node.index)}]'
-
-        return f'{val}_{dtype.fields[node.index]}'
+        elif is_type(dtype):
+            return f'{val}_{dtype.fields[node.index]}'
+        else:
+            raise Exception('Unable to subscript')
 
 
 def vexpr(expr, extras=None):

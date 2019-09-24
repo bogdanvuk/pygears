@@ -27,7 +27,7 @@ def get_dut(dout_delay):
 
 def test_directed(tmpdir, sim_cls):
     directed(drv(t=T_DIN, seq=SEQUENCE), f=replicate(sim_cls=sim_cls), ref=REF)
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 @pytest.mark.parametrize('din_delay', [0, 5])
@@ -40,7 +40,7 @@ def test_directed_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
         ref=replicate(name='ref_model'),
         delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 # TODO: live fails

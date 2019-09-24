@@ -80,7 +80,7 @@ def multicycle_test_gen(tmpdir, func, latency):
              f=func,
              ref=list(range(data_num)))
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
     assert registry('sim/timestep') == (data_num + latency - 1)
 

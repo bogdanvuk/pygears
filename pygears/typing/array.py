@@ -11,8 +11,13 @@ class ArrayType(EnumerableGenericMeta):
 
         return list(range(int(self.args[1])))
 
+    #TODO: Remove this
     @property
     def dtype(self):
+        return self.args[0]
+
+    @property
+    def data(self):
         return self.args[0]
 
     def __getitem__(self, index):

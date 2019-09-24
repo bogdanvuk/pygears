@@ -38,7 +38,7 @@ def test_uint_directed(tmpdir, sim_cls, din_delay, cfg_delay, dout_delay):
              ref=[(5, 0), (6, 1), (7, 2)],
              delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 @pytest.mark.parametrize('din_delay', [0, 1])
@@ -58,7 +58,7 @@ def test_tuple_uint_directed(tmpdir, sim_cls, din_delay, cfg_delay,
              ref=[(5, 0), (6, 1), (7, 2)],
              delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 
@@ -98,7 +98,7 @@ def test_mapped_directed(tmpdir, sim_cls, din_delay, cfg_delay, dout_delay,
              delays=[delay_rng(dout_delay, dout_delay)],
              ref=ref)
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 # test_mapped_directed('/tools/home/tmp', None, 0, 0, 0, 5)
@@ -126,7 +126,7 @@ def test_diff_inputs(tmpdir, sim_cls, din_delay, cfg_delay, dout_delay):
              ref=[(5, 0), (6, 1), ((8, 1), 2)],
              delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 # @formal_check(assumes=[

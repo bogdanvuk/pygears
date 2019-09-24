@@ -168,7 +168,7 @@ def registry(key_path):
     **Example** - Obtain a list of directory paths where SystemVerilog
     generator will look for the SystemVerilog implementations of the gears:
 
-    >>> registry('hdl/include_paths')
+    >>> registry('hdl/include')
     ['/tools/home/.pygears/svlib', '/tools/home/pygears/pygears/lib/svlib', '/tools/home/pygears/pygears/lib/svlib']
 
     """

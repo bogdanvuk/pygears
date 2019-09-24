@@ -210,9 +210,9 @@ class WaveJSON(SimExtend):
     def __init__(self,
                  top,
                  trace_fn=Inject('wavejson/trace_fn'),
-                 include=Inject('hdl/debug_intfs'),
+                 include=Inject('debug/trace'),
                  sim=Inject('sim/simulator'),
-                 outdir=Inject('sim/artifacts_dir'),
+                 outdir=Inject('results-dir'),
                  sim_map=Inject('sim/map')):
         super().__init__()
         self.sim = sim

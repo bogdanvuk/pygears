@@ -24,7 +24,7 @@ def test_uint_3(tmpdir, cosim_cls, din_delay, dout_delay):
              ref=[(0, 4, 8), (1, 5, 9), (2, 6, 10), (3, 7, 11)],
              delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 @pytest.mark.parametrize('din_delay', [(0, 0, 0), (1, 5, 3)])
@@ -41,7 +41,7 @@ def test_queue_3(tmpdir, cosim_cls, din_delay, dout_delay):
           ref=ccat(name='ref_model'),
           delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 @pytest.mark.parametrize('branches', [2, 3, 27, 127])

@@ -14,4 +14,4 @@ def test_directed(tmpdir, sim_cls, div):
     ref = [math.ceil(x / div) for x in seq]
     directed(
         drv(t=Uint[8], seq=seq), f=iceil(sim_cls=sim_cls, div=div), ref=ref)
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)

@@ -14,7 +14,7 @@ def test_unsigned_overflow_cosim(tmpdir, cosim_cls):
           f=mul(sim_cls=cosim_cls),
           ref=mul(name='ref_model'))
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_signed_unsigned_cosim(tmpdir, cosim_cls):
@@ -24,7 +24,7 @@ def test_signed_unsigned_cosim(tmpdir, cosim_cls):
           f=mul(sim_cls=cosim_cls),
           ref=mul(name='ref_model'))
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_unsigned_signed_cosim(tmpdir, cosim_cls):
@@ -34,7 +34,7 @@ def test_unsigned_signed_cosim(tmpdir, cosim_cls):
           f=mul(sim_cls=cosim_cls),
           ref=mul(name='ref_model'))
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_signed_cosim(tmpdir, cosim_cls):
@@ -44,7 +44,7 @@ def test_signed_cosim(tmpdir, cosim_cls):
           f=mul(sim_cls=cosim_cls),
           ref=mul(name='ref_model'))
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 @synth_check(

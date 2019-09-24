@@ -14,7 +14,7 @@ def test_pygears_sim(tmpdir):
 
     directed(drv(t=Uint[16], seq=seq), f=dreg, ref=seq)
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
     assert timestep() == len(seq) + 1
 
@@ -39,7 +39,7 @@ def test_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
              ref=seq,
              delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 @pytest.mark.parametrize('din_delay', [0, 5])
@@ -53,7 +53,7 @@ def test_queue_tuple(tmpdir, cosim_cls, din_delay, dout_delay):
           ref=dreg(name='ref_model'),
           delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 @pytest.mark.parametrize('lvl', [1, 2, 5])
@@ -66,7 +66,7 @@ def test_queue_unit(tmpdir, cosim_cls, lvl):
           f=dreg(sim_cls=cosim_cls),
           ref=dreg(name='ref_model'))
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 @formal_check()

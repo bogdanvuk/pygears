@@ -52,14 +52,14 @@ def test_directed(tmpdir, sim_cls, din_delay, dout_delay):
         f=dut(sim_cls=sim_cls),
         ref=[[0, 1], [2, 3], [4, 5], [6, 7], [8], [0, 1, 2]],
         delays=[delay_rng(dout_delay, dout_delay)])
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_random(tmpdir, sim_cls):
     skip_ifndef('RANDOM_TEST')
     stim = get_stim()
     verif(*stim, f=chop(sim_cls=sim_cls), ref=chop(name='ref_model'))
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_socket_rand_cons(tmpdir):
@@ -81,7 +81,7 @@ def test_socket_rand_cons(tmpdir):
         f=chop(sim_cls=partial(SimSocket, run=True)),
         ref=chop(name='ref_model'))
 
-    sim(outdir=tmpdir, extens=[partial(SVRandSocket, cons=cons)])
+    sim(resdir=tmpdir, extens=[partial(SVRandSocket, cons=cons)])
 
 
 def test_open_rand_cons(tmpdir):
@@ -105,7 +105,7 @@ def test_open_rand_cons(tmpdir):
 
     verif(*stim, f=chop(sim_cls=SimVerilated), ref=chop(name='ref_model'))
 
-    sim(outdir=tmpdir, extens=[partial(SCVRand, cons=cons)])
+    sim(resdir=tmpdir, extens=[partial(SCVRand, cons=cons)])
 
 
 @formal_check()

@@ -42,7 +42,7 @@ class VGenInstVisitor(HierVisitorBase):
 
 
 def vgen_inst(top, conf):
-    config['hdl/include_paths'].extend([USER_VLIB_DIR, LIB_VLIB_DIR])
+    config['hdl/include'].extend([USER_VLIB_DIR, LIB_VLIB_DIR])
 
     v = VGenInstVisitor()
     v.visit(top)

@@ -26,7 +26,7 @@ def test_cosim_one_queue(tmpdir, cosim_cls, din_delay, dout_delay):
           ref=czip(name='ref_model'),
           delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 @pytest.mark.parametrize('din_delay', [0, 5])
@@ -40,7 +40,7 @@ def test_cosim_both_queue(tmpdir, cosim_cls, din_delay, dout_delay):
           ref=czip(name='ref_model'),
           delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 @pytest.mark.parametrize('din0_delay', [0, 1])
@@ -60,7 +60,7 @@ def test_cosim_zipsync_one_queue(tmpdir, cosim_cls, din0_delay, din1_delay,
               delay_rng(dout1_delay, dout1_delay)
           ])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 @pytest.mark.parametrize('din0_delay', [0, 1])
@@ -80,4 +80,4 @@ def test_cosim_zipsync_both_queue(tmpdir, cosim_cls, din0_delay, din1_delay,
               delay_rng(dout1_delay, dout1_delay)
           ])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)

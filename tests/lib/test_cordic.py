@@ -155,7 +155,7 @@ def test_cordic_stage(tmpdir):
 
 # # from pygears.hdl.hdlgen import hdlgen
 
-# # # bind('hdl/debug_intfs', [])
+# # # bind('debug/trace', [])
 # # hdlgen('/cordic_sin_cos',
 # #        outdir='/tools/home/tmp',
 # #        language='sv',

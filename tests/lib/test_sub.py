@@ -12,7 +12,7 @@ def test_float(tmpdir):
         | sub \
         | check(ref=[0.0, 3e-120, -2e+200])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_unsigned_overflow_cosim(tmpdir, cosim_cls):
@@ -22,7 +22,7 @@ def test_unsigned_overflow_cosim(tmpdir, cosim_cls):
           f=sub(sim_cls=cosim_cls),
           ref=sub(name='ref_model'))
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_signed_unsigned_cosim(tmpdir, cosim_cls):
@@ -32,7 +32,7 @@ def test_signed_unsigned_cosim(tmpdir, cosim_cls):
           f=sub(sim_cls=cosim_cls),
           ref=sub(name='ref_model'))
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_unsigned_signed_cosim(tmpdir, cosim_cls):
@@ -42,7 +42,7 @@ def test_unsigned_signed_cosim(tmpdir, cosim_cls):
           f=sub(sim_cls=cosim_cls),
           ref=sub(name='ref_model'))
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_signed_cosim(tmpdir, cosim_cls):
@@ -52,7 +52,7 @@ def test_signed_cosim(tmpdir, cosim_cls):
           f=sub(sim_cls=cosim_cls),
           ref=sub(name='ref_model'))
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_hier(tmpdir, cosim_cls):
@@ -64,4 +64,4 @@ def test_hier(tmpdir, cosim_cls):
              f=const_sub(sim_cls=cosim_cls),
              ref=[(0, 0), (1, 0), (2, 0)])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)

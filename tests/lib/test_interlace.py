@@ -44,7 +44,7 @@ def test_directed(tmpdir, sim_cls, din_delay, dout_delay):
               [0, 1, 2, 3, 4, 5, 6, 7, 8]], [[0, 1, 2], [0, 1, 2], [0, 1, 2]]],
         delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_random(tmpdir, sim_cls):
@@ -63,7 +63,7 @@ def test_random(tmpdir, sim_cls):
 
     verif(*stim, f=qinterlace(sim_cls=sim_cls), ref=qinterlace(name='ref_model'))
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_socket_cosim_rand(tmpdir):
@@ -85,7 +85,7 @@ def test_socket_cosim_rand(tmpdir):
         f=qinterlace(sim_cls=partial(SimSocket, run=True)),
         ref=qinterlace(name='ref_model'))
 
-    sim(outdir=tmpdir, extens=[partial(SVRandSocket, cons=cons)])
+    sim(resdir=tmpdir, extens=[partial(SVRandSocket, cons=cons)])
 
 
 @formal_check()

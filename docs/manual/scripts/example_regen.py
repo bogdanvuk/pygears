@@ -41,12 +41,12 @@ def run_file(path):
         gear = get_example_gear(example).basename
 
         for inp in find(f'/{gear}').in_ports:
-            config['hdl/debug_intfs'].append(inp.name)
+            config['debug/trace'].append(inp.name)
 
         for outp in find(f'/{gear}').out_ports:
-            config['hdl/debug_intfs'].append(outp.name)
+            config['debug/trace'].append(outp.name)
 
-    # config['sim/artifacts_dir'] = '/tools/home/tmp'
+    # config['results-dir'] = '/tools/home/tmp'
     config['wavejson/trace_fn'] = os.path.join(examples_dir, f'{example}.json')
     config['sim/extens'].append(WaveJSON)
     # config['trace/level'] = 0

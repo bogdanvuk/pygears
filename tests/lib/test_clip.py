@@ -54,7 +54,7 @@ def test_directed(tmpdir, sim_cls, din_delay, dout_delay):
              list(range(3, 5))],
         delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_directed_two_inputs(tmpdir, cosim_cls):
@@ -63,7 +63,7 @@ def test_directed_two_inputs(tmpdir, cosim_cls):
           f=clip(sim_cls=cosim_cls),
           ref=clip(name='ref_model'))
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_random(tmpdir, cosim_cls):
@@ -81,7 +81,7 @@ def test_random(tmpdir, cosim_cls):
           f=clip(sim_cls=cosim_cls),
           ref=clip(name='ref_model'))
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_random_constrained(tmpdir):
@@ -101,7 +101,7 @@ def test_random_constrained(tmpdir):
           f=clip(sim_cls=partial(SimSocket, run=True)),
           ref=clip(name='ref_model'))
 
-    sim(outdir=tmpdir, extens=[partial(SVRandSocket, cons=cons)])
+    sim(resdir=tmpdir, extens=[partial(SVRandSocket, cons=cons)])
 
 
 @formal_check()

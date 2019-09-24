@@ -9,7 +9,7 @@ def test_full_flat_cosim(tmpdir, cosim_cls):
           f=flatten(lvl=3, sim_cls=cosim_cls),
           ref=flatten(lvl=3, name='ref_model'))
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_dout_queue_lvl_1_cosim(tmpdir, cosim_cls):
@@ -17,7 +17,7 @@ def test_dout_queue_lvl_1_cosim(tmpdir, cosim_cls):
           f=flatten(sim_cls=cosim_cls),
           ref=flatten(name='ref_model'))
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_dout_queue_lvl_2_cosim(tmpdir, cosim_cls):
@@ -26,7 +26,7 @@ def test_dout_queue_lvl_2_cosim(tmpdir, cosim_cls):
           f=flatten(sim_cls=cosim_cls),
           ref=flatten(name='ref_model'))
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_dout_queue_lvl_2_no_datacosim(tmpdir, cosim_cls):
@@ -36,4 +36,4 @@ def test_dout_queue_lvl_2_no_datacosim(tmpdir, cosim_cls):
           f=flatten(sim_cls=cosim_cls),
           ref=flatten(name='ref_model'))
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)

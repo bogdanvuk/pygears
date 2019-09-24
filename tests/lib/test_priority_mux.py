@@ -28,7 +28,7 @@ def test_2_inputs(tmpdir, cosim_cls):
           ref=priority_mux(name='ref_model'),
           delays=[delay_rng(*dout_delay)])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_diff_types(tmpdir, sim_cls):
@@ -50,7 +50,7 @@ def test_diff_types(tmpdir, sim_cls):
              ref=[(0, 0), ((1, 2), 1), (1, 0), (0, 2), (2, 0), ((2, 1), 1), (3, 0),
                   (1, 2), (4, 0), ((3, 3), 1), (2, 2), ((4, 1), 1), ((3, 2), 1)])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_queue(tmpdir, sim_cls):
@@ -73,7 +73,7 @@ def test_queue(tmpdir, sim_cls):
                   [(6, 1), (7, 1), (8, 1)], [(4, 0), (5, 0), (6, 0), (7, 0)],
                   [(0, 2), (1, 2)], [(9, 2), (10, 2)]])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 @formal_check(assumes=['s_eventually (din0_valid == 0)'])

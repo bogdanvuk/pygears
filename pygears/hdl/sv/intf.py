@@ -31,7 +31,7 @@ class SVIntfGen:
     def traced(self):
         return any(
             fnmatch.fnmatch(self.intf.name, p)
-            for p in registry('hdl/debug_intfs'))
+            for p in registry('debug/trace'))
 
     @inject
     def get_inst(self,
@@ -74,7 +74,7 @@ class SVIntfGen:
 
                     inst.append(
                         template_env.snippets.intf_intf_connect(
-                            self.intf.consumers[i].basename, din_name))
+                            din_name, self.intf.consumers[i].basename))
 
         if self.traced:
             inst.extend(
@@ -123,6 +123,6 @@ class SVIntfGen:
 class SVGenIntfPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        config.define('hdl/debug_intfs', default=[])
+        config.define('debug/trace', default=[])
 
         safe_bind('svgen/spy_connection_template', dti_spy_connect_t)

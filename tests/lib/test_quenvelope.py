@@ -23,7 +23,7 @@ def test_skip_sim(tmpdir, sim_cls):
              f=quenvelope(lvl=2, sim_cls=sim_cls),
              ref=[ref])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_all_pass():

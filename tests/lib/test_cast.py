@@ -26,7 +26,7 @@ def cast_cosim_test(tmpdir, src_type, cast_type, seq, expected):
                    f=cast_gear(sim_cls=SimVerilated, cast_type=cast_type),
                    ref=cast_gear(name='ref_model', cast_type=cast_type))
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
     for e, rep in zip(expected, report[0]):
         assert e == rep['items'][0]

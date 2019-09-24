@@ -73,7 +73,7 @@ class SVRandSocket(RandBase):
     def before_setup(self,
                      sim,
                      sim_map=Inject('sim/map'),
-                     outdir=Inject('sim/artifacts_dir')):
+                     outdir=Inject('results-dir')):
         for module, sim_gear in sim_map.items():
             if isinstance(sim_gear, SimSocket):
                 self.open_sock = False

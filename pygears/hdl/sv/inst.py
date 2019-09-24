@@ -44,7 +44,7 @@ class SVGenInstVisitor(HierVisitorBase):
 
 
 def svgen_inst(top, conf):
-    config['hdl/include_paths'].extend([USER_SVLIB_DIR, LIB_SVLIB_DIR])
+    config['hdl/include'].extend([USER_SVLIB_DIR, LIB_SVLIB_DIR])
 
     v = SVGenInstVisitor()
     v.visit(top)

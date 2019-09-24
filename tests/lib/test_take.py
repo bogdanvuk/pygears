@@ -47,7 +47,7 @@ def test_directed(tmpdir, sim_cls, din_delay, dout_delay):
         ref=[[0, 1], [0, 1, 2]],
         delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_directed_two_inputs(tmpdir, cosim_cls):
@@ -56,7 +56,7 @@ def test_directed_two_inputs(tmpdir, cosim_cls):
           f=take(sim_cls=cosim_cls),
           ref=take(name='ref_model'))
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 @pytest.mark.parametrize('delay', [0, 5])
@@ -86,7 +86,7 @@ def test_q_directed(tmpdir, sim_cls, delay, dout_delay):
         ref=[[list(range(3))] * 2, [list(range(6))] * 3],
         delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 @pytest.mark.parametrize('din_delay', [0, 5])
@@ -114,7 +114,7 @@ def test_q_directed_two_inputs(tmpdir, sim_cls, din_delay, cfg_delay):
              f=take(sim_cls=sim_cls),
              ref=[[list(range(3))] * 2, [list(range(6))] * 3])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 @formal_check()

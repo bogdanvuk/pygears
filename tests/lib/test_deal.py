@@ -57,7 +57,7 @@ def test_directed(tmpdir, sim_cls, din_delay, dout_delay):
             delay_rng(dout_delay, dout_delay)
         ])
 
-    sim(outdir=tmpdir)
+    sim(tmpdir)
 
 
 @pytest.mark.parametrize('din_delay', [0, 5])
@@ -91,7 +91,7 @@ def test_directed_3in(tmpdir, sim_cls, din_delay, dout_delay):
         ref=ref,
         delays=dout_dly)
 
-    sim(outdir=tmpdir)
+    sim(tmpdir)
 
 
 def test_random(tmpdir, sim_cls):
@@ -107,7 +107,7 @@ def test_random(tmpdir, sim_cls):
              f=qdeal(sim_cls=sim_cls, num=2),
              ref=get_refs(seq))
 
-    sim(outdir=tmpdir)
+    sim(tmpdir)
 
 
 def test_socket_rand_cons(tmpdir):
@@ -123,7 +123,7 @@ def test_socket_rand_cons(tmpdir):
           f=qdeal(sim_cls=partial(SimSocket, run=True), num=2),
           ref=qdeal(name='ref_model', num=2))
 
-    sim(outdir=tmpdir, extens=[partial(SVRandSocket, cons=cons)])
+    sim(tmpdir, extens=[partial(SVRandSocket, cons=cons)])
 
 
 @formal_check()

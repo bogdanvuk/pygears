@@ -16,7 +16,7 @@ def test_uint_directed(tmpdir, sim_cls):
              drv(t=Uint[8], seq=init),
              f=reduce(f=add, sim_cls=sim_cls),
              ref=[sum(s, i) for s, i in zip(seq, init)])
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 @pytest.mark.parametrize('din_delay', [0, 1, 10])
@@ -35,4 +35,4 @@ def test_delay(tmpdir, cosim_cls, din_delay, dout_delay):
           ref=reduce(name='ref_model', f=lambda x, y: x ^ y),
           delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)

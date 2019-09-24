@@ -14,7 +14,7 @@ def test_unsigned_cosim(tmpdir, cosim_cls):
           f=mod(sim_cls=cosim_cls),
           ref=mod(name='ref_model'))
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 @formal_check()

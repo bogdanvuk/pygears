@@ -1,12 +1,11 @@
 import subprocess
-from pygears import bind, PluginBase, safe_bind
+from pygears import bind, PluginBase, safe_bind, config
 from pygears.core.port import OutPort
-from pygears.sim import sim_log, timestep
+from pygears.sim import sim_log, timestep, SimPlugin
 from pygears.sim.sim_gear import SimGear
 from pygears.typing import typeof, TLM, Float
 from pygears.typing.visitor import TypingVisitorBase
 from vcd import VCDWriter
-from vcd.gtkw import GTKWSave
 from pygears.core.hier_node import HierVisitorBase
 from .sim_extend import SimExtend
 import os
@@ -158,49 +157,20 @@ def is_trace_included(port, include, vcd_tlm):
     return True
 
 
-def module_sav(gtkw, module, vcd_vars):
-    gear_vcd_scope = module.name[1:].replace('/', '.')
-    with gtkw.group(module.basename):
-        for p in itertools.chain(module.out_ports, module.in_ports):
-            if isinstance(p, OutPort):
-                intf = p.producer
-            else:
-                intf = p.consumer
-
-            if intf in vcd_vars:
-                scope = '.'.join([gear_vcd_scope, p.basename])
-                with gtkw.group("    " + p.basename):
-                    for name, var in vcd_vars[intf].items():
-                        width = ''
-                        if var.size > 1:
-                            width = f'[{var.size - 1}:0]'
-
-                        gtkw.trace(f'{scope}.{name}{width}')
-
-
 class VCDHierVisitor(HierVisitorBase):
     @inject
-    def __init__(self,
-                 gtkw,
-                 writer,
-                 include,
-                 vcd_tlm,
-                 sim_map=Inject('sim/map')):
+    def __init__(self, include, vcd_tlm, sim_map=Inject('sim/map')):
         self.include = include
         self.vcd_tlm = vcd_tlm
         self.sim_map = sim_map
-        # self.gtkw = gtkw
         self.vcd_vars = {}
-        self.writer = writer
         self.indent = 0
 
     def enter_hier(self, name):
-        # self.gtkw.begin_group(f'{" "*self.indent}{name}', closed=True)
         self.indent += 4
 
     def exit_hier(self, name):
         self.indent -= 4
-        # self.gtkw.end_group(f'{" "*self.indent}{name}', closed=True)
 
     def Gear(self, module):
         self.enter_hier(module.basename)
@@ -217,17 +187,9 @@ class VCDHierVisitor(HierVisitorBase):
                 else:
                     intf = p.consumer
 
-                self.vcd_vars[intf] = register_traces_for_intf(
-                    p.dtype, scope, self.writer)
-
-                self.enter_hier(p.basename)
-                for name, var in self.vcd_vars[intf].items():
-                    width = ''
-                    if var.size > 1:
-                        width = f'[{var.size - 1}:0]'
-
-                    # self.gtkw.trace(f'{scope}.{name}{width}')
-                self.exit_hier(p.basename)
+                # self.vcd_vars[intf] = register_traces_for_intf(
+                #     p.dtype, scope, self.writer)
+                self.vcd_vars[intf] = scope
 
         super().HierNode(module)
 
@@ -241,12 +203,12 @@ class VCD(SimExtend):
     def __init__(self,
                  top,
                  trace_fn='pygears.vcd',
-                 include=Inject('hdl/debug_intfs'),
+                 include=Inject('debug/trace'),
                  tlm=False,
                  shmidcat=Inject('sim_extens/vcd/shmidcat'),
                  vcd_fifo=Inject('sim_extens/vcd/vcd_fifo'),
                  sim=Inject('sim/simulator'),
-                 outdir=Inject('sim/artifacts_dir'),
+                 outdir=Inject('results-dir'),
                  sim_map=Inject('sim/map')):
         super().__init__()
         self.sim = sim
@@ -254,15 +216,23 @@ class VCD(SimExtend):
         self.vcd_fifo = vcd_fifo
         self.shmidcat = shmidcat
         self.outdir = outdir
-        self.trace_fn = os.path.abspath(os.path.join(self.outdir, trace_fn))
+        self.trace_fn = None
         self.shmid_proc = None
-
-        atexit.register(self.finish)
 
         try:
             subprocess.call(f"rm -f {self.trace_fn}", shell=True)
         except OSError:
             pass
+
+        vcd_visitor = VCDHierVisitor(include, tlm)
+        vcd_visitor.visit(top)
+
+        if not vcd_visitor.vcd_vars:
+            self.deactivate()
+            return
+
+        self.trace_fn = os.path.abspath(os.path.join(self.outdir, trace_fn))
+        atexit.register(self.finish)
 
         if self.vcd_fifo:
             subprocess.call(f"mkfifo {self.trace_fn}", shell=True)
@@ -287,6 +257,7 @@ class VCD(SimExtend):
             sim_log().info(f'Main VCD dump to shared memory at 0x{self.shmid}')
 
         self.writer = VCDWriter(self.vcd_file, timescale='1 ns', date='today')
+
         bind('VCDWriter', self.writer)
         bind('VCD', self)
 
@@ -303,9 +274,10 @@ class VCD(SimExtend):
 
         self.handhake = set()
 
-        v = VCDHierVisitor(None, self.writer, include, tlm)
-        v.visit(top)
-        self.vcd_vars = v.vcd_vars
+        self.vcd_vars = {
+            intf: register_traces_for_intf(intf.dtype, scope, self.writer)
+            for intf, scope in vcd_visitor.vcd_vars.items()
+        }
 
         for intf in self.vcd_vars:
             intf.events['put'].append(self.intf_put)
@@ -369,8 +341,9 @@ class VCD(SimExtend):
         self.finish()
 
 
-class SimVCDPlugin(PluginBase):
+class SimVCDPlugin(SimPlugin):
     @classmethod
     def bind(cls):
         safe_bind('sim_extens/vcd/shmidcat', False)
         safe_bind('sim_extens/vcd/vcd_fifo', False)
+        config['sim/extens'].append(VCD)

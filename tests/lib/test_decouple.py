@@ -33,7 +33,7 @@ def test_cosim(tmpdir, cosim_cls):
              ref=seq,
              delays=[delay_rng(0, 2)])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 # from pygears.sim.modules import SimVerilated

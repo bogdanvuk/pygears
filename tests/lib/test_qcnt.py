@@ -56,7 +56,7 @@ def test_directed_golden(tmpdir, sim_cls, din_delay, dout_delay):
              f=dut(sim_cls=sim_cls),
              ref=get_ref(seq),
              delays=[delay_rng(dout_delay, dout_delay)])
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 @pytest.mark.parametrize('din_delay', [0, 5])
@@ -69,7 +69,7 @@ def test_random_golden(tmpdir, sim_cls, din_delay, dout_delay):
              f=dut(sim_cls=sim_cls),
              ref=get_ref(seq),
              delays=[delay_rng(dout_delay, dout_delay)])
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 @pytest.mark.parametrize('lvl', range(1, 0))
@@ -82,7 +82,7 @@ def test_directed_cosim(tmpdir, cosim_cls, lvl, din_delay, dout_delay):
           f=dut(sim_cls=cosim_cls, lvl=lvl),
           ref=qcnt(name='ref_model', lvl=lvl),
           delays=[delay_rng(dout_delay, dout_delay)])
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 @pytest.mark.parametrize('din_delay', [0, 5])
@@ -95,7 +95,7 @@ def test_random_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
           f=dut(sim_cls=cosim_cls),
           ref=qcnt(name='ref_model'),
           delays=[delay_rng(dout_delay, dout_delay)])
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_socket_rand_cons(tmpdir):
@@ -111,7 +111,7 @@ def test_socket_rand_cons(tmpdir):
           f=qcnt(sim_cls=partial(SimSocket, run=True)),
           ref=qcnt(name='ref_model'))
 
-    sim(outdir=tmpdir, extens=[partial(SVRandSocket, cons=cons)])
+    sim(resdir=tmpdir, extens=[partial(SVRandSocket, cons=cons)])
 
 
 @formal_check()

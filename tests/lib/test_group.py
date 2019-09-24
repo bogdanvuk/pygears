@@ -44,7 +44,7 @@ def test_queue_directed(tmpdir, sim_cls, din_delay, dout_delay, cfg_delay):
                    list(range(3)),
                    list(range(8))]],
              delays=[delay_rng(dout_delay, dout_delay)])
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 @pytest.mark.parametrize('din_delay', [0, 5])
@@ -68,7 +68,7 @@ def test_directed(tmpdir, sim_cls, din_delay, dout_delay, cfg_delay):
                  list(range(10, 15))
              ],
              delays=[delay_rng(dout_delay, dout_delay)])
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 @formal_check()

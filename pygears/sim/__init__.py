@@ -4,10 +4,11 @@
 
 from functools import partial
 from .sim import sim, artifacts_dir, sim_assert, timestep, clk, delta, sim_log, sim_phase, SimFinish
-
 from . import inst
 
 from .sim import SimPlugin, schedule_to_finish
+
+from .extens.vcd import VCD
 
 
 def verilate(top, *args, **kwds):

@@ -12,7 +12,7 @@ def test_unsigned_overflow_cosim(tmpdir, cosim_cls):
           f=add(sim_cls=cosim_cls),
           ref=add(name='ref_model'))
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_signed_unsigned_cosim(tmpdir, cosim_cls):
@@ -22,7 +22,7 @@ def test_signed_unsigned_cosim(tmpdir, cosim_cls):
           f=add(sim_cls=cosim_cls),
           ref=add(name='ref_model'))
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_unsigned_signed_cosim(tmpdir, cosim_cls):
@@ -32,7 +32,7 @@ def test_unsigned_signed_cosim(tmpdir, cosim_cls):
           f=add(sim_cls=cosim_cls),
           ref=add(name='ref_model'))
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_signed_cosim(tmpdir, cosim_cls):
@@ -42,7 +42,7 @@ def test_signed_cosim(tmpdir, cosim_cls):
           f=add(sim_cls=cosim_cls),
           ref=add(name='ref_model'))
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 @synth_check({'logic luts': 34}, tool='vivado')
@@ -70,7 +70,7 @@ def test_ufixp(tmpdir, sim_cls):
              drv(t=Ufixp[3, 4], seq=[3.5, 0]),
              f=add(sim_cls=sim_cls),
              ref=[6.0, 0.0])
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 def test_fixp(tmpdir, sim_cls):
@@ -78,4 +78,4 @@ def test_fixp(tmpdir, sim_cls):
              drv(t=Fixp[3, 6], seq=[3.875, -4.0, 0, 3.875, -4.0]),
              f=add(sim_cls=sim_cls),
              ref=[5.625, -2.25, 0, 1.875, -6.0])
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)

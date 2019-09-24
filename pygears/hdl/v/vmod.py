@@ -33,7 +33,7 @@ class VModuleInst(HDLModuleInst):
     def traced(self):
         self_traced = any(
             fnmatch.fnmatch(self.node.name, p)
-            for p in registry('hdl/debug_intfs'))
+            for p in registry('debug/trace'))
 
         if self.is_hierarchical:
             children_traced = any(self.vgen_map[child].traced

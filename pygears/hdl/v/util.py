@@ -1,5 +1,5 @@
 from pygears.hls.utils import add_to_list
-from pygears.typing import Int, Uint, typeof
+from pygears.typing import Int, Uint, typeof, is_type
 from pygears.typing.visitor import TypingVisitorBase
 
 
@@ -87,44 +87,29 @@ class VGenTypeVisitor(TypingVisitorBase):
     def visit_tuple(self, type_, field, **kwds):
         res = []
         res.append(
-            f'{self.basic_type} [{int(type_)-1}:0] {self.context}; // {type_}'
-        )
+            f'{self.basic_type} [{int(type_)-1}:0] {self.context}; // {type_}')
 
         res.extend(self._complex_type_iterator(zip(type_.fields, type_.args)))
 
         return res
 
     def visit_array(self, type_, field, **kwds):
-        if typeof(type_.args[0], Int):
-            merge_t = Int[int(type_.args[0]) * len(type_)]
-        elif typeof(type_.args[0], Uint):
-            merge_t = Uint[int(type_.args[0]) * len(type_)]
+        if type_.data.signed:
+            merge_t = Int[int(type_.data) * len(type_)]
         else:
-            raise Exception('Array subtype can only be Uint or Int in Verilog')
-        merge = self.visit(merge_t, type_.fields[0])
-        assert len(merge) == 1
+            merge_t = Uint[int(type_.data) * len(type_)]
 
-        res = []
+        arr_var = f'{self.context}_arr'
+        res = self.visit(merge_t, type_.fields[0])
+        res.append(
+            f'wire [{int(type_.data)-1}:0] {arr_var} [0:{int(len(type_))-1}];')
+
         high = 0
         low = 0
-        res.append(f'{merge[0]} // from {type_}')
         for i in range(len(type_)):
-            name = f'{self.context}_{i}'
-            high += int(type_.args[0])
-
-            sub = self.visit(type_.args[0], type_.fields[0])
-            assert len(sub) == 1
-            sub_var = sub[0].split(';', 1)[0]  # remove ; // comment
-            sub_var = sub_var.rsplit(' ', 1)[0]  # remove name
-            sub_var += f' {name}; // {type_.args[0]}'
-            res.append(sub_var)
-            if self.direction == 'input':
-                res.append(
-                    f'assign {name} = {self.context}[{high - 1}:{low}];')
-            else:
-                res.append(
-                    f'assign {self.context}[{high - 1}:{low}] = {name};')
-            low += int(type_.args[0])
+            high += int(type_.data)
+            res.append(f'assign {arr_var}[{i}] = {self.context}[{high - 1}:{low}];')
+            low += int(type_.data)
 
         return res
 
@@ -153,12 +138,18 @@ def vgen_signal(dtype, vtype, name, direction, hier=True):
     if isinstance(dtype, str):
         return f'{dtype} {name};'
 
-    if int(dtype) == 0:
+    if is_type(dtype) and int(dtype) == 0:
         return f'{vtype} [0:0] {name};'
 
     if not hier:
-        sign = 'signed' if getattr(dtype, 'signed', False) else ''
-        return f'{vtype} {sign} [{int(dtype)-1}:0] {name}; // {dtype}'
+        if is_type(dtype):
+            width = int(dtype)
+            sign = 'signed' if getattr(dtype, 'signed', False) else ''
+        elif isinstance(dtype, (tuple, list)):
+            width = sum(int(d) for d in dtype)
+            sign = ''
+
+        return f'{vtype} {sign} [{width-1}:0] {name}; // {dtype}'
 
     vis = VGenTypeVisitor(name,
                           basic_type=vtype,

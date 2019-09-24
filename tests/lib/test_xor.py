@@ -20,4 +20,4 @@ def test_basic(tmpdir, cosim_cls):
         f=xor_wrap(sim_cls=cosim_cls),
         ref=xor(name='ref_model'))
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)

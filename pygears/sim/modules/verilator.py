@@ -58,7 +58,7 @@ class SimVerilated(CosimBase):
         super().__init__(gear, timeout=timeout)
         self.name = gear.name[1:].replace('/', '_')
         self.outdir = os.path.abspath(
-            os.path.join(registry('sim/artifacts_dir'), self.name))
+            os.path.join(registry('results-dir'), self.name))
         self.objdir = os.path.join(self.outdir, 'obj_dir')
         self.post_synth = post_synth
         bind('svgen/spy_connection_template', signal_spy_connect_t)
@@ -124,9 +124,9 @@ class SimVerilated(CosimBase):
             self.build()
             sim_log().info(f'Done')
 
-        tracing_enabled = bool(registry('hdl/debug_intfs'))
+        tracing_enabled = bool(registry('debug/trace'))
         if tracing_enabled:
-            sim_log().info(f"Debug: {registry('hdl/debug_intfs')}")
+            sim_log().info(f"Debug: {registry('debug/trace')}")
             self.trace_fn = f'{self.outdir}/vlt_dump.vcd'
             try:
                 subprocess.call(f"rm -f {self.trace_fn}", shell=True)
@@ -184,7 +184,7 @@ class SimVerilated(CosimBase):
         super().setup()
 
     def build(self):
-        tracing_enabled = bool(registry('hdl/debug_intfs'))
+        tracing_enabled = bool(registry('debug/trace'))
         context = {
             'in_ports': self.rtlnode.in_ports,
             'out_ports': self.rtlnode.out_ports,
@@ -200,7 +200,7 @@ class SimVerilated(CosimBase):
         c = jenv.get_template('sim_veriwrap.j2').render(context)
         save_file('sim_main.cpp', self.outdir, c)
         include = ' '.join([
-            f'-I{os.path.abspath(p)}' for p in registry(f'hdl/include_paths')
+            f'-I{os.path.abspath(p)}' for p in registry(f'hdl/include')
         ])
 
         include += f' -I{self.outdir}'

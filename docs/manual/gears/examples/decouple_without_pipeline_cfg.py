@@ -1,4 +1,4 @@
 from pygears import config
 
-config['hdl/debug_intfs'].append('/flatten.dout')
-config['hdl/debug_intfs'].append('/add.dout')
+config['debug/trace'].append('/flatten.dout')
+config['debug/trace'].append('/add.dout')

@@ -33,14 +33,14 @@
 #     directed(drv(t=T_DIN_UINT, seq=SEQ_UINT),
 #              f=accumulator(sim_cls=sim_cls),
 #              ref=REF_UINT)
-#     sim(outdir=tmpdir)
+#     sim(resdir=tmpdir)
 
 
 # def test_int_directed(tmpdir, sim_cls):
 #     directed(drv(t=T_DIN_INT, seq=SEQ_INT),
 #              f=accumulator(sim_cls=sim_cls),
 #              ref=REF_INT)
-#     sim(outdir=tmpdir)
+#     sim(resdir=tmpdir)
 
 
 # @pytest.mark.parametrize('din_delay', [0, 1, 10])
@@ -52,7 +52,7 @@
 #         f=dut(sim_cls=cosim_cls),
 #         ref=accumulator(name='ref_model'),
 #         delays=[delay_rng(dout_delay, dout_delay)])
-#     sim(outdir=tmpdir)
+#     sim(resdir=tmpdir)
 
 
 # @pytest.mark.parametrize('din_delay', [0, 1, 10])
@@ -65,7 +65,7 @@
 #         f=dut(sim_cls=cosim_cls),
 #         ref=accumulator(name='ref_model'),
 #         delays=[delay_rng(dout_delay, dout_delay)])
-#     sim(outdir=tmpdir)
+#     sim(resdir=tmpdir)
 
 
 # @formal_check()

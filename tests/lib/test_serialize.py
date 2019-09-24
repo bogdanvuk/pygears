@@ -31,7 +31,7 @@ def test_directed(tmpdir, sim_cls):
              f=serialize(sim_cls=sim_cls),
              ref=[(i, ) * brick_size for i in seq_list])
 
-    sim(outdir=tmpdir)
+    sim(tmpdir)
 
 
 def test_directed_active(tmpdir, sim_cls):
@@ -41,7 +41,7 @@ def test_directed_active(tmpdir, sim_cls):
              f=serialize(sim_cls=sim_cls),
              ref=[[8] * 3, [2] * 4, [1]])
 
-    sim(outdir=tmpdir)
+    sim(tmpdir)
 
 
 @pytest.mark.parametrize('din_delay', [0, 5])
@@ -58,7 +58,7 @@ def test_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
           ref=serialize(name='ref_model'),
           delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(outdir=tmpdir)
+    sim(tmpdir)
 
 
 @pytest.mark.parametrize('din_delay', [0, 5])
@@ -73,7 +73,7 @@ def test_cosim_active(tmpdir, cosim_cls, din_delay, dout_delay):
           ref=serialize(name='ref_model'),
           delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(outdir=tmpdir)
+    sim(tmpdir)
 
 
 @formal_check()

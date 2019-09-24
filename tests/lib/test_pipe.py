@@ -16,7 +16,7 @@ def test_sim(tmpdir, din_delay, dout_delay):
              ref=seq,
              delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 @pytest.mark.parametrize('din_delay', [0, 3])
@@ -32,4 +32,4 @@ def test_cosim(tmpdir, din_delay, dout_delay):
           check_timing=True
           )
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)

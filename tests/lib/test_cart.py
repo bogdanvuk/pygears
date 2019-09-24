@@ -32,7 +32,7 @@ def test_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
           ref=cart(name='ref_model'),
           delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 @pytest.mark.parametrize('din0_delay', [0, 1])
@@ -51,4 +51,4 @@ def test_cosim_cartsync(tmpdir, cosim_cls, din0_delay, din1_delay, dout0_delay,
               delay_rng(dout1_delay, dout1_delay)
           ])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)

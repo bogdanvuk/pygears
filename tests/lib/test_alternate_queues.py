@@ -47,7 +47,7 @@ def test_2_inputs(tmpdir, sim_cls, din_delay, dout_delay):
             delay_rng(dout_delay, dout_delay)
         ])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 @pytest.mark.parametrize('din_delay', [0, 5])
@@ -70,7 +70,7 @@ def test_3_inputs(tmpdir, sim_cls, din_delay, dout_delay):
         ref=ref,
         delays=[delay_rng(dout_delay, dout_delay)] * din_num)
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 @formal_check(asserts={

@@ -191,7 +191,7 @@ class SimSocket(CosimBase):
         super().__init__(gear, timeout)
         self.name = gear.name[1:].replace('/', '_')
         self.outdir = os.path.abspath(
-            os.path.join(registry('sim/artifacts_dir'), self.name))
+            os.path.join(registry('results-dir'), self.name))
 
         self.rebuild = rebuild
 
@@ -333,7 +333,7 @@ class SimSocket(CosimBase):
 
         inc_paths = []
         context['includes'] = []
-        for path in registry('hdl/include_paths'):
+        for path in registry('hdl/include'):
             inc_paths.append(path)
         inc_paths.append(self.srcdir)
         inc_paths.append(self.outdir)

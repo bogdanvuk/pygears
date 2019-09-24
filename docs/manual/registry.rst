@@ -12,7 +12,7 @@ Variables
 - ``svgen``: Data used by the SystemVerilog generation submodule
 
   - ``svgen/flow``: List of operations performed while generating a SystemVerilog code for the PyGears description. Flow configuration is usually not modified by the user, but can be used to implement a custom generation flow. 
-  - ``hdl/include_paths``: List of directory paths where SystemVerilog generator will look for the SystemVerilog implementations of the gears. User can include additional direcrories where custom SystemVerilog files are located. 
+  - ``hdl/include``: List of directory paths where SystemVerilog generator will look for the SystemVerilog implementations of the gears. User can include additional direcrories where custom SystemVerilog files are located. 
   - ``debug_intfs``: []
 
 - ``sim``: 

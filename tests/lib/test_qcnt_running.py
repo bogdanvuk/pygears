@@ -37,7 +37,7 @@ def test_directed_lvl1(tmpdir, sim_cls, din_delay, dout_delay, init):
              ref=ref,
              delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 @pytest.mark.parametrize('din_delay', [0, 10])
@@ -57,7 +57,7 @@ def test_directed_lvl2(tmpdir, sim_cls, din_delay, dout_delay, init):
              ref=ref,
              delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 @pytest.mark.parametrize('din_delay', [0, 10])
@@ -78,7 +78,7 @@ def test_directed_lvl3_2(tmpdir, sim_cls, din_delay, dout_delay, init):
              ref=ref,
              delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(outdir=tmpdir)
+    sim(resdir=tmpdir)
 
 
 @formal_check()

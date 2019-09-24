@@ -32,7 +32,7 @@ class VCompiler(InstanceVisitor):
         self.separated = kwds.get('separated_visit', False)
         self.condtitions = kwds['conditions']
 
-    def find_width(self, node):
+    def resolve_stmt(self, node):
         target = vexpr(node.target, extras=self.extras)
 
         if self.separated:
@@ -88,7 +88,7 @@ class VCompiler(InstanceVisitor):
             self.writer.line(f'end')
 
     def visit_AssignValue(self, node):
-        val = self.find_width(node)
+        val = self.resolve_stmt(node)
         if val is not None:
             self.writer.line(val)
 
@@ -165,7 +165,7 @@ class VCompiler(InstanceVisitor):
         if node.stmts:
             self.writer.line(f'// Comb statements for: {self.visit_var}')
             for stmt in node.stmts:
-                val = self.find_width(stmt)
+                val = self.resolve_stmt(stmt)
                 if val is not None:
                     self.writer.line(f'assign {val}')
             self.writer.line('')
@@ -174,7 +174,7 @@ class VCompiler(InstanceVisitor):
         self.enter_block(node)
 
         for stmt in node.dflt_stmts:
-            val = self.find_width(stmt)
+            val = self.resolve_stmt(stmt)
             if val is not None:
                 self.writer.line(val)
 
