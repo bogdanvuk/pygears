@@ -76,7 +76,10 @@ class Array(tuple, metaclass=ArrayType):
     """
     __parameters__ = ['T', 'N']
 
-    def __new__(cls, val: tuple):
+    def __new__(cls, val: tuple = None):
+        if val is None:
+            val = (None, ) * len(cls)
+
         array_tpl = (cls[0](v) for v in val)
         return super(Array, cls).__new__(cls, array_tpl)
 

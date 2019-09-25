@@ -64,7 +64,6 @@ Number.register(Integral)
 class IntegerType(IntegralType):
     """Defines lib methods for all Integer based classes.
     """
-
     def __str__(self):
         if self.args:
             if isinstance(self.args[0], int):
@@ -94,6 +93,18 @@ class IntegerType(IntegralType):
 
     def __or__(self, others):
         # return int(self) | int(others)
+        return self.base[max(int(op) for op in (self, others))]
+
+    def __shl__(self, others):
+        return self.base[int(self) + others]
+
+    def __shr__(self, others):
+        if others < int(self):
+            return self.base[int(self) - others]
+        else:
+            return Unit
+
+    def __and__(self, others):
         return self.base[max(int(op) for op in (self, others))]
 
     def __xor__(self, others):
@@ -217,8 +228,10 @@ class Integer(Integral, metaclass=IntegerType):
     Corresponds to HDL logic vector types. For an example Integer[9] translates
     to :sv:`logic [8:0]`.
     """
+    def __new__(cls, val: int = None):
+        if val is None:
+            val = 0
 
-    def __new__(cls, val: int = 0):
         if type(val) == cls:
             return val
 
@@ -448,7 +461,6 @@ class UintType(IntegerType):
     >>> u16 = Uint[16]
 
     """
-
     @property
     def signed(self):
         return False
