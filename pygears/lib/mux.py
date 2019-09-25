@@ -1,7 +1,6 @@
 from pygears import gear, alternative
 from pygears.hls import datagear
 from pygears.typing import Queue, Union, typeof, Tuple, Uint, Any
-from pygears.util.utils import gather
 
 
 def mux_type(dtypes, mapping):
@@ -44,12 +43,17 @@ async def mux(ctrl: Uint,
 
 
 @gear
-def mux_zip(ctrl,
-            *din,
-            mapping=b'dflt_map(din)',
-            _full_mapping=b'full_mapping(din, mapping)'
-            ) -> b'mux_type(din, _full_mapping)':
-    pass
+async def mux_zip(ctrl,
+                  *din,
+                  mapping=b'dflt_map(din)',
+                  _full_mapping=b'full_mapping(din, mapping)'
+                  ) -> b'mux_type(din, _full_mapping)':
+    async with ctrl as c:
+        c_map = _full_mapping[c]
+
+        assert c_map < len(din), 'mux: incorrect selection value'
+        async for d in din[c_map]:
+            yield (d, c)
 
 
 @alternative(mux)
