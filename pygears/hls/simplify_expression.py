@@ -177,7 +177,10 @@ class Sym2Hdl(InstanceVisitor):
 
 def simplify_expr(expr, same_names=None):
     hdl_v = Hdl2Sym(same_names)
-    sym_expr = hdl_v.visit(expr)
+    try:
+        sym_expr = hdl_v.visit(expr)
+    except VisitError:
+        return expr
 
     # TODO : takes to long...
     try:

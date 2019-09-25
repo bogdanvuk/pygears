@@ -219,11 +219,6 @@ class VCD(SimExtend):
         self.trace_fn = None
         self.shmid_proc = None
 
-        try:
-            subprocess.call(f"rm -f {self.trace_fn}", shell=True)
-        except OSError:
-            pass
-
         vcd_visitor = VCDHierVisitor(include, tlm)
         vcd_visitor.visit(top)
 
@@ -233,6 +228,11 @@ class VCD(SimExtend):
 
         self.trace_fn = os.path.abspath(os.path.join(self.outdir, trace_fn))
         atexit.register(self.finish)
+
+        try:
+            subprocess.call(f"rm -f {self.trace_fn}", shell=True)
+        except OSError:
+            pass
 
         if self.vcd_fifo:
             subprocess.call(f"mkfifo {self.trace_fn}", shell=True)
