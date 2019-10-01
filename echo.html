@@ -39,13 +39,13 @@
   <div class="section" id="echo">
 <span id="echo-examples"></span><h1>Echo<a class="headerlink" href="#echo" title="Permalink to this headline">¶</a></h1>
 <p>This example shows how to use PyGears to implement a hardware module that applies echo audio effect to a continuous audio stream. For a more detailed explanation of PyGears features used in this example, you can checkout a <a class="reference internal" href="introduction.html#introduction"><span class="std std-ref">quick introduction to PyGears</span></a>.</p>
-<p>The hardware module is defined in <a class="reference external" href="https://github.com/bogdanvuk/pygears/tree/develop/examples/echo/echo.py">examples/echo/echo.py</a>, and block diagram is given below. You can checkout the <a class="reference internal" href="#examples-echo-functional-description"><span class="std std-ref">functional description</span></a> of the <code class="docutils literal notranslate"><span class="pre">echo</span></code> module. In-depth explanation of the PyGears description of the echo model given in <a class="reference internal" href="#examples-echo-hardware-description"><span class="std std-ref">hardware description</span></a> chapter. PyGears takes the Python module description and compiles it to SystemVerilog which is <a class="reference internal" href="#echo-sv"><span class="std std-ref">listed below</span></a>.</p>
+<p>The hardware module is part of the <a class="reference external" href="https://github.com/bogdanvuk/pygears-dsp">pygears_dsp</a> library and is defined in <a class="reference external" href="https://github.com/bogdanvuk/pygears-dsp/blob/master/pygears_dsp/lib/echo.py">pygears_dsp/lib/echo.py</a>. Its block diagram is given below. You can checkout the <a class="reference internal" href="#examples-echo-functional-description"><span class="std std-ref">functional description</span></a> of the <code class="docutils literal notranslate"><span class="pre">echo</span></code> module. In-depth explanation of the PyGears description of the echo model given in <a class="reference internal" href="#examples-echo-hardware-description"><span class="std std-ref">hardware description</span></a> chapter. PyGears takes the Python module description and compiles it to SystemVerilog which is <a class="reference internal" href="#echo-sv"><span class="std std-ref">listed below</span></a>.</p>
 <div class="figure align-center">
 <img alt="_images/echo.png" src="_images/echo.png" />
 </div>
 <div class="section" id="systemverilog-generation">
 <h2>SystemVerilog Generation<a class="headerlink" href="#systemverilog-generation" title="Permalink to this headline">¶</a></h2>
-<p>Run the script <a class="reference external" href="https://github.com/bogdanvuk/pygears/tree/develop/examples/echo/echo_svgen.py">examples/echo/echo_svgen.py</a> in order to let PyGears generate SystemVerilog files.</p>
+<p>Run the script <a class="reference external" href="https://github.com/bogdanvuk/pygears-dsp/blob/master/examples/echo/echo_svgen.py">examples/echo/echo_svgen.py</a> in order to let PyGears generate SystemVerilog files.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> &lt;pygears_source_dir&gt;/examples/echo
 python echo_svgen.py
 </pre></div>
@@ -91,24 +91,6 @@ Result length: <span class="m">165359</span>
 <img alt="_images/stereo_echo.png" src="_images/stereo_echo.png" />
 </div>
 <p>In PyGears this can be described as follows:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@gear</span>
-<span class="k">def</span> <span class="nf">stereo_echo</span><span class="p">(</span>
-        <span class="n">din</span><span class="p">,</span>  <span class="c1"># audio samples</span>
-        <span class="o">*</span><span class="p">,</span>
-        <span class="n">feedback_gain</span><span class="p">,</span>  <span class="c1"># feedback gain == echo gain</span>
-        <span class="n">sample_rate</span><span class="p">,</span>  <span class="c1"># sample_rate in samples per second</span>
-        <span class="n">delay</span><span class="p">,</span>  <span class="c1"># delay in seconds</span>
-        <span class="n">precision</span><span class="o">=</span><span class="mi">15</span><span class="p">):</span>
-
-    <span class="n">mono_echo</span> <span class="o">=</span> <span class="n">echo</span><span class="p">(</span>
-        <span class="n">feedback_gain</span><span class="o">=</span><span class="n">feedback_gain</span><span class="p">,</span>
-        <span class="n">sample_rate</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">,</span>
-        <span class="n">delay</span><span class="o">=</span><span class="n">delay</span><span class="p">,</span>
-        <span class="n">precision</span><span class="o">=</span><span class="n">precision</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">din</span> <span class="o">|</span> <span class="n">fmap</span><span class="p">(</span><span class="n">f</span><span class="o">=</span><span class="p">(</span><span class="n">mono_echo</span><span class="p">,</span> <span class="n">mono_echo</span><span class="p">))</span>
-</pre></div>
-</div>
 <p>The input interface <code class="docutils literal notranslate"><span class="pre">din</span></code> of the <code class="docutils literal notranslate"><span class="pre">stereo_echo</span></code> module, needs to carry two samples, one for each channel. This can be represented as a <code class="docutils literal notranslate"><span class="pre">Tuple</span></code> data type. If the samples are 16 bits wide, the stereo data should be of the type <code class="docutils literal notranslate"><span class="pre">Tuple[Int[16],</span> <span class="pre">Int[16]]</span></code>, which can be displayed more succinctly as <code class="docutils literal notranslate"><span class="pre">(i16,</span> <span class="pre">116)</span></code>. Other parameters of the <code class="docutils literal notranslate"><span class="pre">stereo_echo</span></code> gear have the same meaning as the <code class="docutils literal notranslate"><span class="pre">echo</span></code> gear parameters.</p>
 <p>First, a version of echo gear is created, with some of its parameters supplied/set. This is akin to the <a class="reference external" href="https://en.wikipedia.org/wiki/Partial_application">partial function application</a>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mono_echo</span> <span class="o">=</span> <span class="n">echo</span><span class="p">(</span>
@@ -129,88 +111,20 @@ Result length: <span class="m">165359</span>
 <div class="section" id="functional-description">
 <span id="examples-echo-functional-description"></span><h2>Functional description<a class="headerlink" href="#functional-description" title="Permalink to this headline">¶</a></h2>
 <p>The <code class="docutils literal notranslate"><span class="pre">echo</span></code> module operates as follows: audio samples arrive at the <code class="docutils literal notranslate"><span class="pre">echo</span></code> module input <code class="docutils literal notranslate"><span class="pre">din</span></code>, echo is added and the resulting samples are output to the module output <code class="docutils literal notranslate"><span class="pre">dout</span></code>. In PyGears terms this is a single-input, single-output gear (function), with the following declaration:</p>
-<dl class="function">
-<dt id="echo.echo">
-<code class="descname">echo</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwds</em><span class="sig-paren">)</span><a class="headerlink" href="#echo.echo" title="Permalink to this definition">¶</a></dt>
-<dd><p>Performs echo audio effect on the continuous input sample stream</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>din</strong> – Stream of audio samples</p>
-</dd>
-<dt class="field-even">Keyword Arguments</dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>feedback_gain</strong> (<em>float</em>) – gain of the feedback loop</p></li>
-<li><p><strong>sample_rate</strong> (<em>int</em>) – samples per second</p></li>
-<li><p><strong>delay</strong> (<em>float</em>) – delay in seconds</p></li>
-<li><p><strong>precision</strong> (<em>int</em>) – sample fixed point precision</p></li>
-<li><p><strong>sample_width</strong> (<em>int</em>) – sample width in bits</p></li>
-</ul>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><ul class="simple">
-<li><p><strong>dout</strong> - Stream of audio samples with applied echo</p></li>
-</ul>
-</p>
-</dd>
-</dl>
-</dd></dl>
-
 <p>As you can see the <code class="docutils literal notranslate"><span class="pre">echo</span></code> gear has few more parameters besides <code class="docutils literal notranslate"><span class="pre">din</span></code>: <code class="docutils literal notranslate"><span class="pre">feedback_gain</span></code>, <code class="docutils literal notranslate"><span class="pre">sample_rate</span></code>, <code class="docutils literal notranslate"><span class="pre">delay</span></code> and <code class="docutils literal notranslate"><span class="pre">precision</span></code>. These are declared after the ‘*’ symbol, which makes them keyword-only arguments in Python, which in turn makes them <strong>compile-time parameters</strong> in PyGears. These are akin to HDL parameters or generics.</p>
 <p>Notice that the <code class="docutils literal notranslate"><span class="pre">din</span></code> argument has also a type associated with it, namely a template <code class="docutils literal notranslate"><span class="pre">Int['W']</span></code> which represents signed integers of arbitrary width. Take a look at the <a class="reference internal" href="typing.html#typing"><span class="std std-ref">short explanation</span></a> on how types are used in PyGears. <a class="reference internal" href="typing/int.html#pygears.typing.uint.Int" title="pygears.typing.uint.Int"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int</span></code></a> type is generic in the number of bits, hence <code class="docutils literal notranslate"><span class="pre">echo</span></code> gear can work on samples of arbitrary width. The actual width of the input will be set by <code class="docutils literal notranslate"><span class="pre">echo</span></code> gear parent, i.e the module that instantiates <code class="docutils literal notranslate"><span class="pre">echo</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">mono_echo_sim</span><span class="p">(</span><span class="n">seq</span><span class="p">,</span>
-                  <span class="n">sample_rate</span><span class="p">,</span>
-                  <span class="n">sample_width</span><span class="p">,</span>
-                  <span class="n">cosim</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                  <span class="n">feedback_gain</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
-                  <span class="n">delay</span><span class="o">=</span><span class="mf">0.250</span><span class="p">,</span>
-                  <span class="n">stereo</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-    <span class="n">sample_bit_width</span> <span class="o">=</span> <span class="mi">8</span> <span class="o">*</span> <span class="n">sample_width</span>
-
-    <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Int</span><span class="p">[</span><span class="n">sample_bit_width</span><span class="p">],</span> <span class="n">seq</span><span class="o">=</span><span class="n">seq</span><span class="p">)</span> \
-<span class="hll">        <span class="o">|</span> <span class="n">echo</span><span class="p">(</span><span class="n">feedback_gain</span><span class="o">=</span><span class="n">feedback_gain</span><span class="p">,</span>
-</span><span class="hll">               <span class="n">sample_rate</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">,</span>
-</span><span class="hll">               <span class="n">delay</span><span class="o">=</span><span class="n">delay</span><span class="p">,</span>
-</span><span class="hll">               <span class="n">sim_cls</span><span class="o">=</span><span class="n">SimVerilated</span> <span class="k">if</span> <span class="n">cosim</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span> \
-</span>        <span class="o">|</span> <span class="n">collect</span><span class="p">(</span><span class="n">result</span><span class="o">=</span><span class="n">result</span><span class="p">,</span> <span class="n">samples_num</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">seq</span><span class="p">))</span>
-
-    <span class="c1"># sim(outdir=&#39;./build&#39;)</span>
-
-    <span class="k">return</span> <span class="n">result</span>
-</pre></div>
-</div>
 <p>In <code class="docutils literal notranslate"><span class="pre">mono_echo_sim()</span></code> function, <code class="docutils literal notranslate"><span class="pre">drv</span></code> gear is used to drive audio samples to the <code class="docutils literal notranslate"><span class="pre">echo</span></code> gear, which in turn sends the result to the <code class="docutils literal notranslate"><span class="pre">collect</span></code> gear. In PyGears the connection from <code class="docutils literal notranslate"><span class="pre">drv</span></code> to <code class="docutils literal notranslate"><span class="pre">echo</span></code> can be described using pipe ‘|’ operator. The <code class="docutils literal notranslate"><span class="pre">drv</span></code> gear sends the sequence of audio samples (variable <code class="docutils literal notranslate"><span class="pre">seq</span></code>), by first converting them to the specified data type: <code class="docutils literal notranslate"><span class="pre">Int[sample_bit_width]</span></code>, where <code class="docutils literal notranslate"><span class="pre">sample_bit_width</span></code> value is calculated based on the <code class="docutils literal notranslate"><span class="pre">mono_echo_sim()</span></code> function argument <code class="docutils literal notranslate"><span class="pre">sample_width</span></code>.</p>
 <div class="figure align-center">
 <img alt="_images/echo_sim.png" src="_images/echo_sim.png" />
 </div>
 <p>At compile time, PyGears will try to match output data type of <code class="docutils literal notranslate"><span class="pre">drv</span></code> gear: <code class="docutils literal notranslate"><span class="pre">Int[sample_bit_width]</span></code> to the input data type <code class="docutils literal notranslate"><span class="pre">Int['W']</span></code> of the <code class="docutils literal notranslate"><span class="pre">echo</span></code> gear, and since that their base types (<a class="reference internal" href="typing/int.html#pygears.typing.uint.Int" title="pygears.typing.uint.Int"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int</span></code></a>) match, deduce the value of the template parameter <code class="docutils literal notranslate"><span class="pre">W</span> <span class="pre">=</span> <span class="pre">sample_bit_width</span></code>. This parameter can then be used throughout the gear signature to calculate values of a gear compile-time parameters or fix types of a gear interfaces. In this example, value of the <code class="docutils literal notranslate"><span class="pre">echo</span></code> gear argument <code class="docutils literal notranslate"><span class="pre">sample_width</span></code> is set to be exactly equal to <code class="docutils literal notranslate"><span class="pre">W</span></code>.</p>
 <p>Conveniently, <code class="docutils literal notranslate"><span class="pre">echo</span></code> gear accepts also some floating point arguments, but these then need to be converted in order to be used for parametrizing hardware modules. This is done at the beginning of the function:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">sample_dly_len</span> <span class="o">=</span> <span class="n">sample_rate</span> <span class="o">*</span> <span class="n">delay</span>
-    <span class="n">fifo_depth</span> <span class="o">=</span> <span class="n">ceil_pow2</span><span class="p">(</span><span class="n">sample_dly_len</span><span class="p">)</span>
-    <span class="n">feedback_gain_fixp</span> <span class="o">=</span> <span class="n">din</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span>
-        <span class="n">float_to_fixp</span><span class="p">(</span><span class="n">feedback_gain</span><span class="p">,</span> <span class="n">precision</span><span class="p">,</span> <span class="n">sample_width</span><span class="p">))</span>
-</pre></div>
-</div>
 <p>Since echo delay is given in seconds, it needs to be calculated in terms of the number of samples: variable <code class="docutils literal notranslate"><span class="pre">sample_dly_len</span></code> in the code. Then, feedback loop fifo needs to be deep enough to store the delayed samples. Current implementation of the fifo module in PyGears demands its depth to be a power of 2. Hence, function <code class="docutils literal notranslate"><span class="pre">ceil_pow2</span></code> is used to calculate the smallest power of 2 that can accommodate selected delay: variable <code class="docutils literal notranslate"><span class="pre">fifo_depth</span></code> in the code.</p>
 <p>Feedback loop gain is also given as a floating point number and needs to be converted to its fixed-point representation: variable <code class="docutils literal notranslate"><span class="pre">feedback_gain_fixp</span></code>. Width of the fixed-point gain is chosen to be equal to the width of the audio samples received at <code class="docutils literal notranslate"><span class="pre">din</span></code>, which will be available via the <code class="docutils literal notranslate"><span class="pre">sample_width</span></code> argument. Calculated fixed-point value is then cast to the type of the <em>din</em> interface: <code class="docutils literal notranslate"><span class="pre">feedback_gain_fixp</span> <span class="pre">=</span> <span class="pre">din.dtype(...)</span></code>.</p>
 </div>
 <div class="section" id="hardware-description">
 <span id="examples-echo-hardware-description"></span><h2>Hardware description<a class="headerlink" href="#hardware-description" title="Permalink to this headline">¶</a></h2>
 <p>After the compile-time parameters calculation in the <code class="docutils literal notranslate"><span class="pre">echo</span></code> function, the description of the actual hardware is given.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">dout</span> <span class="o">=</span> <span class="n">Intf</span><span class="p">(</span><span class="n">din</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
-
-    <span class="n">feedback</span> <span class="o">=</span> <span class="n">dout</span> \
-        <span class="o">|</span> <span class="n">fifo</span><span class="p">(</span><span class="n">depth</span><span class="o">=</span><span class="n">fifo_depth</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="n">sample_dly_len</span><span class="p">,</span> <span class="n">regout</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> \
-        <span class="o">|</span> <span class="n">fill_void</span><span class="p">(</span><span class="n">fill</span><span class="o">=</span><span class="n">din</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span> \
-        <span class="o">|</span> <span class="n">decoupler</span>
-
-    <span class="n">feedback_attenuated</span> <span class="o">=</span> <span class="p">(</span><span class="n">feedback</span> <span class="o">*</span> <span class="n">feedback_gain_fixp</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="n">precision</span>
-
-    <span class="n">dout</span> <span class="o">|=</span> <span class="p">(</span><span class="n">din</span> <span class="o">+</span> <span class="n">feedback_attenuated</span><span class="p">)</span> <span class="o">|</span> <span class="n">dout</span><span class="o">.</span><span class="n">dtype</span>
-
-    <span class="k">return</span> <span class="n">dout</span>
-</pre></div>
-</div>
 <div class="figure align-center">
 <img alt="_images/echo.png" src="_images/echo.png" />
 </div>
@@ -222,7 +136,7 @@ Result length: <span class="m">165359</span>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">feedback</span> <span class="o">=</span> <span class="n">dout</span> \
     <span class="o">|</span> <span class="n">fifo</span><span class="p">(</span><span class="n">depth</span><span class="o">=</span><span class="n">fifo_depth</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="n">sample_dly_len</span><span class="p">)</span> \
     <span class="o">|</span> <span class="n">fill_void</span><span class="p">(</span><span class="n">fill</span><span class="o">=</span><span class="n">din</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span> \
-    <span class="o">|</span> <span class="n">decoupler</span>
+    <span class="o">|</span> <span class="n">decouple</span>
 </pre></div>
 </div>
 <p>[Omitted long line with 1 matches]</p>
@@ -327,7 +241,7 @@ Result length: <span class="m">165359</span>
     <span class="p">);</span>
 
 
-    <span class="n">decoupler</span> <span class="n">decoupler_i</span> <span class="p">(</span>
+    <span class="n">decouple</span> <span class="n">decouple_i</span> <span class="p">(</span>
         <span class="p">.</span><span class="n">clk</span><span class="p">(</span><span class="n">clk</span><span class="p">),</span>
         <span class="p">.</span><span class="n">rst</span><span class="p">(</span><span class="n">rst</span><span class="p">),</span>
         <span class="p">.</span><span class="n">din</span><span class="p">(</span><span class="n">fill_void_s</span><span class="p">),</span>
@@ -495,7 +409,7 @@ Result length: <span class="m">165359</span>
 </tr>
 <tr class="row-even"><td><ul class="simple">
 <li><ul>
-<li><p>decoupler_i</p></li>
+<li><p>decouple_i</p></li>
 </ul>
 </li>
 </ul>

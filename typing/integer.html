@@ -46,7 +46,7 @@ arithmetic capabilities.</p>
 <dl class="class">
 <dt id="pygears.typing.uint.IntegerType">
 <em class="property">class </em><code class="descname">IntegerType</code><a class="headerlink" href="#pygears.typing.uint.IntegerType" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="base.html#pygears.typing.base.EnumerableGenericMeta" title="pygears.typing.base.EnumerableGenericMeta"><code class="xref py py-class docutils literal notranslate"><span class="pre">pygears.typing.base.EnumerableGenericMeta</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pygears.typing.uint.IntegralType</span></code></p>
 <p>Defines lib methods for all Integer based classes.</p>
 <dl class="method">
 <dt id="pygears.typing.uint.IntegerType.__add__">
@@ -141,20 +141,6 @@ potential overflow.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pygears.typing.uint.IntegerType.is_specified">
-<code class="descname">is_specified</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.IntegerType.is_specified" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return True if all generic parameters were supplied concrete values.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Uint</span><span class="p">[</span><span class="s1">&#39;template&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">is_specified</span><span class="p">()</span>
-<span class="go">False</span>
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">]</span><span class="o">.</span><span class="n">is_specified</span><span class="p">()</span>
-<span class="go">True</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="method">
 <dt id="pygears.typing.uint.IntegerType.items">
 <code class="descname">items</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.IntegerType.items" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generator that yields (key, element) pairs.</p>
@@ -166,6 +152,20 @@ potential overflow.</p>
 <dd><p>Returns a list of keys that can be used for indexing the type.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Int</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
 <span class="go">[0, 1, 2, 3, 4, 5, 6, 7]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pygears.typing.uint.IntegerType.specified">
+<code class="descname">specified</code><a class="headerlink" href="#pygears.typing.uint.IntegerType.specified" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True if all generic parameters were supplied concrete values.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Uint</span><span class="p">[</span><span class="s1">&#39;template&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">specified</span>
+<span class="go">False</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">]</span><span class="o">.</span><span class="n">specified</span>
+<span class="go">True</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -186,7 +186,7 @@ searched recursively. Each template is reported only once.</p>
 <dl class="class">
 <dt id="pygears.typing.uint.Integer">
 <em class="property">class </em><code class="descname">Integer</code><a class="headerlink" href="#pygears.typing.uint.Integer" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pygears.typing.uint.Integral</span></code></p>
 <p>Base type for both <a class="reference internal" href="int.html#pygears.typing.uint.Int" title="pygears.typing.uint.Int"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int</span></code></a> and <a class="reference internal" href="uint.html#pygears.typing.uint.Uint" title="pygears.typing.uint.Uint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Uint</span></code></a> generic types.
 Corresponds to HDL logic vector types. For an example Integer[9] translates
 to <code class="code sv systemverilog docutils literal notranslate"><span class="keyword"><span class="pre">logic</span></span> <span class="punctuation"><span class="pre">[</span></span><span class="literal number hex"><span class="pre">8</span></span><span class="operator"><span class="pre">:</span></span><span class="literal number hex"><span class="pre">0</span></span><span class="punctuation"><span class="pre">]</span></span></code>.</p>

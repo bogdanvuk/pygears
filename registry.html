@@ -69,7 +69,7 @@ errors:</p>
 </dl>
 <p><strong>Example</strong> - Obtain a list of directory paths where SystemVerilog
 generator will look for the SystemVerilog implementations of the gears:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">registry</span><span class="p">(</span><span class="s1">&#39;svgen/sv_paths&#39;</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">registry</span><span class="p">(</span><span class="s1">&#39;hdl/include&#39;</span><span class="p">)</span>
 <span class="go">[&#39;/tools/home/.pygears/svlib&#39;, &#39;/tools/home/pygears/pygears/lib/svlib&#39;, &#39;/tools/home/pygears/pygears/lib/svlib&#39;]</span>
 </pre></div>
 </div>
@@ -81,7 +81,7 @@ generator will look for the SystemVerilog implementations of the gears:</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">svgen</span></code>: Data used by the SystemVerilog generation submodule</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">svgen/flow</span></code>: List of operations performed while generating a SystemVerilog code for the PyGears description. Flow configuration is usually not modified by the user, but can be used to implement a custom generation flow.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">svgen/sv_paths</span></code>: List of directory paths where SystemVerilog generator will look for the SystemVerilog implementations of the gears. User can include additional direcrories where custom SystemVerilog files are located.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">hdl/include</span></code>: List of directory paths where SystemVerilog generator will look for the SystemVerilog implementations of the gears. User can include additional direcrories where custom SystemVerilog files are located.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">debug_intfs</span></code>: []</p></li>
 </ul>
 </li>
@@ -95,7 +95,7 @@ generator will look for the SystemVerilog implementations of the gears:</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">gear/naming</span></code>:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">gear/naming/pretty_sieve</span></code> (bool): Try to obtain a variable which was
-sliced to form a <a class="reference internal" href="gears/sieve.html#pygears.lib.sieve" title="pygears.lib.sieve"><code class="xref any py py-func docutils literal notranslate"><span class="pre">sieve</span></code></a>. Turned off by default
+sliced to form a <code class="xref any docutils literal notranslate"><span class="pre">sieve</span></code>. Turned off by default
 because it impacts performance on large designs.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">gear/naming/default_out_name</span></code> (str): Name to give to gear output interfaces if none is specified. Default: ‘dout’</p></li>
 </ul>

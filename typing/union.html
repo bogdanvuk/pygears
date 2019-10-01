@@ -18,7 +18,7 @@
     <link rel="shortcut icon" href="../_static/pygears.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Common" href="../gears/lib.html" />
+    <link rel="next" title="Common" href="../gears/index.html" />
     <link rel="prev" title="Logger" href="../conf/log.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
@@ -180,20 +180,6 @@ field is of type <code class="xref py py-class docutils literal notranslate"><sp
 </div>
 </dd></dl>
 
-<dl class="attribute">
-<dt id="pygears.typing.union.UnionType.is_specified">
-<code class="descname">is_specified</code><a class="headerlink" href="#pygears.typing.union.UnionType.is_specified" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return True if all generic parameters were supplied concrete values.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Uint</span><span class="p">[</span><span class="s1">&#39;template&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">is_specified</span><span class="p">()</span>
-<span class="go">False</span>
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">]</span><span class="o">.</span><span class="n">is_specified</span><span class="p">()</span>
-<span class="go">True</span>
-</pre></div>
-</div>
-</dd></dl>
-
 <dl class="method">
 <dt id="pygears.typing.union.UnionType.items">
 <code class="descname">items</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.union.UnionType.items" title="Permalink to this definition">¶</a></dt>
@@ -204,6 +190,20 @@ field is of type <code class="xref py py-class docutils literal notranslate"><sp
 <dt id="pygears.typing.union.UnionType.keys">
 <code class="descname">keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.union.UnionType.keys" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a list of keys that can be used for indexing the type.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pygears.typing.union.UnionType.specified">
+<code class="descname">specified</code><a class="headerlink" href="#pygears.typing.union.UnionType.specified" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True if all generic parameters were supplied concrete values.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Uint</span><span class="p">[</span><span class="s1">&#39;template&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">specified</span>
+<span class="go">False</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">]</span><span class="o">.</span><span class="n">specified</span>
+<span class="go">True</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="attribute">
