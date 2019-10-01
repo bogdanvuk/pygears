@@ -352,7 +352,7 @@ def gear_base_resolver(func,
                 f'Enablement condition failed for "{name}" alternative'
                 f' "{meta_kwds["definition"].__module__}.'
                 f'{meta_kwds["definition"].__name__}": '
-                f'{meta_kwds["enablement"]}')
+                f'{meta_kwds["enablement"].decode()}')
 
     gear_inst = Gear(func, args, params, const_args)
 

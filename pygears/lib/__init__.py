@@ -57,7 +57,7 @@ from .reduce2 import reduce2
 from .reduce import reduce, accum
 from .funclut import funclut
 from .rounding import truncate, round_half_up, round_to_zero, round_to_even
-from .cordic import cordic, cordic_sin_cos
+from .scope import scope
 
 import pygears.lib.fmaps
 import pygears.lib.hls
@@ -76,7 +76,6 @@ __all__ = [
     'unary', 'alternate_queues', 'delay', 'delay_rng', 'directed', 'verif',
     'collect', 'rom', 'drv', 'check', 'mon', 'reduce', 'accum', 'pipe',
     'funclut', 'truncate', 'round_half_up', 'round_to_zero', 'round_to_even',
-    'cordic', 'cordic_sin_cos', 'add', 'div', 'eq', 'ge', 'gt', 'invert',
-    'iceil', 'le', 'lt', 'mod', 'mul', 'ne', 'neg', 'sub', 'shl', 'shr', 'xor',
-    'scoreboard'
+    'add', 'div', 'eq', 'ge', 'gt', 'invert', 'iceil', 'le', 'lt', 'mod',
+    'mul', 'ne', 'neg', 'sub', 'shl', 'shr', 'xor', 'scoreboard', 'scope'
 ]
