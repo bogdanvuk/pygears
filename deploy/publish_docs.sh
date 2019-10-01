@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+shopt -s extglob
 
 cd ../docs/manual
 
@@ -15,8 +16,13 @@ git checkout gh-pages
 
 # goto GIT root
 cd $(git rev-parse --show-toplevel)
+read -p "Are you sure you want to clear the directory $PWD? " -n 1 -r
+echo    # (optional) move to a new line
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+    rm -rf !("docs"|".git")
+fi
 # remove tracked files
-git ls-files -z | xargs -0 rm -f
 mv ./docs/manual/_build/html/{.,}* ./
 
 rm -rf blog
