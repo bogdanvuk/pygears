@@ -1,0 +1,221 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>fmap &#8212; PyGears - HW Design: A Functional Approach</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script type="text/javascript" src="../_static/default.js"></script>
+    <script type="text/javascript" src="../_static/wavedrom.js"></script>
+    <link rel="canonical" href="https://www.pygears.org/gears/fmap.html" />
+    <link rel="shortcut icon" href="../_static/pygears.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="funclut" href="funclut.html" />
+    <link rel="prev" title="flatten" href="flatten.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-fmap">
+<span id="fmap"></span><h1>fmap<a class="headerlink" href="#module-fmap" title="Permalink to this headline">¶</a></h1>
+<p>Enables a gear which operates on a certain data type to be used with a complex data type that contains the type the gear knows how to handle.</p>
+<dl class="function">
+<dt id="fmap.fmap">
+<code class="descname">fmap</code><span class="sig-paren">(</span><em>din: Tuple</em>, <em>*</em>, <em>f</em>, <em>lvl=1</em>, <em>fcat=ccat</em>, <em>balance=None</em><span class="sig-paren">)</span><a class="headerlink" href="#fmap.fmap" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <a class="reference internal" href="../typing/tuple.html#pygears.typing.tuple.Tuple" title="pygears.typing.tuple.Tuple"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code></a> fmap is useful in context where we need to operate on <a class="reference internal" href="../typing/tuple.html#pygears.typing.tuple.Tuple" title="pygears.typing.tuple.Tuple"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code></a> -s of some data types, and we already have gears that implement desired transformation but they operate on data types that are individual fields of the <a class="reference internal" href="../typing/tuple.html#pygears.typing.tuple.Tuple" title="pygears.typing.tuple.Tuple"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code></a>. The gears that process the <a class="reference internal" href="../typing/tuple.html#pygears.typing.tuple.Tuple" title="pygears.typing.tuple.Tuple"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code></a> fields are passed as a tuple (or any Python iterable) through the <code class="docutils literal notranslate"><span class="pre">f</span></code> parameter, and there should be as many gears as there are fields in the <a class="reference internal" href="../typing/tuple.html#pygears.typing.tuple.Tuple" title="pygears.typing.tuple.Tuple"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code></a>. If some of the fields should not be processed at all, <code class="docutils literal notranslate"><span class="pre">None</span></code> should be passed in their place for the <code class="docutils literal notranslate"><span class="pre">f</span></code> parameter.</p>
+<p>Consider a simple example where a complex number is implemented as a <a class="reference internal" href="../typing/tuple.html#pygears.typing.tuple.Tuple" title="pygears.typing.tuple.Tuple"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code></a>, and we would like to multiply both the real and imaginary parts with a number 2. We don’t need to create a special gear for multiplying a complex number with a scalar, as we can reuse the <a class="reference internal" href="operators.html#mul.mul" title="mul.mul"><code class="xref py py-func docutils literal notranslate"><span class="pre">mul()</span></code></a> gear with a helm of the <a class="reference internal" href="#fmap.fmap" title="fmap.fmap"><code class="xref py py-func docutils literal notranslate"><span class="pre">fmap()</span></code></a>:</p>
+<div>
+
+      <link href="/_static/css/fontello.css" type="text/css" rel="stylesheet"/>
+      <button id="cmdrun" class="btn-run cls-tryme" style="font-size:16px; font-weight:bold;" onClick="window.open('/live.html?file=gears/examples/fmap_tuple.py', '_blank');" title="Run this example on PyGears LIVE!"><i class="icon-cog-alt"></i> Try Me!</button></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">],</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">]],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">20</span><span class="p">)])</span> \
+    <span class="o">|</span> <span class="n">fmap</span><span class="p">(</span><span class="n">f</span><span class="o">=</span><span class="p">(</span><span class="n">mul</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">mul</span><span class="p">(</span><span class="mi">2</span><span class="p">)))</span> \
+    <span class="o">|</span> <span class="n">check</span><span class="p">(</span><span class="n">ref</span><span class="o">=</span><span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">20</span><span class="p">),</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">40</span><span class="p">)])</span>
+</pre></div>
+</div>
+
+<div style="overflow-x:auto">
+<script type="WaveDrom">
+{"signal": [{"name": "clk", "wave": "p..."}, ["fmap.din", {"name": "f0", "wave": "555z", "data": ["0", "1", "2"]}, {"name": "f1", "wave": "555z", "data": ["0", "10", "20"]}], ["fmap.dout", {"name": "f0", "wave": "555z", "data": ["0", "2", "4"]}, {"name": "f1", "wave": "555z", "data": ["0", "20", "40"]}]], "head": {"tock": 0}}
+</script>
+</div>
+<p>Under the hood, the <code class="xref py py-class docutils literal notranslate"><span class="pre">fmap</span></code> will be implemented as shown below:</p>
+<div class="figure align-center">
+<img alt="../_images/tuple_fmap.png" src="../_images/tuple_fmap.png" />
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt>
+<code class="descname">fmap</code><span class="sig-paren">(</span><em>din: Union</em>, <em>*</em>, <em>f</em>, <em>fdemux=demux_ctrl</em>, <em>fmux=mux</em>, <em>balance=None</em><span class="sig-paren">)</span></dt>
+<dd><p>The <a class="reference internal" href="../typing/union.html#pygears.typing.union.Union" title="pygears.typing.union.Union"><code class="xref py py-class docutils literal notranslate"><span class="pre">Union</span></code></a> fmap operates ont the <a class="reference internal" href="../typing/union.html#pygears.typing.union.Union" title="pygears.typing.union.Union"><code class="xref py py-class docutils literal notranslate"><span class="pre">Union</span></code></a> data types and enables to process the <a class="reference internal" href="../typing/union.html#pygears.typing.union.Union" title="pygears.typing.union.Union"><code class="xref py py-class docutils literal notranslate"><span class="pre">Union</span></code></a> data values with different gears depending on the concrete type of the value. The gears that process the <a class="reference internal" href="../typing/union.html#pygears.typing.union.Union" title="pygears.typing.union.Union"><code class="xref py py-class docutils literal notranslate"><span class="pre">Union</span></code></a> types are passed as a tuple (or any Python iterable) through the <code class="docutils literal notranslate"><span class="pre">f</span></code> parameter, and there should be as many gears as there are types in the <a class="reference internal" href="../typing/union.html#pygears.typing.union.Union" title="pygears.typing.union.Union"><code class="xref py py-class docutils literal notranslate"><span class="pre">Union</span></code></a>. Unlike the <a class="reference internal" href="../typing/tuple.html#pygears.typing.tuple.Tuple" title="pygears.typing.tuple.Tuple"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code></a> fmap, only one of the gears is used to process the received value, i.e. only one gear is active at a time.</p>
+<p>Following example processes the data that can either be signed or unsigned integers, and if value is signed it decrements it, otherwise nothing is done to the data:</p>
+<div>
+
+      <link href="/_static/css/fontello.css" type="text/css" rel="stylesheet"/>
+      <button id="cmdrun" class="btn-run cls-tryme" style="font-size:16px; font-weight:bold;" onClick="window.open('/live.html?file=gears/examples/fmap_union.py', '_blank');" title="Run this example on PyGears LIVE!"><i class="icon-cog-alt"></i> Try Me!</button></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Union</span><span class="p">[</span><span class="n">Int</span><span class="p">[</span><span class="mi">16</span><span class="p">],</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">]],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">11</span><span class="p">,</span> <span class="mi">0</span><span class="p">)])</span> \
+    <span class="o">|</span> <span class="n">fmap</span><span class="p">(</span><span class="n">f</span><span class="o">=</span><span class="p">(</span><span class="n">sub</span><span class="p">(</span><span class="n">b</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="kc">None</span><span class="p">))</span> \
+    <span class="o">|</span> <span class="n">check</span><span class="p">(</span><span class="n">ref</span><span class="o">=</span><span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">11</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">12</span><span class="p">,</span> <span class="mi">0</span><span class="p">)])</span>
+</pre></div>
+</div>
+
+<div style="overflow-x:auto">
+<script type="WaveDrom">
+{"signal": [{"name": "clk", "wave": "p...."}, ["fmap.din", {"name": "data", "wave": "5555z", "data": ["0", "1", "65526", "65525"]}, {"name": "ctrl", "wave": "5555z", "data": ["1", "1", "0", "0"]}], ["fmap.dout", {"name": "data", "wave": "5555z", "data": ["0", "1", "131061", "131060"]}, {"name": "ctrl", "wave": "5555z", "data": ["1", "1", "0", "0"]}], ["fmap.sub.din", {"name": "a", "wave": "z.55z", "data": ["-10", "-11"]}, {"name": "b", "wave": "z.55z", "data": ["1", "1"]}], ["fmap.sub.dout", {"name": "", "wave": "z.55z", "data": ["-11", "-12"]}]], "head": {"tock": 0}}
+</script>
+</div>
+<p>Under the hood, the <code class="xref py py-class docutils literal notranslate"><span class="pre">fmap</span></code> will be implemented as shown below:</p>
+<div class="figure align-center">
+<img alt="../_images/union_fmap.png" src="../_images/union_fmap.png" />
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt>
+<code class="descname">fmap</code><span class="sig-paren">(</span><em>din: Union</em>, <em>*</em>, <em>f</em>, <em>lvl=1</em>, <em>fcat=czip</em>, <em>balance=None</em>, <em>common_balance=True</em><span class="sig-paren">)</span></dt>
+<dd><p>The <a class="reference internal" href="../typing/queue.html#pygears.typing.queue.Queue" title="pygears.typing.queue.Queue"><code class="xref py py-class docutils literal notranslate"><span class="pre">Queue</span></code></a> fmaps are useful in context where we need to operate on <code class="xref py py-func docutils literal notranslate"><span class="pre">Queue()</span></code> -s of some data types, and we already have gears that implement desired transformation but operate on single data or lower level <code class="xref py py-class docutils literal notranslate"><span class="pre">Queues</span></code>.</p>
+<p>Consider a simple example in which we want to multiply each element of a <a class="reference internal" href="../typing/queue.html#pygears.typing.queue.Queue" title="pygears.typing.queue.Queue"><code class="xref py py-class docutils literal notranslate"><span class="pre">Queue</span></code></a> with a number 2. We don’t need to create a special gear for this, as we can reuse the <a class="reference internal" href="operators.html#mul.mul" title="mul.mul"><code class="xref py py-func docutils literal notranslate"><span class="pre">mul()</span></code></a> gear with a helm of the <a class="reference internal" href="#fmap.fmap" title="fmap.fmap"><code class="xref py py-func docutils literal notranslate"><span class="pre">fmap()</span></code></a>:</p>
+<div>
+
+      <link href="/_static/css/fontello.css" type="text/css" rel="stylesheet"/>
+      <button id="cmdrun" class="btn-run cls-tryme" style="font-size:16px; font-weight:bold;" onClick="window.open('/live.html?file=gears/examples/fmap_queue.py', '_blank');" title="Run this example on PyGears LIVE!"><i class="icon-cog-alt"></i> Try Me!</button></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Queue</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">]],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">]])</span> \
+    <span class="o">|</span> <span class="n">fmap</span><span class="p">(</span><span class="n">f</span><span class="o">=</span><span class="n">mul</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span> \
+    <span class="o">|</span> <span class="n">check</span><span class="p">(</span><span class="n">ref</span><span class="o">=</span><span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">8</span><span class="p">]])</span>
+</pre></div>
+</div>
+
+<div style="overflow-x:auto">
+<script type="WaveDrom">
+{"signal": [{"name": "clk", "wave": "p....."}, ["fmap.din", {"name": "data", "wave": "55555z", "data": ["0", "1", "2", "3", "4"]}, {"name": "eot", "wave": "55555z", "data": ["0", "0", "0", "0", "1"]}], ["fmap.dout", {"name": "data", "wave": "55555z", "data": ["0", "2", "4", "6", "8"]}, {"name": "eot", "wave": "55555z", "data": ["0", "0", "0", "0", "1"]}]], "head": {"tock": 0}}
+</script>
+</div>
+<p>Under the hood, the <code class="xref py py-class docutils literal notranslate"><span class="pre">fmap</span></code> will be implemented as shown below:</p>
+<div class="figure align-center">
+<img alt="../_images/queue_fmap.png" src="../_images/queue_fmap.png" />
+</div>
+</dd></dl>
+
+</div>
+
+    <script type="text/javascript">
+        function init() {
+            WaveDrom.ProcessAll();
+        }
+        window.onload = init;
+    </script>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../index.html">
+    <img class="logo" src="../_static/logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+<p class="blurb">HW Design: A Functional Approach</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=bogdanvuk&repo=pygears&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<hr />
+<p>
+    <h3> Blogs </h3>
+    <ul>
+        <li class="toctree-l1"><a href="https://www.pygears.org/blog/blog/category/risc-v.html">RISC-V implementation blog</a></li>
+    </ul>
+</p>
+<hr />
+<h3><a href="https://www.pygears.org/blog/blog/category/release.html">Release notes</a></h3>
+<hr />
+<h3><a href="../index.html">Table of Contents</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../live.html">PyGears LIVE!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Quick introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gears.html">Introduction to Gears</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../typing.html">Typing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../registry.html">Registry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../setup.html">PyGears Tools Setup for Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../reference.html">Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../reference.html#core">Core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference.html#infrastructure">Infrastructure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference.html#typing">Typing</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../reference.html#gears">Gears</a></li>
+</ul>
+</li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Bogdan Vukobratovic.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/gears/fmap.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+    <a href="https://github.com/bogdanvuk/pygears" class="github">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>

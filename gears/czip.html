@@ -1,0 +1,182 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>czip &#8212; PyGears - HW Design: A Functional Approach</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script type="text/javascript" src="../_static/default.js"></script>
+    <script type="text/javascript" src="../_static/wavedrom.js"></script>
+    <link rel="canonical" href="https://www.pygears.org/gears/czip.html" />
+    <link rel="shortcut icon" href="../_static/pygears.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="deal" href="deal.html" />
+    <link rel="prev" title="const" href="const.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-czip">
+<span id="czip"></span><h1>czip<a class="headerlink" href="#module-czip" title="Permalink to this headline">¶</a></h1>
+<p>Zips two or more <a class="reference internal" href="../typing/queue.html#pygears.typing.queue.Queue" title="pygears.typing.queue.Queue"><code class="xref py py-class docutils literal notranslate"><span class="pre">Queue</span></code></a> -s together</p>
+<dl class="function">
+<dt id="czip.czip">
+<code class="descname">czip</code><span class="sig-paren">(</span><em>*din</em><span class="sig-paren">)</span><a class="headerlink" href="#czip.czip" title="Permalink to this definition">¶</a></dt>
+<dd><p>Example shows how to form a <a class="reference internal" href="../typing/queue.html#pygears.typing.queue.Queue" title="pygears.typing.queue.Queue"><code class="xref py py-class docutils literal notranslate"><span class="pre">Queue</span></code></a> of points from the two <a class="reference internal" href="../typing/queue.html#pygears.typing.queue.Queue" title="pygears.typing.queue.Queue"><code class="xref py py-class docutils literal notranslate"><span class="pre">Queue</span></code></a> -s, one with <code class="docutils literal notranslate"><span class="pre">x</span></code> coordinates <code class="docutils literal notranslate"><span class="pre">[10,</span> <span class="pre">11,</span> <span class="pre">12]</span></code>, and the other with <code class="docutils literal notranslate"><span class="pre">y</span></code> coordinates <code class="docutils literal notranslate"><span class="pre">[20,</span> <span class="pre">21,</span> <span class="pre">22]</span></code>.</p>
+<div>
+
+      <link href="/_static/css/fontello.css" type="text/css" rel="stylesheet"/>
+      <button id="cmdrun" class="btn-run cls-tryme" style="font-size:16px; font-weight:bold;" onClick="window.open('/live.html?file=gears/examples/czip_point.py', '_blank');" title="Run this example on PyGears LIVE!"><i class="icon-cog-alt"></i> Try Me!</button></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Queue</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">5</span><span class="p">]],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">]])</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Queue</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">5</span><span class="p">]],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[[</span><span class="mi">20</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span> <span class="mi">22</span><span class="p">]])</span>
+
+<span class="n">czip</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="o">|</span> <span class="n">check</span><span class="p">(</span><span class="n">ref</span><span class="o">=</span><span class="p">[[(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">),</span> <span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">21</span><span class="p">),</span> <span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">22</span><span class="p">)]])</span>
+</pre></div>
+</div>
+
+<div style="overflow-x:auto">
+<script type="WaveDrom">
+{"signal": [{"name": "clk", "wave": "p..."}, ["czip.din0", {"name": "data", "wave": "555z", "data": ["10", "11", "12"]}, {"name": "eot", "wave": "555z", "data": ["0", "0", "1"]}], ["czip.din1", {"name": "data", "wave": "555z", "data": ["20", "21", "22"]}, {"name": "eot", "wave": "555z", "data": ["0", "0", "1"]}], ["czip.dout", ["data", {"name": "f0", "wave": "555z", "data": ["10", "11", "12"]}, {"name": "f1", "wave": "555z", "data": ["20", "21", "22"]}], {"name": "eot", "wave": "555z", "data": ["0", "0", "1"]}]], "head": {"tock": 0}}
+</script>
+</div>
+<p>Next example demonstrates how <a class="reference internal" href="#czip.czip" title="czip.czip"><code class="xref py py-func docutils literal notranslate"><span class="pre">czip()</span></code></a> waits for its inputs. The producer of the <code class="docutils literal notranslate"><span class="pre">x</span></code> coordinate outputs the data only once every three cycles. Checkout how <code class="docutils literal notranslate"><span class="pre">czip.din1</span></code> is acknowledged only when <code class="docutils literal notranslate"><span class="pre">czip.din0</span></code> also becomes available:</p>
+<div>
+
+      <link href="/_static/css/fontello.css" type="text/css" rel="stylesheet"/>
+      <button id="cmdrun" class="btn-run cls-tryme" style="font-size:16px; font-weight:bold;" onClick="window.open('/live.html?file=gears/examples/czip_delay.py', '_blank');" title="Run this example on PyGears LIVE!"><i class="icon-cog-alt"></i> Try Me!</button></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Queue</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">5</span><span class="p">]],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">]])</span> <span class="o">|</span> <span class="n">delay</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Queue</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">5</span><span class="p">]],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[[</span><span class="mi">20</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span> <span class="mi">22</span><span class="p">]])</span>
+
+<span class="n">czip</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="o">|</span> <span class="n">check</span><span class="p">(</span><span class="n">ref</span><span class="o">=</span><span class="p">[[(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">),</span> <span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">21</span><span class="p">),</span> <span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">22</span><span class="p">)]])</span>
+</pre></div>
+</div>
+
+<div style="overflow-x:auto">
+<script type="WaveDrom">
+{"signal": [{"name": "clk", "wave": "p........."}, ["czip.din0", {"name": "data", "wave": "z.5z.5z.5z", "data": ["10", "11", "12"]}, {"name": "eot", "wave": "z.5z.5z.5z", "data": ["0", "0", "1"]}], ["czip.din1", {"name": "data", "wave": "4.54.54.5z", "data": ["20", "20", "21", "21", "22", "22"]}, {"name": "eot", "wave": "4.54.54.5z", "data": ["0", "0", "0", "0", "1", "1"]}], ["czip.dout", ["data", {"name": "f0", "wave": "z.5z.5z.5z", "data": ["10", "11", "12"]}, {"name": "f1", "wave": "z.5z.5z.5z", "data": ["20", "21", "22"]}], {"name": "eot", "wave": "z.5z.5z.5z", "data": ["0", "0", "1"]}]], "head": {"tock": 0}}
+</script>
+</div>
+</dd></dl>
+
+</div>
+
+    <script type="text/javascript">
+        function init() {
+            WaveDrom.ProcessAll();
+        }
+        window.onload = init;
+    </script>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../index.html">
+    <img class="logo" src="../_static/logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+<p class="blurb">HW Design: A Functional Approach</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=bogdanvuk&repo=pygears&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<hr />
+<p>
+    <h3> Blogs </h3>
+    <ul>
+        <li class="toctree-l1"><a href="https://www.pygears.org/blog/blog/category/risc-v.html">RISC-V implementation blog</a></li>
+    </ul>
+</p>
+<hr />
+<h3><a href="https://www.pygears.org/blog/blog/category/release.html">Release notes</a></h3>
+<hr />
+<h3><a href="../index.html">Table of Contents</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../live.html">PyGears LIVE!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Quick introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gears.html">Introduction to Gears</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../typing.html">Typing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../registry.html">Registry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../setup.html">PyGears Tools Setup for Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../reference.html">Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../reference.html#core">Core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference.html#infrastructure">Infrastructure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference.html#typing">Typing</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../reference.html#gears">Gears</a></li>
+</ul>
+</li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Bogdan Vukobratovic.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/gears/czip.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+    <a href="https://github.com/bogdanvuk/pygears" class="github">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,232 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>decouple &#8212; PyGears - HW Design: A Functional Approach</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script type="text/javascript" src="../_static/default.js"></script>
+    <script type="text/javascript" src="../_static/wavedrom.js"></script>
+    <link rel="canonical" href="https://www.pygears.org/gears/decouple.html" />
+    <link rel="shortcut icon" href="../_static/pygears.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="demux" href="demux.html" />
+    <link rel="prev" title="deal" href="deal.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-decouple">
+<span id="decouple"></span><h1>decouple<a class="headerlink" href="#module-decouple" title="Permalink to this headline">¶</a></h1>
+<p>It is used to break combinatorial paths on both data and control signals of the DTI interface, without sacrificing the throughput. It adds a latency of one clock cycle to the path, but does not impact the throughput no matter the pattern in which the data is written and read from it. It is transparent to the functionality of the design.</p>
+<dl class="function">
+<dt id="decouple.decouple">
+<code class="descname">decouple</code><span class="sig-paren">(</span><em>din</em>, <em>*</em>, <em>depth=2</em><span class="sig-paren">)</span> &#x2192; din<a class="headerlink" href="#decouple.decouple" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <a class="reference internal" href="#decouple.decouple" title="decouple.decouple"><code class="xref py py-func docutils literal notranslate"><span class="pre">decouple()</span></code></a> gear is basically a FIFO with no combinatorial loops between its input and output. It is used in the following cases:</p>
+<ol class="arabic simple">
+<li><p>When there is a loop in the data path, where it is used to prevent the combinatorial loops</p></li>
+<li><p>For pipelining:</p></li>
+</ol>
+<blockquote>
+<div><p>Example design features a <a class="reference internal" href="rng.html#rng.rng" title="rng.rng"><code class="xref py py-func docutils literal notranslate"><span class="pre">rng()</span></code></a> generator, whose output values are led to an incrementer. Both the value generation and the addition are performed in a single clock cycle.</p>
+<div>
+
+      <link href="/_static/css/fontello.css" type="text/css" rel="stylesheet"/>
+      <button id="cmdrun" class="btn-run cls-tryme" style="font-size:16px; font-weight:bold;" onClick="window.open('/live.html?file=gears/examples/decouple_without_pipeline.py', '_blank');" title="Run this example on PyGears LIVE!"><i class="icon-cog-alt"></i> Try Me!</button></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">rng_vals</span> <span class="o">=</span> <span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Uint</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[</span><span class="mi">6</span><span class="p">])</span> <span class="o">|</span> <span class="n">rng</span> <span class="o">|</span> <span class="n">flatten</span>
+<span class="n">rng_vals_incr</span> <span class="o">=</span> <span class="n">rng_vals</span> <span class="o">+</span> <span class="mi">1</span>
+
+<span class="n">rng_vals_incr</span> <span class="o">|</span> <span class="n">check</span><span class="p">(</span><span class="n">ref</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">])</span>
+</pre></div>
+</div>
+
+<div style="overflow-x:auto">
+<script type="WaveDrom">
+{"signal": [{"name": "clk", "wave": "p......"}, ["flatten.dout", {"name": "", "wave": "555555z", "data": ["0", "1", "2", "3", "4", "5"]}], ["add.dout", {"name": "", "wave": "555555z", "data": ["1", "2", "3", "4", "5", "6"]}]], "head": {"tock": 0}}
+</script>
+</div>
+<p>In order to reduce the combinatorial path lengths in the design, we might split these two operations in two clock cycles. The <a class="reference internal" href="#decouple.decouple" title="decouple.decouple"><code class="xref py py-func docutils literal notranslate"><span class="pre">decouple()</span></code></a> gear cuts the combinatorial paths on both data and control interface signals, it does not impact the design throughput, but adds a single clock cycle of latency:</p>
+<div>
+
+      <link href="/_static/css/fontello.css" type="text/css" rel="stylesheet"/>
+      <button id="cmdrun" class="btn-run cls-tryme" style="font-size:16px; font-weight:bold;" onClick="window.open('/live.html?file=gears/examples/decouple_pipeline.py', '_blank');" title="Run this example on PyGears LIVE!"><i class="icon-cog-alt"></i> Try Me!</button></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">rng_vals</span> <span class="o">=</span> <span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Uint</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[</span><span class="mi">6</span><span class="p">])</span> <span class="o">|</span> <span class="n">rng</span> <span class="o">|</span> <span class="n">flatten</span>
+<span class="hll"><span class="n">rng_vals_incr</span> <span class="o">=</span> <span class="p">(</span><span class="n">rng_vals</span> <span class="o">|</span> <span class="n">decouple</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+</span>
+<span class="n">rng_vals_incr</span> <span class="o">|</span> <span class="n">check</span><span class="p">(</span><span class="n">ref</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">])</span>
+</pre></div>
+</div>
+
+<div style="overflow-x:auto">
+<script type="WaveDrom">
+{"signal": [{"name": "clk", "wave": "p......."}, ["flatten.dout", {"name": "", "wave": "555555z.", "data": ["0", "1", "2", "3", "4", "5"]}], ["add.dout", {"name": "", "wave": "z555555z", "data": ["1", "2", "3", "4", "5", "6"]}]], "head": {"tock": 0}}
+</script>
+</div>
+</div></blockquote>
+<ol class="arabic simple" start="3">
+<li><p>For balancing latencies on the datapath branches:</p></li>
+</ol>
+<blockquote>
+<div><p>Consider a datapath consisting of two branches whose outputs are later concatenated together. First branch performs some arithmetic operations with registers added for pipelining, and has a latency of two clock cycles. The second branch does nothing to the data and has zero latency. Due to the mismatch in the pipeline depths of the two branches, the resulting throughput is 1 data value per 3 clock cycles.</p>
+<div>
+
+      <link href="/_static/css/fontello.css" type="text/css" rel="stylesheet"/>
+      <button id="cmdrun" class="btn-run cls-tryme" style="font-size:16px; font-weight:bold;" onClick="window.open('/live.html?file=gears/examples/decouple_without_balance.py', '_blank');" title="Run this example on PyGears LIVE!"><i class="icon-cog-alt"></i> Try Me!</button></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">inp</span> <span class="o">=</span> <span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Uint</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+
+<span class="n">branch1</span> <span class="o">=</span> <span class="n">dreg</span><span class="p">(</span><span class="n">dreg</span><span class="p">(</span><span class="n">inp</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="mi">3</span><span class="p">)</span>
+<span class="n">branch2</span> <span class="o">=</span> <span class="n">inp</span>
+
+<span class="n">ccat</span><span class="p">(</span><span class="n">branch1</span><span class="p">,</span> <span class="n">branch2</span><span class="p">)</span> <span class="o">|</span> <span class="n">check</span><span class="p">(</span><span class="n">ref</span><span class="o">=</span><span class="p">[(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">3</span><span class="p">)])</span>
+</pre></div>
+</div>
+
+<div style="overflow-x:auto">
+<script type="WaveDrom">
+{"signal": [{"name": "clk", "wave": "p........."}, ["ccat2.din0", {"name": "", "wave": "z.5z.5z.5z", "data": ["6", "9", "12"]}], ["ccat2.din1", {"name": "", "wave": "4.54.54.5z", "data": ["1", "1", "2", "2", "3", "3"]}], ["ccat2.dout", {"name": "f0", "wave": "z.5z.5z.5z", "data": ["6", "9", "12"]}, {"name": "f1", "wave": "z.5z.5z.5z", "data": ["1", "2", "3"]}]], "head": {"tock": 0}}
+</script>
+</div>
+<p>By introducing a decoupler on the second branch (default <code class="docutils literal notranslate"><span class="pre">depth</span></code> of two is enough here), we have achieved maximum throughput after the initial latency.</p>
+<div>
+
+      <link href="/_static/css/fontello.css" type="text/css" rel="stylesheet"/>
+      <button id="cmdrun" class="btn-run cls-tryme" style="font-size:16px; font-weight:bold;" onClick="window.open('/live.html?file=gears/examples/decouple_balance.py', '_blank');" title="Run this example on PyGears LIVE!"><i class="icon-cog-alt"></i> Try Me!</button></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">inp</span> <span class="o">=</span> <span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Uint</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+
+<span class="n">branch1</span> <span class="o">=</span> <span class="n">dreg</span><span class="p">(</span><span class="n">dreg</span><span class="p">(</span><span class="n">inp</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="mi">3</span><span class="p">)</span>
+<span class="hll"><span class="n">branch2</span> <span class="o">=</span> <span class="n">inp</span> <span class="o">|</span> <span class="n">decouple</span>
+</span>
+<span class="n">ccat</span><span class="p">(</span><span class="n">branch1</span><span class="p">,</span> <span class="n">branch2</span><span class="p">)</span> <span class="o">|</span> <span class="n">check</span><span class="p">(</span><span class="n">ref</span><span class="o">=</span><span class="p">[(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">3</span><span class="p">)])</span>
+</pre></div>
+</div>
+
+<div style="overflow-x:auto">
+<script type="WaveDrom">
+{"signal": [{"name": "clk", "wave": "p....."}, ["ccat2.din0", {"name": "", "wave": "z.555z", "data": ["6", "9", "12"]}], ["ccat2.din1", {"name": "", "wave": "z4555z", "data": ["1", "1", "2", "3"]}], ["ccat2.dout", {"name": "f0", "wave": "z.555z", "data": ["6", "9", "12"]}, {"name": "f1", "wave": "z.555z", "data": ["1", "2", "3"]}]], "head": {"tock": 0}}
+</script>
+</div>
+</div></blockquote>
+</dd></dl>
+
+</div>
+
+    <script type="text/javascript">
+        function init() {
+            WaveDrom.ProcessAll();
+        }
+        window.onload = init;
+    </script>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../index.html">
+    <img class="logo" src="../_static/logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+<p class="blurb">HW Design: A Functional Approach</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=bogdanvuk&repo=pygears&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<hr />
+<p>
+    <h3> Blogs </h3>
+    <ul>
+        <li class="toctree-l1"><a href="https://www.pygears.org/blog/blog/category/risc-v.html">RISC-V implementation blog</a></li>
+    </ul>
+</p>
+<hr />
+<h3><a href="https://www.pygears.org/blog/blog/category/release.html">Release notes</a></h3>
+<hr />
+<h3><a href="../index.html">Table of Contents</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../live.html">PyGears LIVE!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Quick introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gears.html">Introduction to Gears</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../typing.html">Typing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../registry.html">Registry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../setup.html">PyGears Tools Setup for Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../reference.html">Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../reference.html#core">Core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference.html#infrastructure">Infrastructure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference.html#typing">Typing</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../reference.html#gears">Gears</a></li>
+</ul>
+</li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Bogdan Vukobratovic.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/gears/decouple.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+    <a href="https://github.com/bogdanvuk/pygears" class="github">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>
