@@ -12,7 +12,7 @@ Variables
 - ``svgen``: Data used by the SystemVerilog generation submodule
 
   - ``svgen/flow``: List of operations performed while generating a SystemVerilog code for the PyGears description. Flow configuration is usually not modified by the user, but can be used to implement a custom generation flow. 
-  - ``svgen/sv_paths``: List of directory paths where SystemVerilog generator will look for the SystemVerilog implementations of the gears. User can include additional direcrories where custom SystemVerilog files are located. 
+  - ``hdl/include``: List of directory paths where SystemVerilog generator will look for the SystemVerilog implementations of the gears. User can include additional direcrories where custom SystemVerilog files are located. 
   - ``debug_intfs``: []
 
 - ``sim``: 
@@ -24,7 +24,7 @@ Variables
   - ``gear/naming``: 
 
     - ``gear/naming/pretty_sieve`` (bool): Try to obtain a variable which was
-      sliced to form a :any:`sieve <common.sieve>`. Turned off by default
+      sliced to form a :any:`sieve <lib.sieve>`. Turned off by default
       because it impacts performance on large designs.
     - ``gear/naming/default_out_name`` (str): Name to give to gear output interfaces if none is specified. Default: 'dout'
   - ``gear/params``:

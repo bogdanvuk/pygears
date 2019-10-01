@@ -1,0 +1,52 @@
+{%- import 'snippet.j2' as snippet -%}
+{% call snippet.gear_module(module_name, intfs, comment) %}
+
+    {{snippet.intf_typedef(_din, depth=0)}}
+
+{% for i in (intfs|isoutput) %}
+    assign {{i['name']}}.data = din_s.data;
+{% endfor %}
+
+{%- set output_intfs = intfs|isoutput %}
+
+    always_comb
+    begin
+        din.ready = 1'bx;
+
+        if (din.valid) begin
+            case(din_s.ctrl)
+{% for key, iout in params['_full_mapping'].items() %}
+                {{key}} : begin
+                    din.ready = {{output_intfs[iout]['name']}}.ready;
+                end
+{% endfor %}
+                default: begin
+                    din.ready = 1'bx;
+                end
+            endcase
+        end
+    end
+
+    always_comb
+    begin
+{% for i in (intfs|isoutput) %}
+        {{i['name']}}.valid = 0;
+{% endfor %}
+
+        if (din.valid) begin
+            case(din_s.ctrl)
+{% for key, iout in params['_full_mapping'].items() %}
+                {{key}} : begin
+                    {{output_intfs[iout]['name']}}.valid = din.valid;
+                end
+{% endfor %}
+                default: begin
+{% for i in (intfs|isoutput) %}
+                    {{i['name']}}.valid = 1'bx;
+{% endfor %}
+                end
+            endcase
+        end
+    end
+
+{% endcall %}

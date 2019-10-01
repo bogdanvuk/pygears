@@ -1,5 +1,5 @@
 from pygears.core.hier_node import HierVisitorBase
-from pygears.svgen.util import svgen_visitor
+from pygears.rtl import flow_visitor
 from pygears.rtl.intf import RTLIntf
 
 
@@ -21,38 +21,30 @@ def is_in_subbranch(root, node):
         return True
 
 
-@svgen_visitor
+@flow_visitor
 class RTLOutChannelVisitor(HierVisitorBase):
     def RTLNode(self, node):
         super().HierNode(node)
         if node.parent is None:
             return True
 
-        # print(node.name)
-        # if node.name == 'is_ifm_mover/do_if/fmap':
-        #     import pdb
-        #     pdb.set_trace()
-
         for p in node.out_ports:
             cons_intf = p.consumer
             consumers_at_same_level_or_sublevel = [
-                cons_p in node.parent.out_ports or is_in_subbranch(cons_intf.parent, cons_p.node.parent)
+                # cons_p in node.parent.out_ports or is_in_subbranch(cons_intf.parent, cons_p.node.parent)
+                cons_p in node.parent.out_ports
+                or cons_intf.parent.has_descendent(cons_p.node)
                 for cons_p in cons_intf.consumers
             ]
+
             if not all(consumers_at_same_level_or_sublevel) or (not cons_intf):
-                # print(f'Node: {node.name}')
-                # print(f'    {consumers_at_same_level_or_sublevel}')
-
-                # import pdb
-                # pdb.set_trace()
-                # print("Here!")
-
                 cons_intf.parent.child.remove(cons_intf)
                 cons_intf.parent.parent.add_child(cons_intf)
 
                 cons_intf.disconnect(p)
-                node.parent.add_out_port(
-                    p.basename, consumer=cons_intf, dtype=cons_intf.dtype)
+                node.parent.add_out_port(p.basename,
+                                         consumer=cons_intf,
+                                         dtype=cons_intf.dtype)
 
                 out_port = node.parent.out_ports[-1]
                 cons_intf.producer = out_port
@@ -74,7 +66,63 @@ class RTLOutChannelVisitor(HierVisitorBase):
         return True
 
 
-@svgen_visitor
+from pygears.core.gear import OutSig, InSig
+
+
+def is_driven_by_node(node, name):
+    for s in node.params['signals']:
+        if isinstance(s, OutSig):
+            if s.name in node.params['sigmap']:
+                if name == node.params['sigmap'][s.name]:
+                    return s
+            else:
+                if name == s.name:
+                    return s
+    else:
+        return None
+
+
+def find_signal_driver_port(parent, name):
+    for node in parent.local_modules():
+        if is_driven_by_node(node, name):
+            return True
+
+    for s in parent.params['signals']:
+        if isinstance(s, InSig):
+            if s.name == name:
+                return True
+
+    return False
+
+
+@flow_visitor
+class RTLSigChannelVisitor(HierVisitorBase):
+    def RTLNode(self, node):
+        self.HierNode(node)
+
+        if node.parent:
+            for s in node.params['signals']:
+                if s.name not in node.params['sigmap']:
+                    node.params['sigmap'] = node.params['sigmap'].copy()
+                    node.params['sigmap'][s.name] = s.name
+
+            for s in node.params['signals']:
+                if isinstance(s, InSig):
+                    sig_name = node.params['sigmap'][s.name]
+
+                    if not find_signal_driver_port(node.parent, sig_name):
+                        if not isinstance(node.parent.params['signals'], list):
+                            node.parent.params['signals'] = list(
+                                node.parent.params['signals'])
+
+                        node.parent.params['signals'] = node.parent.params[
+                            'signals'].copy()
+                        node.parent.params['signals'].append(s)
+
+        return True
+
+
+@flow_visitor
 class RTLChannelVisitor(HierVisitorBase):
     def RTLNode(self, node):
         for p in node.in_ports:
@@ -83,19 +131,21 @@ class RTLChannelVisitor(HierVisitorBase):
             parent = node.parent
             while parent is not None:
                 if (prod_intf is not None and prod_intf.parent != parent
-                        and (not parent.is_descendent(prod_intf.parent))):
+                        and (not parent.has_descendent(prod_intf.parent))):
 
-                    parent.add_in_port(
-                        p.basename, producer=prod_intf, dtype=prod_intf.dtype)
+                    parent.add_in_port(p.basename,
+                                       producer=prod_intf,
+                                       dtype=prod_intf.dtype)
                     in_port = parent.in_ports[-1]
 
                     local_cons = [
                         port for port in prod_intf.consumers
-                        if parent.is_descendent(port.node)
+                        if parent.has_descendent(port.node)
                     ]
 
-                    local_intf = RTLIntf(
-                        parent, prod_intf.dtype, producer=in_port)
+                    local_intf = RTLIntf(parent,
+                                         prod_intf.dtype,
+                                         producer=in_port)
 
                     for port in local_cons:
                         prod_intf.consumers.remove(port)

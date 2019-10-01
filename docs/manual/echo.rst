@@ -5,7 +5,7 @@ Echo
 
 This example shows how to use PyGears to implement a hardware module that applies echo audio effect to a continuous audio stream. For a more detailed explanation of PyGears features used in this example, you can checkout a :ref:`quick introduction to PyGears <introduction>`.
 
-The hardware module is defined in `examples/echo/echo.py <https://github.com/bogdanvuk/pygears/tree/develop/examples/echo/echo.py>`_, and block diagram is given below. You can checkout the :ref:`functional description <examples-echo-functional-description>` of the ``echo`` module. In-depth explanation of the PyGears description of the echo model given in :ref:`hardware description <examples-echo-hardware-description>` chapter. PyGears takes the Python module description and compiles it to SystemVerilog which is :ref:`listed below<echo-sv>`.
+The hardware module is part of the `pygears_dsp <https://github.com/bogdanvuk/pygears-dsp>`_ library and is defined in `pygears_dsp/lib/echo.py <https://github.com/bogdanvuk/pygears-dsp/blob/master/pygears_dsp/lib/echo.py>`_. Its block diagram is given below. You can checkout the :ref:`functional description <examples-echo-functional-description>` of the ``echo`` module. In-depth explanation of the PyGears description of the echo model given in :ref:`hardware description <examples-echo-hardware-description>` chapter. PyGears takes the Python module description and compiles it to SystemVerilog which is :ref:`listed below<echo-sv>`.
 
 .. bdp:: images/echo.py
     :align: center
@@ -14,7 +14,7 @@ The hardware module is defined in `examples/echo/echo.py <https://github.com/bog
 SystemVerilog Generation
 ------------------------
 
-Run the script `examples/echo/echo_svgen.py <https://github.com/bogdanvuk/pygears/tree/develop/examples/echo/echo_svgen.py>`_ in order to let PyGears generate SystemVerilog files.
+Run the script `examples/echo/echo_svgen.py <https://github.com/bogdanvuk/pygears-dsp/blob/master/examples/echo/echo_svgen.py>`_ in order to let PyGears generate SystemVerilog files.
 
 .. code-block:: bash
 
@@ -156,9 +156,9 @@ At this moment, this interface has no source (producer), which has to be attende
   feedback = dout \
       | fifo(depth=fifo_depth, threshold=sample_dly_len) \
       | fill_void(fill=din.dtype(0)) \
-      | decoupler
+      | decouple
 
-The FIFO gear is declared in `fifo.py <https://github.com/bogdanvuk/pygears/tree/develop/pygears/common/fifo.py>`_, and its SystemVerilog description is given in `fifo.sv <https://github.com/bogdanvuk/pygears/tree/develop/svlib/fifo.sv>`_. In the ``echo`` gear FIFO is used to delay the output audio samples before adding them back to the input stream. Parameters ``depth=fifo_depth`` and ``threshold=sample_dly_len`` are set using the values whose calculations were described earlier. Parameter ``threshold`` tells the FIFO the number of data it needs to contain before it starts outputting them. When ``threshold=0``, the FIFO outputs the data immediately.
+[Omitted long line with 1 matches]
 
 The function of the Fill Void gear is to supply the feedback loop with zeros until there are enough samples (``sample_dly_len`` of them) in the FIFO, at which moment the FIFO will start outputting the delayed samples. The definition of the Fill Void gear is given in the same file:: 
 
@@ -267,7 +267,7 @@ Generated SystemVerilog
       );
 
 
-      decoupler decoupler_i (
+      decouple decouple_i (
           .clk(clk),
           .rst(rst),
           .din(fill_void_s),
@@ -368,7 +368,7 @@ If you have Vivado tool on your path while running the `examples/echo/echo_svgen
 +----------------------+------------+------------+---------+------+-----+--------+--------+--------------+
 | - - bc_dout_s        |          5 |          5 |       0 |    0 |   2 |      0 |      0 |            0 |
 +----------------------+------------+------------+---------+------+-----+--------+--------+--------------+
-| - - decoupler_i      |         24 |         24 |       0 |    0 |  38 |      0 |      0 |            0 |
+| - - decouple_i       |         24 |         24 |       0 |    0 |  38 |      0 |      0 |            0 |
 +----------------------+------------+------------+---------+------+-----+--------+--------+--------------+
 | - - fifo_i           |         42 |         42 |       0 |    0 |  30 |      8 |      0 |            0 |
 +----------------------+------------+------------+---------+------+-----+--------+--------+--------------+

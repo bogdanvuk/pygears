@@ -1,0 +1,67 @@
+{%- import 'snippet.j2' as snippet -%}
+
+{% set Queue = import_from('pygears.typing', 'Queue') %}
+{% set typeof = import_from('pygears.typing', 'typeof') %}
+
+{%- set queue_intfs = [] -%}
+{%- for intf in intfs|isinput if typeof(intf['type'], Queue) -%}
+  {%- do queue_intfs.append(intf) -%}
+{%- endfor -%}
+
+{%- for intf in intfs -%}
+  {%- do intf.update({'lvl': intf['type'].lvl if typeof(intf['type'], Queue) else 0}) -%}
+{%- endfor -%}
+
+{% if params['outsync'] %} 
+  {% set base_module_name = module_name + "_base" %} 
+{% else %}
+  {% set base_module_name = module_name %} 
+{% endif %} 
+
+{% call snippet.module_with_intf_structs(base_module_name, intfs, intfs|isinput, comment, outtype="wire") %}
+
+  {%- set input_intf_names = intfs|isinput|keymap("name") %}
+  {%- set min_lvl = intfs|isinput|keymap("lvl")|min %}
+  {%- set out_intf_names = intfs|isoutput|keymap("name") %}
+
+    wire all_valid;
+    wire out_valid;
+    wire out_ready;
+    wire all_aligned;
+    wire handshake;
+  {% for name in input_intf_names %}
+    {% if min_lvl > 0 %}
+    wire [{{min_lvl-1}}:0] {{name}}_eot_overlap;
+    {% endif %}
+    wire {{name}}_eot_aligned;
+  {% endfor %}
+
+  {% if min_lvl > 0 %}
+    {% for name in input_intf_names %}
+    assign {{name}}_eot_overlap = {{name}}_s_eot[{{min_lvl-1}}:0];
+    {% endfor %}
+  {# Main zip functionality that determines which of the inputs is ahead in
+  Queue structure, i.e. aligned. #}
+    assign din0_eot_aligned = din0_eot_overlap >= din1_eot_overlap;
+    assign din1_eot_aligned = din1_eot_overlap >= din0_eot_overlap;
+  {% else %}
+    assign din0_eot_aligned = 1;
+    assign din1_eot_aligned = 1;
+  {% endif %}
+
+    assign all_valid   = {{input_intf_names|format_list("%s_valid")|join(" && ")}};
+    assign all_aligned = din0_eot_aligned && din1_eot_aligned;
+    assign out_valid   = all_valid & all_aligned;
+
+  {# Connect internal signals to either output interfaces or sync-guard input interfaces. #}
+  {% for din, dout in zip(input_intf_names, out_intf_names) %}
+    assign {{dout}}_valid = out_valid;
+    assign {{dout}}_data = {{din}}_s;
+    assign {{din}}_ready = all_valid && ({{dout}}_ready || !{{din}}_eot_aligned);
+  {% endfor %}
+
+{% endcall %}
+
+{% if params['outsync'] %}
+{{snippet.output_syncguard(module_name, intfs)}}
+{% endif %}

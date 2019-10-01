@@ -22,6 +22,12 @@ class TypingVisitorBase:
     def visit_uint(self, type_, field, **kwds):
         pass
 
+    def visit_ufixp(self, type_, field, **kwds):
+        pass
+
+    def visit_fixp(self, type_, field, **kwds):
+        pass
+
     def visit_default(self, type_, field, **kwds):
         if hasattr(type_, 'fields'):
             return {

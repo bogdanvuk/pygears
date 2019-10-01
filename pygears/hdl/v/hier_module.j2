@@ -1,0 +1,25 @@
+{%- import 'snippet.j2' as snippet -%}
+
+module {{module_name}}
+{%- if generics|length > 0 %}
+#({{snippet.generic_list(generics)}}
+)
+{%- endif %}
+(
+  {% if sigs == None -%}
+    input clk,
+    input rst,
+  {% else %}
+{{snippet.sig_list(sigs)|indent(4, True) }}
+  {% endif %}
+{{snippet.signal_intf_list(intfs, outtype="wire")|indent(4, True)}}
+);
+
+/*verilator tracing_off*/
+
+{% for i in inst %}
+{{i|indent(4,True)}}
+
+{% endfor %}
+
+endmodule

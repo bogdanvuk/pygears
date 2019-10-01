@@ -1,59 +1,74 @@
-import os
+import logging
 import sys
-
-from enum import IntEnum
-from traceback import (extract_stack, extract_tb, format_list, walk_stack,
-                       walk_tb)
+import textwrap
+import inspect
 from functools import partial
-from traceback import format_exception_only
+from traceback import TracebackException
 
-from .pdb_patch import patch_pdb, unpatch_pdb
-from .registry import PluginBase, RegistryHook, registry
+from .log import CustomLogger, LogPlugin, register_custom_log
+from .registry import Inject, bind, inject, registry
 
-
-class TraceLevel(IntEnum):
-    debug = 0
-    user = 1
+from .trace_format import enum_traceback, TraceLevel, enum_stacktrace
 
 
-class TraceConfig(RegistryHook):
-    def _set_level(self, val):
-        if val == TraceLevel.user:
-            patch_pdb()
-        else:
-            unpatch_pdb()
+class MultiAlternativeError(Exception):
+    def __init__(self, errors):
+        self.errors = errors
+
+    def __str__(self):
+        ret = ['\n']
+        for func, err_cls, err, tr in self.errors:
+            ret.append('\n')
+            tr_list = list(enum_traceback(tr))
+            if tr_list:
+                ret.extend(tr_list)
+            else:
+                uwrp = inspect.unwrap(
+                    func, stop=(lambda f: hasattr(f, "__signature__")))
+                fn = inspect.getfile(uwrp)
+                try:
+                    _, ln = inspect.getsourcelines(uwrp)
+                except OSError:
+                    ln = '-'
+
+                ret.append(f'  File "{fn}", line {ln}, in {uwrp.__name__}\n')
+
+            exc_msg = register_issue(err_cls, err)
+            ret.append(textwrap.indent(exc_msg, 4 * ' '))
+
+        return textwrap.indent(str(''.join(ret)), 2 * ' ')
 
 
-class TraceConfigPlugin(PluginBase):
-    @classmethod
-    def bind(cls):
-        cls.registry['trace'] = TraceConfig(level=TraceLevel.debug)
-        cls.registry['trace']['hooks'] = []
-
-
-def parse_trace(s, t):
-    if registry('trace/level') == TraceLevel.debug:
-        yield s
+@inject
+def register_issue(err_cls, err, issues=Inject('trace/issues')):
+    tr_exc = TracebackException(err_cls, err, None)
+    issue_id = len(issues)
+    if isinstance(err, MultiAlternativeError):
+        issue = f"{err_cls.__name__}: {tr_exc}\n"
     else:
-        is_internal = t[0].f_code.co_filename.startswith(
-            os.path.dirname(__file__))
-        is_boltons = 'boltons' in t[0].f_code.co_filename
-        if not is_internal and not is_boltons:
-            yield s
+        issue = f"{err_cls.__name__}: [{issue_id}], {tr_exc}\n"
+        issues.append(err)
 
-
-def enum_traceback(tr):
-    for s, t in zip(format_list(extract_tb(tr)), walk_tb(tr)):
-        yield from parse_trace(s, t)
-
-
-def enum_stacktrace():
-    for s, t in zip(format_list(extract_stack()), walk_stack(f=None)):
-        yield from parse_trace(s, t)
+    return issue
 
 
 def register_exit_hook(hook, *args, **kwds):
     registry('trace/hooks').append(partial(hook, *args, **kwds))
+
+
+def log_exception(exception):
+    exception_type = type(exception)
+    tr = exception.__traceback__
+
+    from pygears.conf.log import LogException
+    print_traceback = (exception_type is not LogException)
+    if not print_traceback:
+        print_traceback = registry(f'logger/{exception.name}/print_traceback')
+    if print_traceback:
+        for s in enum_traceback(tr):
+            logging.getLogger('trace').error(s[:-1])
+
+    logging.getLogger('trace').error(register_issue(exception_type, exception))
 
 
 def pygears_excepthook(exception_type,
@@ -64,7 +79,7 @@ def pygears_excepthook(exception_type,
     for hook in registry('trace/hooks'):
         try:
             hook()
-        except:
+        except Exception:
             pass
 
     if registry('trace/level') == TraceLevel.debug:
@@ -75,18 +90,44 @@ def pygears_excepthook(exception_type,
 
         try:
             print_hier(find('/'))
-        except Exception as e:
+        except Exception:
             pass
 
-        # print traceback for LogException only if appropriate
-        # 'print_traceback' in registry is set
-        from pygears.conf.log import LogException
-        print_traceback = (exception_type is not LogException)
-        if not print_traceback:
-            print_traceback = registry(
-                f'logger/{exception.name}/print_traceback')
-        if print_traceback:
-            for s in enum_traceback(tr):
-                print(s, end='')
+        log_exception(exception.with_traceback(tr))
 
-        print(format_exception_only(exception_type, exception)[0])
+
+@inject
+def stack_trace(name,
+                verbosity,
+                message,
+                stack_traceback_fn=Inject('logger/stack_traceback_fn')):
+    with open(stack_traceback_fn, 'a') as f:
+        delim = '-' * 50 + '\n'
+        f.write(delim)
+        f.write(f'{name} [{verbosity.upper()}] {message}\n\n')
+        tr = ''
+        for s in enum_stacktrace():
+            tr += s
+        f.write(tr)
+        f.write(delim)
+
+
+def log_error_to_file(name, severity, msg):
+    if severity in ['error', 'warning']:
+        stack_trace(name, severity, msg)
+
+
+class TraceLog(CustomLogger):
+    def get_format(self):
+        return logging.Formatter('%(message)s')
+
+    def get_filter(self):
+        return None
+
+
+class TracePlugin(LogPlugin):
+    @classmethod
+    def bind(cls):
+        register_custom_log('trace', cls=TraceLog)
+        registry('logger/hooks').append(log_error_to_file)
+        bind('trace/issues', [])

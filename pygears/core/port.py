@@ -7,25 +7,30 @@ class Port:
         self.basename = basename
 
     @property
+    def name(self):
+        return f'{self.gear.name}.{self.basename}'
+
+    @property
     def dtype(self):
         if self.producer is not None:
             return self.producer.dtype
         else:
             return self.consumer.dtype
 
-    def get_queue(self, port=None):
-        if port is None:
-            port = self
-
-        return self.producer.get_consumer_queue(port)
-
     def finish(self):
         self.consumer.finish()
 
 
 class InPort(Port):
-    pass
+    direction = "in"
+
+    @property
+    def dtype(self):
+        if self.consumer is not None:
+            return self.consumer.dtype
+        else:
+            return self.producer.dtype
 
 
 class OutPort(Port):
-    pass
+    direction = "out"

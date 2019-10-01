@@ -111,19 +111,32 @@ class NamedHierNode(HierNode):
             if new_name:
                 child.basename = new_name
 
+    def __contains__(self, path):
+        try:
+            self[path]
+            return True
+        except KeyError:
+            return False
+
     def __getitem__(self, path):
-        parts = path.split("/")
+        if not path:
+            raise KeyError()
+
+        if path[0] == '/':
+            return self.root()[path[1:]]
+
+        part, multi, rest = path.partition("/")
 
         for child in self.child:
-            if hasattr(child, 'basename') and child.basename == parts[0]:
+            if child.basename == part:
                 break
         else:
             raise KeyError()
 
-        if len(parts) == 1:
+        if not multi:
             return child
         else:
-            return child["/".join(parts[1:])]
+            return child[rest]
 
     @property
     def name(self):
@@ -132,5 +145,14 @@ class NamedHierNode(HierNode):
         else:
             return self.basename
 
-    def is_descendent(self, node):
-        return node.name.startswith(self.name)
+    def has_descendent(self, node):
+        if not self.name or node.name == self.name:
+            return True
+
+        if not node.name.startswith(self.name):
+            return False
+
+        # make sure that the node is an actual descendent
+        # not a different gear with the same prefix in its name
+        child_part = node.name.split(self.name, 1)[1]
+        return child_part.startswith(('/', '.'))

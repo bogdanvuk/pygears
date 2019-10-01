@@ -2,18 +2,17 @@ import os
 import shutil
 import subprocess
 
-from nose import with_setup
 
-from pygears import clear, gear
-from pygears.cookbook.verif import directed
+from pygears import gear
+from pygears.lib.verif import directed
 from pygears.definitions import ROOT_DIR
 from pygears.sim import sim
-from pygears.sim.modules import drv
+from pygears.lib.verif import drv
 from pygears.sim.modules.sim_socket import SimSocket
 from pygears.typing import Queue, Tuple, Uint
 # import sys
 # sys.path.append('/data/projects/pygears/tests')
-from utils import prepare_result_dir, skip_ifndef
+from pygears.util.test_utils import prepare_result_dir, skip_ifndef
 
 test_single_word_data_cmake = """
 cmake_minimum_required (VERSION 2.6)
@@ -65,35 +64,30 @@ def socket_echo(t_din, seq):
     proc.wait()
 
 
-@with_setup(clear)
 def test_small_uint():
     t_din = Uint[16]
     seq = list(range(10))
     socket_echo(t_din, seq)
 
 
-@with_setup(clear)
 def test_large_uint():
     t_din = Uint[512]
     seq = list(range(10))
     socket_echo(t_din, seq)
 
 
-@with_setup(clear)
 def test_queue_small_elem():
     t_din = Queue[Uint[16]]
     seq = [list(range(5)), list(range(6))]
     socket_echo(t_din, seq)
 
 
-@with_setup(clear)
 def test_tuple():
     t_din = Tuple[Uint[3], Uint[4], Uint[5]]
     seq = [(1, 2, 3), (2, 4, 6), (4, 8, 12)]
     socket_echo(t_din, seq)
 
 
-@with_setup(clear)
 def test_queue_tuple():
     t_din = Queue[Tuple[Uint[2], Uint[70], Uint[22]]]
     seq = [[(1, i * 12, i * 4) for i in range(4)],

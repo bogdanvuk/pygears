@@ -1,0 +1,29 @@
+{%- import 'snippet.j2' as snippet -%}
+
+{% set Queue = import_from('pygears.typing', 'Queue') %}
+{% set typeof = import_from('pygears.typing', 'typeof') %}
+{% set din_data_cat = import_from('pygears.lib.cat_util', 'din_data_cat_v') %}
+
+{%- for intf in intfs -%}
+  {%- do intf.update({'lvl': intf['type'].lvl if typeof(intf['type'], Queue) else 0}) -%}
+{%- endfor -%}
+
+{% call snippet.module_with_intf_structs(module_name, intfs, intfs, comment, outtype="wire") %}
+
+  {%- set input_intf_names = intfs|isinput|keymap("name") %}
+  {%- set max_lvl_intf = intfs|isinput|max(attribute="lvl") %}
+
+    assign dout_s_eot = {{ max_lvl_intf['name'] }}_s_eot;
+    assign dout_s_data = {{din_data_cat(intfs)}};
+
+    logic  all_valid;
+    logic  handshake;
+    assign all_valid = {{input_intf_names|format_list("%s_valid")|join(" && ")}};
+    assign handshake = dout_valid & dout_ready;
+    assign dout_valid = all_valid;
+
+  {% for i in intfs|isinput %}
+    assign {{i['name']}}_ready = handshake;
+  {% endfor %}
+
+{% endcall %}

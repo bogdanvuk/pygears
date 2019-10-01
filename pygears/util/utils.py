@@ -15,18 +15,20 @@ def quiter(iterable):
     yield last, True
 
 
+def qrange(*args):
+    return quiter(range(*args))
+
+
 async def quiter_async(intf):
-
-    teot = intf.dtype[1:]
-    eot = 0
-
-    while (eot != ((1 << len(teot)) - 1)):
+    while True:
         data = await intf.pull()
-        eot = data[1:]
 
         yield data
 
         intf.ack()
+
+        if all(data.eot):
+            break
 
 
 class gather:
@@ -41,5 +43,6 @@ class gather:
         return tuple(din_data)
 
     async def __aexit__(self, exception_type, exception_value, traceback):
-        for d in self.din:
-            d.ack()
+        if exception_type is None:
+            for d in self.din:
+                d.ack()

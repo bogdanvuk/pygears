@@ -1,14 +1,12 @@
 import os
-import traceback
 import logging
-import socket
 import sys
 import time
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from http.client import HTTPConnection
-from pygears import registry
 from functools import partial
-from traceback import extract_tb, format_list, walk_tb
+from traceback import extract_tb, format_list
+from pygears.conf import inject, Inject
 
 
 def finish():
@@ -136,10 +134,11 @@ def restart_wave(sim, outdir, address):
                 pass
 
 
-def activity_wave(top):
-
-    sim = registry('sim/simulator')
-    outdir = os.path.abspath(registry('sim/artifact_dir'))
+@inject
+def activity_wave(top,
+                  sim=Inject('sim/simulator'),
+                  outdir=Inject('results-dir')):
+    outdir = os.path.abspath(outdir)
     sim.events['at_exit'].append(
         partial(restart_wave, outdir=outdir, address=('localhost', 5000)))
 

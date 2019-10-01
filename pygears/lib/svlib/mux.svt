@@ -1,0 +1,55 @@
+{%- import 'snippet.j2' as snippet -%}
+{% call snippet.module_with_intf_structs(module_name, intfs, intfs, comment) %}
+
+    logic handshake;
+    logic din_valid_sel;
+
+    assign handshake = dout.valid && dout.ready;
+
+    always_comb
+    begin
+{% for i in intfs[1:-1] %}
+        {{i['name']}}.ready = 0;
+{% endfor %}
+        if (ctrl.valid) begin
+            case( ctrl.data )
+{% for key, iout in params['_full_mapping'].items() %}
+{% set i = intfs[1:-1][iout] %}
+                {{key}} : begin
+                    {{i['name']}}.ready = handshake;
+                end
+{% endfor %}
+                default: begin
+{% for i in intfs[1:-1] %}
+                    {{i['name']}}.ready = 1'bx;
+{% endfor %}
+                end
+            endcase
+        end
+    end
+
+    always_comb
+    begin
+        dout_s.data = { {{int(_dout_t.data)}} {1'bx}};
+        din_valid_sel = 0;
+        if (ctrl.valid) begin
+            case( ctrl.data )
+{% for key, iout in params['_full_mapping'].items() %}
+{% set i = intfs[1:-1][iout] %}
+                {{key}} : begin
+                    din_valid_sel = {{i['name']}}.valid;
+                    dout_s.data[{{i['width']-1}}:0] = {{i['name']}}_s;
+                end
+{% endfor %}
+                default: begin
+                    din_valid_sel = 1'bx;
+                end
+            endcase
+        end
+    end
+
+    assign ctrl.ready = handshake;
+    assign dout_s.ctrl = ctrl_s;
+    assign dout.valid = ctrl.valid && din_valid_sel;
+
+{% endcall %}

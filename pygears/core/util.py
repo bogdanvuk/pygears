@@ -1,3 +1,4 @@
+import inspect
 from functools import wraps
 
 
@@ -24,3 +25,26 @@ def doublewrap(f):
 def perpetum(func, *args, **kwds):
     while True:
         yield func(*args, **kwds)
+
+
+def is_standard_func(func):
+    is_async_gen = bool(func.__code__.co_flags & inspect.CO_ASYNC_GENERATOR)
+    return not (inspect.iscoroutinefunction(func)
+                or inspect.isgeneratorfunction(func) or is_async_gen)
+
+
+def get_function_context_dict(func):
+    if func.__closure__ is None:
+        return func.__globals__
+
+    context = {}
+    context.update(func.__globals__)
+
+    for name, cell in zip(func.__code__.co_freevars, func.__closure__):
+        try:
+            context[name] = cell.cell_contents
+        except ValueError:
+            # Cell is empty
+            pass
+
+    return context

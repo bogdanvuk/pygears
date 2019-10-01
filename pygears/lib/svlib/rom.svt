@@ -1,0 +1,81 @@
+{%- import 'snippet.j2' as snippet -%}
+
+{% set py = import_('builtins') %}
+{% set bitw = import_from('pygears.typing', 'bitw') %}
+
+{% call snippet.module_with_intf_structs(module_name, intfs, intfs, comment) %}
+
+   logic                          addr_reg_valid;
+   logic                          reg_empty;
+   logic                          reg_ready;
+
+   assign reg_ready = reg_empty | dout.ready;
+   assign reg_empty = !addr_reg_valid;
+
+   always @(posedge clk)
+     begin
+        if(rst) begin
+           addr_reg_valid <= '0;
+        end else if (reg_ready) begin
+           addr_reg_valid <= addr.valid;
+        end
+     end
+
+{% if params['dflt'] is none -%}
+  {% if py.isinstance(params['data'], py.dict) %}
+   logic [{{int(_dout_t)-1}}:0] memory [0:{{py.max(params['data'].keys())}}];
+  {% else %}
+   logic [{{int(_dout_t)-1}}:0] memory [0:{{len(params['data'])-1}}];
+  {% endif -%}
+{% else -%}
+   logic [{{int(_dout_t)-1}}:0] memory [0:{{2**int(_addr_t) - 1}}];
+{% endif %}
+
+   always @(posedge clk)
+     begin
+        if (reg_ready) begin
+           dout_s <= memory[addr_s];
+        end
+     end
+
+   initial begin
+{% if params['dflt'] is none -%}
+
+  {% if py.isinstance(params['data'], py.dict) -%}
+    {% for key, val in params['data'].items() %}
+      memory[{{key}}] = {{int(val)}};
+    {% endfor %}
+  {% else -%}
+    {% for val in params['data'] %}
+      memory[{{loop.index-1}}] = {{int(val)}};
+    {% endfor %}
+  {% endif -%}
+
+{% else -%}
+
+  {% if py.isinstance(params['data'], py.dict) -%}
+    {% for i in range(2**int(_addr_t)) %}
+      {% if i in params['data'] %}
+      memory[{{i}}] = {{int(params['data'][i])}};
+      {% else -%}
+      memory[{{i}}] = {{int(params['dflt'])}};
+      {% endif -%}
+    {% endfor %}
+  {% else -%}
+    {% for i in range(2**int(_addr_t)) %}
+      {% if i < len(params['data']) %}
+      memory[{{i}}] = {{int(params['data'][i])}};
+      {% else -%}
+      memory[{{i}}] = {{int(params['dflt'])}};
+      {% endif -%}
+    {% endfor %}
+  {% endif -%}
+
+{% endif -%}
+
+   end
+
+   assign addr.ready = reg_ready;
+   assign dout.valid = addr_reg_valid;
+
+{% endcall %}

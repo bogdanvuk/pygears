@@ -6,14 +6,14 @@
    :class: highlight
 
 .. urlinclude::
-   :branch: a05abf3
+   :branch: a7d98ec
    :github: bogdanvuk/pygears_riscv
 
 My First Instruction
 ====================
 
-.. post::
-   :author: Bogyman
+.. post:: October 30, 2018
+   :author: Bogdan
    :category: RISC-V
 
 .. _RISC-V ISA Specification: https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf
@@ -21,6 +21,8 @@ My First Instruction
 .. verbosity_slider:: 3
 
 :v:`2` First instruction is probably going to be unlike any other in the amount of work that I'll need to put into implementing it, so it deserves a post on its own. :v:`1` Let's start from the RV32I description in the (currently) latest version of the `RISC-V ISA Specification`_, which is given in the `Chapter 2: RV32I Base Integer Instruction Set <https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf#page=21>`_. The specification first goes on to describe `Integer Computational Instructions (Chapter 2.4) <https://content.riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf#page=25>`_, of which the ``addi`` instruction is explained first, so let's start with that one.
+
+Relevant pygears_riscv git commit: `pygears_riscv@a7d98ec <https://github.com/bogdanvuk/pygears_riscv/tree/a7d98ec>`_
 
 .. verbosity:: 2
 
@@ -111,7 +113,7 @@ Let's dig deeper into those 6 lines of code. The :py:`@gear` statement is called
 
 Next, the `function prototype <https://en.wikipedia.org/wiki/Function_prototype>`__  declares the types of input interfaces the ``riscv`` gear accepts, namely: :py:`instruction: TInstructionI` and :py:`reg_data: Uint['xlen']`. So on the first interface ``riscv`` expects to see a flow of instructions of the "I-type" format, and on the second, the operation argument read from the register determined by the ``rs1`` field (``riscv`` gear will issue these read requests as we'll see in the moment). For the details on how PyGears implements interfaces in HDL, checkout the PyGears documentation section :ref:`One Interface <pygears:gears-interface>`. The ``riscv`` gear is implemented via the gear composition, so I needn't specify the output interface types since they will be determined by the interfaces returned from the ``riscv()`` function.
 
-In order to instantiate the ``riscv`` gear, all the input interfaces need to be specified as arguments to the ``riscv`` gear function. Inside the ``gear`` function, ``instruction`` and ``reg_data`` become local variables that bring the interface objects from the outside and distribute them to the internal gears. :v:`1` Image below shows the resulting processor structure and connection with its environment. :v:`2` The graph was auto-generated with the :giturl:`riscv_graph.py script <pygears_riscv/script/riscv_graph.py>`. 
+In order to instantiate the ``riscv`` gear, all the input interfaces need to be specified as arguments to the ``riscv`` gear function. Inside the ``gear`` function, ``instruction`` and ``reg_data`` become local variables that bring the interface objects from the outside and distribute them to the internal gears. :v:`1` Image below shows the resulting processor structure and connection with its environment. :v:`2` The graph was auto-generated with the :giturl:`riscv_graph.py script <script/riscv_graph.py>`. 
 
 .. verbosity:: 1
 
@@ -122,11 +124,11 @@ In order to instantiate the ``riscv`` gear, all the input interfaces need to be 
 
 .. verbosity:: 2
 
-First line of the function: :py:`reg_file_rd_req = instruction['rs1']`, forms a read request for the register file and results in the ``instruction_rs1`` gear shown in the graph above. The request consists only of the register ID from which to read the data, which is given in the ``rs1`` instruction field. Simply by slicing the ``instruction`` interface with the field name, I can tell PyGears to extract the desired part of the incoming data. For more information about slicing the :any:`typing/tuple` type, checkout :meth:`Tuple.__getitem__() <pygears:pygears.typing.tuple.TupleType.__getitem__>`. This is a zero-overhead abstraction and results in nothing but wiring in generated SystemVerilog. After Python executes this statement, the variable ``reg_file_rd_req`` contains the output interface of the ``instruction_rs1`` gear (this is a :any:`sieve <pygears.common.sieve>` gear, automatically generated whenever interfaces are sliced), which is later lead out of the ``riscv`` gear by returning the variable value: :py:`return reg_file_rd_req, reg_file_wr_req`.  
+[Omitted long line with 1 matches]
 
 .. verbosity:: 3
 
-In order to the get nice names for the automatically generated :any:`sieve <pygears.common.sieve>` gears, I need to set ``gear/naming/pretty_sieve`` configuration variable to ``True``. These configuration variables can be accessed and modified via the PyGears :ref:`registry <pygears:registry:registry>`. PyGears also supports the configuration files that are automatically loaded during the framework initialization. During the initialization, PyGears searches for the file with the name ``.pygears.py`` in the following locations: ``~/.pygears/``, current working directory, and all the parent directories of the current working directory. Current working directory is the location of the user python script being run where PyGears has been imported. I've placed the ``pretty_sieve`` configuration inside :giturl:`pygears_riscv/.pygears.py`, so that it is loaded for all scripts within ``pygears_riscv`` project. 
+[Omitted long line with 1 matches]
 
 .. verbosity:: 2
 
@@ -134,7 +136,7 @@ Next, data read from the register file is cast to an :any:`Int <typing/int>` to 
 
 Then, the signed addition is performed between the ``reg_data_signed`` and the ``imm`` instruction field, resulting in the ``add`` gear in the graph. Finally, the addition result is cast back to the type of the ``reg_data`` interface: ``reg_data.dtype``, which truncates the result by 1 bit and changes its type back to the unsigned integer. The interface carrying the result of these operations is stored in the variable ``add_res``. 
 
-Next, the write request :py:`reg_file_wr_req = ccat(instruction['rd'], add_res)` is formed, with which the register file is instructed to store the result of the addition (variable ``add_res``) into the register specified by the ``rd`` instruction field. These two pieces of information are combined in a :any:`typing/tuple` by using :any:`ccat <pygears.common.ccat>` (short for concatenation) gear from the :any:`pygears.common <gears/common>` library. 
+Next, the write request :py:`reg_file_wr_req = ccat(instruction['rd'], add_res)` is formed, with which the register file is instructed to store the result of the addition (variable ``add_res``) into the register specified by the ``rd`` instruction field. These two pieces of information are combined in a :any:`typing/tuple` by using :any:`ccat <pygears.lib.ccat>` (short for concatenation) gear from the :any:`pygears.lib <gears/lib>` library. 
 
 .. verbosity:: 1
 
@@ -240,7 +242,7 @@ In order to create the test instruction, I'll use the :py:data:`ADDI` template a
 
 First, the Spike simulator is called via :py:func:`run_all` function to run the ``test_instr``, and return the referent initial and resulting states of the register file, as described in the section `Spike interface`_.
 
-Next, the :py:func:`riscv_instr_seq_env` function is called to create the verification environment, as described in the section `Verification environment`_. The initial register file state obtained from Spike in the form of a ``list``, is transformed to a ``dict`` and provided to the :py:func:`riscv_instr_seq_env` verbatim. After this statement, all the gears are instantiated and registered with PyGears framework, so when the simulator is invoked via :py:`sim()`, it has all the information it needs to simulate the design. This command invokes the PyGears built-in pure-Python simulator, which I'll explain a bit in the section `PyGears pure-Python simulator`_.
+Next, the :py:func:`riscv_instr_seq_env` function is called to create the verification environment, as described in the section `Verification environment`_. The initial register file state obtained from Spike in the form of a ``list``, is transformed to a ``dict`` and provided to the :py:func:`riscv_instr_seq_env` verbatim. After this statement, all the gears are instantiated and registered with PyGears framework, so when the simulator is invoked via :py:`sim()`, it has all the information it needs to simulate the design. This command invokes the PyGears built-in pure-Python simulator, of which I'll talk some more in the following blog posts.
 
 After the simulation is done, I print the resulting value of the register ``x1``, by casting its value to the :any:`Int[32] <typing/int>` type in order to print its signed representation. :v:`3` This is of course an ptional step and is useful to me only now at the beginning for the purpose of debugging the verification environment. I'll remove it later when I gain trust in my tests.
 
@@ -249,106 +251,65 @@ Finally, I check whether the resulting register file state of my design matches 
 Running the test
 ----------------
 
-For running the tests for the PyGears framework, I've been using `nose <https://nose.readthedocs.io>`__, so I'll use it here too. :v:`2` I use a test runner since it allows me to run all my tests with a single command. It automatically searches the files in order to discover the test functions, and generates a nice report telling me how many tests passed and which of them failed. :v:`3` There are also options for running only a specific group of tests, run all tests from a single file or run a single test. While writing this blog post I discovered that nose is in maintenance mode, i.e it is not actively developed, and `pytest <https://docs.pytest.org>`__ is recommended as an alternative. Nevertheless, for now I'll continue using nose for this project too, since it has served me well and in order to switch to pytest, I would need to update some of my tests that invoke nose-specific API. I might revisit this decision in future if I find a compelling reason to switch to pytest.
+For running the tests for the PyGears framework, I've been using `pytest <https://pytest.org>`__, so I'll use it here too. :v:`2` I use a test runner since it allows me to run all my tests with a single command. It automatically searches the files in order to discover the test functions, and generates a nice report telling me how many tests passed and which of them failed. :v:`3` There are also options for running only a specific group of tests, run all tests from a single file or run a single test.
 
 .. verbosity:: 2
 
-Before running the tests with nose, you'll need to install it with pip:
+Before running the tests with pytest, you'll need to install it with pip:
 
 .. code-block:: bash
 
-   pip3 install pygears
+   pip3 install pytest
 
 .. verbosity:: 1
 
-In order to invoke the test with nose, you can navigate to the :giturl:`tests/test_instructions` folder in your terminal and run the test by invoking: 
+In order to invoke the test with pytest, you can navigate to the :giturl:`tests/test_instructions` folder in your terminal and run the test by invoking: 
 
 .. code-block:: bash
 
-   nosetests "test_addi.py:test_addi"
+   pytest "test_addi.py::test_addi"
 
-Nose should automatically find the ``test_addi()`` test function, run it and print the report:
+The pytest runner should automatically find the ``test_addi()`` test function, run it and print the report:
 
 .. code-block:: python
 
-  .
-  ----------------------------------------------------------------------
-  Ran 1 test in 3.674s
+  ========================================== test session starts ==========================================
+  platform linux -- Python 3.6.6, pytest-3.9.3, py-1.7.0, pluggy-0.8.0
+  rootdir: /tools/home/pygears_riscv/tests, inifile: setup.cfg
+  collected 1 item                                                                                        
 
-  OK
+  test_addi.py .                                                                                    [100%]
 
-Et voila! My RISC-V design is completely aligned with the Spike simulator! :v:`2` By default, nose hides all console output from the tests in order to provide a cleaner report. If I want to see the output, I need to invoke nose with the ``-s`` option: 
+  ======================================= 1 passed in 3.57 seconds ========================================
+
+Et voila! My RISC-V design is completely aligned with the Spike simulator! :v:`2` By default, pytest hides all console output from the tests in order to provide a cleaner report. If I want to see the output, I need to invoke pytest with the ``-s`` option: 
 
 .. verbosity:: 2
 
 .. code-block:: bash
 
-   nosetests -s "test_addi.py:test_addi"
+   pytest -s "test_addi.py::test_addi"
 
 Which prints the following:
 
 .. code-block:: python
 
-  -                      [INFO]: Running sim with seed: 1540239478  
+  ========================================== test session starts ==========================================
+  platform linux -- Python 3.6.6, pytest-3.9.3, py-1.7.0, pluggy-0.8.0
+  rootdir: /tools/home/pygears_riscv/tests, inifile: setup.cfg
+  collected 1 item                                                                                        
+
+  test_addi.py -                      [INFO]: Running sim with seed: 6084884924426910478  
   0                      [INFO]: -------------- Simulation start --------------  
   0 /register_file/register_file_write [INFO]: Writing u32(4294966062) to x1  
-  2                      [INFO]: ----------- Simulation done ---------------  
-  2                      [INFO]: Elapsed: 0.00  
+  3                      [INFO]: ----------- Simulation done ---------------  
+  3                      [INFO]: Elapsed: 0.00  
   Resulting value of the register x1: i32(-1234)
   .
-  ----------------------------------------------------------------------
-  Ran 1 test in 3.717s
 
-  OK
+  ======================================= 1 passed in 3.58 seconds ========================================
 
 :v:`3` I profiled the test a bit and found out that the majority of the test run time is spent in retrieving the register file state from Spike, so I'll need to optimize it soon if I want to have an elaborate regression suit that runs in a reasonable amount of time. 
-
-:v:`2` PyGears pure-Python simulator
-------------------------------------
-
-.. verbosity:: 3
-
-I haven't yet found time to thoroughly document the PyGears built-in pure-Python simulator, so I'll just write a quick introduction here. Furthermore, there are still lots of gears in the libraries shipped with PyGears that do not have their implementation in pure Python, so I'll wait with describing the simulator until all the gears are supported and I've learned all the lessons from implementing them.
-
-You may wonder what is the point of simulating the design with a custom Python simulator instead of using a well-tested RTL simulator, when anyways our target is to produce a working RTL description of the design? Well the point is that by designing hardware in PyGears we can reason about the design on a higher level of abstraction than it is possible with the RTL. PyGears allows us to view the design completely in terms of the dataflow, and the PyGears simulator utilizes this to abstract away all unnecessary details.    
-
-RTL simulators are event-driven, i.e. the processes they simulate are executed to recalculate their outputs each time one of their input signals (called the sensitivity list) change in value. The change in signal value is considered an event and all processes sensitive to that event are triggered by it and their outputs are recalculated, which now in turn triggers other processes sensitive to these outputs, and so on. So whenever a signal changes in value, it can send waves of process reevaluation (called delta cycles) throughout the design, where depending on the inter-process connectivity a single process can be run multiple times, which makes it hard to reason about what's happening at that level. 
-
-I learned a lot about event-driven simulator from the `SystemC: From the Ground Up, Section 6: Concurrency <https://www.springer.com/gp/book/9780387699578>`__, but I had a hard time finding a free succinct explanation on the web to reference here. `This informal article <https://users.isy.liu.se/da/petka86/Delta_cycle.pdf>`__ came close, so you might want to take a look at it. 
-
-.. verbosity:: 2
-
-While in RTL methodology the signals travel unconstrained to and fro between the processes, in PyGears design, the data has a clear direction of propagation, namely from the producer to the consumer. This puts a heavy constraint on the order in which gears need to be simulated, where a consumer is always run only after all of its producers were executed and they've decided whether they want to offer a new piece of data to the said consumer. In other words, the gears form a `DAG <https://en.wikipedia.org/wiki/Directed_acyclic_graph>`__ (Directed Acyclic Graph), where there is a clear order of gear execution (check `Topological sorting <https://en.wikipedia.org/wiki/Topological_sorting>`__).
-
-Furthermore, in PyGears simulation, the signals comprising the :ref:`DTI interface <pygears:gears-interface>` are abstracted away and higher level events are used to trigger gears to execute, of which two are most important:
-
-#. **put**: an event issued by the producer when it outputs new data. This signals the consumers that new data is available, i.e they have new task to work on and should be scheduled for execution.
-#. **ack**: an event issued by the consumer signaling that it is done using the data from the producer. This signals the producer that it can dispose of the acknowledged data and it is free to output a new value. 
-#. **done**: an event issued by the producer when it is finished producing new data in the current simulation. This usually happens when the producer receives the **done** event on one of its inputs (it is slightly more complicated than that, but it'll suffice for now).
-
-This all means that for each clock cycle, PyGears simulator makes two passes through a DAG of gears:
-
-#. **Forward pass**: Producers are executed first and gears are triggered by the **put** events. 
-#. **Backward pass**: The order of execution is reversed and consumers are executed first. Gears are triggered by the **ack** event in the backward pass.
-
-Throughout the blog, I'll predominantly debug the design using the PyGears simulator, since it abstracts away the unnecessary details, its flow is easier to follow, it allows me to work with complex data types, it allows me to use the Python debugger during the simulation, etc.  
-
-The animation below shows the timelapse of the PyGears pure-Python simulation of the RISC-V design on a single ``addi`` command (same one used for the test explained in the section `Writing the first test`_). The python script that generates this gif animation is located in :giturl:`script/addi_timelapse.py`. The animation shows the graph of the RISC-V verification environment and shows the process of the simulation in the following manner:  
-
-- Gear is painted :html:`<font color="green">GREEN</font>` if it is being executed as part of the "forward pass", :html:`<font color="orange">ORANGE</font>` if it is being executed as part of the "backward pass", and :html:`<font color="red">RED</font>` if it received the **done** event.  
-- Interface is painted in :html:`<font color="green">GREEN</font>` if a **put** event was issued over it, :html:`<font color="orange">ORANGE</font>` for an **ack** event, and :html:`<font color="red">RED</font>` for a **done** event. 
-- Transmitted values are printed in **bold** over the interfaces.
-
-.. gifplayer::
-
-   .. image:: images/addi-timelapse.gif
-      :width: 100%
-
-As you can see, the simulation starts with the ``drv`` module which has no inputs and is thus a "source node" of the DAG. ``drv`` generates the test instruction and its consumers are triggered. The simulation continues until a "sink node" of the DAG is reached, namely ``register_file_write``, which marks the end of the "forward pass". The "backward pass" begins and the wave of **ack** events trigger the gears in reverse order, until ``drv`` is reached and the timestep is completed.
-
-In the next timestep, ``drv`` realizes that there is no more data to produce, so it issues a **done** event. The **done** event then propagates throughout the design, since no gear in the current design can operate when ``drv`` stops issuing the instructions.
-
-:v:`3` Since this post is already too long, I'll show in some other post how the PyGears simulator can create waveforms, diagnose issues, how to use it with the Python debugger, etc.
 
 :v:`2` Simulating with Verilator
 --------------------------------
@@ -359,7 +320,7 @@ If I navigate to the :giturl:`tests/test_instructions` directory, I can run only
 
 .. code-block:: bash
 
-   nosetests -s "test_addi.py:test_addi_verilator"
+   pytest -s "test_addi.py::test_addi_verilator"
 
 .. verbosity:: 3
 
@@ -367,21 +328,26 @@ If there is some issue with running the Verilator, an error report will be print
 
 .. code-block:: python
 
-  -                      [INFO]: Running sim with seed: 1540290124  
+  ========================================= test session starts ==========================================
+  platform linux -- Python 3.6.6, pytest-3.9.3, py-1.7.0, pluggy-0.8.0
+  rootdir: /tools/home/pygears_riscv/tests, inifile: setup.cfg
+  collected 1 item                                                                                       
+
+  test_addi.py -                      [INFO]: Running sim with seed: 4987822489491942249  
   0               /riscv [INFO]: Verilating...  
-    File "test_addi.py", line 56, in <module>
-      test_addi_verilator()
-    File "test_addi.py", line 48, in test_addi_verilator
-      sim()
-    File "/tools/home/pygears/pygears/sim/sim.py", line 347, in sim
-      loop.run(timeout)
-    File "/tools/home/pygears/pygears/sim/sim.py", line 293, in run
-      sim_gear.setup()
-    File "/tools/home/pygears/pygears/sim/modules/verilator.py", line 47, in setup
-      self.build()
-    File "/tools/home/pygears/pygears/sim/modules/verilator.py", line 91, in build
-      f'Verilator compile error: {ret}. '
-  pygears.sim.modules.verilator.VerilatorCompileError: Verilator compile error: 32512. Please inspect "/tmp/tmpx6yqczmv/riscv/verilate.log"
+  F
+
+  =================================== FAILURES ===================================
+
+.. code-block:: python
+
+  E           pygears.sim.modules.verilator.VerilatorCompileError: Verilator compile error: 32512. Please inspect "/tools/home/pygears_riscv/tests/test_instructions/build/riscv/verilate.log"
+
+  ../../../pygears/pygears/sim/modules/verilator.py:101: VerilatorCompileError
+  ------------------------------ Captured log call -------------------------------
+  sim.py                     373 INFO     Running sim with seed: 4755614176382389150
+  verilator.py                46 INFO     Verilating...
+  =========================== 1 failed in 3.89 seconds ===========================
 
 In my case, I forgot to :ref:`install Verilator <pygears:install:Installing Verilator>` and add it to the path, so my ``verilate.log`` showed that I had no ``verilator`` executable on the path, which I needed to amend:
 
@@ -395,9 +361,13 @@ The test gave me an almost identical report to the pure-Python simulation. :v:`3
 
 .. code-block:: python
 
-  -                      [INFO]: Running sim with seed: 1540456453  
+  ========================================= test session starts ==========================================
+  platform linux -- Python 3.6.6, pytest-3.9.3, py-1.7.0, pluggy-0.8.0
+  rootdir: /tools/home/pygears_riscv/tests, inifile: setup.cfg
+  collected 1 item                                                                                       
+
+  test_addi.py -                      [INFO]: Running sim with seed: 4987822489491942249  
   0               /riscv [INFO]: Verilating...  
-  0               /riscv [INFO]: Verilator VCD dump to "/tmp/tmp72ngbynw/riscv/vlt_dump.vcd"  
   0               /riscv [INFO]: Done  
   0                      [INFO]: -------------- Simulation start --------------  
   0 /register_file/register_file_write [INFO]: Writing u32(4294966062) to x1  
@@ -405,10 +375,6 @@ The test gave me an almost identical report to the pure-Python simulation. :v:`3
   51                      [INFO]: Elapsed: 0.01  
   Resulting value of the register x1: i32(-1234)
   .
-  ----------------------------------------------------------------------
-  Ran 1 test in 4.999s
-
-  OK
 
 .. verbosity:: 3
 

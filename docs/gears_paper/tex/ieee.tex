@@ -1,0 +1,76 @@
+\newcommand{\subparagraph}{}
+\PassOptionsToPackage{english}{babel}
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+\usepackage[utf8]{inputenc}
+\usepackage{listings}
+\lstset{
+       basicstyle=\small\ttfamily,
+       captionpos=b,
+       tabsize=4,
+       xleftmargin=.10in,
+       xrightmargin=.10in
+  }
+\usepackage{tabulary}
+\usepackage{sphinxcontribtikz}
+\usepackage{hyperref}
+\usepackage{hypcap}% it must be loaded after hyperref.
+\urlstyle{same}
+
+\newcommand{\sphinxupquote}{}
+\newcommand{\sphinxcode}[1]{\texttt{#1}}
+\newcommand{\sphinxcite}[1]{\cite{#1}}
+\newcommand{\sphinxincludegraphics}{\includegraphics}
+\newcommand{\sphinxstyleemphasis}{\textit}
+\newcommand{\sphinxstylestrong}{\textbf}
+\newcommand{\sphinxcaption}{\caption}
+\newcommand{\sphinxthecaptionisattop}{}
+\newcommand{\sphinxaftertopcaption}{}
+\newcommand{\sphinxcapstartof}[1]{}
+\newcommand{\sphinxaftercaption}{}
+\newcommand{\sphinxattablestart}{}
+\newcommand{\sphinxstyletheadfamily}{}
+\newcommand{\sphinxattableend}{}
+\newcommand{\sphinxurl}{\url}
+\newcommand{\sphinxthebibliography}{\thebibliography}
+\newcommand{\printindex}{}
+
+\newenvironment{savenotes}
+    {
+    \begin{table}[htpb]
+    }
+    { 
+    \end{table}
+    }
+
+\begin{document}
+\title{PyGears: A Functional Approach to Hardware Design}
+
+\author{
+\IEEEauthorblockN{Bogdan Vukobratović}
+\IEEEauthorblockA{
+Novi Sad, Serbia \\
+bogdan.vukobratovic@gmail.com}
+\and
+\IEEEauthorblockN{Andrea Erdeljan}
+\IEEEauthorblockA{\textit{Faculty of Technical Sciences} \\
+\textit{University of Novi Sad}\\
+Novi Sad, Serbia \\
+andrea.erdeljan@uns.ac.rs}
+\and
+\IEEEauthorblockN{Damjan Rakanović}
+\IEEEauthorblockA{\textit{Faculty of Technical Sciences} \\
+\textit{University of Novi Sad}\\
+Novi Sad, Serbia \\
+rdamjan@uns.ac.rs}}
+
+\maketitle

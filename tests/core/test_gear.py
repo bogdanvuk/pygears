@@ -1,10 +1,7 @@
-from nose import with_setup
-
-from pygears import Intf, clear, gear, registry, alternative
+from pygears import Intf, alternative, gear, registry, find
 from pygears.typing import Queue, Tuple, Uint
 
 
-@with_setup(clear)
 def test_simple():
     @gear
     def func1(arg1, arg2, arg3) -> Uint[4]:
@@ -23,15 +20,14 @@ def test_simple():
     root = registry('gear/hier_root')
     assert len(root.child) == 2
 
-    assert root['func1'].get_type() == Uint[4]
+    assert root['func1'].tout == Uint[4]
     assert iout1.producer == root['func1'].out_ports[0]
 
-    assert root['func2'].get_type() == Uint[2]
+    assert root['func2'].tout == Uint[2]
     assert iout1.consumers == [root['func2'].in_ports[0]]
     assert iout2.producer == root['func2'].out_ports[0]
 
 
-@with_setup(clear)
 def test_hier():
     @gear
     def func1(arg1, arg2, arg3) -> Uint[4]:
@@ -53,22 +49,21 @@ def test_hier():
     root = registry('gear/hier_root')
     assert len(root.child) == 1
 
-    assert root['func_hier'].get_type() == Uint[2]
+    assert root['func_hier'].tout == Uint[2]
     for i in range(3):
         arg_intf = root['func_hier'].in_ports[i].consumer
         assert arg_intf.consumers[0] == root['func_hier/func1'].in_ports[i]
 
-    assert root['func_hier/func1'].get_type() == Uint[4]
-    iout1 = root['func_hier/func1'].intfs[0]
+    assert root['func_hier/func1'].tout == Uint[4]
+    iout1 = root['func_hier/func1'].outputs[0]
     assert iout1.producer == root['func_hier/func1'].out_ports[0]
 
-    assert root['func_hier/func2'].get_type() == Uint[2]
-    iout2 = root['func_hier/func2'].intfs[0]
+    assert root['func_hier/func2'].tout == Uint[2]
+    iout2 = root['func_hier/func2'].outputs[0]
     assert iout1.consumers == [root['func_hier/func2'].in_ports[0]]
     assert iout2.producer == root['func_hier/func2'].out_ports[0]
 
 
-@with_setup(clear)
 def test_hier_hierarchy():
     @gear
     def fgear(arg1) -> Uint[2]:
@@ -94,23 +89,23 @@ def test_hier_hierarchy():
     root = registry('gear/hier_root')
     assert len(root.child) == 1
 
-    assert root['fhier1'].get_type() == Uint[2]
-    assert root['fhier1/fhier2'].get_type() == Uint[2]
-    assert root['fhier1/fhier2/fhier3'].get_type() == Uint[2]
-    assert root['fhier1/fhier2/fhier3/fgear'].get_type() == Uint[2]
+    assert root['fhier1'].tout == Uint[2]
+    assert root['fhier1/fhier2'].tout == Uint[2]
+    assert root['fhier1/fhier2/fhier3'].tout == Uint[2]
+    assert root['fhier1/fhier2/fhier3/fgear'].tout == Uint[2]
 
-    assert root['fhier1'].in_ports[0].consumer == root['fhier1/fhier2'].args[0]
+    assert root['fhier1'].in_ports[0].consumer == root['fhier1/fhier2'].inputs[
+        0]
     assert root['fhier1'].in_ports[0].consumer == root[
         'fhier1/fhier2'].in_ports[0].producer
     assert root['fhier1/fhier2'].in_ports[0].consumer == root[
-        'fhier1/fhier2/fhier3'].args[0]
+        'fhier1/fhier2/fhier3'].inputs[0]
     assert root['fhier1/fhier2'].in_ports[0].consumer == root[
         'fhier1/fhier2/fhier3'].in_ports[0].producer
     assert root['fhier1/fhier2/fhier3'].in_ports[0].consumer == root[
-        'fhier1/fhier2/fhier3/fgear'].args[0]
+        'fhier1/fhier2/fhier3/fgear'].inputs[0]
 
 
-@with_setup(clear)
 def test_alternatives():
     @gear(version=0)
     def fgear(arg1: Queue['T', 3], *, lvl=3) -> Tuple['T', Uint['lvl']]:
@@ -160,3 +155,28 @@ def test_alternatives():
     assert root['fgear4'].params['version'] == 4
 
     assert len(root.child) == 5
+
+
+def test_intf_name_inference():
+    @gear
+    def fsub1(din1, din2) -> Tuple['din1', 'din2']:
+        pass
+
+    @gear
+    def fsub2(din) -> b'din':
+        pass
+
+    @gear
+    def fgear(din1, din2):
+        var1 = fsub1(din1, din2)
+        var2 = fsub2(var1)
+
+        return var2
+
+    fgear(Intf(Uint[1]), Intf(Uint[2]))
+
+    fsub1_inst = find('/fgear/fsub1')
+    fsub2_inst = find('/fgear/fsub2')
+
+    assert fsub1_inst.outputs[0].var_name == 'var1'
+    assert fsub2_inst.outputs[0].var_name == 'var2'

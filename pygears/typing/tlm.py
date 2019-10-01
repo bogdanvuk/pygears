@@ -5,7 +5,7 @@ from .base import EnumerableGenericMeta
 
 class TLMMeta(EnumerableGenericMeta):
     def __getitem__(self, index):
-        if not self.is_specified():
+        if not self.specified:
             return super().__getitem__(index)
 
         index = self.index_norm(index)

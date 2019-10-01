@@ -1,10 +1,17 @@
 import asyncio
 
+from .graph import get_consumer_tree, get_producer_queue
 from pygears import GearDone
 from pygears.conf import PluginBase, registry, safe_bind
 from pygears.core.port import InPort, OutPort
 from pygears.core.sim_event import SimEvent
+from .type_match import TypeMatchError
+from pygears.typing import typeof, Any
 from pygears.typing.base import TypingMeta
+from pygears.conf import inject, Inject
+from .graph import get_sim_map_gear
+
+gear_reg = {}
 
 
 def operator_func_from_namespace(cls, name):
@@ -24,27 +31,13 @@ def operator_methods_gen(cls):
     return cls
 
 
-def _get_consumer_tree_rec(intf, consumers):
-    for port in intf.consumers:
-        cons_intf = port.consumer
-        if (port.gear in registry('sim/map')) and (isinstance(port, InPort)):
-            # if not cons_intf.consumers:
-            consumers.append(port)
-        else:
-            _get_consumer_tree_rec(cons_intf, consumers)
-
-
-def get_consumer_tree(intf):
-    consumers = []
-    _get_consumer_tree_rec(intf, consumers)
-    return consumers
-
-
 @operator_methods_gen
 class Intf:
     OPERATOR_SUPPORT = [
-        '__getitem__', '__neg__', '__add__', '__sub__', '__mul__', '__div__',
-        '__floordiv__', '__mod__', '__invert__', '__rshift__', '__lt__'
+        '__getitem__', '__neg__', '__add__', '__div__', '__eq__',
+        '__floordiv__', '__ge__', '__gt__', '__invert__', '__le__', '__lt__',
+        '__mod__', '__mul__', '__ne__', '__neg__', '__lshift__', '__rshift__',
+        '__aiter__', '__sub__', '__xor__'
     ]
 
     def __init__(self, dtype):
@@ -116,42 +109,19 @@ class Intf:
     def in_queue(self):
         if self._in_queue is None:
             if self.producer is not None:
-                self._in_queue = self.producer.get_queue()
+                # self._in_queue = self.producer.get_queue()
+                self._in_queue = get_producer_queue(self)
 
         return self._in_queue
-
-    def get_consumer_queue(self, port):
-        for pout in self.consumers:
-            if pout.gear in registry('sim/map') and (isinstance(pout,
-                                                                OutPort)):
-                out_queues = self.out_queues
-                try:
-                    i = self.end_consumers.index(port)
-                except Exception as e:
-                    print(
-                        f'Port {port.gear.name}.{port.basename} not in end consumer list of {self.consumers[0].gear.name}.{self.consumers[0].basename}'
-                    )
-                    raise e
-                return out_queues[i]
-        else:
-            if self.producer:
-                return self.producer.get_queue(port)
-            else:
-                raise Exception(
-                    f'Interface path does not end with a simulation gear at {pout.gear.name}.{pout.basename}'
-                )
 
     @property
     def out_queues(self):
         if self._out_queues:
             return self._out_queues
 
-        # if len(self.consumers) == 1 and self.in_queue:
-        # if self.producer is not None:
-        #     return [self.in_queue]
-        # else:
         self._out_queues = [
-            asyncio.Queue(maxsize=1) for _ in self.end_consumers
+            asyncio.Queue(maxsize=1, loop=registry('sim/simulator'))
+            for _ in self.end_consumers
         ]
 
         for i, q in enumerate(self._out_queues):
@@ -161,21 +131,27 @@ class Intf:
         return self._out_queues
 
     def put_nb(self, val):
-        if any(registry('sim/map')[c.gear].done for c in self.end_consumers):
+        if any(get_sim_map_gear(c.gear).done for c in self.end_consumers):
             raise GearDone
 
         put_event = self.events['put']
 
         if self.dtype is not type(val):
             try:
-                val = self.dtype(val)
+                if not typeof(self.dtype, Any):
+                    val = self.dtype(val)
             except TypeError:
-                pass
+                raise TypeMatchError(
+                    f'Output data "{repr(val)}" from the'
+                    f' "{registry("gear/current_module").name}"'
+                    f' module cannot be converted to the type'
+                    f' {repr(self.dtype)}')
 
         if put_event:
             put_event(self, val)
 
         for q, c in zip(self.out_queues, self.end_consumers):
+            put_event = c.consumer.events['put']
             if put_event:
                 put_event(c.consumer, val)
 
@@ -184,7 +160,7 @@ class Intf:
     async def ready(self):
         if not self.ready_nb():
             for q, c in zip(self.out_queues, self.end_consumers):
-                registry('gear/current_module').phase = 'back'
+                gear_reg['current_sim'].phase = 'back'
                 await q.join()
 
     def ready_nb(self):
@@ -226,7 +202,7 @@ class Intf:
         if self._data is None:
             self._data = self.in_queue.get_nowait()
 
-        if self.dtype is type(self._data):
+        if isinstance(self._data, self.dtype):
             return self._data
 
         try:
@@ -248,13 +224,14 @@ class Intf:
             raise GearDone
 
         if self._data is None:
+            gear_reg['current_sim'].phase = 'forward'
             self._data = await self.in_queue.get()
 
         e = self.events['pull_done']
         if e:
             e(self)
 
-        if self.dtype is type(self._data):
+        if isinstance(self._data, self.dtype):
             return self._data
 
         try:
@@ -269,6 +246,7 @@ class Intf:
 
         ret = self.in_queue.task_done()
         if self.in_queue.intf.ready_nb():
+            e = self.in_queue.intf.events['ack']
             e(self.in_queue.intf)
 
         self._data = None
@@ -294,3 +272,5 @@ class IntfOperPlugin(PluginBase):
     @classmethod
     def bind(cls):
         safe_bind('gear/intf_oper', {})
+        global gear_reg
+        gear_reg = registry('gear')

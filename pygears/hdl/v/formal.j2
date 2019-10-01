@@ -1,0 +1,56 @@
+initial  begin
+    assume(rst);
+{% for name, eot, asrt in in_context %}
+    assume({{name}}_valid == 0);
+{% endfor %}
+{% for name, eot, asrt in out_context %}
+    assume({{name}}_ready == 0);
+{% endfor %}
+end
+always @(posedge clk) begin
+{% for val in assumes %}
+    assume ({{val}});
+{% endfor %}
+    if (!rst) begin
+{% for name, eot, asrt in in_context %}
+        // Assumptions: {{name}}
+        if ($past({{name}}_valid) && !$past({{name}}_ready)) begin
+            assume ({{name}}_valid);
+            assume($stable({{name}}_data));
+        end
+        assume (s_eventually ({{name}}_valid));
+  {% if eot %}
+        assume (s_eventually (&{{name}}_s_eot && {{name}}_valid));
+  {% endif %}
+
+`ifdef {{name|upper}}_CHECK
+        // Checks: {{name}}
+        if ({{name}}_valid) begin
+           assert (s_eventually ({{name}}_ready | rst));
+        end
+  {% for a in asrt %}
+        assert ({{a}});
+  {% endfor %}
+`endif
+
+{% endfor %}
+
+{% for name, eot, asrt in out_context %}
+        // Assumptions: {{name}}
+        if ({{name}}_valid)
+            assume (s_eventually {{name}}_ready);
+
+`ifdef {{name|upper}}_CHECK
+        // Checks: {{name}}
+        if ($past({{name}}_valid) && !$past({{name}}_ready) && !$past(rst)) begin
+            assert ({{name}}_valid);
+            assert ($stable({{name}}_data));
+        end
+  {% for a in asrt %}
+        assert ({{a}});
+  {% endfor %}
+`endif
+
+{% endfor %}
+    end
+end

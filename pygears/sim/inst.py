@@ -18,10 +18,8 @@ class SimInstVisitor(HierVisitorBase):
             sim_cls = self.namespace.get(module.definition, None)
 
         if sim_cls:
-            # print(f"Recognized {module.name} as {sim_cls}")
             sim_inst = sim_cls(module)
         elif is_simgear_func(module.func):
-            # print(f"Recognized {module.name} as sim_gear")
             sim_inst = SimGear(module)
 
         if sim_inst:
@@ -39,7 +37,6 @@ def sim_inst(top):
 class SimInstPlugin(SimPlugin, GearPlugin):
     @classmethod
     def bind(cls):
-        # cls.registry['SimFlow'].append(sim_inst)
         cls.registry['sim']['flow'].append(sim_inst)
         safe_bind('sim/module_namespace', {})
         safe_bind('sim/map', {})

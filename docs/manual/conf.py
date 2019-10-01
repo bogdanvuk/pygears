@@ -16,11 +16,7 @@ author = 'Bogdan Vukobratovic'
 version = pkg_resources.get_distribution("pygears").version
 release = version
 
-# -- General configuration ---------------------------------------------------
-
-# If your documentation needs a minimal Sphinx version, state it here.
-#
-# needs_sphinx = '1.0'
+sys.path.append(os.path.abspath("./_ext"))
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -29,7 +25,7 @@ extensions = [
     'sphinx_verboser.verboser', 'sphinxarg.ext', 'sphinx.ext.autodoc',
     'sphinx.ext.githubpages', 'sphinxcontrib.tikz', 'sphinxcontrib.wavedrom',
     'bdp.sphinxext.bdpfigure', 'sphinx.ext.napoleon', 'sphinx_sitemap',
-    'sphinx.ext.autosectionlabel'
+    'sphinx.ext.autosectionlabel', 'tryme', 'pgexample'
 ]
 
 autosectionlabel_prefix_document = True
@@ -80,10 +76,6 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
         pass
 
     return skip or exclude
-
-
-def setup(app):
-    app.connect('autodoc-skip-member', autodoc_skip_member)
 
 
 add_line = ClassDocumenter.add_line
@@ -253,3 +245,7 @@ node {#7}
   }
 }
 '''
+
+
+def setup(app):
+    app.connect('autodoc-skip-member', autodoc_skip_member)

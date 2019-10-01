@@ -1,0 +1,38 @@
+{%- import 'snippet.j2' as snippet -%}
+{% call snippet.module_with_intf_structs(module_name, intfs, intfs|isoutput, comment) %}
+
+   logic [{{intfs|isinput|length}}-1:0] flag, flag_reg; // {{intfs|isinput|length}} = no of input interfaces
+   logic handshake;
+   assign handshake = dout.valid && dout.ready;
+
+   always_comb begin
+      flag = 0;
+      dout_s.ctrl = 0;
+      dout_s.data = din0.data;
+      dout.valid = 1'b0;
+{% for i in intfs|isinput %}
+      {{i['name']}}.ready = dout.ready;
+{% endfor %}
+
+      if(din0.valid && (!flag_reg || flag_reg[0])) begin
+         dout.valid = din0.valid;
+         flag[0] = 1;
+{% for i in intfs[1:]|isinput %}
+      end else if ({{i['name']}}.valid && (!flag_reg || flag_reg[{{loop.index}}])) begin
+         dout_s.data = {{i['name']}}.data;
+         dout_s.ctrl = {{loop.index}};
+         dout.valid = {{i['name']}}.valid;
+  flag[{{loop.index}}] = 1;
+{% endfor %}
+      end
+   end
+
+   always @(posedge clk) begin
+      if (rst | handshake) begin
+         flag_reg <= 0;
+      end else begin
+         flag_reg <= flag;
+      end
+   end
+
+{% endcall %}

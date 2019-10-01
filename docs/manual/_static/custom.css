@@ -29,3 +29,22 @@ table.docutils td {
 table.footnote, table.footnote td {
     border: 0 !important;
 }
+
+.btn-run {
+    padding-left: 25px;
+    padding-right: 25px;
+    background-color: #5bb75b;
+    color: #ffffff;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+    padding: 4px 12px;
+    margin-bottom: 0;
+    font-size: 14px;
+    line-height: 20px;
+    text-align: center;
+    vertical-align: middle;
+    cursor: pointer;
+    border: 1px solid #cccccc;
+    border-radius: 4px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 1px 2px rgba(0,0,0,.05);
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+}

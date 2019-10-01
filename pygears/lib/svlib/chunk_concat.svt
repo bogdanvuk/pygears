@@ -1,0 +1,102 @@
+{%- import 'snippet.j2' as snippet -%}
+
+{% call snippet.gear_module(module_name, intfs, comment) %}
+
+   localparam CNT_TYPE = {{params['cnt_type']}}; // 0 = #(cnt + 1) items; 1 = #cnt items
+   localparam CFG_WIDTH = {{intfs[0]['width']}};
+   localparam DIN0_WIDTH = {{intfs[1]['width']}};
+   localparam DOUT_WIDTH = {{intfs[-1]['width']}};
+   localparam DIN_NUM = {{intfs|length - 2}};
+   {# localparam CHUNK_SIZE = ((DOUT_WIDTH-3)/(DIN0_WIDTH-2)); #}
+   localparam CHUNK_SIZE = {{params['chunk_size']}};
+   localparam PAD = {{params['pad']}};
+
+   typedef struct packed {
+      logic eot;
+      logic [DIN0_WIDTH-2:0] data;
+   } din_t;
+
+   typedef struct packed {
+      logic [1:0] eot;
+      logic [DOUT_WIDTH-3:0] data;
+   } dout_t;
+
+   logic handshake;
+   logic last_span;
+   logic [CFG_WIDTH-1:0] cnt_reg, cnt_next;
+   logic [CFG_WIDTH-1:0] cnt_data;
+   logic [DIN_NUM-1:0] valid_array;
+   logic [DIN_NUM-1:0] [DIN0_WIDTH-2:0] din_data_array;
+   logic [DIN_NUM-1:0] [DIN0_WIDTH-2:0] sel_data_array;
+   logic [DIN_NUM-1:0] din_eot_array;
+   logic [DIN_NUM-1:0] sel_array;
+   logic [DIN_NUM/CHUNK_SIZE-1:0] dout_valid_array;
+   dout_t [DIN_NUM/CHUNK_SIZE-1:0] dout_array;
+   dout_t dout_s;
+
+   if (CNT_TYPE)
+      assign last_span = (cnt_next == cnt_data);
+   else
+      assign last_span = (cnt_reg == cnt_data);
+
+   assign handshake = dout.ready && dout.valid && cfg.valid;
+   assign cnt_data = (cfg.data + CHUNK_SIZE - 1) / CHUNK_SIZE;
+
+  if (PAD) begin
+     dti #(.W_DATA(DIN_NUM)) unary_in();
+     dti #(.W_DATA(DIN_NUM)) unary_out();
+
+     assign unary_in.data = cfg.data;
+     assign unary_in.valid = cfg.valid;
+     assign unary_out.ready = cfg.ready;
+
+     unary #(
+         .W_DATA($clog2(DIN_NUM)+1)
+     ) vu
+     (
+         .clk(clk),
+         .rst(rst),
+         .din(unary_in),
+         .dout(unary_out)
+     );
+
+     assign sel_array = unary_out.data;
+  end else
+     assign sel_array = '1;
+
+{% for i in intfs[1:-1] %}
+   assign valid_array[{{loop.index-1}}] = sel_array[{{loop.index-1}}] ? {{i['name']}}.valid : 1;
+   assign din_data_array[{{loop.index-1}}] = {{i['name']}}.data[DIN0_WIDTH-2:0];
+   assign sel_data_array[{{loop.index-1}}] = sel_array[{{loop.index-1}}] ? din_data_array[{{loop.index-1}}] : 0;
+   assign din_eot_array[{{loop.index-1}}] = {{i['name']}}.data[DIN0_WIDTH-1:DIN0_WIDTH-1];
+   assign {{i['name']}}.ready = handshake && last_span;
+{% endfor %}
+
+   generate
+      for (genvar i = 0; i < (DIN_NUM/CHUNK_SIZE); i++) begin
+         assign dout_valid_array[i] = &valid_array[(i + 1) * CHUNK_SIZE - 1 : i * CHUNK_SIZE];
+         assign dout_array[i].data = sel_data_array[(i + 1) * CHUNK_SIZE - 1 : i * CHUNK_SIZE];
+         assign dout_array[i].eot[0] = din_eot_array[(i + 1) * CHUNK_SIZE - 1 : i * CHUNK_SIZE];
+      end
+   endgenerate
+
+   assign cnt_next = cnt_reg + 1;
+
+   always @(posedge clk) begin
+      if (rst | (handshake && last_span)) begin
+         cnt_reg <= '0;
+      end else if (handshake) begin
+         cnt_reg <= cnt_next;
+      end
+   end
+
+   assign dout_s.data = dout_array[cnt_reg].data;
+   assign dout_s.eot[0] = last_span;
+   assign dout_s.eot[1] = dout_array[cnt_reg].eot[0];
+
+   assign dout.data = dout_s;
+   assign dout.valid = dout_valid_array[cnt_reg] && cfg.valid;
+
+   assign cfg.ready = handshake && last_span;
+
+{% endcall %}

@@ -6,13 +6,14 @@ from subprocess import DEVNULL, Popen
 
 import jinja2
 
-from pygears import registry, bind
+from pygears import bind
 from pygears.definitions import ROOT_DIR
 from pygears.sim import sim_log
 from pygears.sim.extens.rand_base import RandBase
 from pygears.sim.modules.sim_socket import SimSocket, u32_bytes_decode
-from pygears.svgen.util import svgen_typedef
+from pygears.hdl.sv.util import svgen_typedef
 from pygears.util.fileio import save_file
+from pygears.conf import inject, Inject
 
 
 class SVRandConstraints:
@@ -37,10 +38,18 @@ class SVRandConstraints:
 class SVRandSocket(RandBase):
     SVRAND_CONN_NAME = "_svrand"
 
-    def __init__(self, top, cons, run=False, port=4567, **kwds):
+    @inject
+    def __init__(self,
+                 top,
+                 cons,
+                 run=False,
+                 port=4567,
+                 seed=Inject('sim/rand_seed'),
+                 **kwds):
         super().__init__(top, cons, **kwds)
         self.run_cosim = run
         self.cosim_pid = None
+        self.seed = seed
         kwds['batch'] = True
         kwds['clean'] = True
         self.kwds = kwds
@@ -60,8 +69,11 @@ class SVRandSocket(RandBase):
 
         return tcons
 
-    def before_setup(self, sim):
-        sim_map = registry('sim/map')
+    @inject
+    def before_setup(self,
+                     sim,
+                     sim_map=Inject('sim/map'),
+                     outdir=Inject('results-dir')):
         for module, sim_gear in sim_map.items():
             if isinstance(sim_gear, SimSocket):
                 self.open_sock = False
@@ -71,16 +83,10 @@ class SVRandSocket(RandBase):
         if self.open_sock:
             self.cosim_pid = None
             if self.run_cosim:
-                outdir = registry('sim/artifact_dir')
                 args = ' '.join(f'-{k} {v if not isinstance(v, bool) else ""}'
                                 for k, v in self.kwds.items()
                                 if not isinstance(v, bool) or v)
-                if 'seed' in self.kwds:
-                    sim_log().warning(
-                        'Separately set seed for cosimulator. Ignoring sim/rand_seed.'
-                    )
-                else:
-                    args += f' -seed {registry("sim/rand_seed")}'
+                args += f' -seed {self.seed}'
 
                 if sim_log().isEnabledFor(logging.DEBUG):
                     stdout = None

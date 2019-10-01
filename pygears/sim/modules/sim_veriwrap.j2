@@ -1,7 +1,10 @@
 #include "V{{top_name}}.h"
 #include "verilated.h"
+{% if tracing %}
 #include "verilated_vcd_c.h"
+{% endif %}
 #include "stdio.h"
+{# #define DEBUG #}
 
 extern "C" {
 
@@ -12,37 +15,60 @@ vluint64_t main_time = 0;
 VerilatedVcdC* tfp = NULL;
 {% endif %}
 
-void eval(void) {
+void forward(void) {
 #ifdef DEBUG
-    printf("eval\n");
+    printf("---- forward ----\n");
 #endif
     top->eval();
 }
 
 void back(void) {
 #ifdef DEBUG
-    printf("back\n");
+    printf("---- back    ----\n");
 #endif
     top->eval();
-{% if tracing %}
-    if (tfp) tfp->dump (main_time);
-{% endif %}
-    main_time+=5;
-    top->clk = 0;
-    top->rst = 0;
-    top->eval();
-{% if tracing %}
-    if (tfp) tfp->dump (main_time);
-{% endif %}
-    main_time+=5;
 }
 
-void trig(void) {
+void cycle(void) {
 #ifdef DEBUG
-    printf("trig\n");
+    printf("---- cycle   ----\n");
 #endif
-    top->clk = 1;
     top->eval();
+
+{% if tracing %}
+    if (tfp) tfp->dump (main_time);
+{% endif %}
+    if (main_time > 5) {
+        main_time+=5;
+        top->clk = 0;
+        top->eval();
+    }
+{% if tracing %}
+    if (tfp) tfp->dump (main_time);
+{% endif %}
+    main_time+=5;
+{% if tracing %}
+    if (tfp) tfp->dump (main_time);
+    tfp->flush();
+{% endif %}
+    top->clk = 1;
+
+{% if aux_clock %}
+    top->{{aux_clock[0].name}} = 1;
+{%- endif %}
+
+    top->eval();
+
+{% if aux_clock %}
+    top->{{aux_clock[0].name}} = 0;
+    top->eval();
+  {% for i in range(aux_clock[0].frequency-1) %}
+    top->{{aux_clock[0].name}} = 1;
+    top->eval();
+    top->{{aux_clock[0].name}} = 0;
+    top->eval();
+  {% endfor %}
+{%- endif %}
 }
 
 int init(void) {
@@ -53,7 +79,7 @@ int init(void) {
     tfp = new VerilatedVcdC;
     top->trace(tfp, 99);  // Trace 99 levels of hierarchy
     {# mkdir("logs", 0777); #}
-
+    main_time = 0;
 
 #ifdef DEBUG
     printf("%p\n", tfp);
@@ -70,6 +96,32 @@ int init(void) {
 
     top->rst = 1;
     top->eval();
+    top->clk = 1;
+{% if aux_clock %}
+    top->{{aux_clock[0].name}} = 1;
+{% endif %}
+    top->eval();
+
+{% if tracing %}
+    tfp->dump(0);
+    tfp->flush();
+{%- endif %}
+
+{% if aux_clock %}
+    top->{{aux_clock[0].name}} = 0;
+    top->eval();
+  {% for i in range(aux_clock[0].frequency-1) %}
+    top->{{aux_clock[0].name}} = 1;
+    top->eval();
+    top->{{aux_clock[0].name}} = 0;
+    top->eval();
+  {% endfor %}
+{%- endif %}
+
+    main_time+=5;
+    top->rst = 0;
+    top->clk = 0;
+    top->eval();
 
     return 0;
 }
@@ -77,7 +129,9 @@ int init(void) {
 void final() {
     top->final();
 {% if tracing %}
-    if (tfp) { tfp->close(); tfp = NULL; }
+    if (tfp) {
+        tfp->close(); tfp = NULL;
+    }
 {% endif %}
     delete top; top = NULL;
 }

@@ -1,6 +1,7 @@
 from pygears.core.hier_node import NamedHierNode, find_unique_names
 from pygears.rtl.port import InPort, OutPort
 from pygears.rtl.intf import RTLIntf
+import functools
 
 
 def is_in_subbranch(root, node):
@@ -35,7 +36,8 @@ class RTLNode(NamedHierNode):
                 dtype=dtype))
 
         port_names = [p.basename for p in self.in_ports]
-        for port, new_name in zip(self.in_ports, find_unique_names(port_names)):
+        for port, new_name in zip(self.in_ports,
+                                  find_unique_names(port_names)):
             if new_name:
                 port.basename = new_name
 
@@ -49,8 +51,9 @@ class RTLNode(NamedHierNode):
                 consumer=consumer,
                 dtype=dtype))
 
-        port_names = [p.basename for p in self.out_ports]
-        for port, new_name in zip(self.out_ports, find_unique_names(port_names)):
+        port_names = [p.basename for p in (self.out_ports + self.in_ports)]
+        for port, new_name in zip(self.out_ports,
+                                  find_unique_names(port_names)):
             if new_name:
                 port.basename = new_name
 
@@ -80,8 +83,27 @@ class RTLNode(NamedHierNode):
         super().remove()
 
     @property
+    def _basename(self):
+        return self.basename
+
+    @property
+    def inst_basename(self):
+        return self.basename
+
+    @property
+    def inst_name(self):
+        parent = self.parent
+        hier = [self.inst_basename]
+        while parent:
+            hier.append(parent.inst_basename)
+            parent = parent.parent
+
+        return '.'.join(reversed(hier))
+
+    @property
+    @functools.lru_cache(maxsize=None)
     def is_hierarchical(self):
-        return any([isinstance(c, RTLNode) for c in self.child])
+        return any(isinstance(c, RTLNode) for c in self.child)
 
     def local_interfaces(self):
         for child in self.child:
@@ -109,7 +131,7 @@ class RTLNode(NamedHierNode):
 
         for p in self.in_ports():
             if p['intf'].parent != self.parent and (
-                    not self.parent.is_descendent(p['intf'].parent)):
+                    not self.parent.has_descendent(p['intf'].parent)):
                 self.parent.in_port_make(p, self)
 
         for p in self.out_ports():

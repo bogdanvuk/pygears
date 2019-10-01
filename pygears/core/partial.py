@@ -1,27 +1,7 @@
 import functools
 import inspect
 import sys
-import traceback
-from pygears.conf import enum_traceback
-
-
-class MultiAlternativeError(Exception):
-    def __init__(self, errors):
-        self.errors = errors
-
-    def __str__(self):
-        ret = ['\n']
-        for func, e, info in self.errors:
-            uwrp = inspect.unwrap(
-                func, stop=(lambda f: hasattr(f, "__signature__")))
-            fn = inspect.getfile(uwrp)
-            _, ln = inspect.getsourcelines(uwrp)
-            ret.extend(enum_traceback(info[2]))
-            # ret.extend(traceback.format_tb(info[2]))
-            ret.append(f'  File "{fn}", line {ln}, in {uwrp.__name__}\n')
-            ret.extend(traceback.format_exception_only(*info[:2]))
-            ret.append('\n')
-        return str(''.join(ret))
+from pygears.conf import MultiAlternativeError
 
 
 def argspec_unwrap(func):
@@ -31,16 +11,17 @@ def argspec_unwrap(func):
 
 
 def extract_arg_kwds(kwds, func):
-    arg_names, _, _, _, kwonlyargs, *_ = argspec_unwrap(func)
+    arg_names, _, varkw, _, kwonlyargs, *_ = argspec_unwrap(func)
 
     arg_kwds = {}
     kwds_only = {}
     for k in list(kwds.keys()):
         if k in arg_names:
             arg_kwds[k] = kwds[k]
-        elif k in kwonlyargs:
+        elif (k in kwonlyargs) or (varkw is not None):
             kwds_only[k] = kwds[k]
         else:
+            kwds_only[k] = kwds[k]
             raise TypeError(
                 f"{func.__name__}() got an unexpected keyword argument '{k}'")
 
@@ -53,18 +34,18 @@ def combine_arg_kwds(args, kwds, func):
     if varargs:
         return args
 
-    args = list(args)
+    args_unmatched = list(args)
     args_comb = []
     for a in arg_names:
         if a in kwds:
             args_comb.append(kwds[a])
-        elif args:
-            args_comb.append(args.pop(0))
+        elif args_unmatched:
+            args_comb.append(args_unmatched.pop(0))
         else:
             break
 
     # If some args could not be matched to argument names, raise an Exception
-    if args:
+    if args_unmatched:
         raise TypeError(f"Too many positional arguments for {func.__name__}()")
 
     return args_comb
@@ -108,6 +89,7 @@ class Partial:
         self.func = func
         self.args = args
         self.kwds = kwds
+        self.errors = []
 
     def __call__(self, *args, **kwds):
         prev_kwds = self.kwds.copy()
@@ -117,7 +99,7 @@ class Partial:
         args = self.args + args
 
         alternatives = [self.func] + getattr(self.func, 'alternatives', [])
-        errors = []
+        self.errors.clear()
 
         for func in alternatives:
             try:
@@ -134,14 +116,17 @@ class Partial:
                 if len(alternatives) == 1:
                     raise e
                 else:
-                    errors.append((func, e, sys.exc_info()))
+                    # errors.append((func, e, sys.exc_info()))
+                    self.errors.append((func, *sys.exc_info()))
         else:
-            if len(errors) == len(alternatives):
-                raise MultiAlternativeError(errors)
+            if len(self.errors) == len(alternatives):
+                raise MultiAlternativeError(self.errors)
             else:
                 # If some alternative can handle more arguments, try to wait
                 # for it
-                return Partial(self.func, *args, **kwds)
+                p = Partial(self.func, *args, **kwds)
+                p.errors = self.errors[:]
+                return p
 
     def __matmul__(self, iin):
         return self(intfs=iin)

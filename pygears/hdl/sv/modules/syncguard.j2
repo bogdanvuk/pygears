@@ -1,0 +1,61 @@
+{%- import 'snippet.j2' as snippet -%}
+{% call snippet.gear_module(module_name, intfs, comment) %}
+
+    localparam SIZE = {{len(intfs)//2}};
+
+    logic in_ready;
+    logic [SIZE-1 : 0] channel_open_reg;
+    logic [SIZE-1 : 0] ready_all;
+
+    logic [SIZE-1 : 0] out_valid;
+    logic [SIZE-1 : 0] out_ready;
+
+    logic [SIZE-1 : 0] in_valid;
+
+    logic [SIZE-1 : 0] channel_open;
+
+
+{% set in_names = intfs|isinput|keymap("name") %}
+{% set out_names = intfs|isoutput|keymap("name") %}
+    assign in_valid = { {{in_names|reverse|format_list("%s.valid")|join(", ")}} };
+{% for name in in_names %}
+    assign {{name}}.ready = in_ready;
+{% endfor %}
+
+    assign out_ready = { {{out_names|reverse|format_list("%s.ready")|join(", ")}} };
+
+{% for in, on in zip(in_names, out_names) %}
+    assign {{on}}.valid = out_valid[{{loop.index-1}}];
+    assign {{on}}.data = {{in}}.data;
+{% endfor %}
+
+    assign in_ready = &ready_all;
+    generate
+        for (genvar i = 0; i < SIZE; i++) begin
+         // Since data has been posted, i-th channel is considered to have been
+         // opened if either
+         assign channel_open[i]
+           = channel_open_reg[i] | // i-th channel has already been opened any time
+             // since the data has been posted
+             out_ready[i];   // or, i-th consumer is currently ready
+
+         // For each channel the data is considered consumed, if either:
+         assign ready_all[i]
+           = channel_open[i] |            // the channel has been open
+             ~(in_valid[i]);  // or, no data has been output to the channel
+
+         // Block valid signal if channel has been opened any time
+         // since the data has been posted
+         assign out_valid[i] = in_valid[i] & !channel_open_reg[i];
+
+         always @(posedge clk) begin
+            if (rst | in_ready) begin
+               channel_open_reg[i] <= 1'b0;
+            end
+            else begin
+               channel_open_reg[i] <= channel_open[i];
+            end
+         end
+      end
+   endgenerate
+{% endcall %}

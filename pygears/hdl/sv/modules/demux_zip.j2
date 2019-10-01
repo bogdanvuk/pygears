@@ -1,0 +1,74 @@
+{%- import 'snippet.j2' as snippet -%}
+{% call snippet.module_with_intf_structs(module_name, intfs, intfs, comment) %}
+
+{{snippet.intf_inst("ctrl_if", width="$bits(din_s.ctrl)", size=1, type="")|indent(4,True)}}
+{{snippet.intf_inst("data_if", width="$bits(din_s.data)", size=1, type="")|indent(4,True)}}
+{{snippet.intf_inst("data_sync_if", width="$bits(din_s.data)", size=1, type="")|indent(4,True)}}
+{{snippet.intf_inst("ctrl_eot_sync", width="$bits(din_s.ctrl)", size=1, type="")|indent(4,True)}}
+
+    assign ctrl_if.data = din_s.ctrl;
+    assign ctrl_if.valid = din.valid;
+
+    assign data_if.data = din_s.data;
+    assign data_if.valid = din.valid;
+
+    assign din.ready = ctrl_if.ready && data_if.ready;
+
+{{snippet.module_inst(module_name + "_syncguard", {}, "syncguard", {"din0":"ctrl_if", "din1": "data_if", "dout0": "ctrl_eot_sync", "dout1": "data_sync_if"})|indent(4, True)}}
+
+{% for i in intfs[2:] %}
+    assign {{i['name']}}_s = data_sync_if.data;
+{% endfor %}
+
+    always_comb
+    begin
+        case( {{(intfs|isoutput)[0]['name']}}.data )
+{% for i in intfs[2:] %}
+            {{loop.index-1}} : begin
+                data_sync_if.ready = {{i['name']}}.ready;
+            end
+{% endfor %}
+            default: begin
+                data_sync_if.ready = 0;
+            end
+        endcase
+    end
+
+    always_comb
+    begin
+{% for i in intfs[2:] %}
+        {{i['name']}}.valid = 0;
+{% endfor %}
+
+        case( {{(intfs|isoutput)[0]['name']}}.data )
+{% for i in intfs[2:] %}
+            {{loop.index-1}} : begin
+                {{i['name']}}.valid = data_sync_if.valid;
+            end
+{% endfor %}
+            default: begin
+            end
+        endcase
+    end
+
+{% for i in intfs[2:] %}
+    logic {{i['name']}}_eot;
+{% endfor %}
+
+{% for i in intfs[2:] %}
+  {% if i['type'].__name__.startswith('Queue')%}
+    assign {{i['name']}}_eot = &{{i['name']}}_s.eot;
+  {% else %}
+    assign {{i['name']}}_eot = 1;
+  {% endif %}
+{% endfor %}
+
+{# {% for i in intfs[2:] %}   #}
+{#   assign {{i['name']}}.data = {{i['name']}}_s;   #}
+{# {% endfor %}   #}
+
+   assign {{(intfs|isoutput)[0]['name']}}_s = ctrl_eot_sync.data; 
+   assign {{(intfs|isoutput)[0]['name']}}.valid = ctrl_eot_sync.valid;
+   assign ctrl_eot_sync.ready = {{(intfs|isoutput)[0]['name']}}.ready;
+
+{% endcall %}

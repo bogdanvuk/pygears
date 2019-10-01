@@ -1,7 +1,6 @@
-from nose.tools import raises
 
 from pygears.typing import Int, Tuple, Uint
-from pygears.core.infer_ftypes import TypeMatchError, infer_ftypes
+from pygears.core.infer_ftypes import infer_ftypes
 
 
 def test_simple_deduction():
@@ -52,19 +51,6 @@ def test_templated_type_deduction_multi_related_templates():
     assert params['return'] == Tuple[Uint[1], 2]
     assert params['T1'] == Uint[1]
     assert params['T2'] == 2
-
-
-@raises(TypeMatchError)
-def test_templated_type_deduction_multi_related_templates_fail():
-    params = {
-        'din': Tuple['T1', Uint['T2'], 'T1'],
-        'return': Tuple['T1', 'T2']
-    }
-    args = {'din': Tuple[Uint[1], Uint[2], Uint[2]]}
-
-    params = infer_ftypes(params, args)
-
-    print(params)
 
 
 def test_expression():

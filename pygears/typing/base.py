@@ -1,34 +1,45 @@
 import collections
+import copy
 import functools
 
 
 @functools.lru_cache(maxsize=None)
 def index_norm_hashable_single(i, size):
     if isinstance(i, tuple):
-        start, stop, incr = i
+        start, stop, step = i
+
+        if step == -1:
+            start, stop = stop, start
+            if stop is not None:
+                if stop == -1:
+                    stop = None
+                else:
+                    stop += 1
+
+            step = 1
 
         if start is None:
             start = 0
         elif start < 0:
-            start = size + start
+            start += size
 
         if stop is None:
             stop = size
         elif stop < 0:
             stop += size
         elif stop > size:
-            raise IndexError
+            stop = size
 
-        if start == stop:
-            raise IndexError
+        # if start == stop:
+        #     raise IndexError
 
-        return slice(start, stop, incr)
+        return slice(start, stop, step)
 
     else:
         if i < 0:
             i = size + i
 
-        if i > size:
+        if i >= size:
             raise IndexError
 
         return i
@@ -51,7 +62,8 @@ class TypingMeta(type):
     """Base class all types.
     """
 
-    def is_specified(self):
+    @property
+    def specified(self):
         return True
 
     def __repr__(self):
@@ -62,6 +74,9 @@ class TypingMeta(type):
 
     def __hash__(self):
         return hash(self.__name__)
+
+    def copy(self):
+        return self
 
 
 def type_repr(obj):
@@ -98,6 +113,10 @@ class class_and_instance_method:
 class GenericMeta(TypingMeta):
     """Base class for all types that have a generic parameter.
     """
+    _args = None
+    _hash = None
+    _base = None
+    _specified = None
 
     def __new__(cls, name, bases, namespace, args=[]):
         if (not bases) or (not hasattr(bases[0],
@@ -111,8 +130,14 @@ class GenericMeta(TypingMeta):
             else:
                 namespace.update({'__args__': args})
 
-            spec_cls = super().__new__(cls, name, bases, namespace)
-            return spec_cls
+            namespace.update({
+                '_hash': None,
+                '_base': None,
+                '_specified': None,
+                '_args': None
+            })
+
+            return super().__new__(cls, name, bases, namespace)
         else:
             if len(bases[0].templates) < len(args):
                 raise TemplateArgumentsError(
@@ -145,40 +170,52 @@ class GenericMeta(TypingMeta):
 
         return len(self.args) == 0
 
+    def is_abstract(self):
+        return True
+
     def __bool__(self):
-        return self.is_specified()
+        return self.specified
 
     def __hash__(self):
-        return id(self)
+        if self._hash is None:
+            self._hash = hash(repr(self))
 
-    @functools.lru_cache()
-    def is_specified(self):
-        """Return True if all generic parameters were supplied concrete values.
+        return self._hash
 
-        >>> Uint['template'].is_specified()
-        False
-
-        >>> Uint[16].is_specified()
-        True
-        """
-
-        if hasattr(self, '__parameters__'):
+    def __specified(self):
+        try:
             if len(self.args) != len(self.__parameters__):
                 return False
+        except AttributeError:
+            pass
 
         if self.args:
-            spec = True
             for a in self.args:
                 try:
-                    spec &= a.is_specified()
+                    if not a.specified:
+                        return False
                 except AttributeError:
                     if isinstance(a, (str, bytes)):
                         return False
-                        # spec &= (templ_var_re.search(a) is None)
 
-            return spec
+            return True
         else:
             return False
+
+    @property
+    def specified(self):
+        """Return True if all generic parameters were supplied concrete values.
+
+        >>> Uint['template'].specified
+        False
+
+        >>> Uint[16].specified
+        True
+        """
+        if self._specified is None:
+            self._specified = self.__specified()
+
+        return self._specified
 
     def __getitem__(self, params):
         if isinstance(params, tuple):
@@ -186,10 +223,9 @@ class GenericMeta(TypingMeta):
         elif not isinstance(params, dict):
             params = [params]
 
-        return self.__class__(
-            self.__name__, (self, ) + self.__bases__,
-            dict(self.__dict__),
-            args=params)
+        return self.__class__(self.__name__, (self, ) + self.__bases__,
+                              dict(self.__dict__),
+                              args=params)
 
     @property
     def base(self):
@@ -197,11 +233,14 @@ class GenericMeta(TypingMeta):
 
         >>> assert Uint[16].base == Uint
         """
+        if self._base is None:
 
-        if len(self.__bases__) == 1:
-            return self
-        else:
-            return self.__bases__[-2]
+            if len(self.__bases__) == 1:
+                self._base = self
+            else:
+                self._base = self.__bases__[-2]
+
+        return self._base
 
     @property
     def templates(self):
@@ -235,20 +274,24 @@ searched recursively. Each template is reported only once.
         [Uint[1], Uint[2]]
         """
 
-        if hasattr(self, '__args__'):
-            if hasattr(self, '__default__'):
-                plen = len(self.__parameters__)
-                alen = len(self.__args__)
-                dlen = len(self.__default__)
-                missing = plen - alen
+        if self._args is None:
+            if hasattr(self, '__args__'):
+                if hasattr(self, '__default__'):
+                    plen = len(self.__parameters__)
+                    alen = len(self.__args__)
+                    dlen = len(self.__default__)
+                    missing = plen - alen
 
-                if (missing == 0) or (dlen < missing):
-                    return self.__args__
+                    if (missing == 0) or (dlen < missing):
+                        self._args = self.__args__
+                    else:
+                        self._args = self.__args__ + self.__default__[-missing:]
                 else:
-                    return self.__args__ + self.__default__[-missing:]
+                    self._args = self.__args__
             else:
-                return self.__args__
-        return []
+                self._args = []
+
+        return self._args
 
     def __repr__(self):
         if not self.args:
@@ -264,10 +307,6 @@ searched recursively. Each template is reported only once.
             return super().__str__() + '[%s]' % ', '.join(
                 [type_str(a) for a in self.args])
 
-    @args.setter
-    def args(self, val):
-        self.__args__ = val
-
     @property
     def fields(self):
         """Returns the names of the generic parameters.
@@ -282,7 +321,7 @@ searched recursively. Each template is reported only once.
         if hasattr(self, '__parameters__'):
             return self.__parameters__
         else:
-            return [f'f{i}' for i in self.keys()]
+            return [f'f{i}' for i in range(len(self.args))]
 
     def replace(self, field_map, arg_map={}):
         args = {
@@ -292,15 +331,35 @@ searched recursively. Each template is reported only once.
 
         return self.base[args]
 
+    def copy(self):
+        if hasattr(self, '__parameters__'):
+            args = {
+                f: a.copy() if is_type(a) else copy.copy(a)
+                for f, a in zip(self.fields, self.args)
+            }
+        else:
+            args = tuple(a.copy() if is_type(a) else copy.copy(a)
+                         for a in self.args)
+
+        return self.base[args]
+
+    # @functools.lru_cache(maxsize=None)
+    def _arg_eq(self, other):
+        if len(self.args) != len(other.args):
+            return False
+        return all(s == o for s, o in zip(self.args, other.args))
+
     def __eq__(self, other):
         if not isinstance(other, GenericMeta):
             return False
-        elif self.base is not other.base:
+
+        if self.base is not other.base:
             return False
-        else:
-            if len(self.args) != len(other.args):
-                return False
-            return all([s == o for s, o in zip(self.args, other.args)])
+
+        if len(self.args) != len(other.args):
+            return False
+
+        return all(s == o for s, o in zip(self.args, other.args))
 
 
 def param_subs(t, matches, namespace):
@@ -316,10 +375,10 @@ def param_subs(t, matches, namespace):
             # raise Exception(
             #     f"{str(e)}\n - while evaluating parameter string '{t}'")
 
-    elif isinstance(t, collections.Iterable):
+    elif isinstance(t, collections.abc.Iterable):
         return type(t)(param_subs(tt, matches, namespace) for tt in t)
     else:
-        if isinstance(t, GenericMeta) and (not t.is_specified()):
+        if isinstance(t, GenericMeta) and (not t.specified):
             args = [
                 param_subs(t.args[i], matches, namespace)
                 for i in range(len(t.args))
@@ -328,8 +387,10 @@ def param_subs(t, matches, namespace):
             if hasattr(t, '__parameters__'):
                 args = {name: a for name, a in zip(t.__parameters__, args)}
 
-            return t.__class__(
-                t.__name__, t.__bases__, dict(t.__dict__), args=args)
+            return t.__class__(t.__name__,
+                               t.__bases__,
+                               dict(t.__dict__),
+                               args=args)
 
     return t
 
@@ -344,7 +405,7 @@ class EnumerableGenericMeta(GenericMeta):
         >>> int(Tuple[Uint[1], Uint[2]])
         3
         """
-        if self.is_specified():
+        if self.specified:
             return sum(map(int, self))
         else:
             raise Exception(
@@ -377,8 +438,8 @@ class EnumerableGenericMeta(GenericMeta):
 
     def index_norm(self, index):
         if not isinstance(index, tuple):
-            return (index_norm_hashable_single(
-                self.index_convert(index), len(self)), )
+            return (index_norm_hashable_single(self.index_convert(index),
+                                               len(self)), )
         else:
             return index_norm_hashable(
                 tuple(self.index_convert(i) for i in index), len(self))
@@ -408,3 +469,7 @@ def typeof(obj, t):
         return issubclass(obj, t)
     except TypeError:
         return False
+
+
+def is_type(obj):
+    return isinstance(obj, TypingMeta)

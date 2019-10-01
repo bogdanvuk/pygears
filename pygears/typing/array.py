@@ -11,8 +11,13 @@ class ArrayType(EnumerableGenericMeta):
 
         return list(range(int(self.args[1])))
 
+    #TODO: Remove this
     @property
     def dtype(self):
+        return self.args[0]
+
+    @property
+    def data(self):
         return self.args[0]
 
     def __getitem__(self, index):
@@ -25,7 +30,7 @@ class ArrayType(EnumerableGenericMeta):
         Array[Uint[2], 2]
         """
 
-        if not self.is_specified():
+        if not self.specified:
             return super().__getitem__(index)
 
         index = self.index_norm(index)
@@ -71,7 +76,10 @@ class Array(tuple, metaclass=ArrayType):
     """
     __parameters__ = ['T', 'N']
 
-    def __new__(cls, val: tuple):
+    def __new__(cls, val: tuple = None):
+        if val is None:
+            val = (None, ) * len(cls)
+
         array_tpl = (cls[0](v) for v in val)
         return super(Array, cls).__new__(cls, array_tpl)
 
@@ -81,6 +89,15 @@ class Array(tuple, metaclass=ArrayType):
         for d in reversed(self):
             ret <<= w_dtype
             ret |= int(d)
+
+        return ret
+
+    def code(self):
+        w_dtype = int(type(self).dtype)
+        ret = 0
+        for d in reversed(self):
+            ret <<= w_dtype
+            ret |= d.code()
 
         return ret
 

@@ -54,6 +54,8 @@ module zip_cat
     assign din2_s = din2.data;
     assign din3_s = din3.data;
 
+    assign dout.data = dout_s;
+
     assign dout_s.eot = din0_s.eot;
     assign dout_s.data = { din2_s.data, din1_s, din0_s.data };
 
@@ -62,7 +64,6 @@ module zip_cat
     assign all_valid = din0.valid && din1.valid && din2.valid && din3.valid;
     assign handshake = dout.valid & dout.ready;
     assign dout.valid = all_valid;
-    assign dout.data = dout_s;
 
     assign din0.ready = handshake;
     assign din1.ready = handshake;

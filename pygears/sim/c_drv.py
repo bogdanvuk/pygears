@@ -1,6 +1,5 @@
 import ctypes
 from math import ceil
-from pygears.typing_common.codec import code, decode
 from pygears.sim.modules.cosim_base import CosimNoData
 
 
@@ -78,7 +77,8 @@ class CInputDrv(CDrv):
         return self.seq.empty()
 
     def send(self, data):
-        self.c_set_api(self.to_c_data(code(self.port.dtype, data)), 1)
+        # self.c_set_api(self.to_c_data(code(self.port.dtype, data)), 1)
+        self.c_set_api(self.to_c_data(self.port.dtype(data).code()), 1)
 
     def ready(self):
         return self.c_get_api()
@@ -92,6 +92,12 @@ class COutputDrv(CDrv):
         super().__init__(verilib, port)
         if self.width <= 64:
             self.c_dtype = self.c_dtype * 1
+            if self.c_get_api is None:
+                raise Exception(
+                    f"Unexpected exception, Verilator interface has no handler"
+                    f" for the port: {port.basename}"
+                )
+
             self.c_get_api.argtypes = (self.c_dtype, )
 
         self.active = False
@@ -117,6 +123,6 @@ class COutputDrv(CDrv):
         #     f'{self.port.basename}: {self.active}, {self.from_c_data(self.dout)}'
         # )
         if self.active:
-            return decode(self.port.dtype, self.from_c_data(self.dout))
+            return self.port.dtype.decode(self.from_c_data(self.dout))
         else:
             raise CosimNoData

@@ -23,6 +23,7 @@ Typing
    typing/uint
    typing/int
    typing/tuple
+   typing/union
    typing/array
 
 Gears
@@ -31,5 +32,5 @@ Gears
 .. toctree::
    :maxdepth: 2
 
-   gears/common
+   gears/index
    gears/simulation_gears

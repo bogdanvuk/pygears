@@ -12,7 +12,8 @@ def is_async_gen(func):
 
 
 def is_simgear_func(func):
-    return inspect.iscoroutinefunction(func) or is_async_gen(func)
+    return (inspect.isgeneratorfunction(func)
+            or inspect.iscoroutinefunction(func) or is_async_gen(func))
 
 
 class SimGear:
@@ -31,7 +32,6 @@ class SimGear:
             self.gear.params['sim_setup'](self.gear)
 
     async def run(self):
-        self.task = asyncio.Task.current_task()
         args, kwds = self.sim_func_args
 
         out_prods = [p.producer for p in self.gear.out_ports]
@@ -67,6 +67,31 @@ class SimGear:
                     if args:
                         if all(a.done for a in args):
                             raise GearDone
+            elif inspect.isgeneratorfunction(self.func):
+                while (1):
+                    if sim.phase != 'forward':
+                        await clk()
+
+                    for val in self.func(*args, **kwds):
+                        if sim.phase != 'forward':
+                            await clk()
+
+                        if val is not None:
+                            if single_output:
+                                out_prods.put_nb(val)
+                                await out_prods.ready()
+                            else:
+                                for p, v in zip(out_prods, val):
+                                    if v is not None:
+                                        p.put_nb(v)
+
+                                for p, v in zip(out_prods, val):
+                                    if v is not None:
+                                        await p.ready()
+
+                    if args:
+                        if all(a.done for a in args):
+                            raise GearDone
             else:
                 while (1):
                     await self.func(*args, **kwds)
@@ -78,10 +103,13 @@ class SimGear:
         except GearDone as e:
             for p in self.gear.in_ports:
                 intf = p.consumer
-                if not intf.empty():
-                    prod_intf = intf.in_queue.intf
-                    prod_gear = prod_intf.consumers[0].gear
-                    schedule_to_finish(prod_gear)
+                try:
+                    if not intf.empty():
+                        prod_intf = intf.in_queue.intf
+                        prod_gear = prod_intf.consumers[0].gear
+                        schedule_to_finish(prod_gear)
+                except GearDone:
+                    pass
 
             self._finish()
             raise e
@@ -92,12 +120,7 @@ class SimGear:
         for p in self.gear.in_ports:
             args.append(p.consumer)
 
-        kwds = {
-            k: self.gear.params[k]
-            for k in self.gear.kwdnames if k in self.gear.params
-        }
-
-        return args, kwds
+        return args, self.gear.explicit_params
 
     def _finish(self):
         self.done = True

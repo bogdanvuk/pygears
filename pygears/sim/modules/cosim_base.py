@@ -1,100 +1,112 @@
+from dataclasses import dataclass
 from pygears.sim.sim_gear import SimGear
-from pygears.sim import delta
-from pygears import GearDone
-
-
-class CosimNoData(Exception):
-    pass
+from pygears.sim import delta, timestep, sim_log, clk
+from pygears.sim.sim import SimPlugin
+from pygears.conf import Inject, inject
+from pygears import GearDone, config
+from .cosim_port import CosimNoData, InCosimPort, OutCosimPort
 
 
 class CosimBase(SimGear):
     SYNCHRO_HANDLE_NAME = "_synchro"
 
-    def __init__(self, gear, timeout=-1):
+    @inject
+    def __init__(self, gear, timeout=-1, sim_map=Inject('sim/map')):
         super().__init__(gear)
         self.timeout = timeout
+        self.in_cosim_ports = [InCosimPort(self, p) for p in gear.in_ports]
+        self.out_cosim_ports = [OutCosimPort(self, p) for p in gear.out_ports]
+        self.eval_needed = False
 
-    def _forward(self):
-        self.handlers[self.SYNCHRO_HANDLE_NAME].cycle()
+        for p in (self.in_cosim_ports + self.out_cosim_ports):
+            sim_map[p.port] = p
 
-        for p in self.gear.in_ports:
-            intf = p.consumer
-            if p.basename not in self.handlers:
-                continue
+    def read_out(self, port):
+        if self.eval_needed:
+            self.handlers[self.SYNCHRO_HANDLE_NAME].forward()
 
-            hin = self.handlers[p.basename]
+        self.eval_needed = True
 
-            if intf.done:
-                hin.close()
-                del self.handlers[p.basename]
+        hout = self.handlers[port.basename]
+        hout.reset()
+        return hout.read()
 
-            if p not in self.din_pulled:
-                if not intf.empty():
-                    data = intf.pull_nb()
-                    self.din_pulled.add(p)
-                    hin.send(data)
-                else:
-                    hin.reset()
+    def ack_out(self, port):
+        self.eval_needed = True
+        hout = self.handlers[port.basename]
+        hout.ack()
+        self.activity_monitor = 0
 
-        self.handlers[self.SYNCHRO_HANDLE_NAME].forward()
+    def write_in(self, port, data):
+        self.eval_needed = True
 
-        for p in self.gear.out_ports:
-            intf = p.producer
-            hout = self.handlers[p.basename]
-            if intf.ready_nb():
-                try:
-                    intf.put_nb(hout.read())
-                    self.dout_put.add(p)
-                    self.activity_monitor = 0
-                except CosimNoData:
-                    pass
-            else:
-                hout.reset()
+        hin = self.handlers[port.basename]
+        return hin.send(data)
 
-    def _back(self):
-        for p in self.dout_put.copy():
-            intf = p.producer
-            if intf.ready_nb():
-                hout = self.handlers[p.basename]
-                hout.ack()
-                self.dout_put.remove(p)
+    def reset_out(self, port):
+        self.eval_needed = True
 
-        self.handlers[self.SYNCHRO_HANDLE_NAME].back()
+        hout = self.handlers[port.basename]
+        hout.reset()
 
-        for p in self.din_pulled.copy():
-            if p.basename not in self.handlers:
-                continue
+    def reset_in(self, port):
+        self.eval_needed = True
 
-            hin = self.handlers[p.basename]
-            if hin.ready():
-                self.activity_monitor = 0
-                self.din_pulled.remove(p)
-                intf = p.consumer
-                intf.ack()
+        hin = self.handlers[port.basename]
+        hin.reset()
+
+    def ready_in(self, port):
+        if self.eval_needed:
+            self.handlers[self.SYNCHRO_HANDLE_NAME].back()
+            self.eval_needed = False
+
+        hin = self.handlers[port.basename]
+        if hin.ready():
+            self.activity_monitor = 0
+            return True
+        else:
+            return False
 
     async def func(self, *args, **kwds):
         self.activity_monitor = 0
         self.din_pulled = set()
         self.dout_put = set()
-        try:
-            phase = 'forward'
+        self.prev_timestep = -1
+        self.eval_needed = False
 
+        try:
             while True:
-                if phase == 'forward':
-                    self.activity_monitor += 1
-                    self._forward()
-                else:
-                    self._back()
+
+                phase = None
+                while phase != 'cycle':
+                    phase = await delta()
+
+                if self.eval_needed:
+                    self.handlers[self.SYNCHRO_HANDLE_NAME].forward()
+                    self.eval_needed = False
 
                 if self.activity_monitor == self.timeout:
                     raise GearDone
-                else:
-                    phase = await delta()
 
-        except GearDone as e:
+                self.handlers[self.SYNCHRO_HANDLE_NAME].cycle()
+                self.activity_monitor += 1
+
+        except (GearDone, BrokenPipeError):
             # print(f"SimGear canceling: {self.gear.name}")
             for p in self.gear.out_ports:
                 p.producer.finish()
 
             self._finish()
-            raise e
+            raise GearDone
+
+
+@dataclass
+class AuxClock:
+    name: str
+    frequency: int
+
+
+class CosimPlugin(SimPlugin):
+    @classmethod
+    def bind(cls):
+        config.define('sim/aux_clock', default=[])

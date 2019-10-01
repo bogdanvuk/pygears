@@ -33,8 +33,12 @@ class PostInstallCommand(install):
         setup_home()
 
 
+this_directory = os.path.abspath(os.path.dirname(__file__))
+
+
 def readme():
-    with open('README.rst') as f:
+    with open(os.path.join(this_directory, 'README.rst'),
+              encoding='utf-8') as f:
         return f.read()
 
 
@@ -45,23 +49,28 @@ setup(
     long_description=readme(),
     url='https://www.pygears.org',
     # download_url = '',
-
     author='Bogdan Vukobratovic',
     author_email='bogdan.vukobratovic@gmail.com',
-
     license='MIT',
-
     classifiers=[
         'Development Status :: 4 - Beta',
         'Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
     python_requires='>=3.6.0',
     package_data={'': ['*.j2', '*.sv']},
     include_package_data=True,
     keywords='functional hardware design Python simulator HDL ASIC FPGA Gears',
-    install_requires=['jinja2>=2.10', 'pygears-tools'],
+    install_requires=[
+        'jinja2>=2.10', 'pygears-tools', 'dataclasses;python_version<"3.7"',
+        'pyvcd'
+    ],
+    setup_requires=[
+        'jinja2>=2.10', 'pygears-tools', 'dataclasses;python_version<"3.7"',
+        'pyvcd'
+    ],
     packages=find_packages(exclude=['examples*', 'docs']),
     entry_points={
         'console_scripts': [

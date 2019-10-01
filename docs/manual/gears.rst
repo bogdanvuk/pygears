@@ -3,6 +3,24 @@
 Introduction to Gears
 =====================
 
+**PyGears** is an ambitious attempt to create a Python framework that facilitates describing digital hardware. It aims to augment current RTL methodology to drastically increase **composability** of hardware modules. Ease of composition leads to better **reusability**, since modules that compose better can be used in a wider variety of contexts. Set of reusable components can then form a well-tested and documented library that significantly speeds up the development process.  
+
+For a guide through **PyGears** methodology, checkout `blog series on implementing RISC-V in PyGears <https://www.pygears.org/blog/riscv/introduction.html>`_. 
+
+For an introductory **PyGears** example, checkout :ref:`echo <echo-examples>`. A snippet is given below: 
+
+**PyGears** proposes a single generic interface for all modules (:ref:`read about the hardware implementation of the interface here <gears-interface>`) and provides a way to use powerful features of Python language to compose modules written in an existing HDL (currently only supports SystemVerilog). Based on the Python description, **PyGears** generates functionally equivalent, synthesizable RTL code.
+
+Furthermore, **PyGears** offers a way to write verification environment in high-level Python language and co-simulate the generated RTL with an external HDL simulator. **PyGears** features a completely free solution using `Verilator <http://www.veripool.org/wiki/verilator>`_ simulator and standard SystemVerilog simulators via the `DPI <https://en.wikipedia.org/wiki/SystemVerilog_DPI>`_ (tested on proprietary Questa and NCSim simulators).
+
+**PyGears** also features a `library of standard modules <https://github.com/bogdanvuk/pygears/tree/master/pygears/lib>`_ and the `lib library <https://github.com/bogdanvuk/pygears/tree/master/pygears/lib>`_ that are ready to be used in a **PyGears** design.
+
+In **PyGears**, each HDL module is considered a Python function, called the *gear*, hence the design is described in form of a functional (gear) composition. In order for HDL modules to be composable in this way, they need to be designed in accordance with the **Gears** methodology. You should probably :ref:`read a short intro to Gears <gears-introduction-to-gears>` in order to understand this project from the hardware perspective.
+
+**PyGears** supports also the hierarchical gears which do not have a HDL implementation, but are defined in terms of other gears. Each gear accepts and returns interface objects as arguments, which represents module connections. This allows for a module composition to be described in terms of powerful functional concepts, such as: partial application, higher-order functions, function polymorphism.
+
+**PyGears** features a powerful system of :ref:`generic types <typing>`, which allows for generic modules to be described, as well as to perform type checking of the gear composition.
+
 The main goal of the **Gears** hardware design methodology is to enable easy composition of hardware modules. **Gears** provides guidelines on how modules need to be implemented and standardizes the :ref:`interface <gears-interface>` between them. This methodology was inspired by the `Category theory <https://en.wikipedia.org/wiki/Category_theory>`__ and functional programming.
 
 Modules that adhere to the **Gears** methodology are called **gears**. Gears are self-synchronizing, meaning that they can be composed without the need of some global control FSM. On the other hand, they add no overhead in terms of latency and induce little to no overhead in terms of the logic gates used.
@@ -51,9 +69,9 @@ Gears need to adhere to the following rules:
 1. Producer shall initiate the data transfer by posting the data on Data signal, and rising Valid signal to high, as seen in cycle 1, 6 and 7 in the figure.
 2. Consumer can start using the input data in the same cycle the Valid line went high.
 3. Consumer can use the input data sent by the Producer for internal calculations for as many cycles as needed. For an example in cycles 1-3 in the figure.
-4. When Consumer realizes that it is the last cycle in which it needs the input data, it raises the Ready signal to high (cycles 3, 6 and 7 in the figure, marked also as ACK). On the edge of the clock if both Valid and Ready signals are high, it is said that the Consumer acknowledged/consumed the data, or that the handshake has happened. This signals the Producer that in the following cycle new data transfer can be initiated, or Valid signal can be set to low (cycles 4 or 7 in the figure), which will pause the data transfer.
+4. When Consumer realizes that it is the last cycle in which it needs the input data, it raises the Ready signal to high. On the edge of the clock if both Valid and Ready signals are high, it is said that the Consumer acknowledged/consumed the data, or that the handshake has happened (cycles 3, 6 and 7 in the figure, marked also as ACK). This signals the Producer that in the following cycle new data transfer can be initiated, or Valid signal can be set to low (cycles 4, 5, 8 or 9 in the figure), which will pause the data transfer.
 5. After initiating the transfer, Producer shall keep the Data signal unchanged and the Valid signal high until the handshake occurs, as seen in cycles 1-2 in the figure.
-6. Producer can keep Valid signal low for as many cycles as needed, which will block the Consumer if it is waiting for new input data, as seen in cycles 6-7 in the figure.
+6. Producer can keep Valid signal low for as many cycles as needed, which will block the Consumer if it is waiting for new input data, as seen in cycles 4-5 in the figure.
 7. There must be no combinatorial path from Ready to Valid signal on the Producer side. In other words, the Producer should not decide whether to output the data based on the state of the Consumer, but only based on its own inputs and internal state.
 8. Consumer may decide whether to acknowledge the data based on the state of the Valid signal, i.e. there may exist a combinatorial path from Valid to Ready signal on the Consumer side.
 

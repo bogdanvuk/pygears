@@ -73,7 +73,7 @@ Tuple[Tuple[{'x': 'coord1_t', 'y': 'coord1_t'}], Tuple[{'x': 'coord2_t', 'y': 'c
 >>> LineU8_U16
 Tuple[Tuple[{'x': Uint[8], 'y': Uint[8]}], Tuple[{'x': Uint[16], 'y': Uint[16]}]]
 
-Once a concrete type has been formed it can be instantiated which is useful
+Once a concrete type has been formed it can be instantiated, which is useful
 for the verification. Type instance is obtained by specifying the values for
 the :class:`Tuple` fields in parenthesis, grouped in the Python tuple (can be
 any iterable really)::
@@ -98,6 +98,7 @@ class TupleType(EnumerableGenericMeta):
     :class:`TupleType` class. Operations on the :class:`Tuple` type instances
     are defined in the :class:`Tuple` class.
     """
+
     def __new__(cls, name, bases, namespace, args=[]):
         cls = super().__new__(cls, name, bases, namespace, args)
 
@@ -106,7 +107,7 @@ class TupleType(EnumerableGenericMeta):
             # Generic parameter values have not been supplied
             return cls
         else:
-            cls.args = args
+            cls._args = args
             return cls
 
     def without(self, *index):
@@ -186,7 +187,7 @@ class TupleType(EnumerableGenericMeta):
         Tuple[Uint[8], Uint[16]]
 
         """
-        if not self.is_specified():
+        if not self.specified:
             return super().__getitem__(key)
 
         key_norm = self.index_norm(key)
@@ -223,20 +224,28 @@ class Tuple(tuple, metaclass=TupleType):
     (Uint[8](1), Uint[8](0))
 
     """
-    def __new__(cls, val):
-        if not cls.is_specified():
-            raise TemplatedTypeUnspecified
 
-        if type(val) == cls:
+    def __new__(cls, val=None):
+        if isinstance(val, cls):
             return val
 
-        if isinstance(val, dict):
+        if not cls.specified:
+            raise TemplatedTypeUnspecified
+
+        if val is None:
+            tpl_val = tuple(t() for t in cls)
+        elif isinstance(val, dict):
             tpl_val = tuple(t(val[f]) for t, f in zip(cls, cls.fields))
         else:
             tpl_val = tuple(t(v) for t, v in zip(cls, val))
 
+        if len(tpl_val) != len(cls):
+            raise TypeError(f'{repr(cls)}() takes {len(cls)} arguments'
+                            f' ({len(tpl_val)} given)')
+
         return super(Tuple, cls).__new__(cls, tpl_val)
 
+    @class_and_instance_method
     def __getitem__(self, key):
         """Returns the value of the field or fields specified by the ``key``.
 
@@ -320,7 +329,27 @@ class Tuple(tuple, metaclass=TupleType):
 
         for d, t in zip(reversed(self), reversed(type(self))):
             ret <<= int(t)
-            ret |= int(d)
+            ret |= int(d) & ((1 << int(t)) - 1)
+
+        return ret
+
+    def code(self):
+        """Returns a packed integer representation of the :class:`Tuple` instance.
+
+        ::
+
+            Point = Tuple[{'x': Uint[8], 'y': Uint[8]}]
+
+        >>> int(Point((0xaa, 0xbb)))
+        48042
+        >>> hex(48042)
+        '0xbbaa'
+        """
+        ret = 0
+
+        for d, t in zip(reversed(self), reversed(type(self))):
+            ret <<= int(t)
+            ret |= d.code() & ((1 << int(t)) - 1)
 
         return ret
 
@@ -337,8 +366,9 @@ class Tuple(tuple, metaclass=TupleType):
         """
         ret = []
         for t in cls:
-            type_mask = (1 << int(t)) - 1
-            ret.append(t.decode(val & type_mask))
-            val >>= int(t)
+            t_width = int(t)
+            t_mask = (1 << t_width) - 1
+            ret.append(t.decode(val & t_mask))
+            val >>= t_width
 
         return cls(tuple(ret))

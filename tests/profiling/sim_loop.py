@@ -2,10 +2,10 @@ import time
 import cProfile, pstats, io
 from pygears import gear
 from pygears.typing import Uint
-from pygears.sim.modules import drv
+from pygears.lib.verif import drv
 from pygears.sim import sim
 from pygears.sim.extens.sim_extend import SimExtend
-from pygears.common import shred
+from pygears.lib import shred
 
 
 class Profiler(SimExtend):
@@ -18,6 +18,7 @@ class Profiler(SimExtend):
         s = io.StringIO()
         ps = pstats.Stats(self.pr, stream=s).sort_stats('time')
         ps.print_stats()
+        ps.dump_stats('/tools/home/tmp/pygears.profile')
         print(s.getvalue())
 
 

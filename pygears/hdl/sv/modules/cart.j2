@@ -1,0 +1,34 @@
+{%- import 'snippet.j2' as snippet -%}
+
+{% call snippet.module_with_intf_structs(module_name, intfs, intfs, comment) %}
+
+  {%- set queue_intf_names = queue_intfs|keymap("name") %}
+  {%- set input_intf_names = intfs|isinput|keymap("name") %}
+
+  {% set ns = namespace(queue=False) -%}
+  {% for i in intfs -%}
+    {% if i['lvl'] > 0 -%}
+      {% set ns.queue=True -%}
+    {%- endif %}
+  {%- endfor %}
+
+    {% if not ns.queue %}
+    assign dout_s = {{din_data_cat(intfs)}};
+    {% else %}
+    assign dout_s.eot = { {{queue_intf_names|format_list("%s_s.eot")|join(", ")}} };
+    assign dout_s.data = {{din_data_cat(intfs)}};
+    {% endif %}
+
+    logic  handshake;
+    assign dout.valid = {{input_intf_names|format_list("%s.valid")|join(" & ")}};
+    assign handshake = dout.valid && dout.ready;
+
+    {% if intfs[0]['lvl'] > 0 and intfs[1]['lvl'] > 0 %}
+    assign din0.ready = handshake && {{intfs[1]['data_eot']}};
+    assign din1.ready = handshake;
+    {% else %}
+    assign din0.ready = handshake && {{intfs[1]['data_eot']}};
+    assign din1.ready = handshake && {{intfs[0]['data_eot']}};
+    {% endif %}
+
+{% endcall %}

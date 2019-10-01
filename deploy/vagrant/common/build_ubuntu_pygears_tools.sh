@@ -11,4 +11,4 @@ pygears-tools-install pyenv python pygears verilator
 
 source ~/.pygears/tools/tools.sh
 
-pip install -U --pre pygears nose
+pip install -U --pre pygears pytest
