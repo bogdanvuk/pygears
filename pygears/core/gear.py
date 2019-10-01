@@ -55,11 +55,47 @@ class GearHierRoot(NamedHierNode):
         self.definition = __main
 
 
+class HookableDict(dict):
+    def __init__(self, gear, **kwds):
+        self.gear = gear
+        super().__init__(**kwds)
+
+    def get(self, key, dflt=None):
+        try:
+            return self.__getitem__(key)
+        except KeyError:
+            return dflt
+
+    def __getitem__(self, key):
+        obj = dict.__getitem__(self, key)
+        if hasattr(obj, '__get__'):
+            return obj.__get__(self.gear)
+
+        return obj
+
+    def __setitem__(self, key, value):
+        try:
+            obj = dict.__getitem__(self, key)
+
+            if hasattr(obj, f'__set__'):
+                obj.__set__(self.gear, value)
+                return
+        except KeyError:
+            pass
+
+        dict.__setitem__(self, key, value)
+
+
 class Gear(NamedHierNode):
     def __init__(self, func, args, params, const_args):
         super().__init__(params['name'], registry('gear/current_module'))
         self.trace = list(enum_stacktrace())
         self.args = args
+        # for p, v in params.items():
+        #     if isinstance(v, dict):
+        #         params[p] = HookableDict(self, **v)
+
+        # self.params = HookableDict(self, **params)
         self.params = params
         self.func = func
         self.const_args = const_args

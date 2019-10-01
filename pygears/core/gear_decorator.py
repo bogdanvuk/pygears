@@ -5,6 +5,7 @@ import pygears
 
 from pygears.conf import Inject, inject, registry, PluginBase, safe_bind
 from pygears.typing import Tuple, typeof
+from pygears import module
 
 from .funcutils import FunctionMaker
 from .partial import Partial
@@ -112,7 +113,12 @@ def create_unpacked_tuple_alternative(g):
     '''
 
     from ..lib.ccat import ccat
-    closure = {'ccat': ccat, base_func.__name__: g, 'pygears': pygears}
+    closure = {
+        'ccat': ccat,
+        base_func.__name__: g,
+        'pygears': pygears,
+        'module': module
+    }
     closure.update(get_function_context_dict(g.func))
 
     unpack_func = f.make(body, evaldict=closure, addsource=True)

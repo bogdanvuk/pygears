@@ -103,10 +103,13 @@ class SimGear:
         except GearDone as e:
             for p in self.gear.in_ports:
                 intf = p.consumer
-                if not intf.empty():
-                    prod_intf = intf.in_queue.intf
-                    prod_gear = prod_intf.consumers[0].gear
-                    schedule_to_finish(prod_gear)
+                try:
+                    if not intf.empty():
+                        prod_intf = intf.in_queue.intf
+                        prod_gear = prod_intf.consumers[0].gear
+                        schedule_to_finish(prod_gear)
+                except GearDone:
+                    pass
 
             self._finish()
             raise e

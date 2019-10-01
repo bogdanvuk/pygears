@@ -20,9 +20,9 @@ module hier(
         .dout(ret1_bc)
     );
 
-    assign ret1_bc[1].valid = top_ret1.valid;
-    assign ret1_bc[1].data = top_ret1.data;
-    assign top_ret1.ready = ret1_bc[1].ready;
+    assign top_ret1.valid = ret1_bc[1].valid;
+    assign top_ret1.data = ret1_bc[1].data;
+    assign ret1_bc[1].ready = top_ret1.ready;
 
       dti #(.W_DATA(2)) top_din2_bc[1:0](); // u2 (2)
     bc #(

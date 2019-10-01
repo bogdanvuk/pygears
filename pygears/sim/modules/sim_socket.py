@@ -331,20 +331,11 @@ class SimSocket(CosimBase):
             'activity_timeout': 1000  # in clk cycles
         }
 
-        inc_paths = []
         context['includes'] = []
-        for path in registry('hdl/include'):
-            inc_paths.append(path)
-        inc_paths.append(self.srcdir)
-        inc_paths.append(self.outdir)
-
-        context['includes'] = [
-            os.path.abspath(os.path.join(p, '*.sv')) for p in inc_paths
-            if os.path.exists(p)
-        ]
-
-        # remove empty wildcard imports
-        context['includes'] = [p for p in context['includes'] if glob.glob(p)]
+        context['includes'].extend(self.svmod.include)
+        context['includes'].extend(registry('hdl/include'))
+        context['includes'].append(self.srcdir)
+        context['includes'].append(self.outdir)
 
         for templ, tname in zip(j2_templates, j2_file_names):
             res = env.get_template(templ).render(context)

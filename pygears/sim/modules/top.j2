@@ -115,10 +115,15 @@ module top;
                   for(int i = 0; i < {{(intf['width'] + 31)//32}}; ++i) begin
                       ret = sock_get_bv(synchro_handle, 32, data);
                       `verif_info($sformatf("Reading input data for %s at %0t %0h", "{{intf['name']}}", $time, data), 2);
+                 {% if intf['width'] <= 32 %}
+                      {{intf['name']}}_data[({{intf['width']-1}}) : 0] = data;
+                 {% else %}
                       if ((i+1)*32 <= {{intf['width']}})
                          {{intf['name']}}_data[i*32 +: 32] = data;
                       else
-                         {{intf['name']}}_data[({{intf['width']}}-1) : {{32*((intf['width']-1) // 32)}}] = data;
+                         {{intf['name']}}_data[({{intf['width']-1}}) : {{32*((intf['width']-1) // 32)}}] = data;
+                 {% endif %}
+
                   end
                   `verif_info($sformatf("Setting data for %s: %0h at %0t (ret = %0d)", "{{intf['name']}}", {{intf['name']}}_data, $time, ret), 2);
                   {{intf['name']}}_vif.valid <= 1'b1;
@@ -126,30 +131,31 @@ module top;
                end
 {% endfor %}
             endcase
-         end if (data & CMD_READ) begin
+         end else if (data & CMD_READ) begin
              case(data[15:0])
 {% for intf in intfs %}
               {{loop.index-1}} : begin
   {% if intf['modport'] == 'producer' %}
                   if ({{intf['name']}}_vif.valid) begin
-                     `verif_info($sformatf("Setting output for %s at %0t", "{{intf['name']}}", $time), 2);
+                     `verif_info($sformatf("[sock_put] output for %s at %0t", "{{intf['name']}}", $time), 2);
                      status = 1;
                      ret = sock_put(synchro_handle, status);
                      {{intf['name']}}_data = {{intf['name']}}_vif.data;
                      ret = sock_put(synchro_handle, {{intf['name']}}_data);
                   end else begin
-                     `verif_info($sformatf("No output for %s at %0t", "{{intf['name']}}", $time), 2);
                      status = 0;
+                     `verif_info($sformatf("[sock_put] no output for %s at %0t: %0h", "{{intf['name']}}", $time, status), 2);
                      ret = sock_put(synchro_handle, status);
                   end
   {% else %}
                   status = {{intf['name']}}_vif.ready;
+                  `verif_info($sformatf("[sock_put] ready status for %s: %0h", "{{intf['name']}}", status), 2);
                   ret = sock_put(synchro_handle, status);
   {% endif %}
                  end
 {% endfor %}
             endcase
-         end if (data & CMD_ACK) begin
+         end else if (data & CMD_ACK) begin
              case(data[15:0])
 {% for intf in intfs %}
   {% if intf['modport'] == 'producer' %}
@@ -160,7 +166,7 @@ module top;
   {% endif %}
 {% endfor %}
             endcase
-         end if (data & CMD_RESET) begin
+         end else if (data & CMD_RESET) begin
              case(data[15:0])
 {% for intf in intfs %}
               {{loop.index-1}} : begin
@@ -175,14 +181,14 @@ module top;
   {% endif -%}
 {%- endfor %}
             endcase
-         end if (data & CMD_FORWARD) begin
+         end else if (data & CMD_FORWARD) begin
            `verif_info($sformatf("Forward from %0t", $time), 2);
            #1;
            `verif_info($sformatf("Forward to %0t", $time), 2);
-         end if (data & CMD_CYCLE) begin
+         end else if (data & CMD_CYCLE) begin
            @(posedge clk);
            #1;
-         end if (data & CMD_SYS_RESET) begin
+         end else if (data & CMD_SYS_RESET) begin
 {% for intf in intfs -%}
   {% if intf['modport'] == 'consumer' %}
             {{intf['name']}}_vif.valid <= 1'b0;
@@ -191,6 +197,7 @@ module top;
   {% endif -%}
 {%- endfor %}
             drive_reset(data[15:0]);
+            `verif_info($sformatf("[sock_done] Why? from %0t", $time), 2);
             ret = sock_done(synchro_handle);
             if (ret == 1) break;
          end

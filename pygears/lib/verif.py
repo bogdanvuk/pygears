@@ -169,34 +169,8 @@ async def mon(din, *, t=b'din') -> Any:
     yield data
 
 
-def match_check(data, ref, tolerance):
-    low = ref - tolerance
-    high = ref + tolerance
-    return low <= data <= high
-
-
-def tolerance_check(items, tolerance):
-    match = False
-
-    if typeof(type(items[0]), Queue):
-        for val in items:
-            match = match_check(val.data, items[0].data, tolerance)
-            if match:
-                match = val.eot == items[0].eot
-
-            if not match:
-                break
-    else:
-        for val in items:
-            match = match_check(val, items[0], tolerance)
-            if not match:
-                break
-
-    return match
-
-
 @gear
-async def scoreboard(*din: b't', report, tolerance=0) -> None:
+async def scoreboard(*din: b't', report, cmp=None) -> None:
     """Generic scoreboard used from comparing actual results from the DUT to
     expected results. Eventual mismatches are asserted using the ``sim_assert``
     function meaning that any ``error`` behaviour is controled via the ``sim``
@@ -212,6 +186,12 @@ async def scoreboard(*din: b't', report, tolerance=0) -> None:
     Returns:
         None
     """
+    def match_exact(x, y):
+        return x == y
+
+    if cmp is None:
+        cmp = match_exact
+
     cnt = 0
     match_cnt = 0
     try:
@@ -220,10 +200,7 @@ async def scoreboard(*din: b't', report, tolerance=0) -> None:
             for d in din:
                 items.append(await d.get())
 
-            if tolerance != 0:
-                match = tolerance_check(items, tolerance)
-            else:
-                match = all(v == items[0] for v in items)
+            match = all(cmp(v, items[0]) for v in items)
 
             report.append({'match': match, 'items': items})
             cnt += 1
@@ -299,7 +276,7 @@ def tlm_verif(*seq, f, ref):
     return report
 
 
-def verif(*stim, f, ref, delays=None, tolerance=0, check_timing=False):
+def verif(*stim, f, ref, delays=None, cmp=None, check_timing=False):
     """Verification environment for comparing DUV results with reference model.
     The environment instantiates the DUV and reference model and drives the
     passed stimulus to both. The outpus are passed to the scoreboard which
@@ -347,7 +324,7 @@ def verif(*stim, f, ref, delays=None, tolerance=0, check_timing=False):
         res_intf = res_intf | decouple(depth=0)
         ref_intf = ref_intf | decouple(depth=0)
 
-        scoreboard(res_intf, ref_intf, report=r, tolerance=tolerance)
+        scoreboard(res_intf, ref_intf, report=r, cmp=cmp)
 
     return report
 

@@ -1,9 +1,9 @@
 from pygears.hdl.sv import SVGenPlugin
-from pygears.hdl.sv.svmod import SVModuleGen
+from pygears.hdl.sv.svmod import SVModuleInst
 from pygears.lib.align import align
 
 
-class SVGenAlign(SVModuleGen):
+class SVGenAlign(SVModuleInst):
     @property
     def is_generated(self):
         return True

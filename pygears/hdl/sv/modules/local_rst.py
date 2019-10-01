@@ -1,9 +1,9 @@
 from pygears.hdl.sv import SVGenPlugin
-from pygears.hdl.sv.svmod import SVModuleGen
+from pygears.hdl.sv.svmod import SVModuleInst
 from pygears.lib.local_rst import local_rst
 
 
-class SVGenLocalRst(SVModuleGen):
+class SVGenLocalRst(SVModuleInst):
     def get_inst(self, template_env):
         in_intf_name = self.get_in_port_map_intf_name(self.node.in_ports[0])
 

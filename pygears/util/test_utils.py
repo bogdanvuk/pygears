@@ -16,7 +16,7 @@ from pygears.sim.modules.sim_socket import SimSocket
 from pygears.sim.modules.verilator import SimVerilated
 from pygears.hdl import register_hdl_paths
 from pygears.hdl import hdlgen
-from pygears.synth import yosys, vivado
+from pygears.synth import yosys
 
 re_trailing_space_rem = re.compile(r"\s+$", re.MULTILINE)
 re_multispace_rem = re.compile(r"\s+", re.MULTILINE)
@@ -228,7 +228,7 @@ def hdl_check_fixt(tmpdir, request):
 
     language = os.path.splitext(request.param[0][0])[1][1:]
     register_hdl_paths(tmpdir)
-    hdlgen(language=language, resdir=tmpdir, **request.param[1])
+    hdlgen(language=language, outdir=tmpdir, **request.param[1])
 
     for fn in request.param[0]:
         res_file = os.path.join(tmpdir, fn)

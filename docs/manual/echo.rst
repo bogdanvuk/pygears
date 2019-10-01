@@ -5,7 +5,7 @@ Echo
 
 This example shows how to use PyGears to implement a hardware module that applies echo audio effect to a continuous audio stream. For a more detailed explanation of PyGears features used in this example, you can checkout a :ref:`quick introduction to PyGears <introduction>`.
 
-The hardware module is defined in `examples/echo/echo.py <https://github.com/bogdanvuk/pygears/tree/develop/examples/echo/echo.py>`_, and block diagram is given below. You can checkout the :ref:`functional description <examples-echo-functional-description>` of the ``echo`` module. In-depth explanation of the PyGears description of the echo model given in :ref:`hardware description <examples-echo-hardware-description>` chapter. PyGears takes the Python module description and compiles it to SystemVerilog which is :ref:`listed below<echo-sv>`.
+The hardware module is part of the `pygears_dsp <https://github.com/bogdanvuk/pygears-dsp>`_ library and is defined in `pygears_dsp/lib/echo.py <https://github.com/bogdanvuk/pygears-dsp/blob/master/pygears_dsp/lib/echo.py>`_. Its block diagram is given below. You can checkout the :ref:`functional description <examples-echo-functional-description>` of the ``echo`` module. In-depth explanation of the PyGears description of the echo model given in :ref:`hardware description <examples-echo-hardware-description>` chapter. PyGears takes the Python module description and compiles it to SystemVerilog which is :ref:`listed below<echo-sv>`.
 
 .. bdp:: images/echo.py
     :align: center
@@ -14,7 +14,7 @@ The hardware module is defined in `examples/echo/echo.py <https://github.com/bog
 SystemVerilog Generation
 ------------------------
 
-Run the script `examples/echo/echo_svgen.py <https://github.com/bogdanvuk/pygears/tree/develop/examples/echo/echo_svgen.py>`_ in order to let PyGears generate SystemVerilog files.
+Run the script `examples/echo/echo_svgen.py <https://github.com/bogdanvuk/pygears-dsp/blob/master/examples/echo/echo_svgen.py>`_ in order to let PyGears generate SystemVerilog files.
 
 .. code-block:: bash
 

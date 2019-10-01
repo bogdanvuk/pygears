@@ -1,10 +1,10 @@
-from pygears.hdl.sv.svmod import SVModuleGen
+from pygears.hdl.sv.svmod import SVModuleInst
 from pygears.hdl.sv import SVGenPlugin
 from pygears.lib.demux import demux_zip
 from .syncguard import SVGenSyncGuard
 
 
-class SVGenDemuxZip(SVModuleGen):
+class SVGenDemuxZip(SVModuleInst):
     def __init__(self, node):
         super().__init__(node)
         self.syncguard = SVGenSyncGuard(f'{self.module_name}_syncguard', 2)

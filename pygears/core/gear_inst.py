@@ -126,6 +126,8 @@ def resolve_return_annotation(annotations):
         if isinstance(ret_anot, dict):
             outnames = tuple(ret_anot.keys())
             annotations['return'] = tuple(ret_anot.values())
+            if len(annotations['return']) == 1:
+                annotations['return'] = annotations['return'][0]
     else:
         annotations['return'] = None
 

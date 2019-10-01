@@ -13,7 +13,7 @@ from .inst import svgen_log
 from .sv_keywords import sv_keywords
 
 
-class SVModuleGen(HDLModuleInst):
+class SVModuleInst(HDLModuleInst):
     def __init__(self, node):
         super().__init__(node, 'sv')
         self.svgen_map = registry("svgen/map")
@@ -53,6 +53,7 @@ class SVModuleGen(HDLModuleInst):
 
     def get_synth_wrap(self, template_env):
         context = {
+            'wrap_module_name': f'wrap_{self.module_name}',
             'module_name': self.module_name,
             'inst_name': self.inst_name,
             'intfs': list(self.port_configs),
@@ -135,10 +136,3 @@ class SVModuleGen(HDLModuleInst):
         }
 
         return template_env.snippets.module_inst(**context)
-
-
-# class SVGenSVModPlugin(SVGenPlugin):
-#     @classmethod
-#     def bind(cls):
-#         safe_bind('svgen/module_namespace/Gear', SVModuleGen)
-#         safe_bind('svgen/module_namespace/GearHierRoot', SVModuleGen)

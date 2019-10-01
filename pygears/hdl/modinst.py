@@ -85,11 +85,18 @@ class HDLModuleInst:
         else:
             return self.node.name
 
+    def hdl_fn_get(self, dflt):
+        if 'hdl' not in self.node.params:
+            return dflt
+
+        if 'hdl_fn' not in self.node.params['hdl']:
+            return dflt
+
+        return self.node.params['hdl']['hdl_fn']
+
     @property
     def module_base_path(self):
-        hdl_params = self.node.params.get('hdl', {})
-        hdl_module_name = hdl_params.get('hdl_fn', self.module_basename)
-        return f'{hdl_module_name}.{self.extension}'
+        return f'{self.hdl_fn_get(self.module_basename)}.{self.extension}'
 
     @property
     def module_name(self):
@@ -114,9 +121,19 @@ class HDLModuleInst:
 
     @property
     def file_name(self):
-        hdl_params = self.node.params.get('hdl', {})
-        hdl_module_name = hdl_params.get('hdl_fn', self.module_name)
-        return f'{hdl_module_name}.{self.extension}'
+        return f'{self.hdl_fn_get(self.module_name)}.{self.extension}'
+
+    @property
+    def files(self):
+        if 'hdl' in self.node.params:
+            if 'files' in self.node.params['hdl']:
+                return self.node.params['hdl']['files']
+
+        return []
+
+    @property
+    def include(self):
+        return []
 
     def impl_parse():
         pass

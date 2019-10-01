@@ -1,10 +1,10 @@
 from pygears.hdl.sv import SVGenPlugin
-from pygears.hdl.sv.svmod import SVModuleGen
+from pygears.hdl.sv.svmod import SVModuleInst
 from pygears.lib.union import union_sync
 from .syncguard import SVGenSyncGuard
 
 
-class SVGenUnionSyncBase(SVModuleGen):
+class SVGenUnionSyncBase(SVModuleInst):
     def __init__(self, node):
         super().__init__(node)
 

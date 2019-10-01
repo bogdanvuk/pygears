@@ -203,7 +203,7 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
                     cls = Fixp if val.signed else Ufixp
 
             if not is_type(type(val)):
-                return cls[bitw(val), bitw(val)](int(val))
+                return cls[bitw(val)+1, bitw(val)+1](int(val))
             elif isinstance(val, Integer):
                 return cls[val.width, val.width](val.code())
 
@@ -219,8 +219,11 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
         else:
             raise TypeError(f'Unsupported value {val} of type {type(val)}')
 
-        if not cls.signed:
-            val &= ((1 << cls.width) - 1)
+        val &= ((1 << cls.width) - 1)
+
+        if cls.signed:
+            if val >= (1 << (cls.width - 1)):
+                val -= 1 << cls.width
 
         res = int.__new__(cls, val)
 

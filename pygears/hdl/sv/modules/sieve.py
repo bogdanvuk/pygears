@@ -2,7 +2,7 @@ import itertools
 
 from pygears.lib.sieve import sieve
 from pygears.hdl.sv import SVGenPlugin
-from pygears.hdl.sv.svmod import SVModuleGen
+from pygears.hdl.sv.svmod import SVModuleInst
 from pygears.hdl.modinst import get_port_config
 from functools import partial
 from pygears.rtl import flow_visitor, RTLPlugin
@@ -49,7 +49,7 @@ def get_sieve_stages(node):
     return stages
 
 
-class SVGenSieve(SVModuleGen):
+class SVGenSieve(SVModuleInst):
     @property
     def is_generated(self):
         return True
