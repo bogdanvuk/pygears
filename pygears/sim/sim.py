@@ -546,6 +546,7 @@ class SimPlugin(GearPlugin):
         safe_bind('sim/config', {})
         safe_bind('sim/flow', [])
         safe_bind('sim/tasks', {})
+        config.define('sim/clk_freq', 1000)
         config.define('results-dir', default=None)
         config.define('sim/extens', default=[])
         config.define('debug/trace', default=[])
