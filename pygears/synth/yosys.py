@@ -1,16 +1,11 @@
 import re
 import os
 import pexpect
-from pygears.hdl import hdlgen
+from pygears.hdl import hdlgen, list_hdl_files
 from pygears import registry
-from .common import list_hdl_files
 
-
-def create_project(outdir, top=None):
-    rtl = hdlgen(top, language='v', outdir=outdir)
-    hdl_files = list_hdl_files(rtl, outdir, language='v')
-    print(hdl_files)
-
+# from pygears import config
+# from . import SynthPlugin
 
 def create_project_script(script_fn, outdir, top, language, wrapper):
     hdl_files = list_hdl_files(top, outdir, language=language, wrapper=wrapper)
@@ -150,3 +145,9 @@ def synth(outdir,
             yosys.command(f'write_verilog -noattr {synth_out}')
 
         return yosys.stats
+
+
+# class VivadoSynthPlugin(SynthPlugin):
+#     @classmethod
+#     def bind(cls):
+#         config['synth/backend']['yosys'] = synth

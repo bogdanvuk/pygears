@@ -25,5 +25,6 @@ class HDLPlugin(PluginBase):
 from . import sv
 from . import v
 from .hdlgen import hdlgen
+from .common import list_hdl_files
 
-__all__ = ['hdlgen']
+__all__ = ['hdlgen', 'list_hdl_files']

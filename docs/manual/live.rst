@@ -356,9 +356,7 @@ PyGears LIVE!
                   }
               });
       } else {
-          editor.setValue('from pygears.lib import rng\n' +
-                          'from pygears.lib import shred\n' +
-                          'from pygears.lib.verif import drv\n' +
+          editor.setValue('from pygears.lib import rng, shred, drv\n' +
                           'from pygears.typing import Uint\n' +
                           '\n' +
                           'drv(t=Uint[4], seq=[10]) | rng | shred', -1);
@@ -366,11 +364,47 @@ PyGears LIVE!
 
 
       var gears = {
+          'add': {'page': 'gears/operators.html', 'page-div-id': 'module-add', 'view-div-id': 'operators.add'},
           'accum': {'page': 'gears/reduce.html', 'page-div-id': 'module-reduce', 'view-div-id': 'reduce.accum'},
-          'ccat': {'page-div-id': 'concatenation'},
+          'cart': {},
+          'ccat': {},
+          'chop': {},
+          'clip': {},
+          'const': {},
+          'czip': {},
+          'deal': {},
+          'decouple': {},
+          'demux': {},
+          'div': {'page': 'gears/operators.html', 'page-div-id': 'module-add', 'view-div-id': 'module-div'},
+          'dreg': {},
+          'eq': {'page': 'gears/operators.html', 'page-div-id': 'module-add', 'view-div-id': 'module-eq'},
           'filt': {},
+          'flatten': {},
+          'fmap': {},
+          'funclut': {},
+          'group': {},
+          'ge': {'page': 'gears/operators.html', 'page-div-id': 'module-add', 'view-div-id': 'module-ge'},
+          'gt': {'page': 'gears/operators.html', 'page-div-id': 'module-add', 'view-div-id': 'module-gt'},
+          'interlace': {},
+          'invert': {'page': 'gears/operators.html', 'page-div-id': 'module-add', 'view-div-id': 'module-invert'},
+          'le': {'page': 'gears/operators.html', 'page-div-id': 'module-add', 'view-div-id': 'module-le'},
+          'lt': {'page': 'gears/operators.html', 'page-div-id': 'module-add', 'view-div-id': 'module-lt'},
+          'mod': {'page': 'gears/operators.html', 'page-div-id': 'module-add', 'view-div-id': 'module-mod'},
+          'mul': {'page': 'gears/operators.html', 'page-div-id': 'module-add', 'view-div-id': 'module-mul'},
+          'mux': {},
+          'ne': {'page': 'gears/operators.html', 'page-div-id': 'module-add', 'view-div-id': 'module-ne'},
+          'neg': {'page': 'gears/operators.html', 'page-div-id': 'module-add', 'view-div-id': 'module-neg'},
+          'qcnt': {},
           'reduce': {},
+          'replicate': {},
           'rng': {},
+          'rom': {},
+          'sdp': {},
+          'serialize': {},
+          'shred': {},
+          'sieve': {},
+          'take': {},
+          'unary': {},
       }
 
       autocomplete(document.getElementById("gearSelect"), Object.keys(gears), function(val) {

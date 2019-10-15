@@ -19,11 +19,10 @@ from pygears.sim.modules.cosim_base import CosimBase, CosimNoData
 from .cosim_port import InCosimPort
 from pygears.core.port import InPort
 from pygears.core.graph import closest_gear_port_from_rtl
-from pygears.hdl import hdlgen
+from pygears.hdl import hdlgen, list_hdl_files
 from pygears.hdl.sv.util import svgen_typedef
 from pygears.util.fileio import save_file
 from pygears.hdl.templenv import isinput, isoutput, keymap
-from pygears.synth.common import list_hdl_files
 
 CMD_SYS_RESET = 0x80000000
 CMD_SET_DATA = 0x40000000

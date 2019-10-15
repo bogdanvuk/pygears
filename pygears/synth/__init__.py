@@ -1,8 +1,5 @@
-from pygears import PluginBase, safe_bind, config
-from .common import list_hdl_files, enum_hdl_files
+from pygears import PluginBase, config
 from .yosys import synth as yosys_synth
-
-__all__ = ['list_hdl_files', 'enum_hdl_files']
 
 
 def synth(tool, top=None, outdir=None, language=None, **kwds):
@@ -13,6 +10,9 @@ def synth(tool, top=None, outdir=None, language=None, **kwds):
                                          outdir=outdir,
                                          language=language,
                                          **kwds)
+
+
+__all__ = ['synth']
 
 
 class SynthPlugin(PluginBase):

@@ -2,7 +2,7 @@ import shutil
 from pygears.conf import bind, registry
 from pygears.rtl import rtlgen
 from pygears.util.find import find
-from pygears.synth import list_hdl_files
+from .common import list_hdl_files
 
 
 def find_rtl_top(top, **conf):

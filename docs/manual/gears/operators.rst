@@ -66,19 +66,6 @@ Test whether a :class:`~.Number` from one interface is greater or equal to the :
    .. pg-example:: examples/ge
       :lines: 4-7
 
-.. module:: iceil
-
-Adds two or more :class:`~.Number` data received from the input interfaces and outputs the result. The :func:`~.add` gear is automatically instantiated when a "+" operator is used on two interfaces.
-
-.. py:function:: add(a: Number, b: Number)
-
-.. py:function:: add(din: Tuple[Number, Number])
-
-   Adds two numbers together:
-
-   .. pg-example:: examples/add
-      :lines: 4-7
-
 .. module:: invert
 
 Bitwise inverts data. The :func:`~.invert` gear is automatically instantiated when a "~" operator is used on an interface.
