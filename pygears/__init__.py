@@ -10,6 +10,7 @@ from asyncio.queues import QueueEmpty as IntfEmpty
 from pygears.conf import PluginBase, bind, registry, clear, MultiAlternativeError
 from pygears.conf import pygears_excepthook, TraceLevel, safe_bind, config
 import pygears.conf
+import pygears.entry
 
 from pygears.util.find import find
 
