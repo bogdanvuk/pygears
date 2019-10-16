@@ -90,10 +90,14 @@ class ConfigVariable:
     default: Any
     docs: str = None
     setter: Callable = None
+    getter: Callable = None
 
     @property
     def val(self):
-        return registry(self.path)
+        if self.getter is None:
+            return registry(self.path)
+        else:
+            return self.getter(self)
 
     @property
     def changed(self):
@@ -104,9 +108,13 @@ class Configure:
     def __init__(self):
         self.definitions = {}
 
-    def define(self, path, default=None, docs=None, setter=None):
+    def define(self, path, default=None, docs=None, setter=None, getter=None):
         safe_bind(path, copy.copy(default))
-        var = ConfigVariable(path, default=default, docs=docs, setter=setter)
+        var = ConfigVariable(path,
+                             default=default,
+                             docs=docs,
+                             setter=setter,
+                             getter=getter)
         self.definitions[path] = var
         return var
 
@@ -117,7 +125,7 @@ class Configure:
         self.definitions.clear()
 
     def __getitem__(self, path):
-        return registry(path)
+        return self.definitions[path].val
 
     def __setitem__(self, path, value):
         var = self.definitions[path]
@@ -290,8 +298,7 @@ def load_plugin_folder(path, package=None):
                 ret = importlib.import_module(
                     plugin, package=f'{package}.{plugin_dir}')
             else:
-                ret = importlib.import_module(
-                    plugin, package=plugin_dir)
+                ret = importlib.import_module(plugin, package=plugin_dir)
 
             modules.append(ret)
 
