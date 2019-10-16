@@ -1,6 +1,7 @@
 import shutil
 from pygears.conf import bind, registry
 from pygears.rtl import rtlgen
+from pygears.rtl.node import RTLNode
 from pygears.util.find import find
 from .common import list_hdl_files
 
@@ -18,19 +19,30 @@ def find_rtl_top(top, **conf):
     return rtl_map[top]
 
 
-def hdlgen(top=None, language='sv', copy_files=False, **conf):
-    rtl_top = find_rtl_top(top, **conf)
+def hdlgen(top=None,
+           language='sv',
+           copy_files=False,
+           generate=True,
+           outdir=None,
+           **conf):
+    conf['generate'] = generate
+    conf['outdir'] = outdir
+
+    if isinstance(top, RTLNode):
+        rtl_top = top
+    else:
+        rtl_top = find_rtl_top(top, **conf)
 
     bind('svgen/conf', conf)
     for oper in registry(f'{language}gen/flow'):
         rtl_top = oper(rtl_top, conf)
 
-    if copy_files is True:
+    if copy_files and generate:
         for fn in list_hdl_files(rtl_top.name,
-                                 outdir=conf['outdir'],
+                                 outdir=outdir,
                                  language=language,
                                  rtl_only=True,
                                  wrapper=conf.get('wrapper', False)):
-            shutil.copy(fn, conf['outdir'])
+            shutil.copy(fn, outdir)
 
     return rtl_top
