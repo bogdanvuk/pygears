@@ -44,8 +44,6 @@ class SVGenInstVisitor(HierVisitorBase):
 
 
 def svgen_inst(top, conf):
-    config['hdl/include'].extend([USER_SVLIB_DIR, LIB_SVLIB_DIR])
-
     v = SVGenInstVisitor()
     v.visit(top)
 
@@ -56,11 +54,17 @@ def svgen_log():
     return logging.getLogger('svgen')
 
 
+def svgen_include_get(cfg):
+    return config['hdl/include'] + [USER_SVLIB_DIR, LIB_SVLIB_DIR]
+
+
 class SVGenInstPlugin(PluginBase):
     @classmethod
     def bind(cls):
         safe_bind('svgen/map', {})
         register_custom_log('svgen', logging.WARNING)
+
+        config.define('svgen/include', getter=svgen_include_get)
 
     @classmethod
     def reset(cls):

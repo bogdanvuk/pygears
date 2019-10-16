@@ -38,6 +38,9 @@ class VGenGenerateVisitor(HierYielderBase):
 
 
 def vgen_generate(top, conf):
+    if not conf['generate']:
+        return top
+
     v = VGenGenerateVisitor(top, conf.get('wrapper', False))
     for file_names, contents in v.visit(top):
         if contents:

@@ -2,7 +2,7 @@ import os
 import functools
 
 import pygears
-from pygears import registry
+from pygears import registry, config
 from pygears.typing import code
 
 # from .inst import svgen_log
@@ -43,7 +43,7 @@ class HDLModuleInst:
 
     @property
     def hdl_path_list(self):
-        return registry('hdl/include')
+        return config[f'{self.extension}gen/include']
 
     @property
     @functools.lru_cache()

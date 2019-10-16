@@ -12,7 +12,7 @@ from subprocess import DEVNULL, Popen
 
 import jinja2
 
-from pygears import GearDone, bind, registry
+from pygears import GearDone, bind, registry, config
 from pygears.definitions import ROOT_DIR
 from pygears.sim import clk, sim_log, timestep
 from pygears.sim.modules.cosim_base import CosimBase, CosimNoData
@@ -332,7 +332,7 @@ class SimSocket(CosimBase):
 
         context['includes'] = []
         context['includes'].extend(self.svmod.include)
-        context['includes'].extend(registry('hdl/include'))
+        context['includes'].extend(config[f'{self.language}gen/include'])
         context['includes'].append(self.srcdir)
         context['includes'].append(self.outdir)
 

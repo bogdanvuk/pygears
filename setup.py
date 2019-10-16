@@ -3,7 +3,6 @@ from setuptools.command.develop import develop
 from setuptools.command.install import install
 from setuptools.command.egg_info import egg_info
 import os
-import glob
 
 
 def setup_home():
@@ -44,7 +43,7 @@ def readme():
 
 setup(
     name='pygears',
-    version='0.1.2',
+    version='0.2.0',
     description='Framework for functional hardware design approach',
     long_description=readme(),
     url='https://www.pygears.org',
@@ -74,7 +73,7 @@ setup(
     packages=find_packages(exclude=['examples*', 'docs']),
     entry_points={
         'console_scripts': [
-            'pywave = pygears.sim.extens.pywave:main',
+            'pygears = pygears.entry:main',
         ],
     },
     cmdclass={

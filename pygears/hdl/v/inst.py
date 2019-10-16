@@ -42,12 +42,14 @@ class VGenInstVisitor(HierVisitorBase):
 
 
 def vgen_inst(top, conf):
-    config['hdl/include'].extend([USER_VLIB_DIR, LIB_VLIB_DIR])
-
     v = VGenInstVisitor()
     v.visit(top)
 
     return top
+
+
+def vgen_include_get(cfg):
+    return config['hdl/include'] + [USER_VLIB_DIR, LIB_VLIB_DIR]
 
 
 class VGenInstPlugin(PluginBase):
@@ -55,6 +57,7 @@ class VGenInstPlugin(PluginBase):
     def bind(cls):
         safe_bind('vgen/map', {})
         safe_bind('vgen/module_namespace', {})
+        config.define('vgen/include', getter=vgen_include_get)
 
     @classmethod
     def reset(cls):

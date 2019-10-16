@@ -200,7 +200,8 @@ class SimVerilated(CosimBase):
         c = jenv.get_template('sim_veriwrap.j2').render(context)
         save_file('sim_main.cpp', self.outdir, c)
         include = ' '.join([
-            f'-I{os.path.abspath(p)}' for p in registry(f'hdl/include')
+            f'-I{os.path.abspath(p)}'
+            for p in config[f'{self.language}gen/include']
         ])
 
         include += f' -I{self.outdir}'
