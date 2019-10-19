@@ -1,9 +1,7 @@
 import ast
 import typing
-import astpretty
 import inspect
 from dataclasses import dataclass, field
-from types import FunctionType
 from itertools import chain
 
 from pygears import bind
@@ -20,7 +18,7 @@ from .conditions_utils import init_conditions
 from .hdl_stmt import (AssertionVisitor, InputVisitor, IntfReadyVisitor,
                        IntfValidVisitor, OutputVisitor, RegEnVisitor,
                        VariableVisitor, FunctionVisitor, OutSigVisitor)
-from .hls_expressions import IntfDef, RegDef, VariableDef, VariableStmt, OperandVal, ReturnStmt
+from .hls_expressions import IntfDef, OperandVal, RegDef, ReturnStmt, VariableDef
 from .intf_finder import IntfFinder
 from .optimizations import pipeline_ast
 from .reg_finder import RegFinder
