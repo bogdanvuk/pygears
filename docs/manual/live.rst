@@ -321,8 +321,6 @@ PyGears LIVE!
       }
 
       /* var serverName = "http://127.0.0.1:5000"; */
-      /* var serverName = "http://167.86.106.32:5000"; */
-      /* var serverName = "https://167.86.106.32"; */
       var serverName = "https://www.synchord.com";
 
       document.getElementById("btn-result-zip").disabled = true

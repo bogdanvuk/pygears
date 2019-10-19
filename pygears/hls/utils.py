@@ -4,7 +4,6 @@ import logging
 import textwrap
 import inspect
 import types
-import astpretty
 import pprint
 from types import FunctionType
 
@@ -449,6 +448,7 @@ def hls_debug(msg='', title=None, indent=0):
     if isinstance(msg, dict):
         msg = pprint.pformat(msg)
     elif isinstance(msg, ast.AST):
+        import astpretty
         msg = astpretty.pformat(msg)
 
     if title is not None:
