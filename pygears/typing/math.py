@@ -15,6 +15,14 @@ def ceil_pow2(num: int) -> int:
     return int(2**(bitw(num - 1)))
 
 
+def ceil_div(num: int, divisor: int) -> int:
+    return (num + divisor - 1) // divisor
+
+
+def ceil_chunk(num: int, chunk: int) -> int:
+    return ceil_div(num, chunk)*chunk
+
+
 def div(a, b, subprec):
     res = a.__truediv__(b, subprec)
     if res is not NotImplemented:

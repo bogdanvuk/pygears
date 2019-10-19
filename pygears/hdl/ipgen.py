@@ -13,40 +13,15 @@ def ipgen_entry(args):
 
     runpy.run_path(args.design)
 
-    ipgen(
-        tool=args.tool,
-        top=args.top,
-        design=args.design,
-        outdir=args.outdir,
-        include=args.include,
-        lang=args.lang,
-        build=args.build,
-        copy=args.copy,
-        makefile=args.makefile,
-    )
+    kwds = vars(args)
+    del kwds['func']
+    ipgen(**kwds)
 
 
-def ipgen(
-        tool,
-        top=None,
-        design=None,
-        outdir=None,
-        include=[],
-        lang='sv',
-        build=False,
-        copy=True,
-        makefile=False,
-):
+def ipgen(tool, design=None, top=None, **kwds):
     design = os.path.abspath(os.path.expanduser(design))
 
-    config['ipgen/backend'][tool](top,
-                                  design=design,
-                                  outdir=outdir,
-                                  include=include,
-                                  lang=lang,
-                                  build=build,
-                                  copy=copy,
-                                  makefile=makefile)
+    config['ipgen/backend'][tool](top, design=design, **kwds)
 
 
 class IpgenPlugin(EntryPlugin):
