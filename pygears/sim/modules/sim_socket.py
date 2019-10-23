@@ -332,7 +332,7 @@ class SimSocket(CosimBase):
 
         context['includes'] = []
         context['includes'].extend(self.svmod.include)
-        context['includes'].extend(config[f'{self.language}gen/include'])
+        context['includes'].extend(config[f'svgen/include'])
         context['includes'].append(self.srcdir)
         context['includes'].append(self.outdir)
 
@@ -344,6 +344,7 @@ class SimSocket(CosimBase):
 
     def setup(self):
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.loop = asyncio.get_event_loop()
 
         if os.path.exists("/tmp/socket_test.s"):
             os.remove("/tmp/socket_test.s")
@@ -382,22 +383,7 @@ class SimSocket(CosimBase):
                                    stdout=stdout,
                                    stderr=stdout,
                                    cwd=self.outdir)
-            time.sleep(0.1)
-            ret = self.cosim_pid.poll()
-            if ret is not None:
-                breakpoint()
-                sim_log().error(
-                    f"Cosimulator error: {ret}. Check log file {self.outdir}/log.log"
-                )
-                raise CosimulatorStartError
-            else:
-                sim_log().info(f"Cosimulator started")
 
-        self.loop = asyncio.get_event_loop()
-
-        sim_log().info(f'Waiting on {self.sock.getsockname()}')
-
-        if self.cosim_pid:
             ret = None
             while ret is None:
                 try:
@@ -406,10 +392,12 @@ class SimSocket(CosimBase):
                 except socket.timeout:
                     ret = self.cosim_pid.poll()
                     if ret is not None:
-                        sim_log().error(f"Cosimulator error: {ret}")
-                        raise Exception
+                        sim_log().error(
+                            f'Cosimulator error: {ret}. Check log File "{self.outdir}/log.log"'
+                        )
+                        raise CosimulatorStartError
         else:
-            sim_log().debug("Wait for connection")
+            sim_log().info(f'Waiting on {self.sock.getsockname()} for connection')
             conn, addr = self.sock.accept()
 
         msg = conn.recv(1024)

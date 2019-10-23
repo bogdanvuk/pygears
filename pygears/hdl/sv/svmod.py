@@ -1,5 +1,6 @@
 import fnmatch
 import functools
+import os
 from collections import OrderedDict
 
 from pygears import registry, safe_bind
@@ -42,9 +43,85 @@ class SVModuleInst(HDLModuleInst):
 
         return self_traced or children_traced
 
+    @property
+    def non_sv_impl(self):
+        if not super().impl_path:
+            return False
+
+        splitext = os.path.splitext(super().impl_path)
+        if not splitext or not splitext[1]:
+            return False
+
+        return splitext[1] != '.sv'
+
+    def get_module(self, template_env):
+        if self.non_sv_impl:
+            return self.get_impl_wrap(template_env)
+        else:
+            return super().get_module(template_env)
+
+    @property
+    def module_name(self):
+        module_name = super().module_name
+
+        if self.non_sv_impl:
+            return f'{module_name}_sv'
+
+        return module_name
+
+    @property
+    def impl_path(self):
+        if self.non_sv_impl:
+            return None
+        else:
+            return super().impl_path
+
+    @property
+    def files(self):
+        if self.non_sv_impl:
+            return super().files + [super().impl_path]
+        else:
+            return super().files
+
+    @property
+    def file_name(self):
+        if self.non_sv_impl:
+            return f'{self.module_name}.sv'
+        else:
+            return super().file_name
+
+    def get_impl_wrap(self, template_env):
+        intfs = list(self.port_configs)
+
+        port_map = {}
+        for i in intfs:
+            name = i['name']
+            port_map[f'{name}_data'] = f'{name}.data'
+            port_map[f'{name}_valid'] = f'{name}.valid'
+            port_map[f'{name}_ready'] = f'{name}.ready'
+
+        context = {
+            'wrap_module_name': self.module_name,
+            'module_name': self.module_basename,
+            'inst_name': f'{self.module_basename}_i',
+            'intfs': list(self.port_configs),
+            'sigs': self.node.params['signals'],
+            'param_map': self.params,
+            'port_map': port_map
+        }
+
+        return template_env.render_local(__file__, "impl_wrap.j2", context)
+
+    @property
+    def is_generated(self):
+        return super().is_generated or self.non_sv_impl
+
     @functools.lru_cache()
     def impl_parse(self):
         if self.impl_path:
+            if self.non_sv_impl:
+                return
+
             with open(self.impl_path, 'r') as f:
                 return parse(f.read())
         else:

@@ -12,7 +12,7 @@ def test_float():
     t_b = Fixp[3, 4]
 
     assert (t_a.decode(7) == t_a(3.5))
-    assert (t_b.decode(-9) == t_b(-4.5))
+    assert (t_b.decode(-8) == t_b(-4.0))
 
 
 def test_unsigned_add():
@@ -27,25 +27,25 @@ def test_unsigned_add():
 
 
 def test_signed_add():
-    t_a = Fixp[2, 3]
-    t_b = Fixp[3, 4]
+    t_a = Fixp[3, 4]
+    t_b = Fixp[4, 5]
 
-    assert (t_a + t_b == Fixp[4, 5])
+    assert (t_a + t_b == Fixp[5, 6])
 
     a = t_a(-2.5)
     b = t_b(-4.5)
-    assert a + b == Fixp[4, 5](-7.0)
+    assert a + b == Fixp[5, 6](-7.0)
 
 
 def test_signed_sub():
-    t_a = Fixp[2, 3]
-    t_b = Fixp[3, 4]
+    t_a = Fixp[3, 4]
+    t_b = Fixp[4, 5]
 
-    assert (t_a - t_b == Fixp[4, 5])
+    assert (t_a - t_b == Fixp[5, 6])
 
     a = t_a(-2.5)
     b = t_b(-4.5)
-    assert a - b == Fixp[4, 5](2.0)
+    assert a - b == Fixp[5, 6](2.0)
 
 
 def test_unsigned_fdiv():
@@ -168,4 +168,4 @@ def test_mul_integer():
 def test_mul_int():
     a = Ufixp[8, 16](4.0)
 
-    assert type(2 * a) == Fixp[10, 18]
+    assert type(2 * a) == Fixp[11, 19]

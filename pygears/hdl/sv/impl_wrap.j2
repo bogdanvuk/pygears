@@ -1,0 +1,7 @@
+{%- import 'snippet.j2' as snippet -%}
+
+{% call snippet.gear_module(wrap_module_name, intfs, comment) %}
+
+{{snippet.module_inst(module_name, param_map, inst_name, port_map)|indent(4, True)}}
+
+{% endcall %}

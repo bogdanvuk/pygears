@@ -26,7 +26,7 @@ def get_literal_type(val):
             f"Value {val} not supported for const module")
 
 
-@gear(hdl={'hdl_fn': 'sustain'})
+@gear(hdl={'impl': 'sustain'})
 async def const(*, val, tout=b'get_literal_type(val)') -> b'tout':
     yield tout(val)
 
@@ -39,7 +39,7 @@ async def once(*, val, tout=b'get_literal_type(val)') -> b'tout':
         pass
 
 
-@gear(hdl={'hdl_fn': 'sustain_ping'})
+@gear(hdl={'impl': 'sustain_ping'})
 async def const_ping(ping, *, val, tout=b'get_literal_type(val)') -> b'tout':
     async with ping:
         yield tout(val)

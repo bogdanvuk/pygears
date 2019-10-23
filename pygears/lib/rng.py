@@ -48,7 +48,7 @@ async def py_rng(cfg: TCfg, *, cnt_steps=False,
                 yield data, last
 
 
-@gear(hdl={'hdl_fn': 'rng'})
+@gear(hdl={'impl': 'rng'})
 async def sv_rng(cfg: TCfg,
                  *,
                  signed=b'typeof(cfg[0], Int)',

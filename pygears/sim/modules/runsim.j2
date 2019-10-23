@@ -127,7 +127,8 @@ elif [ $simulator == "xsim" ]; then
         {% for f in files %}
             {{ switch_lookup[f.rpartition('.')[-1]] }} {{ f }} \
         {% endfor %}
-            -svlog {{top_name}}.sv
+            -svlog {{top_name}}.sv \
+            --log log.log
      fi
 
      if [ "$gui" == "" ]; then
