@@ -1,4 +1,4 @@
-module sustain_ping
+module fix
   #(
     parameter TOUT = 0,
     parameter VAL = 0
@@ -7,12 +7,12 @@ module sustain_ping
     input clk,
     input rst,
 
-	  dti.consumer ping,
+	  dti.consumer din,
 	  dti.producer dout
     );
 
-   assign ping.ready = dout.ready;
-   assign dout.valid = ping.valid;
+   assign din.ready = dout.ready;
+   assign dout.valid = din.valid;
    assign dout.data = TOUT'(VAL);
 
 endmodule

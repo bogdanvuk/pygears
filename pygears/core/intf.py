@@ -64,6 +64,12 @@ class Intf:
         return iout.__matmul__(self)
 
     def __or__(self, other):
+        if isinstance(other, Intf):
+            raise Exception(
+                f'Cannot connect interface {self} to the interface {other}\n'
+                f'Did you mean to connect to "{other.producer.gear.name}"?'
+            )
+
         if not isinstance(other, (str, TypingMeta)):
             return other.__ror__(self)
 

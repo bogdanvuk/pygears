@@ -39,7 +39,7 @@ async def once(*, val, tout=b'get_literal_type(val)') -> b'tout':
         pass
 
 
-@gear(hdl={'impl': 'sustain_ping'})
-async def const_ping(ping, *, val, tout=b'get_literal_type(val)') -> b'tout':
-    async with ping:
+@gear
+async def fix(din, *, val, tout=b'get_literal_type(val)') -> b'tout':
+    async with din:
         yield tout(val)

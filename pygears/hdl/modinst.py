@@ -170,6 +170,18 @@ class HDLModuleInst:
         return self._impl_parse
 
     @property
+    def impl_intfs(self):
+        parse_res = self.impl_parse()
+        if parse_res:
+            intfs = {}
+            for i in parse_res[2]:
+                intfs[i['name']] = i
+
+            return intfs
+
+        return None
+
+    @property
     def params(self):
         if not self.is_generated:
             params = {}
@@ -204,11 +216,28 @@ class HDLModuleInst:
 
     @property
     def port_configs(self):
+        intf_names = []
+        if not self.is_generated:
+            intfs = self.impl_intfs
+            if intfs:
+                intf_names = list(intfs.keys())
+
         for p in self.node.in_ports:
+            if p.basename in intf_names:
+                intf_names.remove(p.basename)
+
             yield get_port_config('consumer', type_=p.dtype, name=p.basename)
 
         for p in self.node.out_ports:
+            if p.basename in intf_names:
+                intf_names.remove(p.basename)
+
             yield get_port_config('producer', type_=p.dtype, name=p.basename)
+
+        if intf_names:
+            raise Exception(
+                f'Port(s) {intf_names} not specified in the definition of the module "{self.node.name}"'
+            )
 
     @property
     def module_context(self):

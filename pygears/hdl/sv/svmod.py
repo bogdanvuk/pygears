@@ -119,14 +119,15 @@ class SVModuleInst(HDLModuleInst):
     @functools.lru_cache()
     def impl_parse(self):
         if self.impl_path:
-            if self.non_sv_impl:
-                return
-
             with open(self.impl_path, 'r') as f:
                 return parse(f.read())
-        else:
-            svgen_log().warning(
-                f'SystemVerilog file not found for {self.node.name}')
+
+        if self.non_sv_impl:
+            return None
+
+        breakpoint()
+        svgen_log().warning(
+            f'SystemVerilog file not found for {self.node.name}')
 
     def get_synth_wrap(self, template_env):
         context = {

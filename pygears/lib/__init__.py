@@ -14,7 +14,7 @@ from .quenvelope import quenvelope
 from .sieve import sieve
 from .fmap import fmap
 from .permute import permuted_apply
-from .const import const, const_ping, once
+from .const import const, fix, once
 from .rom import rom
 from .operators import (add, div, eq, ge, gt, invert, le, lt, mod, mul, ne,
                         neg, sub, shl, shr, xor)
@@ -69,7 +69,7 @@ __all__ = [
     'project', 'fifo', 'factor', 'fill', 'mux_zip', 'demux_zip', 'demux_ctrl',
     'data_dly', 'union_sync', 'union_collapse', 'ucase', 'filt', 'buff',
     'local_rst', 'queue_wrap_from', 'demux_by', 'mux_by', 'align',
-    'cart_sync_with', 'when', 'union_sync_with', 'case', 'const_ping', 'xor',
+    'cart_sync_with', 'when', 'union_sync_with', 'case', 'fix', 'xor',
     'rng', 'priority_mux', 'qcnt', 'sdp', 'chop', 'qinterlace', 'replicate',
     'qdeal', 'clip', 'din_cat', 'take', 'release_after_eot', 'reverse',
     'form_sub_cfg', 'reduce2', 'group', 'repack', 'priority_mux_valve', 'max2',
