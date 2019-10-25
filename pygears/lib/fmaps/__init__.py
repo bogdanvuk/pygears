@@ -1,6 +1,6 @@
-from .queue import fmap as queue_fmap
-from .tuple import fmap as tuple_fmap
-from .union import fmap as union_fmap
-from .array import fmap as array_fmap
+from .queue import queuemap
+from .tuple import tuplemap
+from .union import unionmap
+from .array import arraymap
 
-__all__ = ['queue_fmap', 'tuple_fmap', 'union_fmap', 'array_fmap']
+__all__ = ['queuemap', 'tuplemap', 'unionmap', 'arraymap']

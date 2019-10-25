@@ -23,7 +23,7 @@ def tuplemap_check(dtype, f):
 
 @alternative(common_fmap)
 @gear(enablement=b'tuplemap_check(din, f)')
-def fmap(din: Tuple, *, f, lvl=1, fcat=ccat, balance=None):
+def tuplemap(din: Tuple, *, f, lvl=1, fcat=ccat, balance=None):
     lvl -= 1
 
     dout = []

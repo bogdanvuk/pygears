@@ -6,7 +6,7 @@ from pygears.lib import fmap as common_fmap
 
 @alternative(common_fmap)
 @gear(enablement=b'issubclass(din, Queue)')
-def fmap(din, *, f, lvl=1, fcat=czip, balance=None, common_balance=True):
+def queuemap(din, *, f, lvl=1, fcat=czip, balance=None, common_balance=True):
     queue_lvl = din.dtype.lvl
     fmap_lvl = min(lvl, queue_lvl)
     lvl -= fmap_lvl

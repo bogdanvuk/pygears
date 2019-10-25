@@ -59,23 +59,24 @@ from .funclut import funclut
 from .rounding import truncate, round_half_up, round_to_zero, round_to_even
 from .scope import scope
 
-import pygears.lib.fmaps
+from pygears.lib.fmaps import unionmap, queuemap, tuplemap, arraymap
 import pygears.lib.hls
 
 __all__ = [
     'expand', 'czip', 'ccat', 'cart', 'cast', 'quenvelope', 'zip_sync',
-    'sieve', 'flatten', 'fmap', 'permuted_apply', 'const', 'once', 'mux',
-    'demux', 'shred', 'cart_sync', 'decouple', 'dreg', 'unzip', 'serialize',
-    'project', 'fifo', 'factor', 'fill', 'mux_zip', 'demux_zip', 'demux_ctrl',
-    'data_dly', 'union_sync', 'union_collapse', 'ucase', 'filt', 'buff',
-    'local_rst', 'queue_wrap_from', 'demux_by', 'mux_by', 'align',
-    'cart_sync_with', 'when', 'union_sync_with', 'case', 'fix', 'xor',
-    'rng', 'priority_mux', 'qcnt', 'sdp', 'chop', 'qinterlace', 'replicate',
-    'qdeal', 'clip', 'din_cat', 'take', 'release_after_eot', 'reverse',
-    'form_sub_cfg', 'reduce2', 'group', 'repack', 'priority_mux_valve', 'max2',
-    'unary', 'alternate_queues', 'delay', 'delay_rng', 'directed', 'verif',
-    'collect', 'rom', 'drv', 'check', 'mon', 'reduce', 'accum', 'pipe',
-    'funclut', 'truncate', 'round_half_up', 'round_to_zero', 'round_to_even',
-    'add', 'div', 'eq', 'ge', 'gt', 'invert', 'iceil', 'le', 'lt', 'mod',
-    'mul', 'ne', 'neg', 'sub', 'shl', 'shr', 'xor', 'scoreboard', 'scope'
+    'sieve', 'flatten', 'fmap', 'unionmap', 'queuemap', 'tuplemap', 'arraymap',
+    'permuted_apply', 'const', 'once', 'mux', 'demux', 'shred', 'cart_sync',
+    'decouple', 'dreg', 'unzip', 'serialize', 'project', 'fifo', 'factor',
+    'fill', 'mux_zip', 'demux_zip', 'demux_ctrl', 'data_dly', 'union_sync',
+    'union_collapse', 'ucase', 'filt', 'buff', 'local_rst', 'queue_wrap_from',
+    'demux_by', 'mux_by', 'align', 'cart_sync_with', 'when', 'union_sync_with',
+    'case', 'fix', 'xor', 'rng', 'priority_mux', 'qcnt', 'sdp', 'chop',
+    'qinterlace', 'replicate', 'qdeal', 'clip', 'din_cat', 'take',
+    'release_after_eot', 'reverse', 'form_sub_cfg', 'reduce2', 'group',
+    'repack', 'priority_mux_valve', 'max2', 'unary', 'alternate_queues',
+    'delay', 'delay_rng', 'directed', 'verif', 'collect', 'rom', 'drv',
+    'check', 'mon', 'reduce', 'accum', 'pipe', 'funclut', 'truncate',
+    'round_half_up', 'round_to_zero', 'round_to_even', 'add', 'div', 'eq',
+    'ge', 'gt', 'invert', 'iceil', 'le', 'lt', 'mod', 'mul', 'ne', 'neg',
+    'sub', 'shl', 'shr', 'xor', 'scoreboard', 'scope'
 ]
