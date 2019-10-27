@@ -125,7 +125,6 @@ class SVModuleInst(HDLModuleInst):
         if self.non_sv_impl:
             return None
 
-        breakpoint()
         svgen_log().warning(
             f'SystemVerilog file not found for {self.node.name}')
 

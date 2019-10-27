@@ -216,7 +216,6 @@ class IntegerType(IntegralType):
 def check_width(val, width):
     if ((bitw(val) > width) and (val != 0)):
         from pygears.conf import typing_log
-        breakpoint()
 
         typing_log().warning(
             f'Value overflow - value {val} cannot be represented with {width} bits'

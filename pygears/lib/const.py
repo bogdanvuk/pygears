@@ -1,4 +1,4 @@
-from pygears import gear
+from pygears import gear, GearDone
 from pygears.core.gear import GearTypeNotSpecified
 from pygears.typing import Int, Tuple, Uint, bitw
 from pygears.typing.base import TypingMeta
@@ -36,7 +36,7 @@ async def once(*, val, tout=b'get_literal_type(val)') -> b'tout':
     yield tout(val)
 
     while True:
-        pass
+        raise GearDone
 
 
 @gear
