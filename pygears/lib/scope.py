@@ -10,7 +10,7 @@ import os
 import queue
 import pickle
 from functools import partial
-from pygears.typing import Array, typeof
+from pygears.typing import Array, typeof, Queue
 from pygears import gear, module, GearDone, config, registry
 from pygears.sim import timestep, clk
 
@@ -18,6 +18,12 @@ import multiprocessing
 
 suffix = ["G", "M", "k", "", "m", "u", "n", "p"]
 decades = [1e9, 1e6, 1e3, 1e0, 1e-3, 1e-6, 1e-9, 1e-12]
+
+colors = {
+    'line': "#355c7d",
+    'handshake': "#c06c84",
+    'eot': "#f67280",
+}
 
 
 def t_fmt(t, posp, positions):
@@ -49,7 +55,13 @@ def create_plot(title, method, clk_freq):
     if title:
         plt.title(title)
 
-    line = [getattr(ax, m)([], [], lw=2)[0] for m in method]
+    line = []
+    for m in method:
+        kwds = {'linewidth': 2, 'color': colors['line']}
+        if m == 'step':
+            kwds['where'] = 'post'
+
+        line.append(getattr(ax, m)([], [], **kwds)[0])
 
     ax.grid()
     ax.set_xlim(0, 1 / clk_freq)
@@ -102,7 +114,7 @@ def plot_process(method, qin, clk_freq, title=None, scale=None):
                     done.append(True)
                     break
 
-                ch, t, y = res
+                ch, t, y, _ = res
 
                 if scale:
                     y *= scale[ch]
@@ -156,7 +168,7 @@ def plot_process(method, qin, clk_freq, title=None, scale=None):
     plt.show()
 
 
-def plot_live(method, clk_freq, title, scale):
+def plot_live(method, clk_freq, title, scale, transaction):
     qin = multiprocessing.Queue(maxsize=10000)
 
     _proc = multiprocessing.context.Process(target=plot_process,
@@ -179,17 +191,22 @@ def plot_live(method, clk_freq, title, scale):
         qin.put(None)
 
 
-def plot_dump(files, method, clk_freq, title, scale):
+def plot_dump(files, method, clk_freq, title, scale, transaction):
     fig, ax, line = create_plot(title, method, clk_freq)
 
     chnum = len(method)
 
     xdata = [[] for _ in range(chnum)]
     ydata = [[] for _ in range(chnum)]
+    eots = [[] for _ in range(chnum)]
 
+    from matplotlib import patches
     try:
         while True:
-            ch, t, val = yield None
+            ch, t, val, eot = yield None
+            if eot:
+                eots[ch].append(t)
+
             xdata[ch].append(t)
             ydata[ch].append(val)
     except GeneratorExit:
@@ -197,10 +214,44 @@ def plot_dump(files, method, clk_freq, title, scale):
 
     ax.set_autoscale_on(True)
     for i in range(chnum):
+        ymax = max(ydata[i])
+
+        if transaction:
+            for t in xdata[i]:
+                rect = patches.Rectangle((t, t + 1 / clk_freq),
+                                         1 / clk_freq,
+                                         ymax,
+                                         color=colors['handshake'],
+                                         fill=True,
+                                         alpha=0.13)
+
+                ax.add_patch(rect)
+
+            for t in eots[i]:
+                rect = patches.Rectangle((t, t + 1 / clk_freq),
+                                         1 / clk_freq,
+                                         ymax,
+                                         color=colors['eot'],
+                                         fill=True,
+                                         alpha=0.5)
+
+                ax.add_patch(rect)
+
+        ydata[i].append(ydata[i][-1])
+        xdata[i].append(xdata[i][-1] + 1 / clk_freq)
         line[i].set_data(xdata[i], ydata[i])
 
     ax.relim()
     ax.autoscale_view(True, True, True)
+    # plt.axhline(xmin=0.1, xmax=0.2, linewidth=8, color='#d62728')
+    # plt.hlines(y=0.5, xmin=0.0, xmax=0.02, linewidth=8, color='#d62728', solid_capstyle='round')
+    # plt.fill_between([0, 0.02], [10, 10])
+
+    # Add the patch to the Axes
+    # plt.bar([0, 0.02], [0, 0], linewidth=8, color='#d62728', solid_capstyle='round', alpha=0.5)
+    # plt.axvspan(0, 0.02, facecolor='#3cb03c', alpha=0.3)
+    # plt.axvspan(0.02, 0.04, facecolor='#0c600c', alpha=0.35)
+    # ax.axhline(linewidth=8, color='#d62728')
     fig.canvas.draw()
 
     for f in files.split(','):
@@ -221,7 +272,8 @@ async def scope(*xs,
                 scale=None,
                 method=None,
                 live=True,
-                dump=None):
+                dump=None,
+                transaction=False):
     if clk_freq is None:
         clk_freq = config['sim/clk_freq']
 
@@ -236,13 +288,19 @@ async def scope(*xs,
 
     backends = []
 
+    kwds = {
+        'method': method,
+        'clk_freq': clk_freq * parallel_steps,
+        'title': title,
+        'scale': scale,
+        'transaction': transaction
+    }
+
     if live:
-        backends.append(
-            plot_live(method, clk_freq * parallel_steps, title, scale))
+        backends.append(plot_live(**kwds))
 
     if dump:
-        backends.append(
-            plot_dump(dump, method, clk_freq * parallel_steps, title, scale))
+        backends.append(plot_dump(dump, **kwds))
 
     for b in backends:
         b.send(None)
@@ -257,12 +315,17 @@ async def scope(*xs,
                     continue
 
                 async with x as x_data:
+                    if isinstance(x_data, Queue):
+                        x_data, eot = x_data
+                    else:
+                        eot = 0
+
                     if not isinstance(x_data, Array):
                         x_data = [x_data]
 
                     for i, v in enumerate(x_data):
                         point = (ch, (timestep() + i / len(x_data)) / clk_freq,
-                                 float(v))
+                                 float(v), eot)
 
                         for b in backends:
                             b.send(point)

@@ -2,7 +2,7 @@ import json
 from pygears import bind, PluginBase, safe_bind, config
 from pygears.core.port import OutPort
 from pygears.sim import timestep
-from pygears.typing import typeof, TLM
+from pygears.typing import typeof, TLM, Queue
 from .vcd import VCDTypeVisitor, VCDValVisitor, is_trace_included
 from pygears.core.hier_node import HierVisitorBase
 from .sim_extend import SimExtend
@@ -138,7 +138,7 @@ class WaveJSONWriter:
         else:
             self.values[sig][timestep] = WaveValue(3, None)
 
-    def json(self):
+    def json(self, vcd_vars):
         if timestep() is None:
             return {}
 
@@ -165,36 +165,49 @@ class WaveJSONWriter:
                 'tock': 0
             },
         }
-        for s in self.signals:
-            vals = self.values[s]
+        for _, wintfs in vcd_vars.items():
+            for w in wintfs:
+                for name, s in w.waves.items():
 
-            js_sig = {'name': s.name, 'wave': '', 'data': []}
-            state = None
-            for t in range(timestep() + 1):
-                if t in vals:
-                    val = vals[t]
-                    if val.state == 1:
-                        js_sig['wave'] += '4'
-                    else:
-                        js_sig['wave'] += '5'
+                    # for s in self.signals:
+                    vals = self.values[s]
 
-                    state = val.state
-                    if val.val is not None:
-                        js_sig['data'].append(str(val.val))
-                    else:
-                        js_sig['data'].append(js_sig['data'][-1])
+                    eot = 0
+                    js_sig = {'name': s.name, 'wave': '', 'data': []}
+                    state = None
+                    for t in range(timestep() + 1):
+                        if t in vals:
+                            if typeof(w.dtype, Queue):
+                                if self.values[w.waves['eot']][t].val:
+                                    eot = 1
+                                elif self.values[w.waves['eot']][t].val == 0:
+                                    eot = 0
 
-                elif state == 3:
-                    state = 0
-                    js_sig['wave'] += 'z'
-                elif state is None:
-                    state = 0
-                    js_sig['wave'] += 'z'
-                else:
-                    js_sig['wave'] += '.'
+                            val = vals[t]
+                            if val.state == 1:
+                                js_sig['wave'] += '4'
+                            elif eot:
+                                js_sig['wave'] += '3'
+                            else:
+                                js_sig['wave'] += '5'
 
-            scope = get_sig_scope(data['signal'], s.scope)
-            scope.append(js_sig)
+                            state = val.state
+                            if val.val is not None:
+                                js_sig['data'].append(str(val.val))
+                            else:
+                                js_sig['data'].append(js_sig['data'][-1])
+
+                        elif state == 3:
+                            state = 0
+                            js_sig['wave'] += 'z'
+                        elif state is None:
+                            state = 0
+                            js_sig['wave'] += 'z'
+                        else:
+                            js_sig['wave'] += '.'
+
+                    scope = get_sig_scope(data['signal'], s.scope)
+                    scope.append(js_sig)
 
         return data
 
@@ -269,7 +282,7 @@ class WaveJSON(SimExtend):
     def finish(self):
         if not self.finished:
             with open(self.trace_fn, 'w') as f:
-                data = self.writer.json()
+                data = self.writer.json(self.vcd_vars)
                 json.dump(data, f)
 
             self.finished = True
