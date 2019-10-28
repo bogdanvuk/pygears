@@ -13,7 +13,9 @@ module {{wrap_module_name}}
 {{snippet.signal_intf_list(intfs)|indent(4, True)}}
 );
 
+/*verilator tracing_on*/
 {{snippet.intf_list_inst(intfs)|indent(4, True)}}
+/*verilator tracing_off*/
 
 {{snippet.signal_intf_connect(intfs)|indent(4, True)}}
 
