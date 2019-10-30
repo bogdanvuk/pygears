@@ -215,27 +215,37 @@ def plot_dump(files, method, clk_freq, title, scale, transaction):
     ax.set_autoscale_on(True)
     for i in range(chnum):
         ymax = max(ydata[i])
+        ymin = min(ydata[i])
+
+        def handshake(x1, x2, color, alpha):
+            rect = patches.Rectangle((x1, ymin),
+                                     x2 - x1,
+                                     ymax - ymin,
+                                     color=color,
+                                     fill=True,
+                                     alpha=alpha)
+            ax.add_patch(rect)
 
         if transaction:
-            for t in xdata[i]:
-                rect = patches.Rectangle((t, t + 1 / clk_freq),
-                                         1 / clk_freq,
-                                         ymax,
-                                         color=colors['handshake'],
-                                         fill=True,
-                                         alpha=0.13)
+            next_t = None
+            rect_start_t = None
 
-                ax.add_patch(rect)
+            for t in xdata[i]:
+                if rect_start_t is None:
+                    rect_start_t = t
+
+                if (next_t is not None and (t - next_t) > 1 / (2 * clk_freq)):
+                    handshake(rect_start_t, next_t, colors['handshake'], 0.13)
+                    rect_start_t = t
+
+                next_t = t + 1 / clk_freq
+
+            if (next_t is not None
+                    and (next_t - rect_start_t) > 1 / (2 * clk_freq)):
+                handshake(rect_start_t, next_t, colors['handshake'], 0.13)
 
             for t in eots[i]:
-                rect = patches.Rectangle((t, t + 1 / clk_freq),
-                                         1 / clk_freq,
-                                         ymax,
-                                         color=colors['eot'],
-                                         fill=True,
-                                         alpha=0.5)
-
-                ax.add_patch(rect)
+                handshake(t, t + 1 / clk_freq, colors['eot'], 0.5)
 
         ydata[i].append(ydata[i][-1])
         xdata[i].append(xdata[i][-1] + 1 / clk_freq)
@@ -255,12 +265,18 @@ def plot_dump(files, method, clk_freq, title, scale, transaction):
     fig.canvas.draw()
 
     for f in files.split(','):
+        if f == 'show':
+            continue
+
         os.makedirs(os.path.dirname(f), exist_ok=True)
         if os.path.splitext(f)[1] == '.pkl':
             with open(f, 'wb') as fid:
                 pickle.dump(fig, fid)
         else:
             fig.savefig(f)
+
+    if 'show' in files.split(','):
+        plt.show()
 
     plt.close(fig)
 
@@ -271,7 +287,7 @@ async def scope(*xs,
                 title=None,
                 scale=None,
                 method=None,
-                live=True,
+                live=None,
                 dump=None,
                 transaction=False):
     if clk_freq is None:
@@ -296,7 +312,7 @@ async def scope(*xs,
         'transaction': transaction
     }
 
-    if live:
+    if live or (live is None and dump is None):
         backends.append(plot_live(**kwds))
 
     if dump:

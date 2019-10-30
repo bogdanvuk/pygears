@@ -1,6 +1,5 @@
 import re
 import os
-import pexpect
 from pygears.hdl import hdlgen, list_hdl_files
 from pygears import registry
 
@@ -27,9 +26,11 @@ class Yosys:
         self.cmd_line = cmd_line
 
     def __enter__(self):
+        import pexpect
         self.proc = pexpect.spawnu(self.cmd_line)
         self.proc.expect(Yosys.PROMPT)
         self.proc.setecho(False)
+        self.EOF = pexpect.EOF
         return self
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
@@ -39,7 +40,7 @@ class Yosys:
         self.proc.sendline(cmd)
         try:
             self.proc.expect(Yosys.PROMPT, timeout=None)
-        except pexpect.EOF:
+        except self.EOF:
             print(self.proc.before)
             raise
 

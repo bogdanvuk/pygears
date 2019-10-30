@@ -45,7 +45,9 @@ class SVModuleInst(HDLModuleInst):
 
     @property
     def non_sv_impl(self):
-        if not super().impl_path:
+        return False
+
+        if super().is_generated:
             return False
 
         splitext = os.path.splitext(super().impl_path)
