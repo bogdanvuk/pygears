@@ -76,18 +76,18 @@ class UnionType(EnumerableGenericMeta):
     are defined in the :class:`Union` class.
     """
 
-    def __new__(cls, name, bases, namespace, args=[]):
-        cls = super().__new__(cls, name, bases, namespace, args)
+    # def __new__(cls, name, bases, namespace, args=[]):
+    #     cls = super().__new__(cls, name, bases, namespace, args)
 
-        args = cls.args
-        if not args:
-            return cls
-        elif len(args) == 0:
-            return Unit
-        elif len(args) == 1:
-            return args[0]
-        else:
-            return cls
+    #     args = cls.args
+    #     if not args:
+    #         return cls
+    #     elif len(args) == 0:
+    #         return Unit
+    #     elif len(args) == 1:
+    #         return args[0]
+    #     else:
+    #         return cls
 
     def __getitem__(self, parameters):
         if not self.specified:
@@ -145,20 +145,25 @@ class UnionType(EnumerableGenericMeta):
 
 
 class Union(tuple, metaclass=UnionType):
-    def __new__(cls, val, ctrl=None):
+    def __new__(cls, val=None, ctrl=None):
         if type(val) == cls:
             return val
 
         if not cls.specified:
             raise TemplatedTypeUnspecified
 
+        if val is None:
+            val = cls.types[0](val)
+            ctrl = 0
+
         if ctrl is None:
             val, ctrl = val
 
         subtype = cls.types[ctrl]
 
-        return super(Union, cls).__new__(
-            cls, (cls[0](int(subtype(val))), cls[1](ctrl)))
+        return super(Union,
+                     cls).__new__(cls,
+                                  (cls[0](int(subtype(val))), cls[1](ctrl)))
 
     def __int__(self):
         """Returns a packed integer representation of the :class:`Union` instance.
@@ -212,3 +217,16 @@ class Union(tuple, metaclass=UnionType):
         subtype = cls.types[ctrl]
 
         return cls(subtype.decode(data), cls[1].decode(ctrl))
+
+
+class MaybeCls(Union):
+    def __new__(cls, val=None, ctrl=None):
+        if val is None:
+            return super().__new__(cls)
+        elif val is not None and ctrl is None:
+            return super().__new__(cls, val=val, ctrl=1)
+        else:
+            return super().__new__(cls, val, ctrl)
+
+
+Maybe = MaybeCls[Unit, 'data']

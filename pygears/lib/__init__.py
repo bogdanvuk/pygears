@@ -1,3 +1,4 @@
+from .asyncreg import trigreg, sample, regmap
 from .expand import expand
 from .local_rst import local_rst
 from .factor import factor
@@ -50,7 +51,7 @@ from .priority_mux_valve import priority_mux_valve
 from .max_gears import max2
 from .unary import unary
 from .alternate_queues import alternate_queues
-from .delay import delay, delay_rng
+from .delay import delay, delay_rng, delay_gen
 from .pipe import pipe
 from .verif import directed, verif, drv, check, mon, scoreboard, collect
 from .reduce2 import reduce2
@@ -74,9 +75,9 @@ __all__ = [
     'qinterlace', 'replicate', 'qdeal', 'clip', 'din_cat', 'take',
     'release_after_eot', 'reverse', 'form_sub_cfg', 'reduce2', 'group',
     'repack', 'priority_mux_valve', 'max2', 'unary', 'alternate_queues',
-    'delay', 'delay_rng', 'directed', 'verif', 'collect', 'rom', 'drv',
-    'check', 'mon', 'reduce', 'accum', 'pipe', 'funclut', 'truncate',
+    'delay', 'delay_rng', 'delay_gen', 'directed', 'verif', 'collect', 'rom',
+    'drv', 'check', 'mon', 'reduce', 'accum', 'pipe', 'funclut', 'truncate',
     'round_half_up', 'round_to_zero', 'round_to_even', 'add', 'div', 'eq',
     'ge', 'gt', 'invert', 'iceil', 'le', 'lt', 'mod', 'mul', 'ne', 'neg',
-    'sub', 'shl', 'shr', 'xor', 'scoreboard', 'scope'
+    'sub', 'shl', 'shr', 'xor', 'scoreboard', 'scope', 'sample', 'trigreg', 'regmap'
 ]

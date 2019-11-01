@@ -7,7 +7,7 @@ from .base import TemplateArgumentsError, typeof, Any, is_type
 from .tuple import Tuple
 from .uint import Int, Uint, Integer, Bool, Integral
 from .unit import Unit
-from .union import Union
+from .union import Union, Maybe
 from .math import bitw, ceil_pow2, div, floor
 from .tlm import TLM
 from .flatten import flatten
@@ -19,9 +19,9 @@ from .float import Float
 
 __all__ = [
     'Bool', 'Queue', 'TemplateArgumentsError', 'Tuple', 'Int', 'Uint', 'Unit',
-    'Union', 'Array', 'Float', 'bitw', 'div', 'floor', 'typeof', 'Any', 'TLM',
-    'ceil_pow2', 'is_type', 'flatten', 'expand', 'factor', 'Ufixp', 'Fixp',
-    'Number', 'Fixpnumber', 'Integral'
+    'Union', 'Maybe', 'Array', 'Float', 'bitw', 'div', 'floor', 'typeof',
+    'Any', 'TLM', 'ceil_pow2', 'is_type', 'flatten', 'expand', 'factor',
+    'Ufixp', 'Fixp', 'Number', 'Fixpnumber', 'Integral'
 ]
 
 

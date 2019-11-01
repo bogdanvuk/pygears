@@ -13,8 +13,11 @@ async def delay_gen(din, *, f) -> b'din':
         f: iterable which specifies the delay values
     """
     async with din as item:
-        for i in range(next(f)):
-            await clk()
+        try:
+            for i in range(next(f)):
+                await clk()
+        except StopIteration:
+            pass
 
         yield item
 
