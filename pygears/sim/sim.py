@@ -221,7 +221,8 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             g.phase = 'forward'
             if g not in self.sim_map:
                 raise Exception(
-                    f'Gear {g.name} of type {g.definition.__name__} has no simulation model'
+                    f'Gear "{g.name}" of type "{g.definition.__name__}" has'
+                    f' no simulation model'
                 )
 
             self.sim_map[g].phase = 'forward'

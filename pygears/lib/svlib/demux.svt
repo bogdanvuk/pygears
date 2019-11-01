@@ -1,4 +1,5 @@
 {%- import 'snippet.j2' as snippet -%}
+{% set py = import_('builtins') %}
 {% call snippet.gear_module(module_name, intfs, comment) %}
 
     {{snippet.intf_typedef(_din, depth=0)}}
@@ -8,6 +9,7 @@
 {% endfor %}
 
 {%- set output_intfs = intfs|isoutput %}
+{%- set mapped_dout_num = py.max(params['mapping'].values()) + 1 %}
 
     always_comb
     begin
@@ -15,13 +17,17 @@
 
         if (din.valid) begin
             case(din_s.ctrl)
-{% for key, iout in params['_full_mapping'].items() %}
+{% for key, iout in params['mapping'].items() %}
                 {{key}} : begin
                     din.ready = {{output_intfs[iout]['name']}}.ready;
                 end
 {% endfor %}
                 default: begin
+{% if len(_din_t.types) > mapped_dout_num %}
+                    din.ready = {{output_intfs[-1]['name']}}.ready;
+{% else %}
                     din.ready = 1'bx;
+{% endif %}
                 end
             endcase
         end
@@ -35,7 +41,7 @@
 
         if (din.valid) begin
             case(din_s.ctrl)
-{% for key, iout in params['_full_mapping'].items() %}
+{% for key, iout in params['mapping'].items() %}
                 {{key}} : begin
                     {{output_intfs[iout]['name']}}.valid = din.valid;
                 end
@@ -44,6 +50,9 @@
 {% for i in (intfs|isoutput) %}
                     {{i['name']}}.valid = 1'bx;
 {% endfor %}
+{% if len(_din_t.types) > mapped_dout_num %}
+                    {{output_intfs[-1]['name']}}.valid = 1;
+{% endif %}
                 end
             endcase
         end

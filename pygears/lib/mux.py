@@ -25,11 +25,11 @@ def dflt_map(dtypes):
 
 # @gear(svgen={'compile': True})
 @gear(enablement=b'len(din) >= 2')
-async def mux(ctrl: Uint,
-              *din,
-              mapping=b'dflt_map(din)',
-              _full_mapping=b'full_mapping(din, mapping)'
-              ) -> b'mux_type(din, _full_mapping)':
+async def mux(
+        ctrl: Uint,
+        *din,
+        mapping=b'dflt_map(din)',
+        _full_mapping=b'full_mapping(din, mapping)') -> b'mux_type(din, _full_mapping)':
     async with ctrl as c:
         c_map = _full_mapping[c]
 
@@ -43,11 +43,9 @@ async def mux(ctrl: Uint,
 
 
 @gear
-async def mux_zip(ctrl,
-                  *din,
-                  mapping=b'dflt_map(din)',
-                  _full_mapping=b'full_mapping(din, mapping)'
-                  ) -> b'mux_type(din, _full_mapping)':
+async def mux_zip(
+        ctrl, *din, mapping=b'dflt_map(din)',
+        _full_mapping=b'full_mapping(din, mapping)') -> b'mux_type(din, _full_mapping)':
     async with ctrl as c:
         c_map = _full_mapping[c]
 
@@ -58,13 +56,14 @@ async def mux_zip(ctrl,
 
 @alternative(mux)
 @datagear
-def mux_valve(din: Tuple[{
-        'ctrl': Uint,
-        'data': Any
-}],
-              *,
-              mapping=b'dflt_map(din["data"])',
-              _full_mapping=b'full_mapping(din["data"], mapping)'
-              ) -> b'mux_type(din["data"], _full_mapping)':
+def mux_valve(
+        din: Tuple[{
+            'ctrl': Uint,
+            'data': Any
+        }],
+        *,
+        mapping=b'dflt_map(din["data"])',
+        _full_mapping=b'full_mapping(din["data"], mapping)'
+) -> b'mux_type(din["data"], _full_mapping)':
     c_map = _full_mapping[din['ctrl']]
     return (din['data'][c_map], c_map)

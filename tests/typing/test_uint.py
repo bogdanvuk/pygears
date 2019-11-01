@@ -1,4 +1,4 @@
-from pygears.typing import Int, Integer, Uint, Unit, Bool
+from pygears.typing import Int, Integer, Uint, Unit, Bool, typeof
 
 
 def test_autowidth():
@@ -42,3 +42,6 @@ def test_bool():
     assert Bool(2) == Uint[1](1)
     assert Bool(0) == Uint[1](0)
     assert type(Bool(0)) == Uint[1]
+
+
+print(Uint[8].fields)

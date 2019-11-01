@@ -1,13 +1,21 @@
 {%- import 'snippet.j2' as snippet -%}
+{% set typeof = import_from('pygears.typing', 'typeof') %}
+
 {% call snippet.data_func_gear(module_name, intfs, comment) %}
 
     always @*
     begin
         case( din_s.ctrl )
+
 {% for key, iout in params['_full_mapping'].items() %}
 {% set i = _din_t["data"][key] %}
             {{key}} : begin
+
+  {% if typeof(_din_t['data'], Tuple) %}
                 dout_s.data[{{int(i) - 1}}:0] = din_s.data.{{_din_t["data"].fields[key]}};
+  {% else %}
+                dout_s.data[{{int(i) - 1}}:0] = din_s.data[{{key}}];
+  {% endif %}
             end
 {% endfor %}
             default: begin
@@ -19,3 +27,4 @@
     assign dout_s.ctrl = din_s.ctrl;
 
 {% endcall %}
+

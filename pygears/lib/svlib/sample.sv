@@ -33,7 +33,7 @@ module sample #(
          if (INIT_VALID)
            din_reg <= INIT;
 
-      end else if (handshake || !dout.valid) begin
+      end else if (handshake || !din_reg_valid) begin
          if (din.valid || (HOLD == 0)) begin
             din_reg <= din.data;
          end

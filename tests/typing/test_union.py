@@ -9,7 +9,6 @@ def test_inheritance():
 
 def test_equality():
     assert Union[1] == Union[1]
-    assert Union[1] == 1
     assert Union[1, 2] != Union[1, 3]
     assert Union[1, 2] != Union[1, 2, 3]
 
@@ -62,11 +61,6 @@ def test_indexing():
     a = Union[Uint[1], Uint[2], Uint[3]]
     assert a[0] == Uint[3]
     assert a[1] == Uint[2]
-
-
-def test_unit():
-    a = Union[Unit]
-    assert a == Unit
 
 
 def test_decode_int():

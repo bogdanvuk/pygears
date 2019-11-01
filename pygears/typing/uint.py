@@ -218,8 +218,7 @@ def check_width(val, width):
         from pygears.conf import typing_log
 
         typing_log().warning(
-            f'Value overflow - value {val} cannot be represented with {width} bits'
-        )
+            f'Value overflow - value {val} cannot be represented with {width} bits')
 
 
 class Integer(Integral, metaclass=IntegerType):
@@ -238,9 +237,7 @@ class Integer(Integral, metaclass=IntegerType):
             res = cls[bitw(val)](int(val))
         else:
             if typeof(cls, Uint):
-                res = super(Integer,
-                            cls).__new__(cls,
-                                         int(val) & ((1 << len(cls)) - 1))
+                res = super(Integer, cls).__new__(cls, int(val) & ((1 << len(cls)) - 1))
             else:
                 res = super(Integer, cls).__new__(cls, val)
 
@@ -337,8 +334,7 @@ class Integer(Integral, metaclass=IntegerType):
                 if stop <= start:
                     part = Unit()
                 else:
-                    part = Uint[stop - start]((int(self)
-                                               & ((1 << stop) - 1)) >> start)
+                    part = Uint[stop - start]((int(self) & ((1 << stop) - 1)) >> start)
 
             elif i < self.width:
                 part = Bool(int(self) & (1 << i))
@@ -529,14 +525,17 @@ class Uint(Integer, metaclass=UintType):
             return super().__sub__(other)
 
     def __matmul__(self, other):
+        if not is_type(type(other)):
+            raise TypeError(
+                f"unsupported operand type(s) for @: '{type(self)}' and '{type(other)}'")
+
         if isinstance(other, Unit):
             return self
 
         if not isinstance(other, Uint):
             other = Uint(other)
 
-        return Uint[self.width + other.width]((int(self) << other.width) +
-                                              int(other))
+        return Uint[self.width + other.width]((int(self) << other.width) + int(other))
 
     def __rmatmul__(self, other):
         if isinstance(other, bool):
@@ -551,6 +550,7 @@ class Uint(Integer, metaclass=UintType):
 class BoolMeta(UintType):
     def __new__(cls, name, bases, namespace, args=[]):
         spec_cls = super().__new__(cls, name, bases, namespace, args=[1])
+        spec_cls._base = Uint
         return spec_cls
 
     def copy(self):
@@ -559,7 +559,4 @@ class BoolMeta(UintType):
 
 class Bool(Uint, metaclass=BoolMeta):
     def __new__(cls, val):
-        return Uint[1](bool(val))
-
-
-# Bool = Uint[1]
+        return int.__new__(cls, bool(val))

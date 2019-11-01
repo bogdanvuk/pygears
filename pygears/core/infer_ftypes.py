@@ -140,7 +140,7 @@ def infer_ftypes(params, args, namespace={}, allow_incomplete=False):
 
                 except Exception as e:
                     if final_check:
-                        err = type(e)(f'{str(e)}\n - when resolving '
+                        err = type(e)(f'{e.args[0]}\n - when resolving '
                                       f'parameter "{name}": {val}')
                         err.params = match
                         raise err

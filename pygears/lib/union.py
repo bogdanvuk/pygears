@@ -4,9 +4,10 @@ from pygears.lib.shred import shred
 from pygears.lib.ccat import ccat
 from pygears.lib.fmap import fmap
 from pygears.lib.mux import mux
+from pygears.lib.filt import filt
 
 
-@gear
+@gear(enablement=b'len(din) >= 1')
 def mux_by(ctrl, *din, fmux=mux):
     return fmux(ctrl, *din) | union_collapse
 
@@ -48,8 +49,14 @@ def ucase(din: Union, *, f, fcat=ccat, tout=None, fmux=mux):
 
 
 @gear
-def when(cond, din, *, f, fe=None, fcat=ccat, tout=None, **kwds):
+def when(cond, din, *, f, fe, fcat=ccat, tout=None, **kwds):
     return din | case(cond, f=(fe, f), fcat=fcat, tout=tout, **kwds)
+
+
+@alternative(when)
+@gear
+def when_single(cond, din, *, f):
+    return ccat(din, cond) | Union | filt(fixsel=1) | f
 
 
 def all_same(din):
