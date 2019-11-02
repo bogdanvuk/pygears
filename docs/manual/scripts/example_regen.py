@@ -71,6 +71,6 @@ def run_all():
         run_file(path)
 
 
-example = 'eq'
+# example = 'eq'
 # run_example(example)
 run_all()

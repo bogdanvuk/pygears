@@ -21,7 +21,7 @@ async def qdeal(din: Queue, *, num,
     while True:
         async with din as val:
             out_res = [None] * num
-            out_eot = val.eot[din.dtype.lvl:lvl + 1:-1] @ val.eot[lvl - 1::-1]
+            out_eot = val.eot[din.dtype.lvl:lvl + 1:-1] @ val.eot[:lvl]
             out_res[i] = (val.data, out_eot)
             yield out_res
 

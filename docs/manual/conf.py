@@ -150,7 +150,7 @@ html_theme_options = {
     'travis_button': False,
     'github_user': 'bogdanvuk',
     'github_repo': 'pygears',
-    'github_banner': True,
+    'github_banner': False,
     'description': 'HW Design: A Functional Approach',
     'logo': 'logo.png',
     'sidebar_width': '230px'
