@@ -59,13 +59,17 @@ def demux_ctrl(din: Union):
 
 @alternative(demux)
 @gear
-def demux_by(ctrl: Uint, din, *, fcat=ccat, nout=None):
+def demux_by(ctrl: Uint, din, *, fcat=ccat, nout=None, mapping=None):
     if nout is None:
         nout = 2**int(ctrl.dtype)
 
-    return fcat(din, ctrl) \
-        | Union[(din.dtype, )*nout] \
-        | demux
+    demux_din = fcat(din, ctrl) \
+        | Union[(din.dtype, ) * nout] \
+
+    if mapping is None:
+        return demux_din | demux
+    else:
+        return demux_din | demux(mapping=mapping)
 
 
 @gear

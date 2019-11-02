@@ -1,5 +1,6 @@
 {%- import 'snippet.j2' as snippet -%}
 {% set typeof = import_from('pygears.typing', 'typeof') %}
+{% set Tuple = import_from('pygears.typing', 'Tuple') %}
 
 {% call snippet.data_func_gear(module_name, intfs, comment) %}
 
@@ -8,7 +9,7 @@
         case( din_s.ctrl )
 
 {% for key, iout in params['_full_mapping'].items() %}
-{% set i = _din_t["data"][key] %}
+{% set i = _din_t['data'][key] %}
             {{key}} : begin
 
   {% if typeof(_din_t['data'], Tuple) %}

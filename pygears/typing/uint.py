@@ -130,7 +130,10 @@ class IntegerType(IntegralType):
         >>> Uint[8] + Uint[8]
         Uint[9]
         """
-        if not issubclass(other, Integer):
+        try:
+            if not issubclass(other, Integer):
+                return NotImplemented
+        except TypeError:
             return NotImplemented
 
         ops = [self, other]

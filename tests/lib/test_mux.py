@@ -61,7 +61,6 @@ def test_tuple_uint_directed(tmpdir, sim_cls, din_delay, cfg_delay,
     sim(resdir=tmpdir)
 
 
-
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('cfg_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])

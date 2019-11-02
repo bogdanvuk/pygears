@@ -50,14 +50,16 @@ def isort(iterable, key=lambda x: x, reverse=False):
     return values, indices
 
 
-@gear(enablement=b'len(din) == 2')
-def czip(*din) -> b'zip_type(din)':
-    return din | zip_sync(outsync=False) | zip_cat
+@gear
+def czip2(a, b) -> b'zip_type((a, b))':
+    return (a, b) | zip_sync(outsync=False) | zip_cat
 
 
-@alternative(czip)
-@gear(enablement=b'len(din) > 2')
-def czip_vararg(*din):
+@gear
+def czip(*din):
+    if len(din) == 2:
+        return czip2(*din)
+
     # Sort input interfaces in descending order of their Queue levels, i.e. we
     # want to zip highest Queue levels first in order to synchronize them first
     din_sorted_by_lvl, din_sort_indices = isort(

@@ -21,22 +21,22 @@ module sample #(
    end
 
    always @(posedge clk) begin
-      din_reg <= din_reg;
-      din_reg_valid <= ((HOLD == 1) && din_reg_valid) || din.valid;
-
-      consuming <= 0;
-
       if (rst) begin
-         din_reg <= 0;
-
          din_reg_valid <= INIT_VALID;
          if (INIT_VALID)
            din_reg <= INIT;
 
-      end else if (handshake || !din_reg_valid) begin
+      end else if (handshake || !consuming) begin
          if (din.valid || (HOLD == 0)) begin
+            din_reg_valid <= din.valid;
             din_reg <= din.data;
          end
+      end
+   end
+
+   always @(posedge clk) begin
+      if (rst || handshake) begin
+         consuming <= 0;
       end else if (dout.valid) begin
          consuming <= 1;
       end
