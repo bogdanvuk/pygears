@@ -4,7 +4,6 @@ import runpy
 import argparse
 from pygears import config
 from pygears.entry import EntryPlugin
-from pygears.hdl import find_rtl_top
 
 
 def ipgen_entry(args):

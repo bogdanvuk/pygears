@@ -1,4 +1,6 @@
 import pkg_resources
+import pkgutil
+import importlib
 
 __version__ = pkg_resources.get_distribution("pygears").version
 
@@ -32,13 +34,19 @@ import pygears.lib
 import pygears.typing
 import pygears.typing.pprint
 
-
 # import os
 # from pygears.registry import load_plugin_folder
 # load_plugin_folder(os.path.join(os.path.dirname(__file__), 'lib'))
 
 import pygears.hdl
 import pygears.rtl
+
+non_plugin_pkgs = ['pygears_live', 'pygears_tools']
+plugins = {
+    name: importlib.import_module(name)
+    for finder, name, ispkg in pkgutil.iter_modules()
+    if name.startswith('pygears_') and name not in non_plugin_pkgs
+}
 
 from pygears.conf.custom_settings import load_rc, print_registry
 load_rc('.pygears')
