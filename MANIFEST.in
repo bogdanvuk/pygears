@@ -1,2 +1,4 @@
 recursive-include pygears/lib/svlib *.sv
-recursive-include pygears/lib/svlib *.sv
+recursive-include pygears/lib/svlib *.svt
+recursive-include pygears/lib/vlib *.v
+recursive-include pygears/lib/vlib *.vt

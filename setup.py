@@ -59,7 +59,7 @@ setup(
         'Programming Language :: Python :: 3.7',
     ],
     python_requires='>=3.6.0',
-    package_data={'': ['*.j2', '*.sv', '*.svt', '*.vt']},
+    package_data={'': ['*.j2', '*.v', '*.sv', '*.svt', '*.vt']},
     include_package_data=True,
     keywords='functional hardware design Python simulator HDL ASIC FPGA Gears',
     install_requires=[
