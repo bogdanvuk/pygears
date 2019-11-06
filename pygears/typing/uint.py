@@ -95,15 +95,6 @@ class IntegerType(IntegralType):
         # return int(self) | int(others)
         return self.base[max(int(op) for op in (self, others))]
 
-    def __shl__(self, others):
-        return self.base[int(self) + others]
-
-    def __shr__(self, others):
-        if others < int(self):
-            return self.base[int(self) - others]
-        else:
-            return Unit
-
     def __and__(self, others):
         return self.base[max(int(op) for op in (self, others))]
 
@@ -275,6 +266,12 @@ class Integer(Integral, metaclass=IntegerType):
 
     def __neg__(self):
         return (-type(self))(-int(self))
+
+    def __rshift__(self, other):
+        return (type(self) >> other)(int(self) >> other)
+
+    def __lshift__(self, other):
+        return (type(self) << other)(int(self) << other)
 
     def __add__(self, other):
         if not is_type(type(other)):
