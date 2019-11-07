@@ -161,9 +161,15 @@ class Union(tuple, metaclass=UnionType):
 
         subtype = cls.types[ctrl]
 
-        return super(Union,
-                     cls).__new__(cls,
-                                  (cls[0](int(subtype(val))), cls[1](ctrl)))
+        try:
+            subval = subtype(val)
+        except TypeError as e:
+            raise TypeError(
+                f'{str(e)}\n - when instantiating subtype "{repr(subtype)}"'
+                f' with "{repr(val)}"')
+
+        return super(Union, cls).__new__(cls,
+                                         (cls[0](int(subval)), cls[1](ctrl)))
 
     def __int__(self):
         """Returns a packed integer representation of the :class:`Union` instance.

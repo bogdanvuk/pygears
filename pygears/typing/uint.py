@@ -51,7 +51,7 @@ class IntegralType(EnumerableGenericMeta):
                     raise IndexError
                 width += 1
 
-        return self.base[width]
+        return Uint[width]
 
 
 class Integral(int, metaclass=IntegralType):
@@ -209,10 +209,9 @@ class IntegerType(IntegralType):
 
 def check_width(val, width):
     if ((bitw(val) > width) and (val != 0)):
-        from pygears.conf import typing_log
-
-        typing_log().warning(
-            f'Value overflow - value {val} cannot be represented with {width} bits')
+        raise TypeError(
+            f'Value overflow - value {val} cannot be represented with {width} bits'
+        )
 
 
 class Integer(Integral, metaclass=IntegerType):
@@ -231,7 +230,9 @@ class Integer(Integral, metaclass=IntegerType):
             res = cls[bitw(val)](int(val))
         else:
             if typeof(cls, Uint):
-                res = super(Integer, cls).__new__(cls, int(val) & ((1 << len(cls)) - 1))
+                res = super(Integer,
+                            cls).__new__(cls,
+                                         int(val) & ((1 << len(cls)) - 1))
             else:
                 res = super(Integer, cls).__new__(cls, val)
 
@@ -334,7 +335,8 @@ class Integer(Integral, metaclass=IntegerType):
                 if stop <= start:
                     part = Unit()
                 else:
-                    part = Uint[stop - start]((int(self) & ((1 << stop) - 1)) >> start)
+                    part = Uint[stop - start]((int(self) & (
+                        (1 << stop) - 1)) >> start)
 
             elif i < self.width:
                 part = Bool(int(self) & (1 << i))
@@ -527,7 +529,8 @@ class Uint(Integer, metaclass=UintType):
     def __matmul__(self, other):
         if not is_type(type(other)):
             raise TypeError(
-                f"unsupported operand type(s) for @: '{type(self)}' and '{type(other)}'")
+                f"unsupported operand type(s) for @: '{type(self)}' and '{type(other)}'"
+            )
 
         if isinstance(other, Unit):
             return self
@@ -535,7 +538,8 @@ class Uint(Integer, metaclass=UintType):
         if not isinstance(other, Uint):
             other = Uint(other)
 
-        return Uint[self.width + other.width]((int(self) << other.width) + int(other))
+        return Uint[self.width + other.width]((int(self) << other.width) +
+                                              int(other))
 
     def __rmatmul__(self, other):
         if isinstance(other, bool):

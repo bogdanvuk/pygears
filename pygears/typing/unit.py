@@ -38,6 +38,9 @@ class Unit(metaclass=UnitMeta):
     def __int__(self):
         return 0
 
+    def __len__(self):
+        return 0
+
     def __matmul__(self, other):
         return other
 

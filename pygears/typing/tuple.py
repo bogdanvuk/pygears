@@ -235,9 +235,24 @@ class Tuple(tuple, metaclass=TupleType):
         if val is None:
             tpl_val = tuple(t() for t in cls)
         elif isinstance(val, dict):
-            tpl_val = tuple(t(val[f]) for t, f in zip(cls, cls.fields))
+            tpl_val = []
+            for t, f in zip(cls, cls.fields):
+                try:
+                    tpl_val.append(t(val[f]))
+                except TypeError as e:
+                    raise TypeError(
+                        f'{str(e)}\n - when instantiating field "{f}" of'
+                        f' type "{repr(t)}" with "{repr(val[f])}"')
+
         else:
-            tpl_val = tuple(t(v) for t, v in zip(cls, val))
+            tpl_val = []
+            for i, (t, v) in enumerate(zip(cls, val)):
+                try:
+                    tpl_val.append(t(v))
+                except TypeError as e:
+                    raise TypeError(
+                        f'{str(e)}\n - when instantiating field {i} of'
+                        f' type "{repr(t)}" with "{repr(v)}"')
 
         if len(tpl_val) != len(cls):
             raise TypeError(f'{repr(cls)}() takes {len(cls)} arguments'

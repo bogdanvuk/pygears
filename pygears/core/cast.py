@@ -108,6 +108,10 @@ def tuple_value_cast_resolver(val, cast_type):
     if typeof(type(val), Queue) and not cast_type.specified:
         return cast_type((val[0], val[1:]))
 
+    if typeof(type(val), Array) and not cast_type.specified:
+        return Tuple[tuple(type(val).data
+                           for _ in range(len(type(val))))](val)
+
     raise TypeMatchError
 
 
@@ -152,6 +156,11 @@ def value_cast(val, cast_type):
             return value_cast_resolvers[templ](val, cast_type)
         except TypeMatchError:
             continue
+
+    if not cast_type.specified:
+        raise TypeMatchError(
+            f'Cannot cast value "{val}" of type "{repr(type(val))}"'
+            f' to unspecified type {repr(cast_type)}')
 
     return cast_type.decode(int(val))
 
