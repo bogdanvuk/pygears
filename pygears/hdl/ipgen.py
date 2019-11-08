@@ -4,6 +4,7 @@ import runpy
 import argparse
 from pygears import config
 from pygears.entry import EntryPlugin
+from pygears.conf.custom_settings import load_rc
 
 
 def ipgen_entry(args):
@@ -19,6 +20,8 @@ def ipgen_entry(args):
 
 def ipgen(tool, design=None, top=None, **kwds):
     design = os.path.abspath(os.path.expanduser(design))
+
+    load_rc('.pygears', os.path.dirname(design))
 
     config['ipgen/backend'][tool](top, design=design, **kwds)
 
