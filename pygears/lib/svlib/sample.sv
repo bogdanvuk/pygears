@@ -49,9 +49,8 @@ module sample #(
       assign dout.valid = (!consuming) && (din.valid || (HOLD == 0)) ? din.valid : din_reg_valid;
    end else begin
       assign dout.data = din_reg;
+      assign dout.valid = din_reg_valid;
    end
-
-   assign dout.valid = din_reg_valid;
 
    assign din.ready = 1'b1;
 
