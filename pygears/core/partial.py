@@ -83,7 +83,6 @@ class Partial:
     This class also supports supplying arguments by pipe '|' operator.
 
     '''
-
     def __init__(self, func, *args, **kwds):
         functools.update_wrapper(self, func)
         self.func = func
@@ -99,9 +98,9 @@ class Partial:
         args = self.args + args
 
         alternatives = [self.func] + getattr(self.func, 'alternatives', [])
-        self.errors.clear()
+        self.errors = [None] * len(alternatives)
 
-        for func in alternatives:
+        for i, func in enumerate(alternatives):
             try:
                 kwd_intfs, kwd_params = extract_arg_kwds(kwds, func)
                 args_comb = combine_arg_kwds(args, kwd_intfs, func)
@@ -111,15 +110,17 @@ class Partial:
                     if '__base__' in argspec.kwonlyargs:
                         kwd_params['__base__'] = self.func
                     return func(*args_comb, **kwd_params)
+                else:
+                    self.errors[i] = (func, TypeError, TypeError(f'not enough arguments specified for {self.func.__name__}'), [])
             except Exception as e:
                 # If no alternatives, just re-raise an error
                 if len(alternatives) == 1:
                     raise e
                 else:
                     # errors.append((func, e, sys.exc_info()))
-                    self.errors.append((func, *sys.exc_info()))
+                    self.errors[i] = (func, *sys.exc_info())
         else:
-            if len(self.errors) == len(alternatives):
+            if self._all_alternative_error():
                 raise MultiAlternativeError(self.errors)
             else:
                 # If some alternative can handle more arguments, try to wait
@@ -127,6 +128,16 @@ class Partial:
                 p = Partial(self.func, *args, **kwds)
                 p.errors = self.errors[:]
                 return p
+
+    def _all_alternative_error(self):
+        if self.errors.count(None) != 0:
+            return False
+
+        for e in self.errors:
+            if e[-1] == []:
+                return False
+
+        return True
 
     def __matmul__(self, iin):
         return self(intfs=iin)
@@ -150,7 +161,6 @@ each of the function invocations.
     This class also supports supplying arguments by pipe '|' operator.
 
     '''
-
     def __init__(self, func):
         self.func = func
 

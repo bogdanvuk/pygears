@@ -19,7 +19,7 @@ class MultiAlternativeError(Exception):
         ret = ['\n']
         for func, err_cls, err, tr in self.errors:
             ret.append('\n')
-            tr_list = list(enum_traceback(tr))
+            tr_list = None if not tr else list(enum_traceback(tr))
             if tr_list:
                 ret.extend(tr_list)
             else:
