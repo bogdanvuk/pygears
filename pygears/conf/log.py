@@ -49,9 +49,7 @@ from logging import CRITICAL, DEBUG, ERROR, INFO, NOTSET, WARNING
 from .registry import Inject, PluginBase, config, inject, safe_bind
 from .trace_format import enum_stacktrace
 
-HOOKABLE_LOG_METHODS = [
-    'critical', 'exception', 'error', 'warning', 'info', 'debug'
-]
+HOOKABLE_LOG_METHODS = ['critical', 'error', 'warning', 'info', 'debug']
 
 
 class LogException(Exception):
@@ -60,13 +58,12 @@ class LogException(Exception):
         self.name = name
 
 
-def set_log_level(name, level):
+def set_log_level(var, level, name):
     log = logging.getLogger(name)
     if log.level != level:
         log.setLevel(level)
         for h in log.handlers:
             h.setLevel(level)
-    conf_log().info(f'Setting log level {name}, {level}')
 
 
 def log_parent(cls, severity):
@@ -90,18 +87,16 @@ def log_action_debug():
 
 @inject
 def custom_action(logger_name, message, severity, log_cfgs=Inject('logger')):
-    log_cfg = log_cfgs[logger_name]
-
-    if severity in log_cfg:
-        if log_cfg[severity] == 'exception':
-            log_action_exception(logger_name, message)
-        elif log_cfg[severity] == 'debug':
-            log_action_debug()
-        elif log_cfg[severity] == 'pass':
-            pass
-        else:
-            # custom function in registry
-            log_cfg[severity](message)
+    method = config[f'logger/{logger_name}/{severity}']
+    if method == 'exception':
+        log_action_exception(logger_name, message)
+    elif method == 'debug':
+        log_action_debug()
+    elif method == 'pass':
+        pass
+    elif callable(method):
+        # custom function in registry
+        method(message)
 
 
 def log_hook(cls, severity):
@@ -142,7 +137,7 @@ class LogFmtFilter(logging.Filter):
                 stack_num = 0
             record.stack_file = f'\n  File "{self.stack_traceback_fn}", line {stack_num}, for stacktrace'
             *_, last_frame = enum_stacktrace()
-            record.err_file = f'\n{last_frame}'[:-1]
+            record.err_file = f'\n{last_frame}' [:-1]
 
         return True
 
@@ -150,7 +145,6 @@ class LogFmtFilter(logging.Filter):
 @hookable_methods_gen
 class CustomLogger(logging.Logger):
     '''Inherits from Logger and adds hook methods to HOOKABLE_LOG_METHODS'''
-
     def __init__(self, name, level=INFO):
         super(CustomLogger, self).__init__(name, level)
 
@@ -174,6 +168,26 @@ class CustomLogger(logging.Logger):
             handler.addFilter(filt)
 
         return handler
+
+
+def core_log():
+    return logging.getLogger('core')
+
+
+def typing_log():
+    return logging.getLogger('typing')
+
+
+def util_log():
+    return logging.getLogger('util')
+
+
+def gear_log():
+    return logging.getLogger('gear')
+
+
+def conf_log():
+    return logging.getLogger('conf')
 
 
 def register_custom_log(name, level=INFO, cls=CustomLogger):
@@ -220,14 +234,14 @@ def register_custom_log(name, level=INFO, cls=CustomLogger):
 
     reg_name = f'logger/{name}'
 
-    config.define(
-        f'{reg_name}/level',
-        default=level,
-        setter=partial(set_log_level, name))
+    for m in HOOKABLE_LOG_METHODS:
+        config.define(f'{reg_name}/{m}', default='pass')
 
-    config.define(
-        f'{reg_name}/print_traceback',
-        default=True)
+    config.define(f'{reg_name}/level',
+                  default=level,
+                  setter=partial(set_log_level, name=name))
+
+    config.define(f'{reg_name}/print_traceback', default=True)
 
     logger = logging.getLogger(name)
     logger.handlers.clear()
@@ -249,23 +263,3 @@ class LogPlugin(PluginBase):
         register_custom_log('util', WARNING)
         register_custom_log('gear', WARNING)
         register_custom_log('conf', WARNING)
-
-
-def core_log():
-    return logging.getLogger('core')
-
-
-def typing_log():
-    return logging.getLogger('typing')
-
-
-def util_log():
-    return logging.getLogger('util')
-
-
-def gear_log():
-    return logging.getLogger('gear')
-
-
-def conf_log():
-    return logging.getLogger('conf')

@@ -7,7 +7,7 @@ import inspect
 fn_skip = ['<*', f'{sys.prefix}/lib/*']
 
 module_skip = [
-    'pygears.core.*', 'pygears.registry', 'pygears.util.*', 'inspect', 'enum',
+    'pygears.conf.*', 'pygears.core.*', 'pygears.registry', 'pygears.util.*',
     'pygears.typing.*', 'pygears.sim.*', '<*', 'pygears.lib.const'
 ]
 

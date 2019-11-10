@@ -115,7 +115,12 @@ class Configure:
                              docs=docs,
                              setter=setter,
                              getter=getter)
+
         self.definitions[path] = var
+
+        if setter is not None:
+            setter(var, default)
+
         return var
 
     def changed(self, path):
