@@ -22,3 +22,8 @@ async def dreg(din, *, init=None) -> b'din':
             data = await din.get()
             valid = True
             await clk()
+
+
+@gear
+def regout(din, *, f):
+    return din | f | dreg

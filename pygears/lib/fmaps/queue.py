@@ -1,7 +1,9 @@
 from pygears import alternative, gear
 from pygears.typing import Queue
-from pygears.lib import quenvelope, czip, project
-from pygears.lib import fmap as common_fmap
+from pygears.lib.quenvelope import quenvelope
+from pygears.lib.czip import czip
+from pygears.lib.project import project
+from pygears.lib.fmap import fmap as common_fmap
 
 
 @alternative(common_fmap)

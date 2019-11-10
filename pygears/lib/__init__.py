@@ -1,4 +1,6 @@
-from .asyncreg import trigreg, sample, regmap
+from .fmap import fmap
+from pygears.lib.fmaps import unionmap, queuemap, tuplemap, arraymap
+
 from .expand import expand
 from .local_rst import local_rst
 from .factor import factor
@@ -13,7 +15,6 @@ from .queue import queue_wrap_from
 from .cast import cast
 from .quenvelope import quenvelope
 from .sieve import sieve
-from .fmap import fmap
 from .permute import permuted_apply
 from .const import const, fix, once
 from .rom import rom
@@ -25,7 +26,7 @@ from .shred import shred
 from .decouple import decouple, buff
 from .fifo import fifo
 from .fill import fill
-from .dreg import dreg
+from .dreg import dreg, regout
 from .serialize import serialize
 from .data_dly import data_dly
 from .filt import filt
@@ -59,25 +60,26 @@ from .reduce import reduce, accum
 from .funclut import funclut
 from .rounding import truncate, round_half_up, round_to_zero, round_to_even
 from .scope import scope
+from .asyncreg import trigreg, sample, regmap
 
-from pygears.lib.fmaps import unionmap, queuemap, tuplemap, arraymap
 import pygears.lib.hls
 
 __all__ = [
     'expand', 'czip', 'ccat', 'cart', 'cast', 'quenvelope', 'zip_sync',
     'sieve', 'flatten', 'fmap', 'unionmap', 'queuemap', 'tuplemap', 'arraymap',
     'permuted_apply', 'const', 'once', 'mux', 'demux', 'shred', 'cart_sync',
-    'decouple', 'dreg', 'unzip', 'serialize', 'project', 'fifo', 'factor',
-    'fill', 'mux_zip', 'demux_zip', 'demux_ctrl', 'data_dly', 'union_sync',
-    'union_collapse', 'ucase', 'filt', 'buff', 'local_rst', 'queue_wrap_from',
-    'demux_by', 'mux_by', 'align', 'cart_sync_with', 'when', 'union_sync_with',
-    'case', 'fix', 'xor', 'rng', 'priority_mux', 'qcnt', 'sdp', 'chop',
-    'qinterlace', 'replicate', 'qdeal', 'clip', 'din_cat', 'take',
-    'release_after_eot', 'reverse', 'form_sub_cfg', 'reduce2', 'group',
+    'decouple', 'dreg', 'regout', 'unzip', 'serialize', 'project', 'fifo',
+    'factor', 'fill', 'mux_zip', 'demux_zip', 'demux_ctrl', 'data_dly',
+    'union_sync', 'union_collapse', 'ucase', 'filt', 'buff', 'local_rst',
+    'queue_wrap_from', 'demux_by', 'mux_by', 'align', 'cart_sync_with', 'when',
+    'union_sync_with', 'case', 'fix', 'xor', 'rng', 'priority_mux', 'qcnt',
+    'sdp', 'chop', 'qinterlace', 'replicate', 'qdeal', 'clip', 'din_cat',
+    'take', 'release_after_eot', 'reverse', 'form_sub_cfg', 'reduce2', 'group',
     'repack', 'priority_mux_valve', 'max2', 'unary', 'alternate_queues',
     'delay', 'delay_rng', 'delay_gen', 'directed', 'verif', 'collect', 'rom',
     'drv', 'check', 'mon', 'reduce', 'accum', 'pipe', 'funclut', 'truncate',
     'round_half_up', 'round_to_zero', 'round_to_even', 'add', 'div', 'eq',
     'ge', 'gt', 'invert', 'iceil', 'le', 'lt', 'mod', 'mul', 'ne', 'neg',
-    'sub', 'shl', 'shr', 'xor', 'scoreboard', 'scope', 'sample', 'trigreg', 'regmap'
+    'sub', 'shl', 'shr', 'xor', 'scoreboard', 'scope', 'sample', 'trigreg',
+    'regmap'
 ]

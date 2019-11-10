@@ -1,7 +1,8 @@
 from pygears import alternative, TypeMatchError, gear
 from pygears.typing import Union
 from pygears.lib import fmap as common_fmap
-from pygears.lib import mux, demux_ctrl
+from pygears.lib.mux import mux
+from pygears.lib.demux import demux_ctrl
 
 
 def unionmap_check(dtype, f):
@@ -10,7 +11,7 @@ def unionmap_check(dtype, f):
 
     try:
         num_f = len(f)
-    except TypeError as e:
+    except TypeError:
         raise TypeMatchError(
             f'Union fmap argument "f" needs to be a sequence, received {f}')
 

@@ -2,7 +2,7 @@ from pygears import gear, alternative
 from pygears.typing import Union
 from pygears.lib.shred import shred
 from pygears.lib.ccat import ccat
-from pygears.lib.fmap import fmap
+from pygears.lib.fmaps.union import unionmap
 from pygears.lib.mux import mux
 from pygears.lib.filt import filt
 
@@ -37,14 +37,14 @@ def case(cond, din, *, f, fcat=ccat, tout=None, **kwds):
 
     return fcat(din, cond) \
         | Union \
-        | fmap(f=f, **kwds) \
+        | unionmap(f=f, **kwds) \
         | union_collapse(t=tout)
 
 
 @gear
 def ucase(din: Union, *, f, fcat=ccat, tout=None, fmux=mux):
     return din \
-        | fmap(f=f, fmux=fmux) \
+        | unionmap(f=f, fmux=fmux) \
         | union_collapse(t=tout)
 
 
