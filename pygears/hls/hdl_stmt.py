@@ -311,6 +311,10 @@ class ReadyBase(HDLStmtVisitor):
     def input_target(self):
         raise NotImplementedError('Input target not set')
 
+    @property
+    def ready_dflt(self):
+        return "1'bx"
+
     def enter_Module(self, block):
         res = []
         for port in self.input_target.values():
@@ -319,14 +323,14 @@ class ReadyBase(HDLStmtVisitor):
                     res.extend([
                         AssignValue(
                             IntfReadyExpr(op),
-                            ConditionalExpr(operands=(0, "1'bx"),
+                            ConditionalExpr(operands=(0, self.ready_dflt),
                                             cond=IntfValidExpr(op)))
                         for op in port.intf.operands
                         if op.name in self.input_target
                     ])
                 raise VisitError('Unsupported expression type in IntfDef')
             else:
-                val = ConditionalExpr(operands=(0, "1'bx"),
+                val = ConditionalExpr(operands=(0, self.ready_dflt),
                                       cond=IntfValidExpr(port))
                 res.append(AssignValue(IntfReadyExpr(port), val))
         return res
@@ -373,6 +377,14 @@ class InputVisitor(ReadyBase):
     @property
     def input_target(self):
         return self.hdl_data.in_ports
+
+    @property
+    def ready_dflt(self):
+        if len(self.hdl_data.out_ports):
+            out_intf = next(iter(self.hdl_data.out_ports.values()))
+            return IntfReadyExpr(out_intf)
+        else:
+            return "1'bx"
 
 
 class IntfReadyVisitor(ReadyBase):

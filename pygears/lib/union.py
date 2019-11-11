@@ -1,9 +1,9 @@
-from pygears import gear, alternative
+from pygears import gear, alternative, module
 from pygears.typing import Union
 from pygears.lib.shred import shred
 from pygears.lib.ccat import ccat
 from pygears.lib.fmaps.union import unionmap
-from pygears.lib.mux import mux
+from pygears.lib.mux import mux, dflt_map
 from pygears.lib.filt import filt
 
 
@@ -61,6 +61,16 @@ def when_single(cond, din, *, f):
 
 def all_same(din):
     return din.types.count(din.types[0]) == len(din.types)
+
+
+@gear
+def select(cond, *din, mapping=b'dflt_map(din)'):
+
+    dtypes = [d.dtype for d in din]
+    if dtypes.count(dtypes[0]) != len(dtypes):
+        raise TypeError(f'Expected all inputs to "{module().name}" to be same type, but got: "{dtypes}"')
+
+    return mux(cond, ccat(*din), mapping=mapping) | union_collapse
 
 
 @gear(enablement=b'all_same(din) or t')

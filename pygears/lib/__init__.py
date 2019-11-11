@@ -10,7 +10,7 @@ from .czip import czip, zip_sync, unzip
 from .ccat import ccat
 from .cart import cart, cart_sync, cart_sync_with
 from .union import (union_sync, union_collapse, union_sync_with, case, when,
-                    mux_by, ucase)
+                    mux_by, ucase, select)
 from .queue import queue_wrap_from
 from .cast import cast
 from .quenvelope import quenvelope
@@ -72,14 +72,14 @@ __all__ = [
     'factor', 'fill', 'mux_zip', 'demux_zip', 'demux_ctrl', 'data_dly',
     'union_sync', 'union_collapse', 'ucase', 'filt', 'buff', 'local_rst',
     'queue_wrap_from', 'demux_by', 'mux_by', 'align', 'cart_sync_with', 'when',
-    'union_sync_with', 'case', 'fix', 'xor', 'rng', 'priority_mux', 'qcnt',
-    'sdp', 'chop', 'qinterlace', 'replicate', 'qdeal', 'clip', 'din_cat',
-    'take', 'release_after_eot', 'reverse', 'form_sub_cfg', 'reduce2', 'group',
-    'repack', 'priority_mux_valve', 'max2', 'unary', 'alternate_queues',
-    'delay', 'delay_rng', 'delay_gen', 'directed', 'verif', 'collect', 'rom',
-    'drv', 'check', 'mon', 'reduce', 'accum', 'pipe', 'funclut', 'truncate',
-    'round_half_up', 'round_to_zero', 'round_to_even', 'add', 'div', 'eq',
-    'ge', 'gt', 'invert', 'iceil', 'le', 'lt', 'mod', 'mul', 'ne', 'neg',
-    'sub', 'shl', 'shr', 'xor', 'scoreboard', 'scope', 'sample', 'trigreg',
-    'regmap'
+    'union_sync_with', 'select', 'case', 'fix', 'xor', 'rng', 'priority_mux',
+    'qcnt', 'sdp', 'chop', 'qinterlace', 'replicate', 'qdeal', 'clip',
+    'din_cat', 'take', 'release_after_eot', 'reverse', 'form_sub_cfg',
+    'reduce2', 'group', 'repack', 'priority_mux_valve', 'max2', 'unary',
+    'alternate_queues', 'delay', 'delay_rng', 'delay_gen', 'directed', 'verif',
+    'collect', 'rom', 'drv', 'check', 'mon', 'reduce', 'accum', 'pipe',
+    'funclut', 'truncate', 'round_half_up', 'round_to_zero', 'round_to_even',
+    'add', 'div', 'eq', 'ge', 'gt', 'invert', 'iceil', 'le', 'lt', 'mod',
+    'mul', 'ne', 'neg', 'sub', 'shl', 'shr', 'xor', 'scoreboard', 'scope',
+    'sample', 'trigreg', 'regmap'
 ]
