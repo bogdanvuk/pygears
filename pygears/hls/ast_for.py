@@ -1,7 +1,7 @@
 import ast
 from functools import reduce
 
-from pygears.typing import Uint, Bool
+from pygears.typing import Uint, Bool, Int
 from pygears.util.utils import qrange
 
 from .ast_modifications import unroll_statements
@@ -352,8 +352,13 @@ def parse_list_comp(node, module_data):
     rng = parse_ast(comprehension.iter, module_data)
     var = comprehension.target.id
     concat = []
+    if rng.val.start < 0 or rng.val.stop < 0:
+        iter_type = type(Int(max(abs(rng.val.start), abs(rng.val.stop))))
+    else:
+        iter_type = type(Uint(max(rng.val.start, rng.val.stop)))
+
     for i in rng.val:
-        module_data.hdl_locals[var] = ResExpr(Uint[4](i))
+        module_data.hdl_locals[var] = ResExpr(iter_type(i))
         concat.append(parse_ast(node.elt, module_data))
 
     return ConcatExpr(concat)

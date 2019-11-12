@@ -1,6 +1,6 @@
 import ast
 from functools import reduce
-from pygears.typing import Int, Tuple, Uint, typeof, Queue, is_type, div, floor
+from pygears.typing import Int, Tuple, Uint, typeof, Queue, is_type, div, floor, Array
 from pygears.typing.queue import QueueMeta
 
 from pygears.util.utils import gather, qrange
@@ -134,6 +134,10 @@ def call_signed(val):
     raise Exception("Unsupported signed cast")
 
 
+def call_code(val):
+    return val
+
+
 builtins = {
     gather: call_gather,
     all: call_all,
@@ -150,5 +154,6 @@ builtins = {
     cast: call_cast,
     signed: call_signed,
     QueueMeta.sub: call_sub,
-    OutSig.write: outsig_write
+    OutSig.write: outsig_write,
+    Array.code: call_code
 }
