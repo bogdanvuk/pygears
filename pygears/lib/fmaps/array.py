@@ -1,6 +1,7 @@
 from pygears import alternative, TypeMatchError, gear
 from pygears.typing import Array
-from pygears.lib import fmap as common_fmap, ccat
+from pygears.lib import fmap as common_fmap
+from pygears.lib.ccat import ccat
 
 
 @alternative(common_fmap)
