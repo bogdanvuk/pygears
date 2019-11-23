@@ -176,7 +176,7 @@ class SVServerIntf:
 
 
 class SimSocket(CosimBase):
-    def __init__(self, gear, timeout=100, rebuild=True, run=False, batch=True, **kwds):
+    def __init__(self, gear, timeout=100, rebuild=True, run=True, batch=True, **kwds):
         super().__init__(gear, timeout)
         self.name = gear.name[1:].replace('/', '_')
         self.outdir = os.path.abspath(os.path.join(registry('results-dir'), self.name))

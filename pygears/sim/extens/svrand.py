@@ -138,7 +138,7 @@ def find_tcon_resolver(desc, tenv):
         if typeof(desc['dtype'], templ):
             return tcon_resolvers[templ](desc, tenv)
 
-    return default_tcon_resolver(desc)
+    return default_tcon_resolver(desc, tenv)
 
 
 class SVRandSocket(RandBase):

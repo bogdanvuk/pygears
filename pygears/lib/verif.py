@@ -197,6 +197,7 @@ async def scoreboard(*din: b't', report, cmp=None) -> None:
     if cmp is None:
         cmp = match_exact
 
+    # print(f'Number of matches: -\r', end='')
     cnt = 0
     match_cnt = 0
     try:
@@ -211,10 +212,13 @@ async def scoreboard(*din: b't', report, cmp=None) -> None:
             cnt += 1
             if match:
                 match_cnt += 1
+
             sim_assert(match, f'mismatch on #{cnt}: {items[0]}, {items[1]}')
 
+            # print(f'Number of matches: {match_cnt:>4}/{cnt:>4}\r', end='')
+
     except GearDone as e:
-        sim_log().info(f'Number of matches = {match_cnt}/{cnt}')
+        sim_log().info(f'Number of matches: {match_cnt:>4}/{cnt:>4}')
         raise e
 
 
@@ -248,7 +252,7 @@ async def check(din, *, ref, cmp=lambda x, y: x == y):
 
             sim_assert(
                 cmp(data, ref_item),
-                f'mismatch in item {len(items)-1}. Got: {data}, expected: {ref_item}'
+                f'mismatch in item #{len(items)}. Got: {data}, expected: {ref_item}'
             )
     except GearDone:
         ref_empty = False
