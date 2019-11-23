@@ -1,5 +1,7 @@
 import random
 from functools import partial
+from pygears.hdl.templenv import TemplateEnv
+import itertools
 
 import pytest
 
@@ -8,12 +10,13 @@ from pygears.lib import decouple
 from pygears.lib.clip import clip
 from pygears.lib.delay import delay_rng
 from pygears.lib.verif import directed, drv, verif
-from pygears.sim import sim
-from pygears.sim.extens.randomization import create_constraint, rand_seq
+from pygears.sim import sim, cosim
+from pygears.sim.extens.randomization import randomize, rand_seq
 from pygears.sim.extens.svrand import SVRandSocket
 from pygears.sim.modules.sim_socket import SimSocket
 from pygears.typing import Queue, Tuple, Uint
 from pygears.util.test_utils import formal_check, skip_ifndef, synth_check
+from pygears.hdl.sv.util import svgen_typedef
 
 T_DIN = Queue[Tuple[Uint[16], Uint[16]]]
 T_DIN_SEP = Queue[Uint[16]]
@@ -48,20 +51,19 @@ def test_directed(tmpdir, sim_cls, din_delay, dout_delay):
     directed(
         drv(t=T_DIN, seq=seq) | delay_rng(din_delay, din_delay),
         f=dut(sim_cls=sim_cls),
-        ref=[[0, 1],
-             list(range(2, 9)),
-             list(range(3)),
-             list(range(3, 5))],
+        ref=[[0, 1], list(range(2, 9)),
+             list(range(3)), list(range(3, 5))],
         delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(resdir=tmpdir)
 
 
 def test_directed_two_inputs(tmpdir, cosim_cls):
-    verif(drv(t=T_DIN_SEP, seq=[list(range(9)), list(range(5))]),
-          drv(t=T_CFG, seq=[2, 3]),
-          f=clip(sim_cls=cosim_cls),
-          ref=clip(name='ref_model'))
+    verif(
+        drv(t=T_DIN_SEP, seq=[list(range(9)), list(range(5))]),
+        drv(t=T_CFG, seq=[2, 3]),
+        f=clip(sim_cls=cosim_cls),
+        ref=clip(name='ref_model'))
 
     sim(resdir=tmpdir)
 
@@ -76,10 +78,11 @@ def test_random(tmpdir, cosim_cls):
         cfg_seq.append(random.randint(1, 10))
         din_seq.append(list(range(random.randint(1, 10))))
 
-    verif(drv(t=T_DIN_SEP, seq=din_seq),
-          drv(t=T_CFG, seq=cfg_seq),
-          f=clip(sim_cls=cosim_cls),
-          ref=clip(name='ref_model'))
+    verif(
+        drv(t=T_DIN_SEP, seq=din_seq),
+        drv(t=T_CFG, seq=cfg_seq),
+        f=clip(sim_cls=cosim_cls),
+        ref=clip(name='ref_model'))
 
     sim(resdir=tmpdir)
 
@@ -88,20 +91,21 @@ def test_random_constrained(tmpdir):
     skip_ifndef('SIM_SOCKET_TEST', 'RANDOM_TEST')
 
     cnt = 5
-    cons = []
-    cons.append(
-        create_constraint(T_DIN_SEP, 'din', eot_cons=['data_size == 20']))
-    cons.append(create_constraint(T_CFG, 'cfg', cons=['cfg < 20', 'cfg > 0']))
+
+    # cons.append(randomize(T_CFG, 'cfg', cons=['cfg == 2']))
 
     stim = []
-    stim.append(drv(t=T_DIN_SEP, seq=rand_seq('din', cnt)))
-    stim.append(drv(t=T_CFG, seq=rand_seq('cfg', cnt)))
+    stim.append(drv(t=T_DIN_SEP, seq=randomize(T_DIN_SEP, 'din', cnt=cnt)))
+    stim.append(
+        drv(t=T_CFG, seq=randomize(T_CFG, 'cfg', cons=['cfg < 20', 'cfg > 0'], cnt=cnt)))
 
-    verif(*stim,
-          f=clip(sim_cls=partial(SimSocket, run=True)),
-          ref=clip(name='ref_model'))
+    verif(*stim, f=clip, ref=clip(name='ref_model'))
 
-    sim(resdir=tmpdir, extens=[partial(SVRandSocket, cons=cons)])
+    cosim('/clip', 'xsim', run=False)
+    sim(resdir=tmpdir)
+
+    # cosim('/clip', 'xsim', run=True)
+    # sim(resdir=tmpdir, extens=[partial(SVRandSocket, cons=cons)])
 
 
 @formal_check()

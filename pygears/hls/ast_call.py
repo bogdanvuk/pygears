@@ -8,7 +8,7 @@ from pygears.core.util import is_standard_func
 from pygears.core.util import get_function_context_dict
 
 from .hdl_builtins import builtins
-from .ast_parse import parse_ast
+from .ast_parse import parse_node, parse_ast
 from .hls_expressions import ConcatExpr, FunctionCall, OperandVal, ResExpr
 from .hls_expressions import Expr, IntfDef
 from .utils import (VisitError, add_to_list, eval_expression,
@@ -42,9 +42,8 @@ def parse_func_args(args, module_data):
     return func_args
 
 
-@parse_ast.register(ast.Call)
+@parse_node(ast.Call)
 def parse_call(node, module_data):
-
     func_args = parse_func_args(node.args, module_data)
 
     # If all arguments are resolved expressions, maybe we can evaluate the
@@ -211,8 +210,8 @@ def parse_func_call(node, func_args, module_data):
     if func in builtins:
         func = builtins[func](*func_args)
     elif is_type(func):
-        from .hdl_arith import resolve_cast_func
-        func = resolve_cast_func(func, func_args[0])
+        from .hdl_cast import resolve_cast_func
+        func = resolve_cast_func(func_args[0], func)
 
     if func is None or isinstance(func, Expr):
         return func

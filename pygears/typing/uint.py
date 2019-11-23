@@ -64,6 +64,25 @@ Number.register(Integral)
 class IntegerType(IntegralType):
     """Defines lib methods for all Integer based classes.
     """
+    def __new__(cls, name, bases, namespace, args=[]):
+        if args:
+            if isinstance(args, dict):
+                w = list(args.values())[0]
+            else:
+                w = args[0]
+
+            if not isinstance(w, (str, int)):
+                raise TypeError(
+                    f"{name} type parameter must be an integer, not '{w}'")
+
+            if isinstance(w, int):
+                if w < 0:
+                    raise TypeError(
+                        f"{name} type parameter must be a positive integer, not '{w}'"
+                    )
+
+        return super().__new__(cls, name, bases, namespace, args=args)
+
     def __str__(self):
         if self.args:
             if isinstance(self.args[0], int):
@@ -74,8 +93,9 @@ class IntegerType(IntegralType):
             return super().__str__()
 
     def __int__(self):
-        if not self.__args__:
-            raise TypeError
+        if not self.args_specified:
+            raise TypeError(
+                f"Cannot calculate width of unspecified type '{repr(self)}'")
 
         return int(self.__args__[0])
 
@@ -207,11 +227,9 @@ class IntegerType(IntegralType):
         return False
 
 
-def check_width(val, width):
+def check_width(val, width, type_):
     if ((bitw(val) > width) and (val != 0)):
-        raise TypeError(
-            f'Value overflow - value {val} cannot be represented with {width} bits'
-        )
+        raise ValueError(f"{repr(type_)} cannot represent value '{val}'")
 
 
 class Integer(Integral, metaclass=IntegerType):
@@ -236,7 +254,7 @@ class Integer(Integral, metaclass=IntegerType):
             else:
                 res = super(Integer, cls).__new__(cls, val)
 
-        check_width(val, res.width)
+        check_width(val, res.width, cls)
         return res
 
     @class_and_instance_method
@@ -269,7 +287,11 @@ class Integer(Integral, metaclass=IntegerType):
         return (-type(self))(-int(self))
 
     def __rshift__(self, other):
-        return (type(self) >> other)(int(self) >> other)
+        res_t = type(self) >> other
+        if typeof(res_t, Unit):
+            return Unit()
+
+        return res_t(int(self) >> other)
 
     def __lshift__(self, other):
         return (type(self) << other)(int(self) << other)
@@ -430,7 +452,7 @@ class Int(Integer, metaclass=IntType):
             # res = super(Int, cls).__new__(cls,
             #                               int(val) & ((1 << len(cls)) - 1))
 
-        check_width(val, res.width if val < 0 else res.width - 1)
+        check_width(val, res.width if val < 0 else res.width - 1, cls)
         return res
 
     def __eq__(self, other):
@@ -556,6 +578,9 @@ class BoolMeta(UintType):
         spec_cls = super().__new__(cls, name, bases, namespace, args=[1])
         spec_cls._base = Uint
         return spec_cls
+
+    def __repr__(self):
+        return 'Bool'
 
     def copy(self):
         return self

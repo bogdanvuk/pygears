@@ -317,6 +317,12 @@ int sock_put(void *handle, const svOpenArrayHandle signal) {
   /* printf("Width: %d\n", width); */
   /* printf("Sending %d bytes\n", SV_PACKED_DATA_NELEMS(width) * sizeof(svBitVecVal)); */
 
+  /* int i; */
+  /* for (i = 0; i < SV_PACKED_DATA_NELEMS(width); i++) { */
+  /*   printf("0x%x ", ptr[i]); */
+  /* } */
+  /* printf("\n"); */
+
   send(h->sock, ptr, SV_PACKED_DATA_NELEMS(width) * sizeof(svBitVecVal), 0);
 
   return 0;

@@ -12,6 +12,10 @@ class QueueMeta(EnumerableGenericMeta):
     def keys(self):
         return (0, 1)
 
+    @property
+    def width(self):
+        return sum(f.width for f in self)
+
     def __new__(cls, name, bases, namespace, args=[]):
         if isinstance(args, dict) and (list(args.values())[1] == 0):
             return list(args.values())[0]

@@ -1,6 +1,7 @@
 from pygears import alternative, TypeMatchError, gear
 from pygears.typing import Tuple
-from pygears.lib import fmap as common_fmap, ccat
+from pygears.lib.fmap import fmap as common_fmap
+from pygears.lib.ccat import ccat
 
 
 def tuplemap_check(dtype, f):

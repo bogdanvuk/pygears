@@ -11,27 +11,48 @@ from .registry import Inject, bind, inject, registry
 from .trace_format import enum_traceback, TraceLevel, enum_stacktrace
 
 
+def gear_definition_location(func):
+    uwrp = inspect.unwrap(func, stop=(lambda f: hasattr(f, "__signature__")))
+    fn = inspect.getfile(uwrp)
+
+    ln = '-'
+    if fn.startswith('<decorator'):
+        if hasattr(uwrp, 'definition'):
+            uwrp = uwrp.definition
+        elif hasattr(uwrp, 'alternative_to'):
+            uwrp = uwrp.alternative_to
+
+        fn = inspect.getfile(uwrp)
+        _, ln = inspect.getsourcelines(uwrp)
+    else:
+        try:
+            _, ln = inspect.getsourcelines(uwrp)
+        except OSError:
+            pass
+
+    return uwrp, fn, ln
+
+
 class MultiAlternativeError(Exception):
     def __init__(self, errors):
         self.errors = errors
 
     def __str__(self):
         ret = ['\n']
-        for func, err_cls, err, tr in self.errors:
+        for err_pack in self.errors:
+            if err_pack is None:
+                continue
+
+            func, err_cls, err, tr = err_pack
+
             ret.append('\n')
             tr_list = None if not tr else list(enum_traceback(tr))
             if tr_list:
                 ret.extend(tr_list)
             else:
-                uwrp = inspect.unwrap(
-                    func, stop=(lambda f: hasattr(f, "__signature__")))
-                fn = inspect.getfile(uwrp)
-                try:
-                    _, ln = inspect.getsourcelines(uwrp)
-                except OSError:
-                    ln = '-'
+                funcdef, fn, ln = gear_definition_location(func)
 
-                ret.append(f'  File "{fn}", line {ln}, in {uwrp.__name__}\n')
+                ret.append(f'  File "{fn}", line {ln}, in {funcdef.__name__}\n')
 
             exc_msg = register_issue(err_cls, err)
             ret.append(textwrap.indent(exc_msg, 4 * ' '))
@@ -71,10 +92,7 @@ def log_exception(exception):
     logging.getLogger('trace').error(register_issue(exception_type, exception))
 
 
-def pygears_excepthook(exception_type,
-                       exception,
-                       tr,
-                       debug_hook=sys.excepthook):
+def pygears_excepthook(exception_type, exception, tr, debug_hook=sys.excepthook):
 
     for hook in registry('trace/hooks'):
         try:
@@ -97,10 +115,8 @@ def pygears_excepthook(exception_type,
 
 
 @inject
-def stack_trace(name,
-                verbosity,
-                message,
-                stack_traceback_fn=Inject('logger/stack_traceback_fn')):
+def stack_trace(
+        name, verbosity, message, stack_traceback_fn=Inject('logger/stack_traceback_fn')):
     with open(stack_traceback_fn, 'a') as f:
         delim = '-' * 50 + '\n'
         f.write(delim)

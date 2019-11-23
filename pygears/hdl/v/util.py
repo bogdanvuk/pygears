@@ -10,15 +10,15 @@ class VGenTypeVisitor(TypingVisitorBase):
         self.hier = hier
         self.direction = direction
 
-    def visit_int(self, type_, field, **kwds):
+    def visit_Int(self, type_, field, **kwds):
         return [
             f'{self.basic_type} signed [{int(type_)-1}:0] {self.context}; // {type_}'
         ]
 
-    def visit_bool(self, type_, field, **kwds):
+    def visit_Bool(self, type_, field, **kwds):
         return [f'{self.basic_type} [0:0] {self.context}; // {type_}']
 
-    def visit_uint(self, type_, field, **kwds):
+    def visit_Uint(self, type_, field, **kwds):
         if int(type_) != 0:
             return [
                 f'{self.basic_type} [{int(type_)-1}:0] {self.context}; // {type_}'
@@ -26,13 +26,13 @@ class VGenTypeVisitor(TypingVisitorBase):
 
         return None
 
-    visit_ufixp = visit_uint
-    visit_fixp = visit_uint
+    visit_Ufixp = visit_Uint
+    visit_Fixp = visit_Uint
 
-    def visit_unit(self, type_, field, **kwds):
+    def visit_Unit(self, type_, field, **kwds):
         return None
 
-    def visit_union(self, type_, field, **kwds):
+    def visit_Union(self, type_, field, **kwds):
         res = []
 
         # top
@@ -45,7 +45,7 @@ class VGenTypeVisitor(TypingVisitorBase):
 
         return res
 
-    def visit_queue(self, type_, field, **kwds):
+    def visit_Queue(self, type_, field, **kwds):
         res = []
 
         # top
@@ -84,7 +84,7 @@ class VGenTypeVisitor(TypingVisitorBase):
         self.context = parent_context
         return res
 
-    def visit_tuple(self, type_, field, **kwds):
+    def visit_Tuple(self, type_, field, **kwds):
         res = []
         res.append(
             f'{self.basic_type} [{int(type_)-1}:0] {self.context}; // {type_}')
@@ -93,7 +93,7 @@ class VGenTypeVisitor(TypingVisitorBase):
 
         return res
 
-    def visit_array(self, type_, field, **kwds):
+    def visit_Array(self, type_, field, **kwds):
         if type_.data.signed:
             merge_t = Int[int(type_.data) * len(type_)]
         else:

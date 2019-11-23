@@ -23,7 +23,7 @@ def permute(dout, indices):
     # leave Queue delimiters in same place after reordering
     reorder_indices.append(-1)
 
-    return dout[tuple(reorder_indices)] | out_type
+    return dout[tuple(reorder_indices)] >> out_type
 
 
 def intf_arrange(*din, indices):

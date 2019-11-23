@@ -8,8 +8,6 @@ from .cosim_port import CosimNoData, InCosimPort, OutCosimPort
 
 
 class CosimBase(SimGear):
-    SYNCHRO_HANDLE_NAME = "_synchro"
-
     @inject
     def __init__(self, gear, timeout=-1, sim_map=Inject('sim/map')):
         super().__init__(gear)
@@ -21,9 +19,18 @@ class CosimBase(SimGear):
         for p in (self.in_cosim_ports + self.out_cosim_ports):
             sim_map[p.port] = p
 
+    def cycle(self):
+        raise NotImplementedError()
+
+    def forward(self):
+        raise NotImplementedError()
+
+    def back(self):
+        raise NotImplementedError()
+
     def read_out(self, port):
         if self.eval_needed:
-            self.handlers[self.SYNCHRO_HANDLE_NAME].forward()
+            self.forward()
 
         self.eval_needed = True
 
@@ -57,7 +64,7 @@ class CosimBase(SimGear):
 
     def ready_in(self, port):
         if self.eval_needed:
-            self.handlers[self.SYNCHRO_HANDLE_NAME].back()
+            self.back()
             self.eval_needed = False
 
         hin = self.handlers[port.basename]
@@ -82,13 +89,13 @@ class CosimBase(SimGear):
                     phase = await delta()
 
                 if self.eval_needed:
-                    self.handlers[self.SYNCHRO_HANDLE_NAME].forward()
+                    self.forward()
                     self.eval_needed = False
 
                 if self.activity_monitor == self.timeout:
                     raise GearDone
 
-                self.handlers[self.SYNCHRO_HANDLE_NAME].cycle()
+                self.cycle()
                 self.activity_monitor += 1
 
         except (GearDone, BrokenPipeError):

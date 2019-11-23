@@ -52,7 +52,7 @@ def cart_vararg(*din):
     for d in din[2:]:
         ret = cart(ret, d)
 
-    return ret | cart_type([d.dtype for d in din])
+    return ret >> cart_type([d.dtype for d in din])
 
 
 # TODO: Lowest eot for each uncart output needs to be shortened to 1 data using

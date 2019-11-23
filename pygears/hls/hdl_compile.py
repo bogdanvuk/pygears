@@ -10,7 +10,7 @@ from pygears.core.util import get_function_context_dict
 
 from .utils import get_function_source, hls_debug, hls_debug_header, hls_debug_log_enabled
 from .assign_conditions import AssignConditions
-from .ast_parse import parse_ast, parse_block
+from .ast_parse import parse_ast, parse_block, parse_node
 from .cblock import CBlockVisitor
 from .cleanup import condition_cleanup
 from .conditions_finder import find_conditions
@@ -165,7 +165,7 @@ def print_parse_intro(gear, body_ast, source):
         hls_debug(stmt)
 
 
-@parse_ast.register(ast.FunctionDef)
+@parse_node(ast.FunctionDef)
 def parse_func(node, module_data):
     if hasattr(node, 'func'):
         func = node.func

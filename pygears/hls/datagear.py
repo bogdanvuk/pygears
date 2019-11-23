@@ -30,5 +30,6 @@ def datagear(func, **meta_kwds):
                                      evaldict=execdict,
                                      isasync=True,
                                      addsource=True)
+    gear_func.definition = func
 
     return create_gear_definition(gear_func, hdl={'compile': True})

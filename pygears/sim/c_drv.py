@@ -1,6 +1,7 @@
 import ctypes
 from math import ceil
 from pygears.sim.modules.cosim_base import CosimNoData
+from pygears.sim import sim_log
 
 
 class IdleIteration(Exception):
@@ -95,8 +96,7 @@ class COutputDrv(CDrv):
             if self.c_get_api is None:
                 raise Exception(
                     f"Unexpected exception, Verilator interface has no handler"
-                    f" for the port: {port.basename}"
-                )
+                    f" for the port: {port.basename}")
 
             self.c_get_api.argtypes = (self.c_dtype, )
 
@@ -123,6 +123,10 @@ class COutputDrv(CDrv):
         #     f'{self.port.basename}: {self.active}, {self.from_c_data(self.dout)}'
         # )
         if self.active:
-            return self.port.dtype.decode(self.from_c_data(self.dout))
+            try:
+                return self.port.dtype.decode(self.from_c_data(self.dout))
+            except ValueError as e:
+                sim_log().error(
+                    str(e) + f'\n    - received at port "{self.port.name}"')
         else:
             raise CosimNoData

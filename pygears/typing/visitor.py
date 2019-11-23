@@ -1,31 +1,34 @@
 class TypingVisitorBase:
     def visit(self, type_, field=None, **kwds):
-        visit_func_name = f'visit_{type_.__name__.lower()}'
+        for c in type_.mro():
+            visit_func_name = f'visit_{c.__name__}'
 
-        visit_func = getattr(self, visit_func_name, self.visit_default)
+            if hasattr(self, visit_func_name):
+                return getattr(self, visit_func_name)(type_, field, **kwds)
 
-        return visit_func(type_, field, **kwds)
+        else:
+            return self.visit_default(type_, field, **kwds)
 
-    def visit_union(self, type_, field, **kwds):
+    def visit_Union(self, type_, field, **kwds):
         for t, f in zip(type_.types, type_.fields):
             self.visit(t, f)
 
-    def visit_int(self, type_, field, **kwds):
+    def visit_Int(self, type_, field, **kwds):
         pass
 
-    def visit_integer(self, type_, field, **kwds):
+    def visit_Integer(self, type_, field, **kwds):
         pass
 
-    def visit_bool(self, type_, field, **kwds):
+    def visit_Bool(self, type_, field, **kwds):
         pass
 
-    def visit_uint(self, type_, field, **kwds):
+    def visit_Uint(self, type_, field, **kwds):
         pass
 
-    def visit_ufixp(self, type_, field, **kwds):
+    def visit_Ufixp(self, type_, field, **kwds):
         pass
 
-    def visit_fixp(self, type_, field, **kwds):
+    def visit_Fixp(self, type_, field, **kwds):
         pass
 
     def visit_default(self, type_, field, **kwds):

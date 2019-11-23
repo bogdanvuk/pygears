@@ -1,6 +1,5 @@
-from pygears import cast
-from pygears.lib import cast as cast_gear
-from pygears.typing import Tuple, Uint, Queue, Int, Ufixp
+from pygears.lib import cast as cast_gear, reinterpret as reinterpret_gear
+from pygears.typing import Tuple, Uint, Queue, Int, Ufixp, cast
 from pygears import Intf
 from pygears.util.test_utils import skip_ifndef
 from pygears.lib.verif import verif
@@ -19,12 +18,17 @@ def test_queue_to_tuple():
     assert iout.dtype == Tuple[Tuple[Uint[1], Uint[2]], Uint[3]]
 
 
-def cast_cosim_test(tmpdir, src_type, cast_type, seq, expected):
+def cast_cosim_test(tmpdir,
+                    src_type,
+                    cast_type,
+                    seq,
+                    expected,
+                    module=cast_gear):
     skip_ifndef('VERILATOR_ROOT')
 
     report = verif(drv(t=src_type, seq=seq),
-                   f=cast_gear(sim_cls=SimVerilated, cast_type=cast_type),
-                   ref=cast_gear(name='ref_model', cast_type=cast_type))
+                   f=module(sim_cls=SimVerilated, t=cast_type),
+                   ref=module(name='ref_model', t=cast_type))
 
     sim(resdir=tmpdir)
 
@@ -45,7 +49,8 @@ def test_signed_signed_less_cosim(tmpdir):
                     Int[4],
                     Int[2],
                     seq=[-0x8, 0x7],
-                    expected=[Int[2](0), Int[2](-1)])
+                    expected=[Int[2](0), Int[2](-1)],
+                    module=reinterpret_gear)
 
 
 def test_signed_unsigned_more_cosim(tmpdir):
@@ -53,7 +58,8 @@ def test_signed_unsigned_more_cosim(tmpdir):
                     Int[4],
                     Uint[6],
                     seq=[-0x8, 0x7],
-                    expected=[Uint[6](-0x8 & 0x3f), Uint[6](7)])
+                    expected=[Uint[6](-0x8 & 0xf), Uint[6](7)],
+                    module=reinterpret_gear)
 
 
 def test_signed_unsigned_less_cosim(tmpdir):
@@ -61,7 +67,8 @@ def test_signed_unsigned_less_cosim(tmpdir):
                     Int[4],
                     Uint[3],
                     seq=[-0x8, 0x7],
-                    expected=[Uint[3](0), Uint[3](7)])
+                    expected=[Uint[3](0), Uint[3](7)],
+                    module=reinterpret_gear)
 
 
 def test_unsigned_signed_same_cosim(tmpdir):
@@ -69,7 +76,16 @@ def test_unsigned_signed_same_cosim(tmpdir):
                     Uint[4],
                     Int[4],
                     seq=[0xf, 0x7],
-                    expected=[Int[4](-1), Int[4](7)])
+                    expected=[Int[4](-1), Int[4](7)],
+                    module=reinterpret_gear)
+
+
+def test_unsigned_signed_more_cosim(tmpdir):
+    cast_cosim_test(tmpdir,
+                    Uint[4],
+                    Int[5],
+                    seq=[0xf, 0x7],
+                    expected=[Int[5](0xf), Int[5](0x7)])
 
 
 def test_unsigned_signed_less_cosim(tmpdir):
@@ -77,7 +93,16 @@ def test_unsigned_signed_less_cosim(tmpdir):
                     Uint[4],
                     Int[2],
                     seq=[0xf, 0x7],
-                    expected=[Int[2](-1), Int[2](-1)])
+                    expected=[Int[2](-1), Int[2](-1)],
+                    module=reinterpret_gear)
+
+
+def test_tuple_cosim(tmpdir):
+    cast_cosim_test(tmpdir,
+                    Tuple[Uint[4], Int[2]],
+                    Tuple[Int[5], Int[4]],
+                    seq=[(3, -2), (1, 1)],
+                    expected=[(3, -2), (1, 1)])
 
 
 def test_ufixp_cosim(tmpdir):
@@ -85,4 +110,5 @@ def test_ufixp_cosim(tmpdir):
                     Ufixp[4, 6],
                     Ufixp[2, 3],
                     seq=[2.75, 4.0],
-                    expected=[Ufixp[2, 3](2.5), Ufixp[3, 4](0.0)])
+                    expected=[Ufixp[2, 3](1.5), Ufixp[2, 3](0.0)],
+                    module=reinterpret_gear)

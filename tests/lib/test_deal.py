@@ -9,7 +9,7 @@ from pygears.lib.delay import delay_rng
 from pygears.lib.deal import qdeal
 from pygears.lib.verif import directed, drv, verif
 from pygears.sim import sim
-from pygears.sim.extens.randomization import create_constraint, rand_seq
+from pygears.sim.extens.randomization import randomize, rand_seq
 from pygears.sim.extens.svrand import SVRandSocket
 from pygears.sim.modules.sim_socket import SimSocket
 from pygears.typing import Queue, Uint
@@ -115,7 +115,7 @@ def test_socket_rand_cons(tmpdir):
 
     cons = []
     cons.append(
-        create_constraint(T_TRR_DIST,
+        randomize(T_TRR_DIST,
                           'din',
                           eot_cons=['data_size == 50', 'trans_lvl1[0] == 4']))
 

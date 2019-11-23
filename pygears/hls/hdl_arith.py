@@ -1,6 +1,5 @@
 import ast
-from pygears.typing import Any, Fixpnumber, Uint, Unit, Tuple, typeof, Integer, Fixp, Ufixp
-from pygears import cast
+from pygears.typing import Any, Fixpnumber, Tuple, Uint, Unit
 from . import hls_expressions as expr
 from pygears.core.type_match import type_match, TypeMatchError
 
@@ -20,7 +19,8 @@ def concat_resolver(opexp, module_data):
     elif len(ops) == 1:
         return ops[0]
     else:
-        return expr.ConcatExpr(ops)
+        tuple_res = expr.ConcatExpr(ops)
+        return expr.CastExpr(tuple_res, Uint[tuple_res.dtype.width])
 
 
 def fixp_add_resolver(opexp, module_data):
@@ -59,43 +59,6 @@ def fixp_sub_resolver(opexp, module_data):
         return fixp__sub__
     else:
         return expr.BinOpExpr(opexp, '-')
-
-
-def fixp_cast_resolver(cast_to, opexp):
-    val_dtype = opexp.dtype
-
-    if typeof(val_dtype, Integer):
-        other_cls = Fixp if val_dtype.signed else Ufixp
-        val_dtype = other_cls[val_dtype.width, val_dtype.width]
-
-    val_fract = val_dtype.fract
-    fract = cast_to.fract
-
-    if fract > val_fract:
-        shift = expr.BinOpExpr(
-            [opexp, expr.ResExpr(Uint(fract - val_fract))], '<<')
-    else:
-        shift = expr.BinOpExpr(
-            [opexp, expr.ResExpr(Uint(val_fract - fract))], '>>')
-
-    return expr.CastExpr(shift, cast_to)
-
-
-cast_resolvers = {Fixpnumber: fixp_cast_resolver}
-
-
-def resolve_cast_func(dtype, opexp):
-    if opexp.dtype == dtype:
-        return opexp
-
-    for templ in cast_resolvers:
-        try:
-            type_match(dtype, templ)
-            return cast_resolvers[templ](dtype, opexp)
-        except TypeMatchError:
-            continue
-
-    return expr.CastExpr(operand=opexp, cast_to=cast(opexp.dtype, dtype))
 
 
 resolvers = {

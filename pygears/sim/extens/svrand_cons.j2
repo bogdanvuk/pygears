@@ -1,0 +1,161 @@
+{% macro default_tcon(con) -%}
+
+class {{con.name}}_tcon;
+
+{% for n, s in con.cvars.items() %}
+{{s | indent(3, True)}}
+{% endfor %}
+
+{% for n in con.cvars %}
+   rand {{n}}_t {{n}};
+{% endfor %}
+   bit[$bits(dout_t)-1 : 0] res;
+
+   constraint c_dflt {
+{% for c in con.cons %}
+      {{c}};
+{% endfor %}
+   }
+
+   function void post_randomize();
+      res = dout;
+   endfunction
+endclass
+
+{%- endmacro -%}
+
+
+{% macro queue_tcon(con, sv_dtype, queue_struct_cons, queue_size_cons, sv_data_dtype) -%}
+
+  {% set lvl = con.dtype.lvl %}
+
+class {{con.name}}_eot_tcon;
+   bit [31:0] length;
+  {% for i in range(1, lvl) %}
+   rand bit [15:0] struct{{i}}[];
+  {% endfor %}
+   bit [15:0] struct{{lvl}}[1];
+
+   int       idx[{{lvl+1}}];
+
+   constraint c_dflt {
+{% for c in queue_struct_cons %}
+      {{c}};
+{% endfor %}
+   }
+
+   {% if lvl > 1 %}
+   constraint c_struct1 {
+      soft struct1.size inside {[1:length]};
+      struct1.sum() == length;
+      foreach (struct1[j]) {
+         soft struct1[j] inside {[1:length]};
+      }
+   }
+  {% endif %}
+
+  {% for i in range(2, lvl) %}
+   constraint c_struct{{i}} {
+      soft struct{{i}}.size inside {[1:struct{{i-1}}.size]};
+      struct{{i}}.sum() == struct{{i-1}}.size;
+      foreach (struct{{i}}[j]) {
+         soft struct{{i}}[j] inside {[1:struct{{i-1}}.size]};
+      }
+   }
+  {% endfor %}
+
+   function void rand_length();
+      assert(std::randomize(length) with {
+         soft length inside {[1:1000]};
+         length > 0;
+{% for c in queue_size_cons %}
+         {{c}};
+{% endfor %}
+      } );
+
+      `verif_info($sformatf("length: %d", length), 2);
+   endfunction
+
+
+   function void post_randomize();
+   {% if lvl > 1 %}
+      struct{{lvl}}[0] = struct{{lvl-1}}.size;
+   {% else %}
+      struct{{lvl}}[0] = length;
+   {% endif %}
+
+      {# `verif_info($sformatf("sum: %d, size: %d", length, struct1.size), 2); #}
+      {# foreach (struct1[j]) begin #}
+      {#    `verif_info($sformatf("val: %d", struct1[j]), 2); #}
+      {# end #}
+
+   endfunction
+
+endclass
+
+class {{con.name}}_tcon;
+
+{% for n, s in con.cvars.items() %}
+{{s | indent(3, True)}}
+{% endfor %}
+
+{% for n in con.cvars %}
+   rand {{n}}_t {{n}};
+{% endfor %}
+
+{{sv_dtype | indent(3, True)}}
+   dout_t dout;
+
+   rand {{sv_data_dtype}} data;
+   {{con.name}}_eot_tcon queue;
+   bit[$bits(dout_t)-1 : 0] res;
+
+   constraint c_dflt {
+{% for c in con.cons %}
+      {{c}};
+{% endfor %}
+   }
+
+   function new;
+      if(queue==null) queue = new;
+      `verif_info($sformatf("{{con.name}}: randomizing Queue structure"), 2);
+      queue.rand_length();
+      assert(queue.randomize());
+   endfunction
+
+   function void pre_randomize();
+      dout.eot = 0;
+
+{% for i in range(0, lvl) %}
+      if (queue.idx[{{i}}] == (queue.struct{{i+1}}[queue.idx[{{i+1}}]] - 1)) begin
+        dout.eot[{{i}}] = 1;
+      end
+{% endfor %}
+
+   endfunction
+
+   function void post_randomize();
+      dout.data = data;
+      res = dout;
+
+      `verif_info($sformatf("{{con.name}}: %p", queue.idx), 2);
+
+      if (&dout.eot == 1) begin
+         foreach (queue.idx[i]) queue.idx[i] = 0;
+         `verif_info($sformatf("{{con.name}}: randomizing Queue structure"), 2);
+         queue.rand_length();
+         assert(queue.randomize());
+      end else begin
+        ++queue.idx[0];
+
+{% for i in range(0, lvl-1) %}
+        if (queue.idx[{{i}}] == queue.struct{{i+1}}[queue.idx[{{i+1}}]]) begin
+          queue.idx[{{i}}] = 0;
+          ++queue.idx[{{i+1}}];
+        end
+{% endfor %}
+      end
+   endfunction
+endclass
+
+{%- endmacro -%}

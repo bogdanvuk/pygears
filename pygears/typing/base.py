@@ -182,7 +182,8 @@ class GenericMeta(TypingMeta):
 
         return self._hash
 
-    def __specified(self):
+    @property
+    def args_specified(self):
         try:
             if len(self.args) != len(self.__parameters__):
                 return False
@@ -213,7 +214,7 @@ class GenericMeta(TypingMeta):
         True
         """
         if self._specified is None:
-            self._specified = self.__specified()
+            self._specified = self.args_specified
 
         return self._specified
 

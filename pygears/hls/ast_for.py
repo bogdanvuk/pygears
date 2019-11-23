@@ -1,11 +1,11 @@
 import ast
 from functools import reduce
 
-from pygears.typing import Uint, Bool, Int
+from pygears.typing import Uint, Bool, Int, bitw
 from pygears.util.utils import qrange
 
 from .ast_modifications import unroll_statements
-from .ast_parse import parse_ast, parse_block
+from .ast_parse import parse_ast, parse_block, parse_node
 from .ast_call import parse_func_args
 from .compile_snippets import enumerate_impl, qrange_mux_impl
 from .hls_expressions import (BinOpExpr, BreakExpr, OperandVal, RegDef,
@@ -15,7 +15,7 @@ from .pydl_types import Block, CombBlock, IfBlock, Loop
 from .utils import VisitError, add_to_list, find_for_target
 
 
-@parse_ast.register(ast.For)
+@parse_node(ast.For)
 def parse_for(node, module_data):
     names = find_for_target(node)
 
@@ -200,7 +200,8 @@ def qrange_impl(name, node, svnode, module_data):
 
     loop_incr_stmt = assign_reg(
         switch_reg, module_data, None,
-        BinOpExpr((OperandVal(module_data.variables[name], 'v'), args[2]), '+'))
+        BinOpExpr((OperandVal(module_data.variables[name], 'v'), args[2]),
+                  '+'))
 
     loop_switch_stmt = assign_reg(flag_reg, module_data, None,
                                   ResExpr(Bool(True)))
@@ -266,11 +267,12 @@ def comb_enumerate(node, target_names, stop, enum_target, module_data):
     reg_name = node.break_func['reg']
     init_reg_stmt = ast.parse(
         f"{reg_name} = Uint[{node.break_func['length']}](0)").body[0]
+        # f"{reg_name} = Uint[{bitw(node.break_func['length']-1)}](0)").body[0]
     add_to_list(pydl_node.stmts, parse_ast(init_reg_stmt, module_data))
     module_data.hdl_locals[reg_name].en_cond = 1
 
     for i, last in qrange(stop.val):
-        py_stmt = (f'{target_names[0]} = Uint[bitw({stop.val})]({i}); '
+        py_stmt = (f'{target_names[0]} = Uint[bitw({stop.val-1})]({i}); '
                    f'{target_names[1]} = {enum_target}{i}')
         stmts = ast.parse(py_stmt).body + node.body
 
@@ -346,7 +348,7 @@ def break_comb_loop(loop_to_break, module_data, reg_name):
     if_block.stmts.insert(0, loop_stmt)
 
 
-@parse_ast.register(ast.ListComp)
+@parse_node(ast.ListComp)
 def parse_list_comp(node, module_data):
     comprehension = node.generators[0]
     rng = parse_ast(comprehension.iter, module_data)

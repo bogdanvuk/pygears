@@ -11,6 +11,10 @@ class ArrayType(EnumerableGenericMeta):
 
         return list(range(int(self.args[1])))
 
+    @property
+    def width(self):
+        return sum(f.width for f in self)
+
     #TODO: Remove this
     @property
     def dtype(self):

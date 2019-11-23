@@ -7,7 +7,7 @@ from pygears import Intf, gear
 from pygears.lib import decouple
 from pygears.lib import chop, delay_rng, directed, verif
 from pygears.sim import sim
-from pygears.sim.extens.randomization import create_constraint, rand_seq
+from pygears.sim.extens.randomization import randomize, rand_seq
 from pygears.sim.extens.scvrand import SCVRand
 from pygears.sim.extens.svrand import SVRandSocket
 from pygears.lib.verif import drv
@@ -68,8 +68,8 @@ def test_socket_rand_cons(tmpdir):
     cnt = 5
 
     cons = []
-    cons.append(create_constraint(t_din, 'din', eot_cons=['data_size == 20']))
-    cons.append(create_constraint(t_cfg, 'cfg', cons=['cfg < 20', 'cfg > 0']))
+    cons.append(randomize(t_din, 'din', eot_cons=['data_size == 20']))
+    cons.append(randomize(t_cfg, 'cfg', cons=['cfg < 20', 'cfg > 0']))
 
     stim = []
 
@@ -91,8 +91,8 @@ def test_open_rand_cons(tmpdir):
 
     cons = []
     # TODO : queue constraints not yet supported in SCVRand
-    # cons.append(create_constraint(t_din, 'din', eot_cons=['data_size == 20']))
-    cons.append(create_constraint(t_cfg, 'cfg', cons=['cfg < 20', 'cfg > 0']))
+    # cons.append(randomize(t_din, 'din', eot_cons=['data_size == 20']))
+    cons.append(randomize(t_cfg, 'cfg', cons=['cfg < 20', 'cfg > 0']))
 
     stim = []
 

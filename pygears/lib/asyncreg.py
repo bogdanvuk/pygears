@@ -44,7 +44,7 @@ def regmap(
         init = initmap.get(i, None)
         type_ = regtype.get(i, sample)
         if type_.func.__name__ == 'trigreg':
-            r = r | Maybe[Uint[len(r.dtype)-1]]
+            r = r >> Maybe[Uint[len(r.dtype)-1]]
 
         douts.append(type_(r, init=init))
 

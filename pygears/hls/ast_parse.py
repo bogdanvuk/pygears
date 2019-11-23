@@ -2,16 +2,48 @@ import ast
 import itertools
 from functools import singledispatch
 
-from pygears.typing import Array, Int, Integer, Uint, Unit, typeof, Tuple
-from pygears.core.util import get_function_context_dict
+from pygears import config
+from pygears.typing import Array, Int, Integer, Uint, Unit, typeof
 
 from . import hls_expressions as expr
-from .hdl_arith import resolve_cast_func
+from .hdl_cast import resolve_cast_func
 from . import pydl_types as blocks
-from .utils import (add_to_list, cast_return, eval_local_expression,
-                    find_assign_target, find_data_expression,
-                    find_name_expression, get_bin_expr, get_context_var,
-                    intf_parse)
+from .utils import (
+    add_to_list, cast_return, eval_local_expression, find_assign_target,
+    find_data_expression, find_name_expression, get_bin_expr, get_context_var, intf_parse)
+
+from pygears.conf.trace import gear_definition_location
+from jinja2.debug import make_traceback, TemplateSyntaxError, reraise
+import sys
+
+
+class SyntaxError(TemplateSyntaxError):
+    pass
+
+
+def parse_node(ast_type):
+    def wrapper(f):
+        def func_wrapper(node, module_data):
+            if config['trace/level'] == 0:
+                return f(node, module_data)
+
+            try:
+                return f(node, module_data)
+            except SyntaxError:
+                ttype, value, traceback = sys.exc_info()
+                raise value.with_traceback(traceback)
+            except Exception as e:
+                func, fn, ln = gear_definition_location(module_data.gear.func)
+                err = SyntaxError(str(e), ln + node.lineno - 1, filename=fn)
+
+                traceback = make_traceback((SyntaxError, err, sys.exc_info()[2]))
+                exc_type, exc_value, tb = traceback.standard_exc_info
+
+            reraise(exc_type, exc_value, tb)
+
+        return parse_ast.register(ast_type)(func_wrapper)
+
+    return wrapper
 
 
 @singledispatch
@@ -37,7 +69,7 @@ def parse_block(pydl_node, body, module_data):
     return pydl_node
 
 
-@parse_ast.register(ast.AsyncFunctionDef)
+@parse_node(ast.AsyncFunctionDef)
 def parse_async_func(node, module_data):
     pydl_node = blocks.Module(stmts=[])
 
@@ -49,13 +81,12 @@ def parse_async_func(node, module_data):
             if isinstance(stmt, ast.Assign)))
     missing_reg = [name for name in reg_names if name not in assign_names]
     for name in missing_reg:
-        module_data.hdl_locals[name] = expr.RegDef(module_data.regs[name],
-                                                   name)
+        module_data.hdl_locals[name] = expr.RegDef(module_data.regs[name], name)
 
     return parse_block(pydl_node, node.body, module_data)
 
 
-@parse_ast.register(ast.Expr)
+@parse_node(ast.Expr)
 def parse_expr(node, module_data):
     if isinstance(node.value, ast.Yield):
         return parse_yield(node.value, module_data)
@@ -63,7 +94,7 @@ def parse_expr(node, module_data):
     return parse_ast(node.value, module_data)
 
 
-@parse_ast.register(ast.Return)
+@parse_node(ast.Return)
 def parse_return(node, module_data):
     ret_expr = parse_ast(node.value, module_data)
 
@@ -74,28 +105,25 @@ def parse_return(node, module_data):
         raise Exception('Return found outside function')
 
     if func_block.ret_dtype:
-        ret_expr = resolve_cast_func(func_block.ret_dtype, ret_expr)
+        ret_expr = resolve_cast_func(ret_expr, func_block.ret_dtype)
 
     return expr.ReturnStmt(ret_expr)
 
 
-@parse_ast.register(ast.IfExp)
+@parse_node(ast.IfExp)
 def parse_ifexp(node, module_data):
     res = {
         field: find_data_expression(getattr(node, field), module_data)
         for field in ['test', 'body', 'orelse']
     }
-    return expr.ConditionalExpr(operands=(res['body'], res['orelse']),
-                                cond=res['test'])
+    return expr.ConditionalExpr(operands=(res['body'], res['orelse']), cond=res['test'])
 
 
-@parse_ast.register(ast.Yield)
+@parse_node(ast.Yield)
 def parse_yield(node, module_data):
     if isinstance(node.value, ast.Tuple) and len(module_data.out_ports) > 1:
         ports = []
-        yield_expr = [
-            find_data_expression(item, module_data) for item in node.value.elts
-        ]
+        yield_expr = [find_data_expression(item, module_data) for item in node.value.elts]
         for i, val in enumerate(yield_expr):
             if not (isinstance(val, expr.ResExpr) and val.val is None):
                 ports.append(list(module_data.out_ports.values())[i])
@@ -106,23 +134,21 @@ def parse_yield(node, module_data):
 
     try:
         ret = cast_return(yield_expr, module_data.out_ports)
-    except Exception as e:
-        raise Exception('Output value incompatible with output type')
+    except TypeError as e:
+        raise TypeError(f"{str(e)}\n    - when casting output value to the output type")
 
     add_to_list(stmts, ret)
     return blocks.Yield(stmts=stmts, ports=ports)
 
 
-@parse_ast.register(ast.While)
+@parse_node(ast.While)
 def parse_while(node, module_data):
     test = find_data_expression(node.test, module_data)
     multi = []
     if isinstance(test, expr.ResExpr) and test.val:
         multi = True
-    pydl_node = blocks.Loop(_in_cond=test,
-                            stmts=[],
-                            _exit_cond=expr.create_oposite(test),
-                            multicycle=multi)
+    pydl_node = blocks.Loop(
+        _in_cond=test, stmts=[], _exit_cond=expr.create_oposite(test), multicycle=multi)
 
     return parse_block(pydl_node, node.body, module_data)
 
@@ -142,7 +168,7 @@ def find_subscript_expression(node, module_data):
     return stmts
 
 
-@parse_ast.register(ast.AsyncFor)
+@parse_node(ast.AsyncFor)
 def parse_asyncfor(node, module_data):
     intf = find_name_expression(node.iter, module_data)
     scope, loop_intf = intf_parse(intf=intf, target=node.target)
@@ -160,13 +186,12 @@ def parse_asyncfor(node, module_data):
     return assign_stmts + [pydl_node]
 
 
-@parse_ast.register(ast.AsyncWith)
+@parse_node(ast.AsyncWith)
 def parse_asyncwith(node, module_data):
     context_expr = node.items[0].context_expr
 
     intf = find_name_expression(context_expr, module_data)
-    scope, block_intf = intf_parse(intf=intf,
-                                   target=node.items[0].optional_vars)
+    scope, block_intf = intf_parse(intf=intf, target=node.items[0].optional_vars)
 
     module_data.hdl_locals.update(scope)
 
@@ -181,7 +206,7 @@ def parse_asyncwith(node, module_data):
     return assign_stmts + [pydl_node]
 
 
-@parse_ast.register(ast.If)
+@parse_node(ast.If)
 def parse_if(node, module_data):
     test_expr = find_data_expression(node.test, module_data)
 
@@ -213,14 +238,14 @@ def parse_if(node, module_data):
         return pydl_node
 
 
-@parse_ast.register(ast.Assert)
+@parse_node(ast.Assert)
 def parse_assert(node, module_data):
     test = parse_ast(node.test, module_data)
     msg = node.msg.s if node.msg else 'Assertion failed.'
     return expr.AssertExpr(test=test, msg=msg)
 
 
-@parse_ast.register(ast.Num)
+@parse_node(ast.Num)
 def parse_num(node, module_data):
     if node.n < 0:
         dtype = type(Int(node.n))
@@ -230,12 +255,12 @@ def parse_num(node, module_data):
     return expr.ResExpr(dtype(node.n))
 
 
-@parse_ast.register(ast.Name)
+@parse_node(ast.Name)
 def parse_name(node, module_data):
     return get_context_var(node.id, module_data)
 
 
-@parse_ast.register(ast.Attribute)
+@parse_node(ast.Attribute)
 def parse_attribute(node, module_data):
     val = parse_ast(node.value, module_data)
 
@@ -245,23 +270,22 @@ def parse_attribute(node, module_data):
     return expr.AttrExpr(val, [node.attr])
 
 
-@parse_ast.register(ast.BinOp)
+@parse_node(ast.BinOp)
 def parse_binop(node, module_data):
     return get_bin_expr(node.op, (node.left, node.right), module_data)
 
 
-@parse_ast.register(ast.Compare)
+@parse_node(ast.Compare)
 def parse_compare(node, module_data):
-    return get_bin_expr(node.ops[0], (node.left, node.comparators[0]),
-                        module_data)
+    return get_bin_expr(node.ops[0], (node.left, node.comparators[0]), module_data)
 
 
-@parse_ast.register(ast.BoolOp)
+@parse_node(ast.BoolOp)
 def parse_boolop(node, module_data):
     return get_bin_expr(node.op, node.values, module_data)
 
 
-@parse_ast.register(ast.UnaryOp)
+@parse_node(ast.UnaryOp)
 def parse_unaryop(node, module_data):
     operand = find_data_expression(node.operand, module_data)
     if operand is None:
@@ -278,7 +302,7 @@ def parse_unaryop(node, module_data):
     return expr.UnaryOpExpr(operand, operator)
 
 
-@parse_ast.register(ast.Subscript)
+@parse_node(ast.Subscript)
 def parse_subscript(node, module_data):
     val_expr = parse_ast(node.value, module_data)
 
@@ -288,8 +312,7 @@ def parse_subscript(node, module_data):
             if not data_index:
                 try:
                     data_index = isinstance(
-                        val_expr,
-                        expr.OperandVal) and (len(val_expr.op.intf) > 1)
+                        val_expr, expr.OperandVal) and (len(val_expr.op.intf) > 1)
                 except (TypeError, AttributeError):
                     pass
 
@@ -300,8 +323,7 @@ def parse_subscript(node, module_data):
 
                 return index
             else:
-                return eval_local_expression(_slice.value,
-                                             module_data.local_namespace)
+                return eval_local_expression(_slice.value, module_data.local_namespace)
         else:
 
             def slice_eval():
@@ -310,8 +332,7 @@ def parse_subscript(node, module_data):
                         yield None
                     else:
                         yield eval_local_expression(
-                            getattr(_slice, field),
-                            module_data.local_namespace)
+                            getattr(_slice, field), module_data.local_namespace)
 
             slice_args = list(slice_eval())
 
@@ -323,8 +344,7 @@ def parse_subscript(node, module_data):
 
     if hasattr(node.value, 'id') and node.value.id in module_data.out_intfs:
         # conditional assginment, not subscript
-        for i, port in zip(range(len(val_expr.op.intf)),
-                           module_data.out_ports.values()):
+        for i, port in zip(range(len(val_expr.op.intf)), module_data.out_ports.values()):
             port.context = expr.BinOpExpr((index, expr.ResExpr(i)), '==')
         return None
 
@@ -343,12 +363,12 @@ def parse_subscript(node, module_data):
     return pydl_node
 
 
-@parse_ast.register(ast.Tuple)
+@parse_node(ast.Tuple)
 def parse_tuple(node, module_data):
     items = [find_data_expression(item, module_data) for item in node.elts]
     return expr.ConcatExpr(items)
 
 
-@parse_ast.register(ast.Break)
+@parse_node(ast.Break)
 def parse_break(node, module_data):
     return expr.BreakExpr()

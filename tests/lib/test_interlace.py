@@ -9,7 +9,7 @@ from pygears.lib.delay import delay_rng
 from pygears.lib.interlace import qinterlace
 from pygears.lib.verif import directed, drv, verif
 from pygears.sim import sim
-from pygears.sim.extens.randomization import create_constraint, rand_seq
+from pygears.sim.extens.randomization import randomize, rand_seq
 from pygears.sim.extens.svrand import SVRandSocket
 from pygears.sim.modules.sim_socket import SimSocket
 from pygears.typing import Queue, Uint
@@ -74,7 +74,7 @@ def test_socket_cosim_rand(tmpdir):
     cons = []
     for i in range(din_num):
         cons.append(
-            create_constraint(T_DIN, f'din{i}', eot_cons=['data_size == 10']))
+            randomize(T_DIN, f'din{i}', eot_cons=['data_size == 10']))
 
     stim = []
     for i in range(din_num):

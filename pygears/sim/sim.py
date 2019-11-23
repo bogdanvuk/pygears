@@ -476,12 +476,13 @@ def sim(resdir=None,
     config['results-dir'] = resdir
     os.makedirs(resdir, exist_ok=True)
 
-    if not seed:
+    if seed is None and config['sim/rand_seed'] is None:
         seed = random.randrange(sys.maxsize)
-    random.seed(seed)
-    bind('sim/rand_seed', seed)
+        config['sim/rand_seed'] = seed
 
-    sim_log().info(f'Running sim with seed: {seed}')
+    random.seed(config['sim/rand_seed'])
+
+    sim_log().info(f'Running sim with seed: {config["sim/rand_seed"]}')
 
     loop = EventLoop()
     asyncio.set_event_loop(loop)
@@ -547,6 +548,8 @@ class SimPlugin(GearPlugin):
         safe_bind('sim/config', {})
         safe_bind('sim/flow', [])
         safe_bind('sim/tasks', {})
+        safe_bind('sim/simulator', None)
+        config.define('sim/rand_seed', None)
         config.define('sim/clk_freq', 1000)
         config.define('results-dir', default=None)
         config.define('sim/extens', default=[])

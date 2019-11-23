@@ -1,6 +1,6 @@
 from pygears import alternative, gear, module
 from pygears.lib import cart, ccat, fmap, permuted_apply
-from pygears.typing import Int, Integer, Queue, Tuple, typeof
+from pygears.typing import Int, Integer, Queue, Tuple, typeof, reinterpret
 from pygears.util.utils import qrange, quiter
 
 TCfg = Tuple[{
@@ -43,7 +43,7 @@ async def py_rng(cfg: TCfg, *, cnt_steps=False,
 
         for data, last in qrange(start, stop, step):
             if incr_steps:
-                yield offset + (data * incr), last
+                yield reinterpret(offset + (data * incr), module().tout.data), last
             else:
                 yield data, last
 

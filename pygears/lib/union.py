@@ -78,4 +78,4 @@ def union_collapse(din: Union, *, t=None):
     if t is None:
         t = din.dtype.types[0]
 
-    return din[0] | t
+    return din[0] >> t

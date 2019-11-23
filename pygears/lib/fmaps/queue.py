@@ -36,6 +36,6 @@ def queuemap(din, *, f, lvl=1, fcat=czip, balance=None, common_balance=True):
         cat_dout.append(fcat(benv, d))
 
     # Cast to remove tuple Unit from resulting cart tuple
-    ret = [d | Queue[d.dtype[0][1], d.dtype.lvl] for d in cat_dout]
+    ret = [d >> Queue[d.dtype[0][1], d.dtype.lvl] for d in cat_dout]
 
     return tuple(ret)

@@ -62,7 +62,7 @@ def test_queue_unit(tmpdir, cosim_cls, lvl):
     # cast to Queue[Unit] after driver
     seq = [0, 0, 1, 2, 1, 2, 3]
 
-    verif(drv(t=Uint[8], seq=seq) | Queue[Unit, lvl],
+    verif(drv(t=Uint[8], seq=seq) >> Queue[Unit, lvl],
           f=dreg(sim_cls=cosim_cls),
           ref=dreg(name='ref_model'))
 

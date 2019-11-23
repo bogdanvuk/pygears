@@ -1,0 +1,146 @@
+`ifndef TOP_SV
+`define TOP_SV
+
+parameter CMD_SYS_RESET  = 32'h8000_0000;
+parameter CMD_SET_DATA   = 32'h4000_0000;
+parameter CMD_RESET      = 32'h2000_0000;
+parameter CMD_FORWARD    = 32'h1000_0000;
+parameter CMD_CYCLE      = 32'h0800_0000;
+parameter CMD_READ       = 32'h0400_0000;
+parameter CMD_ACK        = 32'h0200_0000;
+parameter CMD_FINISH      = 32'h0100_0000;
+
+parameter ACTIVITY_TIMEOUT = 1000;
+
+module top;
+
+   `include "socket_macros.svh"
+   `include "dti_verif_if.sv"
+
+   import sock::*;
+
+   logic clk;
+   logic rst;
+   chandle synchro_handle;
+
+{% for d in declaration.values() %}
+{{ d | indent(3, True) }}
+{% endfor %}
+
+   initial begin
+      clk = 0;
+      rst = 1;
+      #15 rst = 0;
+   end
+   always #10 clk = ~clk;
+
+   initial begin
+      fork
+         begin
+            #0.5s; 
+            $warning("watchdog timer expired. killing test...");
+            sock_close(synchro_handle);
+            $finish();
+         end
+      join
+      sock_close(synchro_handle);
+      $finish();
+   end
+
+   task drive_reset(int duration);
+      fork
+         if (rst != 1) begin
+            rst = 1;
+            repeat(duration) @(negedge clk);
+            rst = 0;
+         end
+      join_none
+   endtask
+
+   initial begin
+      int ret;
+      bit[31:0] data;
+      bit[31:0] status;
+
+      `verif_info($sformatf("Waiting for socket"), 2);
+      {# synchro_handle = sock_open("tcp://localhost:{{port}}", "_synchro"); #}
+      synchro_handle = sock_open("unix://{{port}}", "_synchro");
+
+{% for d in init.values() %}
+{{ d | indent(6, True) }}
+{% endfor %}
+
+      `verif_info($sformatf("Socket open"), 2);
+      `verif_info($sformatf("Reset from %0t", $time), 2);
+      #15;
+      `verif_info($sformatf("Reset to %0t", $time), 2);
+
+      forever begin
+         `verif_info($sformatf("Wait for data"), 2);
+         ret = sock_get_bv(synchro_handle, 32, data);
+         `verif_info($sformatf("Got synchro with ret %0d, data %0h at %0t", ret, data, $time), 2);
+         if (ret) $finish();
+
+         if (data & CMD_SET_DATA) begin
+{% if set_data %}
+             case(data[15:0])
+  {% for i, d in set_data.items() %}
+              {{i}} : begin
+{{ d | indent(18, True) }}
+               end
+  {% endfor %}
+            endcase
+{% endif %}
+         end else if (data & CMD_READ) begin
+{% if read %}
+             case(data[15:0])
+  {% for i, d in read.items() %}
+              {{i}} : begin
+{{ d | indent(18, True) }}
+               end
+  {% endfor %}
+            endcase
+{% endif %}
+         end else if (data & CMD_ACK) begin
+{% if ack %}
+             case(data[15:0])
+  {% for i, d in ack.items() %}
+              {{i}} : begin
+{{ d | indent(18, True) }}
+               end
+  {% endfor %}
+            endcase
+{% endif %}
+         end else if (data & CMD_RESET) begin
+{% if reset %}
+             case(data[15:0])
+  {% for i, d in reset.items() %}
+              {{i}} : begin
+{{ d | indent(18, True) }}
+               end
+  {% endfor %}
+            endcase
+{% endif %}
+         end else if (data & CMD_FORWARD) begin
+           `verif_info($sformatf("Forward from %0t", $time), 2);
+           #1;
+           `verif_info($sformatf("Forward to %0t", $time), 2);
+         end else if (data & CMD_CYCLE) begin
+           @(posedge clk);
+           #1;
+         end else if (data & CMD_SYS_RESET) begin
+{% for d in sys_reset.values() %}
+{{ d | indent(6, True) }}
+{% endfor %}
+            drive_reset(data[15:0]);
+            `verif_info($sformatf("[sock_done] Why? from %0t", $time), 2);
+            ret = sock_done(synchro_handle);
+            if (ret == 1) break;
+         end else if (data & CMD_FINISH) begin
+            $finish();
+         end
+      end
+   end
+endmodule : top
+
+`endif

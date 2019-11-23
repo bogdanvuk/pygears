@@ -1,10 +1,12 @@
+import sys
 import inspect
-import asyncio
+from jinja2.debug import TemplateSyntaxError, make_traceback, reraise
 import atexit
 from pygears.conf.trace import register_exit_hook
 from pygears import registry, GearDone
 from pygears.sim import clk
 from pygears.sim.sim import schedule_to_finish
+from pygears.conf.trace import gear_definition_location
 
 
 def is_async_gen(func):
@@ -14,6 +16,10 @@ def is_async_gen(func):
 def is_simgear_func(func):
     return (inspect.isgeneratorfunction(func)
             or inspect.iscoroutinefunction(func) or is_async_gen(func))
+
+
+class SimulationError(TemplateSyntaxError):
+    pass
 
 
 class SimGear:
@@ -47,13 +53,33 @@ class SimGear:
                     if sim.phase != 'forward':
                         await clk()
 
-                    async for val in self.func(*args, **kwds):
+                    async_gen = self.func(*args, **kwds)
+
+                    async for val in async_gen:
                         if sim.phase != 'forward':
                             await clk()
 
                         if val is not None:
                             if single_output:
-                                out_prods.put_nb(val)
+                                tb = None
+                                try:
+                                    out_prods.put_nb(val)
+                                except Exception as e:
+                                    func, fn, ln = gear_definition_location(
+                                        self.func)
+
+                                    err = SimulationError(
+                                        str(e),
+                                        async_gen.ag_frame.f_lineno,
+                                        filename=fn)
+                                    traceback = make_traceback(
+                                        (type(err), err, sys.exc_info()[2]))
+
+                                    exc_type, exc_value, tb = traceback.standard_exc_info
+
+                                if tb is not None:
+                                    reraise(exc_type, exc_value, tb)
+
                                 await out_prods.ready()
                             else:
                                 for p, v in zip(out_prods, val):

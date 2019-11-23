@@ -111,7 +111,20 @@ class Partial:
                         kwd_params['__base__'] = self.func
                     return func(*args_comb, **kwd_params)
                 else:
-                    self.errors[i] = (func, TypeError, TypeError(f'not enough arguments specified for {self.func.__name__}'), [])
+                    msg = f"not enough arguments specified for '{self.func.__name__}'"
+                    if func.__name__ == f'{self.func.__name__}_unpack':
+                        arg_signature = ', '.join(
+                            f'{name}: {repr(dtype)}'
+                            for name, dtype in func.__annotations__.items())
+
+                        alt_arg_names, *_ = inspect.getfullargspec(func.alternative_to)
+
+                        msg = (
+                            f"not enough arguments specified for '{self.func.__name__}' for an"
+                            f" alternative with argument '{alt_arg_names[0]}' unpacked to: ({arg_signature})"
+                        )
+
+                    self.errors[i] = (func, TypeError, TypeError(msg), [])
             except Exception as e:
                 # If no alternatives, just re-raise an error
                 if len(alternatives) == 1:

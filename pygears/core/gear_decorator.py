@@ -61,6 +61,18 @@ def find_invocation(func, extra_params=Inject('gear/params/extra')):
     return ','.join(invocation)
 
 
+def formatannotation(annotation, base_module=None):
+    if getattr(annotation, '__module__', '').startswith('pygears.typing'):
+        return repr(annotation)
+    if getattr(annotation, '__module__', None) == 'typing':
+        return repr(annotation).replace('typing.', '')
+    if isinstance(annotation, type):
+        if annotation.__module__ in ('builtins', base_module):
+            return annotation.__qualname__
+        return annotation.__module__ + '.' + annotation.__qualname__
+    return repr(annotation)
+
+
 def formatargspec(args,
                   varargs=None,
                   varkw=None,
@@ -73,7 +85,7 @@ def formatargspec(args,
                   formatvarkw=lambda name: '**' + name,
                   formatvalue=lambda value: '=' + repr(value),
                   formatreturns=lambda text: ' -> ' + text,
-                  formatannotation=inspect.formatannotation):
+                  formatannotation=formatannotation):
     """Format an argument spec from the values returned by getfullargspec.
 
     The first seven arguments are (args, varargs, varkw, defaults,
@@ -119,7 +131,6 @@ def formatargspec(args,
 
 
 def create_unpacked_tuple_alternative(g):
-
     args, *paramspec, annotations = inspect.getfullargspec(g.func)
 
     if len(args) != 1:
@@ -143,11 +154,11 @@ def create_unpacked_tuple_alternative(g):
         for name, dtype in zip(din_type.fields, din_type.args)
     }
 
-    signature = formatargspec(din_type.fields,
-                              *paramspec,
-                              annotations=unpack_annot)
+    signature = formatargspec(din_type.fields, *paramspec)
 
     f = FunctionMaker(name=f'{g.func.__name__}_unpack', signature=signature)
+
+    f.annotations = unpack_annot
 
     base_func = g.func
 

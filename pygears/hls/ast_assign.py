@@ -1,6 +1,6 @@
 import ast
 
-from .ast_parse import parse_ast
+from .ast_parse import parse_node, parse_ast
 from .hls_expressions import (ConcatExpr, Expr, IntfDef, IntfStmt, RegDef,
                               AttrExpr, RegNextStmt, ResExpr, VariableDef,
                               VariableStmt)
@@ -10,7 +10,7 @@ from .utils import (VisitError, add_to_list, find_assign_target,
                     eval_expression)
 
 
-@parse_ast.register(ast.AugAssign)
+@parse_node(ast.AugAssign)
 def parse_augassign(node, module_data):
     target_load = ast.Name(node.target.id, ast.Load())
     val = ast.BinOp(target_load, node.op, node.value)
@@ -18,7 +18,7 @@ def parse_augassign(node, module_data):
     return parse_assign(assign_node, module_data)
 
 
-@parse_ast.register(ast.Assign)
+@parse_node(ast.Assign)
 def parse_assign(node, module_data):
     names = find_assign_target(node)
     indexes = [None] * len(names)

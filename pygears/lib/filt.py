@@ -1,7 +1,7 @@
 from pygears import alternative, gear
 from pygears.typing import Queue, Union, Uint, Tuple, Bool, Unit, Any
+from pygears.lib.fmaps.queue import queuemap
 from .ccat import ccat
-from .fmap import fmap
 
 
 def filt_type(din, lvl, sel):
@@ -33,7 +33,7 @@ def filt_unit(din: Union[Any, Unit]) -> b'din.types[0]':
 @gear
 def filt_fix_sel(din: Union, *, fixsel) -> b'din.types[fixsel]':
     return (ccat(din, din.dtype[1](fixsel)) | filt)[0] \
-        | din.dtype.types[fixsel]
+        >> din.dtype.types[fixsel]
 
 
 @alternative(filt)
@@ -43,7 +43,7 @@ def qfilt_f(din: Queue, *, f):
     def maybe_out(din, *, f):
         return ccat(din, din | f) | Union
 
-    return din | fmap(f=maybe_out(f=f)) | qfilt_union(fixsel=1)
+    return din | queuemap(f=maybe_out(f=f)) | qfilt_union(fixsel=1)
 
 
 @alternative(filt)

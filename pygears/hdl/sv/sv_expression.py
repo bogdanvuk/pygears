@@ -70,15 +70,15 @@ class SVExpressionVisitor:
     def visit_CastExpr(self, node):
         res = self.visit(node.operand)
 
-        if len(node.operand.dtype) != len(node.dtype):
-            res = f"{int(node.dtype)}'({res})"
-
         res_signed = getattr(node.dtype, 'signed', False)
         op_signed = getattr(node.operand.dtype, 'signed', False)
 
         if res_signed != op_signed:
             sign = 'signed' if res_signed else 'unsigned'
             res = f"{sign}'({res})"
+
+        if len(node.operand.dtype) != len(node.dtype):
+            res = f"{int(node.dtype)}'({res})"
 
         return res
 

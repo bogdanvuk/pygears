@@ -3,16 +3,29 @@ from pygears.lib import add, directed, drv, verif
 from pygears.sim import sim
 from pygears.typing import Int, Tuple, Uint, Ufixp, Fixp
 from pygears.util.test_utils import synth_check
+from pygears.sim.extens.randomization import randomize, rand_seq
 
 
-def test_unsigned_overflow_cosim(tmpdir, cosim_cls):
-    seq = [(0x1, 0xf), (0x2, 0xe), (0x3, 0xd)]
+# def test_unsigned_overflow_cosim(tmpdir, cosim_cls=None):
+#     seq = [(0x1, 0xf), (0x2, 0xe), (0x3, 0xd)]
 
-    verif(drv(t=Tuple[Uint[2], Uint[4]], seq=seq),
-          f=add(sim_cls=cosim_cls),
-          ref=add(name='ref_model'))
+#     operands_t = Tuple[{'a': Uint[2], 'b': Uint[4]}]
 
-    sim(resdir=tmpdir)
+#     # verif(drv(t=Tuple[Uint[2], Uint[4]], seq=seq),
+
+#     verif(
+#         drv(t=operands_t,
+#             seq=randomize(operands_t, 'din', cnt=4,
+#                           cons=['din.a + din.b > 8'])),
+#         f=add,
+#         ref=add(name='ref_model'))
+
+#     from pygears.sim import cosim
+#     cosim('/add', 'xsim', run=True)
+#     sim(resdir=tmpdir)
+
+
+# test_unsigned_overflow_cosim('/tools/home/tmp/simsock')
 
 
 def test_signed_unsigned_cosim(tmpdir, cosim_cls):

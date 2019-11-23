@@ -7,11 +7,11 @@ from pygears.conf import inject, Inject
 
 class RandBase(SimExtend):
     @inject
-    def __init__(self, top, cons, outdir=Inject('results-dir'), **kwds):
+    def __init__(self, top, cons, outdir=Inject('results-dir')):
         super().__init__()
         self.outdir = outdir
-        self.constraints = self.create_constraints(cons)
-        bind('sim/config/randomizator', self)
+        self.constraints = self.randomizes(cons)
+        bind('sim/config/randomizer', self)
 
     def get_dtype_by_name(self, name):
         for constraint in self.constraints:
@@ -30,7 +30,7 @@ class RandBase(SimExtend):
         if data and eot:
             return Queue[data, len(eot)]
 
-    def create_constraints(self, cons):
+    def randomizes(self, cons):
         constraints = []
         for c in cons:
             constraints.append(self.create_type_cons(c.get_data_desc()))

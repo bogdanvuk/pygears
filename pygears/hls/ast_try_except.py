@@ -1,6 +1,6 @@
 import ast
 
-from .ast_parse import parse_ast, parse_block
+from .ast_parse import parse_node, parse_block
 from .hls_expressions import IntfDef, create_oposite
 from .pydl_types import ContainerBlock, IfBlock, IntfBlock
 from .utils import VisitError, interface_operations
@@ -11,7 +11,7 @@ from .utils import VisitError, interface_operations
 INTF_EXCEPTIONS = {'IntfEmpty': {'get_nb': IntfBlock}}
 
 
-@parse_ast.register(ast.Try)
+@parse_node(ast.Try)
 def parse_try(node, module_data):
     assert len(
         node.handlers) == 1, f'Try/except block must only except one exception'

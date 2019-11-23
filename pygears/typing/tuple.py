@@ -98,7 +98,6 @@ class TupleType(EnumerableGenericMeta):
     :class:`TupleType` class. Operations on the :class:`Tuple` type instances
     are defined in the :class:`Tuple` class.
     """
-
     def __new__(cls, name, bases, namespace, args=[]):
         cls = super().__new__(cls, name, bases, namespace, args)
 
@@ -205,6 +204,10 @@ class TupleType(EnumerableGenericMeta):
     def __str__(self):
         return '(%s)' % ', '.join([type_str(a) for a in self.args])
 
+    @property
+    def width(self):
+        return sum(f.width for f in self)
+
 
 class Tuple(tuple, metaclass=TupleType):
     """Implements the :class:`Tuple` type instance.
@@ -224,7 +227,6 @@ class Tuple(tuple, metaclass=TupleType):
     (Uint[8](1), Uint[8](0))
 
     """
-
     def __new__(cls, val=None):
         if isinstance(val, cls):
             return val

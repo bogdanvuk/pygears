@@ -202,7 +202,7 @@ def gather_control_stmt_vars(variables, intf, attr=None, dtype=None):
 
 
 def cast_return(arg_nodes, out_ports):
-    from .hdl_arith import resolve_cast_func
+    from .hdl_cast import resolve_cast_func
     out_num = len(out_ports)
     if isinstance(arg_nodes, list):
         assert len(arg_nodes) == out_num
@@ -229,12 +229,12 @@ def cast_return(arg_nodes, out_ports):
                         pass
                     else:
                         arg.operands[i] = resolve_cast_func(
-                            port_t[i], arg.operands[i])
+                            arg.operands[i], port_t[i])
 
             args.append(arg)
         else:
             if arg.dtype != port_t:
-                args.append(resolve_cast_func(port_t, arg))
+                args.append(resolve_cast_func(arg, port_t))
             else:
                 args.append(arg)
 
@@ -290,19 +290,20 @@ def find_data_expression(node, module_data):
     if not isinstance(node, ast.AST):
         return node
 
-    # when interfaces are assigned eval_data_expr is not allowed
-    # because eval will execute the assignment and create extra gears
-    # and connections for them
-    name = None
-    if hasattr(node, 'value') and hasattr(node.value, 'id'):
-        name = node.value.id
-    elif hasattr(node, 'id'):
-        name = node.id
+    if not isinstance(node, ast.Attribute):
+        # when interfaces are assigned eval_data_expr is not allowed
+        # because eval will execute the assignment and create extra gears
+        # and connections for them
+        name = None
+        if hasattr(node, 'value') and hasattr(node.value, 'id'):
+            name = node.value.id
+        elif hasattr(node, 'id'):
+            name = node.id
 
-    if name is not None:
-        val = find_intf_by_name(module_data, name)
-        if val is not None:
-            return val
+        if name is not None:
+            val = find_intf_by_name(module_data, name)
+            if val is not None:
+                return val
 
     try:
         return eval_data_expr(node, module_data.local_namespace)

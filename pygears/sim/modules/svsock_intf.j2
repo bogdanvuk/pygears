@@ -1,0 +1,103 @@
+{% macro set_data(name, width) -%}
+
+for(int i = 0; i < {{(width + 31)//32}}; ++i) begin
+    ret = sock_get_bv(synchro_handle, 32, data);
+    `verif_info($sformatf("Reading input data for %s at %0t %0h", "{{name}}", $time, data), 2);
+  {% if width <= 32 %}
+    {{name}}_data[({{width-1}}) : 0] = data;
+  {% else %}
+    if ((i+1)*32 <= {{width}})
+        {{name}}_data[i*32 +: 32] = data;
+    else
+        {{name}}_data[({{width-1}}) : {{32*((width-1) // 32)}}] = data;
+  {% endif %}
+
+end
+`verif_info($sformatf("Setting data for %s: %0h at %0t (ret = %0d)", "{{name}}", {{name}}_data, $time, ret), 2);
+{{name}}_vif.valid <= 1'b1;
+{{name}}_vif.data <= {{name}}_data;
+
+{%- endmacro -%}
+
+
+{% macro read(name, direction) -%}
+  {% if direction == 'out' %}
+if ({{name}}_vif.valid) begin
+    `verif_info($sformatf("[sock_put] output for %s at %0t", "{{name}}", $time), 2);
+    status = 1;
+    ret = sock_put(synchro_handle, status);
+    {{name}}_data = {{name}}_vif.data;
+    ret = sock_put(synchro_handle, {{name}}_data);
+end else begin
+    status = 0;
+    `verif_info($sformatf("[sock_put] no output for %s at %0t: %0h", "{{name}}", $time, status), 2);
+    ret = sock_put(synchro_handle, status);
+end
+  {% else %}
+status = {{name}}_vif.ready;
+`verif_info($sformatf("[sock_put] ready status for %s: %0h", "{{name}}", status), 2);
+ret = sock_put(synchro_handle, status);
+  {% endif %}
+{%- endmacro -%}
+
+{% macro ack(name) -%}
+`verif_info($sformatf("ACK for %s at %0t", "{{name}}", $time), 2);
+{{name}}_vif.ready <= 1'b1;
+{%- endmacro -%}
+
+{% macro reset(name, direction) -%}
+  {% if direction == 'in' %}
+`verif_info($sformatf("Resetting %s at %0t", "{{name}}", $time), 2);
+{{name}}_vif.valid <= 1'b0;
+  {% else %}
+`verif_info($sformatf("Resetting %s at %0t", "{{name}}", $time), 2);
+{{name}}_vif.ready <= 1'b0;
+  {% endif -%}
+{%- endmacro -%}
+
+{% macro sys_reset(name, direction) -%}
+  {% if direction == 'in' %}
+{{name}}_vif.valid <= 1'b0;
+  {% else %}
+{{name}}_vif.ready <= 1'b0;
+  {% endif -%}
+{%- endmacro -%}
+
+{% macro connect_vif(name, direction) -%}
+  {% if direction == 'in' %}
+assign {{name}}.valid = {{name}}_vif.valid;
+assign {{name}}.data = {{name}}_vif.data;
+assign {{name}}_vif.ready = {{name}}.ready;
+  {% else %}
+assign {{name}}_vif.valid = {{name}}.valid;
+assign {{name}}_vif.data = {{name}}.data;
+assign {{name}}.ready = {{name}}_vif.ready;
+  {% endif %}
+{%- endmacro -%}
+
+{% macro module_inst(module_name, param_map, inst_name, port_map=None) -%}
+
+  {{module_name}}
+  {%- if param_map|length > 0 %}
+ #(
+    {% for name,value in param_map.items() -%}
+      {%- if name %}
+        {{"."|indent(4,True)}}{{name}}({{value}}){{ "," if not loop.last else "" }}
+      {% else -%}
+        {{value|indent(4,True)}}{{ "," if not loop.last }}
+      {% endif -%}
+    {% endfor -%}
+    )
+  {% endif %}
+ {{inst_name}} (
+    .clk(clk),
+    .rst(rst),
+  {% if port_map -%}
+    {% for name,value in port_map.items() -%}
+      {{"."|indent(4,True)}}{{name}}({{value}}){{ "," if not loop.last else "" }}
+    {% endfor -%}
+  {% else -%}
+    .*
+  {% endif -%}
+  );
+{% endmacro %}

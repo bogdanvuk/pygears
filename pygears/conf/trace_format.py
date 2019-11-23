@@ -58,12 +58,10 @@ class TraceFormatPlugin(PluginBase):
 
         config.define('trace/level',
                       setter=set_trace_level,
-                      default=TraceLevel.user)
-
-        import logging
+                      default=TraceLevel.debug)
 
         config.define('trace/ignore',
                       default=[
                           os.path.join(ROOT_DIR, d)
-                          for d in ['core', 'conf', 'sim']
-                      ] + [logging.__file__])
+                          for d in ['core', 'conf', 'sim', 'hls', 'hdl']
+                      ] + [os.path.dirname(os.__file__)])

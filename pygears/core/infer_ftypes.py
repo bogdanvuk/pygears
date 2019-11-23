@@ -1,7 +1,7 @@
 import collections
 
 from pygears.conf import registry
-from pygears.typing.base import GenericMeta, param_subs
+from pygears.typing.base import GenericMeta, param_subs, is_type
 
 from .type_match import TypeMatchError, type_match
 
@@ -28,17 +28,17 @@ def copy_field_names(t, pat):
 
 
 def type_is_specified(t):
-    try:
+    if is_type(t):
         return t.specified
-    except Exception as e:
-        if t is None:
-            return True
-        elif isinstance(t, dict):
-            return all(type_is_specified(subt) for subt in t.values())
-        elif is_type_iterable(t):
-            return all(type_is_specified(subt) for subt in t)
-        else:
-            return False
+
+    if t is None:
+        return True
+    elif isinstance(t, dict):
+        return all(type_is_specified(subt) for subt in t.values())
+    elif is_type_iterable(t):
+        return all(type_is_specified(subt) for subt in t)
+    else:
+        return True
 
 
 def resolve_param(val, match, namespace):

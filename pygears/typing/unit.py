@@ -5,6 +5,10 @@ class UnitMeta(TypingMeta):
     def __int__(self):
         return 0
 
+    @property
+    def width(self):
+        return 0
+
     def __len__(self):
         return 0
 

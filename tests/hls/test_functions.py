@@ -1,6 +1,6 @@
 from pygears import gear
 from pygears.sim import sim
-from pygears.typing import Fixpnumber, Integer, Tuple, Ufixp, Uint
+from pygears.typing import Fixpnumber, Integer, Tuple, Ufixp, Uint, reinterpret
 from pygears.util.utils import gather
 from pygears.lib.verif import directed, drv
 from pygears.sim.modules import SimVerilated
@@ -18,7 +18,7 @@ def test_multiple_arguments(tmpdir):
     async def add_real_part_module(x: TComplex, y: TComplex) -> b'x[0]':
         async with gather(x, y) as data:
             res = add_real_part_func(data[0], data[1])
-            yield res
+            yield reinterpret(res, x.dtype[0])
 
     directed(drv(t=complex_t, seq=[(i, i) for i in range(10)]),
              drv(t=complex_t, seq=[(i, i) for i in range(10)]),
@@ -34,7 +34,7 @@ def test_multiple_arguments_datagear(tmpdir):
 
     @datagear
     def add_real_part_func(x: TComplex, y: TComplex) -> b'x[0]':
-        return x[0] + y[0]
+        return reinterpret(x[0] + y[0], type(x[0]))
 
     directed(drv(t=complex_t, seq=[(i, i) for i in range(10)]),
              drv(t=complex_t, seq=[(i, i) for i in range(10)]),
@@ -51,9 +51,9 @@ def test_multiple_arguments_datagear_complex(tmpdir):
     @datagear
     def add_real_part_func(x: TComplex, y: TComplex) -> b'x[0]':
         if x[0] % 2:
-            return x[0] + y[0]
+            return reinterpret(x[0] + y[0], type(x[0]))
         else:
-            return x[1] + y[1]
+            return reinterpret(x[1] + y[1], type(x[0]))
 
     directed(drv(t=complex_t, seq=[(i, 2 * i) for i in range(10)]),
              drv(t=complex_t, seq=[(i, 2 * i) for i in range(10)]),

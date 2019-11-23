@@ -1,17 +1,17 @@
-from pygears import gear, module, cast as type_cast
+from pygears import gear
+from pygears.typing import cast as type_cast
 from pygears.conf import safe_bind
 from pygears.core.intf import IntfOperPlugin
-from pygears.rtl.connect import rtl_connect
 from pygears.rtl.gear import RTLGearHierVisitor
-from pygears.rtl import flow_visitor, RTLPlugin
+from pygears.rtl import flow_visitor
 from pygears.hdl.sv import SVGenPlugin
 from pygears.hdl.v import VGenPlugin
 
 
 @gear(hdl={'compile': True})
-async def cast(din, *, cast_type) -> b'type_cast(din, cast_type)':
+async def cast(din, *, t) -> b'type_cast(din, t)':
     async with din as d:
-        yield type_cast(d, cast_type)
+        yield type_cast(d, t)
 
 
 def pipe(self, other):
@@ -20,7 +20,7 @@ def pipe(self, other):
     else:
         name = 'cast'
 
-    return cast(self, cast_type=other, name=name)
+    return cast(self, t=other, name=name)
 
 
 @flow_visitor

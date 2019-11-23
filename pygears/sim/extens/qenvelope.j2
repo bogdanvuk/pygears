@@ -1,104 +1,114 @@
-`ifndef QENVELOPE_{{tcon.name.upper()}}_SV
- `define QENVELOPE_{{tcon.name.upper()}}_SV
+`ifndef SVRAND_TOP_SV
+`define SVRAND_TOP_SV
 
-class qenvelope_{{tcon.name}} #(int lvl={{int(tcon.dtype)}});
 
-   rand int unsigned data_size;
-   int num_trans[lvl-1:0][$];
+class eot_tcon;
+   bit [31:0] data_size;
+   rand bit [7:0] test[];
+   int       idx[2];
 
-{% for i in range(int(tcon.dtype)) %}
-  {% if i == (int(tcon.dtype) - 1) %}
-   rand int trans_lvl{{i}}[1];
- {% else %}
-   rand int trans_lvl{{i}}[$];
- {% endif %}
-{% endfor %}
+   function new;
+      assert(std::randomize(data_size) with {
+         soft data_size inside {[1:1000]};
+         data_size inside {[1:100]};
+      } );
+   endfunction
 
-   bit [lvl-1 : 0] eots[$];
-   bit [lvl-1 : 0] res;
-   int             idx;
-   int             idx_max;
-
-{% for i in range(int(tcon.dtype)) %}
-  {% if i == 0 %}
-
-    {# if this is lvl 1 Queue #}
-    {% if i == (int(tcon.dtype) - 1) %}
-
-   constraint c_trans_lvl0 {
-      trans_lvl0[0] == data_size;
-   }
-
-    {% else %}
-
-   constraint c_trans_lvl0 {
-      trans_lvl0.size inside {[1:data_size]};
-      trans_lvl0.sum() == data_size;
-      foreach (trans_lvl0[j]) {
-         trans_lvl0[j] inside {[1:data_size]};
-      }
-   }
-    {% endif %}
-
-  {% elif i == (int(tcon.dtype) - 1) %}
-
-   constraint c_trans_lvl{{i}} {
-      trans_lvl{{i}}[0] == trans_lvl{{i-1}}.size;
-   }
-
-  {% else %}
-
-   constraint c_trans_lvl{{i}} {
-      trans_lvl{{i}}.size inside {[1:trans_lvl{{i-1}}.size]};
-      trans_lvl{{i}}.sum() == trans_lvl{{i-1}}.size;
-      foreach (trans_lvl{{i}}[j]) {
-         trans_lvl{{i}}[j] inside {[1:trans_lvl{{i-1}}.size]};
+   constraint c_eot {
+      test.size inside {[1:data_size]};
+      test.sum() == data_size;
+      foreach (test[j]) {
+         test[j] inside {[1:data_size]};
       }
    }
 
-  {% endif %}
-{% endfor %}
+endclass
 
-   function void eot_setup(int cur_lvl, bit [lvl-1:0] eot, int trans_id);
-      int          flat_subtrans_id;
+class din_dflt_tcon;
 
-      for (int sub_trans_id = 0; sub_trans_id < num_trans[cur_lvl][trans_id]; sub_trans_id++) begin
-         if (sub_trans_id == num_trans[cur_lvl][trans_id] - 1) begin
-            eot[cur_lvl] = 1;
-         end else begin
-            eot[cur_lvl] = 0;
-         end
+`include "socket_macros.svh"
 
-         flat_subtrans_id = sub_trans_id;
-         for (int i = 0; i < trans_id; i++)
-           flat_subtrans_id += num_trans[cur_lvl][i];
+   typedef struct packed { // (u16, u32)
+       logic [1:0] eot; // u32
+       logic [15:0] data; // u16
+   } din_t;
 
-         if (cur_lvl == 0) begin
-            this.eots[flat_subtrans_id] = eot;
-         end else begin
-            eot_setup(cur_lvl - 1, eot, flat_subtrans_id);
-         end
+   din_t din;
 
-         flat_subtrans_id++;
+   rand logic [15: 0] data;
+   eot_tcon queue;
+   bit[$bits(din_t)-1 : 0] res;
+
+   constraint c_dflt {
+      data == queue.idx[0];
+   }
+
+   function new;
+      if(queue==null) queue = new;
+      assert(queue.randomize());
+   endfunction
+
+   function void pre_randomize();
+     `verif_info($sformatf("queue: %d", queue.data_size), 2);
+      din.eot = 0;
+
+      if (queue.idx[0] == (queue.test[queue.idx[1]] - 1)) begin
+        din.eot[0] = 1;
       end
+
+      if (queue.idx[1] == (queue.test.size - 1)) begin
+        din.eot[1] = 1;
+      end
+
    endfunction
 
    function void post_randomize();
-      if (idx == 0) begin
-{% for i in range(int(tcon.dtype)) %}
-         num_trans[{{i}}] = trans_lvl{{i}};
-{% endfor %}
-         eot_setup(lvl-1, {lvl{1'b0}}, 0);
-         idx_max = data_size;
-      end
-      res = eots[idx];
-      idx++;
-      if (idx == idx_max) begin
-         idx = 0;
-         this.eots = {};
+      din.data = data;
+      res = din;
+
+      `verif_info($sformatf("dout: %p (%d, %d)", din, queue.idx[0], queue.idx[1]), 2);
+
+      ++queue.idx[0];
+
+      if (queue.idx[0] == queue.test[queue.idx[1]]) begin
+        queue.idx[0] = 0;
+        ++queue.idx[1];
       end
    endfunction
-
 endclass
+
+
+module svrand_top;
+
+   `include "socket_macros.svh"
+
+   import sock::*;
+
+   din_dflt_tcon din_i = new();
+
+   initial begin
+      `verif_info($sformatf("sum: %d, size: %d", din_i.queue.data_size, din_i.queue.test.size), 2);
+      foreach (din_i.queue.test[j]) begin
+         `verif_info($sformatf("val: %d", din_i.queue.test[j]), 2);
+      end
+   end
+
+   function int get_rand(chandle handle, int req);
+      int ret;
+      bit[17:0] din_data;
+
+      case (req[7:0])
+         1: begin
+            assert(din_i.randomize());
+
+            din_data = din_i.res;
+            ret = sock_put(handle, din_data);
+            `verif_info($sformatf("svrand: Sent din value %p", din_i.res), 2);
+         end
+      endcase
+      return ret;
+   endfunction
+
+endmodule
 
 `endif

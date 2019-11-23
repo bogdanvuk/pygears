@@ -52,5 +52,5 @@ def funclut(x: Fixpnumber, *, f, precision=b'len(x)', dtype=None):
     else:
         lut_list = [dtype(v) for v in gen_vals()]
 
-    dout = x | Uint[w_din] | rom(data=lut_list, dtype=dtype)
+    dout = x >> Uint[w_din] | rom(data=lut_list, dtype=dtype)
     return dout

@@ -1,4 +1,5 @@
-from pygears.typing import Int, Integer, Uint, Unit, Bool, typeof
+import pytest
+from pygears.typing import Bool, Int, Integer, Uint, Unit
 
 
 def test_autowidth():
@@ -44,4 +45,9 @@ def test_bool():
     assert type(Bool(0)) == Uint[1]
 
 
-print(Uint[8].fields)
+def test_wrong_param():
+    with pytest.raises(TypeError, match="Uint type parameter must be an integer, not '1.2'"):
+        Uint[1.2]
+
+    with pytest.raises(TypeError, match="Uint type parameter must be a positive integer, not '-1'"):
+        Uint[-1]

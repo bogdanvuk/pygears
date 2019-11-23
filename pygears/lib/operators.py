@@ -1,10 +1,15 @@
 from pygears import alternative, gear, module
 from pygears.conf import safe_bind
 from pygears.core.intf import IntfOperPlugin
-from pygears.typing import Integer, Tuple, Number, Any, Bool, Integral, Fixpnumber
-from pygears.typing import div as typing_div
+from pygears.typing import Any, Bool, Integer, Integral, Number, Tuple
+from pygears.typing import div as typing_div, is_type, Uint, typeof
+from pygears.typing import reinterpret as type_reinterpret
 from pygears.util.hof import oper_tree
 from pygears.hls import datagear
+from pygears.rtl.gear import RTLGearHierVisitor
+from pygears.rtl import flow_visitor
+from pygears.hdl.sv import SVGenPlugin
+from pygears.hdl.v import VGenPlugin
 
 
 @datagear
@@ -97,8 +102,23 @@ def shr(din: Integral, *, shamt) -> b'din >> shamt':
 
 
 @datagear
+def reinterpret(din, *, t) -> b't':
+    return type_reinterpret(din, t)
+
+
+@datagear
 def xor(din: Tuple[Integral, Integral]) -> b'din[0] ^ din[1]':
     return din[0] ^ din[1]
+
+
+def shr_or_reinterpret(x, y):
+    if is_type(y):
+        if typeof(y, Uint) and (not y.specified):
+            y = Uint[x.dtype.width]
+
+        return reinterpret(x, t=y)
+    else:
+        return shr(x, shamt=y)
 
 
 class AddIntfOperPlugin(IntfOperPlugin):
@@ -118,6 +138,19 @@ class AddIntfOperPlugin(IntfOperPlugin):
         safe_bind('gear/intf_oper/__mul__', mul)
         safe_bind('gear/intf_oper/__ne__', ne)
         safe_bind('gear/intf_oper/__neg__', neg)
-        safe_bind('gear/intf_oper/__rshift__', lambda x, y: shr(x, shamt=y))
+        safe_bind('gear/intf_oper/__rshift__', shr_or_reinterpret)
         safe_bind('gear/intf_oper/__sub__', sub)
         safe_bind('gear/intf_oper/__xor__', xor)
+
+
+@flow_visitor
+class SVRemoveReplicate(RTLGearHierVisitor):
+    def reinterpret(self, node):
+        node.bypass()
+
+
+class RTLReinterpretPlugin(VGenPlugin, SVGenPlugin):
+    @classmethod
+    def bind(cls):
+        cls.registry['vgen']['flow'].insert(0, SVRemoveReplicate)
+        cls.registry['svgen']['flow'].insert(0, SVRemoveReplicate)

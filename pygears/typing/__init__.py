@@ -16,27 +16,15 @@ from .factor import factor
 from .fixp import Fixp, Ufixp, Fixpnumber
 from .number import Number
 from .float import Float
+from .cast import cast, signed, reinterpret, code, decode
+from .saturate import saturate
 
 __all__ = [
-    'Bool', 'Queue', 'TemplateArgumentsError', 'Tuple', 'Int', 'Uint', 'Unit',
-    'Union', 'Maybe', 'Array', 'Float', 'bitw', 'div', 'floor', 'typeof',
-    'Any', 'TLM', 'ceil_pow2', 'is_type', 'flatten', 'expand', 'factor',
-    'Ufixp', 'Fixp', 'Number', 'Fixpnumber', 'Integral'
+    'Bool', 'Queue', 'TemplateArgumentsError', 'Tuple', 'Int', 'Uint', 'Unit', 'Union',
+    'Maybe', 'Array', 'Float', 'bitw', 'div', 'floor', 'typeof', 'Any', 'TLM',
+    'ceil_pow2', 'is_type', 'flatten', 'expand', 'factor', 'Ufixp', 'Fixp', 'Number',
+    'Fixpnumber', 'Integral', 'cast', 'signed', 'reinterpret', 'code', 'decode', 'saturate'
 ]
-
-
-def code(val):
-    if is_type(type(val)):
-        return val.code()
-    else:
-        return int(val)
-
-
-def decode(val):
-    if is_type(type(val)):
-        return val.decode()
-    else:
-        return val
 
 
 class TypingNamespacePlugin(PluginBase):
@@ -69,3 +57,4 @@ class CoreTypesPlugin(TypingNamespacePlugin):
         safe_bind('gear/type_arith/flatten', flatten)
         safe_bind('gear/type_arith/expand', expand)
         safe_bind('gear/type_arith/factor', factor)
+        safe_bind('gear/type_arith/cast', cast)

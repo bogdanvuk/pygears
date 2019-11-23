@@ -140,6 +140,10 @@ class UnionType(EnumerableGenericMeta):
         '''Returns a list of subtypes.'''
         return self.args
 
+    @property
+    def width(self):
+        return sum(f.width for f in self)
+
     def __str__(self):
         return '%s' % ' | '.join([type_str(a) for a in self.args])
 
@@ -225,7 +229,7 @@ class Union(tuple, metaclass=UnionType):
         return cls(subtype.decode(data), cls[1].decode(ctrl))
 
 
-class MaybeCls(Union):
+class Maybe(Union):
     def __new__(cls, val=None, ctrl=None):
         if val is None:
             return super().__new__(cls)
@@ -235,4 +239,4 @@ class MaybeCls(Union):
             return super().__new__(cls, val, ctrl)
 
 
-Maybe = MaybeCls[Unit, 'data']
+Maybe = Maybe[Unit, 'data']

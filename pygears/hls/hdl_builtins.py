@@ -1,17 +1,17 @@
-import ast
 from functools import reduce
-from pygears.typing import Int, Tuple, Uint, typeof, Queue, is_type, div, floor, Array
+from pygears.typing import Int, Tuple, Uint, div, typeof
+from pygears.typing import floor, Array, cast, signed, reinterpret
 from pygears.typing.queue import QueueMeta
 
-from pygears.util.utils import gather, qrange
+from pygears.util.utils import gather
 from pygears.sim import clk
-from pygears import Intf, cast, signed
+from pygears import Intf
 from pygears.core.gear import OutSig
 
 from .hls_expressions import ArrayOpExpr, AttrExpr, BinOpExpr, CastExpr
 from .hls_expressions import ConcatExpr, ConditionalExpr, IntfDef, ResExpr
-from .hls_expressions import UnaryOpExpr, TupleExpr, SignalDef, SignalStmt
-from .hdl_arith import resolve_cast_func
+from .hls_expressions import SignalDef, SignalStmt, UnaryOpExpr
+from .hdl_cast import resolve_cast_func
 
 
 def call_floor(arg):
@@ -41,9 +41,9 @@ def max_expr(op1, op2):
     op2_compare = op2
     signed = typeof(op1.dtype, Int) or typeof(op2.dtype, Int)
     if signed and typeof(op1.dtype, Uint):
-        op1_compare = CastExpr(op1, Int[int(op1.dtype) + 1])
+        op1_compare = resolve_cast_func(op1, Int)
     if signed and typeof(op2.dtype, Uint):
-        op2_compare = CastExpr(op2, Int[int(op2.dtype) + 1])
+        op2_compare = resolve_cast_func(op2, Int)
 
     cond = BinOpExpr((op1_compare, op2_compare), '>')
     return ConditionalExpr(cond=cond, operands=(op1, op2))
@@ -120,8 +120,15 @@ def call_gather(*arg, **kwds):
     return ConcatExpr(operands=list(arg))
 
 
-def call_cast(dtype, cast_type):
-    return resolve_cast_func(cast_type.val, dtype)
+def call_cast(arg, cast_type):
+    return resolve_cast_func(arg, cast_type.val)
+
+
+def call_reinterpret(arg, cast_type):
+    if arg.dtype == cast_type.val:
+        return arg
+
+    return CastExpr(arg, cast_to=cast_type.val)
 
 
 def call_signed(val):
@@ -129,13 +136,17 @@ def call_signed(val):
         return val
 
     if typeof(val.dtype, Uint):
-        return resolve_cast_func(Int, val)
+        return resolve_cast_func(val, Int)
 
     raise Exception("Unsupported signed cast")
 
 
 def call_code(val):
     return val
+
+
+def call_type(arg):
+    return ResExpr(arg.dtype)
 
 
 builtins = {
@@ -146,12 +157,14 @@ builtins = {
     int: call_int,
     len: call_len,
     print: call_print,
+    type: call_type,
     div: call_div,
     floor: call_floor,
     Intf.empty: call_empty,
     Intf.get: call_get,
     Intf.get_nb: call_get_nb,
     cast: call_cast,
+    reinterpret: call_reinterpret,
     signed: call_signed,
     QueueMeta.sub: call_sub,
     OutSig.write: outsig_write,

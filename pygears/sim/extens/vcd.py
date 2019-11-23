@@ -23,36 +23,36 @@ class VCDTypeVisitor(TypingVisitorBase):
     def __init__(self):
         self.fields = {}
 
-    def visit_int(self, type_, field):
+    def visit_Int(self, type_, field):
         self.fields[field] = type_
 
-    def visit_bool(self, type_, field):
+    def visit_Bool(self, type_, field):
         self.fields[field] = type_
 
-    def visit_uint(self, type_, field):
+    def visit_Uint(self, type_, field):
         self.fields[field] = type_
 
-    def visit_fixp(self, type_, field):
+    def visit_Fixp(self, type_, field):
         self.fields[field] = type_
 
-    def visit_float(self, type_, field):
+    def visit_Float(self, type_, field):
         self.fields[field] = type_
 
-    def visit_ufixp(self, type_, field):
+    def visit_Ufixp(self, type_, field):
         self.fields[field] = type_
 
-    def visit_unit(self, type_, field):
+    def visit_Unit(self, type_, field):
         self.fields[field] = type_
 
-    def visit_queue(self, type_, field):
+    def visit_Queue(self, type_, field):
         self.visit(type_[0], f'{field}.data' if field else 'data')
         self.visit(type_[1:], f'{field}.eot' if field else 'eot')
 
-    def visit_union(self, type_, field):
+    def visit_Union(self, type_, field):
         self.visit(type_[0], f'{field}.data' if field else 'data')
         self.visit(type_[1], f'{field}.ctrl' if field else 'ctrl')
 
-    def visit_array(self, type_, field):
+    def visit_Array(self, type_, field):
         for i, t in enumerate(type_):
             self.visit(t, f'{field}.({i})' if field else f'({i})')
 
@@ -74,38 +74,38 @@ class VCDValVisitor(TypingVisitorBase):
         self.writer.change(self.vcd_vars[field], self.timestep,
                            dtype(val).code())
 
-    def visit_fixp(self, type_, field, val=None):
+    def visit_Fixp(self, type_, field, val=None):
         self.change(type_, field, val)
 
-    def visit_ufixp(self, type_, field, val=None):
+    def visit_Ufixp(self, type_, field, val=None):
         self.change(type_, field, val)
 
-    def visit_float(self, type_, field, val=None):
+    def visit_Float(self, type_, field, val=None):
         self.writer.change(self.vcd_vars[field], self.timestep, float(val))
 
-    def visit_int(self, type_, field, val=None):
+    def visit_Int(self, type_, field, val=None):
         self.change(type_, field, val)
 
-    def visit_bool(self, type_, field, val=None):
+    def visit_Bool(self, type_, field, val=None):
         self.change(type_, field, val)
 
-    def visit_union(self, type_, field, val=None):
+    def visit_Union(self, type_, field, val=None):
         self.visit(type_[0], f'{field}.data' if field else 'data', val=val[0])
         self.visit(type_[1], f'{field}.ctrl' if field else 'ctrl', val=val[1])
 
-    def visit_queue(self, type_, field, val=None):
+    def visit_Queue(self, type_, field, val=None):
         val = type_(val)
         self.visit(type_[0], f'{field}.data' if field else 'data', val=val[0])
         self.visit(type_[1:], f'{field}.eot' if field else 'eot', val=val[1])
 
-    def visit_array(self, type_, field, val):
+    def visit_Array(self, type_, field, val):
         for i, t in enumerate(type_):
             self.visit(t, f'{field}.({i})' if field else f'({i})', val=val[i])
 
-    def visit_uint(self, type_, field, val=None):
+    def visit_Uint(self, type_, field, val=None):
         self.change(type_, field, val)
 
-    def visit_unit(self, type_, field, val=None):
+    def visit_Unit(self, type_, field, val=None):
         self.change(type_, field, val)
 
     def visit_default(self, type_, field, val=None):

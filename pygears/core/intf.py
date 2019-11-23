@@ -67,10 +67,10 @@ class Intf:
         if isinstance(other, Intf):
             raise Exception(
                 f'Cannot connect interface {self} to the interface {other}\n'
-                f'Did you mean to connect to "{other.producer.gear.name}"?'
-            )
+                f'Did you mean to connect to "{other.producer.gear.name}"?')
 
-        if not isinstance(other, (str, TypingMeta)):
+        if not (isinstance(other, (str, TypingMeta)) or (other is int) or
+                (other is float)):
             return other.__ror__(self)
 
         operator_func = registry('gear/intf_oper/__or__')

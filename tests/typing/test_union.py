@@ -1,6 +1,6 @@
 import pytest
 
-from pygears.typing import TemplateArgumentsError, Uint, Union, Unit, Int, Tuple
+from pygears.typing import Int, TemplateArgumentsError, Tuple, Uint, Union
 
 
 def test_inheritance():

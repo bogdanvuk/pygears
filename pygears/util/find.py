@@ -39,7 +39,7 @@ def find(path, root=None):
     try:
         module = _find_rec(module_path, root)
     except ModuleNotFoundError:
-        raise ModuleNotFoundError(f'No module found on path "{module_path}"')
+        raise ModuleNotFoundError(f'No module found on path "/{module_path}"')
 
     if not port_name:
         return module

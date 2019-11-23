@@ -6,7 +6,7 @@ from pygears.util.find import find
 from .common import list_hdl_files
 
 
-def find_rtl_top(top, **conf):
+def find_rtl(top, **conf):
     if top is None:
         top = registry('gear/hier_root')
     elif isinstance(top, str):
@@ -31,7 +31,7 @@ def hdlgen(top=None,
     if isinstance(top, RTLNode):
         rtl_top = top
     else:
-        rtl_top = find_rtl_top(top, **conf)
+        rtl_top = find_rtl(top, **conf)
 
     bind('svgen/conf', conf)
     for oper in registry(f'{language}gen/flow'):

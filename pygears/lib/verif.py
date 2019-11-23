@@ -1,11 +1,13 @@
 import inspect
+import pprint
+import textwrap
+
 from pygears import GearDone, gear, datagear
 from pygears.lib import decouple
 from pygears.util.utils import quiter, gather
 from pygears.typing import Uint
 from pygears.typing import Any
 from pygears.sim import sim_assert, sim_log, clk
-from pygears.typing import Queue, typeof
 
 
 class TypingYieldVisitorBase:
@@ -25,12 +27,15 @@ class TypingYieldVisitorBase:
 
 class TypeDrvVisitor(TypingYieldVisitorBase):
     def visit_queue(self, data, dtype):
-        for (i, d), eot in quiter(enumerate(data)):
-            for ret in self.visit(d, dtype.sub()):
-                if dtype.lvl == 1:
-                    yield (ret, Uint[1](eot))
-                else:
-                    yield (ret[0], eot @ ret[1])
+        for d, eot in quiter(data):
+            if type(d) == dtype:
+                yield d
+            else:
+                for ret in self.visit(d, dtype.sub()):
+                    if dtype.lvl == 1:
+                        yield (ret, Uint[1](eot))
+                    else:
+                        yield (ret[0], eot @ ret[1])
 
 
 def typeseq(t, v):
@@ -256,11 +261,20 @@ async def check(din, *, ref, cmp=lambda x, y: x == y):
                 ref_empty = True
 
         if not ref_empty:
-            sim_assert(items == ref,
-                       f'mismatch. Got: {items}, expected: {ref}')
+            sim_assert(
+                items == ref,
+                f"mismatch in number of items '{len(items)}' vs '{len(ref)}'. "
+                f"\ngot:\n{textwrap.indent(pprint.pformat(items), ' '*4)}"
+                f"\nexp:\n{textwrap.indent(pprint.pformat(ref), ' '*4)}"
+            )
 
     except (GearDone, StopIteration):
-        sim_assert(items == ref, f'mismatch. Got: {items}, expected: {ref}')
+        sim_assert(
+            items == ref,
+            f"mismatch in number of items '{len(items)}' vs '{len(ref)}'. "
+            f"\ngot:\n{textwrap.indent(pprint.pformat(items), ' '*4)}"
+            f"\nexp:\n{textwrap.indent(pprint.pformat(ref), ' '*4)}"
+        )
 
 
 def tlm_verif(*seq, f, ref):

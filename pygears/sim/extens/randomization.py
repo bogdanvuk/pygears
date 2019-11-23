@@ -1,29 +1,27 @@
+from pygears.sim import SimPlugin
+
 from itertools import islice
 
-from pygears import registry
+from pygears import registry, config, safe_bind
 from pygears.core.util import perpetum
 from pygears.sim import sim_log
 from pygears.sim.extens.scvrand import SCVRand
 from pygears.sim.extens.svrand import SVRandSocket
-from pygears.typing import Queue
+from pygears.typing import Queue, typeof, Bool, Tuple, Uint
 from pygears.typing.queue import QueueMeta
 
 
-def get_rand(name, cnt=None):
-    randomizator = registry('sim/config/randomizator')
+def register_exten():
+    if SVRandSocket not in config['sim/extens']:
+        config['sim/extens'].append(SVRandSocket)
+        if registry('sim/simulator') is not None:
+            SVRandSocket(top=None)
 
-    if isinstance(randomizator, SVRandSocket):
-        if randomizator.open_sock:
-            rand_func = perpetum(randomizator.get_rand, name)
-        else:
-            req, dtype = randomizator.parse_name(name)
-            simsoc = registry('sim/config/socket')
-            rand_func = perpetum(simsoc.send_req, req, dtype)
-    elif isinstance(randomizator, SCVRand):
-        rand_func = perpetum(randomizator.get_rand, name)
-    else:
-        sim_log().error('Randomizator not set')
-        return None
+
+def get_rand(name, cnt=None, rand_func=None):
+    if rand_func is None:
+        randomizer = registry('sim/config/randomizer')
+        rand_func = perpetum(randomizer.get_rand, name)
 
     if cnt is not None:
         yield from islice(rand_func, cnt)
@@ -31,40 +29,37 @@ def get_rand(name, cnt=None):
         yield from rand_func
 
 
+def queue_rand_seq(dtype, name):
+    randomizer = registry('sim/config/randomizer')
+
+    while True:
+        val = randomizer.get_rand(name)
+        yield val
+
+        if val.eot == dtype.eot.max:
+            break
+
+
 def rand_seq(name, cnt=None):
-    randomizator = registry('sim/config/randomizator')
-    dtype = randomizator.get_dtype_by_name(name)
+    randomizer = registry('sim/config/randomizer')
+    dtype = randomizer.get_dtype_by_name(name)
 
-    if isinstance(dtype, Queue) or isinstance(dtype, QueueMeta):
-        rnd_data = get_rand(f'{name}_data')
-        rnd_eot = get_rand(f'{name}_eot')
-        tout = None
-        while cnt != 0:
-            eot = next(rnd_eot)
-            data = next(rnd_data)
-            if tout is None:
-                tout = Queue[type(data), len(eot)]
-
-            yield tout((data, eot))
-            if cnt is not None:
-                if eot == int('1' * len(eot), 2):
-                    cnt -= 1
+    if typeof(dtype, Queue):
+        yield from get_rand(name, cnt, perpetum(queue_rand_seq, dtype, name))
     else:
         yield from get_rand(name, cnt)
 
 
 class ConstraintWrap:
-    def __init__(self,
-                 dtype,
-                 name,
-                 cons=[],
-                 params={},
-                 cls='dflt_tcon',
-                 cls_params=None,
-                 eot_cons=[],
-                 eot_cls='qenvelope',
-                 eot_cls_params=None,
-                 eot_params={}):
+    def __init__(
+            self,
+            dtype,
+            name,
+            cons=[],
+            cnt=None,
+            params={},
+            cls='dflt_tcon',
+            cls_params=None):
         self.dtype = dtype
         self.name = name
 
@@ -72,14 +67,7 @@ class ConstraintWrap:
         self.params = params
         self.cls = cls
         self.cls_params = cls_params
-
         self.is_queue = False
-        if isinstance(dtype, Queue) or isinstance(dtype, QueueMeta):
-            self.is_queue = True
-            self.eot_cons = eot_cons
-            self.eot_params = eot_params
-            self.eot_cls = eot_cls
-            self.eot_cls_params = eot_cls_params
 
     def get_data_desc(self):
         return {
@@ -102,14 +90,29 @@ class ConstraintWrap:
         }
 
 
-def create_constraint(dtype,
-                      name,
-                      cons=[],
-                      params={},
-                      cls='dflt_tcon',
-                      cls_params=None,
-                      eot_cons=[],
-                      eot_cls='qenvelope',
-                      eot_cls_params=None,
-                      eot_params={}):
-    return ConstraintWrap(**locals())
+def randomize(
+        dtype,
+        name,
+        cnt=None,
+        cons=None,
+        params=None,
+        cls='dflt_tcon',
+        cls_params=None):
+
+    if cons is None:
+        cons = []
+
+    if params is None:
+        params = {}
+
+    register_exten()
+    cons = ConstraintWrap(**locals())
+    registry('sim/svrand/constraints').append(cons)
+    return rand_seq(name, cnt=cnt)
+
+
+class SVRandPlugin(SimPlugin):
+    @classmethod
+    def bind(cls):
+        safe_bind('sim/svrand/constraints', [])
+        # safe_bind('sim/svsock/server', None)

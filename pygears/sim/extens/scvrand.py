@@ -48,21 +48,21 @@ class SCVTypeSeqVisitor(TypingVisitorBase):
         self.context.rsplit('_', 1)[0]
         return val
 
-    def visit_queue(self, dtype, field):
+    def visit_Queue(self, dtype, field):
         qlen = random.randrange(1, 3)
         return [self.visit(dtype[:-1]) for i in range(qlen)]
 
-    def visit_tuple(self, dtype, field):
+    def visit_Tuple(self, dtype, field):
         return tuple(self.visit(d, f) for d, f in zip(dtype, dtype.fields))
 
-    def visit_uint(self, dtype, field):
+    def visit_Uint(self, dtype, field):
         scv_var_func = getattr(self.scvlib, f'get_{field}', None)
         if scv_var_func:
             return scv_var_func()
         else:
             return random.randrange(0, 2**(int(dtype)) - 1)
 
-    def visit_int(self, dtype, field):
+    def visit_Int(self, dtype, field):
         scv_var_func = getattr(self.scvlib, f'get_{field}', None)
         if scv_var_func:
             return scv_var_func()
@@ -82,23 +82,23 @@ class SCVTypeVisitor(TypingVisitorBase):
         self.depth -= 1
         return type_declaration
 
-    def visit_int(self, type_, field):
+    def visit_Int(self, type_, field):
         self.cvars[field] = (f'sc_int<{int(type_)}>', int(type_))
 
-    def visit_uint(self, type_, field):
+    def visit_Uint(self, type_, field):
         if (int(type_) != 0):
             self.cvars[field] = (f'sc_uint<{int(type_)}>', int(type_))
 
-    def visit_unit(self, type_, field):
+    def visit_Unit(self, type_, field):
         return None
 
-    def visit_union(self, type_, field):
+    def visit_Union(self, type_, field):
         pass
 
-    def visit_queue(self, type_, field):
+    def visit_Queue(self, type_, field):
         pass
 
-    def visit_tuple(self, type_, field):
+    def visit_Tuple(self, type_, field):
         for t, f in zip(type_.args, type_.fields):
 
             if field:

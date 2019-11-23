@@ -54,8 +54,6 @@ def test_incomplete_argument():
 
 def test_unresolved_partial_err():
 
-    expected_err_text = 'Unresolved gear "consumer" with arguments (Intf(Integer),) and parameters {}, connected to the input "din": \n, when instantiating "producer"'
-
     @gear
     def consumer(din1, din2) -> b'din':
         pass
@@ -64,7 +62,5 @@ def test_unresolved_partial_err():
     def producer(din) -> b'din':
         pass
 
-    with pytest.raises(GearArgsNotSpecified) as excinfo:
+    with pytest.raises(GearArgsNotSpecified):
         consumer(Intf(Integer)) | producer
-
-    assert equal_on_nonspace(str(excinfo.value), expected_err_text)
