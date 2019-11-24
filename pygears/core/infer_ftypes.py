@@ -37,6 +37,8 @@ def type_is_specified(t):
         return all(type_is_specified(subt) for subt in t.values())
     elif is_type_iterable(t):
         return all(type_is_specified(subt) for subt in t)
+    elif isinstance(t, bytes):
+        return False
     else:
         return True
 
@@ -49,6 +51,7 @@ def resolve_param(val, match, namespace):
     if ((is_templated_type or is_type_iterable(val))
             and (not type_is_specified(val))):
         new_p = param_subs(val, match, namespace)
+
         if repr(new_p) != repr(val):
             return True, new_p
 

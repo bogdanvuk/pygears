@@ -44,7 +44,7 @@ def test_incomplete_argument():
     def test(din) -> b'din':
         pass
 
-    expected_err_text = """Input argument "din" has unresolved type "Integer", when instantiating "test" """
+    expected_err_text = """Input argument "din" has unresolved type "Integer"\n    when instantiating "test" """
 
     with pytest.raises(GearArgsNotSpecified) as excinfo:
         test(Intf(Integer))

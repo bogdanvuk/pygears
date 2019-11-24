@@ -51,7 +51,7 @@ def dualcycle_wrap_thin(din) -> b'din[0][0]':
 def dualcycle_wrap_comb_middle(din) -> b'din[0][0]':
     middle = Intf(din.dtype[0])
 
-    middle_back = middle | fmap(f=(add(0), add(0)))
+    middle_back = (middle | fmap(f=(add(0), add(0)))) >> din.dtype[0]
 
     return dualcycle(din,
                      middle_back,

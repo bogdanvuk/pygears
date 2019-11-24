@@ -364,6 +364,8 @@ searched recursively. Each template is reported only once.
 
 
 def param_subs(t, matches, namespace):
+    t_orig = t
+
     if isinstance(t, bytes):
         t = t.decode()
 
@@ -372,7 +374,7 @@ def param_subs(t, matches, namespace):
         try:
             return eval(t, namespace, matches)
         except Exception as e:
-            return t
+            return t_orig
             # raise Exception(
             #     f"{str(e)}\n - while evaluating parameter string '{t}'")
 
@@ -393,7 +395,7 @@ def param_subs(t, matches, namespace):
                                dict(t.__dict__),
                                args=args)
 
-    return t
+    return t_orig
 
 
 class EnumerableGenericMeta(GenericMeta):

@@ -2,7 +2,7 @@ import inspect
 import sys
 
 from pygears.conf import bind, core_log, registry, safe_bind, MultiAlternativeError
-from pygears.typing import Any
+from pygears.typing import Any, cast
 from pygears.core.util import is_standard_func, get_function_context_dict
 
 from .partial import Partial
@@ -35,7 +35,8 @@ def find_current_gear_frame():
 
 
 def check_args_num(argnames, varargsname, args):
-    if (len(args) < len(argnames)) or (not varargsname and (len(args) > len(argnames))):
+    if (len(args) < len(argnames)) or (not varargsname and
+                                       (len(args) > len(argnames))):
         balance = "few" if (len(args) < len(argnames)) else "many"
 
         raise TooManyArguments(f"Too {balance} arguments provided.")
@@ -49,7 +50,8 @@ def check_args_specified(args):
 
         if not type_is_specified(intf.dtype):
             raise GearArgsNotSpecified(
-                f'Input argument "{name}" has unresolved type "{repr(intf.dtype)}"')
+                f'Input argument "{name}" has unresolved type "{repr(intf.dtype)}"'
+            )
 
 
 def resolve_gear_name(func, __base__):
@@ -79,7 +81,8 @@ def infer_const_args(args):
                     raise GearArgsNotSpecified(
                         f'Unresolved gear "{intf.func.__name__}" with'
                         f' arguments {intf.args} and parameters {intf.kwds},'
-                        f' connected to the input "{name}": {str(MultiAlternativeError(intf.errors))}')
+                        f' connected to the input "{name}": {str(MultiAlternativeError(intf.errors))}'
+                    )
                 else:
                     raise GearArgsNotSpecified(
                         f'Unresolved argument "{intf}" connected to the input'
@@ -114,7 +117,8 @@ def expand_varargs(args, annotations, varargsname, varargs):
         args[argname] = a
 
     if vararg_type_list:
-        annotations[varargsname] = f'({", ".join(vararg_type_list)}, )'.encode()
+        annotations[varargsname] = f'({", ".join(vararg_type_list)}, )'.encode(
+        )
 
 
 def resolve_return_annotation(annotations):
@@ -154,7 +158,10 @@ def resolve_args(args, argnames, annotations, varargs):
 def infer_params(args, params, context):
     arg_types = {name: arg.dtype for name, arg in args.items()}
 
-    return infer_ftypes(params, arg_types, namespace=context, allow_incomplete=False)
+    return infer_ftypes(params,
+                        arg_types,
+                        namespace=context,
+                        allow_incomplete=False)
 
 
 class create_hier:
@@ -186,13 +193,15 @@ class intf_name_tracer:
         self.code_map.append(self.gear)
 
         # tracer is activated on next call, return or exception
-        if registry('gear/current_module').parent == registry('gear/hier_root'):
+        if registry('gear/current_module').parent == registry(
+                'gear/hier_root'):
             sys.setprofile(self.tracer)
 
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
-        if registry('gear/current_module').parent == registry('gear/hier_root'):
+        if registry('gear/current_module').parent == registry(
+                'gear/hier_root'):
             sys.setprofile(None)
 
         cm = self.code_map.pop()
@@ -204,62 +213,92 @@ class intf_name_tracer:
 
 
 def resolve_func(gear_inst):
+    out_dtype = gear_inst.params.get('return', None)
+    if out_dtype is None:
+        out_dtype = ()
+    elif out_dtype:
+        if isinstance(out_dtype, dict):
+            out_dtype = tuple(out_dtype.values())
+
+    if not isinstance(out_dtype, tuple):
+        out_dtype = (out_dtype, )
+
     if not is_standard_func(gear_inst.func):
-        return tuple()
+        return tuple(), out_dtype
 
     with create_hier(gear_inst):
         with intf_name_tracer(gear_inst):
-            out_intfs = gear_inst.func(
-                *gear_inst.in_port_intfs, **gear_inst.explicit_params)
+            out_intfs = gear_inst.func(*gear_inst.in_port_intfs,
+                                       **gear_inst.explicit_params)
 
-    if out_intfs is None:
-        out_intfs = tuple()
-    elif not isinstance(out_intfs, tuple):
-        out_intfs = (out_intfs, )
+        if out_intfs is None:
+            out_intfs = tuple()
+        elif not isinstance(out_intfs, tuple):
+            out_intfs = (out_intfs, )
 
-    return out_intfs
-
-
-def resolve_out_types(out_intfs, gear_inst):
-
-    if out_intfs:
-        out_dtype = tuple(intf.dtype for intf in out_intfs)
-    elif gear_inst.params['return'] is not None:
-        if not isinstance(gear_inst.params['return'], tuple):
-            out_dtype = (gear_inst.params['return'], )
-        else:
-            out_dtype = gear_inst.params['return']
-    else:
-        out_dtype = tuple()
-
-    return out_dtype
-
-
-def resolve_gear(gear_inst, fix_intfs):
-    out_intfs = resolve_func(gear_inst)
-
-    for i, intf in enumerate(out_intfs):
-        if not isinstance(intf, Intf):
+        for i, intf in enumerate(out_intfs):
             if isinstance(intf, Partial):
                 raise GearArgsNotSpecified(
                     f'Unresolved gear "{intf.func.__name__}" with'
                     f' arguments {intf.args} and parameters {intf.kwds},'
-                    f' returned as output "{i}": {str(MultiAlternativeError(intf.errors))}')
-            else:
-                pass
-                # raise GearArgsNotSpecified(
-                #     f'Unresolved output "{intf}" connected to the input'
-                #     f' "{name}"')
+                    f' returned as output "{i}": {str(MultiAlternativeError(intf.errors))}'
+                )
 
-    out_dtype = resolve_out_types(out_intfs, gear_inst)
+        err = None
+        try:
+            out_intfs, out_dtype = resolve_out_types(out_intfs, out_dtype, gear_inst)
+        except TypeError as e:
+            err = type(e)(f"{str(e)}, when instantiating '{gear_inst.name}'")
+
+        if err:
+            raise err
+
+    return out_intfs, out_dtype
+
+
+def resolve_out_types(out_intfs, out_dtype, gear_inst):
+
+    if out_intfs and (not out_dtype):
+        out_dtype = tuple(intf.dtype for intf in out_intfs)
+        return out_intfs, out_dtype
+
+    if out_intfs:
+        if len(out_intfs) != len(out_dtype):
+            relation = 'less' if len(out_intfs) < len(out_dtype) else 'more'
+            raise TypeMatchError(
+                f"Number of output interfaces ({len(out_intfs)}) is {relation} "
+                f" than specified output types ({out_dtype}): {repr(out_dtype)}"
+            )
+
+        casted_out_intfs = list(out_intfs)
+
+        # Try casting interface types upfront to get better error messaging
+        for intf, t in zip(out_intfs, out_dtype):
+            if intf.dtype != t:
+                cast(intf.dtype, t)
+
+        # If no exceptions occured, do it for real
+        for i, (intf, t) in enumerate(zip(out_intfs, out_dtype)):
+            if intf.dtype != t:
+                from pygears.lib.cast import cast as cast_gear
+                casted_out_intfs[i] = cast_gear(intf, t=t)
+
+        out_intfs = tuple(casted_out_intfs)
+        return out_intfs, out_dtype
+
+    return out_intfs, out_dtype
+
+
+def resolve_gear(gear_inst, fix_intfs):
+    out_intfs, out_dtype = resolve_func(gear_inst)
 
     dflt_dout_name = registry('gear/naming/default_out_name')
     for i in range(len(gear_inst.outnames), len(out_dtype)):
         if out_intfs and hasattr(out_intfs[i], 'var_name'):
             gear_inst.outnames.append(out_intfs[i].var_name)
         else:
-            gear_inst.outnames.append(
-                dflt_dout_name if len(out_dtype) == 1 else f'{dflt_dout_name}{i}')
+            gear_inst.outnames.append(dflt_dout_name if len(out_dtype) ==
+                                      1 else f'{dflt_dout_name}{i}')
 
     gear_inst.connect_output(out_intfs, out_dtype)
 
@@ -305,9 +344,14 @@ def resolve_gear(gear_inst, fix_intfs):
         return None
 
 
-def gear_base_resolver(
-        func, meta_kwds, *args, name=None, intfs=None, __base__=None, outnames=None,
-        **kwds):
+def gear_base_resolver(func,
+                       meta_kwds,
+                       *args,
+                       name=None,
+                       intfs=None,
+                       __base__=None,
+                       outnames=None,
+                       **kwds):
     name = name or resolve_gear_name(func, __base__)
 
     paramspec = inspect.getfullargspec(func)
@@ -317,7 +361,7 @@ def gear_base_resolver(
         args, annotations, const_args, ret_outnames = resolve_args(
             args, paramspec.args, paramspec.annotations, paramspec.varargs)
     except (TooManyArguments, GearArgsNotSpecified) as e:
-        err = type(e)(f'{str(e)}, when instantiating "{name}"')
+        err = type(e)(f'{str(e)}\n    when instantiating "{name}"')
 
     if err:
         raise err
@@ -331,7 +375,9 @@ def gear_base_resolver(
 
     kwddefaults = paramspec.kwonlydefaults or {}
     param_templates = {
-        **dict(outnames=outnames or ret_outnames or [], name=name, intfs=fix_intfs),
+        **dict(outnames=outnames or ret_outnames or [],
+               name=name,
+               intfs=fix_intfs),
         **kwddefaults,
         **kwds,
         **meta_kwds,
@@ -339,8 +385,9 @@ def gear_base_resolver(
     }
 
     try:
-        params = infer_params(
-            args, param_templates, context=get_function_context_dict(func))
+        params = infer_params(args,
+                              param_templates,
+                              context=get_function_context_dict(func))
     except TypeMatchError as e:
         err = TypeMatchError(f'{str(e)}, of the module "{name}"')
         params = e.params
@@ -363,10 +410,11 @@ def gear_base_resolver(
         gear_inst.connect_input()
         try:
             out_intfs = resolve_gear(gear_inst, fix_intfs)
-        except (TooManyArguments, GearTypeNotSpecified, GearArgsNotSpecified, TypeError,
-                TypeMatchError, MultiAlternativeError) as e:
+        except (TooManyArguments, GearTypeNotSpecified, GearArgsNotSpecified,
+                TypeError, TypeMatchError, MultiAlternativeError) as e:
             err = e
-            if hasattr(func, 'alternatives') or hasattr(func, 'alternative_to'):
+            if hasattr(func, 'alternatives') or hasattr(
+                    func, 'alternative_to'):
                 err.root_gear = gear_inst
 
     if err:

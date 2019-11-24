@@ -4,12 +4,9 @@ from pygears.lib import drv, collect
 from pygears.sim import sim
 
 
-config['trace/level'] = 0
-
 @gear
-def darken(din: Uint[8], *, gain) -> Ufixp[1, 8]:
-    res = din * Ufixp[0, 8](gain)
-    return res | Uint[8]
+def darken(din: Uint[8], *, gain) -> Uint[8]:
+    return din * Ufixp[0, 8](gain)
 
 
 res = []
