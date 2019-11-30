@@ -9,7 +9,6 @@ from .math import bitw
 class FixpnumberType(IntegralType):
     """Defines lib methods for all Integer based classes.
     """
-
     def __str__(self):
         if self.args:
             return f'q{self.integer}.{self.width - self.integer}'
@@ -43,6 +42,12 @@ class FixpnumberType(IntegralType):
             return Int[self.integer]
         else:
             return Uint[self.integer]
+
+    def __round__(self, digits=0):
+        if digits == 0:
+            return self.__floor__
+
+        return self.base[self.integer, self.width]
 
     def __rshift__(self, others):
         shamt = int(others)
@@ -203,7 +208,7 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
                     cls = Fixp if val.signed else Ufixp
 
             if not is_type(type(val)):
-                return cls[bitw(val)+1, bitw(val)+1](int(val))
+                return cls[bitw(val) + 1, bitw(val) + 1](int(val))
             elif isinstance(val, Integer):
                 return cls[val.width, val.width](val.code())
 
@@ -258,6 +263,9 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
             return floor(type(self))(self.code() >> type(self).fract)
         else:
             return floor(type(self))(self.code() << (-type(self).fract))
+
+    def __round__(self, digits=0):
+        round(type(self), digits=digits)(round(float(self), digits))
 
     def __add__(self, other):
         if not isinstance(other, Fixpnumber):

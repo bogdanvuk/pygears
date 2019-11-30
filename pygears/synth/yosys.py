@@ -122,7 +122,7 @@ def synth(outdir,
                           top=rtl_node,
                           language=language,
                           wrapper=wrapper)
-    with Yosys('yosys') as yosys:
+    with Yosys(f'yosys -l {os.path.join(outdir, "yosys.log")}') as yosys:
 
         yosys.command(f'script {prj_script_fn}')
 

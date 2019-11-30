@@ -19,7 +19,7 @@ class SVExpressionVisitor:
             return f'{node.op.name}_{node.context}'
 
     def visit_ResExpr(self, node):
-        return code(node.val)
+        return int(code(node.val))
 
     def visit_FunctionCall(self, node):
         return (f'{node.name}(' +

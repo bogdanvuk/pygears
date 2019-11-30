@@ -1,4 +1,9 @@
-from pygears import gear
+from pygears import gear, datagear
+
+
+@datagear
+def qround(din) -> b't':
+    return type_reinterpret(din, t)
 
 
 @gear

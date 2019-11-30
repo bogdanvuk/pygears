@@ -9,7 +9,7 @@ import matplotlib.image as mpimg
 
 @gear
 def darken(din: Uint[8], *, gain) -> Uint[8]:
-    return din * Ufixp[0, 8](gain) | Uint
+    return din * Ufixp[0, 8](gain)
 
 
 @gear

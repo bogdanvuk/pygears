@@ -12,6 +12,12 @@ from .number import NumberType, Number
 from .tuple import Tuple
 from .math import bitw
 from .unit import Unit
+from functools import reduce
+from operator import matmul
+
+
+def concat(l):
+    return reduce(matmul, l)
 
 
 class IntegralType(EnumerableGenericMeta):
@@ -243,6 +249,20 @@ class Integer(Integral, metaclass=IntegerType):
 
         if type(val) == cls:
             return val
+
+        if isinstance(val, list):
+            if cls.signed:
+                raise TypeError(f'cannot create Int from bit list')
+
+            if not cls.specified:
+                cls = Uint[len(val)]
+
+            ival = 0
+            for v in val:
+                ival <<= 1
+                ival |= bool(v)
+
+            return cls(ival)
 
         if cls.is_generic():
             res = cls[bitw(val)](int(val))

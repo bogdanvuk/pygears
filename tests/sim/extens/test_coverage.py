@@ -47,7 +47,7 @@ def test_accum(enable_coverage=True):
         for x in seq:
             yield x
 
-    directed(drv(t=t_din, seq=test_sample()), f=accum, ref=ref)
+    directed(drv(t=t_din, seq=test_sample()), f=accum(t=Uint[8]), ref=ref)
     sim()
     # print(cg.report())
 

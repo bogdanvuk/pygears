@@ -21,6 +21,7 @@ from .rom import rom
 from .operators import (
     add, div, eq, ge, gt, invert, le, lt, mod, mul, ne, neg, sub, shl, shr, xor,
     reinterpret)
+from .saturate import saturate
 from .mux import mux, mux_zip
 from .demux import demux, demux_zip, demux_by, demux_ctrl
 from .shred import shred
@@ -81,5 +82,5 @@ __all__ = [
     'check', 'mon', 'reduce', 'accum', 'pipe', 'funclut', 'truncate', 'round_half_up',
     'round_to_zero', 'round_to_even', 'add', 'div', 'eq', 'ge', 'gt', 'invert', 'iceil',
     'le', 'lt', 'mod', 'mul', 'ne', 'neg', 'sub', 'shl', 'shr', 'xor', 'scoreboard',
-    'scope', 'sample', 'trigreg', 'regmap'
+    'scope', 'sample', 'trigreg', 'regmap', 'saturate'
 ]

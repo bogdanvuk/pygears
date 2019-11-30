@@ -1,5 +1,5 @@
 from functools import reduce
-from pygears.typing import Int, Tuple, Uint, div, typeof
+from pygears.typing import Int, Tuple, Uint, div, typeof, code
 from pygears.typing import floor, Array, cast, signed, reinterpret
 from pygears.typing.queue import QueueMeta
 
@@ -141,8 +141,12 @@ def call_signed(val):
     raise Exception("Unsupported signed cast")
 
 
-def call_code(val):
-    return val
+def call_code(val, cast_type=Uint):
+    breakpoint()
+    if val.dtype == cast_type.val:
+        return val
+
+    return CastExpr(val, cast_to=cast_type.val)
 
 
 def call_type(arg):
@@ -168,5 +172,7 @@ builtins = {
     signed: call_signed,
     QueueMeta.sub: call_sub,
     OutSig.write: outsig_write,
-    Array.code: call_code
+    Array.code: call_code,
+    Tuple.code: call_code,
+    code: call_code
 }

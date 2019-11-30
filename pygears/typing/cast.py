@@ -1,15 +1,34 @@
 # from pygears.conf import safe_bind
 from pygears.typing.base import typeof, is_type
 from . import Array, Int, Integer, Queue, Tuple, Uint, Union
-from . import Fixpnumber, Float, Number, Ufixp
+from . import Fixpnumber, Float, Number, Ufixp, Fixp
 # from pygears.conf.log import gear_log
 
 
-def code(val):
-    if is_type(type(val)):
-        return val.code()
+def reinterpret(data, cast_type):
+    if is_type(data):
+        return cast_type
     else:
-        return int(val)
+        return cast_type.decode(code(data) & ((1 << cast_type.width) - 1))
+
+
+def code(data, cast_type=Uint):
+    if is_type(data):
+        if not cast_type.specified and typeof(cast_type, Uint):
+            cast_type = Uint[data.width]
+
+        return cast_type
+
+    dtype = type(data)
+    if is_type(dtype):
+        data = data.code()
+        if not cast_type.specified and typeof(cast_type, Integer):
+            cast_type = cast_type[dtype.width]
+
+    if is_type(cast_type) and cast_type.specified:
+        return cast_type.decode(data & ((1 << cast_type.width) - 1))
+    else:
+        return cast_type(data)
 
 
 def decode(val):
@@ -88,6 +107,77 @@ def uint_type_cast_resolver(dtype, cast_type):
 
 def float_type_cast_resolver(dtype, cast_type):
     if typeof(dtype, Number):
+        return cast_type
+
+    raise get_type_error(dtype, cast_type)
+
+
+def ufixp_type_cast_resolver(dtype, cast_type):
+    if typeof(dtype, Ufixp):
+        if not cast_type.specified:
+            return dtype
+
+        if dtype.integer > cast_type.integer:
+            raise get_type_error(dtype, cast_type, [
+                f"fixed-point integer part is larger than target's integer part ('{dtype.integer}' > '{cast_type.integer})",
+            ])
+
+        if dtype.fract > cast_type.fract:
+            raise get_type_error(dtype, cast_type, [
+                f"fixed-point fraction part is larger than target's fraction part ('{dtype.fract}' > '{cast_type.fract})",
+            ])
+
+        return cast_type
+
+    if typeof(dtype, Uint):
+        if not cast_type.specified:
+            return Ufixp[dtype.width, dtype.width]
+
+        if dtype.width > cast_type.integer:
+            raise get_type_error(dtype, cast_type, [
+                f"integer is larger than fixed-point integer part ('{dtype.width}' > '{cast_type.integer})",
+            ])
+
+        return cast_type
+
+    raise get_type_error(dtype, cast_type)
+
+
+def fixp_type_cast_resolver(dtype, cast_type):
+    if typeof(dtype, Fixpnumber):
+        if not cast_type.specified:
+            if dtype.signed:
+                return dtype
+            else:
+                return Fixp[dtype.integer + 1, dtype.width + 1]
+
+        int_part = dtype.integer
+        if not dtype.signed:
+            int_part += 1
+
+        if int_part > cast_type.integer:
+            raise get_type_error(dtype, cast_type, [
+                f"needed target's integer part >= {int_part}",
+            ])
+
+        if dtype.fract > cast_type.fract:
+            raise get_type_error(dtype, cast_type, [
+                f"fixed-point fraction part is larger than target's fraction part ('{dtype.fract}' > '{cast_type.fract})",
+            ])
+
+        return cast_type
+
+    if typeof(dtype, Integer):
+        dtype = type_cast(dtype, Int)
+
+        if not cast_type.specified:
+            return Fixp[dtype.width, dtype.width]
+
+        if dtype.width > cast_type.integer:
+            raise get_type_error(dtype, cast_type, [
+                f"integer is larger than fixed-point integer part ('{dtype.width}' > '{cast_type.integer})",
+            ])
+
         return cast_type
 
     raise get_type_error(dtype, cast_type)
@@ -288,6 +378,8 @@ def queue_type_cast_resolver(dtype, cast_type):
 type_cast_resolvers = {
     Uint: uint_type_cast_resolver,
     Int: int_type_cast_resolver,
+    Ufixp: ufixp_type_cast_resolver,
+    Fixp: fixp_type_cast_resolver,
     Tuple: tuple_type_cast_resolver,
     Union: union_type_cast_resolver,
     Float: float_type_cast_resolver,
@@ -397,10 +489,10 @@ def queue_value_cast_resolver(val, cast_type):
 
 
 def fixpnumber_value_cast_resolver(val, cast_type):
-    if typeof(type(val), (Fixpnumber, Float)):
-        return cast_type(val)
+    val_type = type(val)
+    cast_type = type_cast(val_type, cast_type)
 
-    raise get_value_error(val, cast_type)
+    return cast_type(val)
 
 
 def float_value_cast_resolver(val, cast_type):
@@ -434,8 +526,9 @@ def value_cast(val, cast_type):
         if typeof(cast_type, templ):
             return value_cast_resolvers[templ](val, cast_type)
 
-    raise ValueError(f'Cannot cast value "{val}" of type "{repr(type(val))}"'
-                     f' to unspecified type {repr(cast_type)}')
+    raise ValueError(
+        f"Type '{repr(cast_type)}' unsupported, cannot cast value '{val}' "
+        f"of type '{repr(type(val))}'")
 
 
 def cast(data, cast_type):

@@ -8,8 +8,8 @@ import matplotlib.image as mpimg
 
 
 @gear
-def darken(din: Uint[8], *, gain) -> Ufixp[1, 8]:
-    return din * Ufixp[0, 8](gain) | Uint[8]
+def darken(din: Uint[8], *, gain) -> Uint[8]:
+    return din * Ufixp[0, 8](gain)
 
 
 orig_img = (mpimg.imread('../creature.png') * 255).astype(np.uint8)

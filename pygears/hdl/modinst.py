@@ -3,7 +3,7 @@ import functools
 
 import pygears
 from pygears import registry, config
-from pygears.typing import code
+from pygears.typing import code, is_type
 
 # from .inst import svgen_log
 
@@ -198,8 +198,11 @@ class HDLModuleInst:
                             params[param_valid_name] = 0
                         continue
 
+                    if is_type(v):
+                        v = v.width
+
                     if (code(v) != int(self.impl_params[param_name]['val'])):
-                        params[param_name] = code(v)
+                        params[param_name] = int(code(v))
 
                     if param_valid_name in self.impl_params:
                         params[param_valid_name] = 1

@@ -18,12 +18,14 @@ from .number import Number
 from .float import Float
 from .cast import cast, signed, reinterpret, code, decode
 from .saturate import saturate
+from .qround import qround
 
 __all__ = [
-    'Bool', 'Queue', 'TemplateArgumentsError', 'Tuple', 'Int', 'Uint', 'Unit', 'Union',
-    'Maybe', 'Array', 'Float', 'bitw', 'div', 'floor', 'typeof', 'Any', 'TLM',
-    'ceil_pow2', 'is_type', 'flatten', 'expand', 'factor', 'Ufixp', 'Fixp', 'Number',
-    'Fixpnumber', 'Integral', 'cast', 'signed', 'reinterpret', 'code', 'decode', 'saturate'
+    'Bool', 'Queue', 'TemplateArgumentsError', 'Tuple', 'Int', 'Uint', 'Unit',
+    'Union', 'Maybe', 'Array', 'Float', 'bitw', 'div', 'floor', 'typeof',
+    'Any', 'TLM', 'ceil_pow2', 'is_type', 'flatten', 'expand', 'factor',
+    'Ufixp', 'Fixp', 'Number', 'Fixpnumber', 'Integral', 'cast', 'signed',
+    'reinterpret', 'code', 'decode', 'saturate', 'qround'
 ]
 
 

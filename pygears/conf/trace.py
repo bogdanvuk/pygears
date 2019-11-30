@@ -16,19 +16,18 @@ def gear_definition_location(func):
     fn = inspect.getfile(uwrp)
 
     ln = '-'
-    if fn.startswith('<decorator'):
+    while fn.startswith('<decorator'):
         if hasattr(uwrp, 'definition'):
             uwrp = uwrp.definition
         elif hasattr(uwrp, 'alternative_to'):
             uwrp = uwrp.alternative_to
 
         fn = inspect.getfile(uwrp)
+
+    try:
         _, ln = inspect.getsourcelines(uwrp)
-    else:
-        try:
-            _, ln = inspect.getsourcelines(uwrp)
-        except OSError:
-            pass
+    except OSError:
+        pass
 
     return uwrp, fn, ln
 
