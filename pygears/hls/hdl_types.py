@@ -44,6 +44,7 @@ class FuncBlock(BaseBlock):
     args: List[VariableDef]
     name: str
     ret_dtype: PgType
+    hdl_data: Any
 
 
 @dataclass

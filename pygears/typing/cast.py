@@ -14,8 +14,8 @@ def reinterpret(data, cast_type):
 
 def code(data, cast_type=Uint):
     if is_type(data):
-        if not cast_type.specified and typeof(cast_type, Uint):
-            cast_type = Uint[data.width]
+        if not cast_type.specified and typeof(cast_type, Integer):
+            cast_type = cast_type[data.width]
 
         return cast_type
 

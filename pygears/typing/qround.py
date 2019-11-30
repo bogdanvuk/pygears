@@ -1,19 +1,21 @@
-from .cast import code, value_cast
+from .cast import code, value_cast, type_cast
 from .fixp import Fixp, Ufixp
 from .uint import Uint, Bool, Int
 
 
+def get_out_type(val_type, fract):
+    return val_type.base[val_type.integer + 1, val_type.integer + fract + 1]
+
+
+def get_cut_bits(val_type, fract):
+    return val_type.width - val_type.integer - fract
+
+
 def _qround_setup(val, fract):
-    if type(val).signed:
-        val = value_cast(val, Fixp)
-    else:
-        val = value_cast(val, Ufixp)
-
     val_type = type(val)
-    out_type = val_type.base[val_type.integer + 1, val_type.integer + fract +
-                             1]
+    out_type = get_out_type(val_type, fract)
 
-    cut_bits = val_type.width - val_type.integer - fract
+    cut_bits = get_cut_bits(val_type, fract)
 
     if val.signed:
         val_coded = code(val, Int)

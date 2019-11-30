@@ -61,7 +61,7 @@ from .drvrnd import drvrnd
 from .reduce2 import reduce2
 from .reduce import reduce, accum
 from .funclut import funclut
-from .rounding import truncate, round_half_up, round_to_zero, round_to_even
+from .rounding import truncate, round_half_up, round_to_zero, round_to_even, qround
 from .scope import scope
 from .asyncreg import trigreg, sample, regmap
 
@@ -82,5 +82,5 @@ __all__ = [
     'check', 'mon', 'reduce', 'accum', 'pipe', 'funclut', 'truncate', 'round_half_up',
     'round_to_zero', 'round_to_even', 'add', 'div', 'eq', 'ge', 'gt', 'invert', 'iceil',
     'le', 'lt', 'mod', 'mul', 'ne', 'neg', 'sub', 'shl', 'shr', 'xor', 'scoreboard',
-    'scope', 'sample', 'trigreg', 'regmap', 'saturate'
+    'scope', 'sample', 'trigreg', 'regmap', 'saturate', 'qround'
 ]

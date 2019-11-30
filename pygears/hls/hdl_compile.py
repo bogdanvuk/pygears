@@ -354,6 +354,7 @@ def parse_gear_body(gear):
         for func_block in func_alter_impls:
             hdl_data.hdl_functions[func_block.name] = FunctionVisitor(
                 func_block.hdl_data).visit(func_block)
+            hdl_data.hdl_functions[func_block.name].hdl_data = func_block.hdl_data
 
     res['conditions'] = cond_visit.get_condition_block()
     try:

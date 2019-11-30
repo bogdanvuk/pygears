@@ -241,7 +241,8 @@ class FunctionVisitor(HDLStmtVisitor):
                           dflts={},
                           args=node.args,
                           name=node.name,
-                          ret_dtype=node.ret_dtype)
+                          ret_dtype=node.ret_dtype,
+                          hdl_data=self.hdl_data)
 
         self.func_block = block
 

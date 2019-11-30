@@ -91,6 +91,12 @@ class SVCompiler(InstanceVisitor):
         for name, arg in node.args.items():
             self.writer.line(f'input {name}_t {svexpr(arg)};')
 
+        for name, expr in node.hdl_data.variables.items():
+            if name not in node.args:
+                self.writer.block(svgen_typedef(expr.dtype, name))
+                self.writer.line(f'{name}_t {name}_v;')
+                self.writer.line()
+
         if not node.stmts and not node.dflts:
             return
 

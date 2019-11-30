@@ -141,12 +141,12 @@ def call_signed(val):
     raise Exception("Unsupported signed cast")
 
 
-def call_code(val, cast_type=Uint):
-    breakpoint()
-    if val.dtype == cast_type.val:
+def call_code(val, cast_type=ResExpr(Uint)):
+    cast_type = code(val.dtype, cast_type.val)
+    if val.dtype == cast_type:
         return val
 
-    return CastExpr(val, cast_to=cast_type.val)
+    return CastExpr(val, cast_to=cast_type)
 
 
 def call_type(arg):
