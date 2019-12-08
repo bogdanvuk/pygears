@@ -264,15 +264,13 @@ class Integer(Integral, metaclass=IntegerType):
 
             return cls(ival)
 
+        if typeof(cls, Uint) and val < 0:
+            raise ValueError(f"cannot represent negative numbers with unsigned type '{repr(cls)}'")
+
         if cls.is_generic():
             res = cls[bitw(val)](int(val))
         else:
-            if typeof(cls, Uint):
-                res = super(Integer,
-                            cls).__new__(cls,
-                                         int(val) & ((1 << len(cls)) - 1))
-            else:
-                res = super(Integer, cls).__new__(cls, val)
+            res = super(Integer, cls).__new__(cls, val)
 
         check_width(val, res.width, cls)
         return res

@@ -1,3 +1,4 @@
+import pytest
 from math import floor
 from pygears.typing import Fixp, Ufixp, typeof, Number, Int, Uint, div
 from pygears.core.type_match import type_match
@@ -130,7 +131,8 @@ def test_cast():
     assert t_a(t_b(2.5)) == t_a(2.5)
 
     # Overflow
-    assert t_a(t_b(7.5)) == t_a(3.5)
+    with pytest.raises(ValueError):
+        assert t_a(t_b(7.5)) == t_a(3.5)
 
 
 def test_floor():

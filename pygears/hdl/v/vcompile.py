@@ -141,6 +141,10 @@ class VCompiler(InstanceVisitor):
                 if l.startswith('reg'):
                     self.writer.line(l)
 
+        for name, expr in node.hdl_data.variables.items():
+            if name not in node.args:
+                self.writer.block(vgen_signal(expr.dtype, 'reg', f'{name}_v', 'input'))
+
         self.writer.indent -= 4
 
         if not node.stmts and not node.dflts:

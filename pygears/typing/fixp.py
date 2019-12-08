@@ -215,24 +215,36 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
         if isinstance(val, Fixpnumber):
             val_fract = type(val).fract
             if cls.fract > val_fract:
-                val = int(val) << (cls.fract - val_fract)
+                ival = int(val) << (cls.fract - val_fract)
             else:
-                val = int(val) >> (val_fract - cls.fract)
+                ival = int(val) >> (val_fract - cls.fract)
         elif ((not is_type(type(val)) and isinstance(val, (float, int)))
               or isinstance(val, (Integer, Float))):
-            val = int(float(val) * (2**cls.fract))
+            ival = int(float(val) * (2**cls.fract))
         else:
             raise TypeError(f'Unsupported value {val} of type {type(val)}')
 
-        val &= ((1 << cls.width) - 1)
-
         if cls.signed:
-            if val >= (1 << (cls.width - 1)):
-                val -= 1 << cls.width
+            if (bitw(ival) > (cls.width if ival < 0 else cls.width - 1)):
+                raise ValueError(f"{repr(cls)} cannot represent value '{val}'")
+        else:
+            if ival < 0:
+                raise ValueError(
+                    f"cannot represent negative numbers with unsigned type '{repr(cls)}'"
+                )
 
-        res = int.__new__(cls, val)
+            if (bitw(ival) > cls.width):
+                raise ValueError(f"{repr(cls)} cannot represent value '{val}'")
+
+        res = int.__new__(cls, ival)
 
         return res
+
+    def __str__(self):
+        return f'{str(type(self))}({float(self)})'
+
+    def __repr__(self):
+        return f'{repr(type(self))}({float(self)})'
 
     def __neg__(self):
         return (-type(self))(-int(self))
@@ -284,12 +296,24 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
             (int(self) << (sum_cls.fract - type(self).fract)) -
             (int(other) << (sum_cls.fract - type(other).fract)))
 
+    def __eq__(self, other):
+        cls = type(self)
+        cls_other = type(other)
+
+        if cls_other.fract > cls.fract:
+            return int(self) << (cls_other.fract - cls.fract) == int(other)
+        else:
+            return int(self) == int(other) << (cls.fract - cls_other.fract)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def code(self):
         return int(self) & ((1 << self.width) - 1)
 
     @classmethod
     def decode(cls, val):
-        return int.__new__(cls, int(val))
+        return int.__new__(cls, int(val) & ((1 << cls.width) - 1))
 
     @property
     def width(self):

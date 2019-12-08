@@ -19,7 +19,7 @@ class VGenTypeVisitor(TypingVisitorBase):
         return [f'{self.basic_type} [0:0] {self.context}; // {type_}']
 
     def visit_Uint(self, type_, field, **kwds):
-        if int(type_) != 0:
+        if type_.width != 0:
             return [
                 f'{self.basic_type} [{int(type_)-1}:0] {self.context}; // {type_}'
             ]

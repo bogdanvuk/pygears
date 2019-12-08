@@ -1,16 +1,45 @@
-from pygears.typing import typeof, Int, Fixp, Uint, Ufixp
+from pygears.typing import typeof, Int, Fixp, Uint, Ufixp, is_type
 from .cast import cast
 
 
-def integral_saturate_resolver(val, cast_type, limits=None):
+def integral_type_saturate_resolver(dtype, cast_type):
+    return cast_type
+
+
+def fixp_type_saturate_resolver(dtype, cast_type):
+    if dtype.fract != cast_type.fract:
+        raise TypeError(
+            f"cannot saturate fixed point type '{repr(dtype)}' to a type '{repr(cast_type)}'"
+            f" with a different fractional size ({dtype.fract} != {cast_type.fract}) ")
+
+    return cast_type
+
+
+type_saturate_resolvers = {
+    Int: integral_type_saturate_resolver,
+    Fixp: fixp_type_saturate_resolver,
+    Uint: integral_type_saturate_resolver,
+    Ufixp: fixp_type_saturate_resolver,
+}
+
+
+def type_saturate(val, cast_type, limits=None):
+    for templ in type_saturate_resolvers:
+        if typeof(cast_type, templ):
+            return type_saturate_resolvers[templ](val, cast_type)
+
+    raise TypeError(
+        f"Type '{repr(cast_type)}' unsupported, cannot saturate type '{val}' "
+        f"of type '{repr(type(val))}'")
+
+
+def integral_value_saturate_resolver(val, cast_type, limits=None):
     val = cast(val, cast_type.base)
     if limits is None:
         if cast_type.signed:
-            limits = (-cast_type.max, cast_type.max)
+            limits = (cast_type.min, cast_type.max)
         else:
             limits = (cast_type(0), cast_type.max)
-
-    print(f'val: {val} ({float(val)}), limits: {limits}')
 
     if val < limits[0]:
         return limits[0]
@@ -20,18 +49,27 @@ def integral_saturate_resolver(val, cast_type, limits=None):
         return cast_type(val)
 
 
-saturate_resolvers = {
-    Int: integral_saturate_resolver,
-    Fixp: integral_saturate_resolver,
-    Uint: integral_saturate_resolver,
-    Ufixp: integral_saturate_resolver,
+value_saturate_resolvers = {
+    Int: integral_value_saturate_resolver,
+    Fixp: integral_value_saturate_resolver,
+    Uint: integral_value_saturate_resolver,
+    Ufixp: integral_value_saturate_resolver,
 }
 
 
-def saturate(val, cast_type, limits=None):
-    for templ in saturate_resolvers:
+def value_saturate(val, cast_type, limits=None):
+    for templ in value_saturate_resolvers:
         if typeof(cast_type, templ):
-            return saturate_resolvers[templ](val, cast_type)
+            return value_saturate_resolvers[templ](val, cast_type, limits)
 
-    raise ValueError(f"Type '{repr(cast_type)}' unsupported, cannot saturate value '{val}' "
-                     f"of type '{repr(type(val))}'")
+    raise ValueError(
+        f"Type '{repr(cast_type)}' unsupported, cannot saturate value '{val}' "
+        f"of type '{repr(type(val))}'")
+
+
+def saturate(data, cast_type, limits=None):
+    if is_type(data):
+        return type_saturate(data, cast_type, limits)
+    else:
+        sat_type = type_saturate(data, cast_type, limits)
+        return value_saturate(data, sat_type, limits)

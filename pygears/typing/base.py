@@ -119,6 +119,7 @@ class GenericMeta(TypingMeta):
     _specified = None
 
     def __new__(cls, name, bases, namespace, args=[]):
+        # TODO: Throw error when too many args are supplied
         if (not bases) or (not hasattr(bases[0],
                                        'args')) or (not bases[0].args):
             # Form a class that has the generic arguments specified

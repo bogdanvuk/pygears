@@ -1,4 +1,4 @@
-from pygears import gear, datagear, alternative
+from pygears import gear, datagear, alternative, module
 from pygears.typing.qround import get_out_type, get_cut_bits
 from pygears.typing import Uint, code, Bool, Int, Fixp, Ufixp
 
@@ -11,7 +11,7 @@ def qround(din,
            signed=b'din.signed') -> b'get_out_type(din, fract)':
 
     res = code(din, Int if signed else Uint) + (Bool(1) << (cut_bits - 1))
-    return code(res[cut_bits:])
+    return code(res[cut_bits:], module().tout)
 
 
 # @datagear

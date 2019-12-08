@@ -9,7 +9,7 @@ from . import hls_expressions as expr
 from .hdl_cast import resolve_cast_func
 from . import pydl_types as blocks
 from .utils import (
-    add_to_list, cast_return, eval_local_expression, find_assign_target,
+    add_to_list, cast_return, eval_local_expression, find_assign_target, eval_data_expr,
     find_data_expression, find_name_expression, get_bin_expr, get_context_var, intf_parse)
 
 from pygears.conf.trace import gear_definition_location
@@ -262,7 +262,13 @@ def parse_name(node, module_data):
 
 @parse_node(ast.Attribute)
 def parse_attribute(node, module_data):
-    val = parse_ast(node.value, module_data)
+    try:
+        val = eval_data_expr(node, module_data.local_namespace)
+    except NameError:
+        val = parse_ast(node.value, module_data)
+
+    if isinstance(val, expr.ResExpr):
+        return val
 
     if isinstance(val, expr.AttrExpr):
         return expr.AttrExpr(val.val, val.attr + [node.attr])
