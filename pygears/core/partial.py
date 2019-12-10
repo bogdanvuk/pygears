@@ -152,9 +152,6 @@ class Partial:
 
         return True
 
-    def __matmul__(self, iin):
-        return self(intfs=iin)
-
     def __or__(self, iin):
         return iin.__ror__(self)
 

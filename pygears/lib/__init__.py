@@ -16,7 +16,7 @@ from .cast import cast
 from .quenvelope import quenvelope
 from .sieve import sieve
 from .permute import permuted_apply
-from .const import const, fix, once
+from .const import const, fix, once, ping
 from .rom import rom
 from .operators import (
     add, div, eq, ge, gt, invert, le, lt, mod, mul, ne, neg, sub, shl, shr, xor,
@@ -30,6 +30,7 @@ from .fifo import fifo
 from .fill import fill
 from .dreg import dreg, regout
 from .serialize import serialize
+from .parallelize import parallelize
 from .data_dly import data_dly
 from .filt import filt
 from .align import align
@@ -82,5 +83,5 @@ __all__ = [
     'check', 'mon', 'reduce', 'accum', 'pipe', 'funclut', 'truncate', 'round_half_up',
     'round_to_zero', 'round_to_even', 'add', 'div', 'eq', 'ge', 'gt', 'invert', 'iceil',
     'le', 'lt', 'mod', 'mul', 'ne', 'neg', 'sub', 'shl', 'shr', 'xor', 'scoreboard',
-    'scope', 'sample', 'trigreg', 'regmap', 'saturate', 'qround'
+    'scope', 'sample', 'trigreg', 'regmap', 'saturate', 'qround', 'parallelize', 'ping'
 ]

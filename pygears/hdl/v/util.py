@@ -102,13 +102,18 @@ class VGenTypeVisitor(TypingVisitorBase):
         arr_var = f'{self.context}_arr'
         res = self.visit(merge_t, type_.fields[0])
         res.append(
-            f'wire [{int(type_.data)-1}:0] {arr_var} [0:{int(len(type_))-1}];')
+            f'{self.basic_type} [{int(type_.data)-1}:0] {arr_var} [0:{int(len(type_))-1}];')
 
         high = 0
         low = 0
         for i in range(len(type_)):
             high += int(type_.data)
-            res.append(f'assign {arr_var}[{i}] = {self.context}[{high - 1}:{low}];')
+
+            if self.direction == 'input':
+                res.append(f'assign {arr_var}[{i}] = {self.context}[{high - 1}:{low}];')
+            else:
+                res.append(f'assign {self.context}[{high - 1}:{low}] = {arr_var}[{i}];')
+
             low += int(type_.data)
 
         return res

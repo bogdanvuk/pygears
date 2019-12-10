@@ -32,7 +32,7 @@ def filt_unit(din: Union[Any, Unit]) -> b'din.types[0]':
 @alternative(filt)
 @gear
 def filt_fix_sel(din: Union, *, fixsel) -> b'din.types[fixsel]':
-    return (ccat(din, din.dtype[1](fixsel)) | filt)[0] \
+    return (ccat(din, din.dtype.ctrl(fixsel)) | filt)[0] \
         >> din.dtype.types[fixsel]
 
 

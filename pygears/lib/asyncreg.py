@@ -1,5 +1,6 @@
-from pygears import gear
-from pygears.typing import Maybe, Tuple, Uint, Union
+from pygears import gear, IntfEmpty, module
+from pygears.sim import clk
+from pygears.typing import Maybe, Tuple, Uint, Union, Bool
 from .mux import mux
 from .demux import demux
 from .ccat import ccat
@@ -14,7 +15,24 @@ def spy(din) -> b'din':
 
 @gear
 async def sample(din, *, latency=1, hold=1, init=None) -> b"din":
-    pass
+    data = din.dtype() if init is None else din.dtype(init)
+    valid = init is not None
+    dout = module().dout
+
+    while True:
+        try:
+            data = din.get_nb()
+            valid = True
+        except IntfEmpty:
+            pass
+
+        if valid and dout.ready_nb():
+            dout.put_nb(data)
+
+            if not hold:
+                valid = False
+
+        await clk()
 
 
 @gear(hdl={'files': ['sample.sv']})
@@ -44,7 +62,7 @@ def regmap(
         init = initmap.get(i, None)
         type_ = regtype.get(i, sample)
         if type_.func.__name__ == 'trigreg':
-            r = r >> Maybe[Uint[len(r.dtype)-1]]
+            r = r >> Maybe[Uint[len(r.dtype) - 1]]
 
         douts.append(type_(r, init=init))
 

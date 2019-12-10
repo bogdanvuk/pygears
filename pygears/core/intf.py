@@ -61,7 +61,10 @@ class Intf:
         }
 
     def __ior__(self, iout):
-        return iout.__matmul__(self)
+        iout.producer.consumer = self
+        self.producer = iout.producer
+
+        return self
 
     def __or__(self, other):
         if isinstance(other, Intf):
@@ -75,12 +78,6 @@ class Intf:
 
         operator_func = registry('gear/intf_oper/__or__')
         return operator_func(self, other)
-
-    def __matmul__(self, iout):
-        self.producer.consumer = iout
-        iout.producer = self.producer
-
-        return iout
 
     def source(self, port):
         self.producer = port

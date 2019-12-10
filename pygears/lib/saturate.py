@@ -1,7 +1,6 @@
-from pygears import module
+from pygears import module, datagear
 from pygears.typing import Uint
-from pygears import datagear
-from pygears.typing import Integral, code
+from pygears.typing import Integral, code, saturate as type_saturate
 
 
 @datagear

@@ -26,8 +26,8 @@ def expand(din, *, depth=16) -> b'expand(din)':
 
 
 @alternative(expand)
-@gear(enablement=b'typeof(din, Tuple)')
-def expand_tuple(din) -> b'expand(din)':
+@gear
+def expand_tuple(din: Tuple) -> b'expand(din)':
     ctrl_lens = []
     ctrl_list = []
     for i, t in enumerate(din.dtype):
