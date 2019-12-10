@@ -88,14 +88,14 @@ logic {{name}};
 output logic         {{intf['name']}}_ready,
 input  logic         {{intf['name']}}_valid,
 {# input  logic [{{((intf['width']+7)//8)*8-1}}:0] {{intf['name']}}_data #}
-input  logic [{{intf['width']-1}}:0] {{intf['name']}}_data
+input  logic [{{max(intf['width']-1, 0)}}:0] {{intf['name']}}_data
 {%- endmacro %}
 
 {% macro prod_signal_intf(intf) -%}
 input  logic         {{intf['name']}}_ready,
 output logic         {{intf['name']}}_valid,
 {# output logic [{{((intf['width']+7)//8)*8-1}}:0] {{intf['name']}}_data #}
-output logic [{{intf['width']-1}}:0] {{intf['name']}}_data
+output logic [{{max(intf['width']-1, 0)}}:0] {{intf['name']}}_data
 {%- endmacro %}
 
 {% macro signal_intf_list(intfs) -%}
@@ -185,6 +185,13 @@ endmodule
   {%- endif -%}
 
 {%- endmacro -%}
+
+{% macro module() -%}
+{% set caller_ = caller %}
+{% call module_with_intf_structs(module_name, intfs, intfs, comment, sigs) %}
+{{ caller_() }}
+{% endcall %}
+{%- endmacro %}
 
 {% macro module_with_intf_structs(module_name, intfs, struct_intfs, comment, sigs=None) -%}
 {% set caller_ = caller %}

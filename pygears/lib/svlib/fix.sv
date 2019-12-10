@@ -13,6 +13,8 @@ module fix
 
    assign din.ready = dout.ready;
    assign dout.valid = din.valid;
-   assign dout.data = TOUT'(VAL);
+
+   if (TOUT > 0)
+     assign dout.data = TOUT'(VAL);
 
 endmodule

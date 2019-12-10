@@ -25,15 +25,13 @@ class SVGenTypeVisitor(TypingVisitorBase):
     def visit_Int(self, type_, field):
         if (not self.depth):
             self.struct_array.append(
-                f'typedef {self.basic_type} signed [{int(type_)-1}:0] {self.context}_t; // {type_}\n'
-            )
+                f'typedef {self.basic_type} signed [{int(type_)-1}:0] {self.context}_t; // {type_}\n')
         return f'{self.basic_type} signed [{int(type_)-1}:0]'
 
     def visit_Bool(self, type_, field):
         if (not self.depth):
             self.struct_array.append(
-                f'typedef {self.basic_type} [0:0] {self.context}_t; // {type_}'
-            )
+                f'typedef {self.basic_type} [0:0] {self.context}_t; // {type_}')
         return f'{self.basic_type} [0:0]'
 
     def visit_Uint(self, type_, field):
@@ -41,8 +39,7 @@ class SVGenTypeVisitor(TypingVisitorBase):
             return None
         if (not self.depth):
             self.struct_array.append(
-                f'typedef {self.basic_type} [{int(type_)-1}:0] {self.context}_t; // {type_}\n'
-            )
+                f'typedef {self.basic_type} [{int(type_)-1}:0] {self.context}_t; // {type_}\n')
         return f'{self.basic_type} [{int(type_)-1}:0]'
 
     visit_Ufixp = visit_Uint
@@ -71,21 +68,17 @@ class SVGenTypeVisitor(TypingVisitorBase):
                 type_declaration = self.visit(t, field_tmp)
                 if (int(t) < max_len):
                     struct_fields.append(
-                        f'    {self.basic_type} [{max_len-int(t)-1}:0] dummy; // u{max_len-int(t)}'
-                    )
+                        f'    {self.basic_type} [{max_len-int(t)-1}:0] dummy; // u{max_len-int(t)}')
                 if (type_declaration is not None):
-                    struct_fields.append(
-                        f'    {type_declaration} {field_tmp}; // {t}')
-                struct_fields.append(
-                    f'}} {middle_parent_context}_{field_tmp}_t;\n')
+                    struct_fields.append(f'    {type_declaration} {field_tmp}; // {t}')
+                struct_fields.append(f'}} {middle_parent_context}_{field_tmp}_t;\n')
 
             # create union
             struct_fields.append(f'{self.union_str} // {type_}')
             for i, t in reversed(list(enumerate(type_.args))):
                 field_tmp = f'f{i}'
                 struct_fields.append(
-                    f'    {middle_parent_context}_{field_tmp}_t {field_tmp}; // ({t}, u?)'
-                )
+                    f'    {middle_parent_context}_{field_tmp}_t {field_tmp}; // ({t}, u?)')
             struct_fields.append(f'}} {middle_parent_context}_t;\n')
 
         # create struct
@@ -94,13 +87,9 @@ class SVGenTypeVisitor(TypingVisitorBase):
             f'    {self.basic_type} [{bitw(len(type_.args)-1)-1}:0] ctrl; // u{bitw(len(type_.args)-1)}'
         )
 
-        # if self.depth < self.max_depth:
-        if False:
-            struct_fields.append(f'    {middle_parent_context}_t data; // {type_}')
-        else:
+        if int(type_.data) > 0:
             struct_fields.append(
-                f'    {self.basic_type} [{int(type_.data)-1}:0] data; // {type_.data}'
-            )
+                f'    {self.basic_type} [{int(type_.data)-1}:0] data; // {type_.data}')
 
         struct_fields.append(f'}} {high_parent_context}_t;\n')
 
@@ -115,14 +104,12 @@ class SVGenTypeVisitor(TypingVisitorBase):
         parent_context = self.context
         struct_fields.append(f'{self.struct_str} // {type_}')
         struct_fields.append(
-            f'    {self.basic_type} [{type_.args[1]-1}:0] eot; // u{type_.args[1]}'
-        )
+            f'    {self.basic_type} [{type_.args[1]-1}:0] eot; // u{type_.args[1]}')
         self.context = f'{parent_context}_data'
         type_declaration = self.visit(type_.args[0], type_.fields[0])
 
         if (type_declaration is not None):
-            struct_fields.append(
-                f'    {type_declaration} data; // {type_.args[0]}')
+            struct_fields.append(f'    {type_declaration} data; // {type_.args[0]}')
 
         struct_fields.append(f'}} {parent_context}_t;\n')
         self.struct_array.append('\n'.join(struct_fields))
@@ -134,6 +121,7 @@ class SVGenTypeVisitor(TypingVisitorBase):
     def visit_Tuple(self, type_, field):
         struct_fields = []
         parent_context = self.context
+
         struct_fields.append(f'{self.struct_str} // {type_}')
         for t, f in zip(reversed(type_.args), reversed(type_.fields)):
             self.context = f'{parent_context}_{f}'

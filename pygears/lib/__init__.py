@@ -16,7 +16,7 @@ from .cast import cast
 from .quenvelope import quenvelope
 from .sieve import sieve
 from .permute import permuted_apply
-from .const import const, fix, once
+from .const import const, fix, once, ping
 from .rom import rom
 from .operators import (
     add, div, eq, ge, gt, invert, le, lt, mod, mul, ne, neg, sub, shl, shr, xor,
@@ -29,6 +29,7 @@ from .fifo import fifo
 from .fill import fill
 from .dreg import dreg, regout
 from .serialize import serialize
+from .parallelize import parallelize
 from .data_dly import data_dly
 from .filt import filt
 from .align import align
@@ -70,16 +71,16 @@ __all__ = [
     'expand', 'czip', 'ccat', 'cart', 'cast', 'reinterpret', 'quenvelope', 'zip_sync',
     'sieve', 'flatten', 'fmap', 'unionmap', 'queuemap', 'tuplemap', 'arraymap',
     'permuted_apply', 'const', 'once', 'mux', 'demux', 'shred', 'cart_sync', 'decouple',
-    'dreg', 'regout', 'unzip', 'serialize', 'project', 'fifo', 'factor', 'fill',
-    'mux_zip', 'demux_zip', 'demux_ctrl', 'data_dly', 'union_sync', 'union_collapse',
-    'ucase', 'filt', 'buff', 'local_rst', 'queue_wrap_from', 'demux_by', 'mux_by',
-    'align', 'cart_sync_with', 'when', 'union_sync_with', 'select', 'case', 'fix', 'xor',
-    'rng', 'priority_mux', 'qcnt', 'sdp', 'chop', 'qinterlace', 'replicate', 'qdeal',
-    'clip', 'din_cat', 'take', 'release_after_eot', 'reverse', 'form_sub_cfg', 'reduce2',
-    'group', 'repack', 'priority_mux_valve', 'max2', 'unary', 'alternate_queues', 'delay',
-    'delay_rng', 'delay_gen', 'directed', 'verif', 'collect', 'rom', 'drv', 'drvrnd',
-    'check', 'mon', 'reduce', 'accum', 'pipe', 'funclut', 'truncate', 'round_half_up',
-    'round_to_zero', 'round_to_even', 'add', 'div', 'eq', 'ge', 'gt', 'invert', 'iceil',
-    'le', 'lt', 'mod', 'mul', 'ne', 'neg', 'sub', 'shl', 'shr', 'xor', 'scoreboard',
-    'scope', 'sample', 'trigreg', 'regmap'
+    'dreg', 'regout', 'unzip', 'serialize', 'parallelize', 'project', 'fifo', 'factor',
+    'fill', 'mux_zip', 'demux_zip', 'demux_ctrl', 'data_dly', 'union_sync',
+    'union_collapse', 'ucase', 'filt', 'buff', 'local_rst', 'queue_wrap_from', 'demux_by',
+    'mux_by', 'align', 'cart_sync_with', 'when', 'union_sync_with', 'select', 'case',
+    'fix', 'ping', 'xor', 'rng', 'priority_mux', 'qcnt', 'sdp', 'chop', 'qinterlace',
+    'replicate', 'qdeal', 'clip', 'din_cat', 'take', 'release_after_eot', 'reverse',
+    'form_sub_cfg', 'reduce2', 'group', 'repack', 'priority_mux_valve', 'max2', 'unary',
+    'alternate_queues', 'delay', 'delay_rng', 'delay_gen', 'directed', 'verif', 'collect',
+    'rom', 'drv', 'drvrnd', 'check', 'mon', 'reduce', 'accum', 'pipe', 'funclut',
+    'truncate', 'round_half_up', 'round_to_zero', 'round_to_even', 'add', 'div', 'eq',
+    'ge', 'gt', 'invert', 'iceil', 'le', 'lt', 'mod', 'mul', 'ne', 'neg', 'sub', 'shl',
+    'shr', 'xor', 'scoreboard', 'scope', 'sample', 'trigreg', 'regmap'
 ]

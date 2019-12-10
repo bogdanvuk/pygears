@@ -1,6 +1,6 @@
 from pygears import gear, GearDone
 from pygears.core.gear import GearTypeNotSpecified
-from pygears.typing import Int, Tuple, Uint, bitw
+from pygears.typing import Int, Tuple, Uint, bitw, Unit
 from pygears.typing.base import TypingMeta
 
 
@@ -43,3 +43,5 @@ async def once(*, val, tout=b'get_literal_type(val)') -> b'tout':
 async def fix(din, *, val, tout=b'get_literal_type(val)') -> b'tout':
     async with din:
         yield tout(val)
+
+ping = fix(val=Unit())

@@ -4,7 +4,7 @@ from jinja2.debug import TemplateSyntaxError, make_traceback, reraise
 import atexit
 from pygears.conf.trace import register_exit_hook
 from pygears import registry, GearDone
-from pygears.sim import clk
+from pygears.sim import clk, timestep
 from pygears.sim.sim import schedule_to_finish
 from pygears.conf.trace import gear_definition_location
 
@@ -120,6 +120,9 @@ class SimGear:
                             raise GearDone
             else:
                 while (1):
+                    # TODO: handle case where self.func is empty and this loop
+                    # will just go on forever freezing everything. It happens
+                    # if the user accidently creates empty "async def" function
                     await self.func(*args, **kwds)
 
                     if args:

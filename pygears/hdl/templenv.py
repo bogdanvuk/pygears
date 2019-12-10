@@ -52,6 +52,7 @@ class TemplateEnv:
             zip=zip,
             len=len,
             int=int,
+            max=max,
             bitw=bitw,
             enumerate=enumerate,
             import_from=import_from,
