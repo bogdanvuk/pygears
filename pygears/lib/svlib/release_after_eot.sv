@@ -4,8 +4,8 @@ module release_after_eot
     parameter W_PRED = 16
     )
    (
-    input clk,
-    input rst,
+    input logic clk,
+    input logic rst,
     dti.consumer din,
     dti.consumer pred,
     dti.producer dout,

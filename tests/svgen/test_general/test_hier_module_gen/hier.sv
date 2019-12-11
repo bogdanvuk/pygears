@@ -1,6 +1,6 @@
 module hier(
-    input clk,
-    input rst,
+    input logic clk,
+    input logic rst,
     dti.consumer top_din1, // u1 (1)
     dti.consumer top_din2, // u2 (2)
     dti.producer top_ret1, // u2 (2)

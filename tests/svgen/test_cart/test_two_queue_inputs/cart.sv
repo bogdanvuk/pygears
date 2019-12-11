@@ -1,6 +1,6 @@
 module cart(
-    input clk,
-    input rst,
+    input logic clk,
+    input logic rst,
 
     dti.consumer din0, // [u4]^2 (6)
     dti.consumer din1, // [()] (1)

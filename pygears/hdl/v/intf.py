@@ -109,11 +109,8 @@ class VIntfGen:
         if inst_name.endswith('_if_s'):
             inst_name = inst_name[:-len('_if_s')]
 
-        rst_name = 'local_rst' if registry("vgen/map")[
-            self.intf.parent].has_local_rst else 'rst'
-
         bc_context = {
-            'rst_name': rst_name,
+            'rst_name': 'rst',
             'module_name': 'bc',
             'inst_name': inst_name,
             'param_map': {

@@ -10,10 +10,10 @@
 {% macro sig_list(sigs) -%}
   {% for i in sigs -%}
     {% if i['width'] == 1 -%}
-      {{i['modport']}} {{i['name']}},
+      {{i['modport']}} logic {{i['name']}},
     {% else -%}
       {# {{i['modport']}} [{{i['width']-1}}:0] {{i['name']}}{{ "" if loop.last else "," }} // {{i['type']}} #}
-      {{i['modport']}} [{{i['width']-1}}:0] {{i['name']}},
+      {{i['modport']}} logic [{{i['width']-1}}:0] {{i['name']}},
     {% endif -%}
   {% endfor -%}
 {%- endmacro %}
@@ -158,8 +158,8 @@ assign {{intf['name']}}.ready = {{intf['name']}}_ready;
 module {{module_name}}
 (
   {% if sigs == None %}
-    input clk,
-    input rst,
+    input logic clk,
+    input logic rst,
   {% else %}
 {{ sig_list(sigs)|indent(4, True) }}
   {% endif %}

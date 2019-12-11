@@ -3,8 +3,8 @@ module dreg #(parameter DIN = 16,
               parameter INIT_VALID = 0
               )
    (
-    input clk,
-    input rst,
+    input logic clk,
+    input logic rst,
     dti.consumer din,
     dti.producer dout
     );

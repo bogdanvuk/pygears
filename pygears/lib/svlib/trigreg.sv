@@ -3,8 +3,8 @@ module trigreg  #(
                    DIN = 0
                    )
   (
-   input rst,
-   input clk,
+   input logic rst,
+   input logic clk,
 	 dti.consumer din,
 	 dti.producer dout
    );

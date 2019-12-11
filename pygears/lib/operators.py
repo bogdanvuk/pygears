@@ -24,6 +24,11 @@ def add_vararg(*din: Integer):
 
 
 @datagear
+def and_(din: Tuple[Integral, Integral]) -> b'din[0] & din[1]':
+    return din[0] & din[1]
+
+
+@datagear
 def fdiv(din: Tuple[{'a': Integer, 'b': Integer}]) -> b'din[0] // din[1]':
     return din[0] // din[1]
 
@@ -87,6 +92,11 @@ def neg(a: Number) -> b'-a':
 
 
 @datagear
+def or_(din: Tuple[Integral, Integral]) -> b'din[0] | din[1]':
+    return din[0] | din[1]
+
+
+@datagear
 def sub(din: Tuple[{'a': Number, 'b': Number}]) -> b'din[0] - din[1]':
     return din[0] - din[1]
 
@@ -125,8 +135,9 @@ class AddIntfOperPlugin(IntfOperPlugin):
     @classmethod
     def bind(cls):
         safe_bind('gear/intf_oper/__add__', add)
+        safe_bind('gear/intf_oper/__and__', and_)
         safe_bind('gear/intf_oper/__floordiv__', fdiv)
-        safe_bind('gear/intf_oper/__div__', div)
+        safe_bind('gear/intf_oper/__truediv__', or_)
         safe_bind('gear/intf_oper/__eq__', eq)
         safe_bind('gear/intf_oper/__ge__', ge)
         safe_bind('gear/intf_oper/__gt__', gt)

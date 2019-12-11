@@ -1,7 +1,7 @@
 module reverse
   (
-   input clk,
-   input rst,
+   input logic clk,
+   input logic rst,
    dti.consumer din,
    dti.producer dout
    );

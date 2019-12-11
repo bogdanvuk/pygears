@@ -1,8 +1,8 @@
 
 module cart_cart_cat
 (
-    input clk,
-    input rst,
+    input logic clk,
+    input logic rst,
     dti.consumer din0, // [u4]^2 (6)
     dti.consumer din1, // [()] (1)
     dti.producer dout // [(u4, ())]^3 (7)

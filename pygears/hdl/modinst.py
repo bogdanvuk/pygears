@@ -212,11 +212,6 @@ class HDLModuleInst:
             return {}
 
     @property
-    def has_local_rst(self):
-        return any(child.gear.definition.__name__ == 'local_rst'
-                   for child in self.node.local_modules())
-
-    @property
     def hier_path_name(self):
         return path_name(self.node.name)
 
@@ -255,8 +250,7 @@ class HDLModuleInst:
             'sigs': self.node.params['signals'],
             'params': self.node.params,
             'inst': [],
-            'generics': [],
-            'has_local_rst': self.has_local_rst
+            'generics': []
         }
 
         for port in context['intfs']:

@@ -160,31 +160,3 @@ class Partial:
             return self(*iin)
         else:
             return self(iin)
-
-
-class Definition:
-    '''The Definition class postpones creation of the Partial object on a function
-until the function object (definition) has been called to assign first set (or
-all) of arguments. This allows for creation of separate Partial objects for
-each of the function invocations.
-
-    This class also supports supplying arguments by pipe '|' operator.
-
-    '''
-    def __init__(self, func):
-        self.func = func
-
-        functools.update_wrapper(self, func)
-
-    def __call__(self, *args, **kwds):
-        return Partial(self.func, *args, **kwds)
-
-    def __or__(self, iin):
-        module = Partial(self.func)
-        return module | iin
-
-    def __ror__(self, iin):
-        if isinstance(iin, tuple):
-            return Partial(self.func, *iin)
-        else:
-            return Partial(self.func, iin)

@@ -4,8 +4,8 @@
 
 module zip_sync
 (
-    input clk,
-    input rst,
+    input logic clk,
+    input logic rst,
     dti.consumer din0, // [u3]^3 (6)
     dti.consumer din1, // u4 (4)
     dti.producer dout0, // [u3]^3 (6)

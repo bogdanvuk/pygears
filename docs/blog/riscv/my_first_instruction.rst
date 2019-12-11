@@ -383,8 +383,8 @@ Generated SystemVerilog can be found in the ``/tmp`` folder, since no output dir
 .. code-block:: sv
 
   module riscv(
-      input clk,
-      input rst,
+      input logic clk,
+      input logic rst,
       dti.consumer instruction, // (u7, u5, u3, u5, i12) (32)
       dti.consumer reg_data, // u32 (32)
       dti.producer reg_file_rd_req, // u5 (5)

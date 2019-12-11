@@ -6,8 +6,8 @@ module sdp
     DEPTH = 1024
     )
    (
-    input clk,
-    input rst,
+    input logic clk,
+    input logic rst,
     dti.consumer wr_addr_data,
     dti.consumer rd_addr,
     dti.producer rd_data

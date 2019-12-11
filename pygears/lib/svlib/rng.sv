@@ -12,8 +12,8 @@
     parameter SIGNED = 0
     )
    (
-    input clk,
-    input rst,
+    input logic clk,
+    input logic rst,
     dti.consumer cfg,
     dti.producer dout
     );

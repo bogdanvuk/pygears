@@ -2,8 +2,8 @@
 module pipe #(parameter LENGTH = 2,
               parameter DIN = 16)
    (
-    input clk,
-    input rst,
+    input logic clk,
+    input logic rst,
     dti.consumer din,
     dti.producer dout
     );

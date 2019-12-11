@@ -4,7 +4,7 @@ module truncate #(
                   )
    (
     input logic clk,
-    input rst,
+    input logic rst,
     dti.consumer din,
     dti.producer dout
     );

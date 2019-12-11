@@ -1,8 +1,8 @@
 
 module sieve_0v2_7_8v10
 (
-    input clk,
-    input rst,
+    input logic clk,
+    input logic rst,
     dti.consumer din, // u10 (10)
     dti.producer dout // u5 (5)
 

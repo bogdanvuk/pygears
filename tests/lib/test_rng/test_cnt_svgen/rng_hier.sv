@@ -1,6 +1,6 @@
 module rng_hier(
-                input clk,
-                input rst,
+                input logic clk,
+                input logic rst,
                 dti.consumer cfg, // u4 (4)
                 dti.producer dout // [u4] (5)
 

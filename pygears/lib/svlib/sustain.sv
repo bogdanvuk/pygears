@@ -4,8 +4,8 @@ module sustain
     parameter VAL = 0
     )
    (
-    input clk,
-    input rst,
+    input logic clk,
+    input logic rst,
 
 	  dti.producer dout
     );

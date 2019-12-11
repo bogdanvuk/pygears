@@ -107,6 +107,8 @@ def infer_ftypes(params, args, namespace={}, allow_incomplete=False):
                     args[name] = res
 
                     if type_is_specified(res):
+                        res = copy_field_names(res, params[name])
+                        args[name] = res
                         match[name] = res
                         del postponed[name]
                         substituted = True

@@ -121,17 +121,8 @@ class VModuleInst(HDLModuleInst):
             for port in self.node.out_ports
         })
 
-        rst_name = 'local_rst' if self.vgen_map[
-            self.node.parent].has_local_rst else 'rst'
-
-        try:
-            if self.node.out_ports[-1].basename == 'rst_o':
-                rst_name = 'rst'
-        except:
-            pass
-
         context = {
-            'rst_name': rst_name,
+            'rst_name': 'rst',
             'module_name': self.module_name,
             'inst_name': self.inst_name,
             'param_map': param_map,

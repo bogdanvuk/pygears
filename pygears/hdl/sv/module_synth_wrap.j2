@@ -5,8 +5,8 @@
 module {{wrap_module_name}}
 (
   {% if sigs == None -%}
-    input clk,
-    input rst,
+    input logic clk,
+    input logic rst,
   {% else %}
 {{snippet.sig_list(sigs)|indent(4, True) }}
   {% endif %}

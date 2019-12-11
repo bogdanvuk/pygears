@@ -73,8 +73,8 @@ The RTL implementation of the "example" module can be also parameterized in this
       parameter W_FIELD_1 = 8
   )
   (
-      input clk,
-      input rst,
+      input logic clk,
+      input logic rst,
       dti.consumer din,
       dti.producer dout
   );
@@ -95,8 +95,8 @@ The RTL implementation of the "example" module can be also parameterized in this
 .. code-block:: systemverilog
 
   module top(
-      input clk,
-      input rst,
+      input logic clk,
+      input logic rst,
       dti.producer dout // u16 (16)
   );
 

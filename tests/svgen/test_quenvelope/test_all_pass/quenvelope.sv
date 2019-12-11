@@ -4,8 +4,8 @@
 
 module quenvelope
 (
-    input clk,
-    input rst,
+    input logic clk,
+    input logic rst,
     dti.consumer din, // [u1]^2 (3)
     dti.producer dout // [()]^2 (2)
 

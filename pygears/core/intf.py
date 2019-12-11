@@ -34,10 +34,10 @@ def operator_methods_gen(cls):
 @operator_methods_gen
 class Intf:
     OPERATOR_SUPPORT = [
-        '__getitem__', '__neg__', '__add__', '__div__', '__eq__',
+        '__getitem__', '__neg__', '__add__', '__and__', '__div__', '__eq__',
         '__floordiv__', '__ge__', '__gt__', '__invert__', '__le__', '__lt__',
         '__mod__', '__mul__', '__ne__', '__neg__', '__lshift__', '__rshift__',
-        '__aiter__', '__sub__', '__xor__'
+        '__aiter__', '__sub__', '__xor__', '__truediv__'
     ]
 
     def __init__(self, dtype):

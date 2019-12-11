@@ -4,8 +4,8 @@
 
 module cart_cart_sync
 (
-    input clk,
-    input rst,
+    input logic clk,
+    input logic rst,
     dti.consumer din0, // [u4]^2 (6)
     dti.consumer din1, // [()] (1)
     dti.producer dout0, // [u4]^2 (6)

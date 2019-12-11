@@ -1,8 +1,8 @@
 module data_dly #(parameter LEN = 5,
                   parameter W_DIN = 16)
    (
-    input clk,
-    input rst,
+    input logic clk,
+    input logic rst,
     dti.consumer din,
     dti.producer dout
     );

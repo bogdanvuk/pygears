@@ -1,7 +1,7 @@
 module hsspy
   (
-   input rst,
-   input clk,
+   input logic rst,
+   input logic clk,
 	 dti.consumer din,
 	 dti.producer dout,
 	 dti.producer spy

@@ -1,6 +1,6 @@
 module rng_rng(
-               input clk,
-               input rst,
+               input logic clk,
+               input logic rst,
                dti.consumer cfg, // (u1, u4, u1) (6)
                dti.producer dout // [u4] (5)
 

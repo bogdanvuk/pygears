@@ -196,17 +196,8 @@ class SVModuleInst(HDLModuleInst):
         out_port_map = [(port.basename, self.get_out_port_map_intf_name(port))
                         for port in self.node.out_ports]
 
-        rst_name = 'local_rst' if self.svgen_map[
-            self.node.parent].has_local_rst else 'rst'
-
-        try:
-            if self.node.out_ports[-1].basename == 'rst_o':
-                rst_name = 'rst'
-        except:
-            pass
-
         context = {
-            'rst_name': rst_name,
+            'rst_name': 'rst',
             'module_name': self.module_name,
             'inst_name': self.inst_name,
             'param_map': param_map,

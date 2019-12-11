@@ -1,6 +1,6 @@
 module hier0(
-    input clk,
-    input rst,
+    input logic clk,
+    input logic rst,
     dti.consumer din, // u2 (2)
     dti.consumer channeled, // u1 (1)
     dti.producer dout0, // (u2, u1) (3)

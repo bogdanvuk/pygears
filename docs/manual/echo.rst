@@ -191,8 +191,8 @@ Generated SystemVerilog
 .. code-block:: systemverilog
 
   module echo(
-      input clk,
-      input rst,
+      input logic clk,
+      input logic rst,
       dti.consumer din, // i16 (16)
       dti.producer dout // i16 (16)
 

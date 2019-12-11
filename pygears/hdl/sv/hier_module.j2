@@ -7,8 +7,8 @@ module {{module_name}}
 {%- endif %}
 (
   {% if sigs == None -%}
-    input clk,
-    input rst,
+    input logic clk,
+    input logic rst,
   {% else %}
 {{snippet.sig_list(sigs)|indent(4, True) }}
   {% endif %}
