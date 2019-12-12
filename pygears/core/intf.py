@@ -62,6 +62,10 @@ class Intf:
 
     def __ior__(self, iout):
         iout.producer.consumer = self
+        if self.producer is not None:
+            raise Exception(
+                f"Interface '{self}' is already connected to a producer '{self.producer.name}'\n")
+
         self.producer = iout.producer
 
         return self

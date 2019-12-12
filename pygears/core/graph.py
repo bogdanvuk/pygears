@@ -93,8 +93,14 @@ def closest_gear_port_from_rtl(rtl_port, direction):
         gear_port = gear_from_rtl_port(rtl_port)
         if not gear_port:
             if direction == 'in':
+                if rtl_port.producer is None:
+                    return None
+
                 rtl_port = rtl_port.producer.producer
             else:
+                if rtl_port.consumer is None:
+                    return None
+
                 rtl_port = rtl_port.consumer.consumers[0]
 
     return gear_port

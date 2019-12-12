@@ -59,7 +59,7 @@ def when_single(cond, din, *, f):
     return ccat(din, cond) | Union | filt(fixsel=1) | f
 
 
-@gear(hdl={'compile': True})
+@gear
 async def valve(cond, din) -> b'din':
     async with cond as c:
         if c:

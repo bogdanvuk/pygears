@@ -83,6 +83,9 @@ class SimVerilated(CosimBase):
         for p in self.rtlnode.in_ports:
             if p.index >= len(self.gear.in_ports):
                 driver = closest_gear_port_from_rtl(p, 'in')
+                if driver is None:
+                    raise VerilatorCompileError(f"Inferred top module port '{p.name}' has no driver")
+
                 consumer = closest_gear_port_from_rtl(p, 'out')
 
                 in_port = InPort(

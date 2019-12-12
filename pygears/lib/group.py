@@ -5,16 +5,6 @@ from pygears.typing import Queue, Uint
 @gear(hdl={'compile': True})
 async def group(din: Queue, size: Uint, *,
                 init=1) -> Queue['din.data', 'din.lvl + 1']:
-    """Short for transaction counter, counts the input transactions. The number
-    of transactions counted on the ``din`` input is given with the ``size``
-    input. When sufficent transactions are seen, ready is returned on ``size``
-    and ``din`` blocks until the next configuration is available.
-
-    Args: init: Initialization value for the counter
-
-    Returns: A level 2 Queue type whose data consists of the input data, but
-        the highest `eot` signalizes that sufficent transactions have been
-        counted. """
 
     cnt = size.dtype(init)
 

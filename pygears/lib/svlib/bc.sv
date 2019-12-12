@@ -17,7 +17,7 @@ module bc #(
    end
 
    generate
-      for (genvar i = 0; i < SIZE; i++) begin
+      for (genvar i = 0; i < 32'(SIZE); i++) begin
          assign ready_all[i]    = dout[i].ready | ready_reg[i];
          assign dout[i].valid = din.valid & !ready_reg[i];
          assign dout[i].data   = din.data;
