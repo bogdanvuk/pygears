@@ -14,7 +14,7 @@ from pygears.typing import expand as expand_type
 
 
 @gear(enablement=b'typeof(din, Queue) and typeof(din[0], Union)')
-def expand(din, *, depth=16) -> b'expand(din)':
+def expand(din, *, depth=16) -> b'expand_type(din)':
     din_tuple = din | Tuple | tuplemap(f=(Tuple, None)) | flatten
     union_din = din_tuple[0, 2, 1] >> expand_type(din.dtype)
     for i in range(len(union_din.dtype.types)):
@@ -27,13 +27,16 @@ def expand(din, *, depth=16) -> b'expand(din)':
 
 @alternative(expand)
 @gear
-def expand_tuple(din: Tuple) -> b'expand(din)':
+def expand_tuple(din: Tuple) -> b'expand_type(din)':
     ctrl_lens = []
     ctrl_list = []
     for i, t in enumerate(din.dtype):
         if (typeof(t, Union)):
             ctrl_list.append(din[i][1])
             ctrl_lens.append(int(t[1]))
+
+    if not ctrl_list:
+        return din
 
     ctrl = ccat(*ctrl_list)
     ctrl = ctrl >> Uint
@@ -69,7 +72,7 @@ def expand_tuple(din: Tuple) -> b'expand(din)':
 
 @alternative(expand)
 @gear(enablement=b'typeof(din, Queue) and typeof(din[0], Tuple)')
-def expand_queue_to_tuple(din) -> b'expand(din)':
+def expand_queue_to_tuple(din) -> b'expand_type(din)':
     din_tuple = din | Tuple | flatten
     tuple_len = len(din_tuple.dtype)
 

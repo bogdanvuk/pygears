@@ -53,6 +53,8 @@ async def demux(
 @gear
 def demux_ctrl(din: Union):
     dout = din | demux
+    if not isinstance(dout, tuple):
+        dout = (dout, )
 
     return (din[1], *dout)
 

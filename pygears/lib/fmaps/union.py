@@ -3,6 +3,7 @@ from pygears.typing import Union
 from pygears.lib import fmap as common_fmap
 from pygears.lib.mux import mux
 from pygears.lib.demux import demux_ctrl
+from pygears.lib.ccat import ccat
 
 
 def unionmap_check(dtype, f):
@@ -29,6 +30,7 @@ def unionmap(din, *, f, fdemux=demux_ctrl, fmux=mux, balance=None):
     demux_dout = din | fdemux
     ctrl = demux_dout[0]
     branches = demux_dout[1:]
+
     dout = []
     for i, fd in enumerate(f):
         if fd is None:
@@ -42,4 +44,7 @@ def unionmap(din, *, f, fdemux=demux_ctrl, fmux=mux, balance=None):
     if balance is not None:
         ctrl = ctrl | balance
 
-    return fmux(ctrl, *dout)
+    if len(dout) == 1:
+        return ccat(*dout, ctrl) | Union[dout[0].dtype]
+    else:
+        return fmux(ctrl, *dout)

@@ -1,5 +1,6 @@
 import os
 import functools
+import hashlib
 
 import pygears
 from pygears import registry, config
@@ -21,7 +22,11 @@ def path_name(path):
     if path.startswith('/'):
         path = path[1:]
 
-    return path.replace('/', '_')
+    full_name = path.replace('/', '_')
+    if len(full_name) > 80:
+        full_name = full_name[:80] + '_' + hashlib.sha1(full_name.encode()).hexdigest()
+
+    return full_name
 
 
 def get_port_config(modport, type_, name):
@@ -237,8 +242,7 @@ class HDLModuleInst:
 
         if intf_names:
             raise Exception(
-                f'Port(s) {intf_names} not specified in the definition of the module "{self.node.name}"'
-            )
+                f'Port(s) {intf_names} not specified in the definition of the module "{self.node.name}"')
 
     @property
     def module_context(self):
