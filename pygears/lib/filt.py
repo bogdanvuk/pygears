@@ -1,5 +1,5 @@
 from pygears import alternative, gear
-from pygears.typing import Queue, Union, Uint, Tuple, Bool, Unit, Any
+from pygears.typing import Queue, Union, Uint, Tuple, Bool, Unit, Any, Maybe
 from pygears.lib.fmaps.queue import queuemap
 from .ccat import ccat
 
@@ -27,6 +27,12 @@ async def filt(din: Tuple[{'data': Union, 'sel': Uint}]) -> b'din["data"]':
 @gear
 def filt_unit(din: Union[Any, Unit]) -> b'din.types[0]':
     return din | filt(fixsel=0)
+
+
+@alternative(filt)
+@gear
+def filt_maybe(din: Union[Unit, Any]) -> b'din.types[1]':
+    return din | filt(fixsel=1)
 
 
 @alternative(filt)

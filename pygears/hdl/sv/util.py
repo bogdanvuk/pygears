@@ -119,6 +119,9 @@ class SVGenTypeVisitor(TypingVisitorBase):
         return f'{parent_context}_t'
 
     def visit_Tuple(self, type_, field):
+        if self.depth == self.max_depth:
+            return self.visit_Uint(type_, field)
+
         struct_fields = []
         parent_context = self.context
 

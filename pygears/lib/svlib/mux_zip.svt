@@ -40,7 +40,9 @@
 {% set i = intfs[1:-1][iout] %}
                 {{key}} : begin
                     din_valid_sel = {{i['name']}}.valid;
+  {% if i['width'] > 0 %}
                     dout_s.data[{{i['width']-1}}:0] = {{i['name']}}_s;
+  {% endif %}
                     ctrl.ready = handshake && {{i['name']}}_s.eot;
                 end
 {% endfor %}

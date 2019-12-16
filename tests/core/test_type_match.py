@@ -1,6 +1,6 @@
 import pytest
 
-from pygears.typing import Tuple, Uint, Integer, Queue, Union
+from pygears.typing import Tuple, Uint, Integer, Queue, Union, Maybe, Unit
 from pygears.core.type_match import type_match, TypeMatchError
 
 
@@ -155,9 +155,19 @@ def test_union_template():
     assert res == type_
     assert not match
 
+
 def test_union_template_complex():
     type_ = Queue[Union[Uint[3], Uint[3]], 1]
     templ = Queue[Union, 'lvl']
     match, res = type_match(type_, templ)
     assert res == type_
     assert match == {'lvl': 1}
+
+
+def test_maybe():
+    type_ = Maybe[Uint[8]]
+    templ = Union[Unit, 'data']
+
+    match, res = type_match(type_, templ)
+    assert res == type_
+    assert match == {'data': Uint[8]}

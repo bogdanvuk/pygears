@@ -7,7 +7,6 @@ class TypeMatchError(Exception):
 
 
 def _type_match_rec(t, pat, matches):
-
     # Ignore type template arguments, i.e.: 'T2' in Tuple[1, 2, 3, 'T2']
     if isinstance(t, str):
         return t
@@ -40,6 +39,9 @@ def _type_match_rec(t, pat, matches):
 
         return t
 
+    # TODO: There might be multiple levels of inheritance when the types are
+    # created, maybe they are compatible base on some of their more distant
+    # base classes
     if (isinstance(t, GenericMeta) and isinstance(pat, GenericMeta)
             and (typeof(t.base, pat.base))):
 

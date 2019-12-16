@@ -69,7 +69,7 @@ class SimGear:
                                         self.func)
 
                                     err = SimulationError(
-                                        str(e),
+                                        f"inside '{self.gear.name}': {repr(e)}",
                                         async_gen.ag_frame.f_lineno,
                                         filename=fn)
                                     traceback = make_traceback(

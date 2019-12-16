@@ -1,9 +1,11 @@
 from pygears import gear, alternative, module
-from pygears.typing import Union, Tuple, Uint, Any
+from pygears.typing import Union, Tuple, Uint, Any, Unit, Maybe
 from pygears.lib.shred import shred
+from pygears.lib.const import fix
 from pygears.lib.ccat import ccat
 from pygears.lib.fmaps.union import unionmap
 from pygears.lib.mux import mux, dflt_map
+from pygears.lib.demux import demux
 from pygears.lib.filt import filt
 
 
@@ -80,25 +82,41 @@ def all_same(din):
     return din.types.count(din.types[0]) == len(din.types)
 
 
+@gear
+def maybe_when(cond, din, *, f, fcat=ccat):
+    return fcat(din, cond) \
+        | Union \
+        | unionmap(f=(fix(val=Unit()), f)) \
+        | Maybe
+
+
 @gear(enablement=b'len(din) >= 2')
 def select(cond: Uint, *din, mapping=b'dflt_map(din)'):
 
     dtypes = [d.dtype for d in din]
     if dtypes.count(dtypes[0]) != len(dtypes):
         raise TypeError(
-            f'Expected all inputs to "{module().name}" to be same type, but got: "{dtypes}"')
+            f'Expected all inputs to "{module().name}" to be same type, but got: "{dtypes}"'
+        )
 
     return mux(cond, *din, mapping=mapping) | union_collapse
 
 
 @alternative(select)
 @gear
-def select_valve(din: Tuple[{'ctrl': Uint, 'data': Any}], mapping=b'dflt_map(din)'):
+def select_valve(din: Tuple[{
+        'ctrl': Uint,
+        'data': Any
+}],
+                 *,
+                 mapping=b'dflt_map(din)'):
 
-    dtypes = [d.dtype for d in din.dtype['data']]
-    if dtypes.count(dtypes[0]) != len(dtypes):
-        raise TypeError(
-            f'Expected all inputs to "{module().name}" to be same type, but got: "{dtypes}"')
+    if isinstance(din.dtype['data'], Tuple):
+        dtypes = [d.dtype for d in din.dtype['data']]
+        if dtypes.count(dtypes[0]) != len(dtypes):
+            raise TypeError(
+                f'Expected all inputs to "{module().name}" to be same type, but got: "{dtypes}"'
+            )
 
     return mux(din, mapping=mapping) | union_collapse
 

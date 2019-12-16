@@ -2,6 +2,7 @@ from pygears import module
 from pygears.sim import delta
 from pygears.typing import Queue, Tuple, typeof
 from pygears import gear, alternative
+from pygears.lib.shred import shred
 from .ccat import ccat
 from .permute import permuted_apply
 from .cat_util import din_data_cat_value
@@ -123,3 +124,14 @@ async def zip_sync(*din, outsync=True) -> b'din':
 @gear(enablement=b'len(din) > 2')
 def zip_sync_vararg(*din):
     return din | czip | unzip(dtypes=[d.dtype for d in din])
+
+
+@gear
+def zip_sync_with(sync_in, din, *, balance=None):
+    if balance:
+        sync_in = sync_in | balance
+
+    din_sync, sync_in_sync = zip_sync(din, sync_in)
+    sync_in_sync | shred
+
+    return din_sync

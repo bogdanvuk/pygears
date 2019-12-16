@@ -1,7 +1,7 @@
 # from pygears.conf import safe_bind
 from pygears.typing.base import typeof, is_type
-from . import Array, Int, Integer, Queue, Tuple, Uint, Union
-from . import Fixpnumber, Float, Number, Ufixp, Fixp
+from . import Array, Int, Integer, Queue, Tuple, Uint, Union, Maybe
+from . import Fixpnumber, Float, Number, Ufixp, Fixp, Unit
 # from pygears.conf.log import gear_log
 
 
@@ -313,6 +313,19 @@ def union_type_cast_resolver(dtype, cast_type):
                 dtype, cast_type,
                 [f"only Tuple with exactly 2 elements can be converted to Union"])
 
+        if typeof(cast_type, Maybe):
+            if dtype.args[1].width != 1:
+                raise get_type_error(
+                    dtype, cast_type,
+                    [f"only Tuple with 1 bit wide second argument can be converted to Maybe"])
+
+            if not cast_type.specified:
+                return Maybe[dtype.args[0]]
+
+            data_type = cast(dtype.args[0], cast_type.types[1])
+
+            return Maybe[data_type]
+
         if len(cast_type.types) != 0:
             cast_ctrl = cast_type.ctrl
             types = tuple(cast_type.types)
@@ -339,6 +352,14 @@ def union_type_cast_resolver(dtype, cast_type):
         #         f' subtypes from {dtype}')
 
         return res
+
+    if typeof(cast_type, Maybe):
+        if not (len(dtype.types) == 2 and typeof(dtype.types[0], Unit)):
+            raise get_type_error(
+                dtype, cast_type,
+                [f"only Union's with with the form 'Union[Unit, Any]' can be converted to Maybe"])
+
+        return Maybe[dtype.types[1]]
 
     raise get_type_error(dtype, cast_type)
 
@@ -389,6 +410,7 @@ type_cast_resolvers = {
 
 
 def type_cast(dtype, cast_type):
+
     if dtype == cast_type:
         return dtype
 

@@ -23,8 +23,12 @@ def path_name(path):
         path = path[1:]
 
     full_name = path.replace('/', '_')
-    if len(full_name) > 80:
-        full_name = full_name[:80] + '_' + hashlib.sha1(full_name.encode()).hexdigest()
+    if len(full_name) > 100:
+        path_l = path.split('/')
+        head = '_'.join(path_l[:3])
+        tail = '_'.join(path_l[-3:])
+        mid = '_'.join(path_l[-3:3])
+        full_name = head + '_' + hashlib.sha1(mid.encode()).hexdigest()[:8] + '_' + tail
 
     return full_name
 

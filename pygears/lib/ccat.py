@@ -1,5 +1,6 @@
 from pygears import gear
 from pygears.util.utils import gather
+from pygears.lib.shred import shred
 
 
 # @gear(hdl={'compile': True})
@@ -19,3 +20,14 @@ async def ccat(*din) -> b'Tuple[din]':
 
     async with gather(*din) as dout:
         yield dout
+
+
+@gear
+def ccat_sync_with(sync_in, din, *, balance=None):
+    if balance:
+        sync_in = sync_in | balance
+
+    din_sync, sync_in_sync = ccat(din, sync_in)
+    sync_in_sync | shred
+
+    return din_sync
