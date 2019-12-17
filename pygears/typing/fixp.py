@@ -188,7 +188,7 @@ class FixpnumberType(IntegralType):
                     raise IndexError
                 width += 1
 
-        return self.base[width]
+        return Uint[width]
 
 
 class Fixpnumber(Integral, metaclass=FixpnumberType):

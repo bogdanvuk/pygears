@@ -69,8 +69,16 @@ module decouple
       assign reg_ready = reg_empty;
       assign reg_empty = !din_reg_valid;
 
+      initial begin
+         din_reg_valid = INIT;
+      end
+
       always @(posedge clk) begin
-         if(rst | (!reg_empty && dout.ready)) begin
+         if (rst) begin
+            din_reg_valid <= INIT_VALID;
+            if (INIT_VALID)
+              din_reg_data <= INIT;
+         end else if(!reg_empty && dout.ready) begin
             din_reg_valid <= '0;
          end else if (reg_ready)begin
             din_reg_valid <= din.valid;

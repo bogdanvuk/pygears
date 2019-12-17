@@ -18,7 +18,7 @@ module dreg #(parameter DIN = 16,
    assign reg_empty = !din_reg_valid;
 
    initial begin
-      din_reg_valid = 0;
+      din_reg_valid = INIT;
    end
 
    always @(posedge clk)

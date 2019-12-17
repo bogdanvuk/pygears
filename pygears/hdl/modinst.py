@@ -27,7 +27,7 @@ def path_name(path):
         path_l = path.split('/')
         head = '_'.join(path_l[:3])
         tail = '_'.join(path_l[-3:])
-        mid = '_'.join(path_l[-3:3])
+        mid = '_'.join(path_l[3:-3])
         full_name = head + '_' + hashlib.sha1(mid.encode()).hexdigest()[:8] + '_' + tail
 
     return full_name
