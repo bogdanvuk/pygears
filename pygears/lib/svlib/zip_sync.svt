@@ -24,9 +24,6 @@
   {%- set min_lvl = intfs|isinput|keymap("lvl")|min %}
   {%- set out_intf_names = intfs|isoutput|keymap("name") %}
 
-    logic all_valid;
-    logic out_valid;
-    logic out_ready;
     logic all_aligned;
     logic handshake;
   {% for name in input_intf_names %}
@@ -49,15 +46,13 @@
     assign din1_eot_aligned = 1;
   {% endif %}
 
-    assign all_valid   = {{input_intf_names|format_list("%s.valid")|join(" && ")}};
     assign all_aligned = din0_eot_aligned && din1_eot_aligned;
-    assign out_valid   = all_valid & all_aligned;
 
   {# Connect internal signals to either output interfaces or sync-guard input interfaces. #}
   {% for din, dout in zip(input_intf_names, out_intf_names) %}
-    assign {{dout}}.valid = out_valid;
+    assign {{dout}}.valid = {{din}}.valid & all_aligned;
     assign {{dout}}.data = {{din}}_s;
-    assign {{din}}.ready = all_valid && ({{dout}}.ready || !{{din}}_eot_aligned);
+    assign {{din}}.ready = {{din}}.valid && ({{dout}}.ready || !{{din}}_eot_aligned);
   {% endfor %}
 
 {% endcall %}
