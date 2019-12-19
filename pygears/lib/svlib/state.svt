@@ -1,0 +1,27 @@
+{% from 'snippet.j2' import module with context %}
+
+{% call module() %}
+   {%- set rd_intf_names = intfs[1:]|isinput|keymap("name") %}
+   {%- set dout_intf_names = intfs|isoutput|keymap("name") %}
+
+   logic [$size(din.data)-1 : 0] data_reg = {{code(params['init'], int)}};
+
+   always_ff @(posedge clk) begin
+      if (rst) begin
+         data_reg <= {{code(params['init'], int)}};
+      end else if (din.valid && din.ready) begin
+         data_reg <= din.data;
+      end
+   end
+
+
+  {% for rd, dout in zip(rd_intf_names, dout_intf_names) %}
+   assign {{dout}}.data = data_reg;
+   assign {{dout}}.valid = {{rd}}.valid;
+   assign {{rd}}.ready = {{dout}}.ready;
+  {% endfor %}
+
+   // assign din.ready = dout.ready ? rd.valid : 1'b1;
+   assign din.ready = 1'b1;
+
+{% endcall %}

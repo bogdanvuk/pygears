@@ -18,7 +18,10 @@ def demux_type(dtypes, mapping):
     return tuple(tout)
 
 
-def full_mapping(dtypes, mapping):
+def full_mapping(dtypes, mapping, use_dflt):
+    if not use_dflt:
+        return mapping
+
     dout_num = max(mapping.values()) + 1
     fm = mapping.copy()
 
@@ -35,10 +38,11 @@ def dflt_map(dtypes):
 
 @gear
 async def demux(
-        din: Union,
-        *,
-        mapping=b'dflt_map(din)',
-        _full_mapping=b'full_mapping(din, mapping)',
+    din: Union,
+    *,
+    use_dflt=True,
+    mapping=b'dflt_map(din)',
+    _full_mapping=b'full_mapping(din, mapping, use_dflt)',
 ) -> b'demux_type(din, _full_mapping)':
     async with din as (data, ctrl):
         dout = [None] * len(module().tout)
@@ -61,7 +65,7 @@ def demux_ctrl(din: Union):
 
 @alternative(demux)
 @gear
-def demux_by(ctrl: Uint, din, *, fcat=ccat, nout=None, mapping=None):
+def demux_by(ctrl: Uint, din, *, fcat=ccat, nout=None, use_dflt=True, mapping=None):
     if nout is None:
         nout = 2**int(ctrl.dtype)
 
@@ -71,7 +75,7 @@ def demux_by(ctrl: Uint, din, *, fcat=ccat, nout=None, mapping=None):
     if mapping is None:
         return demux_din | demux
     else:
-        return demux_din | demux(mapping=mapping)
+        return demux_din | demux(mapping=mapping, use_dflt=use_dflt)
 
 
 @gear

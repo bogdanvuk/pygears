@@ -11,6 +11,7 @@ module sustain
     );
 
    assign dout.valid = 1'b1;
-   assign dout.data = TOUT'(VAL);
+   if (TOUT > 0)
+     assign dout.data = TOUT'(VAL);
 
 endmodule

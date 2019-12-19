@@ -5,7 +5,9 @@
     {{snippet.intf_typedef(_din, depth=0)}}
 
 {% for i in (intfs|isoutput) %}
+  {% if _din_t.data.width > 0 %}
     assign {{i['name']}}.data = din_s.data;
+  {% endif %}
 {% endfor %}
 
 {%- set output_intfs = intfs|isoutput %}

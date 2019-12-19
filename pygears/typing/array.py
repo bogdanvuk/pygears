@@ -1,4 +1,4 @@
-from .base import EnumerableGenericMeta
+from .base import EnumerableGenericMeta, typeof
 
 
 class ArrayType(EnumerableGenericMeta):
@@ -84,7 +84,7 @@ class Array(tuple, metaclass=ArrayType):
         if val is None:
             val = (None, ) * len(cls)
 
-        array_tpl = (cls[0](v) for v in val)
+        array_tpl = (v if typeof(type(v), cls[0]) else cls[0](v) for v in val)
         return super(Array, cls).__new__(cls, array_tpl)
 
     def __int__(self):

@@ -22,7 +22,8 @@ def code(data, cast_type=Uint):
     dtype = type(data)
     if is_type(dtype):
         data = data.code()
-        if not cast_type.specified and typeof(cast_type, Integer):
+
+        if is_type(cast_type) and not cast_type.specified and typeof(cast_type, Integer):
             cast_type = cast_type[dtype.width]
 
     if is_type(cast_type) and cast_type.specified:
