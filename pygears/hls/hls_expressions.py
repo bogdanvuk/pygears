@@ -4,8 +4,7 @@ from dataclasses import dataclass
 
 from pygears.core.port import InPort, OutPort
 from pygears.core.gear import InSig, OutSig
-from pygears.typing import (Bool, Integer, Queue, Tuple, Uint, Unit, is_type,
-                            typeof, Int)
+from pygears.typing import (Bool, Integer, Queue, Tuple, Uint, Unit, is_type, typeof, Int, Array, Union)
 from pygears.typing.base import TypingMeta
 
 BOOLEAN_OPERATORS = {'|', '&', '^', '~', '!', '&&', '||'}
@@ -336,10 +335,11 @@ class CastExpr(Expr):
     cast_to: PgType
 
     def __post_init__(self):
-        if isinstance(self.operand, ConcatExpr):
+        if isinstance(self.operand, ConcatExpr) and typeof(self.cast_to,
+                                                           (Array, Tuple, Queue, Union)):
             cast_ops = [
-                CastExpr(op_t, cast_t) if op_t.dtype != cast_t else op_t
-                for op_t, cast_t in zip(self.operand.operands, self.cast_to)
+                CastExpr(op, cast_t) if op.dtype != cast_t else op
+                for op, cast_t in zip(self.operand.operands, self.cast_to)
             ]
             self.operand = ConcatExpr(cast_ops)
 
@@ -358,16 +358,16 @@ class BinOpExpr(Expr):
         if self.operator in BIN_OPERATORS:
             return Uint[1]
 
-        if (self.operator in ('<<', '>>')) and isinstance(
-                self.operands[1], ResExpr):
+        if (self.operator in ('<<', '>>')) and isinstance(self.operands[1], ResExpr):
             op2 = self.operands[1].val
         else:
             op2 = self.operands[1].dtype
 
-        res_t = eval(f'op1 {self.operator} op2', {
-            'op1': self.operands[0].dtype,
-            'op2': op2
-        })
+        res_t = eval(
+            f'op1 {self.operator} op2', {
+                'op1': self.operands[0].dtype,
+                'op2': op2
+            })
 
         if isinstance(res_t, bool):
             return Uint[1]

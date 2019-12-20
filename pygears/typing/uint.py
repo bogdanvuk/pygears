@@ -520,6 +520,12 @@ class UintType(IntegerType):
         else:
             return super().__sub__(other)
 
+    def __matmul__(self, other):
+        if not typeof(other, Uint):
+            return NotImplemented
+
+        return Uint[self.width + other.width]
+
     @property
     def max(self):
         return self.decode(2**self.width - 1)
