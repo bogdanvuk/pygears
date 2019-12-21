@@ -1,5 +1,5 @@
 from pygears import datagear
-from pygears.typing import reinterpret as type_reinterpret
+from pygears.typing import code
 from pygears.typing import Maybe, Uint
 from pygears.lib import verif, drv
 from pygears.sim import sim, cosim
@@ -8,7 +8,7 @@ from pygears.sim import sim, cosim
 def test_reinterpret(tmpdir):
     @datagear
     def test(din, *, t) -> b't':
-        return type_reinterpret(din, t)
+        return code(din, t)
 
     cast_t = Maybe[Uint[31]]
 

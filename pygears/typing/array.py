@@ -1,4 +1,4 @@
-from .base import EnumerableGenericMeta, typeof
+from .base import EnumerableGenericMeta, typeof, is_type
 
 
 class ArrayType(EnumerableGenericMeta):
@@ -86,6 +86,21 @@ class Array(tuple, metaclass=ArrayType):
 
         array_tpl = (v if typeof(type(v), cls[0]) else cls[0](v) for v in val)
         return super(Array, cls).__new__(cls, array_tpl)
+
+    def __eq__(self, other):
+        if not is_type(type(other)):
+            return super().__eq__(other)
+
+        return type(self) == type(other) and super().__eq__(other)
+
+    def __hash__(self):
+        return super().__hash__()
+
+    def __ne__(self, other):
+        if not is_type(type(other)):
+            return super().__ne__(other)
+
+        return not self.__eq__(other)
 
     def __int__(self):
         w_dtype = int(type(self).dtype)

@@ -2,8 +2,9 @@ import os
 import copy
 import inspect
 
+from typing import List
 from dataclasses import dataclass
-from pygears.conf import PluginBase, registry, safe_bind
+from pygears.conf import PluginBase, registry, safe_bind, bind
 from traceback import walk_stack
 from .intf import Intf
 from .port import InPort, OutPort
@@ -55,65 +56,32 @@ class GearHierRoot(NamedHierNode):
         self.definition = __main
 
 
-class HookableDict(dict):
-    def __init__(self, gear, **kwds):
-        self.gear = gear
-        super().__init__(**kwds)
-
-    def get(self, key, dflt=None):
-        try:
-            return self.__getitem__(key)
-        except KeyError:
-            return dflt
-
-    def __getitem__(self, key):
-        obj = dict.__getitem__(self, key)
-        if hasattr(obj, '__get__'):
-            return obj.__get__(self.gear)
-
-        return obj
-
-    def __setitem__(self, key, value):
-        try:
-            obj = dict.__getitem__(self, key)
-
-            if hasattr(obj, f'__set__'):
-                obj.__set__(self.gear, value)
-                return
-        except KeyError:
-            pass
-
-        dict.__setitem__(self, key, value)
-
-
 class Gear(NamedHierNode):
-    def __init__(self, func, args, params, const_args):
+    def __init__(self, func, params):
         super().__init__(params['name'], registry('gear/current_module'))
         self.trace = list(enum_stacktrace())
-        self.args = args
-        # for p, v in params.items():
-        #     if isinstance(v, dict):
-        #         params[p] = HookableDict(self, **v)
-
-        # self.params = HookableDict(self, **params)
+        self.args = {}
         self.params = params
         self.func = func
-        self.const_args = const_args
+        self.const_args = {}
+        self.in_ports: List[InPort] = []
+        self.out_ports: List[OutPort] = []
 
-        for name, val in self.const_args.items():
+    def connect_input(self, args, const_args):
+        for name, val in const_args.items():
             from pygears.lib import const
             const(val=val, intfs=[args[name]])
 
-        self.in_ports = []
-        self.out_ports = []
         for i, (name, intf) in enumerate(args.items()):
             port = InPort(self, i, name)
             intf.connect(port)
             self.in_ports.append(port)
 
-    def connect_input(self):
         for port in self.in_ports:
             Intf(self.params[port.basename]).source(port)
+
+        self.const_args = const_args
+        self.args = args
 
     def connect_output(self, out_intfs, out_dtypes):
 
@@ -142,7 +110,14 @@ class Gear(NamedHierNode):
 
     @property
     def hierarchical(self):
-        return bool(self.child)
+        if self.child:
+            return True
+
+        # This Second condition is when gear contains only wiring
+        if self.in_ports and self.in_ports[0].consumer.consumers:
+            return True
+
+        return False
 
     @property
     def definition(self):
@@ -215,6 +190,18 @@ class Gear(NamedHierNode):
             super().remove()
         except ValueError:
             pass
+
+
+class create_hier:
+    def __init__(self, gear):
+        self.gear = gear
+
+    def __enter__(self):
+        bind('gear/current_module', self.gear)
+        return self
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        bind('gear/current_module', self.gear.parent)
 
 
 @dataclass

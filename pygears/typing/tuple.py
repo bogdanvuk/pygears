@@ -86,7 +86,7 @@ any iterable really)::
 Uint[8](0)
 """
 
-from .base import EnumerableGenericMeta, type_str, type_repr
+from .base import EnumerableGenericMeta, type_str, type_repr, is_type
 from .base import TemplatedTypeUnspecified
 from .base import class_and_instance_method
 
@@ -319,6 +319,21 @@ class Tuple(tuple, metaclass=TupleType):
     @class_and_instance_method
     def __str__(self):
         return '(%s)' % ', '.join([type_str(a) for a in self])
+
+    def __eq__(self, other):
+        if not is_type(type(other)):
+            return super().__eq__(other)
+
+        return type(self) == type(other) and super().__eq__(other)
+
+    def __hash__(self):
+        return super().__hash__()
+
+    def __ne__(self, other):
+        if not is_type(type(other)):
+            return super().__ne__(other)
+
+        return not self.__eq__(other)
 
     @class_and_instance_method
     def replace(self, **kwds):

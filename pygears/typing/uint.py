@@ -304,6 +304,21 @@ class Integer(Integral, metaclass=IntegerType):
     def __neg__(self):
         return (-type(self))(-int(self))
 
+    def __eq__(self, other):
+        if not is_type(type(other)):
+            return super().__eq__(other)
+
+        return type(self).base == type(other).base and super().__eq__(other)
+
+    def __hash__(self):
+        return super().__hash__()
+
+    def __ne__(self, other):
+        if not is_type(type(other)):
+            return super().__ne__(other)
+
+        return not self.__eq__(other)
+
     def __rshift__(self, other):
         res_t = type(self) >> other
         if typeof(res_t, Unit):
@@ -472,9 +487,6 @@ class Int(Integer, metaclass=IntType):
 
         check_width(val, res.width if val < 0 else res.width - 1, cls)
         return res
-
-    def __eq__(self, other):
-        return int(self) == int(other)
 
     @classmethod
     def decode(cls, val):

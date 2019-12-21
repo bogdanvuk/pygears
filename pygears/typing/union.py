@@ -61,7 +61,7 @@ Uint[1](1)
 
 """
 
-from .base import EnumerableGenericMeta, type_str
+from .base import EnumerableGenericMeta, type_str, is_type
 from .base import class_and_instance_method, TemplatedTypeUnspecified
 from .math import bitw
 from .unit import Unit
@@ -185,6 +185,21 @@ class Union(tuple, metaclass=UnionType):
             ret |= int(d)
 
         return ret
+
+    def __eq__(self, other):
+        if not is_type(type(other)):
+            return super().__eq__(other)
+
+        return type(self) == type(other) and super().__eq__(other)
+
+    def __hash__(self):
+        return super().__hash__()
+
+    def __ne__(self, other):
+        if not is_type(type(other)):
+            return super().__ne__(other)
+
+        return not self.__eq__(other)
 
     def code(self):
         """Returns a packed integer representation of the :class:`Union` instance.

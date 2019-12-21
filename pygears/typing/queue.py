@@ -1,7 +1,7 @@
 import inspect
 
 from .base import EnumerableGenericMeta, type_str, typeof
-from .base import TemplatedTypeUnspecified, class_and_instance_method
+from .base import TemplatedTypeUnspecified, class_and_instance_method, is_type
 from .uint import Uint
 from .unit import Unit
 
@@ -115,6 +115,21 @@ class Queue(tuple, metaclass=QueueMeta):
 
         queue_tpl = (cls.args[0](val), cls.eot(eot))
         return super(Queue, cls).__new__(cls, queue_tpl)
+
+    def __eq__(self, other):
+        if not is_type(type(other)):
+            return super().__eq__(other)
+
+        return type(self) == type(other) and super().__eq__(other)
+
+    def __hash__(self):
+        return super().__hash__()
+
+    def __ne__(self, other):
+        if not is_type(type(other)):
+            return super().__ne__(other)
+
+        return not self.__eq__(other)
 
     def __int__(self):
         """Returns a packed integer representation of the :class:`Queue` instance.

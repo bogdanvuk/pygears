@@ -1,7 +1,7 @@
 import inspect
 import sys
 
-from pygears.conf import bind, core_log, registry, safe_bind, MultiAlternativeError
+from pygears.conf import bind, core_log, registry, safe_bind, MultiAlternativeError, config
 from pygears.typing import Any, cast
 from pygears.core.util import is_standard_func, get_function_context_dict
 
@@ -9,8 +9,9 @@ from .partial import Partial
 from .intf import Intf
 from .infer_ftypes import TypeMatchError, infer_ftypes, type_is_specified
 from .gear import TooManyArguments, GearTypeNotSpecified, GearArgsNotSpecified
-from .gear import Gear
+from .gear import Gear, create_hier
 from .gear_decorator import GearDecoratorPlugin
+from .gear_memoize import get_memoized_gear, memoize_gear
 
 
 def get_obj_var_name(frame, obj):
@@ -164,20 +165,6 @@ def infer_params(args, params, context):
                         allow_incomplete=False)
 
 
-class create_hier:
-    def __init__(self, gear):
-        self.gear = gear
-
-    def __enter__(self):
-        bind('gear/current_module', self.gear)
-        return self
-
-    def __exit__(self, exception_type, exception_value, traceback):
-        bind('gear/current_module', self.gear.parent)
-        # if exception_type is not None:
-        #     self.gear.clear()
-
-
 class intf_name_tracer:
     def __init__(self, gear):
         self.code_map = registry('gear/code_map')
@@ -246,7 +233,8 @@ def resolve_func(gear_inst):
 
         err = None
         try:
-            out_intfs, out_dtype = resolve_out_types(out_intfs, out_dtype, gear_inst)
+            out_intfs, out_dtype = resolve_out_types(out_intfs, out_dtype,
+                                                     gear_inst)
         except TypeError as e:
             err = type(e)(f"{str(e)}, when instantiating '{gear_inst.name}'")
 
@@ -256,42 +244,7 @@ def resolve_func(gear_inst):
     return out_intfs, out_dtype
 
 
-def resolve_out_types(out_intfs, out_dtype, gear_inst):
-
-    if out_intfs and (not out_dtype):
-        out_dtype = tuple(intf.dtype for intf in out_intfs)
-        return out_intfs, out_dtype
-
-    if out_intfs:
-        if len(out_intfs) != len(out_dtype):
-            relation = 'less' if len(out_intfs) < len(out_dtype) else 'more'
-            raise TypeMatchError(
-                f"Number of output interfaces ({len(out_intfs)}) is {relation} "
-                f" than specified output types ({out_dtype}): {repr(out_dtype)}"
-            )
-
-        casted_out_intfs = list(out_intfs)
-
-        # Try casting interface types upfront to get better error messaging
-        for intf, t in zip(out_intfs, out_dtype):
-            if intf.dtype != t:
-                cast(intf.dtype, t)
-
-        # If no exceptions occured, do it for real
-        for i, (intf, t) in enumerate(zip(out_intfs, out_dtype)):
-            if intf.dtype != t:
-                from pygears.lib.cast import cast as cast_gear
-                casted_out_intfs[i] = cast_gear(intf, t=t)
-
-        out_intfs = tuple(casted_out_intfs)
-        return out_intfs, out_dtype
-
-    return out_intfs, out_dtype
-
-
-def resolve_gear(gear_inst, fix_intfs):
-    out_intfs, out_dtype = resolve_func(gear_inst)
-
+def resolve_gear(gear_inst, out_intfs, out_dtype, fix_intfs):
     dflt_dout_name = registry('gear/naming/default_out_name')
     for i in range(len(gear_inst.outnames), len(out_dtype)):
         if out_intfs and hasattr(out_intfs[i], 'var_name'):
@@ -334,6 +287,7 @@ def resolve_gear(gear_inst, fix_intfs):
         for p in c.out_ports:
             intf = p.consumer
             if intf not in set(intfs) and not intf.consumers:
+                breakpoint()
                 core_log().warning(f'"{c.name}.{p.basename}" left dangling.')
 
     if len(out_intfs) > 1:
@@ -342,6 +296,39 @@ def resolve_gear(gear_inst, fix_intfs):
         return out_intfs[0]
     else:
         return None
+
+
+def resolve_out_types(out_intfs, out_dtype, gear_inst):
+
+    if out_intfs and (not out_dtype):
+        out_dtype = tuple(intf.dtype for intf in out_intfs)
+        return out_intfs, out_dtype
+
+    if out_intfs:
+        if len(out_intfs) != len(out_dtype):
+            relation = 'less' if len(out_intfs) < len(out_dtype) else 'more'
+            raise TypeMatchError(
+                f"Number of output interfaces ({len(out_intfs)}) is {relation} "
+                f" than specified output types ({out_dtype}): {repr(out_dtype)}"
+            )
+
+        casted_out_intfs = list(out_intfs)
+
+        # Try casting interface types upfront to get better error messaging
+        for intf, t in zip(out_intfs, out_dtype):
+            if intf.dtype != t:
+                cast(intf.dtype, t)
+
+        # If no exceptions occured, do it for real
+        for i, (intf, t) in enumerate(zip(out_intfs, out_dtype)):
+            if intf.dtype != t:
+                from pygears.lib.cast import cast as cast_gear
+                casted_out_intfs[i] = cast_gear(intf, t=t)
+
+        out_intfs = tuple(casted_out_intfs)
+        return out_intfs, out_dtype
+
+    return out_intfs, out_dtype
 
 
 def gear_base_resolver(func,
@@ -373,6 +360,16 @@ def gear_base_resolver(func,
     else:
         fix_intfs = intfs.copy()
 
+    if config['gear/memoize']:
+        gear_inst = get_memoized_gear(func, args, const_args, kwds, fix_intfs,
+                                      name)
+        if gear_inst is not None:
+            out_intfs = gear_inst.outputs
+            if len(out_intfs) == 1:
+                return out_intfs[0]
+            else:
+                return out_intfs
+
     kwddefaults = paramspec.kwonlydefaults or {}
     param_templates = {
         **dict(outnames=outnames or ret_outnames or [],
@@ -400,16 +397,18 @@ def gear_base_resolver(func,
                 f'{meta_kwds["definition"].__name__}": '
                 f'{meta_kwds["enablement"].decode()}')
 
-    gear_inst = Gear(func, args, params, const_args)
+    gear_inst = Gear(func, params)
 
     if err:
         err.gear = gear_inst
         err.root_gear = gear_inst
 
     if not err:
-        gear_inst.connect_input()
+        gear_inst.connect_input(args, const_args)
         try:
-            out_intfs = resolve_gear(gear_inst, fix_intfs)
+            out_intfs, out_dtype = resolve_func(gear_inst)
+            out_intfs = resolve_gear(gear_inst, out_intfs, out_dtype,
+                                     fix_intfs)
         except (TooManyArguments, GearTypeNotSpecified, GearArgsNotSpecified,
                 TypeError, TypeMatchError, MultiAlternativeError) as e:
             err = e
@@ -428,6 +427,9 @@ def gear_base_resolver(func,
 
         raise err
 
+    if config['gear/memoize'] and not func.__name__.endswith('_unpack'):
+        memoize_gear(gear_inst, args, const_args, kwds)
+
     return out_intfs
 
 
@@ -436,6 +438,7 @@ class GearInstPlugin(GearDecoratorPlugin):
     def bind(cls):
         safe_bind('gear/code_map', [])
         safe_bind('gear/gear_dflt_resolver', gear_base_resolver)
+        config.define('gear/memoize', True)
 
     @classmethod
     def reset(cls):

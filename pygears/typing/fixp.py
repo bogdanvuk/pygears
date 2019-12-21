@@ -300,6 +300,9 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
         cls = type(self)
         cls_other = type(other)
 
+        if cls.base != cls_other.base:
+            return False
+
         if cls_other.fract > cls.fract:
             return int(self) << (cls_other.fract - cls.fract) == int(other)
         else:
