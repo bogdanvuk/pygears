@@ -112,17 +112,3 @@ def test_ufixp_cosim(tmpdir):
                     seq=[2.75, 4.0],
                     expected=[Ufixp[2, 3](1.5), Ufixp[2, 3](0.0)],
                     module=reinterpret_gear)
-
-
-from pygears.typing import Array
-
-va = Array[Uint[4], 4]((2, ) * 8)
-vu = Int[4](2)
-
-breakpoint()
-print(3 != va)
-print(vu == va)
-print(vu != va)
-
-print(va == vu)
-print(va != vu)

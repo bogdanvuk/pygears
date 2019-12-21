@@ -28,7 +28,8 @@ def path_name(path):
         head = '_'.join(path_l[:3])
         tail = '_'.join(path_l[-3:])
         mid = '_'.join(path_l[3:-3])
-        full_name = head + '_' + hashlib.sha1(mid.encode()).hexdigest()[:8] + '_' + tail
+        full_name = head + '_' + hashlib.sha1(
+            mid.encode()).hexdigest()[:8] + '_' + tail
 
     return full_name
 
@@ -82,6 +83,9 @@ class HDLModuleInst:
 
     @property
     def is_generated(self):
+        if self.memoized:
+            return False
+
         return self.is_compiled \
             or self.template_path \
             or self.is_hierarchical
@@ -115,7 +119,34 @@ class HDLModuleInst:
         return hdl_fn
 
     @property
+    @functools.lru_cache()
+    def memoized(self):
+        if 'memoized' not in self.node.params:
+            return None
+
+        if not (self.is_hierarchical or self.is_compiled or self.template_path):
+            return None
+
+        mem_gear = self.node.params['memoized']
+        rtl_map = registry('rtl/gear_node_map')
+        if mem_gear not in rtl_map:
+            return None
+
+        mem_node = rtl_map[mem_gear]
+        hdlgen_map = registry(f'{self.extension}gen/map')
+        if mem_node not in hdlgen_map:
+            return None
+
+        # print(
+        #     f'Reusing {hdlgen_map[mem_node].module_name} for {self.hier_path_name}'
+        # )
+        return hdlgen_map[mem_node]
+
+    @property
     def module_name(self):
+        if self.memoized:
+            return self.memoized.module_name
+
         if self.hier_path_name == '':
             return "top"
         elif self.is_hierarchical:
@@ -195,7 +226,7 @@ class HDLModuleInst:
 
     @property
     def params(self):
-        if not self.is_generated:
+        if not self.is_generated and not self.memoized:
             params = {}
             for k, v in self.node.params.items():
                 param_name = k.upper()
@@ -227,7 +258,7 @@ class HDLModuleInst:
     @property
     def port_configs(self):
         intf_names = []
-        if not self.is_generated:
+        if not self.is_generated and not self.memoized:
             intfs = self.impl_intfs
             if intfs:
                 intf_names = list(intfs.keys())
@@ -246,7 +277,8 @@ class HDLModuleInst:
 
         if intf_names:
             raise Exception(
-                f'Port(s) {intf_names} not specified in the definition of the module "{self.node.name}"')
+                f'Port(s) {intf_names} not specified in the definition of the module "{self.node.name}"'
+            )
 
     @property
     def module_context(self):

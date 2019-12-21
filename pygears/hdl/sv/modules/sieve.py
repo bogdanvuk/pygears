@@ -1,11 +1,14 @@
 import itertools
+import os
 
+from pygears import config
 from pygears.lib.sieve import sieve
 from pygears.hdl.sv import SVGenPlugin
 from pygears.hdl.sv.svmod import SVModuleInst
 from pygears.hdl.modinst import get_port_config
 from functools import partial
 from pygears.rtl import flow_visitor, RTLPlugin
+from pygears.core.gear_inst import GearInstPlugin
 from pygears.rtl.gear import RTLGearHierVisitor, is_gear_instance
 
 
@@ -26,7 +29,7 @@ def index_to_sv_slice(dtype, key):
 
 
 def get_sieve_stages_iter(node):
-    for s in itertools.chain(node.pre_sieves, [node]):
+    for s in itertools.chain(getattr(node, 'pre_sieves', []), [node]):
         indexes = s.params['key']
         if not isinstance(indexes, tuple):
             indexes = (indexes, )
@@ -52,12 +55,12 @@ def get_sieve_stages(node):
 class SVGenSieve(SVModuleInst):
     @property
     def is_generated(self):
-        return True
+        return not self.memoized or getattr(self.node, 'pre_sieves', [])
 
     @property
     def port_configs(self):
-        if self.node.pre_sieves:
-            node = self.node.pre_sieves[0]
+        if getattr(self.node, 'pre_sieves', []):
+            node = getattr(self.node, 'pre_sieves', [])[0]
         else:
             node = self.node
 
@@ -67,7 +70,13 @@ class SVGenSieve(SVModuleInst):
         for p in node.out_ports:
             yield get_port_config('producer', type_=p.dtype, name=p.basename)
 
+    @property
+    def template_path(self):
+        return os.path.join(os.path.dirname(__file__), 'sieve.j2')
+
     def get_module(self, template_env):
+        if self.memoized and not getattr(self.node, 'pre_sieves', []):
+            return None
 
         context = {
             'stages': get_sieve_stages(self.node),
@@ -129,8 +138,9 @@ class CollapseSievesVisitor(RTLGearHierVisitor):
                 iout.remove()
 
 
-class RTLSievePlugin(SVGenPlugin, RTLPlugin):
+class RTLSievePlugin(SVGenPlugin, RTLPlugin, GearInstPlugin):
     @classmethod
     def bind(cls):
         cls.registry['svgen']['module_namespace'][sieve] = SVGenSieve
-        cls.registry['rtl']['flow'].append(CollapseSievesVisitor)
+        if not config['gear/memoize']:
+            cls.registry['rtl']['flow'].append(CollapseSievesVisitor)

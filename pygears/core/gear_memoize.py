@@ -2,6 +2,7 @@ from pygears.conf import PluginBase, registry, safe_bind
 from .intf import Intf
 from .gear import Gear, create_hier
 from .port import InPort, OutPort
+from copy import deepcopy, copy
 
 
 def check_args(args, const_args, kwds, mem_args, mem_const_args, mem_kwds):
@@ -38,7 +39,13 @@ def check_args(args, const_args, kwds, mem_args, mem_const_args, mem_kwds):
 
 
 def copy_gear_full(g: Gear, name=None):
-    params = g.params.copy()
+    params = {}
+    for n, val in g.params.items():
+        if isinstance(val, (list, dict)):
+            params[n] = val.copy()
+        else:
+            params[n] = val
+
     params['memoized'] = g
 
     if name:
@@ -98,9 +105,6 @@ def copy_gear_full(g: Gear, name=None):
 # TODO: Handle unpack gears that create ccat in parents space
 def copy_gear(mem_gear: Gear, args, kwds, name):
     gear_inst = copy_gear_full(mem_gear, name)
-
-    if gear_inst.name ==  '/top/triggering/const':
-        breakpoint()
 
     for key in kwds:
         if (key in registry('gear/params/extra')) or (

@@ -361,8 +361,10 @@ def gear_base_resolver(func,
         fix_intfs = intfs.copy()
 
     if config['gear/memoize']:
-        gear_inst = get_memoized_gear(func, args, const_args, kwds, fix_intfs,
-                                      name)
+        gear_inst = get_memoized_gear(func, args, const_args, {
+            **kwds,
+            **meta_kwds
+        }, fix_intfs, name)
         if gear_inst is not None:
             out_intfs = gear_inst.outputs
             if len(out_intfs) == 1:

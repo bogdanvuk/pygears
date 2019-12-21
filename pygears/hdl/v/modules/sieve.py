@@ -12,8 +12,8 @@ class VGenSieve(VModuleInst):
 
     @property
     def port_configs(self):
-        if self.node.pre_sieves:
-            node = self.node.pre_sieves[0]
+        if getattr(self.node, 'pre_sieves', []):
+            node = getattr(self.node, 'pre_sieves', [])[0]
         else:
             node = self.node
 

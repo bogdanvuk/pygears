@@ -2,7 +2,7 @@ from pygears import gear, registry, find
 from pygears.lib import const
 from pygears.typing import Uint, Int
 from pygears.lib import directed, drv, add
-from pygears.sim import sim
+from pygears.sim import sim, cosim
 from pygears.core.hier_node import HierYielderBase
 
 
@@ -69,7 +69,6 @@ def test_hier_level2():
 
     assert check_memoized('/top/test_hier1', '/top/test_hier0/test1')
 
+    cosim('/top', 'verilator')
+
     sim()
-
-
-test_hier_level2()
