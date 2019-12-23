@@ -16,8 +16,8 @@ async def group(din: Queue, size: Uint, *,
                 last = (cnt == c)
                 out_eot = last @ eot
                 yield (data, out_eot)
-                if not last:
-                    cnt += int(eot)
+                if not last and all(eot):
+                    cnt += 1
 
 
 @alternative(group)

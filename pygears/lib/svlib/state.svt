@@ -8,7 +8,7 @@
 
    always_ff @(posedge clk) begin
       if (rst) begin
-         data_reg <= {{code(params['init'], int)}};
+         data_reg <= {{code(_din_t(params['init']), int)}};
       end else if (din.valid && din.ready) begin
          data_reg <= din.data;
       end

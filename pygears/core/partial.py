@@ -111,6 +111,8 @@ class Partial:
                         kwd_params['__base__'] = self.func
                     return func(*args_comb, **kwd_params)
                 else:
+                    # TODO: Can happen if user forgets '*' for separation, warn about this
+                    # TODO: Think about disabling keyword arguments that are not keyword-only for gears
                     msg = f"not enough arguments specified for '{self.func.__name__}'"
                     if func.__name__ == f'{self.func.__name__}_unpack':
                         arg_signature = ', '.join(

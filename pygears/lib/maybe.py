@@ -4,7 +4,7 @@ from pygears.lib.ccat import ccat
 from pygears.lib.const import fix
 from pygears.lib.filt import filt
 from pygears.lib.fmaps.union import unionmap
-from pygears.typing import Maybe, cast
+from pygears.typing import Maybe, cast, Bool
 
 
 @gear
@@ -34,3 +34,8 @@ def apply(din: Maybe, *, f, args=None):
 @gear
 def sync_with(sync_in: Maybe, din, *, fcat=ccat, balance=None):
     return fcat(din, sync_in[1]) | Maybe | filt
+
+
+@gear
+def some(din) -> Maybe['din']:
+    return ccat(din, Bool(True)) >> Maybe[din.dtype]

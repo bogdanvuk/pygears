@@ -21,6 +21,8 @@ class HDLPlugin(PluginBase):
 
         config.define('hdl/include', default=[])
 
+        config.define('debug/hide_interm_vals', default=True)
+
 
 from . import sv
 from . import v

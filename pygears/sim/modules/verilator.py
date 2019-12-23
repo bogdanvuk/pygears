@@ -29,6 +29,22 @@ assign ${intf_name}_valid = ${conn_name}.valid;
 assign ${intf_name}_ready = ${conn_name}.ready;
 """)
 
+signal_spy_connect_hide_interm_t = Template(
+    """
+/*verilator tracing_on*/
+${intf_name}_t ${intf_name}_data;
+logic ${intf_name}_valid;
+logic ${intf_name}_ready;
+/*verilator tracing_off*/
+
+always_comb
+    if (${conn_name}.valid)
+        ${intf_name}_data = ${conn_name}.data;
+
+assign ${intf_name}_valid = ${conn_name}.valid;
+assign ${intf_name}_ready = ${conn_name}.ready;
+""")
+
 
 class VerilatorCompileError(Exception):
     pass
@@ -36,19 +52,23 @@ class VerilatorCompileError(Exception):
 
 class SimVerilated(CosimBase):
     def __init__(
-            self,
-            gear,
-            timeout=100,
-            vcd_fifo=False,
-            shmidcat=False,
-            post_synth=False,
-            language='sv'):
+        self,
+        gear,
+        timeout=100,
+        vcd_fifo=False,
+        shmidcat=False,
+        post_synth=False,
+        language='sv'):
+
         super().__init__(gear, timeout=timeout)
         self.name = gear.name[1:].replace('/', '_')
         self.outdir = os.path.abspath(os.path.join(registry('results-dir'), self.name))
         self.objdir = os.path.join(self.outdir, 'obj_dir')
         self.post_synth = post_synth
-        bind('svgen/spy_connection_template', signal_spy_connect_t)
+
+        bind(
+            'svgen/spy_connection_template', signal_spy_connect_hide_interm_t
+            if config['debug/hide_interm_vals'] else signal_spy_connect_t)
 
         self.language = language
 
@@ -84,7 +104,8 @@ class SimVerilated(CosimBase):
             if p.index >= len(self.gear.in_ports):
                 driver = closest_gear_port_from_rtl(p, 'in')
                 if driver is None:
-                    raise VerilatorCompileError(f"Inferred top module port '{p.name}' has no driver")
+                    raise VerilatorCompileError(
+                        f"Inferred top module port '{p.name}' has no driver")
 
                 consumer = closest_gear_port_from_rtl(p, 'out')
 

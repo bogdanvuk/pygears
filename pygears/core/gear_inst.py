@@ -378,10 +378,10 @@ def gear_base_resolver(func,
         **dict(outnames=outnames or ret_outnames or [],
                name=name,
                intfs=fix_intfs),
+        **annotations,
         **kwddefaults,
         **kwds,
         **meta_kwds,
-        **annotations
     }
 
     try:
