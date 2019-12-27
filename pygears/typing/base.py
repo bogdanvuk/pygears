@@ -61,7 +61,6 @@ class TemplatedTypeUnspecified(Exception):
 class TypingMeta(type):
     """Base class all types.
     """
-
     @property
     def specified(self):
         return True
@@ -120,23 +119,24 @@ class GenericMeta(TypingMeta):
 
     def __new__(cls, name, bases, namespace, args=[]):
         # TODO: Throw error when too many args are supplied
-        if (not bases) or (not hasattr(bases[0],
-                                       'args')) or (not bases[0].args):
+        if (not bases) or (not hasattr(bases[0], 'args')) or (not bases[0].args):
             # Form a class that has the generic arguments specified
             if isinstance(args, dict):
-                namespace.update({
-                    '__args__': tuple(args.values()),
-                    '__parameters__': tuple(args.keys())
-                })
+                namespace.update(
+                    {
+                        '__args__': tuple(args.values()),
+                        '__parameters__': tuple(args.keys())
+                    })
             else:
                 namespace.update({'__args__': args})
 
-            namespace.update({
-                '_hash': None,
-                '_base': None,
-                '_specified': None,
-                '_args': None
-            })
+            namespace.update(
+                {
+                    '_hash': None,
+                    '_base': None,
+                    '_specified': None,
+                    '_args': None
+                })
 
             return super().__new__(cls, name, bases, namespace)
         else:
@@ -153,10 +153,7 @@ class GenericMeta(TypingMeta):
 
                 tmpl_map = args
             else:
-                tmpl_map = {
-                    name: val
-                    for name, val in zip(bases[0].templates, args)
-                }
+                tmpl_map = {name: val for name, val in zip(bases[0].templates, args)}
             return param_subs(bases[0], tmpl_map, {})
 
     def is_generic(self):
@@ -225,9 +222,8 @@ class GenericMeta(TypingMeta):
         elif not isinstance(params, dict):
             params = [params]
 
-        return self.__class__(self.__name__, (self, ) + self.__bases__,
-                              dict(self.__dict__),
-                              args=params)
+        return self.__class__(
+            self.__name__, (self, ) + self.__bases__, dict(self.__dict__), args=params)
 
     @property
     def base(self):
@@ -252,7 +248,6 @@ searched recursively. Each template is reported only once.
         >>> Tuple[Tuple['T1', 'T2'], 'T1'].templates
         ['T1', 'T2']
         """
-
         def make_unique(seq):
             seen = set()
             return [x for x in seq if x not in seen and not seen.add(x)]
@@ -325,11 +320,18 @@ searched recursively. Each template is reported only once.
         else:
             return [f'f{i}' for i in range(len(self.args))]
 
-    def replace(self, field_map, arg_map={}):
-        args = {
-            field_map.get(k, k): arg_map.get(field_map.get(k, k), v)
-            for k, v in zip(self.fields, self.args)
-        }
+    def remove(self, *args):
+        args = {k: v for k, v in zip(self.fields, self.args) if k not in args}
+
+        return self.base[args]
+
+    def rename(self, **kwds):
+        args = {kwds.get(k, k): v for k, v in zip(self.fields, self.args)}
+
+        return self.base[args]
+
+    def replace(self, **kwds):
+        args = {k: kwds.get(k, v) for k, v in zip(self.fields, self.args)}
 
         return self.base[args]
 
@@ -340,8 +342,7 @@ searched recursively. Each template is reported only once.
                 for f, a in zip(self.fields, self.args)
             }
         else:
-            args = tuple(a.copy() if is_type(a) else copy.copy(a)
-                         for a in self.args)
+            args = tuple(a.copy() if is_type(a) else copy.copy(a) for a in self.args)
 
         return self.base[args]
 
@@ -383,18 +384,12 @@ def param_subs(t, matches, namespace):
         return type(t)(param_subs(tt, matches, namespace) for tt in t)
     else:
         if isinstance(t, GenericMeta) and (not t.specified):
-            args = [
-                param_subs(t.args[i], matches, namespace)
-                for i in range(len(t.args))
-            ]
+            args = [param_subs(t.args[i], matches, namespace) for i in range(len(t.args))]
 
             if hasattr(t, '__parameters__'):
                 args = {name: a for name, a in zip(t.__parameters__, args)}
 
-            return t.__class__(t.__name__,
-                               t.__bases__,
-                               dict(t.__dict__),
-                               args=args)
+            return t.__class__(t.__name__, t.__bases__, dict(t.__dict__), args=args)
 
     return t_orig
 
@@ -402,7 +397,6 @@ def param_subs(t, matches, namespace):
 class EnumerableGenericMeta(GenericMeta):
     """Base class for all types that are iterable.
     """
-
     def __int__(self):
         """Calculates the bit width of the type.
 
@@ -442,8 +436,7 @@ class EnumerableGenericMeta(GenericMeta):
 
     def index_norm(self, index):
         if not isinstance(index, tuple):
-            return (index_norm_hashable_single(self.index_convert(index),
-                                               len(self)), )
+            return (index_norm_hashable_single(self.index_convert(index), len(self)), )
         else:
             return index_norm_hashable(
                 tuple(self.index_convert(i) for i in index), len(self))

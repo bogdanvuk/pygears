@@ -55,6 +55,7 @@ class SimVerilated(CosimBase):
         self,
         gear,
         timeout=100,
+        rebuild=True,
         vcd_fifo=False,
         shmidcat=False,
         post_synth=False,
@@ -65,6 +66,7 @@ class SimVerilated(CosimBase):
         self.outdir = os.path.abspath(os.path.join(registry('results-dir'), self.name))
         self.objdir = os.path.join(self.outdir, 'obj_dir')
         self.post_synth = post_synth
+        self.rebuild = rebuild
 
         bind(
             'svgen/spy_connection_template', signal_spy_connect_hide_interm_t
@@ -79,6 +81,7 @@ class SimVerilated(CosimBase):
                 gear,
                 outdir=synth_src_dir if post_synth else self.outdir,
                 wrapper=True,
+                generate=self.rebuild,
                 language='v')
 
             self.svmod = registry('vgen/map')[self.rtlnode]
@@ -91,11 +94,17 @@ class SimVerilated(CosimBase):
                     rtl_node=self.rtlnode,
                     synth_cmd='synth',
                     outdir=self.outdir,
+                    generate=self.rebuild,
                     srcdir=synth_src_dir,
                     synth_out=os.path.join(
                         self.outdir, f'wrap_{self.svmod.module_name}.v'))
         else:
-            self.rtlnode = hdlgen(gear, outdir=self.outdir, wrapper=True, language='sv')
+            self.rtlnode = hdlgen(
+                gear,
+                outdir=self.outdir,
+                wrapper=True,
+                generate=self.rebuild,
+                language='sv')
             self.svmod = registry('svgen/map')[self.rtlnode]
             self.wrap_name = f'wrap_{self.svmod.module_name}'
             self.top_name = self.wrap_name
@@ -136,9 +145,7 @@ class SimVerilated(CosimBase):
         self.verilib.back()
 
     def setup(self):
-        rebuild = True
-
-        if rebuild:
+        if self.rebuild:
             sim_log().info(f'Verilating...')
             self.build()
             sim_log().info(f'Done')
