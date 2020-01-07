@@ -1,6 +1,6 @@
 from pygears import alternative, gear
 from pygears.lib import cart
-from pygears.typing import Queue, Tuple, Uint
+from pygears.typing import Queue, Tuple, Uint, Bool
 
 
 @gear(hdl={'compile': True})
@@ -19,7 +19,9 @@ async def chop(din: Queue[Tuple[{
         A level 2 :class:`Queue` type whose data consists of the ``data`` field
           of the :class:`Tuple` input
     """
-    cnt = din.dtype.data['size'](init)
+
+    cnt: din.dtype.data['size'] = init
+    last: Bool
 
     async for ((data, size), eot) in din:
         last = (cnt == size)

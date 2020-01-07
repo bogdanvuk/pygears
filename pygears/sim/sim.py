@@ -431,6 +431,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             bind('gear/current_sim', sim_gear)
 
         bind('sim/exception', None)
+        bind('gear/exec_context', 'sim')
         try:
             self.events['before_run'](self)
             self.sim_loop(timeout)
@@ -438,6 +439,8 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             pass
         except Exception as e:
             bind('sim/exception', e)
+
+        bind('gear/exec_context', 'compile')
 
         try:
             # print(f"----------- After run ---------------")

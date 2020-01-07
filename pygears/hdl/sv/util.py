@@ -31,8 +31,8 @@ class SVGenTypeVisitor(TypingVisitorBase):
     def visit_Bool(self, type_, field):
         if (not self.depth):
             self.struct_array.append(
-                f'typedef {self.basic_type} [0:0] {self.context}_t; // {type_}')
-        return f'{self.basic_type} [0:0]'
+                f'typedef {self.basic_type} {self.context}_t; // {type_}')
+        return f'{self.basic_type}'
 
     def visit_Uint(self, type_, field):
         if (type_.width == 0):

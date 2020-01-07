@@ -144,16 +144,13 @@ def resolve_args(args, argnames, annotations, varargs):
     if varargs:
         expand_varargs(args_dict, annotations, varargs, args[len(args_dict):])
 
-    args_dict, const_args = infer_const_args(args_dict)
-    check_args_specified(args_dict)
-
     outnames = resolve_return_annotation(annotations)
 
     for a in args_dict:
         if a not in annotations:
             annotations[a] = Any
 
-    return args_dict, annotations, const_args, outnames
+    return args_dict, annotations, outnames
 
 
 def infer_params(args, params, context):
@@ -345,8 +342,11 @@ def gear_base_resolver(func,
 
     err = None
     try:
-        args, annotations, const_args, ret_outnames = resolve_args(
+        args, annotations, ret_outnames = resolve_args(
             args, paramspec.args, paramspec.annotations, paramspec.varargs)
+
+        args, const_args = infer_const_args(args)
+        check_args_specified(args)
     except (TooManyArguments, GearArgsNotSpecified) as e:
         err = type(e)(f'{str(e)}\n    when instantiating "{name}"')
 

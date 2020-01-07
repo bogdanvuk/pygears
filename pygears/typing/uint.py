@@ -264,6 +264,25 @@ class Integer(Integral, metaclass=IntegerType):
 
             return cls(ival)
 
+        if cls.base is Integer:
+            if typeof(type(val), Uint) or int(val) >= 0:
+                if cls.is_generic():
+                    if typeof(type(val), Uint):
+                        cls = type(val)
+                    else:
+                        cls = Uint[bitw(val)]
+                else:
+                    cls = Uint[cls.width]
+
+            if typeof(type(val), Int) or int(val) < 0:
+                if cls.is_generic():
+                    if typeof(type(val), Int):
+                        cls = type(val)
+                    else:
+                        cls = Int[bitw(val)]
+                else:
+                    cls = Int[cls.width]
+
         if typeof(cls, Uint) and val < 0:
             raise ValueError(f"cannot represent negative numbers with unsigned type '{repr(cls)}'")
 

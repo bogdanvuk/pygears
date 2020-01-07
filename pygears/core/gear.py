@@ -242,6 +242,7 @@ class GearPlugin(PluginBase):
 
         safe_bind('gear/hier_root', GearHierRoot(''))
         safe_bind('gear/current_module', cls.registry['gear']['hier_root'])
+        safe_bind('gear/exec_context', 'compile')
 
     @classmethod
     def reset(cls):

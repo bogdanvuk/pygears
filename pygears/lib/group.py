@@ -1,12 +1,13 @@
 from pygears import gear, alternative
-from pygears.typing import Queue, Uint
+from pygears.typing import Queue, Uint, Bool
 
 
 @gear(hdl={'compile': True})
 async def group(din: Queue, size: Uint, *,
                 init=1) -> Queue['din.data', 'din.lvl + 1']:
 
-    cnt = size.dtype(init)
+    cnt: size.dtype = init
+    last: Bool
 
     async with size as c:
         assert c >= init, 'group: incorrect configuration'
@@ -23,7 +24,9 @@ async def group(din: Queue, size: Uint, *,
 @alternative(group)
 @gear(hdl={'compile': True})
 async def group_other(din, size: Uint, *, init=1) -> Queue['din']:
-    cnt = size.dtype(init)
+    cnt: size.dtype = init
+    last: Bool
+    # cnt= size.dtype(init)
 
     async with size as c:
         assert c >= init, 'group: incorrect configuration'

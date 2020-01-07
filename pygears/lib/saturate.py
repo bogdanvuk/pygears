@@ -7,7 +7,9 @@ from pygears.typing import Integral, code, saturate as type_saturate
 def saturate(din: Integral, *, t,
              limits=None) -> b'type_saturate(din, t, limits)':
     idin = code(din)
-    if module().in_ports[0].dtype.signed and not t.signed:
+    if module().in_ports[0].dtype.signed == t.signed and module().in_ports[0].dtype.width <= t.width:
+        return code(din, t)
+    elif module().in_ports[0].dtype.signed and not t.signed:
         if idin[t.width - 1:] == 0:
             return code(din, t)
         elif din < 0:

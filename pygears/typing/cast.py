@@ -423,6 +423,9 @@ def type_cast(dtype, cast_type):
 
 
 def integer_value_cast_resolver(val, cast_type):
+    if isinstance(val, int):
+        return cast_type(val)
+
     if typeof(type(val), Integer):
         if not cast_type.specified:
             cast_type = cast_type[val.width]
