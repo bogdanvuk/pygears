@@ -125,16 +125,16 @@ class SVExpressionVisitor:
     def visit_SubscriptExpr(self, node):
         val = self.visit(node.val)
 
-        if typeof(node.val.dtype, Array) or typeof(node.val.dtype, Integer):
-            return f'{val}[{self.visit(node.index)}]'
+        # if typeof(node.val.dtype, Array) or typeof(node.val.dtype, Integer):
+        #     return f'{val}[{self.visit(node.index)}]'
 
         if isinstance(node.index, pydl.ResExpr):
             index = node.index.val
 
+            index = node.val.dtype.index_norm(index)[0]
+
             if isinstance(index, slice):
                 return f'{val}[{int(index.stop) - 1}:{index.start}]'
-
-            index = node.val.dtype.index_norm(index)[0]
 
             return f'{val}.{node.val.dtype.fields[index]}'
 

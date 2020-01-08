@@ -101,6 +101,9 @@ def node_visitor(ast_type):
 @singledispatch
 def visit_ast(node, ctx):
     """Used by default. Called if no explicit function exists for a node."""
+    if node is None:
+        return nodes.ResExpr(None)
+
     breakpoint()
     raise SyntaxError(f"Unsupported language construct", node.lineno)
 

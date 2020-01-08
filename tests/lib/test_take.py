@@ -62,22 +62,10 @@ def test_directed_two_inputs(tmpdir, cosim_cls):
 @pytest.mark.parametrize('delay', [0, 5])
 @pytest.mark.parametrize('dout_delay', [0, 5])
 def test_q_directed(tmpdir, sim_cls, delay, dout_delay):
-    seq = []
-    tmp = []
-    for _ in range(9):
-        sub = []
-        for j in range(3):
-            sub.append((j, 2))
-        tmp.append(sub)
-    seq.append(tmp)
+    seq1 = [[(j, 2) for j in range(3)] for _ in range(9)]
+    seq2 = [[(j, 3) for j in range(6)] for _ in range(5)]
 
-    tmp = []
-    for _ in range(5):
-        sub = []
-        for j in range(6):
-            sub.append((j, 3))
-        tmp.append(sub)
-    seq.append(tmp)
+    seq = [seq1, seq2]
 
     dut = get_dut(dout_delay)
     directed(

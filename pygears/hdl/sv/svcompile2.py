@@ -131,7 +131,7 @@ class SVCompiler(InstanceVisitor):
 
             elif isinstance(obj, pydl.Register):
                 if self.selected(self.ctx.ref(name, ctx='store')):
-                    self.write(f'{name}_next = {name}')
+                    self.write(f"{name}_next = {obj.dtype.width}'(1'bx)")
                     self.write(f'{name}_en = 0')
 
             elif isinstance(obj, pydl.Variable):

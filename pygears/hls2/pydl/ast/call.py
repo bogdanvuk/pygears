@@ -55,9 +55,10 @@ def _(node, ctx: Context):
     # function at compile time
     if (all(isinstance(node, nodes.ResExpr) for node in args_only) and all(
             isinstance(node, nodes.ResExpr) for node in kwds_only.values())):
-        return func(*(a.val for a in args_only),
-                    **{n: v.val
-                       for n, v in kwds_only.items()})
+        return nodes.ResExpr(
+            func(*(a.val for a in args_only),
+                 **{n: v.val
+                    for n, v in kwds_only.items()}))
 
     # If we are dealing with bound methods
     if not inspect.isbuiltin(func) and hasattr(func, '__self__'):

@@ -461,6 +461,24 @@ class CastExpr(Expr):
         return self.cast_to
 
 
+class SliceExpr(Expr):
+    def __repr__(self):
+        return f'({self.start if self.start else ""}:{self.stop if self.stop else ""}:{self.step if self.step else ""})'
+
+    def __init__(self, start: OpType, stop: OpType, step: OpType):
+        pass
+
+    def __new__(cls, start: OpType, stop: OpType, step: OpType):
+        if isinstance(start, ResExpr) and isinstance(stop, ResExpr) and isinstance(step, ResExpr):
+            return ResExpr(slice(start.val, stop.val, step.val))
+
+        inst = super().__new__(cls)
+        inst.start = start
+        inst.stop = stop
+        inst.step = step
+        return inst
+
+
 class BinOpExpr(Expr):
     def __repr__(self):
         return f'({self.operands[0]} {self.operator} {self.operands[1]})'
@@ -536,6 +554,9 @@ class SubscriptExpr(Expr):
         inst = super().__new__(cls)
         inst.val = val
         inst.index = index
+
+        if typeof(inst.dtype, Unit):
+            return ResExpr(Unit())
 
         return inst
 

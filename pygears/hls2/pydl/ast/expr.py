@@ -36,7 +36,8 @@ def name(node, ctx: Context):
                 return nodes.ResExpr(ctx.local_namespace[node.id])
 
             if node.id in ctx.local_namespace['__builtins__']:
-                return nodes.ResExpr(ctx.local_namespace['__builtins__'][node.id])
+                return nodes.ResExpr(
+                    ctx.local_namespace['__builtins__'][node.id])
 
             raise SyntaxError(f"Name '{node.id}' not found", node.lineno)
 
@@ -85,7 +86,8 @@ def _(node, ctx: Context):
 
 
 def visit_bin_expr(op, operands, ctx: Context):
-    res = resolve_arith_func(op, tuple(visit_ast(p, ctx) for p in operands), ctx)
+    res = resolve_arith_func(op, tuple(visit_ast(p, ctx) for p in operands),
+                             ctx)
     return res
 
     # if isinstance(res, FunctionType):
@@ -136,7 +138,14 @@ def _(node, ctx: Context):
 
 
 @node_visitor(ast.Assert)
-def parse_assert(node, module_data):
-    test = visit_ast(node.test, module_data)
+def _(node, ctx: Context):
+    test = visit_ast(node.test, ctx)
     msg = node.msg.s if node.msg else 'Assertion failed.'
     return nodes.AssertExpr(test=test, msg=msg)
+
+
+@node_visitor(ast.Slice)
+def _(node, ctx: Context):
+    return nodes.SliceExpr(visit_ast(node.lower, ctx),
+                           visit_ast(node.upper, ctx),
+                           visit_ast(node.step, ctx))

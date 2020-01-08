@@ -20,13 +20,13 @@ async def take(din: Queue[Tuple[{
     Returns: A :class:`Queue` type whose data consists of the input ``data``
         field of the :class:`Tuple`. """
 
-    cnt = din.dtype.data['size'](init)
-    pass_eot = Bool(True)
+    cnt: din.dtype.data['size'] = init
+    last_take: Bool
 
     async for ((data, size), eot) in din:
-        last_take = (cnt == size) and pass_eot
+        last_take = (cnt == size)
 
-        if (cnt <= size) and pass_eot:
+        if (cnt <= size):
             yield (data, eot | (last_take << (din.dtype.lvl - 1)))
 
         if all(eot[:(din.dtype.lvl - 1)]):

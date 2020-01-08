@@ -231,8 +231,9 @@ class HDLGenerator:
     def visit_IntfLoop(self, node):
         block = HDLBlock(in_cond=self.in_condition(node),
                          opt_in_cond=self.opt_in_condition(node),
-                         exit_cond=pydl.SubscriptExpr(
-                             Component(node.intf, 'data'), pydl.ResExpr(-1)),
+                         exit_cond=pydl.ArrayOpExpr(
+                             pydl.SubscriptExpr(Component(node.intf, 'data'),
+                                                pydl.ResExpr(-1)), '&'),
                          stmts=[],
                          dflts={})
 

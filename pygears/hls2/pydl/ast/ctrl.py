@@ -5,7 +5,7 @@ from .utils import add_to_list
 
 
 @node_visitor(ast.If)
-def parse_if(node, ctx):
+def _(node, ctx):
     test_expr = visit_ast(node.test, ctx)
 
     if isinstance(test_expr, nodes.ResExpr):
