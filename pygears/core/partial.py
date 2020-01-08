@@ -4,14 +4,8 @@ import sys
 from pygears.conf import MultiAlternativeError
 
 
-def argspec_unwrap(func):
-    # uwrp = inspect.unwrap(func, stop=(lambda f: hasattr(f, "__signature__")))
-    # return inspect.getfullargspec(uwrp)
-    return inspect.getfullargspec(func)
-
-
 def extract_arg_kwds(kwds, func):
-    arg_names, _, varkw, _, kwonlyargs, *_ = argspec_unwrap(func)
+    arg_names, _, varkw, _, kwonlyargs, *_ = inspect.getfullargspec(func)
 
     arg_kwds = {}
     kwds_only = {}
@@ -29,7 +23,7 @@ def extract_arg_kwds(kwds, func):
 
 
 def combine_arg_kwds(args, kwds, func):
-    arg_names, varargs, *_ = argspec_unwrap(func)
+    arg_names, varargs, *_ = inspect.getfullargspec(func)
 
     if varargs:
         return args
@@ -52,7 +46,7 @@ def combine_arg_kwds(args, kwds, func):
 
 
 def all_args_specified(args, func):
-    arg_names, varargs, _, _, kwds, _, types = argspec_unwrap(func)
+    arg_names, varargs, _, _, kwds, _, types = inspect.getfullargspec(func)
     if varargs:
         return len(args) > 0
     elif len(args) == len(arg_names):
@@ -106,7 +100,7 @@ class Partial:
                 args_comb = combine_arg_kwds(args, kwd_intfs, func)
 
                 if all_args_specified(args_comb, func):
-                    argspec = argspec_unwrap(func)
+                    argspec = inspect.getfullargspec(func)
                     if '__base__' in argspec.kwonlyargs:
                         kwd_params['__base__'] = self.func
                     return func(*args_comb, **kwd_params)
@@ -119,7 +113,8 @@ class Partial:
                             f'{name}: {repr(dtype)}'
                             for name, dtype in func.__annotations__.items())
 
-                        alt_arg_names, *_ = inspect.getfullargspec(func.alternative_to)
+                        alt_arg_names, *_ = inspect.getfullargspec(
+                            func.alternative_to)
 
                         msg = (
                             f"not enough arguments specified for '{self.func.__name__}' for an"

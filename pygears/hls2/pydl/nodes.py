@@ -42,9 +42,13 @@ OPMAP = {
 }
 
 PYOPMAP = {
-    '!': operator.__not__,
+    '+': operator.__add__,
     '&&': operator.__and__,
-    '||': operator.__or__
+    '<<': operator.__lshift__,
+    '!': operator.__not__,
+    '||': operator.__or__,
+    '>>': operator.__rshift__,
+    '-': operator.__sub__,
 }
 
 

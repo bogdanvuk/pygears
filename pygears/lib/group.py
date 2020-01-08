@@ -8,6 +8,7 @@ async def group(din: Queue, size: Uint, *,
 
     cnt: size.dtype = init
     last: Bool
+    out_eot: Uint[din.dtype.lvl+1]
 
     async with size as c:
         assert c >= init, 'group: incorrect configuration'
@@ -26,7 +27,6 @@ async def group(din: Queue, size: Uint, *,
 async def group_other(din, size: Uint, *, init=1) -> Queue['din']:
     cnt: size.dtype = init
     last: Bool
-    # cnt= size.dtype(init)
 
     async with size as c:
         assert c >= init, 'group: incorrect configuration'
