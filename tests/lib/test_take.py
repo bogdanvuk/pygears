@@ -80,22 +80,10 @@ def test_q_directed(tmpdir, sim_cls, delay, dout_delay):
 @pytest.mark.parametrize('din_delay', [0, 5])
 @pytest.mark.parametrize('cfg_delay', [0, 5])
 def test_q_directed_two_inputs(tmpdir, sim_cls, din_delay, cfg_delay):
-    seq = []
-    tmp = []
-    for _ in range(9):
-        sub = []
-        for j in range(3):
-            sub.append(j)
-        tmp.append(sub)
-    seq.append(tmp)
+    seq1 = [[(j, 2) for j in range(3)] for _ in range(9)]
+    seq2 = [[(j, 3) for j in range(6)] for _ in range(5)]
 
-    tmp = []
-    for _ in range(5):
-        sub = []
-        for j in range(6):
-            sub.append(j)
-        tmp.append(sub)
-    seq.append(tmp)
+    seq = [seq1, seq2]
 
     directed(drv(t=T_QDIN_SEP, seq=seq) | delay_rng(din_delay, din_delay),
              drv(t=T_CFG, seq=[2, 3]) | delay_rng(cfg_delay, cfg_delay),

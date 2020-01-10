@@ -33,7 +33,7 @@ def enum_hdl_files(top, outdir, language, rtl_only=False, wrapper=False):
 
         if ((node is rtl_top) and wrapper and (language == 'sv')
                 and not rtl_only):
-            yield os.path.join(outdir, f'wrap_{vinst.file_name}')
+            yield os.path.join(outdir, f'wrap_{vinst.file_basename}')
 
         if (isinstance(node, RTLNode)
                 and (node in registry(f'{language}gen/map'))):
@@ -42,7 +42,7 @@ def enum_hdl_files(top, outdir, language, rtl_only=False, wrapper=False):
             for f in modinst.files:
                 yield f
 
-        if hasattr(vinst, 'file_name'):
+        if hasattr(vinst, 'file_basename'):
             file_name = vinst.impl_path
             if file_name:
                 yield file_name

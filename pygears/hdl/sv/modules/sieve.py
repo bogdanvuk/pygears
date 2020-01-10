@@ -4,87 +4,87 @@ import os
 from pygears import config
 from pygears.lib.sieve import sieve
 from pygears.hdl.sv import SVGenPlugin
-from pygears.hdl.sv.svmod import SVModuleInst
-from pygears.hdl.modinst import get_port_config
-from functools import partial
+# from pygears.hdl.sv.svmod import SVModuleInst
+# from pygears.hdl.modinst import get_port_config
+# from functools import partial
 from pygears.rtl import flow_visitor, RTLPlugin
 from pygears.core.gear_inst import GearInstPlugin
 from pygears.rtl.gear import RTLGearHierVisitor, is_gear_instance
 
 
-def index_to_sv_slice(dtype, key):
-    subtype = dtype[key]
+# def index_to_sv_slice(dtype, key):
+#     subtype = dtype[key]
 
-    if isinstance(key, slice):
-        key = min(key.start, key.stop)
+#     if isinstance(key, slice):
+#         key = min(key.start, key.stop)
 
-    if key is None or key == 0:
-        low_pos = 0
-    else:
-        low_pos = int(dtype[:key])
+#     if key is None or key == 0:
+#         low_pos = 0
+#     else:
+#         low_pos = int(dtype[:key])
 
-    high_pos = low_pos + int(subtype) - 1
+#     high_pos = low_pos + int(subtype) - 1
 
-    return f'{high_pos}:{low_pos}'
-
-
-def get_sieve_stages_iter(node):
-    for s in itertools.chain(getattr(node, 'pre_sieves', []), [node]):
-        indexes = s.params['key']
-        if not isinstance(indexes, tuple):
-            indexes = (indexes, )
-
-        dtype = s.in_ports[0].dtype
-        out_type = s.out_ports[0].dtype
-        slices = list(
-            map(partial(index_to_sv_slice, dtype),
-                filter(lambda i: int(dtype[i]) > 0, indexes)))
-        yield slices, out_type
+#     return f'{high_pos}:{low_pos}'
 
 
-def get_sieve_stages(node):
-    stages = list(get_sieve_stages_iter(node))
-    # If any of the sieves has shrunk data to 0 width, there is nothing to
-    # do
-    if any(i[0] == [] for i in stages):
-        stages = []
+# def get_sieve_stages_iter(node):
+#     for s in itertools.chain(getattr(node, 'pre_sieves', []), [node]):
+#         indexes = s.params['key']
+#         if not isinstance(indexes, tuple):
+#             indexes = (indexes, )
 
-    return stages
+#         dtype = s.in_ports[0].dtype
+#         out_type = s.out_ports[0].dtype
+#         slices = list(
+#             map(partial(index_to_sv_slice, dtype),
+#                 filter(lambda i: int(dtype[i]) > 0, indexes)))
+#         yield slices, out_type
 
 
-class SVGenSieve(SVModuleInst):
-    @property
-    def is_generated(self):
-        return not self.memoized or getattr(self.node, 'pre_sieves', [])
+# def get_sieve_stages(node):
+#     stages = list(get_sieve_stages_iter(node))
+#     # If any of the sieves has shrunk data to 0 width, there is nothing to
+#     # do
+#     if any(i[0] == [] for i in stages):
+#         stages = []
 
-    @property
-    def port_configs(self):
-        if getattr(self.node, 'pre_sieves', []):
-            node = getattr(self.node, 'pre_sieves', [])[0]
-        else:
-            node = self.node
+#     return stages
 
-        for p in node.in_ports:
-            yield get_port_config('consumer', type_=p.dtype, name=p.basename)
 
-        for p in node.out_ports:
-            yield get_port_config('producer', type_=p.dtype, name=p.basename)
+# class SVGenSieve(SVModuleInst):
+#     @property
+#     def is_generated(self):
+#         return not self.memoized or getattr(self.node, 'pre_sieves', [])
 
-    @property
-    def template_path(self):
-        return os.path.join(os.path.dirname(__file__), 'sieve.j2')
+#     @property
+#     def port_configs(self):
+#         if getattr(self.node, 'pre_sieves', []):
+#             node = getattr(self.node, 'pre_sieves', [])[0]
+#         else:
+#             node = self.node
 
-    def get_module(self, template_env):
-        if self.memoized and not getattr(self.node, 'pre_sieves', []):
-            return None
+#         for p in node.in_ports:
+#             yield get_port_config('consumer', type_=p.dtype, name=p.basename)
 
-        context = {
-            'stages': get_sieve_stages(self.node),
-            'module_name': self.module_name,
-            'intfs': list(self.port_configs)
-        }
+#         for p in node.out_ports:
+#             yield get_port_config('producer', type_=p.dtype, name=p.basename)
 
-        return template_env.render_local(__file__, "sieve.j2", context)
+#     @property
+#     def template_path(self):
+#         return os.path.join(os.path.dirname(__file__), 'sieve.j2')
+
+#     def get_module(self, template_env):
+#         if self.memoized and not getattr(self.node, 'pre_sieves', []):
+#             return None
+
+#         context = {
+#             'stages': get_sieve_stages(self.node),
+#             'module_name': self.module_name,
+#             'intfs': list(self.port_configs)
+#         }
+
+#         return template_env.render_local(__file__, "sieve.j2", context)
 
 
 @flow_visitor
@@ -141,6 +141,5 @@ class CollapseSievesVisitor(RTLGearHierVisitor):
 class RTLSievePlugin(SVGenPlugin, RTLPlugin, GearInstPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['svgen']['module_namespace'][sieve] = SVGenSieve
         if not config['gear/memoize']:
             cls.registry['rtl']['flow'].append(CollapseSievesVisitor)

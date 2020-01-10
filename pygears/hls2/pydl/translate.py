@@ -15,10 +15,10 @@ def translate_gear(gear: Gear):
     print_gear_parse_intro(gear, body_ast)
     ctx = Context(gear)
     for p in gear.in_ports:
-        ctx.scope[p.basename] = nodes.Interface(p)
+        ctx.scope[p.basename] = nodes.Interface(p, 'in')
 
     for p in gear.out_ports:
-        ctx.scope[p.basename] = nodes.Interface(p)
+        ctx.scope[p.basename] = nodes.Interface(p, 'out')
 
     for k, v in gear.explicit_params.items():
         ctx.scope[k] = ResExpr(v)

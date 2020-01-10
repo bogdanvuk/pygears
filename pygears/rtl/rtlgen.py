@@ -4,7 +4,7 @@ from pygears.rtl.connect import rtl_connect
 from pygears.rtl.inst import rtl_inst
 
 
-def rtlgen(top=None, force=False, **conf):
+def rtlgen(top=None, **conf):
 
     if top is None:
         top = registry('gear/hier_root')

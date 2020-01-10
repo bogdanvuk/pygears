@@ -8,7 +8,7 @@ async def serialize(din: Tuple[{
         'data': Any,
         'active': Uint
 }]) -> Queue['din["data"][0]']:
-    i = din.dtype['active'](0)
+    i: din.dtype['active'] = 0
 
     async with din as (data, active):
         for i, last in qrange(active):

@@ -1,7 +1,7 @@
 from pygears.core.gear import Gear
 
 from . import pydl
-from pygears import bind
+from pygears import bind, registry
 from pygears.typing import Uint, bitw, Bool
 from .schedule import schedule, CBlockVisitor
 # from .schedule.state_transition import HdlStmtStateTransition
@@ -49,6 +49,7 @@ class PydlTestToVar(pydl.PydlVisitor):
 
 
 def translate_gear(gear: Gear):
+    exec_context = registry('gear/exec_context')
     bind('gear/exec_context', 'hls')
 
     # For the code that inspects gear via module() call
@@ -62,5 +63,5 @@ def translate_gear(gear: Gear):
 
     res = generate(pydl_ast, ctx)
 
-    bind('gear/exec_context', 'compile')
+    bind('gear/exec_context', exec_context)
     return ctx, res

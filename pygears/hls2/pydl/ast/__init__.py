@@ -1,4 +1,4 @@
-from .visitor import visit_ast, visit_block, node_visitor, Context, SyntaxError
+from .visitor import visit_ast, visit_block, node_visitor, Context, SyntaxError, Submodule
 from .. import nodes
 
 from . import async_stmts

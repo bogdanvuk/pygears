@@ -57,7 +57,7 @@ def call_len(arg, **kwds):
     return nodes.ResExpr(len(arg.dtype))
 
 
-def call_print(arg, **kwds):
+def call_print(*arg, **kwds):
     pass
 
 

@@ -1,8 +1,12 @@
+import itertools
 from pygears.hls import HDLWriter, InstanceVisitor, parse_gear_body
+from pygears import registry
 from pygears.hls2.pydl import nodes as pydl
 from pygears.typing import code, Bool
+from pygears.core.port import Port
 from dataclasses import dataclass, field
 from typing import List
+from pygears import Intf
 
 from ..util import separate_conditions
 from .sv_expression2 import svexpr
@@ -20,11 +24,13 @@ end
 
 res_true = pydl.ResExpr(Bool(True))
 
+
 @dataclass
 class BlockLines:
     header: List = field(default_factory=list)
     content: List = field(default_factory=list)
     footer: List = field(default_factory=list)
+
 
 class SVCompiler(InstanceVisitor):
     def __init__(self, ctx, visit_var, writer, selected):
@@ -85,7 +91,7 @@ class SVCompiler(InstanceVisitor):
             self.write(f"{stmt.target.name}_en = 1")
             return
 
-        if isinstance(stmt.target.obj, pydl.Interface) :
+        if isinstance(stmt.target.obj, pydl.Interface):
             if stmt.target.ctx == 'store':
                 self.write(f"{stmt.target.name}_s = {svexpr(val)}")
                 self.write(f"{stmt.target.name}.valid = 1")
@@ -121,7 +127,7 @@ class SVCompiler(InstanceVisitor):
     def list_initials(self):
         for name, obj in self.ctx.scope.items():
             if isinstance(obj, pydl.Interface):
-                if obj.intf.direction == 'in':
+                if obj.direction == 'in':
                     if self.selected(self.ctx.ref(name, ctx='ready')):
                         self.write(f"{name}.ready = {name}.valid ? 0 : 1'bx")
                 else:
@@ -227,15 +233,16 @@ class SVCompiler(InstanceVisitor):
         self.exit_block(node)
 
 
-DATA_FUNC_GEAR = """
+gear_module_template = """
 {%- import 'snippet.j2' as snippet -%}
 
-{% call snippet.module_with_intf_structs(module_name, intfs, intfs, comment, sigs) %}
+{% call snippet.gear_module(module_name, intfs, comment, sigs) %}
 
 {{svlines|indent(4,True)}}
 
 {%- endcall %}
 """
+
 
 def write_block(block, writer):
     for h in block.header:
@@ -255,6 +262,7 @@ def write_block(block, writer):
         for f in block.footer:
             writer.line(f)
 
+
 def typedef_or_inline(writer, dtype, name):
     res = svgen_typedef(dtype, name)
     if "\n" not in res[:-1]:
@@ -263,13 +271,15 @@ def typedef_or_inline(writer, dtype, name):
     writer.block(res)
     return f'{name}_t'
 
+
 def svcompile(hdl_stmts, writer, ctx, title, selected):
     v = SVCompiler(ctx, title, writer, selected=selected)
     v.visit(hdl_stmts)
     write_block(v.block_lines[0], writer)
     writer.line()
 
-def write_module(ctx, hdl, writer, config=None):
+
+def write_module(ctx, hdl, writer, subsvmods, template_env, config=None):
     if config is None:
         config = {}
 
@@ -280,12 +290,34 @@ def write_module(ctx, hdl, writer, config=None):
         writer.line(f'logic [{expr.dtype.width-1}:0] {name}, {name}_next;')
         writer.line()
 
-    writer.line()
+    for name, expr in ctx.intfs.items():
+        if isinstance(expr.intf, Intf):
+            writer.line(f'dti#({expr.dtype.width}) {name}();')
+
+        name_t = typedef_or_inline(writer, expr.dtype, name)
+        writer.line(f'{name_t} {name}_s;')
+        if expr.direction == 'in':
+            writer.line(f'assign {name}_s = {name}.data;')
+        else:
+            writer.line(f'assign {name}.data = {name}_s;')
+
+        writer.line()
 
     for name, expr in ctx.variables.items():
         name_t = typedef_or_inline(writer, expr.dtype, name)
         writer.line(f'{name_t} {name};')
         writer.line()
+
+    for c, s in zip(ctx.submodules, subsvmods):
+
+        port_map = {}
+        for intf, p in zip(c.in_ports, c.gear.in_ports):
+            port_map[p.basename] = intf.name
+
+        for intf, p in zip(c.out_ports, c.gear.out_ports):
+            port_map[p.basename] = intf.name
+
+        writer.block(s.get_inst(template_env, port_map))
 
     if ctx.regs:
         writer.line(f'initial begin')
@@ -293,7 +325,6 @@ def write_module(ctx, hdl, writer, config=None):
             writer.line(f"    {name} = {int(code(svexpr(expr.val)))};")
 
         writer.line(f'end')
-
 
     for name, expr in ctx.regs.items():
         writer.block(REG_TEMPLATE.format(name, int(code(svexpr(expr.val)))))
@@ -304,20 +335,40 @@ def write_module(ctx, hdl, writer, config=None):
     for name, expr in ctx.variables.items():
         svcompile(hdl, writer, ctx, name, selected=lambda x: x.obj == expr)
 
-    svcompile(hdl, writer, ctx, name, selected=lambda x: isinstance(x.obj, pydl.Interface))
+    svcompile(hdl,
+              writer,
+              ctx,
+              "interfaces",
+              selected=lambda x: isinstance(x.obj, pydl.Interface))
 
 
-def compile_gear_body(gear):
+def compile_gear_body(gear, outdir, template_env):
     # ctx, hdl_ast = parse_gear_body(gear)
     from pygears.hls2.translate import translate_gear
     ctx, hdl_ast = translate_gear(gear)
+
+    subsvmods = []
+    if ctx.submodules:
+        from pygears.hdl import hdlgen
+        svgen_map = registry("svgen/map")
+        for c in ctx.submodules:
+            rtl_top = hdlgen(c.gear, outdir=outdir)
+            svmod = svgen_map[rtl_top]
+            subsvmods.append(svmod)
+
     writer = HDLWriter()
-    write_module(ctx, hdl_ast, writer, config=gear.params.get('hdl', {}))
+    write_module(ctx, hdl_ast, writer, subsvmods, template_env, config=gear.params.get('hdl', {}))
 
-    return '\n'.join(writer.lines)
+    return '\n'.join(writer.lines), subsvmods
 
+def compile_gear(gear, template_env, module_name, outdir):
+    context = {
+        'module_name': module_name,
+        'intfs': template_env.port_intfs(gear),
+        'sigs': gear.params['signals'],
+        'params': gear.params
+    }
 
-def compile_gear(gear, template_env, context):
-    context['svlines'] = compile_gear_body(gear)
+    context['svlines'], subsvmods = compile_gear_body(gear, outdir, template_env)
 
-    return template_env.render_string(DATA_FUNC_GEAR, context)
+    return template_env.render_string(gear_module_template, context), subsvmods

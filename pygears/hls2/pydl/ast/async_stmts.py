@@ -68,24 +68,29 @@ def parse_yield(node, ctx):
             f"{str(e)}\n    - when casting output value to the output type")
 
     return nodes.Yield(stmts=ret,
-                       ports=[nodes.Interface(p) for p in ctx.gear.out_ports])
+                       ports=ctx.out_ports)
 
 
 @node_visitor(ast.withitem)
 def withitem(node: ast.withitem, ctx: Context):
-    assert isinstance(ctx.pydl_parent_bock, nodes.IntfBlock)
+    assert isinstance(ctx.pydl_parent_block, nodes.IntfBlock)
 
     intf = visit_ast(node.context_expr, ctx)
     targets = visit_ast(node.optional_vars, ctx)
 
-    if not isinstance(targets, tuple):
-        targets = (targets, )
+    ass_targets = assign_targets(ctx, targets,
+                                 nodes.InterfacePull(intf),
+                                 nodes.Variable)
 
-    ass_targets = []
-    for t in targets:
-        var = nodes.Variable(t.name, intf.dtype)
-        ctx.scope[t.name] = var
-        ass_targets.append(nodes.Name(t.name, var, t.ctx))
+    # if not isinstance(targets, tuple):
+    #     targets = (targets, )
+
+    # ass_targets = []
+    # for t in targets:
+    #     breakpoint()
+    #     var = nodes.Variable(t.name, intf.dtype)
+    #     ctx.scope[t.name] = var
+    #     ass_targets.append(nodes.Name(t.name, var, t.ctx))
 
     return intf, ass_targets
 
@@ -99,11 +104,7 @@ def asyncwith(node, ctx: Context):
 
     for intf, targets in assigns:
         pydl_node.intfs.append(intf)
-        if len(targets) == 1:
-            pydl_node.stmts.append(
-                nodes.Assign(targets[0], nodes.InterfacePull(intf)))
-        else:
-            raise SyntaxError
+        add_to_list(pydl_node.stmts, targets)
 
     for stmt in node.body:
         res_stmt = visit_ast(stmt, ctx)

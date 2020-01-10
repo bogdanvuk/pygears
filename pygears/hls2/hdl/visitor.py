@@ -151,13 +151,13 @@ class HDLStmtVisitor:
 
         block.stmts.extend([
             AssignValue(Component(port, 'valid'), 0)
-            for port in self.ctx.out_ports.values()
+            for port in self.ctx.out_ports
         ])
 
-        for port in self.ctx.in_ports.values():
-            val = pydl.ConditionalExpr(operands=(0, "1'bx"),
-                                       cond=Component(port, 'valid'))
-            block.stmts.append(AssignValue(Component(port, 'ready'), val))
+        # for port in self.ctx.in_ports.values():
+        #     val = pydl.ConditionalExpr(operands=(0, "1'bx"),
+        #                                cond=Component(port, 'valid'))
+        #     block.stmts.append(AssignValue(Component(port, 'ready'), val))
 
         block = self.traverse_block(node, block)
 
@@ -218,7 +218,7 @@ class HDLStmtVisitor:
 
         assert len(exprs) == len(self.ctx.out_ports)
 
-        for expr, (port_name, port) in zip(exprs, self.ctx.out_ports.items()):
+        for expr, port in zip(exprs, self.ctx.out_ports):
             # if port.context:
             #     valid = port.context
             if isinstance(expr, pydl.ResExpr) and expr.val is None:

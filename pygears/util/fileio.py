@@ -34,3 +34,13 @@ def save_if_changed(fn, outdir, content):
 
     if content_old != content:
         save_file(os.path.basename(fn), outdir, content)
+
+
+def find_in_dirs(fn, dirs):
+    for d in dirs:
+        full_path = os.path.join(d, fn)
+        if os.path.exists(full_path):
+            return full_path
+    else:
+        return None
+

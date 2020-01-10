@@ -259,12 +259,12 @@ class HDLGenerator:
 
         assert len(exprs) == len(self.ctx.out_ports)
 
-        for expr, (port_name, port) in zip(exprs, self.ctx.out_ports.items()):
+        for expr, port in zip(exprs, self.ctx.out_ports):
             if isinstance(expr, pydl.ResExpr) and expr.val is None:
                 continue
 
             block.stmts.append(
-                AssignValue(self.ctx.ref(port_name, ctx='store'), expr))
+                AssignValue(self.ctx.ref(port.name, ctx='store'), expr))
 
         return block
 

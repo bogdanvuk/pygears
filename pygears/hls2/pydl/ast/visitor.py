@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from .. import nodes
 
 from pygears import config
+from pygears.core.port import InPort, OutPort
 
 from .utils import add_to_list
 
@@ -19,9 +20,17 @@ class SyntaxError(TemplateSyntaxError):
 
 
 @dataclass
+class Submodule:
+    gear: typing.Any
+    in_ports: typing.List[nodes.Interface]
+    out_ports: typing.List[nodes.Interface]
+
+
+@dataclass
 class Context:
     gear: typing.Any
     pydl_block_closure: typing.List = field(default_factory=list)
+    submodules: typing.List[Submodule] = field(default_factory=list)
     scope: typing.Dict = field(default_factory=dict)
     local_namespace: typing.Dict = None
 
@@ -30,11 +39,19 @@ class Context:
 
     @property
     def in_ports(self):
-        return {
-            name: obj
-            for name, obj in self.scope.items()
-            if isinstance(obj, nodes.Interface) and obj.intf.direction == "in"
-        }
+        return [
+            obj for obj in self.scope.values()
+            if (isinstance(obj, nodes.Interface) and isinstance(
+                obj.intf, InPort) and obj.intf.gear is self.gear)
+        ]
+
+    @property
+    def out_ports(self):
+        return [
+            obj for obj in self.scope.values()
+            if (isinstance(obj, nodes.Interface) and isinstance(
+                obj.intf, OutPort) and obj.intf.gear is self.gear)
+        ]
 
     @property
     def intfs(self):
@@ -64,11 +81,7 @@ class Context:
         return nodes.Name(name, self.scope[name], ctx=ctx)
 
     @property
-    def out_ports(self):
-        return {p.basename: nodes.Interface(p) for p in self.gear.out_ports}
-
-    @property
-    def pydl_parent_bock(self):
+    def pydl_parent_block(self):
         return self.pydl_block_closure[-1]
 
 

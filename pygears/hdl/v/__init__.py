@@ -16,10 +16,4 @@ class VGenPlugin(PluginBase):
         safe_bind('vgen/module_namespace/Gear', VModuleInst)
         safe_bind('vgen/module_namespace/GearHierRoot', VModuleInst)
 
-
-from pygears.conf import load_plugin_folder
-import os
-load_plugin_folder(os.path.join(os.path.dirname(__file__), 'modules'),
-                   package='pygears.hdl.v')
-
 __all__ = ['compile_gear', 'compile_gear_body']

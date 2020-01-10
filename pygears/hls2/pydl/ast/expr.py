@@ -1,4 +1,5 @@
 import ast
+import types
 from . import Context, SyntaxError, node_visitor, nodes, visit_ast, visit_block
 from ..pydl_arith import resolve_arith_func
 from pygears.typing import cast, Integer
@@ -35,9 +36,12 @@ def name(node, ctx: Context):
             if node.id in ctx.local_namespace:
                 return nodes.ResExpr(ctx.local_namespace[node.id])
 
-            if node.id in ctx.local_namespace['__builtins__']:
-                return nodes.ResExpr(
-                    ctx.local_namespace['__builtins__'][node.id])
+            builtins = ctx.local_namespace['__builtins__']
+            if not isinstance(builtins, dict):
+                builtins = builtins.__dict__
+
+            if node.id in builtins:
+                return nodes.ResExpr(builtins[node.id])
 
             raise SyntaxError(f"Name '{node.id}' not found", node.lineno)
 

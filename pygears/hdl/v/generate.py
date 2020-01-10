@@ -29,7 +29,7 @@ class VGenGenerateVisitor(HierYielderBase):
         vgen = self.vgen_map.get(node, None)
         if vgen is not None:
             contents = vgen.get_module(self.template_env)
-            yield vgen.file_name, contents
+            yield vgen.file_basename, contents
 
             # wrappers not needed for verilog, hence no else
             if (self.wrapper) and (node is self.top):

@@ -5,7 +5,11 @@ from pygears.conf import MultiAlternativeError
 
 
 def extract_arg_kwds(kwds, func):
-    arg_names, _, varkw, _, kwonlyargs, *_ = inspect.getfullargspec(func)
+    try:
+        arg_names, _, varkw, _, kwonlyargs, *_ = inspect.getfullargspec(func)
+    except TypeError:
+        # Function not inspectable (probably a builtin), do nothing
+        return {}, kwds
 
     arg_kwds = {}
     kwds_only = {}
@@ -23,7 +27,11 @@ def extract_arg_kwds(kwds, func):
 
 
 def combine_arg_kwds(args, kwds, func):
-    arg_names, varargs, *_ = inspect.getfullargspec(func)
+    try:
+        arg_names, varargs, *_ = inspect.getfullargspec(func)
+    except TypeError:
+        # Function not inspectable (probably a builtin), do nothing
+        return args
 
     if varargs:
         return args

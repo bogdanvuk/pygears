@@ -180,6 +180,7 @@ class Variable:
 @dataclass
 class Interface(Expr):
     intf: typing.Union[InPort, OutPort, Expr]
+    direction: str
     _name: str = None
 
     @property

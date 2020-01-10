@@ -342,8 +342,9 @@ def gear_base_resolver(func,
 
     err = None
     try:
-        args, annotations, ret_outnames = resolve_args(
-            args, paramspec.args, paramspec.annotations, paramspec.varargs)
+        args, annotations, ret_outnames = resolve_args(args, paramspec.args,
+                                                       paramspec.annotations,
+                                                       paramspec.varargs)
 
         args, const_args = infer_const_args(args)
         check_args_specified(args)
@@ -435,11 +436,41 @@ def gear_base_resolver(func,
     return out_intfs
 
 
+def sim_compile_resolver(func, meta_kwds, *args, **kwds):
+    ctx = registry('gear/exec_context')
+    if ctx == 'sim':
+        local_in = [Intf(type(a)) for a in args]
+
+        outputs = gear_base_resolver(func, meta_kwds, *local_in, **kwds)
+
+        if isinstance(outputs, tuple):
+            raise Exception("Not yet supported")
+
+        gear_inst = outputs.producer.gear
+
+        def is_async_gen(func):
+            return bool(func.__code__.co_flags & inspect.CO_ASYNC_GENERATOR)
+
+        if not is_async_gen(gear_inst.func):
+            raise Exception("Not yet supported")
+
+        import asyncio
+        for intf, a in zip(local_in, args):
+            intf._in_queue = asyncio.Queue(maxsize=1,
+                                           loop=registry('sim/simulator'))
+            intf.put_nb(a)
+
+        return gear_inst.func(*(p.consumer for p in gear_inst.in_ports),
+                              **gear_inst.explicit_params)
+    else:
+        return gear_base_resolver(func, meta_kwds, *args, **kwds)
+
+
 class GearInstPlugin(GearDecoratorPlugin):
     @classmethod
     def bind(cls):
         safe_bind('gear/code_map', [])
-        safe_bind('gear/gear_dflt_resolver', gear_base_resolver)
+        safe_bind('gear/gear_dflt_resolver', sim_compile_resolver)
         config.define('gear/memoize', True)
 
     @classmethod
