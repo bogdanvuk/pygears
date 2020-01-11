@@ -211,10 +211,7 @@ class HDLStmtVisitor:
                          stmts=[],
                          dflts={})
 
-        if not isinstance(node.expr, list):
-            exprs = [node.expr]
-        else:
-            exprs = node.expr
+        exprs = node.expr.val
 
         assert len(exprs) == len(self.ctx.out_ports)
 

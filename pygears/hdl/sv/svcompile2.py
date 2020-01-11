@@ -137,7 +137,8 @@ class SVCompiler(InstanceVisitor):
 
             elif isinstance(obj, pydl.Register):
                 if self.selected(self.ctx.ref(name, ctx='store')):
-                    self.write(f"{name}_next = {obj.dtype.width}'(1'bx)")
+                    # self.write(f"{name}_next = {obj.dtype.width}'(1'bx)")
+                    self.write(f"{name}_next = {name}")
                     self.write(f'{name}_en = 0')
 
             elif isinstance(obj, pydl.Variable):
@@ -355,6 +356,8 @@ def compile_gear_body(gear, outdir, template_env):
             rtl_top = hdlgen(c.gear, outdir=outdir)
             svmod = svgen_map[rtl_top]
             subsvmods.append(svmod)
+
+    gear.child.clear()
 
     writer = HDLWriter()
     write_module(ctx, hdl_ast, writer, subsvmods, template_env, config=gear.params.get('hdl', {}))

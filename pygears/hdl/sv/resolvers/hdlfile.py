@@ -106,5 +106,5 @@ class HDLFileResolver(ResolverBase):
     def module_name(self):
         return self.impl_parse[0]
 
-    def generate(self, template_env):
+    def generate(self, template_env, outdir):
         pass

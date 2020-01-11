@@ -26,7 +26,7 @@ def assign_targets(ctx, target, source, obj_factory=None):
             ctx.scope[target.name] = var
             target = nodes.Name(target.name, var, target.ctx)
 
-        return nodes.Assign(target, source)
+        return nodes.Assign(source, target)
 
 
 @node_visitor(ast.AnnAssign)
@@ -55,9 +55,8 @@ def _(node, ctx: Context):
     target = visit_ast(node.target, ctx)
     value = visit_ast(node.value, ctx)
     return nodes.Assign(
-        target,
         nodes.BinOpExpr((ctx.ref(target.name), value),
-                        nodes.OPMAP[type(node.op)]))
+                        nodes.OPMAP[type(node.op)]), target)
 
 
 @node_visitor(ast.Assign)

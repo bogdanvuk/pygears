@@ -50,12 +50,6 @@ class CosimBase(SimGear):
         hin = self.handlers[port.basename]
         return hin.send(data)
 
-    def reset_out(self, port):
-        self.eval_needed = True
-
-        hout = self.handlers[port.basename]
-        hout.reset()
-
     def reset_in(self, port):
         self.eval_needed = True
 
@@ -76,9 +70,6 @@ class CosimBase(SimGear):
 
     async def func(self, *args, **kwds):
         self.activity_monitor = 0
-        self.din_pulled = set()
-        self.dout_put = set()
-        self.prev_timestep = -1
         self.eval_needed = False
 
         try:

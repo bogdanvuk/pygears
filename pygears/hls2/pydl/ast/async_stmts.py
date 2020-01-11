@@ -54,7 +54,7 @@ def cast_return(arg_nodes, out_ports):
             else:
                 args.append(arg)
 
-    return args
+    return nodes.TupleExpr(args)
 
 
 @node_visitor(ast.Yield)
@@ -67,8 +67,7 @@ def parse_yield(node, ctx):
         raise TypeError(
             f"{str(e)}\n    - when casting output value to the output type")
 
-    return nodes.Yield(stmts=ret,
-                       ports=ctx.out_ports)
+    return nodes.Yield(ret, ports=ctx.out_ports)
 
 
 @node_visitor(ast.withitem)
@@ -78,8 +77,7 @@ def withitem(node: ast.withitem, ctx: Context):
     intf = visit_ast(node.context_expr, ctx)
     targets = visit_ast(node.optional_vars, ctx)
 
-    ass_targets = assign_targets(ctx, targets,
-                                 nodes.InterfacePull(intf),
+    ass_targets = assign_targets(ctx, targets, nodes.InterfacePull(intf),
                                  nodes.Variable)
 
     # if not isinstance(targets, tuple):

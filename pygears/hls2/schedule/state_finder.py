@@ -45,6 +45,9 @@ class ContextFinder(PydlVisitor):
         for stmt in node.stmts:
             self.visit(stmt)
 
+    def visit_all_Statement(self, node):
+        self.visit(node.expr)
+
     def visit_OperandVal(self, node):
         if node.context == 'reg':
             return self.walk_up_block_hier(block=self.scope,

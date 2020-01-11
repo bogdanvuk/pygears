@@ -1,4 +1,5 @@
-import typing
+import fnmatch
+import functools
 import hashlib
 
 from pygears import registry
@@ -34,7 +35,24 @@ class HDLModuleInst:
             except ResolverTypeError:
                 pass
         else:
+            breakpoint()
             raise Exception
+
+    @property
+    @functools.lru_cache()
+    def traced(self):
+        self_traced = any(
+            fnmatch.fnmatch(self.node.name, p)
+            for p in registry('debug/trace'))
+
+        if self.node.child:
+            children_traced = any(self.svgen_map[child].traced
+                                  for child in self.node.child)
+        else:
+            children_traced = False
+
+        return self_traced or children_traced
+
 
     @property
     def hier_path_name(self):

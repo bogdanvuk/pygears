@@ -34,7 +34,10 @@ class SVExpressionVisitor:
         return f'{node.name}_v'
 
     def visit_Name(self, node):
-        return node.name
+        if node.ctx in ('load', 'store'):
+            return node.name
+        elif node.ctx == 'next':
+            return f'{node.name}_next'
 
     def visit_Component(self, node):
         if (node.field == 'data'):

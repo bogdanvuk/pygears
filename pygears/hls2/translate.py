@@ -39,7 +39,7 @@ class PydlTestToVar(pydl.PydlVisitor):
         self.ctx.cond_cnt += 1
         var = pydl.Variable(cond_name, Bool)
         self.ctx.scope[cond_name] = var
-        self.top.stmts.append(pydl.Assign(var, node.test))
+        self.top.stmts.append(pydl.Assign(node.test, var))
 
     def visit_ElseBlock(self, node):
         return self.visit_IfBlock(node)

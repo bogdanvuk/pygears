@@ -145,7 +145,7 @@ def _(node, ctx: Context):
 def _(node, ctx: Context):
     test = visit_ast(node.test, ctx)
     msg = node.msg.s if node.msg else 'Assertion failed.'
-    return nodes.AssertExpr(test=test, msg=msg)
+    return nodes.Assert(test, msg=msg)
 
 
 @node_visitor(ast.Slice)

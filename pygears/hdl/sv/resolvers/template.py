@@ -71,7 +71,6 @@ class HDLTemplateResolver(ResolverBase):
     def file_basename(self):
         return f'{self.module_name}.{self.extension}'
 
-    @property
     def module_context(self, template_env):
         context = {
             'pygears': pygears,
@@ -93,6 +92,6 @@ class HDLTemplateResolver(ResolverBase):
     def generate(self, template_env, outdir):
         save_file(
             self.file_basename, outdir,
-            template_env.render_local(self.template_path,
-                                      os.path.basename(self.template_path),
+            template_env.render_local(self.impl_path,
+                                      self.impl_basename,
                                       self.module_context(template_env)))

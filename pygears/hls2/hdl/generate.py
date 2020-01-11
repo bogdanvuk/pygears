@@ -45,34 +45,44 @@ def add_to_list(orig_list, extension):
 
 
 class AliasVisitor(PydlExprVisitor):
-    def __init__(self, aliases):
+    def __init__(self, aliases, nextregs):
         self.aliases = aliases
+        self.nextregs = nextregs
         self.replaceable = []
 
     def visit_Name(self, node):
-        if (node.name in self.aliases) and (node.ctx == 'load'):
+        if ((node.name in self.aliases) and (node.ctx == 'load')
+                and isinstance(self.aliases[node.name], pydl.ResExpr)):
+            self.replaceable.append(node.name)
+
+        if ((node.name in self.nextregs) and (node.ctx == 'load')):
             self.replaceable.append(node.name)
 
 
 class AliasRewriter(PydlExprRewriter):
-    def __init__(self, aliases):
+    def __init__(self, aliases, nextregs):
         self.aliases = aliases
+        self.nextregs = nextregs
 
     def visit_Name(self, node):
         if ((node.name in self.aliases) and (node.ctx == 'load')
                 and isinstance(self.aliases[node.name], pydl.ResExpr)):
             return self.aliases[node.name]
 
+        if ((node.name in self.nextregs) and (node.ctx == 'load')):
+            return pydl.Name(node.name, node.obj, 'next')
+
         return node
 
 
-def replace_aliases(aliases, node):
-    v = AliasVisitor(aliases)
+
+def replace_aliases(aliases, nextregs, node):
+    v = AliasVisitor(aliases, nextregs)
     v.visit(node)
     if not v.replaceable:
         return node
 
-    return AliasRewriter(aliases).visit(node)
+    return AliasRewriter(aliases, nextregs).visit(node)
 
 
 class HDLGenerator:
@@ -81,6 +91,7 @@ class HDLGenerator:
         self.state_id = 0
         self.alias_stack = []
         self.block_stack = []
+        self.assigned_regs = []
 
     @property
     def alias(self):
@@ -101,6 +112,9 @@ class HDLGenerator:
         if visitor.__name__ == 'generic_visit' and isinstance(node, pydl.Expr):
             visitor = getattr(self, 'visit_all_Expr', self.generic_visit)
 
+        if visitor.__name__ == 'generic_visit' and isinstance(node, pydl.Statement):
+            visitor = getattr(self, 'visit_all_Statement', self.generic_visit)
+
         return visitor(node)
 
     def generic_traverse(self, node, block):
@@ -120,6 +134,7 @@ class HDLGenerator:
                 node_state_id = self.ctx.state_root.index(stmt)
                 if in_state_id != node_state_id:
                     stmts[node_state_id] = []
+                    self.assigned_regs.clear()
                     stmt_blocks[node_state_id] = self.ctx.stmt_states[id(stmt)]
 
                     stmts[self.state_id].append(
@@ -148,11 +163,6 @@ class HDLGenerator:
                     (self.ctx.ref('state'), pydl.ResExpr(sid)), '==')
                 state_in_cond = pydl.BinOpExpr((state_in_cond, in_cond), '||')
 
-            # child = HDLBlock(
-            #     stmts=stmts[state_id],
-            #     in_cond=pydl.BinOpExpr(
-            #         (self.ctx.ref('state'), pydl.ResExpr(state_id)), '=='),
-            #     dflts={})
             child = HDLBlock(stmts=stmts[state_id],
                              in_cond=state_in_cond,
                              dflts={})
@@ -190,10 +200,11 @@ class HDLGenerator:
 
     def visit_Assign(self, node):
         var_name = node.var.name
-        # if var_name == 'last':
-        #     breakpoint()
 
         self.alias[var_name] = node.expr
+
+        if isinstance(node.var.obj, pydl.Register):
+            self.assigned_regs.append(var_name)
 
         opt_var = False
         for b, a in zip(reversed(self.block_stack[1:]),
@@ -217,11 +228,14 @@ class HDLGenerator:
 
         return block
 
+    def visit_all_Expr(self, expr):
+        return replace_aliases(self.alias, self.assigned_regs, expr)
+
     def opt_in_condition(self, node):
-        return replace_aliases(self.alias, opt_in_condition(node, self.ctx))
+        return self.visit_all_Expr(opt_in_condition(node, self.ctx))
 
     def in_condition(self, node):
-        return replace_aliases(self.alias, in_condition(node, self.ctx))
+        return self.visit_all_Expr(in_condition(node, self.ctx))
 
     def visit_Loop(self, node):
         block = self.visit_all_Block(node)
@@ -252,10 +266,7 @@ class HDLGenerator:
                          stmts=[],
                          dflts={})
 
-        if not isinstance(node.expr, list):
-            exprs = [node.expr]
-        else:
-            exprs = node.expr
+        exprs = node.expr.val
 
         assert len(exprs) == len(self.ctx.out_ports)
 
@@ -264,7 +275,7 @@ class HDLGenerator:
                 continue
 
             block.stmts.append(
-                AssignValue(self.ctx.ref(port.name, ctx='store'), expr))
+                AssignValue(self.ctx.ref(port.name, ctx='store'), self.visit_all_Expr(expr)))
 
         return block
 

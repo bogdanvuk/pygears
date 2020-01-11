@@ -144,8 +144,11 @@ class Scheduler(PydlVisitor):
 
     def visit_Yield(self, node):
         cblock = SeqCBlock(parent=self.scope[-1], pydl_block=node, child=[])
-        cblock.child.append(Leaf(parent=cblock, pydl_blocks=node.stmts))
+        cblock.child.append(Leaf(parent=cblock, pydl_blocks=node.expr))
         return cblock
+
+    def visit_all_Statement(self, node):
+        return None
 
     def visit_all_Expr(self, node):
         return None
@@ -156,7 +159,7 @@ def schedule(pydl_ast):
     schedule = Scheduler().visit(pydl_ast)
     states = StateFinder()
     states.visit(schedule)
-    BlockId().visit(schedule)
+    # BlockId().visit(schedule)
     print(pformat(schedule))
 
     # if hls_debug_log_enabled():

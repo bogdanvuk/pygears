@@ -135,6 +135,13 @@ def visit_block(pydl_node, body, ctx):
         res_stmt = visit_ast(stmt, ctx)
         add_to_list(pydl_node.stmts, res_stmt)
 
+    for s in pydl_node.stmts:
+        if isinstance(s, nodes.Expr):
+            print("Expression as statement!")
+            print(s)
+
+    pydl_node.stmts = [s for s in pydl_node.stmts if not isinstance(s, nodes.Expr)]
+
     ctx.pydl_block_closure.pop()
 
     return pydl_node

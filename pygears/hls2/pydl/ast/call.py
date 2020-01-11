@@ -80,7 +80,7 @@ def cal_gear(func, args, kwds, ctx: Context):
 
 
     for a, intf in zip(args, in_ports):
-        ctx.pydl_parent_block.stmts.append(nodes.Assign(ctx.ref(intf.name, ctx='store'), a))
+        ctx.pydl_parent_block.stmts.append(nodes.Assign(a, ctx.ref(intf.name, ctx='store')))
 
     ctx.submodules.append(Submodule(gear_inst, in_ports, out_ports))
 

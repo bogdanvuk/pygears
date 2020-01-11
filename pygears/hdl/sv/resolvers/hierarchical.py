@@ -24,7 +24,7 @@ class HierarchicalResolver(ResolverBase):
 
     @property
     def files(self):
-        files = [self.module_name]
+        files = [self.file_basename]
         if 'hdl' in self.node.params:
             if 'files' in self.node.params['hdl']:
                 for fn in self.node.params['hdl']['files']:
@@ -45,6 +45,9 @@ class HierarchicalResolver(ResolverBase):
             return self.hier_path_name
 
     @property
+    def file_basename(self):
+        return f'{self.module_name}.{self.extension}'
+
     def module_context(self, template_env):
         context = {
             'pygears': pygears,
@@ -66,21 +69,6 @@ class HierarchicalResolver(ResolverBase):
     @property
     def params(self):
         return {}
-
-    @property
-    @functools.lru_cache()
-    def traced(self):
-        self_traced = any(
-            fnmatch.fnmatch(self.node.name, p)
-            for p in registry('debug/trace'))
-
-        if self.is_hierarchical:
-            children_traced = any(self.svgen_map[child].traced
-                                  for child in self.node.child)
-        else:
-            children_traced = False
-
-        return self_traced or children_traced
 
     def get_hier_module(self, template_env):
         context = self.module_context(template_env)

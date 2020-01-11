@@ -12,7 +12,7 @@ class HLSResolver(ResolverBase):
         self.extension = 'sv'
         self.generated = False
 
-        if self.node.params.get('hdl', {}).get('compile', False):
+        if not self.node.params.get('hdl', {}).get('compile', False):
             raise ResolverTypeError
 
         self._files = [self.file_basename]

@@ -240,16 +240,6 @@ class InterfacePull(Expr):
 
 
 @dataclass
-class Assign(Expr):
-    var: Variable
-    expr: Expr
-
-    @property
-    def dtype(self):
-        return None
-
-
-@dataclass
 class IntfDef(Expr):
     intf: typing.Union[InPort, OutPort, Expr]
     _name: str = None
@@ -647,12 +637,6 @@ class ConditionalExpr(Expr):
 
 
 @dataclass
-class AssertExpr(Expr):
-    test: Expr
-    msg: str
-
-
-@dataclass
 class BreakExpr(Expr):
     pass
 
@@ -812,22 +796,21 @@ class Loop(BaseLoop):
 
 
 @dataclass
-class Yield(Block):
+class Statement:
+    expr: Expr
+
+
+@dataclass
+class Yield(Statement):
     ports: typing.List[IntfDef]
 
-    @property
-    def expr(self):
-        if len(self.stmts) == 1:
-            return self.stmts[0]
-        return self.stmts
+@dataclass
+class Assign(Statement):
+    var: Variable
 
-    # @property
-    # def cycle_cond(self):
-    #     return IntfReadyExpr(self.ports)
-
-    # @property
-    # def exit_cond(self):
-    #     return self.cycle_cond
+@dataclass
+class Assert(Statement):
+    msg: str
 
 
 @dataclass
