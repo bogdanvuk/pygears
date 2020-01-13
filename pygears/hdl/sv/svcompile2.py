@@ -35,6 +35,7 @@ class BlockLines:
 class SVCompiler(InstanceVisitor):
     def __init__(self, ctx, visit_var, writer, selected):
         self.ctx = ctx
+        self.defaults = {}
         self.writer = writer
         self.visit_var = visit_var
         self.selected = selected
@@ -87,20 +88,41 @@ class SVCompiler(InstanceVisitor):
         val = stmt.val
 
         if isinstance(stmt.target.obj, pydl.Register):
-            self.write(f"{stmt.target.name}_next = {svexpr(val)}")
+            svstmt = f"{stmt.target.name}_next = {svexpr(val)}"
+
+            if stmt.target.name not in self.defaults:
+                self.defaults[stmt.target.name] = svstmt
+            elif stmt != self.defaults[stmt.target.name]:
+                self.write(svstmt)
+
             self.write(f"{stmt.target.name}_en = 1")
             return
 
         if isinstance(stmt.target.obj, pydl.Interface):
             if stmt.target.ctx == 'store':
-                self.write(f"{stmt.target.name}_s = {svexpr(val)}")
+                svstmt = f"{stmt.target.name}_s = {svexpr(val)}"
+
+                if stmt.target.name not in self.defaults:
+                    self.defaults[stmt.target.name] = svstmt
+                elif stmt != self.defaults[stmt.target.name]:
+                    self.write(svstmt)
+
+                # self.write(f"{stmt.target.name}_s = {svexpr(val)}")
                 self.write(f"{stmt.target.name}.valid = 1")
             elif stmt.target.ctx == 'ready':
                 self.write(f"{stmt.target.name}.ready = 1")
 
             return
 
-        self.write(f"{svexpr(stmt.target)} = {svexpr(val)}")
+        target = svexpr(stmt.target)
+        svstmt = f"{target} = {svexpr(val)}"
+
+        if target not in self.defaults:
+            self.defaults[target] = svstmt
+        elif stmt != self.defaults[target]:
+            self.write(svstmt)
+
+        # self.write(f"{svexpr(stmt.target)} = {svexpr(val)}")
 
     def visit_AssertValue(self, node):
         self.write(f'assert ({svexpr(node.val.test)})')
@@ -133,17 +155,18 @@ class SVCompiler(InstanceVisitor):
                 else:
                     if self.selected(self.ctx.ref(name, ctx='store')):
                         self.write(f"{name}.valid = 0")
-                        self.write(f"{name}_s = {obj.dtype.width}'(1'bx)")
+                        # self.write(f"{name}_s = {obj.dtype.width}'(1'bx)")
 
             elif isinstance(obj, pydl.Register):
                 if self.selected(self.ctx.ref(name, ctx='store')):
                     # self.write(f"{name}_next = {obj.dtype.width}'(1'bx)")
-                    self.write(f"{name}_next = {name}")
+                    # self.write(f"{name}_next = {name}")
                     self.write(f'{name}_en = 0')
 
             elif isinstance(obj, pydl.Variable):
-                if self.selected(self.ctx.ref(name, ctx='store')):
-                    self.write(f"{name} = {obj.dtype.width}'(1'bx)")
+                pass
+                # if self.selected(self.ctx.ref(name, ctx='store')):
+                #     self.write(f"{name} = {obj.dtype.width}'(1'bx)")
 
     def visit_CombBlock(self, node):
         self.block_lines.append(BlockLines())
@@ -154,6 +177,9 @@ class SVCompiler(InstanceVisitor):
         self.list_initials()
 
         self.visit_HDLBlock(node)
+
+        for target, svstmt in self.defaults.items():
+            self.cur_block_lines.content.insert(0, svstmt)
 
         self.footer('end')
 

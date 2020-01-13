@@ -7,16 +7,13 @@ class PydlVisitor:
         method = 'visit_' + node.__class__.__name__
         visitor = getattr(self, method, self.generic_visit)
 
-        if visitor.__name__ == 'generic_visit' and isinstance(
-                node, nodes.Block):
+        if visitor.__name__ == 'generic_visit' and isinstance(node, nodes.Block):
             visitor = getattr(self, 'visit_all_Block', self.generic_visit)
 
-        if visitor.__name__ == 'generic_visit' and isinstance(
-                node, nodes.Expr):
+        if visitor.__name__ == 'generic_visit' and isinstance(node, nodes.Expr):
             visitor = getattr(self, 'visit_all_Expr', self.generic_visit)
 
-        if visitor.__name__ == 'generic_visit' and isinstance(
-                node, nodes.Statement):
+        if visitor.__name__ == 'generic_visit' and isinstance(node, nodes.Statement):
             visitor = getattr(self, 'visit_all_Statement', self.generic_visit)
 
         if kwds:
@@ -29,8 +26,7 @@ class PydlVisitor:
 
     def generic_visit(self, node):
         raise Exception(
-            f'Method "{node.__class__.__name__}" not implemented in "{self.__class__.__name__}" visitor'
-        )
+            f'Method "{node.__class__.__name__}" not implemented in "{self.__class__.__name__}" visitor')
 
 
 class PydlExprVisitor:
@@ -79,32 +75,82 @@ class PydlExprRewriter:
         return visitor(node)
 
     def visit_AttrExpr(self, node):
-        return nodes.AttrExpr(self.visit(node.val), node.attr)
+        val = self.visit(node.val)
+        if val is not None:
+            return nodes.AttrExpr(val, node.attr)
+
+        return node
 
     def visit_CastExpr(self, node):
-        return nodes.CastExpr(self.visit(node.operand), node.cast_to)
+        operand = self.visit(node.operand)
+        if operand is not None:
+            return nodes.CastExpr(operand, node.cast_to)
+
+        return node
 
     def visit_ConcatExpr(self, node):
-        return nodes.ConcatExpr(tuple(self.visit(op) for op in node.operands))
+        ops = [self.visit(op) for op in node.operands]
+        if all(op is None for op in ops):
+            return node
+
+        ops = [
+            old_op if new_op is None else new_op
+            for new_op, old_op in zip(ops, node.operands)
+        ]
+
+        return nodes.ConcatExpr(tuple(ops))
 
     def visit_ArrayOpExpr(self, node):
-        return nodes.ArrayOpExpr(self.visit(node.array), node.operator)
+        array = self.visit(node.array)
+        if array is not None:
+            return nodes.ArrayOpExpr(array, node.operator)
+
+        return node
 
     def visit_UnaryOpExpr(self, node):
-        return nodes.UnaryOpExpr(self.visit(node.operand), node.operator)
+        operand = self.visit(node.operand)
+        if operand is not None:
+            return nodes.UnaryOpExpr(operand, node.operator)
+
+        return node
 
     def visit_BinOpExpr(self, node):
-        return nodes.BinOpExpr(tuple(self.visit(op) for op in node.operands),
-                               node.operator)
+        ops = [self.visit(op) for op in node.operands]
+        if all(op is None for op in ops):
+            return node
+
+        ops = [
+            old_op if new_op is None else new_op
+            for new_op, old_op in zip(ops, node.operands)
+        ]
+
+        return nodes.BinOpExpr(tuple(ops), node.operator)
 
     def visit_SubscriptExpr(self, node):
-        return nodes.SubscriptExpr(self.visit(node.val),
-                                   self.visit(node.index))
+        old_ops = (node.val, node.index)
+
+        ops = [self.visit(op) for op in old_ops]
+        if all(op is None for op in ops):
+            return node
+
+        ops = [
+            old_op if new_op is None else new_op for new_op, old_op in zip(ops, old_ops)
+        ]
+
+        return nodes.SubscriptExpr(*ops)
 
     def visit_ConditionalExpr(self, node):
-        return nodes.ConditionalExpr(
-            self.visit(node.cond),
-            tuple(self.visit(op) for op in node.operands))
+        old_ops = (node.cond, *node.operands)
+
+        ops = [self.visit(op) for op in old_ops]
+        if all(op is None for op in ops):
+            return node
+
+        ops = [
+            old_op if new_op is None else new_op for new_op, old_op in zip(ops, old_ops)
+        ]
+
+        return nodes.ConditionalExpr(tuple(ops[1:]), ops[0])
 
     def generic_visit(self, node):
         return node

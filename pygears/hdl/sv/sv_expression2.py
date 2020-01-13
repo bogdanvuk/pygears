@@ -144,7 +144,7 @@ class SVExpressionVisitor:
     def visit_ConditionalExpr(self, node):
         cond = self.visit(node.cond)
         ops = [self.visit(op) for op in node.operands]
-        return f'({cond}) ? ({ops[0]}) : ({ops[1]})'
+        return f'(({cond}) ? ({ops[0]}) : ({ops[1]}))'
 
     def _parse_intf(self, node, context=None):
         if context is None:
