@@ -140,6 +140,7 @@ def visit_block(pydl_node, body, ctx):
             print("Expression as statement!")
             print(s)
 
+    # Remove expressions that are added as block statements
     pydl_node.stmts = [s for s in pydl_node.stmts if not isinstance(s, nodes.Expr)]
 
     ctx.pydl_block_closure.pop()

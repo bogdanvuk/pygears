@@ -84,6 +84,39 @@ def replace_aliases(aliases, nextregs, node):
 
     return AliasRewriter(aliases, nextregs).visit(node)
 
+class Scope:
+    def __init__(self, parent=None):
+        self.parent = None
+        self.child = None
+        self.items = {}
+
+    def subscope(self):
+        if self.child is None:
+            self.child = Scope(parent=self)
+            return self.child
+
+        return self.child.subscope()
+
+    def clear(self):
+        self.child.clear()
+        self.child = None
+        self.items.clear()
+
+    def __getitem__(self, key):
+        if self.child:
+            try:
+                return self.child[key]
+            except KeyError:
+                pass
+
+        return self.items[key]
+
+    def __setitem__(self, key, val):
+        if self.child:
+            self.child[key] = val
+
+        self.items[key] = val
+
 
 class HDLGenerator:
     def __init__(self, ctx):
@@ -91,7 +124,7 @@ class HDLGenerator:
         self.state_id = 0
         self.alias_stack = []
         self.block_stack = []
-        self.assigned_regs = []
+        self.assigned_regs = Scope()
 
     @property
     def alias(self):
@@ -204,7 +237,7 @@ class HDLGenerator:
         self.alias[var_name] = node.expr
 
         if isinstance(node.var.obj, pydl.Register):
-            self.assigned_regs.append(var_name)
+            self.assigned_regs[var_name] = node.expr
 
         opt_var = False
         for b, a in zip(reversed(self.block_stack[1:]),

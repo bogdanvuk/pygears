@@ -270,7 +270,7 @@ def skip_sim_if_no_tools():
 
 @pytest.fixture(params=[
     None,
-    partial(SimVerilated, language='v'),
+    # partial(SimVerilated, language='v'),
     partial(SimVerilated, language='sv'), SimSocket
 ])
 def sim_cls(request):
@@ -285,7 +285,7 @@ def sim_cls(request):
 
 
 @pytest.fixture(params=[
-    partial(SimVerilated, language='v'),
+    # partial(SimVerilated, language='v'),
     partial(SimVerilated, language='sv'), SimSocket
 ])
 def cosim_cls(request):
