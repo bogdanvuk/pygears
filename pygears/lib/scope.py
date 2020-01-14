@@ -42,7 +42,8 @@ def t_fmt(t, posp, positions):
 
                 break
 
-            str_val = str_val[:-cutoff]
+            if cutoff:
+                str_val = str_val[:-cutoff]
 
             return f'{str_val} {suffix[i]}'
 

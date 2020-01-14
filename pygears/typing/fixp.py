@@ -33,6 +33,12 @@ class FixpnumberType(IntegralType):
     def __neg__(self):
         return Fixp[self.integer + 1, self.width + 1]
 
+    def __abs__(self):
+        if not self.signed:
+            return self
+
+        return Fixp[self.integer, self.width]
+
     def __lshift__(self, others):
         shamt = int(others)
         return self.base[self.integer + shamt, self.width + shamt]
@@ -202,8 +208,7 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
                     if isinstance(val, int):
                         cls = Fixp
                     else:
-                        raise TypeError(
-                            f'Unsupported value {val} of type {type(val)}')
+                        raise TypeError(f'Unsupported value {val} of type {type(val)}')
                 elif isinstance(val, Integer):
                     cls = Fixp if val.signed else Ufixp
 
@@ -230,8 +235,7 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
         else:
             if ival < 0:
                 raise ValueError(
-                    f"cannot represent negative numbers with unsigned type '{repr(cls)}'"
-                )
+                    f"cannot represent negative numbers with unsigned type '{repr(cls)}'")
 
             if (bitw(ival) > cls.width):
                 raise ValueError(f"{repr(cls)} cannot represent value '{val}'")
@@ -248,6 +252,9 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
 
     def __neg__(self):
         return (-type(self))(-int(self))
+
+    def __abs__(self):
+        return abs(type(self))(abs(float(self)))
 
     @class_and_instance_method
     def __truediv__(self, other, subprec=0):
