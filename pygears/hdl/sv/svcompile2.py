@@ -2,6 +2,7 @@ import itertools
 from pygears.hls import HDLWriter, InstanceVisitor, parse_gear_body
 from pygears import registry
 from pygears.hls2.pydl import nodes as pydl
+from pygears.hls2 import Context
 from pygears.typing import code, Bool
 from pygears.core.port import Port
 from dataclasses import dataclass, field
@@ -16,7 +17,7 @@ REG_TEMPLATE = """
 always @(posedge clk) begin
     if(rst | rst_cond) begin
         {0} <= {1};
-    end else if ({0}_en) begin
+    end else if ({0}_en && cycle_done) begin
         {0} <= {0}_next;
     end
 end
@@ -92,7 +93,7 @@ class SVCompiler(InstanceVisitor):
 
             if stmt.target.name not in self.defaults:
                 self.defaults[stmt.target.name] = svstmt
-            elif stmt != self.defaults[stmt.target.name]:
+            elif svstmt != self.defaults[stmt.target.name]:
                 self.write(svstmt)
 
             self.write(f"{stmt.target.name}_en = 1")
@@ -104,7 +105,7 @@ class SVCompiler(InstanceVisitor):
 
                 if stmt.target.name not in self.defaults:
                     self.defaults[stmt.target.name] = svstmt
-                elif stmt != self.defaults[stmt.target.name]:
+                elif svstmt != self.defaults[stmt.target.name]:
                     self.write(svstmt)
 
                 # self.write(f"{stmt.target.name}_s = {svexpr(val)}")
@@ -119,7 +120,7 @@ class SVCompiler(InstanceVisitor):
 
         if target not in self.defaults:
             self.defaults[target] = svstmt
-        elif stmt != self.defaults[target]:
+        elif svstmt != self.defaults[target]:
             self.write(svstmt)
 
         # self.write(f"{svexpr(stmt.target)} = {svexpr(val)}")
@@ -306,7 +307,12 @@ def svcompile(hdl_stmts, writer, ctx, title, selected):
     writer.line()
 
 
-def write_module(ctx, hdl, writer, subsvmods, template_env, config=None):
+def write_module(ctx: Context,
+                 hdl,
+                 writer,
+                 subsvmods,
+                 template_env,
+                 config=None):
     if config is None:
         config = {}
 
@@ -349,12 +355,12 @@ def write_module(ctx, hdl, writer, subsvmods, template_env, config=None):
     if ctx.regs:
         writer.line(f'initial begin')
         for name, expr in ctx.regs.items():
-            writer.line(f"    {name} = {int(code(svexpr(expr.val)))};")
+            writer.line(f"    {name} = {svexpr(expr.val)};")
 
         writer.line(f'end')
 
     for name, expr in ctx.regs.items():
-        writer.block(REG_TEMPLATE.format(name, int(code(svexpr(expr.val)))))
+        writer.block(REG_TEMPLATE.format(name, svexpr(expr.val)))
 
     for name, expr in ctx.regs.items():
         svcompile(hdl, writer, ctx, name, selected=lambda x: x.obj == expr)
@@ -362,11 +368,8 @@ def write_module(ctx, hdl, writer, subsvmods, template_env, config=None):
     for name, expr in ctx.variables.items():
         svcompile(hdl, writer, ctx, name, selected=lambda x: x.obj == expr)
 
-    svcompile(hdl,
-              writer,
-              ctx,
-              "interfaces",
-              selected=lambda x: isinstance(x.obj, pydl.Interface))
+    for name, expr in ctx.intfs.items():
+        svcompile(hdl, writer, ctx, name, selected=lambda x: x.name == name)
 
 
 def compile_gear_body(gear, outdir, template_env):
@@ -386,9 +389,15 @@ def compile_gear_body(gear, outdir, template_env):
     gear.child.clear()
 
     writer = HDLWriter()
-    write_module(ctx, hdl_ast, writer, subsvmods, template_env, config=gear.params.get('hdl', {}))
+    write_module(ctx,
+                 hdl_ast,
+                 writer,
+                 subsvmods,
+                 template_env,
+                 config=gear.params.get('hdl', {}))
 
     return '\n'.join(writer.lines), subsvmods
+
 
 def compile_gear(gear, template_env, module_name, outdir):
     context = {
@@ -398,6 +407,7 @@ def compile_gear(gear, template_env, module_name, outdir):
         'params': gear.params
     }
 
-    context['svlines'], subsvmods = compile_gear_body(gear, outdir, template_env)
+    context['svlines'], subsvmods = compile_gear_body(gear, outdir,
+                                                      template_env)
 
     return template_env.render_string(gear_module_template, context), subsvmods

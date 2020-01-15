@@ -49,6 +49,10 @@ class SVExpressionVisitor:
         # return f'{node.intf.name}{self.separator}data'
         return f'{node.intf.name}_s'
 
+    def visit_InterfaceAck(self, node):
+        # return f'{node.intf.name}{self.separator}data'
+        return f'{node.intf.name}.valid && {node.intf.name}.ready'
+
     def visit_IntfReadyExpr(self, node):
         res = []
         if not isinstance(node.port, (list, tuple)):
@@ -128,9 +132,6 @@ class SVExpressionVisitor:
     def visit_SubscriptExpr(self, node):
         val = self.visit(node.val)
 
-        # if typeof(node.val.dtype, Array) or typeof(node.val.dtype, Integer):
-        #     return f'{val}[{self.visit(node.index)}]'
-
         if isinstance(node.index, pydl.ResExpr):
             index = node.index.val
 
@@ -140,6 +141,12 @@ class SVExpressionVisitor:
                 return f'{val}[{int(index.stop) - 1}:{index.start}]'
 
             return f'{val}.{node.val.dtype.fields[index]}'
+
+        if typeof(node.val.dtype, Array) or typeof(node.val.dtype, Integer):
+            return f'{val}[{self.visit(node.index)}]'
+
+        raise Exception('Unsupported slicing')
+
 
     def visit_ConditionalExpr(self, node):
         cond = self.visit(node.cond)

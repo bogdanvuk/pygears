@@ -1,7 +1,10 @@
 from pygears import alternative, gear, module
-from pygears.lib import cart, ccat, fmap, permuted_apply
+from .ccat import ccat
+from .cart import cart
+from .fmap import fmap
+from .permute import permuted_apply
 from pygears.typing import Int, Integer, Queue, Tuple, typeof, reinterpret
-from pygears.util.utils import qrange, quiter
+from pygears.util.utils import quiter
 
 TCfg = Tuple[{
     'start': Integer['w_start'],
@@ -15,6 +18,35 @@ def rng_out_type(cfg, cnt_steps):
         return cfg[0] + cfg[1] + cfg[2]
 
     return max(cfg[0], cfg[1])
+
+
+@gear(hdl={'compile': True})
+async def qrange(cfg: Tuple[{
+        'start': Integer,
+        'stop': Integer
+}]) -> Queue[b'cfg[0] if cfg[0].width >= cfg[1].width else cfg[1]']:
+    cnt: cfg.dtype[0] = None
+    cur_cnt: cfg.dtype[0]
+
+    async with cfg as c:
+        cnt = c[0]
+        while (cnt < c[1]):
+            cur_cnt = cnt
+            cnt += 1
+            yield cur_cnt, cnt == c[1]
+
+
+@alternative(qrange)
+@gear(hdl={'compile': True})
+async def qrange_stop(stop: Integer) -> Queue[b'stop']:
+    cnt: stop.dtype = 0
+    cur_cnt: stop.dtype
+
+    async with stop as s:
+        while (cnt < s):
+            cur_cnt = cnt
+            cnt += 1
+            yield cur_cnt, cnt == s
 
 
 @gear(hdl={'compile': True})
@@ -43,7 +75,8 @@ async def py_rng(cfg: TCfg, *, cnt_steps=False,
 
         for data, last in qrange(start, stop, step):
             if incr_steps:
-                yield reinterpret(offset + (data * incr), module().tout.data), last
+                yield reinterpret(offset + (data * incr),
+                                  module().tout.data), last
             else:
                 yield data, last
 

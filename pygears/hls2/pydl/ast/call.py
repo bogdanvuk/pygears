@@ -100,6 +100,9 @@ def _(node, ctx: Context):
     kwd_args, kwds_only = extract_arg_kwds(kwds, func)
     args_only = combine_arg_kwds(args, kwd_args, func)
 
+    if (func in builtins) and (isinstance(builtins[func], Partial)):
+        return cal_gear(builtins[func], args_only, kwds_only, ctx)
+
     if isinstance(func, Partial):
         return cal_gear(func, args_only, kwds_only, ctx)
 
@@ -117,7 +120,7 @@ def _(node, ctx: Context):
         raise Exception
 
     if func in builtins:
-        func = builtins[func](*args_only, **kwds_only)
+        return builtins[func](*args_only, **kwds_only)
     elif is_type(func):
         raise Exception
         # from .hdl_cast import resolve_cast_func

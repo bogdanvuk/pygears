@@ -205,6 +205,7 @@ class Interface(Expr):
 class Register(Expr):
     name: str
     val: typing.Union[PgType, Expr] = None
+    any_init = False
 
     @property
     def dtype(self):
@@ -237,6 +238,34 @@ class InterfacePull(Expr):
     @property
     def dtype(self):
         return self.intf.dtype
+
+@dataclass
+class Component(Expr):
+    val: Interface
+    field: str
+
+    def __repr__(self):
+        return f'{self.val.name}.{self.field}'
+
+    @property
+    def dtype(self):
+        if self.field in ['ready', 'valid']:
+            return Bool
+        elif self.field == 'data':
+            return self.val.dtype
+
+    def __hash__(self):
+        return hash(self.val.name)
+
+
+
+@dataclass
+class InterfaceAck(Expr):
+    intf: Interface
+
+    @property
+    def dtype(self):
+        return Bool
 
 
 @dataclass
@@ -725,18 +754,6 @@ class IntfBlock(Block):
 class IntfLoop(BaseLoop):
     intf: IntfDef
 
-    @property
-    def in_cond(self):
-        return self.intf
-
-    @property
-    def exit_cond(self):
-        intf_expr = IntfDef(intf=self.intf.intf,
-                            _name=self.intf.name,
-                            context='eot')
-
-        return ExitSubCond(intf_expr, '&&')
-
 
 @dataclass
 class IfBlock(Block):
@@ -832,15 +849,7 @@ class Function(Block):
 
 @dataclass
 class Module(Block):
-    id: int = field(init=False, default=0)
-
-    @property
-    def cycle_cond(self):
-        return CycleSubCond()
-
-    @property
-    def exit_cond(self):
-        return ExitSubCond()
+    pass
 
 
 class PydlPrinter:

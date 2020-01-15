@@ -16,7 +16,7 @@ async def qdeal(din: Queue, *, num,
 
     Returns: A tuple of Queues one level lower than the input. """
 
-    i = Uint[bitw(num)](0)
+    i: Uint[bitw(num)] = 0
 
     while True:
         async with din as val:
@@ -36,7 +36,7 @@ async def qdeal(din: Queue, *, num,
 
 @gear(hdl={'compile': True})
 async def deal(din, *, num) -> b'(din, ) * num':
-    i = Uint[bitw(num)](0)
+    i: Uint[bitw(num)] = 0
     # out_res: (din.dtype, ) * num
     out_res: Array[din.dtype, num]
 

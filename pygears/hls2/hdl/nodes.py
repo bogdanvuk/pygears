@@ -15,26 +15,6 @@ class AssignValue:
     in_cond: pydl.Expr = pydl.ResExpr(True)
     exit_cond: pydl.Expr = pydl.ResExpr(True)
 
-
-@dataclass
-class Component:
-    val: pydl.Interface
-    field: str
-
-    def __repr__(self):
-        return f'{self.val.name}.{self.field}'
-
-    @property
-    def dtype(self):
-        if self.field in ['ready', 'valid']:
-            return Bool
-        elif self.field == 'data':
-            return self.val.dtype
-
-    def __hash__(self):
-        return hash(self.val.name)
-
-
 @dataclass
 class AssertValue:
     val: Any

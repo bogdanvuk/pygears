@@ -2,21 +2,9 @@ from pygears.core.gear import Gear
 
 from . import pydl
 from pygears import bind, registry
-from pygears.typing import Uint, bitw, Bool
-from .schedule import schedule, CBlockVisitor
-# from .schedule.state_transition import HdlStmtStateTransition
-# from .hdl.visitor import (AssertionVisitor, InputVisitor, IntfReadyVisitor,
-#                           IntfValidVisitor, OutputVisitor, RegEnVisitor,
-#                           VariableVisitor, FunctionVisitor, OutSigVisitor)
-# from .hdl.visitor import InputVisitor, OutputVisitor
-from .hdl.visitor import HDLStmtVisitor
-from .hdl.nodes import StateBlock, CombBlock
+from pygears.typing import Bool
+from .schedule import schedule
 from .hdl.generate import generate
-
-# from .schedule.cleanup import condition_cleanup
-
-# from .schedule.conditions_finder import find_conditions
-# from .schedule.conditions_utils import init_conditions
 
 
 class PydlTestToVar(pydl.PydlVisitor):

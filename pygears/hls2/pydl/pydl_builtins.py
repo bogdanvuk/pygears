@@ -3,10 +3,11 @@ from pygears.typing import Int, Tuple, Uint, div, typeof, code
 from pygears.typing import floor, Array, cast, signed, reinterpret
 from pygears.typing.queue import QueueMeta
 
-from pygears.util.utils import gather
+from pygears.util.utils import gather, qrange
 from pygears.sim import clk
 from pygears import Intf
 from pygears.core.gear import OutSig
+from pygears.lib.rng import qrange as qrange_gear
 
 from . import nodes
 
@@ -174,5 +175,6 @@ builtins = {
     OutSig.write: outsig_write,
     Array.code: call_code,
     Tuple.code: call_code,
-    code: call_code
+    code: call_code,
+    qrange: qrange_gear
 }

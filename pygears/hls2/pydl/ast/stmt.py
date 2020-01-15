@@ -41,13 +41,15 @@ def _(node, ctx: Context):
     if node.value:
         init = visit_ast(node.value, ctx)
 
-        init = nodes.ResExpr(annotation.val(init.val))
-        stmts = assign_targets(ctx, targets, init, nodes.Register)
+        init_cast = nodes.ResExpr(annotation.val(init.val))
+        stmts = assign_targets(ctx, targets, init_cast, nodes.Register)
         if not isinstance(stmts, list):
             stmts = [stmts]
 
         for s in stmts:
             s.var.obj.val = s.expr
+            if init.val is None:
+                s.var.obj.any_init = True
 
 
 @node_visitor(ast.AugAssign)
