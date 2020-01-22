@@ -71,5 +71,5 @@ def saturate(data, cast_type, limits=None):
     if is_type(data):
         return type_saturate(data, cast_type, limits)
     else:
-        sat_type = type_saturate(data, cast_type, limits)
+        sat_type = type_saturate(type(data), cast_type, limits)
         return value_saturate(data, sat_type, limits)

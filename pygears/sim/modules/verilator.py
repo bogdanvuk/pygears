@@ -59,14 +59,24 @@ class SimVerilated(CosimBase):
         vcd_fifo=False,
         shmidcat=False,
         post_synth=False,
+        outdir=None,
         language='sv'):
 
         super().__init__(gear, timeout=timeout)
         self.name = gear.name[1:].replace('/', '_')
-        self.outdir = os.path.abspath(os.path.join(registry('results-dir'), self.name))
+
+        if outdir is None:
+            outdir = os.path.join(registry('results-dir'), self.name)
+
+        self.outdir = os.path.abspath(outdir)
         self.objdir = os.path.join(self.outdir, 'obj_dir')
         self.post_synth = post_synth
-        self.rebuild = rebuild
+
+        self.dll_path = os.path.join(self.objdir, f'pygearslib')
+        if os.name == 'nt':
+            self.dll_path += '.exe'
+
+        self.rebuild = rebuild or not os.path.exists(self.dll_path)
 
         bind(
             'svgen/spy_connection_template', signal_spy_connect_hide_interm_t
@@ -153,7 +163,7 @@ class SimVerilated(CosimBase):
         tracing_enabled = bool(registry('debug/trace'))
         if tracing_enabled:
             sim_log().info(f"Debug: {registry('debug/trace')}")
-            self.trace_fn = f'{self.outdir}/vlt_dump.vcd'
+            self.trace_fn = os.path.join(registry("results-dir"), f'{self.name}.vcd')
             try:
                 subprocess.call(f"rm -f {self.trace_fn}", shell=True)
             except OSError:
@@ -162,18 +172,16 @@ class SimVerilated(CosimBase):
             if self.vcd_fifo:
                 subprocess.call(f"mkfifo {self.trace_fn}", shell=True)
             else:
-                sim_log().info(f'Verilator VCD dump to "{self.outdir}/vlt_dump.vcd"')
-
-        dll_path = os.path.join(self.objdir, f'V{self.top_name}')
-        if os.name == 'nt':
-            dll_path += '.exe'
+                sim_log().info(f'Verilator VCD dump to "{self.trace_fn}"')
+        else:
+            self.trace_fn = ''
 
         try:
-            self.verilib = ctypes.CDLL(dll_path)
+            self.verilib = ctypes.CDLL(self.dll_path)
         except OSError:
             raise VerilatorCompileError(
                 f'Verilator compiled library for the gear "{self.gear.name}"'
-                f' not found at: "{dll_path}"')
+                f' not found at: "{self.dll_path}"')
 
         self.finished = False
         atexit.register(self._finish)
@@ -188,7 +196,8 @@ class SimVerilated(CosimBase):
             import time
             time.sleep(0.1)
 
-        self.verilib.init()
+        self.verilib.init.argtypes = [ctypes.c_char_p]
+        self.verilib.init(self.trace_fn.encode('utf8'))
 
         if self.shmid_proc:
             self.shmid = self.shmid_proc.stdout.readline().decode().strip()
@@ -210,8 +219,7 @@ class SimVerilated(CosimBase):
             'out_ports': self.rtlnode.out_ports,
             'top_name': self.top_name,
             'tracing': tracing_enabled,
-            'aux_clock': config['sim/aux_clock'],
-            'outdir': self.outdir
+            'aux_clock': config['sim/aux_clock']
         }
 
         jenv = jinja2.Environment(trim_blocks=True, lstrip_blocks=True)
@@ -233,6 +241,7 @@ class SimVerilated(CosimBase):
             '-clk clk',
             f'--top-module {self.top_name}',
             '--trace --no-trace-params --trace-structs' if tracing_enabled else '',
+            '-o pygearslib',
             files,
             'sim_main.cpp'
         ]  # yapf: disable

@@ -4,7 +4,7 @@
 #include "verilated_vcd_c.h"
 {% endif %}
 #include "stdio.h"
-{# #define DEBUG #}
+{# #define DEBUG  #}
 
 extern "C" {
 
@@ -48,8 +48,10 @@ void cycle(void) {
 {% endif %}
     main_time+=5;
 {% if tracing %}
-    if (tfp) tfp->dump (main_time);
-    tfp->flush();
+    if (tfp) {
+      tfp->dump (main_time);
+      tfp->flush();
+    }
 {% endif %}
     top->clk = 1;
 
@@ -71,23 +73,24 @@ void cycle(void) {
 {%- endif %}
 }
 
-int init(void) {
+int init(const char* trace_fn) {
     top = new V{{top_name}};
-
-{% if tracing %}
-    Verilated::traceEverOn(true);
-    tfp = new VerilatedVcdC;
-    top->trace(tfp, 99);  // Trace 99 levels of hierarchy
-    {# mkdir("logs", 0777); #}
     main_time = 0;
 
+{% if tracing %}
+    if (trace_fn) {
+        Verilated::traceEverOn(true);
+        tfp = new VerilatedVcdC;
+        top->trace(tfp, 99);  // Trace 99 levels of hierarchy
+        {# mkdir("logs", 0777); #}
 #ifdef DEBUG
-    printf("%p\n", tfp);
+        printf("%p\n", tfp);
 #endif
-    tfp->open("{{outdir}}/vlt_dump.vcd");  // Open the dump file
+        tfp->open(trace_fn);  // Open the dump file
 #ifdef DEBUG
-    printf("tfp->open\n");
+        printf("tfp->open(%s)\n", trace_fn);
 #endif
+    }
 {% endif %}
 
 {% for p in out_ports -%}
@@ -103,8 +106,10 @@ int init(void) {
     top->eval();
 
 {% if tracing %}
-    tfp->dump(0);
-    tfp->flush();
+    if (tfp) {
+        tfp->dump(0);
+        tfp->flush();
+    }
 {%- endif %}
 
 {% if aux_clock %}

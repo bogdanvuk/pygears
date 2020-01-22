@@ -237,7 +237,7 @@ class VCD(SimExtend):
         if self.vcd_fifo:
             subprocess.call(f"mkfifo {self.trace_fn}", shell=True)
         else:
-            sim_log().info(f'Main VCD dump to "{self.outdir}/vlt_dump.vcd"')
+            sim_log().info(f'Main VCD dump to "{self.trace_fn}"')
 
         if self.shmidcat:
             self.shmid_proc = subprocess.Popen(f'shmidcat {self.trace_fn}',
