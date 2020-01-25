@@ -1,5 +1,5 @@
 import ast
-from . import node_visitor, nodes, visit_block, visit_ast, Context, SyntaxError
+from . import node_visitor, nodes, visit_block, visit_ast, Context, SyntaxError, FuncContext
 from .cast import resolve_cast_func
 from .utils import add_to_list
 from .stmt import assign_targets
@@ -10,26 +10,38 @@ def parse_async_func(node, ctx: Context):
     return visit_block(nodes.Module(stmts=[]), node.body, ctx)
 
 
+@node_visitor(ast.FunctionDef)
+def _(node, ctx: FuncContext):
+    if not isinstance(ctx, FuncContext):
+        raise Exception('Unsupported')
+
+    return visit_block(
+        nodes.Function(stmts=[],
+                       name=ctx.funcref.name,
+                       args=ctx.args,
+                       ret_dtype=ctx.ret_dtype), node.body, ctx)
+
+
 def is_target_id(node):
     return isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store)
 
 
 # TODO: Revisit cast_return, maybe it can be more general
-from pygears.typing import typeof, Queue, Tuple
+from pygears.typing import typeof, Queue, Tuple, Array
 
 
 def cast_return(arg_nodes, out_ports):
     out_num = len(out_ports)
-    if isinstance(arg_nodes, list):
+    if isinstance(arg_nodes, (list, tuple)):
         assert len(arg_nodes) == out_num
         input_vars = arg_nodes
-    elif isinstance(arg_nodes, nodes.OperandVal) and out_num > 1:
-        intf = arg_nodes.op
-        assert len(intf.intf) == out_num
+    elif isinstance(arg_nodes, nodes.Name) and out_num > 1:
+        var = arg_nodes.obj
+        assert len(var.dtype) == out_num
         input_vars = []
-        for i in range(len(intf.intf)):
+        for i in range(len(var.dtype)):
             input_vars.append(
-                nodes.SubscriptExpr(val=intf, index=nodes.ResExpr(i)))
+                nodes.SubscriptExpr(val=arg_nodes, index=nodes.ResExpr(i)))
     else:
         assert out_num == 1
         input_vars = [arg_nodes]
@@ -37,7 +49,7 @@ def cast_return(arg_nodes, out_ports):
     args = []
     for arg, intf in zip(input_vars, out_ports):
         port_t = intf.dtype
-        if typeof(port_t, Queue) or typeof(port_t, Tuple):
+        if typeof(port_t, (Queue, Tuple, Array)):
             if isinstance(arg, nodes.ConcatExpr) and arg.dtype != port_t:
                 for i in range(len(arg.operands)):
                     if isinstance(arg.operands[i], nodes.CastExpr) and (
@@ -77,18 +89,13 @@ def withitem(node: ast.withitem, ctx: Context):
     intf = visit_ast(node.context_expr, ctx)
     targets = visit_ast(node.optional_vars, ctx)
 
-    ass_targets = assign_targets(ctx, targets, nodes.InterfacePull(intf),
-                                 nodes.Variable)
+    if isinstance(intf, nodes.ConcatExpr):
+        data = nodes.ConcatExpr(
+            [nodes.InterfacePull(i) for i in intf.operands])
+    else:
+        data = nodes.InterfacePull(intf)
 
-    # if not isinstance(targets, tuple):
-    #     targets = (targets, )
-
-    # ass_targets = []
-    # for t in targets:
-    #     breakpoint()
-    #     var = nodes.Variable(t.name, intf.dtype)
-    #     ctx.scope[t.name] = var
-    #     ass_targets.append(nodes.Name(t.name, var, t.ctx))
+    ass_targets = assign_targets(ctx, targets, data, nodes.Variable)
 
     return intf, ass_targets
 
@@ -101,7 +108,11 @@ def asyncwith(node, ctx: Context):
     assigns = [visit_ast(i, ctx) for i in node.items]
 
     for intf, targets in assigns:
-        pydl_node.intfs.append(intf)
+        if isinstance(intf, nodes.ConcatExpr):
+            pydl_node.intfs.extend(intf.operands)
+        else:
+            pydl_node.intfs.append(intf)
+
         add_to_list(pydl_node.stmts, targets)
 
     for stmt in node.body:

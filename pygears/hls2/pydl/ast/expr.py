@@ -1,7 +1,7 @@
 import ast
 import types
 from . import Context, SyntaxError, node_visitor, nodes, visit_ast, visit_block
-from ..pydl_arith import resolve_arith_func
+from .arith import resolve_arith_func
 from pygears.typing import cast, Integer
 
 
@@ -30,7 +30,7 @@ def num(node, ctx: Context):
 
 
 @node_visitor(ast.Name)
-def name(node, ctx: Context):
+def _(node: ast.Name, ctx: Context):
     if isinstance(node.ctx, ast.Load):
         if node.id not in ctx.scope:
             if node.id in ctx.local_namespace:
@@ -58,24 +58,12 @@ def name(node, ctx: Context):
 
 
 @node_visitor(ast.UnaryOp)
-def parse_unaryop(node, ctx: Context):
+def _(node: ast.UnaryOp, ctx: Context):
     operand = visit_ast(node.operand, ctx)
-    if operand is None:
-        return None
+    # if operand is None:
+    #     return None
 
-    if isinstance(operand, nodes.ResExpr):
-        return eval(
-            compile(ast.Expression(
-                ast.fix_missing_locations(type(node.op)(ast.Name('var')))),
-                    filename="<ast>",
-                    mode="eval"), {'var': operand.val}, globals())
-
-    operator = nodes.OPMAP[type(node.op)]
-
-    if operator == '!':
-        return nodes.create_oposite(operand)
-
-    return nodes.UnaryOpExpr(operand, operator)
+    return nodes.UnaryOpExpr(operand, type(node.op))
 
 
 @node_visitor(ast.Tuple)
@@ -136,16 +124,14 @@ def _(node, ctx: Context):
     return nodes.ResExpr(node.value)
 
 
+@node_visitor(ast.NameConstant)
+def _(node, ctx: Context):
+    return nodes.ResExpr(node.value)
+
+
 @node_visitor(ast.Index)
 def _(node, ctx: Context):
     return visit_ast(node.value, ctx)
-
-
-@node_visitor(ast.Assert)
-def _(node, ctx: Context):
-    test = visit_ast(node.test, ctx)
-    msg = node.msg.s if node.msg else 'Assertion failed.'
-    return nodes.Assert(test, msg=msg)
 
 
 @node_visitor(ast.Slice)
@@ -153,3 +139,9 @@ def _(node, ctx: Context):
     return nodes.SliceExpr(visit_ast(node.lower, ctx),
                            visit_ast(node.upper, ctx),
                            visit_ast(node.step, ctx))
+
+
+@node_visitor(ast.List)
+def _(node: ast.List, ctx: Context):
+    return nodes.ResExpr(
+        nodes.ConcatExpr([visit_ast(e, ctx) for e in node.elts]))

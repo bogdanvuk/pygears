@@ -2,7 +2,8 @@ import itertools
 from pygears.hls import HDLWriter, InstanceVisitor, parse_gear_body
 from pygears import registry
 from pygears.hls2.pydl import nodes as pydl
-from pygears.hls2 import Context
+from pygears.hls2.hdl import nodes
+from pygears.hls2 import Context, GearContext, FuncContext
 from pygears.typing import code, Bool
 from pygears.core.port import Port
 from dataclasses import dataclass, field
@@ -32,6 +33,10 @@ class BlockLines:
     content: List = field(default_factory=list)
     footer: List = field(default_factory=list)
 
+@dataclass
+class IfElseBlock(BlockLines):
+    pass
+
 
 class SVCompiler(InstanceVisitor):
     def __init__(self, ctx, visit_var, writer, selected):
@@ -41,6 +46,7 @@ class SVCompiler(InstanceVisitor):
         self.visit_var = visit_var
         self.selected = selected
         self.block_lines = []
+        self.block_stack = []
 
     @property
     def cur_block_lines(self):
@@ -56,62 +62,68 @@ class SVCompiler(InstanceVisitor):
         self.cur_block_lines.footer.append(line)
 
     def enter_block(self, block):
+        self.block_stack.append(block)
         bl = BlockLines()
         self.block_lines.append(bl)
 
         maybe_else = 'else ' if getattr(block, 'else_branch', False) else ''
 
-        in_cond = pydl.BinOpExpr((block.in_cond, block.opt_in_cond), '&&')
+        in_cond = pydl.BinOpExpr((block.in_cond, block.opt_in_cond),
+                                 pydl.opc.And)
 
         if in_cond != res_true:
-            if isinstance(in_cond, str) and in_cond in self.condtitions:
-                in_cond_val = self.condtitions[in_cond]
-            else:
-                in_cond_val = svexpr(in_cond)
+            in_cond_val = svexpr(in_cond)
 
             self.header(f'{maybe_else}if ({in_cond_val}) begin')
         elif maybe_else:
             self.header(f'else begin')
 
     def exit_block(self, block=None):
-        in_cond = pydl.BinOpExpr((block.in_cond, block.opt_in_cond), '&&')
-        if in_cond != res_true or getattr(block, 'else_branch', False):
-            self.footer('end')
-
         bl = self.block_lines.pop()
-        if bl.content:
-            self.write(bl)
+
+        self.write(bl)
+
+        self.block_stack.pop()
 
     def _assign_value(self, stmt):
-        if not self.selected(stmt.target):
+        if isinstance(stmt.target, pydl.SubscriptExpr):
+            target = stmt.target.val
+        elif isinstance(stmt.target, pydl.Name):
+            target = stmt.target
+            if target.name == 'out_res':
+                breakpoint()
+        else:
+            raise Exception
+
+        if not self.selected(target):
             return
 
         val = stmt.val
 
-        if isinstance(stmt.target.obj, pydl.Register):
-            svstmt = f"{stmt.target.name}_next = {svexpr(val)}"
+        if isinstance(target.obj, pydl.Register):
+            svstmt = f"{target.name}_next = {svexpr(val)}"
 
-            if stmt.target.name not in self.defaults:
-                self.defaults[stmt.target.name] = svstmt
-            elif svstmt != self.defaults[stmt.target.name]:
+            if target.name not in self.defaults:
+                self.defaults[target.name] = svstmt
+            elif svstmt != self.defaults[target.name]:
                 self.write(svstmt)
 
-            self.write(f"{stmt.target.name}_en = 1")
+            self.write(f"{target.name}_en = 1")
             return
 
-        if isinstance(stmt.target.obj, pydl.Interface):
-            if stmt.target.ctx == 'store':
-                svstmt = f"{stmt.target.name}_s = {svexpr(val)}"
+        if isinstance(target.obj, pydl.Interface):
+            if target.ctx == 'store':
+                svstmt = f"{target.name}_s = {svexpr(val)}"
 
-                if stmt.target.name not in self.defaults:
-                    self.defaults[stmt.target.name] = svstmt
-                elif svstmt != self.defaults[stmt.target.name]:
+                if target.name not in self.defaults:
+                    self.defaults[target.name] = svstmt
+                elif svstmt != self.defaults[target.name]:
                     self.write(svstmt)
 
-                # self.write(f"{stmt.target.name}_s = {svexpr(val)}")
-                self.write(f"{stmt.target.name}.valid = 1")
-            elif stmt.target.ctx == 'ready':
-                self.write(f"{stmt.target.name}.ready = 1")
+                # self.write(f"{target.name}_s = {svexpr(val)}")
+                self.write(f"{target.name}.valid = 1")
+            elif target.ctx == 'ready':
+                self.write(f"{target.name}.ready = 1")
 
             return
 
@@ -185,42 +197,17 @@ class SVCompiler(InstanceVisitor):
         self.footer('end')
 
     def visit_FuncReturn(self, node):
-        self.write(f"{svexpr(node.func.name)} = {svexpr(node.expr)};")
+        self.write(f"{svexpr(node.func.name)} = {svexpr(node.expr)}")
 
     def visit_FuncBlock(self, node):
-        size = ''
-        if int(node.ret_dtype) > 0:
-            size = f'[{int(node.ret_dtype)-1}:0]'
+        self.block_lines.append(BlockLines())
 
-        if getattr(node.ret_dtype, 'signed', False):
-            size = f'signed {size}'
-
-        self.write(f'function {size} {node.name};')
-
-        self.write.indent += 4
-        for name, arg in node.args.items():
-            self.write.block(svgen_typedef(arg.dtype, name))
-
-        for name, arg in node.args.items():
-            self.write(f'input {name}_t {svexpr(arg)};')
-
-        for name, expr in node.ctx.variables.items():
-            if name not in node.args:
-                self.write.block(svgen_typedef(expr.dtype, name))
-                self.write(f'{name}_t {name}_v;')
-                self.write()
-
-        if not node.stmts and not node.dflts:
-            return
-
-        self.write.indent -= 4
-
-        self.write(f'begin')
+        self.header('')
 
         self.visit_HDLBlock(node)
 
-        self.write(f'endfunction')
-        self.write('')
+        self.footer(f'endfunction')
+        self.footer('')
 
     def visit_CombSeparateStmts(self, node):
         if node.stmts:
@@ -242,6 +229,15 @@ class SVCompiler(InstanceVisitor):
         for stmt in node.stmts:
             self.visit(stmt)
 
+        content = []
+        for c in self.cur_block_lines.content:
+            if isinstance(c, BlockLines) and not c.content:
+                continue
+
+            content.append(c)
+
+        self.cur_block_lines.content = content
+
         self.exit_block(node)
 
     def visit_IfElseBlock(self, node):
@@ -257,6 +253,15 @@ class SVCompiler(InstanceVisitor):
                 stmt.else_branch = True
 
             self.visit(stmt)
+
+        content = []
+        for c in reversed(self.cur_block_lines.content):
+            if not content and not c.content:
+                continue
+
+            content.insert(0, c)
+
+        self.cur_block_lines.content = content
 
         self.exit_block(node)
 
@@ -287,8 +292,7 @@ def write_block(block, writer):
 
     if block.header:
         writer.indent -= 4
-        for f in block.footer:
-            writer.line(f)
+        writer.line('end')
 
 
 def typedef_or_inline(writer, dtype, name):
@@ -311,6 +315,7 @@ def write_module(ctx: Context,
                  hdl,
                  writer,
                  subsvmods,
+                 funcs,
                  template_env,
                  config=None):
     if config is None:
@@ -342,7 +347,6 @@ def write_module(ctx: Context,
         writer.line()
 
     for c, s in zip(ctx.submodules, subsvmods):
-
         port_map = {}
         for intf, p in zip(c.in_ports, c.gear.in_ports):
             port_map[p.basename] = intf.name
@@ -351,6 +355,25 @@ def write_module(ctx: Context,
             port_map[p.basename] = intf.name
 
         writer.block(s.get_inst(template_env, port_map))
+
+    for f_hdl, f_ctx in funcs:
+        size = ''
+        if int(f_hdl.ret_dtype) > 0:
+            size = f'[{int(f_hdl.ret_dtype)-1}:0]'
+
+        if getattr(f_hdl.ret_dtype, 'signed', False):
+            size = f'signed {size}'
+
+        writer.line(f'function {size} {f_hdl.name};')
+
+        writer.indent += 4
+
+        for name, expr in f_ctx.args.items():
+            name_t = typedef_or_inline(writer, expr.dtype, name)
+            writer.line(f'input {name_t} {name};')
+            writer.line()
+
+        svcompile(f_hdl, writer, f_ctx, '', selected=lambda x: True)
 
     if ctx.regs:
         writer.line(f'initial begin')
@@ -386,6 +409,15 @@ def compile_gear_body(gear, outdir, template_env):
             svmod = svgen_map[rtl_top]
             subsvmods.append(svmod)
 
+    funcs = []
+
+    def _get_funcs_rec(block):
+        for f_ast, f_ctx in block.funcs:
+            funcs.append((f_ast, f_ctx))
+            _get_funcs_rec(f_ast)
+
+    _get_funcs_rec(hdl_ast)
+
     gear.child.clear()
 
     writer = HDLWriter()
@@ -393,6 +425,7 @@ def compile_gear_body(gear, outdir, template_env):
                  hdl_ast,
                  writer,
                  subsvmods,
+                 funcs,
                  template_env,
                  config=gear.params.get('hdl', {}))
 

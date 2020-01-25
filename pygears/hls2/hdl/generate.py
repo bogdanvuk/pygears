@@ -1,8 +1,9 @@
 from ..pydl import nodes as pydl
+from ..pydl.ast import GearContext, FuncContext, Context
 from ..pydl.visitor import PydlExprRewriter
 from functools import singledispatch
 from pygears.typing import Bool, Uint, bitw
-from .nodes import AssignValue, CombBlock, HDLBlock, IfElseBlock
+from .nodes import AssignValue, CombBlock, HDLBlock, IfElseBlock, FuncReturn, FuncBlock
 # from .simplify import simplify
 
 res_true = pydl.ResExpr(Bool(True))
@@ -14,9 +15,19 @@ def in_condition(node, ctx):
     return res_true
 
 
+def bin_op_reduce(intfs, func, op):
+    intf1 = func(intfs[0])
+
+    if len(intfs) == 1:
+        return intf1
+    else:
+        return pydl.BinOpExpr([intf1, bin_op_reduce(intfs[1:], func, op)], op)
+
+
 @in_condition.register
 def _(node: pydl.IntfBlock, ctx):
-    return pydl.Component(node.intfs[0], 'valid')
+    return bin_op_reduce(node.intfs, lambda i: pydl.Component(i, 'valid'),
+                         pydl.opc.And)
 
 
 @in_condition.register
@@ -135,7 +146,7 @@ class HDLGenerator:
         self.state_id = 0
         self.alias_stack = []
         self.block_stack = []
-        self.forwarded = Scope()
+        self.forwarded = {}
 
     @property
     def alias(self):
@@ -162,12 +173,88 @@ class HDLGenerator:
 
         return visitor(node)
 
+    def generic_visit(self, node):
+        pass
+
+    def generic_traverse(self, node, block):
+        for stmt in node.stmts:
+            add_to_list(block.stmts, self.visit(stmt))
+
+        return block
+
+    def traverse_block(self, node, block):
+        method = 'traverse_' + node.__class__.__name__
+        traverse_visitor = getattr(self, method, self.generic_traverse)
+
+        return traverse_visitor(node, block)
+
+    def visit_all_Block(self, node):
+        block = HDLBlock(in_cond=self.in_condition(node),
+                         opt_in_cond=self.opt_in_condition(node),
+                         stmts=[],
+                         dflts={})
+        return self.traverse_block(node, block)
+
+    def visit_Assign(self, node):
+        expr = self.visit(node.expr)
+        ret = AssignValue(target=node.var, val=expr, dtype=node.var.dtype)
+
+        if (isinstance(node.var, pydl.Name)
+                and isinstance(node.var.obj, pydl.Register)):
+            if node.var.obj.any_init:
+                node.var.obj.val = expr
+                node.var.obj.any_init = False
+
+        if isinstance(node.var, pydl.SubscriptExpr):
+            if node.var.val.name not in self.forwarded:
+                raise Exception
+
+            var_name = node.var.val.name
+            if isinstance(node.var.index, pydl.ResExpr):
+                index_val = node.var.index.val
+                self.forwarded[var_name][index_val] = expr
+            else:
+                del self.forwarded[var_name]
+
+        elif isinstance(node.var, pydl.Name):
+            self.forwarded[node.var.name] = expr
+        else:
+            raise Exception
+
+        # print('------------')
+        # print(node.expr)
+        # print(expr)
+
+        return ret
+
+    def visit_all_Expr(self, expr):
+        return replace_aliases(self.forwarded, expr)
+
+    def opt_in_condition(self, node):
+        return self.visit_all_Expr(opt_in_condition(node, self.ctx))
+
+    def in_condition(self, node):
+        return self.visit_all_Expr(in_condition(node, self.ctx))
+
+    def visit_AssignValue(self, node):
+        return node
+
+    def visit_ContainerBlock(self, node):
+        block = IfElseBlock(stmts=[], dflts={})
+        return self.traverse_block(node, block)
+
+
+class ModuleGenerator(HDLGenerator):
     def generic_traverse(self, node, block):
         self.alias_stack.append({})
         self.block_stack.append(block)
         in_state_id = self.state_id
 
         stmts = {in_state_id: []}
+
+        if isinstance(node, pydl.IfBlock):
+            print(str(node))
+            breakpoint()
 
         if node.stmts and id(node.stmts[0]) in self.ctx.stmt_states:
             stmt_blocks = {
@@ -205,8 +292,9 @@ class HDLGenerator:
             state_in_cond = res_false
             for sid in stmt_blocks[state_id].state_ids:
                 in_cond = pydl.BinOpExpr(
-                    (self.ctx.ref('state'), pydl.ResExpr(sid)), '==')
-                state_in_cond = pydl.BinOpExpr((state_in_cond, in_cond), '||')
+                    (self.ctx.ref('state'), pydl.ResExpr(sid)), pydl.opc.Eq)
+                state_in_cond = pydl.BinOpExpr((state_in_cond, in_cond),
+                                               pydl.opc.Or)
 
             child = HDLBlock(stmts=stmts[state_id],
                              in_cond=state_in_cond,
@@ -218,9 +306,6 @@ class HDLGenerator:
         self.alias_stack.pop()
         self.block_stack.pop()
         return block
-
-    def generic_visit(self, node):
-        pass
 
     def visit_Module(self, node):
         block = HDLBlock(stmts=[], dflts={})
@@ -237,53 +322,15 @@ class HDLGenerator:
             AssignValue(self.ctx.ref('rst_cond', 'store'), res_true))
         return block
 
-    def traverse_block(self, node, block):
-        method = 'traverse_' + node.__class__.__name__
-        traverse_visitor = getattr(self, method, self.generic_traverse)
-
-        return traverse_visitor(node, block)
-
-    def visit_all_Block(self, node):
-        block = HDLBlock(in_cond=self.in_condition(node),
-                         opt_in_cond=self.opt_in_condition(node),
-                         stmts=[],
-                         dflts={})
-        return self.traverse_block(node, block)
-
-    def visit_Assign(self, node):
-        expr = self.visit(node.expr)
-        var_name = node.var.name
-
-        ret = AssignValue(target=node.var, val=expr, dtype=node.var.dtype)
-
-        if isinstance(node.var.obj, pydl.Register):
-            if node.var.obj.any_init:
-                node.var.obj.val = expr
-                node.var.obj.any_init = False
-
-        # print('------------')
-        # print(node.expr)
-        # print(expr)
-        self.forwarded[var_name] = expr
-
-        return ret
-
     def visit_IntfBlock(self, node):
         block = self.visit_all_Block(node)
-        block.stmts.append(
-            AssignValue(target=self.ctx.ref(node.intfs[0].name, 'ready'),
-                        val=res_true))
+
+        for i in node.intfs:
+            block.stmts.append(
+                AssignValue(target=self.ctx.ref(i.name, 'ready'),
+                            val=res_true))
 
         return block
-
-    def visit_all_Expr(self, expr):
-        return replace_aliases(self.forwarded, expr)
-
-    def opt_in_condition(self, node):
-        return self.visit_all_Expr(opt_in_condition(node, self.ctx))
-
-    def in_condition(self, node):
-        return self.visit_all_Expr(in_condition(node, self.ctx))
 
     def visit_Loop(self, node):
 
@@ -315,15 +362,16 @@ class HDLGenerator:
         block.stmts.append(
             AssignValue(target=self.ctx.ref('cycle_done'), val=res_true))
 
-        block.exit_cond = pydl.UnaryOpExpr(self.opt_in_condition(node), '!')
+        block.exit_cond = pydl.UnaryOpExpr(self.opt_in_condition(node),
+                                           pydl.opc.Not)
         return block
 
     def visit_IntfLoop(self, node):
         block = self.visit_Loop(node)
 
         block.exit_cond = pydl.ArrayOpExpr(
-            pydl.SubscriptExpr(pydl.Component(node.intf, 'data'), pydl.ResExpr(-1)),
-            '&')
+            pydl.SubscriptExpr(pydl.Component(node.intf, 'data'),
+                               pydl.ResExpr(-1)), pydl.opc.BitAnd)
 
         # block = HDLBlock(in_cond=self.in_condition(node),
         #                  opt_in_cond=self.opt_in_condition(node),
@@ -339,9 +387,6 @@ class HDLGenerator:
 
         # block = self.traverse_block(node, block)
         return block
-
-    def visit_AssignValue(self, node):
-        return node
 
     def visit_Yield(self, node):
         block = HDLBlock(exit_cond=pydl.Component(node.ports[0], 'ready'),
@@ -362,9 +407,21 @@ class HDLGenerator:
 
         return block
 
-    def visit_ContainerBlock(self, node):
-        block = IfElseBlock(stmts=[], dflts={})
+
+class FunctionGenerator(HDLGenerator):
+    def visit_Function(self, node, **kwds):
+        block = FuncBlock(stmts=[],
+                          dflts={},
+                          args=node.args,
+                          name=node.name,
+                          ret_dtype=self.ctx.ret_dtype)
+
+        self.func_block = block
+
         return self.traverse_block(node, block)
+
+    def visit_Return(self, node):
+        return FuncReturn(func=self.func_block, expr=node.expr)
 
 
 class RewriteExitCond:
@@ -392,9 +449,10 @@ class RewriteExitCond:
 
             if stmt.exit_cond != res_true:
                 next_in_cond = pydl.BinOpExpr(
-                    (pydl.UnaryOpExpr(stmt.opt_in_cond, '!'),
+                    (pydl.UnaryOpExpr(stmt.opt_in_cond, pydl.opc.Not),
                      pydl.BinOpExpr(
-                         (stmt.in_cond, stmt.exit_cond), '&&')), '||')
+                         (stmt.in_cond, stmt.exit_cond), pydl.opc.And)),
+                    pydl.opc.Or)
 
                 cur_block.stmts.append(
                     HDLBlock(in_cond=next_in_cond, stmts=[], dflts={}))
@@ -403,7 +461,8 @@ class RewriteExitCond:
                 if exit_cond == res_true:
                     exit_cond = next_in_cond
                 else:
-                    exit_cond = pydl.BinOpExpr((exit_cond, next_in_cond), '&&')
+                    exit_cond = pydl.BinOpExpr((exit_cond, next_in_cond),
+                                               pydl.opc.And)
 
         node.exit_cond = exit_cond
 
@@ -426,7 +485,8 @@ class RewriteExitCond:
                             (cur_cond, prev_cond), cond=child.opt_in_cond)
                     else:
                         prev_cond = pydl.BinOpExpr((pydl.UnaryOpExpr(
-                            child.opt_in_cond, '!'), cur_cond), '||')
+                            child.opt_in_cond, pydl.opc.Not), cur_cond),
+                                                   pydl.opc.Or)
 
         node.exit_cond = prev_cond
         return node
@@ -449,6 +509,9 @@ class RemoveDeadCode:
         stmts = node.stmts
         node.stmts = []
 
+        if (node.opt_in_cond == res_false) or (node.in_cond == res_false):
+            return None
+
         for stmt in stmts:
             child = self.visit(stmt)
             if child is not None:
@@ -460,14 +523,14 @@ class RemoveDeadCode:
         return node
 
 
-def generate(pydl_ast, ctx):
+def generate(pydl_ast, ctx: GearContext):
     state_num = len(ctx.state_root)
 
     if state_num > 1:
-        ctx.scope['state'] = pydl.Register('state',
-                                           Uint[bitw(state_num - 1)](0))
+        ctx.scope['state'] = pydl.Register(
+            'state', pydl.ResExpr(Uint[bitw(state_num - 1)](0)))
 
-    v = HDLGenerator(ctx)
+    v = ModuleGenerator(ctx)
     res = v.visit(pydl_ast)
 
     RewriteExitCond(ctx).visit(res)
@@ -478,4 +541,20 @@ def generate(pydl_ast, ctx):
 
     res = CombBlock(dflts={}, stmts=[res])
 
+    gen_all_funcs(res, ctx)
+
     return res
+
+
+def generate_func(pydl_ast, ctx: FuncContext):
+    v = FunctionGenerator(ctx)
+    res = v.visit(pydl_ast)
+
+    gen_all_funcs(res, ctx)
+
+    return res
+
+
+def gen_all_funcs(block, ctx: Context):
+    for f_ast, f_ctx in ctx.functions.values():
+        block.funcs.append((generate_func(f_ast, f_ctx), f_ctx))

@@ -6,50 +6,50 @@ from pygears.lib.sieve import sieve
 from pygears.hdl.sv import SVGenPlugin
 # from pygears.hdl.sv.svmod import SVModuleInst
 # from pygears.hdl.modinst import get_port_config
-# from functools import partial
+from functools import partial
 from pygears.rtl import flow_visitor, RTLPlugin
 from pygears.core.gear_inst import GearInstPlugin
 from pygears.rtl.gear import RTLGearHierVisitor, is_gear_instance
 
 
-# def index_to_sv_slice(dtype, key):
-#     subtype = dtype[key]
+def index_to_sv_slice(dtype, key):
+    subtype = dtype[key]
 
-#     if isinstance(key, slice):
-#         key = min(key.start, key.stop)
+    if isinstance(key, slice):
+        key = min(key.start, key.stop)
 
-#     if key is None or key == 0:
-#         low_pos = 0
-#     else:
-#         low_pos = int(dtype[:key])
+    if key is None or key == 0:
+        low_pos = 0
+    else:
+        low_pos = int(dtype[:key])
 
-#     high_pos = low_pos + int(subtype) - 1
+    high_pos = low_pos + int(subtype) - 1
 
-#     return f'{high_pos}:{low_pos}'
-
-
-# def get_sieve_stages_iter(node):
-#     for s in itertools.chain(getattr(node, 'pre_sieves', []), [node]):
-#         indexes = s.params['key']
-#         if not isinstance(indexes, tuple):
-#             indexes = (indexes, )
-
-#         dtype = s.in_ports[0].dtype
-#         out_type = s.out_ports[0].dtype
-#         slices = list(
-#             map(partial(index_to_sv_slice, dtype),
-#                 filter(lambda i: int(dtype[i]) > 0, indexes)))
-#         yield slices, out_type
+    return f'{high_pos}:{low_pos}'
 
 
-# def get_sieve_stages(node):
-#     stages = list(get_sieve_stages_iter(node))
-#     # If any of the sieves has shrunk data to 0 width, there is nothing to
-#     # do
-#     if any(i[0] == [] for i in stages):
-#         stages = []
+def get_sieve_stages_iter(node):
+    for s in itertools.chain(getattr(node, 'pre_sieves', []), [node]):
+        indexes = s.params['key']
+        if not isinstance(indexes, tuple):
+            indexes = (indexes, )
 
-#     return stages
+        dtype = s.in_ports[0].dtype
+        out_type = s.out_ports[0].dtype
+        slices = list(
+            map(partial(index_to_sv_slice, dtype),
+                filter(lambda i: int(dtype[i]) > 0, indexes)))
+        yield slices, out_type
+
+
+def get_sieve_stages(node):
+    stages = list(get_sieve_stages_iter(node))
+    # If any of the sieves has shrunk data to 0 width, there is nothing to
+    # do
+    if any(i[0] == [] for i in stages):
+        stages = []
+
+    return stages
 
 
 # class SVGenSieve(SVModuleInst):
@@ -102,6 +102,10 @@ class CollapseSievesVisitor(RTLGearHierVisitor):
     def sieve(self, node):
         if not hasattr(node, 'pre_sieves'):
             node.pre_sieves = []
+            node.params['stages'] = get_sieve_stages(node)
+
+        if config['gear/memoize']:
+            return
 
         sieve_cons = [
             p for p in node.consumers if is_gear_instance(p.node, sieve)
@@ -125,6 +129,7 @@ class CollapseSievesVisitor(RTLGearHierVisitor):
                     # If the consumer is a Sieve, just register this Sieve with
                     # it, and short circuit this one
                     consumer.pre_sieves = node.pre_sieves + [node]
+                    consumer.params['stages'] = get_sieve_stages(consumer)
                     iout.disconnect(cons_pin)
                     iin.connect(cons_pin)
 
@@ -141,5 +146,4 @@ class CollapseSievesVisitor(RTLGearHierVisitor):
 class RTLSievePlugin(SVGenPlugin, RTLPlugin, GearInstPlugin):
     @classmethod
     def bind(cls):
-        if not config['gear/memoize']:
-            cls.registry['rtl']['flow'].append(CollapseSievesVisitor)
+        cls.registry['rtl']['flow'].append(CollapseSievesVisitor)

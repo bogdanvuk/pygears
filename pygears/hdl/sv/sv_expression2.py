@@ -1,6 +1,6 @@
 from pygears.hls2.pydl import nodes as pydl
 from pygears.hls.utils import VisitError
-from pygears.typing import Array, Integer, Queue, code, typeof
+from pygears.typing import Array, Integer, Queue, code, typeof, Integral, Tuple, Union
 
 
 class SVExpressionVisitor:
@@ -28,6 +28,7 @@ class SVExpressionVisitor:
         return node.name
 
     def visit_Variable(self, node):
+        breakpoint()
         return f'{node.name}_v'
 
     def visit_Register(self, node):
@@ -76,13 +77,13 @@ class SVExpressionVisitor:
 
     def visit_AttrExpr(self, node):
         val = [self.visit(node.val)]
-        if node.attr:
-            if typeof(node.val.dtype, Queue):
-                try:
-                    node.val.dtype[node.attr[0]]
-                except KeyError:
-                    val.append('data')
-        return self.separator.join(val + node.attr)
+        # if node.attr:
+        #     if typeof(node.val.dtype, Queue):
+        #         try:
+        #             node.val.dtype[node.attr[0]]
+        #         except KeyError:
+        #             val.append('data')
+        return self.separator.join(val + [node.attr])
 
     def visit_CastExpr(self, node):
         res = self.visit(node.operand)
@@ -107,11 +108,11 @@ class SVExpressionVisitor:
 
     def visit_ArrayOpExpr(self, node):
         val = self.visit(node.array)
-        return f'{node.operator}({val})'
+        return f'{pydl.OPMAP[node.operator]}({val})'
 
     def visit_UnaryOpExpr(self, node):
         val = self.visit(node.operand)
-        return f'{node.operator}({val})'
+        return f'{pydl.OPMAP[node.operator]}({val})'
 
     def visit_BinOpExpr(self, node):
         ops = [self.visit(op) for op in node.operands]
@@ -123,10 +124,10 @@ class SVExpressionVisitor:
             width = max(int(node.dtype), int(node.operands[0].dtype),
                         int(node.operands[1].dtype))
             svrepr = (f"{width}'({ops[0]})"
-                      f" {node.operator} "
+                      f" {pydl.OPMAP[node.operator]} "
                       f"{width}'({ops[1]})")
         else:
-            svrepr = f'{ops[0]} {node.operator} {ops[1]}'
+            svrepr = f'{ops[0]} {pydl.OPMAP[node.operator]} {ops[1]}'
         return svrepr
 
     def visit_SubscriptExpr(self, node):
@@ -140,11 +141,15 @@ class SVExpressionVisitor:
             if isinstance(index, slice):
                 return f'{val}[{int(index.stop) - 1}:{index.start}]'
 
-            return f'{val}.{node.val.dtype.fields[index]}'
+            if typeof(node.val.dtype, (Array, Integral)):
+                return f'{val}[{index}]'
+            elif typeof(node.val.dtype, (Tuple, Union, Queue)):
+                return f'{val}.{node.val.dtype.fields[index]}'
 
         if typeof(node.val.dtype, Array) or typeof(node.val.dtype, Integer):
             return f'{val}[{self.visit(node.index)}]'
 
+        breakpoint()
         raise Exception('Unsupported slicing')
 
 

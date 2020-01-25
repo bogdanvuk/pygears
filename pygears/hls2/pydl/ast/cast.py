@@ -14,9 +14,9 @@ def fixp_resolver(opexp, cast_to):
     fract = cast_to.fract
 
     if fract > val_fract:
-        shift = nodes.BinOpExpr([opexp, nodes.ResExpr(Uint(fract - val_fract))], '<<')
+        shift = nodes.BinOpExpr([opexp, nodes.ResExpr(Uint(fract - val_fract))], nodes.opc.LShift)
     else:
-        shift = nodes.BinOpExpr([opexp, nodes.ResExpr(Uint(val_fract - fract))], '>>')
+        shift = nodes.BinOpExpr([opexp, nodes.ResExpr(Uint(val_fract - fract))], nodes.opc.RShift)
 
     return nodes.CastExpr(shift, cast_to)
 
@@ -25,7 +25,7 @@ def subscript(opexp, index):
     if not isinstance(index, slice) and isinstance(opexp, nodes.ConcatExpr):
         return opexp.operands[index]
     else:
-        return nodes.SubscriptExpr(opexp, index)
+        return nodes.SubscriptExpr(opexp, nodes.ResExpr(index))
 
 
 def tuple_resolver(opexp, cast_to):

@@ -11,7 +11,7 @@ from pygears.lib.rng import qrange as qrange_gear
 
 from . import nodes
 
-from .pydl_cast import resolve_cast_func
+from .cast import resolve_cast_func
 
 
 def call_floor(arg):
@@ -19,9 +19,9 @@ def call_floor(arg):
     int_cls = Int if t_arg.signed else Uint
     arg_to_int = nodes.CastExpr(arg, int_cls[t_arg.width])
     if t_arg.fract >= 0:
-        return nodes.BinOpExpr((arg_to_int, nodes.ResExpr(Uint(t_arg.fract))), '>>')
+        return nodes.BinOpExpr((arg_to_int, nodes.ResExpr(Uint(t_arg.fract))), nodes.opc.RShift)
     else:
-        return nodes.BinOpExpr((arg_to_int, nodes.ResExpr(Uint(-t_arg.fract))), '<<')
+        return nodes.BinOpExpr((arg_to_int, nodes.ResExpr(Uint(-t_arg.fract))), nodes.opc.LShift)
 
 
 def call_div(a, b, subprec):
@@ -45,7 +45,7 @@ def max_expr(op1, op2):
     if signed and typeof(op2.dtype, Uint):
         op2_compare = resolve_cast_func(op2, Int)
 
-    cond = nodes.BinOpExpr((op1_compare, op2_compare), '>')
+    cond = nodes.BinOpExpr((op1_compare, op2_compare), nodes.opc.GT)
     return nodes.ConditionalExpr(cond=cond, operands=(op1, op2))
 
 
@@ -71,7 +71,7 @@ def call_int(arg, **kwds):
 
 
 def call_all(arg, **kwds):
-    return nodes.ArrayOpExpr(arg, '&')
+    return nodes.ArrayOpExpr(arg, nodes.opc.BitAnd)
 
 
 def call_max(*arg, **kwds):
@@ -113,7 +113,7 @@ def call_clk(*arg, **kwds):
 def call_empty(obj, *arg, **kwds):
     assert not arg, 'Empty should be called without arguments'
     expr = nodes.IntfDef(intf=obj.intf, _name=obj.name, context='valid')
-    return nodes.UnaryOpExpr(expr, '!')
+    return nodes.UnaryOpExpr(expr, nodes.opc.Not)
 
 
 def call_gather(*arg, **kwds):
@@ -142,7 +142,6 @@ def call_signed(val):
 
 
 def call_code(val, cast_type=nodes.ResExpr(Uint)):
-    breakpoint()
     cast_type = code(val.dtype, cast_type.val)
     if val.dtype == cast_type:
         return val

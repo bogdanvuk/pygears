@@ -16,6 +16,7 @@ def test_multiple_arguments(tmpdir):
 
     @gear(hdl={'compile': True})
     async def add_real_part_module(x: TComplex, y: TComplex) -> b'x[0]':
+        res: x.dtype[0] + y.dtype[0]
         async with gather(x, y) as data:
             res = add_real_part_func(data[0], data[1])
             yield reinterpret(res, x.dtype[0])

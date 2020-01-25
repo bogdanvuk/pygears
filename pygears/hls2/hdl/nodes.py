@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Union
 
 from pygears.typing.base import TypingMeta
@@ -13,7 +13,9 @@ class AssignValue:
     val: Union[str, int, pydl.Expr]
     dtype: Union[TypingMeta, None] = None
     in_cond: pydl.Expr = pydl.ResExpr(True)
+    opt_in_cond: pydl.Expr = pydl.ResExpr(True)
     exit_cond: pydl.Expr = pydl.ResExpr(True)
+
 
 @dataclass
 class AssertValue:
@@ -53,7 +55,7 @@ class StateBlock(BaseBlock):
 class CombBlock(BaseBlock):
     in_cond: pydl.Expr = pydl.ResExpr(True)
     opt_in_cond: pydl.Expr = pydl.ResExpr(True)
-
+    funcs: List = field(default_factory=list)
 
 
 @dataclass
@@ -61,7 +63,9 @@ class FuncBlock(BaseBlock):
     args: List[pydl.VariableDef]
     name: str
     ret_dtype: pydl.PgType
-    hdl_data: Any
+    in_cond: pydl.Expr = pydl.ResExpr(True)
+    opt_in_cond: pydl.Expr = pydl.ResExpr(True)
+    funcs: List = field(default_factory=list)
 
 
 @dataclass

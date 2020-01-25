@@ -4,7 +4,7 @@ import ast
 import textwrap
 import inspect
 
-from .utils import get_function_source
+from .ast.utils import get_function_source
 
 logger = None
 

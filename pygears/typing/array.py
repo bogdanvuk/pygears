@@ -84,7 +84,7 @@ class Array(tuple, metaclass=ArrayType):
         if val is None:
             val = (None, ) * len(cls)
 
-        array_tpl = (v if typeof(type(v), cls[0]) else cls[0](v) for v in val)
+        array_tpl = (v if typeof(type(v), cls[0]) or v is None else cls[0](v) for v in val)
         return super(Array, cls).__new__(cls, array_tpl)
 
     def __eq__(self, other):

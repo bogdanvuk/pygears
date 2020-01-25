@@ -1,5 +1,6 @@
-import ast
+import ast as opc
 import typing
+import textwrap
 from dataclasses import dataclass, field
 
 from pygears.core.port import InPort, OutPort
@@ -9,54 +10,71 @@ from pygears.typing import (Bool, Integer, Queue, Tuple, Uint, Unit, is_type,
 from pygears.typing.base import TypingMeta
 import operator
 
-BOOLEAN_OPERATORS = {'|', '&', '^', '~', '!', '&&', '||'}
-BIN_OPERATORS = ['!', '==', '>', '>=', '<', '<=', '!=', '&&', '||']
+BOOLEAN_OPERATORS = {
+    opc.BitOr, opc.BitAnd, opc.BitXor, opc.Invert, opc.Not, opc.And, opc.Or
+}
+BIN_OPERATORS = [
+    opc.Not, opc.Eq, opc.Gt, opc.GtE, opc.Lt, opc.LtE, opc.NotEq, opc.And,
+    opc.Or
+]
 EXTENDABLE_OPERATORS = [
-    '+', '-', '*', '/', '%', '**', '<<', '>>', '|', '&', '^', '/', '~', '!'
+    opc.Add, opc.Sub, opc.Mult, opc.Div, opc.Mod, opc.Pow, opc.LShift,
+    opc.RShift, opc.BitOr, opc.BitAnd, opc.BitXor, opc.Div, opc.Invert, opc.Not
 ]
 OPMAP = {
-    ast.Add: '+',
-    ast.Sub: '-',
-    ast.Mult: '*',
-    ast.Div: '/',
-    ast.Mod: '%',
-    ast.Pow: '**',
-    ast.LShift: '<<',
-    ast.RShift: '>>',
-    ast.BitOr: '|',
-    ast.BitAnd: '&',
-    ast.BitXor: '^',
-    ast.FloorDiv: '/',
-    ast.Invert: '~',
-    ast.Not: '!',
-    ast.UAdd: '+',
-    ast.USub: '-',
-    ast.Eq: '==',
-    ast.Gt: '>',
-    ast.GtE: '>=',
-    ast.Lt: '<',
-    ast.LtE: '<=',
-    ast.NotEq: '!=',
-    ast.And: '&&',
-    ast.Or: '||'
+    opc.Add: '+',
+    opc.Sub: '-',
+    opc.Mult: '*',
+    opc.Div: '/',
+    opc.Mod: '%',
+    opc.Pow: '**',
+    opc.LShift: '<<',
+    opc.RShift: '>>',
+    opc.BitOr: '|',
+    opc.BitAnd: '&',
+    opc.BitXor: '^',
+    opc.FloorDiv: '/',
+    opc.Invert: '~',
+    opc.Not: '!',
+    opc.UAdd: '+',
+    opc.USub: '-',
+    opc.Eq: '==',
+    opc.Gt: '>',
+    opc.GtE: '>=',
+    opc.Lt: '<',
+    opc.LtE: '<=',
+    opc.NotEq: '!=',
+    opc.And: '&&',
+    opc.Or: '||'
 }
 
 PYOPMAP = {
-    '+': operator.__add__,
-    '&&': operator.__and__,
-    '<<': operator.__lshift__,
-    '!': operator.__not__,
-    '||': operator.__or__,
-    '>>': operator.__rshift__,
-    '-': operator.__sub__,
+    opc.Add: operator.__add__,
+    opc.And: operator.__and__,
+    opc.Div: operator.__truediv__,
+    opc.Eq: operator.__eq__,
+    opc.FloorDiv: operator.__floordiv__,
+    opc.LShift: operator.__lshift__,
+    opc.Mult: operator.__mul__,
+    opc.NotEq: operator.__ne__,
+    opc.Not: operator.__not__,
+    opc.Or: operator.__or__,
+    opc.RShift: operator.__rshift__,
+    opc.Sub: operator.__sub__,
+    opc.UAdd: operator.__pos__,
+    opc.USub: operator.__neg__,
 }
 
 
+def opex(op, *operands):
+    return PYOPMAP[op](*(p.val for p in operands))
+
+
 def create_oposite(expr):
-    if isinstance(expr, UnaryOpExpr) and expr.operator == '!':
+    if isinstance(expr, UnaryOpExpr) and expr.operator == opc.Not:
         return expr.operand
 
-    return UnaryOpExpr(expr, '!')
+    return UnaryOpExpr(expr, opc.Not)
 
 
 def binary_expr(expr1, expr2, operator):
@@ -73,11 +91,11 @@ def binary_expr(expr1, expr2, operator):
 
 
 def and_expr(expr1, expr2):
-    return binary_expr(expr1, expr2, '&&')
+    return binary_expr(expr1, expr2, opc.And)
 
 
 def or_expr(expr1, expr2):
-    return binary_expr(expr1, expr2, '||')
+    return binary_expr(expr1, expr2, opc.Or)
 
 
 def find_sub_dtype(val):
@@ -120,7 +138,14 @@ OpType = typing.Union[Expr, PgType, str]
 class ResExpr(Expr):
     val: typing.Union[PgType, typing.Sequence, None]
 
+    def __post_init__(self):
+        while isinstance(self.val, ResExpr):
+            self.val = self.val.val
+
     def __repr__(self):
+        return f'ResExpr({repr(self.val)})'
+
+    def __str__(self):
         return repr(self.val)
 
     @property
@@ -192,6 +217,9 @@ class Interface(Expr):
         except AttributeError:
             return find_name(self.intf)
 
+    def __str__(self):
+        return self.name
+
     @property
     def dtype(self):
         return find_sub_dtype(self.intf)
@@ -218,6 +246,7 @@ class Register(Expr):
 
         return self.val.dtype
 
+
 @dataclass(frozen=True)
 class Name(Expr):
     name: str
@@ -225,11 +254,15 @@ class Name(Expr):
     ctx: str = 'load'
 
     def __repr__(self):
+        return f'Id({self.name})'
+
+    def __str__(self):
         return self.name
 
     @property
     def dtype(self):
         return self.obj.dtype
+
 
 @dataclass
 class InterfacePull(Expr):
@@ -238,6 +271,7 @@ class InterfacePull(Expr):
     @property
     def dtype(self):
         return self.intf.dtype
+
 
 @dataclass
 class Component(Expr):
@@ -256,7 +290,6 @@ class Component(Expr):
 
     def __hash__(self):
         return hash(self.val.name)
-
 
 
 @dataclass
@@ -335,11 +368,6 @@ class RegNextStmt(Expr):
     @property
     def name(self):
         return find_name(self.reg)
-
-
-@dataclass
-class ReturnStmt:
-    val: Expr
 
 
 @dataclass
@@ -424,7 +452,20 @@ class IntfValidExpr(IntfOpExpr):
 
 @dataclass
 class ConcatExpr(Expr):
-    operands: typing.Sequence[OpType]
+    def __repr__(self):
+        return '(' + ', '.join([repr(v) for v in self.operands]) + ')'
+
+    def __init__(self, operands: typing.Sequence[Expr]):
+        pass
+
+    def __new__(cls, operands: typing.Sequence[Expr]):
+        if all(isinstance(v, ResExpr) for v in operands):
+            return ResExpr(tuple(v.val for v in operands))
+
+        inst = super().__new__(cls)
+        inst.operands = operands
+
+        return inst
 
     @property
     def dtype(self):
@@ -436,20 +477,21 @@ class UnaryOpExpr(Expr):
         pass
 
     def __repr__(self):
-        return f'{self.operator}({self.operand})'
+        return f'{OPMAP[self.operator]}({self.operand})'
 
     def __new__(cls, operand, operator):
         if isinstance(operand, ResExpr):
-            return ResExpr(PYOPMAP[operator](operand.val))
+            return ResExpr(opex(operator, operand))
 
-        if operator == '!' and isinstance(operand, BinOpExpr):
-            if operand.operator == "==":
-                return BinOpExpr(operand.operands, "!=")
+        if operator == opc.Not and isinstance(operand, BinOpExpr):
+            if operand.operator == opc.Eq:
+                return BinOpExpr(operand.operands, opc.NotEq)
 
-            if operand.operator == "!=":
-                return BinOpExpr(operand.operands, "==")
+            if operand.operator == opc.NotEq:
+                return BinOpExpr(operand.operands, opc.Eq)
 
-        if operator == '!' and isinstance(operand, UnaryOpExpr) and operand.operator == '!':
+        if operator == opc.Not and isinstance(
+                operand, UnaryOpExpr) and operand.operator == opc.Not:
             return operand.operand
 
         inst = super().__new__(cls)
@@ -459,7 +501,7 @@ class UnaryOpExpr(Expr):
 
     @property
     def dtype(self):
-        return Uint[1] if (self.operand == '!') else self.operand.dtype
+        return Uint[1] if (self.operand == opc.Not) else self.operand.dtype
 
 
 @dataclass
@@ -489,7 +531,8 @@ class SliceExpr(Expr):
         pass
 
     def __new__(cls, start: OpType, stop: OpType, step: OpType):
-        if isinstance(start, ResExpr) and isinstance(stop, ResExpr) and isinstance(step, ResExpr):
+        if isinstance(start, ResExpr) and isinstance(
+                stop, ResExpr) and isinstance(step, ResExpr):
             return ResExpr(slice(start.val, stop.val, step.val))
 
         inst = super().__new__(cls)
@@ -501,23 +544,29 @@ class SliceExpr(Expr):
 
 class BinOpExpr(Expr):
     def __repr__(self):
-        return f'({self.operands[0]} {self.operator} {self.operands[1]})'
+        try:
+            return f'{type(self).__name__}(operands={repr(self.operands)}, operator={self.operator.__name__})'
+        except:
+            return f'{type(self).__name__}(operands={repr(self.operands)}, operator={self.operator})'
 
-    def __init__(self, operands: typing.Tuple[OpType], operator: str):
+    def __str__(self):
+        return f'({self.operands[0]} {OPMAP[self.operator]} {self.operands[1]})'
+
+    def __init__(self, operands: typing.Tuple[OpType], operator):
         pass
 
-    def __new__(cls, operands: typing.Tuple[OpType], operator: str):
+    def __new__(cls, operands: typing.Tuple[OpType], operator):
         op1, op2 = operands
         if isinstance(op1, ResExpr) and isinstance(op2, ResExpr):
-            return ResExpr(PYOPMAP[operator](op1.val, op2.val))
+            return ResExpr(opex(operator, op1, op2))
 
-        if operator == '&&':
+        if operator == opc.And:
             if isinstance(op1, ResExpr):
                 return op2 if op1.val else op1
             if isinstance(op2, ResExpr):
                 return op1 if op2.val else op2
 
-        elif operator == '||':
+        elif operator == opc.Or:
             if isinstance(op1, ResExpr):
                 return op1 if op1.val else op2
             if isinstance(op2, ResExpr):
@@ -533,13 +582,13 @@ class BinOpExpr(Expr):
         if self.operator in BIN_OPERATORS:
             return Uint[1]
 
-        if (self.operator in ('<<', '>>')) and isinstance(
+        if (self.operator in (opc.LShift, opc.RShift)) and isinstance(
                 self.operands[1], ResExpr):
             op2 = self.operands[1].val
         else:
             op2 = self.operands[1].dtype
 
-        res_t = eval(f'op1 {self.operator} op2', {
+        res_t = eval(f'op1 {OPMAP[self.operator]} op2', {
             'op1': self.operands[0].dtype,
             'op2': op2
         })
@@ -562,14 +611,21 @@ class ArrayOpExpr(Expr):
 
 class SubscriptExpr(Expr):
     def __repr__(self):
-        return f'({self.val}[{self.index}])'
+        return f'{type(self).__name__}(val={repr(self.val)}, index={repr(self.index)})'
+
+    def __str__(self):
+        return f'{self.val}[{self.index}]'
 
     def __init__(self, val: Expr, index: Expr):
         pass
 
     def __new__(cls, val: Expr, index: Expr):
-        if isinstance(val, ResExpr) and isinstance(index, ResExpr):
-            return ResExpr(val.val[index.val])
+        if isinstance(index, ResExpr):
+            if isinstance(val, ResExpr):
+                return ResExpr(val.val[index.val])
+
+            if isinstance(val, ConcatExpr):
+                return val.operands[index.val]
 
         inst = super().__new__(cls)
         inst.val = val
@@ -593,8 +649,8 @@ class AttrExpr(Expr):
     val: Expr
     attr: str
 
-    def __repr__(self):
-        return f'({self.val}.{self.attr})'
+    def __str__(self):
+        return f'{self.val}.{self.attr}'
 
     def __init__(self, val: Expr, attr: str):
         pass
@@ -632,7 +688,6 @@ class AttrExpr(Expr):
 
 
 class ConditionalExpr(Expr):
-
     def __repr__(self):
         return f'({self.cond} ? {self.operands[0]} : {self.operands[1]})'
 
@@ -649,10 +704,10 @@ class ConditionalExpr(Expr):
             return op1
 
         if isinstance(op1, ResExpr) and not op1.val:
-            return BinOpExpr((UnaryOpExpr(cond, '!'), op2), '&&')
+            return BinOpExpr((UnaryOpExpr(cond, opc.Not), op2), opc.And)
 
         if isinstance(op2, ResExpr) and not op2.val:
-            return BinOpExpr((cond, op1), '&&')
+            return BinOpExpr((cond, op1), opc.And)
 
         inst = super().__new__(cls)
         inst.operands = operands
@@ -709,7 +764,6 @@ class BothSubCond(SubConditions):
 class Block:
     # TODO : newer versions of Python will not need the string
     stmts: typing.List[typing.Union['Block', Expr]]
-    id: int = field(init=False, default=None)
 
     # @property
     # def in_cond(self):
@@ -759,6 +813,14 @@ class IntfLoop(BaseLoop):
 class IfBlock(Block):
     test: Expr
 
+    def __str__(self):
+        header = f'if {str(self.test)}:'
+        body = ''
+        for s in self.stmts:
+            body += str(s)
+
+        return f'{header}\n{textwrap.indent(body, "  ")}end\n'
+
     # @property
     # def in_cond(self):
     #     return self._in_cond
@@ -768,8 +830,8 @@ class IfBlock(Block):
     #     if self.in_cond is not None:
     #         from .conditions_utils import InCond, CondExpr
     #         in_c = InCond(self.id)
-    #         return CycleSubCond(CondExpr(sub_expr=UnaryOpExpr(in_c, '!')),
-    #                             '||')
+    #         return CycleSubCond(CondExpr(sub_expr=UnaryOpExpr(in_c, opc.Not)),
+    #                             opc.Or)
     #     return CycleSubCond()
 
     # @property
@@ -777,7 +839,7 @@ class IfBlock(Block):
     #     if self.in_cond is not None:
     #         from .conditions_utils import InCond, CondExpr
     #         in_c = InCond(self.id)
-    #         return ExitSubCond(CondExpr(sub_expr=UnaryOpExpr(in_c, '!')), '||')
+    #         return ExitSubCond(CondExpr(sub_expr=UnaryOpExpr(in_c, opc.Not)), opc.Or)
     #     return ExitSubCond()
 
 
@@ -818,12 +880,29 @@ class Statement:
 
 
 @dataclass
+class Return(Statement):
+    pass
+
+
+@dataclass
 class Yield(Statement):
     ports: typing.List[IntfDef]
+
+    def __str__(self):
+        if len(self.ports) == 1:
+            return f'{str(self.ports[0])} <= {self.expr.val[0]}\n'
+        else:
+            assigns = ''
+            for p, e in zip(self.ports, self.expr.vals):
+                assigns += f'{str(p)} <= {e}\n'
+
+            return assigns
+
 
 @dataclass
 class Assign(Statement):
     var: Variable
+
 
 @dataclass
 class Assert(Statement):
@@ -832,19 +911,9 @@ class Assert(Statement):
 
 @dataclass
 class Function(Block):
-    id: int = field(init=False, default=0)
-    args: typing.List[str]
     name: str
+    args: typing.List[str]
     ret_dtype: PgType
-    hdl_data: typing.Any
-
-    @property
-    def cycle_cond(self):
-        return CycleSubCond()
-
-    @property
-    def exit_cond(self):
-        return ExitSubCond()
 
 
 @dataclass

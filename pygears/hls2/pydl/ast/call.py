@@ -1,10 +1,12 @@
 import ast
+import typing
 import inspect
-from . import Submodule, Context, SyntaxError, node_visitor, nodes, visit_ast, visit_block
-from ..pydl_builtins import builtins
+from . import Submodule, Context, FuncContext, SyntaxError, node_visitor, nodes, visit_ast, visit_block, Function
+from .builtins import builtins
+from .cast import resolve_cast_func
 from pygears import Intf, registry
 from pygears.core.partial import extract_arg_kwds, combine_arg_kwds, Partial
-from pygears.typing import is_type
+from pygears.typing import is_type, typeof, Tuple, Array
 
 
 def parse_func_args(args, kwds, ctx):
@@ -14,25 +16,24 @@ def parse_func_args(args, kwds, ctx):
     if kwds is None:
         kwds = []
 
-    arg_unpacked = []
+    func_args = []
     for arg in args:
         if isinstance(arg, ast.Starred):
-            breakpoint()
-            # var = get_context_var(arg.value.id, ctx)
+            var = visit_ast(arg.value, ctx)
 
-            # if not isinstance(var, ConcatExpr):
+            # if not isinstance(var, nodes.ConcatExpr):
             #     raise VisitError(f'Cannot unpack variable "{arg.value.id}"')
 
-            # for i in range(len(var.operands)):
-            #     arg_unpacked.append(
-            #         ast.fix_missing_locations(
-            #             ast.Subscript(value=arg.value,
-            #                           slice=ast.Index(value=ast.Num(i)),
-            #                           ctx=ast.Load)))
-        else:
-            arg_unpacked.append(arg)
+            # if not typeof(var.dtype, (Tuple, Array)):
+            #     breakpoint()
+            #     raise Exception('Unsupported')
 
-    func_args = [visit_ast(arg, ctx) for arg in arg_unpacked]
+            for i in range(len(var.dtype)):
+                func_args.append(
+                    nodes.SubscriptExpr(val=var, index=nodes.ResExpr(i)))
+
+        else:
+            func_args.append(visit_ast(arg, ctx))
 
     func_kwds = {kwd.arg: visit_ast(kwd.value, ctx) for kwd in kwds}
 
@@ -78,13 +79,20 @@ def cal_gear(func, args, kwds, ctx: Context):
         ctx.scope[intf_name] = pydl_intf
         out_ports.append(pydl_intf)
 
-
     for a, intf in zip(args, in_ports):
-        ctx.pydl_parent_block.stmts.append(nodes.Assign(a, ctx.ref(intf.name, ctx='store')))
+        ctx.pydl_parent_block.stmts.append(
+            nodes.Assign(a, ctx.ref(intf.name, ctx='store')))
 
     ctx.submodules.append(Submodule(gear_inst, in_ports, out_ports))
 
     return ctx.ref(out_ports[0].name)
+
+
+def form_gear_args(args, kwds, func):
+    kwd_args, kwds_only = extract_arg_kwds(kwds, func)
+    args_only = combine_arg_kwds(args, kwd_args, func)
+
+    return args_only, kwds_only
 
 
 @node_visitor(ast.Call)
@@ -97,34 +105,45 @@ def _(node, ctx: Context):
 
     args, kwds = parse_func_args(node.args, node.keywords, ctx)
 
-    kwd_args, kwds_only = extract_arg_kwds(kwds, func)
-    args_only = combine_arg_kwds(args, kwd_args, func)
-
     if (func in builtins) and (isinstance(builtins[func], Partial)):
-        return cal_gear(builtins[func], args_only, kwds_only, ctx)
+        return cal_gear(builtins[func], *form_gear_args(args, kwds, func), ctx)
 
     if isinstance(func, Partial):
-        return cal_gear(func, args_only, kwds_only, ctx)
+        return cal_gear(func, *form_gear_args(args, kwds, func), ctx)
 
     # If all arguments are resolved expressions, maybe we can evaluate the
     # function at compile time
-    if (all(isinstance(node, nodes.ResExpr) for node in args_only) and all(
-            isinstance(node, nodes.ResExpr) for node in kwds_only.values())):
+    if (all(isinstance(node, nodes.ResExpr) for node in args)
+            and all(isinstance(node, nodes.ResExpr)
+                    for node in kwds.values())):
         return nodes.ResExpr(
-            func(*(a.val for a in args_only),
-                 **{n: v.val
-                    for n, v in kwds_only.items()}))
+            func(*(a.val for a in args), **{n: v.val
+                                            for n, v in kwds.items()}))
 
     # If we are dealing with bound methods
     if not inspect.isbuiltin(func) and hasattr(func, '__self__'):
         raise Exception
 
     if func in builtins:
-        return builtins[func](*args_only, **kwds_only)
+        return builtins[func](*args, **kwds)
     elif is_type(func):
-        raise Exception
-        # from .hdl_cast import resolve_cast_func
-        # func = resolve_cast_func(func_args[0], func)
+        return resolve_cast_func(args[0], func)
+    else:
+        return parse_func_call(func, args, kwds, ctx)
 
     if isinstance(func, nodes.Expr):
         return func
+
+
+def parse_func_call(func: typing.Callable, args, kwds, ctx: Context):
+    funcref = Function(func, args, kwds, uniqueid=len(ctx.functions))
+    if not funcref in ctx.functions:
+        func_ctx = FuncContext(funcref, args, kwds)
+        pydl_ast = visit_ast(funcref.ast, func_ctx)
+        ctx.functions[funcref] = (pydl_ast, func_ctx)
+    else:
+        (pydl_ast, func_ctx) = ctx.functions[funcref]
+
+    return nodes.FunctionCall(operands=list(func_ctx.args.values()),
+                              ret_dtype=func_ctx.ret_dtype,
+                              name=funcref.name)

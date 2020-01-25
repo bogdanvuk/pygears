@@ -14,9 +14,9 @@ def fixp_resolver(opexp, cast_to):
     fract = cast_to.fract
 
     if fract > val_fract:
-        shift = expr.BinOpExpr([opexp, expr.ResExpr(Uint(fract - val_fract))], '<<')
+        shift = expr.BinOpExpr([opexp, expr.ResExpr(Uint(fract - val_fract))], expr.opc.LShift)
     else:
-        shift = expr.BinOpExpr([opexp, expr.ResExpr(Uint(val_fract - fract))], '>>')
+        shift = expr.BinOpExpr([opexp, expr.ResExpr(Uint(val_fract - fract))], expr.opc.RShift)
 
     return expr.CastExpr(shift, cast_to)
 

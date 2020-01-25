@@ -1,4 +1,5 @@
 from pygears import gear
+from typing import List
 from pygears.typing import Queue, Uint, bitw, Array
 
 
@@ -17,6 +18,8 @@ async def qdeal(din: Queue, *, num,
     Returns: A tuple of Queues one level lower than the input. """
 
     i: Uint[bitw(num)] = 0
+    out_res: List[din.dtype.sub(), num]
+    out_eot: Uint[lvl]
 
     while True:
         async with din as val:

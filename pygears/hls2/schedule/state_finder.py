@@ -34,7 +34,7 @@ class ContextFinder(PydlVisitor):
     def find_context(self, node, scope):
         self.switch = []
         self.scope = scope
-        self.visit(node)
+        # self.visit(node)
         return self.switch
 
     def visit_list(self, node):

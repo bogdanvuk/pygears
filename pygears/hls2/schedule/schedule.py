@@ -160,7 +160,7 @@ def schedule(pydl_ast):
     states = StateFinder()
     states.visit(schedule)
     # BlockId().visit(schedule)
-    print(pformat(schedule))
+    # print(pformat(schedule))
 
     # if hls_debug_log_enabled():
     #     hls_debug(cblock_pformat(schedule), title='State Structure')
