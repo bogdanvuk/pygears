@@ -257,7 +257,10 @@ class Name(Expr):
         return f'Id({self.name})'
 
     def __str__(self):
-        return self.name
+        if self.ctx in ['load', 'store']:
+            return self.name
+        else:
+            return f'{self.name}.{self.ctx}'
 
     @property
     def dtype(self):
@@ -271,6 +274,9 @@ class InterfacePull(Expr):
     @property
     def dtype(self):
         return self.intf.dtype
+
+    def __str__(self):
+        return f'{str(self.intf)}.data'
 
 
 @dataclass
@@ -453,7 +459,10 @@ class IntfValidExpr(IntfOpExpr):
 @dataclass
 class ConcatExpr(Expr):
     def __repr__(self):
-        return '(' + ', '.join([repr(v) for v in self.operands]) + ')'
+        return 'ConcatExpr(' + ', '.join([repr(v) for v in self.operands]) + ')'
+
+    def __str__(self):
+        return '(' + ', '.join([str(v) for v in self.operands]) + ')'
 
     def __init__(self, operands: typing.Sequence[Expr]):
         pass
@@ -603,6 +612,9 @@ class BinOpExpr(Expr):
 class ArrayOpExpr(Expr):
     array: OpType
     operator: str
+
+    def __str__(self):
+        return f'{OPMAP[self.operator]}({str(self.array)})'
 
     @property
     def dtype(self):
@@ -819,38 +831,33 @@ class IfBlock(Block):
         for s in self.stmts:
             body += str(s)
 
-        return f'{header}\n{textwrap.indent(body, "  ")}end\n'
-
-    # @property
-    # def in_cond(self):
-    #     return self._in_cond
-
-    # @property
-    # def cycle_cond(self):
-    #     if self.in_cond is not None:
-    #         from .conditions_utils import InCond, CondExpr
-    #         in_c = InCond(self.id)
-    #         return CycleSubCond(CondExpr(sub_expr=UnaryOpExpr(in_c, opc.Not)),
-    #                             opc.Or)
-    #     return CycleSubCond()
-
-    # @property
-    # def exit_cond(self):
-    #     if self.in_cond is not None:
-    #         from .conditions_utils import InCond, CondExpr
-    #         in_c = InCond(self.id)
-    #         return ExitSubCond(CondExpr(sub_expr=UnaryOpExpr(in_c, opc.Not)), opc.Or)
-    #     return ExitSubCond()
+        return f'{header}\n{textwrap.indent(body, "    ")}'
 
 
 @dataclass
 class ElseBlock(Block):
-    pass
+    def __str__(self):
+        body = ''
+        for s in self.stmts:
+            body += str(s)
+
+        return f'else:\n{textwrap.indent(body, "    ")}'
+
 
 
 @dataclass
 class ContainerBlock(Block):
-    pass
+    def __str__(self):
+        body = ''
+        for i, s in enumerate(self.stmts):
+            ss = str(s)
+            if i > 1 and isinstance(s, IfBlock):
+                body += 'el'
+
+            body += ss
+
+        return body
+
     # stmts: typing.List[Block]
 
     # @property

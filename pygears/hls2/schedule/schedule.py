@@ -1,50 +1,44 @@
-from .scheduling_types import Leaf, MutexCBlock, SeqCBlock
-from .state_finder import BlockId, StateFinder
-from .visitor import pformat
 from ..pydl import nodes, PydlVisitor
 
-ASYNC_TYPES = (nodes.Yield, )
 
+class PPrinter(PydlVisitor):
+    def __init__(self):
+        self.msg = ''
+        self.indent = 0
 
-def check_if_blocking(stmt):
-    if isinstance(stmt, ASYNC_TYPES):
-        return stmt
-    if isinstance(stmt, nodes.Block):
-        return find_hier_blocks(stmt.stmts)
-    return None
+    def enter_block(self, node):
+        self.write_line(f'{type(node).__name__} {node.state}')
+        self.indent += 4
 
+    def exit_block(self):
+        self.indent -= 4
 
-def find_hier_blocks(body):
-    hier = []
-    for stmt in body:
-        block = check_if_blocking(stmt)
-        if block:
-            hier.append(block)
-    return hier
+    def write_line(self, line):
+        self.msg += f'{" "*self.indent}{line}\n'
 
+    def visit_all_Block(self, node):
+        self.enter_block(node)
 
-def non_state_block(block):
-    return (isinstance(block, MutexCBlock)
-            and (not find_hier_blocks(block.pydl_block.stmts)))
+        for stmt in node.stmts:
+            self.visit(stmt)
 
+        self.exit_block()
 
-def add_prolog(child, stmts):
-    if child.prolog:
-        child.prolog.extend(stmts)
-    else:
-        child.prolog = stmts
+        return self.msg
 
-
-def add_epilog(child, stmts):
-    if child.epilog:
-        child.epilog.extend(stmts)
-    else:
-        child.epilog = stmts
+    def visit_all_Statement(self, node):
+        self.write_line(f'{type(node).__name__} {node.state}')
+        return self.msg
 
 
 class Scheduler(PydlVisitor):
     def __init__(self):
         self.scope = []
+        self.state = []
+        self.path = []
+        self.state_root = []
+        self.stmt_states = {}
+        self.max_state = 0
 
     def enter_block(self, block):
         self.scope.append(block)
@@ -52,119 +46,79 @@ class Scheduler(PydlVisitor):
     def exit_block(self):
         self.scope.pop()
 
-    def visit_block(self, cnode, body):
-        self.enter_block(cnode)
+    def new_state(self):
+        self.max_state += 1
+        return self.max_state
 
-        free_stmts = []
-        leaf_found = None
+    @property
+    def parent(self):
+        return self.scope[-1]
 
-        for stmt in body:
-            child = self.visit(stmt)
-            if (child is None) or non_state_block(child):
-                if leaf_found:
-                    if isinstance(leaf_found, Leaf):
-                        leaf_found.pydl_blocks.append(stmt)
-                    else:
-                        if leaf_found.epilog:
-                            leaf_found.epilog.append(stmt)
-                        else:
-                            leaf_found.epilog = [stmt]
-                else:
-                    free_stmts.append(stmt)
-            else:
-                if leaf_found:
-                    cnode.child.append(leaf_found)
-                    assert not free_stmts
-                else:
-                    if free_stmts:
-                        if isinstance(child, Leaf):
-                            child.pydl_blocks = free_stmts + child.pydl_blocks
-                        else:
-                            add_prolog(child, free_stmts)
-                            free_stmts = []
-
-                leaf_found = child
-                child = None
-
-        if leaf_found:
-            cnode.child.append(leaf_found)
+    def visit_all_Block(self, node):
+        if self.scope:
+            node.state = {self.parent.cur_state}
+            node.blocked = self.parent.blocked
+            node.cur_state = self.parent.cur_state
         else:
-            if (not cnode.child) and free_stmts:
-                cnode.child.append(
-                    Leaf(parent=self.scope[-1], pydl_blocks=free_stmts))
+            node.blocked = False
+            node.cur_state = 0
+
+        node.blocking = False
+
+        self.enter_block(node)
+
+        for stmt in node.stmts:
+            self.visit(stmt)
+
+            if stmt.blocking:
+                node.cur_state = stmt.cur_state
+                node.state.update(stmt.state)
+                node.blocked = True
+
+        if node.blocked:
+            node.blocking = True
 
         self.exit_block()
 
-        return cnode
+    def visit_ContainerBlock(self, node):
+        node.state = {self.parent.cur_state}
+        node.blocked = self.parent.blocked
+        node.blocking = False
+        node.cur_state = self.parent.cur_state
+
+        self.enter_block(node)
+
+        for stmt in node.stmts:
+            self.visit(stmt)
+
+            if stmt.blocking:
+                node.state.update(stmt.state)
+                node.blocking = True
+
+        self.exit_block()
 
     def visit_Module(self, node):
-        cblock = SeqCBlock(parent=None, pydl_block=node, child=[])
-        return self.visit_block(cblock, node.stmts)
-
-    def visit_IntfBlock(self, node):
-        cblock = SeqCBlock(parent=self.scope[-1], pydl_block=node, child=[])
-        return self.visit_block(cblock, node.stmts)
-
-    def visit_IntfLoop(self, node):
-        cblock = SeqCBlock(parent=self.scope[-1], pydl_block=node, child=[])
-        return self.visit_block(cblock, node.stmts)
-
-    def visit_IfBlock(self, node):
-        cblock = MutexCBlock(parent=self.scope[-1], pydl_block=node, child=[])
-        hier = find_hier_blocks(node.stmts)
-        if len(hier) > 1:
-            cblock = SeqCBlock(parent=self.scope[-1],
-                               pydl_block=node,
-                               child=[])
-
-        return self.visit_block(cblock, node.stmts)
-
-    def visit_ElseBlock(self, node):
-        return self.visit_IfBlock(node)
-
-    def visit_CombBlock(self, node):
-        cblock = MutexCBlock(parent=self.scope[-1], pydl_block=node, child=[])
-        return self.visit_block(cblock, node.stmts)
-
-    def visit_ContainerBlock(self, node):
-        cblock = MutexCBlock(parent=self.scope[-1], pydl_block=node, child=[])
-        for stmt in node.stmts:
-            cblock.child.append(self.visit(stmt))
-        return cblock
-
-    def visit_Loop(self, node):
-        hier = find_hier_blocks(node.stmts)
-        if hier:
-            cblock = SeqCBlock(parent=self.scope[-1],
-                               pydl_block=node,
-                               child=[])
-            return self.visit_block(cblock, node.stmts)
-
-        raise Exception("If loop isn't blocking stmts should be merged")
+        node.state = set()
+        self.visit_all_Block(node)
 
     def visit_Yield(self, node):
-        cblock = SeqCBlock(parent=self.scope[-1], pydl_block=node, child=[])
-        cblock.child.append(Leaf(parent=cblock, pydl_blocks=node.expr))
-        return cblock
+        node.blocking = True
+        if self.parent.blocked:
+            node.cur_state = self.new_state()
+        else:
+            node.cur_state = self.parent.cur_state
+
+        node.state = {node.cur_state}
 
     def visit_all_Statement(self, node):
-        return None
+        node.blocking = False
+        node.cur_state = self.parent.cur_state
+        node.state = self.parent.state.copy()
 
     def visit_all_Expr(self, node):
-        return None
+        pass
 
 
 def schedule(pydl_ast):
-
-    schedule = Scheduler().visit(pydl_ast)
-    states = StateFinder()
-    states.visit(schedule)
-    # BlockId().visit(schedule)
-    # print(pformat(schedule))
-
-    # if hls_debug_log_enabled():
-    #     hls_debug(cblock_pformat(schedule), title='State Structure')
-    schedule.state_root = states.state_root
-    schedule.stmt_states = states.stmt_states
-
-    return schedule
+    Scheduler().visit(pydl_ast)
+    print(PPrinter().visit(pydl_ast))

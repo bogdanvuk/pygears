@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Union
+import textwrap
 
 from pygears.typing.base import TypingMeta
 from pygears.typing import Bool
@@ -15,6 +16,14 @@ class AssignValue:
     in_cond: pydl.Expr = pydl.ResExpr(True)
     opt_in_cond: pydl.Expr = pydl.ResExpr(True)
     exit_cond: pydl.Expr = pydl.ResExpr(True)
+
+    def __str__(self):
+
+        footer = ''
+        if self.exit_cond != pydl.ResExpr(True):
+            footer = f' (exit: {str(self.exit_cond)})'
+
+        return f'{str(self.target)} <= {str(self.val)}{footer}\n'
 
 
 @dataclass
@@ -40,10 +49,39 @@ class HDLBlock(BaseBlock):
     exit_cond: pydl.Expr = pydl.ResExpr(True)
     cycle_cond: pydl.Expr = pydl.ResExpr(True)
 
+    def __str__(self):
+        body = ''
+        conds = {
+            'in': self.in_cond,
+            'opt_in': self.opt_in_cond,
+        }
+        header = []
+        for name, val in conds.items():
+            if val != pydl.ResExpr(True):
+                header.append(f'{name}: {str(val)}')
+
+        if header:
+            header = '(' + ', '.join(header) + ') '
+        else:
+            header = ''
+
+        footer = ''
+        if self.exit_cond != pydl.ResExpr(True):
+            footer = f' (exit: {str(self.exit_cond)})'
+
+        for s in self.stmts:
+            body += str(s)
+
+        if not header and body.count('\n') == 1:
+            return f'{body[:-1]}{footer}\n'
+
+        return f'{header}{{\n{textwrap.indent(body, "    ")}}}{footer}\n'
+
 
 @dataclass
 class IfElseBlock(HDLBlock):
-    pass
+    def __str__(self):
+        return f'IfElse {super().__str__()}'
 
 
 @dataclass
@@ -52,9 +90,10 @@ class StateBlock(BaseBlock):
 
 
 @dataclass
-class CombBlock(BaseBlock):
+class CombBlock(HDLBlock):
     in_cond: pydl.Expr = pydl.ResExpr(True)
     opt_in_cond: pydl.Expr = pydl.ResExpr(True)
+    exit_cond: pydl.Expr = pydl.ResExpr(True)
     funcs: List = field(default_factory=list)
 
 

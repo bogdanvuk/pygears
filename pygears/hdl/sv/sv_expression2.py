@@ -1,6 +1,7 @@
 from pygears.hls2.pydl import nodes as pydl
 from pygears.hls.utils import VisitError
 from pygears.typing import Array, Integer, Queue, code, typeof, Integral, Tuple, Union
+from .sv_keywords import sv_keywords
 
 
 class SVExpressionVisitor:
@@ -35,10 +36,14 @@ class SVExpressionVisitor:
         return f'{node.name}_v'
 
     def visit_Name(self, node):
-        if node.ctx in ('load', 'store'):
-            return node.name
-        elif node.ctx == 'next':
-            return f'{node.name}_next'
+        name = node.name
+        if name in sv_keywords:
+            name = f'pg_{name}'
+
+        if node.ctx in ['next', 'en']:
+            return f'{name}_{node.ctx}'
+        else:
+            return name
 
     def visit_Component(self, node):
         if (node.field == 'data'):

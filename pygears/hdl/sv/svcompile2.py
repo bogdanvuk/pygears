@@ -3,7 +3,7 @@ from pygears.hls import HDLWriter, InstanceVisitor, parse_gear_body
 from pygears import registry
 from pygears.hls2.pydl import nodes as pydl
 from pygears.hls2.hdl import nodes
-from pygears.hls2 import Context, GearContext, FuncContext
+from pygears.hls2 import Context, GearContext, FuncContext, Scope
 from pygears.typing import code, Bool
 from pygears.core.port import Port
 from dataclasses import dataclass, field
@@ -33,6 +33,7 @@ class BlockLines:
     content: List = field(default_factory=list)
     footer: List = field(default_factory=list)
 
+
 @dataclass
 class IfElseBlock(BlockLines):
     pass
@@ -41,12 +42,12 @@ class IfElseBlock(BlockLines):
 class SVCompiler(InstanceVisitor):
     def __init__(self, ctx, visit_var, writer, selected):
         self.ctx = ctx
-        self.defaults = {}
         self.writer = writer
         self.visit_var = visit_var
         self.selected = selected
         self.block_lines = []
         self.block_stack = []
+        self.defaults = Scope()
 
     @property
     def cur_block_lines(self):
@@ -62,6 +63,7 @@ class SVCompiler(InstanceVisitor):
         self.cur_block_lines.footer.append(line)
 
     def enter_block(self, block):
+        self.defaults.subscope()
         self.block_stack.append(block)
         bl = BlockLines()
         self.block_lines.append(bl)
@@ -79,11 +81,20 @@ class SVCompiler(InstanceVisitor):
             self.header(f'else begin')
 
     def exit_block(self, block=None):
+        self.defaults.upscope()
+
         bl = self.block_lines.pop()
 
         self.write(bl)
 
         self.block_stack.pop()
+
+    def handle_defaults(self, target, stmt):
+        if target not in self.defaults:
+            self.defaults.items[target] = stmt
+        elif stmt != self.defaults[target]:
+            self.defaults[target] = stmt
+            self.write(stmt)
 
     def _assign_value(self, stmt):
         if isinstance(stmt.target, pydl.SubscriptExpr):
@@ -101,39 +112,30 @@ class SVCompiler(InstanceVisitor):
         val = stmt.val
 
         if isinstance(target.obj, pydl.Register):
-            svstmt = f"{target.name}_next = {svexpr(val)}"
+            name = svexpr(target)
+            svstmt = f"{name}_next = {svexpr(val)}"
+            self.handle_defaults(name, svstmt)
 
-            if target.name not in self.defaults:
-                self.defaults[target.name] = svstmt
-            elif svstmt != self.defaults[target.name]:
-                self.write(svstmt)
-
-            self.write(f"{target.name}_en = 1")
+            self.write(f"{name}_en = 1")
             return
 
         if isinstance(target.obj, pydl.Interface):
+            name = svexpr(target)
             if target.ctx == 'store':
-                svstmt = f"{target.name}_s = {svexpr(val)}"
+                svstmt = f"{name}_s = {svexpr(val)}"
+                self.handle_defaults(name, svstmt)
 
-                if target.name not in self.defaults:
-                    self.defaults[target.name] = svstmt
-                elif svstmt != self.defaults[target.name]:
-                    self.write(svstmt)
-
-                # self.write(f"{target.name}_s = {svexpr(val)}")
-                self.write(f"{target.name}.valid = 1")
+                # self.write(f"{name}_s = {svexpr(val)}")
+                self.write(f"{name}.valid = 1")
             elif target.ctx == 'ready':
-                self.write(f"{target.name}.ready = 1")
+                self.write(f"{name}.ready = 1")
 
             return
 
         target = svexpr(stmt.target)
         svstmt = f"{target} = {svexpr(val)}"
 
-        if target not in self.defaults:
-            self.defaults[target] = svstmt
-        elif svstmt != self.defaults[target]:
-            self.write(svstmt)
+        self.handle_defaults(target, svstmt)
 
         # self.write(f"{svexpr(stmt.target)} = {svexpr(val)}")
 
@@ -171,10 +173,11 @@ class SVCompiler(InstanceVisitor):
                         # self.write(f"{name}_s = {obj.dtype.width}'(1'bx)")
 
             elif isinstance(obj, pydl.Register):
-                if self.selected(self.ctx.ref(name, ctx='store')):
+                target = self.ctx.ref(name, ctx='store')
+                if self.selected(target):
                     # self.write(f"{name}_next = {obj.dtype.width}'(1'bx)")
                     # self.write(f"{name}_next = {name}")
-                    self.write(f'{name}_en = 0')
+                    self.write(f'{svexpr(target)}_en = 0')
 
             elif isinstance(obj, pydl.Variable):
                 pass
@@ -191,7 +194,7 @@ class SVCompiler(InstanceVisitor):
 
         self.visit_HDLBlock(node)
 
-        for target, svstmt in self.defaults.items():
+        for target, svstmt in self.defaults.items.items():
             self.cur_block_lines.content.insert(0, svstmt)
 
         self.footer('end')
@@ -292,7 +295,10 @@ def write_block(block, writer):
 
     if block.header:
         writer.indent -= 4
-        writer.line('end')
+        if block.footer and block.footer[0] == 'endfunction':
+            writer.line('endfunction')
+        else:
+            writer.line('end')
 
 
 def typedef_or_inline(writer, dtype, name):
@@ -324,6 +330,7 @@ def write_module(ctx: Context,
     # svcompile(hdl, writer, ctx, "proba", selected=lambda x: x)
 
     for name, expr in ctx.regs.items():
+        name = svexpr(ctx.ref(name))
         writer.line(f'logic {name}_en;')
         writer.line(f'logic [{expr.dtype.width-1}:0] {name}, {name}_next;')
         writer.line()
@@ -378,12 +385,13 @@ def write_module(ctx: Context,
     if ctx.regs:
         writer.line(f'initial begin')
         for name, expr in ctx.regs.items():
-            writer.line(f"    {name} = {svexpr(expr.val)};")
+            writer.line(f"    {svexpr(ctx.ref(name))} = {svexpr(expr.val)};")
 
         writer.line(f'end')
 
     for name, expr in ctx.regs.items():
-        writer.block(REG_TEMPLATE.format(name, svexpr(expr.val)))
+        writer.block(
+            REG_TEMPLATE.format(svexpr(ctx.ref(name)), svexpr(expr.val)))
 
     for name, expr in ctx.regs.items():
         svcompile(hdl, writer, ctx, name, selected=lambda x: x.obj == expr)
