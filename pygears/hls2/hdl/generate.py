@@ -79,13 +79,8 @@ def replace_aliases(forwarded, node):
 class HDLGenerator:
     def __init__(self, ctx):
         self.ctx = ctx
-        self.alias_stack = []
         self.block_stack = []
         self.forwarded = Scope()
-
-    @property
-    def alias(self):
-        return self.alias_stack[-1]
 
     @property
     def block(self):
@@ -128,13 +123,30 @@ class HDLGenerator:
                          opt_in_cond=self.opt_in_condition(node),
                          stmts=[],
                          dflts={})
-        self.forwarded.subscope()
+
+        if not isinstance(self.block, IfElseBlock):
+            self.forwarded.subscope()
+
         res = self.traverse_block(node, block)
-        # breakpoint()
+
+        if isinstance(self.block, IfElseBlock):
+            return res
+
+        subscope = self.forwarded.cur_subscope
         self.forwarded.upscope()
 
-        return res
+        for name, val in subscope.items.items():
+            if block.opt_in_cond != res_true:
+                if name in self.forwarded:
+                    prev_val = self.forwarded[name]
+                else:
+                    prev_val = self.ctx.ref(name)
 
+                val = pydl.ConditionalExpr((val, prev_val), block.opt_in_cond)
+
+            self.forwarded[name] = val
+
+        return res
 
     def visit_Assign(self, node):
         expr = self.visit(node.expr)
@@ -182,7 +194,36 @@ class HDLGenerator:
 
     def visit_ContainerBlock(self, node):
         block = IfElseBlock(stmts=[], dflts={})
-        return self.traverse_block(node, block)
+        self.block_stack.append(block)
+        subscopes = []
+        forwards = set()
+
+        for stmt in node.stmts:
+            self.forwarded.subscope()
+
+            add_to_list(block.stmts, self.visit(stmt))
+            subs = self.forwarded.cur_subscope
+            subs.opt_in_cond = block.stmts[-1].opt_in_cond
+            subscopes.append(subs)
+            forwards.update(subs.items.keys())
+
+            self.forwarded.upscope()
+
+        for name in forwards:
+            if name in self.forwarded:
+                val = self.forwarded[name]
+            else:
+                val = self.ctx.ref(name)
+
+            for subs in reversed(subscopes):
+                if name in subs.items:
+                    val = pydl.ConditionalExpr(
+                        (subs.items[name], val), cond=subs.opt_in_cond)
+
+            self.forwarded[name] = val
+
+        self.block_stack.pop()
+        return block
 
 
 class ModuleGenerator(HDLGenerator):
@@ -199,7 +240,6 @@ class ModuleGenerator(HDLGenerator):
         if self.state_id not in node.state:
             return block
 
-        self.alias_stack.append({})
         self.block_stack.append(block)
         self.cur_state_id = list(node.state)[0]
 
@@ -215,7 +255,6 @@ class ModuleGenerator(HDLGenerator):
                 break
 
         self.cur_state_id = list(node.state)[0]
-        self.alias_stack.pop()
         self.block_stack.pop()
         return block
 
