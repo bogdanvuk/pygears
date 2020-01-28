@@ -58,11 +58,14 @@ def create_plot(title, method, clk_freq):
 
     line = []
     for m in method:
-        kwds = {'linewidth': 2, 'color': colors['line']}
-        if m == 'step':
-            kwds['where'] = 'post'
+        if isinstance(m, str):
+            kwds = {'linewidth': 2, 'color': colors['line']}
+            if m == 'step':
+                kwds['where'] = 'post'
 
-        line.append(getattr(ax, m)([], [], **kwds)[0])
+            line.append(getattr(ax, m)([], [], **kwds)[0])
+        else:
+            line.append(m(ax, x=[], y=[]))
 
     ax.grid()
     ax.set_xlim(0, 1 / clk_freq)
@@ -159,12 +162,7 @@ def plot_process(method, qin, clk_freq, title=None, scale=None):
 
         return
 
-    _ = CustFuncAnimation(fig,
-                          run,
-                          data_gen,
-                          blit=False,
-                          interval=100,
-                          repeat=False)
+    _ = CustFuncAnimation(fig, run, data_gen, blit=False, interval=100, repeat=False)
 
     plt.show()
 
@@ -172,9 +170,8 @@ def plot_process(method, qin, clk_freq, title=None, scale=None):
 def plot_live(method, clk_freq, title, scale, transaction):
     qin = multiprocessing.Queue(maxsize=10000)
 
-    _proc = multiprocessing.context.Process(target=plot_process,
-                                            args=(method, qin, clk_freq, title,
-                                                  scale))
+    _proc = multiprocessing.context.Process(
+        target=plot_process, args=(method, qin, clk_freq, title, scale))
     _proc.start()
 
     def cleanup(sim):
@@ -219,12 +216,8 @@ def plot_dump(files, method, clk_freq, title, scale, transaction):
         ymin = min(ydata[i])
 
         def handshake(x1, x2, color, alpha):
-            rect = patches.Rectangle((x1, ymin),
-                                     x2 - x1,
-                                     ymax - ymin,
-                                     color=color,
-                                     fill=True,
-                                     alpha=alpha)
+            rect = patches.Rectangle(
+                (x1, ymin), x2 - x1, ymax - ymin, color=color, fill=True, alpha=alpha)
             ax.add_patch(rect)
 
         if transaction:
@@ -241,8 +234,7 @@ def plot_dump(files, method, clk_freq, title, scale, transaction):
 
                 next_t = t + 1 / clk_freq
 
-            if (next_t is not None
-                    and (next_t - rect_start_t) > 1 / (2 * clk_freq)):
+            if (next_t is not None and (next_t - rect_start_t) > 1 / (2 * clk_freq)):
                 handshake(rect_start_t, next_t, colors['handshake'], 0.13)
 
             for t in eots[i]:
@@ -283,25 +275,30 @@ def plot_dump(files, method, clk_freq, title, scale, transaction):
 
 
 @gear(enablement=b'"matplotlib" in globals()')
-async def scope(*xs,
-                clk_freq=None,
-                title=None,
-                scale=None,
-                method=None,
-                live=None,
-                dump=None,
-                transaction=False):
+async def scope(
+    *xs,
+    clk_freq=None,
+    title=None,
+    scale=None,
+    method=None,
+    live=None,
+    dump=None,
+    transaction=False):
+
     if clk_freq is None:
         clk_freq = config['sim/clk_freq']
 
     if method is None:
         method = ['plot'] * len(xs)
 
+    if len(method) != len(xs):
+        raise Exception(
+            f'Number of plotting methods ({method}) needs to match the number of inputs ({len(xs)})')
+
     if title is None:
         title = module().name
 
-    parallel_steps = max(
-        len(x.dtype) if typeof(x.dtype, Array) else 1 for x in xs)
+    parallel_steps = max(len(x.dtype) if typeof(x.dtype, Array) else 1 for x in xs)
 
     backends = []
 
@@ -341,8 +338,8 @@ async def scope(*xs,
                         x_data = [x_data]
 
                     for i, v in enumerate(x_data):
-                        point = (ch, (timestep() + i / len(x_data)) / clk_freq,
-                                 float(v), eot)
+                        point = (
+                            ch, (timestep() + i / len(x_data)) / clk_freq, float(v), eot)
 
                         for b in backends:
                             b.send(point)

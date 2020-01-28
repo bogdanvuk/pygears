@@ -225,7 +225,7 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
                 ival = int(val) >> (val_fract - cls.fract)
         elif ((not is_type(type(val)) and isinstance(val, (float, int)))
               or isinstance(val, (Integer, Float))):
-            ival = int(float(val) * (2**cls.fract))
+            ival = round(float(val) * (2**cls.fract))
         else:
             raise TypeError(f'Unsupported value {val} of type {type(val)}')
 
@@ -302,6 +302,15 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
         return sum_cls.decode(
             (int(self) << (sum_cls.fract - type(self).fract)) -
             (int(other) << (sum_cls.fract - type(other).fract)))
+
+    def __gt__(self, other):
+        cls = type(self)
+        cls_other = type(other)
+
+        if cls_other.fract > cls.fract:
+            return int(self) << (cls_other.fract - cls.fract) > int(other)
+        else:
+            return int(self) > int(other) << (cls.fract - cls_other.fract)
 
     def __eq__(self, other):
         cls = type(self)

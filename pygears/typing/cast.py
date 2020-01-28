@@ -269,7 +269,10 @@ def tuple_type_cast_resolver(dtype, cast_type):
             raise TypeError(
                 f"{str(e)}\n    - when casting '{repr(dtype)}' to '{repr(cast_type)}'")
 
-        return Tuple[tuple(cast_fields)]
+        if typeof(cast_type, Tuple):
+            return Tuple[dict(zip(cast_type.fields, cast_fields))]
+        else:
+            return Tuple[tuple(cast_fields)]
 
     raise get_type_error(dtype, cast_type)
 
@@ -413,6 +416,9 @@ type_cast_resolvers = {
 def type_cast(dtype, cast_type):
 
     if dtype == cast_type:
+        return dtype
+
+    if isinstance(cast_type, str):
         return dtype
 
     for templ in type_cast_resolvers:

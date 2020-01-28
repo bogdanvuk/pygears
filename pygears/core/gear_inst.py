@@ -352,6 +352,7 @@ def gear_base_resolver(func,
                        __base__=None,
                        outnames=None,
                        **kwds):
+
     name = name or resolve_gear_name(func, __base__)
 
     paramspec = inspect.getfullargspec(func)
