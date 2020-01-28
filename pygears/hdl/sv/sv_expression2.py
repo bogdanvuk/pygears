@@ -144,7 +144,9 @@ class SVExpressionVisitor:
             index = node.val.dtype.index_norm(index)[0]
 
             if isinstance(index, slice):
-                return f'{val}[{int(index.stop) - 1}:{index.start}]'
+                return f'{val}[{int(index.stop) - 1}:{int(index.start)}]'
+
+            index = int(index)
 
             if typeof(node.val.dtype, (Array, Integral)):
                 return f'{val}[{index}]'

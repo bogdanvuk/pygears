@@ -47,6 +47,11 @@ def filt_by_test(tmpdir, din_t, seq, sel, sim_cls):
         ref=[val for (val, ctrl) in zip(din_seq, ctrl_seq) if (ctrl == sel)])
     sim(tmpdir)
 
+# from pygears.sim.modules import SimVerilated
+# # from pygears import config
+# # config['debug/trace'] = ['*']
+# filt_by_test('/tools/home/tmp/filt', plain_din, directed_seq, 1, SimVerilated)
+
 
 def queue_filt_test(din_t, seq, sel, sim_cls):
     pysim_env(din_t, [seq], sel,
@@ -91,6 +96,11 @@ def test_qfilt_union_delay(tmpdir, cosim_cls, din_delay, dout_delay, sel):
           ref=filt(name='ref_model', fixsel=sel),
           delays=[delay_rng(dout_delay, dout_delay)])
     sim(resdir=tmpdir)
+
+from pygears.sim.modules import SimVerilated
+# from pygears import config
+# config['debug/trace'] = ['*']
+test_qfilt_union_delay('/tools/home/tmp/qfilt', SimVerilated, 0, 0, 1)
 
 
 @pytest.mark.parametrize('din_delay', [0, 10])

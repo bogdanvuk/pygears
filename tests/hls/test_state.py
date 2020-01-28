@@ -23,4 +23,4 @@ def test_cond_2state(tmpdir):
     sim(tmpdir)
 
 
-test_cond_2state('/tools/home/tmp/test_cond_2state')
+# test_cond_2state('/tools/home/tmp/test_cond_2state')

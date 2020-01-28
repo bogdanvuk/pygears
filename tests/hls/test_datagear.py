@@ -20,14 +20,15 @@ def test_reinterpret(tmpdir):
     sim(tmpdir)
 
 
-def test_sim_invoke(tmpdir):
-    @gear(hdl={'compile': True})
-    async def sat_wrap(din) -> b'din':
-        async with din as d:
-            saturate(d, t=Uint[8])
+# def test_sim_invoke(tmpdir):
+#     @gear(hdl={'compile': True})
+#     async def sat_wrap(din) -> b'din':
+#         async with din as d:
+#             saturate(d, t=Uint[8])
 
-    drv(t=Uint[8], seq=[7]) | sat_wrap | shred
-    cosim('/sat_wrap', 'verilator')
-    sim(tmpdir)
+#     drv(t=Uint[8], seq=[7]) | sat_wrap | shred
+#     cosim('/sat_wrap', 'verilator')
+#     sim(tmpdir)
 
-test_sim_invoke('/tools/home/tmp/datagear')
+
+# test_sim_invoke('/tools/home/tmp/datagear')

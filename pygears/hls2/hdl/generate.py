@@ -128,7 +128,13 @@ class HDLGenerator:
                          opt_in_cond=self.opt_in_condition(node),
                          stmts=[],
                          dflts={})
-        return self.traverse_block(node, block)
+        self.forwarded.subscope()
+        res = self.traverse_block(node, block)
+        # breakpoint()
+        self.forwarded.upscope()
+
+        return res
+
 
     def visit_Assign(self, node):
         expr = self.visit(node.expr)
@@ -193,7 +199,6 @@ class ModuleGenerator(HDLGenerator):
         if self.state_id not in node.state:
             return block
 
-        self.forwarded.subscope()
         self.alias_stack.append({})
         self.block_stack.append(block)
         self.cur_state_id = list(node.state)[0]
@@ -212,7 +217,6 @@ class ModuleGenerator(HDLGenerator):
         self.cur_state_id = list(node.state)[0]
         self.alias_stack.pop()
         self.block_stack.pop()
-        self.forwarded.upscope()
         return block
 
     def visit_Module(self, node):
@@ -276,10 +280,14 @@ class ModuleGenerator(HDLGenerator):
                     (self.ctx.ref(name), self.forwarded[name]),
                     self.ctx.ref('looped'))
 
+        self.forwarded.subscope()
+
         block = self.traverse_block(node, block)
 
         block.exit_cond = pydl.UnaryOpExpr(self.opt_in_condition(node),
                                            pydl.opc.Not)
+
+        self.forwarded.upscope()
 
         if looped_init:
             block.stmts.append(
@@ -298,10 +306,11 @@ class ModuleGenerator(HDLGenerator):
         block.stmts.append(
             AssignValue(target=self.ctx.ref('cycle_done'), val=res_true))
 
-        block.stmts.append(
-            AssignValue(self.ctx.ref('state', ctx='store'),
-                        list(node.state)[0],
-                        exit_cond=res_false))
+        if 'state' in self.ctx.scope:
+            block.stmts.append(
+                AssignValue(self.ctx.ref('state', ctx='store'),
+                            list(node.state)[0],
+                            exit_cond=res_false))
 
         return block
 
@@ -468,11 +477,11 @@ def generate(pydl_ast, ctx: GearContext):
 
     modblock = CombBlock(stmts=[stateblock], dflts={})
 
-    # print(modblock)
+    print(modblock)
     RewriteExitCond(ctx).visit(modblock)
-    # print(modblock)
+    print(modblock)
     RemoveDeadCode(ctx).visit(modblock)
-    # print(modblock)
+    print(modblock)
     gen_all_funcs(modblock, ctx)
 
     return modblock

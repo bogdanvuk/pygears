@@ -14,7 +14,7 @@ def find_rtl(top, **conf):
 
     rtl_map = registry('rtl/gear_node_map')
     if top not in rtl_map:
-        rtlgen(top, **conf)
+        rtlgen(**conf)
 
     return rtl_map[top]
 
