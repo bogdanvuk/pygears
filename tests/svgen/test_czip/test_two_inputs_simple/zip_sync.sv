@@ -21,9 +21,6 @@ module zip_sync_base
     assign din1_s = din1.data;
 
 
-    logic all_valid;
-    logic out_valid;
-    logic out_ready;
     logic all_aligned;
     logic handshake;
     logic din0_eot_aligned;
@@ -32,16 +29,14 @@ module zip_sync_base
     assign din0_eot_aligned = 1;
     assign din1_eot_aligned = 1;
 
-    assign all_valid   = din0.valid && din1.valid;
     assign all_aligned = din0_eot_aligned && din1_eot_aligned;
-    assign out_valid   = all_valid & all_aligned;
 
-    assign dout0.valid = out_valid;
+    assign dout0.valid = din0.valid & all_aligned;
     assign dout0.data = din0_s;
-    assign din0.ready = all_valid && (dout0.ready || !din0_eot_aligned);
-    assign dout1.valid = out_valid;
+    assign din0.ready = din0.valid && (dout0.ready || !din0_eot_aligned);
+    assign dout1.valid = din1.valid & all_aligned;
     assign dout1.data = din1_s;
-    assign din1.ready = all_valid && (dout1.ready || !din1_eot_aligned);
+    assign din1.ready = din1.valid && (dout1.ready || !din1_eot_aligned);
 
 
 
@@ -63,16 +58,18 @@ module zip_sync_syncguard
 
     localparam SIZE = 2;
 
-    logic in_valid;
+    logic [SIZE-1 : 0] in_valid;
     logic in_ready;
+    logic all_valid;
     logic [SIZE-1 : 0] out_valid;
     logic [SIZE-1 : 0] out_ready;
     logic [SIZE-1 : 0] ready_reg;
     logic [SIZE-1 : 0] ready_all;
 
-    assign in_valid = din0.valid && din1.valid;
+    assign all_valid = din0.valid && din1.valid;
+    assign in_valid = { din1.valid, din0.valid };
     assign out_ready = { dout1.ready, dout0.ready };
-    assign in_ready = &ready_all;
+    assign in_ready = &ready_all && all_valid;
 
     assign din0.ready = in_ready;
     assign dout0.valid = out_valid[0];
@@ -88,10 +85,10 @@ module zip_sync_syncguard
    generate
       for (genvar i = 0; i < SIZE; i++) begin
          assign ready_all[i]  = out_ready[i] || ready_reg[i];
-         assign out_valid[i]  = in_valid && !ready_reg[i];
+         assign out_valid[i]  = in_valid[i] && !ready_reg[i];
 
          always @(posedge clk) begin
-            if (rst || (!in_valid) || in_ready) begin
+            if (rst || in_ready) begin
                ready_reg[i] <= 1'b0;
             end else if (out_ready[i]) begin
                ready_reg[i] <= 1'b1;

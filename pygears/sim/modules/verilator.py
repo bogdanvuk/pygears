@@ -3,6 +3,7 @@ import atexit
 import os
 import subprocess
 from string import Template
+from pygears import Intf
 
 import jinja2
 
@@ -12,8 +13,8 @@ from pygears.sim.c_drv import CInputDrv, COutputDrv
 from pygears.sim.modules.cosim_base import CosimBase
 from pygears.hdl import hdlgen
 from pygears.util.fileio import save_file
-from pygears.core.port import InPort
-from .cosim_port import InCosimPort
+from pygears.core.port import InPort, OutPort
+from .cosim_port import InCosimPort, OutCosimPort
 from pygears.core.graph import closest_gear_port_from_rtl
 
 signal_spy_connect_t = Template(
@@ -138,6 +139,29 @@ class SimVerilated(CosimBase):
                 self.in_cosim_ports.append(InCosimPort(self, in_port))
                 registry('sim/map')[in_port] = self.in_cosim_ports[-1]
 
+        for p in self.rtlnode.out_ports:
+            if p.index < len(self.gear.out_ports):
+                self.out_cosim_ports[p.index].name = p.basename
+            elif p.index >= len(self.gear.out_ports):
+                driver = closest_gear_port_from_rtl(p, 'in')
+                if driver is None:
+                    raise VerilatorCompileError(
+                        f"Inferred top module port '{p.name}' has no driver")
+
+                consumer = closest_gear_port_from_rtl(p, 'out')
+
+                out_port = OutPort(self.gear, p.index, p.basename, consumer)
+                out_intf = Intf(p.dtype)
+
+                driver.consumer.disconnect(consumer)
+                driver.consumer.connect(out_port)
+
+                out_intf.source(out_port)
+                out_intf.connect(consumer)
+
+                self.out_cosim_ports.append(OutCosimPort(self, out_port))
+                registry('sim/map')[out_port] = self.out_cosim_ports[-1]
+
         self.trace_fn = None
         self.vcd_fifo = vcd_fifo
         self.shmidcat = shmidcat
@@ -205,10 +229,10 @@ class SimVerilated(CosimBase):
 
         self.handlers = {}
         for cp in self.in_cosim_ports:
-            self.handlers[cp.port.basename] = CInputDrv(self.verilib, cp.port)
+            self.handlers[cp.name] = CInputDrv(self.verilib, cp.port, cp.name)
 
-        for p in self.gear.out_ports:
-            self.handlers[p.basename] = COutputDrv(self.verilib, p)
+        for cp in self.out_cosim_ports:
+            self.handlers[cp.name] = COutputDrv(self.verilib, cp.port, cp.name)
 
         super().setup()
 

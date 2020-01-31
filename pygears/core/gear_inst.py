@@ -227,6 +227,8 @@ def resolve_func(gear_inst):
         return tuple(), out_dtype
 
     with create_hier(gear_inst):
+        # TODO: Try to detect infinite recursions
+        # TODO: If the gear is instantiated in REPL, intf_name_tracer will fail
         with intf_name_tracer(gear_inst):
             out_intfs = gear_inst.func(*gear_inst.in_port_intfs,
                                        **gear_inst.explicit_params)

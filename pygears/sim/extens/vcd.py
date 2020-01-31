@@ -71,8 +71,7 @@ class VCDValVisitor(TypingVisitorBase):
         self.timestep = timestep
 
     def change(self, dtype, field, val):
-        self.writer.change(self.vcd_vars[field], self.timestep,
-                           dtype(val).code())
+        self.writer.change(self.vcd_vars[field], self.timestep, dtype(val).code())
 
     def visit_Fixp(self, type_, field, val=None):
         self.change(type_, field, val)
@@ -131,15 +130,11 @@ def register_traces_for_intf(dtype, scope, writer):
                 field_scope = scope
 
             if typeof(t, Float):
-                vcd_vars['data'] = writer.register_var(field_scope,
-                                                       basename,
-                                                       var_type='real',
-                                                       size=32)
+                vcd_vars[name] = writer.register_var(
+                    field_scope, basename, var_type='real', size=32)
             else:
-                vcd_vars[name] = writer.register_var(field_scope,
-                                                     basename,
-                                                     var_type='wire',
-                                                     size=max(int(t), 1))
+                vcd_vars[name] = writer.register_var(
+                    field_scope, basename, var_type='wire', size=max(int(t), 1))
 
     for sig in ('valid', 'ready'):
         vcd_vars[sig] = writer.register_var(scope, sig, 'wire', size=1, init=0)
@@ -200,16 +195,17 @@ class VCDHierVisitor(HierVisitorBase):
 
 class VCD(SimExtend):
     @inject
-    def __init__(self,
-                 top,
-                 trace_fn='pygears.vcd',
-                 include=Inject('debug/trace'),
-                 tlm=False,
-                 shmidcat=Inject('sim_extens/vcd/shmidcat'),
-                 vcd_fifo=Inject('sim_extens/vcd/vcd_fifo'),
-                 sim=Inject('sim/simulator'),
-                 outdir=Inject('results-dir'),
-                 sim_map=Inject('sim/map')):
+    def __init__(
+        self,
+        top,
+        trace_fn='pygears.vcd',
+        include=Inject('debug/trace'),
+        tlm=False,
+        shmidcat=Inject('sim_extens/vcd/shmidcat'),
+        vcd_fifo=Inject('sim_extens/vcd/vcd_fifo'),
+        sim=Inject('sim/simulator'),
+        outdir=Inject('results-dir'),
+        sim_map=Inject('sim/map')):
         super().__init__()
         self.sim = sim
         self.finished = False
@@ -240,9 +236,8 @@ class VCD(SimExtend):
             sim_log().info(f'Main VCD dump to "{self.trace_fn}"')
 
         if self.shmidcat:
-            self.shmid_proc = subprocess.Popen(f'shmidcat {self.trace_fn}',
-                                               shell=True,
-                                               stdout=subprocess.PIPE)
+            self.shmid_proc = subprocess.Popen(
+                f'shmidcat {self.trace_fn}', shell=True, stdout=subprocess.PIPE)
 
             # Wait for shmidcat to actually open the pipe, which is necessary
             # to happen prior to init of the verilator. If shmidcat does not
@@ -261,16 +256,9 @@ class VCD(SimExtend):
         bind('VCDWriter', self.writer)
         bind('VCD', self)
 
-        self.clk_var = self.writer.register_var('',
-                                                'clk',
-                                                'wire',
-                                                size=1,
-                                                init=1)
+        self.clk_var = self.writer.register_var('', 'clk', 'wire', size=1, init=1)
 
-        self.timestep_var = self.writer.register_var('',
-                                                     'timestep',
-                                                     'integer',
-                                                     init=0)
+        self.timestep_var = self.writer.register_var('', 'timestep', 'integer', init=0)
 
         self.handhake = set()
 

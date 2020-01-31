@@ -36,15 +36,16 @@ class CGet:
 
 
 class CDrv:
-    def __init__(self, verilib, port):
+    def __init__(self, verilib, port, name=None):
         self.verilib = verilib
         self.port = port
+        self.name = name if name else self.port.basename
 
         self.data_posted = False
         self.done = False
         self.width = int(self.port.dtype)
-        self.c_set_api = getattr(verilib, f'set_{port.basename}', None)
-        self.c_get_api = getattr(verilib, f'get_{port.basename}', None)
+        self.c_set_api = getattr(verilib, f'set_{self.name}', None)
+        self.c_get_api = getattr(verilib, f'get_{self.name}', None)
 
         if self.width > 64:
             self.c_dtype = ctypes.c_uint * (ceil(self.width / 32))
@@ -55,8 +56,8 @@ class CDrv:
 
 
 class CInputDrv(CDrv):
-    def __init__(self, verilib, port):
-        super().__init__(verilib, port)
+    def __init__(self, verilib, port, name=None):
+        super().__init__(verilib, port, name)
         self.c_set_api.argtypes = (self.c_dtype, ctypes.c_uint)
 
     def close(self):
@@ -89,8 +90,8 @@ class CInputDrv(CDrv):
 
 
 class COutputDrv(CDrv):
-    def __init__(self, verilib, port):
-        super().__init__(verilib, port)
+    def __init__(self, verilib, port, name=None):
+        super().__init__(verilib, port, name)
         if self.width <= 64:
             self.c_dtype = self.c_dtype * 1
             if self.c_get_api is None:

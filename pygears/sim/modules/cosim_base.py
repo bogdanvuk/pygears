@@ -34,32 +34,32 @@ class CosimBase(SimGear):
 
         self.eval_needed = True
 
-        hout = self.handlers[port.basename]
+        hout = self.handlers[port]
         hout.reset()
         return hout.read()
 
     def ack_out(self, port):
         self.eval_needed = True
-        hout = self.handlers[port.basename]
+        hout = self.handlers[port]
         hout.ack()
         self.activity_monitor = 0
 
     def write_in(self, port, data):
         self.eval_needed = True
 
-        hin = self.handlers[port.basename]
+        hin = self.handlers[port]
         return hin.send(data)
 
     def reset_out(self, port):
         self.eval_needed = True
 
-        hout = self.handlers[port.basename]
+        hout = self.handlers[port]
         hout.reset()
 
     def reset_in(self, port):
         self.eval_needed = True
 
-        hin = self.handlers[port.basename]
+        hin = self.handlers[port]
         hin.reset()
 
     def ready_in(self, port):
@@ -67,7 +67,7 @@ class CosimBase(SimGear):
             self.back()
             self.eval_needed = False
 
-        hin = self.handlers[port.basename]
+        hin = self.handlers[port]
         if hin.ready():
             self.activity_monitor = 0
             return True

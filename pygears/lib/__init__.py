@@ -51,7 +51,7 @@ from .sdp import sdp
 from .take import take
 from .group import group
 from .interlace import qinterlace, interlace
-from .deal import qdeal
+from .deal import qdeal, deal
 from .repack import repack
 from .priority_mux_valve import priority_mux_valve
 from .max_gears import max2
@@ -79,8 +79,8 @@ __all__ = [
     'ucase', 'filt', 'buff', 'local_rst', 'queue_wrap_from', 'demux_by', 'mux_by',
     'align', 'cart_sync_with', 'when', 'union_sync_with', 'select', 'case', 'fix', 'xor',
     'rng', 'priority_mux', 'qcnt', 'sdp', 'chop', 'qinterlace', 'interlace', 'replicate',
-    'qdeal', 'clip', 'din_cat', 'take', 'release_after_eot', 'reverse', 'form_sub_cfg',
-    'reduce2', 'group', 'repack', 'priority_mux_valve', 'max2', 'unary',
+    'qdeal', 'deal', 'clip', 'din_cat', 'take', 'release_after_eot', 'reverse',
+    'form_sub_cfg', 'reduce2', 'group', 'repack', 'priority_mux_valve', 'max2', 'unary',
     'alternate_queues', 'delay', 'delay_rng', 'delay_gen', 'directed', 'verif', 'collect',
     'rom', 'drv', 'drvrnd', 'check', 'mon', 'reduce', 'accum', 'pipe', 'funclut',
     'truncate', 'round_half_up', 'round_to_zero', 'round_to_even', 'add', 'div', 'eq',
