@@ -3,6 +3,7 @@ import typing
 import textwrap
 from dataclasses import dataclass, field
 
+from functools import reduce
 from pygears.core.port import InPort, OutPort
 from pygears.core.gear import InSig, OutSig
 from pygears.typing import (Bool, Integer, Queue, Tuple, Uint, Unit, is_type,
@@ -51,6 +52,7 @@ OPMAP = {
 PYOPMAP = {
     opc.Add: operator.__add__,
     opc.And: operator.__and__,
+    opc.BitAnd: operator.__and__,
     opc.Div: operator.__truediv__,
     opc.Eq: operator.__eq__,
     opc.FloorDiv: operator.__floordiv__,
@@ -134,13 +136,21 @@ OpType = typing.Union[Expr, PgType, str]
 # Type definitions
 
 
-@dataclass
 class ResExpr(Expr):
-    val: typing.Union[PgType, typing.Sequence, None]
+    def __new__(cls, val):
+        if isinstance(val, Expr):
+            return val
 
-    def __post_init__(self):
-        while isinstance(self.val, ResExpr):
-            self.val = self.val.val
+        inst = super().__new__(cls)
+        inst.val = val
+
+        return inst
+
+    def __eq__(self, other):
+        if not isinstance(other, ResExpr):
+            return False
+
+        return self.val == other.val
 
     def __repr__(self):
         return f'ResExpr({repr(self.val)})'
@@ -608,17 +618,29 @@ class BinOpExpr(Expr):
         return res_t
 
 
-@dataclass
 class ArrayOpExpr(Expr):
-    array: OpType
-    operator: str
+    def __repr__(self):
+        return f'{type(self).__name__}(val={repr(self.val)}, index={repr(self.index)})'
 
     def __str__(self):
         return f'{OPMAP[self.operator]}({str(self.array)})'
 
+    def __init__(self, array: Expr, operator):
+        pass
+
+    def __new__(cls, array: Expr, operator):
+        if isinstance(array, ResExpr):
+            return ResExpr(reduce(PYOPMAP[operator], array.val))
+
+        inst = super().__new__(cls)
+        inst.array = array
+        inst.operator = operator
+
+        return inst
+
     @property
     def dtype(self):
-        return Uint[1]
+        return self.array.dtype[0]
 
 
 class SubscriptExpr(Expr):

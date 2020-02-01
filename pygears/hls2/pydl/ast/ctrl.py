@@ -3,6 +3,7 @@ from . import Context, SyntaxError, node_visitor, nodes, visit_ast, visit_block
 from pygears.typing import cast, Integer, Bool, typeof, Queue
 from .utils import add_to_list
 from .stmt import assign_targets
+from .async_stmts import AsyncForContext
 
 
 @node_visitor(ast.If)
@@ -46,29 +47,45 @@ def _(node: ast.While, ctx: Context):
 
 @node_visitor(ast.For)
 def _(node: ast.For, ctx: Context):
-    out_intf = visit_ast(node.iter, ctx).obj
+    out_intf_ref = visit_ast(node.iter, ctx)
 
-    if not typeof(out_intf.dtype, Queue):
-        raise Exception('Unsupported return data type for for loop')
+    with AsyncForContext(out_intf_ref, ctx) as stmts:
+        targets = visit_ast(node.target, ctx)
 
-    # in_intf = ctx.submodules[-1].in_ports[0]
+        add_to_list(
+            ctx.pydl_parent_block.stmts,
+            assign_targets(
+                ctx, targets,
+                nodes.SubscriptExpr(nodes.Component(out_intf_ref.obj, 'data'),
+                                    nodes.ResExpr(0)), nodes.Variable))
 
-    pydl_node = nodes.IntfLoop(intf=out_intf,
-                               stmts=[],
-                               multicycle=[])
-    ctx.pydl_block_closure.append(pydl_node)
+        for stmt in node.body:
+            res_stmt = visit_ast(stmt, ctx)
+            add_to_list(ctx.pydl_parent_block.stmts, res_stmt)
 
-    targets = visit_ast(node.target, ctx)
+        return stmts
 
-    add_to_list(
-        pydl_node.stmts,
-        assign_targets(ctx, targets, nodes.InterfacePull(pydl_node.intf),
-                       nodes.Variable))
+    # if not typeof(out_intf.dtype, Queue):
+    #     raise Exception('Unsupported return data type for for loop')
 
-    for stmt in node.body:
-        res_stmt = visit_ast(stmt, ctx)
-        add_to_list(pydl_node.stmts, res_stmt)
+    # # in_intf = ctx.submodules[-1].in_ports[0]
 
-    ctx.pydl_block_closure.pop()
+    # pydl_node = nodes.IntfLoop(intf=out_intf,
+    #                            stmts=[],
+    #                            multicycle=[])
+    # ctx.pydl_block_closure.append(pydl_node)
 
-    return pydl_node
+    # targets = visit_ast(node.target, ctx)
+
+    # add_to_list(
+    #     pydl_node.stmts,
+    #     assign_targets(ctx, targets, nodes.InterfacePull(pydl_node.intf),
+    #                    nodes.Variable))
+
+    # for stmt in node.body:
+    #     res_stmt = visit_ast(stmt, ctx)
+    #     add_to_list(pydl_node.stmts, res_stmt)
+
+    # ctx.pydl_block_closure.pop()
+
+    # return pydl_node

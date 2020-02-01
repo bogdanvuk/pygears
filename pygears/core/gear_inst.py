@@ -190,7 +190,7 @@ class intf_name_tracer:
 
         cm = self.code_map.pop()
 
-        if exception_type is None:
+        if exception_type is None and hasattr(cm, 'func_locals'):
             for name, val in cm.func_locals.items():
                 if isinstance(val, Intf):
                     val.var_name = name

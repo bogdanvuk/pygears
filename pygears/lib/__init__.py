@@ -19,7 +19,7 @@ from .permute import permuted_apply
 from .const import const, fix, once, ping
 from .rom import rom
 from .operators import (add, div, eq, ge, gt, invert, le, lt, mod, mul, ne,
-                        neg, sub, shl, shr, xor, reinterpret)
+                        neg, sub, shl, shr, xor, code)
 from .saturate import saturate
 from .state import state
 from .mux import mux, mux_zip
@@ -69,7 +69,7 @@ from .asyncreg import trigreg, sample, regmap
 import pygears.lib.hls
 
 __all__ = [
-    'expand', 'czip', 'ccat', 'cart', 'cast', 'reinterpret', 'quenvelope',
+    'expand', 'czip', 'ccat', 'cart', 'cast', 'code', 'quenvelope',
     'zip_sync', 'sieve', 'flatten', 'fmap', 'unionmap', 'queuemap', 'tuplemap',
     'arraymap', 'permuted_apply', 'const', 'once', 'mux', 'demux', 'shred',
     'cart_sync', 'decouple', 'dreg', 'regout', 'unzip', 'serialize', 'project',

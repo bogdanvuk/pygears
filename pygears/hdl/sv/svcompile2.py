@@ -53,6 +53,19 @@ class SVCompiler(InstanceVisitor):
     def cur_block_lines(self):
         return self.block_lines[-1]
 
+    def trim_cur_block(self):
+        content = []
+        for c in self.cur_block_lines.content:
+            if isinstance(c, BlockLines) and not c.content:
+                continue
+
+            content.append(c)
+
+        self.cur_block_lines.content = content
+
+    def prepend(self, line):
+        self.cur_block_lines.content.insert(0, line)
+
     def write(self, line):
         self.cur_block_lines.content.append(line)
 
@@ -166,10 +179,10 @@ class SVCompiler(InstanceVisitor):
             if isinstance(obj, pydl.Interface):
                 if obj.direction == 'in':
                     if self.selected(self.ctx.ref(name, ctx='ready')):
-                        self.write(f"{name}.ready = {name}.valid ? 0 : 1'bx")
+                        self.prepend(f"{name}.ready = {name}.valid ? 0 : 1'bx")
                 else:
                     if self.selected(self.ctx.ref(name, ctx='store')):
-                        self.write(f"{name}.valid = 0")
+                        self.prepend(f"{name}.valid = 0")
                         # self.write(f"{name}_s = {obj.dtype.width}'(1'bx)")
 
             elif isinstance(obj, pydl.Register):
@@ -177,7 +190,7 @@ class SVCompiler(InstanceVisitor):
                 if self.selected(target):
                     # self.write(f"{name}_next = {obj.dtype.width}'(1'bx)")
                     # self.write(f"{name}_next = {name}")
-                    self.write(f'{svexpr(target)}_en = 0')
+                    self.prepend(f'{svexpr(target)}_en = 0')
 
             elif isinstance(obj, pydl.Variable):
                 pass
@@ -190,12 +203,15 @@ class SVCompiler(InstanceVisitor):
         self.header(f'// Comb block for: {self.visit_var}')
         self.header(f'always_comb begin')
 
-        self.list_initials()
-
         self.visit_HDLBlock(node)
 
+        self.trim_cur_block()
+
         for target, svstmt in self.defaults.items.items():
-            self.cur_block_lines.content.insert(0, svstmt)
+            self.prepend(svstmt)
+
+        if self.cur_block_lines.content:
+            self.list_initials()
 
         self.footer('end')
 
@@ -232,14 +248,7 @@ class SVCompiler(InstanceVisitor):
         for stmt in node.stmts:
             self.visit(stmt)
 
-        content = []
-        for c in self.cur_block_lines.content:
-            if isinstance(c, BlockLines) and not c.content:
-                continue
-
-            content.append(c)
-
-        self.cur_block_lines.content = content
+        self.trim_cur_block()
 
         self.exit_block(node)
 
@@ -313,6 +322,10 @@ def typedef_or_inline(writer, dtype, name):
 def svcompile(hdl_stmts, writer, ctx, title, selected):
     v = SVCompiler(ctx, title, writer, selected=selected)
     v.visit(hdl_stmts)
+
+    if not v.block_lines[0].content:
+        return
+
     write_block(v.block_lines[0], writer)
     writer.line()
 

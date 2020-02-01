@@ -19,6 +19,12 @@ class SVExpressionVisitor:
             return f'{node.op.name}_{node.context}'
 
     def visit_ResExpr(self, node):
+        if isinstance(node.val, tuple):
+            return (
+                '{' +
+                ', '.join(f"{type(op).width}'d{self.visit(pydl.ResExpr(op))}"
+                          for op in reversed(node.val)) + '}')
+
         return int(code(node.val))
 
     def visit_FunctionCall(self, node):
@@ -156,9 +162,7 @@ class SVExpressionVisitor:
         if typeof(node.val.dtype, Array) or typeof(node.val.dtype, Integer):
             return f'{val}[{self.visit(node.index)}]'
 
-        breakpoint()
         raise Exception('Unsupported slicing')
-
 
     def visit_ConditionalExpr(self, node):
         cond = self.visit(node.cond)

@@ -62,12 +62,13 @@ class Scheduler(PydlVisitor):
         else:
             node.blocked = False
             node.cur_state = 0
+            node.state = {node.cur_state}
 
         node.blocking = False
 
         self.enter_block(node)
 
-        for stmt in node.stmts:
+        for i, stmt in enumerate(node.stmts):
             self.visit(stmt)
 
             if stmt.blocking:

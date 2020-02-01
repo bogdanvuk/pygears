@@ -1,6 +1,6 @@
 from pygears import alternative, gear
 from pygears.lib import cart
-from pygears.typing import Any, Bool, Queue, Tuple, Number, reinterpret, cast
+from pygears.typing import Any, Bool, Queue, Tuple, Number, code, cast
 from pygears.typing import saturate as sat
 
 t_din = Queue[Tuple[{'data': Any, 'init': Any}]]
@@ -30,7 +30,7 @@ async def reduce(din: t_din, *, f, t) -> b't':
             op2 = cast(init, t)
             init_added = True
 
-        acc = reinterpret(f(op2, data), t)
+        acc = code(f(op2, data), t)
         if eot:
             yield acc
 

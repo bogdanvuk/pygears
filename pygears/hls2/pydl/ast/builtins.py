@@ -1,17 +1,21 @@
 from functools import reduce
-from pygears.typing import Int, Tuple, Uint, div, typeof, code
-from pygears.typing import floor, Array, cast, signed, reinterpret
+from pygears.typing import Int, Tuple, Uint, div, typeof, code, bitw
+from pygears.typing import floor, Array, cast, signed
 from pygears.typing.queue import QueueMeta
 
 from pygears.util.utils import gather, qrange
 from pygears.sim import clk
-from pygears import Intf
+from pygears import Intf, registry, gear
 from pygears.core.gear import OutSig
 from pygears.lib.rng import qrange as qrange_gear
+from pygears.lib.rng import qenumerate
+from pygears.lib.mux import mux
+from pygears.lib.fmaps.queue import queuemap
 
 from . import nodes
 
 from .cast import resolve_cast_func
+from .inline import call_gear, form_gear_args
 
 
 def call_floor(arg):
@@ -19,9 +23,11 @@ def call_floor(arg):
     int_cls = Int if t_arg.signed else Uint
     arg_to_int = nodes.CastExpr(arg, int_cls[t_arg.width])
     if t_arg.fract >= 0:
-        return nodes.BinOpExpr((arg_to_int, nodes.ResExpr(Uint(t_arg.fract))), nodes.opc.RShift)
+        return nodes.BinOpExpr((arg_to_int, nodes.ResExpr(Uint(t_arg.fract))),
+                               nodes.opc.RShift)
     else:
-        return nodes.BinOpExpr((arg_to_int, nodes.ResExpr(Uint(-t_arg.fract))), nodes.opc.LShift)
+        return nodes.BinOpExpr((arg_to_int, nodes.ResExpr(Uint(-t_arg.fract))),
+                               nodes.opc.LShift)
 
 
 def call_div(a, b, subprec):
@@ -124,13 +130,6 @@ def call_cast(arg, cast_type):
     return resolve_cast_func(arg, cast_type.val)
 
 
-def call_reinterpret(arg, cast_type):
-    if arg.dtype == cast_type.val:
-        return arg
-
-    return nodes.CastExpr(arg, cast_to=cast_type.val)
-
-
 def call_signed(val):
     if val.dtype.signed:
         return val
@@ -153,6 +152,27 @@ def call_type(arg):
     return nodes.ResExpr(arg.dtype)
 
 
+# @gear
+# def qenum_intfs(i: Uint, *din: b'din_t'):
+#     @gear
+#     def mux_wrap(sel):
+#         return mux(sel, *din) | Tuple
+
+#     return i | queuemap(f=mux_wrap)
+
+
+def call_enumerate(arg):
+    ctx = registry('hls/ctx')[-1]
+    iname = '_enum_iter'
+
+    ctx.scope[iname] = nodes.Register(iname, Uint[bitw(len(arg.val) - 1)])
+
+    ret = call_gear(mux, args=[ctx.ref(iname)] + arg.val, kwds={}, ctx=ctx)
+
+    return ret, nodes.BinOpExpr(
+        (ctx.ref(iname), nodes.ResExpr(len(arg.val) - 1)), nodes.opc.NotEq)
+
+
 builtins = {
     gather: call_gather,
     all: call_all,
@@ -168,12 +188,13 @@ builtins = {
     Intf.get: call_get,
     Intf.get_nb: call_get_nb,
     cast: call_cast,
-    reinterpret: call_reinterpret,
     signed: call_signed,
     QueueMeta.sub: call_sub,
     OutSig.write: outsig_write,
     Array.code: call_code,
     Tuple.code: call_code,
     code: call_code,
-    qrange: qrange_gear
+    qrange: qrange_gear,
+    range: qrange_gear,
+    enumerate: call_enumerate,
 }

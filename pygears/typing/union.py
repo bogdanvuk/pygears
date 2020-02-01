@@ -149,6 +149,8 @@ class UnionType(EnumerableGenericMeta):
 
 
 class Union(tuple, metaclass=UnionType):
+    __parameters__ = ['data', 'ctrl']
+
     def __new__(cls, val=None, ctrl=None):
         if type(val) == cls:
             return val

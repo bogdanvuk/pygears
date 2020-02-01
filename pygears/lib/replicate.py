@@ -16,8 +16,6 @@ async def replicate(din: Tuple[{
         A :class:`Queue` type where each element is equal to the ``value``
            input field and the `eot` signalizes the last replicated element.
     """
-    i = din.dtype[0](0)
-
     async with din as (length, value):
         for i, last in qrange(length):
             yield (value, last)

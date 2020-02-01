@@ -3,14 +3,30 @@ from .ccat import ccat
 from .cart import cart
 from .fmap import fmap
 from .permute import permuted_apply
-from pygears.typing import Int, Integer, Queue, Tuple, typeof, reinterpret
+from pygears.typing import Int, Integer, Queue, Tuple, typeof, code, Uint
 from pygears.util.utils import quiter
+from .fmaps import queuemap
+from .mux import mux
 
 TCfg = Tuple[{
     'start': Integer['w_start'],
     'cnt': Integer['w_cnt'],
     'incr': Integer['w_incr']
 }]
+
+
+@gear
+def qenumerate(*din: b'din_t'
+               ) -> Queue[Tuple['din_t', Uint['bitw(len(din)-1)']]]:
+    @gear
+    def mux_wrap(sel):
+        res = mux(sel, *din)
+        breakpoint()
+        res = res | Tuple
+        breakpoint()
+        return res
+
+    return qrange(len(din)) | queuemap(f=mux_wrap)
 
 
 def rng_out_type(cfg, cnt_steps):
@@ -38,7 +54,7 @@ async def qrange(cfg: Tuple[{
 
 @alternative(qrange)
 @gear(hdl={'compile': True})
-async def qrange_stop(stop: Integer) -> Queue[b'stop']:
+async def qrange_stop(stop: Integer, *, inclusive=False) -> Queue[b'stop']:
     cnt: stop.dtype = 0
     cur_cnt: stop.dtype
 
@@ -47,6 +63,18 @@ async def qrange_stop(stop: Integer) -> Queue[b'stop']:
             cur_cnt = cnt
             cnt += 1
             yield cur_cnt, cnt == s
+
+@alternative(qrange)
+@gear(hdl={'compile': True})
+async def qrange_stop_inclusive(stop: Integer, *, inclusive=True) -> Queue[b'stop']:
+    cnt: stop.dtype = 0
+    cur_cnt: stop.dtype
+
+    async with stop as s:
+        while (cnt < s):
+            cur_cnt = cnt
+            yield cur_cnt, cnt == s
+            cnt += 1
 
 
 @gear(hdl={'compile': True})
@@ -75,7 +103,7 @@ async def py_rng(cfg: TCfg, *, cnt_steps=False,
 
         for data, last in qrange(start, stop, step):
             if incr_steps:
-                yield reinterpret(offset + (data * incr),
+                yield code(offset + (data * incr),
                                   module().tout.data), last
             else:
                 yield data, last

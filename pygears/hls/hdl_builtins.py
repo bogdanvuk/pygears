@@ -1,6 +1,6 @@
 from functools import reduce
 from pygears.typing import Int, Tuple, Uint, div, typeof, code
-from pygears.typing import floor, Array, cast, signed, reinterpret
+from pygears.typing import floor, Array, cast, signed
 from pygears.typing.queue import QueueMeta
 
 from pygears.util.utils import gather
@@ -124,13 +124,6 @@ def call_cast(arg, cast_type):
     return resolve_cast_func(arg, cast_type.val)
 
 
-def call_reinterpret(arg, cast_type):
-    if arg.dtype == cast_type.val:
-        return arg
-
-    return CastExpr(arg, cast_to=cast_type.val)
-
-
 def call_signed(val):
     if val.dtype.signed:
         return val
@@ -168,7 +161,6 @@ builtins = {
     Intf.get: call_get,
     Intf.get_nb: call_get_nb,
     cast: call_cast,
-    reinterpret: call_reinterpret,
     signed: call_signed,
     QueueMeta.sub: call_sub,
     OutSig.write: outsig_write,

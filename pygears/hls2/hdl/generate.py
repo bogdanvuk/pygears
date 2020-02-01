@@ -217,8 +217,8 @@ class HDLGenerator:
 
             for subs in reversed(subscopes):
                 if name in subs.items:
-                    val = pydl.ConditionalExpr(
-                        (subs.items[name], val), cond=subs.opt_in_cond)
+                    val = pydl.ConditionalExpr((subs.items[name], val),
+                                               cond=subs.opt_in_cond)
 
             self.forwarded[name] = val
 
@@ -245,7 +245,9 @@ class ModuleGenerator(HDLGenerator):
 
         for stmt in node.stmts:
             if self.state_id in stmt.state:
-                self.cur_state_id = list(stmt.state)[0]
+                if self.cur_state_id not in stmt.state:
+                    self.cur_state_id = list(stmt.state)[0]
+
                 add_to_list(block.stmts, self.visit(stmt))
             elif self.cur_state:
                 block.stmts.append(
@@ -254,7 +256,9 @@ class ModuleGenerator(HDLGenerator):
                                 exit_cond=res_false))
                 break
 
-        self.cur_state_id = list(node.state)[0]
+        if self.cur_state_id not in node.state:
+            self.cur_state_id = list(node.state)[0]
+
         self.block_stack.pop()
         return block
 
@@ -346,10 +350,12 @@ class ModuleGenerator(HDLGenerator):
             AssignValue(target=self.ctx.ref('cycle_done'), val=res_true))
 
         if 'state' in self.ctx.scope:
-            block.stmts.append(
-                AssignValue(self.ctx.ref('state', ctx='store'),
-                            list(node.state)[0],
-                            exit_cond=res_false))
+            if (self.cur_state and self.state_id != list(node.state)[0]
+                    and node.blocking):
+                block.stmts.append(
+                    AssignValue(self.ctx.ref('state', ctx='store'),
+                                list(node.state)[0],
+                                exit_cond=res_false))
 
         return block
 

@@ -1,5 +1,5 @@
 from pygears import gear
-from pygears.typing import Uint, reinterpret
+from pygears.typing import Uint, code
 
 
 @gear(hdl={'compile': True})
@@ -11,4 +11,4 @@ async def iceil(din: Uint['T'], *, div=4) -> Uint['T']:
         div: The divisor value
     """
     async with din as val:
-        yield reinterpret((val + div - 1) // div, din.dtype)
+        yield code((val + div - 1) // div, din.dtype)

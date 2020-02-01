@@ -3,7 +3,7 @@ from pygears.conf import safe_bind
 from pygears.core.intf import IntfOperPlugin
 from pygears.typing import Any, Bool, Integer, Integral, Number, Tuple
 from pygears.typing import div as typing_div, is_type, Uint, typeof
-from pygears.typing import reinterpret as type_reinterpret
+from pygears.typing import code as type_code
 from pygears.util.hof import oper_tree
 from pygears.hls import datagear
 from pygears.rtl.gear import RTLGearHierVisitor
@@ -118,8 +118,8 @@ def shr(din: Integral, *, shamt) -> b'din >> shamt':
 
 
 @datagear
-def reinterpret(din, *, t) -> b't':
-    return type_reinterpret(din, t)
+def code(din, *, t) -> b't':
+    return type_code(din, t)
 
 
 @datagear
@@ -127,12 +127,12 @@ def xor(din: Tuple[Integral, Integral]) -> b'din[0] ^ din[1]':
     return din[0] ^ din[1]
 
 
-def shr_or_reinterpret(x, y):
+def shr_or_code(x, y):
     if is_type(y):
         if typeof(y, Uint) and (not y.specified):
             y = Uint[x.dtype.width]
 
-        return reinterpret(x, t=y)
+        return code(x, t=y)
     else:
         return shr(x, shamt=y)
 
@@ -156,19 +156,19 @@ class AddIntfOperPlugin(IntfOperPlugin):
         safe_bind('gear/intf_oper/__mul__', mul)
         safe_bind('gear/intf_oper/__ne__', ne)
         safe_bind('gear/intf_oper/__neg__', neg)
-        safe_bind('gear/intf_oper/__rshift__', shr_or_reinterpret)
+        safe_bind('gear/intf_oper/__rshift__', shr_or_code)
         safe_bind('gear/intf_oper/__sub__', sub)
         safe_bind('gear/intf_oper/__xor__', xor)
 
 
 @flow_visitor
-class SVRemoveReplicate(RTLGearHierVisitor):
-    def reinterpret(self, node):
+class RemoveRecode(RTLGearHierVisitor):
+    def code(self, node):
         node.bypass()
 
 
-class RTLReinterpretPlugin(VGenPlugin, SVGenPlugin):
+class RTLCodePlugin(VGenPlugin, SVGenPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['vgen']['flow'].insert(0, SVRemoveReplicate)
-        cls.registry['svgen']['flow'].insert(0, SVRemoveReplicate)
+        cls.registry['vgen']['flow'].insert(0, RemoveRecode)
+        cls.registry['svgen']['flow'].insert(0, RemoveRecode)

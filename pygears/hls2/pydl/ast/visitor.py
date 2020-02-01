@@ -104,8 +104,18 @@ class GearContext(Context):
         self.gear = gear
         self.local_namespace = get_function_context_dict(self.gear.func)
 
+        paramspec = inspect.getfullargspec(self.gear.func)
+
+        vararg = []
         for p in self.gear.in_ports:
+            if paramspec.varargs and p.basename.startswith(paramspec.varargs):
+                vararg.append(nodes.Interface(p, 'in'))
+
             self.scope[p.basename] = nodes.Interface(p, 'in')
+
+        if paramspec.varargs:
+            self.local_namespace[paramspec.varargs] = nodes.ResExpr(vararg)
+            # self.scope[paramspec.varargs] = nodes.ConcatExpr(vararg)
 
         for p in self.gear.out_ports:
             self.scope[p.basename] = nodes.Interface(p, 'out')

@@ -1,4 +1,4 @@
-from pygears.lib import cast as cast_gear, reinterpret as reinterpret_gear
+from pygears.lib import cast as cast_gear, code as code_gear
 from pygears.typing import Tuple, Uint, Queue, Int, Ufixp, cast
 from pygears import Intf
 from pygears.util.test_utils import skip_ifndef
@@ -50,7 +50,7 @@ def test_signed_signed_less_cosim(tmpdir):
                     Int[2],
                     seq=[-0x8, 0x7],
                     expected=[Int[2](0), Int[2](-1)],
-                    module=reinterpret_gear)
+                    module=code_gear)
 
 
 def test_signed_unsigned_more_cosim(tmpdir):
@@ -59,7 +59,7 @@ def test_signed_unsigned_more_cosim(tmpdir):
                     Uint[6],
                     seq=[-0x8, 0x7],
                     expected=[Uint[6](-0x8 & 0xf), Uint[6](7)],
-                    module=reinterpret_gear)
+                    module=code_gear)
 
 
 def test_signed_unsigned_less_cosim(tmpdir):
@@ -68,7 +68,7 @@ def test_signed_unsigned_less_cosim(tmpdir):
                     Uint[3],
                     seq=[-0x8, 0x7],
                     expected=[Uint[3](0), Uint[3](7)],
-                    module=reinterpret_gear)
+                    module=code_gear)
 
 
 def test_unsigned_signed_same_cosim(tmpdir):
@@ -77,7 +77,7 @@ def test_unsigned_signed_same_cosim(tmpdir):
                     Int[4],
                     seq=[0xf, 0x7],
                     expected=[Int[4](-1), Int[4](7)],
-                    module=reinterpret_gear)
+                    module=code_gear)
 
 
 def test_unsigned_signed_more_cosim(tmpdir):
@@ -94,7 +94,7 @@ def test_unsigned_signed_less_cosim(tmpdir):
                     Int[2],
                     seq=[0xf, 0x7],
                     expected=[Int[2](-1), Int[2](-1)],
-                    module=reinterpret_gear)
+                    module=code_gear)
 
 
 def test_tuple_cosim(tmpdir):
@@ -111,4 +111,4 @@ def test_ufixp_cosim(tmpdir):
                     Ufixp[2, 3],
                     seq=[2.75, 4.0],
                     expected=[Ufixp[2, 3](1.5), Ufixp[2, 3](0.0)],
-                    module=reinterpret_gear)
+                    module=code_gear)

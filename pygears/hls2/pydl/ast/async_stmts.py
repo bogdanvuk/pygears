@@ -84,7 +84,7 @@ def parse_yield(node, ctx):
 
 @node_visitor(ast.withitem)
 def withitem(node: ast.withitem, ctx: Context):
-    assert isinstance(ctx.pydl_parent_block, nodes.IntfBlock)
+    # assert isinstance(ctx.pydl_parent_block, nodes.IntfBlock)
 
     intf = visit_ast(node.context_expr, ctx)
     targets = visit_ast(node.optional_vars, ctx)
@@ -102,10 +102,10 @@ def withitem(node: ast.withitem, ctx: Context):
 
 @node_visitor(ast.AsyncWith)
 def asyncwith(node, ctx: Context):
+    assigns = [visit_ast(i, ctx) for i in node.items]
+
     pydl_node = nodes.IntfBlock(intfs=[], stmts=[])
     ctx.pydl_block_closure.append(pydl_node)
-
-    assigns = [visit_ast(i, ctx) for i in node.items]
 
     for intf, targets in assigns:
         if isinstance(intf, nodes.ConcatExpr):
@@ -124,24 +124,61 @@ def asyncwith(node, ctx: Context):
     return pydl_node
 
 
+class AsyncForContext:
+    def __init__(self, intf, ctx):
+        self.intf = intf
+        self.ctx = ctx
+
+    def __enter__(self):
+        eot_name = '_eot'
+        while eot_name in self.ctx.scope:
+            eot_name = eot_name[:-1] + str(int(eot_name[-1]) + 1)
+
+        self.ctx.scope[eot_name] = nodes.Variable(eot_name,
+                                                  self.intf.dtype.eot)
+
+        eot_init = nodes.Assign(nodes.ResExpr(self.intf.dtype.eot(0)),
+                                self.ctx.ref(eot_name))
+
+        eot_test = nodes.BinOpExpr(
+            (self.ctx.ref(eot_name), nodes.ResExpr(self.intf.dtype.eot.max)),
+            nodes.opc.NotEq)
+
+        eot_load = nodes.Assign(
+            nodes.SubscriptExpr(nodes.Component(self.intf.obj, 'data'),
+                                nodes.ResExpr(-1)), self.ctx.ref(eot_name))
+
+        intf_block = nodes.IntfBlock(intfs=[self.intf.obj], stmts=[eot_load])
+
+        eot_loop_stmt = nodes.Loop(test=eot_test,
+                                   stmts=[intf_block],
+                                   multicycle=[])
+
+        self.ctx.pydl_block_closure.append(intf_block)
+
+        self.intf_block = intf_block
+
+        return [eot_init, eot_loop_stmt]
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        self.ctx.pydl_block_closure.append(self.intf_block)
+
+
 @node_visitor(ast.AsyncFor)
 def AsyncFor(node, ctx: Context):
-    pydl_node = nodes.IntfLoop(intf=visit_ast(node.iter, ctx).obj,
-                               stmts=[],
-                               multicycle=[])
-    ctx.pydl_block_closure.append(pydl_node)
+    out_intf_ref = visit_ast(node.iter, ctx)
 
-    targets = visit_ast(node.target, ctx)
+    with AsyncForContext(out_intf_ref, ctx) as stmts:
+        targets = visit_ast(node.target, ctx)
 
-    add_to_list(
-        pydl_node.stmts,
-        assign_targets(ctx, targets, nodes.InterfacePull(pydl_node.intf),
-                       nodes.Variable))
+        add_to_list(
+            ctx.pydl_parent_block.stmts,
+            assign_targets(ctx, targets,
+                           nodes.Component(out_intf_ref.obj, 'data'),
+                           nodes.Variable))
 
-    for stmt in node.body:
-        res_stmt = visit_ast(stmt, ctx)
-        add_to_list(pydl_node.stmts, res_stmt)
+        for stmt in node.body:
+            res_stmt = visit_ast(stmt, ctx)
+            add_to_list(ctx.pydl_parent_block.stmts, res_stmt)
 
-    ctx.pydl_block_closure.pop()
-
-    return pydl_node
+        return stmts

@@ -1,7 +1,7 @@
 from pygears import gear, alternative
 from .fmaps import tuplemap
 from .flatten import flatten
-from .operators import reinterpret
+from .operators import code
 from pygears.typing import Tuple, typeof, Queue, Union, Uint
 from pygears.typing import factor as factor_type
 
@@ -19,7 +19,7 @@ def factor(din) -> b'factor(din)':
     lvl = din.dtype.types[0].lvl
     data_len = int(din.dtype.types[0]) - lvl
     din_tuple = din | Tuple \
-        | tuplemap(f=(reinterpret(t=Tuple[Uint[data_len], Uint[lvl]]), None)) \
+        | tuplemap(f=(code(t=Tuple[Uint[data_len], Uint[lvl]]), None)) \
         | flatten
 
     return din_tuple[0, 2, 1] >> factor_type(din.dtype)

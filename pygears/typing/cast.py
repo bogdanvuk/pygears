@@ -5,13 +5,6 @@ from . import Fixpnumber, Float, Number, Ufixp, Fixp, Unit
 # from pygears.conf.log import gear_log
 
 
-def reinterpret(data, cast_type):
-    if is_type(data):
-        return cast_type
-    else:
-        return cast_type.decode(code(data) & ((1 << cast_type.width) - 1))
-
-
 def code(data, cast_type=Uint):
     if is_type(data):
         if not cast_type.specified and typeof(cast_type, Integer):
@@ -59,11 +52,11 @@ def get_type_error(dtype, cast_type, details=None):
     if cast_type.specified:
         details.append(
             f"FIX: to interpret '{short_repr(dtype)}' encoding as '{short_repr(cast_type)}',"
-            f" use reinterpret()")
+            f" use code()")
     else:
         details.append(
             f"FIX: to interpret '{short_repr(dtype)}' encoding as '{short_repr(cast_type)}',"
-            f" specify the cast type completely and use reinterpret()")
+            f" specify the cast type completely and use code()")
 
     return TypeError(
         f"Cannot convert type '{repr(dtype)}' to '{repr(cast_type)}'\n    " +
@@ -81,7 +74,7 @@ def uint_type_cast_resolver(dtype, cast_type):
                 raise get_type_error(
                     dtype, cast_type, [
                         f"fixed-point integer part (width '{dtype.integer}') is larger than target Uint",
-                        f"FIX: to force cast to smaller Uint, cast to generic Uint first and then reinterpret() as '{repr(cast_type)}'"
+                        f"FIX: to force cast to smaller Uint, cast to generic Uint first and then code() as '{repr(cast_type)}'"
                     ])
 
             return cast_type
@@ -195,14 +188,14 @@ def int_type_cast_resolver(dtype, cast_type):
                 raise get_type_error(
                     dtype, cast_type, (
                         f"Int needs to be one bit larger (width {int_part}) to represent unsigned fixed-point integer part (width {dtype.integer})",
-                        f"FIX: to force cast to smaller Int, cast to generic Int first and then reinterpret() as '{repr(cast_type)}'"
+                        f"FIX: to force cast to smaller Int, cast to generic Int first and then code() as '{repr(cast_type)}'"
                     ))
 
             elif cast_type.width < dtype.integer:
                 raise get_type_error(
                     dtype, cast_type, (
                         f"fixed-point integer part (width '{dtype.integer}') is larger than target Int",
-                        f"FIX: to force cast to smaller Int, cast to generic Int first and then reinterpret() as '{repr(cast_type)}'"
+                        f"FIX: to force cast to smaller Int, cast to generic Int first and then code() as '{repr(cast_type)}'"
                     ))
 
             return cast_type
@@ -225,7 +218,7 @@ def int_type_cast_resolver(dtype, cast_type):
             raise get_type_error(
                 dtype, cast_type, (
                     f"Int needs to be one bit larger (width {width}) to represent unsigned integer (width {dtype.width})",
-                    f"FIX: to force cast to smaller Int, cast to generic Int first and then reinterpret() as '{repr(cast_type)}'"
+                    f"FIX: to force cast to smaller Int, cast to generic Int first and then code() as '{repr(cast_type)}'"
                 ))
         elif cast_type.width < dtype.width:
             raise get_type_error(
@@ -574,16 +567,6 @@ def signed(dtype_or_val):
     if is_type(dtype_or_val):
         if typeof(dtype_or_val, Uint):
             return cast(dtype_or_val, Int)
-
-
-def reinterpret(data, cast_type):
-    if is_type(data):
-        return cast_type
-    else:
-        if typeof(cast_type, (Uint, Int)) and not cast_type.specified:
-            cast_type = cast_type[type(data).width]
-
-        return cast_type.decode(code(data) & ((1 << cast_type.width) - 1))
 
 
 # class CastCoreTypesPlugin(CoreTypesPlugin):

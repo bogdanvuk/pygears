@@ -275,7 +275,7 @@ async def check(din, *, ref, cmp=lambda x, y: x == y):
     except (GearDone, StopIteration):
         sim_assert(
             items == ref,
-            f"mismatch in number of items '{len(items)}' vs '{len(ref)}'. "
+            f"mismatch in number of items {len(items)} vs {len(ref)}. "
             f"\ngot:\n{textwrap.indent(pprint.pformat(items), ' '*4)}"
             f"\nexp:\n{textwrap.indent(pprint.pformat(ref), ' '*4)}"
         )
