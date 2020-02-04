@@ -130,9 +130,7 @@ class AsyncForContext:
         self.ctx = ctx
 
     def __enter__(self):
-        eot_name = '_eot'
-        while eot_name in self.ctx.scope:
-            eot_name = eot_name[:-1] + str(int(eot_name[-1]) + 1)
+        eot_name = self.ctx.find_unique_name('_eot')
 
         self.ctx.scope[eot_name] = nodes.Variable(eot_name,
                                                   self.intf.dtype.eot)
@@ -154,6 +152,7 @@ class AsyncForContext:
                                    stmts=[intf_block],
                                    multicycle=[])
 
+        self.ctx.pydl_block_closure.append(eot_loop_stmt)
         self.ctx.pydl_block_closure.append(intf_block)
 
         self.intf_block = intf_block
@@ -161,7 +160,8 @@ class AsyncForContext:
         return [eot_init, eot_loop_stmt]
 
     def __exit__(self, exception_type, exception_value, traceback):
-        self.ctx.pydl_block_closure.append(self.intf_block)
+        self.ctx.pydl_block_closure.pop()
+        self.ctx.pydl_block_closure.pop()
 
 
 @node_visitor(ast.AsyncFor)

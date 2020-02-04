@@ -1,5 +1,5 @@
 from pygears.conf import registry, safe_bind, PluginBase, Inject, inject
-from pygears.core.port import InPort, OutPort, Port
+from pygears.core.port import InPort, OutPort, Port, HDLConsumer, HDLProducer
 from pygears.core.hier_node import HierNode
 
 sim_reg = None
@@ -21,6 +21,9 @@ def get_sim_map_gear(gear):
 
 def _get_consumer_tree_rec(root_intf, cur_intf, consumers, end_producer):
     for port in cur_intf.consumers:
+        if isinstance(port, HDLConsumer):
+            continue
+
         cons_intf = port.consumer
         sim_mod = get_sim_map_gear(port.gear)
 
@@ -168,7 +171,13 @@ def get_end_producer(obj):
     if isinstance(obj, Port):
         return get_end_producer(obj.producer)
     else:
+        if isinstance(obj.producer, HDLProducer):
+            return obj
+
         for pout in obj.consumers:
+            if isinstance(pout, HDLConsumer):
+                continue
+
             if pout.gear in registry('sim/map') and (isinstance(pout,
                                                                 OutPort)):
                 return obj

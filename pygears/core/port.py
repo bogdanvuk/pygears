@@ -34,3 +34,15 @@ class InPort(Port):
 
 class OutPort(Port):
     direction = "out"
+
+
+class HDLUser:
+    pass
+
+
+class HDLProducer(HDLUser):
+    pass
+
+
+class HDLConsumer(HDLUser):
+    pass

@@ -2,6 +2,7 @@ import ast
 import inspect
 import typing
 from pygears.core.infer_ftypes import infer_ftypes
+from pygears.typing import Any
 from functools import singledispatch
 from dataclasses import dataclass, field
 from .. import nodes
@@ -60,6 +61,15 @@ class Context:
 
     def ref(self, name, ctx='load'):
         return nodes.Name(name, self.scope[name], ctx=ctx)
+
+    def find_unique_name(self, name):
+        res_name = name
+        i = 0
+        while res_name in self.scope:
+            i += 1
+            res_name = f'{name}_i'
+
+        return res_name
 
     @property
     def pydl_parent_block(self):
@@ -155,16 +165,30 @@ class FuncContext(Context):
         self.const_args = {}
 
         if func.__annotations__:
-            params = {**func.__annotations__}
-            for name, var in self.args.items():
-                if name not in params:
-                    params[name] = var.dtype
+            kwddefaults = paramspec.kwonlydefaults or {}
+            params = {**func.__annotations__, **kwddefaults}
 
-            res = infer_ftypes(
-                params=params,
-                args={name: var.dtype
-                      for name, var in self.args.items()},
-                namespace=self.local_namespace)
+            for a in paramspec.args:
+                if a not in params:
+                    params[a] = Any
+
+            arg_types = {
+                name: self.args[name].dtype
+                for name in params if name in self.args
+            }
+
+            for name, var in self.args.items():
+                if name in params:
+                    continue
+
+                if isinstance(var, nodes.ResExpr):
+                    params[name] = var.val
+                else:
+                    params[name] = var
+
+            res = infer_ftypes(params=params,
+                               args=arg_types,
+                               namespace=self.local_namespace)
 
             for name, dtype in res.items():
                 if name == 'return':

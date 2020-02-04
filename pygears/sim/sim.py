@@ -11,7 +11,7 @@ from pygears import GearDone, bind, find, registry, safe_bind, config
 from pygears.conf import CustomLogger, LogFmtFilter, register_custom_log
 from pygears.core.gear import GearPlugin, Gear
 # from pygears.core.intf import get_consumer_tree as intf_get_consumer_tree
-from pygears.core.port import InPort, OutPort
+from pygears.core.port import InPort, OutPort, HDLConsumer, HDLProducer
 from pygears.core.sim_event import SimEvent
 from pygears.core.hier_node import HierVisitorBase
 
@@ -114,6 +114,9 @@ def topo_sort(dag):
 
 def _get_consumer_tree_rec(root_intf, cur_intf, consumers):
     for port in cur_intf.consumers:
+        if isinstance(port, HDLConsumer):
+            continue
+
         cons_intf = port.consumer
         if port in registry('sim/map'):
             consumers.append(port)
@@ -189,12 +192,18 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
         for g, sim_gear in self.sim_map.items():
             if isinstance(g, InPort):
+                #TODO: Following doesn't work when verilator adds InputPorts for channeled intfs
+                # if (len(g.consumer.consumers) == 1
+                #         and isinstance(g.consumer.consumers[0], HDLConsumer)):
+
                 if (not g.gear.hierarchical):
                     dag[g] = [g.gear]
                 else:
                     dag[g] = get_consumer_tree(g.consumer)
 
             elif isinstance(g, OutPort):
+                #TODO: Test if this works
+                # if isinstance(g.producer.producer, HDLProducer):
                 if (not g.gear.hierarchical):
                     dag[g.gear].append(g)
 
@@ -222,8 +231,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             if g not in self.sim_map:
                 raise Exception(
                     f'Gear "{g.name}" of type "{g.definition.__name__}" has'
-                    f' no simulation model'
-                )
+                    f' no simulation model')
 
             self.sim_map[g].phase = 'forward'
 

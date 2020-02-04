@@ -5,7 +5,7 @@ from pygears.lib import verif, drv, saturate, shred
 from pygears.sim import sim, cosim
 
 
-def test_reinterpret(tmpdir):
+def test_code(tmpdir):
     @datagear
     def test(din, *, t) -> b't':
         return code(din, t)
@@ -31,4 +31,4 @@ def test_reinterpret(tmpdir):
 #     sim(tmpdir)
 
 
-# test_sim_invoke('/tools/home/tmp/datagear')
+# test_code('/tools/home/tmp/datagear')

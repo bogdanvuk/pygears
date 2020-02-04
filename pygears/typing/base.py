@@ -430,7 +430,7 @@ class EnumerableGenericMeta(GenericMeta):
             except ValueError as e:
                 raise KeyError(f'Field "{index}" not in type "{repr(self)}"')
         elif not isinstance(index, slice):
-            return index
+            return int(index)
         else:
             return index.__reduce__()[1]
 

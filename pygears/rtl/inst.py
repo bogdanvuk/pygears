@@ -61,6 +61,9 @@ class RTLNodeInstVisitor(HierVisitorBase):
         if not node_cls:
             return None
 
+        if self.cur_hier is None and module.parent in self.rtl_map:
+            self.cur_hier = self.rtl_map[module.parent]
+
         node = node_cls(module, parent=self.cur_hier)
 
         for p in module.in_ports:
@@ -76,7 +79,7 @@ def rtl_inst(top, conf):
     v = RTLNodeInstVisitor()
     v.visit(top)
 
-    return v.design
+    return registry('rtl/gear_node_map')[top]
 
 
 class RTLNodeInstPlugin(GearPlugin):

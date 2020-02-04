@@ -70,9 +70,6 @@ def test_directed(tmpdir, sim_cls, din_delay, dout_delay, cfg_delay):
              delays=[delay_rng(dout_delay, dout_delay)])
     sim(resdir=tmpdir)
 
-# from pygears.sim.modules import SimVerilated
-# test_directed('/tools/home/tmp/group', SimVerilated, 0, 0, 0)
-
 
 @formal_check()
 def test_formal():

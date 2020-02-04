@@ -9,6 +9,7 @@ from traceback import walk_stack
 from .intf import Intf
 from .port import InPort, OutPort
 from .hier_node import NamedHierNode
+from .util import is_standard_func
 
 
 class TooManyArguments(Exception):
@@ -110,14 +111,16 @@ class Gear(NamedHierNode):
 
     @property
     def hierarchical(self):
-        if self.child:
-            return True
+        return is_standard_func(self.func)
 
-        # This Second condition is when gear contains only wiring
-        if self.in_ports and self.in_ports[0].consumer.consumers:
-            return True
+        # if self.child:
+        #     return True
 
-        return False
+        # # This Second condition is when gear contains only wiring
+        # if self.in_ports and self.in_ports[0].consumer.consumers:
+        #     return True
+
+        # return False
 
     @property
     def definition(self):

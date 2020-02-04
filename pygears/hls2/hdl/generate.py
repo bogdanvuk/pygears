@@ -118,6 +118,21 @@ class HDLGenerator:
 
         return traverse_visitor(node, block)
 
+    def merge_subscope(self, block):
+        subscope = self.forwarded.cur_subscope
+        self.forwarded.upscope()
+
+        for name, val in subscope.items.items():
+            if block.opt_in_cond != res_true:
+                if name in self.forwarded:
+                    prev_val = self.forwarded[name]
+                else:
+                    prev_val = self.ctx.ref(name)
+
+                val = pydl.ConditionalExpr((val, prev_val), block.opt_in_cond)
+
+            self.forwarded[name] = val
+
     def visit_all_Block(self, node):
         block = HDLBlock(in_cond=self.in_condition(node),
                          opt_in_cond=self.opt_in_condition(node),
@@ -132,19 +147,7 @@ class HDLGenerator:
         if isinstance(self.block, IfElseBlock):
             return res
 
-        subscope = self.forwarded.cur_subscope
-        self.forwarded.upscope()
-
-        for name, val in subscope.items.items():
-            if block.opt_in_cond != res_true:
-                if name in self.forwarded:
-                    prev_val = self.forwarded[name]
-                else:
-                    prev_val = self.ctx.ref(name)
-
-                val = pydl.ConditionalExpr((val, prev_val), block.opt_in_cond)
-
-            self.forwarded[name] = val
+        self.merge_subscope(block)
 
         return res
 
@@ -330,7 +333,8 @@ class ModuleGenerator(HDLGenerator):
         block.exit_cond = pydl.UnaryOpExpr(self.opt_in_condition(node),
                                            pydl.opc.Not)
 
-        self.forwarded.upscope()
+        self.merge_subscope(block)
+        # self.forwarded.upscope()
 
         if looped_init:
             block.stmts.append(
@@ -522,11 +526,11 @@ def generate(pydl_ast, ctx: GearContext):
 
     modblock = CombBlock(stmts=[stateblock], dflts={})
 
-    print(modblock)
+    # print(modblock)
     RewriteExitCond(ctx).visit(modblock)
-    print(modblock)
+    # print(modblock)
     RemoveDeadCode(ctx).visit(modblock)
-    print(modblock)
+    # print(modblock)
     gen_all_funcs(modblock, ctx)
 
     return modblock

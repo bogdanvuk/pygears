@@ -1,7 +1,7 @@
 from pygears.conf import PluginBase, registry, safe_bind
 from .intf import Intf
 from .gear import Gear, create_hier
-from .port import InPort, OutPort
+from .port import InPort, OutPort, HDLConsumer, HDLProducer
 from copy import deepcopy, copy
 
 
@@ -84,6 +84,10 @@ def copy_gear_full(g: Gear, name=None):
 
         intf = p.consumer
         for cons in intf.consumers:
+            if isinstance(cons, HDLConsumer):
+                cp_intf.connect(HDLConsumer())
+                continue
+
             cp_cons_gear = cp_map[cons.gear]
             cp_cons = getattr(cp_cons_gear,
                               f'{cons.direction}_ports')[cons.index]

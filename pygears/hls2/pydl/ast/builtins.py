@@ -51,7 +51,7 @@ def max_expr(op1, op2):
     if signed and typeof(op2.dtype, Uint):
         op2_compare = resolve_cast_func(op2, Int)
 
-    cond = nodes.BinOpExpr((op1_compare, op2_compare), nodes.opc.GT)
+    cond = nodes.BinOpExpr((op1_compare, op2_compare), nodes.opc.Gt)
     return nodes.ConditionalExpr(cond=cond, operands=(op1, op2))
 
 
@@ -61,7 +61,7 @@ def precompiled(func):
 
 
 def call_len(arg, **kwds):
-    return nodes.ResExpr(len(arg.dtype))
+    return nodes.ResExpr(len(arg.val))
 
 
 def call_print(*arg, **kwds):
@@ -86,12 +86,11 @@ def call_max(*arg, **kwds):
 
     arg = arg[0]
 
-    assert isinstance(arg.op, nodes.IntfDef), 'Not supported yet...'
     assert typeof(arg.dtype, Tuple), 'Not supported yet...'
 
     op = []
     for field in arg.dtype.fields:
-        op.append(nodes.AttrExpr(arg.op, [field]))
+        op.append(nodes.SubscriptExpr(arg, nodes.ResExpr(field)))
 
     return reduce(max_expr, op)
 
@@ -162,15 +161,17 @@ def call_type(arg):
 
 
 def call_enumerate(arg):
-    ctx = registry('hls/ctx')[-1]
-    iname = '_enum_iter'
+    arg.enumerated = True
+    return arg
+    # ctx = registry('hls/ctx')[-1]
+    # iname = '_enum_iter'
 
-    ctx.scope[iname] = nodes.Register(iname, Uint[bitw(len(arg.val) - 1)])
+    # ctx.scope[iname] = nodes.Register(iname, Uint[bitw(len(arg.val) - 1)])
 
-    ret = call_gear(mux, args=[ctx.ref(iname)] + arg.val, kwds={}, ctx=ctx)
+    # ret = call_gear(mux, args=[ctx.ref(iname)] + arg.val, kwds={}, ctx=ctx)
 
-    return ret, nodes.BinOpExpr(
-        (ctx.ref(iname), nodes.ResExpr(len(arg.val) - 1)), nodes.opc.NotEq)
+    # return ret, nodes.BinOpExpr(
+    #     (ctx.ref(iname), nodes.ResExpr(len(arg.val) - 1)), nodes.opc.NotEq)
 
 
 builtins = {

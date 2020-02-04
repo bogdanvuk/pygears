@@ -11,7 +11,7 @@ class SVGenPlugin(PluginBase):
     def bind(cls):
         safe_bind('svgen/flow', [svgen_inst, svgen_generate])
         safe_bind('svgen/resolvers', [
-            HDLFileResolver, HLSResolver, HDLTemplateResolver,
+            HDLFileResolver, HDLTemplateResolver, HLSResolver,
             HierarchicalResolver
         ])
         safe_bind('svgen/module_namespace', {})

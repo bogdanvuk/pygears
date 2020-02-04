@@ -122,4 +122,4 @@ class Scheduler(PydlVisitor):
 
 def schedule(pydl_ast):
     Scheduler().visit(pydl_ast)
-    print(PPrinter().visit(pydl_ast))
+    # print(PPrinter().visit(pydl_ast))

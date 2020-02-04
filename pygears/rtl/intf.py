@@ -2,6 +2,7 @@ import functools
 
 from pygears.core.hier_node import NamedHierNode
 from pygears.rtl.port import InPort, OutPort
+from pygears.core.port import HDLProducer
 
 
 class RTLIntf(NamedHierNode):
@@ -18,6 +19,10 @@ class RTLIntf(NamedHierNode):
     @functools.lru_cache(maxsize=None)
     def _basename(self):
         producer_port = self.producer
+        if isinstance(producer_port, HDLProducer):
+            #TODO: Not really a producer port
+            producer_port = self.consumers[0]
+
         port_name = producer_port.basename
 
         if isinstance(producer_port, InPort):

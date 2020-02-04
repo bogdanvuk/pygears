@@ -620,7 +620,7 @@ class BinOpExpr(Expr):
 
 class ArrayOpExpr(Expr):
     def __repr__(self):
-        return f'{type(self).__name__}(val={repr(self.val)}, index={repr(self.index)})'
+        return f'{type(self).__name__}(val={repr(self.array)}, op={repr(self.operator)})'
 
     def __str__(self):
         return f'{OPMAP[self.operator]}({str(self.array)})'

@@ -1,4 +1,4 @@
-from pygears.core.port import InPort
+from pygears.core.port import InPort, HDLConsumer, HDLProducer
 from pygears.conf import inject, Inject
 from pygears.rtl.intf import RTLIntf
 from pygears.core.hier_node import HierVisitorBase
@@ -20,6 +20,12 @@ def connect(node, rtl_map=Inject('rtl/gear_node_map')):
 
         prod_intf = gear_p.producer
 
+        if isinstance(prod_intf.producer, HDLProducer):
+            intf_inst = RTLIntf(node.parent, prod_intf.dtype, producer=HDLProducer())
+            intf_inst.connect(p)
+            rtl_map[prod_intf] = intf_inst
+            continue
+
         # If this port was already connected while processing other ports (it
         # shares an interface with them)
         if isinstance(p.producer, RTLIntf):
@@ -30,11 +36,17 @@ def connect(node, rtl_map=Inject('rtl/gear_node_map')):
             create_unsourced_intf(node, p, gear_p)
 
     for p, gear_p in zip(node.out_ports, node.gear.out_ports):
-        create_intf(p, gear_p, domain=node.parent)
+        gear_intf = gear_p.consumer
+
+        if (len(gear_intf.consumers) == 1 and isinstance(gear_intf.consumers[0], HDLConsumer)):
+            intf_inst = RTLIntf(node.parent, gear_intf.dtype, producer=p)
+            rtl_map[gear_intf] = intf_inst
+        else:
+            create_intf(p, gear_p, domain=node.parent)
+
         if not node.is_hierarchical:
             p.producer = None
 
-        gear_intf = gear_p.consumer
 
         if (node.parent is not None and gear_intf is not None
                 and not gear_intf.consumers):
@@ -68,7 +80,7 @@ def create_unsourced_intf(node,
 @inject
 def create_intf(port, gear_port, domain, rtl_map=Inject('rtl/gear_node_map')):
     gear_intf = gear_port.consumer
-    if gear_intf is not None:
+    if not isinstance(gear_intf, HDLConsumer):
         intf_inst = RTLIntf(domain, gear_intf.dtype, producer=port)
 
         for cons_port in gear_intf.consumers:

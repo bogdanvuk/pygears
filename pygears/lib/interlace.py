@@ -22,14 +22,6 @@ async def qinterlace(*din: Queue['t_data']) -> b'Queue[t_data, 2]':
         async for (data, eot) in data_in:
             yield (data, (i == len(din) - 1) @ eot)
 
-    for i in range(len(din)):
-        data_in = din[i]
-
-        eot = data_in.dtype.eot(0)
-        while not all(eot):
-            async with data_in as (data, eot):
-                yield (data, (i == len(din) - 1) @ eot)
-
 
 # @gear(hdl={'compile': True})
 # async def interlace(*din: b'din_t') -> b'din_t':

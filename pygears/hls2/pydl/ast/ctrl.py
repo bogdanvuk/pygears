@@ -1,9 +1,12 @@
 import ast
 from . import Context, SyntaxError, node_visitor, nodes, visit_ast, visit_block
 from pygears.typing import cast, Integer, Bool, typeof, Queue
+from pygears.lib.rng import qrange
+from pygears.lib.union import select
 from .utils import add_to_list
 from .stmt import assign_targets
 from .async_stmts import AsyncForContext
+from .inline import form_gear_args, call_gear
 
 
 @node_visitor(ast.If)
@@ -45,13 +48,58 @@ def _(node: ast.While, ctx: Context):
     return visit_block(pydl_node, node.body, ctx)
 
 
+def is_intf_list(node):
+    if not isinstance(node, nodes.ResExpr):
+        return False
+
+    if not isinstance(node.val, list):
+        return False
+
+    return all(isinstance(v, nodes.Interface) for v in node.val)
+
+
+def intf_loop(node, intfs, targets, ctx: Context, enumerated):
+    rng_intf = call_gear(qrange, [nodes.ResExpr(len(intfs))], {}, ctx)
+    with AsyncForContext(rng_intf, ctx) as stmts:
+        rng_iter = nodes.SubscriptExpr(nodes.Component(rng_intf.obj, 'data'),
+                                       nodes.ResExpr(0))
+        select_intf = call_gear(select,
+                                args=[rng_iter] + intfs,
+                                kwds={},
+                                ctx=ctx)
+
+        if enumerated:
+            intf_var_name = targets.operands[1].name
+        else:
+            intf_var_name = targets.name
+
+        ctx.local_namespace[intf_var_name] = select_intf
+
+        if enumerated:
+            add_to_list(
+                ctx.pydl_parent_block.stmts,
+                assign_targets(
+                    ctx, targets.operands[0],
+                    nodes.SubscriptExpr(nodes.Component(rng_intf.obj, 'data'),
+                                        nodes.ResExpr(0)), nodes.Variable))
+
+        for stmt in node.body:
+            res_stmt = visit_ast(stmt, ctx)
+            add_to_list(ctx.pydl_parent_block.stmts, res_stmt)
+
+        return stmts
+
+
 @node_visitor(ast.For)
 def _(node: ast.For, ctx: Context):
     out_intf_ref = visit_ast(node.iter, ctx)
+    targets = visit_ast(node.target, ctx)
+
+    if is_intf_list(out_intf_ref):
+        return intf_loop(node, out_intf_ref.val, targets, ctx,
+                         getattr(out_intf_ref, 'enumerated', False))
 
     with AsyncForContext(out_intf_ref, ctx) as stmts:
-        targets = visit_ast(node.target, ctx)
-
         add_to_list(
             ctx.pydl_parent_block.stmts,
             assign_targets(
@@ -64,28 +112,3 @@ def _(node: ast.For, ctx: Context):
             add_to_list(ctx.pydl_parent_block.stmts, res_stmt)
 
         return stmts
-
-    # if not typeof(out_intf.dtype, Queue):
-    #     raise Exception('Unsupported return data type for for loop')
-
-    # # in_intf = ctx.submodules[-1].in_ports[0]
-
-    # pydl_node = nodes.IntfLoop(intf=out_intf,
-    #                            stmts=[],
-    #                            multicycle=[])
-    # ctx.pydl_block_closure.append(pydl_node)
-
-    # targets = visit_ast(node.target, ctx)
-
-    # add_to_list(
-    #     pydl_node.stmts,
-    #     assign_targets(ctx, targets, nodes.InterfacePull(pydl_node.intf),
-    #                    nodes.Variable))
-
-    # for stmt in node.body:
-    #     res_stmt = visit_ast(stmt, ctx)
-    #     add_to_list(pydl_node.stmts, res_stmt)
-
-    # ctx.pydl_block_closure.pop()
-
-    # return pydl_node

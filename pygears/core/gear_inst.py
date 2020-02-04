@@ -12,6 +12,7 @@ from .gear import TooManyArguments, GearTypeNotSpecified, GearArgsNotSpecified
 from .gear import Gear, create_hier
 from .gear_decorator import GearDecoratorPlugin
 from .gear_memoize import get_memoized_gear, memoize_gear
+from .port import HDLConsumer, HDLProducer
 
 
 def get_obj_var_name(frame, obj):
@@ -412,6 +413,15 @@ def gear_base_resolver(func,
             out_intfs, out_dtype = resolve_func(gear_inst)
             out_intfs = resolve_gear(gear_inst, out_intfs, out_dtype,
                                      fix_intfs)
+
+            if not is_standard_func(gear_inst.func):
+                for i in gear_inst.in_port_intfs:
+                    i.connect(HDLConsumer())
+
+                for i in gear_inst.out_port_intfs:
+                    i.source(HDLProducer())
+
+
         except (TooManyArguments, GearTypeNotSpecified, GearArgsNotSpecified,
                 TypeError, TypeMatchError, MultiAlternativeError) as e:
             err = e

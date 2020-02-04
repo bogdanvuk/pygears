@@ -113,6 +113,10 @@ class UnionType(EnumerableGenericMeta):
             else:
                 raise IndexError
 
+    @property
+    def fields(self):
+        return ['data', 'ctrl']
+
     def keys(self):
         return [0, 1]
 
@@ -149,8 +153,6 @@ class UnionType(EnumerableGenericMeta):
 
 
 class Union(tuple, metaclass=UnionType):
-    __parameters__ = ['data', 'ctrl']
-
     def __new__(cls, val=None, ctrl=None):
         if type(val) == cls:
             return val
