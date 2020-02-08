@@ -47,7 +47,6 @@ class HDLBlock(BaseBlock):
     in_cond: pydl.Expr = pydl.ResExpr(True)
     opt_in_cond: pydl.Expr = pydl.ResExpr(True)
     exit_cond: pydl.Expr = pydl.ResExpr(True)
-    cycle_cond: pydl.Expr = pydl.ResExpr(True)
 
     def __str__(self):
         body = ''
@@ -91,9 +90,6 @@ class StateBlock(BaseBlock):
 
 @dataclass
 class CombBlock(HDLBlock):
-    in_cond: pydl.Expr = pydl.ResExpr(True)
-    opt_in_cond: pydl.Expr = pydl.ResExpr(True)
-    exit_cond: pydl.Expr = pydl.ResExpr(True)
     funcs: List = field(default_factory=list)
 
 
@@ -106,11 +102,22 @@ class FuncBlock(BaseBlock):
     opt_in_cond: pydl.Expr = pydl.ResExpr(True)
     funcs: List = field(default_factory=list)
 
+    def __str__(self):
+        body = ''
+        for s in self.stmts:
+            body += str(s)
+
+        args = [f'{name}: {val}' for name, val in self.args.items()]
+        return f'{self.name}({", ".join(args)}) {{\n{textwrap.indent(body, "    ")}}}\n'
+
 
 @dataclass
 class FuncReturn:
     func: FuncBlock
     expr: pydl.Expr
+
+    def __str__(self):
+        return f'return {self.expr}'
 
 
 @dataclass

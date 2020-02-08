@@ -18,7 +18,7 @@ def parse_ifexp(node, ctx: Context):
     }
 
     if all(isinstance(v, nodes.ResExpr) for v in res.values()):
-        return res['body'].val if res['test'].val else res['orelse']
+        return nodes.ResExpr(res['body'].val if res['test'].val else res['orelse'])
 
     return nodes.ConditionalExpr(operands=(res['body'], res['orelse']),
                                  cond=res['test'])

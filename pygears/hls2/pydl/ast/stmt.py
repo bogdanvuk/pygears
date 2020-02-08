@@ -46,7 +46,7 @@ def _(node, ctx: Context):
     if node.value:
         init = visit_ast(node.value, ctx)
 
-        init_cast = nodes.ResExpr(annotation.val(init.val))
+        init_cast = nodes.CastExpr(init, annotation.val)
         stmts = assign_targets(ctx, targets, init_cast, nodes.Register)
         if not isinstance(stmts, list):
             stmts = [stmts]
@@ -71,7 +71,7 @@ def _(node, ctx: Context):
     stmts = []
     for t in node.targets:
         targets = visit_ast(t, ctx)
-        add_to_list(stmts, assign_targets(ctx, targets, value))
+        add_to_list(stmts, assign_targets(ctx, targets, value, nodes.Variable))
 
     return stmts
 

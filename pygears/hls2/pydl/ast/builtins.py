@@ -34,6 +34,7 @@ def call_div(a, b, subprec):
     t_a = a.dtype
     t_b = b.dtype
 
+
     t_div = div(t_a, t_b, int(subprec.val))
 
     def fixp__div__(op1: t_a, op2: t_b) -> t_div:
@@ -45,6 +46,8 @@ def call_div(a, b, subprec):
 def max_expr(op1, op2):
     op1_compare = op1
     op2_compare = op2
+
+    #TODO: Sort this casting out
     signed = typeof(op1.dtype, Int) or typeof(op2.dtype, Int)
     if signed and typeof(op1.dtype, Uint):
         op1_compare = resolve_cast_func(op1, Int)

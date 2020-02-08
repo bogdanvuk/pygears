@@ -3,7 +3,7 @@ from .ccat import ccat
 from .cart import cart
 from .fmap import fmap
 from .permute import permuted_apply
-from pygears.typing import Int, Integer, Queue, Tuple, typeof, code, Uint
+from pygears.typing import Int, Integer, Queue, Tuple, typeof, code, Uint, Bool
 from pygears.util.utils import quiter
 from .fmaps import queuemap
 from .mux import mux
@@ -20,11 +20,7 @@ def qenumerate(*din: b'din_t'
                ) -> Queue[Tuple['din_t', Uint['bitw(len(din)-1)']]]:
     @gear
     def mux_wrap(sel):
-        res = mux(sel, *din)
-        breakpoint()
-        res = res | Tuple
-        breakpoint()
-        return res
+        return mux(sel, *din) | Tuple
 
     return qrange(len(din)) | queuemap(f=mux_wrap)
 
@@ -36,44 +32,75 @@ def rng_out_type(cfg, cnt_steps):
     return max(cfg[0], cfg[1])
 
 
-@gear(hdl={'compile': True})
+def qrange_out_type(cfg):
+    if typeof(cfg, Tuple):
+        return max(cfg[0], cfg[1])
+
+    return cfg
+
+
+@gear(hdl={'compile': True}, enablement=b'inclusive==False')
 async def qrange(cfg: Tuple[{
         'start': Integer,
         'stop': Integer
-}]) -> Queue[b'cfg[0] if cfg[0].width >= cfg[1].width else cfg[1]']:
-    cnt: cfg.dtype[0] = None
+}],
+                 *,
+                 inclusive=False) -> Queue['qrange_out_type(cfg)']:
+    cnt: max(cfg.dtype[0], cfg.dtype[1]) = None
     cur_cnt: cfg.dtype[0]
 
     async with cfg as c:
         cnt = c[0]
-        while (cnt < c[1]):
+        while (cnt != c[1]):
             cur_cnt = cnt
             cnt += 1
             yield cur_cnt, cnt == c[1]
 
 
 @alternative(qrange)
-@gear(hdl={'compile': True})
+@gear(hdl={'compile': True}, enablement=b'inclusive==True')
+async def qrange_inclusive(cfg: Tuple[{
+        'start': Integer,
+        'stop': Integer
+}],
+                           *,
+                           inclusive=True) -> Queue['qrange_out_type(cfg)']:
+    cnt: max(cfg.dtype[0], cfg.dtype[1]) = None
+    last: Bool
+
+    async with cfg as c:
+        last = False
+        cnt = c[0]
+        while not last:
+            last = cnt == c[1]
+            yield cnt, last
+            cnt += 1
+
+
+@alternative(qrange)
+@gear(hdl={'compile': True}, enablement=b'inclusive==False')
 async def qrange_stop(stop: Integer, *, inclusive=False) -> Queue[b'stop']:
     cnt: stop.dtype = 0
     cur_cnt: stop.dtype
 
     async with stop as s:
-        while (cnt < s):
+        while (cnt != s):
             cur_cnt = cnt
             cnt += 1
             yield cur_cnt, cnt == s
 
+
 @alternative(qrange)
-@gear(hdl={'compile': True})
-async def qrange_stop_inclusive(stop: Integer, *, inclusive=True) -> Queue[b'stop']:
+@gear(hdl={'compile': True}, enablement=b'inclusive==True')
+async def qrange_stop_inclusive(stop: Integer, *, inclusive) -> Queue[b'stop']:
     cnt: stop.dtype = 0
-    cur_cnt: stop.dtype
+    last: Bool
 
     async with stop as s:
-        while (cnt < s):
-            cur_cnt = cnt
-            yield cur_cnt, cnt == s
+        last = False
+        while not last:
+            last = cnt == s
+            yield cnt, last
             cnt += 1
 
 
@@ -103,8 +130,7 @@ async def py_rng(cfg: TCfg, *, cnt_steps=False,
 
         for data, last in qrange(start, stop, step):
             if incr_steps:
-                yield code(offset + (data * incr),
-                                  module().tout.data), last
+                yield code(offset + (data * incr), module().tout.data), last
             else:
                 yield data, last
 

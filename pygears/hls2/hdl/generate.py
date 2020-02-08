@@ -158,7 +158,7 @@ class HDLGenerator:
         if (isinstance(node.var, pydl.Name)
                 and isinstance(node.var.obj, pydl.Register)):
             if node.var.obj.any_init:
-                node.var.obj.val = expr
+                node.var.obj.val = pydl.CastExpr(expr, node.var.obj.dtype)
                 node.var.obj.any_init = False
 
         if isinstance(node.var, pydl.SubscriptExpr):
@@ -416,7 +416,7 @@ class FunctionGenerator(HDLGenerator):
         return self.traverse_block(node, block)
 
     def visit_Return(self, node):
-        return FuncReturn(func=self.func_block, expr=node.expr)
+        return FuncReturn(func=self.func_block, expr=self.visit(node.expr))
 
 
 class RewriteExitCond:
@@ -526,11 +526,11 @@ def generate(pydl_ast, ctx: GearContext):
 
     modblock = CombBlock(stmts=[stateblock], dflts={})
 
-    # print(modblock)
+    print(modblock)
     RewriteExitCond(ctx).visit(modblock)
-    # print(modblock)
+    print(modblock)
     RemoveDeadCode(ctx).visit(modblock)
-    # print(modblock)
+    print(modblock)
     gen_all_funcs(modblock, ctx)
 
     return modblock
@@ -540,6 +540,7 @@ def generate_func(pydl_ast, ctx: FuncContext):
     v = FunctionGenerator(ctx)
     res = v.visit(pydl_ast)
 
+    print(res)
     gen_all_funcs(res, ctx)
 
     return res

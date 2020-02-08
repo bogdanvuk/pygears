@@ -53,9 +53,14 @@ PYOPMAP = {
     opc.Add: operator.__add__,
     opc.And: operator.__and__,
     opc.BitAnd: operator.__and__,
+    opc.BitOr: operator.__and__,
     opc.Div: operator.__truediv__,
     opc.Eq: operator.__eq__,
+    opc.Gt: operator.__gt__,
+    opc.GtE: operator.__ge__,
     opc.FloorDiv: operator.__floordiv__,
+    opc.Lt: operator.__lt__,
+    opc.LtE: operator.__le__,
     opc.LShift: operator.__lshift__,
     opc.Mult: operator.__mul__,
     opc.NotEq: operator.__ne__,
@@ -67,6 +72,14 @@ PYOPMAP = {
     opc.USub: operator.__neg__,
 }
 
+REDUCE_INITIAL = {
+    opc.Add: 0,
+    opc.And: True,
+    opc.BitAnd: True,
+    opc.BitOr: False,
+    opc.Mult: 1,
+    opc.Or: False,
+}
 
 def opex(op, *operands):
     return PYOPMAP[op](*(p.val for p in operands))
@@ -523,19 +536,35 @@ class UnaryOpExpr(Expr):
         return Uint[1] if (self.operand == opc.Not) else self.operand.dtype
 
 
-@dataclass
 class CastExpr(Expr):
-    operand: OpType
-    cast_to: PgType
+    def __init__(self, operand, cast_to):
+        pass
 
-    def __post_init__(self):
-        if isinstance(self.operand, ConcatExpr) and typeof(
-                self.cast_to, (Array, Tuple, Queue, Union)):
+    def __repr__(self):
+        return f'CastTo({self.operand}, {self.cast_to})'
+
+    def __str__(self):
+        return f"({self.cast_to})'({self.operand})"
+
+    def __new__(cls, operand, cast_to):
+        if isinstance(cast_to, ResExpr):
+            cast_to = cast_to.val
+
+        if operand.dtype == cast_to:
+            return operand
+
+        if isinstance(operand, ConcatExpr) and typeof(
+                cast_to, (Array, Tuple, Queue, Union)):
             cast_ops = [
                 CastExpr(op, cast_t) if op.dtype != cast_t else op
-                for op, cast_t in zip(self.operand.operands, self.cast_to)
+                for op, cast_t in zip(operand.operands, cast_to)
             ]
-            self.operand = ConcatExpr(cast_ops)
+            operand = ConcatExpr(cast_ops)
+
+        inst = super().__new__(cls)
+        inst.operand = operand
+        inst.cast_to = cast_to
+        return inst
 
     @property
     def dtype(self):
@@ -630,7 +659,7 @@ class ArrayOpExpr(Expr):
 
     def __new__(cls, array: Expr, operator):
         if isinstance(array, ResExpr):
-            return ResExpr(reduce(PYOPMAP[operator], array.val))
+            return ResExpr(reduce(PYOPMAP[operator], array.val, REDUCE_INITIAL[operator]))
 
         inst = super().__new__(cls)
         inst.array = array

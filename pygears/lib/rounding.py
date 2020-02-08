@@ -11,7 +11,7 @@ def qround(din,
            signed=b'din.signed') -> b'get_out_type(din, fract)':
 
     res = code(din, Int if signed else Uint) + (Bool(1) << (cut_bits - 1))
-    return code(res[cut_bits:], module().tout)
+    return code(res >> cut_bits, module().tout)
 
 
 # @datagear

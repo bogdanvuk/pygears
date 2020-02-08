@@ -10,6 +10,17 @@ def parse_async_func(node, ctx: Context):
     return visit_block(nodes.Module(stmts=[]), node.body, ctx)
 
 
+@node_visitor(ast.Lambda)
+def _(node, ctx: FuncContext):
+    if not isinstance(ctx, FuncContext):
+        raise Exception('Unsupported')
+
+    return visit_block(
+        nodes.Function(stmts=[],
+                       name=ctx.funcref.name,
+                       args=ctx.args,
+                       ret_dtype=ctx.ret_dtype), node.body, ctx)
+
 @node_visitor(ast.FunctionDef)
 def _(node, ctx: FuncContext):
     if not isinstance(ctx, FuncContext):

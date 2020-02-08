@@ -345,7 +345,8 @@ def write_module(ctx: Context,
     for name, expr in ctx.regs.items():
         name = svexpr(ctx.ref(name))
         writer.line(f'logic {name}_en;')
-        writer.line(f'logic [{expr.dtype.width-1}:0] {name}, {name}_next;')
+        name_t = typedef_or_inline(writer, expr.dtype, name)
+        writer.line(f'{name_t} {name}, {name}_next;')
         writer.line()
 
     for name, expr in ctx.intfs.items():
@@ -392,6 +393,8 @@ def write_module(ctx: Context,
             name_t = typedef_or_inline(writer, expr.dtype, name)
             writer.line(f'input {name_t} {name};')
             writer.line()
+
+        writer.indent -= 4
 
         svcompile(f_hdl, writer, f_ctx, '', selected=lambda x: True)
 

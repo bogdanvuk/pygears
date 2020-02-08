@@ -34,7 +34,7 @@ class Function:
         self.source = get_function_source(func)
         self.func = func
         self.ast = get_function_ast(func)
-        self.basename = func.__name__
+        self.basename = ''.join(e for e in func.__name__ if e.isalnum())
         self.uniqueid = uniqueid
         # TODO: Include keywords here
         self._hash = hash(self.source) ^ hash(tuple(arg.dtype for arg in args))
@@ -174,7 +174,7 @@ class FuncContext(Context):
 
             arg_types = {
                 name: self.args[name].dtype
-                for name in params if name in self.args
+                for name in paramspec.args if name in self.args
             }
 
             for name, var in self.args.items():

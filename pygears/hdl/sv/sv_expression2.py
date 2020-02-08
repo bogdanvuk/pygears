@@ -150,6 +150,7 @@ class SVExpressionVisitor:
             index = node.val.dtype.index_norm(index)[0]
 
             if isinstance(index, slice):
+                #TODO: To make this general, we need a function for slicing expressions
                 return f'{val}[{int(index.stop) - 1}:{int(index.start)}]'
 
             index = int(index)
