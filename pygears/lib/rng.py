@@ -3,7 +3,7 @@ from .ccat import ccat
 from .cart import cart
 from .fmap import fmap
 from .permute import permuted_apply
-from pygears.typing import Int, Integer, Queue, Tuple, typeof, code, Uint, Bool
+from pygears.typing import Int, Integer, Queue, Tuple, typeof, code, Uint, Bool, cast
 from pygears.util.utils import quiter
 from .fmaps import queuemap
 from .mux import mux
@@ -34,7 +34,9 @@ def rng_out_type(cfg, cnt_steps):
 
 def qrange_out_type(cfg):
     if typeof(cfg, Tuple):
-        return max(cfg[0], cfg[1])
+        base = Int if any(c.signed for c in cfg) else Uint
+
+        return cast(max(cfg[0], cfg[1]), base)
 
     return cfg
 
@@ -43,17 +45,22 @@ def qrange_out_type(cfg):
 async def qrange(cfg: Tuple[{
         'start': Integer,
         'stop': Integer
-}],
+        }],
                  *,
                  inclusive=False) -> Queue['qrange_out_type(cfg)']:
-    cnt: max(cfg.dtype[0], cfg.dtype[1]) = None
+    cnt: module().tout.data = None
     cur_cnt: cfg.dtype[0]
+    last: Bool
 
     async with cfg as c:
-        cnt = c[0]
-        while (cnt != c[1]):
+        cnt = module().tout.data(c[0])
+        last = False
+        while not last:
+        # while (cnt != c[1]):
             cur_cnt = cnt
             cnt += 1
+
+            last = cnt == c[1]
             yield cur_cnt, cnt == c[1]
 
 
@@ -61,16 +68,15 @@ async def qrange(cfg: Tuple[{
 @gear(hdl={'compile': True}, enablement=b'inclusive==True')
 async def qrange_inclusive(cfg: Tuple[{
         'start': Integer,
-        'stop': Integer
-}],
+        'stop': Integer}],
                            *,
                            inclusive=True) -> Queue['qrange_out_type(cfg)']:
-    cnt: max(cfg.dtype[0], cfg.dtype[1]) = None
+    cnt: module().tout.data = None
     last: Bool
 
     async with cfg as c:
         last = False
-        cnt = c[0]
+        cnt = module().tout.data(c[0])
         while not last:
             last = cnt == c[1]
             yield cnt, last
@@ -82,12 +88,17 @@ async def qrange_inclusive(cfg: Tuple[{
 async def qrange_stop(stop: Integer, *, inclusive=False) -> Queue[b'stop']:
     cnt: stop.dtype = 0
     cur_cnt: stop.dtype
+    last: Bool
 
     async with stop as s:
-        while (cnt != s):
+        last = False
+        while not last:
+        # while (cnt != s):
             cur_cnt = cnt
             cnt += 1
-            yield cur_cnt, cnt == s
+
+            last = cnt == s
+            yield cur_cnt, last
 
 
 @alternative(qrange)

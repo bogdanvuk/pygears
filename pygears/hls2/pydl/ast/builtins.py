@@ -176,6 +176,9 @@ def call_enumerate(arg):
     # return ret, nodes.BinOpExpr(
     #     (ctx.ref(iname), nodes.ResExpr(len(arg.val) - 1)), nodes.opc.NotEq)
 
+def call_breakpoint():
+    return None
+
 
 builtins = {
     gather: call_gather,
@@ -201,4 +204,5 @@ builtins = {
     qrange: qrange_gear,
     range: qrange_gear,
     enumerate: call_enumerate,
+    breakpoint: call_breakpoint
 }

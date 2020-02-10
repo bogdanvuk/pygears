@@ -48,10 +48,11 @@ def test_start_stop_signed(tmpdir, sim_cls):
              ref=[list(range(-2, 7))])
     sim(resdir=tmpdir)
 
-# from pygears.sim.modules import SimVerilated
-# test_start_stop_signed('/tools/home/tmp/qrange_stop', SimVerilated)
-# test_stop_inclusive('/tools/home/tmp/qrange_stop', None)
-
+def test_start_stop_combined(tmpdir, sim_cls):
+    directed(drv(t=Tuple[Int[2], Uint[4]], seq=[(-2, 7)]),
+             f=qrange(sim_cls=sim_cls),
+             ref=[list(range(-2, 7))])
+    sim(resdir=tmpdir)
 
 # def test_basic_unsigned():
 #     iout = qrange(Intf(Tuple[Uint[4], Uint[4], Uint[2]]))

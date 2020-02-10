@@ -178,10 +178,9 @@ class AsyncForContext:
 @node_visitor(ast.AsyncFor)
 def AsyncFor(node, ctx: Context):
     out_intf_ref = visit_ast(node.iter, ctx)
+    targets = visit_ast(node.target, ctx)
 
     with AsyncForContext(out_intf_ref, ctx) as stmts:
-        targets = visit_ast(node.target, ctx)
-
         add_to_list(
             ctx.pydl_parent_block.stmts,
             assign_targets(ctx, targets,

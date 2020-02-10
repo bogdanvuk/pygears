@@ -60,6 +60,17 @@ def test_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
 
     sim(tmpdir)
 
+# from pygears.lib.rng import qrange
+from pygears.util.call import call
+
+res = call(serialize, Array[Uint[16], 4]((0, 1, 2, 3)))
+# # res = qrange(4)
+
+# breakpoint()
+
+from pygears.sim.modules import SimVerilated
+test_cosim('/tools/home/tmp/serialize', SimVerilated, 0, 0)
+
 
 @pytest.mark.parametrize('din_delay', [0, 5])
 @pytest.mark.parametrize('dout_delay', [0, 5])

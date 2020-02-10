@@ -44,7 +44,7 @@ from .priority_mux import priority_mux
 from .qcnt import qcnt
 from .release_after_eot import release_after_eot
 from .reverse import reverse
-from .rng import rng
+from .rng import rng, qrange
 from .sdp import sdp
 from .take import take
 from .group import group
@@ -69,16 +69,16 @@ from .asyncreg import trigreg, sample, regmap
 import pygears.lib.hls
 
 __all__ = [
-    'expand', 'czip', 'ccat', 'cart', 'cast', 'code', 'quenvelope',
-    'zip_sync', 'sieve', 'flatten', 'fmap', 'unionmap', 'queuemap', 'tuplemap',
-    'arraymap', 'permuted_apply', 'const', 'once', 'mux', 'demux', 'shred',
-    'cart_sync', 'decouple', 'dreg', 'regout', 'unzip', 'serialize', 'project',
-    'fifo', 'factor', 'fill', 'mux_zip', 'demux_zip', 'demux_ctrl', 'data_dly',
+    'expand', 'czip', 'ccat', 'cart', 'cast', 'code', 'quenvelope', 'zip_sync',
+    'sieve', 'flatten', 'fmap', 'unionmap', 'queuemap', 'tuplemap', 'arraymap',
+    'permuted_apply', 'const', 'once', 'mux', 'demux', 'shred', 'cart_sync',
+    'decouple', 'dreg', 'regout', 'unzip', 'serialize', 'project', 'fifo',
+    'factor', 'fill', 'mux_zip', 'demux_zip', 'demux_ctrl', 'data_dly',
     'union_sync', 'union_collapse', 'ucase', 'filt', 'buff', 'local_rst',
     'queue_wrap_from', 'demux_by', 'mux_by', 'align', 'cart_sync_with', 'when',
-    'union_sync_with', 'select', 'case', 'fix', 'xor', 'rng', 'priority_mux',
-    'qcnt', 'sdp', 'chop', 'qinterlace', 'replicate', 'qdeal', 'clip',
-    'din_cat', 'take', 'release_after_eot', 'reverse', 'form_sub_cfg',
+    'union_sync_with', 'select', 'case', 'fix', 'xor', 'rng', 'qrange',
+    'priority_mux', 'qcnt', 'sdp', 'chop', 'qinterlace', 'replicate', 'qdeal',
+    'clip', 'din_cat', 'take', 'release_after_eot', 'reverse', 'form_sub_cfg',
     'reduce2', 'group', 'repack', 'priority_mux_valve', 'max2', 'unary',
     'alternate_queues', 'delay', 'delay_rng', 'delay_gen', 'directed', 'verif',
     'collect', 'rom', 'drv', 'drvrnd', 'check', 'mon', 'reduce', 'accum',

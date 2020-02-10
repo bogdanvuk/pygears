@@ -2,7 +2,7 @@ import inspect
 import sys
 
 from pygears.conf import bind, core_log, registry, safe_bind, MultiAlternativeError, config
-from pygears.typing import Any, cast
+from pygears.typing import Any, cast, is_type
 from pygears.core.util import is_standard_func, get_function_context_dict
 
 from .partial import Partial
@@ -449,9 +449,22 @@ def gear_base_resolver(func,
 def sim_compile_resolver(func, meta_kwds, *args, **kwds):
     ctx = registry('gear/exec_context')
     if ctx == 'sim':
-        local_in = [Intf(type(a)) for a in args]
+        safe_bind('gear/exec_context', 'compile')
+        local_in = []
+        for a in args:
+            if is_type(a):
+                local_in.append(Intf(type(a)))
+            else:
+                from pygears.lib import const
+                local_in.append(const(val=a))
+
+        safe_bind('gear/exec_context', 'sim')
 
         outputs = gear_base_resolver(func, meta_kwds, *local_in, **kwds)
+
+        #TODO: Support multiple outputs
+
+        outputs.connect(HDLConsumer())
 
         if isinstance(outputs, tuple):
             raise Exception("Not yet supported")
@@ -469,6 +482,7 @@ def sim_compile_resolver(func, meta_kwds, *args, **kwds):
             intf._in_queue = asyncio.Queue(maxsize=1,
                                            loop=registry('sim/simulator'))
             intf.put_nb(a)
+
 
         return gear_inst.func(*(p.consumer for p in gear_inst.in_ports),
                               **gear_inst.explicit_params)

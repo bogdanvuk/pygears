@@ -165,6 +165,9 @@ class IntegerType(IntegralType):
 
         return res_type[max(int(op) for op in ops) + 1]
 
+    def __iadd__(self, other):
+        return self
+
     __radd__ = __add__
 
     def __sub__(self, other):
@@ -327,7 +330,10 @@ class Integer(Integral, metaclass=IntegerType):
         if not is_type(type(other)):
             return super().__eq__(other)
 
-        return type(self).base == type(other).base and super().__eq__(other)
+        if not typeof(type(other), Integer):
+            return False
+
+        return super().__eq__(other)
 
     def __hash__(self):
         return super().__hash__()
@@ -356,6 +362,21 @@ class Integer(Integral, metaclass=IntegerType):
             return NotImplemented
 
         return (type(self) + type(other))(int(self) + int(other))
+
+    def __iadd__(self, other):
+        if not is_type(type(other)):
+            other = type(self).base(other)
+
+        if not isinstance(other, Integer):
+            return NotImplemented
+
+        if not self.signed and other.signed:
+            raise TypeError(
+                f"unsupported operand type(s) for +=: '{type(self)}' and '{type(other)}'"
+            )
+
+        return type(self)(int(self) + int(other))
+
 
     def __sub__(self, other):
         if isinstance(other, Integer):
