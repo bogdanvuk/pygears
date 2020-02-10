@@ -7,6 +7,7 @@ import time
 import os
 from enum import IntEnum
 
+from pygears.core.port import HDLProducer
 from pygears.typing import Integer, Uint
 from pygears.lib.verif import TypeMonitorVisitor, Partial
 from pygears.util.utils import quiter
@@ -368,7 +369,7 @@ class CoverIntf(CoverBase):
 
 def cover_intf(intf, cg, en=True):
     '''Function to register which interface needs to be covered'''
-    while intf.producer:
+    while not isinstance(intf.producer, HDLProducer) and intf.producer:
         intf = intf.producer
 
     c = CoverIntf(intf, cg=cg, en=en)

@@ -526,11 +526,11 @@ def generate(pydl_ast, ctx: GearContext):
 
     modblock = CombBlock(stmts=[stateblock], dflts={})
 
-    print(modblock)
+    # print(modblock)
     RewriteExitCond(ctx).visit(modblock)
-    print(modblock)
+    # print(modblock)
     RemoveDeadCode(ctx).visit(modblock)
-    print(modblock)
+    # print(modblock)
     gen_all_funcs(modblock, ctx)
 
     return modblock
@@ -540,7 +540,7 @@ def generate_func(pydl_ast, ctx: FuncContext):
     v = FunctionGenerator(ctx)
     res = v.visit(pydl_ast)
 
-    print(res)
+    # print(res)
     gen_all_funcs(res, ctx)
 
     return res

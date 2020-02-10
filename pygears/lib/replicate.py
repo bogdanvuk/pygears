@@ -1,5 +1,5 @@
 from pygears import gear
-from .rng import qrange
+from pygears.util.utils import qrange
 from pygears.typing import Queue, Tuple, Uint, Any
 
 
@@ -17,5 +17,5 @@ async def replicate(din: Tuple[{
            input field and the `eot` signalizes the last replicated element.
     """
     async with din as (length, value):
-        async for i, last in qrange(length):
+        for i, last in qrange(length):
             yield (value, last)

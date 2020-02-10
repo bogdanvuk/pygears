@@ -3,11 +3,28 @@ from pygears.hls.utils import VisitError
 from pygears.typing import Array, Integer, Queue, code, typeof, Integral, Tuple, Union
 from .sv_keywords import sv_keywords
 
+SLICE_FUNC_TEMPLATE = """function [{2}:0] slice_{0}_{1}(input [{0}:0] val);
+    slice_{0}_{1} = val[{0}:{1}];
+endfunction
+"""
+
+def get_slice_func(aux_funcs, start, stop):
+    name = f'slice_{stop}_{start}'
+    if name not in aux_funcs:
+        aux_funcs[name] = SLICE_FUNC_TEMPLATE.format(stop, start, stop - start)
+
+    return name
+
 
 class SVExpressionVisitor:
-    def __init__(self):
+    def __init__(self, aux_funcs=None):
         self.separator = '.'
         self.expr = svexpr
+
+        if aux_funcs is None:
+            aux_funcs = {}
+
+        self.aux_funcs = aux_funcs
 
     def visit(self, node):
         method = 'visit_' + node.__class__.__name__
@@ -150,8 +167,15 @@ class SVExpressionVisitor:
             index = node.val.dtype.index_norm(index)[0]
 
             if isinstance(index, slice):
+                stop = int(index.stop) - 1
+                start = int(index.start)
+
                 #TODO: To make this general, we need a function for slicing expressions
-                return f'{val}[{int(index.stop) - 1}:{int(index.start)}]'
+                if isinstance(node.val, (pydl.Name, pydl.AttrExpr)):
+                    return f'{val}[{stop}:{start}]'
+                else:
+                    fname = get_slice_func(self.aux_funcs, start, stop)
+                    return f'{fname}({val})'
 
             index = int(index)
 
@@ -197,6 +221,6 @@ class SVExpressionVisitor:
         return node
 
 
-def svexpr(expr):
-    sv_visit = SVExpressionVisitor()
+def svexpr(expr, aux_funcs=None):
+    sv_visit = SVExpressionVisitor(aux_funcs)
     return sv_visit.visit(expr)

@@ -40,7 +40,7 @@ class IfElseBlock(BlockLines):
 
 
 class SVCompiler(InstanceVisitor):
-    def __init__(self, ctx, visit_var, writer, selected):
+    def __init__(self, ctx, visit_var, writer, selected, aux_funcs=None):
         self.ctx = ctx
         self.writer = writer
         self.visit_var = visit_var
@@ -48,6 +48,11 @@ class SVCompiler(InstanceVisitor):
         self.block_lines = []
         self.block_stack = []
         self.defaults = Scope()
+
+        if aux_funcs is None:
+            aux_funcs = {}
+
+        self.aux_funcs = aux_funcs
 
     @property
     def cur_block_lines(self):
@@ -87,7 +92,7 @@ class SVCompiler(InstanceVisitor):
                                  pydl.opc.And)
 
         if in_cond != res_true:
-            in_cond_val = svexpr(in_cond)
+            in_cond_val = svexpr(in_cond, self.aux_funcs)
 
             self.header(f'{maybe_else}if ({in_cond_val}) begin')
         elif maybe_else:
@@ -125,35 +130,32 @@ class SVCompiler(InstanceVisitor):
         val = stmt.val
 
         if isinstance(target.obj, pydl.Register):
-            name = svexpr(target)
-            svstmt = f"{name}_next = {svexpr(val)}"
+            name = svexpr(target, self.aux_funcs)
+            svstmt = f"{name}_next = {svexpr(val, self.aux_funcs)}"
             self.handle_defaults(name, svstmt)
 
             self.write(f"{name}_en = 1")
             return
 
         if isinstance(target.obj, pydl.Interface):
-            name = svexpr(target)
+            name = svexpr(target, self.aux_funcs)
             if target.ctx == 'store':
-                svstmt = f"{name}_s = {svexpr(val)}"
+                svstmt = f"{name}_s = {svexpr(val, self.aux_funcs)}"
                 self.handle_defaults(name, svstmt)
 
-                # self.write(f"{name}_s = {svexpr(val)}")
                 self.write(f"{name}.valid = 1")
             elif target.ctx == 'ready':
                 self.write(f"{name}.ready = 1")
 
             return
 
-        target = svexpr(stmt.target)
-        svstmt = f"{target} = {svexpr(val)}"
+        target = svexpr(stmt.target, self.aux_funcs)
+        svstmt = f"{target} = {svexpr(val, self.aux_funcs)}"
 
         self.handle_defaults(target, svstmt)
 
-        # self.write(f"{svexpr(stmt.target)} = {svexpr(val)}")
-
     def visit_AssertValue(self, node):
-        self.write(f'assert ({svexpr(node.val.test)})')
+        self.write(f'assert ({svexpr(node.val.test, self.aux_funcs)})')
         self.write(f'else $error("{node.val.msg}");')
 
     def visit_AssignValue(self, node):
@@ -190,7 +192,7 @@ class SVCompiler(InstanceVisitor):
                 if self.selected(target):
                     # self.write(f"{name}_next = {obj.dtype.width}'(1'bx)")
                     # self.write(f"{name}_next = {name}")
-                    self.prepend(f'{svexpr(target)}_en = 0')
+                    self.prepend(f'{svexpr(target, self.aux_funcs)}_en = 0')
 
             elif isinstance(obj, pydl.Variable):
                 pass
@@ -216,7 +218,9 @@ class SVCompiler(InstanceVisitor):
         self.footer('end')
 
     def visit_FuncReturn(self, node):
-        self.write(f"{svexpr(node.func.name)} = {svexpr(node.expr)}")
+        self.write(
+            f"{svexpr(node.func.name, self.aux_funcs)} = {svexpr(node.expr, self.aux_funcs)}"
+        )
 
     def visit_FuncBlock(self, node):
         self.block_lines.append(BlockLines())
@@ -319,8 +323,8 @@ def typedef_or_inline(writer, dtype, name):
     return f'{name}_t'
 
 
-def svcompile(hdl_stmts, writer, ctx, title, selected):
-    v = SVCompiler(ctx, title, writer, selected=selected)
+def svcompile(hdl_stmts, writer, ctx, title, selected, aux_funcs=None):
+    v = SVCompiler(ctx, title, writer, selected=selected, aux_funcs=aux_funcs)
     v.visit(hdl_stmts)
 
     if not v.block_lines[0].content:
@@ -339,6 +343,8 @@ def write_module(ctx: Context,
                  config=None):
     if config is None:
         config = {}
+
+    aux_funcs = {}
 
     # svcompile(hdl, writer, ctx, "proba", selected=lambda x: x)
 
@@ -396,7 +402,12 @@ def write_module(ctx: Context,
 
         writer.indent -= 4
 
-        svcompile(f_hdl, writer, f_ctx, '', selected=lambda x: True)
+        svcompile(f_hdl,
+                  writer,
+                  f_ctx,
+                  '',
+                  selected=lambda x: True,
+                  aux_funcs=aux_funcs)
 
     if ctx.regs:
         writer.line(f'initial begin')
@@ -410,13 +421,30 @@ def write_module(ctx: Context,
             REG_TEMPLATE.format(svexpr(ctx.ref(name)), svexpr(expr.val)))
 
     for name, expr in ctx.regs.items():
-        svcompile(hdl, writer, ctx, name, selected=lambda x: x.obj == expr)
+        svcompile(hdl,
+                  writer,
+                  ctx,
+                  name,
+                  selected=lambda x: x.obj == expr,
+                  aux_funcs=aux_funcs)
 
     for name, expr in ctx.variables.items():
-        svcompile(hdl, writer, ctx, name, selected=lambda x: x.obj == expr)
+        svcompile(hdl,
+                  writer,
+                  ctx,
+                  name,
+                  selected=lambda x: x.obj == expr,
+                  aux_funcs=aux_funcs)
 
     for name, expr in ctx.intfs.items():
-        svcompile(hdl, writer, ctx, name, selected=lambda x: x.name == name)
+        svcompile(hdl,
+                  writer,
+                  ctx,
+                  name,
+                  selected=lambda x: x.name == name,
+                  aux_funcs=aux_funcs)
+
+    writer.lines[0:0] = aux_funcs.values()
 
 
 def compile_gear_body(gear, outdir, template_env):

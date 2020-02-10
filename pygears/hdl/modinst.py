@@ -4,6 +4,7 @@ import hashlib
 
 from pygears import registry
 from .base_resolver import ResolverTypeError
+from . import hdl_log
 
 # from .inst import svgen_log
 
@@ -23,6 +24,7 @@ def path_name(path):
 
     return full_name
 
+
 class HDLModuleInst:
     def __init__(self, node, extension):
         self.node = node
@@ -35,8 +37,10 @@ class HDLModuleInst:
             except ResolverTypeError:
                 pass
         else:
-            breakpoint()
-            raise Exception
+            self.resolver = registry(f'{self.extension}gen/dflt_resolver')(node)
+            hdl_log().warning(
+                f'Unable to compile "{node.name}" to HDL and no HDL module with the name '
+                f'"{self.resolver.module_name}" found on the path. Module connected as a black-box.')
 
     @property
     @functools.lru_cache()
@@ -52,7 +56,6 @@ class HDLModuleInst:
             children_traced = False
 
         return self_traced or children_traced
-
 
     @property
     def hier_path_name(self):

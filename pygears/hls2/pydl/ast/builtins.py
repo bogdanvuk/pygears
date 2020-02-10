@@ -176,6 +176,16 @@ def call_enumerate(arg):
     # return ret, nodes.BinOpExpr(
     #     (ctx.ref(iname), nodes.ResExpr(len(arg.val) - 1)), nodes.opc.NotEq)
 
+def call_qrange(*arg):
+    ctx = registry('hls/ctx')[-1]
+    ret = call_gear(qrange_gear, *form_gear_args(arg, {}, qrange_gear.func), ctx=ctx)
+    ret.eot_to_data = True
+    return ret
+
+def call_range(*arg):
+    ctx = registry('hls/ctx')[-1]
+    return call_gear(qrange_gear, *form_gear_args(arg, {}, qrange_gear.func), ctx=ctx)
+
 def call_breakpoint():
     return None
 
@@ -201,8 +211,8 @@ builtins = {
     Array.code: call_code,
     Tuple.code: call_code,
     code: call_code,
-    qrange: qrange_gear,
-    range: qrange_gear,
+    qrange: call_qrange,
+    range: call_range,
     enumerate: call_enumerate,
     breakpoint: call_breakpoint
 }

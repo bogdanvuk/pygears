@@ -100,12 +100,12 @@ def _(node: ast.For, ctx: Context):
                          getattr(out_intf_ref, 'enumerated', False))
 
     with AsyncForContext(out_intf_ref, ctx) as stmts:
-        add_to_list(
-            ctx.pydl_parent_block.stmts,
-            assign_targets(
-                ctx, targets,
-                nodes.SubscriptExpr(nodes.Component(out_intf_ref.obj, 'data'),
-                                    nodes.ResExpr(0)), nodes.Variable))
+        data = nodes.Component(out_intf_ref.obj, 'data')
+        if not getattr(out_intf_ref, 'eot_to_data', False):
+            data = nodes.SubscriptExpr(data, nodes.ResExpr(0))
+
+        add_to_list(ctx.pydl_parent_block.stmts,
+                    assign_targets(ctx, targets, data, nodes.Variable))
 
         for stmt in node.body:
             res_stmt = visit_ast(stmt, ctx)

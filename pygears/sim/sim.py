@@ -140,6 +140,53 @@ class GearEnum(HierVisitorBase):
         if not node.hierarchical:
             self.gears.append(node)
 
+def simgear_exec_order(gears):
+    sim_map = registry('sim/map')
+    dag = {}
+
+    for g in gears:
+        dag[g] = []
+        for p in g.out_ports:
+            dag[g].extend(get_consumer_tree(p.consumer))
+
+    for g, sim_gear in sim_map.items():
+        if isinstance(g, OutPort):
+            if (not g.gear.hierarchical):
+                dag[g.gear].clear()
+
+    for g, sim_gear in sim_map.items():
+        if isinstance(g, InPort):
+            #TODO: Following doesn't work when verilator adds InputPorts for channeled intfs
+            # if (len(g.consumer.consumers) == 1
+            #         and isinstance(g.consumer.consumers[0], HDLConsumer)):
+
+            if (not g.gear.hierarchical):
+                dag[g] = [g.gear]
+            else:
+                dag[g] = get_consumer_tree(g.consumer)
+
+        elif isinstance(g, OutPort):
+            #TODO: Test if this works
+            # if isinstance(g.producer.producer, HDLProducer):
+            if (not g.gear.hierarchical):
+                dag[g.gear].append(g)
+
+            dag[g] = get_consumer_tree(g.consumer)
+
+    gear_order = topo_sort(dag)
+
+    cosim_modules = [
+        g for g in sim_map
+        if isinstance(g, Gear) and g.params['sim_cls'] is not None
+    ]
+
+    gear_multi_order = cosim_modules.copy()
+    for g in gear_order:
+        if (all(not m.has_descendent(g) for m in cosim_modules)
+                or isinstance(g, (InPort, OutPort))):
+            gear_multi_order.append(g)
+
+    return gear_multi_order
 
 class EventLoop(asyncio.events.AbstractEventLoop):
     def __init__(self):
@@ -161,72 +208,8 @@ class EventLoop(asyncio.events.AbstractEventLoop):
     def get_debug(self):
         return False
 
-    def get_tasks(self):
-        self.sim_map = registry('sim/map')
-        dag = {}
-
-        # for g in self.sim_map:
-        #     dag[g] = []
-        #     g.phase = 'forward'
-        #     for p in g.out_ports:
-        #         dag[g].extend(
-        #             [port.gear for port in get_consumer_tree(p.producer)])
-
-        cosim_modules = [
-            g for g in self.sim_map
-            if isinstance(g, Gear) and g.params['sim_cls'] is not None
-        ]
-
-        v = GearEnum()
-        v.visit(registry('gear/hier_root'))
-
-        for g in v.gears:
-            dag[g] = []
-            for p in g.out_ports:
-                dag[g].extend(get_consumer_tree(p.consumer))
-
-        for g, sim_gear in self.sim_map.items():
-            if isinstance(g, OutPort):
-                if (not g.gear.hierarchical):
-                    dag[g.gear].clear()
-
-        for g, sim_gear in self.sim_map.items():
-            if isinstance(g, InPort):
-                #TODO: Following doesn't work when verilator adds InputPorts for channeled intfs
-                # if (len(g.consumer.consumers) == 1
-                #         and isinstance(g.consumer.consumers[0], HDLConsumer)):
-
-                if (not g.gear.hierarchical):
-                    dag[g] = [g.gear]
-                else:
-                    dag[g] = get_consumer_tree(g.consumer)
-
-            elif isinstance(g, OutPort):
-                #TODO: Test if this works
-                # if isinstance(g.producer.producer, HDLProducer):
-                if (not g.gear.hierarchical):
-                    dag[g.gear].append(g)
-
-                dag[g] = get_consumer_tree(g.consumer)
-
-        gear_order = topo_sort(dag)
-
-        gear_multi_order = cosim_modules.copy()
-        for g in gear_order:
-            if (all(not m.has_descendent(g) for m in cosim_modules)
-                    or isinstance(g, (InPort, OutPort))):
-                gear_multi_order.append(g)
-
-        # print("-" * 60)
-        # print("Topological order:")
-        # for g in gear_multi_order:
-        #     print(f'{g.name}: {[c.name for c in dag.get(g, [])]}')
-
-        # print("-" * 60)
-
-        # raise
-
-        for g in gear_multi_order:
+    def insert_gears(self, gears, pos=None):
+        for g in gears:
             g.phase = 'forward'
             if g not in self.sim_map:
                 raise Exception(
@@ -235,9 +218,18 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
             self.sim_map[g].phase = 'forward'
 
-        self.sim_gears = [self.sim_map[g] for g in gear_multi_order]
-        self.tasks = {g: g.run() for g in set(self.sim_gears)}
-        self.task_data = {g: None for g in set(self.sim_gears)}
+        sim_gears = [self.sim_map[g] for g in gears]
+
+        if pos is None:
+            index = 0
+        else:
+            index = self.sim_gears.index(self.sim_map[pos])
+
+        self.sim_gears[index:index] = sim_gears
+
+        for g in set(sim_gears):
+            self.tasks[g] = g.run()
+            self.task_data[g] = None
 
     def call_soon(self, callback, *fut, context=None):
         callback(fut[0])
@@ -415,7 +407,16 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         #     self.finish(sim_gear)
 
     def run(self, timeout=None):
-        self.get_tasks()
+        self.sim_map = registry('sim/map')
+        self.sim_gears = []
+        self.tasks = {}
+        self.task_data = {}
+
+        v = GearEnum()
+        v.visit(registry('gear/hier_root'))
+
+        self.insert_gears(simgear_exec_order(v.gears))
+
         self.wait_list = {}
         self.forward_ready = set(self.sim_gears)
         self.back_ready = set()

@@ -108,8 +108,7 @@ class RTLSigChannelVisitor(HierVisitorBase):
 
             for s in node.params['signals']:
                 if isinstance(s, InSig):
-                    # sig_name = node.params['sigmap'][s.name]
-                    sig_name = s.name
+                    sig_name = node.params['sigmap'].get(s.name, s.name)
 
                     if not find_signal_driver_port(node.parent, sig_name):
                         if not isinstance(node.parent.params['signals'], list):

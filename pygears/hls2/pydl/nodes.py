@@ -270,7 +270,7 @@ class Register(Expr):
         return self.val.dtype
 
 
-@dataclass(frozen=True)
+@dataclass
 class Name(Expr):
     name: str
     obj: typing.Union[Variable, Register]

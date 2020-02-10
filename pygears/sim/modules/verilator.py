@@ -237,7 +237,11 @@ class SimVerilated(CosimBase):
             'sim_main.cpp'
         ]  # yapf: disable
 
-        ret = subprocess.call(f'{" ".join(verilate_cmd)} > verilate.log 2>&1', shell=True)
+        with open(os.path.join(self.outdir, 'verilate.log'), 'w') as f:
+            f.write(" ".join(verilate_cmd))
+            f.write("\n")
+
+        ret = subprocess.call(f'{" ".join(verilate_cmd)} >> verilate.log 2>&1', shell=True)
 
         if ret != 0:
             raise VerilatorCompileError(
