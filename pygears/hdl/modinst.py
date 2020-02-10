@@ -137,7 +137,11 @@ class HDLModuleInst:
 
     @property
     def file_name(self):
-        hdl_fn = self.hdl_fn_get(self.module_name)
+        if self.template_path:
+            hdl_fn = self.module_name
+        else:
+            hdl_fn = self.hdl_fn_get(self.module_name)
+
         if not os.path.splitext(hdl_fn)[-1]:
             hdl_fn = f'{hdl_fn}.{self.extension}'
 

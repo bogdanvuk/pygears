@@ -4,7 +4,7 @@
 #include "verilated_vcd_c.h"
 {% endif %}
 #include "stdio.h"
-{# #define DEBUG  #}
+{# #define DEBUG   #}
 
 extern "C" {
 
@@ -170,6 +170,10 @@ void set_{{p.basename}}(uint32_t data, uint valid) {
 }
 
 int get_{{p.basename}}() {
+    top->eval();
+#ifdef DEBUG
+    printf("{{p.basename}}_ready = %d\n", top->{{p.basename}}_ready);
+#endif
     return top->{{p.basename}}_ready;
 }
 
