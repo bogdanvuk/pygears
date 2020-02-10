@@ -64,6 +64,8 @@ class SimGear:
                                 tb = None
                                 try:
                                     out_prods.put_nb(val)
+                                except GearDone:
+                                    raise
                                 except Exception as e:
                                     func, fn, ln = gear_definition_location(
                                         self.func)

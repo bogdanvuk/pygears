@@ -3,6 +3,7 @@ import atexit
 import os
 import subprocess
 from string import Template
+from pygears import Intf
 
 import jinja2
 
@@ -12,8 +13,8 @@ from pygears.sim.c_drv import CInputDrv, COutputDrv
 from pygears.sim.modules.cosim_base import CosimBase
 from pygears.hdl import hdlgen
 from pygears.util.fileio import save_file
-from pygears.core.port import InPort
-from .cosim_port import InCosimPort
+from pygears.core.port import InPort, OutPort
+from .cosim_port import InCosimPort, OutCosimPort
 from pygears.core.graph import closest_gear_port_from_rtl
 
 signal_spy_connect_t = Template(
@@ -59,14 +60,24 @@ class SimVerilated(CosimBase):
         vcd_fifo=False,
         shmidcat=False,
         post_synth=False,
+        outdir=None,
         language='sv'):
 
         super().__init__(gear, timeout=timeout)
         self.name = gear.name[1:].replace('/', '_')
-        self.outdir = os.path.abspath(os.path.join(registry('results-dir'), self.name))
+
+        if outdir is None:
+            outdir = os.path.join(registry('results-dir'), self.name)
+
+        self.outdir = os.path.abspath(outdir)
         self.objdir = os.path.join(self.outdir, 'obj_dir')
         self.post_synth = post_synth
-        self.rebuild = rebuild
+
+        self.dll_path = os.path.join(self.objdir, f'pygearslib')
+        if os.name == 'nt':
+            self.dll_path += '.exe'
+
+        self.rebuild = rebuild or not os.path.exists(self.dll_path)
 
         bind(
             'svgen/spy_connection_template', signal_spy_connect_hide_interm_t
@@ -128,6 +139,29 @@ class SimVerilated(CosimBase):
                 self.in_cosim_ports.append(InCosimPort(self, in_port))
                 registry('sim/map')[in_port] = self.in_cosim_ports[-1]
 
+        for p in self.rtlnode.out_ports:
+            if p.index < len(self.gear.out_ports):
+                self.out_cosim_ports[p.index].name = p.basename
+            elif p.index >= len(self.gear.out_ports):
+                driver = closest_gear_port_from_rtl(p, 'in')
+                if driver is None:
+                    raise VerilatorCompileError(
+                        f"Inferred top module port '{p.name}' has no driver")
+
+                consumer = closest_gear_port_from_rtl(p, 'out')
+
+                out_port = OutPort(self.gear, p.index, p.basename, consumer)
+                out_intf = Intf(p.dtype)
+
+                driver.consumer.disconnect(consumer)
+                driver.consumer.connect(out_port)
+
+                out_intf.source(out_port)
+                out_intf.connect(consumer)
+
+                self.out_cosim_ports.append(OutCosimPort(self, out_port))
+                registry('sim/map')[out_port] = self.out_cosim_ports[-1]
+
         self.trace_fn = None
         self.vcd_fifo = vcd_fifo
         self.shmidcat = shmidcat
@@ -153,7 +187,7 @@ class SimVerilated(CosimBase):
         tracing_enabled = bool(registry('debug/trace'))
         if tracing_enabled:
             sim_log().info(f"Debug: {registry('debug/trace')}")
-            self.trace_fn = f'{self.outdir}/vlt_dump.vcd'
+            self.trace_fn = os.path.join(registry("results-dir"), f'{self.name}.vcd')
             try:
                 subprocess.call(f"rm -f {self.trace_fn}", shell=True)
             except OSError:
@@ -162,18 +196,16 @@ class SimVerilated(CosimBase):
             if self.vcd_fifo:
                 subprocess.call(f"mkfifo {self.trace_fn}", shell=True)
             else:
-                sim_log().info(f'Verilator VCD dump to "{self.outdir}/vlt_dump.vcd"')
-
-        dll_path = os.path.join(self.objdir, f'V{self.top_name}')
-        if os.name == 'nt':
-            dll_path += '.exe'
+                sim_log().info(f'Verilator VCD dump to "{self.trace_fn}"')
+        else:
+            self.trace_fn = ''
 
         try:
-            self.verilib = ctypes.CDLL(dll_path)
+            self.verilib = ctypes.CDLL(self.dll_path)
         except OSError:
             raise VerilatorCompileError(
                 f'Verilator compiled library for the gear "{self.gear.name}"'
-                f' not found at: "{dll_path}"')
+                f' not found at: "{self.dll_path}"')
 
         self.finished = False
         atexit.register(self._finish)
@@ -188,7 +220,8 @@ class SimVerilated(CosimBase):
             import time
             time.sleep(0.1)
 
-        self.verilib.init()
+        self.verilib.init.argtypes = [ctypes.c_char_p]
+        self.verilib.init(self.trace_fn.encode('utf8'))
 
         if self.shmid_proc:
             self.shmid = self.shmid_proc.stdout.readline().decode().strip()
@@ -196,10 +229,10 @@ class SimVerilated(CosimBase):
 
         self.handlers = {}
         for cp in self.in_cosim_ports:
-            self.handlers[cp.port.basename] = CInputDrv(self.verilib, cp.port)
+            self.handlers[cp.name] = CInputDrv(self.verilib, cp.port, cp.name)
 
-        for p in self.gear.out_ports:
-            self.handlers[p.basename] = COutputDrv(self.verilib, p)
+        for cp in self.out_cosim_ports:
+            self.handlers[cp.name] = COutputDrv(self.verilib, cp.port, cp.name)
 
         super().setup()
 
@@ -210,8 +243,7 @@ class SimVerilated(CosimBase):
             'out_ports': self.rtlnode.out_ports,
             'top_name': self.top_name,
             'tracing': tracing_enabled,
-            'aux_clock': config['sim/aux_clock'],
-            'outdir': self.outdir
+            'aux_clock': config['sim/aux_clock']
         }
 
         jenv = jinja2.Environment(trim_blocks=True, lstrip_blocks=True)
@@ -233,6 +265,7 @@ class SimVerilated(CosimBase):
             '-clk clk',
             f'--top-module {self.top_name}',
             '--trace --no-trace-params --trace-structs' if tracing_enabled else '',
+            '-o pygearslib',
             files,
             'sim_main.cpp'
         ]  # yapf: disable

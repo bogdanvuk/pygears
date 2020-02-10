@@ -2,8 +2,9 @@ import asyncio
 
 from .graph import get_consumer_tree, get_producer_queue
 from pygears import GearDone
-from pygears.conf import PluginBase, registry, safe_bind
+from pygears.conf import PluginBase, registry, safe_bind, MultiAlternativeError
 from pygears.core.port import InPort, OutPort
+from pygears.core.partial import Partial
 from pygears.core.sim_event import SimEvent
 from .type_match import TypeMatchError
 from pygears.typing import typeof, Any
@@ -61,6 +62,12 @@ class Intf:
         }
 
     def __ior__(self, iout):
+        if isinstance(iout, Partial):
+            raise Exception(
+                f"Output of the unresolved gear '{iout.func.__name__}' with"
+                f" arguments {iout.args} and parameters {iout.kwds},"
+                f" connected to '{self}': {str(MultiAlternativeError(iout.errors))}")
+
         iout.producer.consumer = self
         if self.producer is not None:
             raise Exception(

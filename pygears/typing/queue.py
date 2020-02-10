@@ -24,12 +24,10 @@ class QueueMeta(EnumerableGenericMeta):
 
     def __getitem__(self, index):
         if not self.specified:
-            if inspect.isclass(index) and issubclass(
-                    index, Queue) and not self.__args__:
+            if inspect.isclass(index) and issubclass(index, Queue) and not self.__args__:
                 return Queue[index.args[0], index.lvl + 1]
-            elif isinstance(
-                    index, tuple) and inspect.isclass(index[0]) and issubclass(
-                        index[0], Queue) and not self.__args__:
+            elif isinstance(index, tuple) and inspect.isclass(index[0]) and issubclass(
+                    index[0], Queue) and not self.__args__:
                 return Queue[index[0].args[0], index[0].lvl + index[1]]
             elif isinstance(index, tuple) and (index[1] == 0):
                 return index[0]
@@ -96,6 +94,7 @@ class QueueMeta(EnumerableGenericMeta):
             return super().__str__()
 
 
+# TODO: If queue is parameterized with two types, the other one will substitute eot field
 class Queue(tuple, metaclass=QueueMeta):
     __default__ = [1]
     __parameters__ = ['data', 'eot']

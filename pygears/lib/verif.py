@@ -267,7 +267,7 @@ async def check(din, *, ref, cmp=lambda x, y: x == y):
         if not ref_empty:
             sim_assert(
                 items == ref,
-                f"mismatch in number of items '{len(items)}' vs '{len(ref)}'. "
+                f"mismatch in number of items, got '{len(items)}' but expected '{len(ref)}'. "
                 f"\ngot:\n{textwrap.indent(pprint.pformat(items), ' '*4)}"
                 f"\nexp:\n{textwrap.indent(pprint.pformat(ref), ' '*4)}"
             )

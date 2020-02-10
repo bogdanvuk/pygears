@@ -168,7 +168,7 @@ def create_unpacked_tuple_alternative(g):
     body = f'''def %(name)s%(signature)s:
     {arg} = ccat({",".join(din_type.fields)})
     try:
-        return {base_func.__name__}({find_invocation(base_func)})
+        return __{base_func.__name__}({find_invocation(base_func)})
     except Exception as e:
         gear_inst = module().child[-1]
         gear_inst.parent.child.remove(gear_inst)
@@ -183,7 +183,7 @@ def create_unpacked_tuple_alternative(g):
     from ..lib.ccat import ccat
     closure = {
         'ccat': ccat,
-        base_func.__name__: g,
+        f'__{base_func.__name__}': g,
         'pygears': pygears,
         'module': module
     }

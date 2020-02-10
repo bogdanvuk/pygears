@@ -39,6 +39,7 @@ def sim_phase():
 
 
 def clk():
+    # TODO: await clk() after yield (in back phase) might not have desired effect
     gear_reg['current_sim'].phase = 'forward'
     return sim_reg['clk_event'].wait()
 
@@ -81,8 +82,9 @@ def topo_sort_util(v, g, dag, visited, stack, cycle):
         if consumer in cycle:
             index = cycle.index(consumer)
             cycle.append(consumer)
-            raise SimCyclic('Simulation not possible, gear cycle found:'
-                            f' {" - ".join([c.name for c in cycle[index:]])}')
+            raise SimCyclic(
+                'Simulation not possible, gear cycle found:'
+                f' {" - ".join([c.name for c in cycle[index:]])}')
 
         if not visited[i]:
             topo_sort_util(i, consumer, dag, visited, stack, cycle)
@@ -185,6 +187,23 @@ def simgear_exec_order(gears):
         if (all(not m.has_descendent(g) for m in cosim_modules)
                 or isinstance(g, (InPort, OutPort))):
             gear_multi_order.append(g)
+
+    # import networkx as nx
+    # import matplotlib.pyplot as plt
+
+    # G = nx.DiGraph()
+    # for g in dag:
+    #     for c in dag[g]:
+    #         G.add_edge(g.name, c.name)
+
+    # pos = nx.spring_layout(G)
+    # nx.draw(G, pos, font_size=16, with_labels=False)
+
+    # for p in pos:  # raise text positions
+    #     pos[p][1] += 0.07
+
+    # nx.draw_networkx_labels(G, pos)
+    # plt.show()
 
     return gear_multi_order
 
@@ -354,8 +373,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
             self.phase = 'forward'
             for sim_gear in self.sim_gears:
-                if ((sim_gear in self.forward_ready)
-                        or (sim_gear in self.delta_ready)):
+                if ((sim_gear in self.forward_ready) or (sim_gear in self.delta_ready)):
                     # print(
                     #     f'Forward: {sim_gear.port.name if hasattr(sim_gear, "port") else sim_gear.gear.name}'
                     # )
@@ -373,8 +391,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
                     self._schedule_to_finish.remove(sim_gear)
 
             for sim_gear in reversed(self.sim_gears):
-                if ((sim_gear in self.back_ready)
-                        or (sim_gear in self.delta_ready)):
+                if ((sim_gear in self.back_ready) or (sim_gear in self.delta_ready)):
                     # print(
                     #     f'Back: {sim_gear.port.name if hasattr(sim_gear, "port") else sim_gear.gear.name}'
                     # )
@@ -468,12 +485,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
                 raise registry('sim/exception')
 
 
-def sim(resdir=None,
-        timeout=None,
-        extens=None,
-        run=True,
-        check_activity=True,
-        seed=None):
+def sim(resdir=None, timeout=None, extens=None, run=True, check_activity=True, seed=None):
 
     if extens is None:
         extens = []
@@ -539,8 +551,7 @@ class SimLog(CustomLogger):
 
     def get_format(self):
         return logging.Formatter(
-            '%(timestep)s %(module)20s [%(levelname)s]: %(message)s %(err_file)s %(stack_file)s'
-        )
+            '%(timestep)s %(module)20s [%(levelname)s]: %(message)s %(err_file)s %(stack_file)s')
 
     def get_filter(self):
         return SimFmtFilter()

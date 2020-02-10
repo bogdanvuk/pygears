@@ -58,13 +58,13 @@ def test_unsigned_fdiv():
     assert t_a(15.75) // t_b(0.015625) == Ufixp[10, 6](15.75 / 0.015625)
 
 
-def test_signed_fdiv():
-    t_a = Fixp[4, 6]
-    t_b = Fixp[1, 7]
+# def test_signed_fdiv():
+#     t_a = Fixp[4, 6]
+#     t_b = Fixp[1, 7]
 
-    assert (t_a // t_b == Fixp[10, 6])
+#     assert (t_a // t_b == Fixp[10, 6])
 
-    assert t_a(-8.0) // t_b(0.9375) == Fixp[10, 6]((-8.0) / 0.9375)
+#     assert t_a(-8.0) // t_b(0.9375) == Fixp[10, 6]((-8.0) / 0.9375)
 
 
 def test_unsigned_div():
@@ -78,10 +78,8 @@ def test_unsigned_div():
     t_c = Ufixp[10, 6]
     t_d = Ufixp[-2, 12]
 
-    assert div(t_c.max, t_d.lsb,
-               0) == Ufixp[24, 6](float(t_c.max) / float(t_d.lsb))
-    assert div(t_c.max, t_d.max,
-               0) == Ufixp[24, 6](float(t_c.max) / float(t_d.max))
+    assert div(t_c.max, t_d.lsb, 0) == Ufixp[24, 6](float(t_c.max) / float(t_d.lsb))
+    assert div(t_c.max, t_d.max, 0) == Ufixp[24, 6](float(t_c.max) / float(t_d.max))
 
 
 # def test_signed_div():

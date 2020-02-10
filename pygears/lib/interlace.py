@@ -1,12 +1,5 @@
 from pygears import gear
-from pygears.typing import Queue, Union, Tuple, Uint
-from .ccat import ccat
-from .rng import qrange
-from .flatten import flatten
-from .rng import rng
-from .union import select
-from .fmaps import queuemap
-from .mux import mux
+from pygears.typing import Queue
 
 
 @gear(hdl={'compile': True})
@@ -23,13 +16,8 @@ async def qinterlace(*din: Queue['t_data']) -> b'Queue[t_data, 2]':
             yield (data, (i == len(din) - 1) @ eot)
 
 
-# @gear(hdl={'compile': True})
-# async def interlace(*din: b'din_t') -> b'din_t':
-#     for i, data_in in enumerate(din):
-#         async with data_in as data:
-#             yield data
-
-
-@gear
-def interlace(*din: b'din_t') -> b'din_t':
-    return select(rng(len(din)) | flatten, *din)
+@gear(hdl={'compile': True})
+async def interlace(*din: b'din_t') -> b'din_t':
+    for i, data_in in enumerate(din):
+        async with data_in as data:
+            yield data
