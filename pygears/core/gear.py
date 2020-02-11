@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pygears.conf import PluginBase, registry, safe_bind, bind
 from traceback import walk_stack
 from .intf import Intf
-from .port import InPort, OutPort
+from .port import InPort, OutPort, HDLConsumer
 from .hier_node import NamedHierNode
 from .util import is_standard_func
 
@@ -111,16 +111,18 @@ class Gear(NamedHierNode):
 
     @property
     def hierarchical(self):
-        return is_standard_func(self.func)
+        # return is_standard_func(self.func)
 
         # if self.child:
         #     return True
 
-        # # This Second condition is when gear contains only wiring
-        # if self.in_ports and self.in_ports[0].consumer.consumers:
-        #     return True
+        # This Second condition is when gear contains only wiring
+        if self.in_ports:
+            if (self.in_ports[0].consumer.consumers and
+                    not isinstance(self.in_ports[0].consumer.consumers[0], HDLConsumer)):
+                return True
 
-        # return False
+        return False
 
     @property
     def definition(self):
