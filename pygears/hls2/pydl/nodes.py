@@ -796,7 +796,7 @@ def is_container(block):
 
 
 def is_intftype(block):
-    return isinstance(block, (IntfBlock, IntfLoop))
+    return isinstance(block, IntfBlock)
 
 
 @dataclass
@@ -865,11 +865,6 @@ class IntfBlock(Block):
     # @property
     # def exit_cond(self):
     #     return ExitSubCond()
-
-
-@dataclass
-class IntfLoop(BaseLoop):
-    intf: IntfDef
 
 
 @dataclass

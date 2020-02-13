@@ -1,4 +1,5 @@
 import shutil
+from pygears import Intf
 from pygears.conf import bind, registry
 from pygears.rtl import rtlgen
 from pygears.rtl.node import RTLNode
@@ -34,6 +35,12 @@ def hdlgen(top=None,
     if isinstance(top, RTLNode):
         rtl_top = top
     else:
+        if isinstance(top, tuple):
+            top = top[0]
+
+        if isinstance(top, Intf):
+            top = top.producer.gear
+
         rtl_top = find_rtl(top, **conf)
 
     bind('svgen/conf', conf)
