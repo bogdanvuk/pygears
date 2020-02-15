@@ -20,7 +20,7 @@ async def take(din: Queue[Tuple[{
     Returns: A :class:`Queue` type whose data consists of the input ``data``
         field of the :class:`Tuple`. """
 
-    cnt: din.dtype.data['size'] = init
+    cnt = din.dtype.data['size'](init)
     last_take: Bool
 
     async for ((data, size), eot) in din:

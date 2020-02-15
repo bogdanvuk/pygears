@@ -32,9 +32,16 @@ def _(node: ast.If, ctx: Context):
         pydl_node = nodes.IfBlock(test=test_expr, stmts=[])
         visit_block(pydl_node, node.body, ctx)
         if hasattr(node, 'orelse') and node.orelse:
-            pydl_node_else = nodes.ElseBlock(stmts=[])
-            visit_block(pydl_node_else, node.orelse, ctx)
-            top = nodes.ContainerBlock(stmts=[pydl_node, pydl_node_else])
+            top = nodes.ContainerBlock(stmts=[])
+            visit_block(top, node.orelse, ctx)
+
+            if isinstance(top.stmts[0], nodes.IfBlock):
+                top.stmts.insert(0, pydl_node)
+            elif isinstance(top.stmts[0], nodes.ContainerBlock):
+                top.stmts = [pydl_node] + top.stmts[0].stmts
+            else:
+                top.stmts = [pydl_node, nodes.ElseBlock(stmts=top.stmts)]
+
             return top
 
         return pydl_node

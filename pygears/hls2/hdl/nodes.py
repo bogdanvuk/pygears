@@ -10,7 +10,7 @@ from ..pydl import nodes as pydl
 
 @dataclass
 class AssignValue:
-    target: Union[str, pydl.IntfOpExpr]
+    target: Union[str, pydl.Name]
     val: Union[str, int, pydl.Expr]
     dtype: Union[TypingMeta, None] = None
     in_cond: pydl.Expr = pydl.ResExpr(True)
@@ -35,11 +35,18 @@ class AssertValue:
 class BaseBlock:
     # TODO : newer versions of Python will not need the string
     stmts: List[Union[AssignValue, 'HDLBlock']]
-    dflts: Dict[Union[str, pydl.IntfOpExpr], AssignValue]
+    dflts: Dict[Union[str, pydl.Name], AssignValue]
 
     @property
     def dflt_stmts(self):
         return list(self.dflts.values())
+
+    def __str__(self):
+        body = ''
+        for s in self.stmts:
+            body += str(s)
+
+        return f'{{\n{textwrap.indent(body, "    ")}}}\n'
 
 
 @dataclass
@@ -78,24 +85,24 @@ class HDLBlock(BaseBlock):
 
 
 @dataclass
+class LoopBlock(HDLBlock):
+    pass
+
+
+@dataclass
 class IfElseBlock(HDLBlock):
     def __str__(self):
         return f'IfElse {super().__str__()}'
 
 
 @dataclass
-class StateBlock(BaseBlock):
-    pass
-
-
-@dataclass
-class CombBlock(HDLBlock):
+class CombBlock(BaseBlock):
     funcs: List = field(default_factory=list)
 
 
 @dataclass
 class FuncBlock(BaseBlock):
-    args: List[pydl.VariableDef]
+    args: List[pydl.Name]
     name: str
     ret_dtype: pydl.PgType
     in_cond: pydl.Expr = pydl.ResExpr(True)

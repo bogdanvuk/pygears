@@ -19,8 +19,8 @@ async def clip(din: Queue[Tuple[{
         A :class:`Queue` type whose data consists of the ``data`` field of
           the :class:`Tuple` input
     """
-    cnt: din.dtype.data['size'] = init
-    pass_eot: Bool = True
+    cnt = din.dtype.data['size'](init)
+    pass_eot = Bool(True)
 
     async for ((data, size), eot) in din:
         yield (data, eot or ((cnt == size) and pass_eot))

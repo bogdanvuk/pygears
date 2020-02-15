@@ -46,6 +46,9 @@ def test_directed(tmpdir, sim_cls, din_delay, dout_delay):
 
     sim(resdir=tmpdir)
 
+# from pygears.sim.modules import SimVerilated
+# test_directed('/tools/home/tmp/interlace', SimVerilated, 0, 0)
+
 
 def test_random(tmpdir, sim_cls):
     skip_ifndef('RANDOM_TEST')

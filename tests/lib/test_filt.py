@@ -98,8 +98,8 @@ def test_qfilt_union_delay(tmpdir, cosim_cls, din_delay, dout_delay, sel):
     sim(resdir=tmpdir)
 
 # from pygears.sim.modules import SimVerilated
-# # from pygears import config
-# # config['debug/trace'] = ['*']
+# from pygears import config
+# config['debug/trace'] = ['*']
 # test_qfilt_union_delay('/tools/home/tmp/qfilt', SimVerilated, 0, 0, 1)
 
 

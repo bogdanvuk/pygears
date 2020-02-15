@@ -154,27 +154,9 @@ def call_type(arg):
     return nodes.ResExpr(arg.dtype)
 
 
-# @gear
-# def qenum_intfs(i: Uint, *din: b'din_t'):
-#     @gear
-#     def mux_wrap(sel):
-#         return mux(sel, *din) | Tuple
-
-#     return i | queuemap(f=mux_wrap)
-
-
 def call_enumerate(arg):
     arg.enumerated = True
     return arg
-    # ctx = registry('hls/ctx')[-1]
-    # iname = '_enum_iter'
-
-    # ctx.scope[iname] = nodes.Register(iname, Uint[bitw(len(arg.val) - 1)])
-
-    # ret = call_gear(mux, args=[ctx.ref(iname)] + arg.val, kwds={}, ctx=ctx)
-
-    # return ret, nodes.BinOpExpr(
-    #     (ctx.ref(iname), nodes.ResExpr(len(arg.val) - 1)), nodes.opc.NotEq)
 
 def call_qrange(*arg):
     ctx = registry('hls/ctx')[-1]

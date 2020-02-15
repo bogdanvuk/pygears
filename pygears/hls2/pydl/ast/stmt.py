@@ -47,7 +47,7 @@ def _(node, ctx: Context):
         init = visit_ast(node.value, ctx)
 
         init_cast = nodes.CastExpr(init, annotation.val)
-        stmts = assign_targets(ctx, targets, init_cast, nodes.Register)
+        stmts = assign_targets(ctx, targets, init_cast, nodes.Variable)
         if not isinstance(stmts, list):
             stmts = [stmts]
 

@@ -20,8 +20,8 @@ async def reduce(din: t_din, *, f, t) -> b't':
           input :class:`Tuple` type.
 
     """
-    acc: t = 0
-    init_added: Bool = False
+    acc = t(0)
+    init_added = Bool(False)
 
     async for ((data, init), eot) in din:
         op2 = acc

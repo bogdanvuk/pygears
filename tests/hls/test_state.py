@@ -25,7 +25,7 @@ def test_cond_2state(tmpdir):
 def test_loop_state(tmpdir):
     @gear(hdl={'compile': True})
     async def test(din: Uint) -> b'din':
-        i: Uint[3] = 0
+        i = Uint[3](0)
 
         async with din as d:
             while i != d:

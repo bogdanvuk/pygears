@@ -6,7 +6,7 @@ from pygears.typing import Queue, Uint, Bool
 async def group(din: Queue, size: Uint, *,
                 init=1) -> Queue['din.data', 'din.lvl + 1']:
 
-    cnt: size.dtype = init
+    cnt = size.dtype(init)
     last: Bool
     out_eot: Uint[din.dtype.lvl+1]
 
@@ -25,7 +25,8 @@ async def group(din: Queue, size: Uint, *,
 @alternative(group)
 @gear(hdl={'compile': True})
 async def group_other(din, size: Uint, *, init=1) -> Queue['din']:
-    cnt: size.dtype = init
+    # cnt: size.dtype = init
+    cnt = size.dtype(init)
     last: Bool
 
     async with size as c:

@@ -67,7 +67,7 @@ class Context:
         i = 0
         while res_name in self.scope:
             i += 1
-            res_name = f'{name}_i'
+            res_name = f'{name}_{i}'
 
         return res_name
 
@@ -84,19 +84,11 @@ class Context:
         }
 
     @property
-    def variables(self):
-        return {
-            name: obj
-            for name, obj in self.scope.items()
-            if isinstance(obj, nodes.Variable)
-        }
-
-    @property
     def regs(self):
         return {
             name: obj
             for name, obj in self.scope.items()
-            if isinstance(obj, nodes.Register)
+            if isinstance(obj, nodes.Variable) and obj.reg
         }
 
     @property
@@ -104,7 +96,7 @@ class Context:
         return {
             name: obj
             for name, obj in self.scope.items()
-            if isinstance(obj, nodes.Variable) and name not in self.args
+            if isinstance(obj, nodes.Variable) and not obj.reg
         }
 
 

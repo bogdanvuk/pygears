@@ -1,5 +1,5 @@
-from pygears import gear
-from pygears.typing import Bool, Uint
+from pygears import gear, Intf
+from pygears.typing import Bool, Uint, Queue
 from pygears.sim import sim, cosim
 from pygears.lib import drv, shred, directed
 from pygears.lib.rng import qrange
@@ -18,3 +18,35 @@ def test_for_loop(tmpdir):
 
     cosim('/test', 'verilator')
     sim(tmpdir)
+
+def test_while_loop_reg_infer(tmpdir):
+    @gear(hdl={'compile': True})
+    async def test() -> Uint[32]:
+        cnt: Uint[10] = 0
+        while cnt != 10:
+            yield cnt
+            cnt += 1
+
+    directed(f=test(), ref=list(range(10))*3)
+    sim('/tools/home/tmp/test', timeout=30)
+
+# test_while_loop_reg_infer('/tools/home/tmp/test')
+
+# @gear(hdl={'compile': True})
+# async def test(din: Uint[32]) -> Queue[Uint[32]]:
+#     last = False
+#     while not last:
+#         async with din as d:
+#             last = (d == 4)
+#             yield d, last
+
+# from pygears.hdl import hdlgen
+# hdlgen(test(Intf(Uint[32])), outdir='/tools/home/tmp/test')
+
+# from pygears.sim import sim
+# from pygears.lib import collect
+
+# res = []
+# test() | collect(result = res)
+# sim('/tools/home/tmp/test', timeout=30)
+# print(res)

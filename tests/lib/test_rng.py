@@ -35,6 +35,10 @@ def test_start_stop(tmpdir, sim_cls):
              ref=[list(range(2, 10))])
     sim(resdir=tmpdir)
 
+# from pygears.sim.modules import SimVerilated
+# test_start_stop('/tools/home/tmp/start_stop', SimVerilated)
+
+
 def test_start_stop_inclusive(tmpdir, sim_cls):
     directed(drv(t=Tuple[Uint[2], Uint[4]], seq=[(2, 10)]),
              f=qrange(inclusive=True, sim_cls=sim_cls),

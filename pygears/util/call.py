@@ -34,8 +34,8 @@ def call(f, *args, **kwds):
         collect(outputs | mon, result=res[0])
 
     mod = seqs[0].consumers[0].gear
-    # from pygears.sim import cosim
-    # cosim(mod, 'verilator')
+    from pygears.sim import cosim
+    cosim(mod, 'verilator')
     sim(check_activity=False)
 
     if isinstance(outputs, tuple):

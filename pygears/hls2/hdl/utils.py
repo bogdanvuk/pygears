@@ -13,7 +13,9 @@ class Scope:
         return self.child.subscope()
 
     def upscope(self):
-        self.cur_subscope.parent.child = None
+        s = self.cur_subscope
+        s.parent.child = None
+        s.parent = None
 
     @property
     def cur_subscope(self):
@@ -21,6 +23,13 @@ class Scope:
             return self
 
         return self.child.cur_subscope
+
+    @property
+    def top_scope(self):
+        if self.parent is not None:
+            return self.parent.top_scope
+
+        return self
 
     def clear(self):
         self.child.clear()

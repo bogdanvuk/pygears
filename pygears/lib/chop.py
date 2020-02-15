@@ -20,7 +20,7 @@ async def chop(din: Queue[Tuple[{
           of the :class:`Tuple` input
     """
 
-    cnt: din.dtype.data['size'] = init
+    cnt = din.dtype.data['size'](init)
     last: Bool
 
     async for ((data, size), eot) in din:

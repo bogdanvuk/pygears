@@ -81,6 +81,7 @@ REDUCE_INITIAL = {
     opc.Or: False,
 }
 
+
 def opex(op, *operands):
     return PYOPMAP[op](*(p.val for p in operands))
 
@@ -215,14 +216,17 @@ class RegDef(DefBase):
 
 
 @dataclass
-class VariableDef(DefBase):
-    pass
-
-
-@dataclass(frozen=True)
 class Variable:
     name: str
     dtype: typing.Union[PgType, typing.Any] = None
+    val: typing.Union[PgType, Expr] = None
+    any_init: Bool = False
+    reg: Bool = False
+
+    def __post_init__(self):
+        if self.dtype is None:
+            if self.val is not None:
+                self.dtype = self.val.dtype
 
 
 @dataclass
@@ -253,27 +257,9 @@ class Interface(Expr):
 
 
 @dataclass
-class Register(Expr):
-    name: str
-    val: typing.Union[PgType, Expr] = None
-    any_init = False
-
-    @property
-    def dtype(self):
-        if self.val is None:
-            return None
-        elif is_type(self.val):
-            return self.val
-        elif is_type(type(self.val)):
-            return type(self.val)
-
-        return self.val.dtype
-
-
-@dataclass
 class Name(Expr):
     name: str
-    obj: typing.Union[Variable, Register]
+    obj: Variable
     ctx: str = 'load'
 
     def __repr__(self):
@@ -386,54 +372,6 @@ class SignalStmt(Expr):
 
 
 @dataclass
-class RegNextStmt(Expr):
-    reg: RegDef
-    val: Expr
-
-    @property
-    def dtype(self):
-        return self.reg.dtype
-
-    @property
-    def name(self):
-        return find_name(self.reg)
-
-
-@dataclass
-class VariableStmt(Expr):
-    variable: VariableDef
-    val: Expr
-
-    @property
-    def dtype(self):
-        return self.variable.dtype
-
-    @property
-    def name(self):
-        return find_name(self.variable)
-
-
-@dataclass
-class IntfStmt(Expr):
-    intf: IntfDef
-    val: Expr
-
-    @property
-    def dtype(self):
-        return self.intf.dtype
-
-
-@dataclass
-class OperandVal(Expr):
-    op: typing.Union[VariableDef, RegDef, IntfDef]
-    context: str
-
-    @property
-    def dtype(self):
-        return find_sub_dtype(self.op)
-
-
-@dataclass
 class FunctionCall(Expr):
     name: str
     operands: typing.Tuple[OpType]
@@ -445,44 +383,14 @@ class FunctionCall(Expr):
         return self.ret_dtype
 
 
-# Inteface operations expressions
-
-
-@dataclass
-class IntfOpExpr(Expr):
-    port: typing.Union[IntfDef, str, typing.Sequence]
-
-    @property
-    def name(self):
-        if isinstance(self.port, str):
-            return self.port
-
-        return self.port.name
-
-    @property
-    def dtype(self):
-        return Bool
-
-
-@dataclass
-class IntfReadyExpr(IntfOpExpr):
-    def __hash__(self):
-        return hash(self.name)
-
-
-@dataclass
-class IntfValidExpr(IntfOpExpr):
-    def __hash__(self):
-        return hash(self.name)
-
-
 # Expressions
 
 
 @dataclass
 class ConcatExpr(Expr):
     def __repr__(self):
-        return 'ConcatExpr(' + ', '.join([repr(v) for v in self.operands]) + ')'
+        return 'ConcatExpr(' + ', '.join([repr(v)
+                                          for v in self.operands]) + ')'
 
     def __str__(self):
         return '(' + ', '.join([str(v) for v in self.operands]) + ')'
@@ -659,7 +567,8 @@ class ArrayOpExpr(Expr):
 
     def __new__(cls, array: Expr, operator):
         if isinstance(array, ResExpr):
-            return ResExpr(reduce(PYOPMAP[operator], array.val, REDUCE_INITIAL[operator]))
+            return ResExpr(
+                reduce(PYOPMAP[operator], array.val, REDUCE_INITIAL[operator]))
 
         inst = super().__new__(cls)
         inst.array = array
@@ -882,13 +791,17 @@ class IfBlock(Block):
 
 @dataclass
 class ElseBlock(Block):
+
+    @property
+    def test(self):
+        return ResExpr(Bool(True))
+
     def __str__(self):
         body = ''
         for s in self.stmts:
             body += str(s)
 
         return f'else:\n{textwrap.indent(body, "    ")}'
-
 
 
 @dataclass

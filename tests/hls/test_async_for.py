@@ -46,6 +46,8 @@ def test_exit_cond(tmpdir):
     cosim('/test', 'verilator')
     sim(tmpdir)
 
+# test_exit_cond('/tools/home/tmp/exit_cond')
+
 # config['results-dir'] = '/tools/home/tmp/test'
 
 # res = []

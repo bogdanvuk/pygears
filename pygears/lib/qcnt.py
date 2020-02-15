@@ -17,7 +17,7 @@ async def qcnt(din: Queue, *, running=False, lvl=0, init=1,
         The number of sub-transactions in the input transaction.
     """
 
-    cnt: Uint[w_out] = init
+    cnt = Uint[w_out](init)
 
     async for (data, eot) in din:
         if all(eot):
@@ -42,7 +42,7 @@ async def qcnt_running(din: Queue, *, running=True, lvl=0, init=1,
     Returns:
         The running count of sub-transactions in the input transaction.
     """
-    cnt: Uint[w_out] = init
+    cnt = Uint[w_out](init)
 
     async for (data, eot) in din:
         if all(eot[:lvl]):

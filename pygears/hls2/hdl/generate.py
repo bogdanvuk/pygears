@@ -4,8 +4,8 @@ from ..pydl.visitor import PydlExprRewriter
 from .utils import Scope
 from functools import singledispatch
 from pygears.typing import Bool, Uint, bitw
-from .nodes import AssignValue, CombBlock, HDLBlock, IfElseBlock, FuncReturn, FuncBlock
-from .passes import RewriteExitCond, RemoveDeadCode
+from .nodes import AssignValue, CombBlock, HDLBlock, IfElseBlock, FuncReturn, FuncBlock, LoopBlock
+from .passes import RewriteExitCond, RemoveDeadCode, InlineValues, InferRegisters, InlineResValues, infer_registers
 # from .simplify import simplify
 
 res_true = pydl.ResExpr(Bool(True))
@@ -75,12 +75,6 @@ def replace_aliases(forwarded, node):
 class HDLGenerator:
     def __init__(self, ctx):
         self.ctx = ctx
-        self.block_stack = []
-        self.forwarded = Scope()
-
-    @property
-    def block(self):
-        return self.block_stack[-1]
 
     def visit(self, node):
         method = 'visit_' + node.__class__.__name__
@@ -114,73 +108,21 @@ class HDLGenerator:
 
         return traverse_visitor(node, block)
 
-    def merge_subscope(self, block):
-        subscope = self.forwarded.cur_subscope
-        self.forwarded.upscope()
-
-        for name, val in subscope.items.items():
-            if block.opt_in_cond != res_true:
-                if name in self.forwarded:
-                    prev_val = self.forwarded[name]
-                else:
-                    prev_val = self.ctx.ref(name)
-
-                val = pydl.ConditionalExpr((val, prev_val), block.opt_in_cond)
-
-            self.forwarded[name] = val
-
     def visit_all_Block(self, node):
         block = HDLBlock(in_cond=self.in_condition(node),
                          opt_in_cond=self.opt_in_condition(node),
                          stmts=[],
                          dflts={})
-
-        if not isinstance(self.block, IfElseBlock):
-            self.forwarded.subscope()
-
-        res = self.traverse_block(node, block)
-
-        if isinstance(self.block, IfElseBlock):
-            return res
-
-        self.merge_subscope(block)
-
-        return res
+        return self.traverse_block(node, block)
 
     def visit_Assign(self, node):
         expr = self.visit(node.expr)
         ret = AssignValue(target=node.var, val=expr, dtype=node.var.dtype)
 
-        if (isinstance(node.var, pydl.Name)
-                and isinstance(node.var.obj, pydl.Register)):
-            if node.var.obj.any_init:
-                node.var.obj.val = pydl.CastExpr(expr, node.var.obj.dtype)
-                node.var.obj.any_init = False
-
-        if isinstance(node.var, pydl.SubscriptExpr):
-            if node.var.val.name not in self.forwarded:
-                raise Exception
-
-            var_name = node.var.val.name
-            if isinstance(node.var.index, pydl.ResExpr):
-                index_val = node.var.index.val
-                self.forwarded[var_name][index_val] = expr
-            else:
-                del self.forwarded[var_name]
-
-        elif isinstance(node.var, pydl.Name):
-            self.forwarded[node.var.name] = expr
-        else:
-            raise Exception
-
-        # print('------------')
-        # print(node.expr)
-        # print(expr)
-
         return ret
 
     def visit_all_Expr(self, expr):
-        return replace_aliases(self.forwarded, expr)
+        return expr
 
     def opt_in_condition(self, node):
         return self.visit_all_Expr(opt_in_condition(node, self.ctx))
@@ -193,35 +135,10 @@ class HDLGenerator:
 
     def visit_ContainerBlock(self, node):
         block = IfElseBlock(stmts=[], dflts={})
-        self.block_stack.append(block)
-        subscopes = []
-        forwards = set()
 
         for stmt in node.stmts:
-            self.forwarded.subscope()
-
             add_to_list(block.stmts, self.visit(stmt))
-            subs = self.forwarded.cur_subscope
-            subs.opt_in_cond = block.stmts[-1].opt_in_cond
-            subscopes.append(subs)
-            forwards.update(subs.items.keys())
 
-            self.forwarded.upscope()
-
-        for name in forwards:
-            if name in self.forwarded:
-                val = self.forwarded[name]
-            else:
-                val = self.ctx.ref(name)
-
-            for subs in reversed(subscopes):
-                if name in subs.items:
-                    val = pydl.ConditionalExpr((subs.items[name], val),
-                                               cond=subs.opt_in_cond)
-
-            self.forwarded[name] = val
-
-        self.block_stack.pop()
         return block
 
 
@@ -239,7 +156,6 @@ class ModuleGenerator(HDLGenerator):
         if self.state_id not in node.state:
             return block
 
-        self.block_stack.append(block)
         self.cur_state_id = list(node.state)[0]
 
         for stmt in node.stmts:
@@ -251,14 +167,13 @@ class ModuleGenerator(HDLGenerator):
             elif self.cur_state:
                 block.stmts.append(
                     AssignValue(self.ctx.ref('state', ctx='store'),
-                                list(stmt.state)[0],
+                                pydl.ResExpr(list(stmt.state)[0]),
                                 exit_cond=res_false))
                 break
 
         if self.cur_state_id not in node.state:
             self.cur_state_id = list(node.state)[0]
 
-        self.block_stack.pop()
         return block
 
     def visit_Module(self, node):
@@ -305,36 +220,15 @@ class ModuleGenerator(HDLGenerator):
         if self.state_id not in node.state:
             return []
 
-        block = HDLBlock(in_cond=self.in_condition(node),
-                         opt_in_cond=self.opt_in_condition(node),
-                         stmts=[],
-                         dflts={})
-
-        looped_init = False
-        for name in self.forwarded:
-            if isinstance(self.ctx.scope[name], pydl.Register):
-                if not looped_init:
-                    looped_init = True
-                    self.ctx.scope['looped'] = pydl.Register('looped',
-                                                             val=res_false)
-
-                self.forwarded[name] = pydl.ConditionalExpr(
-                    (self.ctx.ref(name), self.forwarded[name]),
-                    self.ctx.ref('looped'))
-
-        self.forwarded.subscope()
+        block = LoopBlock(in_cond=self.in_condition(node),
+                          opt_in_cond=self.opt_in_condition(node),
+                          stmts=[],
+                          dflts={})
 
         block = self.traverse_block(node, block)
 
         block.exit_cond = pydl.UnaryOpExpr(self.opt_in_condition(node),
                                            pydl.opc.Not)
-
-        self.merge_subscope(block)
-        # self.forwarded.upscope()
-
-        if looped_init:
-            block.stmts.append(
-                AssignValue(target=self.ctx.ref('looped'), val=res_true))
 
         if 'state' in self.ctx.scope:
             block.stmts.insert(
@@ -354,7 +248,7 @@ class ModuleGenerator(HDLGenerator):
                     and node.blocking):
                 block.stmts.append(
                     AssignValue(self.ctx.ref('state', ctx='store'),
-                                list(node.state)[0],
+                                pydl.ResExpr(list(node.state)[0]),
                                 exit_cond=res_false))
 
         return block
@@ -419,8 +313,11 @@ def generate(pydl_ast, ctx: GearContext):
     state_num = len(pydl_ast.state)
 
     if state_num > 1:
-        ctx.scope['state'] = pydl.Register(
-            'state', pydl.ResExpr(Uint[bitw(state_num - 1)](0)))
+        ctx.scope['state'] = pydl.Variable(
+            'state',
+            val=pydl.ResExpr(Uint[bitw(state_num - 1)](0)),
+            reg=True,
+        )
 
     stateblock = IfElseBlock(stmts=[], dflts={})
     for i in range(state_num):
@@ -432,13 +329,27 @@ def generate(pydl_ast, ctx: GearContext):
             res.opt_in_cond = pydl.BinOpExpr(
                 (ctx.ref('state'), pydl.ResExpr(i)), pydl.opc.Eq)
 
-    modblock = CombBlock(stmts=[stateblock], dflts={})
+    if state_num > 1:
+        modblock = CombBlock(stmts=[stateblock], dflts={})
+    else:
+        modblock = CombBlock(stmts=stateblock.stmts[0].stmts, dflts={})
 
-    # print(modblock)
+    print(modblock)
+    InlineResValues(ctx).visit(modblock)
+    print('*** Inline ResExpr values ***')
+    print(modblock)
+    infer_registers(modblock, ctx)
+    print('*** Infer registers ***')
+    print(modblock)
+    InlineValues(ctx).visit(modblock)
+    print('*** Inline values ***')
+    print(modblock)
     RewriteExitCond(ctx).visit(modblock)
-    # print(modblock)
+    print('*** Rewrite Exit Conditions ***')
+    print(modblock)
     RemoveDeadCode(ctx).visit(modblock)
-    # print(modblock)
+    print('*** Remove Dead Code ***')
+    print(modblock)
     gen_all_funcs(modblock, ctx)
 
     return modblock
@@ -449,6 +360,9 @@ def generate_func(pydl_ast, ctx: FuncContext):
     res = v.visit(pydl_ast)
 
     # print(res)
+    InlineValues(ctx).visit(res)
+    # print(res)
+    RemoveDeadCode(ctx).visit(res)
     gen_all_funcs(res, ctx)
 
     return res

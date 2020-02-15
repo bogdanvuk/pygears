@@ -87,6 +87,9 @@ def test_loop_intfs(tmpdir, din_delay, dout_delay):
     cosim('/test', 'verilator')
     sim(tmpdir, check_activity=False)
 
+# from pygears import config
+# config['debug/trace'] = ['*']
+# test_loop_intfs('/tools/home/tmp/loop_intfs', 0, 0)
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])

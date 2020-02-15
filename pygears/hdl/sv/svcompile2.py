@@ -86,6 +86,9 @@ class SVCompiler(InstanceVisitor):
         bl = BlockLines()
         self.block_lines.append(bl)
 
+        if not isinstance(block, nodes.HDLBlock):
+            return
+
         maybe_else = 'else ' if getattr(block, 'else_branch', False) else ''
 
         in_cond = pydl.BinOpExpr((block.in_cond, block.opt_in_cond),
@@ -129,7 +132,7 @@ class SVCompiler(InstanceVisitor):
 
         val = stmt.val
 
-        if isinstance(target.obj, pydl.Register):
+        if isinstance(target.obj, pydl.Variable) and target.obj.reg:
             name = svexpr(target, self.aux_funcs)
             svstmt = f"{name}_next = {svexpr(val, self.aux_funcs)}"
             self.handle_defaults(name, svstmt)
@@ -187,7 +190,7 @@ class SVCompiler(InstanceVisitor):
                         self.prepend(f"{name}.valid = 0")
                         # self.write(f"{name}_s = {obj.dtype.width}'(1'bx)")
 
-            elif isinstance(obj, pydl.Register):
+            elif isinstance(obj, pydl.Variable) and obj.reg:
                 target = self.ctx.ref(name, ctx='store')
                 if self.selected(target):
                     # self.write(f"{name}_next = {obj.dtype.width}'(1'bx)")
@@ -240,6 +243,9 @@ class SVCompiler(InstanceVisitor):
                 if assign_stmt is not None:
                     self.write(f'assign {assign_stmt};')
             self.write('')
+
+    def visit_LoopBlock(self, node):
+        self.visit_HDLBlock(node)
 
     def visit_HDLBlock(self, node):
         self.enter_block(node)
@@ -457,7 +463,7 @@ def compile_gear_body(gear, outdir, template_env):
         from pygears.hdl import hdlgen
         svgen_map = registry("svgen/map")
         for c in ctx.submodules:
-            rtl_top = hdlgen(c.gear, outdir=outdir)
+            rtl_top = hdlgen(c.gear, outdir=outdir, generate=False)
             svmod = svgen_map[rtl_top]
             subsvmods.append(svmod)
 
