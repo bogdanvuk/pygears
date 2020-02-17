@@ -78,3 +78,14 @@ def test_index_error():
 def test_size():
     a = Array[Uint[6], 6]
     assert int(a) == 36
+
+
+def test_eq():
+    t1 = Array[Uint[4], 4]
+    t2 = Array[Uint[3], 4]
+
+    assert t1((0, 1, 2, 3)) == t1((0, 1, 2, 3))
+
+    assert t1((0, 1, 2, 3)) != t1((0, 1, 2, 4))
+
+    assert t1((0, 1, 2, 3)) != t2((0, 1, 2, 3))

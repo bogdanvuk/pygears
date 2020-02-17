@@ -118,7 +118,10 @@ def infer_ftypes(params, args, namespace={}, allow_incomplete=False):
                     else:
                         postponed[name] = res
 
-                except Exception as e:
+                except TypeMatchError as e:
+                    if str(e) == "descriptor 'copy' of 'list' object needs an argument":
+                        breakpoint()
+
                     err = TypeMatchError(
                         f'{str(e)}\n - when deducing type for argument '
                         f'"{name}"')

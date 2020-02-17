@@ -1,4 +1,5 @@
 from .base import EnumerableGenericMeta, typeof, is_type
+from .base import class_and_instance_method
 
 
 class ArrayType(EnumerableGenericMeta):
@@ -65,7 +66,7 @@ class ArrayType(EnumerableGenericMeta):
             return super().__str__()
 
 
-class Array(tuple, metaclass=ArrayType):
+class Array(list, metaclass=ArrayType):
     """Generic container datatype that holds N instances of type T
 
     Generic parameters:
@@ -81,38 +82,34 @@ class Array(tuple, metaclass=ArrayType):
     __parameters__ = ['T', 'N']
 
     def __new__(cls, val: tuple = None):
-        if val is None:
-            val = (None, ) * len(cls)
+        t = cls.dtype
 
-        array_tpl = (v if typeof(type(v), cls[0]) or v is None else cls[0](v) for v in val)
+        if val is None:
+            array_tpl = (t(), ) * len(cls)
+        else:
+            array_tpl = (v if typeof(type(v), t) or v is None else t(v)
+                         for v in val)
+
         return super(Array, cls).__new__(cls, array_tpl)
 
     def __eq__(self, other):
-        if not is_type(type(other)):
+        t_other = type(other)
+        if not is_type(t_other):
             return super().__eq__(other)
 
-        return type(self) == type(other) and super().__eq__(other)
+        return type(self) == t_other and super().__eq__(other)
+
+    def __ne__(self, other):
+        if not is_type(type(other)):
+            return self._array != other
+
+        return not self.__eq__(other)
 
     def __hash__(self):
         return super().__hash__()
 
-    def __ne__(self, other):
-        if not is_type(type(other)):
-            return super().__ne__(other)
-
-        return not self.__eq__(other)
-
-    def __int__(self):
-        w_dtype = int(type(self).dtype)
-        ret = 0
-        for d in reversed(self):
-            ret <<= w_dtype
-            ret |= int(d)
-
-        return ret
-
     def code(self):
-        w_dtype = int(type(self).dtype)
+        w_dtype = type(self).dtype.width
         ret = 0
         for d in reversed(self):
             ret <<= w_dtype
@@ -123,9 +120,13 @@ class Array(tuple, metaclass=ArrayType):
     @classmethod
     def decode(cls, val):
         ret = []
-        mask = int(len(cls[0]) * '1', 2)
+        mask = int(len(cls.dtype) * '1', 2)
         for t in cls:
             ret.append(t.decode(val & mask))
-            val >>= int(t)
+            val >>= t.width
 
-        return cls(tuple(ret))
+        return cls(ret)
+
+    @class_and_instance_method
+    def copy(self):
+        type(self)(self)
