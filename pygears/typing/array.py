@@ -81,16 +81,16 @@ class Array(list, metaclass=ArrayType):
     """
     __parameters__ = ['T', 'N']
 
-    def __new__(cls, val: tuple = None):
-        t = cls.dtype
+    def __init__(self, val: tuple = None):
+        t = type(self).data
 
         if val is None:
-            array_tpl = (t(), ) * len(cls)
+            array_tpl = (None, ) * len(type(self))
         else:
             array_tpl = (v if typeof(type(v), t) or v is None else t(v)
                          for v in val)
 
-        return super(Array, cls).__new__(cls, array_tpl)
+        return super().__init__(array_tpl)
 
     def __eq__(self, other):
         t_other = type(other)
@@ -109,7 +109,7 @@ class Array(list, metaclass=ArrayType):
         return super().__hash__()
 
     def code(self):
-        w_dtype = type(self).dtype.width
+        w_dtype = type(self).data.width
         ret = 0
         for d in reversed(self):
             ret <<= w_dtype
@@ -117,10 +117,14 @@ class Array(list, metaclass=ArrayType):
 
         return ret
 
+    @property
+    def unknown(self):
+        return any(v is None or getattr(v, 'unknown', False) for v in self)
+
     @classmethod
     def decode(cls, val):
         ret = []
-        mask = int(len(cls.dtype) * '1', 2)
+        mask = int(len(cls.data) * '1', 2)
         for t in cls:
             ret.append(t.decode(val & mask))
             val >>= t.width

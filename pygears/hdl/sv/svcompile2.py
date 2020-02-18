@@ -89,22 +89,23 @@ class SVCompiler(InstanceVisitor):
         if not isinstance(block, nodes.HDLBlock):
             return
 
-        maybe_else = 'else ' if getattr(block, 'else_branch', False) else ''
-
-        in_cond = pydl.BinOpExpr((block.in_cond, block.opt_in_cond),
-                                 pydl.opc.And)
-
-        if in_cond != res_true:
-            in_cond_val = svexpr(in_cond, self.aux_funcs)
-
-            self.header(f'{maybe_else}if ({in_cond_val}) begin')
-        elif maybe_else:
-            self.header(f'else begin')
-
     def exit_block(self, block=None):
         self.defaults.upscope()
 
         bl = self.block_lines.pop()
+
+        if bl.content and isinstance(block, nodes.HDLBlock):
+            maybe_else = 'else ' if getattr(block, 'else_branch', False) else ''
+
+            in_cond = pydl.BinOpExpr((block.in_cond, block.opt_in_cond),
+                                     pydl.opc.And)
+
+            if in_cond != res_true:
+                in_cond_val = svexpr(in_cond, self.aux_funcs)
+
+                bl.header.append(f'{maybe_else}if ({in_cond_val}) begin')
+            elif maybe_else:
+                bl.header.append(f'else begin')
 
         self.write(bl)
 
@@ -122,8 +123,6 @@ class SVCompiler(InstanceVisitor):
             target = stmt.target.val
         elif isinstance(stmt.target, pydl.Name):
             target = stmt.target
-            if target.name == 'out_res':
-                breakpoint()
         else:
             raise Exception
 
@@ -133,11 +132,13 @@ class SVCompiler(InstanceVisitor):
         val = stmt.val
 
         if isinstance(target.obj, pydl.Variable) and target.obj.reg:
-            name = svexpr(target, self.aux_funcs)
-            svstmt = f"{name}_next = {svexpr(val, self.aux_funcs)}"
+            name = svexpr(stmt.target, self.aux_funcs)
+
+            svstmt = f"{name} = {svexpr(val, self.aux_funcs)}"
             self.handle_defaults(name, svstmt)
 
-            self.write(f"{name}_en = 1")
+            self.write(f"{target.name}_en = 1")
+
             return
 
         if isinstance(target.obj, pydl.Interface):
@@ -271,8 +272,10 @@ class SVCompiler(InstanceVisitor):
                 self.write(f'{assign_stmt};')
 
         for i, stmt in enumerate(node.stmts):
-            if i > 0:
+            if any(c.content for c in self.cur_block_lines.content):
                 stmt.else_branch = True
+            else:
+                stmt.else_branch = False
 
             self.visit(stmt)
 

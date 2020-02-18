@@ -19,6 +19,8 @@ def assign_targets(ctx, target, source, obj_factory=None):
                                obj_factory))
         return stmts
 
+    #TODO: Should we have some kind of recursion here for more complex targets
+    #(tuple of tuples)?
     if isinstance(target, nodes.SubscriptExpr):
         return nodes.Assign(source, target)
 
@@ -53,7 +55,7 @@ def _(node, ctx: Context):
 
         for s in stmts:
             s.var.obj.val = s.expr
-            if init.val is None:
+            if init.val is None or getattr(init.val, 'unknown', False):
                 s.var.obj.any_init = True
 
 

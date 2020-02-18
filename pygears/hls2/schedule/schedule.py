@@ -102,6 +102,15 @@ class Scheduler(PydlVisitor):
         node.state = set()
         self.visit_all_Block(node)
 
+    def visit_Await(self, node):
+        node.blocking = True
+        if self.parent.blocked:
+            node.cur_state = self.new_state()
+        else:
+            node.cur_state = self.parent.cur_state
+
+        node.state = {node.cur_state}
+
     def visit_Yield(self, node):
         node.blocking = True
         if self.parent.blocked:

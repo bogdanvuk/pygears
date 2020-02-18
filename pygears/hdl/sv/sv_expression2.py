@@ -42,6 +42,9 @@ class SVExpressionVisitor:
                 ', '.join(f"{type(op).width}'d{self.visit(pydl.ResExpr(op))}"
                           for op in reversed(node.val)) + '}')
 
+        if getattr(node.val, 'unknown', False):
+            return f"{node.dtype.width}'bx"
+
         return int(code(node.val))
 
     def visit_FunctionCall(self, node):

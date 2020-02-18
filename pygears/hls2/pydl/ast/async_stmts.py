@@ -192,3 +192,8 @@ def AsyncFor(node, ctx: Context):
             add_to_list(ctx.pydl_parent_block.stmts, res_stmt)
 
         return stmts
+
+
+@node_visitor(ast.Await)
+def _(node: ast.Await, ctx: Context):
+    return nodes.Await('clk')

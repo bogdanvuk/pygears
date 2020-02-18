@@ -49,7 +49,7 @@ class RewriteExitCond(HDLVisitor):
         for stmt in stmts:
             cur_block.stmts.append(self.visit(stmt))
 
-            if stmt.exit_cond != res_true:
+            if stmt.exit_cond != res_true or stmt.in_cond != res_true:
                 next_in_cond = pydl.BinOpExpr(
                     (pydl.UnaryOpExpr(stmt.opt_in_cond, pydl.opc.Not),
                      pydl.BinOpExpr(
@@ -196,18 +196,9 @@ class InferRegisters(HDLVisitor):
         self.find_unspecified(node.val)
 
         if isinstance(node.target, pydl.SubscriptExpr):
-            #TODO handle partial updates
-            pass
-            # if node.target.val.name not in self.assigned:
-            #     raise Exception
-
-            # var_name = node.target.val.name
-            # if isinstance(node.target.index, pydl.ResExpr):
-            #     index_val = node.target.index.val
-            #     self.assigned[var_name][index_val] = node.val
-            # else:
-            #     del self.assigned[var_name]
-
+            var_name = node.target.val.name
+            self.unspecified.add(var_name)
+            self.assigned[var_name] = node.val
         elif isinstance(node.target, pydl.Name):
             self.assigned[node.target.name] = node.val
         else:
@@ -387,11 +378,21 @@ class InlineValues(HDLVisitor):
 
     def AssignValue(self, node: AssignValue):
         node.val = self.inline_expr(node.val)
+
+        # TODO: This needs to be some form of recursive pass, since value can
+        # be assigned to a value field
         if isinstance(node.target, pydl.SubscriptExpr):
-            if node.target.val.name not in self.forwarded:
+            target = node.target.val
+            if isinstance(target.obj, pydl.Variable) and target.obj.reg:
+                target.ctx = 'next'
+
+            if target.name not in self.forwarded:
+                if target.obj.reg:
+                    return node
+
                 raise Exception
 
-            var_name = node.target.val.name
+            var_name = target.name
             if isinstance(node.target.index, pydl.ResExpr):
                 index_val = node.target.index.val
                 self.forwarded[var_name][index_val] = node.val
@@ -399,6 +400,9 @@ class InlineValues(HDLVisitor):
                 del self.forwarded[var_name]
 
         elif isinstance(node.target, pydl.Name):
+            if isinstance(node.target.obj, pydl.Variable) and node.target.obj.reg:
+                node.target.ctx = 'next'
+
             self.forwarded[node.target.name] = node.val
         else:
             raise Exception

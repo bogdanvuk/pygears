@@ -874,6 +874,10 @@ class Assign(Statement):
 class Assert(Statement):
     msg: str
 
+@dataclass
+class Await(Statement):
+    pass
+
 
 @dataclass
 class Function(Block):
