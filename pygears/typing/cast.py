@@ -503,21 +503,23 @@ def array_value_cast_resolver(val, cast_type):
     val_type = type(val)
     cast_type = array_type_cast_resolver(val_type, cast_type)
 
-    return cast_type(tuple(cast(v, cast_type.data) for v in val))
+    return cast_type(tuple(cast(v, t) for v, t in zip(val, cast_type)))
 
 
 def union_value_cast_resolver(val, cast_type):
     val_type = type(val)
     cast_type = union_type_cast_resolver(val_type, cast_type)
 
-    return cast_type(tuple(cast(v, cast_type.data) for v in val))
+    data = cast_type.data(val[0].code())
+    ctrl = cast_type.ctrl(val[1])
+    return cast_type((data, ctrl))
 
 
 def queue_value_cast_resolver(val, cast_type):
     val_type = type(val)
     cast_type = queue_type_cast_resolver(val_type, cast_type)
 
-    return cast_type(tuple(cast(v, cast_type.data) for v in val))
+    return cast_type(tuple(cast(v, t) for v, t in zip(val, cast_type)))
 
 
 def fixpnumber_value_cast_resolver(val, cast_type):
