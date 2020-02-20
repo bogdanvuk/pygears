@@ -42,7 +42,7 @@
          assign out_valid[i] = in_valid[i] & !ready_all_reg[i];
 
          always @(posedge clk) begin
-            if (rst | in_ready) begin
+            if (rst || (!in_valid[i]) || in_ready) begin
                ready_all_reg[i] <= 1'b0;
             end else if (dout[i].ready) begin
                ready_reg[i] <= 1'b1;

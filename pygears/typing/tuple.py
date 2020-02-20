@@ -110,7 +110,10 @@ class TupleType(EnumerableGenericMeta):
             return cls
 
     def without(self, *index):
-        return Tuple[{k: v for k, v in zip(self.fields, self.args) if k not in index}]
+        return Tuple[{
+            k: v
+            for k, v in zip(self.fields, self.args) if k not in index
+        }]
 
     def __add__(self, other):
         """Combines the fields of two :class:`Tuple` types.
@@ -129,8 +132,10 @@ class TupleType(EnumerableGenericMeta):
         if not self.args or not hasattr(self, '__parameters__'):
             return super().__repr__()
         else:
-            return 'Tuple[{%s}]' % ', '.join(
-                [f'{repr(f)}: {type_repr(a)}' for f, a in zip(self.fields, self.args)])
+            return 'Tuple[{%s}]' % ', '.join([
+                f'{repr(f)}: {type_repr(a)}'
+                for f, a in zip(self.fields, self.args)
+            ])
 
     def get(self, name, default=None):
         """Calls :py:meth:`__getitem__` and returns the ``default`` value if it
@@ -201,6 +206,10 @@ class TupleType(EnumerableGenericMeta):
 
     @property
     def width(self):
+        if not self.specified:
+            raise TemplatedTypeUnspecified(
+                f'Cannot callculate width of the unspecified type {repr(self)}'
+            )
         return sum(f.width for f in self)
 
 
@@ -233,7 +242,8 @@ class Tuple(tuple, metaclass=TupleType):
                 else:
                     cls = Tuple[tuple([type(v) for v in val])]
             except TypeError as e:
-                raise TypeError(f"{str(e)}\n - when creating Tuple from '{val}'")
+                raise TypeError(
+                    f"{str(e)}\n - when creating Tuple from '{val}'")
 
         if val is None:
             tpl_val = tuple(t() for t in cls)
@@ -258,9 +268,8 @@ class Tuple(tuple, metaclass=TupleType):
                         f' type "{repr(t)}" with "{repr(v)}"')
 
         if len(tpl_val) != len(cls):
-            raise TypeError(
-                f'{repr(cls)}() takes {len(cls)} arguments'
-                f' ({len(tpl_val)} given)')
+            raise TypeError(f'{repr(cls)}() takes {len(cls)} arguments'
+                            f' ({len(tpl_val)} given)')
 
         return super(Tuple, cls).__new__(cls, tpl_val)
 

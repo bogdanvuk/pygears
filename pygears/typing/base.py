@@ -373,12 +373,18 @@ def param_subs(t, matches, namespace):
 
     # Did we reach the parameter name?
     if isinstance(t, str):
+        if t.isidentifier():
+            return matches.get(t, t)
+
+        err = None
         try:
             return eval(t, namespace, matches)
         except Exception as e:
-            return t_orig
-            # raise Exception(
-            #     f"{str(e)}\n - while evaluating parameter string '{t}'")
+            err = e
+
+        if err:
+            raise type(err)(
+                f"{str(err)}\n - while evaluating string parameter '{t}'")
 
     elif isinstance(t, collections.abc.Iterable):
         return type(t)(param_subs(tt, matches, namespace) for tt in t)
