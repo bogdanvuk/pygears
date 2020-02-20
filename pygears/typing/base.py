@@ -374,7 +374,7 @@ def param_subs(t, matches, namespace):
     # Did we reach the parameter name?
     if isinstance(t, str):
         if t.isidentifier():
-            return matches.get(t, t)
+            return matches.get(t, namespace.get(t, t))
 
         err = None
         try:
