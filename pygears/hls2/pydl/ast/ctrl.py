@@ -50,8 +50,7 @@ def _(node: ast.If, ctx: Context):
 @node_visitor(ast.While)
 def _(node: ast.While, ctx: Context):
     pydl_node = nodes.Loop(test=visit_ast(node.test, ctx),
-                           stmts=[],
-                           multicycle=[])
+                           stmts=[])
     return visit_block(pydl_node, node.body, ctx)
 
 

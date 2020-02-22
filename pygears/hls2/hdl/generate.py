@@ -52,26 +52,6 @@ def add_to_list(orig_list, extension):
         orig_list.extend(
             extension if isinstance(extension, list) else [extension])
 
-
-class AliasRewriter(PydlExprRewriter):
-    def __init__(self, forwarded):
-        self.forwarded = forwarded
-
-    def visit_Name(self, node):
-        if ((node.name in self.forwarded) and (node.ctx == 'load')):
-            return self.forwarded[node.name]
-
-        return None
-
-
-def replace_aliases(forwarded, node):
-    new_node = AliasRewriter(forwarded).visit(node)
-    if new_node is None:
-        return node
-
-    return new_node
-
-
 class HDLGenerator:
     def __init__(self, ctx):
         self.ctx = ctx

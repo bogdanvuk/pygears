@@ -160,8 +160,7 @@ class AsyncForContext:
         intf_block = nodes.IntfBlock(intfs=[self.intf.obj], stmts=[eot_load])
 
         eot_loop_stmt = nodes.Loop(test=eot_test,
-                                   stmts=[intf_block],
-                                   multicycle=[])
+                                   stmts=[intf_block])
 
         self.ctx.pydl_block_closure.append(eot_loop_stmt)
         self.ctx.pydl_block_closure.append(intf_block)

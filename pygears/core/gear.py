@@ -233,6 +233,7 @@ class GearPlugin(PluginBase):
 
         safe_bind('gear/params/meta', {
             'enablement': True,
+            'outnames': None,
             'signals': (InSig('clk', 1), InSig('rst', 1))
         })
 
@@ -240,7 +241,6 @@ class GearPlugin(PluginBase):
             'gear/params/extra', {
                 'name': None,
                 'intfs': [],
-                'outnames': [],
                 'sigmap': {},
                 '__base__': None
             })

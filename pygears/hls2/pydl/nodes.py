@@ -737,43 +737,10 @@ class Block:
     # TODO : newer versions of Python will not need the string
     stmts: typing.List[typing.Union['Block', Expr]]
 
-    # @property
-    # def in_cond(self):
-    #     pass
-
-    # @property
-    # def cycle_cond(self):
-    #     pass
-
-    # @property
-    # def exit_cond(self):
-    #     pass
-
-
-@dataclass
-class BaseLoop(Block):
-    multicycle: typing.List[Expr]
-
-    @property
-    def cycle_cond(self):
-        return CycleSubCond()
-
 
 @dataclass
 class IntfBlock(Block):
     intfs: typing.List[Interface]
-
-    # @property
-    # def in_cond(self):
-    #     return self.intfs[0]
-
-    # @property
-    # def cycle_cond(self):
-    #     return CycleSubCond()
-
-    # @property
-    # def exit_cond(self):
-    #     return ExitSubCond()
 
 
 @dataclass
@@ -817,18 +784,6 @@ class ContainerBlock(Block):
 
         return body
 
-    # stmts: typing.List[Block]
-
-    # @property
-    # def cycle_cond(self):
-    #     from .conditions_utils import CycleCond
-    #     return CycleCond(self.id)
-
-    # @property
-    # def exit_cond(self):
-    #     from .conditions_utils import ExitCond
-    #     return ExitCond(self.id)
-
 
 @dataclass
 class CombBlock(ContainerBlock):
@@ -836,7 +791,7 @@ class CombBlock(ContainerBlock):
 
 
 @dataclass
-class Loop(BaseLoop):
+class Loop(Block):
     test: Expr
 
 

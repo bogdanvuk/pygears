@@ -1,5 +1,6 @@
 import inspect
 import sys
+from copy import copy
 
 from pygears.conf import bind, core_log, registry, safe_bind, MultiAlternativeError, config
 from pygears.typing import Any, cast, is_type
@@ -124,18 +125,14 @@ def expand_varargs(args, annotations, varargsname, varargs):
 
 
 def resolve_return_annotation(annotations):
-    outnames = None
     if "return" in annotations:
         ret_anot = annotations["return"]
         if isinstance(ret_anot, dict):
-            outnames = tuple(ret_anot.keys())
             annotations['return'] = tuple(ret_anot.values())
             if len(annotations['return']) == 1:
                 annotations['return'] = annotations['return'][0]
     else:
         annotations['return'] = None
-
-    return outnames
 
 
 def resolve_args(args, argnames, annotations, varargs):
@@ -154,6 +151,25 @@ def resolve_args(args, argnames, annotations, varargs):
     return args_dict, annotations, outnames
 
 
+def gear_signature(func, args, kwds, meta_kwds):
+    paramspec = inspect.getfullargspec(func)
+
+    args, annotations, outnames = resolve_args(args, paramspec.args,
+                                               paramspec.annotations,
+                                               paramspec.varargs)
+
+    kwddefaults = paramspec.kwonlydefaults or {}
+
+    templates = {
+        **annotations,
+        **kwddefaults,
+        **kwds,
+        '_enablement': meta_kwds['enablement'],
+    }
+
+    return args, templates
+
+
 def infer_params(args, params, context):
     arg_types = {name: arg.dtype for name, arg in args.items()}
 
@@ -161,6 +177,20 @@ def infer_params(args, params, context):
                         arg_types,
                         namespace=context,
                         allow_incomplete=False)
+
+def infer_outnames(annotations, meta_kwds):
+    outnames = None
+    if "return" in annotations:
+        if isinstance(annotations['return'], dict):
+            outnames = tuple(annotations['return'].keys())
+
+    if not outnames:
+        outnames = copy(meta_kwds['outnames'])
+
+    if not outnames:
+        outnames = []
+
+    return outnames
 
 
 class intf_name_tracer:
@@ -337,18 +367,15 @@ def gear_base_resolver(func,
                        name=None,
                        intfs=None,
                        __base__=None,
-                       outnames=None,
                        **kwds):
 
     name = name or resolve_gear_name(func, __base__)
-
-    paramspec = inspect.getfullargspec(func)
+    # if name == 'demux':
+    #     breakpoint()
 
     err = None
     try:
-        args, annotations, ret_outnames = resolve_args(args, paramspec.args,
-                                                       paramspec.annotations,
-                                                       paramspec.varargs)
+        args, param_templates = gear_signature(func, args, kwds, meta_kwds)
 
         args, const_args = infer_const_args(args)
         check_args_specified(args)
@@ -377,17 +404,6 @@ def gear_base_resolver(func,
             else:
                 return out_intfs
 
-    kwddefaults = paramspec.kwonlydefaults or {}
-    param_templates = {
-        **dict(outnames=outnames or ret_outnames or [],
-               name=name,
-               intfs=fix_intfs),
-        **annotations,
-        **kwddefaults,
-        **kwds,
-        **meta_kwds,
-    }
-
     try:
         params = infer_params(args,
                               param_templates,
@@ -397,13 +413,21 @@ def gear_base_resolver(func,
         params = e.params
 
     if not err:
-        if not params.pop('enablement'):
+        if not params.pop('_enablement'):
             err = TypeMatchError(
                 f'Enablement condition failed for "{name}" alternative'
                 f' "{meta_kwds["definition"].__module__}.'
                 f'{meta_kwds["definition"].__name__}": '
                 f'{meta_kwds["enablement"].decode()}')
 
+    params['outnames'] = infer_outnames(func.__annotations__, meta_kwds)
+
+    for key in meta_kwds:
+        if key not in ['outnames', 'enablement']:
+            params[key] = meta_kwds[key]
+
+    params['name'] = name
+    params['intfs'] = fix_intfs
     gear_inst = Gear(func, params)
 
     if err:
@@ -423,7 +447,6 @@ def gear_base_resolver(func,
 
                 for i in gear_inst.out_port_intfs:
                     i.source(HDLProducer())
-
 
         except (TooManyArguments, GearTypeNotSpecified, GearArgsNotSpecified,
                 TypeError, TypeMatchError, MultiAlternativeError) as e:
@@ -485,7 +508,6 @@ def sim_compile_resolver(func, meta_kwds, *args, **kwds):
             intf._in_queue = asyncio.Queue(maxsize=1,
                                            loop=registry('sim/simulator'))
             intf.put_nb(a)
-
 
         return gear_inst.func(*(p.consumer for p in gear_inst.in_ports),
                               **gear_inst.explicit_params)

@@ -44,8 +44,6 @@ def parse_func_args(args, kwds, ctx):
     return func_args, func_kwds
 
 
-
-
 @node_visitor(ast.Call)
 def _(node, ctx: Context):
     name = visit_ast(node.func, ctx)
