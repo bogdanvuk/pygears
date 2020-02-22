@@ -233,15 +233,15 @@ class ModuleGenerator(HDLGenerator):
         if 'state' in self.ctx.scope:
             block.stmts.insert(
                 0,
-                AssignValue(target=self.ctx.ref('cycle_done'),
+                AssignValue(target=self.ctx.ref('cycle_done', ctx='store'),
                             val=self.ctx.ref('state', ctx='en')))
         else:
             block.stmts.insert(
-                0, AssignValue(target=self.ctx.ref('cycle_done'),
+                0, AssignValue(target=self.ctx.ref('cycle_done', ctx='store'),
                                val=res_false))
 
         block.stmts.append(
-            AssignValue(target=self.ctx.ref('cycle_done'), val=res_true))
+            AssignValue(target=self.ctx.ref('cycle_done', ctx='store'), val=res_true))
 
         if 'state' in self.ctx.scope:
             if (self.cur_state and self.state_id != list(node.state)[0]
@@ -251,23 +251,6 @@ class ModuleGenerator(HDLGenerator):
                                 pydl.ResExpr(list(node.state)[0]),
                                 exit_cond=res_false))
 
-        return block
-
-    def visit_IntfLoop(self, node):
-        if self.state_id not in node.state:
-            return []
-
-        block = self.visit_Loop(node)
-
-        block.exit_cond = pydl.ArrayOpExpr(
-            pydl.SubscriptExpr(pydl.Component(node.intf, 'data'),
-                               pydl.ResExpr(-1)), pydl.opc.BitAnd)
-
-        block.stmts.append(
-            AssignValue(target=self.ctx.ref(node.intf.name, 'ready'),
-                        val=res_true))
-
-        # block = self.traverse_block(node, block)
         return block
 
     def visit_Yield(self, node):

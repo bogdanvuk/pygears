@@ -383,8 +383,6 @@ class InlineValues(HDLVisitor):
         # be assigned to a value field
         if isinstance(node.target, pydl.SubscriptExpr):
             target = node.target.val
-            if isinstance(target.obj, pydl.Variable) and target.obj.reg:
-                target.ctx = 'next'
 
             if target.name not in self.forwarded:
                 if target.obj.reg:
@@ -400,9 +398,6 @@ class InlineValues(HDLVisitor):
                 del self.forwarded[var_name]
 
         elif isinstance(node.target, pydl.Name):
-            if isinstance(node.target.obj, pydl.Variable) and node.target.obj.reg:
-                node.target.ctx = 'next'
-
             self.forwarded[node.target.name] = node.val
         else:
             raise Exception

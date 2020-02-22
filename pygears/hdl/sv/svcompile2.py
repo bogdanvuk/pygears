@@ -192,11 +192,11 @@ class SVCompiler(InstanceVisitor):
                         # self.write(f"{name}_s = {obj.dtype.width}'(1'bx)")
 
             elif isinstance(obj, pydl.Variable) and obj.reg:
-                target = self.ctx.ref(name, ctx='store')
+                target = self.ctx.ref(name, ctx='en')
                 if self.selected(target):
                     # self.write(f"{name}_next = {obj.dtype.width}'(1'bx)")
                     # self.write(f"{name}_next = {name}")
-                    self.prepend(f'{svexpr(target, self.aux_funcs)}_en = 0')
+                    self.prepend(f'{svexpr(target, self.aux_funcs)} = 0')
 
             elif isinstance(obj, pydl.Variable):
                 pass

@@ -17,17 +17,14 @@ class AssignValue:
     opt_in_cond: pydl.Expr = pydl.ResExpr(True)
     exit_cond: pydl.Expr = pydl.ResExpr(True)
 
-    #TODO: generalize this
+    #TODO: generalize this for arbitrarility deep subscripts and attrexpr-s
     def __post_init__(self):
         target = self.target
         if isinstance(target, pydl.SubscriptExpr):
             target = self.target.val
 
         if isinstance(target.obj, pydl.Variable):
-            if target.obj.reg:
-                target.ctx = 'next'
-            else:
-                target.ctx = 'store'
+            target.ctx = 'store'
 
     def __str__(self):
 

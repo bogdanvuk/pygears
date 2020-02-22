@@ -66,10 +66,13 @@ class SVExpressionVisitor:
         if name in sv_keywords:
             name = f'pg_{name}'
 
-        if node.ctx in ['next', 'en']:
+        if node.ctx == 'store' and isinstance(node.obj, pydl.Variable) and node.obj.reg:
+            return f'{name}_next'
+
+        if node.ctx in ['en']:
             return f'{name}_{node.ctx}'
-        else:
-            return name
+
+        return name
 
     def visit_Component(self, node):
         if (node.field == 'data'):
