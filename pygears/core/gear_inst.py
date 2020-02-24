@@ -249,7 +249,7 @@ def resolve_func(gear_inst):
         err = None
         try:
             out_intfs, out_dtype = resolve_out_types(out_intfs, out_dtype, gear_inst)
-        except TypeError as e:
+        except (TypeError, TypeMatchError) as e:
             err = type(e)(f"{str(e)}, when instantiating '{gear_inst.name}'")
 
         if err:
@@ -266,10 +266,10 @@ def resolve_out_types(out_intfs, out_dtype, gear_inst):
 
     if out_intfs:
         if len(out_intfs) != len(out_dtype):
-            relation = 'less' if len(out_intfs) < len(out_dtype) else 'more'
+            relation = 'smaller' if len(out_intfs) < len(out_dtype) else 'larger'
             raise TypeMatchError(
-                f"Number of output interfaces ({len(out_intfs)}) is {relation} "
-                f" than specified output types ({out_dtype}): {repr(out_dtype)}"
+                f"Number of actual output interfaces ({len(out_intfs)}) is {relation} "
+                f"than the number of specified output types: ({tuple(i.dtype for i in out_intfs)}) vs {repr(out_dtype)}"
             )
 
         casted_out_intfs = list(out_intfs)
