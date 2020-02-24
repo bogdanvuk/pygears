@@ -64,11 +64,6 @@ class AssertValue:
 class BaseBlock:
     # TODO : newer versions of Python will not need the string
     stmts: List[Union[AssignValue, 'HDLBlock']]
-    dflts: Dict[Union[str, pydl.Name], AssignValue]
-
-    @property
-    def dflt_stmts(self):
-        return list(self.dflts.values())
 
     def __str__(self):
         body = ''

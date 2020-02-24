@@ -26,7 +26,7 @@ class RewriteExitCond(HDLVisitor):
                     pydl.opc.Or)
 
                 cur_block.stmts.append(
-                    nodes.HDLBlock(in_cond=next_in_cond, stmts=[], dflts={}))
+                    nodes.HDLBlock(in_cond=next_in_cond, stmts=[]))
                 cur_block = cur_block.stmts[-1]
 
                 if exit_cond == res_true:

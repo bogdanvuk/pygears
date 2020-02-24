@@ -243,9 +243,6 @@ class SVCompiler(InstanceVisitor):
     def visit_HDLBlock(self, node):
         self.enter_block(node)
 
-        for stmt in node.dflt_stmts:
-            self._assign_value(stmt.target, stmt.val)
-
         for stmt in node.stmts:
             self.visit(stmt)
 
@@ -255,9 +252,6 @@ class SVCompiler(InstanceVisitor):
 
     def visit_IfElseBlock(self, node):
         self.enter_block(node)
-
-        for stmt in node.dflt_stmts:
-            self._assign_value(stmt.target, stmt.val)
 
         for i, stmt in enumerate(node.stmts):
             if any(c.content for c in self.cur_block_lines.content):

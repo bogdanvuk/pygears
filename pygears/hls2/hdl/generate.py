@@ -8,7 +8,7 @@ from ..pydl.ast.inline import call_gear
 from .nodes import (AssignValue, CombBlock, FuncBlock, FuncReturn, HDLBlock,
                     IfElseBlock, LoopBlock)
 from .passes import (inline, inline_res, remove_dead_code, infer_exit_cond,
-                     infer_registers)
+                     infer_registers, schedule)
 
 # from .simplify import simplify
 
@@ -96,8 +96,7 @@ class HDLGenerator:
     def visit_all_Block(self, node):
         block = HDLBlock(in_cond=self.in_condition(node),
                          opt_in_cond=self.opt_in_condition(node),
-                         stmts=[],
-                         dflts={})
+                         stmts=[])
         return self.traverse_block(node, block)
 
     def visit_Assign(self, node):
@@ -119,7 +118,7 @@ class HDLGenerator:
         return node
 
     def visit_ContainerBlock(self, node):
-        block = IfElseBlock(stmts=[], dflts={})
+        block = IfElseBlock(stmts=[])
 
         for stmt in node.stmts:
             add_to_list(block.stmts, self.visit(stmt))
@@ -128,47 +127,20 @@ class HDLGenerator:
 
 
 class ModuleGenerator(HDLGenerator):
-    def __init__(self, ctx, state_id):
+    def __init__(self, ctx):
         super().__init__(ctx)
-        self.state_id = state_id
-        self.cur_state_id = 0
         self.generators = {}
 
-    @property
-    def cur_state(self):
-        return self.cur_state_id == self.state_id
-
     def generic_traverse(self, node, block):
-        if self.state_id not in node.state:
-            return block
-
-        self.cur_state_id = list(node.state)[0]
-
         for stmt in node.stmts:
-            if self.state_id in stmt.state:
-                if self.cur_state_id not in stmt.state:
-                    self.cur_state_id = list(stmt.state)[0]
-
-                add_to_list(block.stmts, self.visit(stmt))
-            elif self.cur_state:
-                block.stmts.append(
-                    AssignValue(self.ctx.ref('state', ctx='store'),
-                                pydl.ResExpr(list(stmt.state)[0]),
-                                exit_cond=res_false))
-                break
-
-        if self.cur_state_id not in node.state:
-            self.cur_state_id = list(node.state)[0]
+            add_to_list(block.stmts, self.visit(stmt))
 
         return block
 
     def visit_Module(self, node):
-        block = HDLBlock(stmts=[], dflts={})
+        block = HDLBlock(stmts=[])
         self.ctx.scope['rst_cond'] = pydl.Variable('rst_cond', Bool)
-        self.ctx.scope['cycle_done'] = pydl.Variable('cycle_done', Bool)
 
-        block.stmts.append(
-            AssignValue(self.ctx.ref('cycle_done', 'store'), res_true))
         block.stmts.append(
             AssignValue(self.ctx.ref('rst_cond', 'store'), res_false))
 
@@ -178,21 +150,12 @@ class ModuleGenerator(HDLGenerator):
         return block
 
     def opt_in_condition(self, node):
-        if not self.cur_state:
-            return res_true
-
         return self.visit_all_Expr(opt_in_condition(node, self.ctx))
 
     def in_condition(self, node):
-        if not self.cur_state:
-            return res_true
-
         return self.visit_all_Expr(in_condition(node, self.ctx))
 
     def visit_IntfBlock(self, node):
-        if self.state_id not in node.state:
-            return []
-
         block = self.visit_all_Block(node)
 
         for i in node.intfs:
@@ -220,7 +183,6 @@ class ModuleGenerator(HDLGenerator):
 
         stmts = []
         for n in nodes:
-            n.state = node.state
             stmts.append(self.visit(n))
 
         eot_name = self.ctx.find_unique_name('_eot')
@@ -248,7 +210,6 @@ class ModuleGenerator(HDLGenerator):
         if not func_call.pass_eot:
             data = pydl.SubscriptExpr(data, pydl.ResExpr(0))
         eot_load = pydl.Assign(data, self.ctx.ref(eot_name))
-        eot_load.state = node.state
 
         intf_node = pydl.IntfBlock(intfs=[intf.obj],
                                    stmts=[eot_load] + node.stmts)
@@ -262,70 +223,33 @@ class ModuleGenerator(HDLGenerator):
             'eot': self.ctx.scope[eot_name]
         }
 
-        intf_node.state = node.state
         intf_block = self.visit_IntfBlock(intf_node)
 
         eot_loop_stmt = LoopBlock(opt_in_cond=eot_test,
-                                  stmts=[intf_block],
-                                  dflts={})
+                                  stmts=[intf_block])
 
         stmts.append(eot_loop_stmt)
 
         return stmts, eot_loop_stmt
 
     def visit_Loop(self, node):
-        if self.state_id not in node.state:
-            return []
-
-        if not (node.in_blocked or node.out_blocked):
-            breakpoint()
-            return
-
         if isinstance(node.test, pydl.GenLive):
             stmts, block = self.create_async_loop(node)
         else:
             block = LoopBlock(in_cond=self.in_condition(node),
                               opt_in_cond=self.opt_in_condition(node),
-                              stmts=[],
-                              dflts={})
+                              stmts=[])
 
             block = self.traverse_block(node, block)
             stmts = [block]
 
         block.exit_cond = pydl.UnaryOpExpr(block.opt_in_cond, pydl.opc.Not)
 
-        if 'state' in self.ctx.scope:
-            block.stmts.insert(
-                0,
-                AssignValue(target=self.ctx.ref('cycle_done', ctx='store'),
-                            val=self.ctx.ref('state', ctx='en')))
-        else:
-            block.stmts.insert(
-                0,
-                AssignValue(target=self.ctx.ref('cycle_done', ctx='store'),
-                            val=res_false))
-
-        block.stmts.append(
-            AssignValue(target=self.ctx.ref('cycle_done', ctx='store'),
-                        val=res_true))
-
-        if 'state' in self.ctx.scope:
-            if (self.cur_state and self.state_id != list(node.state)[0]
-                    and node.out_blocking):
-                block.stmts.append(
-                    AssignValue(self.ctx.ref('state', ctx='store'),
-                                pydl.ResExpr(list(node.state)[0]),
-                                exit_cond=res_false))
-
         return stmts
 
     def visit_Yield(self, node):
-        if not self.cur_state:
-            return []
-
         block = HDLBlock(exit_cond=pydl.Component(node.ports[0], 'ready'),
-                         stmts=[],
-                         dflts={})
+                         stmts=[])
 
         exprs = node.expr.val
 
@@ -345,7 +269,6 @@ class ModuleGenerator(HDLGenerator):
 class FunctionGenerator(HDLGenerator):
     def visit_Function(self, node, **kwds):
         block = FuncBlock(stmts=[],
-                          dflts={},
                           args=node.args,
                           name=node.name,
                           ret_dtype=self.ctx.ret_dtype)
@@ -359,29 +282,9 @@ class FunctionGenerator(HDLGenerator):
 
 
 def generate(pydl_ast, ctx: GearContext):
-    state_num = len(pydl_ast.state)
-
-    if state_num > 1:
-        ctx.scope['state'] = pydl.Variable(
-            'state',
-            val=pydl.ResExpr(Uint[bitw(state_num - 1)](0)),
-            reg=True,
-        )
-
-    stateblock = IfElseBlock(stmts=[], dflts={})
-    for i in range(state_num):
-        v = ModuleGenerator(ctx, i)
-        res = v.visit(pydl_ast)
-        stateblock.stmts.append(res)
-
-        if state_num > 1:
-            res.opt_in_cond = pydl.BinOpExpr(
-                (ctx.ref('state'), pydl.ResExpr(i)), pydl.opc.Eq)
-
-    if state_num > 1:
-        modblock = CombBlock(stmts=[stateblock], dflts={})
-    else:
-        modblock = CombBlock(stmts=stateblock.stmts[0].stmts, dflts={})
+    v = ModuleGenerator(ctx)
+    modblock = v.visit(pydl_ast)
+    modblock = schedule(modblock, ctx)
 
     print('*** Initial ***')
     print(modblock)
