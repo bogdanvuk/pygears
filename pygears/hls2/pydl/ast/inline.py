@@ -23,7 +23,6 @@ def call_gear(func, args, kwds, ctx: Context):
     if not all(isinstance(node, nodes.ResExpr) for node in kwds.values()):
         raise Exception("Not supproted")
 
-
     bind('gear/exec_context', 'compile')
     outputs = func(*local_in, **{k: v.val for k, v in kwds.items()})
     bind('gear/exec_context', 'hls')
@@ -63,13 +62,13 @@ def call_gear(func, args, kwds, ctx: Context):
         p.consumer.connect(HDLConsumer())
         out_ports.append(pydl_intf)
 
+    stmts = []
     for a, intf in zip(args, in_ports):
         if a == intf:
             continue
 
-        ctx.pydl_parent_block.stmts.append(
-            nodes.Assign(a, nodes.Name(intf.name, intf, ctx='store')))
+        stmts.append(nodes.Assign(a, nodes.Name(intf.name, intf, ctx='store')))
 
     ctx.submodules.append(Submodule(gear_inst, in_ports, out_ports))
 
-    return ctx.ref(out_ports[0].name)
+    return ctx.ref(out_ports[0].name), stmts

@@ -1,3 +1,18 @@
+import inspect
+
+from .. import pydl
+from pygears.typing import Bool
+from .. import nodes
+
+def add_to_list(orig_list, extension):
+    if extension:
+        orig_list.extend(
+            extension if isinstance(extension, list) else [extension])
+
+
+res_true = pydl.ResExpr(Bool(True))
+res_false = pydl.ResExpr(Bool(False))
+
 class Scope:
     def __init__(self, parent=None):
         self.parent = None
@@ -82,3 +97,18 @@ class Scope:
             scope = scope.parent
 
 
+class HDLVisitor:
+    def __init__(self, ctx):
+        self.ctx = ctx
+
+    def visit(self, node):
+        for base_class in inspect.getmro(node.__class__):
+            if hasattr(self, base_class.__name__):
+                return getattr(self, base_class.__name__)(node)
+        else:
+            return self.generic_visit(node)
+
+    def generic_visit(self, node):
+        return node
+
+__all__ = ['Scope', 'HDLVisitor', 'res_true', 'res_false', 'add_to_list', 'nodes']

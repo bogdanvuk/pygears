@@ -8,6 +8,22 @@ from pygears.typing import Bool
 from ..pydl import nodes as pydl
 
 
+def extract_base_targets(target):
+    if isinstance(target, pydl.SubscriptExpr):
+        yield from extract_base_targets(target.val)
+    elif isinstance(target, pydl.ConcatExpr):
+        for t in target.operands:
+            yield from extract_base_targets(t)
+    elif isinstance(target, pydl.Name) and isinstance(target.obj,
+                                                      pydl.Variable):
+        yield target
+
+
+def extract_partial_targets(target):
+    if isinstance(target, pydl.SubscriptExpr):
+        yield from extract_base_targets(target.val)
+
+
 @dataclass
 class AssignValue:
     target: Union[str, pydl.Name]
@@ -19,12 +35,16 @@ class AssignValue:
 
     #TODO: generalize this for arbitrarility deep subscripts and attrexpr-s
     def __post_init__(self):
-        target = self.target
-        if isinstance(target, pydl.SubscriptExpr):
-            target = self.target.val
+        for t in extract_base_targets(self.target):
+            t.ctx = 'store'
 
-        if isinstance(target.obj, pydl.Variable):
-            target.ctx = 'store'
+    @property
+    def base_targets(self):
+        return list(extract_base_targets(self.target))
+
+    @property
+    def partial_targets(self):
+        return list(extract_partial_targets(self.target))
 
     def __str__(self):
 

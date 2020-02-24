@@ -1,7 +1,7 @@
 import ast as opc
 import typing
 import textwrap
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from functools import reduce
 from pygears.core.port import InPort, OutPort
@@ -368,21 +368,6 @@ class SignalStmt(Expr):
         return self.variable.name
 
 
-# Statements
-
-
-@dataclass
-class FunctionCall(Expr):
-    name: str
-    operands: typing.Tuple[OpType]
-    keywords: typing.Dict[str, typing.Any] = None
-    ret_dtype: PgType = None
-
-    @property
-    def dtype(self):
-        return self.ret_dtype
-
-
 # Expressions
 
 
@@ -693,39 +678,66 @@ class ConditionalExpr(Expr):
 
 
 @dataclass
+class FunctionCall(Expr):
+    name: str
+    operands: typing.Tuple[OpType]
+    keywords: typing.Dict[str, typing.Any] = None
+    ret_dtype: PgType = None
+
+    @property
+    def dtype(self):
+        return self.ret_dtype
+
+@dataclass
+class GenCallExpr(Expr):
+    func: typing.Any
+    args: typing.Tuple[OpType]
+    kwds: typing.Dict[str, typing.Any]
+    params: typing.Dict
+    pass_eot = True
+
+    @property
+    def dtype(self):
+        ret = self.params['return']
+        if isinstance(ret, tuple):
+            ret = Tuple[ret]
+
+        if not self.pass_eot:
+            return ret.data
+
+        return ret
+
+
+@dataclass
+class Generator:
+    name: str
+    func: GenCallExpr
+
+    @property
+    def dtype(self):
+        return self.func.dtype
+
+
+@dataclass
+class GenLive(Expr):
+    val: Name
+
+    @property
+    def dtype(self):
+        return Bool
+
+
+@dataclass
+class GenNext(Expr):
+    val: Name
+
+    @property
+    def dtype(self):
+        return self.val.dtype
+
+
+@dataclass
 class BreakExpr(Expr):
-    pass
-
-
-# Conditions
-
-
-def is_container(block):
-    return isinstance(block, (ContainerBlock, CombBlock))
-
-
-def is_intftype(block):
-    return isinstance(block, IntfBlock)
-
-
-@dataclass
-class SubConditions:
-    expr: OpType = None
-    operator: str = None
-
-
-@dataclass
-class CycleSubCond(SubConditions):
-    pass
-
-
-@dataclass
-class ExitSubCond(SubConditions):
-    pass
-
-
-@dataclass
-class BothSubCond(SubConditions):
     pass
 
 
@@ -758,7 +770,6 @@ class IfBlock(Block):
 
 @dataclass
 class ElseBlock(Block):
-
     @property
     def test(self):
         return ResExpr(Bool(True))
@@ -828,6 +839,7 @@ class Assign(Statement):
 @dataclass
 class Assert(Statement):
     msg: str
+
 
 @dataclass
 class Await(Statement):
@@ -914,7 +926,7 @@ class PydlPrinter:
                 self.visit(elem)
             self.exit_block()
             self.write_line(')')
-        else:
+
             self.write_line(f'{self.field_hdr}{node}')
 
         return self.msg

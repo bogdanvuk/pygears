@@ -118,26 +118,29 @@ class SVCompiler(InstanceVisitor):
             self.defaults[target] = stmt
             self.write(stmt)
 
-    def _assign_value(self, stmt):
-        if isinstance(stmt.target, pydl.SubscriptExpr):
-            target = stmt.target.val
-        elif isinstance(stmt.target, pydl.Name):
-            target = stmt.target
+    def _assign_value(self, target, val):
+        if isinstance(target, pydl.SubscriptExpr):
+            base_target = target.val
+        elif isinstance(target, pydl.Name):
+            base_target = target
+        elif isinstance(target, pydl.ConcatExpr):
+            for i, t in enumerate(target.operands):
+                self._assign_value(t, pydl.SubscriptExpr(val, pydl.ResExpr(i)))
+
+            return
         else:
             raise Exception
 
-        if not self.selected(target):
+        if not self.selected(base_target):
             return
 
-        val = stmt.val
-
-        if isinstance(target.obj, pydl.Variable) and target.obj.reg:
-            name = svexpr(stmt.target, self.aux_funcs)
+        if isinstance(base_target.obj, pydl.Variable) and base_target.obj.reg:
+            name = svexpr(target, self.aux_funcs)
 
             svstmt = f"{name} = {svexpr(val, self.aux_funcs)}"
             self.handle_defaults(name, svstmt)
 
-            self.write(f"{target.name}_en = 1")
+            self.write(f"{base_target.name}_en = 1")
 
             return
 
@@ -153,7 +156,7 @@ class SVCompiler(InstanceVisitor):
 
             return
 
-        target = svexpr(stmt.target, self.aux_funcs)
+        target = svexpr(target, self.aux_funcs)
         svstmt = f"{target} = {svexpr(val, self.aux_funcs)}"
 
         self.handle_defaults(target, svstmt)
@@ -163,9 +166,7 @@ class SVCompiler(InstanceVisitor):
         self.write(f'else $error("{node.val.msg}");')
 
     def visit_AssignValue(self, node):
-        assign_stmt = self._assign_value(node)
-        if assign_stmt is not None:
-            self.write(f'{assign_stmt};')
+        self._assign_value(node.target, node.val)
 
     def visit_StateBlock(self, node):
         self.write('case (state)')
@@ -236,15 +237,6 @@ class SVCompiler(InstanceVisitor):
         self.footer(f'endfunction')
         self.footer('')
 
-    def visit_CombSeparateStmts(self, node):
-        if node.stmts:
-            self.write(f'// Comb statements for: {self.visit_var}')
-            for stmt in node.stmts:
-                assign_stmt = self._assign_value(stmt)
-                if assign_stmt is not None:
-                    self.write(f'assign {assign_stmt};')
-            self.write('')
-
     def visit_LoopBlock(self, node):
         self.visit_HDLBlock(node)
 
@@ -252,9 +244,7 @@ class SVCompiler(InstanceVisitor):
         self.enter_block(node)
 
         for stmt in node.dflt_stmts:
-            assign_stmt = self._assign_value(stmt)
-            if assign_stmt is not None:
-                self.write(f'{assign_stmt};')
+            self._assign_value(stmt.target, stmt.val)
 
         for stmt in node.stmts:
             self.visit(stmt)
@@ -267,9 +257,7 @@ class SVCompiler(InstanceVisitor):
         self.enter_block(node)
 
         for stmt in node.dflt_stmts:
-            assign_stmt = self._assign_value(stmt)
-            if assign_stmt is not None:
-                self.write(f'{assign_stmt};')
+            self._assign_value(stmt.target, stmt.val)
 
         for i, stmt in enumerate(node.stmts):
             if any(c.content for c in self.cur_block_lines.content):

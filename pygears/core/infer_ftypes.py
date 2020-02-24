@@ -61,7 +61,7 @@ def resolve_param(val, match, namespace):
     return False, None
 
 
-def infer_ftypes(params, args, namespace={}, allow_incomplete=False):
+def infer_ftypes(params, args, namespace={}):
 
     # Add all registered objects (types and transformations) to the namespace
     namespace = dict(namespace)

@@ -142,21 +142,21 @@ def resolve_args(args, argnames, annotations, varargs):
     if varargs:
         expand_varargs(args_dict, annotations, varargs, args[len(args_dict):])
 
-    outnames = resolve_return_annotation(annotations)
+    resolve_return_annotation(annotations)
 
     for a in args_dict:
         if a not in annotations:
             annotations[a] = Any
 
-    return args_dict, annotations, outnames
+    return args_dict, annotations
 
 
 def gear_signature(func, args, kwds, meta_kwds):
     paramspec = inspect.getfullargspec(func)
 
-    args, annotations, outnames = resolve_args(args, paramspec.args,
-                                               paramspec.annotations,
-                                               paramspec.varargs)
+    args, annotations  = resolve_args(args, paramspec.args,
+                                      paramspec.annotations,
+                                      paramspec.varargs)
 
     kwddefaults = paramspec.kwonlydefaults or {}
 
@@ -175,8 +175,7 @@ def infer_params(args, params, context):
 
     return infer_ftypes(params,
                         arg_types,
-                        namespace=context,
-                        allow_incomplete=False)
+                        namespace=context)
 
 def infer_outnames(annotations, meta_kwds):
     outnames = None

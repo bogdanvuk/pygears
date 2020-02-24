@@ -54,57 +54,88 @@ class Scheduler(PydlVisitor):
     def parent(self):
         return self.scope[-1]
 
-    def visit_all_Block(self, node):
-        if self.scope:
-            node.state = {self.parent.cur_state}
-            node.blocked = self.parent.blocked
-            node.cur_state = self.parent.cur_state
-        else:
-            node.blocked = False
-            node.cur_state = 0
-            node.state = {node.cur_state}
-
-        node.blocking = False
-
+    def traverse_block(self, node):
         self.enter_block(node)
 
         for i, stmt in enumerate(node.stmts):
             self.visit(stmt)
 
-            if stmt.blocking:
+            if stmt.out_blocking:
                 node.cur_state = stmt.cur_state
                 node.state.update(stmt.state)
-                node.blocked = True
+                node.out_blocked = True
 
-        if node.blocked:
-            node.blocking = True
+            if stmt.in_blocking:
+                node.in_blocked = True
+
+        if node.out_blocked:
+            node.out_blocking = True
+
+        if node.in_blocked:
+            node.in_blocking = True
 
         self.exit_block()
 
+    def visit_all_Block(self, node):
+        node.state = {self.parent.cur_state}
+        node.cur_state = self.parent.cur_state
+
+        node.out_blocked = self.parent.out_blocked
+        node.out_blocking = False
+        node.in_blocking = False
+        node.in_blocked = False
+
+        self.traverse_block(node)
+
+    def visit_IntfBlock(self, node):
+        node.state = {self.parent.cur_state}
+        node.cur_state = self.parent.cur_state
+
+        node.out_blocked = self.parent.out_blocked
+        node.out_blocking = False
+        node.in_blocking = True
+        node.in_blocked = False
+
+        self.traverse_block(node)
+
     def visit_ContainerBlock(self, node):
         node.state = {self.parent.cur_state}
-        node.blocked = self.parent.blocked
-        node.blocking = False
         node.cur_state = self.parent.cur_state
+
+        node.out_blocked = self.parent.out_blocked
+        node.out_blocking = False
+        node.in_blocking = False
+        node.in_blocked = False
 
         self.enter_block(node)
 
         for stmt in node.stmts:
             self.visit(stmt)
 
-            if stmt.blocking:
+            if stmt.out_blocking:
                 node.state.update(stmt.state)
-                node.blocking = True
+                node.out_blocking = True
+
+            if stmt.in_blocking:
+                node.in_blocking = True
 
         self.exit_block()
 
     def visit_Module(self, node):
-        node.state = set()
-        self.visit_all_Block(node)
+        node.cur_state = 0
+        node.state = {node.cur_state}
+
+        node.out_blocked = False
+        node.out_blocking = False
+        node.in_blocked = False
+        node.out_blocked = False
+
+        self.traverse_block(node)
 
     def visit_Await(self, node):
-        node.blocking = True
-        if self.parent.blocked:
+        node.out_blocking = True
+        node.in_blocking = False
+        if self.parent.out_blocked:
             node.cur_state = self.new_state()
         else:
             node.cur_state = self.parent.cur_state
@@ -112,8 +143,9 @@ class Scheduler(PydlVisitor):
         node.state = {node.cur_state}
 
     def visit_Yield(self, node):
-        node.blocking = True
-        if self.parent.blocked:
+        node.out_blocking = True
+        node.in_blocking = False
+        if self.parent.out_blocked:
             node.cur_state = self.new_state()
         else:
             node.cur_state = self.parent.cur_state
@@ -121,7 +153,8 @@ class Scheduler(PydlVisitor):
         node.state = {node.cur_state}
 
     def visit_all_Statement(self, node):
-        node.blocking = False
+        node.out_blocking = False
+        node.in_blocking = False
         node.cur_state = self.parent.cur_state
         node.state = self.parent.state.copy()
 

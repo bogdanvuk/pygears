@@ -4,7 +4,7 @@ from pygears.typing import cast, Integer, Bool, typeof, Queue
 from pygears.lib.rng import qrange
 from pygears.lib.union import select
 from .utils import add_to_list
-from .stmt import assign_targets
+from .stmt import assign_targets, infer_targets
 from .async_stmts import AsyncForContext
 from .inline import form_gear_args, call_gear
 
@@ -49,8 +49,7 @@ def _(node: ast.If, ctx: Context):
 
 @node_visitor(ast.While)
 def _(node: ast.While, ctx: Context):
-    pydl_node = nodes.Loop(test=visit_ast(node.test, ctx),
-                           stmts=[])
+    pydl_node = nodes.Loop(test=visit_ast(node.test, ctx), stmts=[])
     return visit_block(pydl_node, node.body, ctx)
 
 
@@ -65,14 +64,17 @@ def is_intf_list(node):
 
 
 def intf_loop(node, intfs, targets, ctx: Context, enumerated):
-    rng_intf = call_gear(qrange, [nodes.ResExpr(len(intfs))], {}, ctx)
+    rng_intf, stmts = call_gear(qrange, [nodes.ResExpr(len(intfs))], {}, ctx)
+    ctx.pydl_parent_block.stmts.extend(stmts)
+
     with AsyncForContext(rng_intf, ctx) as stmts:
         rng_iter = nodes.SubscriptExpr(nodes.Component(rng_intf.obj, 'data'),
                                        nodes.ResExpr(0))
-        select_intf = call_gear(select,
-                                args=[rng_iter] + intfs,
-                                kwds={},
-                                ctx=ctx)
+        select_intf, call_stmts = call_gear(select,
+                                            args=[rng_iter] + intfs,
+                                            kwds={},
+                                            ctx=ctx)
+        ctx.pydl_parent_block.stmts.extend(call_stmts)
 
         if enumerated:
             intf_var_name = targets.operands[1].name
@@ -98,23 +100,39 @@ def intf_loop(node, intfs, targets, ctx: Context, enumerated):
 
 @node_visitor(ast.For)
 def _(node: ast.For, ctx: Context):
-    out_intf_ref = visit_ast(node.iter, ctx)
     targets = visit_ast(node.target, ctx)
+
+    out_intf_ref = visit_ast(node.iter, ctx)
 
     if is_intf_list(out_intf_ref):
         return intf_loop(node, out_intf_ref.val, targets, ctx,
                          getattr(out_intf_ref, 'enumerated', False))
 
-    with AsyncForContext(out_intf_ref, ctx) as stmts:
-        data = nodes.Component(out_intf_ref.obj, 'data')
-        if not getattr(out_intf_ref, 'eot_to_data', False):
-            data = nodes.SubscriptExpr(data, nodes.ResExpr(0))
+    gen_name = ctx.find_unique_name('_gen')
+    ctx.scope[gen_name] = nodes.Generator(gen_name, out_intf_ref)
 
-        add_to_list(ctx.pydl_parent_block.stmts,
-                    assign_targets(ctx, targets, data, nodes.Variable))
+    infer_targets(ctx, targets, out_intf_ref.dtype, nodes.Variable)
 
-        for stmt in node.body:
-            res_stmt = visit_ast(stmt, ctx)
-            add_to_list(ctx.pydl_parent_block.stmts, res_stmt)
+    block = nodes.Loop(
+        test=nodes.GenLive(ctx.ref(gen_name)),
+        stmts=[nodes.Assign(nodes.GenNext(ctx.ref(gen_name)), targets)])
 
-        return stmts
+    visit_block(block, node.body, ctx)
+
+    return block
+
+    # breakpoint()
+
+    # with AsyncForContext(out_intf_ref, ctx) as stmts:
+    #     data = nodes.Component(out_intf_ref.obj, 'data')
+    #     if not getattr(out_intf_ref, 'eot_to_data', False):
+    #         data = nodes.SubscriptExpr(data, nodes.ResExpr(0))
+
+    #     add_to_list(ctx.pydl_parent_block.stmts,
+    #                 assign_targets(ctx, targets, data, nodes.Variable))
+
+    #     for stmt in node.body:
+    #         res_stmt = visit_ast(stmt, ctx)
+    #         add_to_list(ctx.pydl_parent_block.stmts, res_stmt)
+
+    #     return stmts
