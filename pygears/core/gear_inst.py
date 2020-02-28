@@ -207,9 +207,8 @@ class intf_name_tracer:
         cm = self.code_map.pop()
 
         if exception_type is None:
-            for name, val in cm.func_locals.items():
-                if isinstance(val, Intf):
-                    val.var_name = name
+            for name, val in filter(lambda x: isinstance(x[1], Intf), cm.func_locals.items()):
+                val.var_name = name
 
 
 def resolve_func(gear_inst):

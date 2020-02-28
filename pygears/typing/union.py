@@ -236,7 +236,12 @@ class Maybe(Union):
         elif val is not None and ctrl is None:
             return super().__new__(cls, val=val, ctrl=1)
         else:
-            return super().__new__(cls, val, ctrl)
+            return super().__new__(cls, (val, ctrl))
+
+    @classmethod
+    def data(cls):
+        return cls.types[1]
 
 
+# TODO: typeof does not work correctly
 Maybe = Maybe[Unit, 'data']

@@ -166,6 +166,12 @@ class SVGenTypeVisitor(TypingVisitorBase):
 
 
 def svgen_typedef(dtype, name, depth=4):
+    # TODO: if a variable is called "wr", of the type that has a composite
+    # field "data", than struct for that field will be called "wr_data_t". If
+    # there is a variable "wr_data" in same module, it will also have the type
+    # called "wr_data_t". This can be in conflict when the type definitions are
+    # added for verilator debugging. Maybe think of a different scheme to name
+    # subtypes
     if isinstance(dtype, str):
         return f'typedef {dtype} {name}_t;'
     elif int(dtype) == 0:

@@ -145,7 +145,7 @@ class Intf:
         return self._out_queues
 
     def put_nb(self, val):
-        if any(get_sim_map_gear(c.gear).done for c in self.end_consumers):
+        if any(c.consumer._done for c in self.end_consumers):
             raise GearDone
 
         put_event = self.events['put']

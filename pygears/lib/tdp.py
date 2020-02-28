@@ -1,11 +1,13 @@
-from pygears import gear, module, find
+from pygears import gear, module, find, alternative
 from pygears.sim import clk
-from pygears.typing import Tuple, Uint, Union
+from pygears.typing import Tuple, Uint, Union, Maybe
 from .dreg import dreg
 
-TWrReq = Tuple[{'addr': Uint['w_addr'], 'data': 'w_data'}]
+TReq = Tuple[{'addr': Uint['w_addr'], 'data': Maybe['data']}]
 
-TReq = Union[TWrReq, 'data']
+TWrReq = Tuple[{'addr': Uint['w_addr'], 'data': 'data'}]
+
+TUniReq = Union[Uint['w_addr'], TWrReq]
 
 
 def tdp_port0_setup(module):
@@ -13,15 +15,14 @@ def tdp_port0_setup(module):
 
 
 @gear(sim_setup=tdp_port0_setup, svgen={'node_cls': None})
-async def tdp_port0(req, *, depth) -> b'req.types[0]["data"]':
+async def tdp_port0(req, *, depth) -> b'req["data"].data':
     ram = module().ram
 
-    async with req as (data, ctrl):
-        r = req.dtype.types[ctrl].decode(data)
+    async with req as (addr, (data, ctrl)):
         if ctrl:
-            yield ram[r]
+            ram[addr] = data
         else:
-            ram[r["addr"]] = r["data"]
+            yield ram[addr]
 
 
 def tdp_port1_setup(module):
@@ -29,15 +30,14 @@ def tdp_port1_setup(module):
 
 
 @gear(sim_setup=tdp_port1_setup, svgen={'node_cls': None})
-async def tdp_port1(req, *, depth) -> b'req.types[0]["data"]':
+async def tdp_port1(req, *, depth) -> b'req["data"].data':
     ram = module().port0.ram
 
-    async with req as (data, ctrl):
-        r = req.dtype.types[ctrl].decode(data)
+    async with req as (addr, (data, ctrl)):
         if ctrl:
-            yield ram[r]
+            ram[addr] = data
         else:
-            ram[r.addr] = r.data
+            yield ram[addr]
 
 
 @gear
@@ -46,10 +46,18 @@ def tdp(
         req1: TReq,
         *,
         depth=b'2**w_addr',
-        w_data=b'w_data',
-        w_addr=b'w_addr') -> b'(req0.types[0]["data"], req1.types[0]["data"])':
+        w_data=b'data.width',
+        w_addr=b'w_addr') -> b'(req0["data"].data, req1["data"].data)':
 
     dout0 = req0 | tdp_port0(depth=depth)
     dout1 = req1 | tdp_port1(depth=depth)
 
     return dout0, dout1
+
+
+@alternative(tdp)
+@gear
+def tdp_union(req0: TUniReq, req1: TUniReq, *, depth=b'2**w_addr'):
+    wr_req_t = req0.dtype.types[1]
+    req_t = TReq[wr_req_t['addr'].width, wr_req_t['data']]
+    return tdp(req0 >> req_t, req1 >> req_t)
