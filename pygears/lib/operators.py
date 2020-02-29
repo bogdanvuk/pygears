@@ -5,7 +5,7 @@ from pygears.typing import Any, Bool, Integer, Integral, Number, Tuple
 from pygears.typing import div as typing_div, is_type, Uint, typeof
 from pygears.typing import code as type_code
 from pygears.util.hof import oper_tree
-from pygears.hls import datagear
+from pygears import datagear
 from pygears.rtl.gear import RTLGearHierVisitor
 from pygears.rtl import flow_visitor
 from pygears.hdl.sv import SVGenPlugin

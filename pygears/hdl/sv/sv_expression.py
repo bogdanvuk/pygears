@@ -1,13 +1,29 @@
-from pygears.hls.hls_expressions import (EXTENDABLE_OPERATORS, BinOpExpr,
-                                         ConcatExpr)
-from pygears.hls.utils import VisitError
-from pygears.typing import Array, Integer, Queue, code, typeof
+from pygears.hls import ir
+from pygears.typing import Array, Integer, Queue, code, typeof, Integral, Tuple, Union
+from .sv_keywords import sv_keywords
+
+SLICE_FUNC_TEMPLATE = """function [{2}:0] slice_{0}_{1}(input [{0}:0] val);
+    slice_{0}_{1} = val[{0}:{1}];
+endfunction
+"""
+
+def get_slice_func(aux_funcs, start, stop):
+    name = f'slice_{stop}_{start}'
+    if name not in aux_funcs:
+        aux_funcs[name] = SLICE_FUNC_TEMPLATE.format(stop, start, stop - start)
+
+    return name
 
 
 class SVExpressionVisitor:
-    def __init__(self):
-        self.merge_with = '.'
+    def __init__(self, aux_funcs=None):
+        self.separator = '.'
         self.expr = svexpr
+
+        if aux_funcs is None:
+            aux_funcs = {}
+
+        self.aux_funcs = aux_funcs
 
     def visit(self, node):
         method = 'visit_' + node.__class__.__name__
@@ -19,37 +35,76 @@ class SVExpressionVisitor:
             return f'{node.op.name}_{node.context}'
 
     def visit_ResExpr(self, node):
+        if isinstance(node.val, tuple):
+            return (
+                '{' +
+                ', '.join(f"{type(op).width}'d{self.visit(ir.ResExpr(op))}"
+                          for op in reversed(node.val)) + '}')
+
+        if getattr(node.val, 'unknown', False):
+            return f"{node.dtype.width}'bx"
+
         return int(code(node.val))
 
     def visit_FunctionCall(self, node):
         return (f'{node.name}(' +
                 ', '.join(self.visit(op) for op in node.operands) + ')')
 
-    def visit_IntfValidExpr(self, node):
-        if getattr(node.port, 'has_subop', None):
-            if isinstance(node.intf, ConcatExpr):
-                return ' && '.join([
-                    f'{op.name}{self.merge_with}valid'
-                    for op in node.port.intf.operands
-                ])
-            raise VisitError('Unsupported expression type in IntfDef')
+    def visit_Interface(self, node):
+        return node.name
 
-        return f'{node.name}{self.merge_with}valid'
+    def visit_Variable(self, node):
+        breakpoint()
+        return f'{node.name}_v'
+
+    def visit_Register(self, node):
+        return f'{node.name}_v'
+
+    def visit_Name(self, node):
+        name = node.name
+        if name in sv_keywords:
+            name = f'pg_{name}'
+
+        if node.ctx == 'store' and isinstance(node.obj, ir.Variable) and node.obj.reg:
+            return f'{name}_next'
+
+        if node.ctx in ['en']:
+            return f'{name}_{node.ctx}'
+
+        return name
+
+    def visit_Component(self, node):
+        if (node.field == 'data'):
+            return f'{node.val.name}_s'
+        else:
+            return self.separator.join([self.visit(node.val), node.field])
+
+    def visit_InterfacePull(self, node):
+        # return f'{node.intf.name}{self.separator}data'
+        return f'{node.intf.name}_s'
+
+    def visit_InterfaceReady(self, node):
+        # return f'{node.intf.name}{self.separator}data'
+        return f'{node.intf.name}.ready'
+
+    def visit_InterfaceAck(self, node):
+        # return f'{node.intf.name}{self.separator}data'
+        return f'{node.intf.name}.valid && {node.intf.name}.ready'
 
     def visit_IntfReadyExpr(self, node):
         res = []
         if not isinstance(node.port, (list, tuple)):
-            return f'{node.name}{self.merge_with}ready'
+            return f'{node.name}{self.separator}ready'
 
         for port in node.port:
-            if port.context:
-                inst = self.expr(
-                    BinOpExpr(
-                        (f'{port.name}{self.merge_with}ready', port.context),
-                        '&&'))
-                res.append(f'({inst})')
-            else:
-                res.append(f'{port.name}{self.merge_with}ready')
+            # if port.context:
+            #     inst = self.expr(
+            #         BinOpExpr(
+            #             (f'{port.name}{self.separator}ready', port.context),
+            #             '&&'))
+            #     res.append(f'({inst})')
+            # else:
+            res.append(f'{port.name}{self.separator}ready')
         res = ' || '.join(res)
 
         if len(node.port) > 1:
@@ -59,13 +114,13 @@ class SVExpressionVisitor:
 
     def visit_AttrExpr(self, node):
         val = [self.visit(node.val)]
-        if node.attr:
-            if typeof(node.val.dtype, Queue):
-                try:
-                    node.val.dtype[node.attr[0]]
-                except KeyError:
-                    val.append('data')
-        return self.merge_with.join(val + node.attr)
+        # if node.attr:
+        #     if typeof(node.val.dtype, Queue):
+        #         try:
+        #             node.val.dtype[node.attr[0]]
+        #         except KeyError:
+        #             val.append('data')
+        return self.separator.join(val + [node.attr])
 
     def visit_CastExpr(self, node):
         res = self.visit(node.operand)
@@ -90,45 +145,64 @@ class SVExpressionVisitor:
 
     def visit_ArrayOpExpr(self, node):
         val = self.visit(node.array)
-        return f'{node.operator}({val})'
+        return f'{ir.OPMAP[node.operator]}({val})'
 
     def visit_UnaryOpExpr(self, node):
         val = self.visit(node.operand)
-        return f'{node.operator}({val})'
+        return f'{ir.OPMAP[node.operator]}({val})'
 
     def visit_BinOpExpr(self, node):
         ops = [self.visit(op) for op in node.operands]
         for i, op in enumerate(node.operands):
-            if isinstance(op, BinOpExpr):
+            if isinstance(op, ir.BinOpExpr):
                 ops[i] = f'({ops[i]})'
 
-        if node.operator in EXTENDABLE_OPERATORS:
+        if node.operator in ir.EXTENDABLE_OPERATORS:
             width = max(int(node.dtype), int(node.operands[0].dtype),
                         int(node.operands[1].dtype))
             svrepr = (f"{width}'({ops[0]})"
-                      f" {node.operator} "
+                      f" {ir.OPMAP[node.operator]} "
                       f"{width}'({ops[1]})")
         else:
-            svrepr = f'{ops[0]} {node.operator} {ops[1]}'
+            svrepr = f'{ops[0]} {ir.OPMAP[node.operator]} {ops[1]}'
         return svrepr
 
     def visit_SubscriptExpr(self, node):
         val = self.visit(node.val)
 
-        if isinstance(node.index, slice):
-            return f'{val}[{int(node.index.stop) - 1}:{node.index.start}]'
+        if isinstance(node.index, ir.ResExpr):
+            index = node.index.val
 
-        if typeof(node.val.dtype, Array) or typeof(node.val.dtype, Integer):
+            index = node.val.dtype.index_norm(index)[0]
+
+            if isinstance(index, slice):
+                stop = int(index.stop) - 1
+                start = int(index.start)
+
+                #TODO: To make this general, we need a function for slicing expressions
+                if isinstance(node.val, (ir.Name, ir.AttrExpr)):
+                    return f'{val}[{stop}:{start}]'
+                else:
+                    fname = get_slice_func(self.aux_funcs, start, stop)
+                    return f'{fname}({val})'
+
+            index = int(index)
+
+            if typeof(node.val.dtype, (Array, Integral)):
+                return f'{val}[{index}]'
+            elif typeof(node.val.dtype, (Tuple, Union, Queue)):
+                return f'{val}.{node.val.dtype.fields[index]}'
+
+        if typeof(node.val.dtype, (Array, Queue, Integer, Tuple, Union)):
             return f'{val}[{self.visit(node.index)}]'
 
-        index = node.val.dtype.index_norm(node.index)[0]
-
-        return f'{val}.{node.val.dtype.fields[index]}'
+        breakpoint()
+        raise Exception('Unsupported slicing')
 
     def visit_ConditionalExpr(self, node):
         cond = self.visit(node.cond)
         ops = [self.visit(op) for op in node.operands]
-        return f'({cond}) ? ({ops[0]}) : ({ops[1]})'
+        return f'(({cond}) ? ({ops[0]}) : ({ops[1]}))'
 
     def _parse_intf(self, node, context=None):
         if context is None:
@@ -136,27 +210,16 @@ class SVExpressionVisitor:
 
         if context:
             if context == 'eot':
-                return f'&{node.name}_s{self.merge_with}{context}'
+                return f'&{node.name}_s{self.separator}{context}'
 
-            return f'{node.name}{self.merge_with}{context}'
+            return f'{node.name}{self.separator}{context}'
 
         return f'{node.name}_s'
-
-    def visit_IntfDef(self, node):
-        if node.has_subop:
-            if isinstance(node.intf, ConcatExpr):
-                return ' && '.join([
-                    self._parse_intf(op, node.context)
-                    for op in node.intf.operands
-                ])
-            raise VisitError('Unsupported expression type in IntfDef')
-        else:
-            return self._parse_intf(node)
 
     def generic_visit(self, node):
         return node
 
 
-def svexpr(expr):
-    sv_visit = SVExpressionVisitor()
+def svexpr(expr, aux_funcs=None):
+    sv_visit = SVExpressionVisitor(aux_funcs)
     return sv_visit.visit(expr)

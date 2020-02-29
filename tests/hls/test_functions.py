@@ -4,7 +4,7 @@ from pygears.typing import Fixpnumber, Integer, Tuple, Ufixp, Uint, code
 from pygears.util.utils import gather
 from pygears.lib.verif import directed, drv
 from pygears.sim.modules import SimVerilated
-from pygears.hls import datagear
+from pygears import datagear
 
 
 def test_multiple_arguments(tmpdir):
@@ -27,6 +27,8 @@ def test_multiple_arguments(tmpdir):
              ref=[2 * i for i in range(10)])
 
     sim(tmpdir)
+
+# test_multiple_arguments('/tools/home/tmp/test_func')
 
 
 def test_multiple_arguments_datagear(tmpdir):

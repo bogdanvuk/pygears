@@ -1,9 +1,7 @@
 import typing
-from pygears import registry
 from ...base_resolver import ResolverBase, ResolverTypeError
-# from .svcompile import compile_gear
-from ..svcompile2 import compile_gear
-from pygears.util.fileio import find_in_dirs, save_file
+from ..svcompile import compile_gear
+from pygears.util.fileio import save_file
 
 
 class HLSResolver(ResolverBase):

@@ -9,7 +9,7 @@ from pygears.lib.verif import directed, drv, verif
 from pygears.sim import sim
 from pygears.typing import Queue, Tuple, Uint, Union, typeof
 from pygears.util.test_utils import skip_ifndef, synth_check
-from pygears.hls import datagear
+from pygears import datagear
 from pygears.typing import Integer, Bool
 
 plain_din = Uint[8]

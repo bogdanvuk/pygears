@@ -19,6 +19,8 @@ def test_for_loop(tmpdir):
     cosim('/test', 'verilator')
     sim(tmpdir)
 
+test_for_loop('/tools/home/tmp/test_for_loop')
+
 def test_while_loop_reg_infer(tmpdir):
     @gear(hdl={'compile': True})
     async def test() -> Uint[32]:
@@ -30,7 +32,6 @@ def test_while_loop_reg_infer(tmpdir):
     directed(f=test(), ref=list(range(10))*3)
     sim('/tools/home/tmp/test', timeout=30)
 
-# test_while_loop_reg_infer('/tools/home/tmp/test')
 
 # @gear(hdl={'compile': True})
 # async def test(din: Uint[32]) -> Queue[Uint[32]]:

@@ -54,6 +54,12 @@ def test_directed(tmpdir, sim_cls, din_delay, dout_delay):
         delays=[delay_rng(dout_delay, dout_delay)])
     sim(resdir=tmpdir)
 
+# from pygears.sim.modules import SimVerilated
+# from pygears import config
+# # config['debug/trace'] = ['*']
+# from pygears.synth import synth
+# test_directed('/tools/home/tmp/test_chop', SimVerilated, 0, 1)
+# # synth('vivado', top='/decoupled', outdir='/tools/home/tmp/test_chop', language='sv')
 
 def test_random(tmpdir, sim_cls):
     skip_ifndef('RANDOM_TEST')

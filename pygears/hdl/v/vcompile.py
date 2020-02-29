@@ -3,7 +3,7 @@ import os
 import jinja2
 
 from pygears.conf import registry
-from pygears.hls import HDLWriter, InstanceVisitor, parse_gear_body
+from pygears.hls import HDLVisitor
 from pygears.typing import Queue, typeof, code
 
 from ..util import separate_conditions
@@ -21,7 +21,23 @@ end
 """
 
 
-class VCompiler(InstanceVisitor):
+class HDLWriter:
+    def __init__(self):
+        self.indent = 0
+        self.lines = []
+
+    def line(self, line=''):
+        if not line:
+            self.lines.append('')
+        else:
+            self.lines.append(f'{" "*self.indent}{line}')
+
+    def block(self, block):
+        for line in block.split('\n'):
+            self.line(line)
+
+
+class VCompiler(HDLVisitor):
     def __init__(self, visit_var, writer, hdl_locals, **kwds):
         self.writer = writer
         self.visit_var = visit_var
@@ -134,8 +150,8 @@ class VCompiler(InstanceVisitor):
             self.writer.line(
                 vgen_signal(arg.dtype, 'input', arg_name, 'input', False))
 
-            sigdef[arg_name] = vgen_signal(arg.dtype, 'reg', arg_name,
-                                           'input', True).split('\n')[1:]
+            sigdef[arg_name] = vgen_signal(arg.dtype, 'reg', arg_name, 'input',
+                                           True).split('\n')[1:]
 
             for l in sigdef[arg_name]:
                 if l.startswith('reg'):
@@ -143,7 +159,8 @@ class VCompiler(InstanceVisitor):
 
         for name, expr in node.hdl_data.variables.items():
             if name not in node.args:
-                self.writer.block(vgen_signal(expr.dtype, 'reg', f'{name}_v', 'input'))
+                self.writer.block(
+                    vgen_signal(expr.dtype, 'reg', f'{name}_v', 'input'))
 
         self.writer.indent -= 4
 

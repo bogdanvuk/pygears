@@ -40,14 +40,15 @@ def enum_hdl_files(top, outdir, language, rtl_only=False, wrapper=False):
 
             modinst = registry(f'{language}gen/map')[node]
             for f in modinst.files:
-                yield f
+                yield os.path.join(outdir, f)
 
         if hasattr(vinst, 'file_basename'):
-            file_name = vinst.impl_path
+            file_name = getattr(vinst, 'impl_path', None)
             if file_name:
                 yield file_name
-            elif rtl_only is False:
-                yield os.path.join(outdir, vinst.file_name)
+            # elif rtl_only is False:
+            #     for f in vinst.files:
+            #         yield os.path.join(outdir, f)
 
         elif vinst.intf.is_broadcast:
             if language == 'v':

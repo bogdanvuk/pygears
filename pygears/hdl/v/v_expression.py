@@ -1,4 +1,4 @@
-from pygears.hls.hls_expressions import EXTENDABLE_OPERATORS, BinOpExpr
+# from pygears.hls.hls_expressions import EXTENDABLE_OPERATORS, BinOpExpr
 from pygears.hdl.sv.sv_expression import SVExpressionVisitor
 from pygears.typing import Array, Number, typeof, is_type
 

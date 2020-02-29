@@ -1,5 +1,4 @@
-from pygears.hls.utils import add_to_list
-from pygears.typing import Int, Uint, typeof, is_type
+from pygears.typing import Int, Uint, is_type
 from pygears.typing.visitor import TypingVisitorBase
 
 

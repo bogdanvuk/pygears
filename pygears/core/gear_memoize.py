@@ -69,6 +69,9 @@ def copy_gear_full(g: Gear, name=None):
 
             inside_intf.connect(cp_p)
 
+            if isinstance(p.producer.producer, HDLProducer):
+                inside_intf.source(HDLProducer())
+
         outside_intf = Intf(p.dtype)
         outside_intf.source(cp_p)
 

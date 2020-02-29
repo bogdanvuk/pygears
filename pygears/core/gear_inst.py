@@ -359,6 +359,14 @@ def resolve_out_types(out_intfs, out_dtype, gear_inst):
 
     return out_intfs, out_dtype
 
+def terminate_internal_intfs(gear_inst):
+    if not is_standard_func(gear_inst.func):
+        for i in gear_inst.in_port_intfs:
+            i.connect(HDLConsumer())
+
+        for i in gear_inst.out_port_intfs:
+            i.source(HDLProducer())
+
 
 def gear_base_resolver(func,
                        meta_kwds,
@@ -439,13 +447,7 @@ def gear_base_resolver(func,
             out_intfs, out_dtype = resolve_func(gear_inst)
             out_intfs = resolve_gear(gear_inst, out_intfs, out_dtype,
                                      fix_intfs)
-
-            if not is_standard_func(gear_inst.func):
-                for i in gear_inst.in_port_intfs:
-                    i.connect(HDLConsumer())
-
-                for i in gear_inst.out_port_intfs:
-                    i.source(HDLProducer())
+            terminate_internal_intfs(gear_inst)
 
         except (TooManyArguments, GearTypeNotSpecified, GearArgsNotSpecified,
                 TypeError, TypeMatchError, MultiAlternativeError) as e:

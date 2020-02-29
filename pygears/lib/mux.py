@@ -1,5 +1,5 @@
 from pygears import gear, alternative
-from pygears.hls import datagear
+from pygears import datagear
 from pygears.typing import Queue, Union, typeof, Tuple, Uint, Any
 
 
