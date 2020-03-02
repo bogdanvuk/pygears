@@ -1,4 +1,5 @@
 import ast as opc
+import attr
 import typing
 import textwrap
 from dataclasses import dataclass, field
@@ -114,13 +115,17 @@ def or_expr(expr1, expr2):
     return binary_expr(expr1, expr2, opc.Or)
 
 
-def bin_op_reduce(intfs, func, op):
+def bin_op_reduce(intfs, func, op, dflt=None):
+    if not intfs:
+        return dflt
+
     intf1 = func(intfs[0])
 
     if len(intfs) == 1:
         return intf1
     else:
-        return BinOpExpr([intf1, bin_op_reduce(intfs[1:], func, op)], op)
+        return BinOpExpr(
+            [intf1, bin_op_reduce(intfs[1:], func, op, dflt=dflt)], op)
 
 
 def find_sub_dtype(val):
@@ -159,18 +164,17 @@ def get_contextpr(node):
     if isinstance(node, ResExpr):
         return node.val
 
+    # TODO: rethink this? This should be some sort of named constant expression?
     if isinstance(node, Name):
         obj = node.obj
-        if isinstance(obj, Variable) and obj.val is not None:
+        if isinstance(obj, Variable) and obj.val is not None and not obj.reg:
             return obj.val
 
     return None
 
 
+@attr.s(auto_attribs=True, kw_only=True)
 class Expr:
-    in_cond: typing.Any = None
-    exit_cond: typing.Any = None
-
     @property
     def dtype(self):
         pass
@@ -193,6 +197,9 @@ class ResExpr(Expr):
         inst.val = val
 
         return inst
+
+    def __init__(self, val):
+        super().__init__()
 
     def __eq__(self, other):
         if not isinstance(other, ResExpr):
@@ -220,7 +227,7 @@ class ResExpr(Expr):
 
 
 res_true = ResExpr(Bool(True))
-res_false = ResExpr(Bool(True))
+res_false = ResExpr(Bool(False))
 
 
 @dataclass
@@ -229,28 +236,6 @@ class TupleExpr(Expr):
 
     def __getitem__(self, key):
         return self.val[key]
-
-
-@dataclass
-class DefBase(Expr):
-    val: typing.Union[PgType, Expr]
-    name: str
-
-    @property
-    def dtype(self):
-        if self.val is None:
-            return None
-        elif is_type(self.val):
-            return self.val
-        elif is_type(type(self.val)):
-            return type(self.val)
-
-        return self.val.dtype
-
-
-@dataclass
-class RegDef(DefBase):
-    pass
 
 
 @dataclass
@@ -265,6 +250,9 @@ class Variable:
         if self.dtype is None:
             if self.val is not None:
                 self.dtype = self.val.dtype
+
+        if (repr(self.dtype)) == 'Uint[4](0)':
+            breakpoint()
 
 
 @dataclass
@@ -290,10 +278,10 @@ class Interface(Expr):
         return find_sub_dtype(self.intf)
 
 
-@dataclass
+@attr.s(auto_attribs=True)
 class Name(Expr):
     name: str
-    obj: Variable
+    obj: Variable = None
     ctx: str = 'load'
 
     def __repr__(self):
@@ -310,7 +298,7 @@ class Name(Expr):
         return self.obj.dtype
 
 
-@dataclass
+@attr.s(auto_attribs=True)
 class Component(Expr):
     val: Expr
     field: str
@@ -329,13 +317,43 @@ class Component(Expr):
             return self.val.dtype
 
 
-@dataclass
+@attr.s(auto_attribs=True)
+class Await(Expr):
+    expr: Expr = None
+    in_await: Expr = res_true
+    exit_await: Expr = res_true
+
+    @property
+    def dtype(self):
+        if self.expr is None:
+            return None
+
+        return self.expr.dtype
+
+    def __str__(self):
+        if self.in_await != res_true:
+            footer = f'(in-await {self.in_await})'
+
+        if self.exit_await != res_true:
+            footer = f'(exit-await {self.exit_await})'
+
+        if self.expr:
+            return f'{str(self.expr)} {footer}'
+        else:
+            return footer
+
+
+@attr.s(auto_attribs=True)
 class InterfacePull(Expr):
     intf: Interface
 
     @property
-    def in_cond(self):
+    def in_await(self):
         return Component(self.intf, 'valid')
+
+    @in_await.setter
+    def in_await(self, val):
+        pass
 
     @property
     def dtype(self):
@@ -345,13 +363,17 @@ class InterfacePull(Expr):
         return f'{str(self.intf)}.data'
 
 
-@dataclass
+@attr.s(auto_attribs=True)
 class InterfaceReady(Expr):
     intf: Interface
 
     @property
-    def exit_cond(self):
+    def exit_await(self):
         return Component(self.intf, 'ready')
+
+    @exit_await.setter
+    def exit_await(self, val):
+        pass
 
     @property
     def dtype(self):
@@ -413,6 +435,13 @@ class ConcatExpr(Expr):
     def __init__(self, operands: typing.Sequence[Expr]):
         pass
 
+    def __eq__(self, other):
+        if not isinstance(other, BinOpExpr):
+            return False
+
+        return all(ops == opo
+                   for ops, opo in zip(self.operands, other.operands))
+
     def __new__(cls, operands: typing.Sequence[Expr]):
         if all(isinstance(v, ResExpr) for v in operands):
             return ResExpr(tuple(v.val for v in operands))
@@ -433,6 +462,13 @@ class UnaryOpExpr(Expr):
 
     def __repr__(self):
         return f'{OPMAP[self.operator]}({self.operand})'
+
+    def __eq__(self, other):
+        if not isinstance(other, type(self)):
+            return False
+
+        return (self.operand == other.operand
+                and self.operator == other.operator)
 
     def __new__(cls, operand, operator):
         if isinstance(operand, ResExpr):
@@ -469,6 +505,13 @@ class CastExpr(Expr):
     def __str__(self):
         return f"({self.cast_to})'({self.operand})"
 
+    def __eq__(self, other):
+        if not isinstance(other, type(self)):
+            return False
+
+        return (self.operand == other.operand
+                and self.cast_to == other.cast_to)
+
     def __new__(cls, operand, cast_to):
         if isinstance(cast_to, ResExpr):
             cast_to = cast_to.val
@@ -500,6 +543,13 @@ class SliceExpr(Expr):
 
     def __init__(self, start: OpType, stop: OpType, step: OpType):
         pass
+
+    def __eq__(self, other):
+        if not isinstance(other, type(self)):
+            return False
+
+        return (self.start == other.start and self.stop == other.stop
+                and self.step == other.step)
 
     def __new__(cls, start: OpType, stop: OpType, step: OpType):
         if isinstance(start, ResExpr) and isinstance(
@@ -548,6 +598,14 @@ class BinOpExpr(Expr):
         inst.operator = operator
         return inst
 
+    def __eq__(self, other):
+        if not isinstance(other, BinOpExpr):
+            return False
+
+        return ((self.operator == other.operator)
+                and (all(ops == opo
+                         for ops, opo in zip(self.operands, other.operands))))
+
     @property
     def dtype(self):
         if self.operator in BIN_OPERATORS:
@@ -580,6 +638,12 @@ class ArrayOpExpr(Expr):
     def __init__(self, array: Expr, operator):
         pass
 
+    def __eq__(self, other):
+        if not isinstance(other, type(self)):
+            return False
+
+        return self.operator == other.operator and self.array == other.array
+
     def __new__(cls, array: Expr, operator):
         if isinstance(array, ResExpr):
             return ResExpr(
@@ -605,6 +669,12 @@ class SubscriptExpr(Expr):
 
     def __init__(self, val: Expr, index: Expr):
         pass
+
+    def __eq__(self, other):
+        if not isinstance(other, type(self)):
+            return False
+
+        return self.val == other.val and self.index == other.index
 
     def __new__(cls, val: Expr, index: Expr):
         const_index = get_contextpr(index)
@@ -644,6 +714,12 @@ class AttrExpr(Expr):
     def __init__(self, val: Expr, attr: str):
         pass
 
+    def __eq__(self, other):
+        if not isinstance(other, type(self)):
+            return False
+
+        return self.val == other.val and self.attr == other.attr
+
     def __new__(cls, val: Expr, attr: str):
         const_val = get_contextpr(val)
         if const_val is not None:
@@ -666,6 +742,14 @@ class ConditionalExpr(Expr):
 
     def __init__(self, operands: typing.Sequence[OpType], cond: Expr):
         pass
+
+    def __eq__(self, other):
+        if not isinstance(other, type(self)):
+            return False
+
+        return (self.cond == other.cond
+                and self.operands[0] == other.operands[0]
+                and self.operands[1] == other.operands[1])
 
     def __new__(cls, operands: typing.Sequence[OpType], cond: Expr):
         op1, op2 = operands
@@ -738,16 +822,7 @@ class Generator:
         return self.func.dtype
 
 
-@dataclass
-class GenLive(Expr):
-    val: Name
-
-    @property
-    def dtype(self):
-        return Bool
-
-
-@dataclass
+@attr.s(auto_attribs=True)
 class GenDone(Expr):
     val: Name
 
@@ -756,8 +831,17 @@ class GenDone(Expr):
         return Bool
 
 
-@dataclass
+@attr.s(auto_attribs=True)
 class GenNext(Expr):
+    val: Name
+
+    @property
+    def dtype(self):
+        return self.val.dtype
+
+
+@attr.s(auto_attribs=True)
+class GenAck(Expr):
     val: Name
 
     @property
@@ -768,23 +852,63 @@ class GenNext(Expr):
 # Statements
 
 
+# @attr.s(auto_attribs=True)
+@attr.s(auto_attribs=True, kw_only=True)
 class Statement:
-    in_block: bool = False
-    out_block: bool = False
+    in_await: Expr = res_true
+    exit_await: Expr = res_true
+    parent: typing.Type['BaseBlock'] = None
 
 
-@dataclass
-class Assert(Statement):
-    msg: str
-
-
-@dataclass
-class Await(Statement):
+@attr.s(auto_attribs=True)
+class ExprStatement(Statement):
     expr: Expr
 
     @property
-    def dtype(self):
-        return self.expr.dtype
+    def in_await(self):
+        if isinstance(self.expr, Await):
+            return self.expr.in_await
+
+        if isinstance(self.val, ConcatExpr):
+            return bin_op_reduce(
+                list(op.in_await for op in self.val.operands
+                     if isinstance(op, Await)), lambda op: op, opc.And,
+                res_true)
+
+        return res_true
+
+    @in_await.setter
+    def in_await(self, val):
+        pass
+
+    @property
+    def exit_await(self):
+        if isinstance(self.expr, Await):
+            return self.expr.exit_await
+
+        return res_true
+
+    @exit_await.setter
+    def exit_await(self, val):
+        pass
+
+    def __str__(self):
+        return f'{self.expr}\n'
+
+
+@attr.s(auto_attribs=True)
+class Assert(Statement):
+    test: Expr
+    msg: str = None
+
+
+# @attr.s(auto_attribs=True)
+# class Await(Statement):
+#     expr: Expr
+
+#     @property
+#     def dtype(self):
+#         return self.expr.dtype
 
 
 def extract_base_targets(target):
@@ -802,26 +926,45 @@ def extract_partial_targets(target):
         yield from extract_base_targets(target.val)
 
 
-@dataclass
+@attr.s(auto_attribs=True)
 class AssignValue(Statement):
     target: Union[str, Name]
     val: Union[str, int, Expr]
+    in_await = attr.ib()
+    exit_await = attr.ib()
     dtype: Union[TypingMeta, None] = None
-    opt_in_cond: Expr = res_true
 
-    def __post_init__(self):
+    def __attrs_post_init__(self):
         for t in extract_base_targets(self.target):
             t.ctx = 'store'
 
     @property
-    def in_cond(self):
-        in_cond = self.val.in_cond
-        return in_cond if in_cond is not None else res_true
+    def in_await(self):
+        if isinstance(self.val, Await):
+            return self.val.in_await
+
+        if isinstance(self.val, ConcatExpr):
+            return bin_op_reduce(
+                list(op.in_await for op in self.val.operands
+                     if isinstance(op, Await)), lambda op: op, opc.And,
+                res_true)
+
+        return res_true
+
+    @in_await.setter
+    def in_await(self, val):
+        pass
 
     @property
-    def exit_cond(self):
-        exit_cond = self.val.exit_cond
-        return exit_cond if exit_cond is not None else res_true
+    def exit_await(self):
+        if isinstance(self.val, Await):
+            return self.val.exit_await
+
+        return res_true
+
+    @exit_await.setter
+    def exit_await(self, val):
+        pass
 
     @property
     def base_targets(self):
@@ -832,12 +975,7 @@ class AssignValue(Statement):
         return list(extract_partial_targets(self.target))
 
     def __str__(self):
-
-        footer = ''
-        if self.exit_cond != res_true:
-            footer = f' (exit: {str(self.exit_cond)})'
-
-        return f'{str(self.target)} <= {str(self.val)}{footer}\n'
+        return f'{str(self.target)} <= {str(self.val)}\n'
 
 
 @dataclass
@@ -848,10 +986,40 @@ class AssertValue(Statement):
 # Blocks
 
 
-@dataclass
-class BaseBlock:
-    # TODO : newer versions of Python will not need the string
-    stmts: typing.List[typing.Union[AssignValue, 'HDLBlock']]
+@attr.s(auto_attribs=True, kw_only=True)
+class BaseBlock(Statement):
+    stmts: typing.List = None
+
+    def __attrs_post_init__(self):
+        if self.stmts is None:
+            self.stmts = []
+
+        for s in self.stmts:
+            s.parent = self
+
+    def insert(self, index, stmt):
+        stmt.parent = self
+        self.stmts.insert(index, stmt)
+
+    def append(self, stmt):
+        stmt.parent = self
+        self.stmts.append(stmt)
+
+    def add(self, stmts):
+        if isinstance(stmts, (list, tuple)):
+            for s in stmts:
+                self.append(s)
+        else:
+            self.append(stmts)
+
+    def stmt_pred(self, stmt):
+        pred = None
+        for s in self.stmts:
+            if s is stmt:
+                break
+            pred = s
+
+        return pred
 
     def __str__(self):
         body = ''
@@ -861,27 +1029,38 @@ class BaseBlock:
         return f'{{\n{textwrap.indent(body, "    ")}}}\n'
 
 
-@dataclass
+@attr.s(auto_attribs=True)
 class HDLBlock(BaseBlock):
+    test: Expr = None
     in_cond: Expr = res_true
-    opt_in_cond: Expr = res_true
     exit_cond: Expr = res_true
+
+    def __attrs_post_init__(self):
+        super().__attrs_post_init__()
+        if self.test is not None:
+            self.in_cond = self.test
+
+    # @property
+    # def in_cond(self):
+    #     if self.test == res_true:
+    #         return super().in_cond()
+
+    #     return BinOpExpr((super().in_cond(), self.test), opc.And)
+
+    # @property
+    # def exit_cond(self):
+    #     if self.test == res_true:
+    #         return super().exit_cond()
+
+    #     return BinOpExpr((UnaryOpExpr(self.test, opc.Not)))
 
     def __str__(self):
         body = ''
-        conds = {
-            'in': self.in_cond,
-            'opt_in': self.opt_in_cond,
-        }
-        header = []
-        for name, val in conds.items():
-            if val != res_true:
-                header.append(f'{name}: {str(val)}')
 
-        if header:
-            header = '(' + ', '.join(header) + ') '
-        else:
+        if self.in_cond == res_true:
             header = ''
+        else:
+            header = f'(if {str(self.in_cond)})'
 
         footer = ''
         if self.exit_cond != res_true:
@@ -910,35 +1089,33 @@ class IntfBlock(HDLBlock):
                 AssignValue(target=Component(i, 'ready'), val=res_true))
 
 
-@dataclass
+@attr.s(auto_attribs=True)
 class LoopBlock(HDLBlock):
-    test: Expr = None
-
-    def __post_init__(self):
+    def __attrs_post_init__(self):
+        super().__attrs_post_init__()
         if self.test is not None:
             self.exit_cond = UnaryOpExpr(self.test, opc.Not)
-            self.opt_in_cond = self.test
 
 
-@dataclass
+@attr.s(auto_attribs=True)
 class IfElseBlock(HDLBlock):
     def __str__(self):
         return f'IfElse {super().__str__()}'
 
 
-@dataclass
+@attr.s(auto_attribs=True)
 class CombBlock(BaseBlock):
-    funcs: typing.List = field(default_factory=list)
+    funcs: typing.List = attr.Factory(list)
 
 
-@dataclass
+@attr.s(auto_attribs=True)
 class FuncBlock(BaseBlock):
     args: typing.List[Name]
     name: str
     ret_dtype: PgType
     in_cond: Expr = res_true
     opt_in_cond: Expr = res_true
-    funcs: typing.List = field(default_factory=list)
+    funcs: typing.List = attr.Factory(list)
 
     def __str__(self):
         body = ''

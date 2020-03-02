@@ -63,8 +63,14 @@ def parse_yield(node, ctx):
         raise TypeError(
             f"{str(e)}\n    - when casting output value to the output type")
 
-    return ir.HDLBlock(exit_cond=ir.Component(ctx.out_ports[0], 'ready'),
-                       stmts=[ir.AssignValue(ctx.out_ports[0], yield_expr)])
+    return [
+        ir.AssignValue(ctx.out_ports[0], yield_expr),
+        ir.ExprStatement(
+            ir.Await(exit_await=ir.Component(ctx.out_ports[0], 'ready')))
+    ]
+
+    # return ir.Statement(exit_await=ir.Component(ctx.out_ports[0], 'ready'),
+    #                     stmts=[ir.AssignValue(ctx.out_ports[0], yield_expr)])
 
     # return ir.Yield(ret, ports=ctx.out_ports)
 
@@ -77,9 +83,13 @@ def withitem(node: ast.withitem, ctx: Context):
     targets = visit_ast(node.optional_vars, ctx)
 
     if isinstance(intf, ir.ConcatExpr):
-        data = ir.ConcatExpr([ir.InterfacePull(i) for i in intf.operands])
+        data = ir.ConcatExpr([
+            ir.Await(ir.Component(i, 'data'),
+                     in_await=ir.Component(i, 'valid')) for i in intf.operands
+        ])
     else:
-        data = ir.InterfacePull(intf)
+        data = ir.Await(ir.Component(intf, 'data'),
+                        in_await=ir.Component(intf, 'valid'))
 
     ass_targets = assign_targets(ctx, targets, data, ir.Variable)
 
@@ -115,8 +125,7 @@ def asyncwith(node, ctx: Context):
     # ir_node.close()
 
     for i in intfs:
-        stmts.append(
-            ir.AssignValue(target=ir.Component(i, 'ready'), val=ir.res_true))
+        stmts.append(ir.AssignValue(ir.Component(i, 'ready'), ir.res_true))
 
     return stmts
 
@@ -128,10 +137,12 @@ class AsyncForContext:
 
     def __enter__(self):
         eot_name = self.ctx.find_unique_name('_eot')
+        data_name = self.ctx.find_unique_name('_data')
 
         intf_obj = self.intf.obj.val
 
         self.ctx.scope[eot_name] = ir.Variable(eot_name, intf_obj.dtype.eot)
+        self.ctx.scope[data_name] = ir.Variable(data_name, intf_obj.dtype.data)
 
         eot_init = ir.AssignValue(
             self.ctx.ref(eot_name),
@@ -146,21 +157,27 @@ class AsyncForContext:
             self.ctx.ref(eot_name),
             ir.SubscriptExpr(ir.Component(self.intf, 'data'), ir.ResExpr(-1)))
 
-        intf_block = ir.IntfBlock(intfs=[self.intf], stmts=[eot_load])
+        data_load = ir.AssignValue(
+            self.ctx.ref(data_name),
+            ir.Await(ir.Component(self.intf, 'data'),
+                     in_await=ir.Component(self.intf, 'valid')))
 
-        eot_loop_stmt = ir.LoopBlock(test=eot_test, stmts=[intf_block])
+        # intf_block = ir.IntfBlock(intfs=[self.intf], stmts=[eot_load])
+
+        eot_loop_stmt = ir.LoopBlock(test=eot_test,
+                                     stmts=[data_load, eot_load])
 
         self.ctx.pydl_block_closure.append(eot_loop_stmt)
-        self.ctx.pydl_block_closure.append(intf_block)
+        # self.ctx.pydl_block_closure.append(intf_block)
 
-        self.intf_block = intf_block
+        # self.intf_block = intf_block
 
         return [eot_init, eot_loop_stmt]
 
     def __exit__(self, exception_type, exception_value, traceback):
-        self.ctx.pydl_block_closure.pop()
-        self.ctx.pydl_block_closure.pop()
-        self.intf_block.close()
+        loop = self.ctx.pydl_block_closure.pop()
+        loop.stmts.append(
+            ir.AssignValue(ir.Component(self.intf, 'ready'), ir.res_true))
 
 
 @node_visitor(ast.AsyncFor)
@@ -183,4 +200,5 @@ def AsyncFor(node, ctx: Context):
 
 @node_visitor(ast.Await)
 def _(node: ast.Await, ctx: Context):
-    return ir.Await('clk')
+    return ir.ExprStatement(
+        ir.Await(in_await=ir.res_false, exit_await=ir.res_false))

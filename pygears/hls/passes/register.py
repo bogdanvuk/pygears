@@ -20,6 +20,9 @@ class InferRegisters(HDLVisitor):
 
     @property
     def block(self):
+        if not self.block_stack:
+            return None
+
         return self.block_stack[-1]
 
     @property
@@ -60,7 +63,7 @@ class InferRegisters(HDLVisitor):
         self.assigned.upscope()
 
         for name, val in subscope.items.items():
-            if block.opt_in_cond == res_true:
+            if block.in_cond == res_true:
                 self.assigned[name] = val
             else:
                 self.cond_assigned[name] = val
@@ -84,7 +87,6 @@ class InferRegisters(HDLVisitor):
 
     def HDLBlock(self, block: ir.HDLBlock):
         self.find_unspecified(block.in_cond)
-        self.find_unspecified(block.opt_in_cond)
 
         if not isinstance(self.block, ir.IfElseBlock):
             self.assigned.subscope()
@@ -101,7 +103,6 @@ class InferRegisters(HDLVisitor):
 
     def LoopBlock(self, block: ir.LoopBlock):
         self.find_unspecified(block.in_cond)
-        self.find_unspecified(block.opt_in_cond)
 
         self.append_cycle_local_scope()
 
@@ -121,7 +122,7 @@ class InferRegisters(HDLVisitor):
         self.cond_assigned.items.update(local_cond_assigned.items)
 
         for name in local_assigned:
-            if block.opt_in_cond == res_true:
+            if block.in_cond == res_true:
                 self.assigned[name] = local_assigned[name]
             else:
                 self.cond_assigned[name] = local_assigned[name]
@@ -148,7 +149,7 @@ class InferRegisters(HDLVisitor):
             self.assigned.upscope()
             assigned_in_block.update(subs.items.keys())
 
-        full_switch = block.stmts[-1].opt_in_cond == res_true
+        full_switch = block.stmts[-1].in_cond == res_true
 
         for name in assigned_in_block:
             if (all(name in subs.items for subs in branch_assignes)

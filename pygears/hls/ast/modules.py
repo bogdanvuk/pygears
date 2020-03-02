@@ -4,7 +4,7 @@ from . import Context, FuncContext, SyntaxError, ir, node_visitor, visit_ast, vi
 
 @node_visitor(ast.AsyncFunctionDef)
 def parse_async_func(node, ctx: Context):
-    return visit_block(ir.HDLBlock(stmts=[]), node.body, ctx)
+    return visit_block(ir.HDLBlock(), node.body, ctx)
 
 
 # @node_visitor(ast.Lambda)

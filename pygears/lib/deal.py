@@ -6,7 +6,7 @@ from .ccat import ccat
 from .demux import demux
 
 
-#TODO: fix qdeal
+# TODO: fix qdeal
 @gear(hdl={'compile': True})
 async def qdeal(
         din: Queue, *, num, lvl=b'din.lvl-1') -> b'(Queue[din.data, din.lvl-1], ) * num':

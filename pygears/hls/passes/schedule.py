@@ -1,4 +1,6 @@
-from .utils import res_true, HDLVisitor, ir, add_to_list, res_false
+import attr
+from copy import deepcopy
+from .utils import res_true, HDLVisitor, ir, add_to_list, res_false, is_intf_id
 from pygears.typing import bitw, Uint, Bool
 from .loops import infer_cycle_done
 
@@ -34,15 +36,24 @@ class PPrinter(HDLVisitor):
         return self.msg
 
 
+@attr.s(auto_attribs=True)
+class SchedStatus:
+    forward_blocked: bool = False
+    back_blocked: bool = False
+    output_value: set = attr.Factory(set)
+    cur_state: int = 0
+
+    def copy(self):
+        return deepcopy(self)
+
+
 class Scheduler(HDLVisitor):
     def __init__(self, ctx):
         super().__init__(ctx)
         self.scope = []
-        self.state = []
         self.path = []
-        self.state_root = []
-        self.stmt_states = {}
         self.max_state = 0
+        self.status = SchedStatus()
 
     def enter_block(self, block):
         self.scope.append(block)
@@ -52,6 +63,7 @@ class Scheduler(HDLVisitor):
 
     def new_state(self):
         self.max_state += 1
+        self.status = SchedStatus(cur_state=self.max_state)
         return self.max_state
 
     @property
@@ -62,33 +74,37 @@ class Scheduler(HDLVisitor):
             return None
 
     def traverse_block(self, node):
+        init_state = node.cur_state
+
         self.enter_block(node)
 
         for i, stmt in enumerate(node.stmts):
             self.visit(stmt)
+            if not isinstance(stmt, ir.HDLBlock):
+                if hasattr(stmt, 'state'):
+                    node.cur_state = list(stmt.state)[0]
+                else:
+                    if node.cur_state == init_state:
+                        stmt.state = node.state.copy()
+                    else:
+                        stmt.state = {node.cur_state}
 
-            if stmt.out_blocking:
-                node.cur_state = stmt.cur_state
-                node.state.update(stmt.state)
-                node.out_blocked = True
+                    if stmt.in_await == res_false:  # await clk()
+                        node.cur_state = self.new_state()
+                        stmt.state = {node.cur_state}
+                    elif stmt.in_await != res_true:
+                        self.status.forward_blocked = True
+                        if self.status.back_blocked:
+                            node.cur_state = self.new_state()
+                            stmt.state = {node.cur_state}
+                    elif stmt.exit_await != res_true:
+                        self.status.back_blocked = True
 
-            if stmt.in_blocking:
-                node.in_blocked = True
-
-        if node.out_blocked:
-            node.out_blocking = True
-
-        if node.in_blocked:
-            node.in_blocking = True
+            node.state.update(stmt.state)
 
         self.exit_block()
 
     def HDLBlock(self, node: ir.HDLBlock):
-        node.out_blocking = False
-        node.in_blocking = False
-        node.out_blocked = False
-        node.in_blocked = False
-
         if self.parent:
             node.cur_state = self.parent.cur_state
         else:
@@ -96,69 +112,35 @@ class Scheduler(HDLVisitor):
 
         node.state = {node.cur_state}
 
-        if self.parent and node.exit_cond != res_true:
-            if self.parent.out_blocked:
-                node.cur_state = self.new_state()
-            else:
-                node.cur_state = self.parent.cur_state
-
-            node.state = {node.cur_state}
-            node.out_blocking = True
-
-        if node.in_cond != res_true:
-            node.in_blocking = True
-
         self.traverse_block(node)
 
-    def AssignValue(self, node):
-        node.out_blocking = False
-        node.in_blocking = False
-        node.cur_state = self.parent.cur_state
-        node.state = self.parent.state.copy()
+    def AssignValue(self, node: ir.AssignValue):
+        if is_intf_id(node.target):
+            if node.target.name not in self.status.output_value:
+                self.status.output_value.add(node.target.name)
+            else:
+                node.state = {self.new_state()}
 
     def IfElseBlock(self, node):
         node.state = {self.parent.cur_state}
         node.cur_state = self.parent.cur_state
 
-        node.out_blocked = self.parent.out_blocked
-        node.out_blocking = False
-        node.in_blocking = False
-        node.in_blocked = False
+        init_state = self.status.copy()
 
         self.enter_block(node)
 
+        out_states = []
+
         for stmt in node.stmts:
+            self.status = init_state.copy()
+
             self.visit(stmt)
 
-            if stmt.out_blocking:
-                node.state.update(stmt.state)
-                node.out_blocking = True
+            out_states.append(self.status.copy())
 
-            if stmt.in_blocking:
-                node.in_blocking = True
+            node.state.update(stmt.state)
 
         self.exit_block()
-
-    def CombBlock(self, node):
-        node.cur_state = 0
-        node.state = {node.cur_state}
-
-        node.out_blocked = False
-        node.out_blocking = False
-        node.in_blocked = False
-        node.out_blocked = False
-
-        self.traverse_block(node)
-
-    def Await(self, node):
-        node.out_blocking = True
-        node.in_blocking = False
-        if self.parent.out_blocked:
-            node.cur_state = self.new_state()
-        else:
-            node.cur_state = self.parent.cur_state
-
-        node.state = {node.cur_state}
 
 
 class StateIsolator(HDLVisitor):
@@ -183,15 +165,22 @@ class StateIsolator(HDLVisitor):
                 add_to_list(stmts, self.visit(stmt))
             elif self.cur_state:
                 stmts.append(
-                    ir.AssignValue(self.ctx.ref('state', ctx='store'),
-                                   ir.ResExpr(list(stmt.state)[0]),
-                                   exit_cond=res_false))
+                    ir.AssignValue(
+                        self.ctx.ref('state', ctx='store'),
+                        ir.Await(ir.ResExpr(list(stmt.state)[0]),
+                                 exit_await=res_false)))
                 break
 
         if self.cur_state_id not in state:
             self.cur_state_id = list(state)[0]
 
         return stmts
+
+    def ExprStatement(self, node: ir.ExprStatement):
+        # TODO: Make this more general, now it convers the case of "await
+        # clk()" like this
+        if node.in_await != res_false:
+            return node
 
     def HDLBlock(self, node):
         if self.state_id not in node.state:
@@ -201,21 +190,17 @@ class StateIsolator(HDLVisitor):
             return node
 
         in_cond = node.in_cond if self.cur_state else res_true
-        opt_in_cond = node.opt_in_cond if self.cur_state else res_true
         exit_cond = node.exit_cond
 
         stmts = self.traverse_block(node.stmts, node.state)
 
-        if in_cond == res_true and opt_in_cond == res_true and exit_cond == res_true:
+        if in_cond == res_true and exit_cond == res_true:
             return stmts
 
         if in_cond == res_true and exit_cond == res_true and not stmts:
             return None
 
-        return ir.HDLBlock(in_cond=in_cond,
-                              opt_in_cond=opt_in_cond,
-                              exit_cond=exit_cond,
-                              stmts=stmts)
+        return ir.HDLBlock(in_cond=in_cond, exit_cond=exit_cond, stmts=stmts)
 
     def LoopBlock(self, node):
         if self.state_id not in node.state:
@@ -226,17 +211,18 @@ class StateIsolator(HDLVisitor):
 
         block = ir.LoopBlock(
             in_cond=node.in_cond if self.cur_state else res_true,
-            opt_in_cond=node.opt_in_cond if self.cur_state else res_true,
             exit_cond=node.exit_cond,
             stmts=self.traverse_block(node.stmts, node.state))
 
         if 'state' in self.ctx.scope:
-            if (self.cur_state and self.state_id != list(node.state)[0]
-                    and node.out_blocking):
-                block.stmts.append(
-                    ir.AssignValue(self.ctx.ref('state', ctx='store'),
-                                      ir.ResExpr(list(node.state)[0]),
-                                      exit_cond=res_false))
+            if (self.cur_state and self.state_id != list(node.state)[0]):
+                # and node.out_blocking):
+
+                block.append(
+                    ir.AssignValue(
+                        self.ctx.ref('state', ctx='store'),
+                        ir.Await(ir.ResExpr(list(node.state)[0]),
+                                 exit_await=res_false)))
         return block
 
     def IfElseBlock(self, node):
@@ -246,11 +232,13 @@ class StateIsolator(HDLVisitor):
             sub_stmts = self.visit(stmt)
             if isinstance(sub_stmts, list):
                 if len(block.stmts) != 0:
-                    breakpoint()
-
-                return sub_stmts
+                    # traverse_block logic stripped the HDLBlock from else
+                    # path, we need it back
+                    block.stmts.append(ir.HDLBlock(stmts=sub_stmts))
+                else:
+                    return sub_stmts
             else:
-                block.stmts.append(sub_stmts)
+                add_to_list(block.stmts, sub_stmts)
 
         if len(block.stmts) == 1:
             return block.stmts[0]
@@ -289,8 +277,8 @@ def schedule(pydl_ast, ctx):
         stateblock.stmts.append(res)
 
         if state_num > 1:
-            res.opt_in_cond = ir.BinOpExpr(
-                (ctx.ref('state'), ir.ResExpr(i)), ir.opc.Eq)
+            res.in_cond = ir.BinOpExpr((ctx.ref('state'), ir.ResExpr(i)),
+                                       ir.opc.Eq)
 
     if state_num > 1:
         modblock = ir.CombBlock(stmts=[stateblock])

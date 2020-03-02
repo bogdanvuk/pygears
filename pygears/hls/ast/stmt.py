@@ -7,6 +7,7 @@ from .cast import resolve_cast_func
 class UnknownName(SyntaxError):
     pass
 
+
 def infer_targets(ctx, target, dtype, obj_factory=None):
     if isinstance(target, ir.Name):
         if target.name not in ctx.scope:
@@ -27,6 +28,7 @@ def infer_targets(ctx, target, dtype, obj_factory=None):
         pass
     else:
         breakpoint()
+
 
 def assign_targets(ctx, target, source, obj_factory=None):
     infer_targets(ctx, target, source.dtype, obj_factory)
@@ -51,17 +53,17 @@ def _(node, ctx: Context):
             stmts = [stmts]
 
         for s in stmts:
-            s.var.obj.val = s.expr
+            s.target.obj.val = s.val
             if init.val is None or getattr(init.val, 'unknown', False):
-                s.var.obj.any_init = True
+                s.target.obj.any_init = True
 
 
 @node_visitor(ast.AugAssign)
 def _(node, ctx: Context):
     target = visit_ast(node.target, ctx)
     value = visit_ast(node.value, ctx)
-    return ir.AssignValue(target,
-                          ir.BinOpExpr((ctx.ref(target.name), value), type(node.op)))
+    return ir.AssignValue(
+        target, ir.BinOpExpr((ctx.ref(target.name), value), type(node.op)))
 
 
 @node_visitor(ast.Assign)
@@ -95,3 +97,8 @@ def _(node: ast.Return, ctx: FuncContext):
         ctx.ret_dtype = expr.dtype
 
     return ir.FuncReturn(ctx.funcref, expr)
+
+
+@node_visitor(ast.Pass)
+def _(node: ast.Pass, ctx: Context):
+    return None

@@ -2,6 +2,12 @@ import inspect
 
 from .. import ir
 from pygears.typing import Bool
+from pygears import Intf
+
+
+def is_intf_id(expr):
+    return (isinstance(expr, ir.Name) and isinstance(expr.obj, ir.Variable)
+            and isinstance(expr.obj.val, Intf))
 
 
 def add_to_list(orig_list, extension):
@@ -108,6 +114,58 @@ class HDLVisitor:
                 return getattr(self, base_class.__name__)(node)
         else:
             return self.generic_visit(node)
+
+    def BaseBlock(self, block: ir.BaseBlock):
+        for stmt in block.stmts:
+            self.visit(stmt)
+
+        return block
+
+    # def ExprStatement(self, stmt: ir.ExprStatement):
+    #     self.visit(stmt.expr)
+    #     return stmt
+
+    # def AssignValue(self, stmt: ir.AssignValue):
+    #     self.visit(stmt.val)
+    #     self.visit(stmt.target)
+    #     return stmt
+
+    def generic_visit(self, node):
+        return node
+
+
+class IrRewriter:
+    def visit(self, node):
+        for base_class in inspect.getmro(node.__class__):
+            if hasattr(self, base_class.__name__):
+                return getattr(self, base_class.__name__)(node)
+        else:
+            return self.generic_visit(node)
+
+    def BaseBlock(self, block: ir.BaseBlock):
+        rw_block = type(block)()
+
+        for stmt in block.stmts:
+            add_to_list(rw_block.stmts, self.visit(stmt))
+
+        return rw_block
+
+    def HDLBlock(self, block: ir.HDLBlock):
+        rw_block = type(block)(block.test, block.in_cond, block.exit_cond)
+
+        for stmt in block.stmts:
+            add_to_list(rw_block.stmts, self.visit(stmt))
+
+        return rw_block
+
+    def ExprStatement(self, stmt: ir.ExprStatement):
+        return type(stmt)(self.visit(stmt.expr))
+
+    def AssignValue(self, stmt: ir.AssignValue):
+        return type(stmt)(self.visit(stmt.target), self.visit(stmt.val))
+
+    def AssertValue(self, stmt: ir.AssertValue):
+        return type(stmt)(self.visit(stmt.val))
 
     def generic_visit(self, node):
         return node

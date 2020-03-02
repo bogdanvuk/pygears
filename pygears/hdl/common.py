@@ -29,6 +29,9 @@ def enum_hdl_files(top, outdir, language, rtl_only=False, wrapper=False):
         yield os.path.join(LIB_SVLIB_DIR, 'dti.sv')
 
     for node in NodeYielder().visit(rtl_top):
+        if node not in vgen_map:
+            continue
+
         vinst = vgen_map[node]
 
         if ((node is rtl_top) and wrapper and (language == 'sv')

@@ -47,7 +47,7 @@ def test_hier_level1():
     sim()
 
 
-def test_hier_level2():
+def test_hier_level2(tmpdir):
     @gear
     def test(a, b):
         return a + b
@@ -71,4 +71,7 @@ def test_hier_level2():
 
     cosim('/top', 'verilator')
 
-    sim()
+    sim(tmpdir)
+
+
+# test_hier_level2()

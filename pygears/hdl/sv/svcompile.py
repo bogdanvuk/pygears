@@ -112,12 +112,13 @@ class SVCompiler(HDLVisitor):
 
         bl = self.block_lines.pop()
 
-        if bl.content and isinstance(block, ir.HDLBlock):
+        if isinstance(block, ir.HDLBlock):
             maybe_else = 'else ' if getattr(block, 'else_branch',
                                             False) else ''
+            # in_cond = ir.BinOpExpr((block.in_cond, block.opt_in_cond),
+            #                        ir.opc.And)
 
-            in_cond = ir.BinOpExpr((block.in_cond, block.opt_in_cond),
-                                   ir.opc.And)
+            in_cond = block.in_cond
 
             if in_cond != res_true:
                 in_cond_val = svexpr(in_cond, self.aux_funcs)
@@ -207,19 +208,6 @@ class SVCompiler(HDLVisitor):
     def AssignValue(self, node):
         self._assign_value(node.target, node.val)
 
-    def StateBlock(self, node):
-        self.write('case (state)')
-        self.write.indent += 4
-        for i, child in enumerate(node.stmts):
-            self.write(f'{i}: begin')
-            self.write.indent += 4
-            self.visit(child)
-            self.write.indent -= 4
-            self.write('end')
-
-        self.write.indent -= 4
-        self.write('endcase')
-
     def list_initials(self):
         for name, obj in self.ctx.scope.items():
             if not isinstance(obj, ir.Variable):
@@ -303,7 +291,7 @@ class SVCompiler(HDLVisitor):
         self.enter_block(node)
 
         for i, stmt in enumerate(node.stmts):
-            if any(c.content for c in self.cur_block_lines.content):
+            if i > 0:
                 stmt.else_branch = True
             else:
                 stmt.else_branch = False

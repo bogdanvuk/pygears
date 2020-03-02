@@ -30,7 +30,7 @@ def _(node: ast.If, ctx: Context):
 
         return None
     else:
-        pydl_node = ir.HDLBlock(opt_in_cond=test_expr, stmts=[])
+        pydl_node = ir.HDLBlock(in_cond=test_expr, stmts=[])
         visit_block(pydl_node, node.body, ctx)
         if hasattr(node, 'orelse') and node.orelse:
             top = ir.IfElseBlock(stmts=[])
@@ -127,6 +127,8 @@ def _(node: ast.For, ctx: Context):
         exit_cond=ir.GenDone(gen_name))
 
     visit_block(block, node.body, ctx)
+
+    block.stmts.append(ir.ExprStatement(ir.GenAck(gen_name)))
 
     return block
 

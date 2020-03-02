@@ -16,6 +16,7 @@ def test_stop_unsigned(tmpdir, sim_cls):
              ref=[list(range(4))])
     sim(resdir=tmpdir)
 
+
 def test_stop_signed(tmpdir, sim_cls):
     directed(drv(t=Int[4], seq=[7]),
              f=qrange(sim_cls=sim_cls),
@@ -29,14 +30,12 @@ def test_stop_inclusive(tmpdir, sim_cls):
              ref=[list(range(5))])
     sim(resdir=tmpdir)
 
+
 def test_start_stop(tmpdir, sim_cls):
     directed(drv(t=Tuple[Uint[2], Uint[4]], seq=[(2, 10)]),
              f=qrange(sim_cls=sim_cls),
              ref=[list(range(2, 10))])
     sim(resdir=tmpdir)
-
-# from pygears.sim.modules import SimVerilated
-# test_start_stop('/tools/home/tmp/start_stop', SimVerilated)
 
 
 def test_start_stop_inclusive(tmpdir, sim_cls):
@@ -52,16 +51,17 @@ def test_start_stop_signed(tmpdir, sim_cls):
              ref=[list(range(-2, 7))])
     sim(resdir=tmpdir)
 
+
 def test_start_stop_combined(tmpdir, sim_cls):
     directed(drv(t=Tuple[Int[2], Uint[4]], seq=[(-2, 7)]),
              f=qrange(sim_cls=sim_cls),
              ref=[list(range(-2, 7))])
     sim(resdir=tmpdir)
 
+
 # def test_basic_unsigned():
 #     iout = qrange(Intf(Tuple[Uint[4], Uint[4], Uint[2]]))
 #     assert iout.dtype == Queue[Uint[4]]
-
 
 # def test_basic_unsigned_sim(tmpdir):
 #     seq = [(2, 8, 2)]
@@ -71,7 +71,6 @@ def test_start_stop_combined(tmpdir, sim_cls):
 
 #     sim(resdir=tmpdir)
 
-
 # def get_dut(dout_delay):
 #     @gear
 #     def decoupled(din, *, cnt_steps=False, incr_steps=False):
@@ -80,7 +79,6 @@ def test_start_stop_combined(tmpdir, sim_cls):
 #     if dout_delay == 0:
 #         return decoupled
 #     return rng
-
 
 # @pytest.mark.parametrize('din_delay', [0, 5])
 # @pytest.mark.parametrize('dout_delay', [0, 5])
@@ -111,11 +109,9 @@ def test_start_stop_combined(tmpdir, sim_cls):
 
 #     sim(resdir=tmpdir)
 
-
 # def test_basic_signed():
 #     iout = rng(Intf(Tuple[Int[4], Int[6], Uint[2]]))
 #     assert iout.dtype == Queue[Int[6]]
-
 
 # def test_basic_signed_sim(tmpdir):
 #     seq = [(-15, -3, 2)]
@@ -124,7 +120,6 @@ def test_start_stop_combined(tmpdir, sim_cls):
 #     directed(drv(t=Tuple[Int[5], Int[6], Uint[2]], seq=seq), f=rng, ref=ref)
 
 #     sim(resdir=tmpdir)
-
 
 # @pytest.mark.parametrize('din_delay', [0, 5])
 # @pytest.mark.parametrize('dout_delay', [0, 5])
@@ -140,7 +135,6 @@ def test_start_stop_combined(tmpdir, sim_cls):
 
 #     sim(resdir=tmpdir)
 
-
 # def test_supply_constant():
 #     iout = rng((Uint[4](0), 8, 1))
 
@@ -153,7 +147,6 @@ def test_start_stop_combined(tmpdir, sim_cls):
 #         'incr': Uint[1]
 #     }]
 
-
 # def test_cnt_only():
 #     iout = rng(8)
 
@@ -162,7 +155,6 @@ def test_start_stop_combined(tmpdir, sim_cls):
 #     rng_gear = find('/rng/rng/py_rng')
 #     assert rng_gear.params['cfg'] == Tuple[Uint[1], Uint[4], Uint[1]]
 
-
 # def test_cnt_only_sim(tmpdir):
 #     seq = [8]
 #     ref = [list(range(8))]
@@ -170,7 +162,6 @@ def test_start_stop_combined(tmpdir, sim_cls):
 #     directed(drv(t=Uint[4], seq=seq), f=rng, ref=ref)
 
 #     sim(resdir=tmpdir)
-
 
 # @pytest.mark.parametrize('din_delay', [0, 5])
 # @pytest.mark.parametrize('dout_delay', [0, 5])
@@ -185,7 +176,6 @@ def test_start_stop_combined(tmpdir, sim_cls):
 
 #     sim(resdir=tmpdir)
 
-
 # def test_cnt_down():
 #     iout = rng((7, 0, -1))
 
@@ -193,7 +183,6 @@ def test_start_stop_combined(tmpdir, sim_cls):
 
 #     assert rng_gear.params['cfg'] == Tuple[Int[4], Int[2], Int[1]]
 #     assert iout.dtype == Queue[Int[4]]
-
 
 # # @pytest.mark.xfail(raises=MultiAlternativeError)
 # # def test_multi_lvl():
@@ -210,16 +199,13 @@ def test_start_stop_combined(tmpdir, sim_cls):
 
 # # TODO : hierarchy must be avoided for verilog (so py_rng, not rng)
 
-
 # @formal_check()
 # def test_basic_formal():
 #     py_rng(Intf(Tuple[Uint[4], Uint[4], Uint[2]]))
 
-
 # @formal_check()
 # def test_cnt_steps_formal():
 #     py_rng(Intf(Tuple[Uint[4], Uint[4], Uint[2]]), cnt_steps=True)
-
 
 # @formal_check()
 # def test_incr_cnt_steps_formal():

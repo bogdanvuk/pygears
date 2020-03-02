@@ -15,11 +15,16 @@ class RemoveDeadCode(HDLVisitor):
         block.stmts = stmts
         return block
 
+    def ExprStatement(self, stmt: ir.ExprStatement):
+        return None
+
+    # TODO: Implement things properly for IfElseBlock (What if middle elif is missing?)
+
     def HDLBlock(self, node):
         stmts = node.stmts
         live_stmts = []
 
-        if (node.opt_in_cond == res_false) or (node.in_cond == res_false):
+        if node.in_cond == res_false:
             return None
 
         for stmt in stmts:

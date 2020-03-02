@@ -5,6 +5,16 @@ from pygears.util.utils import gather
 from pygears.lib.verif import directed, drv
 from pygears.sim.modules import SimVerilated
 from pygears import datagear
+from pygears.lib import add
+
+
+def test_add(tmpdir):
+    directed(drv(t=Uint[8], seq=list(range(8))),
+             drv(t=Uint[8], seq=list(range(8))),
+             f=add(sim_cls=SimVerilated),
+             ref=[2 * i for i in range(8)])
+
+    sim(tmpdir)
 
 
 def test_multiple_arguments(tmpdir):
@@ -27,6 +37,7 @@ def test_multiple_arguments(tmpdir):
              ref=[2 * i for i in range(10)])
 
     sim(tmpdir)
+
 
 # test_multiple_arguments('/tools/home/tmp/test_func')
 

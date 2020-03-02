@@ -62,6 +62,7 @@ def get_function_ast(func):
     else:
         return ast.parse(get_function_source(func)).body[0]
 
+
 def add_to_list(orig_list, extention):
     if extention:
         orig_list.extend(

@@ -73,6 +73,9 @@ class SVExpressionVisitor:
 
         return name
 
+    def visit_Await(self, node):
+        return self.visit(node.expr)
+
     def visit_Component(self, node):
         if (node.field == 'data'):
             return f'{node.val.name}_s'

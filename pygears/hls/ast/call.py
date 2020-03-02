@@ -130,7 +130,13 @@ def max_expr(op1, op2):
 
 
 def call_len(arg, **kwds):
-    return ir.ResExpr(len(arg.val))
+    if isinstance(arg, ir.ConcatExpr):
+        return ir.ResExpr(len(arg.operands))
+
+    if isinstance(arg, ir.ResExpr):
+        return ir.ResExpr(len(arg.val))
+
+    raise Exception
 
 
 def call_print(*arg, **kwds):

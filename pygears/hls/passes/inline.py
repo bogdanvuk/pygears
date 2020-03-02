@@ -20,6 +20,9 @@ class InlineValues(HDLVisitor):
 
     @property
     def block(self):
+        if not self.block_stack:
+            return None
+
         return self.block_stack[-1]
 
     def inline_expr(self, node):
@@ -34,13 +37,13 @@ class InlineValues(HDLVisitor):
         self.forwarded.upscope()
 
         for name, val in subscope.items.items():
-            if block.opt_in_cond != res_true:
+            if block.in_cond != res_true:
                 if name in self.forwarded:
                     prev_val = self.forwarded[name]
                 else:
                     prev_val = self.ctx.ref(name)
 
-                val = ir.ConditionalExpr((val, prev_val), block.opt_in_cond)
+                val = ir.ConditionalExpr((val, prev_val), block.in_cond)
 
             self.forwarded[name] = val
 
@@ -87,34 +90,21 @@ class InlineValues(HDLVisitor):
             elif isinstance(target, ir.SubscriptExpr):
                 set_forward_subvalue(target, val)
 
-        forward_value(node.target, node.val)
+        val = node.val
+        if isinstance(val, ir.Await):
+            val = val.expr
+
+        if isinstance(val, ir.ConcatExpr):
+            val = ir.ConcatExpr(operands=[
+                op.expr if isinstance(op, ir.Await) else op
+                for op in val.operands])
+
+        forward_value(node.target, val)
 
         return node
 
-        # # TODO: This needs to be some form of recursive pass, since value can
-        # # be assigned to a value field
-        # if isinstance(node.target, ir.SubscriptExpr):
-        #     target = node.target.val
-
-        #     if target.name not in self.forwarded:
-        #         if target.obj.reg:
-        #             return node
-
-        #         raise Exception
-
-        #     var_name = target.name
-        #     if isinstance(node.target.index, ir.ResExpr):
-        #         index_val = node.target.index.val
-        #         self.forwarded[var_name][index_val] = node.val
-        #     else:
-        #         del self.forwarded[var_name]
-
-        # elif isinstance(node.target, ir.Name):
-        #     self.forwarded[node.target.name] = node.val
-        # else:
-        #     raise Exception
-
-        # return node
+    def Statement(self, stmt: ir.Statement):
+        return stmt
 
     def BaseBlock(self, block: ir.BaseBlock):
         stmts = []
@@ -131,7 +121,6 @@ class InlineValues(HDLVisitor):
 
     def HDLBlock(self, block: ir.HDLBlock):
         block.in_cond = self.inline_expr(block.in_cond)
-        block.opt_in_cond = self.inline_expr(block.opt_in_cond)
 
         if not isinstance(self.block, ir.IfElseBlock):
             self.forwarded.subscope()
@@ -149,7 +138,6 @@ class InlineValues(HDLVisitor):
 
     def LoopBlock(self, block: ir.LoopBlock):
         block.in_cond = self.inline_expr(block.in_cond)
-        block.opt_in_cond = self.inline_expr(block.opt_in_cond)
 
         looped_init = False
         for name in self.forwarded:
@@ -195,7 +183,7 @@ class InlineValues(HDLVisitor):
 
             add_to_list(stmts, self.visit(stmt))
             subs = self.forwarded.cur_subscope
-            subs.opt_in_cond = stmts[-1].opt_in_cond
+            subs.in_cond = stmts[-1].in_cond
             subscopes.append(subs)
             forwards.update(subs.items.keys())
 
@@ -210,7 +198,7 @@ class InlineValues(HDLVisitor):
             for subs in reversed(subscopes):
                 if name in subs.items:
                     val = ir.ConditionalExpr((subs.items[name], val),
-                                             cond=subs.opt_in_cond)
+                                             cond=subs.in_cond)
 
             self.forwarded[name] = val
 
@@ -240,13 +228,8 @@ class InlineResValues(HDLVisitor):
                 node.val, ir.ResExpr):
             self.forwarded[node.target.name] = node.val
 
-    def BaseBlock(self, block: ir.BaseBlock):
-        for stmt in block.stmts:
-            self.visit(stmt)
-
     def HDLBlock(self, block: ir.HDLBlock):
         block.in_cond = self.inline_expr(block.in_cond)
-        block.opt_in_cond = self.inline_expr(block.opt_in_cond)
 
         prev_scope = self.forwarded
         self.forwarded = Scope()
