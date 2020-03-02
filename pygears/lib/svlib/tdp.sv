@@ -161,16 +161,17 @@ module tdp_port #(
    assign req_s = req_if.data;
 
    assign rd_req_empty = !rd_req_valid;
-   assign rd_req_ready = rd_req_empty | data_if.ready;
+   assign rd_req_ready = rd_req_empty || data_if.ready;
 
    // to memory
    assign addr_o = req_s.data.addr; // rd_req has addr at the same position
    assign data_o = req_s.data.data; // rd_req has no such field
-   assign en_o = req_if.valid;
-   assign we_o = req_if.valid && req_s.ctrl;
+   assign en_o = req_if.valid && rd_req_ready;
+   assign we_o = req_if.valid && req_s.ctrl && rd_req_ready;
 
    // address interface
-   assign req_if.ready = req_if.valid ? (req_s.ctrl ? 1'b1 : rd_req_ready) : 1'b1;
+   // assign req_if.ready = req_if.valid ? (req_s.ctrl ? 1'b1 : rd_req_ready) : 1'b1;
+   assign req_if.ready = req_if.valid ? rd_req_ready : 1'b1;
 
    // data interface
    assign data_if.data  = data_i;
