@@ -134,6 +134,40 @@ class HDLVisitor:
         return node
 
 
+class IrVisitor:
+    def visit(self, node):
+        for base_class in inspect.getmro(node.__class__):
+            if hasattr(self, base_class.__name__):
+                getattr(self, base_class.__name__)(node)
+                return
+        else:
+            self.generic_visit(node)
+
+    def BaseBlock(self, block: ir.BaseBlock):
+        for stmt in block.stmts:
+            self.visit(stmt)
+
+    def HDLBlock(self, block: ir.HDLBlock):
+        self.visit(block.test)
+        self.visit(block.in_cond)
+        self.visit(block.exit_cond)
+
+        self.BaseBlock(block)
+
+    def ExprStatement(self, stmt: ir.ExprStatement):
+        self.visit(stmt.expr)
+
+    def AssignValue(self, stmt: ir.AssignValue):
+        self.visit(stmt.target)
+        self.visit(stmt.val)
+
+    def AssertValue(self, stmt: ir.AssertValue):
+        self.visit(stmt.val)
+
+    def generic_visit(self, node):
+        pass
+
+
 class IrRewriter:
     def visit(self, node):
         for base_class in inspect.getmro(node.__class__):

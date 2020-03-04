@@ -869,9 +869,9 @@ class ExprStatement(Statement):
         if isinstance(self.expr, Await):
             return self.expr.in_await
 
-        if isinstance(self.val, ConcatExpr):
+        if isinstance(self.expr, ConcatExpr):
             return bin_op_reduce(
-                list(op.in_await for op in self.val.operands
+                list(op.in_await for op in self.expr.operands
                      if isinstance(op, Await)), lambda op: op, opc.And,
                 res_true)
 

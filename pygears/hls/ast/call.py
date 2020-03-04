@@ -96,10 +96,10 @@ def call_floor(arg):
     arg_to_int = ir.CastExpr(arg, int_cls[t_arg.width])
     if t_arg.fract >= 0:
         return ir.BinOpExpr((arg_to_int, ir.ResExpr(Uint(t_arg.fract))),
-                               ir.opc.RShift)
+                            ir.opc.RShift)
     else:
         return ir.BinOpExpr((arg_to_int, ir.ResExpr(Uint(-t_arg.fract))),
-                               ir.opc.LShift)
+                            ir.opc.LShift)
 
 
 def call_div(a, b, subprec):
@@ -327,5 +327,5 @@ def parse_func_call(func: typing.Callable, args, kwds, ctx: Context):
         (pydl_ast, func_ctx) = ctx.functions[funcref]
 
     return ir.FunctionCall(operands=list(func_ctx.args.values()),
-                              ret_dtype=func_ctx.ret_dtype,
-                              name=funcref.name)
+                           ret_dtype=func_ctx.ret_dtype,
+                           name=funcref.name)
