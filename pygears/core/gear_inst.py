@@ -334,7 +334,7 @@ def resolve_gear(gear_inst, fix_intfs):
     for c in gear_inst.child:
         for p in c.out_ports:
             intf = p.consumer
-            if intf not in set(intfs) and not intf.consumers:
+            if intf not in set(intfs) and intf not in set(c.params['intfs']) and not intf.consumers:
                 core_log().warning(f'"{c.name}.{p.basename}" left dangling.')
 
     if len(out_intfs) > 1:
