@@ -369,8 +369,20 @@ def union_type_cast_resolver(dtype, cast_type):
 
 
 def queue_type_cast_resolver(dtype, cast_type):
-    if (typeof(dtype, Queue) and (len(cast_type.args) == 0)):
-        return dtype
+    if typeof(dtype, Queue):
+        if len(cast_type.args) == 0:
+            return dtype
+
+        if dtype.lvl != cast_type.lvl:
+            raise get_type_error(
+                dtype, cast_type,
+                [f"Queue level ({dtype.lvl}) must match the cast Queue lelve ({cast_type.lvl})"])
+
+        try:
+            return Queue[cast(dtype.data, cast_type.data), cast_type.lvl]
+        except TypeError as e:
+            raise TypeError(
+                f"{str(e)}\n    - when casting '{repr(dtype)}' to '{repr(cast_type)}'")
 
     if typeof(dtype, Tuple):
         if len(dtype) != 2:

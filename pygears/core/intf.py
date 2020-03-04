@@ -61,6 +61,7 @@ class Intf:
             'finish': SimEvent()
         }
 
+    # TODO: type checking should be performed here, right?
     def __ior__(self, iout):
         if isinstance(iout, Partial):
             raise Exception(

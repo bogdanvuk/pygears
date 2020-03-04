@@ -121,6 +121,9 @@ class GenericMeta(TypingMeta):
         # TODO: Throw error when too many args are supplied
         if (not bases) or (not hasattr(bases[0], 'args')) or (not bases[0].args):
             # Form a class that has the generic arguments specified
+
+            # TODO: dict parenthesis can be avoided and Python will parse dict
+            # like structure as list of slices. Maybe try this to reduce clutter
             if isinstance(args, dict):
                 namespace.update(
                     {
