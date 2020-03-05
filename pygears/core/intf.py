@@ -152,15 +152,19 @@ class Intf:
         put_event = self.events['put']
 
         if self.dtype is not type(val):
+            err = None
             try:
                 if not typeof(self.dtype, Any):
                     val = self.dtype(val)
-            except TypeError:
+            except (TypeError, ValueError) as e:
+                err = e
+
+            if err:
+                # TODO: when value cannot be represented, the error report can be terse
                 raise TypeMatchError(
-                    f'Output data "{repr(val)}" from the'
-                    f' "{registry("gear/current_module").name}"'
-                    f' module cannot be converted to the type'
-                    f' {repr(self.dtype)}')
+                    f'{str(err)}\n, when converting output data "{repr(val)}"'
+                    f'from the "{registry("gear/current_module").name}"'
+                    f' module cannot to the type {repr(self.dtype)}')
 
         if put_event:
             put_event(self, val)
