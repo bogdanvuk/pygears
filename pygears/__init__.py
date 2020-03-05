@@ -8,6 +8,8 @@ import sys
 from asyncio import CancelledError as GearDone
 from asyncio.queues import QueueEmpty as IntfEmpty
 
+import pygears.typing
+
 # form pygears.conf import only for legacy compatibility
 from pygears.conf import PluginBase, bind, registry, clear, MultiAlternativeError
 from pygears.conf import pygears_excepthook, TraceLevel, safe_bind, config
@@ -19,7 +21,7 @@ from pygears.util.find import find
 import pygears.sim
 from pygears.sim import sim
 
-from pygears.core.type_match import TypeMatchError
+from pygears.typing import TypeMatchError
 from pygears.core.gear import module
 from pygears.core.gear_decorator import gear, alternative
 
@@ -30,7 +32,6 @@ from pygears.core.intf import Intf
 from pygears.hls import datagear
 
 import pygears.lib
-import pygears.typing
 import pygears.typing.pprint
 
 # import os

@@ -6,7 +6,7 @@ from pygears.conf import PluginBase, registry, safe_bind, MultiAlternativeError
 from pygears.core.port import InPort, OutPort
 from pygears.core.partial import Partial
 from pygears.core.sim_event import SimEvent
-from .type_match import TypeMatchError
+from pygears.typing import TypeMatchError
 from pygears.typing import typeof, Any
 from pygears.typing.base import TypingMeta
 from pygears.conf import inject, Inject

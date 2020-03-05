@@ -1,6 +1,6 @@
 from pygears.typing import Fixp, Fixpnumber, Integer, Tuple, Ufixp, Uint, typeof, Int, Union, cast
 from . import hls_expressions as expr
-from pygears.core.type_match import type_match, TypeMatchError
+from pygears.typing import get_match_conds, TypeMatchError
 
 
 def fixp_resolver(opexp, cast_to):
@@ -81,7 +81,7 @@ def resolve_cast_func(opexp, dtype):
 
     for templ in resolvers:
         try:
-            type_match(dtype, templ)
+            get_match_conds(dtype, templ)
             return resolvers[templ](opexp, dtype)
         except TypeMatchError:
             continue

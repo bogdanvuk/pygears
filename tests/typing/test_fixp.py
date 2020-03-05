@@ -1,11 +1,11 @@
 import pytest
 from math import floor
 from pygears.typing import Fixp, Ufixp, typeof, Number, Int, Uint, div
-from pygears.core.type_match import type_match
+from pygears.typing import get_match_conds
 
 
 def test_fixp_is_number():
-    type_match(Fixp[1, 2], Number)
+    get_match_conds(Fixp[1, 2], Number)
 
 
 def test_float():

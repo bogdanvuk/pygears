@@ -26,7 +26,7 @@ When composing gears, the framework will check the compatibility of types. For a
 
 In this example, a constant of Tuple type (u8, u16), with value 1 for both of its fields, is being fed to the module which accepts Tuples of type (u8, u8). This is a mismatch, since u16 and u8 are not the same type. Upon executing the script, **PyGears** will print::
 
-  pygears.core.type_match.TypeMatchError: 16 cannot be matched to 8
+  pygears.typing.TypeMatchError: 16 cannot be matched to 8
   - when matching Uint[16] to Uint[8]
   - when matching Tuple[Uint[8], Uint[16]] to Tuple[Uint[8], Uint[8]]
   - when deducing type for argument din, of the module "/example"

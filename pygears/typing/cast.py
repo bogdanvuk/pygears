@@ -4,6 +4,8 @@ from . import Array, Int, Integer, Queue, Tuple, Uint, Union, Maybe
 from . import Fixpnumber, Float, Number, Ufixp, Fixp, Unit
 # from pygears.conf.log import gear_log
 
+# TODO: Find solution for when a filed of a complex data type needs to be
+# recoded (for an example to a smaller width). This doesn't work properly
 
 def reinterpret(data, cast_type):
     if is_type(data):

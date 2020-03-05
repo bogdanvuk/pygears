@@ -22,7 +22,11 @@ module zip_sync
 
 
     logic all_aligned;
+    logic all_valid;
     logic handshake;
+
+    assign all_valid = din0.valid && din1.valid;
+
     logic din0_eot_aligned;
     logic din1_eot_aligned;
 
@@ -33,10 +37,10 @@ module zip_sync
 
     assign dout0.valid = din0.valid & all_aligned;
     assign dout0.data = din0_s;
-    assign din0.ready = din0.valid && (dout0.ready || !din0_eot_aligned);
+    assign din0.ready = din0.valid && (dout0.ready || (all_valid && !din0_eot_aligned));
     assign dout1.valid = din1.valid & all_aligned;
     assign dout1.data = din1_s;
-    assign din1.ready = din1.valid && (dout1.ready || !din1_eot_aligned);
+    assign din1.ready = din1.valid && (dout1.ready || (all_valid && !din1_eot_aligned));
 
 
 

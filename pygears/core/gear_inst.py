@@ -274,9 +274,17 @@ def resolve_out_types(out_intfs, out_dtype, gear_inst):
         casted_out_intfs = list(out_intfs)
 
         # Try casting interface types upfront to get better error messaging
-        for intf, t in zip(out_intfs, out_dtype):
-            if intf.dtype != t:
-                cast(intf.dtype, t)
+        for i, (intf, t) in enumerate(zip(out_intfs, out_dtype)):
+            err = None
+            try:
+                if intf.dtype != t:
+                    cast(intf.dtype, t)
+            except (TypeError, TypeMatchError) as e:
+                err = type(e)(f"when casting type for output port {i}, "
+                              f"when instantiating '{gear_inst.name}'")
+
+            if err:
+                raise err
 
         # If no exceptions occured, do it for real
         for i, (intf, t) in enumerate(zip(out_intfs, out_dtype)):

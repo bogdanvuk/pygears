@@ -40,7 +40,7 @@ def index_norm_hashable_single(i, size):
             i = size + i
 
         if i >= size:
-            raise IndexError
+            raise IndexError(f'index {i} out of bounds')
 
         return i
 
