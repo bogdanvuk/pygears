@@ -152,7 +152,7 @@ class SVGenTypeVisitor(TypingVisitorBase):
         else:
             insert_idx = 1
 
-        split_type.insert(insert_idx, f'[{type_.args[1]-1}:0]')
+        split_type.insert(insert_idx, f'[{int(type_.args[1])-1}:0]')
         type_declaration = ' '.join(split_type)
 
         if not self.depth:

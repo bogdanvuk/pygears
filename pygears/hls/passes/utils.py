@@ -185,11 +185,13 @@ class IrRewriter:
         return rw_block
 
     def HDLBlock(self, block: ir.HDLBlock):
-        rw_block = type(block)(block.test, block.in_cond, block.exit_cond)
+        rw_block = type(block)(self.visit(block.test),
+                               self.visit(block.in_cond))
 
         for stmt in block.stmts:
             add_to_list(rw_block.stmts, self.visit(stmt))
 
+        rw_block.exit_cond = self.visit(block.exit_cond)
         return rw_block
 
     def ExprStatement(self, stmt: ir.ExprStatement):
@@ -200,6 +202,9 @@ class IrRewriter:
 
     def AssertValue(self, stmt: ir.AssertValue):
         return type(stmt)(self.visit(stmt.val))
+
+    def Expr(self, expr):
+        return expr
 
     def generic_visit(self, node):
         return node

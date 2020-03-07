@@ -1,4 +1,5 @@
 from .utils import Scope, HDLVisitor, res_true, add_to_list, ir, res_false, IrExprRewriter
+from pygears.typing import cast
 
 
 class Inliner(IrExprRewriter):
@@ -63,32 +64,41 @@ class InlineValues(HDLVisitor):
             elif isinstance(target, ir.SubscriptExpr):
                 del_forward_subvalue(target.val)
 
-        def set_forward_subvalue(target, val):
+        def get_forward_value(target):
             if isinstance(target, ir.Name):
                 if target.name not in self.forwarded:
                     if target.obj.reg:
                         return None
 
-                self.forwarded[target.name]
+                return self.forwarded[target.name]
             elif isinstance(target, ir.SubscriptExpr):
                 if isinstance(target.index, ir.ResExpr):
-                    index_val = target.index.val
-                    base_val = set_forward_subvalue(target)
+                    base_val = get_forward_value(target.val)
                     if base_val is None:
                         return None
 
-                    base_val[index_val] = val
+                    return base_val[target.index.val]
                 else:
-                    del_forward_subvalue(target)
+                    return None
 
         def forward_value(target, val):
             if isinstance(target, ir.Name):
                 self.forwarded[target.name] = val
+                return True
             elif isinstance(target, ir.ConcatExpr):
                 for i, t in enumerate(target.operands):
                     forward_value(t, ir.SubscriptExpr(val, ir.ResExpr(i)))
             elif isinstance(target, ir.SubscriptExpr):
-                set_forward_subvalue(target, val)
+                if (isinstance(target.index, ir.ResExpr)
+                        and isinstance(val, ir.ResExpr)):
+                    base_val = get_forward_value(target.val)
+
+                    if isinstance(base_val, ir.ResExpr):
+                        base_val.val[target.index.val] = cast(
+                            val.val, base_val.dtype[target.index.val])
+                        return True
+
+                del_forward_subvalue(target)
 
         val = node.val
         if isinstance(val, ir.Await):
@@ -97,9 +107,13 @@ class InlineValues(HDLVisitor):
         if isinstance(val, ir.ConcatExpr):
             val = ir.ConcatExpr(operands=[
                 op.expr if isinstance(op, ir.Await) else op
-                for op in val.operands])
+                for op in val.operands
+            ])
 
-        forward_value(node.target, val)
+        forwarded = forward_value(node.target, val)
+
+        if forwarded and isinstance(node.target, ir.SubscriptExpr):
+            return None
 
         return node
 

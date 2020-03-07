@@ -7,7 +7,7 @@ from .cast import resolve_cast_func
 from pygears import Intf, registry
 from pygears.core.partial import Partial
 from functools import reduce
-from pygears.typing import Int, Uint, code, div
+from pygears.typing import Int, Uint, code, div, Queue
 from pygears.typing import is_type, typeof, Tuple, Array
 from pygears.typing import floor, cast, signed
 from pygears.typing.queue import QueueMeta
@@ -77,7 +77,7 @@ def resolve_compile_time(func, args, kwds):
                                         for n, v in kwds.items()}))
 
 
-def resolve_gear_cal(func, args, kwds):
+def resolve_gear_call(func, args, kwds):
     args, kwds = form_gear_args(args, kwds, func)
 
     for f, args, templates in get_gear_signatures(func, args, kwds):
@@ -232,11 +232,14 @@ def call_enumerate(arg):
 
 
 def call_qrange(*args):
-    return resolve_gear_cal(qrange_gear.func, args, {})
+    return resolve_gear_call(qrange_gear.func, args, {})
 
 
 def call_range(*args):
-    ret = resolve_gear_cal(qrange_gear.func, args, {})
+    ret = ir.GenCallExpr(range,
+                         dict(zip(['start', 'stop', 'step'], args)),
+                         params={'return': Queue[args[0].dtype]})
+    # ret = resolve_gear_call(qrange_gear.func, args, {})
     ret.pass_eot = False
     return ret
 

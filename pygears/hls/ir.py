@@ -796,8 +796,8 @@ class FunctionCall(Expr):
 class GenCallExpr(Expr):
     func: typing.Any
     args: typing.Tuple[OpType]
-    kwds: typing.Dict[str, typing.Any]
-    params: typing.Dict
+    kwds: typing.Dict[str, typing.Any] = field(default_factory=dict)
+    params: typing.Dict = field(default_factory=dict)
     pass_eot = True
 
     @property
