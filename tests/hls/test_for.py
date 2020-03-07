@@ -15,6 +15,7 @@ def test_simple(tmpdir, sim_cls):
 
     sim(tmpdir, timeout=8)
 
+
 # from pygears.sim.modules import SimVerilated
 # test_simple('/tools/home/tmp/test_simple', SimVerilated)
 
@@ -34,4 +35,15 @@ def test_unfold(tmpdir):
     sim(tmpdir, timeout=2)
 
 
-# test_unfold('/tools/home/tmp/test_simple')
+# def test_comprehension(tmpdir):
+#     @gear(hdl={'compile': True})
+#     async def test() -> Array[Uint[3], 4]:
+#         yield Array[Uint[3], 4](i for i in range(4))
+
+#     directed(f=test(), ref=[(0, 1, 2, 3)] * 2)
+
+#     cosim('/test', 'verilator')
+#     sim(tmpdir, timeout=2)
+
+
+# test_comprehension('/tools/home/tmp/test_simple')

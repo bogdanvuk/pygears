@@ -8,6 +8,7 @@ from .utils import add_to_list
 from .stmt import assign_targets, infer_targets
 from .async_stmts import AsyncForContext
 from .inline import form_gear_args, call_gear
+from .generators import parse_generator_expression, is_intf_list
 
 
 @node_visitor(ast.If)
@@ -54,24 +55,6 @@ def _(node: ast.While, ctx: Context):
     return visit_block(pydl_node, node.body, ctx)
 
 
-def is_intf_id(expr):
-    return (isinstance(expr, ir.Name) and isinstance(expr.obj, ir.Variable)
-            and isinstance(expr.obj.val, Intf))
-
-
-def is_intf_list(node):
-    if isinstance(node, ir.ConcatExpr):
-        return all(is_intf_id(v) for v in node.operands)
-
-    if not isinstance(node, ir.ResExpr):
-        return False
-
-    if not isinstance(node.val, list):
-        return False
-
-    return all(isinstance(v, ir.Interface) for v in node.val)
-
-
 def intf_loop(node, intfs, targets, ctx: Context, enumerated):
     rng_intf, stmts = call_gear(qrange, [ir.ResExpr(len(intfs))], {}, ctx)
     ctx.pydl_parent_block.stmts.extend(stmts)
@@ -109,18 +92,11 @@ def intf_loop(node, intfs, targets, ctx: Context, enumerated):
 
 @node_visitor(ast.For)
 def _(node: ast.For, ctx: Context):
-    targets = visit_ast(node.target, ctx)
-
-    out_intf_ref = visit_ast(node.iter, ctx)
+    out_intf_ref, targets, gen_name = parse_generator_expression(node, ctx)
 
     if is_intf_list(out_intf_ref):
         return intf_loop(node, out_intf_ref.operands, targets, ctx,
                          getattr(out_intf_ref, 'enumerated', False))
-
-    gen_name = ctx.find_unique_name('_gen')
-    ctx.scope[gen_name] = ir.Generator(gen_name, out_intf_ref)
-
-    infer_targets(ctx, targets, out_intf_ref.dtype, ir.Variable)
 
     block = ir.LoopBlock(
         stmts=[ir.AssignValue(targets, ir.GenNext(ctx.ref(gen_name)))],
@@ -131,19 +107,3 @@ def _(node: ast.For, ctx: Context):
     block.stmts.append(ir.ExprStatement(ir.GenAck(gen_name)))
 
     return block
-
-    # breakpoint()
-
-    # with AsyncForContext(out_intf_ref, ctx) as stmts:
-    #     data = ir.Component(out_intf_ref.obj, 'data')
-    #     if not getattr(out_intf_ref, 'eot_to_data', False):
-    #         data = ir.SubscriptExpr(data, ir.ResExpr(0))
-
-    #     add_to_list(ctx.pydl_parent_block.stmts,
-    #                 assign_targets(ctx, targets, data, ir.Variable))
-
-    #     for stmt in node.body:
-    #         res_stmt = visit_ast(stmt, ctx)
-    #         add_to_list(ctx.pydl_parent_block.stmts, res_stmt)
-
-    #     return stmts
