@@ -3,8 +3,10 @@ import hashlib
 import functools
 import typing
 
+
 class ResolverTypeError(Exception):
     pass
+
 
 def path_name(path):
     if path.startswith('/'):
@@ -20,6 +22,7 @@ def path_name(path):
             mid.encode()).hexdigest()[:8] + '_' + tail
 
     return full_name
+
 
 class ResolverBase(ABC):
     def __init__(self, node):

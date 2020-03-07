@@ -1,13 +1,7 @@
 import ast
-from . import Context, SyntaxError, node_visitor, ir, visit_ast, visit_block
+from . import Context, SyntaxError, ir, node_visitor, visit_ast
 from pygears import Intf
-from pygears.typing import cast, Integer, Bool, typeof, Queue
-from pygears.lib.rng import qrange
-from pygears.lib.union import select
-from .utils import add_to_list
-from .stmt import assign_targets, infer_targets
-from .async_stmts import AsyncForContext
-from .inline import form_gear_args, call_gear
+from .stmt import infer_targets
 
 
 def is_intf_id(expr):
@@ -34,7 +28,7 @@ def parse_generator_expression(node, ctx):
     out_intf_ref = visit_ast(node.iter, ctx)
 
     if is_intf_list(out_intf_ref):
-        return out_intf_ref, None, None
+        return out_intf_ref, targets, None
 
     gen_name = ctx.find_unique_name('_gen')
     ctx.scope[gen_name] = ir.Generator(gen_name, out_intf_ref)

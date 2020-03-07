@@ -238,21 +238,6 @@ def hdl_check_fixt(tmpdir, request):
         assert sv_files_equal(res_file, ref_file)
 
 
-def sim_check(**kwds):
-    def decorator(func):
-        @wraps(func)
-        def wrapper():
-            report = func()
-            filename, outdir = get_test_res_ref_dir_pair(func)
-            sim(outdir=outdir, **kwds)
-
-            assert all(item['match'] for item in report)
-
-        return wrapper
-
-    return decorator
-
-
 def skip_ifndef(*envars):
     import unittest
     import os
@@ -271,7 +256,8 @@ def skip_sim_if_no_tools():
 @pytest.fixture(params=[
     None,
     # partial(SimVerilated, language='v'),
-    partial(SimVerilated, language='sv'), SimSocket
+    partial(SimVerilated, language='sv'),
+    SimSocket
 ])
 def sim_cls(request):
     sim_cls = request.param
@@ -286,7 +272,8 @@ def sim_cls(request):
 
 @pytest.fixture(params=[
     # partial(SimVerilated, language='v'),
-    partial(SimVerilated, language='sv'), SimSocket
+    partial(SimVerilated, language='sv'),
+    SimSocket
 ])
 def cosim_cls(request):
     cosim_cls = request.param

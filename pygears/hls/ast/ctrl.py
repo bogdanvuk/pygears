@@ -1,13 +1,11 @@
 import ast
-from . import Context, SyntaxError, node_visitor, ir, visit_ast, visit_block
-from pygears import Intf
-from pygears.typing import cast, Integer, Bool, typeof, Queue
+from . import Context, ir, node_visitor, visit_ast, visit_block
 from pygears.lib.rng import qrange
 from pygears.lib.union import select
 from .utils import add_to_list
-from .stmt import assign_targets, infer_targets
+from .stmt import assign_targets
 from .async_stmts import AsyncForContext
-from .inline import form_gear_args, call_gear
+from .inline import call_gear
 from .generators import parse_generator_expression, is_intf_list
 
 

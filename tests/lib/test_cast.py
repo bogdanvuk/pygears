@@ -28,7 +28,7 @@ def cast_cosim_test(tmpdir,
 
     report = verif(drv(t=src_type, seq=seq),
                    f=module(sim_cls=SimVerilated, t=cast_type),
-                   ref=module(name='ref_model', t=cast_type))
+                   ref=module(name='ref_model', t=cast_type), make_report=True)
 
     sim(resdir=tmpdir)
 

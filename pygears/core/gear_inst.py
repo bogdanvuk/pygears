@@ -1,5 +1,6 @@
 import inspect
 import sys
+from copy import copy
 
 from pygears.conf import bind, core_log, registry, safe_bind, MultiAlternativeError, config
 from pygears.typing import Any, cast
@@ -217,7 +218,7 @@ class intf_name_tracer:
 
         cm = self.code_map.pop()
 
-        if exception_type is None:
+        if exception_type is None and hasattr(cm, 'func_locals'):
             for name, val in filter(lambda x: isinstance(x[1], Intf),
                                     cm.func_locals.items()):
                 val.var_name = name
