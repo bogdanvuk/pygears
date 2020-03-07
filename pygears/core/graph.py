@@ -20,6 +20,17 @@ def get_sim_map_gear(gear):
 
 
 def _get_consumer_tree_rec(root_intf, cur_intf, consumers, end_producer):
+    if not cur_intf.consumers:
+        if cur_intf is not root_intf:
+            # breakpoint()
+            port = cur_intf.producer
+            end_producer[cur_intf] = (root_intf, len(consumers))
+            end_producer[port] = (root_intf, len(consumers))
+            # sim_mod = get_sim_map_gear(port.gear)
+            consumers.append(port)
+
+        return
+
     for port in cur_intf.consumers:
         if isinstance(port, HDLConsumer):
             continue

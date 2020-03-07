@@ -3,7 +3,7 @@ import collections
 from pygears.conf import registry
 from pygears.typing.base import GenericMeta, param_subs, is_type
 
-from .type_match import TypeMatchError, type_match
+from pygears.typing import TypeMatchError, get_match_conds
 
 
 def is_type_iterable(t):
@@ -102,7 +102,7 @@ def infer_ftypes(params, args, namespace={}):
                     if isinstance(val, bytes):
                         templ = templ.decode()
 
-                    match_update, res = type_match(args[name], templ, match)
+                    match_update, res = get_match_conds(args[name], templ, match)
                     match.update(match_update)
                     args[name] = res
 
@@ -150,8 +150,18 @@ def infer_ftypes(params, args, namespace={}):
 
                 except Exception as e:
                     if final_check:
-                        err = type(e)(f'{e.args[0]}\n - when resolving '
-                                      f'parameter "{name}": {val}')
+                        try:
+                            arg_repr = str(e.args[0])
+                        except:
+                            arg_repr = repr(e.args[0])
+
+                        try:
+                            val_repr = str(val)
+                        except:
+                            val_repr = repr(val)
+
+                        err = type(e)(f'{arg_repr}\n - when resolving '
+                                      f'parameter "{name}": {val_repr}')
                         err.params = match
                         raise err
 
@@ -161,7 +171,7 @@ def infer_ftypes(params, args, namespace={}):
     # print('Final match: ', match)
 
     for name, val in args.items():
-        type_match(val, match[name], {})
+        get_match_conds(val, match[name], {})
 
     if postponed:
         name, value = next(iter(postponed.items()))

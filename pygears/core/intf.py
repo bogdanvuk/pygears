@@ -6,7 +6,7 @@ from pygears.conf import PluginBase, registry, safe_bind, MultiAlternativeError
 from pygears.core.port import InPort, OutPort
 from pygears.core.partial import Partial
 from pygears.core.sim_event import SimEvent
-from .type_match import TypeMatchError
+from pygears.typing import TypeMatchError
 from pygears.typing import typeof, Any
 from pygears.typing.base import TypingMeta
 from pygears.conf import inject, Inject
@@ -61,6 +61,7 @@ class Intf:
             'finish': SimEvent()
         }
 
+    # TODO: type checking should be performed here, right?
     def __ior__(self, iout):
         if isinstance(iout, Partial):
             raise Exception(
@@ -145,21 +146,25 @@ class Intf:
         return self._out_queues
 
     def put_nb(self, val):
-        if any(get_sim_map_gear(c.gear).done for c in self.end_consumers):
+        if any(c.consumer._done for c in self.end_consumers):
             raise GearDone
 
         put_event = self.events['put']
 
         if self.dtype is not type(val):
+            err = None
             try:
                 if not typeof(self.dtype, Any):
                     val = self.dtype(val)
-            except TypeError:
+            except (TypeError, ValueError) as e:
+                err = e
+
+            if err:
+                # TODO: when value cannot be represented, the error report can be terse
                 raise TypeMatchError(
-                    f'Output data "{repr(val)}" from the'
-                    f' "{registry("gear/current_module").name}"'
-                    f' module cannot be converted to the type'
-                    f' {repr(self.dtype)}')
+                    f'{str(err)}\n, when converting output data "{repr(val)}"'
+                    f'from the "{registry("gear/current_module").name}"'
+                    f' module cannot to the type {repr(self.dtype)}')
 
         if put_event:
             put_event(self, val)

@@ -175,7 +175,7 @@ async def mon(din, *, t=b'din') -> Any:
 
 
 @gear
-async def scoreboard(*din: b't', report, cmp=None) -> None:
+async def scoreboard(*din: b't', report=None, cmp=None) -> None:
     """Generic scoreboard used from comparing actual results from the DUT to
     expected results. Eventual mismatches are asserted using the ``sim_assert``
     function meaning that any ``error`` behaviour is controled via the ``sim``
@@ -208,7 +208,9 @@ async def scoreboard(*din: b't', report, cmp=None) -> None:
 
             match = all(cmp(v, items[0]) for v in items)
 
-            report.append({'match': match, 'items': items})
+            if report is not None:
+                report.append({'match': match, 'items': items})
+
             cnt += 1
             if match:
                 match_cnt += 1
@@ -294,7 +296,7 @@ def tlm_verif(*seq, f, ref):
     return report
 
 
-def verif(*stim, f, ref, delays=None, cmp=None, check_timing=False):
+def verif(*stim, f, ref, delays=None, cmp=None, check_timing=False, make_report=False):
     """Verification environment for comparing DUV results with reference model.
     The environment instantiates the DUV and reference model and drives the
     passed stimulus to both. The outpus are passed to the scoreboard which
@@ -327,7 +329,10 @@ def verif(*stim, f, ref, delays=None, cmp=None, check_timing=False):
         res_tlm = (res_tlm, )
         ref_tlm = (ref_tlm, )
 
-    report = [[] for _ in range(len(res_tlm))]
+    if make_report:
+        report = [[] for _ in range(len(res_tlm))]
+    else:
+        report = [None for _ in range(len(res_tlm))]
 
     if delays is None:
         delays = (None, ) * len(res_tlm)

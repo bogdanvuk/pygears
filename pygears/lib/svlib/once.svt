@@ -5,6 +5,7 @@
    logic [{{int(params['tout'])}}-1 : 0] din_reg_data;
    logic                         din_reg_valid;
    logic                         reg_ready;
+   logic                         reg_empty;
 
    assign reg_ready = reg_empty | dout.ready;
    assign reg_empty = !din_reg_valid;

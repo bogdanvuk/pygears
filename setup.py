@@ -40,6 +40,7 @@ def readme():
               encoding='utf-8') as f:
         return f.read()
 
+# TODO: Make it work for new jinja versions
 
 setup(
     name='pygears',
@@ -63,10 +64,10 @@ setup(
     include_package_data=True,
     keywords='functional hardware design Python simulator HDL ASIC FPGA Gears',
     install_requires=[
-        'jinja2>=2.10', 'dataclasses;python_version<"3.7"', 'pyvcd'
+        'jinja2==2.10', 'dataclasses;python_version<"3.7"', 'pyvcd'
     ],
     setup_requires=[
-        'jinja2>=2.10', 'dataclasses;python_version<"3.7"', 'pyvcd'
+        'jinja2==2.10', 'dataclasses;python_version<"3.7"', 'pyvcd'
     ],
     packages=find_packages(exclude=['examples*', 'docs']),
     entry_points={

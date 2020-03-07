@@ -4,6 +4,8 @@ from . import Array, Int, Integer, Queue, Tuple, Uint, Union, Maybe
 from . import Fixpnumber, Float, Number, Ufixp, Fixp, Unit
 # from pygears.conf.log import gear_log
 
+# TODO: Find solution for when a filed of a complex data type needs to be
+# recoded (for an example to a smaller width). This doesn't work properly
 
 def code(data, cast_type=Uint):
     if is_type(data):
@@ -362,8 +364,20 @@ def union_type_cast_resolver(dtype, cast_type):
 
 
 def queue_type_cast_resolver(dtype, cast_type):
-    if (typeof(dtype, Queue) and (len(cast_type.args) == 0)):
-        return dtype
+    if typeof(dtype, Queue):
+        if len(cast_type.args) == 0:
+            return dtype
+
+        if dtype.lvl != cast_type.lvl:
+            raise get_type_error(
+                dtype, cast_type,
+                [f"Queue level ({dtype.lvl}) must match the cast Queue lelve ({cast_type.lvl})"])
+
+        try:
+            return Queue[cast(dtype.data, cast_type.data), cast_type.lvl]
+        except TypeError as e:
+            raise TypeError(
+                f"{str(e)}\n    - when casting '{repr(dtype)}' to '{repr(cast_type)}'")
 
     if typeof(dtype, Tuple):
         if len(dtype) != 2:
@@ -499,21 +513,23 @@ def array_value_cast_resolver(val, cast_type):
     val_type = type(val)
     cast_type = array_type_cast_resolver(val_type, cast_type)
 
-    return cast_type(tuple(cast(v, cast_type.data) for v in val))
+    return cast_type(tuple(cast(v, t) for v, t in zip(val, cast_type)))
 
 
 def union_value_cast_resolver(val, cast_type):
     val_type = type(val)
     cast_type = union_type_cast_resolver(val_type, cast_type)
 
-    return cast_type(tuple(cast(v, cast_type.data) for v in val))
+    data = cast_type.data(val[0].code())
+    ctrl = cast_type.ctrl(val[1])
+    return cast_type((data, ctrl))
 
 
 def queue_value_cast_resolver(val, cast_type):
     val_type = type(val)
     cast_type = queue_type_cast_resolver(val_type, cast_type)
 
-    return cast_type(tuple(cast(v, cast_type.data) for v in val))
+    return cast_type(tuple(cast(v, t) for v, t in zip(val, cast_type)))
 
 
 def fixpnumber_value_cast_resolver(val, cast_type):

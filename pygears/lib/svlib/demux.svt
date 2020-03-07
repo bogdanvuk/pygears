@@ -5,8 +5,10 @@
     {{snippet.intf_typedef(_din, depth=0)}}
 
 {% for i in (intfs|isoutput) %}
-  {% if _din_t.data.width > 0 %}
-    assign {{i['name']}}.data = din_s.data;
+  {% if _din_t.data.width > 0 and i['width'] > 0 %}
+    assign {{i['name']}}.data = din_s.data[{{i['width']-1}}:0];
+  {% else %}
+    assign {{i['name']}}.data = 1'bx;
   {% endif %}
 {% endfor %}
 

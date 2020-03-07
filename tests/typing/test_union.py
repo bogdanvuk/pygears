@@ -63,6 +63,12 @@ def test_indexing():
     assert a[1] == Uint[2]
 
 
+def test_define_with_tuple():
+    assert Union[Uint[1], Uint[2]] == Union[(Uint[1], Uint[2])]
+    assert Union[Uint[1]] == Union[(Uint[1], )]
+    assert Union[Uint[1], Uint[2], Uint[3]] == Union[tuple(Uint[i] for i in range(1, 4))]
+
+
 def test_decode_int():
     subt0 = Tuple[Int[8], Int[4]]
     subt1 = Tuple[Int[4], Int[8]]
@@ -77,5 +83,5 @@ def test_decode_int():
     val1 = (-8, -128)
     code1 = int(dtype_tuple1((subt1(val1), 1)))
 
-    assert(dtype.decode(code0).data == val0)
-    assert(dtype.decode(code1).data == val1)
+    assert (dtype.decode(code0).data == val0)
+    assert (dtype.decode(code1).data == val1)

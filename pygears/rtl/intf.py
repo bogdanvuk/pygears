@@ -44,13 +44,22 @@ class RTLIntf(NamedHierNode):
         if self.is_port_intf:
             return basename
 
+        cnt = 0
         for c in self.parent.child:
-            if c is not self and c._basename == basename:
-                return f'{self._basename}_s'
+            if c is self:
+                break
+
+            if c._basename == basename:
+                cnt += 1
 
         for p in self.parent.out_ports:
             if p.basename == basename:
-                return f'{self._basename}_s'
+                cnt += 1
+
+        if cnt == 1:
+            basename = f'{self._basename}_s'
+        else:
+            basename = f'{self._basename}{cnt}_s'
 
         return basename
 

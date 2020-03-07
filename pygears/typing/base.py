@@ -40,7 +40,7 @@ def index_norm_hashable_single(i, size):
             i = size + i
 
         if i >= size:
-            raise IndexError
+            raise IndexError(f'index {i} out of bounds')
 
         return i
 
@@ -121,6 +121,9 @@ class GenericMeta(TypingMeta):
         # TODO: Throw error when too many args are supplied
         if (not bases) or (not hasattr(bases[0], 'args')) or (not bases[0].args):
             # Form a class that has the generic arguments specified
+
+            # TODO: dict parenthesis can be avoided and Python will parse dict
+            # like structure as list of slices. Maybe try this to reduce clutter
             if isinstance(args, dict):
                 namespace.update(
                     {
@@ -373,12 +376,18 @@ def param_subs(t, matches, namespace):
 
     # Did we reach the parameter name?
     if isinstance(t, str):
+        if t.isidentifier():
+            return matches.get(t, namespace.get(t, t))
+
+        err = None
         try:
             return eval(t, namespace, matches)
         except Exception as e:
-            return t_orig
-            # raise Exception(
-            #     f"{str(e)}\n - while evaluating parameter string '{t}'")
+            err = e
+
+        if err:
+            raise type(err)(
+                f"{str(err)}\n - while evaluating string parameter '{t}'")
 
     elif isinstance(t, collections.abc.Iterable):
         return type(t)(param_subs(tt, matches, namespace) for tt in t)

@@ -1,4 +1,4 @@
-from pygears import gear, alternative
+from pygears import gear, alternative, module
 from .fmaps import tuplemap
 from .flatten import flatten
 from .filt import filt
@@ -23,6 +23,18 @@ def expand(din, *, depth=16) -> b'expand_type(din)':
                            fmux=mux_zip, fdemux=demux_zip, sel=i)
 
     return union_din
+
+
+def check_single_last_union(din):
+    return (
+        len([isinstance(t, Union) for t in din.fields])
+        and isinstance(din.fields[-1], Union))
+
+
+@alternative(expand)
+@gear(enablement=b'check_single_last_union(din)')
+def expand_tuple_single_end_union(din: Tuple) -> b'expand_type(din)':
+    return din >> module().tout
 
 
 @alternative(expand)
@@ -57,8 +69,7 @@ def expand_tuple(din: Tuple) -> b'expand_type(din)':
             if (typeof(t, Union)):
                 if (data_indices[0] < len(t.types)):
                     if (int(t.types[data_indices[0]]) != 0):
-                        data.append(din[j][0]
-                                    >> Uint[int(t.types[data_indices.pop(0)])])
+                        data.append(din[j][0] >> Uint[int(t.types[data_indices.pop(0)])])
                     else:
                         data_indices.pop(0)
                 else:

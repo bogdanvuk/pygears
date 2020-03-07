@@ -25,7 +25,11 @@
   {%- set out_intf_names = intfs|isoutput|keymap("name") %}
 
     logic all_aligned;
+    logic all_valid;
     logic handshake;
+
+    assign all_valid = {{input_intf_names|format_list("%s.valid")|join(" && ")}};
+
   {% for name in input_intf_names %}
     {% if min_lvl > 0 %}
     logic [{{min_lvl-1}}:0] {{name}}_eot_overlap;
@@ -52,7 +56,7 @@
   {% for din, dout in zip(input_intf_names, out_intf_names) %}
     assign {{dout}}.valid = {{din}}.valid & all_aligned;
     assign {{dout}}.data = {{din}}_s;
-    assign {{din}}.ready = {{din}}.valid && ({{dout}}.ready || !{{din}}_eot_aligned);
+    assign {{din}}.ready = {{din}}.valid && ({{dout}}.ready || (all_valid && !{{din}}_eot_aligned));
   {% endfor %}
 
 {% endcall %}

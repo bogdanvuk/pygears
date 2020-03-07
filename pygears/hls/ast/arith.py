@@ -2,7 +2,7 @@ import ast
 from pygears.typing import Any, Fixpnumber, Tuple, Uint, Unit
 from . import ir, Context
 from .call import parse_func_call
-from pygears.core.type_match import type_match, TypeMatchError
+from pygears.typing import get_match_conds, TypeMatchError
 
 
 def tuple_mul_resolver(opexp, ctx: Context):
@@ -84,7 +84,7 @@ def resolve_arith_func(op, opexp, ctx: Context):
         for templ in op_resolvers:
             try:
                 try:
-                    type_match(opexp[0].dtype, templ)
+                    get_match_conds(opexp[0].dtype, templ)
                 except AttributeError:
                     breakpoint()
 
