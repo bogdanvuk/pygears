@@ -218,7 +218,7 @@ class StateIsolator(HDLVisitor):
             if (self.cur_state and self.state_id != list(node.state)[0]):
                 # and node.out_blocking):
 
-                block.append(
+                block.stmts.append(
                     ir.AssignValue(
                         self.ctx.ref('state', ctx='store'),
                         ir.Await(ir.ResExpr(list(node.state)[0]),

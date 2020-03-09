@@ -1,5 +1,6 @@
 from .utils import Scope, HDLVisitor, res_true, add_to_list, ir, res_false, IrExprRewriter
 from pygears.typing import cast
+from ..ast.call import builtins
 
 
 class Inliner(IrExprRewriter):
@@ -7,17 +8,24 @@ class Inliner(IrExprRewriter):
         self.forwarded = forwarded
 
     def visit_Name(self, node):
-        if ((node.name in self.forwarded) and (node.ctx == 'load')):
-            return self.forwarded[node.name]
+        if ((node.name not in self.forwarded) or (node.ctx != 'load')):
+            return None
 
-        return None
+        val = self.forwarded[node.name]
+
+        if isinstance(val, ir.ResExpr) and getattr(
+                val.val, 'unknown', False):
+            return node
+
+        return val
 
 
 class InlineValues(HDLVisitor):
-    def __init__(self, ctx):
+    def __init__(self, ctx, res_expr_only=False):
         self.ctx = ctx
         self.block_stack = []
         self.forwarded = Scope()
+        self.res_expr_only = res_expr_only
 
     @property
     def block(self):
@@ -62,7 +70,11 @@ class InlineValues(HDLVisitor):
                     del self.forwarded[target.name]
 
             elif isinstance(target, ir.SubscriptExpr):
-                del_forward_subvalue(target.val)
+                if isinstance(target.index, ir.ResExpr):
+                    if str(target) in self.forwarded:
+                        del self.forwarded[str(target)]
+                else:
+                    del_forward_subvalue(target.val)
 
         def get_forward_value(target):
             if isinstance(target, ir.Name):
@@ -83,8 +95,16 @@ class InlineValues(HDLVisitor):
 
         def forward_value(target, val):
             if isinstance(target, ir.Name):
+                if self.res_expr_only and not isinstance(val, ir.ResExpr):
+                    return False
+
+                # if isinstance(val, ir.ResExpr) and getattr(
+                #         val.val, 'unknown', False):
+                #     return False
+
                 self.forwarded[target.name] = val
                 return True
+
             elif isinstance(target, ir.ConcatExpr):
                 for i, t in enumerate(target.operands):
                     forward_value(t, ir.SubscriptExpr(val, ir.ResExpr(i)))
@@ -116,6 +136,28 @@ class InlineValues(HDLVisitor):
             return None
 
         return node
+
+    def ExprStatement(self, stmt: ir.ExprStatement):
+        stmt.expr = self.inline_expr(stmt.expr)
+        if (isinstance(stmt.expr, ir.CallExpr)
+                and isinstance(stmt.expr.func, ir.ResExpr)):
+            func = stmt.expr.func.val
+            if hasattr(func, '__self__'):
+                obj = func.__self__
+                func = getattr(type(obj), func.__name__)
+                if isinstance(obj, ir.OutSig):
+                    obj = self.ctx.ref(obj.name)
+
+                stmt.expr.args = [obj] + stmt.expr.args
+
+            if func in builtins:
+                res = builtins[func](*stmt.expr.args, **stmt.expr.kwds)
+                if isinstance(res, ir.Statement):
+                    return res
+                else:
+                    stmt.expr = res
+
+        return stmt
 
     def Statement(self, stmt: ir.Statement):
         return stmt
@@ -151,6 +193,9 @@ class InlineValues(HDLVisitor):
         return res
 
     def LoopBlock(self, block: ir.LoopBlock):
+        if self.res_expr_only:
+            return self.BaseBlock(block)
+
         block.in_cond = self.inline_expr(block.in_cond)
 
         looped_init = False
@@ -256,7 +301,8 @@ class InlineResValues(HDLVisitor):
 
 
 def inline_res(modblock, ctx):
-    InlineResValues(ctx).visit(modblock)
+    # InlineValues(ctx, res_expr_only=True).visit(modblock)
+    # InlineResValues(ctx).visit(modblock)
     return modblock
 
 

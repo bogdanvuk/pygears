@@ -1,6 +1,6 @@
 from pygears import gear
 from pygears.typing import Queue, Uint, bitw, Array, Union
-from .rng import rng
+from .rng import qrange
 from .flatten import flatten
 from .ccat import ccat
 from .demux import demux
@@ -8,8 +8,8 @@ from .demux import demux
 
 # TODO: fix qdeal
 @gear(hdl={'compile': True})
-async def qdeal(
-        din: Queue, *, num, lvl=b'din.lvl-1') -> b'(Queue[din.data, din.lvl-1], ) * num':
+async def qdeal(din: Queue, *, num,
+                lvl=b'din.lvl-1') -> b'(Queue[din.data, din.lvl-1], ) * num':
     """Short for Trasaction Round Robin Distributed, outputs data to one of the
     outpus interfaces following a `Round Robin` schedule. The outpus are
     switched when the input transaction ends. The ``din`` type is at least a
@@ -43,6 +43,6 @@ async def qdeal(
 
 @gear
 def deal(din, *, num) -> b'(din, ) * num':
-    return ccat(din, rng(num) | flatten) \
+    return ccat(din, qrange(num - 1, inclusive=True) | flatten) \
         | Union \
         | demux(use_dflt=False, mapping={i: i for i in range(num)})

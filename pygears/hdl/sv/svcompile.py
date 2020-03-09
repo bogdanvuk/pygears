@@ -196,6 +196,9 @@ class SVCompiler(HDLVisitor):
         if not self.selected(base_target):
             return
 
+        if val.dtype is None:
+            return
+
         target = svexpr(target, self.aux_funcs)
         svstmt = f"{target} = {svexpr(val, self.aux_funcs)}"
 
@@ -254,7 +257,7 @@ class SVCompiler(HDLVisitor):
 
         self.trim_cur_block()
 
-        for target, svstmt in self.defaults.items.items():
+        for target, svstmt in reversed(list(self.defaults.items.items())):
             self.prepend(svstmt)
 
         self.footer('end')
@@ -411,6 +414,9 @@ def write_module(ctx: Context,
         writer.line()
 
     for name, expr in ctx.variables.items():
+        if expr.dtype is None:
+            continue
+
         name_t = typedef_or_inline(writer, expr.dtype, name)
         writer.line(f'{name_t} {name};')
         writer.line()

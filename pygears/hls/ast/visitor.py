@@ -280,15 +280,17 @@ def visit_block(pydl_node, body, ctx):
         res_stmt = visit_ast(stmt, ctx)
         add_to_list(pydl_node.stmts, res_stmt)
 
-    for s in pydl_node.stmts:
-        if isinstance(s, ir.Expr):
+    # Remove expressions that are added as block statements
+    stmts = pydl_node.stmts
+    pydl_node.stmts = []
+    for s in stmts:
+        if isinstance(s, ir.CallExpr):
+            pydl_node.stmts.append(ir.ExprStatement(s))
+        elif isinstance(s, ir.Expr):
             print("Expression as statement!")
             print(s)
-
-    # Remove expressions that are added as block statements
-    pydl_node.stmts = [
-        s for s in pydl_node.stmts if not isinstance(s, ir.Expr)
-    ]
+        else:
+            pydl_node.stmts.append(s)
 
     ctx.pydl_block_closure.pop()
 

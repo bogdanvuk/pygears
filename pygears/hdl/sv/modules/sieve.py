@@ -38,7 +38,7 @@ def get_sieve_stages_iter(node):
         out_type = s.out_ports[0].dtype
         slices = list(
             map(partial(index_to_sv_slice, dtype),
-                filter(lambda i: int(dtype[i]) > 0, indexes)))
+                filter(lambda i: getattr(dtype[i], 'width', 0) > 0, indexes)))
         yield slices, out_type
 
 

@@ -1,5 +1,5 @@
 from pygears import gear
-from pygears.typing import Queue, Tuple, Uint, code
+from pygears.typing import Queue, Tuple, Uint, code, Array
 from .ccat import ccat
 from .czip import czip
 
@@ -22,5 +22,9 @@ async def sot_queue(din: Queue['data', 'lvl'],
         yield (data, sot)
 
         neot = (~eot) << 1
-        sot = code(
-            [(eot[i] if i == 0 else (sot[i] & neot[i])) for i in range(lvl)], Uint[lvl])
+
+        sot_arr = Array[Uint[1], lvl](None)
+        for i in range(lvl):
+            sot_arr[i] = eot[i] if i == 0 else sot[i] & neot[i]
+
+        sot = code(sot_arr, Uint)

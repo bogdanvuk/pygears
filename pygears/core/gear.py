@@ -209,14 +209,14 @@ class create_hier:
         bind('gear/current_module', self.gear.parent)
 
 
-@dataclass
+@dataclass(frozen=True, eq=True)
 class InSig:
     name: str
     width: int
     modport: str = 'input'
 
 
-@dataclass
+@dataclass(frozen=True, eq=True)
 class OutSig:
     name: str
     width: int

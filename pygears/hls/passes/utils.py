@@ -216,6 +216,9 @@ class IrExprVisitor:
         visitor = getattr(self, method, self.generic_visit)
         return visitor(node)
 
+    def visit_CallExpr(self, node):
+        self.visit(node.func)
+
     def visit_AttrExpr(self, node):
         self.visit(node.val)
 
@@ -266,6 +269,13 @@ class IrExprRewriter:
         operand = self.visit(node.operand)
         if operand is not None:
             return ir.CastExpr(operand, node.cast_to)
+
+        return node
+
+    def visit_CallExpr(self, node):
+        func = self.visit(node.func)
+        if func is not None:
+            return ir.CallExpr(func, node.args, node.kwds, node.params)
 
         return node
 

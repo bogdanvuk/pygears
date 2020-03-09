@@ -793,7 +793,7 @@ class FunctionCall(Expr):
 
 
 @dataclass
-class GenCallExpr(Expr):
+class CallExpr(Expr):
     func: typing.Any
     args: typing.Tuple[OpType]
     kwds: typing.Dict[str, typing.Any] = field(default_factory=dict)
@@ -815,7 +815,7 @@ class GenCallExpr(Expr):
 @dataclass
 class Generator:
     name: str
-    func: GenCallExpr
+    func: CallExpr
 
     @property
     def dtype(self):
@@ -857,7 +857,6 @@ class GenAck(Expr):
 class Statement:
     in_await: Expr = res_true
     exit_await: Expr = res_true
-    parent: typing.Type['BaseBlock'] = None
 
 
 @attr.s(auto_attribs=True)
@@ -993,33 +992,6 @@ class BaseBlock(Statement):
     def __attrs_post_init__(self):
         if self.stmts is None:
             self.stmts = []
-
-        for s in self.stmts:
-            s.parent = self
-
-    def insert(self, index, stmt):
-        stmt.parent = self
-        self.stmts.insert(index, stmt)
-
-    def append(self, stmt):
-        stmt.parent = self
-        self.stmts.append(stmt)
-
-    def add(self, stmts):
-        if isinstance(stmts, (list, tuple)):
-            for s in stmts:
-                self.append(s)
-        else:
-            self.append(stmts)
-
-    def stmt_pred(self, stmt):
-        pred = None
-        for s in self.stmts:
-            if s is stmt:
-                break
-            pred = s
-
-        return pred
 
     def __str__(self):
         body = ''

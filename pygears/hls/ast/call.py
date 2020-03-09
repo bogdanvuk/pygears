@@ -87,7 +87,7 @@ def resolve_gear_call(func, args, kwds):
         except TypeMatchError:
             pass
         else:
-            return ir.GenCallExpr(f, args, kwds, params)
+            return ir.CallExpr(f, args, kwds, params)
 
 
 def call_floor(arg):
@@ -175,7 +175,8 @@ def call_sub(obj, arg):
 
 
 def outsig_write(obj, arg):
-    return ir.SignalStmt(ir.SignalDef(obj), arg)
+    # return ir.SignalStmt(ir.SignalDef(obj), arg)
+    return ir.AssignValue(obj, arg)
 
 
 def call_get(obj, *args, **kwds):
@@ -236,9 +237,9 @@ def call_qrange(*args):
 
 
 def call_range(*args):
-    ret = ir.GenCallExpr(range,
-                         dict(zip(['start', 'stop', 'step'], args)),
-                         params={'return': Queue[args[0].dtype]})
+    ret = ir.CallExpr(range,
+                      dict(zip(['start', 'stop', 'step'], args)),
+                      params={'return': Queue[args[0].dtype]})
     # ret = resolve_gear_call(qrange_gear.func, args, {})
     ret.pass_eot = False
     return ret
@@ -285,11 +286,14 @@ compile_time_builtins = {
 def _(node, ctx: Context):
     name = visit_ast(node.func, ctx)
 
-    assert isinstance(name, ir.ResExpr)
-
-    func = name.val
+    assert isinstance(name, (ir.ResExpr, ir.AttrExpr))
 
     args, kwds = parse_func_args(node.args, node.keywords, ctx)
+
+    if not isinstance(name, ir.ResExpr):
+        return ir.CallExpr(name, args, kwds)
+
+    func = name.val
 
     if is_type(func):
         if const_func_args(args, kwds):

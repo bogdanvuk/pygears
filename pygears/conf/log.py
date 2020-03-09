@@ -135,6 +135,8 @@ class LogFmtFilter(logging.Filter):
                     stack_num = sum(1 for _ in f)
             else:
                 stack_num = 0
+
+            # TODO: improve error reporting in this way
             record.stack_file = f'\n  File "{self.stack_traceback_fn}", line {stack_num}, for stacktrace'
             *_, last_frame = enum_stacktrace()
             record.err_file = f'\n{last_frame}' [:-1]

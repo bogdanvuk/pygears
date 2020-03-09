@@ -15,8 +15,8 @@ class RemoveDeadCode(HDLVisitor):
         block.stmts = stmts
         return block
 
-    def ExprStatement(self, stmt: ir.ExprStatement):
-        return None
+    # def ExprStatement(self, stmt: ir.ExprStatement):
+    #     return None
 
     # TODO: Implement things properly for IfElseBlock (What if middle elif is missing?)
 

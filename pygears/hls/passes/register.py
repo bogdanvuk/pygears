@@ -72,8 +72,14 @@ class InferRegisters(HDLVisitor):
         self.find_unspecified(node.val)
 
         for t in node.base_targets:
-            self.assigned[t.name] = node.val
+            if (isinstance(node.target, ir.SubscriptExpr)
+                    and isinstance(node.target.index, ir.ResExpr)):
+                self.assigned[str(node.target)] = node.val
+            elif not isinstance(node.val, ir.ResExpr) or not getattr(
+                    node.val.val, 'unknown', False):
+                self.assigned[t.name] = node.val
 
+        # TODO: What's with this? Revisit if this should handle the case above
         for t in node.partial_targets:
             self.unspecified.add(t.name)
 

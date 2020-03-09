@@ -3,7 +3,7 @@ import sys
 from copy import copy
 
 from pygears.conf import bind, core_log, registry, safe_bind, MultiAlternativeError, config
-from pygears.typing import Any, cast
+from pygears.typing import Any, cast, is_type
 from pygears.core.util import is_standard_func, get_function_context_dict
 
 from .partial import Partial
@@ -534,7 +534,7 @@ class GearInstPlugin(GearDecoratorPlugin):
     def bind(cls):
         safe_bind('gear/code_map', [])
         safe_bind('gear/gear_dflt_resolver', sim_compile_resolver)
-        config.define('gear/memoize', True)
+        config.define('gear/memoize', False)
 
     @classmethod
     def reset(cls):

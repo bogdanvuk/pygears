@@ -2,7 +2,6 @@ from .fmap import fmap
 from pygears.lib.fmaps import unionmap, queuemap, tuplemap, arraymap
 
 from .expand import expand
-from .local_rst import local_rst
 from .factor import factor
 from .flatten import flatten
 from .project import project
@@ -75,17 +74,17 @@ __all__ = [
     'permuted_apply', 'const', 'once', 'mux', 'demux', 'shred', 'cart_sync',
     'decouple', 'dreg', 'regout', 'unzip', 'serialize', 'project', 'fifo',
     'factor', 'fill', 'mux_zip', 'demux_zip', 'demux_ctrl', 'data_dly',
-    'union_sync', 'union_collapse', 'ucase', 'filt', 'buff', 'local_rst',
-    'queue_wrap_from', 'demux_by', 'mux_by', 'align', 'cart_sync_with', 'when',
-    'union_sync_with', 'select', 'case', 'fix', 'xor', 'rng', 'qrange',
-    'priority_mux', 'qcnt', 'sdp', 'chop', 'qinterlace', 'interlace',
-    'replicate', 'qdeal', 'deal', 'clip', 'din_cat', 'take',
-    'release_after_eot', 'reverse', 'form_sub_cfg', 'reduce2', 'group',
-    'repack', 'priority_mux_valve', 'max2', 'unary', 'alternate_queues',
-    'delay', 'delay_rng', 'delay_gen', 'directed', 'verif', 'collect', 'rom',
-    'drv', 'drvrnd', 'check', 'mon', 'reduce', 'accum', 'pipe', 'funclut',
-    'truncate', 'round_half_up', 'round_to_zero', 'round_to_even', 'add',
-    'div', 'eq', 'ge', 'gt', 'invert', 'iceil', 'le', 'lt', 'mod', 'mul', 'ne',
-    'neg', 'sub', 'shl', 'shr', 'xor', 'scoreboard', 'scope', 'sample',
-    'trigreg', 'regmap', 'saturate', 'qround', 'parallelize', 'ping', 'state'
+    'union_sync', 'union_collapse', 'ucase', 'filt', 'buff', 'queue_wrap_from',
+    'demux_by', 'mux_by', 'align', 'cart_sync_with', 'when', 'union_sync_with',
+    'select', 'case', 'fix', 'xor', 'rng', 'qrange', 'priority_mux', 'qcnt',
+    'sdp', 'chop', 'qinterlace', 'interlace', 'replicate', 'qdeal', 'deal',
+    'clip', 'din_cat', 'take', 'release_after_eot', 'reverse', 'form_sub_cfg',
+    'reduce2', 'group', 'repack', 'priority_mux_valve', 'max2', 'unary',
+    'alternate_queues', 'delay', 'delay_rng', 'delay_gen', 'directed', 'verif',
+    'collect', 'rom', 'drv', 'drvrnd', 'check', 'mon', 'reduce', 'accum',
+    'pipe', 'funclut', 'truncate', 'round_half_up', 'round_to_zero',
+    'round_to_even', 'add', 'div', 'eq', 'ge', 'gt', 'invert', 'iceil', 'le',
+    'lt', 'mod', 'mul', 'ne', 'neg', 'sub', 'shl', 'shr', 'xor', 'scoreboard',
+    'scope', 'sample', 'trigreg', 'regmap', 'saturate', 'qround',
+    'parallelize', 'ping', 'state'
 ]

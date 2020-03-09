@@ -7,6 +7,7 @@ SLICE_FUNC_TEMPLATE = """function [{2}:0] slice_{0}_{1}(input [{0}:0] val);
 endfunction
 """
 
+
 def get_slice_func(aux_funcs, start, stop):
     name = f'slice_{stop}_{start}'
     if name not in aux_funcs:
@@ -36,10 +37,9 @@ class SVExpressionVisitor:
 
     def visit_ResExpr(self, node):
         if isinstance(node.val, tuple):
-            return (
-                '{' +
-                ', '.join(f"{type(op).width}'d{self.visit(ir.ResExpr(op))}"
-                          for op in reversed(node.val)) + '}')
+            return ('{' +
+                    ', '.join(f"{type(op).width}'d{self.visit(ir.ResExpr(op))}"
+                              for op in reversed(node.val)) + '}')
 
         if getattr(node.val, 'unknown', False):
             return f"{node.dtype.width}'bx"
@@ -65,7 +65,8 @@ class SVExpressionVisitor:
         if name in sv_keywords:
             name = f'pg_{name}'
 
-        if node.ctx == 'store' and isinstance(node.obj, ir.Variable) and node.obj.reg:
+        if node.ctx == 'store' and isinstance(node.obj,
+                                              ir.Variable) and node.obj.reg:
             return f'{name}_next'
 
         if node.ctx in ['en']:
@@ -182,19 +183,31 @@ class SVExpressionVisitor:
                 stop = int(index.stop) - 1
                 start = int(index.start)
 
-                #TODO: To make this general, we need a function for slicing expressions
                 if isinstance(node.val, (ir.Name, ir.AttrExpr)):
                     return f'{val}[{stop}:{start}]'
+            else:
+                if index == node.val.dtype.keys()[0]:
+                    start = 0
                 else:
-                    fname = get_slice_func(self.aux_funcs, start, stop)
-                    return f'{fname}({val})'
+                    start = int(node.val.dtype[:index])
 
-            index = int(index)
+                stop = start + node.val.dtype[index].width - 1
+                index = int(index)
 
-            if typeof(node.val.dtype, (Array, Integral)):
-                return f'{val}[{index}]'
-            elif typeof(node.val.dtype, (Tuple, Union, Queue)):
-                return f'{val}.{node.val.dtype.fields[index]}'
+                if isinstance(node.val, (ir.Name, ir.AttrExpr, ir.Component)):
+                    if typeof(node.val.dtype, (Tuple, Union, Queue)):
+                        return f'{val}.{node.val.dtype.fields[index]}'
+                    else:
+                        return f'{val}[{index}]'
+
+            if isinstance(node.val, ir.ResExpr):
+                if typeof(node.val.dtype, (Array, Integral)):
+                    return f'{val}[{index}]'
+                elif typeof(node.val.dtype, (Tuple, Union, Queue)):
+                    return f'{val}.{node.val.dtype.fields[index]}'
+            else:
+                fname = get_slice_func(self.aux_funcs, start, stop)
+                return f'{fname}({val})'
 
         if typeof(node.val.dtype, (Array, Queue, Integer, Tuple, Union)):
             return f'{val}[{self.visit(node.index)}]'

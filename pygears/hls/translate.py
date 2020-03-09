@@ -8,6 +8,8 @@ from .passes import (inline, inline_res, remove_dead_code, infer_exit_cond,
 
 
 def translate_gear(gear: Gear):
+    print(f'*** Translating: {gear.name} ***')
+
     exec_context = registry('gear/exec_context')
     bind('gear/exec_context', 'hls')
 
