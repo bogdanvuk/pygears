@@ -164,7 +164,11 @@ class AddIntfOperPlugin(IntfOperPlugin):
 @flow_visitor
 class SVRemoveReplicate(RTLGearHierVisitor):
     def reinterpret(self, node):
-        node.bypass()
+        pout = node.out_ports[0]
+        pin = node.in_ports[0]
+
+        if getattr(pin.dtype, 'width', 0) == getattr(pout.dtype, 'width', 0):
+            node.bypass()
 
 
 class RTLReinterpretPlugin(VGenPlugin, SVGenPlugin):
