@@ -5,6 +5,8 @@ from .ast.utils import get_function_ast
 from . import ir
 from .passes import (inline, inline_res, remove_dead_code, infer_exit_cond,
                      infer_registers, schedule, infer_in_cond, handle_generators)
+from .debug import hls_enable_debug_log
+from .debug import print_gear_parse_intro
 
 
 def translate_gear(gear: Gear):
@@ -32,35 +34,31 @@ def translate_gear(gear: Gear):
 
 
 def transform(modblock, ctx: GearContext):
-    print('*** Initial ***')
-    print(modblock)
+    # print('*** Initial ***')
+    # print(modblock)
 
     modblock = handle_generators(modblock, ctx)
-    print('*** Handle Generators ***')
-    print(modblock)
+    # print('*** Handle Generators ***')
+    # print(modblock)
 
-    print('*** Schedule ***')
+    # print('*** Schedule ***')
     modblock = schedule(modblock, ctx)
 
-    modblock = inline_res(modblock, ctx)
-    print('*** Inline ResExpr values ***')
-    print(modblock)
-
     modblock = infer_registers(modblock, ctx)
-    print('*** Infer registers ***')
-    print(modblock)
+    # print('*** Infer registers ***')
+    # print(modblock)
 
     modblock = inline(modblock, ctx)
-    print('*** Inline values ***')
-    print(modblock)
+    # print('*** Inline values ***')
+    # print(modblock)
 
     modblock = infer_exit_cond(modblock, ctx)
-    print('*** Infer Exit Conditions ***')
-    print(modblock)
+    # print('*** Infer Exit Conditions ***')
+    # print(modblock)
 
     modblock = remove_dead_code(modblock, ctx)
-    print('*** Remove Dead Code ***')
-    print(modblock)
+    # print('*** Remove Dead Code ***')
+    # print(modblock)
 
     gen_all_funcs(modblock, ctx)
 

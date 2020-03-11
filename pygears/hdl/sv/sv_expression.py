@@ -126,20 +126,46 @@ class SVExpressionVisitor:
         #             val.append('data')
         return self.separator.join(val + [node.attr])
 
-    def visit_CastExpr(self, node):
-        res = self.visit(node.operand)
-
-        res_signed = getattr(node.dtype, 'signed', False)
-        op_signed = getattr(node.operand.dtype, 'signed', False)
+    def cast_sign(self, expr, expr_dtype, cast_dtype):
+        res_signed = getattr(expr_dtype, 'signed', False)
+        op_signed = getattr(cast_dtype, 'signed', False)
 
         if res_signed != op_signed:
             sign = 'signed' if res_signed else 'unsigned'
-            res = f"{sign}'({res})"
+            expr = f"{sign}'({expr})"
 
-        if len(node.operand.dtype) != len(node.dtype):
-            res = f"{int(node.dtype)}'({res})"
+        return expr
 
-        return res
+    def cast_width(self, expr, expr_dtype, cast_dtype):
+        if len(cast_dtype) != len(expr_dtype):
+            expr = f"{int(expr_dtype)}'({expr})"
+
+        return expr
+
+    def cast_svexpr(self, svexpr, expr_dtype, cast_dtype):
+        expr_signed = getattr(expr_dtype, 'signed', False)
+        res_signed = getattr(cast_dtype, 'signed', False)
+
+        expr_width = expr_dtype.width
+        cast_width = cast_dtype.width
+
+        if res_signed != expr_signed:
+            if res_signed:
+                svexpr = f"signed'({{1'b0, {svexpr}}})"
+                expr_width += 1
+            else:
+                svexpr = f"unsigned'({svexpr})"
+
+        if cast_width != expr_width:
+            svexpr = f"{cast_width}'({svexpr})"
+
+        return svexpr
+
+    def cast_expr(self, expr, cast_dtype):
+        return self.cast_svexpr(self.visit(expr), expr.dtype, cast_dtype)
+
+    def visit_CastExpr(self, node):
+        return self.cast_expr(node.operand, node.cast_to)
 
     def visit_ConcatExpr(self, node):
         return (
@@ -157,19 +183,26 @@ class SVExpressionVisitor:
 
     def visit_BinOpExpr(self, node):
         ops = [self.visit(op) for op in node.operands]
-        for i, op in enumerate(node.operands):
-            if isinstance(op, ir.BinOpExpr):
-                ops[i] = f'({ops[i]})'
+        op_dtypes = [op.dtype for op in node.operands]
+        op_sign = [getattr(dtype, 'signed', False) for dtype in op_dtypes]
 
-        if node.operator in ir.EXTENDABLE_OPERATORS:
-            width = max(int(node.dtype), int(node.operands[0].dtype),
-                        int(node.operands[1].dtype))
-            svrepr = (f"{width}'({ops[0]})"
-                      f" {ir.OPMAP[node.operator]} "
-                      f"{width}'({ops[1]})")
-        else:
-            svrepr = f'{ops[0]} {ir.OPMAP[node.operator]} {ops[1]}'
-        return svrepr
+        if node.operator in [ir.opc.Add, ir.opc.Sub, ir.opc.Mult]:
+            cast_dtype = node.dtype
+            ops = [
+                self.cast_svexpr(expr, dtype, cast_dtype)
+                for expr, dtype in zip(ops, op_dtypes)
+            ]
+        elif node.operator in [
+                ir.opc.Eq, ir.opc.Gt, ir.opc.GtE, ir.opc.Lt, ir.opc.LtE,
+                ir.opc.NotEq, ir.opc.And, ir.opc.Or, ir.opc.BitOr,
+                ir.opc.BitAnd, ir.opc.BitXor
+        ]:
+            if op_sign[0] and not op_sign[1]:
+                ops[1] = self.cast_svexpr(ops[1], op_dtypes[1], op_dtypes[0])
+            elif op_sign[1] and not op_sign[0]:
+                ops[0] = self.cast_svexpr(ops[0], op_dtypes[0], op_dtypes[1])
+
+        return f'({ops[0]}) {ir.OPMAP[node.operator]} ({ops[1]})'
 
     def visit_SubscriptExpr(self, node):
         val = self.visit(node.val)
