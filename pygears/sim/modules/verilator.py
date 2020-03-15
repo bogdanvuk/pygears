@@ -150,6 +150,10 @@ class SimVerilated(CosimBase):
 
                 consumer = closest_gear_port_from_rtl(p, 'out')
 
+                if consumer is None:
+                    raise VerilatorCompileError(
+                        f"Inferred top module port '{p.name}' is dangling")
+
                 out_port = OutPort(self.gear, p.index, p.basename, consumer)
                 out_intf = Intf(p.dtype)
 

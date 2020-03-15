@@ -1,21 +1,11 @@
 import pytest
 
-from pygears import gear
-from pygears.lib import decouple, mux
+from pygears.util.test_utils import get_decoupled_dut
+from pygears.lib import mux, field_mux
 from pygears.lib.delay import delay_rng
 from pygears.lib.verif import directed, drv
 from pygears.sim import sim
 from pygears.typing import Int, Queue, Uint, bitw, Tuple
-
-
-def get_dut(dout_delay):
-    @gear
-    def decoupled(*din):
-        return din | mux | decouple
-
-    if dout_delay == 0:
-        return decoupled
-    return mux
 
 
 @pytest.mark.parametrize('din_delay', [0, 1])
@@ -25,7 +15,7 @@ def test_uint_directed(tmpdir, sim_cls, din_delay, cfg_delay, dout_delay):
     t_ctrl = Uint[4]
     t_din = Uint[8]
 
-    dut = get_dut(dout_delay)
+    dut = get_decoupled_dut(dout_delay, mux)
     directed(drv(t=t_ctrl, seq=[0, 1, 2])
              | delay_rng(cfg_delay, cfg_delay),
              drv(t=t_din, seq=[5])
@@ -49,7 +39,7 @@ def test_tuple_uint_directed(tmpdir, sim_cls, din_delay, cfg_delay,
     t_ctrl = Uint[4]
     t_din = Tuple[Uint[8], Uint[8], Uint[8]]
 
-    dut = get_dut(dout_delay)
+    dut = get_decoupled_dut(dout_delay, field_mux)
     directed(drv(t=t_ctrl, seq=[0, 1, 2])
              | delay_rng(cfg_delay, cfg_delay),
              drv(t=t_din, seq=[(5, 6, 7), (5, 6, 7), (5, 6, 7)])
@@ -86,11 +76,6 @@ def test_mapped_directed(tmpdir, sim_cls, din_delay, cfg_delay, dout_delay,
         for s in seqs
     ]
 
-    # print(mapping)
-    # print(seqs)
-    # print(ctrl)
-    # print(ref)
-
     directed(drv(t=t_ctrl, seq=ctrl) | delay_rng(cfg_delay, cfg_delay),
              *drvs,
              f=mux(mapping=mapping, sim_cls=sim_cls),
@@ -98,9 +83,6 @@ def test_mapped_directed(tmpdir, sim_cls, din_delay, cfg_delay, dout_delay,
              ref=ref)
 
     sim(resdir=tmpdir)
-
-
-# test_mapped_directed('/tools/home/tmp', None, 0, 0, 0, 5)
 
 
 @pytest.mark.parametrize('din_delay', [0, 1])
@@ -112,7 +94,7 @@ def test_diff_inputs(tmpdir, sim_cls, din_delay, cfg_delay, dout_delay):
     t_din1 = Int[10]
     t_din2 = Queue[Uint[8]]
 
-    dut = get_dut(dout_delay)
+    dut = get_decoupled_dut(dout_delay, mux)
     directed(drv(t=t_ctrl, seq=[0, 1, 2])
              | delay_rng(cfg_delay, cfg_delay),
              drv(t=t_din0, seq=[5])

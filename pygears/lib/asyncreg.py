@@ -1,11 +1,9 @@
 from pygears import gear, IntfEmpty, module
 from pygears.sim import clk
-from pygears.typing import Maybe, Tuple, Uint, Union, Bool
-from .mux import mux
+from pygears.typing import Maybe, Tuple, Uint, Union
 from .demux import demux
 from .ccat import ccat
 from .shred import shred
-from .union import union_collapse
 
 
 @gear

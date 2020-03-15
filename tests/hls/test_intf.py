@@ -22,6 +22,7 @@ def test_intf_vararg_fix_index(tmpdir, din_delay, dout_delay):
              drv(t=Uint[4], seq=list(range(4, 8)))
              | delay_rng(din_delay, din_delay),
              f=test,
+             delays=[delay_rng(dout_delay, dout_delay)],
              ref=list(range(4)))
 
     cosim('/test', 'verilator')
@@ -44,6 +45,7 @@ def test_intf_vararg_mux(tmpdir, din_delay, dout_delay):
              drv(t=Uint[4], seq=list(range(4, 8)))
              | delay_rng(din_delay, din_delay),
              f=test,
+             delays=[delay_rng(dout_delay, dout_delay)],
              ref=list(range(4)))
 
     cosim('/test', 'verilator')
@@ -82,14 +84,17 @@ def test_loop_intfs(tmpdir, din_delay, dout_delay):
              drv(t=Uint[4], seq=list(range(4, 8)))
              | delay_rng(din_delay, din_delay),
              f=test,
+             delays=[delay_rng(dout_delay, dout_delay)],
              ref=[0, 4, 1, 5, 2, 6, 3, 7])
 
     cosim('/test', 'verilator')
     sim(tmpdir, check_activity=False)
 
+
 # from pygears import config
 # config['debug/trace'] = ['*']
 # test_loop_intfs('/tools/home/tmp/loop_intfs', 0, 0)
+
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
@@ -105,10 +110,33 @@ def test_enum_intfs(tmpdir, din_delay, dout_delay):
              drv(t=Uint[4], seq=list(range(4, 8)))
              | delay_rng(din_delay, din_delay),
              f=test,
+             delays=[delay_rng(dout_delay, dout_delay)],
              ref=[0, 4, 1, 5, 2, 6, 3, 7])
 
     cosim('/test', 'verilator')
     sim(tmpdir, check_activity=False)
+
+
+@pytest.mark.parametrize('din_delay', [0, 1])
+@pytest.mark.parametrize('dout_delay', [0, 1])
+def test_enum_intfs_single(tmpdir, din_delay, dout_delay):
+    @gear(hdl={'compile': True})
+    async def test(*din: Uint) -> b'din[0]':
+        for i, d in enumerate(din):
+            async with d as data:
+                yield data
+
+    directed(drv(t=Uint[4], seq=list(range(4)))
+             | delay_rng(din_delay, din_delay),
+             f=test,
+             delays=[delay_rng(dout_delay, dout_delay)],
+             ref=list(range(4)))
+
+    cosim('/test', 'verilator')
+    sim(tmpdir, check_activity=False)
+
+
+# test_enum_intfs_single('/tools/home/tmp/enum_intfs_single', 1, 0)
 
 
 @pytest.mark.parametrize('din_delay', [0, 1])
@@ -125,12 +153,13 @@ def test_enum_intfs_use_i(tmpdir, din_delay, dout_delay):
              drv(t=Uint[4], seq=list(range(4, 8)))
              | delay_rng(din_delay, din_delay),
              f=test,
-             ref=[(0, 0), (4, 1), (1, 0), (5, 1), (2, 0), (6, 1), (3, 0), (7, 1)])
+             delays=[delay_rng(dout_delay, dout_delay)],
+             ref=[(0, 0), (4, 1), (1, 0), (5, 1), (2, 0), (6, 1), (3, 0),
+                  (7, 1)])
 
     cosim('/test', 'verilator')
     sim(tmpdir, check_activity=False)
 
-# test_enum_intfs_use_i('/tools/home/tmp/qpass', 0, 0)
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
@@ -146,6 +175,7 @@ def test_loop_queue_intfs(tmpdir, din_delay, dout_delay):
              drv(t=Queue[Uint[4]], seq=[list(range(4, 8))])
              | delay_rng(din_delay, din_delay),
              f=test,
+             delays=[delay_rng(dout_delay, dout_delay)],
              ref=list(range(4)) + list(range(4, 8)))
 
     cosim('/test', 'verilator')

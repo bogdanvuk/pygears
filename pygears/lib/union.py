@@ -4,8 +4,7 @@ from pygears.lib.shred import shred
 from pygears.lib.const import fix
 from pygears.lib.ccat import ccat
 from pygears.lib.fmaps.union import unionmap
-from pygears.lib.mux import mux, dflt_map
-from pygears.lib.demux import demux
+from pygears.lib.mux import field_mux, mux
 from pygears.lib.filt import filt
 
 
@@ -44,9 +43,9 @@ def case(cond, din, *, f, fcat=ccat, tout=None, **kwds):
 
 
 @gear
-def ucase(din: Union, *, f, fcat=ccat, tout=None, fmux=mux):
+def ucase(din: Union, *, f, fcat=ccat, tout=None, fmux=mux, mapping=None):
     return din \
-        | unionmap(f=f, fmux=fmux) \
+        | unionmap(f=f, fmux=fmux, mapping=mapping, use_dflt=False) \
         | union_collapse(t=tout)
 
 
@@ -90,7 +89,11 @@ def maybe_when(cond, din, *, f, fcat=ccat):
         | Maybe
 
 
-@gear(enablement=b'len(din) >= 2')
+def dflt_map(dtypes):
+    return {i: i for i in range(len(dtypes))}
+
+
+@gear
 def select(cond: Uint, *din, mapping=b'dflt_map(din)'):
 
     dtypes = [d.dtype for d in din]
@@ -102,14 +105,13 @@ def select(cond: Uint, *din, mapping=b'dflt_map(din)'):
     return mux(cond, *din, mapping=mapping) | union_collapse
 
 
-@alternative(select)
 @gear
-def select_valve(din: Tuple[{
+def field_sel(din: Tuple[{
         'ctrl': Uint,
         'data': Any
 }],
-                 *,
-                 mapping=b'dflt_map(din)'):
+              *,
+              mapping=b'dflt_map(din)'):
 
     if isinstance(din.dtype['data'], Tuple):
         dtypes = [d.dtype for d in din.dtype['data']]
@@ -118,7 +120,7 @@ def select_valve(din: Tuple[{
                 f'Expected all inputs to "{module().name}" to be same type, but got: "{dtypes}"'
             )
 
-    return mux(din, mapping=mapping) | union_collapse
+    return field_mux(din, mapping=mapping) | union_collapse
 
 
 @gear(enablement=b'all_same(din) or t')

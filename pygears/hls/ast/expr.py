@@ -18,10 +18,11 @@ def parse_ifexp(node, ctx: Context):
     }
 
     if all(isinstance(v, ir.ResExpr) for v in res.values()):
-        return ir.ResExpr(res['body'].val if res['test'].val else res['orelse'])
+        return ir.ResExpr(
+            res['body'].val if res['test'].val else res['orelse'])
 
     return ir.ConditionalExpr(operands=(res['body'], res['orelse']),
-                                 cond=res['test'])
+                              cond=res['test'])
 
 
 @node_visitor(ast.Num)
@@ -74,7 +75,7 @@ def _(node, ctx: Context):
 @node_visitor(ast.Subscript)
 def _(node, ctx: Context):
     return ir.SubscriptExpr(visit_ast(node.value, ctx),
-                               visit_ast(node.slice, ctx))
+                            visit_ast(node.slice, ctx))
 
 
 def visit_bin_expr(op, operands, ctx: Context):
@@ -107,8 +108,7 @@ def _(node, ctx: Context):
 @node_visitor(ast.Attribute)
 def _(node, ctx: Context):
     value = visit_ast(node.value, ctx)
-    if isinstance(value, ir.Name) and isinstance(value.obj,
-                                                    ir.Interface):
+    if isinstance(value, ir.Name) and isinstance(value.obj, ir.Interface):
         return ir.ResExpr(value.obj.intf.dtype)
 
     return ir.AttrExpr(value, node.attr)
@@ -136,12 +136,10 @@ def _(node, ctx: Context):
 
 @node_visitor(ast.Slice)
 def _(node, ctx: Context):
-    return ir.SliceExpr(visit_ast(node.lower, ctx),
-                           visit_ast(node.upper, ctx),
-                           visit_ast(node.step, ctx))
+    return ir.SliceExpr(visit_ast(node.lower, ctx), visit_ast(node.upper, ctx),
+                        visit_ast(node.step, ctx))
 
 
 @node_visitor(ast.List)
 def _(node: ast.List, ctx: Context):
-    return ir.ResExpr(
-        ir.ConcatExpr([visit_ast(e, ctx) for e in node.elts]))
+    return ir.ResExpr(ir.ConcatExpr([visit_ast(e, ctx) for e in node.elts]))

@@ -1,6 +1,7 @@
-from pygears import gear
+from pygears import gear, Intf
 from pygears.core.gear_inst import find_current_gear_frame
 from pygears.core.intf import IntfOperPlugin
+from pygears.lib.union import field_sel
 from pygears import module, registry, safe_bind
 
 
@@ -61,7 +62,7 @@ def maybe_obtain_intf_var_name(intf):
     return get_obj_var_name(frame, intf)
 
 
-def getitem(self, index):
+def get_sieve(self, index):
     naming = registry('gear/naming/pretty_sieve')
     norm_index = self.dtype.index_norm(index)
 
@@ -91,8 +92,19 @@ def getitem(self, index):
 
             name_appendices.append(f'{ind}')
 
-    return self | sieve(
-        key=norm_index, name='_'.join([name] + name_appendices))
+    return self | sieve(key=norm_index,
+                        name='_'.join([name] + name_appendices))
+
+
+def get_select(self, index):
+    return field_sel(index, self)
+
+
+def getitem(self, index):
+    if isinstance(index, Intf):
+        return get_select(self, index)
+    else:
+        return get_sieve(self, index)
 
 
 class GetitemIntfOperPlugin(IntfOperPlugin):

@@ -11,7 +11,7 @@ from .debug import print_gear_parse_intro
 
 def translate_gear(gear: Gear):
     # hls_enable_debug_log()
-    hls_debug(title=f'*** Translating: {gear.name} ***')
+    hls_debug(title=f'Translating: {gear.name}')
 
     exec_context = registry('gear/exec_context')
     bind('gear/exec_context', 'hls')
@@ -34,24 +34,24 @@ def translate_gear(gear: Gear):
 
 
 def transform(modblock, ctx: GearContext):
-    hls_debug(modblock, '*** Initial ***')
+    hls_debug(modblock, 'Initial')
 
     modblock = handle_generators(modblock, ctx)
-    hls_debug(modblock, '*** Handle Generators ***')
+    hls_debug(modblock, 'Handle Generators')
 
     modblock = schedule(modblock, ctx)
 
     modblock = infer_registers(modblock, ctx)
-    hls_debug(modblock, '*** Infer registers ***')
+    hls_debug(modblock, 'Infer registers')
 
     modblock = inline(modblock, ctx)
-    hls_debug(modblock, '*** Inline values ***')
+    hls_debug(modblock, 'Inline values')
 
     modblock = infer_exit_cond(modblock, ctx)
-    hls_debug(modblock, '*** Infer Exit Conditions ***')
+    hls_debug(modblock, 'Infer Exit Conditions')
 
     modblock = remove_dead_code(modblock, ctx)
-    hls_debug(modblock, '*** Remove Dead Code ***')
+    hls_debug(modblock, 'Remove Dead Code')
 
     gen_all_funcs(modblock, ctx)
 

@@ -23,8 +23,7 @@ def dflt_map(dtypes):
     return {i: i for i in range(len(dtypes))}
 
 
-# @gear(svgen={'compile': True})
-@gear(enablement=b'len(din) >= 2')
+@gear
 async def mux(
         ctrl: Uint,
         *din,
@@ -54,9 +53,8 @@ async def mux_zip(
             yield (d, c)
 
 
-@alternative(mux)
 @datagear
-def mux_valve(
+def field_mux(
         din: Tuple[{
             'ctrl': Uint,
             'data': Any

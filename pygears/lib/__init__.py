@@ -9,7 +9,7 @@ from .czip import czip, zip_sync, unzip, zip_sync_with
 from .ccat import ccat, ccat_sync_with
 from .cart import cart, cart_sync, cart_sync_with
 from .union import (union_sync, union_collapse, union_sync_with, case, when,
-                    mux_by, ucase, select, maybe_when)
+                    mux_by, ucase, select, field_sel, maybe_when)
 from .queue import queue_wrap_from, sot_queue
 from .cast import cast
 from .quenvelope import quenvelope
@@ -21,7 +21,7 @@ from .operators import (add, div, eq, ge, gt, invert, le, lt, mod, mul, ne,
                         neg, sub, shl, shr, xor, code)
 from .saturate import saturate
 from .state import state
-from .mux import mux, mux_zip
+from .mux import mux, mux_zip, field_mux
 from .demux import demux, demux_zip, demux_by, demux_ctrl
 from .shred import shred
 from .decouple import decouple, buff
@@ -71,20 +71,20 @@ import pygears.lib.hls
 __all__ = [
     'expand', 'czip', 'ccat', 'cart', 'cast', 'code', 'quenvelope', 'zip_sync',
     'sieve', 'flatten', 'fmap', 'unionmap', 'queuemap', 'tuplemap', 'arraymap',
-    'permuted_apply', 'const', 'once', 'mux', 'demux', 'shred', 'cart_sync',
-    'decouple', 'dreg', 'regout', 'unzip', 'serialize', 'project', 'fifo',
-    'factor', 'fill', 'mux_zip', 'demux_zip', 'demux_ctrl', 'data_dly',
+    'permuted_apply', 'const', 'once', 'mux', 'field_mux', 'demux', 'shred',
+    'cart_sync', 'decouple', 'dreg', 'regout', 'unzip', 'serialize', 'project',
+    'fifo', 'factor', 'fill', 'mux_zip', 'demux_zip', 'demux_ctrl', 'data_dly',
     'union_sync', 'union_collapse', 'ucase', 'filt', 'buff', 'queue_wrap_from',
     'demux_by', 'mux_by', 'align', 'cart_sync_with', 'when', 'union_sync_with',
-    'select', 'case', 'fix', 'xor', 'rng', 'qrange', 'priority_mux', 'qcnt',
-    'sdp', 'chop', 'qinterlace', 'interlace', 'replicate', 'qdeal', 'deal',
-    'clip', 'din_cat', 'take', 'release_after_eot', 'reverse', 'form_sub_cfg',
-    'reduce2', 'group', 'repack', 'priority_mux_valve', 'max2', 'unary',
-    'alternate_queues', 'delay', 'delay_rng', 'delay_gen', 'directed', 'verif',
-    'collect', 'rom', 'drv', 'drvrnd', 'check', 'mon', 'reduce', 'accum',
-    'pipe', 'funclut', 'truncate', 'round_half_up', 'round_to_zero',
-    'round_to_even', 'add', 'div', 'eq', 'ge', 'gt', 'invert', 'iceil', 'le',
-    'lt', 'mod', 'mul', 'ne', 'neg', 'sub', 'shl', 'shr', 'xor', 'scoreboard',
-    'scope', 'sample', 'trigreg', 'regmap', 'saturate', 'qround',
-    'parallelize', 'ping', 'state'
+    'select', 'field_sel', 'case', 'fix', 'xor', 'rng', 'qrange',
+    'priority_mux', 'qcnt', 'sdp', 'tdp', 'chop', 'qinterlace', 'interlace',
+    'replicate', 'qdeal', 'deal', 'clip', 'din_cat', 'take',
+    'release_after_eot', 'reverse', 'form_sub_cfg', 'reduce2', 'group',
+    'repack', 'priority_mux_valve', 'max2', 'unary', 'alternate_queues',
+    'delay', 'delay_rng', 'delay_gen', 'directed', 'verif', 'collect', 'rom',
+    'drv', 'drvrnd', 'check', 'mon', 'reduce', 'accum', 'pipe', 'funclut',
+    'truncate', 'round_half_up', 'round_to_zero', 'round_to_even', 'add',
+    'div', 'eq', 'ge', 'gt', 'invert', 'iceil', 'le', 'lt', 'mod', 'mul', 'ne',
+    'neg', 'sub', 'shl', 'shr', 'xor', 'scoreboard', 'scope', 'sample',
+    'trigreg', 'regmap', 'saturate', 'qround', 'parallelize', 'ping', 'state'
 ]

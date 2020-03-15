@@ -92,6 +92,9 @@ class Partial:
         self.kwds = kwds
         self.errors = []
 
+    def __str__(self):
+        return f'{self.func.__name__}'
+
     def __call__(self, *args, **kwds):
         prev_kwds = self.kwds.copy()
         prev_kwds.update(kwds)

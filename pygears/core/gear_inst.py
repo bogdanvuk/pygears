@@ -313,9 +313,11 @@ def resolve_gear(gear_inst, out_intfs, out_dtype, fix_intfs):
     for c in gear_inst.child:
         for p in c.out_ports:
             intf = p.consumer
-            if intf not in set(intfs) and intf not in set(
-                    c.params['intfs']) and not intf.consumers:
-                core_log().warning(f'"{c.name}.{p.basename}" left dangling.')
+            if intf not in set(intfs) and intf not in set(c.params['intfs']) and not intf.consumers:
+                if hasattr(intf, 'var_name'):
+                    core_log().warning(f'Interface "{gear_inst.name}/{intf.var_name}" left dangling.')
+                else:
+                    core_log().warning(f'Port "{c.name}.{p.basename}" left dangling.')
 
     if len(out_intfs) > 1:
         return tuple(out_intfs)
