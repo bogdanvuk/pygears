@@ -55,8 +55,14 @@ async def demux(
 
 
 @gear
-def demux_ctrl(din: Union):
-    dout = din | demux
+def demux_ctrl(din: Union, *, use_dflt=True, mapping=None):
+    fdemux = demux
+    if mapping is None:
+        fdemux = demux
+    else:
+        fdemux = fdemux(mapping=mapping, use_dflt=use_dflt)
+
+    dout = din | fdemux
     if not isinstance(dout, tuple):
         dout = (dout, )
 

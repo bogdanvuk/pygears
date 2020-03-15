@@ -44,9 +44,9 @@ def case(cond, din, *, f, fcat=ccat, tout=None, **kwds):
 
 
 @gear
-def ucase(din: Union, *, f, fcat=ccat, tout=None, fmux=mux):
+def ucase(din: Union, *, f, fcat=ccat, tout=None, fmux=mux, mapping=None):
     return din \
-        | unionmap(f=f, fmux=fmux) \
+        | unionmap(f=f, fmux=fmux, mapping=mapping, use_dflt=False) \
         | union_collapse(t=tout)
 
 

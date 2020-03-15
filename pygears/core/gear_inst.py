@@ -343,7 +343,10 @@ def resolve_gear(gear_inst, fix_intfs):
         for p in c.out_ports:
             intf = p.consumer
             if intf not in set(intfs) and intf not in set(c.params['intfs']) and not intf.consumers:
-                core_log().warning(f'"{c.name}.{p.basename}" left dangling.')
+                if hasattr(intf, 'var_name'):
+                    core_log().warning(f'Interface "{gear_inst.name}/{intf.var_name}" left dangling.')
+                else:
+                    core_log().warning(f'Port "{c.name}.{p.basename}" left dangling.')
 
     if len(out_intfs) > 1:
         return tuple(out_intfs)
