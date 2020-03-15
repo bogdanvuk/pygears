@@ -18,6 +18,8 @@ def cast_return(arg_nodes, out_ports):
     if isinstance(arg_nodes, (list, tuple)):
         assert len(arg_nodes) == out_num
         input_vars = arg_nodes
+    elif isinstance(arg_nodes, ir.TupleExpr):
+        input_vars = arg_nodes.val
     elif isinstance(arg_nodes, ir.Name) and out_num > 1:
         var = arg_nodes.obj
         assert len(var.dtype) == out_num
@@ -26,8 +28,11 @@ def cast_return(arg_nodes, out_ports):
             input_vars.append(
                 ir.SubscriptExpr(val=arg_nodes, index=ir.ResExpr(i)))
     else:
-        assert out_num == 1
-        input_vars = [arg_nodes]
+        if out_num == 1:
+            input_vars = [arg_nodes]
+        else:
+            assert isinstance(arg_nodes, ir.TupleExpr)
+            input_vars = arg_nodes.val
 
     args = []
     for arg, intf in zip(input_vars, out_ports):
@@ -63,11 +68,27 @@ def parse_yield(node, ctx):
         raise TypeError(
             f"{str(e)}\n    - when casting output value to the output type")
 
-    return [
-        ir.AssignValue(ctx.out_ports[0], yield_expr),
-        ir.ExprStatement(
-            ir.Await(exit_await=ir.Component(ctx.out_ports[0], 'ready')))
-    ]
+    if isinstance(ret, ir.TupleExpr):
+        vals = ret.val
+    else:
+        vals = [ret]
+
+    stmts = []
+    for p, v in zip(ctx.out_ports, vals):
+        stmts.append(ir.AssignValue(p, v))
+
+        if len(ctx.out_ports) == 1:
+            stmts.append(
+                ir.ExprStatement(
+                    ir.Await(exit_await=ir.Component(p, 'ready'))))
+        else:
+            stmts.append(
+                ir.ExprStatement(
+                    ir.Await(exit_await=ir.BinOpExpr((
+                        ir.UnaryOpExpr(ir.Component(p, 'valid'), ir.opc.Not),
+                        ir.Component(p, 'ready')), ir.opc.Or))))
+
+    return stmts
 
     # return ir.Statement(exit_await=ir.Component(ctx.out_ports[0], 'ready'),
     #                     stmts=[ir.AssignValue(ctx.out_ports[0], yield_expr)])

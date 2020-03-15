@@ -140,6 +140,28 @@ def _(node, ctx: Context):
                         visit_ast(node.step, ctx))
 
 
+def py_eval_expr(node, ctx: Context):
+    gear_locals = {
+        n: v.val
+        for n, v in ctx.scope.items() if isinstance(v, ir.ResExpr)
+    }
+
+    return eval(
+        compile(ast.Expression(ast.fix_missing_locations(node)),
+                filename="<ast>",
+                mode="eval"), gear_locals, ctx.local_namespace)
+
+
+@node_visitor(ast.DictComp)
+def _(node, ctx: Context):
+    return ir.ResExpr(py_eval_expr(node, ctx))
+
+
+@node_visitor(ast.ListComp)
+def _(node, ctx: Context):
+    return ir.ResExpr(py_eval_expr(node, ctx))
+
+
 @node_visitor(ast.List)
 def _(node: ast.List, ctx: Context):
     return ir.ResExpr(ir.ConcatExpr([visit_ast(e, ctx) for e in node.elts]))

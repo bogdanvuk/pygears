@@ -28,16 +28,9 @@ def call_gear(func, args, kwds, ctx: Context):
     bind('gear/exec_context', 'hls')
 
     if isinstance(outputs, tuple):
-        raise Exception("Not yet supported")
-
-    gear_inst = outputs.producer.gear
-
-    # def is_async_gen(func):
-    #     return bool(func.__code__.co_flags & inspect.CO_ASYNC_GENERATOR)
-
-    # if not is_async_gen(gear_inst.func):
-    #     breakpoint()
-    #     raise Exception("Not yet supported")
+        gear_inst = outputs[0].producer.gear
+    else:
+        gear_inst = outputs.producer.gear
 
     in_ports = []
     for a, p in zip(args, gear_inst.in_ports):
@@ -50,9 +43,6 @@ def call_gear(func, args, kwds, ctx: Context):
         pydl_intf = ir.Variable(intf_name, val=p.producer)
         ctx.scope[intf_name] = pydl_intf
         in_ports.append(pydl_intf)
-
-    if len(gear_inst.out_ports) != 1:
-        raise Exception("Not supported")
 
     out_ports = []
     for p in gear_inst.out_ports:
@@ -71,4 +61,7 @@ def call_gear(func, args, kwds, ctx: Context):
 
     ctx.submodules.append(Submodule(gear_inst, in_ports, out_ports))
 
-    return ctx.ref(out_ports[0].name), stmts
+    if len(out_ports) == 1:
+        return ctx.ref(out_ports[0].name), stmts
+    else:
+        return ir.TupleExpr(tuple(ctx.ref(p.name) for p in out_ports)), stmts
