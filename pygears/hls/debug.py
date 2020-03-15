@@ -42,6 +42,8 @@ def hls_debug(msg='', title=None, indent=0):
     elif isinstance(msg, ast.AST):
         import astpretty
         msg = astpretty.pformat(msg)
+    else:
+        msg = str(msg)
 
     if title is not None:
         msg = textwrap.indent(msg, '    ')

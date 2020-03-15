@@ -287,8 +287,9 @@ def visit_block(pydl_node, body, ctx):
         if isinstance(s, ir.CallExpr):
             pydl_node.stmts.append(ir.ExprStatement(s))
         elif isinstance(s, ir.Expr):
-            print("Expression as statement!")
-            print(s)
+            pass
+            # print("Expression as statement!")
+            # print(s)
         else:
             pydl_node.stmts.append(s)
 

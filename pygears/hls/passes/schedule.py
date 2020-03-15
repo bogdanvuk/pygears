@@ -255,7 +255,8 @@ def schedule(pydl_ast, ctx):
         ir.AssignValue(ctx.ref('rst_cond', 'store'), res_true))
 
     Scheduler(ctx).visit(pydl_ast)
-    print(PPrinter(ctx).visit(pydl_ast))
+    # print('*** Schedule ***')
+    # print(PPrinter(ctx).visit(pydl_ast))
     state_num = len(pydl_ast.state)
 
     if state_num > 1:

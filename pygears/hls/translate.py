@@ -5,12 +5,13 @@ from .ast.utils import get_function_ast
 from . import ir
 from .passes import (inline, inline_res, remove_dead_code, infer_exit_cond,
                      infer_registers, schedule, infer_in_cond, handle_generators)
-from .debug import hls_enable_debug_log
+from .debug import hls_enable_debug_log, hls_debug
 from .debug import print_gear_parse_intro
 
 
 def translate_gear(gear: Gear):
-    print(f'*** Translating: {gear.name} ***')
+    # hls_enable_debug_log()
+    hls_debug(title=f'*** Translating: {gear.name} ***')
 
     exec_context = registry('gear/exec_context')
     bind('gear/exec_context', 'hls')
@@ -20,8 +21,7 @@ def translate_gear(gear: Gear):
 
     body_ast = get_function_ast(gear.func)
 
-    # hls_enable_debug_log()
-    # print_gear_parse_intro(gear, body_ast)
+    print_gear_parse_intro(gear, body_ast)
     ctx = GearContext(gear)
 
     safe_bind('hls/ctx', [ctx])
@@ -34,31 +34,24 @@ def translate_gear(gear: Gear):
 
 
 def transform(modblock, ctx: GearContext):
-    # print('*** Initial ***')
-    # print(modblock)
+    hls_debug(modblock, '*** Initial ***')
 
     modblock = handle_generators(modblock, ctx)
-    # print('*** Handle Generators ***')
-    # print(modblock)
+    hls_debug(modblock, '*** Handle Generators ***')
 
-    # print('*** Schedule ***')
     modblock = schedule(modblock, ctx)
 
     modblock = infer_registers(modblock, ctx)
-    # print('*** Infer registers ***')
-    # print(modblock)
+    hls_debug(modblock, '*** Infer registers ***')
 
     modblock = inline(modblock, ctx)
-    # print('*** Inline values ***')
-    # print(modblock)
+    hls_debug(modblock, '*** Inline values ***')
 
     modblock = infer_exit_cond(modblock, ctx)
-    # print('*** Infer Exit Conditions ***')
-    # print(modblock)
+    hls_debug(modblock, '*** Infer Exit Conditions ***')
 
     modblock = remove_dead_code(modblock, ctx)
-    # print('*** Remove Dead Code ***')
-    # print(modblock)
+    hls_debug(modblock, '*** Remove Dead Code ***')
 
     gen_all_funcs(modblock, ctx)
 

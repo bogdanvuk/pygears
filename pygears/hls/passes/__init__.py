@@ -1,4 +1,5 @@
 from .. import ir
+from ..debug import hls_debug
 
 from .inline import inline, inline_res
 from .exit_cond import infer_exit_cond, infer_in_cond

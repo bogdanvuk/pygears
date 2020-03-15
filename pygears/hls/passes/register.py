@@ -1,4 +1,5 @@
 from .utils import HDLVisitor, Scope, add_to_list, res_true, ir, IrExprRewriter
+from . import hls_debug
 
 
 class UnspecifiedFinder(IrExprRewriter):
@@ -209,7 +210,7 @@ def infer_registers(modblock, ctx):
     v.visit(modblock)
 
     for reg in inferred:
-        print(f'Inferred register for signal {reg}')
+        hls_debug(f'Inferred register for signal {reg}')
         ctx.scope[reg].reg = True
         ctx.scope[reg].any_init = True
 
