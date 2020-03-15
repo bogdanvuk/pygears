@@ -3,6 +3,24 @@ from .intf import Intf
 from .gear import Gear, create_hier
 from .port import InPort, OutPort, HDLConsumer, HDLProducer
 from copy import deepcopy, copy
+from pygears.typing import is_type
+
+
+def field_names_eq(a, b):
+    if not hasattr(a, 'fields'):
+        return True
+
+    if a.fields != b.fields:
+        return False
+
+    for aa, ab in zip(a.args, b.args):
+        if not is_type(aa):
+            continue
+
+        if not field_names_eq(aa, ab):
+            return False
+
+    return True
 
 
 def check_args(args, const_args, kwds, mem_args, mem_const_args, mem_kwds):
@@ -14,6 +32,9 @@ def check_args(args, const_args, kwds, mem_args, mem_const_args, mem_kwds):
             return False
 
         if mem_args[a] != args[a].dtype:
+            return False
+
+        if not field_names_eq(mem_args[a], args[a].dtype):
             return False
 
     if const_args != mem_const_args:
@@ -118,10 +139,6 @@ def copy_gear(mem_gear: Gear, args, kwds, name):
                 key in registry('gear/params/meta')):
             gear_inst.params[key] = kwds[key]
 
-    # print(
-    #     f"Reusing memoized gear '{gear_inst.params['memoized'].name}' for '{gear_inst.name}'"
-    # )
-
     for i, intf in enumerate(args.values()):
         p = gear_inst.in_ports[i]
         intf.connect(p)
@@ -134,6 +151,9 @@ def get_memoized_gear(func, args, const_args, kwds, fix_intfs, name):
     if func not in gear_memoize:
         gear_memoize[func] = []
 
+    if name == 'apply':
+        return None
+
     for mem_args, mem_const_args, mem_kwds, mem_gear in gear_memoize[func]:
         if not check_args(args, const_args, kwds, mem_args, mem_const_args,
                           mem_kwds):
@@ -143,7 +163,10 @@ def get_memoized_gear(func, args, const_args, kwds, fix_intfs, name):
         if const_args or fix_intfs:
             return None
 
-        return copy_gear(mem_gear, args, kwds, name)
+        try:
+            return copy_gear(mem_gear, args, kwds, name)
+        except Exception:
+            return None
 
     return None
 

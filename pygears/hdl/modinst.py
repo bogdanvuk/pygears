@@ -30,6 +30,12 @@ class HDLModuleInst:
         self.node = node
         self.extension = extension
         self._impl_parse = None
+        if 'memoized' in self.node.params:
+            memnode = registry('rtl/gear_node_map')[self.node.params['memoized']]
+            hdlmod = registry(f'{self.extension}gen/map')[memnode]
+            self.resolver = hdlmod.resolver
+            return
+
         for r in registry(f'{self.extension}gen/resolvers'):
             try:
                 self.resolver = r(node)
@@ -82,4 +88,5 @@ class HDLModuleInst:
         return self.resolver.params
 
     def generate(self, template_env, outdir):
-        return self.resolver.generate(template_env, outdir)
+        if 'memoized' not in self.node.params:
+            return self.resolver.generate(template_env, outdir)
