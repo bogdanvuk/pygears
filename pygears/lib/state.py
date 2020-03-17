@@ -1,16 +1,37 @@
-from pygears import gear, alternative
-from pygears.typing import Unit
+from pygears import gear, alternative, find, module
+from pygears.sim import clk, delta
+from pygears.typing import Unit, cast
 from .const import ping
 
 
-@gear(svgen={'node_cls': None})
+def state_din_setup(module):
+    module.val = module.params['init']
+
+
+@gear(sim_setup=state_din_setup, svgen={'node_cls': None})
 async def state_din(din, *, init) -> None:
-    pass
+    async with din as data:
+        pass
+
+    await delta()
+    module().val = data
 
 
-@gear(svgen={'node_cls': None})
+def state_dout_setup(module):
+    module.state_din = find('../state_din')
+
+
+@gear(sim_setup=state_dout_setup, svgen={'node_cls': None})
 async def state_dout(*rd, t) -> b't':
-    pass
+    dout = [None] * len(rd)
+    for i, rd_req in enumerate(rd):
+        if not rd_req.empty():
+            dout[i] = t(module().state_din.val)
+
+    if len(rd) > 1:
+        yield tuple(dout)
+    else:
+        yield dout[0]
 
 
 @gear(enablement=b'len(rd) > 1')

@@ -1,5 +1,5 @@
 from pygears import gear
-from pygears.typing import Queue, Tuple, Uint, code
+from pygears.typing import Queue, Tuple, Uint, code, Array, Bool
 from .ccat import ccat
 from .czip import czip
 
@@ -13,8 +13,7 @@ def queue_wrap_from(din, qdin, *, fcat=czip):
 
 
 @gear(hdl={'compile': True})
-async def sot_queue(din: Queue['data', 'lvl'],
-                    *,
+async def sot_queue(din: Queue['data', 'lvl'], *,
                     lvl=b'lvl') -> Tuple[b'din.data', b'din.eot']:
     sot = din.dtype.eot.max
 
@@ -23,4 +22,5 @@ async def sot_queue(din: Queue['data', 'lvl'],
 
         neot = (~eot) << 1
         sot = code(
-            [(eot[i] if i == 0 else (sot[i] & neot[i])) for i in range(lvl)], Uint[lvl])
+            Array[Bool, lvl]([(eot[i] if i == 0 else (sot[i] & neot[i]))
+                              for i in range(lvl)]), Uint[lvl])

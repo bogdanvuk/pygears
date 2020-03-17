@@ -81,13 +81,16 @@ def getitem(self, index):
         if isinstance(ind, slice):
             name_appendices.append(f'{ind.start}v{ind.stop}')
         else:
-            if naming:
-                try:
-                    # Try to obtain original index name to form a better name
-                    # for the sieve
-                    ind = index[ind_id]
-                except IndexError:
-                    pass
+            try:
+                # Try to obtain original index name to form a better name
+                # for the sieve
+                orig_ind = str(index[ind_id])
+
+                if orig_ind.isalnum():
+                    ind = orig_ind
+
+            except IndexError:
+                pass
 
             name_appendices.append(f'{ind}')
 

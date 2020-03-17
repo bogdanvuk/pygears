@@ -207,7 +207,8 @@ class intf_name_tracer:
         cm = self.code_map.pop()
 
         if exception_type is None:
-            for name, val in filter(lambda x: isinstance(x[1], Intf), cm.func_locals.items()):
+            for name, val in filter(lambda x: isinstance(x[1], Intf),
+                                    cm.func_locals.items()):
                 if not hasattr(val, 'var_name'):
                     val.var_name = name
 
@@ -248,7 +249,8 @@ def resolve_func(gear_inst):
 
         err = None
         try:
-            out_intfs, out_dtype = resolve_out_types(out_intfs, out_dtype, gear_inst)
+            out_intfs, out_dtype = resolve_out_types(out_intfs, out_dtype,
+                                                     gear_inst)
         except (TypeError, TypeMatchError) as e:
             err = type(e)(f"{str(e)}, when instantiating '{gear_inst.name}'")
 
@@ -266,7 +268,8 @@ def resolve_out_types(out_intfs, out_dtype, gear_inst):
 
     if out_intfs:
         if len(out_intfs) != len(out_dtype):
-            relation = 'smaller' if len(out_intfs) < len(out_dtype) else 'larger'
+            relation = 'smaller' if len(out_intfs) < len(
+                out_dtype) else 'larger'
             raise TypeMatchError(
                 f"Number of actual output interfaces ({len(out_intfs)}) is {relation} "
                 f"than the number of specified output types: ({tuple(i.dtype for i in out_intfs)}) vs {repr(out_dtype)}"
@@ -281,8 +284,9 @@ def resolve_out_types(out_intfs, out_dtype, gear_inst):
                 if intf.dtype != t:
                     cast(intf.dtype, t)
             except (TypeError, TypeMatchError) as e:
-                err = type(e)(f"{str(e)}, when casting type for output port {i}, "
-                              f"when instantiating '{gear_inst.name}'")
+                err = type(e)(
+                    f"{str(e)}, when casting type for output port {i}, "
+                    f"when instantiating '{gear_inst.name}'")
 
             if err:
                 raise err
@@ -343,11 +347,30 @@ def resolve_gear(gear_inst, fix_intfs):
     for c in gear_inst.child:
         for p in c.out_ports:
             intf = p.consumer
-            if intf not in set(intfs) and intf not in set(c.params['intfs']) and not intf.consumers:
+            if intf not in set(intfs) and intf not in set(
+                    c.params['intfs']) and not intf.consumers:
                 if hasattr(intf, 'var_name'):
-                    core_log().warning(f'Interface "{gear_inst.name}/{intf.var_name}" left dangling.')
+                    core_log().warning(
+                        f'Interface "{gear_inst.name}/{intf.var_name}" left dangling.'
+                    )
                 else:
-                    core_log().warning(f'Port "{c.name}.{p.basename}" left dangling.')
+                    path = []
+                    while True:
+                        g = p.gear
+
+                        if hasattr(p.consumer, 'var_name'):
+                            path.append(f'{g.parent.name}/{p.consumer.var_name}')
+                        else:
+                            path.append(p.name)
+
+                        if len(g.in_ports) != 1 or len(g.out_ports) != 1:
+                            break
+
+                        p = g.in_ports[0].producer.producer
+
+                    path = ' -> '.join(reversed(path))
+
+                    core_log().warning(f'Interface "{path}" left dangling.')
 
     if len(out_intfs) > 1:
         return tuple(out_intfs)

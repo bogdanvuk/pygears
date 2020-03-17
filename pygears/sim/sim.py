@@ -84,7 +84,7 @@ def topo_sort_util(v, g, dag, visited, stack, cycle):
             cycle.append(consumer)
             raise SimCyclic(
                 'Simulation not possible, gear cycle found:'
-                f' {" - ".join([c.name for c in cycle[index:]])}')
+                f' {" -> ".join([c.name for c in cycle[index:]])}')
 
         if not visited[i]:
             topo_sort_util(i, consumer, dag, visited, stack, cycle)
