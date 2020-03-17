@@ -1,5 +1,5 @@
 
-from pygears.typing import Int, Tuple, Uint
+from pygears.typing import Int, Tuple, Uint, Queue, Any
 from pygears.core.infer_ftypes import infer_ftypes
 
 
@@ -79,3 +79,13 @@ def test_multidout():
     assert params['din'] == Uint[1]
     assert params['return'] == (Uint[1], Uint[2])
     assert params['T1'] == 1
+
+
+def test_queue_of_queues():
+    params = {'din': Any, 'return': Queue['din']}
+    args = {'din': Queue[Uint[10]]}
+
+    params = infer_ftypes(params, args)
+
+    assert params['din'] == Queue[Uint[10]]
+    assert params['return'] == Queue[Uint[10], 2]

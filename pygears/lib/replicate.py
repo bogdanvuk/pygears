@@ -1,6 +1,6 @@
 from pygears import gear
 from pygears.util.utils import qrange
-from pygears.typing import Queue, Tuple, Uint, Any
+from pygears.typing import Queue, Tuple, Uint, Any, Bool, typeof
 
 
 @gear(hdl={'compile': True})
@@ -21,3 +21,21 @@ async def replicate(din: Tuple[{
     async with din as (length, value):
         for i, last in qrange(length):
             yield (value, last)
+
+
+@gear(hdl={'compile': True})
+async def replicate_while(cond: Bool, data: Any) -> Queue['data']:
+    async with data as d:
+        last = False
+        while not last:
+            async with cond as en:
+                last = ~en
+                if typeof(data.dtype, Queue):
+                    yield (d[0], d[1] @ last)
+                else:
+                    yield (d, last)
+
+
+@gear
+def replicate_until(cond: Bool, data: Any):
+    return replicate_while(~cond, data)
