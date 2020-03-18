@@ -33,7 +33,7 @@ from .parallelize import parallelize
 from .data_dly import data_dly
 from .filt import filt
 from .align import align
-from .replicate import replicate
+from .replicate import replicate, replicate_while, replicate_until
 from .chop import chop
 from .clip import clip
 from .din_cat import din_cat
@@ -78,13 +78,14 @@ __all__ = [
     'demux_by', 'mux_by', 'align', 'cart_sync_with', 'when', 'union_sync_with',
     'select', 'field_sel', 'case', 'fix', 'xor', 'rng', 'qrange',
     'priority_mux', 'qcnt', 'sdp', 'tdp', 'chop', 'qinterlace', 'interlace',
-    'replicate', 'qdeal', 'deal', 'clip', 'din_cat', 'take',
-    'release_after_eot', 'reverse', 'form_sub_cfg', 'reduce2', 'group',
-    'repack', 'priority_mux_valve', 'max2', 'unary', 'alternate_queues',
-    'delay', 'delay_rng', 'delay_gen', 'directed', 'verif', 'collect', 'rom',
-    'drv', 'drvrnd', 'check', 'mon', 'reduce', 'accum', 'pipe', 'funclut',
-    'truncate', 'round_half_up', 'round_to_zero', 'round_to_even', 'add',
-    'div', 'eq', 'ge', 'gt', 'invert', 'iceil', 'le', 'lt', 'mod', 'mul', 'ne',
-    'neg', 'sub', 'shl', 'shr', 'xor', 'scoreboard', 'scope', 'sample',
-    'trigreg', 'regmap', 'saturate', 'qround', 'parallelize', 'ping', 'state'
+    'replicate', 'replicate_while', 'replicate_until', 'qdeal', 'deal', 'clip',
+    'din_cat', 'take', 'release_after_eot', 'reverse', 'form_sub_cfg',
+    'reduce2', 'group', 'repack', 'priority_mux_valve', 'max2', 'unary',
+    'alternate_queues', 'delay', 'delay_rng', 'delay_gen', 'directed', 'verif',
+    'collect', 'rom', 'drv', 'drvrnd', 'check', 'mon', 'reduce', 'accum',
+    'pipe', 'funclut', 'truncate', 'round_half_up', 'round_to_zero',
+    'round_to_even', 'add', 'div', 'eq', 'ge', 'gt', 'invert', 'iceil', 'le',
+    'lt', 'mod', 'mul', 'ne', 'neg', 'sub', 'shl', 'shr', 'xor', 'scoreboard',
+    'scope', 'sample', 'trigreg', 'regmap', 'saturate', 'qround',
+    'parallelize', 'ping', 'state'
 ]

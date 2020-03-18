@@ -17,10 +17,16 @@ class QueueMeta(EnumerableGenericMeta):
         return sum(f.width for f in self)
 
     def __new__(cls, name, bases, namespace, args=[]):
-        if isinstance(args, dict) and (list(args.values())[1] == 0):
-            return list(args.values())[0]
-        else:
-            return super().__new__(cls, name, bases, namespace, args)
+        if args:
+            if isinstance(args, dict) and (args['eot'] == 0):
+                return args['data']
+
+            if isinstance(args, list) and (typeof(args[0], Queue)):
+                args = [args[0].data, args[0].lvl + args[1]]
+            elif isinstance(args, dict) and (typeof(args['data'], Queue)):
+                args = [args['data'].data, args['data'].lvl + args['eot']]
+
+        return super().__new__(cls, name, bases, namespace, args)
 
     def __getitem__(self, index):
         if not self.specified:

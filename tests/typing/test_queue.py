@@ -66,6 +66,10 @@ def test_indexing():
     assert eot == a[1]
 
 
+def test_queue_of_queues():
+    assert Queue[Queue[Uint[2], 2], 3] == Queue[Uint[2], 5]
+
+
 # def test_multilevel_indexing():
 #     a = Queue[Uint[2], 6]
 #     assert a[0] == Uint[2]
