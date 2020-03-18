@@ -225,7 +225,7 @@ async def scoreboard(*din: b't', report=None, cmp=None) -> None:
 
 
 @gear
-async def check(din, *, ref, cmp=lambda x, y: x == y):
+async def check(din, *, ref, cmp=None):
     """Checks equality of input data with expected.
 
     Args:
@@ -237,6 +237,12 @@ async def check(din, *, ref, cmp=lambda x, y: x == y):
     If type ``din`` is a :class:`Queue` of certain level, then ``ref`` should
     generate nested iterables of the same level
     """
+    def match_exact(x, y):
+        return x == y
+
+    if cmp is None:
+        cmp = match_exact
+
     iter_ref = iter(ref)
     ref_seq = iter(())
 
@@ -352,7 +358,7 @@ def verif(*stim, f, ref, delays=None, cmp=None, check_timing=False, make_report=
     return report
 
 
-def directed(*stim, f, ref, delays=None):
+def directed(*stim, f, ref, delays=None, cmp=None):
     """Similar to ``verif`` function, except ``ref`` is a list of expected results"""
     if stim:
         res = stim | f
@@ -372,7 +378,7 @@ def directed(*stim, f, ref, delays=None):
     for ref_inst, res_inst, delay_inst in zip(ref, res, delays):
         if delay_inst is not None:
             res_inst = res_inst | delay_inst
-        res_inst | check(ref=ref_inst)
+        res_inst | check(ref=ref_inst, cmp=cmp)
 
 
 def directed_on_the_fly(*stim, f, refs, delays=None):

@@ -339,7 +339,7 @@ async def scope(
 
                     for i, v in enumerate(x_data):
                         point = (
-                            ch, (timestep() + i / len(x_data)) / clk_freq, float(v), eot)
+                            ch, (timestep() + i / len(x_data)) / clk_freq, float(v), int(eot))
 
                         for b in backends:
                             b.send(point)

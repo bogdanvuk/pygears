@@ -136,3 +136,10 @@ def test_named_subs():
 def test_named_subs_wrong_params():
     a = Tuple[{'F1': 'T1', 'F2': 'T2'}]
     a[{'F1': 1, 'F2': 2}]
+
+
+def test_slice_list_template():
+    t = Tuple['cur':Uint[1], Uint[2], 'slope':Uint[3]]
+
+    assert t.fields == ('cur', 'f1', 'slope')
+    assert t.args == (Uint[1], Uint[2], Uint[3])

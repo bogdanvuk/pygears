@@ -1,5 +1,5 @@
 from pygears import gear, alternative, module
-from pygears.typing import Union, Tuple, Uint, Any, Unit, Maybe
+from pygears.typing import Union, Tuple, Uint, Any, Unit, Maybe, typeof
 from pygears.lib.shred import shred
 from pygears.lib.const import fix
 from pygears.lib.ccat import ccat
@@ -113,8 +113,8 @@ def field_sel(din: Tuple[{
               *,
               mapping=b'dflt_map(din)'):
 
-    if isinstance(din.dtype['data'], Tuple):
-        dtypes = [d.dtype for d in din.dtype['data']]
+    if typeof(din.dtype['data'], Tuple):
+        dtypes = list(din.dtype['data'])
         if dtypes.count(dtypes[0]) != len(dtypes):
             raise TypeError(
                 f'Expected all inputs to "{module().name}" to be same type, but got: "{dtypes}"'

@@ -126,10 +126,28 @@ class GenericMeta(TypingMeta):
             # TODO: dict parenthesis can be avoided and Python will parse dict
             # like structure as list of slices. Maybe try this to reduce clutter
             if isinstance(args, dict):
-                namespace.update({
-                    '__args__': tuple(args.values()),
-                    '__parameters__': tuple(args.keys())
-                })
+                namespace.update(
+                    {
+                        '__args__': tuple(args.values()),
+                        '__parameters__': tuple(args.keys())
+                    })
+            elif any(isinstance(a, slice) for a in args):
+                arg_vals = []
+                arg_names = []
+                for i, val in enumerate(args):
+                    if isinstance(val, slice):
+                        name, val = val.start, val.stop
+                    else:
+                        name = f'f{i}'
+
+                    arg_vals.append(val)
+                    arg_names.append(name)
+
+                namespace.update(
+                    {
+                        '__args__': tuple(arg_vals),
+                        '__parameters__': tuple(arg_names)
+                    })
             else:
                 namespace.update({'__args__': args})
 
