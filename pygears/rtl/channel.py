@@ -42,7 +42,9 @@ class RTLOutChannelVisitor(HierVisitorBase):
                 cons_intf.parent.parent.add_child(cons_intf)
 
                 cons_intf.disconnect(p)
-                node.parent.add_out_port(p.basename,
+
+                basename = getattr(cons_intf, 'var_name', p.basename)
+                node.parent.add_out_port(basename,
                                          consumer=cons_intf,
                                          dtype=cons_intf.dtype)
 
@@ -133,8 +135,9 @@ class RTLChannelVisitor(HierVisitorBase):
             while parent is not None:
                 if (prod_intf is not None and prod_intf.parent != parent
                         and (not parent.has_descendent(prod_intf.parent))):
+                    basename = getattr(prod_intf, 'var_name', p.basename)
 
-                    parent.add_in_port(p.basename,
+                    parent.add_in_port(basename,
                                        producer=prod_intf,
                                        dtype=prod_intf.dtype)
                     in_port = parent.in_ports[-1]
@@ -147,6 +150,8 @@ class RTLChannelVisitor(HierVisitorBase):
                     local_intf = RTLIntf(parent,
                                          prod_intf.dtype,
                                          producer=in_port)
+
+                    local_intf.var_name = basename
 
                     for port in local_cons:
                         prod_intf.consumers.remove(port)

@@ -1,6 +1,6 @@
 # from pygears.conf import safe_bind
 from pygears.typing.base import typeof, is_type
-from . import Array, Int, Integer, Queue, Tuple, Uint, Union, Maybe
+from . import Array, Int, Integer, Queue, Tuple, Uint, Union, Maybe, Any
 from . import Fixpnumber, Float, Number, Ufixp, Fixp, Unit
 # from pygears.conf.log import gear_log
 
@@ -416,7 +416,8 @@ type_cast_resolvers = {
     Float: float_type_cast_resolver,
     Array: array_type_cast_resolver,
     Queue: queue_type_cast_resolver,
-    int: plain_int_type_cast_resolver
+    int: plain_int_type_cast_resolver,
+    Any: lambda dtype, cast_type: dtype
 }
 
 
@@ -559,6 +560,7 @@ value_cast_resolvers = {
     Fixpnumber: fixpnumber_value_cast_resolver,
     Queue: queue_value_cast_resolver,
     int: plain_int_value_cast_resolver,
+    Any: lambda val, cast_type: val
 }
 
 

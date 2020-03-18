@@ -63,6 +63,10 @@ def create_unsourced_intf(node,
     gear_intf = gear_port.producer
 
     intf_inst = RTLIntf(node.root(), gear_intf.dtype)
+
+    if hasattr(gear_intf, 'var_name'):
+        intf_inst.var_name = gear_intf.var_name
+
     for cons_port in gear_intf.consumers:
         rtl_port = rtl_from_gear_port(cons_port)
         if rtl_port:

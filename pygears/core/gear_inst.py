@@ -221,7 +221,8 @@ class intf_name_tracer:
         if exception_type is None and hasattr(cm, 'func_locals'):
             for name, val in filter(lambda x: isinstance(x[1], Intf),
                                     cm.func_locals.items()):
-                val.var_name = name
+                if not hasattr(val, 'var_name'):
+                    val.var_name = name
 
 
 def resolve_func(gear_inst):
@@ -351,7 +352,7 @@ def resolve_out_types(out_intfs, out_dtype, gear_inst):
                 if intf.dtype != t:
                     cast(intf.dtype, t)
             except (TypeError, TypeMatchError) as e:
-                err = type(e)(f"when casting type for output port {i}, "
+                err = type(e)(f"{str(e)}, when casting type for output port {i}, "
                               f"when instantiating '{gear_inst.name}'")
 
             if err:
