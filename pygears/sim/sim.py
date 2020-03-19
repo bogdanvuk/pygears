@@ -241,6 +241,8 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
         if pos is None:
             index = 0
+        elif isinstance(pos, int):
+            index = pos
         else:
             index = self.sim_gears.index(self.sim_map[pos])
 
@@ -372,12 +374,19 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             # print(f"-------------- {timestep} ------------------")
 
             self.phase = 'forward'
-            for sim_gear in self.sim_gears:
-                if ((sim_gear in self.forward_ready) or (sim_gear in self.delta_ready)):
-                    # print(
-                    #     f'Forward: {sim_gear.port.name if hasattr(sim_gear, "port") else sim_gear.gear.name}'
-                    # )
-                    self.maybe_run_gear(sim_gear, self.forward_ready)
+            i = 0
+            while i < len(self.sim_gears):
+                sim_gear = self.sim_gears[i]
+                i += 1
+
+                if ((sim_gear not in self.forward_ready) and (sim_gear not in self.delta_ready)):
+                    continue
+
+                print(
+                    f'Forward: {sim_gear.port.name if hasattr(sim_gear, "port") else sim_gear.gear.name}'
+                )
+                self.cur_task_id = i
+                self.maybe_run_gear(sim_gear, self.forward_ready)
 
             self.phase = 'delta'
             delta.set()

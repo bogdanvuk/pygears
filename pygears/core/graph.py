@@ -40,9 +40,12 @@ def _get_consumer_tree_rec(root_intf, cur_intf, consumers, end_producer):
 
         # If cur_intf -> port connection goes through the input port of a
         # Simulation module, we have found the end-point consumer
+        # if sim_mod and (isinstance(port, InPort)) and len(
+        #         cons_intf.consumers) == 1 and isinstance(
+        #             cons_intf.consumers[0], HDLConsumer):
         if sim_mod and (isinstance(port, InPort)):
             # This might be a false-positive when this is a connection within
-            # the simulation module
+            # the co-simulation module
             if (cur_intf.producer
                     and cur_intf.producer.gear is not sim_mod.gear
                     and sim_mod.gear.has_descendent(cur_intf.producer.gear)):

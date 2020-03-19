@@ -29,6 +29,7 @@ async def mux(
         *din,
         mapping=b'dflt_map(din)',
         _full_mapping=b'full_mapping(din, mapping)') -> b'mux_type(din, _full_mapping)':
+
     async with ctrl as c:
         c_map = _full_mapping[c]
 

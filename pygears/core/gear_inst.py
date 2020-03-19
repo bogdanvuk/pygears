@@ -510,54 +510,11 @@ def gear_base_resolver(func,
     return out_intfs
 
 
-def sim_compile_resolver(func, meta_kwds, *args, **kwds):
-    ctx = registry('gear/exec_context')
-    if ctx == 'sim':
-        safe_bind('gear/exec_context', 'compile')
-        local_in = []
-        for a in args:
-            if is_type(a):
-                local_in.append(Intf(type(a)))
-            else:
-                from pygears.lib import const
-                local_in.append(const(val=a))
-
-        safe_bind('gear/exec_context', 'sim')
-
-        outputs = gear_base_resolver(func, meta_kwds, *local_in, **kwds)
-
-        #TODO: Support multiple outputs
-
-        outputs.connect(HDLConsumer())
-
-        if isinstance(outputs, tuple):
-            raise Exception("Not yet supported")
-
-        gear_inst = outputs.producer.gear
-
-        def is_async_gen(func):
-            return bool(func.__code__.co_flags & inspect.CO_ASYNC_GENERATOR)
-
-        if not is_async_gen(gear_inst.func):
-            raise Exception("Not yet supported")
-
-        import asyncio
-        for intf, a in zip(local_in, args):
-            intf._in_queue = asyncio.Queue(maxsize=1,
-                                           loop=registry('sim/simulator'))
-            intf.put_nb(a)
-
-        return gear_inst.func(*(p.consumer for p in gear_inst.in_ports),
-                              **gear_inst.explicit_params)
-    else:
-        return gear_base_resolver(func, meta_kwds, *args, **kwds)
-
-
 class GearInstPlugin(GearDecoratorPlugin):
     @classmethod
     def bind(cls):
         safe_bind('gear/code_map', [])
-        safe_bind('gear/gear_dflt_resolver', sim_compile_resolver)
+        safe_bind('gear/gear_dflt_resolver', gear_base_resolver)
         config.define('gear/memoize', False)
 
     @classmethod
