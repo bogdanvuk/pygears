@@ -18,9 +18,6 @@ import pygears.entry
 
 from pygears.util.find import find
 
-import pygears.sim
-from pygears.sim import sim
-
 from pygears.typing import TypeMatchError
 from pygears.core.gear import module
 from pygears.core.gear_decorator import gear, alternative
@@ -29,6 +26,9 @@ import pygears.core.gear_inst
 from pygears.core.datagear import datagear
 
 from pygears.core.intf import Intf
+
+import pygears.sim
+from pygears.sim import sim
 
 import pygears.lib
 import pygears.typing.pprint
