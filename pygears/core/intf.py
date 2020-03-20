@@ -61,18 +61,38 @@ class Intf:
             'finish': SimEvent()
         }
 
+    @property
+    def name(self):
+        if isinstance(self.producer, InPort):
+            parent_name = self.producer.gear.name
+            basename = self.producer.basename
+        elif isinstance(self.producer, OutPort):
+            parent_name = self.producer.gear.parent.name
+            basename = self.producer.basename
+        elif len(self.consumers) == 1 and isinstance(self.consumers[0],
+                                                     OutPort):
+            parent_name = self.consumers[0].gear.name
+            basename = self.consumers[0].basename
+
+        if hasattr(self, 'var_name'):
+            basename = self.var_name
+
+        return f'{parent_name}.{basename}'
+
     # TODO: type checking should be performed here, right?
     def __ior__(self, iout):
         if isinstance(iout, Partial):
             raise Exception(
                 f"Output of the unresolved gear '{iout.func.__name__}' with"
                 f" arguments {iout.args} and parameters {iout.kwds},"
-                f" connected to '{self}': {str(MultiAlternativeError(iout.errors))}")
+                f" connected to '{self}': {str(MultiAlternativeError(iout.errors))}"
+            )
 
         iout.producer.consumer = self
         if self.producer is not None:
             raise Exception(
-                f"Interface '{self}' is already connected to a producer '{self.producer.name}'\n")
+                f"Interface '{self}' is already connected to a producer '{self.producer.name}'\n"
+            )
 
         self.producer = iout.producer
 
@@ -277,6 +297,9 @@ class Intf:
         return val
 
     async def __aenter__(self):
+        if self.name == '/test.dout':
+            breakpoint()
+
         return await self.pull()
 
     async def __aexit__(self, exception_type, exception_value, traceback):

@@ -32,34 +32,34 @@ def test_intf_vararg_fix_index(tmpdir, din_delay, dout_delay):
 # test_intf_vararg_fix_index('/tools/home/tmp/qpass', 1, 1)
 
 
-# @pytest.mark.parametrize('din_delay', [0, 1])
-# @pytest.mark.parametrize('dout_delay', [0, 1])
-# def test_intf_vararg_mux(tmpdir, din_delay, dout_delay):
-#     @gear(hdl={'compile': True})
-#     async def test(*din: Uint) -> b'din[0]':
-#         async with mux(0, *din) as d:
-#             yield code(d[0], Uint[4])
+@pytest.mark.parametrize('din_delay', [0, 1])
+@pytest.mark.parametrize('dout_delay', [0, 1])
+def test_intf_vararg_mux(tmpdir, din_delay, dout_delay):
+    @gear(hdl={'compile': True})
+    async def test(*din: Uint) -> b'din[0]':
+        async with mux(0, *din) as d:
+            yield code(d[0], Uint[4])
 
-#     # directed(drv(t=Uint[4], seq=list(range(4)))
-#     #          | delay_rng(din_delay, din_delay),
-#     #          drv(t=Uint[4], seq=list(range(4, 8)))
-#     #          | delay_rng(din_delay, din_delay),
-#     #          f=test,
-#     #          delays=[delay_rng(dout_delay, dout_delay)],
-#     #          ref=list(range(4)))
+    # directed(drv(t=Uint[4], seq=list(range(4)))
+    #          | delay_rng(din_delay, din_delay),
+    #          drv(t=Uint[4], seq=list(range(4, 8)))
+    #          | delay_rng(din_delay, din_delay),
+    #          f=test,
+    #          delays=[delay_rng(dout_delay, dout_delay)],
+    #          ref=list(range(4)))
 
-#     directed(drv(t=Uint[4], seq=list(range(1)))
-#              | delay_rng(din_delay, din_delay),
-#              drv(t=Uint[4], seq=list())
-#              | delay_rng(din_delay, din_delay),
-#              f=test,
-#              delays=[delay_rng(dout_delay, dout_delay)],
-#              ref=list(range(1)))
+    directed(drv(t=Uint[4], seq=list(range(1)))
+             | delay_rng(din_delay, din_delay),
+             drv(t=Uint[4], seq=list())
+             | delay_rng(din_delay, din_delay),
+             f=test,
+             delays=[delay_rng(dout_delay, dout_delay)],
+             ref=list(range(1)))
 
-#     # cosim('/test', 'verilator')
-#     sim(tmpdir, check_activity=False)
+    # cosim('/test', 'verilator')
+    sim(tmpdir, check_activity=False)
 
-# test_intf_vararg_mux('/tools/home/tmp/async_sim', 0, 0)
+test_intf_vararg_mux('/tools/home/tmp/async_sim', 0, 0)
 
 
 # def test_loop_select_intfs(tmpdir):

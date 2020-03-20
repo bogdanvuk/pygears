@@ -58,7 +58,7 @@ class TraceFormatPlugin(PluginBase):
 
         config.define('trace/level',
                       setter=set_trace_level,
-                      default=TraceLevel.user)
+                      default=TraceLevel.debug)
 
         config.define('trace/ignore',
                       default=[

@@ -19,39 +19,79 @@ def get_sim_map_gear(gear):
     return None
 
 
+def get_sim_cls_parent(gear_inst):
+    parent = gear_inst.parent
+    while parent is not None:
+        if parent.params.get('sim_cls', None):
+            break
+
+        parent = parent.parent
+
+    return parent
+
+
+def is_end_consumer(obj, sim=False):
+    if isinstance(obj, InPort):
+        obj = obj.consumer
+
+    if (len(obj.consumers) == 1 and isinstance(obj.consumers[0], HDLConsumer)):
+        return True
+
+    if sim:
+        if (isinstance(obj.producer, InPort)
+                and obj.producer.gear.params.get('sim_cls', None) is not None):
+            return True
+
+    return False
+
+
+def is_source_producer(obj, sim=False):
+    if not obj.consumers:
+        return False
+
+    if sim:
+        # Check if intf drives output port of a sim_cls module
+        for c in obj.consumers:
+            if not isinstance(c, OutPort):
+                continue
+
+            if c.gear.params.get('sim_cls', None) is not None:
+                return True
+
+        for c in obj.consumers + [obj.producer]:
+            if not isinstance(c, OutPort):
+                continue
+
+            if get_sim_cls_parent(c.gear):
+                return False
+
+    return isinstance(obj.producer, HDLProducer)
+
+
+def get_source_producer(obj, sim=False):
+    if isinstance(obj, Port):
+        obj = obj.producer
+
+    if is_source_producer(obj, sim=sim):
+        return obj
+
+    if isinstance(obj.producer, HDLProducer):
+        raise Exception(
+            f'Interface path does not end with a simulation gear at {obj.name}'
+        )
+
+    return get_source_producer(obj.producer, sim=sim)
+
+
 def _get_consumer_tree_rec(root_intf, cur_intf, consumers, end_producer):
-    if not cur_intf.consumers:
-        if cur_intf is not root_intf:
-            # breakpoint()
-            port = cur_intf.producer
-            end_producer[cur_intf] = (root_intf, len(consumers))
-            end_producer[port] = (root_intf, len(consumers))
-            # sim_mod = get_sim_map_gear(port.gear)
-            consumers.append(port)
-
-        return
-
     for port in cur_intf.consumers:
         if isinstance(port, HDLConsumer):
             continue
 
         cons_intf = port.consumer
-        sim_mod = get_sim_map_gear(port.gear)
-
-        # If cur_intf -> port connection goes through the input port of a
-        # Simulation module, we have found the end-point consumer
-        # if sim_mod and (isinstance(port, InPort)) and len(
-        #         cons_intf.consumers) == 1 and isinstance(
-        #             cons_intf.consumers[0], HDLConsumer):
-        if sim_mod and (isinstance(port, InPort)):
-            # This might be a false-positive when this is a connection within
-            # the co-simulation module
-            if (cur_intf.producer
-                    and cur_intf.producer.gear is not sim_mod.gear
-                    and sim_mod.gear.has_descendent(cur_intf.producer.gear)):
-                continue
-
+        if is_end_consumer(cons_intf, sim=True):
             end_producer[port] = (root_intf, len(consumers))
+            end_producer[cons_intf] = end_producer[port]
             consumers.append(port)
         else:
             start = len(consumers)
@@ -62,7 +102,7 @@ def _get_consumer_tree_rec(root_intf, cur_intf, consumers, end_producer):
             else:
                 end_producer[port] = (root_intf, start)
 
-        end_producer[port.consumer] = end_producer[port]
+            end_producer[cons_intf] = end_producer[port]
 
 
 def hier_dfs(root):
@@ -181,33 +221,10 @@ class IntfOperPlugin(PluginBase):
         safe_bind('graph/end_producer', {})
 
 
-def get_end_producer(obj):
-    if isinstance(obj, Port):
-        return get_end_producer(obj.producer)
-    else:
-        if isinstance(obj.producer, HDLProducer):
-            return obj
-
-        for pout in obj.consumers:
-            if isinstance(pout, HDLConsumer):
-                continue
-
-            if pout.gear in registry('sim/map') and (isinstance(pout,
-                                                                OutPort)):
-                return obj
-        else:
-            if obj.producer:
-                return get_end_producer(obj.producer)
-            else:
-                raise Exception(
-                    f'Interface path does not end with a simulation gear at {pout.gear.name}.{pout.basename}'
-                )
-
-
 def get_producer_queue(obj):
     end_producer = registry('graph/end_producer')
     if obj not in end_producer:
-        intf = get_end_producer(obj)
+        intf = get_source_producer(obj, sim=True)
         get_consumer_tree(intf)
 
     # TODO: investigate why this is necessary

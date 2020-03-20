@@ -5,6 +5,7 @@ from copy import copy
 from pygears.conf import bind, core_log, registry, safe_bind, MultiAlternativeError, config
 from pygears.typing import Any, cast, is_type
 from pygears.core.util import is_standard_func, get_function_context_dict
+from pygears.core.graph import get_source_producer, get_sim_cls_parent
 
 from .partial import Partial
 from .intf import Intf
@@ -13,7 +14,7 @@ from .gear import TooManyArguments, GearTypeNotSpecified, GearArgsNotSpecified
 from .gear import Gear, create_hier
 from .gear_decorator import GearDecoratorPlugin
 from .gear_memoize import get_memoized_gear, memoize_gear
-from .port import HDLConsumer, HDLProducer
+from .port import HDLConsumer, HDLProducer, InPort, OutPort
 
 
 def get_obj_var_name(frame, obj):
@@ -272,6 +273,30 @@ def resolve_func(gear_inst):
     return out_intfs, out_dtype
 
 
+def report_dangling(intf, gear_inst, p):
+    if hasattr(intf, 'var_name'):
+        core_log().warning(
+            f'Interface "{gear_inst.name}/{intf.var_name}" left dangling.')
+    else:
+        path = []
+        while True:
+            g = p.gear
+
+            if hasattr(p.consumer, 'var_name'):
+                path.append(f'{g.parent.name}/{p.consumer.var_name}')
+            else:
+                path.append(p.name)
+
+            if len(g.in_ports) != 1 or len(g.out_ports) != 1:
+                break
+
+            p = g.in_ports[0].producer.producer
+
+        path = ' -> '.join(reversed(path))
+
+        core_log().warning(f'Interface "{path}" left dangling.')
+
+
 def resolve_gear(gear_inst, out_intfs, out_dtype, fix_intfs):
     dflt_dout_name = registry('gear/naming/default_out_name')
     for i in range(len(gear_inst.outnames), len(out_dtype)):
@@ -312,33 +337,12 @@ def resolve_gear(gear_inst, out_intfs, out_dtype, fix_intfs):
             f' could not be resolved, and resulted in "{repr(out_dtype)}"')
 
     for c in gear_inst.child:
+        channel_interfaces(c)
         for p in c.out_ports:
             intf = p.consumer
             if intf not in set(intfs) and intf not in set(
                     c.params['intfs']) and not intf.consumers:
-                if hasattr(intf, 'var_name'):
-                    core_log().warning(
-                        f'Interface "{gear_inst.name}/{intf.var_name}" left dangling.'
-                    )
-                else:
-                    path = []
-                    while True:
-                        g = p.gear
-
-                        if hasattr(p.consumer, 'var_name'):
-                            path.append(
-                                f'{g.parent.name}/{p.consumer.var_name}')
-                        else:
-                            path.append(p.name)
-
-                        if len(g.in_ports) != 1 or len(g.out_ports) != 1:
-                            break
-
-                        p = g.in_ports[0].producer.producer
-
-                    path = ' -> '.join(reversed(path))
-
-                    core_log().warning(f'Interface "{path}" left dangling.')
+                report_dangling(intf, gear_inst, p)
 
     if len(out_intfs) > 1:
         return tuple(out_intfs)
@@ -389,6 +393,108 @@ def resolve_out_types(out_intfs, out_dtype, gear_inst):
         return out_intfs, out_dtype
 
     return out_intfs, out_dtype
+
+
+def connect_to_existing_parent_in_port(sim_cls_parent, in_port):
+    in_intf = in_port.producer
+    src_intf = get_source_producer(in_port)
+
+    for parent_port in sim_cls_parent.in_ports:
+        if src_intf is get_source_producer(parent_port):
+            in_intf.disconnect(in_port)
+            parent_port.consumer.connect(in_port)
+            return True
+
+    return False
+
+
+def connect_to_existing_parent_out_port(sim_cls_parent, out_port, cons_port):
+    out_intf = out_port.consumer
+
+    for parent_port in sim_cls_parent.out_ports:
+        if out_intf is parent_port.consumer:
+            out_intf.disconnect(cons_port)
+            parent_port.consumer.connect(cons_port)
+            return True
+
+    return False
+
+
+def channel_out_port(gear_inst, out_port, sim_cls_parent):
+    out_parent_cons = []
+
+    out_intf = out_port.consumer
+    for cons_port in out_intf.consumers:
+        cons_gear = cons_port.gear
+
+        if sim_cls_parent.has_descendent(cons_gear):
+            continue
+
+        if connect_to_existing_parent_out_port(gear_inst.parent, out_port,
+                                               cons_port):
+            continue
+
+        out_parent_cons.append(cons_port)
+
+    if not out_parent_cons:
+        return
+
+    basename = getattr(out_intf, 'var_name', out_port.basename)
+    parent_port = OutPort(gear_inst.parent, len(gear_inst.parent.out_ports),
+                          basename)
+
+    gear_inst.parent.out_ports.append(parent_port)
+
+    in_intf = Intf(out_intf.dtype)
+    out_intf.source(parent_port)
+    in_intf.source(out_port)
+    in_intf.connect(parent_port)
+
+    for p in out_intf.consumers:
+        if p in out_parent_cons:
+            continue
+
+        out_intf.disconnect(p)
+        in_intf.connect(p)
+
+
+def channel_in_port(gear_inst, in_port, sim_cls_parent):
+    in_intf = in_port.producer
+    prod_gear = in_intf.producer.gear
+
+    if sim_cls_parent.has_descendent(prod_gear):
+        return
+
+    if connect_to_existing_parent_in_port(gear_inst.parent, in_port):
+        return
+
+    basename = getattr(in_intf, 'var_name', in_port.basename)
+    parent_port = InPort(gear_inst.parent, len(gear_inst.parent.in_ports),
+                         basename)
+
+    gear_inst.parent.in_ports.append(parent_port)
+
+    in_intf.disconnect(in_port)
+    in_intf.connect(parent_port)
+
+    gear_in_intf = Intf(in_intf.dtype)
+    gear_in_intf.source(parent_port)
+    gear_in_intf.connect(in_port)
+
+
+def channel_interfaces(gear_inst):
+    # if gear_inst.name == '/top_hier/hier':
+    #     breakpoint()
+
+    sim_cls_parent = get_sim_cls_parent(gear_inst)
+    if sim_cls_parent is None:
+        return
+
+    for in_port in gear_inst.in_ports:
+        channel_in_port(gear_inst, in_port, sim_cls_parent)
+
+    for out_port in gear_inst.out_ports:
+        channel_out_port(gear_inst, out_port, sim_cls_parent)
 
 
 def terminate_internal_intfs(gear_inst):

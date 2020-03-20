@@ -382,9 +382,9 @@ class EventLoop(asyncio.events.AbstractEventLoop):
                 if ((sim_gear not in self.forward_ready) and (sim_gear not in self.delta_ready)):
                     continue
 
-                print(
-                    f'Forward: {sim_gear.port.name if hasattr(sim_gear, "port") else sim_gear.gear.name}'
-                )
+                # print(
+                #     f'Forward: {sim_gear.port.name if hasattr(sim_gear, "port") else sim_gear.gear.name}'
+                # )
                 self.cur_task_id = i
                 self.maybe_run_gear(sim_gear, self.forward_ready)
 

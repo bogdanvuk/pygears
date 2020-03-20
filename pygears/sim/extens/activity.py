@@ -4,7 +4,7 @@ from pygears.lib import const
 from pygears.sim import sim_log
 from pygears.conf import inject, Inject
 from pygears.core.gear import Gear
-from pygears.core.graph import get_producer_queue, get_end_producer
+from pygears.core.graph import get_producer_queue, get_source_producer
 
 
 class ActivityChecker:
@@ -51,7 +51,7 @@ class ActivityChecker:
         if q._unfinished_tasks:
             return "active"
 
-        prod_port = get_end_producer(port).consumers[0]
+        prod_port = get_source_producer(port, sim=True).consumers[0]
         if prod_port in self.handshakes:
             return "handshaked"
 
@@ -74,7 +74,7 @@ class ActivityChecker:
                 status = self.get_port_status(p)
 
                 if status == "active":
-                    src_port = get_end_producer(p).consumers[0]
+                    src_port = get_source_producer(p, sim=True).consumers[0]
 
                     if src_port.gear.definition == const:
                         # Skip constants since they are never done
