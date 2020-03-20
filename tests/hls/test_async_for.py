@@ -6,15 +6,15 @@ from pygears.typing import Queue, Uint
 from pygears.lib import directed
 
 
-# def test_simple_async_sim(tmpdir, sim_cls):
-#     @gear(hdl={'compile': True})
-#     async def test() -> Uint[3]:
-#         async for i, _ in qrange(4):
-#             yield i
+def test_simple_async_sim(tmpdir, sim_cls):
+    @gear(hdl={'compile': True})
+    async def test() -> Uint[3]:
+        async for i, _ in qrange(4):
+            yield i
 
-#     directed(f=test(sim_cls=sim_cls), ref=list(range(4)) * 2)
+    directed(f=test(sim_cls=sim_cls), ref=list(range(4)) * 2)
 
-#     sim(tmpdir, timeout=8)
+    sim(tmpdir, timeout=8)
 
 
 def test_simple(tmpdir, sim_cls):

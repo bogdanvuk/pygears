@@ -297,9 +297,6 @@ class Intf:
         return val
 
     async def __aenter__(self):
-        if self.name == '/test.dout':
-            breakpoint()
-
         return await self.pull()
 
     async def __aexit__(self, exception_type, exception_value, traceback):

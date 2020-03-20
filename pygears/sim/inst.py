@@ -1,6 +1,6 @@
 import inspect
 
-from pygears import registry, safe_bind, Intf, bind
+from pygears import registry, safe_bind, Intf, bind, module
 from pygears.sim.sim_gear import SimGear, is_simgear_func
 from pygears.sim.sim import SimPlugin
 from pygears.core.gear import GearPlugin
@@ -9,17 +9,41 @@ from pygears.core.hier_node import HierVisitorBase
 from pygears.core.port import HDLConsumer, HDLProducer
 
 
+def get_existing_child(func, meta_kwds, *args, **kwds):
+    for c in module().child:
+        if c.func is func:
+            break
+    else:
+        return None
+
+    for a, intf in zip(args, c.args.values()):
+        if not isinstance(a, Intf):
+            intf.put_nb(a)
+
+    return c.outputs
+
+
 def sim_compile_resolver(func, meta_kwds, *args, **kwds):
     ctx = registry('gear/exec_context')
     if ctx == 'sim':
+        outputs = get_existing_child(func, meta_kwds, *args, **kwds)
+        if outputs is not None:
+            if len(outputs) == 1:
+                return outputs[0]
+
+            return outputs
+
         safe_bind('gear/exec_context', 'compile')
+
         local_in = []
         for a in args:
             if isinstance(a, Intf):
+                a.consumers.clear()
                 local_in.append(a)
             else:
                 from pygears.lib.const import get_literal_type
                 local_in.append(Intf(get_literal_type(a)))
+                local_in[-1].producer = HDLProducer()
 
         safe_bind('gear/exec_context', 'sim')
 
@@ -27,10 +51,10 @@ def sim_compile_resolver(func, meta_kwds, *args, **kwds):
 
         # TODO: Support multiple outputs
 
-        # outputs.connect(HDLConsumer())
-
         if isinstance(outputs, tuple):
             raise Exception("Not yet supported")
+
+        outputs.connect(HDLConsumer())
 
         gear_inst = outputs.producer.gear
 
@@ -45,8 +69,7 @@ def sim_compile_resolver(func, meta_kwds, *args, **kwds):
             if isinstance(a, Intf):
                 continue
 
-            intf._in_queue = asyncio.Queue(maxsize=1,
-                                           loop=registry('sim/simulator'))
+            intf._in_queue = asyncio.Queue(maxsize=1, loop=registry('sim/simulator'))
             intf.put_nb(a)
 
         simulator = registry('sim/simulator')
@@ -74,6 +97,7 @@ class SimInstVisitor(HierVisitorBase):
     def __init__(self):
         self.namespace = registry('sim/module_namespace')
         self.sim_map = registry('sim/map')
+
     def Gear(self, module):
         sim_cls = module.params.get('sim_cls', None)
         sim_inst = None
