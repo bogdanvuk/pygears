@@ -3,6 +3,7 @@
 # load_plugin_folder(os.path.join(os.path.dirname(__file__), 'modules'))
 
 from functools import partial
+from pygears.core.gear_inst import channel_interfaces
 from .sim import sim, artifacts_dir, sim_assert, timestep, clk, delta, sim_log, sim_phase, SimFinish
 from . import inst
 
@@ -13,6 +14,13 @@ from .extens.vcd import VCD
 
 def verilate(top, *args, **kwds):
     cosim(top, 'verilator', *args, **kwds)
+
+
+def channel_interfaces_rec(gear_inst):
+    for c in gear_inst.child:
+        channel_interfaces_rec(c)
+
+    channel_interfaces(gear_inst)
 
 
 def cosim(top, sim, *args, **kwds):
@@ -41,8 +49,10 @@ def cosim(top, sim, *args, **kwds):
     else:
         top.params['sim_cls'] = sim_cls
 
+    channel_interfaces_rec(top)
+
 
 __all__ = [
-    'sim', 'artifacts_dir', 'sim_assert', 'clk', 'delta', 'timestep',
-    'sim_log', 'sim_phase', 'schedule_to_finish', 'SimFinish', 'verilate'
+    'sim', 'artifacts_dir', 'sim_assert', 'clk', 'delta', 'timestep', 'sim_log',
+    'sim_phase', 'schedule_to_finish', 'SimFinish', 'verilate'
 ]

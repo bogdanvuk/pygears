@@ -483,9 +483,6 @@ def channel_in_port(gear_inst, in_port, sim_cls_parent):
 
 
 def channel_interfaces(gear_inst):
-    # if gear_inst.name == '/top_hier/hier':
-    #     breakpoint()
-
     sim_cls_parent = get_sim_cls_parent(gear_inst)
     if sim_cls_parent is None:
         return

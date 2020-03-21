@@ -142,6 +142,7 @@ class GearEnum(HierVisitorBase):
         if not node.hierarchical:
             self.gears.append(node)
 
+
 def simgear_exec_order(gears):
     sim_map = registry('sim/map')
     dag = {}
@@ -178,8 +179,7 @@ def simgear_exec_order(gears):
     gear_order = topo_sort(dag)
 
     cosim_modules = [
-        g for g in sim_map
-        if isinstance(g, Gear) and g.params['sim_cls'] is not None
+        g for g in sim_map if isinstance(g, Gear) and g.params['sim_cls'] is not None
     ]
 
     gear_multi_order = cosim_modules.copy()
@@ -187,6 +187,10 @@ def simgear_exec_order(gears):
         if (all(not m.has_descendent(g) for m in cosim_modules)
                 or isinstance(g, (InPort, OutPort))):
             gear_multi_order.append(g)
+
+    # print('Order: ')
+    # for g in gear_multi_order:
+    #     print(g.name)
 
     # import networkx as nx
     # import matplotlib.pyplot as plt
@@ -206,6 +210,7 @@ def simgear_exec_order(gears):
     # plt.show()
 
     return gear_multi_order
+
 
 class EventLoop(asyncio.events.AbstractEventLoop):
     def __init__(self):
@@ -379,7 +384,8 @@ class EventLoop(asyncio.events.AbstractEventLoop):
                 sim_gear = self.sim_gears[i]
                 i += 1
 
-                if ((sim_gear not in self.forward_ready) and (sim_gear not in self.delta_ready)):
+                if ((sim_gear not in self.forward_ready)
+                        and (sim_gear not in self.delta_ready)):
                     continue
 
                 # print(

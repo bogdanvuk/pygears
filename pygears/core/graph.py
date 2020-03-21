@@ -34,13 +34,16 @@ def is_end_consumer(obj, sim=False):
     if isinstance(obj, InPort):
         obj = obj.consumer
 
+    if sim:
+        if isinstance(obj.producer, InPort):
+            if obj.producer.gear.params.get('sim_cls', None) is not None:
+                return True
+
+            if get_sim_cls_parent(obj.producer.gear):
+                return False
+
     if (len(obj.consumers) == 1 and isinstance(obj.consumers[0], HDLConsumer)):
         return True
-
-    if sim:
-        if (isinstance(obj.producer, InPort)
-                and obj.producer.gear.params.get('sim_cls', None) is not None):
-            return True
 
     return False
 
@@ -77,8 +80,7 @@ def get_source_producer(obj, sim=False):
 
     if isinstance(obj.producer, HDLProducer):
         raise Exception(
-            f'Interface path does not end with a simulation gear at {obj.name}'
-        )
+            f'Interface path does not end with a simulation gear at {obj.name}')
 
     return get_source_producer(obj.producer, sim=sim)
 
@@ -95,8 +97,7 @@ def _get_consumer_tree_rec(root_intf, cur_intf, consumers, end_producer):
             consumers.append(port)
         else:
             start = len(consumers)
-            _get_consumer_tree_rec(root_intf, cons_intf, consumers,
-                                   end_producer)
+            _get_consumer_tree_rec(root_intf, cons_intf, consumers, end_producer)
             if len(consumers) - start > 1:
                 end_producer[port] = (root_intf, slice(start, len(consumers)))
             else:
@@ -232,4 +233,7 @@ def get_producer_queue(obj):
         return None
 
     intf, i = end_producer[obj]
+    if i >= len(intf.out_queues):
+        breakpoint()
+
     return intf.out_queues[i]
