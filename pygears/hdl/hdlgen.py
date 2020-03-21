@@ -53,6 +53,9 @@ def hdlgen(top=None,
                                  language=language,
                                  rtl_only=True,
                                  wrapper=conf.get('wrapper', False)):
-            shutil.copy(fn, outdir)
+            try:
+                shutil.copy(fn, outdir)
+            except shutil.SameFileError:
+                pass
 
     return rtl_top

@@ -39,8 +39,7 @@ def find_current_gear_frame():
 
 
 def check_args_num(argnames, varargsname, args):
-    if (len(args) < len(argnames)) or (not varargsname and
-                                       (len(args) > len(argnames))):
+    if (len(args) < len(argnames)) or (not varargsname and (len(args) > len(argnames))):
         balance = "few" if (len(args) < len(argnames)) else "many"
 
         raise TooManyArguments(f"Too {balance} arguments provided.")
@@ -54,8 +53,7 @@ def check_args_specified(args):
 
         if not type_is_specified(intf.dtype):
             raise GearArgsNotSpecified(
-                f'Input argument "{name}" has unresolved type "{repr(intf.dtype)}"'
-            )
+                f'Input argument "{name}" has unresolved type "{repr(intf.dtype)}"')
 
 
 def resolve_gear_name(func, __base__):
@@ -65,6 +63,40 @@ def resolve_gear_name(func, __base__):
         name = __base__.__name__
 
     return name
+
+
+oper_name = {
+    '__add__': '+',
+    '__and__': '&',
+    '__floordiv__': '/',
+    '__truediv__': '//',
+    '__eq__': '==',
+    '__ge__': '>=',
+    '__gt__': '>',
+    '__invert__': '~',
+    '__le__': '<=',
+    '__lt__': '<',
+    '__lshift__': '<<',
+    '__matmul__': '@',
+    '__mod__': '%',
+    '__mul__': '*',
+    '__ne__': '!=',
+    '__neg__': '-',
+    '__rshift__': '>>',
+    '__sub__': '-',
+    '__xor__': '^',
+}
+
+
+def get_operator_name(func):
+    for name, p in registry('gear/intf_oper').items():
+        if isinstance(p, Partial):
+            p = p.func
+
+        if p is func:
+            return oper_name[name]
+
+    return None
 
 
 def infer_const_args(args):
@@ -82,11 +114,16 @@ def infer_const_args(args):
                     #     f'Unresolved gear "{intf.func.__name__}" with inputs'
                     #     f' {intf.args} and parameters {intf.kwds},'
                     #     f'connected to the input "{name}"')
+
+                    opinfo = ''
+                    op = get_operator_name(intf.func)
+                    if op:
+                        opinfo = f' (operator "{op}")'
+
                     raise GearArgsNotSpecified(
-                        f'Unresolved gear "{intf.func.__name__}" with'
+                        f'Unresolved gear "{intf.func.__name__}"{opinfo} with'
                         f' arguments {intf.args} and parameters {intf.kwds},'
-                        f' connected to the input "{name}": {str(MultiAlternativeError(intf.errors))}'
-                    )
+                        f' connected to the input "{name}": {str(MultiAlternativeError(intf.errors))}')
                 else:
                     raise GearArgsNotSpecified(
                         f'Unresolved argument "{intf}" connected to the input'
@@ -121,8 +158,7 @@ def expand_varargs(args, annotations, varargsname, varargs):
         args[argname] = a
 
     if vararg_type_list:
-        annotations[varargsname] = f'({", ".join(vararg_type_list)}, )'.encode(
-        )
+        annotations[varargsname] = f'({", ".join(vararg_type_list)}, )'.encode()
 
 
 def resolve_return_annotation(annotations):
@@ -155,8 +191,8 @@ def resolve_args(args, argnames, annotations, varargs):
 def gear_signature(func, args, kwds, meta_kwds):
     paramspec = inspect.getfullargspec(func)
 
-    args, annotations = resolve_args(args, paramspec.args,
-                                     paramspec.annotations, paramspec.varargs)
+    args, annotations = resolve_args(
+        args, paramspec.args, paramspec.annotations, paramspec.varargs)
 
     kwddefaults = paramspec.kwonlydefaults or {}
 
@@ -206,15 +242,13 @@ class intf_name_tracer:
         self.code_map.append(self.gear)
 
         # tracer is activated on next call, return or exception
-        if registry('gear/current_module').parent == registry(
-                'gear/hier_root'):
+        if registry('gear/current_module').parent == registry('gear/hier_root'):
             sys.setprofile(self.tracer)
 
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
-        if registry('gear/current_module').parent == registry(
-                'gear/hier_root'):
+        if registry('gear/current_module').parent == registry('gear/hier_root'):
             sys.setprofile(None)
 
         cm = self.code_map.pop()
@@ -244,8 +278,8 @@ def resolve_func(gear_inst):
         # TODO: Try to detect infinite recursions
         # TODO: If the gear is instantiated in REPL, intf_name_tracer will fail
         with intf_name_tracer(gear_inst):
-            out_intfs = gear_inst.func(*gear_inst.in_port_intfs,
-                                       **gear_inst.explicit_params)
+            out_intfs = gear_inst.func(
+                *gear_inst.in_port_intfs, **gear_inst.explicit_params)
 
         if out_intfs is None:
             out_intfs = tuple()
@@ -257,13 +291,11 @@ def resolve_func(gear_inst):
                 raise GearArgsNotSpecified(
                     f'Unresolved gear "{intf.func.__name__}" with'
                     f' arguments {intf.args} and parameters {intf.kwds},'
-                    f' returned as output "{i}": {str(MultiAlternativeError(intf.errors))}'
-                )
+                    f' returned as output "{i}": {str(MultiAlternativeError(intf.errors))}')
 
         err = None
         try:
-            out_intfs, out_dtype = resolve_out_types(out_intfs, out_dtype,
-                                                     gear_inst)
+            out_intfs, out_dtype = resolve_out_types(out_intfs, out_dtype, gear_inst)
         except (TypeError, TypeMatchError) as e:
             err = type(e)(f"{str(e)}, when instantiating '{gear_inst.name}'")
 
@@ -275,8 +307,7 @@ def resolve_func(gear_inst):
 
 def report_dangling(intf, gear_inst, p):
     if hasattr(intf, 'var_name'):
-        core_log().warning(
-            f'Interface "{gear_inst.name}/{intf.var_name}" left dangling.')
+        core_log().warning(f'Interface "{gear_inst.name}/{intf.var_name}" left dangling.')
     else:
         path = []
         while True:
@@ -303,8 +334,8 @@ def resolve_gear(gear_inst, out_intfs, out_dtype, fix_intfs):
         if out_intfs and hasattr(out_intfs[i], 'var_name'):
             gear_inst.outnames.append(out_intfs[i].var_name)
         else:
-            gear_inst.outnames.append(dflt_dout_name if len(out_dtype) ==
-                                      1 else f'{dflt_dout_name}{i}')
+            gear_inst.outnames.append(
+                dflt_dout_name if len(out_dtype) == 1 else f'{dflt_dout_name}{i}')
 
     gear_inst.connect_output(out_intfs, out_dtype)
 
@@ -360,8 +391,7 @@ def resolve_out_types(out_intfs, out_dtype, gear_inst):
 
     if out_intfs:
         if len(out_intfs) != len(out_dtype):
-            relation = 'smaller' if len(out_intfs) < len(
-                out_dtype) else 'larger'
+            relation = 'smaller' if len(out_intfs) < len(out_dtype) else 'larger'
             raise TypeMatchError(
                 f"Number of actual output interfaces ({len(out_intfs)}) is {relation} "
                 f"than the number of specified output types: ({tuple(i.dtype for i in out_intfs)}) vs {repr(out_dtype)}"
@@ -430,8 +460,7 @@ def channel_out_port(gear_inst, out_port, sim_cls_parent):
         if sim_cls_parent.has_descendent(cons_gear):
             continue
 
-        if connect_to_existing_parent_out_port(gear_inst.parent, out_port,
-                                               cons_port):
+        if connect_to_existing_parent_out_port(gear_inst.parent, out_port, cons_port):
             continue
 
         out_parent_cons.append(cons_port)
@@ -440,8 +469,7 @@ def channel_out_port(gear_inst, out_port, sim_cls_parent):
         return
 
     basename = getattr(out_intf, 'var_name', out_port.basename)
-    parent_port = OutPort(gear_inst.parent, len(gear_inst.parent.out_ports),
-                          basename)
+    parent_port = OutPort(gear_inst.parent, len(gear_inst.parent.out_ports), basename)
 
     gear_inst.parent.out_ports.append(parent_port)
 
@@ -469,8 +497,7 @@ def channel_in_port(gear_inst, in_port, sim_cls_parent):
         return
 
     basename = getattr(in_intf, 'var_name', in_port.basename)
-    parent_port = InPort(gear_inst.parent, len(gear_inst.parent.in_ports),
-                         basename)
+    parent_port = InPort(gear_inst.parent, len(gear_inst.parent.in_ports), basename)
 
     gear_inst.parent.in_ports.append(parent_port)
 
@@ -503,13 +530,8 @@ def terminate_internal_intfs(gear_inst):
             i.source(HDLProducer())
 
 
-def gear_base_resolver(func,
-                       meta_kwds,
-                       *args,
-                       name=None,
-                       intfs=None,
-                       __base__=None,
-                       **kwds):
+def gear_base_resolver(
+    func, meta_kwds, *args, name=None, intfs=None, __base__=None, **kwds):
 
     name = name or resolve_gear_name(func, __base__)
     # if name == 'demux':
@@ -535,10 +557,11 @@ def gear_base_resolver(func,
         fix_intfs = intfs.copy()
 
     if config['gear/memoize']:
-        gear_inst = get_memoized_gear(func, args, const_args, {
-            **kwds,
-            **meta_kwds
-        }, fix_intfs, name)
+        gear_inst = get_memoized_gear(
+            func, args, const_args, {
+                **kwds,
+                **meta_kwds
+            }, fix_intfs, name)
         if gear_inst is not None:
             out_intfs = gear_inst.outputs
             if len(out_intfs) == 1:
@@ -547,9 +570,8 @@ def gear_base_resolver(func,
                 return out_intfs
 
     try:
-        params = infer_params(args,
-                              param_templates,
-                              context=get_function_context_dict(func))
+        params = infer_params(
+            args, param_templates, context=get_function_context_dict(func))
     except TypeMatchError as e:
         err = TypeMatchError(f'{str(e)}, of the module "{name}"')
         params = e.params
@@ -585,15 +607,13 @@ def gear_base_resolver(func,
         gear_inst.connect_input(args, const_args)
         try:
             out_intfs, out_dtype = resolve_func(gear_inst)
-            out_intfs = resolve_gear(gear_inst, out_intfs, out_dtype,
-                                     fix_intfs)
+            out_intfs = resolve_gear(gear_inst, out_intfs, out_dtype, fix_intfs)
             terminate_internal_intfs(gear_inst)
 
-        except (TooManyArguments, GearTypeNotSpecified, GearArgsNotSpecified,
-                TypeError, TypeMatchError, MultiAlternativeError) as e:
+        except (TooManyArguments, GearTypeNotSpecified, GearArgsNotSpecified, TypeError,
+                TypeMatchError, MultiAlternativeError) as e:
             err = e
-            if hasattr(func, 'alternatives') or hasattr(
-                    func, 'alternative_to'):
+            if hasattr(func, 'alternatives') or hasattr(func, 'alternative_to'):
                 err.root_gear = gear_inst
 
     if err:
