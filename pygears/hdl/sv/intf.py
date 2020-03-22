@@ -49,7 +49,12 @@ class SVIntfGen:
 
     @property
     def parent(self):
-        return self.intf.producer.gear
+        prod_port = self.intf.producer
+
+        if isinstance(prod_port, InPort):
+            return prod_port.gear
+
+        return prod_port.gear.parent
 
     @property
     @functools.lru_cache(maxsize=None)
@@ -62,6 +67,10 @@ class SVIntfGen:
 
         cnt = 0
         for c in self.parent.child:
+            if svgen_map[c]._basename == basename:
+                cnt += 1
+
+        for c in self.parent.local_intfs:
             if c is self.intf:
                 break
 
@@ -72,7 +81,7 @@ class SVIntfGen:
             if p.basename == basename:
                 cnt += 1
 
-        if cnt == 1:
+        if cnt == 0:
             basename = f'{self._basename}_s'
         else:
             basename = f'{self._basename}{cnt}_s'

@@ -15,7 +15,7 @@ class HierarchicalResolver(ResolverBase):
         self.extension = 'sv'
         self.svgen_map = registry("svgen/map")
 
-        if not self.node.hierarchical:
+        if not node.params.get('hdl', {}).get('hierarchical', node.hierarchical):
             raise ResolverTypeError
 
     @property

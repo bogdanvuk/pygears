@@ -99,6 +99,9 @@ class SimInstVisitor(HierVisitorBase):
         self.sim_map = registry('sim/map')
 
     def Gear(self, module):
+        if module.parent is None:
+            return False
+
         sim_cls = module.params.get('sim_cls', None)
         sim_inst = None
 

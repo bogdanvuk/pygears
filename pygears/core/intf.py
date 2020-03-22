@@ -36,9 +36,9 @@ def operator_methods_gen(cls):
 class Intf:
     OPERATOR_SUPPORT = [
         '__getitem__', '__neg__', '__add__', '__and__', '__div__', '__eq__',
-        '__floordiv__', '__ge__', '__gt__', '__invert__', '__le__', '__lt__',
-        '__mod__', '__mul__', '__ne__', '__neg__', '__lshift__', '__rshift__',
-        '__aiter__', '__sub__', '__xor__', '__truediv__', '__matmul__'
+        '__floordiv__', '__ge__', '__gt__', '__invert__', '__le__', '__lt__', '__mod__',
+        '__mul__', '__ne__', '__neg__', '__lshift__', '__rshift__', '__aiter__',
+        '__sub__', '__xor__', '__truediv__', '__matmul__'
     ]
 
     def __init__(self, dtype):
@@ -62,22 +62,34 @@ class Intf:
         }
 
     @property
-    def name(self):
+    def basename(self):
         if isinstance(self.producer, InPort):
-            parent_name = self.producer.gear.name
             basename = self.producer.basename
         elif isinstance(self.producer, OutPort):
-            parent_name = self.producer.gear.parent.name
             basename = self.producer.basename
-        elif len(self.consumers) == 1 and isinstance(self.consumers[0],
-                                                     OutPort):
-            parent_name = self.consumers[0].gear.name
+        elif len(self.consumers) == 1 and isinstance(self.consumers[0], OutPort):
             basename = self.consumers[0].basename
 
         if hasattr(self, 'var_name'):
             basename = self.var_name
 
-        return f'{parent_name}.{basename}'
+        return basename
+
+    @property
+    def parent(self):
+        if isinstance(self.producer, InPort):
+            return self.producer.gear
+        elif isinstance(self.producer, OutPort):
+            return self.producer.gear.parent
+        elif len(self.consumers) == 1 and isinstance(self.consumers[0], OutPort):
+            return self.consumers[0].gear
+
+    @property
+    def name(self):
+        if not self.parent:
+            return None
+
+        return f'{self.parent.name}.{self.basename}'
 
     # TODO: type checking should be performed here, right?
     def __ior__(self, iout):
@@ -85,14 +97,12 @@ class Intf:
             raise Exception(
                 f"Output of the unresolved gear '{iout.func.__name__}' with"
                 f" arguments {iout.args} and parameters {iout.kwds},"
-                f" connected to '{self}': {str(MultiAlternativeError(iout.errors))}"
-            )
+                f" connected to '{self}': {str(MultiAlternativeError(iout.errors))}")
 
         iout.producer.consumer = self
         if self.producer is not None:
             raise Exception(
-                f"Interface '{self}' is already connected to a producer '{self.producer.name}'\n"
-            )
+                f"Interface '{self}' is already connected to a producer '{self.producer.name}'\n")
 
         self.producer = iout.producer
 
@@ -104,8 +114,8 @@ class Intf:
                 f'Cannot connect interface {self} to the interface {other}\n'
                 f'Did you mean to connect to "{other.producer.gear.name}"?')
 
-        if not (isinstance(other, (str, TypingMeta)) or (other is int) or
-                (other is float)):
+        if not (isinstance(other,
+                           (str, TypingMeta)) or (other is int) or (other is float)):
             return other.__ror__(self)
 
         operator_func = registry('gear/intf_oper/__or__')

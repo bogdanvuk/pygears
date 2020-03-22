@@ -19,8 +19,7 @@ def path_name(path):
         head = '_'.join(path_l[:3])
         tail = '_'.join(path_l[-3:])
         mid = '_'.join(path_l[3:-3])
-        full_name = head + '_' + hashlib.sha1(
-            mid.encode()).hexdigest()[:8] + '_' + tail
+        full_name = head + '_' + hashlib.sha1(mid.encode()).hexdigest()[:8] + '_' + tail
 
     return full_name
 
@@ -34,6 +33,10 @@ class HDLModuleInst:
             memnode = registry('rtl/gear_node_map')[self.node.params['memoized']]
             hdlmod = registry(f'{self.extension}gen/map')[memnode]
             self.resolver = hdlmod.resolver
+            return
+
+        if self.node.parent is None:
+            self.resolver = registry(f'{self.extension}gen/dflt_resolver')(node)
             return
 
         for r in registry(f'{self.extension}gen/resolvers'):
@@ -60,16 +63,19 @@ class HDLModuleInst:
     @functools.lru_cache()
     def traced(self):
         self_traced = any(
-            fnmatch.fnmatch(self.node.name, p)
-            for p in registry('debug/trace'))
+            fnmatch.fnmatch(self.node.name, p) for p in registry('debug/trace'))
 
-        if self.node.child:
-            children_traced = any(self.svgen_map[child].traced
-                                  for child in self.node.child)
+        if self.hierarchical:
+            children_traced = any(
+                self.svgen_map[child].traced for child in self.node.child)
         else:
             children_traced = False
 
         return self_traced or children_traced
+
+    @property
+    def hierarchical(self):
+        return self.node.params.get('hdl', {}).get('hierarchical', self.node.hierarchical)
 
     @property
     def hier_path_name(self):

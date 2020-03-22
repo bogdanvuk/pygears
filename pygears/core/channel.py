@@ -47,7 +47,7 @@ def channel_out_port(gear_inst, out_port):
 
         out_parent_cons.append(cons_port)
 
-    if not out_parent_cons:
+    if out_intf.consumers and not out_parent_cons:
         return
 
     basename = getattr(out_intf, 'var_name', out_port.basename)
@@ -152,7 +152,7 @@ def channel_interfaces(gear_inst):
         if isinstance(s, InSig):
             sig_name = gear_inst.params['sigmap'].get(s.name, s.name)
 
-            if not sig_name.isidentifier:
+            if not sig_name.isidentifier():
                 continue
 
             # sig_name = s.name

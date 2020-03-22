@@ -1,7 +1,6 @@
 import os
 import pytest
-from pygears import Intf, config, gear, sim
-from pygears.rtl import rtlgen
+from pygears import Intf, config, gear, sim, find
 from pygears.typing import Uint
 from pygears.sim.modules import SimVerilated
 from pygears.lib.verif import directed, drv
@@ -70,9 +69,9 @@ def test_clk_channeling():
 
     Intf(Uint[16]) | dut
 
-    rtltop = rtlgen()
+    mod_dut = find('/dut')
 
-    assert InSig('clk2', 1) in rtltop['/dut'].params['signals']
+    assert InSig('clk2', 1) in mod_dut.params['signals']
 
 
 # config['hdl/include'].append(

@@ -200,6 +200,10 @@ class SVCompiler(HDLVisitor):
             return
 
         target = svexpr(target, self.aux_funcs)
+
+        if target is None:
+            return
+
         svstmt = f"{target} = {svexpr(val, self.aux_funcs)}"
 
         self.handle_defaults(target, svstmt)
@@ -263,9 +267,12 @@ class SVCompiler(HDLVisitor):
         self.footer('end')
 
     def FuncReturn(self, node):
-        self.write(
-            f"{svexpr(node.func.name, self.aux_funcs)} = {svexpr(node.expr, self.aux_funcs)}"
-        )
+        retval = svexpr(node.expr, self.aux_funcs)
+
+        if retval is not None:
+            self.write(
+                f"{svexpr(node.func.name, self.aux_funcs)} = {svexpr(node.expr, self.aux_funcs)}"
+            )
 
     def FuncBlock(self, node):
         self.block_lines.append(BlockLines())

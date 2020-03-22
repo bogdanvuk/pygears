@@ -11,7 +11,7 @@ def decouple_din_setup(module):
         module.queue.put_nowait(module.params['init'])
 
 
-@gear(sim_setup=decouple_din_setup, svgen={'node_cls': None})
+@gear(sim_setup=decouple_din_setup)
 async def decouple_din(din, *, depth, init) -> None:
     async with din as d:
         await module().queue.put(d)
@@ -23,7 +23,7 @@ def decouple_dout_setup(module):
     module.decouple_din = find('../decouple_din')
 
 
-@gear(sim_setup=decouple_dout_setup, svgen={'node_cls': None})
+@gear(sim_setup=decouple_dout_setup)
 async def decouple_dout(*, t, depth) -> b't':
     queue = module().decouple_din.queue
     while queue.empty():
@@ -38,7 +38,7 @@ async def decouple_dout(*, t, depth) -> b't':
     await clk()
 
 
-@gear
+@gear(hdl={'hierarchical': False})
 def decouple(din, *, depth=2, init=None) -> b'din':
     din | decouple_din(depth=depth, init=init)
     return decouple_dout(t=din.dtype, depth=depth)

@@ -9,7 +9,7 @@ def sdp_wr_port_setup(module):
     module.ram = {}
 
 
-@gear(sim_setup=sdp_wr_port_setup, svgen={'node_cls': None})
+@gear(sim_setup=sdp_wr_port_setup)
 async def sdp_wr_port(din, *, depth) -> None:
     async with din as (addr, data):
         module().ram[addr] = data
@@ -19,7 +19,7 @@ def sdp_rd_port_setup(module):
     module.sdp_wr_port = find('../sdp_wr_port')
 
 
-@gear(sim_setup=sdp_rd_port_setup, svgen={'node_cls': None})
+@gear(sim_setup=sdp_rd_port_setup)
 async def sdp_rd_port(addr, *, t, depth) -> b't':
     ram = module().sdp_wr_port.ram
 
@@ -27,7 +27,7 @@ async def sdp_rd_port(addr, *, t, depth) -> b't':
         yield ram[a]
 
 
-@gear(outnames=['rd_data'])
+@gear(outnames=['rd_data'], hdl={'hierarchical': False})
 def sdp(wr_addr_data: TWrDin,
         rd_addr: TRdDin,
         *,

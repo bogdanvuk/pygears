@@ -1,6 +1,5 @@
 import inspect
 import logging
-import os
 
 from pygears import PluginBase, registry, safe_bind, config
 from pygears.conf import register_custom_log
@@ -29,6 +28,9 @@ class SVGenInstVisitor(HierVisitorBase):
             svgen_inst = None
 
         self.svgen_map[node] = svgen_inst
+
+        if not svgen_inst.hierarchical:
+            return True
 
         for i in node.local_intfs:
             self.svgen_map[i] = SVIntfGen(i)

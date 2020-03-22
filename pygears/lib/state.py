@@ -8,7 +8,7 @@ def state_din_setup(module):
     module.val = module.params['init']
 
 
-@gear(sim_setup=state_din_setup, svgen={'node_cls': None})
+@gear(sim_setup=state_din_setup)
 async def state_din(din, *, init) -> None:
     async with din as data:
         pass
@@ -21,7 +21,7 @@ def state_dout_setup(module):
     module.state_din = find('../state_din')
 
 
-@gear(sim_setup=state_dout_setup, svgen={'node_cls': None})
+@gear(sim_setup=state_dout_setup)
 async def state_dout(*rd, t) -> b't':
     dout = [None] * len(rd)
     for i, rd_req in enumerate(rd):
@@ -34,14 +34,14 @@ async def state_dout(*rd, t) -> b't':
         yield dout[0]
 
 
-@gear(enablement=b'len(rd) > 1')
+@gear(enablement=b'len(rd) > 1', hdl={'hierarchical': False})
 def state(din, *rd: Unit, init=0, hold=False) -> b'(din,)*len(rd)':
     din | state_din(init=init)
     return tuple(state_dout(r, t=din.dtype) for r in rd)
 
 
 @alternative(state)
-@gear(hdl={'impl': 'state'})
+@gear(hdl={'impl': 'state', 'hierarchical': False})
 def state_single_out(din, rd: Unit, *, init=0, hold=False) -> b'din':
     din | state_din(init=init)
     return state_dout(rd, t=din.dtype)

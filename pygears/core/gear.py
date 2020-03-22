@@ -56,10 +56,14 @@ class GearHierRoot(NamedHierNode):
 
         self.definition = __main
 
+    @property
+    def hierarchical(self):
+        return True
+
 
 class Gear(NamedHierNode):
     def __init__(self, func, params):
-        super().__init__(params['name'], registry('gear/current_module'))
+        super().__init__(params['name'], registry('gear/current_module') if func else None)
         self.trace = list(enum_stacktrace())
         self.args = {}
         self.params = params
@@ -69,6 +73,9 @@ class Gear(NamedHierNode):
         self.out_ports: List[OutPort] = []
 
     def __repr__(self):
+        if self.parent is None:
+            return f'Top'
+
         return f'{self.definition.__name__}("{self.name}")'
 
     def connect_input(self, args, const_args):
@@ -94,12 +101,10 @@ class Gear(NamedHierNode):
             if out_intfs and hasattr(out_intfs[i], 'var_name'):
                 self.outnames.append(out_intfs[i].var_name)
             else:
-                self.outnames.append(dflt_dout_name if len(out_dtypes) ==
-                                     1 else f'{dflt_dout_name}{i}')
+                self.outnames.append(
+                    dflt_dout_name if len(out_dtypes) == 1 else f'{dflt_dout_name}{i}')
 
-        self.out_ports = [
-            OutPort(self, i, name) for i, name in enumerate(self.outnames)
-        ]
+        self.out_ports = [OutPort(self, i, name) for i, name in enumerate(self.outnames)]
 
         # Connect internal interfaces
         if out_intfs:
@@ -120,16 +125,15 @@ class Gear(NamedHierNode):
                 for p in self.in_ports)
         else:
             return not any(
-                isinstance(p.producer.producer, HDLProducer)
-                for p in self.out_ports)
+                isinstance(p.producer.producer, HDLProducer) for p in self.out_ports)
 
     @property
     def definition(self):
-        return self.params['definition']
+        return self.params.get('definition', None)
 
     @property
     def outnames(self):
-        return self.params['outnames']
+        return self.params.get('outnames', None)
 
     @property
     def tout(self):
@@ -246,19 +250,20 @@ class GearPlugin(PluginBase):
                 'signals': (InSig('clk', 1), InSig('rst', 1))
             })
 
-        safe_bind('gear/params/extra', {
-            'name': None,
-            'intfs': [],
-            'sigmap': {},
-            '__base__': None
-        })
+        safe_bind(
+            'gear/params/extra', {
+                'name': None,
+                'intfs': [],
+                'sigmap': {},
+                '__base__': None
+            })
 
-        safe_bind('gear/hier_root', GearHierRoot(''))
+        safe_bind('gear/hier_root', Gear(None, params={'name': ''}))
         safe_bind('gear/current_module', cls.registry['gear']['hier_root'])
         safe_bind('gear/exec_context', 'compile')
 
     @classmethod
     def reset(cls):
-        safe_bind('gear/hier_root', GearHierRoot(''))
+        safe_bind('gear/hier_root', Gear(None, params={'name': ''}))
         safe_bind('gear/current_module', cls.registry['gear']['hier_root'])
         safe_bind('gear/code_map', [])

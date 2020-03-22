@@ -14,7 +14,7 @@ def tdp_port0_setup(module):
     module.ram = {}
 
 
-@gear(sim_setup=tdp_port0_setup, svgen={'node_cls': None})
+@gear(sim_setup=tdp_port0_setup)
 async def tdp_port0(req, *, depth) -> b'req["data"].data':
     ram = module().ram
 
@@ -29,7 +29,7 @@ def tdp_port1_setup(module):
     module.port0 = find('../tdp_port0')
 
 
-@gear(sim_setup=tdp_port1_setup, svgen={'node_cls': None})
+@gear(sim_setup=tdp_port1_setup)
 async def tdp_port1(req, *, depth) -> b'req["data"].data':
     ram = module().port0.ram
 
@@ -40,7 +40,7 @@ async def tdp_port1(req, *, depth) -> b'req["data"].data':
             yield ram[addr]
 
 
-@gear
+@gear(hdl={'hierarchical': False})
 def tdp(
         req0: TReq,
         req1: TReq,
