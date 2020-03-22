@@ -26,7 +26,7 @@ class HDLPlugin(PluginBase):
 
 from . import sv
 from . import v
-from .hdlgen import hdlgen, find_rtl
+from .hdlgen import hdlgen
 from .common import list_hdl_files
 from .ipgen import ipgen
 

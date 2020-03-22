@@ -15,7 +15,7 @@ class HierarchicalResolver(ResolverBase):
         self.extension = 'sv'
         self.svgen_map = registry("svgen/map")
 
-        if not self.node.is_hierarchical:
+        if not self.node.hierarchical:
             raise ResolverTypeError
 
     @property
@@ -75,13 +75,13 @@ class HierarchicalResolver(ResolverBase):
 
         self.svgen_map = registry('svgen/map')
 
-        for child in self.node.local_interfaces():
+        for child in self.node.local_intfs:
             svgen = self.svgen_map[child]
             contents = svgen.get_inst(template_env)
             if contents:
                 context['inst'].append(contents)
 
-        for child in self.node.local_modules():
+        for child in self.node.child:
             for s in child.params['signals']:
                 if isinstance(s, OutSig):
                     name = child.params['sigmap'][s.name]

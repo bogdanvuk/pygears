@@ -120,51 +120,51 @@ class SimVerilated(CosimBase):
             self.wrap_name = f'wrap_{self.svmod.module_name}'
             self.top_name = self.wrap_name
 
-        for p in self.rtlnode.in_ports:
-            if p.index >= len(self.gear.in_ports):
-                driver = closest_gear_port_from_rtl(p, 'in')
-                if driver is None:
-                    raise VerilatorCompileError(
-                        f"Inferred top module port '{p.name}' has no driver")
+        # for p in self.rtlnode.in_ports:
+        #     if p.index >= len(self.gear.in_ports):
+        #         driver = closest_gear_port_from_rtl(p, 'in')
+        #         if driver is None:
+        #             raise VerilatorCompileError(
+        #                 f"Inferred top module port '{p.name}' has no driver")
 
-                consumer = closest_gear_port_from_rtl(p, 'out')
+        #         consumer = closest_gear_port_from_rtl(p, 'out')
 
-                in_port = InPort(
-                    self.gear,
-                    p.index,
-                    p.basename,
-                    producer=driver.producer,
-                    consumer=consumer.consumer)
+        #         in_port = InPort(
+        #             self.gear,
+        #             p.index,
+        #             p.basename,
+        #             producer=driver.producer,
+        #             consumer=consumer.consumer)
 
-                self.in_cosim_ports.append(InCosimPort(self, in_port))
-                registry('sim/map')[in_port] = self.in_cosim_ports[-1]
+        #         self.in_cosim_ports.append(InCosimPort(self, in_port))
+        #         registry('sim/map')[in_port] = self.in_cosim_ports[-1]
 
-        for p in self.rtlnode.out_ports:
-            if p.index < len(self.gear.out_ports):
-                self.out_cosim_ports[p.index].name = p.basename
-            elif p.index >= len(self.gear.out_ports):
-                driver = closest_gear_port_from_rtl(p, 'in')
-                if driver is None:
-                    raise VerilatorCompileError(
-                        f"Inferred top module port '{p.name}' has no driver")
+        # for p in self.rtlnode.out_ports:
+        #     if p.index < len(self.gear.out_ports):
+        #         self.out_cosim_ports[p.index].name = p.basename
+        #     elif p.index >= len(self.gear.out_ports):
+        #         driver = closest_gear_port_from_rtl(p, 'in')
+        #         if driver is None:
+        #             raise VerilatorCompileError(
+        #                 f"Inferred top module port '{p.name}' has no driver")
 
-                consumer = closest_gear_port_from_rtl(p, 'out')
+        #         consumer = closest_gear_port_from_rtl(p, 'out')
 
-                if consumer is None:
-                    raise VerilatorCompileError(
-                        f"Inferred top module port '{p.name}' is dangling")
+        #         if consumer is None:
+        #             raise VerilatorCompileError(
+        #                 f"Inferred top module port '{p.name}' is dangling")
 
-                out_port = OutPort(self.gear, p.index, p.basename, consumer)
-                out_intf = Intf(p.dtype)
+        #         out_port = OutPort(self.gear, p.index, p.basename, consumer)
+        #         out_intf = Intf(p.dtype)
 
-                driver.consumer.disconnect(consumer)
-                driver.consumer.connect(out_port)
+        #         driver.consumer.disconnect(consumer)
+        #         driver.consumer.connect(out_port)
 
-                out_intf.source(out_port)
-                out_intf.connect(consumer)
+        #         out_intf.source(out_port)
+        #         out_intf.connect(consumer)
 
-                self.out_cosim_ports.append(OutCosimPort(self, out_port))
-                registry('sim/map')[out_port] = self.out_cosim_ports[-1]
+        #         self.out_cosim_ports.append(OutCosimPort(self, out_port))
+        #         registry('sim/map')[out_port] = self.out_cosim_ports[-1]
 
         self.trace_fn = None
         self.vcd_fifo = vcd_fifo

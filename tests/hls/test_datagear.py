@@ -1,7 +1,7 @@
 from pygears import datagear, gear
 from pygears.typing import code
-from pygears.typing import Maybe, Uint
-from pygears.lib import verif, drv, saturate, shred
+from pygears.typing import Maybe, Uint, Unit
+from pygears.lib import verif, drv, saturate, shred, code as code_gear
 from pygears.sim import sim, cosim
 
 
@@ -20,6 +20,23 @@ def test_code(tmpdir):
     sim(tmpdir)
 
 
+def test_code_unit(tmpdir):
+    verif(drv(t=Uint[1], seq=list(range(2))),
+          f=code_gear(name='dut', t=Unit),
+          ref=code_gear(t=Unit))
+
+    cosim('/dut', 'verilator')
+    sim(tmpdir)
+
+
+def test_code_unit_to_unit(tmpdir):
+    verif(drv(t=Uint[0], seq=[0, 0]),
+          f=code_gear(name='dut', t=Unit),
+          ref=code_gear(t=Unit))
+
+    cosim('/dut', 'verilator')
+    sim(tmpdir)
+
 # def test_sim_invoke(tmpdir):
 #     @gear(hdl={'compile': True})
 #     async def sat_wrap(din) -> b'din':
@@ -29,6 +46,5 @@ def test_code(tmpdir):
 #     drv(t=Uint[8], seq=[7]) | sat_wrap | shred
 #     cosim('/sat_wrap', 'verilator')
 #     sim(tmpdir)
-
 
 # test_code('/tools/home/tmp/datagear')

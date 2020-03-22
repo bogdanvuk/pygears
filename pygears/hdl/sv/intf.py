@@ -4,7 +4,7 @@ from string import Template
 
 from pygears import PluginBase, registry, safe_bind
 from pygears.conf import Inject, inject, config
-from pygears.rtl.port import OutPort, InPort
+from pygears.core.port import OutPort, InPort, HDLProducer
 from .util import svgen_typedef
 
 dti_spy_connect_t = Template("""
@@ -19,19 +19,94 @@ class SVIntfGen:
         self.intf = intf
 
     @property
-    def basename(self):
-        return self.intf.basename
-
-    @property
-    def outname(self):
-        return self.intf.outname
-
-    @property
     @functools.lru_cache()
     def traced(self):
         return any(
             fnmatch.fnmatch(self.intf.name, p)
             for p in registry('debug/trace'))
+
+    @property
+    @functools.lru_cache(maxsize=None)
+    def _basename(self):
+        producer_port = self.intf.producer
+        if isinstance(producer_port, HDLProducer):
+            #TODO: Not really a producer port
+            producer_port = self.intf.consumers[0]
+
+        port_name = producer_port.basename
+
+        if isinstance(producer_port, InPort):
+            return port_name
+        elif ((not self.is_broadcast) and self.intf.consumers
+              and isinstance(self.intf.consumers[0], OutPort)):
+            return self.intf.consumers[0].basename
+        elif hasattr(self.intf, 'var_name'):
+            return self.intf.var_name
+        elif self.sole_intf:
+            return f'{producer_port.gear.basename}'
+        else:
+            return f'{producer_port.gear.basename}_{port_name}'
+
+    @property
+    def parent(self):
+        return self.intf.producer.gear
+
+    @property
+    @functools.lru_cache(maxsize=None)
+    def basename(self):
+
+        svgen_map = registry('svgen/map')
+        basename = self._basename
+        if self.is_port_intf:
+            return basename
+
+        cnt = 0
+        for c in self.parent.child:
+            if c is self.intf:
+                break
+
+            if svgen_map[c]._basename == basename:
+                cnt += 1
+
+        for p in self.parent.out_ports:
+            if p.basename == basename:
+                cnt += 1
+
+        if cnt == 1:
+            basename = f'{self._basename}_s'
+        else:
+            basename = f'{self._basename}{cnt}_s'
+
+        return basename
+
+    @property
+    def is_port_intf(self):
+        if isinstance(self.intf.producer, InPort):
+            return True
+        elif ((not self.is_broadcast) and self.intf.consumers
+              and isinstance(self.intf.consumers[0], OutPort)):
+            return True
+        else:
+            return False
+
+
+    @property
+    def sole_intf(self):
+        if self.intf.producer:
+            return len(self.intf.producer.gear.out_ports) == 1
+        else:
+            return True
+
+    @property
+    def is_broadcast(self):
+        return len(self.intf.consumers) > 1
+
+    @property
+    def outname(self):
+        if self.is_broadcast:
+            return f'{self.basename}_bc'
+        else:
+            return self.basename
 
     @inject
     def get_inst(self,
@@ -42,10 +117,10 @@ class SVIntfGen:
             return
 
         inst = []
-        if not self.intf.is_port_intf:
+        if not self.is_port_intf:
             inst.append(self.get_intf_def(self.basename, 1, template_env))
 
-        if self.intf.is_broadcast:
+        if self.is_broadcast:
             inst.extend([
                 self.get_intf_def(self.outname, len(self.intf.consumers),
                                   template_env),
@@ -66,10 +141,10 @@ class SVIntfGen:
 
         for i, cons_port in enumerate(self.intf.consumers):
             if isinstance(cons_port, OutPort):
-                if self.intf.is_broadcast or isinstance(
+                if self.is_broadcast or isinstance(
                         self.intf.producer, InPort):
                     din_name = self.outname
-                    if self.intf.is_broadcast:
+                    if self.is_broadcast:
                         din_name += f'[{i}]'
 
                     inst.append(

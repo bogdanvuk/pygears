@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pygears.conf import PluginBase, registry, safe_bind, bind
 from traceback import walk_stack
 from .intf import Intf
-from .port import InPort, OutPort, HDLConsumer
+from .port import InPort, OutPort, HDLConsumer, HDLProducer
 from .hier_node import NamedHierNode
 from .util import is_standard_func
 
@@ -68,6 +68,9 @@ class Gear(NamedHierNode):
         self.in_ports: List[InPort] = []
         self.out_ports: List[OutPort] = []
 
+    def __repr__(self):
+        return f'{self.definition.__name__}("{self.name}")'
+
     def connect_input(self, args, const_args):
         for name, val in const_args.items():
             from pygears.lib import const
@@ -111,18 +114,14 @@ class Gear(NamedHierNode):
 
     @property
     def hierarchical(self):
-        # return is_standard_func(self.func)
-
-        # if self.child:
-        #     return True
-
-        # This Second condition is when gear contains only wiring
         if self.in_ports:
-            if (self.in_ports[0].consumer.consumers and
-                    not isinstance(self.in_ports[0].consumer.consumers[0], HDLConsumer)):
-                return True
-
-        return False
+            return not any(
+                any(isinstance(c, HDLConsumer) for c in p.consumer.consumers)
+                for p in self.in_ports)
+        else:
+            return not any(
+                isinstance(p.producer.producer, HDLProducer)
+                for p in self.out_ports)
 
     @property
     def definition(self):
@@ -152,6 +151,15 @@ class Gear(NamedHierNode):
             return ret[0]
         else:
             return ret
+
+    @property
+    def local_intfs(self):
+        intfs = {}  # acts as ordered set
+        for c in self.child:
+            for i in c.inputs + c.outputs:
+                intfs[i] = None
+
+        return list(intfs.keys())
 
     @property
     def in_port_intfs(self):
@@ -231,19 +239,19 @@ class GearPlugin(PluginBase):
     def bind(cls):
         safe_bind('gear/naming', {'default_out_name': 'dout'})
 
-        safe_bind('gear/params/meta', {
-            'enablement': True,
-            'outnames': None,
-            'signals': (InSig('clk', 1), InSig('rst', 1))
-        })
-
         safe_bind(
-            'gear/params/extra', {
-                'name': None,
-                'intfs': [],
-                'sigmap': {},
-                '__base__': None
+            'gear/params/meta', {
+                'enablement': True,
+                'outnames': None,
+                'signals': (InSig('clk', 1), InSig('rst', 1))
             })
+
+        safe_bind('gear/params/extra', {
+            'name': None,
+            'intfs': [],
+            'sigmap': {},
+            '__base__': None
+        })
 
         safe_bind('gear/hier_root', GearHierRoot(''))
         safe_bind('gear/current_module', cls.registry['gear']['hier_root'])

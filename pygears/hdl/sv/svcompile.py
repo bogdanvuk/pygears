@@ -505,7 +505,7 @@ def compile_gear_body(gear, outdir, template_env):
         from pygears.hdl import hdlgen
         svgen_map = registry("svgen/map")
         for c in ctx.submodules:
-            rtl_top = hdlgen(c.gear, outdir=outdir, generate=False)
+            rtl_top = hdlgen(c.gear, outdir=outdir, generate=True)
             svmod = svgen_map[rtl_top]
             subsvmods.append(svmod)
 

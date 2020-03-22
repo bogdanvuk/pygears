@@ -7,7 +7,7 @@ module hier0_hier1(
 
                    );
 
-   func func (
+   hier0_hier1_func func (
                 .clk(clk),
                 .rst(rst),
                 .din(din),

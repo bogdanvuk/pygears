@@ -1,22 +1,14 @@
 {%- import 'snippet.j2' as snippet -%}
+{% set svexpr = import_('pygears.hdl.sv.sv_expression') %}
 
 {% call snippet.gear_module(module_name, intfs, comment) %}
 
-  {% if params["stages"] %}
-    {% set ns = namespace(prev_name = "din.data") %}
-	  {% for i, (slices, dtype) in enumerate(params["stages"]) %}
-	    {% set concat = snippet.concat(slices|reverse|format_list(ns.prev_name + "[%s]")) %}
-	    {%- if loop.last %}
-   assign dout.data = {{ concat }};
-      {% else %}
-   logic [{{int(dtype)-1}}:0] stage{{i}}_data;
-   assign stage{{i}}_data = {{ concat }};
-        {% set ns.prev_name = "stage{}_data".format(i) %}
-      {% endif %}
-    {% endfor %}
-  {% else %}
-   assign dout.data = 0;
-  {% endif %}
+{% set slices = svexpr.sieve_slices(_din_t, params["key"]) %}
+{% set concat = snippet.concat(slices|reverse|format_list("din.data[%s]")) %}
+
+{% if slices %}
+   assign dout.data = {{concat}};
+{% endif %}
 
    assign dout.valid = din.valid;
    assign din.ready  = dout.ready;

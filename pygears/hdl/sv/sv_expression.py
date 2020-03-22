@@ -1,4 +1,5 @@
 from pygears.hls import ir
+from functools import partial
 from pygears.typing import Array, Integer, Queue, code, typeof, Integral, Tuple, Union
 from .sv_keywords import sv_keywords
 
@@ -14,6 +15,31 @@ def get_slice_func(aux_funcs, start, stop):
         aux_funcs[name] = SLICE_FUNC_TEMPLATE.format(stop, start, stop - start)
 
     return name
+
+
+def index_to_sv_slice(dtype, key):
+    subtype = dtype[key]
+
+    if isinstance(key, slice):
+        key = min(key.start, key.stop)
+
+    if key is None or key == 0:
+        low_pos = 0
+    else:
+        low_pos = int(dtype[:key])
+
+    high_pos = low_pos + int(subtype) - 1
+
+    return f'{high_pos}:{low_pos}'
+
+
+def sieve_slices(dtype, keys):
+    if not isinstance(keys, tuple):
+        keys = (keys, )
+
+    return list(
+        map(partial(index_to_sv_slice, dtype),
+            filter(lambda i: getattr(dtype[i], 'width', 0) > 0, keys)))
 
 
 class SVExpressionVisitor:
@@ -148,6 +174,9 @@ class SVExpressionVisitor:
 
         expr_width = expr_dtype.width
         cast_width = cast_dtype.width
+
+        if cast_width == 0:
+            return svexpr
 
         if res_signed != expr_signed:
             if res_signed:

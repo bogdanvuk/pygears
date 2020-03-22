@@ -1,6 +1,7 @@
 module hier0(
     input logic clk,
     input logic rst,
+
     dti.consumer din, // u2 (2)
     dti.consumer channeled, // u1 (1)
     dti.producer dout0, // (u2, u1) (3)
@@ -8,6 +9,8 @@ module hier0(
     dti.producer dout2 // (u2, u1) (3)
 
 );
+
+/*verilator tracing_off*/
 
       dti #(.W_DATA(2)) din_bc[2:0](); // u2 (2)
     bc #(
@@ -33,7 +36,7 @@ module hier0(
     );
 
 
-    func func0 (
+    hier0_func0 func0 (
         .clk(clk),
         .rst(rst),
         .din(din_bc[0]),
@@ -42,7 +45,7 @@ module hier0(
     );
 
 
-    func func1 (
+    hier0_func1 func1 (
         .clk(clk),
         .rst(rst),
         .din(din_bc[1]),

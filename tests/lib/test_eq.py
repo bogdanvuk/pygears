@@ -15,10 +15,9 @@ def test_basic(tmpdir, cosim_cls):
     def eq_wrap(op1, op2):
         return op1 == op2
 
-    verif(
-        drv(t=Uint[4], seq=seq_op1),
-        drv(t=Uint[4], seq=seq_op2),
-        f=eq_wrap(sim_cls=cosim_cls),
-        ref=eq(name='ref_model'))
+    verif(drv(t=Uint[4], seq=seq_op1),
+          drv(t=Uint[4], seq=seq_op2),
+          f=eq_wrap(sim_cls=cosim_cls),
+          ref=eq(name='ref_model'))
 
-    sim(resdir=tmpdir)
+    sim(resdir=tmpdir, check_activity=False)

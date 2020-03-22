@@ -14,23 +14,14 @@ class SVGenInstVisitor(HierVisitorBase):
         self.namespace = registry('svgen/module_namespace')
         self.svgen_map = registry('svgen/map')
 
-    def RTLGear(self, node):
-        if 'svgen' not in node.params:
-            node.params['svgen'] = {}
+    def Gear(self, node):
+        svgen_cls = self.namespace.get(node.definition, None)
 
-        if 'svgen_cls' not in node.params['svgen']:
-            svgen_cls = self.namespace.get(node.gear.definition, None)
-
-            if svgen_cls is None:
-                for base_class in inspect.getmro(node.gear.__class__):
-                    if base_class.__name__ in self.namespace:
-                        svgen_cls = self.namespace[base_class.__name__]
-                        break
-
-            node.params['svgen']['svgen_cls'] = svgen_cls
-
-    def RTLNode(self, node):
-        svgen_cls = node.params['svgen']['svgen_cls']
+        if svgen_cls is None:
+            for base_class in inspect.getmro(node.__class__):
+                if base_class.__name__ in self.namespace:
+                    svgen_cls = self.namespace[base_class.__name__]
+                    break
 
         if svgen_cls:
             svgen_inst = svgen_cls(node)
@@ -39,8 +30,8 @@ class SVGenInstVisitor(HierVisitorBase):
 
         self.svgen_map[node] = svgen_inst
 
-    def RTLIntf(self, intf):
-        self.svgen_map[intf] = SVIntfGen(intf)
+        for i in node.local_intfs:
+            self.svgen_map[i] = SVIntfGen(i)
 
 
 def svgen_inst(top, conf):

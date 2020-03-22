@@ -3,6 +3,7 @@ from pygears.hdl.modinst import HDLModuleInst
 from .sv_keywords import sv_keywords
 from collections import OrderedDict
 
+
 class SVModuleInst(HDLModuleInst):
     def __init__(self, node):
         super().__init__(node, 'sv')
@@ -66,10 +67,12 @@ class SVModuleInst(HDLModuleInst):
 
     def get_inst(self, template_env, port_map=None):
         if not port_map:
-            in_port_map = [(port.basename, self.get_in_port_map_intf_name(port))
-                        for port in self.node.in_ports]
+            in_port_map = [(port.basename,
+                            self.get_in_port_map_intf_name(port))
+                           for port in self.node.in_ports]
 
-            out_port_map = [(port.basename, self.get_out_port_map_intf_name(port))
+            out_port_map = [(port.basename,
+                             self.get_out_port_map_intf_name(port))
                             for port in self.node.out_ports]
             port_map = OrderedDict(in_port_map + out_port_map)
 

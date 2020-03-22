@@ -23,7 +23,7 @@ class SVGenGenerateVisitor(HierYielderBase):
         self.top = top
         self.outdir = outdir
 
-    def RTLNode(self, node):
+    def Gear(self, node):
         svgen = self.svgen_map.get(node, None)
         if svgen is not None:
             svgen.generate(self.template_env, self.outdir)

@@ -30,10 +30,11 @@ class ResolverBase(ABC):
 
     @property
     def node_def_name(self):
-        if hasattr(self.node, 'gear'):
-            return self.node.gear.definition.__name__
-        else:
-            return self.node.name
+        return self.node.definition.__name__
+        # if hasattr(self.node, 'gear'):
+        #     return self.node.gear.definition.__name__
+        # else:
+        #     return self.node.name
 
     @property
     @functools.lru_cache()

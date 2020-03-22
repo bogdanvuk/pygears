@@ -118,7 +118,6 @@ def test_enum_intfs(tmpdir, din_delay, dout_delay):
     cosim('/test', 'verilator')
     sim(tmpdir, check_activity=False)
 
-
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_enum_intfs_single(tmpdir, din_delay, dout_delay):
@@ -138,8 +137,6 @@ def test_enum_intfs_single(tmpdir, din_delay, dout_delay):
     cosim('/test', 'verilator')
     sim(tmpdir, check_activity=False)
 
-
-# test_enum_intfs_single('/tools/home/tmp/enum_intfs_single', 1, 0)
 
 
 @pytest.mark.parametrize('din_delay', [0, 1])

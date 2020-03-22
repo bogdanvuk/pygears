@@ -15,12 +15,12 @@ def configure():
 
 
 @gear(signals=[OutSig('dout_sig', 16)])
-def bc_sig(din) -> b'din':
+async def bc_sig(din) -> b'din':
     pass
 
 
 @gear(signals=[InSig('din_sig', 16)])
-def add_sig(din) -> b'din':
+async def add_sig(din) -> b'din':
     pass
 
 
@@ -35,7 +35,7 @@ def test_local_signal(tmpdir):
              f=dut(sim_cls=SimVerilated),
              ref=(list(range(0, 6, 2))))
 
-    sim(resdir=tmpdir)
+    sim(tmpdir)
 
 
 @gear

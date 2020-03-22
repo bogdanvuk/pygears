@@ -7,7 +7,7 @@ module hier(
 
 );
 
-    func func (
+    hier_func func (
         .clk(clk),
         .rst(rst),
         .din(din),

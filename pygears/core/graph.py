@@ -78,9 +78,13 @@ def get_source_producer(obj, sim=False):
     if is_source_producer(obj, sim=sim):
         return obj
 
-    if isinstance(obj.producer, HDLProducer):
-        raise Exception(
-            f'Interface path does not end with a simulation gear at {obj.name}')
+    if isinstance(obj.producer, HDLProducer) or obj.producer is None:
+        if sim:
+            raise Exception(
+                f'Interface path does not end with a simulation gear at {obj.name}'
+            )
+
+        return obj
 
     return get_source_producer(obj.producer, sim=sim)
 
@@ -97,7 +101,8 @@ def _get_consumer_tree_rec(root_intf, cur_intf, consumers, end_producer):
             consumers.append(port)
         else:
             start = len(consumers)
-            _get_consumer_tree_rec(root_intf, cons_intf, consumers, end_producer)
+            _get_consumer_tree_rec(root_intf, cons_intf, consumers,
+                                   end_producer)
             if len(consumers) - start > 1:
                 end_producer[port] = (root_intf, slice(start, len(consumers)))
             else:

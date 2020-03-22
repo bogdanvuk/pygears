@@ -49,6 +49,14 @@ class HDLModuleInst:
                 f'"{self.resolver.module_name}" found on the path. Module connected as a black-box.')
 
     @property
+    def _basename(self):
+        return self.basename
+
+    @property
+    def basename(self):
+        return self.node.basename
+
+    @property
     @functools.lru_cache()
     def traced(self):
         self_traced = any(
@@ -69,7 +77,7 @@ class HDLModuleInst:
 
     @property
     def inst_name(self):
-        return path_name(self.node.inst_basename)
+        return path_name(self.node.basename)
 
     @property
     def module_name(self):

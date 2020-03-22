@@ -690,7 +690,7 @@ class SubscriptExpr(Expr):
         inst.val = val
         inst.index = index
 
-        if typeof(inst.dtype, Unit):
+        if inst.dtype.width == 0:
             return ResExpr(Unit())
 
         return inst

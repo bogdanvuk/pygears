@@ -32,7 +32,7 @@ class HLSResolver(ResolverBase):
         return self._files
 
     def generate(self, template_env, outdir):
-        contents, subsvmods = compile_gear(self.node.gear, template_env, self.module_name, outdir)
+        contents, subsvmods = compile_gear(self.node, template_env, self.module_name, outdir)
         save_file(self.file_basename, outdir, contents)
 
         for s in subsvmods:

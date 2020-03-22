@@ -31,9 +31,15 @@ class InPort(Port):
         else:
             return self.producer.dtype
 
+    def __repr__(self):
+        return f'InPort("{self.name}")'
+
 
 class OutPort(Port):
     direction = "out"
+
+    def __repr__(self):
+        return f'OutPort("{self.name}")'
 
 
 class HDLUser:
