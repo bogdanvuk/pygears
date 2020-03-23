@@ -15,7 +15,6 @@ from pygears.hdl import hdlgen
 from pygears.util.fileio import save_file
 from pygears.core.port import InPort, OutPort
 from .cosim_port import InCosimPort, OutCosimPort
-from pygears.core.graph import closest_gear_port_from_rtl
 
 signal_spy_connect_t = Template(
     """
@@ -88,21 +87,21 @@ class SimVerilated(CosimBase):
         if self.language == 'v':
 
             synth_src_dir = os.path.join(self.outdir, 'src')
-            self.rtlnode = hdlgen(
+            self.top = hdlgen(
                 gear,
                 outdir=synth_src_dir if post_synth else self.outdir,
                 wrapper=True,
                 generate=self.rebuild,
                 language='v')
 
-            self.svmod = registry('vgen/map')[self.rtlnode]
+            self.svmod = registry('vgen/map')[self.top]
             self.wrap_name = f'wrap_{self.svmod.module_name}'
             self.top_name = self.svmod.module_name if self.post_synth else self.wrap_name
 
             if post_synth:
                 from pygears.synth.yosys import synth
                 synth(
-                    rtl_node=self.rtlnode,
+                    rtl_node=self.top,
                     synth_cmd='synth',
                     outdir=self.outdir,
                     generate=self.rebuild,
@@ -110,61 +109,15 @@ class SimVerilated(CosimBase):
                     synth_out=os.path.join(
                         self.outdir, f'wrap_{self.svmod.module_name}.v'))
         else:
-            self.rtlnode = hdlgen(
+            self.top = hdlgen(
                 gear,
                 outdir=self.outdir,
                 wrapper=True,
                 generate=self.rebuild,
                 language='sv')
-            self.svmod = registry('svgen/map')[self.rtlnode]
+            self.svmod = registry('svgen/map')[self.top]
             self.wrap_name = f'wrap_{self.svmod.module_name}'
             self.top_name = self.wrap_name
-
-        # for p in self.rtlnode.in_ports:
-        #     if p.index >= len(self.gear.in_ports):
-        #         driver = closest_gear_port_from_rtl(p, 'in')
-        #         if driver is None:
-        #             raise VerilatorCompileError(
-        #                 f"Inferred top module port '{p.name}' has no driver")
-
-        #         consumer = closest_gear_port_from_rtl(p, 'out')
-
-        #         in_port = InPort(
-        #             self.gear,
-        #             p.index,
-        #             p.basename,
-        #             producer=driver.producer,
-        #             consumer=consumer.consumer)
-
-        #         self.in_cosim_ports.append(InCosimPort(self, in_port))
-        #         registry('sim/map')[in_port] = self.in_cosim_ports[-1]
-
-        # for p in self.rtlnode.out_ports:
-        #     if p.index < len(self.gear.out_ports):
-        #         self.out_cosim_ports[p.index].name = p.basename
-        #     elif p.index >= len(self.gear.out_ports):
-        #         driver = closest_gear_port_from_rtl(p, 'in')
-        #         if driver is None:
-        #             raise VerilatorCompileError(
-        #                 f"Inferred top module port '{p.name}' has no driver")
-
-        #         consumer = closest_gear_port_from_rtl(p, 'out')
-
-        #         if consumer is None:
-        #             raise VerilatorCompileError(
-        #                 f"Inferred top module port '{p.name}' is dangling")
-
-        #         out_port = OutPort(self.gear, p.index, p.basename, consumer)
-        #         out_intf = Intf(p.dtype)
-
-        #         driver.consumer.disconnect(consumer)
-        #         driver.consumer.connect(out_port)
-
-        #         out_intf.source(out_port)
-        #         out_intf.connect(consumer)
-
-        #         self.out_cosim_ports.append(OutCosimPort(self, out_port))
-        #         registry('sim/map')[out_port] = self.out_cosim_ports[-1]
 
         self.trace_fn = None
         self.vcd_fifo = vcd_fifo
@@ -243,8 +196,8 @@ class SimVerilated(CosimBase):
     def build(self):
         tracing_enabled = bool(registry('debug/trace'))
         context = {
-            'in_ports': self.rtlnode.in_ports,
-            'out_ports': self.rtlnode.out_ports,
+            'in_ports': self.top.in_ports,
+            'out_ports': self.top.out_ports,
             'top_name': self.top_name,
             'tracing': tracing_enabled,
             'aux_clock': config['sim/aux_clock']

@@ -38,7 +38,6 @@ import pygears.typing.pprint
 # load_plugin_folder(os.path.join(os.path.dirname(__file__), 'lib'))
 
 import pygears.hdl
-import pygears.rtl
 
 non_plugin_pkgs = ['pygears_live', 'pygears_tools']
 plugins = {

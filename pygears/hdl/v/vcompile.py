@@ -6,7 +6,6 @@ from pygears.conf import registry
 from pygears.hls import HDLVisitor
 from pygears.typing import Queue, typeof, code
 
-from ..util import separate_conditions
 from .util import vgen_intf, vgen_signal
 from .v_expression import cast, vexpr
 

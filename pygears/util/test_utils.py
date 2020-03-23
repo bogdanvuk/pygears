@@ -122,7 +122,7 @@ def formal_check_fixt(tmpdir, request):
     safe_bind('vgen/formal/assumes', assumes)
 
     root = find('/')
-    rtlgen = hdlgen(root.child[0],
+    module = hdlgen(root.child[0],
                     language='v',
                     outdir=outdir,
                     wrapper=False,
@@ -131,7 +131,7 @@ def formal_check_fixt(tmpdir, request):
     yosis_cmds = []
     env = jinja2.Environment(loader=jinja2.FileSystemLoader(
         searchpath=os.path.dirname(__file__)))
-    jinja_context = {'name': rtlgen.basename, 'outdir': outdir}
+    jinja_context = {'name': module.basename, 'outdir': outdir}
 
     def find_yosis_cmd(name):
         if name in disable:
@@ -144,11 +144,11 @@ def formal_check_fixt(tmpdir, request):
         env.get_template('formal.j2').stream(jinja_context).dump(script_path)
         yosis_cmds.append(f'sby {script_path}')
 
-    for port in rtlgen.in_ports:
+    for port in module.in_ports:
         jinja_context['live_task'] = True
         find_yosis_cmd(port.basename)
 
-    for port in rtlgen.out_ports:
+    for port in module.out_ports:
         jinja_context['live_task'] = False
         find_yosis_cmd(port.basename)
 

@@ -6,8 +6,8 @@ from pygears.typing import div as typing_div, is_type, Uint, typeof
 from pygears.typing import code as type_code
 from pygears.util.hof import oper_tree
 from pygears import datagear
-from pygears.rtl.gear import RTLGearHierVisitor
-from pygears.rtl import flow_visitor
+from pygears.hdl.util import HDLGearHierVisitor
+from pygears.hdl import flow_visitor
 from pygears.hdl.sv import SVGenPlugin
 from pygears.hdl.v import VGenPlugin
 
@@ -162,7 +162,7 @@ class AddIntfOperPlugin(IntfOperPlugin):
 
 
 @flow_visitor
-class RemoveRecode(RTLGearHierVisitor):
+class RemoveRecode(HDLGearHierVisitor):
     def code(self, node):
         pout = node.out_ports[0]
         pin = node.in_ports[0]
@@ -171,7 +171,7 @@ class RemoveRecode(RTLGearHierVisitor):
             node.bypass()
 
 
-class RTLCodePlugin(VGenPlugin, SVGenPlugin):
+class HDLCodePlugin(VGenPlugin, SVGenPlugin):
     @classmethod
     def bind(cls):
         cls.registry['vgen']['flow'].insert(0, RemoveRecode)

@@ -7,9 +7,8 @@ from pygears.hdl.sv import SVGenPlugin
 # from pygears.hdl.sv.svmod import SVModuleInst
 # from pygears.hdl.modinst import get_port_config
 from functools import partial
-from pygears.rtl import flow_visitor, RTLPlugin
 from pygears.core.gear_inst import GearInstPlugin
-from pygears.rtl.gear import RTLGearHierVisitor, is_gear_instance
+from pygears.hdl.util import HDLGearHierVisitor, is_gear_instance, flow_visitor
 
 
 def index_to_sv_slice(dtype, key):
@@ -88,7 +87,7 @@ def get_sieve_stages(node):
 
 
 @flow_visitor
-class RemoveEqualReprSieveVisitor(RTLGearHierVisitor):
+class RemoveEqualReprSieveVisitor(HDLGearHierVisitor):
     def sieve(self, node):
         pout = node.out_ports[0]
         pin = node.in_ports[0]
@@ -98,7 +97,7 @@ class RemoveEqualReprSieveVisitor(RTLGearHierVisitor):
 
 
 @flow_visitor
-class CollapseSievesVisitor(RTLGearHierVisitor):
+class CollapseSievesVisitor(HDLGearHierVisitor):
     def sieve(self, node):
         if not hasattr(node, 'pre_sieves'):
             node.pre_sieves = []
@@ -143,7 +142,7 @@ class CollapseSievesVisitor(RTLGearHierVisitor):
                 iout.remove()
 
 
-class RTLSievePlugin(SVGenPlugin, RTLPlugin, GearInstPlugin):
-    @classmethod
-    def bind(cls):
-        cls.registry['rtl']['flow'].append(CollapseSievesVisitor)
+# class RTLSievePlugin(SVGenPlugin, RTLPlugin, GearInstPlugin):
+#     @classmethod
+#     def bind(cls):
+#         cls.registry['rtl']['flow'].append(CollapseSievesVisitor)

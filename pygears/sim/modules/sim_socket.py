@@ -12,7 +12,6 @@ from pygears.sim.modules.cosim_base import CosimBase, CosimNoData
 from pygears.sim.extens.svsock import register_intf
 from .cosim_port import InCosimPort
 from pygears.core.port import InPort
-from pygears.core.graph import closest_gear_port_from_rtl
 from pygears.hdl import hdlgen, list_hdl_files
 from pygears.hdl.sv.util import svgen_typedef
 from pygears.hdl.templenv import TemplateEnv

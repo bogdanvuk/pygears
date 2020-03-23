@@ -1,44 +1,39 @@
 import os
 import shutil
 from pygears import registry, find
-from pygears.rtl.node import RTLNode
 from pygears.core.hier_node import HierYielderBase
+from pygears.core.gear import Gear
 from pygears.definitions import LIB_VLIB_DIR, LIB_SVLIB_DIR
 
 
 class NodeYielder(HierYielderBase):
-    def RTLNode(self, node):
-        yield node
+    def Gear(self, node):
+        for intf in node.local_intfs:
+            yield intf
 
-    def RTLIntf(self, intf):
-        yield intf
+        yield node
 
 
 def enum_hdl_files(top, outdir, language, rtl_only=False, wrapper=False):
     if isinstance(top, str):
         top = find(top)
 
-    if isinstance(top, RTLNode):
-        rtl_top = top
-    else:
-        rtl_top = registry('rtl/gear_node_map')[top]
-
     vgen_map = registry(f'{language}gen/map')
 
     if language == 'sv':
         yield os.path.join(LIB_SVLIB_DIR, 'dti.sv')
 
-    for node in NodeYielder().visit(rtl_top):
+    for node in NodeYielder().visit(top):
         if node not in vgen_map:
             continue
 
         vinst = vgen_map[node]
 
-        if ((node is rtl_top) and wrapper and (language == 'sv')
+        if ((node is top) and wrapper and (language == 'sv')
                 and not rtl_only):
             yield os.path.join(outdir, f'wrap_{vinst.file_basename}')
 
-        if (isinstance(node, RTLNode)
+        if (isinstance(node, Gear)
                 and (node in registry(f'{language}gen/map'))):
 
             modinst = registry(f'{language}gen/map')[node]

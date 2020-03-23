@@ -24,10 +24,11 @@ class HDLPlugin(PluginBase):
         config.define('debug/hide_interm_vals', default=True)
 
 
+from .util import flow_visitor, HDLGearHierVisitor
 from . import sv
 from . import v
 from .hdlgen import hdlgen
 from .common import list_hdl_files
 from .ipgen import ipgen
 
-__all__ = ['hdlgen', 'list_hdl_files']
+__all__ = ['hdlgen', 'list_hdl_files', 'flow_visitor']

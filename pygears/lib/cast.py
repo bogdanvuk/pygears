@@ -2,8 +2,7 @@ from pygears import gear
 from pygears.typing import cast as type_cast
 from pygears.conf import safe_bind
 from pygears.core.intf import IntfOperPlugin
-from pygears.rtl.gear import RTLGearHierVisitor
-from pygears.rtl import flow_visitor
+from pygears.hdl.util import HDLGearHierVisitor, flow_visitor
 from pygears.hdl.sv import SVGenPlugin
 from pygears.hdl.v import VGenPlugin
 
@@ -24,7 +23,7 @@ def pipe(self, other):
 
 
 @flow_visitor
-class RemoveEqualReprCastVisitor(RTLGearHierVisitor):
+class RemoveEqualReprCastVisitor(HDLGearHierVisitor):
     def cast(self, node):
         pout = node.out_ports[0]
         pin = node.in_ports[0]
@@ -33,7 +32,7 @@ class RemoveEqualReprCastVisitor(RTLGearHierVisitor):
             node.bypass()
 
 
-class RTLCastPlugin(IntfOperPlugin, VGenPlugin, SVGenPlugin):
+class HDLCastPlugin(IntfOperPlugin, VGenPlugin, SVGenPlugin):
     @classmethod
     def bind(cls):
         safe_bind('gear/intf_oper/__or__', pipe)

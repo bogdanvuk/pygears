@@ -4,7 +4,7 @@ from string import Template
 
 from pygears import PluginBase, registry, safe_bind
 from pygears.conf import Inject, inject, config
-from pygears.rtl.port import OutPort, InPort
+from pygears.core.port import OutPort, InPort
 # from .util import svgen_typedef
 
 dti_spy_connect_t = Template("""
