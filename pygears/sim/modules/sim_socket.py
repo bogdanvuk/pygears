@@ -114,7 +114,7 @@ class SVServerModule:
         return list_hdl_files(self.module, self.srcdir, language='sv', wrapper=False)
 
     def includes(self):
-        return self.svmod.include + config[f'svgen/include'] + [self.srcdir]
+        return config[f'svgen/include'] + [self.srcdir]
 
     def declaration(self):
         port_map = {
@@ -198,21 +198,6 @@ class SimSocket(CosimBase):
         self.srcdir = os.path.join(self.outdir, 'src_gen')
         self.rtl_node = hdlgen(gear, outdir=self.srcdir, language='sv')
         self.svmod = registry('svgen/map')[self.rtl_node]
-
-        for p in self.rtl_node.in_ports:
-            if p.index >= len(gear.in_ports):
-                driver = closest_gear_port_from_rtl(p, 'in')
-                consumer = closest_gear_port_from_rtl(p, 'out')
-
-                in_port = InPort(
-                    gear,
-                    p.index,
-                    p.basename,
-                    producer=driver.producer,
-                    consumer=consumer.consumer)
-
-                self.in_cosim_ports.append(InCosimPort(self, in_port))
-                registry('sim/map')[in_port] = self.in_cosim_ports[-1]
 
     def cycle(self):
         self.send_cmd(CMD_CYCLE)

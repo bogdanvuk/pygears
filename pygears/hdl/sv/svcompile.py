@@ -525,8 +525,6 @@ def compile_gear_body(gear, outdir, template_env):
 
     _get_funcs_rec(hdl_ast)
 
-    gear.child.clear()
-
     writer = HDLWriter()
     write_module(ctx,
                  hdl_ast,

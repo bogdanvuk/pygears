@@ -48,7 +48,7 @@ def enum_hdl_files(top, outdir, language, rtl_only=False, wrapper=False):
             #     for f in vinst.files:
             #         yield os.path.join(outdir, f)
 
-        elif vinst.intf.is_broadcast:
+        elif vinst.is_broadcast:
             if language == 'v':
                 yield os.path.join(LIB_VLIB_DIR, 'bc.v')
             elif language == 'sv':
