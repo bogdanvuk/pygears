@@ -19,6 +19,9 @@ def ipgen_entry(args):
 
 
 def ipgen(tool, design=None, top=None, **kwds):
+    if tool not in config['ipgen/backend']:
+        raise Exception(f'Unknown backend synth tool "{tool}".')
+
     design = os.path.abspath(os.path.expanduser(design))
 
     load_rc('.pygears', os.path.dirname(design))

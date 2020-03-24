@@ -48,14 +48,15 @@ class BlockLines:
 
 
 def is_intf_id(expr):
-    return (isinstance(expr, ir.Name)
-            and isinstance(expr.obj, ir.Variable)
-            and isinstance(expr.obj.val, Intf))
+    return (
+        isinstance(expr, ir.Name) and isinstance(expr.obj, ir.Variable)
+        and isinstance(expr.obj.val, Intf))
+
 
 def is_reg_id(expr):
-    return (isinstance(expr, ir.Name)
-            and isinstance(expr.obj, ir.Variable)
-            and expr.obj.reg)
+    return (
+        isinstance(expr, ir.Name) and isinstance(expr.obj, ir.Variable) and expr.obj.reg)
+
 
 class SVCompiler(HDLVisitor):
     def __init__(self, ctx, var, writer, selected, aux_funcs=None):
@@ -113,8 +114,7 @@ class SVCompiler(HDLVisitor):
         bl = self.block_lines.pop()
 
         if isinstance(block, ir.HDLBlock):
-            maybe_else = 'else ' if getattr(block, 'else_branch',
-                                            False) else ''
+            maybe_else = 'else ' if getattr(block, 'else_branch', False) else ''
             # in_cond = ir.BinOpExpr((block.in_cond, block.opt_in_cond),
             #                        ir.opc.And)
 
@@ -224,27 +224,20 @@ class SVCompiler(HDLVisitor):
                 if isinstance(obj.val.producer, HDLProducer):
                     if self.selected(self.ctx.ref(name, ctx='store')):
                         yield f'{name}.valid', '0'
-                        # self.prepend(f"{name}.valid = 0")
-                        # self.defaults[f"{name}.valid"] = "0"
-                        # self.write(f"{name}_s = {obj.dtype.width}'(1'bx)")
                 else:
                     if self.selected(self.ctx.ref(name, ctx='ready')):
                         yield f'{name}.ready', f"{name}.valid ? 0 : 1'bx"
-                        # self.prepend(f"{name}.ready = {name}.valid ? 0 : 1'bx")
-                        # self.defaults[f"{name}.ready"] = "{name}.valid ? 0 : 1'bx"
 
             elif obj.reg:
                 target = self.ctx.ref(name, ctx='en')
                 if self.selected(target):
-                    # self.write(f"{name}_next = {obj.dtype.width}'(1'bx)")
-                    # self.write(f"{name}_next = {name}")
-                    yield f'{svexpr(target, self.aux_funcs)}', '0'
-                    # self.prepend(f'{svexpr(target, self.aux_funcs)} = 0')
+                    yield (
+                        f'{svexpr(self.ctx.ref(name, ctx="store"), self.aux_funcs)}',
+                        f'{svexpr(self.ctx.ref(name), self.aux_funcs)}')
 
+                    yield f'{svexpr(target, self.aux_funcs)}', '0'
             else:
                 pass
-                # if self.selected(self.ctx.ref(name, ctx='store')):
-                #     self.write(f"{name} = {obj.dtype.width}'(1'bx)")
 
     def CombBlock(self, node):
         self.block_lines.append(BlockLines())
@@ -271,8 +264,7 @@ class SVCompiler(HDLVisitor):
 
         if retval is not None:
             self.write(
-                f"{svexpr(node.func.name, self.aux_funcs)} = {svexpr(node.expr, self.aux_funcs)}"
-            )
+                f"{svexpr(node.func.name, self.aux_funcs)} = {svexpr(node.expr, self.aux_funcs)}")
 
     def FuncBlock(self, node):
         self.block_lines.append(BlockLines())
@@ -372,13 +364,7 @@ def svcompile(hdl_stmts, writer, ctx, title, selected, aux_funcs=None):
     writer.line()
 
 
-def write_module(ctx: Context,
-                 hdl,
-                 writer,
-                 subsvmods,
-                 funcs,
-                 template_env,
-                 config=None):
+def write_module(ctx: Context, hdl, writer, subsvmods, funcs, template_env, config=None):
     if config is None:
         config = {}
 
@@ -457,12 +443,7 @@ def write_module(ctx: Context,
 
         writer.indent -= 4
 
-        svcompile(f_hdl,
-                  writer,
-                  f_ctx,
-                  '',
-                  selected=lambda x: True,
-                  aux_funcs=aux_funcs)
+        svcompile(f_hdl, writer, f_ctx, '', selected=lambda x: True, aux_funcs=aux_funcs)
 
     if ctx.regs:
         writer.line(f'initial begin')
@@ -472,32 +453,24 @@ def write_module(ctx: Context,
         writer.line(f'end')
 
     for name, expr in ctx.regs.items():
-        writer.block(
-            REG_TEMPLATE.format(svexpr(ctx.ref(name)), svexpr(expr.val)))
+        writer.block(REG_TEMPLATE.format(svexpr(ctx.ref(name)), svexpr(expr.val)))
 
     for name, expr in ctx.regs.items():
-        svcompile(hdl,
-                  writer,
-                  ctx,
-                  name,
-                  selected=lambda x: x.obj == expr,
-                  aux_funcs=aux_funcs)
+        svcompile(
+            hdl, writer, ctx, name, selected=lambda x: x.obj == expr, aux_funcs=aux_funcs)
 
     for name, expr in ctx.variables.items():
-        svcompile(hdl,
-                  writer,
-                  ctx,
-                  name,
-                  selected=lambda x: x.obj == expr,
-                  aux_funcs=aux_funcs)
+        svcompile(
+            hdl, writer, ctx, name, selected=lambda x: x.obj == expr, aux_funcs=aux_funcs)
 
     for name, expr in ctx.intfs.items():
-        svcompile(hdl,
-                  writer,
-                  ctx,
-                  name,
-                  selected=lambda x: x.name == name,
-                  aux_funcs=aux_funcs)
+        svcompile(
+            hdl,
+            writer,
+            ctx,
+            name,
+            selected=lambda x: x.name == name,
+            aux_funcs=aux_funcs)
 
     writer.lines[0:0] = aux_funcs.values()
 
@@ -526,13 +499,14 @@ def compile_gear_body(gear, outdir, template_env):
     _get_funcs_rec(hdl_ast)
 
     writer = HDLWriter()
-    write_module(ctx,
-                 hdl_ast,
-                 writer,
-                 subsvmods,
-                 funcs,
-                 template_env,
-                 config=gear.params.get('hdl', {}))
+    write_module(
+        ctx,
+        hdl_ast,
+        writer,
+        subsvmods,
+        funcs,
+        template_env,
+        config=gear.params.get('hdl', {}))
 
     return '\n'.join(writer.lines), subsvmods
 
@@ -545,7 +519,6 @@ def compile_gear(gear, template_env, module_name, outdir):
         'params': gear.params
     }
 
-    context['svlines'], subsvmods = compile_gear_body(gear, outdir,
-                                                      template_env)
+    context['svlines'], subsvmods = compile_gear_body(gear, outdir, template_env)
 
     return template_env.render_string(gear_module_template, context), subsvmods
