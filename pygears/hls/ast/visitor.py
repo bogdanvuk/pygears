@@ -99,6 +99,7 @@ class Context:
             if isinstance(obj, ir.Variable) and obj.val is None
         }
 
+
 class IntfProxy(Intf):
     def __init__(self, port):
         self.port = port
@@ -112,6 +113,7 @@ class IntfProxy(Intf):
 
     def __repr__(self):
         return repr(self.port)
+
 
 class GearContext(Context):
     def __init__(self, gear):
@@ -145,8 +147,8 @@ class GearContext(Context):
     @property
     def in_ports(self):
         return [
-            obj for obj in self.scope.values()
-            if (isinstance(obj, ir.Interface) and isinstance(obj.intf, Intf)
+            obj for obj in self.scope.values() if (
+                isinstance(obj, ir.Interface) and isinstance(obj.intf, Intf)
                 and obj.intf.producer and obj.intf.producer.gear is self.gear)
         ]
 
@@ -198,9 +200,8 @@ class FuncContext(Context):
                 else:
                     params[name] = var
 
-            res = infer_ftypes(params=params,
-                               args=arg_types,
-                               namespace=self.local_namespace)
+            res = infer_ftypes(
+                params=params, args=arg_types, namespace=self.local_namespace)
 
             for name, dtype in res.items():
                 if name == 'return':
@@ -236,10 +237,13 @@ def node_visitor(ast_type):
                 raise value.with_traceback(traceback)
             except Exception as e:
                 func, fn, ln = gear_definition_location(ctx.gear.func)
-                err = SyntaxError(str(e), ln + node.lineno - 1, filename=fn)
+                msg = (
+                    f'{str(e)}\n    - when compiling gear "{ctx.gear.name}" with'
+                    f' parameters {ctx.gear.params}')
 
-                traceback = make_traceback(
-                    (SyntaxError, err, sys.exc_info()[2]))
+                err = SyntaxError(msg, ln + node.lineno - 1, filename=fn)
+
+                traceback = make_traceback((SyntaxError, err, sys.exc_info()[2]))
                 exc_type, exc_value, tb = traceback.standard_exc_info
 
             reraise(exc_type, exc_value, tb)

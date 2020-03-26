@@ -5,18 +5,20 @@ from .flatten import flatten
 from .ccat import ccat
 from .demux import demux
 
+
 @gear(hdl={'compile': True})
-async def qdeal(din: Queue, *, num,
-                lvl=b'din.lvl-1') -> b'(Queue[din.data, din.lvl-1], ) * num':
+async def qdeal(
+        din: Queue, *, num, lvl=b'din.lvl-1') -> b'(Queue[din.data, din.lvl-1], ) * num':
 
     i = Uint[bitw(num)](0)
 
     async for (data, eot) in din:
         out_eot = eot[:lvl]
-        yield demux(i, (data, out_eot),
-                    use_dflt=False,
-                    mapping={n: n
-                             for n in range(num)})
+
+        dout = data if lvl == 0 else (data, out_eot)
+
+        yield demux(i, dout, use_dflt=False, mapping={n: n for n in range(num)})
+
         if all(out_eot):
             if i == (num - 1):
                 i = 0

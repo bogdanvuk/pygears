@@ -39,7 +39,7 @@ def find(path, root=None):
     try:
         module = _find_rec(module_path, root)
     except ModuleNotFoundError:
-        raise ModuleNotFoundError(f'No module found on path "/{module_path}"')
+        return None
 
     if not port_name:
         return module
@@ -53,4 +53,4 @@ def find(path, root=None):
             if p.basename == port_name:
                 return module.out_ports[i]
 
-        raise ModuleNotFoundError(f'No module found on path "{path}"')
+        return None

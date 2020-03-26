@@ -29,12 +29,10 @@ def enum_hdl_files(top, outdir, language, rtl_only=False, wrapper=False):
 
         vinst = vgen_map[node]
 
-        if ((node is top) and wrapper and (language == 'sv')
-                and not rtl_only):
+        if ((node is top) and wrapper and (language == 'sv') and not rtl_only):
             yield os.path.join(outdir, f'wrap_{vinst.file_basename}')
 
-        if (isinstance(node, Gear)
-                and (node in registry(f'{language}gen/map'))):
+        if (isinstance(node, Gear) and (node in registry(f'{language}gen/map'))):
 
             modinst = registry(f'{language}gen/map')[node]
             for f in modinst.files:

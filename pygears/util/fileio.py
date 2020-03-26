@@ -44,3 +44,7 @@ def find_in_dirs(fn, dirs):
     else:
         return None
 
+
+def get_main_script():
+    import __main__
+    return os.path.basename(__main__.__file__)
