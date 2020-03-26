@@ -247,14 +247,14 @@ class intf_name_tracer:
 
         # tracer is activated on next call, return or exception
         if registry('gear/current_module').parent == registry(
-                'gear/hier_root'):
+                'gear/root'):
             sys.setprofile(self.tracer)
 
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
         if registry('gear/current_module').parent == registry(
-                'gear/hier_root'):
+                'gear/root'):
             sys.setprofile(None)
 
         cm = self.code_map.pop()

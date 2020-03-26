@@ -193,10 +193,7 @@ def create_unpacked_tuple_alternative(g):
 
     unpack_func.__kwdefaults__ = paramspec[-1]
 
-    p = Partial(unpack_func)
-    p.meta_kwds = {'definition': p}
-
-    add_alternative(base_func, p.func)
+    add_alternative(base_func, unpack_func)
 
 
 def create_gear_definition(func, gear_resolver=None, **meta_kwds):

@@ -79,7 +79,7 @@ class Visitor(HierVisitorBase):
 
 
 @inject
-def print_hier(root=Inject('gear/hier_root'), params=False, fullname=False):
+def print_hier(root=Inject('gear/root'), params=False, fullname=False):
     v = Visitor(params, fullname)
     v.visit(root)
     util_log().info('\n'.join(v.res))

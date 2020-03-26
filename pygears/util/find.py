@@ -24,7 +24,7 @@ def _find_rec(path, root):
 def find(path, root=None):
     if path.startswith('/'):
         path = path[1:]
-        root = registry('gear/hier_root')
+        root = registry('gear/root')
     else:
         if path.startswith('./'):
             path = path[2:]

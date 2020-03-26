@@ -70,19 +70,13 @@ def test_directed(tmpdir, sim_cls, din_delay, dout_delay, cfg_delay):
              delays=[delay_rng(dout_delay, dout_delay)])
     sim(resdir=tmpdir)
 
-# from pygears import config
-# from pygears.sim.modules import SimVerilated
-# config['debug/trace'] = ['*']
-
-# test_queue_directed('/tools/home/tmp/group', SimVerilated, 0, 0, 0)
-
 
 @formal_check()
 def test_formal():
     group(Intf(Queue[Uint[8]]), Intf(Uint[3]))
 
 
-@synth_check({'logic luts': 11, 'ffs': 16}, tool='vivado')
+@synth_check({'logic luts': 19, 'ffs': 17}, tool='vivado')
 def test_synth_vivado():
     group(Intf(Queue[Uint[16]]), Intf(Uint[16]))
 

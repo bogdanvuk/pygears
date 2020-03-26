@@ -22,7 +22,7 @@ def test_unsigned_formal():
     mod(Intf(Tuple[Uint[10], Uint[4]]))
 
 
-@synth_check({'logic luts': 53, 'ffs': 0}, tool='vivado')
+@synth_check({'logic luts': 54, 'ffs': 0}, tool='vivado')
 def test_unsigned_synth_vivado():
     mod(Intf(Tuple[Uint[10], Uint[4]]))
 

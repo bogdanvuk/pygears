@@ -20,7 +20,7 @@ def hdlgen(top=None,
         top = top.producer.gear
 
     if top is None:
-        top = registry('gear/hier_root')
+        top = registry('gear/root')
     elif isinstance(top, str):
         top = find(top)
     else:

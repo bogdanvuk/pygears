@@ -30,5 +30,6 @@ from . import v
 from .hdlgen import hdlgen
 from .common import list_hdl_files
 from .ipgen import ipgen
+from .synth import synth
 
 __all__ = ['hdlgen', 'list_hdl_files', 'flow_visitor']

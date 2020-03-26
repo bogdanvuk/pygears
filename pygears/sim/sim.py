@@ -300,7 +300,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         finally:
             self.done.add(sim_gear)
             self.events['after_finish'](self, sim_gear)
-            self.cur_gear = registry('gear/hier_root')
+            self.cur_gear = registry('gear/root')
             self.back_ready.discard(sim_gear)
             self.forward_ready.discard(sim_gear)
             self.delta_ready.discard(sim_gear)
@@ -347,7 +347,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         # print(f'{self.phase}: {sim_gear.gear.name}')
         self.run_gear(sim_gear, ready)
 
-        self.cur_gear = gear_reg['hier_root']
+        self.cur_gear = gear_reg['root']
         gear_reg['current_module'] = self.cur_gear
         gear_reg['current_sim'] = sim_gear
 
@@ -445,7 +445,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         self.task_data = {}
 
         v = GearEnum()
-        v.visit(registry('gear/hier_root'))
+        v.visit(registry('gear/root'))
 
         self.insert_gears(simgear_exec_order(v.gears))
 
@@ -467,7 +467,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             bind('gear/current_module', self.cur_gear)
             bind('gear/current_sim', sim_gear)
             sim_gear.setup()
-            self.cur_gear = registry('gear/hier_root')
+            self.cur_gear = registry('gear/root')
             bind('gear/current_module', self.cur_gear)
             bind('gear/current_sim', sim_gear)
 

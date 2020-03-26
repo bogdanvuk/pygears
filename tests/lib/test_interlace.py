@@ -96,7 +96,7 @@ def test_formal():
     qinterlace(Intf(T_DIN), Intf(T_DIN), Intf(T_DIN))
 
 
-@synth_check({'logic luts': 22, 'ffs': 2}, tool='vivado')
+@synth_check({'logic luts': 24, 'ffs': 2}, tool='vivado')
 def test_trr_vivado():
     qinterlace(Intf(T_DIN), Intf(T_DIN), Intf(T_DIN))
 

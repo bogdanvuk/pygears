@@ -60,17 +60,6 @@ def test_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
 
     sim(tmpdir)
 
-# # from pygears.lib.rng import qrange
-# from pygears.util.call import call
-
-# res = call(serialize, Array[Uint[16], 4]((0, 1, 2, 3)))
-# # # res = qrange(4)
-
-# # breakpoint()
-
-# from pygears.sim.modules import SimVerilated
-# test_cosim('/tools/home/tmp/serialize', SimVerilated, 0, 0)
-
 
 @pytest.mark.parametrize('din_delay', [0, 5])
 @pytest.mark.parametrize('dout_delay', [0, 5])
@@ -97,7 +86,7 @@ def test_formal_active():
     serialize(Intf(TDin[Uint[8], 4, 4]))
 
 
-@synth_check({'logic luts': 19, 'ffs': 3}, tool='vivado')
+@synth_check({'logic luts': 20, 'ffs': 3}, tool='vivado')
 def test_synth_vivado():
     serialize(Intf(Array[Uint[16], 4]))
 
@@ -107,7 +96,7 @@ def test_synth_yosys():
     serialize(Intf(Array[Uint[16], 4]))
 
 
-@synth_check({'logic luts': 23, 'ffs': 4}, tool='vivado')
+@synth_check({'logic luts': 16, 'ffs': 4}, tool='vivado')
 def test_synth_active_vivado():
     serialize(Intf(TDin[Uint[8], 4, 4]))
 

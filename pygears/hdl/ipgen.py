@@ -11,6 +11,7 @@ def ipgen(
     build=True,
     generate=True,
     **kwds):
+
     backends = registry('entry/cmds/ipgen/cmds')
     if tool not in backends:
         raise Exception(f'Unknown backend synth tool "{tool}".')

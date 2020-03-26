@@ -47,11 +47,20 @@ def test_signed_cosim(tmpdir, cosim_cls):
     sim(resdir=tmpdir)
 
 
+# @synth_check(
+#     {
+#         'logic luts': 43,
+#         'ffs': 0,
+#         'path delay': lambda delay: delay < 8.0
+#     },
+#     tool='vivado')
+# def test_unsigned_synth_vivado():
+#     mul(Intf(Tuple[Uint[10], Uint[4]]))
+
 @synth_check(
     {
         'logic luts': 43,
         'ffs': 0,
-        'path delay': lambda delay: delay < 8.0
     },
     tool='vivado')
 def test_unsigned_synth_vivado():

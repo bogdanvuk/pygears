@@ -60,16 +60,13 @@ def test_replicate_queue(tmpdir, cosim_cls, din_delay, dout_delay):
     sim(resdir=tmpdir)
 
 
-# from pygears.sim.modules import SimVerilated
-# test_replicate_queue('/tools/home/tmp/replicate_while', SimVerilated, 0, 0)
-
 # TODO: live fails
 # @formal_check()
 # def test_formal():
 #     replicate(Intf(T_DIN))
 
 
-@synth_check({'logic luts': 12, 'ffs': 16}, tool='vivado')
+@synth_check({'logic luts': 10, 'ffs': 16}, tool='vivado')
 def test_synth_vivado():
     replicate(Intf(T_DIN))
 

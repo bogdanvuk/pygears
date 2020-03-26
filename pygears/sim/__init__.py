@@ -19,7 +19,7 @@ def cosim(top, sim, *args, **kwds):
     from pygears import find, registry
 
     if top is None:
-        top = registry('gear/hier_root')
+        top = registry('gear/root')
     elif isinstance(top, str):
         top = find(top)
 

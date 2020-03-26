@@ -258,12 +258,12 @@ class GearPlugin(PluginBase):
                 '__base__': None
             })
 
-        safe_bind('gear/hier_root', Gear(None, params={'name': ''}))
-        safe_bind('gear/current_module', cls.registry['gear']['hier_root'])
+        safe_bind('gear/root', Gear(None, params={'name': ''}))
+        safe_bind('gear/current_module', cls.registry['gear']['root'])
         safe_bind('gear/exec_context', 'compile')
 
     @classmethod
     def reset(cls):
-        safe_bind('gear/hier_root', Gear(None, params={'name': ''}))
-        safe_bind('gear/current_module', cls.registry['gear']['hier_root'])
+        safe_bind('gear/root', Gear(None, params={'name': ''}))
+        safe_bind('gear/current_module', cls.registry['gear']['root'])
         safe_bind('gear/code_map', [])

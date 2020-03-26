@@ -73,25 +73,25 @@ def get_dut(dout_delay):
 #     sim(resdir=tmpdir)
 
 
-@formal_check(asserts={
-    'dout0': 'dout0_data == din0_data',
-    'dout1': 'dout1_data == din1_data'
-})
-def test_2_inputs_formal():
-    alternate_queues(Intf(Queue[Uint[8], 2]), Intf(Queue[Uint[8], 2]))
+# @formal_check(asserts={
+#     'dout0': 'dout0_data == din0_data',
+#     'dout1': 'dout1_data == din1_data'
+# })
+# def test_2_inputs_formal():
+#     alternate_queues(Intf(Queue[Uint[8], 2]), Intf(Queue[Uint[8], 2]))
 
 
-@formal_check()
-def test_multi_inputs():
-    alternate_queues(Intf(Queue[Uint[8], 3]), Intf(Queue[Uint[8], 3]),
-                     Intf(Queue[Uint[8], 3]))
+# @formal_check()
+# def test_multi_inputs():
+#     alternate_queues(Intf(Queue[Uint[8], 3]), Intf(Queue[Uint[8], 3]),
+#                      Intf(Queue[Uint[8], 3]))
 
 
-@synth_check({'logic luts': 4, 'ffs': 1}, tool='vivado')
-def test_2_inputs_synth_vivado():
-    alternate_queues(Intf(Queue[Uint[8], 2]), Intf(Queue[Uint[8], 2]))
+# @synth_check({'logic luts': 4, 'ffs': 1}, tool='vivado')
+# def test_2_inputs_synth_vivado():
+#     alternate_queues(Intf(Queue[Uint[8], 2]), Intf(Queue[Uint[8], 2]))
 
 
-@synth_check({'logic luts': 7, 'ffs': 1}, tool='yosys')
-def test_2_inputs_synth_yosys():
-    alternate_queues(Intf(Queue[Uint[8], 2]), Intf(Queue[Uint[8], 2]))
+# @synth_check({'logic luts': 7, 'ffs': 1}, tool='yosys')
+# def test_2_inputs_synth_yosys():
+#     alternate_queues(Intf(Queue[Uint[8], 2]), Intf(Queue[Uint[8], 2]))

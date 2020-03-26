@@ -47,4 +47,8 @@ def find_in_dirs(fn, dirs):
 
 def get_main_script():
     import __main__
+
+    if not hasattr(__main__, '__file__'):
+        return None
+
     return os.path.basename(__main__.__file__)

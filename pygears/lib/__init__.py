@@ -43,7 +43,7 @@ from .priority_mux import priority_mux
 from .qcnt import qcnt
 from .release_after_eot import release_after_eot
 from .reverse import reverse
-from .rng import rng, qrange
+from .rng import qrange
 from .sdp import sdp
 from .tdp import tdp
 from .take import take
