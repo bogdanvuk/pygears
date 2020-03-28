@@ -54,7 +54,7 @@ class Context:
     def __init__(self):
         self.scope: typing.Dict = {}
         self.args = {}
-        self.local_namespace: typing.Dict = None
+        self.local_namespace: typing.Dict = {'__builtins__': __builtins__}
         self.functions: typing.Mapping[Function, FuncContext] = {}
         self.pydl_block_closure: typing.List = []
         self.submodules: typing.List[Submodule] = []

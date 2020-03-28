@@ -10,7 +10,7 @@ from .debug import print_gear_parse_intro
 
 
 def translate_gear(gear: Gear):
-    # hls_enable_debug_log()
+    hls_enable_debug_log()
     hls_debug(title=f'Translating: {gear.name}')
 
     exec_context = registry('gear/exec_context')

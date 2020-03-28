@@ -19,6 +19,14 @@ def gear_resolver(gear_func, meta_kwds, *args, **kwds):
                                                    **kwds)
 
 
+def is_datagear(func):
+    return hasattr(func, 'definition')
+
+
+def get_datagear_func(func):
+    return func.definition
+
+
 @doublewrap
 def datagear(func, **meta_kwds):
     if not is_standard_func(func):

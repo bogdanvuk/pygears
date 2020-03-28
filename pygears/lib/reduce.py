@@ -3,36 +3,36 @@ from pygears.lib import cart
 from pygears.typing import Any, Bool, Queue, Tuple, Number, code, cast
 from pygears.typing import saturate as sat
 
-t_din = Queue[Tuple[{'data': Any, 'init': Any}]]
 
-
-# @gear(hdl={'compile': True, 'pipeline': True})
 @gear(hdl={'compile': True})
-async def reduce(din: t_din, *, f, t) -> b't':
-    """Accumulates i.e. sums up the values from the input. The ``data`` field
-    values of the input :class:`Tuple` type are accumulated and an initial
-    init can be added via the ``init`` field. The accumulated sum is
-    returned when the input :class:`Queue` terminates at which point the gear
-    resets.
+async def reduce(din: Queue, init, *, f) -> b'init':
+    acc: init.dtype = None
 
-    Returns:
-        The accumulated sum which is the same type as the ``data`` field of the
-          input :class:`Tuple` type.
+    async with init as i:
+        acc = i
+        async for (d, eot) in din:
+            acc = f(acc, d)
 
-    """
-    acc = t(0)
-    init_added = Bool(False)
+            if eot:
+                yield acc
 
-    async for ((data, init), eot) in din:
-        op2 = acc
+    #         cur_cnt = cnt
+    #         cnt += c[2]
 
-        if not init_added:
-            op2 = cast(init, t)
-            init_added = True
+    #         last = cnt >= c[1]
+    #         yield cur_cnt, last
 
-        acc = code(f(op2, data), t)
-        if eot:
-            yield acc
+    # async for ((data, init), eot) in din:
+    #     acc = init
+
+    #     if init_added:
+    #         op2 = cast(init, t)
+    #     else:
+    #         init_added = True
+
+    #     acc = code(f(op2, data), t)
+    #     if eot:
+    #         yield acc
 
 
 @alternative(reduce)
@@ -42,7 +42,13 @@ def reduce_unpack(din: Queue, init, *, f, t):
 
 
 @gear
-def accum(din: Queue[Tuple[{'data': Number, 'init': Number}]], *, t, saturate=False) -> b't':
+def accum(din: Queue[Tuple[{
+        'data': Number,
+        'init': Number
+}]],
+          *,
+          t,
+          saturate=False) -> b't':
     if saturate:
         return reduce(din, f=lambda x, y: sat(x + y, t), t=t)
     else:
@@ -51,13 +57,18 @@ def accum(din: Queue[Tuple[{'data': Number, 'init': Number}]], *, t, saturate=Fa
 
 @alternative(accum)
 @gear
-def accum_unpack(din: Queue[Number], init: Number, *, t, saturate=False) -> b't':
+def accum_unpack(din: Queue[Number], init: Number, *, t,
+                 saturate=False) -> b't':
     return cart(din, init) | accum(t=t, saturate=saturate)
 
 
 @alternative(accum)
 @gear
-def accum_fix_init(din: Queue[Number], *, t, init: Number = b't(0)', saturate=False) -> b't':
+def accum_fix_init(din: Queue[Number],
+                   *,
+                   t,
+                   init: Number = b't(0)',
+                   saturate=False) -> b't':
     return cart(din, init) | accum(t=t, saturate=saturate)
 
 

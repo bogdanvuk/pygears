@@ -87,6 +87,8 @@ class IntegerType(IntegralType):
                         f"{name} type parameter must be a positive integer, not '{w}'"
                     )
 
+                args = [int(w)]
+
         return super().__new__(cls, name, bases, namespace, args=args)
 
     def __str__(self):

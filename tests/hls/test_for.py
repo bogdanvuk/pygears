@@ -1,8 +1,9 @@
 from pygears import gear
 from pygears.lib import drv
 from pygears.sim import sim, cosim
-from pygears.typing import Array, Bool, Uint, code
+from pygears.typing import Array, Bool, Uint, code, Queue
 from pygears.lib import directed
+from pygears.util.utils import qrange
 
 
 def test_simple(tmpdir, sim_cls):
@@ -16,8 +17,15 @@ def test_simple(tmpdir, sim_cls):
     sim(tmpdir, timeout=8)
 
 
-# from pygears.sim.modules import SimVerilated
-# test_simple('/tools/home/tmp/test_simple', SimVerilated)
+def test_simple_qrange(tmpdir, sim_cls):
+    @gear(hdl={'compile': True})
+    async def test() -> Queue[Uint[3]]:
+        for i, last in qrange(4):
+            yield i, last
+
+    directed(f=test(sim_cls=sim_cls), ref=[list(range(4))] * 2)
+
+    sim(tmpdir, timeout=8)
 
 
 def test_unfold(tmpdir):

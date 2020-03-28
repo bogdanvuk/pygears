@@ -6,16 +6,18 @@ from .inline import form_gear_args, call_gear
 from .cast import resolve_cast_func
 from pygears import Intf, registry
 from pygears.core.partial import Partial
+from pygears.core.datagear import is_datagear, get_datagear_func
 from functools import reduce
 from pygears.typing import Int, Uint, code, div, Queue
 from pygears.typing import is_type, typeof, Tuple, Array
-from pygears.typing import floor, cast, signed
+from pygears.typing import floor, cast, signed, saturate
 from pygears.typing.queue import QueueMeta
 
 from pygears.util.utils import gather, qrange
 from pygears.sim import clk
 from pygears.core.gear import OutSig
 from pygears.lib.rng import qrange as qrange_gear
+from pygears.lib.saturate import saturate as saturate_gear
 
 from pygears.core.gear_inst import gear_signature, infer_params, get_function_context_dict, TypeMatchError, TooManyArguments, GearArgsNotSpecified
 
@@ -51,6 +53,10 @@ def get_gear_signatures(func, args, kwds):
     alternatives = [func] + getattr(func, 'alternatives', [])
 
     signatures = []
+    kwds = {
+        n: v.val if isinstance(v, ir.ResExpr) else v
+        for n, v in kwds.items()
+    }
 
     for f in alternatives:
         meta_kwds = f.__globals__['meta_kwds']
@@ -87,6 +93,11 @@ def resolve_gear_call(func, args, kwds):
         except TypeMatchError:
             pass
         else:
+            if is_datagear(f):
+                f = get_datagear_func(f)
+                breakpoint()
+                # parse_func_call(get_datagear_func(f), args, kwds)
+
             return ir.CallExpr(f, args, kwds, params)
 
 
@@ -250,30 +261,59 @@ def call_breakpoint():
 
 
 builtins = {
-    gather: call_gather,
-    all: call_all,
-    max: call_max,
-    clk: call_clk,
-    int: call_int,
-    len: call_len,
-    print: call_print,
-    type: call_type,
-    div: call_div,
-    floor: call_floor,
-    Intf.empty: call_empty,
-    Intf.get: call_get,
-    Intf.get_nb: call_get_nb,
-    cast: call_cast,
-    signed: call_signed,
-    QueueMeta.sub: call_sub,
-    OutSig.write: outsig_write,
-    Array.code: call_code,
-    Tuple.code: call_code,
-    code: call_code,
-    qrange: call_qrange,
-    range: call_range,
-    enumerate: call_enumerate,
-    breakpoint: call_breakpoint
+    gather:
+    call_gather,
+    all:
+    call_all,
+    max:
+    call_max,
+    clk:
+    call_clk,
+    int:
+    call_int,
+    len:
+    call_len,
+    print:
+    call_print,
+    type:
+    call_type,
+    div:
+    call_div,
+    floor:
+    call_floor,
+    Intf.empty:
+    call_empty,
+    Intf.get:
+    call_get,
+    Intf.get_nb:
+    call_get_nb,
+    cast:
+    call_cast,
+    signed:
+    call_signed,
+    QueueMeta.sub:
+    call_sub,
+    OutSig.write:
+    outsig_write,
+    Array.code:
+    call_code,
+    Tuple.code:
+    call_code,
+    code:
+    call_code,
+    qrange:
+    call_qrange,
+    range:
+    call_range,
+    enumerate:
+    call_enumerate,
+    breakpoint:
+    call_breakpoint,
+    saturate:
+    lambda *args, **kwds: resolve_gear_call(saturate_gear.func, (), {
+        'din': args[0],
+        't': args[1]
+    })
 }
 
 compile_time_builtins = {

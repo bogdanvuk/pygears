@@ -48,6 +48,7 @@ def combine_arg_kwds(args, kwds, func):
 
     # If some args could not be matched to argument names, raise an Exception
     if args_unmatched:
+        breakpoint()
         raise TypeError(f"Too many positional arguments for {func.__name__}()")
 
     return args_comb
@@ -119,7 +120,7 @@ class Partial:
                     # TODO: Can happen if user forgets '*' for separation, warn about this
                     # TODO: Think about disabling keyword arguments that are not keyword-only for gears
                     msg = f"not enough arguments specified for '{self.func.__name__}'"
-                    if func.__name__ == f'{self.func.__name__}_unpack':
+                    if hasattr(func, 'alternative_to'):
                         arg_signature = ', '.join(
                             f'{name}: {repr(dtype)}'
                             for name, dtype in func.__annotations__.items())

@@ -142,6 +142,9 @@ class SVExpressionVisitor:
 
         return f'{res}'
 
+    def visit_CallExpr(self, node):
+        breakpoint()
+
     def visit_AttrExpr(self, node):
         val = [self.visit(node.val)]
         # if node.attr:
