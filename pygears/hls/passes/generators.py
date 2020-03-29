@@ -146,7 +146,8 @@ class HandleGenerators(IrRewriter):
             func_call = builtins[func_call.func](*func_call.args.values(),
                                                  **func_call.kwds)
 
-        intf, nodes = call_gear(func_call.func, list(func_call.args.values()),
+        # intf, nodes = call_gear(func_call.func, list(func_call.args.values()),
+        intf, nodes = call_gear(func_call.func, func_call.args,
                                 func_call.kwds, self.ctx)
 
         eot_name = self.ctx.find_unique_name('_eot')

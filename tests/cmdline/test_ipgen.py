@@ -3,9 +3,11 @@ from pygears import Intf
 from pygears.lib import qdeal
 from pygears.typing import Queue, Uint
 from pygears.hdl import ipgen
+from pygears.util.test_utils import skip_ifndef
 
 
 def test_extern_design(tmpdir):
+    skip_ifndef('SYNTH_TEST')
 
     test_dir = os.path.dirname(__file__)
 
@@ -18,6 +20,7 @@ def test_extern_design(tmpdir):
 
 
 def test_makefile(tmpdir):
+    skip_ifndef('SYNTH_TEST')
 
     test_dir = os.path.dirname(__file__)
 

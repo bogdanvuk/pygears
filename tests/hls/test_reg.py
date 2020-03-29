@@ -1,7 +1,8 @@
-from pygears import gear
-from pygears.typing import Bool
+from pygears import gear, Intf, find
+from pygears.typing import Bool, Uint, Queue
 from pygears.sim import sim
 from pygears.lib import drv, shred, directed
+from pygears.hls.translate import translate_gear
 
 
 # def test_reg_if_branch():
@@ -28,3 +29,17 @@ from pygears.lib import drv, shred, directed
 
 
 # test_reg_if_branch()
+
+
+@gear(hdl={'compile': True})
+async def reduce(din: Queue[Uint]) -> b'din':
+    acc = din.dtype.data(0)
+
+    async for d, eot in din:
+        acc = d + acc
+        if eot:
+            yield acc, eot
+
+reduce(Intf(Queue[Uint[8]]))
+
+translate_gear(find('/reduce'))

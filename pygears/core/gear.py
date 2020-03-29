@@ -61,9 +61,18 @@ class GearHierRoot(NamedHierNode):
         return True
 
 
+def gear_explicit_params(func, params):
+    paramspec = inspect.getfullargspec(func)
+    explicit_param_names = paramspec.kwonlyargs or []
+
+    return {name: params[name] for name in explicit_param_names if name in params}
+
+
 class Gear(NamedHierNode):
     def __init__(self, func, params):
-        super().__init__(params['name'], registry('gear/current_module') if func else None)
+        super().__init__(
+            params['name'],
+            registry('gear/current_module') if func else None)
         self.trace = list(enum_stacktrace())
         self.args = {}
         self.params = params
@@ -183,13 +192,7 @@ class Gear(NamedHierNode):
 
     @property
     def explicit_params(self):
-        paramspec = inspect.getfullargspec(self.func)
-        explicit_param_names = paramspec.kwonlyargs or []
-
-        return {
-            name: self.params[name]
-            for name in explicit_param_names if name in self.params
-        }
+        return gear_explicit_params(self.func, self.params)
 
     def remove(self):
         for p in self.in_ports:

@@ -124,11 +124,6 @@ def _(node, ctx: Context):
     return ir.ResExpr(node.value)
 
 
-@node_visitor(ast.NameConstant)
-def _(node, ctx: Context):
-    return ir.ResExpr(node.value)
-
-
 @node_visitor(ast.Index)
 def _(node, ctx: Context):
     return visit_ast(node.value, ctx)

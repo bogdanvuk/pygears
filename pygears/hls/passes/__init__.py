@@ -7,8 +7,9 @@ from .dead_code import remove_dead_code
 from .register import infer_registers
 from .schedule import schedule
 from .generators import handle_generators
+from .gears import resolve_gear_calls
 
 __all__ = [
     'inline', 'inline_res', 'infer_exit_cond', 'remove_dead_code',
-    'infer_registers', 'infer_in_cond'
+    'infer_registers', 'infer_in_cond', 'resolve_gear_calls'
 ]

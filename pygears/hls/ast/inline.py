@@ -1,8 +1,11 @@
 import inspect
+import typing
 from . import Context, FuncContext, Function, Submodule, SyntaxError, node_visitor, ir, visit_ast, visit_block
-from pygears import Intf, bind
+from pygears import Intf, bind, registry
 from pygears.core.partial import combine_arg_kwds, extract_arg_kwds
 from pygears.core.port import InPort, HDLConsumer, HDLProducer
+from pygears.core.datagear import is_datagear, get_datagear_func
+from pygears.core.gear import gear_explicit_params
 
 
 def form_gear_args(args, kwds, func):
@@ -10,6 +13,30 @@ def form_gear_args(args, kwds, func):
     args_only = combine_arg_kwds(args, kwd_args, func)
 
     return args_only, kwds_only
+
+
+def parse_func_call(func: typing.Callable, args, kwds, ctx: Context):
+    funcref = Function(func, args, kwds, uniqueid=len(ctx.functions))
+    if not funcref in ctx.functions:
+        func_ctx = FuncContext(funcref, args, kwds)
+        registry('hls/ctx').append(func_ctx)
+        pydl_ast = visit_ast(funcref.ast, func_ctx)
+        registry('hls/ctx').pop()
+        ctx.functions[funcref] = (pydl_ast, func_ctx)
+    else:
+        (pydl_ast, func_ctx) = ctx.functions[funcref]
+
+    return ir.FunctionCall(
+        operands=list(func_ctx.args.values()),
+        ret_dtype=func_ctx.ret_dtype,
+        name=funcref.name)
+
+
+def call_datagear(func, args, params, ctx: Context):
+    f = get_datagear_func(func)
+    kwds = gear_explicit_params(f, params)
+    kwds = {n: ir.ResExpr(v) for n, v in kwds.items()}
+    return parse_func_call(f, args, kwds, ctx)
 
 
 def call_gear(func, args, kwds, ctx: Context):

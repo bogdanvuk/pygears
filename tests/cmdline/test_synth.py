@@ -1,8 +1,10 @@
 import os
 from pygears.hdl import synth
+from pygears.util.test_utils import skip_ifndef
 
 
 def test_extern_design(tmpdir):
+    skip_ifndef('SYNTH_TEST')
 
     test_dir = os.path.dirname(__file__)
 

@@ -1,8 +1,8 @@
-from .utils import HDLVisitor, Scope, add_to_list, res_true, ir, IrExprRewriter
+from .utils import HDLVisitor, Scope, add_to_list, res_true, ir, IrExprRewriter, IrExprVisitor
 from . import hls_debug
 
 
-class UnspecifiedFinder(IrExprRewriter):
+class UnspecifiedFinder(IrExprVisitor):
     def __init__(self, assigned):
         self.assigned = assigned
         self.unspecified = set()

@@ -7,18 +7,18 @@ from pygears.typing import Integral, code, saturate as type_saturate
 def saturate(din: Integral, *, t,
              limits=None) -> b'type_saturate(din, t, limits)':
     idin = code(din)
-    if module().in_ports[0].dtype.signed == t.signed and module().in_ports[0].dtype.width <= t.width:
+    if type(din).signed == t.signed and type(din).width <= t.width:
         return code(din, t)
-    elif module().in_ports[0].dtype.signed and not t.signed:
+    elif type(din).signed and not t.signed:
         if idin[t.width - 1:] == 0:
             return code(din, t)
         elif din < 0:
             return 0
         else:
             return t.max
-    elif module().in_ports[0].dtype.signed and t.signed:
+    elif type(din).signed and t.signed:
         if ((idin[t.width - 1:] == 0) or
-            (idin[t.width - 1:] == Uint[module().in_ports[0].dtype.width -
+            (idin[t.width - 1:] == Uint[type(din).width -
                                         t.width + 1].max)):
             return code(din, t)
         elif din < 0:
@@ -31,5 +31,5 @@ def saturate(din: Integral, *, t,
         else:
             return t.max
 
-            # if din[t.width:] == module().in_ports[0].dtype[t.width:].max:
+            # if din[t.width:] == type(din)[t.width:].max:
             #     return 0

@@ -8,61 +8,61 @@ from pygears.typing import Queue, Tuple, Uint
 from pygears import find
 
 
-def test_accum(enable_coverage=True):
-    seq = [[(1, 2), (5, 2), (8, 2)], [(3, 8), (1, 8)],
-           [(0, 12), (4, 12), (2, 12), (99, 12)]]
-    ref = [16, 12, 117]
-    t_din = Queue[Tuple[{'val': Uint[8], 'offset': Uint[8]}]]
+# def test_accum(enable_coverage=True):
+#     seq = [[(1, 2), (5, 2), (8, 2)], [(3, 8), (1, 8)],
+#            [(0, 12), (4, 12), (2, 12), (99, 12)]]
+#     ref = [16, 12, 117]
+#     t_din = Queue[Tuple[{'val': Uint[8], 'offset': Uint[8]}]]
 
-    val_bins = [
-        CoverBin('one', enablement=lambda x: x == 1, threshold=8),
-        CoverBin('default')
-    ]
-    cross_bins = [
-        CoverBin('one_two', enablement=lambda x: x[0] == 1 and x[1] == 2),
-        CoverBin('three_eight', enablement=lambda x: x[0] == 3 and x[1] == 8),
-        CoverBin('default')
-    ]
-    points = [
-        CoverPoint(
-            'val_cp',
-            bins=val_bins,
-            ignore_bins=[CoverBin('ignore', enablement=lambda x: x == 5)],
-            bind_field_name='data.val',
-            threshold=11),
-        CoverPoint(
-            'offset_cp',
-            bins=None,
-            dtype=Uint[8],
-            bind_field_name='data.offset'),
-        CoverPoint(
-            'tuple_cp', bins=cross_bins, dtype=t_din[0], bind_dtype=True),
-        CoverPoint(
-            'qlen_cp', bins=[CoverBin('all')], bind_dtype=True, dtype=t_din)
-    ]
-    cg = CoverGroup('din_cg', t_din, cover_points=points)
+#     val_bins = [
+#         CoverBin('one', enablement=lambda x: x == 1, threshold=8),
+#         CoverBin('default')
+#     ]
+#     cross_bins = [
+#         CoverBin('one_two', enablement=lambda x: x[0] == 1 and x[1] == 2),
+#         CoverBin('three_eight', enablement=lambda x: x[0] == 3 and x[1] == 8),
+#         CoverBin('default')
+#     ]
+#     points = [
+#         CoverPoint(
+#             'val_cp',
+#             bins=val_bins,
+#             ignore_bins=[CoverBin('ignore', enablement=lambda x: x == 5)],
+#             bind_field_name='data.val',
+#             threshold=11),
+#         CoverPoint(
+#             'offset_cp',
+#             bins=None,
+#             dtype=Uint[8],
+#             bind_field_name='data.offset'),
+#         CoverPoint(
+#             'tuple_cp', bins=cross_bins, dtype=t_din[0], bind_dtype=True),
+#         CoverPoint(
+#             'qlen_cp', bins=[CoverBin('all')], bind_dtype=True, dtype=t_din)
+#     ]
+#     cg = CoverGroup('din_cg', t_din, cover_points=points)
 
-    @cover_func(cg=cg, en=enable_coverage)
-    def test_sample():
-        for x in seq:
-            yield x
+#     @cover_func(cg=cg, en=enable_coverage)
+#     def test_sample():
+#         for x in seq:
+#             yield x
 
-    directed(drv(t=t_din, seq=test_sample()), f=accum(t=Uint[8]), ref=ref)
-    sim()
-    # print(cg.report())
+#     directed(drv(t=t_din, seq=test_sample()), f=accum(t=Uint[8]), ref=ref)
+#     sim()
+#     # print(cg.report())
 
-    # checks
-    # val
-    assert cg.cover_points[0].bins[0].cover_cnt == 2
-    assert cg.cover_points[0].bins[1].cover_cnt == 6
-    # offset
-    assert cg.cover_points[1].cover_cnt == 9
-    # tuple
-    assert cg.cover_points[2].bins[0].cover_cnt == 1
-    assert cg.cover_points[2].bins[1].cover_cnt == 1
-    assert cg.cover_points[2].bins[2].cover_cnt == 7
-    # qlen
-    assert cg.cover_points[3].bins[0].cover_cnt == 3
+#     # checks
+#     # val
+#     assert cg.cover_points[0].bins[0].cover_cnt == 2
+#     assert cg.cover_points[0].bins[1].cover_cnt == 6
+#     # offset
+#     assert cg.cover_points[1].cover_cnt == 9
+#     # tuple
+#     assert cg.cover_points[2].bins[0].cover_cnt == 1
+#     assert cg.cover_points[2].bins[1].cover_cnt == 1
+#     assert cg.cover_points[2].bins[2].cover_cnt == 7
+#     # qlen
+#     assert cg.cover_points[3].bins[0].cover_cnt == 3
 
 
 def test_chop(enable_coverage=True):

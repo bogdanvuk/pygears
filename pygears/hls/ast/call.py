@@ -1,12 +1,15 @@
 import ast
+import sys
 import typing
 import inspect
 from . import Context, FuncContext, Function, node_visitor, ir, visit_ast
-from .inline import form_gear_args, call_gear
+from .inline import form_gear_args, call_gear, parse_func_call
 from .cast import resolve_cast_func
 from pygears import Intf, registry
-from pygears.core.partial import Partial
-from pygears.core.datagear import is_datagear, get_datagear_func
+
+from pygears.core.partial import Partial, MultiAlternativeError
+from pygears.core.gear import OutSig, gear_explicit_params
+
 from functools import reduce
 from pygears.typing import Int, Uint, code, div, Queue
 from pygears.typing import is_type, typeof, Tuple, Array
@@ -15,7 +18,6 @@ from pygears.typing.queue import QueueMeta
 
 from pygears.util.utils import gather, qrange
 from pygears.sim import clk
-from pygears.core.gear import OutSig
 from pygears.lib.rng import qrange as qrange_gear
 from pygears.lib.saturate import saturate as saturate_gear
 
@@ -38,8 +40,7 @@ def parse_func_args(args, kwds, ctx):
                 func_args.extend(var.val)
             else:
                 for i in range(len(var.dtype)):
-                    func_args.append(
-                        ir.SubscriptExpr(val=var, index=ir.ResExpr(i)))
+                    func_args.append(ir.SubscriptExpr(val=var, index=ir.ResExpr(i)))
 
         else:
             func_args.append(visit_ast(arg, ctx))
@@ -53,10 +54,7 @@ def get_gear_signatures(func, args, kwds):
     alternatives = [func] + getattr(func, 'alternatives', [])
 
     signatures = []
-    kwds = {
-        n: v.val if isinstance(v, ir.ResExpr) else v
-        for n, v in kwds.items()
-    }
+    kwds = {n: v.val if isinstance(v, ir.ResExpr) else v for n, v in kwds.items()}
 
     for f in alternatives:
         meta_kwds = f.__globals__['meta_kwds']
@@ -71,34 +69,36 @@ def get_gear_signatures(func, args, kwds):
 
 
 def const_func_args(args, kwds):
-    return (all(isinstance(node, ir.ResExpr) for node in args)
-            and all(isinstance(node, ir.ResExpr) for node in kwds.values()))
+    return (
+        all(isinstance(node, ir.ResExpr) for node in args)
+        and all(isinstance(node, ir.ResExpr) for node in kwds.values()))
 
 
 def resolve_compile_time(func, args, kwds):
     # If all arguments are resolved expressions, maybe we can evaluate the
     # function at compile time
-    return ir.ResExpr(
-        func(*(a.val for a in args), **{n: v.val
-                                        for n, v in kwds.items()}))
+    return ir.ResExpr(func(*(a.val for a in args), **{n: v.val for n, v in kwds.items()}))
+
+
+def resolve_gear_alternative(func, args, kwds):
+    errors = []
+    for f, args, templates in get_gear_signatures(func, args, kwds):
+        try:
+            params = infer_params(args, templates, get_function_context_dict(f))
+        except TypeMatchError:
+            errors.append((f, *sys.exc_info()))
+        else:
+            return (f, params)
+
+    raise MultiAlternativeError(errors)
 
 
 def resolve_gear_call(func, args, kwds):
     args, kwds = form_gear_args(args, kwds, func)
 
-    for f, args, templates in get_gear_signatures(func, args, kwds):
-        try:
-            params = infer_params(args, templates,
-                                  get_function_context_dict(f))
-        except TypeMatchError:
-            pass
-        else:
-            if is_datagear(f):
-                f = get_datagear_func(f)
-                breakpoint()
-                # parse_func_call(get_datagear_func(f), args, kwds)
+    f, params = resolve_gear_alternative(func, args, kwds)
 
-            return ir.CallExpr(f, args, kwds, params)
+    return ir.CallExpr(f, args, kwds, params)
 
 
 def call_floor(arg):
@@ -106,11 +106,9 @@ def call_floor(arg):
     int_cls = Int if t_arg.signed else Uint
     arg_to_int = ir.CastExpr(arg, int_cls[t_arg.width])
     if t_arg.fract >= 0:
-        return ir.BinOpExpr((arg_to_int, ir.ResExpr(Uint(t_arg.fract))),
-                            ir.opc.RShift)
+        return ir.BinOpExpr((arg_to_int, ir.ResExpr(Uint(t_arg.fract))), ir.opc.RShift)
     else:
-        return ir.BinOpExpr((arg_to_int, ir.ResExpr(Uint(-t_arg.fract))),
-                            ir.opc.LShift)
+        return ir.BinOpExpr((arg_to_int, ir.ResExpr(Uint(-t_arg.fract))), ir.opc.LShift)
 
 
 def call_div(a, b, subprec):
@@ -248,10 +246,11 @@ def call_qrange(*args):
 
 
 def call_range(*args):
-    ret = ir.CallExpr(range,
-                      dict(zip(['start', 'stop', 'step'], args)),
-                      params={'return': Queue[args[0].dtype]})
-    # ret = resolve_gear_call(qrange_gear.func, args, {})
+    ret = ir.CallExpr(
+        range,
+        dict(zip(['start', 'stop', 'step'], args)),
+        params={'return': Queue[args[0].dtype]})
+
     ret.pass_eot = False
     return ret
 
@@ -310,15 +309,16 @@ builtins = {
     breakpoint:
     call_breakpoint,
     saturate:
-    lambda *args, **kwds: resolve_gear_call(saturate_gear.func, (), {
-        'din': args[0],
-        't': args[1]
-    })
+    lambda *args, **kwds: resolve_gear_call(
+        saturate_gear.func, (), {
+            'din': args[0],
+            't': args[1]
+        })
 }
 
 compile_time_builtins = {
-    all, max, int, len, type, div, floor, cast, QueueMeta.sub, Array.code,
-    Tuple.code, code
+    all, max, int, len, type, div, floor, cast, QueueMeta.sub, Array.code, Tuple.code,
+    code
 }
 
 
@@ -362,17 +362,3 @@ def _(node, ctx: Context):
         return parse_func_call(func, args, kwds, ctx)
 
 
-def parse_func_call(func: typing.Callable, args, kwds, ctx: Context):
-    funcref = Function(func, args, kwds, uniqueid=len(ctx.functions))
-    if not funcref in ctx.functions:
-        func_ctx = FuncContext(funcref, args, kwds)
-        registry('hls/ctx').append(func_ctx)
-        pydl_ast = visit_ast(funcref.ast, func_ctx)
-        registry('hls/ctx').pop()
-        ctx.functions[funcref] = (pydl_ast, func_ctx)
-    else:
-        (pydl_ast, func_ctx) = ctx.functions[funcref]
-
-    return ir.FunctionCall(operands=list(func_ctx.args.values()),
-                           ret_dtype=func_ctx.ret_dtype,
-                           name=funcref.name)

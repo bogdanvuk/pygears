@@ -791,6 +791,22 @@ class FunctionCall(Expr):
     def dtype(self):
         return self.ret_dtype
 
+    def __str__(self):
+        ops = ', '.join([str(op) for op in self.operands])
+
+        kwds = None
+        if self.keywords is not None:
+            kwds = ', '.join([f'{n}={v}' for n, v in self.keywords.items()])
+
+        if not ops and not kwds:
+            sig = ''
+        elif not kwds:
+            sig = ops
+        else:
+            sig = ', '.join([ops, kwds])
+
+        return f'{self.name}({sig})'
+
 
 @dataclass
 class CallExpr(Expr):
@@ -1085,8 +1101,6 @@ class FuncBlock(BaseBlock):
     args: typing.List[Name]
     name: str
     ret_dtype: PgType
-    in_cond: Expr = res_true
-    opt_in_cond: Expr = res_true
     funcs: typing.List = attr.Factory(list)
 
     def __str__(self):
@@ -1098,8 +1112,8 @@ class FuncBlock(BaseBlock):
         return f'{self.name}({", ".join(args)}) {{\n{textwrap.indent(body, "    ")}}}\n'
 
 
-@dataclass
-class FuncReturn:
+@attr.s(auto_attribs=True)
+class FuncReturn(Statement):
     func: FuncBlock
     expr: Expr
 
