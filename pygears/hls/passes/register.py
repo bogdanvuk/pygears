@@ -1,171 +1,77 @@
-from .utils import HDLVisitor, Scope, add_to_list, res_true, ir, IrExprRewriter, IrExprVisitor
+from .utils import HDLVisitor, Scope, add_to_list, res_true, ir, IrExprRewriter, IrExprVisitor, IrVisitor
 from . import hls_debug
 
 
-class UnspecifiedFinder(IrExprVisitor):
-    def __init__(self, assigned):
-        self.assigned = assigned
-        self.unspecified = set()
+class VariableFinder(IrExprVisitor):
+    def __init__(self):
+        self.variables = set()
 
     def visit_Name(self, node):
-        if ((node.name not in self.assigned) and (node.ctx == 'load')):
-            self.unspecified.add(node.name)
+        self.variables.add(node.name)
 
 
-class InferRegisters(HDLVisitor):
+class InferRegisters(IrVisitor):
     def __init__(self, ctx, inferred):
         self.ctx = ctx
-        self.block_stack = []
+        self.visited = set()
         self.inferred = inferred
-        self.cycle_locals = [(set(), Scope(), Scope())]
 
-    @property
-    def block(self):
-        if not self.block_stack:
-            return None
-
-        return self.block_stack[-1]
-
-    @property
-    def unspecified(self):
-        return self.cycle_locals[-1][0]
-
-    @property
-    def assigned(self):
-        return self.cycle_locals[-1][1]
-
-    @property
-    def cond_assigned(self):
-        return self.cycle_locals[-1][2]
-
-    def append_cycle_local_scope(self):
-        self.cycle_locals.append(
-            (set(), self.assigned.subscope(), self.cond_assigned.subscope()))
-
-    def pop_cycle_local_scope(self):
-        ret = self.cycle_locals.pop()
-        self.assigned.upscope()
-        self.cond_assigned.upscope()
-
-        return ret
-
-    def find_unspecified(self, node):
-        v = UnspecifiedFinder(self.assigned)
-        v.visit(node)
-
-        self.unspecified.update(v.unspecified)
-
-    def merge_subscope(self, block):
-        cond_subscope = self.cond_assigned.cur_subscope
-        self.cond_assigned.upscope()
-        self.cond_assigned.cur_subscope.items.update(cond_subscope.items)
-
-        subscope = self.assigned.cur_subscope
-        self.assigned.upscope()
-
-        for name, val in subscope.items.items():
-            if block.in_cond == res_true:
-                self.assigned[name] = val
-            else:
-                self.cond_assigned[name] = val
-
-    def AssignValue(self, node: ir.AssignValue):
-        self.find_unspecified(node.val)
-
-        for t in node.base_targets:
-            if (isinstance(node.target, ir.SubscriptExpr)
-                    and isinstance(node.target.index, ir.ResExpr)):
-                self.assigned[str(node.target)] = node.val
-            elif not isinstance(node.val, ir.ResExpr) or not getattr(
-                    node.val.val, 'unknown', False):
-                self.assigned[t.name] = node.val
-
-        # TODO: What's with this? Revisit if this should handle the case above
-        for t in node.partial_targets:
-            self.unspecified.add(t.name)
+    def Statement(self, stmt: ir.Statement):
+        self.visited.add(stmt)
 
     def BaseBlock(self, block: ir.BaseBlock):
-        self.block_stack.append(block)
-
         for stmt in block.stmts:
             self.visit(stmt)
 
-        self.block_stack.pop()
-
-    def HDLBlock(self, block: ir.HDLBlock):
-        self.find_unspecified(block.in_cond)
-
-        if not isinstance(self.block, ir.IfElseBlock):
-            self.assigned.subscope()
-            self.cond_assigned.subscope()
-
-        self.BaseBlock(block)
-
-        if isinstance(self.block, ir.IfElseBlock):
+    def Expr(self, expr: ir.Expr):
+        if all(d[1] in self.visited for d in expr.reaching['in']):
             return
 
-        self.find_unspecified(block.exit_cond)
+        v = VariableFinder()
+        v.visit(expr)
 
-        self.merge_subscope(block)
+        if not v.variables:
+            return
 
-    def LoopBlock(self, block: ir.LoopBlock):
-        self.find_unspecified(block.in_cond)
+        for d in expr.reaching['in']:
+            if d[0] not in v.variables:
+                continue
 
-        self.append_cycle_local_scope()
+            if d[1] in self.visited:
+                continue
 
-        self.BaseBlock(block)
+            self.inferred.add(d[0])
 
-        self.find_unspecified(block.exit_cond)
+    def AssignValue(self, stmt: ir.AssignValue):
+        if isinstance(stmt.target, ir.SubscriptExpr) and not isinstance(
+                stmt.target.index, ir.ResExpr):
+            stmt.target.val.reaching = stmt.reaching
+            self.visit(stmt.target.val)
 
-        local_unspecified, local_assigned, local_cond_assigned = self.pop_cycle_local_scope(
-        )
+        stmt.val.reaching = stmt.reaching
+        self.visit(stmt.val)
 
-        for name in local_unspecified:
-            if name in local_assigned or name in local_cond_assigned:
-                self.inferred.add(name)
-            elif name not in self.assigned:
-                self.unspecified.add(name)
+        self.visited.add(stmt)
 
-        self.cond_assigned.items.update(local_cond_assigned.items)
+    def ExprStatement(self, stmt: ir.ExprStatement):
+        stmt.expr.reaching = stmt.reaching
+        self.visit(stmt.expr)
 
-        for name in local_assigned:
-            if block.in_cond == res_true:
-                self.assigned[name] = local_assigned[name]
-            else:
-                self.cond_assigned[name] = local_assigned[name]
+        self.visited.add(stmt)
 
     def IfElseBlock(self, block: ir.IfElseBlock):
-        self.block_stack.append(block)
+        prebranch = self.visited.copy()
 
-        branch_assignes = []
-        assigned_in_block = set()
+        allbranch = set()
 
         for stmt in block.stmts:
-            self.assigned.subscope()
-            self.cond_assigned.subscope()
-
-            subs = self.assigned.cur_subscope
-            branch_assignes.append(subs)
-
             self.visit(stmt)
+            allbranch.update(self.visited)
+            self.visited = prebranch.copy()
 
-            cond_subscope = self.cond_assigned.cur_subscope
-            self.cond_assigned.upscope()
-            self.cond_assigned.cur_subscope.items.update(cond_subscope.items)
+        self.visited = allbranch
 
-            self.assigned.upscope()
-            assigned_in_block.update(subs.items.keys())
-
-        full_switch = block.stmts[-1].in_cond == res_true
-
-        for name in assigned_in_block:
-            if (all(name in subs.items for subs in branch_assignes)
-                    and full_switch):
-                self.assigned[name] = None
-            else:
-                self.cond_assigned[name] = None
-
-        self.block_stack.pop()
+        self.BaseBlock(block)
 
     def generic_visit(self, node):
         pass

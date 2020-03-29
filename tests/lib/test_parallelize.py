@@ -15,13 +15,11 @@ from pygears.util.test_utils import get_decoupled_dut
 def test_array(tmpdir, cosim_cls, din_delay, dout_delay, size):
     ref = [list(range(i * size, (i + 1) * size)) for i in range(255 // size)]
 
-    print(ref)
     dut = get_decoupled_dut(dout_delay, parallelize(t=Array[Uint[8], size]))
-    directed(
-        drv(t=Uint[8], seq=itertools.chain(*ref)),
-        f=dut(name='dut', sim_cls=cosim_cls),
-        ref=ref,
-        delays=[delay_rng(dout_delay, dout_delay)])
+    directed(drv(t=Uint[8], seq=itertools.chain(*ref)),
+             f=dut(name='dut', sim_cls=cosim_cls),
+             ref=ref,
+             delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(tmpdir)
 
@@ -33,10 +31,9 @@ def test_uint(tmpdir, cosim_cls, din_delay, dout_delay):
     ref = [Uint[size](0x11), Uint[size](0x22), Uint[size](0x33)]
 
     dut = get_decoupled_dut(dout_delay, parallelize(t=Uint[size]))
-    directed(
-        drv(t=Bool, seq=itertools.chain(*ref)),
-        f=dut(name='dut', sim_cls=cosim_cls),
-        ref=ref,
-        delays=[delay_rng(dout_delay, dout_delay)])
+    directed(drv(t=Bool, seq=itertools.chain(*ref)),
+             f=dut(name='dut', sim_cls=cosim_cls),
+             ref=ref,
+             delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(tmpdir)

@@ -4,10 +4,11 @@ from .ast import visit_ast, GearContext, FuncContext, Context
 from .ast.utils import get_function_ast
 from . import ir
 from .passes import (inline, inline_res, remove_dead_code, infer_exit_cond,
-                     infer_registers, schedule, infer_in_cond, handle_generators, resolve_gear_calls)
+                     infer_registers, schedule, infer_in_cond,
+                     handle_generators, resolve_gear_calls)
 from .debug import hls_enable_debug_log, hls_debug
 from .debug import print_gear_parse_intro
-from .ast import cfg
+from . import cfg
 
 
 def translate_gear(gear: Gear):
@@ -21,8 +22,6 @@ def translate_gear(gear: Gear):
     bind('gear/current_module', gear)
 
     body_ast = get_function_ast(gear.func)
-
-    # cfg.forward(body_ast, cfg.ReachingDefinitions())
 
     print_gear_parse_intro(gear, body_ast)
     ctx = GearContext(gear)
@@ -45,10 +44,12 @@ def transform(modblock, ctx: GearContext):
     modblock = handle_generators(modblock, ctx)
     hls_debug(modblock, 'Handle Generators')
 
-    modblock = schedule(modblock, ctx)
+    cfg.forward(modblock, cfg.ReachingDefinitions())
 
     modblock = infer_registers(modblock, ctx)
     hls_debug(modblock, 'Infer registers')
+
+    modblock = schedule(modblock, ctx)
 
     modblock = inline(modblock, ctx)
     hls_debug(modblock, 'Inline values')

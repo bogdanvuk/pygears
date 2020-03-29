@@ -1,45 +1,66 @@
 from pygears import gear, Intf, find
-from pygears.typing import Bool, Uint, Queue
-from pygears.sim import sim
-from pygears.lib import drv, shred, directed
+from pygears.typing import Queue, Uint
 from pygears.hls.translate import translate_gear
 
 
-# def test_reg_if_branch():
-#     @gear(hdl={'compile': True})
-#     async def test(din: Bool) -> Bool:
-#         reg: Bool = Bool(True)
-#         async with din as d:
-#             if d:
-#                 yield True
-#                 reg = Bool(False)
-#             else:
-#                 if not reg:
-#                     yield False
+def test_update_after_in_loop():
+    @gear(hdl={'compile': True})
+    async def test(din: Queue[Uint]) -> b'din':
+        acc = din.dtype.data(0)
 
-#     directed(drv(t=Bool, seq=[True, False, True, False]),
-#              f=test,
-#              ref=[True, False, True, False])
+        async for d, eot in din:
+            acc = d + acc
+            if eot:
+                yield acc, eot
 
-#     from pygears.sim import cosim
-#     from pygears import config
-#     config['debug/trace'] = ['*']
-#     cosim('/test', 'verilator')
-#     sim('/tools/home/tmp/test_reg_if_branch')
+    test(Intf(Queue[Uint[8]]))
+
+    ctx, res = translate_gear(find('/test'))
+
+    assert ctx.scope['acc'].reg
 
 
-# test_reg_if_branch()
+def test_update_after_in_loop_ifelse_trap():
+    @gear(hdl={'compile': True})
+    async def test(din: Queue[Uint]) -> b'din':
+        acc = din.dtype.data(0)
+
+        async for d, eot in din:
+            if d > 0:
+                acc = 1
+            else:
+                acc = 0
+
+            acc = d + acc
+
+            if eot:
+                yield acc, eot
+
+    test(Intf(Queue[Uint[8]]))
+
+    ctx, res = translate_gear(find('/test'))
+
+    assert not ctx.scope['acc'].reg
 
 
-@gear(hdl={'compile': True})
-async def reduce(din: Queue[Uint]) -> b'din':
-    acc = din.dtype.data(0)
+def test_update_after_in_loop_ifelif():
+    @gear(hdl={'compile': True})
+    async def test(din: Queue[Uint]) -> b'din':
+        acc = din.dtype.data(0)
 
-    async for d, eot in din:
-        acc = d + acc
-        if eot:
-            yield acc, eot
+        async for d, eot in din:
+            if d > 0:
+                acc = 1
+            elif d < 2:
+                acc = 0
 
-reduce(Intf(Queue[Uint[8]]))
+            acc = d + acc
 
-translate_gear(find('/reduce'))
+            if eot:
+                yield acc, eot
+
+    test(Intf(Queue[Uint[8]]))
+
+    ctx, res = translate_gear(find('/test'))
+
+    assert ctx.scope['acc'].reg

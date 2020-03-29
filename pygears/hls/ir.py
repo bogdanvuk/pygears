@@ -869,13 +869,16 @@ class GenAck(Expr):
 
 
 # @attr.s(auto_attribs=True)
-@attr.s(auto_attribs=True, kw_only=True)
+@attr.s(auto_attribs=True, kw_only=True, eq=False)
 class Statement:
     in_await: Expr = res_true
     exit_await: Expr = res_true
 
+    def __hash__(self):
+        return id(self)
 
-@attr.s(auto_attribs=True)
+
+@attr.s(auto_attribs=True, eq=False)
 class ExprStatement(Statement):
     expr: Expr
 
@@ -911,7 +914,7 @@ class ExprStatement(Statement):
         return f'{self.expr}\n'
 
 
-@attr.s(auto_attribs=True)
+@attr.s(auto_attribs=True, eq=False)
 class Assert(Statement):
     test: Expr
     msg: str = None
@@ -941,7 +944,7 @@ def extract_partial_targets(target):
         yield from extract_base_targets(target.val)
 
 
-@attr.s(auto_attribs=True)
+@attr.s(auto_attribs=True, eq=False)
 class AssignValue(Statement):
     target: Union[str, Name]
     val: Union[str, int, Expr]
@@ -1001,7 +1004,7 @@ class AssertValue(Statement):
 # Blocks
 
 
-@attr.s(auto_attribs=True, kw_only=True)
+@attr.s(auto_attribs=True, kw_only=True, eq=False)
 class BaseBlock(Statement):
     stmts: typing.List = None
 
@@ -1017,7 +1020,7 @@ class BaseBlock(Statement):
         return f'{{\n{textwrap.indent(body, "    ")}}}\n'
 
 
-@attr.s(auto_attribs=True)
+@attr.s(auto_attribs=True, eq=False)
 class HDLBlock(BaseBlock):
     test: Expr = None
     in_cond: Expr = res_true
@@ -1063,21 +1066,7 @@ class HDLBlock(BaseBlock):
         return f'{header}{{\n{textwrap.indent(body, "    ")}}}{footer}\n'
 
 
-@dataclass
-class IntfBlock(HDLBlock):
-    intfs: typing.List = field(default_factory=list)
-
-    def __post_init__(self):
-        self.in_cond = bin_op_reduce(self.intfs,
-                                     lambda i: Component(i, 'valid'), opc.And)
-
-    def close(self):
-        for i in self.intfs:
-            self.stmts.append(
-                AssignValue(target=Component(i, 'ready'), val=res_true))
-
-
-@attr.s(auto_attribs=True)
+@attr.s(auto_attribs=True, eq=False)
 class LoopBlock(HDLBlock):
     def __attrs_post_init__(self):
         super().__attrs_post_init__()
@@ -1085,18 +1074,18 @@ class LoopBlock(HDLBlock):
             self.exit_cond = UnaryOpExpr(self.test, opc.Not)
 
 
-@attr.s(auto_attribs=True)
+@attr.s(auto_attribs=True, eq=False)
 class IfElseBlock(HDLBlock):
     def __str__(self):
         return f'IfElse {super().__str__()}'
 
 
-@attr.s(auto_attribs=True)
+@attr.s(auto_attribs=True, eq=False)
 class CombBlock(BaseBlock):
     funcs: typing.List = attr.Factory(list)
 
 
-@attr.s(auto_attribs=True)
+@attr.s(auto_attribs=True, eq=False)
 class FuncBlock(BaseBlock):
     args: typing.List[Name]
     name: str
@@ -1112,7 +1101,7 @@ class FuncBlock(BaseBlock):
         return f'{self.name}({", ".join(args)}) {{\n{textwrap.indent(body, "    ")}}}\n'
 
 
-@attr.s(auto_attribs=True)
+@attr.s(auto_attribs=True, eq=False)
 class FuncReturn(Statement):
     func: FuncBlock
     expr: Expr

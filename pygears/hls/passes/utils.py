@@ -149,10 +149,14 @@ class IrVisitor:
 
     def HDLBlock(self, block: ir.HDLBlock):
         self.visit(block.test)
-        self.visit(block.in_cond)
-        self.visit(block.exit_cond)
+
+        if block.in_cond != ir.res_true:
+            self.visit(block.in_cond)
 
         self.BaseBlock(block)
+
+        if block.exit_cond != ir.res_true:
+            self.visit(block.exit_cond)
 
     def ExprStatement(self, stmt: ir.ExprStatement):
         self.visit(stmt.expr)
@@ -241,8 +245,9 @@ class IrExprVisitor:
         for arg in node.operands:
             self.visit(arg)
 
-        for name, arg in node.keywords.items():
-            self.visit(arg)
+        if node.keywords:
+            for name, arg in node.keywords.items():
+                self.visit(arg)
 
     def visit_AttrExpr(self, node):
         self.visit(node.val)

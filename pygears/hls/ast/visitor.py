@@ -58,6 +58,8 @@ class Context:
         self.functions: typing.Mapping[Function, FuncContext] = {}
         self.pydl_block_closure: typing.List = []
         self.submodules: typing.List[Submodule] = []
+        self.reaching: typing.Dict = {}
+        self.ast_stmt_map: typing.Dict = {}
 
     def ref(self, name, ctx='load'):
         return ir.Name(name, self.scope[name], ctx=ctx)
@@ -147,8 +149,8 @@ class GearContext(Context):
     @property
     def in_ports(self):
         return [
-            obj for obj in self.scope.values() if (
-                isinstance(obj, ir.Interface) and isinstance(obj.intf, Intf)
+            obj for obj in self.scope.values()
+            if (isinstance(obj, ir.Interface) and isinstance(obj.intf, Intf)
                 and obj.intf.producer and obj.intf.producer.gear is self.gear)
         ]
 
@@ -200,8 +202,9 @@ class FuncContext(Context):
                 else:
                     params[name] = var
 
-            res = infer_ftypes(
-                params=params, args=arg_types, namespace=self.local_namespace)
+            res = infer_ftypes(params=params,
+                               args=arg_types,
+                               namespace=self.local_namespace)
 
             for name, dtype in res.items():
                 if name == 'return':
@@ -243,7 +246,8 @@ def node_visitor(ast_type):
 
                 err = SyntaxError(msg, ln + node.lineno - 1, filename=fn)
 
-                traceback = make_traceback((SyntaxError, err, sys.exc_info()[2]))
+                traceback = make_traceback(
+                    (SyntaxError, err, sys.exc_info()[2]))
                 exc_type, exc_value, tb = traceback.standard_exc_info
 
             reraise(exc_type, exc_value, tb)
