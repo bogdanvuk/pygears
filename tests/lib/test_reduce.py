@@ -9,7 +9,7 @@ from pygears import Intf
 
 def test_uint_directed(tmpdir, sim_cls):
     init = [7, 45]
-    seq = [list(range(10)), list(range(2))]
+    seq = [list(range(0, 200, 10)), list(range(2))]
 
     def add(x, y):
         return saturate(x + y, Uint[8])
@@ -21,8 +21,8 @@ def test_uint_directed(tmpdir, sim_cls):
     sim(resdir=tmpdir)
 
 
-# from pygears.sim.modules import SimVerilated
-# test_uint_directed('/tools/home/tmp/reduce', SimVerilated)
+from pygears.sim.modules import SimVerilated
+test_uint_directed('/tools/home/tmp/reduce', SimVerilated)
 
 
 @pytest.mark.parametrize('din_delay', [0, 1, 10])

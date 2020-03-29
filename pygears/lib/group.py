@@ -25,7 +25,6 @@ async def group(din: Queue, size: Uint, *,
 @alternative(group)
 @gear(hdl={'compile': True})
 async def group_other(din, size: Uint, *, init=1) -> Queue['din']:
-    # cnt: size.dtype = init
     cnt = size.dtype(init)
     last: Bool
 

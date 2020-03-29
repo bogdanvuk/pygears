@@ -76,7 +76,7 @@ def test_formal():
     group(Intf(Queue[Uint[8]]), Intf(Uint[3]))
 
 
-@synth_check({'logic luts': 19, 'ffs': 17}, tool='vivado')
+@synth_check({'logic luts': 17, 'ffs': 16}, tool='vivado')
 def test_synth_vivado():
     group(Intf(Queue[Uint[16]]), Intf(Uint[16]))
 
