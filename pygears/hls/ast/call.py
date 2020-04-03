@@ -40,7 +40,8 @@ def parse_func_args(args, kwds, ctx):
                 func_args.extend(var.val)
             else:
                 for i in range(len(var.dtype)):
-                    func_args.append(ir.SubscriptExpr(val=var, index=ir.ResExpr(i)))
+                    func_args.append(
+                        ir.SubscriptExpr(val=var, index=ir.ResExpr(i)))
 
         else:
             func_args.append(visit_ast(arg, ctx))
@@ -54,7 +55,10 @@ def get_gear_signatures(func, args, kwds):
     alternatives = [func] + getattr(func, 'alternatives', [])
 
     signatures = []
-    kwds = {n: v.val if isinstance(v, ir.ResExpr) else v for n, v in kwds.items()}
+    kwds = {
+        n: v.val if isinstance(v, ir.ResExpr) else v
+        for n, v in kwds.items()
+    }
 
     for f in alternatives:
         meta_kwds = f.__globals__['meta_kwds']
@@ -69,22 +73,24 @@ def get_gear_signatures(func, args, kwds):
 
 
 def const_func_args(args, kwds):
-    return (
-        all(isinstance(node, ir.ResExpr) for node in args)
-        and all(isinstance(node, ir.ResExpr) for node in kwds.values()))
+    return (all(isinstance(node, ir.ResExpr) for node in args)
+            and all(isinstance(node, ir.ResExpr) for node in kwds.values()))
 
 
 def resolve_compile_time(func, args, kwds):
     # If all arguments are resolved expressions, maybe we can evaluate the
     # function at compile time
-    return ir.ResExpr(func(*(a.val for a in args), **{n: v.val for n, v in kwds.items()}))
+    return ir.ResExpr(
+        func(*(a.val for a in args), **{n: v.val
+                                        for n, v in kwds.items()}))
 
 
 def resolve_gear_alternative(func, args, kwds):
     errors = []
     for f, args, templates in get_gear_signatures(func, args, kwds):
         try:
-            params = infer_params(args, templates, get_function_context_dict(f))
+            params = infer_params(args, templates,
+                                  get_function_context_dict(f))
         except TypeMatchError:
             errors.append((f, *sys.exc_info()))
         else:
@@ -106,9 +112,11 @@ def call_floor(arg):
     int_cls = Int if t_arg.signed else Uint
     arg_to_int = ir.CastExpr(arg, int_cls[t_arg.width])
     if t_arg.fract >= 0:
-        return ir.BinOpExpr((arg_to_int, ir.ResExpr(Uint(t_arg.fract))), ir.opc.RShift)
+        return ir.BinOpExpr((arg_to_int, ir.ResExpr(Uint(t_arg.fract))),
+                            ir.opc.RShift)
     else:
-        return ir.BinOpExpr((arg_to_int, ir.ResExpr(Uint(-t_arg.fract))), ir.opc.LShift)
+        return ir.BinOpExpr((arg_to_int, ir.ResExpr(Uint(-t_arg.fract))),
+                            ir.opc.LShift)
 
 
 def call_div(a, b, subprec):
@@ -246,10 +254,9 @@ def call_qrange(*args):
 
 
 def call_range(*args):
-    ret = ir.CallExpr(
-        range,
-        dict(zip(['start', 'stop', 'step'], args)),
-        params={'return': Queue[args[0].dtype]})
+    ret = ir.CallExpr(range,
+                      dict(zip(['start', 'stop', 'step'], args)),
+                      params={'return': Queue[args[0].dtype]})
 
     ret.pass_eot = False
     return ret
@@ -309,32 +316,19 @@ builtins = {
     breakpoint:
     call_breakpoint,
     saturate:
-    lambda *args, **kwds: resolve_gear_call(
-        saturate_gear.func, (), {
-            'din': args[0],
-            't': args[1]
-        })
+    lambda *args, **kwds: resolve_gear_call(saturate_gear.func, (), {
+        'din': args[0],
+        't': args[1]
+    })
 }
 
 compile_time_builtins = {
-    all, max, int, len, type, div, floor, cast, QueueMeta.sub, Array.code, Tuple.code,
-    code
+    all, max, int, len, type, div, floor, cast, QueueMeta.sub, Array.code,
+    Tuple.code, code, is_type
 }
 
 
-@node_visitor(ast.Call)
-def _(node, ctx: Context):
-    name = visit_ast(node.func, ctx)
-
-    assert isinstance(name, (ir.ResExpr, ir.AttrExpr))
-
-    args, kwds = parse_func_args(node.args, node.keywords, ctx)
-
-    if not isinstance(name, ir.ResExpr):
-        return ir.CallExpr(name, args, kwds)
-
-    func = name.val
-
+def resolve_func(func, args, kwds, ctx):
     if is_type(func):
         if const_func_args(args, kwds):
             return resolve_compile_time(func, args, kwds)
@@ -358,7 +352,30 @@ def _(node, ctx: Context):
 
     if const_func_args(args, kwds):
         return resolve_compile_time(func, args, kwds)
+    elif hasattr(func, 'dispatch'):
+        if isinstance(args[0], ir.ResExpr) and is_type(args[0].val):
+            # TODO: Reconsider why ResExpr returns None for type classes, which
+            # makes this "if" necessary
+            dtype = args[0].val.__class__
+        else:
+            dtype = args[0].dtype
+
+        return resolve_func(func.dispatch(dtype), args, kwds, ctx)
     else:
         return parse_func_call(func, args, kwds, ctx)
 
 
+@node_visitor(ast.Call)
+def _(node, ctx: Context):
+    name = visit_ast(node.func, ctx)
+
+    assert isinstance(name, (ir.ResExpr, ir.AttrExpr))
+
+    args, kwds = parse_func_args(node.args, node.keywords, ctx)
+
+    if not isinstance(name, ir.ResExpr):
+        return ir.CallExpr(name, args, kwds)
+
+    func = name.val
+
+    return resolve_func(func, args, kwds, ctx)

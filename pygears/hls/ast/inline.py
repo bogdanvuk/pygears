@@ -17,19 +17,18 @@ def form_gear_args(args, kwds, func):
 
 def parse_func_call(func: typing.Callable, args, kwds, ctx: Context):
     funcref = Function(func, args, kwds, uniqueid=len(ctx.functions))
-    if not funcref in ctx.functions:
+    if funcref not in ctx.functions:
         func_ctx = FuncContext(funcref, args, kwds)
         registry('hls/ctx').append(func_ctx)
-        pydl_ast = visit_ast(funcref.ast, func_ctx)
+        func_ir = visit_ast(funcref.ast, func_ctx)
         registry('hls/ctx').pop()
-        ctx.functions[funcref] = (pydl_ast, func_ctx)
+        ctx.functions[funcref] = (func_ir, func_ctx)
     else:
-        (pydl_ast, func_ctx) = ctx.functions[funcref]
+        (func_ir, func_ctx) = ctx.functions[funcref]
 
-    return ir.FunctionCall(
-        operands=list(func_ctx.args.values()),
-        ret_dtype=func_ctx.ret_dtype,
-        name=funcref.name)
+    return ir.FunctionCall(operands=list(func_ctx.args.values()),
+                           ret_dtype=func_ctx.ret_dtype,
+                           name=funcref.name)
 
 
 def call_datagear(func, args, params, ctx: Context):
