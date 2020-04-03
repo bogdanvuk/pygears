@@ -62,6 +62,6 @@ def test_hier(tmpdir, cosim_cls):
 
     directed(drv(t=Uint[4], seq=[1, 2, 3]),
              f=const_sub(sim_cls=cosim_cls),
-             ref=[(0, 0), (1, 0), (2, 0)])
+             ref=[0, 1, 2])
 
     sim(resdir=tmpdir)

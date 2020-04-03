@@ -30,7 +30,7 @@ def test_saturate_int(tmpdir, sim_cls):
 def test_saturate_ufixp(tmpdir, sim_cls):
     dtype = Ufixp[4, 8]
     sat_type = Ufixp[2, 6]
-    seq = [0.0, sat_type.fmax, sat_type.fmax + dtype.lsb, dtype.fmax]
+    seq = [0.0, sat_type.fmax, sat_type.fmax + dtype.quant, dtype.fmax]
     ref = [0.0, sat_type.fmax, sat_type.fmax, sat_type.fmax]
 
     directed(drv(t=dtype, seq=seq), f=saturate(t=sat_type), ref=ref)
