@@ -83,3 +83,24 @@ def print_gear_parse_intro(gear, body_ast):
 
     for stmt in body_ast.body:
         hls_debug(stmt)
+
+
+def print_func_parse_intro(func, body_ast):
+    hls_debug('*' * 80)
+    hls_debug_header(f'Compiling code for the {func}')
+
+    fn = inspect.getfile(func)
+    try:
+        _, ln = inspect.getsourcelines(func)
+    except OSError:
+        ln = '-'
+
+    hls_debug(
+        get_function_source(func),
+        title=f'Parsing function {func} from "{fn}", line {ln}'
+    )
+
+    hls_debug_header('Function body AST')
+
+    for stmt in body_ast.body:
+        hls_debug(stmt)

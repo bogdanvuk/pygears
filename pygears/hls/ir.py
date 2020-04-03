@@ -516,6 +516,9 @@ class CastExpr(Expr):
         if isinstance(cast_to, ResExpr):
             cast_to = cast_to.val
 
+        if cast_to == int:
+            cast_to = Uint[operand.dtype.width]
+
         if operand.dtype == cast_to:
             return operand
 

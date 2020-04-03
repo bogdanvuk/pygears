@@ -244,6 +244,13 @@ def call_type(arg):
     return ir.ResExpr(arg.dtype)
 
 
+def call_is_type(arg):
+    if not isinstance(arg, ir.ResExpr):
+        return ir.res_false
+
+    return ir.ResExpr(is_type(arg.val))
+
+
 def call_enumerate(arg):
     arg.enumerated = True
     return arg
@@ -283,6 +290,8 @@ builtins = {
     call_print,
     type:
     call_type,
+    is_type:
+    call_is_type,
     div:
     call_div,
     floor:
@@ -337,6 +346,11 @@ def resolve_func(func, args, kwds, ctx):
 
     # If we are dealing with bound methods
     if not inspect.isbuiltin(func) and hasattr(func, '__self__'):
+        if is_type(func.__self__):
+            if func.__name__ == 'decode':
+                return ir.CastExpr(args[0], ir.ResExpr(func.__self__))
+
+        breakpoint()
         raise Exception
 
     if isinstance(func, Partial):

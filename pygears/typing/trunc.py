@@ -1,5 +1,5 @@
 from functools import singledispatch
-from pygears.typing import typeof, Int, Fixp, Uint, Ufixp, is_type, Integral, Fixpnumber, Integer
+from pygears.typing import typeof, Int, Fixp, Uint, Ufixp, is_type, Integral, Fixpnumber, Integer, code
 from pygears.typing.uint import IntegerType, IntType, UintType
 from pygears.typing.fixp import FixpnumberType, FixpType, UfixpType
 from .cast import cast
@@ -52,12 +52,10 @@ def value_trunc(cast_type, val):
 
 @value_trunc.register
 def fixp_value_trunc_resolver(trunc_type: FixpType, val):
-    val_type = type(val)
+    bv = code(val, int)
+    sign = bv >> (type(val).width - 1)
 
-    bv = val.code()
-    sign = bv >> (val_type.width - 1)
-
-    bv_fract_trunc = bv >> (val_type.fract - trunc_type.fract)
+    bv_fract_trunc = bv >> (type(val).fract - trunc_type.fract)
 
     bv_res = (bv_fract_trunc & ((1 << trunc_type.width) - 1) |
               (sign << (trunc_type.width - 1)))
@@ -67,17 +65,14 @@ def fixp_value_trunc_resolver(trunc_type: FixpType, val):
 
 @value_trunc.register
 def ufixp_value_trunc_resolver(trunc_type: UfixpType, val):
-    val_type = type(val)
-
-    return trunc_type.decode(val.code() >> (val_type.fract - trunc_type.fract))
+    return trunc_type.decode(
+        code(val, int) >> (type(val).fract - trunc_type.fract))
 
 
 @value_trunc.register
 def int_value_trunc_resolver(trunc_type: IntType, val):
-    val_type = type(val)
-
-    bv = val.code()
-    sign = bv >> (val_type.width - 1)
+    bv = code(val, int)
+    sign = bv >> (type(val).width - 1)
 
     bv_res = bv & ((1 << trunc_type.width) - 1) | (sign <<
                                                    (trunc_type.width - 1))
@@ -87,12 +82,11 @@ def int_value_trunc_resolver(trunc_type: IntType, val):
 
 @value_trunc.register
 def uint_value_trunc_resolver(trunc_type: UintType, val):
-    return trunc_type.decode(val.code() & ((1 << trunc_type.width) - 1))
+    return trunc_type.decode(code(val, int) & ((1 << trunc_type.width) - 1))
 
 
 def trunc(data, cast_type):
     if is_type(data):
         return type_trunc(data, cast_type)
     else:
-        trunc_type = type_trunc(type(data), cast_type)
-        return value_trunc(trunc_type, data)
+        return value_trunc(type_trunc(type(data), cast_type), data)
