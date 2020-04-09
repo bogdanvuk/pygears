@@ -158,6 +158,9 @@ class IrVisitor:
         if block.exit_cond != ir.res_true:
             self.visit(block.exit_cond)
 
+    def FuncReturn(self, stmt: ir.FuncReturn):
+        self.visit(stmt.expr)
+
     def ExprStatement(self, stmt: ir.ExprStatement):
         self.visit(stmt.expr)
 

@@ -64,6 +64,11 @@ def transform(modblock, ctx: GearContext):
     modblock  = remove_dead_code(modblock, ctx)
     hls_debug(modblock, 'Remove Dead Code')
 
+    compile_funcs(modblock, ctx)
+
+    return modblock
+
+def compile_funcs(modblock, ctx):
     called_funcs = find_called_funcs(modblock, ctx)
 
     added = bool(called_funcs)
@@ -81,9 +86,7 @@ def transform(modblock, ctx: GearContext):
             func_called_funcs = find_called_funcs(f_ast, f_ctx)
             if func_called_funcs:
                 added = True
-                active_funcs.update(func_called_funcs)
-
-    return modblock
+                called_funcs.update(func_called_funcs)
 
 
 def transform_func(funcblock, ctx: FuncContext):

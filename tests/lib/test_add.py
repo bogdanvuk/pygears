@@ -87,7 +87,6 @@ def test_ufixp(tmpdir, sim_cls):
         ref=[6.0, 0.0])
     sim(resdir=tmpdir)
 
-
 def test_fixp(tmpdir, sim_cls):
     directed(
         drv(t=Fixp[2, 4], seq=[1.75, 1.75, 0, -2.0, -2.0]),
