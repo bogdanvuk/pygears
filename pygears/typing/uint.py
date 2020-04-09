@@ -144,28 +144,16 @@ class IntegerType(IntegralType):
             return self.base[width - shamt]
 
     def __add__(self, other):
-        """Returns the same type, but one bit wider to accomodate potential overflow.
-
-        >>> Uint[8] + Uint[8]
-        Uint[9]
-        """
-        try:
-            if not issubclass(other, Integer):
-                return NotImplemented
-        except TypeError:
+        if not typeof(other, Integer):
             return NotImplemented
 
-        ops = [self, other]
+        signed = self.signed or other.signed
 
-        signed = any(typeof(op, Int) for op in ops)
+        w1 = self.width + 1 if signed and not self.signed else self.width
+        w2 = other.width + 1 if signed and not other.signed else other.width
+        res_type = Int if signed else Uint
 
-        if signed:
-            ops = [Int[int(op) + 1] if typeof(op, Uint) else op for op in ops]
-            res_type = Int
-        else:
-            res_type = Uint
-
-        return res_type[max(int(op) for op in ops) + 1]
+        return res_type[max((w1, w2)) + 1]
 
     def __iadd__(self, other):
         return self
@@ -173,23 +161,15 @@ class IntegerType(IntegralType):
     __radd__ = __add__
 
     def __sub__(self, other):
-        """Returns the signed Int type, but one bit wider to accomodate
-        potential overflow.
+        if not typeof(other, Integer):
+            return NotImplemented
 
-        >>> Uint[8] + Uint[8]
-        Int[9]
-        """
-        ops = [self, other]
+        signed = self.signed or other.signed
 
-        signed = any(typeof(op, Int) for op in ops)
+        w1 = self.width + 1 if signed and not self.signed else self.width
+        w2 = other.width + 1 if signed and not other.signed else other.width
 
-        if signed:
-            ops = [Int[int(op) + 1] if typeof(op, Uint) else op for op in ops]
-            res_type = Int
-        else:
-            res_type = Uint
-
-        return res_type[max(int(op) for op in ops) + 1]
+        return Int[max((w1, w2)) + 1]
 
     def __mul__(self, other):
         """Returns the same type, whose width is equal to the sum of operand widths
@@ -202,7 +182,7 @@ class IntegerType(IntegralType):
         Int[16]
         """
 
-        if not issubclass(other, Integer):
+        if not typeof(other, Integer):
             return NotImplemented
 
         ops = [self, other]
@@ -289,7 +269,9 @@ class Integer(Integral, metaclass=IntegerType):
                     cls = Int[cls.width]
 
         if typeof(cls, Uint) and val < 0:
-            raise ValueError(f"cannot represent negative numbers with unsigned type '{repr(cls)}'")
+            raise ValueError(
+                f"cannot represent negative numbers with unsigned type '{repr(cls)}'"
+            )
 
         if cls.is_generic():
             res = cls[bitw(val)](int(val))
@@ -298,6 +280,10 @@ class Integer(Integral, metaclass=IntegerType):
 
         check_width(val, res.width, cls)
         return res
+
+    @property
+    def quant(self):
+        return self.decode(1)
 
     @class_and_instance_method
     @property
@@ -379,12 +365,14 @@ class Integer(Integral, metaclass=IntegerType):
 
         return type(self)(int(self) + int(other))
 
-
     def __sub__(self, other):
-        if isinstance(other, Integer):
-            return (type(self) - type(other))(int(self) - int(other))
-        else:
-            return type(self)(int(self) - other)
+        if not is_type(type(other)):
+            other = type(self).base(other)
+
+        if not isinstance(other, Integer):
+            return NotImplemented
+
+        return (type(self) - type(other))(int(self) - int(other))
 
     def __mul__(self, other):
         if not is_type(type(other)):
@@ -563,17 +551,6 @@ class UintType(IntegerType):
     def specified(self):
         return IntegralType.specified.fget(self)
 
-    def __sub__(self, other):
-        """Returns a Tuple of the result type and overflow bit.
-
-        >>> Uint[16] - Uint[8]
-        Tuple(Uint[16], Bool)
-        """
-        if (issubclass(other, Uint)):
-            return Tuple[Uint[max(int(self), int(other))], Bool]
-        else:
-            return super().__sub__(other)
-
     def __matmul__(self, other):
         if not typeof(other, Uint):
             return NotImplemented
@@ -616,15 +593,6 @@ class Uint(Integer, metaclass=UintType):
     @property
     def signed(self):
         return False
-
-    @class_and_instance_method
-    def __sub__(self, other):
-        if (typeof(type(other), Uint)):
-            res = int(self) - int(other)
-            tout = type(self) - type(other)
-            return tout((res & tout[0].mask, res < 0))
-        else:
-            return super().__sub__(other)
 
     def __matmul__(self, other):
         if not is_type(type(other)):

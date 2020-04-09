@@ -10,7 +10,7 @@ def fixp_type_saturate_resolver(dtype, cast_type):
     if dtype.fract != cast_type.fract:
         raise TypeError(
             f"cannot saturate fixed point type '{repr(dtype)}' to a type '{repr(cast_type)}'"
-            f" with a different fractional size ({dtype.fract} != {cast_type.fract}) ")
+            f" with a different fractional size ({dtype.fract} != {cast_type.fract})")
 
     return cast_type
 
@@ -28,10 +28,9 @@ def type_saturate(val, cast_type, limits=None):
         if typeof(cast_type, templ):
             return type_saturate_resolvers[templ](val, cast_type)
 
-    breakpoint()
     raise TypeError(
-        f"Type '{repr(cast_type)}' unsupported, cannot saturate type '{val}' "
-        f"of type '{repr(type(val))}'")
+        f"Type '{repr(cast_type)}' unsupported, cannot saturate type '{val}'"
+        f" of type '{repr(type(val))}'")
 
 
 def integral_value_saturate_resolver(val, cast_type, limits=None):
@@ -64,8 +63,8 @@ def value_saturate(val, cast_type, limits=None):
             return value_saturate_resolvers[templ](val, cast_type, limits)
 
     raise ValueError(
-        f"Type '{repr(cast_type)}' unsupported, cannot saturate value '{val}' "
-        f"of type '{repr(type(val))}'")
+        f"Type '{repr(cast_type)}' unsupported, cannot saturate value '{val}'"
+        f" of type '{repr(type(val))}'")
 
 
 def saturate(data, cast_type, limits=None):

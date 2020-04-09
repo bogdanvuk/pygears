@@ -16,6 +16,99 @@ def test_float():
     assert (t_b.decode(-8) == t_b(-4.0))
 
 
+def test_add_type():
+    assert Ufixp[2, 3] + Ufixp[3, 4] == Ufixp[4, 5]
+    assert Ufixp[3, 4] + Ufixp[3, 4] == Ufixp[4, 5]
+
+    assert Ufixp[2, 4] + Ufixp[3, 4] == Ufixp[4, 6]
+    assert Ufixp[3, 4] + Ufixp[3, 5] == Ufixp[4, 6]
+
+    assert Fixp[2, 3] + Fixp[3, 4] == Fixp[4, 5]
+    assert Fixp[3, 4] + Fixp[3, 4] == Fixp[4, 5]
+
+    assert Fixp[2, 4] + Fixp[3, 4] == Fixp[4, 6]
+    assert Fixp[3, 4] + Fixp[3, 5] == Fixp[4, 6]
+
+    assert Ufixp[2, 3] + Fixp[3, 4] == Fixp[4, 5]
+    assert Fixp[2, 3] + Ufixp[3, 4] == Fixp[5, 6]
+    assert Ufixp[3, 4] + Fixp[3, 4] == Fixp[5, 6]
+    assert Ufixp[2, 4] + Fixp[3, 4] == Fixp[4, 6]
+    assert Ufixp[3, 4] + Fixp[3, 5] == Fixp[5, 7]
+    assert Fixp[2, 4] + Ufixp[3, 4] == Fixp[5, 7]
+
+
+def test_add_val():
+    assert Ufixp[2, 3].quant + Ufixp[3, 4].quant == Ufixp[4, 5](
+        float(Ufixp[2, 3].quant) + float(Ufixp[3, 4].quant))
+    assert Ufixp[2, 3].max + Ufixp[3, 4].max == Ufixp[4, 5](11.0)
+    assert Ufixp[3, 4].max + Ufixp[3, 4].max == Ufixp[4, 5](15.0)
+
+    assert Ufixp[2, 4].quant + Ufixp[3, 4].quant == Ufixp[4, 6](
+        float(Ufixp[2, 4].quant) + float(Ufixp[3, 4].quant))
+    assert Ufixp[2, 4].max + Ufixp[3, 4].max == Ufixp[4, 6](11.25)
+    assert Ufixp[3, 4].max + Ufixp[3, 5].max == Ufixp[4, 6](15.25)
+
+    assert Fixp[2, 3].quant + Fixp[3, 4].quant == Fixp[4, 5](
+        float(Fixp[2, 3].quant) + float(Fixp[3, 4].quant))
+    assert Fixp[2, 3].max + Fixp[3, 4].max == Fixp[4, 5](5.0)
+    assert Fixp[3, 4].max + Fixp[3, 4].max == Fixp[4, 5](7.0)
+
+    assert Fixp[2, 4].quant + Fixp[3, 4].quant == Fixp[4, 6](
+        float(Fixp[2, 4].quant) + float(Fixp[3, 4].quant))
+    assert Fixp[2, 4].max + Fixp[3, 4].max == Fixp[4, 6](5.25)
+    assert Fixp[3, 4].max + Fixp[3, 5].max == Fixp[4, 6](7.25)
+
+    assert Ufixp[2, 3].quant + Fixp[3, 4].quant == Fixp[4, 5](
+        float(Ufixp[2, 3].quant) + float(Fixp[3, 4].quant))
+    assert Ufixp[2, 3].max + Fixp[3, 4].max == Fixp[4, 5](7.0)
+    assert Fixp[2, 3].max + Ufixp[3, 4].max == Fixp[5, 6](9.0)
+
+    assert Ufixp[3, 4].max + Fixp[3, 4].max == Fixp[5, 6](11.0)
+
+    assert Ufixp[2, 4].quant + Fixp[3, 4].quant == Fixp[4, 6](
+        float(Ufixp[2, 4].quant) + float(Fixp[3, 4].quant))
+    assert Ufixp[2, 4].max + Fixp[3, 4].max == Fixp[4, 6](7.25)
+    assert Ufixp[3, 4].max + Fixp[3, 5].max == Fixp[5, 7](11.25)
+    assert Fixp[2, 4].max + Ufixp[3, 4].max == Fixp[5, 7](9.25)
+
+
+def test_sub_val():
+    assert Ufixp[2, 3].quant - Ufixp[3, 4].quant == Fixp[4, 5](0.0)
+    assert Ufixp[2, 3].min - Ufixp[3, 4].max == Fixp[4, 5](-7.5)
+
+    assert Ufixp[2, 4].quant - Ufixp[3, 4].quant == Fixp[4, 6](
+        float(Ufixp[2, 4].quant) - float(Ufixp[3, 4].quant))
+
+    assert Ufixp[2, 4].min - Ufixp[3, 4].max == Fixp[4, 6](-7.5)
+    assert Ufixp[3, 4].min - Ufixp[3, 5].max == Fixp[4, 6](-7.75)
+
+    assert Fixp[2, 3].quant - Fixp[3, 4].quant == Fixp[4, 5](0.0)
+    assert Fixp[2, 3].min - Fixp[3, 4].max == Fixp[4, 5](-5.5)
+    assert Fixp[3, 4].min - Fixp[3, 4].max == Fixp[4, 5](-7.5)
+    assert Fixp[3, 4].max - Fixp[3, 4].min == Fixp[4, 5](7.5)
+
+    assert Fixp[2, 4].quant - Fixp[3, 4].quant == Fixp[4, 6](
+        float(Fixp[2, 4].quant) - float(Fixp[3, 4].quant))
+    assert Fixp[2, 4].min - Fixp[3, 4].max == Fixp[4, 6](-5.5)
+    assert Fixp[2, 4].max - Fixp[3, 4].min == Fixp[4, 6](5.75)
+
+    assert Fixp[3, 4].min - Fixp[3, 5].max == Fixp[4, 6](-7.75)
+    assert Fixp[3, 4].max - Fixp[3, 5].min == Fixp[4, 6](7.5)
+
+    assert Ufixp[2, 3].quant - Fixp[3, 4].quant == Fixp[4, 5](0.0)
+    assert Ufixp[2, 3].max - Fixp[3, 4].min == Fixp[4, 5](7.5)
+    assert Fixp[2, 3].min - Ufixp[3, 4].max == Fixp[5, 6](-9.5)
+
+    assert Ufixp[3, 4].max - Fixp[3, 4].min == Fixp[5, 6](11.5)
+    assert Fixp[3, 4].min - Ufixp[3, 4].max == Fixp[5, 6](-11.5)
+
+    assert Ufixp[2, 4].quant - Fixp[3, 4].quant == Fixp[4, 6](
+        float(Ufixp[2, 4].quant) - float(Fixp[3, 4].quant))
+    assert Ufixp[2, 4].max - Fixp[3, 4].min == Fixp[4, 6](7.75)
+    assert Ufixp[3, 4].max - Fixp[3, 5].min == Fixp[5, 7](11.5)
+    assert Fixp[2, 4].min - Ufixp[3, 4].max == Fixp[5, 7](-9.5)
+
+
 def test_unsigned_add():
     t_a = Ufixp[2, 3]
     t_b = Ufixp[3, 4]
@@ -78,8 +171,10 @@ def test_unsigned_div():
     t_c = Ufixp[10, 6]
     t_d = Ufixp[-2, 12]
 
-    assert div(t_c.max, t_d.lsb, 0) == Ufixp[24, 6](float(t_c.max) / float(t_d.lsb))
-    assert div(t_c.max, t_d.max, 0) == Ufixp[24, 6](float(t_c.max) / float(t_d.max))
+    assert div(t_c.max, t_d.quant,
+               0) == Ufixp[24, 6](float(t_c.max) / float(t_d.quant))
+    assert div(t_c.max, t_d.max,
+               0) == Ufixp[24, 6](float(t_c.max) / float(t_d.max))
 
 
 # def test_signed_div():
@@ -150,11 +245,11 @@ def test_add_integer():
     assert t_a(2) + t_c(2) == Ufixp[17, 25](4)
     assert t_c(2) + t_a(2) == Ufixp[17, 25](4)
 
-    assert t_b + t_c == Fixp[17, 25]
-    assert t_c + t_b == Fixp[17, 25]
+    assert t_b + t_c == Fixp[18, 26]
+    assert t_c + t_b == Fixp[18, 26]
 
-    assert t_b(-2) + t_c(2) == Fixp[17, 25](0)
-    assert t_c(2) + t_b(-2) == Fixp[17, 25](0)
+    assert t_b(-2) + t_c(2) == Fixp[18, 26](0)
+    assert t_c(2) + t_b(-2) == Fixp[18, 26](0)
 
 
 def test_mul_integer():

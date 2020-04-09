@@ -46,8 +46,68 @@ def test_bool():
 
 
 def test_wrong_param():
-    with pytest.raises(TypeError, match="Uint type parameter must be an integer, not '1.2'"):
+    with pytest.raises(
+            TypeError,
+            match="Uint type parameter must be an integer, not '1.2'"):
         Uint[1.2]
 
-    with pytest.raises(TypeError, match="Uint type parameter must be a positive integer, not '-1'"):
+    with pytest.raises(
+            TypeError,
+            match="Uint type parameter must be a positive integer, not '-1'"):
         Uint[-1]
+
+
+def test_add_type():
+    assert Uint[2] + Uint[5] == Uint[6]
+    assert Uint[5] + Uint[5] == Uint[6]
+
+    assert Int[2] + Int[5] == Int[6]
+    assert Int[5] + Int[5] == Int[6]
+
+    assert Uint[2] + Int[5] == Int[6]
+    assert Uint[5] + Int[2] == Int[7]
+    assert Uint[5] + Int[5] == Int[7]
+
+
+def test_add_val():
+    assert Uint[2].max + Uint[5].max == Uint[6](34)
+    assert Uint[5].max + Uint[5].max == Uint[6](62)
+
+    assert Int[2].min + Int[5].min == Int[6](-18)
+    assert Int[5].min + Int[5].min == Int[6](-32)
+
+    assert Uint[2].max + Int[5].max == Int[6](18)
+    assert Uint[5].max + Int[2].max == Int[7](32)
+    assert Uint[5].max + Int[5].max == Int[7](46)
+
+
+def test_sub_type():
+    assert Uint[2] - Uint[5] == Int[6]
+    assert Uint[5] - Uint[2] == Int[6]
+
+    assert Int[2] - Int[5] == Int[6]
+    assert Int[5] - Int[2] == Int[6]
+
+    assert Uint[2] - Int[5] == Int[6]
+    assert Uint[5] - Int[2] == Int[7]
+    assert Uint[5] - Int[5] == Int[7]
+
+    assert Int[2] - Uint[5] == Int[7]
+    assert Int[5] - Uint[2] == Int[6]
+    assert Int[5] - Uint[5] == Int[7]
+
+
+def test_sub_val():
+    assert Uint[2].min - Uint[5].max == Int[6](-31)
+    assert Uint[5].max - Uint[2].min == Int[6](31)
+
+    assert Int[2].min - Int[5].max == Int[6](-17)
+    assert Int[5].min - Int[2].max == Int[6](-17)
+
+    assert Uint[2].max - Int[5].min == Int[6](19)
+    assert Uint[5].max - Int[2].min == Int[7](33)
+    assert Uint[5].max - Int[5].min == Int[7](47)
+
+    assert Int[2].min - Uint[5].max == Int[7](-33)
+    assert Int[5].min - Uint[2].max == Int[6](-19)
+    assert Int[5].min - Uint[5].max == Int[7](-47)

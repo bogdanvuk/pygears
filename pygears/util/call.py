@@ -2,6 +2,7 @@ from pygears.lib import drv, collect, mon
 from pygears.sim import sim
 from pygears.typing import Integer, Int, Uint, is_type
 from pygears.core.partial import extract_arg_kwds, combine_arg_kwds, all_args_specified
+from pygears import clear
 
 
 def infer_dtype(val):
@@ -16,6 +17,7 @@ def infer_dtype(val):
 
 
 def call(f, *args, **kwds):
+    clear()
     kwd_intfs, kwd_params = extract_arg_kwds(kwds, f)
     args_comb = combine_arg_kwds(args, kwd_intfs, f)
     dtypes = [infer_dtype(arg) for arg in args_comb]
@@ -36,6 +38,7 @@ def call(f, *args, **kwds):
     mod = seqs[0].consumers[0].gear
     from pygears.sim import cosim
     cosim(mod, 'verilator')
+    # sim('/tools/home/tmp/trunc', check_activity=False)
     sim(check_activity=False)
 
     if isinstance(outputs, tuple):

@@ -1,6 +1,7 @@
 import inspect
 import typing
 from . import Context, FuncContext, Function, Submodule, SyntaxError, node_visitor, ir, visit_ast, visit_block
+from ..debug import print_func_parse_intro
 from pygears import Intf, bind, registry
 from pygears.core.partial import combine_arg_kwds, extract_arg_kwds
 from pygears.core.port import InPort, HDLConsumer, HDLProducer
@@ -17,19 +18,19 @@ def form_gear_args(args, kwds, func):
 
 def parse_func_call(func: typing.Callable, args, kwds, ctx: Context):
     funcref = Function(func, args, kwds, uniqueid=len(ctx.functions))
-    if not funcref in ctx.functions:
+    if funcref not in ctx.functions:
         func_ctx = FuncContext(funcref, args, kwds)
+        print_func_parse_intro(func, funcref.ast)
         registry('hls/ctx').append(func_ctx)
-        pydl_ast = visit_ast(funcref.ast, func_ctx)
+        func_ir = visit_ast(funcref.ast, func_ctx)
         registry('hls/ctx').pop()
-        ctx.functions[funcref] = (pydl_ast, func_ctx)
+        ctx.functions[funcref] = (func_ir, func_ctx)
     else:
-        (pydl_ast, func_ctx) = ctx.functions[funcref]
+        (func_ir, func_ctx) = ctx.functions[funcref]
 
-    return ir.FunctionCall(
-        operands=list(func_ctx.args.values()),
-        ret_dtype=func_ctx.ret_dtype,
-        name=funcref.name)
+    return ir.FunctionCall(operands=list(func_ctx.args.values()),
+                           ret_dtype=func_ctx.ret_dtype,
+                           name=funcref.name)
 
 
 def call_datagear(func, args, params, ctx: Context):

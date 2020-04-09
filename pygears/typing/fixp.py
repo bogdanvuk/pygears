@@ -126,50 +126,50 @@ class FixpnumberType(IntegralType):
         if not typeof(other, Integral):
             return NotImplemented
 
-        if typeof(other, Integer):
-            other_cls = Fixp if other.signed else Ufixp
-            other = other_cls[other.width, other.width]
+        signed = self.signed or other.signed
+        res_type = Fixp if signed else Ufixp
 
-        ops = [self, other]
+        i1 = self.integer + 1 if signed and not self.signed else self.integer
+        fr1 = self.fract
 
-        signed = any(op.signed for op in ops)
+        if typeof(other, Fixpnumber):
+            i2 = other.integer + 1 if signed and not other.signed else other.integer
+            fr2 = other.fract
+        elif typeof(other, Integer):
+            i2 = other.width + 1 if signed and not other.signed else other.width
+            fr2 = 0
+        else:
+            return NotImplemented
 
-        try:
-            integer_part = max(self.integer, other.integer)
-            fract_part = max(self.fract, other.fract)
-        except AttributeError:
-            integer_part = max(self.integer, int(other))
-            fract_part = self.fract
-
-        integer_part += 1
+        integer_part = max(i1, i2) + 1
+        fract_part = max(fr1, fr2)
         width = integer_part + fract_part
 
-        if signed:
-            return Fixp[integer_part, width]
-        else:
-            return Ufixp[integer_part, width]
+        return res_type[integer_part, width]
 
     __radd__ = __add__
 
     def __sub__(self, other):
-        ops = [self, other]
+        if not typeof(other, Integral):
+            return NotImplemented
 
-        signed = any(op.signed for op in ops)
+        i1 = self.integer + 1 if other.signed and not self.signed else self.integer
+        fr1 = self.fract
 
-        try:
-            integer_part = max(self.integer, other.integer)
-            fract_part = max(self.fract, other.fract)
-        except AttributeError:
-            integer_part = max(self.integer, int(other))
-            fract_part = self.fract
+        if typeof(other, Fixpnumber):
+            i2 = other.integer
+            fr2 = other.fract
+        elif typeof(other, Integer):
+            i2 = other.width
+            fr2 = 0
+        else:
+            return NotImplemented
 
-        integer_part += 1
+        integer_part = max(i1, i2) + 1
+        fract_part = max(fr1, fr2)
         width = integer_part + fract_part
 
-        if signed:
-            return Fixp[integer_part, width]
-        else:
-            return Ufixp[integer_part, width]
+        return Fixp[integer_part, width]
 
     @property
     def specified(self):
@@ -316,6 +316,9 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
         cls = type(self)
         cls_other = type(other)
 
+        if isinstance(other, float):
+            return float(self) == other
+
         if cls.base != cls_other.base:
             return False
 
@@ -363,7 +366,7 @@ class FixpType(FixpnumberType):
         return self.decode(-2**(self.width - 1))
 
     @property
-    def lsb(self):
+    def quant(self):
         return self.decode(1)
 
     @property
@@ -413,7 +416,7 @@ class UfixpType(FixpnumberType):
         return self.decode(0)
 
     @property
-    def lsb(self):
+    def quant(self):
         return self.decode(1)
 
     @property

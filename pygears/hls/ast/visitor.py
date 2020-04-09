@@ -2,7 +2,7 @@ import ast
 import inspect
 import typing
 from pygears.core.infer_ftypes import infer_ftypes
-from pygears.typing import Any
+from pygears.typing import Any, is_type
 from functools import singledispatch
 from dataclasses import dataclass, field
 from .. import ir
@@ -188,10 +188,18 @@ class FuncContext(Context):
                 if a not in params:
                     params[a] = Any
 
-            arg_types = {
-                name: self.args[name].dtype
-                for name in paramspec.args if name in self.args
-            }
+            arg_types = {}
+            for name in paramspec.args:
+                if name not in self.args:
+                    continue
+                if isinstance(self.args[name], ir.ResExpr) and is_type(self.args[name].val):
+                    # TODO: Reconsider why ResExpr returns None for type classes, which
+                    # makes this "if" necessary
+                    dtype = self.args[name].val.__class__
+                else:
+                    dtype = self.args[name].dtype
+
+                arg_types[name] = dtype
 
             for name, var in self.args.items():
                 if name in params:

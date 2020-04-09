@@ -1,10 +1,17 @@
 from pygears import gear
 from pygears.typing import cast as type_cast
+from pygears.typing import trunc as type_trunc
 from pygears.conf import safe_bind
 from pygears.core.intf import IntfOperPlugin
 from pygears.hdl.util import HDLGearHierVisitor, flow_visitor
 from pygears.hdl.sv import SVGenPlugin
 from pygears.hdl.v import VGenPlugin
+
+
+@gear(hdl={'compile': True})
+async def trunc(din, *, t) -> b'type_trunc(din, t)':
+    async with din as d:
+        yield type_trunc(d, t)
 
 
 @gear(hdl={'compile': True})

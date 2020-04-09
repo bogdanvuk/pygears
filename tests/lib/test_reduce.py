@@ -1,5 +1,6 @@
 import pytest
 from pygears.util.test_utils import get_decoupled_dut
+from functools import reduce as freduce
 from pygears.lib import reduce, directed, drv, verif, delay_rng, accum
 from pygears.typing import Uint, Queue, Bool, saturate
 from pygears.sim import sim
@@ -9,7 +10,7 @@ from pygears import Intf
 
 def test_uint_directed(tmpdir, sim_cls):
     init = [7, 45]
-    seq = [list(range(0, 200, 10)), list(range(2))]
+    seq = [list(range(0, 100, 10)), list(range(2))]
 
     def add(x, y):
         return saturate(x + y, Uint[8])
@@ -17,12 +18,12 @@ def test_uint_directed(tmpdir, sim_cls):
     directed(drv(t=Queue[Uint[8]], seq=seq),
              drv(t=Uint[8], seq=init),
              f=reduce(f=add, sim_cls=sim_cls),
-             ref=[sum(s, i) for s, i in zip(seq, init)])
+             ref=[freduce(add, s, i) for s, i in zip(seq, init)])
     sim(resdir=tmpdir)
 
 
-from pygears.sim.modules import SimVerilated
-test_uint_directed('/tools/home/tmp/reduce', SimVerilated)
+# from pygears.sim.modules import SimVerilated
+# test_uint_directed('/tools/home/tmp/reduce', SimVerilated)
 
 
 @pytest.mark.parametrize('din_delay', [0, 1, 10])

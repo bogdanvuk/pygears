@@ -300,6 +300,27 @@ class InlineResValues(HDLVisitor):
         self.forwarded = prev_scope
 
 
+# Implement function inlining
+# def inlinable(func_ir):
+#     if len(func_ir.stmts) > 1:
+#         return None
+
+#     ret_stmt = func_ir.stmts[0]
+
+#     # TODO: Should this even be possible?
+#     if not isinstance(ret_stmt, ir.FuncReturn):
+#         breakpoint()
+#         return None
+
+#     # TODO: Should this even be possible?
+#     if ret_stmt.expr.dtype != func_ir.ret_dtype:
+#         breakpoint()
+#         return None
+
+#     return ret_stmt
+
+
+
 def inline_res(modblock, ctx):
     # InlineValues(ctx, res_expr_only=True).visit(modblock)
     # InlineResValues(ctx).visit(modblock)
