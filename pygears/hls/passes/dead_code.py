@@ -1,10 +1,35 @@
-from ..ir_utils import HDLVisitor, add_to_list, ir, res_false
+from ..ir_utils import HDLVisitor, add_to_list, ir, res_false, IrVisitor, IrExprVisitor
+
+class FuncCallExprFinder(IrExprVisitor):
+    def __init__(self, called_funcs):
+        self.called_funcs = called_funcs
+
+    def visit_FunctionCall(self, node: ir.FunctionCall):
+        self.called_funcs.add(node.name)
+        super().visit_FunctionCall(node)
+
+
+class FuncCallFinder(IrVisitor):
+    def __init__(self):
+        self.called_funcs = set()
+        self.expr_visit = FuncCallExprFinder(self.called_funcs)
+
+    def Expr(self, expr):
+        self.expr_visit.visit(expr)
 
 class RemoveDeadCode(HDLVisitor):
+    def __init__(self, ctx):
+        super().__init__(ctx)
+        self.called_funcs = set()
+
     def AssignValue(self, node):
         return node
 
     def FuncReturn(self, node):
+        return node
+
+    def FunctionCall(self, node: ir.FunctionCall):
+        self.called_funcs.add(node.name)
         return node
 
     def BaseBlock(self, block: ir.BaseBlock):
@@ -41,5 +66,9 @@ class RemoveDeadCode(HDLVisitor):
 
 
 def remove_dead_code(modblock, ctx):
-    RemoveDeadCode(ctx).visit(modblock)
-    return modblock
+    return RemoveDeadCode(ctx).visit(modblock)
+
+def find_called_funcs(modblock, ctx):
+    v = FuncCallFinder()
+    v.visit(modblock)
+    return v.called_funcs

@@ -5,7 +5,7 @@ from .ast.utils import get_function_ast
 from . import ir
 from .passes import (inline, inline_res, remove_dead_code, infer_exit_cond,
                      infer_registers, schedule, infer_in_cond,
-                     handle_generators, resolve_gear_calls)
+                     handle_generators, resolve_gear_calls, find_called_funcs)
 from .debug import hls_enable_debug_log, hls_debug
 from .debug import print_gear_parse_intro
 from . import cfg
@@ -39,7 +39,6 @@ def process(body_ast, ctx):
     safe_bind('hls/ctx', [ctx])
     return visit_ast(body_ast, ctx)
 
-
 def transform(modblock, ctx: GearContext):
     hls_debug(modblock, 'Initial')
 
@@ -62,10 +61,27 @@ def transform(modblock, ctx: GearContext):
     modblock = infer_exit_cond(modblock, ctx)
     hls_debug(modblock, 'Infer Exit Conditions')
 
-    modblock = remove_dead_code(modblock, ctx)
+    modblock  = remove_dead_code(modblock, ctx)
     hls_debug(modblock, 'Remove Dead Code')
 
-    gen_all_funcs(modblock, ctx)
+    called_funcs = find_called_funcs(modblock, ctx)
+
+    added = bool(called_funcs)
+
+    active_funcs = set()
+    while added:
+        added = False
+        for f_ast, f_ctx in ctx.functions.values():
+            if (f_ast.name in active_funcs) or (f_ast.name not in called_funcs):
+                continue
+
+            active_funcs.add(f_ctx.funcref.name)
+            modblock.funcs.append((transform_func(f_ast, f_ctx), f_ctx))
+
+            func_called_funcs = find_called_funcs(f_ast, f_ctx)
+            if func_called_funcs:
+                added = True
+                active_funcs.update(func_called_funcs)
 
     return modblock
 
@@ -77,11 +93,5 @@ def transform_func(funcblock, ctx: FuncContext):
     funcblock = inline(funcblock, ctx)
 
     funcblock = remove_dead_code(funcblock, ctx)
-    gen_all_funcs(funcblock, ctx)
 
     return funcblock
-
-
-def gen_all_funcs(block, ctx: Context):
-    for f_ast, f_ctx in ctx.functions.values():
-        block.funcs.append((transform_func(f_ast, f_ctx), f_ctx))

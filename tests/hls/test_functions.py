@@ -89,9 +89,6 @@ def test_fixp_arith(tmpdir, sim_cls):
 
     sim(tmpdir)
 
-# from pygears.sim.modules import SimVerilated
-# test_fixp_arith('/tools/home/tmp/test_fixp_arith', SimVerilated)
-
 
 def test_fixp_diff_arith(tmpdir, sim_cls):
     @gear(hdl={'compile': True})

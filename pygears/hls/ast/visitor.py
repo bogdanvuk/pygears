@@ -60,7 +60,6 @@ class Context:
         args = {}
         self.methods = {}
         self.local_namespace: typing.Dict = {'__builtins__': __builtins__}
-        self.functions: typing.Mapping[Function, FuncContext] = {}
         self.pydl_block_closure: typing.List = []
         self.submodules: typing.List[Submodule] = []
         self.reaching: typing.Dict = {}
@@ -127,6 +126,7 @@ class GearContext(Context):
     def __init__(self, gear):
         super().__init__()
         self.gear = gear
+        self.functions: typing.Mapping[Function, FuncContext] = {}
         self.local_namespace = get_function_context_dict(self.gear.func)
 
         paramspec = inspect.getfullargspec(self.gear.func)
@@ -186,6 +186,7 @@ class FuncContext(Context):
     def __init__(self, funcref: Function, args, kwds):
         super().__init__()
         self.funcref = funcref
+
         func = funcref.func
 
         # self.name = funcref.name
