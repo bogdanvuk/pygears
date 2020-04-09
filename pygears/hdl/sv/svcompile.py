@@ -3,6 +3,7 @@ from pygears.hls import ir
 from pygears.hls import Context, HDLVisitor, Scope
 from pygears.typing import Bool
 from pygears.core.port import HDLProducer
+from pygears.core.gear import InSig, OutSig
 from dataclasses import dataclass, field
 from typing import List
 from pygears import Intf
@@ -153,9 +154,6 @@ class SVCompiler(HDLVisitor):
         else:
             raise Exception
 
-        # if str(target) == 'mux_din0':
-        #     breakpoint()
-
         if is_reg_id(base_target):
 
             if not self.selected(base_target):
@@ -163,7 +161,11 @@ class SVCompiler(HDLVisitor):
 
             name = svexpr(target, self.aux_funcs)
 
-            svstmt = f"{name} = {svexpr(val, self.aux_funcs)}"
+            val = svexpr(val, self.aux_funcs)
+            if val is None:
+                return
+
+            svstmt = f"{name} = {val}"
             self.handle_defaults(name, svstmt)
 
             self.write(f"{base_target.name}_en = 1")
@@ -180,9 +182,11 @@ class SVCompiler(HDLVisitor):
                         self.handle_defaults(name, svstmt)
                         self.write(f"{name}.valid = {val_name}.valid")
                     else:
-                        svstmt = f"{name}_s = {svexpr(val, self.aux_funcs)}"
-                        self.handle_defaults(name, svstmt)
                         self.handle_defaults(f"{name}.valid", f"{name}.valid = 1")
+                        val = svexpr(val, self.aux_funcs)
+                        if val is not None:
+                            svstmt = f"{name}_s = {val}"
+                            self.handle_defaults(name, svstmt)
 
                 if is_intf_id(val) and self.selected(val):
                     val_name = svexpr(val, self.aux_funcs)
@@ -204,7 +208,11 @@ class SVCompiler(HDLVisitor):
         if target is None:
             return
 
-        svstmt = f"{target} = {svexpr(val, self.aux_funcs)}"
+        val = svexpr(val, self.aux_funcs)
+        if val is None:
+            return
+
+        svstmt = f"{target} = {val}"
 
         self.handle_defaults(target, svstmt)
 
@@ -411,6 +419,7 @@ def write_module(ctx: Context, hdl, writer, subsvmods, funcs, template_env, conf
             continue
 
         name_t = typedef_or_inline(writer, expr.dtype, name)
+
         writer.line(f'{name_t} {name};')
         writer.line()
 
@@ -436,8 +445,8 @@ def write_module(ctx: Context, hdl, writer, subsvmods, funcs, template_env, conf
 
         writer.indent += 4
 
-        for name, expr in f_ctx.args.items():
-            name_t = typedef_or_inline(writer, expr.dtype, name)
+        for name, dtype in f_ctx.signature.items():
+            name_t = typedef_or_inline(writer, dtype, name)
             writer.line(f'input {name_t} {name};')
             writer.line()
 
@@ -485,7 +494,7 @@ def compile_gear_body(gear, outdir, template_env):
         from pygears.hdl import hdlgen
         svgen_map = registry("svgen/map")
         for c in ctx.submodules:
-            rtl_top = hdlgen(c.gear, outdir=outdir, generate=True)
+            rtl_top = hdlgen(c.gear, outdir=outdir, generate=False)
             svmod = svgen_map[rtl_top]
             subsvmods.append(svmod)
 

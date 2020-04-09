@@ -1,7 +1,7 @@
 import inspect
 import asyncio
 from pygears import bind
-from .utils import HDLVisitor, ir, res_false, res_true, IrRewriter, IrVisitor
+from ..ir_utils import HDLVisitor, ir, res_false, res_true, IrRewriter, IrVisitor
 from ..ast import Context
 from ..ast.inline import call_gear
 from ..ast.call import const_func_args, resolve_gear_call

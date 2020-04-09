@@ -1,7 +1,10 @@
 import ast
 import types
+import inspect
+from functools import partial
 from . import Context, SyntaxError, node_visitor, ir, visit_ast, visit_block
 from .arith import resolve_arith_func
+from .call import resolve_func, Method, store_method_obj
 from pygears.typing import cast, Integer
 
 
@@ -78,10 +81,60 @@ def _(node, ctx: Context):
                             visit_ast(node.slice, ctx))
 
 
+METHOD_OP_MAP = {
+    ast.Add: '__add__',
+    ast.And: '__and__',
+    ast.BitAnd: '__and__',
+    ast.BitOr: '__or__',
+    ast.BitXor: '__xor__',
+    ast.Div: '__truediv__',
+    ast.Eq: '__eq__',
+    ast.Gt: '__gt__',
+    ast.GtE: '__ge__',
+    ast.FloorDiv: '__floordiv__',
+    ast.Lt: '__lt__',
+    ast.LtE: '__le__',
+    ast.LShift: '__lshift__',
+    ast.MatMult: '__matmul__',
+    ast.Mult: '__mul__',
+    ast.Mod: '__mod__',
+    ast.NotEq: '__ne__',
+    ast.Not: '__not__',
+    ast.Or: '__or__',
+    ast.RShift: '__rshift__',
+    ast.Sub: '__sub__',
+    ast.UAdd: '__pos__',
+    ast.USub: '__neg__',
+}
+
+
 def visit_bin_expr(op, operands, ctx: Context):
-    res = resolve_arith_func(op, tuple(visit_ast(p, ctx) for p in operands),
-                             ctx)
-    return res
+    op1 = visit_ast(operands[0], ctx)
+    op2 = visit_ast(operands[1], ctx)
+
+    if type(op) in [ast.And, ast.Or]:
+        return ir.BinOpExpr((op1, op2), type(op))
+
+    # TODO: This WAS needed, since: ir.ResExpr(Uint[8]).dtype is None. REMOVE
+    dtype = type(op1.val) if isinstance(op1, ir.ResExpr) else op1.dtype
+
+    f = getattr(dtype, METHOD_OP_MAP[type(op)])
+    if isinstance(op1, ir.ResExpr):
+        # f = partial(f, op1.val)
+        return resolve_func(f, (op1, op2, ), {}, ctx)
+        # f = f.__get__(op1.val, dtype)
+    else:
+        # f = partial(f, op1)
+
+        return resolve_func(f, (op1, op2, ), {}, ctx)
+        # f = f.__get__(dtype(), dtype)
+        # store_method_obj(f, op1)
+
+    return resolve_func(f, (op2, ), {}, ctx)
+
+    # res = resolve_arith_func(op, tuple(visit_ast(p, ctx) for p in operands),
+    #                          ctx)
+    # return res
 
     # if isinstance(res, FunctionType):
     #     return resolve_func_call(res, res.__name__, opexp, None, operands,
@@ -110,6 +163,22 @@ def _(node, ctx: Context):
     value = visit_ast(node.value, ctx)
     if isinstance(value, ir.Name) and isinstance(value.obj, ir.Interface):
         return ir.ResExpr(value.obj.intf.dtype)
+
+    if isinstance(value, ir.ResExpr):
+        return ir.ResExpr(getattr(value.val, node.attr))
+
+    if hasattr(value.dtype, node.attr):
+        cls_attr = getattr(value.dtype, node.attr)
+
+        if isinstance(cls_attr, property):
+            return resolve_func(cls_attr.fget, (value, ), {}, ctx)
+
+        if not inspect.isclass(cls_attr):
+            if callable(cls_attr):
+                return ir.ResExpr(partial(cls_attr, value))
+
+            # If value.attr was a class method and we instantly got the result
+            return ir.ResExpr(cls_attr)
 
     return ir.AttrExpr(value, node.attr)
 

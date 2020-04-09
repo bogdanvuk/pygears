@@ -1,4 +1,5 @@
 import ast as opc
+import inspect
 import attr
 import typing
 import textwrap
@@ -10,22 +11,25 @@ from pygears.core.port import InPort, OutPort
 from pygears.core.gear import InSig, OutSig
 from pygears.typing import (Bool, Integer, Queue, Tuple, Uint, is_type, typeof,
                             Array, Union, Unit)
+# from .ast.utils import get_property_type
 import operator
 
 BOOLEAN_OPERATORS = {
     opc.BitOr, opc.BitAnd, opc.BitXor, opc.Invert, opc.Not, opc.And, opc.Or
 }
 BIN_OPERATORS = [
-    opc.Not, opc.Eq, opc.Gt, opc.GtE, opc.Lt, opc.LtE, opc.NotEq, opc.And,
+    opc.Eq, opc.Gt, opc.GtE, opc.Lt, opc.LtE, opc.NotEq, opc.And,
     opc.Or
 ]
 EXTENDABLE_OPERATORS = [
     opc.Add, opc.Sub, opc.Mult, opc.Div, opc.Mod, opc.Pow, opc.LShift,
     opc.RShift, opc.BitOr, opc.BitAnd, opc.BitXor, opc.Div, opc.Invert, opc.Not
 ]
+
 OPMAP = {
     opc.Add: '+',
     opc.Sub: '-',
+    opc.MatMult: '@',
     opc.Mult: '*',
     opc.Div: '/',
     opc.Mod: '%',
@@ -54,7 +58,8 @@ PYOPMAP = {
     opc.Add: operator.__add__,
     opc.And: operator.__and__,
     opc.BitAnd: operator.__and__,
-    opc.BitOr: operator.__and__,
+    opc.BitOr: operator.__or__,
+    opc.BitXor: operator.__xor__,
     opc.Div: operator.__truediv__,
     opc.Eq: operator.__eq__,
     opc.Gt: operator.__gt__,
@@ -63,6 +68,7 @@ PYOPMAP = {
     opc.Lt: operator.__lt__,
     opc.LtE: operator.__le__,
     opc.LShift: operator.__lshift__,
+    opc.MatMult: operator.__matmul__,
     opc.Mult: operator.__mul__,
     opc.NotEq: operator.__ne__,
     opc.Not: operator.__not__,
@@ -215,15 +221,15 @@ class ResExpr(Expr):
 
     @property
     def dtype(self):
-        if is_type(type(self.val)):
-            return type(self.val)
+        # if is_type(type(self.val)):
+        #     return type(self.val)
 
-        if isinstance(self.val, int):
+        if not is_type(type(self.val)) and isinstance(self.val, int):
             return type(Integer(self.val))
 
-        # return type(self.val)
+        return type(self.val)
 
-        return None
+        # return None
 
 
 res_true = ResExpr(Bool(True))
@@ -737,6 +743,10 @@ class AttrExpr(Expr):
     @property
     def dtype(self):
         return getattr(self.val.dtype, self.attr, None)
+        # if isinstance(ret, property):
+        #     return get_property_type(ret)
+
+        # return ret
 
 
 class ConditionalExpr(Expr):

@@ -1,4 +1,4 @@
-from .utils import HDLVisitor, add_to_list, ir, res_false
+from ..ir_utils import HDLVisitor, add_to_list, ir, res_false
 
 class RemoveDeadCode(HDLVisitor):
     def AssignValue(self, node):

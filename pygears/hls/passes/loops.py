@@ -1,4 +1,4 @@
-from .utils import HDLVisitor, ir, res_false, res_true
+from ..ir_utils import HDLVisitor, ir, res_false, res_true
 from pygears.typing import Bool
 
 

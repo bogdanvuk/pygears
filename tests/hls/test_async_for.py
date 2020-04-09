@@ -15,7 +15,12 @@ def test_simple_async_sim(tmpdir, sim_cls):
     directed(f=test(sim_cls=sim_cls), ref=list(range(4)) * 2)
 
     sim(tmpdir, timeout=8)
+    # sim('/tools/home/tmp/simple_async_sim', timeout=8)
 
+# from pygears.sim.modules import SimVerilated
+# from pygears import config
+# config['debug/trace'] = ['*']
+# test_simple_async_sim('/tools/home/tmp/simple_async_sim', SimVerilated)
 
 def test_simple(tmpdir, sim_cls):
     @gear(hdl={'compile': True})

@@ -97,8 +97,6 @@ def parse_yield(node, ctx):
 
 @node_visitor(ast.withitem)
 def withitem(node: ast.withitem, ctx: Context):
-    # assert isinstance(ctx.pydl_parent_block, ir.IntfBlock)
-
     intf = visit_ast(node.context_expr, ctx)
     targets = visit_ast(node.optional_vars, ctx)
 

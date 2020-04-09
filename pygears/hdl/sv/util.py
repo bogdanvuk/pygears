@@ -1,5 +1,5 @@
 from pygears.typing.visitor import TypingVisitorBase
-from pygears.typing import bitw
+from pygears.typing import bitw, is_type
 
 
 class SVGenTypeVisitor(TypingVisitorBase):
@@ -174,7 +174,10 @@ def svgen_typedef(dtype, name, depth=4):
     # subtypes
     if isinstance(dtype, str):
         return f'typedef {dtype} {name}_t;'
-    elif int(dtype) == 0:
+
+    assert is_type(dtype)
+
+    if dtype.width == 0:
         return f'typedef logic [0:0] {name}_t;'
 
     vis = SVGenTypeVisitor(name, depth=depth)

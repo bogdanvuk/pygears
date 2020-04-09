@@ -22,11 +22,11 @@ def concat(l):
 
 class IntegralType(EnumerableGenericMeta):
     @property
-    def mask(self):
+    def mask(self) -> int:
         return (1 << len(self)) - 1
 
     @property
-    def width(self):
+    def width(self) -> int:
         return int(self)
 
     def keys(self):
@@ -333,14 +333,13 @@ class Integer(Integral, metaclass=IntegerType):
         return not self.__eq__(other)
 
     def __rshift__(self, other):
-        res_t = type(self) >> other
-        if typeof(res_t, Unit):
+        if typeof((type(self) >> other), Unit):
             return Unit()
 
-        return res_t(int(self) >> other)
+        return (type(self) >> other)(super().__rshift__(other))
 
     def __lshift__(self, other):
-        return (type(self) << other)(int(self) << other)
+        return (type(self) << other)(super().__lshift__(other))
 
     def __add__(self, other):
         if not is_type(type(other)):
@@ -349,7 +348,7 @@ class Integer(Integral, metaclass=IntegerType):
         if not isinstance(other, Integer):
             return NotImplemented
 
-        return (type(self) + type(other))(int(self) + int(other))
+        return (type(self) + type(other))(super().__add__(other))
 
     def __iadd__(self, other):
         if not is_type(type(other)):
@@ -372,7 +371,7 @@ class Integer(Integral, metaclass=IntegerType):
         if not isinstance(other, Integer):
             return NotImplemented
 
-        return (type(self) - type(other))(int(self) - int(other))
+        return (type(self) - type(other))(super().__sub__(other))
 
     def __mul__(self, other):
         if not is_type(type(other)):
@@ -381,7 +380,7 @@ class Integer(Integral, metaclass=IntegerType):
         if not isinstance(other, Integer):
             return NotImplemented
 
-        return (type(self) * type(other))(int(self) * int(other))
+        return (type(self) * type(other))(super().__mul__(other))
 
     __rmul__ = __mul__
 
@@ -606,7 +605,7 @@ class Uint(Integer, metaclass=UintType):
         if not isinstance(other, Uint):
             other = Uint(other)
 
-        return Uint[self.width + other.width]((int(self) << other.width) +
+        return Uint[self.width + other.width]((int(self) << other.width) |
                                               int(other))
 
     def __rmatmul__(self, other):

@@ -354,8 +354,8 @@ def forward(node, analysis):
 
     cfg_obj = CFG.build_cfg(node)
 
-    if hls_debug_log_enabled():
-        draw_cfg(cfg_obj)
+    # if hls_debug_log_enabled():
+    #     draw_cfg(cfg_obj)
 
     analysis.visit(cfg_obj.entry)
 

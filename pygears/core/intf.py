@@ -194,7 +194,7 @@ class Intf:
                 raise TypeMatchError(
                     f'{str(err)}\n, when converting output data "{repr(val)}"'
                     f'from the "{registry("gear/current_module").name}"'
-                    f' module cannot to the type {repr(self.dtype)}')
+                    f' module to the type {repr(self.dtype)}')
 
         if put_event:
             put_event(self, val)

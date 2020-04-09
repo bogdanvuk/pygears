@@ -2,6 +2,8 @@ import ast
 import sys
 import typing
 import inspect
+import weakref
+from functools import partial
 from . import Context, FuncContext, Function, node_visitor, ir, visit_ast
 from .inline import form_gear_args, call_gear, parse_func_call
 from .cast import resolve_cast_func
@@ -11,7 +13,7 @@ from pygears.core.partial import Partial, MultiAlternativeError
 from pygears.core.gear import OutSig, gear_explicit_params
 
 from functools import reduce
-from pygears.typing import Int, Uint, code, div, Queue
+from pygears.typing import Int, Uint, code, div, Queue, Integral
 from pygears.typing import is_type, typeof, Tuple, Array
 from pygears.typing import floor, cast, signed, saturate
 from pygears.typing.queue import QueueMeta
@@ -135,7 +137,7 @@ def max_expr(op1, op2):
     op1_compare = op1
     op2_compare = op2
 
-    #TODO: Sort this casting out
+    # TODO: Sort this casting out
     signed = typeof(op1.dtype, Int) or typeof(op2.dtype, Int)
     if signed and typeof(op1.dtype, Uint):
         op1_compare = resolve_cast_func(op1, Int)
@@ -164,8 +166,11 @@ def call_int(arg, **kwds):
     # ignore cast
     if typeof(arg.dtype, (Uint, Int)):
         return arg
-    else:
-        return ir.CastExpr(arg, cast_to=Uint[len(arg.dtype)])
+    elif typeof(arg.dtype, Integral):
+        if arg.dtype.signed:
+            return ir.CastExpr(arg, cast_to=Int[arg.dtype.width])
+        else:
+            return ir.CastExpr(arg, cast_to=Uint[arg.dtype.width])
 
 
 def call_all(arg, **kwds):
@@ -244,11 +249,31 @@ def call_type(arg):
     return ir.ResExpr(arg.dtype)
 
 
+def call_isinstance(arg, dtype):
+    if isinstance(dtype, ir.ResExpr):
+        dtype = dtype.val
+
+    if isinstance(arg, ir.ResExpr):
+        return isinstance(arg.val, dtype)
+
+    return ir.ResExpr(typeof(arg.dtype, dtype))
+
+
 def call_is_type(arg):
     if not isinstance(arg, ir.ResExpr):
         return ir.res_false
 
     return ir.ResExpr(is_type(arg.val))
+
+
+def call_typeof(arg, dtype):
+    if isinstance(dtype, ir.ResExpr):
+        dtype = dtype.val
+
+    if not isinstance(arg, ir.ResExpr):
+        return ir.res_false
+
+    return ir.ResExpr(typeof(arg.val, dtype))
 
 
 def call_enumerate(arg):
@@ -290,8 +315,12 @@ builtins = {
     call_print,
     type:
     call_type,
+    isinstance:
+    call_isinstance,
     is_type:
     call_is_type,
+    typeof:
+    call_typeof,
     div:
     call_div,
     floor:
@@ -331,10 +360,123 @@ builtins = {
     })
 }
 
-compile_time_builtins = {
-    all, max, int, len, type, div, floor, cast, QueueMeta.sub, Array.code,
-    Tuple.code, code, is_type
+# TODO: Both bitwise and boolean operators will be mapped to bitwise HDL
+# operators. Rework the mapping below.
+
+int_ops = {
+    ir.opc.Add: '__add__',
+    ir.opc.BitAnd: '__and__',
+    ir.opc.BitOr: '__or__',
+    ir.opc.BitXor: '__xor__',
+    ir.opc.Div: '__truediv__',
+    ir.opc.Eq: '__eq__',
+    ir.opc.Gt: '__gt__',
+    ir.opc.GtE: '__ge__',
+    ir.opc.FloorDiv: '__floordiv__',
+    ir.opc.Lt: '__lt__',
+    ir.opc.LtE: '__le__',
+    ir.opc.LShift: '__lshift__',
+    ir.opc.Mod: '__mod__',
+    ir.opc.Mult: '__mul__',
+    ir.opc.NotEq: '__ne__',
+    ir.opc.RShift: '__rshift__',
+    ir.opc.Sub: '__sub__'
 }
+
+
+for op, name in int_ops.items():
+    builtins[getattr(int, name)] = lambda a, b, x=op: ir.BinOpExpr((call_int(a), b), x)
+
+compile_time_builtins = {
+    all, max, int, len, type, isinstance, div, floor, cast, QueueMeta.sub,
+    Array.code, Tuple.code, code, is_type, typeof
+}
+
+
+class Method:
+    def __init__(self, func, val, cls):
+        self.__func__ = func
+        self.__self__ = val
+        self.__dtype__ = cls
+
+    def __call__(self, *args, **kwds):
+        self.__func__(self.__self__, *args, **kwds)
+
+
+class Super:
+    def __init__(self, cls, val):
+        self.cls = cls
+        self.val = val
+
+    def __getattribute__(self, name):
+        cls = super().__getattribute__('cls')
+        val = super().__getattribute__('val')
+        for base in inspect.getmro(cls):
+            if name in base.__dict__:
+                if base is object:
+                    return getattr(base, name)
+
+                f = base.__dict__[name]
+                if isinstance(val, ir.ResExpr):
+                    f = partial(f, val.val)
+                    # f = f.__get__(op1.val, base)
+                else:
+                    f = partial(f, val)
+                    # f = f.__get__(base(), base)
+
+                store_method_obj(f, val)
+
+                return f
+        else:
+            raise AttributeError(name)
+
+
+def get_class_that_defined_method(meth):
+    if inspect.ismethod(meth):
+        for cls in inspect.getmro(meth.__self__.__class__):
+            if cls.__dict__.get(meth.__name__) is meth:
+                return cls
+        meth = meth.__func__  # fallback to __qualname__ parsing
+
+    if isinstance(meth, Method):
+        return meth.__dtype__
+
+    if inspect.isfunction(meth):
+        cls = getattr(
+            inspect.getmodule(meth),
+            meth.__qualname__.split('.<locals>', 1)[0].rsplit('.', 1)[0])
+        if isinstance(cls, type):
+            return cls
+
+    return getattr(meth, '__objclass__',
+                   None)  # handle special descriptor objects
+
+
+def get_method_obj(f):
+    ctx = registry('hls/ctx')[0]
+    print(f'Get __self__ for {f}: {id(f)}')
+    # TODO: Think about whether hash(repr(f)) is a unique way to reference a
+    # method when I used id(f), it wasn't unique (garbage collection?). Maybe I
+    # could hook somehow to garbage disposal of functions
+    obj, wref = ctx.methods.get(id(f), (None, None))
+    if wref is not None:
+        if wref() is None:
+            return None
+
+    return obj
+
+
+def store_method_obj(f, obj):
+    ctx = registry('hls/ctx')[0]
+    ctx.methods[id(f)] = (obj, weakref.ref(f))
+    print(f'Storing {obj} for {f} under {id(f)}')
+
+
+def func_from_method(f):
+    if hasattr(f, '__func__'):
+        return f.__func__
+
+    return getattr(type(f.__self__), f.__name__)
 
 
 def resolve_func(func, args, kwds, ctx):
@@ -344,14 +486,37 @@ def resolve_func(func, args, kwds, ctx):
 
         return resolve_cast_func(args[0], func)
 
-    # If we are dealing with bound methods
-    if not inspect.isbuiltin(func) and hasattr(func, '__self__'):
-        if is_type(func.__self__):
+    if isinstance(func, partial):
+        args = func.args + tuple(args)
+        func = func.func
+    elif not inspect.isbuiltin(func) and hasattr(func, '__self__'):
+
+        if get_method_obj(func) is not None:
+            args = (get_method_obj(func), ) + tuple(args)
+            func = func_from_method(func)
+        elif func is super:
+            if not isinstance(ctx, FuncContext):
+                raise Expception(f'super() called outside a method function')
+
+            f = ctx.funcref.func
+            obj = ctx.ref('self')
+            cls = get_class_that_defined_method(f).__base__
+
+            return ir.ResExpr(Super(cls, obj))
+        elif const_func_args(args, kwds):
+            if func.__qualname__ == 'FixpnumberType.__add__':
+                print('But not here?')
+
+            return resolve_compile_time(func, args, kwds)
+        elif is_type(func.__self__):
             if func.__name__ == 'decode':
                 return ir.CastExpr(args[0], ir.ResExpr(func.__self__))
-
-        breakpoint()
-        raise Exception
+            else:
+                breakpoint()
+                raise Exception
+        else:
+            breakpoint()
+            raise Exception
 
     if isinstance(func, Partial):
         intf, stmts = call_gear(func, *form_gear_args(args, kwds, func), ctx)
@@ -377,6 +542,7 @@ def resolve_func(func, args, kwds, ctx):
         return resolve_func(func.dispatch(dtype), args, kwds, ctx)
     else:
         return parse_func_call(func, args, kwds, ctx)
+        # return parse_func_call(orig_func, args, kwds, ctx)
 
 
 @node_visitor(ast.Call)

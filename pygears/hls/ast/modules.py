@@ -7,25 +7,13 @@ def parse_async_func(node, ctx: Context):
     return visit_block(ir.HDLBlock(), node.body, ctx)
 
 
-# @node_visitor(ast.Lambda)
-# def _(node, ctx: FuncContext):
-#     if not isinstance(ctx, FuncContext):
-#         raise Exception('Unsupported')
-
-#     return visit_block(
-#         ir.FuncBlock(stmts=[],
-#                      args=ctx.args,
-#                      name=ctx.funcref.name,
-#                      ret_dtype=ctx.ret_dtype), node.body, ctx)
-
-
 @node_visitor((ast.Lambda, ast.FunctionDef))
 def _(node, ctx: FuncContext):
     if not isinstance(ctx, FuncContext):
         raise Exception('Unsupported')
 
     block = ir.FuncBlock(stmts=[],
-                         args=ctx.args,
+                         args=ctx.signature,
                          name=ctx.funcref.name,
                          ret_dtype=ctx.ret_dtype)
 

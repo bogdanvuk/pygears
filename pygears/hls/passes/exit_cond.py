@@ -1,4 +1,4 @@
-from .utils import HDLVisitor, ir, res_true
+from ..ir_utils import HDLVisitor, ir, res_true
 
 
 class InferInCond(HDLVisitor):

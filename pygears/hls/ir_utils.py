@@ -1,19 +1,19 @@
 import inspect
 
-from .. import ir
+from . import ir
 from pygears.typing import Bool
 from pygears import Intf
 
 
 def is_intf_id(expr):
-    return (
-        isinstance(expr, ir.Name) and isinstance(expr.obj, ir.Variable)
-        and isinstance(expr.obj.val, Intf))
+    return (isinstance(expr, ir.Name) and isinstance(expr.obj, ir.Variable)
+            and isinstance(expr.obj.val, Intf))
 
 
 def add_to_list(orig_list, extension):
     if extension:
-        orig_list.extend(extension if isinstance(extension, list) else [extension])
+        orig_list.extend(
+            extension if isinstance(extension, list) else [extension])
 
 
 res_true = ir.ResExpr(Bool(True))
@@ -189,9 +189,12 @@ class IrRewriter:
         return rw_block
 
     def FuncBlock(self, block: ir.FuncBlock):
-        args = {n: self.visit(val) for n, val in block.args.items()}
+        # args = {n: self.visit(val) for n, val in block.args.items()}
 
-        rw_block = type(block)(args, block.name, block.ret_dtype, block.funcs)
+        rw_block = type(block)(name=block.name,
+                               args=block.args,
+                               ret_dtype=block.ret_dtype,
+                               funcs=block.funcs)
 
         for stmt in block.stmts:
             add_to_list(rw_block.stmts, self.visit(stmt))
@@ -199,7 +202,8 @@ class IrRewriter:
         return rw_block
 
     def HDLBlock(self, block: ir.HDLBlock):
-        rw_block = type(block)(self.visit(block.test), self.visit(block.in_cond))
+        rw_block = type(block)(self.visit(block.test),
+                               self.visit(block.in_cond))
 
         for stmt in block.stmts:
             add_to_list(rw_block.stmts, self.visit(stmt))
@@ -303,11 +307,11 @@ class IrExprRewriter:
         return node
 
     def visit_CallExpr(self, node):
+        args = [self.visit(a) for a in node.args]
+        kwds = {name: self.visit(val) for name, val in node.kwds.items()}
         func = self.visit(node.func)
-        if func is not None:
-            return ir.CallExpr(func, node.args, node.kwds, node.params)
 
-        return node
+        return ir.CallExpr(func, args, kwds, node.params)
 
     def visit_FunctionCall(self, node: ir.FunctionCall):
         changed = False
@@ -381,7 +385,8 @@ class IrExprRewriter:
             return node
 
         ops = [
-            old_op if new_op is None else new_op for new_op, old_op in zip(ops, old_ops)
+            old_op if new_op is None else new_op
+            for new_op, old_op in zip(ops, old_ops)
         ]
 
         return ir.SubscriptExpr(*ops)
@@ -394,7 +399,8 @@ class IrExprRewriter:
             return node
 
         ops = [
-            old_op if new_op is None else new_op for new_op, old_op in zip(ops, old_ops)
+            old_op if new_op is None else new_op
+            for new_op, old_op in zip(ops, old_ops)
         ]
 
         return ir.ConditionalExpr(tuple(ops[1:]), ops[0])

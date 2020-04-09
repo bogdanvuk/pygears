@@ -39,9 +39,6 @@ def test_multiple_arguments(tmpdir):
     sim(tmpdir)
 
 
-# test_multiple_arguments('/tools/home/tmp/test_func')
-
-
 def test_multiple_arguments_datagear(tmpdir):
     TComplex = Tuple[Integer, Integer]
     complex_t = Tuple[Uint[8], Uint[8]]
@@ -77,6 +74,8 @@ def test_multiple_arguments_datagear_complex(tmpdir):
     sim(tmpdir)
 
 
+
+
 def test_fixp_arith(tmpdir, sim_cls):
     @gear(hdl={'compile': True})
     async def fixp_arith(x: Fixpnumber, y: Fixpnumber) -> Ufixp[4, 7]:
@@ -89,6 +88,9 @@ def test_fixp_arith(tmpdir, sim_cls):
              ref=[Ufixp[4, 7](10.75)])
 
     sim(tmpdir)
+
+# from pygears.sim.modules import SimVerilated
+# test_fixp_arith('/tools/home/tmp/test_fixp_arith', SimVerilated)
 
 
 def test_fixp_diff_arith(tmpdir, sim_cls):

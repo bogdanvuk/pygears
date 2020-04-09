@@ -1,6 +1,6 @@
 import attr
 from copy import deepcopy
-from .utils import res_true, HDLVisitor, ir, add_to_list, res_false, is_intf_id
+from ..ir_utils import res_true, HDLVisitor, ir, add_to_list, res_false, is_intf_id
 from pygears.typing import bitw, Uint, Bool
 from .loops import infer_cycle_done
 

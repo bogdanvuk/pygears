@@ -1,4 +1,4 @@
-from .utils import IrExprRewriter, IrRewriter
+from ..ir_utils import IrExprRewriter, IrRewriter
 from pygears.core.datagear import is_datagear
 from ..ast.inline import call_datagear
 

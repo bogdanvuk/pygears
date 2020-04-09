@@ -58,6 +58,8 @@ def test_directed(tmpdir, sim_cls, din_delay, dout_delay):
     sim(resdir=tmpdir)
 
 # from pygears.sim.modules import SimVerilated
+# from pygears import config
+# config['debug/trace'] = ['*']
 # test_directed('/tools/home/tmp/clip', SimVerilated, 0, 0)
 
 

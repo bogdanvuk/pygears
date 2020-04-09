@@ -1,4 +1,5 @@
 from .. import ir
+from .. import ir_utils
 from ..debug import hls_debug
 
 from .inline import inline, inline_res

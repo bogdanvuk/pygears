@@ -59,6 +59,11 @@ def test_replicate_queue(tmpdir, cosim_cls, din_delay, dout_delay):
 
     sim(resdir=tmpdir)
 
+# from pygears.sim.modules import SimVerilated
+# from pygears import config
+# config['debug/trace'] = ['*']
+# test_replicate_queue('/tools/home/tmp/replicate', SimVerilated, 0, 0)
+
 
 # TODO: live fails
 # @formal_check()

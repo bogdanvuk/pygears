@@ -1,7 +1,5 @@
-from pygears import alternative, gear
-from pygears.lib import cart
-from pygears.typing import Any, Bool, Queue, Tuple, Number, code, cast
-from pygears.typing import saturate as sat
+from pygears import gear
+from pygears.typing import Number, Queue, saturate
 
 
 @gear(hdl={'compile': True})
@@ -18,21 +16,8 @@ async def reduce(din: Queue, init, *, f) -> b'init':
 
 
 @gear
-def accum(din: Queue[Tuple[{
-        'data': Number,
-        'init': Number
-}]],
-          *,
-          t,
-          saturate=False) -> b't':
-    if saturate:
-        return reduce(din, f=lambda x, y: sat(x + y, t), t=t)
-    else:
-        return reduce(din, f=lambda x, y: x + y, t=t)
+def accum(din: Queue[Number], init: Number, *, cast=saturate) -> b'init':
+    def add(x, y):
+        return saturate(x + y, init.dtype)
 
-
-@gear
-def accum(din: Queue[Number], init: Number, *, saturate=False) -> b't':
-    # def add(x, y):
-
-    return reduce(saturate=saturate)
+    return reduce(din, init, f=add)

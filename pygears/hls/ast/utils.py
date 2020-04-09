@@ -62,6 +62,10 @@ def get_function_ast(func):
     else:
         return ast.parse(get_function_source(func)).body[0]
 
+def get_property_type(prop):
+    assert isinstance(prop, property)
+
+    return prop.fget.__annotations__['return']
 
 def add_to_list(orig_list, extention):
     if extention:

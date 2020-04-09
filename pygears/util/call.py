@@ -37,7 +37,7 @@ def call(f, *args, **kwds):
 
     mod = seqs[0].consumers[0].gear
     from pygears.sim import cosim
-    cosim(mod, 'verilator')
+    cosim(mod, 'verilator', rebuild=True)
     # sim('/tools/home/tmp/trunc', check_activity=False)
     sim(check_activity=False)
 

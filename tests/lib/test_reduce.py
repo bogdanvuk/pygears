@@ -2,7 +2,7 @@ import pytest
 from pygears.util.test_utils import get_decoupled_dut
 from functools import reduce as freduce
 from pygears.lib import reduce, directed, drv, verif, delay_rng, accum
-from pygears.typing import Uint, Queue, Bool, saturate
+from pygears.typing import Uint, Queue, Bool, saturate, trunc
 from pygears.sim import sim
 from pygears.util.test_utils import synth_check
 from pygears import Intf
@@ -44,71 +44,33 @@ def test_delay(tmpdir, cosim_cls, din_delay, dout_delay):
 
     sim(resdir=tmpdir)
 
-# from pygears.hls.ast import beniget
 
-# c = """
-# async def group(din: Queue, size: Uint, *,
-#                 init=1) -> Queue['din.data', 'din.lvl + 1']:
-#     cnt = size.dtype(init)
-#     last: Bool
-#     out_eot: Uint[din.dtype.lvl+1]
+def accum_test(tmpdir, accum_gear, reduce_func):
+    init = [7, 45]
+    seq = [list(range(0, 100, 10)), list(range(2))]
 
-#     async with size as c:
-#         assert c >= init, 'group: incorrect configuration'
-#         last = False
-#         while not last:
-#             async for (data, eot) in din:
-#                 last = (cnt == c)
-#                 out_eot = last @ eot
-#                 yield (data, out_eot)
-#                 if not last and all(eot):
-#                     cnt += 1
-# """
+    directed(drv(t=Queue[Uint[8]], seq=seq),
+             drv(t=Uint[8], seq=init),
+             f=accum_gear,
+             ref=[freduce(reduce_func, s, i) for s, i in zip(seq, init)])
 
-# module = beniget.ast.parse(c)
-
-# # compute the def-use chains at module level
-# duc = beniget.DefUseChains()
-# duc.visit(module)
-# udc = beniget.UseDefChains(duc)
-
-# for n, d in udc.chains.items():
-#     print(f'{id(n)}: {beniget.ast.dump(n)}')
-#     print(' | '.join([str(id(v.node)) for v in d]))
-
-# # for n, d in duc.chains.items():
-# #     print(f'{id(n)}: {beniget.ast.dump(n)}')
-# #     print(repr(d))
-
-# import gast
-# import ast
-# from pygears.hls.ast import cfg, annotations as anno
+    sim(resdir=tmpdir)
 
 
-# c = """
-# async def reduce(din: Queue, init, *, f) -> b'init':
-#     a = 2
-#     acc: init.dtype = a
+def test_accum_dflt_directed(tmpdir, sim_cls):
+    def add(x, y):
+        return saturate(x + y, Uint[8])
 
-#     async with init as i:
-#         acc = i
-#         async for (d, eot) in din:
-#             bla = acc + i
-#             acc = f(bla, d)
+    accum_test(tmpdir, accum(sim_cls=sim_cls), add)
 
-#             if eot:
-#                 yield acc
-# """
 
-# node = ast.parse(c)
-# cfg.forward(node, cfg.ReachingDefinitions())
-# body = node.body[0].body
-# print(anno.getanno(body[2].body[1].body[0], 'definitions_in'))
-# breakpoint()
-# # Only the argument reaches the expression
-# assert len(anno.getanno(body[0], 'definitions_in')) == 1
-# while_body = body[1].body
-# # x can be either the argument here, or from the previous loop
-# assert len(anno.getanno(while_body[0], 'definitions_in')) == 2
+# def test_accum_trunc_directed(tmpdir, sim_cls):
+#     def add(x, y):
+#         return trunc(x + y, Uint[8])
 
-# breakpoint()
+#     accum_test(tmpdir, accum(sim_cls=sim_cls, cast=trunc), add)
+
+
+# from pygears.sim.modules import SimVerilated
+# test_accum_trunc_directed('/tools/home/tmp/accum', SimVerilated)
+# test_uint_directed('/tools/home/tmp/accum', SimVerilated)

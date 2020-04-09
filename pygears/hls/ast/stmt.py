@@ -30,7 +30,26 @@ def infer_targets(ctx, target, dtype, obj_factory=None):
         breakpoint()
 
 
-def assign_targets(ctx, target, source, obj_factory=None):
+def assign_targets(ctx: Context, target, source, obj_factory=None):
+    # Speed-up the process of evaluating functions deep inside pygears. If the
+    # target is a top level variable within the function, assume it is just an
+    # alias
+    if (isinstance(target, ir.Name) and ctx.pydl_block_closure
+            and isinstance(ctx.pydl_parent_block, ir.FuncBlock)
+            and isinstance(source, ir.ResExpr)
+            and not target.name in ctx.scope):
+        ctx.local_namespace[target.name] = source.val
+        return None
+
+    # If we thought something was an alias, but it changed later, turn that
+    # alias into an variable assignment at the begining of the scope
+    if isinstance(target, ir.Name) and target.name in ctx.local_namespace:
+        ctx.pydl_block_closure[0].stmts.insert(
+            0,
+            ir.AssignValue(target.name,
+                           ir.ResExpr(ctx.local_namespace[target.name])))
+        del ctx.local_namespace[target.name]
+
     infer_targets(ctx, target, source.dtype, obj_factory)
     return ir.AssignValue(target, source)
 
@@ -62,8 +81,12 @@ def _(node, ctx: Context):
 def _(node, ctx: Context):
     target = visit_ast(node.target, ctx)
     value = visit_ast(node.value, ctx)
+
+    # TODO: We should probably invoke truncate function to preserve the sign correctly
     return ir.AssignValue(
-        target, ir.BinOpExpr((ctx.ref(target.name), value), type(node.op)))
+        target,
+        ir.CastExpr(ir.BinOpExpr((ctx.ref(target.name), value), type(node.op)),
+                    target.dtype))
 
 
 @node_visitor(ast.Assign)

@@ -5,7 +5,7 @@ from abc import ABCMeta, abstractmethod
 class NumberType(ABCMeta, GenericMeta):
     @property
     @abstractmethod
-    def signed(self):
+    def signed(self) -> bool:
         ...
 
 

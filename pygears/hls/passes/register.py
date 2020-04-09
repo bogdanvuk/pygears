@@ -1,4 +1,4 @@
-from .utils import HDLVisitor, Scope, add_to_list, res_true, ir, IrExprRewriter, IrExprVisitor, IrVisitor
+from ..ir_utils import HDLVisitor, Scope, add_to_list, res_true, ir, IrExprRewriter, IrExprVisitor, IrVisitor
 from . import hls_debug
 
 

@@ -1,6 +1,6 @@
 import inspect
 import typing
-from . import Context, FuncContext, Function, Submodule, SyntaxError, node_visitor, ir, visit_ast, visit_block
+from . import Context, FuncContext, Function, Submodule, SyntaxError, node_visitor, ir, visit_ast, visit_block, ir_utils
 from ..debug import print_func_parse_intro
 from pygears import Intf, bind, registry
 from pygears.core.partial import combine_arg_kwds, extract_arg_kwds
@@ -16,21 +16,93 @@ def form_gear_args(args, kwds, func):
     return args_only, kwds_only
 
 
+class ComplexityExplorer(ir_utils.IrExprVisitor):
+    def __init__(self):
+        self.operations = 0
+        self.names = 0
+
+    def visit_Name(self, node):
+        self.names += 1
+
+    def visit_BinOpExpr(self, node):
+        self.operations += 1
+        super().visit_BinOpExpr(node)
+
+    def visit_ConditionalExpr(self, node):
+        self.operations += 1
+        super().visit_ConditionalExpr(node)
+
+
+class Inliner(ir_utils.IrExprRewriter):
+    def __init__(self, forwarded):
+        self.forwarded = forwarded
+
+    def visit_Name(self, node):
+        if ((node.name not in self.forwarded) or (node.ctx != 'load')):
+            return None
+
+        val = self.forwarded[node.name]
+
+        if isinstance(val, ir.ResExpr) and getattr(val.val, 'unknown', False):
+            return node
+
+        return val
+
+
+def should_inline(func_ir, func_ctx, args):
+    if len(func_ir.stmts) > 1:
+        return False
+
+    s = func_ir.stmts[0]
+
+    if not isinstance(s, ir.FuncReturn):
+        return False
+
+    v = ComplexityExplorer()
+    v.visit(s.expr)
+
+    if v.operations <= 2 and v.names <= len(args):
+        return True
+
+    return False
+
+
+def inline_expr(func_ir, func_ctx, args):
+    s = func_ir.stmts[0]
+    return Inliner(args).visit(s.expr)
+
+
 def parse_func_call(func: typing.Callable, args, kwds, ctx: Context):
-    funcref = Function(func, args, kwds, uniqueid=len(ctx.functions))
-    if funcref not in ctx.functions:
+    ctx_stack = registry('hls/ctx')
+
+    uniqueid = ''
+    if isinstance(ctx, FuncContext):
+        uniqueid = ctx.funcref.name
+
+    uniqueid += str(len(ctx_stack[0].functions))
+
+    funcref = Function(func, args, kwds, uniqueid=uniqueid)
+
+    if funcref not in ctx_stack[0].functions:
         func_ctx = FuncContext(funcref, args, kwds)
         print_func_parse_intro(func, funcref.ast)
         registry('hls/ctx').append(func_ctx)
         func_ir = visit_ast(funcref.ast, func_ctx)
         registry('hls/ctx').pop()
-        ctx.functions[funcref] = (func_ir, func_ctx)
+        ctx_stack[0].functions[funcref] = (func_ir, func_ctx)
     else:
-        (func_ir, func_ctx) = ctx.functions[funcref]
+        (func_ir, func_ctx) = ctx_stack[0].functions[funcref]
+        funcref_list = list(ctx_stack[0].functions.keys())
+        funcref.uniqueid = funcref_list[funcref_list.index(funcref)].uniqueid
 
-    return ir.FunctionCall(operands=list(func_ctx.args.values()),
-                           ret_dtype=func_ctx.ret_dtype,
-                           name=funcref.name)
+    args = func_ctx.argdict(args, kwds)
+
+    if not should_inline(func_ir, func_ctx, args):
+        return ir.FunctionCall(operands=list(args.values()),
+                               ret_dtype=func_ctx.ret_dtype,
+                               name=funcref.name)
+    else:
+        return inline_expr(func_ir, func_ctx, args)
 
 
 def call_datagear(func, args, params, ctx: Context):

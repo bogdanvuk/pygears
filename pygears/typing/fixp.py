@@ -16,15 +16,15 @@ class FixpnumberType(IntegralType):
             return super().__str__()
 
     @property
-    def width(self):
+    def width(self) -> int:
         return self.__args__[1]
 
     @property
-    def integer(self):
+    def integer(self) -> int:
         return self.__args__[0]
 
     @property
-    def fract(self):
+    def fract(self) -> int:
         return self.width - self.integer
 
     def __int__(self):
@@ -295,6 +295,10 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
             (int(self) << (sum_cls.fract - type(self).fract)) +
             (int(other) << (sum_cls.fract - type(other).fract)))
 
+        # return sum_cls.decode(
+        #     super().__lshift__(sum_cls.fract - type(self).fract) +
+        #     super().__lshift__(sum_cls.fract - type(other).fract))
+
     __radd__ = __add__
 
     def __sub__(self, other):
@@ -397,14 +401,14 @@ class Fixp(Fixpnumber, metaclass=FixpType):
 
 class UfixpType(FixpnumberType):
     @property
-    def signed(self):
+    def signed(self) -> bool:
         return False
 
     def is_abstract(self):
         return False
 
     @property
-    def specified(self):
+    def specified(self) -> bool:
         return IntegralType.specified.fget(self)
 
     @property
@@ -427,15 +431,14 @@ class UfixpType(FixpnumberType):
     def fmin(self):
         return float(0)
 
+    def decode(self, val):
+        return int.__new__(self, int(val) & ((1 << self.width) - 1))
+
 
 class Ufixp(Fixpnumber, metaclass=UfixpType):
     __parameters__ = ['I', 'W']
 
     @class_and_instance_method
     @property
-    def signed(self):
+    def signed(self) -> bool:
         return False
-
-    @classmethod
-    def decode(cls, val):
-        return int.__new__(cls, int(val) & ((1 << cls.width) - 1))

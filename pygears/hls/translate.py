@@ -16,7 +16,6 @@ def translate_gear(gear: Gear):
     hls_debug(title=f'Translating: {gear.name}')
 
     exec_context = registry('gear/exec_context')
-    bind('gear/exec_context', 'hls')
 
     # For the code that inspects gear via module() call
     bind('gear/current_module', gear)
@@ -26,13 +25,19 @@ def translate_gear(gear: Gear):
     print_gear_parse_intro(gear, body_ast)
     ctx = GearContext(gear)
 
-    safe_bind('hls/ctx', [ctx])
-    modblock = visit_ast(body_ast, ctx)
+    res = process(body_ast, ctx)
 
-    res = transform(modblock, ctx)
+    res = transform(res, ctx)
 
     bind('gear/exec_context', exec_context)
     return ctx, res
+
+def process(body_ast, ctx):
+    # hls_enable_debug_log()
+    bind('gear/exec_context', 'hls')
+
+    safe_bind('hls/ctx', [ctx])
+    return visit_ast(body_ast, ctx)
 
 
 def transform(modblock, ctx: GearContext):

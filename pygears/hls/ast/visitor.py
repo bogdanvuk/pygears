@@ -34,7 +34,8 @@ class Function:
         self.source = get_function_source(func)
         self.func = func
         self.ast = get_function_ast(func)
-        self.basename = ''.join(e for e in func.__name__ if e.isalnum())
+        self.basename = ''.join(e for e in func.__name__
+                                if e.isalnum() or e == '_')
         self.uniqueid = uniqueid
         # TODO: Include keywords here
         self._hash = hash(self.source) ^ hash(tuple(arg.dtype for arg in args))
@@ -46,6 +47,9 @@ class Function:
 
         return f'{self.basename}_{self.uniqueid}'
 
+    def __eq__(self, other):
+        return hash(self) == hash(other)
+
     def __hash__(self):
         return self._hash
 
@@ -53,7 +57,8 @@ class Function:
 class Context:
     def __init__(self):
         self.scope: typing.Dict = {}
-        self.args = {}
+        args = {}
+        self.methods = {}
         self.local_namespace: typing.Dict = {'__builtins__': __builtins__}
         self.functions: typing.Mapping[Function, FuncContext] = {}
         self.pydl_block_closure: typing.List = []
@@ -73,6 +78,7 @@ class Context:
 
         return res_name
 
+    # TODO: rename pydl_ (maybe to ir_)
     @property
     def pydl_parent_block(self):
         return self.pydl_block_closure[-1]
@@ -167,16 +173,28 @@ class GearContext(Context):
 
 
 class FuncContext(Context):
+    def argdict(self, args, kwds):
+        paramspec = inspect.getfullargspec(self.funcref.func)
+        args = dict(zip(paramspec.args, args))
+        args.update(kwds)
+
+        for name in self.const_args:
+            del args[name]
+
+        return args
+
     def __init__(self, funcref: Function, args, kwds):
         super().__init__()
         self.funcref = funcref
         func = funcref.func
 
+        # self.name = funcref.name
         self.local_namespace = get_function_context_dict(func)
 
         paramspec = inspect.getfullargspec(funcref.func)
-        self.args = dict(zip(paramspec.args, args))
-        self.args.update(kwds)
+        args = dict(zip(paramspec.args, args))
+        args.update(kwds)
+
         self.ret_dtype = None
         self.const_args = {}
 
@@ -190,18 +208,19 @@ class FuncContext(Context):
 
             arg_types = {}
             for name in paramspec.args:
-                if name not in self.args:
+                if name not in args:
                     continue
-                if isinstance(self.args[name], ir.ResExpr) and is_type(self.args[name].val):
+                if isinstance(args[name], ir.ResExpr) and is_type(
+                        args[name].val):
                     # TODO: Reconsider why ResExpr returns None for type classes, which
                     # makes this "if" necessary
-                    dtype = self.args[name].val.__class__
+                    dtype = args[name].val.__class__
                 else:
-                    dtype = self.args[name].dtype
+                    dtype = args[name].dtype
 
                 arg_types[name] = dtype
 
-            for name, var in self.args.items():
+            for name, var in args.items():
                 if name in params:
                     continue
 
@@ -218,21 +237,23 @@ class FuncContext(Context):
                 if name == 'return':
                     continue
 
-                if isinstance(self.args[name], ir.ResExpr):
-                    self.local_namespace[name] = self.args[name].val
-                    self.const_args[name] = self.args[name]
+                if isinstance(args[name], ir.ResExpr):
+                    self.local_namespace[name] = args[name].val
+                    self.const_args[name] = args[name]
                 else:
                     self.scope[name] = ir.Variable(name, dtype)
         else:
-            for name, arg in self.args.items():
+            for name, arg in args.items():
                 if isinstance(arg, ir.ResExpr):
                     self.local_namespace[name] = arg.val
                     self.const_args[name] = arg
                 else:
                     self.scope[name] = ir.Variable(name, arg.dtype)
 
-        for name in self.const_args:
-            del self.args[name]
+        self.signature = {
+            name: var.dtype
+            for name, var in args.items() if name not in self.const_args
+        }
 
 
 def node_visitor(ast_type):
@@ -247,10 +268,16 @@ def node_visitor(ast_type):
                 ttype, value, traceback = sys.exc_info()
                 raise value.with_traceback(traceback)
             except Exception as e:
-                func, fn, ln = gear_definition_location(ctx.gear.func)
-                msg = (
-                    f'{str(e)}\n    - when compiling gear "{ctx.gear.name}" with'
-                    f' parameters {ctx.gear.params}')
+                if isinstance(ctx, GearContext):
+                    func, fn, ln = gear_definition_location(ctx.gear.func)
+                    msg = (
+                        f'{str(e)}\n    - when compiling gear "{ctx.gear.name}" with'
+                        f' parameters {ctx.gear.params}')
+                else:
+                    func, fn, ln = gear_definition_location(ctx.funcref.func)
+                    msg = (
+                        f'{str(e)}\n    - when compiling function "{ctx.funcref.func}" with'
+                        f' parameters {ctx.args}')
 
                 err = SyntaxError(msg, ln + node.lineno - 1, filename=fn)
 
