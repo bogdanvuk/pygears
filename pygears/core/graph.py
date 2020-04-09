@@ -173,6 +173,9 @@ def get_producer_queue(obj):
 
     intf, i = end_producer[obj]
     if i >= len(intf.out_queues):
-        breakpoint()
+        # TODO: Investigate this. This happens when consumers tries to get
+        # data, but somewhere along the path from the producer to the consumer,
+        # some intermediate consumer is not registered with its immediate producer
+        return None
 
     return intf.out_queues[i]

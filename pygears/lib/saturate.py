@@ -17,6 +17,7 @@ def saturate(din: Integral, *, t,
         else:
             return t.max
     elif type(din).signed and t.signed:
+        # TODO: This 0 is not typecast, check why that happens
         if ((idin[t.width - 1:] == 0) or
             (idin[t.width - 1:] == Uint[type(din).width -
                                         t.width + 1].max)):
