@@ -76,17 +76,22 @@ def compile_funcs(modblock, ctx):
     active_funcs = set()
     while added:
         added = False
-        for f_ast, f_ctx in ctx.functions.values():
+
+        functions = ctx.functions.copy()
+
+        for f_ast, f_ctx in functions.values():
             if (f_ast.name in active_funcs) or (f_ast.name not in called_funcs):
                 continue
 
             active_funcs.add(f_ctx.funcref.name)
-            modblock.funcs.append((transform_func(f_ast, f_ctx), f_ctx))
+            funcblock = transform_func(f_ast, f_ctx)
 
-            func_called_funcs = find_called_funcs(f_ast, f_ctx)
+            func_called_funcs = find_called_funcs(funcblock, f_ctx)
             if func_called_funcs:
                 added = True
                 called_funcs.update(func_called_funcs)
+
+            modblock.funcs.append((funcblock, f_ctx))
 
 
 def transform_func(funcblock, ctx: FuncContext):

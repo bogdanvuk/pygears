@@ -13,13 +13,13 @@ from pygears.lib import drv, shred
 #                    OutSig('flush', 1)],
 #           hdl={'compile': True})
 #     async def local_rst(din):
-#         flush = module().signals['flush']
-#         flush.write(0)
+#         sig = module().signals['flush']
+#         sig.write(0)
 #         async with din as d:
 #             if d:
-#                 flush.write(1)
+#                 sig.write(1)
 #             else:
-#                 flush.write(0)
+#                 sig.write(0)
 
 #     @gear
 #     def hier(din: Bool):
@@ -28,3 +28,5 @@ from pygears.lib import drv, shred
 #     drv(t=Bool, seq=[False, True]) | hier
 #     cosim('/hier', 'verilator')
 #     sim(tmpdir)
+
+# test_outsig('/tools/home/tmp/signal')

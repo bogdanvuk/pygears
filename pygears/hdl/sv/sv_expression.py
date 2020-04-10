@@ -75,7 +75,7 @@ class SVExpressionVisitor:
 
     def visit_FunctionCall(self, node):
         return (f'{node.name}(' +
-                ', '.join(self.visit(op) for op in node.operands) + ')')
+                ', '.join(str(self.visit(op)) for op in node.operands) + ')')
 
     def visit_Interface(self, node):
         return node.name
