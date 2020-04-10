@@ -40,14 +40,15 @@ def test_directed(tmpdir, sim_cls, din_delay, dout_delay):
         drv(t=T_DIN, seq=[list(range(9)), list(range(3))])
         | delay_rng(din_delay, din_delay),
         f=dut(sim_cls=sim_cls),
-        ref=[[[0, 1, 2, 3, 4, 5, 6, 7, 8], [0, 1, 2, 3, 4, 5, 6, 7, 8],
-              [0, 1, 2, 3, 4, 5, 6, 7, 8]], [[0, 1, 2], [0, 1, 2], [0, 1, 2]]],
+        ref=[
+            [
+                [0, 1, 2, 3, 4, 5, 6, 7, 8], [0, 1, 2, 3, 4, 5, 6, 7, 8],
+                [0, 1, 2, 3, 4, 5, 6, 7, 8]
+            ], [[0, 1, 2], [0, 1, 2], [0, 1, 2]]
+        ],
         delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(resdir=tmpdir)
-
-# from pygears.sim.modules import SimVerilated
-# test_directed('/tools/home/tmp/interlace', SimVerilated, 0, 0)
 
 
 def test_random(tmpdir, sim_cls):
@@ -58,7 +59,8 @@ def test_random(tmpdir, sim_cls):
     stim = []
     for _ in range(din_num):
         stim.append(
-            drv(t=T_DIN,
+            drv(
+                t=T_DIN,
                 seq=[
                     list(range(random.randint(1, 10))),
                     list(range(random.randint(1, 10)))
@@ -76,8 +78,7 @@ def test_socket_cosim_rand(tmpdir):
 
     cons = []
     for i in range(din_num):
-        cons.append(
-            randomize(T_DIN, f'din{i}', eot_cons=['data_size == 10']))
+        cons.append(randomize(T_DIN, f'din{i}', eot_cons=['data_size == 10']))
 
     stim = []
     for i in range(din_num):

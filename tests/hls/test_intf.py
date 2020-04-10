@@ -50,24 +50,22 @@ def test_intf_vararg_mux(tmpdir, sim_cls, din_delay, dout_delay):
     sim(tmpdir, check_activity=False)
 
 
-# test_intf_vararg_mux('/tools/home/tmp/async_sim', 0, 0)
+def test_loop_select_intfs(tmpdir):
+    @gear(hdl={'compile': True})
+    async def test(*din: Uint) -> b'din[0]':
+        dsel: Uint[4]
+        for i in range(len(din)):
+            async with select(i, *din) as d:
+                yield d
 
-# def test_loop_select_intfs(tmpdir):
-#     @gear(hdl={'compile': True})
-#     async def test(*din: Uint) -> b'din[0]':
-#         dsel : Uint[4]
-#         for i in range(len(din)):
-#             dsel = select(i, *din)
-#             async with dsel as d:
-#                 yield d
+    directed(
+        drv(t=Uint[4], seq=list(range(4))),
+        drv(t=Uint[4], seq=list(range(4, 8))),
+        f=test,
+        ref=[0, 4, 1, 5, 2, 6, 3, 7])
 
-#     directed(drv(t=Uint[4], seq=list(range(4))),
-#              drv(t=Uint[4], seq=list(range(4, 8))),
-#              f=test,
-#              ref=[0, 4, 1, 5, 2, 6, 3, 7])
-
-#     cosim('/test', 'verilator')
-#     sim(tmpdir, check_activity=False)
+    cosim('/test', 'verilator')
+    sim(tmpdir, check_activity=False)
 
 
 @pytest.mark.parametrize('din_delay', [0, 1])
@@ -92,11 +90,6 @@ def test_loop_intfs(tmpdir, din_delay, dout_delay):
     sim(tmpdir, check_activity=False)
 
 
-# from pygears import config
-# config['debug/trace'] = ['*']
-# test_loop_intfs('/tools/home/tmp/loop_intfs', 0, 0)
-
-
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_enum_intfs(tmpdir, din_delay, dout_delay):
@@ -118,6 +111,7 @@ def test_enum_intfs(tmpdir, din_delay, dout_delay):
     cosim('/test', 'verilator')
     sim(tmpdir, check_activity=False)
 
+
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_enum_intfs_single(tmpdir, din_delay, dout_delay):
@@ -136,7 +130,6 @@ def test_enum_intfs_single(tmpdir, din_delay, dout_delay):
 
     cosim('/test', 'verilator')
     sim(tmpdir, check_activity=False)
-
 
 
 @pytest.mark.parametrize('din_delay', [0, 1])

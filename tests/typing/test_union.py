@@ -13,14 +13,6 @@ def test_equality():
     assert Union[1, 2] != Union[1, 2, 3]
 
 
-# def test_union_collapse():
-#     assert Union[Union[1]] == 1
-#     assert Union[1, Union[2, 3]] == Union[1, 2, 3]
-#     assert Union[Union[1, 2, 3], Union[4, 5, 6]] == Union[1, 2, 3, 4, 5, 6]
-#     assert Union[Union[1, 2, 3], Union[Union[4, 5], 6]] == Union[1, 2, 3, 4, 5,
-#                                                                  6]
-
-
 def test_is_specified():
     assert Union[1, 2].specified is True
     assert Union['T1', 2].specified is False

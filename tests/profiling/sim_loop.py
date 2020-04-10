@@ -3,7 +3,7 @@ import cProfile, pstats, io
 from pygears import gear
 from pygears.typing import Uint
 from pygears.lib.verif import drv
-from pygears.sim import sim
+# from pygears.sim import sim
 from pygears.sim.extens.sim_extend import SimExtend
 from pygears.lib import shred
 
@@ -28,14 +28,14 @@ async def passthrough(din: Uint[16]) -> Uint[16]:
         yield d
 
 
-d = drv(t=Uint[16], seq=list(range(4000)))
+# d = drv(t=Uint[16], seq=list(range(4000)))
 
-for _ in range(20):
-    d = d | passthrough
+# for _ in range(20):
+#     d = d | passthrough
 
-d | shred
+# d | shred
 
-t = time.time()
-# sim(extens=[Profiler])
-sim()
-print("%.3f" % (time.time()-t))
+# t = time.time()
+# # sim(extens=[Profiler])
+# sim()
+# print("%.3f" % (time.time()-t))

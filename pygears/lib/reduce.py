@@ -18,6 +18,6 @@ async def reduce(din: Queue, init, *, f) -> b'init':
 @gear
 def accum(din: Queue[Number], init: Number, *, cast=saturate) -> b'init':
     def add(x, y):
-        return saturate(x + y, init.dtype)
+        return cast(x + y, init.dtype)
 
     return reduce(din, init, f=add)

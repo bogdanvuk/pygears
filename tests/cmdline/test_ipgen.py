@@ -33,7 +33,3 @@ def test_makefile(tmpdir):
         generate=False)
 
     os.system(f'cd {tmpdir}; make')
-
-
-# test_extern_design('/tools/home/tmp/ipgen_test')
-# test_makefile('/tools/home/tmp/ipgen_test')

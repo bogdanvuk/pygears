@@ -1,5 +1,6 @@
 import ast
 from . import Context, FuncContext, SyntaxError, node_visitor, ir, visit_ast
+from pygears.core.gear import InSig, OutSig
 from .utils import add_to_list
 from .cast import resolve_cast_func
 
@@ -51,6 +52,11 @@ def assign_targets(ctx: Context, target, source, obj_factory=None):
         del ctx.local_namespace[target.name]
 
     infer_targets(ctx, target, source.dtype, obj_factory)
+
+    if source.dtype in (OutSig, InSig):
+        ctx.scope[target.name].val = source.val
+        return None
+
     return ir.AssignValue(target, source)
 
 

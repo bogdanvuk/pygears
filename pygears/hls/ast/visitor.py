@@ -2,6 +2,7 @@ import ast
 import inspect
 import typing
 from pygears.core.infer_ftypes import infer_ftypes
+from pygears.core.gear import OutSig, InSig
 from pygears.typing import Any, is_type
 from functools import singledispatch
 from dataclasses import dataclass, field
@@ -83,22 +84,6 @@ class Context:
         return self.pydl_block_closure[-1]
 
     @property
-    def intfs(self):
-        return {
-            name: obj
-            for name, obj in self.scope.items()
-            if isinstance(obj, ir.Variable) and isinstance(obj.val, Intf)
-        }
-
-    @property
-    def regs(self):
-        return {
-            name: obj
-            for name, obj in self.scope.items()
-            if isinstance(obj, ir.Variable) and obj.reg
-        }
-
-    @property
     def variables(self):
         return {
             name: obj
@@ -151,6 +136,31 @@ class GearContext(Context):
 
         for k, v in self.gear.explicit_params.items():
             self.scope[k] = ir.ResExpr(v)
+
+    @property
+    def intfs(self):
+        return {
+            name: obj
+            for name, obj in self.scope.items()
+            if isinstance(obj, ir.Variable) and isinstance(obj.val, Intf)
+        }
+
+    @property
+    def signals(self):
+        return {
+            name: obj
+            for name, obj in self.scope.items()
+            if isinstance(obj, ir.Variable) and isinstance(obj.val, (OutSig, InSig))
+        }
+
+    @property
+    def regs(self):
+        return {
+            name: obj
+            for name, obj in self.scope.items()
+            if isinstance(obj, ir.Variable) and obj.reg
+        }
+
 
     @property
     def in_ports(self):

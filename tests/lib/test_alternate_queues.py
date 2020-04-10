@@ -8,19 +8,22 @@ from pygears.sim import sim
 from pygears.typing import Int, Queue, Uint
 from pygears.util.test_utils import formal_check, synth_check
 
+#########################################################
+#  Multiple outputs currently not supported             #
+#########################################################
 
-def get_dut(dout_delay):
-    @gear
-    def decoupled(*din):
-        res = din | alternate_queues
-        dout = []
-        for r in res:
-            dout.append(r | decouple)
-        return tuple(dout)
+# def get_dut(dout_delay):
+#     @gear
+#     def decoupled(*din):
+#         res = din | alternate_queues
+#         dout = []
+#         for r in res:
+#             dout.append(r | decouple)
+#         return tuple(dout)
 
-    if dout_delay == 0:
-        return decoupled
-    return alternate_queues
+#     if dout_delay == 0:
+#         return decoupled
+#     return alternate_queues
 
 
 # @pytest.mark.parametrize('din_delay', [0, 5])

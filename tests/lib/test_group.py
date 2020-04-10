@@ -46,10 +46,6 @@ def test_queue_directed(tmpdir, sim_cls, din_delay, dout_delay, cfg_delay):
              delays=[delay_rng(dout_delay, dout_delay)])
     sim(resdir=tmpdir)
 
-# from pygears.sim.modules import SimVerilated
-# from pygears import config
-# config['debug/trace'] = ['*']
-# test_queue_directed('/tools/home/tmp/qfilt', SimVerilated, 0, 0, 1)
 
 @pytest.mark.parametrize('din_delay', [0, 5])
 @pytest.mark.parametrize('dout_delay', [0, 5])

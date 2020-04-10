@@ -1,7 +1,4 @@
 import random
-from functools import partial
-from pygears.hdl.templenv import TemplateEnv
-import itertools
 
 import pytest
 
@@ -11,12 +8,9 @@ from pygears.lib.clip import clip
 from pygears.lib.delay import delay_rng
 from pygears.lib.verif import directed, drv, verif
 from pygears.sim import sim, cosim
-from pygears.sim.extens.randomization import randomize, rand_seq
-from pygears.sim.extens.svrand import SVRandSocket
-from pygears.sim.modules.sim_socket import SimSocket
+from pygears.sim.extens.randomization import randomize
 from pygears.typing import Queue, Tuple, Uint
 from pygears.util.test_utils import formal_check, skip_ifndef, synth_check
-from pygears.hdl.sv.util import svgen_typedef
 
 T_DIN = Queue[Tuple[Uint[16], Uint[16]]]
 T_DIN_SEP = Queue[Uint[16]]
@@ -56,11 +50,6 @@ def test_directed(tmpdir, sim_cls, din_delay, dout_delay):
         delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(resdir=tmpdir)
-
-# from pygears.sim.modules import SimVerilated
-# from pygears import config
-# config['debug/trace'] = ['*']
-# test_directed('/tools/home/tmp/clip', SimVerilated, 0, 0)
 
 
 def test_directed_two_inputs(tmpdir, cosim_cls):

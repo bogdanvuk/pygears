@@ -4,7 +4,7 @@ import inspect
 from functools import partial
 from . import Context, SyntaxError, node_visitor, ir, visit_ast, visit_block
 from .arith import resolve_arith_func
-from .call import resolve_func, Method, store_method_obj
+from .call import resolve_func
 from pygears.typing import cast, Integer
 
 
@@ -15,17 +15,12 @@ def expr(node, ctx: Context):
 
 @node_visitor(ast.IfExp)
 def parse_ifexp(node, ctx: Context):
-    res = {
-        field: visit_ast(getattr(node, field), ctx)
-        for field in node._fields
-    }
+    res = {field: visit_ast(getattr(node, field), ctx) for field in node._fields}
 
     if all(isinstance(v, ir.ResExpr) for v in res.values()):
-        return ir.ResExpr(
-            res['body'].val if res['test'].val else res['orelse'])
+        return ir.ResExpr(res['body'].val if res['test'].val else res['orelse'])
 
-    return ir.ConditionalExpr(operands=(res['body'], res['orelse']),
-                              cond=res['test'])
+    return ir.ConditionalExpr(operands=(res['body'], res['orelse']), cond=res['test'])
 
 
 @node_visitor(ast.Num)
@@ -77,8 +72,7 @@ def _(node, ctx: Context):
 
 @node_visitor(ast.Subscript)
 def _(node, ctx: Context):
-    return ir.SubscriptExpr(visit_ast(node.value, ctx),
-                            visit_ast(node.slice, ctx))
+    return ir.SubscriptExpr(visit_ast(node.value, ctx), visit_ast(node.slice, ctx))
 
 
 METHOD_OP_MAP = {
@@ -119,28 +113,11 @@ def visit_bin_expr(op, operands, ctx: Context):
     dtype = type(op1.val) if isinstance(op1, ir.ResExpr) else op1.dtype
 
     f = getattr(dtype, METHOD_OP_MAP[type(op)])
-    if isinstance(op1, ir.ResExpr):
-        # f = partial(f, op1.val)
-        return resolve_func(f, (op1, op2, ), {}, ctx)
-        # f = f.__get__(op1.val, dtype)
-    else:
-        # f = partial(f, op1)
 
-        return resolve_func(f, (op1, op2, ), {}, ctx)
-        # f = f.__get__(dtype(), dtype)
-        # store_method_obj(f, op1)
-
-    return resolve_func(f, (op2, ), {}, ctx)
-
-    # res = resolve_arith_func(op, tuple(visit_ast(p, ctx) for p in operands),
-    #                          ctx)
-    # return res
-
-    # if isinstance(res, FunctionType):
-    #     return resolve_func_call(res, res.__name__, opexp, None, operands,
-    #                              module_data)
-    # else:
-    #     return res
+    return resolve_func(f, (
+        op1,
+        op2,
+    ), {}, ctx)
 
 
 @node_visitor(ast.Compare)
@@ -200,20 +177,18 @@ def _(node, ctx: Context):
 
 @node_visitor(ast.Slice)
 def _(node, ctx: Context):
-    return ir.SliceExpr(visit_ast(node.lower, ctx), visit_ast(node.upper, ctx),
-                        visit_ast(node.step, ctx))
+    return ir.SliceExpr(
+        visit_ast(node.lower, ctx), visit_ast(node.upper, ctx), visit_ast(node.step, ctx))
 
 
 def py_eval_expr(node, ctx: Context):
-    gear_locals = {
-        n: v.val
-        for n, v in ctx.scope.items() if isinstance(v, ir.ResExpr)
-    }
+    gear_locals = {n: v.val for n, v in ctx.scope.items() if isinstance(v, ir.ResExpr)}
 
     return eval(
-        compile(ast.Expression(ast.fix_missing_locations(node)),
-                filename="<ast>",
-                mode="eval"), gear_locals, ctx.local_namespace)
+        compile(
+            ast.Expression(ast.fix_missing_locations(node)),
+            filename="<ast>",
+            mode="eval"), gear_locals, ctx.local_namespace)
 
 
 @node_visitor(ast.DictComp)

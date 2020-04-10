@@ -22,10 +22,6 @@ def test_uint_directed(tmpdir, sim_cls):
     sim(resdir=tmpdir)
 
 
-# from pygears.sim.modules import SimVerilated
-# test_uint_directed('/tools/home/tmp/reduce', SimVerilated)
-
-
 @pytest.mark.parametrize('din_delay', [0, 1, 10])
 @pytest.mark.parametrize('dout_delay', [0, 1, 10])
 def test_delay(tmpdir, cosim_cls, din_delay, dout_delay):
@@ -64,13 +60,8 @@ def test_accum_dflt_directed(tmpdir, sim_cls):
     accum_test(tmpdir, accum(sim_cls=sim_cls), add)
 
 
-# def test_accum_trunc_directed(tmpdir, sim_cls):
-#     def add(x, y):
-#         return trunc(x + y, Uint[8])
+def test_accum_trunc_directed(tmpdir, sim_cls):
+    def add(x, y):
+        return trunc(x + y, Uint[8])
 
-#     accum_test(tmpdir, accum(sim_cls=sim_cls, cast=trunc), add)
-
-
-# from pygears.sim.modules import SimVerilated
-# test_accum_trunc_directed('/tools/home/tmp/accum', SimVerilated)
-# test_uint_directed('/tools/home/tmp/accum', SimVerilated)
+    accum_test(tmpdir, accum(sim_cls=sim_cls, cast=trunc), add)

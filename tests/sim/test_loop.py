@@ -7,30 +7,6 @@ from pygears.typing import Uint, Tuple
 from pygears.lib import add, fmap, decouple
 from functools import partial
 
-# from pygears.sim import delta, sim
-# from pygears.typing import Uint
-# from pygears.lib.verif import drv
-# from pygears.lib import shred
-
-# @gear
-# async def multicycle(*din) -> b'din':
-#     phase = 'forward'
-#     output = set()
-
-#     while (1):
-#         import pdb; pdb.set_trace()
-#         if phase == 'forward':
-#             for i, (inp, outp) in enumerate(zip(din, module().dout)):
-#                 if outp.ready_nb() and (not inp.empty()):
-#                     outp.put_nb(inp.pull_nb())
-#                     output.add(i)
-#         else:
-#             for i in output:
-#                 if module().dout[i].ready_nb():
-#                     din[i].ack()
-
-#         phase = await delta()
-
 
 @gear
 def dualcycle(din0, din1) -> (b'din0[0]', b'din1[0]'):
@@ -41,10 +17,8 @@ def dualcycle(din0, din1) -> (b'din0[0]', b'din1[0]'):
 def dualcycle_wrap_thin(din) -> b'din[0][0]':
     middle = Intf(din.dtype[0])
 
-    return dualcycle(din,
-                     middle,
-                     intfs={'dout0': middle},
-                     sim_cls=partial(SimVerilated, timeout=1))
+    return dualcycle(
+        din, middle, intfs={'dout0': middle}, sim_cls=partial(SimVerilated, timeout=1))
 
 
 @gear
@@ -53,10 +27,11 @@ def dualcycle_wrap_comb_middle(din) -> b'din[0][0]':
 
     middle_back = (middle | fmap(f=(add(0), add(0)))) >> din.dtype[0]
 
-    return dualcycle(din,
-                     middle_back,
-                     intfs={'dout0': middle},
-                     sim_cls=partial(SimVerilated, timeout=1))
+    return dualcycle(
+        din,
+        middle_back,
+        intfs={'dout0': middle},
+        sim_cls=partial(SimVerilated, timeout=1))
 
 
 @gear
@@ -65,10 +40,11 @@ def dualcycle_wrap_decouple_middle(din) -> b'din[0][0]':
 
     middle_back = middle | decouple
 
-    return dualcycle(din,
-                     middle_back,
-                     intfs={'dout0': middle},
-                     sim_cls=partial(SimVerilated, timeout=1))
+    return dualcycle(
+        din,
+        middle_back,
+        intfs={'dout0': middle},
+        sim_cls=partial(SimVerilated, timeout=1))
 
 
 def multicycle_test_gen(tmpdir, func, latency):
@@ -76,9 +52,10 @@ def multicycle_test_gen(tmpdir, func, latency):
 
     data = [((i, 1), 2) for i in range(data_num)]
 
-    directed(drv(t=Tuple[Tuple[Uint[8], Uint[8]], Uint[8]], seq=data),
-             f=func,
-             ref=list(range(data_num)))
+    directed(
+        drv(t=Tuple[Tuple[Uint[8], Uint[8]], Uint[8]], seq=data),
+        f=func,
+        ref=list(range(data_num)))
 
     sim(resdir=tmpdir)
 

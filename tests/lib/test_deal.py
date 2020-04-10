@@ -59,10 +59,6 @@ def test_directed(tmpdir, cosim_cls, din_delay, dout_delay):
     sim(tmpdir)
 
 
-# from pygears.sim.modules import SimVerilated
-# test_directed('/tools/home/tmp/deal', SimVerilated, 0, 5)
-
-
 @pytest.mark.parametrize('din_delay', [0, 5])
 @pytest.mark.parametrize('dout_delay', [0, 5])
 def test_directed_3in(tmpdir, cosim_cls, din_delay, dout_delay):
@@ -134,7 +130,7 @@ def test_random(tmpdir, sim_cls):
 # def test_lvl_2_formal():
 #     qdeal(Intf(Queue[Uint[16], 3]), num=3, lvl=2)
 
-@synth_check({'logic luts': 4, 'ffs': 1}, tool='vivado')
+@synth_check({'logic luts': 5, 'ffs': 2}, tool='vivado')
 def test_synth_vivado():
     qdeal(Intf(T_TRR_DIST), num=2)
 

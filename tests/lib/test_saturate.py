@@ -1,8 +1,8 @@
 import pytest
 from pygears import Intf
-from pygears.lib import drv, saturate, verif, directed
+from pygears.lib import directed, drv, saturate
 from pygears.typing import Fixp, Uint, Int, Ufixp
-from pygears.sim import sim, cosim
+from pygears.sim import sim
 
 
 def test_saturate_uint(tmpdir, sim_cls):

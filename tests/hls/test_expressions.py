@@ -1,8 +1,7 @@
 from pygears import gear
-from pygears.lib import directed, drv, delay_rng, collect
+from pygears.lib import directed, drv
 from pygears.sim import sim
-from pygears.typing import Bool, Queue, Tuple, Uint
-from pygears.util.utils import gather
+from pygears.typing import Bool
 
 
 def test_inline_if(tmpdir, cosim_cls):

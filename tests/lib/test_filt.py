@@ -20,15 +20,12 @@ directed_seq = [union_din(v, v % 2) for v in range(50)]
 
 
 def pysim_env(din_t, seq, sel, ref, sim_cls):
-    directed(drv(t=din_t, seq=seq),
-             f=filt(sim_cls=sim_cls, fixsel=sel),
-             ref=ref)
+    directed(drv(t=din_t, seq=seq), f=filt(sim_cls=sim_cls, fixsel=sel), ref=ref)
     sim()
 
 
 def filt_test(din_t, seq, sel, sim_cls):
-    pysim_env(din_t, seq, sel, [val for (val, ctrl) in seq if (ctrl == sel)],
-              sim_cls)
+    pysim_env(din_t, seq, sel, [val for (val, ctrl) in seq if (ctrl == sel)], sim_cls)
 
 
 def filt_by_test(tmpdir, din_t, seq, sel, sim_cls):
@@ -47,15 +44,9 @@ def filt_by_test(tmpdir, din_t, seq, sel, sim_cls):
         ref=[val for (val, ctrl) in zip(din_seq, ctrl_seq) if (ctrl == sel)])
     sim(tmpdir)
 
-# from pygears.sim.modules import SimVerilated
-# # from pygears import config
-# # config['debug/trace'] = ['*']
-# filt_by_test('/tools/home/tmp/filt', plain_din, directed_seq, 1, SimVerilated)
-
 
 def queue_filt_test(din_t, seq, sel, sim_cls):
-    pysim_env(din_t, [seq], sel,
-              [[val for (val, ctrl) in seq if (ctrl == sel)]], sim_cls)
+    pysim_env(din_t, [seq], sel, [[val for (val, ctrl) in seq if (ctrl == sel)]], sim_cls)
 
 
 @pytest.mark.parametrize('sel', [0, 1])
@@ -64,8 +55,10 @@ def queue_filt_test(din_t, seq, sel, sim_cls):
 def test_pysim_dir(tmpdir, sel, din_t, seq, sim_cls):
     if seq == 'rand':
         skip_ifndef('RANDOM_TEST')
-        seq = [(random.randint(1, 100), random.randint(0, 2))
-               for _ in range(random.randint(10, 50))]
+        seq = [
+            (random.randint(1, 100), random.randint(0, 2))
+            for _ in range(random.randint(10, 50))
+        ]
 
     if typeof(din_t, Queue):
         queue_filt_test(din_t, seq, sel, sim_cls)
@@ -90,17 +83,13 @@ def get_dut(dout_delay):
 @pytest.mark.parametrize('dout_delay', [0, 10])
 def test_qfilt_union_delay(tmpdir, cosim_cls, din_delay, dout_delay, sel):
     dut = get_dut(dout_delay)
-    verif(drv(t=queue_din, seq=[directed_seq, directed_seq])
-          | delay_rng(din_delay, din_delay),
-          f=dut(sim_cls=cosim_cls, fixsel=sel),
-          ref=filt(name='ref_model', fixsel=sel),
-          delays=[delay_rng(dout_delay, dout_delay)])
+    verif(
+        drv(t=queue_din, seq=[directed_seq, directed_seq])
+        | delay_rng(din_delay, din_delay),
+        f=dut(sim_cls=cosim_cls, fixsel=sel),
+        ref=filt(name='ref_model', fixsel=sel),
+        delays=[delay_rng(dout_delay, dout_delay)])
     sim(resdir=tmpdir)
-
-# from pygears.sim.modules import SimVerilated
-# from pygears import config
-# config['debug/trace'] = ['*']
-# test_qfilt_union_delay('/tools/home/tmp/qfilt', SimVerilated, 0, 0, 1)
 
 
 @pytest.mark.parametrize('din_delay', [0, 10])
@@ -110,24 +99,19 @@ def test_qfilt_delay(tmpdir, cosim_cls, din_delay, dout_delay):
     def even(x: Integer) -> Bool:
         return not x[0]
 
-    directed(drv(t=Queue[Uint[8]], seq=[list(range(10)),
-                                        list(range(10))])
-             | delay_rng(din_delay, din_delay),
-             f=filt(sim_cls=cosim_cls, f=even),
-             ref=[list(range(0, 10, 2)),
-                  list(range(0, 10, 2))],
-             delays=[delay_rng(dout_delay, dout_delay)])
+    directed(
+        drv(t=Queue[Uint[8]], seq=[list(range(10)), list(range(10))])
+        | delay_rng(din_delay, din_delay),
+        f=filt(sim_cls=cosim_cls, f=even),
+        ref=[list(range(0, 10, 2)), list(range(0, 10, 2))],
+        delays=[delay_rng(dout_delay, dout_delay)])
 
     sim(resdir=tmpdir)
 
 
 def test_filt_base():
     data_t = Union[Uint[1], Uint[2], Uint[3]]
-    data = [
-        data_t(Uint[1](0), 0),
-        data_t(Uint[2](3), 1),
-        data_t(Uint[3](7), 2)
-    ]
+    data = [data_t(Uint[1](0), 0), data_t(Uint[2](3), 1), data_t(Uint[3](7), 2)]
     sel = [1, 1, 1]
 
     seq = list(zip(data, sel))

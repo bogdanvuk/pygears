@@ -103,9 +103,3 @@ def test_val_int():
 
     assert trunc(val, i7) == Int[7](-0x16)
     assert trunc(val, i15) == -0x56
-
-
-val = Fixp[3, 5](-2.75)
-q1_5 = Fixp[2, 7]
-
-assert trunc(val, q1_5) == -0.75

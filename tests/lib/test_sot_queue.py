@@ -19,7 +19,3 @@ def test_lvl2(tmpdir, cosim_cls):
              ref=[(0, 3), (1, 2), (2, 1), (3, 0)])
 
     sim(tmpdir)
-
-
-# from pygears.sim.modules import SimVerilated
-# test_lvl2('/tools/home/tmp/sot_queuee', SimVerilated)

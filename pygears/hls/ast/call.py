@@ -15,7 +15,6 @@ from pygears.typing import is_type, typeof, Tuple, Array
 from pygears.typing import cast, floor
 from pygears.typing.queue import QueueMeta
 
-
 from pygears.core.gear_inst import gear_signature, infer_params, get_function_context_dict, TypeMatchError, TooManyArguments, GearArgsNotSpecified
 
 
@@ -35,8 +34,7 @@ def parse_func_args(args, kwds, ctx):
                 func_args.extend(var.val)
             else:
                 for i in range(len(var.dtype)):
-                    func_args.append(
-                        ir.SubscriptExpr(val=var, index=ir.ResExpr(i)))
+                    func_args.append(ir.SubscriptExpr(val=var, index=ir.ResExpr(i)))
 
         else:
             func_args.append(visit_ast(arg, ctx))
@@ -50,10 +48,7 @@ def get_gear_signatures(func, args, kwds):
     alternatives = [func] + getattr(func, 'alternatives', [])
 
     signatures = []
-    kwds = {
-        n: v.val if isinstance(v, ir.ResExpr) else v
-        for n, v in kwds.items()
-    }
+    kwds = {n: v.val if isinstance(v, ir.ResExpr) else v for n, v in kwds.items()}
 
     for f in alternatives:
         meta_kwds = f.__globals__['meta_kwds']
@@ -68,24 +63,22 @@ def get_gear_signatures(func, args, kwds):
 
 
 def const_func_args(args, kwds):
-    return (all(isinstance(node, ir.ResExpr) for node in args)
-            and all(isinstance(node, ir.ResExpr) for node in kwds.values()))
+    return (
+        all(isinstance(node, ir.ResExpr) for node in args)
+        and all(isinstance(node, ir.ResExpr) for node in kwds.values()))
 
 
 def resolve_compile_time(func, args, kwds):
     # If all arguments are resolved expressions, maybe we can evaluate the
     # function at compile time
-    return ir.ResExpr(
-        func(*(a.val for a in args), **{n: v.val
-                                        for n, v in kwds.items()}))
+    return ir.ResExpr(func(*(a.val for a in args), **{n: v.val for n, v in kwds.items()}))
 
 
 def resolve_gear_alternative(func, args, kwds):
     errors = []
     for f, args, templates in get_gear_signatures(func, args, kwds):
         try:
-            params = infer_params(args, templates,
-                                  get_function_context_dict(f))
+            params = infer_params(args, templates, get_function_context_dict(f))
         except TypeMatchError:
             errors.append((f, *sys.exc_info()))
         else:
@@ -101,9 +94,10 @@ def resolve_gear_call(func, args, kwds):
 
     return ir.CallExpr(f, args, kwds, params)
 
+
 compile_time_builtins = {
-    all, max, int, len, type, isinstance, div, floor, cast, QueueMeta.sub,
-    Array.code, Tuple.code, code, is_type, typeof
+    all, max, int, len, type, isinstance, div, floor, cast, QueueMeta.sub, Array.code,
+    Tuple.code, code, is_type, typeof
 }
 
 
@@ -133,12 +127,8 @@ class Super:
                 f = base.__dict__[name]
                 if isinstance(val, ir.ResExpr):
                     f = partial(f, val.val)
-                    # f = f.__get__(op1.val, base)
                 else:
                     f = partial(f, val)
-                    # f = f.__get__(base(), base)
-
-                store_method_obj(f, val)
 
                 return f
         else:
@@ -162,28 +152,7 @@ def get_class_that_defined_method(meth):
         if isinstance(cls, type):
             return cls
 
-    return getattr(meth, '__objclass__',
-                   None)  # handle special descriptor objects
-
-
-def get_method_obj(f):
-    ctx = registry('hls/ctx')[0]
-    print(f'Get __self__ for {f}: {id(f)}')
-    # TODO: Think about whether hash(repr(f)) is a unique way to reference a
-    # method when I used id(f), it wasn't unique (garbage collection?). Maybe I
-    # could hook somehow to garbage disposal of functions
-    obj, wref = ctx.methods.get(id(f), (None, None))
-    if wref is not None:
-        if wref() is None:
-            return None
-
-    return obj
-
-
-def store_method_obj(f, obj):
-    ctx = registry('hls/ctx')[0]
-    ctx.methods[id(f)] = (obj, weakref.ref(f))
-    print(f'Storing {obj} for {f} under {id(f)}')
+    return getattr(meth, '__objclass__', None)  # handle special descriptor objects
 
 
 def func_from_method(f):
@@ -204,11 +173,7 @@ def resolve_func(func, args, kwds, ctx):
         args = func.args + tuple(args)
         func = func.func
     elif not inspect.isbuiltin(func) and hasattr(func, '__self__'):
-
-        if get_method_obj(func) is not None:
-            args = (get_method_obj(func), ) + tuple(args)
-            func = func_from_method(func)
-        elif func is super:
+        if func is super:
             if not isinstance(ctx, FuncContext):
                 raise Exception(f'super() called outside a method function')
 

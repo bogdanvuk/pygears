@@ -59,8 +59,6 @@ def test_unfold_uint(tmpdir):
     sim(tmpdir, timeout=2)
 
 
-# test_unfold_uint('/tools/home/tmp/test_simple')
-
 # def test_comprehension(tmpdir):
 #     @gear(hdl={'compile': True})
 #     async def test() -> Array[Uint[3], 4]:

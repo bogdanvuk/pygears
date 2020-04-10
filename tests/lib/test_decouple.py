@@ -34,8 +34,3 @@ def test_cosim(tmpdir, cosim_cls):
              delays=[delay_rng(0, 2)])
 
     sim(resdir=tmpdir)
-
-
-# from pygears.sim.modules import SimVerilated
-# from functools import partial
-# test_cosim('/tools/home/tmp', partial(SimVerilated, language='v'))

@@ -1,9 +1,6 @@
-from pygears.lib import (
-    regmap, trigreg, directed, drv, delay, delay_gen, demux, shred, sample, collect,
-    directed)
-from pygears.typing import Union, Unit, Uint, Maybe, Tuple
+from pygears.lib import regmap, trigreg, directed, drv, delay_gen
+from pygears.typing import Maybe, Tuple, Uint
 from pygears.sim import sim, cosim
-from pygears import config, gear
 
 
 def test_none(tmpdir):

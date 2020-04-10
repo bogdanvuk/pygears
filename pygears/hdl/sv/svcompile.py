@@ -172,7 +172,14 @@ class SVCompiler(HDLVisitor):
 
             return
 
-        if is_intf_id(target):
+        if target.dtype is OutSig:
+            if self.selected(target):
+                name = target.obj.val.name
+                svval = svexpr(val, self.aux_funcs)
+                svstmt = f"{name} = {svval}"
+                self.handle_defaults(name, svstmt)
+            return
+        elif is_intf_id(target):
             name = svexpr(target, self.aux_funcs)
             if target.ctx == 'store':
                 if self.selected(target):
@@ -469,6 +476,10 @@ def write_module(ctx: Context, hdl, writer, subsvmods, funcs, template_env, conf
             hdl, writer, ctx, name, selected=lambda x: x.obj == expr, aux_funcs=aux_funcs)
 
     for name, expr in ctx.variables.items():
+        svcompile(
+            hdl, writer, ctx, name, selected=lambda x: x.obj == expr, aux_funcs=aux_funcs)
+
+    for name, expr in ctx.signals.items():
         svcompile(
             hdl, writer, ctx, name, selected=lambda x: x.obj == expr, aux_funcs=aux_funcs)
 
