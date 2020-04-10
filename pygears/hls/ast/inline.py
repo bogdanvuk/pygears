@@ -1,11 +1,10 @@
-import inspect
 import typing
-from . import Context, FuncContext, Function, Submodule, SyntaxError, node_visitor, ir, visit_ast, visit_block, ir_utils
+from . import Context, FuncContext, Function, Submodule, SyntaxError, ir, ir_utils, node_visitor, visit_ast, visit_block
 from ..debug import print_func_parse_intro
 from pygears import Intf, bind, registry
 from pygears.core.partial import combine_arg_kwds, extract_arg_kwds
-from pygears.core.port import InPort, HDLConsumer, HDLProducer
-from pygears.core.datagear import is_datagear, get_datagear_func
+from pygears.core.port import HDLConsumer, HDLProducer
+from pygears.core.datagear import get_datagear_func
 from pygears.core.gear import gear_explicit_params
 
 
@@ -119,7 +118,6 @@ def call_gear(func, args, kwds, ctx: Context):
         intf.source(HDLProducer())
         local_in.append(intf)
 
-    # local_in = [Intf(a.dtype) for a in args]
     if not all(isinstance(node, ir.ResExpr) for node in kwds.values()):
         raise Exception("Not supproted")
 
@@ -140,17 +138,17 @@ def call_gear(func, args, kwds, ctx: Context):
 
         intf_name = f'{gear_inst.basename}_{p.basename}'
         p.producer.source(HDLProducer())
-        pydl_intf = ir.Variable(intf_name, val=p.producer)
-        ctx.scope[intf_name] = pydl_intf
-        in_ports.append(pydl_intf)
+        ir_intf = ir.Variable(intf_name, val=p.producer)
+        ctx.scope[intf_name] = ir_intf
+        in_ports.append(ir_intf)
 
     out_ports = []
     for p in gear_inst.out_ports:
         intf_name = f'{gear_inst.basename}_{p.basename}'
-        pydl_intf = ir.Variable(intf_name, val=p.consumer)
-        ctx.scope[intf_name] = pydl_intf
+        ir_intf = ir.Variable(intf_name, val=p.consumer)
+        ctx.scope[intf_name] = ir_intf
         p.consumer.connect(HDLConsumer())
-        out_ports.append(pydl_intf)
+        out_ports.append(ir_intf)
 
     stmts = []
     for a, intf in zip(args, in_ports):

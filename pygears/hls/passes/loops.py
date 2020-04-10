@@ -20,12 +20,12 @@ class CycleDone(HDLVisitor):
                            val=res_true))
 
 
-def infer_cycle_done(pydl_ast, ctx):
+def infer_cycle_done(block, ctx):
     ctx.scope['cycle_done'] = ir.Variable('cycle_done', Bool)
 
-    pydl_ast.stmts.insert(
+    block.stmts.insert(
         0, ir.AssignValue(ctx.ref('cycle_done', 'store'), res_true))
 
-    CycleDone(ctx).visit(pydl_ast)
+    CycleDone(ctx).visit(block)
 
-    return pydl_ast
+    return block

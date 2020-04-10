@@ -1,15 +1,13 @@
-import ast
 import inspect
 import typing
 from pygears.core.infer_ftypes import infer_ftypes
 from pygears.core.gear import OutSig, InSig
-from pygears.typing import Any, is_type
+from pygears.typing import Any
 from functools import singledispatch
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from .. import ir
 
 from pygears import config, Intf
-from pygears.core.port import InPort, OutPort
 
 from .utils import add_to_list, get_function_source, get_function_ast
 
@@ -58,10 +56,9 @@ class Function:
 class Context:
     def __init__(self):
         self.scope: typing.Dict = {}
-        args = {}
         self.methods = {}
         self.local_namespace: typing.Dict = {'__builtins__': __builtins__}
-        self.pydl_block_closure: typing.List = []
+        self.ir_block_closure: typing.List = []
         self.submodules: typing.List[Submodule] = []
         self.reaching: typing.Dict = {}
         self.ast_stmt_map: typing.Dict = {}
@@ -78,10 +75,9 @@ class Context:
 
         return res_name
 
-    # TODO: rename pydl_ (maybe to ir_)
     @property
-    def pydl_parent_block(self):
-        return self.pydl_block_closure[-1]
+    def ir_parent_block(self):
+        return self.ir_block_closure[-1]
 
     @property
     def variables(self):
@@ -125,14 +121,9 @@ class GearContext(Context):
 
         if paramspec.varargs:
             self.local_namespace[paramspec.varargs] = ir.ConcatExpr(vararg)
-            # self.scope[paramspec.varargs] = ir.Variable(p.basename, val=p.consumer)
-            # self.scope[paramspec.varargs] = ir.Variable(paramspec.varargs, ir.ConcatExpr(vararg))
 
         for p in self.gear.out_ports:
-            # self.scope[p.basename] = ir.Interface(p.producer, 'out')
             self.scope[p.basename] = ir.Variable(p.basename, val=p.producer)
-            # p.producer.name = p.basename
-            # self.scope[p.basename] = ir.ResExpr(IntfProxy(p))
 
         for k, v in self.gear.explicit_params.items():
             self.scope[k] = ir.ResExpr(v)
@@ -174,13 +165,6 @@ class GearContext(Context):
     def out_ports(self):
         return [self.ref(p.basename) for p in self.gear.out_ports]
 
-        # return [
-        #     obj for obj in self.scope.values()
-        #     if (isinstance(obj, ir.Interface) and isinstance(obj.intf, Intf)
-        #         and len(obj.intf.consumers) == 1
-        #         and obj.intf.consumers[0].gear is self.gear)
-        # ]
-
 
 class FuncContext(Context):
     def argdict(self, args, kwds):
@@ -221,15 +205,8 @@ class FuncContext(Context):
             for name in paramspec.args:
                 if name not in args:
                     continue
-                if isinstance(args[name], ir.ResExpr) and is_type(
-                        args[name].val):
-                    # TODO: Reconsider why ResExpr returns None for type classes, which
-                    # makes this "if" necessary
-                    dtype = args[name].val.__class__
-                else:
-                    dtype = args[name].dtype
 
-                arg_types[name] = dtype
+                arg_types[name] = args[name].dtype
 
             for name, var in args.items():
                 if name in params:
@@ -319,34 +296,24 @@ def visit_ast(node, ctx):
     breakpoint()
     raise SyntaxError(f"Unsupported language construct", node.lineno)
 
-    # for _, value in ast.iter_fields(node):
-    #     if isinstance(value, list):
-    #         for item in value:
-    #             if isinstance(item, ast.AST):
-    #                 visit_ast(item, ctx)
-    #     elif isinstance(value, ast.AST):
-    #         visit_ast(value, ctx)
 
-
-def visit_block(pydl_node, body, ctx):
-    ctx.pydl_block_closure.append(pydl_node)
+def visit_block(ir_node, body, ctx):
+    ctx.ir_block_closure.append(ir_node)
     for stmt in body:
         res_stmt = visit_ast(stmt, ctx)
-        add_to_list(pydl_node.stmts, res_stmt)
+        add_to_list(ir_node.stmts, res_stmt)
 
     # Remove expressions that are added as block statements
-    stmts = pydl_node.stmts
-    pydl_node.stmts = []
+    stmts = ir_node.stmts
+    ir_node.stmts = []
     for s in stmts:
         if isinstance(s, ir.CallExpr):
-            pydl_node.stmts.append(ir.ExprStatement(s))
+            ir_node.stmts.append(ir.ExprStatement(s))
         elif isinstance(s, ir.Expr):
             pass
-            # print("Expression as statement!")
-            # print(s)
         else:
-            pydl_node.stmts.append(s)
+            ir_node.stmts.append(s)
 
-    ctx.pydl_block_closure.pop()
+    ctx.ir_block_closure.pop()
 
-    return pydl_node
+    return ir_node

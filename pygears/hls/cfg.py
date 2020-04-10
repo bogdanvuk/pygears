@@ -221,74 +221,74 @@ class CFG(HDLVisitor):
         breakpoint()
         raise ValueError('unknown control flow')
 
-    def visit_AsyncWith(self, node):
-        # The current head will hold the conditional
-        test = Node(node)
-        self.set_head(test)
-        # Handle the body
-        self.visit_statements(node.body)
+    # def visit_AsyncWith(self, node):
+    #     # The current head will hold the conditional
+    #     test = Node(node)
+    #     self.set_head(test)
+    #     # Handle the body
+    #     self.visit_statements(node.body)
 
-    def visit_If(self, node):
-        # The current head will hold the conditional
-        test = Node(node.test)
-        self.set_head(test)
-        # Handle the body
-        self.visit_statements(node.body)
-        body_exit = self.head[:]
-        self.head[:] = []
-        self.head.append(test)
-        # Handle the orelse
-        self.visit_statements(node.orelse)
-        self.head.extend(body_exit)
+    # def visit_If(self, node):
+    #     # The current head will hold the conditional
+    #     test = Node(node.test)
+    #     self.set_head(test)
+    #     # Handle the body
+    #     self.visit_statements(node.body)
+    #     body_exit = self.head[:]
+    #     self.head[:] = []
+    #     self.head.append(test)
+    #     # Handle the orelse
+    #     self.visit_statements(node.orelse)
+    #     self.head.extend(body_exit)
 
-    def visit_While(self, node):
-        test = Node(node.test)
-        self.set_head(test)
-        # Start a new level of nesting
-        self.break_.append([])
-        self.continue_.append([])
-        # Handle the body
-        self.visit_statements(node.body)
-        self.head.extend(self.continue_.pop())
-        self.set_head(test)
-        # Handle the orelse
-        self.visit_statements(node.orelse)
-        # The break statements and the test go to the next node
-        self.head.extend(self.break_.pop())
+    # def visit_While(self, node):
+    #     test = Node(node.test)
+    #     self.set_head(test)
+    #     # Start a new level of nesting
+    #     self.break_.append([])
+    #     self.continue_.append([])
+    #     # Handle the body
+    #     self.visit_statements(node.body)
+    #     self.head.extend(self.continue_.pop())
+    #     self.set_head(test)
+    #     # Handle the orelse
+    #     self.visit_statements(node.orelse)
+    #     # The break statements and the test go to the next node
+    #     self.head.extend(self.break_.pop())
 
-    def visit_AsyncFor(self, node):
-        self.visit_For(node)
+    # def visit_AsyncFor(self, node):
+    #     self.visit_For(node)
 
-    def visit_For(self, node):
-        iter_ = Node(node)
-        self.set_head(iter_)
-        self.break_.append([])
-        self.continue_.append([])
-        self.visit_statements(node.body)
-        self.head.extend(self.continue_.pop())
-        self.set_head(iter_)
-        self.head.extend(self.break_.pop())
+    # def visit_For(self, node):
+    #     iter_ = Node(node)
+    #     self.set_head(iter_)
+    #     self.break_.append([])
+    #     self.continue_.append([])
+    #     self.visit_statements(node.body)
+    #     self.head.extend(self.continue_.pop())
+    #     self.set_head(iter_)
+    #     self.head.extend(self.break_.pop())
 
-    def visit_Break(self, node):
-        self.break_[-1].extend(self.head)
-        self.head[:] = []
+    # def visit_Break(self, node):
+    #     self.break_[-1].extend(self.head)
+    #     self.head[:] = []
 
-    def visit_Continue(self, node):
-        self.continue_[-1].extend(self.head)
-        self.head[:] = []
+    # def visit_Continue(self, node):
+    #     self.continue_[-1].extend(self.head)
+    #     self.head[:] = []
 
-    def visit_Try(self, node):
-        self.visit_statements(node.body)
-        body = self.head
-        handlers = []
-        for handler in node.handlers:
-            self.head = body[:]
-            self.visit_statements(handler.body)
-            handlers.extend(self.head)
-        self.head = body
-        self.visit_statements(node.orelse)
-        self.head = handlers + self.head
-        self.visit_statements(node.finalbody)
+    # def visit_Try(self, node):
+    #     self.visit_statements(node.body)
+    #     body = self.head
+    #     handlers = []
+    #     for handler in node.handlers:
+    #         self.head = body[:]
+    #         self.visit_statements(handler.body)
+    #         handlers.extend(self.head)
+    #     self.head = body
+    #     self.visit_statements(node.orelse)
+    #     self.head = handlers + self.head
+    #     self.visit_statements(node.finalbody)
 
 
 class Forward(object):

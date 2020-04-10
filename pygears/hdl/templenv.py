@@ -92,30 +92,6 @@ class TemplateEnv:
 
     # TODO: Revisit this function
     def port_intfs(self, node):
-        # intfs = []
-        # intf_names = []
-
-        # if not self.is_generated and not self.memoized:
-        #     intfs = self.impl_intfs
-        #     if intfs:
-        #         intf_names = list(intfs.keys())
-
-        # for p in node.in_ports:
-        #     if p.basename in intf_names:
-        #         intf_names.remove(p.basename)
-
-        #     intfs.append(get_port_config('consumer', type_=p.dtype, name=p.basename))
-
-        # for p in node.out_ports:
-        #     if p.basename in intf_names:
-        #         intf_names.remove(p.basename)
-
-        #     intfs.append(get_port_config('producer', type_=p.dtype, name=p.basename))
-
-        # if intf_names:
-        #     raise Exception(
-        #         f'Port(s) {intf_names} not specified in the definition of the module "{node.name}"')
-
         return get_port_intfs(node)
 
     def load(self, tmplt_dir, tmplt_fn):

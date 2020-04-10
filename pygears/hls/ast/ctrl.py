@@ -17,45 +17,45 @@ def _(node: ast.If, ctx: Context):
         body_stmts = []
         if bool(test_expr.val):
             for stmt in node.body:
-                pydl_stmt = visit_ast(stmt, ctx)
-                add_to_list(body_stmts, pydl_stmt)
+                ir_stmt = visit_ast(stmt, ctx)
+                add_to_list(body_stmts, ir_stmt)
         elif hasattr(node, 'orelse'):
             for stmt in node.orelse:
-                pydl_stmt = visit_ast(stmt, ctx)
-                add_to_list(body_stmts, pydl_stmt)
+                ir_stmt = visit_ast(stmt, ctx)
+                add_to_list(body_stmts, ir_stmt)
 
         if body_stmts:
             return body_stmts
 
         return None
     else:
-        pydl_node = ir.HDLBlock(in_cond=test_expr, stmts=[])
-        visit_block(pydl_node, node.body, ctx)
+        ir_node = ir.HDLBlock(in_cond=test_expr, stmts=[])
+        visit_block(ir_node, node.body, ctx)
         if hasattr(node, 'orelse') and node.orelse:
             top = ir.IfElseBlock(stmts=[])
             visit_block(top, node.orelse, ctx)
 
             if isinstance(top.stmts[0], ir.HDLBlock):
-                top.stmts.insert(0, pydl_node)
+                top.stmts.insert(0, ir_node)
             elif isinstance(top.stmts[0], ir.IfElseBlock):
-                top.stmts = [pydl_node] + top.stmts[0].stmts
+                top.stmts = [ir_node] + top.stmts[0].stmts
             else:
-                top.stmts = [pydl_node, ir.HDLBlock(stmts=top.stmts)]
+                top.stmts = [ir_node, ir.HDLBlock(stmts=top.stmts)]
 
             return top
 
-        return pydl_node
+        return ir_node
 
 
 @node_visitor(ast.While)
 def _(node: ast.While, ctx: Context):
-    pydl_node = ir.LoopBlock(test=visit_ast(node.test, ctx), stmts=[])
-    return visit_block(pydl_node, node.body, ctx)
+    ir_node = ir.LoopBlock(test=visit_ast(node.test, ctx), stmts=[])
+    return visit_block(ir_node, node.body, ctx)
 
 
 def intf_loop(node, intfs, targets, ctx: Context, enumerated):
     rng_intf, stmts = call_gear(qrange, [ir.ResExpr(len(intfs))], {}, ctx)
-    ctx.pydl_parent_block.stmts.extend(stmts)
+    ctx.ir_parent_block.stmts.extend(stmts)
 
     with AsyncForContext(rng_intf, ctx) as stmts:
         rng_iter = ir.SubscriptExpr(ir.Component(rng_intf.obj, 'data'),
@@ -64,7 +64,7 @@ def intf_loop(node, intfs, targets, ctx: Context, enumerated):
                                             args=[rng_iter] + intfs,
                                             kwds={},
                                             ctx=ctx)
-        ctx.pydl_parent_block.stmts.extend(call_stmts)
+        ctx.ir_parent_block.stmts.extend(call_stmts)
 
         if enumerated:
             intf_var_name = targets.operands[1].name
@@ -75,7 +75,7 @@ def intf_loop(node, intfs, targets, ctx: Context, enumerated):
 
         if enumerated:
             add_to_list(
-                ctx.pydl_parent_block.stmts,
+                ctx.ir_parent_block.stmts,
                 assign_targets(
                     ctx, targets.operands[0],
                     ir.SubscriptExpr(ir.Component(rng_intf.obj, 'data'),
@@ -83,7 +83,7 @@ def intf_loop(node, intfs, targets, ctx: Context, enumerated):
 
         for stmt in node.body:
             res_stmt = visit_ast(stmt, ctx)
-            add_to_list(ctx.pydl_parent_block.stmts, res_stmt)
+            add_to_list(ctx.ir_parent_block.stmts, res_stmt)
 
         return stmts
 

@@ -19,13 +19,11 @@ def infer_targets(ctx, target, dtype, obj_factory=None):
             var = obj_factory(target.name, dtype)
             ctx.scope[target.name] = var
             target.obj = var
-        # else:
-        #     assert target.dtype == dtype
     elif isinstance(target, ir.ConcatExpr):
         for t, d in zip(target.operands, dtype):
             infer_targets(ctx, t, d, obj_factory)
     elif isinstance(target, ir.SubscriptExpr):
-        # Todo can we do some check here?
+        # TODO: can we do some check here?
         pass
     else:
         breakpoint()
@@ -35,8 +33,8 @@ def assign_targets(ctx: Context, target, source, obj_factory=None):
     # Speed-up the process of evaluating functions deep inside pygears. If the
     # target is a top level variable within the function, assume it is just an
     # alias
-    if (isinstance(target, ir.Name) and ctx.pydl_block_closure
-            and isinstance(ctx.pydl_parent_block, ir.FuncBlock)
+    if (isinstance(target, ir.Name) and ctx.ir_block_closure
+            and isinstance(ctx.ir_parent_block, ir.FuncBlock)
             and isinstance(source, ir.ResExpr)
             and not target.name in ctx.scope):
         ctx.local_namespace[target.name] = source.val
@@ -45,7 +43,7 @@ def assign_targets(ctx: Context, target, source, obj_factory=None):
     # If we thought something was an alias, but it changed later, turn that
     # alias into an variable assignment at the begining of the scope
     if isinstance(target, ir.Name) and target.name in ctx.local_namespace:
-        ctx.pydl_block_closure[0].stmts.insert(
+        ctx.ir_block_closure[0].stmts.insert(
             0,
             ir.AssignValue(target.name,
                            ir.ResExpr(ctx.local_namespace[target.name])))

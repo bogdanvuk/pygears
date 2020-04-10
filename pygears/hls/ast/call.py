@@ -1,7 +1,6 @@
 import ast
 import sys
 import inspect
-import weakref
 from functools import partial
 from . import Context, FuncContext, ir, node_visitor, visit_ast
 from .inline import form_gear_args, call_gear, parse_func_call
@@ -101,16 +100,6 @@ compile_time_builtins = {
 }
 
 
-class Method:
-    def __init__(self, func, val, cls):
-        self.__func__ = func
-        self.__self__ = val
-        self.__dtype__ = cls
-
-    def __call__(self, *args, **kwds):
-        self.__func__(self.__self__, *args, **kwds)
-
-
 class Super:
     def __init__(self, cls, val):
         self.cls = cls
@@ -142,9 +131,6 @@ def get_class_that_defined_method(meth):
                 return cls
         meth = meth.__func__  # fallback to __qualname__ parsing
 
-    if isinstance(meth, Method):
-        return meth.__dtype__
-
     if inspect.isfunction(meth):
         cls = getattr(
             inspect.getmodule(meth),
@@ -153,13 +139,6 @@ def get_class_that_defined_method(meth):
             return cls
 
     return getattr(meth, '__objclass__', None)  # handle special descriptor objects
-
-
-def func_from_method(f):
-    if hasattr(f, '__func__'):
-        return f.__func__
-
-    return getattr(type(f.__self__), f.__name__)
 
 
 def resolve_func(func, args, kwds, ctx):
@@ -196,7 +175,7 @@ def resolve_func(func, args, kwds, ctx):
 
     if isinstance(func, Partial):
         intf, stmts = call_gear(func, *form_gear_args(args, kwds, func), ctx)
-        ctx.pydl_parent_block.stmts.extend(stmts)
+        ctx.ir_parent_block.stmts.extend(stmts)
         return intf
 
     if func in compile_time_builtins and const_func_args(args, kwds):
@@ -208,17 +187,9 @@ def resolve_func(func, args, kwds, ctx):
     if const_func_args(args, kwds):
         return resolve_compile_time(func, args, kwds)
     elif hasattr(func, 'dispatch'):
-        if isinstance(args[0], ir.ResExpr) and is_type(args[0].val):
-            # TODO: Reconsider why ResExpr returns None for type classes, which
-            # makes this "if" necessary
-            dtype = args[0].val.__class__
-        else:
-            dtype = args[0].dtype
-
-        return resolve_func(func.dispatch(dtype), args, kwds, ctx)
+        return resolve_func(func.dispatch(args[0].dtype), args, kwds, ctx)
     else:
         return parse_func_call(func, args, kwds, ctx)
-        # return parse_func_call(orig_func, args, kwds, ctx)
 
 
 @node_visitor(ast.Call)

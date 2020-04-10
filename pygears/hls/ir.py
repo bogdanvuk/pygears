@@ -93,34 +93,6 @@ def opex(op, *operands):
     return PYOPMAP[op](*(p.val for p in operands))
 
 
-def create_oposite(expr):
-    if isinstance(expr, UnaryOpExpr) and expr.operator == opc.Not:
-        return expr.operand
-
-    return UnaryOpExpr(expr, opc.Not)
-
-
-def binary_expr(expr1, expr2, operator):
-    if expr1 is None:
-        return expr2
-
-    if expr2 is None:
-        return expr1
-
-    if expr1 is None and expr2 is None:
-        return None
-
-    return BinOpExpr((expr1, expr2), operator)
-
-
-def and_expr(expr1, expr2):
-    return binary_expr(expr1, expr2, opc.And)
-
-
-def or_expr(expr1, expr2):
-    return binary_expr(expr1, expr2, opc.Or)
-
-
 def bin_op_reduce(intfs, func, op, dflt=None):
     if not intfs:
         return dflt
@@ -154,16 +126,6 @@ def find_name(node):
         return find_name(node.op)
 
     return None
-
-
-def is_constexpr(node):
-    if isinstance(node, ResExpr):
-        return True
-
-    if isinstance(node, Variable) and node.val != None:
-        return True
-
-    return False
 
 
 def get_contextpr(node):
@@ -396,37 +358,6 @@ class InterfaceAck(Expr):
     @property
     def dtype(self):
         return Bool
-
-
-@dataclass
-class SignalDef(Expr):
-    sig: typing.Union[InSig, OutSig]
-    context: str = None
-
-    @property
-    def name(self):
-        return self.sig.name
-
-    @property
-    def dtype(self):
-        return Uint[self.sig.width]
-
-
-@dataclass
-class SignalStmt(Expr):
-    variable: SignalDef
-    val: Expr
-
-    @property
-    def dtype(self):
-        return self.variable.dtype
-
-    @property
-    def name(self):
-        return self.variable.name
-
-
-# Expressions
 
 
 @dataclass
@@ -743,10 +674,6 @@ class AttrExpr(Expr):
     @property
     def dtype(self):
         return getattr(self.val.dtype, self.attr, None)
-        # if isinstance(ret, property):
-        #     return get_property_type(ret)
-
-        # return ret
 
 
 class ConditionalExpr(Expr):
@@ -933,15 +860,6 @@ class Assert(Statement):
     msg: str = None
 
 
-# @attr.s(auto_attribs=True)
-# class Await(Statement):
-#     expr: Expr
-
-#     @property
-#     def dtype(self):
-#         return self.expr.dtype
-
-
 def extract_base_targets(target):
     if isinstance(target, SubscriptExpr):
         yield from extract_base_targets(target.val)
@@ -1043,20 +961,6 @@ class HDLBlock(BaseBlock):
         super().__attrs_post_init__()
         if self.test is not None:
             self.in_cond = self.test
-
-    # @property
-    # def in_cond(self):
-    #     if self.test == res_true:
-    #         return super().in_cond()
-
-    #     return BinOpExpr((super().in_cond(), self.test), opc.And)
-
-    # @property
-    # def exit_cond(self):
-    #     if self.test == res_true:
-    #         return super().exit_cond()
-
-    #     return BinOpExpr((UnaryOpExpr(self.test, opc.Not)))
 
     def __str__(self):
         body = ''

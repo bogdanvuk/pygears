@@ -12,9 +12,6 @@ class CallExprRewriter(IrExprRewriter):
             return call_datagear(expr.func, expr.args, expr.params, self.ctx)
         else:
             return expr
-            # intf, stmts = call_gear(func, *form_gear_args(args, kwds, func), ctx)
-            # ctx.pydl_parent_block.stmts.extend(stmts)
-            # return intf
 
 
 class ExprFinder(IrRewriter):

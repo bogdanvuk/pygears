@@ -106,7 +106,6 @@ def call_sub(obj, arg):
 
 
 def outsig_write(obj, arg):
-    # return ir.SignalStmt(ir.SignalDef(obj), arg)
     return ir.AssignValue(obj, arg)
 
 
@@ -275,9 +274,6 @@ class AddIntfOperPlugin(PluginBase):
                 })
         }
 
-
-        # TODO: Both bitwise and boolean operators will be mapped to bitwise HDL
-        # operators. Rework the mapping below.
 
         int_ops = {
             ir.opc.Add: '__add__',

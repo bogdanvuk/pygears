@@ -246,18 +246,18 @@ class StateIsolator(HDLVisitor):
         return block
 
 
-def schedule(pydl_ast, ctx):
+def schedule(block, ctx):
     ctx.scope['rst_cond'] = ir.Variable('rst_cond', Bool)
-    pydl_ast.stmts.insert(
+    block.stmts.insert(
         0, ir.AssignValue(ctx.ref('rst_cond', 'store'), res_false))
 
-    pydl_ast.stmts.append(
+    block.stmts.append(
         ir.AssignValue(ctx.ref('rst_cond', 'store'), res_true))
 
-    Scheduler(ctx).visit(pydl_ast)
+    Scheduler(ctx).visit(block)
     # print('*** Schedule ***')
-    # print(PPrinter(ctx).visit(pydl_ast))
-    state_num = len(pydl_ast.state)
+    # print(PPrinter(ctx).visit(block))
+    state_num = len(block.state)
 
     if state_num > 1:
         ctx.scope['state'] = ir.Variable(
@@ -269,7 +269,7 @@ def schedule(pydl_ast, ctx):
     stateblock = ir.IfElseBlock(stmts=[])
     for i in range(state_num):
         v = StateIsolator(ctx, i)
-        res = v.visit(pydl_ast)
+        res = v.visit(block)
         if isinstance(res, list):
             res = ir.HDLBlock(stmts=res)
 

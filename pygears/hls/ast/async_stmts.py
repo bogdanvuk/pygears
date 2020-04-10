@@ -89,11 +89,6 @@ def parse_yield(node, ctx):
 
     return stmts
 
-    # return ir.Statement(exit_await=ir.Component(ctx.out_ports[0], 'ready'),
-    #                     stmts=[ir.AssignValue(ctx.out_ports[0], yield_expr)])
-
-    # return ir.Yield(ret, ports=ctx.out_ports)
-
 
 @node_visitor(ast.withitem)
 def withitem(node: ast.withitem, ctx: Context):
@@ -128,19 +123,9 @@ def asyncwith(node, ctx: Context):
 
         add_to_list(stmts, targets)
 
-    # ir_node = ir.IntfBlock(stmts=stmts, intfs=intfs)
-
-    # ctx.pydl_block_closure.append(ir_node)
-
-    # stmts = []
-
     for stmt in node.body:
         res_stmt = visit_ast(stmt, ctx)
         add_to_list(stmts, res_stmt)
-
-    # ctx.pydl_block_closure.pop()
-
-    # ir_node.close()
 
     for i in intfs:
         stmts.append(ir.AssignValue(ir.Component(i, 'ready'), ir.res_true))
@@ -180,20 +165,15 @@ class AsyncForContext:
             ir.Await(ir.Component(self.intf, 'data'),
                      in_await=ir.Component(self.intf, 'valid')))
 
-        # intf_block = ir.IntfBlock(intfs=[self.intf], stmts=[eot_load])
-
         eot_loop_stmt = ir.LoopBlock(test=eot_test,
                                      stmts=[data_load, eot_load])
 
-        self.ctx.pydl_block_closure.append(eot_loop_stmt)
-        # self.ctx.pydl_block_closure.append(intf_block)
-
-        # self.intf_block = intf_block
+        self.ctx.ir_block_closure.append(eot_loop_stmt)
 
         return [eot_init, eot_loop_stmt]
 
     def __exit__(self, exception_type, exception_value, traceback):
-        loop = self.ctx.pydl_block_closure.pop()
+        loop = self.ctx.ir_block_closure.pop()
         loop.stmts.append(
             ir.AssignValue(ir.Component(self.intf, 'ready'), ir.res_true))
 
@@ -205,13 +185,13 @@ def AsyncFor(node, ctx: Context):
 
     with AsyncForContext(out_intf_ref, ctx) as stmts:
         add_to_list(
-            ctx.pydl_parent_block.stmts,
+            ctx.ir_parent_block.stmts,
             assign_targets(ctx, targets, ir.Component(out_intf_ref, 'data'),
                            ir.Variable))
 
         for stmt in node.body:
             res_stmt = visit_ast(stmt, ctx)
-            add_to_list(ctx.pydl_parent_block.stmts, res_stmt)
+            add_to_list(ctx.ir_parent_block.stmts, res_stmt)
 
         return stmts
 
