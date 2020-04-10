@@ -178,7 +178,8 @@ class SimVerilated(CosimBase):
             time.sleep(0.1)
 
         self.verilib.init.argtypes = [ctypes.c_char_p]
-        self.verilib.init(self.trace_fn.encode('utf8'))
+
+        assert self.verilib.init(self.trace_fn.encode('utf8')) != 0
 
         if self.shmid_proc:
             self.shmid = self.shmid_proc.stdout.readline().decode().strip()
@@ -218,6 +219,7 @@ class SimVerilated(CosimBase):
         verilate_cmd = [
             f'cd {self.outdir};',
             'verilator -cc -CFLAGS -fpic -LDFLAGS -shared --exe', '-Wno-fatal',
+            # TODO: Not much of a speedup: '-O3 --x-assign fast --x-initial fast --noassert',
             include,
             '-clk clk',
             f'--top-module {self.top_name}',
@@ -248,7 +250,8 @@ class SimVerilated(CosimBase):
             #         f'Please inspect "{self.outdir}/verilate.log"')
 
         ret = os.system(
-            f"cd {self.objdir}; make -j -f V{self.top_name}.mk > make.log 2>&1")
+            f'cd {self.objdir}; make -j -f V{self.top_name}.mk > make.log 2>&1')
+            # TODO: Not much of a speedup f'cd {self.objdir}; make -j OPT_FAST="-Os -fno-stack-protector" -f V{self.top_name}.mk > make.log 2>&1')
 
         if ret != 0:
             raise VerilatorCompileError(

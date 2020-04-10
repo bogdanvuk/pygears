@@ -4,11 +4,11 @@
 #include "verilated_vcd_c.h"
 {% endif %}
 #include "stdio.h"
-{# #define DEBUG   #}
+{# #define DEBUG    #}
 
 extern "C" {
 
-V{{top_name}}* top;
+V{{top_name}}* top = NULL;
 vluint64_t main_time = 0;
 
 {% if tracing %}
@@ -73,7 +73,7 @@ void cycle(void) {
 {%- endif %}
 }
 
-int init(const char* trace_fn) {
+unsigned long init(const char* trace_fn) {
     top = new V{{top_name}};
     main_time = 0;
 
@@ -128,7 +128,7 @@ int init(const char* trace_fn) {
     top->clk = 0;
     top->eval();
 
-    return 0;
+    return (unsigned long)(top);
 }
 
 void final() {
@@ -201,7 +201,7 @@ int get_{{p.basename}}(uint32_t* data) {
     return top->{{p.basename}}_valid;
 }
 
-int set_{{p.basename}}(uint ready) {
+void set_{{p.basename}}(uint ready) {
 #ifdef DEBUG
     printf("{{p.basename}}_ready = %d\n", ready);
 #endif
