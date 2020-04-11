@@ -269,8 +269,7 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
         if not isinstance(other, Fixpnumber):
             other = Fixpnumber(other)
 
-        mul_cls = type(self) * type(other)
-        return mul_cls.decode(int(self) * int(other))
+        return (type(self) * type(other)).decode(super().__mul__(other))
 
     __rmul__ = __mul__
 

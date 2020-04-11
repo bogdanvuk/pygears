@@ -67,9 +67,9 @@ def value_saturate(val, cast_type, limits=None):
         f" of type '{repr(type(val))}'")
 
 
-def saturate(data, cast_type, limits=None):
+def saturate(data, t, limits=None):
     if is_type(data):
-        return type_saturate(data, cast_type, limits)
+        return type_saturate(data, t, limits)
     else:
-        sat_type = type_saturate(type(data), cast_type, limits)
+        sat_type = type_saturate(type(data), t, limits)
         return value_saturate(data, sat_type, limits)

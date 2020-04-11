@@ -35,12 +35,12 @@ def datagear(func, **meta_kwds):
 
     paramspec = inspect.getfullargspec(func)
 
-    invocation = ['*data']
+    invocation = ['*_data']
 
     for name in paramspec.kwonlyargs:
         invocation.append(f'{name}={name}')
 
-    body = f'''async with gather({",".join(paramspec.args)}) as data:
+    body = f'''async with gather({",".join(paramspec.args)}) as _data:
         yield datafunc({",".join(invocation)})'''
 
     execdict = {'datafunc': func, 'gather': gather}

@@ -4,6 +4,8 @@ from pygears.core.hier_node import HierNode
 
 sim_reg = None
 
+class PathError(Exception):
+    pass
 
 def get_sim_map_gear(gear):
     global sim_reg
@@ -80,13 +82,19 @@ def get_source_producer(obj, sim=False):
 
     if isinstance(obj.producer, HDLProducer) or obj.producer is None:
         if sim:
-            raise Exception(
-                f'Interface path does not end with a simulation gear at {obj.name}'
+            raise PathError(
+                f'No producer found on beginning of the path: ?'
             )
 
         return obj
 
-    return get_source_producer(obj.producer, sim=sim)
+    err = None
+    try:
+        return get_source_producer(obj.producer, sim=sim)
+    except PathError as e:
+        err = e
+
+    raise PathError(f'{str(err)} -> {obj.name}')
 
 
 def _get_consumer_tree_rec(root_intf, cur_intf, consumers, end_producer):

@@ -101,6 +101,25 @@ METHOD_OP_MAP = {
     ast.USub: '__neg__',
 }
 
+R_METHOD_OP_MAP = {
+    ast.Add: '__radd__',
+    ast.BitAnd: '__rand__',
+    ast.BitOr: '__ror__',
+    ast.BitXor: '__rxor__',
+    ast.Div: '__rtruediv__',
+    ast.Eq: '__eq__',
+    ast.Gt: '__le__',
+    ast.GtE: '__lt__',
+    ast.FloorDiv: '__rfloordiv__',
+    ast.Lt: '__ge__',
+    ast.LtE: '__gt__',
+    ast.MatMult: '__rmatmul__',
+    ast.Mult: '__rmul__',
+    ast.Mod: '__rmod__',
+    ast.NotEq: '__ne__',
+    ast.Sub: '__rsub__'
+}
+
 
 def visit_bin_expr(op, operands, ctx: Context):
     op1 = visit_ast(operands[0], ctx)
@@ -114,10 +133,19 @@ def visit_bin_expr(op, operands, ctx: Context):
 
     f = getattr(dtype, METHOD_OP_MAP[type(op)])
 
-    return resolve_func(f, (
-        op1,
-        op2,
-    ), {}, ctx)
+    ret = resolve_func(f, (op1, op2), {}, ctx)
+
+    if ret != ir.ResExpr(NotImplemented):
+        return ret
+
+    # TODO: This WAS needed, since: ir.ResExpr(Uint[8]).dtype is None. REMOVE
+    dtype = type(op2.val) if isinstance(op2, ir.ResExpr) else op2.dtype
+
+    f = getattr(dtype, R_METHOD_OP_MAP[type(op)])
+
+    ret = resolve_func(f, (op2, op1), {}, ctx)
+
+    return ret
 
 
 @node_visitor(ast.Compare)

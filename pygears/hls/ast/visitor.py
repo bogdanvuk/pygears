@@ -265,7 +265,7 @@ def node_visitor(ast_type):
                     func, fn, ln = gear_definition_location(ctx.funcref.func)
                     msg = (
                         f'{str(e)}\n    - when compiling function "{ctx.funcref.func}" with'
-                        f' parameters {ctx.args}')
+                        f' signature {ctx.signature}')
 
                 err = SyntaxError(msg, ln + node.lineno - 1, filename=fn)
 
@@ -301,7 +301,20 @@ def visit_block(ir_node, body, ctx):
     ctx.ir_block_closure.append(ir_node)
     for stmt in body:
         res_stmt = visit_ast(stmt, ctx)
-        add_to_list(ir_node.stmts, res_stmt)
+        if not isinstance(res_stmt, list):
+            res_stmt = [res_stmt]
+
+        for s in res_stmt:
+            ir_node.stmts.append(s)
+            if isinstance(ir_node, ir.FuncBlock) and isinstance(s, ir.FuncReturn):
+                # No need to continue, return has been hit
+                break
+
+        if isinstance(ir_node, ir.FuncBlock) and isinstance(ir_node.stmts[-1], ir.FuncReturn):
+            # No need to continue, return has been hit
+            break
+
+        # add_to_list(ir_node.stmts, res_stmt)
 
     # Remove expressions that are added as block statements
     stmts = ir_node.stmts

@@ -374,13 +374,13 @@ class Integer(Integral, metaclass=IntegerType):
         return (type(self) - type(other))(super().__sub__(other))
 
     def __mul__(self, other):
-        if not is_type(type(other)):
-            other = type(self).base(other)
-
-        if not isinstance(other, Integer):
+        if is_type(type(other)) and not isinstance(other, Integer):
             return NotImplemented
 
-        return (type(self) * type(other))(super().__mul__(other))
+        if not is_type(type(other)):
+            return (type(self) * type(self).base(other))(super().__mul__(other))
+        else:
+            return (type(self) * type(other))(super().__mul__(other))
 
     __rmul__ = __mul__
 

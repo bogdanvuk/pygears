@@ -500,7 +500,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
                 raise registry('sim/exception')
 
 
-def sim(resdir=None, timeout=None, extens=None, run=True, check_activity=True, seed=None):
+def sim(resdir=None, timeout=None, extens=None, run=True, check_activity=False, seed=None):
 
     if extens is None:
         extens = []

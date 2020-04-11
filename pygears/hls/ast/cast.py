@@ -10,6 +10,9 @@ def fixp_resolver(opexp, cast_to):
         other_cls = Fixp if val_dtype.signed else Ufixp
         val_dtype = other_cls[val_dtype.width, val_dtype.width]
 
+    if cast_to is Fixpnumber:
+        return ir.CastExpr(opexp, val_dtype)
+
     val_fract = val_dtype.fract
     fract = cast_to.fract
 

@@ -118,6 +118,8 @@ def _(node: ast.Return, ctx: FuncContext):
     if not isinstance(ctx, FuncContext):
         raise Exception('Return found outside function')
 
+    # TODO: If there are multiple returns from a function, return types might
+    # clash which is not supported right now. Check that this is not the case
     if ctx.ret_dtype is not None:
         expr = resolve_cast_func(expr, ctx.ret_dtype)
     else:

@@ -95,8 +95,8 @@ def uint_value_trunc_resolver(trunc_type: UintType, val):
     return trunc_type.decode(code(val, int) & ((1 << trunc_type.width) - 1))
 
 
-def trunc(data, cast_type):
+def trunc(data, t):
     if is_type(data):
-        return type_trunc(cast_type, data)
+        return type_trunc(t, data)
     else:
-        return value_trunc(type_trunc(cast_type, type(data)), data)
+        return value_trunc(type_trunc(t, type(data)), data)

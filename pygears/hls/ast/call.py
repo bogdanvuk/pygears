@@ -182,7 +182,10 @@ def resolve_func(func, args, kwds, ctx):
         return resolve_compile_time(func, args, kwds)
 
     if func in registry('hls/ir_builtins'):
-        return registry('hls/ir_builtins')[func](*args, **kwds)
+        try:
+            return registry('hls/ir_builtins')[func](*args, **kwds)
+        except TypeError as e:
+            raise SyntaxError(str(e).replace('<lambda>()', repr(func)))
 
     if const_func_args(args, kwds):
         return resolve_compile_time(func, args, kwds)

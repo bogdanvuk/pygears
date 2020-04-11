@@ -23,11 +23,9 @@ def call_floor(arg):
     int_cls = Int if t_arg.signed else Uint
     arg_to_int = ir.CastExpr(arg, int_cls[t_arg.width])
     if t_arg.fract >= 0:
-        return ir.BinOpExpr((arg_to_int, ir.ResExpr(Uint(t_arg.fract))),
-                            ir.opc.RShift)
+        return ir.BinOpExpr((arg_to_int, ir.ResExpr(Uint(t_arg.fract))), ir.opc.RShift)
     else:
-        return ir.BinOpExpr((arg_to_int, ir.ResExpr(Uint(-t_arg.fract))),
-                            ir.opc.LShift)
+        return ir.BinOpExpr((arg_to_int, ir.ResExpr(Uint(-t_arg.fract))), ir.opc.LShift)
 
 
 def call_div(a, b, subprec):
@@ -194,9 +192,10 @@ def call_qrange(*args):
 
 
 def call_range(*args):
-    ret = ir.CallExpr(range,
-                      dict(zip(['start', 'stop', 'step'], args)),
-                      params={'return': Queue[args[0].dtype]})
+    ret = ir.CallExpr(
+        range,
+        dict(zip(['start', 'stop', 'step'], args)),
+        params={'return': Queue[args[0].dtype]})
 
     ret.pass_eot = False
     return ret
@@ -205,8 +204,10 @@ def call_range(*args):
 def call_breakpoint():
     return None
 
+
 def ir_builtin(func):
     registry('hls/ir_builtins').get(func, None)
+
 
 class AddIntfOperPlugin(PluginBase):
     @classmethod
@@ -268,12 +269,9 @@ class AddIntfOperPlugin(PluginBase):
             call_breakpoint,
             saturate:
             lambda *args, **kwds: resolve_gear_call(
-                saturate_gear.func, (), {
-                    'din': args[0],
-                    't': args[1]
-                })
+                saturate_gear.func, args if len(args) == 1 else [args[0]], kwds
+                if len(kwds) == 1 else {'t': args[1]})
         }
-
 
         int_ops = {
             ir.opc.Add: '__add__',
@@ -295,8 +293,9 @@ class AddIntfOperPlugin(PluginBase):
             ir.opc.Sub: '__sub__'
         }
 
-
+        # TODO: User @wraps for better error reporting
         for op, name in int_ops.items():
-            ir_builtins[getattr(int, name)] = lambda a, b, x=op: ir.BinOpExpr((call_int(a), b), x)
+            ir_builtins[getattr(int, name)] = lambda a, b, *, x=op: ir.BinOpExpr(
+                (call_int(a), b), x)
 
         safe_bind('hls/ir_builtins', ir_builtins)

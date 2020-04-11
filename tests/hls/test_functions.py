@@ -5,14 +5,15 @@ from pygears.util.utils import gather
 from pygears.lib.verif import directed, drv
 from pygears.sim.modules import SimVerilated
 from pygears import datagear
-from pygears.lib import add
+from pygears.lib import add, mul
 
 
 def test_add(tmpdir):
-    directed(drv(t=Uint[8], seq=list(range(8))),
-             drv(t=Uint[8], seq=list(range(8))),
-             f=add(sim_cls=SimVerilated),
-             ref=[2 * i for i in range(8)])
+    directed(
+        drv(t=Uint[8], seq=list(range(8))),
+        drv(t=Uint[8], seq=list(range(8))),
+        f=add(sim_cls=SimVerilated),
+        ref=[2 * i for i in range(8)])
 
     sim(tmpdir)
 
@@ -31,10 +32,11 @@ def test_multiple_arguments(tmpdir):
             res = add_real_part_func(data[0], data[1])
             yield code(res, x.dtype[0])
 
-    directed(drv(t=complex_t, seq=[(i, i) for i in range(10)]),
-             drv(t=complex_t, seq=[(i, i) for i in range(10)]),
-             f=add_real_part_module(sim_cls=SimVerilated),
-             ref=[2 * i for i in range(10)])
+    directed(
+        drv(t=complex_t, seq=[(i, i) for i in range(10)]),
+        drv(t=complex_t, seq=[(i, i) for i in range(10)]),
+        f=add_real_part_module(sim_cls=SimVerilated),
+        ref=[2 * i for i in range(10)])
 
     sim(tmpdir)
 
@@ -47,10 +49,11 @@ def test_multiple_arguments_datagear(tmpdir):
     def add_real_part_func(x: TComplex, y: TComplex) -> b'x[0]':
         return code(x[0] + y[0], type(x[0]))
 
-    directed(drv(t=complex_t, seq=[(i, i) for i in range(10)]),
-             drv(t=complex_t, seq=[(i, i) for i in range(10)]),
-             f=add_real_part_func(sim_cls=SimVerilated),
-             ref=[2 * i for i in range(10)])
+    directed(
+        drv(t=complex_t, seq=[(i, i) for i in range(10)]),
+        drv(t=complex_t, seq=[(i, i) for i in range(10)]),
+        f=add_real_part_func(sim_cls=SimVerilated),
+        ref=[2 * i for i in range(10)])
 
     sim(tmpdir)
 
@@ -66,14 +69,13 @@ def test_multiple_arguments_datagear_complex(tmpdir):
         else:
             return code(x[1] + y[1], type(x[0]))
 
-    directed(drv(t=complex_t, seq=[(i, 2 * i) for i in range(10)]),
-             drv(t=complex_t, seq=[(i, 2 * i) for i in range(10)]),
-             f=add_real_part_func(sim_cls=SimVerilated),
-             ref=[2 * i if i % 2 else 4 * i for i in range(10)])
+    directed(
+        drv(t=complex_t, seq=[(i, 2 * i) for i in range(10)]),
+        drv(t=complex_t, seq=[(i, 2 * i) for i in range(10)]),
+        f=add_real_part_func(sim_cls=SimVerilated),
+        ref=[2 * i if i % 2 else 4 * i for i in range(10)])
 
     sim(tmpdir)
-
-
 
 
 def test_fixp_arith(tmpdir, sim_cls):
@@ -82,10 +84,11 @@ def test_fixp_arith(tmpdir, sim_cls):
         async with gather(x, y) as data:
             yield (data[0] + data[1]) + (data[0] + data[1])
 
-    directed(drv(t=Ufixp[4, 7], seq=[3.125]),
-             drv(t=Ufixp[4, 7], seq=[2.25]),
-             f=fixp_arith(sim_cls=sim_cls),
-             ref=[Ufixp[4, 7](10.75)])
+    directed(
+        drv(t=Ufixp[4, 7], seq=[3.125]),
+        drv(t=Ufixp[4, 7], seq=[2.25]),
+        f=fixp_arith(sim_cls=sim_cls),
+        ref=[Ufixp[4, 7](10.75)])
 
     sim(tmpdir)
 
@@ -96,9 +99,23 @@ def test_fixp_diff_arith(tmpdir, sim_cls):
         async with gather(x, y) as data:
             yield (data[0] + data[1]) + (data[0] + data[1])
 
-    directed(drv(t=Ufixp[4, 7], seq=[3.125]),
-             drv(t=Ufixp[4, 6], seq=[2.25]),
-             f=fixp_arith(sim_cls=sim_cls),
-             ref=[Ufixp[4, 7](10.75)])
+    directed(
+        drv(t=Ufixp[4, 7], seq=[3.125]),
+        drv(t=Ufixp[4, 6], seq=[2.25]),
+        f=fixp_arith(sim_cls=sim_cls),
+        ref=[Ufixp[4, 7](10.75)])
+
+    sim(tmpdir)
+
+
+def test__rmul__(tmpdir, sim_cls):
+    # Uint __mul__ raises NotImplemented, so __rmul__ of Ufixp needs to be
+    # invoked
+    directed(
+        drv(t=Uint[8], seq=[128]),
+        drv(t=Ufixp[0, 8], seq=[0.5]),
+        f=mul,
+        ref=[64],
+    )
 
     sim(tmpdir)
