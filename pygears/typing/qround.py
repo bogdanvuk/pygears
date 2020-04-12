@@ -4,7 +4,10 @@ from .uint import Uint, Bool, Int
 
 
 def get_out_type(val_type, fract):
-    return val_type.base[val_type.integer + 1, val_type.integer + fract + 1]
+    if fract != 0:
+        return val_type.base[val_type.integer + 1, val_type.integer + fract + 1]
+    else:
+        return (Int if val_type.signed else Uint)[val_type.integer + 1]
 
 
 def get_cut_bits(val_type, fract):

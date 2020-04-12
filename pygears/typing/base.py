@@ -1,6 +1,8 @@
 import collections
 import copy
 import functools
+import copyreg
+import operator
 
 
 @functools.lru_cache(maxsize=None)
@@ -95,6 +97,11 @@ def type_str(obj):
         return ('...')
     return str(obj)
 
+def pickle_c(c):
+    if c.is_generic():
+        return c.__name__
+
+    return operator.getitem, (c.base, tuple(c.args))
 
 class class_and_instance_method:
     def __init__(self, func):
@@ -178,6 +185,9 @@ class GenericMeta(TypingMeta):
                     for name, val in zip(bases[0].templates, args)
                 }
             return param_subs(bases[0], tmpl_map, {})
+
+    def __init_subclass__(cls, **kwds):
+        copyreg.pickle(cls, pickle_c)
 
     def is_generic(self):
         """Return True if no values have been supplied for the generic parameters.

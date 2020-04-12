@@ -1,6 +1,6 @@
 import inspect
 
-from pygears import registry, safe_bind, Intf, bind, module
+from pygears import registry, safe_bind, Intf, bind, module, find
 from pygears.sim.sim_gear import SimGear, is_simgear_func
 from pygears.sim.sim import SimPlugin
 from pygears.core.gear import GearPlugin
@@ -118,7 +118,10 @@ class SimInstVisitor(HierVisitorBase):
             return True
 
 
-def sim_inst(top):
+def sim_inst(top=None):
+    if top is None:
+        top = find('/')
+
     v = SimInstVisitor()
     v.visit(top)
 

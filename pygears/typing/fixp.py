@@ -199,6 +199,7 @@ class FixpnumberType(IntegralType):
 
 class Fixpnumber(Integral, metaclass=FixpnumberType):
     def __new__(cls, val=0):
+        # TODO: this takes some time. Implement hashing for classes to speed things up
         if type(val) == cls:
             return val
 

@@ -1,4 +1,5 @@
 import os
+from pygears import find
 from pygears.sim.extens.sim_extend import SimExtend
 from pygears.sim.extens import graphviz
 
@@ -17,12 +18,12 @@ class SimTimelapse(SimExtend):
         'finished': 'red'
     }
 
-    def __init__(self, top, outdir='timelapse', dpi=60):
-        super().__init__(top)
+    def __init__(self, outdir='timelapse', dpi=60):
+        super().__init__()
         self.outdir = os.path.abspath(
             os.path.expandvars(os.path.expanduser(outdir)))
         os.makedirs(self.outdir, exist_ok=True)
-        self.g = graphviz.graph(top, edge_fmt='{prod_gear} -> {cons_gear}')
+        self.g = graphviz.graph(find('/'), edge_fmt='{prod_gear} -> {cons_gear}')
         self.g.set_dpi(dpi)
         self.img_cnt = 0
 

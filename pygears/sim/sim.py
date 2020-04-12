@@ -532,9 +532,8 @@ def sim(resdir=None, timeout=None, extens=None, run=True, check_activity=False, 
         if ActivityChecker not in extens:
             extens.append(ActivityChecker)
 
-    top = find('/')
     for oper in itertools.chain(registry('sim/flow'), extens):
-        oper(top)
+        oper()
 
     if run:
         loop.run(timeout)

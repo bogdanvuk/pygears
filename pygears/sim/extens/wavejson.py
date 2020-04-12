@@ -1,5 +1,5 @@
 import json
-from pygears import bind, PluginBase, safe_bind, config
+from pygears import bind, PluginBase, safe_bind, config, find
 from pygears.core.port import OutPort
 from pygears.sim import timestep
 from pygears.typing import typeof, TLM, Queue
@@ -221,7 +221,6 @@ class WaveJSONValVisitor(VCDValVisitor):
 class WaveJSON(SimExtend):
     @inject
     def __init__(self,
-                 top,
                  trace_fn=Inject('wavejson/trace_fn'),
                  include=Inject('debug/trace'),
                  sim=Inject('sim/simulator'),
@@ -247,7 +246,7 @@ class WaveJSON(SimExtend):
         self.handhake = set()
 
         v = WaveJSONHierVisitor(self.writer, include)
-        v.visit(top)
+        v.visit(find('/'))
         self.vcd_vars = v.vcd_vars
 
         for intf in self.vcd_vars:

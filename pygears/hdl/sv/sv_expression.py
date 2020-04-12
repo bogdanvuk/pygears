@@ -71,7 +71,14 @@ class SVExpressionVisitor:
         if getattr(node.val, 'unknown', False):
             return f"{node.dtype.width}'bx"
 
-        return int(code(node.val))
+        val = int(code(node.val))
+
+        if (val >= 2**31) or (val < -2**31):
+            val = Integer(val)
+            sign = '-' if val.signed else ''
+            return f"{sign}{val.width}'d{abs(val)}"
+
+        return val
 
     def visit_FunctionCall(self, node):
         return (f'{node.name}(' +

@@ -7,7 +7,7 @@ from pygears.conf import inject, Inject
 
 class RandBase(SimExtend):
     @inject
-    def __init__(self, top, cons, outdir=Inject('results-dir')):
+    def __init__(self, cons, outdir=Inject('results-dir')):
         super().__init__()
         self.outdir = outdir
         self.constraints = self.randomizes(cons)

@@ -77,7 +77,7 @@ def u32_bytes_decode(data, dtype):
 
 class SVSock(SimExtend):
     @inject
-    def __init__(self, top, run=Inject('sim/svsock/run'), **kwds):
+    def __init__(self, run=Inject('sim/svsock/run'), **kwds):
         bind('sim/svsock/server', self)
         self.run_cosim = run
         self.kwds = kwds

@@ -219,9 +219,6 @@ class Variable:
             if self.val is not None:
                 self.dtype = self.val.dtype
 
-        if (repr(self.dtype)) == 'Uint[4](0)':
-            breakpoint()
-
 
 @dataclass
 class Interface(Expr):
@@ -533,6 +530,10 @@ class BinOpExpr(Expr):
             if isinstance(op2, ResExpr):
                 return op2 if op2.val else op1
 
+        elif operator in (opc.RShift, opc.LShift):
+            if isinstance(op2, ResExpr) and op2.val == 0:
+                return op1
+
         inst = super().__new__(cls)
         inst.operands = operands
         inst.operator = operator
@@ -717,7 +718,12 @@ class ConditionalExpr(Expr):
 
     @property
     def dtype(self):
-        return max([op.dtype for op in self.operands])
+        if self.operands[0].dtype.width > self.operands[1].dtype.width:
+            return self.operands[0].dtype
+        else:
+            return self.operands[1].dtype
+
+        # return max([op.dtype for op in self.operands])
 
 
 @dataclass

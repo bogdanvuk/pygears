@@ -1,7 +1,7 @@
 import pytest
 from pygears.util.test_utils import get_decoupled_dut
 from functools import reduce as freduce
-from pygears.lib import reduce, directed, drv, verif, delay_rng, accum
+from pygears.lib import reduce, directed, drv, verif, delay_rng, accum, saturate as saturate_gear
 from pygears.typing import Uint, Queue, Bool, saturate, trunc
 from pygears.sim import sim
 from pygears.util.test_utils import synth_check
@@ -65,3 +65,10 @@ def test_accum_trunc_directed(tmpdir, sim_cls):
         return trunc(x + y, Uint[8])
 
     accum_test(tmpdir, accum(sim_cls=sim_cls, cast=trunc), add)
+
+
+def test_accum_saturate_gear_directed(tmpdir, sim_cls):
+    def add(x, y):
+        return saturate(x + y, Uint[8])
+
+    accum_test(tmpdir, accum(sim_cls=sim_cls, cast=saturate_gear), add)

@@ -5,7 +5,7 @@ from pygears.conf import inject, Inject
 
 class SimExtend:
     @inject
-    def __init__(self, top=None, sim=Inject('sim/simulator')):
+    def __init__(self, sim=Inject('sim/simulator')):
         self.sim = sim
         self.activate()
 

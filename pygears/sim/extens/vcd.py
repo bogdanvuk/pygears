@@ -1,5 +1,5 @@
 import subprocess
-from pygears import bind, PluginBase, safe_bind, config
+from pygears import bind, PluginBase, safe_bind, config, find
 from pygears.core.port import OutPort
 from pygears.sim import sim_log, timestep, SimPlugin
 from pygears.sim.sim_gear import SimGear
@@ -197,7 +197,6 @@ class VCD(SimExtend):
     @inject
     def __init__(
         self,
-        top,
         trace_fn='pygears.vcd',
         include=Inject('debug/trace'),
         tlm=False,
@@ -206,6 +205,7 @@ class VCD(SimExtend):
         sim=Inject('sim/simulator'),
         outdir=Inject('results-dir'),
         sim_map=Inject('sim/map')):
+
         super().__init__()
         self.sim = sim
         self.finished = False
@@ -216,7 +216,7 @@ class VCD(SimExtend):
         self.shmid_proc = None
 
         vcd_visitor = VCDHierVisitor(include, tlm)
-        vcd_visitor.visit(top)
+        vcd_visitor.visit(find('/'))
 
         if not vcd_visitor.vcd_vars:
             self.deactivate()

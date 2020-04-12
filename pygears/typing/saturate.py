@@ -3,10 +3,18 @@ from .cast import cast
 
 
 def integral_type_saturate_resolver(dtype, cast_type):
+    if dtype is not int and dtype.base != cast_type.base:
+        raise TypeError(
+            f"cannot saturate '{repr(dtype)}' to a different base type '{repr(cast_type)}'")
+
     return cast_type
 
 
 def fixp_type_saturate_resolver(dtype, cast_type):
+    if dtype.base != cast_type.base:
+        raise TypeError(
+            f"cannot saturate '{repr(dtype)}' to a different base type '{repr(cast_type)}'")
+
     if dtype.fract != cast_type.fract:
         raise TypeError(
             f"cannot saturate fixed point type '{repr(dtype)}' to a type '{repr(cast_type)}'"

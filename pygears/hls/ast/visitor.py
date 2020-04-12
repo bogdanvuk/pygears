@@ -33,8 +33,7 @@ class Function:
         self.source = get_function_source(func)
         self.func = func
         self.ast = get_function_ast(func)
-        self.basename = ''.join(e for e in func.__name__
-                                if e.isalnum() or e == '_')
+        self.basename = ''.join(e for e in func.__name__ if e.isalnum() or e == '_')
         self.uniqueid = uniqueid
         # TODO: Include keywords here
         self._hash = hash(self.source) ^ hash(tuple(arg.dtype for arg in args))
@@ -152,12 +151,11 @@ class GearContext(Context):
             if isinstance(obj, ir.Variable) and obj.reg
         }
 
-
     @property
     def in_ports(self):
         return [
-            obj for obj in self.scope.values()
-            if (isinstance(obj, ir.Interface) and isinstance(obj.intf, Intf)
+            obj for obj in self.scope.values() if (
+                isinstance(obj, ir.Interface) and isinstance(obj.intf, Intf)
                 and obj.intf.producer and obj.intf.producer.gear is self.gear)
         ]
 
@@ -173,6 +171,9 @@ class FuncContext(Context):
         args.update(kwds)
 
         for name in self.const_args:
+            if name not in args:
+                continue
+
             del args[name]
 
         return args
@@ -217,13 +218,15 @@ class FuncContext(Context):
                 else:
                     params[name] = var
 
-            res = infer_ftypes(params=params,
-                               args=arg_types,
-                               namespace=self.local_namespace)
+            res = infer_ftypes(
+                params=params, args=arg_types, namespace=self.local_namespace)
 
             for name, dtype in res.items():
                 if name == 'return':
                     continue
+
+                if name not in args:
+                    args[name] = ir.ResExpr(dtype)
 
                 if isinstance(args[name], ir.ResExpr):
                     self.local_namespace[name] = args[name].val
@@ -269,8 +272,7 @@ def node_visitor(ast_type):
 
                 err = SyntaxError(msg, ln + node.lineno - 1, filename=fn)
 
-                traceback = make_traceback(
-                    (SyntaxError, err, sys.exc_info()[2]))
+                traceback = make_traceback((SyntaxError, err, sys.exc_info()[2]))
                 exc_type, exc_value, tb = traceback.standard_exc_info
 
             reraise(exc_type, exc_value, tb)
@@ -305,12 +307,16 @@ def visit_block(ir_node, body, ctx):
             res_stmt = [res_stmt]
 
         for s in res_stmt:
+            if s is None:
+                continue
+
             ir_node.stmts.append(s)
             if isinstance(ir_node, ir.FuncBlock) and isinstance(s, ir.FuncReturn):
                 # No need to continue, return has been hit
                 break
 
-        if isinstance(ir_node, ir.FuncBlock) and isinstance(ir_node.stmts[-1], ir.FuncReturn):
+        if ir_node.stmts and isinstance(ir_node, ir.FuncBlock) and isinstance(
+                ir_node.stmts[-1], ir.FuncReturn):
             # No need to continue, return has been hit
             break
 

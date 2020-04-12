@@ -3,7 +3,7 @@ import time
 
 
 class SimTiming(SimExtend):
-    def __init__(self, top, window=1000):
+    def __init__(self, window=1000):
         super().__init__()
         self.window = window
         self.forward_times = {}
