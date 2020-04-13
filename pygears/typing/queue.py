@@ -16,15 +16,15 @@ class QueueMeta(EnumerableGenericMeta):
     def width(self):
         return sum(f.width for f in self)
 
-    def __new__(cls, name, bases, namespace, args=[]):
+    def __new__(cls, name, bases, namespace, args=None):
         if args:
             if isinstance(args, dict) and (args['eot'] == 0):
                 return args['data']
 
             if isinstance(args, list) and (typeof(args[0], Queue)):
-                args = [args[0].data, args[0].lvl + args[1]]
+                args = (args[0].data, args[0].lvl + args[1])
             elif isinstance(args, dict) and (typeof(args['data'], Queue)):
-                args = [args['data'].data, args['data'].lvl + args['eot']]
+                args = (args['data'].data, args['data'].lvl + args['eot'])
 
         return super().__new__(cls, name, bases, namespace, args)
 
@@ -102,7 +102,7 @@ class QueueMeta(EnumerableGenericMeta):
 
 # TODO: If queue is parameterized with two types, the other one will substitute eot field
 class Queue(tuple, metaclass=QueueMeta):
-    __default__ = [1]
+    __default__ = (1, )
     __parameters__ = ['data', 'eot']
 
     def __new__(cls, val=None, eot=None):

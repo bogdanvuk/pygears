@@ -70,12 +70,14 @@ Number.register(Integral)
 class IntegerType(IntegralType):
     """Defines lib methods for all Integer based classes.
     """
-    def __new__(cls, name, bases, namespace, args=[]):
+    def __new__(cls, name, bases, namespace, args=None):
         if args:
             if isinstance(args, dict):
                 w = list(args.values())[0]
-            else:
+            elif isinstance(args, (tuple, list)):
                 w = args[0]
+            else:
+                w = args
 
             if not isinstance(w, (str, int)):
                 raise TypeError(
@@ -87,7 +89,7 @@ class IntegerType(IntegralType):
                         f"{name} type parameter must be a positive integer, not '{w}'"
                     )
 
-                args = [int(w)]
+                args = (int(w), )
 
         return super().__new__(cls, name, bases, namespace, args=args)
 
@@ -228,6 +230,61 @@ class Integer(Integral, metaclass=IntegerType):
     Corresponds to HDL logic vector types. For an example Integer[9] translates
     to :sv:`logic [8:0]`.
     """
+
+    # def __new__(cls, val: int = None):
+    #     if not cls.is_generic():
+    #         if val is None:
+    #             return super().__new__(cls, 0)
+
+    #         if isinstance(val, cls):
+    #             return val
+
+    #         # check_width(val, cls.width, cls)
+    #         if isinstance(val, int):
+    #             return super().__new__(cls, val)
+
+    #         if isinstance(val, list):
+    #             if cls.signed:
+    #                 raise TypeError(f'cannot create Int from bit list')
+
+    #             if not cls.specified:
+    #                 cls = Uint[len(val)]
+
+    #             ival = 0
+    #             for v in val:
+    #                 ival <<= 1
+    #                 ival |= bool(v)
+
+    #             return cls(ival)
+
+    #         if cls.base is Integer:
+    #             if isinstance(val, Uint) or int(val) >= 0:
+    #                 cls = Uint[bitw(val)]
+
+    #             if typeof(type(val), Int) or int(val) < 0:
+    #                 cls = Int[bitw(val)]
+
+    #         return super().__new__(cls, val)
+    #     else:
+    #         if val is None:
+    #             val = 0
+
+    #         if cls.base is Integer:
+    #             if typeof(type(val), Uint) or int(val) >= 0:
+    #                 if typeof(type(val), Uint):
+    #                     cls = type(val)
+    #                 else:
+    #                     cls = Uint[bitw(val)]
+
+    #             if typeof(type(val), Int) or int(val) < 0:
+    #                 if typeof(type(val), Int):
+    #                     cls = type(val)
+    #                 else:
+    #                     cls = Int[bitw(val)]
+
+    #         # check_width(val, res.width, cls)
+    #         return cls[bitw(val)](int(val))
+
     def __new__(cls, val: int = None):
         if val is None:
             val = 0
@@ -306,7 +363,7 @@ class Integer(Integral, metaclass=IntegerType):
         >>> len(Integer[8](0))
         8
         """
-        return self.width
+        return len(type(self))
 
     def __invert__(self):
         return type(self)(~int(self) & type(self).mask)
@@ -619,8 +676,8 @@ class Uint(Integer, metaclass=UintType):
 
 
 class BoolMeta(UintType):
-    def __new__(cls, name, bases, namespace, args=[]):
-        spec_cls = super().__new__(cls, name, bases, namespace, args=[1])
+    def __new__(cls, name, bases, namespace, args=None):
+        spec_cls = super().__new__(cls, name, bases, namespace, args=(1, ))
         spec_cls._base = Uint
         return spec_cls
 
@@ -632,5 +689,7 @@ class BoolMeta(UintType):
 
 
 class Bool(Uint, metaclass=BoolMeta):
+    __parameters__ = ['N']
+
     def __new__(cls, val):
         return int.__new__(cls, bool(val))

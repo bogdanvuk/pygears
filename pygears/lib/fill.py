@@ -6,7 +6,7 @@ from pygears.lib.shred import shred
 
 
 def fill_type(din_t, union_t, sel):
-    dtypes = union_t.types.copy()
+    dtypes = list(union_t.types).copy()
     dtypes[sel] = din_t
 
     return Union[tuple(dtypes)]

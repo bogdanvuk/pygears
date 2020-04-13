@@ -5,6 +5,28 @@ import copyreg
 import operator
 
 
+class BlackBox:
+    """All BlackBoxes are the same."""
+    def __init__(self, contents):
+        # TODO: use a weak reference for contents
+        self._contents = contents
+
+    @property
+    def contents(self):
+        return self._contents
+
+    def __eq__(self, other):
+        return isinstance(other, type(self))
+
+    def __hash__(self):
+        return hash(type(self))
+
+
+class hashabledict(dict):
+    def __hash__(self):
+        return hash(tuple(self.items()))
+
+
 @functools.lru_cache(maxsize=None)
 def index_norm_hashable_single(i, size):
     if isinstance(i, tuple):
@@ -97,11 +119,13 @@ def type_str(obj):
         return ('...')
     return str(obj)
 
+
 def pickle_c(c):
     if c.is_generic():
         return c.__name__
 
     return operator.getitem, (c.base, tuple(c.args))
+
 
 class class_and_instance_method:
     def __init__(self, func):
@@ -124,49 +148,72 @@ class GenericMeta(TypingMeta):
     _base = None
     _specified = None
 
-    def __new__(cls, name, bases, namespace, args=[]):
-        # TODO: Throw error when too many args are supplied
-        if (not bases) or (not hasattr(bases[0],
-                                       'args')) or (not bases[0].args):
-            # Form a class that has the generic arguments specified
-
-            # TODO: dict parenthesis can be avoided and Python will parse dict
-            # like structure as list of slices. Maybe try this to reduce clutter
-            if isinstance(args, dict):
-                namespace.update(
-                    {
-                        '__args__': tuple(args.values()),
-                        '__parameters__': tuple(args.keys())
-                    })
-            elif any(isinstance(a, slice) for a in args):
-                arg_vals = []
-                arg_names = []
-                for i, val in enumerate(args):
-                    if isinstance(val, slice):
-                        name, val = val.start, val.stop
-                    else:
-                        name = f'f{i}'
-
-                    arg_vals.append(val)
-                    arg_names.append(name)
-
-                namespace.update(
-                    {
-                        '__args__': tuple(arg_vals),
-                        '__parameters__': tuple(arg_names)
-                    })
+    @classmethod
+    @functools.lru_cache(maxsize=None)
+    def get_class(cls, name, bases, namespace, args):
+        namespace = dict(namespace.contents)
+        # TODO: dict parenthesis can be avoided and Python will parse dict
+        # like structure as list of slices. Maybe try this to reduce clutter
+        if isinstance(args, dict):
+            namespace.update(
+                {
+                    '__args__': tuple(args.values()),
+                    '__parameters__': tuple(args.keys())
+                })
+        else:
+            if args is None:
+                namespace['__args__'] = tuple()
+            elif not isinstance(args, tuple):
+                namespace['__args__'] = (args, )
             else:
-                namespace.update({'__args__': args})
+                namespace['__args__'] = args
 
-            namespace.update({
+        if len(bases) <= 1:
+            base = None
+        else:
+            base = bases[-2]
+
+        namespace.update(
+            {
                 '_hash': None,
-                '_base': None,
+                '_base': base,
                 '_specified': None,
                 '_args': None
             })
 
-            return super().__new__(cls, name, bases, namespace)
+        res = super().__new__(cls, name, bases, namespace)
+        if base is None:
+            res._base = res
+
+        return res
+
+    def __new__(cls, name, bases, namespace, args=None):
+        # TODO: Throw error when too many args are supplied
+        if ((not bases) or (not hasattr(bases[0], 'args')) or (not bases[0].args)
+                or args is None):
+
+            if isinstance(args, slice):
+                args = {args.start: args.stop}
+
+            if isinstance(args, tuple) and any(isinstance(a, slice) for a in args):
+                args_dict = {}
+
+                for i, val in enumerate(args):
+                    if isinstance(val, slice):
+                        args_dict[val.start] = val.stop
+                    else:
+                        args_dict[f'f{i}'] = val
+
+                args = args_dict
+
+            if isinstance(args, dict):
+                args = hashabledict(args)
+
+            return cls.get_class(name, bases, BlackBox(namespace), args)
         else:
+            if not isinstance(args, dict) and not isinstance(args, tuple):
+                args = (args, )
+
             if len(bases[0].templates) < len(args):
                 raise TemplateArgumentsError(
                     "Too many arguments to the templated type: {bases[0]}")
@@ -180,10 +227,7 @@ class GenericMeta(TypingMeta):
 
                 tmpl_map = args
             else:
-                tmpl_map = {
-                    name: val
-                    for name, val in zip(bases[0].templates, args)
-                }
+                tmpl_map = {name: val for name, val in zip(bases[0].templates, args)}
             return param_subs(bases[0], tmpl_map, {})
 
     def __init_subclass__(cls, **kwds):
@@ -250,14 +294,16 @@ class GenericMeta(TypingMeta):
         return self._specified
 
     def __getitem__(self, params):
-        if isinstance(params, tuple):
-            params = list(params)
-        elif not isinstance(params, dict):
-            params = [params]
+        # if isinstance(params, tuple):
+        #     params = list(params)
+        # elif not isinstance(params, dict):
+        #     params = [params]
 
-        return self.__class__(self.__name__, (self, ) + self.__bases__,
-                              dict(self.__dict__),
-                              args=params)
+        if isinstance(params, dict):
+            params = hashabledict(params)
+
+        return self.__class__(
+            self.__name__, (self, ) + self.__bases__, self.__dict__, args=params)
 
     @property
     def base(self):
@@ -376,8 +422,7 @@ searched recursively. Each template is reported only once.
                 for f, a in zip(self.fields, self.args)
             }
         else:
-            args = tuple(a.copy() if is_type(a) else copy.copy(a)
-                         for a in self.args)
+            args = tuple(a.copy() if is_type(a) else copy.copy(a) for a in self.args)
 
         return self.base[args]
 
@@ -418,25 +463,19 @@ def param_subs(t, matches, namespace):
             err = e
 
         if err:
-            raise type(err)(
-                f"{str(err)}\n - while evaluating string parameter '{t}'")
+            raise type(err)(f"{str(err)}\n - while evaluating string parameter '{t}'")
 
     elif isinstance(t, collections.abc.Iterable):
         return type(t)(param_subs(tt, matches, namespace) for tt in t)
     else:
         if isinstance(t, GenericMeta) and (not t.specified):
-            args = [
-                param_subs(t.args[i], matches, namespace)
-                for i in range(len(t.args))
-            ]
+            args = tuple(
+                param_subs(t.args[i], matches, namespace) for i in range(len(t.args)))
 
             if hasattr(t, '__parameters__'):
                 args = {name: a for name, a in zip(t.__parameters__, args)}
 
-            return t.__class__(t.__name__,
-                               t.__bases__,
-                               dict(t.__dict__),
-                               args=args)
+            return t.__class__(t.__name__, t.__bases__, t.__dict__, args=args)
 
     return t_orig
 
@@ -487,8 +526,7 @@ class EnumerableGenericMeta(GenericMeta):
 
     def index_norm(self, index):
         if not isinstance(index, tuple):
-            return (index_norm_hashable_single(self.index_convert(index),
-                                               len(self)), )
+            return (index_norm_hashable_single(self.index_convert(index), len(self)), )
         else:
             return index_norm_hashable(
                 tuple(self.index_convert(i) for i in index), len(self))
