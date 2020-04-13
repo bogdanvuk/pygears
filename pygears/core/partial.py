@@ -2,6 +2,7 @@ import functools
 import inspect
 import sys
 from pygears.conf import MultiAlternativeError
+from pygears.typing.base import hashabledict
 
 
 def extract_arg_kwds(kwds, func):
@@ -20,8 +21,7 @@ def extract_arg_kwds(kwds, func):
             kwds_only[k] = kwds[k]
         else:
             kwds_only[k] = kwds[k]
-            raise TypeError(
-                f"{func.__name__}() got an unexpected keyword argument '{k}'")
+            raise TypeError(f"{func.__name__}() got an unexpected keyword argument '{k}'")
 
     return arg_kwds, kwds_only
 
@@ -91,16 +91,27 @@ class Partial:
         self.args = args
         self.kwds = kwds
         self.errors = []
+        self._cache = {}
 
     def __str__(self):
         return f'{self.func.__name__}'
 
     def __call__(self, *args, **kwds):
-        prev_kwds = self.kwds.copy()
-        prev_kwds.update(kwds)
-        kwds = prev_kwds
+        if self.kwds:
+            prev_kwds = self.kwds.copy()
+            prev_kwds.update(kwds)
+            kwds = prev_kwds
 
-        args = self.args + args
+        if self.args:
+            args = self.args + args
+
+        try:
+            key = hash(functools._make_key(args, kwds, False)) ^ hash(self.func)
+        except TypeError:
+            key = None
+
+        if key in self._cache:
+            return self._cache[key](*args, **kwds)
 
         alternatives = [self.func] + getattr(self.func, 'alternatives', [])
         self.errors = [None] * len(alternatives)
@@ -114,7 +125,12 @@ class Partial:
                     argspec = inspect.getfullargspec(func)
                     if '__base__' in argspec.kwonlyargs:
                         kwd_params['__base__'] = self.func
-                    return func(*args_comb, **kwd_params)
+                    ret = func(*args_comb, **kwd_params)
+
+                    if key is not None:
+                        self._cache[key] = func
+
+                    return ret
                 else:
                     # TODO: Can happen if user forgets '*' for separation, warn about this
                     # TODO: Think about disabling keyword arguments that are not keyword-only for gears
@@ -124,8 +140,7 @@ class Partial:
                             f'{name}: {repr(dtype)}'
                             for name, dtype in func.__annotations__.items())
 
-                        alt_arg_names, *_ = inspect.getfullargspec(
-                            func.alternative_to)
+                        alt_arg_names, *_ = inspect.getfullargspec(func.alternative_to)
 
                         msg = (
                             f"not enough arguments specified for '{self.func.__name__}' for an"
