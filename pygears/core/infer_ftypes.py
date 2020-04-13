@@ -155,13 +155,20 @@ def infer_ftypes(params, args, namespace={}):
                         except:
                             arg_repr = repr(e.args[0])
 
-                        try:
-                            val_repr = str(val)
-                        except:
-                            val_repr = repr(val)
+                        if isinstance(val, bytes):
+                            val_repr = val.decode()
+                        else:
+                            try:
+                                val_repr = str(val)
+                            except:
+                                val_repr = repr(val)
 
-                        err = type(e)(f'{arg_repr}\n - when resolving '
-                                      f'parameter "{name}": {val_repr}')
+                        if name == 'return':
+                            err = type(e)(f'{arg_repr}\n - when resolving '
+                                        f'return type "{val_repr}"')
+                        else:
+                            err = type(e)(f'{arg_repr}\n - when resolving '
+                                        f'parameter "{name}": "{val_repr}"')
                         err.params = match
                         raise err
 

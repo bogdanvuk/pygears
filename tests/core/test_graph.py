@@ -1,4 +1,4 @@
-from pygears import gear, Intf, find
+from pygears import gear, Intf, find, config
 from pygears.typing import Unit
 from pygears.core.graph import get_source_producer, is_source_producer, get_consumer_tree, is_end_consumer
 from pygears.sim.modules.cosim_base import CosimBase
@@ -29,6 +29,8 @@ async def leaf_sink(din):
 
 
 def test_plain():
+    config['gear/infer_signal_names'] = True
+
     s = leaf_src(t=Unit)
     s | leaf_sink(name='si1')
     s | leaf_sink(name='si2')
@@ -48,6 +50,8 @@ def test_plain():
 
 
 def test_through_hier_simple():
+    config['gear/infer_signal_names'] = True
+
     @gear
     def hier(din):
         din | leaf_sink(name='si1')
@@ -71,6 +75,8 @@ def test_through_hier_simple():
 
 
 def test_through_hier_cosim():
+    config['gear/infer_signal_names'] = True
+
     @gear
     def hier(din):
         din | leaf_sink(name='si1')
@@ -92,6 +98,8 @@ def test_through_hier_cosim():
 
 
 def test_through_hier_cosim_in_channel():
+    config['gear/infer_signal_names'] = True
+
     @gear
     def hier(din, *, channeled):
         din | leaf_sink(name='si1')
@@ -118,6 +126,8 @@ def test_through_hier_cosim_in_channel():
 
 
 def test_through_hier_cosim_in_deeper_channel():
+    config['gear/infer_signal_names'] = True
+
     @gear
     def hier(din, *, channeled):
         din | leaf_sink(name='si1')
@@ -152,6 +162,8 @@ def test_through_hier_cosim_in_deeper_channel():
 
 
 def test_in_hof():
+    config['gear/infer_signal_names'] = True
+
     @gear
     def hier(din, *, f):
         return din | f
@@ -171,6 +183,8 @@ def test_in_hof():
 
 
 def test_through_hier_cosim_out_channel():
+    config['gear/infer_signal_names'] = True
+
     @gear
     def hier(din, *, channeled):
         din | leaf_sink(name='si1')

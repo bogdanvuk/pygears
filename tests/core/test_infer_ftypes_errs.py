@@ -28,7 +28,7 @@ def test_templated_type_deduction_multi_related_templates_fail():
 def test_incomplete_type():
 
     expected_err_text = """Incomplete type: Integer
- - when resolving parameter "return": b't'"""
+ - when resolving return type \"t\""""
 
     params = {'t': Integer, 'return': b't'}
     args = {}

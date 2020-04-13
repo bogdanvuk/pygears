@@ -9,7 +9,7 @@ from functools import partial, wraps
 import jinja2
 import pytest
 
-from pygears import clear, find
+from pygears import clear, find, config
 from pygears.conf import safe_bind
 from pygears.sim import sim
 from pygears.sim.modules.sim_socket import SimSocket
@@ -226,6 +226,8 @@ clear = pytest.fixture(autouse=True)(clear)
 
 @pytest.fixture
 def hdl_check_fixt(tmpdir, request):
+    config['gear/infer_signal_names'] = True
+
     yield
 
     language = os.path.splitext(request.param[0][0])[1][1:]

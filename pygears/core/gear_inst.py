@@ -233,6 +233,10 @@ def infer_outnames(annotations, meta_kwds):
 
 class intf_name_tracer:
     def __init__(self, gear):
+        self.enabled = config['gear/infer_signal_names']
+        if not self.enabled:
+            return
+
         self.code_map = registry('gear/code_map')
         self.gear = gear
 
@@ -243,6 +247,9 @@ class intf_name_tracer:
                     cm.func_locals = frame.f_locals.copy()
 
     def __enter__(self):
+        if not self.enabled:
+            return
+
         self.code_map.append(self.gear)
 
         # tracer is activated on next call, return or exception
@@ -253,6 +260,9 @@ class intf_name_tracer:
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
+        if not self.enabled:
+            return
+
         if registry('gear/current_module').parent == registry(
                 'gear/root'):
             sys.setprofile(None)
@@ -305,7 +315,7 @@ def resolve_func(gear_inst):
             out_intfs, out_dtype = resolve_out_types(out_intfs, out_dtype,
                                                      gear_inst)
         except (TypeError, TypeMatchError) as e:
-            err = type(e)(f"{str(e)}, when instantiating '{gear_inst.name}'")
+            err = type(e)(f"{str(e)}\n    when instantiating '{gear_inst.name}'")
 
         if err:
             raise err
@@ -417,8 +427,7 @@ def resolve_out_types(out_intfs, out_dtype, gear_inst):
                     cast(intf.dtype, t)
             except (TypeError, TypeMatchError) as e:
                 err = type(e)(
-                    f"{str(e)}, when casting type for output port {i}, "
-                    f"when instantiating '{gear_inst.name}'")
+                    f"{str(e)}, when casting type for output port {i}")
 
             if err:
                 raise err
@@ -560,6 +569,7 @@ class GearInstPlugin(GearDecoratorPlugin):
         safe_bind('gear/code_map', [])
         safe_bind('gear/gear_dflt_resolver', gear_base_resolver)
         config.define('gear/memoize', False)
+        config.define('gear/infer_signal_names', False)
 
     @classmethod
     def reset(cls):

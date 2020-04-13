@@ -1,4 +1,4 @@
-from pygears import Intf, alternative, gear, registry, find
+from pygears import Intf, alternative, gear, registry, find, config
 from pygears.typing import Queue, Tuple, Uint
 
 
@@ -158,6 +158,8 @@ def test_alternatives():
 
 
 def test_intf_name_inference():
+    config['gear/infer_signal_names'] = True
+
     @gear
     def fsub1(din1, din2) -> Tuple['din1', 'din2']:
         pass
