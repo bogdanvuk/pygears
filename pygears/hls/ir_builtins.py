@@ -274,7 +274,7 @@ class AddIntfOperPlugin(PluginBase):
 
         import sys
         if sys.version_info[1] >= 7:
-            ir_builtin[breakpoint] == call_breakpoint
+            ir_builtins[breakpoint] = call_breakpoint
 
         int_ops = {
             ir.opc.Add: '__add__',
