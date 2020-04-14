@@ -176,9 +176,6 @@ class Intf:
         return self._out_queues
 
     def put_nb(self, val):
-        if any(c.consumer._done for c in self.end_consumers):
-            raise GearDone
-
         put_event = self.events['put']
 
         if self.dtype is not type(val):
@@ -193,13 +190,16 @@ class Intf:
                 # TODO: when value cannot be represented, the error report can be terse
                 raise TypeMatchError(
                     f'{str(err)}\n, when converting output data "{repr(val)}"'
-                    f'from the "{registry("gear/current_module").name}"'
+                    f' from the "{registry("gear/current_module").name}"'
                     f' module to the type {repr(self.dtype)}')
 
         if put_event:
             put_event(self, val)
 
         for q, c in zip(self.out_queues, self.end_consumers):
+            if c.consumer._done:
+                raise GearDone
+
             put_event = c.consumer.events['put']
             if put_event:
                 put_event(c.consumer, val)
@@ -213,7 +213,11 @@ class Intf:
                 await q.join()
 
     def ready_nb(self):
-        return all(not q._unfinished_tasks for q in self.out_queues)
+        for q in self.out_queues:
+            if q._unfinished_tasks:
+                return False
+
+        return True
 
     async def put(self, val):
         self.put_nb(val)

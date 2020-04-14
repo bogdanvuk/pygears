@@ -23,11 +23,11 @@ def concat(l):
 class IntegralType(EnumerableGenericMeta):
     @property
     def mask(self) -> int:
-        return (1 << len(self)) - 1
+        return (1 << self.width) - 1
 
     @property
     def width(self) -> int:
-        return int(self)
+        return self.__args__[-1]
 
     def keys(self):
         """Returns a list of keys that can be used for indexing the type.
@@ -350,7 +350,7 @@ class Integer(Integral, metaclass=IntegerType):
         >>> Integer[8](0).width
         8
         """
-        return len(type(self))
+        return type(self).width
 
     @class_and_instance_method
     @property

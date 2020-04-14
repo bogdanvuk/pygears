@@ -204,7 +204,11 @@ class TupleType(EnumerableGenericMeta):
         if not self.specified:
             raise TemplatedTypeUnspecified(
                 f'Cannot callculate width of the unspecified type {repr(self)}')
-        return sum(f.width for f in self)
+        w = 0
+        for f in self.__args__:
+            w += f.width
+
+        return w
 
 
 class Tuple(tuple, metaclass=TupleType):
@@ -239,10 +243,10 @@ class Tuple(tuple, metaclass=TupleType):
                 raise TypeError(f"{str(e)}\n - when creating Tuple from '{val}'")
 
         if val is None:
-            tpl_val = tuple(t() for t in cls)
+            tpl_val = tuple(t() for t in cls.__args__)
         elif isinstance(val, dict):
             tpl_val = []
-            for t, f in zip(cls, cls.fields):
+            for t, f in zip(cls.__args__, cls.__parameters__):
                 try:
                     tpl_val.append(t(val[f]))
                 except TypeError as e:
@@ -259,7 +263,7 @@ class Tuple(tuple, metaclass=TupleType):
 
         else:
             tpl_val = []
-            for i, (t, v) in enumerate(zip(cls, val)):
+            for i, (t, v) in enumerate(zip(cls.__args__, val)):
                 try:
                     tpl_val.append(t(v))
                 except TypeError as e:
@@ -274,7 +278,7 @@ class Tuple(tuple, metaclass=TupleType):
 
                     raise TypeError(msg)
 
-        if len(tpl_val) != len(cls):
+        if len(tpl_val) != len(cls.__args__):
             raise TypeError(
                 f'{repr(cls)}() takes {len(cls)} arguments'
                 f' ({len(tpl_val)} given)')
@@ -319,6 +323,11 @@ class Tuple(tuple, metaclass=TupleType):
         >>> point_a['x', -1]
         (Uint[8](1), Uint[16](3))
         """
+
+        if isinstance(key, int):
+            return super().__getitem__(key)
+        elif isinstance(key, str):
+            return super().__getitem__(type(self).fields.index(key))
 
         key_norm = type(self).index_norm(key)
 
@@ -378,31 +387,14 @@ class Tuple(tuple, metaclass=TupleType):
         """
         ret = 0
 
-        for d, t in zip(reversed(self), reversed(type(self))):
-            ret <<= int(t)
-            ret |= int(d) & ((1 << int(t)) - 1)
+        t = type(self).__args__
+        for i in range(len(t)-1, -1, -1):
+            ret <<= int(t[i])
+            ret |= super().__getitem__(i).code() & ((1 << int(t[i])) - 1)
 
         return ret
 
-    def code(self):
-        """Returns a packed integer representation of the :class:`Tuple` instance.
-
-        ::
-
-            Point = Tuple[{'x': Uint[8], 'y': Uint[8]}]
-
-        >>> int(Point((0xaa, 0xbb)))
-        48042
-        >>> hex(48042)
-        '0xbbaa'
-        """
-        ret = 0
-
-        for d, t in zip(reversed(self), reversed(type(self))):
-            ret <<= int(t)
-            ret |= d.code() & ((1 << int(t)) - 1)
-
-        return ret
+    code = __int__
 
     @classmethod
     def decode(cls, val):

@@ -15,6 +15,7 @@ class QueueMeta(EnumerableGenericMeta):
     @property
     def width(self):
         return sum(f.width for f in self)
+        # return self.__args__[0].width + self.__args__[1]
 
     def __new__(cls, name, bases, namespace, args=None):
         if args:
@@ -150,7 +151,9 @@ class Queue(tuple, metaclass=QueueMeta):
     def code(self):
         """Returns a packed integer representation of the :class:`Queue` instance.
         """
-        return self.data.code() | (self.eot.code() << int(type(self).data))
+        data = super().__getitem__(0)
+        eot = super().__getitem__(1)
+        return data.code() | (int(eot) << type(data).width)
 
     @class_and_instance_method
     def sub(self, lvl=None):
@@ -191,11 +194,9 @@ class Queue(tuple, metaclass=QueueMeta):
 
     @classmethod
     def decode(cls, val):
-        ret = []
-        for t in cls:
-            t_width = int(t)
-            t_mask = (1 << t_width) - 1
-            ret.append(t.decode(val & t_mask))
-            val >>= t_width
+        data_t = cls.__args__[0]
+        data_t_width = int(data_t)
+        data_t_mask = (1 << data_t_width) - 1
 
-        return cls(*ret)
+        return cls((data_t.decode(val & data_t_mask), val >> data_t_width))
+

@@ -26,9 +26,9 @@ class hashabledict(dict):
     def __hash__(self):
         return hash(tuple(self.items()))
 
-
 @functools.lru_cache(maxsize=None)
-def index_norm_hashable_single(i, size):
+def index_norm_hashable_single(i, dtype):
+    size = len(dtype)
     if isinstance(i, tuple):
         start, stop, step = i
 
@@ -59,7 +59,10 @@ def index_norm_hashable_single(i, size):
 
         return slice(start, stop, step)
 
+    elif isinstance(i, str):
+        return dtype.fields.index(i)
     else:
+
         if i < 0:
             i = size + i
 
@@ -69,9 +72,51 @@ def index_norm_hashable_single(i, size):
         return i
 
 
+# @functools.lru_cache(maxsize=None)
+# def index_norm_hashable_single(i, size):
+#     if isinstance(i, tuple):
+#         start, stop, step = i
+
+#         if step == -1:
+#             start, stop = stop, start
+#             if stop is not None:
+#                 if stop == -1:
+#                     stop = None
+#                 else:
+#                     stop += 1
+
+#             step = 1
+
+#         if start is None:
+#             start = 0
+#         elif start < 0:
+#             start += size
+
+#         if stop is None:
+#             stop = size
+#         elif stop < 0:
+#             stop += size
+#         elif stop > size:
+#             stop = size
+
+#         # if start == stop:
+#         #     raise IndexError
+
+#         return slice(start, stop, step)
+
+#     else:
+#         if i < 0:
+#             i = size + i
+
+#         if i >= size:
+#             raise IndexError(f'index {i} out of bounds')
+
+#         return i
+
+
 @functools.lru_cache(maxsize=None)
-def index_norm_hashable(index, size):
-    return tuple(index_norm_hashable_single(i, size) for i in index)
+def index_norm_hashable(index, dtype):
+    return tuple(index_norm_hashable_single(i, dtype) for i in index)
 
 
 class TemplateArgumentsError(Exception):
@@ -92,8 +137,8 @@ class TypingMeta(type):
     def __repr__(self):
         return self.__name__
 
-    def __eq__(self, other):
-        return self is other
+    # def __eq__(self, other):
+    #     return self is other
 
     def __hash__(self):
         return hash(self.__name__)
@@ -253,9 +298,17 @@ class GenericMeta(TypingMeta):
 
     def __hash__(self):
         if self._hash is None:
-            self._hash = hash(repr(self))
+            # self._hash = hash(repr(self))
+            if bool(self.args):
+                self._hash = hash((self.base, tuple(self.args), tuple(self.fields)))
+            else:
+                self._hash = hash(self.__class__)
 
         return self._hash
+
+    def __eq__(self, other):
+        # return hash(self) == hash(other)
+        return hash(self) == hash(other)
 
     @property
     def args_specified(self):
@@ -432,17 +485,17 @@ searched recursively. Each template is reported only once.
             return False
         return all(s == o for s, o in zip(self.args, other.args))
 
-    def __eq__(self, other):
-        if not isinstance(other, GenericMeta):
-            return False
+    # def __eq__(self, other):
+    #     if not isinstance(other, GenericMeta):
+    #         return False
 
-        if self.base is not other.base:
-            return False
+    #     if self.base is not other.base:
+    #         return False
 
-        if len(self.args) != len(other.args):
-            return False
+    #     if len(self.args) != len(other.args):
+    #         return False
 
-        return all(s == o for s, o in zip(self.args, other.args))
+    #     return all(s == o for s, o in zip(self.args, other.args))
 
 
 def param_subs(t, matches, namespace):
@@ -526,10 +579,10 @@ class EnumerableGenericMeta(GenericMeta):
 
     def index_norm(self, index):
         if not isinstance(index, tuple):
-            return (index_norm_hashable_single(self.index_convert(index), len(self)), )
+            return (index_norm_hashable_single(index.__reduce__()[1] if isinstance(index, slice) else index, self), )
         else:
             return index_norm_hashable(
-                tuple(self.index_convert(i) for i in index), len(self))
+                tuple(self.index_convert(i) for i in index), self)
 
     def items(self):
         """Generator that yields (key, element) pairs.
