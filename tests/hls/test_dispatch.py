@@ -11,12 +11,12 @@ def dispatch_test(val):
     raise TypeError
 
 
-@dispatch_test.register
+@dispatch_test.register(Int)
 def _(val: Int):
     return val - 1
 
 
-@dispatch_test.register
+@dispatch_test.register(Uint)
 def _(val: Uint):
     return val + 1
 
@@ -52,12 +52,12 @@ def dispatch_types(t, val):
     raise TypeError
 
 
-@dispatch_types.register
+@dispatch_types.register(IntType)
 def _(t: IntType, val):
     return t(val - 1)
 
 
-@dispatch_types.register
+@dispatch_types.register(UintType)
 def _(t: UintType, val):
     return t(val + 1)
 

@@ -23,11 +23,6 @@ def parse_ifexp(node, ctx: Context):
     return ir.ConditionalExpr(operands=(res['body'], res['orelse']), cond=res['test'])
 
 
-@node_visitor(ast.Num)
-def num(node, ctx: Context):
-    return ir.ResExpr(cast(node.n, Integer))
-
-
 @node_visitor(ast.Name)
 def _(node: ast.Name, ctx: Context):
     if isinstance(node.ctx, ast.Load):
@@ -188,14 +183,27 @@ def _(node, ctx: Context):
     return ir.AttrExpr(value, node.attr)
 
 
-@node_visitor(ast.Str)
-def _(node, ctx: Context):
-    return ir.ResExpr(node.s)
+import sys
+if sys.version_info[1] < 8:
+    @node_visitor(ast.Str)
+    def _(node, ctx: Context):
+        return ir.ResExpr(node.s)
 
+    @node_visitor(ast.NameConstant)
+    def _(node, ctx: Context):
+        return ir.ResExpr(node.value)
 
-@node_visitor(ast.NameConstant)
-def _(node, ctx: Context):
-    return ir.ResExpr(node.value)
+    @node_visitor(ast.Num)
+    def num(node, ctx: Context):
+        return ir.ResExpr(cast(node.n, Integer))
+
+else:
+    @node_visitor(ast.Constant)
+    def _(node, ctx: Context):
+        if isinstance(node.value, (int, float)):
+            return ir.ResExpr(cast(node.n, Integer))
+        else:
+            return ir.ResExpr(node.value)
 
 
 @node_visitor(ast.Index)

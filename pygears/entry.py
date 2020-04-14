@@ -59,8 +59,11 @@ def cmd_register(
         cmd_config['subparsers'] = cmd_config['parser'].add_subparsers(
             title='subcommands',
             help='subcommand help',
-            dest=dest,
-            required=cmd_entry is None)
+            dest=dest)
+
+        import sys
+        if sys.version_info[1] >= 7:
+            cmd_config['subparsers'].required = cmd_entry is None
 
     cmd_config['baseparser'] = argparse.ArgumentParser(add_help=False)
 

@@ -265,13 +265,16 @@ class AddIntfOperPlugin(PluginBase):
             call_range,
             enumerate:
             call_enumerate,
-            breakpoint:
-            call_breakpoint,
             saturate:
             lambda *args, **kwds: resolve_gear_call(
                 saturate_gear.func, args if len(args) == 1 else [args[0]], kwds
                 if len(kwds) == 1 else {'t': args[1]})
         }
+
+
+        import sys
+        if sys.version_info[1] >= 7:
+            ir_builtin[breakpoint] == call_breakpoint
 
         int_ops = {
             ir.opc.Add: '__add__',

@@ -12,7 +12,7 @@ def type_trunc(cast_type, val):
         f"of type '{repr(type(val))}'")
 
 
-@type_trunc.register
+@type_trunc.register(IntegerType)
 def integer_type_trunc_resolver(cast_type: IntegerType, dtype):
     if dtype is int:
         return cast_type
@@ -25,7 +25,7 @@ def integer_type_trunc_resolver(cast_type: IntegerType, dtype):
     return cast_type
 
 
-@type_trunc.register
+@type_trunc.register(FixpnumberType)
 def fixp_type_trunc_resolver(cast_type: FixpnumberType, dtype):
     if not is_type(dtype) or dtype.base != cast_type.base:
         raise TypeError(
@@ -42,7 +42,7 @@ def value_trunc(cast_type, val):
         f"of type '{repr(type(val))}'")
 
 
-@value_trunc.register
+@value_trunc.register(FixpType)
 def fixp_value_trunc_resolver(trunc_type: FixpType, val):
     bv = code(val, Uint)
     sign = bv >> (type(val).width - 1)
@@ -65,7 +65,7 @@ def fixp_value_trunc_resolver(trunc_type: FixpType, val):
     return trunc_type.decode(bv_res)
 
 
-@value_trunc.register
+@value_trunc.register(UfixpType)
 def ufixp_value_trunc_resolver(trunc_type: UfixpType, val):
     if type(val).fract > trunc_type.fract:
         return trunc_type.decode(
@@ -75,7 +75,7 @@ def ufixp_value_trunc_resolver(trunc_type: UfixpType, val):
             code(val, int) << (trunc_type.fract - type(val).fract))
 
 
-@value_trunc.register
+@value_trunc.register(IntType)
 def int_value_trunc_resolver(trunc_type: IntType, val):
     bv = code(val, int)
     sign = bv >> (type(val).width - 1)
@@ -90,7 +90,7 @@ def int_value_trunc_resolver(trunc_type: IntType, val):
     return trunc_type.decode(bv_res)
 
 
-@value_trunc.register
+@value_trunc.register(UintType)
 def uint_value_trunc_resolver(trunc_type: UintType, val):
     return trunc_type.decode(code(val, int) & ((1 << trunc_type.width) - 1))
 
