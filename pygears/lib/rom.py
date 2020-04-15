@@ -6,10 +6,10 @@ from pygears.typing import Uint
 async def rom(addr: Uint, *, data, dtype, dflt=None) -> b'dtype':
     async with addr as a:
         if dflt is None:
-            d = data[a]
+            d = data[int(a)]
         else:
             try:
-                d = data[a]
+                d = data[int(a)]
             except (IndexError, KeyError):
                 d = dflt
 

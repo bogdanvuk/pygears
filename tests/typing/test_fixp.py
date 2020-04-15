@@ -171,10 +171,8 @@ def test_unsigned_div():
     t_c = Ufixp[10, 6]
     t_d = Ufixp[-2, 12]
 
-    assert div(t_c.max, t_d.quant,
-               0) == Ufixp[24, 6](float(t_c.max) / float(t_d.quant))
-    assert div(t_c.max, t_d.max,
-               0) == Ufixp[24, 6](float(t_c.max) / float(t_d.max))
+    assert div(t_c.max, t_d.quant, 0) == Ufixp[24, 6](float(t_c.max) / float(t_d.quant))
+    assert div(t_c.max, t_d.max, 0) == Ufixp[24, 6](float(t_c.max) / float(t_d.max))
 
 
 # def test_signed_div():
@@ -226,6 +224,35 @@ def test_cast():
     # Overflow
     with pytest.raises(ValueError):
         assert t_a(t_b(7.5)) == t_a(3.5)
+
+    u2 = Uint[2]
+
+    assert t_a(u2(2)) == t_a(2.0)
+    assert t_b(u2(2)) == t_b(2.0)
+
+    assert t_a(3) == t_a(3.0)
+
+
+def test_signed_cast():
+    t_a = Fixp[2, 4]
+    t_b = Fixp[3, 4]
+
+    assert t_b(t_a(-1.5)) == t_b(-1.5)
+
+    assert t_a(t_b(-1.5)) == t_a(-1.5)
+
+    # Overflow
+    with pytest.raises(ValueError):
+        assert t_a(t_b(3.5)) == t_a(3.5)
+
+    u2 = Uint[2]
+    i3 = Int[3]
+
+    assert t_a(u2(1)) == t_a(1.0)
+    assert t_b(u2(1)) == t_b(1.0)
+
+    assert t_a(i3(-2)) == t_a(-2)
+    assert t_b(i3(-2)) == t_b(-2)
 
 
 def test_floor():

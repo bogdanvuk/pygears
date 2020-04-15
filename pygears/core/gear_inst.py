@@ -388,11 +388,6 @@ def resolve_gear(gear_inst, out_intfs, out_dtype, fix_intfs):
 
     for c in gear_inst.child:
         channel_interfaces(c)
-        for p in c.out_ports:
-            intf = p.consumer
-            if intf not in set(intfs) and intf not in set(
-                    c.params['intfs']) and not intf.consumers:
-                report_dangling(intf, gear_inst, p)
 
     if len(out_intfs) > 1:
         return tuple(out_intfs)

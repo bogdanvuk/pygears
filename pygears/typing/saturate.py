@@ -1,9 +1,9 @@
-from pygears.typing import typeof, Int, Fixp, Uint, Ufixp, is_type
+from pygears.typing import typeof, Int, Fixp, Uint, Ufixp, is_type, Integer, Fixpnumber
 from .cast import cast
 
 
 def integral_type_saturate_resolver(dtype, cast_type):
-    if dtype is not int and dtype.base != cast_type.base:
+    if dtype is not int and not typeof(dtype, Integer):
         raise TypeError(
             f"cannot saturate '{repr(dtype)}' to a different base type '{repr(cast_type)}'")
 
@@ -11,7 +11,7 @@ def integral_type_saturate_resolver(dtype, cast_type):
 
 
 def fixp_type_saturate_resolver(dtype, cast_type):
-    if dtype.base != cast_type.base:
+    if not typeof(dtype, Fixpnumber):
         raise TypeError(
             f"cannot saturate '{repr(dtype)}' to a different base type '{repr(cast_type)}'")
 

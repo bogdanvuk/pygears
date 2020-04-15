@@ -4,6 +4,7 @@ from jinja2.debug import TemplateSyntaxError, make_traceback, reraise
 import atexit
 from pygears.conf.trace import register_exit_hook
 from pygears import registry, GearDone
+from pygears.core.channel import report_out_dangling
 from pygears.sim import clk, timestep
 from pygears.sim.sim import schedule_to_finish
 from pygears.conf.trace import gear_definition_location
@@ -14,8 +15,9 @@ def is_async_gen(func):
 
 
 def is_simgear_func(func):
-    return (inspect.isgeneratorfunction(func)
-            or inspect.iscoroutinefunction(func) or is_async_gen(func))
+    return (
+        inspect.isgeneratorfunction(func) or inspect.iscoroutinefunction(func)
+        or is_async_gen(func))
 
 
 class SimulationError(TemplateSyntaxError):
@@ -29,6 +31,12 @@ class SimGear:
         self._clean = True
         if not hasattr(self, 'func'):
             self.func = gear.func
+
+        for p in gear.out_ports:
+            if p.consumer.consumers:
+                continue
+
+            report_out_dangling(p)
 
     def setup(self):
         self._clean = False
@@ -67,8 +75,7 @@ class SimGear:
                                 except GearDone:
                                     raise
                                 except Exception as e:
-                                    func, fn, ln = gear_definition_location(
-                                        self.func)
+                                    func, fn, ln = gear_definition_location(self.func)
 
                                     err = SimulationError(
                                         f"inside '{self.gear.name}': {repr(e)}",

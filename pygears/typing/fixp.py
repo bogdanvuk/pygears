@@ -205,13 +205,14 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
 
         if cls.is_generic():
             if cls.is_abstract():
-                if not is_type(type(val)):
-                    if isinstance(val, int):
-                        cls = Fixp
-                    else:
-                        raise TypeError(f'Unsupported value {val} of type {type(val)}')
-                elif isinstance(val, Integer):
+                if isinstance(val, Integer):
                     cls = Fixp if val.signed else Ufixp
+                else:
+                    try:
+                        val = int(val)
+                        cls = Fixp
+                    except:
+                        raise TypeError(f'Unsupported value {val} of type {type(val)}')
 
             if not is_type(type(val)):
                 return cls[bitw(val) + 1, bitw(val) + 1](int(val))
@@ -224,11 +225,15 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
                 ival = int(val) << (cls.fract - val_fract)
             else:
                 ival = int(val) >> (val_fract - cls.fract)
-        elif ((not is_type(type(val)) and isinstance(val, (float, int)))
-              or isinstance(val, (Integer, Float))):
+        elif isinstance(val, Integer):
+            ival = round(float(val) * (2**cls.fract))
+        elif isinstance(val, float):
             ival = round(float(val) * (2**cls.fract))
         else:
-            raise TypeError(f'Unsupported value {val} of type {type(val)}')
+            try:
+                ival = round(float(val) * (2**cls.fract))
+            except TypeError:
+                raise TypeError(f'Unsupported value {val} of type {type(val)}')
 
         if cls.signed:
             if (bitw(ival) > (cls.width if ival < 0 else cls.width - 1)):

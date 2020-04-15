@@ -11,7 +11,7 @@ def saturate(data: Integral, *, t,
     if type(data).signed == t.signed and type(data).width <= t.width:
         return code(data, t)
     elif type(data).signed and not t.signed:
-        if idin[t.width - 1:] == 0:
+        if idin[t.width:] == 0:
             return code(data, t)
         elif data < 0:
             return 0
