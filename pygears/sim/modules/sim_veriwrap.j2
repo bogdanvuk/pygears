@@ -38,11 +38,11 @@ void cycle(void) {
 {% if tracing %}
     if (tfp) tfp->dump (main_time);
 {% endif %}
-    if (main_time > 5) {
+    {# if (main_time > 5) { #}
         main_time+=5;
         top->clk = 0;
         top->eval();
-    }
+    {# } #}
 {% if tracing %}
     if (tfp) tfp->dump (main_time);
 {% endif %}
@@ -123,10 +123,12 @@ unsigned long init(const char* trace_fn) {
   {% endfor %}
 {%- endif %}
 
-    main_time+=5;
+    {# main_time+=1; #}
     top->rst = 0;
     top->clk = 0;
     top->eval();
+
+    {# main_time+=5; #}
 
     return (unsigned long)(top);
 }

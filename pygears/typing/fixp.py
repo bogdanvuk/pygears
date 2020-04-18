@@ -353,8 +353,6 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
     def __float__(self):
         return int(self) / (2**type(self).fract)
 
-    def __hash__(self):
-        return hash((type(self), int(self)))
 
 
 class FixpType(FixpnumberType):

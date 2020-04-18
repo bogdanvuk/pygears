@@ -1,5 +1,5 @@
 from pygears import gear, alternative, module
-from pygears.typing import Union, Tuple, Uint, Any, Unit, Maybe, typeof
+from pygears.typing import Union, Tuple, Uint, Any, Unit, Maybe, typeof, TypeMatchError
 from pygears.lib.shred import shred
 from pygears.lib.const import fix
 from pygears.lib.ccat import ccat
@@ -44,9 +44,14 @@ def case(cond, din, *, f, fcat=ccat, tout=None, **kwds):
 
 @gear
 def ucase(din: Union, *, f, fcat=ccat, tout=None, fmux=mux, mapping=None):
-    return din \
-        | unionmap(f=f, fmux=fmux, mapping=mapping, use_dflt=False) \
-        | union_collapse(t=tout)
+    dout = din \
+        | unionmap(f=f, fmux=fmux, mapping=mapping, use_dflt=False)
+
+    if dout.dtype.types.count(dout.dtype.types[0]) != len(dout.dtype.types):
+        breakpoint()
+        raise TypeMatchError(f'output types of all input types need be the same, but got "{dout.dtype.types}')
+
+    return dout | union_collapse(t=tout)
 
 
 @gear

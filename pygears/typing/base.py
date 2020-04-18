@@ -579,7 +579,7 @@ class EnumerableGenericMeta(GenericMeta):
 
     def index_norm(self, index):
         if not isinstance(index, tuple):
-            return (index_norm_hashable_single(index.__reduce__()[1] if isinstance(index, slice) else index, self), )
+            return (index_norm_hashable_single(self.index_convert(index), self), )
         else:
             return index_norm_hashable(
                 tuple(self.index_convert(i) for i in index), self)

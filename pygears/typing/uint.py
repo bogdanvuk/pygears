@@ -61,7 +61,9 @@ class IntegralType(EnumerableGenericMeta):
 
 
 class Integral(int, metaclass=IntegralType):
-    pass
+    def __hash__(self):
+        return hash((type(self), int(self)))
+
 
 
 Number.register(Integral)

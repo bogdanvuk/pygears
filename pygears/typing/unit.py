@@ -57,3 +57,6 @@ class Unit(metaclass=UnitMeta):
     @classmethod
     def decode(cls, val):
         return cls()
+
+    def __hash__(self):
+        return hash(type(self))

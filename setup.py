@@ -64,10 +64,10 @@ setup(
     include_package_data=True,
     keywords='functional hardware design Python simulator HDL ASIC FPGA Gears',
     install_requires=[
-        'jinja2==2.10', 'dataclasses;python_version<"3.7"', 'pyvcd', 'attrs'
+        'jinja2<2.11', 'dataclasses;python_version<"3.7"', 'pyvcd', 'attrs'
     ],
     setup_requires=[
-        'jinja2==2.10', 'dataclasses;python_version<"3.7"', 'pyvcd', 'attrs'
+        'jinja2<2.11', 'dataclasses;python_version<"3.7"', 'pyvcd', 'attrs'
     ],
     packages=find_packages(exclude=['examples*', 'docs']),
     entry_points={

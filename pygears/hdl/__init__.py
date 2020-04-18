@@ -1,7 +1,8 @@
 import logging
 import os
 
-from pygears.conf import PluginBase, register_custom_log, config
+from pygears.conf import PluginBase, register_custom_log, config, registry
+from pygears.core.gear import GearPlugin
 
 
 def register_hdl_paths(*paths):
@@ -14,10 +15,11 @@ def hdl_log():
     return logging.getLogger('svgen')
 
 
-class HDLPlugin(PluginBase):
+class HDLPlugin(GearPlugin):
     @classmethod
     def bind(cls):
         register_custom_log('hdl', logging.WARNING)
+        registry('gear/params/meta')['hdl'] = {}
 
         config.define('hdl/include', default=[])
 

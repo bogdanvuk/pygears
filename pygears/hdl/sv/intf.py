@@ -204,6 +204,4 @@ class SVIntfGen:
 class SVGenIntfPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        config.define('debug/trace', default=[])
-
         safe_bind('svgen/spy_connection_template', dti_spy_connect_t)

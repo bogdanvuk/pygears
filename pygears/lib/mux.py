@@ -31,7 +31,7 @@ async def mux(
         _full_mapping=b'full_mapping(din, mapping)') -> b'mux_type(din, _full_mapping)':
 
     async with ctrl as c:
-        c_map = _full_mapping[c]
+        c_map = _full_mapping[int(c)]
 
         assert c_map < len(din), 'mux: incorrect selection value'
         if typeof(din[0].dtype, Queue):
@@ -47,7 +47,7 @@ async def mux_zip(
         ctrl, *din, mapping=b'dflt_map(din)',
         _full_mapping=b'full_mapping(din, mapping)') -> b'mux_type(din, _full_mapping)':
     async with ctrl as c:
-        c_map = _full_mapping[c]
+        c_map = _full_mapping[int(c)]
 
         assert c_map < len(din), 'mux: incorrect selection value'
         async for d in din[c_map]:
@@ -64,5 +64,5 @@ def field_mux(
         mapping=b'dflt_map(din["data"])',
         _full_mapping=b'full_mapping(din["data"], mapping)'
 ) -> b'mux_type(din["data"], _full_mapping)':
-    c_map = _full_mapping[din['ctrl']]
+    c_map = _full_mapping[int(din['ctrl'])]
     return (din['data'][c_map], c_map)
