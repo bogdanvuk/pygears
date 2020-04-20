@@ -1,0 +1,70 @@
+{%- import 'snippet.j2' as snippet -%}
+
+module {{wrap_module_name}} #(
+    parameter integer C_S_AXI_ID_WIDTH	= 2)
+(
+    input         aresetn,
+    input         aclk,
+{{ port_def|join(",\n")|indent(4, True)}}
+);
+
+{{snippet.intf_inst_list(intfs.values())|indent(4, True)}}
+
+{{snippet.module_inst(module_name, param_map, inst_name, sig_map={'clk': pg_clk, 'rst': '~aresetn'})|indent(4, True)}}
+
+{% for name, p in ports.items() %}
+  {% if p['raddr'] %}
+  axi_slave_read #(
+                    .C_S_AXI_ID_WIDTH(C_S_AXI_ID_WIDTH),
+                    .C_S_AXI_ADDR_WIDTH({{p['raddr']['width']}}),
+                    .C_S_AXI_DATA_WIDTH({{p['rdata']['width']}})
+  )
+  {{name}}_axi_slave_read (
+                    .S_AXI_ACLK(aclk),
+                    .S_AXI_ARESETN(aresetn),
+                    .M_AXI_ARADDR({{p['raddr']['name']}}.data),
+                    .M_AXI_ARVALID({{p['raddr']['name']}}.valid),
+                    .M_AXI_ARREADY({{p['raddr']['name']}}.ready & {{p['raddr']['name']}}.valid),
+                    .M_AXI_RDATA({{p['rdata']['name']}}.data),
+                    .M_AXI_RVALID({{p['rdata']['name']}}.valid),
+                    .M_AXI_RREADY({{p['rdata']['name']}}.ready),
+                    .M_AXI_RRESP(2'b0),
+{{axi_intfs.port_map(axi_intfs.AXI_SLAVE, name, "s_axi", uppercase=True,
+    raddr=p['raddr']['width'],
+    rdata=p['rdata']['width'])|join(",\n")|indent(19, True)}}
+                    );
+  {% endif %}
+
+  {% if p.get('waddr', False) %}
+    {% if p['waddr']['name'] == p['wdata']['name'] %}
+
+      {% set wr_req_data = p['waddr']['name'] + '.data' %}
+
+  axi_slave_write #(
+                    .C_S_AXI_ID_WIDTH(C_S_AXI_ID_WIDTH),
+                    .C_S_AXI_ADDR_WIDTH({{p['waddr']['width']}}),
+                    .C_S_AXI_DATA_WIDTH({{p['wdata']['width']}})
+  )
+  {{name}}_axi_slave_write (
+                    .S_AXI_ACLK(aclk),
+                    .S_AXI_ARESETN(aresetn),
+                    .M_AXI_AWADDR({{wr_req_data}}[{{p['waddr']['width']-1}}:0]),
+                    .M_AXI_AWREADY({{p['waddr']['name']}}.ready & {{p['waddr']['name']}}.valid),
+                    .M_AXI_WDATA({{wr_req_data}}[{{p['waddr']['width'] + p['wdata']['width']-1}}:{{p['waddr']['width']}}]),
+                    .M_AXI_WVALID({{p['waddr']['name']}}.valid),
+                    .M_AXI_WREADY({{p['waddr']['name']}}.ready),
+                    .M_AXI_BRESP(2'b0),
+                    .M_AXI_BVALID({{p['wdata']['name']}}.valid),
+{{axi_intfs.port_map(axi_intfs.AXI_SLAVE, name, "s_axi", uppercase=True, waddr=p['waddr']['width'],
+    bresp=True,
+    wdata={
+        'wdata': p['wdata']['width'],
+        'wstrb': p['wdata']['width']//8,
+    })|join(",\n")|indent(19, True)}}
+                    );
+
+    {% endif %}
+  {% endif %}
+{% endfor %}
+
+endmodule
