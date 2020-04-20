@@ -36,9 +36,9 @@
 `default_nettype	none
 //
 module axi_slave_read #(
-	parameter integer C_S_AXI_ID_WIDTH	= 2,
-	parameter integer C_S_AXI_DATA_WIDTH	= 32,
-	parameter integer C_S_AXI_ADDR_WIDTH	= 6,
+	parameter integer C_AXI_ID_WIDTH	= 2,
+	parameter integer C_AXI_DATA_WIDTH	= 32,
+	parameter integer C_AXI_ADDR_WIDTH	= 6,
 	parameter	 [0:0]	OPT_READS	= 1,
 	// Log (based two) of the maximum number of outstanding AXI
 	// (not AXI-lite) transactions.  If you multiply 2^LGFIFO * 256,
@@ -50,8 +50,8 @@ module axi_slave_read #(
 		//
 		input	wire				S_AXI_ARVALID,
 		output	wire				S_AXI_ARREADY,
-		input	wire	[C_S_AXI_ID_WIDTH-1:0]	S_AXI_ARID,
-		input	wire	[C_S_AXI_ADDR_WIDTH-1:0]	S_AXI_ARADDR,
+		input	wire	[C_AXI_ID_WIDTH-1:0]	S_AXI_ARID,
+		input	wire	[C_AXI_ADDR_WIDTH-1:0]	S_AXI_ARADDR,
 		input	wire	[7:0]			S_AXI_ARLEN,
 		input	wire	[2:0]			S_AXI_ARSIZE,
 		input	wire	[1:0]			S_AXI_ARBURST,
@@ -62,22 +62,22 @@ module axi_slave_read #(
 		//
 		output	wire				S_AXI_RVALID,
 		input	wire				S_AXI_RREADY,
-		output	wire	[C_S_AXI_ID_WIDTH-1:0] S_AXI_RID,
-		output	wire	[C_S_AXI_DATA_WIDTH-1:0] S_AXI_RDATA,
+		output	wire	[C_AXI_ID_WIDTH-1:0] S_AXI_RID,
+		output	wire	[C_AXI_DATA_WIDTH-1:0] S_AXI_RDATA,
 		output	wire	[1:0]			S_AXI_RRESP,
 		output	wire				S_AXI_RLAST,
 		//
 		//
 		//
 		// Write address (issued by master, acceped by Slave)
-		output	wire	[C_S_AXI_ADDR_WIDTH-1:0]	M_AXI_ARADDR,
+		output	wire	[C_AXI_ADDR_WIDTH-1:0]	M_AXI_ARADDR,
 		output	wire	[2:0]			M_AXI_ARPROT,
 		output	wire				M_AXI_ARVALID,
 		input	wire				M_AXI_ARREADY,
 		//
 		input	wire				M_AXI_RVALID,
 		output	wire				M_AXI_RREADY,
-		input	wire	[C_S_AXI_DATA_WIDTH-1 : 0] M_AXI_RDATA,
+		input	wire	[C_AXI_DATA_WIDTH-1 : 0] M_AXI_RDATA,
 		input	wire	[1 : 0]			M_AXI_RRESP
 	);
 
@@ -85,10 +85,10 @@ module axi_slave_read #(
 				EXOKAY = 2'b01,
 				SLVERR = 2'b10,
 				DECERR = 2'b10;
-	localparam	AW = C_S_AXI_ADDR_WIDTH;
-	localparam	DW = C_S_AXI_DATA_WIDTH;
-	localparam	IW = C_S_AXI_ID_WIDTH;
-	localparam	LSB = $clog2(C_S_AXI_DATA_WIDTH)-3;
+	localparam	AW = C_AXI_ADDR_WIDTH;
+	localparam	DW = C_AXI_DATA_WIDTH;
+	localparam	IW = C_AXI_ID_WIDTH;
+	localparam	LSB = $clog2(C_AXI_DATA_WIDTH)-3;
 
 
 	// Read register
@@ -100,14 +100,14 @@ module axi_slave_read #(
 	reg				s_axi_rvalid;
 	reg	[1:0]			s_axi_rresp;
 	reg	[8:0]			rcounts;
-	reg	[C_S_AXI_ADDR_WIDTH-1:0]	axi_araddr;
+	reg	[C_AXI_ADDR_WIDTH-1:0]	axi_araddr;
 	reg	[7:0]			axi_arlen, axi_rlen;
 	reg	[1:0]			axi_arburst;
 	reg	[2:0]			axi_arsize;
-	wire	[C_S_AXI_ADDR_WIDTH-1:0]	next_read_addr;
-	reg	[C_S_AXI_ID_WIDTH-1:0]	s_axi_rid;
-	wire	[C_S_AXI_ID_WIDTH-1:0]	rfifo_rid;
-	reg	[C_S_AXI_DATA_WIDTH-1:0]	s_axi_rdata;
+	wire	[C_AXI_ADDR_WIDTH-1:0]	next_read_addr;
+	reg	[C_AXI_ID_WIDTH-1:0]	s_axi_rid;
+	wire	[C_AXI_ID_WIDTH-1:0]	rfifo_rid;
+	reg	[C_AXI_DATA_WIDTH-1:0]	s_axi_rdata;
 	reg				s_axi_rlast;
 	reg	[IW-1:0]		rid;
 	wire				read_from_rdfifo;
@@ -171,7 +171,7 @@ module axi_slave_read #(
 		end else if (M_AXI_ARREADY)
 			axi_araddr <= next_read_addr;
 
-		axi_addr #(.AW(C_S_AXI_ADDR_WIDTH))
+		axi_addr #(.AW(C_AXI_ADDR_WIDTH))
 			calcrdaddr(axi_araddr, axi_arsize, axi_arburst,
 			axi_rlen, next_read_addr);
 
@@ -192,7 +192,7 @@ module axi_slave_read #(
 		assign	read_from_rdfifo = skidm_rvalid && skidm_rready
 					&& (rcounts <= 1) && !rfifo_empty;
 
-		sfifo	#(.BW(C_S_AXI_ID_WIDTH+8), .LGFLEN(LGFIFO))
+		sfifo	#(.BW(C_AXI_ID_WIDTH+8), .LGFLEN(LGFIFO))
 		ridlnfifo(S_AXI_ACLK, !S_AXI_ARESETN,
 			skids_arvalid && skids_arready,
 			{ skids_arid, skids_arlen },

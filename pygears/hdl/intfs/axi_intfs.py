@@ -43,7 +43,7 @@ AXI_SLAVE = {
     ],
     'raddr': [
         Port('araddr', 'in', -1),
-        Port('arid', 'in', 'C_S_AXI_ID_WIDTH-1'),
+        Port('arid', 'in', 'C_AXI_ID_WIDTH-1'),
         Port('arprot', 'in', 3),
         Port('arvalid', 'in', 0),
         Port('arready', 'out', 0),
@@ -63,6 +63,42 @@ AXI_SLAVE = {
         Port('rvalid', 'out', 0),
         Port('rready', 'in', 0),
         Port('rlast', 'out', 0),
+    ],
+}
+
+AXIL_SLAVE = {
+    'common': [
+        Port('aclk', 'in', 0),
+        Port('aresetn', 'in', 0),
+    ],
+    'waddr': [
+        Port('awaddr', 'in', -1),
+        Port('awprot', 'in', 3),
+        Port('awvalid', 'in', 0),
+        Port('awready', 'out', 0),
+    ],
+    'wdata': [
+        Port('wdata', 'in', -1),
+        Port('wstrb', 'in', -1),
+        Port('wvalid', 'in', 0),
+        Port('wready', 'out', 0),
+    ],
+    'bresp': [
+        Port('bresp', 'out', 2),
+        Port('bvalid', 'out', 0),
+        Port('bready', 'in', 0),
+    ],
+    'raddr': [
+        Port('araddr', 'in', -1),
+        Port('arprot', 'in', 3),
+        Port('arvalid', 'in', 0),
+        Port('arready', 'out', 0),
+    ],
+    'rdata': [
+        Port('rdata', 'out', -1),
+        Port('rresp', 'out', 2),
+        Port('rvalid', 'out', 0),
+        Port('rready', 'in', 0),
     ],
 }
 

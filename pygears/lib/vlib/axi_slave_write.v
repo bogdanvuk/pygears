@@ -36,9 +36,9 @@
 `default_nettype	none
 //
 module axi_slave_write #(
-	parameter integer C_S_AXI_ID_WIDTH	= 2,
-	parameter integer C_S_AXI_DATA_WIDTH	= 32,
-	parameter integer C_S_AXI_ADDR_WIDTH	= 6,
+	parameter integer C_AXI_ID_WIDTH	= 2,
+	parameter integer C_AXI_DATA_WIDTH	= 32,
+	parameter integer C_AXI_ADDR_WIDTH	= 6,
 	parameter	 [0:0]	OPT_WRITES	= 1,
 	// Log (based two) of the maximum number of outstanding AXI
 	// (not AXI-lite) transactions.  If you multiply 2^LGFIFO * 256,
@@ -50,8 +50,8 @@ module axi_slave_write #(
 		//
 		input wire                               S_AXI_AWVALID,
 		output wire                              S_AXI_AWREADY,
-		input wire [C_S_AXI_ID_WIDTH-1:0]        S_AXI_AWID,
-		input wire [C_S_AXI_ADDR_WIDTH-1:0]      S_AXI_AWADDR,
+		input wire [C_AXI_ID_WIDTH-1:0]        S_AXI_AWID,
+		input wire [C_AXI_ADDR_WIDTH-1:0]      S_AXI_AWADDR,
 		input wire [7:0]                         S_AXI_AWLEN,
 		input wire [2:0]                         S_AXI_AWSIZE,
 		input wire [1:0]                         S_AXI_AWBURST,
@@ -62,23 +62,23 @@ module axi_slave_write #(
 		//
 		input wire                               S_AXI_WVALID,
 		output wire                              S_AXI_WREADY,
-		input wire [C_S_AXI_DATA_WIDTH-1:0]      S_AXI_WDATA,
-		input wire [(C_S_AXI_DATA_WIDTH/8)-1:0]  S_AXI_WSTRB,
+		input wire [C_AXI_DATA_WIDTH-1:0]      S_AXI_WDATA,
+		input wire [(C_AXI_DATA_WIDTH/8)-1:0]  S_AXI_WSTRB,
 		input wire                               S_AXI_WLAST,
 		//
 		output wire                              S_AXI_BVALID,
 		input wire                               S_AXI_BREADY,
-		output wire [C_S_AXI_ID_WIDTH-1:0]       S_AXI_BID,
+		output wire [C_AXI_ID_WIDTH-1:0]       S_AXI_BID,
 		output wire [1:0]                        S_AXI_BRESP,
 		//
 		//
 		// Write address (issued by master, acceped by Slave)
-		output wire [C_S_AXI_ADDR_WIDTH-1:0]     M_AXI_AWADDR,
+		output wire [C_AXI_ADDR_WIDTH-1:0]     M_AXI_AWADDR,
 		output wire [2 : 0]                      M_AXI_AWPROT,
 		output wire                              M_AXI_AWVALID,
 		input wire                               M_AXI_AWREADY,
-		output wire [C_S_AXI_DATA_WIDTH-1:0]     M_AXI_WDATA,
-		output wire [(C_S_AXI_DATA_WIDTH/8)-1:0] M_AXI_WSTRB,
+		output wire [C_AXI_DATA_WIDTH-1:0]     M_AXI_WDATA,
+		output wire [(C_AXI_DATA_WIDTH/8)-1:0] M_AXI_WSTRB,
 		output wire                              M_AXI_WVALID,
 		input wire                               M_AXI_WREADY,
 		input wire [1 : 0]                       M_AXI_BRESP,
@@ -90,27 +90,27 @@ module axi_slave_write #(
 				EXOKAY = 2'b01,
 				SLVERR = 2'b10,
 				DECERR = 2'b10;
-	localparam	AW = C_S_AXI_ADDR_WIDTH;
-	localparam	DW = C_S_AXI_DATA_WIDTH;
-	localparam	IW = C_S_AXI_ID_WIDTH;
-	localparam	LSB = $clog2(C_S_AXI_DATA_WIDTH)-3;
+	localparam	AW = C_AXI_ADDR_WIDTH;
+	localparam	DW = C_AXI_DATA_WIDTH;
+	localparam	IW = C_AXI_ID_WIDTH;
+	localparam	LSB = $clog2(C_AXI_DATA_WIDTH)-3;
 
 
 	//
 	// Write registers
 	reg				m_axi_awvalid, s_axi_wready;
-	reg	[C_S_AXI_ADDR_WIDTH-1:0]	axi_awaddr;
+	reg	[C_AXI_ADDR_WIDTH-1:0]	axi_awaddr;
 	reg	[7:0]			axi_awlen, axi_blen;
 	reg	[1:0]			axi_awburst;
 	reg	[2:0]			axi_awsize;
-	wire	[C_S_AXI_ADDR_WIDTH-1:0]	next_write_addr;
+	wire	[C_AXI_ADDR_WIDTH-1:0]	next_write_addr;
 	wire	[4:0]			wfifo_count;
 	wire				wfifo_full;
 	wire				wfifo_empty;
 	wire	[7:0]			wfifo_bcount;
 	wire	[IW-1:0]		wfifo_bid;
 	reg	[8:0]			bcounts;
-	reg	[C_S_AXI_ID_WIDTH-1:0]	axi_bid, bid;
+	reg	[C_AXI_ID_WIDTH-1:0]	axi_bid, bid;
 	reg	[1:0]			axi_bresp;
 	reg				s_axi_bvalid;
 	wire				read_from_wrfifo;
@@ -210,7 +210,7 @@ module axi_slave_write #(
 		else if (M_AXI_AWVALID && M_AXI_AWREADY && axi_awlen > 0)
 			axi_awlen <= axi_awlen - 1;
 
-		axi_addr #(.AW(C_S_AXI_ADDR_WIDTH))
+		axi_addr #(.AW(C_AXI_ADDR_WIDTH))
 		calcwraddr(axi_awaddr, axi_awsize, axi_awburst,
 			axi_blen, next_write_addr);
 
@@ -234,7 +234,7 @@ module axi_slave_write #(
 			    &&(skidm_bvalid && skidm_bready);
 
 		// BFIFO
-		sfifo	#(.BW(C_S_AXI_ID_WIDTH+8), .LGFLEN(LGFIFO))
+		sfifo	#(.BW(C_AXI_ID_WIDTH+8), .LGFLEN(LGFIFO))
 			bidlnfifo(S_AXI_ACLK, !S_AXI_ARESETN,
 				skids_awvalid && skids_awready,
 				{ skids_awid, skids_awlen },

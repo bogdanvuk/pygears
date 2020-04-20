@@ -1,7 +1,7 @@
 {%- import 'snippet.j2' as snippet -%}
 
 module {{wrap_module_name}} #(
-    parameter integer C_S_AXI_ID_WIDTH	= 2)
+    parameter integer C_AXI_ID_WIDTH	= 2)
 (
     input         aresetn,
     input         aclk,
@@ -13,11 +13,12 @@ module {{wrap_module_name}} #(
 {{snippet.module_inst(module_name, param_map, inst_name, sig_map={'clk': pg_clk, 'rst': '~aresetn'})|indent(4, True)}}
 
 {% for name, p in ports.items() %}
-  {% if p['raddr'] %}
+  {% if p['type'] == 'axi' %}
+    {% if p['raddr'] %}
   axi_slave_read #(
-                    .C_S_AXI_ID_WIDTH(C_S_AXI_ID_WIDTH),
-                    .C_S_AXI_ADDR_WIDTH({{p['raddr']['width']}}),
-                    .C_S_AXI_DATA_WIDTH({{p['rdata']['width']}})
+                    .C_AXI_ID_WIDTH(C_AXI_ID_WIDTH),
+                    .C_AXI_ADDR_WIDTH({{p['raddr']['width']}}),
+                    .C_AXI_DATA_WIDTH({{p['rdata']['width']}})
   )
   {{name}}_axi_slave_read (
                     .S_AXI_ACLK(aclk),
@@ -33,17 +34,17 @@ module {{wrap_module_name}} #(
     raddr=p['raddr']['width'],
     rdata=p['rdata']['width'])|join(",\n")|indent(19, True)}}
                     );
-  {% endif %}
+    {% endif %}
 
-  {% if p.get('waddr', False) %}
-    {% if p['waddr']['name'] == p['wdata']['name'] %}
+    {% if p.get('waddr', False) %}
+      {% if p['waddr']['name'] == p['wdata']['name'] %}
 
-      {% set wr_req_data = p['waddr']['name'] + '.data' %}
+        {% set wr_req_data = p['waddr']['name'] + '.data' %}
 
   axi_slave_write #(
-                    .C_S_AXI_ID_WIDTH(C_S_AXI_ID_WIDTH),
-                    .C_S_AXI_ADDR_WIDTH({{p['waddr']['width']}}),
-                    .C_S_AXI_DATA_WIDTH({{p['wdata']['width']}})
+                    .C_AXI_ID_WIDTH(C_AXI_ID_WIDTH),
+                    .C_AXI_ADDR_WIDTH({{p['waddr']['width']}}),
+                    .C_AXI_DATA_WIDTH({{p['wdata']['width']}})
   )
   {{name}}_axi_slave_write (
                     .S_AXI_ACLK(aclk),
@@ -63,6 +64,7 @@ module {{wrap_module_name}} #(
     })|join(",\n")|indent(19, True)}}
                     );
 
+      {% endif %}
     {% endif %}
   {% endif %}
 {% endfor %}

@@ -44,7 +44,30 @@ def generate(top, intf):
 
     defs = []
     for name, p in axi_port_cfg.items():
-        if p['type'] in ['bram', 'bram.req', 'axi']:
+        if p['type'] == 'axidma':
+            wdata = False
+            if 'wdata' in p:
+                wdata = {'wdata': p['wdata'], 'wstrb': p['wdata']//8}
+
+            pdefs = axi_intfs.port_def(
+                axi_intfs.AXI_SLAVE,
+                name,
+                raddr=p.get('raddr', {}).get('width', 32),
+                rdata=p.get('rdata', {}).get('width', False))
+
+            defs.extend(pdefs)
+
+            pdefs = axi_intfs.port_def(
+                axi_intfs.AXIL_SLAVE,
+                name,
+                waddr=5,
+                wdata={'wdata': 32, 'wstrb': 4},
+                raddr=5,
+                rdata=32)
+
+            defs.extend(pdefs)
+
+        elif p['type'] in ['bram', 'bram.req', 'axi']:
 
             wdata = False
             if 'wdata' in p:
@@ -58,6 +81,9 @@ def generate(top, intf):
                 bresp=('waddr' in p),
                 raddr=p.get('raddr', {}).get('width', False),
                 rdata=p.get('rdata', {}).get('width', False))
+
+            defs.extend(pdefs)
+
         elif p['type'] == 'axis':
             if p['direction'] == 'in':
                 tmplt = axi_intfs.AXIS_SLAVE
@@ -66,7 +92,7 @@ def generate(top, intf):
 
             pdefs = axi_intfs.port_def(tmplt, name, data=p['width'], last=p['w_eot'] > 0)
 
-        defs.extend(pdefs)
+            defs.extend(pdefs)
 
     print(axi_port_cfg)
     print(defs)
