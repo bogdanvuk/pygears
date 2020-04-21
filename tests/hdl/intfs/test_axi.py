@@ -8,9 +8,9 @@ from pygears.hdl.ipgen import ipgen
 
 from pygears.hdl.intfs.generate import generate
 
-# ret = rom(Intf(Uint[8]), data=[], dtype=Uint[32], dflt=0xaabbccdd)
-# top = find('/rom')
-# outdir = '/tools/home/tmp/axi_test/ip/rom'
+ret = rom(Intf(Uint[8]), data=[], dtype=Uint[24], dflt=0xbbccdd)
+top = find('/rom')
+outdir = '/tools/home/tmp/axi_test/ip/rom'
 
 # ipgen(
 #     'vivado',
@@ -28,7 +28,7 @@ from pygears.hdl.intfs.generate import generate
 # ret = sdp(Intf(Tuple[Uint[8], Uint[32]]), Intf(Uint[8]))
 
 # top = find('/sdp')
-# outdir = '/tools/home/tmp/axi_test_19_2/ip/rom'
+# outdir = '/tools/home/tmp/axi_test/ip/sdp'
 
 # ipgen(
 #     'vivado',
@@ -45,7 +45,7 @@ from pygears.hdl.intfs.generate import generate
 #         'wdata': 'wr_addr_data'
 #     }})
 
-ret = shred(Intf(Uint[32]))
+ret = shred(Intf(Uint[128]))
 
 top = find('/shred')
 outdir = '/tools/home/tmp/axi_test/ip/shred'
@@ -54,10 +54,10 @@ ipgen(
     'vivado',
     __file__,
     outdir=outdir,
-    top='/sdp',
+    top='/shred',
     lang='sv',
     prjdir='/tools/home/tmp/axi_test/ipprj',
-    intf={'s_axi': {
+    intf={'din': {
         'type': 'axidma',
         'rdata': 'din'
     }})

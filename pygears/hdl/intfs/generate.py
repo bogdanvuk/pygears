@@ -13,6 +13,7 @@ from . import axi_intfs
 
 
 def generate(top, intf):
+    files = set()
     if isinstance(top, str):
         top = find(top)
 
@@ -45,42 +46,65 @@ def generate(top, intf):
     defs = []
     for name, p in axi_port_cfg.items():
         if p['type'] == 'axidma':
-            wdata = False
-            if 'wdata' in p:
-                wdata = {'wdata': p['wdata'], 'wstrb': p['wdata']//8}
+            # TODO: Investigate why aximm2s cannot handle data widths of more than 128
 
-            pdefs = axi_intfs.port_def(
-                axi_intfs.AXI_SLAVE,
-                name,
-                raddr=p.get('raddr', {}).get('width', 32),
-                rdata=p.get('rdata', {}).get('width', False))
+            # waddr_cfg = p.get('waddr', {}).get('width', False)
+            # wdata_cfg = False
+            raddr_cfg = p.get('raddr', {}).get('width', 32)
+            rdata_cfg = p.get('rdata', {}).get('width', False)
+
+            pdefs = axi_intfs.port_def(axi_intfs.AXI_MASTER,
+                                       name,
+                                       raddr=raddr_cfg,
+                                       rdata=rdata_cfg)
+
+            defs.extend(pdefs)
+
+            pdefs = axi_intfs.port_def(axi_intfs.AXIL_SLAVE,
+                                       f'{name}_ctrl',
+                                       waddr=5,
+                                       wdata={
+                                           'wdata': 32,
+                                           'wstrb': 4
+                                       },
+                                       bresp=True,
+                                       raddr=5,
+                                       rdata=32)
 
             defs.extend(pdefs)
 
-            pdefs = axi_intfs.port_def(
-                axi_intfs.AXIL_SLAVE,
-                name,
-                waddr=5,
-                wdata={'wdata': 32, 'wstrb': 4},
-                raddr=5,
-                rdata=32)
-
-            defs.extend(pdefs)
+            files.update(
+                {'sfifo.v', 'axi_addr.v', 'skidbuffer.v', 'aximm2s.v'})
 
         elif p['type'] in ['bram', 'bram.req', 'axi']:
 
-            wdata = False
-            if 'wdata' in p:
-                wdata = {'wdata': p['wdata']['width'], 'wstrb': p['wdata']['width']//8}
+            waddr_cfg = p.get('waddr', {}).get('width', False)
+            wdata_cfg = False
+            raddr_cfg = p.get('raddr', {}).get('width', False)
+            rdata_cfg = p.get('rdata', {}).get('width', False)
 
-            pdefs = axi_intfs.port_def(
-                axi_intfs.AXI_SLAVE,
-                name,
-                waddr=p.get('waddr', {}).get('width', False),
-                wdata=wdata,
-                bresp=('waddr' in p),
-                raddr=p.get('raddr', {}).get('width', False),
-                rdata=p.get('rdata', {}).get('width', False))
+            if 'wdata' in p:
+                wdata_cfg = {
+                    'wdata': p['wdata']['width'],
+                    'wstrb': p['wdata']['width'] // 8
+                }
+
+            if raddr_cfg:
+                files.add('axi_slave_read.v')
+
+            if waddr_cfg:
+                files.add('axi_slave_write.v')
+
+            if raddr_cfg or waddr_cfg:
+                files.update({'sfifo.v', 'axi_addr.v', 'skidbuffer.v'})
+
+            pdefs = axi_intfs.port_def(axi_intfs.AXI_SLAVE,
+                                       name,
+                                       waddr=waddr_cfg,
+                                       wdata=wdata_cfg,
+                                       bresp=('waddr' in p),
+                                       raddr=raddr_cfg,
+                                       rdata=rdata_cfg)
 
             defs.extend(pdefs)
 
@@ -90,12 +114,13 @@ def generate(top, intf):
             else:
                 tmplt = axi_intfs.AXIS_MASTER
 
-            pdefs = axi_intfs.port_def(tmplt, name, data=p['width'], last=p['w_eot'] > 0)
+            pdefs = axi_intfs.port_def(tmplt,
+                                       name,
+                                       data=p['width'],
+                                       last=p['w_eot'] > 0)
 
             defs.extend(pdefs)
 
-    print(axi_port_cfg)
-    print(defs)
     context = {
         'wrap_module_name': f'wrap_{modinst.module_name}',
         'module_name': modinst.module_name,
@@ -111,32 +136,13 @@ def generate(top, intf):
     tmplt = 'wrapper.j2'
 
     base_addr = os.path.dirname(__file__)
-    print(os.path.join(os.path.dirname(base_addr), 'sv'))
     lang_dir = os.path.join(os.path.dirname(base_addr), 'sv')
     env = TemplateEnv(lang_dir)
 
-    # env = jinja2.Environment(
-    #     extensions=['jinja2.ext.do'],
-    #     loader=jinja2.FileSystemLoader([base_addr, os.path.join(os.path.dirname(base_addr), 'sv')]),
-    #     trim_blocks=True,
-    #     lstrip_blocks=True)
+    env.jenv.globals.update(zip=zip,
+                            ceil_pow2=ceil_pow2,
+                            ceil_div=ceil_div,
+                            ceil_chunk=ceil_chunk,
+                            axi_intfs=axi_intfs)
 
-    env.jenv.globals.update(
-        zip=zip,
-        ceil_pow2=ceil_pow2,
-        ceil_div=ceil_div,
-        ceil_chunk=ceil_chunk,
-        axi_intfs=axi_intfs)
-
-    wrp = env.render(base_addr, tmplt, context)
-
-    # env.globals.update(
-    #     zip=zip,
-    #     ceil_pow2=ceil_pow2,
-    #     ceil_div=ceil_div,
-    #     ceil_chunk=ceil_chunk,
-    #     axi_intfs=axi_intfs)
-
-    # wrp = env.get_template(tmplt).render(context)
-    return wrp
-    # save_file(f'wrap_{os.path.basename(modinst.file_basename)}', dirs['hdl'], wrp)
+    return env.render(base_addr, tmplt, context), files

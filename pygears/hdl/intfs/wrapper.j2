@@ -13,7 +13,31 @@ module {{wrap_module_name}} #(
 {{snippet.module_inst(module_name, param_map, inst_name, sig_map={'clk': pg_clk, 'rst': '~aresetn'})|indent(4, True)}}
 
 {% for name, p in ports.items() %}
-  {% if p['type'] == 'axi' %}
+  {% if p['type'] == 'axidma' %}
+    {%- set axi_port_map = axi_intfs.port_map(
+         axi_intfs.AXIL_SLAVE, name + "_ctrl", "s_axil", uppercase=True,
+         raddr=5, rdata=32, waddr=5, wdata=32, bresp=True) %}
+
+    {%- set ctrl_port_map = axi_intfs.port_map(
+         axi_intfs.AXI_MASTER, name, "m_axi", uppercase=True,
+         raddr=32, rdata=p['rdata']['width']) %}
+
+
+  aximm2s #(
+                    .C_AXI_ID_WIDTH(C_AXI_ID_WIDTH),
+                    .C_AXI_DATA_WIDTH({{p['rdata']['width']}})
+    )
+  {{name}}_aximm2s (
+                    .S_AXI_ACLK(aclk),
+                    .S_AXI_ARESETN(aresetn),
+                    .S_AXIS_TDATA({{p['rdata']['name']}}.data),
+                    .S_AXIS_TVALID({{p['rdata']['name']}}.valid),
+                    .S_AXIS_TREADY({{p['rdata']['name']}}.ready),
+                    {{axi_port_map|join(",\n")|indent(19, True)}},
+                    {{ctrl_port_map|join(",\n")|indent(19, True)}}
+                    );
+
+  {% elif p['type'] == 'axi' %}
     {% if p['raddr'] %}
   axi_slave_read #(
                     .C_AXI_ID_WIDTH(C_AXI_ID_WIDTH),

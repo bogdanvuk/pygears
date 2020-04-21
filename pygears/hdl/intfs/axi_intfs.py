@@ -8,6 +8,63 @@ class Port:
     direction: str
     width: int
 
+AXI_MASTER = {
+    'common': [
+        Port('aclk', 'out', 0),
+        Port('aresetn', 'out', 0),
+    ],
+    'waddr': [
+        Port('awaddr', 'out', -1),
+        Port('awprot', 'out', 3),
+        Port('awvalid', 'out', 0),
+        Port('awready', 'in', 0),
+        Port('awsize', 'out', 3),
+        Port('awburst', 'out', 2),
+        Port('awcache', 'out', 4),
+        Port('awlen', 'out', 8),
+    ],
+    'waddr_qos': [
+        Port('awlock', 'out', 1),
+        Port('awqos', 'out', 4),
+        Port('awregion', 'out', 4),
+    ],
+    'wdata': [
+        Port('wdata', 'out', -1),
+        Port('wstrb', 'out', -1),
+        Port('wvalid', 'out', 0),
+        Port('wready', 'in', 0),
+        Port('wlast', 'out', 0),
+    ],
+    'bresp': [
+        Port('bresp', 'in', 2),
+        Port('bvalid', 'in', 0),
+        Port('bready', 'out', 0),
+    ],
+    'raddr': [
+        Port('araddr', 'out', -1),
+        Port('arid', 'out', 'C_AXI_ID_WIDTH-1'),
+        Port('arprot', 'out', 3),
+        Port('arvalid', 'out', 0),
+        Port('arready', 'in', 0),
+        Port('arsize', 'out', 3),
+        Port('arburst', 'out', 2),
+        Port('arcache', 'out', 4),
+        Port('arlen', 'out', 8),
+    ],
+    'raddr_qos': [
+        Port('arlock', 'out', 1),
+        Port('arqos', 'out', 4),
+        Port('arregion', 'out', 4),
+    ],
+    'rdata': [
+        Port('rdata', 'in', -1),
+        Port('rresp', 'in', 2),
+        Port('rvalid', 'in', 0),
+        Port('rready', 'out', 0),
+        Port('rlast', 'in', 0),
+    ],
+}
+
 
 AXI_SLAVE = {
     'common': [
