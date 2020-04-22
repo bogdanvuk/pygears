@@ -7,7 +7,7 @@ from pygears.typing import Bool
 from pygears.lib import drv
 
 
-def test_outsig(tmpdir):
+def test_outsig():
     @gear(signals=[InSig('clk', 1),
                    InSig('rst', 1),
                    OutSig('flush', 1)],
@@ -27,4 +27,4 @@ def test_outsig(tmpdir):
 
     drv(t=Bool, seq=[False, True]) | hier
     cosim('/hier', 'verilator')
-    sim(tmpdir)
+    sim()

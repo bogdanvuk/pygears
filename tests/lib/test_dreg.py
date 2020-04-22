@@ -9,12 +9,12 @@ from pygears.typing import Int, Queue, Tuple, Uint, Unit
 from pygears.util.test_utils import formal_check, synth_check
 
 
-def test_pygears_sim(tmpdir):
+def test_pygears_sim():
     seq = list(range(10))
 
     directed(drv(t=Uint[16], seq=seq), f=dreg, ref=seq)
 
-    sim(resdir=tmpdir)
+    sim()
 
     assert timestep() == len(seq) + 1
 
@@ -31,7 +31,7 @@ def get_dut(dout_delay):
 
 @pytest.mark.parametrize('din_delay', [0, 5])
 @pytest.mark.parametrize('dout_delay', [0, 5])
-def test_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
+def test_cosim(cosim_cls, din_delay, dout_delay):
     seq = list(range(1, 10))
     dut = get_dut(dout_delay)
     directed(drv(t=Uint[16], seq=seq) | delay_rng(din_delay, din_delay),
@@ -39,12 +39,12 @@ def test_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
              ref=seq,
              delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(resdir=tmpdir)
+    sim()
 
 
 @pytest.mark.parametrize('din_delay', [0, 5])
 @pytest.mark.parametrize('dout_delay', [0, 5])
-def test_queue_tuple(tmpdir, cosim_cls, din_delay, dout_delay):
+def test_queue_tuple(cosim_cls, din_delay, dout_delay):
     seq = [[(0, 1), (4, 0), (1, 1)], [(1, 1), (2, 0), (3, 1), (4, 0)]]
     dut = get_dut(dout_delay)
     verif(drv(t=Queue[Tuple[Uint[16], Int[2]]], seq=seq)
@@ -53,11 +53,11 @@ def test_queue_tuple(tmpdir, cosim_cls, din_delay, dout_delay):
           ref=dreg(name='ref_model'),
           delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(resdir=tmpdir)
+    sim()
 
 
 @pytest.mark.parametrize('lvl', [1, 2, 5])
-def test_queue_unit(tmpdir, cosim_cls, lvl):
+def test_queue_unit(cosim_cls, lvl):
     # sequence represents eot values
     # cast to Queue[Unit] after driver
     seq = [0, 0, 1, 2, 1, 2, 3]
@@ -66,7 +66,7 @@ def test_queue_unit(tmpdir, cosim_cls, lvl):
           f=dreg(sim_cls=cosim_cls),
           ref=dreg(name='ref_model'))
 
-    sim(resdir=tmpdir)
+    sim()
 
 
 @formal_check()

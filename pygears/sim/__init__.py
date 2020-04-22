@@ -4,6 +4,7 @@
 
 from functools import partial
 from .sim import sim, artifacts_dir, sim_assert, timestep, clk, delta, sim_log, sim_phase, SimFinish
+from pygears import config
 from . import inst
 
 from .sim import SimPlugin, schedule_to_finish
@@ -21,7 +22,11 @@ def cosim(top, sim, *args, **kwds):
     if top is None:
         top = registry('gear/root')
     elif isinstance(top, str):
+        top_name = top
         top = find(top)
+
+        if top is None:
+            raise Exception(f'No gear found on path: "{top_name}"')
 
     if isinstance(sim, str):
         if sim in ['cadence', 'xsim', 'questa']:
@@ -30,7 +35,12 @@ def cosim(top, sim, *args, **kwds):
             kwds['sim'] = sim
         elif sim == 'verilator':
             from .modules import SimVerilated
+            from .modules.verilator import build
+
+            kwds['outdir'] = kwds.get('outdir', config['results-dir'])
             sim_cls = SimVerilated
+            build(top, outdir=kwds['outdir'], rebuild=kwds.get('rebuild', True))
+            kwds['rebuild'] = False
         else:
             raise Exception(f"Unsupported simulator: {sim}")
     else:

@@ -14,7 +14,6 @@ from pygears.typing import Bool, Uint, Union
 @pytest.mark.parametrize('dout_delay', [0, 5])
 @pytest.mark.parametrize('depth', [4, 8])
 def test_directed(
-    tmpdir,
     wr0_delay,
     rd0_delay,
     wr1_delay,
@@ -65,4 +64,4 @@ def test_directed(
         ref=tdp(depth=depth),
         delays=[delay_rng(0, dout_delay), delay_rng(0, 0)])
 
-    sim(resdir=tmpdir)
+    sim()

@@ -6,7 +6,7 @@ from pygears.typing import Uint
 from pygears.lib import eq
 
 
-def test_basic(tmpdir, cosim_cls):
+def test_basic(cosim_cls):
 
     seq_op1 = [1, 2, 3]
     seq_op2 = [2, 2, 2]
@@ -20,4 +20,4 @@ def test_basic(tmpdir, cosim_cls):
           f=eq_wrap(sim_cls=cosim_cls),
           ref=eq(name='ref_model'))
 
-    sim(resdir=tmpdir, check_activity=False)
+    sim(check_activity=False)

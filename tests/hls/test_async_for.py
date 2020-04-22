@@ -6,7 +6,7 @@ from pygears.typing import Queue, Uint
 from pygears.lib import directed
 
 
-def test_simple_async_sim(tmpdir, sim_cls):
+def test_simple_async_sim(sim_cls):
     @gear(hdl={'compile': True})
     async def test() -> Uint[3]:
         async for i, _ in qrange(4):
@@ -14,9 +14,9 @@ def test_simple_async_sim(tmpdir, sim_cls):
 
     directed(f=test(sim_cls=sim_cls), ref=list(range(4)) * 2)
 
-    sim(tmpdir, timeout=8)
+    sim(timeout=8)
 
-def test_simple(tmpdir, sim_cls):
+def test_simple(sim_cls):
     @gear(hdl={'compile': True})
     async def test(din: Queue) -> b'din':
         async for (data, eot) in din:
@@ -26,10 +26,10 @@ def test_simple(tmpdir, sim_cls):
              f=test(sim_cls=sim_cls),
              ref=[list(range(10))])
 
-    sim(tmpdir)
+    sim()
 
 
-def test_exit_cond(tmpdir, sim_cls):
+def test_exit_cond(sim_cls):
     @gear(hdl={'compile': True})
     async def test(din: Queue) -> b'din':
         async for (data, eot) in din:
@@ -41,4 +41,4 @@ def test_exit_cond(tmpdir, sim_cls):
              f=test(sim_cls=sim_cls),
              ref=[list(range(10)), [0]])
 
-    sim(tmpdir)
+    sim()

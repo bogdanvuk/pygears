@@ -3,7 +3,7 @@ from pygears.sim import sim
 from pygears.typing import Fixp, Int, Uint
 
 
-def test_unsigned(tmpdir, cosim_cls):
+def test_unsigned(cosim_cls):
     a_seq = [0, 5, 14, 15]
     b = 6
 
@@ -11,10 +11,10 @@ def test_unsigned(tmpdir, cosim_cls):
           f=add(b=b, sim_cls=cosim_cls),
           ref=add(b=b, name='ref_model'))
 
-    sim(resdir=tmpdir)
+    sim()
 
 
-def test_signed(tmpdir, cosim_cls):
+def test_signed(cosim_cls):
     a_seq = [-8, -1, 0, 1, 7]
     b = 5
 
@@ -22,10 +22,10 @@ def test_signed(tmpdir, cosim_cls):
           f=add(b=b, sim_cls=cosim_cls),
           ref=add(b=b, name='ref_model'))
 
-    sim(resdir=tmpdir)
+    sim()
 
 
-def test_fixp(tmpdir, cosim_cls):
+def test_fixp(cosim_cls):
     a_seq = [-8., -1, 0, 1, 7]
     b = Fixp[1, 5](-0.125)
 
@@ -33,4 +33,4 @@ def test_fixp(tmpdir, cosim_cls):
           f=add(b=b, sim_cls=cosim_cls),
           ref=add(b=b, name='ref_model'))
 
-    sim(resdir=tmpdir)
+    sim()

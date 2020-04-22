@@ -11,7 +11,7 @@ from pygears.typing import Int, Queue, Uint, bitw, Tuple
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('cfg_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
-def test_uint_directed(tmpdir, sim_cls, din_delay, cfg_delay, dout_delay):
+def test_uint_directed(sim_cls, din_delay, cfg_delay, dout_delay):
     t_ctrl = Uint[4]
     t_din = Uint[8]
 
@@ -28,13 +28,13 @@ def test_uint_directed(tmpdir, sim_cls, din_delay, cfg_delay, dout_delay):
              ref=[(5, 0), (6, 1), (7, 2)],
              delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(resdir=tmpdir)
+    sim()
 
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('cfg_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
-def test_tuple_uint_directed(tmpdir, sim_cls, din_delay, cfg_delay,
+def test_tuple_uint_directed(sim_cls, din_delay, cfg_delay,
                              dout_delay):
     t_ctrl = Uint[4]
     t_din = Tuple[Uint[8], Uint[8], Uint[8]]
@@ -48,14 +48,14 @@ def test_tuple_uint_directed(tmpdir, sim_cls, din_delay, cfg_delay,
              ref=[(5, 0), (6, 1), (7, 2)],
              delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(resdir=tmpdir)
+    sim()
 
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('cfg_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 @pytest.mark.parametrize('branches', [2, 5, 7])
-def test_mapped_directed(tmpdir, sim_cls, din_delay, cfg_delay, dout_delay,
+def test_mapped_directed(sim_cls, din_delay, cfg_delay, dout_delay,
                          branches):
 
     t_ctrl = Uint[bitw(branches - 1)]
@@ -82,13 +82,13 @@ def test_mapped_directed(tmpdir, sim_cls, din_delay, cfg_delay, dout_delay,
              delays=[delay_rng(dout_delay, dout_delay)],
              ref=ref)
 
-    sim(resdir=tmpdir)
+    sim()
 
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('cfg_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
-def test_diff_inputs(tmpdir, sim_cls, din_delay, cfg_delay, dout_delay):
+def test_diff_inputs(sim_cls, din_delay, cfg_delay, dout_delay):
     t_ctrl = Uint[2]
     t_din0 = Uint[5]
     t_din1 = Int[10]
@@ -107,7 +107,7 @@ def test_diff_inputs(tmpdir, sim_cls, din_delay, cfg_delay, dout_delay):
              ref=[(5, 0), (6, 1), ((8, 1), 2)],
              delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(resdir=tmpdir)
+    sim()
 
 
 # @formal_check(assumes=[

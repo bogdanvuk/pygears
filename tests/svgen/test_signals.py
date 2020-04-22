@@ -23,7 +23,7 @@ async def add_sig(din) -> b'din':
     pass
 
 
-def test_local_signal(tmpdir):
+def test_local_signal():
     @gear
     def dut(din):
         return din \
@@ -34,7 +34,7 @@ def test_local_signal(tmpdir):
              f=dut(sim_cls=SimVerilated),
              ref=(list(range(0, 6, 2))))
 
-    sim(tmpdir)
+    sim()
 
 
 @gear
@@ -42,7 +42,7 @@ def add_wrap(din):
     return din | add_sig
 
 
-def test_channeling(tmpdir):
+def test_channeling():
     @gear
     def dut(din):
         return din \
@@ -53,7 +53,7 @@ def test_channeling(tmpdir):
              f=dut(sim_cls=SimVerilated),
              ref=(list(range(0, 6, 2))))
 
-    sim(resdir=tmpdir)
+    sim()
 
 
 @gear(signals=[InSig('clk', 1), InSig('rst', 1), InSig('clk2', 1)])

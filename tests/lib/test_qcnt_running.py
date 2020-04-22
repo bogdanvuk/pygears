@@ -23,7 +23,7 @@ def get_dut(dout_delay):
 @pytest.mark.parametrize('din_delay', [0, 10])
 @pytest.mark.parametrize('dout_delay', [0, 10])
 @pytest.mark.parametrize('init', [1, 0])
-def test_directed_lvl1(tmpdir, sim_cls, din_delay, dout_delay, init):
+def test_directed_lvl1(sim_cls, din_delay, dout_delay, init):
     t_din = Queue[Uint[16]]
 
     seq = [list(range(2)), list(range(8)), list(range(5))]
@@ -37,13 +37,13 @@ def test_directed_lvl1(tmpdir, sim_cls, din_delay, dout_delay, init):
              ref=ref,
              delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(resdir=tmpdir)
+    sim()
 
 
 @pytest.mark.parametrize('din_delay', [0, 10])
 @pytest.mark.parametrize('dout_delay', [0, 10])
 @pytest.mark.parametrize('init', [1, 0])
-def test_directed_lvl2(tmpdir, sim_cls, din_delay, dout_delay, init):
+def test_directed_lvl2(sim_cls, din_delay, dout_delay, init):
     t_din = Queue[Uint[16], 2]
 
     seq = [[list(range(2)), list(range(8))], [list(range(5))]]
@@ -57,13 +57,13 @@ def test_directed_lvl2(tmpdir, sim_cls, din_delay, dout_delay, init):
              ref=ref,
              delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(resdir=tmpdir)
+    sim()
 
 
 @pytest.mark.parametrize('din_delay', [0, 10])
 @pytest.mark.parametrize('dout_delay', [0, 10])
 @pytest.mark.parametrize('init', [1, 0])
-def test_directed_lvl3_2(tmpdir, sim_cls, din_delay, dout_delay, init):
+def test_directed_lvl3_2(sim_cls, din_delay, dout_delay, init):
     t_din = Queue[Uint[16], 3]
 
     seq = [[[list(range(2)), list(range(8))], [list(range(5))]],
@@ -78,7 +78,7 @@ def test_directed_lvl3_2(tmpdir, sim_cls, din_delay, dout_delay, init):
              ref=ref,
              delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(resdir=tmpdir)
+    sim()
 
 
 @formal_check()

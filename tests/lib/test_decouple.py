@@ -26,11 +26,11 @@ def test_synth_u64_yosys():
     decouple(Intf(Uint[64]))
 
 
-def test_cosim(tmpdir, cosim_cls):
+def test_cosim(cosim_cls):
     seq = list(range(1, 10))
     directed(drv(t=Uint[16], seq=seq) | delay_rng(0, 2),
              f=decouple(sim_cls=cosim_cls),
              ref=seq,
              delays=[delay_rng(0, 2)])
 
-    sim(resdir=tmpdir)
+    sim()

@@ -7,7 +7,7 @@ from pygears.typing import Uint
 from collections import defaultdict
 
 
-def test_directed_list(tmpdir, sim_cls):
+def test_directed_list(sim_cls):
     data = list(range(100, 110))
     addr = list(range(10))
 
@@ -15,10 +15,10 @@ def test_directed_list(tmpdir, sim_cls):
              f=rom(sim_cls=sim_cls, data=data, dtype=Uint[8]),
              ref=data)
 
-    sim(resdir=tmpdir)
+    sim()
 
 
-def test_directed_dict(tmpdir, sim_cls):
+def test_directed_dict(sim_cls):
     addr = list(range(0, 20, 2))
     data = {i: i + 100 for i in addr}
 
@@ -28,10 +28,10 @@ def test_directed_dict(tmpdir, sim_cls):
              f=rom(sim_cls=sim_cls, data=data, dtype=Uint[8]),
              ref=res)
 
-    sim(resdir=tmpdir)
+    sim()
 
 
-def test_directed_list_dflt(tmpdir, sim_cls):
+def test_directed_list_dflt(sim_cls):
     data = list(range(100, 110))
     addr = list(range(20))
 
@@ -39,10 +39,10 @@ def test_directed_list_dflt(tmpdir, sim_cls):
              f=rom(sim_cls=sim_cls, data=data, dtype=Uint[8], dflt=0),
              ref=data + [0]*10)
 
-    sim(resdir=tmpdir)
+    sim()
 
 
-def test_directed_dict_dflt(tmpdir, sim_cls):
+def test_directed_dict_dflt(sim_cls):
     addr = list(range(0, 20, 2))
     data = {i: i + 100 for i in addr}
 
@@ -52,4 +52,4 @@ def test_directed_dict_dflt(tmpdir, sim_cls):
              f=rom(sim_cls=sim_cls, data=data, dtype=Uint[8], dflt=0),
              ref=res)
 
-    sim(resdir=tmpdir)
+    sim()

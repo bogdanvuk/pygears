@@ -4,7 +4,7 @@ from pygears.sim import sim
 from pygears.typing import Bool
 
 
-def test_inline_if(tmpdir, cosim_cls):
+def test_inline_if(cosim_cls):
     @gear(hdl={'compile': True})
     async def inv(din: Bool) -> Bool:
         async with din as data:
@@ -12,4 +12,4 @@ def test_inline_if(tmpdir, cosim_cls):
 
     directed(drv(t=Bool, seq=[1, 0]), f=inv(sim_cls=cosim_cls), ref=[0, 1])
 
-    sim(tmpdir)
+    sim()

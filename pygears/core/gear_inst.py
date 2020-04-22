@@ -450,8 +450,6 @@ def gear_base_resolver(
     func, meta_kwds, *args, name=None, intfs=None, __base__=None, **kwds):
 
     name = name or resolve_gear_name(func, __base__)
-    # if name == 'demux':
-    #     breakpoint()
 
     err = None
     try:
@@ -531,6 +529,8 @@ def gear_base_resolver(
             err = e
             if hasattr(func, 'alternatives') or hasattr(func, 'alternative_to'):
                 err.root_gear = gear_inst
+        except Exception as e:
+            err = type(e)(f'{str(e)}, of the module "{name}"')
 
     if err:
         if hasattr(func, 'alternatives') or hasattr(func, 'alternative_to'):

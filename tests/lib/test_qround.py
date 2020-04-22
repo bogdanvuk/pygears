@@ -3,15 +3,15 @@ from pygears.typing import Fixp, Ufixp
 from pygears.sim import sim, cosim
 
 
-def test_qround_ufixp(tmpdir):
+def test_qround_ufixp():
     seq = [0.5 - 0.0625, 0.5, 1.5 - 0.0625, 1.5]
     verif(drv(t=Ufixp[6, 10], seq=seq), f=qround(name='dut'), ref=qround)
 
     cosim('/dut', 'verilator')
-    sim(tmpdir)
+    sim()
 
 
-def test_qround_fixp(tmpdir):
+def test_qround_fixp():
     seq = [
         -1.5 - 0.0625, -1.5, -0.5 - 0.0625, -0.5, 0.5 - 0.0625, 0.5,
         1.5 - 0.0625, 1.5
@@ -20,16 +20,16 @@ def test_qround_fixp(tmpdir):
     verif(drv(t=Fixp[6, 10], seq=seq), f=qround(name='dut'), ref=qround)
 
     cosim('/dut', 'verilator')
-    sim(tmpdir)
+    sim()
 
 
-# def test_qround_even_ufixp(tmpdir):
+# def test_qround_even_ufixp():
 #     seq = [0.5 - 0.0625, 0.5, 0.5 + 0.0625, 1.5 - 0.0625, 1.5, 1.5 + 0.0625]
 #     res = []
 #     verif(drv(t=Ufixp[6, 10], seq=seq), f=qround_even(name='dut'), ref=qround)
 
 #     cosim('/dut', 'verilator')
-#     sim(tmpdir)
+#     sim()
 #     print(res)
 
 

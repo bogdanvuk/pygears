@@ -12,7 +12,7 @@ from pygears.sim import sim
 
 @pytest.mark.parametrize('din_delay', [(0, 0, 0), (1, 5, 3)])
 @pytest.mark.parametrize('dout_delay', [0, 5])
-def test_uint_3(tmpdir, cosim_cls, din_delay, dout_delay):
+def test_uint_3(cosim_cls, din_delay, dout_delay):
 
     directed(drv(t=Uint[2], seq=[0, 1, 2, 3])
              | delay_rng(din_delay[0], din_delay[0]),
@@ -24,12 +24,12 @@ def test_uint_3(tmpdir, cosim_cls, din_delay, dout_delay):
              ref=[(0, 4, 8), (1, 5, 9), (2, 6, 10), (3, 7, 11)],
              delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(resdir=tmpdir)
+    sim()
 
 
 @pytest.mark.parametrize('din_delay', [(0, 0, 0), (1, 5, 3)])
 @pytest.mark.parametrize('dout_delay', [0, 5])
-def test_queue_3(tmpdir, cosim_cls, din_delay, dout_delay):
+def test_queue_3(cosim_cls, din_delay, dout_delay):
 
     verif(drv(t=Queue[Uint[2]], seq=[[0, 1], [2, 3]])
           | delay_rng(din_delay[0], din_delay[0]),
@@ -41,7 +41,7 @@ def test_queue_3(tmpdir, cosim_cls, din_delay, dout_delay):
           ref=ccat(name='ref_model'),
           delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(resdir=tmpdir)
+    sim()
 
 
 @pytest.mark.parametrize('branches', [2, 3, 27, 127])

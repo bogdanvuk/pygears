@@ -12,7 +12,7 @@ from pygears import Intf
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 @pytest.mark.parametrize('branches', list(range(2, 10)))
-def test_simple_directed(tmpdir, sim_cls, din_delay, dout_delay, branches):
+def test_simple_directed(sim_cls, din_delay, dout_delay, branches):
 
     seq = [(i, i) for i in range(branches)]
     TDin = Union[tuple(Uint[i] for i in range(1, branches + 1))]
@@ -23,13 +23,13 @@ def test_simple_directed(tmpdir, sim_cls, din_delay, dout_delay, branches):
         delays=[delay_rng(dout_delay, dout_delay) for _ in range(branches)],
         ref=[[i] for i in range(branches)])
 
-    sim(resdir=tmpdir)
+    sim()
 
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 @pytest.mark.parametrize('branches', list(range(2, 10)))
-def test_mapped_directed(tmpdir, sim_cls, din_delay, dout_delay, branches):
+def test_mapped_directed(sim_cls, din_delay, dout_delay, branches):
 
     seq = [(i, i) for i in range(branches)]
     TDin = Union[tuple(Uint[i] for i in range(1, branches + 1))]
@@ -47,12 +47,12 @@ def test_mapped_directed(tmpdir, sim_cls, din_delay, dout_delay, branches):
         delays=[delay_rng(dout_delay, dout_delay) for _ in range(branches)],
         ref=ref)
 
-    sim(resdir=tmpdir)
+    sim()
 
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
-def test_mapped_default_directed(tmpdir, sim_cls, din_delay, dout_delay):
+def test_mapped_default_directed(sim_cls, din_delay, dout_delay):
 
     seq = [(i, i) for i in range(8)]
     TDin = Union[tuple(Uint[i] for i in range(1, 8 + 1))]
@@ -66,7 +66,7 @@ def test_mapped_default_directed(tmpdir, sim_cls, din_delay, dout_delay):
              delays=[delay_rng(dout_delay, dout_delay) for _ in range(3)],
              ref=ref)
 
-    sim(resdir=tmpdir)
+    sim()
 
 
 def mux_demux_redux(branches):

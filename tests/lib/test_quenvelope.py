@@ -12,7 +12,7 @@ def test_skip():
     assert iout.dtype == Queue[Unit, 2]
 
 
-def test_skip_sim(tmpdir, sim_cls):
+def test_skip_sim(sim_cls):
     seq = [[list(range(1))], [list(range(1)), list(range(2))],
            [list(range(1)), list(range(2)),
             list(range(3))]]
@@ -23,7 +23,7 @@ def test_skip_sim(tmpdir, sim_cls):
              f=quenvelope(lvl=2, sim_cls=sim_cls),
              ref=[ref])
 
-    sim(resdir=tmpdir)
+    sim()
 
 
 def test_all_pass():

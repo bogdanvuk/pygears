@@ -8,17 +8,17 @@ from pygears import datagear
 from pygears.lib import add, mul
 
 
-def test_add(tmpdir):
+def test_add():
     directed(
         drv(t=Uint[8], seq=list(range(8))),
         drv(t=Uint[8], seq=list(range(8))),
         f=add(sim_cls=SimVerilated),
         ref=[2 * i for i in range(8)])
 
-    sim(tmpdir)
+    sim()
 
 
-def test_multiple_arguments(tmpdir):
+def test_multiple_arguments():
     TComplex = Tuple[Integer, Integer]
     complex_t = Tuple[Uint[8], Uint[8]]
 
@@ -38,10 +38,10 @@ def test_multiple_arguments(tmpdir):
         f=add_real_part_module(sim_cls=SimVerilated),
         ref=[2 * i for i in range(10)])
 
-    sim(tmpdir)
+    sim()
 
 
-def test_multiple_arguments_datagear(tmpdir):
+def test_multiple_arguments_datagear():
     TComplex = Tuple[Integer, Integer]
     complex_t = Tuple[Uint[8], Uint[8]]
 
@@ -55,10 +55,10 @@ def test_multiple_arguments_datagear(tmpdir):
         f=add_real_part_func(sim_cls=SimVerilated),
         ref=[2 * i for i in range(10)])
 
-    sim(tmpdir)
+    sim()
 
 
-def test_multiple_arguments_datagear_complex(tmpdir):
+def test_multiple_arguments_datagear_complex():
     TComplex = Tuple[Integer, Integer]
     complex_t = Tuple[Uint[8], Uint[8]]
 
@@ -75,10 +75,10 @@ def test_multiple_arguments_datagear_complex(tmpdir):
         f=add_real_part_func(sim_cls=SimVerilated),
         ref=[2 * i if i % 2 else 4 * i for i in range(10)])
 
-    sim(tmpdir)
+    sim()
 
 
-def test_fixp_arith(tmpdir, sim_cls):
+def test_fixp_arith(sim_cls):
     @gear(hdl={'compile': True})
     async def fixp_arith(x: Fixpnumber, y: Fixpnumber) -> Ufixp[4, 7]:
         async with gather(x, y) as data:
@@ -90,10 +90,10 @@ def test_fixp_arith(tmpdir, sim_cls):
         f=fixp_arith(sim_cls=sim_cls),
         ref=[Ufixp[4, 7](10.75)])
 
-    sim(tmpdir)
+    sim()
 
 
-def test_fixp_diff_arith(tmpdir, sim_cls):
+def test_fixp_diff_arith(sim_cls):
     @gear(hdl={'compile': True})
     async def fixp_arith(x: Fixpnumber, y: Fixpnumber) -> Ufixp[4, 7]:
         async with gather(x, y) as data:
@@ -105,10 +105,10 @@ def test_fixp_diff_arith(tmpdir, sim_cls):
         f=fixp_arith(sim_cls=sim_cls),
         ref=[Ufixp[4, 7](10.75)])
 
-    sim(tmpdir)
+    sim()
 
 
-def test__rmul__(tmpdir, sim_cls):
+def test__rmul__(sim_cls):
     # Uint __mul__ raises NotImplemented, so __rmul__ of Ufixp needs to be
     # invoked
     directed(
@@ -118,4 +118,4 @@ def test__rmul__(tmpdir, sim_cls):
         ref=[64],
     )
 
-    sim(tmpdir)
+    sim()

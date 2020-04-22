@@ -21,7 +21,7 @@ def _(val: Uint):
     return val + 1
 
 
-def test_simple_uint(tmpdir, sim_cls):
+def test_simple_uint(sim_cls):
     @gear(hdl={'compile': True})
     async def test(din: Integer['w']) -> b'din.base[w+1]':
         async with din as d:
@@ -31,10 +31,10 @@ def test_simple_uint(tmpdir, sim_cls):
              f=test(sim_cls=sim_cls),
              ref=[1, 2, 3])
 
-    sim(tmpdir, timeout=3)
+    sim(timeout=3)
 
 
-def test_simple_int(tmpdir, sim_cls):
+def test_simple_int(sim_cls):
     @gear(hdl={'compile': True})
     async def test(din: Integer['w']) -> b'din.base[w+1]':
         async with din as d:
@@ -44,7 +44,7 @@ def test_simple_int(tmpdir, sim_cls):
              f=test(sim_cls=sim_cls),
              ref=[-1, -2, -3])
 
-    sim(tmpdir, timeout=3)
+    sim(timeout=3)
 
 
 @singledispatch
@@ -62,7 +62,7 @@ def _(t: UintType, val):
     return t(val + 1)
 
 
-def test_type_uint(tmpdir, sim_cls):
+def test_type_uint(sim_cls):
     @gear(hdl={'compile': True})
     async def test(din: Integer['w'], *, t) -> b't':
         async with din as d:
@@ -72,10 +72,10 @@ def test_type_uint(tmpdir, sim_cls):
              f=test(sim_cls=sim_cls, t=Uint[16]),
              ref=[1, 2, 3])
 
-    sim(tmpdir, timeout=3)
+    sim(timeout=3)
 
 
-def test_type_int(tmpdir, sim_cls):
+def test_type_int(sim_cls):
     @gear(hdl={'compile': True})
     async def test(din: Integer['w'], *, t) -> b't':
         async with din as d:
@@ -85,4 +85,4 @@ def test_type_int(tmpdir, sim_cls):
              f=test(sim_cls=sim_cls, t=Int[16]),
              ref=[-1, 0, 1])
 
-    sim(tmpdir, timeout=3)
+    sim(timeout=3)

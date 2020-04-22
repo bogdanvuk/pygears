@@ -509,8 +509,6 @@ def sim(resdir=None, timeout=None, extens=None, run=True, check_activity=False, 
 
     if resdir is None:
         resdir = config['results-dir']
-        if resdir is None:
-            resdir = tempfile.mkdtemp()
 
     config['results-dir'] = resdir
     os.makedirs(resdir, exist_ok=True)
@@ -588,7 +586,7 @@ class SimPlugin(GearPlugin):
         safe_bind('sim/simulator', None)
         config.define('sim/rand_seed', None)
         config.define('sim/clk_freq', 1000)
-        config.define('results-dir', default=None)
+        config.define('results-dir', default=tempfile.mkdtemp())
         config.define('sim/extens', default=[])
         config.define('debug/trace', default=[])
 

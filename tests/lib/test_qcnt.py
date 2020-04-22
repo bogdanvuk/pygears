@@ -49,19 +49,19 @@ def get_ref(seq):
 
 @pytest.mark.parametrize('din_delay', [0, 5])
 @pytest.mark.parametrize('dout_delay', [0, 5])
-def test_directed_golden(tmpdir, sim_cls, din_delay, dout_delay):
+def test_directed_golden(sim_cls, din_delay, dout_delay):
     seq = DIR_SEQ
     dut = get_dut(dout_delay)
     directed(drv(t=T_DIN, seq=seq) | delay_rng(din_delay, din_delay),
              f=dut(sim_cls=sim_cls),
              ref=get_ref(seq),
              delays=[delay_rng(dout_delay, dout_delay)])
-    sim(resdir=tmpdir)
+    sim()
 
 
 @pytest.mark.parametrize('din_delay', [0, 5])
 @pytest.mark.parametrize('dout_delay', [0, 5])
-def test_random_golden(tmpdir, sim_cls, din_delay, dout_delay):
+def test_random_golden(sim_cls, din_delay, dout_delay):
     skip_ifndef('RANDOM_TEST')
     seq = RANDOM_SEQ
     dut = get_dut(dout_delay)
@@ -69,25 +69,25 @@ def test_random_golden(tmpdir, sim_cls, din_delay, dout_delay):
              f=dut(sim_cls=sim_cls),
              ref=get_ref(seq),
              delays=[delay_rng(dout_delay, dout_delay)])
-    sim(resdir=tmpdir)
+    sim()
 
 
 @pytest.mark.parametrize('lvl', range(1, 0))
 @pytest.mark.parametrize('din_delay', [0, 1, 10])
 @pytest.mark.parametrize('dout_delay', [0, 1, 10])
-def test_directed_cosim(tmpdir, cosim_cls, lvl, din_delay, dout_delay):
+def test_directed_cosim(cosim_cls, lvl, din_delay, dout_delay):
     seq = DIR_SEQ
     dut = get_dut(dout_delay)
     verif(drv(t=T_DIN, seq=seq) | delay_rng(din_delay, din_delay),
           f=dut(sim_cls=cosim_cls, lvl=lvl),
           ref=qcnt(name='ref_model', lvl=lvl),
           delays=[delay_rng(dout_delay, dout_delay)])
-    sim(resdir=tmpdir)
+    sim()
 
 
 @pytest.mark.parametrize('din_delay', [0, 5])
 @pytest.mark.parametrize('dout_delay', [0, 5])
-def test_random_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
+def test_random_cosim(cosim_cls, din_delay, dout_delay):
     skip_ifndef('RANDOM_TEST')
     seq = RANDOM_SEQ
     dut = get_dut(dout_delay)
@@ -95,10 +95,10 @@ def test_random_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
           f=dut(sim_cls=cosim_cls),
           ref=qcnt(name='ref_model'),
           delays=[delay_rng(dout_delay, dout_delay)])
-    sim(resdir=tmpdir)
+    sim()
 
 
-def test_socket_rand_cons(tmpdir):
+def test_socket_rand_cons():
     skip_ifndef('SIM_SOCKET_TEST', 'RANDOM_TEST')
 
     cons = []
@@ -111,7 +111,7 @@ def test_socket_rand_cons(tmpdir):
           f=qcnt(sim_cls=partial(SimSocket, run=True)),
           ref=qcnt(name='ref_model'))
 
-    sim(resdir=tmpdir, extens=[partial(SVRandSocket, cons=cons)])
+    sim(extens=[partial(SVRandSocket, cons=cons)])
 
 
 @formal_check()

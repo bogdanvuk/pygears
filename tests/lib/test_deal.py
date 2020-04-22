@@ -40,7 +40,7 @@ def get_refs(seq):
 
 @pytest.mark.parametrize('din_delay', [0, 5])
 @pytest.mark.parametrize('dout_delay', [0, 5])
-def test_directed(tmpdir, cosim_cls, din_delay, dout_delay):
+def test_directed(cosim_cls, din_delay, dout_delay):
     seq = [[list(range(8)), list(range(2)),
             list(range(3))], [list(range(1)), list(range(2))]]
 
@@ -56,12 +56,12 @@ def test_directed(tmpdir, cosim_cls, din_delay, dout_delay):
                  delay_rng(dout_delay, dout_delay)
              ])
 
-    sim(tmpdir)
+    sim()
 
 
 @pytest.mark.parametrize('din_delay', [0, 5])
 @pytest.mark.parametrize('dout_delay', [0, 5])
-def test_directed_3in(tmpdir, cosim_cls, din_delay, dout_delay):
+def test_directed_3in(cosim_cls, din_delay, dout_delay):
     t_deal = Queue[Uint[16], 3]
     num = 3
     lvl = 2
@@ -88,10 +88,10 @@ def test_directed_3in(tmpdir, cosim_cls, din_delay, dout_delay):
              ref=ref,
              delays=dout_dly)
 
-    sim(tmpdir)
+    sim()
 
 
-def test_random(tmpdir, sim_cls):
+def test_random(sim_cls):
     skip_ifndef('RANDOM_TEST')
 
     seq = [[
@@ -104,10 +104,10 @@ def test_random(tmpdir, sim_cls):
              f=qdeal(sim_cls=sim_cls, num=2),
              ref=get_refs(seq))
 
-    sim(tmpdir)
+    sim()
 
 
-# def test_socket_rand_cons(tmpdir):
+# def test_socket_rand_cons():
 #     skip_ifndef('SIM_SOCKET_TEST', 'RANDOM_TEST')
 
 #     cons = []
@@ -120,7 +120,7 @@ def test_random(tmpdir, sim_cls):
 #           f=qdeal(sim_cls=partial(SimSocket, run=True), num=2),
 #           ref=qdeal(name='ref_model', num=2))
 
-#     sim(tmpdir, extens=[partial(SVRandSocket, cons=cons)])
+#     sim(extens=[partial(SVRandSocket, cons=cons)])
 
 # @formal_check()
 # def test_formal():

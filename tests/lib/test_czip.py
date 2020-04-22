@@ -17,7 +17,7 @@ def test_general():
 
 @pytest.mark.parametrize('din_delay', [0, 5])
 @pytest.mark.parametrize('dout_delay', [0, 5])
-def test_cosim_one_queue(tmpdir, cosim_cls, din_delay, dout_delay):
+def test_cosim_one_queue(cosim_cls, din_delay, dout_delay):
     verif(drv(t=Uint[8], seq=list(range(10)))
           | delay_rng(din_delay, din_delay),
           drv(t=Queue[Uint[8]], seq=[list(range(10))])
@@ -26,12 +26,12 @@ def test_cosim_one_queue(tmpdir, cosim_cls, din_delay, dout_delay):
           ref=czip(name='ref_model'),
           delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(resdir=tmpdir)
+    sim()
 
 
 @pytest.mark.parametrize('din_delay', [0, 5])
 @pytest.mark.parametrize('dout_delay', [0, 5])
-def test_cosim_both_queue(tmpdir, cosim_cls, din_delay, dout_delay):
+def test_cosim_both_queue(cosim_cls, din_delay, dout_delay):
     verif(drv(t=Queue[Uint[8]], seq=[list(range(10))])
           | delay_rng(din_delay, din_delay),
           drv(t=Queue[Uint[8]], seq=[list(range(10))])
@@ -40,14 +40,14 @@ def test_cosim_both_queue(tmpdir, cosim_cls, din_delay, dout_delay):
           ref=czip(name='ref_model'),
           delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(resdir=tmpdir)
+    sim()
 
 
 @pytest.mark.parametrize('din0_delay', [0, 1])
 @pytest.mark.parametrize('din1_delay', [0, 1])
 @pytest.mark.parametrize('dout0_delay', [0, 1])
 @pytest.mark.parametrize('dout1_delay', [0, 1])
-def test_cosim_zipsync_one_queue(tmpdir, cosim_cls, din0_delay, din1_delay,
+def test_cosim_zipsync_one_queue(cosim_cls, din0_delay, din1_delay,
                                  dout0_delay, dout1_delay):
     verif(drv(t=Uint[8], seq=list(range(10)))
           | delay_rng(din0_delay, din0_delay),
@@ -60,14 +60,14 @@ def test_cosim_zipsync_one_queue(tmpdir, cosim_cls, din0_delay, din1_delay,
               delay_rng(dout1_delay, dout1_delay)
           ])
 
-    sim(resdir=tmpdir)
+    sim()
 
 
 @pytest.mark.parametrize('din0_delay', [0, 1])
 @pytest.mark.parametrize('din1_delay', [0, 1])
 @pytest.mark.parametrize('dout0_delay', [0, 1])
 @pytest.mark.parametrize('dout1_delay', [0, 1])
-def test_cosim_zipsync_both_queue(tmpdir, cosim_cls, din0_delay, din1_delay,
+def test_cosim_zipsync_both_queue(cosim_cls, din0_delay, din1_delay,
                                   dout0_delay, dout1_delay):
     verif(drv(t=Queue[Uint[8], 2], seq=[[list(range(10)) for _ in range(2)]])
           | delay_rng(din0_delay, din0_delay),
@@ -80,4 +80,4 @@ def test_cosim_zipsync_both_queue(tmpdir, cosim_cls, din0_delay, din1_delay,
               delay_rng(dout1_delay, dout1_delay)
           ])
 
-    sim(resdir=tmpdir)
+    sim()

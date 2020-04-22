@@ -12,7 +12,7 @@ from pygears.util.test_utils import get_decoupled_dut
 @pytest.mark.parametrize('din_delay', [0, 5])
 @pytest.mark.parametrize('dout_delay', [0, 5])
 @pytest.mark.parametrize('size', [1, 4, 9])
-def test_array(tmpdir, cosim_cls, din_delay, dout_delay, size):
+def test_array(cosim_cls, din_delay, dout_delay, size):
     ref = [list(range(i * size, (i + 1) * size)) for i in range(255 // size)]
 
     dut = get_decoupled_dut(dout_delay, parallelize(t=Array[Uint[8], size]))
@@ -21,12 +21,12 @@ def test_array(tmpdir, cosim_cls, din_delay, dout_delay, size):
              ref=ref,
              delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(tmpdir)
+    sim()
 
 
 @pytest.mark.parametrize('din_delay', [0, 5])
 @pytest.mark.parametrize('dout_delay', [0, 5])
-def test_uint(tmpdir, cosim_cls, din_delay, dout_delay):
+def test_uint(cosim_cls, din_delay, dout_delay):
     size = 8
     ref = [Uint[size](0x11), Uint[size](0x22), Uint[size](0x33)]
 
@@ -36,4 +36,4 @@ def test_uint(tmpdir, cosim_cls, din_delay, dout_delay):
              ref=ref,
              delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(tmpdir)
+    sim()

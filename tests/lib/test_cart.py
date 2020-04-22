@@ -24,7 +24,7 @@ def test_multiple():
 
 @pytest.mark.parametrize('din_delay', [0, 5])
 @pytest.mark.parametrize('dout_delay', [0, 5])
-def test_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
+def test_cosim(cosim_cls, din_delay, dout_delay):
     verif(drv(t=Uint[8], seq=[0]) | delay_rng(din_delay, din_delay),
           drv(t=Queue[Uint[8]], seq=[list(range(10))])
           | delay_rng(din_delay, din_delay),
@@ -32,14 +32,14 @@ def test_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
           ref=cart(name='ref_model'),
           delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(resdir=tmpdir)
+    sim()
 
 
 @pytest.mark.parametrize('din0_delay', [0, 1])
 @pytest.mark.parametrize('din1_delay', [0, 1])
 @pytest.mark.parametrize('dout0_delay', [0, 1])
 @pytest.mark.parametrize('dout1_delay', [0, 1])
-def test_cosim_cartsync(tmpdir, cosim_cls, din0_delay, din1_delay, dout0_delay,
+def test_cosim_cartsync(cosim_cls, din0_delay, din1_delay, dout0_delay,
                         dout1_delay):
     verif(drv(t=Uint[8], seq=[0]) | delay_rng(din0_delay, din0_delay),
           drv(t=Queue[Uint[8]], seq=[list(range(10))])
@@ -51,4 +51,4 @@ def test_cosim_cartsync(tmpdir, cosim_cls, din0_delay, din1_delay, dout0_delay,
               delay_rng(dout1_delay, dout1_delay)
           ])
 
-    sim(resdir=tmpdir)
+    sim()

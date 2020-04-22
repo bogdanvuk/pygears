@@ -4,7 +4,7 @@ from pygears.typing import Uint, Unit
 from pygears.sim import clk, sim, cosim
 
 
-def test_hold(tmpdir):
+def test_hold():
     @gear
     async def wr_sequence() -> Uint[4]:
         for i in range(4):
@@ -32,4 +32,4 @@ def test_hold(tmpdir):
         delays=[delay(2)])
 
     cosim('/state', 'verilator')
-    sim(tmpdir)
+    sim()

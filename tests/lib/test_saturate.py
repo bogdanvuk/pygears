@@ -5,7 +5,7 @@ from pygears.typing import Fixp, Uint, Int, Ufixp
 from pygears.sim import sim
 
 
-def test_saturate_uint(tmpdir, sim_cls):
+def test_saturate_uint(sim_cls):
     seq = [0, 14, 15, 16, 32, 63]
     ref = [0, 14, 15, 15, 15, 15]
 
@@ -13,10 +13,10 @@ def test_saturate_uint(tmpdir, sim_cls):
              f=saturate(t=Uint[4], sim_cls=sim_cls),
              ref=ref)
 
-    sim(tmpdir)
+    sim()
 
 
-def test_saturate_int(tmpdir, sim_cls):
+def test_saturate_int(sim_cls):
     seq = [-63, -32, -17, -16, 0, 14, 15, 16, 32, 63]
     ref = [-16, -16, -16, -16, 0, 14, 15, 15, 15, 15]
 
@@ -24,10 +24,10 @@ def test_saturate_int(tmpdir, sim_cls):
              f=saturate(t=Int[5], sim_cls=sim_cls),
              ref=ref)
 
-    sim(tmpdir)
+    sim()
 
 
-def test_saturate_ufixp(tmpdir, sim_cls):
+def test_saturate_ufixp(sim_cls):
     dtype = Ufixp[4, 8]
     sat_type = Ufixp[2, 6]
     seq = [0.0, sat_type.fmax, sat_type.fmax + dtype.quant, dtype.fmax]
@@ -35,7 +35,7 @@ def test_saturate_ufixp(tmpdir, sim_cls):
 
     directed(drv(t=dtype, seq=seq), f=saturate(t=sat_type), ref=ref)
 
-    sim(tmpdir)
+    sim()
 
 
 def test_saturate_fail():

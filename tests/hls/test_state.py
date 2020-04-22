@@ -5,7 +5,7 @@ from pygears.sim import sim, cosim
 from pygears.lib import drv, shred, directed, delay_rng
 
 
-def test_cond_no_state(tmpdir):
+def test_cond_no_state():
     @gear(hdl={'compile': True})
     async def test(din: Bool) -> Bool:
         async with din as d:
@@ -19,10 +19,10 @@ def test_cond_no_state(tmpdir):
              ref=[True, False, True, False])
 
     cosim('/test', 'verilator')
-    sim(tmpdir, timeout=4)
+    sim(timeout=4)
 
 
-def test_cond_2state_asymetric(tmpdir):
+def test_cond_2state_asymetric():
     @gear(hdl={'compile': True})
     async def test(din: Bool) -> Bool:
         async with din as d:
@@ -37,12 +37,12 @@ def test_cond_2state_asymetric(tmpdir):
              ref=[True, True, False, True, True, False])
 
     cosim('/test', 'verilator')
-    sim(tmpdir)
+    sim()
 
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
-def test_cond_2state_symetric(tmpdir, din_delay, dout_delay):
+def test_cond_2state_symetric(din_delay, dout_delay):
     @gear(hdl={'compile': True})
     async def test(din: Bool) -> Bool:
         async with din as d:
@@ -60,12 +60,12 @@ def test_cond_2state_symetric(tmpdir, din_delay, dout_delay):
              delays=[delay_rng(dout_delay, dout_delay)])
 
     cosim('/test', 'verilator')
-    sim(tmpdir)
+    sim()
 
 
 # @pytest.mark.parametrize('din_delay', [0, 1])
 # @pytest.mark.parametrize('dout_delay', [0, 1])
-# def test_cond_hourglass(tmpdir, din_delay, dout_delay):
+# def test_cond_hourglass(din_delay, dout_delay):
 #     @gear(hdl={'compile': True})
 #     async def test(din: Bool) -> Bool:
 #         async with din as d:
@@ -88,7 +88,7 @@ def test_cond_2state_symetric(tmpdir, din_delay, dout_delay):
 #              delays=[delay_rng(dout_delay, dout_delay)])
 
 #     cosim('/test', 'verilator')
-#     sim(tmpdir)
+#     sim()
 
 
 # from pygears import config
@@ -96,7 +96,7 @@ def test_cond_2state_symetric(tmpdir, din_delay, dout_delay):
 # test_cond_hourglass('/tools/home/tmp/test', 1, 1)
 
 
-def test_loop_state(tmpdir):
+def test_loop_state():
     @gear(hdl={'compile': True})
     async def test(din: Uint) -> b'din':
         i = Uint[3](0)
@@ -112,4 +112,4 @@ def test_loop_state(tmpdir):
              ref=[0, 1, 1, 2, 2, 3, 3, 4, 0, 1, 1, 2])
 
     cosim('/test', 'verilator')
-    sim(tmpdir)
+    sim()

@@ -30,7 +30,7 @@ def get_dut(dout_delay):
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
-def test_directed(tmpdir, sim_cls, din_delay, dout_delay):
+def test_directed(sim_cls, din_delay, dout_delay):
     dut = get_dut(dout_delay)
     directed(
         drv(t=T_DIN, seq=[list(range(9)), list(range(3))])
@@ -48,10 +48,10 @@ def test_directed(tmpdir, sim_cls, din_delay, dout_delay):
         ],
         delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(resdir=tmpdir)
+    sim()
 
 
-def test_random(tmpdir, sim_cls):
+def test_random(sim_cls):
     skip_ifndef('RANDOM_TEST')
 
     din_num = 3
@@ -68,10 +68,10 @@ def test_random(tmpdir, sim_cls):
 
     verif(*stim, f=qinterlace(sim_cls=sim_cls), ref=qinterlace(name='ref_model'))
 
-    sim(resdir=tmpdir)
+    sim()
 
 
-def test_socket_cosim_rand(tmpdir):
+def test_socket_cosim_rand():
     skip_ifndef('SIM_SOCKET_TEST', 'RANDOM_TEST')
 
     din_num = 3
@@ -89,7 +89,7 @@ def test_socket_cosim_rand(tmpdir):
         f=qinterlace(sim_cls=partial(SimSocket, run=True)),
         ref=qinterlace(name='ref_model'))
 
-    sim(resdir=tmpdir, extens=[partial(SVRandSocket, cons=cons)])
+    sim(extens=[partial(SVRandSocket, cons=cons)])
 
 
 @formal_check()

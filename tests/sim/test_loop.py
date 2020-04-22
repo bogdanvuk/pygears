@@ -47,7 +47,7 @@ def dualcycle_wrap_decouple_middle(din) -> b'din[0][0]':
         sim_cls=partial(SimVerilated, timeout=1))
 
 
-def multicycle_test_gen(tmpdir, func, latency):
+def multicycle_test_gen(func, latency):
     data_num = 10
 
     data = [((i, 1), 2) for i in range(data_num)]
@@ -57,21 +57,21 @@ def multicycle_test_gen(tmpdir, func, latency):
         f=func,
         ref=list(range(data_num)))
 
-    sim(resdir=tmpdir)
+    sim()
 
     assert registry('sim/timestep') == (data_num + latency - 1)
 
 
-def test_multicycle_thin(tmpdir):
+def test_multicycle_thin():
     # One additional cycle is needed for Verilator timeout set above
-    multicycle_test_gen(tmpdir, dualcycle_wrap_thin, latency=2)
+    multicycle_test_gen(dualcycle_wrap_thin, latency=2)
 
 
-def test_multicycle_comb_middle(tmpdir):
+def test_multicycle_comb_middle():
     # One additional cycle is needed for Verilator timeout set above
-    multicycle_test_gen(tmpdir, dualcycle_wrap_comb_middle, latency=2)
+    multicycle_test_gen(dualcycle_wrap_comb_middle, latency=2)
 
 
-def test_multicycle_decouple_middle(tmpdir):
+def test_multicycle_decouple_middle():
     # One additional cycle is needed for Verilator timeout set above
-    multicycle_test_gen(tmpdir, dualcycle_wrap_decouple_middle, latency=4)
+    multicycle_test_gen(dualcycle_wrap_decouple_middle, latency=4)

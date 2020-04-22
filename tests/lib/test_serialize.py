@@ -22,7 +22,7 @@ def get_dut(dout_delay):
     return serialize
 
 
-def test_directed(tmpdir, sim_cls):
+def test_directed(sim_cls):
     brick_size = 4
     seq_list = [1, 2, 3, 4]
 
@@ -31,22 +31,22 @@ def test_directed(tmpdir, sim_cls):
              f=serialize(sim_cls=sim_cls),
              ref=[(i, ) * brick_size for i in seq_list])
 
-    sim(tmpdir)
+    sim()
 
 
-def test_directed_active(tmpdir, sim_cls):
+def test_directed_active(sim_cls):
     no = 4
     directed(drv(t=TDin[Uint[8], no, 4],
                  seq=[((8, ) * no, 3), ((2, ) * no, 4), ((1, ) * no, 1)]),
              f=serialize(sim_cls=sim_cls),
              ref=[[8] * 3, [2] * 4, [1]])
 
-    sim(tmpdir)
+    sim()
 
 
 @pytest.mark.parametrize('din_delay', [0, 5])
 @pytest.mark.parametrize('dout_delay', [0, 5])
-def test_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
+def test_cosim(cosim_cls, din_delay, dout_delay):
     brick_size = 4
     seq_list = [1, 2, 3, 4]
 
@@ -58,12 +58,12 @@ def test_cosim(tmpdir, cosim_cls, din_delay, dout_delay):
           ref=serialize(name='ref_model'),
           delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(tmpdir)
+    sim()
 
 
 @pytest.mark.parametrize('din_delay', [0, 5])
 @pytest.mark.parametrize('dout_delay', [0, 5])
-def test_cosim_active(tmpdir, cosim_cls, din_delay, dout_delay):
+def test_cosim_active(cosim_cls, din_delay, dout_delay):
     no = 4
     dut = get_dut(dout_delay)
     verif(drv(t=TDin[Uint[8], no, 4],
@@ -73,7 +73,7 @@ def test_cosim_active(tmpdir, cosim_cls, din_delay, dout_delay):
           ref=serialize(name='ref_model'),
           delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(tmpdir)
+    sim()
 
 
 @formal_check()

@@ -28,7 +28,7 @@ from pygears.util.test_utils import formal_check, synth_check
 
 # @pytest.mark.parametrize('din_delay', [0, 5])
 # @pytest.mark.parametrize('dout_delay', [0, 5])
-# def test_2_inputs(tmpdir, sim_cls, din_delay, dout_delay):
+# def test_2_inputs(sim_cls, din_delay, dout_delay):
 #     t_din0 = Queue[Uint[8], 2]
 #     t_din1 = Queue[Int[8], 2]
 #     seq0 = [[list(range(8)), list(range(2))],
@@ -50,12 +50,12 @@ from pygears.util.test_utils import formal_check, synth_check
 #             delay_rng(dout_delay, dout_delay)
 #         ])
 
-#     sim(resdir=tmpdir)
+#     sim()
 
 
 # @pytest.mark.parametrize('din_delay', [0, 5])
 # @pytest.mark.parametrize('dout_delay', [0, 5])
-# def test_3_inputs(tmpdir, sim_cls, din_delay, dout_delay):
+# def test_3_inputs(sim_cls, din_delay, dout_delay):
 #     din_num = 3
 
 #     t_din = Queue[Uint[8]]
@@ -73,7 +73,7 @@ from pygears.util.test_utils import formal_check, synth_check
 #         ref=ref,
 #         delays=[delay_rng(dout_delay, dout_delay)] * din_num)
 
-#     sim(resdir=tmpdir)
+#     sim()
 
 
 # @formal_check(asserts={

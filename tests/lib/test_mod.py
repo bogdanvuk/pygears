@@ -7,14 +7,14 @@ from pygears.typing import Tuple, Uint
 from pygears.util.test_utils import formal_check, synth_check
 
 
-def test_unsigned_cosim(tmpdir, cosim_cls):
+def test_unsigned_cosim(cosim_cls):
     seq = [(0x6, 0x2), (0x5, 0x2), (0x4, 0x3)]
 
     verif(drv(t=Tuple[Uint[4], Uint[2]], seq=seq),
           f=mod(sim_cls=cosim_cls),
           ref=mod(name='ref_model'))
 
-    sim(resdir=tmpdir)
+    sim()
 
 
 @formal_check()

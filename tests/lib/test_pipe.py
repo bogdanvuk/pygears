@@ -9,19 +9,19 @@ from pygears.typing import Uint
 
 @pytest.mark.parametrize('din_delay', [0, 5])
 @pytest.mark.parametrize('dout_delay', [0, 5])
-def test_sim(tmpdir, din_delay, dout_delay):
+def test_sim(din_delay, dout_delay):
     seq = list(range(1, 10))
     directed(drv(t=Uint[16], seq=seq) | delay_rng(din_delay, din_delay),
              f=pipe(length=8),
              ref=seq,
              delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(resdir=tmpdir)
+    sim()
 
 
 @pytest.mark.parametrize('din_delay', [0, 3])
 @pytest.mark.parametrize('dout_delay', [0, 3])
-def test_cosim(tmpdir, din_delay, dout_delay):
+def test_cosim(din_delay, dout_delay):
     from pygears.sim.modules import SimVerilated
 
     seq = list(range(1, 10))
@@ -32,4 +32,4 @@ def test_cosim(tmpdir, din_delay, dout_delay):
           check_timing=True
           )
 
-    sim(resdir=tmpdir)
+    sim()

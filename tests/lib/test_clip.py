@@ -29,7 +29,7 @@ def get_dut(dout_delay):
 
 @pytest.mark.parametrize('din_delay', [0, 5])
 @pytest.mark.parametrize('dout_delay', [0, 5])
-def test_directed(tmpdir, sim_cls, din_delay, dout_delay):
+def test_directed(sim_cls, din_delay, dout_delay):
     seq = []
     tmp = []
     for i in range(9):
@@ -49,20 +49,20 @@ def test_directed(tmpdir, sim_cls, din_delay, dout_delay):
              list(range(3)), list(range(3, 5))],
         delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(resdir=tmpdir)
+    sim()
 
 
-def test_directed_two_inputs(tmpdir, cosim_cls):
+def test_directed_two_inputs(cosim_cls):
     verif(
         drv(t=T_DIN_SEP, seq=[list(range(9)), list(range(5))]),
         drv(t=T_CFG, seq=[2, 3]),
         f=clip(sim_cls=cosim_cls),
         ref=clip(name='ref_model'))
 
-    sim(resdir=tmpdir)
+    sim()
 
 
-def test_random(tmpdir, cosim_cls):
+def test_random(cosim_cls):
     skip_ifndef('RANDOM_TEST')
 
     cfg_seq = []
@@ -78,10 +78,10 @@ def test_random(tmpdir, cosim_cls):
         f=clip(sim_cls=cosim_cls),
         ref=clip(name='ref_model'))
 
-    sim(resdir=tmpdir)
+    sim()
 
 
-def test_random_constrained(tmpdir):
+def test_random_constrained():
     skip_ifndef('SIM_SOCKET_TEST', 'RANDOM_TEST')
 
     cnt = 5
@@ -96,10 +96,10 @@ def test_random_constrained(tmpdir):
     verif(*stim, f=clip, ref=clip(name='ref_model'))
 
     cosim('/clip', 'xsim', run=False)
-    sim(resdir=tmpdir)
+    sim()
 
     # cosim('/clip', 'xsim', run=True)
-    # sim(resdir=tmpdir, extens=[partial(SVRandSocket, cons=cons)])
+    # sim(resdir=extens=[partial(SVRandSocket, cons=cons)])
 
 
 @formal_check()

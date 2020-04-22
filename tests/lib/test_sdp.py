@@ -6,7 +6,7 @@ from pygears.lib.verif import drv
 from pygears.typing import Tuple, Uint
 
 
-def test_directed(tmpdir, sim_cls):
+def test_directed(sim_cls):
     wr_addr_data = [(i, i * 2) for i in range(4)]
     rd_addr = list(range(4))
     rd_data = [i * 2 for i in range(4)]
@@ -16,4 +16,4 @@ def test_directed(tmpdir, sim_cls):
              f=sdp(sim_cls=sim_cls, depth=4),
              ref=rd_data)
 
-    sim(resdir=tmpdir)
+    sim()

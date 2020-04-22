@@ -14,7 +14,7 @@ from pygears.lib.rng import qrange
 #             yield data, eot
 
 
-def test_while_loop_reg_infer(tmpdir):
+def test_while_loop_reg_infer():
     @gear(hdl={'compile': True})
     async def test() -> Uint[32]:
         cnt = Uint[10](0)
@@ -26,7 +26,7 @@ def test_while_loop_reg_infer(tmpdir):
     directed(f=test(), ref=list(range(10)) * 3)
     cosim('/test', 'verilator')
 
-    sim(tmpdir, timeout=30)
+    sim(timeout=30)
 
 
 

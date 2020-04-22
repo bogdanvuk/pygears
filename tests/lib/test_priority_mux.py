@@ -9,7 +9,7 @@ from pygears.typing import Int, Queue, Tuple, Uint
 from pygears.util.test_utils import formal_check
 
 
-def test_2_inputs(tmpdir, cosim_cls):
+def test_2_inputs(cosim_cls):
     din0_delay = (1, 1)
     din1_delay = (2, 2)
     dout_delay = (3, 3)
@@ -28,10 +28,10 @@ def test_2_inputs(tmpdir, cosim_cls):
           ref=priority_mux(name='ref_model'),
           delays=[delay_rng(*dout_delay)])
 
-    sim(resdir=tmpdir)
+    sim()
 
 
-def test_diff_types(tmpdir, sim_cls):
+def test_diff_types(sim_cls):
     din0_delay = (1, 1)
     din1_delay = (2, 2)
     din2_delay = (1, 1)
@@ -50,10 +50,10 @@ def test_diff_types(tmpdir, sim_cls):
              ref=[(0, 0), ((1, 2), 1), (1, 0), (0, 2), (2, 0), ((2, 1), 1), (3, 0),
                   (1, 2), (4, 0), ((3, 3), 1), (2, 2), ((4, 1), 1), ((3, 2), 1)])
 
-    sim(resdir=tmpdir)
+    sim()
 
 
-def test_queue(tmpdir, sim_cls):
+def test_queue(sim_cls):
     din0_delay = (1, 1)
     din1_delay = (2, 2)
     din2_delay = (1, 1)
@@ -73,7 +73,7 @@ def test_queue(tmpdir, sim_cls):
                   [(6, 1), (7, 1), (8, 1)], [(4, 0), (5, 0), (6, 0), (7, 0)],
                   [(0, 2), (1, 2)], [(9, 2), (10, 2)]])
 
-    sim(resdir=tmpdir)
+    sim()
 
 
 @formal_check(assumes=['s_eventually (din0_valid == 0)'])

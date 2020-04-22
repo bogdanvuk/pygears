@@ -6,7 +6,7 @@ from pygears.lib import directed
 from pygears.util.utils import qrange
 
 
-def test_simple(tmpdir, sim_cls):
+def test_simple(sim_cls):
     @gear(hdl={'compile': True})
     async def test() -> Uint[3]:
         for i in range(4):
@@ -14,10 +14,10 @@ def test_simple(tmpdir, sim_cls):
 
     directed(f=test(sim_cls=sim_cls), ref=list(range(4)) * 2)
 
-    sim(tmpdir, timeout=8)
+    sim(timeout=8)
 
 
-def test_simple_qrange(tmpdir, sim_cls):
+def test_simple_qrange(sim_cls):
     @gear(hdl={'compile': True})
     async def test() -> Queue[Uint[3]]:
         for i, last in qrange(4):
@@ -25,10 +25,10 @@ def test_simple_qrange(tmpdir, sim_cls):
 
     directed(f=test(sim_cls=sim_cls), ref=[list(range(4))] * 2)
 
-    sim(tmpdir, timeout=8)
+    sim(timeout=8)
 
 
-def test_unfold(tmpdir):
+def test_unfold():
     @gear(hdl={'compile': True})
     async def test() -> Array[Uint[3], 4]:
         data = Array[Uint[3], 4](None)
@@ -40,10 +40,10 @@ def test_unfold(tmpdir):
     directed(f=test(), ref=[(0, 1, 2, 3)] * 2)
 
     cosim('/test', 'verilator')
-    sim(tmpdir, timeout=2)
+    sim(timeout=2)
 
 
-def test_unfold_uint(tmpdir):
+def test_unfold_uint():
     @gear(hdl={'compile': True})
     async def test(din: Bool, *, w_dout) -> Uint['w_dout']:
         data = Array[Bool, w_dout](None)
@@ -56,10 +56,10 @@ def test_unfold_uint(tmpdir):
     directed(drv(t=Bool, seq=[0, 1]), f=test(w_dout=8), ref=[0x00, 0xff])
 
     cosim('/test', 'verilator')
-    sim(tmpdir, timeout=2)
+    sim(timeout=2)
 
 
-# def test_comprehension(tmpdir):
+# def test_comprehension():
 #     @gear(hdl={'compile': True})
 #     async def test() -> Array[Uint[3], 4]:
 #         yield Array[Uint[3], 4](i for i in range(4))
@@ -67,4 +67,4 @@ def test_unfold_uint(tmpdir):
 #     directed(f=test(), ref=[(0, 1, 2, 3)] * 2)
 
 #     cosim('/test', 'verilator')
-#     sim(tmpdir, timeout=2)
+#     sim(timeout=2)

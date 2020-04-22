@@ -48,7 +48,7 @@ def test_hier_level1():
 
     sim()
 
-def test_hier_level2(tmpdir):
+def test_hier_level2():
     config['gear/memoize'] = True
     @gear
     def test(a, b):
@@ -73,4 +73,4 @@ def test_hier_level2(tmpdir):
 
     cosim('/top', 'verilator')
 
-    sim(tmpdir)
+    sim()

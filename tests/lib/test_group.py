@@ -23,7 +23,7 @@ def get_dut(dout_delay):
 @pytest.mark.parametrize('din_delay', [0, 5])
 @pytest.mark.parametrize('dout_delay', [0, 5])
 @pytest.mark.parametrize('cfg_delay', [0, 5])
-def test_queue_directed(tmpdir, sim_cls, din_delay, dout_delay, cfg_delay):
+def test_queue_directed(sim_cls, din_delay, dout_delay, cfg_delay):
     t_din = Queue[Uint[16]]
     t_cfg = Uint[16]
 
@@ -44,13 +44,13 @@ def test_queue_directed(tmpdir, sim_cls, din_delay, dout_delay, cfg_delay):
                    list(range(3)),
                    list(range(8))]],
              delays=[delay_rng(dout_delay, dout_delay)])
-    sim(resdir=tmpdir)
+    sim()
 
 
 @pytest.mark.parametrize('din_delay', [0, 5])
 @pytest.mark.parametrize('dout_delay', [0, 5])
 @pytest.mark.parametrize('cfg_delay', [0, 5])
-def test_directed(tmpdir, sim_cls, din_delay, dout_delay, cfg_delay):
+def test_directed(sim_cls, din_delay, dout_delay, cfg_delay):
     t_din = Uint[16]
     t_cfg = Uint[8]
 
@@ -68,7 +68,7 @@ def test_directed(tmpdir, sim_cls, din_delay, dout_delay, cfg_delay):
                  list(range(10, 15))
              ],
              delays=[delay_rng(dout_delay, dout_delay)])
-    sim(resdir=tmpdir)
+    sim()
 
 
 @formal_check()

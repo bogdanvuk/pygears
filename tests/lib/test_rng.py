@@ -5,53 +5,53 @@ from pygears.sim import sim
 from pygears.typing import Int, Tuple, Uint
 
 
-def test_stop_unsigned(tmpdir, sim_cls):
+def test_stop_unsigned(sim_cls):
     directed(drv(t=Uint[4], seq=[4]),
              f=qrange(sim_cls=sim_cls),
              ref=[list(range(4))])
-    sim(resdir=tmpdir)
+    sim()
 
 
-def test_stop_signed(tmpdir, sim_cls):
+def test_stop_signed(sim_cls):
     directed(drv(t=Int[4], seq=[7]),
              f=qrange(sim_cls=sim_cls),
              ref=[list(range(7))])
-    sim(resdir=tmpdir)
+    sim()
 
 
-def test_stop_inclusive(tmpdir, sim_cls):
+def test_stop_inclusive(sim_cls):
     directed(drv(t=Uint[4], seq=[4]),
              f=qrange(inclusive=True, sim_cls=sim_cls),
              ref=[list(range(5))])
-    sim(resdir=tmpdir)
+    sim()
 
 
-def test_start_stop(tmpdir, sim_cls):
+def test_start_stop(sim_cls):
     directed(drv(t=Tuple[Uint[2], Uint[4]], seq=[(2, 10)]),
              f=qrange(sim_cls=sim_cls),
              ref=[list(range(2, 10))])
-    sim(resdir=tmpdir)
+    sim()
 
 
-def test_start_stop_inclusive(tmpdir, sim_cls):
+def test_start_stop_inclusive(sim_cls):
     directed(drv(t=Tuple[Uint[2], Uint[4]], seq=[(2, 10)]),
              f=qrange(inclusive=True, sim_cls=sim_cls),
              ref=[list(range(2, 11))])
-    sim(resdir=tmpdir)
+    sim()
 
 
-def test_start_stop_signed(tmpdir, sim_cls):
+def test_start_stop_signed(sim_cls):
     directed(drv(t=Tuple[Int[2], Int[4]], seq=[(-2, 7)]),
              f=qrange(sim_cls=sim_cls),
              ref=[list(range(-2, 7))])
-    sim(resdir=tmpdir)
+    sim()
 
 
-def test_start_stop_combined(tmpdir, sim_cls):
+def test_start_stop_combined(sim_cls):
     directed(drv(t=Tuple[Int[2], Uint[4]], seq=[(-2, 7)]),
              f=qrange(sim_cls=sim_cls),
              ref=[list(range(-2, 7))])
-    sim(resdir=tmpdir)
+    sim()
 
 # @formal_check()
 # def test_basic_formal():

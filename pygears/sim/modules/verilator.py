@@ -7,7 +7,7 @@ from pygears import Intf
 
 import jinja2
 
-from pygears import bind, registry, config
+from pygears import bind, registry, config, find
 from pygears.sim import sim_log
 from pygears.sim.c_drv import CInputDrv, COutputDrv
 from pygears.sim.modules.cosim_base import CosimBase
@@ -50,6 +50,120 @@ class VerilatorCompileError(Exception):
     pass
 
 
+# cosim('/top', 'verilator', build=True, rebuild=False)
+
+
+def get_file_struct(top, outdir):
+    name = top.name[1:].replace('/', '_')
+
+    if outdir is None:
+        outdir = os.path.join(registry('results-dir'), name)
+
+    outdir = os.path.abspath(outdir)
+    objdir = os.path.join(outdir, 'obj_dir')
+
+    dll_path = os.path.join(objdir, f'pygearslib')
+    if os.name == 'nt':
+        dll_path += '.exe'
+
+    return {'name': name, 'outdir': outdir, 'objdir': objdir, 'dll_path': dll_path}
+
+
+def make(objdir, top_name):
+    ret = os.system(f'cd {objdir}; make -j -f V{top_name}.mk > make.log 2>&1')
+    # TODO: Not much of a speedup f'cd {self.objdir}; make -j OPT_FAST="-Os -fno-stack-protector" -f V{self.top_name}.mk > make.log 2>&1')
+
+    if ret != 0:
+        raise VerilatorCompileError(
+            f'Verilator compile error: {ret}. '
+            f'Please inspect "{objdir}/make.log"')
+
+
+def verilate(outdir, lang, top_name, wrap_name, tracing_enabled):
+    include = ' '.join([f'-I{os.path.abspath(p)}' for p in config[f'{lang}gen/include']])
+
+    include += f' -I{outdir}'
+
+    files = f'{wrap_name}.{lang}'
+
+    verilate_cmd = [
+        f'cd {outdir};',
+        'verilator -cc -CFLAGS -fpic -LDFLAGS -shared --exe',
+        '-Wno-fatal',
+        # TODO: Not much of a speedup: '-O3 --x-assign fast --x-initial fast --noassert',
+        include,
+        '-clk clk',
+        f'--top-module {top_name}',
+        '--trace --no-trace-params --trace-structs' if tracing_enabled else '',
+        '-o pygearslib',
+        files,
+        'sim_main.cpp',
+    ]
+
+    with open(os.path.join(outdir, 'verilate.log'), 'w') as f:
+        f.write(" ".join(verilate_cmd))
+        f.write("\n")
+
+    ret = subprocess.call(f'{" ".join(verilate_cmd)} >> verilate.log 2>&1', shell=True)
+
+    if ret != 0:
+        raise VerilatorCompileError(
+            f'Verilator compile error: {ret}. '
+            f'Please inspect "{outdir}/verilate.log"')
+
+
+def build(top, outdir=None, post_synth=False, lang='sv', rebuild=True):
+    if isinstance(top, str):
+        top_name = top
+        top = find(top)
+
+        if top is None:
+            raise Exception(f'No gear found on path: "{top_name}"')
+
+    file_struct = get_file_struct(top, outdir)
+
+    outdir = file_struct['outdir']
+
+    if not rebuild and os.path.exists(file_struct['dll_path']):
+        return
+
+    bind(
+        'svgen/spy_connection_template', signal_spy_connect_hide_interm_t
+        if config['debug/hide_interm_vals'] else signal_spy_connect_t)
+
+    synth_src_dir = os.path.join(outdir, 'src')
+    hdlgen(
+        top,
+        outdir=synth_src_dir if post_synth else outdir,
+        wrapper=True,
+        generate=True,
+        language=lang)
+
+    hdlmod = registry(f'{lang}gen/map')[top]
+
+    wrap_name = f'wrap_{hdlmod.module_name}'
+    top_name = hdlmod.module_name if post_synth else wrap_name
+
+    tracing_enabled = bool(registry('debug/trace'))
+    context = {
+        'in_ports': top.in_ports,
+        'out_ports': top.out_ports,
+        'top_name': top_name,
+        'tracing': tracing_enabled,
+        'aux_clock': config['sim/aux_clock']
+    }
+
+    jenv = jinja2.Environment(trim_blocks=True, lstrip_blocks=True)
+    jenv.globals.update(int=int)
+    jenv.loader = jinja2.FileSystemLoader([os.path.dirname(__file__)])
+    c = jenv.get_template('sim_veriwrap.j2').render(context)
+    save_file('sim_main.cpp', outdir, c)
+
+    verilate(outdir, lang, top_name, wrap_name, tracing_enabled)
+
+    make(file_struct['objdir'], top_name)
+
+
 class SimVerilated(CosimBase):
     def __init__(
         self,
@@ -64,61 +178,10 @@ class SimVerilated(CosimBase):
 
         super().__init__(gear, timeout=timeout)
         self.name = gear.name[1:].replace('/', '_')
-
-        if outdir is None:
-            outdir = os.path.join(registry('results-dir'), self.name)
-
-        self.outdir = os.path.abspath(outdir)
-        self.objdir = os.path.join(self.outdir, 'obj_dir')
-        self.post_synth = post_synth
-
-        self.dll_path = os.path.join(self.objdir, f'pygearslib')
-        if os.name == 'nt':
-            self.dll_path += '.exe'
-
-        self.rebuild = rebuild or not os.path.exists(self.dll_path)
-
-        bind(
-            'svgen/spy_connection_template', signal_spy_connect_hide_interm_t
-            if config['debug/hide_interm_vals'] else signal_spy_connect_t)
-
+        self.outdir = outdir
+        self.rebuild = rebuild
+        self.top = gear
         self.language = language
-
-        if self.language == 'v':
-
-            synth_src_dir = os.path.join(self.outdir, 'src')
-            self.top = hdlgen(
-                gear,
-                outdir=synth_src_dir if post_synth else self.outdir,
-                wrapper=True,
-                generate=self.rebuild,
-                language='v')
-
-            self.svmod = registry('vgen/map')[self.top]
-            self.wrap_name = f'wrap_{self.svmod.module_name}'
-            self.top_name = self.svmod.module_name if self.post_synth else self.wrap_name
-
-            if post_synth:
-                from pygears.synth.yosys import synth
-                synth(
-                    rtl_node=self.top,
-                    synth_cmd='synth',
-                    outdir=self.outdir,
-                    generate=self.rebuild,
-                    srcdir=synth_src_dir,
-                    synth_out=os.path.join(
-                        self.outdir, f'wrap_{self.svmod.module_name}.v'))
-        else:
-            self.top = hdlgen(
-                gear,
-                outdir=self.outdir,
-                wrapper=True,
-                generate=self.rebuild,
-                language='sv')
-            self.svmod = registry('svgen/map')[self.top]
-            self.wrap_name = f'wrap_{self.svmod.module_name}'
-            self.top_name = self.wrap_name
-
         self.trace_fn = None
         self.vcd_fifo = vcd_fifo
         self.shmidcat = shmidcat
@@ -136,9 +199,13 @@ class SimVerilated(CosimBase):
         self.verilib.back()
 
     def setup(self):
+        file_struct = get_file_struct(self.top, self.outdir)
+
+        # TODO: When reusing existing verilated build, add test to check
+        # whether verilated module is the same as the current one (Maybe hash check?)
         if self.rebuild:
             sim_log().info(f'Verilating...')
-            self.build()
+            build(self.top, file_struct['outdir'], post_synth=False, lang=self.language)
             sim_log().info(f'Done')
 
         tracing_enabled = bool(registry('debug/trace'))
@@ -158,11 +225,11 @@ class SimVerilated(CosimBase):
             self.trace_fn = ''
 
         try:
-            self.verilib = ctypes.CDLL(self.dll_path)
+            self.verilib = ctypes.CDLL(file_struct['dll_path'])
         except OSError:
             raise VerilatorCompileError(
                 f'Verilator compiled library for the gear "{self.gear.name}"'
-                f' not found at: "{self.dll_path}"')
+                f' not found at: "{file_struct["dll_path"]}"')
 
         self.finished = False
         atexit.register(self._finish)
@@ -193,70 +260,6 @@ class SimVerilated(CosimBase):
             self.handlers[cp.name] = COutputDrv(self.verilib, cp.port, cp.name)
 
         super().setup()
-
-    def build(self):
-        tracing_enabled = bool(registry('debug/trace'))
-        context = {
-            'in_ports': self.top.in_ports,
-            'out_ports': self.top.out_ports,
-            'top_name': self.top_name,
-            'tracing': tracing_enabled,
-            'aux_clock': config['sim/aux_clock']
-        }
-
-        jenv = jinja2.Environment(trim_blocks=True, lstrip_blocks=True)
-        jenv.globals.update(int=int)
-        jenv.loader = jinja2.FileSystemLoader([os.path.dirname(__file__)])
-        c = jenv.get_template('sim_veriwrap.j2').render(context)
-        save_file('sim_main.cpp', self.outdir, c)
-        include = ' '.join(
-            [f'-I{os.path.abspath(p)}' for p in config[f'{self.language}gen/include']])
-
-        include += f' -I{self.outdir}'
-
-        files = f'{self.wrap_name}.{self.language}'
-
-        verilate_cmd = [
-            f'cd {self.outdir};',
-            'verilator -cc -CFLAGS -fpic -LDFLAGS -shared --exe', '-Wno-fatal',
-            # TODO: Not much of a speedup: '-O3 --x-assign fast --x-initial fast --noassert',
-            include,
-            '-clk clk',
-            f'--top-module {self.top_name}',
-            '--trace --no-trace-params --trace-structs' if tracing_enabled else '',
-            '-o pygearslib',
-            files,
-            'sim_main.cpp'
-        ]  # yapf: disable
-
-        with open(os.path.join(self.outdir, 'verilate.log'), 'w') as f:
-            f.write(" ".join(verilate_cmd))
-            f.write("\n")
-
-        ret = subprocess.call(f'{" ".join(verilate_cmd)} >> verilate.log 2>&1', shell=True)
-
-        if ret != 0:
-            raise VerilatorCompileError(
-                f'Verilator compile error: {ret}. '
-                f'Please inspect "{self.outdir}/verilate.log"')
-
-            # if not os.path.exists(self.objdir):
-            #     raise VerilatorCompileError(
-            #         f'Verilator compile error: {ret}. '
-            #         f'Please inspect "{self.outdir}/verilate.log"')
-            # else:
-            #     sim_log().warning(
-            #         f'Verilator compiled with warnings. '
-            #         f'Please inspect "{self.outdir}/verilate.log"')
-
-        ret = os.system(
-            f'cd {self.objdir}; make -j -f V{self.top_name}.mk > make.log 2>&1')
-            # TODO: Not much of a speedup f'cd {self.objdir}; make -j OPT_FAST="-Os -fno-stack-protector" -f V{self.top_name}.mk > make.log 2>&1')
-
-        if ret != 0:
-            raise VerilatorCompileError(
-                f'Verilator compile error: {ret}. '
-                f'Please inspect "{self.objdir}/make.log"')
 
     def _finish(self):
         if not self.finished:

@@ -8,7 +8,7 @@ from pygears.util.test_utils import synth_check
 from pygears import Intf
 
 
-def test_uint_directed(tmpdir, sim_cls):
+def test_uint_directed(sim_cls):
     init = [7, 45]
     seq = [list(range(0, 100, 10)), list(range(2))]
 
@@ -19,12 +19,12 @@ def test_uint_directed(tmpdir, sim_cls):
              drv(t=Uint[8], seq=init),
              f=reduce(f=add, sim_cls=sim_cls),
              ref=[freduce(add, s, i) for s, i in zip(seq, init)])
-    sim(resdir=tmpdir)
+    sim()
 
 
 @pytest.mark.parametrize('din_delay', [0, 1, 10])
 @pytest.mark.parametrize('dout_delay', [0, 1, 10])
-def test_delay(tmpdir, cosim_cls, din_delay, dout_delay):
+def test_delay(cosim_cls, din_delay, dout_delay):
     def bitfield(n):
         return [int(digit) for digit in bin(n)[2:]]
 
@@ -38,10 +38,10 @@ def test_delay(tmpdir, cosim_cls, din_delay, dout_delay):
           ref=reduce(name='ref_model', f=lambda x, y: x ^ y),
           delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(resdir=tmpdir)
+    sim()
 
 
-def accum_test(tmpdir, accum_gear, reduce_func):
+def accum_test(accum_gear, reduce_func):
     init = [7, 45]
     seq = [list(range(0, 100, 10)), list(range(2))]
 
@@ -50,25 +50,25 @@ def accum_test(tmpdir, accum_gear, reduce_func):
              f=accum_gear,
              ref=[freduce(reduce_func, s, i) for s, i in zip(seq, init)])
 
-    sim(resdir=tmpdir)
+    sim()
 
 
-def test_accum_dflt_directed(tmpdir, sim_cls):
+def test_accum_dflt_directed(sim_cls):
     def add(x, y):
         return saturate(x + y, Uint[8])
 
-    accum_test(tmpdir, accum(sim_cls=sim_cls), add)
+    accum_test(accum(sim_cls=sim_cls), add)
 
 
-def test_accum_trunc_directed(tmpdir, sim_cls):
+def test_accum_trunc_directed(sim_cls):
     def add(x, y):
         return trunc(x + y, Uint[8])
 
-    accum_test(tmpdir, accum(sim_cls=sim_cls, cast=trunc), add)
+    accum_test(accum(sim_cls=sim_cls, cast=trunc), add)
 
 
-def test_accum_saturate_gear_directed(tmpdir, sim_cls):
+def test_accum_saturate_gear_directed(sim_cls):
     def add(x, y):
         return saturate(x + y, Uint[8])
 
-    accum_test(tmpdir, accum(sim_cls=sim_cls, cast=saturate_gear), add)
+    accum_test(accum(sim_cls=sim_cls, cast=saturate_gear), add)
