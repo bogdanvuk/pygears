@@ -60,7 +60,6 @@ def get_port_intfs(node):
 
     return intfs
 
-
 class TemplateEnv:
     def __init__(self, basedir):
         self.basedir = basedir

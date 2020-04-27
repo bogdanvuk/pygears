@@ -13,8 +13,9 @@ AXI_MASTER = {
         Port('aclk', 'out', 0),
         Port('aresetn', 'out', 0),
     ],
-    'waddr': [
+    'awaddr': [
         Port('awaddr', 'out', -1),
+        Port('awid', 'out', 'C_AXI_ID_WIDTH-1'),
         Port('awprot', 'out', 3),
         Port('awvalid', 'out', 0),
         Port('awready', 'in', 0),
@@ -23,7 +24,7 @@ AXI_MASTER = {
         Port('awcache', 'out', 4),
         Port('awlen', 'out', 8),
     ],
-    'waddr_qos': [
+    'awaddr_qos': [
         Port('awlock', 'out', 1),
         Port('awqos', 'out', 4),
         Port('awregion', 'out', 4),
@@ -40,7 +41,7 @@ AXI_MASTER = {
         Port('bvalid', 'in', 0),
         Port('bready', 'out', 0),
     ],
-    'raddr': [
+    'araddr': [
         Port('araddr', 'out', -1),
         Port('arid', 'out', 'C_AXI_ID_WIDTH-1'),
         Port('arprot', 'out', 3),
@@ -51,13 +52,14 @@ AXI_MASTER = {
         Port('arcache', 'out', 4),
         Port('arlen', 'out', 8),
     ],
-    'raddr_qos': [
+    'araddr_qos': [
         Port('arlock', 'out', 1),
         Port('arqos', 'out', 4),
         Port('arregion', 'out', 4),
     ],
     'rdata': [
         Port('rdata', 'in', -1),
+        Port('rid', 'in', 'C_AXI_ID_WIDTH-1'),
         Port('rresp', 'in', 2),
         Port('rvalid', 'in', 0),
         Port('rready', 'out', 0),
@@ -71,8 +73,9 @@ AXI_SLAVE = {
         Port('aclk', 'in', 0),
         Port('aresetn', 'in', 0),
     ],
-    'waddr': [
+    'awaddr': [
         Port('awaddr', 'in', -1),
+        Port('awid', 'in', 'C_AXI_ID_WIDTH-1'),
         Port('awprot', 'in', 3),
         Port('awvalid', 'in', 0),
         Port('awready', 'out', 0),
@@ -81,7 +84,7 @@ AXI_SLAVE = {
         Port('awcache', 'in', 4),
         Port('awlen', 'in', 8),
     ],
-    'waddr_qos': [
+    'awaddr_qos': [
         Port('awlock', 'in', 1),
         Port('awqos', 'in', 4),
         Port('awregion', 'in', 4),
@@ -97,8 +100,9 @@ AXI_SLAVE = {
         Port('bresp', 'out', 2),
         Port('bvalid', 'out', 0),
         Port('bready', 'in', 0),
+        Port('bid', 'out', 'C_AXI_ID_WIDTH-1'),
     ],
-    'raddr': [
+    'araddr': [
         Port('araddr', 'in', -1),
         Port('arid', 'in', 'C_AXI_ID_WIDTH-1'),
         Port('arprot', 'in', 3),
@@ -109,13 +113,14 @@ AXI_SLAVE = {
         Port('arcache', 'in', 4),
         Port('arlen', 'in', 8),
     ],
-    'raddr_qos': [
+    'araddr_qos': [
         Port('arlock', 'in', 1),
         Port('arqos', 'in', 4),
         Port('arregion', 'in', 4),
     ],
     'rdata': [
         Port('rdata', 'out', -1),
+        Port('rid', 'out', 'C_AXI_ID_WIDTH-1'),
         Port('rresp', 'out', 2),
         Port('rvalid', 'out', 0),
         Port('rready', 'in', 0),
@@ -128,7 +133,7 @@ AXIL_SLAVE = {
         Port('aclk', 'in', 0),
         Port('aresetn', 'in', 0),
     ],
-    'waddr': [
+    'awaddr': [
         Port('awaddr', 'in', -1),
         Port('awprot', 'in', 3),
         Port('awvalid', 'in', 0),
@@ -145,7 +150,7 @@ AXIL_SLAVE = {
         Port('bvalid', 'out', 0),
         Port('bready', 'in', 0),
     ],
-    'raddr': [
+    'araddr': [
         Port('araddr', 'in', -1),
         Port('arprot', 'in', 3),
         Port('arvalid', 'in', 0),

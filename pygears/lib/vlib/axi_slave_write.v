@@ -35,6 +35,7 @@
 //
 `default_nettype	none
 //
+(* dont_touch = "yes" *)
 module axi_slave_write #(
 	parameter integer C_AXI_ID_WIDTH	= 2,
 	parameter integer C_AXI_DATA_WIDTH	= 32,

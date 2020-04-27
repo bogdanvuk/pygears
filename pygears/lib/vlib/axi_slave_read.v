@@ -35,6 +35,7 @@
 //
 `default_nettype	none
 //
+(* dont_touch = "yes", mark_debug = "yes" *)
 module axi_slave_read #(
 	parameter integer C_AXI_ID_WIDTH	= 2,
 	parameter integer C_AXI_DATA_WIDTH	= 32,
@@ -92,42 +93,46 @@ module axi_slave_read #(
 
 
 	// Read register
-	reg				m_axi_arvalid;
-	wire	[4:0]			rfifo_count;
-	wire				rfifo_full;
-	wire				rfifo_empty;
-	wire	[7:0]			rfifo_rcount;
-	reg				s_axi_rvalid;
-	reg	[1:0]			s_axi_rresp;
-	reg	[8:0]			rcounts;
-	reg	[C_AXI_ADDR_WIDTH-1:0]	axi_araddr;
-	reg	[7:0]			axi_arlen, axi_rlen;
-	reg	[1:0]			axi_arburst;
-	reg	[2:0]			axi_arsize;
-	wire	[C_AXI_ADDR_WIDTH-1:0]	next_read_addr;
-	reg	[C_AXI_ID_WIDTH-1:0]	s_axi_rid;
-	wire	[C_AXI_ID_WIDTH-1:0]	rfifo_rid;
-	reg	[C_AXI_DATA_WIDTH-1:0]	s_axi_rdata;
-	reg				s_axi_rlast;
-	reg	[IW-1:0]		rid;
-	wire				read_from_rdfifo;
+	(* dont_touch = "yes", mark_debug = "yes" *) reg				m_axi_arvalid;
+	(* dont_touch = "yes", mark_debug = "yes" *) wire	[4:0]			rfifo_count;
+	(* dont_touch = "yes", mark_debug = "yes" *) wire				rfifo_full;
+	 (* dont_touch = "yes", mark_debug = "yes" *) wire				rfifo_empty;
+	 (* dont_touch = "yes", mark_debug = "yes" *) wire	[7:0]			rfifo_rcount;
+	 (* dont_touch = "yes", mark_debug = "yes" *) reg				s_axi_rvalid;
+	 (* dont_touch = "yes", mark_debug = "yes" *) reg	[1:0]			s_axi_rresp;
+	 (* dont_touch = "yes", mark_debug = "yes" *) reg	[8:0]			rcounts;
+	 (* dont_touch = "yes", mark_debug = "yes" *) reg	[C_AXI_ADDR_WIDTH-1:0]	axi_araddr;
+	 (* dont_touch = "yes", mark_debug = "yes" *)reg	[7:0]			axi_arlen, axi_rlen;
+	 (* dont_touch = "yes", mark_debug = "yes" *)reg	[1:0]			axi_arburst;
+	 (* dont_touch = "yes", mark_debug = "yes" *)reg	[2:0]			axi_arsize;
+	 (* dont_touch = "yes", mark_debug = "yes" *)wire	[C_AXI_ADDR_WIDTH-1:0]	next_read_addr;
+	 (* dont_touch = "yes", mark_debug = "yes" *)reg	[C_AXI_ID_WIDTH-1:0]	s_axi_rid;
+	 (* dont_touch = "yes", mark_debug = "yes" *)wire	[C_AXI_ID_WIDTH-1:0]	rfifo_rid;
+	 (* dont_touch = "yes", mark_debug = "yes" *)reg	[C_AXI_DATA_WIDTH-1:0]	s_axi_rdata;
+	 (* dont_touch = "yes", mark_debug = "yes" *)reg				s_axi_rlast;
+	 (* dont_touch = "yes", mark_debug = "yes" *)reg	[IW-1:0]		rid;
+	 (* dont_touch = "yes", mark_debug = "yes" *)wire				read_from_rdfifo;
 
 	//
 	// S_AXI_AR* skid buffer
-	wire			skids_arvalid, skids_arready;
-	wire	[IW-1:0]	skids_arid;
-	wire	[AW-1:0]	skids_araddr;
-	wire	[7:0]		skids_arlen;
-	wire	[2:0]		skids_arsize;
-	wire	[1:0]		skids_arburst;
+   (* dont_touch = "yes", mark_debug = "yes" *)	wire			skids_arvalid, skids_arready;
+	 (* dont_touch = "yes", mark_debug = "yes" *)wire	[IW-1:0]	skids_arid;
+	 (* dont_touch = "yes", mark_debug = "yes" *)wire	[AW-1:0]	skids_araddr;
+	 (* dont_touch = "yes", mark_debug = "yes" *)wire	[7:0]		skids_arlen;
+	 (* dont_touch = "yes", mark_debug = "yes" *)wire	[2:0]		skids_arsize;
+	 (* dont_touch = "yes", mark_debug = "yes" *)wire	[1:0]		skids_arburst;
 	//
 	// S_AXI_R* skid buffer isn't needed
 	//
 	// M_AXI_AR* skid buffer isn't needed
 	// M_AXI_R* skid buffer
-	wire			skidm_rvalid, skidm_rready;
-	wire	[DW-1:0]	skidm_rdata;
-	wire	[1:0]		skidm_rresp;
+	 (* dont_touch = "yes", mark_debug = "yes" *)wire			skidm_rvalid, skidm_rready;
+	 (* dont_touch = "yes", mark_debug = "yes" *)wire	[DW-1:0]	skidm_rdata;
+	 (* dont_touch = "yes", mark_debug = "yes" *)wire	[1:0]		skidm_rresp;
+
+   (* dont_touch = "yes", mark_debug = "yes" *) wire addr_req;
+   (* dont_touch = "yes", mark_debug = "yes" *) wire rdata_handshake;
+   (* dont_touch = "yes", mark_debug = "yes" *) wire araddr_handshake;
 
 	////////////////////////////////////////////////////////////////////////
 	//
@@ -149,20 +154,20 @@ module axi_slave_read #(
 		// M_AXI_R* skid buffer
 		skidbuffer #(.DW(DW+2), .OPT_LOWPOWER(0), .OPT_OUTREG(0))
 		rskid(S_AXI_ACLK, !S_AXI_ARESETN,
-			M_AXI_RVALID, M_AXI_RREADY, { M_AXI_RDATA, M_AXI_RRESP },
+			    M_AXI_RVALID, M_AXI_RREADY, { M_AXI_RDATA, M_AXI_RRESP },
 			skidm_rvalid, skidm_rready, { skidm_rdata, skidm_rresp });
 
 		initial	m_axi_arvalid = 0;
 		always @(posedge S_AXI_ACLK)
 		if (!S_AXI_ARESETN)
 			m_axi_arvalid <= 0;
-		else if (skids_arvalid && skids_arready)
+		else if (araddr_handshake)
 			m_axi_arvalid <= 1;
 		else if (M_AXI_ARREADY && axi_arlen == 0)
 			m_axi_arvalid <= 0;
 
 		always @(posedge S_AXI_ACLK)
-		if (skids_arvalid && skids_arready)
+		if (araddr_handshake)
 		begin
 			axi_araddr  <= skids_araddr;
 			axi_arburst <= skids_arburst;
@@ -180,7 +185,7 @@ module axi_slave_read #(
 		always @(posedge S_AXI_ACLK)
 		if (!S_AXI_ARESETN)
 			axi_arlen <= 0;
-		else if (skids_arvalid && skids_arready)
+		else if (araddr_handshake)
 			axi_arlen <= skids_arlen;
 		else if (M_AXI_ARVALID && M_AXI_ARREADY && axi_arlen > 0)
 			axi_arlen <= axi_arlen - 1;
@@ -189,31 +194,34 @@ module axi_slave_read #(
 				((axi_arlen == 0) && M_AXI_ARREADY))
 				&& !rfifo_full;
 
-		assign	read_from_rdfifo = skidm_rvalid && skidm_rready
-					&& (rcounts <= 1) && !rfifo_empty;
+    assign rdata_handshake = skidm_rvalid && skidm_rready;
+    assign araddr_handshake = skids_arvalid && skids_arready;
+		assign read_from_rdfifo = rdata_handshake && (rcounts <= 1) && !rfifo_empty;
 
 		sfifo	#(.BW(C_AXI_ID_WIDTH+8), .LGFLEN(LGFIFO))
 		ridlnfifo(S_AXI_ACLK, !S_AXI_ARESETN,
-			skids_arvalid && skids_arready,
+			araddr_handshake,
 			{ skids_arid, skids_arlen },
 			rfifo_full, rfifo_count,
 			read_from_rdfifo,
 			{ rfifo_rid, rfifo_rcount }, rfifo_empty);
 
 
-		assign	skidm_rready = (!S_AXI_RVALID || S_AXI_RREADY);
+     assign addr_req = m_axi_arvalid || (araddr_handshake);
+		 // assign	skidm_rready = (!S_AXI_RVALID || S_AXI_RREADY) && addr_req;
+		 assign	skidm_rready = (!S_AXI_RVALID || S_AXI_RREADY) && !rfifo_empty;
 
 		initial	s_axi_rvalid = 0;
 		always @(posedge S_AXI_ACLK)
 		if (!S_AXI_ARESETN)
 			s_axi_rvalid <= 0;
-		else if (skidm_rvalid && skidm_rready)
+		else if (rdata_handshake)
 			s_axi_rvalid <= 1;
 		else if (S_AXI_RREADY)
 			s_axi_rvalid <= 0;
 
 		always @(posedge S_AXI_ACLK)
-		if (skidm_rvalid && skidm_rready)
+		if (rdata_handshake)
 		begin
 			s_axi_rresp <= skidm_rresp;
 			s_axi_rdata <= skidm_rdata;
@@ -229,8 +237,8 @@ module axi_slave_read #(
 		if (!S_AXI_ARESETN)
 			rcounts <= 0;
 		else if (read_from_rdfifo)
-			rcounts <= rfifo_rcount + rcounts;
-		else if (skidm_rvalid && skidm_rready)
+			rcounts <= rcounts + rfifo_rcount;
+		else if (rdata_handshake)
 			rcounts <= rcounts - 1;
 
 		initial	rid = 0;
