@@ -14,7 +14,7 @@ def test_simple(sim_cls):
 
     directed(f=test(sim_cls=sim_cls), ref=list(range(4)) * 2)
 
-    sim(timeout=8)
+    sim('/tools/home/tmp/vsimple', timeout=8)
 
 
 def test_simple_qrange(sim_cls):
@@ -28,7 +28,7 @@ def test_simple_qrange(sim_cls):
     sim(timeout=8)
 
 
-def test_unfold():
+def test_unfold(lang):
     @gear(hdl={'compile': True})
     async def test() -> Array[Uint[3], 4]:
         data = Array[Uint[3], 4](None)
@@ -39,11 +39,11 @@ def test_unfold():
 
     directed(f=test(), ref=[(0, 1, 2, 3)] * 2)
 
-    cosim('/test', 'verilator')
+    cosim('/test', 'verilator', lang=lang)
     sim(timeout=2)
 
 
-def test_unfold_uint():
+def test_unfold_uint(lang):
     @gear(hdl={'compile': True})
     async def test(din: Bool, *, w_dout) -> Uint['w_dout']:
         data = Array[Bool, w_dout](None)
@@ -55,7 +55,7 @@ def test_unfold_uint():
 
     directed(drv(t=Bool, seq=[0, 1]), f=test(w_dout=8), ref=[0x00, 0xff])
 
-    cosim('/test', 'verilator')
+    cosim('/test', 'verilator', lang=lang)
     sim(timeout=2)
 
 
@@ -66,5 +66,5 @@ def test_unfold_uint():
 
 #     directed(f=test(), ref=[(0, 1, 2, 3)] * 2)
 
-#     cosim('/test', 'verilator')
+#     cosim('/test', 'verilator', lang=lang)
 #     sim(timeout=2)

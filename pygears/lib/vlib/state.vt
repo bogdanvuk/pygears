@@ -1,0 +1,51 @@
+{% from 'snippet.j2' import module with context %}
+
+{% call module() %}
+   {%- set rd_intf_names = intfs[1:]|isinput|keymap("name") %}
+   {%- set dout_intf_names = intfs|isoutput|keymap("name") %}
+
+   logic [$size(din_data)-1 : 0] din_reg = {{code(_din_t(params['init']), int)}};
+
+   always_ff @(posedge clk) begin
+      if (rst) begin
+         din_reg <= {{code(_din_t(params['init']), int)}};
+      end else if (din_valid && din_ready) begin
+         din_reg <= din_data;
+      end
+   end
+
+
+  {% for rd, dout in zip(rd_intf_names, dout_intf_names) %}
+   {% if params['hold'] %}
+   logic                         {{rd}}_consuming;
+   logic                         {{rd}}_handshake;
+   logic [$size(din_data)-1 : 0] rd_reg;
+
+   always @(posedge clk) begin
+      if (!{{rd}}_consuming) begin
+         {{rd}}_reg <= din_reg;
+      end
+   end
+
+   always @(posedge clk) begin
+      if (rst || {{rd}}_handshake) begin
+         {{rd}}_consuming <= 0;
+      end else if ({{rd}}_valid) begin
+         {{rd}}_consuming <= 1;
+      end
+   end
+
+   assign {{rd}}_handshake = {{dout}}_valid && {{dout}}_ready;
+   assign {{dout}}_data = (!{{rd}}_consuming) ? din_reg : {{rd}}_reg;
+   {% else %}
+   assign {{dout}}_data = din_reg;
+   {% endif %}
+
+   assign {{dout}}_valid = {{rd}}_valid;
+   assign {{rd}}_ready = {{dout}}_ready;
+
+  {% endfor %}
+
+   assign din_ready = 1'b1;
+
+{% endcall %}

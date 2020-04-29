@@ -2,12 +2,14 @@ from pygears import registry
 from pygears.hdl.modinst import HDLModuleInst
 from .sv_keywords import sv_keywords
 from collections import OrderedDict
+from pygears.conf import inject, Inject
 
 
 class SVModuleInst(HDLModuleInst):
-    def __init__(self, node):
-        super().__init__(node, 'sv')
-        self.svgen_map = registry("svgen/map")
+    @inject
+    def __init__(self, node, ext=Inject('hdl/lang')):
+        super().__init__(node, ext)
+        self.hdlgen_map = registry(f"{ext}gen/map")
 
     @property
     def inst_name(self):
@@ -49,21 +51,31 @@ class SVModuleInst(HDLModuleInst):
             'sigs': self.node.params['signals'],
             'param_map': self.resolver.params
         }
-        return template_env.render_local(__file__, "module_synth_wrap.j2",
-                                         context)
+
+        return template_env.render('.', "module_synth_wrap.j2", context)
 
     def get_out_port_map_intf_name(self, port):
-        return self.svgen_map[port.consumer].basename
+        basename = self.hdlgen_map[port.consumer].basename
+        if self.ext == 'sv':
+            return basename
+        else:
+            return basename, None, None
 
     def get_in_port_map_intf_name(self, port):
         intf = port.producer
-        svgen_intf = self.svgen_map[intf]
+        hdlgen_intf = self.hdlgen_map[intf]
 
         if len(intf.consumers) == 1:
-            return svgen_intf.outname
+            if self.ext == 'sv':
+                return hdlgen_intf.outname
+            else:
+                return hdlgen_intf.outname, None, None
         else:
             i = intf.consumers.index(port)
-            return f'{svgen_intf.outname}[{i}]'
+            if self.ext == 'sv':
+                return f'{hdlgen_intf.outname}[{i}]'
+            else:
+                return (hdlgen_intf.outname, i, int(intf.dtype))
 
     def get_inst(self, template_env, port_map=None):
         if not port_map:

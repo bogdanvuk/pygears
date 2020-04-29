@@ -2,7 +2,7 @@ import ast
 import types
 import inspect
 from functools import partial
-from . import Context, SyntaxError, node_visitor, ir, visit_ast, visit_block
+from . import Context, HLSSyntaxError, node_visitor, ir, visit_ast, visit_block
 from .arith import resolve_arith_func
 from .call import resolve_func
 from pygears.typing import cast, Integer
@@ -37,7 +37,7 @@ def _(node: ast.Name, ctx: Context):
             if node.id in builtins:
                 return ir.ResExpr(builtins[node.id])
 
-            raise SyntaxError(f"Name '{node.id}' not found", node.lineno)
+            raise SyntaxError(f"Name '{node.id}' not found")
 
         if isinstance(ctx.scope[node.id], ir.ResExpr):
             return ctx.scope[node.id]

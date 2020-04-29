@@ -111,7 +111,7 @@ class SVServerModule:
         self.svmod = registry('svgen/map')[self.module]
 
     def files(self):
-        return list_hdl_files(self.module, self.srcdir, language='sv', wrapper=False)
+        return list_hdl_files(self.module, self.srcdir, lang='sv', wrapper=False)
 
     def includes(self):
         return config[f'svgen/include'] + [self.srcdir]
@@ -196,7 +196,7 @@ class SimSocket(CosimBase):
         bind('sim/config/socket', self)
 
         self.srcdir = os.path.join(self.outdir, 'src_gen')
-        self.rtl_node = hdlgen(gear, outdir=self.srcdir, language='sv')
+        self.rtl_node = hdlgen(gear, outdir=self.srcdir, lang='sv')
         self.svmod = registry('svgen/map')[self.rtl_node]
 
     def cycle(self):

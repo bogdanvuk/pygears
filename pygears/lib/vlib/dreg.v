@@ -25,7 +25,7 @@ module dreg #(
    assign reg_empty = !din_reg_valid;
 
    initial begin
-      din_reg_valid = 0;
+      din_reg_valid = INIT;
    end
 
    always @(posedge clk)
@@ -34,7 +34,7 @@ module dreg #(
            din_reg_valid <= INIT_VALID;
            if (INIT_VALID)
              din_reg_data <= INIT;
-        end else if (reg_ready)begin
+        end else if (reg_ready) begin
            din_reg_valid <= din_valid;
            din_reg_data <= din_data;
         end

@@ -25,9 +25,11 @@
     reg  handshake_reg;
     reg  valid_reg;
     wire  subelem_done;
-    reg [{{params['lvl']-1}}:0] eots_reg;
 
+    {% if params['lvl'] > 0 %}
+    reg [{{params['lvl']-1}}:0] eots_reg;
     assign dout_s_eot = valid_reg ? eots_reg : din_s_out_eot;
+    {% endif %}
 
     assign subelem_done = {{'&din_s_subenvelope' if _din_t.lvl > params['lvl'] else 1}} && din_valid;
     assign din_ready = (dout_ready || handshake_reg || (!subelem_done));
@@ -39,18 +41,24 @@
        if (rst) begin
          handshake_reg <= 1'b0;
          valid_reg <= 1'b0;
+    {% if params['lvl'] > 0 %}
          eots_reg <= 0;
+    {% endif %}
        end
        else begin
          if (subelem_done && (handshake || handshake_reg)) begin
              handshake_reg <= 1'b0;
              valid_reg <= 1'b0;
+    {% if params['lvl'] > 0 %}
              eots_reg <= 0;
+    {% endif %}
          end
          else begin
              handshake_reg <= handshake_reg || handshake;
              if (!valid_reg && din_valid) begin
+    {% if params['lvl'] > 0 %}
                   eots_reg <= din_s_out_eot;
+    {% endif %}
                   valid_reg <= 1;
              end
           end

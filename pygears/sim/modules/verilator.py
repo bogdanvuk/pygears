@@ -112,13 +112,16 @@ def verilate(outdir, lang, top_name, wrap_name, tracing_enabled):
             f'Please inspect "{outdir}/verilate.log"')
 
 
-def build(top, outdir=None, post_synth=False, lang='sv', rebuild=True):
+def build(top, outdir=None, post_synth=False, lang=None, rebuild=True):
     if isinstance(top, str):
         top_name = top
         top = find(top)
 
         if top is None:
             raise Exception(f'No gear found on path: "{top_name}"')
+
+    if lang is None:
+        lang = config['hdl/lang']
 
     file_struct = get_file_struct(top, outdir)
 
@@ -137,7 +140,7 @@ def build(top, outdir=None, post_synth=False, lang='sv', rebuild=True):
         outdir=synth_src_dir if post_synth else outdir,
         wrapper=True,
         generate=True,
-        language=lang)
+        lang=lang)
 
     hdlmod = registry(f'{lang}gen/map')[top]
 
@@ -166,22 +169,22 @@ def build(top, outdir=None, post_synth=False, lang='sv', rebuild=True):
 
 class SimVerilated(CosimBase):
     def __init__(
-        self,
-        gear,
-        timeout=100,
-        rebuild=True,
-        vcd_fifo=False,
-        shmidcat=False,
-        post_synth=False,
-        outdir=None,
-        language='sv'):
+            self,
+            gear,
+            timeout=100,
+            rebuild=True,
+            vcd_fifo=False,
+            shmidcat=False,
+            post_synth=False,
+            outdir=None,
+            lang=None):
 
         super().__init__(gear, timeout=timeout)
         self.name = gear.name[1:].replace('/', '_')
         self.outdir = outdir
         self.rebuild = rebuild
         self.top = gear
-        self.language = language
+        self.lang = lang
         self.trace_fn = None
         self.vcd_fifo = vcd_fifo
         self.shmidcat = shmidcat
@@ -205,7 +208,7 @@ class SimVerilated(CosimBase):
         # whether verilated module is the same as the current one (Maybe hash check?)
         if self.rebuild:
             sim_log().info(f'Verilating...')
-            build(self.top, file_struct['outdir'], post_synth=False, lang=self.language)
+            build(self.top, file_struct['outdir'], post_synth=False, lang=self.lang)
             sim_log().info(f'Done')
 
         tracing_enabled = bool(registry('debug/trace'))

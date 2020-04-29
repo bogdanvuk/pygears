@@ -8,7 +8,7 @@ from pygears.lib import directed, drv
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
-def test_bare(din_delay, dout_delay):
+def test_bare(lang, din_delay, dout_delay):
     @gear(hdl={'compile': True})
     async def test(din: Uint) -> b'din':
         async with din as d:
@@ -19,13 +19,13 @@ def test_bare(din_delay, dout_delay):
              f=test,
              ref=list(range(4)))
 
-    cosim('/test', 'verilator')
+    cosim('/test', 'verilator', lang=lang)
     sim(check_activity=False)
 
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
-def test_cond_out(din_delay, dout_delay):
+def test_cond_out(lang, din_delay, dout_delay):
     @gear(hdl={'compile': True})
     async def test(din: Uint) -> Uint['din.width+2']:
         async with din as d:
@@ -39,13 +39,13 @@ def test_cond_out(din_delay, dout_delay):
              f=test,
              ref=[0, 1, 2, 3, 14])
 
-    cosim('/test', 'verilator')
+    cosim('/test', 'verilator', lang=lang)
     sim(check_activity=False)
 
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
-def test_bare_two_inputs(din_delay, dout_delay):
+def test_bare_two_inputs(lang, din_delay, dout_delay):
     @gear(hdl={'compile': True})
     async def test(din0: Uint, din1: Uint) -> Uint['din0.width+1']:
         async with din0 as d0:
@@ -59,13 +59,13 @@ def test_bare_two_inputs(din_delay, dout_delay):
              f=test,
              ref=[2 * x for x in range(8)])
 
-    cosim('/test', 'verilator')
+    cosim('/test', 'verilator', lang=lang)
     sim(check_activity=False)
 
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
-def test_async_over_if_over_async(din_delay, dout_delay):
+def test_async_over_if_over_async(lang, din_delay, dout_delay):
     @gear(hdl={'compile': True})
     async def test(sel: Bool, din0: Uint, din1: Uint) -> b'max(din0, din1)':
         async with sel as s:
@@ -84,13 +84,13 @@ def test_async_over_if_over_async(din_delay, dout_delay):
              f=test,
              ref=[0, 4, 1, 5, 2, 6, 3, 7])
 
-    cosim('/test', 'verilator')
+    cosim('/test', 'verilator', lang=lang)
     sim(check_activity=False)
 
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
-def test_async_over_if_over_async_over_if(din_delay, dout_delay):
+def test_async_over_if_over_async_over_if(lang, din_delay, dout_delay):
     @gear(hdl={'compile': True})
     async def test(sel: Bool, din0: Uint,
                    din1: Uint) -> b'max(din0, din1) * Uint[2]':
@@ -114,5 +114,5 @@ def test_async_over_if_over_async_over_if(din_delay, dout_delay):
              f=test,
              ref=[0, 1, 5, 4, 6, 6, 7])
 
-    cosim('/test', 'verilator')
+    cosim('/test', 'verilator', lang=lang)
     sim(check_activity=False)

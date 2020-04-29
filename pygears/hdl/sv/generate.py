@@ -7,6 +7,8 @@ from .util import svgen_typedef
 
 
 class SVTemplateEnv(TemplateEnv):
+    lang = 'sv'
+
     def __init__(self):
         super().__init__(basedir=os.path.dirname(__file__))
 

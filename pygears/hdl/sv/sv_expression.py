@@ -295,15 +295,17 @@ class SVExpressionVisitor:
 
                 if isinstance(node.val, (ir.Name, ir.AttrExpr, ir.Component)):
                     if typeof(node.val.dtype, (Tuple, Union, Queue)):
-                        return f'{val}.{node.val.dtype.fields[index]}'
+                        return f'{val}{self.separator}{node.val.dtype.fields[index]}'
                     else:
                         return f'{val}[{index}]'
 
             if isinstance(node.val, ir.ResExpr):
-                if typeof(node.val.dtype, (Array, Integral)):
+                if typeof(node.val.dtype, Array):
+                    return f'{val}[{index}]'
+                elif typeof(node.val.dtype, Integral):
                     return f'{val}[{index}]'
                 elif typeof(node.val.dtype, (Tuple, Union, Queue)):
-                    return f'{val}.{node.val.dtype.fields[index]}'
+                    return f'{val}{self.separator}{node.val.dtype.fields[index]}'
             else:
                 fname = get_slice_func(self.aux_funcs, start, stop,
                                        node.val.dtype.width)

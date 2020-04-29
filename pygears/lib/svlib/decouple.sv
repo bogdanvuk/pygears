@@ -93,4 +93,4 @@ module decouple
       assign dout.valid = din_reg_valid;
    end
 
-endmodule : decouple
+endmodule

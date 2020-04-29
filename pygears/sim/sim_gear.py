@@ -1,8 +1,7 @@
 import sys
 import inspect
-from jinja2.debug import TemplateSyntaxError, make_traceback, reraise
 import atexit
-from pygears.conf.trace import register_exit_hook
+from pygears.conf.trace import register_exit_hook, TraceException, make_traceback
 from pygears import registry, GearDone
 from pygears.core.channel import report_out_dangling
 from pygears.sim import clk, timestep
@@ -20,7 +19,7 @@ def is_simgear_func(func):
         or is_async_gen(func))
 
 
-class SimulationError(TemplateSyntaxError):
+class SimulationError(TraceException):
     pass
 
 
@@ -81,13 +80,12 @@ class SimGear:
                                         f"inside '{self.gear.name}': {repr(e)}",
                                         async_gen.ag_frame.f_lineno,
                                         filename=fn)
-                                    traceback = make_traceback(
-                                        (type(err), err, sys.exc_info()[2]))
 
+                                    traceback = make_traceback((SimulationError, err, sys.exc_info()[2]))
                                     exc_type, exc_value, tb = traceback.standard_exc_info
 
                                 if tb is not None:
-                                    reraise(exc_type, exc_value, tb)
+                                    raise exc_value.with_traceback(tb)
 
                                 await out_prods.ready()
                             else:

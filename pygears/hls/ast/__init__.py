@@ -1,5 +1,5 @@
 from .visitor import (visit_ast, visit_block, node_visitor, Context,
-                      SyntaxError, Submodule, Function, FuncContext,
+                      HLSSyntaxError, Submodule, Function, FuncContext,
                       GearContext)
 from .. import ir
 from .. import ir_utils

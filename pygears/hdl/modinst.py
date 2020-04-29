@@ -25,28 +25,30 @@ def path_name(path):
 
 
 class HDLModuleInst:
-    def __init__(self, node, extension):
+    def __init__(self, node, ext):
         self.node = node
-        self.extension = extension
+        self.ext = ext
+        self.hdlgen_map = registry(f"{self.ext}gen/map")
+
         self._impl_parse = None
         if 'memoized' in self.node.params:
             memnode = self.node.params['memoized']
-            hdlmod = registry(f'{self.extension}gen/map')[memnode]
+            hdlmod = registry(f'{self.ext}gen/map')[memnode]
             self.resolver = hdlmod.resolver
             return
 
         if self.node.parent is None:
-            self.resolver = registry(f'{self.extension}gen/dflt_resolver')(node)
+            self.resolver = registry(f'{self.ext}gen/dflt_resolver')(node)
             return
 
-        for r in registry(f'{self.extension}gen/resolvers'):
+        for r in registry(f'{self.ext}gen/resolvers'):
             try:
                 self.resolver = r(node)
                 break
             except ResolverTypeError:
                 pass
         else:
-            self.resolver = registry(f'{self.extension}gen/dflt_resolver')(node)
+            self.resolver = registry(f'{self.ext}gen/dflt_resolver')(node)
             hdl_log().warning(
                 f'Unable to compile "{node.name}" to HDL and no HDL module with the name '
                 f'"{self.resolver.module_name}" found on the path. Module connected as a black-box.')
@@ -67,7 +69,7 @@ class HDLModuleInst:
 
         if self.hierarchical:
             children_traced = any(
-                self.svgen_map[child].traced for child in self.node.child)
+                self.hdlgen_map[child].traced for child in self.node.child)
         else:
             children_traced = False
 

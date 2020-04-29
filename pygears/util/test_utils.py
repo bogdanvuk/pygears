@@ -123,7 +123,7 @@ def formal_check_fixt(tmpdir, request):
 
     root = find('/')
     module = hdlgen(
-        root.child[0], language='v', outdir=outdir, wrapper=False, **request.param[3])
+        root.child[0], lang='v', outdir=outdir, wrapper=False, **request.param[3])
 
     yosis_cmds = []
     env = jinja2.Environment(
@@ -230,9 +230,9 @@ def hdl_check_fixt(tmpdir, request):
 
     yield
 
-    language = os.path.splitext(request.param[0][0])[1][1:]
+    lang = os.path.splitext(request.param[0][0])[1][1:]
     register_hdl_paths(tmpdir)
-    hdlgen(language=language, outdir=tmpdir, **request.param[1])
+    hdlgen(lang=lang, outdir=tmpdir, **request.param[1])
 
     for fn in request.param[0]:
         res_file = os.path.join(tmpdir, fn)
@@ -258,8 +258,8 @@ def skip_sim_if_no_tools():
 @pytest.fixture(
     params=[
         None,
-        # partial(SimVerilated, language='v'),
-        partial(SimVerilated, language='sv'),
+        partial(SimVerilated, lang='v'),
+        partial(SimVerilated, lang='sv'),
         SimSocket
     ])
 def sim_cls(request):
@@ -275,8 +275,8 @@ def sim_cls(request):
 
 @pytest.fixture(
     params=[
-        # partial(SimVerilated, language='v'),
-        partial(SimVerilated, language='sv'),
+        partial(SimVerilated, lang='v'),
+        partial(SimVerilated, lang='sv'),
         SimSocket
     ])
 def cosim_cls(request):
@@ -291,11 +291,11 @@ def cosim_cls(request):
 
 
 @pytest.fixture(params=['v', 'sv'])
-def language(request):
-    language = request.param
-    # if language is 'v':
+def lang(request):
+    lang = request.param
+    # if lang is 'v':
     #     skip_ifndef('VERILOG_TEST')
-    yield language
+    yield lang
 
 
 from pygears import gear

@@ -13,8 +13,12 @@
   {%- set input_intf_names = intfs|isinput|keymap("name") %}
   {%- set max_lvl_intf = intfs|isinput|max(attribute="lvl") %}
 
+  {% if max_lvl_intf['lvl'] > 0 %}
     assign dout_s_eot = {{ max_lvl_intf['name'] }}_s_eot;
     assign dout_s_data = {{din_data_cat(intfs)}};
+  {% else %}
+    assign dout_s = {{din_data_cat(intfs)}};
+  {% endif %}
 
     logic  all_valid;
     logic  handshake;

@@ -1,6 +1,6 @@
 module sustain
   #(
-    parameter TOUT = 0,
+    parameter DOUT = 0,
     parameter VAL = 0
     )
    (
@@ -9,7 +9,7 @@ module sustain
 
     input wire             dout_ready,
     output wire            dout_valid,
-    output wire [TOUT-1:0] dout_data
+    output wire [DOUT-1:0] dout_data
     );
 
    assign dout_valid = 1'b1;

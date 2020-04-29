@@ -132,9 +132,3 @@ class VModuleInst(HDLModuleInst):
 
         return template_env.snippets.module_inst(**context)
 
-
-# class VGenVModPlugin(SVGenPlugin):
-#     @classmethod
-#     def bind(cls):
-#         safe_bind('vgen/module_namespace/Gear', VModuleInst)
-#         safe_bind('vgen/module_namespace/GearHierRoot', VModuleInst)

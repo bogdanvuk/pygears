@@ -18,17 +18,25 @@ async def sample(din, *, latency=1, hold=1, init=None) -> b"din":
     dout = module().dout
 
     while True:
-        try:
-            data = din.get_nb()
-            valid = True
-        except IntfEmpty:
-            pass
+        if latency == 0:
+            try:
+                data = din.get_nb()
+                valid = True
+            except IntfEmpty:
+                pass
 
         if valid and dout.ready_nb():
             dout.put_nb(data)
 
             if not hold:
                 valid = False
+
+        if latency == 1:
+            try:
+                data = din.get_nb()
+                valid = True
+            except IntfEmpty:
+                pass
 
         await clk()
 

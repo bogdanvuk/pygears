@@ -1,5 +1,5 @@
 import ast
-from . import Context, SyntaxError, ir, node_visitor, visit_ast
+from . import Context, HLSSyntaxError, ir, node_visitor, visit_ast
 from pygears import Intf
 from .stmt import infer_targets
 
@@ -43,4 +43,4 @@ def _(node: ast.GeneratorExp, ctx: Context):
     # out_intf_ref, targets, gen_name = parse_generator_expression(node.generators[0], ctx)
 
     breakpoint()
-    raise SyntaxError(f"Unsupported language construct", node.lineno)
+    raise HLSSyntaxError(f"Unsupported language construct", node.lineno)

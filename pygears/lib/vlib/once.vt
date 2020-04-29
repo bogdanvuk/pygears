@@ -1,0 +1,26 @@
+{%- import 'snippet.j2' as snippet -%}
+{% set py = import_('builtins') %}
+{% call snippet.gear_module(module_name, intfs, comment) %}
+
+   logic [{{int(params['tout'])}}-1 : 0] din_reg_data;
+   logic                         din_reg_valid;
+   logic                         reg_ready;
+   logic                         reg_empty;
+
+   assign reg_ready = reg_empty | dout_ready;
+   assign reg_empty = !din_reg_valid;
+
+   always @(posedge clk)
+     begin
+        if(rst) begin
+           din_reg_valid <= '1;
+           din_reg_data <= {{ params['tout'](params['val']).code() }};
+        end else if (dout_ready) begin
+           din_reg_valid <= '0;
+        end
+     end
+
+   assign dout_data = din_reg_data;
+   assign dout_valid = din_reg_valid;
+
+{% endcall %}

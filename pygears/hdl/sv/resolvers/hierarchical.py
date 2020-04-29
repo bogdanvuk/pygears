@@ -7,20 +7,21 @@ from pygears import config, registry
 from pygears.core.gear import OutSig
 from ...base_resolver import ResolverBase, ResolverTypeError
 from pygears.util.fileio import find_in_dirs, save_file
+from pygears.conf import inject, Inject
 
 
 class HierarchicalResolver(ResolverBase):
-    def __init__(self, node):
+    @inject
+    def __init__(self, node, ext=Inject('hdl/lang')):
         self.node = node
-        self.extension = 'sv'
-        self.svgen_map = registry("svgen/map")
+        self.ext = ext
 
         if not node.params.get('hdl', {}).get('hierarchical', node.hierarchical):
             raise ResolverTypeError
 
     @property
     def hdl_path_list(self):
-        return config[f'{self.extension}gen/include']
+        return config[f'{self.ext}gen/include']
 
     @property
     def files(self):
@@ -29,7 +30,7 @@ class HierarchicalResolver(ResolverBase):
             if 'files' in self.node.params['hdl']:
                 for fn in self.node.params['hdl']['files']:
                     if not os.path.splitext(fn)[-1]:
-                        fn = f'{fn}.{self.extension}'
+                        fn = f'{fn}.{self.ext}'
 
                     files.append(fn)
 
@@ -38,7 +39,7 @@ class HierarchicalResolver(ResolverBase):
     @property
     @functools.lru_cache()
     def module_name(self):
-        if find_in_dirs(f'{self.hier_path_name}.{self.extension}',
+        if find_in_dirs(f'{self.hier_path_name}.{self.ext}',
                         self.hdl_path_list):
             return self.hier_path_name + '_hier'
         else:
@@ -46,7 +47,7 @@ class HierarchicalResolver(ResolverBase):
 
     @property
     def file_basename(self):
-        return f'{self.module_name}.{self.extension}'
+        return f'{self.module_name}.{self.ext}'
 
     def module_context(self, template_env):
         context = {
@@ -73,11 +74,11 @@ class HierarchicalResolver(ResolverBase):
     def get_hier_module(self, template_env):
         context = self.module_context(template_env)
 
-        self.svgen_map = registry('svgen/map')
+        self.hdlgen_map = registry(f'{self.ext}gen/map')
 
         for child in self.node.local_intfs:
-            svgen = self.svgen_map[child]
-            contents = svgen.get_inst(template_env)
+            hdlmod = self.hdlgen_map[child]
+            contents = hdlmod.get_inst(template_env)
             if contents:
                 context['inst'].append(contents)
 
@@ -87,14 +88,14 @@ class HierarchicalResolver(ResolverBase):
                     name = child.params['sigmap'][s.name]
                     context['inst'].append(f'logic [{s.width-1}:0] {name};')
 
-            svgen = self.svgen_map[child]
-            if hasattr(svgen, 'get_inst'):
-                contents = svgen.get_inst(template_env)
+            hdlmod = self.hdlgen_map[child]
+            if hasattr(hdlmod, 'get_inst'):
+                contents = hdlmod.get_inst(template_env)
                 if contents:
-                    if svgen.traced:
+                    if hdlmod.traced:
                         context['inst'].append('/*verilator tracing_on*/')
                     context['inst'].append(contents)
-                    if svgen.traced:
+                    if hdlmod.traced:
                         context['inst'].append('/*verilator tracing_off*/')
 
         return template_env.render_local(__file__, "hier_module.j2", context)

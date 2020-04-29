@@ -11,7 +11,7 @@ from pygears.lib.union import select
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
-def test_intf_vararg_fix_index(din_delay, dout_delay):
+def test_intf_vararg_fix_index(lang, din_delay, dout_delay):
     @gear(hdl={'compile': True})
     async def test(*din: Uint) -> b'din[0]':
         async with din[0] as d:
@@ -26,7 +26,7 @@ def test_intf_vararg_fix_index(din_delay, dout_delay):
         delays=[delay_rng(dout_delay, dout_delay)],
         ref=list(range(4)))
 
-    cosim('/test', 'verilator')
+    cosim('/test', 'verilator', lang=lang)
     sim(check_activity=False)
 
 
@@ -50,7 +50,7 @@ def test_intf_vararg_mux(sim_cls, din_delay, dout_delay):
     sim(check_activity=False)
 
 
-def test_loop_select_intfs():
+def test_loop_select_intfs(lang):
     @gear(hdl={'compile': True})
     async def test(*din: Uint) -> b'din[0]':
         dsel: Uint[4]
@@ -64,13 +64,13 @@ def test_loop_select_intfs():
         f=test,
         ref=[0, 4, 1, 5, 2, 6, 3, 7])
 
-    cosim('/test', 'verilator')
+    cosim('/test', 'verilator', lang=lang)
     sim(check_activity=False)
 
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
-def test_loop_intfs(din_delay, dout_delay):
+def test_loop_intfs(lang, din_delay, dout_delay):
     @gear(hdl={'compile': True})
     async def test(*din: Uint) -> b'din[0]':
         for d in din:
@@ -86,13 +86,13 @@ def test_loop_intfs(din_delay, dout_delay):
         delays=[delay_rng(dout_delay, dout_delay)],
         ref=[0, 4, 1, 5, 2, 6, 3, 7])
 
-    cosim('/test', 'verilator')
+    cosim('/test', 'verilator', lang=lang)
     sim(check_activity=False)
 
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
-def test_enum_intfs(din_delay, dout_delay):
+def test_enum_intfs(lang, din_delay, dout_delay):
     @gear(hdl={'compile': True})
     async def test(*din: Uint) -> b'din[0]':
         for i, d in enumerate(din):
@@ -108,13 +108,13 @@ def test_enum_intfs(din_delay, dout_delay):
         delays=[delay_rng(dout_delay, dout_delay)],
         ref=[0, 4, 1, 5, 2, 6, 3, 7])
 
-    cosim('/test', 'verilator')
+    cosim('/test', 'verilator', lang=lang)
     sim(check_activity=False)
 
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
-def test_enum_intfs_single(din_delay, dout_delay):
+def test_enum_intfs_single(lang, din_delay, dout_delay):
     @gear(hdl={'compile': True})
     async def test(*din: Uint) -> b'din[0]':
         for i, d in enumerate(din):
@@ -128,13 +128,13 @@ def test_enum_intfs_single(din_delay, dout_delay):
         delays=[delay_rng(dout_delay, dout_delay)],
         ref=list(range(4)))
 
-    cosim('/test', 'verilator')
+    cosim('/test', 'verilator', lang=lang)
     sim(check_activity=False)
 
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
-def test_enum_intfs_use_i(din_delay, dout_delay):
+def test_enum_intfs_use_i(lang, din_delay, dout_delay):
     @gear(hdl={'compile': True})
     async def test(*din: Uint) -> Tuple['din[0]', Uint['bitw(len(din))']]:
         for i, d in enumerate(din):
@@ -150,13 +150,13 @@ def test_enum_intfs_use_i(din_delay, dout_delay):
         delays=[delay_rng(dout_delay, dout_delay)],
         ref=[(0, 0), (4, 1), (1, 0), (5, 1), (2, 0), (6, 1), (3, 0), (7, 1)])
 
-    cosim('/test', 'verilator')
+    cosim('/test', 'verilator', lang=lang)
     sim(check_activity=False)
 
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
-def test_loop_queue_intfs(din_delay, dout_delay):
+def test_loop_queue_intfs(lang, din_delay, dout_delay):
     @gear(hdl={'compile': True})
     async def test(*din: Queue) -> b'din[0].data':
         for i, d in enumerate(din):
@@ -172,5 +172,5 @@ def test_loop_queue_intfs(din_delay, dout_delay):
         delays=[delay_rng(dout_delay, dout_delay)],
         ref=list(range(4)) + list(range(4, 8)))
 
-    cosim('/test', 'verilator')
+    cosim('/test', 'verilator', lang=lang)
     sim(check_activity=False)

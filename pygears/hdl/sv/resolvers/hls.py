@@ -2,12 +2,14 @@ import typing
 from ...base_resolver import ResolverBase, ResolverTypeError
 from ..svcompile import compile_gear
 from pygears.util.fileio import save_file
+from pygears.conf import inject, Inject
 
 
 class HLSResolver(ResolverBase):
-    def __init__(self, node):
+    @inject
+    def __init__(self, node, ext=Inject('hdl/lang')):
         self.node = node
-        self.extension = 'sv'
+        self.ext = ext
         self.generated = False
 
         if not self.node.params.get('hdl', {}).get('compile', False):
@@ -25,7 +27,7 @@ class HLSResolver(ResolverBase):
 
     @property
     def file_basename(self):
-        return f'{self.module_name}.{self.extension}'
+        return f'{self.module_name}.{self.ext}'
 
     @property
     def files(self) -> typing.List[str]:

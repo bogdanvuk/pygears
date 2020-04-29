@@ -14,13 +14,13 @@ class NodeYielder(HierYielderBase):
         yield node
 
 
-def enum_hdl_files(top, outdir, language, rtl_only=False, wrapper=False):
+def enum_hdl_files(top, outdir, lang, rtl_only=False, wrapper=False):
     if isinstance(top, str):
         top = find(top)
 
-    vgen_map = registry(f'{language}gen/map')
+    vgen_map = registry(f'{lang}gen/map')
 
-    if language == 'sv':
+    if lang == 'sv':
         yield os.path.join(LIB_SVLIB_DIR, 'dti.sv')
 
     for node in NodeYielder().visit(top):
@@ -29,12 +29,12 @@ def enum_hdl_files(top, outdir, language, rtl_only=False, wrapper=False):
 
         vinst = vgen_map[node]
 
-        if ((node is top) and wrapper and (language == 'sv') and not rtl_only):
+        if ((node is top) and wrapper and (lang == 'sv') and not rtl_only):
             yield os.path.join(outdir, f'wrap_{vinst.file_basename}')
 
-        if (isinstance(node, Gear) and (node in registry(f'{language}gen/map'))):
+        if (isinstance(node, Gear) and (node in registry(f'{lang}gen/map'))):
 
-            modinst = registry(f'{language}gen/map')[node]
+            modinst = registry(f'{lang}gen/map')[node]
             for f in modinst.files:
                 yield os.path.join(outdir, f)
 
@@ -47,18 +47,18 @@ def enum_hdl_files(top, outdir, language, rtl_only=False, wrapper=False):
             #         yield os.path.join(outdir, f)
 
         elif vinst.is_broadcast:
-            if language == 'v':
+            if lang == 'v':
                 yield os.path.join(LIB_VLIB_DIR, 'bc.v')
-            elif language == 'sv':
+            elif lang == 'sv':
                 yield os.path.join(LIB_SVLIB_DIR, 'bc.sv')
 
 
-def list_hdl_files(top, outdir, language, rtl_only=False, wrapper=False):
+def list_hdl_files(top, outdir, lang, rtl_only=False, wrapper=False):
     seen = set()
     seen_add = seen.add
     return [
         x for x in enum_hdl_files(
-            top, outdir, language, rtl_only=rtl_only, wrapper=wrapper)
+            top, outdir, lang, rtl_only=rtl_only, wrapper=wrapper)
         if not (x in seen or seen_add(x))
     ]
 

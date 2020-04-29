@@ -89,7 +89,7 @@ def test_qfilt_union_delay(cosim_cls, din_delay, dout_delay, sel):
         f=dut(sim_cls=cosim_cls, fixsel=sel),
         ref=filt(name='ref_model', fixsel=sel),
         delays=[delay_rng(dout_delay, dout_delay)])
-    sim(resdir=)
+    sim()
 
 
 @pytest.mark.parametrize('din_delay', [0, 10])
@@ -106,7 +106,7 @@ def test_qfilt_delay(cosim_cls, din_delay, dout_delay):
         ref=[list(range(0, 10, 2)), list(range(0, 10, 2))],
         delays=[delay_rng(dout_delay, dout_delay)])
 
-    sim(resdir=)
+    sim()
 
 
 def test_filt_base():

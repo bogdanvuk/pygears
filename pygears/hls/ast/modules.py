@@ -1,5 +1,5 @@
 import ast
-from . import Context, FuncContext, SyntaxError, ir, node_visitor, visit_ast, visit_block
+from . import Context, FuncContext, ir, node_visitor, visit_ast, visit_block
 
 
 @node_visitor(ast.AsyncFunctionDef)

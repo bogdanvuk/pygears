@@ -1,12 +1,8 @@
 import ast
-from . import Context, FuncContext, SyntaxError, node_visitor, ir, visit_ast
+from . import Context, FuncContext, node_visitor, ir, visit_ast
 from pygears.core.gear import InSig, OutSig
 from .utils import add_to_list
 from .cast import resolve_cast_func
-
-
-class UnknownName(SyntaxError):
-    pass
 
 
 def infer_targets(ctx, target, dtype, obj_factory=None):

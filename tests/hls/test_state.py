@@ -5,7 +5,7 @@ from pygears.sim import sim, cosim
 from pygears.lib import drv, shred, directed, delay_rng
 
 
-def test_cond_no_state():
+def test_cond_no_state(lang):
     @gear(hdl={'compile': True})
     async def test(din: Bool) -> Bool:
         async with din as d:
@@ -18,11 +18,11 @@ def test_cond_no_state():
              f=test,
              ref=[True, False, True, False])
 
-    cosim('/test', 'verilator')
+    cosim('/test', 'verilator', lang=lang)
     sim(timeout=4)
 
 
-def test_cond_2state_asymetric():
+def test_cond_2state_asymetric(lang):
     @gear(hdl={'compile': True})
     async def test(din: Bool) -> Bool:
         async with din as d:
@@ -36,13 +36,13 @@ def test_cond_2state_asymetric():
              f=test,
              ref=[True, True, False, True, True, False])
 
-    cosim('/test', 'verilator')
+    cosim('/test', 'verilator', lang=lang)
     sim()
 
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
-def test_cond_2state_symetric(din_delay, dout_delay):
+def test_cond_2state_symetric(lang, din_delay, dout_delay):
     @gear(hdl={'compile': True})
     async def test(din: Bool) -> Bool:
         async with din as d:
@@ -59,7 +59,7 @@ def test_cond_2state_symetric(din_delay, dout_delay):
              ref=[True, True, False, True, True, True, False, True],
              delays=[delay_rng(dout_delay, dout_delay)])
 
-    cosim('/test', 'verilator')
+    cosim('/test', 'verilator', lang=lang)
     sim()
 
 
@@ -87,7 +87,7 @@ def test_cond_2state_symetric(din_delay, dout_delay):
 #              ref=[True, True, False, True, True, True, False, True],
 #              delays=[delay_rng(dout_delay, dout_delay)])
 
-#     cosim('/test', 'verilator')
+#     cosim('/test', 'verilator', lang=lang)
 #     sim()
 
 
@@ -96,7 +96,7 @@ def test_cond_2state_symetric(din_delay, dout_delay):
 # test_cond_hourglass('/tools/home/tmp/test', 1, 1)
 
 
-def test_loop_state():
+def test_loop_state(lang):
     @gear(hdl={'compile': True})
     async def test(din: Uint) -> b'din':
         i = Uint[3](0)
@@ -111,5 +111,5 @@ def test_loop_state():
              f=test,
              ref=[0, 1, 1, 2, 2, 3, 3, 4, 0, 1, 1, 2])
 
-    cosim('/test', 'verilator')
+    cosim('/test', 'verilator', lang=lang)
     sim()

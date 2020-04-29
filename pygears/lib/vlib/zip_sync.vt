@@ -24,11 +24,12 @@
   {%- set min_lvl = intfs|isinput|keymap("lvl")|min %}
   {%- set out_intf_names = intfs|isoutput|keymap("name") %}
 
-    wire all_valid;
-    wire out_valid;
-    wire out_ready;
     wire all_aligned;
+    wire all_valid;
     wire handshake;
+
+    assign all_valid = {{input_intf_names|format_list("%s_valid")|join(" && ")}};
+
   {% for name in input_intf_names %}
     {% if min_lvl > 0 %}
     wire [{{min_lvl-1}}:0] {{name}}_eot_overlap;
@@ -49,15 +50,13 @@
     assign din1_eot_aligned = 1;
   {% endif %}
 
-    assign all_valid   = {{input_intf_names|format_list("%s_valid")|join(" && ")}};
     assign all_aligned = din0_eot_aligned && din1_eot_aligned;
-    assign out_valid   = all_valid & all_aligned;
 
   {# Connect internal signals to either output interfaces or sync-guard input interfaces. #}
   {% for din, dout in zip(input_intf_names, out_intf_names) %}
-    assign {{dout}}_valid = out_valid;
+    assign {{dout}}_valid = {{din}}_valid & all_aligned;
     assign {{dout}}_data = {{din}}_s;
-    assign {{din}}_ready = all_valid && ({{dout}}_ready || !{{din}}_eot_aligned);
+    assign {{din}}_ready = {{din}}_valid && ({{dout}}_ready || (all_valid && !{{din}}_eot_aligned));
   {% endfor %}
 
 {% endcall %}

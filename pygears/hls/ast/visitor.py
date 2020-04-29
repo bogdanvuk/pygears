@@ -13,11 +13,11 @@ from .utils import add_to_list, get_function_source, get_function_ast
 
 from pygears.core.util import get_function_context_dict
 from pygears.conf.trace import gear_definition_location
-from jinja2.debug import make_traceback, TemplateSyntaxError, reraise
+from pygears.conf.trace import make_traceback, TraceException
 import sys
 
 
-class SyntaxError(TemplateSyntaxError):
+class HLSSyntaxError(TraceException):
     pass
 
 
@@ -246,6 +246,10 @@ class FuncContext(Context):
             for name, var in args.items() if name not in self.const_args
         }
 
+def reraise(tp, value, tb=None):
+    if value.__traceback__ is not tb:
+        raise value.with_traceback(tb)
+    raise value
 
 def node_visitor(ast_type):
     def wrapper(f):
@@ -255,27 +259,27 @@ def node_visitor(ast_type):
 
             try:
                 return f(node, ctx)
-            except SyntaxError:
-                ttype, value, traceback = sys.exc_info()
-                raise value.with_traceback(traceback)
             except Exception as e:
-                if isinstance(ctx, GearContext):
-                    func, fn, ln = gear_definition_location(ctx.gear.func)
-                    msg = (
-                        f'{str(e)}\n    - when compiling gear "{ctx.gear.name}" with'
-                        f' parameters {ctx.gear.params}')
+                if isinstance(e, HLSSyntaxError) and e.lineno is not None:
+                    exc_type, exc_value, tb = sys.exc_info()
                 else:
-                    func, fn, ln = gear_definition_location(ctx.funcref.func)
-                    msg = (
-                        f'{str(e)}\n    - when compiling function "{ctx.funcref.func}" with'
-                        f' signature {ctx.signature}')
+                    if isinstance(ctx, GearContext):
+                        func, fn, ln = gear_definition_location(ctx.gear.func)
+                        msg = (
+                            f'{str(e)}\n    - when compiling gear "{ctx.gear.name}" with'
+                            f' parameters {ctx.gear.params}')
+                    else:
+                        func, fn, ln = gear_definition_location(ctx.funcref.func)
+                        msg = (
+                            f'{str(e)}\n    - when compiling function "{ctx.funcref.func}" with'
+                            f' signature {ctx.signature}')
 
-                err = SyntaxError(msg, ln + node.lineno - 1, filename=fn)
+                    err = HLSSyntaxError(msg, ln + node.lineno - 1, filename=fn)
 
-                traceback = make_traceback((SyntaxError, err, sys.exc_info()[2]))
-                exc_type, exc_value, tb = traceback.standard_exc_info
+                    traceback = make_traceback((HLSSyntaxError, err, sys.exc_info()[2]))
+                    exc_type, exc_value, tb = traceback.standard_exc_info
 
-            reraise(exc_type, exc_value, tb)
+            raise exc_value.with_traceback(tb)
 
         if isinstance(ast_type, tuple):
             f_ret = visit_ast.register(ast_type[0])(func_wrapper)

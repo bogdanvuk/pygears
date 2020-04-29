@@ -5,6 +5,7 @@ import pygears
 from pygears import config
 from ...base_resolver import ResolverBase, ResolverTypeError
 from pygears.util.fileio import find_in_dirs, save_file
+from pygears.conf import inject, Inject
 
 
 def get_port_config(modport, type_, name):
@@ -19,16 +20,17 @@ def get_port_config(modport, type_, name):
 
 
 class HDLTemplateResolver(ResolverBase):
-    def __init__(self, node):
+    @inject
+    def __init__(self, node, ext=Inject('hdl/lang')):
         self.node = node
-        self.extension = 'sv'
+        self.ext = ext
 
         if self.impl_path is None:
             raise ResolverTypeError
 
     @property
     def hdl_path_list(self):
-        return config[f'{self.extension}gen/include']
+        return config[f'{self.ext}gen/include']
 
     @property
     def impl_basename(self):
@@ -38,7 +40,7 @@ class HDLTemplateResolver(ResolverBase):
                 fn = self.node.params['hdl']['impl']
 
         if not os.path.splitext(fn)[-1]:
-            fn = f'{fn}.{self.extension}t'
+            fn = f'{fn}.{self.ext}t'
 
         return fn
 
@@ -53,7 +55,7 @@ class HDLTemplateResolver(ResolverBase):
             if 'files' in self.node.params['hdl']:
                 for fn in self.node.params['hdl']['files']:
                     if not os.path.splitext(fn)[-1]:
-                        fn = f'{fn}.{self.extension}'
+                        fn = f'{fn}.{self.ext}'
 
                     files.append(fn)
 
@@ -69,7 +71,7 @@ class HDLTemplateResolver(ResolverBase):
 
     @property
     def file_basename(self):
-        return f'{self.module_name}.{self.extension}'
+        return f'{self.module_name}.{self.ext}'
 
     def module_context(self, template_env):
         context = {

@@ -1,15 +1,22 @@
 import shutil
-from pygears import Intf, find
+from pygears import Intf, find, config
 from pygears.conf import bind, registry
 from .common import list_hdl_files
 
 
 def hdlgen(top=None,
-           language='sv',
+           lang=None,
            copy_files=False,
            generate=True,
            outdir=None,
            **conf):
+
+    if lang is None:
+        lang = config['hdl/lang']
+    else:
+        # TODO: should we save/restore previous setting for 'hdl/lang'?
+        config['hdl/lang'] = lang
+
     conf['generate'] = generate
     conf['outdir'] = outdir
 
@@ -27,13 +34,13 @@ def hdlgen(top=None,
         top = top
 
     bind('svgen/conf', conf)
-    for oper in registry(f'{language}gen/flow'):
+    for oper in registry(f'{lang}gen/flow'):
         top = oper(top, conf)
 
     if copy_files and generate:
         for fn in list_hdl_files(top.name,
                                  outdir=outdir,
-                                 language=language,
+                                 lang=lang,
                                  rtl_only=True,
                                  wrapper=conf.get('wrapper', False)):
             try:

@@ -17,6 +17,7 @@ assign _${intf_name}.ready = ${conn_name}.ready;""")
 class SVIntfGen:
     def __init__(self, intf):
         self.intf = intf
+        self.ext = config['hdl/lang']
 
     @property
     @functools.lru_cache()
@@ -60,21 +61,21 @@ class SVIntfGen:
     @functools.lru_cache(maxsize=None)
     def basename(self):
 
-        svgen_map = registry('svgen/map')
+        hdlgen_map = registry(f'{self.ext}gen/map')
         basename = self._basename
         if self.is_port_intf:
             return basename
 
         cnt = 0
         for c in self.parent.child:
-            if svgen_map[c]._basename == basename:
+            if hdlgen_map[c]._basename == basename:
                 cnt += 1
 
         for c in self.parent.local_intfs:
             if c is self.intf:
                 break
 
-            if svgen_map[c]._basename == basename:
+            if hdlgen_map[c]._basename == basename:
                 cnt += 1
 
         for p in self.parent.out_ports:
@@ -185,18 +186,33 @@ class SVIntfGen:
         if inst_name.endswith('_if_s'):
             inst_name = inst_name[:-len('_if_s')]
 
-        bc_context = {
-            'rst_name': 'rst',
-            'module_name': 'bc',
-            'inst_name': inst_name,
-            'param_map': {
-                'SIZE': len(self.intf.consumers)
-            },
-            'port_map': {
-                'din': self.basename,
-                'dout': self.outname
+        if self.ext == 'sv':
+            bc_context = {
+                'rst_name': 'rst',
+                'module_name': 'bc',
+                'inst_name': inst_name,
+                'param_map': {
+                    'SIZE': len(self.intf.consumers)
+                },
+                'port_map': {
+                    'din': self.basename,
+                    'dout': self.outname
+                }
             }
-        }
+        else:
+            bc_context = {
+                'rst_name': 'rst',
+                'module_name': 'bc',
+                'inst_name': inst_name,
+                'param_map': {
+                    'SIZE': len(self.intf.consumers),
+                    'WIDTH': int(self.intf.dtype)
+                },
+                'port_map': {
+                    'din': (self.basename, None, None),
+                    'dout': (self.outname, None, None)
+                }
+            }
 
         return template_env.snippets.module_inst(**bc_context)
 

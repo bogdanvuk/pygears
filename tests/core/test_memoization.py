@@ -48,7 +48,7 @@ def test_hier_level1():
 
     sim()
 
-def test_hier_level2():
+def test_hier_level2(lang):
     config['gear/memoize'] = True
     @gear
     def test(a, b):
@@ -71,6 +71,6 @@ def test_hier_level2():
 
     assert check_memoized('/top/test_hier1', '/top/test_hier0/test1')
 
-    cosim('/top', 'verilator')
+    cosim('/top', 'verilator', lang=lang)
 
     sim()

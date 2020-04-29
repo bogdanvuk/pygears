@@ -6,11 +6,11 @@ from pygears import registry
 # from pygears import config
 # from . import SynthPlugin
 
-def create_project_script(script_fn, outdir, top, language, wrapper):
-    hdl_files = list_hdl_files(top, outdir, language=language, wrapper=wrapper)
+def create_project_script(script_fn, outdir, top, lang, wrapper):
+    hdl_files = list_hdl_files(top, outdir, lang=lang, wrapper=wrapper)
     with open(script_fn, 'w') as f:
         for fn in hdl_files:
-            f.write(f'read_verilog {"-sv" if language== "sv" else ""} {fn}\n')
+            f.write(f'read_verilog {"-sv" if lang== "sv" else ""} {fn}\n')
 
 
 class Yosys:
@@ -98,7 +98,7 @@ def synth(outdir,
           optimize=True,
           freduce=False,
           synth_out=None,
-          language='v',
+          lang='v',
           synth_cmd='synth'):
     if not srcdir:
         srcdir = os.path.join(outdir, 'src')
@@ -110,17 +110,17 @@ def synth(outdir,
     wrapper = False if top is None else True
     if rtl_node is None:
         rtl_node = hdlgen(top,
-                          language=language,
+                          lang=lang,
                           outdir=srcdir,
                           wrapper=wrapper)
 
-    vgen_map = registry(f'{language}gen/map')
+    vgen_map = registry(f'{lang}gen/map')
     top_name = vgen_map[rtl_node].module_name
 
     create_project_script(prj_script_fn,
                           outdir=srcdir,
                           top=rtl_node,
-                          language=language,
+                          lang=lang,
                           wrapper=wrapper)
     with Yosys(f'yosys -l {os.path.join(outdir, "yosys.log")}') as yosys:
 

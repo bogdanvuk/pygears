@@ -127,7 +127,10 @@ def unfold_loop(node: ir.LoopBlock, ctx: Context):
     return stmts
 
 
-builtins = {range: lambda *args, **kwds: resolve_gear_call(qrange_gear.func, args, kwds)}
+builtins = {
+    range:
+    lambda *args, **kwds: resolve_gear_call(qrange_gear.func, args, kwds)
+}
 
 
 class HandleGenerators(IrRewriter):
@@ -141,14 +144,15 @@ class HandleGenerators(IrRewriter):
 
         gen_id = node.val.val
         func_call = gen_id.obj.func
+        pass_eot = func_call.pass_eot
 
         if func_call.func in builtins:
             func_call = builtins[func_call.func](*func_call.args.values(),
                                                  **func_call.kwds)
 
         # intf, nodes = call_gear(func_call.func, list(func_call.args.values()),
-        intf, nodes = call_gear(func_call.func, func_call.args,
-                                func_call.kwds, self.ctx)
+        intf, nodes = call_gear(func_call.func, func_call.args, func_call.kwds,
+                                self.ctx)
 
         eot_name = self.ctx.find_unique_name('_eot')
         data_name = self.ctx.find_unique_name('_data')
@@ -164,21 +168,28 @@ class HandleGenerators(IrRewriter):
             'eot': self.ctx.scope[eot_name]
         }
 
+        if pass_eot:
+            dout = ir.Component(intf, 'data')
+        else:
+            dout = ir.SubscriptExpr(ir.Component(intf, 'data'), ir.ResExpr(0))
+
         eot_load = ir.AssignValue(
             self.ctx.ref(eot_name),
             ir.SubscriptExpr(ir.Component(intf, 'data'), ir.ResExpr(-1)))
 
+        # data_load = ir.AssignValue(
+        #     self.ctx.ref(data_name),
+        #     ir.Await(ir.Component(intf, 'data'),
+        #              in_await=ir.Component(intf, 'valid')))
+
         data_load = ir.AssignValue(
             self.ctx.ref(data_name),
-            ir.Await(ir.Component(intf, 'data'),
-                     in_await=ir.Component(intf, 'valid')))
+            ir.Await(dout, in_await=ir.Component(intf, 'valid')))
 
         stmts = nodes + [eot_load, data_load]
 
-        add_to_list(
-            stmts,
-            assign_targets(self.ctx, node.target, ir.Component(intf, 'data'),
-                           ir.Variable))
+        add_to_list(stmts,
+                    assign_targets(self.ctx, node.target, dout, ir.Variable))
 
         return stmts
 

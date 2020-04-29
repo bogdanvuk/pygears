@@ -51,12 +51,6 @@ module bc #(
               ready_reg[i] = !(rst || others_ready);
             else
               ready_reg[i] = !rst && din_valid && (!din_ready) && dout_ready[i];
-
-            // if (rst || (!din_valid) || din_ready) begin
-            //    ready_reg[i] <= 1'b0;
-            // end else if (dout_ready[i]) begin
-            //    ready_reg[i] <= 1'b1;
-            // end
          end
       end
    endgenerate

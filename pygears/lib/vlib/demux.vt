@@ -1,11 +1,19 @@
 {%- import 'snippet.j2' as snippet -%}
-{% call snippet.module_with_intf_structs(module_name, intfs, intfs|isinput, comment) %}
+{% set py = import_('builtins') %}
+{% call snippet.gear_module(module_name, intfs, comment) %}
 
-{%- set output_intfs = intfs|isoutput %}
+    {{snippet.intf_typedef(_din, depth=0)}}
 
 {% for i in (intfs|isoutput) %}
-    assign {{i['name']}}_data = din_data;
+  {% if _din_t.data.width > 0 and i['width'] > 0 %}
+    assign {{i['name']}}_data = din_s_data[{{i['width']-1}}:0];
+  {% else %}
+    assign {{i['name']}}_data = 1'bx;
+  {% endif %}
 {% endfor %}
+
+{%- set output_intfs = intfs|isoutput %}
+{%- set mapped_dout_num = py.max(params['mapping'].values()) + 1 %}
 
     always @*
     begin
@@ -13,13 +21,17 @@
 
         if (din_valid) begin
             case(din_s_ctrl)
-{% for key, iout in params['_full_mapping'].items() %}
+{% for key, iout in params['mapping'].items() %}
                 {{key}} : begin
                     din_ready = {{output_intfs[iout]['name']}}_ready;
                 end
 {% endfor %}
                 default: begin
+{% if len(_din_t.types) > mapped_dout_num %}
+                    din_ready = {{output_intfs[-1]['name']}}_ready;
+{% else %}
                     din_ready = 1'bx;
+{% endif %}
                 end
             endcase
         end
@@ -33,7 +45,7 @@
 
         if (din_valid) begin
             case(din_s_ctrl)
-{% for key, iout in params['_full_mapping'].items() %}
+{% for key, iout in params['mapping'].items() %}
                 {{key}} : begin
                     {{output_intfs[iout]['name']}}_valid = din_valid;
                 end
@@ -42,6 +54,9 @@
 {% for i in (intfs|isoutput) %}
                     {{i['name']}}_valid = 1'bx;
 {% endfor %}
+{% if len(_din_t.types) > mapped_dout_num %}
+                    {{output_intfs[-1]['name']}}_valid = 1;
+{% endif %}
                 end
             endcase
         end

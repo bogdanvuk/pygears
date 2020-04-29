@@ -22,6 +22,7 @@ class HDLPlugin(GearPlugin):
         registry('gear/params/meta')['hdl'] = {}
 
         config.define('hdl/include', default=[])
+        config.define('hdl/lang', default='sv')
 
         config.define('debug/hide_interm_vals', default=True)
 

@@ -6,19 +6,21 @@ from ...base_resolver import ResolverBase, ResolverTypeError
 from ..svparse import parse
 from pygears.util.fileio import find_in_dirs
 from pygears.typing import code, is_type
+from pygears.conf import inject, Inject
 
 
 class HDLFileResolver(ResolverBase):
-    def __init__(self, node):
+    @inject
+    def __init__(self, node, ext=Inject('hdl/lang')):
         self.node = node
-        self.extension = 'sv'
+        self.ext = ext
 
         if self.impl_parse is None:
             raise ResolverTypeError
 
     @property
     def hdl_path_list(self):
-        return config[f'{self.extension}gen/include']
+        return config[f'{self.ext}gen/include']
 
     @property
     def impl_path(self):
@@ -66,7 +68,7 @@ class HDLFileResolver(ResolverBase):
                     continue
 
                 if is_type(v):
-                    v = v.width
+                    v = max(v.width, 1)
 
                 if (code(v) != int(self.impl_params[param_name]['val'])):
                     params[param_name] = int(code(v))
@@ -84,7 +86,7 @@ class HDLFileResolver(ResolverBase):
                 fn = self.node.params['hdl']['impl']
 
         if not os.path.splitext(fn)[-1]:
-            fn = f'{fn}.{self.extension}'
+            fn = f'{fn}.{self.ext}'
 
         return fn
 
@@ -95,7 +97,7 @@ class HDLFileResolver(ResolverBase):
             if 'files' in self.node.params['hdl']:
                 for fn in self.node.params['hdl']['files']:
                     if not os.path.splitext(fn)[-1]:
-                        fn = f'{fn}.{self.extension}'
+                        fn = f'{fn}.{self.ext}'
 
                     files.append(fn)
 

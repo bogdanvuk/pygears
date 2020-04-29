@@ -55,9 +55,10 @@ def vgen_include_get(cfg):
 class VGenInstPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        safe_bind('vgen/map', {})
-        safe_bind('vgen/module_namespace', {})
-        config.define('vgen/include', getter=vgen_include_get)
+        pass
+        # safe_bind('vgen/map', {})
+        # safe_bind('vgen/module_namespace', {})
+        # config.define('vgen/include', getter=vgen_include_get)
 
     @classmethod
     def reset(cls):

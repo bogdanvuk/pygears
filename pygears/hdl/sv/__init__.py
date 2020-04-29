@@ -1,5 +1,6 @@
 from pygears.conf import PluginBase, safe_bind
 from .generate import svgen_generate
+from .v.generate import vgen_generate
 from .inst import svgen_inst
 from .svmod import SVModuleInst
 from .resolvers import HDLFileResolver, HDLTemplateResolver, HierarchicalResolver, HLSResolver, BlackBoxResolver
@@ -15,9 +16,23 @@ class SVGenPlugin(PluginBase):
             HierarchicalResolver
         ])
         safe_bind('svgen/dflt_resolver', BlackBoxResolver)
-        safe_bind('svgen/module_namespace', {})
-        safe_bind('svgen/module_namespace/Gear', SVModuleInst)
-        safe_bind('svgen/module_namespace/GearHierRoot', SVModuleInst)
+
+        safe_bind('svgen/module_namespace', {
+            'Gear': SVModuleInst,
+            'GearHierRoot': SVModuleInst
+        })
+
+        safe_bind('vgen/module_namespace', {
+            'Gear': SVModuleInst,
+            'GearHierRoot': SVModuleInst
+        })
+
+        safe_bind('vgen/flow', [svgen_inst, vgen_generate])
+        safe_bind('vgen/resolvers', [
+            HDLFileResolver, HDLTemplateResolver, HLSResolver,
+            HierarchicalResolver
+        ])
+        safe_bind('vgen/dflt_resolver', BlackBoxResolver)
 
 
 from pygears.conf import load_plugin_folder

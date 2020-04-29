@@ -14,12 +14,13 @@ from pygears.typing import Bool, Uint, Union
 @pytest.mark.parametrize('dout_delay', [0, 5])
 @pytest.mark.parametrize('depth', [4, 8])
 def test_directed(
-    wr0_delay,
-    rd0_delay,
-    wr1_delay,
-    rd1_delay,
-    dout_delay,
-    depth,
+        cosim_cls,
+        wr0_delay,
+        rd0_delay,
+        wr1_delay,
+        rd1_delay,
+        dout_delay,
+        depth,
 ):
     def wr0_delay_gen():
         for _ in range(depth):
@@ -56,12 +57,11 @@ def test_directed(
                 | delay_rng(0, rd1_delay)
                 , Bool(False)) | req_t
 
-    from pygears.sim.modules import SimVerilated
-    verif(
-        req0,
-        req1,
-        f=tdp(name='dut', sim_cls=SimVerilated, depth=depth),
-        ref=tdp(depth=depth),
-        delays=[delay_rng(0, dout_delay), delay_rng(0, 0)])
+    verif(req0,
+          req1,
+          f=tdp(name='dut', sim_cls=cosim_cls, depth=depth),
+          ref=tdp(depth=depth),
+          delays=[delay_rng(0, dout_delay),
+                  delay_rng(0, 0)])
 
     sim()

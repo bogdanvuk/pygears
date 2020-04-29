@@ -1,5 +1,5 @@
 import typing
-from . import Context, FuncContext, Function, Submodule, SyntaxError, ir, ir_utils, node_visitor, visit_ast, visit_block
+from . import Context, FuncContext, Function, Submodule, ir, ir_utils, node_visitor, visit_ast, visit_block
 from ..debug import print_func_parse_intro
 from pygears import Intf, bind, registry
 from pygears.core.partial import combine_arg_kwds, extract_arg_kwds

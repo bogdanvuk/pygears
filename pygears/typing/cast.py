@@ -56,11 +56,11 @@ def get_type_error(dtype, cast_type, details=None):
 
     if cast_type.specified:
         details.append(
-            f"FIX: to interpret '{short_repr(dtype)}' encoding as '{short_repr(cast_type)}',"
+            f"FIX: to interpret '{short_repr(dtype)}' encoded value as '{short_repr(cast_type)}',"
             f" use code()")
     else:
         details.append(
-            f"FIX: to interpret '{short_repr(dtype)}' encoding as '{short_repr(cast_type)}',"
+            f"FIX: to interpret '{short_repr(dtype)}' encoded value as '{short_repr(cast_type)}',"
             f" specify the cast type completely and use code()")
 
     return TypeError(
