@@ -44,16 +44,23 @@ module {{wrap_module_name}} #(
 
   {% elif p.t == 'axi' %}
     {% if rdata %}
+      {% set araddr_w = araddr.params['araddr'] %}
+      {% set rdata_w = rdata.params['rdata'] %}
+      {% set rdata_byte_addr_w = bitw(ceil_div(rdata_w, 8) - 1) %}
+
+  wire [{{araddr_w + rdata_byte_addr_w - 1}}:0] {{name}}_araddr_s;
+  assign {{araddr.name}}.data = {{name}}_araddr_s[{{araddr_w + rdata_byte_addr_w - 1}}:{{rdata_byte_addr_w}}];
+
   axi_slave_read #(
                     .C_AXI_ID_WIDTH(C_AXI_ID_WIDTH),
-                    .C_AXI_ADDR_WIDTH({{araddr.params['araddr']}}),
+                    .C_AXI_ADDR_WIDTH({{araddr.params['araddr'] + rdata_byte_addr_w}}),
                     .C_AXI_DATA_WIDTH({{rdata.params['rdata']}})
   )
   {{name}}_axi_slave_read (
                     .S_AXI_ACLK(aclk),
                     .S_AXI_ARESETN(aresetn),
       {% if araddr.port %}
-                    .M_AXI_ARADDR({{araddr.name}}.data),
+                    .M_AXI_ARADDR({{name}}_araddr_s),
                     .M_AXI_ARVALID({{araddr.name}}.valid),
                     .M_AXI_ARREADY({{araddr.name}}.ready & {{araddr.name}}.valid),
       {% else %}
