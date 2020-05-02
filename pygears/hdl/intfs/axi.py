@@ -170,5 +170,4 @@ def get_axi_conf(top, conf):
 
         #     defs.extend(pdefs)
 
-    print(axi_port_cfg)
     return axi_port_cfg

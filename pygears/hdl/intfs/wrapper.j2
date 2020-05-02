@@ -1,4 +1,5 @@
 {%- import 'snippet.j2' as snippet -%}
+{%- import 'axi_inst.j2' as axi -%}
 
 module {{wrap_module_name}} #(
     parameter integer C_AXI_ID_WIDTH	= 2)
@@ -19,122 +20,21 @@ module {{wrap_module_name}} #(
   {% set wdata = p.comp.get('wdata', None) %}
 
   {% if p.t == 'axidma' %}
-    {%- set axi_port_map = axi_intfs.port_map(
-         axi_intfs.AXIL_SLAVE, name + "_ctrl", "s_axil", uppercase=True,
-         araddr=5, rdata=32, awaddr=5, wdata=32, bresp=True) %}
-
-    {%- set ctrl_port_map = axi_intfs.port_map(
-         axi_intfs.AXI_MASTER, name, "m_axi", uppercase=True,
-         araddr=32, rdata=rdata.params['rdata']) %}
-
-
-  aximm2s #(
-                    .C_AXI_ID_WIDTH(C_AXI_ID_WIDTH),
-                    .C_AXI_DATA_WIDTH({{rdata.params['rdata']}})
-    )
-  {{name}}_aximm2s (
-                    .S_AXI_ACLK(aclk),
-                    .S_AXI_ARESETN(aresetn),
-                    .S_AXIS_TDATA({{rdata.name}}.data),
-                    .S_AXIS_TVALID({{rdata.name}}.valid),
-                    .S_AXIS_TREADY({{rdata.name}}.ready),
-                    {{axi_port_map|join(",\n")|indent(19, True)}},
-                    {{ctrl_port_map|join(",\n")|indent(19, True)}}
-                    );
-
+    {{axi.dma_read(name, rdata)}}
   {% elif p.t == 'axi' %}
     {% if rdata %}
-      {% set araddr_w = araddr.params['araddr'] %}
-      {% set rdata_w = rdata.params['rdata'] %}
-      {% set rdata_byte_addr_w = bitw(ceil_div(rdata_w, 8) - 1) %}
-
-  wire [{{araddr_w + rdata_byte_addr_w - 1}}:0] {{name}}_araddr_s;
-  assign {{araddr.name}}.data = {{name}}_araddr_s[{{araddr_w + rdata_byte_addr_w - 1}}:{{rdata_byte_addr_w}}];
-
-  axi_slave_read #(
-                    .C_AXI_ID_WIDTH(C_AXI_ID_WIDTH),
-                    .C_AXI_ADDR_WIDTH({{araddr.params['araddr'] + rdata_byte_addr_w}}),
-                    .C_AXI_DATA_WIDTH({{rdata.params['rdata']}})
-  )
-  {{name}}_axi_slave_read (
-                    .S_AXI_ACLK(aclk),
-                    .S_AXI_ARESETN(aresetn),
       {% if araddr.port %}
-                    .M_AXI_ARADDR({{name}}_araddr_s),
-                    .M_AXI_ARVALID({{araddr.name}}.valid),
-                    .M_AXI_ARREADY({{araddr.name}}.ready & {{araddr.name}}.valid),
+        {{axi.slave_read(name, rdata, araddr)}}
       {% else %}
-                    .M_AXI_ARREADY(1'b1),
+        {{axi.slave_read_no_araddr(name, rdata, araddr)}}
       {% endif %}
-                    .M_AXI_RDATA({{rdata.name}}.data),
-                    .M_AXI_RVALID({{rdata.name}}.valid),
-                    .M_AXI_RREADY({{rdata.name}}.ready),
-                    .M_AXI_RRESP(2'b0),
-{{axi_intfs.port_map(axi_intfs.AXI_SLAVE, name, "s_axi", uppercase=True,
-    araddr=araddr.params,
-    rdata=rdata.params)|join(",\n")|indent(19, True)}}
-                    );
     {% endif %}
 
     {% if wdata %}
       {% if awaddr.port == wdata.port %}
-
-        {% set wr_req_data = awaddr['name'] + '.data' %}
-        {% set awaddr_w = awaddr.params['awaddr'] %}
-        {% set wdata_w = wdata.params['wdata'] %}
-        {% set wdata_byte_addr_w = bitw(ceil_div(wdata_w, 8) - 1) %}
-
-  wire [{{awaddr_w + wdata_byte_addr_w - 1}}:0] {{name}}_awaddr_s;
-  assign {{wr_req_data}}[{{awaddr_w-1}}:0] = {{name}}_awaddr_s[{{awaddr_w + wdata_byte_addr_w - 1}}:{{wdata_byte_addr_w}}];
-
-  axi_slave_write #(
-                    .C_AXI_ID_WIDTH(C_AXI_ID_WIDTH),
-                    .C_AXI_ADDR_WIDTH({{awaddr_w + wdata_byte_addr_w}}),
-                    .C_AXI_DATA_WIDTH({{wdata_w}})
-  )
-  {{name}}_axi_slave_write (
-                    .S_AXI_ACLK(aclk),
-                    .S_AXI_ARESETN(aresetn),
-                    .M_AXI_AWADDR({{name}}_awaddr_s),
-                    .M_AXI_AWREADY({{awaddr['name']}}.ready & {{awaddr['name']}}.valid),
-                    .M_AXI_WDATA({{wr_req_data}}[{{awaddr_w + wdata_w-1}}:{{awaddr_w}}]),
-                    .M_AXI_WVALID({{wdata['name']}}.valid),
-                    .M_AXI_WREADY({{wdata['name']}}.ready),
-                    .M_AXI_BRESP(2'b0),
-                    .M_AXI_BVALID({{wdata['name']}}.valid),
-{{axi_intfs.port_map(axi_intfs.AXI_SLAVE, name, "s_axi", uppercase=True, awaddr=True,
-    bresp=True,
-    wdata=True)|join(",\n")|indent(19, True)}}
-                    );
-
+        {{axi.slave_write_combined(name, wdata, awaddr)}}
       {% else %}
-  axi_slave_write #(
-                    .C_AXI_ID_WIDTH(C_AXI_ID_WIDTH),
-                    .C_AXI_ADDR_WIDTH({{awaddr.params['awaddr']}}),
-                    .C_AXI_DATA_WIDTH({{wdata.params['wdata']}})
-  )
-  {{name}}_axi_slave_write (
-                    .S_AXI_ACLK(aclk),
-                    .S_AXI_ARESETN(aresetn),
-
-        {% if awaddr.port %}
-                    .M_AXI_AWADDR({{awaddr.name}}.data),
-                    .M_AXI_AWREADY({{awaddr.name}}.ready & {{awaddr.name}}.valid),
-        {% else %}
-                    .M_AXI_AWREADY(1'b1),
-        {% endif %}
-                    .M_AXI_WDATA({{wdata.name}}.data),
-
-                    .M_AXI_WVALID({{wdata.name}}.valid),
-                    .M_AXI_WREADY({{wdata.name}}.ready & {{wdata.name}}.valid),
-                    .M_AXI_BRESP(2'b0),
-                    .M_AXI_BVALID({{wdata.name}}.valid),
-{{axi_intfs.port_map(axi_intfs.AXI_SLAVE, name, "s_axi", uppercase=True,
-    awaddr=True,
-    bresp=True,
-    wdata=True)|join(",\n")|indent(19, True)}}
-                    );
-
+        {{axi.slave_write(name, wdata, awaddr)}}
       {% endif %}
     {% endif %}
   {% endif %}

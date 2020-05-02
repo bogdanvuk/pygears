@@ -1,4 +1,5 @@
 import os
+import time
 from pygears import Intf, find
 from pygears.lib import sdp, rom, shred, add
 from pygears.typing import Tuple, Uint
@@ -25,25 +26,57 @@ outdir = '/tools/home/tmp/axi_test/ip/rom'
 #         'rdata': 'dout'
 #     }})
 
-ret = sdp(Intf(Tuple[Uint[8], Uint[32]]), Intf(Uint[8]))
+# ret = sdp(Intf(Tuple[Uint[8], Uint[32]]), Intf(Uint[8]))
 
-top = find('/sdp')
-outdir = '/tools/home/tmp/axi_test/ip/sdp'
+# top = find('/sdp')
+# outdir = '/tools/home/tmp/axi_test/ip/sdp'
 
-ipgen(
-    'vivado',
-    __file__,
-    outdir=outdir,
-    top='/sdp',
-    lang='sv',
-    prjdir='/tools/home/tmp/axi_test/ipprj',
-    intf={'s_axi': {
-        'type': 'axi',
-        'araddr': 'rd_addr',
-        'rdata': 'rd_data',
-        'awaddr': 'wr_addr_data',
-        'wdata': 'wr_addr_data'
-    }})
+# ipgen(
+#     'vivado',
+#     __file__,
+#     outdir=outdir,
+#     top='/sdp',
+#     lang='sv',
+#     prjdir='/tools/home/tmp/axi_test/ipprj',
+#     intf={'s_axi': {
+#         'type': 'axi',
+#         'araddr': 'rd_addr',
+#         'rdata': 'rd_data',
+#         'awaddr': 'wr_addr_data',
+#         'wdata': 'wr_addr_data'
+#     }})
+
+# tcl = 'viv_testprj.tcl'
+testdir = "/tools/home/pygears/tests/hdl/intfs"
+prjdir = "/tools/home/tmp/axi_test"
+testname = "test_sdp"
+
+# os.system(f'vivado -mode batch -source {tcl} -nolog -nojournal -tclargs "{testdir}" "{prjdir}" "{testname}"')
+
+def str_readout(ser, timeout=0.01):
+    res = ''
+    while True:
+        time.sleep(0.01)
+        rout = ser.read(size=1024)
+        if not len(rout):
+            break
+
+        res += rout.decode()
+
+    return res
+
+
+# tcl = 'sdk_testprj.tcl'
+# testdir = "/tools/home/pygears/tests/hdl/intfs/test_sdp"
+# os.system(f'xsct {tcl} "{testdir}" "{prjdir}" "{testname}"')
+
+import serial
+
+with serial.Serial('/dev/ttyUSB1', 115200, timeout=0.5) as ser:
+    tcl = 'xsdb_testprj.tcl'
+    os.system(f'xsdb {tcl} "{testdir}" "{prjdir}"')
+    print(str_readout(ser))
+
 
 # ret = shred(Intf(Uint[128]))
 
