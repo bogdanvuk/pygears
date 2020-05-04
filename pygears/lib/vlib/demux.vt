@@ -6,56 +6,56 @@
 
 {% for i in (intfs|isoutput) %}
   {% if _din_t.data.width > 0 and i['width'] > 0 %}
-    assign {{i['name']}}_data = din_s_data[{{i['width']-1}}:0];
+    assign {{i['name']}}.data = din_s.data[{{i['width']-1}}:0];
   {% else %}
-    assign {{i['name']}}_data = 1'bx;
+    assign {{i['name']}}.data = 1'bx;
   {% endif %}
 {% endfor %}
 
 {%- set output_intfs = intfs|isoutput %}
 {%- set mapped_dout_num = py.max(params['mapping'].values()) + 1 %}
 
-    always @*
+    always_comb
     begin
-        din_ready = 1'bx;
+        din.ready = 1'bx;
 
-        if (din_valid) begin
-            case(din_s_ctrl)
+        if (din.valid) begin
+            case(din_s.ctrl)
 {% for key, iout in params['mapping'].items() %}
                 {{key}} : begin
-                    din_ready = {{output_intfs[iout]['name']}}_ready;
+                    din.ready = {{output_intfs[iout]['name']}}.ready;
                 end
 {% endfor %}
                 default: begin
 {% if len(_din_t.types) > mapped_dout_num %}
-                    din_ready = {{output_intfs[-1]['name']}}_ready;
+                    din.ready = {{output_intfs[-1]['name']}}.ready;
 {% else %}
-                    din_ready = 1'bx;
+                    din.ready = 1'bx;
 {% endif %}
                 end
             endcase
         end
     end
 
-    always @*
+    always_comb
     begin
 {% for i in (intfs|isoutput) %}
-        {{i['name']}}_valid = 0;
+        {{i['name']}}.valid = 0;
 {% endfor %}
 
-        if (din_valid) begin
-            case(din_s_ctrl)
+        if (din.valid) begin
+            case(din_s.ctrl)
 {% for key, iout in params['mapping'].items() %}
                 {{key}} : begin
-                    {{output_intfs[iout]['name']}}_valid = din_valid;
+                    {{output_intfs[iout]['name']}}.valid = din.valid;
                 end
 {% endfor %}
                 default: begin
 {% for i in (intfs|isoutput) %}
-                    {{i['name']}}_valid = 1'bx;
+                    {{i['name']}}.valid = 1'bx;
 {% endfor %}
 {% if len(_din_t.types) > mapped_dout_num %}
-                    {{output_intfs[-1]['name']}}_valid = 1;
+                    {{output_intfs[-1]['name']}}.valid = 1;
 {% endif %}
                 end
             endcase

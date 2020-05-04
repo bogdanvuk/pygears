@@ -7,14 +7,14 @@
   {% set dout_lvl = _dout_t.lvl if typeof(_dout_t, Queue) else 0 %}
 
   {% if dout_lvl > 0 %}
-  assign dout_s_eot = din_s_eot[{{dout_lvl-1}}:0];
+  assign dout_s.eot = din_s.eot[{{dout_lvl-1}}:0];
   {% endif %}
 
   {% if int(_din_t.data) > 0 %}
     {% if dout_lvl > 0 %}
-  assign dout_s_data = din_s_data;
+  assign dout_s.data = din_s.data;
     {% else %}
-  assign dout_s = din_s_data;
+  assign dout_s = din_s.data;
     {% endif %}
   {% endif %}
 

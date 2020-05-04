@@ -33,6 +33,9 @@ class HDLModuleInst:
         self._impl_parse = None
         if 'memoized' in self.node.params:
             memnode = self.node.params['memoized']
+
+            # TODO: What if hdlmod hasn't been generated? This can happen if we
+            # only generate a part of the design
             hdlmod = registry(f'{self.ext}gen/map')[memnode]
             self.resolver = hdlmod.resolver
             return

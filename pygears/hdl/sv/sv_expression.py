@@ -235,7 +235,8 @@ class SVExpressionVisitor:
         if node.operator in [
                 ir.opc.Invert
         ]:
-            res = f"{node.dtype.width}'({res})"
+            res = self.cast_svexpr(res, node.dtype, node.operand.dtype)
+            # f"{node.dtype.width}'({res})"
 
         return res
 

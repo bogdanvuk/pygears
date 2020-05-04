@@ -57,9 +57,9 @@ def get_file_struct(top, outdir):
     name = top.name[1:].replace('/', '_')
 
     if outdir is None:
-        outdir = os.path.join(registry('results-dir'), name)
+        outdir = registry('results-dir')
 
-    outdir = os.path.abspath(outdir)
+    outdir = os.path.abspath(os.path.join(outdir, name))
     objdir = os.path.join(outdir, 'obj_dir')
 
     dll_path = os.path.join(objdir, f'pygearslib')
@@ -185,6 +185,9 @@ class SimVerilated(CosimBase):
         self.rebuild = rebuild
         self.top = gear
         self.lang = lang
+        if self.lang is None:
+            self.lang = config['hdl/lang']
+
         self.trace_fn = None
         self.vcd_fifo = vcd_fifo
         self.shmidcat = shmidcat
@@ -202,14 +205,14 @@ class SimVerilated(CosimBase):
         self.verilib.back()
 
     def setup(self):
-        file_struct = get_file_struct(self.top, self.outdir)
-
         # TODO: When reusing existing verilated build, add test to check
         # whether verilated module is the same as the current one (Maybe hash check?)
         if self.rebuild:
             sim_log().info(f'Verilating...')
-            build(self.top, file_struct['outdir'], post_synth=False, lang=self.lang)
+            build(self.top, self.outdir, post_synth=False, lang=self.lang)
             sim_log().info(f'Done')
+
+        file_struct = get_file_struct(self.top, self.outdir)
 
         tracing_enabled = bool(registry('debug/trace'))
         if tracing_enabled:

@@ -1,27 +1,27 @@
 {%- import 'snippet.j2' as snippet -%}
 {% call snippet.module_with_intf_structs(module_name, intfs, intfs|isoutput, comment) %}
 
-   reg [{{intfs|isinput|length}}-1:0] flag, flag_reg; // {{intfs|isinput|length}} = no of input interfaces
-   wire handshake;
-   assign handshake = dout_valid && dout_ready;
+   logic [{{intfs|isinput|length}}-1:0] flag, flag_reg; // {{intfs|isinput|length}} = no of input interfaces
+   logic handshake;
+   assign handshake = dout.valid && dout.ready;
 
    always_comb begin
       flag = 0;
-      dout_s_ctrl = 0;
-      dout_s_data = din0_data;
-      dout_valid = 1'b0;
+      dout_s.ctrl = 0;
+      dout_s.data = din0.data;
+      dout.valid = 1'b0;
 {% for i in intfs|isinput %}
-      {{i['name']}}_ready = dout_ready;
+      {{i['name']}}.ready = dout.ready;
 {% endfor %}
 
-      if(din0_valid && (!flag_reg || flag_reg[0])) begin
-         dout_valid = din0_valid;
+      if(din0.valid && (!flag_reg || flag_reg[0])) begin
+         dout.valid = din0.valid;
          flag[0] = 1;
 {% for i in intfs[1:]|isinput %}
-      end else if ({{i['name']}}_valid && (!flag_reg || flag_reg[{{loop.index}}])) begin
-         dout_s_data = {{i['name']}}_data;
-         dout_s_ctrl = {{loop.index}};
-         dout_valid = {{i['name']}}_valid;
+      end else if ({{i['name']}}.valid && (!flag_reg || flag_reg[{{loop.index}}])) begin
+         dout_s.data = {{i['name']}}.data;
+         dout_s.ctrl = {{loop.index}};
+         dout.valid = {{i['name']}}.valid;
   flag[{{loop.index}}] = 1;
 {% endfor %}
       end

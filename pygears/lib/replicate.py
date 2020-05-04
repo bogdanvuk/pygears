@@ -27,7 +27,7 @@ async def replicate_while(cond: Bool, data: Any) -> Queue['data']:
         last = False
         while not last:
             async with cond as en:
-                last = ~en
+                last = not en
                 if typeof(data.dtype, Queue):
                     yield (d[0], d[1] @ last)
                 else:

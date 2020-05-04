@@ -14,8 +14,8 @@ simple_port_regex = "(?P<dir>input|output)" + opt_space_regex + \
                     id_regex_t.format("type") + \
                     "?" + space_regex + id_regex_t.format("name")
 
-param_regex = id_regex_t.format("name") + \
-              space_regex + "=" + space_regex + id_regex_t.format("val")
+param_regex = r'(?:parameter\s+)?' + id_regex_t.format("name") + \
+              opt_space_regex + "=" + opt_space_regex + id_regex_t.format("val")
 
 intf_port_regex = id_regex_t.format("type") + "\." + id_regex_t.format("modport") + \
                   space_regex + id_regex_t.format("name") + opt_space_regex + \

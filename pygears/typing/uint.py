@@ -65,7 +65,6 @@ class Integral(int, metaclass=IntegralType):
         return hash((type(self), int(self)))
 
 
-
 Number.register(Integral)
 
 
@@ -82,14 +81,12 @@ class IntegerType(IntegralType):
                 w = args
 
             if not isinstance(w, (str, int)):
-                raise TypeError(
-                    f"{name} type parameter must be an integer, not '{w}'")
+                raise TypeError(f"{name} type parameter must be an integer, not '{w}'")
 
             if isinstance(w, int):
                 if w < 0:
                     raise TypeError(
-                        f"{name} type parameter must be a positive integer, not '{w}'"
-                    )
+                        f"{name} type parameter must be a positive integer, not '{w}'")
 
                 args = (int(w), )
 
@@ -106,8 +103,7 @@ class IntegerType(IntegralType):
 
     def __int__(self):
         if not self.args_specified:
-            raise TypeError(
-                f"Cannot calculate width of unspecified type '{repr(self)}'")
+            raise TypeError(f"Cannot calculate width of unspecified type '{repr(self)}'")
 
         return int(self.__args__[0])
 
@@ -329,8 +325,7 @@ class Integer(Integral, metaclass=IntegerType):
 
         if typeof(cls, Uint) and val < 0:
             raise ValueError(
-                f"cannot represent negative numbers with unsigned type '{repr(cls)}'"
-            )
+                f"cannot represent negative numbers with unsigned type '{repr(cls)}'")
 
         if cls.is_generic():
             res = cls[bitw(val)](int(val))
@@ -418,8 +413,7 @@ class Integer(Integral, metaclass=IntegerType):
 
         if not self.signed and other.signed:
             raise TypeError(
-                f"unsupported operand type(s) for +=: '{type(self)}' and '{type(other)}'"
-            )
+                f"unsupported operand type(s) for +=: '{type(self)}' and '{type(other)}'")
 
         return type(self)(int(self) + int(other))
 
@@ -478,8 +472,7 @@ class Integer(Integral, metaclass=IntegerType):
                 if stop <= start:
                     part = Unit()
                 else:
-                    part = Uint[stop - start]((int(self) & (
-                        (1 << stop) - 1)) >> start)
+                    part = Uint[stop - start]((int(self) & ((1 << stop) - 1)) >> start)
 
             elif i < self.width:
                 part = Bool(int(self) & (1 << i))
@@ -610,10 +603,13 @@ class UintType(IntegerType):
         return IntegralType.specified.fget(self)
 
     def __matmul__(self, other):
-        if not typeof(other, Uint):
+        if not typeof(other, (bool, Uint)):
             return NotImplemented
 
-        return Uint[self.width + other.width]
+        if issubclass(other, bool):
+            return Uint[self.width + 1]
+        else:
+            return Uint[self.width + other.width]
 
     @property
     def max(self):
@@ -653,10 +649,12 @@ class Uint(Integer, metaclass=UintType):
         return False
 
     def __matmul__(self, other):
+        if isinstance(other, bool):
+            return Uint[self.width + 1]((int(self) << 1) | int(other))
+
         if not is_type(type(other)):
             raise TypeError(
-                f"unsupported operand type(s) for @: '{type(self)}' and '{type(other)}'"
-            )
+                f"unsupported operand type(s) for @: '{type(self)}' and '{type(other)}'")
 
         if isinstance(other, Unit):
             return self
@@ -664,8 +662,7 @@ class Uint(Integer, metaclass=UintType):
         if not isinstance(other, Uint):
             other = Uint(other)
 
-        return Uint[self.width + other.width]((int(self) << other.width) |
-                                              int(other))
+        return Uint[self.width + other.width]((int(self) << other.width) | int(other))
 
     def __rmatmul__(self, other):
         if isinstance(other, bool):

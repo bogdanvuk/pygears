@@ -32,9 +32,9 @@
 
   {% for name in input_intf_names %}
     {% if min_lvl > 0 %}
-    logic [{{min_lvl-1}}:0] {{name}}_eot_overlap;
+    wire [{{min_lvl-1}}:0] {{name}}_eot_overlap;
     {% endif %}
-    logic {{name}}_eot_aligned;
+    wire {{name}}_eot_aligned;
   {% endfor %}
 
   {% if min_lvl > 0 %}

@@ -7,13 +7,20 @@
   {%- endfor -%}
 {%- endmacro -%}
 
-{% macro sig_list(sigs) -%}
+{% macro sig_list(sigs, outtype="reg") -%}
   {% for i in sigs -%}
     {% if i['width'] == 1 -%}
-      {{i['modport']}} {{i['name']}},
+      {% if i['modport'] == "output" %}
+output {{outtype}} {{i['name']}},
+      {% else -%}
+input {{i['name']}},
+      {% endif -%}
     {% else -%}
-      {# {{i['modport']}} [{{i['width']-1}}:0] {{i['name']}}{{ "" if loop.last else "," }} // {{i['type']}} #}
-      {{i['modport']}} [{{max(i['width']-1, 0)}}:0] {{i['name']}},
+      {% if i['modport'] == "output" %}
+output {{outtype}} [{{max(i['width']-1, 0)}}:0] {{i['name']}},
+      {% else -%}
+input [{{max(i['width']-1, 0)}}:0] {{i['name']}},
+      {% endif -%}
     {% endif -%}
   {% endfor -%}
 {%- endmacro %}
@@ -25,7 +32,7 @@
  #(
     {% for name,value in param_map.items() -%}
       {%- if name %}
-        {{"."|indent(4,True)}}{{name}}({{value.bit_length()}}'d{{value}}){{ "" if loop.last else "," }}
+        {{"."|indent(4,True)}}{{name}}({{max(1, value.bit_length())}}'d{{value}}){{ "" if loop.last else "," }}
       {% else -%}
         {{value|indent(4,True)}}{{ "" if loop.last else "," }}
       {% endif -%}
@@ -189,12 +196,11 @@ endmodule
 {% call gear_module(module_name, intfs, comment, sigs, outtype=outtype) %}
   {% for i in struct_intfs %}
     {% if i['modport'] == 'consumer' %}
-    {{ vgen_signal(i['local_type'], "wire", i['name'] + '_s', 'input')|indent(4, False) }}
+    {{ vgen_signal(i['local_type'], "wire", i['name'] + '_s', 'input', hier=False)|indent(4, False) }}
     {% else %}
-    {{ vgen_signal(i['local_type'], "reg", i['name'] + '_s', 'output')|indent(4, False) }}
+    {{ vgen_signal(i['local_type'], "reg", i['name'] + '_s', 'output', hier=False)|indent(4, False) }}
     {% endif %}
-
-  {% endfor %}
+  {%- endfor %}
 
   {% for i in struct_intfs|isinput -%}
     {% if i['width'] > 0 %}

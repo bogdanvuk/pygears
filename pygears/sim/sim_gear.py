@@ -53,6 +53,7 @@ class SimGear:
             out_prods = out_prods[0]
 
         sim = registry('sim/simulator')
+        err = None
 
         try:
             if is_async_gen(self.func):
@@ -149,6 +150,12 @@ class SimGear:
 
             self._finish()
             raise e
+        except Exception as e:
+            e.args = (f'{str(e)}, in the module "{self.gear.name}"', )
+            err = e
+
+        if err:
+            raise err
 
     @property
     def sim_func_args(self):

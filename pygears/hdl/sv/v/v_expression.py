@@ -18,7 +18,7 @@ def get_resize_func(res_dtype, op_dtype):
     op_size = int(op_dtype)
     signed = 'signed' if getattr(op_dtype, 'signed', False) else ''
 
-    name = f'resize_{op_size}_to_{res_size}_{signed}'
+    name = f'ext_{op_size}_to_{res_size}_{signed}'
     val = RESIZE_FUNC_TEMPLATE.format(res_size=res_size-1,
                                       op_size=op_size-1,
                                       signed=signed,
@@ -59,62 +59,89 @@ def cast(res_dtype, op_dtype, op_value):
 class VExpressionVisitor(SVExpressionVisitor):
     def __init__(self, aux_funcs=None):
         super(VExpressionVisitor, self).__init__(aux_funcs=aux_funcs)
-        self.separator = '_'
+        self.separator = '.'
         self.expr = vexpr
         self.extras = {}
 
-    def visit_SubscriptExpr(self, node):
-        val = self.visit(node.val)
+    def cast_svexpr(self, svexpr, expr_dtype, cast_dtype):
+        expr_signed = getattr(expr_dtype, 'signed', False)
+        res_signed = getattr(cast_dtype, 'signed', False)
 
-        if val is None:
+        expr_width = expr_dtype.width
+        cast_width = cast_dtype.width
+
+        if cast_width == 0:
             return None
 
-        if isinstance(node.index, ir.ResExpr):
-            index = node.index.val
-
-            index = node.val.dtype.index_norm(index)[0]
-
-            if isinstance(index, slice):
-                stop = int(index.stop) - 1
-                start = int(index.start)
-
-                if isinstance(node.val, (ir.Name, ir.AttrExpr)):
-                    return f'{val}[{stop}:{start}]'
+        if res_signed != expr_signed:
+            if res_signed:
+                svexpr = f"$signed({{1'b0, {svexpr}}})"
+                expr_width += 1
             else:
-                if index == node.val.dtype.keys()[0]:
-                    start = 0
-                else:
-                    start = int(node.val.dtype[:index])
+                svexpr = f"$unsigned({svexpr})"
 
-                stop = start + node.val.dtype[index].width - 1
-                index = int(index)
+        if cast_width != expr_width:
+            truncate_func, truncate_impl = get_resize_func(cast_dtype, expr_dtype)
+            self.aux_funcs[truncate_func] = truncate_impl
+            svexpr = f'{truncate_func}({svexpr})'
 
-                if isinstance(node.val, (ir.Name, ir.AttrExpr, ir.Component)):
-                    if typeof(node.val.dtype, (Tuple, Union, Queue)):
-                        return f'{val}{self.separator}{node.val.dtype.fields[index]}'
-                    else:
-                        return f'{val}[{index}]'
+        if res_signed:
+            svexpr = f"$signed({svexpr})"
 
-            if isinstance(node.val, ir.ResExpr):
-                if typeof(node.val.dtype, Array):
-                    return f'{val}_arr[{index}]'
-                elif typeof(node.val.dtype, Integral):
-                    return f'{val}[{index}]'
-                elif typeof(node.val.dtype, (Tuple, Union, Queue)):
-                    return f'{val}{self.separator}{node.val.dtype.fields[index]}'
-            else:
-                fname = get_slice_func(self.aux_funcs, start, stop,
-                                       node.val.dtype.width)
-                return f'{fname}({val})'
+        return svexpr
 
-        if typeof(node.val.dtype, Array):
-            return f'{val}_arr[{self.visit(node.index)}]'
+    # def visit_SubscriptExpr(self, node):
+    #     val = self.visit(node.val)
 
-        if typeof(node.val.dtype, (Queue, Integer, Tuple, Union)):
-            return f'{val}[{self.visit(node.index)}]'
+    #     if val is None:
+    #         return None
 
-        breakpoint()
-        raise Exception('Unsupported slicing')
+    #     if isinstance(node.index, ir.ResExpr):
+    #         index = node.index.val
+
+    #         index = node.val.dtype.index_norm(index)[0]
+
+    #         if isinstance(index, slice):
+    #             stop = int(index.stop) - 1
+    #             start = int(index.start)
+
+    #             if isinstance(node.val, (ir.Name, ir.AttrExpr)):
+    #                 return f'{val}[{stop}:{start}]'
+    #         else:
+    #             if index == node.val.dtype.keys()[0]:
+    #                 start = 0
+    #             else:
+    #                 start = int(node.val.dtype[:index])
+
+    #             stop = start + node.val.dtype[index].width - 1
+    #             index = int(index)
+
+    #             if isinstance(node.val, (ir.Name, ir.AttrExpr, ir.Component)):
+    #                 if typeof(node.val.dtype, (Tuple, Union, Queue)):
+    #                     return f'{val}{self.separator}{node.val.dtype.fields[index]}'
+    #                 else:
+    #                     return f'{val}[{index}]'
+
+    #         if isinstance(node.val, ir.ResExpr):
+    #             if typeof(node.val.dtype, Array):
+    #                 return f'{val}_arr[{index}]'
+    #             elif typeof(node.val.dtype, Integral):
+    #                 return f'{val}[{index}]'
+    #             elif typeof(node.val.dtype, (Tuple, Union, Queue)):
+    #                 return f'{val}{self.separator}{node.val.dtype.fields[index]}'
+    #         else:
+    #             fname = get_slice_func(self.aux_funcs, start, stop,
+    #                                    node.val.dtype.width)
+    #             return f'{fname}({val})'
+
+    #     if typeof(node.val.dtype, Array):
+    #         return f'{val}_arr[{self.visit(node.index)}]'
+
+    #     if typeof(node.val.dtype, (Queue, Integer, Tuple, Union)):
+    #         return f'{val}[{self.visit(node.index)}]'
+
+    #     breakpoint()
+    #     raise Exception('Unsupported slicing')
 
     # def visit_CastExpr(self, node):
     #     op = self.visit(node.operand)

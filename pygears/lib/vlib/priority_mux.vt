@@ -1,3 +1,4 @@
+
 {%- import 'snippet.j2' as snippet -%}
 {% set Queue = import_from('pygears.typing', 'Queue') %}
 {% set typeof = import_from('pygears.typing', 'typeof') %}
@@ -6,9 +7,9 @@
 
   {% set is_queue = typeof(_dout_t, Queue) %}
 
-   reg [{{intfs|isinput|length}}-1:0] flag, flag_reg; // {{intfs|isinput|length}} = no of input interfaces
-   wire handshake;
-   assign handshake = dout_valid && dout_ready;
+   logic [{{intfs|isinput|length - 1}}:0] flag, flag_reg; // {{intfs|isinput|length}} = no of input interfaces
+   logic handshake;
+   assign handshake = dout.valid && dout.ready;
 {% if is_queue %}
    logic start_reg;
 {% endif %}
@@ -16,34 +17,34 @@
    always_comb begin
       flag = 0;
   {% if is_queue %}
-      dout_s_data_ctrl = 0;
-      dout_s_data_data = din0_data;
-      dout_s_eot = din0_data[$size(din0_data)-1:$size(din0_data)-1];
+      dout_s.data.ctrl = 0;
+      dout_s.data.data = din0.data;
+      dout_s.eot = din0.data[{{_din0_t.width-1}}];
   {% else %}
-      dout_s_ctrl = 0;
-      dout_s_data = din0_data;
+      dout_s.ctrl = 0;
+      dout_s.data = din0.data;
   {% endif %}
-      dout_valid = 1'b0;
+      dout.valid = 1'b0;
 {% for i in intfs|isinput %}
-      {{i['name']}}_ready = 1'b0;
+      {{i['name']}}.ready = 1'b0;
 {% endfor %}
 
-      if(din0_valid && (!flag_reg || flag_reg[0])) begin
-         dout_valid = din0_valid;
-         din0_ready = dout_ready;
+      if(din0.valid && (!flag_reg || flag_reg[0])) begin
+         dout.valid = din0.valid;
+         din0.ready = dout.ready;
          flag[0] = 1;
 {% for i in intfs[1:]|isinput %}
-      end else if ({{i['name']}}_valid && (!flag_reg || flag_reg[{{loop.index}}])) begin
+      end else if ({{i['name']}}.valid && (!flag_reg || flag_reg[{{loop.index}}])) begin
   {% if is_queue %}
-         dout_s_data_data = {{i['name']}}_data;
-         dout_s_data_ctrl = {{loop.index}};
-         dout_s_eot = {{i['name']}}_data[{{i['width']-1}}:{{i['width']-1}}];
+         dout_s.data.data = {{i['name']}}.data;
+         dout_s.data.ctrl = {{loop.index}};
+         dout_s.eot = {{i['name']}}.data[{{i['width']-1}}:{{i['width']-1}}];
   {% else %}
-         dout_s_data = {{i['name']}}_data;
-         dout_s_ctrl = {{loop.index}};
+         dout_s.data = {{i['name']}}.data;
+         dout_s.ctrl = {{loop.index}};
   {% endif %}
-         dout_valid = {{i['name']}}_valid;
-         {{i['name']}}_ready = dout_ready;
+         dout.valid = {{i['name']}}.valid;
+         {{i['name']}}.ready = dout.ready;
          flag[{{loop.index}}] = 1;
 {% endfor %}
       end
@@ -51,14 +52,14 @@
 
    always_ff @(posedge clk) begin
   {% if is_queue %}
-      if (rst | (handshake && dout_s_eot)) begin
+      if (rst | (handshake && dout_s.eot)) begin
          start_reg <= 0;
   {% else %}
       if (rst | handshake) begin
   {% endif %}
          flag_reg <= 0;
   {% if is_queue %}
-      end else if (dout_valid && !start_reg) begin
+      end else if (dout.valid && !start_reg) begin
          start_reg <= 1;
   {% else %}
       end else begin

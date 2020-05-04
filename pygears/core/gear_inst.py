@@ -530,7 +530,11 @@ def gear_base_resolver(
             if hasattr(func, 'alternatives') or hasattr(func, 'alternative_to'):
                 err.root_gear = gear_inst
         except Exception as e:
-            err = type(e)(f'{str(e)}, of the module "{name}"')
+            if not hasattr(e, '_stamped'):
+                e.args = (f'{str(e)}, in the module "{registry("gear/current_module").name}/{name}"', )
+                e._stamped = True
+
+            err = e
 
     if err:
         if hasattr(func, 'alternatives') or hasattr(func, 'alternative_to'):

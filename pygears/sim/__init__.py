@@ -38,8 +38,9 @@ def cosim(top, sim, *args, **kwds):
             from .modules.verilator import build
 
             kwds['outdir'] = kwds.get('outdir', config['results-dir'])
+            kwds['rebuild'] = kwds.get('rebuild', True)
             sim_cls = SimVerilated
-            build(top, outdir=kwds['outdir'], rebuild=kwds.get('rebuild', True))
+            build(top, **kwds)
             kwds['rebuild'] = False
         else:
             raise Exception(f"Unsupported simulator: {sim}")

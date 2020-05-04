@@ -18,7 +18,7 @@
   {% set base_module_name = module_name %} 
 {% endif %} 
 
-{% call snippet.module_with_intf_structs(base_module_name, intfs, intfs|isinput, comment, outtype="wire") %}
+{% call snippet.module_with_intf_structs(base_module_name, intfs, intfs|isinput, comment) %}
 
   {%- set input_intf_names = intfs|isinput|keymap("name") %}
   {%- set min_lvl = intfs|isinput|keymap("lvl")|min %}
@@ -28,7 +28,7 @@
     wire all_valid;
     wire handshake;
 
-    assign all_valid = {{input_intf_names|format_list("%s_valid")|join(" && ")}};
+    assign all_valid = {{input_intf_names|format_list("%s.valid")|join(" && ")}};
 
   {% for name in input_intf_names %}
     {% if min_lvl > 0 %}
@@ -39,7 +39,11 @@
 
   {% if min_lvl > 0 %}
     {% for name in input_intf_names %}
-    assign {{name}}_eot_overlap = {{name}}_s_eot[{{min_lvl-1}}:0];
+      {% if min_lvl == 1 %}
+    assign {{name}}_eot_overlap = {{name}}_s.eot;
+      {% else %}
+    assign {{name}}_eot_overlap = {{name}}_s.eot[{{min_lvl-1}}:0];
+      {% endif %}
     {% endfor %}
   {# Main zip functionality that determines which of the inputs is ahead in
   Queue structure, i.e. aligned. #}
@@ -54,9 +58,9 @@
 
   {# Connect internal signals to either output interfaces or sync-guard input interfaces. #}
   {% for din, dout in zip(input_intf_names, out_intf_names) %}
-    assign {{dout}}_valid = {{din}}_valid & all_aligned;
-    assign {{dout}}_data = {{din}}_s;
-    assign {{din}}_ready = {{din}}_valid && ({{dout}}_ready || (all_valid && !{{din}}_eot_aligned));
+    assign {{dout}}.valid = {{din}}.valid & all_aligned;
+    assign {{dout}}.data = {{din}}_s;
+    assign {{din}}.ready = {{din}}.valid && ({{dout}}.ready || (all_valid && !{{din}}_eot_aligned));
   {% endfor %}
 
 {% endcall %}

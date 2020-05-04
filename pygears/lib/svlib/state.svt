@@ -4,7 +4,11 @@
    {%- set rd_intf_names = intfs[1:]|isinput|keymap("name") %}
    {%- set dout_intf_names = intfs|isoutput|keymap("name") %}
 
-   logic [$size(din.data)-1 : 0] din_reg = {{code(_din_t(params['init']), int)}};
+   logic [$size(din.data)-1 : 0] din_reg;
+
+   initial begin
+      din_reg = {{code(_din_t(params['init']), int)}};
+   end
 
    always_ff @(posedge clk) begin
       if (rst) begin
@@ -36,9 +40,9 @@
    end
 
    assign {{rd}}_handshake = {{dout}}.valid && {{dout}}.ready;
-   assign {{dout}}.data = (!{{rd}}_consuming) ? din_reg : {{rd}}_reg;
+   assign {{dout}}_s = (!{{rd}}_consuming) ? din_reg : {{rd}}_reg;
    {% else %}
-   assign {{dout}}.data = din_reg;
+   assign {{dout}}_s = din_reg;
    {% endif %}
 
    assign {{dout}}.valid = {{rd}}.valid;

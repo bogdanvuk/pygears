@@ -31,7 +31,7 @@
  #(
     {% for name,value in param_map.items() -%}
       {%- if name %}
-        {{"."|indent(4,True)}}{{name}}({{value.bit_length()}}'d{{value}}){{ "" if loop.last else "," }}
+        {{"."|indent(4,True)}}{{name}}({{max(1, value.bit_length())}}'d{{value}}){{ "" if loop.last else "," }}
       {% else -%}
         {{value|indent(4,True)}}{{ "" if loop.last else "," }}
       {% endif -%}
@@ -126,10 +126,10 @@ assign {{intf['name']}}.data = {{intf['name']}}_data;
 assign {{intf['name']}}_ready = {{intf['name']}}.ready;
 {%- endmacro %}
 
-{% macro intf_intf_connect(src, dest) -%}
-assign {{dest}}.valid = {{src}}.valid;
-assign {{dest}}.data = {{src}}.data;
-assign {{src}}.ready = {{dest}}.ready;
+{% macro intf_intf_connect(src, dest, index) -%}
+assign {{dest}}.valid = {{src}}{{index}}.valid;
+assign {{dest}}.data = {{src}}{{index}}.data;
+assign {{src}}{{index}}.ready = {{dest}}.ready;
 {%- endmacro %}
 
 {% macro prod_signal_intf_connect(intf) -%}

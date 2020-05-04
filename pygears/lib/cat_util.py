@@ -9,7 +9,7 @@ def din_data_cat_v(intfs):
 
         if issubclass(intf['type'], Queue):
             if int(intf['type'][0]) > 0:
-                data.append(f'{intf["name"]}_s_data')
+                data.append(f'{intf["name"]}_s.data')
         else:
             if int(intf['type']) > 0:
                 data.append(f'{intf["name"]}_s')

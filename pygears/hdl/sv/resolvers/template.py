@@ -2,10 +2,11 @@ import functools
 import typing
 import os
 import pygears
-from pygears import config
+from pygears import config, Intf
 from ...base_resolver import ResolverBase, ResolverTypeError
 from pygears.util.fileio import find_in_dirs, save_file
 from pygears.conf import inject, Inject
+from pygears.hdl.sv.v.accessors import rewrite
 
 
 def get_port_config(modport, type_, name):
@@ -92,8 +93,16 @@ class HDLTemplateResolver(ResolverBase):
         return context
 
     def generate(self, template_env, outdir):
-        save_file(
-            self.file_basename, outdir,
-            template_env.render_local(self.impl_path,
-                                      self.impl_basename,
-                                      self.module_context(template_env)))
+        ctx = self.module_context(template_env)
+        module = template_env.render_local(
+            self.impl_path, self.impl_basename, self.module_context(template_env))
+
+        if template_env.lang == 'v':
+            index = {}
+            for intf in ctx['intfs']:
+                index[intf['name']] = Intf(intf['type'])
+                index[f'{intf["name"]}_s'] = intf['type']
+
+            module = rewrite(module, index)
+
+        save_file(self.file_basename, outdir, module)

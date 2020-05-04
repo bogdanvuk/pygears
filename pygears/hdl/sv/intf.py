@@ -154,12 +154,13 @@ class SVIntfGen:
                 if self.is_broadcast or isinstance(
                         self.intf.producer, InPort):
                     din_name = self.outname
+                    index = ''
                     if self.is_broadcast:
-                        din_name += f'[{i}]'
+                        index = f'[{i}]'
 
                     inst.append(
                         template_env.snippets.intf_intf_connect(
-                            din_name, self.intf.consumers[i].basename))
+                            din_name, self.intf.consumers[i].basename, index))
 
         if self.traced:
             inst.extend(
