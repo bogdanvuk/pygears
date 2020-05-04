@@ -3,7 +3,7 @@
   {% set rdata_w = rdata.params['rdata'] %}
 
   axi_slave_read #(
-                    .C_AXI_ID_WIDTH(C_AXI_ID_WIDTH),
+                    .C_AXI_ID_WIDTH(C_AXI_{{name.upper()}}_ID_WIDTH),
                     .C_AXI_ADDR_WIDTH({{araddr.params['araddr']}}),
                     .C_AXI_DATA_WIDTH({{rdata.params['rdata']}})
   )
@@ -32,7 +32,7 @@
   assign {{araddr.name}}.data = {{name}}_araddr_s[{{araddr_w + rdata_byte_addr_w - 1}}:{{rdata_byte_addr_w}}];
 
   axi_slave_read #(
-                    .C_AXI_ID_WIDTH(C_AXI_ID_WIDTH),
+                    .C_AXI_ID_WIDTH(C_AXI_{{name.upper()}}_ID_WIDTH),
                     .C_AXI_ADDR_WIDTH({{araddr.params['araddr'] + rdata_byte_addr_w}}),
                     .C_AXI_DATA_WIDTH({{rdata.params['rdata']}})
   )
@@ -54,7 +54,7 @@
 
 {% macro slave_write(name, wdata, awaddr) -%}
   axi_slave_write #(
-                    .C_AXI_ID_WIDTH(C_AXI_ID_WIDTH),
+                    .C_AXI_ID_WIDTH(C_AXI_{{name.upper()}}_ID_WIDTH),
                     .C_AXI_ADDR_WIDTH({{awaddr.params['awaddr']}}),
                     .C_AXI_DATA_WIDTH({{wdata.params['wdata']}})
   )
@@ -94,7 +94,7 @@
   assign {{wr_req_data}}[{{awaddr_w-1}}:0] = {{name}}_awaddr_s[{{awaddr_w + wdata_byte_addr_w - 1}}:{{wdata_byte_addr_w}}];
 
   axi_slave_write #(
-                    .C_AXI_ID_WIDTH(C_AXI_ID_WIDTH),
+                    .C_AXI_ID_WIDTH(C_AXI_{{name.upper()}}_ID_WIDTH),
                     .C_AXI_ADDR_WIDTH({{awaddr_w + wdata_byte_addr_w}}),
                     .C_AXI_DATA_WIDTH({{wdata_w}})
   )
@@ -127,13 +127,48 @@
 
 
   aximm2s #(
-                    .C_AXI_ID_WIDTH(C_AXI_ID_WIDTH),
+  {% if 'rlast' in rdata.datamap %}
+                    .OPT_TLAST(1),
+  {% endif %}
+                    .C_AXI_ID_WIDTH(C_AXI_{{name.upper()}}_ID_WIDTH),
                     .C_AXI_DATA_WIDTH({{rdata.params['rdata']}})
     )
   {{name}}_aximm2s (
                     .S_AXI_ACLK(aclk),
                     .S_AXI_ARESETN(aresetn),
-                    .S_AXIS_TDATA({{rdata.name}}.data),
+                    .S_AXIS_TDATA({{rdata.name}}.data[{{rdata.dataslice('rdata')}}]),
+                    .S_AXIS_TVALID({{rdata.name}}.valid),
+                    .S_AXIS_TREADY({{rdata.name}}.ready),
+  {% if 'rlast' in rdata.datamap %}
+                    .S_AXIS_TLAST({{rdata.name}}.data[{{rdata.dataslice('rlast')}}]),
+  {% endif %}
+                    {{axi_port_map|join(",\n")|indent(19, True)}},
+                    {{ctrl_port_map|join(",\n")|indent(19, True)}}
+                    );
+
+{%- endmacro %}
+
+
+{% macro dma_read_queue(name, rdata) -%}
+
+  {%- set axi_port_map = axi_intfs.port_map(
+      axi_intfs.AXIL_SLAVE, name + "_ctrl", "s_axil", uppercase=True,
+      araddr=5, rdata=32, awaddr=5, wdata=32, bresp=True) %}
+
+  {%- set ctrl_port_map = axi_intfs.port_map(
+      axi_intfs.AXI_MASTER, name, "m_axi", uppercase=True,
+      araddr=32, rdata=rdata.params['rdata']) %}
+
+
+  aximm2s #(
+                    .C_AXI_ID_WIDTH(C_AXI_{{name.upper()}}_ID_WIDTH),
+                    .C_AXI_DATA_WIDTH({{rdata.params['rdata']}})
+    )
+  {{name}}_aximm2s (
+                    .S_AXI_ACLK(aclk),
+                    .S_AXI_ARESETN(aresetn),
+                    .S_AXIS_TDATA({{rdata.name}}.data[{{rdata.params['rdata'] - 2}}:0]),
+                    .S_AXIS_TLAST({{rdata.name}}.data[{{rdata.params['rdata'] - 1}}]),
                     .S_AXIS_TVALID({{rdata.name}}.valid),
                     .S_AXIS_TREADY({{rdata.name}}.ready),
                     {{axi_port_map|join(",\n")|indent(19, True)}},

@@ -1,8 +1,14 @@
 {%- import 'snippet.j2' as snippet -%}
 {%- import 'axi_inst.j2' as axi -%}
 
+{% set Queue = import_from('pygears.typing', 'Queue') %}
+{% set typeof = import_from('pygears.typing', 'typeof') %}
+
 module {{wrap_module_name}} #(
-    parameter integer C_AXI_ID_WIDTH	= 2)
+{% for name, p in ports.items() if p.t != 'axilite' %}
+  parameter integer C_AXI_{{name.upper()}}_ID_WIDTH	= 2{{ "" if loop.last else "," }}
+{% endfor %}
+)
 (
     input         aresetn,
     input         aclk,
