@@ -73,6 +73,12 @@ input [{{max(i['width']-1, 0)}}:0] {{i['name']}},
   assign {{port_name}}_data = {{intf_name}}_data;
 {%- endmacro %}
 
+{% macro intf_intf_connect(src, dest, index) -%}
+assign {{dest}}_valid = {{src}}_valid{{index}};
+assign {{dest}}_data = {{src}}_data{{index}};
+assign {{src}}_ready{{index}} = {{dest}}_ready;
+{%- endmacro %}
+
 {% macro intf_inst(name, width, size, type) -%}
   {% set unpacked = "[%d:0]"|format(size-1) if size>1 else "" %}
   {% if width == 0 %}

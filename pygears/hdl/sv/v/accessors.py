@@ -81,7 +81,7 @@ def paren_matcher (n):
     res = r"[^\[\]]*?(?:\["*n+r"[^\[\]]*?"+r"\][^\[\]]*?)*?"*n
     return res[9:-2]
 
-SLICED_ID = re.compile(r'\b(\w+)\b(?:' + paren_matcher(2) + r'|(?:\.\w+\b))+')
+SLICED_ID = re.compile(r'\b(\w+)\b(?:' + paren_matcher(2) + r'|(?:\.\w+\b))+(\s*<?=)?')
 
 def split_id(s):
     path = []
@@ -148,13 +148,13 @@ def combine_ranges(a, b):
     elif is_rng(a) and is_step(b):
         return slice(sl_arith(f'{a.stop} + {b.start}'), None, b.step)
     elif is_rng(a) and is_index(b):
-        return slice(sl_arith(f'{a.stop} + {b.start}'))
+        return slice(sl_arith(f'{a.stop} + {b.start}'), None)
     elif is_step(a) and is_rng(b):
         return slice(sl_arith(f'{a.start} + {b.stop}'), None, sl_arith(f'{b.start} - {b.stop} + 1'))
     elif is_step(a) and is_step(b):
         return slice(sl_arith(f'{a.start} + {b.stop}'), None, b.step)
     elif is_step(a) and is_index(b):
-        return slice(sl_arith(f'{a.start} + {b.start}'))
+        return slice(sl_arith(f'{a.start} + {b.start}'), None)
     else:
         return a
 
@@ -162,11 +162,16 @@ def combine_ranges(a, b):
 def rewrite(module, index):
     def substitute(m):
         name = m.group(1)
+        lval = m.group(2)
+        if lval is None:
+            lval = ''
 
         if name not in index:
             return m.group(0)
 
         hit = m.group(0)
+        if lval:
+            hit = hit[:-len(lval)]
 
         path = []
         for i, p in enumerate(split_id(hit)):
@@ -208,6 +213,9 @@ def rewrite(module, index):
             for p, dtype in spath[1:]:
                 rng = combine_ranges(rng, p)
 
+            if rng.start is None:
+                breakpoint()
+
             if rng.stop is not None:
                 s += f'[{rng.start}:{rng.stop}]'
             elif rng.step is not None:
@@ -215,10 +223,10 @@ def rewrite(module, index):
             else:
                 s += f'[{rng.start}]'
 
-            if getattr(dtype, 'signed', False):
+            if getattr(dtype, 'signed', False) and not lval:
                 s = f'$signed({s})'
 
-        return s
+        return s+lval
 
     module = SLICED_ID.sub(substitute, module)
 
