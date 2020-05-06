@@ -23,12 +23,12 @@
 
 {% if params['dflt'] is none -%}
   {% if py.isinstance(params['data'], py.dict) %}
-   logic [{{int(_dout_t)-1}}:0] memory [0:{{py.max(params['data'].keys())}}];
+   reg [{{int(_dout_t)-1}}:0] memory [0:{{py.max(params['data'].keys())}}];
   {% else %}
-   logic [{{int(_dout_t)-1}}:0] memory [0:{{len(params['data'])-1}}];
+   reg [{{int(_dout_t)-1}}:0] memory [0:{{len(params['data'])-1}}];
   {% endif -%}
 {% else -%}
-   logic [{{int(_dout_t)-1}}:0] memory [0:{{2**int(_addr_t) - 1}}];
+   reg [{{int(_dout_t)-1}}:0] memory [0:{{2**int(_addr_t) - 1}}];
 {% endif %}
 
    always @(posedge clk)

@@ -178,12 +178,12 @@ endmodule
 
 {% macro intf_typedef(intf, depth=4) -%}
   {% if intf['modport'] == 'consumer' %}
-    {{ vgen_signal(intf['local_type'], "wire", intf['name'] + '_s', 'input')|indent(4, False) }}
+    {{ vgen_signal(intf['local_type'], "wire", intf['name'] + '_s', 'input', hier=False)|indent(4, True) }}
     {% if intf['width'] > 0 %}
     assign {{intf['name']}}_s = {{intf['name']}}_data;
     {% endif %}
   {% else %}
-    {{ vgen_signal(intf['local_type'], "reg", intf['name'] + '_s', 'output')|indent(4, False) }}
+    {{ vgen_signal(intf['local_type'], "reg", intf['name'] + '_s', 'output', hier=False)|indent(4, True) }}
     {% if intf['width'] > 0 %}
     assign {{intf['name']}}_data = {{intf['name']}}_s;
     {% endif %}
@@ -196,9 +196,9 @@ endmodule
 {% call gear_module(module_name, intfs, comment, sigs, outtype=outtype) %}
   {% for i in struct_intfs %}
     {% if i['modport'] == 'consumer' %}
-    {{ vgen_signal(i['local_type'], "wire", i['name'] + '_s', 'input', hier=False)|indent(4, False) }}
+    {{ vgen_signal(i['local_type'], "wire", i['name'] + '_s', 'input', hier=False)|indent(4, True) }}
     {% else %}
-    {{ vgen_signal(i['local_type'], "reg", i['name'] + '_s', 'output', hier=False)|indent(4, False) }}
+    {{ vgen_signal(i['local_type'], "reg", i['name'] + '_s', 'output', hier=False)|indent(4, True) }}
     {% endif %}
   {%- endfor %}
 
@@ -278,8 +278,9 @@ endmodule
       ready_reg = 0;
    end
 
+   genvar i;
    generate
-      for (genvar i = 0; i < SIZE; i++) begin
+      for (i = 0; i < SIZE; i++) begin
          assign ready_all[i]  = out_ready[i] || ready_reg[i];
          assign out_valid[i]  = in_valid && !ready_reg[i];
 

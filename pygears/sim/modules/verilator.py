@@ -112,7 +112,7 @@ def verilate(outdir, lang, top_name, wrap_name, tracing_enabled):
             f'Please inspect "{outdir}/verilate.log"')
 
 
-def build(top, outdir=None, post_synth=False, lang=None, rebuild=True):
+def build(top, outdir=None, postsynth=False, lang=None, rebuild=True):
     if isinstance(top, str):
         top_name = top
         top = find(top)
@@ -122,6 +122,12 @@ def build(top, outdir=None, post_synth=False, lang=None, rebuild=True):
 
     if lang is None:
         lang = config['hdl/lang']
+
+    if lang != 'v':
+        postsynth = False
+    else:
+        pass
+        # postsynth = True
 
     file_struct = get_file_struct(top, outdir)
 
@@ -137,7 +143,7 @@ def build(top, outdir=None, post_synth=False, lang=None, rebuild=True):
     synth_src_dir = os.path.join(outdir, 'src')
     hdlgen(
         top,
-        outdir=synth_src_dir if post_synth else outdir,
+        outdir=synth_src_dir if postsynth else outdir,
         wrapper=True,
         generate=True,
         lang=lang)
@@ -145,7 +151,19 @@ def build(top, outdir=None, post_synth=False, lang=None, rebuild=True):
     hdlmod = registry(f'{lang}gen/map')[top]
 
     wrap_name = f'wrap_{hdlmod.module_name}'
-    top_name = hdlmod.module_name if post_synth else wrap_name
+    # top_name = hdlmod.module_name if postsynth else wrap_name
+    top_name = wrap_name
+
+    if postsynth:
+        # TODO: change this to the call of the toplevel synth function
+        from pygears.hdl.yosys import synth
+        synth(
+            outdir=outdir,
+            top=top,
+            synthcmd='synth',
+            srcdir=synth_src_dir,
+            synthout=os.path.join(
+                outdir, f'{wrap_name}.v'))
 
     tracing_enabled = bool(registry('debug/trace'))
     context = {
@@ -175,7 +193,7 @@ class SimVerilated(CosimBase):
             rebuild=True,
             vcd_fifo=False,
             shmidcat=False,
-            post_synth=False,
+            postsynth=False,
             outdir=None,
             lang=None):
 
@@ -209,7 +227,7 @@ class SimVerilated(CosimBase):
         # whether verilated module is the same as the current one (Maybe hash check?)
         if self.rebuild:
             sim_log().info(f'Verilating...')
-            build(self.top, self.outdir, post_synth=False, lang=self.lang)
+            build(self.top, self.outdir, postsynth=False, lang=self.lang)
             sim_log().info(f'Done')
 
         file_struct = get_file_struct(self.top, self.outdir)

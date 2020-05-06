@@ -97,14 +97,14 @@ class Yosys:
         return res
 
 
-def generate_synth(outdir,
-                   srcdir=None,
-                   top=None,
-                   optimize=True,
-                   freduce=False,
-                   synthout=None,
-                   lang='v',
-                   synthcmd='synth'):
+def synth(outdir,
+          srcdir=None,
+          top=None,
+          optimize=True,
+          freduce=False,
+          synthout=None,
+          lang='v',
+          synthcmd='synth'):
     if not srcdir:
         srcdir = os.path.join(outdir, 'src')
 
@@ -158,7 +158,7 @@ def generate_synth(outdir,
         return yosys.stats
 
 
-def synth(
+def entry(
         top,
         design,
         outdir=None,
@@ -215,7 +215,7 @@ def synth(
 
     include += config[f'{lang}gen/include']
 
-    report = generate_synth(outdir, top=top_mod, lang=lang, synthout=synthout, synthcmd=synthcmd, freduce=freduce)
+    report = synth(outdir, top=top_mod, lang=lang, synthout=synthout, synthcmd=synthcmd, freduce=freduce)
 
     return report
 
@@ -223,7 +223,7 @@ def synth(
 class YosysSynthPlugin(SynthPlugin):
     @classmethod
     def bind(cls):
-        conf = cmd_register(['synth', 'yosys'], synth, derived=True)
+        conf = cmd_register(['synth', 'yosys'], entry, derived=True)
 
         safe_bind('yosys/synth/lock', False)
 
