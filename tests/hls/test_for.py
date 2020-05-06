@@ -14,7 +14,7 @@ def test_simple(sim_cls):
 
     directed(f=test(sim_cls=sim_cls), ref=list(range(4)) * 2)
 
-    sim('/tools/home/tmp/vsimple', timeout=8)
+    sim(timeout=8)
 
 
 def test_simple_qrange(sim_cls):

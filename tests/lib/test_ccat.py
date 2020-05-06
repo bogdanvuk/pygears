@@ -54,7 +54,7 @@ def test_bc_ccat_redux_yosys(branches):
     test(Intf(Uint[8]))
 
 
-@synth_check({'logic luts': 3, 'ffs': 0}, tool='yosys')
+@synth_check({'logic luts': 4, 'ffs': 0}, tool='yosys')
 def test_bc_ccat_partial_in_redux_yosys():
     din1 = Intf(Uint[8])
     din0_2 = Intf(Uint[8])

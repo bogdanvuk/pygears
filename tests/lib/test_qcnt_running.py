@@ -106,6 +106,6 @@ def test_synth_vivado():
     qcnt(Intf(Queue[Uint[16], 3]))
 
 
-@synth_check({'logic luts': 36, 'ffs': 16}, tool='yosys')
+@synth_check({'logic luts': 4, 'ffs': 15}, tool='yosys')
 def test_synth_yosys():
     qcnt(Intf(Queue[Uint[16], 3]))

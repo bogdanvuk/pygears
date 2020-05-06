@@ -1,8 +1,6 @@
 from pygears import Intf
 import hashlib
 import inspect
-from pygears.typing.visitor import TypingVisitorBase
-from pygears.util.utils import quiter
 import re
 
 class Signed:
@@ -79,15 +77,11 @@ class VGenTypeVisitor:
 
         yield self.keys, base_offset, type_
 
-SLICE_OR_ELEM = r'(?:(?:\[[^\]]+\])|(?:\.\w+\b))+'
-
 def paren_matcher (n):
     res = r"[^\[\]]*?(?:\["*n+r"[^\[\]]*?"+r"\][^\[\]]*?)*?"*n
     return res[9:-2]
 
-SLICED_ID = re.compile(r'\b(\w+)\b(?:' + paren_matcher(2) + r'|(?:\.\w+\b))+(\s*<?=)?')
-
-# SLICED_ID = re.compile(r'\w+(?:(?:\[[^\]]+\])|(?:\.\w+\b))+')
+SLICED_ID = re.compile(r'\b(\w+)\b(?:' + paren_matcher(2) + r'|(?:\.\w+\b))+')
 
 def split_id(s):
     path = []
@@ -133,29 +127,46 @@ def split_id(s):
 def wire_name(path):
     return hashlib.sha1(path.encode()).hexdigest()[:8]
 
+def combine_ranges(a, b):
+    def is_step(x):
+        return x.stop is None and x.step is not None
+
+    def is_rng(x):
+        return x.stop is not None and x.step is None
+
+    def is_index(x):
+        return x.stop is None and x.step is None
+
+    def sl_arith(x):
+        try:
+            return str(eval(x))
+        except:
+            return x
+
+    if is_rng(a) and is_rng(b):
+        return slice(sl_arith(f'{a.stop} + {b.start}'), sl_arith(f'{a.stop} + {b.stop}'))
+    elif is_rng(a) and is_step(b):
+        return slice(sl_arith(f'{a.stop} + {b.start}'), None, b.step)
+    elif is_rng(a) and is_index(b):
+        return slice(sl_arith(f'{a.stop} + {b.start}'))
+    elif is_step(a) and is_rng(b):
+        return slice(sl_arith(f'{a.start} + {b.stop}'), None, sl_arith(f'{b.start} - {b.stop} + 1'))
+    elif is_step(a) and is_step(b):
+        return slice(sl_arith(f'{a.start} + {b.stop}'), None, b.step)
+    elif is_step(a) and is_index(b):
+        return slice(sl_arith(f'{a.start} + {b.start}'))
+    else:
+        return a
+
+
 def rewrite(module, index):
-    # pats = []
-
-    # for name, elem in index.items():
-    #     pats.append(r'\b' + re.escape(name) + r'\b' + SLICE_OR_ELEM)
-    #     if isinstance(elem, Intf):
-    #         pats.append(r'\b' + re.escape(f'{name}_s') + r'\b' + SLICE_OR_ELEM)
-
-    # if not pats:
-    #     return module
-
-    wires = {}
-
     def substitute(m):
         name = m.group(1)
-        lval = m.group(2)
 
         if name not in index:
             return m.group(0)
 
         hit = m.group(0)
-        if lval is not None:
-            hit = hit[:-len(lval)]
 
         path = []
         for i, p in enumerate(split_id(hit)):
@@ -193,55 +204,23 @@ def rewrite(module, index):
 
         s = name
         if spath:
-            cur_name = name
-            for (p, dtype), last in quiter(spath):
-                if p.stop is not None:
-                    s += f'[{p.start}:{p.stop}]'
-                elif p.step is not None:
-                    s += f'[{p.start}+:{p.step}]'
-                else:
-                    s += f'[{p.start}]'
+            rng, dtype = spath[0]
+            for p, dtype in spath[1:]:
+                rng = combine_ranges(rng, p)
 
-                if getattr(dtype, 'signed', False) and lval is None:
-                    s = f'$signed({s})'
+            if rng.stop is not None:
+                s += f'[{rng.start}:{rng.stop}]'
+            elif rng.step is not None:
+                s += f'[{rng.start}+:{rng.step}]'
+            else:
+                s += f'[{rng.start}]'
 
-                if not last:
-                    if name not in wires:
-                        wires[name] = {}
+            if getattr(dtype, 'signed', False):
+                s = f'$signed({s})'
 
-                    next_name = f'{name}_{wire_name(s)}'
-                    if next_name not in wires[name]:
-                        vtype = 'wire'
-                        if getattr(dtype, 'signed', False):
-                            vtype = 'wire signed'
-
-                        decl = [f'{vtype} [{dtype.width-1}:0] {next_name};']
-                        if lval:
-                            decl.append(f'assign {s} = {next_name};')
-                        else:
-                            decl.append(f'assign {next_name} = {s};')
-
-                        wires[name][next_name] = decl
-
-                    cur_name = next_name
-                    s = cur_name
-
-        if lval:
-            return f'{s} {lval}'
-        else:
-            return s
+        return s
 
     module = SLICED_ID.sub(substitute, module)
-
-    for name, lines in wires.items():
-        def fsub(m):
-            s = m.group(0)
-            for id_lines in lines.values():
-                s += '\n'.join(id_lines) + '\n'
-
-            return s
-
-        module = re.sub(r'^\s*(?:(?:wire)|(?:reg)).*\b' + name + r'\b.*\n', fsub, module, flags=re.MULTILINE)
 
     pat = re.compile(r'always_ff @\(posedge (\w+)\)')
     module = pat.sub(lambda m: f'always @(posedge {m.group(1)})', module)
@@ -265,10 +244,9 @@ def rewrite(module, index):
 #     Tuple['a':Array[Uint[2], 4], 'b':Array[Tuple['c':Int[3], 'd':Uint[4]], 2]]
 # }
 
-# ret = rewrite('''
-# wire signed [C_IDEN: 0] din_s;
-# din_s.a[i] = din_s.b[1].c-din_s.b[0].c[1:0]''', intfs)
+# ret = rewrite('din_s.b[i] = din_s.b[2].d-din_s.b[0].c[1:0]', intfs)
 
+# print(ret)
 # breakpoint()
 # print(ret[1])
 # print(ret[0])

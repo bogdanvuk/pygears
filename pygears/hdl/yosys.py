@@ -1,10 +1,12 @@
+import runpy
 import re
 import os
 from pygears.hdl import hdlgen, list_hdl_files
-from pygears import registry, find, safe_bind, config
+from pygears import registry, find, safe_bind, config, bind
 from pygears.util.fileio import get_main_script
 from pygears.hdl.synth import SynthPlugin
 from pygears.entry import cmd_register
+from pygears.conf.custom_settings import load_rc
 
 # from pygears import config
 # from . import SynthPlugin
@@ -163,6 +165,7 @@ def synth(
         include=None,
         lang='sv',
         generate=True,
+        freduce=False,
         synthout=None,
         synthcmd='synth',
         build=True):
@@ -212,7 +215,7 @@ def synth(
 
     include += config[f'{lang}gen/include']
 
-    report = generate_synth(outdir, top=top_mod, lang=lang, synthout=synthout, synthcmd=synthcmd)
+    report = generate_synth(outdir, top=top_mod, lang=lang, synthout=synthout, synthcmd=synthcmd, freduce=freduce)
 
     return report
 

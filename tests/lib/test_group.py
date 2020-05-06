@@ -81,6 +81,6 @@ def test_synth_vivado():
     group(Intf(Queue[Uint[16]]), Intf(Uint[16]))
 
 
-@synth_check({'logic luts': 50, 'ffs': 16}, tool='yosys')
+@synth_check({'logic luts': 15, 'ffs': 15}, tool='yosys')
 def test_synth_yosys():
     group(Intf(Queue[Uint[16]]), Intf(Uint[16]))
