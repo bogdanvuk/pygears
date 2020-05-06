@@ -411,20 +411,10 @@ def svcompile(hdl_stmts, ctx, title, selected, lang, aux_funcs=None):
     writer.line()
     return str(writer)
 
-
-def write_module(ctx: Context,
-                 hdl,
-                 writer,
-                 subsvmods,
-                 funcs,
-                 template_env,
-                 config=None):
-    if config is None:
-        config = {}
+def write_declarations(ctx, subsvmods, template_env):
+    writer = HDLWriter()
 
     lang = template_env.lang
-
-    aux_funcs = {}
 
     if lang == 'sv':
         from .sv_expression import svexpr
@@ -521,6 +511,42 @@ def write_module(ctx: Context,
 
         writer.block(s.get_inst(template_env, port_map))
 
+    if ctx.regs:
+        writer.line(f'initial begin')
+        for name, expr in ctx.regs.items():
+            if not isinstance(expr, ir.ResExpr):
+                continue
+
+            writer.line(f"    {exprgen(ctx.ref(name))} = {exprgen(expr.val)};")
+
+        writer.line(f'end')
+
+    return str(writer)
+
+
+def write_module(ctx: Context,
+                 hdl,
+                 writer,
+                 subsvmods,
+                 funcs,
+                 template_env,
+                 config=None):
+    if config is None:
+        config = {}
+
+    lang = template_env.lang
+
+    aux_funcs = {}
+
+    if lang == 'sv':
+        from .sv_expression import svexpr
+        sep = '.'
+        exprgen = svexpr
+    else:
+        from .v.v_expression import vexpr
+        sep = '.'
+        exprgen = vexpr
+
     for f_hdl, f_ctx in funcs:
         size = ''
         if int(f_hdl.ret_dtype) > 0:
@@ -570,21 +596,12 @@ def write_module(ctx: Context,
                         aux_funcs=aux_funcs)
 
         if lang == 'v':
-            blk = vrewrite(f_ctx, blk)
+            blk  = vrewrite(f_ctx, blk)
 
         writer.line(blk)
 
-    if ctx.regs:
-        writer.line(f'initial begin')
-        for name, expr in ctx.regs.items():
-            if not isinstance(expr, ir.ResExpr):
-                continue
+    blk = write_declarations(ctx, subsvmods, template_env);
 
-            writer.line(f"    {exprgen(ctx.ref(name))} = {exprgen(expr.val)};")
-
-        writer.line(f'end')
-
-    blk = ''
     for name, expr in ctx.regs.items():
         blk += REG_TEMPLATE.format(exprgen(ctx.ref(name)), exprgen(expr.val))
 
@@ -621,7 +638,7 @@ def write_module(ctx: Context,
                         aux_funcs=aux_funcs)
 
     if lang == 'v':
-        blk = vrewrite(ctx, blk)
+        blk  = vrewrite(ctx, blk)
 
     writer.line(blk)
 

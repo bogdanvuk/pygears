@@ -1,6 +1,8 @@
 from pygears import Intf
+import hashlib
 import inspect
 from pygears.typing.visitor import TypingVisitorBase
+from pygears.util.utils import quiter
 import re
 
 class Signed:
@@ -25,30 +27,24 @@ class VGenOffsetVisitor:
         assert key.stop is None
 
         elem = slice(f'({up})*{type_.data.width}', None, type_.data.width)
-        return [elem] + self.visit(type_.data, path)
+        return [(elem, type_.data)] + self.visit(type_.data, path)
 
     def visit_default(self, type_, path):
         if not path or type_.width == 1 :
-            if getattr(type_, 'signed', False):
-                return [Signed()]
-
             return []
 
         if isinstance(path[0], slice):
-            return path
+            return [(path[0], None)]
 
         if len(getattr(type_, 'fields', [])) > 1:
             key = path.pop(0)
             offset = 0
             for t, f in zip(type_, type_.fields):
                 if f == key:
-                    return [slice(t.width+offset-1, offset)] + self.visit(t, path)
+                    return [(slice(t.width+offset-1, offset), t)] + self.visit(t, path)
                 offset += t.width
             else:
                 raise ElemNotFound
-
-        if getattr(type_, 'signed', False):
-            return [Signed()]
 
         return []
 
@@ -89,7 +85,8 @@ def paren_matcher (n):
     res = r"[^\[\]]*?(?:\["*n+r"[^\[\]]*?"+r"\][^\[\]]*?)*?"*n
     return res[9:-2]
 
-SLICED_ID = re.compile(r'\b(\w+)\b(?:' + paren_matcher(2) + r'|(?:\.\w+\b))+')
+SLICED_ID = re.compile(r'\b(\w+)\b(?:' + paren_matcher(2) + r'|(?:\.\w+\b))+(\s*<?=)?')
+
 # SLICED_ID = re.compile(r'\w+(?:(?:\[[^\]]+\])|(?:\.\w+\b))+')
 
 def split_id(s):
@@ -133,6 +130,9 @@ def split_id(s):
 
     return path
 
+def wire_name(path):
+    return hashlib.sha1(path.encode()).hexdigest()[:8]
+
 def rewrite(module, index):
     # pats = []
 
@@ -144,15 +144,21 @@ def rewrite(module, index):
     # if not pats:
     #     return module
 
+    wires = {}
+
     def substitute(m):
         name = m.group(1)
+        lval = m.group(2)
+
         if name not in index:
             return m.group(0)
 
-        # print(f'{name}: {m.group(0)}')
+        hit = m.group(0)
+        if lval is not None:
+            hit = hit[:-len(lval)]
 
         path = []
-        for i, p in enumerate(split_id(m.group(0))):
+        for i, p in enumerate(split_id(hit)):
             if i == 0:
                 continue
 
@@ -166,24 +172,11 @@ def rewrite(module, index):
             else:
                 path.append(p)
 
-        # path = []
-        # for i, elem in enumerate(re.split('\.|\[', m.group(0))):
-        #     if i == 0:
-        #         continue
-
-        #     if elem[-1] == ']':
-        #         up, _, down = elem[:-1].partition(':')
-        #         if not down:
-        #             down = None
-        #         path.append(slice(up, down))
-        #     else:
-        #         path.append(elem)
-
         dtype = index[name]
         if isinstance(dtype, Intf):
             if path[0] in ['valid', 'ready', 'data']:
                 name = name + '_' + path[0]
-                spath = path[1:]
+                spath = [(p, None) for p in path[1:]]
             else:
                 print(module)
                 print(m.group(0))
@@ -199,21 +192,56 @@ def rewrite(module, index):
                 return m.group(0)
 
         s = name
-        for p in spath:
-            if isinstance(p, Signed):
-                s = f'$signed({s})'
-            elif p.stop is not None:
-                s += f'[{p.start}:{p.stop}]'
-            elif p.step is not None:
-                s += f'[{p.start}+:{p.step}]'
-            else:
-                s += f'[{p.start}]'
+        if spath:
+            cur_name = name
+            for (p, dtype), last in quiter(spath):
+                if p.stop is not None:
+                    s += f'[{p.start}:{p.stop}]'
+                elif p.step is not None:
+                    s += f'[{p.start}+:{p.step}]'
+                else:
+                    s += f'[{p.start}]'
 
-        return s
+                if getattr(dtype, 'signed', False) and lval is None:
+                    s = f'$signed({s})'
 
-    # pattern = re.compile("|".join(pats))
+                if not last:
+                    if name not in wires:
+                        wires[name] = {}
+
+                    next_name = f'{name}_{wire_name(s)}'
+                    if next_name not in wires[name]:
+                        vtype = 'wire'
+                        if getattr(dtype, 'signed', False):
+                            vtype = 'wire signed'
+
+                        decl = [f'{vtype} [{dtype.width-1}:0] {next_name};']
+                        if lval:
+                            decl.append(f'assign {s} = {next_name};')
+                        else:
+                            decl.append(f'assign {next_name} = {s};')
+
+                        wires[name][next_name] = decl
+
+                    cur_name = next_name
+                    s = cur_name
+
+        if lval:
+            return f'{s} {lval}'
+        else:
+            return s
 
     module = SLICED_ID.sub(substitute, module)
+
+    for name, lines in wires.items():
+        def fsub(m):
+            s = m.group(0)
+            for id_lines in lines.values():
+                s += '\n'.join(id_lines) + '\n'
+
+            return s
+
+        module = re.sub(r'^\s*(?:(?:wire)|(?:reg)).*\b' + name + r'\b.*\n', fsub, module, flags=re.MULTILINE)
 
     pat = re.compile(r'always_ff @\(posedge (\w+)\)')
     module = pat.sub(lambda m: f'always @(posedge {m.group(1)})', module)
@@ -233,12 +261,18 @@ def rewrite(module, index):
 
 # from pygears.typing import Tuple, Uint, Array, Int
 # intfs = {
-#     'din':
-#     Intf(Tuple['a':Array[Uint[2], 4], 'b':Array[Tuple['c':Int[3], 'd':Uint[4]], 2]])
+#     'din_s':
+#     Tuple['a':Array[Uint[2], 4], 'b':Array[Tuple['c':Int[3], 'd':Uint[4]], 2]]
 # }
 
-# ret = rewrite('din_s.a[i] = din_s.b[1].c-din_s.b[0].c[1:0]', intfs)
-# print(ret)
+# ret = rewrite('''
+# wire signed [C_IDEN: 0] din_s;
+# din_s.a[i] = din_s.b[1].c-din_s.b[0].c[1:0]''', intfs)
+
+# breakpoint()
+# print(ret[1])
+# print(ret[0])
+
 # print(split_id('din_s[qrange_stop_dout_s.data[2:1]:0]'))
 
 # from pygears.typing import Tuple, Uint, Array, Int, Queue
