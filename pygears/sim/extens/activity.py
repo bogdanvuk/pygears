@@ -12,7 +12,7 @@ class ActivityChecker:
     def __init__(self, top, sim=Inject('sim/simulator')):
         sim.events['before_run'].append(self.before_run)
         sim.events['after_run'].append(self.after_run)
-        bind('sim/activity', self)
+        reg['sim/activity'] = self
         self.blockers = {}
         self.handshakes = set()
         self.hooks = {}

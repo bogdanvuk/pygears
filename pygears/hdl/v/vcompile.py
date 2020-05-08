@@ -324,7 +324,7 @@ def write_assertions(gear, writer, cfg):
 
 def compile_gear_body(gear):
     formal = False
-    conf = registry('vgen')
+    conf = reg['vgen']
     if 'formal' in conf:
         formal = conf['formal']
 

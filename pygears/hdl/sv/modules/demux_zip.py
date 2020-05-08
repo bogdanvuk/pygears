@@ -1,3 +1,4 @@
+from pygears import reg
 from pygears.hdl.sv.svmod import SVModuleInst
 from pygears.hdl.sv import SVGenPlugin
 from pygears.lib.demux import demux_zip
@@ -30,4 +31,4 @@ class SVGenDemuxZip(SVModuleInst):
 class SVGenDemuxZipPlugin(SVGenPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['svgen']['module_namespace'][demux_zip] = SVGenDemuxZip
+        reg['svgen/module_namespace'][demux_zip] = SVGenDemuxZip

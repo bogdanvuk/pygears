@@ -46,7 +46,7 @@ import tempfile
 from functools import partial
 from logging import CRITICAL, DEBUG, ERROR, INFO, NOTSET, WARNING
 
-from .registry import Inject, PluginBase, config, inject, safe_bind
+from .registry import Inject, PluginBase, inject, reg
 from .trace_format import enum_stacktrace
 
 HOOKABLE_LOG_METHODS = ['critical', 'error', 'warning', 'info', 'debug']
@@ -221,15 +221,15 @@ def register_custom_log(name, level=INFO, cls=CustomLogger):
 
     Sets the verbosity level for the ``core`` logger at ``INFO`` level:
 
-    >>> bind('logger/core/level', INFO)
+    >>> reg['logger/core/level'] = INFO
 
     Configures the ``typing`` logger to throw exception on warnings:
 
-    >>> bind('logger/typing/warning', 'exception')
+    >>> reg['logger/typing/warning'] = 'exception'
 
     Configures the ``conf`` logger to use custom function on errors:
 
-    >>> bind('logger/conf/errors', custom_func)
+    >>> reg['logger/conf/errors'] = custom_func
     '''
     log_cls = logging.getLoggerClass()
     logging.setLoggerClass(cls)
@@ -237,13 +237,13 @@ def register_custom_log(name, level=INFO, cls=CustomLogger):
     reg_name = f'logger/{name}'
 
     for m in HOOKABLE_LOG_METHODS:
-        config.define(f'{reg_name}/{m}', default='pass')
+        reg.confdef(f'{reg_name}/{m}', default='pass')
 
-    config.define(f'{reg_name}/level',
+    reg.confdef(f'{reg_name}/level',
                   default=level,
                   setter=partial(set_log_level, name=name))
 
-    config.define(f'{reg_name}/print_traceback', default=True)
+    reg.confdef(f'{reg_name}/print_traceback', default=True)
 
     logger = logging.getLogger(name)
     logger.handlers.clear()
@@ -257,8 +257,8 @@ class LogPlugin(PluginBase):
     @classmethod
     def bind(cls):
         tf = tempfile.NamedTemporaryFile(delete=False)
-        safe_bind('logger/stack_traceback_fn', tf.name)
-        safe_bind('logger/hooks', [])
+        reg['logger/stack_traceback_fn'] = tf.name
+        reg['logger/hooks'] = []
 
         register_custom_log('core', WARNING)
         register_custom_log('typing', WARNING)

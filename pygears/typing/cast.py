@@ -601,4 +601,4 @@ def signed(dtype_or_val):
 # class CastCoreTypesPlugin(CoreTypesPlugin):
 #     @classmethod
 #     def bind(cls):
-#         safe_bind('gear/type_arith/cast', cast)
+#         reg['gear/type_arith/cast'] = cast

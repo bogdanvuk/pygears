@@ -1,4 +1,4 @@
-from pygears import registry
+from pygears import reg
 from pygears.hdl.modinst import HDLModuleInst
 from .sv_keywords import sv_keywords
 from collections import OrderedDict
@@ -9,7 +9,7 @@ class SVModuleInst(HDLModuleInst):
     @inject
     def __init__(self, node, ext=Inject('hdl/lang')):
         super().__init__(node, ext)
-        self.hdlgen_map = registry(f"{ext}gen/map")
+        self.hdlgen_map = reg[f"{ext}gen/map"]
 
     @property
     def inst_name(self):

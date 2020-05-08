@@ -1,4 +1,3 @@
-from pygears.conf import safe_bind
 from . import Queue, Tuple, Union, typeof
 
 

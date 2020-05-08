@@ -2,8 +2,8 @@ import fnmatch
 import functools
 from string import Template
 
-from pygears import PluginBase, registry, safe_bind
-from pygears.conf import Inject, inject, config
+from pygears import PluginBase, reg
+from pygears.conf import Inject, inject
 from pygears.core.port import OutPort, InPort
 # from .util import svgen_typedef
 
@@ -31,7 +31,7 @@ class VIntfGen:
     def traced(self):
         return any(
             fnmatch.fnmatch(self.intf.name, p)
-            for p in registry('debug/trace'))
+            for p in reg['debug/trace'])
 
     @inject
     def get_inst(self,
@@ -130,4 +130,4 @@ class VGenIntfPlugin(PluginBase):
     @classmethod
     def bind(cls):
         pass
-        # safe_bind('svgen/spy_connection_template', dti_spy_connect_t)
+        # reg['svgen/spy_connection_template'] = dti_spy_connect_t

@@ -241,7 +241,7 @@ class WaveJSON(SimExtend):
 
         self.writer = WaveJSONWriter()
 
-        bind('WaveJSONWriter', self.writer)
+        reg['WaveJSONWriter'] = self.writer
 
         self.handhake = set()
 
@@ -293,4 +293,4 @@ class WaveJSON(SimExtend):
 class WaveJSONPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        config.define('wavejson/trace_fn', 'pygears.json')
+        reg.confdef('wavejson/trace_fn', 'pygears.json')

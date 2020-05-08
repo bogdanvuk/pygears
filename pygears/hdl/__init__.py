@@ -1,13 +1,13 @@
 import logging
 import os
 
-from pygears.conf import PluginBase, register_custom_log, config, registry
+from pygears.conf import PluginBase, register_custom_log, reg
 from pygears.core.gear import GearPlugin
 
 
 def register_hdl_paths(*paths):
     for p in paths:
-        config['hdl/include'].append(
+        reg['hdl/include'].append(
             os.path.abspath(os.path.expandvars(os.path.expanduser(p))))
 
 
@@ -19,12 +19,12 @@ class HDLPlugin(GearPlugin):
     @classmethod
     def bind(cls):
         register_custom_log('hdl', logging.WARNING)
-        registry('gear/params/meta')['hdl'] = {}
+        reg['gear/params/meta'].subreg('hdl')
 
-        config.define('hdl/include', default=[])
-        config.define('hdl/lang', default='sv')
+        reg.confdef('hdl/include', default=[])
+        reg.confdef('hdl/lang', default='sv')
 
-        config.define('debug/hide_interm_vals', default=True)
+        reg.confdef('debug/hide_interm_vals', default=True)
 
 
 from .util import flow_visitor, HDLGearHierVisitor

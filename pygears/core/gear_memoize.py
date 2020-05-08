@@ -1,5 +1,5 @@
 import inspect
-from pygears.conf import PluginBase, registry, safe_bind
+from pygears.conf import PluginBase, reg
 from .intf import Intf
 from .gear import Gear, create_hier
 from .port import InPort, OutPort, HDLConsumer, HDLProducer
@@ -46,10 +46,10 @@ def check_args(args, const_args, kwds, mem_args, mem_const_args, mem_kwds):
         if key not in kwds:
             return False
 
-        if key in registry('gear/params/extra'):
+        if key in reg['gear/params/extra']:
             continue
 
-        if key in registry('gear/params/meta'):
+        if key in reg['gear/params/meta']:
             continue
 
         if mem_kwds[key] != kwds[key]:
@@ -142,7 +142,7 @@ def copy_gear(mem_gear: Gear, args, kwds, name, intf_mapping, kwd_intfs):
             kwd_intfs[ii].source(gear_inst.out_ports[pi - in_num])
 
     for key in kwds:
-        if (key in registry('gear/params/extra')) or (key in registry('gear/params/meta')):
+        if (key in reg['gear/params/extra']) or (key in reg['gear/params/meta']):
             gear_inst.params[key] = kwds[key]
 
     for name, val in mem_gear.const_args.items():
@@ -201,10 +201,10 @@ class ContainerVisitor:
 
 def make_gear_call_hash(func, args, const_args, kwds, fix_intfs):
     user_kwds = kwds.copy()
-    for key in registry('gear/params/extra'):
+    for key in reg['gear/params/extra']:
         user_kwds.pop(key, None)
 
-    for key in registry('gear/params/meta'):
+    for key in reg['gear/params/meta']:
         user_kwds.pop(key, None)
 
     del user_kwds['definition']
@@ -236,7 +236,7 @@ def get_memoized_gear(func, args, const_args, kwds, fix_intfs, name):
     if key is None:
         return None, None, None
 
-    gear_memoize = registry('gear/memoize_map')
+    gear_memoize = reg['gear/memoize_map']
     if key not in gear_memoize:
         return None, None, (key, kwd_intfs)
 
@@ -265,15 +265,15 @@ def memoize_gear(gear_inst, key):
             if intf is p.consumer:
                 intf_mapping[p.index + len(gear_inst.in_ports)] = i
 
-    gear_memoize = registry('gear/memoize_map')
+    gear_memoize = reg['gear/memoize_map']
     gear_memoize[key] = (gear_inst, intf_mapping)
 
 
 class GearMemoizePlugin(PluginBase):
     @classmethod
     def bind(cls):
-        safe_bind('gear/memoize_map', {})
+        reg['gear/memoize_map'] = {}
 
     @classmethod
     def reset(cls):
-        safe_bind('gear/memoize_map', {})
+        reg['gear/memoize_map'] = {}

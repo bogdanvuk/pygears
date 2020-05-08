@@ -2,7 +2,7 @@ import sys
 import inspect
 import atexit
 from pygears.conf.trace import register_exit_hook, TraceException, make_traceback
-from pygears import registry, GearDone
+from pygears import reg, GearDone
 from pygears.core.channel import report_out_dangling
 from pygears.sim import clk, timestep
 from pygears.sim.sim import schedule_to_finish
@@ -52,7 +52,7 @@ class SimGear:
         if single_output:
             out_prods = out_prods[0]
 
-        sim = registry('sim/simulator')
+        sim = reg['sim/simulator']
         err = None
 
         try:

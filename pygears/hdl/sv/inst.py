@@ -1,7 +1,7 @@
 import inspect
 import logging
 
-from pygears import PluginBase, registry, safe_bind, config
+from pygears import PluginBase, reg
 from pygears.conf import register_custom_log
 from pygears.core.hier_node import HierVisitorBase
 from .intf import SVIntfGen
@@ -12,8 +12,8 @@ from pygears.conf import inject, Inject
 class SVGenInstVisitor(HierVisitorBase):
     @inject
     def __init__(self, ext=Inject('hdl/lang')):
-        self.namespace = registry(f'{ext}gen/module_namespace')
-        self.hdlgen_map = registry(f'{ext}gen/map')
+        self.namespace = reg[f'{ext}gen/module_namespace']
+        self.hdlgen_map = reg[f'{ext}gen/map']
 
     def Gear(self, node):
         hdlgen_cls = self.namespace.get(node.definition, None)
@@ -59,15 +59,15 @@ def vgen_include_get(cfg):
 class SVGenInstPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        safe_bind('svgen/map', {})
+        reg['svgen/map'] = {}
         register_custom_log('svgen', logging.WARNING)
-        config.define('svgen/include', getter=svgen_include_get)
+        reg.confdef('svgen/include', getter=svgen_include_get)
 
-        safe_bind('vgen/map', {})
+        reg['vgen/map'] = {}
         register_custom_log('vgen', logging.WARNING)
-        config.define('vgen/include', getter=vgen_include_get)
+        reg.confdef('vgen/include', getter=vgen_include_get)
 
     @classmethod
     def reset(cls):
-        safe_bind('svgen/map', {})
-        safe_bind('vgen/map', {})
+        reg['svgen/map'] = {}
+        reg['vgen/map'] = {}

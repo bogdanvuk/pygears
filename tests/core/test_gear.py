@@ -17,7 +17,7 @@ def test_simple():
     assert isinstance(iout1, Intf)
     assert isinstance(iout2, Intf)
 
-    root = registry('gear/root')
+    root = reg['gear/root']
     assert len(root.child) == 2
 
     assert root['func1'].tout == Uint[4]
@@ -46,7 +46,7 @@ def test_hier():
     assert isinstance(iout, Intf)
     assert iout.dtype == Uint[2]
 
-    root = registry('gear/root')
+    root = reg['gear/root']
     assert len(root.child) == 1
 
     assert root['func_hier'].tout == Uint[2]
@@ -86,7 +86,7 @@ def test_hier_hierarchy():
     assert isinstance(iout, Intf)
     assert iout.dtype == Uint[2]
 
-    root = registry('gear/root')
+    root = reg['gear/root']
     assert len(root.child) == 1
 
     assert root['fhier1'].tout == Uint[2]
@@ -131,7 +131,7 @@ def test_alternatives():
     def fgear01(arg1: Tuple['T1', 'T2'], *, lvl=0) -> b'T2':
         pass
 
-    root = registry('gear/root')
+    root = reg['gear/root']
 
     iout = Intf(Uint[1]) | fgear
     assert iout.dtype == Uint[1]

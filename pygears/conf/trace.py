@@ -6,7 +6,7 @@ from functools import partial
 from traceback import TracebackException
 
 from .log import CustomLogger, LogPlugin, register_custom_log
-from .registry import Inject, bind, inject, registry
+from .registry import Inject, inject, reg
 
 from .trace_format import enum_traceback, TraceLevel, enum_stacktrace
 
@@ -74,7 +74,7 @@ def register_issue(err_cls, err, issues=Inject('trace/issues')):
 
 
 def register_exit_hook(hook, *args, **kwds):
-    registry('trace/hooks').append(partial(hook, *args, **kwds))
+    reg['trace/hooks'].append(partial(hook, *args, **kwds))
 
 
 def log_exception(exception):
@@ -84,7 +84,7 @@ def log_exception(exception):
     from pygears.conf.log import LogException
     print_traceback = (exception_type is not LogException)
     if not print_traceback:
-        print_traceback = registry(f'logger/{exception.name}/print_traceback')
+        print_traceback = reg[f'logger/{exception.name}/print_traceback']
     if print_traceback:
         for s in enum_traceback(tr):
             logging.getLogger('trace').error(s[:-1])
@@ -97,13 +97,13 @@ def pygears_excepthook(exception_type,
                        tr,
                        debug_hook=sys.excepthook):
 
-    for hook in registry('trace/hooks'):
+    for hook in reg['trace/hooks']:
         try:
             hook()
         except Exception:
             pass
 
-    if registry('trace/level') == TraceLevel.debug:
+    if reg['trace/level'] == TraceLevel.debug:
         debug_hook(exception_type, exception, tr)
     else:
         from pygears.util.print_hier import print_hier
@@ -150,8 +150,8 @@ class TracePlugin(LogPlugin):
     @classmethod
     def bind(cls):
         register_custom_log('trace', cls=TraceLog)
-        registry('logger/hooks').append(log_error_to_file)
-        bind('trace/issues', [])
+        reg['logger/hooks'].append(log_error_to_file)
+        reg['trace/issues'] = []
 
 
 # -*- coding: utf-8 -*-

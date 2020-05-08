@@ -6,8 +6,8 @@ from pygears.util.test_utils import sim_cls
 from pygears.util.test_utils import cosim_cls
 from pygears.util.test_utils import lang
 
-from pygears import config
+from pygears import reg
 import pytest
 @pytest.fixture(autouse=True)
 def load_conf(tmpdir):
-    config['results-dir'] = tmpdir
+    reg['results-dir'] = tmpdir

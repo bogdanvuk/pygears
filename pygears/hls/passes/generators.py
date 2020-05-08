@@ -55,10 +55,10 @@ def exhaust(func, args):
     #     return [i async for i in aiter]
 
     # loop = asyncio.new_event_loop()
-    # bind('gear/exec_context', 'sim')
+    # reg['gear/exec_context'] = 'sim'
     # items = loop.run_until_complete(
     #     exhaust(func_call.func.__wrapped__(*args)))
-    # bind('gear/exec_context', 'hls')
+    # reg['gear/exec_context'] = 'hls'
 
 
 class Unfolder(IrRewriter):

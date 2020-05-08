@@ -1,7 +1,7 @@
 import typing
 from . import Context, FuncContext, Function, Submodule, ir, ir_utils, node_visitor, visit_ast, visit_block
 from ..debug import print_func_parse_intro
-from pygears import Intf, bind, registry
+from pygears import Intf, reg
 from pygears.core.partial import combine_arg_kwds, extract_arg_kwds
 from pygears.core.port import HDLConsumer, HDLProducer
 from pygears.core.datagear import get_datagear_func, is_datagear
@@ -72,7 +72,7 @@ def inline_expr(func_ir, func_ctx, args):
 
 
 def parse_func_call(func: typing.Callable, args, kwds, ctx: Context):
-    ctx_stack = registry('hls/ctx')
+    ctx_stack = reg['hls/ctx']
 
     uniqueid = ''
     if isinstance(ctx, FuncContext):
@@ -85,9 +85,9 @@ def parse_func_call(func: typing.Callable, args, kwds, ctx: Context):
     if funcref not in ctx_stack[0].functions:
         func_ctx = FuncContext(funcref, args, kwds)
         print_func_parse_intro(func, funcref.ast)
-        registry('hls/ctx').append(func_ctx)
+        reg['hls/ctx'].append(func_ctx)
         func_ir = visit_ast(funcref.ast, func_ctx)
-        registry('hls/ctx').pop()
+        reg['hls/ctx'].pop()
         ctx_stack[0].functions[funcref] = (func_ir, func_ctx)
     else:
         (func_ir, func_ctx) = ctx_stack[0].functions[funcref]
@@ -127,9 +127,9 @@ def call_gear(func, args, kwds, ctx: Context):
     if not all(isinstance(node, ir.ResExpr) for node in kwds.values()):
         raise Exception("Not supproted")
 
-    bind('gear/exec_context', 'compile')
+    reg['gear/exec_context'] = 'compile'
     outputs = func(*local_in, **{k: v.val for k, v in kwds.items()})
-    bind('gear/exec_context', 'hls')
+    reg['gear/exec_context'] = 'hls'
 
     if isinstance(outputs, tuple):
         gear_inst = outputs[0].producer.gear

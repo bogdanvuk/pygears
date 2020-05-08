@@ -1,4 +1,4 @@
-from pygears import registry, config
+from pygears import reg
 from pygears.hls import ir
 from pygears.hls import Context, HDLVisitor, Scope
 from pygears.typing import Bool
@@ -672,7 +672,7 @@ def compile_gear_body(gear, outdir, template_env):
     subsvmods = []
     if ctx.submodules:
         from pygears.hdl import hdlgen
-        hdlgen_map = registry(f'{lang}gen/map')
+        hdlgen_map = reg[f'{lang}gen/map']
         for c in ctx.submodules:
             rtl_top = hdlgen(c.gear, outdir=outdir, generate=False)
             svmod = hdlgen_map[rtl_top]

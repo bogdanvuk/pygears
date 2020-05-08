@@ -3,7 +3,7 @@ import functools
 import typing
 import os
 import pygears
-from pygears import config, registry
+from pygears import reg
 from pygears.core.gear import OutSig
 from ...base_resolver import ResolverBase, ResolverTypeError
 from pygears.util.fileio import find_in_dirs, save_file
@@ -74,7 +74,7 @@ class HierarchicalResolver(ResolverBase):
     def get_hier_module(self, template_env):
         context = self.module_context(template_env)
 
-        self.hdlgen_map = registry(f'{self.ext}gen/map')
+        self.hdlgen_map = reg[f'{self.ext}gen/map']
 
         for child in self.node.local_intfs:
             hdlmod = self.hdlgen_map[child]

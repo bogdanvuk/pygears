@@ -150,8 +150,8 @@ class InlineValues(HDLVisitor):
 
                 stmt.expr.args = [obj] + stmt.expr.args
 
-            if func in registry('hls/ir_builtins'):
-                res = registry('hls/ir_builtins')[func](*stmt.expr.args, **stmt.expr.kwds)
+            if func in reg['hls/ir_builtins']:
+                res = reg['hls/ir_builtins'][func](*stmt.expr.args, **stmt.expr.kwds)
                 if isinstance(res, ir.Statement):
                     return res
                 else:

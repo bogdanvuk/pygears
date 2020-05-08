@@ -2,7 +2,7 @@ import runpy
 import re
 import os
 from pygears.hdl import hdlgen, list_hdl_files
-from pygears import registry, find, safe_bind, config, bind
+from pygears import reg, find
 from pygears.util.fileio import get_main_script
 from pygears.hdl.synth import SynthPlugin
 from pygears.entry import cmd_register
@@ -121,7 +121,7 @@ def synth(outdir,
 
     hdlgen(top=top_mod, lang=lang, outdir=srcdir, wrapper=wrapper)
 
-    vgen_map = registry(f'{lang}gen/map')
+    vgen_map = reg[f'{lang}gen/map']
     top_name = vgen_map[top_mod].module_name
     if wrapper:
         top_name = f'wrap_{top_name}'
@@ -170,7 +170,7 @@ def entry(
         synthcmd='synth',
         build=True):
 
-    if registry('yosys/synth/lock'):
+    if reg['yosys/synth/lock']:
         return
 
     if design is None:
@@ -200,10 +200,10 @@ def entry(
         top_mod = top
 
     if top_mod is None:
-        bind('yosys/synth/lock', True)
+        reg['yosys/synth/lock'] = True
         load_rc('.pygears', os.path.dirname(design))
         runpy.run_path(design)
-        bind('yosys/synth/lock', False)
+        reg['yosys/synth/lock'] = False
         top_mod = find(top)
 
     if top_mod is None:
@@ -225,7 +225,7 @@ class YosysSynthPlugin(SynthPlugin):
     def bind(cls):
         conf = cmd_register(['synth', 'yosys'], entry, derived=True)
 
-        safe_bind('yosys/synth/lock', False)
+        reg['yosys/synth/lock'] = False
 
         conf['parser'].add_argument('--synthout', type=str)
         # conf['parser'].add_argument('--util', action='store_true')

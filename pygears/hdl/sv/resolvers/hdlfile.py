@@ -1,7 +1,7 @@
 import functools
 import typing
 import os
-from pygears import config
+from pygears import reg
 from ...base_resolver import ResolverBase, ResolverTypeError
 from ..svparse import parse
 from pygears.util.fileio import find_in_dirs

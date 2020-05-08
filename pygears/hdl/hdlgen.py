@@ -1,6 +1,5 @@
 import shutil
-from pygears import Intf, find, config
-from pygears.conf import bind, registry
+from pygears import Intf, find, reg
 from .common import list_hdl_files
 
 
@@ -27,14 +26,14 @@ def hdlgen(top=None,
         top = top.producer.gear
 
     if top is None:
-        top = registry('gear/root')
+        top = reg['gear/root']
     elif isinstance(top, str):
         top = find(top)
     else:
         top = top
 
-    bind('svgen/conf', conf)
-    for oper in registry(f'{lang}gen/flow'):
+    reg['svgen/conf'] = conf
+    for oper in reg[f'{lang}gen/flow']:
         top = oper(top, conf)
 
     if copy_files and generate:

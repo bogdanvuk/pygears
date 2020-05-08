@@ -1,6 +1,6 @@
 import os
 import shutil
-from pygears import registry, find
+from pygears import reg, find
 from pygears.core.hier_node import HierYielderBase
 from pygears.core.gear import Gear
 from pygears.definitions import LIB_VLIB_DIR, LIB_SVLIB_DIR
@@ -18,7 +18,7 @@ def enum_hdl_files(top, outdir, lang, rtl_only=False, wrapper=False):
     if isinstance(top, str):
         top = find(top)
 
-    vgen_map = registry(f'{lang}gen/map')
+    vgen_map = reg[f'{lang}gen/map']
 
     if lang == 'sv':
         yield os.path.join(LIB_SVLIB_DIR, 'dti.sv')
@@ -32,9 +32,9 @@ def enum_hdl_files(top, outdir, lang, rtl_only=False, wrapper=False):
         if ((node is top) and wrapper and not rtl_only):
             yield os.path.join(outdir, f'wrap_{vinst.file_basename}')
 
-        if (isinstance(node, Gear) and (node in registry(f'{lang}gen/map'))):
+        if (isinstance(node, Gear) and (node in reg[f'{lang}gen/map'])):
 
-            modinst = registry(f'{lang}gen/map')[node]
+            modinst = reg[f'{lang}gen/map'][node]
             for f in modinst.files:
                 yield os.path.join(outdir, f)
 
@@ -64,7 +64,7 @@ def list_hdl_files(top, outdir, lang, rtl_only=False, wrapper=False):
 
 
 def copy_files(files):
-    outdir = registry('svgen/conf')['outdir']
+    outdir = reg['svgen/conf']['outdir']
 
     for fn in files:
         shutil.copy(fn, outdir)

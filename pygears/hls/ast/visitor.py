@@ -7,7 +7,7 @@ from functools import singledispatch
 from dataclasses import dataclass
 from .. import ir
 
-from pygears import config, Intf
+from pygears import reg, Intf
 
 from .utils import add_to_list, get_function_source, get_function_ast
 

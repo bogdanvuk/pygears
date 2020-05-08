@@ -5,7 +5,7 @@ import os
 import socket
 from math import ceil
 
-from pygears import GearDone, bind, registry, config
+from pygears import GearDone, reg
 from pygears.conf import Inject, inject
 from pygears.sim import clk
 from pygears.sim.modules.cosim_base import CosimBase, CosimNoData
@@ -34,7 +34,7 @@ def format_list(list_, pattern):
 
 
 async def drive_reset(duration):
-    simsoc = registry('sim/config/socket')
+    simsoc = reg['sim/config/socket']
     await clk()
     simsoc.send_cmd(duration | CMD_SYS_RESET)
     for i in range(duration):
@@ -108,7 +108,7 @@ class SVServerModule:
         self.module = module
         self.tenv = tenv
         from pygears import registry
-        self.svmod = registry('svgen/map')[self.module]
+        self.svmod = reg['svgen/map'][self.module]
 
     def files(self):
         return list_hdl_files(self.module, self.srcdir, lang='sv', wrapper=False)
@@ -193,11 +193,11 @@ class SimSocket(CosimBase):
 
         self.handlers = {}
 
-        bind('sim/config/socket', self)
+        reg['sim/config/socket'] = self
 
         self.srcdir = os.path.join(self.outdir, 'src_gen')
         self.rtl_node = hdlgen(gear, outdir=self.srcdir, lang='sv')
-        self.svmod = registry('svgen/map')[self.rtl_node]
+        self.svmod = reg['svgen/map'][self.rtl_node]
 
     def cycle(self):
         self.send_cmd(CMD_CYCLE)
@@ -222,7 +222,7 @@ class SimSocket(CosimBase):
 
         register_intf(SVServerModule(self.rtl_node, tenv, self.srcdir))
 
-        self.conn = registry('sim/svsock/server')
+        self.conn = reg['sim/svsock/server']
         self.send_cmd = self.conn.send_cmd
 
         super().setup()

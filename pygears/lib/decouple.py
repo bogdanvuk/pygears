@@ -1,6 +1,6 @@
 import asyncio
 
-from pygears import gear, module, GearDone, registry
+from pygears import gear, module, GearDone, reg
 from pygears.util.find import find
 from pygears.sim import delta, clk
 
@@ -27,7 +27,7 @@ def decouple_dout_setup(module):
 async def decouple_dout(*, t, depth) -> b't':
     queue = module().decouple_din.queue
     while queue.empty():
-        if registry('sim/map')[module().decouple_din].done:
+        if reg['sim/map'][module().decouple_din].done:
             raise GearDone
 
         await clk()

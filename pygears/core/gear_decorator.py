@@ -3,7 +3,7 @@ import functools
 import inspect
 import pygears
 
-from pygears.conf import Inject, inject, registry, PluginBase, safe_bind
+from pygears.conf import Inject, inject, reg, PluginBase
 from pygears.typing import Tuple, typeof
 from pygears import module
 
@@ -198,10 +198,10 @@ def create_unpacked_tuple_alternative(g):
 
 def create_gear_definition(func, gear_resolver=None, **meta_kwds):
     if gear_resolver is None:
-        gear_resolver = registry('gear/gear_dflt_resolver')
+        gear_resolver = reg['gear/gear_dflt_resolver']
 
     # Add defaults from GearMetaParams registry
-    for k, v in registry('gear/params/meta').items():
+    for k, v in reg['gear/params/meta'].items():
         if k not in meta_kwds:
             meta_kwds[k] = copy.copy(v)
 
@@ -222,7 +222,7 @@ def create_gear_definition(func, gear_resolver=None, **meta_kwds):
         addsource=True,
         extra_kwds={
             k: copy.copy(v)
-            for k, v in registry('gear/params/extra').items()
+            for k, v in reg['gear/params/extra'].items()
         })
 
     functools.update_wrapper(gear_func, func)
@@ -242,4 +242,4 @@ gear = doublewrap(create_gear_definition)
 class GearDecoratorPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        safe_bind('gear/gear_dflt_resolver', None)
+        reg['gear/gear_dflt_resolver'] = None

@@ -1,7 +1,7 @@
 import inspect
 import os
 
-from pygears import PluginBase, registry, safe_bind, config
+from pygears import PluginBase, reg
 from pygears.core.hier_node import HierVisitorBase
 from .intf import VIntfGen
 from pygears.definitions import LIB_VLIB_DIR, USER_VLIB_DIR
@@ -9,8 +9,8 @@ from pygears.definitions import LIB_VLIB_DIR, USER_VLIB_DIR
 
 class VGenInstVisitor(HierVisitorBase):
     def __init__(self):
-        self.namespace = registry('vgen/module_namespace')
-        self.vgen_map = registry('vgen/map')
+        self.namespace = reg['vgen/module_namespace']
+        self.vgen_map = reg['vgen/map']
 
     def RTLGear(self, node):
         if 'hdl' not in node.params:
@@ -56,10 +56,10 @@ class VGenInstPlugin(PluginBase):
     @classmethod
     def bind(cls):
         pass
-        # safe_bind('vgen/map', {})
-        # safe_bind('vgen/module_namespace', {})
-        # config.define('vgen/include', getter=vgen_include_get)
+        # reg['vgen/map'] = {}
+        # reg['vgen/module_namespace'] = {}
+        # reg.confdef('vgen/include', getter=vgen_include_get)
 
     @classmethod
     def reset(cls):
-        safe_bind('vgen/map', {})
+        reg['vgen/map'] = {}

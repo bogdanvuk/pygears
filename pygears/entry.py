@@ -4,7 +4,7 @@ import inspect
 import runpy
 import argparse
 
-from pygears import PluginBase, __version__, bind
+from pygears import PluginBase, __version__, reg
 from pygears.conf import inject, Inject
 from pygears.conf.custom_settings import load_rc
 
@@ -106,4 +106,4 @@ class EntryPlugin(PluginBase):
 
         subparsers = parser.add_subparsers(title='subcommands', help='subcommand help', dest='command')
 
-        bind('entry', {'parser': parser, 'subparsers': subparsers, 'cmds': {}})
+        reg['entry'] = {'parser': parser, 'subparsers': subparsers, 'cmds': {}}

@@ -9,8 +9,7 @@ from functools import partial, wraps
 import jinja2
 import pytest
 
-from pygears import clear, find, config
-from pygears.conf import safe_bind
+from pygears import clear, find, reg
 from pygears.sim import sim
 from pygears.sim.modules.sim_socket import SimSocket
 from pygears.sim.modules.verilator import SimVerilated
@@ -118,8 +117,8 @@ def formal_check_fixt(tmpdir, request):
     disable = request.param[0] if request.param[0] is not None else {}
     asserts = request.param[1] if request.param[1] is not None else {}
     assumes = request.param[2] if request.param[2] is not None else []
-    safe_bind('vgen/formal/asserts', asserts)
-    safe_bind('vgen/formal/assumes', assumes)
+    reg['vgen/formal/asserts'] = asserts
+    reg['vgen/formal/assumes'] = assumes
 
     root = find('/')
     module = hdlgen(

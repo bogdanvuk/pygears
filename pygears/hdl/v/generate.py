@@ -20,7 +20,7 @@ class VTemplateEnv(TemplateEnv):
 
 class VGenGenerateVisitor(HierYielderBase):
     def __init__(self, top, wrapper=False):
-        self.vgen_map = registry('vgen/map')
+        self.vgen_map = reg['vgen/map']
         self.wrapper = wrapper
         self.top = top
         self.template_env = VTemplateEnv()

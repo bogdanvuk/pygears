@@ -4,7 +4,7 @@ import inspect
 
 from typing import List
 from dataclasses import dataclass
-from pygears.conf import PluginBase, registry, safe_bind, bind
+from pygears.conf import PluginBase, reg
 from traceback import walk_stack
 from .intf import Intf
 from .port import InPort, OutPort, HDLConsumer, HDLProducer
@@ -25,7 +25,7 @@ class GearArgsNotSpecified(Exception):
 
 
 def module():
-    return registry('gear/current_module')
+    return reg['gear/current_module']
 
 
 def filter_internals(t):
@@ -65,14 +65,16 @@ def gear_explicit_params(func, params):
     paramspec = inspect.getfullargspec(func)
     explicit_param_names = paramspec.kwonlyargs or []
 
-    return {name: params[name] for name in explicit_param_names if name in params}
+    return {
+        name: params[name]
+        for name in explicit_param_names if name in params
+    }
 
 
 class Gear(NamedHierNode):
     def __init__(self, func, params):
-        super().__init__(
-            params['name'],
-            registry('gear/current_module') if func else None)
+        super().__init__(params['name'],
+                         reg['gear/current_module'] if func else None)
         self.trace = list(enum_stacktrace())
         self.args = {}
         self.params = params
@@ -105,15 +107,17 @@ class Gear(NamedHierNode):
 
     def connect_output(self, out_intfs, out_dtypes):
 
-        dflt_dout_name = registry('gear/naming/default_out_name')
+        dflt_dout_name = reg['gear/naming/default_out_name']
         for i in range(len(self.outnames), len(out_dtypes)):
             if out_intfs and hasattr(out_intfs[i], 'var_name'):
                 self.outnames.append(out_intfs[i].var_name)
             else:
-                self.outnames.append(
-                    dflt_dout_name if len(out_dtypes) == 1 else f'{dflt_dout_name}{i}')
+                self.outnames.append(dflt_dout_name if len(out_dtypes) ==
+                                     1 else f'{dflt_dout_name}{i}')
 
-        self.out_ports = [OutPort(self, i, name) for i, name in enumerate(self.outnames)]
+        self.out_ports = [
+            OutPort(self, i, name) for i, name in enumerate(self.outnames)
+        ]
 
         # Connect internal interfaces
         if out_intfs:
@@ -134,7 +138,8 @@ class Gear(NamedHierNode):
                 for p in self.in_ports)
         else:
             return not any(
-                isinstance(p.producer.producer, HDLProducer) for p in self.out_ports)
+                isinstance(p.producer.producer, HDLProducer)
+                for p in self.out_ports)
 
     @property
     def definition(self):
@@ -217,11 +222,11 @@ class create_hier:
         self.gear = gear
 
     def __enter__(self):
-        bind('gear/current_module', self.gear)
+        reg['gear/current_module'] = self.gear
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
-        bind('gear/current_module', self.gear.parent)
+        reg['gear/current_module'] = self.gear.parent
 
 
 @dataclass(frozen=True, eq=True)
@@ -244,29 +249,30 @@ class OutSig:
 class GearPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        safe_bind('gear/naming', {'default_out_name': 'dout'})
+        reg['gear/naming'] = {'default_out_name': 'dout'}
 
-        safe_bind(
-            'gear/params/meta', {
+        reg['gear'].subreg('params')
+
+        reg['gear/params'].subreg(
+            'meta', {
                 'enablement': True,
                 'outnames': None,
                 'signals': (InSig('clk', 1), InSig('rst', 1))
             })
 
-        safe_bind(
-            'gear/params/extra', {
-                'name': None,
-                'intfs': [],
-                'sigmap': {},
-                '__base__': None
-            })
+        reg['gear/params'].subreg('extra', {
+            'name': None,
+            'intfs': [],
+            'sigmap': {},
+            '__base__': None
+        })
 
-        safe_bind('gear/root', Gear(None, params={'name': ''}))
-        safe_bind('gear/current_module', cls.registry['gear']['root'])
-        safe_bind('gear/exec_context', 'compile')
+        reg['gear/root'] = Gear(None, params={'name': ''})
+        reg['gear/current_module'] = reg['gear/root']
+        reg['gear/exec_context'] = 'compile'
 
     @classmethod
     def reset(cls):
-        safe_bind('gear/root', Gear(None, params={'name': ''}))
-        safe_bind('gear/current_module', cls.registry['gear']['root'])
-        safe_bind('gear/code_map', [])
+        reg['gear/root'] = Gear(None, params={'name': ''})
+        reg['gear/current_module'] = reg['gear/root']
+        reg['gear/code_map'] = []

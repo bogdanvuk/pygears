@@ -2,7 +2,7 @@ import fnmatch
 import functools
 import hashlib
 
-from pygears import registry
+from pygears import reg
 from .base_resolver import ResolverTypeError
 from . import hdl_log
 
@@ -28,7 +28,7 @@ class HDLModuleInst:
     def __init__(self, node, ext):
         self.node = node
         self.ext = ext
-        self.hdlgen_map = registry(f"{self.ext}gen/map")
+        self.hdlgen_map = reg[f"{self.ext}gen/map"]
 
         self._impl_parse = None
         if 'memoized' in self.node.params:
@@ -36,22 +36,22 @@ class HDLModuleInst:
 
             # TODO: What if hdlmod hasn't been generated? This can happen if we
             # only generate a part of the design
-            hdlmod = registry(f'{self.ext}gen/map')[memnode]
+            hdlmod = reg[f'{self.ext}gen/map'][memnode]
             self.resolver = hdlmod.resolver
             return
 
         if self.node.parent is None:
-            self.resolver = registry(f'{self.ext}gen/dflt_resolver')(node)
+            self.resolver = reg[f'{self.ext}gen/dflt_resolver'](node)
             return
 
-        for r in registry(f'{self.ext}gen/resolvers'):
+        for r in reg[f'{self.ext}gen/resolvers']:
             try:
                 self.resolver = r(node)
                 break
             except ResolverTypeError:
                 pass
         else:
-            self.resolver = registry(f'{self.ext}gen/dflt_resolver')(node)
+            self.resolver = reg[f'{self.ext}gen/dflt_resolver'](node)
             hdl_log().warning(
                 f'Unable to compile "{node.name}" to HDL and no HDL module with the name '
                 f'"{self.resolver.module_name}" found on the path. Module connected as a black-box.')
@@ -68,7 +68,7 @@ class HDLModuleInst:
     @functools.lru_cache()
     def traced(self):
         self_traced = any(
-            fnmatch.fnmatch(self.node.name, p) for p in registry('debug/trace'))
+            fnmatch.fnmatch(self.node.name, p) for p in reg['debug/trace'])
 
         if self.hierarchical:
             children_traced = any(

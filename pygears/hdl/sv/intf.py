@@ -2,8 +2,8 @@ import fnmatch
 import functools
 from string import Template
 
-from pygears import PluginBase, registry, safe_bind
-from pygears.conf import Inject, inject, config
+from pygears import PluginBase, reg
+from pygears.conf import Inject, inject, reg
 from pygears.core.port import OutPort, InPort, HDLProducer
 from .util import svgen_typedef
 
@@ -24,7 +24,7 @@ class SVIntfGen:
     def traced(self):
         return any(
             fnmatch.fnmatch(self.intf.name, p)
-            for p in registry('debug/trace'))
+            for p in reg['debug/trace'])
 
     @property
     @functools.lru_cache(maxsize=None)
@@ -61,7 +61,7 @@ class SVIntfGen:
     @functools.lru_cache(maxsize=None)
     def basename(self):
 
-        hdlgen_map = registry(f'{self.ext}gen/map')
+        hdlgen_map = reg[f'{self.ext}gen/map']
         basename = self._basename
         if self.is_port_intf:
             return basename
@@ -221,4 +221,4 @@ class SVIntfGen:
 class SVGenIntfPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        safe_bind('svgen/spy_connection_template', dti_spy_connect_t)
+        reg['svgen/spy_connection_template'] = dti_spy_connect_t

@@ -2,7 +2,7 @@ import os
 from pygears.core.hier_node import HierYielderBase
 from pygears.util.fileio import save_file
 from pygears.hdl.templenv import TemplateEnv
-from pygears import registry
+from pygears import reg
 from .util import svgen_typedef
 
 
@@ -20,7 +20,7 @@ class SVTemplateEnv(TemplateEnv):
 class SVGenGenerateVisitor(HierYielderBase):
     def __init__(self, top, outdir, wrapper=False):
         self.template_env = SVTemplateEnv()
-        self.svgen_map = registry('svgen/map')
+        self.svgen_map = reg['svgen/map']
         self.wrapper = wrapper
         self.top = top
         self.outdir = outdir

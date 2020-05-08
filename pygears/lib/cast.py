@@ -1,7 +1,7 @@
 from pygears import gear
 from pygears.typing import cast as type_cast
 from pygears.typing import trunc as type_trunc
-from pygears.conf import safe_bind
+from pygears.conf import reg
 from pygears.core.intf import IntfOperPlugin
 from pygears.hdl.util import HDLGearHierVisitor, flow_visitor
 from pygears.hdl.sv import SVGenPlugin
@@ -42,6 +42,6 @@ class RemoveEqualReprCastVisitor(HDLGearHierVisitor):
 class HDLCastPlugin(IntfOperPlugin, VGenPlugin, SVGenPlugin):
     @classmethod
     def bind(cls):
-        safe_bind('gear/intf_oper/__or__', pipe)
-        cls.registry['vgen']['flow'].insert(0, RemoveEqualReprCastVisitor)
-        cls.registry['svgen']['flow'].insert(0, RemoveEqualReprCastVisitor)
+        reg['gear/intf_oper/__or__'] = pipe
+        reg['vgen/flow'].insert(0, RemoveEqualReprCastVisitor)
+        reg['svgen/flow'].insert(0, RemoveEqualReprCastVisitor)

@@ -1,4 +1,4 @@
-from pygears.conf import PluginBase, safe_bind, registry
+from pygears.conf import PluginBase, reg
 from . import ir
 from .ast.cast import resolve_cast_func
 from .ast.call import resolve_gear_call
@@ -206,7 +206,7 @@ def call_breakpoint():
 
 
 def ir_builtin(func):
-    registry('hls/ir_builtins').get(func, None)
+    reg['hls/ir_builtins'].get(func, None)
 
 
 class AddIntfOperPlugin(PluginBase):
@@ -301,4 +301,4 @@ class AddIntfOperPlugin(PluginBase):
             ir_builtins[getattr(int, name)] = lambda a, b, *, x=op: ir.BinOpExpr(
                 (call_int(a), b), x)
 
-        safe_bind('hls/ir_builtins', ir_builtins)
+        reg['hls/ir_builtins'] = ir_builtins

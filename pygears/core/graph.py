@@ -1,4 +1,4 @@
-from pygears.conf import registry, safe_bind, PluginBase, Inject, inject
+from pygears.conf import reg, PluginBase, Inject, inject
 from pygears.core.port import InPort, OutPort, Port, HDLConsumer, HDLProducer
 from pygears.core.hier_node import HierNode
 
@@ -10,7 +10,7 @@ class PathError(Exception):
 def get_sim_map_gear(gear):
     global sim_reg
     if sim_reg is None:
-        sim_reg = registry('sim')
+        sim_reg = reg['sim']
 
     sim_map = sim_reg['map']
     while gear is not None:
@@ -150,8 +150,8 @@ def interface_tree(intf):
 
 
 def get_consumer_tree(intf):
-    consumer_tree = registry('graph/consumer_tree')
-    end_producer = registry('graph/end_producer')
+    consumer_tree = reg['graph/consumer_tree']
+    end_producer = reg['graph/end_producer']
     if intf in consumer_tree:
         return consumer_tree[intf]
 
@@ -165,12 +165,12 @@ class IntfOperPlugin(PluginBase):
     def bind(cls):
         global sim_reg
         sim_reg = None
-        safe_bind('graph/consumer_tree', {})
-        safe_bind('graph/end_producer', {})
+        reg['graph/consumer_tree'] = {}
+        reg['graph/end_producer'] = {}
 
 
 def get_producer_queue(obj):
-    end_producer = registry('graph/end_producer')
+    end_producer = reg['graph/end_producer']
     if obj not in end_producer:
         intf = get_source_producer(obj, sim=True)
         get_consumer_tree(intf)

@@ -4,7 +4,7 @@
 
 from functools import partial
 from .sim import sim, artifacts_dir, sim_assert, timestep, clk, delta, sim_log, sim_phase, SimFinish
-from pygears import config
+from pygears import reg
 from . import inst
 
 from .sim import SimPlugin, schedule_to_finish
@@ -20,7 +20,7 @@ def cosim(top, sim, *args, **kwds):
     from pygears import find, registry
 
     if top is None:
-        top = registry('gear/root')
+        top = reg['gear/root']
     elif isinstance(top, str):
         top_name = top
         top = find(top)

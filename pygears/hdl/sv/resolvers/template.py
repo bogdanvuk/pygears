@@ -2,7 +2,7 @@ import functools
 import typing
 import os
 import pygears
-from pygears import config, Intf
+from pygears import reg, Intf
 from ...base_resolver import ResolverBase, ResolverTypeError
 from pygears.util.fileio import find_in_dirs, save_file
 from pygears.conf import inject, Inject

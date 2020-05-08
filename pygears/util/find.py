@@ -1,5 +1,5 @@
 import os
-from pygears import registry
+from pygears import reg
 
 
 def _find_rec(path, root):
@@ -24,12 +24,12 @@ def _find_rec(path, root):
 def find(path, root=None):
     if path.startswith('/'):
         path = path[1:]
-        root = registry('gear/root')
+        root = reg('gear/root')
     else:
         if path.startswith('./'):
             path = path[2:]
 
-        root = registry('gear/current_module')
+        root = reg['gear/current_module']
 
     if path == '':
         return root

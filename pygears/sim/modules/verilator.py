@@ -7,7 +7,7 @@ from pygears import Intf
 
 import jinja2
 
-from pygears import bind, registry, config, find
+from pygears import reg, find
 from pygears.sim import sim_log
 from pygears.sim.c_drv import CInputDrv, COutputDrv
 from pygears.sim.modules.cosim_base import CosimBase
@@ -57,7 +57,7 @@ def get_file_struct(top, outdir):
     name = top.name[1:].replace('/', '_')
 
     if outdir is None:
-        outdir = registry('results-dir')
+        outdir = reg['results-dir']
 
     outdir = os.path.abspath(os.path.join(outdir, name))
     objdir = os.path.join(outdir, 'obj_dir')
@@ -148,7 +148,7 @@ def build(top, outdir=None, postsynth=False, lang=None, rebuild=True):
         generate=True,
         lang=lang)
 
-    hdlmod = registry(f'{lang}gen/map')[top]
+    hdlmod = reg[f'{lang}gen/map'][top]
 
     wrap_name = f'wrap_{hdlmod.module_name}'
     # top_name = hdlmod.module_name if postsynth else wrap_name

@@ -59,7 +59,7 @@ def multicycle_test_gen(func, latency):
 
     sim()
 
-    assert registry('sim/timestep') == (data_num + latency - 1)
+    assert reg['sim/timestep'] == (data_num + latency - 1)
 
 
 def test_multicycle_thin():

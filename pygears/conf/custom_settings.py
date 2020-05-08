@@ -6,7 +6,7 @@ import pprint
 import runpy
 
 from .log import conf_log
-from .registry import PluginBase, bind
+from .registry import PluginBase, reg
 from .utils import dict_generator
 
 
@@ -14,8 +14,8 @@ def print_registry():
     # monkey patch sorting
     pprint._safe_key.__lt__ = lambda x, y: True
 
-    reg = pprint.pformat(PluginBase.registry)
-    conf_log().info(f'Registry settings:\n{reg}')
+    preg = pprint.pformat(reg)
+    conf_log().info(f'Registry settings:\n{preg}')
 
 
 def load_rc_from_dir(rc_fn, dirname):
@@ -45,7 +45,7 @@ def load_rc_from_dir(rc_fn, dirname):
     if conf:
         for c_list in dict_generator(conf):
             keys = '/'.join([str(x) for x in c_list[:-1]])
-            bind(keys, c_list[-1])
+            reg(keys, c_list[-1])
 
 
 def load_rc(rc_fn, dirname=None):

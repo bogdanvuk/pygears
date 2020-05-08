@@ -1,7 +1,7 @@
 import itertools
 import os
 
-from pygears import config
+from pygears import reg
 from pygears.lib.sieve import sieve
 from pygears.hdl.sv import SVGenPlugin
 # from pygears.hdl.sv.svmod import SVModuleInst
