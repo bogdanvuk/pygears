@@ -286,7 +286,7 @@ async def scope(
     transaction=False):
 
     if clk_freq is None:
-        clk_freq = config['sim/clk_freq']
+        clk_freq = reg['sim/clk_freq']
 
     if method is None:
         method = ['plot'] * len(xs)

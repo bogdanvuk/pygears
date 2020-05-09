@@ -1,4 +1,4 @@
-from pygears import config
+from pygears import reg
 
-config['debug/trace'].append('/flatten.dout')
-config['debug/trace'].append('/add.dout')
+reg['debug/trace'].append('/flatten.dout')
+reg['debug/trace'].append('/add.dout')

@@ -1,5 +1,5 @@
-from pygears import config
+from pygears import reg
 
-config['debug/trace'].append('/fmap/sub.*')
-config['debug/trace'].append('/fmap.din')
-config['debug/trace'].append('/fmap.dout')
+reg['debug/trace'].append('/fmap/sub.*')
+reg['debug/trace'].append('/fmap.din')
+reg['debug/trace'].append('/fmap.dout')

@@ -505,21 +505,21 @@ def sim(resdir=None, timeout=None, extens=None, run=True, check_activity=False, 
     if extens is None:
         extens = []
 
-    extens.extend(config['sim/extens'])
+    extens.extend(reg['sim/extens'])
 
     if resdir is None:
-        resdir = config['results-dir']
+        resdir = reg['results-dir']
 
-    config['results-dir'] = resdir
+    reg['results-dir'] = resdir
     os.makedirs(resdir, exist_ok=True)
 
-    if seed is None and config['sim/rand_seed'] is None:
+    if seed is None and reg['sim/rand_seed'] is None:
         seed = random.randrange(sys.maxsize)
-        config['sim/rand_seed'] = seed
+        reg['sim/rand_seed'] = seed
 
-    random.seed(config['sim/rand_seed'])
+    random.seed(reg['sim/rand_seed'])
 
-    sim_log().info(f'Running sim with seed: {config["sim/rand_seed"]}')
+    sim_log().info(f'Running sim with seed: {reg["sim/rand_seed"]}')
 
     loop = EventLoop()
     asyncio.set_event_loop(loop)
@@ -554,13 +554,6 @@ class SimFmtFilter(LogFmtFilter):
 
 
 class SimLog(CustomLogger):
-    def __init__(self, name, verbosity=logging.INFO):
-        super().__init__(name, verbosity)
-
-        # change default for error
-        reg['logger/sim/error'] = 'exception'
-        reg['logger/sim/print_traceback'] = False
-
     def get_format(self):
         return logging.Formatter(
             '%(timestep)s %(module)20s [%(levelname)s]: %(message)s %(err_file)s %(stack_file)s')
@@ -588,7 +581,6 @@ class SimPlugin(GearPlugin):
         reg.confdef('sim/clk_freq', 1000)
         reg.confdef('results-dir', default=tempfile.mkdtemp())
         reg.confdef('sim/extens', default=[])
-        reg.confdef('debug/trace', default=[])
 
         reg['gear/params/extra/sim_setup'] = None
         register_custom_log('sim', cls=SimLog)

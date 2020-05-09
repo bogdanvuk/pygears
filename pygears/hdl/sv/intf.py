@@ -17,7 +17,7 @@ assign _${intf_name}.ready = ${conn_name}.ready;""")
 class SVIntfGen:
     def __init__(self, intf):
         self.intf = intf
-        self.ext = config['hdl/lang']
+        self.ext = reg['hdl/lang']
 
     @property
     @functools.lru_cache()

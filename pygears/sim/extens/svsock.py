@@ -37,8 +37,8 @@ class CosimulatorUnavailable(Exception):
 
 
 def register_exten():
-    if SVSock not in config['sim/extens']:
-        config['sim/extens'].append(SVSock)
+    if SVSock not in reg['sim/extens']:
+        reg['sim/extens'].append(SVSock)
         if reg['sim/simulator'] is not None:
             SVSock(top=None)
 
@@ -168,7 +168,7 @@ class SVSock(SimExtend):
         context['files'].extend([os.path.join(self.outdir, 'top.sv')])
 
         cosim_pid = None
-        for b in config['sim/svsock/backend'].values():
+        for b in reg['sim/svsock/backend'].values():
             try:
                 cosim_pid = b(outdir=self.outdir,
                               files=context['files'],
@@ -181,7 +181,7 @@ class SVSock(SimExtend):
         else:
             raise CosimulatorStartError(
                 f'No available cosimulator executables found for any of the plugins:'
-                f'",".join(config["sim/svsock/backend"].keys())')
+                f'",".join(reg["sim/svsock/backend"].keys())')
 
         return cosim_pid
 

@@ -254,7 +254,7 @@ def reraise(tp, value, tb=None):
 def node_visitor(ast_type):
     def wrapper(f):
         def func_wrapper(node, ctx):
-            if config['trace/level'] == 0:
+            if reg['trace/level'] == 0:
                 return f(node, ctx)
 
             try:

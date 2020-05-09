@@ -228,7 +228,7 @@ clear = pytest.fixture(autouse=True)(clear)
 
 @pytest.fixture
 def hdl_check_fixt(tmpdir, request):
-    config['gear/infer_signal_names'] = True
+    reg['gear/infer_signal_names'] = True
 
     yield
 

@@ -49,7 +49,7 @@ def vgen_inst(top, conf):
 
 
 def vgen_include_get(cfg):
-    return config['hdl/include'] + [USER_VLIB_DIR, LIB_VLIB_DIR]
+    return reg['hdl/include'] + [USER_VLIB_DIR, LIB_VLIB_DIR]
 
 
 class VGenInstPlugin(PluginBase):

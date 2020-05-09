@@ -44,8 +44,8 @@ class GearHierRoot(NamedHierNode):
         self.in_ports = []
         self.out_ports = []
         self.params = {}
-        self.params.update(copy.deepcopy(registry('gear/params/meta')))
-        self.params.update(copy.deepcopy(registry('gear/params/extra')))
+        self.params.update(copy.deepcopy(reg['gear/params/meta']))
+        self.params.update(copy.deepcopy(reg['gear/params/extra']))
         self.func = None
         self.const_args = []
         self.args = []

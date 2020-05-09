@@ -87,7 +87,7 @@ def log_action_debug():
 
 @inject
 def custom_action(logger_name, message, severity, log_cfgs=Inject('logger')):
-    method = config[f'logger/{logger_name}/{severity}']
+    method = reg[f'logger/{logger_name}/{severity}']
     if method == 'exception':
         log_action_exception(logger_name, message)
     elif method == 'debug':

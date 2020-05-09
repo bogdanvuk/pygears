@@ -27,7 +27,7 @@ def parse_trace(s):
     else:
         trace_fn = os.path.abspath(s.filename)
         is_internal = any(
-            trace_fn.startswith(d) for d in config['trace/ignore'])
+            trace_fn.startswith(d) for d in reg['trace/ignore'])
 
         is_decorator_gen = '<decorator-gen' in trace_fn
 

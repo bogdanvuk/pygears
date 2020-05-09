@@ -12,8 +12,8 @@ from pygears.typing.queue import QueueMeta
 
 
 def register_exten():
-    if SVRandSocket not in config['sim/extens']:
-        config['sim/extens'].append(SVRandSocket)
+    if SVRandSocket not in reg['sim/extens']:
+        reg['sim/extens'].append(SVRandSocket)
         if reg['sim/simulator'] is not None:
             SVRandSocket(top=None)
 

@@ -1,3 +1,3 @@
-from pygears import config
+from pygears import reg
 
-config['debug/trace'].append('/ccat2.*')
+reg['debug/trace'].append('/ccat2.*')

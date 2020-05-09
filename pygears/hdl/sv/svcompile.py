@@ -375,7 +375,7 @@ def write_block(block, writer):
     if block.header:
         writer.indent -= 4
         if block.footer and block.footer[0] == 'endfunction':
-            lang = config['hdl/lang']
+            lang = reg['hdl/lang']
             if lang == 'sv':
                 writer.line('endfunction')
             else:

@@ -27,7 +27,6 @@ def test_simple():
     assert iout1.consumers == [root['func2'].in_ports[0]]
     assert iout2.producer == root['func2'].out_ports[0]
 
-test_simple()
 
 def test_hier():
     @gear
@@ -159,7 +158,7 @@ def test_alternatives():
 
 
 def test_intf_name_inference():
-    config['gear/infer_signal_names'] = True
+    reg['gear/infer_signal_names'] = True
 
     @gear
     def fsub1(din1, din2) -> Tuple['din1', 'din2']:

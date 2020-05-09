@@ -8,9 +8,6 @@ from pygears.hdl.synth import SynthPlugin
 from pygears.entry import cmd_register
 from pygears.conf.custom_settings import load_rc
 
-# from pygears import config
-# from . import SynthPlugin
-
 def create_project_script(script_fn, outdir, top, lang, wrapper):
     hdl_files = list_hdl_files(top, outdir, lang=lang, wrapper=wrapper)
     with open(script_fn, 'w') as f:
@@ -213,7 +210,7 @@ def entry(
     if include is None:
         include = []
 
-    include += config[f'{lang}gen/include']
+    include += reg[f'{lang}gen/include']
 
     report = synth(outdir, top=top_mod, lang=lang, synthout=synthout, synthcmd=synthcmd, freduce=freduce)
 

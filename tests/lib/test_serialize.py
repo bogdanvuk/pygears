@@ -91,7 +91,7 @@ def test_synth_vivado():
     serialize(Intf(Array[Uint[16], 4]))
 
 
-@synth_check({'logic luts': 20, 'ffs': 3}, tool='yosys')
+@synth_check({'logic luts': 20, 'ffs': 2}, tool='yosys')
 def test_synth_yosys():
     serialize(Intf(Array[Uint[16], 4]))
 

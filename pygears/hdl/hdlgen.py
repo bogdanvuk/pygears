@@ -11,10 +11,10 @@ def hdlgen(top=None,
            **conf):
 
     if lang is None:
-        lang = config['hdl/lang']
+        lang = reg['hdl/lang']
     else:
         # TODO: should we save/restore previous setting for 'hdl/lang'?
-        config['hdl/lang'] = lang
+        reg['hdl/lang'] = lang
 
     conf['generate'] = generate
     conf['outdir'] = outdir

@@ -45,7 +45,7 @@ def load_rc_from_dir(rc_fn, dirname):
     if conf:
         for c_list in dict_generator(conf):
             keys = '/'.join([str(x) for x in c_list[:-1]])
-            reg(keys, c_list[-1])
+            reg[keys] = c_list[-1]
 
 
 def load_rc(rc_fn, dirname=None):

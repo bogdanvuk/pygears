@@ -69,7 +69,7 @@ def sim_compile_resolver(func, meta_kwds, *args, **kwds):
             if isinstance(a, Intf):
                 continue
 
-            intf._in_queue = asyncio.Queue(maxsize=1, loop=registry('sim/simulator'))
+            intf._in_queue = asyncio.Queue(maxsize=1, loop=reg['sim/simulator'])
             intf.put_nb(a)
 
         simulator = reg['sim/simulator']

@@ -115,7 +115,7 @@ class ActivityReporter(ActivityChecker):
     def after_run(self, sim):
         if self.draw_graph:
             g = graph(
-                outdir=reg('results-dir'),
+                outdir=reg['results-dir'],
                 node_filter=lambda g: not g.child)
         else:
             g = None

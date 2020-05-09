@@ -299,6 +299,9 @@ class ConfigVariable:
 
     @val.setter
     def val(self, val):
+        if self.path == 'debug/trace':
+            breakpoint()
+
         if self.setter is not None:
             return self.setter(self, val)
 
@@ -319,6 +322,15 @@ class Registry(dict):
 
         if isinstance(val, ConfigVariable):
             return val.val
+
+        return val
+
+    def __contains__(self, key):
+        key, _, subpath = key.partition('/')
+        val = super().__contains__(key)
+
+        if subpath and val:
+            return subpath in super().__getitem__(key)
 
         return val
 
@@ -345,6 +357,9 @@ class Registry(dict):
         subreg[subpath] = val
 
     def confdef(self, path, default=None, docs=None, setter=None, getter=None):
+        if path in self:
+            raise Exception(f'Variable "{path}" already defined!')
+
         var = ConfigVariable(path,
                             default=default,
                             docs=docs,
@@ -363,6 +378,8 @@ class Registry(dict):
             self[key] = Registry()
         else:
             self[key] = Registry(val)
+
+        return self[key]
 
 
 reg = Registry()

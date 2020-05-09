@@ -31,7 +31,7 @@ class HDLTemplateResolver(ResolverBase):
 
     @property
     def hdl_path_list(self):
-        return config[f'{self.ext}gen/include']
+        return reg[f'{self.ext}gen/include']
 
     @property
     def impl_basename(self):

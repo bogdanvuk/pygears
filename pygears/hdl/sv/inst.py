@@ -50,10 +50,10 @@ def svgen_log():
 
 
 def svgen_include_get(cfg):
-    return config['hdl/include'] + [USER_SVLIB_DIR, LIB_SVLIB_DIR]
+    return reg['hdl/include'] + [USER_SVLIB_DIR, LIB_SVLIB_DIR]
 
 def vgen_include_get(cfg):
-    return config['hdl/include'] + [USER_VLIB_DIR, LIB_VLIB_DIR]
+    return reg['hdl/include'] + [USER_VLIB_DIR, LIB_VLIB_DIR]
 
 
 class SVGenInstPlugin(PluginBase):
