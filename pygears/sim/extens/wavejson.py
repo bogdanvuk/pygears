@@ -1,5 +1,5 @@
 import json
-from pygears import bind, PluginBase, safe_bind, config, find
+from pygears import PluginBase, find, reg
 from pygears.core.port import OutPort
 from pygears.sim import timestep
 from pygears.typing import typeof, TLM, Queue

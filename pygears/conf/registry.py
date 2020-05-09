@@ -84,61 +84,6 @@ class RegistryHook(dict):
             getattr(self, f'_set_{key}')(value)
 
 
-# @dataclass
-# class ConfigVariable:
-#     path: str
-#     default: Any
-#     docs: str = None
-#     setter: Callable = None
-#     getter: Callable = None
-
-#     @property
-#     def val(self):
-#         if self.getter is None:
-#             return registry(self.path)
-#         else:
-#             return self.getter(self)
-
-#     @property
-#     def changed(self):
-#         return registry(self.path) != self.default
-
-
-# class Configure:
-#     def __init__(self):
-#         self.definitions = {}
-
-#     def define(self, path, default=None, docs=None, setter=None, getter=None):
-#         safe_bind(path, copy.copy(default))
-#         var = ConfigVariable(path,
-#                              default=default,
-#                              docs=docs,
-#                              setter=setter,
-#                              getter=getter)
-
-#         self.definitions[path] = var
-
-#         if setter is not None:
-#             setter(var, default)
-
-#         return var
-
-#     def changed(self, path):
-#         return self.definitions[path].changed
-
-#     def clear(self):
-#         self.definitions.clear()
-
-#     def __getitem__(self, path):
-#         return self.definitions[path].val
-
-#     def __setitem__(self, path, value):
-#         var = self.definitions[path]
-#         bind(path, value)
-#         if var.setter:
-#             var.setter(var, value)
-
-
 class PluginBase:
     subclasses = []
     async_reg = {}
@@ -165,59 +110,6 @@ class PluginBase:
     def reset(cls):
         pass
 
-
-# config = PluginBase.config
-
-
-# def registry(key_path):
-#     """Retrieves a value from registry at the location designated by ``key_path``.
-
-#     Args:
-#        key_path: a UNIX style path without leading '/'
-
-#     **Example** - Obtain a list of directory paths where SystemVerilog
-#     generator will look for the SystemVerilog implementations of the gears:
-
-#     >>> registry('hdl/include')
-#     ['/tools/home/.pygears/svlib', '/tools/home/pygears/pygears/lib/svlib', '/tools/home/pygears/pygears/lib/svlib']
-
-#     """
-
-#     # if there is no need to match anything (no wildcards)
-#     if not any(c in key_path for c in wildcard_list):
-#         return nested_get(PluginBase.registry, *key_path.split(delimiter))
-
-#     for reg_list in dict_generator(PluginBase.registry):
-#         as_path = delimiter.join([str(x) for x in reg_list[:-1]])
-#         if fnmatch.fnmatch(as_path, key_path):
-#             return nested_get(PluginBase.registry, *key_path.split(delimiter))
-
-#     raise RegistryException(f'Registry not successful for {key_path}')
-
-
-# def set_cb(key, cb):
-#     PluginBase.cb[key] = cb
-
-
-# def safe_bind(key_path, value):
-#     if any(c in key_path for c in wildcard_list):
-#         raise RegistryException(
-#             f'Safe bind not supported for wildcards (attempted {key_path})')
-#     safe_nested_set(PluginBase.registry, value, *key_path.split(delimiter))
-#     if key_path in PluginBase.cb:
-#         PluginBase.cb[key_path](value)
-
-#     manage_async_regs(key_path)
-
-
-# def bind_by_path(key_path, value):
-#     reg = PluginBase.registry
-#     cb = PluginBase.cb
-#     nested_set(reg, value, *key_path.split(delimiter))
-#     if key_path in cb:
-#         cb[key_path](value)
-
-
 def manage_async_regs(key_path):
     resolved = []
 
@@ -226,7 +118,7 @@ def manage_async_regs(key_path):
             continue
 
         try:
-            all(registry(i) for i in injections)
+            all(reg[i] for i in injections)
             resolved.append(func)
             func()
         except KeyError:
@@ -299,9 +191,6 @@ class ConfigVariable:
 
     @val.setter
     def val(self, val):
-        if self.path == 'debug/trace':
-            breakpoint()
-
         if self.setter is not None:
             return self.setter(self, val)
 
@@ -334,7 +223,7 @@ class Registry(dict):
 
         return val
 
-    def __setitem__(self, key, val):
+    def _setitem(self, key, val):
         key, _, subpath = key.partition('/')
         if not subpath:
             try:
@@ -355,6 +244,13 @@ class Registry(dict):
             subreg = super().__getitem__(key)
 
         subreg[subpath] = val
+
+    def __setitem__(self, key, val):
+        self._setitem(key, val)
+
+        if self is reg:
+            manage_async_regs(key)
+
 
     def confdef(self, path, default=None, docs=None, setter=None, getter=None):
         if path in self:

@@ -139,4 +139,4 @@ class SimInstPlugin(SimPlugin, GearPlugin):
 
     @classmethod
     def reset(cls):
-        cls.bind_val('sim/map', {})
+        reg['sim/map'] = {}
