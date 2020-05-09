@@ -17,7 +17,7 @@ def verilate(top, *args, **kwds):
 
 
 def cosim(top, sim, *args, **kwds):
-    from pygears import find, registry
+    from pygears import find
 
     if top is None:
         top = reg['gear/root']
@@ -37,7 +37,7 @@ def cosim(top, sim, *args, **kwds):
             from .modules import SimVerilated
             from .modules.verilator import build
 
-            kwds['outdir'] = kwds.get('outdir', config['results-dir'])
+            kwds['outdir'] = kwds.get('outdir', reg['results-dir'])
             kwds['rebuild'] = kwds.get('rebuild', True)
             sim_cls = SimVerilated
             build(top, **kwds)

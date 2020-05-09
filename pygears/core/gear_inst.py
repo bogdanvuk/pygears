@@ -235,7 +235,7 @@ def infer_outnames(annotations, meta_kwds):
 
 class intf_name_tracer:
     def __init__(self, gear):
-        self.enabled = config['gear/infer_signal_names']
+        self.enabled = reg['gear/infer_signal_names']
         if self.enabled == 'debug':
             self.enabled = is_traced(gear.name)
 
@@ -470,7 +470,7 @@ def gear_base_resolver(
     else:
         fix_intfs = intfs.copy()
 
-    if config['gear/memoize']:
+    if reg['gear/memoize']:
         gear_inst, outputs, memo_key = get_memoized_gear(
             func, args, const_args, {
                 **kwds,
@@ -483,17 +483,19 @@ def gear_base_resolver(
             else:
                 return outputs
 
-    try:
-        params = infer_params(
-            args, param_templates, context=get_function_context_dict(func))
-    except TypeMatchError as e:
-        err = TypeMatchError(f'{str(e)}, of the module "{name}"')
-        params = e.params
-    except Exception as e:
-        err = type(e)(f'{str(e)}, of the module "{name}"')
+    params = infer_params(
+        args, param_templates, context=get_function_context_dict(func))
+    # try:
+    #     params = infer_params(
+    #         args, param_templates, context=get_function_context_dict(func))
+    # except TypeMatchError as e:
+    #     err = TypeMatchError(f'{str(e)}, of the module "{name}"')
+    #     params = e.params
+    # except Exception as e:
+    #     err = type(e)(f'{str(e)}, of the module "{name}"')
 
-    if err and not isinstance(err, TypeMatchError):
-        raise err
+    # if err and not isinstance(err, TypeMatchError):
+    #     raise err
 
     if not err:
         if not params.pop('_enablement'):
@@ -547,7 +549,7 @@ def gear_base_resolver(
 
         raise err
 
-    if config['gear/memoize'] and not func.__name__.endswith('_unpack'):
+    if reg['gear/memoize'] and not func.__name__.endswith('_unpack'):
         if memo_key is not None:
             memoize_gear(gear_inst, memo_key)
 

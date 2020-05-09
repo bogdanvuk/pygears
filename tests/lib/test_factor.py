@@ -1,4 +1,4 @@
-from pygears import registry, Intf
+from pygears import reg, Intf
 from pygears.lib import factor
 from pygears.typing import Queue, Tuple, Union, Uint
 from pygears.typing.base import param_subs

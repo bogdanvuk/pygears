@@ -80,7 +80,7 @@ def make(objdir, top_name):
 
 
 def verilate(outdir, lang, top_name, wrap_name, tracing_enabled):
-    include = ' '.join([f'-I{os.path.abspath(p)}' for p in config[f'{lang}gen/include']])
+    include = ' '.join([f'-I{os.path.abspath(p)}' for p in reg[f'{lang}gen/include']])
 
     include += f' -I{outdir}'
 
@@ -121,7 +121,7 @@ def build(top, outdir=None, postsynth=False, lang=None, rebuild=True):
             raise Exception(f'No gear found on path: "{top_name}"')
 
     if lang is None:
-        lang = config['hdl/lang']
+        lang = reg['hdl/lang']
 
     if lang != 'v':
         postsynth = False
@@ -136,9 +136,9 @@ def build(top, outdir=None, postsynth=False, lang=None, rebuild=True):
     if not rebuild and os.path.exists(file_struct['dll_path']):
         return
 
-    bind(
-        'svgen/spy_connection_template', signal_spy_connect_hide_interm_t
-        if config['debug/hide_interm_vals'] else signal_spy_connect_t)
+    reg['svgen/spy_connection_template'] = (
+        signal_spy_connect_hide_interm_t
+        if reg['debug/hide_interm_vals'] else signal_spy_connect_t)
 
     synth_src_dir = os.path.join(outdir, 'src')
     hdlgen(
@@ -162,16 +162,15 @@ def build(top, outdir=None, postsynth=False, lang=None, rebuild=True):
             top=top,
             synthcmd='synth',
             srcdir=synth_src_dir,
-            synthout=os.path.join(
-                outdir, f'{wrap_name}.v'))
+            synthout=os.path.join(outdir, f'{wrap_name}.v'))
 
-    tracing_enabled = bool(registry('debug/trace'))
+    tracing_enabled = bool(reg['debug/trace'])
     context = {
         'in_ports': top.in_ports,
         'out_ports': top.out_ports,
         'top_name': top_name,
         'tracing': tracing_enabled,
-        'aux_clock': config['sim/aux_clock']
+        'aux_clock': reg['sim/aux_clock']
     }
 
     jenv = jinja2.Environment(trim_blocks=True, lstrip_blocks=True)
@@ -187,15 +186,15 @@ def build(top, outdir=None, postsynth=False, lang=None, rebuild=True):
 
 class SimVerilated(CosimBase):
     def __init__(
-            self,
-            gear,
-            timeout=100,
-            rebuild=True,
-            vcd_fifo=False,
-            shmidcat=False,
-            postsynth=False,
-            outdir=None,
-            lang=None):
+        self,
+        gear,
+        timeout=100,
+        rebuild=True,
+        vcd_fifo=False,
+        shmidcat=False,
+        postsynth=False,
+        outdir=None,
+        lang=None):
 
         super().__init__(gear, timeout=timeout)
         self.name = gear.name[1:].replace('/', '_')
@@ -204,7 +203,7 @@ class SimVerilated(CosimBase):
         self.top = gear
         self.lang = lang
         if self.lang is None:
-            self.lang = config['hdl/lang']
+            self.lang = reg['hdl/lang']
 
         self.trace_fn = None
         self.vcd_fifo = vcd_fifo
@@ -232,10 +231,10 @@ class SimVerilated(CosimBase):
 
         file_struct = get_file_struct(self.top, self.outdir)
 
-        tracing_enabled = bool(registry('debug/trace'))
+        tracing_enabled = bool(reg['debug/trace'])
         if tracing_enabled:
-            sim_log().info(f"Debug: {registry('debug/trace')}")
-            self.trace_fn = os.path.join(registry("results-dir"), f'{self.name}.vcd')
+            sim_log().info(f"Debug: {reg['debug/trace']}")
+            self.trace_fn = os.path.join(reg["results-dir"], f'{self.name}.vcd')
             try:
                 subprocess.call(f"rm -f {self.trace_fn}", shell=True)
             except OSError:

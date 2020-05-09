@@ -1,4 +1,4 @@
-from pygears.conf import registry
+from pygears.conf import reg
 from pygears.typing.base import Any, GenericMeta, type_repr, typeof
 
 
@@ -37,7 +37,8 @@ def _get_match_conds_rec(t, pat, matches):
 
         return t
 
-    if not (isinstance(t, GenericMeta) and isinstance(pat, GenericMeta) and typeof(t.base, pat.base)):
+    if not (isinstance(t, GenericMeta) and isinstance(pat, GenericMeta)
+            and typeof(t.base, pat.base)):
         raise TypeMatchError(
             "{} cannot be matched to {}".format(type_repr(t), type_repr(pat)))
 

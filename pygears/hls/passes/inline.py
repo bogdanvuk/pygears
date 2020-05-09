@@ -1,6 +1,5 @@
 from ..ir_utils import Scope, HDLVisitor, res_true, add_to_list, ir, res_false, IrExprRewriter
 from pygears.typing import cast
-from pygears import registry
 
 
 class Inliner(IrExprRewriter):

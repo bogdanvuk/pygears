@@ -1,10 +1,9 @@
 import pytest
-from pygears import gear, config
-from pygears.typing import Bool, Uint, code, Queue, Tuple, bitw
+from pygears import gear
+from pygears.typing import Queue, Tuple, Uint, code
 from pygears.lib.delay import delay_rng
 from pygears.sim import sim, cosim
-from pygears.lib import drv, shred, directed
-from pygears.lib.rng import qrange
+from pygears.lib import directed, drv
 from pygears.lib.mux import mux
 from pygears.lib.union import select
 

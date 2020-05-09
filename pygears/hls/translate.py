@@ -1,5 +1,5 @@
 from pygears.core.gear import Gear
-from pygears import bind, registry, safe_bind
+from pygears import reg
 from .ast import visit_ast, GearContext, FuncContext, Context
 from .ast.utils import get_function_ast
 from . import ir

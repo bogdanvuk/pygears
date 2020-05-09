@@ -514,7 +514,7 @@ def write_declarations(ctx, subsvmods, template_env):
     if ctx.regs:
         writer.line(f'initial begin')
         for name, expr in ctx.regs.items():
-            if not isinstance(expr, ir.ResExpr):
+            if not isinstance(expr.val, ir.ResExpr):
                 continue
 
             writer.line(f"    {exprgen(ctx.ref(name))} = {exprgen(expr.val)};")

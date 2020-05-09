@@ -2,7 +2,7 @@ import os
 
 from pygears.hdl.templenv import TemplateEnv
 from pygears.core.hier_node import HierYielderBase
-from pygears.conf import registry
+from pygears.conf import reg
 from pygears.util.fileio import save_file
 
 from .util import vgen_intf, vgen_signal

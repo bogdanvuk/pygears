@@ -1,17 +1,12 @@
-import array
 import itertools
-import math
 import os
 import socket
-from math import ceil
 
 from pygears import GearDone, reg
 from pygears.conf import Inject, inject
 from pygears.sim import clk
 from pygears.sim.modules.cosim_base import CosimBase, CosimNoData
 from pygears.sim.extens.svsock import register_intf
-from .cosim_port import InCosimPort
-from pygears.core.port import InPort
 from pygears.hdl import hdlgen, list_hdl_files
 from pygears.hdl.sv.util import svgen_typedef
 from pygears.hdl.templenv import TemplateEnv
@@ -107,14 +102,14 @@ class SVServerModule:
         self.srcdir = srcdir
         self.module = module
         self.tenv = tenv
-        from pygears import registry
+        from pygears import reg
         self.svmod = reg['svgen/map'][self.module]
 
     def files(self):
         return list_hdl_files(self.module, self.srcdir, lang='sv', wrapper=False)
 
     def includes(self):
-        return config[f'svgen/include'] + [self.srcdir]
+        return reg[f'svgen/include'] + [self.srcdir]
 
     def declaration(self):
         port_map = {
@@ -178,11 +173,11 @@ class SimSocket(CosimBase):
     def __init__(self, gear, timeout=100, rebuild=True, run=True, batch=True, **kwds):
         super().__init__(gear, timeout)
         self.name = gear.name[1:].replace('/', '_')
-        self.outdir = os.path.abspath(os.path.join(registry('results-dir'), self.name))
+        self.outdir = os.path.abspath(os.path.join(reg['results-dir'], self.name))
 
         self.rebuild = rebuild
 
-        config['sim/svsock/run'] = run
+        reg['sim/svsock/run'] = run
 
         if not kwds.get('gui', False):
             kwds['batch'] = batch

@@ -2,7 +2,7 @@ import os
 
 import jinja2
 
-from pygears.conf import registry
+from pygears.conf import reg
 from pygears.hls import HDLVisitor
 from pygears.typing import Queue, typeof, code
 

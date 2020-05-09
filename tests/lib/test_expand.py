@@ -1,5 +1,5 @@
 from pygears import Intf
-from pygears import registry
+from pygears import reg
 from pygears.typing import Queue, Tuple, Union, Uint
 from pygears.typing.base import param_subs
 from pygears.typing.expand import expand as expand_type

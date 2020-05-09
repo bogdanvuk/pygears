@@ -1,4 +1,4 @@
-from pygears import Intf, alternative, gear, registry, find, config
+from pygears import Intf, alternative, gear, find, reg
 from pygears.typing import Queue, Tuple, Uint
 
 
@@ -27,6 +27,7 @@ def test_simple():
     assert iout1.consumers == [root['func2'].in_ports[0]]
     assert iout2.producer == root['func2'].out_ports[0]
 
+test_simple()
 
 def test_hier():
     @gear

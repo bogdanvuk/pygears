@@ -6,9 +6,9 @@ from .trace import pygears_excepthook, register_issue, MultiAlternativeError
 from .trace_format import TraceLevel, enum_traceback
 
 __all__ = [
-    'PluginBase', 'bind', 'registry', 'clear', 'load_plugin_folder',
+    'PluginBase', 'reg', 'clear', 'load_plugin_folder',
     'core_log', 'typing_log', 'util_log', 'gear_log', 'conf_log',
     'CustomLogger', 'LogFmtFilter', 'pygears_excepthook', 'TraceLevel',
-    'enum_traceback', 'set_log_level', 'safe_bind', 'inject', 'Inject',
+    'enum_traceback', 'set_log_level', 'inject', 'Inject',
     'MayInject', 'MultiAlternativeError', 'register_custom_log'
 ]

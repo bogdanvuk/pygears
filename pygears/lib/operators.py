@@ -10,6 +10,8 @@ from pygears.hdl import flow_visitor
 from pygears.hdl.sv import SVGenPlugin
 from pygears.hdl.v import VGenPlugin
 
+# TODO: Think about operand promoting (casting). What if a: Int[32] and someone
+# writes a == 0? Which type should the 0 be?
 
 @datagear
 def add(din: Tuple[{'a': Number, 'b': Number}]) -> b'din[0] + din[1]':

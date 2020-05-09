@@ -1,4 +1,4 @@
-from pygears import module, Intf, gear, registry
+from pygears import Intf, gear, reg
 from pygears.lib.verif import directed
 from pygears.sim import sim
 from pygears.lib.verif import drv

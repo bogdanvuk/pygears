@@ -165,7 +165,7 @@ class Intf:
             return self._out_queues
 
         self._out_queues = [
-            asyncio.Queue(maxsize=1, loop=registry('sim/simulator'))
+            asyncio.Queue(maxsize=1, loop=reg['sim/simulator'])
             for _ in self.end_consumers
         ]
 
@@ -190,7 +190,7 @@ class Intf:
                 # TODO: when value cannot be represented, the error report can be terse
                 raise TypeMatchError(
                     f'{str(err)}\n, when converting output data "{repr(val)}"'
-                    f' from the "{registry("gear/current_module").name}"'
+                    f' from the "{reg["gear/current_module"].name}"'
                     f' module to the type {repr(self.dtype)}')
 
         if put_event:

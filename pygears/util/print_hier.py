@@ -1,5 +1,4 @@
 import pprint
-from pygears import registry
 from pygears.core.hier_node import HierVisitorBase
 import textwrap
 from pygears.conf import util_log, inject, Inject

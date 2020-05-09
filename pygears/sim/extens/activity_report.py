@@ -3,7 +3,7 @@ import re
 
 from vcd.gtkw import GTKWSave
 
-from pygears import find, registry
+from pygears import find, reg
 from pygears.core.port import OutPort as GearOutPort
 from pygears.rtl.port import InPort, OutPort
 from pygears.sim import sim_log
@@ -115,7 +115,7 @@ class ActivityReporter(ActivityChecker):
     def after_run(self, sim):
         if self.draw_graph:
             g = graph(
-                outdir=registry('results-dir'),
+                outdir=reg('results-dir'),
                 node_filter=lambda g: not g.child)
         else:
             g = None

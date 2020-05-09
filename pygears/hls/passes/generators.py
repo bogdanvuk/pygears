@@ -1,14 +1,11 @@
 import inspect
-import asyncio
-from pygears import bind
-from ..ir_utils import HDLVisitor, ir, res_false, res_true, IrRewriter, IrVisitor
+from ..ir_utils import IrRewriter, ir, res_true
 from ..ast import Context
 from ..ast.inline import call_gear
 from ..ast.call import const_func_args, resolve_gear_call
 from ..ast.stmt import assign_targets
 from ..ast.utils import add_to_list
 from .inline import Inliner
-from pygears.typing import Bool
 from pygears.util.utils import quiter
 from pygears.lib.rng import qrange as qrange_gear
 
