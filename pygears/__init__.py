@@ -57,7 +57,7 @@ load_rc('.pygears')
 sys.excepthook = pygears_excepthook
 
 __all__ = [
-    'TraceLevel', 'reg', 'gear', 'alternative', 'clear', 'Intf',
-    'PluginBase', 'find', 'MultiAlternativeError', 'GearDone', 'IntfEmpty',
-    'module', 'safe_bind', 'TypeMatchError', 'datagear'
+    'TraceLevel', 'reg', 'gear', 'alternative', 'clear', 'Intf', 'PluginBase', 'find',
+    'MultiAlternativeError', 'GearDone', 'IntfEmpty', 'module', 'TypeMatchError',
+    'datagear'
 ]
