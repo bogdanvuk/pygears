@@ -5,6 +5,8 @@ import hashlib
 from pygears import reg
 from .base_resolver import ResolverTypeError
 from . import hdl_log
+from pygears.hdl import mod_lang
+from pygears.util.fileio import save_file
 
 # from .inst import svgen_log
 
@@ -70,8 +72,7 @@ class HDLModuleInst:
     @property
     @functools.lru_cache()
     def traced(self):
-        self_traced = any(
-            fnmatch.fnmatch(self.node.name, p) for p in reg['debug/trace'])
+        self_traced = any(fnmatch.fnmatch(self.node.name, p) for p in reg['debug/trace'])
 
         if self.hierarchical:
             children_traced = any(
@@ -103,7 +104,13 @@ class HDLModuleInst:
 
     @property
     def files(self):
-        return self.resolver.files
+        res_files = self.resolver.files
+
+        parent_lang = mod_lang(self.node.parent)
+        if parent_lang != self.lang:
+            res_files.append(f'{self.module_name}_{parent_lang}_wrap')
+
+        return res_files
 
     @property
     def params(self):
@@ -111,4 +118,13 @@ class HDLModuleInst:
 
     def generate(self, template_env, outdir):
         if 'memoized' not in self.node.params:
-            return self.resolver.generate(template_env, outdir)
+            self.resolver.generate(template_env, outdir)
+
+            if not self.node.parent:
+                return
+
+            parent_lang = mod_lang(self.node.parent)
+            if parent_lang != self.lang:
+                save_file(
+                    f'{self.module_name}_{parent_lang}_wrap.{parent_lang}', outdir,
+                    self.get_wrap(parent_lang))

@@ -3,7 +3,7 @@ from pygears.hdl.modinst import HDLModuleInst
 from .sv_keywords import sv_keywords
 from collections import OrderedDict
 from pygears.conf import inject, Inject
-from pygears.hdl import hdlmod
+from pygears.hdl import hdlmod, mod_lang
 
 
 class SVModuleInst(HDLModuleInst):
@@ -38,6 +38,36 @@ class SVModuleInst(HDLModuleInst):
 
         return template_env.render_local(__file__, "impl_wrap.j2", context)
 
+    def get_wrap(self, parent_lang):
+        template_env = reg[f'{self.lang}gen/templenv']
+
+        in_port_map = [(port.basename,
+                        port.basename if self.lang == 'sv' else (port.basename, None, None))
+                        for port in self.node.in_ports]
+
+        out_port_map = [(port.basename,
+                        port.basename if self.lang == 'sv' else (port.basename, None, None))
+                        for port in self.node.out_ports]
+        port_map = OrderedDict(in_port_map + out_port_map)
+
+        sigmap = {}
+        for s in self.node.params['signals']:
+            sigmap[s.name] = self.node.params['sigmap'].get(s.name, s.name)
+
+        context = {
+            'rst_name': 'rst',
+            'wrap_module_name': f'{self.module_name}_{parent_lang}_wrap',
+            'module_name': self.module_name,
+            'inst_name': self.inst_name,
+            'param_map': self.params,
+            'port_map': port_map,
+            'intfs': template_env.port_intfs(self.node),
+            'sigs': self.node.params['signals'],
+            'sig_map': sigmap
+        }
+
+        return template_env.render_local(__file__, f"{parent_lang}_wrap.j2", context)
+
     def get_synth_wrap(self, template_env):
         context = {
             'wrap_module_name': f'wrap_{self.module_name}',
@@ -50,37 +80,45 @@ class SVModuleInst(HDLModuleInst):
 
         return template_env.render('.', "module_synth_wrap.j2", context)
 
-    def get_out_port_map_intf_name(self, port):
+    def get_out_port_map_intf_name(self, port, lang):
         basename = hdlmod(port.consumer).basename
-        if self.lang == 'sv':
+        if lang == 'sv':
             return basename
         else:
             return basename, None, None
 
-    def get_in_port_map_intf_name(self, port):
+    def get_in_port_map_intf_name(self, port, lang):
         intf = port.producer
         hdlgen_intf = hdlmod(intf)
 
         if len(intf.consumers) == 1:
-            if self.lang == 'sv':
+            if lang == 'sv':
                 return hdlgen_intf.outname
             else:
                 return hdlgen_intf.outname, None, None
         else:
             i = intf.consumers.index(port)
-            if self.lang == 'sv':
+            if lang == 'sv':
                 return f'{hdlgen_intf.outname}[{i}]'
             else:
                 return (hdlgen_intf.outname, i, int(intf.dtype))
 
     def get_inst(self, template_env, port_map=None):
+        parent_lang = mod_lang(self.node.parent)
+
+        if parent_lang == self.lang:
+            module_name = self.module_name
+        else:
+            template_env = reg[f'{parent_lang}gen/templenv']
+            module_name = f'{self.module_name}_{parent_lang}_wrap'
+
         if not port_map:
             in_port_map = [(port.basename,
-                            self.get_in_port_map_intf_name(port))
+                            self.get_in_port_map_intf_name(port, parent_lang))
                            for port in self.node.in_ports]
 
             out_port_map = [(port.basename,
-                             self.get_out_port_map_intf_name(port))
+                             self.get_out_port_map_intf_name(port, parent_lang))
                             for port in self.node.out_ports]
             port_map = OrderedDict(in_port_map + out_port_map)
 
@@ -90,7 +128,7 @@ class SVModuleInst(HDLModuleInst):
 
         context = {
             'rst_name': 'rst',
-            'module_name': self.module_name,
+            'module_name': module_name,
             'inst_name': self.inst_name,
             'param_map': self.params,
             'port_map': port_map,
