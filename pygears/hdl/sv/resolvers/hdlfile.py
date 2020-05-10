@@ -11,16 +11,15 @@ from pygears.conf import inject, Inject
 
 class HDLFileResolver(ResolverBase):
     @inject
-    def __init__(self, node, ext=Inject('hdl/lang')):
+    def __init__(self, node):
         self.node = node
-        self.ext = ext
 
         if self.impl_parse is None:
             raise ResolverTypeError
 
     @property
     def hdl_path_list(self):
-        return reg[f'{self.ext}gen/include']
+        return reg[f'{self.lang}gen/include']
 
     @property
     def impl_path(self):
@@ -86,7 +85,7 @@ class HDLFileResolver(ResolverBase):
                 fn = self.node.params['hdl']['impl']
 
         if not os.path.splitext(fn)[-1]:
-            fn = f'{fn}.{self.ext}'
+            fn = f'{fn}.{self.lang}'
 
         return fn
 
@@ -97,7 +96,7 @@ class HDLFileResolver(ResolverBase):
             if 'files' in self.node.params['hdl']:
                 for fn in self.node.params['hdl']['files']:
                     if not os.path.splitext(fn)[-1]:
-                        fn = f'{fn}.{self.ext}'
+                        fn = f'{fn}.{self.lang}'
 
                     files.append(fn)
 

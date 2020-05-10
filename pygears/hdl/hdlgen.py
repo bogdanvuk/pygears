@@ -1,6 +1,7 @@
 import shutil
 from pygears import Intf, find, reg
 from .common import list_hdl_files
+from .generate import generate as hdlgen_generate
 
 
 def hdlgen(top=None,
@@ -16,7 +17,6 @@ def hdlgen(top=None,
         # TODO: should we save/restore previous setting for 'hdl/lang'?
         reg['hdl/lang'] = lang
 
-    conf['generate'] = generate
     conf['outdir'] = outdir
 
     if isinstance(top, tuple):
@@ -35,6 +35,9 @@ def hdlgen(top=None,
     reg['svgen/conf'] = conf
     for oper in reg[f'{lang}gen/flow']:
         top = oper(top, conf)
+
+    if generate:
+        hdlgen_generate(top, conf)
 
     if copy_files and generate:
         for fn in list_hdl_files(top.name,

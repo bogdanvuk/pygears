@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from pygears import reg
 import hashlib
 import functools
 import typing
@@ -27,6 +28,10 @@ def path_name(path):
 class ResolverBase(ABC):
     def __init__(self, node):
         raise ResolverTypeError
+
+    @property
+    def lang(self):
+        return self.node.params.get('hdl', {}).get('lang', reg['hdl/lang'])
 
     @property
     def node_def_name(self):

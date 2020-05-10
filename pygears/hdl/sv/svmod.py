@@ -7,9 +7,9 @@ from pygears.conf import inject, Inject
 
 class SVModuleInst(HDLModuleInst):
     @inject
-    def __init__(self, node, ext=Inject('hdl/lang')):
-        super().__init__(node, ext)
-        self.hdlgen_map = reg[f"{ext}gen/map"]
+    def __init__(self, node):
+        super().__init__(node)
+        self.hdlgen_map = reg[f"{self.lang}gen/map"]
 
     @property
     def inst_name(self):
@@ -56,7 +56,7 @@ class SVModuleInst(HDLModuleInst):
 
     def get_out_port_map_intf_name(self, port):
         basename = self.hdlgen_map[port.consumer].basename
-        if self.ext == 'sv':
+        if self.lang == 'sv':
             return basename
         else:
             return basename, None, None
@@ -66,13 +66,13 @@ class SVModuleInst(HDLModuleInst):
         hdlgen_intf = self.hdlgen_map[intf]
 
         if len(intf.consumers) == 1:
-            if self.ext == 'sv':
+            if self.lang == 'sv':
                 return hdlgen_intf.outname
             else:
                 return hdlgen_intf.outname, None, None
         else:
             i = intf.consumers.index(port)
-            if self.ext == 'sv':
+            if self.lang == 'sv':
                 return f'{hdlgen_intf.outname}[{i}]'
             else:
                 return (hdlgen_intf.outname, i, int(intf.dtype))

@@ -12,16 +12,15 @@ from pygears.conf import inject, Inject
 
 class HierarchicalResolver(ResolverBase):
     @inject
-    def __init__(self, node, ext=Inject('hdl/lang')):
+    def __init__(self, node):
         self.node = node
-        self.ext = ext
 
         if not node.params.get('hdl', {}).get('hierarchical', node.hierarchical):
             raise ResolverTypeError
 
     @property
     def hdl_path_list(self):
-        return reg[f'{self.ext}gen/include']
+        return reg[f'{self.lang}gen/include']
 
     @property
     def files(self):
@@ -30,7 +29,7 @@ class HierarchicalResolver(ResolverBase):
             if 'files' in self.node.params['hdl']:
                 for fn in self.node.params['hdl']['files']:
                     if not os.path.splitext(fn)[-1]:
-                        fn = f'{fn}.{self.ext}'
+                        fn = f'{fn}.{self.lang}'
 
                     files.append(fn)
 
@@ -39,7 +38,7 @@ class HierarchicalResolver(ResolverBase):
     @property
     @functools.lru_cache()
     def module_name(self):
-        if find_in_dirs(f'{self.hier_path_name}.{self.ext}',
+        if find_in_dirs(f'{self.hier_path_name}.{self.lang}',
                         self.hdl_path_list):
             return self.hier_path_name + '_hier'
         else:
@@ -47,7 +46,7 @@ class HierarchicalResolver(ResolverBase):
 
     @property
     def file_basename(self):
-        return f'{self.module_name}.{self.ext}'
+        return f'{self.module_name}.{self.lang}'
 
     def module_context(self, template_env):
         context = {
@@ -74,7 +73,7 @@ class HierarchicalResolver(ResolverBase):
     def get_hier_module(self, template_env):
         context = self.module_context(template_env)
 
-        self.hdlgen_map = reg[f'{self.ext}gen/map']
+        self.hdlgen_map = reg[f'{self.lang}gen/map']
 
         for child in self.node.local_intfs:
             hdlmod = self.hdlgen_map[child]

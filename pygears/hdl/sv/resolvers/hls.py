@@ -7,9 +7,8 @@ from pygears.conf import inject, Inject
 
 class HLSResolver(ResolverBase):
     @inject
-    def __init__(self, node, ext=Inject('hdl/lang')):
+    def __init__(self, node):
         self.node = node
-        self.ext = ext
         self.generated = False
 
         if not self.node.params.get('hdl', {}).get('compile', False):
@@ -27,7 +26,7 @@ class HLSResolver(ResolverBase):
 
     @property
     def file_basename(self):
-        return f'{self.module_name}.{self.ext}'
+        return f'{self.module_name}.{self.lang}'
 
     @property
     def files(self) -> typing.List[str]:
