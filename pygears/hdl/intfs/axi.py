@@ -64,6 +64,8 @@ class AxiPortConf:
                 self.params['awid'] = id_param_name
             elif self.t == 'rdata':
                 self.params['rid'] = id_param_name
+            elif self.t == 'bresp':
+                self.params['bid'] = id_param_name
 
     def dataslice(self, signal):
         if not self.datamap:
@@ -129,13 +131,6 @@ def port_conf(parent, type_, p, datamap=None):
 
 
 def get_port_def(top, name, axi_name, subintf, parent, axi_conf):
-    if axi_conf['type'] == 'axi':
-        axi_dir = 'in'
-    elif axi_conf['type'] == 'axidma':
-        axi_dir = 'out'
-    else:
-        raise Exception
-
     for p in top.in_ports + top.out_ports:
         if p.basename == name:
             break
@@ -145,13 +140,14 @@ def get_port_def(top, name, axi_name, subintf, parent, axi_conf):
             f'Port "{name}" supplied for {subintf} port of the'
             f' {axi_name} interface, not found')
 
-    if p.direction == axi_dir and subintf not in ['araddr', 'awaddr', 'wdata']:
-        raise Exception(
-            f'Cannot drive gear port {name} from AXi port {axi_name}.{subintf}')
+    if axi_conf['type'] == 'axi':
+        if p.direction == 'in' and subintf not in ['araddr', 'awaddr', 'wdata']:
+            raise Exception(
+                f'Cannot drive gear port {name} from AXi port {axi_name}.{subintf}')
 
-    if p.direction != axi_dir and subintf not in ['rdata']:
-        raise Exception(
-            f'Cannot drive AXi port {axi_name}.{subintf} from gear port {name}')
+        if p.direction == 'out' and subintf not in ['rdata']:
+            raise Exception(
+                f'Cannot drive AXi port {axi_name}.{subintf} from gear port {name}')
 
     if subintf == 'awaddr':
         if typeof(p.dtype, Tuple) and axi_conf.get('wdata', '') == name:
@@ -181,7 +177,11 @@ def get_axi_conf(top, conf):
 
     for name, p in axi_port_cfg.copy().items():
         if p.t in ['axidma']:
-            p.comp['araddr'] = AxiPortConf(p, 'araddr', params={'araddr': 32})
+            if 'rdata' in p.comp:
+                p.comp['araddr'] = AxiPortConf(p, 'araddr', params={'araddr': 32})
+
+            if 'wdata' in p.comp:
+                p.comp['awaddr'] = AxiPortConf(p, 'awaddr', params={'awaddr': 32})
 
             axil_comp = {
                 'awaddr': AxiPortConf('axilite', 'awaddr', params={'awaddr': 5}),
@@ -196,6 +196,10 @@ def get_axi_conf(top, conf):
             }
 
             axi_port_cfg[f'{name}_ctrl'] = AxiIntfConf(f'{name}_ctrl', 'axilite', axil_comp)
+
+            if 'wdata' in p.comp and 'bresp' not in p.comp:
+                p.comp['bresp'] = AxiPortConf(
+                    p, 'bresp', params={'bresp': 'awaddr' in p.comp})
 
         if p.t in ['axi']:
             if 'wdata' in p.comp and not 'awaddr' in p.comp:

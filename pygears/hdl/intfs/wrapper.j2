@@ -26,7 +26,11 @@ module {{wrap_module_name}} #(
   {% set wdata = p.comp.get('wdata', None) %}
 
   {% if p.t == 'axidma' %}
+    {% if rdata %}
     {{axi.dma_read(name, rdata)}}
+    {% else %}
+    {{axi.dma_write(name, wdata)}}
+    {% endif %}
   {% elif p.t == 'axi' %}
     {% if rdata %}
       {% if araddr.port %}

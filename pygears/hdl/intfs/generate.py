@@ -50,7 +50,13 @@ def generate(top, intfdef):
             params = {n: c.params for n, c in intfdef[f'{name}_ctrl'].comp.items()}
             defs.extend(axi_intfs.port_def(axi_intfs.AXIL_SLAVE, f'{name}_ctrl', **params))
 
-            files.update({'sfifo.v', 'axi_addr.v', 'skidbuffer.v', 'aximm2s.v'})
+            files.update({'sfifo.v', 'axi_addr.v', 'skidbuffer.v'})
+
+            if 'rdata' in p.comp:
+                files.add('aximm2s.v')
+
+            if 'wdata' in p.comp:
+                files.add('axis2mm.v')
 
         elif p.t in ['bram', 'bram.req', 'axi']:
 

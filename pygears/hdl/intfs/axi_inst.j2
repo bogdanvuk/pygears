@@ -117,11 +117,11 @@
 
 {% macro dma_read(name, rdata) -%}
 
-  {%- set axi_port_map = axi_intfs.port_map(
+  {%- set ctrl_port_map = axi_intfs.port_map(
       axi_intfs.AXIL_SLAVE, name + "_ctrl", "s_axil", uppercase=True,
       araddr=5, rdata=32, awaddr=5, wdata=32, bresp=True) %}
 
-  {%- set ctrl_port_map = axi_intfs.port_map(
+  {%- set axi_port_map = axi_intfs.port_map(
       axi_intfs.AXI_MASTER, name, "m_axi", uppercase=True,
       araddr=32, rdata=rdata.params['rdata']) %}
 
@@ -149,28 +149,36 @@
 {%- endmacro %}
 
 
-{% macro dma_read_queue(name, rdata) -%}
+{% macro dma_write(name, wdata) -%}
 
-  {%- set axi_port_map = axi_intfs.port_map(
+  {%- set ctrl_port_map = axi_intfs.port_map(
       axi_intfs.AXIL_SLAVE, name + "_ctrl", "s_axil", uppercase=True,
       araddr=5, rdata=32, awaddr=5, wdata=32, bresp=True) %}
 
-  {%- set ctrl_port_map = axi_intfs.port_map(
+  {%- set axi_port_map = axi_intfs.port_map(
       axi_intfs.AXI_MASTER, name, "m_axi", uppercase=True,
-      araddr=32, rdata=rdata.params['rdata']) %}
+      awaddr=32, wdata=wdata.params['wdata'], bresp=True) %}
 
 
-  aximm2s #(
+  axis2mm #(
+  {% if 'wlast' in wdata.datamap %}
+                    .OPT_TLAST_SYNC(1),
+  {% else %}
+                    .OPT_TLAST_SYNC(0),
+  {% endif %}
+                    .OPT_TREADY_WHILE_IDLE(0),
                     .C_AXI_ID_WIDTH(C_AXI_{{name.upper()}}_ID_WIDTH),
-                    .C_AXI_DATA_WIDTH({{rdata.params['rdata']}})
+                    .C_AXI_DATA_WIDTH({{wdata.params['wdata']}})
     )
   {{name}}_aximm2s (
                     .S_AXI_ACLK(aclk),
                     .S_AXI_ARESETN(aresetn),
-                    .S_AXIS_TDATA({{rdata.name}}.data[{{rdata.params['rdata'] - 2}}:0]),
-                    .S_AXIS_TLAST({{rdata.name}}.data[{{rdata.params['rdata'] - 1}}]),
-                    .S_AXIS_TVALID({{rdata.name}}.valid),
-                    .S_AXIS_TREADY({{rdata.name}}.ready),
+                    .S_AXIS_TDATA({{wdata.name}}.data[{{wdata.dataslice('wdata')}}]),
+                    .S_AXIS_TVALID({{wdata.name}}.valid),
+                    .S_AXIS_TREADY({{wdata.name}}.ready),
+  {% if 'wlast' in wdata.datamap %}
+                    .S_AXIS_TLAST({{wdata.name}}.data[{{wdata.dataslice('wlast')}}]),
+  {% endif %}
                     {{axi_port_map|join(",\n")|indent(19, True)}},
                     {{ctrl_port_map|join(",\n")|indent(19, True)}}
                     );

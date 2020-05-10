@@ -324,78 +324,78 @@ module	axis2mm #(
 
 
 	wire	i_clk   =  S_AXI_ACLK;
-	wire	i_reset = !S_AXI_ARESETN;
+	 (* dont_touch = "yes", mark_debug = "yes" *)wire	i_reset = !S_AXI_ARESETN;
 
 	// Signal declarations
 	// {{{
-	reg	r_busy, r_err, r_complete, r_continuous, r_increment,
+	 (* dont_touch = "yes", mark_debug = "yes" *)reg	r_busy, r_err, r_complete, r_continuous, r_increment,
 		cmd_abort, zero_length,
 		w_cmd_start, w_complete, w_cmd_abort;
-	reg	[2:0]		r_errcode;
-	// reg	cmd_start;
-	reg			axi_abort_pending;
+	(* dont_touch = "yes", mark_debug = "yes" *)reg	[2:0]		r_errcode;
+	// (* dont_touch = "yes", mark_debug = "yes" *)reg	cmd_start;
+	(* dont_touch = "yes", mark_debug = "yes" *)reg			axi_abort_pending;
 
-	reg	[LGLENW-1:0]	aw_requests_remaining,
+	(* dont_touch = "yes", mark_debug = "yes" *)reg	[LGLENW-1:0]	aw_requests_remaining,
 				aw_bursts_outstanding;
-	reg	[LGMAXBURST:0]	wr_writes_pending;
-	reg	[LGMAXBURST:0]		r_max_burst;
-	reg	[C_AXI_ADDR_WIDTH-1:0]	axi_addr;
-	reg	[C_AXI_ADDR_WIDTH-1:0]	next_awaddr;
+	(* dont_touch = "yes", mark_debug = "yes" *)reg	[LGMAXBURST:0]	wr_writes_pending;
+	(* dont_touch = "yes", mark_debug = "yes" *)reg	[LGMAXBURST:0]		r_max_burst;
+	(* dont_touch = "yes", mark_debug = "yes" *)reg	[C_AXI_ADDR_WIDTH-1:0]	axi_addr;
+	(* dont_touch = "yes", mark_debug = "yes" *)reg	[C_AXI_ADDR_WIDTH-1:0]	next_awaddr;
 
-	reg	[C_AXI_ADDR_WIDTH-1:0]	cmd_addr;
-	reg	[LGLENW-1:0]		cmd_length_w;
+	(* dont_touch = "yes", mark_debug = "yes" *)reg	[C_AXI_ADDR_WIDTH-1:0]	cmd_addr;
+	(* dont_touch = "yes", mark_debug = "yes" *)reg	[LGLENW-1:0]		cmd_length_w;
 
-	reg	[2*C_AXIL_DATA_WIDTH-1:0]	wide_address, wide_length,
+	(* dont_touch = "yes", mark_debug = "yes" *)reg	[2*C_AXIL_DATA_WIDTH-1:0]	wide_address, wide_length,
 					new_wideaddr, new_widelen;
-	wire	[C_AXIL_DATA_WIDTH-1:0]	new_cmdaddrlo, new_cmdaddrhi,
+	(* dont_touch = "yes", mark_debug = "yes" *)wire	[C_AXIL_DATA_WIDTH-1:0]	new_cmdaddrlo, new_cmdaddrhi,
 					new_lengthlo,  new_lengthhi;
 
 	// FIFO signals
-	wire				reset_fifo, write_to_fifo,
+	(* dont_touch = "yes", mark_debug = "yes" *)wire				reset_fifo, write_to_fifo,
 					read_from_fifo;
-	wire [C_AXIS_TUSER_WIDTH+C_AXI_DATA_WIDTH-1:0]	fifo_data;
-	wire	[LGFIFO:0]		fifo_fill;
-	wire				fifo_full, fifo_empty;
+	(* dont_touch = "yes", mark_debug = "yes" *)wire [C_AXIS_TUSER_WIDTH+C_AXI_DATA_WIDTH-1:0]	fifo_data;
+	(* dont_touch = "yes", mark_debug = "yes" *)wire	[LGFIFO:0]		fifo_fill;
+	(* dont_touch = "yes", mark_debug = "yes" *)wire				fifo_full, fifo_empty;
 
-	wire				awskd_valid, axil_write_ready;
-	wire	[C_AXIL_ADDR_WIDTH-AXILLSB-1:0]	awskd_addr;
+	(* dont_touch = "yes", mark_debug = "yes" *)wire				awskd_valid, axil_write_ready;
+	(* dont_touch = "yes", mark_debug = "yes" *)wire	[C_AXIL_ADDR_WIDTH-AXILLSB-1:0]	awskd_addr;
 	//
-	wire				wskd_valid;
-	wire	[C_AXIL_DATA_WIDTH-1:0]	wskd_data;
-	wire [C_AXIL_DATA_WIDTH/8-1:0]	wskd_strb;
-	reg				axil_bvalid;
+	(* dont_touch = "yes", mark_debug = "yes" *)wire				wskd_valid;
+	(* dont_touch = "yes", mark_debug = "yes" *)wire	[C_AXIL_DATA_WIDTH-1:0]	wskd_data;
+	(* dont_touch = "yes", mark_debug = "yes" *)wire [C_AXIL_DATA_WIDTH/8-1:0]	wskd_strb;
+	(* dont_touch = "yes", mark_debug = "yes" *)reg				axil_bvalid;
 	//
-	wire				arskd_valid, axil_read_ready;
-	wire	[C_AXIL_ADDR_WIDTH-AXILLSB-1:0]	arskd_addr;
-	reg	[C_AXIL_DATA_WIDTH-1:0]	axil_read_data;
-	reg				axil_read_valid;
-	reg				last_stalled, overflow, last_tlast;
-	reg	[C_AXI_DATA_WIDTH-1:0]	last_tdata;
-	reg	[C_AXIL_DATA_WIDTH-1:0]	w_status_word;
+	(* dont_touch = "yes", mark_debug = "yes" *)wire				arskd_valid, axil_read_ready;
+	(* dont_touch = "yes", mark_debug = "yes" *)wire	[C_AXIL_ADDR_WIDTH-AXILLSB-1:0]	arskd_addr;
+	(* dont_touch = "yes", mark_debug = "yes" *)reg	[C_AXIL_DATA_WIDTH-1:0]	axil_read_data;
+	(* dont_touch = "yes", mark_debug = "yes" *)reg				axil_read_valid;
+	(* dont_touch = "yes", mark_debug = "yes" *)reg				last_stalled, overflow, last_tlast;
+	(* dont_touch = "yes", mark_debug = "yes" *)reg	[C_AXI_DATA_WIDTH-1:0]	last_tdata;
+	(* dont_touch = "yes", mark_debug = "yes" *)reg	[C_AXIL_DATA_WIDTH-1:0]	w_status_word;
 
-	reg	[LGLENW-1:0]		r_remaining_w;
+	(* dont_touch = "yes", mark_debug = "yes" *)reg	[LGLENW-1:0]		r_remaining_w;
 
-	reg				axi_awvalid;
-	reg	[C_AXI_ADDR_WIDTH-1:0]	axi_awaddr;
-	reg	[7:0]			axi_awlen;
-	reg				axi_wvalid, axi_wlast;
-	reg [C_AXI_DATA_WIDTH/8-1:0]	axi_wstrb;
-	reg	[1:0]			awburst;
+	(* dont_touch = "yes", mark_debug = "yes" *)reg				axi_awvalid;
+	(* dont_touch = "yes", mark_debug = "yes" *)reg	[C_AXI_ADDR_WIDTH-1:0]	axi_awaddr;
+	(* dont_touch = "yes", mark_debug = "yes" *)reg	[7:0]			axi_awlen;
+	(* dont_touch = "yes", mark_debug = "yes" *)reg				axi_wvalid, axi_wlast;
+	(* dont_touch = "yes", mark_debug = "yes" *)reg [C_AXI_DATA_WIDTH/8-1:0]	axi_wstrb;
+	(* dont_touch = "yes", mark_debug = "yes" *)reg	[1:0]			awburst;
 
 	// Speed up checking for zeros
-	reg				aw_none_remaining,
+	(* dont_touch = "yes", mark_debug = "yes" *)reg				aw_none_remaining,
 					aw_last_outstanding,
 					wr_none_pending; // r_none_remaining;
 
-	reg				w_phantom_start, phantom_start;
-	reg	[LGFIFO:0]	next_fill;
-	reg	[LGMAXBURST:0]	initial_burstlen;
-	reg	[LGMAXBURST-1:0] addralign;
-	reg			w_increment;
+	(* dont_touch = "yes", mark_debug = "yes" *)reg				w_phantom_start, phantom_start;
+	(* dont_touch = "yes", mark_debug = "yes" *)reg	[LGFIFO:0]	next_fill;
+	(* dont_touch = "yes", mark_debug = "yes" *)reg	[LGMAXBURST:0]	initial_burstlen;
+	(* dont_touch = "yes", mark_debug = "yes" *)reg	[LGMAXBURST-1:0] addralign;
+	(* dont_touch = "yes", mark_debug = "yes" *)reg			w_increment;
 
 	//
 	// Option processing
-	reg			r_tlast_syncd;
+	(* dont_touch = "yes", mark_debug = "yes" *)reg			r_tlast_syncd;
 
 	// }}}
 
@@ -862,7 +862,7 @@ module	axis2mm #(
 		assign	M_AXI_WUSER = 0;
 
 		// Verilator lint_off UNUSED
-		wire	unused_tuser;
+		(* dont_touch = "yes", mark_debug = "yes" *)wire	unused_tuser;
 		assign	unused_tuser = &{ 1'b0, S_AXIS_TUSER };
 		// Verilator lint_on UNUSED
 	end endgenerate
