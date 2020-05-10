@@ -51,3 +51,4 @@ def hdlgen(top=None,
                 pass
 
     return top
+

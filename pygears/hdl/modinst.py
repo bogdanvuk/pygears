@@ -25,9 +25,11 @@ def path_name(path):
 
 
 class HDLModuleInst:
-    def __init__(self, node):
+    def __init__(self, node, lang=None):
         self.node = node
-        self.lang = node.params.get('hdl', {}).get('lang', reg['hdl/lang'])
+
+        if lang is None:
+            self.lang = node.params.get('hdl', {}).get('lang', reg['hdl/lang'])
 
         self.hdlgen_map = reg[f"{self.lang}gen/map"]
 

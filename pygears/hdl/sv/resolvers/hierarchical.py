@@ -8,6 +8,7 @@ from pygears.core.gear import OutSig
 from ...base_resolver import ResolverBase, ResolverTypeError
 from pygears.util.fileio import find_in_dirs, save_file
 from pygears.conf import inject, Inject
+from pygears.hdl import hdlmod
 
 
 class HierarchicalResolver(ResolverBase):
@@ -73,11 +74,9 @@ class HierarchicalResolver(ResolverBase):
     def get_hier_module(self, template_env):
         context = self.module_context(template_env)
 
-        self.hdlgen_map = reg[f'{self.lang}gen/map']
-
         for child in self.node.local_intfs:
-            hdlmod = self.hdlgen_map[child]
-            contents = hdlmod.get_inst(template_env)
+            hmod = hdlmod(child)
+            contents = hmod.get_inst(template_env)
             if contents:
                 context['inst'].append(contents)
 
@@ -87,14 +86,14 @@ class HierarchicalResolver(ResolverBase):
                     name = child.params['sigmap'][s.name]
                     context['inst'].append(f'logic [{s.width-1}:0] {name};')
 
-            hdlmod = self.hdlgen_map[child]
-            if hasattr(hdlmod, 'get_inst'):
-                contents = hdlmod.get_inst(template_env)
+            hmod = hdlmod(child)
+            if hasattr(hmod, 'get_inst'):
+                contents = hmod.get_inst(template_env)
                 if contents:
-                    if hdlmod.traced:
+                    if hmod.traced:
                         context['inst'].append('/*verilator tracing_on*/')
                     context['inst'].append(contents)
-                    if hdlmod.traced:
+                    if hmod.traced:
                         context['inst'].append('/*verilator tracing_off*/')
 
         return template_env.render_local(__file__, "hier_module.j2", context)

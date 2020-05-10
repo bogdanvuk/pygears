@@ -7,35 +7,19 @@ from pygears.core.hier_node import HierVisitorBase
 from .intf import SVIntfGen
 from pygears.definitions import LIB_SVLIB_DIR, USER_SVLIB_DIR, USER_VLIB_DIR, LIB_VLIB_DIR
 from pygears.conf import inject, Inject
+from pygears.hdl import hdlmod
 
 
 class SVGenInstVisitor(HierVisitorBase):
-    @inject
-    def __init__(self, ext=Inject('hdl/lang')):
-        self.namespace = reg[f'{ext}gen/module_namespace']
-        self.hdlgen_map = reg[f'{ext}gen/map']
-
     def Gear(self, node):
-        hdlgen_cls = self.namespace.get(node.definition, None)
-
-        if hdlgen_cls is None:
-            for base_class in inspect.getmro(node.__class__):
-                if base_class.__name__ in self.namespace:
-                    hdlgen_cls = self.namespace[base_class.__name__]
-                    break
-
-        if hdlgen_cls:
-            hdlgen_inst = hdlgen_cls(node)
-        else:
-            hdlgen_inst = None
-
-        self.hdlgen_map[node] = hdlgen_inst
+        hdlgen_inst = hdlmod(node)
 
         if not hdlgen_inst.hierarchical:
             return True
 
         for i in node.local_intfs:
-            self.hdlgen_map[i] = SVIntfGen(i)
+            hdlgen_map = reg[f'{hdlgen_inst.lang}gen/map']
+            hdlgen_map[i] = SVIntfGen(i, hdlgen_inst.lang)
 
 
 def svgen_inst(top, conf):
@@ -51,6 +35,7 @@ def svgen_log():
 
 def svgen_include_get(cfg):
     return reg['hdl/include'] + [USER_SVLIB_DIR, LIB_SVLIB_DIR]
+
 
 def vgen_include_get(cfg):
     return reg['hdl/include'] + [USER_VLIB_DIR, LIB_VLIB_DIR]

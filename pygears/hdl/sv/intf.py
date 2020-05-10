@@ -15,9 +15,11 @@ assign _${intf_name}.ready = ${conn_name}.ready;""")
 
 
 class SVIntfGen:
-    def __init__(self, intf):
+    def __init__(self, intf, lang=None):
         self.intf = intf
-        self.ext = reg['hdl/lang']
+        self.lang = lang
+        if self.lang is None:
+            self.lang = reg['hdl/lang']
 
     @property
     @functools.lru_cache()
@@ -61,7 +63,7 @@ class SVIntfGen:
     @functools.lru_cache(maxsize=None)
     def basename(self):
 
-        hdlgen_map = reg[f'{self.ext}gen/map']
+        hdlgen_map = reg[f'{self.lang}gen/map']
         basename = self._basename
         if self.is_port_intf:
             return basename
@@ -187,7 +189,7 @@ class SVIntfGen:
         if inst_name.endswith('_if_s'):
             inst_name = inst_name[:-len('_if_s')]
 
-        if self.ext == 'sv':
+        if self.lang == 'sv':
             bc_context = {
                 'rst_name': 'rst',
                 'module_name': 'bc',

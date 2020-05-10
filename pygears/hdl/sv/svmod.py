@@ -3,14 +3,10 @@ from pygears.hdl.modinst import HDLModuleInst
 from .sv_keywords import sv_keywords
 from collections import OrderedDict
 from pygears.conf import inject, Inject
+from pygears.hdl import hdlmod
 
 
 class SVModuleInst(HDLModuleInst):
-    @inject
-    def __init__(self, node):
-        super().__init__(node)
-        self.hdlgen_map = reg[f"{self.lang}gen/map"]
-
     @property
     def inst_name(self):
         inst_name = super().inst_name
@@ -55,7 +51,7 @@ class SVModuleInst(HDLModuleInst):
         return template_env.render('.', "module_synth_wrap.j2", context)
 
     def get_out_port_map_intf_name(self, port):
-        basename = self.hdlgen_map[port.consumer].basename
+        basename = hdlmod(port.consumer).basename
         if self.lang == 'sv':
             return basename
         else:
@@ -63,7 +59,7 @@ class SVModuleInst(HDLModuleInst):
 
     def get_in_port_map_intf_name(self, port):
         intf = port.producer
-        hdlgen_intf = self.hdlgen_map[intf]
+        hdlgen_intf = hdlmod(intf)
 
         if len(intf.consumers) == 1:
             if self.lang == 'sv':
