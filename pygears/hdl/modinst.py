@@ -39,7 +39,7 @@ class HDLModuleInst:
 
             # TODO: What if hdlmod hasn't been generated? This can happen if we
             # only generate a part of the design
-            hdlmod = reg[f'{self.lang}gen/map'][memnode]
+            hdlmod = reg['hdlgen/map'][memnode]
             self.resolver = hdlmod.resolver
             return
 

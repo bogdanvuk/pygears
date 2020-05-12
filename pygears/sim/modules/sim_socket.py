@@ -106,7 +106,7 @@ class SVServerModule:
         self.svmod = reg['svgen/map'][self.module]
 
     def files(self):
-        return list_hdl_files(self.module, self.srcdir, lang='sv', wrapper=False)
+        return list_hdl_files(self.module, self.srcdir, wrapper=False)
 
     def includes(self):
         return reg[f'svgen/include'] + [self.srcdir]

@@ -12,7 +12,7 @@ from pygears import reg, find
 from pygears.sim import sim_log
 from pygears.sim.c_drv import CInputDrv, COutputDrv
 from pygears.sim.modules.cosim_base import CosimBase
-from pygears.hdl import hdlgen
+from pygears.hdl import hdlgen, list_hdl_files
 from pygears.util.fileio import save_file
 from pygears.core.port import InPort, OutPort
 from .cosim_port import InCosimPort, OutCosimPort
@@ -95,25 +95,34 @@ def make(objdir, top_name):
             f'Verilator compile error: {ret}. '
             f'Please inspect "{objdir}/make.log"')
 
+def create_project_script(outdir, top, lang, wrapper):
+    hdl_files = list_hdl_files(top, outdir, wrapper=wrapper)
+    with open(os.path.join(outdir, 'verilator.prj'), 'w') as f:
+        for fn in hdl_files:
+            f.write(f'{fn}\n')
 
-def verilate(outdir, lang, top_name, wrap_name, tracing_enabled):
-    include = ' '.join([f'-I{os.path.abspath(p)}' for p in reg[f'{lang}gen/include']])
+    # with open(os.path.join(outdir, 'verilator.prj'), 'w') as f:
+    #     for fn in reg['hdlgen/hdlmods'].values():
+    #         f.write(f'{fn}\n')
 
-    include += f' -I{outdir}'
+def verilate(outdir, lang, top, top_name, wrap_name, tracing_enabled):
+    # include = ' '.join([f'-I{os.path.abspath(p)}' for p in reg[f'{lang}gen/include']])
 
-    files = f'{wrap_name}.{lang}'
+    # include += f' -I{outdir}'
+
+    # files = f'{wrap_name}.{lang}'
+    create_project_script(outdir, top, lang, wrapper=True)
 
     verilate_cmd = [
         f'cd {outdir};',
         'verilator -cc -CFLAGS -fpic -LDFLAGS -shared --exe',
         '-Wno-fatal',
         # TODO: Not much of a speedup: '-O3 --x-assign fast --x-initial fast --noassert',
-        include,
         '-clk clk',
         f'--top-module {top_name}',
         '--trace --no-trace-params --trace-structs' if tracing_enabled else '',
         '-o pygearslib',
-        files,
+        '-f verilator.prj',
         'sim_main.cpp',
     ]
 
@@ -167,7 +176,7 @@ def build(top, outdir=None, postsynth=False, lang=None, rebuild=True):
         generate=True,
         lang=lang)
 
-    hdlmod = reg[f'{lang}gen/map'][top]
+    hdlmod = reg['hdlgen/map'][top]
 
     wrap_name = f'wrap_{hdlmod.module_name}'
     # top_name = hdlmod.module_name if postsynth else wrap_name
@@ -198,7 +207,7 @@ def build(top, outdir=None, postsynth=False, lang=None, rebuild=True):
     c = jenv.get_template('sim_veriwrap.j2').render(context)
     save_file('sim_main.cpp', outdir, c)
 
-    verilate(outdir, lang, top_name, wrap_name, tracing_enabled)
+    verilate(outdir, lang, top, top_name, wrap_name, tracing_enabled)
 
     make(file_struct['objdir'], top_name)
 

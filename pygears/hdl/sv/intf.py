@@ -1,4 +1,5 @@
 import fnmatch
+import os
 import functools
 from string import Template
 
@@ -6,7 +7,7 @@ from pygears import PluginBase, reg
 from pygears.conf import Inject, inject, reg
 from pygears.core.port import OutPort, InPort, HDLProducer
 from .util import svgen_typedef
-from pygears.hdl import hdlmod
+from pygears.hdl import hdlmod, rename_ambiguous
 
 dti_spy_connect_t = Template("""
 dti_spy #(${intf_name}_t) _${intf_name}(clk, rst);
@@ -26,8 +27,7 @@ class SVIntfGen:
     @functools.lru_cache()
     def traced(self):
         return any(
-            fnmatch.fnmatch(self.intf.name, p)
-            for p in reg['debug/trace'])
+            fnmatch.fnmatch(self.intf.name, p) for p in reg['debug/trace'])
 
     @property
     @functools.lru_cache(maxsize=None)
@@ -100,7 +100,6 @@ class SVIntfGen:
         else:
             return False
 
-
     @property
     def sole_intf(self):
         if self.intf.producer:
@@ -152,8 +151,7 @@ class SVIntfGen:
 
         for i, cons_port in enumerate(self.intf.consumers):
             if isinstance(cons_port, OutPort):
-                if self.is_broadcast or isinstance(
-                        self.intf.producer, InPort):
+                if self.is_broadcast or isinstance(self.intf.producer, InPort):
                     din_name = self.outname
                     index = ''
                     if self.is_broadcast:
@@ -191,7 +189,7 @@ class SVIntfGen:
         if self.lang == 'sv':
             bc_context = {
                 'rst_name': 'rst',
-                'module_name': 'bc',
+                'module_name': rename_ambiguous('bc', self.lang),
                 'inst_name': inst_name,
                 'param_map': {
                     'SIZE': len(self.intf.consumers)
@@ -204,7 +202,7 @@ class SVIntfGen:
         else:
             bc_context = {
                 'rst_name': 'rst',
-                'module_name': 'bc',
+                'module_name': rename_ambiguous('bc', self.lang),
                 'inst_name': inst_name,
                 'param_map': {
                     'SIZE': len(self.intf.consumers),

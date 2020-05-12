@@ -9,7 +9,7 @@ from pygears.entry import cmd_register
 from pygears.conf.custom_settings import load_rc
 
 def create_project_script(script_fn, outdir, top, lang, wrapper):
-    hdl_files = list_hdl_files(top, outdir, lang=lang, wrapper=wrapper)
+    hdl_files = list_hdl_files(top, outdir, wrapper=wrapper)
     with open(script_fn, 'w') as f:
         for fn in hdl_files:
             # f.write(f'read_verilog {"-sv" if lang== "sv" else ""} {fn}\n')
@@ -118,7 +118,7 @@ def synth(outdir,
 
     hdlgen(top=top_mod, lang=lang, outdir=srcdir, wrapper=wrapper)
 
-    vgen_map = reg[f'{lang}gen/map']
+    vgen_map = reg['hdlgen/map']
     top_name = vgen_map[top_mod].module_name
     if wrapper:
         top_name = f'wrap_{top_name}'

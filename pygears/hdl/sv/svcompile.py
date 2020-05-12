@@ -666,7 +666,7 @@ def compile_gear_body(gear, outdir, template_env):
     subsvmods = []
     if ctx.submodules:
         from pygears.hdl import hdlgen
-        hdlgen_map = reg[f'{lang}gen/map']
+        hdlgen_map = reg['hdlgen/map']
         for c in ctx.submodules:
             rtl_top = hdlgen(c.gear, outdir=outdir, generate=False)
             svmod = hdlgen_map[rtl_top]

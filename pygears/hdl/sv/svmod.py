@@ -3,7 +3,7 @@ from pygears.hdl.modinst import HDLModuleInst
 from .sv_keywords import sv_keywords
 from collections import OrderedDict
 from pygears.conf import inject, Inject
-from pygears.hdl import hdlmod, mod_lang
+from pygears.hdl import hdlmod, mod_lang, rename_ambiguous
 
 
 class SVModuleInst(HDLModuleInst):
@@ -130,7 +130,7 @@ class SVModuleInst(HDLModuleInst):
 
         context = {
             'rst_name': 'rst',
-            'module_name': module_name,
+            'module_name': rename_ambiguous(module_name, self.lang),
             'inst_name': self.inst_name,
             'param_map': params,
             'port_map': port_map,

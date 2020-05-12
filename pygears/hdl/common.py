@@ -14,14 +14,13 @@ class NodeYielder(HierYielderBase):
         yield node
 
 
-def enum_hdl_files(top, outdir, lang, rtl_only=False, wrapper=False):
+def enum_hdl_files(top, outdir, rtl_only=False, wrapper=False):
     if isinstance(top, str):
         top = find(top)
 
-    vgen_map = reg[f'{lang}gen/map']
+    vgen_map = reg[f'hdlgen/map']
 
-    if lang == 'sv':
-        yield os.path.join(LIB_SVLIB_DIR, 'dti.sv')
+    dti_yielded = False
 
     for node in NodeYielder().visit(top):
         if node not in vgen_map:
@@ -29,12 +28,16 @@ def enum_hdl_files(top, outdir, lang, rtl_only=False, wrapper=False):
 
         vinst = vgen_map[node]
 
+        if vinst.lang == 'sv' and not dti_yielded:
+            dti_yielded = True
+            yield os.path.join(LIB_SVLIB_DIR, 'dti.sv')
+
         if ((node is top) and wrapper and not rtl_only):
             yield os.path.join(outdir, f'wrap_{vinst.file_basename}')
 
-        if (isinstance(node, Gear) and (node in reg[f'{lang}gen/map'])):
+        if (isinstance(node, Gear) and (node in reg['hdlgen/map'])):
 
-            modinst = reg[f'{lang}gen/map'][node]
+            modinst = reg['hdlgen/map'][node]
             for f in modinst.files:
                 yield os.path.join(outdir, f)
 
@@ -47,20 +50,44 @@ def enum_hdl_files(top, outdir, lang, rtl_only=False, wrapper=False):
             #         yield os.path.join(outdir, f)
 
         elif vinst.is_broadcast:
-            if lang == 'v':
+            if vinst.lang == 'v':
                 yield os.path.join(LIB_VLIB_DIR, 'bc.v')
-            elif lang == 'sv':
+            elif vinst.lang == 'sv':
                 yield os.path.join(LIB_SVLIB_DIR, 'bc.sv')
 
 
-def list_hdl_files(top, outdir, lang, rtl_only=False, wrapper=False):
-    seen = set()
-    seen_add = seen.add
-    return [
-        x for x in enum_hdl_files(
-            top, outdir, lang, rtl_only=rtl_only, wrapper=wrapper)
-        if not (x in seen or seen_add(x))
-    ]
+def list_hdl_files(top, outdir, rtl_only=False, wrapper=False):
+    if isinstance(top, str):
+        top = find(top)
+
+    orig_fns = set()
+    hdlmods = {}
+    for fn in enum_hdl_files(top, outdir, rtl_only=rtl_only, wrapper=wrapper):
+        modname, lang = os.path.splitext(os.path.basename(fn))
+        hdlmods[(modname, lang[1:])] = fn
+
+    hdltop = reg['hdlgen/map'][top]
+    disambig = reg['hdlgen/disambig']
+    fns = []
+    for (modname, lang), fn in hdlmods.items():
+        if lang == hdltop.lang or (modname, hdltop.lang) not in hdlmods:
+            fns.append(fn)
+            continue
+
+        fn_dis = os.path.join(outdir, f'{modname}_{lang}.{lang}')
+        disambig[(modname, lang)] = (fn, fn_dis)
+
+        fns.append(fn_dis)
+
+    return fns
+
+    # seen = set()
+    # seen_add = seen.add
+    # return [
+    #     x for x in enum_hdl_files(
+    #         top, outdir, rtl_only=rtl_only, wrapper=wrapper)
+    #     if not (x in seen or seen_add(x))
+    # ]
 
 
 def copy_files(files):

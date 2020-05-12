@@ -12,6 +12,12 @@ def register_hdl_paths(*paths):
         reg['hdl/include'].append(
             os.path.abspath(os.path.expandvars(os.path.expanduser(p))))
 
+def rename_ambiguous(modname, lang):
+    if (modname, lang) in reg['hdlgen/disambig']:
+        return f'{modname}_{lang}'
+
+    return modname
+
 
 def hdl_log():
     return logging.getLogger('svgen')
@@ -36,7 +42,7 @@ def hdlmod(module, lang=None):
     if lang is None:
         lang = mod_lang(module)
 
-    hdlgen_map = reg[f'{lang}gen/map']
+    hdlgen_map = reg[f'hdlgen/map']
     if module in hdlgen_map:
         return hdlgen_map[module]
 
@@ -73,10 +79,10 @@ class HDLPlugin(GearPlugin):
 
 
 from .util import flow_visitor, HDLGearHierVisitor
+from .common import list_hdl_files
 from . import sv
 from . import v
 from .hdlgen import hdlgen
-from .common import list_hdl_files
 from .ipgen import ipgen
 from .synth import synth
 

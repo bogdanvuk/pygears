@@ -7,7 +7,8 @@ from pygears.hdl import mod_lang
 
 class HDLGenGenerateVisitor(HierYielderBase):
     def __init__(self, top, outdir, wrapper=False):
-        self.hdlgen_map = {lang: reg[f'{lang}gen/map'] for lang in ['sv', 'v']}
+        # self.hdlgen_map = {lang: reg[f'{lang}gen/map'] for lang in ['sv', 'v']}
+        self.hdlgen_map = reg[f'hdlgen/map']
         self.templenv = {lang: reg[f'{lang}gen/templenv'] for lang in ['sv', 'v']}
 
         self.wrapper = wrapper
@@ -16,7 +17,7 @@ class HDLGenGenerateVisitor(HierYielderBase):
 
     def Gear(self, node):
         lang = mod_lang(node)
-        hdlgen = self.hdlgen_map[lang].get(node, None)
+        hdlgen = self.hdlgen_map.get(node, None)
 
         if hdlgen is not None:
             hdlgen.generate(self.templenv[lang], self.outdir)

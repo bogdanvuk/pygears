@@ -34,15 +34,21 @@ def hdlgen(top=None,
 
     reg['svgen/conf'] = conf
     for oper in reg[f'{lang}gen/flow']:
-        top = oper(top, conf)
+        oper(top, conf)
 
     if generate:
         hdlgen_generate(top, conf)
 
+        for (modname, lang), (fn, fn_dis) in reg['hdlgen/disambig'].items():
+            with open(fn) as fin:
+                with open(fn_dis, 'w') as fout:
+                    mod = fin.read()
+                    mod = mod.replace(f'module {modname}', f'module {modname}_{lang}')
+                    fout.write(mod)
+
     if copy_files and generate:
         for fn in list_hdl_files(top.name,
                                  outdir=outdir,
-                                 lang=lang,
                                  rtl_only=True,
                                  wrapper=conf.get('wrapper', False)):
             try:
@@ -51,4 +57,3 @@ def hdlgen(top=None,
                 pass
 
     return top
-
