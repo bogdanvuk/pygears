@@ -2,6 +2,7 @@ import os
 from pygears.core.hier_node import HierYielderBase
 from pygears.util.fileio import save_file
 from pygears import reg
+from pygears.hdl import mod_lang
 
 
 class HDLGenGenerateVisitor(HierYielderBase):
@@ -14,7 +15,7 @@ class HDLGenGenerateVisitor(HierYielderBase):
         self.outdir = outdir
 
     def Gear(self, node):
-        lang = node.params.get('hdl', {}).get('lang', reg['hdl/lang'])
+        lang = mod_lang(node)
         hdlgen = self.hdlgen_map[lang].get(node, None)
 
         if hdlgen is not None:

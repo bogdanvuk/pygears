@@ -3,6 +3,7 @@ from pygears import reg
 import hashlib
 import functools
 import typing
+from pygears.hdl import mod_lang
 
 
 class ResolverTypeError(Exception):
@@ -31,7 +32,7 @@ class ResolverBase(ABC):
 
     @property
     def lang(self):
-        return self.node.params.get('hdl', {}).get('lang', reg['hdl/lang'])
+        return mod_lang(self.node)
 
     @property
     def node_def_name(self):

@@ -6,6 +6,7 @@ from pygears import PluginBase, reg
 from pygears.conf import Inject, inject, reg
 from pygears.core.port import OutPort, InPort, HDLProducer
 from .util import svgen_typedef
+from pygears.hdl import hdlmod
 
 dti_spy_connect_t = Template("""
 dti_spy #(${intf_name}_t) _${intf_name}(clk, rst);
@@ -62,22 +63,20 @@ class SVIntfGen:
     @property
     @functools.lru_cache(maxsize=None)
     def basename(self):
-
-        hdlgen_map = reg[f'{self.lang}gen/map']
         basename = self._basename
         if self.is_port_intf:
             return basename
 
         cnt = 0
         for c in self.parent.child:
-            if hdlgen_map[c]._basename == basename:
+            if hdlmod(c)._basename == basename:
                 cnt += 1
 
         for c in self.parent.local_intfs:
             if c is self.intf:
                 break
 
-            if hdlgen_map[c]._basename == basename:
+            if hdlmod(c)._basename == basename:
                 cnt += 1
 
         for p in self.parent.out_ports:

@@ -29,12 +29,12 @@
       {{i['name']}}.ready = 1'b0;
 {% endfor %}
 
-      if(din0.valid && (!flag_reg || flag_reg[0])) begin
+      if(din0.valid && (!(|flag_reg) || flag_reg[0])) begin
          dout.valid = din0.valid;
          din0.ready = dout.ready;
          flag[0] = 1;
 {% for i in intfs[1:]|isinput %}
-      end else if ({{i['name']}}.valid && (!flag_reg || flag_reg[{{loop.index}}])) begin
+      end else if ({{i['name']}}.valid && (!(|flag_reg) || flag_reg[{{loop.index}}])) begin
   {% if is_queue %}
          dout_s.data.data = {{i['name']}}.data;
          dout_s.data.ctrl = {{loop.index}};

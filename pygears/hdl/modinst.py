@@ -5,7 +5,7 @@ import hashlib
 from pygears import reg
 from .base_resolver import ResolverTypeError
 from . import hdl_log
-from pygears.hdl import mod_lang
+from pygears.hdl import mod_lang, hdlmod
 from pygears.util.fileio import save_file
 
 # from .inst import svgen_log
@@ -31,9 +31,7 @@ class HDLModuleInst:
         self.node = node
 
         if lang is None:
-            self.lang = node.params.get('hdl', {}).get('lang', reg['hdl/lang'])
-
-        self.hdlgen_map = reg[f"{self.lang}gen/map"]
+            self.lang = mod_lang(node)
 
         self._impl_parse = None
         if 'memoized' in self.node.params:
@@ -76,7 +74,7 @@ class HDLModuleInst:
 
         if self.hierarchical:
             children_traced = any(
-                self.hdlgen_map[child].traced for child in self.node.child)
+                hdlmod(child).traced for child in self.node.child)
         else:
             children_traced = False
 

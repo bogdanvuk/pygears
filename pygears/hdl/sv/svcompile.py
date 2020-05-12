@@ -375,12 +375,7 @@ def write_block(block, writer):
     if block.header:
         writer.indent -= 4
         if block.footer and block.footer[0] == 'endfunction':
-            lang = reg['hdl/lang']
-            if lang == 'sv':
-                writer.line('endfunction')
-            else:
-                writer.line('end')
-                writer.line('endfunction')
+            writer.line('endfunction')
         else:
             writer.line('end')
 
@@ -574,7 +569,6 @@ def write_module(ctx: Context,
                 writer.block('\n'.join(l for l in tmp.split('\n')[1:]
                                        if l.startswith('reg')))
 
-            writer.line(f'begin')
             for name, dtype in f_ctx.signature.items():
                 tmp = vgen_signal(dtype, 'reg', name, 'input', hier=False)
                 for l in tmp.split('\n')[1:]:

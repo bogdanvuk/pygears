@@ -70,6 +70,15 @@ def gear_explicit_params(func, params):
         for name in explicit_param_names if name in params
     }
 
+def struct_copy(s):
+    if isinstance(s, dict):
+        return type(s)({k:struct_copy(v) for k,v in s.items()})
+
+    if isinstance(s, list):
+        return type(s)([struct_copy(v) for v in s])
+
+    return s
+
 
 class Gear(NamedHierNode):
     def __init__(self, func, params):
@@ -77,7 +86,7 @@ class Gear(NamedHierNode):
                          reg['gear/current_module'] if func else None)
         self.trace = list(enum_stacktrace())
         self.args = {}
-        self.params = params
+        self.params = struct_copy(params)
         self.func = func
         self.const_args = {}
         self.in_ports: List[InPort] = []

@@ -52,7 +52,7 @@ class SVModuleInst(HDLModuleInst):
 
         sigmap = {}
         for s in self.node.params['signals']:
-            sigmap[s.name] = self.node.params['sigmap'].get(s.name, s.name)
+            sigmap[s.name] = s.name
 
         context = {
             'rst_name': 'rst',
@@ -108,9 +108,11 @@ class SVModuleInst(HDLModuleInst):
 
         if parent_lang == self.lang:
             module_name = self.module_name
+            params = self.params
         else:
             template_env = reg[f'{parent_lang}gen/templenv']
             module_name = f'{self.module_name}_{parent_lang}_wrap'
+            params = {}
 
         if not port_map:
             in_port_map = [(port.basename,
@@ -130,7 +132,7 @@ class SVModuleInst(HDLModuleInst):
             'rst_name': 'rst',
             'module_name': module_name,
             'inst_name': self.inst_name,
-            'param_map': self.params,
+            'param_map': params,
             'port_map': port_map,
             'sig_map': sigmap
         }

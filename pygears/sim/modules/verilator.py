@@ -1,4 +1,5 @@
 import ctypes
+import shutil
 import atexit
 import os
 import subprocess
@@ -33,6 +34,22 @@ signal_spy_connect_hide_interm_t = Template(
     """
 /*verilator tracing_on*/
 ${intf_name}_t ${intf_name}_data;
+logic ${intf_name}_valid;
+logic ${intf_name}_ready;
+/*verilator tracing_off*/
+
+always_comb
+    if (${conn_name}.valid)
+        ${intf_name}_data = ${conn_name}.data;
+
+assign ${intf_name}_valid = ${conn_name}.valid;
+assign ${intf_name}_ready = ${conn_name}.ready;
+""")
+
+signal_spy_connect_no_struct = Template(
+    """
+/*verilator tracing_on*/
+logic [${width}:0] ${intf_name}_data;
 logic ${intf_name}_valid;
 logic ${intf_name}_ready;
 /*verilator tracing_off*/
@@ -135,6 +152,8 @@ def build(top, outdir=None, postsynth=False, lang=None, rebuild=True):
 
     if not rebuild and os.path.exists(file_struct['dll_path']):
         return
+
+    shutil.rmtree(outdir, ignore_errors=True)
 
     reg['svgen/spy_connection_template'] = (
         signal_spy_connect_hide_interm_t
