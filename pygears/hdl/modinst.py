@@ -97,6 +97,14 @@ class HDLModuleInst:
         return self.resolver.module_name
 
     @property
+    def wrap_module_name(self):
+        module_name = self.module_name
+        if self.wrapped:
+            return f'{module_name}_{self.parent_lang}_wrap'
+
+        return module_name
+
+    @property
     def file_basename(self):
         return self.resolver.file_basename
 
@@ -104,11 +112,18 @@ class HDLModuleInst:
     def files(self):
         res_files = self.resolver.files
 
-        parent_lang = mod_lang(self.node.parent)
-        if parent_lang != self.lang:
-            res_files.append(f'{self.module_name}_{parent_lang}_wrap')
+        if self.wrapped:
+            res_files.append(self.wrap_module_name)
 
         return res_files
+
+    @property
+    def parent_lang(self):
+        return mod_lang(self.node.parent)
+
+    @property
+    def wrapped(self):
+        return mod_lang(self.node.parent) != self.lang
 
     @property
     def params(self):
@@ -121,8 +136,9 @@ class HDLModuleInst:
             if not self.node.parent:
                 return
 
-            parent_lang = mod_lang(self.node.parent)
-            if parent_lang != self.lang:
+            # TODO: What about reusing memoized module that didn't need a
+            # wrapper. Discern this.
+            if self.wrapped:
                 save_file(
-                    f'{self.module_name}_{parent_lang}_wrap.{parent_lang}', outdir,
-                    self.get_wrap(parent_lang))
+                    f'{self.wrap_module_name}.{self.parent_lang}', outdir,
+                    self.get_wrap(self.parent_lang))

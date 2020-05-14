@@ -88,10 +88,3 @@ def list_hdl_files(top, outdir, rtl_only=False, wrapper=False):
     #         top, outdir, rtl_only=rtl_only, wrapper=wrapper)
     #     if not (x in seen or seen_add(x))
     # ]
-
-
-def copy_files(files):
-    outdir = reg['svgen/conf']['outdir']
-
-    for fn in files:
-        shutil.copy(fn, outdir)

@@ -8,12 +8,15 @@ from pygears.hdl.synth import SynthPlugin
 from pygears.entry import cmd_register
 from pygears.conf.custom_settings import load_rc
 
-def create_project_script(script_fn, outdir, top, lang, wrapper):
-    hdl_files = list_hdl_files(top, outdir, wrapper=wrapper)
+def create_project_script(script_fn, outdir, top):
+    hdl_files = list_hdl_files(top, outdir)
     with open(script_fn, 'w') as f:
         for fn in hdl_files:
-            # f.write(f'read_verilog {"-sv" if lang== "sv" else ""} {fn}\n')
-            f.write(f'read_verilog -sv {fn}\n')
+            if os.path.splitext(os.path.basename(fn))[0] in ['tdp', 'sdp', 'decouple', 'fifo']:
+                print(f"Loading {fn} as blackbox")
+                f.write(f'read_verilog -sv -lib {fn}\n')
+            else:
+                f.write(f'read_verilog -sv {fn}\n')
 
 
 class Yosys:
@@ -109,25 +112,19 @@ def synth(outdir,
 
     # synth_out_fn = os.path.join(outdir, 'synth.v')
 
-    wrapper = False if top is None else True
-
     if isinstance(top, str):
         top_mod = find(top)
     else:
         top_mod = top
 
-    hdlgen(top=top_mod, lang=lang, outdir=srcdir, wrapper=wrapper)
+    hdlgen(top=top_mod, lang=lang, toplang='v', outdir=srcdir)
 
     vgen_map = reg['hdlgen/map']
-    top_name = vgen_map[top_mod].module_name
-    if wrapper:
-        top_name = f'wrap_{top_name}'
+    top_name = vgen_map[top_mod].wrap_module_name
 
     create_project_script(prj_script_fn,
                           outdir=srcdir,
-                          top=top_mod,
-                          lang=lang,
-                          wrapper=wrapper)
+                          top=top_mod)
 
     with Yosys(f'yosys -l {os.path.join(outdir, "yosys.log")}') as yosys:
 

@@ -6,6 +6,7 @@ from .generate import generate as hdlgen_generate
 
 def hdlgen(top=None,
            lang=None,
+           toplang=None,
            copy_files=False,
            generate=True,
            outdir=None,
@@ -16,6 +17,13 @@ def hdlgen(top=None,
     else:
         # TODO: should we save/restore previous setting for 'hdl/lang'?
         reg['hdl/lang'] = lang
+
+    if toplang is None:
+        toplang = reg['hdl/toplang']
+        if toplang is None:
+            toplang = reg['hdl/lang']
+
+    reg['hdl/toplang'] = toplang
 
     conf['outdir'] = outdir
 
@@ -32,6 +40,8 @@ def hdlgen(top=None,
     else:
         top = top
 
+    reg['hdl/top'] = top
+
     reg['svgen/conf'] = conf
     for oper in reg[f'{lang}gen/flow']:
         oper(top, conf)
@@ -43,14 +53,12 @@ def hdlgen(top=None,
             with open(fn) as fin:
                 with open(fn_dis, 'w') as fout:
                     mod = fin.read()
-                    mod = mod.replace(f'module {modname}', f'module {modname}_{lang}')
+                    mod = mod.replace(f'module {modname}',
+                                      f'module {modname}_{lang}')
                     fout.write(mod)
 
     if copy_files and generate:
-        for fn in list_hdl_files(top.name,
-                                 outdir=outdir,
-                                 rtl_only=True,
-                                 wrapper=conf.get('wrapper', False)):
+        for fn in list_hdl_files(top.name, outdir=outdir, rtl_only=True):
             try:
                 shutil.copy(fn, outdir)
             except shutil.SameFileError:

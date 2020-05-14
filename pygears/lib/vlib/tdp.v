@@ -26,17 +26,17 @@ module tdp
 
     );
 
-   logic        ena;
-   logic        wea;
-   logic [W_ADDR-1:0] addra;
-   logic [W_DATA-1:0] dia;
-   logic [W_DATA-1:0] doa;
+   wire        ena;
+   wire        wea;
+   wire [W_ADDR-1:0] addra;
+   wire [W_DATA-1:0] dia;
+   wire [W_DATA-1:0] doa;
 
-   logic              enb;
-   logic              web;
-   logic [W_ADDR-1:0] addrb;
-   logic [W_DATA-1:0] dib;
-   logic [W_DATA-1:0] dob;
+   wire              enb;
+   wire              web;
+   wire [W_ADDR-1:0] addrb;
+   wire [W_DATA-1:0] dib;
+   wire [W_DATA-1:0] dob;
 
    tdp_port
      #(
@@ -97,7 +97,17 @@ module tdp
    m_ram
      (
       .clk(clk),
-      .*
+      .ena(ena),
+      .wea(wea),
+      .addra(addra),
+      .dia(dia),
+      .doa(doa),
+
+      .enb(enb),
+      .web(web),
+      .addrb(addrb),
+      .dib(dib),
+      .dob(dob)
       );
 
 endmodule
@@ -113,17 +123,17 @@ module tdp_mem #(
     input                     wea,
     input [W_ADDR-1:0]        addra,
     input [W_DATA-1:0]        dia,
-    output logic [W_DATA-1:0] doa,
+    output reg [W_DATA-1:0] doa,
 
     input                     enb,
     input                     web,
     input [W_ADDR-1:0]        addrb,
     input [W_DATA-1:0]        dib,
-    output logic [W_DATA-1:0] dob
+    output reg [W_DATA-1:0] dob
 
     );
 
-   logic [W_DATA-1:0]         ram [DEPTH-1:0];
+   reg [W_DATA-1:0]         ram [DEPTH-1:0];
 
    always @(posedge clk) begin
       if (ena) begin

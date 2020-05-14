@@ -32,8 +32,15 @@ def mod_lang(module):
     if lang is not None:
         return lang
 
-    if module.parent is None:
+    if module is reg['hdl/top']:
         return reg['hdl/lang']
+
+    if module is reg['hdl/top'].parent:
+        return reg['hdl/toplang']
+
+    # # TODO: We shouldn't need this?
+    # if module.parent is None:
+    #     return reg['hdl/lang']
 
     return mod_lang(module.parent)
 
@@ -74,6 +81,8 @@ class HDLPlugin(GearPlugin):
 
         reg.confdef('hdl/include', default=[])
         reg.confdef('hdl/lang', default='sv')
+        reg.confdef('hdl/toplang', default=None)
+        reg['hdl/top'] = None
 
         reg.confdef('debug/hide_interm_vals', default=True)
 

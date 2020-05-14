@@ -87,7 +87,7 @@ module decouple
             if (INIT_VALID)
               din_reg_data <= INIT;
           end else if(!reg_empty && dout_ready) begin
-            din_reg_valid <= '0;
+            din_reg_valid <= 0;
           end else if (reg_ready)begin
             din_reg_valid <= din_valid;
             din_reg_data <= din_data;

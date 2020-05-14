@@ -56,7 +56,7 @@ class SVModuleInst(HDLModuleInst):
 
         context = {
             'rst_name': 'rst',
-            'wrap_module_name': f'{self.module_name}_{parent_lang}_wrap',
+            'wrap_module_name': self.wrap_module_name,
             'module_name': self.module_name,
             'inst_name': self.inst_name,
             'param_map': self.params,
@@ -105,13 +105,12 @@ class SVModuleInst(HDLModuleInst):
 
     def get_inst(self, template_env, port_map=None):
         parent_lang = mod_lang(self.node.parent)
+        module_name = self.wrap_module_name
 
         if parent_lang == self.lang:
-            module_name = self.module_name
             params = self.params
         else:
             template_env = reg[f'{parent_lang}gen/templenv']
-            module_name = f'{self.module_name}_{parent_lang}_wrap'
             params = {}
 
         if not port_map:
