@@ -66,7 +66,7 @@ class SVModuleInst(HDLModuleInst):
             'sig_map': sigmap
         }
 
-        return template_env.render_local(__file__, f"{parent_lang}_wrap.j2", context)
+        return template_env.render(template_env.basedir, f"{parent_lang}_wrap.j2", context)
 
     def get_synth_wrap(self, template_env):
         context = {

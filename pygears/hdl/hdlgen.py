@@ -18,13 +18,6 @@ def hdlgen(top=None,
         # TODO: should we save/restore previous setting for 'hdl/lang'?
         reg['hdl/lang'] = lang
 
-    if toplang is None:
-        toplang = reg['hdl/toplang']
-        if toplang is None:
-            toplang = reg['hdl/lang']
-
-    reg['hdl/toplang'] = toplang
-
     conf['outdir'] = outdir
 
     if isinstance(top, tuple):
@@ -40,7 +33,14 @@ def hdlgen(top=None,
     else:
         top = top
 
-    reg['hdl/top'] = top
+    if toplang is None:
+        toplang = reg['hdl/toplang']
+        if toplang is None:
+            toplang = reg['hdl/lang']
+    else:
+        reg['hdl/top'] = top
+
+    reg['hdl/toplang'] = toplang
 
     reg['svgen/conf'] = conf
     for oper in reg[f'{lang}gen/flow']:

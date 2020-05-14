@@ -112,6 +112,6 @@ def test_synth_vivado():
     clip(Intf(T_DIN))
 
 
-@synth_check({'logic luts': 18, 'ffs': 16}, tool='yosys')
+@synth_check({'logic luts': 13, 'ffs': 16}, tool='yosys')
 def test_synth_yosys():
     clip(Intf(T_DIN))
