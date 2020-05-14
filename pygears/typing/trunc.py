@@ -55,7 +55,7 @@ def fixp_value_trunc_resolver(trunc_type: FixpType, val):
 
 
     if type(val).integer >= trunc_type.integer:
-        bv_res = (bv_fract_trunc & ((1 << trunc_type.width) - 1) |
+        bv_res = (bv_fract_trunc & ((1 << (trunc_type.width-1)) - 1) |
                 (sign << (trunc_type.width - 1)))
     else:
         sign_exten = Uint[trunc_type.integer - type(val).integer].max if sign else 0

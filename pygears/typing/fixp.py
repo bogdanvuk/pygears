@@ -312,6 +312,15 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
             (int(self) << (sum_cls.fract - type(self).fract)) -
             (int(other) << (sum_cls.fract - type(other).fract)))
 
+    def __ge__(self, other):
+        cls = type(self)
+        cls_other = type(other)
+
+        if cls_other.fract > cls.fract:
+            return int(self) << (cls_other.fract - cls.fract) > int(other)
+        else:
+            return int(self) >= int(other) << (cls.fract - cls_other.fract)
+
     def __gt__(self, other):
         cls = type(self)
         cls_other = type(other)
@@ -325,8 +334,11 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
         cls = type(self)
         cls_other = type(other)
 
-        if isinstance(other, float):
-            return float(self) == other
+        # TODO: This is usefull for verification, but cannot yet be compiled
+        # into HDL
+
+        # if isinstance(other, float):
+        #     return float(self) == other
 
         if cls.base != cls_other.base:
             return False
@@ -352,7 +364,6 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
 
     def __float__(self):
         return int(self) / (2**type(self).fract)
-
 
 
 class FixpType(FixpnumberType):
