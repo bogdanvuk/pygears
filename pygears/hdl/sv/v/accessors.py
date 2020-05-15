@@ -1,4 +1,5 @@
 from pygears import Intf
+from pygears.typing import bitw
 import hashlib
 import inspect
 import re
@@ -25,6 +26,9 @@ class VGenOffsetVisitor:
         assert key.stop is None
 
         elem = slice(f'({up})*{type_.data.width}', None, type_.data.width)
+
+        # w = f"{bitw(type_.width-1)}'h{hex(type_.data.width)[2:]}"
+        # elem = slice(f"{w}*({up})", None, w)
         return [(elem, type_.data)] + self.visit(type_.data, path)
 
     def visit_default(self, type_, path):

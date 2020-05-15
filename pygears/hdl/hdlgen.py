@@ -1,4 +1,5 @@
 import shutil
+import os
 from pygears import Intf, find, reg
 from .common import list_hdl_files
 from .generate import generate as hdlgen_generate
@@ -59,9 +60,15 @@ def hdlgen(top=None,
 
     if copy_files and generate:
         for fn in list_hdl_files(top.name, outdir=outdir, rtl_only=True):
+            modname, lang = os.path.splitext(os.path.basename(fn))
+            if (modname, lang[1:]) in reg['hdlgen/disambig']:
+                continue
+
             try:
                 shutil.copy(fn, outdir)
             except shutil.SameFileError:
+                pass
+            except FileNotFoundError:
                 pass
 
     return top

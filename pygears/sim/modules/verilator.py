@@ -114,7 +114,7 @@ def verilate(outdir, lang, top, top_name, tracing_enabled):
     # include += f' -I{outdir}'
 
     # files = f'{wrap_name}.{lang}'
-    create_project_script(outdir, top, lang)
+    # create_project_script(outdir, top, lang)
 
     verilate_cmd = [
         f'cd {outdir};',
@@ -125,7 +125,7 @@ def verilate(outdir, lang, top, top_name, tracing_enabled):
         f'--top-module {top_name}',
         '--trace --no-trace-params --trace-structs' if tracing_enabled else '',
         '-o pygearslib',
-        '-f verilator.prj',
+        top_name,
         'sim_main.cpp',
     ]
 
@@ -176,6 +176,7 @@ def build(top, outdir=None, postsynth=False, lang=None, rebuild=True):
            outdir=synth_src_dir if postsynth else outdir,
            generate=True,
            lang=lang,
+           copy_files=True,
            toplang='v')
 
     hdlmod = reg['hdlgen/map'][top]

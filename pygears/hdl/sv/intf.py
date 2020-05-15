@@ -137,7 +137,7 @@ class SVIntfGen:
                 self.get_bc_module(template_env)
             ])
 
-            if self.traced:
+            if self.traced and self.lang == 'sv':
                 for i in range(len(self.intf.consumers)):
                     intf_name = f'{self.outname}_{i}'
                     conn_name = f'{self.outname}[{i}]'
@@ -161,7 +161,7 @@ class SVIntfGen:
                         template_env.snippets.intf_intf_connect(
                             din_name, self.intf.consumers[i].basename, index))
 
-        if self.traced:
+        if self.traced and self.lang == 'sv':
             inst.extend(
                 svgen_typedef(self.intf.dtype, self.basename).split('\n'))
 
@@ -179,7 +179,16 @@ class SVIntfGen:
             'type': str(self.intf.dtype)
         }
 
-        return template_env.snippets.intf_inst(**ctx)
+        inst = []
+        if self.lang == 'v' and self.traced:
+            inst.append('/*verilator tracing_on*/')
+
+        inst.append(template_env.snippets.intf_inst(**ctx))
+
+        if self.lang == 'v' and self.traced:
+            inst.append('/*verilator tracing_off*/')
+
+        return '\n'.join(inst)
 
     def get_bc_module(self, template_env):
         inst_name = f'bc_{self.basename}'

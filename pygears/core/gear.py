@@ -86,7 +86,21 @@ class Gear(NamedHierNode):
                          reg['gear/current_module'] if func else None)
         self.trace = list(enum_stacktrace())
         self.args = {}
-        self.params = struct_copy(params)
+        # self.params = struct_copy(params)
+
+        self.params = params
+        for p in reg['gear/params/extra']:
+            if p not in params:
+                continue
+
+            self.params[p] = struct_copy(params[p])
+
+        for p in reg['gear/params/meta']:
+            if p not in params:
+                continue
+
+            self.params[p] = struct_copy(params[p])
+
         self.func = func
         self.const_args = {}
         self.in_ports: List[InPort] = []

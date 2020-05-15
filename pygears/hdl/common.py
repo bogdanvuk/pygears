@@ -4,6 +4,7 @@ from pygears import reg, find
 from pygears.core.hier_node import HierYielderBase
 from pygears.core.gear import Gear
 from pygears.definitions import LIB_VLIB_DIR, LIB_SVLIB_DIR
+from pygears.util.fileio import find_in_dirs
 
 
 class NodeYielder(HierYielderBase):
@@ -19,6 +20,9 @@ def enum_hdl_files(top, outdir, rtl_only=False, wrapper=False):
         top = find(top)
 
     vgen_map = reg[f'hdlgen/map']
+    dirs = {}
+    for lang in ['v', 'sv']:
+        dirs[lang] = reg[f'{lang}gen/include']
 
     dti_yielded = False
 
@@ -36,10 +40,13 @@ def enum_hdl_files(top, outdir, rtl_only=False, wrapper=False):
             yield os.path.join(outdir, f'wrap_{vinst.file_basename}')
 
         if (isinstance(node, Gear) and (node in reg['hdlgen/map'])):
-
             modinst = reg['hdlgen/map'][node]
             for f in modinst.files:
-                yield os.path.join(outdir, f)
+                path = find_in_dirs(f, dirs[modinst.lang])
+                if path is not None:
+                    yield path
+                else:
+                    yield os.path.join(outdir, f)
 
         if hasattr(vinst, 'file_basename'):
             file_name = getattr(vinst, 'impl_path', None)

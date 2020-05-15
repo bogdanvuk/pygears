@@ -24,6 +24,9 @@ def hdl_log():
 
 
 def mod_lang(module):
+    if module is None:
+        return reg['hdl/lang']
+
     if isinstance(module, Intf):
         lang = None
     else:
@@ -32,15 +35,17 @@ def mod_lang(module):
     if lang is not None:
         return lang
 
-    if module is reg['hdl/top']:
+    hdl_top = reg['hdl/top']
+
+    if module is hdl_top:
         return reg['hdl/lang']
 
-    if module is reg['hdl/top'].parent:
+    if hdl_top and module is hdl_top.parent:
         return reg['hdl/toplang']
 
     # # TODO: We shouldn't need this?
-    # if module.parent is None:
-    #     return reg['hdl/lang']
+    if module.parent is None:
+        return reg['hdl/lang']
 
     return mod_lang(module.parent)
 
