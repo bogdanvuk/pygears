@@ -369,22 +369,16 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
                 return int(self) > int(fixp_other) << (type(self).fract - type(fixp_other).fract)
 
     def __eq__(self, other):
-        cls = type(self)
-        cls_other = type(other)
+        if isinstance(other, Fixpnumber):
+            if type(self).base != type(other).base:
+                return False
 
-        # TODO: This is usefull for verification, but cannot yet be compiled
-        # into HDL
-
-        # if isinstance(other, float):
-        #     return float(self) == other
-
-        if cls.base != cls_other.base:
-            return False
-
-        if cls_other.fract > cls.fract:
-            return int(self) << (cls_other.fract - cls.fract) == int(other)
-        else:
-            return int(self) == int(other) << (cls.fract - cls_other.fract)
+            if type(other).fract > type(self).fract:
+                return int(self) << (type(other).fract - type(self).fract) == int(other)
+            else:
+                return int(self) == int(other) << (type(self).fract - type(other).fract)
+        elif isinstance(other, float):
+            return float(self) == other
 
     def __ne__(self, other):
         return not self.__eq__(other)
