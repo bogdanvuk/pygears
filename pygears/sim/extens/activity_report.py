@@ -87,7 +87,7 @@ def find_target_intf(gear_name, intf_name):
 
     intf_name = intf_name[1:]  # spy name always starts with _
     for i in rtl_node.local_interfaces():
-        if reg['svgen/map'][i].basename == intf_name:
+        if reg['hdlgen/map'][i].basename == intf_name:
             return i
 
 

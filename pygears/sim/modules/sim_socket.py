@@ -103,7 +103,7 @@ class SVServerModule:
         self.module = module
         self.tenv = tenv
         from pygears import reg
-        self.svmod = reg['svgen/map'][self.module]
+        self.svmod = reg['hdlgen/map'][self.module]
 
     def files(self):
         return list_hdl_files(self.module, self.srcdir)
@@ -192,7 +192,7 @@ class SimSocket(CosimBase):
 
         self.srcdir = os.path.join(self.outdir, 'src_gen')
         self.rtl_node = hdlgen(gear, outdir=self.srcdir, lang='sv')
-        self.svmod = reg['svgen/map'][self.rtl_node]
+        self.svmod = reg['hdlgen/map'][self.rtl_node]
 
     def cycle(self):
         self.send_cmd(CMD_CYCLE)

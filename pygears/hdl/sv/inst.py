@@ -53,7 +53,6 @@ def vgen_include_get(cfg):
 class SVGenInstPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        reg['svgen/map'] = {}
         reg['hdlgen/map'] = {}
         reg['hdlgen/hdlmods'] = {}
         reg['hdlgen/disambig'] = {}
@@ -66,7 +65,6 @@ class SVGenInstPlugin(PluginBase):
 
     @classmethod
     def reset(cls):
-        reg['svgen/map'] = {}
         reg['vgen/map'] = {}
         reg['hdlgen/hdlmods'] = {}
         reg['hdlgen/disambig'] = {}
