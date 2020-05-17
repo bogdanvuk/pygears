@@ -41,7 +41,7 @@ def assign_targets(ctx: Context, target, source, obj_factory=None):
     if isinstance(target, ir.Name) and target.name in ctx.local_namespace:
         ctx.ir_block_closure[0].stmts.insert(
             0,
-            ir.AssignValue(target.name,
+            ir.AssignValue(target,
                            ir.ResExpr(ctx.local_namespace[target.name])))
         del ctx.local_namespace[target.name]
 
