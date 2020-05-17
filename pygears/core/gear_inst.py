@@ -324,29 +324,6 @@ def resolve_func(gear_inst):
     return out_intfs, out_dtype
 
 
-def report_dangling(intf, gear_inst, p):
-    if hasattr(intf, 'var_name'):
-        core_log().warning(f'Interface "{gear_inst.name}/{intf.var_name}" left dangling.')
-    else:
-        path = []
-        while True:
-            g = p.gear
-
-            if hasattr(p.consumer, 'var_name'):
-                path.append(f'{g.parent.name}/{p.consumer.var_name}')
-            else:
-                path.append(p.name)
-
-            if len(g.in_ports) != 1 or len(g.out_ports) != 1:
-                break
-
-            p = g.in_ports[0].producer.producer
-
-        path = ' -> '.join(reversed(path))
-
-        core_log().warning(f'Interface "{path}" left dangling.')
-
-
 def resolve_gear(gear_inst, out_intfs, out_dtype, fix_intfs):
     dflt_dout_name = reg['gear/naming/default_out_name']
     for i in range(len(gear_inst.outnames), len(out_dtype)):

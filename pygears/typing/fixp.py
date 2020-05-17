@@ -312,21 +312,71 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
             (int(self) << (sum_cls.fract - type(self).fract)) -
             (int(other) << (sum_cls.fract - type(other).fract)))
 
-    def __gt__(self, other):
-        cls = type(self)
-        cls_other = type(other)
-
-        if cls_other.fract > cls.fract:
-            return int(self) << (cls_other.fract - cls.fract) > int(other)
+    def __le__(self, other):
+        if isinstance(other, Fixpnumber):
+            if type(other).fract > type(self).fract:
+                return int(self) << (type(other).fract - type(self).fract) < int(other)
+            else:
+                return int(self) <= int(other) << (type(self).fract - type(other).fract)
         else:
-            return int(self) > int(other) << (cls.fract - cls_other.fract)
+            fixp_other = Fixpnumber(other)
+
+            if type(fixp_other).fract > type(self).fract:
+                return int(self) << (type(fixp_other).fract - type(self).fract) < int(fixp_other)
+            else:
+                return int(self) <= int(fixp_other) << (type(self).fract - type(fixp_other).fract)
+
+    def __lt__(self, other):
+        if isinstance(other, Fixpnumber):
+            if type(other).fract > type(self).fract:
+                return int(self) << (type(other).fract - type(self).fract) < int(other)
+            else:
+                return int(self) < int(other) << (type(self).fract - type(other).fract)
+        else:
+            fixp_other = Fixpnumber(other)
+
+            if type(fixp_other).fract > type(self).fract:
+                return int(self) << (type(fixp_other).fract - type(self).fract) < int(fixp_other)
+            else:
+                return int(self) < int(fixp_other) << (type(self).fract - type(fixp_other).fract)
+
+    def __ge__(self, other):
+        if isinstance(other, Fixpnumber):
+            if type(other).fract > type(self).fract:
+                return int(self) << (type(other).fract - type(self).fract) >= int(other)
+            else:
+                return int(self) >= int(other) << (type(self).fract - type(other).fract)
+        else:
+            fixp_other = Fixpnumber(other)
+
+            if type(fixp_other).fract > type(self).fract:
+                return int(self) << (type(fixp_other).fract - type(self).fract) >= int(fixp_other)
+            else:
+                return int(self) >= int(fixp_other) << (type(self).fract - type(fixp_other).fract)
+
+    def __gt__(self, other):
+        if isinstance(other, Fixpnumber):
+            if type(other).fract > type(self).fract:
+                return int(self) << (type(other).fract - type(self).fract) > int(other)
+            else:
+                return int(self) > int(other) << (type(self).fract - type(other).fract)
+        else:
+            fixp_other = Fixpnumber(other)
+
+            if type(fixp_other).fract > type(self).fract:
+                return int(self) << (type(fixp_other).fract - type(self).fract) > int(fixp_other)
+            else:
+                return int(self) > int(fixp_other) << (type(self).fract - type(fixp_other).fract)
 
     def __eq__(self, other):
         cls = type(self)
         cls_other = type(other)
 
-        if isinstance(other, float):
-            return float(self) == other
+        # TODO: This is usefull for verification, but cannot yet be compiled
+        # into HDL
+
+        # if isinstance(other, float):
+        #     return float(self) == other
 
         if cls.base != cls_other.base:
             return False
@@ -352,7 +402,6 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
 
     def __float__(self):
         return int(self) / (2**type(self).fract)
-
 
 
 class FixpType(FixpnumberType):

@@ -7,7 +7,7 @@ from pygears import Intf
 from pygears.core.gear import OutSig
 
 from functools import reduce
-from pygears.typing import Int, Uint, code, div, Queue, Integral
+from pygears.typing import Int, Uint, code, div, Queue, Integral, Float
 from pygears.typing import is_type, typeof, Tuple, Array
 from pygears.typing import floor, cast, signed, saturate
 from pygears.typing.queue import QueueMeta
@@ -68,6 +68,8 @@ def call_len(arg, **kwds):
 def call_print(*arg, **kwds):
     pass
 
+def call_float(arg, **kwds):
+    return ir.CastExpr(arg, cast_to=Float)
 
 def call_int(arg, **kwds):
     # ignore cast
@@ -221,6 +223,8 @@ class AddIntfOperPlugin(PluginBase):
             call_max,
             clk:
             call_clk,
+            float:
+            call_float,
             int:
             call_int,
             len:
