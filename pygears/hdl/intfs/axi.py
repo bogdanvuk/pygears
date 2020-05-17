@@ -28,6 +28,7 @@ from dataclasses import dataclass, field
 #     }
 #     port_map[p.basename] = port_cfg
 
+
 def index_to_sv_slice(dtype, key):
     subtype = dtype[key]
 
@@ -160,10 +161,34 @@ def get_port_def(top, name, axi_name, subintf, parent, axi_conf):
     return port_conf(parent, subintf, p)
 
 
+def port_by_name(top, name):
+    for p in top.in_ports + top.out_ports:
+        if p.basename == name:
+            return p
+
+    return None
+
+
 def get_axi_conf(top, conf):
     axi_port_cfg = {}
 
     for name, pconf in conf.items():
+        if isinstance(pconf, str):
+            p = port_by_name(top, name)
+            if p is None:
+                raise Exception(f'Port "{name}" not found in the module')
+
+            if p.direction == 'in':
+                if pconf == 'axi':
+                    pconf = {'type': pconf, 'wdata': name}
+                elif pconf == 'axidma':
+                    pconf = {'type': pconf, 'rdata': name}
+            elif p.direction == 'out':
+                if pconf == 'axi':
+                    pconf = {'type': pconf, 'rdata': name}
+                elif pconf == 'axidma':
+                    pconf = {'type': pconf, 'wdata': name}
+
         if pconf['type'] not in ['axi', 'axidma']:
             continue
 
@@ -195,17 +220,18 @@ def get_axi_conf(top, conf):
                 'bresp': AxiPortConf('axilite', 'bresp', params={'bresp': True})
             }
 
-            axi_port_cfg[f'{name}_ctrl'] = AxiIntfConf(f'{name}_ctrl', 'axilite', axil_comp)
+            axi_port_cfg[f'{name}_ctrl'] = AxiIntfConf(
+                f'{name}_ctrl', 'axilite', axil_comp)
 
             if 'wdata' in p.comp and 'bresp' not in p.comp:
                 p.comp['bresp'] = AxiPortConf(
                     p, 'bresp', params={'bresp': 'awaddr' in p.comp})
 
         if p.t in ['axi']:
-            if 'wdata' in p.comp and not 'awaddr' in p.comp:
+            if 'wdata' in p.comp and 'awaddr' not in p.comp:
                 p.comp['awaddr'] = AxiPortConf(p, 'awaddr', params={'awaddr': 1})
 
-            if 'rdata' in p.comp and not 'araddr' in p.comp:
+            if 'rdata' in p.comp and 'araddr' not in p.comp:
                 p.comp['araddr'] = AxiPortConf(p, 'araddr', params={'araddr': 1})
 
             if 'wdata' in p.comp and 'bresp' not in p.comp:
