@@ -4,6 +4,13 @@ from .uint import Uint, Bool, Int
 
 
 def get_out_type(val_type, fract):
+    if get_cut_bits(val_type, fract) <= 0:
+        raise TypeError(
+            f'Cannot qround type "{val_type}" with "{val_type.fract}" '
+            f'fractional bits, to produce the type with more fractional '
+            f'bits "fract={fract}"'
+        )
+
     if fract != 0:
         return val_type.base[val_type.integer + 1, val_type.integer + fract + 1]
     else:
@@ -11,7 +18,7 @@ def get_out_type(val_type, fract):
 
 
 def get_cut_bits(val_type, fract):
-    return val_type.width - val_type.integer - fract
+    return val_type.fract - fract
 
 
 def _qround_setup(val, fract):

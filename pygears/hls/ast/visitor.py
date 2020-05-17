@@ -107,7 +107,7 @@ class GearContext(Context):
         super().__init__()
         self.gear = gear
         self.functions: typing.Mapping[Function, FuncContext] = {}
-        self.local_namespace = get_function_context_dict(self.gear.func)
+        self.local_namespace = get_function_context_dict(self.gear.func).copy()
 
         paramspec = inspect.getfullargspec(self.gear.func)
 
@@ -185,7 +185,7 @@ class FuncContext(Context):
         func = funcref.func
 
         # self.name = funcref.name
-        self.local_namespace = get_function_context_dict(func)
+        self.local_namespace = get_function_context_dict(func).copy()
 
         paramspec = inspect.getfullargspec(funcref.func)
         args = dict(zip(paramspec.args, args))
