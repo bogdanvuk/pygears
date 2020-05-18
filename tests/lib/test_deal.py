@@ -130,7 +130,7 @@ def test_random(sim_cls):
 # def test_lvl_2_formal():
 #     qdeal(Intf(Queue[Uint[16], 3]), num=3, lvl=2)
 
-@synth_check({'logic luts': 5, 'ffs': 2}, tool='vivado')
+@synth_check({'logic luts': 4, 'ffs': 2}, tool='vivado')
 def test_synth_vivado():
     qdeal(Intf(T_TRR_DIST), num=2)
 

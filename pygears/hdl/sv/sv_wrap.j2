@@ -1,0 +1,26 @@
+{%- import 'snippet.j2' as snippet -%}
+
+/*verilator tracing_off*/
+
+module {{wrap_module_name}}
+(
+  {% if sigs == None -%}
+    input logic clk,
+    input logic rst,
+  {% else %}
+{{snippet.sig_list(sigs)|indent(4, True) }}
+  {% endif %}
+{{snippet.signal_intf_list(intfs)|indent(4, True)}}
+);
+
+/*verilator tracing_on*/
+{{snippet.intf_list_inst(intfs)|indent(4, True)}}
+/*verilator tracing_off*/
+
+{{snippet.signal_intf_connect(intfs)|indent(4, True)}}
+
+/*verilator tracing_on*/
+{{snippet.module_inst(module_name, param_map, inst_name)|indent(4, True)}}
+/*verilator tracing_off*/
+
+endmodule

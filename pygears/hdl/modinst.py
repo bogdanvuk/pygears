@@ -113,7 +113,7 @@ class HDLModuleInst:
         res_files = self.resolver.files
 
         if self.wrapped:
-            res_files.append(f'{self.wrap_module_name}.v')
+            res_files.append(f'{self.wrap_module_name}.{self.parent_lang}')
 
         return res_files
 
@@ -128,6 +128,8 @@ class HDLModuleInst:
 
         if self.node is reg['hdl/top'] and self.params:
             return True
+
+        return False
 
     @property
     def params(self):
