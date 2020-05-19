@@ -1,4 +1,4 @@
-from pygears.typing import Fixp, Fixpnumber, Integer, Tuple, Ufixp, Uint, typeof, Int, Union, cast
+from pygears.typing import Fixp, Fixpnumber, Integer, Tuple, Ufixp, Uint, typeof, Int, Union, cast, Array
 from . import ir
 from pygears.typing import get_match_conds, TypeMatchError
 
@@ -41,6 +41,16 @@ def tuple_resolver(opexp, cast_to):
 
     return ir.ConcatExpr(cast_fields)
 
+def array_resolver(opexp, cast_to):
+    cast_to = cast(opexp.dtype, cast_to)
+
+    cast_fields = []
+    for i in range(len(opexp.dtype)):
+        field = subscript(opexp, i)
+        cast_fields.append(resolve_cast_func(field, cast_to.data))
+
+    return ir.ConcatExpr(cast_fields)
+
 
 def union_resolver(opexp, cast_to):
     cast_to = cast(opexp.dtype, cast_to)
@@ -58,7 +68,15 @@ def union_resolver(opexp, cast_to):
 
 
 def uint_resolver(opexp, cast_to):
-    return ir.CastExpr(opexp, cast(opexp.dtype, cast_to))
+    cast_to = cast(opexp.dtype, cast_to)
+
+    if typeof(opexp.dtype, Ufixp):
+        if opexp.dtype.fract >= 0:
+            opexp = ir.BinOpExpr((opexp, ir.ResExpr(opexp.dtype.fract)), ir.opc.RShift)
+        else:
+            opexp = ir.BinOpExpr((opexp, ir.ResExpr(-opexp.dtype.fract)), ir.opc.LShift)
+
+    return ir.CastExpr(opexp, cast_to)
 
 
 def int_resolver(opexp, cast_to):
@@ -72,6 +90,7 @@ def int_resolver(opexp, cast_to):
 resolvers = {
     Fixpnumber: fixp_resolver,
     Tuple: tuple_resolver,
+    Array: array_resolver,
     Int: int_resolver,
     Uint: uint_resolver,
     Union: union_resolver

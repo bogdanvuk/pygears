@@ -52,7 +52,7 @@ def get_type_error(dtype, cast_type, details=None):
     else:
         details = list(details)
 
-    if cast_type.specified:
+    if getattr(cast_type, 'specified', False):
         details.append(
             f"FIX: to interpret '{short_repr(dtype)}' encoded value as '{short_repr(cast_type)}',"
             f" use code()")
@@ -305,6 +305,23 @@ def array_type_cast_resolver(dtype, cast_type):
                 f"{str(e)}\n    - when casting '{repr(dtype)}' to '{repr(cast_type)}'")
 
         return Array[arr_dtype, len(dtype)]
+
+    if typeof(dtype, Array):
+        if len(dtype) != len(cast_type):
+            comp = 'less' if len(cast_type) < len(dtype) else 'more'
+            raise get_type_error(
+                dtype, cast_type, [
+                    f"target Array has {comp} elements ({len(cast_type)}) than source ({len(dtype)})"
+                ])
+
+        try:
+            arr_dtype = cast(dtype.data, cast_type.data)
+        except TypeError as e:
+            raise TypeError(
+                f"{str(e)}\n    - when casting '{repr(dtype)}' to '{repr(cast_type)}'")
+
+        return Array[arr_dtype, len(dtype)]
+
 
     raise get_type_error(dtype, cast_type)
 

@@ -1,5 +1,5 @@
 import inspect
-from pygears import reg
+from pygears import reg, Intf
 from pygears.core.gear_decorator import create_gear_definition
 from pygears.core.gear_decorator import FunctionMaker
 from pygears.core.util import doublewrap, get_function_context_dict
@@ -12,6 +12,12 @@ def gear_resolver(gear_func, meta_kwds, *args, **kwds):
     if ctx == 'sim':
         for p in reg['gear/params/extra']:
             del kwds[p]
+
+        for a in args:
+            if not isinstance(a, Intf):
+                continue
+
+            raise Exception(f'Cannot evaluate interface at runtime!')
 
         return gear_func.definition(*args, **kwds)
     else:

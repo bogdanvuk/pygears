@@ -108,7 +108,10 @@ class IntegerType(IntegralType):
         return int(self.__args__[0])
 
     def __gt__(self, others):
-        return int(self) > int(others)
+        if not is_type(type(other)):
+            return super().__eq__(other)
+
+        return super().__gt__(other)
 
     def __ge__(self, others):
         return int(self) >= int(others)

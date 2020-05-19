@@ -266,7 +266,12 @@ class SVExpressionVisitor:
             elif op_sign[1] and not op_sign[0]:
                 ops[0] = self.cast_svexpr(ops[0], op_dtypes[0], op_dtypes[1])
 
-        return f'({ops[0]}) {ir.OPMAP[node.operator]} ({ops[1]})'
+        res = f'({ops[0]}) {ir.OPMAP[node.operator]} ({ops[1]})'
+
+        if node.operator in [ir.opc.LShift, ir.opc.RShift]:
+            res = self.cast_svexpr(res, op_dtypes[0], node.dtype)
+
+        return res
 
     def visit_SubscriptExpr(self, node):
         val = self.visit(node.val)
