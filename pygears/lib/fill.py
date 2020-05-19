@@ -1,4 +1,4 @@
-from pygears import gear, registry
+from pygears import gear, reg
 from pygears.typing import Union
 from pygears.lib.demux import demux_ctrl
 from pygears.lib.mux import mux

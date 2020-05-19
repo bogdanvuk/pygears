@@ -1,4 +1,4 @@
-from pygears import bind
+from pygears import reg
 from pygears.sim import sim_log
 from pygears.sim.extens.sim_extend import SimExtend
 from pygears.typing import Queue
@@ -11,7 +11,7 @@ class RandBase(SimExtend):
         super().__init__()
         self.outdir = outdir
         self.constraints = self.randomizes(cons)
-        bind('sim/config/randomizer', self)
+        reg['sim/config/randomizer'] = self
 
     def get_dtype_by_name(self, name):
         for constraint in self.constraints:

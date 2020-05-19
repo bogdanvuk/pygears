@@ -1,3 +1,4 @@
+from pygears import reg
 from pygears.hdl.sv import SVGenPlugin
 from pygears.hdl.sv.svmod import SVModuleInst
 from pygears.lib.union import union_sync
@@ -53,4 +54,4 @@ class SVGenUnionSync(SVGenUnionSyncBase):
 class SVGenUnionPlugin(SVGenPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['svgen']['module_namespace'][union_sync] = SVGenUnionSync
+        reg['svgen/module_namespace'][union_sync] = SVGenUnionSync

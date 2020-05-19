@@ -9,8 +9,7 @@ from functools import partial, wraps
 import jinja2
 import pytest
 
-from pygears import clear, find, config
-from pygears.conf import safe_bind
+from pygears import clear, find, reg
 from pygears.sim import sim
 from pygears.sim.modules.sim_socket import SimSocket
 from pygears.sim.modules.verilator import SimVerilated
@@ -118,8 +117,8 @@ def formal_check_fixt(tmpdir, request):
     disable = request.param[0] if request.param[0] is not None else {}
     asserts = request.param[1] if request.param[1] is not None else {}
     assumes = request.param[2] if request.param[2] is not None else []
-    safe_bind('vgen/formal/asserts', asserts)
-    safe_bind('vgen/formal/assumes', assumes)
+    reg['vgen/formal/asserts'] = asserts
+    reg['vgen/formal/assumes'] = assumes
 
     root = find('/')
     module = hdlgen(
@@ -153,32 +152,34 @@ def formal_check_fixt(tmpdir, request):
         assert os.system(cmd) == 0, f'Yosis failed. Cmd: {cmd}'
 
 
-def synth_check(expected, tool='yosys', **kwds):
+def synth_check(expected, tool='yosys', top=None, **kwds):
     def decorator(func):
         return pytest.mark.usefixtures('synth_check_fixt')(
             pytest.mark.parametrize(
-                'synth_check_fixt', [[expected, kwds, tool]], indirect=True)(func))
+                'synth_check_fixt', [[expected, kwds, tool, top]], indirect=True)(func))
 
     return decorator
 
 
 @pytest.fixture
-def synth_check_fixt(tmpdir, request):
-    skip_ifndef('SYNTH_TEST')
+def synth_check_fixt(tmpdir, lang, request):
+    # skip_ifndef('SYNTH_TEST')
 
-    lang = 'sv'
+    # lang = 'sv'
     util_ref = request.param[0]
     params = request.param[1]
     tool = request.param[2]
+    top = request.param[3]
 
-    if tool == 'yosys':
+    if tool == 'vivado':
         skip_ifndef('SYNTH_TEST')
 
     if tool == 'vivado':
         if not shutil.which('vivado'):
             raise unittest.SkipTest(f"Skipping test, vivado not found")
 
-        tool = 'vivado'
+        params['util'] = True
+        params['timing'] = True
 
     elif tool == 'yosys' and lang == 'v':
         if lang != 'v':
@@ -186,25 +187,26 @@ def synth_check_fixt(tmpdir, request):
 
         if not shutil.which('yosys'):
             raise unittest.SkipTest(f"Skipping test, yosys not found")
+
+        params['synthcmd'] = 'synth_xilinx'
+
+        # from pygears.hdl.yosys import synth
+        # report = synth(tmpdir, top=top, synth_cmd='synth_xilinx', optimize=True)
     else:
         raise unittest.SkipTest(f"Skipping test, not appropriate tool not found")
 
     yield
 
-    if 'top' not in params:
-        params['top'] = find('/').child[0]
+    if top is None:
+        top = find('/').child[0]
 
-    report = synth(
-        'vivado',
-        outdir=tmpdir,
-        lang=lang,
-        util=True,
-        timing=True,
-        **params)
+    util = synth(tool, outdir=tmpdir, top=top, lang=lang, **params)
 
-    util = report['util']
+    if tool == 'vivado':
+        util = util['util']
 
-    print(report)
+    print(util)
+
     for param, value in util_ref.items():
         if callable(value):
             assert value(util[param])
@@ -226,7 +228,7 @@ clear = pytest.fixture(autouse=True)(clear)
 
 @pytest.fixture
 def hdl_check_fixt(tmpdir, request):
-    config['gear/infer_signal_names'] = True
+    reg['gear/infer_signal_names'] = True
 
     yield
 
@@ -260,7 +262,7 @@ def skip_sim_if_no_tools():
         None,
         partial(SimVerilated, lang='v'),
         partial(SimVerilated, lang='sv'),
-        SimSocket
+        SimSocket,
     ])
 def sim_cls(request):
     sim_cls = request.param
@@ -277,7 +279,7 @@ def sim_cls(request):
     params=[
         partial(SimVerilated, lang='v'),
         partial(SimVerilated, lang='sv'),
-        SimSocket
+        SimSocket,
     ])
 def cosim_cls(request):
     cosim_cls = request.param

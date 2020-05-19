@@ -1,4 +1,4 @@
-from pygears.conf import PluginBase, safe_bind, registry
+from pygears.conf import PluginBase, reg
 from . import ir
 from .ast.cast import resolve_cast_func
 from .ast.call import resolve_gear_call
@@ -7,7 +7,7 @@ from pygears import Intf
 from pygears.core.gear import OutSig
 
 from functools import reduce
-from pygears.typing import Int, Uint, code, div, Queue, Integral
+from pygears.typing import Int, Uint, code, div, Queue, Integral, Float
 from pygears.typing import is_type, typeof, Tuple, Array
 from pygears.typing import floor, cast, signed, saturate
 from pygears.typing.queue import QueueMeta
@@ -68,6 +68,8 @@ def call_len(arg, **kwds):
 def call_print(*arg, **kwds):
     pass
 
+def call_float(arg, **kwds):
+    return ir.CastExpr(arg, cast_to=Float)
 
 def call_int(arg, **kwds):
     # ignore cast
@@ -206,7 +208,7 @@ def call_breakpoint():
 
 
 def ir_builtin(func):
-    registry('hls/ir_builtins').get(func, None)
+    reg['hls/ir_builtins'].get(func, None)
 
 
 class AddIntfOperPlugin(PluginBase):
@@ -221,6 +223,8 @@ class AddIntfOperPlugin(PluginBase):
             call_max,
             clk:
             call_clk,
+            float:
+            call_float,
             int:
             call_int,
             len:
@@ -301,4 +305,4 @@ class AddIntfOperPlugin(PluginBase):
             ir_builtins[getattr(int, name)] = lambda a, b, *, x=op: ir.BinOpExpr(
                 (call_int(a), b), x)
 
-        safe_bind('hls/ir_builtins', ir_builtins)
+        reg['hls/ir_builtins'] = ir_builtins

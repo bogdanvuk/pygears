@@ -2,10 +2,11 @@ import functools
 import typing
 import os
 import pygears
-from pygears import config
+from pygears import reg, Intf
 from ...base_resolver import ResolverBase, ResolverTypeError
 from pygears.util.fileio import find_in_dirs, save_file
 from pygears.conf import inject, Inject
+from pygears.hdl.sv.v.accessors import rewrite
 
 
 def get_port_config(modport, type_, name):
@@ -21,16 +22,15 @@ def get_port_config(modport, type_, name):
 
 class HDLTemplateResolver(ResolverBase):
     @inject
-    def __init__(self, node, ext=Inject('hdl/lang')):
+    def __init__(self, node):
         self.node = node
-        self.ext = ext
 
         if self.impl_path is None:
             raise ResolverTypeError
 
     @property
     def hdl_path_list(self):
-        return config[f'{self.ext}gen/include']
+        return reg[f'{self.lang}gen/include']
 
     @property
     def impl_basename(self):
@@ -40,7 +40,7 @@ class HDLTemplateResolver(ResolverBase):
                 fn = self.node.params['hdl']['impl']
 
         if not os.path.splitext(fn)[-1]:
-            fn = f'{fn}.{self.ext}t'
+            fn = f'{fn}.{self.lang}t'
 
         return fn
 
@@ -55,7 +55,7 @@ class HDLTemplateResolver(ResolverBase):
             if 'files' in self.node.params['hdl']:
                 for fn in self.node.params['hdl']['files']:
                     if not os.path.splitext(fn)[-1]:
-                        fn = f'{fn}.{self.ext}'
+                        fn = f'{fn}.{self.lang}'
 
                     files.append(fn)
 
@@ -71,7 +71,7 @@ class HDLTemplateResolver(ResolverBase):
 
     @property
     def file_basename(self):
-        return f'{self.module_name}.{self.ext}'
+        return f'{self.module_name}.{self.lang}'
 
     def module_context(self, template_env):
         context = {
@@ -92,8 +92,16 @@ class HDLTemplateResolver(ResolverBase):
         return context
 
     def generate(self, template_env, outdir):
-        save_file(
-            self.file_basename, outdir,
-            template_env.render_local(self.impl_path,
-                                      self.impl_basename,
-                                      self.module_context(template_env)))
+        ctx = self.module_context(template_env)
+        module = template_env.render_local(
+            self.impl_path, self.impl_basename, self.module_context(template_env))
+
+        if template_env.lang == 'v':
+            index = {}
+            for intf in ctx['intfs']:
+                index[intf['name']] = Intf(intf['type'])
+                index[f'{intf["name"]}_s'] = intf['type']
+
+            module = rewrite(module, index)
+
+        save_file(self.file_basename, outdir, module)

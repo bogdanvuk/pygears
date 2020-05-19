@@ -3,7 +3,7 @@ import fnmatch
 import sys
 from copy import copy
 
-from pygears.conf import MultiAlternativeError, config, core_log, registry, safe_bind
+from pygears.conf import MultiAlternativeError, core_log, reg
 from pygears.typing import Any, cast
 from pygears.core.util import is_standard_func, get_function_context_dict
 
@@ -19,7 +19,7 @@ from .channel import channel_interfaces
 
 
 def is_traced(name):
-    cfg = registry('debug/trace')
+    cfg = reg['debug/trace']
     return any(fnmatch.fnmatch(name, p) for p in cfg)
 
 
@@ -33,7 +33,7 @@ def get_obj_var_name(frame, obj):
 
 def find_current_gear_frame():
     import inspect
-    code_map = registry('gear/code_map')
+    code_map = reg['gear/code_map']
     if not code_map:
         return None
 
@@ -95,7 +95,7 @@ oper_name = {
 
 
 def get_operator_name(func):
-    for name, p in registry('gear/intf_oper').items():
+    for name, p in reg['gear/intf_oper'].items():
         if isinstance(p, Partial):
             p = p.func
 
@@ -235,14 +235,14 @@ def infer_outnames(annotations, meta_kwds):
 
 class intf_name_tracer:
     def __init__(self, gear):
-        self.enabled = config['gear/infer_signal_names']
+        self.enabled = reg['gear/infer_signal_names']
         if self.enabled == 'debug':
             self.enabled = is_traced(gear.name)
 
         if not self.enabled:
             return
 
-        self.code_map = registry('gear/code_map')
+        self.code_map = reg['gear/code_map']
         self.gear = gear
 
     def tracer(self, frame, event, arg):
@@ -258,7 +258,7 @@ class intf_name_tracer:
         self.code_map.append(self.gear)
 
         # tracer is activated on next call, return or exception
-        if registry('gear/current_module').parent == registry('gear/root'):
+        if reg['gear/current_module'].parent == reg['gear/root']:
             sys.setprofile(self.tracer)
 
         return self
@@ -267,7 +267,7 @@ class intf_name_tracer:
         if not self.enabled:
             return
 
-        if registry('gear/current_module').parent == registry('gear/root'):
+        if reg['gear/current_module'].parent == reg['gear/root']:
             sys.setprofile(None)
 
         cm = self.code_map.pop()
@@ -324,31 +324,8 @@ def resolve_func(gear_inst):
     return out_intfs, out_dtype
 
 
-def report_dangling(intf, gear_inst, p):
-    if hasattr(intf, 'var_name'):
-        core_log().warning(f'Interface "{gear_inst.name}/{intf.var_name}" left dangling.')
-    else:
-        path = []
-        while True:
-            g = p.gear
-
-            if hasattr(p.consumer, 'var_name'):
-                path.append(f'{g.parent.name}/{p.consumer.var_name}')
-            else:
-                path.append(p.name)
-
-            if len(g.in_ports) != 1 or len(g.out_ports) != 1:
-                break
-
-            p = g.in_ports[0].producer.producer
-
-        path = ' -> '.join(reversed(path))
-
-        core_log().warning(f'Interface "{path}" left dangling.')
-
-
 def resolve_gear(gear_inst, out_intfs, out_dtype, fix_intfs):
-    dflt_dout_name = registry('gear/naming/default_out_name')
+    dflt_dout_name = reg['gear/naming/default_out_name']
     for i in range(len(gear_inst.outnames), len(out_dtype)):
         if out_intfs and hasattr(out_intfs[i], 'var_name'):
             gear_inst.outnames.append(out_intfs[i].var_name)
@@ -470,7 +447,7 @@ def gear_base_resolver(
     else:
         fix_intfs = intfs.copy()
 
-    if config['gear/memoize']:
+    if reg['gear/memoize']:
         gear_inst, outputs, memo_key = get_memoized_gear(
             func, args, const_args, {
                 **kwds,
@@ -483,17 +460,19 @@ def gear_base_resolver(
             else:
                 return outputs
 
-    try:
-        params = infer_params(
-            args, param_templates, context=get_function_context_dict(func))
-    except TypeMatchError as e:
-        err = TypeMatchError(f'{str(e)}, of the module "{name}"')
-        params = e.params
-    except Exception as e:
-        err = type(e)(f'{str(e)}, of the module "{name}"')
+    params = infer_params(
+        args, param_templates, context=get_function_context_dict(func))
+    # try:
+    #     params = infer_params(
+    #         args, param_templates, context=get_function_context_dict(func))
+    # except TypeMatchError as e:
+    #     err = TypeMatchError(f'{str(e)}, of the module "{name}"')
+    #     params = e.params
+    # except Exception as e:
+    #     err = type(e)(f'{str(e)}, of the module "{name}"')
 
-    if err and not isinstance(err, TypeMatchError):
-        raise err
+    # if err and not isinstance(err, TypeMatchError):
+    #     raise err
 
     if not err:
         if not params.pop('_enablement'):
@@ -530,7 +509,11 @@ def gear_base_resolver(
             if hasattr(func, 'alternatives') or hasattr(func, 'alternative_to'):
                 err.root_gear = gear_inst
         except Exception as e:
-            err = type(e)(f'{str(e)}, of the module "{name}"')
+            if not hasattr(e, '_stamped'):
+                e.args = (f'{str(e)}, in the module "{reg["gear/current_module"].name}/{name}"', )
+                e._stamped = True
+
+            err = e
 
     if err:
         if hasattr(func, 'alternatives') or hasattr(func, 'alternative_to'):
@@ -543,7 +526,7 @@ def gear_base_resolver(
 
         raise err
 
-    if config['gear/memoize'] and not func.__name__.endswith('_unpack'):
+    if reg['gear/memoize'] and not func.__name__.endswith('_unpack'):
         if memo_key is not None:
             memoize_gear(gear_inst, memo_key)
 
@@ -553,12 +536,12 @@ def gear_base_resolver(
 class GearInstPlugin(GearDecoratorPlugin):
     @classmethod
     def bind(cls):
-        safe_bind('gear/code_map', [])
-        safe_bind('gear/gear_dflt_resolver', gear_base_resolver)
-        config.define('gear/memoize', False)
-        config.define('gear/infer_signal_names', 'debug')
-        config.define('debug/trace', default=[])
+        reg['gear/code_map'] = []
+        reg['gear/gear_dflt_resolver'] = gear_base_resolver
+        reg.confdef('gear/memoize', False)
+        reg.confdef('gear/infer_signal_names', 'debug')
+        reg.confdef('debug/trace', default=[])
 
     @classmethod
     def reset(cls):
-        safe_bind('gear/code_map', [])
+        reg['gear/code_map'] = []

@@ -121,7 +121,7 @@ def test_filt_base():
     sim()
 
 
-@synth_check({'logic luts': 1, 'ffs': 0}, tool='vivado')
+@synth_check({'logic luts': 2, 'ffs': 0}, tool='vivado')
 def test_filt_synth_vivado():
     filt(Intf(union_din), fixsel=0)
 

@@ -1,4 +1,4 @@
-from pygears import module, Intf, gear, registry
+from pygears import Intf, gear, reg
 from pygears.lib.verif import directed
 from pygears.sim import sim
 from pygears.lib.verif import drv
@@ -59,7 +59,7 @@ def multicycle_test_gen(func, latency):
 
     sim()
 
-    assert registry('sim/timestep') == (data_num + latency - 1)
+    assert reg['sim/timestep'] == (data_num + latency - 1)
 
 
 def test_multicycle_thin():

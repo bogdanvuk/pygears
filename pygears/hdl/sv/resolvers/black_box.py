@@ -4,9 +4,8 @@ from pygears.conf import inject, Inject
 
 class BlackBoxResolver(HDLFileResolver):
     @inject
-    def __init__(self, node, ext=Inject('hdl/lang')):
+    def __init__(self, node):
         self.node = node
-        self.ext = ext
 
     @property
     def impl_parse(self):

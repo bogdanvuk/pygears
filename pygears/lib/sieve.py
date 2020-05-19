@@ -2,7 +2,7 @@ from pygears import gear, Intf
 from pygears.core.gear_inst import find_current_gear_frame
 from pygears.core.intf import IntfOperPlugin
 from pygears.lib.union import field_sel
-from pygears import module, registry, safe_bind
+from pygears import module, reg
 
 
 @gear
@@ -63,7 +63,7 @@ def maybe_obtain_intf_var_name(intf):
 
 
 def get_sieve(self, index):
-    naming = registry('gear/naming/pretty_sieve')
+    naming = reg['gear/naming/pretty_sieve']
     norm_index = self.dtype.index_norm(index)
 
     # Try to obtain variable to which interface was assigned to form a better
@@ -113,5 +113,5 @@ def getitem(self, index):
 class GetitemIntfOperPlugin(IntfOperPlugin):
     @classmethod
     def bind(cls):
-        safe_bind('gear/intf_oper/__getitem__', getitem)
-        safe_bind('gear/naming/pretty_sieve', False)
+        reg['gear/intf_oper/__getitem__'] = getitem
+        reg['gear/naming/pretty_sieve'] = False

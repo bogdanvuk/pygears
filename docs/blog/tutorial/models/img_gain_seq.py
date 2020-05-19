@@ -1,4 +1,4 @@
-from pygears import gear, config
+from pygears import gear, reg
 from pygears.typing import Fixp, Float, Ufixp, Uint
 from pygears.lib import drv, collect
 from pygears.sim import sim
@@ -20,7 +20,7 @@ drv(t=Uint[8], seq=orig_img.flatten()) \
     | int \
     | collect(result=res)
 
-config['trace/level'] = 0
+reg['trace/level'] = 0
 sim()
 
 res_img = np.array(res, np.uint8)

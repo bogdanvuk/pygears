@@ -2,7 +2,7 @@ import os
 
 from pygears.hdl.templenv import TemplateEnv
 from pygears.core.hier_node import HierYielderBase
-from pygears.conf import registry
+from pygears.conf import reg
 from pygears.util.fileio import save_file
 
 from .util import vgen_intf, vgen_signal
@@ -20,7 +20,7 @@ class VTemplateEnv(TemplateEnv):
 
 class VGenGenerateVisitor(HierYielderBase):
     def __init__(self, top, wrapper=False):
-        self.vgen_map = registry('vgen/map')
+        self.vgen_map = reg['vgen/map']
         self.wrapper = wrapper
         self.top = top
         self.template_env = VTemplateEnv()

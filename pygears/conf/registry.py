@@ -30,10 +30,10 @@ class MayInject:
 def get_args_from_registry(arg_dict):
     for k, v in arg_dict.items():
         if isinstance(v, Inject):
-            arg_dict[k] = registry(v.args[0])
+            arg_dict[k] = reg[v.args[0]]
         elif isinstance(v, MayInject):
             try:
-                arg_dict[k] = registry(v.args[0])
+                arg_dict[k] = reg[v.args[0]]
             except KeyError:
                 arg_dict[k] = None
 
@@ -49,7 +49,7 @@ def inject_async(func):
                                cb_kwds=get_args_from_registry)
 
     try:
-        all(registry(i) for i in injections)
+        all(reg[i] for i in injections)
         func()
     except KeyError:
         PluginBase.async_reg[func] = injections
@@ -84,66 +84,8 @@ class RegistryHook(dict):
             getattr(self, f'_set_{key}')(value)
 
 
-@dataclass
-class ConfigVariable:
-    path: str
-    default: Any
-    docs: str = None
-    setter: Callable = None
-    getter: Callable = None
-
-    @property
-    def val(self):
-        if self.getter is None:
-            return registry(self.path)
-        else:
-            return self.getter(self)
-
-    @property
-    def changed(self):
-        return registry(self.path) != self.default
-
-
-class Configure:
-    def __init__(self):
-        self.definitions = {}
-
-    def define(self, path, default=None, docs=None, setter=None, getter=None):
-        safe_bind(path, copy.copy(default))
-        var = ConfigVariable(path,
-                             default=default,
-                             docs=docs,
-                             setter=setter,
-                             getter=getter)
-
-        self.definitions[path] = var
-
-        if setter is not None:
-            setter(var, default)
-
-        return var
-
-    def changed(self, path):
-        return self.definitions[path].changed
-
-    def clear(self):
-        self.definitions.clear()
-
-    def __getitem__(self, path):
-        return self.definitions[path].val
-
-    def __setitem__(self, path, value):
-        var = self.definitions[path]
-        bind(path, value)
-        if var.setter:
-            var.setter(var, value)
-
-
 class PluginBase:
     subclasses = []
-    registry = {}
-    config = Configure()
-    cb = {}
     async_reg = {}
 
     def __init_subclass__(cls, **kwargs):
@@ -158,7 +100,7 @@ class PluginBase:
     @classmethod
     def purge(cls):
         cls.subclasses.clear()
-        cls.registry.clear()
+        reg.clear()
 
     @classmethod
     def bind(cls):
@@ -168,59 +110,6 @@ class PluginBase:
     def reset(cls):
         pass
 
-
-config = PluginBase.config
-
-
-def registry(key_path):
-    """Retrieves a value from registry at the location designated by ``key_path``.
-
-    Args:
-       key_path: a UNIX style path without leading '/'
-
-    **Example** - Obtain a list of directory paths where SystemVerilog
-    generator will look for the SystemVerilog implementations of the gears:
-
-    >>> registry('hdl/include')
-    ['/tools/home/.pygears/svlib', '/tools/home/pygears/pygears/lib/svlib', '/tools/home/pygears/pygears/lib/svlib']
-
-    """
-
-    # if there is no need to match anything (no wildcards)
-    if not any(c in key_path for c in wildcard_list):
-        return nested_get(PluginBase.registry, *key_path.split(delimiter))
-
-    for reg_list in dict_generator(PluginBase.registry):
-        as_path = delimiter.join([str(x) for x in reg_list[:-1]])
-        if fnmatch.fnmatch(as_path, key_path):
-            return nested_get(PluginBase.registry, *key_path.split(delimiter))
-
-    raise RegistryException(f'Registry not successful for {key_path}')
-
-
-def set_cb(key, cb):
-    PluginBase.cb[key] = cb
-
-
-def safe_bind(key_path, value):
-    if any(c in key_path for c in wildcard_list):
-        raise RegistryException(
-            f'Safe bind not supported for wildcards (attempted {key_path})')
-    safe_nested_set(PluginBase.registry, value, *key_path.split(delimiter))
-    if key_path in PluginBase.cb:
-        PluginBase.cb[key_path](value)
-
-    manage_async_regs(key_path)
-
-
-def bind_by_path(key_path, value):
-    reg = PluginBase.registry
-    cb = PluginBase.cb
-    nested_set(reg, value, *key_path.split(delimiter))
-    if key_path in cb:
-        cb[key_path](value)
-
-
 def manage_async_regs(key_path):
     resolved = []
 
@@ -229,7 +118,7 @@ def manage_async_regs(key_path):
             continue
 
         try:
-            all(registry(i) for i in injections)
+            all(reg[i] for i in injections)
             resolved.append(func)
             func()
         except KeyError:
@@ -239,50 +128,157 @@ def manage_async_regs(key_path):
         PluginBase.async_reg.pop(r)
 
 
-def bind(key_pattern, value):
-    """Sets a new ``value`` for the registry location designated by ``key_path``.
+# def bind(key_pattern, value):
+#     """Sets a new ``value`` for the registry location designated by ``key_path``.
 
-    Args:
-       key_path: a UNIX style path without leading '/'
-       value: value to set
+#     Args:
+#        key_path: a UNIX style path without leading '/'
+#        value: value to set
 
-    **Example** - configure the simulator not to throw exeptions on simulation
-    errors::
+#     **Example** - configure the simulator not to throw exeptions on simulation
+#     errors::
 
-        bind('logger/sim/error/exception', False)
+#         reg['logger/sim/error/exception'] = False
 
-    """
+#     """
 
-    reg = PluginBase.registry
+#     reg = PluginBase.registry
 
-    # if there is no need to match anything (no wildcards)
-    if not any(c in key_pattern for c in wildcard_list):
-        bind_by_path(key_path=key_pattern, value=value)
-        manage_async_regs(key_pattern)
-        return
+#     # if there is no need to match anything (no wildcards)
+#     if not any(c in key_pattern for c in wildcard_list):
+#         bind_by_path(key_path=key_pattern, value=value)
+#         manage_async_regs(key_pattern)
+#         return
 
-    matched = False
-    for reg_list in dict_generator(reg):
-        as_path = delimiter.join([str(x) for x in reg_list[:-1]])
-        if fnmatch.fnmatch(as_path, key_pattern):
-            bind_by_path(key_path=as_path, value=value)
-            matched = True
-    if not matched:
-        raise RegistryException(f'Bind not successful for {key_pattern}')
-    else:
-        manage_async_regs(key_pattern)
+#     matched = False
+#     for reg_list in dict_generator(reg):
+#         as_path = delimiter.join([str(x) for x in reg_list[:-1]])
+#         if fnmatch.fnmatch(as_path, key_pattern):
+#             bind_by_path(key_path=as_path, value=value)
+#             matched = True
+#     if not matched:
+#         raise RegistryException(f'Bind not successful for {key_pattern}')
+#     else:
+#         manage_async_regs(key_pattern)
 
 
 def clear():
     for subc in PluginBase.subclasses:
         subc.clear()
 
-    PluginBase.registry.clear()
-    PluginBase.config.clear()
+    reg.clear()
 
     for subc in PluginBase.subclasses:
         subc.bind()
 
+@dataclass
+class ConfigVariable:
+    path: str
+    default: Any
+    docs: str = None
+    setter: Callable = None
+    getter: Callable = None
+
+    def __post_init__(self):
+        self._val = self.default
+
+    @property
+    def val(self):
+        if self.getter is not None:
+            return self.getter(self)
+
+        return self._val
+
+    @val.setter
+    def val(self, val):
+        if self.setter is not None:
+            return self.setter(self, val)
+
+        self._val = val
+
+    @property
+    def changed(self):
+        return self._val != self.default
+
+
+class Registry(dict):
+    def __getitem__(self, key):
+        key, _, subpath = key.partition('/')
+        val = super().__getitem__(key)
+
+        if subpath:
+            return val[subpath]
+
+        if isinstance(val, ConfigVariable):
+            return val.val
+
+        return val
+
+    def __contains__(self, key):
+        key, _, subpath = key.partition('/')
+        val = super().__contains__(key)
+
+        if subpath and val:
+            return subpath in super().__getitem__(key)
+
+        return val
+
+    def _setitem(self, key, val):
+        key, _, subpath = key.partition('/')
+        if not subpath:
+            try:
+                cfgvar = super().__getitem__(key)
+            except KeyError:
+                pass
+            else:
+                if isinstance(cfgvar, ConfigVariable):
+                    cfgvar.val = val
+                    return
+
+            return super().__setitem__(key, val)
+
+        if key not in self:
+            subreg = Registry()
+            super().__setitem__(key, subreg)
+        else:
+            subreg = super().__getitem__(key)
+
+        subreg[subpath] = val
+
+    def __setitem__(self, key, val):
+        self._setitem(key, val)
+
+        if self is reg:
+            manage_async_regs(key)
+
+
+    def confdef(self, path, default=None, docs=None, setter=None, getter=None):
+        if path in self:
+            raise Exception(f'Variable "{path}" already defined!')
+
+        var = ConfigVariable(path,
+                            default=default,
+                            docs=docs,
+                            setter=setter,
+                            getter=getter)
+
+        if setter is not None:
+            setter(var, default)
+
+        self[path] = var
+
+        return var
+
+    def subreg(self, key, val=None):
+        if val is None:
+            self[key] = Registry()
+        else:
+            self[key] = Registry(val)
+
+        return self[key]
+
+
+reg = Registry()
 
 def load_plugin_folder(path, package=None):
     plugin_parent_dir, plugin_dir = os.path.split(path)

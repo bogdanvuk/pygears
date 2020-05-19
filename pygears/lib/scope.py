@@ -11,7 +11,7 @@ import queue
 import pickle
 from functools import partial
 from pygears.typing import Array, typeof, Queue
-from pygears import gear, module, GearDone, config, registry
+from pygears import gear, module, GearDone, reg
 from pygears.sim import timestep, clk
 
 import multiprocessing
@@ -175,12 +175,12 @@ def plot_live(method, clk_freq, title, scale, transaction):
     _proc.start()
 
     def cleanup(sim):
-        if not registry('sim/exception'):
+        if not reg['sim/exception']:
             _proc.join()
         else:
             _proc.terminate()
 
-    registry('sim/simulator').events['after_cleanup'].append(cleanup)
+    reg['sim/simulator'].events['after_cleanup'].append(cleanup)
 
     try:
         while True:
@@ -286,7 +286,7 @@ async def scope(
     transaction=False):
 
     if clk_freq is None:
-        clk_freq = config['sim/clk_freq']
+        clk_freq = reg['sim/clk_freq']
 
     if method is None:
         method = ['plot'] * len(xs)

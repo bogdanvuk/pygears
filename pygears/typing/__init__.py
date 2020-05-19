@@ -1,4 +1,4 @@
-from pygears.conf import PluginBase, safe_bind
+from pygears.conf import PluginBase, reg
 
 # from .bool import Bool
 from .queue import Queue
@@ -34,31 +34,31 @@ __all__ = [
 class TypingNamespacePlugin(PluginBase):
     @classmethod
     def bind(cls):
-        safe_bind('gear/type_arith', {})
+        reg['gear/type_arith'] = {}
 
 
 class CoreTypesPlugin(TypingNamespacePlugin):
     @classmethod
     def bind(cls):
-        safe_bind('gear/type_arith/Union', Union)
-        safe_bind('gear/type_arith/Tuple', Tuple)
-        safe_bind('gear/type_arith/Uint', Uint)
-        safe_bind('gear/type_arith/Float', Float)
-        safe_bind('gear/type_arith/Int', Int)
-        safe_bind('gear/type_arith/Integer', Integer)
-        safe_bind('gear/type_arith/Integral', Integral)
-        safe_bind('gear/type_arith/Unit', Unit)
-        safe_bind('gear/type_arith/Fixp', Fixp)
-        safe_bind('gear/type_arith/Ufixp', Ufixp)
-        safe_bind('gear/type_arith/Bool', Bool)
-        safe_bind('gear/type_arith/Queue', Queue)
-        safe_bind('gear/type_arith/Array', Array)
-        safe_bind('gear/type_arith/bitw', bitw)
-        safe_bind('gear/type_arith/ceil_pow2', ceil_pow2)
-        safe_bind('gear/type_arith/typeof', typeof)
-        safe_bind('gear/type_arith/Any', Any)
-        safe_bind('gear/type_arith/TLM', TLM)
-        safe_bind('gear/type_arith/flatten', flatten)
-        safe_bind('gear/type_arith/expand', expand)
-        safe_bind('gear/type_arith/factor', factor)
-        safe_bind('gear/type_arith/cast', cast)
+        reg['gear/type_arith/Union'] = Union
+        reg['gear/type_arith/Tuple'] = Tuple
+        reg['gear/type_arith/Uint'] = Uint
+        reg['gear/type_arith/Float'] = Float
+        reg['gear/type_arith/Int'] = Int
+        reg['gear/type_arith/Integer'] = Integer
+        reg['gear/type_arith/Integral'] = Integral
+        reg['gear/type_arith/Unit'] = Unit
+        reg['gear/type_arith/Fixp'] = Fixp
+        reg['gear/type_arith/Ufixp'] = Ufixp
+        reg['gear/type_arith/Bool'] = Bool
+        reg['gear/type_arith/Queue'] = Queue
+        reg['gear/type_arith/Array'] = Array
+        reg['gear/type_arith/bitw'] = bitw
+        reg['gear/type_arith/ceil_pow2'] = ceil_pow2
+        reg['gear/type_arith/typeof'] = typeof
+        reg['gear/type_arith/Any'] = Any
+        reg['gear/type_arith/TLM'] = TLM
+        reg['gear/type_arith/flatten'] = flatten
+        reg['gear/type_arith/expand'] = expand
+        reg['gear/type_arith/factor'] = factor
+        reg['gear/type_arith/cast'] = cast

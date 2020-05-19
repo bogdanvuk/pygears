@@ -15,8 +15,8 @@ from asyncio.queues import QueueEmpty as IntfEmpty
 import pygears.typing
 
 # form pygears.conf import only for legacy compatibility
-from pygears.conf import PluginBase, bind, registry, clear, MultiAlternativeError
-from pygears.conf import pygears_excepthook, TraceLevel, safe_bind, config
+from pygears.conf import PluginBase, clear, MultiAlternativeError
+from pygears.conf import pygears_excepthook, TraceLevel, reg
 import pygears.conf
 import pygears.entry
 
@@ -57,7 +57,7 @@ load_rc('.pygears')
 sys.excepthook = pygears_excepthook
 
 __all__ = [
-    'registry', 'TraceLevel', 'bind', 'gear', 'alternative', 'clear', 'Intf',
-    'PluginBase', 'find', 'MultiAlternativeError', 'GearDone', 'IntfEmpty',
-    'module', 'safe_bind', 'TypeMatchError', 'datagear'
+    'TraceLevel', 'reg', 'gear', 'alternative', 'clear', 'Intf', 'PluginBase', 'find',
+    'MultiAlternativeError', 'GearDone', 'IntfEmpty', 'module', 'TypeMatchError',
+    'datagear'
 ]

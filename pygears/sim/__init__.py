@@ -4,7 +4,7 @@
 
 from functools import partial
 from .sim import sim, artifacts_dir, sim_assert, timestep, clk, delta, sim_log, sim_phase, SimFinish
-from pygears import config
+from pygears import reg
 from . import inst
 
 from .sim import SimPlugin, schedule_to_finish
@@ -17,10 +17,10 @@ def verilate(top, *args, **kwds):
 
 
 def cosim(top, sim, *args, **kwds):
-    from pygears import find, registry
+    from pygears import find
 
     if top is None:
-        top = registry('gear/root')
+        top = reg['gear/root']
     elif isinstance(top, str):
         top_name = top
         top = find(top)
@@ -37,9 +37,10 @@ def cosim(top, sim, *args, **kwds):
             from .modules import SimVerilated
             from .modules.verilator import build
 
-            kwds['outdir'] = kwds.get('outdir', config['results-dir'])
+            kwds['outdir'] = kwds.get('outdir', reg['results-dir'])
+            kwds['rebuild'] = kwds.get('rebuild', True)
             sim_cls = SimVerilated
-            build(top, outdir=kwds['outdir'], rebuild=kwds.get('rebuild', True))
+            build(top, **kwds)
             kwds['rebuild'] = False
         else:
             raise Exception(f"Unsupported simulator: {sim}")

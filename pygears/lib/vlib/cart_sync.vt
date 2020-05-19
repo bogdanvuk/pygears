@@ -10,7 +10,7 @@
 
 {%- for intf in intfs -%}
   {%- do intf.update({'lvl': intf['type'].lvl if typeof(intf['type'], Queue) else 0}) -%}
-  {%- do intf.update({'data_eot': '(&%s_s_eot)'|format(intf['name']) if typeof(intf['type'], Queue) else 1}) -%}
+  {%- do intf.update({'data_eot': '(&%s_s.eot)'|format(intf['name']) if typeof(intf['type'], Queue) else 1}) -%}
 {%- endfor -%}
 
 {% if params['outsync'] %} 
@@ -26,22 +26,22 @@
   {%- set out_intf_names = intfs|isoutput|keymap("name") %}
 
   wire all_valid;
-  assign all_valid   = {{input_intf_names|format_list("%s_valid")|join(" && ")}};
+  assign all_valid   = {{input_intf_names|format_list("%s.valid")|join(" && ")}};
 
   {% for din, dout in zip(input_intf_names, out_intf_names) %}
-    assign {{dout}}_valid = all_valid;
-    assign {{dout}}_data = {{din}}_data;
+    assign {{dout}}.valid = all_valid;
+    assign {{dout}}.data = {{din}}.data;
   {% endfor %}
 
   {% if min_lvl > 0 %}
-    assign din0_ready = din1_valid && din1_ready && {{intfs[1]['data_eot']}};
-    assign din1_ready = dout1_valid && dout1_ready;
+    assign din0.ready = din1.valid && din1.ready && {{intfs[1]['data_eot']}};
+    assign din1.ready = dout1.valid && dout1.ready;
   {% elif intfs[1]['lvl'] > 0 %}
-    assign din0_ready = din1_valid && din1_ready && {{intfs[1]['data_eot']}};
-    assign din1_ready = dout1_valid && dout1_ready;
+    assign din0.ready = din1.valid && din1.ready && {{intfs[1]['data_eot']}};
+    assign din1.ready = dout1.valid && dout1.ready;
   {% else %}
-    assign din0_ready = dout0_valid && dout0_ready;
-    assign din1_ready = din0_valid && din0_ready && {{intfs[0]['data_eot']}};
+    assign din0.ready = dout0.valid && dout0.ready;
+    assign din1.ready = din0.valid && din0.ready && {{intfs[0]['data_eot']}};
   {% endif %}
 {% endcall %}
 

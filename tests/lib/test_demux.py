@@ -6,7 +6,7 @@ from pygears.lib import demux, mux, demux_ctrl
 from pygears.lib.delay import delay_rng
 from pygears.lib.verif import drv, directed
 from pygears.sim import sim
-from pygears import Intf
+from pygears import Intf, gear
 
 
 @pytest.mark.parametrize('din_delay', [0, 1])
@@ -69,12 +69,13 @@ def test_mapped_default_directed(sim_cls, din_delay, dout_delay):
     sim()
 
 
-def mux_demux_redux(branches):
-    TDin = Union[tuple(Uint[i] for i in range(1, branches + 1))]
-    demux_ctrl(Intf(TDin)) | mux
-
-
 @pytest.mark.parametrize('branches', [2, 3, 27])
 @synth_check({'logic luts': 0, 'ffs': 0}, tool='yosys')
 def test_mux_demux_redux_yosys(branches):
-    mux_demux_redux(branches)
+    TDin = Union[tuple(Uint[i] for i in range(1, branches + 1))]
+
+    @gear
+    def test(din):
+        return demux_ctrl(din) | mux
+
+    test(Intf(TDin))

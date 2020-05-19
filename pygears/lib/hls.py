@@ -1,4 +1,4 @@
-from pygears.conf import safe_bind
+from pygears.conf import reg
 from pygears.core.intf import IntfOperPlugin
 
 
@@ -33,4 +33,4 @@ class gather:
 class PipeIntfOperPlugin(IntfOperPlugin):
     @classmethod
     def bind(cls):
-        safe_bind('gear/intf_oper/__aiter__', qiter)
+        reg['gear/intf_oper/__aiter__'] = qiter

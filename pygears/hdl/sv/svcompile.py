@@ -1,4 +1,4 @@
-from pygears import registry, config
+from pygears import reg
 from pygears.hls import ir
 from pygears.hls import Context, HDLVisitor, Scope
 from pygears.typing import Bool
@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from typing import List
 from pygears import Intf
 import itertools
+from pygears.hdl.sv.v.accessors import rewrite
 
 from .util import svgen_typedef
 from .v.util import vgen_signal, vgen_intf
@@ -24,8 +25,8 @@ end
 
 
 class HDLWriter:
-    def __init__(self):
-        self.indent = 0
+    def __init__(self, indent=0):
+        self.indent = indent
         self.lines = []
 
     def line(self, line=''):
@@ -37,6 +38,9 @@ class HDLWriter:
     def block(self, block):
         for line in block.split('\n'):
             self.line(line)
+
+    def __str__(self):
+        return '\n'.join(self.lines)
 
 
 res_true = ir.ResExpr(Bool(True))
@@ -76,7 +80,7 @@ class SVCompiler(HDLVisitor):
             self.svexpr = svexpr
         else:
             from .v.v_expression import vexpr
-            self.separator = '_'
+            self.separator = '.'
             self.svexpr = vexpr
 
         if aux_funcs is None:
@@ -371,12 +375,7 @@ def write_block(block, writer):
     if block.header:
         writer.indent -= 4
         if block.footer and block.footer[0] == 'endfunction':
-            lang = config['hdl/lang']
-            if lang == 'sv':
-                writer.line('endfunction')
-            else:
-                writer.line('end')
-                writer.line('endfunction')
+            writer.line('endfunction')
         else:
             writer.line('end')
 
@@ -390,32 +389,27 @@ def typedef_or_inline(writer, dtype, name):
     return f'{name}_t'
 
 
-def svcompile(hdl_stmts, writer, ctx, title, selected, lang, aux_funcs=None):
-    v = SVCompiler(ctx, title, writer, selected=selected, lang=lang, aux_funcs=aux_funcs)
+def svcompile(hdl_stmts, ctx, title, selected, lang, aux_funcs=None):
+    writer = HDLWriter()
+    v = SVCompiler(ctx,
+                   title,
+                   writer,
+                   selected=selected,
+                   lang=lang,
+                   aux_funcs=aux_funcs)
     v.visit(hdl_stmts)
 
     if not v.block_lines[0].content:
-        return
+        return ''
 
     write_block(v.block_lines[0], writer)
     writer.line()
+    return str(writer)
 
-
-def write_module(ctx: Context,
-                 hdl,
-                 writer,
-                 subsvmods,
-                 funcs,
-                 template_env,
-                 config=None):
-    if config is None:
-        config = {}
+def write_declarations(ctx, subsvmods, template_env):
+    writer = HDLWriter()
 
     lang = template_env.lang
-
-    aux_funcs = {}
-
-    # svcompile(hdl, writer, ctx, "proba", selected=lambda x: x)
 
     if lang == 'sv':
         from .sv_expression import svexpr
@@ -423,7 +417,7 @@ def write_module(ctx: Context,
         exprgen = svexpr
     else:
         from .v.v_expression import vexpr
-        sep = '_'
+        sep = '.'
         exprgen = vexpr
 
     for name, expr in ctx.regs.items():
@@ -434,8 +428,14 @@ def write_module(ctx: Context,
             writer.line(f'{name_t} {name}, {name}_next;')
         else:
             writer.line(f'reg {name}_en;')
-            writer.block(vgen_signal(expr.dtype, 'reg', f'{name}_next', 'output'))
-            writer.block(vgen_signal(expr.dtype, 'reg', name, 'output', hier=False))
+            writer.block(
+                vgen_signal(expr.dtype,
+                            'reg',
+                            f'{name}_next',
+                            'output',
+                            hier=False))
+            writer.block(
+                vgen_signal(expr.dtype, 'reg', name, 'output', hier=False))
 
         writer.line()
 
@@ -472,10 +472,12 @@ def write_module(ctx: Context,
 
         else:
             if isinstance(intf.producer, HDLProducer):
-                writer.block(vgen_signal(intf.dtype, 'reg', f'{name}_s', 'output', True))
+                writer.block(
+                    vgen_signal(intf.dtype, 'reg', f'{name}_s', 'output',
+                                False))
                 writer.line(f"assign {name}_data = {name}_s;")
             else:
-                writer.block(vgen_signal(intf.dtype, 'reg', f'{name}_s', 'input', True))
+                writer.block(vgen_signal(intf.dtype, 'reg', f'{name}_s', 'input', False))
                 writer.line(f"assign {name}_s = {name}_data;")
 
         writer.line()
@@ -488,7 +490,8 @@ def write_module(ctx: Context,
             name_t = typedef_or_inline(writer, expr.dtype, name)
             writer.line(f'{name_t} {name};')
         else:
-            writer.block(vgen_signal(expr.dtype, 'reg', name, 'input'))
+            writer.block(
+                vgen_signal(expr.dtype, 'reg', name, 'input', hier=False))
 
         writer.line()
 
@@ -502,6 +505,42 @@ def write_module(ctx: Context,
                 port_map[p.basename] = (intf.name, None, None)
 
         writer.block(s.get_inst(template_env, port_map))
+
+    if ctx.regs:
+        writer.line(f'initial begin')
+        for name, expr in ctx.regs.items():
+            if not isinstance(expr.val, ir.ResExpr):
+                continue
+
+            writer.line(f"    {exprgen(ctx.ref(name))} = {exprgen(expr.val)};")
+
+        writer.line(f'end')
+
+    return str(writer)
+
+
+def write_module(ctx: Context,
+                 hdl,
+                 writer,
+                 subsvmods,
+                 funcs,
+                 template_env,
+                 config=None):
+    if config is None:
+        config = {}
+
+    lang = template_env.lang
+
+    aux_funcs = {}
+
+    if lang == 'sv':
+        from .sv_expression import svexpr
+        sep = '.'
+        exprgen = svexpr
+    else:
+        from .v.v_expression import vexpr
+        sep = '.'
+        exprgen = vexpr
 
     for f_hdl, f_ctx in funcs:
         size = ''
@@ -526,72 +565,95 @@ def write_module(ctx: Context,
                 writer.line()
 
             for name, dtype in f_ctx.signature.items():
-                tmp = vgen_signal(dtype, 'reg', name, 'input', hier=True)
-                writer.block('\n'.join(l for l in tmp.split('\n')[1:] if l.startswith('reg')))
+                tmp = vgen_signal(dtype, 'reg', name, 'input', hier=False)
+                writer.block('\n'.join(l for l in tmp.split('\n')[1:]
+                                       if l.startswith('reg')))
 
-            writer.line(f'begin')
             for name, dtype in f_ctx.signature.items():
-                tmp = vgen_signal(dtype, 'reg', name, 'input', hier=True)
-                writer.block('\n'.join(l for l in tmp.split('\n')[1:] if not l.startswith('reg')))
+                tmp = vgen_signal(dtype, 'reg', name, 'input', hier=False)
+                for l in tmp.split('\n')[1:]:
+                    if l.startswith('reg'):
+                        continue
+
+                    if l.startswith('assign'):
+                        l = l[7:]
+
+                    writer.line(l)
 
         writer.indent -= 4
 
-        svcompile(f_hdl,
-                  writer,
-                  f_ctx,
-                  '',
-                  selected=lambda x: True,
-                  lang=lang,
-                  aux_funcs=aux_funcs)
+        blk = svcompile(f_hdl,
+                        f_ctx,
+                        '',
+                        selected=lambda x: True,
+                        lang=lang,
+                        aux_funcs=aux_funcs)
 
-    if ctx.regs:
-        writer.line(f'initial begin')
-        for name, expr in ctx.regs.items():
-            writer.line(f"    {exprgen(ctx.ref(name))} = {exprgen(expr.val)};")
+        if lang == 'v':
+            blk  = vrewrite(f_ctx, blk)
 
-        writer.line(f'end')
+        writer.line(blk)
 
-    for name, expr in ctx.regs.items():
-        writer.block(
-            REG_TEMPLATE.format(exprgen(ctx.ref(name)), exprgen(expr.val)))
+    blk = write_declarations(ctx, subsvmods, template_env);
 
     for name, expr in ctx.regs.items():
-        svcompile(hdl,
-                  writer,
-                  ctx,
-                  name,
-                  selected=lambda x: x.obj == expr,
-                  lang=lang,
-                  aux_funcs=aux_funcs)
+        blk += REG_TEMPLATE.format(exprgen(ctx.ref(name)), exprgen(expr.val))
+
+    for name, expr in ctx.regs.items():
+        blk += svcompile(hdl,
+                        ctx,
+                        name,
+                        selected=lambda x: x.obj == expr,
+                        lang=lang,
+                        aux_funcs=aux_funcs)
 
     for name, expr in ctx.variables.items():
-        svcompile(hdl,
-                  writer,
-                  ctx,
-                  name,
-                  selected=lambda x: x.obj == expr,
-                  lang=lang,
-                  aux_funcs=aux_funcs)
+        blk += svcompile(hdl,
+                        ctx,
+                        name,
+                        selected=lambda x: x.obj == expr,
+                        lang=lang,
+                        aux_funcs=aux_funcs)
 
     for name, expr in ctx.signals.items():
-        svcompile(hdl,
-                  writer,
-                  ctx,
-                  name,
-                  selected=lambda x: x.obj == expr,
-                  lang=lang,
-                  aux_funcs=aux_funcs)
+        blk += svcompile(hdl,
+                        ctx,
+                        name,
+                        selected=lambda x: x.obj == expr,
+                        lang=lang,
+                        aux_funcs=aux_funcs)
 
     for name, expr in ctx.intfs.items():
-        svcompile(hdl,
-                  writer,
-                  ctx,
-                  name,
-                  selected=lambda x: x.name == name,
-                  lang=lang,
-                  aux_funcs=aux_funcs)
+        blk += svcompile(hdl,
+                        ctx,
+                        name,
+                        selected=lambda x: x.name == name,
+                        lang=lang,
+                        aux_funcs=aux_funcs)
+
+    if lang == 'v':
+        blk  = vrewrite(ctx, blk)
+
+    writer.line(blk)
 
     writer.lines[0:0] = aux_funcs.values()
+
+
+def vrewrite(ctx, body):
+    index = {}
+    for name, v in ctx.scope.items():
+        if not isinstance(v, ir.Variable):
+            continue
+
+        if isinstance(v.val, Intf):
+            index[name] = v.val
+            index[f'{name}_s'] = v.val.dtype
+        else:
+            index[name] = v.dtype
+            if v.reg:
+                index[f'{name}_next'] = v.dtype
+
+    return rewrite(body, index)
 
 
 def compile_gear_body(gear, outdir, template_env):
@@ -604,7 +666,7 @@ def compile_gear_body(gear, outdir, template_env):
     subsvmods = []
     if ctx.submodules:
         from pygears.hdl import hdlgen
-        hdlgen_map = registry(f'{lang}gen/map')
+        hdlgen_map = reg['hdlgen/map']
         for c in ctx.submodules:
             rtl_top = hdlgen(c.gear, outdir=outdir, generate=False)
             svmod = hdlgen_map[rtl_top]

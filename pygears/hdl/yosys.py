@@ -1,16 +1,22 @@
+import runpy
 import re
 import os
 from pygears.hdl import hdlgen, list_hdl_files
-from pygears import registry
+from pygears import reg, find
+from pygears.util.fileio import get_main_script
+from pygears.hdl.synth import SynthPlugin
+from pygears.entry import cmd_register
+from pygears.conf.custom_settings import load_rc
 
-# from pygears import config
-# from . import SynthPlugin
-
-def create_project_script(script_fn, outdir, top, lang, wrapper):
-    hdl_files = list_hdl_files(top, outdir, lang=lang, wrapper=wrapper)
+def create_project_script(script_fn, outdir, top):
+    hdl_files = list_hdl_files(top, outdir)
     with open(script_fn, 'w') as f:
         for fn in hdl_files:
-            f.write(f'read_verilog {"-sv" if lang== "sv" else ""} {fn}\n')
+            if os.path.splitext(os.path.basename(fn))[0] in ['tdp', 'sdp', 'decouple', 'fifo']:
+                print(f"Loading {fn} as blackbox")
+                f.write(f'read_verilog -sv -lib {fn}\n')
+            else:
+                f.write(f'read_verilog -sv {fn}\n')
 
 
 class Yosys:
@@ -94,12 +100,11 @@ class Yosys:
 def synth(outdir,
           srcdir=None,
           top=None,
-          rtl_node=None,
           optimize=True,
           freduce=False,
-          synth_out=None,
+          synthout=None,
           lang='v',
-          synth_cmd='synth'):
+          synthcmd='synth'):
     if not srcdir:
         srcdir = os.path.join(outdir, 'src')
 
@@ -107,21 +112,20 @@ def synth(outdir,
 
     # synth_out_fn = os.path.join(outdir, 'synth.v')
 
-    wrapper = False if top is None else True
-    if rtl_node is None:
-        rtl_node = hdlgen(top,
-                          lang=lang,
-                          outdir=srcdir,
-                          wrapper=wrapper)
+    if isinstance(top, str):
+        top_mod = find(top)
+    else:
+        top_mod = top
 
-    vgen_map = registry(f'{lang}gen/map')
-    top_name = vgen_map[rtl_node].module_name
+    hdlgen(top=top_mod, lang=lang, toplang='v', outdir=srcdir)
+
+    vgen_map = reg['hdlgen/map']
+    top_name = vgen_map[top_mod].wrap_module_name
 
     create_project_script(prj_script_fn,
                           outdir=srcdir,
-                          top=rtl_node,
-                          lang=lang,
-                          wrapper=wrapper)
+                          top=top_mod)
+
     with Yosys(f'yosys -l {os.path.join(outdir, "yosys.log")}') as yosys:
 
         yosys.command(f'script {prj_script_fn}')
@@ -138,17 +142,85 @@ def synth(outdir,
                 yosys.command(f'freduce')
                 yosys.command(f'opt -full')
 
-        if synth_cmd:
-            yosys.command(synth_cmd)
+        if synthcmd:
+            yosys.command(synthcmd)
 
-        if synth_out:
+        if synthout:
             yosys.command(f'clean -purge')
-            yosys.command(f'write_verilog -noattr {synth_out}')
+            yosys.command(f'write_verilog -noattr {synthout}')
 
         return yosys.stats
 
 
-# class VivadoSynthPlugin(SynthPlugin):
-#     @classmethod
-#     def bind(cls):
-#         config['synth/backend']['yosys'] = synth
+def entry(
+        top,
+        design,
+        outdir=None,
+        include=None,
+        lang='sv',
+        generate=True,
+        freduce=False,
+        synthout=None,
+        synthcmd='synth',
+        build=True):
+
+    if reg['yosys/synth/lock']:
+        return
+
+    if design is None:
+        design = get_main_script()
+
+    if design is not None:
+        design = os.path.abspath(os.path.expanduser(design))
+
+    os.makedirs(outdir, exist_ok=True)
+
+    # makefile(
+    #     top,
+    #     design,
+    #     outdir,
+    #     lang=lang,
+    #     generate=generate,
+    #     build=build,
+    #     include=include,
+    #     prjdir=prjdir)
+
+    if not generate:
+        return
+
+    if isinstance(top, str):
+        top_mod = find(top)
+    else:
+        top_mod = top
+
+    if top_mod is None:
+        reg['yosys/synth/lock'] = True
+        load_rc('.pygears', os.path.dirname(design))
+        runpy.run_path(design)
+        reg['yosys/synth/lock'] = False
+        top_mod = find(top)
+
+    if top_mod is None:
+        raise Exception(
+            f'Module "{top}" specified as a IP core top level module, not found in the design "{design}"')
+
+    if include is None:
+        include = []
+
+    include += reg[f'{lang}gen/include']
+
+    report = synth(outdir, top=top_mod, lang=lang, synthout=synthout, synthcmd=synthcmd, freduce=freduce)
+
+    return report
+
+
+class YosysSynthPlugin(SynthPlugin):
+    @classmethod
+    def bind(cls):
+        conf = cmd_register(['synth', 'yosys'], entry, derived=True)
+
+        reg['yosys/synth/lock'] = False
+
+        conf['parser'].add_argument('--synthout', type=str)
+        # conf['parser'].add_argument('--util', action='store_true')
+        # conf['parser'].add_argument('--timing', action='store_true')

@@ -79,6 +79,6 @@ def test_synth_vivado():
     dreg(Intf(Uint[16]))
 
 
-@synth_check({'logic luts': 4, 'ffs': 17}, tool='yosys')
+@synth_check({'logic luts': 2, 'ffs': 17}, tool='yosys')
 def test_synth_yosys():
     dreg(Intf(Uint[16]))

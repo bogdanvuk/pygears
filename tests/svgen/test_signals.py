@@ -1,6 +1,6 @@
 import os
 import pytest
-from pygears import Intf, config, gear, sim, find
+from pygears import Intf, reg, gear, sim, find
 from pygears.typing import Uint
 from pygears.sim.modules import SimVerilated
 from pygears.lib.verif import directed, drv
@@ -9,7 +9,7 @@ from pygears.core.gear import InSig, OutSig
 
 @pytest.fixture(autouse=True)
 def configure():
-    config['hdl/include'].append(
+    reg['hdl/include'].append(
         os.path.join(os.path.dirname(__file__), 'test_signals'))
 
 
@@ -74,6 +74,6 @@ def test_clk_channeling():
     assert InSig('clk2', 1) in mod_dut.params['signals']
 
 
-# config['hdl/include'].append(
+# reg['hdl/include'].append(
 #     os.path.join(os.path.dirname(__file__), 'test_signals'))
 # test_channeling('/tools/home/tmp')

@@ -3,31 +3,31 @@ from pygears.typing import Maybe, Tuple, Uint
 from pygears.sim import sim, cosim
 
 
-def test_none(lang):
-    directed(drv(t=Maybe[Uint[8]], seq=[None]), f=trigreg, ref=[])
-    cosim('/trigreg', 'verilator', lang=lang)
-    sim()
+# def test_none(lang):
+#     directed(drv(t=Maybe[Uint[8]], seq=[None]), f=trigreg, ref=[])
+#     cosim('/trigreg', 'verilator', lang=lang)
+#     sim()
 
 
-def test_two(lang):
-    directed(
-        drv(t=Maybe[Uint[8]], seq=[2, None]) | delay_gen(f=iter([0, 1])),
-        f=trigreg,
-        ref=[2, 2],
-    )
-    cosim('/trigreg', 'verilator', lang=lang)
-    sim()
+# def test_two(lang):
+#     directed(
+#         drv(t=Maybe[Uint[8]], seq=[2, None]) | delay_gen(f=iter([0, 1])),
+#         f=trigreg,
+#         ref=[2, 2],
+#     )
+#     cosim('/trigreg', 'verilator', lang=lang)
+#     sim()
 
 
-def test_three(lang):
-    directed(
-        drv(t=Maybe[Uint[8]], seq=[2, None, 3, None])
-        | delay_gen(f=iter([0, 1, 0, 0])),
-        f=trigreg,
-        ref=[2, 2, 3],
-    )
-    cosim('/trigreg', 'verilator', lang=lang)
-    sim()
+# def test_three(lang):
+#     directed(
+#         drv(t=Maybe[Uint[8]], seq=[2, None, 3, None])
+#         | delay_gen(f=iter([0, 1, 0, 0])),
+#         f=trigreg,
+#         ref=[2, 2, 3],
+#     )
+#     cosim('/trigreg', 'verilator', lang=lang)
+#     sim()
 
 
 def test_regmap(lang):

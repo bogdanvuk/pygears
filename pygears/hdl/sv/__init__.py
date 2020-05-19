@@ -1,38 +1,70 @@
-from pygears.conf import PluginBase, safe_bind
-from .generate import svgen_generate
-from .v.generate import vgen_generate
+import os
+
+from pygears.conf import PluginBase, reg
 from .inst import svgen_inst
 from .svmod import SVModuleInst
 from .resolvers import HDLFileResolver, HDLTemplateResolver, HierarchicalResolver, HLSResolver, BlackBoxResolver
-from pygears.conf import PluginBase, config
+from pygears.conf import PluginBase, reg
+
+from pygears.hdl.templenv import TemplateEnv
+from .v.util import vgen_intf, vgen_signal
+from .util import svgen_typedef
+
+
+class SVTemplateEnv(TemplateEnv):
+    lang = 'sv'
+
+    def __init__(self):
+        super().__init__(basedir=os.path.dirname(__file__))
+
+        self.jenv.globals.update(svgen_typedef=svgen_typedef)
+
+        self.snippets = self.load(self.basedir, 'snippet.j2').module
 
 
 class SVGenPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        safe_bind('svgen/flow', [svgen_inst, svgen_generate])
-        safe_bind('svgen/resolvers', [
+        reg['svgen/flow'] = [svgen_inst]
+        reg['svgen/resolvers'] = [
             HDLFileResolver, HDLTemplateResolver, HLSResolver,
             HierarchicalResolver
-        ])
-        safe_bind('svgen/dflt_resolver', BlackBoxResolver)
+        ]
+        reg['svgen/dflt_resolver'] = BlackBoxResolver
+        reg['svgen/templenv'] = SVTemplateEnv()
 
-        safe_bind('svgen/module_namespace', {
+        reg['svgen/module_namespace'] = {
             'Gear': SVModuleInst,
             'GearHierRoot': SVModuleInst
-        })
+        }
 
-        safe_bind('vgen/module_namespace', {
+class VTemplateEnv(TemplateEnv):
+    lang = 'v'
+    def __init__(self):
+        super().__init__(basedir=os.path.join(os.path.dirname(__file__), 'v'))
+
+        self.jenv.globals.update(vgen_intf=vgen_intf,
+                                 vgen_signal=vgen_signal)
+
+        self.snippets = self.load(self.basedir, 'snippet.j2').module
+
+
+class VGenPlugin(PluginBase):
+    @classmethod
+    def bind(cls):
+        reg['vgen/templenv'] = VTemplateEnv()
+
+        reg['vgen/module_namespace'] = {
             'Gear': SVModuleInst,
             'GearHierRoot': SVModuleInst
-        })
+        }
 
-        safe_bind('vgen/flow', [svgen_inst, vgen_generate])
-        safe_bind('vgen/resolvers', [
+        reg['vgen/flow'] = [svgen_inst]
+        reg['vgen/resolvers'] = [
             HDLFileResolver, HDLTemplateResolver, HLSResolver,
             HierarchicalResolver
-        ])
-        safe_bind('vgen/dflt_resolver', BlackBoxResolver)
+        ]
+        reg['vgen/dflt_resolver'] = BlackBoxResolver
 
 
 from pygears.conf import load_plugin_folder

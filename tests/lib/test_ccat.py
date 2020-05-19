@@ -3,7 +3,7 @@ import pytest
 from pygears.util.test_utils import synth_check
 from pygears.typing import Uint, Queue
 from pygears.lib import ccat
-from pygears import Intf
+from pygears import Intf, gear
 
 from pygears.lib.delay import delay_rng
 from pygears.lib.verif import directed, drv, verif
@@ -47,11 +47,14 @@ def test_queue_3(cosim_cls, din_delay, dout_delay):
 @pytest.mark.parametrize('branches', [2, 3, 27, 127])
 @synth_check({'logic luts': 0, 'ffs': 0}, tool='yosys', freduce=True)
 def test_bc_ccat_redux_yosys(branches):
-    din = Intf(Uint[8])
-    ((din, ) * branches) | ccat()
+    @gear
+    def test(din):
+        return ccat(*((din, ) * branches))
+
+    test(Intf(Uint[8]))
 
 
-@synth_check({'logic luts': 3, 'ffs': 0}, tool='yosys')
+@synth_check({'logic luts': 4, 'ffs': 0}, tool='yosys')
 def test_bc_ccat_partial_in_redux_yosys():
     din1 = Intf(Uint[8])
     din0_2 = Intf(Uint[8])

@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
+from pygears import reg
 import hashlib
 import functools
 import typing
+from pygears.hdl import mod_lang
 
 
 class ResolverTypeError(Exception):
@@ -27,6 +29,10 @@ def path_name(path):
 class ResolverBase(ABC):
     def __init__(self, node):
         raise ResolverTypeError
+
+    @property
+    def lang(self):
+        return mod_lang(self.node)
 
     @property
     def node_def_name(self):

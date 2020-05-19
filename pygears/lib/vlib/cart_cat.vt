@@ -2,7 +2,7 @@
 
 {% set Queue = import_from('pygears.typing', 'Queue') %}
 {% set typeof = import_from('pygears.typing', 'typeof') %}
-{% set din_data_cat = import_from('pygears.lib.cat_util', 'din_data_cat_v') %}
+{% set din_data_cat = import_from('pygears.lib.cat_util', 'din_data_cat') %}
 
 {%- set queue_intfs = [] -%}
 {%- for intf in intfs|isinput if typeof(intf['type'], Queue) -%}
@@ -22,16 +22,16 @@
     {% if max_lvl == 0 %}
     assign dout_s = {{din_data_cat(intfs)}};
     {% else %}
-    assign dout_s_eot = { {{queue_intf_names|format_list("%s_s_eot")|join(", ")}} };
-    assign dout_s_data = {{din_data_cat(intfs)}};
+    assign dout_s.eot = { {{queue_intf_names|format_list("%s_s.eot")|join(", ")}} };
+    assign dout_s.data = {{din_data_cat(intfs)}};
     {% endif %}
 
-    wire  handshake;
-    assign dout_valid = {{input_intf_names|format_list("%s_valid")|join(" & ")}};
-    assign handshake = dout_valid && dout_ready;
+    logic  handshake;
+    assign dout.valid = {{input_intf_names|format_list("%s.valid")|join(" & ")}};
+    assign handshake = dout.valid && dout.ready;
 
   {% for i in intfs|isinput %}
-    assign {{i['name']}}_ready = {{i['name']}}_valid ? handshake : dout_ready;
+    assign {{i['name']}}.ready = {{i['name']}}.valid ? handshake : dout.ready;
   {% endfor %}
 
 {% endcall %}

@@ -1,5 +1,5 @@
 import inspect
-from pygears import registry
+from pygears import reg
 from pygears.core.gear_decorator import create_gear_definition
 from pygears.core.gear_decorator import FunctionMaker
 from pygears.core.util import doublewrap, get_function_context_dict
@@ -8,14 +8,14 @@ from pygears.util.utils import gather
 
 
 def gear_resolver(gear_func, meta_kwds, *args, **kwds):
-    ctx = registry('gear/exec_context')
+    ctx = reg['gear/exec_context']
     if ctx == 'sim':
-        for p in registry('gear/params/extra'):
+        for p in reg['gear/params/extra']:
             del kwds[p]
 
         return gear_func.definition(*args, **kwds)
     else:
-        return registry('gear/gear_dflt_resolver')(gear_func, meta_kwds, *args,
+        return reg['gear/gear_dflt_resolver'](gear_func, meta_kwds, *args,
                                                    **kwds)
 
 

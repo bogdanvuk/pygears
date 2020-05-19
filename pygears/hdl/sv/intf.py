@@ -1,11 +1,13 @@
 import fnmatch
+import os
 import functools
 from string import Template
 
-from pygears import PluginBase, registry, safe_bind
-from pygears.conf import Inject, inject, config
+from pygears import PluginBase, reg
+from pygears.conf import Inject, inject, reg
 from pygears.core.port import OutPort, InPort, HDLProducer
 from .util import svgen_typedef
+from pygears.hdl import hdlmod, rename_ambiguous
 
 dti_spy_connect_t = Template("""
 dti_spy #(${intf_name}_t) _${intf_name}(clk, rst);
@@ -15,16 +17,17 @@ assign _${intf_name}.ready = ${conn_name}.ready;""")
 
 
 class SVIntfGen:
-    def __init__(self, intf):
+    def __init__(self, intf, lang=None):
         self.intf = intf
-        self.ext = config['hdl/lang']
+        self.lang = lang
+        if self.lang is None:
+            self.lang = reg['hdl/lang']
 
     @property
     @functools.lru_cache()
     def traced(self):
         return any(
-            fnmatch.fnmatch(self.intf.name, p)
-            for p in registry('debug/trace'))
+            fnmatch.fnmatch(self.intf.name, p) for p in reg['debug/trace'])
 
     @property
     @functools.lru_cache(maxsize=None)
@@ -60,22 +63,20 @@ class SVIntfGen:
     @property
     @functools.lru_cache(maxsize=None)
     def basename(self):
-
-        hdlgen_map = registry(f'{self.ext}gen/map')
         basename = self._basename
         if self.is_port_intf:
             return basename
 
         cnt = 0
         for c in self.parent.child:
-            if hdlgen_map[c]._basename == basename:
+            if hdlmod(c)._basename == basename:
                 cnt += 1
 
         for c in self.parent.local_intfs:
             if c is self.intf:
                 break
 
-            if hdlgen_map[c]._basename == basename:
+            if hdlmod(c)._basename == basename:
                 cnt += 1
 
         for p in self.parent.out_ports:
@@ -98,7 +99,6 @@ class SVIntfGen:
             return True
         else:
             return False
-
 
     @property
     def sole_intf(self):
@@ -137,7 +137,7 @@ class SVIntfGen:
                 self.get_bc_module(template_env)
             ])
 
-            if self.traced:
+            if self.traced and self.lang == 'sv':
                 for i in range(len(self.intf.consumers)):
                     intf_name = f'{self.outname}_{i}'
                     conn_name = f'{self.outname}[{i}]'
@@ -151,17 +151,17 @@ class SVIntfGen:
 
         for i, cons_port in enumerate(self.intf.consumers):
             if isinstance(cons_port, OutPort):
-                if self.is_broadcast or isinstance(
-                        self.intf.producer, InPort):
+                if self.is_broadcast or isinstance(self.intf.producer, InPort):
                     din_name = self.outname
+                    index = ''
                     if self.is_broadcast:
-                        din_name += f'[{i}]'
+                        index = f'[{i}]'
 
                     inst.append(
                         template_env.snippets.intf_intf_connect(
-                            din_name, self.intf.consumers[i].basename))
+                            din_name, self.intf.consumers[i].basename, index))
 
-        if self.traced:
+        if self.traced and self.lang == 'sv':
             inst.extend(
                 svgen_typedef(self.intf.dtype, self.basename).split('\n'))
 
@@ -179,17 +179,26 @@ class SVIntfGen:
             'type': str(self.intf.dtype)
         }
 
-        return template_env.snippets.intf_inst(**ctx)
+        inst = []
+        if self.lang == 'v' and self.traced:
+            inst.append('/*verilator tracing_on*/')
+
+        inst.append(template_env.snippets.intf_inst(**ctx))
+
+        if self.lang == 'v' and self.traced:
+            inst.append('/*verilator tracing_off*/')
+
+        return '\n'.join(inst)
 
     def get_bc_module(self, template_env):
         inst_name = f'bc_{self.basename}'
         if inst_name.endswith('_if_s'):
             inst_name = inst_name[:-len('_if_s')]
 
-        if self.ext == 'sv':
+        if self.lang == 'sv':
             bc_context = {
                 'rst_name': 'rst',
-                'module_name': 'bc',
+                'module_name': rename_ambiguous('bc', self.lang),
                 'inst_name': inst_name,
                 'param_map': {
                     'SIZE': len(self.intf.consumers)
@@ -202,7 +211,7 @@ class SVIntfGen:
         else:
             bc_context = {
                 'rst_name': 'rst',
-                'module_name': 'bc',
+                'module_name': rename_ambiguous('bc', self.lang),
                 'inst_name': inst_name,
                 'param_map': {
                     'SIZE': len(self.intf.consumers),
@@ -220,4 +229,4 @@ class SVIntfGen:
 class SVGenIntfPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        safe_bind('svgen/spy_connection_template', dti_spy_connect_t)
+        reg['svgen/spy_connection_template'] = dti_spy_connect_t

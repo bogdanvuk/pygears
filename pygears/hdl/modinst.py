@@ -2,9 +2,11 @@ import fnmatch
 import functools
 import hashlib
 
-from pygears import registry
+from pygears import reg
 from .base_resolver import ResolverTypeError
 from . import hdl_log
+from pygears.hdl import mod_lang, hdlmod
+from pygears.util.fileio import save_file
 
 # from .inst import svgen_log
 
@@ -25,30 +27,34 @@ def path_name(path):
 
 
 class HDLModuleInst:
-    def __init__(self, node, ext):
+    def __init__(self, node, lang=None):
         self.node = node
-        self.ext = ext
-        self.hdlgen_map = registry(f"{self.ext}gen/map")
+
+        if lang is None:
+            self.lang = mod_lang(node)
 
         self._impl_parse = None
         if 'memoized' in self.node.params:
             memnode = self.node.params['memoized']
-            hdlmod = registry(f'{self.ext}gen/map')[memnode]
+
+            # TODO: What if hdlmod hasn't been generated? This can happen if we
+            # only generate a part of the design
+            hdlmod = reg['hdlgen/map'][memnode]
             self.resolver = hdlmod.resolver
             return
 
         if self.node.parent is None:
-            self.resolver = registry(f'{self.ext}gen/dflt_resolver')(node)
+            self.resolver = reg[f'{self.lang}gen/dflt_resolver'](node)
             return
 
-        for r in registry(f'{self.ext}gen/resolvers'):
+        for r in reg[f'{self.lang}gen/resolvers']:
             try:
                 self.resolver = r(node)
                 break
             except ResolverTypeError:
                 pass
         else:
-            self.resolver = registry(f'{self.ext}gen/dflt_resolver')(node)
+            self.resolver = reg[f'{self.lang}gen/dflt_resolver'](node)
             hdl_log().warning(
                 f'Unable to compile "{node.name}" to HDL and no HDL module with the name '
                 f'"{self.resolver.module_name}" found on the path. Module connected as a black-box.')
@@ -64,12 +70,11 @@ class HDLModuleInst:
     @property
     @functools.lru_cache()
     def traced(self):
-        self_traced = any(
-            fnmatch.fnmatch(self.node.name, p) for p in registry('debug/trace'))
+        self_traced = any(fnmatch.fnmatch(self.node.name, p) for p in reg['debug/trace'])
 
         if self.hierarchical:
             children_traced = any(
-                self.hdlgen_map[child].traced for child in self.node.child)
+                hdlmod(child).traced for child in self.node.child)
         else:
             children_traced = False
 
@@ -92,12 +97,39 @@ class HDLModuleInst:
         return self.resolver.module_name
 
     @property
+    def wrap_module_name(self):
+        module_name = self.module_name
+        if self.wrapped:
+            return f'{module_name}_{self.parent_lang}_wrap'
+
+        return module_name
+
+    @property
     def file_basename(self):
         return self.resolver.file_basename
 
     @property
     def files(self):
-        return self.resolver.files
+        res_files = self.resolver.files
+
+        if self.wrapped:
+            res_files.append(f'{self.wrap_module_name}.{self.parent_lang}')
+
+        return res_files
+
+    @property
+    def parent_lang(self):
+        return mod_lang(self.node.parent)
+
+    @property
+    def wrapped(self):
+        if mod_lang(self.node.parent) != self.lang:
+            return True
+
+        if self.node is reg['hdl/top'] and self.params:
+            return True
+
+        return False
 
     @property
     def params(self):
@@ -105,4 +137,14 @@ class HDLModuleInst:
 
     def generate(self, template_env, outdir):
         if 'memoized' not in self.node.params:
-            return self.resolver.generate(template_env, outdir)
+            self.resolver.generate(template_env, outdir)
+
+            if not self.node.parent:
+                return
+
+            # TODO: What about reusing memoized module that didn't need a
+            # wrapper. Discern this.
+            if self.wrapped:
+                save_file(
+                    f'{self.wrap_module_name}.{self.parent_lang}', outdir,
+                    self.get_wrap(self.parent_lang))

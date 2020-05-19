@@ -2,7 +2,7 @@ from pygears.sim import SimPlugin
 
 from itertools import islice
 
-from pygears import registry, config, safe_bind
+from pygears import reg
 from pygears.core.util import perpetum
 from pygears.sim import sim_log
 from pygears.sim.extens.scvrand import SCVRand
@@ -12,15 +12,15 @@ from pygears.typing.queue import QueueMeta
 
 
 def register_exten():
-    if SVRandSocket not in config['sim/extens']:
-        config['sim/extens'].append(SVRandSocket)
-        if registry('sim/simulator') is not None:
+    if SVRandSocket not in reg['sim/extens']:
+        reg['sim/extens'].append(SVRandSocket)
+        if reg['sim/simulator'] is not None:
             SVRandSocket(top=None)
 
 
 def get_rand(name, cnt=None, rand_func=None):
     if rand_func is None:
-        randomizer = registry('sim/config/randomizer')
+        randomizer = reg['sim/config/randomizer']
         rand_func = perpetum(randomizer.get_rand, name)
 
     if cnt is not None:
@@ -30,7 +30,7 @@ def get_rand(name, cnt=None, rand_func=None):
 
 
 def queue_rand_seq(dtype, name):
-    randomizer = registry('sim/config/randomizer')
+    randomizer = reg['sim/config/randomizer']
 
     while True:
         val = randomizer.get_rand(name)
@@ -41,7 +41,7 @@ def queue_rand_seq(dtype, name):
 
 
 def rand_seq(name, cnt=None):
-    randomizer = registry('sim/config/randomizer')
+    randomizer = reg['sim/config/randomizer']
     dtype = randomizer.get_dtype_by_name(name)
 
     if typeof(dtype, Queue):
@@ -107,12 +107,12 @@ def randomize(
 
     register_exten()
     cons = ConstraintWrap(**locals())
-    registry('sim/svrand/constraints').append(cons)
+    reg['sim/svrand/constraints'].append(cons)
     return rand_seq(name, cnt=cnt)
 
 
 class SVRandPlugin(SimPlugin):
     @classmethod
     def bind(cls):
-        safe_bind('sim/svrand/constraints', [])
-        # safe_bind('sim/svsock/server', None)
+        reg['sim/svrand/constraints'] = []
+        # reg['sim/svsock/server'] = None

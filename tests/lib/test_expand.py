@@ -1,5 +1,5 @@
 from pygears import Intf
-from pygears import registry
+from pygears import reg
 from pygears.typing import Queue, Tuple, Union, Uint
 from pygears.typing.base import param_subs
 from pygears.typing.expand import expand as expand_type
@@ -30,7 +30,7 @@ def test_expand_queue_tuple():
 
 def test_expand_queue_union_str_subs():
     a = param_subs('expand(Queue[Union[1, 2], 6])', {},
-                   registry('gear/type_arith'))
+                   reg['gear/type_arith'])
 
     assert a == Union[Queue[1, 6], Queue[2, 6]]
 

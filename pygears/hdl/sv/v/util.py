@@ -93,7 +93,7 @@ class VGenTypeVisitor(TypingVisitorBase):
         return res
 
     def visit_Array(self, type_, field, **kwds):
-        if type_.data.signed:
+        if getattr(type_.data, 'signed', False):
             merge_t = Int[int(type_.data) * len(type_)]
         else:
             merge_t = Uint[int(type_.data) * len(type_)]

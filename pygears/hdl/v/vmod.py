@@ -2,7 +2,7 @@ import fnmatch
 import functools
 from collections import OrderedDict
 
-from pygears import registry, safe_bind
+from pygears import reg
 from pygears.core.gear import OutSig
 # from .inst import SVGenInstPlugin
 # from pygears.hdl.sv.svparse import parse
@@ -17,7 +17,7 @@ from ..sv.sv_keywords import sv_keywords as keywords
 class VModuleInst(HDLModuleInst):
     def __init__(self, node):
         super().__init__(node, 'v')
-        self.vgen_map = registry('vgen/map')
+        self.vgen_map = reg['vgen/map']
 
     @property
     def inst_name(self):
@@ -33,7 +33,7 @@ class VModuleInst(HDLModuleInst):
     def traced(self):
         self_traced = any(
             fnmatch.fnmatch(self.node.name, p)
-            for p in registry('debug/trace'))
+            for p in reg['debug/trace'])
 
         if self.is_hierarchical:
             children_traced = any(self.vgen_map[child].traced
@@ -82,7 +82,7 @@ class VModuleInst(HDLModuleInst):
     def get_hier_module(self, template_env):
         context = self.module_context
 
-        self.vgen_map = registry('vgen/map')
+        self.vgen_map = reg['vgen/map']
 
         for child in self.node.local_interfaces():
             vgen = self.vgen_map[child]

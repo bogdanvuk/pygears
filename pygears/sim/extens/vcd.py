@@ -1,5 +1,5 @@
 import subprocess
-from pygears import bind, PluginBase, safe_bind, config, find
+from pygears import PluginBase, reg, find
 from pygears.core.port import OutPort
 from pygears.sim import sim_log, timestep, SimPlugin
 from pygears.sim.sim_gear import SimGear
@@ -253,8 +253,8 @@ class VCD(SimExtend):
 
         self.writer = VCDWriter(self.vcd_file, timescale='1 ns', date='today')
 
-        bind('VCDWriter', self.writer)
-        bind('VCD', self)
+        reg['VCDWriter'] = self.writer
+        reg['VCD'] = self
 
         self.clk_var = self.writer.register_var('', 'clk', 'wire', size=1, init=1)
 
@@ -332,6 +332,6 @@ class VCD(SimExtend):
 class SimVCDPlugin(SimPlugin):
     @classmethod
     def bind(cls):
-        safe_bind('sim_extens/vcd/shmidcat', False)
-        safe_bind('sim_extens/vcd/vcd_fifo', False)
-        config['sim/extens'].append(VCD)
+        reg['sim_extens/vcd/shmidcat'] = False
+        reg['sim_extens/vcd/vcd_fifo'] = False
+        reg['sim/extens'].append(VCD)

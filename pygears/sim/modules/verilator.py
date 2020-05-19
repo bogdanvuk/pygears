@@ -1,4 +1,5 @@
 import ctypes
+import shutil
 import atexit
 import os
 import subprocess
@@ -7,17 +8,16 @@ from pygears import Intf
 
 import jinja2
 
-from pygears import bind, registry, config, find
+from pygears import reg, find
 from pygears.sim import sim_log
 from pygears.sim.c_drv import CInputDrv, COutputDrv
 from pygears.sim.modules.cosim_base import CosimBase
-from pygears.hdl import hdlgen
+from pygears.hdl import hdlgen, list_hdl_files
 from pygears.util.fileio import save_file
 from pygears.core.port import InPort, OutPort
 from .cosim_port import InCosimPort, OutCosimPort
 
-signal_spy_connect_t = Template(
-    """
+signal_spy_connect_t = Template("""
 /*verilator tracing_on*/
 ${intf_name}_t ${intf_name}_data;
 logic ${intf_name}_valid;
@@ -29,10 +29,24 @@ assign ${intf_name}_valid = ${conn_name}.valid;
 assign ${intf_name}_ready = ${conn_name}.ready;
 """)
 
-signal_spy_connect_hide_interm_t = Template(
-    """
+signal_spy_connect_hide_interm_t = Template("""
 /*verilator tracing_on*/
 ${intf_name}_t ${intf_name}_data;
+logic ${intf_name}_valid;
+logic ${intf_name}_ready;
+/*verilator tracing_off*/
+
+always_comb
+    if (${conn_name}.valid)
+        ${intf_name}_data = ${conn_name}.data;
+
+assign ${intf_name}_valid = ${conn_name}.valid;
+assign ${intf_name}_ready = ${conn_name}.ready;
+""")
+
+signal_spy_connect_no_struct = Template("""
+/*verilator tracing_on*/
+logic [${width}:0] ${intf_name}_data;
 logic ${intf_name}_valid;
 logic ${intf_name}_ready;
 /*verilator tracing_off*/
@@ -57,16 +71,21 @@ def get_file_struct(top, outdir):
     name = top.name[1:].replace('/', '_')
 
     if outdir is None:
-        outdir = os.path.join(registry('results-dir'), name)
+        outdir = reg['results-dir']
 
-    outdir = os.path.abspath(outdir)
+    outdir = os.path.abspath(os.path.join(outdir, name))
     objdir = os.path.join(outdir, 'obj_dir')
 
     dll_path = os.path.join(objdir, f'pygearslib')
     if os.name == 'nt':
         dll_path += '.exe'
 
-    return {'name': name, 'outdir': outdir, 'objdir': objdir, 'dll_path': dll_path}
+    return {
+        'name': name,
+        'outdir': outdir,
+        'objdir': objdir,
+        'dll_path': dll_path
+    }
 
 
 def make(objdir, top_name):
@@ -74,29 +93,39 @@ def make(objdir, top_name):
     # TODO: Not much of a speedup f'cd {self.objdir}; make -j OPT_FAST="-Os -fno-stack-protector" -f V{self.top_name}.mk > make.log 2>&1')
 
     if ret != 0:
-        raise VerilatorCompileError(
-            f'Verilator compile error: {ret}. '
-            f'Please inspect "{objdir}/make.log"')
+        raise VerilatorCompileError(f'Verilator compile error: {ret}. '
+                                    f'Please inspect "{objdir}/make.log"')
 
 
-def verilate(outdir, lang, top_name, wrap_name, tracing_enabled):
-    include = ' '.join([f'-I{os.path.abspath(p)}' for p in config[f'{lang}gen/include']])
+def create_project_script(outdir, top, lang):
+    hdl_files = list_hdl_files(top, outdir)
+    with open(os.path.join(outdir, 'verilator.prj'), 'w') as f:
+        for fn in hdl_files:
+            f.write(f'{fn}\n')
 
-    include += f' -I{outdir}'
+    # with open(os.path.join(outdir, 'verilator.prj'), 'w') as f:
+    #     for fn in reg['hdlgen/hdlmods'].values():
+    #         f.write(f'{fn}\n')
 
-    files = f'{wrap_name}.{lang}'
+
+def verilate(outdir, lang, top, top_name, tracing_enabled):
+    # include = ' '.join([f'-I{os.path.abspath(p)}' for p in reg[f'{lang}gen/include']])
+
+    # include += f' -I{outdir}'
+
+    # files = f'{wrap_name}.{lang}'
+    # create_project_script(outdir, top, lang)
 
     verilate_cmd = [
         f'cd {outdir};',
         'verilator -cc -CFLAGS -fpic -LDFLAGS -shared --exe',
         '-Wno-fatal',
         # TODO: Not much of a speedup: '-O3 --x-assign fast --x-initial fast --noassert',
-        include,
         '-clk clk',
         f'--top-module {top_name}',
         '--trace --no-trace-params --trace-structs' if tracing_enabled else '',
         '-o pygearslib',
-        files,
+        top_name,
         'sim_main.cpp',
     ]
 
@@ -104,15 +133,15 @@ def verilate(outdir, lang, top_name, wrap_name, tracing_enabled):
         f.write(" ".join(verilate_cmd))
         f.write("\n")
 
-    ret = subprocess.call(f'{" ".join(verilate_cmd)} >> verilate.log 2>&1', shell=True)
+    ret = subprocess.call(f'{" ".join(verilate_cmd)} >> verilate.log 2>&1',
+                          shell=True)
 
     if ret != 0:
-        raise VerilatorCompileError(
-            f'Verilator compile error: {ret}. '
-            f'Please inspect "{outdir}/verilate.log"')
+        raise VerilatorCompileError(f'Verilator compile error: {ret}. '
+                                    f'Please inspect "{outdir}/verilate.log"')
 
 
-def build(top, outdir=None, post_synth=False, lang=None, rebuild=True):
+def build(top, outdir=None, postsynth=False, lang=None, rebuild=True):
     if isinstance(top, str):
         top_name = top
         top = find(top)
@@ -121,7 +150,13 @@ def build(top, outdir=None, post_synth=False, lang=None, rebuild=True):
             raise Exception(f'No gear found on path: "{top_name}"')
 
     if lang is None:
-        lang = config['hdl/lang']
+        lang = reg['hdl/lang']
+
+    if lang != 'v':
+        postsynth = False
+    else:
+        pass
+        # postsynth = True
 
     file_struct = get_file_struct(top, outdir)
 
@@ -130,30 +165,38 @@ def build(top, outdir=None, post_synth=False, lang=None, rebuild=True):
     if not rebuild and os.path.exists(file_struct['dll_path']):
         return
 
-    bind(
-        'svgen/spy_connection_template', signal_spy_connect_hide_interm_t
-        if config['debug/hide_interm_vals'] else signal_spy_connect_t)
+    shutil.rmtree(outdir, ignore_errors=True)
+
+    reg['svgen/spy_connection_template'] = (signal_spy_connect_hide_interm_t
+                                            if reg['debug/hide_interm_vals']
+                                            else signal_spy_connect_t)
 
     synth_src_dir = os.path.join(outdir, 'src')
-    hdlgen(
-        top,
-        outdir=synth_src_dir if post_synth else outdir,
-        wrapper=True,
-        generate=True,
-        lang=lang)
+    hdlgen(top,
+           outdir=synth_src_dir if postsynth else outdir,
+           generate=True,
+           lang=lang,
+           copy_files=True,
+           toplang='v')
 
-    hdlmod = registry(f'{lang}gen/map')[top]
+    hdlmod = reg['hdlgen/map'][top]
 
-    wrap_name = f'wrap_{hdlmod.module_name}'
-    top_name = hdlmod.module_name if post_synth else wrap_name
+    if postsynth:
+        # TODO: change this to the call of the toplevel synth function
+        from pygears.hdl.yosys import synth
+        synth(outdir=outdir,
+              top=top,
+              synthcmd='synth',
+              srcdir=synth_src_dir,
+              synthout=os.path.join(outdir, hdlmod.file_basename))
 
-    tracing_enabled = bool(registry('debug/trace'))
+    tracing_enabled = bool(reg['debug/trace'])
     context = {
         'in_ports': top.in_ports,
         'out_ports': top.out_ports,
-        'top_name': top_name,
+        'top_name': hdlmod.wrap_module_name,
         'tracing': tracing_enabled,
-        'aux_clock': config['sim/aux_clock']
+        'aux_clock': reg['sim/aux_clock']
     }
 
     jenv = jinja2.Environment(trim_blocks=True, lstrip_blocks=True)
@@ -162,22 +205,21 @@ def build(top, outdir=None, post_synth=False, lang=None, rebuild=True):
     c = jenv.get_template('sim_veriwrap.j2').render(context)
     save_file('sim_main.cpp', outdir, c)
 
-    verilate(outdir, lang, top_name, wrap_name, tracing_enabled)
+    verilate(outdir, lang, top, hdlmod.wrap_module_name, tracing_enabled)
 
-    make(file_struct['objdir'], top_name)
+    make(file_struct['objdir'], hdlmod.wrap_module_name)
 
 
 class SimVerilated(CosimBase):
-    def __init__(
-            self,
-            gear,
-            timeout=100,
-            rebuild=True,
-            vcd_fifo=False,
-            shmidcat=False,
-            post_synth=False,
-            outdir=None,
-            lang=None):
+    def __init__(self,
+                 gear,
+                 timeout=100,
+                 rebuild=True,
+                 vcd_fifo=False,
+                 shmidcat=False,
+                 postsynth=False,
+                 outdir=None,
+                 lang=None):
 
         super().__init__(gear, timeout=timeout)
         self.name = gear.name[1:].replace('/', '_')
@@ -185,6 +227,9 @@ class SimVerilated(CosimBase):
         self.rebuild = rebuild
         self.top = gear
         self.lang = lang
+        if self.lang is None:
+            self.lang = reg['hdl/lang']
+
         self.trace_fn = None
         self.vcd_fifo = vcd_fifo
         self.shmidcat = shmidcat
@@ -202,19 +247,20 @@ class SimVerilated(CosimBase):
         self.verilib.back()
 
     def setup(self):
-        file_struct = get_file_struct(self.top, self.outdir)
-
         # TODO: When reusing existing verilated build, add test to check
         # whether verilated module is the same as the current one (Maybe hash check?)
         if self.rebuild:
             sim_log().info(f'Verilating...')
-            build(self.top, file_struct['outdir'], post_synth=False, lang=self.lang)
+            build(self.top, self.outdir, postsynth=False, lang=self.lang)
             sim_log().info(f'Done')
 
-        tracing_enabled = bool(registry('debug/trace'))
+        file_struct = get_file_struct(self.top, self.outdir)
+
+        tracing_enabled = bool(reg['debug/trace'])
         if tracing_enabled:
-            sim_log().info(f"Debug: {registry('debug/trace')}")
-            self.trace_fn = os.path.join(registry("results-dir"), f'{self.name}.vcd')
+            sim_log().info(f"Debug: {reg['debug/trace']}")
+            self.trace_fn = os.path.join(reg["results-dir"],
+                                         f'{self.name}.vcd')
             try:
                 subprocess.call(f"rm -f {self.trace_fn}", shell=True)
             except OSError:
@@ -238,8 +284,9 @@ class SimVerilated(CosimBase):
         atexit.register(self._finish)
 
         if self.shmidcat and tracing_enabled:
-            self.shmid_proc = subprocess.Popen(
-                f'shmidcat {self.trace_fn}', shell=True, stdout=subprocess.PIPE)
+            self.shmid_proc = subprocess.Popen(f'shmidcat {self.trace_fn}',
+                                               shell=True,
+                                               stdout=subprocess.PIPE)
 
             # Wait for shmidcat to actually open the pipe, which is necessary
             # to happen prior to init of the verilator. If shmidcat does not
@@ -253,7 +300,8 @@ class SimVerilated(CosimBase):
 
         if self.shmid_proc:
             self.shmid = self.shmid_proc.stdout.readline().decode().strip()
-            sim_log().info(f'Verilator VCD dump to shared memory at 0x{self.shmid}')
+            sim_log().info(
+                f'Verilator VCD dump to shared memory at 0x{self.shmid}')
 
         self.handlers = {}
         for cp in self.in_cosim_ports:

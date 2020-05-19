@@ -4,42 +4,42 @@
     wire handshake;
     reg din_valid_sel;
 
-    assign handshake = dout_valid && dout_ready;
+    assign handshake = dout.valid && dout.ready;
 
-    always @*
+    always_comb
     begin
 {% for i in intfs[1:-1] %}
-        {{i['name']}}_ready = {{i['name']}}_valid ? 0 : dout_ready;
+        {{i['name']}}.ready = {{i['name']}}.valid ? 0 : dout.ready;
 {% endfor %}
-        if (ctrl_valid) begin
-            case( ctrl_data )
+        if (ctrl.valid) begin
+            case( ctrl.data )
 {% for key, iout in params['_full_mapping'].items() %}
 {% set i = intfs[1:-1][iout] %}
                 {{key}} : begin
-                    {{i['name']}}_ready = {{i['name']}}_valid ? handshake : dout_ready;
+                    {{i['name']}}.ready = {{i['name']}}.valid ? handshake : dout.ready;
                 end
 {% endfor %}
                 default: begin
 {% for i in intfs[1:-1] %}
-                    {{i['name']}}_ready = dout_ready;
+                    {{i['name']}}.ready = dout_ready;
 {% endfor %}
                 end
             endcase
         end
     end
 
-    always @*
+    always_comb
     begin
-        dout_s_data = { {{int(_dout_t.data)}} {1'bx}};
+        dout_s.data = { {{int(_dout_t.data)}} {1'bx}};
         din_valid_sel = 0;
-        if (ctrl_valid) begin
-            case( ctrl_data )
+        if (ctrl.valid) begin
+            case( ctrl.data )
 {% for key, iout in params['_full_mapping'].items() %}
 {% set i = intfs[1:-1][iout] %}
                 {{key}} : begin
-                    din_valid_sel = {{i['name']}}_valid;
+                    din_valid_sel = {{i['name']}}.valid;
   {% if i['width'] > 0 %}
-                    dout_s_data[{{i['width']-1}}:0] = {{i['name']}}_s;
+                    dout_s.data[{{i['width']-1}}:0] = {{i['name']}}_s;
   {% endif %}
                 end
 {% endfor %}
@@ -50,8 +50,8 @@
         end
     end
 
-    assign ctrl_ready = ctrl_valid ? handshake : dout_ready;
-    assign dout_s_ctrl = ctrl_s;
-    assign dout_valid = ctrl_valid && din_valid_sel;
+    assign ctrl.ready = ctrl_valid ? handshake : dout_ready;
+    assign dout_s.ctrl = ctrl_s;
+    assign dout.valid = ctrl.valid && din_valid_sel;
 
 {% endcall %}

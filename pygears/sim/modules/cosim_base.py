@@ -3,7 +3,7 @@ from pygears.sim.sim_gear import SimGear
 from pygears.sim import delta, timestep, sim_log, clk
 from pygears.sim.sim import SimPlugin
 from pygears.conf import Inject, inject
-from pygears import GearDone, config
+from pygears import GearDone, reg
 from .cosim_port import CosimNoData, InCosimPort, OutCosimPort
 
 
@@ -107,4 +107,4 @@ class AuxClock:
 class CosimPlugin(SimPlugin):
     @classmethod
     def bind(cls):
-        config.define('sim/aux_clock', default=[])
+        reg.confdef('sim/aux_clock', default=[])

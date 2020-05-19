@@ -3,7 +3,7 @@ import os
 
 import jinja2
 
-from pygears import registry
+from pygears import reg
 from pygears.typing import Queue, typeof, Tuple, Union, Array, Queue, Integral
 from pygears.hdl.templenv import TemplateEnv
 from pygears.sim.extens.rand_base import RandBase
@@ -163,7 +163,7 @@ class SVRandSocket(RandBase):
         for c in self.constraints:
             c.index = register_intf(SVServerIntf())
 
-        self.conn = registry('sim/svsock/server')
+        self.conn = reg['sim/svsock/server']
         self.send_cmd = self.conn.send_cmd
         self.dtype_recv = self.conn.dtype_recv
 

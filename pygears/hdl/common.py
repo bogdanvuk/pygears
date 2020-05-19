@@ -1,9 +1,10 @@
 import os
 import shutil
-from pygears import registry, find
+from pygears import reg, find
 from pygears.core.hier_node import HierYielderBase
 from pygears.core.gear import Gear
 from pygears.definitions import LIB_VLIB_DIR, LIB_SVLIB_DIR
+from pygears.util.fileio import find_in_dirs
 
 
 class NodeYielder(HierYielderBase):
@@ -14,14 +15,16 @@ class NodeYielder(HierYielderBase):
         yield node
 
 
-def enum_hdl_files(top, outdir, lang, rtl_only=False, wrapper=False):
+def enum_hdl_files(top, outdir, rtl_only=False, wrapper=False):
     if isinstance(top, str):
         top = find(top)
 
-    vgen_map = registry(f'{lang}gen/map')
+    vgen_map = reg[f'hdlgen/map']
+    dirs = {}
+    for lang in ['v', 'sv']:
+        dirs[lang] = reg[f'{lang}gen/include']
 
-    if lang == 'sv':
-        yield os.path.join(LIB_SVLIB_DIR, 'dti.sv')
+    dti_yielded = False
 
     for node in NodeYielder().visit(top):
         if node not in vgen_map:
@@ -29,14 +32,21 @@ def enum_hdl_files(top, outdir, lang, rtl_only=False, wrapper=False):
 
         vinst = vgen_map[node]
 
-        if ((node is top) and wrapper and (lang == 'sv') and not rtl_only):
+        if vinst.lang == 'sv' and not dti_yielded:
+            dti_yielded = True
+            yield os.path.join(LIB_SVLIB_DIR, 'dti.sv')
+
+        if ((node is top) and wrapper and not rtl_only):
             yield os.path.join(outdir, f'wrap_{vinst.file_basename}')
 
-        if (isinstance(node, Gear) and (node in registry(f'{lang}gen/map'))):
-
-            modinst = registry(f'{lang}gen/map')[node]
+        if (isinstance(node, Gear) and (node in reg['hdlgen/map'])):
+            modinst = reg['hdlgen/map'][node]
             for f in modinst.files:
-                yield os.path.join(outdir, f)
+                path = find_in_dirs(f, dirs[modinst.lang])
+                if path is not None:
+                    yield path
+                else:
+                    yield os.path.join(outdir, f)
 
         if hasattr(vinst, 'file_basename'):
             file_name = getattr(vinst, 'impl_path', None)
@@ -47,24 +57,41 @@ def enum_hdl_files(top, outdir, lang, rtl_only=False, wrapper=False):
             #         yield os.path.join(outdir, f)
 
         elif vinst.is_broadcast:
-            if lang == 'v':
+            if vinst.lang == 'v':
                 yield os.path.join(LIB_VLIB_DIR, 'bc.v')
-            elif lang == 'sv':
+            elif vinst.lang == 'sv':
                 yield os.path.join(LIB_SVLIB_DIR, 'bc.sv')
 
 
-def list_hdl_files(top, outdir, lang, rtl_only=False, wrapper=False):
-    seen = set()
-    seen_add = seen.add
-    return [
-        x for x in enum_hdl_files(
-            top, outdir, lang, rtl_only=rtl_only, wrapper=wrapper)
-        if not (x in seen or seen_add(x))
-    ]
+def list_hdl_files(top, outdir, rtl_only=False, wrapper=False):
+    if isinstance(top, str):
+        top = find(top)
 
+    orig_fns = set()
+    hdlmods = {}
+    for fn in enum_hdl_files(top, outdir, rtl_only=rtl_only, wrapper=wrapper):
+        modname, lang = os.path.splitext(os.path.basename(fn))
+        hdlmods[(modname, lang[1:])] = fn
 
-def copy_files(files):
-    outdir = registry('svgen/conf')['outdir']
+    hdltop = reg['hdlgen/map'][top]
+    disambig = reg['hdlgen/disambig']
+    fns = []
+    for (modname, lang), fn in hdlmods.items():
+        if lang == hdltop.lang or (modname, hdltop.lang) not in hdlmods:
+            fns.append(fn)
+            continue
 
-    for fn in files:
-        shutil.copy(fn, outdir)
+        fn_dis = os.path.join(outdir, f'{modname}_{lang}.{lang}')
+        disambig[(modname, lang)] = (fn, fn_dis)
+
+        fns.append(fn_dis)
+
+    return fns
+
+    # seen = set()
+    # seen_add = seen.add
+    # return [
+    #     x for x in enum_hdl_files(
+    #         top, outdir, rtl_only=rtl_only, wrapper=wrapper)
+    #     if not (x in seen or seen_add(x))
+    # ]

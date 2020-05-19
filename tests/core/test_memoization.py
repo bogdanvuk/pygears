@@ -1,13 +1,12 @@
-from pygears import gear, registry, find, config
-from pygears.lib import const
-from pygears.typing import Uint, Int
-from pygears.lib import directed, drv, add
+from pygears import gear, find, reg
+from pygears.typing import Uint
+from pygears.lib import directed, drv
 from pygears.sim import sim, cosim
 from pygears.core.hier_node import HierYielderBase
 
 
 # def test_simple_out_only():
-#     config['gear/memoize'] = True
+#     reg['gear/memoize'] = True
 #     directed(drv(t=Uint[4], seq=[7]), drv(t=Uint[4], seq=[7]), f=add, ref=[14])
 #     sim()
 
@@ -25,7 +24,7 @@ def check_memoized(*paths):
 
 
 def test_hier_level1():
-    config['gear/memoize'] = True
+    reg['gear/memoize'] = True
 
     @gear
     def test(a, b):
@@ -49,7 +48,7 @@ def test_hier_level1():
     sim()
 
 def test_hier_level2(lang):
-    config['gear/memoize'] = True
+    reg['gear/memoize'] = True
     @gear
     def test(a, b):
         return a + b

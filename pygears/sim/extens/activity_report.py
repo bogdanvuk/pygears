@@ -3,7 +3,7 @@ import re
 
 from vcd.gtkw import GTKWSave
 
-from pygears import find, registry
+from pygears import find, reg
 from pygears.core.port import OutPort as GearOutPort
 from pygears.rtl.port import InPort, OutPort
 from pygears.sim import sim_log
@@ -83,11 +83,11 @@ def find_target_cons(intf):
 
 def find_target_intf(gear_name, intf_name):
     gear_mod = find(gear_name)
-    rtl_node = registry('rtl/gear_node_map')[gear_mod].node
+    rtl_node = reg['rtl/gear_node_map'][gear_mod].node
 
     intf_name = intf_name[1:]  # spy name always starts with _
     for i in rtl_node.local_interfaces():
-        if registry('svgen/map')[i].basename == intf_name:
+        if reg['hdlgen/map'][i].basename == intf_name:
             return i
 
 
@@ -115,7 +115,7 @@ class ActivityReporter(ActivityChecker):
     def after_run(self, sim):
         if self.draw_graph:
             g = graph(
-                outdir=registry('results-dir'),
+                outdir=reg['results-dir'],
                 node_filter=lambda g: not g.child)
         else:
             g = None
@@ -131,11 +131,11 @@ class ActivityReporter(ActivityChecker):
         self.sim_gears_activity(g, sim, blocking_gears)
 
         if self.draw_graph:
-            outdir = registry('results-dir')
+            outdir = reg['results-dir']
             g.graph.write_svg(os.path.join(outdir, 'proba.svg'))
 
         try:
-            vcd_writer = registry('VCD')
+            vcd_writer = reg['VCD']
         except KeyError:
             return
 
@@ -174,7 +174,7 @@ class ActivityReporter(ActivityChecker):
         super().after_run(sim)
 
     def cosim_activity(self, g, top_name):
-        outdir = registry('results-dir')
+        outdir = reg['results-dir']
         activity_path = os.path.join(outdir, 'activity.log')
 
         if not os.path.isfile(activity_path):

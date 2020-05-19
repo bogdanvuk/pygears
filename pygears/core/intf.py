@@ -2,7 +2,7 @@ import asyncio
 
 from .graph import get_consumer_tree, get_producer_queue
 from pygears import GearDone
-from pygears.conf import PluginBase, registry, safe_bind, MultiAlternativeError
+from pygears.conf import PluginBase, reg, MultiAlternativeError
 from pygears.core.port import InPort, OutPort
 from pygears.core.partial import Partial
 from pygears.core.sim_event import SimEvent
@@ -17,10 +17,10 @@ gear_reg = {}
 
 def operator_func_from_namespace(cls, name):
     def wrapper(self, *args, **kwargs):
-        if name not in registry('gear/intf_oper'):
+        if name not in reg['gear/intf_oper']:
             raise Exception(f'Operator {name} is not supported.')
 
-        operator_func = registry(f'gear/intf_oper/{name}')
+        operator_func = reg[f'gear/intf_oper/{name}']
         return operator_func(self, *args, **kwargs)
 
     return wrapper
@@ -118,7 +118,7 @@ class Intf:
                            (str, TypingMeta)) or (other is int) or (other is float)):
             return other.__ror__(self)
 
-        operator_func = registry('gear/intf_oper/__or__')
+        operator_func = reg['gear/intf_oper/__or__']
         return operator_func(self, other)
 
     def source(self, port):
@@ -165,7 +165,7 @@ class Intf:
             return self._out_queues
 
         self._out_queues = [
-            asyncio.Queue(maxsize=1, loop=registry('sim/simulator'))
+            asyncio.Queue(maxsize=1, loop=reg['sim/simulator'])
             for _ in self.end_consumers
         ]
 
@@ -190,7 +190,7 @@ class Intf:
                 # TODO: when value cannot be represented, the error report can be terse
                 raise TypeMatchError(
                     f'{str(err)}\n, when converting output data "{repr(val)}"'
-                    f' from the "{registry("gear/current_module").name}"'
+                    f' from the "{reg["gear/current_module"].name}"'
                     f' module to the type {repr(self.dtype)}')
 
         if put_event:
@@ -324,6 +324,6 @@ class Intf:
 class IntfOperPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        safe_bind('gear/intf_oper', {})
+        reg['gear/intf_oper'] = {}
         global gear_reg
-        gear_reg = registry('gear')
+        gear_reg = reg['gear']

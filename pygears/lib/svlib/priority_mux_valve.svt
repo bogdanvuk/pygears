@@ -14,11 +14,11 @@
       {{i['name']}}.ready = dout.ready;
 {% endfor %}
 
-      if(din0.valid && (!flag_reg || flag_reg[0])) begin
+      if(din0.valid && (!(|flag_reg) || flag_reg[0])) begin
          dout.valid = din0.valid;
          flag[0] = 1;
 {% for i in intfs[1:]|isinput %}
-      end else if ({{i['name']}}.valid && (!flag_reg || flag_reg[{{loop.index}}])) begin
+      end else if ({{i['name']}}.valid && (!(|flag_reg) || flag_reg[{{loop.index}}])) begin
          dout_s.data = {{i['name']}}.data;
          dout_s.ctrl = {{loop.index}};
          dout.valid = {{i['name']}}.valid;

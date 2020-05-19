@@ -1,6 +1,5 @@
 from ..ir_utils import Scope, HDLVisitor, res_true, add_to_list, ir, res_false, IrExprRewriter
 from pygears.typing import cast
-from pygears import registry
 
 
 class Inliner(IrExprRewriter):
@@ -150,8 +149,8 @@ class InlineValues(HDLVisitor):
 
                 stmt.expr.args = [obj] + stmt.expr.args
 
-            if func in registry('hls/ir_builtins'):
-                res = registry('hls/ir_builtins')[func](*stmt.expr.args, **stmt.expr.kwds)
+            if func in reg['hls/ir_builtins']:
+                res = reg['hls/ir_builtins'][func](*stmt.expr.args, **stmt.expr.kwds)
                 if isinstance(res, ir.Statement):
                     return res
                 else:

@@ -1,6 +1,6 @@
 import inspect
 
-from pygears import registry, safe_bind, Intf, bind, module, find
+from pygears import reg, Intf, module, find
 from pygears.sim.sim_gear import SimGear, is_simgear_func
 from pygears.sim.sim import SimPlugin
 from pygears.core.gear import GearPlugin
@@ -24,7 +24,7 @@ def get_existing_child(func, meta_kwds, *args, **kwds):
 
 
 def sim_compile_resolver(func, meta_kwds, *args, **kwds):
-    ctx = registry('gear/exec_context')
+    ctx = reg['gear/exec_context']
     if ctx == 'sim':
         outputs = get_existing_child(func, meta_kwds, *args, **kwds)
         if outputs is not None:
@@ -33,7 +33,7 @@ def sim_compile_resolver(func, meta_kwds, *args, **kwds):
 
             return outputs
 
-        safe_bind('gear/exec_context', 'compile')
+        reg['gear/exec_context'] = 'compile'
 
         local_in = []
         for a in args:
@@ -45,7 +45,7 @@ def sim_compile_resolver(func, meta_kwds, *args, **kwds):
                 local_in.append(Intf(get_literal_type(a)))
                 local_in[-1].producer = HDLProducer()
 
-        safe_bind('gear/exec_context', 'sim')
+        reg['gear/exec_context'] = 'sim'
 
         outputs = gear_base_resolver(func, meta_kwds, *local_in, **kwds)
 
@@ -69,13 +69,13 @@ def sim_compile_resolver(func, meta_kwds, *args, **kwds):
             if isinstance(a, Intf):
                 continue
 
-            intf._in_queue = asyncio.Queue(maxsize=1, loop=registry('sim/simulator'))
+            intf._in_queue = asyncio.Queue(maxsize=1, loop=reg['sim/simulator'])
             intf.put_nb(a)
 
-        simulator = registry('sim/simulator')
-        cur_sim = registry('gear/current_sim')
+        simulator = reg['sim/simulator']
+        cur_sim = reg['gear/current_sim']
         sim_gear = SimGear(gear_inst)
-        sim_map = registry('sim/map')
+        sim_map = reg['sim/map']
         sim_map[gear_inst] = sim_gear
         simulator.insert_gears([gear_inst], simulator.cur_task_id)
         simulator.forward_ready.add(sim_gear)
@@ -95,8 +95,8 @@ def sim_compile_resolver(func, meta_kwds, *args, **kwds):
 
 class SimInstVisitor(HierVisitorBase):
     def __init__(self):
-        self.namespace = registry('sim/module_namespace')
-        self.sim_map = registry('sim/map')
+        self.namespace = reg['sim/module_namespace']
+        self.sim_map = reg['sim/map']
 
     def Gear(self, module):
         if module.parent is None:
@@ -131,12 +131,12 @@ def sim_inst(top=None):
 class SimInstPlugin(SimPlugin, GearPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['sim']['flow'].append(sim_inst)
-        safe_bind('sim/module_namespace', {})
-        safe_bind('sim/map', {})
-        safe_bind('gear/params/extra/sim_cls', None)
-        bind('gear/gear_dflt_resolver', sim_compile_resolver)
+        reg['sim/flow'].append(sim_inst)
+        reg['sim/module_namespace'] = {}
+        reg['sim/map'] = {}
+        reg['gear/params/extra/sim_cls'] = None
+        reg['gear/gear_dflt_resolver'] = sim_compile_resolver
 
     @classmethod
     def reset(cls):
-        cls.bind_val('sim/map', {})
+        reg['sim/map'] = {}

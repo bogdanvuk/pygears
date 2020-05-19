@@ -7,7 +7,7 @@ from functools import singledispatch
 from dataclasses import dataclass
 from .. import ir
 
-from pygears import config, Intf
+from pygears import reg, Intf
 
 from .utils import add_to_list, get_function_source, get_function_ast
 
@@ -107,7 +107,7 @@ class GearContext(Context):
         super().__init__()
         self.gear = gear
         self.functions: typing.Mapping[Function, FuncContext] = {}
-        self.local_namespace = get_function_context_dict(self.gear.func)
+        self.local_namespace = get_function_context_dict(self.gear.func).copy()
 
         paramspec = inspect.getfullargspec(self.gear.func)
 
@@ -185,7 +185,7 @@ class FuncContext(Context):
         func = funcref.func
 
         # self.name = funcref.name
-        self.local_namespace = get_function_context_dict(func)
+        self.local_namespace = get_function_context_dict(func).copy()
 
         paramspec = inspect.getfullargspec(funcref.func)
         args = dict(zip(paramspec.args, args))
@@ -254,7 +254,7 @@ def reraise(tp, value, tb=None):
 def node_visitor(ast_type):
     def wrapper(f):
         def func_wrapper(node, ctx):
-            if config['trace/level'] == 0:
+            if reg['trace/level'] == 0:
                 return f(node, ctx)
 
             try:

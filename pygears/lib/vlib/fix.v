@@ -5,22 +5,24 @@ module fix
     parameter VAL = 0
     )
    (
-    input                 clk,
-    input                 rst,
+    input                  clk,
+    input                  rst,
 
-    output wire           din_ready,
-    input wire            din_valid,
-    input wire [DIN-1:0]  din_data,
+    output wire            din_ready,
+    input wire             din_valid,
+    input wire [DIN-1:0]   din_data,
 
-    input wire            dout_ready,
-    output wire           dout_valid,
-    output wire [DIN-1:0] dout_data
+    input wire             dout_ready,
+    output wire            dout_valid,
+    output wire [TOUT-1:0] dout_data
     );
 
-   assign din.ready = dout.ready;
-   assign dout.valid = din.valid;
+   assign din_ready = dout_ready;
+   assign dout_valid = din_valid;
 
    if (TOUT > 0)
-     assign dout.data = TOUT'(VAL);
+     assign dout_data = VAL;
+   else
+     assign dout_data = 0;
 
 endmodule

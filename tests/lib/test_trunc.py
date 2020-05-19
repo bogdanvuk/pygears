@@ -33,6 +33,9 @@ def test_fixp():
     assert call(trunc, val, t=q5_1)[0] == -3.0
     assert call(trunc, val, t=q1_5)[0] == -0.75
 
+    val = Fixp[3, 5](0.75)
+    assert call(trunc, val, t=Fixp[0, 2])[0] == 0.25
+
 
 def test_uint():
     assert call(trunc, Uint[8](0xaa), t=Uint[7])[0] == 0x2a

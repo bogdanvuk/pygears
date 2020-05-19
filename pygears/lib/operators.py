@@ -1,5 +1,4 @@
-from pygears import alternative, gear, module
-from pygears.conf import safe_bind
+from pygears import alternative, gear, module, reg
 from pygears.core.intf import IntfOperPlugin
 from pygears.typing import Any, Bool, Integer, Integral, Number, Tuple
 from pygears.typing import div as typing_div, is_type, Uint, typeof
@@ -11,6 +10,8 @@ from pygears.hdl import flow_visitor
 from pygears.hdl.sv import SVGenPlugin
 from pygears.hdl.v import VGenPlugin
 
+# TODO: Think about operand promoting (casting). What if a: Int[32] and someone
+# writes a == 0? Which type should the 0 be?
 
 @datagear
 def add(din: Tuple[{'a': Number, 'b': Number}]) -> b'din[0] + din[1]':
@@ -140,25 +141,25 @@ def shr_or_code(x, y):
 class AddIntfOperPlugin(IntfOperPlugin):
     @classmethod
     def bind(cls):
-        safe_bind('gear/intf_oper/__add__', add)
-        safe_bind('gear/intf_oper/__and__', and_)
-        safe_bind('gear/intf_oper/__floordiv__', fdiv)
-        safe_bind('gear/intf_oper/__truediv__', or_)
-        safe_bind('gear/intf_oper/__eq__', eq)
-        safe_bind('gear/intf_oper/__ge__', ge)
-        safe_bind('gear/intf_oper/__gt__', gt)
-        safe_bind('gear/intf_oper/__invert__', invert)
-        safe_bind('gear/intf_oper/__le__', le)
-        safe_bind('gear/intf_oper/__lt__', lt)
-        safe_bind('gear/intf_oper/__lshift__', lambda x, y: shl(x, shamt=y))
-        safe_bind('gear/intf_oper/__matmul__', cat)
-        safe_bind('gear/intf_oper/__mod__', mod)
-        safe_bind('gear/intf_oper/__mul__', mul)
-        safe_bind('gear/intf_oper/__ne__', ne)
-        safe_bind('gear/intf_oper/__neg__', neg)
-        safe_bind('gear/intf_oper/__rshift__', shr_or_code)
-        safe_bind('gear/intf_oper/__sub__', sub)
-        safe_bind('gear/intf_oper/__xor__', xor)
+        reg['gear/intf_oper/__add__'] = add
+        reg['gear/intf_oper/__and__'] = and_
+        reg['gear/intf_oper/__floordiv__'] = fdiv
+        reg['gear/intf_oper/__truediv__'] = or_
+        reg['gear/intf_oper/__eq__'] = eq
+        reg['gear/intf_oper/__ge__'] = ge
+        reg['gear/intf_oper/__gt__'] = gt
+        reg['gear/intf_oper/__invert__'] = invert
+        reg['gear/intf_oper/__le__'] = le
+        reg['gear/intf_oper/__lt__'] = lt
+        reg['gear/intf_oper/__lshift__'] = lambda x, y: shl(x, shamt=y)
+        reg['gear/intf_oper/__matmul__'] = cat
+        reg['gear/intf_oper/__mod__'] = mod
+        reg['gear/intf_oper/__mul__'] = mul
+        reg['gear/intf_oper/__ne__'] = ne
+        reg['gear/intf_oper/__neg__'] = neg
+        reg['gear/intf_oper/__rshift__'] = shr_or_code
+        reg['gear/intf_oper/__sub__'] = sub
+        reg['gear/intf_oper/__xor__'] = xor
 
 
 @flow_visitor
@@ -174,5 +175,5 @@ class RemoveRecode(HDLGearHierVisitor):
 class HDLCodePlugin(VGenPlugin, SVGenPlugin):
     @classmethod
     def bind(cls):
-        cls.registry['vgen']['flow'].insert(0, RemoveRecode)
-        cls.registry['svgen']['flow'].insert(0, RemoveRecode)
+        reg['vgen/flow'].insert(0, RemoveRecode)
+        reg['svgen/flow'].insert(0, RemoveRecode)

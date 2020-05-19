@@ -6,7 +6,7 @@ from traceback import extract_stack, extract_tb
 from pygears.definitions import ROOT_DIR
 
 from .pdb_patch import patch_pdb, unpatch_pdb
-from .registry import PluginBase, config, registry, safe_bind
+from .registry import PluginBase, reg
 
 
 class TraceLevel(IntEnum):
@@ -22,12 +22,12 @@ def set_trace_level(var, val):
 
 
 def parse_trace(s):
-    if registry('trace/level') == TraceLevel.debug:
+    if reg['trace/level'] == TraceLevel.debug:
         return s
     else:
         trace_fn = os.path.abspath(s.filename)
         is_internal = any(
-            trace_fn.startswith(d) for d in config['trace/ignore'])
+            trace_fn.startswith(d) for d in reg['trace/ignore'])
 
         is_decorator_gen = '<decorator-gen' in trace_fn
 
@@ -54,13 +54,13 @@ def enum_stacktrace():
 class TraceFormatPlugin(PluginBase):
     @classmethod
     def bind(cls):
-        safe_bind('trace/hooks', [])
+        reg['trace/hooks'] = []
 
-        config.define('trace/level',
+        reg.confdef('trace/level',
                       setter=set_trace_level,
                       default=TraceLevel.debug)
 
-        config.define('trace/ignore',
+        reg.confdef('trace/ignore',
                       default=[
                           os.path.join(ROOT_DIR, d)
                           for d in ['core', 'conf', 'sim', 'hls', 'hdl']

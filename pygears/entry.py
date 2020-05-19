@@ -4,7 +4,7 @@ import inspect
 import runpy
 import argparse
 
-from pygears import PluginBase, __version__, bind
+from pygears import PluginBase, __version__, reg
 from pygears.conf import inject, Inject
 from pygears.conf.custom_settings import load_rc
 
@@ -46,7 +46,7 @@ def cmd_register(
         tree = tree['cmds'][p]
 
     name = path[-1]
-    cmd_config = tree['cmds'][name] = {}
+    cmd_config = tree['cmds'].subreg(name)
 
     parents = []
     if derived:
@@ -67,7 +67,7 @@ def cmd_register(
 
     cmd_config['baseparser'] = argparse.ArgumentParser(add_help=False)
 
-    cmd_config['cmds'] = {}
+    cmd_config.subreg('cmds')
     cmd_config['entry'] = cmd_entry
 
     return cmd_config
@@ -106,4 +106,5 @@ class EntryPlugin(PluginBase):
 
         subparsers = parser.add_subparsers(title='subcommands', help='subcommand help', dest='command')
 
-        bind('entry', {'parser': parser, 'subparsers': subparsers, 'cmds': {}})
+        reg.subreg('entry', {'parser': parser, 'subparsers': subparsers})
+        reg['entry'].subreg('cmds')

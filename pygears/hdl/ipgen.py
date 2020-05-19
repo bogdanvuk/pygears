@@ -1,4 +1,4 @@
-from pygears import registry
+from pygears import reg
 from pygears.entry import EntryPlugin, cmd_register
 
 
@@ -12,7 +12,7 @@ def ipgen(
     generate=True,
     **kwds):
 
-    backends = registry('entry/cmds/ipgen/cmds')
+    backends = reg['entry/cmds/ipgen/cmds']
     if tool not in backends:
         raise Exception(f'Unknown backend synth tool "{tool}".')
 

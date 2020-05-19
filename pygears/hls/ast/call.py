@@ -5,7 +5,7 @@ from functools import partial
 from . import Context, FuncContext, ir, node_visitor, visit_ast
 from .inline import form_gear_args, call_gear, parse_func_call
 from .cast import resolve_cast_func
-from pygears import registry
+from pygears import reg
 
 from pygears.core.partial import Partial, MultiAlternativeError
 
@@ -181,9 +181,9 @@ def resolve_func(func, args, kwds, ctx):
     if func in compile_time_builtins and const_func_args(args, kwds):
         return resolve_compile_time(func, args, kwds)
 
-    if func in registry('hls/ir_builtins'):
+    if func in reg['hls/ir_builtins']:
         try:
-            return registry('hls/ir_builtins')[func](*args, **kwds)
+            return reg['hls/ir_builtins'][func](*args, **kwds)
         except TypeError as e:
             raise SyntaxError(str(e).replace('<lambda>()', repr(func)))
 

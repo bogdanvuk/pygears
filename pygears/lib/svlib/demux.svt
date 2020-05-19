@@ -51,11 +51,12 @@
                 end
 {% endfor %}
                 default: begin
-{% for i in (intfs|isoutput) %}
-                    {{i['name']}}.valid = 1'bx;
-{% endfor %}
 {% if len(_din_t.types) > mapped_dout_num %}
                     {{output_intfs[-1]['name']}}.valid = 1;
+{% else %}
+  {% for i in (intfs|isoutput) %}
+                    {{i['name']}}.valid = 1'bx;
+  {% endfor %}
 {% endif %}
                 end
             endcase

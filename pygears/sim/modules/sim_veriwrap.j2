@@ -15,6 +15,20 @@ vluint64_t main_time = 0;
 VerilatedVcdC* tfp = NULL;
 {% endif %}
 
+{% if tracing %}
+vluint64_t prev_dump_time = -1;
+
+void dump(vluint64_t t) {
+    if (t == prev_dump_time) {
+        return;
+    }
+
+    if (tfp) tfp->dump (t);
+
+    prev_dump_time = t;
+}
+{% endif %}
+
 void forward(void) {
 #ifdef DEBUG
     printf("---- forward ----\n");
@@ -36,7 +50,7 @@ void cycle(void) {
     top->eval();
 
 {% if tracing %}
-    if (tfp) tfp->dump (main_time);
+  tfp->dump (main_time);
 {% endif %}
     {# if (main_time > 5) { #}
         main_time+=5;
@@ -44,12 +58,12 @@ void cycle(void) {
         top->eval();
     {# } #}
 {% if tracing %}
-    if (tfp) tfp->dump (main_time);
+    dump(main_time);
 {% endif %}
     main_time+=5;
 {% if tracing %}
     if (tfp) {
-      tfp->dump (main_time);
+      {# dump(main_time); #}
       tfp->flush();
     }
 {% endif %}
@@ -105,12 +119,12 @@ unsigned long init(const char* trace_fn) {
 {% endif %}
     top->eval();
 
-{% if tracing %}
-    if (tfp) {
-        tfp->dump(0);
-        tfp->flush();
-    }
-{%- endif %}
+{# {% if tracing %} #}
+{#     if (tfp) { #}
+{#         tfp->dump(0); #}
+{#         tfp->flush(); #}
+{#     } #}
+{# {%- endif %} #}
 
 {% if aux_clock %}
     top->{{aux_clock[0].name}} = 0;

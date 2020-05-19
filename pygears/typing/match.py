@@ -1,4 +1,4 @@
-from pygears.conf import registry
+from pygears.conf import reg
 from pygears.typing.base import Any, GenericMeta, type_repr, typeof
 
 
@@ -28,7 +28,7 @@ def _get_match_conds_rec(t, pat, matches):
                     f"and {type_repr(matches[pat])}")
         else:
             try:
-                res = eval(pat, registry('gear/type_arith'), matches)
+                res = eval(pat, reg['gear/type_arith'], matches)
                 if repr(t) != repr(res):
                     raise TypeMatchError(
                         f"{type_repr(t)} cannot be matched to {type_repr(res)}")
@@ -37,7 +37,8 @@ def _get_match_conds_rec(t, pat, matches):
 
         return t
 
-    if not (isinstance(t, GenericMeta) and isinstance(pat, GenericMeta) and typeof(t.base, pat.base)):
+    if not (isinstance(t, GenericMeta) and isinstance(pat, GenericMeta)
+            and typeof(t.base, pat.base)):
         raise TypeMatchError(
             "{} cannot be matched to {}".format(type_repr(t), type_repr(pat)))
 

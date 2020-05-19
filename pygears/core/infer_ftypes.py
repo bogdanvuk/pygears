@@ -1,6 +1,6 @@
 import collections
 
-from pygears.conf import registry
+from pygears.conf import reg
 from pygears.typing.base import GenericMeta, param_subs, is_type
 
 from pygears.typing import TypeMatchError, get_match_conds
@@ -65,7 +65,7 @@ def infer_ftypes(params, args, namespace={}):
 
     # Add all registered objects (types and transformations) to the namespace
     namespace = dict(namespace)
-    namespace.update(registry('gear/type_arith'))
+    namespace.update(reg['gear/type_arith'])
 
     def is_postponed(name, val):
         if isinstance(val, bytes):

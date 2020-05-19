@@ -1,13 +1,8 @@
 import itertools
-import os
 
-from pygears import config
+from pygears import reg
 from pygears.lib.sieve import sieve
-from pygears.hdl.sv import SVGenPlugin
-# from pygears.hdl.sv.svmod import SVModuleInst
-# from pygears.hdl.modinst import get_port_config
 from functools import partial
-from pygears.core.gear_inst import GearInstPlugin
 from pygears.hdl.util import HDLGearHierVisitor, is_gear_instance, flow_visitor
 
 
@@ -51,41 +46,6 @@ def get_sieve_stages(node):
     return stages
 
 
-# class SVGenSieve(SVModuleInst):
-#     @property
-#     def is_generated(self):
-#         return not self.memoized or getattr(self.node, 'pre_sieves', [])
-
-#     @property
-#     def port_configs(self):
-#         if getattr(self.node, 'pre_sieves', []):
-#             node = getattr(self.node, 'pre_sieves', [])[0]
-#         else:
-#             node = self.node
-
-#         for p in node.in_ports:
-#             yield get_port_config('consumer', type_=p.dtype, name=p.basename)
-
-#         for p in node.out_ports:
-#             yield get_port_config('producer', type_=p.dtype, name=p.basename)
-
-#     @property
-#     def template_path(self):
-#         return os.path.join(os.path.dirname(__file__), 'sieve.j2')
-
-#     def get_module(self, template_env):
-#         if self.memoized and not getattr(self.node, 'pre_sieves', []):
-#             return None
-
-#         context = {
-#             'stages': get_sieve_stages(self.node),
-#             'module_name': self.module_name,
-#             'intfs': list(self.port_configs)
-#         }
-
-#         return template_env.render_local(__file__, "sieve.j2", context)
-
-
 @flow_visitor
 class RemoveEqualReprSieveVisitor(HDLGearHierVisitor):
     def sieve(self, node):
@@ -103,7 +63,7 @@ class CollapseSievesVisitor(HDLGearHierVisitor):
             node.pre_sieves = []
             node.params['stages'] = get_sieve_stages(node)
 
-        if config['gear/memoize']:
+        if reg['gear/memoize']:
             return
 
         sieve_cons = [
@@ -140,9 +100,3 @@ class CollapseSievesVisitor(HDLGearHierVisitor):
                 # SVGen tree
                 node.remove()
                 iout.remove()
-
-
-# class RTLSievePlugin(SVGenPlugin, RTLPlugin, GearInstPlugin):
-#     @classmethod
-#     def bind(cls):
-#         cls.registry['rtl']['flow'].append(CollapseSievesVisitor)

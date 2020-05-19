@@ -50,6 +50,6 @@ def test_shift_larger():
     Intf(Uint[8]) >> 9
 
 
-@synth_check({'logic luts': 0, 'ffs': 0}, tool='yosys', freduce=True)
+@synth_check({'logic luts': 1, 'ffs': 0}, tool='yosys', freduce=True)
 def test_shr_synth():
     Intf(Uint[8]) >> 4

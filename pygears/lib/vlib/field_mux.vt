@@ -6,26 +6,26 @@
 
     always @*
     begin
-        case( din_s_ctrl )
+        case( din_s.ctrl )
 
 {% for key, iout in params['_full_mapping'].items() %}
 {% set i = _din_t['data'][key] %}
             {{key}} : begin
 
   {% if typeof(_din_t['data'], Tuple) %}
-                dout_s_data[{{int(i) - 1}}:0] = din_s_data_{{_din_t["data"].fields[key]}};
+                dout_s.data[{{int(i) - 1}}:0] = din_s.data.{{_din_t["data"].fields[key]}};
   {% else %}
-                dout_s_data[{{int(i) - 1}}:0] = din_s_data[{{key}}];
+                dout_s.data[{{int(i) - 1}}:0] = din_s.data[{{key}}];
   {% endif %}
             end
 {% endfor %}
             default: begin
-                dout_s_data = { {{int(_dout_t.data)}} {1'bx}};
+                dout_s.data = { {{int(_dout_t.data)}} {1'bx}};
             end
         endcase
     end
 
-    assign dout_s_ctrl = din_s_ctrl;
+    assign dout_s.ctrl = din_s.ctrl;
 
 {% endcall %}
 

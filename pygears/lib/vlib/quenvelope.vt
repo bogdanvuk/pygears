@@ -1,41 +1,33 @@
 {%- import 'snippet.j2' as snippet -%}
 
-{% set Uint = import_from('pygears.typing', 'Uint') %}
-{% set Tuple = import_from('pygears.typing', 'Tuple') %}
+{% set subenv_w = _din_t.lvl - params['lvl'] %}
 
-{% set fields = {
-            'data': _din_t[0],
-            'subenvelope': Uint[_din_t.lvl - params['lvl']],
-            'out_eot': Uint[params['lvl']]
-        }
-%}
-
-{% do intfs[0].update({'local_type': Tuple[fields]}) %}
+{% set out_eot = "din_s.eot[{}:{}]".format(_din_t.lvl-1, subenv_w) %}
 
 {% call snippet.module_with_intf_structs(module_name, intfs, intfs, comment) %}
 
   {% set input_intf_names = intfs|isinput|keymap("name") %}
 
   {% if _din_t.lvl <= params['lvl'] %}
-    assign din_ready = dout_ready;
-    assign dout_valid = din_valid;
-    assign dout_s_eot = din_s_out_eot;
+    assign din.ready = dout.ready;
+    assign dout.valid = din.valid;
+    assign dout_s.eot = {{out_eot}};
   {% else %}
-    wire  handshake;
-    reg  handshake_reg;
-    reg  valid_reg;
-    wire  subelem_done;
+    logic  handshake;
+    logic  handshake_reg;
+    logic  valid_reg;
+    logic  subelem_done;
 
     {% if params['lvl'] > 0 %}
-    reg [{{params['lvl']-1}}:0] eots_reg;
-    assign dout_s_eot = valid_reg ? eots_reg : din_s_out_eot;
+    logic [{{params['lvl']-1}}:0] eots_reg;
+    assign dout_s.eot = valid_reg ? eots_reg : {{out_eot}};
     {% endif %}
 
-    assign subelem_done = {{'&din_s_subenvelope' if _din_t.lvl > params['lvl'] else 1}} && din_valid;
-    assign din_ready = (dout_ready || handshake_reg || (!subelem_done));
-    assign dout_valid = (din_valid || valid_reg) && (!handshake_reg);
+    assign subelem_done = {{'&din_s.eot[{}:0]'.format(subenv_w-1) if _din_t.lvl > params['lvl'] else 1}} && din.valid;
+    assign din.ready = (dout.ready || handshake_reg || (!subelem_done));
+    assign dout.valid = (din.valid || valid_reg) && (!handshake_reg);
 
-    assign handshake = dout_valid & dout_ready;
+    assign handshake = dout.valid & dout.ready;
 
     always @(posedge clk) begin
        if (rst) begin
@@ -55,9 +47,9 @@
          end
          else begin
              handshake_reg <= handshake_reg || handshake;
-             if (!valid_reg && din_valid) begin
+             if (!valid_reg && din.valid) begin
     {% if params['lvl'] > 0 %}
-                  eots_reg <= din_s_out_eot;
+                  eots_reg <= {{out_eot}};
     {% endif %}
                   valid_reg <= 1;
              end

@@ -2,7 +2,7 @@ from pygears import GearDone, gear, module
 from pygears.sim import clk, delta
 
 
-@gear
+@gear(hdl={'files': ['dreg']})
 async def pipe(din, *, length) -> b'din':
     data = [None] * length
     dout = module().dout

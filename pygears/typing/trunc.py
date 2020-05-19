@@ -53,14 +53,13 @@ def fixp_value_trunc_resolver(trunc_type: FixpType, val):
     else:
         bv_fract_trunc = bv << (trunc_type.fract - type(val).fract)
 
-
     if type(val).integer >= trunc_type.integer:
-        bv_res = (bv_fract_trunc & ((1 << trunc_type.width) - 1) |
-                (sign << (trunc_type.width - 1)))
+        bv_res = (
+            bv_fract_trunc & ((1 << (trunc_type.width - 1)) - 1) |
+            (sign << (trunc_type.width - 1)))
     else:
         sign_exten = Uint[trunc_type.integer - type(val).integer].max if sign else 0
         bv_res = (sign_exten << (type(val).integer + trunc_type.fract)) | bv_fract_trunc
-
 
     return trunc_type.decode(bv_res)
 
@@ -68,11 +67,9 @@ def fixp_value_trunc_resolver(trunc_type: FixpType, val):
 @value_trunc.register(UfixpType)
 def ufixp_value_trunc_resolver(trunc_type: UfixpType, val):
     if type(val).fract > trunc_type.fract:
-        return trunc_type.decode(
-            code(val, int) >> (type(val).fract - trunc_type.fract))
+        return trunc_type.decode(code(val, int) >> (type(val).fract - trunc_type.fract))
     else:
-        return trunc_type.decode(
-            code(val, int) << (trunc_type.fract - type(val).fract))
+        return trunc_type.decode(code(val, int) << (trunc_type.fract - type(val).fract))
 
 
 @value_trunc.register(IntType)

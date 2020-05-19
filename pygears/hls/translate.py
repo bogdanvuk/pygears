@@ -1,5 +1,5 @@
 from pygears.core.gear import Gear
-from pygears import bind, registry, safe_bind
+from pygears import reg
 from .ast import visit_ast, GearContext, FuncContext, Context
 from .ast.utils import get_function_ast
 from . import ir
@@ -15,10 +15,10 @@ def translate_gear(gear: Gear):
     # hls_enable_debug_log()
     hls_debug(title=f'Translating: {gear.name}')
 
-    exec_context = registry('gear/exec_context')
+    exec_context = reg['gear/exec_context']
 
     # For the code that inspects gear via module() call
-    bind('gear/current_module', gear)
+    reg['gear/current_module'] = gear
 
     body_ast = get_function_ast(gear.func)
 
@@ -29,14 +29,14 @@ def translate_gear(gear: Gear):
 
     res = transform(res, ctx)
 
-    bind('gear/exec_context', exec_context)
+    reg['gear/exec_context'] = exec_context
     return ctx, res
 
 def process(body_ast, ctx):
     # hls_enable_debug_log()
-    bind('gear/exec_context', 'hls')
+    reg['gear/exec_context'] = 'hls'
 
-    safe_bind('hls/ctx', [ctx])
+    reg['hls/ctx'] = [ctx]
     return visit_ast(body_ast, ctx)
 
 def transform(modblock, ctx: GearContext):

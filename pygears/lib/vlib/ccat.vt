@@ -8,11 +8,11 @@
     wire  handshake;
     assign handshake = dout_valid && dout_ready;
 
-    assign dout_valid = {{input_intf_names|format_list("%s_valid")|join(" && ")}};
-    assign dout_data = { {{input_intf_data_names|reverse|format_list("%s_data")|join(", ")}} };
+    assign dout.valid = {{input_intf_names|format_list("%s.valid")|join(" && ")}};
+    assign dout.data = { {{input_intf_data_names|reverse|format_list("%s.data")|join(", ")}} };
 
   {% for i in input_intf_names %}
-    assign {{i}}_ready = {{i}}_valid ? handshake : dout_ready;
+    assign {{i}}.ready = {{i}}.valid ? handshake : dout.ready;
   {% endfor %}
 
 {% endcall %}

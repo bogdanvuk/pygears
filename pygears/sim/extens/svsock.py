@@ -10,7 +10,7 @@ import socket
 import logging
 from pygears.definitions import ROOT_DIR
 from subprocess import DEVNULL, Popen
-from pygears import safe_bind, registry, config, bind
+from pygears import reg
 from pygears.sim.extens.sim_extend import SimExtend
 from pygears.sim import SimPlugin
 from pygears.util.fileio import save_file
@@ -37,9 +37,9 @@ class CosimulatorUnavailable(Exception):
 
 
 def register_exten():
-    if SVSock not in config['sim/extens']:
-        config['sim/extens'].append(SVSock)
-        if registry('sim/simulator') is not None:
+    if SVSock not in reg['sim/extens']:
+        reg['sim/extens'].append(SVSock)
+        if reg['sim/simulator'] is not None:
             SVSock(top=None)
 
 
@@ -78,7 +78,7 @@ def u32_bytes_decode(data, dtype):
 class SVSock(SimExtend):
     @inject
     def __init__(self, run=Inject('sim/svsock/run'), **kwds):
-        bind('sim/svsock/server', self)
+        reg['sim/svsock/server'] = self
         self.run_cosim = run
         self.kwds = kwds
         self.sock = None
@@ -168,7 +168,7 @@ class SVSock(SimExtend):
         context['files'].extend([os.path.join(self.outdir, 'top.sv')])
 
         cosim_pid = None
-        for b in config['sim/svsock/backend'].values():
+        for b in reg['sim/svsock/backend'].values():
             try:
                 cosim_pid = b(outdir=self.outdir,
                               files=context['files'],
@@ -181,7 +181,7 @@ class SVSock(SimExtend):
         else:
             raise CosimulatorStartError(
                 f'No available cosimulator executables found for any of the plugins:'
-                f'",".join(config["sim/svsock/backend"].keys())')
+                f'",".join(reg["sim/svsock/backend"].keys())')
 
         return cosim_pid
 
@@ -265,7 +265,7 @@ class SVSock(SimExtend):
 class SVSockPlugin(SimPlugin):
     @classmethod
     def bind(cls):
-        config.define('sim/svsock/backend', default={})
-        config.define('sim/svsock/run', default=True)
-        safe_bind('sim/svsock/intfs', [])
-        safe_bind('sim/svsock/server', None)
+        reg.confdef('sim/svsock/backend', default={})
+        reg.confdef('sim/svsock/run', default=True)
+        reg['sim/svsock/intfs'] = []
+        reg['sim/svsock/server'] = None

@@ -10,8 +10,7 @@ from . import Fixpnumber, Float, Number, Ufixp, Fixp, Unit
 
 def code(data, cast_type=Uint):
     if is_type(data):
-        if is_type(cast_type) and not cast_type.specified and typeof(
-                cast_type, Integer):
+        if is_type(cast_type) and not cast_type.specified and typeof(cast_type, Integer):
             cast_type = cast_type[data.width]
 
         return cast_type
@@ -20,8 +19,7 @@ def code(data, cast_type=Uint):
     if is_type(dtype):
         data = data.code()
 
-        if is_type(cast_type) and not cast_type.specified and typeof(
-                cast_type, Integer):
+        if is_type(cast_type) and not cast_type.specified and typeof(cast_type, Integer):
             cast_type = cast_type[dtype.width]
 
     if is_type(cast_type) and cast_type.specified:
@@ -69,25 +67,26 @@ def get_type_error(dtype, cast_type, details=None):
 
 
 def get_value_error(val, cast_type):
-    return ValueError(
-        f"Cannot convert value '{repr(val)}' to '{repr(cast_type)}'")
+    return ValueError(f"Cannot convert value '{repr(val)}' to '{repr(cast_type)}'")
 
 
 def uint_type_cast_resolver(dtype, cast_type):
     if typeof(dtype, Ufixp):
         if cast_type.specified:
             if cast_type.width < dtype.integer:
-                raise get_type_error(dtype, cast_type, [
-                    f"fixed-point integer part (width '{dtype.integer}') is larger than target Uint",
-                    f"FIX: to force cast to smaller Uint, cast to generic Uint first and then code() as '{repr(cast_type)}'"
-                ])
+                raise get_type_error(
+                    dtype, cast_type, [
+                        f"fixed-point integer part (width '{dtype.integer}') is larger than target Uint",
+                        f"FIX: to force cast to smaller Uint, cast to generic Uint first and then code() as '{repr(cast_type)}'"
+                    ])
 
             return cast_type
         elif dtype.integer <= 0:
-            raise get_type_error(dtype, cast_type, [
-                f"fixed-point has no integer part",
-                f"FIX: to force cast to Uint, supply Uint width explicitly"
-            ])
+            raise get_type_error(
+                dtype, cast_type, [
+                    f"fixed-point has no integer part",
+                    f"FIX: to force cast to Uint, supply Uint width explicitly"
+                ])
         else:
             return Uint[dtype.integer]
 
@@ -96,8 +95,7 @@ def uint_type_cast_resolver(dtype, cast_type):
             return dtype
         elif dtype.width > cast_type.width:
             raise get_type_error(
-                dtype, cast_type,
-                [f"{repr(dtype)} is larger then {repr(cast_type)}"])
+                dtype, cast_type, [f"{repr(dtype)} is larger then {repr(cast_type)}"])
         else:
             return cast_type
 
@@ -117,14 +115,16 @@ def ufixp_type_cast_resolver(dtype, cast_type):
             return dtype
 
         if dtype.integer > cast_type.integer:
-            raise get_type_error(dtype, cast_type, [
-                f"fixed-point integer part is larger than target's integer part ('{dtype.integer}' > '{cast_type.integer})",
-            ])
+            raise get_type_error(
+                dtype, cast_type, [
+                    f"fixed-point integer part is larger than target's integer part ('{dtype.integer}' > '{cast_type.integer})",
+                ])
 
         if dtype.fract > cast_type.fract:
-            raise get_type_error(dtype, cast_type, [
-                f"fixed-point fraction part is larger than target's fraction part ('{dtype.fract}' > '{cast_type.fract})",
-            ])
+            raise get_type_error(
+                dtype, cast_type, [
+                    f"fixed-point fraction part is larger than target's fraction part ('{dtype.fract}' > '{cast_type.fract})",
+                ])
 
         return cast_type
 
@@ -133,9 +133,10 @@ def ufixp_type_cast_resolver(dtype, cast_type):
             return Ufixp[dtype.width, dtype.width]
 
         if dtype.width > cast_type.integer:
-            raise get_type_error(dtype, cast_type, [
-                f"integer is larger than fixed-point integer part ('{dtype.width}' > '{cast_type.integer})",
-            ])
+            raise get_type_error(
+                dtype, cast_type, [
+                    f"integer is larger than fixed-point integer part ('{dtype.width}' > '{cast_type.integer})",
+                ])
 
         return cast_type
 
@@ -155,14 +156,16 @@ def fixp_type_cast_resolver(dtype, cast_type):
             int_part += 1
 
         if int_part > cast_type.integer:
-            raise get_type_error(dtype, cast_type, [
-                f"needed target's integer part >= {int_part}",
-            ])
+            raise get_type_error(
+                dtype, cast_type, [
+                    f"needed target's integer part >= {int_part}",
+                ])
 
         if dtype.fract > cast_type.fract:
-            raise get_type_error(dtype, cast_type, [
-                f"fixed-point fraction part is larger than target's fraction part ('{dtype.fract}' > '{cast_type.fract})",
-            ])
+            raise get_type_error(
+                dtype, cast_type, [
+                    f"fixed-point fraction part is larger than target's fraction part ('{dtype.fract}' > '{cast_type.fract})",
+                ])
 
         return cast_type
 
@@ -173,9 +176,10 @@ def fixp_type_cast_resolver(dtype, cast_type):
             return Fixp[dtype.width, dtype.width]
 
         if dtype.width > cast_type.integer:
-            raise get_type_error(dtype, cast_type, [
-                f"integer is larger than fixed-point integer part ('{dtype.width}' > '{cast_type.integer})",
-            ])
+            raise get_type_error(
+                dtype, cast_type, [
+                    f"integer is larger than fixed-point integer part ('{dtype.width}' > '{cast_type.integer})",
+                ])
 
         return cast_type
 
@@ -190,23 +194,25 @@ def int_type_cast_resolver(dtype, cast_type):
 
         if cast_type.specified:
             if not dtype.signed and cast_type.width == dtype.integer:
-                raise get_type_error(dtype, cast_type, (
-                    f"Int needs to be one bit larger (width {int_part}) to represent unsigned fixed-point integer part (width {dtype.integer})",
-                    f"FIX: to force cast to smaller Int, cast to generic Int first and then code() as '{repr(cast_type)}'"
-                ))
+                raise get_type_error(
+                    dtype, cast_type, (
+                        f"Int needs to be one bit larger (width {int_part}) to represent unsigned fixed-point integer part (width {dtype.integer})",
+                        f"FIX: to force cast to smaller Int, cast to generic Int first and then code() as '{repr(cast_type)}'"
+                    ))
 
             elif cast_type.width < dtype.integer:
-                raise get_type_error(dtype, cast_type, (
-                    f"fixed-point integer part (width '{dtype.integer}') is larger than target Int",
-                    f"FIX: to force cast to smaller Int, cast to generic Int first and then code() as '{repr(cast_type)}'"
-                ))
+                raise get_type_error(
+                    dtype, cast_type, (
+                        f"fixed-point integer part (width '{dtype.integer}') is larger than target Int",
+                        f"FIX: to force cast to smaller Int, cast to generic Int first and then code() as '{repr(cast_type)}'"
+                    ))
 
             return cast_type
         elif dtype.integer <= 0:
             raise get_type_error(
-                dtype, cast_type,
-                (f"fixed-point has no integer part",
-                 f"FIX: to force cast to Int, supply Int width explicitly"))
+                dtype, cast_type, (
+                    f"fixed-point has no integer part",
+                    f"FIX: to force cast to Int, supply Int width explicitly"))
         else:
             return Int[int_part]
 
@@ -218,14 +224,14 @@ def int_type_cast_resolver(dtype, cast_type):
         if not cast_type.specified:
             return Int[width]
         elif not dtype.signed and cast_type.width == dtype.width:
-            raise get_type_error(dtype, cast_type, (
-                f"Int needs to be one bit larger (width {width}) to represent unsigned integer (width {dtype.width})",
-                f"FIX: to force cast to smaller Int, cast to generic Int first and then code() as '{repr(cast_type)}'"
-            ))
+            raise get_type_error(
+                dtype, cast_type, (
+                    f"Int needs to be one bit larger (width {width}) to represent unsigned integer (width {dtype.width})",
+                    f"FIX: to force cast to smaller Int, cast to generic Int first and then code() as '{repr(cast_type)}'"
+                ))
         elif cast_type.width < dtype.width:
             raise get_type_error(
-                dtype, cast_type,
-                [f"{repr(dtype)} is larger then {repr(cast_type)}"])
+                dtype, cast_type, [f"{repr(dtype)} is larger then {repr(cast_type)}"])
         else:
             return cast_type
 
@@ -254,18 +260,16 @@ def tuple_type_cast_resolver(dtype, cast_type):
         return Tuple[tuple(fields)]
     elif len(cast_type) != len(fields):
         comp = 'less' if len(cast_type) < len(fields) else 'more'
-        raise get_type_error(dtype, cast_type, [
-            f"target Tuple has {comp} elements ({len(cast_type)}) than needed ({len(fields)})"
-        ])
+        raise get_type_error(
+            dtype, cast_type, [
+                f"target Tuple has {comp} elements ({len(cast_type)}) than needed ({len(fields)})"
+            ])
     else:
         try:
-            cast_fields = [
-                cast(dt, ct) for dt, ct in zip(fields, cast_type.args)
-            ]
+            cast_fields = [cast(dt, ct) for dt, ct in zip(fields, cast_type.args)]
         except TypeError as e:
             raise TypeError(
-                f"{str(e)}\n    - when casting '{repr(dtype)}' to '{repr(cast_type)}'"
-            )
+                f"{str(e)}\n    - when casting '{repr(dtype)}' to '{repr(cast_type)}'")
 
         if typeof(cast_type, Tuple):
             return Tuple[dict(zip(cast_type.fields, cast_fields))]
@@ -288,17 +292,17 @@ def array_type_cast_resolver(dtype, cast_type):
         if len(cast_type.args) == 2:
             if len(dtype) != len(cast_type):
                 comp = 'less' if len(cast_type) < len(dtype) else 'more'
-                raise get_type_error(dtype, cast_type, [
-                    f"target Array has {comp} elements ({len(cast_type)}) than Tuple ({len(dtype)})"
-                ])
+                raise get_type_error(
+                    dtype, cast_type, [
+                        f"target Array has {comp} elements ({len(cast_type)}) than Tuple ({len(dtype)})"
+                    ])
 
         try:
             for t in dtype.args:
                 cast(t, arr_dtype)
         except TypeError as e:
             raise TypeError(
-                f"{str(e)}\n    - when casting '{repr(dtype)}' to '{repr(cast_type)}'"
-            )
+                f"{str(e)}\n    - when casting '{repr(dtype)}' to '{repr(cast_type)}'")
 
         return Array[arr_dtype, len(dtype)]
 
@@ -311,15 +315,16 @@ def union_type_cast_resolver(dtype, cast_type):
 
     if typeof(dtype, Tuple):
         if len(dtype) != 2:
-            raise get_type_error(dtype, cast_type, [
-                f"only Tuple with exactly 2 elements can be converted to Union"
-            ])
+            raise get_type_error(
+                dtype, cast_type,
+                [f"only Tuple with exactly 2 elements can be converted to Union"])
 
         if typeof(cast_type, Maybe):
             if dtype.args[1].width != 1:
-                raise get_type_error(dtype, cast_type, [
-                    f"only Tuple with 1 bit wide second argument can be converted to Maybe"
-                ])
+                raise get_type_error(
+                    dtype, cast_type, [
+                        f"only Tuple with 1 bit wide second argument can be converted to Maybe"
+                    ])
 
             if not cast_type.specified:
                 return Maybe[dtype.args[0]]
@@ -333,34 +338,35 @@ def union_type_cast_resolver(dtype, cast_type):
             types = tuple(cast_type.types)
 
             if cast_type.data.width < dtype.args[0].width:
-                raise get_type_error(dtype, cast_type, [
-                    f"Tuple first element larger than target Union data field"
-                ])
+                raise get_type_error(
+                    dtype, cast_type,
+                    [f"Tuple first element larger than target Union data field"])
 
             try:
                 ctrl = cast(dtype.args[1], cast_ctrl)
             except TypeError as e:
                 raise TypeError(
-                    f"{str(e)}\n    - when casting '{repr(dtype)}' to '{repr(cast_type)}'"
-                )
+                    f"{str(e)}\n    - when casting '{repr(dtype)}' to '{repr(cast_type)}'")
         else:
             ctrl = cast(dtype.args[1], Uint)
+
+            if ctrl.width > 6:
+                raise TypeError(
+                    f'Casting to large Union with {2**ctrl.width}'
+                    f' subtypes from {dtype}')
+
             types = (dtype.args[0], ) * (2**ctrl.width)
 
         res = Union[types]
-
-        # if ctrl.width > 6:
-        #     gear_log().warning(
-        #         f'Casting to large Union with {2**ctrl.width}'
-        #         f' subtypes from {dtype}')
 
         return res
 
     if typeof(cast_type, Maybe):
         if not (len(dtype.types) == 2 and typeof(dtype.types[0], Unit)):
-            raise get_type_error(dtype, cast_type, [
-                f"only Union's with with the form 'Union[Unit, Any]' can be converted to Maybe"
-            ])
+            raise get_type_error(
+                dtype, cast_type, [
+                    f"only Union's with with the form 'Union[Unit, Any]' can be converted to Maybe"
+                ])
 
         return Maybe[dtype.types[1]]
 
@@ -373,36 +379,36 @@ def queue_type_cast_resolver(dtype, cast_type):
             return dtype
 
         if dtype.lvl != cast_type.lvl:
-            raise get_type_error(dtype, cast_type, [
-                f"Queue level ({dtype.lvl}) must match the cast Queue lelve ({cast_type.lvl})"
-            ])
+            raise get_type_error(
+                dtype, cast_type, [
+                    f"Queue level ({dtype.lvl}) must match the cast Queue lelve ({cast_type.lvl})"
+                ])
 
         try:
             return Queue[cast(dtype.data, cast_type.data), cast_type.lvl]
         except TypeError as e:
             raise TypeError(
-                f"{str(e)}\n    - when casting '{repr(dtype)}' to '{repr(cast_type)}'"
-            )
+                f"{str(e)}\n    - when casting '{repr(dtype)}' to '{repr(cast_type)}'")
 
     if typeof(dtype, Tuple):
         if len(dtype) != 2:
-            raise get_type_error(dtype, cast_type, [
-                f"only Tuple with exactly 2 elements can be converted to Queue"
-            ])
+            raise get_type_error(
+                dtype, cast_type,
+                [f"only Tuple with exactly 2 elements can be converted to Queue"])
 
         lvl = cast(dtype[1], Uint).width
         if len(cast_type.args) != 0:
             if cast_type.lvl != lvl:
-                raise get_type_error(dtype, cast_type, [
-                    f"second Tuple element width ({lvl}) must match Queue level ({cast_type.lvl})"
-                ])
+                raise get_type_error(
+                    dtype, cast_type, [
+                        f"second Tuple element width ({lvl}) must match Queue level ({cast_type.lvl})"
+                    ])
 
             try:
                 data = cast(dtype.args[0], cast_type.data)
             except TypeError as e:
                 raise TypeError(
-                    f"{str(e)}\n    - when casting '{repr(dtype)}' to '{repr(cast_type)}'"
-                )
+                    f"{str(e)}\n    - when casting '{repr(dtype)}' to '{repr(cast_type)}'")
         else:
             data = dtype.args[0]
 
@@ -601,4 +607,4 @@ def signed(dtype_or_val):
 # class CastCoreTypesPlugin(CoreTypesPlugin):
 #     @classmethod
 #     def bind(cls):
-#         safe_bind('gear/type_arith/cast', cast)
+#         reg['gear/type_arith/cast'] = cast
