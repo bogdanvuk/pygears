@@ -1,7 +1,7 @@
 import os
 import jinja2
 from .axi import get_axi_conf
-from pygears import registry, find
+from pygears import reg, find
 from pygears.typing import Queue, typeof
 from pygears.core.gear import InSig
 from pygears.hdl import hdlgen
@@ -17,7 +17,7 @@ def generate(top, intfdef):
     if isinstance(top, str):
         top = find(top)
 
-    modinst = registry('svgen/map')[top]
+    modinst = reg('hdlgen/map')[top]
 
     sigs = []
     for s in top.signals.values():

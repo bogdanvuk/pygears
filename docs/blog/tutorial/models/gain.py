@@ -1,4 +1,4 @@
-from pygears import gear, config
+from pygears import gear
 from pygears.typing import Ufixp, Uint
 from pygears.lib import drv, collect
 from pygears.sim import sim
@@ -12,7 +12,6 @@ def darken(din: Uint[8], *, gain) -> Uint[8]:
 res = []
 drv(t=Uint[8], seq=[255, 128, 0]) \
     | darken(gain=0.5) \
-    | int \
     | collect(result=res)
 
 sim()

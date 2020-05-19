@@ -116,6 +116,9 @@ def unpatch_pdb():
     if sys.gettrace():
         p = sys.gettrace().__self__
 
+        if p is None:
+            return
+
         if inspect.getfile(p.stop_here) == __file__:
             p.stop_here = pdb.Pdb.stop_here.__get__(p, pdb.Pdb)
             p.do_up = pdb.Pdb.do_up.__get__(p, pdb.Pdb)
