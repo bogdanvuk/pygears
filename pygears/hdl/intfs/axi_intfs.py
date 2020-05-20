@@ -169,12 +169,10 @@ AXIS_SLAVE = {
         Port('aclk', 'in', 0),
         Port('aresetn', 'in', 0),
     ],
-    'data': [
+    'tdata': [
         Port('tdata', 'in', -1),
         Port('tvalid', 'in', 0),
         Port('tready', 'out', 0),
-    ],
-    'last': [
         Port('tlast', 'in', 0),
     ]
 }
@@ -184,12 +182,10 @@ AXIS_MASTER = {
         Port('aclk', 'in', 0),
         Port('aresetn', 'in', 0),
     ],
-    'data': [
+    'tdata': [
         Port('tdata', 'out', -1),
         Port('tvalid', 'out', 0),
         Port('tready', 'in', 0),
-    ],
-    'last': [
         Port('tlast', 'out', 0),
     ]
 }
@@ -198,6 +194,9 @@ AXIS_MASTER = {
 def subport_def(subintf, prefix, **kwds):
     ret = []
     for p in subintf:
+        if kwds.get(p.name, True) is None:
+            continue
+
         width = p.width
         if p.width == -1:
             if p.name in kwds:
@@ -208,8 +207,10 @@ def subport_def(subintf, prefix, **kwds):
                 breakpoint()
                 raise Exception(f'Port "{p.name}" wasn\'t supplied a parameter')
 
-            if p.name in ['tdata', 'wdata', 'rdata'] and isinstance(width, int):
+            if p.name in ['wdata', 'rdata'] and isinstance(width, int):
                 width = ceil_chunk(ceil_pow2(int(width)), 32)
+            elif p.name == 'tdata' and isinstance(width, int):
+                width = ceil_chunk(ceil_pow2(int(width)), 8)
 
         direction = 'input' if p.direction == 'in' else 'output'
         name = f'{prefix}_{p.name}'
@@ -248,7 +249,12 @@ def port_map(intf, prefix_src, prefix_dest, uppercase=False, **kwds):
         if not kwds.get(subintf, False):
             continue
 
+        cfg = kwds[subintf]
+
         for p in intf[subintf]:
+            if isinstance(cfg, dict) and not cfg.get(p.name, True):
+                continue
+
             dest = f'{prefix_dest}_{p.name}'
 
             if uppercase:

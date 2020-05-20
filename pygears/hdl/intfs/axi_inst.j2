@@ -28,12 +28,12 @@
   {% set rdata_w = rdata.params['rdata'] %}
   {% set rdata_byte_addr_w = bitw(ceil_div(rdata_w, 8) - 1) %}
 
-  wire [{{araddr_w + rdata_byte_addr_w - 1}}:0] {{name}}_araddr_s;
-  assign {{araddr.name}}.data = {{name}}_araddr_s[{{araddr_w + rdata_byte_addr_w - 1}}:{{rdata_byte_addr_w}}];
+  wire [{{araddr_w - 1}}:0] {{name}}_araddr_s;
+  assign {{araddr.name}}.data = {{name}}_araddr_s[{{araddr_w - 1}}:{{rdata_byte_addr_w}}];
 
   axi_slave_read #(
                     .C_AXI_ID_WIDTH(C_AXI_{{name.upper()}}_ID_WIDTH),
-                    .C_AXI_ADDR_WIDTH({{araddr.params['araddr'] + rdata_byte_addr_w}}),
+                    .C_AXI_ADDR_WIDTH({{araddr.params['araddr']}}),
                     .C_AXI_DATA_WIDTH({{rdata.params['rdata']}})
   )
   {{name}}_axi_slave_read (
@@ -90,12 +90,12 @@
   {% set wdata_w = wdata.params['wdata'] %}
   {% set wdata_byte_addr_w = bitw(ceil_div(wdata_w, 8) - 1) %}
 
-  wire [{{awaddr_w + wdata_byte_addr_w - 1}}:0] {{name}}_awaddr_s;
-  assign {{wr_req_data}}[{{awaddr_w-1}}:0] = {{name}}_awaddr_s[{{awaddr_w + wdata_byte_addr_w - 1}}:{{wdata_byte_addr_w}}];
+  wire [{{awaddr_w - 1}}:0] {{name}}_awaddr_s;
+  assign {{wr_req_data}}[{{awaddr_w-wdata_byte_addr_w-1}}:0] = {{name}}_awaddr_s[{{awaddr_w - 1}}:{{wdata_byte_addr_w}}];
 
   axi_slave_write #(
                     .C_AXI_ID_WIDTH(C_AXI_{{name.upper()}}_ID_WIDTH),
-                    .C_AXI_ADDR_WIDTH({{awaddr_w + wdata_byte_addr_w}}),
+                    .C_AXI_ADDR_WIDTH({{awaddr_w}}),
                     .C_AXI_DATA_WIDTH({{wdata_w}})
   )
   {{name}}_axi_slave_write (
@@ -103,7 +103,7 @@
                     .S_AXI_ARESETN(aresetn),
                     .M_AXI_AWADDR({{name}}_awaddr_s),
                     .M_AXI_AWREADY({{awaddr['name']}}.ready & {{awaddr['name']}}.valid),
-                    .M_AXI_WDATA({{wr_req_data}}[{{awaddr_w + wdata_w-1}}:{{awaddr_w}}]),
+                    .M_AXI_WDATA({{wr_req_data}}[{{awaddr_w - wdata_byte_addr_w + wdata_w-1}}:{{awaddr_w-wdata_byte_addr_w}}]),
                     .M_AXI_WVALID({{wdata['name']}}.valid),
                     .M_AXI_WREADY({{wdata['name']}}.ready),
                     .M_AXI_BRESP(2'b0),
@@ -182,5 +182,82 @@
                     {{axi_port_map|join(",\n")|indent(19, True)}},
                     {{ctrl_port_map|join(",\n")|indent(19, True)}}
                     );
+
+{%- endmacro %}
+
+
+{% macro bram(name, awaddr, wdata, araddr, rdata) -%}
+    {% set bram_din = wdata.name %}
+    {% set bram_dout = rdata.name %}
+
+    {% set wr_req_data = awaddr['name'] + '.data' %}
+    {% set awaddr_w = awaddr.params['awaddr'] %}
+    {% set wdata_w = wdata.params['wdata'] %}
+    {% set wdata_byte_addr_w = bitw(ceil_div(wdata_w, 8) - 1) %}
+
+    {%- set axi_port_map = axi_intfs.port_map(
+      axi_intfs.AXI_SLAVE, name, "s_axi", uppercase=True,
+      awaddr={'awid': None}, wdata=True, bresp={'bid': None},
+      araddr={'arid': None}, rdata={'rid': None}) %}
+
+    logic [15:0] bram_addr_a;
+    logic [31:0] bram_rd_data;
+    logic [31:0] bram_wr_data;
+    logic bram_we_a;
+
+    assign {{name}}_rid = 0;
+    assign {{name}}_bid = 0;
+
+    {# TODO: Fixme: BRAM controller pulls valid low after initial cycle. It expects return data exactly on next cycle #}
+    {% if bram_dout %}
+      assign bram_rd_data = {{rdata.name}}.data;
+      assign {{rdata.name}}.ready = 1'b1;
+      assign {{wdata.name}}.data[{{awaddr_w - wdata_byte_addr_w}}+:{{wdata_w}}] = bram_wr_data;
+      assign {{wdata.name}}.data[{{awaddr_w - wdata_byte_addr_w + wdata_w}}] = bram_we_a;
+    {% else %}
+      assign bram_wr_data = {{wdata.name}}.data[{{awaddr_w - wdata_byte_addr_w}}+:{{wdata_w}}];
+      assign bram_rd_data = bram_wr_data;
+    {% endif %}
+
+   assign {{wdata.name}}.data[{{awaddr_w-wdata_byte_addr_w-1}}:0] = bram_addr_a[{{awaddr_w-1}}:{{wdata_byte_addr_w}}];
+   dtibram_{{name}} dtibram_{{name}}_i (
+                    .s_axi_aclk(aclk),
+                    .s_axi_aresetn(aresetn),
+                    .bram_en_a({{wdata.name}}.valid),
+                    .bram_we_a(bram_we_a),
+                    .bram_addr_a(bram_addr_a),
+                    .bram_rddata_a(bram_rd_data),
+                    .bram_wrdata_a(bram_wr_data),
+                    .bram_clk_a(),
+                    .bram_rst_a(),
+                    {{axi_port_map|join(",\n")|indent(19, True)}}
+    );
+
+{%- endmacro %}
+
+{% macro axis(name, direction, tdata) -%}
+
+    {% set tdata_w = tdata.params['tdata'] %}
+    {% set tlast_w = tdata.params.get('tlast', 0) %}
+
+    {% if direction == "w" %}
+      {% if tlast_w == 0 %}
+assign {{name}}_tdata = {{name}}.data;
+      {% else %}
+assign {{name}}_tdata = {{name}}.data[{{tdata_w-1}}:0];
+assign {{name}}_tlast = &{{name}}.data[{{tdata_w}}+:{{tlast_w}}];
+      {% endif %}
+assign {{name}}.valid = {{name}}_tvalid;
+assign {{name}}_tready = {{name}}.ready;
+    {% else %}
+      {% if tlast_w == 0 %}
+assign {{name}}_tdata = {{name}}.data;
+      {% else %}
+assign {{name}}_tdata = {{name}}.data[{{tdata_w-1}}:0];
+assign {{name}}_tlast = &{{name}}.data[{{tdata_w}}+:{{tlast_w}}];
+      {% endif %}
+assign {{name}}_tvalid = {{name}}.valid;
+assign {{name}}.ready = {{name}}_tready;
+    {% endif %}
 
 {%- endmacro %}

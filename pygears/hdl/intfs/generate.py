@@ -17,7 +17,7 @@ def generate(top, intfdef):
     if isinstance(top, str):
         top = find(top)
 
-    modinst = reg('hdlgen/map')[top]
+    modinst = reg['hdlgen/map'][top]
 
     sigs = []
     for s in top.signals.values():
@@ -76,12 +76,14 @@ def generate(top, intfdef):
             defs.extend(pdefs)
 
         elif p.t == 'axis':
-            if p['direction'] == 'in':
+            if p.direction == 'w':
                 tmplt = axi_intfs.AXIS_SLAVE
             else:
                 tmplt = axi_intfs.AXIS_MASTER
 
-            pdefs = axi_intfs.port_def(tmplt, name, data=p['width'], last=p['w_eot'] > 0)
+            params = {n: c.params for n, c in p.comp.items()}
+
+            pdefs = axi_intfs.port_def(tmplt, name, **params)
 
             defs.extend(pdefs)
 

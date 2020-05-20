@@ -1,32 +1,7 @@
 import typing
 from pygears.typing import Queue, Union, typeof, Tuple
-from pygears.typing.math import ceil_chunk, ceil_pow2
+from pygears.typing.math import ceil_chunk, ceil_pow2, bitw, ceil_div
 from dataclasses import dataclass, field
-
-# axi_port_cfg = conf.copy()
-
-# port_map = {}
-# for p in top.in_ports + top.out_ports:
-#     dtype = p.dtype
-#     w_data = int(dtype)
-#     w_eot = 0
-#     w_addr = 0
-#     if typeof(dtype, Queue):
-#         w_data = int(dtype.data)
-#         w_eot = int(dtype.eot)
-#         width = ceil_chunk(ceil_pow2(int(w_data)), 32)
-#     else:
-#         width = ceil_chunk(w_data, 8)
-
-#     port_cfg = {
-#         'width': width,
-#         'w_data': w_data,
-#         'w_eot': w_eot,
-#         'w_addr': w_addr,
-#         'name': p.basename,
-#         'dir': p.direction
-#     }
-#     port_map[p.basename] = port_cfg
 
 
 def index_to_sv_slice(dtype, key):
@@ -98,12 +73,29 @@ class AxiIntfConf:
         if 'rdata' in self.comp:
             d += 'r'
 
+        if self.t == 'axis' and 'tdata' in self.comp:
+            if self.comp['tdata'].port.direction == 'in':
+                d += 'w'
+            else:
+                d += 'r'
+
         return d
 
 
+def apply_key(key, dtype):
+    if isinstance(key, tuple):
+        for k in key:
+            dtype = dtype[k]
+
+    else:
+        dtype = dtype[key]
+
+    return dtype
+
+
 def port_conf(parent, type_, p, datamap=None):
-    if not datamap:
-        if not typeof(p.dtype, Queue) or type_ not in ['wdata', 'rdata']:
+    if datamap is None:
+        if not typeof(p.dtype, Queue) or type_ not in ['wdata', 'rdata', 'tdata']:
             width = p.dtype.width
         else:
             width = p.dtype['data'].width
@@ -111,14 +103,22 @@ def port_conf(parent, type_, p, datamap=None):
                 datamap = {'rdata': 'data', 'rlast': 'eot'}
             elif type_ == 'wdata':
                 datamap = {'wdata': 'data', 'wlast': 'eot'}
+            elif type_ == 'tdata':
+                datamap = {'tdata': 'data', 'tlast': 'eot'}
 
-    elif isinstance(datamap, dict):
-        width = p.dtype[datamap[type_]].width
     else:
-        width = p.dtype[datamap].width
+        key = datamap
+        if isinstance(key, dict):
+            key = key[type_]
+
+        dtype = apply_key(key, p.dtype)
+
+        width = dtype.width
 
     if type_ in ['wdata', 'rdata']:
         width = ceil_chunk(ceil_pow2(width), 32)
+    elif type_ == 'tdata':
+        width = ceil_chunk(ceil_pow2(width), 8)
 
     conf = AxiPortConf(parent, type_, p, datamap)
 
@@ -152,11 +152,18 @@ def get_port_def(top, name, axi_name, subintf, parent, axi_conf):
 
     if subintf == 'awaddr':
         if typeof(p.dtype, Tuple) and axi_conf.get('wdata', '') == name:
-            return port_conf(parent, subintf, p, slice(0, 1))
+            return port_conf(parent, subintf, p, 0)
+
+    if subintf == 'araddr':
+        if typeof(p.dtype, Tuple) and axi_conf.get('wdata', '') == name:
+            return port_conf(parent, subintf, p, 0)
 
     if subintf == 'wdata':
         if typeof(p.dtype, Tuple) and axi_conf.get('awaddr', '') == name:
-            return port_conf(parent, subintf, p, slice(1, 2))
+            if typeof(p.dtype[1], Union) and axi_conf.get('araddr', '') == name:
+                return port_conf(parent, subintf, p, (1, 0))
+            else:
+                return port_conf(parent, subintf, p, 1)
 
     return port_conf(parent, subintf, p)
 
@@ -183,22 +190,37 @@ def get_axi_conf(top, conf):
                     pconf = {'type': pconf, 'wdata': name}
                 elif pconf == 'axidma':
                     pconf = {'type': pconf, 'rdata': name}
+                elif pconf == 'axis':
+                    pconf = {'type': pconf, 'tdata': name}
+
             elif p.direction == 'out':
                 if pconf == 'axi':
                     pconf = {'type': pconf, 'rdata': name}
                 elif pconf == 'axidma':
                     pconf = {'type': pconf, 'wdata': name}
+                elif pconf == 'axis':
+                    pconf = {'type': pconf, 'tdata': name}
 
-        if pconf['type'] not in ['axi', 'axidma']:
+        if pconf['type'] not in ['axi', 'axidma', 'bram', 'axis']:
             continue
 
-        axi_port_cfg[name] = AxiIntfConf(name, pconf['type'])
-        for subintf in ['araddr', 'rdata', 'awaddr', 'wdata']:
-            if subintf not in pconf:
-                continue
+        if pconf['type'] in ['axi', 'axidma', 'bram']:
+            axi_port_cfg[name] = AxiIntfConf(name, pconf['type'])
+            for subintf in ['araddr', 'rdata', 'awaddr', 'wdata']:
+                if subintf not in pconf:
+                    continue
 
-            axi_port_cfg[name].comp[subintf] = get_port_def(
-                top, pconf[subintf], name, subintf, axi_port_cfg[name], pconf)
+                axi_port_cfg[name].comp[subintf] = get_port_def(
+                    top, pconf[subintf], name, subintf, axi_port_cfg[name], pconf)
+
+        elif pconf['type'] in ['axis']:
+            axi_port_cfg[name] = AxiIntfConf(name, pconf['type'])
+            for subintf in ['tdata']:
+                if subintf not in pconf:
+                    continue
+
+                axi_port_cfg[name].comp[subintf] = get_port_def(
+                    top, pconf[subintf], name, subintf, axi_port_cfg[name], pconf)
 
     for name, p in axi_port_cfg.copy().items():
         if p.t in ['axidma']:
@@ -234,18 +256,17 @@ def get_axi_conf(top, conf):
             if 'rdata' in p.comp and 'araddr' not in p.comp:
                 p.comp['araddr'] = AxiPortConf(p, 'araddr', params={'araddr': 1})
 
+        if p.t in ['axi', 'bram']:
+            if 'wdata' in p.comp and 'awaddr' in p.comp:
+                wdata_byte_addr_w = bitw(ceil_div(p.comp['wdata'].params['wdata'], 8) - 1)
+                p.comp['awaddr'].params['awaddr'] += wdata_byte_addr_w
+
+            if 'rdata' in p.comp and 'araddr' in p.comp:
+                rdata_byte_addr_w = bitw(ceil_div(p.comp['rdata'].params['rdata'], 8) - 1)
+                p.comp['araddr'].params['araddr'] += rdata_byte_addr_w
+
             if 'wdata' in p.comp and 'bresp' not in p.comp:
                 p.comp['bresp'] = AxiPortConf(
                     p, 'bresp', params={'bresp': 'awaddr' in p.comp})
-
-        # elif p.t == 'axis':
-        #     if p['direction'] == 'in':
-        #         tmplt = axi_intfs.AXIS_SLAVE
-        #     else:
-        #         tmplt = axi_intfs.AXIS_MASTER
-
-        #     pdefs = axi_intfs.port_def(tmplt, name, data=p['width'], last=p['w_eot'] > 0)
-
-        #     defs.extend(pdefs)
 
     return axi_port_cfg

@@ -5,7 +5,7 @@
 {% set typeof = import_from('pygears.typing', 'typeof') %}
 
 module {{wrap_module_name}} #(
-{% for name, p in ports.items() if p.t != 'axilite' %}
+{% for name, p in ports.items() if p.t not in ['axilite', 'axis'] %}
   parameter integer C_AXI_{{name.upper()}}_ID_WIDTH	= 2{{ "" if loop.last else "," }}
 {% endfor %}
 )
@@ -47,6 +47,10 @@ module {{wrap_module_name}} #(
         {{axi.slave_write(name, wdata, awaddr)}}
       {% endif %}
     {% endif %}
+  {% elif p.t == 'bram' %}
+    {{axi.bram(name, awaddr, wdata, araddr, rdata)}}
+  {% elif p.t == 'axis' %}
+    {{axi.axis(name, p.direction, p.comp['tdata'])}}
   {% endif %}
 {% endfor %}
 
