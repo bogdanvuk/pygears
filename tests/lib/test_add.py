@@ -87,6 +87,7 @@ def test_ufixp(sim_cls):
         ref=[6.0, 0.0])
     sim()
 
+
 def test_fixp(sim_cls):
     directed(
         drv(t=Fixp[2, 4], seq=[1.75, 1.75, 0, -2.0, -2.0]),

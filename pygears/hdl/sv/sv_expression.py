@@ -268,7 +268,7 @@ class SVExpressionVisitor:
 
         res = f'({ops[0]}) {ir.OPMAP[node.operator]} ({ops[1]})'
 
-        if node.operator in [ir.opc.LShift, ir.opc.RShift]:
+        if node.operator in [ir.opc.RShift]:
             res = self.cast_svexpr(res, op_dtypes[0], node.dtype)
 
         return res

@@ -7,13 +7,12 @@ from pygears.typing import TypeMatchError, get_match_conds
 
 
 def is_type_iterable(t):
-    return (not isinstance(t, (str, bytes))) and isinstance(
-        t, collections.abc.Iterable)
+    return (not isinstance(t, (str, bytes))) and isinstance(t, collections.abc.Iterable)
 
 
 def _copy_field_names(t, pat):
-    if isinstance(t, GenericMeta) and isinstance(
-            pat, GenericMeta) and (issubclass(t.base, pat.base)):
+    if isinstance(t, GenericMeta) and isinstance(pat, GenericMeta) and (issubclass(
+            t.base, pat.base)):
         for ta, pa in zip(t.args, pat.args):
             _copy_field_names(ta, pa)
 
@@ -45,11 +44,9 @@ def type_is_specified(t):
 
 def resolve_param(val, match, namespace):
 
-    is_templated_type = (isinstance(val, GenericMeta)
-                         and (not val.is_generic()))
+    is_templated_type = (isinstance(val, GenericMeta) and (not val.is_generic()))
 
-    if ((is_templated_type or is_type_iterable(val))
-            and (not type_is_specified(val))):
+    if ((is_templated_type or is_type_iterable(val)) and (not type_is_specified(val))):
         new_p = param_subs(val, match, namespace)
 
         if repr(new_p) != repr(val):
@@ -78,14 +75,8 @@ def infer_ftypes(params, args, namespace={}):
 
         return False
 
-    postponed = {
-        name: val
-        for name, val in params.items() if is_postponed(name, val)
-    }
-    match = {
-        name: val
-        for name, val in params.items() if name not in postponed
-    }
+    postponed = {name: val for name, val in params.items() if is_postponed(name, val)}
+    match = {name: val for name, val in params.items() if name not in postponed}
 
     substituted = True
     final_check = False
@@ -142,11 +133,9 @@ def infer_ftypes(params, args, namespace={}):
                         break
                     elif final_check:
                         if new_p is not None:
-                            raise TypeMatchError(
-                                f'Incomplete type: {repr(new_p)}')
+                            raise TypeMatchError(f'Incomplete type: {repr(new_p)}')
                         else:
-                            raise TypeMatchError(
-                                f'Incomplete type: {repr(val)}')
+                            raise TypeMatchError(f'Incomplete type: {repr(val)}')
 
                 except Exception as e:
                     if final_check:
@@ -164,11 +153,13 @@ def infer_ftypes(params, args, namespace={}):
                                 val_repr = repr(val)
 
                         if name == 'return':
-                            err = type(e)(f'{arg_repr}\n - when resolving '
-                                        f'return type "{val_repr}"')
+                            err = type(e)(
+                                f'{arg_repr}\n - when resolving '
+                                f'return type "{val_repr}"')
                         else:
-                            err = type(e)(f'{arg_repr}\n - when resolving '
-                                        f'parameter "{name}": "{val_repr}"')
+                            err = type(e)(
+                                f'{arg_repr}\n - when resolving '
+                                f'parameter "{name}": "{val_repr}"')
                         err.params = match
                         raise err
 

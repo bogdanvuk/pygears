@@ -26,8 +26,7 @@ def parse_trace(s):
         return s
     else:
         trace_fn = os.path.abspath(s.filename)
-        is_internal = any(
-            trace_fn.startswith(d) for d in reg['trace/ignore'])
+        is_internal = any(trace_fn.startswith(d) for d in reg['trace/ignore'])
 
         is_decorator_gen = '<decorator-gen' in trace_fn
 
@@ -56,12 +55,10 @@ class TraceFormatPlugin(PluginBase):
     def bind(cls):
         reg['trace/hooks'] = []
 
-        reg.confdef('trace/level',
-                      setter=set_trace_level,
-                      default=TraceLevel.user)
+        reg.confdef('trace/level', setter=set_trace_level, default=TraceLevel.debug)
 
-        reg.confdef('trace/ignore',
-                      default=[
-                          os.path.join(ROOT_DIR, d)
-                          for d in ['core', 'conf', 'sim', 'hls', 'hdl']
-                      ] + [os.path.dirname(os.__file__)])
+        reg.confdef(
+            'trace/ignore',
+            default=[
+                os.path.join(ROOT_DIR, d) for d in ['core', 'conf', 'sim', 'hls', 'hdl']
+            ] + [os.path.dirname(os.__file__)])

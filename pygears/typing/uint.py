@@ -107,14 +107,11 @@ class IntegerType(IntegralType):
 
         return int(self.__args__[0])
 
-    def __gt__(self, others):
-        if not is_type(type(other)):
-            return super().__eq__(other)
+    def __gt__(self, other):
+        return int(self) > int(other)
 
-        return super().__gt__(other)
-
-    def __ge__(self, others):
-        return int(self) >= int(others)
+    def __ge__(self, other):
+        return int(self) >= int(other)
 
     def __invert__(self):
         return self
@@ -122,21 +119,21 @@ class IntegerType(IntegralType):
     def __neg__(self):
         return Int[int(self) + 1]
 
-    def __or__(self, others):
-        # return int(self) | int(others)
-        return self.base[max(int(op) for op in (self, others))]
+    def __or__(self, other):
+        # return int(self) | int(other)
+        return self.base[max(int(op) for op in (self, other))]
 
-    def __and__(self, others):
-        return self.base[max(int(op) for op in (self, others))]
+    def __and__(self, other):
+        return self.base[max(int(op) for op in (self, other))]
 
-    def __xor__(self, others):
-        return self.base[max(int(op) for op in (self, others))]
+    def __xor__(self, other):
+        return self.base[max(int(op) for op in (self, other))]
 
-    def __lshift__(self, others):
-        return self.base[int(self) + int(others)]
+    def __lshift__(self, other):
+        return self.base[int(self) + int(other)]
 
-    def __rshift__(self, others):
-        shamt = int(others)
+    def __rshift__(self, other):
+        shamt = int(other)
         width = len(self)
 
         if shamt > width:
