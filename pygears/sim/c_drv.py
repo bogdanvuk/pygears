@@ -48,10 +48,13 @@ class CDrv:
         self.c_get_api = getattr(verilib, f'get_{self.name}', None)
 
         if self.width > 64:
+            self.c_width = 32
             self.c_dtype = ctypes.c_uint * (ceil(self.width / 32))
         elif self.width > 32:
+            self.c_width = 64
             self.c_dtype = ctypes.c_ulonglong
         else:
+            self.c_width = 32
             self.c_dtype = ctypes.c_uint
 
 
@@ -107,7 +110,7 @@ class COutputDrv(CDrv):
     def from_c_data(self, data):
         dout = 0
         for d in reversed(list(data)):
-            dout <<= 32
+            dout <<= self.c_width
             dout |= d
 
         return dout

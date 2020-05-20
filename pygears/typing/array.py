@@ -124,7 +124,7 @@ class Array(list, metaclass=ArrayType):
     @classmethod
     def decode(cls, val):
         ret = []
-        mask = int(len(cls.data) * '1', 2)
+        mask = int(cls.data.width * '1', 2)
         for t in cls:
             ret.append(t.decode(val & mask))
             val >>= t.width

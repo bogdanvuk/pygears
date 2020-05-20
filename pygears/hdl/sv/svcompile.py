@@ -554,7 +554,7 @@ def write_module(ctx: Context,
 
         writer.indent += 4
 
-        for name, expr in ctx.variables.items():
+        for name, expr in f_ctx.variables.items():
             if expr.dtype is None:
                 continue
 
