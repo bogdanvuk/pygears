@@ -12,8 +12,8 @@ endfunction
 def get_slice_func(aux_funcs, start, stop, din_width):
     name = f'slice_{stop}_{start}'
     if name not in aux_funcs:
-        aux_funcs[name] = SLICE_FUNC_TEMPLATE.format(stop, start, stop - start,
-                                                     din_width - 1)
+        aux_funcs[name] = SLICE_FUNC_TEMPLATE.format(
+            stop, start, stop - start, din_width - 1)
 
     return name
 
@@ -39,7 +39,8 @@ def sieve_slices(dtype, keys):
         keys = (keys, )
 
     return list(
-        map(partial(index_to_sv_slice, dtype),
+        map(
+            partial(index_to_sv_slice, dtype),
             filter(lambda i: getattr(dtype[i], 'width', 0) > 0, keys)))
 
 
@@ -64,25 +65,28 @@ class SVExpressionVisitor:
 
     def visit_ResExpr(self, node):
         if isinstance(node.val, tuple):
-            return ('{' +
-                    ', '.join(f"{type(op).width}'d{self.visit(ir.ResExpr(op))}"
-                              for op in reversed(node.val)) + '}')
+            res = []
+            for op in reversed(node.val):
+                res_op = ir.ResExpr(op)
+                svexpr = self.visit(res_op)
+                res.append(self.cast_svexpr(svexpr, res_op.dtype, type(op)))
+
+            return '{' + ', '.join(res) + '}'
 
         if getattr(node.val, 'unknown', False):
             return f"{node.dtype.width}'bx"
 
-        val = int(code(node.val))
+        val = node.val
+        if not isinstance(node.val, Integer):
+            val = Integer(int(code(node.val)))
 
-        if (val >= 2**31) or (val < -2**31):
-            val = Integer(val)
-            sign = '-' if val.signed else ''
-            return f"{sign}{val.width}'d{abs(val)}"
-
-        return val
+        sign = '-' if val < 0 else ''
+        return f"{sign}{val.width}'d{abs(val)}"
 
     def visit_FunctionCall(self, node):
-        return (f'{node.name}(' +
-                ', '.join(str(self.visit(op)) for op in node.operands) + ')')
+        return (
+            f'{node.name}(' + ', '.join(str(self.visit(op))
+                                        for op in node.operands) + ')')
 
     def visit_Interface(self, node):
         return node.name
@@ -99,8 +103,7 @@ class SVExpressionVisitor:
         if name in sv_keywords:
             name = f'pg_{name}'
 
-        if node.ctx == 'store' and isinstance(node.obj,
-                                              ir.Variable) and node.obj.reg:
+        if node.ctx == 'store' and isinstance(node.obj, ir.Variable) and node.obj.reg:
             return f'{name}_next'
 
         if node.ctx in ['en']:
@@ -232,9 +235,7 @@ class SVExpressionVisitor:
 
         res = f'{ir.OPMAP[node.operator]}({val})'
 
-        if node.operator in [
-                ir.opc.Invert
-        ]:
+        if node.operator in [ir.opc.Invert]:
             res = self.cast_svexpr(res, node.dtype, node.operand.dtype)
             # f"{node.dtype.width}'({res})"
 
@@ -245,10 +246,8 @@ class SVExpressionVisitor:
         op_dtypes = [op.dtype for op in node.operands]
         op_sign = [getattr(dtype, 'signed', False) for dtype in op_dtypes]
 
-        if node.operator in [
-                ir.opc.Add, ir.opc.Sub, ir.opc.Mult, ir.opc.BitOr,
-                ir.opc.BitAnd, ir.opc.BitXor
-        ]:
+        if node.operator in [ir.opc.Add, ir.opc.Sub, ir.opc.Mult, ir.opc.BitOr,
+                             ir.opc.BitAnd, ir.opc.BitXor]:
             cast_dtype = node.dtype
             ops = [
                 self.cast_svexpr(expr, dtype, cast_dtype)
@@ -257,10 +256,8 @@ class SVExpressionVisitor:
         elif node.operator == ir.opc.LShift:
             if op_dtypes[0].width < node.dtype.width:
                 ops[0] = self.cast_svexpr(ops[0], op_dtypes[0], node.dtype)
-        elif node.operator in [
-                ir.opc.Eq, ir.opc.Gt, ir.opc.GtE, ir.opc.Lt, ir.opc.LtE,
-                ir.opc.NotEq, ir.opc.And, ir.opc.Or
-        ]:
+        elif node.operator in [ir.opc.Eq, ir.opc.Gt, ir.opc.GtE, ir.opc.Lt, ir.opc.LtE,
+                               ir.opc.NotEq, ir.opc.And, ir.opc.Or]:
             if op_sign[0] and not op_sign[1]:
                 ops[1] = self.cast_svexpr(ops[1], op_dtypes[1], op_dtypes[0])
             elif op_sign[1] and not op_sign[0]:
@@ -313,8 +310,7 @@ class SVExpressionVisitor:
                 elif typeof(node.val.dtype, (Tuple, Union, Queue)):
                     return f'{val}{self.separator}{node.val.dtype.fields[index]}'
             else:
-                fname = get_slice_func(self.aux_funcs, start, stop,
-                                       node.val.dtype.width)
+                fname = get_slice_func(self.aux_funcs, start, stop, node.val.dtype.width)
                 return f'{fname}({val})'
 
         if typeof(node.val.dtype, (Array, Queue, Integer, Tuple, Union)):

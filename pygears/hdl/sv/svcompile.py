@@ -554,6 +554,22 @@ def write_module(ctx: Context,
 
         writer.indent += 4
 
+        for name, expr in ctx.variables.items():
+            if expr.dtype is None:
+                continue
+
+            if name in f_ctx.signature:
+                continue
+
+            if lang == 'sv':
+                name_t = typedef_or_inline(writer, expr.dtype, name)
+                writer.line(f'{name_t} {name};')
+            else:
+                writer.block(
+                    vgen_signal(expr.dtype, 'reg', name, 'input', hier=False))
+
+            writer.line()
+
         if lang == 'sv':
             for name, dtype in f_ctx.signature.items():
                 name_t = typedef_or_inline(writer, dtype, name)
