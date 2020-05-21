@@ -75,6 +75,8 @@ class TemplateEnv:
             len=len,
             int=int,
             max=max,
+            tuple=tuple,
+            isinstance=isinstance,
             bitw=bitw,
             enumerate=enumerate,
             import_from=import_from,

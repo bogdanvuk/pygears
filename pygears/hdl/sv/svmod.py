@@ -38,12 +38,25 @@ class SVModuleInst(HDLModuleInst):
 
         return template_env.render_local(__file__, "impl_wrap.j2", context)
 
+    def get_wrap_portmap(self, parent_lang):
+        port_map = {}
+        for p in self.node.in_ports + self.node.out_ports:
+            name = p.basename
+            if self.lang == 'sv':
+                port_map[name] = name
+            elif parent_lang == 'sv':
+                port_map[f'{name}_valid'] = f'{name}.valid'
+                port_map[f'{name}_ready'] = f'{name}.ready'
+                port_map[f'{name}_data'] = f'{name}.data'
+            else:
+                port_map[name] = name
+
+        return port_map
+
     def get_wrap(self, parent_lang):
         template_env = reg[f'{parent_lang}gen/templenv']
 
-        port_map = {}
-        for p in self.node.in_ports + self.node.out_ports:
-            port_map[p.basename] = p.basename
+        port_map = self.get_wrap_portmap(parent_lang)
 
         sigmap = self.node.params.get('sigmap', {})
         for s in self.node.params['signals']:
@@ -83,7 +96,7 @@ class SVModuleInst(HDLModuleInst):
         if lang == 'sv':
             return basename
         else:
-            return basename, None, None
+            return basename, None
 
     def get_in_port_map_intf_name(self, port, lang):
         intf = port.producer
@@ -93,13 +106,13 @@ class SVModuleInst(HDLModuleInst):
             if lang == 'sv':
                 return hdlgen_intf.outname
             else:
-                return hdlgen_intf.outname, None, None
+                return hdlgen_intf.outname, None
         else:
             i = intf.consumers.index(port)
             if lang == 'sv':
                 return f'{hdlgen_intf.outname}[{i}]'
             else:
-                return (hdlgen_intf.outname, i, int(intf.dtype))
+                return (hdlgen_intf.outname, i)
 
     def get_inst(self, template_env, port_map=None):
         parent_lang = mod_lang(self.node.parent)

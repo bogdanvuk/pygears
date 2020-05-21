@@ -1,20 +1,9 @@
 {%- import 'snippet.j2' as snippet -%}
 
-/*verilator tracing_off*/
-
-module {{wrap_module_name}}
-(
-  {% if sigs == None -%}
-    input clk,
-    input rst,
-  {% else %}
-{{snippet.sig_list(sigs)|indent(4, True) }}
-  {% endif %}
-{{snippet.signal_intf_list(intfs)|indent(4, True)}}
-);
+{% call snippet.gear_module(wrap_module_name, intfs, comment) %}
 
 /*verilator tracing_on*/
-{{snippet.module_inst(module_name, param_map, inst_name)|indent(4, True)}}
+{{snippet.module_inst(module_name, param_map, inst_name, port_map, sig_map)|indent(4, True)}}
 /*verilator tracing_off*/
 
-endmodule
+{% endcall %}

@@ -37,7 +37,7 @@
   dti #(.W_DATA({{width}})) {{name}}{{ "[%d:0]"|format(size-1) if size>1 else "" }}(); // {{type}} ({{width}})
 {%- endmacro %}
 
-{% macro module_inst(module_name, param_map, inst_name, port_map=None, sig_map=None, rst_name="rst", break_intfs=False) -%}
+{% macro module_inst(module_name, param_map, inst_name, port_map=None, sig_map=None, rst_name="rst") -%}
 
   {{module_name}}
   {%- if param_map|length > 0 %}
@@ -62,13 +62,7 @@
   {% endif %}
   {% if port_map -%}
     {% for name, value in port_map.items() %}
-      {% if break_intfs %}
-        .{{name}}_tvalid({{value}}.valid),
-        .{{name}}_tready({{value}}.ready),
-        .{{name}}_tdata({{value}}.data){{ "" if loop.last else "," }}
-      {% else %}
-        {{"."|indent(4,True)}}{{name}}({{value}}){{ "" if loop.last else "," }}
-      {% endif -%}
+      {{"."|indent(4,True)}}{{name}}({{value}}){{ "" if loop.last else "," }}
     {% endfor -%}
   {% else -%}
     .*
@@ -131,12 +125,6 @@ output logic [{{max(intf['width']-1, 0)}}:0] {{intf['name']}}_data
   {% for i in intfs -%}
 {{ intf_inst(i['name'], i['width'], 1, i['type']) }}
   {% endfor %}
-{%- endmacro %}
-
-{% macro cons_signal_intf_connect(intf) -%}
-output logic         {{intf['name']}}_ready,
-input  logic         {{intf['name']}}_valid,
-input  logic [{{intf['width']}}:0] {{intf['name']}}_data
 {%- endmacro %}
 
 {% macro cons_signal_intf_connect(intf) -%}

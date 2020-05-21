@@ -1,48 +1,30 @@
 {%- import 'snippet.j2' as snippet -%}
 
+/*verilator tracing_off*/
+
 module {{wrap_module_name}}
 (
   {% if sigs == None -%}
-    input clk,
-    input rst,
+    input logic clk,
+    input logic rst,
   {% else %}
 {{snippet.sig_list(sigs)|indent(4, True) }}
   {% endif %}
-  {% for i in intfs -%}
-    dti.{{i['modport']}} {{i['name']}}{{ "" if loop.last else "," }} // {{i['type']}} ({{i['width']}})
-  {% endfor -%}
+{{snippet.signal_intf_list(intfs)|indent(4, True)}}
 );
 
-  {{module_name}}
-  {%- if param_map|length > 0 %}
- #(
-    {% for name,value in param_map.items() -%}
-      {%- if name %}
-        {{"."|indent(4,True)}}{{name}}({{max(1, value.bit_length())}}'d{{value}}){{ "" if loop.last else "," }}
-      {% else -%}
-        {{value|indent(4,True)}}{{ "" if loop.last else "," }}
-      {% endif -%}
-    {% endfor -%}
-    )
-  {% endif %}
- {{inst_name}} (
-  {% if sig_map == None %}
-    .clk(clk),
-    .rst({{rst_name}}),
-  {% else %}
-    {% for name,value in sig_map.items() -%}
-      {{"."|indent(4,True)}}{{name}}({{value}}){{ "" if loop.last and (not port_map) else "," }}
-    {% endfor -%}
-  {% endif %}
-  {% if port_map -%}
-    {% for name, (value, index, width) in port_map.items() %}
-     .{{name}}_valid({{value}}.valid),
-     .{{name}}_ready({{value}}.ready),
-     .{{name}}_data({{value}}.data){{ "" if loop.last else "," }}
-    {% endfor -%}
-  {% else -%}
-    .*
-  {% endif -%}
-  );
+  {% for i in intfs -%}
+    {% set width = i['width'] %}
+    {% if width == 0 %}
+    {% set width = 1 %}
+    {% endif %}
+    dti #(.W_DATA({{width}})) {{i['name']}}(); // {{i['type']}} ({{i['width']}})
+  {% endfor -%}
+
+{{snippet.signal_intf_connect(intfs)|indent(4, True)}}
+
+/*verilator tracing_on*/
+{{snippet.module_inst(module_name, param_map, inst_name)|indent(4, True)}}
+/*verilator tracing_off*/
 
 endmodule
