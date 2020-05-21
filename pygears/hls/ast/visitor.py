@@ -21,6 +21,25 @@ class HLSSyntaxError(TraceException):
     pass
 
 
+def form_hls_syntax_error(ctx, e, lineno=1):
+    if isinstance(ctx, GearContext):
+        func, fn, ln = gear_definition_location(ctx.gear.func)
+        msg = (f'{str(e)}\n    - when compiling gear "{ctx.gear.name}" with'
+               f' parameters {ctx.gear.params}')
+    else:
+        func, fn, ln = gear_definition_location(ctx.funcref.func)
+        msg = (
+            f'{str(e)}\n    - when compiling function "{ctx.funcref.func}" with'
+            f' signature {ctx.signature}')
+
+    err = HLSSyntaxError(msg, ln + lineno - 1, filename=fn)
+
+    traceback = make_traceback((HLSSyntaxError, err, sys.exc_info()[2]))
+    _, exc_value, tb = traceback.standard_exc_info
+
+    return exc_value, tb
+
+
 @dataclass
 class Submodule:
     gear: typing.Any
@@ -33,7 +52,8 @@ class Function:
         self.source = get_function_source(func)
         self.func = func
         self.ast = get_function_ast(func)
-        self.basename = ''.join(e for e in func.__name__ if e.isalnum() or e == '_')
+        self.basename = ''.join(e for e in func.__name__
+                                if e.isalnum() or e == '_')
         self.uniqueid = uniqueid
         # TODO: Include keywords here
         self._hash = hash(self.source) ^ hash(tuple(arg.dtype for arg in args))
@@ -140,7 +160,8 @@ class GearContext(Context):
         return {
             name: obj
             for name, obj in self.scope.items()
-            if isinstance(obj, ir.Variable) and isinstance(obj.val, (OutSig, InSig))
+            if isinstance(obj, ir.Variable)
+            and isinstance(obj.val, (OutSig, InSig))
         }
 
     @property
@@ -154,8 +175,8 @@ class GearContext(Context):
     @property
     def in_ports(self):
         return [
-            obj for obj in self.scope.values() if (
-                isinstance(obj, ir.Interface) and isinstance(obj.intf, Intf)
+            obj for obj in self.scope.values()
+            if (isinstance(obj, ir.Interface) and isinstance(obj.intf, Intf)
                 and obj.intf.producer and obj.intf.producer.gear is self.gear)
         ]
 
@@ -218,8 +239,9 @@ class FuncContext(Context):
                 else:
                     params[name] = var
 
-            res = infer_ftypes(
-                params=params, args=arg_types, namespace=self.local_namespace)
+            res = infer_ftypes(params=params,
+                               args=arg_types,
+                               namespace=self.local_namespace)
 
             for name, dtype in res.items():
                 if name == 'return':
@@ -246,10 +268,12 @@ class FuncContext(Context):
             for name, var in args.items() if name not in self.const_args
         }
 
+
 def reraise(tp, value, tb=None):
     if value.__traceback__ is not tb:
         raise value.with_traceback(tb)
     raise value
+
 
 def node_visitor(ast_type):
     def wrapper(f):
@@ -261,23 +285,9 @@ def node_visitor(ast_type):
                 return f(node, ctx)
             except Exception as e:
                 if isinstance(e, HLSSyntaxError) and e.lineno is not None:
-                    exc_type, exc_value, tb = sys.exc_info()
+                    _, exc_value, tb = sys.exc_info()
                 else:
-                    if isinstance(ctx, GearContext):
-                        func, fn, ln = gear_definition_location(ctx.gear.func)
-                        msg = (
-                            f'{str(e)}\n    - when compiling gear "{ctx.gear.name}" with'
-                            f' parameters {ctx.gear.params}')
-                    else:
-                        func, fn, ln = gear_definition_location(ctx.funcref.func)
-                        msg = (
-                            f'{str(e)}\n    - when compiling function "{ctx.funcref.func}" with'
-                            f' signature {ctx.signature}')
-
-                    err = HLSSyntaxError(msg, ln + node.lineno - 1, filename=fn)
-
-                    traceback = make_traceback((HLSSyntaxError, err, sys.exc_info()[2]))
-                    exc_type, exc_value, tb = traceback.standard_exc_info
+                    exc_value, tb = form_hls_syntax_error(ctx, e, node.lineno)
 
             raise exc_value.with_traceback(tb)
 
@@ -315,7 +325,8 @@ def visit_block(ir_node, body, ctx):
                 continue
 
             ir_node.stmts.append(s)
-            if isinstance(ir_node, ir.FuncBlock) and isinstance(s, ir.FuncReturn):
+            if isinstance(ir_node, ir.FuncBlock) and isinstance(
+                    s, ir.FuncReturn):
                 # No need to continue, return has been hit
                 break
 

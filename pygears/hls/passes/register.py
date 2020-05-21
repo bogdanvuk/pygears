@@ -82,6 +82,9 @@ class ResolveRegInits(HDLVisitor):
         if not isinstance(node.target, ir.Name):
             return node
 
+        if not isinstance(node.val, ir.ResExpr):
+            return node
+
         obj = self.ctx.scope[node.target.name]
 
         if (isinstance(obj, ir.Variable) and obj.reg):
@@ -92,16 +95,14 @@ class ResolveRegInits(HDLVisitor):
             elif obj.any_init:
                 obj.val = ir.CastExpr(node.val, obj.dtype)
                 obj.any_init = False
-            # if (obj.any_init or obj.val is None) and node.val != ir.ResExpr(None):
-            #     breakpoint()
-            #     obj.val = ir.CastExpr(node.val, obj.dtype)
-            #     obj.any_init = False
-            #     return None
 
         return node
 
     def BaseBlock(self, block):
         stmts = []
+
+        if block.in_cond != res_true:
+            return block
 
         for stmt in block.stmts:
             add_to_list(stmts, self.visit(stmt))
@@ -121,5 +122,12 @@ def infer_registers(modblock, ctx):
         ctx.scope[reg].any_init = True
 
     ResolveRegInits(ctx).visit(modblock)
+
+    for reg in inferred:
+        if ctx.scope[reg].val is None:
+            raise Exception(
+                f'Inferred register for variable "{reg}", but cannot infer its initial value.'
+                f' Specify initial value manually.'
+            )
 
     return modblock

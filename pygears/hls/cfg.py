@@ -175,12 +175,20 @@ class CFG(HDLVisitor):
         self.set_head(expr)
 
     def HDLBlock(self, block: ir.HDLBlock):
+        test = Node(block.in_cond)
         if block.in_cond != ir.res_true:
-            self.set_head(Node(block.in_cond))
+            self.set_head(test)
+        else:
+            node = Node(block)
+            self.set_head(node)
 
-        node = Node(block)
-        self.set_head(node)
         self.BaseBlock(block)
+
+        if block.in_cond != ir.res_true:
+            body_exit = self.head[:]
+            self.head[:] = []
+            self.head.append(test)
+            self.head.extend(body_exit)
 
     def LoopBlock(self, block: ir.LoopBlock):
         in_cond = Node(block.in_cond)
@@ -205,6 +213,7 @@ class CFG(HDLVisitor):
         self.head.extend(self.break_.pop())
 
     def IfElseBlock(self, block: ir.IfElseBlock):
+        breakpoint()
         node = Node(block)
         self.set_head(node)
         branch_exits = []

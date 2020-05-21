@@ -58,11 +58,8 @@ class SVModuleInst(HDLModuleInst):
 
         port_map = self.get_wrap_portmap(parent_lang)
 
-        sigmap = self.node.params.get('sigmap', {})
+        sigmap = {}
         for s in self.node.params['signals']:
-            if s.name in sigmap:
-                continue
-
             sigmap[s.name] = s.name
 
         context = {

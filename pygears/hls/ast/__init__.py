@@ -1,6 +1,6 @@
 from .visitor import (visit_ast, visit_block, node_visitor, Context,
                       HLSSyntaxError, Submodule, Function, FuncContext,
-                      GearContext)
+                      GearContext, form_hls_syntax_error)
 from .. import ir
 from .. import ir_utils
 

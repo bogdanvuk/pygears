@@ -42,5 +42,5 @@ def parse_generator_expression(node, ctx):
 def _(node: ast.GeneratorExp, ctx: Context):
     # out_intf_ref, targets, gen_name = parse_generator_expression(node.generators[0], ctx)
 
-    breakpoint()
+    # breakpoint()
     raise HLSSyntaxError(f"Unsupported language construct", node.lineno)

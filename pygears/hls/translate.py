@@ -1,6 +1,7 @@
 from pygears.core.gear import Gear
 from pygears import reg
-from .ast import visit_ast, GearContext, FuncContext, Context
+from pygears.conf.trace import gear_definition_location
+from .ast import visit_ast, GearContext, FuncContext, Context, form_hls_syntax_error
 from .ast.utils import get_function_ast
 from . import ir
 from .passes import (inline, inline_res, remove_dead_code, infer_exit_cond,
@@ -27,10 +28,18 @@ def translate_gear(gear: Gear):
 
     res = process(body_ast, ctx)
 
-    res = transform(res, ctx)
+    exc_value = None
+    try:
+        res = transform(res, ctx)
+    except Exception as e:
+        exc_value, tb = form_hls_syntax_error(ctx, e)
+
+    if exc_value is not None:
+        raise exc_value.with_traceback(tb)
 
     reg['gear/exec_context'] = exec_context
     return ctx, res
+
 
 def process(body_ast, ctx):
     # hls_enable_debug_log()
@@ -38,6 +47,7 @@ def process(body_ast, ctx):
 
     reg['hls/ctx'] = [ctx]
     return visit_ast(body_ast, ctx)
+
 
 def transform(modblock, ctx: GearContext):
     hls_debug(modblock, 'Initial')
@@ -61,12 +71,13 @@ def transform(modblock, ctx: GearContext):
     modblock = infer_exit_cond(modblock, ctx)
     hls_debug(modblock, 'Infer Exit Conditions')
 
-    modblock  = remove_dead_code(modblock, ctx)
+    modblock = remove_dead_code(modblock, ctx)
     hls_debug(modblock, 'Remove Dead Code')
 
     compile_funcs(modblock, ctx)
 
     return modblock
+
 
 def compile_funcs(modblock, ctx):
     called_funcs = find_called_funcs(modblock, ctx)
@@ -80,7 +91,8 @@ def compile_funcs(modblock, ctx):
         functions = ctx.functions.copy()
 
         for f_ast, f_ctx in functions.values():
-            if (f_ast.name in active_funcs) or (f_ast.name not in called_funcs):
+            if (f_ast.name in active_funcs) or (
+                    f_ast.name not in called_funcs):
                 continue
 
             active_funcs.add(f_ctx.funcref.name)

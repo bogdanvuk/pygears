@@ -1,6 +1,6 @@
 {%- import 'snippet.j2' as snippet -%}
 
-{% call snippet.gear_module(wrap_module_name, intfs, comment) %}
+{% call snippet.gear_module(wrap_module_name, intfs, comment, sigs) %}
 
 /*verilator tracing_on*/
 {{snippet.module_inst(module_name, param_map, inst_name, port_map, sig_map)|indent(4, True)}}

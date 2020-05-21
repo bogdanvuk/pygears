@@ -9,7 +9,7 @@ def infer_targets(ctx, target, dtype, obj_factory=None):
     if isinstance(target, ir.Name):
         if target.name not in ctx.scope:
             if obj_factory is None:
-                breakpoint()
+                # breakpoint()
                 raise NameError
 
             var = obj_factory(target.name, dtype)
@@ -39,11 +39,16 @@ def assign_targets(ctx: Context, target, source, obj_factory=None):
     # If we thought something was an alias, but it changed later, turn that
     # alias into an variable assignment at the begining of the scope
     if isinstance(target, ir.Name) and target.name in ctx.local_namespace:
-        ctx.ir_block_closure[0].stmts.insert(
-            0,
-            ir.AssignValue(target,
-                           ir.ResExpr(ctx.local_namespace[target.name])))
-        del ctx.local_namespace[target.name]
+        if isinstance(ctx.ir_parent_block, ir.FuncBlock):
+            ctx.ir_block_closure[0].stmts.insert(
+                0,
+                ir.AssignValue(target,
+                               ir.ResExpr(ctx.local_namespace[target.name])))
+            del ctx.local_namespace[target.name]
+        else:
+            raise SyntaxError(
+                f'There is already a name "{target.name}" defined in current scope.'
+            )
 
     infer_targets(ctx, target, source.dtype, obj_factory)
 
