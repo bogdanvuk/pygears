@@ -58,6 +58,7 @@ class SVGenInstPlugin(PluginBase):
         reg['hdlgen/disambig'] = {}
         register_custom_log('svgen', logging.WARNING)
         reg.confdef('svgen/include', getter=svgen_include_get)
+        reg.confdef('vhdgen/include', [])
 
         reg['vgen/map'] = {}
         register_custom_log('vgen', logging.WARNING)

@@ -39,19 +39,17 @@ class SVModuleInst(HDLModuleInst):
         return template_env.render_local(__file__, "impl_wrap.j2", context)
 
     def get_wrap(self, parent_lang):
-        template_env = reg[f'{self.lang}gen/templenv']
+        template_env = reg[f'{parent_lang}gen/templenv']
 
-        in_port_map = [(port.basename,
-                        port.basename if self.lang == 'sv' else (port.basename, None, None))
-                        for port in self.node.in_ports]
+        port_map = {}
+        for p in self.node.in_ports + self.node.out_ports:
+            port_map[p.basename] = p.basename
 
-        out_port_map = [(port.basename,
-                        port.basename if self.lang == 'sv' else (port.basename, None, None))
-                        for port in self.node.out_ports]
-        port_map = OrderedDict(in_port_map + out_port_map)
-
-        sigmap = {}
+        sigmap = self.node.params.get('sigmap', {})
         for s in self.node.params['signals']:
+            if s.name in sigmap:
+                continue
+
             sigmap[s.name] = s.name
 
         context = {
@@ -66,7 +64,7 @@ class SVModuleInst(HDLModuleInst):
             'sig_map': sigmap
         }
 
-        return template_env.render(template_env.basedir, f"{parent_lang}_wrap.j2", context)
+        return template_env.render(template_env.basedir, f"{self.lang}_wrap.j2", context)
 
     def get_synth_wrap(self, template_env):
         context = {

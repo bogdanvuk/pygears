@@ -117,7 +117,7 @@ class SVServerModule:
             for port in itertools.chain(self.module.in_ports, self.module.out_ports)
         }
         return self.tenv.snippets.module_inst(
-            self.svmod.module_name, self.svmod.params, "dut", port_map)
+            self.svmod.wrap_module_name, self.svmod.params, "dut", port_map)
 
 
 class SVServerIntf:

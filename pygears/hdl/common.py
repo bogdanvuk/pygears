@@ -21,10 +21,14 @@ def enum_hdl_files(top, outdir, rtl_only=False, wrapper=False):
 
     vgen_map = reg[f'hdlgen/map']
     dirs = {}
-    for lang in ['v', 'sv']:
+    for lang in ['v', 'sv', 'vhd']:
         dirs[lang] = reg[f'{lang}gen/include']
 
     dti_yielded = False
+
+    if reg['hdl/toplang'] == 'sv':
+        dti_yielded = True
+        yield os.path.join(LIB_SVLIB_DIR, 'dti.sv')
 
     for node in NodeYielder().visit(top):
         if node not in vgen_map:
@@ -36,6 +40,7 @@ def enum_hdl_files(top, outdir, rtl_only=False, wrapper=False):
             dti_yielded = True
             yield os.path.join(LIB_SVLIB_DIR, 'dti.sv')
 
+        # TODO: What?
         if ((node is top) and wrapper and not rtl_only):
             yield os.path.join(outdir, f'wrap_{vinst.file_basename}')
 

@@ -27,11 +27,13 @@ def path_name(path):
 
 
 class HDLModuleInst:
-    def __init__(self, node, lang=None):
+    def __init__(self, node, lang=None, resolver=None):
         self.node = node
 
         if lang is None:
-            self.lang = mod_lang(node)
+            lang = mod_lang(node)
+
+        self.lang = lang
 
         self._impl_parse = None
         if 'memoized' in self.node.params:
@@ -43,21 +45,26 @@ class HDLModuleInst:
             self.resolver = hdlmod.resolver
             return
 
+        if resolver is not None:
+            self.resolver = resolver
+        else:
+            self.resolver = self.get_resolver()
+
+    def get_resolver(self):
         if self.node.parent is None:
-            self.resolver = reg[f'{self.lang}gen/dflt_resolver'](node)
-            return
+            return reg[f'{self.lang}gen/dflt_resolver'](self.node)
 
         for r in reg[f'{self.lang}gen/resolvers']:
             try:
-                self.resolver = r(node)
-                break
+                return r(self.node)
             except ResolverTypeError:
                 pass
         else:
-            self.resolver = reg[f'{self.lang}gen/dflt_resolver'](node)
+            resolver = reg[f'{self.lang}gen/dflt_resolver'](self.node)
             hdl_log().warning(
-                f'Unable to compile "{node.name}" to HDL and no HDL module with the name '
-                f'"{self.resolver.module_name}" found on the path. Module connected as a black-box.')
+                f'Unable to compile "{self.node.name}" to HDL and no HDL module with the name '
+                f'"{resolver.module_name}" found on the path. Module connected as a black-box.')
+            return resolver
 
     @property
     def _basename(self):

@@ -37,7 +37,7 @@
   dti #(.W_DATA({{width}})) {{name}}{{ "[%d:0]"|format(size-1) if size>1 else "" }}(); // {{type}} ({{width}})
 {%- endmacro %}
 
-{% macro module_inst(module_name, param_map, inst_name, port_map=None, sig_map=None, rst_name="rst") -%}
+{% macro module_inst(module_name, param_map, inst_name, port_map=None, sig_map=None, rst_name="rst", break_intfs=False) -%}
 
   {{module_name}}
   {%- if param_map|length > 0 %}
@@ -61,8 +61,14 @@
     {% endfor -%}
   {% endif %}
   {% if port_map -%}
-    {% for name,value in port_map.items() -%}
-      {{"."|indent(4,True)}}{{name}}({{value}}){{ "" if loop.last else "," }}
+    {% for name, value in port_map.items() %}
+      {% if break_intfs %}
+        .{{name}}_tvalid({{value}}.valid),
+        .{{name}}_tready({{value}}.ready),
+        .{{name}}_tdata({{value}}.data){{ "" if loop.last else "," }}
+      {% else %}
+        {{"."|indent(4,True)}}{{name}}({{value}}){{ "" if loop.last else "," }}
+      {% endif -%}
     {% endfor -%}
   {% else -%}
     .*

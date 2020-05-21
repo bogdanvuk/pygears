@@ -167,6 +167,9 @@ class SVSock(SimExtend):
         context['includes'].extend([dpi_path, self.outdir])
         context['files'].extend([os.path.join(self.outdir, 'top.sv')])
 
+        if not reg['sim/svsock/backend']:
+            raise CosimulatorStartError('No registered cosimulators')
+
         cosim_pid = None
         for b in reg['sim/svsock/backend'].values():
             try:
@@ -180,8 +183,8 @@ class SVSock(SimExtend):
                 break
         else:
             raise CosimulatorStartError(
-                f'No available cosimulator executables found for any of the plugins:'
-                f'",".join(reg["sim/svsock/backend"].keys())')
+                f'No available cosimulator executables found for any of the plugins: '
+                f'{",".join(reg["sim/svsock/backend"].keys())}')
 
         return cosim_pid
 

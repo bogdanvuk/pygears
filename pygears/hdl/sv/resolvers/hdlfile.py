@@ -1,16 +1,13 @@
 import functools
-import typing
 import os
 from pygears import reg
 from ...base_resolver import ResolverBase, ResolverTypeError
 from ..svparse import parse
 from pygears.util.fileio import find_in_dirs
 from pygears.typing import code, is_type
-from pygears.conf import inject, Inject
 
 
 class HDLFileResolver(ResolverBase):
-    @inject
     def __init__(self, node):
         self.node = node
 
