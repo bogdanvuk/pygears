@@ -462,17 +462,6 @@ def gear_base_resolver(
 
     params = infer_params(
         args, param_templates, context=get_function_context_dict(func))
-    # try:
-    #     params = infer_params(
-    #         args, param_templates, context=get_function_context_dict(func))
-    # except TypeMatchError as e:
-    #     err = TypeMatchError(f'{str(e)}, of the module "{name}"')
-    #     params = e.params
-    # except Exception as e:
-    #     err = type(e)(f'{str(e)}, of the module "{name}"')
-
-    # if err and not isinstance(err, TypeMatchError):
-    #     raise err
 
     if not err:
         if not params.pop('_enablement'):

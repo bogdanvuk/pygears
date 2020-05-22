@@ -1,26 +1,40 @@
 from pygears.lib import drv, collect, mon
+import inspect
 from pygears.sim import sim
 from pygears.typing import Integer, Int, Uint, is_type
 from pygears.core.partial import extract_arg_kwds, combine_arg_kwds, all_args_specified
-from pygears import clear
+from pygears.core.gear_inst import resolve_args
+from pygears import reset
+from pygears.sim import cosim
 
 
-def infer_dtype(val):
+def infer_dtype(val, dtype):
     if is_type(type(val)):
         return type(val)
 
-    if isinstance(val, int):
-        if val < 0:
-            return type(Int(val))
-        else:
-            return type(Uint(val))
+    if not is_type(dtype):
+        if isinstance(val, int):
+            if val < 0:
+                return type(Int(val))
+            else:
+                return type(Uint(val))
+
+    if dtype.specified:
+        return dtype
+
+    return dtype.base(val)
 
 
 def call(f, *args, **kwds):
-    clear()
+    reset()
     kwd_intfs, kwd_params = extract_arg_kwds(kwds, f)
     args_comb = combine_arg_kwds(args, kwd_intfs, f)
-    dtypes = [infer_dtype(arg) for arg in args_comb]
+
+    paramspec = inspect.getfullargspec(f.func)
+    args, annotations = resolve_args(args_comb, paramspec.args,
+                                     paramspec.annotations, paramspec.varargs)
+
+    dtypes = [infer_dtype(args[arg], annotations[arg]) for arg in args]
 
     seqs = [drv(t=t, seq=[v]) for t, v in zip(dtypes, args_comb)]
 
@@ -35,10 +49,6 @@ def call(f, *args, **kwds):
         res = [[]]
         collect(outputs | mon, result=res[0])
 
-    mod = seqs[0].consumers[0].gear
-    from pygears.sim import cosim
-    cosim(mod, 'verilator', rebuild=True)
-    # sim('/tools/home/tmp/trunc', check_activity=False)
     sim(check_activity=False)
 
     if isinstance(outputs, tuple):

@@ -2,7 +2,7 @@ import inspect
 
 from pygears import reg, Intf, module, find
 from pygears.sim.sim_gear import SimGear, is_simgear_func
-from pygears.sim.sim import SimPlugin
+from pygears.sim.sim import SimPlugin, cosim
 from pygears.core.gear import GearPlugin
 from pygears.core.gear_inst import gear_base_resolver
 from pygears.core.hier_node import HierVisitorBase
@@ -102,6 +102,13 @@ class SimInstVisitor(HierVisitorBase):
         if module.parent is None:
             return False
 
+        if module.params.get('__sim__', None) is not None:
+            cfg = module.params['__sim__']
+            if isinstance(cfg, dict):
+                cosim(module, cfg['sim'])
+            else:
+                cosim(module, cfg)
+
         sim_cls = module.params.get('sim_cls', None)
         sim_inst = None
 
@@ -135,6 +142,7 @@ class SimInstPlugin(SimPlugin, GearPlugin):
         reg['sim/module_namespace'] = {}
         reg['sim/map'] = {}
         reg['gear/params/extra/sim_cls'] = None
+        reg['gear/params/extra/__sim__'] = None
         reg['gear/gear_dflt_resolver'] = sim_compile_resolver
 
     @classmethod

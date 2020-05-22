@@ -7,6 +7,7 @@ import sys
 import tempfile
 import time
 
+from functools import partial
 from pygears import GearDone, find, reg
 from pygears.conf import CustomLogger, LogFmtFilter, register_custom_log
 from pygears.core.gear import GearPlugin, Gear
@@ -82,9 +83,8 @@ def topo_sort_util(v, g, dag, visited, stack, cycle):
         if consumer in cycle:
             index = cycle.index(consumer)
             cycle.append(consumer)
-            raise SimCyclic(
-                'Simulation not possible, gear cycle found:'
-                f' {" -> ".join([c.name for c in cycle[index:]])}')
+            raise SimCyclic('Simulation not possible, gear cycle found:'
+                            f' {" -> ".join([c.name for c in cycle[index:]])}')
 
         if not visited[i]:
             topo_sort_util(i, consumer, dag, visited, stack, cycle)
@@ -143,6 +143,41 @@ class GearEnum(HierVisitorBase):
             self.gears.append(node)
 
 
+def cosim(top, sim, *args, **kwds):
+    if top is None:
+        top = reg['gear/root']
+    elif isinstance(top, str):
+        top_name = top
+        top = find(top)
+
+        if top is None:
+            raise Exception(f'No gear found on path: "{top_name}"')
+
+    if isinstance(sim, str):
+        if sim in ['cadence', 'xsim', 'questa']:
+            from .modules import SimSocket
+            sim_cls = SimSocket
+            kwds['sim'] = sim
+        elif sim == 'verilator':
+            from .modules import SimVerilated
+            from .modules.verilator import build
+
+            kwds['outdir'] = kwds.get('outdir', reg['results-dir'])
+            kwds['rebuild'] = kwds.get('rebuild', True)
+            sim_cls = SimVerilated
+            build(top, **kwds)
+            kwds['rebuild'] = False
+        else:
+            raise Exception(f"Unsupported simulator: {sim}")
+    else:
+        sim_cls = sim
+
+    if args or kwds:
+        top.params['sim_cls'] = partial(sim_cls, *args, **kwds)
+    else:
+        top.params['sim_cls'] = sim_cls
+
+
 def simgear_exec_order(gears):
     sim_map = reg['sim/map']
     dag = {}
@@ -179,7 +214,8 @@ def simgear_exec_order(gears):
     gear_order = topo_sort(dag)
 
     cosim_modules = [
-        g for g in sim_map if isinstance(g, Gear) and g.params['sim_cls'] is not None
+        g for g in sim_map
+        if isinstance(g, Gear) and g.params['sim_cls'] is not None
     ]
 
     gear_multi_order = cosim_modules.copy()
@@ -406,7 +442,8 @@ class EventLoop(asyncio.events.AbstractEventLoop):
                     self._schedule_to_finish.remove(sim_gear)
 
             for sim_gear in reversed(self.sim_gears):
-                if ((sim_gear in self.back_ready) or (sim_gear in self.delta_ready)):
+                if ((sim_gear in self.back_ready)
+                        or (sim_gear in self.delta_ready)):
                     # print(
                     #     f'Back: {sim_gear.port.name if hasattr(sim_gear, "port") else sim_gear.gear.name}'
                     # )
@@ -500,7 +537,14 @@ class EventLoop(asyncio.events.AbstractEventLoop):
                 raise reg['sim/exception']
 
 
-def sim(resdir=None, timeout=None, extens=None, run=True, check_activity=False, seed=None):
+def sim(resdir=None,
+        timeout=None,
+        extens=None,
+        run=True,
+        check_activity=False,
+        seed=None):
+    if reg['sim/dryrun']:
+        return
 
     if extens is None:
         extens = []
@@ -556,7 +600,8 @@ class SimFmtFilter(LogFmtFilter):
 class SimLog(CustomLogger):
     def get_format(self):
         return logging.Formatter(
-            '%(timestep)s %(module)20s [%(levelname)s]: %(message)s %(err_file)s %(stack_file)s')
+            '%(timestep)s %(module)20s [%(levelname)s]: %(message)s %(err_file)s %(stack_file)s'
+        )
 
     def get_filter(self):
         return SimFmtFilter()
@@ -577,6 +622,7 @@ class SimPlugin(GearPlugin):
         reg['sim/flow'] = []
         reg['sim/tasks'] = {}
         reg['sim/simulator'] = None
+        reg['sim/dryrun'] = False
         reg.confdef('sim/rand_seed', None)
         reg.confdef('sim/clk_freq', 1000)
         reg.confdef('results-dir', default=tempfile.mkdtemp())

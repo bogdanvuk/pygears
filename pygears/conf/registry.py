@@ -110,6 +110,7 @@ class PluginBase:
     def reset(cls):
         pass
 
+
 def manage_async_regs(key_path):
     resolved = []
 
@@ -162,6 +163,11 @@ def manage_async_regs(key_path):
 #         manage_async_regs(key_pattern)
 
 
+def reset():
+    for subc in PluginBase.subclasses:
+        subc.reset()
+
+
 def clear():
     for subc in PluginBase.subclasses:
         subc.clear()
@@ -170,6 +176,7 @@ def clear():
 
     for subc in PluginBase.subclasses:
         subc.bind()
+
 
 @dataclass
 class ConfigVariable:
@@ -251,16 +258,15 @@ class Registry(dict):
         if self is reg:
             manage_async_regs(key)
 
-
     def confdef(self, path, default=None, docs=None, setter=None, getter=None):
         if path in self:
             raise Exception(f'Variable "{path}" already defined!')
 
         var = ConfigVariable(path,
-                            default=default,
-                            docs=docs,
-                            setter=setter,
-                            getter=getter)
+                             default=default,
+                             docs=docs,
+                             setter=setter,
+                             getter=getter)
 
         if setter is not None:
             setter(var, default)
@@ -279,6 +285,7 @@ class Registry(dict):
 
 
 reg = Registry()
+
 
 def load_plugin_folder(path, package=None):
     plugin_parent_dir, plugin_dir = os.path.split(path)

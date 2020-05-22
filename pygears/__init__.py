@@ -15,7 +15,7 @@ from asyncio.queues import QueueEmpty as IntfEmpty
 import pygears.typing
 
 # form pygears.conf import only for legacy compatibility
-from pygears.conf import PluginBase, clear, MultiAlternativeError
+from pygears.conf import PluginBase, clear, reset, MultiAlternativeError
 from pygears.conf import pygears_excepthook, TraceLevel, reg
 import pygears.conf
 import pygears.entry

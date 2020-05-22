@@ -39,14 +39,14 @@
 
 {% macro module_inst(module_name, param_map, inst_name, port_map=None, sig_map=None, rst_name="rst") -%}
 
-  {{module_name}}
+{{module_name}}
   {%- if param_map|length > 0 %}
  #(
     {% for name,value in param_map.items() -%}
       {%- if name %}
-        {{"."|indent(4,True)}}{{name}}({{max(1, value.bit_length())}}'d{{value}}){{ "" if loop.last else "," }}
+{{"."|indent(4, True)}}{{name}}({{max(1, value.bit_length())}}'d{{value}}){{ "" if loop.last else "," }}
       {% else -%}
-        {{value|indent(4,True)}}{{ "" if loop.last else "," }}
+{{value|indent(4, True)}}{{ "" if loop.last else "," }}
       {% endif -%}
     {% endfor -%}
     )
@@ -57,12 +57,12 @@
     .rst({{rst_name}}),
   {% else %}
     {% for name,value in sig_map.items() -%}
-      {{"."|indent(4,True)}}{{name}}({{value}}),
+{{"."|indent(4, True)}}{{name}}({{value}}),
     {% endfor -%}
   {% endif %}
   {% if port_map -%}
     {% for name, value in port_map.items() %}
-      {{"."|indent(4,True)}}{{name}}({{value}}){{ "" if loop.last else "," }}
+{{"."|indent(4, True)}}{{name}}({{value}}){{ "" if loop.last else "," }}
     {% endfor -%}
   {% else -%}
     .*
