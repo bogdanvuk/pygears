@@ -120,7 +120,7 @@ class SVSock(SimExtend):
                     context[phase][i] = phase_sv
 
         res = env.get_template('svsock_top.j2').render(context)
-        save_file('top.sv', self.outdir, res)
+        save_file('_top.sv', self.outdir, res)
 
     def sendall(self, pkt):
         self.conn.sendall(pkt)
@@ -165,7 +165,7 @@ class SVSock(SimExtend):
                     context[param].extend(param_val)
 
         context['includes'].extend([dpi_path, self.outdir])
-        context['files'].extend([os.path.join(self.outdir, 'top.sv')])
+        context['files'].extend([os.path.join(self.outdir, '_top.sv')])
 
         if not reg['sim/svsock/backend']:
             raise CosimulatorStartError('No registered cosimulators')

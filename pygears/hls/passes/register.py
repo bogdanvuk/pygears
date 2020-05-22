@@ -82,9 +82,6 @@ class ResolveRegInits(HDLVisitor):
         if not isinstance(node.target, ir.Name):
             return node
 
-        if not isinstance(node.val, ir.ResExpr):
-            return node
-
         obj = self.ctx.scope[node.target.name]
 
         if (isinstance(obj, ir.Variable) and obj.reg):

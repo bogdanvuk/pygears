@@ -176,14 +176,12 @@ class CFG(HDLVisitor):
 
     def HDLBlock(self, block: ir.HDLBlock):
         test = Node(block.in_cond)
-        if block.in_cond != ir.res_true:
-            self.set_head(test)
-        else:
-            node = Node(block)
-            self.set_head(node)
+        self.set_head(test)
 
         self.BaseBlock(block)
 
+        # If there is a condition to enter this block, make two possible paths:
+        # one through it and one around it
         if block.in_cond != ir.res_true:
             body_exit = self.head[:]
             self.head[:] = []
@@ -207,22 +205,22 @@ class CFG(HDLVisitor):
         self.set_head(exit_cond)
         self.set_head(node)
 
-        # Handle the orelse
-        # self.visit_statements(node.orelse)
         # The break statements and the test go to the next node
         self.head.extend(self.break_.pop())
 
     def IfElseBlock(self, block: ir.IfElseBlock):
-        breakpoint()
-        node = Node(block)
-        self.set_head(node)
         branch_exits = []
         for stmt in block.stmts:
-            self.visit(stmt)
+            test = Node(stmt.in_cond)
+            self.set_head(test)
+
+            self.BaseBlock(stmt)
+
             branch_exits.extend(self.head[:])
             self.head[:] = []
+
             if stmt.in_cond != ir.res_true:
-                self.head.append(node)
+                self.head.append(test)
 
         self.head.extend(branch_exits)
 

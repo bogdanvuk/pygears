@@ -10,7 +10,7 @@
       din_reg = {{code(_din_t(params['init']), int)}};
    end
 
-   always_ff @(posedge clk) begin
+   always @(posedge clk) begin
       if (rst) begin
          din_reg <= {{code(_din_t(params['init']), int)}};
       end else if (din.valid && din.ready) begin

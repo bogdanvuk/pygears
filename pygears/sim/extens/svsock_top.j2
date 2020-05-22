@@ -12,7 +12,7 @@ parameter CMD_FINISH      = 32'h0100_0000;
 
 parameter ACTIVITY_TIMEOUT = 1000;
 
-module top;
+module _top;
 
    `include "socket_macros.svh"
    `include "dti_verif_if.sv"
@@ -141,6 +141,6 @@ module top;
          end
       end
    end
-endmodule : top
+endmodule
 
 `endif

@@ -10,7 +10,7 @@
       din_reg = {{code(_din_t(params['init']), int)}};
    end
 
-   always_ff @(posedge clk) begin
+   always @(posedge clk) begin
       if (rst) begin
          din_reg <= {{code(_din_t(params['init']), int)}};
       end else if (din.valid && din.ready) begin
@@ -23,7 +23,7 @@
    {% if params['hold'] %}
    logic                         {{rd}}_consuming;
    logic                         {{rd}}_handshake;
-   logic [$size(din.data)-1 : 0] rd_reg;
+   logic [$size(din.data)-1 : 0] {{rd}}_reg;
 
    always @(posedge clk) begin
       if (!{{rd}}_consuming) begin
