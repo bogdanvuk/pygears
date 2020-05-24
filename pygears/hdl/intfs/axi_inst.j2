@@ -159,9 +159,8 @@
       axi_intfs.AXI_MASTER, name, "m_axi", uppercase=True,
       awaddr=32, wdata=wdata.params['wdata'], bresp=True) %}
 
-
   axis2mm #(
-  {% if 'wlast' in wdata.datamap %}
+  {% if wdata.datamap and 'wlast' in wdata.datamap %}
                     .OPT_TLAST_SYNC(1),
   {% else %}
                     .OPT_TLAST_SYNC(0),
@@ -176,7 +175,7 @@
                     .S_AXIS_TDATA({{wdata.name}}.data[{{wdata.dataslice('wdata')}}]),
                     .S_AXIS_TVALID({{wdata.name}}.valid),
                     .S_AXIS_TREADY({{wdata.name}}.ready),
-  {% if 'wlast' in wdata.datamap %}
+  {% if wdata.datamap and 'wlast' in wdata.datamap %}
                     .S_AXIS_TLAST({{wdata.name}}.data[{{wdata.dataslice('wlast')}}]),
   {% endif %}
                     {{axi_port_map|join(",\n")|indent(19, True)}},

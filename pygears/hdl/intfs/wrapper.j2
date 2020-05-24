@@ -28,8 +28,10 @@ module {{wrap_module_name}} #(
   {% if p.t == 'axidma' %}
     {% if rdata %}
     {{axi.dma_read(name, rdata)}}
-    {% else %}
+    {% elif wdata %}
     {{axi.dma_write(name, wdata)}}
+    {% else %}
+    {{ "Unexpeced error in {} config".format(name) | debug}}
     {% endif %}
   {% elif p.t == 'axi' %}
     {% if rdata %}
