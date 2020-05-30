@@ -59,7 +59,6 @@ def resolve_param(val, match, namespace):
 
 
 def infer_ftypes(params, args, namespace={}):
-
     # Add all registered objects (types and transformations) to the namespace
     namespace = dict(namespace)
     namespace.update(reg['gear/type_arith'])

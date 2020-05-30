@@ -24,6 +24,12 @@ def queuemap(din, *, f, lvl=1, fcat=czip, balance=None, common_balance=True):
     if not isinstance(dout, tuple):
         dout = (dout, )
 
+    for i, d in enumerate(dout):
+        if d is None:
+            raise TypeError(
+                f'Module "{f.__name__}" passed to queuemap returned nothing on its ouput {i}'
+            )
+
     if balance is not None and common_balance:
         env = env | balance
 

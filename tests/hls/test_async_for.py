@@ -9,12 +9,25 @@ from pygears.lib import directed
 def test_simple_async_sim(sim_cls):
     @gear(hdl={'compile': True})
     async def test() -> Uint[3]:
-        async for i, _ in qrange(4):
+        for i, _ in qrange(4):
             yield i
 
     directed(f=test(sim_cls=sim_cls), ref=list(range(4)) * 2)
 
     sim(timeout=8)
+
+
+# TODO: This won't work ("for" instead of "async for"), throw reasonable error
+# def test_simple_async_sim(sim_cls):
+#     @gear(hdl={'compile': True})
+#     async def test() -> Uint[3]:
+#         for i, _ in qrange(4):
+#             yield i
+
+#     directed(f=test(sim_cls=sim_cls), ref=list(range(4)) * 2)
+
+#     sim(timeout=8)
+
 
 def test_simple(sim_cls):
     @gear(hdl={'compile': True})

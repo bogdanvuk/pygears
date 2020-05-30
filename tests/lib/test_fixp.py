@@ -1,7 +1,7 @@
 from pygears import gear, Intf
 from pygears.typing import Fixp, Int
 from pygears.sim import cosim
-from pygears.util.call import call
+from pygears.sim import call
 
 
 def test_le():

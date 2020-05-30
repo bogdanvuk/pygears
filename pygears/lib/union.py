@@ -48,7 +48,6 @@ def ucase(din: Union, *, f, fcat=ccat, tout=None, fmux=mux, mapping=None):
         | unionmap(f=f, fmux=fmux, mapping=mapping, use_dflt=False)
 
     if dout.dtype.types.count(dout.dtype.types[0]) != len(dout.dtype.types):
-        breakpoint()
         raise TypeMatchError(f'output types of all input types need be the same, but got "{dout.dtype.types}')
 
     return dout | union_collapse(t=tout)

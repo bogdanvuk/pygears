@@ -22,7 +22,7 @@ def infer_dtype(val, dtype):
     if dtype.specified:
         return dtype
 
-    return dtype.base(val)
+    return type(dtype.base(val))
 
 
 def call(f, *args, **kwds):

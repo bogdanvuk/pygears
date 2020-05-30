@@ -435,7 +435,7 @@ def gear_base_resolver(
         args, const_args = infer_const_args(args)
         check_args_specified(args)
     except (TooManyArguments, GearArgsNotSpecified) as e:
-        err = type(e)(f'{str(e)}\n    when instantiating "{name}"')
+        err = type(e)(f'{str(e)}\n - when instantiating "{name}"')
 
     if err:
         raise err
@@ -460,8 +460,14 @@ def gear_base_resolver(
             else:
                 return outputs
 
-    params = infer_params(
-        args, param_templates, context=get_function_context_dict(func))
+    try:
+        params = infer_params(
+            args, param_templates, context=get_function_context_dict(func))
+    except TypeMatchError as e:
+        err = type(e)(f'{str(e)}\n - when instantiating "{name}"')
+
+    if err:
+        raise err
 
     if not err:
         if not params.pop('_enablement'):

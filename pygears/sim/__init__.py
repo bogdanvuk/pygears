@@ -12,6 +12,8 @@ from .sim import SimPlugin, schedule_to_finish, cosim
 
 from .extens.vcd import VCD
 
+from .call import call
+
 
 def verilate(top, *args, **kwds):
     cosim(top, 'verilator', *args, **kwds)
@@ -20,5 +22,5 @@ def verilate(top, *args, **kwds):
 __all__ = [
     'sim', 'artifacts_dir', 'sim_assert', 'clk', 'delta', 'timestep',
     'sim_log', 'sim_phase', 'schedule_to_finish', 'SimFinish', 'verilate',
-    'SimPlugin', 'VCD'
+    'SimPlugin', 'VCD', 'call'
 ]

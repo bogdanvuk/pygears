@@ -1,5 +1,5 @@
 from pygears.lib import trunc
-from pygears.util.call import call
+from pygears.sim import call
 from pygears.typing import Ufixp, Fixp, Uint, Int
 
 

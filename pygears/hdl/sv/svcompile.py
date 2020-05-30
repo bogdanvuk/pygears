@@ -710,6 +710,7 @@ def compile_gear_body(gear, outdir, template_env):
 
 
 def compile_gear(gear, template_env, module_name, outdir):
+    # TODO: Harden the case where local variable shadows a global one
     context = {
         'module_name': module_name,
         'intfs': template_env.port_intfs(gear),

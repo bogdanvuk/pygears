@@ -37,6 +37,7 @@ def cast_return(arg_nodes, out_ports):
     args = []
     for arg, intf in zip(input_vars, out_ports):
         port_t = intf.dtype
+        # TODO: Let this be handled by typing.cast function for better error reporting
         if typeof(port_t, (Queue, Tuple, Array)):
             if isinstance(arg, ir.ConcatExpr) and arg.dtype != port_t:
                 for i in range(len(arg.operands)):
