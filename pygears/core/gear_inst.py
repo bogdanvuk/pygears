@@ -314,7 +314,8 @@ def resolve_func(gear_inst):
 
         err = None
         try:
-            out_intfs, out_dtype = resolve_out_types(out_intfs, out_dtype, gear_inst)
+            out_intfs, out_dtype = resolve_out_types(out_intfs, out_dtype,
+                                                     gear_inst)
         except (TypeError, TypeMatchError) as e:
             err = type(e)(f"{str(e)}\n    when instantiating '{gear_inst.name}'")
 

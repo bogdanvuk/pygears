@@ -9,7 +9,7 @@ from pygears.lib import directed
 def test_simple_async_sim(sim_cls):
     @gear(hdl={'compile': True})
     async def test() -> Uint[3]:
-        for i, _ in qrange(4):
+        async for i, _ in qrange(4):
             yield i
 
     directed(f=test(sim_cls=sim_cls), ref=list(range(4)) * 2)

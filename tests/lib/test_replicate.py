@@ -59,6 +59,9 @@ def test_replicate_queue(cosim_cls, din_delay, dout_delay):
     sim()
 
 
+# from pygears.sim.modules import SimVerilated
+# test_replicate_queue('/tools/home/tmp/replicate_while', SimVerilated, 0, 0)
+
 # TODO: live fails
 # @formal_check()
 # def test_formal():

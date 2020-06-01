@@ -273,6 +273,7 @@ class GenericMeta(TypingMeta):
                 tmpl_map = args
             else:
                 tmpl_map = {name: val for name, val in zip(bases[0].templates, args)}
+
             return param_subs(bases[0], tmpl_map, {})
 
     def __init_subclass__(cls, **kwds):

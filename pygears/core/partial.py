@@ -96,6 +96,9 @@ class Partial:
     def __str__(self):
         return f'{self.func.__name__}'
 
+    def __str__(self):
+        return f'{self.func.__name__}'
+
     def __call__(self, *args, **kwds):
         if self.kwds:
             prev_kwds = self.kwds.copy()
