@@ -327,7 +327,10 @@ class Tuple(tuple, metaclass=TupleType):
         if isinstance(key, int):
             return super().__getitem__(key)
         elif isinstance(key, str):
-            return super().__getitem__(type(self).fields.index(key))
+            try:
+                return super().__getitem__(type(self).fields.index(key))
+            except ValueError:
+                raise TypeError(f'Tuple "{repr(self)}" has no field "{key}"')
 
         key_norm = type(self).index_norm(key)
 
@@ -362,7 +365,17 @@ class Tuple(tuple, metaclass=TupleType):
         return not self.__eq__(other)
 
     @class_and_instance_method
-    def replace(self, **kwds):
+    def subs(self, *args, **kwds):
+        if args:
+            path, val = args
+            if isinstance(path, tuple):
+                if len(path) > 1:
+                    val = self[path[0]].subs(path[1:], val)
+
+                path = path[0]
+
+            kwds = {path:val}
+
         map_dict = {f: kwds.get(f, self[f]) for f in type(self).fields}
         return type(self)(map_dict)
 

@@ -1,7 +1,7 @@
 from pygears.lib import drv, collect, mon
 import inspect
 from pygears.sim import sim
-from pygears.typing import Integer, Int, Uint, is_type
+from pygears.typing import Integer, Int, Uint, is_type, typeof, Any
 from pygears.core.partial import extract_arg_kwds, combine_arg_kwds, all_args_specified
 from pygears.core.gear_inst import resolve_args
 from pygears import reset
@@ -12,7 +12,7 @@ def infer_dtype(val, dtype):
     if is_type(type(val)):
         return type(val)
 
-    if not is_type(dtype):
+    if not is_type(dtype) or typeof(dtype, Any):
         if isinstance(val, int):
             if val < 0:
                 return type(Int(val))

@@ -87,8 +87,7 @@ class Array(list, metaclass=ArrayType):
         if val is None:
             array_tpl = (None, ) * len(type(self))
         else:
-            array_tpl = (v if typeof(type(v), t) or v is None else t(v)
-                         for v in val)
+            array_tpl = (v if typeof(type(v), t) or v is None else t(v) for v in val)
 
         return super().__init__(array_tpl)
 
@@ -104,6 +103,15 @@ class Array(list, metaclass=ArrayType):
             return self._array != other
 
         return not self.__eq__(other)
+
+    def subs(self, path, val):
+        if isinstance(path, tuple):
+            if len(path) > 1:
+                val = self[path[0]].subs(path[1:], val)
+
+            path = path[0]
+
+        return type(self)([self[i] if i != path else val for i in range(len(self))])
 
     def __hash__(self):
         return super().__hash__()

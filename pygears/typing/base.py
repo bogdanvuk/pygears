@@ -464,7 +464,7 @@ searched recursively. Each template is reported only once.
 
         return self.base[args]
 
-    def replace(self, **kwds):
+    def subs(self, **kwds):
         args = {k: kwds.get(k, v) for k, v in zip(self.fields, self.args)}
 
         return self.base[args]
