@@ -161,6 +161,14 @@ def resolve_func(func, args, kwds, ctx):
             cls = get_class_that_defined_method(f).__base__
 
             return ir.ResExpr(Super(cls, obj))
+        elif getattr(func, '__func__', None) in reg['hls/ir_builtins']:
+            val = func.__self__
+            for name, v in ctx.scope.items():
+                if val is v.val:
+                    val = ctx.ref(name)
+                    break
+
+            return reg['hls/ir_builtins'][func.__func__](val, *args, **kwds)
         elif const_func_args(args, kwds):
             return resolve_compile_time(func, args, kwds)
         elif is_type(func.__self__):

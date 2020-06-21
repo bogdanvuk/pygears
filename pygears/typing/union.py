@@ -236,6 +236,7 @@ class Union(tuple, metaclass=UnionType):
         """
 
         ret = []
+        val = int(val)
         for t in cls:
             t_width = int(t)
             t_mask = (1 << t_width) - 1

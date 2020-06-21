@@ -677,8 +677,6 @@ def compile_gear_body(gear, outdir, template_env):
     from pygears.hls.translate import translate_gear
     ctx, hdl_ast = translate_gear(gear)
 
-    lang = template_env.lang
-
     subsvmods = []
     if ctx.submodules:
         from pygears.hdl import hdlgen

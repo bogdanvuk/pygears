@@ -1,6 +1,8 @@
 from .base import EnumerableGenericMeta, typeof, is_type
 from .base import class_and_instance_method
 
+# TODO: Check why array is specified when no length is specified
+
 
 class ArrayType(EnumerableGenericMeta):
     def keys(self):
@@ -16,7 +18,7 @@ class ArrayType(EnumerableGenericMeta):
     def width(self):
         return sum(f.width for f in self)
 
-    #TODO: Remove this
+    # TODO: Remove this
     @property
     def dtype(self):
         return self.args[0]
@@ -132,6 +134,7 @@ class Array(list, metaclass=ArrayType):
     @classmethod
     def decode(cls, val):
         ret = []
+        val = int(val)
         mask = int(cls.data.width * '1', 2)
         for t in cls:
             ret.append(t.decode(val & mask))

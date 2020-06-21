@@ -68,8 +68,10 @@ def call_len(arg, **kwds):
 def call_print(*arg, **kwds):
     pass
 
+
 def call_float(arg, **kwds):
     return ir.CastExpr(arg, cast_to=Float)
+
 
 def call_int(arg, **kwds):
     # ignore cast
@@ -123,8 +125,7 @@ def call_clk(*arg, **kwds):
 
 def call_empty(obj, *arg, **kwds):
     assert not arg, 'Empty should be called without arguments'
-    expr = ir.IntfDef(intf=obj.intf, _name=obj.name, context='valid')
-    return ir.UnaryOpExpr(expr, ir.opc.Not)
+    return ir.UnaryOpExpr(ir.Component(obj, 'valid'), ir.opc.Not)
 
 
 def call_gather(*arg, **kwds):

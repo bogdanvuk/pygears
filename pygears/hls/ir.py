@@ -9,21 +9,15 @@ from pygears.typing.base import TypingMeta
 from functools import reduce
 from pygears.core.port import InPort, OutPort
 from pygears.core.gear import InSig, OutSig
-from pygears.typing import (Bool, Integer, Queue, Tuple, Uint, is_type, typeof,
-                            Array, Union, Unit)
+from pygears.typing import (Bool, Integer, Queue, Tuple, Uint, is_type, typeof, Array, Union, Unit)
 # from .ast.utils import get_property_type
 import operator
 
-BOOLEAN_OPERATORS = {
-    opc.BitOr, opc.BitAnd, opc.BitXor, opc.Invert, opc.Not, opc.And, opc.Or
-}
-BIN_OPERATORS = [
-    opc.Eq, opc.Gt, opc.GtE, opc.Lt, opc.LtE, opc.NotEq, opc.And,
-    opc.Or
-]
+BOOLEAN_OPERATORS = {opc.BitOr, opc.BitAnd, opc.BitXor, opc.Invert, opc.Not, opc.And, opc.Or}
+BIN_OPERATORS = [opc.Eq, opc.Gt, opc.GtE, opc.Lt, opc.LtE, opc.NotEq, opc.And, opc.Or]
 EXTENDABLE_OPERATORS = [
-    opc.Add, opc.Sub, opc.Mult, opc.Div, opc.Mod, opc.Pow, opc.LShift,
-    opc.RShift, opc.BitOr, opc.BitAnd, opc.BitXor, opc.Div, opc.Invert, opc.Not
+    opc.Add, opc.Sub, opc.Mult, opc.Div, opc.Mod, opc.Pow, opc.LShift, opc.RShift, opc.BitOr,
+    opc.BitAnd, opc.BitXor, opc.Div, opc.Invert, opc.Not
 ]
 
 OPMAP = {
@@ -102,8 +96,7 @@ def bin_op_reduce(intfs, func, op, dflt=None):
     if len(intfs) == 1:
         return intf1
     else:
-        return BinOpExpr(
-            [intf1, bin_op_reduce(intfs[1:], func, op, dflt=dflt)], op)
+        return BinOpExpr([intf1, bin_op_reduce(intfs[1:], func, op, dflt=dflt)], op)
 
 
 def find_sub_dtype(val):
@@ -360,8 +353,7 @@ class InterfaceAck(Expr):
 @dataclass
 class ConcatExpr(Expr):
     def __repr__(self):
-        return 'ConcatExpr(' + ', '.join([repr(v)
-                                          for v in self.operands]) + ')'
+        return 'ConcatExpr(' + ', '.join([repr(v) for v in self.operands]) + ')'
 
     def __str__(self):
         return '(' + ', '.join([str(v) for v in self.operands]) + ')'
@@ -373,12 +365,14 @@ class ConcatExpr(Expr):
         if not isinstance(other, BinOpExpr):
             return False
 
-        return all(ops == opo
-                   for ops, opo in zip(self.operands, other.operands))
+        return all(ops == opo for ops, opo in zip(self.operands, other.operands))
 
     def __new__(cls, operands: typing.Sequence[Expr]):
         if all(isinstance(v, ResExpr) for v in operands):
-            return ResExpr(tuple(v.val for v in operands))
+            if all(is_type(v.dtype) for v in operands):
+                return ResExpr(Tuple[tuple(v.dtype for v in operands)](tuple(v.val for v in operands)))
+            else:
+                return ResExpr(tuple(v.val for v in operands))
 
         inst = super().__new__(cls)
         inst.operands = operands
@@ -401,8 +395,7 @@ class UnaryOpExpr(Expr):
         if not isinstance(other, type(self)):
             return False
 
-        return (self.operand == other.operand
-                and self.operator == other.operator)
+        return (self.operand == other.operand and self.operator == other.operator)
 
     def __new__(cls, operand, operator):
         if isinstance(operand, ResExpr):
@@ -415,8 +408,7 @@ class UnaryOpExpr(Expr):
             if operand.operator == opc.NotEq:
                 return BinOpExpr(operand.operands, opc.Eq)
 
-        if operator == opc.Not and isinstance(
-                operand, UnaryOpExpr) and operand.operator == opc.Not:
+        if operator == opc.Not and isinstance(operand, UnaryOpExpr) and operand.operator == opc.Not:
             return operand.operand
 
         inst = super().__new__(cls)
@@ -443,8 +435,7 @@ class CastExpr(Expr):
         if not isinstance(other, type(self)):
             return False
 
-        return (self.operand == other.operand
-                and self.cast_to == other.cast_to)
+        return (self.operand == other.operand and self.cast_to == other.cast_to)
 
     def __new__(cls, operand, cast_to):
         if isinstance(cast_to, ResExpr):
@@ -456,8 +447,7 @@ class CastExpr(Expr):
         if operand.dtype == cast_to:
             return operand
 
-        if isinstance(operand, ConcatExpr) and typeof(
-                cast_to, (Array, Tuple, Queue, Union)):
+        if isinstance(operand, ConcatExpr) and typeof(cast_to, (Array, Tuple, Queue, Union)):
             cast_ops = [
                 CastExpr(op, cast_t) if op.dtype != cast_t else op
                 for op, cast_t in zip(operand.operands, cast_to)
@@ -485,12 +475,10 @@ class SliceExpr(Expr):
         if not isinstance(other, type(self)):
             return False
 
-        return (self.start == other.start and self.stop == other.stop
-                and self.step == other.step)
+        return (self.start == other.start and self.stop == other.stop and self.step == other.step)
 
     def __new__(cls, start: OpType, stop: OpType, step: OpType):
-        if isinstance(start, ResExpr) and isinstance(
-                stop, ResExpr) and isinstance(step, ResExpr):
+        if isinstance(start, ResExpr) and isinstance(stop, ResExpr) and isinstance(step, ResExpr):
             return ResExpr(slice(start.val, stop.val, step.val))
 
         inst = super().__new__(cls)
@@ -544,24 +532,19 @@ class BinOpExpr(Expr):
             return False
 
         return ((self.operator == other.operator)
-                and (all(ops == opo
-                         for ops, opo in zip(self.operands, other.operands))))
+                and (all(ops == opo for ops, opo in zip(self.operands, other.operands))))
 
     @property
     def dtype(self):
         if self.operator in BIN_OPERATORS:
             return Uint[1]
 
-        if (self.operator in (opc.LShift, opc.RShift)) and isinstance(
-                self.operands[1], ResExpr):
+        if (self.operator in (opc.LShift, opc.RShift)) and isinstance(self.operands[1], ResExpr):
             op2 = self.operands[1].val
         else:
             op2 = self.operands[1].dtype
 
-        res_t = eval(f'op1 {OPMAP[self.operator]} op2', {
-            'op1': self.operands[0].dtype,
-            'op2': op2
-        })
+        res_t = eval(f'op1 {OPMAP[self.operator]} op2', {'op1': self.operands[0].dtype, 'op2': op2})
 
         if isinstance(res_t, bool):
             return Uint[1]
@@ -587,8 +570,7 @@ class ArrayOpExpr(Expr):
 
     def __new__(cls, array: Expr, operator):
         if isinstance(array, ResExpr):
-            return ResExpr(
-                reduce(PYOPMAP[operator], array.val, REDUCE_INITIAL[operator]))
+            return ResExpr(reduce(PYOPMAP[operator], array.val, REDUCE_INITIAL[operator]))
 
         inst = super().__new__(cls)
         inst.array = array
@@ -688,8 +670,7 @@ class ConditionalExpr(Expr):
         if not isinstance(other, type(self)):
             return False
 
-        return (self.cond == other.cond
-                and self.operands[0] == other.operands[0]
+        return (self.cond == other.cond and self.operands[0] == other.operands[0]
                 and self.operands[1] == other.operands[1])
 
     def __new__(cls, operands: typing.Sequence[OpType], cond: Expr):
@@ -835,9 +816,8 @@ class ExprStatement(Statement):
 
         if isinstance(self.expr, ConcatExpr):
             return bin_op_reduce(
-                list(op.in_await for op in self.expr.operands
-                     if isinstance(op, Await)), lambda op: op, opc.And,
-                res_true)
+                list(op.in_await for op in self.expr.operands if isinstance(op, Await)),
+                lambda op: op, opc.And, res_true)
 
         return res_true
 
@@ -900,9 +880,8 @@ class AssignValue(Statement):
 
         if isinstance(self.val, ConcatExpr):
             return bin_op_reduce(
-                list(op.in_await for op in self.val.operands
-                     if isinstance(op, Await)), lambda op: op, opc.And,
-                res_true)
+                list(op.in_await for op in self.val.operands if isinstance(op, Await)),
+                lambda op: op, opc.And, res_true)
 
         return res_true
 

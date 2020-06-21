@@ -41,6 +41,7 @@ def tuple_resolver(opexp, cast_to):
 
     return ir.ConcatExpr(cast_fields)
 
+
 def array_resolver(opexp, cast_to):
     cast_to = cast(opexp.dtype, cast_to)
 

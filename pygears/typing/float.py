@@ -68,3 +68,4 @@ class Float(float, metaclass=FloatType):
 
 
 Number.register(Float)
+Number.register(float)

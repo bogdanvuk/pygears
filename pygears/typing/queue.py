@@ -197,6 +197,7 @@ class Queue(tuple, metaclass=QueueMeta):
         data_t = cls.__args__[0]
         data_t_width = int(data_t)
         data_t_mask = (1 << data_t_width) - 1
+        val = int(val)
 
         return cls((data_t.decode(val & data_t_mask), val >> data_t_width))
 

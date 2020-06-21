@@ -332,8 +332,7 @@ class Forward(object):
                 before = None
 
             preds = [
-                pred.value.reaching['out'] for pred in node.prev
-                if 'out' in pred.value.reaching
+                pred.value.reaching['out'] for pred in node.prev if 'out' in pred.value.reaching
             ]
             if preds:
                 incoming = functools.reduce(self.op, preds[1:], preds[0])
@@ -350,7 +349,9 @@ class Forward(object):
                 for succ in node.next:
                     self.visit(succ)
         else:
-            preds = [pred.value.reaching['out'] for pred in node.prev]
+            preds = [
+                pred.value.reaching['out'] for pred in node.prev if 'out' in pred.value.reaching
+            ]
             self.exit = functools.reduce(self.op, preds[1:], preds[0])
 
 
@@ -361,8 +362,8 @@ def forward(node, analysis):
 
     cfg_obj = CFG.build_cfg(node)
 
-    # if hls_debug_log_enabled():
-    #     draw_cfg(cfg_obj)
+    if hls_debug_log_enabled():
+        draw_cfg(cfg_obj)
 
     analysis.visit(cfg_obj.entry)
 
@@ -419,8 +420,7 @@ class ReachingDefinitions(Forward):
         def definition(node, incoming):
             definitions = get_updated(node.value)
             gen = frozenset((id_, node.value) for id_ in definitions)
-            kill = frozenset(def_ for def_ in incoming
-                             if def_[0] in definitions)
+            kill = frozenset(def_ for def_ in incoming if def_[0] in definitions)
             return gen, kill
 
         super(ReachingDefinitions, self).__init__('definitions', definition)
