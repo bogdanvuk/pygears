@@ -7,7 +7,7 @@ from pygears import Intf
 from pygears.core.gear import OutSig
 
 from functools import reduce
-from pygears.typing import Int, Uint, code, div, Queue, Integral, Float
+from pygears.typing import Int, Uint, code, div, Queue, Integral, Float, Union
 from pygears.typing import is_type, typeof, Tuple, Array
 from pygears.typing import floor, cast, signed, saturate
 from pygears.typing.queue import QueueMeta
@@ -185,6 +185,37 @@ def call_typeof(arg, dtype):
     return ir.ResExpr(typeof(arg.val, dtype))
 
 
+def call_subs(orig, *args, **kwds):
+    if args:
+        path, val = args
+        if isinstance(path, tuple) and len(path) == 1:
+            path = path[0]
+
+        parts = []
+        for i in range(len(orig.dtype)):
+            p = ir.SubscriptExpr(orig, ir.ResExpr(i))
+            if isinstance(path, tuple):
+                if path[0].val == i:
+                    p = ir.CastExpr(call_subs(p, path[1:], val), p.dtype)
+            elif path.val == i:
+                p = ir.CastExpr(val, p.dtype)
+
+            parts.append(p)
+
+        return ir.CastExpr(ir.ConcatExpr(parts), orig.dtype)
+
+    if kwds:
+        parts = []
+        for i, name in enumerate(orig.dtype.fields):
+            p = ir.SubscriptExpr(orig, ir.ResExpr(i))
+            if name in kwds:
+                p = ir.CastExpr(kwds[name], p.dtype)
+
+            parts.append(p)
+
+        return ir.CastExpr(ir.ConcatExpr(parts), orig.dtype)
+
+
 def call_enumerate(arg):
     arg.enumerated = True
     return arg
@@ -195,10 +226,9 @@ def call_qrange(*args):
 
 
 def call_range(*args):
-    ret = ir.CallExpr(
-        range,
-        dict(zip(['start', 'stop', 'step'], args)),
-        params={'return': Queue[args[0].dtype]})
+    ret = ir.CallExpr(range,
+                      dict(zip(['start', 'stop', 'step'], args)),
+                      params={'return': Queue[args[0].dtype]})
 
     ret.pass_eot = False
     return ret
@@ -256,6 +286,10 @@ class AddIntfOperPlugin(PluginBase):
             call_signed,
             QueueMeta.sub:
             call_sub,
+            object.__getattribute__(Array, 'subs').func:
+            call_subs,
+            object.__getattribute__(Tuple, 'subs').func:
+            call_subs,
             OutSig.write:
             outsig_write,
             Array.code:
@@ -271,11 +305,10 @@ class AddIntfOperPlugin(PluginBase):
             enumerate:
             call_enumerate,
             saturate:
-            lambda *args, **kwds: resolve_gear_call(
-                saturate_gear.func, args if len(args) == 1 else [args[0]], kwds
-                if len(kwds) == 1 else {'t': args[1]})
+            lambda *args, **kwds: resolve_gear_call(saturate_gear.func, args
+                                                    if len(args) == 1 else [args[0]], kwds
+                                                    if len(kwds) == 1 else {'t': args[1]})
         }
-
 
         import sys
         if sys.version_info[1] >= 7:

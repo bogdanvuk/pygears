@@ -168,7 +168,10 @@ def _(node, ctx: Context):
         return ir.ResExpr(getattr(value.val, node.attr))
 
     if hasattr(value.dtype, node.attr):
-        cls_attr = getattr(value.dtype, node.attr)
+        try:
+            cls_attr = object.__getattribute__(value.dtype, node.attr).func
+        except Exception:
+            cls_attr = getattr(value.dtype, node.attr)
 
         if isinstance(cls_attr, property):
             return resolve_func(cls_attr.fget, (value, ), {}, ctx)

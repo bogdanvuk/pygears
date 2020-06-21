@@ -106,6 +106,7 @@ class Array(list, metaclass=ArrayType):
 
         return not self.__eq__(other)
 
+    @class_and_instance_method
     def subs(self, path, val):
         if isinstance(path, tuple):
             if len(path) > 1:

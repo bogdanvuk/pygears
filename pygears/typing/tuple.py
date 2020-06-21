@@ -246,18 +246,16 @@ class Tuple(tuple, metaclass=TupleType):
             tpl_val = tuple(t() for t in cls.__args__)
         elif isinstance(val, dict):
             tpl_val = []
-            for t, f in zip(cls.__args__, cls.__parameters__):
+            for t, f in zip(cls.__args__, cls.fields):
                 try:
                     tpl_val.append(t(val[f]))
                 except TypeError as e:
-                    msg = (
-                        f'{str(e)}\n - when instantiating field "{f}" of'
-                        f' type "{repr(t)}" with "{repr(val[f])}"')
+                    msg = (f'{str(e)}\n - when instantiating field "{f}" of'
+                           f' type "{repr(t)}" with "{repr(val[f])}"')
 
                     if is_type(val[f]):
-                        msg += (
-                            f'\n FIX: Did you mean to define a Tuple type?'
-                            f' Use square brackets [] instead of ()')
+                        msg += (f'\n FIX: Did you mean to define a Tuple type?'
+                                f' Use square brackets [] instead of ()')
 
                     raise TypeError(msg)
 
@@ -267,21 +265,17 @@ class Tuple(tuple, metaclass=TupleType):
                 try:
                     tpl_val.append(t(v))
                 except TypeError as e:
-                    msg = (
-                        f'{str(e)}\n - when instantiating field {i} of'
-                        f' type "{repr(t)}" with "{repr(v)}"')
+                    msg = (f'{str(e)}\n - when instantiating field {i} of'
+                           f' type "{repr(t)}" with "{repr(v)}"')
 
                     if is_type(v):
-                        msg += (
-                            f'\n FIX: Did you mean to define a Tuple type?'
-                            f' Use square brackets [] instead of ()')
+                        msg += (f'\n FIX: Did you mean to define a Tuple type?'
+                                f' Use square brackets [] instead of ()')
 
                     raise TypeError(msg)
 
         if len(tpl_val) != len(cls.__args__):
-            raise TypeError(
-                f'{repr(cls)}() takes {len(cls)} arguments'
-                f' ({len(tpl_val)} given)')
+            raise TypeError(f'{repr(cls)}() takes {len(cls)} arguments' f' ({len(tpl_val)} given)')
 
         return super(Tuple, cls).__new__(cls, tpl_val)
 
@@ -374,7 +368,10 @@ class Tuple(tuple, metaclass=TupleType):
 
                 path = path[0]
 
-            kwds = {path:val}
+            if isinstance(path, int):
+                path = type(self).fields[path]
+
+            kwds = {path: val}
 
         map_dict = {f: kwds.get(f, self[f]) for f in type(self).fields}
         return type(self)(map_dict)
@@ -401,7 +398,7 @@ class Tuple(tuple, metaclass=TupleType):
         ret = 0
 
         t = type(self).__args__
-        for i in range(len(t)-1, -1, -1):
+        for i in range(len(t) - 1, -1, -1):
             ret <<= int(t[i])
             ret |= super().__getitem__(i).code() & ((1 << int(t[i])) - 1)
 

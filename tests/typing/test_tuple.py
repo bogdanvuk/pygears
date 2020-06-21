@@ -143,3 +143,10 @@ def test_slice_list_template():
 
     assert t.fields == ('cur', 'f1', 'slope')
     assert t.args == (Uint[1], Uint[2], Uint[3])
+
+
+def test_subs():
+    t = Tuple[Uint[2], Uint[3], Uint[4]]
+
+    a = t((2, 3, 4))
+    assert a.subs(1, 1) == t((2, 1, 4))

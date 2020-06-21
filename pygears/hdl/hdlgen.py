@@ -30,7 +30,11 @@ def hdlgen(top=None,
     if top is None:
         top = reg['gear/root']
     elif isinstance(top, str):
-        top = find(top)
+        mtop = find(top)
+        if mtop is None:
+            raise Exception(f'No module "{top}" found')
+
+        top = mtop
     else:
         top = top
 
