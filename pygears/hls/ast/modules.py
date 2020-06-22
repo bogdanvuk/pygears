@@ -19,7 +19,7 @@ def _(node, ctx: FuncContext):
 
     ret = visit_block(block, node.body, ctx)
 
-    #TODO: Why is this necessary?
+    # TODO: Why is this necessary?
     block.ret_dtype = ctx.ret_dtype
 
     return ret

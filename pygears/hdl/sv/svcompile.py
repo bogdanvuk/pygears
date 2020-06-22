@@ -59,8 +59,7 @@ def is_intf_id(expr):
 
 
 def is_reg_id(expr):
-    return (isinstance(expr, ir.Name) and isinstance(expr.obj, ir.Variable)
-            and expr.obj.reg)
+    return (isinstance(expr, ir.Name) and isinstance(expr.obj, ir.Variable) and expr.obj.reg)
 
 
 class SVCompiler(HDLVisitor):
@@ -129,8 +128,7 @@ class SVCompiler(HDLVisitor):
         bl = self.block_lines.pop()
 
         if isinstance(block, ir.HDLBlock):
-            maybe_else = 'else ' if getattr(block, 'else_branch',
-                                            False) else ''
+            maybe_else = 'else ' if getattr(block, 'else_branch', False) else ''
             # in_cond = ir.BinOpExpr((block.in_cond, block.opt_in_cond),
             #                        ir.opc.And)
 
@@ -266,9 +264,8 @@ class SVCompiler(HDLVisitor):
             elif obj.reg:
                 target = self.ctx.ref(name, ctx='en')
                 if self.selected(target):
-                    yield (
-                        f'{self.svexpr(self.ctx.ref(name, ctx="store"), self.aux_funcs)}',
-                        f'{self.svexpr(self.ctx.ref(name), self.aux_funcs)}')
+                    yield (f'{self.svexpr(self.ctx.ref(name, ctx="store"), self.aux_funcs)}',
+                           f'{self.svexpr(self.ctx.ref(name), self.aux_funcs)}')
 
                     yield f'{self.svexpr(target, self.aux_funcs)}', '0'
             else:
@@ -297,10 +294,16 @@ class SVCompiler(HDLVisitor):
     def FuncReturn(self, node):
         retval = self.svexpr(node.expr, self.aux_funcs)
 
-        if retval is not None:
-            self.write(
-                f"{self.svexpr(node.func.name, self.aux_funcs)} = {self.svexpr(node.expr, self.aux_funcs)}"
-            )
+        if self.lang == 'sv':
+            if retval is None:
+                self.write('return')
+            else:
+                self.write(f"return {self.svexpr(node.expr, self.aux_funcs)}")
+        else:
+            if retval is not None:
+                self.write(
+                    f"{self.svexpr(node.func.name, self.aux_funcs)} = {self.svexpr(node.expr, self.aux_funcs)}"
+                )
 
     def FuncBlock(self, node):
         self.block_lines.append(BlockLines())
@@ -391,12 +394,7 @@ def typedef_or_inline(writer, dtype, name):
 
 def svcompile(hdl_stmts, ctx, title, selected, lang, aux_funcs=None):
     writer = HDLWriter()
-    v = SVCompiler(ctx,
-                   title,
-                   writer,
-                   selected=selected,
-                   lang=lang,
-                   aux_funcs=aux_funcs)
+    v = SVCompiler(ctx, title, writer, selected=selected, lang=lang, aux_funcs=aux_funcs)
     v.visit(hdl_stmts)
 
     if not v.block_lines[0].content:
@@ -405,6 +403,7 @@ def svcompile(hdl_stmts, ctx, title, selected, lang, aux_funcs=None):
     write_block(v.block_lines[0], writer)
     writer.line()
     return str(writer)
+
 
 def write_declarations(ctx, subsvmods, template_env):
     writer = HDLWriter()
@@ -428,14 +427,8 @@ def write_declarations(ctx, subsvmods, template_env):
             writer.line(f'{name_t} {name}, {name}_next;')
         else:
             writer.line(f'reg {name}_en;')
-            writer.block(
-                vgen_signal(expr.dtype,
-                            'reg',
-                            f'{name}_next',
-                            'output',
-                            hier=False))
-            writer.block(
-                vgen_signal(expr.dtype, 'reg', name, 'output', hier=False))
+            writer.block(vgen_signal(expr.dtype, 'reg', f'{name}_next', 'output', hier=False))
+            writer.block(vgen_signal(expr.dtype, 'reg', name, 'output', hier=False))
 
         writer.line()
 
@@ -472,9 +465,7 @@ def write_declarations(ctx, subsvmods, template_env):
 
         else:
             if isinstance(intf.producer, HDLProducer):
-                writer.block(
-                    vgen_signal(intf.dtype, 'reg', f'{name}_s', 'output',
-                                False))
+                writer.block(vgen_signal(intf.dtype, 'reg', f'{name}_s', 'output', False))
                 writer.line(f"assign {name}_data = {name}_s;")
             else:
                 writer.block(vgen_signal(intf.dtype, 'reg', f'{name}_s', 'input', False))
@@ -490,8 +481,7 @@ def write_declarations(ctx, subsvmods, template_env):
             name_t = typedef_or_inline(writer, expr.dtype, name)
             writer.line(f'{name_t} {name};')
         else:
-            writer.block(
-                vgen_signal(expr.dtype, 'reg', name, 'input', hier=False))
+            writer.block(vgen_signal(expr.dtype, 'reg', name, 'input', hier=False))
 
         writer.line()
 
@@ -519,13 +509,7 @@ def write_declarations(ctx, subsvmods, template_env):
     return str(writer)
 
 
-def write_module(ctx: Context,
-                 hdl,
-                 writer,
-                 subsvmods,
-                 funcs,
-                 template_env,
-                 config=None):
+def write_module(ctx: Context, hdl, writer, subsvmods, funcs, template_env, config=None):
     if config is None:
         config = {}
 
@@ -565,8 +549,7 @@ def write_module(ctx: Context,
                 name_t = typedef_or_inline(writer, expr.dtype, name)
                 writer.line(f'{name_t} {name};')
             else:
-                writer.block(
-                    vgen_signal(expr.dtype, 'reg', name, 'input', hier=False))
+                writer.block(vgen_signal(expr.dtype, 'reg', name, 'input', hier=False))
 
             writer.line()
 
@@ -582,8 +565,7 @@ def write_module(ctx: Context,
 
             for name, dtype in f_ctx.signature.items():
                 tmp = vgen_signal(dtype, 'reg', name, 'input', hier=False)
-                writer.block('\n'.join(l for l in tmp.split('\n')[1:]
-                                       if l.startswith('reg')))
+                writer.block('\n'.join(l for l in tmp.split('\n')[1:] if l.startswith('reg')))
 
             for name, dtype in f_ctx.signature.items():
                 tmp = vgen_signal(dtype, 'reg', name, 'input', hier=False)
@@ -598,57 +580,52 @@ def write_module(ctx: Context,
 
         writer.indent -= 4
 
-        blk = svcompile(f_hdl,
-                        f_ctx,
-                        '',
-                        selected=lambda x: True,
-                        lang=lang,
-                        aux_funcs=aux_funcs)
+        blk = svcompile(f_hdl, f_ctx, '', selected=lambda x: True, lang=lang, aux_funcs=aux_funcs)
 
         if lang == 'v':
-            blk  = vrewrite(f_ctx, blk)
+            blk = vrewrite(f_ctx, blk)
 
         writer.line(blk)
 
-    blk = write_declarations(ctx, subsvmods, template_env);
+    blk = write_declarations(ctx, subsvmods, template_env)
 
     for name, expr in ctx.regs.items():
         blk += REG_TEMPLATE.format(exprgen(ctx.ref(name)), exprgen(expr.val))
 
     for name, expr in ctx.regs.items():
         blk += svcompile(hdl,
-                        ctx,
-                        name,
-                        selected=lambda x: x.obj == expr,
-                        lang=lang,
-                        aux_funcs=aux_funcs)
+                         ctx,
+                         name,
+                         selected=lambda x: x.obj == expr,
+                         lang=lang,
+                         aux_funcs=aux_funcs)
 
     for name, expr in ctx.variables.items():
         blk += svcompile(hdl,
-                        ctx,
-                        name,
-                        selected=lambda x: x.obj == expr,
-                        lang=lang,
-                        aux_funcs=aux_funcs)
+                         ctx,
+                         name,
+                         selected=lambda x: x.obj == expr,
+                         lang=lang,
+                         aux_funcs=aux_funcs)
 
     for name, expr in ctx.signals.items():
         blk += svcompile(hdl,
-                        ctx,
-                        name,
-                        selected=lambda x: x.obj == expr,
-                        lang=lang,
-                        aux_funcs=aux_funcs)
+                         ctx,
+                         name,
+                         selected=lambda x: x.obj == expr,
+                         lang=lang,
+                         aux_funcs=aux_funcs)
 
     for name, expr in ctx.intfs.items():
         blk += svcompile(hdl,
-                        ctx,
-                        name,
-                        selected=lambda x: x.name == name,
-                        lang=lang,
-                        aux_funcs=aux_funcs)
+                         ctx,
+                         name,
+                         selected=lambda x: x.name == name,
+                         lang=lang,
+                         aux_funcs=aux_funcs)
 
     if lang == 'v':
-        blk  = vrewrite(ctx, blk)
+        blk = vrewrite(ctx, blk)
 
     writer.line(blk)
 
@@ -716,7 +693,6 @@ def compile_gear(gear, template_env, module_name, outdir):
         'params': gear.params
     }
 
-    context['svlines'], subsvmods = compile_gear_body(gear, outdir,
-                                                      template_env)
+    context['svlines'], subsvmods = compile_gear_body(gear, outdir, template_env)
 
     return template_env.render_string(gear_module_template, context), subsvmods

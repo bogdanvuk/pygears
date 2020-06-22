@@ -33,6 +33,10 @@ async def state_dout(*rd, t) -> b't':
     else:
         yield dout[0]
 
+    for i, rd_req in enumerate(rd):
+        if dout[i] is not None:
+            rd_req.get_nb()
+
 
 @gear(enablement=b'len(rd) > 1', hdl={'hierarchical': False})
 def state(din, *rd: Unit, init=0, hold=False) -> b'(din,)*len(rd)':

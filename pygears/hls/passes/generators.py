@@ -124,10 +124,7 @@ def unfold_loop(node: ir.LoopBlock, ctx: Context):
     return stmts
 
 
-builtins = {
-    range:
-    lambda *args, **kwds: resolve_gear_call(qrange_gear.func, args, kwds)
-}
+builtins = {range: lambda *args, **kwds: resolve_gear_call(qrange_gear.func, args, kwds)}
 
 
 class HandleGenerators(IrRewriter):
@@ -144,12 +141,10 @@ class HandleGenerators(IrRewriter):
         pass_eot = func_call.pass_eot
 
         if func_call.func in builtins:
-            func_call = builtins[func_call.func](*func_call.args.values(),
-                                                 **func_call.kwds)
+            func_call = builtins[func_call.func](*func_call.args.values(), **func_call.kwds)
 
         # intf, nodes = call_gear(func_call.func, list(func_call.args.values()),
-        intf, nodes = call_gear(func_call.func, func_call.args, func_call.kwds,
-                                self.ctx)
+        intf, nodes = call_gear(func_call.func, func_call.args, func_call.kwds, self.ctx)
 
         eot_name = self.ctx.find_unique_name('_eot')
         data_name = self.ctx.find_unique_name('_data')
@@ -170,23 +165,20 @@ class HandleGenerators(IrRewriter):
         else:
             dout = ir.SubscriptExpr(ir.Component(intf, 'data'), ir.ResExpr(0))
 
-        eot_load = ir.AssignValue(
-            self.ctx.ref(eot_name),
-            ir.SubscriptExpr(ir.Component(intf, 'data'), ir.ResExpr(-1)))
+        eot_load = ir.AssignValue(self.ctx.ref(eot_name),
+                                  ir.SubscriptExpr(ir.Component(intf, 'data'), ir.ResExpr(-1)))
 
         # data_load = ir.AssignValue(
         #     self.ctx.ref(data_name),
         #     ir.Await(ir.Component(intf, 'data'),
         #              in_await=ir.Component(intf, 'valid')))
 
-        data_load = ir.AssignValue(
-            self.ctx.ref(data_name),
-            ir.Await(dout, in_await=ir.Component(intf, 'valid')))
+        data_load = ir.AssignValue(self.ctx.ref(data_name),
+                                   ir.Await(dout, in_await=ir.Component(intf, 'valid')))
 
         stmts = nodes + [eot_load, data_load]
 
-        add_to_list(stmts,
-                    assign_targets(self.ctx, node.target, dout, ir.Variable))
+        add_to_list(stmts, assign_targets(self.ctx, node.target, dout, ir.Variable))
 
         return stmts
 
@@ -196,8 +188,7 @@ class HandleGenerators(IrRewriter):
 
         gen_cfg = self.generators[node.expr.val]
 
-        return ir.AssignValue(ir.Component(gen_cfg['intf'], 'ready'),
-                              ir.res_true)
+        return ir.AssignValue(ir.Component(gen_cfg['intf'], 'ready'), ir.res_true)
 
     def LoopBlock(self, node):
         try:
@@ -213,9 +204,9 @@ class HandleGenerators(IrRewriter):
 
         gen_cfg = self.generators[node.exit_cond.val]
 
-        eot_test = ir.BinOpExpr((self.ctx.ref(
-            gen_cfg['eot_name']), ir.ResExpr(gen_cfg['intf'].dtype.eot.max)),
-                                ir.opc.Eq)
+        eot_test = ir.BinOpExpr(
+            (self.ctx.ref(gen_cfg['eot_name']), ir.ResExpr(gen_cfg['intf'].dtype.eot.max)),
+            ir.opc.Eq)
 
         node.exit_cond = eot_test
 

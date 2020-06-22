@@ -24,7 +24,7 @@ class InferRegisters(IrVisitor):
             self.visit(stmt)
 
     def Expr(self, expr: ir.Expr):
-        if all(d[1] in self.visited for d in expr.reaching['in']):
+        if all(d[1] in self.visited for d in expr.reaching.get('in', [])):
             return
 
         v = VariableFinder()

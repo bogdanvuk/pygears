@@ -116,7 +116,8 @@ def call_get(obj, *args, **kwds):
 
 
 def call_get_nb(obj, *args, **kwds):
-    return obj
+    return ir.AssignValue(ir.Component(obj, 'ready'), ir.res_true)
+    # return obj
 
 
 def call_clk(*arg, **kwds):
@@ -185,24 +186,49 @@ def call_typeof(arg, dtype):
     return ir.ResExpr(typeof(arg.val, dtype))
 
 
+def call_subs_fix_index(orig, path, val):
+    parts = []
+    for i in range(len(orig.dtype)):
+        p = ir.SubscriptExpr(orig, ir.ResExpr(i))
+        if isinstance(path, tuple):
+            if path[0].val == i:
+                p = ir.CastExpr(call_subs(p, path[1:], val), p.dtype)
+        elif path.val == i:
+            p = ir.CastExpr(val, p.dtype)
+
+        parts.append(p)
+
+    return ir.CastExpr(ir.ConcatExpr(parts), orig.dtype)
+
+
+def call_subs_var_index(orig, path, val):
+    parts = []
+    for i in range(len(orig.dtype)):
+        p = ir.SubscriptExpr(orig, ir.ResExpr(i))
+        if isinstance(path, tuple):
+            cond = ir.BinOpExpr((path[0], ir.ResExpr(i)), ir.opc.Eq)
+            repl = ir.CastExpr(call_subs(p, path[1:], val), p.dtype)
+        else:
+            cond = ir.BinOpExpr((path, ir.ResExpr(i)), ir.opc.Eq)
+            repl = ir.CastExpr(val, p.dtype)
+
+        parts.append(ir.ConditionalExpr((repl, p), cond))
+
+    return ir.CastExpr(ir.ConcatExpr(parts), orig.dtype)
+
+
 def call_subs(orig, *args, **kwds):
     if args:
         path, val = args
         if isinstance(path, tuple) and len(path) == 1:
             path = path[0]
 
-        parts = []
-        for i in range(len(orig.dtype)):
-            p = ir.SubscriptExpr(orig, ir.ResExpr(i))
-            if isinstance(path, tuple):
-                if path[0].val == i:
-                    p = ir.CastExpr(call_subs(p, path[1:], val), p.dtype)
-            elif path.val == i:
-                p = ir.CastExpr(val, p.dtype)
-
-            parts.append(p)
-
-        return ir.CastExpr(ir.ConcatExpr(parts), orig.dtype)
+        if isinstance(path, tuple) and isinstance(path[0], ir.ResExpr):
+            return call_subs_fix_index(orig, path, val)
+        elif not isinstance(path, tuple) and isinstance(path, ir.ResExpr):
+            return call_subs_fix_index(orig, path, val)
+        else:
+            return call_subs_var_index(orig, path, val)
 
     if kwds:
         parts = []

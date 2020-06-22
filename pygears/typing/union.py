@@ -101,8 +101,7 @@ class UnionType(EnumerableGenericMeta):
             elif (index[0].start == 1) and (index[0].stop == 2):
                 return Uint[bitw(len(self.args) - 1)]
             elif (index[0].start == 0) and (index[0].stop == 2):
-                return Uint[max(map(
-                    int, self.args))], Uint[bitw(len(self.args) - 1)]
+                return Uint[max(map(int, self.args))], Uint[bitw(len(self.args) - 1)]
             else:
                 raise IndexError
         else:
@@ -168,16 +167,19 @@ class Union(tuple, metaclass=UnionType):
             val, ctrl = val
 
         subtype = cls.types[ctrl]
+        data_type = cls[0]
 
-        try:
-            subval = subtype(val)
-        except TypeError as e:
-            raise TypeError(
-                f'{str(e)}\n - when instantiating subtype "{repr(subtype)}"'
-                f' with "{repr(val)}"')
+        if type(val) == data_type:
+            data = val
+        else:
+            try:
+                subval = subtype(val)
+                data = data_type(subval.code())
+            except TypeError as e:
+                raise TypeError(f'{str(e)}\n - when instantiating subtype "{repr(subtype)}"'
+                                f' with "{repr(val)}"')
 
-        return super(Union, cls).__new__(cls,
-                                         (cls[0](int(subval)), cls[1](ctrl)))
+        return super(Union, cls).__new__(cls, (data, cls[1](ctrl)))
 
     def __int__(self):
         """Returns a packed integer representation of the :class:`Union` instance.
@@ -249,6 +251,14 @@ class Union(tuple, metaclass=UnionType):
         return cls(subtype.decode(data), cls[1].decode(ctrl))
 
 
+class classproperty(object):
+    def __init__(self, fget):
+        self.fget = fget
+
+    def __get__(self, owner_self, owner_cls):
+        return self.fget(owner_cls)
+
+
 class Maybe(Union):
     def __new__(cls, val=None, ctrl=None):
         if val is None:
@@ -258,8 +268,8 @@ class Maybe(Union):
         else:
             return super().__new__(cls, (val, ctrl))
 
-    @classmethod
-    def data(cls):
+    @classproperty
+    def dtype(cls):
         return cls.types[1]
 
 

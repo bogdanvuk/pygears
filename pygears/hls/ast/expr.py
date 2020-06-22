@@ -1,4 +1,5 @@
 import ast
+import sys
 import types
 import inspect
 from functools import partial
@@ -186,8 +187,8 @@ def _(node, ctx: Context):
     return ir.AttrExpr(value, node.attr)
 
 
-import sys
 if sys.version_info[1] < 8:
+
     @node_visitor(ast.Str)
     def _(node, ctx: Context):
         return ir.ResExpr(node.s)
@@ -201,6 +202,7 @@ if sys.version_info[1] < 8:
         return ir.ResExpr(cast(node.n, Integer))
 
 else:
+
     @node_visitor(ast.Constant)
     def _(node, ctx: Context):
         if isinstance(node.value, (int, float)):
@@ -216,18 +218,16 @@ def _(node, ctx: Context):
 
 @node_visitor(ast.Slice)
 def _(node, ctx: Context):
-    return ir.SliceExpr(
-        visit_ast(node.lower, ctx), visit_ast(node.upper, ctx), visit_ast(node.step, ctx))
+    return ir.SliceExpr(visit_ast(node.lower, ctx), visit_ast(node.upper, ctx),
+                        visit_ast(node.step, ctx))
 
 
 def py_eval_expr(node, ctx: Context):
     gear_locals = {n: v.val for n, v in ctx.scope.items() if isinstance(v, ir.ResExpr)}
 
     return eval(
-        compile(
-            ast.Expression(ast.fix_missing_locations(node)),
-            filename="<ast>",
-            mode="eval"), gear_locals, ctx.local_namespace)
+        compile(ast.Expression(ast.fix_missing_locations(node)), filename="<ast>", mode="eval"),
+        gear_locals, ctx.local_namespace)
 
 
 @node_visitor(ast.DictComp)

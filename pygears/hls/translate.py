@@ -110,6 +110,9 @@ def transform_func(funcblock, ctx: FuncContext):
     funcblock = resolve_gear_calls(funcblock, ctx)
     # hls_debug(funcblock, 'Resolve Gear Calls')
 
+    funcblock = handle_generators(funcblock, ctx)
+    hls_debug(funcblock, 'Handle Generators')
+
     funcblock = inline(funcblock, ctx)
 
     funcblock = remove_dead_code(funcblock, ctx)

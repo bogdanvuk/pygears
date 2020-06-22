@@ -279,6 +279,8 @@ class intf_name_tracer:
                     val.var_name = name
 
 
+# TODO: Apparently no error is thrown if an input interface is not connected
+# within a hierarchical module
 def resolve_func(gear_inst):
     out_dtype = gear_inst.params.get('return', None)
     if out_dtype is None:

@@ -39,3 +39,8 @@ def sync_with(sync_in: Maybe, din, *, fcat=ccat, balance=None):
 @gear
 def some(din) -> Maybe['din']:
     return ccat(din, Bool(True)) >> Maybe[din.dtype]
+
+
+@gear
+def when_some(din: Maybe) -> b'din.dtype':
+    return din | filt(fixsel=1)

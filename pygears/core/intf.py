@@ -293,17 +293,20 @@ class Intf:
             return self._data
 
     def ack(self):
+        if not self.in_queue._unfinished_tasks:
+            return
+
         e = self.events['ack']
         if e:
             e(self)
 
-        ret = self.in_queue.task_done()
+        self.in_queue.task_done()
         if self.in_queue.intf.ready_nb():
             e = self.in_queue.intf.events['ack']
             e(self.in_queue.intf)
 
         self._data = None
-        return ret
+        return
 
     async def get(self):
         val = await self.pull()
