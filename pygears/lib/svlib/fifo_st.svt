@@ -1,0 +1,110 @@
+{% from 'snippet.j2' import module with context %}
+
+{% call module() %}
+   {%- set rd_intfs = intfs[1:]|isinput %}
+   {%- set dout_intfs = intfs|isoutput %}
+
+	 localparam CW = $clog2({{params['depth']}});
+	 localparam WIDTH = {{_din_t.width}};
+
+	 logic [WIDTH-1:0] ram [0:{{params['depth'] - 1}}];
+	 logic [CW:0]      raddr_reg;
+	 logic [CW:0]      raddr_next;
+	 logic [CW:0]      waddr_reg;
+	 logic [CW:0]      waddr_next;
+
+   logic [CW:0]      fifo_load_tmp;
+   logic [CW-1:0]    fifo_load;
+   logic             fifo_valid;
+   logic             out_ready;
+   logic             out_valid;
+   logic             out_handshake;
+
+	 logic             we;
+	 wire              dv = waddr_reg != raddr_reg;
+
+   logic [WIDTH-1:0]  out_buff;
+
+	 wire              eq_cnt = waddr_reg[CW-1:0] == raddr_reg[CW-1:0];
+	 wire              eq_msb = waddr_reg[CW] == raddr_reg[CW];
+	 wire              full = eq_cnt & ~eq_msb;
+	 wire              empty = eq_cnt & eq_msb;
+
+	 logic [WIDTH-1:0] in_buff;
+
+   logic [$size(din.data)-1 : 0] din_reg;
+
+   assign fifo_load_tmp = waddr_reg - raddr_reg;
+   assign fifo_load = fifo_load_tmp[CW-1 : 0];
+
+   assign fifo_valid = ~empty;
+
+   assign in_buff = din.data;
+
+   assign out_handshake = fifo_valid && out_ready;
+
+   assign out_buff = ram[raddr_reg[CW-1:0]];
+   assign out_valid = fifo_valid;
+
+	 always @(posedge clk)
+	   if (we == 1'b1)
+		   ram[waddr_reg[CW-1:0]] <= in_buff;
+
+
+	 always @(posedge clk)
+	   if (rst)
+		   begin
+			    raddr_reg <= '0;
+			    waddr_reg <= '0;
+		   end
+	   else
+		   begin
+			    raddr_reg <= raddr_next;
+			    waddr_reg <= waddr_next;
+		   end
+
+
+	 wire ready = out_ready | ~full;
+	 assign din.ready = ready;
+
+	 always_comb // Write logic
+	   if (din.valid & ready)
+		   begin
+			    we = 1'b1;
+			    waddr_next = waddr_reg + 1'b1;
+		   end
+	   else
+		   begin
+			    we = 1'b0;
+			    waddr_next = waddr_reg;
+		   end
+
+	 always_comb // Read logic
+	   if (out_handshake) begin
+			  raddr_next = raddr_reg + 1'b1;
+		 end else begin
+		   raddr_next = raddr_reg;
+     end
+
+   {% for i in range(0, len(rd_intfs), 2) %}
+	  assign dout{{i}}_s = ~empty;
+    assign dout{{i}}.valid = rd{{i}}.valid;
+    assign rd{{i}}.ready = dout{{i}}.ready;
+   {% endfor %}
+
+   {% for i in range(1, len(rd_intfs), 2) %}
+     logic rd_{{i}}_valid;
+     logic dout_{{i}}_ready;
+	  assign dout{{i}}_s = out_buff[WIDTH-1:0];
+    assign dout{{i}}.valid = rd{{i}}.valid && out_valid;
+    assign rd{{i}}.ready = dout{{i}}.ready && out_valid;
+     assign rd_{{i}}_valid = rd{{i}}.valid;
+     assign dout_{{i}}_ready = rd{{i}}.ready;
+   {% endfor %}
+
+   assign out_ready =
+   {% for i in range(1, len(rd_intfs), 2) %}
+     (rd{{i}}.valid && rd{{i}}.ready) {{ "||" if not loop.last else ";" }}
+   {% endfor %}
+
+{% endcall %}

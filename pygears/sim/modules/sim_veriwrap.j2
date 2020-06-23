@@ -4,7 +4,7 @@
 #include "verilated_vcd_c.h"
 {% endif %}
 #include "stdio.h"
-{# #define DEBUG    #}
+{# #define DEBUG     #}
 
 extern "C" {
 
@@ -35,25 +35,26 @@ void cycle(void) {
 #endif
     top->eval();
 
-{% if tracing %}
-    if (tfp) tfp->dump (main_time);
-{% endif %}
+{% if tracing %} 
+    if (tfp) tfp->dump (main_time); 
+{% endif %} 
     {# if (main_time > 5) { #}
         main_time+=5;
         top->clk = 0;
         top->eval();
     {# } #}
-{% if tracing %}
-    if (tfp) tfp->dump (main_time);
-{% endif %}
+{% if tracing %} 
+    if (tfp) tfp->dump (main_time); 
+{% endif %} 
+
     main_time+=5;
-{% if tracing %}
-    if (tfp) {
-      tfp->dump (main_time);
-      tfp->flush();
-    }
-{% endif %}
     top->clk = 1;
+{% if tracing %} 
+    if (tfp) { 
+      {# tfp->dump (main_time);  #}
+      tfp->flush(); 
+    } 
+{% endif %} 
 
 {% if aux_clock %}
     top->{{aux_clock[0].name}} = 1;
@@ -155,13 +156,13 @@ void set_{{p.basename}}(uint32_t data, uint valid) {
     for (int i = 0; i < {{ (int(p.dtype) + 31) // 32 }}; ++i) {
         top->{{p.basename}}_data[i] = data[i];
 #ifdef DEBUG
-        printf("Din: %x, Valid: %d\n", data[i], valid);
+        printf("{{p.basename}}_data: %x, Valid: %d\n", data[i], valid);
 #endif
     }
   {% else %}
 
 #ifdef DEBUG
-    printf("Din: %lx, Valid: %d\n", data, valid);
+    printf("{{p.basename}}_data: %lx, Valid: %d\n", data, valid);
 #endif
 
     top->{{p.basename}}_data = data;
@@ -197,7 +198,7 @@ int get_{{p.basename}}(uint32_t* data) {
   {% endif %}
 
 #ifdef DEBUG
-    printf("Dout: %lx, Valid: %d\n", data[0], top->{{p.basename}}_valid);
+    printf("{{p.basename}}_data: %lx, Valid: %d\n", data[0], top->{{p.basename}}_valid);
 #endif
     return top->{{p.basename}}_valid;
 }

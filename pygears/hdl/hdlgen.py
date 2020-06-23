@@ -19,6 +19,9 @@ def hdlgen(top=None,
         # TODO: should we save/restore previous setting for 'hdl/lang'?
         reg['hdl/lang'] = lang
 
+    if outdir is None:
+        outdir = reg['results-dir']
+
     conf['outdir'] = outdir
 
     if isinstance(top, tuple):

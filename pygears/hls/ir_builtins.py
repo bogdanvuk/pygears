@@ -123,6 +123,14 @@ def call_get_nb(obj, *args, **kwds):
     # return obj
 
 
+def call_put_nb(obj, arg):
+    return [
+        ir.AssignValue(ir.Component(obj, 'data'), arg),
+        ir.AssignValue(ir.Component(obj, 'valid'), ir.res_true)
+    ]
+    # return obj
+
+
 def call_clk(*arg, **kwds):
     return None
 
@@ -309,6 +317,8 @@ class AddIntfOperPlugin(PluginBase):
             call_get,
             Intf.get_nb:
             call_get_nb,
+            Intf.put_nb:
+            call_put_nb,
             cast:
             call_cast,
             signed:
