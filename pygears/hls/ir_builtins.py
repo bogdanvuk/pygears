@@ -62,6 +62,9 @@ def call_len(arg, **kwds):
     if isinstance(arg, ir.ResExpr):
         return ir.ResExpr(len(arg.val))
 
+    if isinstance(arg, ir.Name):
+        return ir.ResExpr(len(arg.dtype))
+
     raise Exception
 
 
