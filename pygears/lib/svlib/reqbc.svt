@@ -1,0 +1,19 @@
+{% from 'snippet.j2' import module with context %}
+
+{% call module() %}
+
+   {%- set rd_intf_names = intfs[1:]|isinput|keymap("name") %}
+   {%- set dout_intf_names = intfs|isoutput|keymap("name") %}
+
+  {% for rd, dout in zip(rd_intf_names, dout_intf_names) %}
+	  assign {{dout}}_s = din_s;
+    assign {{dout}}.valid = {{rd}}.valid && din.valid;
+    assign {{rd}}.ready = {{dout}}.ready && din.valid;
+  {% endfor %}
+
+   assign din.ready =
+   {% for rd in rd_intf_names %}
+     ({{rd}}.valid && {{rd}}.ready) {{ "||" if not loop.last else ";" }}
+   {% endfor %}
+
+{% endcall %}

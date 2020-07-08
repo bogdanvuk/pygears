@@ -91,6 +91,10 @@ def call_all(arg, **kwds):
     return ir.ArrayOpExpr(arg, ir.opc.BitAnd)
 
 
+def call_any(arg, **kwds):
+    return ir.ArrayOpExpr(arg, ir.opc.BitOr)
+
+
 def call_max(*arg, **kwds):
     if len(arg) != 1:
         return reduce(max_expr, arg)
@@ -287,6 +291,8 @@ class AddIntfOperPlugin(PluginBase):
             call_gather,
             all:
             call_all,
+            any:
+            call_any,
             max:
             call_max,
             clk:

@@ -1,6 +1,6 @@
 from pygears import gear, IntfEmpty, module
 from pygears.sim import clk
-from pygears.typing import Maybe, Tuple, Uint, Union
+from pygears.typing import Maybe, Tuple, Uint, Union, Bool
 from .demux import demux
 from .ccat import ccat
 from .shred import shred
@@ -9,6 +9,24 @@ from .shred import shred
 @gear
 def spy(din) -> b'din':
     pass
+
+
+@gear
+async def avail_spy(din) -> b'(Bool, din)':
+    pass
+
+
+def avail(din):
+    dout0, dout1 = avail_spy(din)
+
+    for p in din.consumers[:-1]:
+        if p is dout1.producer:
+            continue
+
+        din.disconnect(p)
+        dout1.connect(p)
+
+    return dout0
 
 
 @gear
@@ -47,15 +65,7 @@ async def trigreg(din: Maybe['data'], *, latency=1, init=None) -> b'data':
 
 
 @gear
-def regmap(
-        wr: Tuple[{
-            'addr': Uint['w_addr'],
-            'data': 'data'
-        }],
-        *,
-        addrmap,
-        initmap={},
-        regtype={}):
+def regmap(wr: Tuple[{'addr': Uint['w_addr'], 'data': 'data'}], *, addrmap, initmap={}, regtype={}):
 
     *reqs, dflt = ccat(wr['data'], wr['addr']) \
         | Union \

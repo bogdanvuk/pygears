@@ -51,7 +51,7 @@ void cycle(void) {
     top->clk = 1;
 {% if tracing %} 
     if (tfp) { 
-      {# tfp->dump (main_time);  #}
+      tfp->dump (main_time);
       tfp->flush(); 
     } 
 {% endif %} 

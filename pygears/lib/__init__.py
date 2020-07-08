@@ -64,7 +64,7 @@ from .reduce import reduce, accum
 from .funclut import funclut
 from .rounding import truncate, round_half_up, round_to_zero, round_to_even, qround
 from .scope import scope
-from .asyncreg import trigreg, sample, regmap
+from .asyncreg import trigreg, sample, regmap, avail
 
 import pygears.lib.hls
 
@@ -87,5 +87,5 @@ __all__ = [
     'round_to_even', 'add', 'div', 'eq', 'ge', 'gt', 'invert', 'iceil', 'le',
     'lt', 'mod', 'mul', 'ne', 'neg', 'sub', 'shl', 'shr', 'xor', 'scoreboard',
     'scope', 'sample', 'trigreg', 'regmap', 'saturate', 'qround',
-    'parallelize', 'ping', 'state'
+    'parallelize', 'ping', 'state', 'avail'
 ]
