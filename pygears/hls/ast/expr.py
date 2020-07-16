@@ -126,6 +126,7 @@ def visit_bin_expr(op, operands, ctx: Context):
 
     # TODO: This WAS needed, since: ir.ResExpr(Uint[8]).dtype is None. REMOVE
     dtype = type(op1.val) if isinstance(op1, ir.ResExpr) else op1.dtype
+    # f = getattr(op1.dtype, METHOD_OP_MAP[type(op)])
 
     f = getattr(dtype, METHOD_OP_MAP[type(op)])
 
@@ -136,6 +137,7 @@ def visit_bin_expr(op, operands, ctx: Context):
 
     # TODO: This WAS needed, since: ir.ResExpr(Uint[8]).dtype is None. REMOVE
     dtype = type(op2.val) if isinstance(op2, ir.ResExpr) else op2.dtype
+    # f = getattr(op2.dtype, R_METHOD_OP_MAP[type(op)])
 
     f = getattr(dtype, R_METHOD_OP_MAP[type(op)])
 

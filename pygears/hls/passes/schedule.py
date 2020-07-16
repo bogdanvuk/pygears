@@ -116,10 +116,10 @@ class Scheduler(HDLVisitor):
 
     def AssignValue(self, node: ir.AssignValue):
         if is_intf_id(node.target):
-            if node.target.name not in self.status.output_value:
-                self.status.output_value.add(node.target.name)
-            else:
+            if node.target.name in self.status.output_value:
                 node.state = {self.new_state()}
+
+            self.status.output_value.add(node.target.name)
 
     def IfElseBlock(self, node):
         node.state = {self.parent.cur_state}
