@@ -16,6 +16,14 @@ def test_float():
     assert (t_b.decode(-8) == t_b(-4.0))
 
 
+def test_wrong_parameter_type():
+    with pytest.raises(TypeError):
+        Ufixp[2, None]
+
+    with pytest.raises(TypeError):
+        Ufixp[2, []]
+
+
 def test_add_type():
     assert Ufixp[2, 3] + Ufixp[3, 4] == Ufixp[4, 5]
     assert Ufixp[3, 4] + Ufixp[3, 4] == Ufixp[4, 5]

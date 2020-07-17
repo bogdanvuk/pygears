@@ -21,6 +21,28 @@ def concat(l):
 
 
 class IntegralType(EnumerableGenericMeta):
+    def __new__(cls, name, bases, namespace, args=None):
+        if args is not None:
+            err = None
+            try:
+                if isinstance(args, tuple):
+                    args = tuple(a if isinstance(a, (str, bytes)) else int(a) for a in args)
+                elif isinstance(args, dict):
+                    args = {
+                        n: a if isinstance(a, (str, bytes)) else int(a)
+                        for n, a in args.items()
+                    }
+                else:
+                    args = args if isinstance(args, (str, bytes)) else int(args)
+            except TypeError as e:
+                err = e
+
+            if err:
+                raise TypeError(f"{cls} type parameters must be all either integers or strings,"
+                                f"not '{args}'")
+
+        return super().__new__(cls, name, bases, namespace, args)
+
     @property
     def mask(self) -> int:
         return (1 << self.width) - 1
@@ -85,8 +107,7 @@ class IntegerType(IntegralType):
 
             if isinstance(w, int):
                 if w < 0:
-                    raise TypeError(
-                        f"{name} type parameter must be a positive integer, not '{w}'")
+                    raise TypeError(f"{name} type parameter must be a positive integer, not '{w}'")
 
                 args = (int(w), )
 
@@ -324,8 +345,7 @@ class Integer(Integral, metaclass=IntegerType):
                     cls = Int[cls.width]
 
         if typeof(cls, Uint) and val < 0:
-            raise ValueError(
-                f"cannot represent negative numbers with unsigned type '{repr(cls)}'")
+            raise ValueError(f"cannot represent negative numbers with unsigned type '{repr(cls)}'")
 
         if cls.is_generic():
             res = cls[bitw(val)](int(val))

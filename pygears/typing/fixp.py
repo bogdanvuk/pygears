@@ -27,6 +27,9 @@ class FixpnumberType(IntegralType):
     def fract(self) -> int:
         return self.width - self.integer
 
+    def __hash__(self):
+        return super().__hash__()
+
     def __int__(self):
         return self.width
 
@@ -250,6 +253,9 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
 
         return res
 
+    def __hash__(self):
+        return hash((type(self), int(self)))
+
     def __str__(self):
         return f'{str(type(self))}({float(self)})'
 
@@ -293,12 +299,14 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
 
     def __add__(self, other):
         if not isinstance(other, Fixpnumber):
-            other = Fixpnumber(other)
+            fix_other = Fixpnumber(other)
+        else:
+            fix_other = other
 
-        sum_cls = type(self) + type(other)
+        sum_cls = type(self) + type(fix_other)
         return sum_cls.decode(
             (int(self) << (sum_cls.fract - type(self).fract)) +
-            (int(other) << (sum_cls.fract - type(other).fract)))
+            (int(fix_other) << (sum_cls.fract - type(fix_other).fract)))
 
         # return sum_cls.decode(
         #     super().__lshift__(sum_cls.fract - type(self).fract) +

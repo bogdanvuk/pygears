@@ -2,7 +2,7 @@ from pygears import gear, reg
 from pygears.lib import qrange
 from pygears.lib import drv
 from pygears.sim import sim, cosim
-from pygears.typing import Queue, Uint
+from pygears.typing import Queue, Uint, Ufixp
 from pygears.lib import directed
 
 
@@ -19,7 +19,7 @@ def test_const_op():
     sim(timeout=3)
 
 
-def test_op():
+def test_first_const_op():
     @gear(hdl={'compile': True})
     async def test(din) -> Uint[4]:
         async with din as d:
@@ -31,7 +31,6 @@ def test_op():
         async with din as d:
             yield 3 + d
 
-    reg['results-dir'] = '/tools/home/tmp/hls_call'
     directed(
         drv(t=Uint[3], seq=[1, 2, 3]),
         f=test(__sim__='verilator'),
@@ -41,4 +40,108 @@ def test_op():
     sim(timeout=3)
 
 
-# test_op()
+def test_second_const_op():
+    @gear(hdl={'compile': True})
+    async def test(din) -> Uint[4]:
+        async with din as d:
+            yield d + 1
+
+        async with din as d:
+            yield d + 2
+
+        async with din as d:
+            yield d + 3
+
+    directed(
+        drv(t=Uint[3], seq=[1, 2, 3]),
+        f=test(__sim__='verilator'),
+        ref=[2, 4, 6],
+    )
+
+    sim(timeout=3)
+
+
+def test_same_op():
+    @gear(hdl={'compile': True})
+    async def test(din) -> Uint[4]:
+        async with din as d:
+            yield d + d
+
+        async with din as d:
+            yield d + d
+
+        async with din as d:
+            yield d + d
+
+    directed(
+        drv(t=Uint[3], seq=[1, 2, 3]),
+        f=test(__sim__='verilator'),
+        ref=[2, 4, 6],
+    )
+
+    sim(timeout=3)
+
+
+def test_first_dif_type_const_op():
+    @gear(hdl={'compile': True})
+    async def test(din) -> Ufixp[5, 5]:
+        async with din as d:
+            yield Ufixp[4, 4](1) + d
+
+        async with din as d:
+            yield Ufixp[4, 4](2) + d
+
+        async with din as d:
+            yield Ufixp[4, 4](3) + d
+
+    directed(
+        drv(t=Uint[3], seq=[1, 2, 3]),
+        f=test(__sim__='verilator'),
+        ref=[2, 4, 6],
+    )
+
+    sim(timeout=3)
+
+
+def test_second_dif_type_const_op():
+    @gear(hdl={'compile': True})
+    async def test(din) -> Ufixp[5, 5]:
+        async with din as d:
+            yield d + Ufixp[4, 4](1)
+
+        async with din as d:
+            yield d + Ufixp[4, 4](2)
+
+        async with din as d:
+            yield d + Ufixp[4, 4](3)
+
+    directed(
+        drv(t=Uint[3], seq=[1, 2, 3]),
+        f=test(__sim__='verilator'),
+        ref=[2, 4, 6],
+    )
+
+    sim(timeout=3)
+
+
+def test_dif_type_op():
+    @gear(hdl={'compile': True})
+    async def test(din0, din1) -> Ufixp[4, 4]:
+        async with din0 as d0, din1 as d1:
+            yield d0 + d1
+
+        async with din0 as d0, din1 as d1:
+            yield d0 + d1
+
+        async with din0 as d0, din1 as d1:
+            yield d0 + d1
+
+    # reg['results-dir'] = '/tools/home/tmp/const_add'
+    directed(
+        drv(t=Uint[3], seq=[1, 2, 3]),
+        drv(t=Ufixp[2, 2], seq=[1, 2, 3]),
+        f=test(__sim__='verilator'),
+        ref=[2, 4, 6],
+    )
+
+    sim(timeout=3)

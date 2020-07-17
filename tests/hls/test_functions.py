@@ -80,7 +80,7 @@ def test_multiple_arguments_datagear_complex():
 
 def test_fixp_arith(sim_cls):
     @gear(hdl={'compile': True})
-    async def fixp_arith(x: Fixpnumber, y: Fixpnumber) -> Ufixp[4, 7]:
+    async def fixp_arith(x: Fixpnumber, y: Fixpnumber) -> Ufixp[6, 9]:
         async with gather(x, y) as data:
             yield (data[0] + data[1]) + (data[0] + data[1])
 
@@ -95,7 +95,7 @@ def test_fixp_arith(sim_cls):
 
 def test_fixp_diff_arith(sim_cls):
     @gear(hdl={'compile': True})
-    async def fixp_arith(x: Fixpnumber, y: Fixpnumber) -> Ufixp[4, 7]:
+    async def fixp_arith(x: Fixpnumber, y: Fixpnumber) -> Ufixp[6, 9]:
         async with gather(x, y) as data:
             yield (data[0] + data[1]) + (data[0] + data[1])
 
@@ -103,7 +103,7 @@ def test_fixp_diff_arith(sim_cls):
         drv(t=Ufixp[4, 7], seq=[3.125]),
         drv(t=Ufixp[4, 6], seq=[2.25]),
         f=fixp_arith(sim_cls=sim_cls),
-        ref=[Ufixp[4, 7](10.75)])
+        ref=[Ufixp[6, 9](10.75)])
 
     sim()
 

@@ -4,6 +4,8 @@ from pygears.typing import get_match_conds, TypeMatchError
 
 
 def fixp_resolver(opexp, cast_to):
+    cast_to = cast(opexp.dtype, cast_to)
+
     val_dtype = opexp.dtype
 
     if typeof(val_dtype, Integer):
