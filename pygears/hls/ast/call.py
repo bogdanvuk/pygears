@@ -114,10 +114,7 @@ class Super:
                     return getattr(base, name)
 
                 f = base.__dict__[name]
-                if isinstance(val, ir.ResExpr):
-                    f = partial(f, val.val)
-                else:
-                    f = partial(f, val)
+                f = partial(f, val)
 
                 return f
         else:

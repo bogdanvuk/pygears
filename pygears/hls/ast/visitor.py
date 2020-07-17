@@ -28,9 +28,8 @@ def form_hls_syntax_error(ctx, e, lineno=1):
                f' parameters {ctx.gear.params}')
     else:
         func, fn, ln = gear_definition_location(ctx.funcref.func)
-        msg = (
-            f'{str(e)}\n    - when compiling function "{ctx.funcref.func}" with'
-            f' signature {ctx.signature}')
+        msg = (f'{str(e)}\n    - when compiling function "{ctx.funcref.func}" with'
+               f' signature {ctx.signature}')
 
     err = HLSSyntaxError(msg, ln + lineno - 1, filename=fn)
 
@@ -52,11 +51,15 @@ class Function:
         self.source = get_function_source(func)
         self.func = func
         self.ast = get_function_ast(func)
-        self.basename = ''.join(e for e in func.__name__
-                                if e.isalnum() or e == '_')
+        self.basename = ''.join(e for e in func.__name__ if e.isalnum() or e == '_')
         self.uniqueid = uniqueid
+
+        # If there were some constant arguments, their values were embeded into
+        # funtion code, so we need to take values as part of the hash.
+        hargs = tuple(arg.val if isinstance(arg, ir.ResExpr) else arg.dtype for arg in args)
+
         # TODO: Include keywords here
-        self._hash = hash(self.source) ^ hash(tuple(arg.dtype for arg in args))
+        self._hash = hash(self.source) ^ hash(hargs)
 
     @property
     def name(self):
@@ -83,6 +86,9 @@ class Context:
         self.ast_stmt_map: typing.Dict = {}
 
     def ref(self, name, ctx='load'):
+        if name in self.local_namespace:
+            return ir.ResExpr(self.local_namespace[name])
+
         return ir.Name(name, self.scope[name], ctx=ctx)
 
     def find_unique_name(self, name):
@@ -102,8 +108,7 @@ class Context:
     def variables(self):
         return {
             name: obj
-            for name, obj in self.scope.items()
-            if isinstance(obj, ir.Variable) and obj.val is None
+            for name, obj in self.scope.items() if isinstance(obj, ir.Variable) and obj.val is None
         }
 
 
@@ -160,24 +165,22 @@ class GearContext(Context):
         return {
             name: obj
             for name, obj in self.scope.items()
-            if isinstance(obj, ir.Variable)
-            and isinstance(obj.val, (OutSig, InSig))
+            if isinstance(obj, ir.Variable) and isinstance(obj.val, (OutSig, InSig))
         }
 
     @property
     def regs(self):
         return {
             name: obj
-            for name, obj in self.scope.items()
-            if isinstance(obj, ir.Variable) and obj.reg
+            for name, obj in self.scope.items() if isinstance(obj, ir.Variable) and obj.reg
         }
 
     @property
     def in_ports(self):
         return [
             obj for obj in self.scope.values()
-            if (isinstance(obj, ir.Interface) and isinstance(obj.intf, Intf)
-                and obj.intf.producer and obj.intf.producer.gear is self.gear)
+            if (isinstance(obj, ir.Interface) and isinstance(obj.intf, Intf) and obj.intf.producer
+                and obj.intf.producer.gear is self.gear)
         ]
 
     @property
@@ -239,9 +242,7 @@ class FuncContext(Context):
                 else:
                     params[name] = var
 
-            res = infer_ftypes(params=params,
-                               args=arg_types,
-                               namespace=self.local_namespace)
+            res = infer_ftypes(params=params, args=arg_types, namespace=self.local_namespace)
 
             for name, dtype in res.items():
                 if name == 'return':
@@ -325,8 +326,7 @@ def visit_block(ir_node, body, ctx):
                 continue
 
             ir_node.stmts.append(s)
-            if isinstance(ir_node, ir.FuncBlock) and isinstance(
-                    s, ir.FuncReturn):
+            if isinstance(ir_node, ir.FuncBlock) and isinstance(s, ir.FuncReturn):
                 # No need to continue, return has been hit
                 break
 
