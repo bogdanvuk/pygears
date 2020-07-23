@@ -278,10 +278,15 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
         return div_cls.decode((self.code() << shift) // other.code())
 
     def __mul__(self, other):
-        if not isinstance(other, Fixpnumber):
-            other = Fixpnumber(other)
+        if is_type(type(other)) and not isinstance(other, (Fixpnumber, Integer)):
+            return NotImplemented
 
-        return (type(self) * type(other)).decode(super().__mul__(other))
+        if isinstance(other, Fixpnumber):
+            conv_other = other
+        else:
+            conv_other = Fixpnumber(other)
+
+        return (type(self) * type(conv_other)).decode(super().__mul__(conv_other))
 
     __rmul__ = __mul__
 
@@ -298,27 +303,46 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
         round(type(self), digits=digits)(round(float(self), digits))
 
     def __add__(self, other):
-        if not isinstance(other, Fixpnumber):
-            fix_other = Fixpnumber(other)
+        if is_type(type(other)) and not isinstance(other, (Fixpnumber, Integer)):
+            return NotImplemented
+
+        if isinstance(other, Fixpnumber):
+            conv_other = other
         else:
-            fix_other = other
+            conv_other = Fixpnumber(other)
 
-        sum_cls = type(self) + type(fix_other)
-        return sum_cls.decode(
-            (int(self) << (sum_cls.fract - type(self).fract)) +
-            (int(fix_other) << (sum_cls.fract - type(fix_other).fract)))
-
-        # return sum_cls.decode(
-        #     super().__lshift__(sum_cls.fract - type(self).fract) +
-        #     super().__lshift__(sum_cls.fract - type(other).fract))
+        sum_cls = type(self) + type(conv_other)
+        return sum_cls.decode((int(self) << (sum_cls.fract - type(self).fract)) +
+                              (int(conv_other) << (sum_cls.fract - type(conv_other).fract)))
 
     __radd__ = __add__
 
     def __sub__(self, other):
-        sum_cls = type(self) - type(other)
-        return sum_cls.decode(
-            (int(self) << (sum_cls.fract - type(self).fract)) -
-            (int(other) << (sum_cls.fract - type(other).fract)))
+        if is_type(type(other)) and not isinstance(other, (Fixpnumber, Integer)):
+            return NotImplemented
+
+        if isinstance(other, Fixpnumber):
+            conv_other = other
+        else:
+            conv_other = Fixpnumber(other)
+
+        sum_cls = type(self) - type(conv_other)
+        return sum_cls.decode((int(self) << (sum_cls.fract - type(self).fract)) -
+                              (int(conv_other) << (sum_cls.fract - type(conv_other).fract)))
+
+    def __rsub__(self, other):
+        if is_type(type(other)) and not isinstance(other, (Fixpnumber, Integer)):
+            return NotImplemented
+
+        if isinstance(other, Fixpnumber):
+            conv_other = other
+        else:
+            conv_other = Fixpnumber(other)
+
+        sum_cls = type(conv_other) - type(self)
+
+        return sum_cls.decode((int(conv_other) << (sum_cls.fract - type(conv_other).fract)) -
+                              (int(self) << (sum_cls.fract - type(self).fract)))
 
     def __le__(self, other):
         if isinstance(other, Fixpnumber):

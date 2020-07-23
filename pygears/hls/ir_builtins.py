@@ -85,6 +85,8 @@ def call_int(arg, **kwds):
             return ir.CastExpr(arg, cast_to=Int[arg.dtype.width])
         else:
             return ir.CastExpr(arg, cast_to=Uint[arg.dtype.width])
+    else:
+        return ir.ResExpr(NotImplemented)
 
 
 def call_all(arg, **kwds):
@@ -383,5 +385,31 @@ class AddIntfOperPlugin(PluginBase):
         for op, name in int_ops.items():
             ir_builtins[getattr(int, name)] = lambda a, b, *, x=op: ir.BinOpExpr(
                 (call_int(a), b), x)
+
+        int_rops = {
+            ir.opc.Add: '__radd__',
+            ir.opc.BitAnd: '__rand__',
+            ir.opc.BitOr: '__ror__',
+            ir.opc.BitXor: '__rxor__',
+            ir.opc.Div: '__rtruediv__',
+            ir.opc.FloorDiv: '__rfloordiv__',
+            ir.opc.LShift: '__rlshift__',
+            ir.opc.Mod: '__rmod__',
+            ir.opc.Mult: '__rmul__',
+            ir.opc.RShift: '__rshift__',
+            ir.opc.Sub: '__rsub__'
+        }
+
+        # TODO: User @wraps for better error reporting
+        for op, name in int_rops.items():
+            # TODO: Test NotImplemented part
+            def intop(a, b, *, x=op):
+                a_conv = call_int(a)
+                if a_conv == ir.ResExpr(NotImplemented):
+                    return ir.ResExpr(NotImplemented)
+
+                return ir.BinOpExpr((a_conv, b), x)
+
+            ir_builtins[getattr(int, name)] = intop
 
         reg['hls/ir_builtins'] = ir_builtins

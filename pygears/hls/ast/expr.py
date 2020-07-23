@@ -143,7 +143,11 @@ def visit_bin_expr(op, operands, ctx: Context):
 
     ret = resolve_func(f, (op2, op1), {}, ctx)
 
-    return ret
+    if ret != ir.ResExpr(NotImplemented):
+        return ret
+
+    raise SyntaxError(f"Operator '{ir.OPMAP[type(op)]}' not supported for operands of types "
+                      f"{op1.dtype!r} and {op2.dtype!r}")
 
 
 @node_visitor(ast.Compare)

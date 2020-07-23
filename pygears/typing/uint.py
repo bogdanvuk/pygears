@@ -416,13 +416,15 @@ class Integer(Integral, metaclass=IntegerType):
         return (type(self) << other)(super().__lshift__(other))
 
     def __add__(self, other):
-        if not is_type(type(other)):
-            other = type(self).base(other)
-
-        if not isinstance(other, Integer):
+        if is_type(type(other)) and not isinstance(other, Integer):
             return NotImplemented
 
-        return (type(self) + type(other))(super().__add__(other))
+        if isinstance(other, Integer):
+            conv_other = other
+        else:
+            conv_other = Integer(other)
+
+        return (type(self) + type(conv_other))(super().__add__(conv_other))
 
     def __iadd__(self, other):
         if not is_type(type(other)):
@@ -438,22 +440,37 @@ class Integer(Integral, metaclass=IntegerType):
         return type(self)(int(self) + int(other))
 
     def __sub__(self, other):
-        if not is_type(type(other)):
-            other = type(self).base(other)
-
-        if not isinstance(other, Integer):
+        if is_type(type(other)) and not isinstance(other, Integer):
             return NotImplemented
 
-        return (type(self) - type(other))(super().__sub__(other))
+        if is_type(type(other)):
+            conv_other = other
+        else:
+            conv_other = type(self).base(other)
+
+        return (type(self) - type(conv_other))(super().__sub__(conv_other))
+
+    def __rsub__(self, other):
+        if is_type(type(other)) and not isinstance(other, Integer):
+            return NotImplemented
+
+        if is_type(type(other)):
+            conv_other = other
+        else:
+            conv_other = type(self).base(other)
+
+        return (type(conv_other) - type(self))(super().__rsub__(conv_other))
 
     def __mul__(self, other):
         if is_type(type(other)) and not isinstance(other, Integer):
             return NotImplemented
 
-        if not is_type(type(other)):
-            return (type(self) * type(self).base(other))(super().__mul__(other))
+        if isinstance(other, Integer):
+            conv_other = other
         else:
-            return (type(self) * type(other))(super().__mul__(other))
+            conv_other = Integer(other)
+
+        return (type(self) * type(conv_other))(super().__mul__(conv_other))
 
     __rmul__ = __mul__
 

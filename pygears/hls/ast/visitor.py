@@ -58,8 +58,11 @@ class Function:
         # funtion code, so we need to take values as part of the hash.
         hargs = tuple(arg.val if isinstance(arg, ir.ResExpr) else arg.dtype for arg in args)
 
-        # TODO: Include keywords here
-        self._hash = hash(self.source) ^ hash(hargs)
+        if self.source:
+            # TODO: Include keywords here
+            self._hash = hash(self.source) ^ hash(hargs)
+        else:
+            self._hash = hash(self.__qualname__) ^ hash(hargs)
 
     @property
     def name(self):
