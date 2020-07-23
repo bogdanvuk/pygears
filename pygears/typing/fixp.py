@@ -9,15 +9,13 @@ from .math import bitw
 class FixpnumberType(IntegralType):
     """Defines lib methods for all Integer based classes.
     """
-    def __str__(self):
-        if self.args:
-            return f'q{self.integer}.{self.width - self.integer}'
-        else:
-            return super().__str__()
+    def keys(self):
+        """Returns a list of keys that can be used for indexing the type.
 
-    @property
-    def width(self) -> int:
-        return self.__args__[1]
+        >>> Int[8].keys()
+        [0, 1, 2, 3, 4, 5, 6, 7]
+        """
+        return list(range(self.width))
 
     @property
     def integer(self) -> int:
@@ -27,24 +25,59 @@ class FixpnumberType(IntegralType):
     def fract(self) -> int:
         return self.width - self.integer
 
-    def __hash__(self):
-        return super().__hash__()
+    @property
+    def specified(self):
+        return False
 
-    def __int__(self):
-        return self.width
-
-    def __neg__(self):
-        return Fixp[self.integer + 1, self.width + 1]
+    @property
+    def width(self) -> int:
+        return self.__args__[1]
 
     def __abs__(self):
         if not self.signed:
             return self
 
-        return Fixp[self.integer, self.width]
+        return Fixp[self.integer + 1, self.width + 1]
 
-    def __lshift__(self, others):
-        shamt = int(others)
-        return self.base[self.integer + shamt, self.width + shamt]
+    def __add__(self, other):
+        if not typeof(other, Integral):
+            return NotImplemented
+
+        signed = self.signed or other.signed
+        res_type = Fixp if signed else Ufixp
+
+        i1 = self.integer + 1 if signed and not self.signed else self.integer
+        fr1 = self.fract
+
+        if typeof(other, Fixpnumber):
+            i2 = other.integer + 1 if signed and not other.signed else other.integer
+            fr2 = other.fract
+        elif typeof(other, Integer):
+            i2 = other.width + 1 if signed and not other.signed else other.width
+            fr2 = 0
+        else:
+            return NotImplemented
+
+        integer_part = max(i1, i2) + 1
+        fract_part = max(fr1, fr2)
+        width = integer_part + fract_part
+
+        return res_type[integer_part, width]
+
+    def __and__(self, other):
+        return NotImplemented
+
+    def __ceil__(self):
+        if self.signed:
+            return Int[self.integer]
+        else:
+            return Uint[self.integer]
+
+    def __float__(self):
+        return float
+
+    def __floordiv__(self, other):
+        return self.__truediv__(other, 0)
 
     def __floor__(self):
         if self.signed:
@@ -52,50 +85,42 @@ class FixpnumberType(IntegralType):
         else:
             return Uint[self.integer]
 
-    def __round__(self, digits=0):
-        if digits == 0:
-            return self.__floor__
+    def __getitem__(self, index):
+        if not self.specified:
+            return super().__getitem__(index)
 
-        return self.base[self.integer, self.width]
+        index = self.index_norm(index)
 
-    def __rshift__(self, others):
+        width = 0
+        for i in index:
+            if isinstance(i, slice):
+                if i.stop == 0:
+                    return Unit
+                elif i.stop - i.start > len(self):
+                    raise IndexError
+                width += i.stop - i.start
+            else:
+                if i >= len(self):
+                    raise IndexError
+                width += 1
+
+        return Uint[width]
+
+    def __hash__(self):
+        return super().__hash__()
+
+    def __int__(self):
+        return self.width
+
+    def __invert__(self):
+        return NotImplemented
+
+    def __lshift__(self, others):
         shamt = int(others)
-        width = len(self)
+        return self.base[self.integer + shamt, self.width + shamt]
 
-        if shamt > width:
-            raise TypeError('Right shift larger than data width')
-        elif shamt == width:
-            return Unit
-        else:
-            return self.base[self.integer - shamt, self.width - shamt]
-
-    def keys(self):
-        """Returns a list of keys that can be used for indexing the type.
-
-        >>> Int[8].keys()
-        [0, 1, 2, 3, 4, 5, 6, 7]
-        """
-        return list(range(self.width))
-
-    def __truediv__(self, other, subprec=0):
-        ops = [self, other]
-
-        signed = any(op.signed for op in ops)
-
-        try:
-            integer_part = self.integer + other.fract
-        except AttributeError:
-            integer_part = self.integer
-
-        width = self.width + subprec
-
-        if signed:
-            return Fixp[integer_part, width]
-        else:
-            return Ufixp[integer_part, width]
-
-    def __floordiv__(self, other):
-        return self.__truediv__(other, 0)
+    def __mod__(self, other):
+        return NotImplemented
 
     def __mul__(self, other):
         if not typeof(other, Integral):
@@ -123,34 +148,62 @@ class FixpnumberType(IntegralType):
         else:
             return Ufixp[integer_part, width]
 
-    __rmul__ = __mul__
+    def __neg__(self):
+        return Fixp[self.integer + 1, self.width + 1]
 
-    def __add__(self, other):
-        if not typeof(other, Integral):
-            return NotImplemented
-
-        signed = self.signed or other.signed
-        res_type = Fixp if signed else Ufixp
-
-        i1 = self.integer + 1 if signed and not self.signed else self.integer
-        fr1 = self.fract
-
-        if typeof(other, Fixpnumber):
-            i2 = other.integer + 1 if signed and not other.signed else other.integer
-            fr2 = other.fract
-        elif typeof(other, Integer):
-            i2 = other.width + 1 if signed and not other.signed else other.width
-            fr2 = 0
-        else:
-            return NotImplemented
-
-        integer_part = max(i1, i2) + 1
-        fract_part = max(fr1, fr2)
-        width = integer_part + fract_part
-
-        return res_type[integer_part, width]
+    def __or__(self, other):
+        return NotImplemented
 
     __radd__ = __add__
+
+    def __rand__(self, other):
+        return NotImplemented
+
+    def __rfloordiv__(self, other):
+        return NotImplemented
+
+    def __rlshift__(self, other):
+        return NotImplemented
+
+    def __rmod__(self, other):
+        return NotImplemented
+
+    __rmul__ = __mul__
+
+    def __ror__(self, other):
+        return NotImplemented
+
+    def __round__(self, digits=0):
+        if digits == 0:
+            return self.__floor__
+
+        return self.base[self.integer, self.width]
+
+    def __rshift__(self, others):
+        shamt = int(others)
+        width = len(self)
+
+        if shamt > width:
+            raise TypeError('Right shift larger than data width')
+        elif shamt == width:
+            return Unit
+        else:
+            return self.base[self.integer - shamt, self.width - shamt]
+
+    def __rrshift__(self, other):
+        return NotImplemented
+
+    def __rtruediv__(self, other):
+        return NotImplemented
+
+    def __rxor__(self, other):
+        return NotImplemented
+
+    def __str__(self):
+        if self.args:
+            return f'q{self.integer}.{self.width - self.integer}'
+        else:
+            return super().__str__()
 
     def __sub__(self, other):
         if not typeof(other, Integral):
@@ -174,30 +227,28 @@ class FixpnumberType(IntegralType):
 
         return Fixp[integer_part, width]
 
-    @property
-    def specified(self):
-        return False
+    def __truediv__(self, other, subprec=0):
+        ops = [self, other]
 
-    def __getitem__(self, index):
-        if not self.specified:
-            return super().__getitem__(index)
+        signed = any(op.signed for op in ops)
 
-        index = self.index_norm(index)
+        try:
+            integer_part = self.integer + other.fract
+        except AttributeError:
+            integer_part = self.integer
 
-        width = 0
-        for i in index:
-            if isinstance(i, slice):
-                if i.stop == 0:
-                    return Unit
-                elif i.stop - i.start > len(self):
-                    raise IndexError
-                width += i.stop - i.start
-            else:
-                if i >= len(self):
-                    raise IndexError
-                width += 1
+        width = self.width + subprec
 
-        return Uint[width]
+        if signed:
+            return Fixp[integer_part, width]
+        else:
+            return Ufixp[integer_part, width]
+
+    def __trunc__(self, other):
+        if self.signed:
+            return Int[self.integer]
+        else:
+            return Uint[self.integer]
 
 
 class Fixpnumber(Integral, metaclass=FixpnumberType):
@@ -253,6 +304,9 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
 
         return res
 
+    def __abs__(self):
+        return -self if Uint[self.width](self.code())[-1] else self
+
     def __hash__(self):
         return hash((type(self), int(self)))
 
@@ -264,9 +318,6 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
 
     def __neg__(self):
         return (-type(self))(-int(self))
-
-    def __abs__(self):
-        return abs(type(self))(abs(float(self)))
 
     @class_and_instance_method
     def __truediv__(self, other, subprec=0):

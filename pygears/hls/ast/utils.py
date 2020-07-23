@@ -37,10 +37,8 @@ def get_short_lambda_ast(lambda_func):
     # find the AST node of a lambda definition
     # so we can locate it in the source code
     source_ast = ast.parse(source_text)
-    lambda_node = next(
-        (node
-         for node in ast.walk(source_ast) if isinstance(node, ast.Lambda)),
-        None)
+    lambda_node = next((node for node in ast.walk(source_ast) if isinstance(node, ast.Lambda)),
+                       None)
     if lambda_node is None:  # could be a single line `def fn(x): ...`
         return None
 
@@ -48,8 +46,7 @@ def get_short_lambda_ast(lambda_func):
 
 
 def is_lambda_function(obj):
-    return isinstance(
-        obj, types.LambdaType) and obj.__name__ == (lambda: None).__name__
+    return isinstance(obj, types.LambdaType) and obj.__name__ == (lambda: None).__name__
 
 
 def get_function_ast(func):
@@ -58,14 +55,20 @@ def get_function_ast(func):
         lambda_ast.body = [ast.Return(lambda_ast.body)]
         return ast.fix_missing_locations(lambda_ast)
     else:
-        return ast.parse(get_function_source(func)).body[0]
+        src = get_function_source(func)
+        if not src:
+            breakpoint()
+            raise SyntaxError(f"Function '{func.__qualname__}()' not supported")
+
+        return ast.parse(src).body[0]
+
 
 def get_property_type(prop):
     assert isinstance(prop, property)
 
     return prop.fget.__annotations__['return']
 
+
 def add_to_list(orig_list, extention):
     if extention:
-        orig_list.extend(
-            extention if isinstance(extention, list) else [extention])
+        orig_list.extend(extention if isinstance(extention, list) else [extention])
