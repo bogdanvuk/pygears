@@ -1,7 +1,7 @@
 from pygears.conf import PluginBase, reg
 from . import ir
 from .ast.cast import resolve_cast_func
-from .ast.call import resolve_gear_call
+from .ast.call import resolve_gear_call, resolve_func
 from pygears import Intf
 
 from pygears.core.gear import OutSig
@@ -361,7 +361,17 @@ class AddIntfOperPlugin(PluginBase):
         if sys.version_info[1] >= 7:
             ir_builtins[breakpoint] = call_breakpoint
 
-        int_ops = {
+        int_unops = {
+            ir.opc.Invert: '__invert__',
+            ir.opc.UAdd: '__pos__',
+            ir.opc.USub: '__neg__',
+        }
+
+        # TODO: User @wraps for better error reporting
+        for op, name in int_unops.items():
+            ir_builtins[getattr(int, name)] = lambda a, *, x=op: ir.UnaryOpExpr(call_int(a), x)
+
+        int_binops = {
             ir.opc.Add: '__add__',
             ir.opc.BitAnd: '__and__',
             ir.opc.BitOr: '__or__',
@@ -382,11 +392,11 @@ class AddIntfOperPlugin(PluginBase):
         }
 
         # TODO: User @wraps for better error reporting
-        for op, name in int_ops.items():
+        for op, name in int_binops.items():
             ir_builtins[getattr(int, name)] = lambda a, b, *, x=op: ir.BinOpExpr(
                 (call_int(a), b), x)
 
-        int_rops = {
+        int_binrops = {
             ir.opc.Add: '__radd__',
             ir.opc.BitAnd: '__rand__',
             ir.opc.BitOr: '__ror__',
@@ -401,7 +411,7 @@ class AddIntfOperPlugin(PluginBase):
         }
 
         # TODO: User @wraps for better error reporting
-        for op, name in int_rops.items():
+        for op, name in int_binrops.items():
             # TODO: Test NotImplemented part
             def intop(a, b, *, x=op):
                 a_conv = call_int(a)

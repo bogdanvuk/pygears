@@ -113,6 +113,12 @@ class IntegerType(IntegralType):
 
         return super().__new__(cls, name, bases, namespace, args=args)
 
+    def __abs__(self):
+        if not self.signed:
+            return self
+
+        return Int[self.width + 1]
+
     def __str__(self):
         if self.args:
             if isinstance(self.args[0], int):
@@ -355,6 +361,12 @@ class Integer(Integral, metaclass=IntegerType):
         check_width(val, res.width, cls)
         return res
 
+    def __abs__(self):
+        if self.signed:
+            return -self if code(self, Uint)[-1] else self
+        else:
+            return self
+
     @property
     def quant(self):
         return self.decode(1)
@@ -383,10 +395,10 @@ class Integer(Integral, metaclass=IntegerType):
         return len(type(self))
 
     def __invert__(self):
-        return type(self)(~int(self) & type(self).mask)
+        return type(self)(super().__invert__() & type(self).mask)
 
     def __neg__(self):
-        return (-type(self))(-int(self))
+        return (-type(self)).decode(super().__neg__())
 
     def __eq__(self, other):
         if not is_type(type(other)):
@@ -479,14 +491,6 @@ class Integer(Integral, metaclass=IntegerType):
 
     def __repr__(self):
         return f'{repr(type(self))}({int(self)})'
-
-    def __int__(self):
-        """Returns builtin integer type
-
-        >>> type(int(Integer[8](0)))
-        <class 'int'>
-        """
-        return super(Integer, self).__int__()
 
     @class_and_instance_method
     def __getitem__(self, index):
@@ -729,3 +733,30 @@ class Bool(Uint, metaclass=BoolMeta):
 
     def __new__(cls, val):
         return int.__new__(cls, bool(val))
+
+
+def code(data, cast_type=Uint):
+    if is_type(data):
+        if is_type(cast_type) and not cast_type.specified and typeof(cast_type, Integer):
+            cast_type = cast_type[data.width]
+
+        return cast_type
+
+    dtype = type(data)
+    if is_type(dtype):
+        data = data.code()
+
+        if is_type(cast_type) and not cast_type.specified and typeof(cast_type, Integer):
+            cast_type = cast_type[dtype.width]
+
+    if is_type(cast_type) and cast_type.specified:
+        return cast_type.decode(data & ((1 << cast_type.width) - 1))
+    else:
+        return cast_type(data)
+
+
+def decode(val):
+    if is_type(type(val)):
+        return val.decode()
+    else:
+        return val

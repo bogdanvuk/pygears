@@ -5,7 +5,7 @@ from .queue import Queue
 from .array import Array
 from .base import TemplateArgumentsError, typeof, Any, is_type
 from .tuple import Tuple
-from .uint import Int, Uint, Integer, Bool, Integral
+from .uint import Int, Uint, Integer, Bool, Integral, code, decode
 from .unit import Unit
 from .union import Union, Maybe
 from .math import bitw, ceil_pow2, div, floor
@@ -16,7 +16,7 @@ from .factor import factor
 from .fixp import Fixp, Ufixp, Fixpnumber
 from .number import Number
 from .float import Float
-from .cast import cast, signed, code, decode
+from .cast import cast, signed
 from .saturate import saturate
 from .qround import qround
 from .match import get_match_conds, TypeMatchError, match

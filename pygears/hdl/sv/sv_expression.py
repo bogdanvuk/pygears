@@ -81,7 +81,7 @@ class SVExpressionVisitor:
             val = Integer(int(code(node.val)))
 
         sign = '-' if val < 0 else ''
-        return f"{sign}{val.width}'d{abs(val)}"
+        return f"{sign}{val.width}'d{abs(int(val))}"
 
     def visit_FunctionCall(self, node):
         return (

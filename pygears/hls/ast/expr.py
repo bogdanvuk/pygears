@@ -55,10 +55,23 @@ def _(node: ast.Name, ctx: Context):
 @node_visitor(ast.UnaryOp)
 def _(node: ast.UnaryOp, ctx: Context):
     operand = visit_ast(node.operand, ctx)
-    # if operand is None:
-    #     return None
 
-    return ir.UnaryOpExpr(operand, type(node.op))
+    if type(node.op) in [ast.Not]:
+        return ir.UnaryOpExpr(operand, type(node.op))
+
+    # TODO: This WAS needed, since: ir.ResExpr(Uint[8]).dtype is None. REMOVE
+    dtype = type(operand.val) if isinstance(operand, ir.ResExpr) else operand.dtype
+    # f = getattr(operand.dtype, METHOD_OP_MAP[type(op)])
+
+    f = getattr(dtype, METHOD_OP_MAP[type(node.op)])
+
+    ret = resolve_func(f, (operand, ), {}, ctx)
+
+    if ret != ir.ResExpr(NotImplemented):
+        return ret
+
+    raise SyntaxError(f"Operator '{ir.OPMAP[type(node.op)]}' not supported for operand of type "
+                      f"{operand.dtype!r}")
 
 
 @node_visitor(ast.Tuple)
@@ -82,6 +95,7 @@ METHOD_OP_MAP = {
     ast.Gt: '__gt__',
     ast.GtE: '__ge__',
     ast.FloorDiv: '__floordiv__',
+    ast.Invert: '__invert__',
     ast.Lt: '__lt__',
     ast.LtE: '__le__',
     ast.LShift: '__lshift__',

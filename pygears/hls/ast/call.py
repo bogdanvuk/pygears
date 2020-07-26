@@ -62,9 +62,8 @@ def get_gear_signatures(func, args, kwds):
 
 
 def const_func_args(args, kwds):
-    return (
-        all(isinstance(node, ir.ResExpr) for node in args)
-        and all(isinstance(node, ir.ResExpr) for node in kwds.values()))
+    return (all(isinstance(node, ir.ResExpr) for node in args)
+            and all(isinstance(node, ir.ResExpr) for node in kwds.values()))
 
 
 def resolve_compile_time(func, args, kwds):
@@ -95,8 +94,8 @@ def resolve_gear_call(func, args, kwds):
 
 
 compile_time_builtins = {
-    all, max, int, len, type, isinstance, div, floor, cast, QueueMeta.sub, Array.code,
-    Tuple.code, code, is_type, typeof
+    all, max, int, len, type, isinstance, div, floor, cast, QueueMeta.sub, Array.code, Tuple.code,
+    code, is_type, typeof
 }
 
 
@@ -129,9 +128,8 @@ def get_class_that_defined_method(meth):
         meth = meth.__func__  # fallback to __qualname__ parsing
 
     if inspect.isfunction(meth):
-        cls = getattr(
-            inspect.getmodule(meth),
-            meth.__qualname__.split('.<locals>', 1)[0].rsplit('.', 1)[0])
+        cls = getattr(inspect.getmodule(meth),
+                      meth.__qualname__.split('.<locals>', 1)[0].rsplit('.', 1)[0])
         if isinstance(cls, type):
             return cls
 
@@ -177,6 +175,11 @@ def resolve_func(func, args, kwds, ctx):
         else:
             breakpoint()
             raise Exception
+
+    if func not in reg['hls/ir_builtins']:
+        if func is abs:
+            return resolve_func(
+                getattr(args[0].dtype, '__abs__'), args, kwds, ctx)
 
     if isinstance(func, Partial):
         intf, stmts = call_gear(func, *form_gear_args(args, kwds, func), ctx)

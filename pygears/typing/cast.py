@@ -4,35 +4,8 @@ from . import Array, Int, Integer, Queue, Tuple, Uint, Union, Maybe, Any
 from . import Fixpnumber, Float, Number, Ufixp, Fixp, Unit, Integral
 # from pygears.conf.log import gear_log
 
-# TODO: Find solution for when a filed of a complex data type needs to be
+# TODO: Find solution for when a field of a complex data type needs to be
 # recoded (for an example to a smaller width). This doesn't work properly
-
-
-def code(data, cast_type=Uint):
-    if is_type(data):
-        if is_type(cast_type) and not cast_type.specified and typeof(cast_type, Integer):
-            cast_type = cast_type[data.width]
-
-        return cast_type
-
-    dtype = type(data)
-    if is_type(dtype):
-        data = data.code()
-
-        if is_type(cast_type) and not cast_type.specified and typeof(cast_type, Integer):
-            cast_type = cast_type[dtype.width]
-
-    if is_type(cast_type) and cast_type.specified:
-        return cast_type.decode(data & ((1 << cast_type.width) - 1))
-    else:
-        return cast_type(data)
-
-
-def decode(val):
-    if is_type(type(val)):
-        return val.decode()
-    else:
-        return val
 
 
 def short_s(s, cutoff=20):

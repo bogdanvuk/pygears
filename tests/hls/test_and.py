@@ -6,7 +6,7 @@ from pygears.lib import directed, drv
 
 def test_and_bin_uint():
     @gear(hdl={'compile': True})
-    async def test(a_i: Uint[3], b_i: Int[4]) -> Uint[4]:
+    async def test(a_i: Uint[3], b_i: Int[4]) -> Int[5]:
         async with a_i as a, b_i as b:
             yield a & b
             yield b & a
@@ -20,7 +20,7 @@ def test_and_bin_uint():
     directed(drv(t=Uint[3], seq=[7]),
              drv(t=Int[4], seq=[-7]),
              f=test(__sim__='verilator'),
-             ref=[0x1, 0x1, 0x7, 0x9, 0x5, 0x5, 0x1, 0x1])
+             ref=[0x1, 0x1, 0x7, -7, 0x5, 0x5, 0x1, 0x1])
 
     sim(timeout=8)
 

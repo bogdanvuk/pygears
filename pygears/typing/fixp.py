@@ -2,7 +2,7 @@ from math import floor
 from .base import class_and_instance_method, typeof, is_type
 from .float import Float
 from .unit import Unit
-from .uint import IntegralType, Integral, Uint, Int, Integer
+from .uint import IntegralType, Integral, Uint, Int, Integer, code
 from .math import bitw
 
 
@@ -305,7 +305,10 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
         return res
 
     def __abs__(self):
-        return -self if Uint[self.width](self.code())[-1] else self
+        if self.signed:
+            return -self if code(self, Uint)[-1] else self
+        else:
+            return self
 
     def __hash__(self):
         return hash((type(self), int(self)))
@@ -317,7 +320,7 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
         return f'{repr(type(self))}({float(self)})'
 
     def __neg__(self):
-        return (-type(self))(-int(self))
+        return (-type(self)).decode(super().__neg__())
 
     @class_and_instance_method
     def __truediv__(self, other, subprec=0):

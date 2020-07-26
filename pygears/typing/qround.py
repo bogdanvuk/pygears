@@ -1,6 +1,6 @@
-from .cast import code, value_cast, type_cast
+from .cast import value_cast, type_cast
 from .fixp import Fixp, Ufixp
-from .uint import Uint, Bool, Int
+from .uint import Uint, Bool, Int, code
 
 
 def get_out_type(val_type, fract):
