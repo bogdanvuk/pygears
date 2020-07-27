@@ -18,16 +18,6 @@ from pygears.lib.rng import qrange as qrange_gear
 from pygears.lib.saturate import saturate as saturate_gear
 
 
-def call_floor(arg):
-    t_arg = arg.dtype
-    int_cls = Int if t_arg.signed else Uint
-    arg_to_int = ir.CastExpr(arg, int_cls[t_arg.width])
-    if t_arg.fract >= 0:
-        return ir.BinOpExpr((arg_to_int, ir.ResExpr(Uint(t_arg.fract))), ir.opc.RShift)
-    else:
-        return ir.BinOpExpr((arg_to_int, ir.ResExpr(Uint(-t_arg.fract))), ir.opc.LShift)
-
-
 def call_div(a, b, subprec):
     t_a = a.dtype
     t_b = b.dtype
@@ -317,8 +307,6 @@ class AddIntfOperPlugin(PluginBase):
             call_typeof,
             div:
             call_div,
-            floor:
-            call_floor,
             Intf.empty:
             call_empty,
             Intf.get:

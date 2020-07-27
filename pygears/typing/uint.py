@@ -363,9 +363,9 @@ class Integer(Integral, metaclass=IntegerType):
 
     def __abs__(self):
         if self.signed:
-            return -self if code(self, Uint)[-1] else self
+            return abs(type(self))(-int(self) if code(self, Uint)[-1] else int(self))
         else:
-            return self
+            return abs(type(self))(int(self))
 
     @property
     def quant(self):

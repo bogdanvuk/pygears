@@ -1,6 +1,7 @@
 import ast
 import sys
 import inspect
+import math
 from functools import partial
 from . import Context, FuncContext, ir, node_visitor, visit_ast
 from .inline import form_gear_args, call_gear, parse_func_call
@@ -136,6 +137,9 @@ def get_class_that_defined_method(meth):
     return getattr(meth, '__objclass__', None)  # handle special descriptor objects
 
 
+special_funcs = {abs: '__abs__', math.ceil: '__ceil__'}
+
+
 def resolve_func(func, args, kwds, ctx):
     if is_type(func):
         if const_func_args(args, kwds):
@@ -177,9 +181,8 @@ def resolve_func(func, args, kwds, ctx):
             raise Exception
 
     if func not in reg['hls/ir_builtins']:
-        if func is abs:
-            return resolve_func(
-                getattr(args[0].dtype, '__abs__'), args, kwds, ctx)
+        if func in special_funcs:
+            return resolve_func(getattr(args[0].dtype, special_funcs[func]), args, kwds, ctx)
 
     if isinstance(func, Partial):
         intf, stmts = call_gear(func, *form_gear_args(args, kwds, func), ctx)

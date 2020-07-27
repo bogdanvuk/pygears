@@ -46,15 +46,16 @@ def test_bool():
 
 
 def test_wrong_param():
-    with pytest.raises(
-            TypeError,
-            match="Uint type parameter must be an integer, not '1.2'"):
+    with pytest.raises(TypeError, match="Uint type parameter must be an integer, not '1.2'"):
         Uint[1.2]
 
-    with pytest.raises(
-            TypeError,
-            match="Uint type parameter must be a positive integer, not '-1'"):
+    with pytest.raises(TypeError, match="Uint type parameter must be a positive integer, not '-1'"):
         Uint[-1]
+
+
+def test_abs():
+    assert abs(Uint[2]) == Uint[2]
+    assert abs(Int[2]) == Int[3]
 
 
 def test_add_type():
@@ -67,32 +68,6 @@ def test_add_type():
     assert Uint[2] + Int[5] == Int[6]
     assert Uint[5] + Int[2] == Int[7]
     assert Uint[5] + Int[5] == Int[7]
-
-
-def test_add_val():
-    res = Uint[2].max + Uint[5].max
-    assert isinstance(res, Uint[6])
-    assert res == 34
-    res = Uint[5].max + Uint[5].max
-    assert isinstance(res, Uint[6])
-    assert res == 62
-
-    res = Int[2].min + Int[5].min
-    assert isinstance(res, Int[6])
-    assert res == -18
-    res = Int[5].min + Int[5].min
-    assert isinstance(res, Int[6])
-    assert res == -32
-
-    res = Uint[2].max + Int[5].max
-    assert isinstance(res, Int[6])
-    assert res == 18
-    res = Uint[5].max + Int[2].max
-    assert isinstance(res, Int[7])
-    assert res == 32
-    res = Uint[5].max + Int[5].max
-    assert isinstance(res, Int[7])
-    assert res == 46
 
 
 def test_sub_type():
@@ -231,5 +206,6 @@ def test_mul_int():
     res = 2 * Int[2].min
     assert isinstance(res, Int[4])
     assert res == -4
+
 
 # print(Uint[2].max * 2)

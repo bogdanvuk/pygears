@@ -1,4 +1,4 @@
-from math import floor
+from math import floor, ceil
 from .base import class_and_instance_method, typeof, is_type
 from .float import Float
 from .unit import Unit
@@ -68,10 +68,10 @@ class FixpnumberType(IntegralType):
         return NotImplemented
 
     def __ceil__(self):
-        if self.signed:
-            return Int[self.integer]
+        if self.fract > 0:
+            return self.base[self.integer + 1, self.width + 1]
         else:
-            return Uint[self.integer]
+            return self
 
     def __float__(self):
         return float
@@ -80,10 +80,7 @@ class FixpnumberType(IntegralType):
         return self.__truediv__(other, 0)
 
     def __floor__(self):
-        if self.signed:
-            return Int[self.integer]
-        else:
-            return Uint[self.integer]
+        return self
 
     def __getitem__(self, index):
         if not self.specified:
@@ -310,6 +307,41 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
         else:
             return self
 
+    def __add__(self, other):
+        if is_type(type(other)) and not isinstance(other, (Fixpnumber, Integer)):
+            return NotImplemented
+
+        if isinstance(other, Fixpnumber):
+            conv_other = other
+        else:
+            conv_other = Fixpnumber(other)
+
+        sum_cls = type(self) + type(conv_other)
+        return sum_cls.decode((int(self) << (sum_cls.fract - type(self).fract)) +
+                              (int(conv_other) << (sum_cls.fract - type(conv_other).fract)))
+
+    def __and__(self, other):
+        return NotImplemented
+
+    def __ceil__(self):
+        t = type(self)
+        if t.fract >= 1:
+            i = int(self)
+            fract = i & ((1 << t.fract) - 1)
+            if fract:
+                return ceil(t).decode(((i >> (t.fract)) + 1) << t.fract)
+            else:
+                return ceil(t).decode(i)
+        else:
+            return self
+
+    def __floor__(self):
+        t = type(self)
+        if t.fract >= 1:
+            return floor(t).decode((int(self) >> t.fract) << t.fract)
+        else:
+            return self
+
     def __hash__(self):
         return hash((type(self), int(self)))
 
@@ -347,27 +379,12 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
     def __floordiv__(self, other):
         return self.__truediv__(other, 0)
 
-    def __floor__(self):
-        if type(self).fract >= 0:
-            return floor(type(self))(self.code() >> type(self).fract)
-        else:
-            return floor(type(self))(self.code() << (-type(self).fract))
-
     def __round__(self, digits=0):
-        round(type(self), digits=digits)(round(float(self), digits))
-
-    def __add__(self, other):
-        if is_type(type(other)) and not isinstance(other, (Fixpnumber, Integer)):
-            return NotImplemented
-
-        if isinstance(other, Fixpnumber):
-            conv_other = other
+        t = type(self)
+        if t.fract >= 1:
+            return round(t).decode((((int(self) >> (t.fract - 1)) + 1) >> 1) << t.fract)
         else:
-            conv_other = Fixpnumber(other)
-
-        sum_cls = type(self) + type(conv_other)
-        return sum_cls.decode((int(self) << (sum_cls.fract - type(self).fract)) +
-                              (int(conv_other) << (sum_cls.fract - type(conv_other).fract)))
+            return self
 
     __radd__ = __add__
 
