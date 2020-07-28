@@ -60,15 +60,15 @@ class SCVTypeSeqVisitor(TypingVisitorBase):
         if scv_var_func:
             return scv_var_func()
         else:
-            return random.randrange(0, 2**(int(dtype)) - 1)
+            return random.randrange(0, 2**(dtype.width) - 1)
 
     def visit_Int(self, dtype, field):
         scv_var_func = getattr(self.scvlib, f'get_{field}', None)
         if scv_var_func:
             return scv_var_func()
         else:
-            return random.randrange(-2**(int(dtype) - 1),
-                                    2**(int(dtype) - 1) - 1)
+            return random.randrange(-2**(dtype.width - 1),
+                                    2**(dtype.width - 1) - 1)
 
 
 class SCVTypeVisitor(TypingVisitorBase):
@@ -83,11 +83,11 @@ class SCVTypeVisitor(TypingVisitorBase):
         return type_declaration
 
     def visit_Int(self, type_, field):
-        self.cvars[field] = (f'sc_int<{int(type_)}>', int(type_))
+        self.cvars[field] = (f'sc_int<{int(type_)}>', type_.width)
 
     def visit_Uint(self, type_, field):
-        if (int(type_) != 0):
-            self.cvars[field] = (f'sc_uint<{int(type_)}>', int(type_))
+        if (type_.width != 0):
+            self.cvars[field] = (f'sc_uint<{type_.width}>', type_.width)
 
     def visit_Unit(self, type_, field):
         return None

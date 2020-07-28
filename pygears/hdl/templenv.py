@@ -44,7 +44,7 @@ def get_port_config(modport, type_, name):
         'name': name,
         'size': 1,
         'type': type_,
-        'width': int(type_),
+        'width': type_.width,
         'local_type': type_
     }
 

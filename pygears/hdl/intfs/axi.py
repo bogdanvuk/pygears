@@ -16,9 +16,9 @@ def index_to_sv_slice(dtype, key):
     if key is None or key == 0:
         low_pos = 0
     else:
-        low_pos = int(dtype[:key])
+        low_pos = dtype[:key].width
 
-    high_pos = low_pos + int(subtype) - 1
+    high_pos = low_pos + subtype.width - 1
 
     return f'{high_pos}:{low_pos}'
 

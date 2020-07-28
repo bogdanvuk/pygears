@@ -174,7 +174,7 @@ class SVIntfGen:
     def get_intf_def(self, name, size, template_env):
         ctx = {
             'name': name,
-            'width': int(self.intf.dtype),
+            'width': self.intf.dtype.width,
             'size': size,
             'type': str(self.intf.dtype)
         }
@@ -215,7 +215,7 @@ class SVIntfGen:
                 'inst_name': inst_name,
                 'param_map': {
                     'SIZE': len(self.intf.consumers),
-                    'WIDTH': int(self.intf.dtype)
+                    'WIDTH': self.intf.dtype.width
                 },
                 'port_map': {
                     'din': (self.basename, None, None),

@@ -85,17 +85,18 @@ def test_ceil():
     assert ceil(q6_3.min) == q6_3.min
 
 
-# def test_floor():
-#     uq2_3 = Ufixp[2, 3]
-#     q2_3 = Fixp[2, 3]
-#     uq4_4 = Ufixp[4, 4]
-#     q6_3 = Fixp[6, 3]
+def test_floor():
+    uq2_4 = Ufixp[2, 4]
+    q2_3 = Fixp[2, 3]
+    uq4_4 = Ufixp[4, 4]
+    q6_3 = Fixp[6, 3]
 
-#     assert floor(uq2_3.max) == Ufixp[3, 4](3.0)
-#     assert floor(q2_3.min) == Fixp[3, 4](-2.0)
-#     assert floor(q2_3(-1.5)) == Fixp[3, 4](-2.0)
-#     assert floor(uq4_4.max) == uq4_4.max
-#     assert floor(q6_3.min) == q6_3.min
+    assert floor(uq2_4.max) == uq2_4(3.0)
+    assert floor(uq2_4(3.25)) == uq2_4(3.0)
+    assert floor(q2_3.min) == q2_3(-2.0)
+    assert floor(q2_3(-1.5)) == q2_3(-2.0)
+    assert floor(uq4_4.max) == uq4_4.max
+    assert floor(q6_3.min) == q6_3.min
 
 
 def test_sub_val():

@@ -17,7 +17,7 @@ def is_union_of_queues_with_equal_len(din):
 @gear(enablement=b'is_union_of_queues_with_equal_len(din)')
 def factor(din) -> b'factor(din)':
     lvl = din.dtype.types[0].lvl
-    data_len = int(din.dtype.types[0]) - lvl
+    data_len = din.dtype.types[0].width - lvl
     din_tuple = din | Tuple \
         | tuplemap(f=(code(t=Tuple[Uint[data_len], Uint[lvl]]), None)) \
         | flatten

@@ -13,7 +13,7 @@ def tuple_mul_resolver(opexp, ctx: Context):
 
 
 def concat_resolver(opexp, ctx: Context):
-    ops = tuple(op for op in reversed(opexp) if int(op.dtype))
+    ops = tuple(op for op in reversed(opexp) if op.dtype.width)
 
     if len(ops) == 0:
         return ir.ResExpr(Unit())

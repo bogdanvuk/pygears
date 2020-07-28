@@ -25,8 +25,8 @@ class SVGenTypeVisitor(TypingVisitorBase):
     def visit_Int(self, type_, field):
         if (not self.depth):
             self.struct_array.append(
-                f'typedef {self.basic_type} signed [{int(type_)-1}:0] {self.context}_t; // {type_}\n')
-        return f'{self.basic_type} signed [{int(type_)-1}:0]'
+                f'typedef {self.basic_type} signed [{type_.width-1}:0] {self.context}_t; // {type_}\n')
+        return f'{self.basic_type} signed [{type_.width-1}:0]'
 
     def visit_Bool(self, type_, field):
         if (not self.depth):
@@ -39,8 +39,8 @@ class SVGenTypeVisitor(TypingVisitorBase):
             return None
         if (not self.depth):
             self.struct_array.append(
-                f'typedef {self.basic_type} [{int(type_)-1}:0] {self.context}_t; // {type_}\n')
-        return f'{self.basic_type} [{int(type_)-1}:0]'
+                f'typedef {self.basic_type} [{type_.width-1}:0] {self.context}_t; // {type_}\n')
+        return f'{self.basic_type} [{type_.width-1}:0]'
 
     visit_Ufixp = visit_Uint
     visit_Fixp = visit_Int
@@ -56,8 +56,8 @@ class SVGenTypeVisitor(TypingVisitorBase):
         low_parent_context = f'{middle_parent_context}_data'
 
         for t in (type_.types):
-            if (int(t) > max_len):
-                max_len = int(t)
+            if (t.width > max_len):
+                max_len = t.width
 
         # if self.depth < self.max_depth:
         if False:
@@ -66,9 +66,9 @@ class SVGenTypeVisitor(TypingVisitorBase):
                 struct_fields.append(f'{self.struct_str} // ({t}, u?)')
                 self.context = f'{low_parent_context}_{field_tmp}'
                 type_declaration = self.visit(t, field_tmp)
-                if (int(t) < max_len):
+                if (t.width < max_len):
                     struct_fields.append(
-                        f'    {self.basic_type} [{max_len-int(t)-1}:0] dummy; // u{max_len-int(t)}')
+                        f'    {self.basic_type} [{t.width-1}:0] dummy; // u{t.width}')
                 if (type_declaration is not None):
                     struct_fields.append(f'    {type_declaration} {field_tmp}; // {t}')
                 struct_fields.append(f'}} {middle_parent_context}_{field_tmp}_t;\n')
@@ -87,9 +87,9 @@ class SVGenTypeVisitor(TypingVisitorBase):
             f'    {self.basic_type} [{bitw(len(type_.args)-1)-1}:0] ctrl; // u{bitw(len(type_.args)-1)}'
         )
 
-        if int(type_.data) > 0:
+        if type_.data.width > 0:
             struct_fields.append(
-                f'    {self.basic_type} [{int(type_.data)-1}:0] data; // {type_.data}')
+                f'    {self.basic_type} [{type_.data.width-1}:0] data; // {type_.data}')
 
         struct_fields.append(f'}} {high_parent_context}_t;\n')
 

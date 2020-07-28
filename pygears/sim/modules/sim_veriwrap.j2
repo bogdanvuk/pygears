@@ -144,16 +144,16 @@ void final() {
 }
 
 {% for p in in_ports -%}
-  {% if int(p.dtype) > 64 %}
+  {% if p.dtype.width > 64 %}
 void set_{{p.basename}}(uint32_t* data, uint valid) {
-  {% elif int(p.dtype) > 32 %}
+  {% elif p.dtype.width > 32 %}
 void set_{{p.basename}}(vluint64_t data, uint valid) {
   {% else %}
 void set_{{p.basename}}(uint32_t data, uint valid) {
   {% endif %}
 
-  {% if int(p.dtype) > 64 %}
-    for (int i = 0; i < {{ (int(p.dtype) + 31) // 32 }}; ++i) {
+  {% if p.dtype.width > 64 %}
+    for (int i = 0; i < {{ (p.dtype.width + 31) // 32 }}; ++i) {
         top->{{p.basename}}_data[i] = data[i];
 #ifdef DEBUG
         printf("{{p.basename}}_data: %x, Valid: %d\n", data[i], valid);
@@ -183,14 +183,14 @@ int get_{{p.basename}}() {
 
 {% for p in out_ports -%}
 int get_{{p.basename}}(uint32_t* data) {
-  {% if int(p.dtype) > 64 %}
+  {% if p.dtype.width > 64 %}
     uint32_t* p_data = top->{{p.basename}}_data;
-  {% elif int(p.dtype) > 32 %}
+  {% elif p.dtype.width > 32 %}
     uint32_t* p_data = (uint32_t*) &top->{{p.basename}}_data;
   {% endif %}
 
-  {% if int(p.dtype) > 32 %}
-    for (int i = 0; i < {{ (int(p.dtype) + 31) // 32 }}; ++i) {
+  {% if p.dtype.width > 32 %}
+    for (int i = 0; i < {{ (p.dtype.width + 31) // 32 }}; ++i) {
     data[i] = p_data[i];
     }
   {% else %}

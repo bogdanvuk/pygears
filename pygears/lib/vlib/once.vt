@@ -2,7 +2,7 @@
 {% set py = import_('builtins') %}
 {% call snippet.gear_module(module_name, intfs, comment) %}
 
-   logic [{{int(params['tout'])}}-1 : 0] din_reg_data;
+   logic [{{params['tout'].width}}-1 : 0] din_reg_data;
    logic                         din_reg_valid;
    logic                         reg_ready;
    logic                         reg_empty;

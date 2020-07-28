@@ -528,8 +528,8 @@ def write_module(ctx: Context, hdl, writer, subsvmods, funcs, template_env, conf
 
     for f_hdl, f_ctx in funcs:
         size = ''
-        if int(f_hdl.ret_dtype) > 0:
-            size = f'[{int(f_hdl.ret_dtype)-1}:0]'
+        if f_hdl.ret_dtype.width > 0:
+            size = f'[{f_hdl.ret_dtype.width-1}:0]'
 
         if getattr(f_hdl.ret_dtype, 'signed', False):
             size = f'signed {size}'

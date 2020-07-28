@@ -9,7 +9,7 @@ def demux_type(dtypes, mapping):
         din_t = dtypes.types[idin]
         if tout[idout] is not None:
             if tout[idout] != din_t:
-                tout[idout] = Uint[max(int(din_t), int(tout[idout]))]
+                tout[idout] = Uint[max(din_t.width, tout[idout].width)]
         else:
             tout[idout] = din_t
 
@@ -73,7 +73,7 @@ def demux_ctrl(din: Union, *, use_dflt=True, mapping=None):
 @gear
 def demux_by(ctrl: Uint, din, *, fcat=ccat, nout=None, use_dflt=True, mapping=None):
     if nout is None:
-        nout = 2**int(ctrl.dtype)
+        nout = 2**ctrl.dtype.width
 
     demux_din = fcat(din, ctrl) \
         | Union[(din.dtype, ) * nout] \

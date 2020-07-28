@@ -57,7 +57,7 @@ class IntegralType(EnumerableGenericMeta):
         >>> Int[8].keys()
         [0, 1, 2, 3, 4, 5, 6, 7]
         """
-        return list(range(int(self)))
+        return list(range(self.width))
 
     def __getitem__(self, index):
         if not self.specified:
@@ -135,29 +135,29 @@ class IntegerType(IntegralType):
         return int(self.__args__[0])
 
     def __gt__(self, other):
-        return int(self) > int(other)
+        return self.width > other.width
 
     def __ge__(self, other):
-        return int(self) >= int(other)
+        return self.width >= other.width
 
     def __invert__(self):
         return self
 
     def __neg__(self):
-        return Int[int(self) + 1]
+        return Int[self.width + 1]
 
     def __or__(self, other):
-        # return int(self) | int(other)
-        return self.base[max(int(op) for op in (self, other))]
+        # return self.width | other.width
+        return self.base[max(op.width for op in (self, other))]
 
     def __and__(self, other):
-        return self.base[max(int(op) for op in (self, other))]
+        return self.base[max(op.width for op in (self, other))]
 
     def __xor__(self, other):
-        return self.base[max(int(op) for op in (self, other))]
+        return self.base[max(op.width for op in (self, other))]
 
     def __lshift__(self, other):
-        return self.base[int(self) + int(other)]
+        return self.base[self.width + int(other)]
 
     def __rshift__(self, other):
         shamt = int(other)
@@ -216,21 +216,21 @@ class IntegerType(IntegralType):
 
         signed = any(typeof(op, Int) for op in ops)
         if signed:
-            return Int[int(self) + int(other)]
+            return Int[self.width + other.width]
         else:
-            return self.base[int(self) + int(other)]
+            return self.base[self.width + other.width]
 
     def __truediv__(self, other):
-        return self.base[int(self) - int(other) + 1]
+        return self.base[self.width - other.width + 1]
 
     def __rtruediv__(self, other):
-        return self.base[int(other) - int(self) + 1]
+        return self.base[other.width - self.width + 1]
 
     def __floordiv__(self, other):
-        return self.base[int(self) - int(other) + 1]
+        return self.base[self.width - other.width + 1]
 
     def __rfloordiv__(self, other):
-        return self.base[int(other) - int(self) + 1]
+        return self.base[other.width - self.width + 1]
 
     def __mod__(self, other):
         return other
@@ -613,8 +613,8 @@ class Int(Integer, metaclass=IntType):
     @classmethod
     def decode(cls, val):
         val = int(val)
-        if val >= (1 << (int(cls) - 1)):
-            val -= 1 << int(cls)
+        if val >= (1 << (cls.width - 1)):
+            val -= 1 << cls.width
 
         return cls(val)
 

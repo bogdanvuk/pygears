@@ -35,7 +35,7 @@ class RemoveEqualReprCastVisitor(HDLGearHierVisitor):
         pout = node.out_ports[0]
         pin = node.in_ports[0]
 
-        if int(pin.dtype) == int(pout.dtype):
+        if pin.dtype.width == pout.dtype.width:
             node.bypass()
 
 

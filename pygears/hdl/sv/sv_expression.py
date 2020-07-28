@@ -27,9 +27,9 @@ def index_to_sv_slice(dtype, key):
     if key is None or key == 0:
         low_pos = 0
     else:
-        low_pos = int(dtype[:key])
+        low_pos = dtype[:key].width
 
-    high_pos = low_pos + int(subtype) - 1
+    high_pos = low_pos + subtype.width - 1
 
     return f'{high_pos}:{low_pos}'
 
@@ -178,7 +178,7 @@ class SVExpressionVisitor:
 
     def cast_width(self, expr, expr_dtype, cast_dtype):
         if len(cast_dtype) != len(expr_dtype):
-            expr = f"{int(expr_dtype)}'({expr})"
+            expr = f"{expr_dtype.width}'({expr})"
 
         return expr
 
@@ -291,7 +291,7 @@ class SVExpressionVisitor:
                 if index == node.val.dtype.keys()[0]:
                     start = 0
                 else:
-                    start = int(node.val.dtype[:index])
+                    start = node.val.dtype[:index].width
 
                 stop = start + node.val.dtype[index].width - 1
                 index = int(index)

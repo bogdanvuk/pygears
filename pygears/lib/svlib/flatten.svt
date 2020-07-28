@@ -13,7 +13,7 @@
   assign dout_s.eot = &din_s.eot;
   {% endif %}
 
-  {% if int(_din_t.data) > 0 %}
+  {% if _din_t.data.width > 0 %}
     {% if din_lvl > lvl %}
   assign dout_s.data = din_s.data;
     {% else %}

@@ -143,10 +143,10 @@ class Queue(tuple, metaclass=QueueMeta):
         ret = 0
 
         for d, t in zip(reversed(self), reversed(type(self))):
-            ret <<= int(t)
+            ret <<= t.width
             ret |= int(d)
 
-        return int(self.data) | (int(self.eot) << int(type(self).data))
+        return int(self.data) | (int(self.eot) << type(self).data.width)
 
     def code(self):
         """Returns a packed integer representation of the :class:`Queue` instance.
@@ -195,7 +195,7 @@ class Queue(tuple, metaclass=QueueMeta):
     @classmethod
     def decode(cls, val):
         data_t = cls.__args__[0]
-        data_t_width = int(data_t)
+        data_t_width = data_t.width
         data_t_mask = (1 << data_t_width) - 1
         val = int(val)
 

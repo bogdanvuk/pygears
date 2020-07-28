@@ -23,12 +23,12 @@
 
 {% if params['dflt'] is none -%}
   {% if py.isinstance(params['data'], py.dict) %}
-   logic [{{int(_dout_t)-1}}:0] memory [0:{{py.max(params['data'].keys())}}];
+   logic [{{_dout_t.width-1}}:0] memory [0:{{py.max(params['data'].keys())}}];
   {% else %}
-   logic [{{int(_dout_t)-1}}:0] memory [0:{{len(params['data'])-1}}];
+   logic [{{_dout_t.width-1}}:0] memory [0:{{len(params['data'])-1}}];
   {% endif -%}
 {% else -%}
-   logic [{{int(_dout_t)-1}}:0] memory [0:{{2**int(_addr_t) - 1}}];
+   logic [{{_dout_t.width-1}}:0] memory [0:{{2**_addr_t.width - 1}}];
 {% endif %}
 
    always @(posedge clk)
@@ -54,7 +54,7 @@
 {% else -%}
 
   {% if py.isinstance(params['data'], py.dict) -%}
-    {% for i in range(2**int(_addr_t)) %}
+    {% for i in range(2**_addr_t.width) %}
       {% if i in params['data'] %}
       memory[{{i}}] = {{params['dtype'](params['data'][i]).code()}};
       {% else -%}
@@ -62,7 +62,7 @@
       {% endif -%}
     {% endfor %}
   {% else -%}
-    {% for i in range(2**int(_addr_t)) %}
+    {% for i in range(2**_addr_t.width) %}
       {% if i < len(params['data']) %}
       memory[{{i}}] = {{params['dtype'](params['data'][i]).code()}};
       {% else -%}

@@ -214,7 +214,7 @@ class WaveJSONWriter:
 
 class WaveJSONValVisitor(VCDValVisitor):
     def change(self, dtype, field, val):
-        self.writer.change(self.vcd_vars[field], int(dtype(val)),
+        self.writer.change(self.vcd_vars[field], dtype(val).width,
                            self.timestep)
 
 

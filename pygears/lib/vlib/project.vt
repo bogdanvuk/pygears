@@ -10,7 +10,7 @@
   assign dout_s.eot = din_s.eot[{{dout_lvl-1}}:0];
   {% endif %}
 
-  {% if int(_din_t.data) > 0 %}
+  {% if _din_t.data.width > 0 %}
     {% if dout_lvl > 0 %}
   assign dout_s.data = din_s.data;
     {% else %}

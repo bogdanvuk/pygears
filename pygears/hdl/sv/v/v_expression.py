@@ -14,8 +14,8 @@ endfunction
 
 
 def get_resize_func(res_dtype, op_dtype):
-    res_size = int(res_dtype)
-    op_size = int(op_dtype)
+    res_size = res_dtype.width
+    op_size = op_dtype.width
     signed = 'signed' if getattr(op_dtype, 'signed', False) else ''
 
     name = f'ext_{op_size}_to_{res_size}_{signed}'
@@ -42,7 +42,7 @@ def cast(res_dtype, op_dtype, op_value):
 
     res = op_value
 
-    if int(op_dtype) != int(res_dtype):
+    if op_dtype.width != res_dtype.width:
         truncate_func, truncate_impl = get_resize_func(res_dtype, op_dtype)
         res = f'{truncate_func}({res})'
 
@@ -111,7 +111,7 @@ class VExpressionVisitor(SVExpressionVisitor):
     #             if index == node.val.dtype.keys()[0]:
     #                 start = 0
     #             else:
-    #                 start = int(node.val.dtype[:index])
+    #                 start = node.val.dtype[:index].width
 
     #             stop = start + node.val.dtype[index].width - 1
     #             index = int(index)
@@ -159,9 +159,9 @@ class VExpressionVisitor(SVExpressionVisitor):
     #         return f'{ops[0]} {node.operator} {ops[1]}'
 
     #     res_dtype = node.dtype
-    #     if int(node.operands[0].dtype) > int(res_dtype):
+    #     if node.operands[0].dtype.width > res_dtype.width:
     #         res_dtype = node.operands[0].dtype
-    #     if int(node.operands[1].dtype) > int(res_dtype):
+    #     if node.operands[1].dtype.width > res_dtype.width:
     #         res_dtype = node.operands[1].dtype
 
     #     val0, func = cast(res_dtype, node.operands[0].dtype, ops[0])

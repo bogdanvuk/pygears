@@ -20,7 +20,7 @@
             end
 {% endfor %}
             default: begin
-                dout_s.data = { {{int(_dout_t.data)}} {1'bx}};
+                dout_s.data = { {{_dout_t.data.width}} {1'bx}};
             end
         endcase
     end

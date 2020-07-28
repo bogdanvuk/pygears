@@ -67,7 +67,7 @@ class VCompiler(HDLVisitor):
         if node.dtype or var is None:
             return f'{target} = {rhs};'
 
-        if int(var.dtype) == int(node.dtype):
+        if var.dtype.width == node.dtype.width:
             return f'{target} = {cast(var.dtype, node.val.dtype, rhs)};'
 
         assert False, 'node.dtype diff from hdl local width'
@@ -124,8 +124,8 @@ class VCompiler(HDLVisitor):
 
     def visit_FuncBlock(self, node):
         size = ''
-        if int(node.ret_dtype) > 0:
-            size = f'[{int(node.ret_dtype)-1}:0]'
+        if node.ret_dtype.width > 0:
+            size = f'[{node.ret_dtype.width-1}:0]'
 
         if getattr(node.ret_dtype, 'signed', False):
             size = f'signed {size}'

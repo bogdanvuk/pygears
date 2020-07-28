@@ -187,7 +187,7 @@ class Union(tuple, metaclass=UnionType):
         ret = 0
 
         for d, t in zip(reversed(self), reversed(type(self))):
-            ret <<= int(t)
+            ret <<= t.width
             ret |= int(d)
 
         return ret
@@ -213,7 +213,7 @@ class Union(tuple, metaclass=UnionType):
         ret = 0
 
         for d, t in zip(reversed(self), reversed(type(self))):
-            ret <<= int(t)
+            ret <<= t.width
             ret |= d.code()
 
         return ret
@@ -240,7 +240,7 @@ class Union(tuple, metaclass=UnionType):
         ret = []
         val = int(val)
         for t in cls:
-            t_width = int(t)
+            t_width = t.width
             t_mask = (1 << t_width) - 1
             ret.append(val & t_mask)
             val >>= t_width

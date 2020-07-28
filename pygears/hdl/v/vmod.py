@@ -74,7 +74,7 @@ class VModuleInst(HDLModuleInst):
             return vgen_intf.outname, None, None
         else:
             return (vgen_intf.outname, intf.consumers.index(port),
-                    int(intf.dtype))
+                    intf.dtype.width)
 
     def get_compiled_module(self, template_env):
         return compile_gear(self.node.gear, template_env, self.module_context)

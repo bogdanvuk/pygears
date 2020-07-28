@@ -8,10 +8,10 @@ def din_data_cat_v(intfs):
             continue
 
         if issubclass(intf['type'], Queue):
-            if int(intf['type'][0]) > 0:
+            if intf['type'][0].width > 0:
                 data.append(f'{intf["name"]}_s.data')
         else:
-            if int(intf['type']) > 0:
+            if intf['type'].width > 0:
                 data.append(f'{intf["name"]}_s')
 
     return f'{{ {", ".join(reversed(data))} }}'
@@ -24,10 +24,10 @@ def din_data_cat(intfs):
             continue
 
         if issubclass(intf['type'], Queue):
-            if int(intf['type'][0]) > 0:
+            if intf['type'][0].width > 0:
                 data.append(f'{intf["name"]}_s.data')
         else:
-            if int(intf['type']) > 0:
+            if intf['type'].width > 0:
                 data.append(f'{intf["name"]}_s')
 
     return f'{{ {", ".join(reversed(data))} }}'

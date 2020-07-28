@@ -51,7 +51,7 @@ def register_intf(desc, intfs=Inject('sim/svsock/intfs')):
 
 
 def u32_repr_gen(data, dtype):
-    for i in range(ceil(int(dtype) / 32)):
+    for i in range(ceil(dtype.width / 32)):
         yield data & 0xffffffff
         data >>= 32
 
@@ -72,7 +72,7 @@ def u32_bytes_to_int(data):
 
 
 def u32_bytes_decode(data, dtype):
-    return dtype.decode(u32_bytes_to_int(data) & ((1 << int(dtype)) - 1))
+    return dtype.decode(u32_bytes_to_int(data) & ((1 << dtype.width) - 1))
 
 
 class SVSock(SimExtend):
@@ -137,7 +137,7 @@ class SVSock(SimExtend):
         self.sendall(pkt)
 
     def dtype_recv(self, dtype):
-        buff_size = math.ceil(int(dtype) / 8)
+        buff_size = math.ceil(dtype.width / 8)
         if buff_size < 4:
             buff_size = 4
         if buff_size % 4:

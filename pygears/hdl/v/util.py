@@ -11,7 +11,7 @@ class VGenTypeVisitor(TypingVisitorBase):
 
     def visit_Int(self, type_, field, **kwds):
         return [
-            f'{self.basic_type} signed [{int(type_)-1}:0] {self.context}; // {type_}'
+            f'{self.basic_type} signed [{type_.width-1}:0] {self.context}; // {type_}'
         ]
 
     def visit_Bool(self, type_, field, **kwds):
@@ -20,7 +20,7 @@ class VGenTypeVisitor(TypingVisitorBase):
     def visit_Uint(self, type_, field, **kwds):
         if type_.width != 0:
             return [
-                f'{self.basic_type} [{int(type_)-1}:0] {self.context}; // {type_}'
+                f'{self.basic_type} [{type_.width-1}:0] {self.context}; // {type_}'
             ]
 
         return None
@@ -36,7 +36,7 @@ class VGenTypeVisitor(TypingVisitorBase):
 
         # top
         res.append(
-            f'{self.basic_type} [{int(type_)-1}:0] {self.context}; // {type_}')
+            f'{self.basic_type} [{type_.width-1}:0] {self.context}; // {type_}')
 
         res.extend(
             self._complex_type_iterator([('data', type_.data),
@@ -49,7 +49,7 @@ class VGenTypeVisitor(TypingVisitorBase):
 
         # top
         res.append(
-            f'{self.basic_type} [{int(type_)-1}:0] {self.context}; // {type_}')
+            f'{self.basic_type} [{type_.width-1}:0] {self.context}; // {type_}')
 
         res.extend(
             self._complex_type_iterator([('data', type_.data),
@@ -68,7 +68,7 @@ class VGenTypeVisitor(TypingVisitorBase):
             sub_wire = self.visit(subt, None)
             if sub_wire:
                 res.extend(sub_wire)
-                pos_high = pos_low + int(subt) - 1
+                pos_high = pos_low + subt.width - 1
                 if self.direction == 'input':
                     res.append(
                         f'assign {self.context} = {parent_context}[{pos_high}:{pos_low}];'
@@ -86,7 +86,7 @@ class VGenTypeVisitor(TypingVisitorBase):
     def visit_Tuple(self, type_, field, **kwds):
         res = []
         res.append(
-            f'{self.basic_type} [{int(type_)-1}:0] {self.context}; // {type_}')
+            f'{self.basic_type} [{type_.width-1}:0] {self.context}; // {type_}')
 
         res.extend(self._complex_type_iterator(zip(type_.fields, type_.args)))
 
@@ -94,26 +94,26 @@ class VGenTypeVisitor(TypingVisitorBase):
 
     def visit_Array(self, type_, field, **kwds):
         if type_.data.signed:
-            merge_t = Int[int(type_.data) * len(type_)]
+            merge_t = Int[type_.data.width * len(type_)]
         else:
-            merge_t = Uint[int(type_.data) * len(type_)]
+            merge_t = Uint[type_.data.width * len(type_)]
 
         arr_var = f'{self.context}_arr'
         res = self.visit(merge_t, type_.fields[0])
         res.append(
-            f'{self.basic_type} [{int(type_.data)-1}:0] {arr_var} [0:{int(len(type_))-1}];')
+            f'{self.basic_type} [{type_.data.width-1}:0] {arr_var} [0:{int(len(type_))-1}];')
 
         high = 0
         low = 0
         for i in range(len(type_)):
-            high += int(type_.data)
+            high += type_.data.width
 
             if self.direction == 'input':
                 res.append(f'assign {arr_var}[{i}] = {self.context}[{high - 1}:{low}];')
             else:
                 res.append(f'assign {self.context}[{high - 1}:{low}] = {arr_var}[{i}];')
 
-            low += int(type_.data)
+            low += type_.data.width
 
         return res
 
@@ -126,7 +126,7 @@ def vgen_intf(dtype, name, direction, hier=True):
         data = f'{dtype} {name}_data;\n'
         return data + valid + ready
 
-    if int(dtype) == 0:
+    if dtype.width == 0:
         data = f'wire [0:0] {name}_data;\n'
         return data + valid + ready
 
@@ -142,15 +142,15 @@ def vgen_signal(dtype, vtype, name, direction, hier=True):
     if isinstance(dtype, str):
         return f'{dtype} {name};'
 
-    if is_type(dtype) and int(dtype) == 0:
+    if is_type(dtype) and dtype.width == 0:
         return f'{vtype} [0:0] {name};'
 
     if not hier:
         if is_type(dtype):
-            width = int(dtype)
+            width = dtype.width
             sign = 'signed' if getattr(dtype, 'signed', False) else ''
         elif isinstance(dtype, (tuple, list)):
-            width = sum(int(d) for d in dtype)
+            width = sum(d.width for d in dtype)
             sign = ''
 
         return f'{vtype} {sign} [{width-1}:0] {name}; // {dtype}'

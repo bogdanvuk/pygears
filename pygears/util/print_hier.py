@@ -11,10 +11,10 @@ def module_signature(module, fullname, params):
         sizes = ""
     elif isinstance(t, tuple):
         types = ', '.join([str(tt) for tt in t])
-        sizes = ', '.join([str(int(tt)) for tt in t])
+        sizes = ', '.join([str(tt.width) for tt in t])
     else:
         types = str(t)
-        sizes = int(t)
+        sizes = t.width
 
     if fullname:
         name = module.name
@@ -44,7 +44,7 @@ class Visitor(HierVisitorBase):
     def print_module_signature(self, module):
         def get_size(t):
             try:
-                return str(int(t))
+                return str(t.width)
             except TypeError:
                 return '?'
 

@@ -18,7 +18,7 @@ class SVGenAlign(SVModuleInst):
             if issubclass(dtype, Queue):
                 dtype = dtype[0]
             params[f'W_{p.basename.upper()}_LVL'] = l
-            params[f'W_{p.basename.upper()}_DATA'] = int(dtype)
+            params[f'W_{p.basename.upper()}_DATA'] = dtype.width
 
         context = {
             'module_name': self.module_name,

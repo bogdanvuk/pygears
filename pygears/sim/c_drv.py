@@ -13,7 +13,7 @@ class CGet:
         self.c_get_api = getattr(verilib, f'get_{name}', None)
 
         self.dtype = dtype
-        self.width = int(dtype)
+        self.width = dtype.width
 
         if self.width > 64:
             self.c_dtype = ctypes.c_uint * (ceil(self.width / 32))
@@ -43,7 +43,7 @@ class CDrv:
 
         self.data_posted = False
         self.done = False
-        self.width = int(self.port.dtype)
+        self.width = self.port.dtype.width
         self.c_set_api = getattr(verilib, f'set_{self.name}', None)
         self.c_get_api = getattr(verilib, f'get_{self.name}', None)
 

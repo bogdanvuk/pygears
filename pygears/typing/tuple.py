@@ -399,8 +399,8 @@ class Tuple(tuple, metaclass=TupleType):
 
         t = type(self).__args__
         for i in range(len(t) - 1, -1, -1):
-            ret <<= int(t[i])
-            ret |= super().__getitem__(i).code() & ((1 << int(t[i])) - 1)
+            ret <<= t[i].width
+            ret |= super().__getitem__(i).code() & ((1 << t[i].width) - 1)
 
         return ret
 
@@ -420,7 +420,7 @@ class Tuple(tuple, metaclass=TupleType):
         ret = []
         val = int(val)
         for t in cls:
-            t_width = int(t)
+            t_width = t.width
             t_mask = (1 << t_width) - 1
             ret.append(t.decode(val & t_mask))
             val >>= t_width

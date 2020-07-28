@@ -1,11 +1,11 @@
 from pygears import gear
-from math import ceil
+from math import ceil, floor
 from pygears.sim import sim
 from pygears.typing import Fixp, Ufixp, Int
 from pygears.lib import directed, drv
 
 
-def test_abs_fixp():
+def test_abs():
     @gear(hdl={'compile': True})
     async def test(a_i: Ufixp[3, 6], b_i: Fixp[4, 8]) -> Fixp[5, 9]:
         async with a_i as a, b_i as b:
@@ -20,7 +20,7 @@ def test_abs_fixp():
     sim()
 
 
-def test_add_bin_fixp():
+def test_add_bin():
     @gear(hdl={'compile': True})
     async def test(a_i: Ufixp[3, 6], b_i: Fixp[4, 8]) -> Fixp[5, 9]:
         async with a_i as a, b_i as b:
@@ -41,7 +41,7 @@ def test_add_bin_fixp():
     sim(timeout=8)
 
 
-def test_ceil_fixp():
+def test_ceil():
     @gear(hdl={'compile': True})
     async def test(a_i: Ufixp[3, 6], b_i: Fixp[4, 8]) -> Fixp[5, 9]:
         async with a_i as a, b_i as b:
@@ -56,22 +56,37 @@ def test_ceil_fixp():
     sim()
 
 
-# def test_ceil_floor():
+def test_floor():
+    @gear(hdl={'compile': True})
+    async def test(a_i: Ufixp[3, 6], b_i: Fixp[4, 8]) -> Fixp[4, 8]:
+        async with a_i as a, b_i as b:
+            yield floor(a)
+            yield floor(b)
+
+    directed(drv(t=Ufixp[3, 6], seq=[7.875, 7.375]),
+             drv(t=Fixp[4, 8], seq=[-8.0, -7.5]),
+             f=test(__sim__='verilator'),
+             ref=[7, -8, 7, -8])
+
+    sim()
+
+
+# def test_int():
 #     @gear(hdl={'compile': True})
 #     async def test(a_i: Ufixp[3, 6], b_i: Fixp[4, 8]) -> Fixp[4, 8]:
 #         async with a_i as a, b_i as b:
-#             yield ceil(a)
-#             yield ceil(b)
+#             yield int(a)
+#             yield int(b)
 
 #     directed(drv(t=Ufixp[3, 6], seq=[7.875, 7.375]),
 #              drv(t=Fixp[4, 8], seq=[-8.0, -7.5]),
 #              f=test(__sim__='verilator'),
-#              ref=[7, -8])
+#              ref=[7, -8, 7, -8])
 
 #     sim()
 
 
-def test_mul_bin_fixp():
+def test_mul_bin():
     @gear(hdl={'compile': True})
     async def test(a_i: Ufixp[3, 6], b_i: Fixp[4, 8]) -> Fixp[8, 16]:
         async with a_i as a, b_i as b:
@@ -92,7 +107,7 @@ def test_mul_bin_fixp():
     sim(timeout=8)
 
 
-def test_sub_bin_fixp():
+def test_sub_bin():
     @gear(hdl={'compile': True})
     async def test(a_i: Ufixp[3, 6], b_i: Fixp[4, 8]) -> Fixp[5, 9]:
         async with a_i as a, b_i as b:

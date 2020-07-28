@@ -134,7 +134,7 @@ def register_traces_for_intf(dtype, scope, writer):
                     field_scope, basename, var_type='real', size=32)
             else:
                 vcd_vars[name] = writer.register_var(
-                    field_scope, basename, var_type='wire', size=max(int(t), 1))
+                    field_scope, basename, var_type='wire', size=max(t.width, 1))
 
     for sig in ('valid', 'ready'):
         vcd_vars[sig] = writer.register_var(scope, sig, 'wire', size=1, init=0)

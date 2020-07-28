@@ -101,7 +101,7 @@ def bin_op_reduce(intfs, func, op, dflt=None):
 
 def find_sub_dtype(val):
     if isinstance(val, (tuple, list)):
-        sub = max(val, key=lambda x: int(getattr(x, 'dtype')))
+        sub = max(val, key=lambda x: getattr(x, 'dtype').width)
         return type(sub)
 
     return type(val)

@@ -45,7 +45,7 @@ def expand_tuple(din: Tuple) -> b'expand_type(din)':
     for i, t in enumerate(din.dtype):
         if (typeof(t, Union)):
             ctrl_list.append(din[i][1])
-            ctrl_lens.append(int(t[1]))
+            ctrl_lens.append(t[1].width)
 
     if not ctrl_list:
         return din
@@ -68,8 +68,8 @@ def expand_tuple(din: Tuple) -> b'expand_type(din)':
         for j, t in enumerate(din.dtype):
             if (typeof(t, Union)):
                 if (data_indices[0] < len(t.types)):
-                    if (int(t.types[data_indices[0]]) != 0):
-                        data.append(din[j][0] >> Uint[int(t.types[data_indices.pop(0)])])
+                    if (t.types[data_indices[0]].width != 0):
+                        data.append(din[j][0] >> Uint[t.types[data_indices.pop(0)].width])
                     else:
                         data_indices.pop(0)
                 else:
