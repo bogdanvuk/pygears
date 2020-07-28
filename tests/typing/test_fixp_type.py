@@ -94,6 +94,19 @@ def test_floor():
     assert floor(q6_3) == q6_3
 
 
+def test_lshift():
+    uq2_3 = Ufixp[2, 3]
+    uq4_3 = Ufixp[4, 3]
+    q2_3 = Fixp[2, 3]
+    q4_3 = Fixp[4, 3]
+
+    assert uq2_3 << 2 == uq4_3
+    assert q2_3 << 2 == q4_3
+
+    assert uq2_3 << 0 == uq2_3
+    assert q2_3 << 0 == q2_3
+
+
 def test_unsigned_fdiv():
     t_a = Ufixp[4, 6]
     t_b = Ufixp[1, 7]

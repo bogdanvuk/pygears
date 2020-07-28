@@ -18,6 +18,11 @@ def fixp_resolver(opexp, cast_to):
     val_fract = val_dtype.fract
     fract = cast_to.fract
 
+    if val_dtype.signed:
+        opexp = ir.CastExpr(opexp, Int[val_dtype.width])
+    else:
+        opexp = ir.CastExpr(opexp, Uint[val_dtype.width])
+
     if fract > val_fract:
         shift = ir.BinOpExpr([opexp, ir.ResExpr(Uint(fract - val_fract))], ir.opc.LShift)
     else:

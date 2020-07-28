@@ -1,4 +1,4 @@
-from pygears import gear
+from pygears import gear, reg
 from math import ceil, floor
 from pygears.sim import sim
 from pygears.typing import Fixp, Ufixp, Int
@@ -71,19 +71,21 @@ def test_floor():
     sim()
 
 
-# def test_int():
-#     @gear(hdl={'compile': True})
-#     async def test(a_i: Ufixp[3, 6], b_i: Fixp[4, 8]) -> Fixp[4, 8]:
-#         async with a_i as a, b_i as b:
-#             yield int(a)
-#             yield int(b)
+def test_lshift():
+    @gear(hdl={'compile': True})
+    async def test(a_i: Ufixp[3, 6], b_i: Fixp[4, 8]) -> Fixp[5, 9]:
+        async with a_i as a, b_i as b:
+            yield a << 0
+            yield a << 1
+            yield b << 0
+            yield b << 1
 
-#     directed(drv(t=Ufixp[3, 6], seq=[7.875, 7.375]),
-#              drv(t=Fixp[4, 8], seq=[-8.0, -7.5]),
-#              f=test(__sim__='verilator'),
-#              ref=[7, -8, 7, -8])
+    directed(drv(t=Ufixp[3, 6], seq=[7.875, 7.375]),
+             drv(t=Fixp[4, 8], seq=[-8.0, -7.5]),
+             f=test(__sim__='verilator'),
+             ref=[7.875, 7.875 * 2, -8, -8 * 2, 7.375, 7.375 * 2, -7.5, -7.5 * 2])
 
-#     sim()
+    sim()
 
 
 def test_mul_bin():

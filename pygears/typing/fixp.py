@@ -107,14 +107,14 @@ class FixpnumberType(IntegralType):
         return super().__hash__()
 
     def __int__(self):
-        return self.width
+        return int
 
     def __invert__(self):
         return NotImplemented
 
     def __lshift__(self, others):
         shamt = int(others)
-        return self.base[self.integer + shamt, self.width + shamt]
+        return self.base[self.integer + shamt, self.width]
 
     def __mod__(self, other):
         return NotImplemented
@@ -335,6 +335,9 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
         else:
             return self
 
+    def __float__(self):
+        return int(self) / (2**type(self).fract)
+
     def __floor__(self):
         t = type(self)
         if t.fract >= 1:
@@ -342,8 +345,14 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
         else:
             return self
 
+    def __invert__(self):
+        return NotImplemented
+
     def __hash__(self):
         return hash((type(self), int(self)))
+
+    def __lshift__(self, other):
+        return (type(self) << other).decode(int(self))
 
     def __str__(self):
         return f'{str(type(self))}({float(self)})'
@@ -497,9 +506,6 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
     def width(self):
         return type(self).width
 
-    def __float__(self):
-        return int(self) / (2**type(self).fract)
-
 
 class FixpType(FixpnumberType):
     @property
@@ -545,8 +551,8 @@ class Fixp(Fixpnumber, metaclass=FixpType):
     @classmethod
     def decode(cls, val):
         val = int(val)
-        if val >= (1 << (int(cls) - 1)):
-            val -= 1 << int(cls)
+        if val >= (1 << (cls.width - 1)):
+            val -= 1 << cls.width
 
         return int.__new__(cls, val)
 

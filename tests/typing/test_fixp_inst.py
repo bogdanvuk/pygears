@@ -99,6 +99,19 @@ def test_floor():
     assert floor(q6_3.min) == q6_3.min
 
 
+def test_lshift():
+    uq2_3 = Ufixp[2, 3]
+    uq4_3 = Ufixp[4, 3]
+    q2_3 = Fixp[2, 3]
+    q4_3 = Fixp[4, 3]
+
+    assert uq2_3.max << 2 == uq4_3(14.0)
+    assert q2_3.min << 2 == q4_3.min
+
+    assert uq2_3.max << 0 == uq2_3.max
+    assert q2_3.min << 0 == q2_3.min
+
+
 def test_sub_val():
     uq2_3 = Ufixp[2, 3]
     uq2_4 = Ufixp[2, 4]
