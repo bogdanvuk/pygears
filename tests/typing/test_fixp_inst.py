@@ -136,7 +136,7 @@ def test_lt():
     uq2_3 = Ufixp[2, 3]
     q2_3 = Fixp[2, 3]
 
-    assert uq2_3(1.5) < q2_3(2.0)
+    assert uq2_3(1.0) < q2_3(1.5)
     assert q2_3(1.0) < uq2_3(1.5)
 
     assert uq2_3.min < q2_3.max

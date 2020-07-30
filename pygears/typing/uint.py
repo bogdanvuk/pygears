@@ -8,8 +8,7 @@ arithmetic capabilities.
 
 from .base import class_and_instance_method
 from .base import typeof, EnumerableGenericMeta, is_type
-from .number import NumberType, Number
-from .tuple import Tuple
+from .number import Number
 from .math import bitw
 from .unit import Unit
 from functools import reduce
@@ -43,22 +42,6 @@ class IntegralType(EnumerableGenericMeta):
 
         return super().__new__(cls, name, bases, namespace, args)
 
-    @property
-    def mask(self) -> int:
-        return (1 << self.width) - 1
-
-    @property
-    def width(self) -> int:
-        return self.__args__[-1]
-
-    def keys(self):
-        """Returns a list of keys that can be used for indexing the type.
-
-        >>> Int[8].keys()
-        [0, 1, 2, 3, 4, 5, 6, 7]
-        """
-        return list(range(self.width))
-
     def __getitem__(self, index):
         if not self.specified:
             return super().__getitem__(index)
@@ -80,6 +63,22 @@ class IntegralType(EnumerableGenericMeta):
                 width += 1
 
         return Uint[width]
+
+    @property
+    def mask(self) -> int:
+        return (1 << self.width) - 1
+
+    @property
+    def width(self) -> int:
+        return self.__args__[-1]
+
+    def keys(self):
+        """Returns a list of keys that can be used for indexing the type.
+
+        >>> Int[8].keys()
+        [0, 1, 2, 3, 4, 5, 6, 7]
+        """
+        return list(range(self.width))
 
 
 class Integral(int, metaclass=IntegralType):
@@ -119,57 +118,6 @@ class IntegerType(IntegralType):
 
         return Int[self.width + 1]
 
-    def __str__(self):
-        if self.args:
-            if isinstance(self.args[0], int):
-                return f'z{self.args[0]}'
-            else:
-                return f'z({self.args[0]})'
-        else:
-            return super().__str__()
-
-    def __int__(self):
-        if not self.args_specified:
-            raise TypeError(f"Cannot calculate width of unspecified type '{repr(self)}'")
-
-        return int(self.__args__[0])
-
-    def __gt__(self, other):
-        return self.width > other.width
-
-    def __ge__(self, other):
-        return self.width >= other.width
-
-    def __invert__(self):
-        return self
-
-    def __neg__(self):
-        return Int[self.width + 1]
-
-    def __or__(self, other):
-        # return self.width | other.width
-        return self.base[max(op.width for op in (self, other))]
-
-    def __and__(self, other):
-        return self.base[max(op.width for op in (self, other))]
-
-    def __xor__(self, other):
-        return self.base[max(op.width for op in (self, other))]
-
-    def __lshift__(self, other):
-        return self.base[self.width + int(other)]
-
-    def __rshift__(self, other):
-        shamt = int(other)
-        width = len(self)
-
-        if shamt > width:
-            raise TypeError('Right shift larger than data width')
-        elif shamt == width:
-            return Unit
-        else:
-            return self.base[width - shamt]
-
     def __add__(self, other):
         if not typeof(other, Integer):
             return NotImplemented
@@ -182,21 +130,44 @@ class IntegerType(IntegralType):
 
         return res_type[max((w1, w2)) + 1]
 
-    def __iadd__(self, other):
+    def __and__(self, other):
+        return self.base[max(op.width for op in (self, other))]
+
+    def __ceil__(self):
         return self
 
-    __radd__ = __add__
+    def __float__(self):
+        return float
 
-    def __sub__(self, other):
-        if not typeof(other, Integer):
-            return NotImplemented
+    def __floordiv__(self, other):
+        return self.base[self.width - other.width + 1]
 
-        signed = self.signed or other.signed
+    def __floor__(self):
+        return self
 
-        w1 = self.width + 1 if signed and not self.signed else self.width
-        w2 = other.width + 1 if signed and not other.signed else other.width
+    def __ge__(self, other):
+        return self.width >= other.width
 
-        return Int[max((w1, w2)) + 1]
+    def __gt__(self, other):
+        return self.width > other.width
+
+    def __int__(self):
+        return int
+
+    def __invert__(self):
+        return self
+
+    def __le__(self, other):
+        return Bool
+
+    def __lt__(self, other):
+        return Bool
+
+    def __lshift__(self, other):
+        return self.base[self.width + int(other)]
+
+    def __mod__(self, other):
+        return other
 
     def __mul__(self, other):
         """Returns the same type, whose width is equal to the sum of operand widths
@@ -220,25 +191,65 @@ class IntegerType(IntegralType):
         else:
             return self.base[self.width + other.width]
 
-    def __truediv__(self, other):
-        return self.base[self.width - other.width + 1]
+    def __neg__(self):
+        return Int[self.width + 1]
 
-    def __rtruediv__(self, other):
-        return self.base[other.width - self.width + 1]
+    def __or__(self, other):
+        # return self.width | other.width
+        return self.base[max(op.width for op in (self, other))]
 
-    def __floordiv__(self, other):
-        return self.base[self.width - other.width + 1]
+    __radd__ = __add__
 
     def __rfloordiv__(self, other):
         return self.base[other.width - self.width + 1]
 
-    def __mod__(self, other):
-        return other
+    def __rtruediv__(self, other):
+        return self.base[other.width - self.width + 1]
 
     def __rmod__(self, other):
         return self
 
     __rmul__ = __mul__
+
+    def __rshift__(self, other):
+        shamt = int(other)
+        width = len(self)
+
+        if shamt > width:
+            raise TypeError('Right shift larger than data width')
+        elif shamt == width:
+            return Unit
+        else:
+            return self.base[width - shamt]
+
+    def __str__(self):
+        if self.args:
+            if isinstance(self.args[0], int):
+                return f'z{self.args[0]}'
+            else:
+                return f'z({self.args[0]})'
+        else:
+            return super().__str__()
+
+    def __sub__(self, other):
+        if not typeof(other, Integer):
+            return NotImplemented
+
+        signed = self.signed or other.signed
+
+        w1 = self.width + 1 if signed and not self.signed else self.width
+        w2 = other.width + 1 if signed and not other.signed else other.width
+
+        return Int[max((w1, w2)) + 1]
+
+    def __truediv__(self, other):
+        return self.base[self.width - other.width + 1]
+
+    def __xor__(self, other):
+        return self.base[max(op.width for op in (self, other))]
+
+    def __iadd__(self, other):
+        return self
 
     @property
     def specified(self):
@@ -255,61 +266,6 @@ class Integer(Integral, metaclass=IntegerType):
     Corresponds to HDL logic vector types. For an example Integer[9] translates
     to :sv:`logic [8:0]`.
     """
-
-    # def __new__(cls, val: int = None):
-    #     if not cls.is_generic():
-    #         if val is None:
-    #             return super().__new__(cls, 0)
-
-    #         if isinstance(val, cls):
-    #             return val
-
-    #         # check_width(val, cls.width, cls)
-    #         if isinstance(val, int):
-    #             return super().__new__(cls, val)
-
-    #         if isinstance(val, list):
-    #             if cls.signed:
-    #                 raise TypeError(f'cannot create Int from bit list')
-
-    #             if not cls.specified:
-    #                 cls = Uint[len(val)]
-
-    #             ival = 0
-    #             for v in val:
-    #                 ival <<= 1
-    #                 ival |= bool(v)
-
-    #             return cls(ival)
-
-    #         if cls.base is Integer:
-    #             if isinstance(val, Uint) or int(val) >= 0:
-    #                 cls = Uint[bitw(val)]
-
-    #             if typeof(type(val), Int) or int(val) < 0:
-    #                 cls = Int[bitw(val)]
-
-    #         return super().__new__(cls, val)
-    #     else:
-    #         if val is None:
-    #             val = 0
-
-    #         if cls.base is Integer:
-    #             if typeof(type(val), Uint) or int(val) >= 0:
-    #                 if typeof(type(val), Uint):
-    #                     cls = type(val)
-    #                 else:
-    #                     cls = Uint[bitw(val)]
-
-    #             if typeof(type(val), Int) or int(val) < 0:
-    #                 if typeof(type(val), Int):
-    #                     cls = type(val)
-    #                 else:
-    #                     cls = Int[bitw(val)]
-
-    #         # check_width(val, res.width, cls)
-    #         return cls[bitw(val)](int(val))
-
     def __new__(cls, val: int = None):
         if val is None:
             val = 0
@@ -367,70 +323,6 @@ class Integer(Integral, metaclass=IntegerType):
         else:
             return abs(type(self))(int(self))
 
-    @property
-    def quant(self):
-        return self.decode(1)
-
-    @class_and_instance_method
-    @property
-    def width(self):
-        """Returns the number of bits used for the representation
-
-        >>> Integer[8](0).width
-        8
-        """
-        return type(self).width
-
-    @class_and_instance_method
-    @property
-    def mask(self):
-        return (1 << self.width) - 1
-
-    def __len__(self):
-        """Returns the number of bits used for the representation
-
-        >>> len(Integer[8](0))
-        8
-        """
-        return len(type(self))
-
-    def __invert__(self):
-        return type(self)(super().__invert__() & type(self).mask)
-
-    def __neg__(self):
-        return (-type(self)).decode(super().__neg__())
-
-    def __eq__(self, other):
-        if is_type(type(other)) and not isinstance(other, Integer):
-            return NotImplemented
-
-        if isinstance(other, Integer):
-            conv_other = other
-        elif isinstance(other, (int, float)):
-            conv_other = Integer(other)
-        else:
-            return NotImplemented
-
-        return Bool(super().__eq__(conv_other))
-
-    def __hash__(self):
-        return super().__hash__()
-
-    def __ne__(self, other):
-        if not is_type(type(other)):
-            return super().__ne__(other)
-
-        return not self.__eq__(other)
-
-    def __rshift__(self, other):
-        if typeof((type(self) >> other), Unit):
-            return Unit()
-
-        return (type(self) >> other)(super().__rshift__(other))
-
-    def __lshift__(self, other):
-        return (type(self) << other)(super().__lshift__(other))
-
     def __add__(self, other):
         if is_type(type(other)) and not isinstance(other, Integer):
             return NotImplemented
@@ -444,63 +336,18 @@ class Integer(Integral, metaclass=IntegerType):
 
         return (type(self) + type(conv_other))(super().__add__(conv_other))
 
-    def __iadd__(self, other):
-        if not is_type(type(other)):
-            other = type(self).base(other)
-
-        if not isinstance(other, Integer):
-            return NotImplemented
-
-        if not self.signed and other.signed:
-            raise TypeError(
-                f"unsupported operand type(s) for +=: '{type(self)}' and '{type(other)}'")
-
-        return type(self)(int(self) + int(other))
-
-    def __sub__(self, other):
-        if is_type(type(other)) and not isinstance(other, Integer):
-            return NotImplemented
-
-        if is_type(type(other)):
-            conv_other = other
-        elif isinstance(other, (int, float)):
-            conv_other = Integer(other)
-        else:
-            return NotImplemented
-
-        return (type(self) - type(conv_other))(super().__sub__(conv_other))
-
-    def __rsub__(self, other):
-        if is_type(type(other)) and not isinstance(other, Integer):
-            return NotImplemented
-
-        if is_type(type(other)):
-            conv_other = other
-        elif isinstance(other, (int, float)):
-            conv_other = Integer(other)
-        else:
-            return NotImplemented
-
-        return (type(conv_other) - type(self))(super().__rsub__(conv_other))
-
-    def __mul__(self, other):
+    def __eq__(self, other):
         if is_type(type(other)) and not isinstance(other, Integer):
             return NotImplemented
 
         if isinstance(other, Integer):
             conv_other = other
-        else:
+        elif isinstance(other, (int, float)):
             conv_other = Integer(other)
+        else:
+            return NotImplemented
 
-        return (type(self) * type(conv_other))(super().__mul__(conv_other))
-
-    __rmul__ = __mul__
-
-    def __str__(self):
-        return f'{str(type(self))}({int(self)})'
-
-    def __repr__(self):
-        return f'{repr(type(self))}({int(self)})'
+        return Bool(super().__eq__(conv_other))
 
     @class_and_instance_method
     def __getitem__(self, index):
@@ -536,6 +383,115 @@ class Integer(Integral, metaclass=IntegerType):
                 base = part @ base
 
         return base
+
+    def __hash__(self):
+        return super().__hash__()
+
+    def __invert__(self):
+        return type(self)(super().__invert__() & type(self).mask)
+
+    def __lshift__(self, other):
+        return (type(self) << other)(super().__lshift__(other))
+
+    def __len__(self):
+        """Returns the number of bits used for the representation
+
+        >>> len(Integer[8](0))
+        8
+        """
+        return len(type(self))
+
+    def __mul__(self, other):
+        if is_type(type(other)) and not isinstance(other, Integer):
+            return NotImplemented
+
+        if isinstance(other, Integer):
+            conv_other = other
+        else:
+            conv_other = Integer(other)
+
+        return (type(self) * type(conv_other))(super().__mul__(conv_other))
+
+    def __ne__(self, other):
+        if not is_type(type(other)):
+            return super().__ne__(other)
+
+        return not self.__eq__(other)
+
+    def __neg__(self):
+        return (-type(self)).decode(super().__neg__())
+
+    def __repr__(self):
+        return f'{repr(type(self))}({int(self)})'
+
+    __rmul__ = __mul__
+
+    def __rshift__(self, other):
+        if typeof((type(self) >> other), Unit):
+            return Unit()
+
+        return (type(self) >> other)(super().__rshift__(other))
+
+    def __rsub__(self, other):
+        if is_type(type(other)) and not isinstance(other, Integer):
+            return NotImplemented
+
+        if is_type(type(other)):
+            conv_other = other
+        elif isinstance(other, (int, float)):
+            conv_other = Integer(other)
+        else:
+            return NotImplemented
+
+        return (type(conv_other) - type(self))(super().__rsub__(conv_other))
+
+    def __str__(self):
+        return f'{str(type(self))}({int(self)})'
+
+    def __sub__(self, other):
+        if is_type(type(other)) and not isinstance(other, Integer):
+            return NotImplemented
+
+        if is_type(type(other)):
+            conv_other = other
+        elif isinstance(other, (int, float)):
+            conv_other = Integer(other)
+        else:
+            return NotImplemented
+
+        return (type(self) - type(conv_other))(super().__sub__(conv_other))
+
+    def __iadd__(self, other):
+        if not is_type(type(other)):
+            other = type(self).base(other)
+
+        if not isinstance(other, Integer):
+            return NotImplemented
+
+        if not self.signed and other.signed:
+            raise TypeError(
+                f"unsupported operand type(s) for +=: '{type(self)}' and '{type(other)}'")
+
+        return type(self)(int(self) + int(other))
+
+    @property
+    def quant(self):
+        return self.decode(1)
+
+    @class_and_instance_method
+    @property
+    def width(self):
+        """Returns the number of bits used for the representation
+
+        >>> Integer[8](0).width
+        8
+        """
+        return type(self).width
+
+    @class_and_instance_method
+    @property
+    def mask(self):
+        return (1 << self.width) - 1
 
     def code(self):
         return int(self) & self.mask

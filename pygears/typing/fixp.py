@@ -1,38 +1,11 @@
 from math import floor, ceil
 from .base import class_and_instance_method, typeof, is_type
-from .float import Float
 from .unit import Unit
 from .uint import IntegralType, Integral, Uint, Int, Integer, code, Bool
 from .math import bitw
 
 
 class FixpnumberType(IntegralType):
-    """Defines lib methods for all Integer based classes.
-    """
-    def keys(self):
-        """Returns a list of keys that can be used for indexing the type.
-
-        >>> Int[8].keys()
-        [0, 1, 2, 3, 4, 5, 6, 7]
-        """
-        return list(range(self.width))
-
-    @property
-    def integer(self) -> int:
-        return self.__args__[0]
-
-    @property
-    def fract(self) -> int:
-        return self.width - self.integer
-
-    @property
-    def specified(self):
-        return False
-
-    @property
-    def width(self) -> int:
-        return self.__args__[1]
-
     def __abs__(self):
         if not self.signed:
             return self
@@ -108,9 +81,6 @@ class FixpnumberType(IntegralType):
 
     def __gt__(self, other):
         return Bool
-
-    def __hash__(self):
-        return super().__hash__()
 
     def __int__(self):
         return int
@@ -251,6 +221,30 @@ class FixpnumberType(IntegralType):
             return Int[self.integer]
         else:
             return Uint[self.integer]
+
+    def keys(self):
+        """Returns a list of keys that can be used for indexing the type.
+
+        >>> Int[8].keys()
+        [0, 1, 2, 3, 4, 5, 6, 7]
+        """
+        return list(range(self.width))
+
+    @property
+    def integer(self) -> int:
+        return self.__args__[0]
+
+    @property
+    def fract(self) -> int:
+        return self.width - self.integer
+
+    @property
+    def specified(self):
+        return False
+
+    @property
+    def width(self) -> int:
+        return self.__args__[1]
 
 
 class Fixpnumber(Integral, metaclass=FixpnumberType):
