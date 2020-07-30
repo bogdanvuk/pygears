@@ -1,7 +1,7 @@
 from pygears import gear, reg
 from math import ceil, floor
 from pygears.sim import sim
-from pygears.typing import Fixp, Ufixp, Int
+from pygears.typing import Fixp, Ufixp, Int, Bool
 from pygears.lib import directed, drv
 
 
@@ -71,6 +71,90 @@ def test_floor():
     sim()
 
 
+def test_ge():
+    @gear(hdl={'compile': True})
+    async def test(a_i: Ufixp[3, 6], b_i: Fixp[4, 8]) -> Bool:
+        async with a_i as a, b_i as b:
+            yield a >= b
+            yield b >= a
+            yield a >= a
+            yield b >= b
+            yield a >= 2
+            yield 2 >= a
+            yield b >= 2
+            yield 2 >= b
+
+    directed(drv(t=Ufixp[3, 6], seq=[7.875]),
+             drv(t=Fixp[4, 8], seq=[-8.0]),
+             f=test(__sim__='verilator'),
+             ref=[True, False, True, True, True, False, False, True])
+
+    sim()
+
+
+def test_gt():
+    @gear(hdl={'compile': True})
+    async def test(a_i: Ufixp[3, 6], b_i: Fixp[4, 8]) -> Bool:
+        async with a_i as a, b_i as b:
+            yield a > b
+            yield b > a
+            yield a > a
+            yield b > b
+            yield a > 2
+            yield 2 > a
+            yield b > 2
+            yield 2 > b
+
+    directed(drv(t=Ufixp[3, 6], seq=[7.875]),
+             drv(t=Fixp[4, 8], seq=[-8.0]),
+             f=test(__sim__='verilator'),
+             ref=[True, False, False, False, True, False, False, True])
+
+    sim()
+
+
+def test_le():
+    @gear(hdl={'compile': True})
+    async def test(a_i: Ufixp[3, 6], b_i: Fixp[4, 8]) -> Bool:
+        async with a_i as a, b_i as b:
+            yield a <= b
+            yield b <= a
+            yield a <= a
+            yield b <= b
+            yield a <= 2
+            yield 2 <= a
+            yield b <= 2
+            yield 2 <= b
+
+    directed(drv(t=Ufixp[3, 6], seq=[7.875]),
+             drv(t=Fixp[4, 8], seq=[-8.0]),
+             f=test(__sim__='verilator'),
+             ref=[False, True, True, True, False, True, True, False])
+
+    sim()
+
+
+def test_lt():
+    @gear(hdl={'compile': True})
+    async def test(a_i: Ufixp[3, 6], b_i: Fixp[4, 8]) -> Bool:
+        async with a_i as a, b_i as b:
+            yield a < b
+            yield b < a
+            yield a < a
+            yield b < b
+            yield a < 2
+            yield 2 < a
+            yield b < 2
+            yield 2 < b
+
+    directed(drv(t=Ufixp[3, 6], seq=[7.875]),
+             drv(t=Fixp[4, 8], seq=[-8.0]),
+             f=test(__sim__='verilator'),
+             ref=[False, True, False, False, False, True, True, False])
+
+    sim()
+
+
 def test_lshift():
     @gear(hdl={'compile': True})
     async def test(a_i: Ufixp[3, 6], b_i: Fixp[4, 8]) -> Fixp[5, 9]:
@@ -84,6 +168,36 @@ def test_lshift():
              drv(t=Fixp[4, 8], seq=[-8.0, -7.5]),
              f=test(__sim__='verilator'),
              ref=[7.875, 7.875 * 2, -8, -8 * 2, 7.375, 7.375 * 2, -7.5, -7.5 * 2])
+
+    sim()
+
+
+def test_neg():
+    @gear(hdl={'compile': True})
+    async def test(a_i: Ufixp[3, 6], b_i: Fixp[4, 8]) -> Fixp[5, 9]:
+        async with a_i as a, b_i as b:
+            yield -a
+            yield -b
+
+    directed(drv(t=Ufixp[3, 6], seq=[7.875, 0, 2.125]),
+             drv(t=Fixp[4, 8], seq=[-8.0, 7.5, -2.125]),
+             f=test(__sim__='verilator'),
+             ref=[-7.875, 8, 0, -7.5, -2.125, 2.125])
+
+    sim()
+
+
+def test_round():
+    @gear(hdl={'compile': True})
+    async def test(a_i: Ufixp[3, 6], b_i: Fixp[4, 8]) -> Fixp[5, 9]:
+        async with a_i as a, b_i as b:
+            yield round(a)
+            yield round(b)
+
+    directed(drv(t=Ufixp[3, 6], seq=[7.875, 7.375]),
+             drv(t=Fixp[4, 8], seq=[-8.0, -7.5]),
+             f=test(__sim__='verilator'),
+             ref=[8, -8, 7, -7])
 
     sim()
 

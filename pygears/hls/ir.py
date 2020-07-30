@@ -418,7 +418,15 @@ class UnaryOpExpr(Expr):
 
     @property
     def dtype(self):
-        return Uint[1] if (self.operand == opc.Not) else self.operand.dtype
+        if self.operator == opc.Not:
+            return Uint[1]
+
+        res_t = eval(f'{OPMAP[self.operator]} op', {'op': self.operand.dtype})
+
+        if isinstance(res_t, bool):
+            return Uint[1]
+
+        return res_t
 
 
 class CastExpr(Expr):

@@ -1,6 +1,6 @@
 import pytest
 from math import floor, ceil
-from pygears.typing import Fixp, Ufixp, typeof, Number, Int, Uint, div
+from pygears.typing import Fixp, Ufixp, typeof, Number, Int, Uint, div, Bool
 from pygears.typing import get_match_conds
 
 
@@ -94,6 +94,38 @@ def test_floor():
     assert floor(q6_3) == q6_3
 
 
+def test_ge():
+    uq2_3 = Ufixp[2, 3]
+    q2_3 = Fixp[2, 3]
+
+    assert (uq2_3 >= q2_3) == Bool
+    assert (q2_3 >= uq2_3) == Bool
+
+
+def test_gt():
+    uq2_3 = Ufixp[2, 3]
+    q2_3 = Fixp[2, 3]
+
+    assert (uq2_3 > q2_3) == Bool
+    assert (q2_3 > uq2_3) == Bool
+
+
+def test_le():
+    uq2_3 = Ufixp[2, 3]
+    q2_3 = Fixp[2, 3]
+
+    assert (uq2_3 <= q2_3) == Bool
+    assert (q2_3 <= uq2_3) == Bool
+
+
+def test_lt():
+    uq2_3 = Ufixp[2, 3]
+    q2_3 = Fixp[2, 3]
+
+    assert (uq2_3 < q2_3) == Bool
+    assert (q2_3 < uq2_3) == Bool
+
+
 def test_lshift():
     uq2_3 = Ufixp[2, 3]
     uq4_3 = Ufixp[4, 3]
@@ -105,6 +137,27 @@ def test_lshift():
 
     assert uq2_3 << 0 == uq2_3
     assert q2_3 << 0 == q2_3
+
+
+def test_neg():
+    uq2_3 = Ufixp[2, 3]
+    q2_3 = Fixp[2, 3]
+    q3_4 = Fixp[3, 4]
+
+    assert -uq2_3 == q3_4
+    assert -q2_3 == q3_4
+
+
+def test_round():
+    uq2_3 = Ufixp[2, 3]
+    q2_3 = Fixp[2, 3]
+    uq4_4 = Ufixp[4, 4]
+    q6_3 = Fixp[6, 3]
+
+    assert round(uq2_3) == Ufixp[3, 4]
+    assert round(q2_3) == Fixp[3, 4]
+    assert round(uq4_4) == uq4_4
+    assert round(q6_3) == q6_3
 
 
 def test_unsigned_fdiv():

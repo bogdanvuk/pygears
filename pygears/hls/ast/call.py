@@ -137,7 +137,12 @@ def get_class_that_defined_method(meth):
     return getattr(meth, '__objclass__', None)  # handle special descriptor objects
 
 
-special_funcs = {abs: '__abs__', math.ceil: '__ceil__', math.floor: '__floor__'}
+special_funcs = {
+    abs: '__abs__',
+    math.ceil: '__ceil__',
+    math.floor: '__floor__',
+    round: '__round__'
+}
 
 
 def resolve_func(func, args, kwds, ctx):

@@ -99,6 +99,50 @@ def test_floor():
     assert floor(q6_3.min) == q6_3.min
 
 
+def test_ge():
+    uq2_3 = Ufixp[2, 3]
+    q2_3 = Fixp[2, 3]
+
+    assert uq2_3(1.5) >= q2_3(1.5)
+    assert q2_3(1.5) >= uq2_3(1.5)
+
+    assert uq2_3.max >= q2_3.min
+    assert q2_3.max >= uq2_3.min
+
+
+def test_gt():
+    uq2_3 = Ufixp[2, 3]
+    q2_3 = Fixp[2, 3]
+
+    assert uq2_3(2.0) > q2_3(1.5)
+    assert q2_3(1.5) > uq2_3(1.0)
+
+    assert uq2_3.max > q2_3.min
+    assert q2_3.max > uq2_3.min
+
+
+def test_le():
+    uq2_3 = Ufixp[2, 3]
+    q2_3 = Fixp[2, 3]
+
+    assert uq2_3(1.5) <= q2_3(1.5)
+    assert q2_3(1.5) <= uq2_3(1.5)
+
+    assert uq2_3.min <= q2_3.max
+    assert q2_3.min <= uq2_3.max
+
+
+def test_lt():
+    uq2_3 = Ufixp[2, 3]
+    q2_3 = Fixp[2, 3]
+
+    assert uq2_3(2.0) < q2_3(1.5)
+    assert q2_3(1.5) < uq2_3(1.0)
+
+    assert uq2_3.min < q2_3.max
+    assert q2_3.min < uq2_3.max
+
+
 def test_lshift():
     uq2_3 = Ufixp[2, 3]
     uq4_3 = Ufixp[4, 3]
@@ -110,6 +154,29 @@ def test_lshift():
 
     assert uq2_3.max << 0 == uq2_3.max
     assert q2_3.min << 0 == q2_3.min
+
+
+def test_neg():
+    uq2_3 = Ufixp[2, 3]
+    q2_3 = Fixp[2, 3]
+    q3_4 = Fixp[3, 4]
+
+    assert -uq2_3.max == q3_4(-float(uq2_3.max))
+    assert -q2_3.min == q3_4(-float(q2_3.min))
+
+
+def test_round():
+    uq2_4 = Ufixp[2, 4]
+    q2_3 = Fixp[2, 3]
+    uq4_4 = Ufixp[4, 4]
+    q6_3 = Fixp[6, 3]
+
+    assert round(uq2_4.max) == Ufixp[3, 5](4.0)
+    assert round(uq2_4(3.25)) == Ufixp[3, 5](3.0)
+    assert round(q2_3.min) == Fixp[3, 4](-2.0)
+    assert round(q2_3(-1.5)) == Fixp[3, 4](-1.0)
+    assert round(uq4_4.max) == uq4_4.max
+    assert round(q6_3.min) == q6_3.min
 
 
 def test_sub_val():

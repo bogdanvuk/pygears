@@ -1,6 +1,6 @@
 from pygears.hls import ir
 from functools import partial
-from pygears.typing import Array, Integer, Queue, code, typeof, Integral, Tuple, Union
+from pygears.typing import Array, Integer, Queue, code, typeof, Integral, Tuple, Union, Int
 from .sv_keywords import sv_keywords
 
 SLICE_FUNC_TEMPLATE = """function [{2}:0] slice_{0}_{1}(input [{3}:0] val);
@@ -12,8 +12,7 @@ endfunction
 def get_slice_func(aux_funcs, start, stop, din_width):
     name = f'slice_{stop}_{start}'
     if name not in aux_funcs:
-        aux_funcs[name] = SLICE_FUNC_TEMPLATE.format(
-            stop, start, stop - start, din_width - 1)
+        aux_funcs[name] = SLICE_FUNC_TEMPLATE.format(stop, start, stop - start, din_width - 1)
 
     return name
 
@@ -39,8 +38,7 @@ def sieve_slices(dtype, keys):
         keys = (keys, )
 
     return list(
-        map(
-            partial(index_to_sv_slice, dtype),
+        map(partial(index_to_sv_slice, dtype),
             filter(lambda i: getattr(dtype[i], 'width', 0) > 0, keys)))
 
 
@@ -84,9 +82,7 @@ class SVExpressionVisitor:
         return f"{sign}{val.width}'d{abs(int(val))}"
 
     def visit_FunctionCall(self, node):
-        return (
-            f'{node.name}(' + ', '.join(str(self.visit(op))
-                                        for op in node.operands) + ')')
+        return (f'{node.name}(' + ', '.join(str(self.visit(op)) for op in node.operands) + ')')
 
     def visit_Interface(self, node):
         return node.name
@@ -246,18 +242,18 @@ class SVExpressionVisitor:
         op_dtypes = [op.dtype for op in node.operands]
         op_sign = [getattr(dtype, 'signed', False) for dtype in op_dtypes]
 
-        if node.operator in [ir.opc.Add, ir.opc.Sub, ir.opc.Mult, ir.opc.BitOr,
-                             ir.opc.BitAnd, ir.opc.BitXor]:
+        if node.operator in [
+                ir.opc.Add, ir.opc.Sub, ir.opc.Mult, ir.opc.BitOr, ir.opc.BitAnd, ir.opc.BitXor
+        ]:
             cast_dtype = node.dtype
-            ops = [
-                self.cast_svexpr(expr, dtype, cast_dtype)
-                for expr, dtype in zip(ops, op_dtypes)
-            ]
+            ops = [self.cast_svexpr(expr, dtype, cast_dtype) for expr, dtype in zip(ops, op_dtypes)]
         elif node.operator == ir.opc.LShift:
             if op_dtypes[0].width < node.dtype.width:
                 ops[0] = self.cast_svexpr(ops[0], op_dtypes[0], node.dtype)
-        elif node.operator in [ir.opc.Eq, ir.opc.Gt, ir.opc.GtE, ir.opc.Lt, ir.opc.LtE,
-                               ir.opc.NotEq, ir.opc.And, ir.opc.Or]:
+        elif node.operator in [
+                ir.opc.Eq, ir.opc.Gt, ir.opc.GtE, ir.opc.Lt, ir.opc.LtE, ir.opc.NotEq, ir.opc.And,
+                ir.opc.Or
+        ]:
             if op_sign[0] and not op_sign[1]:
                 ops[1] = self.cast_svexpr(ops[1], op_dtypes[1], op_dtypes[0])
             elif op_sign[1] and not op_sign[0]:
