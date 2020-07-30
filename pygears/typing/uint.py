@@ -401,13 +401,17 @@ class Integer(Integral, metaclass=IntegerType):
         return (-type(self)).decode(super().__neg__())
 
     def __eq__(self, other):
-        if not is_type(type(other)):
-            return super().__eq__(other)
+        if is_type(type(other)) and not isinstance(other, Integer):
+            return NotImplemented
 
-        if not typeof(type(other), Integer):
-            return False
+        if isinstance(other, Integer):
+            conv_other = other
+        elif isinstance(other, (int, float)):
+            conv_other = Integer(other)
+        else:
+            return NotImplemented
 
-        return super().__eq__(other)
+        return Bool(super().__eq__(conv_other))
 
     def __hash__(self):
         return super().__hash__()
@@ -433,8 +437,10 @@ class Integer(Integral, metaclass=IntegerType):
 
         if isinstance(other, Integer):
             conv_other = other
-        else:
+        elif isinstance(other, (int, float)):
             conv_other = Integer(other)
+        else:
+            return NotImplemented
 
         return (type(self) + type(conv_other))(super().__add__(conv_other))
 
@@ -457,8 +463,10 @@ class Integer(Integral, metaclass=IntegerType):
 
         if is_type(type(other)):
             conv_other = other
+        elif isinstance(other, (int, float)):
+            conv_other = Integer(other)
         else:
-            conv_other = type(self).base(other)
+            return NotImplemented
 
         return (type(self) - type(conv_other))(super().__sub__(conv_other))
 
@@ -468,8 +476,10 @@ class Integer(Integral, metaclass=IntegerType):
 
         if is_type(type(other)):
             conv_other = other
+        elif isinstance(other, (int, float)):
+            conv_other = Integer(other)
         else:
-            conv_other = type(self).base(other)
+            return NotImplemented
 
         return (type(conv_other) - type(self))(super().__rsub__(conv_other))
 
@@ -751,6 +761,8 @@ def code(data, cast_type=Uint):
 
     if is_type(cast_type) and cast_type.specified:
         return cast_type.decode(data & ((1 << cast_type.width) - 1))
+    elif is_type(type(data)):
+        return cast_type(data.code())
     else:
         return cast_type(data)
 

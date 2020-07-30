@@ -56,6 +56,27 @@ def test_ceil():
     sim()
 
 
+def test_eq():
+    @gear(hdl={'compile': True})
+    async def test(a_i: Ufixp[3, 6], b_i: Fixp[4, 8]) -> Bool:
+        async with a_i as a, b_i as b:
+            yield a == b
+            yield b == a
+            yield a == a
+            yield b == b
+            yield a == -8
+            yield -8 == a
+            yield b == -8
+            yield -8 == b
+
+    directed(drv(t=Ufixp[3, 6], seq=[7.875]),
+             drv(t=Fixp[4, 8], seq=[-8.0]),
+             f=test(__sim__='verilator'),
+             ref=[False, False, True, True, False, False, True, True])
+
+    sim()
+
+
 def test_floor():
     @gear(hdl={'compile': True})
     async def test(a_i: Ufixp[3, 6], b_i: Fixp[4, 8]) -> Fixp[4, 8]:
@@ -183,6 +204,23 @@ def test_neg():
              drv(t=Fixp[4, 8], seq=[-8.0, 7.5, -2.125]),
              f=test(__sim__='verilator'),
              ref=[-7.875, 8, 0, -7.5, -2.125, 2.125])
+
+    sim()
+
+
+def test_rshift():
+    @gear(hdl={'compile': True})
+    async def test(a_i: Ufixp[3, 6], b_i: Fixp[4, 8]) -> Fixp[4, 9]:
+        async with a_i as a, b_i as b:
+            yield a >> 0
+            yield a >> 1
+            yield b >> 0
+            yield b >> 1
+
+    directed(drv(t=Ufixp[3, 6], seq=[7.875, 7.375]),
+             drv(t=Fixp[4, 8], seq=[-8.0, -7.5]),
+             f=test(__sim__='verilator'),
+             ref=[7.875, 7.875 / 2, -8, -8 / 2, 7.375, 7.375 / 2, -7.5, -7.5 / 2])
 
     sim()
 

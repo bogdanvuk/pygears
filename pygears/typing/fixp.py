@@ -190,14 +190,7 @@ class FixpnumberType(IntegralType):
 
     def __rshift__(self, others):
         shamt = int(others)
-        width = len(self)
-
-        if shamt > width:
-            raise TypeError('Right shift larger than data width')
-        elif shamt == width:
-            return Unit
-        else:
-            return self.base[self.integer - shamt, self.width - shamt]
+        return self.base[self.integer - shamt, self.width]
 
     def __rrshift__(self, other):
         return NotImplemented
@@ -280,7 +273,7 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
             if not is_type(type(val)):
                 return cls[bitw(val) + 1, bitw(val) + 1](int(val))
             elif isinstance(val, Integer):
-                return cls[val.width, val.width](val.code())
+                return cls[val.width, val.width].decode(val.code())
 
         if isinstance(val, Fixpnumber):
             val_fract = type(val).fract
@@ -347,6 +340,23 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
         else:
             return self
 
+    def __eq__(self, other):
+
+        if isinstance(other, Fixpnumber):
+            if type(other).fract > type(self).fract:
+                return int(self) << (type(other).fract - type(self).fract) == int(other)
+            else:
+                return int(self) == int(other) << (type(self).fract - type(other).fract)
+        elif isinstance(other, float):
+            return float(self) == other
+        else:
+            fixp_other = Fixpnumber(other)
+
+            if type(fixp_other).fract > type(self).fract:
+                return int(self) << (type(fixp_other).fract - type(self).fract) == int(fixp_other)
+            else:
+                return int(self) == int(fixp_other) << (type(self).fract - type(fixp_other).fract)
+
     def __float__(self):
         return int(self) / (2**type(self).fract)
 
@@ -356,6 +366,9 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
             return floor(t).decode((int(self) >> t.fract) << t.fract)
         else:
             return self
+
+    def __floordiv__(self, other):
+        return self.__truediv__(other, 0)
 
     def __ge__(self, other):
         if isinstance(other, Fixpnumber):
@@ -422,6 +435,9 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
             else:
                 return int(self) < int(fixp_other) << (type(self).fract - type(fixp_other).fract)
 
+    def __mod__(self, other):
+        return NotImplemented
+
     def __mul__(self, other):
         if is_type(type(other)) and not isinstance(other, (Fixpnumber, Integer)):
             return NotImplemented
@@ -433,28 +449,33 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
 
         return (type(self) * type(conv_other)).decode(super().__mul__(conv_other))
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def __neg__(self):
         return (-type(self)).decode(super().__neg__())
 
-    def __str__(self):
-        return f'{str(type(self))}({float(self)})'
+    def __or__(self, other):
+        return NotImplemented
+
+    def __rand__(self, other):
+        return NotImplemented
+
+    __radd__ = __add__
 
     def __repr__(self):
         return f'{repr(type(self))}({float(self)})'
 
-    @class_and_instance_method
-    def __truediv__(self, other, subprec=0):
-        if not isinstance(other, Fixpnumber):
-            other = Fixpnumber(other)
+    def __rfloordiv__(self, other):
+        return NotImplemented
 
-        div_cls = type(self).__truediv__(type(other), subprec)
-        shift = div_cls.fract - type(self).fract + type(other).fract
-        return div_cls.decode((self.code() << shift) // other.code())
+    def __rlshift__(self, other):
+        return NotImplemented
+
+    def __rmod__(self, other):
+        return NotImplemented
 
     __rmul__ = __mul__
-
-    def __floordiv__(self, other):
-        return self.__truediv__(other, 0)
 
     # TODO: implement digits functionality
     def __round__(self, digits=0):
@@ -464,20 +485,8 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
         else:
             return self
 
-    __radd__ = __add__
-
-    def __sub__(self, other):
-        if is_type(type(other)) and not isinstance(other, (Fixpnumber, Integer)):
-            return NotImplemented
-
-        if isinstance(other, Fixpnumber):
-            conv_other = other
-        else:
-            conv_other = Fixpnumber(other)
-
-        sum_cls = type(self) - type(conv_other)
-        return sum_cls.decode((int(self) << (sum_cls.fract - type(self).fract)) -
-                              (int(conv_other) << (sum_cls.fract - type(conv_other).fract)))
+    def __rshift__(self, other):
+        return (type(self) >> other).decode(int(self))
 
     def __rsub__(self, other):
         if is_type(type(other)) and not isinstance(other, (Fixpnumber, Integer)):
@@ -493,20 +502,30 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
         return sum_cls.decode((int(conv_other) << (sum_cls.fract - type(conv_other).fract)) -
                               (int(self) << (sum_cls.fract - type(self).fract)))
 
-    def __eq__(self, other):
+    def __str__(self):
+        return f'{str(type(self))}({float(self)})'
+
+    def __sub__(self, other):
+        if is_type(type(other)) and not isinstance(other, (Fixpnumber, Integer)):
+            return NotImplemented
+
         if isinstance(other, Fixpnumber):
-            if type(self).base != type(other).base:
-                return False
+            conv_other = other
+        else:
+            conv_other = Fixpnumber(other)
 
-            if type(other).fract > type(self).fract:
-                return int(self) << (type(other).fract - type(self).fract) == int(other)
-            else:
-                return int(self) == int(other) << (type(self).fract - type(other).fract)
-        elif isinstance(other, float):
-            return float(self) == other
+        sum_cls = type(self) - type(conv_other)
+        return sum_cls.decode((int(self) << (sum_cls.fract - type(self).fract)) -
+                              (int(conv_other) << (sum_cls.fract - type(conv_other).fract)))
 
-    def __ne__(self, other):
-        return not self.__eq__(other)
+    @class_and_instance_method
+    def __truediv__(self, other, subprec=0):
+        if not isinstance(other, Fixpnumber):
+            other = Fixpnumber(other)
+
+        div_cls = type(self).__truediv__(type(other), subprec)
+        shift = div_cls.fract - type(self).fract + type(other).fract
+        return div_cls.decode((self.code() << shift) // other.code())
 
     def code(self):
         return int(self) & ((1 << self.width) - 1)

@@ -136,8 +136,8 @@ def test_lt():
     uq2_3 = Ufixp[2, 3]
     q2_3 = Fixp[2, 3]
 
-    assert uq2_3(2.0) < q2_3(1.5)
-    assert q2_3(1.5) < uq2_3(1.0)
+    assert uq2_3(1.5) < q2_3(2.0)
+    assert q2_3(1.0) < uq2_3(1.5)
 
     assert uq2_3.min < q2_3.max
     assert q2_3.min < uq2_3.max
@@ -163,6 +163,19 @@ def test_neg():
 
     assert -uq2_3.max == q3_4(-float(uq2_3.max))
     assert -q2_3.min == q3_4(-float(q2_3.min))
+
+
+def test_rshift():
+    uq2_3 = Ufixp[2, 3]
+    uq4_3 = Ufixp[4, 3]
+    q2_3 = Fixp[2, 3]
+    q4_3 = Fixp[4, 3]
+
+    assert uq4_3(14.0) >> 2 == uq2_3.max
+    assert q4_3.min >> 2 == q2_3.min
+
+    assert uq2_3.max >> 0 == uq2_3.max
+    assert q2_3.min >> 0 == q2_3.min
 
 
 def test_round():
