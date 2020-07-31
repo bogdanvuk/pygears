@@ -100,7 +100,7 @@ def test_first_dif_type_const_op():
         ref=[2, 4, 6],
     )
 
-    sim(timeout=3)
+    sim()
 
 
 def test_second_dif_type_const_op():
@@ -121,7 +121,7 @@ def test_second_dif_type_const_op():
         ref=[2, 4, 6],
     )
 
-    sim(timeout=3)
+    sim()
 
 
 def test_dif_type_op():
@@ -144,4 +144,4 @@ def test_dif_type_op():
         ref=[2, 4, 6],
     )
 
-    sim(timeout=3)
+    sim()
