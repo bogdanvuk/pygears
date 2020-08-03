@@ -89,7 +89,7 @@ class HDLModuleInst:
 
     @property
     def hierarchical(self):
-        return self.node.params.get('hdl', {}).get('hierarchical', self.node.hierarchical)
+        return self.node.meta_kwds.get('hdl', {}).get('hierarchical', self.node.hierarchical)
 
     @property
     def hier_path_name(self):

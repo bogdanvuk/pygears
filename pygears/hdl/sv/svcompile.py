@@ -679,7 +679,7 @@ def compile_gear_body(gear, outdir, template_env):
                  subsvmods,
                  funcs,
                  template_env,
-                 config=gear.params.get('hdl', {}))
+                 config=gear.meta_kwds.get('hdl', {}))
 
     return '\n'.join(writer.lines), subsvmods
 
@@ -689,7 +689,7 @@ def compile_gear(gear, template_env, module_name, outdir):
     context = {
         'module_name': module_name,
         'intfs': template_env.port_intfs(gear),
-        'sigs': gear.params['signals'],
+        'sigs': gear.meta_kwds['signals'],
         'params': gear.params
     }
 

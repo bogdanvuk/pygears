@@ -77,9 +77,9 @@ class HDLFileResolver(ResolverBase):
     @property
     def file_basename(self):
         fn = self.node_def_name
-        if 'hdl' in self.node.params:
-            if 'impl' in self.node.params['hdl']:
-                fn = self.node.params['hdl']['impl']
+        if 'hdl' in self.node.meta_kwds:
+            if 'impl' in self.node.meta_kwds['hdl']:
+                fn = self.node.meta_kwds['hdl']['impl']
 
         if not os.path.splitext(fn)[-1]:
             fn = f'{fn}.{self.lang}'
@@ -89,9 +89,9 @@ class HDLFileResolver(ResolverBase):
     @property
     def files(self):
         files = [self.impl_path]
-        if 'hdl' in self.node.params:
-            if 'files' in self.node.params['hdl']:
-                for fn in self.node.params['hdl']['files']:
+        if 'hdl' in self.node.meta_kwds:
+            if 'files' in self.node.meta_kwds['hdl']:
+                for fn in self.node.meta_kwds['hdl']['files']:
                     if not os.path.splitext(fn)[-1]:
                         fn = f'{fn}.{self.lang}'
 

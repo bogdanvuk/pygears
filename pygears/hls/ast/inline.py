@@ -4,8 +4,6 @@ from ..debug import print_func_parse_intro
 from pygears import Intf, reg
 from pygears.core.partial import combine_arg_kwds, extract_arg_kwds
 from pygears.core.port import HDLConsumer, HDLProducer
-from pygears.core.datagear import get_datagear_func, is_datagear
-from pygears.core.gear import gear_explicit_params
 
 
 def form_gear_args(args, kwds, func):
@@ -104,20 +102,7 @@ def parse_func_call(func: typing.Callable, args, kwds, ctx: Context):
         return inline_expr(func_ir, func_ctx, args)
 
 
-def call_datagear(func, args, params, ctx: Context):
-    f = get_datagear_func(func)
-    kwds = gear_explicit_params(f, params)
-    kwds = {n: ir.ResExpr(v) for n, v in kwds.items()}
-    return parse_func_call(f, args, kwds, ctx)
-
-
 def call_gear(func, args, kwds, ctx: Context):
-    if isinstance(ctx, FuncContext):
-        if not is_datagear(func):
-            raise SyntaxError('only datagears can be invoked within functions')
-
-        return call_datagear(func, args, kwds, ctx), []
-
     local_in = []
     for i, a in enumerate(args):
         intf = Intf(a.dtype)

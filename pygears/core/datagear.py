@@ -7,37 +7,18 @@ from pygears.core.util import is_standard_func
 from pygears.util.utils import gather
 
 
-def gear_resolver(gear_func, meta_kwds, *args, **kwds):
-    ctx = reg['gear/exec_context']
-    if ctx == 'sim':
-        for p in reg['gear/params/extra']:
-            del kwds[p]
-
-        for a in args:
-            if not isinstance(a, Intf):
-                continue
-
-            raise Exception(f'Cannot evaluate interface at runtime!')
-
-        return gear_func.definition(*args, **kwds)
-    else:
-        return reg['gear/gear_dflt_resolver'](gear_func, meta_kwds, *args,
-                                                   **kwds)
-
-
 def is_datagear(func):
-    return hasattr(func, 'definition')
+    return hasattr(func, 'exec')
 
 
 def get_datagear_func(func):
-    return func.definition
+    return func.exec
 
 
 @doublewrap
 def datagear(func, **meta_kwds):
     if not is_standard_func(func):
-        raise Exception(
-            'Only regular functions can be converted to a @datagear.')
+        raise Exception('Only regular functions can be converted to a @datagear.')
 
     paramspec = inspect.getfullargspec(func)
 
@@ -57,8 +38,6 @@ def datagear(func, **meta_kwds):
                                      evaldict=execdict,
                                      isasync=True,
                                      addsource=True)
-    gear_func.definition = func
+    gear_func.exec = func
 
-    return create_gear_definition(gear_func,
-                                  gear_resolver=gear_resolver,
-                                  hdl={'compile': True})
+    return create_gear_definition(gear_func, hdl={'compile': True})

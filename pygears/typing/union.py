@@ -97,16 +97,16 @@ class UnionType(EnumerableGenericMeta):
 
         if isinstance(index[0], slice):
             if (index[0].start == 0) and (index[0].stop == 1):
-                return Uint[max(map(int, self.args))]
+                return Uint[max(a.width for a in self.args)]
             elif (index[0].start == 1) and (index[0].stop == 2):
                 return Uint[bitw(len(self.args) - 1)]
             elif (index[0].start == 0) and (index[0].stop == 2):
-                return Uint[max(map(int, self.args))], Uint[bitw(len(self.args) - 1)]
+                return Uint[max(a.width for a in self.args)], Uint[bitw(len(self.args) - 1)]
             else:
                 raise IndexError
         else:
             if (index[0] == 0):
-                return Uint[max(map(int, self.args))]
+                return Uint[max(a.width for a in self.args)]
             elif (index[0] == 1):
                 return Uint[bitw(len(self.args) - 1)]
             else:

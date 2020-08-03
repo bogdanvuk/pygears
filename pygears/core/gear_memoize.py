@@ -25,42 +25,6 @@ def field_names_eq(a, b):
     return True
 
 
-def check_args(args, const_args, kwds, mem_args, mem_const_args, mem_kwds):
-    if len(mem_args) != len(args):
-        return False
-
-    for a in mem_args:
-        if a not in args:
-            return False
-
-        if mem_args[a] != args[a].dtype:
-            return False
-
-        if not field_names_eq(mem_args[a], args[a].dtype):
-            return False
-
-    if const_args != mem_const_args:
-        return False
-
-    for key in mem_kwds:
-        if key not in kwds:
-            return False
-
-        if key in reg['gear/params/extra']:
-            continue
-
-        if key in reg['gear/params/meta']:
-            continue
-
-        if mem_kwds[key] != kwds[key]:
-            return False
-
-        if type(mem_kwds[key]) != type(kwds[key]):
-            return False
-
-    return True
-
-
 def copy_gear_full(g: Gear, name=None):
     params = {}
     for n, val in g.params.items():
@@ -142,7 +106,7 @@ def copy_gear(mem_gear: Gear, args, kwds, name, intf_mapping, kwd_intfs):
             kwd_intfs[ii].source(gear_inst.out_ports[pi - in_num])
 
     for key in kwds:
-        if (key in reg['gear/params/extra']) or (key in reg['gear/params/meta']):
+        if key in reg['gear/params/extra']:
             gear_inst.params[key] = kwds[key]
 
     for name, val in mem_gear.const_args.items():
@@ -154,10 +118,10 @@ def copy_gear(mem_gear: Gear, args, kwds, name, intf_mapping, kwd_intfs):
         assert p.producer is None
         intf.connect(p)
 
-    out_intfs = tuple(o for i, o in enumerate(gear_inst.outputs) if (i + in_num) not in intf_mapping)
+    out_intfs = tuple(o for i, o in enumerate(gear_inst.outputs)
+                      if (i + in_num) not in intf_mapping)
 
     return gear_inst, out_intfs
-
 
 
 class ContainerVisitor:
@@ -204,11 +168,6 @@ def make_gear_call_hash(func, args, const_args, kwds, fix_intfs):
     for key in reg['gear/params/extra']:
         user_kwds.pop(key, None)
 
-    for key in reg['gear/params/meta']:
-        user_kwds.pop(key, None)
-
-    del user_kwds['definition']
-
     try:
         kwd_intfs = []
         v = ContainerVisitor(kwd_intfs)
@@ -217,12 +176,11 @@ def make_gear_call_hash(func, args, const_args, kwds, fix_intfs):
         v = ContainerVisitor(kwd_intfs)
         fixi_hsh = v.visit(fix_intfs)
 
-        hsh = kwd_hsh ^ fixi_hsh ^ hash(
-            (
-                func,
-                tuple(a.dtype if isinstance(a, Intf) else a for a in args.values()),
-                hashabledict(const_args),
-            ))
+        hsh = kwd_hsh ^ fixi_hsh ^ hash((
+            func,
+            tuple(a.dtype if isinstance(a, Intf) else a for a in args.values()),
+            hashabledict(const_args),
+        ))
 
         return hsh, tuple(kwd_intfs)
 

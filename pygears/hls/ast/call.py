@@ -51,9 +51,8 @@ def get_gear_signatures(func, args, kwds):
     kwds = {n: v.val if isinstance(v, ir.ResExpr) else v for n, v in kwds.items()}
 
     for f in alternatives:
-        meta_kwds = f.__globals__['meta_kwds']
         try:
-            args_dict, templates = gear_signature(f, args, kwds, meta_kwds)
+            args_dict, templates = gear_signature(f, args, kwds)
         except (TooManyArguments, GearArgsNotSpecified):
             pass
         else:

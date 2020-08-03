@@ -13,9 +13,9 @@
             {{key}} : begin
 
   {% if typeof(_din_t['data'], Tuple) %}
-                dout_s.data[{{int(i) - 1}}:0] = din_s.data.{{_din_t["data"].fields[key]}};
+                dout_s.data[{{i.width - 1}}:0] = din_s.data.{{_din_t["data"].fields[key]}};
   {% else %}
-                dout_s.data[{{int(i) - 1}}:0] = din_s.data[{{key}}];
+                dout_s.data[{{i.width - 1}}:0] = din_s.data[{{key}}];
   {% endif %}
             end
 {% endfor %}

@@ -116,7 +116,7 @@ class Scheduler(HDLVisitor):
 
     def AssignValue(self, node: ir.AssignValue):
         if is_intf_id(node.target):
-            if node.target.name in self.status.output_value:
+            if self.status.back_blocked or node.target.name in self.status.output_value:
                 node.state = {self.new_state()}
 
             self.status.output_value.add(node.target.name)

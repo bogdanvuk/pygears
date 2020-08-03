@@ -11,7 +11,7 @@ def test_basic():
 
     directed(drv(t=Uint[4], seq=[4]), f=qrange_wrp, ref=[list(range(4))])
 
-    find('/qrange_wrp/qrange').params['hdl']['lang'] = 'v'
+    find('/qrange_wrp/qrange').meta_kwds['hdl']['lang'] = 'v'
     cosim('/qrange_wrp', 'verilator', lang='sv')
     sim()
 
@@ -27,6 +27,6 @@ def test_fn_clash():
 
     directed(drv(t=Tuple[Uint[4], Uint[4]], seq=[(4, 4)]), f=test_clash, ref=[[4], [8]])
 
-    find('/test_clash/test_v').params['hdl']['lang'] = 'v'
+    find('/test_clash/test_v').meta_kwds['hdl']['lang'] = 'v'
     cosim('/test_clash', 'verilator', lang='sv', rebuild=True)
     sim()

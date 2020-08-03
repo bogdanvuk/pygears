@@ -9,30 +9,9 @@ from pygears.core.hier_node import HierVisitorBase
 from pygears.core.port import HDLConsumer, HDLProducer
 
 
-def get_existing_child(func, meta_kwds, *args, **kwds):
-    for c in module().child:
-        if c.func is func:
-            break
-    else:
-        return None
-
-    for a, intf in zip(args, c.args.values()):
-        if not isinstance(a, Intf):
-            intf.put_nb(a)
-
-    return c.outputs
-
-
-def sim_compile_resolver(func, meta_kwds, *args, **kwds):
+def sim_compile_resolver(func, *args, **kwds):
     ctx = reg['gear/exec_context']
     if ctx == 'sim':
-        outputs = get_existing_child(func, meta_kwds, *args, **kwds)
-        if outputs is not None:
-            if len(outputs) == 1:
-                return outputs[0]
-
-            return outputs
-
         reg['gear/exec_context'] = 'compile'
 
         local_in = []
@@ -47,7 +26,7 @@ def sim_compile_resolver(func, meta_kwds, *args, **kwds):
 
         reg['gear/exec_context'] = 'sim'
 
-        outputs = gear_base_resolver(func, meta_kwds, *local_in, **kwds)
+        outputs = gear_base_resolver(func, *local_in, **kwds)
 
         # TODO: Support multiple outputs
 
@@ -74,23 +53,18 @@ def sim_compile_resolver(func, meta_kwds, *args, **kwds):
 
         simulator = reg['sim/simulator']
         cur_sim = reg['gear/current_sim']
-        sim_gear = SimGear(gear_inst)
         sim_map = reg['sim/map']
+
+        sim_gear = SimGear(gear_inst)
         sim_map[gear_inst] = sim_gear
-        simulator.insert_gears([gear_inst], simulator.cur_task_id)
+        cur_sim.child.append(sim_gear)
         simulator.forward_ready.add(sim_gear)
-        # sim_gear.setup()
-        # simulator.sim_gears.insert(simulator.cur_task_id, sim_gear)
-        simulator.sim_gears.insert(simulator.cur_task_id + 1, cur_sim)
-        # simulator.tasks[sim_gear] = sim_gear.run()
-        # simulator.task_data[sim_gear] = None
+        simulator.tasks[sim_gear] = sim_gear.run()
+        simulator.task_data[sim_gear] = None
 
         return outputs
-
-        # return gear_inst.func(*(p.consumer for p in gear_inst.in_ports),
-        #                       **gear_inst.explicit_params)
     else:
-        return gear_base_resolver(func, meta_kwds, *args, **kwds)
+        return gear_base_resolver(func, *args, **kwds)
 
 
 class SimInstVisitor(HierVisitorBase):

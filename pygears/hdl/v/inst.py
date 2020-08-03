@@ -13,10 +13,10 @@ class VGenInstVisitor(HierVisitorBase):
         self.vgen_map = reg['vgen/map']
 
     def RTLGear(self, node):
-        if 'hdl' not in node.params:
-            node.params['hdl'] = {}
+        if 'hdl' not in node.meta_kwds:
+            node.meta_kwds['hdl'] = {}
 
-        if 'vgen_cls' not in node.params['hdl']:
+        if 'vgen_cls' not in node.meta_kwds['hdl']:
             vgen_cls = self.namespace.get(node.gear.definition, None)
 
             if vgen_cls is None:
@@ -25,10 +25,10 @@ class VGenInstVisitor(HierVisitorBase):
                         vgen_cls = self.namespace[base_class.__name__]
                         break
 
-            node.params['hdl']['vgen_cls'] = vgen_cls
+            node.meta_kwds['hdl']['vgen_cls'] = vgen_cls
 
     def RTLNode(self, node):
-        vgen_cls = node.params['hdl']['vgen_cls']
+        vgen_cls = node.meta_kwds['hdl']['vgen_cls']
 
         if vgen_cls:
             svgen_inst = vgen_cls(node)

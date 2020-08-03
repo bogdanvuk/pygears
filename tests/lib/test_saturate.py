@@ -27,6 +27,17 @@ def test_saturate_int(sim_cls):
     sim()
 
 
+def test_saturate_int_to_larger(sim_cls):
+    seq = [-63, -32, -17, -16, 0, 14, 15, 16, 32, 63]
+    ref = seq
+
+    directed(drv(t=Int[7], seq=seq),
+             f=saturate(t=Int[9], sim_cls=sim_cls),
+             ref=ref)
+
+    sim()
+
+
 def test_saturate_ufixp(sim_cls):
     dtype = Ufixp[4, 8]
     sat_type = Ufixp[2, 6]

@@ -44,7 +44,6 @@ class GearHierRoot(NamedHierNode):
         self.in_ports = []
         self.out_ports = []
         self.params = {}
-        self.params.update(copy.deepcopy(reg['gear/params/meta']))
         self.params.update(copy.deepcopy(reg['gear/params/extra']))
         self.func = None
         self.const_args = []
@@ -84,18 +83,17 @@ class Gear(NamedHierNode):
     def __init__(self, func, params):
         super().__init__(params['name'],
                          reg['gear/current_module'] if func else None)
+        self.meta_kwds = getattr(func, 'meta_kwds', {})
+
         self.trace = list(enum_stacktrace())
         self.args = {}
         # self.params = struct_copy(params)
 
         self.params = params
+        if '__outnames__' not in params:
+            params['__outnames__'] = copy.copy(self.meta_kwds.get('outnames', []))
+
         for p in reg['gear/params/extra']:
-            if p not in params:
-                continue
-
-            self.params[p] = struct_copy(params[p])
-
-        for p in reg['gear/params/meta']:
             if p not in params:
                 continue
 
@@ -166,11 +164,11 @@ class Gear(NamedHierNode):
 
     @property
     def definition(self):
-        return self.params.get('definition', None)
+        return self.meta_kwds.get('definition', None)
 
     @property
     def outnames(self):
-        return self.params.get('outnames', None)
+        return self.params.get('__outnames__', None)
 
     @property
     def tout(self):
@@ -183,7 +181,7 @@ class Gear(NamedHierNode):
 
     @property
     def signals(self):
-        return {sig.name: sig for sig in self.params['signals']}
+        return {sig.name: sig for sig in self.meta_kwds['signals']}
 
     @property
     def dout(self):
@@ -280,14 +278,14 @@ class GearPlugin(PluginBase):
             'meta', {
                 'enablement': True,
                 'outnames': None,
-                'signals': (InSig('clk', 1), InSig('rst', 1))
+                'signals': (InSig('clk', 1), InSig('rst', 1)),
+                '__base__': None
             })
 
         reg['gear/params'].subreg('extra', {
             'name': None,
             'intfs': [],
-            'sigmap': {},
-            '__base__': None
+            'sigmap': {}
         })
 
         reg['gear/root'] = Gear(None, params={'name': ''})

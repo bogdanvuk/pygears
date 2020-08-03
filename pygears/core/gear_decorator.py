@@ -25,6 +25,9 @@ def add_alternative(base, alter):
     gear_func.alternative_to = gear_func_to
     gear_func_to.alternatives = alternatives
 
+    if hasattr(gear_func, 'meta_kwds'):
+        gear_func.meta_kwds['__base__'] = gear_func_to
+
     base.alternatives = alternatives
 
 
@@ -149,10 +152,7 @@ def create_unpacked_tuple_alternative(g):
     if not din_type.fields:
         return
 
-    unpack_annot = {
-        name: dtype
-        for name, dtype in zip(din_type.fields, din_type.args)
-    }
+    unpack_annot = {name: dtype for name, dtype in zip(din_type.fields, din_type.args)}
 
     signature = formatargspec(din_type.fields, *paramspec)
 
@@ -181,12 +181,7 @@ def create_unpacked_tuple_alternative(g):
     '''
 
     from ..lib.ccat import ccat
-    closure = {
-        'ccat': ccat,
-        f'__{base_func.__name__}': g,
-        'pygears': pygears,
-        'module': module
-    }
+    closure = {'ccat': ccat, f'__{base_func.__name__}': g, 'pygears': pygears, 'module': module}
     closure.update(get_function_context_dict(g.func))
 
     unpack_func = f.make(body, evaldict=closure, addsource=True)
@@ -194,6 +189,21 @@ def create_unpacked_tuple_alternative(g):
     unpack_func.__kwdefaults__ = paramspec[-1]
 
     add_alternative(base_func, unpack_func)
+
+
+def infer_outnames(annotations, meta_kwds):
+    outnames = None
+    if "return" in annotations:
+        if isinstance(annotations['return'], dict):
+            outnames = tuple(annotations['return'].keys())
+
+    if not outnames:
+        outnames = meta_kwds['outnames']
+
+    if not outnames:
+        outnames = []
+
+    return outnames
 
 
 def create_gear_definition(func, gear_resolver=None, **meta_kwds):
@@ -205,31 +215,27 @@ def create_gear_definition(func, gear_resolver=None, **meta_kwds):
         if k not in meta_kwds:
             meta_kwds[k] = copy.copy(v)
 
-    execdict = {
-        'gear_resolver': gear_resolver,
-        'meta_kwds': meta_kwds,
-        'gear_func': func
-    }
+    execdict = {'gear_resolver': gear_resolver, 'gear_func': func}
     execdict.update(get_function_context_dict(func))
 
     invocation = find_invocation(func)
-    body = f'return gear_resolver(gear_func, meta_kwds, {invocation})'
+    body = f'return gear_resolver(gear_func, {invocation})'
 
     gear_func = FunctionMaker.create(
         obj=func,
         body=body,
         evaldict=execdict,
         addsource=True,
-        extra_kwds={
-            k: copy.copy(v)
-            for k, v in reg['gear/params/extra'].items()
-        })
+        extra_kwds={k: copy.copy(v)
+                    for k, v in reg['gear/params/extra'].items()})
 
     functools.update_wrapper(gear_func, func)
 
     p = Partial(gear_func)
+
     meta_kwds['definition'] = p
-    p.meta_kwds = meta_kwds
+    meta_kwds['outnames'] = infer_outnames(func.__annotations__, meta_kwds)
+    func.meta_kwds = meta_kwds
 
     create_unpacked_tuple_alternative(p)
 

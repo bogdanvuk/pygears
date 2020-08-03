@@ -213,15 +213,12 @@ def simgear_exec_order(gears):
 
     gear_order = topo_sort(dag)
 
-    cosim_modules = [
-        g for g in sim_map
-        if isinstance(g, Gear) and g.params['sim_cls'] is not None
-    ]
+    cosim_modules = [g for g in sim_map if isinstance(g, Gear) and g.params['sim_cls'] is not None]
 
     gear_multi_order = cosim_modules.copy()
     for g in gear_order:
-        if (all(not m.has_descendent(g) for m in cosim_modules)
-                or isinstance(g, (InPort, OutPort))):
+        if (all(not m.has_descendent(g) for m in cosim_modules) or isinstance(g,
+                                                                              (InPort, OutPort))):
             gear_multi_order.append(g)
 
     # print('Order: ')
@@ -272,9 +269,8 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         for g in gears:
             g.phase = 'forward'
             if g not in self.sim_map:
-                raise Exception(
-                    f'Gear "{g.name}" of type "{g.definition.__name__}" has'
-                    f' no simulation model')
+                raise Exception(f'Gear "{g.name}" of type "{g.definition.__name__}" has'
+                                f' no simulation model')
 
             self.sim_map[g].phase = 'forward'
 
@@ -380,12 +376,32 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         gear_reg['current_module'] = self.cur_gear
         gear_reg['current_sim'] = sim_gear
 
-        # print(f'{self.phase}: {sim_gear.gear.name}')
+        # print(
+        #     f'{self.phase}: '
+        #     f'{sim_gear.port.name if hasattr(sim_gear, "port") else sim_gear.gear.name}'
+        # )
         self.run_gear(sim_gear, ready)
 
         self.cur_gear = gear_reg['root']
         gear_reg['current_module'] = self.cur_gear
         gear_reg['current_sim'] = sim_gear
+
+    def sim_list(self, sim_gears):
+        if self.phase == 'forward':
+            ready_dict = self.forward_ready
+        else:
+            sim_gears = reversed(sim_gears)
+            ready_dict = self.back_ready
+
+        for sim_gear in sim_gears:
+            if ((sim_gear in ready_dict) or (sim_gear in self.delta_ready)):
+                self.maybe_run_gear(sim_gear, ready_dict)
+
+            if (sim_gear.child):
+                self.sim_list(sim_gear.child)
+
+                if ((sim_gear in ready_dict) or (sim_gear in self.delta_ready)):
+                    self.maybe_run_gear(sim_gear, ready_dict)
 
     def sim_loop(self, timeout):
         clk = reg['sim/clk_event']
@@ -415,20 +431,27 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             # print(f"-------------- {timestep} ------------------")
 
             self.phase = 'forward'
-            i = 0
-            while i < len(self.sim_gears):
-                sim_gear = self.sim_gears[i]
-                i += 1
+            # self.cur_task_id = 0
+            # while self.cur_task_id < len(self.sim_gears):
+            #     sim_gear = self.sim_gears[self.cur_task_id]
 
-                if ((sim_gear not in self.forward_ready)
-                        and (sim_gear not in self.delta_ready)):
-                    continue
+            #     if ((sim_gear not in self.forward_ready) and (sim_gear not in self.delta_ready)):
+            #         continue
 
-                # print(
-                #     f'Forward: {sim_gear.port.name if hasattr(sim_gear, "port") else sim_gear.gear.name}'
-                # )
-                self.cur_task_id = i
-                self.maybe_run_gear(sim_gear, self.forward_ready)
+            #     print(
+            #         f'Forward: {sim_gear.port.name if hasattr(sim_gear, "port") else sim_gear.gear.name}'
+            #     )
+            #     self.cur_task_id = i - 1
+            #     self.maybe_run_gear(sim_gear, self.forward_ready)
+
+            self.sim_list(self.sim_gears)
+
+            # for sim_gear in self.sim_gears:
+            #     if ((sim_gear in self.forward_ready) or (sim_gear in self.delta_ready)):
+            #         print(
+            #             f'Back: {sim_gear.port.name if hasattr(sim_gear, "port") else sim_gear.gear.name}'
+            #         )
+            #         self.maybe_run_gear(sim_gear, self.back_ready)
 
             self.phase = 'delta'
             delta.set()
@@ -441,13 +464,14 @@ class EventLoop(asyncio.events.AbstractEventLoop):
                     self._finish(sim_gear)
                     self._schedule_to_finish.remove(sim_gear)
 
-            for sim_gear in reversed(self.sim_gears):
-                if ((sim_gear in self.back_ready)
-                        or (sim_gear in self.delta_ready)):
-                    # print(
-                    #     f'Back: {sim_gear.port.name if hasattr(sim_gear, "port") else sim_gear.gear.name}'
-                    # )
-                    self.maybe_run_gear(sim_gear, self.back_ready)
+            self.sim_list(self.sim_gears)
+
+            # for sim_gear in reversed(self.sim_gears):
+            #     if ((sim_gear in self.back_ready) or (sim_gear in self.delta_ready)):
+            #         print(
+            #             f'Back: {sim_gear.port.name if hasattr(sim_gear, "port") else sim_gear.gear.name}'
+            #         )
+            #         self.maybe_run_gear(sim_gear, self.back_ready)
 
             self.phase = 'cycle'
 
@@ -537,12 +561,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
                 raise reg['sim/exception']
 
 
-def sim(resdir=None,
-        timeout=None,
-        extens=None,
-        run=True,
-        check_activity=False,
-        seed=None):
+def sim(resdir=None, timeout=None, extens=None, run=True, check_activity=False, seed=None):
     if reg['sim/dryrun']:
         return
 
@@ -600,8 +619,7 @@ class SimFmtFilter(LogFmtFilter):
 class SimLog(CustomLogger):
     def get_format(self):
         return logging.Formatter(
-            '%(timestep)s %(module)20s [%(levelname)s]: %(message)s %(err_file)s %(stack_file)s'
-        )
+            '%(timestep)s %(module)20s [%(levelname)s]: %(message)s %(err_file)s %(stack_file)s')
 
     def get_filter(self):
         return SimFmtFilter()
@@ -628,7 +646,7 @@ class SimPlugin(GearPlugin):
         reg.confdef('results-dir', default=tempfile.mkdtemp())
         reg.confdef('sim/extens', default=[])
 
-        reg['gear/params/extra/sim_setup'] = None
+        reg['gear/params/meta/sim_setup'] = None
         register_custom_log('sim', cls=SimLog)
 
         # temporary hack for pytest logger reset issue

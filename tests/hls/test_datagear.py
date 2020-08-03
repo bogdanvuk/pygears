@@ -55,7 +55,7 @@ def test_sim_invoke(lang):
     @gear(hdl={'compile': True})
     async def sat_wrap(din) -> b'din':
         async with din as d:
-            saturate(d, t=Uint[8])
+            saturate.exec(d, t=Uint[8])
 
     drv(t=Uint[8], seq=[7]) | sat_wrap | shred
     cosim('/sat_wrap', 'verilator', lang=lang)

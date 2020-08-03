@@ -1,6 +1,5 @@
 from ..ir_utils import IrExprRewriter, IrRewriter
 from pygears.core.datagear import is_datagear
-from ..ast.inline import call_datagear
 
 
 class CallExprRewriter(IrExprRewriter):
@@ -9,7 +8,8 @@ class CallExprRewriter(IrExprRewriter):
 
     def visit_CallExpr(self, expr):
         if is_datagear(expr.func):
-            return call_datagear(expr.func, expr.args, expr.params, self.ctx)
+            breakpoint()
+            # return call_datagear(expr.func, expr.args, expr.params, self.ctx)
         else:
             return expr
 

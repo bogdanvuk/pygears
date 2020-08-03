@@ -35,9 +35,9 @@ class HDLTemplateResolver(ResolverBase):
     @property
     def impl_basename(self):
         fn = self.node_def_name
-        if 'hdl' in self.node.params:
-            if 'impl' in self.node.params['hdl']:
-                fn = self.node.params['hdl']['impl']
+        if 'hdl' in self.node.meta_kwds:
+            if 'impl' in self.node.meta_kwds['hdl']:
+                fn = self.node.meta_kwds['hdl']['impl']
 
         if not os.path.splitext(fn)[-1]:
             fn = f'{fn}.{self.lang}t'
@@ -51,9 +51,9 @@ class HDLTemplateResolver(ResolverBase):
     @property
     def files(self):
         files = [self.file_basename]
-        if 'hdl' in self.node.params:
-            if 'files' in self.node.params['hdl']:
-                for fn in self.node.params['hdl']['files']:
+        if 'hdl' in self.node.meta_kwds:
+            if 'files' in self.node.meta_kwds['hdl']:
+                for fn in self.node.meta_kwds['hdl']['files']:
                     if not os.path.splitext(fn)[-1]:
                         fn = f'{fn}.{self.lang}'
 
@@ -78,8 +78,8 @@ class HDLTemplateResolver(ResolverBase):
             'pygears': pygears,
             'module_name': self.module_name,
             'intfs': template_env.port_intfs(self.node),
-            # 'sigs': [s.name for s in self.node.params['signals']],
-            'sigs': self.node.params['signals'],
+            # 'sigs': [s.name for s in self.node.meta_kwds['signals']],
+            'sigs': self.node.meta_kwds['signals'],
             'params': self.node.params,
             'inst': [],
             'generics': []

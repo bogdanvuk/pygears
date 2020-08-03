@@ -137,7 +137,7 @@ def channel_in_port(gear_inst, in_port):
 
 
 def is_driven_by_node(node, name):
-    for s in node.params['signals']:
+    for s in node.meta_kwds['signals']:
         if isinstance(s, OutSig):
             if s.name in node.params['sigmap']:
                 if name == node.params['sigmap'][s.name]:
@@ -154,7 +154,7 @@ def find_signal_driver_port(parent, name):
         if is_driven_by_node(node, name):
             return True
 
-    for s in parent.params['signals']:
+    for s in parent.meta_kwds['signals']:
         if isinstance(s, InSig):
             if s.name == name:
                 return True
@@ -169,12 +169,12 @@ def channel_interfaces(gear_inst):
     for out_port in gear_inst.out_ports:
         channel_out_port(gear_inst, out_port)
 
-    for s in gear_inst.params['signals']:
+    for s in gear_inst.meta_kwds['signals']:
         if s.name not in gear_inst.params['sigmap']:
             gear_inst.params['sigmap'] = gear_inst.params['sigmap'].copy()
             gear_inst.params['sigmap'][s.name] = s.name
 
-    for s in gear_inst.params['signals']:
+    for s in gear_inst.meta_kwds['signals']:
         if isinstance(s, InSig):
             sig_name = gear_inst.params['sigmap'].get(s.name, s.name)
 
@@ -184,10 +184,10 @@ def channel_interfaces(gear_inst):
             # sig_name = s.name
 
             if not find_signal_driver_port(gear_inst.parent, sig_name):
-                if not isinstance(gear_inst.parent.params['signals'], list):
-                    gear_inst.parent.params['signals'] = list(
-                        gear_inst.parent.params['signals'])
+                if not isinstance(gear_inst.parent.meta_kwds['signals'], list):
+                    gear_inst.parent.meta_kwds['signals'] = list(
+                        gear_inst.parent.meta_kwds['signals'])
 
-                gear_inst.parent.params['signals'] = gear_inst.parent.params[
+                gear_inst.parent.meta_kwds['signals'] = gear_inst.parent.params[
                     'signals'].copy()
-                gear_inst.parent.params['signals'].append(s)
+                gear_inst.parent.meta_kwds['signals'].append(s)

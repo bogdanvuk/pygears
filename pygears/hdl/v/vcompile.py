@@ -334,7 +334,7 @@ def compile_gear_body(gear):
                  res,
                  writer,
                  formal=formal,
-                 config=gear.params.get('hdl', {}))
+                 config=gear.meta_kwds.get('hdl', {}))
 
     if formal:
         write_assertions(gear, writer, formal)

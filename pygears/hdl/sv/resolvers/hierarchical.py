@@ -16,7 +16,7 @@ class HierarchicalResolver(ResolverBase):
     def __init__(self, node):
         self.node = node
 
-        if not node.params.get('hdl', {}).get('hierarchical', node.hierarchical):
+        if not node.meta_kwds.get('hdl', {}).get('hierarchical', node.hierarchical):
             raise ResolverTypeError
 
     @property
@@ -26,9 +26,9 @@ class HierarchicalResolver(ResolverBase):
     @property
     def files(self):
         files = [self.file_basename]
-        if 'hdl' in self.node.params:
-            if 'files' in self.node.params['hdl']:
-                for fn in self.node.params['hdl']['files']:
+        if 'hdl' in self.node.meta_kwds:
+            if 'files' in self.node.meta_kwds['hdl']:
+                for fn in self.node.meta_kwds['hdl']['files']:
                     if not os.path.splitext(fn)[-1]:
                         fn = f'{fn}.{self.lang}'
 
@@ -54,8 +54,8 @@ class HierarchicalResolver(ResolverBase):
             'pygears': pygears,
             'module_name': self.module_name,
             'intfs': template_env.port_intfs(self.node),
-            # 'sigs': [s.name for s in self.node.params['signals']],
-            'sigs': self.node.params['signals'],
+            # 'sigs': [s.name for s in self.node.meta_kwds['signals']],
+            'sigs': self.node.meta_kwds['signals'],
             'params': self.node.params,
             'inst': [],
             'generics': []
@@ -81,7 +81,7 @@ class HierarchicalResolver(ResolverBase):
                 context['inst'].append(contents)
 
         for child in self.node.child:
-            for s in child.params['signals']:
+            for s in child.meta_kwds['signals']:
                 if isinstance(s, OutSig):
                     name = child.params['sigmap'][s.name]
                     context['inst'].append(f'logic [{s.width-1}:0] {name};')

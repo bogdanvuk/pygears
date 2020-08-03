@@ -31,7 +31,7 @@ class SVModuleInst(HDLModuleInst):
             'module_name': self.module_basename,
             'inst_name': f'{self.module_basename}_i',
             'intfs': intfs,
-            'sigs': self.node.params['signals'],
+            'sigs': self.node.meta_kwds['signals'],
             'param_map': self.params,
             'port_map': port_map
         }
@@ -59,7 +59,7 @@ class SVModuleInst(HDLModuleInst):
         port_map = self.get_wrap_portmap(parent_lang)
 
         sigmap = {}
-        for s in self.node.params['signals']:
+        for s in self.node.meta_kwds['signals']:
             sigmap[s.name] = s.name
 
         context = {
@@ -70,7 +70,7 @@ class SVModuleInst(HDLModuleInst):
             'param_map': self.params,
             'port_map': port_map,
             'intfs': template_env.port_intfs(self.node),
-            'sigs': self.node.params['signals'],
+            'sigs': self.node.meta_kwds['signals'],
             'sig_map': sigmap
         }
 
@@ -82,7 +82,7 @@ class SVModuleInst(HDLModuleInst):
             'module_name': self.module_name,
             'inst_name': self.inst_name,
             'intfs': template_env.port_intfs(self.node),
-            'sigs': self.node.params['signals'],
+            'sigs': self.node.meta_kwds['signals'],
             'param_map': self.resolver.params
         }
 
@@ -132,7 +132,7 @@ class SVModuleInst(HDLModuleInst):
             port_map = OrderedDict(in_port_map + out_port_map)
 
         sigmap = {}
-        for s in self.node.params['signals']:
+        for s in self.node.meta_kwds['signals']:
             sigmap[s.name] = self.node.params['sigmap'].get(s.name, s.name)
 
         context = {

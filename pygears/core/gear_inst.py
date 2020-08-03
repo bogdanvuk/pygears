@@ -54,8 +54,7 @@ def check_args_num(argnames, varargsname, args):
 def check_args_specified(args):
     for name, intf in args.items():
         if not isinstance(intf, Intf):
-            raise GearArgsNotSpecified(
-                f'Unresolved input argument "{name}": {repr(intf)}')
+            raise GearArgsNotSpecified(f'Unresolved input argument "{name}": {repr(intf)}')
 
         if not type_is_specified(intf.dtype):
             raise GearArgsNotSpecified(
@@ -129,7 +128,8 @@ def infer_const_args(args):
                     raise GearArgsNotSpecified(
                         f'Unresolved gear "{intf.func.__name__}"{opinfo} with'
                         f' arguments {intf.args} and parameters {intf.kwds},'
-                        f' connected to the input "{name}": {str(MultiAlternativeError(intf.errors))}')
+                        f' connected to the input "{name}": {str(MultiAlternativeError(intf.errors))}'
+                    )
                 else:
                     raise GearArgsNotSpecified(
                         f'Unresolved argument "{intf}" connected to the input'
@@ -194,20 +194,14 @@ def resolve_args(args, argnames, annotations, varargs):
     return args_dict, annotations
 
 
-def gear_signature(func, args, kwds, meta_kwds):
+def gear_signature(func, args, kwds):
     paramspec = inspect.getfullargspec(func)
 
-    args, annotations = resolve_args(
-        args, paramspec.args, paramspec.annotations, paramspec.varargs)
+    args, annotations = resolve_args(args, paramspec.args, paramspec.annotations, paramspec.varargs)
 
     kwddefaults = paramspec.kwonlydefaults or {}
 
-    templates = {
-        **annotations,
-        **kwddefaults,
-        **kwds,
-        '_enablement': meta_kwds['enablement'],
-    }
+    templates = {**annotations, **kwddefaults, **kwds}
 
     return args, templates
 
@@ -216,21 +210,6 @@ def infer_params(args, params, context):
     arg_types = {name: arg.dtype for name, arg in args.items()}
 
     return infer_ftypes(params, arg_types, namespace=context)
-
-
-def infer_outnames(annotations, meta_kwds):
-    outnames = None
-    if "return" in annotations:
-        if isinstance(annotations['return'], dict):
-            outnames = tuple(annotations['return'].keys())
-
-    if not outnames:
-        outnames = copy(meta_kwds['outnames'])
-
-    if not outnames:
-        outnames = []
-
-    return outnames
 
 
 class intf_name_tracer:
@@ -273,8 +252,7 @@ class intf_name_tracer:
         cm = self.code_map.pop()
 
         if exception_type is None and hasattr(cm, 'func_locals'):
-            for name, val in filter(lambda x: isinstance(x[1], Intf),
-                                    cm.func_locals.items()):
+            for name, val in filter(lambda x: isinstance(x[1], Intf), cm.func_locals.items()):
                 if not hasattr(val, 'var_name'):
                     val.var_name = name
 
@@ -299,8 +277,7 @@ def resolve_func(gear_inst):
         # TODO: Try to detect infinite recursions
         # TODO: If the gear is instantiated in REPL, intf_name_tracer will fail
         with intf_name_tracer(gear_inst):
-            out_intfs = gear_inst.func(
-                *gear_inst.in_port_intfs, **gear_inst.explicit_params)
+            out_intfs = gear_inst.func(*gear_inst.in_port_intfs, **gear_inst.explicit_params)
 
         if out_intfs is None:
             out_intfs = tuple()
@@ -316,8 +293,7 @@ def resolve_func(gear_inst):
 
         err = None
         try:
-            out_intfs, out_dtype = resolve_out_types(out_intfs, out_dtype,
-                                                     gear_inst)
+            out_intfs, out_dtype = resolve_out_types(out_intfs, out_dtype, gear_inst)
         except (TypeError, TypeMatchError) as e:
             err = type(e)(f"{str(e)}\n    when instantiating '{gear_inst.name}'")
 
@@ -333,8 +309,8 @@ def resolve_gear(gear_inst, out_intfs, out_dtype, fix_intfs):
         if out_intfs and hasattr(out_intfs[i], 'var_name'):
             gear_inst.outnames.append(out_intfs[i].var_name)
         else:
-            gear_inst.outnames.append(
-                dflt_dout_name if len(out_dtype) == 1 else f'{dflt_dout_name}{i}')
+            gear_inst.outnames.append(dflt_dout_name if len(out_dtype) ==
+                                      1 else f'{dflt_dout_name}{i}')
 
     gear_inst.connect_output(out_intfs, out_dtype)
 
@@ -362,9 +338,8 @@ def resolve_gear(gear_inst, out_intfs, out_dtype, fix_intfs):
         intf.source(port)
 
     if any(not type_is_specified(i.dtype) for i in out_intfs):
-        raise GearTypeNotSpecified(
-            f'Output type of the gear "{gear_inst.name}"'
-            f' could not be resolved, and resulted in "{repr(out_dtype)}"')
+        raise GearTypeNotSpecified(f'Output type of the gear "{gear_inst.name}"'
+                                   f' could not be resolved, and resulted in "{repr(out_dtype)}"')
 
     for c in gear_inst.child:
         channel_interfaces(c)
@@ -426,15 +401,16 @@ def terminate_internal_intfs(gear_inst):
             i.source(HDLProducer())
 
 
-def gear_base_resolver(
-    func, meta_kwds, *args, name=None, intfs=None, __base__=None, **kwds):
+def gear_base_resolver(func, *args, name=None, intfs=None, **kwds):
 
-    name = name or resolve_gear_name(func, __base__)
+    meta_kwds = func.meta_kwds
+    name = name or resolve_gear_name(func, meta_kwds['__base__'])
 
     err = None
     try:
-        args, param_templates = gear_signature(func, args, kwds, meta_kwds)
+        args, param_templates = gear_signature(func, args, kwds)
 
+        param_templates['_enablement'] = meta_kwds['enablement']
         args, const_args = infer_const_args(args)
         check_args_specified(args)
     except (TooManyArguments, GearArgsNotSpecified) as e:
@@ -451,11 +427,8 @@ def gear_base_resolver(
         fix_intfs = intfs.copy()
 
     if reg['gear/memoize']:
-        gear_inst, outputs, memo_key = get_memoized_gear(
-            func, args, const_args, {
-                **kwds,
-                **meta_kwds
-            }, fix_intfs, name)
+        gear_inst, outputs, memo_key = get_memoized_gear(func, args, const_args, kwds, fix_intfs,
+                                                         name)
 
         if gear_inst is not None:
             if len(outputs) == 1:
@@ -464,8 +437,7 @@ def gear_base_resolver(
                 return outputs
 
     try:
-        params = infer_params(
-            args, param_templates, context=get_function_context_dict(func))
+        params = infer_params(args, param_templates, context=get_function_context_dict(func))
     except TypeMatchError as e:
         err = type(e)(f'{str(e)}\n - when instantiating "{name}"')
 
@@ -474,20 +446,14 @@ def gear_base_resolver(
 
     if not err:
         if not params.pop('_enablement'):
-            err = TypeMatchError(
-                f'Enablement condition failed for "{name}" alternative'
-                f' "{meta_kwds["definition"].__module__}.'
-                f'{meta_kwds["definition"].__name__}": '
-                f'{meta_kwds["enablement"].decode()}')
-
-    params['outnames'] = infer_outnames(func.__annotations__, meta_kwds)
-
-    for key in meta_kwds:
-        if key not in ['outnames', 'enablement']:
-            params[key] = meta_kwds[key]
+            err = TypeMatchError(f'Enablement condition failed for "{name}" alternative'
+                                 f' "{meta_kwds["definition"].__module__}.'
+                                 f'{meta_kwds["definition"].__name__}": '
+                                 f'{meta_kwds["enablement"].decode()}')
 
     params['name'] = name
     params['intfs'] = fix_intfs
+
     gear_inst = Gear(func, params)
 
     if err:

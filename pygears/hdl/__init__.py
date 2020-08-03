@@ -31,7 +31,7 @@ def mod_lang(module):
     if isinstance(module, Intf):
         lang = None
     else:
-        lang = module.params.get('hdl', {}).get('lang', None)
+        lang = module.meta_kwds.get('hdl', {}).get('lang', None)
 
     if lang is not None:
         return lang
@@ -52,7 +52,7 @@ def mod_lang(module):
 
 
 def get_hdlgen_cls(module, lang):
-    hdlgen_cls = module.params.get('hdl', {}).get('hdlgen_cls', None)
+    hdlgen_cls = module.meta_kwds.get('hdl', {}).get('hdlgen_cls', None)
     if hdlgen_cls is not None:
         return hdlgen_cls
 

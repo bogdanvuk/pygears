@@ -27,6 +27,8 @@ class SimGear:
     def __init__(self, gear):
         self.gear = gear
         self.done = False
+        self.child = []
+        self.parent = None
         self._clean = True
         if not hasattr(self, 'func'):
             self.func = gear.func
@@ -41,8 +43,8 @@ class SimGear:
         self._clean = False
         atexit.register(self._finish)
         register_exit_hook(self._cleanup)
-        if self.gear.params['sim_setup'] is not None:
-            self.gear.params['sim_setup'](self.gear)
+        if self.gear.meta_kwds['sim_setup'] is not None:
+            self.gear.meta_kwds['sim_setup'](self.gear)
 
     async def run(self):
         args, kwds = self.sim_func_args
@@ -67,6 +69,9 @@ class SimGear:
                         if sim.phase != 'forward':
                             await clk()
 
+                        # TODO: Yielding an interface might make sense to
+                        # connect internaly instantiated module directly to the
+                        # output, think about it
                         if val is not None:
                             if single_output:
                                 tb = None
@@ -98,6 +103,9 @@ class SimGear:
                                     if v is not None:
                                         await p.ready()
 
+                    if self.parent:
+                        raise GearDone
+
                     if args:
                         if all(a.done for a in args):
                             raise GearDone
@@ -123,6 +131,9 @@ class SimGear:
                                     if v is not None:
                                         await p.ready()
 
+                    if self.parent:
+                        raise GearDone
+
                     if args:
                         if all(a.done for a in args):
                             raise GearDone
@@ -147,6 +158,9 @@ class SimGear:
                         schedule_to_finish(prod_gear)
                 except GearDone:
                     pass
+
+            if self.parent:
+                self.parent.child.remove(self)
 
             self._finish()
             raise e

@@ -125,9 +125,6 @@ class Partial:
                 args_comb = combine_arg_kwds(args, kwd_intfs, func)
 
                 if all_args_specified(args_comb, func):
-                    argspec = inspect.getfullargspec(func)
-                    if '__base__' in argspec.kwonlyargs:
-                        kwd_params['__base__'] = self.func
                     ret = func(*args_comb, **kwd_params)
 
                     if key is not None:

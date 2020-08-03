@@ -94,14 +94,11 @@ def test_hier_hierarchy():
     assert root['fhier1/fhier2/fhier3'].tout == Uint[2]
     assert root['fhier1/fhier2/fhier3/fgear'].tout == Uint[2]
 
-    assert root['fhier1'].in_ports[0].consumer == root['fhier1/fhier2'].inputs[
-        0]
-    assert root['fhier1'].in_ports[0].consumer == root[
-        'fhier1/fhier2'].in_ports[0].producer
-    assert root['fhier1/fhier2'].in_ports[0].consumer == root[
-        'fhier1/fhier2/fhier3'].inputs[0]
-    assert root['fhier1/fhier2'].in_ports[0].consumer == root[
-        'fhier1/fhier2/fhier3'].in_ports[0].producer
+    assert root['fhier1'].in_ports[0].consumer == root['fhier1/fhier2'].inputs[0]
+    assert root['fhier1'].in_ports[0].consumer == root['fhier1/fhier2'].in_ports[0].producer
+    assert root['fhier1/fhier2'].in_ports[0].consumer == root['fhier1/fhier2/fhier3'].inputs[0]
+    assert root['fhier1/fhier2'].in_ports[0].consumer == root['fhier1/fhier2/fhier3'].in_ports[
+        0].producer
     assert root['fhier1/fhier2/fhier3'].in_ports[0].consumer == root[
         'fhier1/fhier2/fhier3/fgear'].inputs[0]
 
@@ -152,7 +149,7 @@ def test_alternatives():
     iout = Intf(Tuple[Uint[1], Uint[2]]) | fgear
     assert iout.dtype == Uint[2]
     assert root['fgear4'].params['lvl'] == 0
-    assert root['fgear4'].params['version'] == 4
+    assert root['fgear4'].meta_kwds['version'] == 4
 
     assert len(root.child) == 5
 

@@ -71,7 +71,7 @@ def test_clk_channeling():
 
     mod_dut = find('/dut')
 
-    assert InSig('clk2', 1) in mod_dut.params['signals']
+    assert InSig('clk2', 1) in mod_dut.meta_kwds['signals']
 
 
 # reg['hdl/include'].append(

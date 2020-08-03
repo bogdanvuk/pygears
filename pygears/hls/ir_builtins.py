@@ -338,11 +338,7 @@ class AddIntfOperPlugin(PluginBase):
             range:
             call_range,
             enumerate:
-            call_enumerate,
-            saturate:
-            lambda *args, **kwds: resolve_gear_call(saturate_gear.func, args
-                                                    if len(args) == 1 else [args[0]], kwds
-                                                    if len(kwds) == 1 else {'t': args[1]})
+            call_enumerate
         }
 
         import sys

@@ -273,6 +273,9 @@ class Integer(Integral, metaclass=IntegerType):
         if type(val) == cls:
             return val
 
+        if not typeof(type(val), Integer) and not isinstance(val, (int, list, float)):
+            raise ValueError(f'cannot convert {val} to {cls}')
+
         if isinstance(val, list):
             if cls.signed:
                 raise TypeError(f'cannot create Int from bit list')

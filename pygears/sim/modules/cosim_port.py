@@ -10,6 +10,8 @@ class InCosimPort:
         self.port = port
         self.name = name if name else port.basename
         self.done = False
+        self.parent = None
+        self.child = None
         self.main = main
 
     @property
@@ -66,6 +68,8 @@ class OutCosimPort:
         self.port = port
         self.name = name if name else port.basename
         self.done = False
+        self.parent = None
+        self.child = None
         self.main = main
 
     @property

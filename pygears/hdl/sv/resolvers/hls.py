@@ -11,7 +11,7 @@ class HLSResolver(ResolverBase):
         self.node = node
         self.generated = False
 
-        if not self.node.params.get('hdl', {}).get('compile', False):
+        if not self.node.meta_kwds.get('hdl', {}).get('compile', False):
             raise ResolverTypeError
 
         self._files = [self.file_basename]

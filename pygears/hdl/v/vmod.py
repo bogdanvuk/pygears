@@ -57,7 +57,7 @@ class VModuleInst(HDLModuleInst):
             'module_name': self.module_name,
             'inst_name': self.inst_name,
             'intfs': list(self.port_configs),
-            'sigs': self.node.params['signals'],
+            'sigs': self.node.meta_kwds['signals'],
             'param_map': self.params
         }
         return template_env.render_local(__file__, "module_synth_wrap.j2",
@@ -91,7 +91,7 @@ class VModuleInst(HDLModuleInst):
                 context['inst'].append(contents)
 
         for child in self.node.local_modules():
-            for s in child.params['signals']:
+            for s in child.meta_kwds['signals']:
                 if isinstance(s, OutSig):
                     name = child.params['sigmap'][s.name]
                     context['inst'].append(f'logic [{s.width-1}:0] {name};')
