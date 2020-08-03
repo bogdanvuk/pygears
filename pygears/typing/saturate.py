@@ -52,9 +52,12 @@ def integral_saturate_resolver(t, data: Integral, limits=None):
     idin = code(data)
 
     if type(conv_data).signed == t.signed and type(conv_data).width <= t.width:
-        sign = code(data, int) >> (type(conv_data).width - 1)
-        sign_exten = Uint[t.width - type(conv_data).width].max if sign else 0
-        return t.decode((sign_exten << type(conv_data).width) | code(data, int))
+        if type(conv_data).signed:
+            sign = code(data, int) >> (type(conv_data).width - 1)
+            sign_exten = Uint[t.width - type(conv_data).width].max if sign else 0
+            return t.decode((sign_exten << type(conv_data).width) | code(data, int))
+        else:
+            return code(conv_data, t)
     elif type(conv_data).signed and not t.signed:
         if idin[t.width:] == 0:
             return code(conv_data, t)

@@ -188,6 +188,6 @@ def channel_interfaces(gear_inst):
                     gear_inst.parent.meta_kwds['signals'] = list(
                         gear_inst.parent.meta_kwds['signals'])
 
-                gear_inst.parent.meta_kwds['signals'] = gear_inst.parent.params[
+                gear_inst.parent.meta_kwds['signals'] = gear_inst.parent.meta_kwds[
                     'signals'].copy()
                 gear_inst.parent.meta_kwds['signals'].append(s)
