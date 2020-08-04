@@ -11,7 +11,7 @@ from .v_expression import cast, vexpr
 
 REG_TEMPLATE = """
 always @(posedge clk) begin
-    if(rst | rst_cond) begin
+    if(rst | _rst_cond) begin
         {0}_reg <= {1};
     end else if ({0}_en) begin
         {0}_reg <= {0}_next;

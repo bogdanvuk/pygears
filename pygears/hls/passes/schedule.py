@@ -166,7 +166,7 @@ class StateIsolator(HDLVisitor):
             elif self.cur_state:
                 stmts.append(
                     ir.AssignValue(
-                        self.ctx.ref('state', ctx='store'),
+                        self.ctx.ref('_state', ctx='store'),
                         ir.Await(ir.ResExpr(list(stmt.state)[0]),
                                  exit_await=res_false)))
                 break
@@ -214,13 +214,13 @@ class StateIsolator(HDLVisitor):
             exit_cond=node.exit_cond,
             stmts=self.traverse_block(node.stmts, node.state))
 
-        if 'state' in self.ctx.scope:
+        if '_state' in self.ctx.scope:
             if (self.cur_state and self.state_id != list(node.state)[0]):
                 # and node.out_blocking):
 
                 block.stmts.append(
                     ir.AssignValue(
-                        self.ctx.ref('state', ctx='store'),
+                        self.ctx.ref('_state', ctx='store'),
                         ir.Await(ir.ResExpr(list(node.state)[0]),
                                  exit_await=res_false)))
         return block
@@ -247,12 +247,12 @@ class StateIsolator(HDLVisitor):
 
 
 def schedule(block, ctx):
-    ctx.scope['rst_cond'] = ir.Variable('rst_cond', Bool)
+    ctx.scope['_rst_cond'] = ir.Variable('_rst_cond', Bool)
     block.stmts.insert(
-        0, ir.AssignValue(ctx.ref('rst_cond', 'store'), res_false))
+        0, ir.AssignValue(ctx.ref('_rst_cond', 'store'), res_false))
 
     block.stmts.append(
-        ir.AssignValue(ctx.ref('rst_cond', 'store'), res_true))
+        ir.AssignValue(ctx.ref('_rst_cond', 'store'), res_true))
 
     Scheduler(ctx).visit(block)
     # print('*** Schedule ***')
@@ -260,8 +260,8 @@ def schedule(block, ctx):
     state_num = len(block.state)
 
     if state_num > 1:
-        ctx.scope['state'] = ir.Variable(
-            'state',
+        ctx.scope['_state'] = ir.Variable(
+            '_state',
             val=ir.ResExpr(Uint[bitw(state_num - 1)](0)),
             reg=True,
         )
@@ -278,7 +278,7 @@ def schedule(block, ctx):
         stateblock.stmts.append(res)
 
         if state_num > 1:
-            res.in_cond = ir.BinOpExpr((ctx.ref('state'), ir.ResExpr(i)),
+            res.in_cond = ir.BinOpExpr((ctx.ref('_state'), ir.ResExpr(i)),
                                        ir.opc.Eq)
 
     if state_num > 1:

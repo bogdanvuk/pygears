@@ -4,11 +4,11 @@ from pygears.typing import Bool
 
 class CycleDone(HDLVisitor):
     def LoopBlock(self, node):
-        if 'state' in self.ctx.scope:
+        if '_state' in self.ctx.scope:
             node.stmts.insert(
                 0,
                 ir.AssignValue(target=self.ctx.ref('cycle_done', ctx='store'),
-                               val=self.ctx.ref('state', ctx='en')))
+                               val=self.ctx.ref('_state', ctx='en')))
         else:
             node.stmts.insert(
                 0,

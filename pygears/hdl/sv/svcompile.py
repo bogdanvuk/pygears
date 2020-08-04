@@ -15,7 +15,7 @@ from .v.util import vgen_signal, vgen_intf
 
 REG_TEMPLATE = """
 always @(posedge clk) begin
-    if(rst | rst_cond) begin
+    if(rst | _rst_cond) begin
         {0} <= {1};
     end else if ({0}_en && cycle_done) begin
         {0} <= {0}_next;
