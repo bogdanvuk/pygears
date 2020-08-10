@@ -42,8 +42,8 @@ def form_hls_syntax_error(ctx, e, lineno=1):
 @dataclass
 class Submodule:
     gear: typing.Any
-    in_ports: typing.List[ir.Interface]
-    out_ports: typing.List[ir.Interface]
+    in_ports: typing.List
+    out_ports: typing.List
 
 
 class Function:
@@ -141,7 +141,9 @@ class GearContext(Context):
 
         vararg = []
         for p in self.gear.in_ports:
-            self.scope[p.basename] = ir.Variable(p.basename, val=p.consumer)
+            self.scope[p.basename] = ir.Variable(p.basename,
+                                                 ir.IntfType[p.consumer.dtype],
+                                                 val=p.consumer)
 
             if paramspec.varargs and p.basename.startswith(paramspec.varargs):
                 vararg.append(self.ref(p.basename))
@@ -150,7 +152,9 @@ class GearContext(Context):
             self.local_namespace[paramspec.varargs] = ir.ConcatExpr(vararg)
 
         for p in self.gear.out_ports:
-            self.scope[p.basename] = ir.Variable(p.basename, val=p.producer)
+            self.scope[p.basename] = ir.Variable(p.basename,
+                                                 ir.IntfType[p.consumer.dtype],
+                                                 val=p.producer)
 
         for k, v in self.gear.explicit_params.items():
             self.scope[k] = ir.ResExpr(v)

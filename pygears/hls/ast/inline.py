@@ -2,6 +2,7 @@ import typing
 from . import Context, FuncContext, Function, Submodule, ir, ir_utils, node_visitor, visit_ast, visit_block
 from ..debug import print_func_parse_intro
 from pygears import Intf, reg
+from pygears.typing import typeof
 from pygears.core.partial import combine_arg_kwds, extract_arg_kwds
 from pygears.core.port import HDLConsumer, HDLProducer
 
@@ -105,8 +106,12 @@ def parse_func_call(func: typing.Callable, args, kwds, ctx: Context):
 def call_gear(func, args, kwds, ctx: Context):
     local_in = []
     for i, a in enumerate(args):
-        intf = Intf(a.dtype)
-        intf.source(HDLProducer())
+        if typeof(a.dtype, ir.IntfType):
+            intf = a.obj.val
+        else:
+            intf = Intf(a.dtype)
+            intf.source(HDLProducer())
+
         local_in.append(intf)
 
     if not all(isinstance(node, ir.ResExpr) for node in kwds.values()):
@@ -123,23 +128,23 @@ def call_gear(func, args, kwds, ctx: Context):
 
     in_ports = []
     for a, p in zip(args, gear_inst.in_ports):
-        if isinstance(a, ir.Interface):
+        if typeof(a.dtype, ir.IntfType):
             in_ports.append(a)
             continue
 
         intf_name = f'{gear_inst.basename}_{p.basename}'
         p.producer.source(HDLProducer())
-        ir_intf = ir.Variable(intf_name, val=p.producer)
+        ir_intf = ir.Variable(intf_name, ir.IntfType[p.producer.dtype], val=p.producer)
         ctx.scope[intf_name] = ir_intf
-        in_ports.append(ir_intf)
+        in_ports.append(ctx.ref(intf_name))
 
     out_ports = []
     for p in gear_inst.out_ports:
         intf_name = f'{gear_inst.basename}_{p.basename}'
-        ir_intf = ir.Variable(intf_name, val=p.consumer)
+        ir_intf = ir.Variable(intf_name, ir.IntfType[p.consumer.dtype], val=p.consumer)
         ctx.scope[intf_name] = ir_intf
         p.consumer.connect(HDLConsumer())
-        out_ports.append(ir_intf)
+        out_ports.append(ctx.ref(intf_name))
 
     stmts = []
     for a, intf in zip(args, in_ports):

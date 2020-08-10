@@ -147,18 +147,18 @@ class AsyncForContext:
         eot_name = self.ctx.find_unique_name('_eot')
         data_name = self.ctx.find_unique_name('_data')
 
-        intf_obj = self.intf.obj.val
+        intf_type = self.intf.dtype.dtype
 
-        self.ctx.scope[eot_name] = ir.Variable(eot_name, intf_obj.dtype.eot)
-        self.ctx.scope[data_name] = ir.Variable(data_name, intf_obj.dtype.data)
+        self.ctx.scope[eot_name] = ir.Variable(eot_name, intf_type.eot)
+        self.ctx.scope[data_name] = ir.Variable(data_name, intf_type.data)
 
         eot_init = ir.AssignValue(
             self.ctx.ref(eot_name),
-            ir.ResExpr(intf_obj.dtype.eot(0)),
+            ir.ResExpr(intf_type.eot(0)),
         )
 
         eot_test = ir.BinOpExpr(
-            (self.ctx.ref(eot_name), ir.ResExpr(intf_obj.dtype.eot.max)),
+            (self.ctx.ref(eot_name), ir.ResExpr(intf_type.eot.max)),
             ir.opc.NotEq)
 
         eot_load = ir.AssignValue(

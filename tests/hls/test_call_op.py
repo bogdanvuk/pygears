@@ -1,8 +1,7 @@
-from pygears import gear, reg
-from pygears.lib import qrange
+from pygears import gear
 from pygears.lib import drv
-from pygears.sim import sim, cosim
-from pygears.typing import Queue, Uint, Ufixp
+from pygears.sim import sim
+from pygears.typing import Ufixp, Uint
 from pygears.lib import directed
 
 
@@ -13,7 +12,6 @@ def test_const_op():
         yield 2 + 2
         yield 3 + 3
 
-    # reg['results-dir'] = '/tools/home/tmp/const_add'
     directed(f=test(__sim__='verilator'), ref=[2, 4, 6])
 
     sim(timeout=3)
@@ -136,7 +134,6 @@ def test_dif_type_op():
         async with din0 as d0, din1 as d1:
             yield d0 + d1
 
-    # reg['results-dir'] = '/tools/home/tmp/const_add'
     directed(
         drv(t=Uint[3], seq=[1, 2, 3]),
         drv(t=Ufixp[2, 2], seq=[1, 2, 3]),

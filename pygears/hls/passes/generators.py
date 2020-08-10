@@ -149,8 +149,9 @@ class HandleGenerators(IrRewriter):
         eot_name = self.ctx.find_unique_name('_eot')
         data_name = self.ctx.find_unique_name('_data')
 
-        self.ctx.scope[eot_name] = ir.Variable(eot_name, intf.dtype.eot)
-        self.ctx.scope[data_name] = ir.Variable(data_name, intf.dtype.data)
+        intf_type = intf.dtype.dtype
+        self.ctx.scope[eot_name] = ir.Variable(eot_name, intf_type.eot)
+        self.ctx.scope[data_name] = ir.Variable(data_name, intf_type.data)
 
         # intf = intf.obj.val
 
@@ -205,7 +206,7 @@ class HandleGenerators(IrRewriter):
         gen_cfg = self.generators[node.exit_cond.val]
 
         eot_test = ir.BinOpExpr(
-            (self.ctx.ref(gen_cfg['eot_name']), ir.ResExpr(gen_cfg['intf'].dtype.eot.max)),
+            (self.ctx.ref(gen_cfg['eot_name']), ir.ResExpr(gen_cfg['intf'].dtype.dtype.eot.max)),
             ir.opc.Eq)
 
         node.exit_cond = eot_test

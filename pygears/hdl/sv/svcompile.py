@@ -1,5 +1,5 @@
 from pygears import reg
-from pygears.hls import ir
+from pygears.hls import ir, is_intf_id
 from pygears.hls import Context, HDLVisitor, Scope
 from pygears.typing import Bool
 from pygears.core.port import HDLProducer
@@ -51,11 +51,6 @@ class BlockLines:
     header: List = field(default_factory=list)
     content: List = field(default_factory=list)
     footer: List = field(default_factory=list)
-
-
-def is_intf_id(expr):
-    return (isinstance(expr, ir.Name) and isinstance(expr.obj, ir.Variable)
-            and isinstance(expr.obj.val, Intf))
 
 
 def is_reg_id(expr):

@@ -182,9 +182,6 @@ def _(node, ctx: Context):
 @node_visitor(ast.Attribute)
 def _(node, ctx: Context):
     value = visit_ast(node.value, ctx)
-    if isinstance(value, ir.Name) and isinstance(value.obj, ir.Interface):
-        return ir.ResExpr(value.obj.intf.dtype)
-
     if isinstance(value, ir.ResExpr):
         return ir.ResExpr(getattr(value.val, node.attr))
 

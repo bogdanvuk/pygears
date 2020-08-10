@@ -1,13 +1,14 @@
 import inspect
 
 from . import ir
-from pygears.typing import Bool
+from pygears.typing import Bool, typeof
 from pygears import Intf
 
 
 def is_intf_id(expr):
-    return (isinstance(expr, ir.Name) and isinstance(expr.obj, ir.Variable)
-            and isinstance(expr.obj.val, Intf))
+    return isinstance(expr, ir.Name) and typeof(expr.dtype, ir.IntfType)
+    # return (isinstance(expr, ir.Name) and isinstance(expr.obj, ir.Variable)
+    #         and isinstance(expr.obj.val, Intf))
 
 
 def add_to_list(orig_list, extension):

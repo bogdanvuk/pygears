@@ -5,8 +5,9 @@ import typing
 import textwrap
 from dataclasses import dataclass, field
 
-from pygears.typing.base import TypingMeta
+from pygears.typing.base import TypingMeta, GenericMeta, class_and_instance_method
 from functools import reduce
+from pygears import Intf
 from pygears.core.port import InPort, OutPort
 from pygears.core.gear import InSig, OutSig
 from pygears.typing import (Bool, Integer, Queue, Tuple, Uint, is_type, typeof, Array, Union, Unit)
@@ -134,6 +135,16 @@ def get_contextpr(node):
     return None
 
 
+class IntfTypeMeta(GenericMeta):
+    @property
+    def dtype(self):
+        return self.args[0]
+
+
+class IntfType(tuple, metaclass=IntfTypeMeta):
+    __parameters__ = ['dtype']
+
+
 @attr.s(auto_attribs=True, kw_only=True)
 class Expr:
     @property
@@ -181,6 +192,9 @@ class ResExpr(Expr):
 
         if not is_type(type(self.val)) and isinstance(self.val, int):
             return type(Integer(self.val))
+
+        if isinstance(self.val, Intf):
+            return IntfType[self.val.dtype]
 
         return type(self.val)
 
@@ -272,7 +286,7 @@ class Component(Expr):
         if self.field in ['ready', 'valid']:
             return Bool
         elif self.field == 'data':
-            return self.val.dtype
+            return self.val.dtype.dtype
 
 
 @attr.s(auto_attribs=True)
@@ -370,7 +384,8 @@ class ConcatExpr(Expr):
     def __new__(cls, operands: typing.Sequence[Expr]):
         if all(isinstance(v, ResExpr) for v in operands):
             if all(is_type(v.dtype) for v in operands):
-                return ResExpr(Tuple[tuple(v.dtype for v in operands)](tuple(v.val for v in operands)))
+                return ResExpr(Tuple[tuple(v.dtype for v in operands)](tuple(v.val
+                                                                             for v in operands)))
             else:
                 return ResExpr(tuple(v.val for v in operands))
 

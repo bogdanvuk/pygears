@@ -1,25 +1,18 @@
 import ast
-from . import Context, HLSSyntaxError, ir, node_visitor, visit_ast
+from . import Context, HLSSyntaxError, ir, node_visitor, visit_ast, ir_utils
 from pygears import Intf
 from .stmt import infer_targets
 
 
-def is_intf_id(expr):
-    return (isinstance(expr, ir.Name) and isinstance(expr.obj, ir.Variable)
-            and isinstance(expr.obj.val, Intf))
-
-
 def is_intf_list(node):
     if isinstance(node, ir.ConcatExpr):
-        return all(is_intf_id(v) for v in node.operands)
+        return all(ir_utils.is_intf_id(v) for v in node.operands)
 
     if not isinstance(node, ir.ResExpr):
         return False
 
     if not isinstance(node.val, list):
         return False
-
-    return all(isinstance(v, ir.Interface) for v in node.val)
 
 
 def parse_generator_expression(node, ctx):
