@@ -8,14 +8,32 @@ from pygears.util.fileio import find_in_dirs
 
 
 class NodeYielder(HierYielderBase):
+    def __init__(self, filt):
+        self.filt = filt
+        self.vgen_map = reg[f'hdlgen/map']
+
     def Gear(self, node):
+        if node in self.vgen_map:
+            vinst = self.vgen_map[node]
+
+            if self.filt and not self.filt(vinst):
+                return
+
         for intf in node.local_intfs:
             yield intf
 
         yield node
 
+def node_hdl_files(node, outdir):
+    for f in node.files:
+        path = find_in_dirs(f, reg[f'{node.lang}gen/include'])
+        if path is not None:
+            yield path
+        else:
+            yield os.path.join(outdir, f)
 
-def enum_hdl_files(top, outdir, rtl_only=False, wrapper=False):
+
+def enum_hdl_files(top, outdir, rtl_only=False, wrapper=False, filt=None):
     if isinstance(top, str):
         top = find(top)
 
@@ -30,7 +48,7 @@ def enum_hdl_files(top, outdir, rtl_only=False, wrapper=False):
         dti_yielded = True
         yield os.path.join(LIB_SVLIB_DIR, 'dti.sv')
 
-    for node in NodeYielder().visit(top):
+    for node in NodeYielder(filt).visit(top):
         if node not in vgen_map:
             continue
 
@@ -44,10 +62,9 @@ def enum_hdl_files(top, outdir, rtl_only=False, wrapper=False):
         if ((node is top) and wrapper and not rtl_only):
             yield os.path.join(outdir, f'wrap_{vinst.file_basename}')
 
-        if (isinstance(node, Gear) and (node in reg['hdlgen/map'])):
-            modinst = reg['hdlgen/map'][node]
-            for f in modinst.files:
-                path = find_in_dirs(f, dirs[modinst.lang])
+        if isinstance(node, Gear):
+            for f in vinst.files:
+                path = find_in_dirs(f, dirs[vinst.lang])
                 if path is not None:
                     yield path
                 else:
@@ -68,13 +85,14 @@ def enum_hdl_files(top, outdir, rtl_only=False, wrapper=False):
                 yield os.path.join(LIB_SVLIB_DIR, 'bc.sv')
 
 
-def list_hdl_files(top, outdir, rtl_only=False, wrapper=False):
+def list_hdl_files(top, outdir, rtl_only=False, wrapper=False, filt=None):
+
     if isinstance(top, str):
         top = find(top)
 
     orig_fns = set()
     hdlmods = {}
-    for fn in enum_hdl_files(top, outdir, rtl_only=rtl_only, wrapper=wrapper):
+    for fn in enum_hdl_files(top, outdir, rtl_only=rtl_only, wrapper=wrapper, filt=filt):
         modname, lang = os.path.splitext(os.path.basename(fn))
         hdlmods[(modname, lang[1:])] = fn
 

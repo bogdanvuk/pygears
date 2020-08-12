@@ -54,13 +54,13 @@
  {{inst_name}} (
   {% if sig_map == None %}
     .clk(clk),
-    .rst({{rst_name}}),
+    .rst({{rst_name}}){{ "" if (port_map != None and not port_map) else "," }}
   {% else %}
     {% for name,value in sig_map.items() -%}
-{{"."|indent(4, True)}}{{name}}({{value}}),
+{{"."|indent(4, True)}}{{name}}({{value}}){{ "" if loop.last and (port_map != None and not port_map) else "," }}
     {% endfor -%}
   {% endif %}
-  {% if port_map -%}
+  {% if port_map != None -%}
     {% for name, value in port_map.items() %}
 {{"."|indent(4, True)}}{{name}}({{value}}){{ "" if loop.last else "," }}
     {% endfor -%}

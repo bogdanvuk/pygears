@@ -7,7 +7,8 @@ class HierYielderBase:
         import inspect
         for base_class in inspect.getmro(node.__class__):
             if hasattr(self, base_class.__name__):
-                yield from getattr(self, base_class.__name__)(node)
+                if (yield from getattr(self, base_class.__name__)(node)):
+                    return
 
     def HierNode(self, node):
         if hasattr(node, "child"):

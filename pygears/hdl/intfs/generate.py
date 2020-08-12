@@ -89,8 +89,8 @@ def generate(top, intfdef):
 
     context = {
         'wrap_module_name': f'wrap_{modinst.module_name}',
-        'module_name': modinst.module_name,
-        'inst_name': modinst.inst_name,
+        'module_name': modinst.wrap_module_name,
+        'inst_name': modinst.wrap_module_name,
         'intfs': intfs,
         'sigs': sigs,
         'param_map': modinst.params,

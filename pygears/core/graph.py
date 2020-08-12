@@ -169,7 +169,7 @@ class IntfOperPlugin(PluginBase):
         reg['graph/end_producer'] = {}
 
 
-def get_producer_queue(obj):
+def get_end_producer(obj):
     end_producer = reg['graph/end_producer']
     if obj not in end_producer:
         intf = get_source_producer(obj, sim=True)
@@ -179,7 +179,10 @@ def get_producer_queue(obj):
     if obj not in end_producer:
         return None
 
-    intf, i = end_producer[obj]
+    return end_producer[obj]
+
+def get_producer_queue(obj):
+    intf, i = get_end_producer(obj)
     if i >= len(intf.out_queues):
         # TODO: Investigate this. This happens when consumers tries to get
         # data, but somewhere along the path from the producer to the consumer,
@@ -187,3 +190,4 @@ def get_producer_queue(obj):
         return None
 
     return intf.out_queues[i]
+

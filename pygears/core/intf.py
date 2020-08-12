@@ -1,6 +1,6 @@
 import asyncio
 
-from .graph import get_consumer_tree, get_producer_queue
+from .graph import get_consumer_tree, get_producer_queue, get_end_producer
 from pygears import GearDone
 from pygears.conf import PluginBase, reg, MultiAlternativeError
 from pygears.core.port import InPort, OutPort
@@ -44,6 +44,7 @@ class Intf:
     def __init__(self, dtype):
         self.consumers = []
         self._end_consumers = None
+        self._end_producer = None
         self.dtype = dtype
         self.producer = None
         self._in_queue = None
@@ -149,6 +150,14 @@ class Intf:
             self._end_consumers = get_consumer_tree(self)
 
         return self._end_consumers
+
+
+    @property
+    def end_producer(self):
+        if self._end_producer is None:
+            self._end_producer = get_end_producer(self)
+
+        return self._end_producer
 
     @property
     def in_queue(self):

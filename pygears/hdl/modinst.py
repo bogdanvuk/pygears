@@ -80,8 +80,7 @@ class HDLModuleInst:
         self_traced = any(fnmatch.fnmatch(self.node.name, p) for p in reg['debug/trace'])
 
         if self.hierarchical:
-            children_traced = any(
-                hdlmod(child).traced for child in self.node.child)
+            children_traced = any(hdlmod(child).traced for child in self.node.child)
         else:
             children_traced = False
 
@@ -112,6 +111,10 @@ class HDLModuleInst:
         return module_name
 
     @property
+    def wrap_file_name(self):
+        return f'{self.wrap_module_name}.{self.parent_lang}'
+
+    @property
     def file_basename(self):
         return self.resolver.file_basename
 
@@ -120,7 +123,7 @@ class HDLModuleInst:
         res_files = self.resolver.files
 
         if self.wrapped:
-            res_files.append(f'{self.wrap_module_name}.{self.parent_lang}')
+            res_files.append(self.wrap_file_name)
 
         return res_files
 
@@ -152,6 +155,4 @@ class HDLModuleInst:
             # TODO: What about reusing memoized module that didn't need a
             # wrapper. Discern this.
             if self.wrapped:
-                save_file(
-                    f'{self.wrap_module_name}.{self.parent_lang}', outdir,
-                    self.get_wrap(self.parent_lang))
+                save_file(self.wrap_file_name, outdir, self.get_wrap(self.parent_lang))
