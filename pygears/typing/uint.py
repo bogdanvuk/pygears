@@ -267,6 +267,8 @@ class Integer(Integral, metaclass=IntegerType):
     to :sv:`logic [8:0]`.
     """
     def __new__(cls, val: int = None):
+        # TODO: Instantiating a type that has templated arguments unresolved
+        # should throw a nicer error (same for all other types)
         if val is None:
             val = 0
 

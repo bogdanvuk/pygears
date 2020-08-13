@@ -248,6 +248,9 @@ class InlineValues(HDLVisitor):
 
             self.forwarded.upscope()
 
+            if stmts[-1].in_cond == res_true:
+                break
+
         for name in forwards:
             if name in self.forwarded:
                 val = self.forwarded[name]

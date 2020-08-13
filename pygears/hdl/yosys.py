@@ -231,6 +231,7 @@ def entry(
     if design is not None:
         design = os.path.abspath(os.path.expanduser(design))
 
+    # TODO: Outdir can be unspecified, use global results-dir then
     os.makedirs(outdir, exist_ok=True)
 
     # makefile(

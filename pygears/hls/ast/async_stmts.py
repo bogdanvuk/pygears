@@ -37,6 +37,19 @@ def cast_return(arg_nodes, out_ports):
     args = []
     for arg, intf in zip(input_vars, out_ports):
         port_t = intf.dtype
+        # if arg.dtype != port_t and not typeof(arg.dtype, ir.IntfType):
+        #     if typeof(port_t, (Queue, Tuple, Array)) and isinstance(arg, ir.ConcatExpr):
+        #         for i in range(len(arg.operands)):
+        #             if isinstance(arg.operands[i], ir.CastExpr) and (
+        #                     arg.operands[i].cast_to == port_t[i]):
+        #                 pass
+        #             else:
+        #                 arg.operands[i] = resolve_cast_func(
+        #                     arg.operands[i], port_t[i])
+        #     # TODO: This whole function needs to be revisited: qdeal malfunctions if this is active
+        #     else:
+        #         arg = resolve_cast_func(arg, port_t)
+
         # TODO: Let this be handled by typing.cast function for better error reporting
         if typeof(port_t, (Queue, Tuple, Array)):
             if isinstance(arg, ir.ConcatExpr) and arg.dtype != port_t:

@@ -249,6 +249,9 @@ class FixpnumberType(IntegralType):
 
 class Fixpnumber(Integral, metaclass=FixpnumberType):
     def __new__(cls, val=0):
+        # TODO: Instantiating a type that has templated arguments unresolved
+        # should throw a nicer error
+
         # TODO: this takes some time. Implement hashing for classes to speed things up
         if type(val) is cls:
             return val

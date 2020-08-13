@@ -57,7 +57,6 @@ def ucase(din: Union, *, f, fcat=ccat, tout=None, fmux=mux, mapping=None):
 def when(cond, din, *, f, fe, fcat=ccat, tout=None, **kwds):
     return din | case(cond, f=(fe, f), fcat=fcat, tout=tout, **kwds)
 
-
 @alternative(when)
 @gear
 def when_single(cond, din, *, f):
@@ -73,12 +72,13 @@ async def valve(cond, din) -> b'din':
 
 
 @alternative(when)
-@gear
-def when_pass(cond, din, *, halt=False):
-    if halt:
-        return valve(cond, din)
-    else:
-        return ccat(din, cond) | Union | filt(fixsel=1)
+@gear(hdl={'compile': True})
+async def when_pass(cond, din, *, halt=False) -> b'din':
+    async with cond as c:
+        if not halt or c:
+            async with din as d:
+                if c:
+                    yield d
 
 
 def all_same(din):

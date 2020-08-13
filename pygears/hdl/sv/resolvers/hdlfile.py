@@ -66,8 +66,19 @@ class HDLFileResolver(ResolverBase):
                 if is_type(v):
                     v = max(v.width, 1)
 
-                if (code(v) != int(self.impl_params[param_name]['val'])):
-                    params[param_name] = int(code(v))
+                err = None
+                try:
+                    v = code(v, int)
+                except:
+                    err = ValueError(
+                        f'Cannot encode value "{v}" as integer, passed for HDL parameter "{param_name}"\n'
+                        f' - when instantiating module "{self.node.name}"')
+
+                if err:
+                    raise err
+
+                if (code(v, int) != int(self.impl_params[param_name]['val'])):
+                    params[param_name] = code(v, int)
 
                 if param_valid_name in self.impl_params:
                     params[param_valid_name] = 1
