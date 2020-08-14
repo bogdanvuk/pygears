@@ -16,6 +16,12 @@ def infer_targets(ctx, target, dtype, obj_factory=None):
             ctx.scope[target.name] = var
             target.obj = var
     elif isinstance(target, ir.ConcatExpr):
+        if len(dtype) != len(target.operands):
+            raise SyntaxError(
+                f'Cannot unpack value of type "{dtype!r}" with {len(dtype)} component(s) into {len(target.operands)} variables: '
+                f'"{target}".'
+            )
+
         for t, d in zip(target.operands, dtype):
             infer_targets(ctx, t, d, obj_factory)
     elif isinstance(target, ir.SubscriptExpr):
@@ -30,8 +36,7 @@ def assign_targets(ctx: Context, target, source, obj_factory=None):
     # target is a top level variable within the function, assume it is just an
     # alias
     if (isinstance(target, ir.Name) and ctx.ir_block_closure
-            and isinstance(ctx.ir_parent_block, ir.FuncBlock)
-            and isinstance(source, ir.ResExpr)
+            and isinstance(ctx.ir_parent_block, ir.FuncBlock) and isinstance(source, ir.ResExpr)
             and not target.name in ctx.scope):
         ctx.local_namespace[target.name] = source.val
         return None
@@ -41,14 +46,10 @@ def assign_targets(ctx: Context, target, source, obj_factory=None):
     if isinstance(target, ir.Name) and target.name in ctx.local_namespace:
         if isinstance(ctx.ir_parent_block, ir.FuncBlock):
             ctx.ir_block_closure[0].stmts.insert(
-                0,
-                ir.AssignValue(target,
-                               ir.ResExpr(ctx.local_namespace[target.name])))
+                0, ir.AssignValue(target, ir.ResExpr(ctx.local_namespace[target.name])))
             del ctx.local_namespace[target.name]
         else:
-            raise SyntaxError(
-                f'There is already a name "{target.name}" defined in current scope.'
-            )
+            raise SyntaxError(f'There is already a name "{target.name}" defined in current scope.')
 
     infer_targets(ctx, target, source.dtype, obj_factory)
 
@@ -89,9 +90,8 @@ def _(node, ctx: Context):
 
     # TODO: We should probably invoke truncate function to preserve the sign correctly
     return ir.AssignValue(
-        target,
-        ir.CastExpr(ir.BinOpExpr((ctx.ref(target.name), value), type(node.op)),
-                    target.dtype))
+        target, ir.CastExpr(ir.BinOpExpr((ctx.ref(target.name), value), type(node.op)),
+                            target.dtype))
 
 
 @node_visitor(ast.Assign)

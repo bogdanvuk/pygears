@@ -39,28 +39,28 @@ class SVModuleInst(HDLModuleInst):
         return template_env.render_local(__file__, "impl_wrap.j2", context)
 
     def get_wrap_portmap(self, parent_lang):
+        sig_map = {}
+        for s in self.node.meta_kwds['signals']:
+            sig_map[s.name] = s.name
+
         port_map = {}
         for p in self.node.in_ports + self.node.out_ports:
             name = p.basename
             if self.lang == 'sv':
                 port_map[name] = name
             elif parent_lang == 'sv':
-                port_map[f'{name}_valid'] = f'{name}.valid'
-                port_map[f'{name}_ready'] = f'{name}.ready'
-                port_map[f'{name}_data'] = f'{name}.data'
+                sig_map[f'{name}_valid'] = f'{name}.valid'
+                sig_map[f'{name}_ready'] = f'{name}.ready'
+                sig_map[f'{name}_data'] = f'{name}.data'
             else:
                 port_map[name] = name
 
-        return port_map
+        return port_map, sig_map
 
     def get_wrap(self, parent_lang):
         template_env = reg[f'{parent_lang}gen/templenv']
 
-        port_map = self.get_wrap_portmap(parent_lang)
-
-        sigmap = {}
-        for s in self.node.meta_kwds['signals']:
-            sigmap[s.name] = s.name
+        port_map, sigmap = self.get_wrap_portmap(parent_lang)
 
         context = {
             'rst_name': 'rst',

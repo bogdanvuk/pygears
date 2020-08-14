@@ -85,7 +85,7 @@ class ResolveRegInits(HDLVisitor):
         obj = self.ctx.scope[node.target.name]
 
         if (isinstance(obj, ir.Variable) and obj.reg):
-            if obj.val is None and node.val != ir.ResExpr(None):
+            if obj.val is None and not (isinstance(node.val, ir.ResExpr) and node.val.val is None):
                 obj.val = ir.CastExpr(node.val, obj.dtype)
                 obj.any_init = False
                 return None

@@ -42,13 +42,13 @@ input [{{max(i['width']-1, 0)}}:0] {{i['name']}},
  {{inst_name}} (
   {% if sig_map == None %}
     .clk(clk),
-    .rst({{rst_name}}),
+    .rst({{rst_name}}){{ "" if (port_map != None and not port_map) else "," }}
   {% else %}
     {% for name,value in sig_map.items() -%}
-      {{"."|indent(4,True)}}{{name}}({{value}}){{ "" if loop.last and (not port_map) else "," }}
+      {{"."|indent(4,True)}}{{name}}({{value}}){{ "" if loop.last and (port_map != None and not port_map) else "," }}
     {% endfor -%}
   {% endif %}
-  {% if port_map -%}
+  {% if port_map != None -%}
     {% for name, val in port_map.items() %}
       {% if isinstance(val, tuple) %}
         {% set value = val[0] %}

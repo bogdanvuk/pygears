@@ -1,22 +1,62 @@
 import runpy
 import re
 import os
+import shutil
 from pygears.hdl import hdlgen, list_hdl_files
 from pygears import reg, find
 from pygears.util.fileio import get_main_script
 from pygears.hdl.synth import SynthPlugin
 from pygears.entry import cmd_register
 from pygears.conf.custom_settings import load_rc
+from pygears.util.fileio import find_in_dirs
+
+black_box_modules = ['tdp', 'sdp', 'decouple', 'fifo']
+
+def get_file_name(f, outdir, lang):
+    path = find_in_dirs(f, reg[f'{lang}gen/include'])
+    if path is not None:
+        return path
+    else:
+        return os.path.join(outdir, f)
+
+def get_top_file_name(node, outdir):
+    return get_file_name(node.wrap_file_name, outdir, node.lang)
 
 def create_project_script(script_fn, outdir, top):
-    hdl_files = list_hdl_files(top, outdir)
+
+    black_box = set()
+    sub_black_box = set()
+
+    def black_box_filt(node):
+        for name in black_box_modules:
+            bb = False
+            if name[0] == '/':
+                if node.node.name.startswith(name):
+                    bb = True
+            else:
+                if node.module_name == name:
+                    bb = True
+
+            if bb:
+                black_box.add(get_top_file_name(node, outdir))
+                for f in node.files:
+                    sub_black_box.add(get_file_name(f, outdir, node.lang))
+
+                return False
+
+        return True
+
+    hdl_files = list_hdl_files(top, outdir, filt=black_box_filt)
+
     with open(script_fn, 'w') as f:
         for fn in hdl_files:
-            if os.path.splitext(os.path.basename(fn))[0] in ['tdp', 'sdp', 'decouple', 'fifo']:
-                print(f"Loading {fn} as blackbox")
-                f.write(f'read_verilog -sv -lib {fn}\n')
-            else:
-                f.write(f'read_verilog -sv {fn}\n')
+            f.write(f'read_verilog -sv {os.path.abspath(fn)}\n')
+
+        for fn in black_box:
+            print(f"Loading {fn} as blackbox")
+            f.write(f'read_verilog -sv -lib {fn}\n')
+
+    return list(sub_black_box)
 
 
 class Yosys:
@@ -103,10 +143,16 @@ def synth(outdir,
           optimize=True,
           freduce=False,
           synthout=None,
+          blackbox=None,
           lang='v',
           synthcmd='synth'):
+
+    if blackbox:
+        # TODO: Don't go global with this
+        black_box_modules.extend(blackbox)
+
     if not srcdir:
-        srcdir = os.path.join(outdir, 'src')
+        srcdir = outdir
 
     prj_script_fn = os.path.join(outdir, 'project.ys')
 
@@ -117,14 +163,24 @@ def synth(outdir,
     else:
         top_mod = top
 
-    hdlgen(top=top_mod, lang=lang, toplang='v', outdir=srcdir)
-
     vgen_map = reg['hdlgen/map']
-    top_name = vgen_map[top_mod].wrap_module_name
 
-    create_project_script(prj_script_fn,
-                          outdir=srcdir,
-                          top=top_mod)
+    if top_mod not in vgen_map:
+        hdlgen(top=top_mod, lang=lang, toplang='v', outdir=srcdir)
+
+    vgen_inst = vgen_map[top_mod]
+
+    if vgen_inst.parent_lang == 'v':
+        top_name = vgen_inst.wrap_module_name
+    else:
+        top_name = vgen_inst.inst_name
+
+    black_box = create_project_script(prj_script_fn,
+                                      outdir=srcdir,
+                                      top=top_mod)
+    if synthout:
+        for b in black_box:
+            shutil.copy(b, outdir)
 
     with Yosys(f'yosys -l {os.path.join(outdir, "yosys.log")}') as yosys:
 
@@ -156,12 +212,14 @@ def entry(
         top,
         design,
         outdir=None,
+        srcdir=None,
         include=None,
         lang='sv',
         generate=True,
         freduce=False,
         synthout=None,
         synthcmd='synth',
+        blackbox='',
         build=True):
 
     if reg['yosys/synth/lock']:
@@ -173,6 +231,7 @@ def entry(
     if design is not None:
         design = os.path.abspath(os.path.expanduser(design))
 
+    # TODO: Outdir can be unspecified, use global results-dir then
     os.makedirs(outdir, exist_ok=True)
 
     # makefile(
@@ -209,7 +268,12 @@ def entry(
 
     include += reg[f'{lang}gen/include']
 
-    report = synth(outdir, top=top_mod, lang=lang, synthout=synthout, synthcmd=synthcmd, freduce=freduce)
+    if blackbox:
+        blackbox = blackbox.split(',')
+    else:
+        blackbox = None
+
+    report = synth(outdir, top=top_mod, lang=lang, synthout=synthout, synthcmd=synthcmd, freduce=freduce, srcdir=srcdir, blackbox=blackbox)
 
     return report
 
@@ -222,5 +286,8 @@ class YosysSynthPlugin(SynthPlugin):
         reg['yosys/synth/lock'] = False
 
         conf['parser'].add_argument('--synthout', type=str)
+        conf['parser'].add_argument('--srcdir', type=str)
+        conf['parser'].add_argument('--synthcmd', type=str)
+        conf['parser'].add_argument('--blackbox', type=str)
         # conf['parser'].add_argument('--util', action='store_true')
         # conf['parser'].add_argument('--timing', action='store_true')

@@ -83,13 +83,18 @@ class Gear(NamedHierNode):
     def __init__(self, func, params):
         super().__init__(params['name'],
                          reg['gear/current_module'] if func else None)
-        self.meta_kwds = getattr(func, 'meta_kwds', {})
+        self.meta_kwds = getattr(func, 'meta_kwds', {}).copy()
 
         self.trace = list(enum_stacktrace())
         self.args = {}
         # self.params = struct_copy(params)
 
         self.params = params
+
+        sigmap = self.params.get('sigmap', {})
+        self.params['sigmap'] = self.meta_kwds.get('sigmap', {})
+        self.params['sigmap'].update(sigmap)
+
         if '__outnames__' not in params:
             params['__outnames__'] = copy.copy(self.meta_kwds.get('outnames', []))
 

@@ -1,21 +1,16 @@
-
-from pygears.lib.rng import qrange
+from pygears.lib import collect, qrange
 from pygears.lib.verif import directed, drv
 from pygears.sim import sim
 from pygears.typing import Int, Tuple, Uint
 
 
 def test_stop_unsigned(sim_cls):
-    directed(drv(t=Uint[4], seq=[4]),
-             f=qrange(sim_cls=sim_cls),
-             ref=[list(range(4))])
+    directed(drv(t=Uint[4], seq=[4]), f=qrange(sim_cls=sim_cls), ref=[list(range(4))])
     sim()
 
 
 def test_stop_signed(sim_cls):
-    directed(drv(t=Int[4], seq=[7]),
-             f=qrange(sim_cls=sim_cls),
-             ref=[list(range(7))])
+    directed(drv(t=Int[4], seq=[7]), f=qrange(sim_cls=sim_cls), ref=[list(range(7))])
     sim()
 
 
@@ -52,6 +47,14 @@ def test_start_stop_combined(sim_cls):
              f=qrange(sim_cls=sim_cls),
              ref=[list(range(-2, 7))])
     sim()
+
+
+def test_start_stop_combined(sim_cls):
+    res = []
+    qrange((0, 8, 1), sim_cls=sim_cls) | collect(result=res)
+    sim(timeout=16)
+
+    assert res == [(i, i==7) for i in range(8)] * 2
 
 # @formal_check()
 # def test_basic_formal():
