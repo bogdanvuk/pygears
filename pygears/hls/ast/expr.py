@@ -24,6 +24,7 @@ def parse_ifexp(node, ctx: Context):
     return ir.ConditionalExpr(operands=(res['body'], res['orelse']), cond=res['test'])
 
 
+# TODO: Signal use of reserved names. Also use of output port names (Or mangle them?)
 @node_visitor(ast.Name)
 def _(node: ast.Name, ctx: Context):
     if isinstance(node.ctx, ast.Load):

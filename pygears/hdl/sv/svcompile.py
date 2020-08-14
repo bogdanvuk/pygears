@@ -1,7 +1,7 @@
 from pygears import reg
 from pygears.hls import ir, is_intf_id
 from pygears.hls import Context, HDLVisitor, Scope
-from pygears.typing import Bool
+from pygears.typing import Bool, typeof
 from pygears.core.port import HDLProducer
 from pygears.core.gear import InSig, OutSig
 from dataclasses import dataclass, field
@@ -428,6 +428,9 @@ def write_declarations(ctx, subsvmods, template_env):
         writer.line()
 
     def is_port_intf(intf):
+        if intf is None:
+            return False
+
         if not isinstance(intf.producer, HDLProducer):
             if intf.producer is None:
                 breakpoint()
@@ -441,35 +444,36 @@ def write_declarations(ctx, subsvmods, template_env):
 
     for name, expr in ctx.intfs.items():
         intf = expr.val
+        dtype = expr.dtype.dtype
         if not is_port_intf(intf):
             if lang == 'sv':
-                writer.line(f'dti#({intf.dtype.width}) {name}();')
+                writer.line(f'dti#({dtype.width}) {name}();')
             else:
                 writer.line(f'reg {name}_ready;')
                 writer.line(f'reg {name}_valid;')
-                writer.line(vgen_signal(intf.dtype, 'reg', f'{name}_data', 'output', False))
+                writer.line(vgen_signal(dtype, 'reg', f'{name}_data', 'output', False))
 
         if lang == 'sv':
-            name_t = typedef_or_inline(writer, intf.dtype, name)
+            name_t = typedef_or_inline(writer, dtype, name)
             writer.line(f'{name_t} {name}_s;')
 
-            if isinstance(intf.producer, HDLProducer):
+            if intf is not None and isinstance(intf.producer, HDLProducer):
                 writer.line(f'assign {sep.join([name, "data"])} = {name}_s;')
             else:
                 writer.line(f'assign {name}_s = {sep.join([name, "data"])};')
 
         else:
-            if isinstance(intf.producer, HDLProducer):
-                writer.block(vgen_signal(intf.dtype, 'reg', f'{name}_s', 'output', False))
+            if intf is not None and isinstance(intf.producer, HDLProducer):
+                writer.block(vgen_signal(dtype, 'reg', f'{name}_s', 'output', False))
                 writer.line(f"assign {name}_data = {name}_s;")
             else:
-                writer.block(vgen_signal(intf.dtype, 'reg', f'{name}_s', 'input', False))
+                writer.block(vgen_signal(dtype, 'reg', f'{name}_s', 'input', False))
                 writer.line(f"assign {name}_s = {name}_data;")
 
         writer.line()
 
     for name, expr in ctx.variables.items():
-        if expr.dtype is None:
+        if expr.dtype is None or typeof(expr.dtype, ir.IntfType):
             continue
 
         if lang == 'sv':

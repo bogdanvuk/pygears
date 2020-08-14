@@ -50,7 +50,10 @@ def cast_return(arg_nodes, out_ports):
 
             args.append(arg)
         else:
-            if arg.dtype != port_t:
+            if typeof(arg.dtype, ir.IntfType):
+                # TODO: Do proper casting of interfaces
+                args.append(arg)
+            elif arg.dtype != port_t:
                 args.append(resolve_cast_func(arg, port_t))
             else:
                 args.append(arg)

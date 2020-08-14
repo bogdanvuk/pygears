@@ -2,7 +2,7 @@ import inspect
 import typing
 from pygears.core.infer_ftypes import infer_ftypes
 from pygears.core.gear import OutSig, InSig
-from pygears.typing import Any
+from pygears.typing import Any, typeof
 from functools import singledispatch
 from dataclasses import dataclass
 from .. import ir
@@ -164,7 +164,7 @@ class GearContext(Context):
         return {
             name: obj
             for name, obj in self.scope.items()
-            if isinstance(obj, ir.Variable) and isinstance(obj.val, Intf)
+            if isinstance(obj, ir.Variable) and typeof(obj.dtype, ir.IntfType)
         }
 
     @property

@@ -16,14 +16,13 @@ def test_intf_vararg_fix_index(lang, din_delay, dout_delay):
         async with din[0] as d:
             yield d
 
-    directed(
-        drv(t=Uint[4], seq=list(range(4)))
-        | delay_rng(din_delay, din_delay),
-        drv(t=Uint[4], seq=list(range(4, 8)))
-        | delay_rng(din_delay, din_delay),
-        f=test,
-        delays=[delay_rng(dout_delay, dout_delay)],
-        ref=list(range(4)))
+    directed(drv(t=Uint[4], seq=list(range(4)))
+             | delay_rng(din_delay, din_delay),
+             drv(t=Uint[4], seq=list(range(4, 8)))
+             | delay_rng(din_delay, din_delay),
+             f=test,
+             delays=[delay_rng(dout_delay, dout_delay)],
+             ref=list(range(4)))
 
     cosim('/test', 'verilator', lang=lang)
     sim(check_activity=False)
@@ -37,14 +36,13 @@ def test_intf_vararg_mux(sim_cls, din_delay, dout_delay):
         async with mux(0, *din) as d:
             yield code(d[0], Uint[4])
 
-    directed(
-        drv(t=Uint[4], seq=list(range(4)))
-        | delay_rng(din_delay, din_delay),
-        drv(t=Uint[4], seq=list(range(4, 8)))
-        | delay_rng(din_delay, din_delay),
-        f=test(sim_cls=sim_cls),
-        delays=[delay_rng(dout_delay, dout_delay)],
-        ref=list(range(4)))
+    directed(drv(t=Uint[4], seq=list(range(4)))
+             | delay_rng(din_delay, din_delay),
+             drv(t=Uint[4], seq=list(range(4, 8)))
+             | delay_rng(din_delay, din_delay),
+             f=test(sim_cls=sim_cls),
+             delays=[delay_rng(dout_delay, dout_delay)],
+             ref=list(range(4)))
 
     sim(check_activity=False)
 
@@ -57,11 +55,10 @@ def test_loop_select_intfs(lang):
             async with select(i, *din) as d:
                 yield d
 
-    directed(
-        drv(t=Uint[4], seq=list(range(4))),
-        drv(t=Uint[4], seq=list(range(4, 8))),
-        f=test,
-        ref=[0, 4, 1, 5, 2, 6, 3, 7])
+    directed(drv(t=Uint[4], seq=list(range(4))),
+             drv(t=Uint[4], seq=list(range(4, 8))),
+             f=test,
+             ref=[0, 4, 1, 5, 2, 6, 3, 7])
 
     cosim('/test', 'verilator', lang=lang)
     sim(check_activity=False)
@@ -76,14 +73,13 @@ def test_loop_intfs(lang, din_delay, dout_delay):
             async with d as data:
                 yield data
 
-    directed(
-        drv(t=Uint[4], seq=list(range(4)))
-        | delay_rng(din_delay, din_delay),
-        drv(t=Uint[4], seq=list(range(4, 8)))
-        | delay_rng(din_delay, din_delay),
-        f=test,
-        delays=[delay_rng(dout_delay, dout_delay)],
-        ref=[0, 4, 1, 5, 2, 6, 3, 7])
+    directed(drv(t=Uint[4], seq=list(range(4)))
+             | delay_rng(din_delay, din_delay),
+             drv(t=Uint[4], seq=list(range(4, 8)))
+             | delay_rng(din_delay, din_delay),
+             f=test,
+             delays=[delay_rng(dout_delay, dout_delay)],
+             ref=[0, 4, 1, 5, 2, 6, 3, 7])
 
     cosim('/test', 'verilator', lang=lang)
     sim(check_activity=False)
@@ -98,14 +94,13 @@ def test_enum_intfs(lang, din_delay, dout_delay):
             async with d as data:
                 yield data
 
-    directed(
-        drv(t=Uint[4], seq=list(range(4)))
-        | delay_rng(din_delay, din_delay),
-        drv(t=Uint[4], seq=list(range(4, 8)))
-        | delay_rng(din_delay, din_delay),
-        f=test,
-        delays=[delay_rng(dout_delay, dout_delay)],
-        ref=[0, 4, 1, 5, 2, 6, 3, 7])
+    directed(drv(t=Uint[4], seq=list(range(4)))
+             | delay_rng(din_delay, din_delay),
+             drv(t=Uint[4], seq=list(range(4, 8)))
+             | delay_rng(din_delay, din_delay),
+             f=test,
+             delays=[delay_rng(dout_delay, dout_delay)],
+             ref=[0, 4, 1, 5, 2, 6, 3, 7])
 
     cosim('/test', 'verilator', lang=lang)
     sim(check_activity=False)
@@ -120,12 +115,11 @@ def test_enum_intfs_single(lang, din_delay, dout_delay):
             async with d as data:
                 yield data
 
-    directed(
-        drv(t=Uint[4], seq=list(range(4)))
-        | delay_rng(din_delay, din_delay),
-        f=test,
-        delays=[delay_rng(dout_delay, dout_delay)],
-        ref=list(range(4)))
+    directed(drv(t=Uint[4], seq=list(range(4)))
+             | delay_rng(din_delay, din_delay),
+             f=test,
+             delays=[delay_rng(dout_delay, dout_delay)],
+             ref=list(range(4)))
 
     cosim('/test', 'verilator', lang=lang)
     sim(check_activity=False)
@@ -140,14 +134,13 @@ def test_enum_intfs_use_i(lang, din_delay, dout_delay):
             async with d as data:
                 yield data, i
 
-    directed(
-        drv(t=Uint[4], seq=list(range(4)))
-        | delay_rng(din_delay, din_delay),
-        drv(t=Uint[4], seq=list(range(4, 8)))
-        | delay_rng(din_delay, din_delay),
-        f=test,
-        delays=[delay_rng(dout_delay, dout_delay)],
-        ref=[(0, 0), (4, 1), (1, 0), (5, 1), (2, 0), (6, 1), (3, 0), (7, 1)])
+    directed(drv(t=Uint[4], seq=list(range(4)))
+             | delay_rng(din_delay, din_delay),
+             drv(t=Uint[4], seq=list(range(4, 8)))
+             | delay_rng(din_delay, din_delay),
+             f=test,
+             delays=[delay_rng(dout_delay, dout_delay)],
+             ref=[(0, 0), (4, 1), (1, 0), (5, 1), (2, 0), (6, 1), (3, 0), (7, 1)])
 
     cosim('/test', 'verilator', lang=lang)
     sim(check_activity=False)
@@ -162,14 +155,32 @@ def test_loop_queue_intfs(lang, din_delay, dout_delay):
             async for (data, last) in d:
                 yield data
 
-    directed(
-        drv(t=Queue[Uint[4]], seq=[list(range(4))])
-        | delay_rng(din_delay, din_delay),
-        drv(t=Queue[Uint[4]], seq=[list(range(4, 8))])
-        | delay_rng(din_delay, din_delay),
-        f=test,
-        delays=[delay_rng(dout_delay, dout_delay)],
-        ref=list(range(4)) + list(range(4, 8)))
+    directed(drv(t=Queue[Uint[4]], seq=[list(range(4))])
+             | delay_rng(din_delay, din_delay),
+             drv(t=Queue[Uint[4]], seq=[list(range(4, 8))])
+             | delay_rng(din_delay, din_delay),
+             f=test,
+             delays=[delay_rng(dout_delay, dout_delay)],
+             ref=list(range(4)) + list(range(4, 8)))
 
     cosim('/test', 'verilator', lang=lang)
     sim(check_activity=False)
+
+
+def test_yield_var():
+    @gear(hdl={'compile': True})
+    async def test(din: Uint[2]) -> Uint[2]:
+        yield din
+
+    directed(drv(t=Uint[2], seq=list(range(3)) * 3), f=test(__sim__='verilator'), ref=[0, 1, 2] * 3)
+    sim(timeout=3 * 3)
+
+
+def test_yield_intermediate_var():
+    @gear(hdl={'compile': True})
+    async def test(din: Uint[2]) -> Uint[2]:
+        d = din
+        yield d
+
+    directed(drv(t=Uint[2], seq=list(range(3)) * 3), f=test(__sim__='verilator'), ref=[0, 1, 2] * 3)
+    sim(timeout=3 * 3)
