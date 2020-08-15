@@ -101,6 +101,6 @@ def test_synth_active_vivado():
     serialize(Intf(TDin[Uint[8], 4, 4]))
 
 
-@synth_check({'logic luts': 17, 'ffs': 4}, tool='yosys')
+@synth_check({'logic luts': 13, 'ffs': 4}, tool='yosys')
 def test_synth_active_yosys():
     serialize(Intf(TDin[Uint[8], 4, 4]))
