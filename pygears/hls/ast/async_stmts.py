@@ -15,6 +15,11 @@ from pygears.typing import typeof, Queue, Tuple, Array
 
 def cast_return(arg_nodes, out_ports):
     out_num = len(out_ports)
+
+    # TODO: Reconsider this: Can we have a type inference mechanism?
+    if out_num == 0:
+        raise TypeError(f"Function must have a return type defined!")
+
     if isinstance(arg_nodes, (list, tuple)):
         assert len(arg_nodes) == out_num
         input_vars = arg_nodes
@@ -25,8 +30,7 @@ def cast_return(arg_nodes, out_ports):
         assert len(var.dtype) == out_num
         input_vars = []
         for i in range(len(var.dtype)):
-            input_vars.append(
-                ir.SubscriptExpr(val=arg_nodes, index=ir.ResExpr(i)))
+            input_vars.append(ir.SubscriptExpr(val=arg_nodes, index=ir.ResExpr(i)))
     else:
         if out_num == 1:
             input_vars = [arg_nodes]
@@ -54,12 +58,11 @@ def cast_return(arg_nodes, out_ports):
         if typeof(port_t, (Queue, Tuple, Array)):
             if isinstance(arg, ir.ConcatExpr) and arg.dtype != port_t:
                 for i in range(len(arg.operands)):
-                    if isinstance(arg.operands[i], ir.CastExpr) and (
-                            arg.operands[i].cast_to == port_t[i]):
+                    if isinstance(arg.operands[i],
+                                  ir.CastExpr) and (arg.operands[i].cast_to == port_t[i]):
                         pass
                     else:
-                        arg.operands[i] = resolve_cast_func(
-                            arg.operands[i], port_t[i])
+                        arg.operands[i] = resolve_cast_func(arg.operands[i], port_t[i])
 
             args.append(arg)
         else:
@@ -81,8 +84,7 @@ def parse_yield(node, ctx):
     try:
         ret = cast_return(yield_expr, ctx.gear.out_ports)
     except TypeError as e:
-        raise SyntaxError(
-            f"{str(e)}\n    - when casting output value to the output type")
+        raise SyntaxError(f"{str(e)}\n    - when casting output value to the output type")
 
     if isinstance(ret, ir.TupleExpr):
         vals = ret.val
@@ -98,9 +100,7 @@ def parse_yield(node, ctx):
 
     for p, v in zip(ctx.out_ports, vals):
         if len(ctx.out_ports) == 1:
-            stmts.append(
-                ir.ExprStatement(
-                    ir.Await(exit_await=ir.Component(p, 'ready'))))
+            stmts.append(ir.ExprStatement(ir.Await(exit_await=ir.Component(p, 'ready'))))
         else:
             stmts.append(
                 ir.ExprStatement(
@@ -118,12 +118,11 @@ def withitem(node: ast.withitem, ctx: Context):
 
     if isinstance(intf, ir.ConcatExpr):
         data = ir.ConcatExpr([
-            ir.Await(ir.Component(i, 'data'),
-                     in_await=ir.Component(i, 'valid')) for i in intf.operands
+            ir.Await(ir.Component(i, 'data'), in_await=ir.Component(i, 'valid'))
+            for i in intf.operands
         ])
     else:
-        data = ir.Await(ir.Component(intf, 'data'),
-                        in_await=ir.Component(intf, 'valid'))
+        data = ir.Await(ir.Component(intf, 'data'), in_await=ir.Component(intf, 'valid'))
 
     ass_targets = assign_targets(ctx, targets, data, ir.Variable)
 
@@ -173,21 +172,17 @@ class AsyncForContext:
             ir.ResExpr(intf_type.eot(0)),
         )
 
-        eot_test = ir.BinOpExpr(
-            (self.ctx.ref(eot_name), ir.ResExpr(intf_type.eot.max)),
-            ir.opc.NotEq)
+        eot_test = ir.BinOpExpr((self.ctx.ref(eot_name), ir.ResExpr(intf_type.eot.max)),
+                                ir.opc.NotEq)
 
-        eot_load = ir.AssignValue(
-            self.ctx.ref(eot_name),
-            ir.SubscriptExpr(ir.Component(self.intf, 'data'), ir.ResExpr(-1)))
+        eot_load = ir.AssignValue(self.ctx.ref(eot_name),
+                                  ir.SubscriptExpr(ir.Component(self.intf, 'data'), ir.ResExpr(-1)))
 
         data_load = ir.AssignValue(
             self.ctx.ref(data_name),
-            ir.Await(ir.Component(self.intf, 'data'),
-                     in_await=ir.Component(self.intf, 'valid')))
+            ir.Await(ir.Component(self.intf, 'data'), in_await=ir.Component(self.intf, 'valid')))
 
-        eot_loop_stmt = ir.LoopBlock(test=eot_test,
-                                     stmts=[data_load, eot_load])
+        eot_loop_stmt = ir.LoopBlock(test=eot_test, stmts=[data_load, eot_load])
 
         self.ctx.ir_block_closure.append(eot_loop_stmt)
 
@@ -195,8 +190,7 @@ class AsyncForContext:
 
     def __exit__(self, exception_type, exception_value, traceback):
         loop = self.ctx.ir_block_closure.pop()
-        loop.stmts.append(
-            ir.AssignValue(ir.Component(self.intf, 'ready'), ir.res_true))
+        loop.stmts.append(ir.AssignValue(ir.Component(self.intf, 'ready'), ir.res_true))
 
 
 @node_visitor(ast.AsyncFor)
@@ -205,10 +199,8 @@ def AsyncFor(node, ctx: Context):
     targets = visit_ast(node.target, ctx)
 
     with AsyncForContext(out_intf_ref, ctx) as stmts:
-        add_to_list(
-            ctx.ir_parent_block.stmts,
-            assign_targets(ctx, targets, ir.Component(out_intf_ref, 'data'),
-                           ir.Variable))
+        add_to_list(ctx.ir_parent_block.stmts,
+                    assign_targets(ctx, targets, ir.Component(out_intf_ref, 'data'), ir.Variable))
 
         for stmt in node.body:
             res_stmt = visit_ast(stmt, ctx)
@@ -219,5 +211,4 @@ def AsyncFor(node, ctx: Context):
 
 @node_visitor(ast.Await)
 def _(node: ast.Await, ctx: Context):
-    return ir.ExprStatement(
-        ir.Await(in_await=ir.res_false, exit_await=ir.res_false))
+    return ir.ExprStatement(ir.Await(in_await=ir.res_false, exit_await=ir.res_false))

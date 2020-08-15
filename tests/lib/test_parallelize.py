@@ -23,9 +23,6 @@ def test_array(cosim_cls, din_delay, dout_delay, size):
 
     sim()
 
-# test_array(None, 0, 0, 4)
-
-
 
 @pytest.mark.parametrize('din_delay', [0, 5])
 @pytest.mark.parametrize('dout_delay', [0, 5])

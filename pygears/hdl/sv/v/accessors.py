@@ -21,6 +21,9 @@ class VGenOffsetVisitor:
             return self.visit_default(type_, path)
 
     def visit_Array(self, type_, path):
+        if not path:
+            return []
+
         key = path.pop(0)
         up = key.start
         assert key.stop is None

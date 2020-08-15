@@ -102,6 +102,10 @@ def call_max(*arg, **kwds):
     return reduce(max_expr, op)
 
 
+def call_uint_matmul(obj, arg):
+    return ir.CastExpr(ir.ConcatExpr(operands=[arg, obj]), cast_to=(obj.dtype @ arg.dtype))
+
+
 def call_sub(obj, arg):
     return ir.CastExpr(arg, cast_to=obj.sub())
 
@@ -279,66 +283,37 @@ class AddIntfOperPlugin(PluginBase):
     @classmethod
     def bind(cls):
         ir_builtins = {
-            gather:
-            call_gather,
-            all:
-            call_all,
-            any:
-            call_any,
-            max:
-            call_max,
-            clk:
-            call_clk,
-            float:
-            call_float,
-            int:
-            call_int,
-            len:
-            call_len,
-            print:
-            call_print,
-            type:
-            call_type,
-            isinstance:
-            call_isinstance,
-            is_type:
-            call_is_type,
-            typeof:
-            call_typeof,
-            div:
-            call_div,
-            Intf.empty:
-            call_empty,
-            Intf.get:
-            call_get,
-            Intf.get_nb:
-            call_get_nb,
-            Intf.put_nb:
-            call_put_nb,
-            cast:
-            call_cast,
-            signed:
-            call_signed,
-            QueueMeta.sub:
-            call_sub,
-            object.__getattribute__(Array, 'subs').func:
-            call_subs,
-            object.__getattribute__(Tuple, 'subs').func:
-            call_subs,
-            OutSig.write:
-            outsig_write,
-            Array.code:
-            call_code,
-            Tuple.code:
-            call_code,
-            code:
-            call_code,
-            qrange:
-            call_qrange,
-            range:
-            call_range,
-            enumerate:
-            call_enumerate
+            gather: call_gather,
+            all: call_all,
+            any: call_any,
+            max: call_max,
+            clk: call_clk,
+            float: call_float,
+            int: call_int,
+            len: call_len,
+            print: call_print,
+            type: call_type,
+            isinstance: call_isinstance,
+            is_type: call_is_type,
+            typeof: call_typeof,
+            div: call_div,
+            Intf.empty: call_empty,
+            Intf.get: call_get,
+            Intf.get_nb: call_get_nb,
+            Intf.put_nb: call_put_nb,
+            cast: call_cast,
+            signed: call_signed,
+            QueueMeta.sub: call_sub,
+            object.__getattribute__(Array, 'subs').func: call_subs,
+            object.__getattribute__(Tuple, 'subs').func: call_subs,
+            object.__getattribute__(Uint, '__matmul__'): call_uint_matmul,
+            OutSig.write: outsig_write,
+            Array.code: call_code,
+            Tuple.code: call_code,
+            code: call_code,
+            qrange: call_qrange,
+            range: call_range,
+            enumerate: call_enumerate
         }
 
         import sys

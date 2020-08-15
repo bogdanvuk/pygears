@@ -3,16 +3,33 @@ from functools import partial
 from pygears.typing import Array, Integer, Queue, code, typeof, Integral, Tuple, Union, Int
 from .sv_keywords import sv_keywords
 
-SLICE_FUNC_TEMPLATE = """function {4} [{2}:0] slice_{0}_{1}(input [{3}:0] val);
-    slice_{0}_{1} = val[{0}:{1}];
+# TODO: Use precedence of operators to induce parenthesis around expressions
+
+SLICE_FUNC_TEMPLATE = """function {4} [{2}:0] slice_{0}_{1}_{3}(input [{3}:0] val);
+    slice_{0}_{1}_{3} = val[{0}:{1}];
+endfunction
+"""
+
+INDEX_FUNC_TEMPLATE = """function {0} [{1}-1:0] index_{1}_{2}_{3}(input [{2}:0] val, input [{3}:0] ind);
+    index_{1}_{2}_{3} = val[ind*{1}+:{1}];
 endfunction
 """
 
 
 def get_slice_func(aux_funcs, start, stop, din_width, signed):
-    name = f'slice_{stop}_{start}'
+    name = f'slice_{stop}_{start}_{din_width-1}'
     if name not in aux_funcs:
-        aux_funcs[name] = SLICE_FUNC_TEMPLATE.format(stop, start, stop - start, din_width - 1, 'signed' if signed else '')
+        aux_funcs[name] = SLICE_FUNC_TEMPLATE.format(stop, start, stop - start, din_width - 1,
+                                                     'signed' if signed else '')
+
+    return name
+
+
+def get_index_func(aux_funcs, din_width, ind_width, part_width, signed):
+    name = f'index_{part_width}_{din_width-1}_{ind_width-1}'
+    if name not in aux_funcs:
+        aux_funcs[name] = INDEX_FUNC_TEMPLATE.format('signed' if signed else '', part_width,
+                                                     din_width - 1, ind_width - 1)
 
     return name
 
@@ -306,11 +323,19 @@ class SVExpressionVisitor:
                 elif typeof(node.val.dtype, (Tuple, Union, Queue)):
                     return f'{val}{self.separator}{node.val.dtype.fields[index]}'
             else:
-                fname = get_slice_func(self.aux_funcs, start, stop, node.val.dtype.width, getattr(node.dtype, 'signed', False))
+                fname = get_slice_func(self.aux_funcs, start, stop, node.val.dtype.width,
+                                       getattr(node.dtype, 'signed', False))
                 return f'{fname}({val})'
 
         if typeof(node.val.dtype, (Array, Queue, Integer, Tuple, Union)):
-            return f'{val}[{self.visit(node.index)}]'
+            ind = self.visit(node.index)
+            if isinstance(node.val, ir.Name):
+                return f'{val}[{ind}]'
+            else:
+                fname = get_index_func(self.aux_funcs, node.val.dtype.width, node.index.dtype.width,
+                                       node.dtype.width, getattr(node.dtype, 'signed', False))
+
+                return f'{fname}({val}, {ind})'
 
         breakpoint()
         raise Exception('Unsupported slicing')
