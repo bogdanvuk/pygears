@@ -106,9 +106,6 @@ class Scope:
 
 
 class HDLVisitor:
-    def __init__(self, ctx):
-        self.ctx = ctx
-
     def visit(self, node):
         for base_class in inspect.getmro(node.__class__):
             if hasattr(self, base_class.__name__):

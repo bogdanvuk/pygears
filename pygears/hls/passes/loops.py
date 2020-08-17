@@ -3,6 +3,9 @@ from pygears.typing import Bool
 
 
 class CycleDone(HDLVisitor):
+    def __init__(self, ctx):
+        self.ctx = ctx
+
     def LoopBlock(self, node):
         if '_state' in self.ctx.scope:
             node.stmts.insert(

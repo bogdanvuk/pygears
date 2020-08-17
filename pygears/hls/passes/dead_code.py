@@ -19,7 +19,7 @@ class FuncCallFinder(IrVisitor):
 
 class RemoveDeadCode(HDLVisitor):
     def __init__(self, ctx):
-        super().__init__(ctx)
+        self.ctx = ctx
         self.called_funcs = set()
 
     def AssignValue(self, node):

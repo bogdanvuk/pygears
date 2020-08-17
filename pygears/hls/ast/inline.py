@@ -108,6 +108,15 @@ def call_gear(func, args, kwds, ctx: Context):
     for i, a in enumerate(args):
         if typeof(a.dtype, ir.IntfType):
             intf = a.obj.val
+            if not (len(intf.consumers) == 1 and isinstance(intf.consumers[0], HDLConsumer)):
+                raise Exception("Interface is used to drive two different modules. This is currently not supported.")
+
+            # Interface does not end with HDLConsumer() any more since it will drive a gear
+
+            # TODO: If interface connects directly to child, without
+            # HDLConsumer of a parent, simulator doesn't function properly (DAG
+            # is wrong, intercepted)
+            # intf.consumers.clear()
         else:
             intf = Intf(a.dtype)
             intf.source(HDLProducer())

@@ -74,5 +74,5 @@ def test_synth_vivado():
 
 
 @synth_check({'logic luts': 12, 'ffs': 16}, tool='yosys')
-def test_synth_yosys():
+def test_synth_yosys_replicate():
     replicate(Intf(T_DIN))

@@ -78,6 +78,9 @@ class InferRegisters(IrVisitor):
 
 
 class ResolveRegInits(HDLVisitor):
+    def __init__(self, ctx):
+        self.ctx = ctx
+
     def AssignValue(self, node):
         if not isinstance(node.target, ir.Name):
             return node

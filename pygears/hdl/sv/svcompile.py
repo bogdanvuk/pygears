@@ -1,13 +1,15 @@
 from pygears import reg
 from pygears.hls import ir, is_intf_id
 from pygears.hls import Context, HDLVisitor, Scope
+from pygears.hls.ir_utils import IrRewriter, IrExprRewriter
 from pygears.typing import Bool, typeof
-from pygears.core.port import HDLProducer
+from pygears.core.port import HDLProducer, HDLConsumer
 from pygears.core.gear import InSig, OutSig
 from dataclasses import dataclass, field
 from typing import List
 from pygears import Intf
 import itertools
+import copy
 from pygears.hdl.sv.v.accessors import rewrite
 
 from .util import svgen_typedef
@@ -22,6 +24,30 @@ always @(posedge clk) begin
     end
 end
 """
+
+class ReadyExprRewriter(IrExprRewriter):
+    def __init__(self, intf):
+        self.intf = intf
+
+    def visit_Component(self, node):
+        if (node.field == 'valid' and node.val.obj.val is self.intf):
+            return ir.res_true
+
+        return node
+
+
+class ReadyRewriter(IrRewriter):
+    def __init__(self, intf):
+        self.intf = intf
+
+    def Expr(self, expr):
+        return ReadyExprRewriter(self.intf).visit(expr)
+
+    def AssignValue(self, stmt: ir.AssignValue):
+        if (isinstance(stmt.target, ir.Component) and stmt.target.field == 'ready' and stmt.target.val.obj.val is self.intf):
+            return type(stmt)(stmt.target, self.visit(stmt.val))
+        else:
+            return stmt
 
 
 class HDLWriter:
@@ -252,9 +278,11 @@ class SVCompiler(HDLVisitor):
                 if isinstance(obj.val.producer, HDLProducer):
                     if self.selected(self.ctx.ref(name, ctx='store')):
                         yield self.attr(name, 'valid'), '0'
-                else:
+                elif len(obj.val.consumers) == 1 and isinstance(obj.val.consumers[0], HDLConsumer):
                     if self.selected(self.ctx.ref(name, ctx='ready')):
-                        yield self.attr(name, 'ready'), f"{self.attr(name, 'valid')} ? 0 : 1'bx"
+                        # yield self.attr(name, 'ready'), f"1'bx"
+                        yield self.attr(name, 'ready'), f"1'b0"
+                        # yield self.attr(name, 'ready'), f"{self.attr(name, 'valid')} ? 0 : 1'bx"
 
             elif obj.reg:
                 target = self.ctx.ref(name, ctx='en')
@@ -276,6 +304,15 @@ class SVCompiler(HDLVisitor):
             self.handle_defaults(target, f"{target} = {expr}")
             # self.prepend(f"{target} = {stmt}")
             # self.defaults[target] = stmt
+
+        for name, obj in self.ctx.scope.items():
+            if not isinstance(obj, ir.Variable):
+                continue
+
+            if isinstance(obj.val, Intf):
+                if len(obj.val.consumers) == 1 and isinstance(obj.val.consumers[0], HDLConsumer):
+                    if self.selected(self.ctx.ref(name, ctx='ready')):
+                        node = ReadyRewriter(obj.val).visit(node)
 
         self.HDLBlock(node)
 

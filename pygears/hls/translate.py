@@ -4,9 +4,9 @@ from pygears.conf.trace import gear_definition_location
 from .ast import visit_ast, GearContext, FuncContext, Context, form_hls_syntax_error
 from .ast.utils import get_function_ast
 from . import ir
-from .passes import (inline, inline_res, remove_dead_code, infer_exit_cond,
-                     infer_registers, schedule, infer_in_cond,
-                     handle_generators, resolve_gear_calls, find_called_funcs)
+from .passes import (inline, remove_dead_code, infer_exit_cond,
+                     infer_registers, schedule, handle_generators,
+                     resolve_gear_calls, find_called_funcs)
 from .debug import hls_enable_debug_log, hls_debug
 from .debug import print_gear_parse_intro
 from . import cfg

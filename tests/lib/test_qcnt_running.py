@@ -107,5 +107,5 @@ def test_synth_vivado():
 
 
 @synth_check({'logic luts': 4, 'ffs': 15}, tool='yosys')
-def test_synth_yosys():
+def test_synth_yosys_qcnt_running():
     qcnt(Intf(Queue[Uint[16], 3]))

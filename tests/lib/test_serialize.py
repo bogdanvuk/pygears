@@ -92,7 +92,7 @@ def test_synth_vivado():
 
 
 @synth_check({'logic luts': 20, 'ffs': 2}, tool='yosys')
-def test_synth_yosys():
+def test_synth_yosys_serialize():
     serialize(Intf(Array[Uint[16], 4]))
 
 
@@ -102,5 +102,5 @@ def test_synth_active_vivado():
 
 
 @synth_check({'logic luts': 13, 'ffs': 4}, tool='yosys')
-def test_synth_active_yosys():
+def test_synth_active_yosys_serialize():
     serialize(Intf(TDin[Uint[8], 4, 4]))

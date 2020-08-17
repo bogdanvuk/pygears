@@ -1,7 +1,7 @@
 from pygears.lib import cast as cast_gear, code as code_gear
 from pygears.typing import Tuple, Uint, Queue, Int, Ufixp, cast
 from pygears import Intf
-from pygears.util.test_utils import skip_ifndef
+from pygears.util.test_utils import skip_ifndef, synth_check
 from pygears.lib.verif import verif
 from pygears.sim import sim
 from pygears.lib.verif import drv
@@ -102,3 +102,8 @@ def test_ufixp_cosim():
                     seq=[2.75, 4.0],
                     expected=[Ufixp[2, 3](1.5), Ufixp[2, 3](0.0)],
                     module=code_gear)
+
+
+@synth_check({'logic luts': 0, 'ffs': 0}, tool='yosys')
+def test_synth_yosys_cast():
+    cast_gear(Intf(Uint[4]), t=Uint[5])

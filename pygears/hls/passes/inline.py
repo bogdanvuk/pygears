@@ -197,6 +197,8 @@ class InlineValues(HDLVisitor):
             return self.BaseBlock(block)
 
         block.in_cond = self.inline_expr(block.in_cond)
+        # TODO: Do we need test field at all?
+        block.test = block.in_cond
 
         looped_init = False
         for name in self.forwarded:
@@ -270,64 +272,6 @@ class InlineValues(HDLVisitor):
 
     def generic_visit(self, node):
         pass
-
-
-class InlineResValues(HDLVisitor):
-    def __init__(self, ctx):
-        super().__init__(ctx)
-        self.forwarded = Scope()
-
-    def inline_expr(self, node):
-        new_node = Inliner(self.forwarded).visit(node)
-        if new_node is None:
-            return node
-
-        return new_node
-
-    def AssignValue(self, node: ir.AssignValue):
-        node.val = self.inline_expr(node.val)
-        if isinstance(node.target, ir.Name) and isinstance(
-                node.val, ir.ResExpr):
-            self.forwarded[node.target.name] = node.val
-
-    def HDLBlock(self, block: ir.HDLBlock):
-        block.in_cond = self.inline_expr(block.in_cond)
-
-        prev_scope = self.forwarded
-        self.forwarded = Scope()
-
-        self.BaseBlock(block)
-
-        block.exit_cond = self.inline_expr(block.exit_cond)
-
-        self.forwarded = prev_scope
-
-
-# Implement function inlining
-# def inlinable(func_ir):
-#     if len(func_ir.stmts) > 1:
-#         return None
-
-#     ret_stmt = func_ir.stmts[0]
-
-#     # TODO: Should this even be possible?
-#     if not isinstance(ret_stmt, ir.FuncReturn):
-#         breakpoint()
-#         return None
-
-#     # TODO: Should this even be possible?
-#     if ret_stmt.expr.dtype != func_ir.ret_dtype:
-#         breakpoint()
-#         return None
-
-#     return ret_stmt
-
-
-
-def inline_res(modblock, ctx):
-    # InlineValues(ctx, res_expr_only=True).visit(modblock)
-    # InlineResValues(ctx).visit(modblock)
-    return modblock
 
 
 def inline(modblock, ctx):

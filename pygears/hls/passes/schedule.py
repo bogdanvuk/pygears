@@ -6,8 +6,7 @@ from .loops import infer_cycle_done
 
 
 class PPrinter(HDLVisitor):
-    def __init__(self, ctx):
-        super().__init__(ctx)
+    def __init__(self):
         self.msg = ''
         self.indent = 0
 
@@ -48,8 +47,7 @@ class SchedStatus:
 
 
 class Scheduler(HDLVisitor):
-    def __init__(self, ctx):
-        super().__init__(ctx)
+    def __init__(self):
         self.scope = []
         self.path = []
         self.max_state = 0
@@ -145,7 +143,7 @@ class Scheduler(HDLVisitor):
 
 class StateIsolator(HDLVisitor):
     def __init__(self, ctx, state_id):
-        super().__init__(ctx)
+        self.ctx = ctx
         self.state_id = state_id
         self.cur_state_id = 0
 
@@ -254,9 +252,9 @@ def schedule(block, ctx):
     block.stmts.append(
         ir.AssignValue(ctx.ref('_rst_cond', 'store'), res_true))
 
-    Scheduler(ctx).visit(block)
+    Scheduler().visit(block)
     # print('*** Schedule ***')
-    # print(PPrinter(ctx).visit(block))
+    # print(PPrinter().visit(block))
     state_num = len(block.state)
 
     if state_num > 1:
