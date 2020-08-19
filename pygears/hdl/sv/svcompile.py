@@ -2,7 +2,7 @@ from pygears import reg
 from pygears.hls import ir, is_intf_id
 from pygears.hls import Context, HDLVisitor, Scope
 from pygears.typing import Bool, typeof
-from pygears.core.port import HDLProducer
+from pygears.core.port import HDLProducer, HDLConsumer
 from pygears.core.gear import InSig, OutSig
 from dataclasses import dataclass, field
 from typing import List
@@ -252,7 +252,7 @@ class SVCompiler(HDLVisitor):
                 if isinstance(obj.val.producer, HDLProducer):
                     if self.selected(self.ctx.ref(name, ctx='store')):
                         yield self.attr(name, 'valid'), '0'
-                else:
+                elif len(obj.val.consumers) == 1 and isinstance(obj.val.consumers[0], HDLConsumer):
                     if self.selected(self.ctx.ref(name, ctx='ready')):
                         yield self.attr(name, 'ready'), f"{self.attr(name, 'valid')} ? 0 : 1'bx"
 
