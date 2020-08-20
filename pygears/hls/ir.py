@@ -179,6 +179,9 @@ class ResExpr(Expr):
 
         return self.val == other.val
 
+    def __hash__(self):
+        return hash((self.val, type(self)))
+
     def __repr__(self):
         return f'ResExpr({repr(self.val)})'
 

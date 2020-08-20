@@ -16,12 +16,18 @@ def expr(node, ctx: Context):
 
 @node_visitor(ast.IfExp)
 def parse_ifexp(node, ctx: Context):
-    res = {field: visit_ast(getattr(node, field), ctx) for field in node._fields}
+    test = visit_ast(node.test, ctx)
 
-    if all(isinstance(v, ir.ResExpr) for v in res.values()):
-        return ir.ResExpr(res['body'].val if res['test'].val else res['orelse'])
+    if isinstance(test, ir.ResExpr):
+        if test.val:
+            return visit_ast(node.body, ctx)
+        else:
+            return visit_ast(node.orelse, ctx)
 
-    return ir.ConditionalExpr(operands=(res['body'], res['orelse']), cond=res['test'])
+    body = visit_ast(node.body, ctx)
+    orelse = visit_ast(node.orelse, ctx)
+
+    return ir.ConditionalExpr(operands=(body, orelse), cond=test)
 
 
 # TODO: Signal use of reserved names. Also use of output port names (Or mangle them?)
@@ -122,6 +128,7 @@ R_METHOD_OP_MAP = {
     ast.Gt: '__le__',
     ast.GtE: '__lt__',
     ast.FloorDiv: '__rfloordiv__',
+    ast.In: '__contains__',
     ast.Lt: '__ge__',
     ast.LtE: '__gt__',
     ast.MatMult: '__rmatmul__',
@@ -143,12 +150,13 @@ def visit_bin_expr(op, operands, ctx: Context):
     dtype = type(op1.val) if isinstance(op1, ir.ResExpr) else op1.dtype
     # f = getattr(op1.dtype, METHOD_OP_MAP[type(op)])
 
-    f = getattr(dtype, METHOD_OP_MAP[type(op)])
+    if type(op) in METHOD_OP_MAP:
+        f = getattr(dtype, METHOD_OP_MAP[type(op)])
 
-    ret = resolve_func(f, (op1, op2), {}, ctx)
+        ret = resolve_func(f, (op1, op2), {}, ctx)
 
-    if ret != ir.ResExpr(NotImplemented):
-        return ret
+        if ret != ir.ResExpr(NotImplemented):
+            return ret
 
     # TODO: This WAS needed, since: ir.ResExpr(Uint[8]).dtype is None. REMOVE
     dtype = type(op2.val) if isinstance(op2, ir.ResExpr) else op2.dtype
@@ -255,7 +263,48 @@ def _(node, ctx: Context):
 
 @node_visitor(ast.ListComp)
 def _(node, ctx: Context):
-    return ir.ResExpr(py_eval_expr(node, ctx))
+    if len(node.generators) != 1:
+        raise SyntaxError(f'Only list comprehensions with a single for loop supported')
+
+    iterator = visit_ast(node.generators[0].iter, ctx)
+    target = visit_ast(node.generators[0].target, ctx)
+
+    outter_var = None
+    outter_namespace = None
+    if target.name in ctx.scope:
+        outter_var = ctx.scope[target.name]
+        del ctx.scope[target.name]
+
+    if target.name in ctx.local_namespace:
+        outter_namespace = ctx.local_namespace[target.name]
+        del ctx.local_namespace[target.name]
+
+    stmts = []
+    if isinstance(iterator, ir.ResExpr):
+        vals = iterator.val
+    else:
+        vals = [ir.SubscriptExpr(iterator, ir.ResExpr(i)) for i in range(len(iterator.dtype))]
+
+    for v in vals:
+        ctx.local_namespace[target.name] = v
+        res = visit_ast(node.elt, ctx)
+        if isinstance(res, list):
+            if len(res) > 1:
+                raise SyntaxError(f'Complex expressions not supported for list comprehensions')
+
+            res = res[0]
+
+        stmts.append(res)
+
+    del ctx.local_namespace[target.name]
+
+    if outter_var:
+        ctx.scope[target.name] = outter_var
+
+    if outter_namespace:
+        ctx.local_namespace[target.name] = outter_namespace
+
+    return ir.ConcatExpr(stmts)
 
 
 @node_visitor(ast.List)

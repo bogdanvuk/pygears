@@ -14,6 +14,7 @@ from pygears.typing import typeof, Queue, Tuple, Array
 
 
 def cast_return(arg_nodes, out_ports):
+
     out_num = len(out_ports)
 
     # TODO: Reconsider this: Can we have a type inference mechanism?
@@ -57,12 +58,15 @@ def cast_return(arg_nodes, out_ports):
         # TODO: Let this be handled by typing.cast function for better error reporting
         if typeof(port_t, (Queue, Tuple, Array)):
             if isinstance(arg, ir.ConcatExpr) and arg.dtype != port_t:
+                ops = []
                 for i in range(len(arg.operands)):
                     if isinstance(arg.operands[i],
                                   ir.CastExpr) and (arg.operands[i].cast_to == port_t[i]):
-                        pass
+                        ops.append(arg.operands[i])
                     else:
-                        arg.operands[i] = resolve_cast_func(arg.operands[i], port_t[i])
+                        ops.append(resolve_cast_func(arg.operands[i], port_t[i]))
+
+                arg.operands = tuple(ops)
 
             args.append(arg)
         else:
@@ -84,6 +88,8 @@ def parse_yield(node, ctx):
     try:
         ret = cast_return(yield_expr, ctx.gear.out_ports)
     except TypeError as e:
+        breakpoint()
+        ret = cast_return(yield_expr, ctx.gear.out_ports)
         raise SyntaxError(f"{str(e)}\n    - when casting output value to the output type")
 
     if isinstance(ret, ir.TupleExpr):

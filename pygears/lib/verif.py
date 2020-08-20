@@ -365,6 +365,9 @@ def directed(*stim, f, ref, delays=None, cmp=None):
     else:
         res = f
 
+    if res is None:
+        raise Exception(f'Module under test has no output interface')
+
     if not isinstance(res, tuple):
         res = (res, )
         ref = (ref, )

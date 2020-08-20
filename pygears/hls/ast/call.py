@@ -140,8 +140,17 @@ special_funcs = {
     abs: '__abs__',
     math.ceil: '__ceil__',
     math.floor: '__floor__',
-    round: '__round__'
+    round: '__round__',
 }
+
+
+def hashable(v):
+    """Determine whether `v` can be hashed."""
+    try:
+        hash(v)
+    except TypeError:
+        return False
+    return True
 
 
 def resolve_func(func, args, kwds, ctx):
@@ -150,6 +159,8 @@ def resolve_func(func, args, kwds, ctx):
             return resolve_compile_time(func, args, kwds)
 
         return resolve_cast_func(args[0], func)
+
+    hashable_func = hashable(func)
 
     if isinstance(func, partial):
         args = func.args + tuple(args)
@@ -184,7 +195,7 @@ def resolve_func(func, args, kwds, ctx):
             breakpoint()
             raise Exception
 
-    if func not in reg['hls/ir_builtins']:
+    if hashable_func and func not in reg['hls/ir_builtins']:
         if func in special_funcs:
             return resolve_func(getattr(args[0].dtype, special_funcs[func]), args, kwds, ctx)
 
@@ -193,10 +204,10 @@ def resolve_func(func, args, kwds, ctx):
         ctx.ir_parent_block.stmts.extend(stmts)
         return intf
 
-    if func in compile_time_builtins and const_func_args(args, kwds):
+    if hashable_func and func in compile_time_builtins and const_func_args(args, kwds):
         return resolve_compile_time(func, args, kwds)
 
-    if func in reg['hls/ir_builtins']:
+    if hashable_func and func in reg['hls/ir_builtins']:
         try:
             return reg['hls/ir_builtins'][func](*args, **kwds)
         except TypeError as e:

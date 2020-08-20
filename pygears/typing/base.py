@@ -24,7 +24,7 @@ class BlackBox:
 
 class hashabledict(dict):
     def __hash__(self):
-        return hash(tuple(self.items()))
+        return hash(tuple(self.items())) ^ hash(dict)
 
 @functools.lru_cache(maxsize=None)
 def index_norm_hashable_single(i, dtype):

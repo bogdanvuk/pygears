@@ -15,12 +15,14 @@ def gear_definition_location(func):
     uwrp = inspect.unwrap(func, stop=(lambda f: hasattr(f, "__signature__")))
     fn = inspect.getfile(uwrp)
 
-    ln = '-'
+    ln = 1
     while fn.startswith('<decorator'):
         if hasattr(uwrp, 'definition'):
             uwrp = uwrp.definition
         elif hasattr(uwrp, 'alternative_to'):
             uwrp = uwrp.alternative_to
+        else:
+            break
 
         fn = inspect.getfile(uwrp)
 

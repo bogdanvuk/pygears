@@ -46,6 +46,15 @@ class Submodule:
     out_ports: typing.List
 
 
+def hashable(v):
+    """Determine whether `v` can be hashed."""
+    try:
+        hash(v)
+    except TypeError:
+        return False
+    return True
+
+
 class Function:
     def __init__(self, func, args, kwds, uniqueid=None):
         self.source = get_function_source(func)
@@ -58,11 +67,13 @@ class Function:
         # funtion code, so we need to take values as part of the hash.
         hargs = tuple(arg.val if isinstance(arg, ir.ResExpr) else arg.dtype for arg in args)
 
+        hkwds = tuple((k, v) for k, v in kwds.items() if hashable(v))
+
         if self.source:
             # TODO: Include keywords here
-            self._hash = hash(self.source) ^ hash(hargs)
+            self._hash = hash(self.source) ^ hash(hargs) ^ hash(hkwds)
         else:
-            self._hash = hash(self.__qualname__) ^ hash(hargs)
+            self._hash = hash(self.__qualname__) ^ hash(hargs) ^ hash(hkwds)
 
     @property
     def name(self):

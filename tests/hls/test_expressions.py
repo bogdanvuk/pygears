@@ -26,3 +26,17 @@ def test_expr_index(cosim_cls):
              ref=[0, 1, 0, 1, 0, 1, 0, 1])
 
     sim()
+
+
+def test_list_comprehension(cosim_cls):
+    @gear(hdl={'compile': True})
+    async def test(din: Tuple[Uint[4], Uint[4], Uint[4], Uint[4]]
+                   ) -> Tuple[Uint[5], Uint[5], Uint[5], Uint[5]]:
+        async with din as d:
+            yield [di + 1 for di in d]
+
+    directed(drv(t=Tuple[Uint[4], Uint[4], Uint[4], Uint[4]], seq=[(i, ) * 4 for i in range(8)]),
+             f=test(sim_cls=cosim_cls),
+             ref=[(i + 1, ) * 4 for i in range(8)])
+
+    sim()
