@@ -241,10 +241,10 @@
 
     {% if direction == "w" %}
       {% if tlast_w == 0 %}
-assign {{name}}_tdata = {{name}}.data;
+assign {{name}}.data = {{name}}_tdata;
       {% else %}
-assign {{name}}_tdata = {{name}}.data[{{tdata_w-1}}:0];
-assign {{name}}_tlast = &{{name}}.data[{{tdata_w}}+:{{tlast_w}}];
+assign {{name}}.data[{{tdata_w-1}}:0] = {{name}}_tdata;
+assign {{name}}.data[{{tdata_w}}+:{{tlast_w}}] = {{tlast_w}}'({{name}}_tlast);
       {% endif %}
 assign {{name}}.valid = {{name}}_tvalid;
 assign {{name}}_tready = {{name}}.ready;

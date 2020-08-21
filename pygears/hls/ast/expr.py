@@ -261,6 +261,11 @@ def _(node, ctx: Context):
     return ir.ResExpr(py_eval_expr(node, ctx))
 
 
+@node_visitor(ast.Dict)
+def _(node, ctx: Context):
+    return ir.ResExpr(py_eval_expr(node, ctx))
+
+
 @node_visitor(ast.ListComp)
 def _(node, ctx: Context):
     if len(node.generators) != 1:

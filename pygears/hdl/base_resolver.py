@@ -35,6 +35,18 @@ class ResolverBase(ABC):
         return mod_lang(self.node)
 
     @property
+    @functools.lru_cache()
+    def cfg(self):
+        hdl = {}
+        if 'hdl' in self.node.meta_kwds:
+            hdl.update(self.node.meta_kwds['hdl'])
+
+        if '__hdl__' in self.node.params and self.node.params['__hdl__'] is not None:
+            hdl.update(self.node.params['__hdl__'])
+
+        return hdl
+
+    @property
     def node_def_name(self):
         if self.node.definition:
             return self.node.definition.__name__

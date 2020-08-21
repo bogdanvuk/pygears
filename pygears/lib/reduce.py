@@ -1,4 +1,5 @@
 from pygears import gear
+from pygears.core.partial import Partial
 from pygears.typing import Number, Queue, saturate
 
 
@@ -9,10 +10,17 @@ async def reduce(din: Queue, init, *, f) -> b'init':
     async with init as i:
         acc = i
         async for (d, eot) in din:
-            acc = f(acc, d)
+            if isinstance(f, Partial):
+                async with f(acc, d) as fout:
+                    acc = fout
 
-            if eot:
-                yield acc
+                    if eot:
+                        yield acc
+            else:
+                acc = f(acc, d)
+
+                if eot:
+                    yield acc
 
 
 @gear

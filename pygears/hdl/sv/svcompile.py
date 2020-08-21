@@ -683,13 +683,17 @@ def compile_gear_body(gear, outdir, template_env):
     return '\n'.join(writer.lines), subsvmods
 
 
-def compile_gear(gear, template_env, module_name, outdir):
+def compile_gear(gear, template_env, module_name, outdir, comment=None, attrib=None):
     # TODO: Harden the case where local variable shadows a global one
     context = {
         'module_name': module_name,
         'intfs': template_env.port_intfs(gear),
         'sigs': gear.meta_kwds['signals'],
-        'params': gear.params
+        'params': gear.params,
+        'comment': {
+            'comment': comment,
+            'attrib': [] if attrib is None else attrib
+        }
     }
 
     context['svlines'], subsvmods = compile_gear_body(gear, outdir, template_env)

@@ -85,6 +85,9 @@ class HDLTemplateResolver(ResolverBase):
             'generics': []
         }
 
+        if 'attrib' in self.cfg:
+            context['comment'] = {'attrib': self.cfg['attrib']}
+
         for port in context['intfs']:
             context[f'_{port["name"]}'] = port
             context[f'_{port["name"]}_t'] = port['type']

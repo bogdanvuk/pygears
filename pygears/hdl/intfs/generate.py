@@ -93,7 +93,7 @@ def generate(top, intfdef):
         'inst_name': modinst.wrap_module_name,
         'intfs': intfs,
         'sigs': sigs,
-        'param_map': modinst.params,
+        'param_map': modinst.params if not modinst.wrapped else {},
         'port_def': defs,
         'ports': intfdef
     }

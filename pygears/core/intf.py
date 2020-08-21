@@ -3,7 +3,7 @@ import asyncio
 from .graph import get_consumer_tree, get_producer_queue, get_end_producer
 from pygears import GearDone
 from pygears.conf import PluginBase, reg, MultiAlternativeError
-from pygears.core.port import InPort, OutPort
+from pygears.core.port import InPort, OutPort, HDLConsumer
 from pygears.core.partial import Partial
 from pygears.core.sim_event import SimEvent
 from pygears.typing import TypeMatchError
@@ -135,6 +135,9 @@ class Intf:
             self.producer = None
 
     def connect(self, port):
+        if self.consumers and isinstance(self.consumers[0], HDLConsumer):
+            self.consumers.clear()
+
         self.consumers.append(port)
         port.producer = self
 

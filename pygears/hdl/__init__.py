@@ -92,6 +92,7 @@ class HDLPlugin(GearPlugin):
     def bind(cls):
         register_custom_log('hdl', logging.WARNING)
         reg['gear/params/meta'].subreg('hdl')
+        reg['gear/params/extra/__hdl__'] = None
 
         reg.confdef('hdl/include', default=[])
         reg.confdef('hdl/lang', default='sv')
