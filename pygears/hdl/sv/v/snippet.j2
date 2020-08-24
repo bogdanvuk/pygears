@@ -176,9 +176,22 @@ assign {{intf['name']}}.ready = {{intf['name']}}_ready;
 
 {% macro gear_module(module_name, intfs, comment, sigs=None, outtype="reg") -%}
   {% if comment is defined -%}
+    {% if isinstance(comment, dict) %}
+      {% if 'comment' in comment and comment['comment'] != None %}
+/*
+    {{ comment['comment'] }}
+*/
+      {% endif %}
+      {% if 'attrib' in comment %}
+        {% for i in comment['attrib'] -%}
+          (* {{ i }} *)
+        {% endfor %}
+      {% endif %}
+    {% else %}
 /*
     {{ comment }}
 */
+    {% endif %}
   {% endif %}
 
 module {{module_name}}

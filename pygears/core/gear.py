@@ -158,14 +158,14 @@ class Gear(NamedHierNode):
 
     @property
     def hierarchical(self):
-        if self.in_ports:
-            return not any(
-                any(isinstance(c, HDLConsumer) for c in p.consumer.consumers)
-                for p in self.in_ports)
-        else:
+        if self.out_ports:
             return not any(
                 isinstance(p.producer.producer, HDLProducer)
                 for p in self.out_ports)
+        else:
+            return not any(
+                any(isinstance(c, HDLConsumer) for c in p.consumer.consumers)
+                for p in self.in_ports)
 
     @property
     def definition(self):
