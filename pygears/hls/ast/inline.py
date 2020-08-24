@@ -103,6 +103,23 @@ def parse_func_call(func: typing.Callable, args, kwds, ctx: Context):
         return inline_expr(func_ir, func_ctx, args)
 
 
+def create_in_intf(i, ctx):
+    p = i.consumers[-1]
+    intf_name = f'{p.gear.basename}_{p.basename}'
+    # p.producer.source(HDLProducer())
+    ir_intf = ir.Variable(intf_name, ir.IntfType[p.producer.dtype], val=p.producer)
+    ctx.scope[intf_name] = ir_intf
+    return ctx.ref(intf_name)
+
+
+def create_out_intf(p, ctx):
+    intf_name = f'{p.gear.basename}_{p.basename}'
+    ir_intf = ir.Variable(intf_name, ir.IntfType[p.consumer.dtype], val=p.consumer)
+    ctx.scope[intf_name] = ir_intf
+    p.consumer.connect(HDLConsumer())
+    return ctx.ref(intf_name)
+
+
 def call_gear(func, args, kwds, ctx: Context):
     local_in = []
     for i, a in enumerate(args):
@@ -127,24 +144,12 @@ def call_gear(func, args, kwds, ctx: Context):
         gear_inst = outputs.producer.gear
 
     in_ports = []
-    for a, p in zip(args, gear_inst.in_ports):
+    for a, i in zip(args, local_in):
         if typeof(a.dtype, ir.IntfType):
             in_ports.append(a)
             continue
 
-        intf_name = f'{gear_inst.basename}_{p.basename}'
-        p.producer.source(HDLProducer())
-        ir_intf = ir.Variable(intf_name, ir.IntfType[p.producer.dtype], val=p.producer)
-        ctx.scope[intf_name] = ir_intf
-        in_ports.append(ctx.ref(intf_name))
-
-    out_ports = []
-    for p in gear_inst.out_ports:
-        intf_name = f'{gear_inst.basename}_{p.basename}'
-        ir_intf = ir.Variable(intf_name, ir.IntfType[p.consumer.dtype], val=p.consumer)
-        ctx.scope[intf_name] = ir_intf
-        p.consumer.connect(HDLConsumer())
-        out_ports.append(ctx.ref(intf_name))
+        in_ports.append(create_in_intf(i, ctx))
 
     stmts = []
     for a, intf in zip(args, in_ports):
@@ -152,6 +157,22 @@ def call_gear(func, args, kwds, ctx: Context):
             continue
 
         stmts.append(ir.AssignValue(ir.Name(intf.name, intf, ctx='store'), a))
+
+    # TODO: Hack! This functionality needs to be rewriten to resemble the way
+    # hierarchical modules work. This only works if ccat is automatically
+    # placed in front of a gear.
+    in_gear_inst = local_in[0].consumers[-1].gear
+    if in_gear_inst is not gear_inst:
+        ccat_out = create_out_intf(in_gear_inst.out_ports[0], ctx)
+        ctx.submodules.append(
+            Submodule(in_gear_inst, in_ports, [ccat_out]))
+
+        in_ports = [ccat_out]
+
+    out_ports = []
+    for p in gear_inst.out_ports:
+        out_ports.append(create_out_intf(p, ctx))
+
 
     ctx.submodules.append(Submodule(gear_inst, in_ports, out_ports))
 
