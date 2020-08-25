@@ -15,6 +15,7 @@ class TraceLevel(IntEnum):
 
 
 def set_trace_level(var, val):
+    var._val = val
     if val == TraceLevel.user:
         patch_pdb()
     else:

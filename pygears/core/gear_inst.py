@@ -363,7 +363,8 @@ def resolve_out_types(out_intfs, out_dtype, gear_inst):
             relation = 'smaller' if len(out_intfs) < len(out_dtype) else 'larger'
             raise TypeMatchError(
                 f"Number of actual output interfaces ({len(out_intfs)}) is {relation} "
-                f"than the number of specified output types: ({tuple(i.dtype for i in out_intfs)}) vs {repr(out_dtype)}"
+                f"than the number of specified output types: ({tuple(getattr(i, 'dtype', type(i)) for i in out_intfs)})"
+                f" vs {repr(out_dtype)}"
             )
 
         casted_out_intfs = list(out_intfs)

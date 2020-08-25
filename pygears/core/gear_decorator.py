@@ -6,6 +6,7 @@ import pygears
 from pygears.conf import Inject, inject, reg, PluginBase
 from pygears.typing import Tuple, typeof
 from pygears import module
+from pygears.core.util import is_async_gen
 
 from .funcutils import FunctionMaker
 from .partial import Partial
@@ -207,6 +208,11 @@ def infer_outnames(annotations, meta_kwds):
 
 
 def create_gear_definition(func, gear_resolver=None, **meta_kwds):
+
+    if inspect.isgeneratorfunction(func):
+        raise Exception(f'Generator function {func} cannot be used as a module. PyGears currently only supports regular functions'
+                        f' or async generators')
+
     if gear_resolver is None:
         gear_resolver = reg['gear/gear_dflt_resolver']
 

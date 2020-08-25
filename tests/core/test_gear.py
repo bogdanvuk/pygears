@@ -1,3 +1,4 @@
+import pytest
 from pygears import Intf, alternative, gear, find, reg
 from pygears.typing import Queue, Tuple, Uint
 
@@ -179,3 +180,22 @@ def test_intf_name_inference():
 
     assert fsub1_inst.outputs[0].var_name == 'var1'
     assert fsub2_inst.outputs[0].var_name == 'var2'
+
+
+def test_generator_func_err():
+    @gear
+    async def func():
+        yield 2
+
+    @gear
+    async def func():
+        await 2
+
+    with pytest.raises(Exception):
+        @gear
+        def func():
+            yield 2
+
+    @gear
+    def func():
+        return 2

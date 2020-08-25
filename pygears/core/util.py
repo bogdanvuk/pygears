@@ -9,7 +9,6 @@ def doublewrap(f):
     or
     @decorator
     '''
-
     @wraps(f)
     def new_dec(*args, **kwds):
         if len(args) == 1 and len(kwds) == 0 and callable(args[0]):
@@ -28,9 +27,12 @@ def perpetum(func, *args, **kwds):
 
 
 def is_standard_func(func):
-    is_async_gen = bool(func.__code__.co_flags & inspect.CO_ASYNC_GENERATOR)
-    return not (inspect.iscoroutinefunction(func)
-                or inspect.isgeneratorfunction(func) or is_async_gen)
+    return not (inspect.iscoroutinefunction(func) or inspect.isgeneratorfunction(func)
+                or is_async_gen(func))
+
+
+def is_async_gen(func):
+    return bool(func.__code__.co_flags & inspect.CO_ASYNC_GENERATOR)
 
 
 def get_function_context_dict(func):
