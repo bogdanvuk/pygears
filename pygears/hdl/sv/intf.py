@@ -32,24 +32,7 @@ class SVIntfGen:
     @property
     @functools.lru_cache(maxsize=None)
     def _basename(self):
-        producer_port = self.intf.producer
-        if isinstance(producer_port, HDLProducer):
-            #TODO: Not really a producer port
-            producer_port = self.intf.consumers[0]
-
-        port_name = producer_port.basename
-
-        if isinstance(producer_port, InPort):
-            return port_name
-        elif ((not self.is_broadcast) and self.intf.consumers
-              and isinstance(self.intf.consumers[0], OutPort)):
-            return self.intf.consumers[0].basename
-        elif hasattr(self.intf, 'var_name'):
-            return self.intf.var_name
-        elif self.sole_intf:
-            return f'{producer_port.gear.basename}'
-        else:
-            return f'{producer_port.gear.basename}_{port_name}'
+        return self.intf.basename
 
     @property
     def parent(self):

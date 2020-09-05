@@ -130,11 +130,15 @@ def register_traces_for_intf(dtype, scope, writer):
                 field_scope = scope
 
             if typeof(t, Float):
-                vcd_vars[name] = writer.register_var(
-                    field_scope, basename, var_type='real', size=32)
+                vcd_vars[name] = writer.register_var(field_scope,
+                                                     basename,
+                                                     var_type='real',
+                                                     size=32)
             else:
-                vcd_vars[name] = writer.register_var(
-                    field_scope, basename, var_type='wire', size=max(t.width, 1))
+                vcd_vars[name] = writer.register_var(field_scope,
+                                                     basename,
+                                                     var_type='wire',
+                                                     size=max(t.width, 1))
 
     for sig in ('valid', 'ready'):
         vcd_vars[sig] = writer.register_var(scope, sig, 'wire', size=1, init=0)
@@ -168,25 +172,23 @@ class VCDHierVisitor(HierVisitorBase):
         self.indent -= 4
 
     def Gear(self, module):
+        if module.parent is None:
+            return super().HierNode(module)
+
         self.enter_hier(module.basename)
 
+        gear_vcd_scope = module.name[1:].replace('/', '.')
+        for p in module.in_ports:
+            if not is_trace_included(p, self.include, self.vcd_tlm):
+                continue
+
+            scope = '.'.join([gear_vcd_scope, p.basename])
+            intf = p.consumer
+
+            self.vcd_vars[intf] = scope
+
         if module in self.sim_map and module.params['sim_cls'] is None:
-            gear_vcd_scope = module.name[1:].replace('/', '.')
-            for p in itertools.chain(module.out_ports, module.in_ports):
-                if not is_trace_included(p, self.include, self.vcd_tlm):
-                    continue
-
-                scope = '.'.join([gear_vcd_scope, p.basename])
-                if isinstance(p, OutPort):
-                    intf = p.producer
-                else:
-                    intf = p.consumer
-
-                # self.vcd_vars[intf] = register_traces_for_intf(
-                #     p.dtype, scope, self.writer)
-                self.vcd_vars[intf] = scope
-
-        super().HierNode(module)
+            super().HierNode(module)
 
         self.exit_hier(module.basename)
 
@@ -195,16 +197,14 @@ class VCDHierVisitor(HierVisitorBase):
 
 class VCD(SimExtend):
     @inject
-    def __init__(
-        self,
-        trace_fn='pygears.vcd',
-        include=Inject('debug/trace'),
-        tlm=False,
-        shmidcat=Inject('sim_extens/vcd/shmidcat'),
-        vcd_fifo=Inject('sim_extens/vcd/vcd_fifo'),
-        sim=Inject('sim/simulator'),
-        outdir=Inject('results-dir'),
-        sim_map=Inject('sim/map')):
+    def __init__(self,
+                 trace_fn='pygears.vcd',
+                 include=Inject('debug/trace'),
+                 tlm=False,
+                 shmidcat=Inject('sim_extens/vcd/shmidcat'),
+                 vcd_fifo=Inject('sim_extens/vcd/vcd_fifo'),
+                 sim=Inject('sim/simulator'),
+                 outdir=Inject('results-dir')):
 
         super().__init__()
         self.sim = sim
@@ -236,8 +236,9 @@ class VCD(SimExtend):
             sim_log().info(f'Main VCD dump to "{self.trace_fn}"')
 
         if self.shmidcat:
-            self.shmid_proc = subprocess.Popen(
-                f'shmidcat {self.trace_fn}', shell=True, stdout=subprocess.PIPE)
+            self.shmid_proc = subprocess.Popen(f'shmidcat {self.trace_fn}',
+                                               shell=True,
+                                               stdout=subprocess.PIPE)
 
             # Wait for shmidcat to actually open the pipe, which is necessary
             # to happen prior to init of the verilator. If shmidcat does not

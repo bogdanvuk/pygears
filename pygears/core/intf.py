@@ -3,7 +3,7 @@ import asyncio
 from .graph import get_consumer_tree, get_producer_queue, get_end_producer
 from pygears import GearDone
 from pygears.conf import PluginBase, reg, MultiAlternativeError
-from pygears.core.port import InPort, OutPort, HDLConsumer
+from pygears.core.port import InPort, OutPort, HDLConsumer, HDLProducer
 from pygears.core.partial import Partial
 from pygears.core.sim_event import SimEvent
 from pygears.typing import TypeMatchError
@@ -35,10 +35,10 @@ def operator_methods_gen(cls):
 @operator_methods_gen
 class Intf:
     OPERATOR_SUPPORT = [
-        '__getitem__', '__neg__', '__add__', '__and__', '__div__', '__eq__',
-        '__floordiv__', '__ge__', '__gt__', '__invert__', '__le__', '__lt__', '__mod__',
-        '__mul__', '__ne__', '__neg__', '__lshift__', '__rshift__', '__aiter__',
-        '__sub__', '__xor__', '__truediv__', '__matmul__'
+        '__getitem__', '__neg__', '__add__', '__and__', '__div__', '__eq__', '__floordiv__',
+        '__ge__', '__gt__', '__invert__', '__le__', '__lt__', '__mod__', '__mul__', '__ne__',
+        '__neg__', '__lshift__', '__rshift__', '__aiter__', '__sub__', '__xor__', '__truediv__',
+        '__matmul__'
     ]
 
     def __init__(self, dtype):
@@ -63,18 +63,36 @@ class Intf:
         }
 
     @property
+    def sole_intf(self):
+        if self.producer:
+            return len(self.producer.gear.out_ports) == 1
+        else:
+            return True
+
+    @property
+    def is_broadcast(self):
+        return len(self.consumers) > 1
+
+    @property
     def basename(self):
-        if isinstance(self.producer, InPort):
-            basename = self.producer.basename
-        elif isinstance(self.producer, OutPort):
-            basename = self.producer.basename
-        elif len(self.consumers) == 1 and isinstance(self.consumers[0], OutPort):
-            basename = self.consumers[0].basename
+        producer_port = self.producer
+        if isinstance(producer_port, HDLProducer):
+            #TODO: Not really a producer port
+            producer_port = self.consumers[0]
 
-        if hasattr(self, 'var_name'):
-            basename = self.var_name
+        port_name = producer_port.basename
 
-        return basename
+        if isinstance(producer_port, InPort):
+            return port_name
+        elif ((not self.is_broadcast) and self.consumers
+              and isinstance(self.consumers[0], OutPort)):
+            return self.consumers[0].basename
+        elif hasattr(self, 'var_name'):
+            return self.var_name
+        elif self.sole_intf:
+            return f'{producer_port.gear.basename}'
+        else:
+            return f'{producer_port.gear.basename}_{port_name}'
 
     @property
     def parent(self):
@@ -95,10 +113,9 @@ class Intf:
     # TODO: type checking should be performed here, right?
     def __ior__(self, iout):
         if isinstance(iout, Partial):
-            raise Exception(
-                f"Output of the unresolved gear '{iout.func.__name__}' with"
-                f" arguments {iout.args} and parameters {iout.kwds},"
-                f" connected to '{self}': {str(MultiAlternativeError(iout.errors))}")
+            raise Exception(f"Output of the unresolved gear '{iout.func.__name__}' with"
+                            f" arguments {iout.args} and parameters {iout.kwds},"
+                            f" connected to '{self}': {str(MultiAlternativeError(iout.errors))}")
 
         iout.producer.consumer = self
         if self.producer is not None:
@@ -111,12 +128,10 @@ class Intf:
 
     def __or__(self, other):
         if isinstance(other, Intf):
-            raise Exception(
-                f'Cannot connect interface {self} to the interface {other}\n'
-                f'Did you mean to connect to "{other.producer.gear.name}"?')
+            raise Exception(f'Cannot connect interface {self} to the interface {other}\n'
+                            f'Did you mean to connect to "{other.producer.gear.name}"?')
 
-        if not (isinstance(other,
-                           (str, TypingMeta)) or (other is int) or (other is float)):
+        if not (isinstance(other, (str, TypingMeta)) or (other is int) or (other is float)):
             return other.__ror__(self)
 
         operator_func = reg['gear/intf_oper/__or__']
@@ -154,7 +169,6 @@ class Intf:
 
         return self._end_consumers
 
-
     @property
     def end_producer(self):
         if self._end_producer is None:
@@ -177,8 +191,7 @@ class Intf:
             return self._out_queues
 
         self._out_queues = [
-            asyncio.Queue(maxsize=1, loop=reg['sim/simulator'])
-            for _ in self.end_consumers
+            asyncio.Queue(maxsize=1, loop=reg['sim/simulator']) for _ in self.end_consumers
         ]
 
         for i, q in enumerate(self._out_queues):
@@ -200,10 +213,9 @@ class Intf:
 
             if err:
                 # TODO: when value cannot be represented, the error report can be terse
-                raise TypeMatchError(
-                    f'{str(err)}\n, when converting output data "{repr(val)}"'
-                    f' from the "{reg["gear/current_module"].name}"'
-                    f' module to the type {repr(self.dtype)}')
+                raise TypeMatchError(f'{str(err)}\n, when converting output data "{repr(val)}"'
+                                     f' from the "{reg["gear/current_module"].name}"'
+                                     f' module to the type {repr(self.dtype)}')
 
         if put_event:
             put_event(self, val)
