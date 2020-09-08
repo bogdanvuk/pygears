@@ -431,34 +431,13 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             # print(f"-------------- {timestep} ------------------")
 
             self.phase = 'forward'
-            # self.cur_task_id = 0
-            # while self.cur_task_id < len(self.sim_gears):
-            #     sim_gear = self.sim_gears[self.cur_task_id]
-
-            #     if ((sim_gear not in self.forward_ready) and (sim_gear not in self.delta_ready)):
-            #         continue
-
-            #     print(
-            #         f'Forward: {sim_gear.port.name if hasattr(sim_gear, "port") else sim_gear.gear.name}'
-            #     )
-            #     self.cur_task_id = i - 1
-            #     self.maybe_run_gear(sim_gear, self.forward_ready)
-
             self.sim_list(self.sim_gears)
-
-            # for sim_gear in self.sim_gears:
-            #     if ((sim_gear in self.forward_ready) or (sim_gear in self.delta_ready)):
-            #         print(
-            #             f'Back: {sim_gear.port.name if hasattr(sim_gear, "port") else sim_gear.gear.name}'
-            #         )
-            #         self.maybe_run_gear(sim_gear, self.back_ready)
 
             self.phase = 'delta'
             delta.set()
             delta.clear()
 
             self.phase = 'back'
-
             while self._schedule_to_finish:
                 for sim_gear in self._schedule_to_finish.copy():
                     self._finish(sim_gear)
@@ -466,15 +445,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
             self.sim_list(self.sim_gears)
 
-            # for sim_gear in reversed(self.sim_gears):
-            #     if ((sim_gear in self.back_ready) or (sim_gear in self.delta_ready)):
-            #         print(
-            #             f'Back: {sim_gear.port.name if hasattr(sim_gear, "port") else sim_gear.gear.name}'
-            #         )
-            #         self.maybe_run_gear(sim_gear, self.back_ready)
-
             self.phase = 'cycle'
-
             self.events['before_timestep'](self, timestep)
 
             clk.set()
