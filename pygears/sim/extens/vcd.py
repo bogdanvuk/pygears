@@ -187,7 +187,7 @@ class VCDHierVisitor(HierVisitorBase):
 
             self.vcd_vars[intf] = scope
 
-        if module in self.sim_map and module.params['sim_cls'] is None:
+        if (module in self.sim_map or module.hierarchical) and module.params['sim_cls'] is None:
             super().HierNode(module)
 
         self.exit_hier(module.basename)

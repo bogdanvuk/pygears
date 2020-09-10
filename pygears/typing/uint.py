@@ -586,7 +586,7 @@ class Int(Integer, metaclass=IntType):
 
     @classmethod
     def decode(cls, val):
-        val = int(val)
+        val = int(val & ((1 << cls.width) - 1))
         if val >= (1 << (cls.width - 1)):
             val -= 1 << cls.width
 

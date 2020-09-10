@@ -1,6 +1,6 @@
 import pytest
 from pygears import gear
-from pygears.typing import Uint, Bool
+from pygears.typing import Uint, Bool, Tuple
 from pygears.lib.delay import delay_rng
 from pygears.sim import sim, cosim
 from pygears.lib import directed, drv
@@ -113,6 +113,20 @@ def test_async_over_if_over_async_over_if(lang, din_delay, dout_delay):
              | delay_rng(din_delay, din_delay),
              f=test,
              ref=[0, 1, 5, 4, 6, 6, 7])
+
+    cosim('/test', 'verilator', lang=lang)
+    sim(check_activity=False)
+
+
+def test_unpack(lang):
+    @gear(hdl={'compile': True})
+    async def test(din: Tuple) -> b'din[0] + din[1]':
+        async with din as (d1, d2):
+            yield d1 + d2
+
+    directed(drv(t=Tuple[Uint[4], Uint[4]], seq=[(i, i+4) for i in range(4)]),
+             f=test,
+             ref=[2*i+4 for i in range(4)])
 
     cosim('/test', 'verilator', lang=lang)
     sim(check_activity=False)
