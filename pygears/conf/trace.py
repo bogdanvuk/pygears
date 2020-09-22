@@ -1,4 +1,5 @@
 import logging
+import platform
 import sys
 import textwrap
 import inspect
@@ -399,7 +400,7 @@ if sys.version_info >= (3, 7):
         tb.tb_next = tb_next
         return tb
 
-elif PYPY:
+elif platform.python_implementation() == "PyPy":
     # PyPy might have special support, and won't work with ctypes.
     try:
         import tputil
