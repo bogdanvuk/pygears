@@ -276,10 +276,13 @@ class Integer(Integral, metaclass=IntegerType):
             return val
 
         if not typeof(type(val), Integer) and not isinstance(val, (int, list, float)):
+            if is_type(type(val)):
+                raise ValueError(f"cannot convert '{val}' of type '{repr(type(val))}' to '{cls}'")
+
             try:
                 val = int(val)
             except:
-                raise ValueError(f'cannot convert {val} to {cls}')
+                raise ValueError(f"cannot convert '{val}' of type '{repr(type(val))}' to '{cls}'")
 
         if isinstance(val, list):
             if cls.signed:

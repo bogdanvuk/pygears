@@ -45,3 +45,8 @@ async def fix(din, *, val, tout=b'get_literal_type(val)') -> b'tout':
         yield tout(val)
 
 ping = fix(val=Unit())
+
+
+@gear
+async def void(*, dtype) -> b'dtype':
+    raise GearDone

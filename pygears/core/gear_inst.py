@@ -328,11 +328,14 @@ def resolve_gear(gear_inst, out_intfs, out_dtype, fix_intfs):
             intfs.append(intf)
 
     elif fix_intfs:
+        # TODO: Should we allow partially supplied fix_intfs? Maybe None should
+        # be supplied where a new Intf should be created
         intfs = fix_intfs
     else:
         intfs = [Intf(dt) for dt in out_dtype]
         out_intfs = intfs
 
+    # TODO: Turn this assert into a error or remove it
     assert len(intfs) == len(gear_inst.out_port_intfs)
     for intf, port in zip(intfs, gear_inst.out_ports):
         intf.source(port)

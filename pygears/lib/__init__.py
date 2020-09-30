@@ -15,7 +15,7 @@ from .cast import cast, trunc
 from .quenvelope import quenvelope
 from .sieve import sieve
 from .permute import permuted_apply
-from .const import const, fix, once, ping
+from .const import const, fix, once, ping, void
 from .rom import rom
 from .operators import (add, div, eq, ge, gt, invert, le, lt, mod, mul, ne,
                         neg, sub, shl, shr, xor, code)
