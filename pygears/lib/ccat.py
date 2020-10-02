@@ -1,6 +1,7 @@
 from pygears import gear
 from pygears.util.utils import gather
 from pygears.lib.shred import shred
+from pygears.typing import Tuple
 
 
 # @gear(hdl={'compile': True})

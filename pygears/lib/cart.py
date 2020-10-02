@@ -14,7 +14,10 @@ def lvl_if_queue(t):
         return t.lvl
 
 
-def cart_type(dtypes):
+def cart_type(dtypes, order=None):
+    if order is not None:
+        dtypes = [dtypes[o] for o in order]
+
     arg_queue_lvl = [lvl_if_queue(d) for d in dtypes]
 
     base_type = Tuple[tuple(d if lvl == 0 else d[0]
@@ -26,14 +29,19 @@ def cart_type(dtypes):
 
 
 @gear(enablement=b'len(din) == 2')
-async def cart_cat(*din) -> b'cart_type(din)':
+async def cart_cat(*din, order=None) -> b'cart_type(din, order)':
+    if order is None:
+        order = range(len(din))
+
     async with gather(*din) as data:
         dout_data = []
         dout_eot = Unit()
-        for d in data:
+        for o in order:
+            d = data[o]
+        # for d in data:
             if isinstance(d, Queue):
                 dout_data.append(d.data)
-                dout_eot = d.eot @ dout_eot
+                dout_eot = dout_eot @ d.eot
             else:
                 dout_data.append(d)
 
@@ -41,8 +49,8 @@ async def cart_cat(*din) -> b'cart_type(din)':
 
 
 @gear(enablement=b'len(din) == 2')
-def cart(*din) -> b'cart_type(din)':
-    return din | cart_sync(outsync=False) | cart_cat
+def cart(*din, order=None) -> b'cart_type(din, order)':
+    return din | cart_sync(outsync=False) | cart_cat(order=order)
 
 
 @alternative(cart)
@@ -75,16 +83,13 @@ def uncart(din, *, dtypes):
 
 @gear(enablement=b'len(din) == 2')
 async def cart_sync(*din, outsync=True) -> b'din':
-    din_t = [d.dtype for d in din]
-
-    queue_id, single_id = (0, 1) if typeof(din_t[0], Queue) else (1, 0)
-
-    async with din[single_id] as single_data:
-        async for queue_data in quiter_async(din[queue_id]):
-            dout = [0, 0]
-            dout[single_id] = single_data
-            dout[queue_id] = queue_data
-            yield tuple(dout)
+    async with din[0] as d0:
+        if typeof(din[1].dtype, Queue):
+            async for d1 in quiter_async(din[1]):
+                yield d0, d1
+        else:
+            async with din[1] as d1:
+                yield d0, d1
 
 
 @alternative(cart_sync)
@@ -102,3 +107,9 @@ def cart_sync_with(sync_in, din, *, balance=None):
     sync_in_sync | shred
 
     return din_sync
+
+@gear
+def cart_wrap_with(sync, din):
+    din_cart = cart(sync, din)
+
+    return ccat(din_cart['data'][1], din_cart['eot']) | Queue

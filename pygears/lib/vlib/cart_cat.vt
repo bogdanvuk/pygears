@@ -20,10 +20,10 @@
   {%- set max_lvl = intfs|isinput|keymap("lvl")|max %}
 
     {% if max_lvl == 0 %}
-    assign dout_s = {{din_data_cat(intfs)}};
+    assign dout_s = {{din_data_cat(intfs, params['order'])}};
     {% else %}
     assign dout_s.eot = { {{queue_intf_names|format_list("%s_s.eot")|join(", ")}} };
-    assign dout_s.data = {{din_data_cat(intfs)}};
+    assign dout_s.data = {{din_data_cat(intfs, params['order'])}};
     {% endif %}
 
     logic  handshake;

@@ -34,4 +34,4 @@ async def clip(din: Queue[Tuple[{
 @alternative(clip)
 @gear
 def clip2(din: Queue, size: Uint, *, init=1) -> b'din':
-    return cart(din, size) | clip
+    return cart(size, din, order=[1, 0]) | clip(init=init)

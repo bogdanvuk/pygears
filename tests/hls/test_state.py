@@ -113,3 +113,13 @@ def test_loop_state(lang):
 
     cosim('/test', 'verilator', lang=lang)
     sim()
+
+
+# TODO: This fails
+# def test_loop_state(lang):
+#     @gear(hdl={'compile': True})
+#     async def init() -> Bool:
+#         yield True
+
+#         while True:
+#             yield False

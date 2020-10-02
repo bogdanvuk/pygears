@@ -36,4 +36,4 @@ async def take(din: Queue[Tuple[{
 @alternative(take)
 @gear
 def take2(din: Queue, size: Uint):
-    return cart(din, size) | take
+    return cart(size, din, order=[1, 0]) | take

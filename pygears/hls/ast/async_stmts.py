@@ -88,8 +88,6 @@ def parse_yield(node, ctx):
     try:
         ret = cast_return(yield_expr, ctx.gear.out_ports)
     except TypeError as e:
-        breakpoint()
-        ret = cast_return(yield_expr, ctx.gear.out_ports)
         raise SyntaxError(f"{str(e)}\n    - when casting output value to the output type")
 
     if isinstance(ret, ir.TupleExpr):

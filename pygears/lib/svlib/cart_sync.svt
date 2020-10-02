@@ -33,15 +33,12 @@
     assign {{dout}}.data = {{din}}.data;
   {% endfor %}
 
-  {% if min_lvl > 0 %}
-    assign din0.ready = din1.valid && din1.ready && {{intfs[1]['data_eot']}};
-    assign din1.ready = dout1.valid && dout1.ready;
-  {% elif intfs[1]['lvl'] > 0 %}
+  {% if intfs[1]['lvl'] > 0 %}
     assign din0.ready = din1.valid && din1.ready && {{intfs[1]['data_eot']}};
     assign din1.ready = dout1.valid && dout1.ready;
   {% else %}
-    assign din0.ready = dout0.valid && dout0.ready;
-    assign din1.ready = din0.valid && din0.ready && {{intfs[0]['data_eot']}};
+    assign din0.ready = din1.valid && din1.ready;
+    assign din1.ready = dout1.valid && dout1.ready;
   {% endif %}
 {% endcall %}
 

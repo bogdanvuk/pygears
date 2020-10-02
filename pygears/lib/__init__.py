@@ -7,7 +7,7 @@ from .flatten import flatten
 from .project import project
 from .czip import czip, zip_sync, unzip, zip_sync_with
 from .ccat import ccat, ccat_sync_with
-from .cart import cart, cart_sync, cart_sync_with
+from .cart import cart, cart_sync, cart_sync_with, cart_wrap_with
 from .union import (union_sync, union_collapse, union_sync_with, case, when,
                     mux_by, ucase, select, field_sel, maybe_when)
 from .queue import queue_wrap_from, sot_queue

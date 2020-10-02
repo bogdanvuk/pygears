@@ -4,7 +4,7 @@ import sys
 from copy import copy
 
 from pygears.conf import MultiAlternativeError, core_log, reg
-from pygears.typing import Any, cast
+from pygears.typing import Any, cast, get_match_conds
 from pygears.core.util import is_standard_func, get_function_context_dict
 
 from .partial import Partial
@@ -321,6 +321,18 @@ def resolve_gear(gear_inst, out_intfs, out_dtype, fix_intfs):
         for i, (name, dt) in enumerate(zip(gear_inst.outnames, out_dtype)):
             if name in fix_intfs:
                 intf = fix_intfs[name]
+                err = None
+                try:
+                    get_match_conds(dt, intf.dtype)
+                except (TypeError, TypeMatchError) as e:
+                    err = type(
+                        e
+                    )(f"{str(e)}\n    when connecting user supplied output interface '{name}' of '{gear_inst.name}'"
+                      f"\n    FIX: Consider changing the type of the supplied output interface '{name}' to '{repr(dt)}'"
+                      )
+
+                if err:
+                    raise err
             else:
                 intf = Intf(dt)
                 out_intfs.append(intf)
@@ -330,6 +342,7 @@ def resolve_gear(gear_inst, out_intfs, out_dtype, fix_intfs):
     elif fix_intfs:
         # TODO: Should we allow partially supplied fix_intfs? Maybe None should
         # be supplied where a new Intf should be created
+        # TODO: Do similar type checking as above
         intfs = fix_intfs
     else:
         intfs = [Intf(dt) for dt in out_dtype]
@@ -367,8 +380,7 @@ def resolve_out_types(out_intfs, out_dtype, gear_inst):
             raise TypeMatchError(
                 f"Number of actual output interfaces ({len(out_intfs)}) is {relation} "
                 f"than the number of specified output types: ({tuple(getattr(i, 'dtype', type(i)) for i in out_intfs)})"
-                f" vs {repr(out_dtype)}"
-            )
+                f" vs {repr(out_dtype)}")
 
         casted_out_intfs = list(out_intfs)
 
