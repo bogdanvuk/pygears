@@ -27,7 +27,8 @@ def decouple_dout_setup(module):
 async def decouple_dout(*, t, depth) -> b't':
     queue = module().decouple_din.queue
     while queue.empty():
-        if reg['sim/map'][module().decouple_din].done:
+        din = module().decouple_din
+        if din not in reg['sim/map'] or reg['sim/map'][module().decouple_din].done:
             raise GearDone
 
         await clk()

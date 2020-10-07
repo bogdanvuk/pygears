@@ -1,4 +1,5 @@
 import inspect
+import weakref
 
 from pygears import reg, Intf, module, find
 from pygears.sim.sim_gear import SimGear, is_simgear_func
@@ -8,6 +9,7 @@ from pygears.core.gear_inst import gear_base_resolver
 from pygears.core.hier_node import HierVisitorBase
 from pygears.core.port import HDLConsumer, HDLProducer
 
+from pygears.sim.intf import SimIntf
 
 def sim_compile_resolver(func, *args, **kwds):
     ctx = reg['gear/exec_context']
@@ -17,7 +19,7 @@ def sim_compile_resolver(func, *args, **kwds):
         local_in = []
         for a in args:
             if isinstance(a, Intf):
-                a.consumers.clear()
+                # a.consumers.clear()
                 local_in.append(a)
             else:
                 from pygears.lib.const import get_literal_type
@@ -32,8 +34,6 @@ def sim_compile_resolver(func, *args, **kwds):
 
         if isinstance(outputs, tuple):
             raise Exception("Not yet supported")
-
-        outputs.connect(HDLConsumer())
 
         gear_inst = outputs.producer.gear
 
@@ -55,13 +55,30 @@ def sim_compile_resolver(func, *args, **kwds):
         cur_sim = reg['gear/current_sim']
         sim_map = reg['sim/map']
 
+        outputs.connect(HDLConsumer())
+        gear_inst.trace = None
         sim_gear = SimGear(gear_inst)
+
         sim_map[gear_inst] = sim_gear
         cur_sim.child.append(sim_gear)
+        sim_gear.parent = cur_sim
         simulator.forward_ready.add(sim_gear)
         simulator.tasks[sim_gear] = sim_gear.run()
         simulator.task_data[sim_gear] = None
 
+        outputs = SimIntf(outputs)
+
+        def callback(intf):
+            print(f'Out of scope: {intf.producer.gear.name}')
+            g = intf.producer.gear
+            intf.finish()
+            for i in g.in_ports:
+                if isinstance(i.producer.producer, HDLProducer):
+                    i.producer.finish()
+                else:
+                    i.producer.disconnect(i)
+
+        weakref.finalize(outputs, callback, outputs.intf)
         return outputs
     else:
         return gear_base_resolver(func, *args, **kwds)

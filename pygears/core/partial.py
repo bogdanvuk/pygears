@@ -130,6 +130,7 @@ class Partial:
                     if key is not None:
                         self._cache[key] = func
 
+                    self.errors = []
                     return ret
                 else:
                     # TODO: Can happen if user forgets '*' for separation, warn about this

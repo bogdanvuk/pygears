@@ -12,40 +12,32 @@ def test_code(lang):
 
     cast_t = Maybe[Uint[31]]
 
-    verif(
-        drv(t=Uint[32], seq=list(range(10))),
-        f=test(name='dut', t=cast_t),
-        ref=test(t=cast_t))
+    verif(drv(t=Uint[32], seq=list(range(10))), f=test(name='dut', t=cast_t), ref=test(t=cast_t))
 
     cosim('/dut', 'verilator', lang=lang)
     sim()
 
 
 def test_code_unit(lang):
-    verif(
-        drv(t=Uint[1], seq=list(range(2))),
-        f=code_gear(name='dut', t=Unit),
-        ref=code_gear(t=Unit))
+    verif(drv(t=Uint[1], seq=list(range(2))),
+          f=code_gear(name='dut', t=Unit),
+          ref=code_gear(t=Unit))
 
     cosim('/dut', 'verilator', lang=lang)
     sim()
 
 
 def test_code_unit_to_unit(lang):
-    verif(
-        drv(t=Uint[0], seq=[0, 0]),
-        f=code_gear(name='dut', t=Unit),
-        ref=code_gear(t=Unit))
+    verif(drv(t=Uint[0], seq=[0, 0]), f=code_gear(name='dut', t=Unit), ref=code_gear(t=Unit))
 
     cosim('/dut', 'verilator', lang=lang)
     sim()
 
 
 def test_cast_union_of_units(lang):
-    verif(
-        drv(t=Tuple[Unit, Uint[1]], seq=[(Unit(), 0), (Unit(), 1)]),
-        f=cast(name='dut', t=Union[Unit, Unit]),
-        ref=code_gear(t=Union[Unit, Unit]))
+    verif(drv(t=Tuple[Unit, Uint[1]], seq=[(Unit(), 0), (Unit(), 1)]),
+          f=cast(name='dut', t=Union[Unit, Unit]),
+          ref=code_gear(t=Union[Unit, Unit]))
 
     cosim('/dut', 'verilator', lang=lang)
     sim()

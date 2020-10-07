@@ -152,7 +152,7 @@ class SimGear:
             for p in self.gear.in_ports:
                 intf = p.consumer
                 try:
-                    if not intf.empty():
+                    if intf.producer.producer and not intf.empty():
                         prod_intf = intf.in_queue.intf
                         prod_gear = prod_intf.consumers[0].gear
                         schedule_to_finish(prod_gear)
