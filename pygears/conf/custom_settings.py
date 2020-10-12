@@ -57,11 +57,11 @@ def load_rc(rc_fn, dirname=None):
         else:
             dirname = os.getcwd()
 
-    while dirname != '/':
+    while dirname != os.path.abspath(os.sep):
         search_dirs.append(dirname)
         dirname = os.path.abspath(os.path.join(dirname, '..'))
 
-    home_path = os.environ.get('HOME')
+    home_path = os.path.expanduser("~")
     if home_path not in search_dirs:
         search_dirs.append(home_path)
 
