@@ -157,7 +157,7 @@ def create_unpacked_tuple_alternative(g):
 
     signature = formatargspec(din_type.fields, *paramspec)
 
-    f = FunctionMaker(name=f'{g.func.__name__}_unpack', signature=signature)
+    f = FunctionMaker(name=f'__{g.func.__name__}_unpack__', signature=signature)
 
     f.annotations = unpack_annot
 
@@ -169,7 +169,7 @@ def create_unpacked_tuple_alternative(g):
     body = f'''def %(name)s%(signature)s:
     {arg} = ccat({",".join(din_type.fields)})
     try:
-        return __{base_func.__name__}({find_invocation(base_func)})
+        return __{base_func.__name__}({find_invocation(base_func)}, __no_unpack_alt__=True)
     except Exception as e:
         gear_inst = module().child[-1]
         gear_inst.parent.child.remove(gear_inst)
