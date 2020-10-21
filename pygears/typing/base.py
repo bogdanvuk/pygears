@@ -595,7 +595,9 @@ class EnumerableGenericMeta(GenericMeta):
 class Any(metaclass=TypingMeta):
     """Type that can be matched to any other type.
     """
-    pass
+
+    def __new__(val):
+        return val
 
 
 def typeof(obj, t):

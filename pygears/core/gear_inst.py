@@ -348,8 +348,12 @@ def resolve_gear(gear_inst, out_intfs, out_dtype, fix_intfs):
         intfs = [Intf(dt) for dt in out_dtype]
         out_intfs = intfs
 
-    # TODO: Turn this assert into a error or remove it
-    assert len(intfs) == len(gear_inst.out_port_intfs)
+    if len(intfs) != len(gear_inst.out_port_intfs):
+        raise GearArgsNotSpecified(
+            f'Received {len(intfs)} output interfaces,'
+            f' while expecting {len(gear_inst.out_port_intfs)}'
+        )
+
     for intf, port in zip(intfs, gear_inst.out_ports):
         intf.source(port)
 
@@ -439,8 +443,10 @@ def gear_base_resolver(func, *args, name=None, intfs=None, **kwds):
         fix_intfs = []
     elif isinstance(intfs, Intf):
         fix_intfs = [intfs]
+    elif isinstance(intfs, dict):
+        fix_intfs = intfs
     else:
-        fix_intfs = intfs.copy()
+        fix_intfs = list(intfs)
 
     if reg['gear/memoize']:
         gear_inst, outputs, memo_key = get_memoized_gear(func, args, const_args, kwds, fix_intfs,
