@@ -116,7 +116,11 @@ class Partial:
         if key in self._cache:
             return self._cache[key](*args, **kwds)
 
+        no_unpack_alt = kwds.pop('__no_unpack_alt__', False)
         alternatives = [self.func] + getattr(self.func, 'alternatives', [])
+        if no_unpack_alt:
+            alternatives = [f for f in alternatives if not f.__name__.endswith('_unpack__')]
+
         self.errors = [None] * len(alternatives)
 
         for i, func in enumerate(alternatives):

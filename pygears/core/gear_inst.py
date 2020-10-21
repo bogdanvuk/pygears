@@ -512,7 +512,7 @@ def gear_base_resolver(func, *args, name=None, intfs=None, **kwds):
 
         raise err
 
-    if reg['gear/memoize'] and not func.__name__.endswith('_unpack'):
+    if reg['gear/memoize'] and not func.__name__.endswith('_unpack__'):
         if memo_key is not None:
             memoize_gear(gear_inst, memo_key)
 
