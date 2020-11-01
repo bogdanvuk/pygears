@@ -6,7 +6,6 @@ from pygears.core.port import HDLProducer, HDLConsumer
 from pygears.core.gear import InSig, OutSig
 from dataclasses import dataclass, field
 from typing import List
-from pygears import Intf
 import itertools
 from pygears.hdl.sv.v.accessors import rewrite
 
@@ -248,11 +247,13 @@ class SVCompiler(HDLVisitor):
             if not isinstance(obj, ir.Variable):
                 continue
 
-            if isinstance(obj.val, Intf):
-                if isinstance(obj.val.producer, HDLProducer):
+            if typeof(obj.dtype, ir.IntfType):
+                # if isinstance(obj.val.producer, HDLProducer):
+                if obj.dtype.direction == ir.IntfType.iout:
                     if self.selected(self.ctx.ref(name, ctx='store')):
                         yield self.attr(name, 'valid'), '0'
-                elif len(obj.val.consumers) == 1 and isinstance(obj.val.consumers[0], HDLConsumer):
+                # elif len(obj.val.consumers) == 1 and isinstance(obj.val.consumers[0], HDLConsumer):
+                else:
                     if self.selected(self.ctx.ref(name, ctx='ready')):
                         yield self.attr(name, 'ready'), f"{self.attr(name, 'valid')} ? 0 : 1'bx"
 
@@ -427,25 +428,13 @@ def write_declarations(ctx, subsvmods, template_env):
 
         writer.line()
 
-    def is_port_intf(intf):
-        if intf is None:
-            return False
-
-        if not isinstance(intf.producer, HDLProducer):
-            if intf.producer is None:
-                breakpoint()
-
-            return intf.producer.gear is ctx.gear
-
-        if intf.consumers:
-            return intf.consumers[0].gear is ctx.gear
-
-        return False
+    # TODO: Why do we need this check, can we generalize this for any variable?
+    def is_port_intf(name):
+        return any(p.basename == name for p in ctx.gear.in_ports + ctx.gear.out_ports)
 
     for name, expr in ctx.intfs.items():
-        intf = expr.val
         dtype = expr.dtype.dtype
-        if not is_port_intf(intf):
+        if not is_port_intf(name):
             if lang == 'sv':
                 writer.line(f'dti#({dtype.width}) {name}();')
             else:
@@ -457,18 +446,18 @@ def write_declarations(ctx, subsvmods, template_env):
             name_t = typedef_or_inline(writer, dtype, name)
             writer.line(f'{name_t} {name}_s;')
 
-            if intf is not None and isinstance(intf.producer, HDLProducer):
-                writer.line(f'assign {sep.join([name, "data"])} = {name}_s;')
-            else:
+            if expr.dtype.direction == ir.IntfType.iin:
                 writer.line(f'assign {name}_s = {sep.join([name, "data"])};')
+            else:
+                writer.line(f'assign {sep.join([name, "data"])} = {name}_s;')
 
         else:
-            if intf is not None and isinstance(intf.producer, HDLProducer):
-                writer.block(vgen_signal(dtype, 'reg', f'{name}_s', 'output', False))
-                writer.line(f"assign {name}_data = {name}_s;")
-            else:
+            if expr.dtype.direction == ir.IntfType.iin:
                 writer.block(vgen_signal(dtype, 'reg', f'{name}_s', 'input', False))
                 writer.line(f"assign {name}_s = {name}_data;")
+            else:
+                writer.block(vgen_signal(dtype, 'reg', f'{name}_s', 'output', False))
+                writer.line(f"assign {name}_data = {name}_s;")
 
         writer.line()
 
@@ -615,13 +604,13 @@ def write_module(ctx: Context, hdl, writer, subsvmods, funcs, template_env, conf
                          lang=lang,
                          aux_funcs=aux_funcs)
 
-    for name, expr in ctx.intfs.items():
-        blk += svcompile(hdl,
-                         ctx,
-                         name,
-                         selected=lambda x: x.name == name,
-                         lang=lang,
-                         aux_funcs=aux_funcs)
+    # for name, expr in ctx.intfs.items():
+    #     blk += svcompile(hdl,
+    #                      ctx,
+    #                      name,
+    #                      selected=lambda x: x.name == name,
+    #                      lang=lang,
+    #                      aux_funcs=aux_funcs)
 
     if lang == 'v':
         blk = vrewrite(ctx, blk)
@@ -637,11 +626,10 @@ def vrewrite(ctx, body):
         if not isinstance(v, ir.Variable):
             continue
 
-        if isinstance(v.val, Intf):
-            index[name] = v.val
-            index[f'{name}_s'] = v.val.dtype
+        index[name] = v.dtype
+        if typeof(v.dtype, ir.IntfType):
+            index[f'{name}_s'] = v.dtype.dtype
         else:
-            index[name] = v.dtype
             if v.reg:
                 index[f'{name}_next'] = v.dtype
 

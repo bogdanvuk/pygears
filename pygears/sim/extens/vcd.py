@@ -183,9 +183,8 @@ class VCDHierVisitor(HierVisitorBase):
                 continue
 
             scope = '.'.join([gear_vcd_scope, p.basename])
-            intf = p.consumer
 
-            self.vcd_vars[intf] = scope
+            self.vcd_vars[p] = scope
 
         if (module in self.sim_map or module.hierarchical) and module.params['sim_cls'] is None:
             super().HierNode(module)
@@ -264,15 +263,21 @@ class VCD(SimExtend):
         self.handhake = set()
 
         self.vcd_vars = {
-            intf: register_traces_for_intf(intf.dtype, scope, self.writer)
-            for intf, scope in vcd_visitor.vcd_vars.items()
+            p: register_traces_for_intf(p.dtype, scope, self.writer)
+            for p, scope in vcd_visitor.vcd_vars.items()
         }
 
-        for intf in self.vcd_vars:
+        self.writer.flush()
+
+    def before_run(self, sim):
+        vcd_intf_vars = {}
+        for p, v in self.vcd_vars.items():
+            intf = p.consumer
             intf.events['put'].append(self.intf_put)
             intf.events['ack'].append(self.intf_ack)
+            vcd_intf_vars[intf] = v
 
-        self.writer.flush()
+        self.vcd_vars = vcd_intf_vars
 
     def intf_put(self, intf, val):
         if intf not in self.vcd_vars:

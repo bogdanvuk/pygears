@@ -74,4 +74,4 @@ def test_multicycle_comb_middle():
 
 def test_multicycle_decouple_middle():
     # One additional cycle is needed for Verilator timeout set above
-    multicycle_test_gen(dualcycle_wrap_decouple_middle, latency=4)
+    multicycle_test_gen(dualcycle_wrap_decouple_middle, latency=5)

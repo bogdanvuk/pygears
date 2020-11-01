@@ -107,14 +107,14 @@ def create_in_intf(i, ctx):
     p = i.consumers[-1]
     intf_name = f'{p.gear.basename}_{p.basename}'
     # p.producer.source(HDLProducer())
-    ir_intf = ir.Variable(intf_name, ir.IntfType[p.producer.dtype], val=p.producer)
+    ir_intf = ir.Variable(intf_name, ir.IntfType[p.producer.dtype, ir.IntfType.iout])
     ctx.scope[intf_name] = ir_intf
     return ctx.ref(intf_name)
 
 
 def create_out_intf(p, ctx):
     intf_name = f'{p.gear.basename}_{p.basename}'
-    ir_intf = ir.Variable(intf_name, ir.IntfType[p.consumer.dtype], val=p.consumer)
+    ir_intf = ir.Variable(intf_name, ir.IntfType[p.consumer.dtype, ir.IntfType.iin])
     ctx.scope[intf_name] = ir_intf
     p.consumer.connect(HDLConsumer())
     return ctx.ref(intf_name)
@@ -124,7 +124,16 @@ def call_gear(func, args, kwds, ctx: Context):
     local_in = []
     for i, a in enumerate(args):
         if typeof(a.dtype, ir.IntfType):
-            intf = a.obj.val
+            if not isinstance(a, ir.Name):
+                raise Exception(f'Expressions with interfaces not yet supported')
+
+            intf = Intf(a.dtype.dtype)
+            for p in ctx.gear.in_ports:
+                if p.basename == a.name:
+                    intf.source(p)
+                    break
+            else:
+                raise Exception(f'Declaring free interfaces in async gears not yet supported')
         else:
             intf = Intf(a.dtype)
             intf.source(HDLProducer())
@@ -156,7 +165,7 @@ def call_gear(func, args, kwds, ctx: Context):
         if a == intf:
             continue
 
-        stmts.append(ir.AssignValue(ir.Name(intf.name, intf, ctx='store'), a))
+        stmts.append(ir.AssignValue(ctx.ref(intf.name, ctx='store'), a))
 
     # TODO: Hack! This functionality needs to be rewriten to resemble the way
     # hierarchical modules work. This only works if ccat is automatically

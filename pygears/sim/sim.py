@@ -57,7 +57,8 @@ def artifacts_dir():
 
 def schedule_to_finish(gear):
     sim = sim_reg['simulator']
-    sim.schedule_to_finish(sim_reg['map'][gear])
+    if gear in sim_reg['map']:
+        sim.schedule_to_finish(sim_reg['map'][gear])
 
 
 class SimFuture(asyncio.Future):
@@ -194,7 +195,7 @@ def simgear_exec_order(gears):
 
     for g, sim_gear in sim_map.items():
         if isinstance(g, InPort):
-            #TODO: Following doesn't work when verilator adds InputPorts for channeled intfs
+            # TODO: Following doesn't work when verilator adds InputPorts for channeled intfs
             # if (len(g.consumer.consumers) == 1
             #         and isinstance(g.consumer.consumers[0], HDLConsumer)):
 
@@ -204,8 +205,9 @@ def simgear_exec_order(gears):
                 dag[g] = get_consumer_tree(g.consumer)
 
         elif isinstance(g, OutPort):
-            #TODO: Test if this works
-            # if isinstance(g.producer.producer, HDLProducer):
+            # TODO: Test if this works
+            # from pygers.core.graph import has_async_producer
+            # if has_async_producer(g):
             if (not g.gear.hierarchical):
                 dag[g.gear].append(g)
 
@@ -293,17 +295,34 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         callback(fut[0])
 
     def future_done(self, fut):
-        sim_gear = self.wait_list.pop(fut)
+        sim_gear = self.wait_list.pop(fut, None)
         if fut.cancelled():
             # Interface that sim_gear waited on is done, so we need to finish
             # the sim_gear too
-            self.schedule_to_finish(sim_gear)
+            if sim_gear:
+                self.schedule_to_finish(sim_gear)
         else:
             # If sim_gear was waiting for ack
             if sim_gear.phase == 'back':
                 self.back_ready.add(sim_gear)
             else:
                 self.forward_ready.add(sim_gear)
+
+    def remove(self, sim_gear):
+        # print(f'Remove: {sim_gear.port.name if hasattr(sim_gear, "port") else sim_gear.gear.name}')
+        self.sim_map.pop(sim_gear.gear, None)
+        self.tasks.pop(sim_gear, None)
+        self.task_data.pop(sim_gear, None)
+
+        if sim_gear.parent is None:
+            self.sim_gears.remove(sim_gear)
+
+        self.back_ready.discard(sim_gear)
+        self.forward_ready.discard(sim_gear)
+        self.delta_ready.discard(sim_gear)
+        self.back_ready.discard(sim_gear)
+        self.forward_ready.discard(sim_gear)
+        self.delta_ready.discard(sim_gear)
 
     def create_future(self):
         """Create a Future object attached to the loop."""
@@ -327,17 +346,18 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             self.tasks[sim_gear].throw(GearDone)
         except (StopIteration, GearDone):
             pass
+        except Exception as e:
+            raise e
         else:
-            sim_log().error("Gear didn't stop on finish!")
+            sim_log().error(
+                f"Process of '{sim_gear.port.name if hasattr(sim_gear, 'port') else sim_gear.gear.name}'"
+                f" didn't stop on finish!")
         finally:
-            self.done.add(sim_gear)
             self.events['after_finish'](self, sim_gear)
             self.cur_gear = reg['gear/root']
-            self.back_ready.discard(sim_gear)
-            self.forward_ready.discard(sim_gear)
-            self.delta_ready.discard(sim_gear)
             reg['gear/current_module'] = self.cur_gear
             reg['gear/current_sim'] = sim_gear
+            self.remove(sim_gear)
 
     def run_gear(self, sim_gear, ready):
         before_event = None
@@ -397,11 +417,16 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             if ((sim_gear in ready_dict) or (sim_gear in self.delta_ready)):
                 self.maybe_run_gear(sim_gear, ready_dict)
 
-            if (sim_gear.child):
-                self.sim_list(sim_gear.child)
+            if sim_gear.child:
+                unprocessed_children = True
+                while (unprocessed_children):
+                    self.sim_list(sim_gear.child)
 
-                if ((sim_gear in ready_dict) or (sim_gear in self.delta_ready)):
-                    self.maybe_run_gear(sim_gear, ready_dict)
+                    cur_child_num = len(sim_gear.child)
+                    if ((sim_gear in ready_dict) or (sim_gear in self.delta_ready)):
+                        self.maybe_run_gear(sim_gear, ready_dict)
+
+                    unprocessed_children = cur_child_num < len(sim_gear.child)
 
     def sim_loop(self, timeout):
         clk = reg['sim/clk_event']
@@ -429,6 +454,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             #     sim_log().info("-------------- Simulation cycle --------------")
 
             # print(f"-------------- {timestep} ------------------")
+            # print(f'Tasks: {len(self.tasks)}')
 
             self.phase = 'forward'
             self.sim_list(self.sim_gears)
@@ -459,6 +485,11 @@ class EventLoop(asyncio.events.AbstractEventLoop):
                     #     print(f'Clock: {sim_gear.gear.name}')
 
                     self.maybe_run_gear(sim_gear, self.delta_ready)
+
+            for sim_gear in self.done:
+                self.remove(sim_gear)
+
+            self.done.clear()
 
             self.events['after_timestep'](self, timestep)
 

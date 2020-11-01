@@ -96,13 +96,16 @@ class HDLTemplateResolver(ResolverBase):
 
     def generate(self, template_env, outdir):
         ctx = self.module_context(template_env)
-        module = template_env.render_local(
-            self.impl_path, self.impl_basename, self.module_context(template_env))
+        module = template_env.render_local(self.impl_path, self.impl_basename,
+                                           self.module_context(template_env))
 
         if template_env.lang == 'v':
             index = {}
             for intf in ctx['intfs']:
-                index[intf['name']] = Intf(intf['type'])
+                from pygears.hls import ir
+                direction = ir.IntfType.iin if intf['modport'] == 'consumer' else ir.IntfType.iout
+
+                index[intf['name']] = ir.IntfType[intf['type'], direction]
                 index[f'{intf["name"]}_s'] = intf['type']
 
             module = rewrite(module, index)

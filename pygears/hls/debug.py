@@ -26,6 +26,11 @@ def hls_enable_debug_log():
     logger.setLevel(logging.DEBUG)
 
 
+def hls_disable_debug_log():
+    logger = hls_log()
+    logger.setLevel(logging.ERROR)
+
+
 def hls_debug_log_enabled():
     return hls_log().getEffectiveLevel() == logging.DEBUG
 
@@ -74,10 +79,8 @@ def print_gear_parse_intro(gear, body_ast):
     except OSError:
         ln = '-'
 
-    hls_debug(
-        get_function_source(gear.func),
-        title=f'Parsing function "{gear.func.__name__}" from "{fn}", line {ln}'
-    )
+    hls_debug(get_function_source(gear.func),
+              title=f'Parsing function "{gear.func.__name__}" from "{fn}", line {ln}')
 
     hls_debug_header('Function body AST')
 
@@ -95,10 +98,7 @@ def print_func_parse_intro(func, body_ast):
     except OSError:
         ln = '-'
 
-    hls_debug(
-        get_function_source(func),
-        title=f'Parsing function {func} from "{fn}", line {ln}'
-    )
+    hls_debug(get_function_source(func), title=f'Parsing function {func} from "{fn}", line {ln}')
 
     hls_debug_header('Function body AST')
 

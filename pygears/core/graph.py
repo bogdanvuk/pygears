@@ -4,8 +4,10 @@ from pygears.core.hier_node import HierNode
 
 sim_reg = None
 
+
 class PathError(Exception):
     pass
+
 
 def get_sim_map_gear(gear):
     global sim_reg
@@ -32,19 +34,21 @@ def get_sim_cls_parent(gear_inst):
     return parent
 
 
-def is_end_consumer(obj, sim=False):
-    if isinstance(obj, InPort):
-        obj = obj.consumer
-
+def is_end_consumer(port: Port, sim=False):
     if sim:
-        if isinstance(obj.producer, InPort):
-            if obj.producer.gear.params.get('sim_cls', None) is not None:
+        if isinstance(port, InPort):
+            if port.gear.params.get('sim_cls', None) is not None:
                 return True
 
-            if get_sim_cls_parent(obj.producer.gear):
+            if get_sim_cls_parent(port.gear):
                 return False
 
-    if (len(obj.consumers) == 1 and isinstance(obj.consumers[0], HDLConsumer)):
+    intf = port.consumer
+
+    if intf is None:
+        return True
+
+    if (len(intf.consumers) == 1 and isinstance(intf.consumers[0], HDLConsumer)):
         return True
 
     return False
@@ -82,9 +86,7 @@ def get_source_producer(obj, sim=False):
 
     if isinstance(obj.producer, HDLProducer) or obj.producer is None:
         if sim:
-            raise PathError(
-                f'No producer found on beginning of the path: ?'
-            )
+            raise PathError(f'No producer found on beginning of the path: ?')
 
         return obj
 
@@ -103,50 +105,19 @@ def _get_consumer_tree_rec(root_intf, cur_intf, consumers, end_producer):
             continue
 
         cons_intf = port.consumer
-        if is_end_consumer(cons_intf, sim=True):
+        if is_end_consumer(port, sim=True):
             end_producer[port] = (root_intf, len(consumers))
-            end_producer[cons_intf] = end_producer[port]
+            # end_producer[cons_intf] = end_producer[port]
             consumers.append(port)
-        else:
+        elif cons_intf is not None:
             start = len(consumers)
-            _get_consumer_tree_rec(root_intf, cons_intf, consumers,
-                                   end_producer)
+            _get_consumer_tree_rec(root_intf, cons_intf, consumers, end_producer)
             if len(consumers) - start > 1:
                 end_producer[port] = (root_intf, slice(start, len(consumers)))
             else:
                 end_producer[port] = (root_intf, start)
 
-            end_producer[cons_intf] = end_producer[port]
-
-
-def hier_dfs(root):
-    yield root
-    for c in root.child:
-        yield from hier_dfs(c)
-
-
-def _interface_tree_rec(node):
-    for c in node.intf.consumers:
-        child = HierNode(node)
-        child.port = c
-        child.intf = c.consumer
-        _interface_tree_rec(child)
-
-
-def interface_tree(intf):
-    root_intf = intf
-
-    while root_intf.producer is not None:
-        root_intf = root_intf.producer.producer
-
-    tree = HierNode()
-    tree.intf = root_intf
-    tree.port = root_intf.producer
-    _interface_tree_rec(tree)
-
-    for node in hier_dfs(tree):
-        if node.intf is intf:
-            return node
+            # end_producer[cons_intf] = end_producer[port]
 
 
 def get_consumer_tree(intf):
@@ -181,8 +152,9 @@ def get_end_producer(obj):
 
     return end_producer[obj]
 
+
 def get_producer_queue(obj):
-    intf, i = get_end_producer(obj)
+    intf, i = get_end_producer(obj.producer)
     if i >= len(intf.out_queues):
         # TODO: Investigate this. This happens when consumers tries to get
         # data, but somewhere along the path from the producer to the consumer,
@@ -191,3 +163,14 @@ def get_producer_queue(obj):
 
     return intf.out_queues[i]
 
+
+def get_producer_port(obj):
+    if isinstance(obj, Port):
+        obj = obj.producer
+
+    return obj.producer
+
+
+def has_async_producer(obj):
+    port = get_producer_port(obj)
+    return isinstance(port, HDLProducer)

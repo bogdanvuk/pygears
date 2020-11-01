@@ -1,6 +1,6 @@
 from .intf import Intf
 from pygears.conf import core_log
-from pygears.core.graph import get_source_producer
+from pygears.core.graph import get_source_producer, get_producer_port
 from pygears.core.hier_node import find_unique_names
 from .port import InPort, OutPort
 from .gear import OutSig, InSig
@@ -32,13 +32,13 @@ def connect_to_existing_parent_out_port(out_port, cons_port):
 
     return False
 
+
 def report_out_dangling(port):
     src_intf = get_source_producer(port)
     p = src_intf.consumers[0]
 
     if hasattr(src_intf, 'var_name'):
-        core_log().warning(
-            f'Interface "{p.gear.name}/{src_intf.var_name}" left dangling.')
+        core_log().warning(f'Interface "{p.gear.name}/{src_intf.var_name}" left dangling.')
     else:
         path = []
         while True:
@@ -52,11 +52,12 @@ def report_out_dangling(port):
             if len(g.in_ports) != 1 or len(g.out_ports) != 1:
                 break
 
-            p = g.in_ports[0].producer.producer
+            p = get_producer_port(g.in_ports[0])
 
         path = ' -> '.join(reversed(path))
 
         core_log().warning(f'Interface "{path}" left dangling.')
+
 
 def channel_out_port(gear_inst, out_port):
     out_parent_cons = []
@@ -85,8 +86,7 @@ def channel_out_port(gear_inst, out_port):
     if new_name:
         basename = new_name
 
-    parent_port = OutPort(gear_inst.parent, len(gear_inst.parent.out_ports),
-                          basename)
+    parent_port = OutPort(gear_inst.parent, len(gear_inst.parent.out_ports), basename)
 
     gear_inst.parent.out_ports.append(parent_port)
 
@@ -123,8 +123,7 @@ def channel_in_port(gear_inst, in_port):
     if new_name:
         basename = new_name
 
-    parent_port = InPort(gear_inst.parent, len(gear_inst.parent.in_ports),
-                         basename)
+    parent_port = InPort(gear_inst.parent, len(gear_inst.parent.in_ports), basename)
 
     gear_inst.parent.in_ports.append(parent_port)
 
@@ -188,6 +187,5 @@ def channel_interfaces(gear_inst):
                     gear_inst.parent.meta_kwds['signals'] = list(
                         gear_inst.parent.meta_kwds['signals'])
 
-                gear_inst.parent.meta_kwds['signals'] = gear_inst.parent.meta_kwds[
-                    'signals'].copy()
+                gear_inst.parent.meta_kwds['signals'] = gear_inst.parent.meta_kwds['signals'].copy()
                 gear_inst.parent.meta_kwds['signals'].append(s)

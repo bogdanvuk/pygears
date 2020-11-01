@@ -188,6 +188,14 @@ def _(node, ctx: Context):
     return visit_bin_expr(node.op, (node.left, node.right), ctx)
 
 
+def get_dict_attr(obj, attr):
+    for cls in (obj, ) + inspect.getmro(obj.__class__):
+        if attr in obj.__dict__:
+            return obj.__dict__[attr]
+
+    raise AttributeError
+
+
 @node_visitor(ast.Attribute)
 def _(node, ctx: Context):
     value = visit_ast(node.value, ctx)
@@ -196,19 +204,29 @@ def _(node, ctx: Context):
 
     if hasattr(value.dtype, node.attr):
         try:
-            cls_attr = object.__getattribute__(value.dtype, node.attr).func
-        except Exception:
+            cls_attr = get_dict_attr(value.dtype, node.attr)
+
+            # Maybe we have a class method, try to get function
+            cls_attr = getattr(cls_attr, 'func', cls_attr)
+        except AttributeError:
+            # TODO: When is this necessary
             cls_attr = getattr(value.dtype, node.attr)
+
+        # try:
+        #     cls_attr = object.__getattribute__(value.dtype, node.attr).func
+        # except Exception:
+        #     cls_attr = getattr(value.dtype, node.attr)
 
         if isinstance(cls_attr, property):
             return resolve_func(cls_attr.fget, (value, ), {}, ctx)
 
+        # TODO: What does this exactly do?
         if not inspect.isclass(cls_attr):
             if callable(cls_attr):
                 return ir.ResExpr(partial(cls_attr, value))
 
-            # If value.attr was a class method and we instantly got the result
-            return ir.ResExpr(cls_attr)
+        # If value.attr was a class method and we instantly got the result
+        return ir.ResExpr(cls_attr)
 
     return ir.AttrExpr(value, node.attr)
 

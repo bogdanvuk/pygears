@@ -75,5 +75,5 @@ def test_decode_int():
     val1 = (-8, -128)
     code1 = int(dtype_tuple1((subt1(val1), 1)))
 
-    assert (dtype.decode(code0).data == val0)
-    assert (dtype.decode(code1).data == val1)
+    assert (dtype.decode(code0).data == subt0(val0).code())
+    assert (dtype.decode(code1).data == subt1(val1).code())

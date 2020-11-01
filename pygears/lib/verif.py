@@ -288,6 +288,8 @@ async def check(din, *, ref, cmp=None):
             f"\nexp:\n{textwrap.indent(pprint.pformat(ref), ' '*4)}"
         )
 
+    raise GearDone
+
 
 def tlm_verif(*seq, f, ref):
     res_tlm = tuple(s | drv for s in seq) \

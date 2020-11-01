@@ -18,6 +18,22 @@ queue_din = Queue[Union[Uint[8], Uint[8], Uint[8]]]
 
 directed_seq = [union_din(v, v % 2) for v in range(50)]
 
+# import inspect
+
+
+# def get_dict_attr(obj, attr):
+#     for cls in (obj, ) + inspect.getmro(obj.__class__):
+#         if attr in obj.__dict__:
+#             return obj.__dict__[attr]
+
+#     raise AttributeError
+
+
+# a = get_dict_attr(queue_din, 'eot')
+# # b = get_dict_attr(queue_din(((2, 1), 0)), 'eot')
+# breakpoint()
+# # object.__getattribute__(queue_din, 'eot').func
+
 
 def pysim_env(din_t, seq, sel, ref, sim_cls):
     directed(drv(t=din_t, seq=seq), f=filt(sim_cls=sim_cls, fixsel=sel), ref=ref)
@@ -38,10 +54,9 @@ def filt_by_test(din_t, seq, sel, sim_cls):
     def cond(ctrl: Uint, din) -> Bool:
         return ctrl == sel
 
-    directed(
-        din_drv,
-        f=filt(f=cond(ctrl_drv), sim_cls=sim_cls),
-        ref=[val for (val, ctrl) in zip(din_seq, ctrl_seq) if (ctrl == sel)])
+    directed(din_drv,
+             f=filt(f=cond(ctrl_drv), sim_cls=sim_cls),
+             ref=[val for (val, ctrl) in zip(din_seq, ctrl_seq) if (ctrl == sel)])
     sim()
 
 
@@ -55,10 +70,8 @@ def queue_filt_test(din_t, seq, sel, sim_cls):
 def test_pysim_dir(sel, din_t, seq, sim_cls):
     if seq == 'rand':
         skip_ifndef('RANDOM_TEST')
-        seq = [
-            (random.randint(1, 100), random.randint(0, 2))
-            for _ in range(random.randint(10, 50))
-        ]
+        seq = [(random.randint(1, 100), random.randint(0, 2))
+               for _ in range(random.randint(10, 50))]
 
     if typeof(din_t, Queue):
         queue_filt_test(din_t, seq, sel, sim_cls)
@@ -83,12 +96,11 @@ def get_dut(dout_delay):
 @pytest.mark.parametrize('dout_delay', [0, 10])
 def test_qfilt_union_delay(cosim_cls, din_delay, dout_delay, sel):
     dut = get_dut(dout_delay)
-    verif(
-        drv(t=queue_din, seq=[directed_seq, directed_seq])
-        | delay_rng(din_delay, din_delay),
-        f=dut(sim_cls=cosim_cls, fixsel=sel),
-        ref=filt(name='ref_model', fixsel=sel),
-        delays=[delay_rng(dout_delay, dout_delay)])
+    verif(drv(t=queue_din, seq=[directed_seq, directed_seq])
+          | delay_rng(din_delay, din_delay),
+          f=dut(sim_cls=cosim_cls, fixsel=sel),
+          ref=filt(name='ref_model', fixsel=sel),
+          delays=[delay_rng(dout_delay, dout_delay)])
     sim()
 
 
@@ -99,12 +111,11 @@ def test_qfilt_delay(cosim_cls, din_delay, dout_delay):
     def even(x: Integer) -> Bool:
         return not x[0]
 
-    directed(
-        drv(t=Queue[Uint[8]], seq=[list(range(10)), list(range(10))])
-        | delay_rng(din_delay, din_delay),
-        f=filt(sim_cls=cosim_cls, f=even),
-        ref=[list(range(0, 10, 2)), list(range(0, 10, 2))],
-        delays=[delay_rng(dout_delay, dout_delay)])
+    directed(drv(t=Queue[Uint[8]], seq=[list(range(10)), list(range(10))])
+             | delay_rng(din_delay, din_delay),
+             f=filt(sim_cls=cosim_cls, f=even),
+             ref=[list(range(0, 10, 2)), list(range(0, 10, 2))],
+             delays=[delay_rng(dout_delay, dout_delay)])
 
     sim()
 

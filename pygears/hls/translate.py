@@ -7,7 +7,7 @@ from . import ir
 from .passes import (inline, inline_res, remove_dead_code, infer_exit_cond,
                      infer_registers, schedule, infer_in_cond,
                      handle_generators, resolve_gear_calls, find_called_funcs)
-from .debug import hls_enable_debug_log, hls_debug
+from .debug import hls_enable_debug_log, hls_debug, hls_disable_debug_log
 from .debug import print_gear_parse_intro
 from . import cfg
 

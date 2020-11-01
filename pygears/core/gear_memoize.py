@@ -3,6 +3,7 @@ from pygears.conf import PluginBase, reg
 from .intf import Intf
 from .gear import Gear, create_hier
 from .port import InPort, OutPort, HDLConsumer, HDLProducer
+from .graph import has_async_producer
 from copy import deepcopy, copy
 from pygears.typing import is_type
 from pygears.typing.base import hashabledict
@@ -40,11 +41,19 @@ def copy_gear_full(g: Gear, name=None):
 
     cp_g = Gear(g.func, params)
 
+    # Important! Have to keep the copy in local array, or garbage collector
+    # collects unconnected port consumers
+    local_in_ports = []
     for p in g.in_ports:
         cp_p = InPort(cp_g, p.index, p.basename)
         cp_g.in_ports.append(cp_p)
-        Intf(p.dtype).source(cp_p)
+        i = Intf(p.dtype)
+        local_in_ports.append(i)
+        i.source(cp_p)
 
+    # Important! Have to keep the copy in local array, or garbage collector
+    # collects unconnected port consumers
+    outside_intfs = []
     for p in g.out_ports:
         cp_p = OutPort(cp_g, p.index, p.basename)
         cp_g.out_ports.append(cp_p)
@@ -56,16 +65,18 @@ def copy_gear_full(g: Gear, name=None):
 
             inside_intf.connect(cp_p)
 
-            if isinstance(p.producer.producer, HDLProducer):
+            if has_async_producer(p):
                 inside_intf.source(HDLProducer())
 
-        outside_intf = Intf(p.dtype)
-        outside_intf.source(cp_p)
+        i = Intf(p.dtype)
+        outside_intfs.append(i)
+        i.source(cp_p)
 
     cp_map = {g: cp_g}
+    cp_outside_intf_map = {}
     with create_hier(cp_g):
         for c in g.child:
-            cp_map[c] = copy_gear_full(c)
+            cp_map[c], cp_outside_intf_map[c] = copy_gear_full(c)
 
     def copy_port_connection(p):
         cp_prod_gear = cp_map[p.gear]
@@ -73,6 +84,9 @@ def copy_gear_full(g: Gear, name=None):
         cp_intf = cp_prod.consumer
 
         intf = p.consumer
+        if intf is None:
+            return
+
         for cons in intf.consumers:
             if isinstance(cons, HDLConsumer):
                 cp_intf.connect(HDLConsumer())
@@ -81,7 +95,6 @@ def copy_gear_full(g: Gear, name=None):
             cp_cons_gear = cp_map[cons.gear]
             cp_cons = getattr(cp_cons_gear, f'{cons.direction}_ports')[cons.index]
 
-            # print(f'Connecting: {cp_prod.name} -> {cp_cons.name}')
             cp_intf.connect(cp_cons)
 
     for p in g.in_ports:
@@ -91,12 +104,12 @@ def copy_gear_full(g: Gear, name=None):
         for p in c.out_ports:
             copy_port_connection(p)
 
-    return cp_g
+    return cp_g, outside_intfs
 
 
 # TODO: Handle unpack gears that create ccat in parents space
 def copy_gear(mem_gear: Gear, args, kwds, name, intf_mapping, kwd_intfs):
-    gear_inst = copy_gear_full(mem_gear, name)
+    gear_inst, outside_intfs = copy_gear_full(mem_gear, name)
     in_num = len(gear_inst.in_ports)
 
     for pi, ii in intf_mapping.items():

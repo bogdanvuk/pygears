@@ -1,10 +1,30 @@
-from .base import EnumerableGenericMeta, typeof, is_type
+from .base import EnumerableGenericMeta, typeof, is_type, TemplateArgumentsError
 from .base import class_and_instance_method
 
 # TODO: Check why array is specified when no length is specified
 
 
 class ArrayType(EnumerableGenericMeta):
+    def __new__(cls, name, bases, namespace, args=None):
+        cls = super().__new__(cls, name, bases, namespace, args)
+
+        if not cls.specified:
+            return cls
+
+        if not isinstance(cls.args[1], int):
+            err = None
+            try:
+                cls.__args__[1] = int(cls.args[1])
+            except TypeError as e:
+                err = e
+
+            if err:
+                raise TemplateArgumentsError(
+                    f'Second argument to the "Array" type must be integer, not "{repr(cls.args[1])}'
+                )
+
+        return cls
+
     def keys(self):
         """Returns a list of keys that can be used for indexing :class:`Array` [T, N] type. Number of keys equals to the number of elements N.
 
@@ -12,7 +32,7 @@ class ArrayType(EnumerableGenericMeta):
         [0, 1, 2, 3, 4]
         """
 
-        return list(range(int(self.args[1])))
+        return list(range(self.args[1]))
 
     @property
     def width(self):

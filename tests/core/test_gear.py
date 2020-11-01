@@ -192,6 +192,7 @@ def test_generator_func_err():
         await 2
 
     with pytest.raises(Exception):
+
         @gear
         def func():
             yield 2

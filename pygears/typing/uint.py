@@ -575,10 +575,12 @@ class Int(Integer, metaclass=IntType):
             return val
 
         if cls.is_generic():
-            if isinstance(val, Uint):
+            if isinstance(val, Int):
+                return val
+            elif isinstance(val, Uint):
                 res = cls[val.width + 1](int(val))
             else:
-                res = cls[val.bit_length() + 1](int(val))
+                res = cls[bitw(val) + (0 if int(val) < 0 else 1)](int(val))
         else:
             res = super(Int, cls).__new__(cls, val)
             # res = super(Int, cls).__new__(cls,

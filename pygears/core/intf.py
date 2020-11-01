@@ -221,7 +221,7 @@ class Intf:
             put_event(self, val)
 
         for q, c in zip(self.out_queues, self.end_consumers):
-            if c.consumer._done:
+            if c.consumer is None or c.consumer._done:
                 raise GearDone
 
             put_event = c.consumer.events['put']
@@ -263,6 +263,7 @@ class Intf:
 
         self.events['finish'](self)
         self._done = True
+
         for q, c in zip(self.out_queues, self.end_consumers):
             c.finish()
             for task in q._getters:

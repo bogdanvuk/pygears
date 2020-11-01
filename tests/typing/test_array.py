@@ -77,7 +77,7 @@ def test_index_error():
 
 def test_size():
     a = Array[Uint[6], 6]
-    assert int(a) == 36
+    assert a.width == 36
 
 
 def test_eq():

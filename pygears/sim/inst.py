@@ -1,4 +1,5 @@
 import inspect
+import weakref
 
 from pygears import reg, Intf, module, find
 from pygears.sim.sim_gear import SimGear, is_simgear_func
@@ -7,6 +8,8 @@ from pygears.core.gear import GearPlugin
 from pygears.core.gear_inst import gear_base_resolver
 from pygears.core.hier_node import HierVisitorBase
 from pygears.core.port import HDLConsumer, HDLProducer
+
+intfs = []
 
 
 def sim_compile_resolver(func, *args, **kwds):
@@ -17,7 +20,7 @@ def sim_compile_resolver(func, *args, **kwds):
         local_in = []
         for a in args:
             if isinstance(a, Intf):
-                a.consumers.clear()
+                # a.consumers.clear()
                 local_in.append(a)
             else:
                 from pygears.lib.const import get_literal_type
@@ -33,15 +36,31 @@ def sim_compile_resolver(func, *args, **kwds):
         if isinstance(outputs, tuple):
             raise Exception("Not yet supported")
 
-        outputs.connect(HDLConsumer())
+        # outputs.connect(HDLConsumer())
+        outputs.consumers.append(HDLConsumer())
 
         gear_inst = outputs.producer.gear
+        gear_inst.trace = None
 
         def is_async_gen(func):
             return bool(func.__code__.co_flags & inspect.CO_ASYNC_GENERATOR)
 
         if not is_async_gen(gear_inst.func):
             raise Exception("Not yet supported")
+
+        simulator = reg['sim/simulator']
+        cur_sim = reg['gear/current_sim']
+        sim_map = reg['sim/map']
+
+        sim_gear = SimGear(gear_inst)
+
+        sim_map[gear_inst] = sim_gear
+        cur_sim.child.append(sim_gear)
+        sim_gear.parent = cur_sim
+        simulator.forward_ready.add(sim_gear)
+        sim_gear.setup()
+        simulator.tasks[sim_gear] = sim_gear.run()
+        simulator.task_data[sim_gear] = None
 
         import asyncio
         for intf, a in zip(local_in, args):
@@ -51,16 +70,26 @@ def sim_compile_resolver(func, *args, **kwds):
             intf._in_queue = asyncio.Queue(maxsize=1, loop=reg['sim/simulator'])
             intf.put_nb(a)
 
-        simulator = reg['sim/simulator']
-        cur_sim = reg['gear/current_sim']
-        sim_map = reg['sim/map']
+        def callback(p):
+            print(f'Out of scope: {p.gear.name}')
+            g = p.gear
+            for i in g.in_ports:
+                if isinstance(i.producer.producer, HDLProducer):
+                    i.producer.finish()
+                else:
+                    i.producer.disconnect(i)
 
-        sim_gear = SimGear(gear_inst)
-        sim_map[gear_inst] = sim_gear
-        cur_sim.child.append(sim_gear)
-        simulator.forward_ready.add(sim_gear)
-        simulator.tasks[sim_gear] = sim_gear.run()
-        simulator.task_data[sim_gear] = None
+        weakref.finalize(outputs, callback, outputs.producer)
+
+        # if not intfs:
+        #     intfs.append(outputs)
+
+        # print(f'Referrers:')
+        # import gc
+        # bla = gc.get_referrers(intfs[0])
+        # for b in bla:
+        #     print(b)
+        # print(f'-----------------------------------')
 
         return outputs
     else:

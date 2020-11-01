@@ -12,9 +12,9 @@ def test_simple_async_sim(sim_cls):
         async for i, _ in qrange(4):
             yield i
 
-    directed(f=test(sim_cls=sim_cls), ref=list(range(4)) * 2)
+    directed(f=test(sim_cls=sim_cls), ref=list(range(4)) * 4)
 
-    sim(timeout=8)
+    sim(timeout=4 * 4)
 
 
 # TODO: This won't work ("for" instead of "async for"), throw reasonable error

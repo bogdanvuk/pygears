@@ -5,6 +5,7 @@ import inspect
 from typing import List
 from dataclasses import dataclass
 from pygears.conf import PluginBase, reg
+from pygears.core.graph import has_async_producer
 from traceback import walk_stack
 from .intf import Intf
 from .port import InPort, OutPort, HDLConsumer, HDLProducer
@@ -64,14 +65,12 @@ def gear_explicit_params(func, params):
     paramspec = inspect.getfullargspec(func)
     explicit_param_names = paramspec.kwonlyargs or []
 
-    return {
-        name: params[name]
-        for name in explicit_param_names if name in params
-    }
+    return {name: params[name] for name in explicit_param_names if name in params}
+
 
 def struct_copy(s):
     if isinstance(s, dict):
-        return type(s)({k:struct_copy(v) for k,v in s.items()})
+        return type(s)({k: struct_copy(v) for k, v in s.items()})
 
     if isinstance(s, list):
         return type(s)([struct_copy(v) for v in s])
@@ -81,8 +80,7 @@ def struct_copy(s):
 
 class Gear(NamedHierNode):
     def __init__(self, func, params):
-        super().__init__(params['name'],
-                         reg['gear/current_module'] if func else None)
+        super().__init__(params['name'], reg['gear/current_module'] if func else None)
         self.meta_kwds = getattr(func, 'meta_kwds', {}).copy()
 
         self.trace = list(enum_stacktrace())
@@ -121,12 +119,9 @@ class Gear(NamedHierNode):
             const(val=val, intfs=[args[name]])
 
         for i, (name, intf) in enumerate(args.items()):
-            port = InPort(self, i, name)
+            port = InPort(self, i, name, dtype=self.params[name])
             intf.connect(port)
             self.in_ports.append(port)
-
-        for port in self.in_ports:
-            Intf(self.params[port.basename]).source(port)
 
         self.const_args = const_args
         self.args = args
@@ -141,9 +136,7 @@ class Gear(NamedHierNode):
                 self.outnames.append(dflt_dout_name if len(out_dtypes) ==
                                      1 else f'{dflt_dout_name}{i}')
 
-        self.out_ports = [
-            OutPort(self, i, name) for i, name in enumerate(self.outnames)
-        ]
+        self.out_ports = [OutPort(self, i, name) for i, name in enumerate(self.outnames)]
 
         # Connect internal interfaces
         if out_intfs:
@@ -159,13 +152,9 @@ class Gear(NamedHierNode):
     @property
     def hierarchical(self):
         if self.out_ports:
-            return not any(
-                isinstance(p.producer.producer, HDLProducer)
-                for p in self.out_ports)
+            return not any(has_async_producer(p) for p in self.out_ports)
         else:
-            return not any(
-                any(isinstance(c, HDLConsumer) for c in p.consumer.consumers)
-                for p in self.in_ports)
+            return not any(p.consumer is None for p in self.in_ports)
 
     @property
     def definition(self):
@@ -207,7 +196,16 @@ class Gear(NamedHierNode):
 
     @property
     def in_port_intfs(self):
-        return tuple(p.consumer for p in self.in_ports)
+        in_intfs = []
+        for port in self.in_ports:
+            if port.consumer is None:
+                i = Intf(self.params[port.basename])
+                i.source(port)
+
+            in_intfs.append(port.consumer)
+
+        return tuple(in_intfs)
+        # return tuple(p.consumer for p in self.in_ports)
 
     @property
     def out_port_intfs(self):
@@ -287,11 +285,7 @@ class GearPlugin(PluginBase):
                 '__base__': None
             })
 
-        reg['gear/params'].subreg('extra', {
-            'name': None,
-            'intfs': [],
-            'sigmap': {}
-        })
+        reg['gear/params'].subreg('extra', {'name': None, 'intfs': [], 'sigmap': {}})
 
         reg['gear/root'] = Gear(None, params={'name': ''})
         reg['gear/current_module'] = reg['gear/root']

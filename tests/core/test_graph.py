@@ -117,7 +117,7 @@ def test_through_hier_cosim_in_channel():
     # Leaf consumers are hidden behind "hier" module with "sim_cls"
     assert len(consumers) == 1
     assert consumers[0].name == '/hier.din'
-    assert is_end_consumer(consumers[0].consumer, sim=True)
+    assert is_end_consumer(consumers[0], sim=True)
 
     cons_intf = consumers[0].consumer
     assert len(cons_intf.consumers) == 2
@@ -150,8 +150,8 @@ def test_through_hier_cosim_in_deeper_channel():
     assert len(consumers) == 1
 
     top_hier_din = consumers[0].consumer
-    assert top_hier_din.producer.name == '/top_hier.din'
-    assert is_end_consumer(top_hier_din, sim=True)
+    assert top_hier_din.name == '/top_hier.din'
+    assert is_end_consumer(top_hier_din.producer, sim=True)
 
     assert len(top_hier_din.consumers) == 1
     top_hier_hier_din = top_hier_din.consumers[0].consumer
@@ -204,4 +204,4 @@ def test_through_hier_cosim_out_channel():
     # Leaf consumers are hidden behind "hier" module with "sim_cls"
     assert len(consumers) == 1
     assert consumers[0].name == '/si0.din'
-    assert is_end_consumer(consumers[0].consumer)
+    assert is_end_consumer(consumers[0])

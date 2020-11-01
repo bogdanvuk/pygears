@@ -1,5 +1,5 @@
-from pygears import Intf
-from pygears.typing import bitw
+from pygears.typing import bitw, typeof
+from pygears.hls import ir
 import hashlib
 import inspect
 import re
@@ -196,7 +196,7 @@ def rewrite(module, index):
                 path.append(p)
 
         dtype = index[name]
-        if isinstance(dtype, Intf):
+        if typeof(dtype, ir.IntfType):
             if path[0] in ['valid', 'ready', 'data']:
                 name = name + '_' + path[0]
                 spath = [(p, None) for p in path[1:]]

@@ -13,10 +13,13 @@ def decouple_din_setup(module):
 
 @gear(sim_setup=decouple_din_setup)
 async def decouple_din(din, *, depth, init) -> None:
-    async with din as d:
-        await module().queue.put(d)
-        while (module().queue.full()):
-            await delta()
+    try:
+        async with din as d:
+            await module().queue.put(d)
+            while (module().queue.full()):
+                await delta()
+    except GearDone:
+        await module().queue.put(None)
 
 
 def decouple_dout_setup(module):
@@ -25,14 +28,21 @@ def decouple_dout_setup(module):
 
 @gear(sim_setup=decouple_dout_setup)
 async def decouple_dout(*, t, depth) -> b't':
+
+    din = module().decouple_din
+    if din not in reg['sim/map'] or reg['sim/map'][module().decouple_din].done:
+        raise GearDone
+
     queue = module().decouple_din.queue
-    while queue.empty():
-        if reg['sim/map'][module().decouple_din].done:
-            raise GearDone
+    data = await queue.get()
 
-        await clk()
+    # while queue.empty():
+    #     if reg['sim/map'][module().decouple_din].done:
+    #         raise GearDone
 
-    yield queue.get_nowait()
+    #     await clk()
+
+    yield data
 
     queue.task_done()
     await clk()

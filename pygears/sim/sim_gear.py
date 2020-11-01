@@ -1,8 +1,9 @@
 import sys
 import inspect
 import atexit
-from pygears.conf.trace import register_exit_hook, TraceException, make_traceback
-from pygears import reg, GearDone
+from pygears.conf.trace import register_exit_hook, TraceException, make_traceback, TraceLevel
+from pygears import reg, GearDone, Intf
+from pygears.core.port import HDLConsumer
 from pygears.core.channel import report_out_dangling
 from pygears.sim import clk, timestep
 from pygears.sim.sim import schedule_to_finish
@@ -46,9 +47,9 @@ class SimGear:
         if self.gear.meta_kwds['sim_setup'] is not None:
             self.gear.meta_kwds['sim_setup'](self.gear)
 
-    async def run(self):
-        args, kwds = self.sim_func_args
+        self.args, self.kwds = self.sim_func_args
 
+    async def run(self):
         out_prods = [p.producer for p in self.gear.out_ports]
         single_output = len(out_prods) == 1
         if single_output:
@@ -56,6 +57,7 @@ class SimGear:
 
         sim = reg['sim/simulator']
         err = None
+        trace_debug = reg['trace/level'] == TraceLevel.debug
 
         try:
             if is_async_gen(self.func):
@@ -63,7 +65,7 @@ class SimGear:
                     if sim.phase != 'forward':
                         await clk()
 
-                    async_gen = self.func(*args, **kwds)
+                    async_gen = self.func(*self.args, **self.kwds)
 
                     async for val in async_gen:
                         if sim.phase != 'forward':
@@ -75,23 +77,26 @@ class SimGear:
                         if val is not None:
                             if single_output:
                                 tb = None
-                                try:
+                                if trace_debug:
                                     out_prods.put_nb(val)
-                                except GearDone:
-                                    raise
-                                except Exception as e:
-                                    func, fn, ln = gear_definition_location(self.func)
+                                else:
+                                    try:
+                                        out_prods.put_nb(val)
+                                    except GearDone:
+                                        raise
+                                    except Exception as e:
+                                        func, fn, ln = gear_definition_location(self.func)
 
-                                    err = SimulationError(
-                                        f"inside '{self.gear.name}': {repr(e)}",
-                                        async_gen.ag_frame.f_lineno,
-                                        filename=fn)
+                                        err = SimulationError(
+                                            f"inside '{self.gear.name}': {repr(e)}",
+                                            async_gen.ag_frame.f_lineno,
+                                            filename=fn)
 
-                                    traceback = make_traceback((SimulationError, err, sys.exc_info()[2]))
-                                    exc_type, exc_value, tb = traceback.standard_exc_info
+                                        traceback = make_traceback((SimulationError, err, sys.exc_info()[2]))
+                                        exc_type, exc_value, tb = traceback.standard_exc_info
 
-                                if tb is not None:
-                                    raise exc_value.with_traceback(tb)
+                                    if tb is not None:
+                                        raise exc_value.with_traceback(tb)
 
                                 await out_prods.ready()
                             else:
@@ -106,15 +111,15 @@ class SimGear:
                     if self.parent:
                         raise GearDone
 
-                    if args:
-                        if all(a.done for a in args):
+                    if self.args:
+                        if all(a.done for a in self.args):
                             raise GearDone
             elif inspect.isgeneratorfunction(self.func):
                 while (1):
                     if sim.phase != 'forward':
                         await clk()
 
-                    for val in self.func(*args, **kwds):
+                    for val in self.func(*self.args, **self.kwds):
                         if sim.phase != 'forward':
                             await clk()
 
@@ -134,25 +139,25 @@ class SimGear:
                     if self.parent:
                         raise GearDone
 
-                    if args:
-                        if all(a.done for a in args):
+                    if self.args:
+                        if all(a.done for a in self.args):
                             raise GearDone
             else:
                 while (1):
                     # TODO: handle case where self.func is empty and this loop
                     # will just go on forever freezing everything. It happens
                     # if the user accidently creates empty "async def" function
-                    await self.func(*args, **kwds)
+                    await self.func(*self.args, **self.kwds)
 
-                    if args:
-                        if all(a.done for a in args):
+                    if self.args:
+                        if all(a.done for a in self.args):
                             raise GearDone
 
         except GearDone as e:
             for p in self.gear.in_ports:
                 intf = p.consumer
                 try:
-                    if not intf.empty():
+                    if intf.producer.producer and not intf.empty():
                         prod_intf = intf.in_queue.intf
                         prod_gear = prod_intf.consumers[0].gear
                         schedule_to_finish(prod_gear)
@@ -175,7 +180,13 @@ class SimGear:
     def sim_func_args(self):
         args = []
         for p in self.gear.in_ports:
-            args.append(p.consumer)
+            i = p.consumer
+            if i is None:
+                i = Intf(p.dtype)
+                i.source(p)
+                i.connect(HDLConsumer())
+
+            args.append(i)
 
         return args, self.gear.explicit_params
 

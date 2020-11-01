@@ -136,13 +136,20 @@ def get_contextpr(node):
 
 
 class IntfTypeMeta(GenericMeta):
+    iin = 0
+    iout = 1
+
     @property
     def dtype(self):
         return self.args[0]
 
+    @property
+    def direction(self):
+        return self.args[1]
+
 
 class IntfType(tuple, metaclass=IntfTypeMeta):
-    __parameters__ = ['dtype']
+    __parameters__ = ['dtype', 'direction']
 
 
 @attr.s(auto_attribs=True, kw_only=True)
@@ -196,6 +203,7 @@ class ResExpr(Expr):
         if not is_type(type(self.val)) and isinstance(self.val, int):
             return type(Integer(self.val))
 
+        # TODO: Remove this if unecessary
         if isinstance(self.val, Intf):
             return IntfType[self.val.dtype]
 

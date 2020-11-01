@@ -223,7 +223,8 @@ class Union(tuple, metaclass=UnionType):
     def data(self):
         """Returns the data carried by the :class:`Union` instance, converted to the
         represented subtype."""
-        return type(self).types[self[1]].decode(self[0])
+        # return type(self).types[self[1]].decode(self[0])
+        return self[0]
 
     @class_and_instance_method
     @property

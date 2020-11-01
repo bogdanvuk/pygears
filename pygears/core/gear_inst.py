@@ -3,6 +3,7 @@ import fnmatch
 import sys
 from copy import copy
 
+from pygears.core.graph import get_producer_port
 from pygears.conf import MultiAlternativeError, core_log, reg
 from pygears.typing import Any, cast, get_match_conds
 from pygears.core.util import is_standard_func, get_function_context_dict
@@ -277,7 +278,8 @@ def resolve_func(gear_inst):
         # TODO: Try to detect infinite recursions
         # TODO: If the gear is instantiated in REPL, intf_name_tracer will fail
         with intf_name_tracer(gear_inst):
-            out_intfs = gear_inst.func(*gear_inst.in_port_intfs, **gear_inst.explicit_params)
+            local_in_intfs = gear_inst.in_port_intfs
+            out_intfs = gear_inst.func(*local_in_intfs, **gear_inst.explicit_params)
 
         if out_intfs is None:
             out_intfs = tuple()
@@ -414,8 +416,9 @@ def resolve_out_types(out_intfs, out_dtype, gear_inst):
 
 def terminate_internal_intfs(gear_inst):
     if not is_standard_func(gear_inst.func):
-        for i in gear_inst.in_port_intfs:
-            i.connect(HDLConsumer())
+        for p in gear_inst.in_ports:
+            if p.consumer is not None:
+                p.consumer.connect(HDLConsumer())
 
         for i in gear_inst.out_port_intfs:
             i.source(HDLProducer())
@@ -508,7 +511,7 @@ def gear_base_resolver(func, *args, name=None, intfs=None, **kwds):
                 if port.basename not in gear_inst.const_args:
                     port.producer.consumers.remove(port)
                 else:
-                    gear_inst.parent.child.remove(port.producer.producer.gear)
+                    gear_inst.parent.child.remove(get_producer_port(port).gear)
 
         raise err
 

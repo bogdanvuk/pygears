@@ -7,7 +7,7 @@ from pygears.typing import factor as factor_type
 
 
 def is_union_of_queues_with_equal_len(din):
-    lengths = list(map(int, din.types))
+    lengths = [t.width for t in din.types]
     return typeof(din, Union) and \
         all(typeof(t, Queue) for t in din.types) and \
         lengths[1:] == lengths[:-1]

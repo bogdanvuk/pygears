@@ -537,9 +537,6 @@ def param_subs(t, matches, namespace):
 class EnumerableGenericMeta(GenericMeta):
     """Base class for all types that are iterable.
     """
-    def __int__(self):
-        return self.width
-
     @property
     def width(self):
         """Calculates the bit width of the type.

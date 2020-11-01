@@ -36,7 +36,7 @@ def generate(top, intfdef):
         w_eot = 0
         if typeof(dtype, Queue):
             w_data = dtype.data.width
-            w_eot = int(dtype.eot)
+            w_eot = dtype.eot.width
 
         i['w_data'] = w_data
         i['w_eot'] = w_eot

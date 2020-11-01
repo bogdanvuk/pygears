@@ -4,6 +4,7 @@ import inspect
 import pygears
 
 from pygears.conf import Inject, inject, reg, PluginBase
+from pygears.core.graph import get_producer_port
 from pygears.typing import Tuple, typeof
 from pygears import module
 from pygears.core.util import is_async_gen
@@ -177,7 +178,7 @@ def create_unpacked_tuple_alternative(g):
             if port.basename not in gear_inst.const_args:
                 port.producer.consumers.remove(port)
             else:
-                gear_inst.parent.child.remove(port.producer.producer.gear)
+                gear_inst.parent.child.remove(get_producer_port(port).gear)
         raise e
     '''
 

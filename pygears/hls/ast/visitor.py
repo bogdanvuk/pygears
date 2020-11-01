@@ -152,9 +152,7 @@ class GearContext(Context):
 
         vararg = []
         for p in self.gear.in_ports:
-            self.scope[p.basename] = ir.Variable(p.basename,
-                                                 ir.IntfType[p.consumer.dtype],
-                                                 val=p.consumer)
+            self.scope[p.basename] = ir.Variable(p.basename, ir.IntfType[p.dtype, ir.IntfType.iin])
 
             if paramspec.varargs and p.basename.startswith(paramspec.varargs):
                 vararg.append(self.ref(p.basename))
@@ -164,8 +162,7 @@ class GearContext(Context):
 
         for p in self.gear.out_ports:
             self.scope[p.basename] = ir.Variable(p.basename,
-                                                 ir.IntfType[p.consumer.dtype],
-                                                 val=p.producer)
+                                                 ir.IntfType[p.consumer.dtype, ir.IntfType.iout])
 
         for k, v in self.gear.explicit_params.items():
             self.scope[k] = ir.ResExpr(v)
@@ -289,8 +286,9 @@ class FuncContext(Context):
                 else:
                     self.scope[name] = ir.Variable(name, arg.dtype)
 
+        # self.scope maybe contains infered type, so use that if present
         self.signature = {
-            name: var.dtype
+            name: self.scope.get(name, var).dtype
             for name, var in args.items() if name not in self.const_args
         }
 

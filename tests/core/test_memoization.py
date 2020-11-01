@@ -4,7 +4,6 @@ from pygears.lib import directed, drv
 from pygears.sim import sim, cosim
 from pygears.core.hier_node import HierYielderBase
 
-
 # def test_simple_out_only():
 #     reg['gear/memoize'] = True
 #     directed(drv(t=Uint[4], seq=[7]), drv(t=Uint[4], seq=[7]), f=add, ref=[14])
@@ -47,8 +46,10 @@ def test_hier_level1():
 
     sim()
 
+
 def test_hier_level2(lang):
     reg['gear/memoize'] = True
+
     @gear
     def test(a, b):
         return a + b
