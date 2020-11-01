@@ -36,12 +36,6 @@ async def decouple_dout(*, t, depth) -> b't':
     queue = module().decouple_din.queue
     data = await queue.get()
 
-    # while queue.empty():
-    #     if reg['sim/map'][module().decouple_din].done:
-    #         raise GearDone
-
-    #     await clk()
-
     yield data
 
     queue.task_done()
