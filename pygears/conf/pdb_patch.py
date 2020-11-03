@@ -93,8 +93,12 @@ def print_stack_trace(self):
 
 
 def patch_pdb():
-    if sys.gettrace():
-        p = sys.gettrace().__self__
+    tr = sys.gettrace();
+    if tr:
+        if not hasattr(tr, '__self__'):
+            return
+
+        p = tr.__self__
         if p is not None:
             p.stop_here = stop_here.__get__(p, pdb.Pdb)
             p.do_up = do_up.__get__(p, pdb.Pdb)
@@ -113,9 +117,13 @@ def patch_pdb():
 
 def unpatch_pdb():
     importlib.reload(pdb)
+    tr = sys.gettrace();
 
-    if sys.gettrace():
-        p = sys.gettrace().__self__
+    if tr:
+        if not hasattr(tr, '__self__'):
+            return
+
+        p = tr.__self__
 
         if p is None:
             return
