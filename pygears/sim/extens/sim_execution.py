@@ -1,5 +1,5 @@
 from .sim_extend import SimExtend
-from pygears.sim import sim_log
+from pygears.sim import log
 
 
 class SimExecution(SimExtend):
@@ -7,12 +7,12 @@ class SimExecution(SimExtend):
     #     return True
 
     def after_call_forward(self, sim, sim_gear):
-        sim_log().info(f'forward')
+        log.info(f'forward')
         return True
 
     # def before_call_back(self, sim, sim_gear):
     #     return True
 
     def after_call_back(self, sim, sim_gear):
-        sim_log().info(f'back')
+        log.info(f'back')
         return True

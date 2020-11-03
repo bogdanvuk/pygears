@@ -5,7 +5,7 @@ import re
 
 import jinja2
 
-from pygears.sim import sim_log
+from pygears.sim import log
 from pygears.sim.extens.rand_base import RandBase
 from pygears.typing.visitor import TypingVisitorBase
 from pygears.util.fileio import save_file
@@ -180,7 +180,7 @@ class SCVRand(RandBase):
         )
 
         if ret != 0:
-            sim_log().warning(
+            log.warning(
                 'Possible reason for exception: Queues not supported in SCV')
             raise SCVCompileError(
                 f'Constrained random library compilation failed for module {name}.'

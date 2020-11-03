@@ -1,7 +1,7 @@
 import ctypes
 from math import ceil
 from pygears.sim.modules.cosim_base import CosimNoData
-from pygears.sim import sim_log
+from pygears.sim import log
 
 
 class IdleIteration(Exception):
@@ -130,7 +130,7 @@ class COutputDrv(CDrv):
             try:
                 return self.port.dtype.decode(self.from_c_data(self.dout))
             except ValueError as e:
-                sim_log().error(
+                log.error(
                     str(e) + f'\n    - received at port "{self.port.name}"')
         else:
             raise CosimNoData

@@ -1,8 +1,18 @@
 import ast
 from . import Context, FuncContext, node_visitor, ir, visit_ast
 from pygears.core.gear import InSig, OutSig
-from .utils import add_to_list
 from .cast import resolve_cast_func
+
+
+def extend_stmts(stmts, extension):
+    if extension:
+        if not isinstance(extension, list):
+            if isinstance(extension, ir.Statement):
+                stmts.append(extension)
+        else:
+            for e in extension:
+                if isinstance(e, ir.Statement):
+                    stmts.append(e)
 
 
 def infer_targets(ctx, target, dtype, obj_factory=None):
@@ -19,8 +29,7 @@ def infer_targets(ctx, target, dtype, obj_factory=None):
         if len(dtype) != len(target.operands):
             raise SyntaxError(
                 f'Cannot unpack value of type "{dtype!r}" with {len(dtype)} component(s) into {len(target.operands)} variables: '
-                f'"{target}".'
-            )
+                f'"{target}".')
 
         for t, d in zip(target.operands, dtype):
             infer_targets(ctx, t, d, obj_factory)
@@ -100,7 +109,7 @@ def _(node, ctx: Context):
     stmts = []
     for t in node.targets:
         targets = visit_ast(t, ctx)
-        add_to_list(stmts, assign_targets(ctx, targets, value, ir.Variable))
+        extend_stmts(stmts, assign_targets(ctx, targets, value, ir.Variable))
 
     return stmts
 
@@ -131,4 +140,10 @@ def _(node: ast.Return, ctx: FuncContext):
 
 @node_visitor(ast.Pass)
 def _(node: ast.Pass, ctx: Context):
-    return None
+    return []
+
+
+@node_visitor(ast.ImportFrom)
+def _(node: ast.ImportFrom, ctx: Context):
+    # TODO: Handle this properly
+    return []

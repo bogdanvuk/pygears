@@ -1,7 +1,7 @@
 from pygears import bind
 from pygears.lib.decouple import decouple_din
 from pygears.lib import const
-from pygears.sim import sim_log
+from pygears.sim import log
 from pygears.conf import inject, Inject
 from pygears.core.gear import Gear
 from pygears.core.graph import get_producer_queue, get_source_producer
@@ -68,7 +68,7 @@ class ActivityChecker:
                 if not module.queue.empty():
                     if 'data_in_decouple' in self.hooks:
                         self.hooks['data_in_decouple'](module)
-                    sim_log().error(f'Data left in decouple: {module.name}')
+                    log.error(f'Data left in decouple: {module.name}')
 
             for p in module.in_ports:
                 status = self.get_port_status(p)
@@ -82,7 +82,7 @@ class ActivityChecker:
 
                     if 'not_ack' in self.hooks:
                         self.hooks['not_ack'](module, p)
-                    sim_log().error(
+                    log.error(
                         f'{src_port.gear.name}.{src_port.basename} -> {module.name}.{p.basename} was not acknowledged'
                     )
 
@@ -90,6 +90,6 @@ class ActivityChecker:
                     src_port = self.blockers[p]
                     if 'waiting' in self.hooks:
                         self.hooks['waiting'](module, p)
-                    sim_log().debug(
+                    log.debug(
                         f'{p.gear.name}.{p.basename} waiting on {src_port.gear.name}.{src_port.basename}'
                     )

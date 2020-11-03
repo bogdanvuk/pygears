@@ -69,6 +69,9 @@ def get_property_type(prop):
     return prop.fget.__annotations__['return']
 
 
-def add_to_list(orig_list, extention):
-    if extention:
-        orig_list.extend(extention if isinstance(extention, list) else [extention])
+def add_to_list(orig_list, extension):
+    if extension:
+        if not isinstance(extension, list):
+            orig_list.append(extension)
+        else:
+            orig_list.extend(extension)

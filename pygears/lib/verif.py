@@ -7,7 +7,7 @@ from pygears.lib import decouple
 from pygears.util.utils import quiter, gather
 from pygears.typing import Uint
 from pygears.typing import Any
-from pygears.sim import sim_assert, sim_log, clk
+from pygears.sim import sim_assert, log, clk
 
 
 class TypingYieldVisitorBase:
@@ -47,10 +47,10 @@ def typeseq(t, v):
                 try:
                     yield t(d)
                 except (TypeError, ValueError):
-                    sim_log().error(
+                    log.error(
                         f'Cannot convert value "{d}" to type "{repr(t)}"')
         except (TypeError, ValueError):
-            sim_log().error(
+            log.error(
                 f'Cannot convert sequence "{v}" to the "{repr(t)}"')
 
 
@@ -220,7 +220,7 @@ async def scoreboard(*din: b't', report=None, cmp=None) -> None:
             # print(f'Number of matches: {match_cnt:>4}/{cnt:>4}\r', end='')
 
     except GearDone as e:
-        sim_log().info(f'Number of matches: {match_cnt:>4}/{cnt:>4}')
+        log.info(f'Number of matches: {match_cnt:>4}/{cnt:>4}')
         raise e
 
 

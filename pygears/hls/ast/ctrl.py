@@ -2,8 +2,7 @@ import ast
 from . import Context, ir, node_visitor, visit_ast, visit_block
 from pygears.lib.rng import qrange
 from pygears.lib.union import select
-from .utils import add_to_list
-from .stmt import assign_targets
+from .stmt import assign_targets, extend_stmts
 from .async_stmts import AsyncForContext
 from .inline import call_gear
 from .generators import parse_generator_expression, is_intf_list
@@ -18,11 +17,11 @@ def _(node: ast.If, ctx: Context):
         if bool(test_expr.val):
             for stmt in node.body:
                 ir_stmt = visit_ast(stmt, ctx)
-                add_to_list(body_stmts, ir_stmt)
+                extend_stmts(body_stmts, ir_stmt)
         elif hasattr(node, 'orelse'):
             for stmt in node.orelse:
                 ir_stmt = visit_ast(stmt, ctx)
-                add_to_list(body_stmts, ir_stmt)
+                extend_stmts(body_stmts, ir_stmt)
 
         if body_stmts:
             return body_stmts
@@ -74,7 +73,7 @@ def intf_loop(node, intfs, targets, ctx: Context, enumerated):
         ctx.local_namespace[intf_var_name] = select_intf
 
         if enumerated:
-            add_to_list(
+            extend_stmts(
                 ctx.ir_parent_block.stmts,
                 assign_targets(
                     ctx, targets.operands[0],
@@ -83,7 +82,7 @@ def intf_loop(node, intfs, targets, ctx: Context, enumerated):
 
         for stmt in node.body:
             res_stmt = visit_ast(stmt, ctx)
-            add_to_list(ctx.ir_parent_block.stmts, res_stmt)
+            extend_stmts(ctx.ir_parent_block.stmts, res_stmt)
 
         return stmts
 

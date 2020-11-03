@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pygears.sim.sim_gear import SimGear
-from pygears.sim import delta, timestep, sim_log, clk
+from pygears.sim import delta, timestep, log, clk
 from pygears.sim.sim import SimPlugin
 from pygears.conf import Inject, inject
 from pygears import GearDone, reg
@@ -76,7 +76,7 @@ class CosimBase(SimGear):
             while True:
 
                 phase = None
-                while phase != 'cycle':
+                while phase != 'back':
                     phase = await delta()
 
                 if self.eval_needed:

@@ -4,7 +4,7 @@ from itertools import islice
 
 from pygears import reg
 from pygears.core.util import perpetum
-from pygears.sim import sim_log
+from pygears.sim import log
 from pygears.sim.extens.scvrand import SCVRand
 from pygears.sim.extens.svrand import SVRandSocket
 from pygears.typing import Queue, typeof, Bool, Tuple, Uint

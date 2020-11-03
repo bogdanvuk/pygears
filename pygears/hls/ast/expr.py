@@ -196,6 +196,12 @@ def get_dict_attr(obj, attr):
     raise AttributeError
 
 
+@node_visitor(ast.JoinedStr)
+def _(node, ctx: Context):
+    # TODO: Implement this properly
+    return ir.ResExpr('')
+
+
 @node_visitor(ast.Attribute)
 def _(node, ctx: Context):
     value = visit_ast(node.value, ctx)

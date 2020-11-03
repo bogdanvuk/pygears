@@ -1,5 +1,5 @@
 from pygears import reg
-from pygears.sim import sim_log
+from pygears.sim import log
 from pygears.sim.extens.sim_extend import SimExtend
 from pygears.typing import Queue
 from pygears.conf import inject, Inject
@@ -39,7 +39,7 @@ class RandBase(SimExtend):
         return constraints
 
     def create_type_cons(self, desc={}):
-        sim_log().error('Create type constraints function not implemented.')
+        log.error('Create type constraints function not implemented.')
 
     def get_rand(self, name):
-        sim_log().error('Get rand function not implemented.')
+        log.error('Get rand function not implemented.')

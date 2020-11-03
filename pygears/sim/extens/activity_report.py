@@ -6,7 +6,7 @@ from vcd.gtkw import GTKWSave
 from pygears import find, reg
 from pygears.core.port import OutPort as GearOutPort
 from pygears.rtl.port import InPort, OutPort
-from pygears.sim import sim_log
+from pygears.sim import log
 from pygears.sim.extens.graphviz import graph
 from pygears.sim.extens.vcd import module_sav
 from pygears.sim.modules.sim_socket import SimSocket
@@ -57,7 +57,7 @@ def find_target_prod(intf):
         prod_gear = end_p[0].gear
     if len(prod_gear.child):
         if len(prod_gear.child) > 1:
-            sim_log().warning(
+            log.warning(
                 f'ActivityCosim: prod has more than one child. Setting on first.'
             )
         return prod_gear.child[0]
@@ -71,7 +71,7 @@ def find_target_cons(intf):
     end_c = get_end_consumer(intf)
     if len(end_c) != 1:
         if len(end_c) > 1:
-            sim_log().debug(f'Find target cons: found broadcast')
+            log.debug(f'Find target cons: found broadcast')
         return None
     cons_rtl_port = end_c[0]
     cons_rtl_node, port_id = cons_rtl_port.node, cons_rtl_port.index
@@ -194,25 +194,25 @@ class ActivityReporter(ActivityChecker):
                 const_regex_one = r'.*_const_s'
                 if not (re.match(const_regex, intf_name)
                         or re.match(const_regex_one, intf_name)):
-                    sim_log().error(
+                    log.error(
                         f'Cosim spy not acknowledged: {activity_name}')
 
                 if self.draw_graph:
                     bc_regex = r'.*_bc_(?P<num>\d+).*'
                     if re.match(bc_regex, intf_name):
-                        sim_log().debug(
+                        log.debug(
                             f'Activity monitor cosim: bc not supported {activity_name}'
                         )
                         continue
 
                     intf = find_target_intf(gear_name, intf_name)
                     if intf is None:
-                        sim_log().error(
+                        log.error(
                             f'Cannot find matching interface for {activity_name}'
                         )
                         continue
                     if intf.is_broadcast:
-                        sim_log().debug(
+                        log.debug(
                             f'Intf bc not supported {activity_name}')
                         continue
 
@@ -220,12 +220,12 @@ class ActivityReporter(ActivityChecker):
                         prod_gear = find_target_prod(intf)
                         set_blocking_node(g, prod_gear)
                     except (KeyError, AttributeError):
-                        sim_log().debug(
+                        log.debug(
                             f'Cannot find node for {activity_name}')
 
                     try:
                         cons_port = find_target_cons(intf)
                         set_blocking_edge(g, cons_port)
                     except (KeyError, AttributeError):
-                        sim_log().debug(
+                        log.debug(
                             f'Cannot find edge for {activity_name}')

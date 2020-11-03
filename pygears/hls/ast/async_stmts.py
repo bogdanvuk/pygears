@@ -1,8 +1,7 @@
 import ast
 from . import Context, ir, node_visitor, visit_ast
 from .cast import resolve_cast_func
-from .utils import add_to_list
-from .stmt import assign_targets
+from .stmt import assign_targets, extend_stmts
 
 
 def is_target_id(node):
@@ -145,11 +144,11 @@ def asyncwith(node, ctx: Context):
         else:
             intfs.append(intf)
 
-        add_to_list(stmts, targets)
+        extend_stmts(stmts, targets)
 
     for stmt in node.body:
         res_stmt = visit_ast(stmt, ctx)
-        add_to_list(stmts, res_stmt)
+        extend_stmts(stmts, res_stmt)
 
     for i in intfs:
         stmts.append(ir.AssignValue(ir.Component(i, 'ready'), ir.res_true))
@@ -203,12 +202,12 @@ def AsyncFor(node, ctx: Context):
     targets = visit_ast(node.target, ctx)
 
     with AsyncForContext(out_intf_ref, ctx) as stmts:
-        add_to_list(ctx.ir_parent_block.stmts,
-                    assign_targets(ctx, targets, ir.Component(out_intf_ref, 'data'), ir.Variable))
+        extend_stmts(ctx.ir_parent_block.stmts,
+                     assign_targets(ctx, targets, ir.Component(out_intf_ref, 'data'), ir.Variable))
 
         for stmt in node.body:
             res_stmt = visit_ast(stmt, ctx)
-            add_to_list(ctx.ir_parent_block.stmts, res_stmt)
+            extend_stmts(ctx.ir_parent_block.stmts, res_stmt)
 
         return stmts
 

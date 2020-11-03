@@ -3,8 +3,8 @@ import weakref
 from functools import partial
 
 
-def callback(p, b):
-    print(f'Consumer of {p.name} consumer is deleted.')
+# def callback(p, b):
+#     print(f'Consumer of {p.name} consumer is deleted.')
 
 
 class Port:
@@ -23,8 +23,8 @@ class Port:
 
     @consumer.setter
     def consumer(self, val):
-        self._consumer = weakref.ref(val, partial(callback, self))
-        # self._consumer = weakref.ref(val)
+        # self._consumer = weakref.ref(val, partial(callback, self))
+        self._consumer = weakref.ref(val)
 
     @property
     def name(self):

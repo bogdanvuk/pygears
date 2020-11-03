@@ -1,7 +1,7 @@
 import subprocess
 from pygears import PluginBase, reg, find
 from pygears.core.port import OutPort
-from pygears.sim import sim_log, timestep, SimPlugin
+from pygears.sim import log, timestep, SimPlugin
 from pygears.sim.sim_gear import SimGear
 from pygears.typing import typeof, TLM, Float
 from pygears.typing.visitor import TypingVisitorBase
@@ -232,7 +232,7 @@ class VCD(SimExtend):
         if self.vcd_fifo:
             subprocess.call(f"mkfifo {self.trace_fn}", shell=True)
         else:
-            sim_log().info(f'Main VCD dump to "{self.trace_fn}"')
+            log.info(f'Main VCD dump to "{self.trace_fn}"')
 
         if self.shmidcat:
             self.shmid_proc = subprocess.Popen(f'shmidcat {self.trace_fn}',
@@ -249,7 +249,7 @@ class VCD(SimExtend):
 
         if self.shmidcat:
             self.shmid = self.shmid_proc.stdout.readline().decode().strip()
-            sim_log().info(f'Main VCD dump to shared memory at 0x{self.shmid}')
+            log.info(f'Main VCD dump to shared memory at 0x{self.shmid}')
 
         self.writer = VCDWriter(self.vcd_file, timescale='1 ns', date='today')
 

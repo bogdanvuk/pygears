@@ -9,7 +9,7 @@ from pygears import Intf
 import jinja2
 
 from pygears import reg, find
-from pygears.sim import sim_log
+from pygears.sim import log
 from pygears.sim.c_drv import CInputDrv, COutputDrv
 from pygears.sim.modules.cosim_base import CosimBase
 from pygears.hdl import hdlgen, list_hdl_files
@@ -250,15 +250,15 @@ class SimVerilated(CosimBase):
         # TODO: When reusing existing verilated build, add test to check
         # whether verilated module is the same as the current one (Maybe hash check?)
         if self.rebuild:
-            sim_log().info(f'Verilating...')
+            log.info(f'Verilating...')
             build(self.top, self.outdir, postsynth=False, lang=self.lang)
-            sim_log().info(f'Done')
+            log.info(f'Done')
 
         file_struct = get_file_struct(self.top, self.outdir)
 
         tracing_enabled = bool(reg['debug/trace'])
         if tracing_enabled:
-            sim_log().info(f"Debug: {reg['debug/trace']}")
+            log.info(f"Debug: {reg['debug/trace']}")
             self.trace_fn = os.path.join(reg["results-dir"],
                                          f'{self.name}.vcd')
             try:
@@ -269,7 +269,7 @@ class SimVerilated(CosimBase):
             if self.vcd_fifo:
                 subprocess.call(f"mkfifo {self.trace_fn}", shell=True)
             else:
-                sim_log().info(f'Verilator VCD dump to "{self.trace_fn}"')
+                log.info(f'Verilator VCD dump to "{self.trace_fn}"')
         else:
             self.trace_fn = ''
 
@@ -300,7 +300,7 @@ class SimVerilated(CosimBase):
 
         if self.shmid_proc:
             self.shmid = self.shmid_proc.stdout.readline().decode().strip()
-            sim_log().info(
+            log.info(
                 f'Verilator VCD dump to shared memory at 0x{self.shmid}')
 
         self.handlers = {}

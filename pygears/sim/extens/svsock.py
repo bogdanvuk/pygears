@@ -14,7 +14,7 @@ from pygears import reg
 from pygears.sim.extens.sim_extend import SimExtend
 from pygears.sim import SimPlugin
 from pygears.util.fileio import save_file
-from pygears.sim import sim_log
+from pygears.sim import log
 
 from pygears.conf import inject, Inject
 
@@ -230,7 +230,7 @@ class SVSock(SimExtend):
                 except socket.timeout:
                     ret = self.cosim_pid.poll()
                     if ret is not None:
-                        sim_log().error(
+                        log.error(
                             f'Cosimulator error: {ret}. Check log File "{self.outdir}/log.log"'
                         )
                         raise CosimulatorStartError
@@ -238,7 +238,7 @@ class SVSock(SimExtend):
         msg = self.conn.recv(1024)
         port_name = msg.decode()
 
-        sim_log().debug(f"Connection received for {port_name}")
+        log.debug(f"Connection received for {port_name}")
 
     def finish(self):
         if self.sock:
@@ -249,7 +249,7 @@ class SVSock(SimExtend):
                 except BrokenPipeError:
                     pass
 
-            sim_log().info(f'Done. Closing the socket...')
+            log.info(f'Done. Closing the socket...')
             self.sock.close()
             time.sleep(1)
 

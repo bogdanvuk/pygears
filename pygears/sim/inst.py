@@ -71,7 +71,7 @@ def sim_compile_resolver(func, *args, **kwds):
             intf.put_nb(a)
 
         def callback(p):
-            print(f'Out of scope: {p.gear.name}')
+            # print(f'Out of scope: {p.gear.name}')
             g = p.gear
             for i in g.in_ports:
                 if isinstance(i.producer.producer, HDLProducer):

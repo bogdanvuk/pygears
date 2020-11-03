@@ -15,6 +15,7 @@ from pygears.core.gear import GearPlugin, Gear
 from pygears.core.port import InPort, OutPort, HDLConsumer, HDLProducer
 from pygears.core.sim_event import SimEvent
 from pygears.core.hier_node import HierVisitorBase
+from pygears.sim import log
 
 gear_reg = {}
 sim_reg = {}
@@ -349,7 +350,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         except Exception as e:
             raise e
         else:
-            sim_log().error(
+            log.error(
                 f"Process of '{sim_gear.port.name if hasattr(sim_gear, 'port') else sim_gear.gear.name}'"
                 f" didn't stop on finish!")
         finally:
@@ -378,10 +379,12 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         except (StopIteration, GearDone):
             self.done.add(sim_gear)
         else:
+            self.wait_list[data] = sim_gear
             if isinstance(data, SimFuture):
                 self.wait_list[data] = sim_gear
             else:
                 self.delta_ready.add(sim_gear)
+                # self.forward_ready.add(sim_gear)
 
             self.task_data[sim_gear] = data
         finally:
@@ -441,7 +444,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         timestep = -1
         start_time = time.time()
 
-        sim_log().info("-------------- Simulation start --------------")
+        log.info("-------------- Simulation start --------------")
         while (self.forward_ready or self.back_ready or self.delta_ready
                or self._schedule_to_finish):
 
@@ -451,7 +454,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
                 break
 
             # if (timestep % 1000) == 0:
-            #     sim_log().info("-------------- Simulation cycle --------------")
+            #     log.info("-------------- Simulation cycle --------------")
 
             # print(f"-------------- {timestep} ------------------")
             # print(f'Tasks: {len(self.tasks)}')
@@ -477,14 +480,14 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             clk.set()
             clk.clear()
 
-            for sim_gear in reversed(self.sim_gears):
-                if sim_gear in self.delta_ready:
-                    # if hasattr(sim_gear, 'port'):
-                    #     print(f'Clock: {sim_gear.gear.name}.{sim_gear.port.basename}')
-                    # else:
-                    #     print(f'Clock: {sim_gear.gear.name}')
+            # for sim_gear in reversed(self.sim_gears):
+            #     if sim_gear in self.delta_ready:
+            #         # if hasattr(sim_gear, 'port'):
+            #         #     print(f'Clock: {sim_gear.gear.name}.{sim_gear.port.basename}')
+            #         # else:
+            #         #     print(f'Clock: {sim_gear.gear.name}')
 
-                    self.maybe_run_gear(sim_gear, self.delta_ready)
+            #         self.maybe_run_gear(sim_gear, self.delta_ready)
 
             for sim_gear in self.done:
                 self.remove(sim_gear)
@@ -493,8 +496,8 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
             self.events['after_timestep'](self, timestep)
 
-        sim_log().info(f"----------- Simulation done ---------------")
-        sim_log().info(f'Elapsed: {time.time() - start_time:.2f}')
+        log.info(f"----------- Simulation done ---------------")
+        log.info(f'Elapsed: {time.time() - start_time:.2f}')
 
         # while self.schedule_to_finish:
         #     # print(f'Canceling {sim_gear.gear.name}')
@@ -584,7 +587,7 @@ def sim(resdir=None, timeout=None, extens=None, run=True, check_activity=False, 
 
     random.seed(reg['sim/rand_seed'])
 
-    sim_log().info(f'Running sim with seed: {reg["sim/rand_seed"]}')
+    log.info(f'Running sim with seed: {reg["sim/rand_seed"]}')
 
     loop = EventLoop()
     asyncio.set_event_loop(loop)
@@ -627,10 +630,6 @@ class SimLog(CustomLogger):
         return SimFmtFilter()
 
 
-def sim_log():
-    return logging.getLogger('sim')
-
-
 class SimPlugin(GearPlugin):
     @classmethod
     def bind(cls):
@@ -662,4 +661,4 @@ class SimPlugin(GearPlugin):
 
 def sim_assert(cond, msg=None):
     if not cond:
-        sim_log().error(f'Assertion failed: {msg}')
+        log.error(f'Assertion failed: {msg}')

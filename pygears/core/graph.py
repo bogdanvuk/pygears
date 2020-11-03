@@ -107,7 +107,6 @@ def _get_consumer_tree_rec(root_intf, cur_intf, consumers, end_producer):
         cons_intf = port.consumer
         if is_end_consumer(port, sim=True):
             end_producer[port] = (root_intf, len(consumers))
-            # end_producer[cons_intf] = end_producer[port]
             consumers.append(port)
         elif cons_intf is not None:
             start = len(consumers)
@@ -116,8 +115,6 @@ def _get_consumer_tree_rec(root_intf, cur_intf, consumers, end_producer):
                 end_producer[port] = (root_intf, slice(start, len(consumers)))
             else:
                 end_producer[port] = (root_intf, start)
-
-            # end_producer[cons_intf] = end_producer[port]
 
 
 def get_consumer_tree(intf):
