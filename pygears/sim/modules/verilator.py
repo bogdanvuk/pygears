@@ -123,7 +123,7 @@ def verilate(outdir, lang, top, top_name, tracing_enabled):
         # TODO: Not much of a speedup: '-O3 --x-assign fast --x-initial fast --noassert',
         '-clk clk',
         f'--top-module {top_name}',
-        '--trace --no-trace-params --trace-structs' if tracing_enabled else '',
+        '--trace --no-trace-params --trace-structs --trace-underscore' if tracing_enabled else '',
         '-o pygearslib',
         top_name,
         'sim_main.cpp',

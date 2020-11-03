@@ -44,9 +44,9 @@ class InCosimPort:
                 if self.phase == 'forward':
                     if not self.active:
                         self.main.reset_in(self.name)
-                        log.info(f'Wait for intf -> {self.name}')
+                        # log.info(f'Wait for intf -> {self.name}')
                         data = await intf.pull()
-                        log.info(f'Set {data} -> {self.name}')
+                        # log.info(f'Set {data} -> {self.name}')
                         self.active = True
                         self.main.write_in(self.name, data)
 
@@ -54,12 +54,12 @@ class InCosimPort:
                 elif self.phase == 'back':
                     if self.active:
                         if self.main.ready_in(self.name):
-                            log.info(f'Ack {self.name}')
+                            # log.info(f'Ack {self.name}')
                             self.active = False
                             intf.ack()
                         else:
                             pass
-                            log.info(f'NAck {self.name}')
+                            # log.info(f'NAck {self.name}')
                     await clk()
 
             except (BrokenPipeError, ConnectionResetError):
@@ -98,16 +98,16 @@ class OutCosimPort:
 
         while True:
             if self.main.done:
-                log.info(f'CosimPort {self.name} finished')
+                # log.info(f'CosimPort {self.name} finished')
                 intf.finish()
                 raise GearDone
 
             try:
-                log.info(f'{self.name} read_out')
+                # log.info(f'{self.name} read_out')
                 data = self.main.read_out(self.name)
-                log.info(f'Put {data} -> {self.name}')
+                # log.info(f'Put {data} -> {self.name}')
                 await intf.put(data)
-                log.info(f'Ack {data} -> {self.name}')
+                # log.info(f'Ack {data} -> {self.name}')
                 self.main.ack_out(self.name)
             except (BrokenPipeError, ConnectionResetError):
                 intf.finish()

@@ -30,24 +30,29 @@ async def qdeal(din: Queue, *, num,
                 i += 1
 
 
-@alternative(qdeal)
-@gear(hdl={'compile': True}, enablement=b'lvl == din.lvl')
-async def qdeal_same_lvl(din: Queue, *, num,
-                         lvl=b'din.lvl-1') -> b'(din, ) * num':
+@gear(hdl={'compile': True})
+async def qdeal_same_lvl_impl(din: Queue, *, num,
+                              lvl=b'din.lvl-1') -> b'Union[(din, ) * num]':
 
     i = Uint[bitw(num)](0)
 
     while i != num:
         async for (data, eot) in din:
-            dout = data if lvl == 0 else (data, eot)
+            d = data if lvl == 0 else (data, eot)
 
-            yield demux(i,
-                        dout,
-                        use_dflt=False,
-                        mapping={n: n
-                                 for n in range(num)})
+            yield (d, i)
 
         i += 1
+
+@alternative(qdeal)
+@gear(enablement=b'lvl == din.lvl')
+def qdeal_same_lvl(din: Queue, *, num,
+                         lvl=b'din.lvl-1'):
+    return din \
+        | qdeal_same_lvl_impl(num=num, lvl=lvl) \
+        | demux(use_dflt=False,
+                mapping={n: n
+                         for n in range(num)})
 
 
 @gear

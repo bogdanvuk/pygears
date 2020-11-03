@@ -206,6 +206,9 @@ class TupleType(EnumerableGenericMeta):
                 f'Cannot callculate width of the unspecified type {repr(self)}')
         w = 0
         for f in self.__args__:
+            if not is_type(f):
+                raise TypeError(f'Argument "{repr(f)}" of type "{repr(self)}" is not PyGears type')
+
             w += f.width
 
         return w

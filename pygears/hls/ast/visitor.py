@@ -150,6 +150,7 @@ class GearContext(Context):
 
         paramspec = inspect.getfullargspec(self.gear.func)
 
+        # TODO: If local variable shadows output interface name, they will clash!!! (Example: dout)
         vararg = []
         for p in self.gear.in_ports:
             self.scope[p.basename] = ir.Variable(p.basename, ir.IntfType[p.dtype, ir.IntfType.iin])
