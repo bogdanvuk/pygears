@@ -1,5 +1,6 @@
-from pygears.sim import delta, clk, log, timestep
+from pygears.sim import clk, delta, log
 from pygears import GearDone
+
 
 class CosimNoData(Exception):
     pass
@@ -32,7 +33,6 @@ class InCosimPort:
     async def run(self):
         intf = self.port.consumer
 
-        phase = 'forward'
         self.active = False
 
         while True:
@@ -41,26 +41,32 @@ class InCosimPort:
                 raise GearDone
 
             try:
-                if (phase == 'forward') and (not self.active):
-                    self.main.reset_in(self.name)
-                    # log.info(f'Wait for intf -> {self.name}')
-                    data = await intf.pull()
-                    # log.info(f'Set {data} -> {self.name}')
-                    self.active = True
-                    self.main.write_in(self.name, data)
-                elif (phase == 'back') and (self.active):
-                    if self.main.ready_in(self.name):
-                        # log.info(f'Ack {self.name}')
-                        self.active = False
-                        intf.ack()
-                    # else:
-                    #     log.info(f'NAck {self.name}')
+                if self.phase == 'forward':
+                    if not self.active:
+                        self.main.reset_in(self.name)
+                        log.info(f'Wait for intf -> {self.name}')
+                        data = await intf.pull()
+                        log.info(f'Set {data} -> {self.name}')
+                        self.active = True
+                        self.main.write_in(self.name, data)
+
+                    await delta()
+                elif self.phase == 'back':
+                    if self.active:
+                        if self.main.ready_in(self.name):
+                            log.info(f'Ack {self.name}')
+                            self.active = False
+                            intf.ack()
+                        else:
+                            pass
+                            log.info(f'NAck {self.name}')
+                    await clk()
 
             except (BrokenPipeError, ConnectionResetError):
                 intf.finish()
                 raise GearDone
 
-            phase = await delta()
+            # phase = await delta()
 
 
 class OutCosimPort:
@@ -92,16 +98,16 @@ class OutCosimPort:
 
         while True:
             if self.main.done:
-                # log.info(f'CosimPort {self.name} finished')
+                log.info(f'CosimPort {self.name} finished')
                 intf.finish()
                 raise GearDone
 
             try:
-                # log.info(f'{self.name} read_out')
+                log.info(f'{self.name} read_out')
                 data = self.main.read_out(self.name)
-                # log.info(f'Put {data} -> {self.name}')
+                log.info(f'Put {data} -> {self.name}')
                 await intf.put(data)
-                # log.info(f'Ack {data} -> {self.name}')
+                log.info(f'Ack {data} -> {self.name}')
                 self.main.ack_out(self.name)
             except (BrokenPipeError, ConnectionResetError):
                 intf.finish()

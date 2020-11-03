@@ -320,10 +320,8 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
         self.back_ready.discard(sim_gear)
         self.forward_ready.discard(sim_gear)
-        self.delta_ready.discard(sim_gear)
         self.back_ready.discard(sim_gear)
         self.forward_ready.discard(sim_gear)
-        self.delta_ready.discard(sim_gear)
 
     def create_future(self):
         """Create a Future object attached to the loop."""
@@ -383,8 +381,10 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             if isinstance(data, SimFuture):
                 self.wait_list[data] = sim_gear
             else:
-                self.delta_ready.add(sim_gear)
-                # self.forward_ready.add(sim_gear)
+                if sim_gear.phase == 'back':
+                    self.back_ready.add(sim_gear)
+                else:
+                    self.forward_ready.add(sim_gear)
 
             self.task_data[sim_gear] = data
         finally:
@@ -393,7 +393,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
     def maybe_run_gear(self, sim_gear, ready):
         ready.discard(sim_gear)
-        self.delta_ready.discard(sim_gear)
+        # self.delta_ready.discard(sim_gear)
 
         self.cur_gear = sim_gear.gear
         gear_reg['current_module'] = self.cur_gear
@@ -417,7 +417,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             ready_dict = self.back_ready
 
         for sim_gear in sim_gears:
-            if ((sim_gear in ready_dict) or (sim_gear in self.delta_ready)):
+            if sim_gear in ready_dict:
                 self.maybe_run_gear(sim_gear, ready_dict)
 
             if sim_gear.child:
@@ -426,7 +426,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
                     self.sim_list(sim_gear.child)
 
                     cur_child_num = len(sim_gear.child)
-                    if ((sim_gear in ready_dict) or (sim_gear in self.delta_ready)):
+                    if sim_gear in ready_dict:
                         self.maybe_run_gear(sim_gear, ready_dict)
 
                     unprocessed_children = cur_child_num < len(sim_gear.child)
@@ -445,8 +445,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         start_time = time.time()
 
         log.info("-------------- Simulation start --------------")
-        while (self.forward_ready or self.back_ready or self.delta_ready
-               or self._schedule_to_finish):
+        while (self.forward_ready or self.back_ready or self._schedule_to_finish):
 
             timestep += 1
             reg['sim/timestep'] = timestep
@@ -518,7 +517,6 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         self.wait_list = {}
         self.forward_ready = set(self.sim_gears)
         self.back_ready = set()
-        self.delta_ready = set()
         self._schedule_to_finish = set()
         self.done = set()
 
