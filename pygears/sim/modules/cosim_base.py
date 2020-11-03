@@ -29,6 +29,9 @@ class CosimBase(SimGear):
         raise NotImplementedError()
 
     def read_out(self, port):
+        if not port in self.handlers:
+            raise ConnectionResetError
+
         if self.eval_needed:
             self.forward()
 
@@ -39,24 +42,36 @@ class CosimBase(SimGear):
         return hout.read()
 
     def ack_out(self, port):
+        if not port in self.handlers:
+            raise ConnectionResetError
+
         self.eval_needed = True
         hout = self.handlers[port]
         hout.ack()
         self.activity_monitor = 0
 
     def write_in(self, port, data):
+        if not port in self.handlers:
+            raise ConnectionResetError
+
         self.eval_needed = True
 
         hin = self.handlers[port]
         return hin.send(data)
 
     def reset_in(self, port):
+        if not port in self.handlers:
+            raise ConnectionResetError
+
         self.eval_needed = True
 
         hin = self.handlers[port]
         hin.reset()
 
     def ready_in(self, port):
+        if not port in self.handlers:
+            raise ConnectionResetError
+
         if self.eval_needed:
             self.back()
             self.eval_needed = False

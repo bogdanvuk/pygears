@@ -33,6 +33,7 @@ def connect_to_existing_parent_out_port(out_port, cons_port):
     return False
 
 
+# TODO: Dangling reporting not working anymore
 def report_out_dangling(port):
     src_intf = get_source_producer(port)
     p = src_intf.consumers[0]

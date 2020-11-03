@@ -110,12 +110,15 @@ class Intf:
 
         return f'{self.parent.name}.{self.basename}'
 
-    # TODO: type checking should be performed here, right?
     def __ior__(self, iout):
         if isinstance(iout, Partial):
             raise Exception(f"Output of the unresolved gear '{iout.func.__name__}' with"
                             f" arguments {iout.args} and parameters {iout.kwds},"
                             f" connected to '{self}': {str(MultiAlternativeError(iout.errors))}")
+
+        if iout.dtype != self.dtype:
+            raise TypeError(f'Output interface of type "{repr(iout.dtype)}", cannot be connected '
+                            f'to the interface of type "{repr(self.dtype)}"')
 
         iout.producer.consumer = self
         if self.producer is not None:
