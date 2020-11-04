@@ -82,11 +82,20 @@ class FixpnumberType(IntegralType):
     def __gt__(self, other):
         return Bool
 
+    def __iadd__(self, other):
+        return self
+
     def __int__(self):
         return int
 
     def __invert__(self):
         return NotImplemented
+
+    def __imul__(self, other):
+        return self
+
+    def __isub__(self, other):
+        return self
 
     def __lshift__(self, others):
         shamt = int(others)
@@ -395,8 +404,46 @@ class Fixpnumber(Integral, metaclass=FixpnumberType):
             else:
                 return int(self) > int(fixp_other) << (type(self).fract - type(fixp_other).fract)
 
+    def __iadd__(self, other):
+        if is_type(type(other)) and not isinstance(other, (Fixpnumber, Integer)):
+            return NotImplemented
+
+        if isinstance(other, Fixpnumber):
+            conv_other = other
+        else:
+            conv_other = Fixpnumber(other)
+
+        sum_cls = type(self)
+        return sum_cls.decode((int(self) << (sum_cls.fract - type(self).fract)) +
+                              (int(conv_other) << (sum_cls.fract - type(conv_other).fract)))
+
+
+    def __imul__(self, other):
+        if is_type(type(other)) and not isinstance(other, (Fixpnumber, Integer)):
+            return NotImplemented
+
+        if isinstance(other, Fixpnumber):
+            conv_other = other
+        else:
+            conv_other = Fixpnumber(other)
+
+        return type(self).decode(super().__mul__(conv_other))
+
     def __invert__(self):
         return NotImplemented
+
+    def __isub__(self, other):
+        if is_type(type(other)) and not isinstance(other, (Fixpnumber, Integer)):
+            return NotImplemented
+
+        if isinstance(other, Fixpnumber):
+            conv_other = other
+        else:
+            conv_other = Fixpnumber(other)
+
+        sum_cls = type(self)
+        return sum_cls.decode((int(self) << (sum_cls.fract - type(self).fract)) -
+                              (int(conv_other) << (sum_cls.fract - type(conv_other).fract)))
 
     def __hash__(self):
         return hash((type(self), int(self)))

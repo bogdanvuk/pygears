@@ -143,9 +143,6 @@ def visit_bin_expr(op, operands, ctx: Context):
     op1 = visit_ast(operands[0], ctx)
     op2 = visit_ast(operands[1], ctx)
 
-    if type(op) in [ast.And, ast.Or]:
-        return ir.BinOpExpr((op1, op2), type(op))
-
     # TODO: This WAS needed, since: ir.ResExpr(Uint[8]).dtype is None. REMOVE
     dtype = type(op1.val) if isinstance(op1, ir.ResExpr) else op1.dtype
     # f = getattr(op1.dtype, METHOD_OP_MAP[type(op)])
@@ -180,8 +177,14 @@ def _(node, ctx: Context):
 
 @node_visitor(ast.BoolOp)
 def _(node, ctx: Context):
-    return visit_bin_expr(node.op, (node.values[0], node.values[1]), ctx)
+    ops = [visit_ast(opi, ctx) for opi in node.values]
 
+    base = ir.BinOpExpr((ops[0], ops[1]), type(node.op))
+
+    for op in ops[2:]:
+        base = ir.BinOpExpr((base, op), type(node.op))
+
+    return base
 
 @node_visitor(ast.BinOp)
 def _(node, ctx: Context):

@@ -151,10 +151,19 @@ class IntegerType(IntegralType):
     def __gt__(self, other):
         return self.width > other.width
 
+    def __iadd__(self, other):
+        return self
+
+    def __imul__(self, other):
+        return self
+
     def __int__(self):
         return int
 
     def __invert__(self):
+        return self
+
+    def __isub__(self, other):
         return self
 
     def __le__(self, other):
@@ -247,9 +256,6 @@ class IntegerType(IntegralType):
 
     def __xor__(self, other):
         return self.base[max(op.width for op in (self, other))]
-
-    def __iadd__(self, other):
-        return self
 
     @property
     def specified(self):
@@ -398,8 +404,46 @@ class Integer(Integral, metaclass=IntegerType):
     def __hash__(self):
         return super().__hash__()
 
+    def __iadd__(self, other):
+        if not is_type(type(other)):
+            other = type(self).base(other)
+
+        if not isinstance(other, Integer):
+            return NotImplemented
+
+        if not self.signed and other.signed:
+            raise TypeError(
+                f"unsupported operand type(s) for +=: '{type(self)}' and '{type(other)}'")
+
+        return type(self)(int(self) + int(other))
+
+    def __imul__(self, other):
+        if is_type(type(other)) and not isinstance(other, Integer):
+            return NotImplemented
+
+        if isinstance(other, Integer):
+            conv_other = other
+        else:
+            conv_other = Integer(other)
+
+        return type(self)(super().__mul__(conv_other))
+
+
     def __invert__(self):
         return type(self)(super().__invert__() & type(self).mask)
+
+    def __isub__(self, other):
+        if is_type(type(other)) and not isinstance(other, Integer):
+            return NotImplemented
+
+        if is_type(type(other)):
+            conv_other = other
+        elif isinstance(other, (int, float)):
+            conv_other = Integer(other)
+        else:
+            return NotImplemented
+
+        return type(self)(super().__sub__(conv_other))
 
     def __lshift__(self, other):
         return (type(self) << other)(super().__lshift__(other))
@@ -471,19 +515,6 @@ class Integer(Integral, metaclass=IntegerType):
             return NotImplemented
 
         return (type(self) - type(conv_other))(super().__sub__(conv_other))
-
-    def __iadd__(self, other):
-        if not is_type(type(other)):
-            other = type(self).base(other)
-
-        if not isinstance(other, Integer):
-            return NotImplemented
-
-        if not self.signed and other.signed:
-            raise TypeError(
-                f"unsupported operand type(s) for +=: '{type(self)}' and '{type(other)}'")
-
-        return type(self)(int(self) + int(other))
 
     @property
     def quant(self):
