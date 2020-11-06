@@ -1,0 +1,7 @@
+sphinx
+-e git+https://github.com/bogdanvuk/bdp.git@develop#egg=bdp
+-e git+https://github.com/bogdanvuk/sphinx-verboser.git@master#egg=sphinx_verboser
+-e ..
+sphinxcontrib-tikz
+sphinxcontrib-wavedrom
+sphinx-sitemap
