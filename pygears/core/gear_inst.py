@@ -272,6 +272,8 @@ def resolve_func(gear_inst):
         out_dtype = (out_dtype, )
 
     if not is_standard_func(gear_inst.func):
+        # TODO: If something is being yield-ed and there is no output type
+        # specified, try to throw an error
         return tuple(), out_dtype
 
     with create_hier(gear_inst):

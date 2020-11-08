@@ -125,6 +125,9 @@ def _get_consumer_tree_rec(root_intf, cur_intf, consumers):
         if port in reg['sim/map']:
             consumers.append(port)
         elif port.gear.hierarchical:
+            if cons_intf is None:
+                raise Exception(f'Port {port.name} found dangling')
+
             _get_consumer_tree_rec(root_intf, cons_intf, consumers)
         else:
             consumers.append(port.gear)
@@ -166,9 +169,11 @@ def cosim(top, sim, *args, **kwds):
 
             kwds['outdir'] = kwds.get('outdir', reg['results-dir'])
             kwds['rebuild'] = kwds.get('rebuild', True)
+            timeout = kwds.pop('timeout', 100)
             sim_cls = SimVerilated
             build(top, **kwds)
             kwds['rebuild'] = False
+            kwds['timeout'] = timeout
         else:
             raise Exception(f"Unsupported simulator: {sim}")
     else:
@@ -564,6 +569,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
                 raise reg['sim/exception']
 
 
+# TODO: This function throws an error when run two times in a script
 def sim(resdir=None, timeout=None, extens=None, run=True, check_activity=False, seed=None):
     if reg['sim/dryrun']:
         return

@@ -108,7 +108,9 @@ class SimInstVisitor(HierVisitorBase):
         if module.params.get('__sim__', None) is not None:
             cfg = module.params['__sim__']
             if isinstance(cfg, dict):
-                cosim(module, cfg['sim'])
+                cfg = cfg.copy()
+                sim = cfg.pop('sim')
+                cosim(module, sim, **cfg)
             else:
                 cosim(module, cfg)
 

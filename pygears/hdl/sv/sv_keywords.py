@@ -1,3 +1,6 @@
+# TODO: generalize this to all gear generation methods. Do proper error
+# reporting where it is not feasible to replace names
+
 sv_keywords = [
     'alias',
     'always',

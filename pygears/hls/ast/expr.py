@@ -6,7 +6,7 @@ from functools import partial
 from . import Context, HLSSyntaxError, node_visitor, ir, visit_ast, visit_block
 from .arith import resolve_arith_func
 from .call import resolve_func
-from pygears.typing import cast, Integer
+from pygears.typing import cast, Integer, typeof
 
 
 @node_visitor(ast.Expr)
@@ -186,6 +186,7 @@ def _(node, ctx: Context):
 
     return base
 
+
 @node_visitor(ast.BinOp)
 def _(node, ctx: Context):
     return visit_bin_expr(node.op, (node.left, node.right), ctx)
@@ -193,8 +194,11 @@ def _(node, ctx: Context):
 
 def get_dict_attr(obj, attr):
     for cls in (obj, ) + inspect.getmro(obj.__class__):
-        if attr in obj.__dict__:
-            return obj.__dict__[attr]
+        if attr in cls.__dict__:
+            if cls.__name__ == "GenericMeta":
+                raise Exception(f'Cannot parse method {attr}')
+
+            return cls.__dict__[attr]
 
     raise AttributeError
 
@@ -205,6 +209,11 @@ def _(node, ctx: Context):
     return ir.ResExpr('')
 
 
+def attr_shortcuts(cls, attr):
+    if typeof(cls, ir.IntfType) and attr == 'dtype':
+        return ir.ResExpr(cls.dtype)
+
+
 @node_visitor(ast.Attribute)
 def _(node, ctx: Context):
     value = visit_ast(node.value, ctx)
@@ -212,6 +221,10 @@ def _(node, ctx: Context):
         return ir.ResExpr(getattr(value.val, node.attr))
 
     if hasattr(value.dtype, node.attr):
+        res = attr_shortcuts(value.dtype, node.attr)
+        if res is not None:
+            return res
+
         try:
             cls_attr = get_dict_attr(value.dtype, node.attr)
 
