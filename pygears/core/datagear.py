@@ -15,6 +15,7 @@ def get_datagear_func(func):
     return func.exec
 
 
+# TODO: "outnames" not working
 @doublewrap
 def datagear(func, **meta_kwds):
     if not is_standard_func(func):

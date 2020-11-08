@@ -249,12 +249,13 @@ class SVCompiler(HDLVisitor):
 
             if typeof(obj.dtype, ir.IntfType):
                 # if isinstance(obj.val.producer, HDLProducer):
-                if obj.dtype.direction == ir.IntfType.iout:
-                    if self.selected(self.ctx.ref(name, ctx='store')):
-                        yield self.attr(name, 'valid'), '0'
+                if (self.selected(self.ctx.ref(name, ctx='store'))
+                        and obj.dtype.direction == ir.IntfType.iout):
+                    yield self.attr(name, 'valid'), '0'
                 # elif len(obj.val.consumers) == 1 and isinstance(obj.val.consumers[0], HDLConsumer):
-                else:
-                    if self.selected(self.ctx.ref(name, ctx='ready')):
+                elif self.selected(self.ctx.ref(name, ctx='ready')):
+                    p = is_port_intf(name, self.ctx)
+                    if p is None or not p.consumer:
                         yield self.attr(name, 'ready'), f"{self.attr(name, 'valid')} ? 0 : 1'bx"
 
             elif obj.reg:
@@ -401,6 +402,15 @@ def svcompile(hdl_stmts, ctx, title, selected, lang, aux_funcs=None):
     return str(writer)
 
 
+# TODO: Why do we need this check, can we generalize this for any variable?
+def is_port_intf(name, ctx):
+    for p in ctx.gear.in_ports + ctx.gear.out_ports:
+        if p.basename == name:
+            return p
+    else:
+        return None
+
+
 def write_declarations(ctx, subsvmods, template_env):
     writer = HDLWriter()
 
@@ -428,13 +438,9 @@ def write_declarations(ctx, subsvmods, template_env):
 
         writer.line()
 
-    # TODO: Why do we need this check, can we generalize this for any variable?
-    def is_port_intf(name):
-        return any(p.basename == name for p in ctx.gear.in_ports + ctx.gear.out_ports)
-
     for name, expr in ctx.intfs.items():
         dtype = expr.dtype.dtype
-        if not is_port_intf(name):
+        if is_port_intf(name, ctx) is None:
             if lang == 'sv':
                 writer.line(f'dti#({dtype.width}) {name}();')
             else:

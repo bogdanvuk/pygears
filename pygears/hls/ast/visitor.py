@@ -100,10 +100,13 @@ class Context:
         self.ast_stmt_map: typing.Dict = {}
 
     def ref(self, name, ctx='load'):
+        if name in self.scope:
+            return ir.Name(name, self.scope[name], ctx=ctx)
+
         if name in self.local_namespace:
             return ir.ResExpr(self.local_namespace[name])
 
-        return ir.Name(name, self.scope[name], ctx=ctx)
+        raise KeyError
 
     def find_unique_name(self, name):
         res_name = name
@@ -306,15 +309,23 @@ def node_visitor(ast_type):
             if reg['trace/level'] == 0:
                 return f(node, ctx)
 
+            err = None
+
             try:
                 return f(node, ctx)
             except Exception as e:
                 if isinstance(e, HLSSyntaxError) and e.lineno is not None:
                     _, exc_value, tb = sys.exc_info()
-                else:
+                elif hasattr(node, 'lineno'):
                     exc_value, tb = form_hls_syntax_error(ctx, e, node.lineno)
+                else:
+                    err = e
+                    tb = None
 
-            raise exc_value.with_traceback(tb)
+            if err is not None:
+                raise err
+            else:
+                raise exc_value.with_traceback(tb)
 
         if isinstance(ast_type, tuple):
             f_ret = visit_ast.register(ast_type[0])(func_wrapper)

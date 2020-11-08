@@ -251,6 +251,7 @@ assign {{name}}_tready = {{name}}.ready;
     {% else %}
       {% if tlast_w == 0 %}
 assign {{name}}_tdata = {{name}}.data;
+assign {{name}}_tlast = 1'b1;
       {% else %}
 assign {{name}}_tdata = {{name}}.data[{{tdata_w-1}}:0];
 assign {{name}}_tlast = &{{name}}.data[{{tdata_w}}+:{{tlast_w}}];

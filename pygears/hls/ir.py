@@ -297,6 +297,7 @@ class Component(Expr):
         if self.field in ['ready', 'valid']:
             return Bool
         elif self.field == 'data':
+            assert typeof(self.val.dtype, IntfType)
             return self.val.dtype.dtype
 
 
