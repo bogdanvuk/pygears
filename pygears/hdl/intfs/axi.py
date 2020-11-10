@@ -128,6 +128,9 @@ def port_conf(parent, type_, p, datamap=None):
     else:
         conf.params[type_] = width
 
+    if type_ == 'tdata' and datamap and 'tlast' in datamap:
+        conf.params['tlast'] = p.dtype.eot.width
+
     return conf
 
 
@@ -222,6 +225,7 @@ def get_axi_conf(top, conf):
                 axi_port_cfg[name].comp[subintf] = get_port_def(
                     top, pconf[subintf], name, subintf, axi_port_cfg[name], pconf)
 
+
     for name, p in axi_port_cfg.copy().items():
         if p.t in ['axidma']:
             if 'rdata' in p.comp:
@@ -251,10 +255,10 @@ def get_axi_conf(top, conf):
 
         if p.t in ['axi']:
             if 'wdata' in p.comp and 'awaddr' not in p.comp:
-                p.comp['awaddr'] = AxiPortConf(p, 'awaddr', params={'awaddr': 1})
+                p.comp['awaddr'] = AxiPortConf(p, 'awaddr', params={'awaddr': 3})
 
             if 'rdata' in p.comp and 'araddr' not in p.comp:
-                p.comp['araddr'] = AxiPortConf(p, 'araddr', params={'araddr': 1})
+                p.comp['araddr'] = AxiPortConf(p, 'araddr', params={'araddr': 3})
 
         if p.t in ['axi', 'bram']:
             if 'wdata' in p.comp and 'awaddr' in p.comp:

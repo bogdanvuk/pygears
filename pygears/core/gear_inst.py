@@ -356,6 +356,7 @@ def resolve_gear(gear_inst, out_intfs, out_dtype, fix_intfs):
         raise GearArgsNotSpecified(
             f'Received {len(intfs)} output interfaces,'
             f' while expecting {len(gear_inst.out_port_intfs)}'
+            f"\n    when instantiating '{gear_inst.name}'"
         )
 
     for intf, port in zip(intfs, gear_inst.out_ports):

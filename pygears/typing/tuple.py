@@ -252,7 +252,7 @@ class Tuple(tuple, metaclass=TupleType):
             for t, f in zip(cls.__args__, cls.fields):
                 try:
                     tpl_val.append(t(val[f]))
-                except TypeError as e:
+                except (TypeError, ValueError) as e:
                     msg = (f'{str(e)}\n - when instantiating field "{f}" of'
                            f' type "{repr(t)}" with "{repr(val[f])}"')
 
