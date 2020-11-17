@@ -254,8 +254,7 @@ class SVCompiler(HDLVisitor):
                     yield self.attr(name, 'valid'), '0'
                 # elif len(obj.val.consumers) == 1 and isinstance(obj.val.consumers[0], HDLConsumer):
                 elif self.selected(self.ctx.ref(name, ctx='ready')):
-                    p = is_port_intf(name, self.ctx)
-                    if p is None or not p.consumer:
+                    if not is_port_intf(name, self.ctx):
                         yield self.attr(name, 'ready'), f"{self.attr(name, 'valid')} ? 0 : 1'bx"
 
             elif obj.reg:
@@ -403,12 +402,30 @@ def svcompile(hdl_stmts, ctx, title, selected, lang, aux_funcs=None):
 
 
 # TODO: Why do we need this check, can we generalize this for any variable?
-def is_port_intf(name, ctx):
+def is_top_port_intf(name, ctx):
     for p in ctx.gear.in_ports + ctx.gear.out_ports:
         if p.basename == name:
             return p
     else:
         return None
+
+def is_port_intf(name, ctx):
+    for m in ctx.submodules:
+        for p in m.in_ports:
+            if p.name == name:
+                return p
+
+    for p in ctx.gear.in_ports:
+        if p.basename == name:
+            if p.consumer:
+                return p
+            else:
+                return None
+
+    for p in ctx.gear.out_ports:
+        if p.basename == name:
+            return p
+
 
 
 def write_declarations(ctx, subsvmods, template_env):
@@ -440,7 +457,7 @@ def write_declarations(ctx, subsvmods, template_env):
 
     for name, expr in ctx.intfs.items():
         dtype = expr.dtype.dtype
-        if is_port_intf(name, ctx) is None:
+        if is_top_port_intf(name, ctx) is None:
             if lang == 'sv':
                 writer.line(f'dti#({dtype.width}) {name}();')
             else:

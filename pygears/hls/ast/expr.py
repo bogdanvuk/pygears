@@ -196,7 +196,8 @@ def get_dict_attr(obj, attr):
     for cls in (obj, ) + inspect.getmro(obj.__class__):
         if attr in cls.__dict__:
             if cls.__name__ == "GenericMeta":
-                raise Exception(f'Cannot parse method {attr}')
+                raise AttributeError
+                # raise Exception(f'Cannot parse method {attr}')
 
             return cls.__dict__[attr]
 
