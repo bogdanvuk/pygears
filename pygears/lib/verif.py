@@ -78,6 +78,7 @@ async def drv(*, t, seq) -> b't':
     """
 
     for s in seq:
+        print('poslao layer_cfg')
         for val in typeseq(t, s):
             yield val
 

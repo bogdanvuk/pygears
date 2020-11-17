@@ -144,4 +144,4 @@ async def qrange_stop_inclusive(stop: Integer, *, inclusive) -> Queue[b'stop']:
         while not last:
             last = cnt == s
             yield cnt, last
-            cnt += 1
+            cnt = code(cnt + 1, stop.dtype)
