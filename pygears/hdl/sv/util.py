@@ -15,7 +15,7 @@ class SVGenTypeVisitor(TypingVisitorBase):
 
     def visit(self, type_, field):
         if self.depth >= self.max_depth:
-            return None
+            return f'{self.basic_type} [{type_.width-1}:0]'
 
         self.depth += 1
         type_declaration = super().visit(type_, field)
@@ -146,6 +146,7 @@ class SVGenTypeVisitor(TypingVisitorBase):
             self.context = f'{parent_context}_data'
 
         type_declaration = self.visit(type_.args[0], type_.fields[0])
+
         split_type = type_declaration.split(" ")
         if 'signed' in split_type:
             insert_idx = split_type.index('signed') + 1
