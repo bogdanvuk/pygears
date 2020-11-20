@@ -1,6 +1,7 @@
 import shutil
 import os
 from pygears import Intf, find, reg
+from pygears.util.fileio import expand
 from .common import list_hdl_files
 from .generate import generate as hdlgen_generate
 
@@ -22,7 +23,7 @@ def hdlgen(top=None,
     if outdir is None:
         outdir = reg['results-dir']
 
-    conf['outdir'] = outdir
+    conf['outdir'] = expand(outdir)
 
     if isinstance(top, tuple):
         top = top[0]

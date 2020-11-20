@@ -2,6 +2,10 @@ import os
 from shutil import copyfile
 
 
+def expand(fn):
+    return os.path.abspath(os.path.expandvars(os.path.expanduser(fn)))
+
+
 def copy_file(fn, outdir, src):
 
     if not os.path.exists(outdir):

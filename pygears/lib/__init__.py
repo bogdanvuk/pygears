@@ -18,7 +18,7 @@ from .permute import permuted_apply
 from .const import const, fix, once, ping, void
 from .rom import rom
 from .operators import (add, div, eq, ge, gt, invert, le, lt, mod, mul, ne,
-                        neg, sub, shl, shr, xor, code)
+                        neg, sub, shl, shr, xor, code, or_, and_)
 from .saturate import saturate
 from .state import state
 from .mux import mux, mux_zip, field_mux

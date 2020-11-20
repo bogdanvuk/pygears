@@ -39,8 +39,13 @@ class HDLModuleInst:
         if 'memoized' in self.node.params:
             memnode = self.node.params['memoized']
 
-            # TODO: What if hdlmod hasn't been generated? This can happen if we
-            # only generate a part of the design
+            # TODO: What if hdlmod is a part of different cosim build and
+            # located at different folder. We should include that folder in the
+            # path
+
+            # TODO: What if hdlmod hasn't been
+            # generated? This can happen if we only generate a part of the
+            # design
             hdlmod = reg['hdlgen/map'][memnode]
             self.resolver = hdlmod.resolver
             return

@@ -121,7 +121,7 @@ class Partial:
         if no_unpack_alt:
             alternatives = [f for f in alternatives if not f.__name__.endswith('_unpack__')]
 
-        self.errors = [None] * len(alternatives)
+        errors = [None] * len(alternatives)
 
         for i, func in enumerate(alternatives):
             try:
@@ -134,7 +134,7 @@ class Partial:
                     if key is not None:
                         self._cache[key] = func
 
-                    self.errors = []
+                    errors = []
                     return ret
                 else:
                     # TODO: Can happen if user forgets '*' for separation, warn about this
@@ -152,29 +152,30 @@ class Partial:
                             f" alternative with argument '{alt_arg_names[0]}' unpacked to: ({arg_signature})"
                         )
 
-                    self.errors[i] = (func, TypeError, TypeError(msg), [])
+                    errors[i] = (func, TypeError, TypeError(msg), [])
             except Exception as e:
                 # If no alternatives, just re-raise an error
                 if len(alternatives) == 1:
                     raise e
                 else:
                     # errors.append((func, e, sys.exc_info()))
-                    self.errors[i] = (func, *sys.exc_info())
+
+                    errors[i] = (func, *sys.exc_info())
         else:
-            if self._all_alternative_error():
-                raise MultiAlternativeError(self.errors)
+            if self._all_alternative_error(errors):
+                raise MultiAlternativeError(errors)
             else:
                 # If some alternative can handle more arguments, try to wait
                 # for it
                 p = Partial(self.func, *args, **kwds)
-                p.errors = self.errors[:]
+                p.errors = errors[:]
                 return p
 
-    def _all_alternative_error(self):
-        if self.errors.count(None) != 0:
+    def _all_alternative_error(self, errors):
+        if errors.count(None) != 0:
             return False
 
-        for e in self.errors:
+        for e in errors:
             if e[-1] == []:
                 return False
 
