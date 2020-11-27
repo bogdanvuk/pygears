@@ -5,7 +5,7 @@ from pygears.typing import Fixp, Fixpnumber, Ufixp, Uint, bitw
 
 
 @gear
-def funclut(x: Fixpnumber, *, f, precision=b'len(x)', dtype=None):
+def funclut(x: Fixpnumber, *, f, precision=b'x.width', dtype=None):
     '''Implement arbitrary 1 input parameter function as Lookup-table for
     integers. f is arbitrary function e.g. math.sqrt, precision is a number of
     bits the function result will be represented with,

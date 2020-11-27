@@ -585,8 +585,10 @@ def sim(resdir=None, timeout=None, extens=None, run=True, check_activity=False, 
     reg['results-dir'] = resdir
     os.makedirs(resdir, exist_ok=True)
 
-    if seed is None and reg['sim/rand_seed'] is None:
-        seed = random.randrange(sys.maxsize)
+    if reg['sim/rand_seed'] is None:
+        if seed is None:
+            seed = random.randrange(sys.maxsize)
+
         reg['sim/rand_seed'] = seed
 
     random.seed(reg['sim/rand_seed'])

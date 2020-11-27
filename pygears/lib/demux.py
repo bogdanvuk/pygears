@@ -45,13 +45,15 @@ async def demux(
     _full_mapping=b'full_mapping(din, mapping, use_dflt)',
 ) -> b'demux_type(din, _full_mapping)':
     async with din as (data, ctrl):
-        dout = [None] * len(module().tout)
+        tout = module().tout
+        if not isinstance(tout, tuple):
+            yield tout.decode(int(data))
+        else:
+            dout = [None] * len(module().tout)
+            ctrl = _full_mapping[int(ctrl)]
+            dout[ctrl] = tout[int(ctrl)].decode(int(data))
 
-        ctrl = _full_mapping[int(ctrl)]
-
-        dout[ctrl] = module().tout[int(ctrl)].decode(int(data))
-
-        yield tuple(dout)
+            yield tuple(dout)
 
 
 @gear

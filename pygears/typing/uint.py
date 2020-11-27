@@ -741,7 +741,7 @@ class BoolMeta(UintType):
 class Bool(Uint, metaclass=BoolMeta):
     __parameters__ = ['N']
 
-    def __new__(cls, val):
+    def __new__(cls, val=None):
         return int.__new__(cls, bool(val))
 
 
