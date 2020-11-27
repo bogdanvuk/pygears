@@ -153,7 +153,7 @@ For testing the ISA implementation, I've envisioned the following test:
 
 I've written an environment that supports these kinds of tests in :giturl:`pygears_riscv/verif/env.py`. This is a regular Python function (not a gear) that instantiates the ``riscv`` and ``register_file`` gears and wires them properly in the following manner.
 
-.. bdp:: images/addi-env-block-diagram.py
+.. image:: images/addi-env-block-diagram.png
     :align: center
     :width: 80%
 

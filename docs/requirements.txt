@@ -1,6 +1,6 @@
 sphinx
--e git+https://github.com/bogdanvuk/bdp.git@develop#egg=bdp
 -e git+https://github.com/bogdanvuk/sphinx-verboser.git@master#egg=sphinx_verboser
+-e git+https://github.com/bogdanvuk/sphinx-verboser.git@master#egg=sphinx_urlinclude
 -e ..
 sphinxcontrib-tikz
 sphinxcontrib-wavedrom

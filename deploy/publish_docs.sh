@@ -37,7 +37,6 @@ tests/
 deploy/
 dist/
 *.egg-info/
-*_bdpfigure/
 "
 robots="# www.robotstxt.org/
 

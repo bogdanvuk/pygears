@@ -25,7 +25,6 @@ extensions = [
     'sphinx_sitemap',
     'sphinx.ext.intersphinx',
     'sphinx.ext.napoleon',
-    'bdp.sphinxext.bdpfigure',
 ]
 
 intersphinx_mapping = {

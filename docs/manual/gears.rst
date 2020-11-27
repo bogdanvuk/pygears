@@ -234,7 +234,7 @@ Tuple functors are useful in context where we need to operate on Tuples of some 
 
 Suppose we would like to implement a module that doubles the complex numbers, and we already have a module that doubles 16-bit unsigned numbers that we would like to reuse. We could than make use of the Tuple functor structure to achieve this.
 
-.. bdp:: tuple_functor.py
+.. image:: images/tuple_functor.png
     :align: center
 
 Within Tuple functor, input Tuple data is first split into two, fed to individual functions and then recombined into a Tuple. **PyGears** can automatically generate such a structure based on the input type and gears that are to be used inside a functor.
@@ -248,7 +248,7 @@ Union functors are useful in context where we need to operate on Unions of some 
 
 Suppose we would like to implement a module that decrements the number, and we already have a module that decrements 16-bit unsigned integers and a module that decrements Q8.8 fixed point numbers that we would like to reuse. We could than make use of the Union functor structure to achieve this.
 
-.. bdp:: union_functor.py
+.. image:: images/union_functor.png
     :align: center
 
 Within Union functor, input Union data is routed to one of two gears by the **Demux** gear, depending on which data type the Union data carries, i.e by the  value of the **ctrl** field. After processing by the gears, output data is wrapped in Union data type again by the **Mux** gear. **PyGears** can automatically generate such a structure based on the input type and gears that are to be used inside a functor.
@@ -268,7 +268,7 @@ Queue functors are useful in context where we need to operate on Queues of some 
 
 Suppose we would like to implement a module that multiplies each number in the Queue by 2, and we already have a module that multiplies single numbers that we would like to reuse. We could than make use of the Queue functor structure to achieve this.
 
-.. bdp:: queue_functor.py
+.. image:: images/queue_functor.png
   :align: center
 
 Within Queue functor, input Queue data is first split into the individual data and the Queue structure, also called the envelope. Queue structure is defined by the pattern of its **eot** field. The individual data is fed to the function and is then recombined with the envelope to produce the output Queue. **PyGears** can automatically generate such a structure based on the input type and gears that are to be used inside a functor.
