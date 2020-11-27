@@ -1,19 +1,20 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Echo &#8212; PyGears - HW Design: A Functional Approach</title>
-    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="_static/language_data.js"></script>
-    <script type="text/javascript" src="_static/default.js"></script>
-    <script type="text/javascript" src="_static/wavedrom.js"></script>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="_static/default.js"></script>
+    <script src="_static/wavedrom.js"></script>
     <link rel="canonical" href="https://www.pygears.org/echo.html" />
     <link rel="shortcut icon" href="_static/pygears.ico"/>
     <link rel="index" title="Index" href="genindex.html" />
@@ -40,9 +41,7 @@
 <span id="echo-examples"></span><h1>Echo<a class="headerlink" href="#echo" title="Permalink to this headline">¶</a></h1>
 <p>This example shows how to use PyGears to implement a hardware module that applies echo audio effect to a continuous audio stream. For a more detailed explanation of PyGears features used in this example, you can checkout a <a class="reference internal" href="introduction.html#introduction"><span class="std std-ref">quick introduction to PyGears</span></a>.</p>
 <p>The hardware module is part of the <a class="reference external" href="https://github.com/bogdanvuk/pygears-dsp">pygears_dsp</a> library and is defined in <a class="reference external" href="https://github.com/bogdanvuk/pygears-dsp/blob/master/pygears_dsp/lib/echo.py">pygears_dsp/lib/echo.py</a>. Its block diagram is given below. You can checkout the <a class="reference internal" href="#examples-echo-functional-description"><span class="std std-ref">functional description</span></a> of the <code class="docutils literal notranslate"><span class="pre">echo</span></code> module. In-depth explanation of the PyGears description of the echo model given in <a class="reference internal" href="#examples-echo-hardware-description"><span class="std std-ref">hardware description</span></a> chapter. PyGears takes the Python module description and compiles it to SystemVerilog which is <a class="reference internal" href="#echo-sv"><span class="std std-ref">listed below</span></a>.</p>
-<div class="figure align-center">
-<img alt="_images/echo.png" src="_images/echo.png" />
-</div>
+<img alt="_images/echo.png" class="align-center" src="_images/echo.png" />
 <div class="section" id="systemverilog-generation">
 <h2>SystemVerilog Generation<a class="headerlink" href="#systemverilog-generation" title="Permalink to this headline">¶</a></h2>
 <p>Run the script <a class="reference external" href="https://github.com/bogdanvuk/pygears-dsp/blob/master/examples/echo/echo_svgen.py">examples/echo/echo_svgen.py</a> in order to let PyGears generate SystemVerilog files.</p>
@@ -87,9 +86,7 @@ Result length: <span class="m">165359</span>
 <div class="section" id="stereo-echo">
 <h2>Stereo Echo<a class="headerlink" href="#stereo-echo" title="Permalink to this headline">¶</a></h2>
 <p>PyGears lets you easily compose gears at any level. To create a stereo echo effect gear, we will instantiate one <code class="docutils literal notranslate"><span class="pre">echo</span></code> gear for each channel.</p>
-<div class="figure align-center">
-<img alt="_images/stereo_echo.png" src="_images/stereo_echo.png" />
-</div>
+<img alt="_images/stereo_echo.png" class="align-center" src="_images/stereo_echo.png" />
 <p>In PyGears this can be described as follows:</p>
 <p>The input interface <code class="docutils literal notranslate"><span class="pre">din</span></code> of the <code class="docutils literal notranslate"><span class="pre">stereo_echo</span></code> module, needs to carry two samples, one for each channel. This can be represented as a <code class="docutils literal notranslate"><span class="pre">Tuple</span></code> data type. If the samples are 16 bits wide, the stereo data should be of the type <code class="docutils literal notranslate"><span class="pre">Tuple[Int[16],</span> <span class="pre">Int[16]]</span></code>, which can be displayed more succinctly as <code class="docutils literal notranslate"><span class="pre">(i16,</span> <span class="pre">116)</span></code>. Other parameters of the <code class="docutils literal notranslate"><span class="pre">stereo_echo</span></code> gear have the same meaning as the <code class="docutils literal notranslate"><span class="pre">echo</span></code> gear parameters.</p>
 <p>First, a version of echo gear is created, with some of its parameters supplied/set. This is akin to the <a class="reference external" href="https://en.wikipedia.org/wiki/Partial_application">partial function application</a>:</p>
@@ -114,9 +111,7 @@ Result length: <span class="m">165359</span>
 <p>As you can see the <code class="docutils literal notranslate"><span class="pre">echo</span></code> gear has few more parameters besides <code class="docutils literal notranslate"><span class="pre">din</span></code>: <code class="docutils literal notranslate"><span class="pre">feedback_gain</span></code>, <code class="docutils literal notranslate"><span class="pre">sample_rate</span></code>, <code class="docutils literal notranslate"><span class="pre">delay</span></code> and <code class="docutils literal notranslate"><span class="pre">precision</span></code>. These are declared after the ‘*’ symbol, which makes them keyword-only arguments in Python, which in turn makes them <strong>compile-time parameters</strong> in PyGears. These are akin to HDL parameters or generics.</p>
 <p>Notice that the <code class="docutils literal notranslate"><span class="pre">din</span></code> argument has also a type associated with it, namely a template <code class="docutils literal notranslate"><span class="pre">Int['W']</span></code> which represents signed integers of arbitrary width. Take a look at the <a class="reference internal" href="typing.html#typing"><span class="std std-ref">short explanation</span></a> on how types are used in PyGears. <a class="reference internal" href="typing/int.html#pygears.typing.uint.Int" title="pygears.typing.uint.Int"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int</span></code></a> type is generic in the number of bits, hence <code class="docutils literal notranslate"><span class="pre">echo</span></code> gear can work on samples of arbitrary width. The actual width of the input will be set by <code class="docutils literal notranslate"><span class="pre">echo</span></code> gear parent, i.e the module that instantiates <code class="docutils literal notranslate"><span class="pre">echo</span></code>:</p>
 <p>In <code class="docutils literal notranslate"><span class="pre">mono_echo_sim()</span></code> function, <code class="docutils literal notranslate"><span class="pre">drv</span></code> gear is used to drive audio samples to the <code class="docutils literal notranslate"><span class="pre">echo</span></code> gear, which in turn sends the result to the <code class="docutils literal notranslate"><span class="pre">collect</span></code> gear. In PyGears the connection from <code class="docutils literal notranslate"><span class="pre">drv</span></code> to <code class="docutils literal notranslate"><span class="pre">echo</span></code> can be described using pipe ‘|’ operator. The <code class="docutils literal notranslate"><span class="pre">drv</span></code> gear sends the sequence of audio samples (variable <code class="docutils literal notranslate"><span class="pre">seq</span></code>), by first converting them to the specified data type: <code class="docutils literal notranslate"><span class="pre">Int[sample_bit_width]</span></code>, where <code class="docutils literal notranslate"><span class="pre">sample_bit_width</span></code> value is calculated based on the <code class="docutils literal notranslate"><span class="pre">mono_echo_sim()</span></code> function argument <code class="docutils literal notranslate"><span class="pre">sample_width</span></code>.</p>
-<div class="figure align-center">
-<img alt="_images/echo_sim.png" src="_images/echo_sim.png" />
-</div>
+<img alt="_images/echo_sim.png" class="align-center" src="_images/echo_sim.png" />
 <p>At compile time, PyGears will try to match output data type of <code class="docutils literal notranslate"><span class="pre">drv</span></code> gear: <code class="docutils literal notranslate"><span class="pre">Int[sample_bit_width]</span></code> to the input data type <code class="docutils literal notranslate"><span class="pre">Int['W']</span></code> of the <code class="docutils literal notranslate"><span class="pre">echo</span></code> gear, and since that their base types (<a class="reference internal" href="typing/int.html#pygears.typing.uint.Int" title="pygears.typing.uint.Int"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int</span></code></a>) match, deduce the value of the template parameter <code class="docutils literal notranslate"><span class="pre">W</span> <span class="pre">=</span> <span class="pre">sample_bit_width</span></code>. This parameter can then be used throughout the gear signature to calculate values of a gear compile-time parameters or fix types of a gear interfaces. In this example, value of the <code class="docutils literal notranslate"><span class="pre">echo</span></code> gear argument <code class="docutils literal notranslate"><span class="pre">sample_width</span></code> is set to be exactly equal to <code class="docutils literal notranslate"><span class="pre">W</span></code>.</p>
 <p>Conveniently, <code class="docutils literal notranslate"><span class="pre">echo</span></code> gear accepts also some floating point arguments, but these then need to be converted in order to be used for parametrizing hardware modules. This is done at the beginning of the function:</p>
 <p>Since echo delay is given in seconds, it needs to be calculated in terms of the number of samples: variable <code class="docutils literal notranslate"><span class="pre">sample_dly_len</span></code> in the code. Then, feedback loop fifo needs to be deep enough to store the delayed samples. Current implementation of the fifo module in PyGears demands its depth to be a power of 2. Hence, function <code class="docutils literal notranslate"><span class="pre">ceil_pow2</span></code> is used to calculate the smallest power of 2 that can accommodate selected delay: variable <code class="docutils literal notranslate"><span class="pre">fifo_depth</span></code> in the code.</p>
@@ -125,9 +120,7 @@ Result length: <span class="m">165359</span>
 <div class="section" id="hardware-description">
 <span id="examples-echo-hardware-description"></span><h2>Hardware description<a class="headerlink" href="#hardware-description" title="Permalink to this headline">¶</a></h2>
 <p>After the compile-time parameters calculation in the <code class="docutils literal notranslate"><span class="pre">echo</span></code> function, the description of the actual hardware is given.</p>
-<div class="figure align-center">
-<img alt="_images/echo.png" src="_images/echo.png" />
-</div>
+<img alt="_images/echo.png" class="align-center" src="_images/echo.png" />
 <p>The feedback loop, present in the design, cannot be described as a plain gear composition since it forms a cycle. This cycle needs to be cut at one spot, described as the gear composition and then stitched together. In this example, we will cut the cycle after the adder and start by defining the interface <code class="docutils literal notranslate"><span class="pre">dout</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dout</span> <span class="o">=</span> <span class="n">Intf</span><span class="p">(</span><span class="n">din</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
 </pre></div>
@@ -165,35 +158,35 @@ Result length: <span class="m">165359</span>
 <div class="section" id="generated-systemverilog">
 <span id="echo-sv"></span><h2>Generated SystemVerilog<a class="headerlink" href="#generated-systemverilog" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-systemverilog notranslate"><div class="highlight"><pre><span></span><span class="k">module</span> <span class="n">echo</span><span class="p">(</span>
-    <span class="k">input</span> <span class="n">clk</span><span class="p">,</span>
-    <span class="k">input</span> <span class="n">rst</span><span class="p">,</span>
+    <span class="k">input</span> <span class="k">logic</span> <span class="n">clk</span><span class="p">,</span>
+    <span class="k">input</span> <span class="k">logic</span> <span class="n">rst</span><span class="p">,</span>
     <span class="n">dti</span><span class="p">.</span><span class="n">consumer</span> <span class="n">din</span><span class="p">,</span> <span class="c1">// i16 (16)</span>
     <span class="n">dti</span><span class="p">.</span><span class="n">producer</span> <span class="n">dout</span> <span class="c1">// i16 (16)</span>
 
 <span class="p">);</span>
 
-      <span class="n">dti</span> <span class="p">#(.</span><span class="no">W_DATA</span><span class="p">(</span><span class="mh">16</span><span class="p">))</span> <span class="n">fifo_s</span><span class="p">();</span> <span class="c1">// i16 (16)</span>
+      <span class="n">dti</span> <span class="p">#(.</span><span class="n">W_DATA</span><span class="p">(</span><span class="mh">16</span><span class="p">))</span> <span class="n">fifo_s</span><span class="p">();</span> <span class="c1">// i16 (16)</span>
 
-      <span class="n">dti</span> <span class="p">#(.</span><span class="no">W_DATA</span><span class="p">(</span><span class="mh">16</span><span class="p">))</span> <span class="n">fill_void_s</span><span class="p">();</span> <span class="c1">// i16 (16)</span>
+      <span class="n">dti</span> <span class="p">#(.</span><span class="n">W_DATA</span><span class="p">(</span><span class="mh">16</span><span class="p">))</span> <span class="n">fill_void_s</span><span class="p">();</span> <span class="c1">// i16 (16)</span>
 
-      <span class="n">dti</span> <span class="p">#(.</span><span class="no">W_DATA</span><span class="p">(</span><span class="mh">16</span><span class="p">))</span> <span class="n">const0_s</span><span class="p">();</span> <span class="c1">// i16 (16)</span>
+      <span class="n">dti</span> <span class="p">#(.</span><span class="n">W_DATA</span><span class="p">(</span><span class="mh">16</span><span class="p">))</span> <span class="n">const0_s</span><span class="p">();</span> <span class="c1">// i16 (16)</span>
 
-      <span class="n">dti</span> <span class="p">#(.</span><span class="no">W_DATA</span><span class="p">(</span><span class="mh">16</span><span class="p">))</span> <span class="n">feedback_s</span><span class="p">();</span> <span class="c1">// i16 (16)</span>
+      <span class="n">dti</span> <span class="p">#(.</span><span class="n">W_DATA</span><span class="p">(</span><span class="mh">16</span><span class="p">))</span> <span class="n">feedback_s</span><span class="p">();</span> <span class="c1">// i16 (16)</span>
 
-      <span class="n">dti</span> <span class="p">#(.</span><span class="no">W_DATA</span><span class="p">(</span><span class="mh">32</span><span class="p">))</span> <span class="n">mul_s</span><span class="p">();</span> <span class="c1">// i32 (32)</span>
+      <span class="n">dti</span> <span class="p">#(.</span><span class="n">W_DATA</span><span class="p">(</span><span class="mh">32</span><span class="p">))</span> <span class="n">mul_s</span><span class="p">();</span> <span class="c1">// i32 (32)</span>
 
-      <span class="n">dti</span> <span class="p">#(.</span><span class="no">W_DATA</span><span class="p">(</span><span class="mh">16</span><span class="p">))</span> <span class="n">const1_s</span><span class="p">();</span> <span class="c1">// i16 (16)</span>
+      <span class="n">dti</span> <span class="p">#(.</span><span class="n">W_DATA</span><span class="p">(</span><span class="mh">16</span><span class="p">))</span> <span class="n">const1_s</span><span class="p">();</span> <span class="c1">// i16 (16)</span>
 
-      <span class="n">dti</span> <span class="p">#(.</span><span class="no">W_DATA</span><span class="p">(</span><span class="mh">32</span><span class="p">))</span> <span class="n">feedback_attenuated_s</span><span class="p">();</span> <span class="c1">// i32 (32)</span>
+      <span class="n">dti</span> <span class="p">#(.</span><span class="n">W_DATA</span><span class="p">(</span><span class="mh">32</span><span class="p">))</span> <span class="n">feedback_attenuated_s</span><span class="p">();</span> <span class="c1">// i32 (32)</span>
 
-      <span class="n">dti</span> <span class="p">#(.</span><span class="no">W_DATA</span><span class="p">(</span><span class="mh">4</span><span class="p">))</span> <span class="n">const2_s</span><span class="p">();</span> <span class="c1">// u4 (4)</span>
+      <span class="n">dti</span> <span class="p">#(.</span><span class="n">W_DATA</span><span class="p">(</span><span class="mh">4</span><span class="p">))</span> <span class="n">const2_s</span><span class="p">();</span> <span class="c1">// u4 (4)</span>
 
-      <span class="n">dti</span> <span class="p">#(.</span><span class="no">W_DATA</span><span class="p">(</span><span class="mh">33</span><span class="p">))</span> <span class="n">add_s</span><span class="p">();</span> <span class="c1">// i33 (33)</span>
+      <span class="n">dti</span> <span class="p">#(.</span><span class="n">W_DATA</span><span class="p">(</span><span class="mh">33</span><span class="p">))</span> <span class="n">add_s</span><span class="p">();</span> <span class="c1">// i33 (33)</span>
 
-      <span class="n">dti</span> <span class="p">#(.</span><span class="no">W_DATA</span><span class="p">(</span><span class="mh">16</span><span class="p">))</span> <span class="n">dout_s</span><span class="p">();</span> <span class="c1">// i16 (16)</span>
-      <span class="n">dti</span> <span class="p">#(.</span><span class="no">W_DATA</span><span class="p">(</span><span class="mh">16</span><span class="p">))</span> <span class="n">dout_s_bc</span><span class="p">[</span><span class="mh">1</span><span class="o">:</span><span class="mh">0</span><span class="p">]();</span> <span class="c1">// i16 (16)</span>
+      <span class="n">dti</span> <span class="p">#(.</span><span class="n">W_DATA</span><span class="p">(</span><span class="mh">16</span><span class="p">))</span> <span class="n">dout_s</span><span class="p">();</span> <span class="c1">// i16 (16)</span>
+      <span class="n">dti</span> <span class="p">#(.</span><span class="n">W_DATA</span><span class="p">(</span><span class="mh">16</span><span class="p">))</span> <span class="n">dout_s_bc</span><span class="p">[</span><span class="mh">1</span><span class="o">:</span><span class="mh">0</span><span class="p">]();</span> <span class="c1">// i16 (16)</span>
     <span class="n">bc</span> <span class="p">#(</span>
-                <span class="p">.</span><span class="no">SIZE</span><span class="p">(</span><span class="mh">2</span><span class="mi">&#39;d2</span><span class="p">)</span>
+                <span class="p">.</span><span class="n">SIZE</span><span class="p">(</span><span class="mh">2</span><span class="mi">&#39;d2</span><span class="p">)</span>
     <span class="p">)</span>
     <span class="n">bc_dout_s</span> <span class="p">(</span>
         <span class="p">.</span><span class="n">clk</span><span class="p">(</span><span class="n">clk</span><span class="p">),</span>
@@ -211,8 +204,8 @@ Result length: <span class="m">165359</span>
 
 
     <span class="n">fifo</span> <span class="p">#(</span>
-                <span class="p">.</span><span class="no">DEPTH</span><span class="p">(</span><span class="mh">15</span><span class="mi">&#39;d16384</span><span class="p">),</span>
-                <span class="p">.</span><span class="no">THRESHOLD</span><span class="p">(</span><span class="mh">14</span><span class="mi">&#39;d12000</span><span class="p">)</span>
+                <span class="p">.</span><span class="n">DEPTH</span><span class="p">(</span><span class="mh">15</span><span class="mi">&#39;d16384</span><span class="p">),</span>
+                <span class="p">.</span><span class="n">THRESHOLD</span><span class="p">(</span><span class="mh">14</span><span class="mi">&#39;d12000</span><span class="p">)</span>
     <span class="p">)</span>
     <span class="n">fifo_i</span> <span class="p">(</span>
         <span class="p">.</span><span class="n">clk</span><span class="p">(</span><span class="n">clk</span><span class="p">),</span>
@@ -232,7 +225,7 @@ Result length: <span class="m">165359</span>
 
 
     <span class="n">sustain</span> <span class="p">#(</span>
-                <span class="p">.</span><span class="no">TOUT</span><span class="p">(</span><span class="mh">5</span><span class="mi">&#39;d16</span><span class="p">)</span>
+                <span class="p">.</span><span class="n">TOUT</span><span class="p">(</span><span class="mh">5</span><span class="mi">&#39;d16</span><span class="p">)</span>
     <span class="p">)</span>
     <span class="n">const0_i</span> <span class="p">(</span>
         <span class="p">.</span><span class="n">clk</span><span class="p">(</span><span class="n">clk</span><span class="p">),</span>
@@ -250,10 +243,10 @@ Result length: <span class="m">165359</span>
 
 
     <span class="n">mul</span> <span class="p">#(</span>
-                <span class="p">.</span><span class="no">DIN0</span><span class="p">(</span><span class="mh">5</span><span class="mi">&#39;d16</span><span class="p">),</span>
-                <span class="p">.</span><span class="no">DIN0_SIGNED</span><span class="p">(</span><span class="mh">1</span><span class="mi">&#39;d1</span><span class="p">),</span>
-                <span class="p">.</span><span class="no">DIN1</span><span class="p">(</span><span class="mh">5</span><span class="mi">&#39;d16</span><span class="p">),</span>
-                <span class="p">.</span><span class="no">DIN1_SIGNED</span><span class="p">(</span><span class="mh">1</span><span class="mi">&#39;d1</span><span class="p">)</span>
+                <span class="p">.</span><span class="n">DIN0</span><span class="p">(</span><span class="mh">5</span><span class="mi">&#39;d16</span><span class="p">),</span>
+                <span class="p">.</span><span class="n">DIN0_SIGNED</span><span class="p">(</span><span class="mh">1</span><span class="mi">&#39;d1</span><span class="p">),</span>
+                <span class="p">.</span><span class="n">DIN1</span><span class="p">(</span><span class="mh">5</span><span class="mi">&#39;d16</span><span class="p">),</span>
+                <span class="p">.</span><span class="n">DIN1_SIGNED</span><span class="p">(</span><span class="mh">1</span><span class="mi">&#39;d1</span><span class="p">)</span>
     <span class="p">)</span>
     <span class="n">mul_i</span> <span class="p">(</span>
         <span class="p">.</span><span class="n">clk</span><span class="p">(</span><span class="n">clk</span><span class="p">),</span>
@@ -265,8 +258,8 @@ Result length: <span class="m">165359</span>
 
 
     <span class="n">sustain</span> <span class="p">#(</span>
-                <span class="p">.</span><span class="no">VAL</span><span class="p">(</span><span class="mh">15</span><span class="mi">&#39;d19660</span><span class="p">),</span>
-                <span class="p">.</span><span class="no">TOUT</span><span class="p">(</span><span class="mh">5</span><span class="mi">&#39;d16</span><span class="p">)</span>
+                <span class="p">.</span><span class="n">VAL</span><span class="p">(</span><span class="mh">15</span><span class="mi">&#39;d19660</span><span class="p">),</span>
+                <span class="p">.</span><span class="n">TOUT</span><span class="p">(</span><span class="mh">5</span><span class="mi">&#39;d16</span><span class="p">)</span>
     <span class="p">)</span>
     <span class="n">const1_i</span> <span class="p">(</span>
         <span class="p">.</span><span class="n">clk</span><span class="p">(</span><span class="n">clk</span><span class="p">),</span>
@@ -276,7 +269,7 @@ Result length: <span class="m">165359</span>
 
 
     <span class="n">shr</span> <span class="p">#(</span>
-                <span class="p">.</span><span class="no">SIGNED</span><span class="p">(</span><span class="mh">1</span><span class="mi">&#39;d1</span><span class="p">)</span>
+                <span class="p">.</span><span class="n">SIGNED</span><span class="p">(</span><span class="mh">1</span><span class="mi">&#39;d1</span><span class="p">)</span>
     <span class="p">)</span>
     <span class="n">shr_i</span> <span class="p">(</span>
         <span class="p">.</span><span class="n">clk</span><span class="p">(</span><span class="n">clk</span><span class="p">),</span>
@@ -288,8 +281,8 @@ Result length: <span class="m">165359</span>
 
 
     <span class="n">sustain</span> <span class="p">#(</span>
-                <span class="p">.</span><span class="no">VAL</span><span class="p">(</span><span class="mh">4</span><span class="mi">&#39;d15</span><span class="p">),</span>
-                <span class="p">.</span><span class="no">TOUT</span><span class="p">(</span><span class="mh">3</span><span class="mi">&#39;d4</span><span class="p">)</span>
+                <span class="p">.</span><span class="n">VAL</span><span class="p">(</span><span class="mh">4</span><span class="mi">&#39;d15</span><span class="p">),</span>
+                <span class="p">.</span><span class="n">TOUT</span><span class="p">(</span><span class="mh">3</span><span class="mi">&#39;d4</span><span class="p">)</span>
     <span class="p">)</span>
     <span class="n">const2_i</span> <span class="p">(</span>
         <span class="p">.</span><span class="n">clk</span><span class="p">(</span><span class="n">clk</span><span class="p">),</span>
@@ -299,10 +292,10 @@ Result length: <span class="m">165359</span>
 
 
     <span class="n">add</span> <span class="p">#(</span>
-                <span class="p">.</span><span class="no">DIN0</span><span class="p">(</span><span class="mh">5</span><span class="mi">&#39;d16</span><span class="p">),</span>
-                <span class="p">.</span><span class="no">DIN0_SIGNED</span><span class="p">(</span><span class="mh">1</span><span class="mi">&#39;d1</span><span class="p">),</span>
-                <span class="p">.</span><span class="no">DIN1</span><span class="p">(</span><span class="mh">6</span><span class="mi">&#39;d32</span><span class="p">),</span>
-                <span class="p">.</span><span class="no">DIN1_SIGNED</span><span class="p">(</span><span class="mh">1</span><span class="mi">&#39;d1</span><span class="p">)</span>
+                <span class="p">.</span><span class="n">DIN0</span><span class="p">(</span><span class="mh">5</span><span class="mi">&#39;d16</span><span class="p">),</span>
+                <span class="p">.</span><span class="n">DIN0_SIGNED</span><span class="p">(</span><span class="mh">1</span><span class="mi">&#39;d1</span><span class="p">),</span>
+                <span class="p">.</span><span class="n">DIN1</span><span class="p">(</span><span class="mh">6</span><span class="mi">&#39;d32</span><span class="p">),</span>
+                <span class="p">.</span><span class="n">DIN1_SIGNED</span><span class="p">(</span><span class="mh">1</span><span class="mi">&#39;d1</span><span class="p">)</span>
     <span class="p">)</span>
     <span class="n">add_i</span> <span class="p">(</span>
         <span class="p">.</span><span class="n">clk</span><span class="p">(</span><span class="n">clk</span><span class="p">),</span>
@@ -329,7 +322,7 @@ Result length: <span class="m">165359</span>
 <div class="section" id="resource-utilization">
 <span id="examples-echo-resource-utilization"></span><h2>Resource Utilization<a class="headerlink" href="#resource-utilization" title="Permalink to this headline">¶</a></h2>
 <p>If you have Vivado tool on your path while running the <a class="reference external" href="https://github.com/bogdanvuk/pygears/tree/develop/examples/echo/echo_svgen.py">examples/echo/echo_svgen.py</a> script, the following report will be produced. Some of the <code class="docutils literal notranslate"><span class="pre">echo</span></code> submodules are missing from the list, since Vivado tried to merged the modules in order to reduce the resource utilization.</p>
-<table class="docutils align-center">
+<table class="docutils align-default">
 <colgroup>
 <col style="width: 23%" />
 <col style="width: 13%" />
@@ -558,24 +551,24 @@ Result length: <span class="m">165359</span>
 </ul>
 
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2019, Bogdan Vukobratovic.
+      &copy;2020, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
@@ -583,10 +576,6 @@ Result length: <span class="m">165359</span>
           rel="nofollow">Page source</a>
     </div>
 
-    
-    <a href="https://github.com/bogdanvuk/pygears" class="github">
-        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
-    </a>
     
 
     

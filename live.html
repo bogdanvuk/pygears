@@ -1,19 +1,20 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PyGears LIVE! &#8212; PyGears - HW Design: A Functional Approach</title>
-    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="_static/language_data.js"></script>
-    <script type="text/javascript" src="_static/default.js"></script>
-    <script type="text/javascript" src="_static/wavedrom.js"></script>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="_static/default.js"></script>
+    <script src="_static/wavedrom.js"></script>
     <link rel="canonical" href="https://www.pygears.org/live.html" />
     <link rel="shortcut icon" href="_static/pygears.ico"/>
     <link rel="index" title="Index" href="genindex.html" />
@@ -346,10 +347,8 @@ input[type=text] {
 
   }
 
-  /* var serverName = "http://127.0.0.1:5000"; */
-  /* var serverName = "http://167.86.106.32:5000"; */
-  /* var serverName = "https://167.86.106.32"; */
-  var serverName = "https://www.synchord.com";
+  var serverName = "http://127.0.0.1:5000";
+  /* var serverName = "https://www.synchord.com"; */
 
   document.getElementById("btn-result-zip").disabled = true
   document.getElementById("btn-result-browse").disabled = true
@@ -382,9 +381,7 @@ input[type=text] {
               }
           });
   } else {
-      editor.setValue('from pygears.lib import rng\n' +
-                      'from pygears.lib import shred\n' +
-                      'from pygears.lib.verif import drv\n' +
+      editor.setValue('from pygears.lib import rng, shred, drv\n' +
                       'from pygears.typing import Uint\n' +
                       '\n' +
                       'drv(t=Uint[4], seq=[10]) | rng | shred', -1);
@@ -392,11 +389,47 @@ input[type=text] {
 
 
   var gears = {
+      'add': {'page': 'gears/operators.html', 'page-div-id': 'module-add', 'view-div-id': 'operators.add'},
       'accum': {'page': 'gears/reduce.html', 'page-div-id': 'module-reduce', 'view-div-id': 'reduce.accum'},
-      'ccat': {'page-div-id': 'concatenation'},
+      'cart': {},
+      'ccat': {},
+      'chop': {},
+      'clip': {},
+      'const': {},
+      'czip': {},
+      'deal': {},
+      'decouple': {},
+      'demux': {},
+      'div': {'page': 'gears/operators.html', 'page-div-id': 'module-add', 'view-div-id': 'module-div'},
+      'dreg': {},
+      'eq': {'page': 'gears/operators.html', 'page-div-id': 'module-add', 'view-div-id': 'module-eq'},
       'filt': {},
+      'flatten': {},
+      'fmap': {},
+      'funclut': {},
+      'group': {},
+      'ge': {'page': 'gears/operators.html', 'page-div-id': 'module-add', 'view-div-id': 'module-ge'},
+      'gt': {'page': 'gears/operators.html', 'page-div-id': 'module-add', 'view-div-id': 'module-gt'},
+      'interlace': {},
+      'invert': {'page': 'gears/operators.html', 'page-div-id': 'module-add', 'view-div-id': 'module-invert'},
+      'le': {'page': 'gears/operators.html', 'page-div-id': 'module-add', 'view-div-id': 'module-le'},
+      'lt': {'page': 'gears/operators.html', 'page-div-id': 'module-add', 'view-div-id': 'module-lt'},
+      'mod': {'page': 'gears/operators.html', 'page-div-id': 'module-add', 'view-div-id': 'module-mod'},
+      'mul': {'page': 'gears/operators.html', 'page-div-id': 'module-add', 'view-div-id': 'module-mul'},
+      'mux': {},
+      'ne': {'page': 'gears/operators.html', 'page-div-id': 'module-add', 'view-div-id': 'module-ne'},
+      'neg': {'page': 'gears/operators.html', 'page-div-id': 'module-add', 'view-div-id': 'module-neg'},
+      'qcnt': {},
       'reduce': {},
+      'replicate': {},
       'rng': {},
+      'rom': {},
+      'sdp': {},
+      'serialize': {},
+      'shred': {},
+      'sieve': {},
+      'take': {},
+      'unary': {},
   }
 
   autocomplete(document.getElementById("gearSelect"), Object.keys(gears), function(val) {
@@ -490,24 +523,24 @@ input[type=text] {
 </ul>
 
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2019, Bogdan Vukobratovic.
+      &copy;2020, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
@@ -515,10 +548,6 @@ input[type=text] {
           rel="nofollow">Page source</a>
     </div>
 
-    
-    <a href="https://github.com/bogdanvuk/pygears" class="github">
-        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
-    </a>
     
 
     

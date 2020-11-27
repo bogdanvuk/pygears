@@ -52,7 +52,7 @@ Arbitrary Python code can be used in modules at compile time, for an example to 
 
 Rest of the ``echo`` function code describes the hardware module for applying echo audio effect to the input stream. 
 
-.. bdp:: images/echo.py
+.. image:: images/echo.png
     :align: center
 
 Modules are instantiated using function calls: ``decouple(dout, depth=fifo_depth)``, which return module output interfaces that can in turn be passed as arguments to other module functions in order to make a connection between the modules. For conveniance the pipe ``"|"`` operator can be used to pass output of one function as argument to the next one. This was used to connect the output of ``decouple`` to ``prefill`` (``"\"`` is used just to split the line visually):

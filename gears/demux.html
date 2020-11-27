@@ -1,19 +1,20 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>demux &#8212; PyGears - HW Design: A Functional Approach</title>
-    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
-    <script type="text/javascript" src="../_static/default.js"></script>
-    <script type="text/javascript" src="../_static/wavedrom.js"></script>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../_static/default.js"></script>
+    <script src="../_static/wavedrom.js"></script>
     <link rel="canonical" href="https://www.pygears.org/gears/demux.html" />
     <link rel="shortcut icon" href="../_static/pygears.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
@@ -39,9 +40,9 @@
   <div class="section" id="module-demux">
 <span id="demux"></span><h1>demux<a class="headerlink" href="#module-demux" title="Permalink to this headline">¶</a></h1>
 <p>It is used to distribute the data received at its input to one of its outputs.</p>
-<dl class="function">
+<dl class="py function">
 <dt id="demux.demux">
-<code class="descname">demux</code><span class="sig-paren">(</span><em>ctrl: Uint</em>, <em>din</em>, <em>*</em>, <em>fcat=ccat</em>, <em>nout=None) -&gt; (din</em>, <em>...</em><span class="sig-paren">)</span><a class="headerlink" href="#demux.demux" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">demux</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ctrl</span><span class="p">:</span> <span class="n">Uint</span></em>, <em class="sig-param"><span class="n">din</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">fcat</span><span class="o">=</span><span class="default_value">ccat</span></em>, <em class="sig-param"><span class="n">nout</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#demux.demux" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sends the data received at <code class="docutils literal notranslate"><span class="pre">din</span></code> to one of its outputs designated by the value received at <code class="docutils literal notranslate"><span class="pre">ctrl</span></code>. The number of outputs is either determined by the value of the <code class="docutils literal notranslate"><span class="pre">nout</span></code> parameter, or equals <code class="docutils literal notranslate"><span class="pre">2**len(ctrl)</span></code> if <code class="docutils literal notranslate"><span class="pre">nout</span></code> is not specified.</p>
 <div>
 
@@ -65,9 +66,9 @@
 </div>
 </dd></dl>
 
-<dl class="function">
-<dt>
-<code class="descname">demux</code><span class="sig-paren">(</span><em>din: Union) -&gt; (din.types[0], din.types[1], ...</em><span class="sig-paren">)</span></dt>
+<dl class="py function">
+<dt id="id0">
+<code class="sig-name descname">demux</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">din</span><span class="p">:</span> <span class="n">Union</span></em><span class="sig-paren">)</span><a class="headerlink" href="#id0" title="Permalink to this definition">¶</a></dt>
 <dd><p>Acts as a switch for the data of the <a class="reference internal" href="../typing/union.html#pygears.typing.union.Union" title="pygears.typing.union.Union"><code class="xref py py-class docutils literal notranslate"><span class="pre">Union</span></code></a> type. It has one output for each of the <a class="reference internal" href="../typing/union.html#pygears.typing.union.Union" title="pygears.typing.union.Union"><code class="xref py py-class docutils literal notranslate"><span class="pre">Union</span></code></a> subtypes.</p>
 </dd></dl>
 
@@ -139,24 +140,24 @@
 </ul>
 
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2019, Bogdan Vukobratovic.
+      &copy;2020, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
@@ -164,10 +165,6 @@
           rel="nofollow">Page source</a>
     </div>
 
-    
-    <a href="https://github.com/bogdanvuk/pygears" class="github">
-        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
-    </a>
     
 
     

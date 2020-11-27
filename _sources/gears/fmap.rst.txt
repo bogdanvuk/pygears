@@ -16,7 +16,7 @@ Enables a gear which operates on a certain data type to be used with a complex d
 
    Under the hood, the :class:`~.fmap` will be implemented as shown below:
 
-   .. bdp:: tuple_fmap.py
+   .. image:: ../images/tuple_fmap.png
         :align: center
 
 
@@ -31,7 +31,7 @@ Enables a gear which operates on a certain data type to be used with a complex d
 
    Under the hood, the :class:`~.fmap` will be implemented as shown below:
 
-   .. bdp:: union_fmap.py
+   .. image:: ../images/union_fmap.png
         :align: center
 
 
@@ -46,5 +46,5 @@ Enables a gear which operates on a certain data type to be used with a complex d
 
    Under the hood, the :class:`~.fmap` will be implemented as shown below:
 
-   .. bdp:: queue_fmap.py
+   .. image:: ../images/queue_fmap.png
         :align: center

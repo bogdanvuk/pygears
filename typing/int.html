@@ -1,19 +1,20 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Int &#8212; PyGears - HW Design: A Functional Approach</title>
-    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
-    <script type="text/javascript" src="../_static/default.js"></script>
-    <script type="text/javascript" src="../_static/wavedrom.js"></script>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../_static/default.js"></script>
+    <script src="../_static/wavedrom.js"></script>
     <link rel="canonical" href="https://www.pygears.org/typing/int.html" />
     <link rel="shortcut icon" href="../_static/pygears.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
@@ -38,9 +39,9 @@
             
   <div class="section" id="int">
 <h1>Int<a class="headerlink" href="#int" title="Permalink to this headline">¶</a></h1>
-<dl class="class">
+<dl class="py class">
 <dt id="pygears.typing.uint.Int">
-<em class="property">class </em><code class="descname">Int</code><a class="headerlink" href="#pygears.typing.uint.Int" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-name descname">Int</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">val</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Int" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="integer.html#pygears.typing.uint.Integer" title="pygears.typing.uint.Integer"><code class="xref py py-class docutils literal notranslate"><span class="pre">pygears.typing.uint.Integer</span></code></a></p>
 <p>Fixed width generic signed integer data type.</p>
 <dl class="simple">
@@ -55,34 +56,30 @@
 <p><a class="reference internal" href="#pygears.typing.uint.Int" title="pygears.typing.uint.Int"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int</span></code></a> is a generic datatype derived from <a class="reference internal" href="integer.html#pygears.typing.uint.Integer" title="pygears.typing.uint.Integer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Integer</span></code></a>. It
 represents signed integers with fixed width binary representation. Concrete
 data type is obtained by indexing:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">i16</span> <span class="o">=</span> <span class="n">Int</span><span class="p">[</span><span class="mi">16</span><span class="p">]</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">i16</span> <span class="o">=</span> <span class="n">Int</span><span class="p">[</span><span class="mi">16</span><span class="p">]</span>
 </pre></div>
 </div>
-<dl class="method">
+<dl class="py method">
 <dt id="pygears.typing.uint.Int.__int__">
-<code class="descname">__int__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Int.__int__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns builtin integer type</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">type</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">Integer</span><span class="p">[</span><span class="mi">8</span><span class="p">](</span><span class="mi">0</span><span class="p">)))</span>
-<span class="go">&lt;class &#39;int&#39;&gt;</span>
-</pre></div>
-</div>
+<code class="sig-name descname">__int__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Int.__int__" title="Permalink to this definition">¶</a></dt>
+<dd><p>int(self)</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="pygears.typing.uint.Int.__len__">
-<code class="descname">__len__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Int.__len__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__len__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Int.__len__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the number of bits used for the representation</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">Integer</span><span class="p">[</span><span class="mi">8</span><span class="p">](</span><span class="mi">0</span><span class="p">))</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">Integer</span><span class="p">[</span><span class="mi">8</span><span class="p">](</span><span class="mi">0</span><span class="p">))</span>
 <span class="go">8</span>
 </pre></div>
 </div>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="pygears.typing.uint.Int.bit_length">
-<code class="descname">bit_length</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Int.bit_length" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">bit_length</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Int.bit_length" title="Permalink to this definition">¶</a></dt>
 <dd><p>Number of bits necessary to represent self in binary.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">bin</span><span class="p">(</span><span class="mi">37</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">bin</span><span class="p">(</span><span class="mi">37</span><span class="p">)</span>
 <span class="go">&#39;0b100101&#39;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="p">(</span><span class="mi">37</span><span class="p">)</span><span class="o">.</span><span class="n">bit_length</span><span class="p">()</span>
 <span class="go">6</span>
@@ -90,11 +87,11 @@ data type is obtained by indexing:</p>
 </div>
 </dd></dl>
 
-<dl class="classmethod">
+<dl class="py method">
 <dt id="pygears.typing.uint.Int.decode">
-<em class="property">classmethod </em><code class="descname">decode</code><span class="sig-paren">(</span><em>val</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Int.decode" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod </em><code class="sig-name descname">decode</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">val</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Int.decode" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates Integer object from any int-convertible object val.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Integer</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="mh">0xffff</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Integer</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="mh">0xffff</span><span class="p">)</span>
 <span class="go">Integer[8](255)</span>
 </pre></div>
 </div>
@@ -169,24 +166,24 @@ data type is obtained by indexing:</p>
 </ul>
 
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2019, Bogdan Vukobratovic.
+      &copy;2020, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
@@ -194,10 +191,6 @@ data type is obtained by indexing:</p>
           rel="nofollow">Page source</a>
     </div>
 
-    
-    <a href="https://github.com/bogdanvuk/pygears" class="github">
-        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
-    </a>
     
 
     

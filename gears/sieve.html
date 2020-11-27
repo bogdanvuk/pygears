@@ -1,19 +1,20 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>sieve &#8212; PyGears - HW Design: A Functional Approach</title>
-    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
-    <script type="text/javascript" src="../_static/default.js"></script>
-    <script type="text/javascript" src="../_static/wavedrom.js"></script>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../_static/default.js"></script>
+    <script src="../_static/wavedrom.js"></script>
     <link rel="canonical" href="https://www.pygears.org/gears/sieve.html" />
     <link rel="shortcut icon" href="../_static/pygears.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
@@ -39,9 +40,9 @@
   <div class="section" id="module-sieve">
 <span id="sieve"></span><h1>sieve<a class="headerlink" href="#module-sieve" title="Permalink to this headline">¶</a></h1>
 <p>Consumes and discards all data received at its input.</p>
-<dl class="function">
+<dl class="py function">
 <dt id="sieve.sieve">
-<code class="descname">sieve</code><span class="sig-paren">(</span><em>din</em>, <em>*</em>, <em>key</em><span class="sig-paren">)</span> &#x2192; din[key]<a class="headerlink" href="#sieve.sieve" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">sieve</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">din</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">key</span></em><span class="sig-paren">)</span> &#x2192; din<span class="p">[</span>key<span class="p">]</span><a class="headerlink" href="#sieve.sieve" title="Permalink to this definition">¶</a></dt>
 <dd><p>Outputs a slice of the <code class="docutils literal notranslate"><span class="pre">din</span></code> input interface. The <a class="reference internal" href="#sieve.sieve" title="sieve.sieve"><code class="xref py py-func docutils literal notranslate"><span class="pre">sieve()</span></code></a> gear is
 automatically instantiated when an index operator <code class="docutils literal notranslate"><span class="pre">[]</span></code> is used on an
 interfaces. The <code class="docutils literal notranslate"><span class="pre">key</span></code> parameter can be both a single key or a sequence of
@@ -52,13 +53,13 @@ For an example of <code class="xref py py-class docutils literal notranslate"><s
 </pre></div>
 </div>
 <p>we could slice it using Python index operator to obtain a high nibble:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">din</span><span class="p">[</span><span class="mi">4</span><span class="p">:]</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">din</span><span class="p">[</span><span class="mi">4</span><span class="p">:]</span>
 <span class="go">Intf(Uint[4])</span>
 </pre></div>
 </div>
 <p>which outputs an interface of the type <code class="xref py py-class docutils literal notranslate"><span class="pre">Uint[4]</span></code>. The same
 would be achieved if the <code class="docutils literal notranslate"><span class="pre">sieve</span></code> gear were instantiated explicitly:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sieve</span><span class="p">(</span><span class="n">din</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="nb">slice</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sieve</span><span class="p">(</span><span class="n">din</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="nb">slice</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
 <span class="go">Intf(Uint[4])</span>
 </pre></div>
 </div>
@@ -132,24 +133,24 @@ would be achieved if the <code class="docutils literal notranslate"><span class=
 </ul>
 
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2019, Bogdan Vukobratovic.
+      &copy;2020, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
@@ -157,10 +158,6 @@ would be achieved if the <code class="docutils literal notranslate"><span class=
           rel="nofollow">Page source</a>
     </div>
 
-    
-    <a href="https://github.com/bogdanvuk/pygears" class="github">
-        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
-    </a>
     
 
     

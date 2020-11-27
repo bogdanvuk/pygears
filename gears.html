@@ -1,19 +1,20 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Introduction to Gears &#8212; PyGears - HW Design: A Functional Approach</title>
-    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="_static/language_data.js"></script>
-    <script type="text/javascript" src="_static/default.js"></script>
-    <script type="text/javascript" src="_static/wavedrom.js"></script>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="_static/default.js"></script>
+    <script src="_static/wavedrom.js"></script>
     <link rel="canonical" href="https://www.pygears.org/gears.html" />
     <link rel="shortcut icon" href="_static/pygears.ico"/>
     <link rel="index" title="Index" href="genindex.html" />
@@ -244,9 +245,7 @@ head:{
 </pre></div>
 </div>
 <p>Suppose we would like to implement a module that doubles the complex numbers, and we already have a module that doubles 16-bit unsigned numbers that we would like to reuse. We could than make use of the Tuple functor structure to achieve this.</p>
-<div class="figure align-center">
-<img alt="_images/tuple_functor.png" src="_images/tuple_functor.png" />
-</div>
+<img alt="_images/tuple_functor.png" class="align-center" src="_images/tuple_functor.png" />
 <p>Within Tuple functor, input Tuple data is first split into two, fed to individual functions and then recombined into a Tuple. <strong>PyGears</strong> can automatically generate such a structure based on the input type and gears that are to be used inside a functor.</p>
 </div>
 <div class="section" id="union-functor">
@@ -256,9 +255,7 @@ head:{
 </pre></div>
 </div>
 <p>Suppose we would like to implement a module that decrements the number, and we already have a module that decrements 16-bit unsigned integers and a module that decrements Q8.8 fixed point numbers that we would like to reuse. We could than make use of the Union functor structure to achieve this.</p>
-<div class="figure align-center">
-<img alt="_images/union_functor.png" src="_images/union_functor.png" />
-</div>
+<img alt="_images/union_functor.png" class="align-center" src="_images/union_functor.png" />
 <p>Within Union functor, input Union data is routed to one of two gears by the <strong>Demux</strong> gear, depending on which data type the Union data carries, i.e by the  value of the <strong>ctrl</strong> field. After processing by the gears, output data is wrapped in Union data type again by the <strong>Mux</strong> gear. <strong>PyGears</strong> can automatically generate such a structure based on the input type and gears that are to be used inside a functor.</p>
 </div>
 <div class="section" id="array-functor">
@@ -272,9 +269,7 @@ head:{
 </pre></div>
 </div>
 <p>Suppose we would like to implement a module that multiplies each number in the Queue by 2, and we already have a module that multiplies single numbers that we would like to reuse. We could than make use of the Queue functor structure to achieve this.</p>
-<div class="figure align-center">
-<img alt="_images/queue_functor.png" src="_images/queue_functor.png" />
-</div>
+<img alt="_images/queue_functor.png" class="align-center" src="_images/queue_functor.png" />
 <p>Within Queue functor, input Queue data is first split into the individual data and the Queue structure, also called the envelope. Queue structure is defined by the pattern of its <strong>eot</strong> field. The individual data is fed to the function and is then recombined with the envelope to produce the output Queue. <strong>PyGears</strong> can automatically generate such a structure based on the input type and gears that are to be used inside a functor.</p>
 </div>
 </div>
@@ -346,24 +341,24 @@ head:{
 </ul>
 
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2019, Bogdan Vukobratovic.
+      &copy;2020, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
@@ -371,10 +366,6 @@ head:{
           rel="nofollow">Page source</a>
     </div>
 
-    
-    <a href="https://github.com/bogdanvuk/pygears" class="github">
-        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
-    </a>
     
 
     

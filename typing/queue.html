@@ -1,19 +1,20 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Queue &#8212; PyGears - HW Design: A Functional Approach</title>
-    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
-    <script type="text/javascript" src="../_static/default.js"></script>
-    <script type="text/javascript" src="../_static/wavedrom.js"></script>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../_static/default.js"></script>
+    <script src="../_static/wavedrom.js"></script>
     <link rel="canonical" href="https://www.pygears.org/typing/queue.html" />
     <link rel="shortcut icon" href="../_static/pygears.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
@@ -38,43 +39,43 @@
             
   <div class="section" id="queue">
 <h1>Queue<a class="headerlink" href="#queue" title="Permalink to this headline">¶</a></h1>
-<dl class="class">
+<dl class="py class">
 <dt id="pygears.typing.queue.Queue">
-<em class="property">class </em><code class="descname">Queue</code><a class="headerlink" href="#pygears.typing.queue.Queue" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-name descname">Queue</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">val</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">eot</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.queue.Queue" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></p>
-<dl class="attribute">
+<dl class="py method">
 <dt id="pygears.typing.queue.Queue.__getitem__">
-<code class="descname">__getitem__</code><a class="headerlink" href="#pygears.typing.queue.Queue.__getitem__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__getitem__</code><span class="sig-paren">(</span><em class="sig-param">key</em>, <em class="sig-param">/</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.queue.Queue.__getitem__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return self[key].</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="pygears.typing.queue.Queue.__int__">
-<code class="descname">__int__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.queue.Queue.__int__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__int__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.queue.Queue.__int__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a packed integer representation of the <a class="reference internal" href="#pygears.typing.queue.Queue" title="pygears.typing.queue.Queue"><code class="xref py py-class docutils literal notranslate"><span class="pre">Queue</span></code></a> instance.</p>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py method">
 <dt id="pygears.typing.queue.Queue.__len__">
-<code class="descname">__len__</code><a class="headerlink" href="#pygears.typing.queue.Queue.__len__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__len__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.queue.Queue.__len__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return len(self).</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="pygears.typing.queue.Queue.code">
-<code class="descname">code</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.queue.Queue.code" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">code</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.queue.Queue.code" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a packed integer representation of the <a class="reference internal" href="#pygears.typing.queue.Queue" title="pygears.typing.queue.Queue"><code class="xref py py-class docutils literal notranslate"><span class="pre">Queue</span></code></a> instance.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="pygears.typing.queue.Queue.count">
-<code class="descname">count</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.queue.Queue.count" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">count</code><span class="sig-paren">(</span><em class="sig-param">value</em>, <em class="sig-param">/</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.queue.Queue.count" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return number of occurrences of value.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="pygears.typing.queue.Queue.index">
-<code class="descname">index</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.queue.Queue.index" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">index</code><span class="sig-paren">(</span><em class="sig-param">value</em>, <em class="sig-param">start=0</em>, <em class="sig-param">stop=9223372036854775807</em>, <em class="sig-param">/</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.queue.Queue.index" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return first index of value.</p>
 <p>Raises ValueError if the value is not present.</p>
 </dd></dl>
@@ -148,24 +149,24 @@
 </ul>
 
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2019, Bogdan Vukobratovic.
+      &copy;2020, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
@@ -173,10 +174,6 @@
           rel="nofollow">Page source</a>
     </div>
 
-    
-    <a href="https://github.com/bogdanvuk/pygears" class="github">
-        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
-    </a>
     
 
     

@@ -7,7 +7,7 @@ This example shows how to use PyGears to implement a hardware module that applie
 
 The hardware module is part of the `pygears_dsp <https://github.com/bogdanvuk/pygears-dsp>`_ library and is defined in `pygears_dsp/lib/echo.py <https://github.com/bogdanvuk/pygears-dsp/blob/master/pygears_dsp/lib/echo.py>`_. Its block diagram is given below. You can checkout the :ref:`functional description <examples-echo-functional-description>` of the ``echo`` module. In-depth explanation of the PyGears description of the echo model given in :ref:`hardware description <examples-echo-hardware-description>` chapter. PyGears takes the Python module description and compiles it to SystemVerilog which is :ref:`listed below<echo-sv>`.
 
-.. bdp:: images/echo.py
+.. image:: images/echo.png
     :align: center
 
 
@@ -69,7 +69,7 @@ Stereo Echo
 
 PyGears lets you easily compose gears at any level. To create a stereo echo effect gear, we will instantiate one ``echo`` gear for each channel.
 
-.. bdp:: images/stereo_echo.py
+.. image:: images/stereo_echo.png
     :align: center
 
 In PyGears this can be described as follows:
@@ -118,7 +118,7 @@ Notice that the ``din`` argument has also a type associated with it, namely a te
 
 In ``mono_echo_sim()`` function, ``drv`` gear is used to drive audio samples to the ``echo`` gear, which in turn sends the result to the ``collect`` gear. In PyGears the connection from ``drv`` to ``echo`` can be described using pipe '|' operator. The ``drv`` gear sends the sequence of audio samples (variable ``seq``), by first converting them to the specified data type: ``Int[sample_bit_width]``, where ``sample_bit_width`` value is calculated based on the ``mono_echo_sim()`` function argument ``sample_width``.
 
-.. bdp:: images/echo_sim.py
+.. image:: images/echo_sim.png
     :align: center
 
 At compile time, PyGears will try to match output data type of ``drv`` gear: ``Int[sample_bit_width]`` to the input data type ``Int['W']`` of the ``echo`` gear, and since that their base types (:class:`~pygears.typing.uint.Int`) match, deduce the value of the template parameter ``W = sample_bit_width``. This parameter can then be used throughout the gear signature to calculate values of a gear compile-time parameters or fix types of a gear interfaces. In this example, value of the ``echo`` gear argument ``sample_width`` is set to be exactly equal to ``W``.   
@@ -144,7 +144,7 @@ After the compile-time parameters calculation in the ``echo`` function, the desc
    :pyobject: echo
    :lines: 39-
 
-.. bdp:: images/echo.py
+.. image:: images/echo.png
     :align: center
 
 The feedback loop, present in the design, cannot be described as a plain gear composition since it forms a cycle. This cycle needs to be cut at one spot, described as the gear composition and then stitched together. In this example, we will cut the cycle after the adder and start by defining the interface ``dout``:: 
@@ -191,8 +191,8 @@ Generated SystemVerilog
 .. code-block:: systemverilog
 
   module echo(
-      input clk,
-      input rst,
+      input logic clk,
+      input logic rst,
       dti.consumer din, // i16 (16)
       dti.producer dout // i16 (16)
 

@@ -1,19 +1,20 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Logger &#8212; PyGears - HW Design: A Functional Approach</title>
-    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
-    <script type="text/javascript" src="../_static/default.js"></script>
-    <script type="text/javascript" src="../_static/wavedrom.js"></script>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../_static/default.js"></script>
+    <script src="../_static/wavedrom.js"></script>
     <link rel="canonical" href="https://www.pygears.org/conf/log.html" />
     <link rel="shortcut icon" href="../_static/pygears.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
@@ -49,13 +50,13 @@ features like:</p>
 </ul>
 <p>To register a new logger create a <code class="xref py py-class docutils literal notranslate"><span class="pre">CustomLog</span></code> instance by specifying the
 logger name and the default logging level:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">CustomLog</span><span class="p">(</span><span class="s1">&#39;core&#39;</span><span class="p">,</span> <span class="n">log</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">CustomLog</span><span class="p">(</span><span class="s1">&#39;core&#39;</span><span class="p">,</span> <span class="n">log</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="section" id="logging-levels">
 <span id="levels"></span><h2>Logging Levels<a class="headerlink" href="#logging-levels" title="Permalink to this headline">¶</a></h2>
 <p>The numeric values of logging levels are given in the following table.</p>
-<table class="docutils align-center">
+<table class="docutils align-default">
 <colgroup>
 <col style="width: 48%" />
 <col style="width: 52%" />
@@ -89,9 +90,9 @@ logger name and the default logging level:</p>
 </div>
 <div class="section" id="reference">
 <h2>Reference<a class="headerlink" href="#reference" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
+<dl class="py class">
 <dt id="pygears.conf.log.register_custom_log">
-<em class="property">class </em><code class="descname">register_custom_log</code><a class="headerlink" href="#pygears.conf.log.register_custom_log" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-name descname">register_custom_log</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">level=20</em>, <em class="sig-param">cls=&lt;class 'pygears.conf.log.CustomLogger'&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.conf.log.register_custom_log" title="Permalink to this definition">¶</a></dt>
 <dd><p>PyGears integrated logger class.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -123,15 +124,15 @@ taken; this is usefull for clearing prevously set values</p></li>
 </li>
 </ul>
 <p>Sets the verbosity level for the <code class="docutils literal notranslate"><span class="pre">core</span></code> logger at <code class="docutils literal notranslate"><span class="pre">INFO</span></code> level:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">bind</span><span class="p">(</span><span class="s1">&#39;logger/core/level&#39;</span><span class="p">,</span> <span class="n">INFO</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">reg</span><span class="p">[</span><span class="s1">&#39;logger/core/level&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">INFO</span>
 </pre></div>
 </div>
 <p>Configures the <code class="docutils literal notranslate"><span class="pre">typing</span></code> logger to throw exception on warnings:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">bind</span><span class="p">(</span><span class="s1">&#39;logger/typing/warning&#39;</span><span class="p">,</span> <span class="s1">&#39;exception&#39;</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">reg</span><span class="p">[</span><span class="s1">&#39;logger/typing/warning&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;exception&#39;</span>
 </pre></div>
 </div>
 <p>Configures the <code class="docutils literal notranslate"><span class="pre">conf</span></code> logger to use custom function on errors:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">bind</span><span class="p">(</span><span class="s1">&#39;logger/conf/errors&#39;</span><span class="p">,</span> <span class="n">custom_func</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">reg</span><span class="p">[</span><span class="s1">&#39;logger/conf/errors&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">custom_func</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -205,24 +206,24 @@ taken; this is usefull for clearing prevously set values</p></li>
 </ul>
 
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2019, Bogdan Vukobratovic.
+      &copy;2020, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
@@ -230,10 +231,6 @@ taken; this is usefull for clearing prevously set values</p></li>
           rel="nofollow">Page source</a>
     </div>
 
-    
-    <a href="https://github.com/bogdanvuk/pygears" class="github">
-        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
-    </a>
     
 
     

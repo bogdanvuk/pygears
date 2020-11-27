@@ -153,7 +153,7 @@ For testing the ISA implementation, I've envisioned the following test:
 
 I've written an environment that supports these kinds of tests in :giturl:`pygears_riscv/verif/env.py`. This is a regular Python function (not a gear) that instantiates the ``riscv`` and ``register_file`` gears and wires them properly in the following manner.
 
-.. bdp:: images/addi-env-block-diagram.py
+.. image:: images/addi-env-block-diagram.png
     :align: center
     :width: 80%
 
@@ -383,8 +383,8 @@ Generated SystemVerilog can be found in the ``/tmp`` folder, since no output dir
 .. code-block:: sv
 
   module riscv(
-      input clk,
-      input rst,
+      input logic clk,
+      input logic rst,
       dti.consumer instruction, // (u7, u5, u3, u5, i12) (32)
       dti.consumer reg_data, // u32 (32)
       dti.producer reg_file_rd_req, // u5 (5)

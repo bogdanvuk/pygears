@@ -1,18 +1,19 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RISC-V Tools Setup &#8212; PyGears - HW Design: A Functional Approach</title>
-    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
     <link rel="canonical" href="https://www.pygears.org/riscv/setup.html" />
     <link rel="shortcut icon" href="../_static/pygears.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
@@ -202,17 +203,17 @@ core   <span class="m">0</span>: 0xffffffff80000000 <span class="o">(</span>0x00
     <span class="n">PROMPT</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;: $&#39;</span>
     <span class="n">CODE_BASE_ADDRESS</span> <span class="o">=</span> <span class="mh">0xffffffff80000000</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cmd_line</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cmd_line</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cmd_line</span> <span class="o">=</span> <span class="n">cmd_line</span>
 
-    <span class="k">def</span> <span class="nf">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">proc</span> <span class="o">=</span> <span class="n">pexpect</span><span class="o">.</span><span class="n">spawnu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cmd_line</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">proc</span><span class="o">.</span><span class="n">expect</span><span class="p">(</span><span class="n">Spike</span><span class="o">.</span><span class="n">PROMPT</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">proc</span><span class="o">.</span><span class="n">setecho</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">until</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span>
 
-    <span class="k">def</span> <span class="nf">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_value</span><span class="p">,</span> <span class="n">exc_traceback</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_value</span><span class="p">,</span> <span class="n">exc_traceback</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">proc</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -232,23 +233,23 @@ core   <span class="m">0</span>: 0xffffffff80000000 <span class="o">(</span>0x00
 </div><p data-verbosity="2" hidden="true">Also, let’s implement some high-level commands that will be used often:</p>
 <div hidden data-verbosity=2>
 <div class="highlight-default notranslate" data-verbosity="2" hidden="true"><div class="highlight"><pre><span></span>    <span class="k">def</span> <span class="nf">until</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">address</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;until pc 0 {hex(Spike.CODE_BASE_ADDRESS + address)}&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;until pc 0 </span><span class="si">{</span><span class="nb">hex</span><span class="p">(</span><span class="n">Spike</span><span class="o">.</span><span class="n">CODE_BASE_ADDRESS</span> <span class="o">+</span> <span class="n">address</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">pc</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;pc 0&#39;</span><span class="p">),</span> <span class="mi">16</span><span class="p">)</span> <span class="o">-</span> <span class="n">Spike</span><span class="o">.</span><span class="n">CODE_BASE_ADDRESS</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;pc 0&#39;</span><span class="p">),</span> <span class="mi">16</span><span class="p">)</span> <span class="o">-</span> <span class="n">Spike</span><span class="o">.</span><span class="n">CODE_BASE_ADDRESS</span>
 
     <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="s1">&#39;run 1&#39;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">reg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reg_id</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;reg 0 a</span><span class="si">{reg_id}</span><span class="s1">&#39;</span><span class="p">),</span> <span class="mi">16</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;reg 0 a</span><span class="si">{</span><span class="n">reg_id</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">),</span> <span class="mi">16</span><span class="p">)</span>
 </pre></div>
 </div>
 
 </div><p data-verbosity="2" hidden="true">The <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">until()</span></code> method instructs the Spike simulator to run until <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">PC</span></code> reaches a specific address. Since my code starts (for some reason) at address <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">0xffffffff80000000</span></code>, I’ll make <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">until()</span></code> accept addressess in form of the offset to this base address, which will reduce the noise of always needing to write such large numbers.</p>
 <p data-verbosity="2" hidden="true">The <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">pc()</span></code> method queries the current value of the <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">PC</span></code>, but also returns only the offset to the code base address. The <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">step()</span></code> method instructs the simulator to run the next instruction, and the <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">reg()</span></code> method retrieves the state of a specific register.</p>
 <p>Now, I can interact with Spike on a pretty high level:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">spike</span> <span class="k">import</span> <span class="n">Spike</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">spike</span> <span class="kn">import</span> <span class="n">Spike</span>
 
 <span class="k">with</span> <span class="n">Spike</span><span class="p">(</span><span class="s1">&#39;spike -d --isa=rv32i hello&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">sp</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;A1 value before: &#39;</span><span class="p">,</span> <span class="nb">hex</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">reg</span><span class="p">(</span><span class="mi">1</span><span class="p">)))</span>
@@ -474,24 +475,24 @@ core   <span class="m">0</span>: 0xffffffff80000000 <span class="o">(</span>0x00
   </ul>
 
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2019, Bogdan Vukobratovic.
+      &copy;2020, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

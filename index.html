@@ -1,22 +1,23 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta charset="utf-8" /><meta content="AjhRHQh3VrfjkedIiaUazWGgzaSBonwmXT_Kf5sPD0I" name="google-site-verification" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta content="AjhRHQh3VrfjkedIiaUazWGgzaSBonwmXT_Kf5sPD0I" name="google-site-verification" />
 <meta content="256433631B2CD469BD8EC0137A9943AA" name="msvalidate.01" />
 <meta content="ORBOCceo-a1e6Je5tI-KUua73jJ2f5DjYTOVD4v8tz4" name="google-site-verification" />
 
     <title>Welcome to PyGears &#8212; PyGears - HW Design: A Functional Approach</title>
-    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="_static/language_data.js"></script>
-    <script type="text/javascript" src="_static/default.js"></script>
-    <script type="text/javascript" src="_static/wavedrom.js"></script>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="_static/default.js"></script>
+    <script src="_static/wavedrom.js"></script>
     <link rel="canonical" href="https://www.pygears.org/index.html" />
     <link rel="shortcut icon" href="_static/pygears.ico"/>
     <link rel="index" title="Index" href="genindex.html" />
@@ -76,9 +77,7 @@
 </pre></div>
 </div>
 <p>Rest of the <code class="docutils literal notranslate"><span class="pre">echo</span></code> function code describes the hardware module for applying echo audio effect to the input stream.</p>
-<div class="figure align-center">
-<img alt="_images/echo.png" src="_images/echo.png" />
-</div>
+<img alt="_images/echo.png" class="align-center" src="_images/echo.png" />
 <p>Modules are instantiated using function calls: <code class="docutils literal notranslate"><span class="pre">decouple(dout,</span> <span class="pre">depth=fifo_depth)</span></code>, which return module output interfaces that can in turn be passed as arguments to other module functions in order to make a connection between the modules. For conveniance the pipe <code class="docutils literal notranslate"><span class="pre">&quot;|&quot;</span></code> operator can be used to pass output of one function as argument to the next one. This was used to connect the output of <code class="docutils literal notranslate"><span class="pre">decouple</span></code> to <code class="docutils literal notranslate"><span class="pre">prefill</span></code> (<code class="docutils literal notranslate"><span class="pre">&quot;\&quot;</span></code> is used just to split the line visually):</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">feedback</span> <span class="o">=</span> <span class="n">decouple</span><span class="p">(</span><span class="n">dout</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="n">fifo_depth</span><span class="p">)</span> \
     <span class="o">|</span> <span class="n">prefill</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">samples</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="n">sample_dly_len</span><span class="p">)</span>
@@ -253,24 +252,24 @@
 </ul>
 
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2019, Bogdan Vukobratovic.
+      &copy;2020, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
@@ -278,10 +277,6 @@
           rel="nofollow">Page source</a>
     </div>
 
-    
-    <a href="https://github.com/bogdanvuk/pygears" class="github">
-        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
-    </a>
     
 
     

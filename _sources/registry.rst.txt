@@ -3,9 +3,6 @@ Registry
 
 PyGears uses a centralized registry to share global data, like configuration, between its submodules. There is also a user API for manipulating the registry in order to provide some user configuration. Registryis organized as a large tree resembling the file system. Basically, there are two commands at users disposal:
 
-.. autofunction:: pygears.bind
-.. autofunction:: pygears.registry
-
 Variables
 ---------
 

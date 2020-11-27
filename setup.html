@@ -1,19 +1,20 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PyGears Tools Setup for Linux &#8212; PyGears - HW Design: A Functional Approach</title>
-    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="_static/language_data.js"></script>
-    <script type="text/javascript" src="_static/default.js"></script>
-    <script type="text/javascript" src="_static/wavedrom.js"></script>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="_static/default.js"></script>
+    <script src="_static/wavedrom.js"></script>
     <link rel="canonical" href="https://www.pygears.org/setup.html" />
     <link rel="shortcut icon" href="_static/pygears.ico"/>
     <link rel="index" title="Index" href="genindex.html" />
@@ -181,41 +182,7 @@ python ~/pygears/examples/echo/plop_test_wav_echo_sim.py
 <div hidden data-verbosity=2>
 <h2 data-verbosity="2" hidden="true"> Complete list of command line arguments<a class="headerlink" href="#complete-list-of-command-line-arguments" title="Permalink to this headline">¶</a></h2>
 
-</div><div hidden data-verbosity=2>
-<div class="highlight-default notranslate" data-verbosity="2" hidden="true"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">pygears</span><span class="o">-</span><span class="n">tools</span><span class="o">-</span><span class="n">install</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">p</span> <span class="n">PKGS_FN</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">o</span> <span class="n">TOOLS_PATH</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">w</span> <span class="n">HOME_PATH</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">l</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">d</span><span class="p">]</span>
-                             <span class="p">[</span><span class="n">pkg_names</span> <span class="p">[</span><span class="n">pkg_names</span> <span class="o">...</span><span class="p">]]</span>
-</pre></div>
-</div>
-
-</div><div class="section" data-verbosity="2" hidden="true" id="Positional Arguments">
-<h3 data-verbosity="2" hidden="true">Positional Arguments<a class="headerlink" href="#Positional Arguments" title="Permalink to this headline">¶</a></h3>
-<dl class="option-list" data-verbosity="2" hidden="true">
-<dt data-verbosity="2" hidden="true"><kbd>pkg_names</kbd></dt>
-<dd data-verbosity="2" hidden="true"><p data-verbosity="2" hidden="true">Names of packages to install. Can be one of: emacs, spacemacs, gtkwave, verilator, systemc, scv, pyenv, python, ripgrep, spacemacs_python, pygears</p>
-</dd>
-</dl>
-</div>
-<div class="section" data-verbosity="2" hidden="true" id="Named Arguments">
-<h3 data-verbosity="2" hidden="true">Named Arguments<a class="headerlink" href="#Named Arguments" title="Permalink to this headline">¶</a></h3>
-<dl class="option-list" data-verbosity="2" hidden="true">
-<dt data-verbosity="2" hidden="true"><kbd>-p</kbd></dt>
-<dd data-verbosity="2" hidden="true"><p data-verbosity="2" hidden="true">Path to packages description file</p>
-</dd>
-<dt data-verbosity="2" hidden="true"><kbd>-o</kbd></dt>
-<dd data-verbosity="2" hidden="true"><p data-verbosity="2" hidden="true">Directory to install tools to</p>
-</dd>
-<dt data-verbosity="2" hidden="true"><kbd>-w</kbd></dt>
-<dd data-verbosity="2" hidden="true"><p data-verbosity="2" hidden="true">Directory to setup home in</p>
-</dd>
-<dt data-verbosity="2" hidden="true"><kbd>-l</kbd></dt>
-<dd data-verbosity="2" hidden="true"><p data-verbosity="2" hidden="true">Only list the package dependencies and exit</p>
-</dd>
-<dt data-verbosity="2" hidden="true"><kbd>-d</kbd></dt>
-<dd data-verbosity="2" hidden="true"><p data-verbosity="2" hidden="true">Automatically install system dependencies. Will require sudo.</p>
-</dd>
-</dl>
-</div>
-</div>
+</div></div>
 <div class="section" id="pygears-tools-list">
 <span id="setup-pygears-tools-list"></span><h2>Pygears Tools List<a class="headerlink" href="#pygears-tools-list" title="Permalink to this headline">¶</a></h2>
 <p>Here’s the list of tools that can be installed using pygears-tools-install.</p>
@@ -297,24 +264,24 @@ python ~/pygears/examples/echo/plop_test_wav_echo_sim.py
 </ul>
 
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2019, Bogdan Vukobratovic.
+      &copy;2020, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
@@ -322,10 +289,6 @@ python ~/pygears/examples/echo/plop_test_wav_echo_sim.py
           rel="nofollow">Page source</a>
     </div>
 
-    
-    <a href="https://github.com/bogdanvuk/pygears" class="github">
-        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
-    </a>
     
 
     

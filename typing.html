@@ -1,19 +1,20 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Typing &#8212; PyGears - HW Design: A Functional Approach</title>
-    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="_static/language_data.js"></script>
-    <script type="text/javascript" src="_static/default.js"></script>
-    <script type="text/javascript" src="_static/wavedrom.js"></script>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="_static/default.js"></script>
+    <script src="_static/wavedrom.js"></script>
     <link rel="canonical" href="https://www.pygears.org/typing.html" />
     <link rel="shortcut icon" href="_static/pygears.ico"/>
     <link rel="index" title="Index" href="genindex.html" />
@@ -42,8 +43,8 @@
 <div class="section" id="compile-time-type-checking">
 <h2>Compile time type checking<a class="headerlink" href="#compile-time-type-checking" title="Permalink to this headline">¶</a></h2>
 <p>When composing gears, the framework will check the compatibility of types. For an example, the following design will raise an error:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pygears</span> <span class="k">import</span> <span class="n">gear</span>
-<span class="kn">from</span> <span class="nn">pygears.typing</span> <span class="k">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Uint</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pygears</span> <span class="kn">import</span> <span class="n">gear</span>
+<span class="kn">from</span> <span class="nn">pygears.typing</span> <span class="kn">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Uint</span>
 
 <span class="nd">@gear</span>
 <span class="k">def</span> <span class="nf">example</span><span class="p">(</span><span class="n">din</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">]]):</span>
@@ -53,7 +54,7 @@
 </pre></div>
 </div>
 <p>In this example, a constant of Tuple type (u8, u16), with value 1 for both of its fields, is being fed to the module which accepts Tuples of type (u8, u8). This is a mismatch, since u16 and u8 are not the same type. Upon executing the script, <strong>PyGears</strong> will print:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pygears.core.type_match.TypeMatchError: 16 cannot be matched to 8
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pygears.typing.TypeMatchError: 16 cannot be matched to 8
 - when matching Uint[16] to Uint[8]
 - when matching Tuple[Uint[8], Uint[16]] to Tuple[Uint[8], Uint[8]]
 - when deducing type for argument din, of the module &quot;/example&quot;
@@ -72,7 +73,7 @@
 
 <span class="n">Tuple</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">]]((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="o">|</span> <span class="n">example</span>
 
-<span class="k">print</span><span class="p">(</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;/example&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;w_field_1&#39;</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;/example&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;w_field_1&#39;</span><span class="p">])</span>
 </pre></div>
 </div>
 <p>Now, everything passes without an error. Last line of the script will print: “16” - the deduced value of the template parameter “w_field_1”. Template parameters can be used within modules to change the behavior. For an example, they can change the output type of the module:</p>
@@ -85,24 +86,24 @@
 
 <span class="n">res</span> <span class="o">=</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">]]((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="o">|</span> <span class="n">example</span>
 
-<span class="k">print</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The output type of the “example” module is now dependent on the input type. Variable <strong>res</strong> will contain the output interface of the “example” module. The last line in the script prints: “u16” - which is the type of the output interface.</p>
 <p>The RTL implementation of the “example” module can be also parameterized in this way. Lets make a simple SystemVerilog implementation of this module, saved under “example.sv”.</p>
 <div class="highlight-systemverilog notranslate"><div class="highlight"><pre><span></span><span class="k">module</span> <span class="n">example</span>
 <span class="p">#(</span>
-    <span class="k">parameter</span> <span class="no">W_FIELD_1</span> <span class="o">=</span> <span class="mh">8</span>
+    <span class="k">parameter</span> <span class="n">W_FIELD_1</span> <span class="o">=</span> <span class="mh">8</span>
 <span class="p">)</span>
 <span class="p">(</span>
-    <span class="k">input</span> <span class="n">clk</span><span class="p">,</span>
-    <span class="k">input</span> <span class="n">rst</span><span class="p">,</span>
+    <span class="k">input</span> <span class="k">logic</span> <span class="n">clk</span><span class="p">,</span>
+    <span class="k">input</span> <span class="k">logic</span> <span class="n">rst</span><span class="p">,</span>
     <span class="n">dti</span><span class="p">.</span><span class="n">consumer</span> <span class="n">din</span><span class="p">,</span>
     <span class="n">dti</span><span class="p">.</span><span class="n">producer</span> <span class="n">dout</span>
 <span class="p">);</span>
 
 <span class="k">typedef</span> <span class="k">struct</span> <span class="k">packed</span> <span class="p">{</span>
-    <span class="k">logic</span> <span class="p">[</span><span class="no">W_FIELD_1</span><span class="o">-</span><span class="mh">1</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span> <span class="n">f1</span><span class="p">;</span>
+    <span class="k">logic</span> <span class="p">[</span><span class="n">W_FIELD_1</span><span class="o">-</span><span class="mh">1</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span> <span class="n">f1</span><span class="p">;</span>
     <span class="k">logic</span> <span class="p">[</span>          <span class="mh">7</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span> <span class="n">f0</span><span class="p">;</span>
 <span class="p">}</span> <span class="n">din_t</span><span class="p">;</span>
 
@@ -116,15 +117,15 @@
 </pre></div>
 </div>
 <div class="highlight-systemverilog notranslate"><div class="highlight"><pre><span></span><span class="k">module</span> <span class="n">top</span><span class="p">(</span>
-    <span class="k">input</span> <span class="n">clk</span><span class="p">,</span>
-    <span class="k">input</span> <span class="n">rst</span><span class="p">,</span>
+    <span class="k">input</span> <span class="k">logic</span> <span class="n">clk</span><span class="p">,</span>
+    <span class="k">input</span> <span class="k">logic</span> <span class="n">rst</span><span class="p">,</span>
     <span class="n">dti</span><span class="p">.</span><span class="n">producer</span> <span class="n">dout</span> <span class="c1">// u16 (16)</span>
 <span class="p">);</span>
 
-  <span class="n">dti</span> <span class="p">#(.</span><span class="no">W_DATA</span><span class="p">(</span><span class="mh">24</span><span class="p">))</span> <span class="n">const_if_s</span><span class="p">();</span> <span class="c1">// (u8, u16) (24)</span>
+  <span class="n">dti</span> <span class="p">#(.</span><span class="n">W_DATA</span><span class="p">(</span><span class="mh">24</span><span class="p">))</span> <span class="n">const_if_s</span><span class="p">();</span> <span class="c1">// (u8, u16) (24)</span>
 
   <span class="n">example</span> <span class="p">#(</span>
-        <span class="p">.</span><span class="no">W_FIELD_1</span><span class="p">(</span><span class="mh">16</span><span class="p">)</span>
+        <span class="p">.</span><span class="n">W_FIELD_1</span><span class="p">(</span><span class="mh">16</span><span class="p">)</span>
   <span class="p">)</span>
   <span class="n">example_i</span> <span class="p">(</span>
       <span class="p">.</span><span class="n">clk</span><span class="p">(</span><span class="n">clk</span><span class="p">),</span>
@@ -134,8 +135,8 @@
   <span class="p">);</span>
 
   <span class="n">sustain</span> <span class="p">#(</span>
-        <span class="p">.</span><span class="no">VAL</span><span class="p">(</span><span class="mh">257</span><span class="p">),</span>
-        <span class="p">.</span><span class="no">TOUT</span><span class="p">(</span><span class="mh">24</span><span class="p">)</span>
+        <span class="p">.</span><span class="n">VAL</span><span class="p">(</span><span class="mh">257</span><span class="p">),</span>
+        <span class="p">.</span><span class="n">TOUT</span><span class="p">(</span><span class="mh">24</span><span class="p">)</span>
   <span class="p">)</span>
   <span class="n">const_i</span> <span class="p">(</span>
       <span class="p">.</span><span class="n">clk</span><span class="p">(</span><span class="n">clk</span><span class="p">),</span>
@@ -228,24 +229,24 @@
 </ul>
 
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2019, Bogdan Vukobratovic.
+      &copy;2020, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
@@ -253,10 +254,6 @@
           rel="nofollow">Page source</a>
     </div>
 
-    
-    <a href="https://github.com/bogdanvuk/pygears" class="github">
-        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
-    </a>
     
 
     

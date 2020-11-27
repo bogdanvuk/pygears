@@ -1,18 +1,19 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PyGears 0.1.2 released &#8212; PyGears - HW Design: A Functional Approach</title>
-    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
     <link rel="canonical" href="https://www.pygears.org/release/v0.1.2.html" />
     <link rel="shortcut icon" href="../_static/pygears.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
@@ -55,10 +56,10 @@
 <h2>Features<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p>Add support for user configuration <code class="docutils literal notranslate"><span class="pre">.pygears.py</span></code> files that are loaded at startup. These files can be local to the project or located in <code class="docutils literal notranslate"><span class="pre">~/.pygears.py</span></code> and active globally.</p></li>
-<li><p>Registry paths can be accessed by Unix path strings (e.g. <code class="docutils literal notranslate"><span class="pre">logger/svgen/print_traceback</span></code>), take a look at <a class="reference external" href="../../registry.html#registry" title="(in PyGears v0.1a0)"><span class="xref std std-ref">registry</span></a></p></li>
+<li><p>Registry paths can be accessed by Unix path strings (e.g. <code class="docutils literal notranslate"><span class="pre">logger/svgen/print_traceback</span></code>), take a look at <a class="reference external" href="../../registry.html#registry" title="(in PyGears v0.2.0)"><span class="xref std std-ref">registry</span></a></p></li>
 <li><p>Wildcards can be used in registry paths, e.g. <code class="docutils literal notranslate"><span class="pre">logger/*/print_traceback</span></code></p></li>
 <li><p>Add support for user configuration files in JSON and YAML formats</p></li>
-<li><p>Loggers are organized better and are configured more easily. Checkout docs for <a class="reference external" href="../../conf/log.html#module-pygears.conf.log" title="(in PyGears v0.1a0)"><span class="xref std std-ref">Logger</span></a></p></li>
+<li><p>Loggers are organized better and are configured more easily. Checkout docs for <a class="reference external" href="../../conf/log.html#module-pygears.conf.log" title="(in PyGears v0.2.0)"><span class="xref std std-ref">Logger</span></a></p></li>
 <li><p>Added generation of Questa run script in SystemVerilog generation subsystem</p></li>
 <li><p>Added Python implementation for the following gears from the gear library: <code class="docutils literal notranslate"><span class="pre">accumulator</span></code>, <code class="docutils literal notranslate"><span class="pre">clip</span></code>, <code class="docutils literal notranslate"><span class="pre">iceil</span></code>, <code class="docutils literal notranslate"><span class="pre">max_gears</span></code>, <code class="docutils literal notranslate"><span class="pre">qlen_cnt</span></code>, <code class="docutils literal notranslate"><span class="pre">reverse</span></code>, <code class="docutils literal notranslate"><span class="pre">take</span></code>, <code class="docutils literal notranslate"><span class="pre">tr_cnt</span></code>, <code class="docutils literal notranslate"><span class="pre">unary</span></code> and <code class="docutils literal notranslate"><span class="pre">valve</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">width_reductor</span></code> is now version of <code class="docutils literal notranslate"><span class="pre">serialize</span></code> gear when active field is supplied</p></li>
@@ -87,9 +88,9 @@
 <div class="section" id="documentation">
 <h2>Documentation<a class="headerlink" href="#documentation" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>Document PyGears <a class="reference external" href="../../registry.html#registry" title="(in PyGears v0.1a0)"><span class="xref std std-ref">registry</span></a>.</p></li>
-<li><p><a class="reference external" href="../../typing/tuple.html" title="(in PyGears v0.1a0)"><code class="docutils literal notranslate"><span class="pre">Tuple</span></code></a> documented.</p></li>
-<li><p>Separate pages and additional documentation for <a class="reference external" href="../../typing/integer.html" title="(in PyGears v0.1a0)"><code class="docutils literal notranslate"><span class="pre">Integer</span></code></a>, <a class="reference external" href="../../typing/uint.html" title="(in PyGears v0.1a0)"><code class="docutils literal notranslate"><span class="pre">Uint</span></code></a> and <a class="reference external" href="../../typing/int.html" title="(in PyGears v0.1a0)"><code class="docutils literal notranslate"><span class="pre">Int</span></code></a> types.</p></li>
+<li><p>Document PyGears <a class="reference external" href="../../registry.html#registry" title="(in PyGears v0.2.0)"><span class="xref std std-ref">registry</span></a>.</p></li>
+<li><p><a class="reference external" href="../../typing/tuple.html" title="(in PyGears v0.2.0)"><code class="docutils literal notranslate"><span class="pre">Tuple</span></code></a> documented.</p></li>
+<li><p>Separate pages and additional documentation for <a class="reference external" href="../../typing/integer.html" title="(in PyGears v0.2.0)"><code class="docutils literal notranslate"><span class="pre">Integer</span></code></a>, <a class="reference external" href="../../typing/uint.html" title="(in PyGears v0.2.0)"><code class="docutils literal notranslate"><span class="pre">Uint</span></code></a> and <a class="reference external" href="../../typing/int.html" title="(in PyGears v0.2.0)"><code class="docutils literal notranslate"><span class="pre">Int</span></code></a> types.</p></li>
 <li><p>Document <code class="xref py py-func docutils literal notranslate"><span class="pre">drv</span></code> gear.</p></li>
 </ul>
 </div>
@@ -289,24 +290,24 @@
   </ul>
 
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2019, Bogdan Vukobratovic.
+      &copy;2020, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

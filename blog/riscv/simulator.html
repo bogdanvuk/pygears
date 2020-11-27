@@ -1,18 +1,19 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PyGears pure-Python simulator &#8212; PyGears - HW Design: A Functional Approach</title>
-    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
     <link rel="canonical" href="https://www.pygears.org/riscv/simulator.html" />
     <link rel="shortcut icon" href="../_static/pygears.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
@@ -57,7 +58,7 @@
 <p data-verbosity="3" hidden="true">RTL simulators are event-driven, i.e. the processes they simulate are executed to recalculate their outputs each time one of their input signals (called the sensitivity list) change in value. The change in signal value is considered an event and all processes sensitive to that event are triggered by it and their outputs are recalculated, which now in turn triggers other processes sensitive to these outputs, and so on. So whenever a signal changes in value, it can send waves of process reevaluation (called delta cycles) throughout the design, where depending on the inter-process connectivity a single process can be run multiple times, which makes it hard to reason about what’s happening at that level.</p>
 <p data-verbosity="3" hidden="true">I learned a lot about event-driven simulator from the <a class="reference external" data-verbosity="3" hidden="true" href="https://www.springer.com/gp/book/9780387699578">SystemC: From the Ground Up, Section 6: Concurrency</a>, but I had a hard time finding a free succinct explanation on the web to reference here. <a class="reference external" data-verbosity="3" hidden="true" href="https://users.isy.liu.se/da/petka86/Delta_cycle.pdf">This informal article</a> came close, so you might want to take a look at it.</p>
 <p data-verbosity="2" hidden="true">While in RTL methodology the signals travel unconstrained to and fro between the processes, in PyGears design, the data has a clear direction of propagation, namely from the producer to the consumer. This puts a heavy constraint on the order in which gears need to be simulated, where a consumer is always run only after all of its producers were executed and they’ve decided whether they want to offer a new piece of data to the said consumer. In other words, the gears form a <a class="reference external" data-verbosity="2" hidden="true" href="https://en.wikipedia.org/wiki/Directed_acyclic_graph">DAG</a> (Directed Acyclic Graph), where there is a clear order of gear execution (check <a class="reference external" data-verbosity="2" hidden="true" href="https://en.wikipedia.org/wiki/Topological_sorting">Topological sorting</a>).</p>
-<p data-verbosity="2" hidden="true">Furthermore, in PyGears simulation, the signals comprising the <a class="reference external" data-verbosity="2" hidden="true" href="../../gears.html#gears-interface" title="(in PyGears v0.1a0)"><span class="xref std std-ref" data-verbosity="2" hidden="true">DTI interface</span></a> are abstracted away and higher level events are used to trigger gears to execute, of which two are most important:</p>
+<p data-verbosity="2" hidden="true">Furthermore, in PyGears simulation, the signals comprising the <a class="reference external" data-verbosity="2" hidden="true" href="../../gears.html#gears-interface" title="(in PyGears v0.2.0)"><span class="xref std std-ref" data-verbosity="2" hidden="true">DTI interface</span></a> are abstracted away and higher level events are used to trigger gears to execute, of which two are most important:</p>
 <ol class="arabic simple" data-verbosity="2" hidden="true">
 <li data-verbosity="2" hidden="true"><p data-verbosity="2" hidden="true"><strong data-verbosity="2" hidden="true">put</strong>: an event issued by the producer when it outputs new data. This signals the consumers that new data is available, i.e they have new task to work on and should be scheduled for execution.</p></li>
 <li data-verbosity="2" hidden="true"><p data-verbosity="2" hidden="true"><strong data-verbosity="2" hidden="true">ack</strong>: an event issued by the consumer signaling that it is done using the data from the producer. This signals the producer that it can dispose of the acknowledged data and it is free to output a new value.</p></li>
@@ -195,24 +196,24 @@
   </ul>
 
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2019, Bogdan Vukobratovic.
+      &copy;2020, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
