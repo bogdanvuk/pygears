@@ -3,95 +3,98 @@
 Installation
 ============
 
-Windows
--------
+**Linux**
+---------
 
-PyGears has been tested to work on Windows 7 and Windows 10 with `Python 3.6.6 <https://www.python.org/ftp/python/3.6.6/python-3.6.6.exe>`_ and installed via `PyCharm <https://www.jetbrains.com/pycharm/>`_. Currently PyGears does not support co-simulation with third-party RTL simulators on Windows.
+**PyGears** depends on a few other tools which are dependent on libraries coming with Linux distribution. We are trying to expand the range of supported distributions.
 
-However co-simulation with Verilator can be achived using `CygWin <https://cygwin.com/>`_. Installing open-source tools Verilator and GTKWave using `CygWin <https://cygwin.com/>`_ is explained on the ``ZipCPU blog <https://zipcpu.com/blog/2017/07/28/cygwin-fpga.html>`_. Depending on the version you might need to add ``gcc-g++`` to CygWin packages as well as the appropriate Python version and need not prefix some commands with ``sudo``. Important: co-simulation tests must be ran with Python from the CygWin environment, not from Windows.
+**PyGears** should be able to run on any Linux normally, but you could get an error because some files are missing, this means that tools used by PyGears are missing some files/packages and those packages should be installed.
 
+**PyGears** was tested on Ubuntu 20.04 LTS, it also should work for versions above 20.04.
 
-Linux
------
+Build essential
+~~~~~~~~~~~~~~~
 
-Install with ``pip``
-~~~~~~~~~~~~~~~~~~~~
-
-**PyGears** requires a specific version of Python3, namely Python 3.6, so think about using ``pygears-tools`` and the procedure given :ref:`below <install-pygears-tools>` for installing the correct python version together with **PyGears**. Otherwise, consider using `virtualenv <https://virtualenv.pypa.io/en/stable/>`_ or `pyenv <https://github.com/pyenv/pyenv>`_ to manage your Python version.
-
-Install **PyGears** package with the command below. Depending on how your Python was installed you might get an error and need to prefix the command with ``sudo``:
+To be able to run all **PyGears** tools we need to be sure we have all essentials installed, run next commands to get it:
 
 .. code-block:: bash
 
-   pip3 install pygears
+   sudo apt update
+   sudo apt install build-essential
 
-*[Optional]* Obtain examples and tests:
+Installing PyGears
+~~~~~~~~~~~~~~~~~~
 
-.. code-block:: bash
-
-   git clone https://github.com/bogdanvuk/pygears.git
-   cd pygears/examples
-
-.. _install-pygears-tools:
-
-Installing using pygears-tools
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Below you can find a procedure for installing the **PyGears** with the correct Python version. On detailed description and capabilities of ``pygears-tools`` refer to :ref:`PyGears tools setup <setup-pygears-tools>` page. The procedure was tested on Ubuntu 18.04, Ubuntu 16.04, Ubuntu 14.04 and openSUSE Leap 15.
+Install with pip first, make sure that you have pip installed
 
 .. code-block:: bash
 
    sudo apt install python3-pip
-   sudo pip3 install pygears-tools
 
-   # List the system-wide dependencies for the tools
-   pygears-tools-install -l pyenv python pygears
-
-   # copy and run the install commands output by 'pygears-tools-install -l', i.e
-   # sudo apt install build-essential
-   # sudo apt install git libxmlsec1-dev curl ...
-
-   pygears-tools-install pyenv python pygears
-
-The script will create ``tools.sh`` bash file that should be sourced prior to running the cosimulation: 
+**PyGears** requires Python 3.6 or higher. Install the PyGears package with the command below.
 
 .. code-block:: bash
 
-   source ~/.pygears/tools/tools.sh
+   sudo pip3 install -U pygears-tools
 
-Alternative installation from source
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. code-block:: bash
-
-  git clone https://github.com/bogdanvuk/pygears.git
-  cd pygears
-  python3 setup.py install
-
-.. warning::
-
-  setup.py might fail to install the necessary dependencies, so you might additionally need to run::
-
-    pip install jinja2
-
-Installing Verilator
-~~~~~~~~~~~~~~~~~~~~
-
-If you would like to run cosimulations with the Verilator, you need to make sure that it is available on the PATH. You can install it manually by following `these instructions <https://www.veripool.org/projects/verilator/wiki/Installing>`_. As an alternative, PyGears offers a script that automatically compiles the latest Verilator. The script was tested on Ubuntu.
+Next, type this command
 
 .. code-block:: bash
 
-   # List the system-wide dependencies for Verilator
-   pygears-tools-install -l verilator
+   pygears-tools-install -d
 
-   # copy and run the install commands output by 'pygears-tools-install -l verilator', i.e:
-   # sudo apt install build-essential
-   # sudo apt install autoconf flex bison
-
-   pygears-tools-install verilator
-
-The script will create ``tools.sh`` bash file that should be sourced prior to running the cosimulation: 
+If you get error regarding **xcb** plugin for **Qt**, to solve this issue type next:
 
 .. code-block:: bash
 
-  source ~/.pygears/tools/tools.sh
+   sudo apt-get install --reinstall libxcb-xinerama0
+
+That should be it. For testing purpose you can use this code:
+
+.. code-block:: python
+
+   from pygears import gear
+   from pygears.typing import Ufixp, Uint
+   from pygears.lib import drv, collect
+   from pygears.sim import sim, cosim
+
+
+   @gear
+   def darken(din, *, gain):
+      return din * Ufixp[0, 8](gain)
+
+
+   res = []
+
+   drv(t=Uint[8], seq=[12, 23, 255]) \
+      | darken(gain=0.5) \
+      | float \
+      | collect(result=res)
+
+   cosim('/darken', 'verilator', outdir='./home/stefan/test/output')
+   sim()
+
+   print(res)
+
+Change **outdir** to show somewhere in your space and save the file as .py and compile as a standard python file. The output should be something like:
+
+.. code-block:: bash
+
+   -          /darken/mul [INFO]: Running sim with seed: 2631661647950327284
+   0                      [INFO]: -------------- Simulation start --------------
+   103                    [INFO]: ----------- Simulation done ---------------
+   103                    [INFO]: Elapsed: 0.01
+   [6.0, 11.5, 127.5]
+
+Update instructions
+~~~~~~~~~~~~~~~~~~~
+.. TODO Add instructions for updating PyGears
+
+``WORK IN PROGRESS``
+
+**Windows**
+-----------
+
+PyGears has been tested to work on Windows 7 and Windows 10 with `Python 3.6.6 <https://www.python.org/ftp/python/3.6.6/python-3.6.6.exe>`_ and installed via `PyCharm <https://www.jetbrains.com/pycharm/>`_. Currently PyGears does not support co-simulation with third-party RTL simulators on Windows.
+
+However co-simulation with Verilator can be achived using `CygWin <https://cygwin.com/>`_. Installing open-source tools Verilator and GTKWave using `CygWin <https://cygwin.com/>`_ is explained on the ``ZipCPU blog <https://zipcpu.com/blog/2017/07/28/cygwin-fpga.html>`_. Depending on the version you might need to add ``gcc-g++`` to CygWin packages as well as the appropriate Python version and need not prefix some commands with ``sudo``. Important: co-simulation tests must be ran with Python from the CygWin environment, not from Windows.

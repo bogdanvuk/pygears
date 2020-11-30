@@ -1,0 +1,4 @@
+permute
+=====
+
+.. module:: permute

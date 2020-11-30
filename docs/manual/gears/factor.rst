@@ -1,0 +1,4 @@
+factor
+=====
+
+.. module:: factor

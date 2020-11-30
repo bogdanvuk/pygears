@@ -1,0 +1,4 @@
+queue
+=====
+
+.. module:: queue

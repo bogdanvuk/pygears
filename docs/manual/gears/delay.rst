@@ -1,0 +1,4 @@
+delay
+=====
+
+.. module:: delay

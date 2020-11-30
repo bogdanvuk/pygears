@@ -5,12 +5,8 @@
 .. meta::
    :google-site-verification: ORBOCceo-a1e6Je5tI-KUua73jJ2f5DjYTOVD4v8tz4
 
-Welcome to PyGears 
-==================
-
-HW Design: A Functional Approach
---------------------------------
-
+PyGears get started
+===================
 **PyGears** is a free framework that lets you design hardware using high-level Python constructs and compile it to synthesizable SystemVerilog or Verilog code. There is a built-in simulator that lets you use arbitrary Python code with its vast set of libraries to verify your hardware modules. **PyGears** makes connecting modules easy, and has built-in synchronization mechanisms that help you build correct parallel systems.
 
 .. code-block:: python
@@ -55,7 +51,7 @@ Rest of the ``echo`` function code describes the hardware module for applying ec
 .. image:: images/echo.png
     :align: center
 
-Modules are instantiated using function calls: ``decouple(dout, depth=fifo_depth)``, which return module output interfaces that can in turn be passed as arguments to other module functions in order to make a connection between the modules. For conveniance the pipe ``"|"`` operator can be used to pass output of one function as argument to the next one. This was used to connect the output of ``decouple`` to ``prefill`` (``"\"`` is used just to split the line visually):
+Modules are instantiated using function calls: ``decouple(dout, depth=fifo_depth)``, which return module output interfaces that can in turn be passed as arguments to other module functions in order to make a connection between the modules. For convenience the pipe ``"|"`` operator can be used to pass output of one function as argument to the next one. This was used to connect the output of ``decouple`` to ``prefill`` (``"\"`` is used just to split the line visually):
 
 .. code-block:: python
 
@@ -82,46 +78,51 @@ Speedup the simulation by configuring **PyGears** simulator to use open-source `
 Checkout :ref:`Echo example description <echo-examples>` for more in depth information about the ``echo`` example.
 
 Installation instructions
-~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------
+For installation and update instructions please visit :ref:`PyGears Installation Page <install>`
 
-Install **PyGears** package with the Python package manager. On Linux distributions, depending on how your Python was installed you might get an error and need to prefix the command with ``sudo``:
+Examples
+--------
+.. TODO Add adder accelerator example
+- :ref:`Example 1 <none>` -
 
-.. code-block:: bash
+- :ref:`Example 2 <echo-examples>` - **Echo** a hardware module that applies echo audio effect to a continuous audio stream.
 
-   pip3 install pygears
+.. `RISC-V processor <https://github.com/bogdanvuk/pygears_riscv>`__: **PyGears** implementation. Checkout also the `RISC-V implementation blog series <https://www.pygears.org/blog/riscv/introduction.html>`_.
 
-For more detailed installation instructions (including how to install additional software) checkout :ref:`Installation <install>` page.
+.. `Tests <https://github.com/bogdanvuk/pygears/tree/master/tests>`_: Contain many examples on how individual **PyGears** components operate
 
-Read the documentation
-~~~~~~~~~~~~~~~~~~~~~~
-
-`PyGears documentation <https://www.pygears.org/>`_
-
-Checkout the examples
-~~~~~~~~~~~~~~~~~~~~~
-
+Library
+-------
 :ref:`Library of standard modules <gears/index:common>`
 
-:ref:`Echo <echo-examples>`: Hardware module that applies echo audio effect to a continuous audio stream.
+How to contribute
+-----------------
+**Issues**
 
-`RISC-V processor <https://github.com/bogdanvuk/pygears_riscv>`__: **PyGears** implementation. Checkout also the `RISC-V implementation blog series <https://www.pygears.org/blog/riscv/introduction.html>`_.
+Feel free to submit issues and enhancement requests.
 
-`Tests <https://github.com/bogdanvuk/pygears/tree/master/tests>`_: Contain many examples on how individual **PyGears** components operate
+**GitHub**
 
-Contributions
--------------
+`PyGears GitHub repo <https://github.com/bogdanvuk/pygears>`_
 
-Special thanks to the people that helped develop this framework:
+In general, we follow the ``fork-and-pull`` Git flow:
 
-- Andrea Erdeljan
-- Damjan Rakanović
-- Nemanja Kajtez
-- Risto Pejašinović
-- Stefan Tambur
-- Vladimir Nikić
-- Vladimir Vrbaški
+1. **Fork** the repo on GitHub
+#. **Clone** the project to your own machine
+#. **Commit** changes to your own fork
+#. **Push** your work back up to your fork
+#. Submit a **Pull request** so that we can review your changes
 
-In order to contribute, pull your copy from `github repository <https://github.com/bogdanvuk/pygears>`_ and create a pull request.
+``NOTE``: Be sure to merge the latest from "upstream" before making a pull request!
+
+**Stackoverflow**
+
+`PyGears Stackoverflow tag page <https://stackoverflow.com/questions/tagged/pygears>`_ 
+
+For any missing information in documentation, the best way to get a fast answer is to use **Stackoverflow**. Our team is regularly checking open questions. Some parts of the documentation are filled based on these questions.
+
+``NOTE``: Be sure that you are using **PyGears Tag** when asking questions! This is the only way you are sure we will see your question.
 
 Contents
 --------

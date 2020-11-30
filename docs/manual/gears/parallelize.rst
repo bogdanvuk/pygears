@@ -1,0 +1,4 @@
+parallelize
+=====
+
+.. module:: parallelize

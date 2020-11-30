@@ -1,0 +1,4 @@
+pipe
+=====
+
+.. module:: pipe

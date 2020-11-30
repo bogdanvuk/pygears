@@ -1,0 +1,4 @@
+maybe
+=====
+
+.. module:: maybe

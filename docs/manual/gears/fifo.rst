@@ -1,0 +1,4 @@
+fifo
+=====
+
+.. module:: fifo

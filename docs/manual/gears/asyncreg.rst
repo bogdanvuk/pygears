@@ -1,0 +1,4 @@
+asyncreg
+=====
+
+.. module:: asyncreg
