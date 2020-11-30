@@ -5,3 +5,4 @@ sphinx
 sphinxcontrib-tikz
 sphinxcontrib-wavedrom
 sphinx-sitemap
+sphinx-argparse

@@ -19,6 +19,9 @@ def demux_type(dtypes, mapping):
 
 
 def full_mapping(dtypes, mapping, use_dflt):
+    if mapping is None:
+        mapping = dflt_map(dtypes)
+
     if not use_dflt:
         return mapping
 

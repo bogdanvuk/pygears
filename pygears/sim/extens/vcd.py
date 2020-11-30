@@ -54,7 +54,7 @@ class VCDTypeVisitor(TypingVisitorBase):
 
     def visit_Array(self, type_, field):
         for i, t in enumerate(type_):
-            self.visit(t, f'{field}.({i})' if field else f'({i})')
+            self.visit(t, f'{field}({i})' if field else f'({i})')
 
     def visit_default(self, type_, field):
         if hasattr(type_, 'fields'):
@@ -99,7 +99,7 @@ class VCDValVisitor(TypingVisitorBase):
 
     def visit_Array(self, type_, field, val):
         for i, t in enumerate(type_):
-            self.visit(t, f'{field}.({i})' if field else f'({i})', val=val[i])
+            self.visit(t, f'{field}({i})' if field else f'({i})', val=val[i])
 
     def visit_Uint(self, type_, field, val=None):
         self.change(type_, field, val)
