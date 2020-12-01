@@ -29,16 +29,11 @@ async def qdeal_impl(din: Queue, *, num,
 @alternative(qdeal_impl)
 @gear(hdl={'compile': True}, enablement=b'lvl == din.lvl')
 async def qdeal_impl_same_lvl(din: Queue, *, num, lvl=b'din.lvl-1') -> b'Union[(din, ) * num]':
-
-    i = Uint[bitw(num - 1)](0)
-
-    while i != num:
+    for i in range(num):
         async for (data, eot) in din:
             d = data if lvl == 0 else (data, eot)
 
             yield (d, i)
-
-        i += 1
 
 
 @gear
