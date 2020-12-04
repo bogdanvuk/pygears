@@ -249,3 +249,4 @@ node {#7}
 
 def setup(app):
     app.connect('autodoc-skip-member', autodoc_skip_member)
+    app.add_stylesheet("css/custom.css")
