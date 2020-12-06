@@ -1,8 +1,10 @@
+.. _log:
+
 Logger
 ======
 
-.. automodule:: pygears.conf.log
-   :no-members:
+   .. automodule:: pygears.conf.log
+      :no-members:
 
 Reference
 ---------

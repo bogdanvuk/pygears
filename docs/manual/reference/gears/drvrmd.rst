@@ -1,4 +1,0 @@
-drvrmd
-=====
-
-.. module:: drvrmd

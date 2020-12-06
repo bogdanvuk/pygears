@@ -104,7 +104,7 @@ What is PyGears?
 
 PyGears installation
 ~~~~~~~~~~~~~~~~~~~~
-For installation and update instructions please visit :ref:`PyGears Installation Tutorial <install>`
+For installation and update instructions please visit :ref:`PyGears Installation Tutorial <installation>`
 
 .. TODO Check is link above for tutorial working
 
@@ -520,14 +520,14 @@ For more detailed information please visit reference pages for each of types:
     .. toctree::
        :maxdepth: 2
     
-       typing/base
-       typing/integer
-       typing/uint
-       typing/int
-       typing/tuple
-       typing/union
-       typing/array
-       typing/queue
+       ../reference/typing/base
+       ../reference/typing/integer
+       ../reference/typing/uint
+       ../reference/typing/int
+       ../reference/typing/tuple
+       ../reference/typing/union
+       ../reference/typing/array
+       ../reference/typing/queue
 
 .. _gears-introduction-to-gears:
 

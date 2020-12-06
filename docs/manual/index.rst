@@ -99,8 +99,8 @@ For any missing information in documentation, the best way to get a fast answer 
 PyGears documentation
 =====================
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    get_started/get_started
    tutorials/tutorials
-   reference/reference
+   reference/reference      

@@ -1,3 +1,5 @@
+.. _live:
+
 .. raw:: html
 
   <link href="_static/css/fontello.css" type="text/css" rel="stylesheet"/>
