@@ -101,6 +101,6 @@ PyGears documentation
 .. toctree::
    :maxdepth: 2
 
-   get_started
+   get_started/get_started
    tutorials/tutorials
    reference/reference
