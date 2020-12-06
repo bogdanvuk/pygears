@@ -6,9 +6,13 @@ h3 {
   font-size: 130% !important;
   font-weight: bold !important;
 }
-
 h4 {
   color:  #53575c !important;
   font-size: 100% !important;
   font-weight: bold !important;
+  text-decoration: underline !important;
+}
+h5 {
+  font-weight: bold !important;
+  font-size: 80% !important;
 }

@@ -5,17 +5,13 @@
 .. meta::
    :google-site-verification: ORBOCceo-a1e6Je5tI-KUua73jJ2f5DjYTOVD4v8tz4
 
-PyGears documentation
-=====================
+Welcome to PyGears
+==================
 
-Contents
---------
 .. toctree::
    :maxdepth: 2
 
-   get_started
-   tutorials
-   reference
+   index
 
 * :ref:`genindex`
 * :ref:`search`
@@ -99,3 +95,12 @@ For any missing information in documentation, the best way to get a fast answer 
 
 .. note::
     Be sure that you are using **PyGears Tag** when asking questions! This is the only way you are sure we will see your question.
+
+PyGears documentation
+=====================
+.. toctree::
+   :maxdepth: 2
+
+   get_started
+   tutorials/tutorials
+   reference/reference
