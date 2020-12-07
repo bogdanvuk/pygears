@@ -428,7 +428,6 @@ def terminate_internal_intfs(gear_inst):
 
 
 def gear_base_resolver(func, *args, name=None, intfs=None, **kwds):
-
     meta_kwds = func.meta_kwds
     name = name or resolve_gear_name(func, meta_kwds['__base__'])
 

@@ -200,3 +200,12 @@ def test_generator_func_err():
     @gear
     def func():
         return 2
+
+
+def test_varkw():
+
+    @gear
+    def test(a, *, b=None, **kwds):
+        assert kwds == {'c': 3}
+
+    test(Intf(Uint[4]), b=2, c=3)

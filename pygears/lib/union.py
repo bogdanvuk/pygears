@@ -37,7 +37,7 @@ def case(cond, din, *, f, fcat=ccat, tout=None, **kwds):
         f = (None, f)
 
     return fcat(din, cond) \
-        | Union \
+        | Union[(din.dtype, ) * len(f)] \
         | unionmap(f=f, **kwds) \
         | union_collapse(t=tout)
 

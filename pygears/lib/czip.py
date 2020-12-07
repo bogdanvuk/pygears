@@ -35,9 +35,8 @@ def zip_type(dtypes):
 
 @gear
 async def zip_cat(*din) -> b'zip_type(din)':
-    id_max_lvl, max_lvl = max(
-        enumerate(din),
-        key=lambda p: p[1].dtype.lvl if typeof(p[1].dtype, Queue) else 0)
+    id_max_lvl, max_lvl = max(enumerate(din),
+                              key=lambda p: p[1].dtype.lvl if typeof(p[1].dtype, Queue) else 0)
 
     async with gather(*din) as dout:
         yield (din_data_cat_value(dout), dout[id_max_lvl].eot)
@@ -63,8 +62,9 @@ def czip(*din):
 
     # Sort input interfaces in descending order of their Queue levels, i.e. we
     # want to zip highest Queue levels first in order to synchronize them first
-    din_sorted_by_lvl, din_sort_indices = isort(
-        din, key=lambda x: lvl_if_queue(x[1].dtype), reverse=True)
+    din_sorted_by_lvl, din_sort_indices = isort(din,
+                                                key=lambda x: lvl_if_queue(x[1].dtype),
+                                                reverse=True)
 
     # Zip din's in sorted order using it as a binary operation. This will
     # produce nested Tuple's, hence we cast it to a Queue of single Tuple
@@ -104,8 +104,7 @@ async def zip_sync(*din, outsync=True) -> b'din':
         if overlap_lvl > 0:
             eot_overlap = [d.eot[:overlap_lvl] for d in din_data]
 
-            eot_aligned = (eot_overlap[0] >= eot_overlap[1],
-                           eot_overlap[1] >= eot_overlap[0])
+            eot_aligned = (eot_overlap[0] >= eot_overlap[1], eot_overlap[1] >= eot_overlap[0])
         else:
             eot_aligned = (1, 1)
             eot_overlap = din_data[0].eot if lvls[0] else din_data[1].eot
@@ -135,3 +134,10 @@ def zip_sync_with(sync_in, din, *, balance=None):
     sync_in_sync | shred
 
     return din_sync
+
+
+@gear
+def zip_wrap_with(sync, din):
+    din_zip = czip(sync, din)
+
+    return ccat(din_zip['data'][1], din_zip['eot']) | Queue

@@ -65,7 +65,15 @@ def gear_explicit_params(func, params):
     paramspec = inspect.getfullargspec(func)
     explicit_param_names = paramspec.kwonlyargs or []
 
-    return {name: params[name] for name in explicit_param_names if name in params}
+    explicit_params = {name: params[name] for name in explicit_param_names if name in params}
+
+    if paramspec.varkw:
+        for k, v in params.items():
+            if ((k not in reg['gear/params']['meta']) and (k not in reg['gear/params']['extra'])
+                    and (k not in paramspec.args) and (k != 'return')):
+                explicit_params[k] = v
+
+    return explicit_params
 
 
 def struct_copy(s):
@@ -282,7 +290,8 @@ class GearPlugin(PluginBase):
                 'enablement': True,
                 'outnames': None,
                 'signals': (InSig('clk', 1), InSig('rst', 1)),
-                '__base__': None
+                '__base__': None,
+                '__outnames__': None
             })
 
         reg['gear/params'].subreg('extra', {'name': None, 'intfs': [], 'sigmap': {}})
