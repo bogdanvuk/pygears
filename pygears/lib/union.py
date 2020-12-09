@@ -115,7 +115,7 @@ def field_sel(din: Tuple[{
         'data': Any
 }],
               *,
-              mapping=b'dflt_map(din)'):
+              mapping=b'dflt_map(din["data"])'):
 
     if typeof(din.dtype['data'], Tuple):
         dtypes = list(din.dtype['data'])
