@@ -34,12 +34,8 @@ async def mux(
         c_map = _full_mapping[int(c)]
 
         assert c_map < len(din), 'mux: incorrect selection value'
-        if typeof(din[0].dtype, Queue):
-            async for d in din[c_map]:
-                yield (d, c)
-        else:
-            async with din[c_map] as d:
-                yield (d, c)
+        async with din[c_map] as d:
+            yield (d, c)
 
 
 @gear
