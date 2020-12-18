@@ -34,9 +34,15 @@ def cast_return(arg_nodes, out_ports):
     else:
         if out_num == 1:
             input_vars = [arg_nodes]
-        else:
-            assert isinstance(arg_nodes, ir.TupleExpr)
+        elif isinstance(arg_nodes, ir.TupleExpr):
             input_vars = arg_nodes.val
+        elif isinstance(arg_nodes, ir.ConcatExpr):
+            input_vars = arg_nodes.operands
+        elif isinstance(arg_nodes, ir.ResExpr) and isinstance(arg_nodes.val, tuple):
+            input_vars = [ir.ResExpr(v) for v in arg_nodes.val]
+        else:
+            breakpoint()
+            raise Exception('Unsupported')
 
     args = []
     for arg, intf in zip(input_vars, out_ports):
@@ -69,7 +75,9 @@ def cast_return(arg_nodes, out_ports):
 
             args.append(arg)
         else:
-            if typeof(arg.dtype, ir.IntfType):
+            if arg == ir.ResExpr(None):
+                args.append(arg)
+            elif typeof(arg.dtype, ir.IntfType):
                 # TODO: Do proper casting of interfaces
                 args.append(arg)
             elif arg.dtype != port_t:
@@ -104,7 +112,7 @@ def parse_yield(node, ctx):
     for p, v in zip(ctx.out_ports, vals):
         if len(ctx.out_ports) == 1:
             stmts.append(ir.ExprStatement(ir.Await(exit_await=ir.Component(p, 'ready'))))
-        else:
+        elif v != ir.ResExpr(None):
             stmts.append(
                 ir.ExprStatement(
                     ir.Await(exit_await=ir.BinOpExpr((
@@ -137,15 +145,15 @@ def asyncwith(node, ctx: Context):
     assigns = [visit_ast(i, ctx) for i in node.items]
 
     intfs = []
-    stmts = []
     for intf, targets in assigns:
         if isinstance(intf, ir.ConcatExpr):
             intfs.extend(intf.operands)
         else:
             intfs.append(intf)
 
-        extend_stmts(stmts, targets)
+        extend_stmts(ctx.ir_parent_block.stmts, targets)
 
+    stmts = []
     for stmt in node.body:
         res_stmt = visit_ast(stmt, ctx)
         extend_stmts(stmts, res_stmt)

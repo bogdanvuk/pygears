@@ -151,6 +151,15 @@ class IntfTypeMeta(GenericMeta):
 class IntfType(tuple, metaclass=IntfTypeMeta):
     __parameters__ = ['dtype', 'direction']
 
+    def pull_nb(self):
+        pass
+
+    def empty(self):
+        pass
+
+    def ack(self):
+        pass
+
 
 @attr.s(auto_attribs=True, kw_only=True)
 class Expr:

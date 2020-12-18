@@ -5,7 +5,7 @@ import inspect
 from functools import partial
 from . import Context, HLSSyntaxError, node_visitor, ir, visit_ast, visit_block
 from .arith import resolve_arith_func
-from .call import resolve_func
+from .call import resolve_func, const_func_args
 from pygears.typing import cast, Integer, typeof
 
 
@@ -328,6 +328,12 @@ def _(node, ctx: Context):
     stmts = []
     if isinstance(iterator, ir.ResExpr):
         vals = iterator.val
+    elif isinstance(iterator, ir.CallExpr):
+        if not const_func_args(iterator.args.values(), iterator.kwds):
+            raise Exception(f'Generator needs to have constant arguments')
+
+        args = tuple(node.val for node in iterator.args.values())
+        vals = list(iterator.func(*args))
     else:
         vals = [ir.SubscriptExpr(iterator, ir.ResExpr(i)) for i in range(len(iterator.dtype))]
 

@@ -41,8 +41,7 @@ def get_refs(seq):
 @pytest.mark.parametrize('din_delay', [0, 5])
 @pytest.mark.parametrize('dout_delay', [0, 5])
 def test_directed(cosim_cls, din_delay, dout_delay):
-    seq = [[list(range(8)), list(range(2)),
-            list(range(3))], [list(range(1)), list(range(2))]]
+    seq = [[list(range(8)), list(range(2)), list(range(3))], [list(range(1)), list(range(2))]]
 
     ref0 = [seq[0][0], seq[0][2], seq[1][0]]
     ref1 = [seq[0][1], seq[1][1]]
@@ -51,10 +50,8 @@ def test_directed(cosim_cls, din_delay, dout_delay):
     directed(drv(t=T_TRR_DIST, seq=seq) | delay_rng(din_delay, din_delay),
              f=dut(sim_cls=cosim_cls, num=2),
              ref=ref,
-             delays=[
-                 delay_rng(dout_delay, dout_delay),
-                 delay_rng(dout_delay, dout_delay)
-             ])
+             delays=[delay_rng(dout_delay, dout_delay),
+                     delay_rng(dout_delay, dout_delay)])
 
     sim()
 
@@ -67,13 +64,10 @@ def test_directed_3in(cosim_cls, din_delay, dout_delay):
     lvl = 2
 
     seq = [[[list(range(3)), list(range(5))],
-            [list(range(1)),
-             list(range(4)),
-             list(range(4)),
-             list(range(8))]],
-           [[list(range(3)), list(range(5)),
-             list(range(1))], [list(range(1)), list(range(8))],
-            [list(range(4))]],
+            [list(range(1)), list(range(4)),
+             list(range(4)), list(range(8))]],
+           [[list(range(3)), list(range(5)), list(range(1))], [list(range(1)),
+                                                               list(range(8))], [list(range(4))]],
            [[list(range(3)), list(range(1))], [list(range(1))]]]
 
     ref0 = [seq[0][0], seq[1][0], seq[2][0]]
@@ -94,15 +88,22 @@ def test_directed_3in(cosim_cls, din_delay, dout_delay):
 def test_random(sim_cls):
     skip_ifndef('RANDOM_TEST')
 
-    seq = [[
-        list(range(random.randint(1, 10))),
-        list(range(random.randint(1, 5)))
-    ], [list(range(random.randint(1, 20))),
-        list(range(random.randint(1, 7)))]]
+    seq = [[list(range(random.randint(1, 10))),
+            list(range(random.randint(1, 5)))],
+           [list(range(random.randint(1, 20))),
+            list(range(random.randint(1, 7)))]]
 
-    directed(drv(t=T_TRR_DIST, seq=seq),
-             f=qdeal(sim_cls=sim_cls, num=2),
-             ref=get_refs(seq))
+    directed(drv(t=T_TRR_DIST, seq=seq), f=qdeal(sim_cls=sim_cls, num=2), ref=get_refs(seq))
+
+    sim()
+
+
+def test_same_lvl(sim_cls):
+    ref = [[[0, 1]] for _ in range(8)]
+
+    directed(drv(t=Queue[Uint[8]], seq=[[0, 1] for _ in range(8)]),
+             f=qdeal(num=8, lvl=1),
+             ref=ref)
 
     sim()
 
@@ -130,9 +131,11 @@ def test_random(sim_cls):
 # def test_lvl_2_formal():
 #     qdeal(Intf(Queue[Uint[16], 3]), num=3, lvl=2)
 
+
 @synth_check({'logic luts': 4, 'ffs': 2}, tool='vivado')
 def test_synth_vivado():
     qdeal(Intf(T_TRR_DIST), num=2)
+
 
 # @synth_check({'logic luts': 5, 'ffs': 1}, tool='yosys')
 # def test_synth_yosys():

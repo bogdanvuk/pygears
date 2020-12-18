@@ -1,5 +1,5 @@
 from pygears import gear, alternative
-from pygears.typing import Queue, Uint, Union, bitw
+from pygears.typing import Queue, Uint, Union, bitw, trunc
 from .rng import qrange
 from .flatten import flatten
 from .ccat import ccat
@@ -33,7 +33,7 @@ async def qdeal_impl_same_lvl(din: Queue, *, num, lvl=b'din.lvl-1') -> b'Union[(
         async for (data, eot) in din:
             d = data if lvl == 0 else (data, eot)
 
-            yield (d, i)
+            yield (d, trunc(i, Uint[bitw(num - 1)]))
 
 
 @gear

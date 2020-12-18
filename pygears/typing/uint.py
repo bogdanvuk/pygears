@@ -225,8 +225,9 @@ class IntegerType(IntegralType):
         width = len(self)
 
         if shamt > width:
-            raise TypeError('Right shift larger than data width')
-        elif shamt == width:
+            return NotImplemented
+
+        if shamt == width:
             return Unit
         else:
             return self.base[width - shamt]

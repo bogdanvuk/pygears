@@ -45,6 +45,15 @@ def max_expr(op1, op2):
     return ir.ConditionalExpr(cond=cond, operands=(op1, op2))
 
 
+def call_tuple(arg):
+    if isinstance(arg, ir.ConcatExpr):
+        return ir.TupleExpr(arg.operands)
+    elif isinstance(arg, ir.TupleExpr):
+        return arg
+    else:
+        raise Exception
+
+
 def call_len(arg, **kwds):
     if isinstance(arg, ir.ConcatExpr):
         return ir.ResExpr(len(arg.operands))
@@ -52,10 +61,7 @@ def call_len(arg, **kwds):
     if isinstance(arg, ir.ResExpr):
         return ir.ResExpr(len(arg.val))
 
-    if isinstance(arg, ir.Name):
-        return ir.ResExpr(len(arg.dtype))
-
-    raise Exception
+    return ir.ResExpr(len(arg.dtype))
 
 
 def call_print(*arg, **kwds):
@@ -123,6 +129,10 @@ def call_get_nb(obj, *args, **kwds):
     # return obj
 
 
+def call_pull_nb(obj):
+    return ir.Component(obj, 'data')
+
+
 def call_put_nb(obj, arg):
     return [
         ir.AssignValue(ir.Component(obj, 'data'), arg),
@@ -135,9 +145,12 @@ def call_clk(*arg, **kwds):
     return None
 
 
-def call_empty(obj, *arg, **kwds):
-    assert not arg, 'Empty should be called without arguments'
+def call_empty(obj):
     return ir.UnaryOpExpr(ir.Component(obj, 'valid'), ir.opc.Not)
+
+
+def call_ack(obj):
+    return ir.AssignValue(ir.Component(obj, 'ready'), ir.res_true)
 
 
 def call_gather(*arg, **kwds):
@@ -294,13 +307,16 @@ class AddIntfOperPlugin(PluginBase):
             print: call_print,
             type: call_type,
             isinstance: call_isinstance,
+            tuple: call_tuple,
             is_type: call_is_type,
             typeof: call_typeof,
             div: call_div,
-            Intf.empty: call_empty,
+            ir.IntfType.empty: call_empty,
+            ir.IntfType.ack: call_ack,
             Intf.get: call_get,
             Intf.get_nb: call_get_nb,
             Intf.put_nb: call_put_nb,
+            ir.IntfType.pull_nb: call_pull_nb,
             cast: call_cast,
             signed: call_signed,
             QueueMeta.sub: call_sub,

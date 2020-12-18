@@ -33,13 +33,13 @@ def _(node: ast.If, ctx: Context):
         if hasattr(node, 'orelse') and node.orelse:
             top = ir.IfElseBlock(stmts=[])
             visit_block(top, node.orelse, ctx)
-
-            if isinstance(top.stmts[0], ir.HDLBlock):
-                top.stmts.insert(0, ir_node)
-            elif isinstance(top.stmts[0], ir.IfElseBlock):
-                top.stmts = [ir_node] + top.stmts[0].stmts
-            else:
-                top.stmts = [ir_node, ir.HDLBlock(stmts=top.stmts)]
+            if top.stmts:
+                if isinstance(top.stmts[0], ir.HDLBlock):
+                    top.stmts.insert(0, ir_node)
+                elif isinstance(top.stmts[0], ir.IfElseBlock):
+                    top.stmts = [ir_node] + top.stmts[0].stmts
+                else:
+                    top.stmts = [ir_node, ir.HDLBlock(stmts=top.stmts)]
 
             return top
 

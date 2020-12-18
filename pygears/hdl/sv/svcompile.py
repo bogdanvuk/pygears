@@ -198,6 +198,9 @@ class SVCompiler(HDLVisitor):
                         svstmt = f"{name}_s = {val_name}_s"
                         self.handle_defaults(name, svstmt)
                         self.write(f"{self.attr(name, 'valid')} = {self.attr(val_name, 'valid')}")
+                    elif val == ir.ResExpr(None):
+                        self.handle_defaults(self.attr(name, 'valid'),
+                                             f"{self.attr(name, 'valid')} = 0")
                     else:
                         self.handle_defaults(self.attr(name, 'valid'),
                                              f"{self.attr(name, 'valid')} = 1")
