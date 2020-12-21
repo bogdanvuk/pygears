@@ -65,6 +65,7 @@ from .funclut import funclut
 from .rounding import truncate, round_half_up, round_to_zero, round_to_even, qround
 from .scope import scope
 from .asyncreg import trigreg, sample, regmap, avail
+from .dispatch import dispatch
 
 import pygears.lib.hls
 

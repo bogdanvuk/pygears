@@ -727,13 +727,13 @@ class ConditionalExpr(Expr):
         if op1 == op2:
             return op1
 
-        const_op1 = get_contextpr(op1)
-        if const_op1 is not None and not const_op1:
-            return BinOpExpr((UnaryOpExpr(cond, opc.Not), op2), opc.And)
+        # const_op1 = get_contextpr(op1)
+        # if const_op1 is not None and not const_op1:
+        #     return BinOpExpr((UnaryOpExpr(cond, opc.Not), op2), opc.BitAnd)
 
-        const_op2 = get_contextpr(op1)
-        if const_op1 is not None and not const_op2:
-            return BinOpExpr((cond, op1), opc.And)
+        # const_op2 = get_contextpr(op1)
+        # if const_op1 is not None and not const_op2:
+        #     return BinOpExpr((cond, op1), opc.BitAnd)
 
         inst = super().__new__(cls)
         inst.operands = operands

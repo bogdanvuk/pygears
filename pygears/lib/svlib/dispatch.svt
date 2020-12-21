@@ -1,0 +1,45 @@
+{%- import 'snippet.j2' as snippet -%}
+
+{% call snippet.gear_module(module_name, intfs, comment) %}
+{% set out_names = intfs|isoutput|keymap("name") %}
+
+{{ svgen_typedef(intfs[0]['local_type'], intfs[0]['name'], depth=1)|indent(4, False) }}
+    din_t din_s;
+    assign din_s = din.data;
+
+    localparam SIZE = {{len(out_names)}};
+
+    logic [SIZE-1 : 0] out_valid;
+    logic [SIZE-1 : 0] out_ready;
+    logic [SIZE-1 : 0] ack_reg;
+    logic [SIZE-1 : 0] ack;
+
+    assign out_ready = { {{out_names|reverse|format_list("%s.ready")|join(", ")}} };
+    assign din.ready = &ack;
+
+{% for dout in out_names %}
+    assign {{dout}}.valid = out_valid[{{loop.index-1}}];
+    assign {{dout}}.data = din_s;
+{% endfor %}
+
+
+    initial begin
+       ack_reg = 0;
+    end
+
+   generate
+      for (genvar i = 0; i < 32'(SIZE); i++) begin
+         assign ack[i]  = out_ready[i] || ack_reg[i] || (!din_s.ctrl[i]);
+         assign out_valid[i]  = din.valid && din_s.ctrl[i] && !ack_reg[i];
+
+         always @(posedge clk) begin
+            if (rst || (!din.valid) || din.ready) begin
+               ack_reg[i] <= 1'b0;
+            end else if (out_ready[i]) begin
+               ack_reg[i] <= 1'b1;
+            end
+         end
+      end
+   endgenerate
+
+{% endcall %}

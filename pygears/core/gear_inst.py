@@ -323,8 +323,12 @@ def resolve_gear(gear_inst, out_intfs, out_dtype, fix_intfs):
     out_intfs = []
     if isinstance(fix_intfs, dict):
         for i, (name, dt) in enumerate(zip(gear_inst.outnames, out_dtype)):
-            if name in fix_intfs:
-                intf = fix_intfs[name]
+            if (name in fix_intfs) or (i in fix_intfs):
+                if name in fix_intfs:
+                    intf = fix_intfs[name]
+                elif i in fix_intfs:
+                    intf = fix_intfs[i]
+
                 err = None
                 try:
                     get_match_conds(dt, intf.dtype)

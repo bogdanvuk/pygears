@@ -18,6 +18,7 @@ def translate_gear(gear: Gear):
 
     exec_context = reg['gear/exec_context']
 
+    parent = reg['gear/current_module']
     # For the code that inspects gear via module() call
     reg['gear/current_module'] = gear
 
@@ -38,6 +39,7 @@ def translate_gear(gear: Gear):
         raise exc_value.with_traceback(tb)
 
     reg['gear/exec_context'] = exec_context
+    reg['gear/current_module'] = parent
     return ctx, res
 
 

@@ -1,7 +1,7 @@
 from pygears import gear
 from pygears.lib import directed, drv
 from pygears.sim import sim
-from pygears.typing import Bool, Uint, Tuple
+from pygears.typing import Bool, Uint, Tuple, Unit, Queue
 
 
 def test_inline_if(cosim_cls):
@@ -40,3 +40,27 @@ def test_list_comprehension(cosim_cls):
              ref=[(i + 1, ) * 4 for i in range(8)])
 
     sim()
+
+
+def test_unit_const():
+    @gear(hdl={'compile': True})
+    async def test() -> Queue[Unit]:
+        yield Unit(), Bool(False)
+        yield Unit(), Bool(True)
+
+    directed(f=test(__sim__='verilator'), ref=[[Unit(), Unit()]])
+
+    sim(timeout=2)
+
+
+def test_unit():
+    @gear(hdl={'compile': True})
+    async def test(din) -> Queue[Unit]:
+        async for d, eot in din:
+            yield Unit(), eot
+
+    directed(drv(t=Queue[Uint[4]], seq=[[1, 2]]),
+             f=test(__sim__='verilator'),
+             ref=[[Unit(), Unit()]])
+
+    sim(timeout=2)

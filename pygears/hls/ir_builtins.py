@@ -50,6 +50,8 @@ def call_tuple(arg):
         return ir.TupleExpr(arg.operands)
     elif isinstance(arg, ir.TupleExpr):
         return arg
+    elif isinstance(arg, ir.ResExpr):
+        return ir.ResExpr(tuple(arg.val))
     else:
         raise Exception
 
