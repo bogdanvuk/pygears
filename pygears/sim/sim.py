@@ -315,7 +315,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
                 self.forward_ready.add(sim_gear)
 
     def remove(self, sim_gear):
-        # print(f'Remove: {sim_gear.port.name if hasattr(sim_gear, "port") else sim_gear.gear.name}')
+        # log.info(f'Remove: {sim_gear.port.name if hasattr(sim_gear, "port") else sim_gear.gear.name}')
         self.sim_map.pop(sim_gear.gear, None)
         self.tasks.pop(sim_gear, None)
         self.task_data.pop(sim_gear, None)

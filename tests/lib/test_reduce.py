@@ -1,8 +1,8 @@
 import pytest
 from pygears.util.test_utils import get_decoupled_dut
 from functools import reduce as freduce
-from pygears.lib import reduce, directed, drv, verif, delay_rng, accum, saturate as saturate_gear
-from pygears.typing import Uint, Queue, Bool, saturate, trunc
+from pygears.lib import reduce, directed, drv, verif, delay_rng, accum, saturate as saturate_gear, qmax
+from pygears.typing import Uint, Queue, Bool, saturate, trunc, Int
 from pygears.sim import sim
 from pygears.util.test_utils import synth_check
 from pygears import Intf, gear
@@ -78,4 +78,10 @@ def test_accum_saturate_gear_directed(cosim_cls):
 
     accum_test(reduce(f=add_gear, sim_cls=cosim_cls), add)
 
-# test_accum_saturate_gear_directed(None)
+
+def test_qmax(sim_cls):
+    seq = [list(range(-20, 24, 4))]
+
+    directed(drv(t=Queue[Int[8]], seq=seq), f=qmax, ref=[max(s) for s in seq])
+
+    sim()

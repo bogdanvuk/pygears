@@ -29,3 +29,11 @@ def accum(din: Queue[Number], init: Number, *, cast=saturate) -> b'init':
         return cast(x + y, t=init.dtype)
 
     return reduce(din, init, f=add)
+
+
+@gear
+def qmax(din: Queue[Number]) -> b'din.data':
+    def fmax(x, y):
+        return x if x > y else y
+
+    return reduce(din, din.dtype.data.min, f=fmax)

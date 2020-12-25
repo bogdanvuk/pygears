@@ -60,7 +60,7 @@ from .pipe import pipe
 from .verif import directed, verif, drv, check, mon, scoreboard, collect
 from .drvrnd import drvrnd
 from .reduce2 import reduce2
-from .reduce import reduce, accum
+from .reduce import reduce, accum, qmax
 from .funclut import funclut
 from .rounding import truncate, round_half_up, round_to_zero, round_to_even, qround
 from .scope import scope

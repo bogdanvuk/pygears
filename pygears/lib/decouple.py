@@ -20,6 +20,7 @@ async def decouple_din(din, *, depth, init) -> None:
                 await delta()
     except GearDone:
         await module().queue.put(None)
+        raise GearDone
 
 
 def decouple_dout_setup(module):
@@ -30,10 +31,10 @@ def decouple_dout_setup(module):
 async def decouple_dout(*, t, depth) -> b't':
 
     din = module().decouple_din
-    if din not in reg['sim/map'] or reg['sim/map'][module().decouple_din].done:
+    if din.queue.empty() and (din not in reg['sim/map'] or reg['sim/map'][din].done):
         raise GearDone
 
-    queue = module().decouple_din.queue
+    queue = din.queue
     data = await queue.get()
 
     yield data
