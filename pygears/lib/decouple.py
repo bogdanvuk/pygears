@@ -19,7 +19,9 @@ async def decouple_din(din, *, depth, init) -> None:
             while (module().queue.full()):
                 await delta()
     except GearDone:
-        await module().queue.put(None)
+        if module().queue.empty():
+            await module().queue.put(None)
+
         raise GearDone
 
 
