@@ -22,14 +22,16 @@ class HLSSyntaxError(TraceException):
 
 
 def form_hls_syntax_error(ctx, e, lineno=1):
-    if isinstance(ctx, GearContext):
-        func, fn, ln = gear_definition_location(ctx.gear.func)
-        msg = (f'{str(e)}\n    - when compiling gear "{ctx.gear.name}" with'
-               f' parameters {ctx.gear.params}')
-    else:
-        func, fn, ln = gear_definition_location(ctx.funcref.func)
-        msg = (f'{str(e)}\n    - when compiling function "{ctx.funcref.func}" with'
-               f' signature {ctx.signature}')
+    msg = str(e)
+    for c in reversed(reg['hls/ctx']):
+        if isinstance(c, GearContext):
+            func, fn, ln = gear_definition_location(c.gear.func)
+            msg += (f'\n    - when compiling gear "{c.gear.name}" with'
+                    f' parameters {c.gear.params}')
+        else:
+            func, fn, ln = gear_definition_location(c.funcref.func)
+            msg += (f'\n    - when compiling function "{c.funcref.func}" with'
+                    f' signature {c.signature}')
 
     err = HLSSyntaxError(msg, ln + lineno - 1, filename=fn)
 

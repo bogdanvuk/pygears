@@ -46,9 +46,9 @@ def typeseq(t, v):
             for d in TypeDrvVisitor().visit(v, t):
                 try:
                     yield t(d)
-                except (TypeError, ValueError):
+                except (TypeError, ValueError) as e:
                     log.error(
-                        f'Cannot convert value "{d}" to type "{repr(t)}"')
+                        f'{e} - Cannot convert value "{d}" to type "{repr(t)}"')
         except (TypeError, ValueError):
             log.error(
                 f'Cannot convert sequence "{v}" to the "{repr(t)}"')
@@ -272,7 +272,9 @@ async def check(din, *, ref, cmp=None):
             except StopIteration:
                 ref_empty = True
 
-        if not ref_empty:
+        if ref_empty:
+            log.info(f'Number of matches: {len(items)}')
+        else:
             log.error(
                 f"mismatch in number of items, got '{len(items)}' but expected '{len(ref)}'. "
                 f"\ngot:\n{textwrap.indent(pprint.pformat(items), ' '*4)}"
