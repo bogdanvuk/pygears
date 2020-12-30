@@ -1,4 +1,4 @@
-from pygears.typing import Fixp, Fixpnumber, Integer, Tuple, Ufixp, Uint, typeof, Int, Union, cast, Array
+from pygears.typing import Fixp, Fixpnumber, Integer, Tuple, Ufixp, Uint, typeof, Int, Union, cast, Array, Queue
 from . import ir
 from pygears.typing import get_match_conds, TypeMatchError
 
@@ -47,6 +47,17 @@ def tuple_resolver(opexp, cast_to):
         cast_fields.append(resolve_cast_func(field, cast_to[i]))
 
     return ir.ConcatExpr(cast_fields)
+
+
+def queue_resolver(opexp, cast_to):
+    cast_to = cast(opexp.dtype, cast_to)
+
+    if cast_to == opexp.dtype:
+        return opexp
+
+    return ir.CastExpr(
+        ir.ConcatExpr([resolve_cast_func(subscript(opexp, 0), cast_to.data), subscript(opexp, 1)]),
+        cast_to)
 
 
 def array_resolver(opexp, cast_to):
@@ -98,6 +109,7 @@ def int_resolver(opexp, cast_to):
 resolvers = {
     Fixpnumber: fixp_resolver,
     Tuple: tuple_resolver,
+    Queue: queue_resolver,
     Array: array_resolver,
     Int: int_resolver,
     Uint: uint_resolver,
