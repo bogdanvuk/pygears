@@ -144,7 +144,8 @@ class Array(list, metaclass=ArrayType):
         ret = 0
         for d in reversed(self):
             ret <<= w_dtype
-            ret |= d.code()
+            if d is not None:
+                ret |= d.code()
 
         return ret
 

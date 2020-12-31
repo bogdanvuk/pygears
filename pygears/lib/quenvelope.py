@@ -31,7 +31,8 @@ correctly used within cartesian concatenations.
             subelem = data.sub(sub_lvl)
             if subelem.last:
                 out_data = None
+                await dout.ready()
         else:
             out_data = None
+            await dout.ready()
 
-        await dout.ready()

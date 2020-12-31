@@ -308,12 +308,8 @@ class SVExpressionVisitor:
                 if isinstance(node.val, (ir.Name, ir.AttrExpr)):
                     return f'{val}[{stop}:{start}]'
             else:
-                if index == node.val.dtype.keys()[0]:
-                    start = 0
-                else:
-                    start = node.val.dtype[:index].width
-
-                stop = start + node.val.dtype[index].width - 1
+                start = index
+                stop = start
                 index = int(index)
 
                 if isinstance(node.val, (ir.Name, ir.AttrExpr, ir.Component)):
@@ -330,6 +326,9 @@ class SVExpressionVisitor:
                 elif typeof(node.val.dtype, (Tuple, Union, Queue)):
                     return f'{val}{self.separator}{node.val.dtype.fields[index]}'
             else:
+                start = sum(node.val.dtype[i].width for i in range(start))
+                stop = sum(node.val.dtype[i].width for i in range(stop + 1)) - 1
+
                 fname = get_slice_func(self.aux_funcs, start, stop, node.val.dtype.width,
                                        getattr(node.dtype, 'signed', False))
                 return f'{fname}({val})'

@@ -19,7 +19,7 @@ def queuemap(din, *, f, lvl=1, fcat=czip, balance=None, common_balance=True):
     if lvl > 0:
         f = common_fmap(f=f, lvl=lvl, fcat=fcat, balance=balance)
 
-    dout = data | f
+    dout = f(data)
 
     if not isinstance(dout, tuple):
         dout = (dout, )

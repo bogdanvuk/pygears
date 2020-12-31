@@ -1,4 +1,5 @@
 from pygears import gear, module, find
+from pygears.lib import dreg
 from pygears.typing import Tuple, Uint
 
 TWrDin = Tuple[{'addr': Uint['w_addr'], 'data': 'w_data'}]
@@ -65,4 +66,4 @@ def sdp(wr_addr_data: TWrDin,
     """
 
     wr_addr_data | sdp_wr_port(depth=depth)
-    return rd_addr | sdp_rd_port(t=wr_addr_data.dtype['data'], depth=depth)
+    return rd_addr | sdp_rd_port(t=wr_addr_data.dtype['data'], depth=depth) | dreg

@@ -14,4 +14,4 @@ def test_seq_incompatible_to_t():
         sim()
 
     assert equal_on_nonspace(
-        str(excinfo.value), 'Cannot convert value "(0, 0)" to type "Uint[2]", in the module "/drv"')
+        str(excinfo.value), 'cannot convert \'(0, 0)\' of type \'<class \'tuple\'>\' to \'u2\' - Cannot convert value "(0, 0)" to type "Uint[2]", in the module "/drv"')
