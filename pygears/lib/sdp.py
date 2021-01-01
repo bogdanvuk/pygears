@@ -1,6 +1,7 @@
 from pygears import gear, module, find
 from pygears.lib import dreg
 from pygears.typing import Tuple, Uint
+from pygears.sim import clk
 
 TWrDin = Tuple[{'addr': Uint['w_addr'], 'data': 'w_data'}]
 TRdDin = Uint['w_addr']
@@ -24,8 +25,11 @@ def sdp_rd_port_setup(module):
 async def sdp_rd_port(addr, *, t, depth) -> b't':
     ram = module().sdp_wr_port.ram
 
-    async with addr as a:
-        yield ram[int(a)]
+    while True:
+        a = await addr.get()
+        dout = ram[int(a)]
+        await clk()
+        yield dout
 
 
 @gear(outnames=['rd_data'], hdl={'hierarchical': False})
@@ -66,4 +70,4 @@ def sdp(wr_addr_data: TWrDin,
     """
 
     wr_addr_data | sdp_wr_port(depth=depth)
-    return rd_addr | sdp_rd_port(t=wr_addr_data.dtype['data'], depth=depth) | dreg
+    return rd_addr | sdp_rd_port(t=wr_addr_data.dtype['data'], depth=depth)

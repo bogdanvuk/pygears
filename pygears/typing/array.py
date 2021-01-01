@@ -127,6 +127,32 @@ class Array(list, metaclass=ArrayType):
         return not self.__eq__(other)
 
     @class_and_instance_method
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return super().__getitem__(key)
+        elif isinstance(key, str):
+            try:
+                return super().__getitem__(type(self).fields.index(key))
+            except ValueError:
+                raise TypeError(f'Tuple "{repr(self)}" has no field "{key}"')
+
+        key_norm = type(self).index_norm(key)
+
+        if len(key_norm) == 1:
+            if isinstance(key_norm[0], slice):
+                tout = type(self)[key_norm]
+                return tout(super().__getitem__(key_norm[0]))
+            else:
+                return super(Array, self).__getitem__(key_norm[0])
+        else:
+            tout = type(self)[key_norm]
+            elems = []
+            for i in key_norm:
+                elems.extend(super().__getitem__(i))
+
+            return tout(elems)
+
+    @class_and_instance_method
     def subs(self, path, val):
         if isinstance(path, tuple):
             if len(path) > 1:
