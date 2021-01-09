@@ -57,7 +57,7 @@ def unionmap(din,
             else:
                 dout.append(branches[i] | balance)
         else:
-            dout.append(branches[i] | fd)
+            dout.append(fd(branches[i]))
 
         if dout[-1] is None or isinstance(dout[-1], tuple):
             ret = 'none' if dout[-1] is None else f'{len(dout[-1])} outputs'
