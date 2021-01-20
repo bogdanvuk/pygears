@@ -17,7 +17,7 @@
 {% set i = intfs[1:-1][iout] %}
                 {{key}} : begin
                     {{i['name']}}.ready = handshake;
-                    ctrl.ready = handshake && {{i['name']}}_s.eot;
+                    ctrl.ready = handshake && &{{i['name']}}_s.eot;
                 end
 {% endfor %}
                 default: begin
@@ -43,7 +43,7 @@
   {% if i['width'] > 0 %}
                     dout_s.data[{{i['width']-1}}:0] = {{i['name']}}_s;
   {% endif %}
-                    ctrl.ready = handshake && {{i['name']}}_s.eot;
+                    ctrl.ready = handshake && &{{i['name']}}_s.eot;
                 end
 {% endfor %}
                 default: begin

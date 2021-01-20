@@ -20,7 +20,7 @@ def unionmap_check(dtype, f, mapping):
     if mapping is None:
         num_types = len(list(dtype.types))
     else:
-        num_types = len(mapping)
+        num_types = max(mapping.values()) + 1
 
     if num_types != num_f:
         raise TypeMatchError(

@@ -46,9 +46,10 @@ class HDLModuleInst:
             # TODO: What if hdlmod hasn't been
             # generated? This can happen if we only generate a part of the
             # design
-            hdlmod = reg['hdlgen/map'][memnode]
-            self.resolver = hdlmod.resolver
-            return
+            if memnode in reg['hdlgen/map']:
+                hdlmod = reg['hdlgen/map'][memnode]
+                self.resolver = hdlmod.resolver
+                return
 
         if resolver is not None:
             self.resolver = resolver

@@ -30,15 +30,20 @@ def union_sync_with(din, sync_in, *, ctrl, balance=None):
 
 
 @gear
-def case(cond, din, *, f, fcat=ccat, tout=None, **kwds):
+def case(cond, din, *, f, fcat=ccat, tout=None, mapping=None, **kwds):
     try:
         len(f)
     except TypeError:
         f = (None, f)
 
+    if mapping is None:
+        in_num_types = len(f)
+    else:
+        in_num_types = max(mapping.keys()) + 1
+
     return fcat(din, cond) \
-        | Union[(din.dtype, ) * len(f)] \
-        | unionmap(f=f, **kwds) \
+        | Union[(din.dtype, ) * in_num_types] \
+        | unionmap(f=f, mapping=mapping, **kwds) \
         | union_collapse(t=tout)
 
 
@@ -48,7 +53,8 @@ def ucase(din: Union, *, f, fcat=ccat, tout=None, fmux=mux, mapping=None):
         | unionmap(f=f, fmux=fmux, mapping=mapping, use_dflt=False)
 
     if dout.dtype.types.count(dout.dtype.types[0]) != len(dout.dtype.types):
-        raise TypeMatchError(f'output types of all input types need be the same, but got "{dout.dtype.types}')
+        raise TypeMatchError(
+            f'output types of all input types need be the same, but got "{dout.dtype.types}')
 
     return dout | union_collapse(t=tout)
 
@@ -56,6 +62,7 @@ def ucase(din: Union, *, f, fcat=ccat, tout=None, fmux=mux, mapping=None):
 @gear
 def when(cond, din, *, f, fe, fcat=ccat, tout=None, **kwds):
     return din | case(cond, f=(fe, f), fcat=fcat, tout=tout, **kwds)
+
 
 @alternative(when)
 @gear
@@ -103,26 +110,19 @@ def select(cond: Uint, *din, mapping=b'dflt_map(din)'):
     dtypes = [d.dtype for d in din]
     if dtypes.count(dtypes[0]) != len(dtypes):
         raise TypeError(
-            f'Expected all inputs to "{module().name}" to be same type, but got: "{dtypes}"'
-        )
+            f'Expected all inputs to "{module().name}" to be same type, but got: "{dtypes}"')
 
     return mux(cond, *din, mapping=mapping) | union_collapse
 
 
 @gear
-def field_sel(din: Tuple[{
-        'ctrl': Uint,
-        'data': Any
-}],
-              *,
-              mapping=b'dflt_map(din["data"])'):
+def field_sel(din: Tuple[{'ctrl': Uint, 'data': Any}], *, mapping=b'dflt_map(din["data"])'):
 
     if typeof(din.dtype['data'], Tuple):
         dtypes = list(din.dtype['data'])
         if dtypes.count(dtypes[0]) != len(dtypes):
             raise TypeError(
-                f'Expected all inputs to "{module().name}" to be same type, but got: "{dtypes}"'
-            )
+                f'Expected all inputs to "{module().name}" to be same type, but got: "{dtypes}"')
 
     return field_mux(din, mapping=mapping) | union_collapse
 

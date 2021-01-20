@@ -448,9 +448,11 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
         timestep = -1
         start_time = time.time()
+        finished = False
 
         log.info("-------------- Simulation start --------------")
-        while (self.forward_ready or self.back_ready or self._schedule_to_finish):
+        while (self.forward_ready or self.back_ready or self._schedule_to_finish or not finished):
+            finished = not bool(self.forward_ready or self.back_ready or self._schedule_to_finish)
 
             timestep += 1
             reg['sim/timestep'] = timestep
