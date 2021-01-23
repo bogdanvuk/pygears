@@ -9,7 +9,7 @@
   )
   {{name}}_axi_slave_read (
                     .S_AXI_ACLK(aclk),
-                    .S_AXI_ARESETN(aresetn),
+                    .S_AXI_ARESETN(aresetn_axi),
                     .M_AXI_ARREADY(1'b1),
                     .M_AXI_RDATA({{rdata.name}}.data),
                     .M_AXI_RVALID({{rdata.name}}.valid),
@@ -38,7 +38,7 @@
   )
   {{name}}_axi_slave_read (
                     .S_AXI_ACLK(aclk),
-                    .S_AXI_ARESETN(aresetn),
+                    .S_AXI_ARESETN(aresetn_axi),
                     .M_AXI_ARADDR({{name}}_araddr_s),
                     .M_AXI_ARVALID({{araddr.name}}.valid),
                     .M_AXI_ARREADY({{araddr.name}}.ready & {{araddr.name}}.valid),
@@ -60,7 +60,7 @@
   )
   {{name}}_axi_slave_write (
                     .S_AXI_ACLK(aclk),
-                    .S_AXI_ARESETN(aresetn),
+                    .S_AXI_ARESETN(aresetn_axi),
 
         {% if awaddr.port %}
                     .M_AXI_AWADDR({{awaddr.name}}.data),
@@ -100,7 +100,7 @@
   )
   {{name}}_axi_slave_write (
                     .S_AXI_ACLK(aclk),
-                    .S_AXI_ARESETN(aresetn),
+                    .S_AXI_ARESETN(aresetn_axi),
                     .M_AXI_AWADDR({{name}}_awaddr_s),
                     .M_AXI_AWREADY({{awaddr['name']}}.ready & {{awaddr['name']}}.valid),
                     .M_AXI_WDATA({{wr_req_data}}[{{awaddr_w - wdata_byte_addr_w + wdata_w-1}}:{{awaddr_w-wdata_byte_addr_w}}]),
@@ -135,7 +135,7 @@
     )
   {{name}}_aximm2s (
                     .S_AXI_ACLK(aclk),
-                    .S_AXI_ARESETN(aresetn),
+                    .S_AXI_ARESETN(aresetn_axi),
                     .S_AXIS_TDATA({{rdata.name}}.data[{{rdata.dataslice('rdata')}}]),
                     .S_AXIS_TVALID({{rdata.name}}.valid),
                     .S_AXIS_TREADY({{rdata.name}}.ready),
@@ -171,7 +171,7 @@
     )
   {{name}}_aximm2s (
                     .S_AXI_ACLK(aclk),
-                    .S_AXI_ARESETN(aresetn),
+                    .S_AXI_ARESETN(aresetn_axi),
                     .S_AXIS_TDATA({{wdata.name}}.data[{{wdata.dataslice('wdata')}}]),
                     .S_AXIS_TVALID({{wdata.name}}.valid),
                     .S_AXIS_TREADY({{wdata.name}}.ready),
@@ -221,7 +221,7 @@
    assign {{wdata.name}}.data[{{awaddr_w-wdata_byte_addr_w-1}}:0] = bram_addr_a[{{awaddr_w-1}}:{{wdata_byte_addr_w}}];
    dtibram_{{name}} dtibram_{{name}}_i (
                     .s_axi_aclk(aclk),
-                    .s_axi_aresetn(aresetn),
+                    .s_axi_aresetn(aresetn_axi),
                     .bram_en_a({{wdata.name}}.valid),
                     .bram_we_a(bram_we_a),
                     .bram_addr_a(bram_addr_a),

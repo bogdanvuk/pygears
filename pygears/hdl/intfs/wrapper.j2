@@ -15,9 +15,18 @@ module {{wrap_module_name}} #(
 {{ port_def|join(",\n")|indent(4, True)}}
 );
 
+   logic   aresetn_axi;
+   logic   rst;
+
+   always @(posedge aclk)
+     begin
+        aresetn_axi <= aresetn;
+        rst <= ~aresetn_axi;
+     end
+
 {{snippet.intf_inst_list(intfs.values())|indent(4, True)}}
 
-{{snippet.module_inst(module_name, param_map, inst_name, sig_map={'clk': pg_clk, 'rst': '~aresetn'})|indent(4, True)}}
+{{snippet.module_inst(module_name, param_map, inst_name, sig_map={'clk': pg_clk, 'rst': 'rst'})|indent(4, True)}}
 
 {% for name, p in ports.items() %}
   {% set araddr = p.comp.get('araddr', None) %}
