@@ -273,11 +273,8 @@ class FuncContext(Context):
             res = infer_ftypes(params=params, args=arg_types, namespace=self.local_namespace)
 
             for name, dtype in res.items():
-                if name == 'return':
-                    continue
-
                 if name not in args:
-                    args[name] = ir.ResExpr(dtype)
+                    continue
 
                 if isinstance(args[name], ir.ResExpr):
                     self.local_namespace[name] = args[name].val
