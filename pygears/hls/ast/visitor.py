@@ -239,6 +239,8 @@ class FuncContext(Context):
         self.ret_dtype = None
         self.const_args = {}
 
+        kwddefaults = paramspec.kwonlydefaults or {}
+
         if paramspec.defaults:
             for name, val in zip(reversed(paramspec.args), reversed(paramspec.defaults)):
                 if name in args:
@@ -246,8 +248,11 @@ class FuncContext(Context):
 
                 args[name] = ir.ResExpr(val)
 
+        for k, v in kwddefaults.items():
+            if k not in args:
+                args[k] = ir.ResExpr(v)
+
         if func.__annotations__:
-            kwddefaults = paramspec.kwonlydefaults or {}
             params = {**func.__annotations__, **kwddefaults}
 
             for a in paramspec.args:
