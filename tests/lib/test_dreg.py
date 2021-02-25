@@ -16,7 +16,7 @@ def test_pygears_sim():
 
     sim()
 
-    assert timestep() == len(seq) + 1
+    assert timestep() == len(seq) + 2
 
 
 def get_dut(dout_delay):

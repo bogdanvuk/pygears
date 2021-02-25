@@ -178,7 +178,11 @@ class SVCompiler(HDLVisitor):
             svstmt = f"{name} = {val}"
             self.handle_defaults(name, svstmt)
 
-            self.write(f"{base_target.name}_en = 1")
+            # self.write(f"{base_target.name}_en = 1")
+            ctx = base_target.ctx
+            base_target.ctx = 'en'
+            self.write(f"{self.svexpr(base_target)} = 1")
+            base_target.ctx = ctx
 
             return
 

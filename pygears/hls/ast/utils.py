@@ -57,7 +57,6 @@ def get_function_ast(func):
     else:
         src = get_function_source(func)
         if not src:
-            breakpoint()
             raise SyntaxError(f"Function '{func.__qualname__}()' not supported")
 
         return ast.parse(src).body[0]

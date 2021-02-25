@@ -34,9 +34,9 @@ def _(node: ast.If, ctx: Context):
             top = ir.IfElseBlock(stmts=[])
             visit_block(top, node.orelse, ctx)
             if top.stmts:
-                if isinstance(top.stmts[0], ir.HDLBlock):
+                if len(top.stmts) == 1 and isinstance(top.stmts[0], ir.HDLBlock):
                     top.stmts.insert(0, ir_node)
-                elif isinstance(top.stmts[0], ir.IfElseBlock):
+                elif len(top.stmts) == 1 and isinstance(top.stmts[0], ir.IfElseBlock):
                     top.stmts = [ir_node] + top.stmts[0].stmts
                 else:
                     top.stmts = [ir_node, ir.HDLBlock(stmts=top.stmts)]

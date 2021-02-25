@@ -37,6 +37,9 @@ async def state_dout(*rd, t) -> b't':
         if dout[i] is not None:
             rd_req.get_nb()
 
+    if all(d is None for d in dout):
+        await clk()
+
 
 @gear(enablement=b'len(rd) > 1', hdl={'hierarchical': False})
 def state(din, *rd: Unit, init=0, hold=False) -> b'(din,)*len(rd)':
