@@ -1,5 +1,6 @@
 import subprocess
 from pygears import PluginBase, reg, find
+from pygears.core.graph import get_consumer_tree
 from pygears.core.port import OutPort
 from pygears.sim import log, timestep, SimPlugin
 from pygears.sim.sim_gear import SimGear
@@ -114,7 +115,8 @@ class VCDValVisitor(TypingVisitorBase):
 
 
 def register_traces_for_intf(dtype, scope, writer):
-    vcd_vars = {}
+    # TODO: Refactor this into a class
+    vcd_vars = {'prods': [], 'srcs': [], 'srcs_active': [], 'dtype': dtype}
 
     if typeof(dtype, TLM):
         vcd_vars['data'] = writer.register_var(scope, 'data', 'string')
@@ -171,20 +173,28 @@ class VCDHierVisitor(HierVisitorBase):
     def exit_hier(self, name):
         self.indent -= 4
 
+    def trace_if_included(self, p):
+        if not is_trace_included(p, self.include, self.vcd_tlm):
+            return
+
+        gear_vcd_scope = p.gear.name[1:].replace('/', '.')
+
+        scope = '.'.join([gear_vcd_scope, p.basename])
+
+        self.vcd_vars[p] = scope
+
     def Gear(self, module):
         if module.parent is None:
             return super().HierNode(module)
 
         self.enter_hier(module.basename)
 
-        gear_vcd_scope = module.name[1:].replace('/', '.')
         for p in module.in_ports:
-            if not is_trace_included(p, self.include, self.vcd_tlm):
-                continue
+            self.trace_if_included(p)
 
-            scope = '.'.join([gear_vcd_scope, p.basename])
-
-            self.vcd_vars[p] = scope
+        if module.hierarchical:
+            for p in module.out_ports:
+                self.trace_if_included(p)
 
         if (module in self.sim_map or module.hierarchical) and module.params['sim_cls'] is None:
             super().HierNode(module)
@@ -272,26 +282,44 @@ class VCD(SimExtend):
     def before_run(self, sim):
         vcd_intf_vars = {}
         for p, v in self.vcd_vars.items():
+            print(f'[VCD] add {p}')
             intf = p.consumer
             intf.events['put'].append(self.intf_put)
             intf.events['ack'].append(self.intf_ack)
+            v['srcs'] = [self.vcd_vars[vs] for vs in get_consumer_tree(intf)]
+            v['srcs_active'] = [False] * len(v['srcs'])
+            v['intf'] = intf
+            for vs in v['srcs']:
+                vs['prods'].append(v)
+
             vcd_intf_vars[intf] = v
 
         self.vcd_vars = vcd_intf_vars
 
+    def var_put(self, v, val):
+        if typeof(v['dtype'], TLM):
+            self.writer.change(v['data'], timestep() * 10, str(val))
+        else:
+            visitor = VCDValVisitor(v, self.writer, timestep() * 10)
+            visitor.visit(v['dtype'], 'data', val=val)
+
+        self.writer.change(v['valid'], timestep() * 10, 1)
+
     def intf_put(self, intf, val):
+        print(f'[VCD] put {intf.producer}')
         if intf not in self.vcd_vars:
             return True
 
         v = self.vcd_vars[intf]
+        self.var_put(v, val)
 
-        if typeof(intf.dtype, TLM):
-            self.writer.change(v['data'], timestep() * 10, str(val))
-        else:
-            visitor = VCDValVisitor(v, self.writer, timestep() * 10)
-            visitor.visit(intf.dtype, 'data', val=val)
+        for vp in v['prods']:
+            if not any(vp['srcs_active']):
+                # TODO: Optimization possibility, don't write the data, only ready/valid signals
+                self.var_put(vp, val)
 
-        self.writer.change(v['valid'], timestep() * 10, 1)
+            vp['srcs_active'][vp['srcs'].index(v)] = True
+
         return True
 
     def intf_ack(self, intf):
@@ -302,6 +330,14 @@ class VCD(SimExtend):
         self.writer.change(v['ready'], timestep() * 10, 1)
 
         self.handhake.add(intf)
+
+        for vp in v['prods']:
+            vp['srcs_active'][vp['srcs'].index(v)] = False
+
+            if not any(vp['srcs_active']):
+                self.writer.change(vp['ready'], timestep() * 10, 1)
+                self.handhake.add(vp['intf'])
+
         return True
 
     def before_timestep(self, sim, timestep):
