@@ -282,7 +282,6 @@ class VCD(SimExtend):
     def before_run(self, sim):
         vcd_intf_vars = {}
         for p, v in self.vcd_vars.items():
-            print(f'[VCD] add {p}')
             intf = p.consumer
             intf.events['put'].append(self.intf_put)
             intf.events['ack'].append(self.intf_ack)
@@ -306,7 +305,6 @@ class VCD(SimExtend):
         self.writer.change(v['valid'], timestep() * 10, 1)
 
     def intf_put(self, intf, val):
-        print(f'[VCD] put {intf.producer}')
         if intf not in self.vcd_vars:
             return True
 
