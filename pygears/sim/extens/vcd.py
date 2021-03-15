@@ -116,7 +116,7 @@ class VCDValVisitor(TypingVisitorBase):
 
 def register_traces_for_intf(dtype, scope, writer):
     # TODO: Refactor this into a class
-    vcd_vars = {'prods': [], 'srcs': [], 'srcs_active': [], 'dtype': dtype}
+    vcd_vars = {'prods': [], 'srcs_active': [], 'dtype': dtype}
 
     if typeof(dtype, TLM):
         vcd_vars['data'] = writer.register_var(scope, 'data', 'string')
@@ -285,12 +285,6 @@ class VCD(SimExtend):
             intf = p.consumer
             intf.events['put'].append(self.intf_put)
             intf.events['ack'].append(self.intf_ack)
-            v['srcs'] = [self.vcd_vars[vs] for vs in get_consumer_tree(intf)]
-            v['srcs_active'] = [False] * len(v['srcs'])
-            v['intf'] = intf
-            for vs in v['srcs']:
-                vs['prods'].append(v)
-
             vcd_intf_vars[intf] = v
 
         self.vcd_vars = vcd_intf_vars
@@ -310,6 +304,14 @@ class VCD(SimExtend):
 
         v = self.vcd_vars[intf]
         self.var_put(v, val)
+
+        # TODO: get_consumer_tree() cannot be called in before_run(). Investigate why?
+        if 'scrc' not in v:
+            v['srcs'] = [self.vcd_vars[vs] for vs in get_consumer_tree(intf)]
+            v['srcs_active'] = [False] * len(v['srcs'])
+            v['intf'] = intf
+            for vs in v['srcs']:
+                vs['prods'].append(v)
 
         for vp in v['prods']:
             if not any(vp['srcs_active']):
