@@ -246,6 +246,13 @@ class Intf:
 
         return True
 
+    async def send(self, val):
+        if reg['sim/simulator'].phase != 'forward':
+            from pygears.sim import clk
+            await clk()
+
+        self.put_nb(val)
+
     async def put(self, val):
         self.put_nb(val)
         await self.ready()

@@ -178,14 +178,11 @@ class VCDHierVisitor(HierVisitorBase):
         if not is_trace_included(p, self.include, self.vcd_tlm):
             return
 
-        if p.consumer in self.vcd_vars:
-            return
-
         gear_vcd_scope = p.gear.name[1:].replace('/', '.')
 
         scope = '.'.join([gear_vcd_scope, p.basename])
 
-        self.vcd_vars[p.producer] = scope
+        self.vcd_vars[p] = scope
 
     def Gear(self, module):
         if module.parent is None:
@@ -195,6 +192,10 @@ class VCDHierVisitor(HierVisitorBase):
 
         for p in module.in_ports:
             self.trace_if_included(p)
+
+        if module in self.sim_map or module.hierarchical:
+            for p in module.out_ports:
+                self.trace_if_included(p)
 
         if module in self.sim_map:
             for p in module.in_ports:
@@ -278,11 +279,11 @@ class VCD(SimExtend):
 
         if not vcd_visitor.vcd_vars:
             self.deactivate()
-            return
+            return True
 
         self.vcd_vars = {
-            intf: register_traces_for_intf(intf.dtype, scope, self.writer)
-            for intf, scope in vcd_visitor.vcd_vars.items()
+            p: register_traces_for_intf(p.dtype, scope, self.writer)
+            for p, scope in vcd_visitor.vcd_vars.items()
         }
 
         self.end_consumers = vcd_visitor.end_consumers
@@ -294,19 +295,19 @@ class VCD(SimExtend):
             intf.events['ack'].append(self.intf_ack)
 
         vcd_intf_vars = {}
-        for intf, v in self.vcd_vars.items():
+        for p, v in self.vcd_vars.items():
             intf.events['put'].append(self.intf_put)
             intf.events['ack'].append(self.intf_ack)
-            vcd_intf_vars[intf] = v
+            vcd_intf_vars[p] = v
 
         self.vcd_vars = vcd_intf_vars
         self.extend_intfs()
 
     def extend_intfs(self):
-        for intf, v in self.vcd_vars.items():
-            v['srcs'] = [self.end_consumers[p.consumer] for p in get_consumer_tree(intf)]
+        for p, v in self.vcd_vars.items():
+            v['srcs'] = [self.end_consumers[pp.consumer] for pp in get_consumer_tree(p.consumer)]
             v['srcs_active'] = [False] * len(v['srcs'])
-            v['intf'] = intf
+            v['p'] = p
             for vs in v['srcs']:
                 vs['prods'].append(v)
 
@@ -323,11 +324,12 @@ class VCD(SimExtend):
         self.writer.change(v['valid'], timestep() * 10, 1)
 
     def intf_put(self, intf, val):
-        if intf in self.vcd_vars:
-            v = self.vcd_vars[intf]
+        p = intf.producer
+        if p in self.vcd_vars:
+            v = self.vcd_vars[p]
             self.var_put(v, val)
 
-        elif intf in self.end_consumers:
+        if intf in self.end_consumers:
             v = self.end_consumers[intf]
             for vp in v['prods']:
                 if not any(vp['srcs_active']):
@@ -339,20 +341,20 @@ class VCD(SimExtend):
         return True
 
     def intf_ack(self, intf):
-        if intf in self.vcd_vars:
-            v = self.vcd_vars[intf]
+        p = intf.producer
+        if p in self.vcd_vars:
+            v = self.vcd_vars[p]
             self.writer.change(v['ready'], timestep() * 10, 1)
+            self.handhake.add(p)
 
-            self.handhake.add(intf)
-
-        elif intf in self.end_consumers:
+        if intf in self.end_consumers:
             v = self.end_consumers[intf]
             for vp in v['prods']:
                 vp['srcs_active'][vp['srcs'].index(v)] = False
 
                 if not any(vp['srcs_active']):
                     self.writer.change(vp['ready'], timestep() * 10, 1)
-                    self.handhake.add(vp['intf'])
+                    self.handhake.add(vp['p'])
 
         return True
 
@@ -364,13 +366,13 @@ class VCD(SimExtend):
         timestep += 1
         self.writer.change(self.timestep_var, timestep * 10, timestep)
         self.writer.change(self.clk_var, timestep * 10, 1)
-        for intf, v in self.vcd_vars.items():
-            if intf in self.handhake:
+        for p, v in self.vcd_vars.items():
+            if p in self.handhake:
                 self.writer.change(v['ready'], timestep * 10, 0)
                 if not any(v['srcs_active']):
                     self.writer.change(v['valid'], timestep * 10, 0)
 
-                self.handhake.remove(intf)
+                self.handhake.remove(p)
 
         self.writer.flush()
 
