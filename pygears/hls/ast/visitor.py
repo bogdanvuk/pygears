@@ -25,11 +25,11 @@ def form_hls_syntax_error(ctx, e, lineno=1):
     msg = str(e)
     for c in reversed(reg['hls/ctx']):
         if isinstance(c, GearContext):
-            func, fn, ln = gear_definition_location(c.gear.func)
+            func, fn, ln, _ = gear_definition_location(c.gear.func)
             msg += (f'\n    - when compiling gear "{c.gear.name}" with'
                     f' parameters {c.gear.params}')
         else:
-            func, fn, ln = gear_definition_location(c.funcref.func)
+            func, fn, ln, _ = gear_definition_location(c.funcref.func)
             msg += (f'\n    - when compiling function "{c.funcref.func}" with'
                     f' signature {c.signature}')
 

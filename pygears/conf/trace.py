@@ -28,11 +28,11 @@ def gear_definition_location(func):
         fn = inspect.getfile(uwrp)
 
     try:
-        _, ln = inspect.getsourcelines(uwrp)
+        lines, ln = inspect.getsourcelines(uwrp)
     except OSError:
         pass
 
-    return uwrp, fn, ln
+    return uwrp, fn, ln, lines
 
 
 class MultiAlternativeError(Exception):
@@ -52,7 +52,7 @@ class MultiAlternativeError(Exception):
             if tr_list:
                 ret.extend(tr_list)
             else:
-                funcdef, fn, ln = gear_definition_location(func)
+                funcdef, fn, ln, _ = gear_definition_location(func)
 
                 ret.append(
                     f'  File "{fn}", line {ln}, in {funcdef.__name__}\n')

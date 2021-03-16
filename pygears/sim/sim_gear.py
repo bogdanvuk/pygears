@@ -31,6 +31,7 @@ class SimGear:
         self.child = []
         self.parent = None
         self._clean = True
+        self.async_gen = None
         if not hasattr(self, 'func'):
             self.func = gear.func
 
@@ -65,9 +66,9 @@ class SimGear:
                     if sim.phase != 'forward':
                         await clk()
 
-                    async_gen = self.func(*self.args, **self.kwds)
+                    self.async_gen = self.func(*self.args, **self.kwds)
 
-                    async for val in async_gen:
+                    async for val in self.async_gen:
                         if sim.phase != 'forward':
                             await clk()
 
@@ -85,11 +86,11 @@ class SimGear:
                                     except GearDone:
                                         raise
                                     except Exception as e:
-                                        func, fn, ln = gear_definition_location(self.func)
+                                        func, fn, ln, _ = gear_definition_location(self.func)
 
                                         err = SimulationError(
                                             f"inside '{self.gear.name}': {repr(e)}",
-                                            async_gen.ag_frame.f_lineno,
+                                            self.async_gen.ag_frame.f_lineno,
                                             filename=fn)
 
                                         traceback = make_traceback((SimulationError, err, sys.exc_info()[2]))
