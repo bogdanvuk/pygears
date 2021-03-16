@@ -367,7 +367,9 @@ class VCD(SimExtend):
         for intf, v in self.vcd_vars.items():
             if intf in self.handhake:
                 self.writer.change(v['ready'], timestep * 10, 0)
-                self.writer.change(v['valid'], timestep * 10, 0)
+                if not any(v['srcs_active']):
+                    self.writer.change(v['valid'], timestep * 10, 0)
+
                 self.handhake.remove(intf)
 
         self.writer.flush()
