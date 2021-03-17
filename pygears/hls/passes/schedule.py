@@ -1,4 +1,6 @@
 import attr
+import inspect
+from contextlib import contextmanager
 from copy import deepcopy
 from ..ir_utils import res_true, HDLVisitor, ir, add_to_list, res_false, is_intf_id
 from pygears.typing import bitw, Uint, Bool
@@ -74,6 +76,7 @@ class Scheduler(HDLVisitor):
             return None
 
     def traverse_block(self, node):
+        breakpoint()
         init_state = node.cur_state
 
         self.enter_block(node)
@@ -165,10 +168,8 @@ class StateIsolator(HDLVisitor):
                 add_to_list(stmts, self.visit(stmt))
             elif self.cur_state:
                 stmts.append(
-                    ir.AssignValue(
-                        self.ctx.ref('_state', ctx='store'),
-                        ir.Await(ir.ResExpr(list(stmt.state)[0]),
-                                 exit_await=res_false)))
+                    ir.AssignValue(self.ctx.ref('_state', ctx='store'),
+                                   ir.Await(ir.ResExpr(list(stmt.state)[0]), exit_await=res_false)))
                 break
 
         if self.cur_state_id not in state:
@@ -209,20 +210,17 @@ class StateIsolator(HDLVisitor):
         if len(node.state) == 1:
             return node
 
-        block = ir.LoopBlock(
-            in_cond=node.in_cond if self.cur_state else res_true,
-            exit_cond=node.exit_cond,
-            stmts=self.traverse_block(node.stmts, node.state))
+        block = ir.LoopBlock(in_cond=node.in_cond if self.cur_state else res_true,
+                             exit_cond=node.exit_cond,
+                             stmts=self.traverse_block(node.stmts, node.state))
 
         if '_state' in self.ctx.scope:
             if (self.cur_state and self.state_id != list(node.state)[0]):
                 # and node.out_blocking):
 
                 block.stmts.append(
-                    ir.AssignValue(
-                        self.ctx.ref('_state', ctx='store'),
-                        ir.Await(ir.ResExpr(list(node.state)[0]),
-                                 exit_await=res_false)))
+                    ir.AssignValue(self.ctx.ref('_state', ctx='store'),
+                                   ir.Await(ir.ResExpr(list(node.state)[0]), exit_await=res_false)))
         return block
 
     def IfElseBlock(self, node):
@@ -246,13 +244,115 @@ class StateIsolator(HDLVisitor):
         return block
 
 
-def schedule(block, ctx):
-    ctx.scope['_rst_cond'] = ir.Variable('_rst_cond', Bool)
-    block.stmts.insert(
-        0, ir.AssignValue(ctx.ref('_rst_cond', 'store'), res_false))
+class SkipBranch(Exception):
+    pass
 
-    block.stmts.append(
-        ir.AssignValue(ctx.ref('_rst_cond', 'store'), res_true))
+
+def create_scheduled_cfg(node, G, visited, labels):
+    if node in visited:
+        return
+
+    visited.add(node)
+    if node.value is None:
+        labels[id(node)] = "None"
+    else:
+        labels[id(node)] = str(node.value.state)
+        if node.value.transition is not None:
+            labels[id(node)] += f' -> {node.value.transition}'
+
+    for n in node.next:
+        G.add_edge(id(node), id(n))
+
+        create_scheduled_cfg(n, G, visited, labels)
+
+
+def draw_scheduled_cfg(cfg):
+    import networkx as nx
+    import matplotlib.pyplot as plt
+
+    G = nx.DiGraph()
+    visited = set()
+    labels = {}
+
+    create_scheduled_cfg(cfg, G, visited, labels)
+
+    pos = nx.planar_layout(G)
+    nx.draw(G, pos, font_size=16, with_labels=False)
+
+    # for p in pos:  # raise text positions
+    #     pos[p][1] += 0.07
+
+    nx.draw_networkx_labels(G, pos, labels)
+    plt.show()
+
+
+class ScheduleDFS:
+    def __init__(self, ctx):
+        self.state = 0
+        self.max_state = 0
+        self.ctx = ctx
+        self.state_stmts = [ir.HDLBlock()]
+        self.visited = []
+
+    def dfs(self, node):
+        try:
+            with self.visit(node.value):
+                for n in node.next:
+                    self.dfs(n)
+        except SkipBranch:
+            pass
+
+    def next_state(self):
+        self.max_state += 1
+        self.state = self.max_state
+
+    def set_state(self, state):
+        self.state = state
+
+    @contextmanager
+    def visit(self, node):
+        for base_class in inspect.getmro(node.__class__):
+            if hasattr(self, base_class.__name__):
+                with getattr(self, base_class.__name__)(node):
+                    yield
+        else:
+            with self.generic_visit(node):
+                yield
+
+    @contextmanager
+    def generic_visit(self, node):
+        if node is None:
+            raise SkipBranch
+
+        print(f'Enter: {node}')
+        enter_state = self.state
+
+        node.state = getattr(node, 'state', set())
+        node.transition = getattr(node, 'transition', None)
+
+        if len(node.state) == 2:
+            raise SkipBranch
+
+        if self.state in node.state:
+            self.next_state()
+            node.transition = self.state
+
+        node.state.add(self.state)
+
+        yield
+
+        self.set_state(enter_state)
+        print(f'Exit: {node}')
+
+
+def schedule(block, cfg, ctx):
+    # ctx.scope['_rst_cond'] = ir.Variable('_rst_cond', Bool)
+    # block.stmts.insert(0, ir.AssignValue(ctx.ref('_rst_cond', 'store'), res_false))
+
+    # block.stmts.append(ir.AssignValue(ctx.ref('_rst_cond', 'store'), res_true))
+
+    ScheduleDFS(ctx).dfs(cfg)
+    draw_scheduled_cfg(cfg)
 
     Scheduler(ctx).visit(block)
     # print('*** Schedule ***')
@@ -278,8 +378,7 @@ def schedule(block, ctx):
         stateblock.stmts.append(res)
 
         if state_num > 1:
-            res.in_cond = ir.BinOpExpr((ctx.ref('_state'), ir.ResExpr(i)),
-                                       ir.opc.Eq)
+            res.in_cond = ir.BinOpExpr((ctx.ref('_state'), ir.ResExpr(i)), ir.opc.Eq)
 
     if state_num > 1:
         modblock = ir.CombBlock(stmts=[stateblock])

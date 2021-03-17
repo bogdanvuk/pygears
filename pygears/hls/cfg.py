@@ -189,9 +189,8 @@ class CFG(HDLVisitor):
             self.head.extend(body_exit)
 
     def LoopBlock(self, block: ir.LoopBlock):
-        in_cond = Node(block.in_cond)
-        node = Node(block)
-        self.set_head(in_cond)
+        # node = Node(block)
+        node = Node(block.in_cond)
         self.set_head(node)
         # Start a new level of nesting
         self.break_.append([])
@@ -200,9 +199,6 @@ class CFG(HDLVisitor):
         self.BaseBlock(block)
         self.head.extend(self.continue_.pop())
 
-        # self.set_head(test)
-        exit_cond = Node(block.exit_cond)
-        self.set_head(exit_cond)
         self.set_head(node)
 
         # The break statements and the test go to the next node
@@ -367,7 +363,7 @@ def forward(node, analysis):
 
     analysis.visit(cfg_obj.entry)
 
-    return node
+    return node, cfg_obj.entry
 
 
 def node_name(node):

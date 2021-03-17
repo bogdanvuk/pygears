@@ -9,7 +9,7 @@ from .passes import (inline, inline_res, remove_dead_code, infer_exit_cond,
                      handle_generators, resolve_gear_calls, find_called_funcs)
 from .debug import hls_enable_debug_log, hls_debug, hls_disable_debug_log
 from .debug import print_gear_parse_intro
-from . import cfg
+from . import cfg as cfgutil
 
 
 def translate_gear(gear: Gear):
@@ -60,12 +60,12 @@ def transform(modblock, ctx: GearContext):
     modblock = handle_generators(modblock, ctx)
     hls_debug(modblock, 'Handle Generators')
 
-    cfg.forward(modblock, cfg.ReachingDefinitions())
+    modblock, cfg = cfgutil.forward(modblock, cfgutil.ReachingDefinitions())
 
-    modblock = infer_registers(modblock, ctx)
-    hls_debug(modblock, 'Infer registers')
+    # modblock = infer_registers(modblock, ctx)
+    # hls_debug(modblock, 'Infer registers')
 
-    modblock = schedule(modblock, ctx)
+    modblock = schedule(modblock, cfg, ctx)
 
     modblock = inline(modblock, ctx)
     hls_debug(modblock, 'Inline values')
