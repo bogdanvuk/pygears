@@ -12,11 +12,20 @@ from pygears.hdl.sv.v.accessors import rewrite
 from .util import svgen_typedef
 from .v.util import vgen_signal, vgen_intf
 
+# REG_TEMPLATE = """
+# always @(posedge clk) begin
+#     if(rst | _rst_cond) begin
+#         {0} <= {1};
+#     end else if ({0}_en && cycle_done) begin
+#         {0} <= {0}_next;
+#     end
+# end
+# """
 REG_TEMPLATE = """
 always @(posedge clk) begin
-    if(rst | _rst_cond) begin
+    if(rst | ((_state_next == 0) && (_state_en))) begin
         {0} <= {1};
-    end else if ({0}_en && cycle_done) begin
+    end else if ({0}_en && _state_en) begin
         {0} <= {0}_next;
     end
 end

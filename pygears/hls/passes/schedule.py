@@ -316,23 +316,15 @@ class RebuildStateIR:
         else:
             return self.generic_visit(node)
 
-    def LoopBlock(self, node):
-        nexit, nloop = node.next
-
-        ir_node = ir.HDLBlock(in_cond=node.value.in_cond, stmts=[])
-
-        self.append(ir_node)
-        self.enter_block(ir_node)
-        self.visit(nloop)
-        self.exit_block()
-        self.visit(nexit)
-
     def HDLBlock(self, node):
         if node.value.in_cond == ir.res_true:
             return self.generic_visit(node)
 
         blocks = []
         for n in node.next:
+            if isinstance(n.value, ir.HDLBlockSink):
+                continue
+
             ir_node = ir.HDLBlock(in_cond=ir.res_true, stmts=[])
             self.enter_block(ir_node)
             self.visit(n)
@@ -346,18 +338,16 @@ class RebuildStateIR:
         else:
             self.append(ir.IfElseBlock(stmts=blocks))
 
-        for n in self.sink.next:
+        for n in node.sink.next:
             self.visit(n)
 
     def IfElseBlock(self, node: ir.IfElseBlock):
         breakpoint()
 
     def HDLBlockSink(self, node: ir.HDLBlockSink):
-        self.sink = node
         return
 
     def LoopBlockSink(self, node: ir.LoopBlockSink):
-        breakpoint()
         return self.generic_visit(node)
 
     def Statement(self, node: ir.Statement):
@@ -390,6 +380,8 @@ class ScheduleBFS:
             self.visited.clear()
             while not self.queue.empty():
                 self.visit(self.queue.get())
+
+        self.state_entry = [m[e] for m, e in zip(self.state_maps, self.state_entry)]
 
     @property
     def state_map(self):
@@ -425,7 +417,7 @@ class ScheduleBFS:
             self.state_map[node] = cp_node
             cp_node.prev = [self.state_map[p] for p in node.prev if p in self.state_map]
         else:
-            node = cp_node
+            cp_node = node
 
         self.append(cp_node)
 
@@ -481,55 +473,27 @@ class ScheduleBFS:
             node.value.state = self.state
             node.value.looped_state = self.add_state(nloop)
         elif second_state:
-            state_node = Node(ir.AssignValue(ir.Name('_state'), node.value.looped_state),
-                              prev=[cond])
+            stmt = ir.AssignValue(self.ctx.ref('_state'), ir.ResExpr(node.value.looped_state))
+            stmt.exit_cond = ir.res_false
+            state_node = Node(stmt, prev=[cond])
+
             self.append(state_node)
-            sink_node = Node(ir.HDLBlockSink, source=cond, prev=[state_node, cond])
+            sink_node = Node(ir.HDLBlockSink(), source=cond, prev=[state_node, cond])
             self.append(sink_node)
+            self.state_map[node.sink] = sink_node
             self.schedule(nexit)
         else:
-            state_node = Node(ir.AssignValue(ir.Name('_state'), node.value.looped_state),
-                              prev=[cond])
+            stmt = ir.AssignValue(self.ctx.ref('_state'), ir.ResExpr(node.value.looped_state))
+            stmt.exit_cond = ir.res_false
+            state_node = Node(stmt, prev=[cond])
+
             self.append(state_node)
-            sink_node = Node(ir.HDLBlockSink, source=cond, prev=[state_node, cond], next_=[orig.sink])
+            sink_node = Node(ir.HDLBlockSink(),
+                             source=cond,
+                             prev=[state_node, cond],
+                             next_=[orig.sink])
             self.append(sink_node)
             orig.sink.prev.append(sink_node)
-
-        # if not second_state:
-        #     # Time to switch state
-        #     if second_loop and len(node.prev) == 1:
-        #         self.change_state(node.value.looped_state)
-        #         self.queue.put(nloop)
-        #         return
-
-        #     if not second_loop:
-        #         node.value.state = self.state
-        #         node.value.looped_state = self.add_state()
-        #         for p in node.prev:
-        #             if (isinstance(p.value, ir.LoopBlockSink) and p.value.block is node.value):
-        #                 node.value.loopback = p
-        #     else:
-        #         node.prev = {node.value.loopback}
-
-        # if second_loop:
-        #     hdl_node = Node(ir.HDLBlock(in_cond=node.value.in_cond), prev=list(node.prev))
-        #     self.append(hdl_node)
-        #     state_node = Node(ir.AssignValue(ir.Name('_state'), node.value.looped_state),
-        #                       prev=[hdl_node])
-        #     self.append(state_node)
-
-        #     hdlsink_node = Node(ir.HDLBlockSink(hdl_node.value), prev=[state_node])
-
-        #     self.append(hdlsink_node)
-
-        #     nexit.prev.append(hdlsink_node)
-        #     self.schedule(nexit)
-        #     if not second_state:
-        #         self.schedule(node)
-        # else:
-        #     self.append(node)
-        #     self.schedule(nexit)
-        #     self.schedule(nloop)
 
     def HDLBlockSink(self, node: ir.LoopBlockSink):
         if not all(p in self.visited for p in node.prev):
@@ -539,14 +503,8 @@ class ScheduleBFS:
         for n in node.next:
             self.schedule(n)
 
-    def LoopBlockSink(self, node: ir.LoopBlockSink):
-        self.copy(node)
-        for n in node.next:
-            self.schedule(n)
-
     def generic_visit(self, node):
         self.copy(node)
-
         for n in node.next:
             self.schedule(n)
 
@@ -557,13 +515,17 @@ def schedule(block, cfg, ctx):
 
     # block.stmts.append(ir.AssignValue(ctx.ref('_rst_cond', 'store'), res_true))
 
+    ctx.scope['_state'] = ir.Variable(
+        '_state',
+        val=ir.ResExpr(Uint[1](0)),
+        reg=True,
+    )
+
     v = ScheduleBFS(ctx)
     v.bfs(cfg)
 
-    draw_scheduled_cfg(v.state_maps[0][v.state_entry[0]])
-    draw_scheduled_cfg(v.state_maps[1][v.state_entry[1]])
-
-    breakpoint()
+    # draw_scheduled_cfg(v.state_entry[0])
+    # draw_scheduled_cfg(v.state_entry[1])
 
     states = []
     for n in v.state_entry:
@@ -572,24 +534,19 @@ def schedule(block, cfg, ctx):
         states.append(v.parent)
         print(v.parent)
 
-    Scheduler(ctx).visit(block)
+    # Scheduler(ctx).visit(block)
     # print('*** Schedule ***')
     # print(PPrinter(ctx).visit(block))
-    state_num = len(block.state)
-
-    if state_num > 1:
-        ctx.scope['_state'] = ir.Variable(
-            '_state',
-            val=ir.ResExpr(Uint[bitw(state_num - 1)](0)),
-            reg=True,
-        )
+    # state_num = len(block.state)
+    state_num = len(states)
+    ctx.scope['_state'].val = ir.ResExpr(Uint[bitw(state_num - 1)](0))
 
     stateblock = ir.IfElseBlock(stmts=[])
-    for i in range(state_num):
-        v = StateIsolator(ctx, i)
-        res = v.visit(block)
-        if isinstance(res, list):
-            res = ir.HDLBlock(stmts=res)
+    for i, res in enumerate(states):
+        # v = StateIsolator(ctx, i)
+        # res = v.visit(block)
+        # if isinstance(res, list):
+        #     res = ir.HDLBlock(stmts=res)
 
         res.exit_cond = res_false
 
@@ -603,6 +560,6 @@ def schedule(block, cfg, ctx):
     else:
         modblock = ir.CombBlock(stmts=stateblock.stmts[0].stmts)
 
-    modblock = infer_cycle_done(modblock, ctx)
+    # modblock = infer_cycle_done(modblock, ctx)
 
     return modblock
