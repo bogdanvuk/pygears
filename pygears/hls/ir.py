@@ -1022,16 +1022,12 @@ class LoopBlock(HDLBlock):
 
 @attr.s(auto_attribs=True, eq=False)
 class HDLBlockSink(Statement):
-    block: HDLBlock
-
     def __str__(self):
         return f'HDLBlockSink'
 
 
 @attr.s(auto_attribs=True, eq=False)
 class LoopBlockSink(Statement):
-    block: LoopBlock
-
     def __str__(self):
         return f'LoopBlockSink'
 

@@ -91,9 +91,9 @@ def get_updated(node):
 
 class Node(object):
     """A node in the CFG."""
-    __slots__ = ['next', 'value', 'prev']
+    __slots__ = ['next', 'value', 'prev', 'sink', '_source']
 
-    def __init__(self, value, next_=None, prev=None):
+    def __init__(self, value, next_=None, prev=None, source=None):
         if next_ is None:
             next_ = []
 
@@ -103,9 +103,26 @@ class Node(object):
         self.next = next_
         self.prev = prev
         self.value = value
+        self._source = None
+
+        self.source = source
+        self.sink = None
 
         if self.value is not None and not hasattr(self.value, 'reaching'):
             self.value.reaching = {}
+
+    @property
+    def source(self):
+        return self._source
+
+    @source.setter
+    def source(self, val):
+        if val is not None:
+            val.sink = self
+        elif self._source is not None:
+            self._source.sink = None
+
+        self._source = val
 
 
 class CFG(HDLVisitor):
@@ -205,19 +222,23 @@ class CFG(HDLVisitor):
         self.BaseBlock(block)
         self.head.extend(self.continue_.pop())
 
-        sink = Node(ir.LoopBlockSink(block))
+        sink = Node(ir.LoopBlockSink())
         self.set_head(sink)
         self.set_head(node)
-        self.set_head(Node(ir.HDLBlockSink(block)))
+        self.set_head(Node(ir.HDLBlockSink(), source=node))
 
         # The break statements and the test go to the next node
         self.head.extend(self.break_.pop())
 
     def IfElseBlock(self, block: ir.IfElseBlock):
         branch_exits = []
+        root = None
         for stmt in block.stmts:
             # test = Node(stmt.in_cond)
             test = Node(stmt)
+            if root is None:
+                root = test
+
             self.set_head(test)
 
             self.BaseBlock(stmt)
@@ -229,7 +250,7 @@ class CFG(HDLVisitor):
                 self.head.append(test)
 
         self.head.extend(branch_exits)
-        sink = Node(ir.HDLBlockSink(block))
+        sink = Node(ir.HDLBlockSink(), source=root)
         self.set_head(sink)
 
     def generic_visit(self, node):

@@ -357,6 +357,7 @@ class RebuildStateIR:
         return
 
     def LoopBlockSink(self, node: ir.LoopBlockSink):
+        breakpoint()
         return self.generic_visit(node)
 
     def Statement(self, node: ir.Statement):
@@ -377,22 +378,26 @@ class ScheduleBFS:
         self.state_entry = []
         self.state_stmts = []
         self.state_maps = []
-        self.visited = []
+        self.visited = set()
 
     def bfs(self, node):
         self.queue = Queue()
-        self.change_state()
-        self.queue.put(node)
+        self.add_state(node.next[0])
 
-        while not self.queue.empty():
-            self.visit(self.queue.get())
+        while self.state < len(self.state_entry) - 1:
+            self.state += 1
+            self.queue.put(self.state_entry[self.state])
+            self.visited.clear()
+            while not self.queue.empty():
+                self.visit(self.queue.get())
 
     @property
     def state_map(self):
         return self.state_maps[self.state]
 
-    def add_state(self):
+    def add_state(self, node):
         self.state_maps.append({})
+        self.state_entry.append(node)
         return len(self.state_maps) - 1
 
     def change_state(self, state=None):
@@ -403,31 +408,37 @@ class ScheduleBFS:
             self.state = state
 
     def schedule(self, node):
-        for p in node.prev:
-            if (isinstance(node.value, ir.LoopBlock) and isinstance(p.value, ir.LoopBlockSink)
-                    and p.value.block is node.value):
-                continue
+        # for i, p in enumerate(node.prev):
+        #     if isinstance(node.value, ir.LoopBlock) and i > 0:
+        #         continue
 
-            if p not in self.state_map:
-                return
+        #     if p not in self.state_map:
+        #         return
 
         self.queue.put(node)
 
-    def append(self, node, cp=True):
-        if cp or node not in self.state_map:
-            cp_node = Node(node.value)
+    def copy(self, node):
+        if node not in self.state_map:
+            source = self.state_map.get(node.source, None)
+
+            cp_node = Node(node.value, source=source)
             self.state_map[node] = cp_node
+            cp_node.prev = [self.state_map[p] for p in node.prev if p in self.state_map]
         else:
-            cp_node = self.state_map[node]
+            node = cp_node
 
-        cp_node.prev = set([self.state_map[p] for p in node.prev if p in self.state_map])
-        for n in cp_node.prev:
-            n.next.append(cp_node)
-
-        if len(self.state_entry) <= self.state:
-            self.state_entry.append(cp_node)
+        self.append(cp_node)
 
         return cp_node
+
+    def append(self, node):
+        for n in node.prev:
+            n.next.append(node)
+
+        if len(self.state_entry) <= self.state:
+            self.state_entry.append(node)
+
+        return node
 
     @property
     def next_state(self):
@@ -437,6 +448,7 @@ class ScheduleBFS:
         self.state = state
 
     def visit(self, node):
+        self.visited.add(node)
         for base_class in inspect.getmro(node.value.__class__):
             if hasattr(self, base_class.__name__):
                 return getattr(self, base_class.__name__)(node)
@@ -445,59 +457,95 @@ class ScheduleBFS:
 
     def LoopBlock(self, node):
         nloop, nexit = node.next
+        nprev, nsink = node.prev
 
         second_state = getattr(node.value, 'state', self.state) != self.state
         second_loop = second_state or node in self.state_map
 
-        if not second_state:
-            # Time to switch state
-            if second_loop and len(node.prev) == 1:
-                self.change_state(node.value.looped_state)
-                self.queue.put(nloop)
-                return
-
-            if not second_loop:
-                node.value.state = self.state
-                node.value.looped_state = self.add_state()
-                for p in node.prev:
-                    if (isinstance(p.value, ir.LoopBlockSink) and p.value.block is node.value):
-                        node.value.loopback = p
-            else:
-                node.prev = {node.value.loopback}
-
+        orig = None
         if second_loop:
-            hdl_node = Node(ir.HDLBlock(in_cond=node.value.in_cond), prev=list(node.prev))
-            self.append(hdl_node)
-            state_node = Node(ir.AssignValue(ir.Name('_state'), node.value.looped_state),
-                              prev=[hdl_node])
-            self.append(state_node)
-
-            hdlsink_node = Node(ir.HDLBlockSink(hdl_node.value), prev=[state_node])
-
-            self.append(hdlsink_node)
-
-            nexit.prev.append(hdlsink_node)
-            self.schedule(nexit)
             if not second_state:
-                self.schedule(node)
+                orig = self.state_map[node]
+
+            prev = [self.state_map[nsink]]
         else:
-            self.append(node)
+            prev = [self.state_map[nprev]]
+
+        cond = Node(ir.HDLBlock(in_cond=node.value.in_cond), prev=prev)
+        self.state_map[node] = cond
+        self.append(cond)
+
+        if not second_loop:
             self.schedule(nexit)
             self.schedule(nloop)
+            node.value.state = self.state
+            node.value.looped_state = self.add_state(nloop)
+        elif second_state:
+            state_node = Node(ir.AssignValue(ir.Name('_state'), node.value.looped_state),
+                              prev=[cond])
+            self.append(state_node)
+            sink_node = Node(ir.HDLBlockSink, source=cond, prev=[state_node, cond])
+            self.append(sink_node)
+            self.schedule(nexit)
+        else:
+            state_node = Node(ir.AssignValue(ir.Name('_state'), node.value.looped_state),
+                              prev=[cond])
+            self.append(state_node)
+            sink_node = Node(ir.HDLBlockSink, source=cond, prev=[state_node, cond], next_=[orig.sink])
+            self.append(sink_node)
+            orig.sink.prev.append(sink_node)
 
-    def LoopBlockSink(self, node: ir.LoopBlockSink):
-        self.append(node)
+        # if not second_state:
+        #     # Time to switch state
+        #     if second_loop and len(node.prev) == 1:
+        #         self.change_state(node.value.looped_state)
+        #         self.queue.put(nloop)
+        #         return
+
+        #     if not second_loop:
+        #         node.value.state = self.state
+        #         node.value.looped_state = self.add_state()
+        #         for p in node.prev:
+        #             if (isinstance(p.value, ir.LoopBlockSink) and p.value.block is node.value):
+        #                 node.value.loopback = p
+        #     else:
+        #         node.prev = {node.value.loopback}
+
+        # if second_loop:
+        #     hdl_node = Node(ir.HDLBlock(in_cond=node.value.in_cond), prev=list(node.prev))
+        #     self.append(hdl_node)
+        #     state_node = Node(ir.AssignValue(ir.Name('_state'), node.value.looped_state),
+        #                       prev=[hdl_node])
+        #     self.append(state_node)
+
+        #     hdlsink_node = Node(ir.HDLBlockSink(hdl_node.value), prev=[state_node])
+
+        #     self.append(hdlsink_node)
+
+        #     nexit.prev.append(hdlsink_node)
+        #     self.schedule(nexit)
+        #     if not second_state:
+        #         self.schedule(node)
+        # else:
+        #     self.append(node)
+        #     self.schedule(nexit)
+        #     self.schedule(nloop)
+
+    def HDLBlockSink(self, node: ir.LoopBlockSink):
+        if not all(p in self.visited for p in node.prev):
+            return
+
+        self.copy(node)
         for n in node.next:
             self.schedule(n)
 
-    def HDLBlockSink(self, node: ir.HDLBlockSink):
-        self.append(node, cp=False)
-
+    def LoopBlockSink(self, node: ir.LoopBlockSink):
+        self.copy(node)
         for n in node.next:
             self.schedule(n)
 
     def generic_visit(self, node):
-        self.append(node)
+        self.copy(node)
 
         for n in node.next:
             self.schedule(n)
@@ -511,8 +559,11 @@ def schedule(block, cfg, ctx):
 
     v = ScheduleBFS(ctx)
     v.bfs(cfg)
-    draw_scheduled_cfg(v.state_entry[0])
-    # draw_scheduled_cfg(v.state_entry[1])
+
+    draw_scheduled_cfg(v.state_maps[0][v.state_entry[0]])
+    draw_scheduled_cfg(v.state_maps[1][v.state_entry[1]])
+
+    breakpoint()
 
     states = []
     for n in v.state_entry:
@@ -520,8 +571,6 @@ def schedule(block, cfg, ctx):
         v.visit(n)
         states.append(v.parent)
         print(v.parent)
-
-    breakpoint()
 
     Scheduler(ctx).visit(block)
     # print('*** Schedule ***')
