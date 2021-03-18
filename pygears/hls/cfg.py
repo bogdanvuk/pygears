@@ -93,9 +93,15 @@ class Node(object):
     """A node in the CFG."""
     __slots__ = ['next', 'value', 'prev']
 
-    def __init__(self, value):
-        self.next = set()
-        self.prev = set()
+    def __init__(self, value, next_=None, prev=None):
+        if next_ is None:
+            next_ = []
+
+        if prev is None:
+            prev = []
+
+        self.next = next_
+        self.prev = prev
         self.value = value
 
         if self.value is not None and not hasattr(self.value, 'reaching'):
@@ -133,14 +139,14 @@ class CFG(HDLVisitor):
             node = to_see.pop()
             seen.add(node)
             for succ in node.next:
-                succ.prev.add(node)
+                succ.prev.append(node)
                 if succ not in seen:
                     to_see.append(succ)
 
     def set_head(self, node):
         """Link this node to the current leaves."""
         for head in self.head:
-            head.next.add(node)
+            head.next.append(node)
         self.head[:] = []
         self.head.append(node)
 
@@ -189,8 +195,8 @@ class CFG(HDLVisitor):
             self.head.extend(body_exit)
 
     def LoopBlock(self, block: ir.LoopBlock):
-        # node = Node(block)
-        node = Node(block.in_cond)
+        node = Node(block)
+        # node = Node(block.in_cond)
         self.set_head(node)
         # Start a new level of nesting
         self.break_.append([])
@@ -199,7 +205,10 @@ class CFG(HDLVisitor):
         self.BaseBlock(block)
         self.head.extend(self.continue_.pop())
 
+        sink = Node(ir.LoopBlockSink(block))
+        self.set_head(sink)
         self.set_head(node)
+        self.set_head(Node(ir.HDLBlockSink(block)))
 
         # The break statements and the test go to the next node
         self.head.extend(self.break_.pop())
@@ -207,7 +216,8 @@ class CFG(HDLVisitor):
     def IfElseBlock(self, block: ir.IfElseBlock):
         branch_exits = []
         for stmt in block.stmts:
-            test = Node(stmt.in_cond)
+            # test = Node(stmt.in_cond)
+            test = Node(stmt)
             self.set_head(test)
 
             self.BaseBlock(stmt)
@@ -219,6 +229,8 @@ class CFG(HDLVisitor):
                 self.head.append(test)
 
         self.head.extend(branch_exits)
+        sink = Node(ir.HDLBlockSink(block))
+        self.set_head(sink)
 
     def generic_visit(self, node):
         breakpoint()
