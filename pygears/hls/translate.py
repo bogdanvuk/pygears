@@ -63,14 +63,12 @@ def transform(modblock, ctx: GearContext):
     modblock = handle_generators(modblock, ctx)
     hls_debug(modblock, 'Handle Generators')
 
-    modblock, cfg = cfgutil.forward(modblock, cfgutil.ReachingDefinitions())
+    # modblock, cfg = cfgutil.forward(modblock, cfgutil.ReachingDefinitions())
 
-    modblock = infer_registers(modblock, ctx)
-    hls_debug(modblock, 'Infer registers')
+    # modblock = infer_registers(modblock, ctx)
+    # hls_debug(modblock, 'Infer registers')
 
-    breakpoint()
-
-    modblock = schedule(modblock, cfg, ctx)
+    modblock = schedule(modblock, ctx)
 
     modblock = inline(modblock, ctx)
     hls_debug(modblock, 'Inline values')

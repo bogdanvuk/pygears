@@ -7,17 +7,24 @@ from pygears.hdl import hdlgen, synth
 from pygears.lib import drv, verif, delay_rng
 
 
+# @gear(hdl={'compile': True})
+# async def test(din: Bool) -> Uint[4]:
+#     c = Bool(True)
+
+#     while c:
+#         async with din as c:
+#             if c:
+#                 c = 1
+
+#             yield c
+
 @gear(hdl={'compile': True})
 async def test(din: Bool) -> Uint[4]:
-    c = Bool(True)
-    cnt = Uint[4](0)
+    async with din as c:
+        if c:
+            c = 1
 
-    while c:
-        async with din as c:
-            a = c
-            a = a + 1
-            cnt += 1
-            yield a
+        yield c
 
 
 test(Intf(Bool))

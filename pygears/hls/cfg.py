@@ -70,8 +70,6 @@ def get_updated(node):
     """
     if isinstance(node, ir.AssignValue):
         return _get_target(node.target)
-    elif isinstance(node, ir.HDLBlock):
-        return _get_target(node.in_cond)
     else:
         return set()
 
@@ -92,9 +90,9 @@ def get_updated(node):
     #     return set()
 
 
-class Node(object):
-    """A node in the CFG."""
-    __slots__ = ['next', 'value', 'prev', 'sink', '_source']
+class Node:
+    # """A node in the CFG."""
+    # __slots__ = ['next', 'value', 'prev', 'sink', '_source']
 
     def __init__(self, value, next_=None, prev=None, source=None):
         if next_ is None:
@@ -110,9 +108,6 @@ class Node(object):
 
         self.source = source
         self.sink = None
-
-        if self.value is not None and not hasattr(self.value, 'reaching'):
-            self.value.reaching = {}
 
     @property
     def source(self):
@@ -201,7 +196,8 @@ class CFG(HDLVisitor):
         self.set_head(expr)
 
     def HDLBlock(self, block: ir.HDLBlock):
-        test = Node(block.in_cond)
+        # test = Node(block.in_cond)
+        test = Node(block)
         self.set_head(test)
 
         self.BaseBlock(block)
@@ -213,6 +209,7 @@ class CFG(HDLVisitor):
             self.head[:] = []
             self.head.append(test)
             self.head.extend(body_exit)
+            self.set_head(Node(ir.HDLBlockSink(), source=test))
 
     def LoopBlock(self, block: ir.LoopBlock):
         node = Node(block)
@@ -355,36 +352,38 @@ class Forward(object):
         self.in_label = label + '_in'
         self.gen_label = label + '_gen'
         self.kill_label = label + '_kill'
+        self.reaching = {}
 
     def visit(self, node):
+        if node not in self.reaching:
+            self.reaching[node] = {}
+
+        reaching = self.reaching[node]
+
         if node.value:
-            if 'out' in node.value.reaching:
-                before = hash(node.value.reaching['out'])
+            if 'out' in reaching:
+                before = hash(reaching['out'])
             else:
                 before = None
 
             preds = [
-                pred.value.reaching['out'] for pred in node.prev if 'out' in pred.value.reaching
+                self.reaching[pred]['out'] for pred in node.prev
+                if 'out' in self.reaching.get(pred, {})
             ]
             if preds:
                 incoming = functools.reduce(self.op, preds[1:], preds[0])
             else:
                 incoming = frozenset()
 
-            node.value.reaching['in'] = incoming
+            reaching['in'] = incoming
             gen, kill = self.gen(node, incoming)
-            node.value.reaching['gen'] = gen
-            node.value.reaching['kill'] = kill
-            node.value.reaching['out'] = (incoming - kill) | gen
+            reaching['gen'] = gen
+            reaching['kill'] = kill
+            reaching['out'] = (incoming - kill) | gen
 
-            if hash(node.value.reaching['out']) != before:
+            if hash(reaching['out']) != before:
                 for succ in node.next:
                     self.visit(succ)
-        else:
-            preds = [
-                pred.value.reaching['out'] for pred in node.prev if 'out' in pred.value.reaching
-            ]
-            self.exit = functools.reduce(self.op, preds[1:], preds[0])
 
 
 def forward(node, analysis):

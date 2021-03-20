@@ -1,6 +1,7 @@
 from queue import Queue
 import attr
 import inspect
+from .. import cfg as cfgutil
 from contextlib import contextmanager
 from copy import deepcopy, copy
 from ..cfg import Node
@@ -249,25 +250,30 @@ class SkipBranch(Exception):
     pass
 
 
-def create_scheduled_cfg(node, G, visited, labels):
+def create_scheduled_cfg(node, G, visited, labels, reaching=None):
     if node in visited:
         return
 
     visited.add(node)
     if node.value is None:
-        labels[id(node)] = "None"
+        name = "None"
     elif isinstance(node.value, ir.BaseBlock):
-        labels[id(node)] = f'{type(node.value)}'
+        name = f'{type(node.value)}'
     else:
-        labels[id(node)] = str(node.value)
+        name = str(node.value)
+
+    if reaching and node in reaching:
+        name += ' <- ' + ','.join([str(rin[1]) for rin in reaching[node].get('in', {})])
+
+    labels[id(node)] = name
 
     for n in node.next:
         G.add_edge(id(node), id(n))
 
-        create_scheduled_cfg(n, G, visited, labels)
+        create_scheduled_cfg(n, G, visited, labels, reaching=reaching)
 
 
-def draw_scheduled_cfg(cfg):
+def draw_scheduled_cfg(cfg, reaching=None):
     import networkx as nx
     import matplotlib.pyplot as plt
 
@@ -275,7 +281,7 @@ def draw_scheduled_cfg(cfg):
     visited = set()
     labels = {}
 
-    create_scheduled_cfg(cfg, G, visited, labels)
+    create_scheduled_cfg(cfg, G, visited, labels, reaching=reaching)
 
     pos = nx.planar_layout(G)
     nx.draw(G, pos, font_size=16, with_labels=False)
@@ -287,13 +293,75 @@ def draw_scheduled_cfg(cfg):
     plt.show()
 
 
+class CfgDfs:
+    def visit(self, node):
+        for base_class in inspect.getmro(node.value.__class__):
+            if hasattr(self, base_class.__name__):
+                return getattr(self, base_class.__name__)(node)
+        else:
+            return self.generic_visit(node)
+
+    def enter_block(self, node):
+        pass
+
+    def exit_block(self, node):
+        pass
+
+    def enter_branch(self, node):
+        pass
+
+    def exit_branch(self, node):
+        pass
+
+    def HDLBlock(self, node):
+        self.enter_block(node)
+        for n in node.next:
+            if isinstance(n.value, ir.HDLBlockSink):
+                continue
+
+            self.enter_branch(n)
+            self.visit(n)
+            self.exit_branch(n)
+
+        self.exit_block(node)
+
+        self.generic_visit(node.sink)
+
+    def generic_visit(self, node):
+        for n in node.next:
+            self.visit(n)
+
+    def HDLBlockSink(self, node: ir.HDLBlockSink):
+        return
+
+
+class Inline(CfgDfs):
+    def __init__(self):
+        self.scopes = [{}]
+
+    @property
+    def scope(self):
+        return self.scopes[-1]
+
+    def enter_block(self, block):
+        self.scopes.append(block)
+
+    def exit_block(self, block):
+        self.scopes.pop()
+
+    def enter_branch(self, node):
+        pass
+
+    def exit_branch(self, node):
+        pass
+
+    def AssignValue(self, node: ir.AssignValue):
+        self.generic_visit(node)
+
+
 class RebuildStateIR:
-    def __init__(self, ctx):
-        self.ctx = ctx
+    def __init__(self):
         self.scope = [ir.HDLBlock()]
-        self.queue = Queue()
-        self.visited = set()
-        self.sink = None
 
     @property
     def parent(self):
@@ -311,7 +379,6 @@ class RebuildStateIR:
     def visit(self, node):
         for base_class in inspect.getmro(node.value.__class__):
             if hasattr(self, base_class.__name__):
-                self.visited.add(node)
                 return getattr(self, base_class.__name__)(node)
         else:
             return self.generic_visit(node)
@@ -509,7 +576,12 @@ class ScheduleBFS:
             self.schedule(n)
 
 
-def schedule(block, cfg, ctx):
+def schedule(block, ctx):
+
+    cfg = cfgutil.CFG.build_cfg(block)
+
+    # modblock, cfg = cfgutil.forward(block, cfgutil.ReachingDefinitions())
+
     # ctx.scope['_rst_cond'] = ir.Variable('_rst_cond', Bool)
     # block.stmts.insert(0, ir.AssignValue(ctx.ref('_rst_cond', 'store'), res_false))
 
@@ -521,15 +593,26 @@ def schedule(block, cfg, ctx):
         reg=True,
     )
 
-    v = ScheduleBFS(ctx)
-    v.bfs(cfg)
+    draw_scheduled_cfg(cfg.entry)
 
-    # draw_scheduled_cfg(v.state_entry[0])
+    v = ScheduleBFS(ctx)
+    v.bfs(cfg.entry)
+
+    state0 = v.state_entry[0]
+
+    # draw_scheduled_cfg(state0)
+    breakpoint()
+    Inline().visit(state0)
+
+    # v = cfgutil.ReachingDefinitions()
+    # v.visit(state0)
+
     # draw_scheduled_cfg(v.state_entry[1])
+
 
     states = []
     for n in v.state_entry:
-        v = RebuildStateIR(ctx)
+        v = RebuildStateIR()
         v.visit(n)
         states.append(v.parent)
         print(v.parent)
