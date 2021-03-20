@@ -48,7 +48,7 @@ def _(node: ast.If, ctx: Context):
 
 @node_visitor(ast.While)
 def _(node: ast.While, ctx: Context):
-    ir_node = ir.LoopBlock(test=visit_ast(node.test, ctx), stmts=[])
+    ir_node = ir.LoopBlock(in_cond=visit_ast(node.test, ctx), stmts=[])
     return visit_block(ir_node, node.body, ctx)
 
 

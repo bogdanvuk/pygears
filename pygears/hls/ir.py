@@ -982,14 +982,8 @@ class BaseBlock(Statement):
 
 @attr.s(auto_attribs=True, eq=False)
 class HDLBlock(BaseBlock):
-    test: Expr = None
     in_cond: Expr = res_true
     exit_cond: Expr = res_true
-
-    def __attrs_post_init__(self):
-        super().__attrs_post_init__()
-        if self.test is not None:
-            self.in_cond = self.test
 
     def __str__(self):
         body = ''
@@ -1014,10 +1008,11 @@ class HDLBlock(BaseBlock):
 
 @attr.s(auto_attribs=True, eq=False)
 class LoopBlock(HDLBlock):
-    def __attrs_post_init__(self):
-        super().__attrs_post_init__()
-        if self.test is not None:
-            self.exit_cond = UnaryOpExpr(self.test, opc.Not)
+    pass
+    # def __attrs_post_init__(self):
+    #     super().__attrs_post_init__()
+    #     if self.test is not None:
+    #         self.exit_cond = UnaryOpExpr(self.test, opc.Not)
 
 
 @attr.s(auto_attribs=True, eq=False)

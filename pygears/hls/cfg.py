@@ -52,8 +52,9 @@ def _get_target(target):
     elif isinstance(target, (ir.Component)):
         return set()
     else:
-        breakpoint()
-        raise ValueError
+        return set()
+        # breakpoint()
+        # raise ValueError
 
 
 def get_updated(node):
@@ -69,6 +70,8 @@ def get_updated(node):
     """
     if isinstance(node, ir.AssignValue):
         return _get_target(node.target)
+    elif isinstance(node, ir.HDLBlock):
+        return _get_target(node.in_cond)
     else:
         return set()
 
@@ -391,8 +394,8 @@ def forward(node, analysis):
 
     cfg_obj = CFG.build_cfg(node)
 
-    if hls_debug_log_enabled():
-        draw_cfg(cfg_obj)
+    # if hls_debug_log_enabled():
+    #     draw_cfg(cfg_obj)
 
     analysis.visit(cfg_obj.entry)
 

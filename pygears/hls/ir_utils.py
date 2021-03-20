@@ -149,9 +149,8 @@ class IrVisitor:
             self.visit(stmt)
 
     def HDLBlock(self, block: ir.HDLBlock):
-        self.visit(block.test)
-
         if block.in_cond != ir.res_true:
+            block.in_cond.reaching = block.reaching
             self.visit(block.in_cond)
 
         self.BaseBlock(block)
@@ -206,8 +205,7 @@ class IrRewriter:
         return rw_block
 
     def HDLBlock(self, block: ir.HDLBlock):
-        rw_block = type(block)(self.visit(block.test),
-                               self.visit(block.in_cond))
+        rw_block = type(block)(self.visit(block.in_cond))
 
         for stmt in block.stmts:
             add_to_list(rw_block.stmts, self.visit(stmt))

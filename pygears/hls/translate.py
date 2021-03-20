@@ -1,6 +1,6 @@
 from pygears.core.gear import Gear
 from pygears import reg
-from pygears.conf.trace import gear_definition_location
+from pygears.conf.trace import gear_definition_location, TraceLevel
 from .ast import visit_ast, GearContext, FuncContext, Context, form_hls_syntax_error
 from .ast.utils import get_function_ast
 from . import ir
@@ -13,7 +13,7 @@ from . import cfg as cfgutil
 
 
 def translate_gear(gear: Gear):
-    # hls_enable_debug_log()
+    hls_enable_debug_log()
     hls_debug(title=f'Translating: {gear.name}')
 
     exec_context = reg['gear/exec_context']
@@ -29,14 +29,17 @@ def translate_gear(gear: Gear):
 
     res = process(body_ast, ctx)
 
-    exc_value = None
-    try:
-        res = transform(res, ctx)
-    except Exception as e:
-        exc_value, tb = form_hls_syntax_error(ctx, e)
+    if reg['trace/level'] == TraceLevel.user:
+        exc_value = None
+        try:
+            res = transform(res, ctx)
+        except Exception as e:
+            exc_value, tb = form_hls_syntax_error(ctx, e)
 
-    if exc_value is not None:
-        raise exc_value.with_traceback(tb)
+        if exc_value is not None:
+            raise exc_value.with_traceback(tb)
+    else:
+        res = transform(res, ctx)
 
     reg['gear/exec_context'] = exec_context
     reg['gear/current_module'] = parent
@@ -62,8 +65,10 @@ def transform(modblock, ctx: GearContext):
 
     modblock, cfg = cfgutil.forward(modblock, cfgutil.ReachingDefinitions())
 
-    # modblock = infer_registers(modblock, ctx)
-    # hls_debug(modblock, 'Infer registers')
+    modblock = infer_registers(modblock, ctx)
+    hls_debug(modblock, 'Infer registers')
+
+    breakpoint()
 
     modblock = schedule(modblock, cfg, ctx)
 

@@ -193,7 +193,7 @@ class AsyncForContext:
             self.ctx.ref(data_name),
             ir.Await(ir.Component(self.intf, 'data'), in_await=ir.Component(self.intf, 'valid')))
 
-        eot_loop_stmt = ir.LoopBlock(test=eot_test, stmts=[data_load, eot_load])
+        eot_loop_stmt = ir.LoopBlock(in_cond=eot_test, stmts=[data_load, eot_load])
 
         self.ctx.ir_block_closure.append(eot_loop_stmt)
 
