@@ -57,11 +57,11 @@ def process(body_ast, ctx):
 def transform(modblock, ctx: GearContext):
     hls_debug(modblock, 'Initial')
 
-    modblock = resolve_gear_calls(modblock, ctx)
-    hls_debug(modblock, 'Resolve Gear Calls')
+    # modblock = resolve_gear_calls(modblock, ctx)
+    # hls_debug(modblock, 'Resolve Gear Calls')
 
-    modblock = handle_generators(modblock, ctx)
-    hls_debug(modblock, 'Handle Generators')
+    # modblock = handle_generators(modblock, ctx)
+    # hls_debug(modblock, 'Handle Generators')
 
     # modblock, cfg = cfgutil.forward(modblock, cfgutil.ReachingDefinitions())
 

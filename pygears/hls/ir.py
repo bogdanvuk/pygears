@@ -966,7 +966,7 @@ class AssertValue(Statement):
 
 @attr.s(auto_attribs=True, kw_only=True, eq=False)
 class BaseBlock(Statement):
-    stmts: typing.List = None
+    stmts: typing.List = attr.Factory(list)
 
     def __attrs_post_init__(self):
         if self.stmts is None:
@@ -981,29 +981,52 @@ class BaseBlock(Statement):
 
 
 @attr.s(auto_attribs=True, eq=False)
-class HDLBlock(BaseBlock):
-    in_cond: Expr = res_true
+class HDLBlock(Statement):
+    branches: typing.List = attr.Factory(list)
+    tests: Expr = attr.Factory(list)
     exit_cond: Expr = res_true
 
+    def add_branch(self, stmts=None, test=res_true):
+        if stmts is None:
+            stmts = []
+
+        self.branches.append([])
+        self.tests.append(test)
+
+    @property
+    def stmts(self):
+        return self.branches[-1]
+
+    @stmts.setter
+    def stmts(self, val):
+        self.branches[-1] = val
+
     def __str__(self):
-        body = ''
+        sblk = ''
+        for t, b in zip(self.tests, self.branches):
+            body = ''
 
-        if self.in_cond == res_true:
-            header = ''
-        else:
-            header = f'(if {str(self.in_cond)})'
+            if t == res_true and not b:
+                continue
 
-        footer = ''
-        if self.exit_cond != res_true:
-            footer = f' (exit: {str(self.exit_cond)})'
+            if t == res_true:
+                header = ''
+            else:
+                header = f'(if {str(t)})'
 
-        for s in self.stmts:
-            body += str(s)
+            footer = ''
+            # if self.exit_cond != res_true:
+            #     footer = f' (exit: {str(self.exit_cond)})'
 
-        if not header and body.count('\n') == 1:
-            return f'{body[:-1]}{footer}\n'
+            for s in b:
+                body += str(s)
 
-        return f'{header}{{\n{textwrap.indent(body, "    ")}}}{footer}\n'
+            # if not header and body.count('\n') == 1:
+            #     return f'{body[:-1]}{footer}\n'
+
+            sblk += f'{header}{{\n{textwrap.indent(body, "    ")}}}{footer}\n'
+
+        return sblk
 
 
 @attr.s(auto_attribs=True, eq=False)

@@ -4,10 +4,11 @@ import inspect
 from .. import cfg as cfgutil
 from contextlib import contextmanager
 from copy import deepcopy, copy
-from ..cfg import Node
+from ..cfg import Node, draw_cfg
 from ..ir_utils import res_true, HDLVisitor, ir, add_to_list, res_false, is_intf_id
 from pygears.typing import bitw, Uint, Bool
 from .loops import infer_cycle_done
+from .inline_cfg import Inline
 
 
 class PPrinter(HDLVisitor):
@@ -293,75 +294,9 @@ def draw_scheduled_cfg(cfg, reaching=None):
     plt.show()
 
 
-class CfgDfs:
-    def visit(self, node):
-        for base_class in inspect.getmro(node.value.__class__):
-            if hasattr(self, base_class.__name__):
-                return getattr(self, base_class.__name__)(node)
-        else:
-            return self.generic_visit(node)
-
-    def enter_block(self, node):
-        pass
-
-    def exit_block(self, node):
-        pass
-
-    def enter_branch(self, node):
-        pass
-
-    def exit_branch(self, node):
-        pass
-
-    def HDLBlock(self, node):
-        self.enter_block(node)
-        for n in node.next:
-            if isinstance(n.value, ir.HDLBlockSink):
-                continue
-
-            self.enter_branch(n)
-            self.visit(n)
-            self.exit_branch(n)
-
-        self.exit_block(node)
-
-        self.generic_visit(node.sink)
-
-    def generic_visit(self, node):
-        for n in node.next:
-            self.visit(n)
-
-    def HDLBlockSink(self, node: ir.HDLBlockSink):
-        return
-
-
-class Inline(CfgDfs):
-    def __init__(self):
-        self.scopes = [{}]
-
-    @property
-    def scope(self):
-        return self.scopes[-1]
-
-    def enter_block(self, block):
-        self.scopes.append(block)
-
-    def exit_block(self, block):
-        self.scopes.pop()
-
-    def enter_branch(self, node):
-        pass
-
-    def exit_branch(self, node):
-        pass
-
-    def AssignValue(self, node: ir.AssignValue):
-        self.generic_visit(node)
-
-
 class RebuildStateIR:
     def __init__(self):
-        self.scope = [ir.HDLBlock()]
+        self.scope = [ir.BaseBlock()]
 
     @property
     def parent(self):
@@ -579,6 +514,7 @@ class ScheduleBFS:
 def schedule(block, ctx):
 
     cfg = cfgutil.CFG.build_cfg(block)
+    # draw_cfg(cfg)
 
     # modblock, cfg = cfgutil.forward(block, cfgutil.ReachingDefinitions())
 
@@ -593,22 +529,20 @@ def schedule(block, ctx):
         reg=True,
     )
 
-    draw_scheduled_cfg(cfg.entry)
+    # draw_scheduled_cfg(cfg.entry)
 
     v = ScheduleBFS(ctx)
     v.bfs(cfg.entry)
 
     state0 = v.state_entry[0]
 
-    # draw_scheduled_cfg(state0)
-    breakpoint()
+    draw_scheduled_cfg(state0)
     Inline().visit(state0)
 
     # v = cfgutil.ReachingDefinitions()
     # v.visit(state0)
 
     # draw_scheduled_cfg(v.state_entry[1])
-
 
     states = []
     for n in v.state_entry:
@@ -624,19 +558,12 @@ def schedule(block, ctx):
     state_num = len(states)
     ctx.scope['_state'].val = ir.ResExpr(Uint[bitw(state_num - 1)](0))
 
-    stateblock = ir.IfElseBlock(stmts=[])
-    for i, res in enumerate(states):
-        # v = StateIsolator(ctx, i)
-        # res = v.visit(block)
-        # if isinstance(res, list):
-        #     res = ir.HDLBlock(stmts=res)
+    tests = [
+        ir.BinOpExpr((ctx.ref('_state'), ir.ResExpr(i)), ir.opc.Eq) for i in range(len(states))
+    ]
+    branches = [s.stmts for s in states]
 
-        res.exit_cond = res_false
-
-        stateblock.stmts.append(res)
-
-        if state_num > 1:
-            res.in_cond = ir.BinOpExpr((ctx.ref('_state'), ir.ResExpr(i)), ir.opc.Eq)
+    stateblock = ir.HDLBlock(branches=branches, tests=tests)
 
     if state_num > 1:
         modblock = ir.CombBlock(stmts=[stateblock])

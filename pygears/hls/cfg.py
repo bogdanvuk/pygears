@@ -21,6 +21,7 @@ CFG.
 from __future__ import absolute_import
 import functools
 import operator
+import inspect
 
 import ast as gast
 
@@ -195,22 +196,6 @@ class CFG(HDLVisitor):
         expr = Node(stmt)
         self.set_head(expr)
 
-    def HDLBlock(self, block: ir.HDLBlock):
-        # test = Node(block.in_cond)
-        test = Node(block)
-        self.set_head(test)
-
-        self.BaseBlock(block)
-
-        # If there is a condition to enter this block, make two possible paths:
-        # one through it and one around it
-        if block.in_cond != ir.res_true:
-            body_exit = self.head[:]
-            self.head[:] = []
-            self.head.append(test)
-            self.head.extend(body_exit)
-            self.set_head(Node(ir.HDLBlockSink(), source=test))
-
     def LoopBlock(self, block: ir.LoopBlock):
         node = Node(block)
         # node = Node(block.in_cond)
@@ -230,27 +215,37 @@ class CFG(HDLVisitor):
         # The break statements and the test go to the next node
         self.head.extend(self.break_.pop())
 
-    def IfElseBlock(self, block: ir.IfElseBlock):
+    # def HDLBlock(self, block: ir.HDLBlock):
+    #     # test = Node(block.in_cond)
+    #     test = Node(block)
+    #     self.set_head(test)
+
+    #     self.BaseBlock(block)
+
+    #     # If there is a condition to enter this block, make two possible paths:
+    #     # one through it and one around it
+    #     if block.in_cond != ir.res_true:
+    #         body_exit = self.head[:]
+    #         self.head[:] = []
+    #         self.head.append(test)
+    #         self.head.extend(body_exit)
+    #         self.set_head(Node(ir.HDLBlockSink(), source=test))
+
+    def HDLBlock(self, block: ir.HDLBlock):
         branch_exits = []
-        root = None
-        for stmt in block.stmts:
-            # test = Node(stmt.in_cond)
-            test = Node(stmt)
-            if root is None:
-                root = test
+        node = Node(block)
 
-            self.set_head(test)
+        for t, b in zip(block.tests, block.branches):
+            self.set_head(node)
 
-            self.BaseBlock(stmt)
+            for stmt in b:
+                self.visit(stmt)
 
             branch_exits.extend(self.head[:])
             self.head[:] = []
 
-            if stmt.in_cond != ir.res_true:
-                self.head.append(test)
-
         self.head.extend(branch_exits)
-        sink = Node(ir.HDLBlockSink(), source=root)
+        sink = Node(ir.HDLBlockSink(), source=node)
         self.set_head(sink)
 
     def generic_visit(self, node):
@@ -393,8 +388,8 @@ def forward(node, analysis):
 
     cfg_obj = CFG.build_cfg(node)
 
-    # if hls_debug_log_enabled():
-    #     draw_cfg(cfg_obj)
+    if hls_debug_log_enabled():
+        draw_cfg(cfg_obj)
 
     analysis.visit(cfg_obj.entry)
 
@@ -501,3 +496,50 @@ class Active(Forward):
             return gen, kill
 
         super(Active, self).__init__('active', active)
+
+
+class CfgDfs:
+    def visit(self, node):
+        for base_class in inspect.getmro(node.value.__class__):
+            if hasattr(self, base_class.__name__):
+                return getattr(self, base_class.__name__)(node)
+        else:
+            return self.generic_visit(node)
+
+    def enter_block(self, node):
+        pass
+
+    def exit_block(self, node):
+        pass
+
+    def enter_branch(self, node):
+        pass
+
+    def exit_branch(self, node):
+        pass
+
+    def BaseBlock(self, node):
+        self.enter_block(node)
+        self.visit(node.next[0])
+        self.exit_block(node)
+
+    def HDLBlock(self, node):
+        self.enter_block(node)
+        for n in node.next:
+            if isinstance(n.value, ir.HDLBlockSink):
+                continue
+
+            self.enter_branch(n)
+            self.visit(n)
+            self.exit_branch(n)
+
+        self.exit_block(node)
+
+        self.generic_visit(node.sink)
+
+    def generic_visit(self, node):
+        for n in node.next:
+            self.visit(n)
+
+    def HDLBlockSink(self, node: ir.HDLBlockSink):
+        return

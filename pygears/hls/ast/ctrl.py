@@ -28,7 +28,8 @@ def _(node: ast.If, ctx: Context):
 
         return None
     else:
-        ir_node = ir.HDLBlock(in_cond=test_expr, stmts=[])
+        ir_node = ir.HDLBlock()
+        ir_node.add_branch(test=test_expr)
         visit_block(ir_node, node.body, ctx)
         if hasattr(node, 'orelse') and node.orelse:
             top = ir.IfElseBlock(stmts=[])
@@ -42,7 +43,10 @@ def _(node: ast.If, ctx: Context):
                     top.stmts = [ir_node, ir.HDLBlock(stmts=top.stmts)]
 
             return top
+        else:
+            ir_node.add_branch()
 
+        print(ir_node)
         return ir_node
 
 

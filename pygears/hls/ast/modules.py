@@ -4,7 +4,7 @@ from . import Context, FuncContext, ir, node_visitor, visit_ast, visit_block
 
 @node_visitor(ast.AsyncFunctionDef)
 def parse_async_func(node, ctx: Context):
-    return visit_block(ir.HDLBlock(), node.body, ctx)
+    return visit_block(ir.BaseBlock(), node.body, ctx)
 
 
 @node_visitor((ast.Lambda, ast.FunctionDef))
