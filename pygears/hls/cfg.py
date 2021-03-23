@@ -180,17 +180,23 @@ class CFG(HDLVisitor):
       TypeError: If the input is not a function definition.
     """
         cfg = cls()
-        cfg.entry = Node(node)
-        cfg.head = [cfg.entry]
-        cfg.BaseBlock(node)
-        cfg.exit = Node(None)
+        cfg.head = []
+        cfg.entry = cfg.BaseBlock(node)
+        cfg.exit = cfg.entry.sink
         cfg.set_head(cfg.exit)
         cfg.backlink(cfg.entry)
         return cfg
 
     def BaseBlock(self, block: ir.BaseBlock):
+        node = Node(block)
+        self.set_head(node)
         for stmt in block.stmts:
             self.visit(stmt)
+
+        sink = Node(ir.BaseBlockSink(), source=node)
+        self.set_head(sink)
+
+        return node
 
     def Statement(self, stmt: ir.Statement):
         expr = Node(stmt)
@@ -215,31 +221,20 @@ class CFG(HDLVisitor):
         # The break statements and the test go to the next node
         self.head.extend(self.break_.pop())
 
-    # def HDLBlock(self, block: ir.HDLBlock):
-    #     # test = Node(block.in_cond)
-    #     test = Node(block)
-    #     self.set_head(test)
-
-    #     self.BaseBlock(block)
-
-    #     # If there is a condition to enter this block, make two possible paths:
-    #     # one through it and one around it
-    #     if block.in_cond != ir.res_true:
-    #         body_exit = self.head[:]
-    #         self.head[:] = []
-    #         self.head.append(test)
-    #         self.head.extend(body_exit)
-    #         self.set_head(Node(ir.HDLBlockSink(), source=test))
-
     def HDLBlock(self, block: ir.HDLBlock):
         branch_exits = []
         node = Node(block)
 
-        for t, b in zip(block.tests, block.branches):
+        for b in block.branches:
             self.set_head(node)
+            bnode = Node(b)
+            self.set_head(bnode)
 
-            for stmt in b:
+            for stmt in b.stmts:
                 self.visit(stmt)
+
+            sink = Node(ir.BranchSink(), source=bnode)
+            self.set_head(sink)
 
             branch_exits.extend(self.head[:])
             self.head[:] = []
@@ -526,9 +521,6 @@ class CfgDfs:
     def HDLBlock(self, node):
         self.enter_block(node)
         for n in node.next:
-            if isinstance(n.value, ir.HDLBlockSink):
-                continue
-
             self.enter_branch(n)
             self.visit(n)
             self.exit_branch(n)

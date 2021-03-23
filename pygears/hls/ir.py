@@ -981,50 +981,51 @@ class BaseBlock(Statement):
 
 
 @attr.s(auto_attribs=True, eq=False)
+class Branch(BaseBlock):
+    test: Expr = res_true
+    branch_id: int = None
+
+    def __str__(self):
+        if self.test == res_true and not self.stmts:
+            return ''
+
+        if self.test == res_true:
+            header = ''
+        else:
+            header = f'(if {str(self.test)})'
+
+        footer = ''
+        # if self.exit_cond != res_true:
+        #     footer = f' (exit: {str(self.exit_cond)})'
+
+        body = ''
+        for s in self.stmts:
+            body += str(s)
+
+        # if not header and body.count('\n') == 1:
+        #     return f'{body[:-1]}{footer}\n'
+
+        return f'{header}{{\n{textwrap.indent(body, "    ")}}}{footer}\n'
+
+
+@attr.s(auto_attribs=True, eq=False)
 class HDLBlock(Statement):
-    branches: typing.List = attr.Factory(list)
-    tests: Expr = attr.Factory(list)
+    branches: typing.List[Branch] = attr.Factory(list)
     exit_cond: Expr = res_true
 
-    def add_branch(self, stmts=None, test=res_true):
-        if stmts is None:
-            stmts = []
+    def add_branch(self, branch: Branch = None):
+        if branch is None:
+            branch = Branch()
 
-        self.branches.append([])
-        self.tests.append(test)
+        branch.branch_id = len(self.branches)
+        self.branches.append(branch)
 
-    @property
-    def stmts(self):
-        return self.branches[-1]
-
-    @stmts.setter
-    def stmts(self, val):
-        self.branches[-1] = val
+        return branch
 
     def __str__(self):
         sblk = ''
-        for t, b in zip(self.tests, self.branches):
-            body = ''
-
-            if t == res_true and not b:
-                continue
-
-            if t == res_true:
-                header = ''
-            else:
-                header = f'(if {str(t)})'
-
-            footer = ''
-            # if self.exit_cond != res_true:
-            #     footer = f' (exit: {str(self.exit_cond)})'
-
-            for s in b:
-                body += str(s)
-
-            # if not header and body.count('\n') == 1:
-            #     return f'{body[:-1]}{footer}\n'
-
-            sblk += f'{header}{{\n{textwrap.indent(body, "    ")}}}{footer}\n'
+        for b in self.branches:
+            sblk += str(b)
 
         return sblk
 
@@ -1036,6 +1037,18 @@ class LoopBlock(HDLBlock):
     #     super().__attrs_post_init__()
     #     if self.test is not None:
     #         self.exit_cond = UnaryOpExpr(self.test, opc.Not)
+
+
+@attr.s(auto_attribs=True, eq=False)
+class BaseBlockSink(Statement):
+    def __str__(self):
+        return f'BaseBlockSink'
+
+
+@attr.s(auto_attribs=True, eq=False)
+class BranchSink(BaseBlockSink):
+    def __str__(self):
+        return f'BrancSink'
 
 
 @attr.s(auto_attribs=True, eq=False)

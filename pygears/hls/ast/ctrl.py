@@ -29,8 +29,8 @@ def _(node: ast.If, ctx: Context):
         return None
     else:
         ir_node = ir.HDLBlock()
-        ir_node.add_branch(test=test_expr)
-        visit_block(ir_node, node.body, ctx)
+        branch = ir_node.add_branch(ir.Branch(test=test_expr))
+        visit_block(branch, node.body, ctx)
         if hasattr(node, 'orelse') and node.orelse:
             top = ir.IfElseBlock(stmts=[])
             visit_block(top, node.orelse, ctx)

@@ -5,22 +5,6 @@ from ..cfg import CfgDfs
 from copy import copy
 
 
-class Inliner(IrExprRewriter):
-    def __init__(self, scope):
-        self.scope = scope
-
-    def visit_Name(self, node):
-        if ((node.name not in self.scope) or (node.ctx != 'load')):
-            return None
-
-        val = self.scope[node.name]
-
-        if isinstance(val, ir.ResExpr) and getattr(val.val, 'unknown', False):
-            return node
-
-        return val
-
-
 def del_forward_subvalue(target, scope):
     if isinstance(target, ir.Name):
         if target.name in scope:
@@ -71,40 +55,65 @@ def forward_value(target, val, scope):
         del_forward_subvalue(target, scope)
 
 
-class Inline(CfgDfs):
+def merge_subscope(block, parent_scope, subscopes):
+    names = set()
+    for s in subscopes:
+        names |= set(s.keys())
+
+    outscope = {}
+    for n in names:
+        vals = []
+        for s in subscopes:
+            vals.append(s.get(n, None))
+
+        if vals.count(vals[0]) == len(vals):
+            outscope[n] = vals[0]
+            continue
+
+        prev_val = parent_scope[n]
+        for v, t in zip(reversed(vals), reversed(block.tests)):
+            prev_val = ir.ConditionalExpr((v, prev_val), t)
+
+        outscope[n] = prev_val
+
+    return outscope
+
+
+class VarScope(CfgDfs):
     def __init__(self):
         self.scopes = [{}]
         self.hier = []
+        self.branch_scopes = {}
 
     @property
     def scope(self):
         return self.scopes[-1]
 
+    @property
+    def parent(self):
+        return self.hier[-1]
+
     def enter_block(self, block):
+        self.hier.append(block)
         block.scope = copy(self.scope)
-        self.scopes.append(copy(self.scope))
+        self.branch_scopes[block] = []
 
     def exit_block(self, block):
-        self.scopes.pop()
+        outscope = merge_subscope(block.value, block.scope, self.branch_scopes[block])
+        self.hier.pop()
+        self.scope.update(outscope)
 
     def enter_branch(self, node):
-        self.scopes.append(self.scope)
+        self.scopes.append(copy(self.parent.scope))
 
     def exit_branch(self, node):
-        pass
-
-    def inline_expr(self, node):
-        new_node = Inliner(self.scope).visit(node)
-        if new_node is None:
-            return node
-
-        return new_node
+        self.branch_scopes[self.parent].append(self.scope)
+        self.scopes.pop()
 
     def AssignValue(self, node):
         irnode: ir.AssignValue = node.value
 
         node.scope = copy(self.scope)
-        # irnode.val = self.inline_expr(irnode.val)
 
         val = irnode.val
         if isinstance(val, ir.Await):
@@ -116,5 +125,46 @@ class Inline(CfgDfs):
 
         forward_value(irnode.target, val, self.scope)
 
-        breakpoint()
+        self.generic_visit(node)
+
+
+class Inliner(IrExprRewriter):
+    def __init__(self, scope):
+        self.scope = scope
+
+    def visit_Name(self, irnode):
+        if (irnode.name not in self.scope):
+            breakpoint()
+
+        if (irnode.ctx != 'load'):
+            return None
+
+        val = self.scope[irnode.name]
+
+        if isinstance(val, ir.ResExpr) and getattr(val.val, 'unknown', False):
+            return irnode
+
+        return val
+
+
+def inline_expr(irnode, scope):
+    new_node = Inliner(scope).visit(irnode)
+    if new_node is None:
+        return irnode
+
+    return new_node
+
+
+class Inline(CfgDfs):
+    def enter_branch(self, node):
+        parent = node.prev[0]
+        branch_id = parent.next.index(node)
+
+        test = parent.value.branches[branch_id]
+        parent.value.branches[branch_id] = inline_expr(test, parent.scope)
+
+    def AssignValue(self, node):
+        irnode = node.value
+        irnode.val = inline_expr(irnode.val, node.scope)
+
         self.generic_visit(node)

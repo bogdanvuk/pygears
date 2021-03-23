@@ -4,11 +4,11 @@ import inspect
 from .. import cfg as cfgutil
 from contextlib import contextmanager
 from copy import deepcopy, copy
-from ..cfg import Node, draw_cfg
+from ..cfg import Node, draw_cfg, CfgDfs
 from ..ir_utils import res_true, HDLVisitor, ir, add_to_list, res_false, is_intf_id
 from pygears.typing import bitw, Uint, Bool
 from .loops import infer_cycle_done
-from .inline_cfg import Inline
+from .inline_cfg import Inline, VarScope
 
 
 class PPrinter(HDLVisitor):
@@ -294,9 +294,10 @@ def draw_scheduled_cfg(cfg, reaching=None):
     plt.show()
 
 
-class RebuildStateIR:
+class RebuildStateIR(CfgDfs):
     def __init__(self):
         self.scope = [ir.BaseBlock()]
+        self.branch_id = []
 
     @property
     def parent(self):
@@ -311,12 +312,12 @@ class RebuildStateIR:
     def exit_block(self):
         self.scope.pop()
 
-    def visit(self, node):
-        for base_class in inspect.getmro(node.value.__class__):
-            if hasattr(self, base_class.__name__):
-                return getattr(self, base_class.__name__)(node)
-        else:
-            return self.generic_visit(node)
+    def enter_branch(self, node):
+        self.scopes.append(copy(self.parent.scope))
+
+    def exit_branch(self, node):
+        self.branch_scopes[self.parent].append(self.scope)
+        self.scopes.pop()
 
     def HDLBlock(self, node):
         if node.value.in_cond == ir.res_true:
@@ -475,8 +476,9 @@ class ScheduleBFS:
             node.value.state = self.state
             node.value.looped_state = self.add_state(nloop)
         elif second_state:
-            stmt = ir.AssignValue(self.ctx.ref('_state'), ir.ResExpr(node.value.looped_state))
-            stmt.exit_cond = ir.res_false
+            stmt = ir.AssignValue(self.ctx.ref('_state'),
+                                  ir.ResExpr(node.value.looped_state),
+                                  exit_await=ir.res_false)
             state_node = Node(stmt, prev=[cond])
 
             self.append(state_node)
@@ -485,8 +487,9 @@ class ScheduleBFS:
             self.state_map[node.sink] = sink_node
             self.schedule(nexit)
         else:
-            stmt = ir.AssignValue(self.ctx.ref('_state'), ir.ResExpr(node.value.looped_state))
-            stmt.exit_cond = ir.res_false
+            stmt = ir.AssignValue(self.ctx.ref('_state'),
+                                  ir.ResExpr(node.value.looped_state),
+                                  exit_await=ir.res_false)
             state_node = Node(stmt, prev=[cond])
 
             self.append(state_node)
@@ -505,6 +508,11 @@ class ScheduleBFS:
         for n in node.next:
             self.schedule(n)
 
+    def BaseBlockSink(self, node: ir.BaseBlockSink):
+        self.copy(node)
+        for n in node.next:
+            self.schedule(n)
+
     def generic_visit(self, node):
         self.copy(node)
         for n in node.next:
@@ -512,9 +520,8 @@ class ScheduleBFS:
 
 
 def schedule(block, ctx):
-
     cfg = cfgutil.CFG.build_cfg(block)
-    # draw_cfg(cfg)
+    draw_cfg(cfg)
 
     # modblock, cfg = cfgutil.forward(block, cfgutil.ReachingDefinitions())
 
@@ -535,9 +542,19 @@ def schedule(block, ctx):
     v.bfs(cfg.entry)
 
     state0 = v.state_entry[0]
+    draw_scheduled_cfg(state0)
+
+    states = []
+    for s in v.state_entry:
+        VarScope().visit(s)
 
     draw_scheduled_cfg(state0)
-    Inline().visit(state0)
+
+    print(state0)
+    v = Inline()
+    v.visit(state0)
+
+    breakpoint()
 
     # v = cfgutil.ReachingDefinitions()
     # v.visit(state0)

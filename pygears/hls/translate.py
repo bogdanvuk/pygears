@@ -13,7 +13,7 @@ from . import cfg as cfgutil
 
 
 def translate_gear(gear: Gear):
-    hls_enable_debug_log()
+    # hls_enable_debug_log()
     hls_debug(title=f'Translating: {gear.name}')
 
     exec_context = reg['gear/exec_context']
