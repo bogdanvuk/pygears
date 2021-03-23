@@ -70,7 +70,7 @@ def integral_saturate_resolver(t, data: Integral, limits=None):
         if ((idin[t.width - 1:] == 0)
                 or (idin[t.width - 1:] == Uint[type(conv_data).width - t.width + 1].max)):
             return code(conv_data, t)
-        elif conv_data < 0:
+        elif (idin[t.width - 1:] == 2):
             return t.min
         else:
             return t.max
