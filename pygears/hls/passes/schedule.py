@@ -306,61 +306,30 @@ class RebuildStateIR(CfgDfs):
     def append(self, node):
         self.parent.stmts.append(node)
 
-    def enter_block(self, block):
+    def Statement(self, node):
+        self.append(node.value)
+        self.generic_visit(node)
+
+    def enter_BaseBlock(self, block):
+        block = block.value
+        block.stmts.clear()
         self.scope.append(block)
 
-    def exit_block(self):
+    def enter_HDLBlock(self, block):
+        block = block.value
+        block.branches.clear()
+        self.scope.append(block)
+
+    def exit_HDLBlock(self, block):
+        self.scope.pop()
+        self.append(block.value)
+
+    def exit_BaseBlock(self, block):
         self.scope.pop()
 
-    def enter_branch(self, node):
-        self.scopes.append(copy(self.parent.scope))
-
-    def exit_branch(self, node):
-        self.branch_scopes[self.parent].append(self.scope)
-        self.scopes.pop()
-
-    def HDLBlock(self, node):
-        if node.value.in_cond == ir.res_true:
-            return self.generic_visit(node)
-
-        blocks = []
-        for n in node.next:
-            if isinstance(n.value, ir.HDLBlockSink):
-                continue
-
-            ir_node = ir.HDLBlock(in_cond=ir.res_true, stmts=[])
-            self.enter_block(ir_node)
-            self.visit(n)
-            self.exit_block()
-            blocks.append(ir_node)
-
-        blocks[0].in_cond = node.value.in_cond
-
-        if len(blocks) == 1:
-            self.append(blocks[0])
-        else:
-            self.append(ir.IfElseBlock(stmts=blocks))
-
-        for n in node.sink.next:
-            self.visit(n)
-
-    def IfElseBlock(self, node: ir.IfElseBlock):
-        breakpoint()
-
-    def HDLBlockSink(self, node: ir.HDLBlockSink):
-        return
-
-    def LoopBlockSink(self, node: ir.LoopBlockSink):
-        return self.generic_visit(node)
-
-    def Statement(self, node: ir.Statement):
-        self.append(node.value)
-        for n in node.next:
-            self.visit(n)
-
-    def generic_visit(self, node):
-        for n in node.next:
-            self.visit(n)
+    def exit_Branch(self, block):
+        self.scope.pop()
+        self.parent.add_branch(block.value)
 
 
 class ScheduleBFS:
@@ -375,7 +344,7 @@ class ScheduleBFS:
 
     def bfs(self, node):
         self.queue = Queue()
-        self.add_state(node.next[0])
+        self.add_state(node)
 
         while self.state < len(self.state_entry) - 1:
             self.state += 1
@@ -403,13 +372,6 @@ class ScheduleBFS:
             self.state = state
 
     def schedule(self, node):
-        # for i, p in enumerate(node.prev):
-        #     if isinstance(node.value, ir.LoopBlock) and i > 0:
-        #         continue
-
-        #     if p not in self.state_map:
-        #         return
-
         self.queue.put(node)
 
     def copy(self, node):
@@ -508,11 +470,6 @@ class ScheduleBFS:
         for n in node.next:
             self.schedule(n)
 
-    def BaseBlockSink(self, node: ir.BaseBlockSink):
-        self.copy(node)
-        for n in node.next:
-            self.schedule(n)
-
     def generic_visit(self, node):
         self.copy(node)
         for n in node.next:
@@ -521,7 +478,7 @@ class ScheduleBFS:
 
 def schedule(block, ctx):
     cfg = cfgutil.CFG.build_cfg(block)
-    draw_cfg(cfg)
+    # draw_cfg(cfg)
 
     # modblock, cfg = cfgutil.forward(block, cfgutil.ReachingDefinitions())
 
@@ -540,51 +497,33 @@ def schedule(block, ctx):
 
     v = ScheduleBFS(ctx)
     v.bfs(cfg.entry)
+    state_cfg = v.state_entry
 
-    state0 = v.state_entry[0]
-    draw_scheduled_cfg(state0)
+    # state0 = v.state_entry[0]
+    # draw_scheduled_cfg(state0)
 
-    states = []
-    for s in v.state_entry:
+    for s in state_cfg:
         VarScope().visit(s)
-
-    draw_scheduled_cfg(state0)
-
-    print(state0)
-    v = Inline()
-    v.visit(state0)
-
-    breakpoint()
-
-    # v = cfgutil.ReachingDefinitions()
-    # v.visit(state0)
-
-    # draw_scheduled_cfg(v.state_entry[1])
+        # Inline().visit(s)
 
     states = []
-    for n in v.state_entry:
+    for n in state_cfg:
         v = RebuildStateIR()
         v.visit(n)
-        states.append(v.parent)
-        print(v.parent)
+        states.append(n.value)
+        print(n.value)
 
-    # Scheduler(ctx).visit(block)
-    # print('*** Schedule ***')
-    # print(PPrinter(ctx).visit(block))
-    # state_num = len(block.state)
     state_num = len(states)
     ctx.scope['_state'].val = ir.ResExpr(Uint[bitw(state_num - 1)](0))
 
-    tests = [
-        ir.BinOpExpr((ctx.ref('_state'), ir.ResExpr(i)), ir.opc.Eq) for i in range(len(states))
-    ]
-    branches = [s.stmts for s in states]
-
-    stateblock = ir.HDLBlock(branches=branches, tests=tests)
-
-    if state_num > 1:
-        modblock = ir.CombBlock(stmts=[stateblock])
+    if state_num == 1:
+        modblock = ir.CombBlock(stmts=states[0].stmts)
     else:
+        stateblock = ir.HDLBlock()
+        for i, s in enumerate(states):
+            test = ir.BinOpExpr((ctx.ref('_state'), ir.ResExpr(i)), ir.opc.Eq)
+            stateblock.add_branch(ir.Branch(stmts=s.stmts, test=test))
+
         modblock = ir.CombBlock(stmts=stateblock.stmts[0].stmts)
 
     # modblock = infer_cycle_done(modblock, ctx)

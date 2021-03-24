@@ -71,61 +71,12 @@ def merge_subscope(block, parent_scope, subscopes):
             continue
 
         prev_val = parent_scope[n]
-        for v, t in zip(reversed(vals), reversed(block.tests)):
-            prev_val = ir.ConditionalExpr((v, prev_val), t)
+        for v, b in zip(reversed(vals), reversed(block.branches)):
+            prev_val = ir.ConditionalExpr((v, prev_val), b.test)
 
         outscope[n] = prev_val
 
     return outscope
-
-
-class VarScope(CfgDfs):
-    def __init__(self):
-        self.scopes = [{}]
-        self.hier = []
-        self.branch_scopes = {}
-
-    @property
-    def scope(self):
-        return self.scopes[-1]
-
-    @property
-    def parent(self):
-        return self.hier[-1]
-
-    def enter_block(self, block):
-        self.hier.append(block)
-        block.scope = copy(self.scope)
-        self.branch_scopes[block] = []
-
-    def exit_block(self, block):
-        outscope = merge_subscope(block.value, block.scope, self.branch_scopes[block])
-        self.hier.pop()
-        self.scope.update(outscope)
-
-    def enter_branch(self, node):
-        self.scopes.append(copy(self.parent.scope))
-
-    def exit_branch(self, node):
-        self.branch_scopes[self.parent].append(self.scope)
-        self.scopes.pop()
-
-    def AssignValue(self, node):
-        irnode: ir.AssignValue = node.value
-
-        node.scope = copy(self.scope)
-
-        val = irnode.val
-        if isinstance(val, ir.Await):
-            val = val.expr
-
-        if isinstance(val, ir.ConcatExpr):
-            val = ir.ConcatExpr(
-                operands=[op.expr if isinstance(op, ir.Await) else op for op in val.operands])
-
-        forward_value(irnode.target, val, self.scope)
-
-        self.generic_visit(node)
 
 
 class Inliner(IrExprRewriter):
@@ -153,6 +104,51 @@ def inline_expr(irnode, scope):
         return irnode
 
     return new_node
+
+
+class VarScope(CfgDfs):
+    def __init__(self):
+        self.scopes = [{}]
+
+    @property
+    def scope(self):
+        return self.scopes[-1]
+
+    def enter_Statement(self, block):
+        block.scope = copy(self.scope)
+
+    def exit_HDLBlock(self, block):
+        branch_scopes = [b.scope for b in block.next]
+        outscope = merge_subscope(block.value, block.scope, branch_scopes)
+        self.scope.update(outscope)
+
+    def FuncReturn(self, node):
+        node.expr = self.inline_expr(node.expr)
+        self.generic_visit(node)
+
+    def Branch(self, node):
+        irnode: ir.Branch = node.value
+        irnode.test = inline_expr(irnode.test, self.scope)
+        super().BaseBlock(node)
+
+    def AssignValue(self, node):
+        irnode: ir.AssignValue = node.value
+
+        node.scope = copy(self.scope)
+
+        irnode.val = inline_expr(irnode.val, self.scope)
+
+        val = irnode.val
+        if isinstance(val, ir.Await):
+            val = val.expr
+
+        if isinstance(val, ir.ConcatExpr):
+            val = ir.ConcatExpr(
+                operands=[op.expr if isinstance(op, ir.Await) else op for op in val.operands])
+
+        forward_value(irnode.target, val, self.scope)
+
+        self.generic_visit(node)
 
 
 class Inline(CfgDfs):

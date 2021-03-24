@@ -183,7 +183,6 @@ class CFG(HDLVisitor):
         cfg.head = []
         cfg.entry = cfg.BaseBlock(node)
         cfg.exit = cfg.entry.sink
-        cfg.set_head(cfg.exit)
         cfg.backlink(cfg.entry)
         return cfg
 
@@ -501,31 +500,31 @@ class CfgDfs:
         else:
             return self.generic_visit(node)
 
-    def enter_block(self, node):
-        pass
+    def enter(self, node):
+        for base_class in inspect.getmro(node.value.__class__):
+            method_name = f'enter_{base_class.__name__}'
+            if hasattr(self, method_name):
+                return getattr(self, method_name)(node)
 
-    def exit_block(self, node):
-        pass
-
-    def enter_branch(self, node):
-        pass
-
-    def exit_branch(self, node):
-        pass
+    def exit(self, node):
+        for base_class in inspect.getmro(node.value.__class__):
+            method_name = f'exit_{base_class.__name__}'
+            if hasattr(self, method_name):
+                return getattr(self, method_name)(node)
 
     def BaseBlock(self, node):
-        self.enter_block(node)
+        self.enter(node)
         self.visit(node.next[0])
-        self.exit_block(node)
+        self.exit(node)
+
+        self.generic_visit(node.sink)
 
     def HDLBlock(self, node):
-        self.enter_block(node)
+        self.enter(node)
         for n in node.next:
-            self.enter_branch(n)
             self.visit(n)
-            self.exit_branch(n)
 
-        self.exit_block(node)
+        self.exit(node)
 
         self.generic_visit(node.sink)
 
@@ -534,4 +533,7 @@ class CfgDfs:
             self.visit(n)
 
     def HDLBlockSink(self, node: ir.HDLBlockSink):
+        return
+
+    def BaseBlockSink(self, node: ir.HDLBlockSink):
         return
