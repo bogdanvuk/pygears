@@ -529,6 +529,8 @@ class CfgDfs:
         self.generic_visit(node.sink)
 
     def generic_visit(self, node):
+        self.enter(node)
+        self.exit(node)
         for n in node.next:
             self.visit(n)
 

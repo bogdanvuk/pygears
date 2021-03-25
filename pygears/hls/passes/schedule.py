@@ -9,6 +9,7 @@ from ..ir_utils import res_true, HDLVisitor, ir, add_to_list, res_false, is_intf
 from pygears.typing import bitw, Uint, Bool
 from .loops import infer_cycle_done
 from .inline_cfg import Inline, VarScope
+from .exit_cond_cfg import ExitAwaits
 
 
 class PPrinter(HDLVisitor):
@@ -499,19 +500,20 @@ def schedule(block, ctx):
     v.bfs(cfg.entry)
     state_cfg = v.state_entry
 
-    # state0 = v.state_entry[0]
-    # draw_scheduled_cfg(state0)
-
     for s in state_cfg:
         VarScope().visit(s)
+        ExitAwaits().visit(s)
+
         # Inline().visit(s)
+
+    # state0 = state_cfg[0]
+    # draw_scheduled_cfg(state0)
 
     states = []
     for n in state_cfg:
         v = RebuildStateIR()
         v.visit(n)
         states.append(n.value)
-        print(n.value)
 
     state_num = len(states)
     ctx.scope['_state'].val = ir.ResExpr(Uint[bitw(state_num - 1)](0))
@@ -526,6 +528,7 @@ def schedule(block, ctx):
 
         modblock = ir.CombBlock(stmts=stateblock.stmts[0].stmts)
 
-    # modblock = infer_cycle_done(modblock, ctx)
+    print(modblock)
+    breakpoint()
 
     return modblock

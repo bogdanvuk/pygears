@@ -1,6 +1,6 @@
 import pytest
 from pygears import gear, Intf, find
-from pygears.sim import sim, cosim
+from pygears.sim import sim, cosim, clk
 from pygears.typing import Bool, Uint
 from pygears.hls.translate import translate_gear
 from pygears.hdl import hdlgen, synth
@@ -21,10 +21,17 @@ from pygears.lib import drv, verif, delay_rng
 @gear(hdl={'compile': True})
 async def test(din: Bool) -> Uint[4]:
     async with din as c:
-        if c:
+        if c == 2:
             c = 1
+        else:
+            c = 3
 
         yield c
+
+        if c == 4:
+            await clk()
+
+        c = 4
 
 
 test(Intf(Bool))

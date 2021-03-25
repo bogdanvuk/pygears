@@ -73,8 +73,8 @@ def transform(modblock, ctx: GearContext):
     # modblock = inline(modblock, ctx)
     # hls_debug(modblock, 'Inline values')
 
-    modblock = infer_exit_cond(modblock, ctx)
-    hls_debug(modblock, 'Infer Exit Conditions')
+    # modblock = infer_exit_cond(modblock, ctx)
+    # hls_debug(modblock, 'Infer Exit Conditions')
 
     modblock = remove_dead_code(modblock, ctx)
     hls_debug(modblock, 'Remove Dead Code')

@@ -108,11 +108,7 @@ def inline_expr(irnode, scope):
 
 class VarScope(CfgDfs):
     def __init__(self):
-        self.scopes = [{}]
-
-    @property
-    def scope(self):
-        return self.scopes[-1]
+        self.scope = {}
 
     def enter_Statement(self, block):
         block.scope = copy(self.scope)
@@ -123,13 +119,16 @@ class VarScope(CfgDfs):
         self.scope.update(outscope)
 
     def FuncReturn(self, node):
-        node.expr = self.inline_expr(node.expr)
+        node.expr = inline_expr(node.expr)
         self.generic_visit(node)
 
-    def Branch(self, node):
+    def enter_Branch(self, node):
+        self.scope = copy(node.prev[0].scope)
         irnode: ir.Branch = node.value
         irnode.test = inline_expr(irnode.test, self.scope)
-        super().BaseBlock(node)
+
+    def exit_Branch(self, node):
+        node.scope = copy(self.scope)
 
     def AssignValue(self, node):
         irnode: ir.AssignValue = node.value

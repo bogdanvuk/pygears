@@ -32,21 +32,18 @@ def _(node: ast.If, ctx: Context):
         branch = ir_node.add_branch(ir.Branch(test=test_expr))
         visit_block(branch, node.body, ctx)
         if hasattr(node, 'orelse') and node.orelse:
-            top = ir.IfElseBlock(stmts=[])
-            visit_block(top, node.orelse, ctx)
-            if top.stmts:
-                if len(top.stmts) == 1 and isinstance(top.stmts[0], ir.HDLBlock):
-                    top.stmts.insert(0, ir_node)
-                elif len(top.stmts) == 1 and isinstance(top.stmts[0], ir.IfElseBlock):
-                    top.stmts = [ir_node] + top.stmts[0].stmts
+            orelse = ir.BaseBlock()
+            visit_block(orelse, node.orelse, ctx)
+            if orelse.stmts:
+                if len(orelse.stmts) == 1 and isinstance(orelse.stmts[0], ir.HDLBlock):
+                    for b in orelse.stmts[0].branches:
+                        ir_node.add_branch(b)
                 else:
-                    top.stmts = [ir_node, ir.HDLBlock(stmts=top.stmts)]
+                    ir_node.add_branch(ir.Branch(stmts=orelse.stmts))
 
-            return top
-        else:
+        if ir_node.branches[-1].test != ir.res_true:
             ir_node.add_branch()
 
-        print(ir_node)
         return ir_node
 
 

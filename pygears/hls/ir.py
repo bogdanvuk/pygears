@@ -1048,7 +1048,7 @@ class BaseBlockSink(Statement):
 @attr.s(auto_attribs=True, eq=False)
 class BranchSink(BaseBlockSink):
     def __str__(self):
-        return f'BrancSink'
+        return f'BranchSink'
 
 
 @attr.s(auto_attribs=True, eq=False)
