@@ -1,5 +1,6 @@
 from pygears import reg
 from ..ir_utils import Scope, HDLVisitor, res_true, add_to_list, ir, res_false, IrExprRewriter
+from .. import HLSSyntaxError
 from pygears.typing import cast
 from ..cfg import CfgDfs
 from copy import copy
@@ -70,9 +71,15 @@ def merge_subscope(block, parent_scope, subscopes):
             outscope[n] = vals[0]
             continue
 
-        prev_val = parent_scope[n]
+        prev_val = parent_scope.get(n, None)
         for v, b in zip(reversed(vals), reversed(block.branches)):
-            prev_val = ir.ConditionalExpr((v, prev_val), b.test)
+            if prev_val is None:
+                if b.test != ir.res_true:
+                    raise HLSSyntaxError(f'Variable "{n}" uninitialized in some cases')
+
+                v = prev_val
+            else:
+                prev_val = ir.ConditionalExpr((v, prev_val), b.test)
 
         outscope[n] = prev_val
 
@@ -107,8 +114,9 @@ def inline_expr(irnode, scope):
 
 
 class VarScope(CfgDfs):
-    def __init__(self):
-        self.scope = {}
+    def __init__(self, ctx):
+        self.scope = copy(ctx.intfs)
+        self.scope['_state'] = ctx.scope['_state']
 
     def enter_Statement(self, block):
         block.scope = copy(self.scope)
@@ -146,20 +154,5 @@ class VarScope(CfgDfs):
                 operands=[op.expr if isinstance(op, ir.Await) else op for op in val.operands])
 
         forward_value(irnode.target, val, self.scope)
-
-        self.generic_visit(node)
-
-
-class Inline(CfgDfs):
-    def enter_branch(self, node):
-        parent = node.prev[0]
-        branch_id = parent.next.index(node)
-
-        test = parent.value.branches[branch_id]
-        parent.value.branches[branch_id] = inline_expr(test, parent.scope)
-
-    def AssignValue(self, node):
-        irnode = node.value
-        irnode.val = inline_expr(irnode.val, node.scope)
 
         self.generic_visit(node)

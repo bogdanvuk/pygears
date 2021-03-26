@@ -13,8 +13,7 @@ def is_intf_id(expr):
 
 def add_to_list(orig_list, extension):
     if extension:
-        orig_list.extend(
-            extension if isinstance(extension, list) else [extension])
+        orig_list.extend(extension if isinstance(extension, list) else [extension])
 
 
 res_true = ir.ResExpr(Bool(True))
@@ -148,15 +147,13 @@ class IrVisitor:
         for stmt in block.stmts:
             self.visit(stmt)
 
-    def HDLBlock(self, block: ir.HDLBlock):
-        if block.in_cond != ir.res_true:
-            block.in_cond.reaching = block.reaching
-            self.visit(block.in_cond)
-
+    def Branch(self, block: ir.Branch):
+        self.visit(block.test)
         self.BaseBlock(block)
 
-        if block.exit_cond != ir.res_true:
-            self.visit(block.exit_cond)
+    def HDLBlock(self, block: ir.HDLBlock):
+        for b in block.branches:
+            self.visit(b)
 
     def FuncReturn(self, stmt: ir.FuncReturn):
         self.visit(stmt.expr)
@@ -191,6 +188,14 @@ class IrRewriter:
 
         return rw_block
 
+    def Branch(self, block: ir.Branch):
+        rw_block = type(block)(test=self.visit(block.test))
+
+        for stmt in block.stmts:
+            add_to_list(rw_block.stmts, self.visit(stmt))
+
+        return rw_block
+
     def FuncBlock(self, block: ir.FuncBlock):
         # args = {n: self.visit(val) for n, val in block.args.items()}
 
@@ -205,13 +210,7 @@ class IrRewriter:
         return rw_block
 
     def HDLBlock(self, block: ir.HDLBlock):
-        rw_block = type(block)(self.visit(block.in_cond))
-
-        for stmt in block.stmts:
-            add_to_list(rw_block.stmts, self.visit(stmt))
-
-        rw_block.exit_cond = self.visit(block.exit_cond)
-        return rw_block
+        return type(block)(branches=[self.visit(b) for b in block.branches])
 
     def ExprStatement(self, stmt: ir.ExprStatement):
         return type(stmt)(self.visit(stmt.expr))
@@ -346,10 +345,7 @@ class IrExprRewriter:
         if all(op is None for op in ops):
             return node
 
-        ops = [
-            old_op if new_op is None else new_op
-            for new_op, old_op in zip(ops, node.operands)
-        ]
+        ops = [old_op if new_op is None else new_op for new_op, old_op in zip(ops, node.operands)]
 
         return ir.ConcatExpr(tuple(ops))
 
@@ -372,10 +368,7 @@ class IrExprRewriter:
         if all(op is None for op in ops):
             return node
 
-        ops = [
-            old_op if new_op is None else new_op
-            for new_op, old_op in zip(ops, node.operands)
-        ]
+        ops = [old_op if new_op is None else new_op for new_op, old_op in zip(ops, node.operands)]
 
         return ir.BinOpExpr(tuple(ops), node.operator)
 
@@ -386,10 +379,7 @@ class IrExprRewriter:
         if all(op is None for op in ops):
             return node
 
-        ops = [
-            old_op if new_op is None else new_op
-            for new_op, old_op in zip(ops, old_ops)
-        ]
+        ops = [old_op if new_op is None else new_op for new_op, old_op in zip(ops, old_ops)]
 
         return ir.SubscriptExpr(*ops)
 
@@ -400,10 +390,7 @@ class IrExprRewriter:
         if all(op is None for op in ops):
             return node
 
-        ops = [
-            old_op if new_op is None else new_op
-            for new_op, old_op in zip(ops, old_ops)
-        ]
+        ops = [old_op if new_op is None else new_op for new_op, old_op in zip(ops, old_ops)]
 
         return ir.ConditionalExpr(tuple(ops[1:]), ops[0])
 

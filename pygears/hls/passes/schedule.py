@@ -5,10 +5,10 @@ from .. import cfg as cfgutil
 from contextlib import contextmanager
 from copy import deepcopy, copy
 from ..cfg import Node, draw_cfg, CfgDfs
-from ..ir_utils import res_true, HDLVisitor, ir, add_to_list, res_false, is_intf_id
+from ..ir_utils import res_true, HDLVisitor, ir, add_to_list, res_false, is_intf_id, IrRewriter
 from pygears.typing import bitw, Uint, Bool
 from .loops import infer_cycle_done
-from .inline_cfg import Inline, VarScope
+from .inline_cfg import VarScope
 from .exit_cond_cfg import ExitAwaits
 
 
@@ -252,7 +252,7 @@ class SkipBranch(Exception):
     pass
 
 
-def create_scheduled_cfg(node, G, visited, labels, reaching=None):
+def create_scheduled_cfg(node, G, visited, labels, reaching=None, simple=True):
     if node in visited:
         return
 
@@ -270,12 +270,20 @@ def create_scheduled_cfg(node, G, visited, labels, reaching=None):
     labels[id(node)] = name
 
     for n in node.next:
+        if simple:
+            if isinstance(n.value, ir.Branch) and n.next:
+                n = n.next[0]
+
+            while (n.next
+                and (isinstance(n.value, ir.BaseBlockSink) or isinstance(n.value, ir.HDLBlockSink))):
+                n = n.next[0]
+
         G.add_edge(id(node), id(n))
 
-        create_scheduled_cfg(n, G, visited, labels, reaching=reaching)
+        create_scheduled_cfg(n, G, visited, labels, reaching=reaching, simple=simple)
 
 
-def draw_scheduled_cfg(cfg, reaching=None):
+def draw_scheduled_cfg(cfg, reaching=None, simple=True):
     import networkx as nx
     import matplotlib.pyplot as plt
 
@@ -283,7 +291,7 @@ def draw_scheduled_cfg(cfg, reaching=None):
     visited = set()
     labels = {}
 
-    create_scheduled_cfg(cfg, G, visited, labels, reaching=reaching)
+    create_scheduled_cfg(cfg, G, visited, labels, reaching=reaching, simple=simple)
 
     pos = nx.planar_layout(G)
     nx.draw(G, pos, font_size=16, with_labels=False)
@@ -298,7 +306,6 @@ def draw_scheduled_cfg(cfg, reaching=None):
 class RebuildStateIR(CfgDfs):
     def __init__(self):
         self.scope = [ir.BaseBlock()]
-        self.branch_id = []
 
     @property
     def parent(self):
@@ -477,9 +484,146 @@ class ScheduleBFS:
             self.schedule(n)
 
 
+class LoopBreaker(IrRewriter):
+    def __init__(self, loops, ctx):
+        self.loops = loops
+        self.ctx = ctx
+
+    def LoopBlock(self, block: ir.LoopBlock):
+        body = ir.Branch(test=block.test)
+
+        for stmt in block.stmts:
+            add_to_list(body.stmts, self.visit(stmt))
+
+        cond_enter_blk = ir.HDLBlock(branches=[body])
+
+        transition = ir.Branch(test=block.test)
+        transition.stmts.append(
+            ir.AssignValue(self.ctx.ref('_state'),
+                           ir.ResExpr(len(self.loops) + 1),
+                           exit_await=ir.res_false))
+
+        cond_exit_blk = ir.HDLBlock(branches=[transition])
+
+        self.loops.append(cond_enter_blk)
+
+        body.stmts.append(cond_exit_blk)
+
+        return cond_enter_blk
+
+
+class LoopState(CfgDfs):
+    def __init__(self, loop):
+        self.loop = loop
+        self.entry = None
+        self.node_map = {}
+        self.scopes = []
+        self.entry_scope = None
+
+    @property
+    def scope(self):
+        return self.scopes[-1]
+
+    def copy(self, node):
+        # print(f'------- Copying node: --------')
+        # print(node.value)
+        source = self.node_map.get(node.source, None)
+
+        cp_node = Node(node.value, source=source)
+        self.node_map[node] = cp_node
+        cp_node.prev = [self.node_map[p] for p in node.prev if p in self.node_map]
+
+        for n in cp_node.prev:
+            n.next.append(cp_node)
+            if (len(n.next) > 1) and (not isinstance(n.value, ir.HDLBlock)):
+                breakpoint()
+
+        # try:
+        #     draw_scheduled_cfg(self.entry, simple=False)
+        # except KeyError:
+        #     pass
+
+        # breakpoint()
+
+        return cp_node
+
+    def enter_BaseBlock(self, node):
+        self.enter_Statement(node)
+        self.scopes.append(node)
+
+    def exit_BaseBlock(self, node):
+        self.scopes.pop()
+        if not self.scopes:
+            sink = Node(ir.BaseBlockSink(), prev=[node.sink.prev[0]])
+            sink = self.copy(sink)
+            sink.source = self.entry
+            sink.source.sink = sink
+
+    def HDLBlock(self, node):
+        if node.value is not self.loop:
+            super().HDLBlock(node)
+            return
+
+        ifbranch = node.next[0]
+        self.entry = Node(ir.BaseBlock())
+        self.node_map[ifbranch] = self.entry
+        self.entry_scope = ifbranch
+        self.visit(ifbranch)
+
+        self.generic_visit(node.sink)
+
+    def enter_HDLBlockSink(self, node):
+        if self.entry is None:
+            return
+
+        if node.source in self.node_map:
+            self.copy(node)
+        else:
+            for p in node.prev:
+                if p in self.node_map:
+                    self.node_map[node] = self.node_map[p]
+
+    def enter_BranchSink(self, node):
+        if node.source is not self.entry_scope:
+            # breakpoint()
+            self.enter_Statement(node)
+            return
+
+        for p in node.prev:
+            if p in self.node_map:
+                self.node_map[node] = self.node_map[p]
+
+    def enter_Statement(self, node):
+        if self.entry is None:
+            return
+
+        if self.scopes and ((self.scope in self.node_map) or (self.scope is self.entry_scope)):
+            self.copy(node)
+        else:
+            for p in node.prev:
+                if p in self.node_map:
+                    self.node_map[node] = self.node_map[p]
+
+
 def schedule(block, ctx):
+    ctx.scope['_state'] = ir.Variable(
+        '_state',
+        val=ir.ResExpr(Uint[1](0)),
+        reg=True,
+    )
+
+    loops = []
+    block = LoopBreaker(loops, ctx).visit(block)
+
     cfg = cfgutil.CFG.build_cfg(block)
     # draw_cfg(cfg)
+
+    state_cfg = [cfg.entry]
+    for l in loops:
+        v = LoopState(l)
+        v.visit(cfg.entry)
+        # draw_scheduled_cfg(v.entry, simple=False)
+        state_cfg.append(v.entry)
 
     # modblock, cfg = cfgutil.forward(block, cfgutil.ReachingDefinitions())
 
@@ -488,23 +632,13 @@ def schedule(block, ctx):
 
     # block.stmts.append(ir.AssignValue(ctx.ref('_rst_cond', 'store'), res_true))
 
-    ctx.scope['_state'] = ir.Variable(
-        '_state',
-        val=ir.ResExpr(Uint[1](0)),
-        reg=True,
-    )
-
-    # draw_scheduled_cfg(cfg.entry)
-
-    v = ScheduleBFS(ctx)
-    v.bfs(cfg.entry)
-    state_cfg = v.state_entry
+    # v = ScheduleBFS(ctx)
+    # v.bfs(cfg.entry)
+    # state_cfg = v.state_entry
 
     for s in state_cfg:
-        VarScope().visit(s)
+        VarScope(ctx).visit(s)
         ExitAwaits().visit(s)
-
-        # Inline().visit(s)
 
     # state0 = state_cfg[0]
     # draw_scheduled_cfg(state0)
@@ -514,6 +648,7 @@ def schedule(block, ctx):
         v = RebuildStateIR()
         v.visit(n)
         states.append(n.value)
+        print(n.value)
 
     state_num = len(states)
     ctx.scope['_state'].val = ir.ResExpr(Uint[bitw(state_num - 1)](0))
@@ -526,9 +661,6 @@ def schedule(block, ctx):
             test = ir.BinOpExpr((ctx.ref('_state'), ir.ResExpr(i)), ir.opc.Eq)
             stateblock.add_branch(ir.Branch(stmts=s.stmts, test=test))
 
-        modblock = ir.CombBlock(stmts=stateblock.stmts[0].stmts)
-
-    print(modblock)
-    breakpoint()
+        modblock = ir.CombBlock(stmts=[stateblock])
 
     return modblock

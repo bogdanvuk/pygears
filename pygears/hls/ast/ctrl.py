@@ -41,15 +41,12 @@ def _(node: ast.If, ctx: Context):
                 else:
                     ir_node.add_branch(ir.Branch(stmts=orelse.stmts))
 
-        if ir_node.branches[-1].test != ir.res_true:
-            ir_node.add_branch()
-
         return ir_node
 
 
 @node_visitor(ast.While)
 def _(node: ast.While, ctx: Context):
-    ir_node = ir.LoopBlock(in_cond=visit_ast(node.test, ctx), stmts=[])
+    ir_node = ir.LoopBlock(test=visit_ast(node.test, ctx), stmts=[])
     return visit_block(ir_node, node.body, ctx)
 
 

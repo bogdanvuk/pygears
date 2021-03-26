@@ -18,25 +18,25 @@ from pygears.lib import drv, verif, delay_rng
 
 #             yield c
 
-@gear(hdl={'compile': True})
-async def test(din: Bool) -> Uint[4]:
-    async with din as c:
-        if c == 2:
-            c = 1
-        else:
-            c = 3
+# @gear(hdl={'compile': True})
+# async def test(din: Bool) -> Uint[4]:
+#     async with din as c:
+#         if c == 2:
+#             c = 1
+#         else:
+#             c = 3
 
-        yield c
+#         yield c
 
-        if c == 4:
-            await clk()
+#         if c == 4:
+#             await clk()
 
-        c = 4
+#         c = 4
 
 
-test(Intf(Bool))
+# test(Intf(Bool))
 
-translate_gear(find('/test'))
+# translate_gear(find('/test'))
 # hdlgen('/test', outdir='/tools/home/tmp')
 
 # util = synth('vivado', outdir='/tools/home/tmp', top='/test', util=True)
@@ -61,8 +61,8 @@ def test_basic(din_delay, dout_delay):
           ref=test,
           delays=[delay_rng(dout_delay, dout_delay)])
 
-    cosim('/dut', 'verilator')
+    cosim('/dut', 'verilator', outdir='/tools/home/tmp/shedule')
     sim()
 
 
-# test_basic()
+test_basic(0, 0)

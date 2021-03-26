@@ -32,33 +32,40 @@ def cond_wrap(first, last, test):
 class ExitAwaits(CfgDfs):
     def __init__(self):
         self.scopes = []
+        self.in_awaited = set()
 
     @property
     def scope(self):
         return self.scopes[-1]
 
+    def apply_await(self, node, exit_await):
+        if not node.next:
+            return
+
+        if exit_await != ir.res_true:
+            cond_wrap(node.next[0], self.scope.sink.prev[0], exit_await)
+            self.scope.exit_await = ir.BinOpExpr((self.scope.exit_await, exit_await), ir.opc.And)
+
     def enter_BaseBlock(self, node):
         self.scopes.append(node)
         node.exit_await = ir.res_true
+        if node.next and node.next[0] not in self.in_awaited:
+            self.in_awaited.add(node.next[0])
+            self.apply_await(node, node.next[0].value.in_await)
 
     def exit_BaseBlock(self, node):
         self.scopes.pop()
 
     def exit_Statement(self, node):
-        exit_await = node.value.exit_await
+        self.apply_await(node, node.value.exit_await)
 
-        if exit_await != ir.res_true:
-            breakpoint()
-            cond_wrap(node.next[0], self.scope.sink.prev[0], exit_await)
-            self.scope.exit_await = ir.BinOpExpr((self.scope.exit_await, exit_await),
-                                                 ir.opc.And)
+        if node.next and node.next[0] not in self.in_awaited:
+            self.in_awaited.add(node.next[0])
+            self.apply_await(node.next[0], node.next[0].value.in_await)
 
     def exit_HDLBlock(self, block):
         exit_await = ir.res_true
         for b in reversed(block.next):
             exit_await = ir.ConditionalExpr((b.exit_await, exit_await), b.value.test)
 
-        if exit_await != ir.res_true:
-            cond_wrap(block.sink.next[0], self.scope.sink.prev[0], exit_await)
-            self.scope.exit_await = ir.BinOpExpr((self.scope.exit_await, exit_await),
-                                                 ir.opc.And)
+        self.apply_await(block.sink, exit_await)

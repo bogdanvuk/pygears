@@ -983,7 +983,6 @@ class BaseBlock(Statement):
 @attr.s(auto_attribs=True, eq=False)
 class Branch(BaseBlock):
     test: Expr = res_true
-    branch_id: int = None
 
     def __str__(self):
         if self.test == res_true and not self.stmts:
@@ -992,20 +991,15 @@ class Branch(BaseBlock):
         if self.test == res_true:
             header = ''
         else:
-            header = f'(if {str(self.test)})'
+            header = f'if ({str(self.test)})'
 
         footer = ''
-        # if self.exit_cond != res_true:
-        #     footer = f' (exit: {str(self.exit_cond)})'
 
         body = ''
         for s in self.stmts:
             body += str(s)
 
-        # if not header and body.count('\n') == 1:
-        #     return f'{body[:-1]}{footer}\n'
-
-        return f'{header}{{\n{textwrap.indent(body, "    ")}}}{footer}\n'
+        return f'{header}{{\n{textwrap.indent(body, "    ")}}}{footer}'
 
 
 @attr.s(auto_attribs=True, eq=False)
@@ -1017,22 +1011,31 @@ class HDLBlock(Statement):
         if branch is None:
             branch = Branch()
 
-        branch.branch_id = len(self.branches)
         self.branches.append(branch)
-
         return branch
+
+    @property
+    def has_else(self):
+        return self.branches[-1].test == res_true
 
     def __str__(self):
         sblk = ''
-        for b in self.branches:
-            sblk += str(b)
+        for i, b in enumerate(self.branches):
+            if b.stmts:
+                if i > 0:
+                    sblk += ' else '
+
+                sblk += str(b)
+
+        sblk += '\n'
 
         return sblk
 
 
 @attr.s(auto_attribs=True, eq=False)
-class LoopBlock(HDLBlock):
-    pass
+class LoopBlock(BaseBlock):
+    test: Expr = res_true
+
     # def __attrs_post_init__(self):
     #     super().__attrs_post_init__()
     #     if self.test is not None:
@@ -1058,7 +1061,7 @@ class HDLBlockSink(Statement):
 
 
 @attr.s(auto_attribs=True, eq=False)
-class LoopBlockSink(Statement):
+class LoopBlockSink(BaseBlock):
     def __str__(self):
         return f'LoopBlockSink'
 

@@ -130,12 +130,12 @@ class SVCompiler(HDLVisitor):
 
         bl = self.block_lines.pop()
 
-        if isinstance(block, ir.HDLBlock):
+        if isinstance(block, ir.Branch):
             maybe_else = 'else ' if getattr(block, 'else_branch', False) else ''
             # in_cond = ir.BinOpExpr((block.in_cond, block.opt_in_cond),
             #                        ir.opc.And)
 
-            in_cond = block.in_cond
+            in_cond = block.test
 
             if in_cond != res_true:
                 in_cond_val = self.svexpr(in_cond, self.aux_funcs)
@@ -294,7 +294,7 @@ class SVCompiler(HDLVisitor):
             # self.prepend(f"{target} = {stmt}")
             # self.defaults[target] = stmt
 
-        self.HDLBlock(node)
+        self.BaseBlock(node)
 
         self.trim_cur_block()
 
@@ -322,15 +322,15 @@ class SVCompiler(HDLVisitor):
 
         self.header('')
 
-        self.HDLBlock(node)
+        self.BaseBlock(node)
 
         self.footer(f'endfunction')
         self.footer('')
 
     def LoopBlock(self, node):
-        self.HDLBlock(node)
+        raise Exception()
 
-    def HDLBlock(self, node):
+    def BaseBlock(self, node):
         self.enter_block(node)
 
         for stmt in node.stmts:
@@ -340,16 +340,16 @@ class SVCompiler(HDLVisitor):
 
         self.exit_block(node)
 
-    def IfElseBlock(self, node):
+    def HDLBlock(self, node):
         self.enter_block(node)
 
-        for i, stmt in enumerate(node.stmts):
+        for i, b in enumerate(node.branches):
             if i > 0:
-                stmt.else_branch = True
+                b.else_branch = True
             else:
-                stmt.else_branch = False
+                b.else_branch = False
 
-            self.visit(stmt)
+            self.visit(b)
 
         content = []
         for c in reversed(self.cur_block_lines.content):
@@ -425,6 +425,7 @@ def is_top_port_intf(name, ctx):
     else:
         return None
 
+
 def is_port_intf(name, ctx):
     for m in ctx.submodules:
         for p in m.in_ports:
@@ -441,7 +442,6 @@ def is_port_intf(name, ctx):
     for p in ctx.gear.out_ports:
         if p.basename == name:
             return p
-
 
 
 def write_declarations(ctx, subsvmods, template_env):

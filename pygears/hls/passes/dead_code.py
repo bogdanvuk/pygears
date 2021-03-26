@@ -1,5 +1,6 @@
 from ..ir_utils import HDLVisitor, add_to_list, ir, res_false, IrVisitor, IrExprVisitor
 
+
 class FuncCallExprFinder(IrExprVisitor):
     def __init__(self, called_funcs):
         self.called_funcs = called_funcs
@@ -16,6 +17,7 @@ class FuncCallFinder(IrVisitor):
 
     def Expr(self, expr):
         self.expr_visit.visit(expr)
+
 
 class RemoveDeadCode(HDLVisitor):
     def __init__(self, ctx):
@@ -46,27 +48,24 @@ class RemoveDeadCode(HDLVisitor):
     # TODO: Implement things properly for IfElseBlock (What if middle elif is missing?)
 
     def HDLBlock(self, node):
-        stmts = node.stmts
-        live_stmts = []
+        branches = []
+        for b in node.branches:
+            if b.test == res_false:
+                continue
 
-        if node.in_cond == res_false:
-            return None
+            if not b.stmts:
+                continue
 
-        for stmt in stmts:
-            child = self.visit(stmt)
-            if child is not None:
-                live_stmts.append(child)
+            branches.append(self.visit(b))
 
-        if not node.stmts:
-            return None
-
-        node.stmts = live_stmts
+        node.branches = branches
 
         return node
 
 
 def remove_dead_code(modblock, ctx):
     return RemoveDeadCode(ctx).visit(modblock)
+
 
 def find_called_funcs(modblock, ctx):
     v = FuncCallFinder()

@@ -203,19 +203,16 @@ class CFG(HDLVisitor):
 
     def LoopBlock(self, block: ir.LoopBlock):
         node = Node(block)
-        # node = Node(block.in_cond)
-        self.set_head(node)
+
         # Start a new level of nesting
         self.break_.append([])
         self.continue_.append([])
         # Handle the body
-        self.BaseBlock(block)
-        self.head.extend(self.continue_.pop())
+        node = self.BaseBlock(block)
+        node.sink.value = ir.LoopBlockSink()
 
-        sink = Node(ir.LoopBlockSink())
-        self.set_head(sink)
+        self.head.extend(self.continue_.pop())
         self.set_head(node)
-        self.set_head(Node(ir.HDLBlockSink(), source=node))
 
         # The break statements and the test go to the next node
         self.head.extend(self.break_.pop())
@@ -241,6 +238,13 @@ class CFG(HDLVisitor):
         self.head.extend(branch_exits)
         sink = Node(ir.HDLBlockSink(), source=node)
         self.set_head(sink)
+
+        if not block.has_else:
+            br_else_sink = Node(ir.BranchSink(), next_=[sink])
+            br_else = Node(ir.Branch(), next_=[br_else_sink])
+            br_else_sink.source = br_else
+            node.next.append(br_else)
+
 
     def generic_visit(self, node):
         breakpoint()
@@ -519,6 +523,15 @@ class CfgDfs:
 
         self.generic_visit(node.sink)
 
+        # self.enter(node)
+        # self.visit(node.next[0])
+        # self.enter(node.sink)
+        # self.exit(node.sink)
+        # self.exit(node)
+
+        # if node.sink.next:
+        #     self.generic_visit(node.sink.next[0])
+
     def HDLBlock(self, node):
         self.enter(node)
         for n in node.next:
@@ -537,5 +550,5 @@ class CfgDfs:
     def HDLBlockSink(self, node: ir.HDLBlockSink):
         return
 
-    def BaseBlockSink(self, node: ir.HDLBlockSink):
+    def BaseBlockSink(self, node: ir.BaseBlockSink):
         return
