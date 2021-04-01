@@ -15,16 +15,13 @@ class InferRegisters(IrVisitor):
         self.ctx = ctx
         self.visited = set()
         self.inferred = inferred
+        self.reaching = ctx.reaching
 
     def Statement(self, stmt: ir.Statement):
         self.visited.add(stmt)
 
-    def BaseBlock(self, block: ir.BaseBlock):
-        for stmt in block.stmts:
-            self.visit(stmt)
-
     def Expr(self, expr: ir.Expr):
-        if all(d[1] in self.visited for d in expr.reaching.get('in', [])):
+        if all(d[1] in self.visited for d in self.reaching[id(expr)].get('in', [])):
             return
 
         v = VariableFinder()
@@ -33,28 +30,28 @@ class InferRegisters(IrVisitor):
         if not v.variables:
             return
 
-        for d in expr.reaching['in']:
+        for d in self.reaching[id(expr)]['in']:
             if d[0] not in v.variables:
                 continue
 
             if d[1] in self.visited:
                 continue
 
-            self.inferred.add(d[0])
+            self.inferred.add(d)
 
     def AssignValue(self, stmt: ir.AssignValue):
         if isinstance(stmt.target, ir.SubscriptExpr) and not isinstance(
                 stmt.target.index, ir.ResExpr):
-            stmt.target.val.reaching = stmt.reaching
+            self.reaching[id(stmt.target.val)] = self.reaching[id(stmt)]
             self.visit(stmt.target.val)
 
-        stmt.val.reaching = stmt.reaching
+        self.reaching[id(stmt.val)] = self.reaching[id(stmt)]
         self.visit(stmt.val)
 
         self.visited.add(stmt)
 
     def ExprStatement(self, stmt: ir.ExprStatement):
-        stmt.expr.reaching = stmt.reaching
+        self.reaching[id(stmt.expr)] = self.reaching[id(stmt)]
         self.visit(stmt.expr)
 
         self.visited.add(stmt)
@@ -95,17 +92,11 @@ class ResolveRegInits(HDLVisitor):
 
         return node
 
-    def BaseBlock(self, block):
-        stmts = []
-
-        if block.in_cond != res_true:
+    def Branch(self, block):
+        if block.test != res_true:
             return block
 
-        for stmt in block.stmts:
-            add_to_list(stmts, self.visit(stmt))
-
-        block.stmts = stmts
-        return block
+        self.BaseBlock(block)
 
 
 def infer_registers(modblock, ctx):
@@ -113,18 +104,18 @@ def infer_registers(modblock, ctx):
     v = InferRegisters(ctx, inferred)
     v.visit(modblock)
 
-    for reg in inferred:
+    for reg, _ in inferred:
         hls_debug(f'Inferred register for signal {reg}')
         ctx.scope[reg].reg = True
         ctx.scope[reg].any_init = True
 
     ResolveRegInits(ctx).visit(modblock)
 
-    for reg in inferred:
+    for reg, _ in inferred:
         if ctx.scope[reg].val is None:
             raise Exception(
                 f'Inferred register for variable "{reg}", but cannot infer its initial value.'
                 f' Specify initial value manually.'
             )
 
-    return modblock
+    return modblock, inferred

@@ -172,7 +172,21 @@ class IrVisitor:
         pass
 
 
+def cp_mapper(f):
+    def wrp(self, node):
+        ret = f(self, node)
+        if self.cpmap is not None:
+            self.cpmap[id(ret)] = node
+
+        return ret
+
+    return wrp
+
+
 class IrRewriter:
+    def __init__(self, cpmap=None):
+        self.cpmap = cpmap
+
     def visit(self, node):
         for base_class in inspect.getmro(node.__class__):
             if hasattr(self, base_class.__name__):
@@ -180,14 +194,15 @@ class IrRewriter:
         else:
             return self.generic_visit(node)
 
+    @cp_mapper
     def BaseBlock(self, block: ir.BaseBlock):
         rw_block = type(block)()
-
         for stmt in block.stmts:
             add_to_list(rw_block.stmts, self.visit(stmt))
 
         return rw_block
 
+    @cp_mapper
     def Branch(self, block: ir.Branch):
         rw_block = type(block)(test=self.visit(block.test))
 
@@ -196,6 +211,7 @@ class IrRewriter:
 
         return rw_block
 
+    @cp_mapper
     def FuncBlock(self, block: ir.FuncBlock):
         # args = {n: self.visit(val) for n, val in block.args.items()}
 
@@ -209,24 +225,31 @@ class IrRewriter:
 
         return rw_block
 
+    @cp_mapper
     def HDLBlock(self, block: ir.HDLBlock):
         return type(block)(branches=[self.visit(b) for b in block.branches])
 
+    @cp_mapper
     def ExprStatement(self, stmt: ir.ExprStatement):
         return type(stmt)(self.visit(stmt.expr))
 
+    @cp_mapper
     def FuncReturn(self, stmt: ir.FuncReturn):
         return type(stmt)(stmt.func, self.visit(stmt.expr))
 
+    @cp_mapper
     def AssignValue(self, stmt: ir.AssignValue):
         return type(stmt)(self.visit(stmt.target), self.visit(stmt.val))
 
+    @cp_mapper
     def AssertValue(self, stmt: ir.AssertValue):
         return type(stmt)(self.visit(stmt.val))
 
+    @cp_mapper
     def Expr(self, expr):
         return expr
 
+    @cp_mapper
     def generic_visit(self, node):
         return node
 

@@ -63,10 +63,12 @@ def transform(modblock, ctx: GearContext):
     # modblock = handle_generators(modblock, ctx)
     # hls_debug(modblock, 'Handle Generators')
 
-    # modblock, cfg = cfgutil.forward(modblock, cfgutil.ReachingDefinitions())
+    modblock, cfg, reaching = cfgutil.forward(modblock, cfgutil.ReachingDefinitions())
 
-    # modblock = infer_registers(modblock, ctx)
-    # hls_debug(modblock, 'Infer registers')
+    ctx.reaching = {id(n.value): v for n, v in reaching.items()}
+
+    modblock, ctx.inferred = infer_registers(modblock, ctx)
+    hls_debug(modblock, 'Infer registers')
 
     modblock = schedule(modblock, ctx)
 

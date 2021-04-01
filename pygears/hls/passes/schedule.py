@@ -274,8 +274,8 @@ def create_scheduled_cfg(node, G, visited, labels, reaching=None, simple=True):
             if isinstance(n.value, ir.Branch) and n.next:
                 n = n.next[0]
 
-            while (n.next
-                and (isinstance(n.value, ir.BaseBlockSink) or isinstance(n.value, ir.HDLBlockSink))):
+            while (n.next and
+                   (isinstance(n.value, ir.BaseBlockSink) or isinstance(n.value, ir.HDLBlockSink))):
                 n = n.next[0]
 
         G.add_edge(id(node), id(n))
@@ -485,9 +485,10 @@ class ScheduleBFS:
 
 
 class LoopBreaker(IrRewriter):
-    def __init__(self, loops, ctx):
+    def __init__(self, loops, cpmap, ctx):
         self.loops = loops
         self.ctx = ctx
+        super().__init__(cpmap)
 
     def LoopBlock(self, block: ir.LoopBlock):
         body = ir.Branch(test=block.test)
@@ -498,12 +499,17 @@ class LoopBreaker(IrRewriter):
         cond_enter_blk = ir.HDLBlock(branches=[body])
 
         transition = ir.Branch(test=block.test)
-        transition.stmts.append(
-            ir.AssignValue(self.ctx.ref('_state'),
-                           ir.ResExpr(len(self.loops) + 1),
-                           exit_await=ir.res_false))
-
+        jump = ir.AssignValue(self.ctx.ref('_state'),
+                              ir.ResExpr(len(self.loops) + 1),
+                              exit_await=ir.res_false)
         cond_exit_blk = ir.HDLBlock(branches=[transition])
+
+        # TODO: out -> in, not just copy
+        self.cpmap[id(transition)] = block.stmts[-1]
+        self.cpmap[id(jump)] = block.stmts[-1]
+        self.cpmap[id(cond_exit_blk)] = block.stmts[-1]
+
+        transition.stmts.append(jump)
 
         self.loops.append(cond_enter_blk)
 
@@ -513,37 +519,32 @@ class LoopBreaker(IrRewriter):
 
 
 class LoopState(CfgDfs):
-    def __init__(self, loop):
+    def __init__(self, loop, cpmap, ctx):
         self.loop = loop
+        self.ctx = ctx
         self.entry = None
         self.node_map = {}
         self.scopes = []
         self.entry_scope = None
+        self.cpmap = cpmap
 
     @property
     def scope(self):
         return self.scopes[-1]
 
     def copy(self, node):
-        # print(f'------- Copying node: --------')
-        # print(node.value)
         source = self.node_map.get(node.source, None)
 
-        cp_node = Node(node.value, source=source)
+        cp_val = copy(node.value)
+        if self.cpmap is not None:
+            self.cpmap[id(cp_val)] = node.value
+
+        cp_node = Node(cp_val, source=source)
         self.node_map[node] = cp_node
         cp_node.prev = [self.node_map[p] for p in node.prev if p in self.node_map]
 
         for n in cp_node.prev:
             n.next.append(cp_node)
-            if (len(n.next) > 1) and (not isinstance(n.value, ir.HDLBlock)):
-                breakpoint()
-
-        # try:
-        #     draw_scheduled_cfg(self.entry, simple=False)
-        # except KeyError:
-        #     pass
-
-        # breakpoint()
 
         return cp_node
 
@@ -554,8 +555,15 @@ class LoopState(CfgDfs):
     def exit_BaseBlock(self, node):
         self.scopes.pop()
         if not self.scopes:
-            sink = Node(ir.BaseBlockSink(), prev=[node.sink.prev[0]])
+            exit_jump = Node(
+                ir.AssignValue(self.ctx.ref('_state'), ir.ResExpr(0), exit_await=ir.res_false),
+                prev=[node.sink.prev[0]],
+            )
+            sink = Node(ir.BaseBlockSink(), prev=[exit_jump])
+
+            exit_jump = self.copy(exit_jump)
             sink = self.copy(sink)
+
             sink.source = self.entry
             sink.source.sink = sink
 
@@ -604,6 +612,9 @@ class LoopState(CfgDfs):
                 if p in self.node_map:
                     self.node_map[node] = self.node_map[p]
 
+class ForwardBlockState(CfgDfs):
+    pass
+
 
 def schedule(block, ctx):
     ctx.scope['_state'] = ir.Variable(
@@ -613,17 +624,25 @@ def schedule(block, ctx):
     )
 
     loops = []
-    block = LoopBreaker(loops, ctx).visit(block)
+    cpmap = {}
+    cplmap = {}
+    block = LoopBreaker(loops, cpmap, ctx).visit(block)
 
     cfg = cfgutil.CFG.build_cfg(block)
     # draw_cfg(cfg)
 
     state_cfg = [cfg.entry]
     for l in loops:
-        v = LoopState(l)
+        v = LoopState(l, cplmap, ctx)
         v.visit(cfg.entry)
         # draw_scheduled_cfg(v.entry, simple=False)
         state_cfg.append(v.entry)
+
+    for k, v in cpmap.items():
+        ctx.reaching[k] = ctx.reaching.get(id(v), None)
+
+    for k, v in cplmap.items():
+        ctx.reaching[k] = ctx.reaching.get(id(v), None)
 
     # modblock, cfg = cfgutil.forward(block, cfgutil.ReachingDefinitions())
 
@@ -636,8 +655,10 @@ def schedule(block, ctx):
     # v.bfs(cfg.entry)
     # state_cfg = v.state_entry
 
-    for s in state_cfg:
-        VarScope(ctx).visit(s)
+    state_in_scope = {}
+    for i, s in enumerate(state_cfg):
+        # draw_scheduled_cfg(s, simple=True)
+        VarScope(ctx, state_in_scope, i).visit(s)
         ExitAwaits().visit(s)
 
     # state0 = state_cfg[0]

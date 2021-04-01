@@ -87,7 +87,7 @@ def merge_subscope(block, parent_scope, subscopes):
 
 
 class Inliner(IrExprRewriter):
-    def __init__(self, scope):
+    def __init__(self, scope, ctx):
         self.scope = scope
 
     def visit_Name(self, irnode):
@@ -105,8 +105,8 @@ class Inliner(IrExprRewriter):
         return val
 
 
-def inline_expr(irnode, scope):
-    new_node = Inliner(scope).visit(irnode)
+def inline_expr(irnode, scope, ctx):
+    new_node = Inliner(scope, ctx).visit(irnode)
     if new_node is None:
         return irnode
 
@@ -114,9 +114,15 @@ def inline_expr(irnode, scope):
 
 
 class VarScope(CfgDfs):
-    def __init__(self, ctx):
-        self.scope = copy(ctx.intfs)
-        self.scope['_state'] = ctx.scope['_state']
+    def __init__(self, ctx, state_in_scope, state_id):
+        if state_id in state_in_scope:
+            self.scope = state_in_scope[state_id]
+        else:
+            self.scope = copy(ctx.intfs)
+            self.scope['_state'] = ctx.scope['_state']
+
+        self.ctx = ctx
+        self.state_in_scope = state_in_scope
 
     def enter_Statement(self, block):
         block.scope = copy(self.scope)
@@ -133,7 +139,7 @@ class VarScope(CfgDfs):
     def enter_Branch(self, node):
         self.scope = copy(node.prev[0].scope)
         irnode: ir.Branch = node.value
-        irnode.test = inline_expr(irnode.test, self.scope)
+        irnode.test = inline_expr(irnode.test, self.scope, self.ctx)
 
     def exit_Branch(self, node):
         node.scope = copy(self.scope)
@@ -141,9 +147,25 @@ class VarScope(CfgDfs):
     def AssignValue(self, node):
         irnode: ir.AssignValue = node.value
 
+        if (isinstance(irnode.target, ir.Name) and irnode.target.name == '_state'
+                and irnode.val.val != 0):
+            in_scope = {}
+            in_scope = copy(self.ctx.intfs)
+            in_scope['_state'] = self.ctx.scope['_state']
+
+            state_id = irnode.val.val
+
+            for name, defstmt in self.ctx.reaching[id(irnode)]['out']:
+                if name in self.ctx.regs:
+                    in_scope[name] = self.ctx.ref(name)
+                else:
+                    in_scope[name] = defstmt
+
+            self.state_in_scope[state_id] = in_scope
+
         node.scope = copy(self.scope)
 
-        irnode.val = inline_expr(irnode.val, self.scope)
+        irnode.val = inline_expr(irnode.val, self.scope, self.ctx)
 
         val = irnode.val
         if isinstance(val, ir.Await):

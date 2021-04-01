@@ -391,7 +391,7 @@ def forward(node, analysis):
 
     analysis.visit(cfg_obj.entry)
 
-    return node, cfg_obj.entry
+    return node, cfg_obj.entry, analysis.reaching
 
 
 def node_name(node):

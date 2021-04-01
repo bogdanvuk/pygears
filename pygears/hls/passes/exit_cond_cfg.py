@@ -42,7 +42,7 @@ class ExitAwaits(CfgDfs):
         if not node.next:
             return
 
-        if exit_await != ir.res_true:
+        if exit_await != ir.res_true and node.next:
             cond_wrap(node.next[0], self.scope.sink.prev[0], exit_await)
             self.scope.exit_await = ir.BinOpExpr((self.scope.exit_await, exit_await), ir.opc.And)
 
