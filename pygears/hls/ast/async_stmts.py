@@ -65,8 +65,8 @@ def cast_return(arg_nodes, out_ports):
             if isinstance(arg, ir.ConcatExpr) and arg.dtype != port_t:
                 ops = []
                 for i in range(len(arg.operands)):
-                    if isinstance(arg.operands[i],
-                                  ir.CastExpr) and (arg.operands[i].cast_to == port_t[i]):
+                    if isinstance(arg.operands[i], ir.CastExpr) and (arg.operands[i].cast_to
+                                                                     == port_t[i]):
                         ops.append(arg.operands[i])
                     else:
                         ops.append(resolve_cast_func(arg.operands[i], port_t[i]))
@@ -111,8 +111,9 @@ def parse_yield(node, ctx):
 
     for p, v in zip(ctx.out_ports, vals):
         if len(ctx.out_ports) == 1:
-            stmts.append(ir.ExprStatement(ir.Await(exit_await=ir.Component(p, 'ready'))))
+            stmts.append(ir.Await(ir.Component(p, 'ready')))
         elif v != ir.ResExpr(None):
+            # TODO: Revisit this!
             stmts.append(
                 ir.ExprStatement(
                     ir.Await(exit_await=ir.BinOpExpr((
@@ -128,12 +129,9 @@ def withitem(node: ast.withitem, ctx: Context):
     targets = visit_ast(node.optional_vars, ctx)
 
     if isinstance(intf, ir.ConcatExpr):
-        data = ir.ConcatExpr([
-            ir.Await(ir.Component(i, 'data'), in_await=ir.Component(i, 'valid'))
-            for i in intf.operands
-        ])
+        data = ir.ConcatExpr([ir.Component(i, 'data') for i in intf.operands])
     else:
-        data = ir.Await(ir.Component(intf, 'data'), in_await=ir.Component(intf, 'valid'))
+        data = ir.Component(intf, 'data')
 
     ass_targets = assign_targets(ctx, targets, data, ir.Variable)
 
@@ -145,12 +143,16 @@ def asyncwith(node, ctx: Context):
     assigns = [visit_ast(i, ctx) for i in node.items]
 
     intfs = []
-    for intf, targets in assigns:
+    for intf, _ in assigns:
         if isinstance(intf, ir.ConcatExpr):
             intfs.extend(intf.operands)
         else:
             intfs.append(intf)
 
+    for i in intfs:
+        extend_stmts(ctx.ir_parent_block.stmts, ir.Await(ir.Component(i, 'valid')))
+
+    for _, targets in assigns:
         extend_stmts(ctx.ir_parent_block.stmts, targets)
 
     stmts = []

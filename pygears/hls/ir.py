@@ -310,81 +310,6 @@ class Component(Expr):
             return self.val.dtype.dtype
 
 
-@attr.s(auto_attribs=True)
-class Await(Expr):
-    expr: Expr = None
-    in_await: Expr = res_true
-    exit_await: Expr = res_true
-
-    @property
-    def dtype(self):
-        if self.expr is None:
-            return None
-
-        return self.expr.dtype
-
-    def __str__(self):
-        if self.in_await != res_true:
-            footer = f'(in-await {self.in_await})'
-
-        if self.exit_await != res_true:
-            footer = f'(exit-await {self.exit_await})'
-
-        if self.expr:
-            return f'{str(self.expr)} {footer}'
-        else:
-            return footer
-
-
-@attr.s(auto_attribs=True)
-class InterfacePull(Expr):
-    intf: Interface
-
-    @property
-    def in_await(self):
-        return Component(self.intf, 'valid')
-
-    @in_await.setter
-    def in_await(self, val):
-        pass
-
-    @property
-    def dtype(self):
-        return self.intf.obj.dtype
-
-    def __str__(self):
-        return f'{str(self.intf)}.data'
-
-
-@attr.s(auto_attribs=True)
-class InterfaceReady(Expr):
-    intf: Interface
-
-    @property
-    def exit_await(self):
-        return Component(self.intf, 'ready')
-
-    @exit_await.setter
-    def exit_await(self, val):
-        pass
-
-    @property
-    def dtype(self):
-        return Bool
-
-    def __str__(self):
-        return f'{str(self.intf)}.ready'
-
-
-@dataclass
-class InterfaceAck(Expr):
-    intf: Interface
-
-    @property
-    def dtype(self):
-        return Bool
-
-
 @dataclass
 class ConcatExpr(Expr):
     def __repr__(self):
@@ -842,43 +767,21 @@ class GenAck(Expr):
 # @attr.s(auto_attribs=True)
 @attr.s(auto_attribs=True, kw_only=True, eq=False)
 class Statement:
-    in_await: Expr = res_true
-    exit_await: Expr = res_true
-
     def __hash__(self):
         return id(self)
 
 
 @attr.s(auto_attribs=True, eq=False)
-class ExprStatement(Statement):
+class Await(Statement):
     expr: Expr
 
-    @property
-    def in_await(self):
-        if isinstance(self.expr, Await):
-            return self.expr.in_await
+    def __str__(self):
+        return f'(await {str(self.expr)})\n'
 
-        if isinstance(self.expr, ConcatExpr):
-            return bin_op_reduce(
-                list(op.in_await for op in self.expr.operands if isinstance(op, Await)),
-                lambda op: op, opc.And, res_true)
 
-        return res_true
-
-    @in_await.setter
-    def in_await(self, val):
-        pass
-
-    @property
-    def exit_await(self):
-        if isinstance(self.expr, Await):
-            return self.expr.exit_await
-
-        return res_true
-
-    @exit_await.setter
-    def exit_await(self, val):
-        pass
+@attr.s(auto_attribs=True, eq=False)
+class ExprStatement(Statement):
+    expr: Expr
 
     def __str__(self):
         return f'{self.expr}\n'
@@ -909,40 +812,11 @@ def extract_partial_targets(target):
 class AssignValue(Statement):
     target: Union[str, Name]
     val: Union[str, int, Expr]
-    in_await = attr.ib()
-    exit_await = attr.ib()
     dtype: Union[TypingMeta, None] = None
 
     def __attrs_post_init__(self):
         for t in extract_base_targets(self.target):
             t.ctx = 'store'
-
-    @property
-    def in_await(self):
-        if isinstance(self.val, Await):
-            return self.val.in_await
-
-        if isinstance(self.val, ConcatExpr):
-            return bin_op_reduce(
-                list(op.in_await for op in self.val.operands if isinstance(op, Await)),
-                lambda op: op, opc.And, res_true)
-
-        return res_true
-
-    @in_await.setter
-    def in_await(self, val):
-        pass
-
-    @property
-    def exit_await(self):
-        if isinstance(self.val, Await):
-            return self.val.exit_await
-
-        return res_true
-
-    @exit_await.setter
-    def exit_await(self, val):
-        pass
 
     @property
     def base_targets(self):

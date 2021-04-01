@@ -29,43 +29,37 @@ def cond_wrap(first, last, test):
     return cond_blk
 
 
-class ExitAwaits(CfgDfs):
+class ResolveBlocking(CfgDfs):
     def __init__(self):
         self.scopes = []
-        self.in_awaited = set()
 
     @property
     def scope(self):
         return self.scopes[-1]
 
-    def apply_await(self, node, exit_await):
+    def apply_await(self, node, blocking):
         if not node.next:
             return
 
-        if exit_await != ir.res_true and node.next:
-            cond_wrap(node.next[0], self.scope.sink.prev[0], exit_await)
-            self.scope.exit_await = ir.BinOpExpr((self.scope.exit_await, exit_await), ir.opc.And)
+        if blocking != ir.res_true and node.next:
+            cond_wrap(node.next[0], self.scope.sink.prev[0], blocking)
+            self.scope.blocking = ir.BinOpExpr((self.scope.blocking, blocking), ir.opc.And)
 
     def enter_BaseBlock(self, node):
         self.scopes.append(node)
-        node.exit_await = ir.res_true
-        if node.next and node.next[0] not in self.in_awaited:
-            self.in_awaited.add(node.next[0])
-            self.apply_await(node, node.next[0].value.in_await)
+        node.blocking = ir.res_true
 
     def exit_BaseBlock(self, node):
         self.scopes.pop()
 
-    def exit_Statement(self, node):
-        self.apply_await(node, node.value.exit_await)
-
-        if node.next and node.next[0] not in self.in_awaited:
-            self.in_awaited.add(node.next[0])
-            self.apply_await(node.next[0], node.next[0].value.in_await)
+    def exit_Await(self, node):
+        self.apply_await(node, node.value.expr)
+        # Remove Await from cfg
+        node.prev[0].next = node.next
 
     def exit_HDLBlock(self, block):
-        exit_await = ir.res_true
+        blocking = ir.res_true
         for b in reversed(block.next):
-            exit_await = ir.ConditionalExpr((b.exit_await, exit_await), b.value.test)
+            blocking = ir.ConditionalExpr((b.blocking, blocking), b.value.test)
 
-        self.apply_await(block.sink, exit_await)
+        self.apply_await(block.sink, blocking)

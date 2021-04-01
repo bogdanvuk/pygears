@@ -137,39 +137,6 @@ class SVExpressionVisitor:
         else:
             return self.separator.join([self.visit(node.val), node.field])
 
-    def visit_InterfacePull(self, node):
-        # return f'{node.intf.name}{self.separator}data'
-        return f'{node.intf.name}_s'
-
-    def visit_InterfaceReady(self, node):
-        # return f'{node.intf.name}{self.separator}data'
-        return f'{node.intf.name}.ready'
-
-    def visit_InterfaceAck(self, node):
-        # return f'{node.intf.name}{self.separator}data'
-        return f'{node.intf.name}.valid && {node.intf.name}.ready'
-
-    def visit_IntfReadyExpr(self, node):
-        res = []
-        if not isinstance(node.port, (list, tuple)):
-            return f'{node.name}{self.separator}ready'
-
-        for port in node.port:
-            # if port.context:
-            #     inst = self.expr(
-            #         BinOpExpr(
-            #             (f'{port.name}{self.separator}ready', port.context),
-            #             '&&'))
-            #     res.append(f'({inst})')
-            # else:
-            res.append(f'{port.name}{self.separator}ready')
-        res = ' || '.join(res)
-
-        if len(node.port) > 1:
-            return f'({res})'
-
-        return f'{res}'
-
     def visit_CallExpr(self, node):
         breakpoint()
 
