@@ -8,7 +8,7 @@ from ..cfg import Node, draw_cfg, CfgDfs, ReachingDefinitions
 from ..ir_utils import res_true, HDLVisitor, ir, add_to_list, res_false, is_intf_id, IrRewriter
 from pygears.typing import bitw, Uint, Bool
 from .loops import infer_cycle_done
-from .inline_cfg import VarScope, Scoping
+from .inline_cfg import VarScope
 from .exit_cond_cfg import ResolveBlocking
 
 
@@ -425,46 +425,6 @@ class StateIsolator(CfgDfs):
         #             self.node_map[node] = self.node_map[p]
 
 
-class StageScoping(Scoping):
-    def __init__(self, new_states):
-        super().__init__(scope_map={'forward': ir.res_true})
-        self.new_states = new_states
-
-    def detect_new_state(self, node):
-        expr = node.value.expr
-        forward = self.scope_map['forward']
-
-        if expr == 'forward':
-            if forward != ir.res_true:
-                return forward
-            else:
-                return None
-
-        if not isinstance(expr, ir.Component):
-            breakpoint()
-
-        if expr.field == 'valid':
-            if forward == ir.res_true:
-                return None
-
-        if expr.field == 'ready':
-            self.scope_map['forward'] = ir.res_false
-
-        return None
-
-    def enter_Await(self, node):
-        if node.value.expr == ir.res_false:
-            return
-
-        cond = self.detect_new_state(node)
-        if cond is not None:
-            print(f'New state cond: {str(cond)}')
-            self.new_states[node] = cond
-
-        if cond == ir.res_false:
-            return True
-
-
 def isolate(ctx, entry, exits=None, state_num=None):
     v = StateIsolator(ctx, exits=exits, state_num=state_num)
     v.visit(entry)
@@ -532,42 +492,27 @@ def schedule(block, ctx):
     for k, v in cpmap.items():
         ctx.reaching[k] = ctx.reaching.get(id(v), None)
 
-    found_new_state = True
-    while found_new_state:
-        found_new_state = False
-        for i, s in enumerate(state_cfg[:]):
-            new_states = {}
-            print(f'Stage scoping state {i}:')
-            StageScoping(new_states).visit(s)
-            if i == 0:
-                print_cfg_ir(s)
-                # breakpoint()
-            # draw_scheduled_cfg(s, simple=False)
-            if new_states:
-                found_new_state = True
-                state_cfg[i] = isolate(ctx, s, exits=new_states, state_num=len(state_cfg))
-                print(f'State {i} isolated based on stage scoping')
-                # draw_scheduled_cfg(state_cfg[i], simple=False)
-                for ns in new_states:
-                    print(f'Adding state {len(state_cfg)} from state {i}')
-                    state_cfg.append(isolate(ctx, ns))
-                    # draw_scheduled_cfg(state_cfg[-1], simple=False)
+    state_in_scope = [{} for _ in range(len(state_cfg))]
+    i = 0
+    while i < len(state_cfg):
+        new_states = {}
+        VarScope(ctx, state_in_scope, i, new_states).visit(state_cfg[i])
+        if new_states:
+            state_cfg[i] = isolate(ctx, state_cfg[i], exits=new_states, state_num=len(state_cfg))
+            for ns in new_states:
+                state_cfg.append(isolate(ctx, ns))
 
-    state_in_scope = {}
+        i += 1
+
     for i, s in enumerate(state_cfg):
         # draw_scheduled_cfg(s, simple=True)
         append_state_epilog(s, ctx)
         print_cfg_ir(s)
-        VarScope(ctx, state_in_scope, i).visit(s)
         ResolveBlocking().visit(s)
-
-    states = []
-    for n in state_cfg:
         v = RebuildStateIR()
-        v.visit(n)
-        states.append(n.value)
-        print(n.value)
+        v.visit(s)
 
+    states = [s.value for s in state_cfg]
     state_num = len(states)
     ctx.scope['_state'].val = ir.ResExpr(Uint[bitw(state_num - 1)](0))
     ctx.scope['_state'].dtype = Uint[bitw(state_num - 1)]

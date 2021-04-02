@@ -142,20 +142,67 @@ from pygears.lib import drv, verif, delay_rng
 # test_cond_state(2, 2)
 
 
+# @pytest.mark.parametrize('din_delay', [0, 1])
+# @pytest.mark.parametrize('dout_delay', [0, 1])
+# def test_yield_after_loop(din_delay, dout_delay):
+#     @gear(hdl={'compile': True})
+#     async def test(din: Bool) -> Uint[4]:
+#         c = Bool(True)
+#         a = Uint[4](0)
+
+#         while c:
+#             async with din as c:
+#                 yield a
+#                 a += 1
+
+#         yield 4
+
+#     verif(drv(t=Bool, seq=[True, False, False, True]) | delay_rng(din_delay, din_delay),
+#           f=test(name='dut'),
+#           ref=test,
+#           delays=[delay_rng(dout_delay, dout_delay)])
+
+#     cosim('/dut', 'verilator', outdir='/tools/home/tmp/shedule')
+#     sim()
+
+# test_yield_after_loop(2, 2)
+
+
+# @pytest.mark.parametrize('din_delay', [0, 1])
+# @pytest.mark.parametrize('dout_delay', [0, 1])
+# def test_yield_after_loop_reg_scope(din_delay, dout_delay):
+#     @gear(hdl={'compile': True})
+#     async def test(din: Bool) -> Uint[4]:
+#         c = Bool(True)
+#         a = Uint[3](0)
+
+#         while c:
+#             async with din as c:
+#                 yield a
+#                 a += 1
+
+#         yield a + 2
+
+#     verif(drv(t=Bool, seq=[True, False, False, True]) | delay_rng(din_delay, din_delay),
+#           f=test(name='dut'),
+#           ref=test,
+#           delays=[delay_rng(dout_delay, dout_delay)])
+
+#     cosim('/dut', 'verilator', outdir='/tools/home/tmp/shedule')
+#     sim()
+
+# test_yield_after_loop_reg_scope(2, 2)
+
+
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
-def test_yield_after_loop(din_delay, dout_delay):
+def test_yield_din_out_of_scope(din_delay, dout_delay):
     @gear(hdl={'compile': True})
-    async def test(din: Bool) -> Uint[4]:
-        c = Bool(True)
-        a = Uint[4](0)
+    async def test(din: Bool) -> Bool:
+        async with din as c:
+            yield c
 
-        while c:
-            async with din as c:
-                yield a
-                a += 1
-
-        yield 4
+        yield not c
 
     verif(drv(t=Bool, seq=[True, False, False, True]) | delay_rng(din_delay, din_delay),
           f=test(name='dut'),
@@ -165,4 +212,4 @@ def test_yield_after_loop(din_delay, dout_delay):
     cosim('/dut', 'verilator', outdir='/tools/home/tmp/shedule')
     sim()
 
-test_yield_after_loop(2, 2)
+test_yield_din_out_of_scope(2, 2)

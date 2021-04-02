@@ -116,17 +116,41 @@ def inline_expr(irnode, scope, ctx):
     return new_node
 
 
-class VarScope(CfgDfs):
-    def __init__(self, ctx, state_in_scope, state_id):
-        super().__init__()
-        if state_id in state_in_scope:
-            self.scope_map = {
-                k: v.val if isinstance(v, ir.AssignValue) else v
-                for k, v in state_in_scope[state_id].items()
-            }
+def detect_new_state(node, scope_map):
+    expr = node.value.expr
+    forward = scope_map['forward']
+
+    if expr == 'forward':
+        if forward != ir.res_true:
+            return forward
         else:
-            self.scope_map = copy(ctx.intfs)
-            self.scope_map['_state'] = ctx.scope['_state']
+            return None
+
+    if not isinstance(expr, ir.Component):
+        breakpoint()
+
+    if expr.field == 'valid':
+        if forward == ir.res_true:
+            return None
+
+    if expr.field == 'ready':
+        scope_map['forward'] = ir.res_false
+
+    return None
+
+
+class VarScope(CfgDfs):
+    def __init__(self, ctx, state_in_scope, state_id, new_states):
+        super().__init__()
+        self.scope_map = {
+            k: v.val if isinstance(v, ir.AssignValue) else v
+            for k, v in state_in_scope[state_id].items()
+        }
+        self.scope_map.update(ctx.intfs)
+        self.scope_map['_state'] = ctx.scope['_state']
+        self.scope_map['forward'] = ir.res_true
+
+        self.new_states = new_states
 
         self.ctx = ctx
         self.state_in_scope = state_in_scope
@@ -150,24 +174,26 @@ class VarScope(CfgDfs):
     def exit_Branch(self, node):
         node.scope = copy(self.scope_map)
 
+    def transition_scope(self, exit_node, state_id):
+        in_scope = {}
+        in_scope = copy(self.ctx.intfs)
+        in_scope['_state'] = self.ctx.scope['_state']
+
+        for name, defstmt in self.ctx.reaching[id(exit_node.value)]['out']:
+            if name in self.ctx.regs:
+                in_scope[name] = self.ctx.ref(name)
+            else:
+                in_scope[name] = defstmt
+
+        self.state_in_scope[state_id] = in_scope
+
     def AssignValue(self, node):
         irnode: ir.AssignValue = node.value
 
         if (isinstance(irnode.target, ir.Name) and irnode.target.name == '_state'
                 and irnode.val.val != 0):
-            in_scope = {}
-            in_scope = copy(self.ctx.intfs)
-            in_scope['_state'] = self.ctx.scope['_state']
-
             state_id = irnode.val.val
-
-            for name, defstmt in self.ctx.reaching[id(irnode)]['out']:
-                if name in self.ctx.regs:
-                    in_scope[name] = self.ctx.ref(name)
-                else:
-                    in_scope[name] = defstmt
-
-            self.state_in_scope[state_id] = in_scope
+            self.transition_scope(node, state_id)
 
         node.scope = copy(self.scope_map)
 
@@ -184,6 +210,22 @@ class VarScope(CfgDfs):
         forward_value(irnode.target, val, self.scope_map)
 
         self.generic_visit(node)
+
+    def enter_Await(self, node):
+        if node.value.expr == ir.res_false:
+            return
+
+        cond = detect_new_state(node, self.scope_map)
+        if cond is not None:
+            print(f'New state cond: {str(cond)}')
+            state_id = len(self.state_in_scope)
+            self.state_in_scope.append(None)
+
+            self.transition_scope(node, state_id)
+            self.new_states[node] = cond
+
+        if cond == ir.res_false:
+            return True
 
 
 class Scoping(CfgDfs):
