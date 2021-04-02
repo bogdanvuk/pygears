@@ -53,7 +53,8 @@ class ResolveBlocking(CfgDfs):
         self.scopes.pop()
 
     def exit_Await(self, node):
-        self.apply_await(node, node.value.expr)
+        if node.value.expr != 'forward':
+            self.apply_await(node, node.value.expr)
         # Remove Await from cfg
         node.prev[0].next = node.next
 
@@ -62,4 +63,6 @@ class ResolveBlocking(CfgDfs):
         for b in reversed(block.next):
             blocking = ir.ConditionalExpr((b.blocking, blocking), b.value.test)
 
+        # TODO: Rest can be put in else statement if else has no blocking
+        # statements. This might result in simpler code
         self.apply_await(block.sink, blocking)

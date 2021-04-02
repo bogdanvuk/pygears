@@ -124,6 +124,32 @@ class Node:
         self._source = val
 
 
+def backlink(node):
+    """Given a CFG with outgoing links, create incoming links."""
+    seen = set()
+    to_see = [node]
+    while to_see:
+        node = to_see.pop()
+        seen.add(node)
+        for succ in node.next:
+            succ.prev.append(node)
+            if succ not in seen:
+                to_see.append(succ)
+
+
+def forwardlink(node):
+    """Given a CFG with outgoing links, create incoming links."""
+    seen = set()
+    to_see = [node]
+    while to_see:
+        node = to_see.pop()
+        seen.add(node)
+        for pred in node.prev:
+            pred.next.append(node)
+            if pred not in seen:
+                to_see.append(pred)
+
+
 class CFG(HDLVisitor):
     """Construct a control flow graph.
 
@@ -145,19 +171,6 @@ class CFG(HDLVisitor):
         self.continue_ = []
         # A stack of break nodes
         self.break_ = []
-
-    @staticmethod
-    def backlink(node):
-        """Given a CFG with outgoing links, create incoming links."""
-        seen = set()
-        to_see = [node]
-        while to_see:
-            node = to_see.pop()
-            seen.add(node)
-            for succ in node.next:
-                succ.prev.append(node)
-                if succ not in seen:
-                    to_see.append(succ)
 
     def set_head(self, node):
         """Link this node to the current leaves."""
@@ -181,10 +194,15 @@ class CFG(HDLVisitor):
     """
         cfg = cls()
         cfg.head = []
-        cfg.entry = cfg.BaseBlock(node)
+        cfg.entry = cfg.visit(node)
         cfg.exit = cfg.entry.sink
-        cfg.backlink(cfg.entry)
+        backlink(cfg.entry)
         return cfg
+
+    def Module(self, block: ir.Module):
+        node = self.BaseBlock(block)
+        node.sink.value = ir.ModuleSink()
+        return node
 
     def BaseBlock(self, block: ir.BaseBlock):
         node = Node(block)
@@ -244,7 +262,6 @@ class CFG(HDLVisitor):
             br_else = Node(ir.Branch(), next_=[br_else_sink])
             br_else_sink.source = br_else
             node.next.append(br_else)
-
 
     def generic_visit(self, node):
         breakpoint()
@@ -440,9 +457,9 @@ class ReachingDefinitions(Forward):
   Each statement is annotated with a set of (variable, definition) pairs.
 
   """
-    def __init__(self):
+    def __init__(self, update=get_updated):
         def definition(node, incoming):
-            definitions = get_updated(node.value)
+            definitions = update(node.value)
             gen = frozenset((id_, node.value) for id_ in definitions)
             kill = frozenset(def_ for def_ in incoming if def_[0] in definitions)
             return gen, kill
@@ -497,6 +514,9 @@ class Active(Forward):
 
 
 class CfgDfs:
+    def __init__(self):
+        self.scopes = []
+
     def visit(self, node):
         for base_class in inspect.getmro(node.value.__class__):
             if hasattr(self, base_class.__name__):
@@ -516,39 +536,48 @@ class CfgDfs:
             if hasattr(self, method_name):
                 return getattr(self, method_name)(node)
 
+    @property
+    def parent(self):
+        return self.scopes[-1]
+
     def BaseBlock(self, node):
-        self.enter(node)
-        self.visit(node.next[0])
+        skip = self.enter(node)
+        if not skip:
+            self.scopes.append(node)
+            self.visit(node.next[0])
+            self.scopes.pop()
+
         self.exit(node)
 
-        self.generic_visit(node.sink)
-
-        # self.enter(node)
-        # self.visit(node.next[0])
-        # self.enter(node.sink)
-        # self.exit(node.sink)
-        # self.exit(node)
-
-        # if node.sink.next:
-        #     self.generic_visit(node.sink.next[0])
+        return self.generic_visit(node.sink)
 
     def HDLBlock(self, node):
-        self.enter(node)
-        for n in node.next:
-            self.visit(n)
+        skip = self.enter(node)
+        if not skip:
+            self.scopes.append(node)
+            for n in node.next:
+                self.visit(n)
 
+            self.scopes.pop()
         self.exit(node)
 
-        self.generic_visit(node.sink)
+        return self.generic_visit(node.sink)
 
     def generic_visit(self, node):
-        self.enter(node)
+        skip = self.enter(node)
         self.exit(node)
-        for n in node.next:
-            self.visit(n)
+        if not skip:
+            for n in node.next:
+                self.visit(n)
 
     def HDLBlockSink(self, node: ir.HDLBlockSink):
-        return
+        if node.source in self.scopes:
+            return
+
+        return self.generic_visit(node)
 
     def BaseBlockSink(self, node: ir.BaseBlockSink):
-        return
+        if node.source in self.scopes:
+            return
+
+        return self.generic_visit(node)

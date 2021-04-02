@@ -104,6 +104,9 @@ def parse_yield(node, ctx):
 
     stmts = []
 
+    for p, v in zip(ctx.out_ports, vals):
+        stmts.append(ir.Await('forward'))
+
     # Outputs values are offered in parallel. So first all outputs are declared
     # valid, and only then are all acknowledges awaited
     for p, v in zip(ctx.out_ports, vals):

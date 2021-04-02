@@ -85,7 +85,12 @@ REDUCE_INITIAL = {
 
 
 def opex(op, *operands):
-    return PYOPMAP[op](*(p.val for p in operands))
+    if op in (opc.Not, opc.And, opc.Or):
+        res_type = Bool
+    else:
+        res_type = PYOPMAP[op](*(p.dtype for p in operands))
+
+    return res_type(PYOPMAP[op](*(p.val for p in operands)))
 
 
 def bin_op_reduce(intfs, func, op, dflt=None):
@@ -652,17 +657,28 @@ class ConditionalExpr(Expr):
         if op1 == op2:
             return op1
 
-        # const_op1 = get_contextpr(op1)
-        # if const_op1 is not None and not const_op1:
-        #     return BinOpExpr((UnaryOpExpr(cond, opc.Not), op2), opc.BitAnd)
+        # TODO: Bool should be equivalent to Uint[1]
+        if typeof(op1.dtype, (Uint[1], Bool)) and typeof(op2.dtype, (Uint[1], Bool)):
+            const_op1 = get_contextpr(op1)
+            if const_op1 is not None and not const_op1:
+                if const_op1:
+                    return BinOpExpr((cond, op2), opc.Or)
+                else:
+                    return BinOpExpr((UnaryOpExpr(cond, opc.Not), op2), opc.And)
 
-        # const_op2 = get_contextpr(op1)
-        # if const_op1 is not None and not const_op2:
-        #     return BinOpExpr((cond, op1), opc.BitAnd)
+            const_op2 = get_contextpr(op2)
+            if const_op2 is not None:
+                if const_op2:
+                    return BinOpExpr((UnaryOpExpr(cond, opc.Not), op1), opc.Or)
+                else:
+                    return BinOpExpr((cond, op1), opc.And)
 
         inst = super().__new__(cls)
         inst.operands = operands
         inst.cond = cond
+
+        if str(inst) == '(din.data ? u1(0) : u1(1))':
+            breakpoint()
 
         return inst
 
@@ -854,6 +870,10 @@ class BaseBlock(Statement):
         return f'{{\n{textwrap.indent(body, "    ")}}}\n'
 
 
+class Module(BaseBlock):
+    pass
+
+
 @attr.s(auto_attribs=True, eq=False)
 class Branch(BaseBlock):
     test: Expr = res_true
@@ -879,7 +899,6 @@ class Branch(BaseBlock):
 @attr.s(auto_attribs=True, eq=False)
 class HDLBlock(Statement):
     branches: typing.List[Branch] = attr.Factory(list)
-    exit_cond: Expr = res_true
 
     def add_branch(self, branch: Branch = None):
         if branch is None:
@@ -910,16 +929,17 @@ class HDLBlock(Statement):
 class LoopBlock(BaseBlock):
     test: Expr = res_true
 
-    # def __attrs_post_init__(self):
-    #     super().__attrs_post_init__()
-    #     if self.test is not None:
-    #         self.exit_cond = UnaryOpExpr(self.test, opc.Not)
-
 
 @attr.s(auto_attribs=True, eq=False)
 class BaseBlockSink(Statement):
     def __str__(self):
         return f'BaseBlockSink'
+
+
+@attr.s(auto_attribs=True, eq=False)
+class ModuleSink(BaseBlockSink):
+    def __str__(self):
+        return f'ModuleSink'
 
 
 @attr.s(auto_attribs=True, eq=False)
@@ -938,12 +958,6 @@ class HDLBlockSink(Statement):
 class LoopBlockSink(BaseBlock):
     def __str__(self):
         return f'LoopBlockSink'
-
-
-@attr.s(auto_attribs=True, eq=False)
-class IfElseBlock(HDLBlock):
-    def __str__(self):
-        return f'IfElse {super().__str__()}'
 
 
 @attr.s(auto_attribs=True, eq=False)

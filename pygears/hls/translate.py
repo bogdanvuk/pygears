@@ -4,7 +4,7 @@ from pygears.conf.trace import gear_definition_location, TraceLevel
 from .ast import visit_ast, GearContext, FuncContext, Context, form_hls_syntax_error
 from .ast.utils import get_function_ast
 from . import ir
-from .passes import (inline, inline_res, remove_dead_code, infer_exit_cond,
+from .passes import (remove_dead_code, infer_exit_cond,
                      infer_registers, schedule, infer_in_cond,
                      handle_generators, resolve_gear_calls, find_called_funcs)
 from .debug import hls_enable_debug_log, hls_debug, hls_disable_debug_log
@@ -65,6 +65,7 @@ def transform(modblock, ctx: GearContext):
 
     modblock, cfg, reaching = cfgutil.forward(modblock, cfgutil.ReachingDefinitions())
 
+    print(modblock)
     ctx.reaching = {id(n.value): v for n, v in reaching.items()}
 
     modblock, ctx.inferred = infer_registers(modblock, ctx)

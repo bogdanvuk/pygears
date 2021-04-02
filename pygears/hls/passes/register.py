@@ -39,6 +39,10 @@ class InferRegisters(IrVisitor):
 
             self.inferred.add(d)
 
+    def Branch(self, block: ir.Branch):
+        self.reaching[id(block.test)] = self.reaching[id(block)]
+        super().Branch(block)
+
     def AssignValue(self, stmt: ir.AssignValue):
         if isinstance(stmt.target, ir.SubscriptExpr) and not isinstance(
                 stmt.target.index, ir.ResExpr):
@@ -56,19 +60,17 @@ class InferRegisters(IrVisitor):
 
         self.visited.add(stmt)
 
-    def IfElseBlock(self, block: ir.IfElseBlock):
+    def HDLBlock(self, block: ir.HDLBlock):
         prebranch = self.visited.copy()
 
         allbranch = set()
 
-        for stmt in block.stmts:
-            self.visit(stmt)
+        for b in block.branches:
+            self.visit(b)
             allbranch.update(self.visited)
             self.visited = prebranch.copy()
 
         self.visited = allbranch
-
-        self.BaseBlock(block)
 
     def generic_visit(self, node):
         pass

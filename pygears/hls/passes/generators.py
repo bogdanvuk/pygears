@@ -5,7 +5,7 @@ from ..ast.inline import call_gear
 from ..ast.call import const_func_args, resolve_gear_call
 from ..ast.stmt import assign_targets
 from ..ast.utils import add_to_list
-from .inline import Inliner
+from .inline_cfg import Inliner
 from pygears.util.utils import quiter
 from pygears.lib.rng import qrange as qrange_gear
 
