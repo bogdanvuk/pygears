@@ -129,6 +129,7 @@ builtins = {range: lambda *args, **kwds: resolve_gear_call(qrange_gear.func, arg
 
 class HandleGenerators(IrRewriter):
     def __init__(self, ctx):
+        super().__init__()
         self.ctx = ctx
         self.generators = {}
 

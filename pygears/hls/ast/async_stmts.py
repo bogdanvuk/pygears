@@ -194,11 +194,10 @@ class AsyncForContext:
         eot_load = ir.AssignValue(self.ctx.ref(eot_name),
                                   ir.SubscriptExpr(ir.Component(self.intf, 'data'), ir.ResExpr(-1)))
 
-        data_load = ir.AssignValue(
-            self.ctx.ref(data_name),
-            ir.Await(ir.Component(self.intf, 'data'), in_await=ir.Component(self.intf, 'valid')))
+        valid_await = ir.Await(ir.Component(self.intf, 'valid'))
+        data_load = ir.AssignValue(self.ctx.ref(data_name), ir.Component(self.intf, 'data'))
 
-        eot_loop_stmt = ir.LoopBlock(in_cond=eot_test, stmts=[data_load, eot_load])
+        eot_loop_stmt = ir.LoopBlock(test=eot_test, stmts=[valid_await, data_load, eot_load])
 
         self.ctx.ir_block_closure.append(eot_loop_stmt)
 
@@ -227,4 +226,4 @@ def AsyncFor(node, ctx: Context):
 
 @node_visitor(ast.Await)
 def _(node: ast.Await, ctx: Context):
-    return ir.ExprStatement(ir.Await(in_await=ir.res_false, exit_await=ir.res_false))
+    return ir.Await(ir.res_false)

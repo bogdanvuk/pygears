@@ -1,7 +1,7 @@
 import pytest
 from pygears import gear, Intf, find
 from pygears.sim import sim, cosim, clk
-from pygears.typing import Bool, Uint
+from pygears.typing import Bool, Uint, Integer, Queue
 from pygears.hls.translate import translate_gear
 from pygears.hdl import hdlgen, synth
 from pygears.lib import drv, verif, delay_rng
@@ -194,17 +194,78 @@ from pygears.lib import drv, verif, delay_rng
 # test_yield_after_loop_reg_scope(2, 2)
 
 
+# @pytest.mark.parametrize('din_delay', [0, 1])
+# @pytest.mark.parametrize('dout_delay', [0, 1])
+# def test_yield_din_out_of_scope(din_delay, dout_delay):
+#     @gear(hdl={'compile': True})
+#     async def test(din: Bool) -> Bool:
+#         async with din as c:
+#             yield c
+
+#         yield not c
+
+#     verif(drv(t=Bool, seq=[True, False, False, True]) | delay_rng(din_delay, din_delay),
+#           f=test(name='dut'),
+#           ref=test,
+#           delays=[delay_rng(dout_delay, dout_delay)])
+
+#     cosim('/dut', 'verilator', outdir='/tools/home/tmp/shedule')
+#     sim()
+
+# test_yield_din_out_of_scope(2, 2)
+
+
+# @pytest.mark.parametrize('din_delay', [0, 1])
+# @pytest.mark.parametrize('dout_delay', [0, 1])
+# def test_qrange(din_delay, dout_delay):
+#     @gear(hdl={'compile': True})
+#     async def test(stop: Integer) -> b'stop':
+#         cnt = stop.dtype(0)
+#         last: Bool
+
+#         async with stop as s:
+#             last = False
+#             while not last:
+#                 last = cnt == s
+#                 yield cnt
+#                 cnt += 1
+
+#     # verif(drv(t=Uint[4], seq=[2, 4]) | delay_rng(din_delay, din_delay),
+#     #       f=test(name='dut'),
+#     #       ref=test,
+#     #       delays=[delay_rng(dout_delay, dout_delay)])
+
+#     # cosim('/dut', 'verilator', outdir='/tools/home/tmp/shedule')
+#     # sim()
+
+#     test(Intf(Uint[16]))
+#     util = synth('vivado', outdir='/tools/home/tmp', prjdir='/tools/home/tmp/prjsynt', top='/test', util=True)
+#     print(util)
+
+# test_qrange(2, 2)
+
+
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
-def test_yield_din_out_of_scope(din_delay, dout_delay):
+def test_double_loop(din_delay, dout_delay):
     @gear(hdl={'compile': True})
-    async def test(din: Bool) -> Bool:
-        async with din as c:
-            yield c
+    async def test(stop: Integer) -> b'stop + stop':
+        cnt1 = stop.dtype(0)
 
-        yield not c
+        async with stop as s:
+            last1 = False
+            while not last1:
+                cnt2 = stop.dtype(0)
+                last2 = False
+                while not last2:
+                    yield cnt1 + cnt2
+                    last2 = cnt2 == s
+                    cnt2 += 1
 
-    verif(drv(t=Bool, seq=[True, False, False, True]) | delay_rng(din_delay, din_delay),
+                last1 = cnt1 == s
+                cnt1 += 1
+
+    verif(drv(t=Uint[4], seq=[2, 4]) | delay_rng(din_delay, din_delay),
           f=test(name='dut'),
           ref=test,
           delays=[delay_rng(dout_delay, dout_delay)])
@@ -212,4 +273,8 @@ def test_yield_din_out_of_scope(din_delay, dout_delay):
     cosim('/dut', 'verilator', outdir='/tools/home/tmp/shedule')
     sim()
 
-test_yield_din_out_of_scope(2, 2)
+    # test(Intf(Uint[16]))
+    # util = synth('vivado', outdir='/tools/home/tmp', prjdir='/tools/home/tmp/prjsynt', top='/test', util=True)
+    # print(util)
+
+test_double_loop(0, 0)

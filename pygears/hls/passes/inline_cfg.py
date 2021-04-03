@@ -92,6 +92,7 @@ def merge_subscope(block):
 class Inliner(IrExprRewriter):
     def __init__(self, scope, ctx):
         self.scope_map = scope
+        self.ctx = ctx
 
     def visit_Name(self, irnode):
         if (irnode.name not in self.scope_map):
@@ -102,6 +103,12 @@ class Inliner(IrExprRewriter):
 
         val = self.scope_map[irnode.name]
 
+        # # If we are about
+        # variable = self.ctx.scope[irnode.name]
+        # if variable.reg and variable.val == val:
+        #     return irnode
+
+        # TODO: What's with unknown?
         if isinstance(val, ir.ResExpr) and getattr(val.val, 'unknown', False):
             return irnode
 
@@ -140,20 +147,32 @@ def detect_new_state(node, scope_map):
 
 
 class VarScope(CfgDfs):
-    def __init__(self, ctx, state_in_scope, state_id, new_states):
+    def __init__(self, ctx, state_in_scope=None, state_id=None, new_states=None):
         super().__init__()
-        self.scope_map = {
-            k: v.val if isinstance(v, ir.AssignValue) else v
-            for k, v in state_in_scope[state_id].items()
-        }
-        self.scope_map.update(ctx.intfs)
-        self.scope_map['_state'] = ctx.scope['_state']
-        self.scope_map['forward'] = ir.res_true
 
-        self.new_states = new_states
+        if state_in_scope:
+            self.scope_map = {
+                k: v.val if isinstance(v, ir.AssignValue) else v
+                for k, v in state_in_scope[state_id].items()
+            }
+            self.scope_map.update(ctx.intfs)
+            for i in ctx.intfs:
+                if f'{i}.valid' not in self.scope_map:
+                    self.scope_map[f'{i}.valid'] = ir.res_false
+
+            self.scope_map['_state'] = ctx.scope['_state']
+            self.scope_map['forward'] = ir.res_true
+
+            self.new_states = new_states
+            self.state_in_scope = state_in_scope
+        else:
+            self.scope_map = {}
 
         self.ctx = ctx
-        self.state_in_scope = state_in_scope
+
+    def enter_FuncBlock(self, block):
+        for a in block.value.args:
+            self.scope_map[a] = self.ctx.ref(a)
 
     def enter_Statement(self, block):
         block.scope = copy(self.scope_map)
@@ -162,9 +181,9 @@ class VarScope(CfgDfs):
         outscope = merge_subscope(block)
         self.scope_map.update(outscope)
 
-    def FuncReturn(self, node):
-        node.expr = inline_expr(node.expr)
-        self.generic_visit(node)
+    def enter_FuncReturn(self, node):
+        irnode: ir.FuncReturn = node.value
+        irnode.expr = inline_expr(irnode.expr, self.scope_map, self.ctx)
 
     def enter_Branch(self, node):
         self.scope_map = copy(node.prev[0].scope)
@@ -190,6 +209,9 @@ class VarScope(CfgDfs):
     def AssignValue(self, node):
         irnode: ir.AssignValue = node.value
 
+        if isinstance(irnode.target, ir.Component) and irnode.target.field == 'ready':
+            self.scope_map[str(irnode.target)] = ir.res_false
+
         if (isinstance(irnode.target, ir.Name) and irnode.target.name == '_state'
                 and irnode.val.val != 0):
             state_id = irnode.val.val
@@ -212,8 +234,13 @@ class VarScope(CfgDfs):
         self.generic_visit(node)
 
     def enter_Await(self, node):
-        if node.value.expr == ir.res_false:
+        irnode: ir.Await = node.value
+
+        if irnode.expr == ir.res_false:
             return
+
+        if isinstance(irnode.expr, ir.Component) and irnode.expr.field == 'valid':
+            self.scope_map[str(irnode.expr)] = ir.res_true
 
         cond = detect_new_state(node, self.scope_map)
         if cond is not None:

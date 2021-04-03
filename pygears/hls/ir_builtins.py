@@ -7,7 +7,7 @@ from pygears import Intf
 from pygears.core.gear import OutSig
 
 from functools import reduce
-from pygears.typing import Int, Uint, code, div, Queue, Integral, Float, Union
+from pygears.typing import Int, Uint, code, div, Queue, Integral, Float, Union, Bool
 from pygears.typing import is_type, typeof, Tuple, Array
 from pygears.typing import floor, cast, signed, saturate
 from pygears.typing.queue import QueueMeta
@@ -190,16 +190,16 @@ def call_isinstance(arg, dtype):
         dtype = dtype.val
 
     if isinstance(arg, ir.ResExpr):
-        return isinstance(arg.val, dtype)
+        return Bool(isinstance(arg.val, dtype))
 
-    return ir.ResExpr(typeof(arg.dtype, dtype))
+    return ir.ResExpr(Bool(typeof(arg.dtype, dtype)))
 
 
 def call_is_type(arg):
     if not isinstance(arg, ir.ResExpr):
         return ir.res_false
 
-    return ir.ResExpr(is_type(arg.val))
+    return ir.ResExpr(Bool(is_type(arg.val)))
 
 
 def call_typeof(arg, dtype):
@@ -209,7 +209,7 @@ def call_typeof(arg, dtype):
     if not isinstance(arg, ir.ResExpr):
         return ir.res_false
 
-    return ir.ResExpr(typeof(arg.val, dtype))
+    return ir.ResExpr(Bool(typeof(arg.val, dtype)))
 
 
 def call_subs_fix_index(orig, path, val):

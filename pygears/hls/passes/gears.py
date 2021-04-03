@@ -17,6 +17,7 @@ class CallExprRewriter(IrExprRewriter):
 class ExprFinder(IrRewriter):
     def __init__(self, ctx):
         self.ctx = ctx
+        super().__init__()
 
     def Expr(self, expr):
         return CallExprRewriter(self.ctx).visit(expr)

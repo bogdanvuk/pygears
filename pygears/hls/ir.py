@@ -5,7 +5,7 @@ import typing
 import textwrap
 from dataclasses import dataclass, field
 
-from pygears.typing.base import TypingMeta, GenericMeta, class_and_instance_method
+from pygears.typing.base import TypingMeta, GenericMeta, class_and_instance_method, is_type
 from functools import reduce
 from pygears import Intf
 from pygears.core.port import InPort, OutPort
@@ -85,7 +85,7 @@ REDUCE_INITIAL = {
 
 
 def opex(op, *operands):
-    if op in (opc.Not, opc.And, opc.Or):
+    if op in BIN_OPERATORS or op is opc.Not:
         res_type = Bool
     else:
         res_type = PYOPMAP[op](*(p.dtype for p in operands))
@@ -966,7 +966,7 @@ class CombBlock(BaseBlock):
 
 
 @attr.s(auto_attribs=True, eq=False)
-class FuncBlock(BaseBlock):
+class FuncBlock(Module):
     args: typing.List[Name]
     name: str
     ret_dtype: PgType

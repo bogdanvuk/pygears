@@ -89,6 +89,8 @@ class Integral(int, metaclass=IntegralType):
 Number.register(Integral)
 
 
+# TODO: Should this implement __eq__ and __ne__?
+
 class IntegerType(IntegralType):
     """Defines lib methods for all Integer based classes.
     """

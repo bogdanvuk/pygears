@@ -85,6 +85,10 @@ class RebuildStateIR(CfgDfs):
     def enter_BaseBlock(self, block):
         block.value = type(block.value)()
 
+    def enter_FuncBlock(self, block):
+        irnode = block.value
+        block.value = type(irnode)(irnode.args, irnode.name, irnode.ret_dtype)
+
     def enter_HDLBlock(self, block):
         block.value = type(block.value)()
 

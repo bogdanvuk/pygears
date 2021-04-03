@@ -95,7 +95,7 @@ def _(node: ast.For, ctx: Context):
 
     block = ir.LoopBlock(
         stmts=[ir.AssignValue(targets, ir.GenNext(ctx.ref(gen_name)))],
-        exit_cond=ir.GenDone(gen_name))
+        test=ir.GenDone(gen_name))
 
     visit_block(block, node.body, ctx)
 

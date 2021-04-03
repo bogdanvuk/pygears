@@ -7,6 +7,11 @@ from . import ir
 from .passes import (remove_dead_code, infer_exit_cond,
                      infer_registers, schedule, infer_in_cond,
                      handle_generators, resolve_gear_calls, find_called_funcs)
+
+from .passes.schedule import RebuildStateIR
+
+from .passes.inline_cfg import VarScope
+
 from .debug import hls_enable_debug_log, hls_debug, hls_disable_debug_log
 from .debug import print_gear_parse_intro
 from . import cfg as cfgutil
@@ -123,7 +128,13 @@ def transform_func(funcblock, ctx: FuncContext):
     funcblock = handle_generators(funcblock, ctx)
     hls_debug(funcblock, 'Handle Generators')
 
-    funcblock = inline(funcblock, ctx)
+    cfg = cfgutil.CFG.build_cfg(funcblock)
+    VarScope(ctx).visit(cfg.entry)
+    v = RebuildStateIR()
+    v.visit(cfg.entry)
+    funcblock = cfg.entry.value
+
+    # funcblock = inline(funcblock, ctx)
 
     funcblock = remove_dead_code(funcblock, ctx)
 
