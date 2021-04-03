@@ -23,9 +23,9 @@ from .v.util import vgen_signal, vgen_intf
 # """
 REG_TEMPLATE = """
 always @(posedge clk) begin
-    if (rst || ({2})) begin
+    if (rst || (({2}) && _state_en)) begin
         {0} <= {1};
-    end else begin
+    end else if (_state_en) begin
         {0} <= {0}_next;
     end
 end
@@ -196,6 +196,8 @@ class SVCompiler(HDLVisitor):
 
             svstmt = f"{name} = {val}"
             self.handle_defaults(name, svstmt)
+            if name == '_state_next':
+                self.handle_defaults("_state_en", "_state_en = 1")
 
             return
 
@@ -206,10 +208,10 @@ class SVCompiler(HDLVisitor):
                 svstmt = f"{name} = {svval}"
                 self.handle_defaults(name, svstmt)
             return
-        elif is_intf_id(target):
-            name = self.svexpr(target, self.aux_funcs)
-            if target.ctx == 'store':
-                if self.selected(target):
+        elif isinstance(target, ir.Component):
+            name = self.svexpr(base_target, self.aux_funcs)
+            if target.field == 'data':
+                if self.selected(base_target):
                     if is_intf_id(val):
                         val_name = self.svexpr(val, self.aux_funcs)
                         svstmt = f"{name}_s = {val_name}_s"
@@ -231,7 +233,7 @@ class SVCompiler(HDLVisitor):
 
                     self.write(f"{self.attr(val_name, 'ready')} = {self.attr(name, 'ready')}")
 
-            elif target.ctx == 'ready':
+            elif target.field == 'ready' and self.selected(base_target):
                 self.handle_defaults(self.attr(name, 'ready'), f"{self.attr(name, 'ready')} = 1")
 
             return
@@ -280,6 +282,9 @@ class SVCompiler(HDLVisitor):
             elif obj.reg:
                 target = self.ctx.ref(name)
                 if self.selected(target):
+                    if name == '_state':
+                        yield '_state_en', '0'
+
                     yield (f'{self.svexpr(self.ctx.ref(name, ctx="store"), self.aux_funcs)}',
                            f'{self.svexpr(self.ctx.ref(name), self.aux_funcs)}')
             else:
@@ -460,8 +465,10 @@ def write_declarations(ctx, subsvmods, template_env):
         sep = '.'
         exprgen = vexpr
 
+    writer.line(f'logic _state_en;')
     for name, expr in ctx.regs.items():
         name = exprgen(ctx.ref(name))
+
         if lang == 'sv':
             name_t = typedef_or_inline(writer, expr.dtype, name)
             writer.line(f'{name_t} {name}, {name}_next;')

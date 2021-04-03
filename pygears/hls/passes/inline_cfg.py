@@ -41,7 +41,9 @@ def forward_value(target, val, scope):
     if isinstance(target, ir.Name):
         scope[target.name] = val
         return True
-
+    elif isinstance(target, ir.Component):
+        scope[f'{target.val.name}.{target.field}'] = val
+        return True
     elif isinstance(target, ir.ConcatExpr):
         for i, t in enumerate(target.operands):
             forward_value(t, ir.SubscriptExpr(val, ir.ResExpr(i)), scope)
@@ -77,14 +79,26 @@ def merge_subscope(block):
         prev_val = parent_scope.get(n, None)
         for v, b in zip(reversed(vals), reversed(block.next)):
             if prev_val is None:
-                if b.value.test != ir.res_true:
-                    raise HLSSyntaxError(f'Variable "{n}" uninitialized in some cases')
+                # if b.value.test != ir.res_true and not n.endswith('.data'):
+                #     raise HLSSyntaxError(f'Variable "{n}" uninitialized in some cases')
 
-                v = prev_val
+                # TODO: Assigning to output interface is more like an event and
+                # less like assigning to a variable, so the following check is not valid
+                # There should be a better way of handling outputs
+                # TODO: Think when iit is OK to have variable initialized only in one branch?
+                if b.value.test != ir.res_true:
+                    prev_val = None
+                else:
+                    prev_val = v
+            elif v is None:
+                # TODO: Connected with two todos above, result of possibly uninitialized variable
+                prev_val = None
             else:
                 prev_val = ir.ConditionalExpr((v, prev_val), b.value.test)
 
-        outscope[n] = prev_val
+        # TODO: Connected with two todos above, result of possibly uninitialized variable
+        if prev_val is not None:
+            outscope[n] = prev_val
 
     return outscope
 
@@ -146,10 +160,12 @@ class VarScope(CfgDfs):
         super().__init__()
 
         if state_in_scope:
-            self.scope_map = {
-                k: v.val if isinstance(v, ir.AssignValue) else v
-                for k, v in state_in_scope[state_id].items()
-            }
+            # self.scope_map = {
+            #     k: v.val if isinstance(v, ir.AssignValue) else v
+            #     for k, v in state_in_scope[state_id].items()
+            # }
+            self.scope_map = {}
+            self.scope_map.update(state_in_scope[state_id])
             self.scope_map.update(ctx.intfs)
             for i in ctx.intfs:
                 if f'{i}.valid' not in self.scope_map:
@@ -193,19 +209,17 @@ class VarScope(CfgDfs):
         in_scope = copy(self.ctx.intfs)
         in_scope['_state'] = self.ctx.scope['_state']
 
-        for name, defstmt in self.ctx.reaching[id(exit_node.value)]['out']:
+        for name, _ in self.ctx.reaching[id(exit_node.value)]['out']:
             if name in self.ctx.regs:
                 in_scope[name] = self.ctx.ref(name)
-            else:
-                in_scope[name] = defstmt
+            # TODO: check this, it fails on 'qrange_dout.ready' for an example
+            elif name in self.scope_map:
+                in_scope[name] = self.scope_map[name]
 
         self.state_in_scope[state_id] = in_scope
 
     def enter_AssignValue(self, node):
         irnode: ir.AssignValue = node.value
-
-        # if isinstance(irnode.target, ir.Component) and irnode.target.field == 'ready':
-        #     self.scope_map[str(irnode.target)] = ir.res_false
 
         if (isinstance(irnode.target, ir.Name) and irnode.target.name == '_state'
                 and irnode.val.val != 0):
@@ -238,9 +252,6 @@ class VarScope(CfgDfs):
                         breakpoint()
                         print('Hier?')
 
-        if isinstance(val, ir.Await):
-            val = val.expr
-
         if isinstance(val, ir.ConcatExpr):
             val = ir.ConcatExpr(
                 operands=[op.expr if isinstance(op, ir.Await) else op for op in val.operands])
@@ -255,6 +266,10 @@ class VarScope(CfgDfs):
 
         # if isinstance(irnode.expr, ir.Component) and irnode.expr.field == 'valid':
         #     self.scope_map[str(irnode.expr)] = ir.res_true
+
+        # if isinstance(irnode.expr, ir.Component) and irnode.expr.field == 'ready':
+        #     del self.scope_map[f'{irnode.expr.val.name}.data']
+        #     del self.scope_map[f'{irnode.expr.val.name}.valid']
 
         cond = detect_new_state(node, self.scope_map)
         if cond is not None:

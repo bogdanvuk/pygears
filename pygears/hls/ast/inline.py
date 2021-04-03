@@ -165,7 +165,7 @@ def call_gear(func, args, kwds, ctx: Context):
         if a == intf:
             continue
 
-        stmts.append(ir.AssignValue(ctx.ref(intf.name, ctx='store'), a))
+        stmts.append(ir.AssignValue(ir.Component(intf, 'data'), a))
 
     # TODO: Hack! This functionality needs to be rewriten to resemble the way
     # hierarchical modules work. This only works if ccat is automatically

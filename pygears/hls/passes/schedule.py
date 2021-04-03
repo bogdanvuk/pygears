@@ -465,6 +465,22 @@ def append_state_epilog(cfg, ctx):
     break_stmt.next = [cp_sink]
 
 
+def prepend_state_prolog(cfg, ctx, in_scope):
+    source = cfg
+    for name, i in ctx.intfs.items():
+        if f'{name}.data' not in in_scope:
+            continue
+
+        hold = Node(ir.AssignValue(ir.Component(ctx.ref(name), 'data'), in_scope[f'{name}.data']),
+                    prev=[source])
+        hold.next = source.next
+
+        source.next = [hold]
+        hold.next[0].prev = [hold]
+
+        source = hold
+
+
 def print_cfg_ir(cfg):
     v = RebuildStateIR()
     v.visit(cfg)
@@ -508,10 +524,10 @@ def schedule(block, ctx):
 
         i += 1
 
-    for i, s in enumerate(state_cfg):
+    for i, (s, in_scope) in enumerate(zip(state_cfg, state_in_scope)):
         # draw_scheduled_cfg(s, simple=True)
         append_state_epilog(s, ctx)
-        print_cfg_ir(s)
+        prepend_state_prolog(s, ctx, in_scope)
         ResolveBlocking().visit(s)
         v = RebuildStateIR()
         v.visit(s)

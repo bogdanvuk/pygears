@@ -167,8 +167,8 @@ class GearContext(Context):
             self.local_namespace[paramspec.varargs] = ir.ConcatExpr(vararg)
 
         for p in self.gear.out_ports:
-            self.scope[p.basename] = ir.Variable(p.basename,
-                                                 ir.IntfType[p.consumer.dtype, ir.IntfType.iout])
+            self.scope[f'{p.basename}'] = ir.Variable(
+                f'{p.basename}', ir.IntfType[p.consumer.dtype, ir.IntfType.iout])
 
         for k, v in self.gear.explicit_params.items():
             self.scope[k] = ir.ResExpr(v)
@@ -206,7 +206,7 @@ class GearContext(Context):
 
     @property
     def out_ports(self):
-        return [self.ref(p.basename) for p in self.gear.out_ports]
+        return [self.ref(f'{p.basename}') for p in self.gear.out_ports]
 
 
 class FuncContext(Context):

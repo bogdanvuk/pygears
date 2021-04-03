@@ -51,7 +51,8 @@ def _get_target(target):
     elif isinstance(target, (ir.ConcatExpr, gast.List)):
         return set.union(*(_get_target(target) for target in target.operands))
     elif isinstance(target, (ir.Component)):
-        return set()
+        # return set()
+        return set([f'{target.val.name}.{target.field}'])
     else:
         return set()
         # breakpoint()
@@ -459,9 +460,16 @@ class ReachingDefinitions(Forward):
   """
     def __init__(self, update=get_updated):
         def definition(node, incoming):
-            definitions = update(node.value)
-            gen = frozenset((id_, node.value) for id_ in definitions)
-            kill = frozenset(def_ for def_ in incoming if def_[0] in definitions)
+            if isinstance(node.value, ir.Await) and isinstance(node.value.expr, ir.Component):
+                intf_name = node.value.expr.val.name
+                # gen = frozenset([(f'{intf_name}.ready', node.value)])
+                gen = frozenset()
+                kill = frozenset(def_ for def_ in incoming if def_[0] == f'{intf_name}.data')
+            else:
+                definitions = update(node.value)
+                gen = frozenset((id_, node.value) for id_ in definitions)
+                kill = frozenset(def_ for def_ in incoming if def_[0] in definitions)
+
             return gen, kill
 
         super(ReachingDefinitions, self).__init__('definitions', definition)

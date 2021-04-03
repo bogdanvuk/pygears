@@ -26,9 +26,8 @@ class BlockDetect:
         for stmt in block.stmts:
             self.visit(stmt)
 
-    def Statement(self, stmt: ir.Statement):
-        if stmt.in_await != res_true or stmt.exit_await != res_true:
-            self.blocking = True
+    def Await(self, stmt: ir.Await):
+        self.blocking = True
 
 
 def is_blocking(node):
@@ -175,10 +174,9 @@ class HandleGenerators(IrRewriter):
         #     ir.Await(ir.Component(intf, 'data'),
         #              in_await=ir.Component(intf, 'valid')))
 
-        data_load = ir.AssignValue(self.ctx.ref(data_name),
-                                   ir.Await(dout, in_await=ir.Component(intf, 'valid')))
+        data_load = ir.AssignValue(self.ctx.ref(data_name), dout)
 
-        stmts = nodes + [eot_load, data_load]
+        stmts = nodes + [ir.Await(ir.Component(intf, 'valid')), eot_load, data_load]
 
         add_to_list(stmts, assign_targets(self.ctx, node.target, dout, ir.Variable))
 
