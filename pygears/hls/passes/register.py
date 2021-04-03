@@ -111,13 +111,17 @@ def infer_registers(modblock, ctx):
         ctx.scope[reg].reg = True
         ctx.scope[reg].any_init = True
 
-    ResolveRegInits(ctx).visit(modblock)
+    # ResolveRegInits(ctx).visit(modblock)
 
+    ctx.reset_states = {}
     for reg, _ in inferred:
-        if ctx.scope[reg].val is None:
-            raise Exception(
-                f'Inferred register for variable "{reg}", but cannot infer its initial value.'
-                f' Specify initial value manually.'
-            )
+        ctx.reset_states[reg] = []
+
+    # for reg, _ in inferred:
+    #     if ctx.scope[reg].val is None:
+    #         raise Exception(
+    #             f'Inferred register for variable "{reg}", but cannot infer its initial value.'
+    #             f' Specify initial value manually.'
+    #         )
 
     return modblock, inferred

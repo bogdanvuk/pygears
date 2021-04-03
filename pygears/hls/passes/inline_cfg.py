@@ -103,11 +103,6 @@ class Inliner(IrExprRewriter):
 
         val = self.scope_map[irnode.name]
 
-        # # If we are about
-        # variable = self.ctx.scope[irnode.name]
-        # if variable.reg and variable.val == val:
-        #     return irnode
-
         # TODO: What's with unknown?
         if isinstance(val, ir.ResExpr) and getattr(val.val, 'unknown', False):
             return irnode
@@ -162,12 +157,12 @@ class VarScope(CfgDfs):
 
             self.scope_map['_state'] = ctx.scope['_state']
             self.scope_map['forward'] = ir.res_true
-
-            self.new_states = new_states
-            self.state_in_scope = state_in_scope
         else:
             self.scope_map = {}
 
+        self.new_states = new_states
+        self.state_in_scope = state_in_scope
+        self.state_id = state_id
         self.ctx = ctx
 
     def enter_FuncBlock(self, block):
@@ -206,11 +201,11 @@ class VarScope(CfgDfs):
 
         self.state_in_scope[state_id] = in_scope
 
-    def AssignValue(self, node):
+    def enter_AssignValue(self, node):
         irnode: ir.AssignValue = node.value
 
-        if isinstance(irnode.target, ir.Component) and irnode.target.field == 'ready':
-            self.scope_map[str(irnode.target)] = ir.res_false
+        # if isinstance(irnode.target, ir.Component) and irnode.target.field == 'ready':
+        #     self.scope_map[str(irnode.target)] = ir.res_false
 
         if (isinstance(irnode.target, ir.Name) and irnode.target.name == '_state'
                 and irnode.val.val != 0):
@@ -222,6 +217,27 @@ class VarScope(CfgDfs):
         irnode.val = inline_expr(irnode.val, self.scope_map, self.ctx)
 
         val = irnode.val
+
+        if isinstance(irnode.target, ir.Name):
+            name = irnode.target.name
+            obj = self.ctx.scope[name]
+            # If this is a register variable and assigned value is a literal value (ResExpr)
+            if (isinstance(obj, ir.Variable) and obj.reg and isinstance(irnode.val, ir.ResExpr)
+                    and irnode.val.val is not None):
+                # If this is first encounter on top most scope (not inside a branch)
+                if (name not in self.scope_map or self.scope_map[name] == self.ctx.ref(name)):
+                    init_val = ir.CastExpr(irnode.val, obj.dtype)
+                    if obj.val is None or obj.val == init_val:
+                        self.ctx.reset_states[name].append(self.state_id)
+                        val = self.ctx.ref(name)
+                        node.prev[0].next = [node.next[0]]
+                        node.next[0].prev = [node.prev[0]]
+                        obj.val = init_val
+                        obj.any_init = False
+                    elif obj.any_init:
+                        breakpoint()
+                        print('Hier?')
+
         if isinstance(val, ir.Await):
             val = val.expr
 
@@ -231,16 +247,14 @@ class VarScope(CfgDfs):
 
         forward_value(irnode.target, val, self.scope_map)
 
-        self.generic_visit(node)
-
     def enter_Await(self, node):
         irnode: ir.Await = node.value
 
         if irnode.expr == ir.res_false:
             return
 
-        if isinstance(irnode.expr, ir.Component) and irnode.expr.field == 'valid':
-            self.scope_map[str(irnode.expr)] = ir.res_true
+        # if isinstance(irnode.expr, ir.Component) and irnode.expr.field == 'valid':
+        #     self.scope_map[str(irnode.expr)] = ir.res_true
 
         cond = detect_new_state(node, self.scope_map)
         if cond is not None:

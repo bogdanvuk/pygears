@@ -23,7 +23,17 @@ from .v.util import vgen_signal, vgen_intf
 # """
 REG_TEMPLATE = """
 always @(posedge clk) begin
-    if(rst | ((_state_next == 0) && (_state_en))) begin
+    if (rst || (({2}) && (_state_en))) begin
+        {0} <= {1};
+    end else if ({0}_en && _state_en) begin
+        {0} <= {0}_next;
+    end
+end
+"""
+
+REG_TEMPLATE_NO_RST_COND = """
+always @(posedge clk) begin
+    if (rst) begin
         {0} <= {1};
     end else if ({0}_en && _state_en) begin
         {0} <= {0}_next;
@@ -617,7 +627,12 @@ def write_module(ctx: Context, hdl, writer, subsvmods, funcs, template_env, conf
     blk = write_declarations(ctx, subsvmods, template_env)
 
     for name, expr in ctx.regs.items():
-        blk += REG_TEMPLATE.format(exprgen(ctx.ref(name)), exprgen(expr.val))
+        if not ctx.reset_states.get(name, None):
+            blk += REG_TEMPLATE_NO_RST_COND.format(exprgen(ctx.ref(name)), exprgen(expr.val))
+        else:
+            rst_states = ctx.reset_states[name]
+            rst_expr = ' || '.join([f'(_state_next == {exprgen(s)})' for s in rst_states])
+            blk += REG_TEMPLATE.format(exprgen(ctx.ref(name)), exprgen(expr.val), rst_expr)
 
     for name, expr in ctx.regs.items():
         blk += svcompile(hdl,

@@ -462,6 +462,80 @@ class SliceExpr(Expr):
         return inst
 
 
+def identity_anihilation(op1, op2, operator):
+    if operator == opc.And:
+        if isinstance(op1, ResExpr):
+            return op2 if op1.val else op1
+
+    elif operator == opc.Or:
+        if isinstance(op1, ResExpr):
+            return op1 if op1.val else op2
+
+    return None
+
+
+def idempotence(op1, op2, operator):
+    if operator in [opc.And, opc.Or, opc.BitAnd, opc.BitOr]:
+        if op1 == op2:
+            return op1
+
+    return None
+
+
+def complementation(op1, op2, operator):
+    if isinstance(op1, UnaryOpExpr) and op1.operator == opc.Not:
+        if op1.operand == op2:
+            if operator is opc.And:
+                return res_true
+            elif operator is opc.Or:
+                return res_false
+
+    return None
+
+
+def absorption(op1, op2, operator):
+    if not isinstance(op2, BinOpExpr):
+        return None
+
+    op2_1, op2_2 = op2.operands
+    if ((operator is opc.And and op2.operator is opc.Or)
+            or (operator is opc.Or and op2.operator is opc.And)):
+        if op1 == op2_1:
+            return op2_2
+        elif isinstance(op2_1, UnaryOpExpr) and op2_1.operator is opc.Not and op1 == op2_1.operand:
+            return BinOpExpr([op1, op2_2], operator)
+        elif op1 == op2_2:
+            return op2_1
+        elif isinstance(op2_2, UnaryOpExpr) and op2_2.operator is opc.Not and op1 == op2_2.operand:
+            return BinOpExpr([op1, op2_1], operator)
+
+    return None
+
+
+def elimination(op1, op2, operator):
+    if not (isinstance(op1, BinOpExpr) and isinstance(op2, BinOpExpr)):
+        return None
+
+    if op1.operator != op2.operator or op1.operator == operator:
+        return None
+
+    op2_1, op2_2 = op2.operands
+    for op1_1, op1_2 in [op1.operands, op1.operands[::-1]]:
+        if op1_1 == op2_1:
+            if isinstance(op2_2,
+                          UnaryOpExpr) and op2_2.operator == opc.Not and op1_2 == op2_2.operand:
+                return op1_1
+        elif op1_1 == op2_2:
+            if isinstance(op2_1,
+                          UnaryOpExpr) and op2_1.operator == opc.Not and op1_2 == op2_1.operand:
+                return op1_1
+
+    return None
+
+
+bin_op_transforms = [identity_anihilation, idempotence, complementation, absorption, elimination]
+
+
 class BinOpExpr(Expr):
     def __repr__(self):
         try:
@@ -480,19 +554,17 @@ class BinOpExpr(Expr):
         if isinstance(op1, ResExpr) and isinstance(op2, ResExpr):
             return ResExpr(opex(operator, op1, op2))
 
-        if operator == opc.And:
-            if isinstance(op1, ResExpr):
-                return op2 if op1.val else op1
-            if isinstance(op2, ResExpr):
-                return op1 if op2.val else op2
+        for t in bin_op_transforms:
+            ret = t(op1, op2, operator)
+            if ret is not None:
+                return ret
 
-        elif operator == opc.Or:
-            if isinstance(op1, ResExpr):
-                return op1 if op1.val else op2
-            if isinstance(op2, ResExpr):
-                return op2 if op2.val else op1
+        for t in bin_op_transforms:
+            ret = t(op2, op1, operator)
+            if ret is not None:
+                return ret
 
-        elif operator in (opc.RShift, opc.LShift):
+        if operator in (opc.RShift, opc.LShift):
             if isinstance(op2, ResExpr) and op2.val == 0:
                 return op1
 
