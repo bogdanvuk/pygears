@@ -23,9 +23,9 @@ from .v.util import vgen_signal, vgen_intf
 # """
 REG_TEMPLATE = """
 always @(posedge clk) begin
-    if (rst || (({2}) && (_state_en))) begin
+    if (rst || ({2})) begin
         {0} <= {1};
-    end else if ({0}_en && _state_en) begin
+    end else begin
         {0} <= {0}_next;
     end
 end
@@ -35,7 +35,7 @@ REG_TEMPLATE_NO_RST_COND = """
 always @(posedge clk) begin
     if (rst) begin
         {0} <= {1};
-    end else if ({0}_en && _state_en) begin
+    end else begin
         {0} <= {0}_next;
     end
 end
@@ -197,12 +197,6 @@ class SVCompiler(HDLVisitor):
             svstmt = f"{name} = {val}"
             self.handle_defaults(name, svstmt)
 
-            # self.write(f"{base_target.name}_en = 1")
-            ctx = base_target.ctx
-            base_target.ctx = 'en'
-            self.write(f"{self.svexpr(base_target)} = 1")
-            base_target.ctx = ctx
-
             return
 
         if target.dtype is OutSig:
@@ -284,12 +278,10 @@ class SVCompiler(HDLVisitor):
                         yield self.attr(name, 'ready'), f"{self.attr(name, 'valid')} ? 0 : 1'bx"
 
             elif obj.reg:
-                target = self.ctx.ref(name, ctx='en')
+                target = self.ctx.ref(name)
                 if self.selected(target):
                     yield (f'{self.svexpr(self.ctx.ref(name, ctx="store"), self.aux_funcs)}',
                            f'{self.svexpr(self.ctx.ref(name), self.aux_funcs)}')
-
-                    yield f'{self.svexpr(target, self.aux_funcs)}', '0'
             else:
                 pass
 
@@ -471,11 +463,9 @@ def write_declarations(ctx, subsvmods, template_env):
     for name, expr in ctx.regs.items():
         name = exprgen(ctx.ref(name))
         if lang == 'sv':
-            writer.line(f'logic {name}_en;')
             name_t = typedef_or_inline(writer, expr.dtype, name)
             writer.line(f'{name_t} {name}, {name}_next;')
         else:
-            writer.line(f'reg {name}_en;')
             writer.block(vgen_signal(expr.dtype, 'reg', f'{name}_next', 'output', hier=False))
             writer.block(vgen_signal(expr.dtype, 'reg', name, 'output', hier=False))
 

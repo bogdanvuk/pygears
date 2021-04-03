@@ -123,9 +123,6 @@ class SVExpressionVisitor:
         if node.ctx == 'store' and isinstance(node.obj, ir.Variable) and node.obj.reg:
             return f'{name}_next'
 
-        if node.ctx in ['en']:
-            return f'{name}_{node.ctx}'
-
         return name
 
     def visit_Await(self, node):

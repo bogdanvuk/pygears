@@ -533,7 +533,30 @@ def elimination(op1, op2, operator):
     return None
 
 
-bin_op_transforms = [identity_anihilation, idempotence, complementation, absorption, elimination]
+def booleq(op1, op2, operator):
+    if operator not in [opc.Eq, opc.NotEq]:
+        return
+
+    if not (typeof(op1.dtype, (Bool, Uint[1])) and typeof(op2.dtype, (Bool, Uint[1]))):
+        return
+
+    if op2 == res_true:
+        return op1 if operator == opc.Eq else UnaryOpExpr(op1, opc.Not)
+
+    if op2 == res_false:
+        return op1 if operator == opc.NotEq else UnaryOpExpr(op1, opc.Not)
+
+    return None
+
+
+bin_op_transforms = [
+    identity_anihilation,
+    idempotence,
+    complementation,
+    absorption,
+    elimination,
+    booleq,
+]
 
 
 class BinOpExpr(Expr):
