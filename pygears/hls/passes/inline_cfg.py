@@ -179,7 +179,9 @@ def detect_new_state(node, scope_map):
         return
 
     if expr.field == 'valid':
-        if forward == ir.res_true:
+        if forward != ir.res_true:
+            return forward
+        else:
             return None
 
     if expr.field == 'ready':
