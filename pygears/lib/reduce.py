@@ -5,7 +5,7 @@ from pygears.typing import Number, Queue, saturate
 
 @gear(hdl={'compile': True})
 async def reduce(din: Queue, init, *, f) -> b'init':
-    acc: init.dtype = None
+    acc: init.dtype
 
     async with init as i:
         acc = i

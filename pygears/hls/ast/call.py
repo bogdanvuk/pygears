@@ -193,11 +193,14 @@ def resolve_func(func, args, kwds, ctx):
                 raise Exception
         else:
             breakpoint()
-            raise Exception
+            func = func.__func__
+            # raise Exception
 
     if hashable_func and func not in reg['hls/ir_builtins']:
         if func in special_funcs:
             return resolve_func(getattr(args[0].dtype, special_funcs[func]), args, kwds, ctx)
+            breakpoint()
+            raise Exception
 
     if isinstance(func, Partial):
         intf, stmts = call_gear(func, *form_gear_args(args, kwds, func), ctx)

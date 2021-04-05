@@ -1,6 +1,7 @@
 import ast
 from . import Context, FuncContext, node_visitor, ir, visit_ast
 from pygears.core.gear import InSig, OutSig
+from pygears.typing import is_type
 from .cast import resolve_cast_func
 
 
@@ -73,6 +74,10 @@ def assign_targets(ctx: Context, target, source, obj_factory=None):
 def _(node, ctx: Context):
     targets = visit_ast(node.target, ctx)
     annotation = visit_ast(node.annotation, ctx)
+
+    if not (isinstance(annotation, ir.ResExpr) or isinstance(annotation.val, type)
+            or is_type(annotation.val)):
+        raise SyntaxError(f'Variable annotation has to be a type, not "{annotation}"')
 
     if node.value is None:
         ctx.scope[targets.name] = ir.Variable(targets.name, annotation.val)

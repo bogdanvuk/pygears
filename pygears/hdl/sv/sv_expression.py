@@ -96,7 +96,9 @@ class SVExpressionVisitor:
             return f"{node.dtype.width}'bx"
 
         val = node.val
-        if not isinstance(node.val, Integer):
+        if node.val is None:
+            return f"'x"
+        elif not isinstance(node.val, Integer):
             val = Integer(code(node.val, int))
 
         sign = '-' if val < 0 else ''

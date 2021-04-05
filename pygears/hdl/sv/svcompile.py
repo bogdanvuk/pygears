@@ -507,7 +507,7 @@ def write_declarations(ctx, subsvmods, template_env):
         writer.line()
 
     for name, expr in ctx.variables.items():
-        if expr.dtype is None or typeof(expr.dtype, ir.IntfType):
+        if expr.dtype is None or typeof(expr.dtype, ir.IntfType) or expr.reg:
             continue
 
         if lang == 'sv':
@@ -623,12 +623,13 @@ def write_module(ctx: Context, hdl, writer, subsvmods, funcs, template_env, conf
     blk = write_declarations(ctx, subsvmods, template_env)
 
     for name, expr in ctx.regs.items():
+        init = "'x" if expr.val is None else exprgen(expr.val)
         if not ctx.reset_states.get(name, None):
-            blk += REG_TEMPLATE_NO_RST_COND.format(exprgen(ctx.ref(name)), exprgen(expr.val))
+            blk += REG_TEMPLATE_NO_RST_COND.format(exprgen(ctx.ref(name)), init)
         else:
             rst_states = ctx.reset_states[name]
             rst_expr = ' || '.join([f'(_state_next == {exprgen(s)})' for s in rst_states])
-            blk += REG_TEMPLATE.format(exprgen(ctx.ref(name)), exprgen(expr.val), rst_expr)
+            blk += REG_TEMPLATE.format(exprgen(ctx.ref(name)), init, rst_expr)
 
     for name, expr in ctx.regs.items():
         blk += svcompile(hdl,

@@ -52,7 +52,7 @@ async def qrange(
         inclusive=False,
 ) -> Queue['qrange_out_type(cfg)']:
 
-    cnt: module().tout.data = None
+    cnt: module().tout.data
     cur_cnt: cfg.dtype[0]
     last: Bool
 
@@ -78,7 +78,7 @@ async def qrange_start_stop(
         inclusive=False,
 ) -> Queue['qrange_out_type(cfg)']:
 
-    cnt: module().tout.data = None
+    cnt: module().tout.data
     cur_cnt: cfg.dtype[0]
     last: Bool
 
@@ -103,7 +103,7 @@ async def qrange_start_stop_inclusive(
         *,
         inclusive,
 ) -> Queue['qrange_out_type(cfg)']:
-    cnt: module().tout.data = None
+    cnt: module().tout.data
     last: Bool
 
     async with cfg as c:
