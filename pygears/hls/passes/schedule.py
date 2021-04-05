@@ -328,21 +328,6 @@ class StateIsolator(CfgDfs):
     def enter_BaseBlock(self, node):
         self.enter_Statement(node)
 
-    # def enter_ModuleSink(self, node):
-    #     exit_jump = Node(
-    #         ir.AssignValue(self.ctx.ref('_state'), ir.ResExpr(0)),
-    #         prev=[node.prev[0]],
-    #     )
-    #     break_stmt = Node(ir.Await(ir.res_false), prev=[exit_jump])
-    #     sink = Node(ir.ModuleSink(), prev=[break_stmt])
-
-    #     exit_jump = self.copy(exit_jump)
-    #     break_stmt = self.copy(break_stmt)
-    #     sink = self.copy(sink)
-
-    #     sink.source = self.isolated
-    #     sink.source.sink = sink
-
     def enter_ModuleSink(self, node):
         sink = Node(ir.ModuleSink(), prev=[node.prev[0]])
         sink = self.copy(sink)
@@ -497,7 +482,6 @@ def schedule(block, ctx):
     loops = []
     cpmap = {}
     block = LoopBreaker(loops, cpmap, ctx).visit(block)
-    print(block)
 
     cfg = cfgutil.CFG.build_cfg(block)
     # draw_cfg(cfg)
@@ -514,12 +498,23 @@ def schedule(block, ctx):
 
     state_in_scope = [{} for _ in range(len(state_cfg))]
     i = 0
-    while i < len(state_cfg):
+    order = list(range(len(state_cfg)))
+    while i < len(order):
+        state_id = order[i]
+        print(f'[{state_id}]: Scoping')
         new_states = {}
-        VarScope(ctx, state_in_scope, i, new_states).visit(state_cfg[i])
+        VarScope(ctx, state_in_scope, state_id, new_states).visit(state_cfg[state_id])
         if new_states:
-            state_cfg[i] = isolate(ctx, state_cfg[i], exits=new_states, state_num=len(state_cfg))
+            print(f'[{state_id}]: Isolating')
+            state_cfg[state_id] = isolate(ctx,
+                                          state_cfg[state_id],
+                                          exits=new_states,
+                                          state_num=len(state_cfg))
+
+            print_cfg_ir(state_cfg[state_id])
             for ns in new_states:
+                order.insert(i + 1, len(state_cfg))
+                print(f'[{len(state_cfg)}]: Isolating')
                 state_cfg.append(isolate(ctx, ns))
 
         i += 1
@@ -547,4 +542,5 @@ def schedule(block, ctx):
 
         modblock = ir.CombBlock(stmts=[stateblock])
 
+    print(modblock)
     return modblock

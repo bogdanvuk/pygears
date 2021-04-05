@@ -120,8 +120,9 @@ class SVExpressionVisitor:
         if name in sv_keywords:
             name = f'pg_{name}'
 
-        if node.ctx == 'store' and isinstance(node.obj, ir.Variable) and node.obj.reg:
-            return f'{name}_next'
+        if isinstance(node.obj, ir.Variable) and node.obj.reg:
+            if node.ctx in ['next', 'store']:
+                return f'{name}_next'
 
         return name
 

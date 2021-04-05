@@ -211,6 +211,7 @@ def resolve_func(func, args, kwds, ctx):
         try:
             return reg['hls/ir_builtins'][func](*args, **kwds)
         except TypeError as e:
+            breakpoint()
             raise SyntaxError(str(e).replace('<lambda>()', repr(func)))
 
     if const_func_args(args, kwds):

@@ -2,6 +2,7 @@ import ast
 from . import Context, ir, node_visitor, visit_ast
 from .cast import resolve_cast_func
 from .stmt import assign_targets, extend_stmts
+from ..ir_utils import is_intf_id
 
 
 def is_target_id(node):
@@ -102,10 +103,12 @@ def parse_yield(node, ctx):
     else:
         vals = [ret]
 
+    if any(is_intf_id(v) for v in vals):
+        return [ir.AssignValue(p, v) for p, v in zip(ctx.out_ports, vals)]
+
     stmts = []
 
-    for p, v in zip(ctx.out_ports, vals):
-        stmts.append(ir.Await('forward'))
+    stmts.append(ir.Await('forward'))
 
     # Outputs values are offered in parallel. So first all outputs are declared
     # valid, and only then are all acknowledges awaited
@@ -118,10 +121,9 @@ def parse_yield(node, ctx):
         elif v != ir.ResExpr(None):
             # TODO: Revisit this!
             stmts.append(
-                ir.ExprStatement(
-                    ir.Await(exit_await=ir.BinOpExpr((
-                        ir.UnaryOpExpr(ir.Component(p, 'valid'), ir.opc.Not),
-                        ir.Component(p, 'ready')), ir.opc.Or))))
+                ir.Await(
+                    ir.BinOpExpr((ir.UnaryOpExpr(ir.Component(
+                        p, 'valid'), ir.opc.Not), ir.Component(p, 'ready')), ir.opc.Or)))
 
     return stmts
 
@@ -226,4 +228,7 @@ def AsyncFor(node, ctx: Context):
 
 @node_visitor(ast.Await)
 def _(node: ast.Await, ctx: Context):
-    return ir.Await(ir.res_false)
+    if isinstance(node.value, ast.Call):
+        return ir.Await(visit_ast(node.value.func, ctx))
+
+    breakpoint()

@@ -10,7 +10,7 @@ from functools import reduce
 from pygears import Intf
 from pygears.core.port import InPort, OutPort
 from pygears.core.gear import InSig, OutSig
-from pygears.typing import (Bool, Integer, Queue, Tuple, Uint, is_type, typeof, Array, Union, Unit)
+from pygears.typing import (Bool, Integer, Queue, Tuple, Uint, is_type, typeof, Array, Union, Unit, cast)
 # from .ast.utils import get_property_type
 import operator
 
@@ -187,6 +187,10 @@ class ResExpr(Expr):
             return val
 
         inst = super().__new__(cls)
+
+        if not is_type(type(val)) and isinstance(val, (int, float)):
+            val = cast(val, Integer)
+
         inst.val = val
 
         return inst
@@ -486,9 +490,9 @@ def complementation(op1, op2, operator):
     if isinstance(op1, UnaryOpExpr) and op1.operator == opc.Not:
         if op1.operand == op2:
             if operator is opc.And:
-                return res_true
-            elif operator is opc.Or:
                 return res_false
+            elif operator is opc.Or:
+                return res_true
 
     return None
 
@@ -755,7 +759,7 @@ class ConditionalExpr(Expr):
         # TODO: Bool should be equivalent to Uint[1]
         if typeof(op1.dtype, (Uint[1], Bool)) and typeof(op2.dtype, (Uint[1], Bool)):
             const_op1 = get_contextpr(op1)
-            if const_op1 is not None and not const_op1:
+            if const_op1 is not None:
                 if const_op1:
                     return BinOpExpr((cond, op2), opc.Or)
                 else:
@@ -1023,6 +1027,9 @@ class HDLBlock(Statement):
 @attr.s(auto_attribs=True, eq=False)
 class LoopBlock(BaseBlock):
     test: Expr = res_true
+
+    def __str__(self):
+        return f'while ({self.test})' + super().__str__()
 
 
 @attr.s(auto_attribs=True, eq=False)

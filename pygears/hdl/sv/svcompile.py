@@ -212,12 +212,7 @@ class SVCompiler(HDLVisitor):
             name = self.svexpr(base_target, self.aux_funcs)
             if target.field == 'data':
                 if self.selected(base_target):
-                    if is_intf_id(val):
-                        val_name = self.svexpr(val, self.aux_funcs)
-                        svstmt = f"{name}_s = {val_name}_s"
-                        self.handle_defaults(name, svstmt)
-                        self.write(f"{self.attr(name, 'valid')} = {self.attr(val_name, 'valid')}")
-                    elif val == ir.ResExpr(None):
+                    if val == ir.ResExpr(None):
                         self.handle_defaults(self.attr(name, 'valid'),
                                              f"{self.attr(name, 'valid')} = 0")
                     else:
@@ -227,14 +222,18 @@ class SVCompiler(HDLVisitor):
                         if val is not None:
                             svstmt = f"{name}_s = {val}"
                             self.handle_defaults(name, svstmt)
-
-                if is_intf_id(val) and self.selected(val):
-                    val_name = self.svexpr(val, self.aux_funcs)
-
-                    self.write(f"{self.attr(val_name, 'ready')} = {self.attr(name, 'ready')}")
-
             elif target.field == 'ready' and self.selected(base_target):
                 self.handle_defaults(self.attr(name, 'ready'), f"{self.attr(name, 'ready')} = 1")
+
+            return
+        elif is_intf_id(target):
+            if is_intf_id(val) and self.selected(val):
+                name = self.svexpr(base_target, self.aux_funcs)
+                val_name = self.svexpr(val, self.aux_funcs)
+                svstmt = f"{name}_s = {val_name}_s"
+                self.handle_defaults(name, svstmt)
+                self.write(f"{self.attr(name, 'valid')} = {self.attr(val_name, 'valid')}")
+                self.write(f"{self.attr(val_name, 'ready')} = {self.attr(name, 'ready')}")
 
             return
 

@@ -212,6 +212,15 @@ class IrRewriter:
         return rw_block
 
     @cp_mapper
+    def LoopBlock(self, block: ir.LoopBlock):
+        rw_block = type(block)(test=self.visit(block.test))
+
+        for stmt in block.stmts:
+            add_to_list(rw_block.stmts, self.visit(stmt))
+
+        return rw_block
+
+    @cp_mapper
     def FuncBlock(self, block: ir.FuncBlock):
         # args = {n: self.visit(val) for n, val in block.args.items()}
 
@@ -310,6 +319,7 @@ class IrExprVisitor:
         pass
 
 
+# TODO: Consolidate method naming with IrVisitor
 class IrExprRewriter:
     def visit(self, node):
         method = 'visit_' + node.__class__.__name__

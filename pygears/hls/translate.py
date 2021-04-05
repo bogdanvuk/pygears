@@ -65,8 +65,8 @@ def transform(modblock, ctx: GearContext):
     # modblock = resolve_gear_calls(modblock, ctx)
     # hls_debug(modblock, 'Resolve Gear Calls')
 
-    # modblock = handle_generators(modblock, ctx)
-    # hls_debug(modblock, 'Handle Generators')
+    modblock = handle_generators(modblock, ctx)
+    hls_debug(modblock, 'Handle Generators')
 
     modblock, cfg, reaching = cfgutil.forward(modblock, cfgutil.ReachingDefinitions())
 
@@ -86,8 +86,6 @@ def transform(modblock, ctx: GearContext):
 
     modblock = remove_dead_code(modblock, ctx)
     hls_debug(modblock, 'Remove Dead Code')
-
-    print(modblock)
 
     compile_funcs(modblock, ctx)
 

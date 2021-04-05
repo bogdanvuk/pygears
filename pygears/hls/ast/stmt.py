@@ -91,6 +91,8 @@ def _(node, ctx: Context):
             if init.val is None or getattr(init.val, 'unknown', False):
                 s.target.obj.any_init = True
 
+        return stmts
+
 
 @node_visitor(ast.AugAssign)
 def _(node, ctx: Context):

@@ -1,5 +1,5 @@
 import inspect
-from ..ir_utils import IrRewriter, ir, res_true
+from ..ir_utils import IrRewriter, ir, res_true, IrVisitor, IrExprRewriter
 from ..ast import Context
 from ..ast.inline import call_gear
 from ..ast.call import const_func_args, resolve_gear_call
@@ -10,7 +10,7 @@ from pygears.util.utils import quiter
 from pygears.lib.rng import qrange as qrange_gear
 
 
-class BlockDetect:
+class BlockDetect(IrVisitor):
     def __init__(self):
         self.blocking = False
 
@@ -21,10 +21,6 @@ class BlockDetect:
                 return
         else:
             self.generic_visit(node)
-
-    def BaseBlock(self, block: ir.BaseBlock):
-        for stmt in block.stmts:
-            self.visit(stmt)
 
     def Await(self, stmt: ir.Await):
         self.blocking = True
@@ -59,12 +55,13 @@ def exhaust(func, args):
 
 class Unfolder(IrRewriter):
     def __init__(self, ctx):
+        super().__init__()
         self.ctx = ctx
         self.generators = {}
         self.forwarded = {}
 
     def Expr(self, node):
-        new_node = Inliner(self.forwarded).visit(node)
+        new_node = Inliner(self.forwarded, self.ctx, missing_ok=True).visit(node)
         if new_node is None:
             return node
 
@@ -94,12 +91,6 @@ class Unfolder(IrRewriter):
 
         return None
 
-    def GenDone(self, expr):
-        if expr.val in self.generators:
-            return self.generators[expr.val]['last']
-
-        return expr
-
     def ExprStatement(self, node):
         if not isinstance(node.expr, ir.GenAck):
             return super().ExprStatement(node)
@@ -110,6 +101,17 @@ class Unfolder(IrRewriter):
         return node
 
 
+class TestRewriter(IrExprRewriter):
+    def __init__(self, generators):
+        self.generators = generators
+
+    def visit_GenDone(self, expr):
+        if expr.val in self.generators:
+            return self.generators[expr.val]['last']
+
+        return expr
+
+
 def unfold_loop(node: ir.LoopBlock, ctx: Context):
     stmts = []
     unfolder = Unfolder(ctx)
@@ -117,7 +119,8 @@ def unfold_loop(node: ir.LoopBlock, ctx: Context):
         unfolded_loop = unfolder.visit(node)
         add_to_list(stmts, unfolded_loop.stmts)
 
-        if unfolded_loop.exit_cond == res_true:
+        unfolded_test = TestRewriter(unfolder.generators).visit(node.test)
+        if unfolded_test == res_true:
             break
 
     return stmts
@@ -197,20 +200,23 @@ class HandleGenerators(IrRewriter):
         except Ununfoldable:
             pass
 
-        node = self.HDLBlock(node)
+        node = super().LoopBlock(node)
 
-        if not isinstance(node.exit_cond, ir.GenDone):
+        if not isinstance(node.test, ir.GenDone):
             return node
 
-        gen_cfg = self.generators[node.exit_cond.val]
+        gen_cfg = self.generators[node.test.val]
 
         eot_test = ir.BinOpExpr(
             (self.ctx.ref(gen_cfg['eot_name']), ir.ResExpr(gen_cfg['intf'].dtype.dtype.eot.max)),
-            ir.opc.Eq)
+            ir.opc.NotEq)
 
-        node.exit_cond = eot_test
+        eot_entry = ir.AssignValue(self.ctx.ref(gen_cfg['eot_name']),
+                                   ir.ResExpr(gen_cfg['eot'].dtype.min))
 
-        return node
+        node.test = eot_test
+
+        return [eot_entry, node]
 
 
 def handle_generators(modblock, ctx):

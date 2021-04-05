@@ -1,5 +1,6 @@
 from pygears import reg
-from ..ir_utils import Scope, HDLVisitor, res_true, add_to_list, ir, res_false, IrExprRewriter
+from pygears.sim import clk
+from ..ir_utils import Scope, HDLVisitor, res_true, add_to_list, ir, res_false, IrExprRewriter, IrExprVisitor
 from .. import HLSSyntaxError
 from pygears.typing import cast
 from ..cfg import CfgDfs
@@ -9,7 +10,14 @@ from copy import copy
 def del_forward_subvalue(target, scope):
     if isinstance(target, ir.Name):
         if target.name in scope:
-            del scope[target.name]
+            if target.obj.reg:
+                # TODO: This means that if a register is partially applied, the
+                # scope should be set to registered value. Shouldn't it be that
+                # it should be the register's next state?
+                scope[target.name] = target
+                scope[target.name].ctx = 'next'
+            else:
+                del scope[target.name]
 
     elif isinstance(target, ir.SubscriptExpr):
         if isinstance(target.index, ir.ResExpr):
@@ -103,13 +111,31 @@ def merge_subscope(block):
     return outscope
 
 
+class DependencyVisitor(IrExprVisitor):
+    def __init__(self):
+        self.variables = set()
+
+    def visit_Name(self, irnode):
+        self.variables.add(irnode.name)
+
+
+def expr_dependencies(node):
+    v = DependencyVisitor()
+    v.visit(node)
+    return v.variables
+
+
 class Inliner(IrExprRewriter):
-    def __init__(self, scope, ctx):
+    def __init__(self, scope, ctx, missing_ok=False):
         self.scope_map = scope
         self.ctx = ctx
+        self.missing_ok = missing_ok
 
     def visit_Name(self, irnode):
         if (irnode.name not in self.scope_map):
+            if self.missing_ok:
+                return irnode
+
             breakpoint()
 
         if (irnode.ctx != 'load'):
@@ -141,9 +167,16 @@ def detect_new_state(node, scope_map):
             return forward
         else:
             return None
+    elif expr == ir.ResExpr(clk):
+        node.value.expr = 'forward'
+        return ir.res_false
 
     if not isinstance(expr, ir.Component):
-        breakpoint()
+        # TODO: This happens with Await-ing when yiedling multiple output
+        # interfaces. Find a better way to detect that this is in fact
+        # Await-ing output ready
+        scope_map['forward'] = ir.res_false
+        return
 
     if expr.field == 'valid':
         if forward == ir.res_true:
@@ -160,14 +193,10 @@ class VarScope(CfgDfs):
         super().__init__()
 
         if state_in_scope:
-            # self.scope_map = {
-            #     k: v.val if isinstance(v, ir.AssignValue) else v
-            #     for k, v in state_in_scope[state_id].items()
-            # }
             self.scope_map = {}
             self.scope_map.update(state_in_scope[state_id])
-            self.scope_map.update(ctx.intfs)
             for i in ctx.intfs:
+                self.scope_map[i] = ctx.ref(i)
                 if f'{i}.valid' not in self.scope_map:
                     self.scope_map[f'{i}.valid'] = ir.res_false
 
@@ -180,6 +209,7 @@ class VarScope(CfgDfs):
         self.state_in_scope = state_in_scope
         self.state_id = state_id
         self.ctx = ctx
+        self.depended_upon = set()
 
     def enter_FuncBlock(self, block):
         for a in block.value.args:
@@ -192,19 +222,30 @@ class VarScope(CfgDfs):
         outscope = merge_subscope(block)
         self.scope_map.update(outscope)
 
+    def handle_expr(self, expr):
+        deps = expr_dependencies(expr)
+        self.depended_upon |= deps
+        return inline_expr(expr, self.scope_map, self.ctx)
+
     def enter_FuncReturn(self, node):
         irnode: ir.FuncReturn = node.value
-        irnode.expr = inline_expr(irnode.expr, self.scope_map, self.ctx)
+        irnode.expr = self.handle_expr(irnode.expr)
 
     def enter_Branch(self, node):
         self.scope_map = copy(node.prev[0].scope)
         irnode: ir.Branch = node.value
-        irnode.test = inline_expr(irnode.test, self.scope_map, self.ctx)
+        irnode.test = self.handle_expr(irnode.test)
 
     def exit_Branch(self, node):
         node.scope = copy(self.scope_map)
 
     def transition_scope(self, exit_node, state_id):
+        # if self.state_in_scope[state_id]:
+        #     # TODO: Now what?
+
+        if state_id == self.state_id:
+            return
+
         in_scope = {}
         in_scope = copy(self.ctx.intfs)
         in_scope['_state'] = self.ctx.scope['_state']
@@ -221,18 +262,17 @@ class VarScope(CfgDfs):
     def enter_AssignValue(self, node):
         irnode: ir.AssignValue = node.value
 
-        if (isinstance(irnode.target, ir.Name) and irnode.target.name == '_state'
-                and irnode.val.val != 0):
+        if isinstance(irnode.target, ir.Name) and irnode.target.name == '_state':
             state_id = irnode.val.val
             self.transition_scope(node, state_id)
 
         node.scope = copy(self.scope_map)
 
-        irnode.val = inline_expr(irnode.val, self.scope_map, self.ctx)
+        irnode.val = self.handle_expr(irnode.val)
 
         val = irnode.val
 
-        if isinstance(irnode.target, ir.Name):
+        if isinstance(irnode.target, ir.Name) and irnode.target.name not in self.depended_upon:
             name = irnode.target.name
             obj = self.ctx.scope[name]
             # If this is a register variable and assigned value is a literal value (ResExpr)
