@@ -125,6 +125,14 @@ class TupleType(EnumerableGenericMeta):
                for k, v in zip(other.fields, other.args)}
         }]
 
+    def __mul__(self, other):
+        """Doubles the fields of :class:`Tuple` type.
+
+        >>> Tuple[Uint[2], Uint[4]] * 2
+        Tuple[Uint[2], Uint[4], Uint[2], Uint[4]]
+        """
+        return Tuple[self.args * 2]
+
     def __repr__(self):
         if not self.args or not hasattr(self, '__parameters__'):
             return super().__repr__()
@@ -341,6 +349,9 @@ class Tuple(tuple, metaclass=TupleType):
                 subtypes.extend(subt if isinstance(i, slice) else [subt])
 
             return tout(tuple(subtypes))
+
+    def __mul__(self, other):
+        return (type(self) * 2)(super().__mul__(2))
 
     @class_and_instance_method
     def __str__(self):

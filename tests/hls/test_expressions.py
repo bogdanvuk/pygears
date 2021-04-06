@@ -1,7 +1,7 @@
 from pygears import gear
 from pygears.lib import directed, drv
 from pygears.sim import sim
-from pygears.typing import Bool, Uint, Tuple, Unit, Queue
+from pygears.typing import Bool, Uint, Tuple, Unit, Queue, Array
 
 
 def test_inline_if(cosim_cls):
@@ -30,8 +30,9 @@ def test_expr_index(cosim_cls):
 
 def test_list_comprehension(cosim_cls):
     @gear(hdl={'compile': True})
-    async def test(din: Tuple[Uint[4], Uint[4], Uint[4], Uint[4]]
-                   ) -> Tuple[Uint[5], Uint[5], Uint[5], Uint[5]]:
+    async def test(
+        din: Tuple[Uint[4], Uint[4], Uint[4],
+                   Uint[4]]) -> Tuple[Uint[5], Uint[5], Uint[5], Uint[5]]:
         async with din as d:
             yield [di + 1 for di in d]
 
@@ -40,6 +41,16 @@ def test_list_comprehension(cosim_cls):
              ref=[(i + 1, ) * 4 for i in range(8)])
 
     sim()
+
+
+def test_list_to_array_2d(cosim_cls):
+    @gear(hdl={'compile': True})
+    async def test() -> Array[Array[Uint[4], 2], 2]:
+        yield [[0] * 2] * 2
+
+    directed(f=test(sim_cls=cosim_cls), ref=[[[0] * 2] * 2] * 2)
+
+    sim(timeout=2)
 
 
 def test_unit_const():

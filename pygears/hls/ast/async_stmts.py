@@ -13,6 +13,32 @@ def is_target_id(node):
 from pygears.typing import typeof, Queue, Tuple, Array
 
 
+def cast_rec(node, t):
+    if node == ir.ResExpr(None):
+        return node
+    elif node.dtype == t:
+        return node
+    elif typeof(node.dtype, ir.IntfType):
+        # TODO: Do proper casting of interfaces
+        return node
+    elif not typeof(t, (Queue, Tuple, Array)):
+        return resolve_cast_func(node, t)
+
+    if isinstance(node, ir.ConcatExpr):
+        ops = node.operands
+    elif isinstance(node, ir.ResExpr):
+        ops = [ir.ResExpr(v) for v in node.val]
+    else:
+        # TODO: Should this be done with indexing to ensure proper casting of fields?
+        return node
+
+    opout = []
+    for i in range(len(ops)):
+        opout.append(cast_rec(ops[i], t[i]))
+
+    return ir.ConcatExpr(opout)
+
+
 def cast_return(arg_nodes, out_ports):
 
     out_num = len(out_ports)
@@ -48,43 +74,7 @@ def cast_return(arg_nodes, out_ports):
     args = []
     for arg, intf in zip(input_vars, out_ports):
         port_t = intf.dtype
-        # if arg.dtype != port_t and not typeof(arg.dtype, ir.IntfType):
-        #     if typeof(port_t, (Queue, Tuple, Array)) and isinstance(arg, ir.ConcatExpr):
-        #         for i in range(len(arg.operands)):
-        #             if isinstance(arg.operands[i], ir.CastExpr) and (
-        #                     arg.operands[i].cast_to == port_t[i]):
-        #                 pass
-        #             else:
-        #                 arg.operands[i] = resolve_cast_func(
-        #                     arg.operands[i], port_t[i])
-        #     # TODO: This whole function needs to be revisited: qdeal malfunctions if this is active
-        #     else:
-        #         arg = resolve_cast_func(arg, port_t)
-
-        # TODO: Let this be handled by typing.cast function for better error reporting
-        if typeof(port_t, (Queue, Tuple, Array)):
-            if isinstance(arg, ir.ConcatExpr) and arg.dtype != port_t:
-                ops = []
-                for i in range(len(arg.operands)):
-                    if isinstance(arg.operands[i], ir.CastExpr) and (arg.operands[i].cast_to
-                                                                     == port_t[i]):
-                        ops.append(arg.operands[i])
-                    else:
-                        ops.append(resolve_cast_func(arg.operands[i], port_t[i]))
-
-                arg.operands = tuple(ops)
-
-            args.append(arg)
-        else:
-            if arg == ir.ResExpr(None):
-                args.append(arg)
-            elif typeof(arg.dtype, ir.IntfType):
-                # TODO: Do proper casting of interfaces
-                args.append(arg)
-            elif arg.dtype != port_t:
-                args.append(resolve_cast_func(arg, port_t))
-            else:
-                args.append(arg)
+        args.append(cast_rec(arg, port_t))
 
     return ir.TupleExpr(args)
 
