@@ -10,7 +10,8 @@ from functools import reduce
 from pygears import Intf
 from pygears.core.port import InPort, OutPort
 from pygears.core.gear import InSig, OutSig
-from pygears.typing import (Bool, Integer, Queue, Tuple, Uint, is_type, typeof, Array, Union, Unit, cast)
+from pygears.typing import (Bool, Integer, Queue, Tuple, Uint, is_type, typeof, Array, Union, Unit,
+                            cast)
 # from .ast.utils import get_property_type
 import operator
 
@@ -181,6 +182,35 @@ OpType = typing.Union[Expr, PgType, str]
 # Type definitions
 
 
+class EmptyTypeMeta(GenericMeta):
+    @property
+    def dtype(self):
+        if self.args:
+            return self.args[0]
+        else:
+            return None
+
+
+class EmptyType(metaclass=EmptyTypeMeta):
+    __parameters__ = ['dtype']
+
+    def __init__(self, v=None):
+        if (v is not None) and (not isinstance(v, EmptyType)):
+            raise TypeError
+
+    def __hash__(self):
+        if type(self).dtype is None:
+            return hash(type(self))
+        else:
+            return hash((type(self), type(self).dtype))
+
+    def __repr__(self):
+        if type(self).dtype is None:
+            return 'Empty'
+        else:
+            return f'{repr(type(self).dtype)}(Empty)'
+
+
 class ResExpr(Expr):
     def __new__(cls, val):
         if isinstance(val, Expr):
@@ -188,6 +218,8 @@ class ResExpr(Expr):
 
         inst = super().__new__(cls)
 
+        # TODO: Think about this automatic casting. For example when register
+        # is inferred based on this value, it might be wrong. ex. "cnt = 0"
         if not is_type(type(val)) and isinstance(val, (int, float)):
             val = cast(val, Integer)
 
@@ -215,6 +247,12 @@ class ResExpr(Expr):
 
     @property
     def dtype(self):
+        if isinstance(self.val, EmptyType):
+            if type(self.val).dtype is None:
+                return EmptyType
+            else:
+                return type(self.val).dtype
+
         # if is_type(type(self.val)):
         #     return type(self.val)
 

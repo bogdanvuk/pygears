@@ -96,8 +96,12 @@ class SVExpressionVisitor:
             return f"{node.dtype.width}'bx"
 
         val = node.val
-        if node.val is None:
-            return f"'x"
+        if isinstance(node.val, ir.EmptyType):
+            if node.dtype is None:
+                return f"'x"
+            else:
+                return f"{node.dtype.width}'bx"
+
         elif not isinstance(node.val, Integer):
             val = Integer(code(node.val, int))
 

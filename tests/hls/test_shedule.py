@@ -240,6 +240,43 @@ def test_complex(din_delay, dout_delay):
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
+def test_complex1(din_delay, dout_delay):
+    @gear(hdl={'compile': True})
+    async def test(din: Queue, is_done) -> b'(din, din)':
+        first_elem = True
+        for_shred = False
+        async for m, last in din:
+            if for_shred:
+                yield None, None
+            elif first_elem:
+                async with is_done as med_found:
+                    if med_found:
+                        for_shred = True
+                        yield None, (m, last)
+                    else:
+                        first_elem = False
+                        yield (m, last), None
+            elif not last:
+                first_elem = False
+                yield (m, last), None
+            else:
+                first_elem = True
+                yield (m, last), None
+
+    t = Queue[Uint[4], 1]
+    verif(drv(t=t, seq=[list(range(5))] * 3) | delay_rng(din_delay, din_delay),
+          drv(t=Bool, seq=[False, False, True]) | delay_rng(din_delay * 2, din_delay * 2),
+          f=test(name='dut'),
+          ref=test,
+          delays=[delay_rng(dout_delay, dout_delay),
+                  delay_rng(dout_delay, dout_delay)])
+
+    cosim('/dut', 'verilator')
+    sim()
+
+
+@pytest.mark.parametrize('din_delay', [0, 1])
+@pytest.mark.parametrize('dout_delay', [0, 1])
 def test_optional_loop(din_delay, dout_delay):
     @gear(hdl={'compile': True})
     async def test(din: Uint[4]) -> Uint[4]:

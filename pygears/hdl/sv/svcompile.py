@@ -212,16 +212,12 @@ class SVCompiler(HDLVisitor):
             name = self.svexpr(base_target, self.aux_funcs)
             if target.field == 'data':
                 if self.selected(base_target):
-                    if val == ir.ResExpr(None):
-                        self.handle_defaults(self.attr(name, 'valid'),
-                                             f"{self.attr(name, 'valid')} = 0")
-                    else:
-                        self.handle_defaults(self.attr(name, 'valid'),
-                                             f"{self.attr(name, 'valid')} = 1")
-                        val = self.svexpr(val, self.aux_funcs)
-                        if val is not None:
-                            svstmt = f"{name}_s = {val}"
-                            self.handle_defaults(name, svstmt)
+                    self.handle_defaults(self.attr(name, 'valid'),
+                                         f"{self.attr(name, 'valid')} = 1")
+                    val = self.svexpr(val, self.aux_funcs)
+                    if val is not None:
+                        svstmt = f"{name}_s = {val}"
+                        self.handle_defaults(name, svstmt)
             elif target.field == 'ready' and self.selected(base_target):
                 self.handle_defaults(self.attr(name, 'ready'), f"{self.attr(name, 'ready')} = 1")
 

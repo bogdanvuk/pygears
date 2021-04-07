@@ -456,6 +456,9 @@ def prepend_state_prolog(cfg, ctx, in_scope):
         if f'{name}.data' not in in_scope:
             continue
 
+        if i.dtype.direction == 1 and in_scope.get(f'{name}.ready', False):
+            continue
+
         hold = Node(ir.AssignValue(ir.Component(ctx.ref(name), 'data'), in_scope[f'{name}.data']),
                     prev=[source])
         hold.next = source.next
@@ -542,5 +545,4 @@ def schedule(block, ctx):
 
         modblock = ir.CombBlock(stmts=[stateblock])
 
-    print(modblock)
     return modblock

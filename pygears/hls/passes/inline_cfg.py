@@ -167,16 +167,12 @@ def detect_new_state(node, scope_map):
             return forward
         else:
             return None
+    elif expr == 'back':
+        scope_map['forward'] = ir.res_false
+        return
     elif expr == ir.ResExpr(clk):
         node.value.expr = 'forward'
         return ir.res_false
-
-    if not isinstance(expr, ir.Component):
-        # TODO: This happens with Await-ing when yiedling multiple output
-        # interfaces. Find a better way to detect that this is in fact
-        # Await-ing output ready
-        scope_map['forward'] = ir.res_false
-        return
 
     if expr.field == 'valid':
         if forward != ir.res_true:
@@ -312,6 +308,9 @@ class VarScope(CfgDfs):
         # if isinstance(irnode.expr, ir.Component) and irnode.expr.field == 'ready':
         #     del self.scope_map[f'{irnode.expr.val.name}.data']
         #     del self.scope_map[f'{irnode.expr.val.name}.valid']
+
+        if isinstance(irnode.expr, ir.Component) and irnode.expr.field == 'ready':
+            self.scope_map[f'{irnode.expr.val.name}.ready'] = ir.ResExpr(True)
 
         cond = detect_new_state(node, self.scope_map)
         if cond is not None:

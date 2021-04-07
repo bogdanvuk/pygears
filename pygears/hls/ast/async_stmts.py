@@ -15,7 +15,7 @@ from pygears.typing import typeof, Queue, Tuple, Array
 
 def cast_rec(node, t):
     if node == ir.ResExpr(None):
-        return node
+        return ir.ResExpr(ir.EmptyType[t]())
     elif node.dtype == t:
         return node
     elif typeof(node.dtype, ir.IntfType):
@@ -40,7 +40,6 @@ def cast_rec(node, t):
 
 
 def cast_return(arg_nodes, out_ports):
-
     out_num = len(out_ports)
 
     # TODO: Reconsider this: Can we have a type inference mechanism?
@@ -103,17 +102,20 @@ def parse_yield(node, ctx):
     # Outputs values are offered in parallel. So first all outputs are declared
     # valid, and only then are all acknowledges awaited
     for p, v in zip(ctx.out_ports, vals):
+        if isinstance(v, ir.ResExpr) and isinstance(v.val, ir.EmptyType):
+            continue
+
         stmts.append(ir.AssignValue(ir.Component(p, 'data'), v))
 
     for p, v in zip(ctx.out_ports, vals):
-        if len(ctx.out_ports) == 1:
-            stmts.append(ir.Await(ir.Component(p, 'ready')))
-        elif v != ir.ResExpr(None):
-            # TODO: Revisit this!
-            stmts.append(
-                ir.Await(
-                    ir.BinOpExpr((ir.UnaryOpExpr(ir.Component(
-                        p, 'valid'), ir.opc.Not), ir.Component(p, 'ready')), ir.opc.Or)))
+        if isinstance(v, ir.ResExpr) and isinstance(v.val, ir.EmptyType):
+            continue
+
+        stmts.append(ir.Await(ir.Component(p, 'ready')))
+
+    # Only "ir.Await('forward')" is present, all None-s are yielded
+    if len(stmts) == 1:
+        stmts.append(ir.Await('back'))
 
     return stmts
 

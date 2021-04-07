@@ -53,7 +53,7 @@ class ResolveBlocking(CfgDfs):
         self.scopes.pop()
 
     def exit_Await(self, node):
-        if node.value.expr != 'forward':
+        if node.value.expr not in ['forward', 'back']:
             self.apply_await(node, node.value.expr)
         # Remove Await from cfg
         node.prev[0].next = node.next
