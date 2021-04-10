@@ -201,7 +201,7 @@ class SVExpressionVisitor:
     def visit_ConcatExpr(self, node):
         svexprs = []
         for op in reversed(node.operands):
-            if op == ir.ResExpr(Unit()):
+            if op.dtype.width == 0:
                 continue
 
             sv = self.visit(op)

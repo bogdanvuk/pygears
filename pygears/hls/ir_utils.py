@@ -213,10 +213,12 @@ class IrRewriter:
 
     @cp_mapper
     def LoopBlock(self, block: ir.LoopBlock):
-        rw_block = type(block)(test=self.visit(block.test))
+        rw_block = type(block)(test_in=self.visit(block.test_in))
 
         for stmt in block.stmts:
             add_to_list(rw_block.stmts, self.visit(stmt))
+
+        rw_block.test_loop = self.visit(block.test_loop)
 
         return rw_block
 

@@ -41,7 +41,7 @@ def test_update_after_in_loop_ifelse_trap():
 
     ctx, res = translate_gear(find('/test'))
 
-    assert not ctx.scope['acc'].reg
+    assert 'acc' not in ctx.scope
 
 
 # Value for 'acc' is set only conditionaly at the beggining of the loop, so it

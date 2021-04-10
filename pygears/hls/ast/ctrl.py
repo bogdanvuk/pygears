@@ -43,8 +43,17 @@ def _(node: ast.If, ctx: Context):
 
 @node_visitor(ast.While)
 def _(node: ast.While, ctx: Context):
-    ir_node = ir.LoopBlock(test=visit_ast(node.test, ctx), stmts=[])
+    test = visit_ast(node.test, ctx)
+    if test == ir.res_false:
+        return None
+
+    ir_node = ir.LoopBlock(test_in=test, stmts=[])
     block = visit_block(ir_node, node.body, ctx)
+
+    ctx.closures.append(ir_node)
+    ir_node.test_loop = visit_ast(node.test, ctx)
+    ctx.closures.pop()
+
     merge_cond_alias_map(block, ctx)
     return block
 
@@ -87,7 +96,7 @@ def _(node: ast.For, ctx: Context):
                          getattr(out_intf_ref, 'enumerated', False))
 
     block = ir.LoopBlock(stmts=[ir.AssignValue(targets, ir.GenNext(ctx.ref(gen_name)))],
-                         test=ir.GenDone(gen_name))
+                         test_loop=ir.GenDone(gen_name))
 
     visit_block(block, node.body, ctx)
 

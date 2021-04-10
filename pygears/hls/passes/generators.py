@@ -119,7 +119,7 @@ def unfold_loop(node: ir.LoopBlock, ctx: Context):
         unfolded_loop = unfolder.visit(node)
         add_to_list(stmts, unfolded_loop.stmts)
 
-        unfolded_test = TestRewriter(unfolder.generators).visit(node.test)
+        unfolded_test = TestRewriter(unfolder.generators).visit(node.test_loop)
         if unfolded_test == res_true:
             break
 
@@ -202,10 +202,10 @@ class HandleGenerators(IrRewriter):
 
         node = super().LoopBlock(node)
 
-        if not isinstance(node.test, ir.GenDone):
+        if not isinstance(node.test_loop, ir.GenDone):
             return node
 
-        gen_cfg = self.generators[node.test.val]
+        gen_cfg = self.generators[node.test_loop.val]
 
         eot_test = ir.BinOpExpr(
             (self.ctx.ref(gen_cfg['eot_name']), ir.ResExpr(gen_cfg['intf'].dtype.dtype.eot.max)),
@@ -214,7 +214,7 @@ class HandleGenerators(IrRewriter):
         eot_entry = ir.AssignValue(self.ctx.ref(gen_cfg['eot_name']),
                                    ir.ResExpr(gen_cfg['eot'].dtype.min))
 
-        node.test = eot_test
+        node.test_loop = eot_test
 
         return [eot_entry, node]
 

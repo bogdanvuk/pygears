@@ -1,5 +1,5 @@
 import typing
-from . import Context, FuncContext, Function, Submodule, ir, ir_utils, node_visitor, visit_ast, visit_block
+from . import Context, GearContext, FuncContext, Function, Submodule, ir, ir_utils, node_visitor, visit_ast, visit_block
 from ..debug import print_func_parse_intro
 from pygears import Intf, reg
 from pygears.typing import typeof
@@ -38,14 +38,17 @@ class UnusedVarCleanup(ir_utils.IrRewriter):
         self.ctx = ctx
 
     def AssignValue(self, node):
-        if isinstance(node.target, ir.Name):
-            if node.target.name not in self.used:
-                if node.target.name in self.ctx.scope:
-                    del self.ctx.scope[node.target.name]
+        if not isinstance(node.target, ir.Name):
+            return node
 
-                return None
+        if node.target.name in self.used or (isinstance(self.ctx, GearContext)
+                                             and node.target.name in self.ctx.intfs):
+            return node
 
-        return node
+        if node.target.name in self.ctx.scope:
+            del self.ctx.scope[node.target.name]
+
+        return None
 
 
 def removed_unused_vars(node, ctx):

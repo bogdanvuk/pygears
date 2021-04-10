@@ -96,12 +96,15 @@ REDUCE_INITIAL = {
 
 
 def opex(op, *operands):
-    if op in BIN_OPERATORS or op is opc.Not:
-        res_type = Bool
-    else:
-        res_type = PYOPMAP[op](*(p.dtype for p in operands))
+    try:
+        if op in BIN_OPERATORS or op is opc.Not:
+            res_type = Bool
+        else:
+            res_type = PYOPMAP[op](*(p.dtype for p in operands))
 
-    return res_type(PYOPMAP[op](*(p.val for p in operands)))
+        return res_type(PYOPMAP[op](*(p.val for p in operands)))
+    except:
+        return PYOPMAP[op](*(p.val for p in operands))
 
 
 def bin_op_reduce(intfs, func, op, dflt=None):
@@ -632,7 +635,7 @@ def conditional_distribution(op1, op2, operator):
         return None
 
     if (isinstance(op2, ConditionalExpr) and isinstance(op2.operands[0], ResExpr)
-            and isinstance(op2.operands[0], ResExpr)):
+            and isinstance(op2.operands[1], ResExpr)):
 
         return ConditionalExpr([
             ResExpr(opex(operator, op1, op2.operands[0])),
@@ -1121,10 +1124,11 @@ class HDLBlock(Statement):
 
 @attr.s(auto_attribs=True, eq=False)
 class LoopBlock(BaseBlock):
-    test: Expr = res_true
+    test_in: Expr = res_true
+    test_loop: Expr = res_true
 
     def __str__(self):
-        return f'while ({self.test})' + super().__str__()
+        return f'do if ({self.test_in})' + super().__str__() + f'while ({self.test_loop})\n'
 
 
 @attr.s(auto_attribs=True, eq=False)

@@ -87,9 +87,9 @@ def transform(modblock, ctx: GearContext):
     modblock = remove_dead_code(modblock, ctx)
     hls_debug(modblock, 'Remove Dead Code')
 
-    compile_funcs(modblock, ctx)
-
     modblock = removed_unused_vars(modblock, ctx)
+
+    compile_funcs(modblock, ctx)
 
     return modblock
 

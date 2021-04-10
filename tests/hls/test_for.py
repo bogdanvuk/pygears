@@ -1,7 +1,7 @@
 from pygears import gear
 from pygears.lib import drv
 from pygears.sim import sim, cosim
-from pygears.typing import Array, Bool, Uint, code, Queue
+from pygears.typing import Array, Bool, Uint, code, Queue, Maybe, bitw
 from pygears.lib import directed
 from pygears.util.utils import qrange
 
@@ -41,6 +41,46 @@ def test_unfold(lang):
 
     cosim('/test', 'verilator', lang=lang)
     sim(timeout=2)
+
+
+def test_unfold_array(lang):
+    @gear(hdl={'compile': True})
+    async def test(din: Array[Maybe, 'num']) -> b'Array[Uint[bitw(num-1)], num]':
+        num = len(din.dtype)
+        TIndex = Uint[bitw(num - 1)]
+        data = Array[TIndex, num]()
+        async with din as d:
+            cnt = TIndex(0)
+            for i in range(num):
+                data[i] = cnt
+                if d[i].ctrl:
+                    cnt += 1
+
+            yield data
+
+    TMaybe = Maybe[Uint[4]]
+    seq = [
+        (1, 2, 3, 4),
+        (2, None, None, 3),
+        (None, None, 1, 2),
+        (1, 2, 3, None),
+        (None, None, None, None),
+    ]
+
+    seq = [[TMaybe(v) for v in arv] for arv in seq]
+
+    ref = [
+        (0, 1, 2, 3),
+        (0, 1, 1, 1),
+        (0, 0, 0, 1),
+        (0, 1, 2, 3),
+        (0, 0, 0, 0),
+    ]
+
+    directed(drv(t=Array[TMaybe, 4], seq=seq), f=test, ref=ref)
+    cosim('/test', 'verilator', lang=lang)
+
+    sim()
 
 
 def test_unfold_uint(lang):

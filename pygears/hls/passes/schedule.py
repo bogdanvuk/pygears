@@ -7,7 +7,6 @@ from copy import deepcopy, copy
 from ..cfg import Node, draw_cfg, CfgDfs, ReachingDefinitions
 from ..ir_utils import res_true, HDLVisitor, ir, add_to_list, res_false, is_intf_id, IrRewriter
 from pygears.typing import bitw, Uint, Bool
-from .loops import infer_cycle_done
 from .inline_cfg import VarScope
 from .exit_cond_cfg import ResolveBlocking
 
@@ -253,14 +252,14 @@ class LoopBreaker(IrRewriter):
         super().__init__(cpmap)
 
     def LoopBlock(self, block: ir.LoopBlock):
-        body = ir.Branch(test=block.test)
+        body = ir.Branch(test=block.test_in)
 
         for stmt in block.stmts:
             add_to_list(body.stmts, self.visit(stmt))
 
         cond_enter_blk = ir.HDLBlock(branches=[body])
 
-        transition = ir.Branch(test=block.test)
+        transition = ir.Branch(test=block.test_loop)
         jump = ir.AssignValue(self.ctx.ref('_state'), ir.ResExpr(len(self.loops) + 1))
         breakstmt = ir.Await(ir.res_false)
         cond_exit_blk = ir.HDLBlock(branches=[transition])

@@ -49,12 +49,13 @@ def test_start_stop_combined(sim_cls):
     sim()
 
 
-def test_start_stop_combined(sim_cls):
+def test_start_stop_step_combined(sim_cls):
     res = []
     qrange((0, 8, 1), sim_cls=sim_cls) | collect(result=res)
     sim(timeout=16)
 
-    assert res == [(i, i==7) for i in range(8)] * 2
+    assert res == [(i, i == 7) for i in range(8)] * 2
+
 
 # @formal_check()
 # def test_basic_formal():
