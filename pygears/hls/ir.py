@@ -601,6 +601,9 @@ def elimination(op1, op2, operator):
     if not (isinstance(op1, BinOpExpr) and isinstance(op2, BinOpExpr)):
         return None
 
+    if op1.operator not in [opc.And, opc.Or] or op2.operator not in [opc.And, opc.Or]:
+        return None
+
     if op1.operator != op2.operator or op1.operator == operator:
         return None
 
@@ -669,6 +672,7 @@ class BinOpExpr(Expr):
 
     def __new__(cls, operands: typing.Tuple[OpType], operator):
         op1, op2 = operands
+
         if isinstance(op1, ResExpr) and isinstance(op2, ResExpr):
             return ResExpr(opex(operator, op1, op2))
 
