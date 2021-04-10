@@ -11,12 +11,22 @@ from pygears import Intf
 from pygears.core.port import InPort, OutPort
 from pygears.core.gear import InSig, OutSig
 from pygears.typing import (Bool, Integer, Queue, Tuple, Uint, is_type, typeof, Array, Union, Unit,
-                            cast)
+                            cast, code)
 # from .ast.utils import get_property_type
 import operator
 
 BOOLEAN_OPERATORS = {opc.BitOr, opc.BitAnd, opc.BitXor, opc.Invert, opc.Not, opc.And, opc.Or}
 BIN_OPERATORS = [opc.Eq, opc.Gt, opc.GtE, opc.Lt, opc.LtE, opc.NotEq, opc.And, opc.Or]
+
+COMMUTATIVE_BIN_OPERATORS = [
+    opc.Add, opc.Mult, opc.BitOr, opc.BitAnd, opc.BitXor, opc.And, opc.Or, opc.Eq
+]
+
+ARITH_BIN_OPERATORS = [
+    opc.Add, opc.Sub, opc.Mult, opc.Div, opc.Mod, opc.Pow, opc.LShift, opc.RShift, opc.BitOr,
+    opc.BitAnd, opc.BitXor, opc.Div
+]
+
 EXTENDABLE_OPERATORS = [
     opc.Add, opc.Sub, opc.Mult, opc.Div, opc.Mod, opc.Pow, opc.LShift, opc.RShift, opc.BitOr,
     opc.BitAnd, opc.BitXor, opc.Div, opc.Invert, opc.Not
@@ -376,7 +386,8 @@ class ConcatExpr(Expr):
 
     def __new__(cls, operands: typing.Sequence[Expr]):
         if all(isinstance(v, ResExpr) for v in operands):
-            if all(is_type(v.dtype) for v in operands):
+            if (all(is_type(v.dtype) for v in operands)
+                    and not any(isinstance(v.val, EmptyType) for v in operands)):
                 return ResExpr(Tuple[tuple(v.dtype for v in operands)](tuple(v.val
                                                                              for v in operands)))
             else:
@@ -463,6 +474,9 @@ class CastExpr(Expr):
         if operand.dtype == cast_to:
             return operand
 
+        if isinstance(operand, ResExpr):
+            return ResExpr(code(operand.val, cast_to))
+
         if isinstance(operand, ConcatExpr) and typeof(cast_to, (Array, Tuple, Queue, Union)):
             cast_ops = [
                 CastExpr(op, cast_t) if op.dtype != cast_t else op
@@ -505,6 +519,13 @@ class SliceExpr(Expr):
 
 
 def identity_anihilation(op1, op2, operator):
+    '''
+    x && True => x
+    x || False => x
+
+    x && False => False
+    x || True => True
+    '''
     if operator == opc.And:
         if isinstance(op1, ResExpr):
             return op2 if op1.val else op1
@@ -517,6 +538,10 @@ def identity_anihilation(op1, op2, operator):
 
 
 def idempotence(op1, op2, operator):
+    '''
+    x && x => x
+    x || x => x
+    '''
     if operator in [opc.And, opc.Or, opc.BitAnd, opc.BitOr]:
         if op1 == op2:
             return op1
@@ -525,6 +550,10 @@ def idempotence(op1, op2, operator):
 
 
 def complementation(op1, op2, operator):
+    '''
+    x && (~x) => False
+    x || (~x) => True
+    '''
     if isinstance(op1, UnaryOpExpr) and op1.operator == opc.Not:
         if op1.operand == op2:
             if operator is opc.And:
@@ -536,6 +565,13 @@ def complementation(op1, op2, operator):
 
 
 def absorption(op1, op2, operator):
+    '''
+    x && (x || y) => x
+    x || (x && y) => x
+
+    x && ((~x) || y) => x && y
+    x || ((~x) && y) => x || y
+    '''
     if not isinstance(op2, BinOpExpr):
         return None
 
@@ -543,18 +579,22 @@ def absorption(op1, op2, operator):
     if ((operator is opc.And and op2.operator is opc.Or)
             or (operator is opc.Or and op2.operator is opc.And)):
         if op1 == op2_1:
-            return op2_2
-        elif isinstance(op2_1, UnaryOpExpr) and op2_1.operator is opc.Not and op1 == op2_1.operand:
-            return BinOpExpr([op1, op2_2], operator)
-        elif op1 == op2_2:
             return op2_1
-        elif isinstance(op2_2, UnaryOpExpr) and op2_2.operator is opc.Not and op1 == op2_2.operand:
+        elif op1 == op2_2:
+            return op2_2
+        elif op1 == UnaryOpExpr(op2_1, opc.Not):
+            return BinOpExpr([op1, op2_2], operator)
+        elif op1 == UnaryOpExpr(op2_2, opc.Not):
             return BinOpExpr([op1, op2_1], operator)
 
     return None
 
 
 def elimination(op1, op2, operator):
+    '''
+    (x && y) || (x && (~y)) => x
+    (x || y) && (x || (~y)) => x
+    '''
     if not (isinstance(op1, BinOpExpr) and isinstance(op2, BinOpExpr)):
         return None
 
@@ -563,14 +603,10 @@ def elimination(op1, op2, operator):
 
     op2_1, op2_2 = op2.operands
     for op1_1, op1_2 in [op1.operands, op1.operands[::-1]]:
-        if op1_1 == op2_1:
-            if isinstance(op2_2,
-                          UnaryOpExpr) and op2_2.operator == opc.Not and op1_2 == op2_2.operand:
-                return op1_1
-        elif op1_1 == op2_2:
-            if isinstance(op2_1,
-                          UnaryOpExpr) and op2_1.operator == opc.Not and op1_2 == op2_1.operand:
-                return op1_1
+        if op1_1 == op2_1 and op1_2 == UnaryOpExpr(op2_2, opc.Not):
+            return op1_1
+        elif op1_1 == op2_2 and op1_2 == UnaryOpExpr(op2_1, opc.Not):
+            return op1_1
 
     return None
 
@@ -591,6 +627,19 @@ def booleq(op1, op2, operator):
     return None
 
 
+def conditional_distribution(op1, op2, operator):
+    if operator not in ARITH_BIN_OPERATORS:
+        return None
+
+    if (isinstance(op2, ConditionalExpr) and isinstance(op2.operands[0], ResExpr)
+            and isinstance(op2.operands[0], ResExpr)):
+
+        return ConditionalExpr([
+            ResExpr(opex(operator, op1, op2.operands[0])),
+            ResExpr(opex(operator, op1, op2.operands[1]))
+        ], op2.cond)
+
+
 bin_op_transforms = [
     identity_anihilation,
     idempotence,
@@ -598,6 +647,7 @@ bin_op_transforms = [
     absorption,
     elimination,
     booleq,
+    conditional_distribution,
 ]
 
 
@@ -624,10 +674,11 @@ class BinOpExpr(Expr):
             if ret is not None:
                 return ret
 
-        for t in bin_op_transforms:
-            ret = t(op2, op1, operator)
-            if ret is not None:
-                return ret
+        if operator in COMMUTATIVE_BIN_OPERATORS:
+            for t in bin_op_transforms:
+                ret = t(op2, op1, operator)
+                if ret is not None:
+                    return ret
 
         if operator in (opc.RShift, opc.LShift):
             if isinstance(op2, ResExpr) and op2.val == 0:
@@ -1036,6 +1087,12 @@ class Branch(BaseBlock):
 @attr.s(auto_attribs=True, eq=False)
 class HDLBlock(Statement):
     branches: typing.List[Branch] = attr.Factory(list)
+
+    def __init__(self, branches=None):
+        if branches is not None:
+            branches = [b for b in branches if b.test != res_false]
+
+        super().__init__(branches)
 
     def add_branch(self, branch: Branch = None):
         if branch is None:

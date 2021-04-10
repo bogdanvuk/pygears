@@ -9,6 +9,13 @@ def is_target_id(node):
     return isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store)
 
 
+def merge_cond_alias_map(ir_node, ctx):
+    alias_map = ctx.alias_map
+    for n, v in ctx.closure_alias_maps[ir_node].items():
+        if v != alias_map.get(n, v):
+            alias_map[n] = ctx.ref(n)
+
+
 # TODO: Revisit cast_return, maybe it can be more general
 from pygears.typing import typeof, Queue, Tuple, Array
 
@@ -130,7 +137,7 @@ def withitem(node: ast.withitem, ctx: Context):
     else:
         data = ir.Component(intf, 'data')
 
-    ass_targets = assign_targets(ctx, targets, data, ir.Variable)
+    ass_targets = assign_targets(ctx, targets, data)
 
     return intf, ass_targets
 
@@ -193,13 +200,14 @@ class AsyncForContext:
 
         eot_loop_stmt = ir.LoopBlock(test=eot_test, stmts=[valid_await, data_load, eot_load])
 
-        self.ctx.ir_block_closure.append(eot_loop_stmt)
+        self.ctx.new_closure(eot_loop_stmt)
 
         return [eot_init, eot_loop_stmt]
 
     def __exit__(self, exception_type, exception_value, traceback):
-        loop = self.ctx.ir_block_closure.pop()
+        loop = self.ctx.closures.pop()
         loop.stmts.append(ir.AssignValue(ir.Component(self.intf, 'ready'), ir.res_true))
+        merge_cond_alias_map(loop, self.ctx)
 
 
 @node_visitor(ast.AsyncFor)
@@ -209,7 +217,7 @@ def AsyncFor(node, ctx: Context):
 
     with AsyncForContext(out_intf_ref, ctx) as stmts:
         extend_stmts(ctx.ir_parent_block.stmts,
-                     assign_targets(ctx, targets, ir.Component(out_intf_ref, 'data'), ir.Variable))
+                     assign_targets(ctx, targets, ir.Component(out_intf_ref, 'data')))
 
         for stmt in node.body:
             res_stmt = visit_ast(stmt, ctx)

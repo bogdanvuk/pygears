@@ -16,52 +16,33 @@ def extend_stmts(stmts, extension):
                     stmts.append(e)
 
 
-def infer_targets(ctx, target, dtype, obj_factory=None):
+def infer_targets(ctx, target, source):
+    dtype = source.dtype
     if isinstance(target, ir.Name):
+        ctx.alias_map[target.name] = source
         if target.name not in ctx.scope:
-            if obj_factory is None:
-                # breakpoint()
-                raise NameError
-
-            var = obj_factory(target.name, dtype)
+            var = ir.Variable(target.name, dtype)
             ctx.scope[target.name] = var
             target.obj = var
+
     elif isinstance(target, ir.ConcatExpr):
         if len(dtype) != len(target.operands):
             raise SyntaxError(
                 f'Cannot unpack value of type "{dtype!r}" with {len(dtype)} component(s) into {len(target.operands)} variables: '
                 f'"{target}".')
 
-        for t, d in zip(target.operands, dtype):
-            infer_targets(ctx, t, d, obj_factory)
+        for i, t in enumerate(target.operands):
+            infer_targets(ctx, t, ir.SubscriptExpr(source, ir.ResExpr(i)))
     elif isinstance(target, ir.SubscriptExpr):
-        # TODO: can we do some check here?
-        pass
+        # # TODO: can we do some check here?
+        if isinstance(target.val, ir.Name):
+            ctx.alias_map[target.val.name] = ctx.ref(target.val.name)
     else:
         breakpoint()
 
 
-def assign_targets(ctx: Context, target, source, obj_factory=None):
-    # Speed-up the process of evaluating functions deep inside pygears. If the
-    # target is a top level variable within the function, assume it is just an
-    # alias
-    if (isinstance(target, ir.Name) and ctx.ir_block_closure
-            and isinstance(ctx.ir_parent_block, ir.FuncBlock) and isinstance(source, ir.ResExpr)
-            and not target.name in ctx.scope):
-        ctx.local_namespace[target.name] = source.val
-        return None
-
-    # If we thought something was an alias, but it changed later, turn that
-    # alias into an variable assignment at the begining of the scope
-    if isinstance(target, ir.Name) and target.name in ctx.local_namespace:
-        if isinstance(ctx.ir_parent_block, ir.FuncBlock):
-            ctx.ir_block_closure[0].stmts.insert(
-                0, ir.AssignValue(target, ir.ResExpr(ctx.local_namespace[target.name])))
-            del ctx.local_namespace[target.name]
-        else:
-            raise SyntaxError(f'There is already a name "{target.name}" defined in current scope.')
-
-    infer_targets(ctx, target, source.dtype, obj_factory)
+def assign_targets(ctx: Context, target, source):
+    infer_targets(ctx, target, source)
 
     if source.dtype in (OutSig, InSig):
         ctx.scope[target.name].val = source.val
@@ -87,7 +68,7 @@ def _(node, ctx: Context):
         init = visit_ast(node.value, ctx)
 
         init_cast = ir.CastExpr(init, annotation.val)
-        stmts = assign_targets(ctx, targets, init_cast, ir.Variable)
+        stmts = assign_targets(ctx, targets, init_cast)
         if not isinstance(stmts, list):
             stmts = [stmts]
 
@@ -113,10 +94,11 @@ def _(node, ctx: Context):
 @node_visitor(ast.Assign)
 def _(node, ctx: Context):
     value = visit_ast(node.value, ctx)
+
     stmts = []
     for t in node.targets:
         targets = visit_ast(t, ctx)
-        extend_stmts(stmts, assign_targets(ctx, targets, value, ir.Variable))
+        extend_stmts(stmts, assign_targets(ctx, targets, value))
 
     return stmts
 

@@ -163,27 +163,21 @@ def detect_new_state(node, scope_map):
     forward = scope_map['forward']
 
     if expr == 'forward':
-        if forward != ir.res_true:
-            return forward
-        else:
-            return None
+        return ir.UnaryOpExpr(forward, ir.opc.Not)
     elif expr == 'back':
         scope_map['forward'] = ir.res_false
-        return
+        return ir.res_false
     elif expr == ir.ResExpr(clk):
         node.value.expr = 'forward'
-        return ir.res_false
+        return ir.res_true
 
     if expr.field == 'valid':
-        if forward != ir.res_true:
-            return forward
-        else:
-            return None
+        return ir.UnaryOpExpr(forward, ir.opc.Not)
 
     if expr.field == 'ready':
         scope_map['forward'] = ir.res_false
 
-    return None
+    return ir.res_false
 
 
 class VarScope(CfgDfs):
@@ -313,7 +307,7 @@ class VarScope(CfgDfs):
             self.scope_map[f'{irnode.expr.val.name}.ready'] = ir.ResExpr(True)
 
         cond = detect_new_state(node, self.scope_map)
-        if cond is not None:
+        if cond != ir.res_false:
             print(f'New state cond: {str(cond)}')
             state_id = len(self.state_in_scope)
             self.state_in_scope.append(None)
@@ -321,7 +315,7 @@ class VarScope(CfgDfs):
             self.transition_scope(node, state_id)
             self.new_states[node] = cond
 
-        if cond == ir.res_false:
+        if cond == ir.res_true:
             return True
 
 

@@ -373,7 +373,7 @@ class StateIsolator(CfgDfs):
             break_stmt = Node(ir.Await(ir.res_false), prev=[exit_jump])
             self.state_num += 1
 
-            if test == ir.res_false:
+            if test == ir.res_true:
                 exit_jump.prev = [prev]
                 exit_jump = self.copy(exit_jump)
                 break_stmt = self.copy(break_stmt)
@@ -381,7 +381,7 @@ class StateIsolator(CfgDfs):
                 return True
 
             cond_blk = Node(ir.HDLBlock(), prev=[prev])
-            if_branch = Node(ir.Branch(test=ir.UnaryOpExpr(test, ir.opc.Not)), prev=[cond_blk])
+            if_branch = Node(ir.Branch(test=test), prev=[cond_blk])
             exit_jump.prev = [if_branch]
             if_sink = Node(ir.BranchSink(), source=if_branch, prev=[break_stmt])
 
@@ -504,20 +504,21 @@ def schedule(block, ctx):
     order = list(range(len(state_cfg)))
     while i < len(order):
         state_id = order[i]
-        print(f'[{state_id}]: Scoping')
+        # print(f'[{state_id}]: Scoping')
         new_states = {}
+        # print_cfg_ir(state_cfg[state_id])
         VarScope(ctx, state_in_scope, state_id, new_states).visit(state_cfg[state_id])
         if new_states:
-            print(f'[{state_id}]: Isolating')
+            # print(f'[{state_id}]: Isolating')
             state_cfg[state_id] = isolate(ctx,
                                           state_cfg[state_id],
                                           exits=new_states,
                                           state_num=len(state_cfg))
 
-            print_cfg_ir(state_cfg[state_id])
+            # print_cfg_ir(state_cfg[state_id])
             for ns in new_states:
                 order.insert(i + 1, len(state_cfg))
-                print(f'[{len(state_cfg)}]: Isolating')
+                # print(f'[{len(state_cfg)}]: Isolating')
                 state_cfg.append(isolate(ctx, ns))
 
         i += 1

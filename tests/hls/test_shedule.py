@@ -6,63 +6,6 @@ from pygears.hls.translate import translate_gear
 from pygears.hdl import hdlgen, synth
 from pygears.lib import drv, verif, delay_rng
 
-# @gear(hdl={'compile': True})
-# async def test(din: Bool) -> Uint[4]:
-#     async with din as c:
-#         yield c
-#         yield c
-
-# yield ->
-#     if already put:
-#         error: double output
-
-#     await forward()
-#     put
-#     await ready
-
-# @gear(hdl={'compile': True})
-# async def test(din: Uint[2]) -> Uint[4]:
-#     async with din as c:
-#         yield 1
-
-#         if c == 1:
-#             yield 2
-
-# test(Intf(Uint[2]))
-
-# translate_gear(find('/test'))
-
-# @gear(hdl={'compile': True})
-# async def test(din: Bool) -> Uint[4]:
-#     c = Bool(True)
-
-#     while c:
-#         async with din as c:
-#             if c:
-#                 c = 1
-
-#             yield c
-
-# @gear(hdl={'compile': True})
-# async def test(din: Bool) -> Uint[4]:
-#     async with din as c:
-#         if c == 2:
-#             c = 1
-#         else:
-#             c = 3
-
-#         yield c
-
-#         if c == 4:
-#             await clk()
-
-#         c = 4
-
-# hdlgen('/test', outdir='/tools/home/tmp')
-
-# util = synth('vivado', outdir='/tools/home/tmp', top='/test', util=True)
-# print(util)
-
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
@@ -112,6 +55,25 @@ def test_basic_loop(din_delay, dout_delay):
 
 
 # test_basic_loop(2, 2)
+
+@pytest.mark.parametrize('din_delay', [0, 1])
+@pytest.mark.parametrize('dout_delay', [0, 1])
+def test_state_in_scope(din_delay, dout_delay):
+    @gear(hdl={'compile': True})
+    async def test(din: Queue[Uint[4]]) -> Uint[4]:
+        async for c, eot in din:
+            yield c
+            yield c
+
+    verif(drv(t=Queue[Uint[4]], seq=[[2, 6, 10, 14]]) | delay_rng(din_delay, din_delay),
+          f=test(name='dut'),
+          ref=test,
+          delays=[delay_rng(dout_delay, dout_delay)])
+
+    cosim('/dut', 'verilator')
+    sim()
+
+# test_state_in_scope(0, 0)
 
 
 @pytest.mark.parametrize('din_delay', [0, 1])

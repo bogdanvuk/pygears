@@ -181,7 +181,7 @@ class HandleGenerators(IrRewriter):
 
         stmts = nodes + [ir.Await(ir.Component(intf, 'valid')), eot_load, data_load]
 
-        add_to_list(stmts, assign_targets(self.ctx, node.target, dout, ir.Variable))
+        add_to_list(stmts, assign_targets(self.ctx, node.target, dout))
 
         return stmts
 

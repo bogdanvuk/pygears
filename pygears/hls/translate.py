@@ -3,9 +3,9 @@ from pygears import reg
 from pygears.conf.trace import gear_definition_location, TraceLevel
 from .ast import visit_ast, GearContext, FuncContext, Context, form_hls_syntax_error
 from .ast.utils import get_function_ast
+from .ast.inline import removed_unused_vars
 from . import ir
-from .passes import (remove_dead_code, infer_exit_cond,
-                     infer_registers, schedule, infer_in_cond,
+from .passes import (remove_dead_code, infer_exit_cond, infer_registers, schedule, infer_in_cond,
                      handle_generators, resolve_gear_calls, find_called_funcs)
 
 from .passes.schedule import RebuildStateIR
@@ -15,6 +15,7 @@ from .passes.inline_cfg import VarScope
 from .debug import hls_enable_debug_log, hls_debug, hls_disable_debug_log
 from .debug import print_gear_parse_intro
 from . import cfg as cfgutil
+from . import cfg_ast
 
 
 def translate_gear(gear: Gear):
@@ -54,7 +55,6 @@ def translate_gear(gear: Gear):
 def process(body_ast, ctx):
     # hls_enable_debug_log()
     reg['gear/exec_context'] = 'hls'
-
     reg['hls/ctx'] = [ctx]
     return visit_ast(body_ast, ctx)
 
@@ -89,6 +89,8 @@ def transform(modblock, ctx: GearContext):
 
     compile_funcs(modblock, ctx)
 
+    modblock = removed_unused_vars(modblock, ctx)
+
     return modblock
 
 
@@ -104,8 +106,7 @@ def compile_funcs(modblock, ctx):
         functions = ctx.functions.copy()
 
         for f_ast, f_ctx in functions.values():
-            if (f_ast.name in active_funcs) or (
-                    f_ast.name not in called_funcs):
+            if (f_ast.name in active_funcs) or (f_ast.name not in called_funcs):
                 continue
 
             active_funcs.add(f_ctx.funcref.name)
@@ -135,5 +136,7 @@ def transform_func(funcblock, ctx: FuncContext):
     # funcblock = inline(funcblock, ctx)
 
     funcblock = remove_dead_code(funcblock, ctx)
+
+    funcblock = removed_unused_vars(funcblock, ctx)
 
     return funcblock

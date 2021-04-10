@@ -34,6 +34,10 @@ def parse_ifexp(node, ctx: Context):
 @node_visitor(ast.Name)
 def _(node: ast.Name, ctx: Context):
     if isinstance(node.ctx, ast.Load):
+        if (node.id in ctx.alias_map and isinstance(ctx.alias_map[node.id], ir.ResExpr)
+                and node.id not in ctx.looped[ctx.expr_closure] and node.id not in ctx.registers):
+            return ctx.alias_map[node.id]
+
         if node.id not in ctx.scope:
             if node.id in ctx.local_namespace:
                 return ir.ResExpr(ctx.local_namespace[node.id])
@@ -47,12 +51,9 @@ def _(node: ast.Name, ctx: Context):
 
             raise SyntaxError(f"Name '{node.id}' not found")
 
-        if isinstance(ctx.scope[node.id], ir.ResExpr):
-            return ctx.scope[node.id]
-
         return ctx.ref(node.id, ctx='load')
 
-    if isinstance(node.ctx, ast.Store):
+    elif isinstance(node.ctx, ast.Store):
         if node.id in ctx.scope:
             return ctx.ref(node.id, ctx='store')
 
@@ -88,6 +89,9 @@ def _(node, ctx: Context):
 
 @node_visitor(ast.Subscript)
 def _(node, ctx: Context):
+    if isinstance(node.value, ast.Name):
+        node.value.ctx = node.ctx
+
     return ir.SubscriptExpr(visit_ast(node.value, ctx), visit_ast(node.slice, ctx))
 
 

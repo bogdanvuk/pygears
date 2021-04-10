@@ -14,6 +14,46 @@ def form_gear_args(args, kwds, func):
     return args_only, kwds_only
 
 
+class UsedVarVisitor(ir_utils.IrExprVisitor):
+    def __init__(self, used):
+        self.used = used
+
+    def visit_Name(self, node):
+        if node.ctx == 'load':
+            self.used.add(node.name)
+
+
+class UsedVarStmtVisitor(ir_utils.IrVisitor):
+    def __init__(self):
+        self.used = set()
+
+    def Expr(self, node):
+        UsedVarVisitor(self.used).visit(node)
+
+
+class UnusedVarCleanup(ir_utils.IrRewriter):
+    def __init__(self, used, ctx):
+        super().__init__()
+        self.used = used
+        self.ctx = ctx
+
+    def AssignValue(self, node):
+        if isinstance(node.target, ir.Name):
+            if node.target.name not in self.used:
+                if node.target.name in self.ctx.scope:
+                    del self.ctx.scope[node.target.name]
+
+                return None
+
+        return node
+
+
+def removed_unused_vars(node, ctx):
+    v = UsedVarStmtVisitor()
+    v.visit(node)
+    return UnusedVarCleanup(v.used, ctx).visit(node)
+
+
 class ComplexityExplorer(ir_utils.IrExprVisitor):
     def __init__(self):
         self.operations = 0
@@ -66,7 +106,7 @@ def should_inline(func_ir, func_ctx, args):
 
 
 def inline_expr(func_ir, func_ctx, args):
-    s = func_ir.stmts[0]
+    s = func_ir.stmts[-1]
     return Inliner(args).visit(s.expr)
 
 
@@ -87,6 +127,7 @@ def parse_func_call(func: typing.Callable, args, kwds, ctx: Context):
         reg['hls/ctx'].append(func_ctx)
         func_ir = visit_ast(funcref.ast, func_ctx)
         reg['hls/ctx'].pop()
+        func_ir = removed_unused_vars(func_ir, func_ctx)
         ctx_stack[0].functions[funcref] = (func_ir, func_ctx)
     else:
         (func_ir, func_ctx) = ctx_stack[0].functions[funcref]
@@ -173,15 +214,13 @@ def call_gear(func, args, kwds, ctx: Context):
     in_gear_inst = local_in[0].consumers[-1].gear
     if in_gear_inst is not gear_inst:
         ccat_out = create_out_intf(in_gear_inst.out_ports[0], ctx)
-        ctx.submodules.append(
-            Submodule(in_gear_inst, in_ports, [ccat_out]))
+        ctx.submodules.append(Submodule(in_gear_inst, in_ports, [ccat_out]))
 
         in_ports = [ccat_out]
 
     out_ports = []
     for p in gear_inst.out_ports:
         out_ports.append(create_out_intf(p, ctx))
-
 
     ctx.submodules.append(Submodule(gear_inst, in_ports, out_ports))
 

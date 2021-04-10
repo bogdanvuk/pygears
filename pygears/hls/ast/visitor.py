@@ -95,11 +95,17 @@ class Context:
     def __init__(self):
         self.scope: typing.Dict = {}
         self.methods = {}
+        self.closures = []
+        self.closure_alias_maps = {}
+        self.expr_closure = None
         self.local_namespace: typing.Dict = {'__builtins__': __builtins__}
         self.ir_block_closure: typing.List = []
         self.submodules: typing.List[Submodule] = []
         self.reaching: typing.Dict = {}
         self.ast_stmt_map: typing.Dict = {}
+        self.looped = {}
+        self.reaching = {}
+        self.registers = set()
 
     def ref(self, name, ctx='load'):
         if name in self.scope:
@@ -119,9 +125,25 @@ class Context:
 
         return res_name
 
+    def new_closure(self, node):
+        if self.closures:
+            scope = self.alias_map.copy()
+        else:
+            scope = self.local_namespace.copy()
+
+        self.closure_alias_maps[node] = scope
+        self.closures.append(node)
+
+    @property
+    def alias_map(self):
+        if self.closures:
+            return self.closure_alias_maps[self.ir_parent_block]
+        else:
+            return {}
+
     @property
     def ir_parent_block(self):
-        return self.ir_block_closure[-1]
+        return self.closures[-1]
 
     @property
     def variables(self):
@@ -171,7 +193,7 @@ class GearContext(Context):
                 f'{p.basename}', ir.IntfType[p.consumer.dtype, ir.IntfType.iout])
 
         for k, v in self.gear.explicit_params.items():
-            self.scope[k] = ir.ResExpr(v)
+            self.local_namespace[k] = ir.ResExpr(v)
 
     @property
     def intfs(self):
@@ -311,12 +333,20 @@ def node_visitor(ast_type):
     def wrapper(f):
         def func_wrapper(node, ctx):
             if reg['trace/level'] == 0:
-                return f(node, ctx)
+                if node in ctx.looped:
+                    ctx.expr_closure = node
+                res = f(node, ctx)
+                ctx.expr_closure = None
+                return res
 
             err = None
 
             try:
-                return f(node, ctx)
+                if node in ctx.looped:
+                    ctx.expr_closure = node
+                res = f(node, ctx)
+                ctx.expr_closure = None
+                return res
             except Exception as e:
                 if isinstance(e, HLSSyntaxError) and e.lineno is not None:
                     _, exc_value, tb = sys.exc_info()
@@ -354,7 +384,7 @@ def visit_ast(node, ctx):
 
 
 def visit_block(ir_node, body, ctx):
-    ctx.ir_block_closure.append(ir_node)
+    ctx.new_closure(ir_node)
     for stmt in body:
         res_stmt = visit_ast(stmt, ctx)
         if not isinstance(res_stmt, list):
@@ -374,8 +404,6 @@ def visit_block(ir_node, body, ctx):
             # No need to continue, return has been hit
             break
 
-        # add_to_list(ir_node.stmts, res_stmt)
-
     # Remove expressions that are added as block statements
     stmts = ir_node.stmts
     ir_node.stmts = []
@@ -387,6 +415,6 @@ def visit_block(ir_node, body, ctx):
         else:
             ir_node.stmts.append(s)
 
-    ctx.ir_block_closure.pop()
+    ctx.closures.pop()
 
     return ir_node

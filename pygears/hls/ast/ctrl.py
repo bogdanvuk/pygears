@@ -3,7 +3,7 @@ from . import Context, ir, node_visitor, visit_ast, visit_block
 from pygears.lib.rng import qrange
 from pygears.lib.union import select
 from .stmt import assign_targets, extend_stmts
-from .async_stmts import AsyncForContext
+from .async_stmts import AsyncForContext, merge_cond_alias_map
 from .inline import call_gear
 from .generators import parse_generator_expression, is_intf_list
 
@@ -12,42 +12,41 @@ from .generators import parse_generator_expression, is_intf_list
 def _(node: ast.If, ctx: Context):
     test_expr = visit_ast(node.test, ctx)
 
-    if isinstance(test_expr, ir.ResExpr):
-        body_stmts = []
-        if bool(test_expr.val):
-            for stmt in node.body:
-                ir_stmt = visit_ast(stmt, ctx)
-                extend_stmts(body_stmts, ir_stmt)
-        elif hasattr(node, 'orelse'):
-            for stmt in node.orelse:
-                ir_stmt = visit_ast(stmt, ctx)
-                extend_stmts(body_stmts, ir_stmt)
-
-        if body_stmts:
-            return body_stmts
-
-        return None
-    else:
-        ir_node = ir.HDLBlock()
+    ir_node = ir.HDLBlock()
+    if test_expr != ir.res_false:
         branch = ir_node.add_branch(ir.Branch(test=test_expr))
         visit_block(branch, node.body, ctx)
-        if hasattr(node, 'orelse') and node.orelse:
-            orelse = ir.BaseBlock()
-            visit_block(orelse, node.orelse, ctx)
-            if orelse.stmts:
-                if len(orelse.stmts) == 1 and isinstance(orelse.stmts[0], ir.HDLBlock):
-                    for b in orelse.stmts[0].branches:
-                        ir_node.add_branch(b)
-                else:
-                    ir_node.add_branch(ir.Branch(stmts=orelse.stmts))
 
-        return ir_node
+    if test_expr != ir.res_true and hasattr(node, 'orelse') and node.orelse:
+        orelse = ir.BaseBlock()
+        visit_block(orelse, node.orelse, ctx)
+        if orelse.stmts:
+            if len(orelse.stmts) == 1 and isinstance(orelse.stmts[0], ir.HDLBlock):
+                for b in orelse.stmts[0].branches:
+                    ir_node.add_branch(b)
+            else:
+                branch = ir_node.add_branch(ir.Branch(stmts=orelse.stmts))
+                ctx.closure_alias_maps[branch] = ctx.closure_alias_maps[orelse]
+
+    if len(ir_node.branches) == 1 and ir_node.branches[0].test == ir.res_true:
+        ctx.alias_map.update(ctx.closure_alias_maps[ir_node.branches[0]])
+        return ir_node.branches[0].stmts
+
+    for b in ir_node.branches:
+        merge_cond_alias_map(b, ctx)
+
+    if not ir_node.branches:
+        return []
+
+    return ir_node
 
 
 @node_visitor(ast.While)
 def _(node: ast.While, ctx: Context):
     ir_node = ir.LoopBlock(test=visit_ast(node.test, ctx), stmts=[])
-    return visit_block(ir_node, node.body, ctx)
+    block = visit_block(ir_node, node.body, ctx)
+    merge_cond_alias_map(block, ctx)
+    return block
 
 
 def intf_loop(node, intfs, targets, ctx: Context, enumerated):
@@ -55,12 +54,8 @@ def intf_loop(node, intfs, targets, ctx: Context, enumerated):
     ctx.ir_parent_block.stmts.extend(stmts)
 
     with AsyncForContext(rng_intf, ctx) as stmts:
-        rng_iter = ir.SubscriptExpr(ir.Component(rng_intf.obj, 'data'),
-                                    ir.ResExpr(0))
-        select_intf, call_stmts = call_gear(select,
-                                            args=[rng_iter] + intfs,
-                                            kwds={},
-                                            ctx=ctx)
+        rng_iter = ir.SubscriptExpr(ir.Component(rng_intf.obj, 'data'), ir.ResExpr(0))
+        select_intf, call_stmts = call_gear(select, args=[rng_iter] + intfs, kwds={}, ctx=ctx)
         ctx.ir_parent_block.stmts.extend(call_stmts)
 
         if enumerated:
@@ -73,10 +68,8 @@ def intf_loop(node, intfs, targets, ctx: Context, enumerated):
         if enumerated:
             extend_stmts(
                 ctx.ir_parent_block.stmts,
-                assign_targets(
-                    ctx, targets.operands[0],
-                    ir.SubscriptExpr(ir.Component(rng_intf.obj, 'data'),
-                                     ir.ResExpr(0)), ir.Variable))
+                assign_targets(ctx, targets.operands[0],
+                               ir.SubscriptExpr(ir.Component(rng_intf.obj, 'data'), ir.ResExpr(0))))
 
         for stmt in node.body:
             res_stmt = visit_ast(stmt, ctx)
@@ -93,12 +86,13 @@ def _(node: ast.For, ctx: Context):
         return intf_loop(node, out_intf_ref.operands, targets, ctx,
                          getattr(out_intf_ref, 'enumerated', False))
 
-    block = ir.LoopBlock(
-        stmts=[ir.AssignValue(targets, ir.GenNext(ctx.ref(gen_name)))],
-        test=ir.GenDone(gen_name))
+    block = ir.LoopBlock(stmts=[ir.AssignValue(targets, ir.GenNext(ctx.ref(gen_name)))],
+                         test=ir.GenDone(gen_name))
 
     visit_block(block, node.body, ctx)
 
     block.stmts.append(ir.ExprStatement(ir.GenAck(gen_name)))
+
+    merge_cond_alias_map(block, ctx)
 
     return block

@@ -1,9 +1,17 @@
 import ast
 from . import Context, FuncContext, ir, node_visitor, visit_ast, visit_block
+from ..cfg_ast import reaching
 
 
 @node_visitor(ast.AsyncFunctionDef)
 def parse_async_func(node, ctx: Context):
+
+    body_ast, cfg, r, looped, registers = reaching(node)
+
+    ctx.reaching = r
+    ctx.registers = registers
+    ctx.looped = looped
+
     return visit_block(ir.Module(), node.body, ctx)
 
 
@@ -16,6 +24,11 @@ def _(node, ctx: FuncContext):
                          args=ctx.signature,
                          name=ctx.funcref.name,
                          ret_dtype=ctx.ret_dtype)
+
+    body_ast, cfg, r, looped, registers = reaching(node)
+    ctx.reaching = r
+    ctx.registers = registers
+    ctx.looped = looped
 
     ret = visit_block(block, node.body, ctx)
 

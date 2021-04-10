@@ -26,7 +26,7 @@ def parse_generator_expression(node, ctx):
     gen_name = ctx.find_unique_name('_gen')
     ctx.scope[gen_name] = ir.Generator(gen_name, out_intf_ref)
 
-    infer_targets(ctx, targets, out_intf_ref.dtype, ir.Variable)
+    infer_targets(ctx, targets, out_intf_ref)
 
     return out_intf_ref, targets, gen_name
 

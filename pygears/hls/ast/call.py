@@ -182,7 +182,7 @@ def resolve_func(func, args, kwds, ctx):
                     val = ctx.ref(name)
                     break
 
-            return reg['hls/ir_builtins'][func.__func__](*args, **kwds)
+            return reg['hls/ir_builtins'][func.__func__](val, *args, **kwds)
         elif const_func_args(args, kwds):
             return resolve_compile_time(func, args, kwds)
         elif is_type(func.__self__):
