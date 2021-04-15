@@ -162,7 +162,7 @@ class HDLScopedVisitor(HDLVisitor):
 
 
 class IrVisitor:
-    def __init__(self, cpmap=None):
+    def __init__(self):
         self.scopes = []
 
     @property
@@ -220,20 +220,8 @@ class IrVisitor:
         pass
 
 
-def cp_mapper(f):
-    def wrp(self, node):
-        ret = f(self, node)
-        if self.cpmap is not None:
-            self.cpmap[id(ret)] = node
-
-        return ret
-
-    return wrp
-
-
 class IrRewriter:
-    def __init__(self, cpmap=None):
-        self.cpmap = cpmap
+    def __init__(self):
         self.scopes = []
 
     def visit(self, node):
@@ -265,7 +253,6 @@ class IrRewriter:
     def exit_scope(self):
         self.scopes.pop()
 
-    # @cp_mapper
     def BaseBlock(self, block: ir.BaseBlock):
         rw_block = type(block)()
         self.enter(rw_block)
@@ -277,7 +264,6 @@ class IrRewriter:
         self.exit(rw_block)
         return rw_block
 
-    # @cp_mapper
     def Branch(self, block: ir.Branch):
         rw_block = type(block)()
         rw_block.test = self.visit(block.test)
@@ -291,7 +277,6 @@ class IrRewriter:
         self.exit(rw_block)
         return rw_block
 
-    # @cp_mapper
     def LoopBlock(self, block: ir.LoopBlock):
         rw_block = type(block)(blocking=block.blocking)
         self.enter(rw_block)
@@ -306,7 +291,6 @@ class IrRewriter:
         self.exit(rw_block)
         return rw_block
 
-    # @cp_mapper
     def FuncBlock(self, block: ir.FuncBlock):
         # args = {n: self.visit(val) for n, val in block.args.items()}
 
@@ -324,7 +308,6 @@ class IrRewriter:
         self.exit(rw_block)
         return rw_block
 
-    # @cp_mapper
     def HDLBlock(self, block: ir.HDLBlock):
         rw_block = type(block)()
         self.enter(rw_block)
@@ -337,27 +320,21 @@ class IrRewriter:
         self.exit(rw_block)
         return rw_block
 
-    # @cp_mapper
     def ExprStatement(self, stmt: ir.ExprStatement):
         return type(stmt)(self.visit(stmt.expr))
 
-    # @cp_mapper
     def FuncReturn(self, stmt: ir.FuncReturn):
         return type(stmt)(stmt.func, self.visit(stmt.expr))
 
-    # @cp_mapper
     def AssignValue(self, stmt: ir.AssignValue):
         return type(stmt)(self.visit(stmt.target), self.visit(stmt.val))
 
-    # @cp_mapper
     def AssertValue(self, stmt: ir.AssertValue):
         return type(stmt)(self.visit(stmt.val))
 
-    @cp_mapper
     def Expr(self, expr):
         return expr
 
-    @cp_mapper
     def generic_visit(self, node):
         return node
 

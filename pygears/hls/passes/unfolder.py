@@ -1,6 +1,5 @@
 from .inline_cfg import forward_value, merge_subscope, inline_expr
 from ..ir_utils import ir, IrRewriter, add_to_list, IrVisitor, IrExprVisitor
-from ..cfg import Node
 from copy import copy
 from ..ast.call import const_func_args
 from pygears.util.utils import quiter
@@ -69,9 +68,6 @@ class RegisterBlockDetect(IrVisitor):
                 'target_scope': [s for s in self.scopes if isinstance(s, ir.LoopBlock)],
             }
 
-            # breakpoint()
-            # self.inferred.add(d)
-
     AssignValue = Statement
     Expr = Statement
 
@@ -91,131 +87,11 @@ class LoopBlockDetect(IrVisitor):
                 s.blocking = True
 
 
-def is_blocking(node):
-    v = LoopBlockDetect()
-    v.visit(node)
-
-    return v.blocking
-
-
 def exhaust(func, args):
     try:
         return list(func(*args))
     except TypeError:
         raise SyntaxError(f'Generator "{func.__name__}" compile time invocation failed')
-
-
-# class LoopScope(Inline):
-class LoopScope:
-    def __init__(self, ctx):
-        super().__init__(ctx)
-        self.ctx = ctx
-        self.node_map = {}
-        self.generators = {}
-        self.cpmap = {}
-
-    def visit(self, node):
-        self.copy(node)
-        super().visit(node)
-
-    def enter_RegReset(self, node):
-        name = node.value.target.name
-        if not self.ctx.registers[name]['blocking']:
-            self.scope_map[name] = node.value.target.val
-
-    def copy(self, node):
-        source = self.node_map.get(node.source, None)
-
-        cp_val = copy(node.value)
-
-        cp_node = Node(cp_val, source=source)
-        self.cpmap[node] = cp_node
-
-        self.node_map[node] = cp_node
-        cp_node.prev = [self.node_map[p] for p in node.prev if p in self.node_map]
-
-        for n in cp_node.prev:
-            n.next.append(cp_node)
-
-        return cp_node
-
-    def enter_AssignValue(self, node):
-        irnode: ir.AssertValue = node.value
-
-        if not isinstance(irnode.val, ir.GenNext):
-            return super().enter_AssignValue(node)
-
-        gen_id = irnode.val.val
-        if gen_id.name not in self.generators:
-            func_call = gen_id.obj.func
-
-            if not const_func_args(func_call.args.values(), func_call.kwds):
-                raise SyntaxError(f'Only generator calls with constant arguments are supported')
-
-            args = tuple(irnode.val for irnode in func_call.args.values())
-
-            vals = exhaust(func_call.func, args)
-
-            self.generators[gen_id.name] = {'vals': quiter(vals)}
-
-        next_val, last = next(self.generators[gen_id.name]['vals'])
-
-        forward_value(irnode.target, ir.ResExpr(next_val), self.scope_map)
-
-        # self.forwarded[irnode.target.name] = ir.ResExpr(next_val)
-        self.generators[gen_id.name]['last'] = ir.ResExpr(last)
-
-        self.node_map[node] = self.node_map[node.prev[0]]
-
-    def LoopBlock(self, node):
-        skip = self.enter(node)
-        if not skip:
-            last = ir.res_false
-            while last == ir.res_false:
-                self.scopes.append(node)
-                self.visit(node.next[0])
-                self.scopes.pop()
-                # TODO: Make this more general
-                last = self.generators[node.value.test.val]['last']
-                draw_scheduled_cfg(list(self.cpmap.values())[0])
-                breakpoint()
-
-        self.exit(node)
-
-        return self.visit(node.next[1])
-
-    # def enter_LoopBlock(self, node):
-    #     breakpoint()
-    #     self.block_scope_map[node] = self.scope_map.copy()
-    #     self.scopes.append(node)
-
-    # def enter_LoopBlock(self, node):
-    #     breakpoint()
-    #     self.block_scope_map[node] = self.scope_map.copy()
-    #     self.scopes.append(node)
-    #     try:
-    #         if not is_blocking(node):
-    #             return unfold_loop(node, self.ctx, self.scope_map)
-    #     except Ununfoldable:
-    #         pass
-
-    #     node = super().LoopBlock(node)
-
-    #     if not isinstance(node.test, ir.GenDone):
-    #         return node
-
-    #     gen_cfg = self.generators[node.test_loop.val]
-
-    #     eot_test = ir.BinOpExpr(
-    #         (self.ctx.ref(gen_cfg['eot_name']), ir.ResExpr(gen_cfg['intf'].dtype.dtype.eot.max)),
-    #         ir.opc.NotEq)
-
-    #     eot_entry = ir.AssignValue(self.ctx.ref(gen_cfg['eot_name']),
-    #                                ir.ResExpr(gen_cfg['eot'].dtype.min))
-
-    #     node.test_loop = eot_test
-
-    #     return [eot_entry, node]
 
 
 def ir_merge_subscope(block, block_scope_map):
@@ -290,8 +166,6 @@ class LoopUnfolder(Inline):
             self.scope_map[name] = node.value.target.val
 
     def LoopBlock(self, block: ir.LoopBlock):
-        # if block.blocking
-        # blocking = is_blocking(block)
         rw_block = type(block)(blocking=block.blocking)
         self.enter(rw_block)
         self.enter_scope(rw_block)
@@ -362,7 +236,6 @@ def match_scopes(spec):
     else:
         # TODO: Is this possible?
         breakpoint()
-        print('bla')
 
 
 def detect_loops(modblock, ctx):

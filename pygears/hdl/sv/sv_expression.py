@@ -131,7 +131,7 @@ class SVExpressionVisitor:
             name = f'pg_{name}'
 
         if isinstance(node.obj, ir.Variable) and node.obj.reg:
-            if self.ctx in ['next', 'store'] or node.ctx in ['next', 'store']:
+            if self.ctx == 'store' or node.ctx == 'store':
                 return f'{name}_next'
 
         return name

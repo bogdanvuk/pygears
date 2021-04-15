@@ -1,21 +1,19 @@
 from pygears.core.gear import Gear
 from pygears import reg
-from pygears.conf.trace import gear_definition_location, TraceLevel
-from .ast import visit_ast, GearContext, FuncContext, Context, form_hls_syntax_error
+from pygears.conf.trace import TraceLevel
+from .ast import FuncContext, GearContext, form_hls_syntax_error, visit_ast
 from .ast.utils import get_function_ast
 from .ast.inline import removed_unused_vars
-from . import ir
-from .passes import (remove_dead_code, infer_exit_cond, infer_registers, schedule, infer_in_cond,
-                     handle_generators, resolve_gear_calls, find_called_funcs, loop_unfold, detect_loops)
+from .passes import (remove_dead_code, infer_registers, schedule, handle_generators, resolve_gear_calls,
+                     find_called_funcs, loop_unfold, detect_loops)
 
 from .passes.schedule import RebuildStateIR
 
 from .passes.inline_cfg import VarScope
 
-from .debug import hls_enable_debug_log, hls_debug, hls_disable_debug_log
+from .debug import hls_debug
 from .debug import print_gear_parse_intro
 from . import cfg as cfgutil
-from . import cfg_ast
 
 
 def translate_gear(gear: Gear):

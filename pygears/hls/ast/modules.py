@@ -11,13 +11,6 @@ def parse_async_func(node, ctx: Context):
     ctx.reaching = r
     ctx.registers = registers
 
-    # for reg in registers:
-    #     ctx.scope[reg]
-    #     ctx.scope[reg].reg = True
-    #     ctx.scope[reg].any_init = True
-
-    # ResolveRegInits(ctx).visit(modblock)
-
     ctx.reset_states = {}
     for reg in registers:
         ctx.reset_states[reg] = []

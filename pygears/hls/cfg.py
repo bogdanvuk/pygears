@@ -415,38 +415,6 @@ class Defined(Forward):
         super(Defined, self).__init__('defined', defined, operator.and_)
 
 
-class Active(Forward):
-    """Active variable analysis.
-
-  Given a set of active arguments, find all variables that are active i.e.
-  variables whose values possibly depend on the given set of arguments.
-
-  Args:
-    wrt: A tuple of indices of arguments that are active.
-  """
-    def __init__(self, wrt):
-        def active(node, incoming):
-            gen = set()
-            kill = set()
-            if isinstance(node.value, gast.arguments):
-                gen.update(node.value.args[i].id for i in wrt)
-            if isinstance(node.value, gast.Assign):
-                # Special-case e.g. x = tangent.pop(_stack)
-                # such that all values popped off the stack are live.
-                if anno.getanno(node.value.value, 'func', False) == utils.pop:
-                    gen.update(get_updated(node.value))
-                else:
-                    for succ in gast.walk(node.value.value):
-                        if isinstance(succ, gast.Name) and succ.id in incoming:
-                            gen.update(get_updated(node.value))
-                            break
-                    else:
-                        kill.update(get_updated(node.value))
-            return gen, kill
-
-        super(Active, self).__init__('active', active)
-
-
 class CfgDfs:
     def __init__(self):
         self.scopes = []

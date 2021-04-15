@@ -339,7 +339,7 @@ def schedule(cfg, ctx):
     )
 
     loops = []
-    LoopBreaker(ctx, loops, cfg).visit(cfg)
+    LoopBreaker(ctx, loops).visit(cfg)
 
     state_cfg = [cfg]
     for l in loops:

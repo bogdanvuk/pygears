@@ -365,27 +365,6 @@ class Forward(object):
             self.exit = functools.reduce(self.op, preds[1:], preds[0])
 
 
-def is_blocking_loop(origin):
-    """Given a CFG with outgoing links, create incoming links."""
-    seen = set()
-    to_see = origin.next[:]
-    while to_see:
-        node = to_see.pop()
-
-        if isinstance(node.value, (gast.Yield, gast.AsyncWith, gast.AsyncFor, gast.Await)):
-            return True
-
-        # If we looped all the way back to the origin, we didn't find a
-        # blocking statement
-        if node is origin:
-            return False
-
-        seen.add(node)
-        for succ in node.next:
-            if succ not in seen:
-                to_see.append(succ)
-
-
 class InferRegisters:
     def __init__(self, reaching):
         self.reaching = reaching
@@ -422,7 +401,10 @@ class InferRegisters:
         if all(d[1] in self.visited for d in reaching.get('in', [])):
             return
 
-        variables = [succ.id for succ in gast.walk(node) if isinstance(succ, gast.Name) and isinstance(succ.ctx, gast.Load)]
+        variables = [
+            succ.id for succ in gast.walk(node)
+            if isinstance(succ, gast.Name) and isinstance(succ.ctx, gast.Load)
+        ]
 
         for name, n in reaching['in']:
             if (n in self.visited) or (name not in variables) or (name in self.registers):

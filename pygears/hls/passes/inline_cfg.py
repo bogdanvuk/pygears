@@ -9,26 +9,6 @@ from .exit_cond_cfg import cond_wrap
 from copy import copy
 
 
-def del_forward_subvalue(target, scope):
-    if isinstance(target, ir.Name):
-        if target.name in scope:
-            if target.obj.reg:
-                # TODO: This means that if a register is partially applied, the
-                # scope should be set to registered value. Shouldn't it be that
-                # it should be the register's next state?
-                scope[target.name] = target
-                scope[target.name].ctx = 'next'
-            else:
-                del scope[target.name]
-
-    elif isinstance(target, ir.SubscriptExpr):
-        if isinstance(target.index, ir.ResExpr):
-            if str(target) in scope:
-                del scope[str(target)]
-        else:
-            del_forward_subvalue(target.val, scope)
-
-
 def get_forward_value(target, scope):
     if isinstance(target, ir.Name):
         if target.name not in scope:
@@ -64,10 +44,6 @@ def forward_value(target, val, scope):
             if isinstance(base_val, ir.ResExpr):
                 base_val.val[target.index.val] = cast(val.val, base_val.dtype[target.index.val])
                 return True
-
-        # breakpoint()
-        # TODO: What is this for?
-        # del_forward_subvalue(target, scope)
 
 
 def merge_subscope(subscopes, tests):
