@@ -12,6 +12,7 @@ from pygears.lib.rng import qrange as qrange_gear
 
 class BlockDetect(IrVisitor):
     def __init__(self):
+        super().__init__()
         self.blocking = False
 
     def visit(self, node):
@@ -194,18 +195,23 @@ class HandleGenerators(IrRewriter):
         return ir.AssignValue(ir.Component(gen_cfg['intf'], 'ready'), ir.res_true)
 
     def LoopBlock(self, node):
-        try:
-            if not is_blocking(node):
-                return unfold_loop(node, self.ctx)
-        except Ununfoldable:
-            pass
+        # TODO: Checking for blocking coupled with blocking generator resolution. Refactor it out
+        node.blocking = is_blocking(node)
+        if not node.blocking:
+            return node
+
+        # try:
+        #     if not is_blocking(node):
+        #         return unfold_loop(node, self.ctx)
+        # except Ununfoldable:
+        #     pass
 
         node = super().LoopBlock(node)
 
-        if not isinstance(node.test_loop, ir.GenDone):
+        if not isinstance(node.test, ir.GenDone):
             return node
 
-        gen_cfg = self.generators[node.test_loop.val]
+        gen_cfg = self.generators[node.test.val]
 
         eot_test = ir.BinOpExpr(
             (self.ctx.ref(gen_cfg['eot_name']), ir.ResExpr(gen_cfg['intf'].dtype.dtype.eot.max)),
@@ -214,7 +220,7 @@ class HandleGenerators(IrRewriter):
         eot_entry = ir.AssignValue(self.ctx.ref(gen_cfg['eot_name']),
                                    ir.ResExpr(gen_cfg['eot'].dtype.min))
 
-        node.test_loop = eot_test
+        node.test = eot_test
 
         return [eot_entry, node]
 

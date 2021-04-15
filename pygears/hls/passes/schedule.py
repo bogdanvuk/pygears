@@ -5,10 +5,12 @@ from .. import cfg as cfgutil
 from contextlib import contextmanager
 from copy import deepcopy, copy
 from ..cfg import Node, draw_cfg, CfgDfs, ReachingDefinitions
+from ..cfg_util import insert_node_before, insert_node_after
 from ..ir_utils import res_true, HDLVisitor, ir, add_to_list, res_false, is_intf_id, IrRewriter
 from pygears.typing import bitw, Uint, Bool
-from .inline_cfg import VarScope
-from .exit_cond_cfg import ResolveBlocking
+from .inline_cfg import VarScope, JumpScoping
+from .exit_cond_cfg import ResolveBlocking, cond_wrap
+from ..cfg_util import insert_node_before
 
 
 def create_scheduled_cfg(node, G, visited, labels, reaching=None, simple=True):
@@ -84,6 +86,10 @@ class RebuildStateIR(CfgDfs):
     def enter_BaseBlock(self, block):
         block.value = type(block.value)()
 
+    def exit_BaseBlock(self, block):
+        if self.scopes:
+            self.append(block.value)
+
     def enter_FuncBlock(self, block):
         irnode = block.value
         block.value = type(irnode)(irnode.args, irnode.name, irnode.ret_dtype)
@@ -101,182 +107,92 @@ class RebuildStateIR(CfgDfs):
         self.parent.value.add_branch(block.value)
 
 
-class ScheduleBFS:
-    def __init__(self, ctx):
-        self.state = -1
-        self.max_state = 0
+class LoopBreaker(CfgDfs):
+    def __init__(self, ctx, loops):
         self.ctx = ctx
-        self.state_entry = []
-        self.state_stmts = []
-        self.state_maps = []
-        self.visited = set()
-
-    def bfs(self, node):
-        self.queue = Queue()
-        self.add_state(node)
-
-        while self.state < len(self.state_entry) - 1:
-            self.state += 1
-            self.queue.put(self.state_entry[self.state])
-            self.visited.clear()
-            while not self.queue.empty():
-                self.visit(self.queue.get())
-
-        self.state_entry = [m[e] for m, e in zip(self.state_maps, self.state_entry)]
-
-    @property
-    def state_map(self):
-        return self.state_maps[self.state]
-
-    def add_state(self, node):
-        self.state_maps.append({})
-        self.state_entry.append(node)
-        return len(self.state_maps) - 1
-
-    def change_state(self, state=None):
-        if state is None:
-            self.state += 1
-            self.state_maps.append({})
-        else:
-            self.state = state
-
-    def schedule(self, node):
-        self.queue.put(node)
-
-    def copy(self, node):
-        if node not in self.state_map:
-            source = self.state_map.get(node.source, None)
-
-            cp_node = Node(node.value, source=source)
-            self.state_map[node] = cp_node
-            cp_node.prev = [self.state_map[p] for p in node.prev if p in self.state_map]
-        else:
-            cp_node = node
-
-        self.append(cp_node)
-
-        return cp_node
-
-    def append(self, node):
-        for n in node.prev:
-            n.next.append(node)
-
-        if len(self.state_entry) <= self.state:
-            self.state_entry.append(node)
-
-        return node
-
-    @property
-    def next_state(self):
-        return len(self.state_entry)
-
-    def set_state(self, state):
-        self.state = state
-
-    def visit(self, node):
-        self.visited.add(node)
-        for base_class in inspect.getmro(node.value.__class__):
-            if hasattr(self, base_class.__name__):
-                return getattr(self, base_class.__name__)(node)
-        else:
-            return self.generic_visit(node)
+        self.loops = loops
+        super().__init__()
 
     def LoopBlock(self, node):
-        nloop, nexit = node.next
-        nprev, nsink = node.prev
+        skip = self.enter(node)
+        if not skip:
+            self.scopes.append(node)
+            self.visit(node.next[0])
+            self.scopes.pop()
 
-        second_state = getattr(node.value, 'state', self.state) != self.state
-        second_loop = second_state or node in self.state_map
+        self.exit(node)
 
-        orig = None
-        if second_loop:
-            if not second_state:
-                orig = self.state_map[node]
+        return self.visit(node.next[0])
 
-            prev = [self.state_map[nsink]]
-        else:
-            prev = [self.state_map[nprev]]
+    # TODO: How to detect registers used uninitialized?
+    def enter_LoopBlock(self, node):
+        test = node.value.test
+        loop_block = node.value
+        node.value = ir.LoopBody(state_id=len(self.loops) + 1)
+        jump = Node(ir.Jump('state', len(self.loops) + 1))
 
-        cond = Node(ir.HDLBlock(in_cond=node.value.in_cond), prev=prev)
-        self.state_map[node] = cond
-        self.append(cond)
+        self.loops.append(node)
+        insert_node_before(node.sink, jump)
+        cond_wrap(jump, jump, test)
 
-        if not second_loop:
-            self.schedule(nexit)
-            self.schedule(nloop)
-            node.value.state = self.state
-            node.value.looped_state = self.add_state(nloop)
-        elif second_state:
-            stmt = ir.AssignValue(self.ctx.ref('_state'),
-                                  ir.ResExpr(node.value.looped_state),
-                                  exit_await=ir.res_false)
-            state_node = Node(stmt, prev=[cond])
+        sink_id = id(node.sink.value)
+        self.ctx.reaching[id(node.value)] = self.ctx.reaching.get(id(loop_block), None)
+        self.ctx.reaching[id(jump.value)] = self.ctx.reaching.get(sink_id, None)
+        self.ctx.reaching[id(jump.prev[0].value)] = self.ctx.reaching.get(sink_id, None)
 
-            self.append(state_node)
-            sink_node = Node(ir.HDLBlockSink(), source=cond, prev=[state_node, cond])
-            self.append(sink_node)
-            self.state_map[node.sink] = sink_node
-            self.schedule(nexit)
-        else:
-            stmt = ir.AssignValue(self.ctx.ref('_state'),
-                                  ir.ResExpr(node.value.looped_state),
-                                  exit_await=ir.res_false)
-            state_node = Node(stmt, prev=[cond])
+        node.sink.value = ir.BaseBlockSink()
 
-            self.append(state_node)
-            sink_node = Node(ir.HDLBlockSink(),
-                             source=cond,
-                             prev=[state_node, cond],
-                             next_=[orig.sink])
-            self.append(sink_node)
-            orig.sink.prev.append(sink_node)
+        breakpoint()
+        loop_exit = node.next[1]
+        loop_entry = node.prev[0]
 
-    def HDLBlockSink(self, node: ir.LoopBlockSink):
-        if not all(p in self.visited for p in node.prev):
-            return
+        node.prev = [loop_entry]
+        loop_entry.next = [node]
+        node.next = [node.next[0]]
 
-        self.copy(node)
-        for n in node.next:
-            self.schedule(n)
-
-    def generic_visit(self, node):
-        self.copy(node)
-        for n in node.next:
-            self.schedule(n)
+        node.sink.next = [loop_exit]
+        loop_exit.prev = [node.sink]
 
 
-class LoopBreaker(IrRewriter):
+class LoopBreakerPrev(IrRewriter):
     def __init__(self, loops, cpmap, ctx):
         self.loops = loops
         self.ctx = ctx
         super().__init__(cpmap)
 
+    # def Jump(self, node: ir.Jump):
+    #     # # breakpoint()
+    #     # if node.label == 'break':
+    #     #     node.where = self.loops
+
+    #     return node
+
     def LoopBlock(self, block: ir.LoopBlock):
-        body = ir.Branch(test=block.test_in)
-
-        for stmt in block.stmts:
-            add_to_list(body.stmts, self.visit(stmt))
-
-        cond_enter_blk = ir.HDLBlock(branches=[body])
+        loop = ir.LoopBody(state_id=len(self.loops) + 1)
+        # maybe_loop = ir.Branch(test=block.test_in, stmts=[loop])
+        # loop = ir.Branch(test=block.test_in)
+        # body = ir.LoopBody(state_id=len(self.loops) + 1, test=block.test_in)
 
         transition = ir.Branch(test=block.test_loop)
-        jump = ir.AssignValue(self.ctx.ref('_state'), ir.ResExpr(len(self.loops) + 1))
-        breakstmt = ir.Await(ir.res_false)
+        return_stmt = ir.Jump('state', len(self.loops) + 1)
         cond_exit_blk = ir.HDLBlock(branches=[transition])
+        # cond_enter_blk = ir.HDLBlock(branches=[maybe_loop])
+
+        self.loops.append(loop)
+
+        for stmt in block.stmts:
+            add_to_list(loop.stmts, self.visit(stmt))
+
+        transition.stmts.append(return_stmt)
+        loop.stmts.append(cond_exit_blk)
 
         # TODO: out -> in, not just copy
         self.cpmap[id(transition)] = block.stmts[-1]
-        self.cpmap[id(jump)] = block.stmts[-1]
-        self.cpmap[id(breakstmt)] = block.stmts[-1]
+        self.cpmap[id(return_stmt)] = block.stmts[-1]
         self.cpmap[id(cond_exit_blk)] = block.stmts[-1]
+        # self.cpmap[id(maybe_loop)] = block.stmts[-1]
 
-        transition.stmts.extend([jump, breakstmt])
-
-        self.loops.append(cond_enter_blk)
-
-        body.stmts.append(cond_exit_blk)
-
-        return cond_enter_blk
+        return loop
 
 
 class StateIsolator(CfgDfs):
@@ -295,9 +211,6 @@ class StateIsolator(CfgDfs):
         self.cpmap = {}
 
     def copy(self, node):
-        # if str(node.value) == "din.ready <= u1(1)\n":
-        #     breakpoint()
-
         source = self.node_map.get(node.source, None)
 
         cp_val = copy(node.value)
@@ -309,9 +222,6 @@ class StateIsolator(CfgDfs):
         cp_node.prev = [self.node_map[p] for p in node.prev if p in self.node_map]
 
         for n in cp_node.prev:
-            if (str(n.value) == "dout <= (u4)'(u3(4))\n") and (n.next):
-                breakpoint()
-
             n.next.append(cp_node)
 
         # TODO: find different way to do this, too coupled
@@ -368,21 +278,21 @@ class StateIsolator(CfgDfs):
             cp_prev.next.clear()
 
             test = self.exits[node]
-            exit_jump = Node(ir.AssignValue(self.ctx.ref('_state'), ir.ResExpr(self.state_num)))
-            break_stmt = Node(ir.Await(ir.res_false), prev=[exit_jump])
+            # exit_jump = Node(ir.AssignValue(self.ctx.ref('_state'), ir.ResExpr(self.state_num)))
+            # break_stmt = Node(ir.Await(ir.res_false), prev=[exit_jump])
+            return_stmt = Node(ir.Jump('state', self.state_num))
             self.state_num += 1
 
             if test == ir.res_true:
-                exit_jump.prev = [prev]
-                exit_jump = self.copy(exit_jump)
-                break_stmt = self.copy(break_stmt)
-                self.node_map[self.parent.sink.prev[0]] = break_stmt
+                return_stmt.prev = [prev]
+                return_stmt = self.copy(return_stmt)
+                self.node_map[self.parent.sink.prev[0]] = return_stmt
                 return True
 
             cond_blk = Node(ir.HDLBlock(), prev=[prev])
             if_branch = Node(ir.Branch(test=test), prev=[cond_blk])
-            exit_jump.prev = [if_branch]
-            if_sink = Node(ir.BranchSink(), source=if_branch, prev=[break_stmt])
+            return_stmt.prev = [if_branch]
+            if_sink = Node(ir.BranchSink(), source=if_branch, prev=[return_stmt])
 
             else_branch = Node(ir.Branch(), prev=[cond_blk])
             else_sink = Node(ir.BranchSink(), source=else_branch, prev=[else_branch])
@@ -391,8 +301,7 @@ class StateIsolator(CfgDfs):
             cond_blk = self.copy(cond_blk)
 
             if_branch = self.copy(if_branch)
-            exit_jump = self.copy(exit_jump)
-            break_stmt = self.copy(break_stmt)
+            return_stmt = self.copy(return_stmt)
             if_sink = self.copy(if_sink)
 
             else_branch = self.copy(else_branch)
@@ -436,17 +345,21 @@ def find_statement_node(cfg, stmt):
 
 
 def append_state_epilog(cfg, ctx):
-    sink = cfg.sink
+    # sink = cfg.sink
 
-    exit_jump = Node(
-        ir.AssignValue(ctx.ref('_state'), ir.ResExpr(0)),
-        prev=[sink.prev[0]],
-    )
-    break_stmt = Node(ir.Await(ir.res_false), prev=[exit_jump])
-    cp_sink = Node(ir.ModuleSink(), prev=[break_stmt], source=cfg)
-    sink.prev[0].next = [exit_jump]
-    exit_jump.next = [break_stmt]
-    break_stmt.next = [cp_sink]
+    # source = insert_node_after(cfg, Node(ir.BaseBlock()))
+    # insert_node_before(cfg.sink, Node(ir.BaseBlockSink, source=source))
+    insert_node_before(cfg.sink, Node(ir.Jump('state', 0)))
+
+    # exit_jump = Node(
+    #     ir.AssignValue(ctx.ref('_state'), ir.ResExpr(0)),
+    #     prev=[sink.prev[0]],
+    # )
+    # break_stmt = Node(ir.Await(ir.res_false), prev=[exit_jump])
+    # cp_sink = Node(ir.ModuleSink(), prev=[break_stmt], source=cfg)
+    # sink.prev[0].next = [exit_jump]
+    # exit_jump.next = [break_stmt]
+    # break_stmt.next = [cp_sink]
 
 
 def prepend_state_prolog(cfg, ctx, in_scope):
@@ -474,61 +387,70 @@ def print_cfg_ir(cfg):
     print(cfg.value)
 
 
-def schedule(block, ctx):
+def schedule(cfg, ctx):
     ctx.scope['_state'] = ir.Variable(
         '_state',
         val=ir.ResExpr(Uint[1](0)),
         reg=True,
     )
 
-    loops = []
-    cpmap = {}
-    block = LoopBreaker(loops, cpmap, ctx).visit(block)
+    draw_scheduled_cfg(cfg, simple=False)
 
-    cfg = cfgutil.CFG.build_cfg(block)
+    loops = []
+    LoopBreaker(ctx, loops).visit(cfg)
+
+    # cfg = cfgutil.CFG.build_cfg(block)
     # draw_cfg(cfg)
 
-    # draw_scheduled_cfg(cfg.entry, simple=False)
+    # draw_scheduled_cfg(cfg, simple=False)
 
-    state_cfg = [cfg.entry]
+    state_cfg = [cfg]
     for l in loops:
-        entry = find_statement_node(cfg.entry, l.branches[0].stmts[0])
-        state_cfg.append(isolate(ctx, entry))
+        state_cfg.append(isolate(ctx, l))
 
-    for k, v in cpmap.items():
-        ctx.reaching[k] = ctx.reaching.get(id(v), None)
+    # draw_scheduled_cfg(state_cfg[1], simple=False)
+
+    # for k, v in cpmap.items():
+    #     ctx.reaching[k] = ctx.reaching.get(id(v), None)
 
     state_in_scope = [{} for _ in range(len(state_cfg))]
     i = 0
     order = list(range(len(state_cfg)))
     while i < len(order):
         state_id = order[i]
-        # print(f'[{state_id}]: Scoping')
+        print(f'[{state_id}]: Scoping')
         new_states = {}
         # print_cfg_ir(state_cfg[state_id])
+        # breakpoint()
         VarScope(ctx, state_in_scope, state_id, new_states).visit(state_cfg[state_id])
         if new_states:
-            # print(f'[{state_id}]: Isolating')
+            print(f'[{state_id}]: Isolating')
             state_cfg[state_id] = isolate(ctx,
                                           state_cfg[state_id],
                                           exits=new_states,
                                           state_num=len(state_cfg))
 
+            # draw_scheduled_cfg(state_cfg[state_id], simple=False)
             # print_cfg_ir(state_cfg[state_id])
             for ns in new_states:
                 order.insert(i + 1, len(state_cfg))
-                # print(f'[{len(state_cfg)}]: Isolating')
+                print(f'[{len(state_cfg)}]: Isolating')
                 state_cfg.append(isolate(ctx, ns))
+                # draw_scheduled_cfg(state_cfg[-1], simple=False)
 
         i += 1
 
     for i, (s, in_scope) in enumerate(zip(state_cfg, state_in_scope)):
+        # print_cfg_ir(s)
         # draw_scheduled_cfg(s, simple=True)
+        # draw_scheduled_cfg(s, simple=False)
+        # breakpoint()
         append_state_epilog(s, ctx)
         prepend_state_prolog(s, ctx, in_scope)
-        ResolveBlocking().visit(s)
-        v = RebuildStateIR()
-        v.visit(s)
+        ResolveBlocking(ctx).visit(s)
+        # print_cfg_ir(s)
+        # JumpScoping(ctx).visit(s)
+        RebuildStateIR().visit(s)
 
     states = [s.value for s in state_cfg]
     state_num = len(states)
@@ -545,4 +467,5 @@ def schedule(block, ctx):
 
         modblock = ir.CombBlock(stmts=[stateblock])
 
+    print(modblock)
     return modblock

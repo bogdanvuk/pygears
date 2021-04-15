@@ -2,7 +2,20 @@ import pytest
 from pygears import gear
 from pygears.typing import Bool, Uint
 from pygears.sim import sim, cosim
-from pygears.lib import drv, shred, directed, delay_rng
+from pygears.lib import drv, shred, directed, delay_rng, verif
+
+
+@pytest.mark.parametrize('dout_delay', [0, 1])
+def test_2state(dout_delay):
+    @gear(hdl={'compile': True})
+    async def test() -> Bool:
+        yield False
+        yield True
+
+    verif(f=test(name='dut'), ref=test(), delays=[delay_rng(dout_delay, dout_delay)])
+
+    cosim('/dut', 'verilator')
+    sim(timeout=8)
 
 
 def test_cond_no_state(lang):
@@ -14,9 +27,7 @@ def test_cond_no_state(lang):
             else:
                 yield False
 
-    directed(drv(t=Bool, seq=[True, False, True, False]),
-             f=test,
-             ref=[True, False, True, False])
+    directed(drv(t=Bool, seq=[True, False, True, False]), f=test, ref=[True, False, True, False])
 
     cosim('/test', 'verilator', lang=lang)
     sim(timeout=4)
@@ -39,6 +50,7 @@ def test_cond_2state_asymetric(lang):
     cosim('/test', 'verilator', lang=lang)
     sim()
 
+# test_cond_2state_asymetric('sv')
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
@@ -62,6 +74,7 @@ def test_cond_2state_symetric(lang, din_delay, dout_delay):
     cosim('/test', 'verilator', lang=lang)
     sim()
 
+# test_cond_2state_symetric('sv', 2, 2)
 
 # @pytest.mark.parametrize('din_delay', [0, 1])
 # @pytest.mark.parametrize('dout_delay', [0, 1])
@@ -90,7 +103,6 @@ def test_cond_2state_symetric(lang, din_delay, dout_delay):
 #     cosim('/test', 'verilator', lang=lang)
 #     sim()
 
-
 # from pygears import config
 # config['debug/trace'] = ['*']
 # test_cond_hourglass('/tools/home/tmp/test', 1, 1)
@@ -107,9 +119,7 @@ def test_loop_state(lang):
                 yield i + 1
                 i += 1
 
-    directed(drv(t=Uint[4], seq=[4, 2]),
-             f=test,
-             ref=[0, 1, 1, 2, 2, 3, 3, 4, 0, 1, 1, 2])
+    directed(drv(t=Uint[4], seq=[4, 2]), f=test, ref=[0, 1, 1, 2, 2, 3, 3, 4, 0, 1, 1, 2])
 
     cosim('/test', 'verilator', lang=lang)
     sim()

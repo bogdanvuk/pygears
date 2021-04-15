@@ -56,6 +56,37 @@ def test_basic_loop(din_delay, dout_delay):
 
 # test_basic_loop(2, 2)
 
+
+@pytest.mark.parametrize('din_delay', [0, 1])
+@pytest.mark.parametrize('dout_delay', [0, 1])
+def test_basic_loop_break(din_delay, dout_delay):
+    @gear(hdl={'compile': True})
+    async def test(din: Bool) -> Uint[4]:
+        a = Uint[4](0)
+
+        c = True
+        while c:
+            async with din as c:
+                yield a
+                if a == 1:
+                    break
+
+                a += 1
+
+        yield 1
+
+    verif(drv(t=Bool, seq=[True, True, True, True, True]) | delay_rng(din_delay, din_delay),
+          f=test(name='dut'),
+          ref=test,
+          delays=[delay_rng(dout_delay, dout_delay)])
+
+    cosim('/dut', 'verilator')
+    sim()
+
+
+# test_basic_loop_break(2, 2)
+
+
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_state_in_scope(din_delay, dout_delay):
@@ -72,6 +103,7 @@ def test_state_in_scope(din_delay, dout_delay):
 
     cosim('/dut', 'verilator')
     sim()
+
 
 # test_state_in_scope(0, 0)
 
@@ -98,6 +130,7 @@ def test_cond_state(din_delay, dout_delay):
     cosim('/dut', 'verilator')
     sim()
 
+# test_cond_state(0, 0)
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
@@ -118,6 +151,7 @@ def test_din_state(din_delay, dout_delay):
     cosim('/dut', 'verilator')
     sim()
 
+# test_din_state(0, 0)
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
@@ -142,6 +176,7 @@ def test_double_loop_seq(din_delay, dout_delay):
     cosim('/dut', 'verilator')
     sim()
 
+# test_double_loop_seq(0, 1)
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
@@ -164,6 +199,7 @@ def test_loop_after_async_with(din_delay, dout_delay):
     cosim('/dut', 'verilator')
     sim()
 
+# test_loop_after_async_with(0, 0)
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
@@ -198,6 +234,9 @@ def test_complex(din_delay, dout_delay):
 
     cosim('/dut', 'verilator')
     sim()
+
+
+# test_complex(2, 2)
 
 
 @pytest.mark.parametrize('din_delay', [0, 1])
@@ -236,6 +275,7 @@ def test_complex1(din_delay, dout_delay):
     cosim('/dut', 'verilator')
     sim()
 
+# test_complex1(0, 0)
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
@@ -258,6 +298,7 @@ def test_optional_loop(din_delay, dout_delay):
     cosim('/dut', 'verilator')
     sim()
 
+# test_optional_loop(0, 0)
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])

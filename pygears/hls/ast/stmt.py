@@ -1,5 +1,5 @@
 import ast
-from . import Context, FuncContext, node_visitor, ir, visit_ast
+from . import Context, FuncContext, node_visitor, ir, visit_ast, GearContext
 from pygears.core.gear import InSig, OutSig
 from pygears.typing import is_type
 from .cast import resolve_cast_func
@@ -16,17 +16,27 @@ def extend_stmts(stmts, extension):
                     stmts.append(e)
 
 
+def output_port_shadow_check(name, ctx):
+    if (isinstance(ctx, GearContext) and name in ctx.intfs and ctx.intfs[name].dtype.direction):
+        raise SyntaxError(f'Variable "{name}" has the same name as the output'
+                          f'interface. This is currently not supported')
+
+
 def infer_targets(ctx, target, source):
     dtype = source.dtype
     if isinstance(target, ir.Name):
         ctx.alias_map[target.name] = source
         if target.name not in ctx.scope:
-            var = ir.Variable(target.name, dtype)
+            var = ir.Variable(target.name, dtype, reg=target.name in ctx.registers)
             ctx.scope[target.name] = var
             target.obj = var
+        else:
+            output_port_shadow_check(target.name, ctx)
 
     elif isinstance(target, ir.ConcatExpr):
-        if len(dtype) != len(target.operands):
+        # We can only make this check if the value is recognized PyGears type.
+        # If it is some random Python type, just hope for the best
+        if is_type(dtype) and len(dtype) != len(target.operands):
             raise SyntaxError(
                 f'Cannot unpack value of type "{dtype!r}" with {len(dtype)} component(s) into {len(target.operands)} variables: '
                 f'"{target}".')
@@ -61,6 +71,7 @@ def _(node, ctx: Context):
         raise SyntaxError(f'Variable annotation has to be a type, not "{annotation}"')
 
     if node.value is None:
+        output_port_shadow_check(targets.name, ctx)
         ctx.scope[targets.name] = ir.Variable(targets.name, annotation.val)
         return
 
@@ -108,6 +119,11 @@ def _(node, ctx: Context):
     test = visit_ast(node.test, ctx)
     msg = node.msg.s if node.msg else 'Assertion failed.'
     return ir.Assert(test, msg=msg)
+
+
+@node_visitor(ast.Break)
+def _(node, ctx: Context):
+    return ir.Jump('break')
 
 
 @node_visitor(ast.Return)

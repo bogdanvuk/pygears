@@ -6,7 +6,7 @@ from .ast.utils import get_function_ast
 from .ast.inline import removed_unused_vars
 from . import ir
 from .passes import (remove_dead_code, infer_exit_cond, infer_registers, schedule, infer_in_cond,
-                     handle_generators, resolve_gear_calls, find_called_funcs)
+                     handle_generators, resolve_gear_calls, find_called_funcs, loop_unfold, detect_loops)
 
 from .passes.schedule import RebuildStateIR
 
@@ -62,27 +62,26 @@ def process(body_ast, ctx):
 def transform(modblock, ctx: GearContext):
     hls_debug(modblock, 'Initial')
 
+    modblock, cfg, reaching = cfgutil.forward(modblock, cfgutil.ReachingDefinitions())
+    ctx.reaching = {id(n.value): v for n, v in reaching.items()}
+
+    detect_loops(modblock, ctx)
+
+    modblock = infer_registers(modblock, ctx)
+
     # modblock = resolve_gear_calls(modblock, ctx)
     # hls_debug(modblock, 'Resolve Gear Calls')
 
     modblock = handle_generators(modblock, ctx)
     hls_debug(modblock, 'Handle Generators')
 
-    modblock, cfg, reaching = cfgutil.forward(modblock, cfgutil.ReachingDefinitions())
+    # loop_unfold(cfg, ctx)
+    modblock = loop_unfold(modblock, ctx)
 
-    print(modblock)
+    modblock, cfg, reaching = cfgutil.forward(modblock, cfgutil.ReachingDefinitions())
     ctx.reaching = {id(n.value): v for n, v in reaching.items()}
 
-    modblock, ctx.inferred = infer_registers(modblock, ctx)
-    hls_debug(modblock, 'Infer registers')
-
-    modblock = schedule(modblock, ctx)
-
-    # modblock = inline(modblock, ctx)
-    # hls_debug(modblock, 'Inline values')
-
-    # modblock = infer_exit_cond(modblock, ctx)
-    # hls_debug(modblock, 'Infer Exit Conditions')
+    modblock = schedule(cfg, ctx)
 
     modblock = remove_dead_code(modblock, ctx)
     hls_debug(modblock, 'Remove Dead Code')
@@ -91,6 +90,7 @@ def transform(modblock, ctx: GearContext):
 
     compile_funcs(modblock, ctx)
 
+    # print(modblock)
     return modblock
 
 
@@ -129,6 +129,7 @@ def transform_func(funcblock, ctx: FuncContext):
 
     cfg = cfgutil.CFG.build_cfg(funcblock)
     VarScope(ctx).visit(cfg.entry)
+
     v = RebuildStateIR()
     v.visit(cfg.entry)
     funcblock = cfg.entry.value

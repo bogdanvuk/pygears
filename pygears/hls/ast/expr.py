@@ -6,6 +6,7 @@ from functools import partial
 from . import Context, HLSSyntaxError, node_visitor, ir, visit_ast, visit_block
 from .arith import resolve_arith_func
 from .call import resolve_func, const_func_args
+from .stmt import output_port_shadow_check
 from pygears.typing import cast, Integer, typeof
 
 
@@ -35,7 +36,7 @@ def parse_ifexp(node, ctx: Context):
 def _(node: ast.Name, ctx: Context):
     if isinstance(node.ctx, ast.Load):
         if (node.id in ctx.alias_map and isinstance(ctx.alias_map[node.id], ir.ResExpr)
-                and node.id not in ctx.looped[ctx.expr_closure] and node.id not in ctx.registers):
+                and node.id not in ctx.registers):
             return ctx.alias_map[node.id]
 
         if node.id not in ctx.scope:
@@ -318,6 +319,8 @@ def _(node, ctx: Context):
 
     iterator = visit_ast(node.generators[0].iter, ctx)
     target = visit_ast(node.generators[0].target, ctx)
+
+    output_port_shadow_check(target.name, ctx)
 
     outter_var = None
     outter_namespace = None

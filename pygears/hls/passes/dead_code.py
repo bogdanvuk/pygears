@@ -12,6 +12,7 @@ class FuncCallExprFinder(IrExprVisitor):
 
 class FuncCallFinder(IrVisitor):
     def __init__(self):
+        super().__init__()
         self.called_funcs = set()
         self.expr_visit = FuncCallExprFinder(self.called_funcs)
 

@@ -121,6 +121,10 @@ class HDLVisitor:
 
         return block
 
+    def HDLBlock(self, block: ir.HDLBlock):
+        for b in block.branches:
+            self.visit(b)
+
     # def ExprStatement(self, stmt: ir.ExprStatement):
     #     self.visit(stmt.expr)
     #     return stmt
@@ -134,7 +138,43 @@ class HDLVisitor:
         return node
 
 
+class HDLScopedVisitor(HDLVisitor):
+    def __init__(self, ctx):
+        super().__init__(ctx)
+        self.scopes = []
+
+    @property
+    def parent(self):
+        return self.scopes[-1]
+
+    def BaseBlock(self, block: ir.BaseBlock):
+        self.scopes.append(block)
+        super().BaseBlock(block)
+        self.scopes.append(block)
+
+    def HDLBlock(self, block: ir.HDLBlock):
+        self.scopes.append(block)
+        super().BaseBlock(block)
+        self.scopes.append(block)
+
+    def generic_visit(self, node):
+        return node
+
+
 class IrVisitor:
+    def __init__(self, cpmap=None):
+        self.scopes = []
+
+    @property
+    def parent(self):
+        return self.scopes[-1]
+
+    def enter_scope(self, block):
+        self.scopes.append(block)
+
+    def exit_scope(self):
+        self.scopes.pop()
+
     def visit(self, node):
         for base_class in inspect.getmro(node.__class__):
             if hasattr(self, base_class.__name__):
@@ -144,16 +184,24 @@ class IrVisitor:
             self.generic_visit(node)
 
     def BaseBlock(self, block: ir.BaseBlock):
+        self.enter_scope(block)
         for stmt in block.stmts:
             self.visit(stmt)
+        self.exit_scope()
 
     def Branch(self, block: ir.Branch):
         self.visit(block.test)
         self.BaseBlock(block)
 
+    def LoopBlock(self, block: ir.LoopBlock):
+        self.BaseBlock(block)
+        self.visit(block.test)
+
     def HDLBlock(self, block: ir.HDLBlock):
+        self.enter_scope(block)
         for b in block.branches:
             self.visit(b)
+        self.exit_scope()
 
     def FuncReturn(self, stmt: ir.FuncReturn):
         self.visit(stmt.expr)
@@ -186,6 +234,7 @@ def cp_mapper(f):
 class IrRewriter:
     def __init__(self, cpmap=None):
         self.cpmap = cpmap
+        self.scopes = []
 
     def visit(self, node):
         for base_class in inspect.getmro(node.__class__):
@@ -194,35 +243,70 @@ class IrRewriter:
         else:
             return self.generic_visit(node)
 
-    @cp_mapper
+    def enter(self, node):
+        for base_class in inspect.getmro(node.__class__):
+            method_name = f'enter_{base_class.__name__}'
+            if hasattr(self, method_name):
+                return getattr(self, method_name)(node)
+
+    def exit(self, node):
+        for base_class in inspect.getmro(node.__class__):
+            method_name = f'exit_{base_class.__name__}'
+            if hasattr(self, method_name):
+                return getattr(self, method_name)(node)
+
+    @property
+    def parent(self):
+        return self.scopes[-1]
+
+    def enter_scope(self, block):
+        self.scopes.append(block)
+
+    def exit_scope(self):
+        self.scopes.pop()
+
+    # @cp_mapper
     def BaseBlock(self, block: ir.BaseBlock):
         rw_block = type(block)()
+        self.enter(rw_block)
+        self.enter_scope(rw_block)
         for stmt in block.stmts:
             add_to_list(rw_block.stmts, self.visit(stmt))
 
+        self.exit_scope()
+        self.exit(rw_block)
         return rw_block
 
-    @cp_mapper
+    # @cp_mapper
     def Branch(self, block: ir.Branch):
-        rw_block = type(block)(test=self.visit(block.test))
+        rw_block = type(block)()
+        rw_block.test = self.visit(block.test)
+        self.enter(rw_block)
+        self.enter_scope(rw_block)
 
         for stmt in block.stmts:
             add_to_list(rw_block.stmts, self.visit(stmt))
 
+        self.exit_scope()
+        self.exit(rw_block)
         return rw_block
 
-    @cp_mapper
+    # @cp_mapper
     def LoopBlock(self, block: ir.LoopBlock):
-        rw_block = type(block)(test_in=self.visit(block.test_in))
+        rw_block = type(block)()
+        self.enter(rw_block)
+        self.enter_scope(rw_block)
 
         for stmt in block.stmts:
             add_to_list(rw_block.stmts, self.visit(stmt))
 
-        rw_block.test_loop = self.visit(block.test_loop)
+        self.exit_scope()
 
+        rw_block.test = self.visit(block.test)
+        self.exit(rw_block)
         return rw_block
 
-    @cp_mapper
+    # @cp_mapper
     def FuncBlock(self, block: ir.FuncBlock):
         # args = {n: self.visit(val) for n, val in block.args.items()}
 
@@ -231,28 +315,41 @@ class IrRewriter:
                                ret_dtype=block.ret_dtype,
                                funcs=block.funcs)
 
+        self.enter(rw_block)
+        self.enter_scope(rw_block)
         for stmt in block.stmts:
             add_to_list(rw_block.stmts, self.visit(stmt))
 
+        self.exit_scope()
+        self.exit(rw_block)
         return rw_block
 
-    @cp_mapper
+    # @cp_mapper
     def HDLBlock(self, block: ir.HDLBlock):
-        return type(block)(branches=[self.visit(b) for b in block.branches])
+        rw_block = type(block)()
+        self.enter(rw_block)
+        self.enter_scope(rw_block)
+        branches = [self.visit(b) for b in block.branches]
 
-    @cp_mapper
+        rw_block.branches = branches
+
+        self.exit_scope()
+        self.exit(rw_block)
+        return rw_block
+
+    # @cp_mapper
     def ExprStatement(self, stmt: ir.ExprStatement):
         return type(stmt)(self.visit(stmt.expr))
 
-    @cp_mapper
+    # @cp_mapper
     def FuncReturn(self, stmt: ir.FuncReturn):
         return type(stmt)(stmt.func, self.visit(stmt.expr))
 
-    @cp_mapper
+    # @cp_mapper
     def AssignValue(self, stmt: ir.AssignValue):
         return type(stmt)(self.visit(stmt.target), self.visit(stmt.val))
 
-    @cp_mapper
+    # @cp_mapper
     def AssertValue(self, stmt: ir.AssertValue):
         return type(stmt)(self.visit(stmt.val))
 

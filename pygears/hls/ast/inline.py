@@ -25,6 +25,7 @@ class UsedVarVisitor(ir_utils.IrExprVisitor):
 
 class UsedVarStmtVisitor(ir_utils.IrVisitor):
     def __init__(self):
+        super().__init__()
         self.used = set()
 
     def Expr(self, node):
@@ -39,6 +40,10 @@ class UnusedVarCleanup(ir_utils.IrRewriter):
 
     def AssignValue(self, node):
         if not isinstance(node.target, ir.Name):
+            return node
+
+        # TODO: Are there situations where we can remove _state
+        if node.target.name == '_state':
             return node
 
         if node.target.name in self.used or (isinstance(self.ctx, GearContext)

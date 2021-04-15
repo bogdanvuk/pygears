@@ -6,11 +6,21 @@ from ..cfg_ast import reaching
 @node_visitor(ast.AsyncFunctionDef)
 def parse_async_func(node, ctx: Context):
 
-    body_ast, cfg, r, looped, registers = reaching(node)
+    body_ast, cfg, r, registers = reaching(node)
 
     ctx.reaching = r
     ctx.registers = registers
-    ctx.looped = looped
+
+    # for reg in registers:
+    #     ctx.scope[reg]
+    #     ctx.scope[reg].reg = True
+    #     ctx.scope[reg].any_init = True
+
+    # ResolveRegInits(ctx).visit(modblock)
+
+    ctx.reset_states = {}
+    for reg in registers:
+        ctx.reset_states[reg] = []
 
     return visit_block(ir.Module(), node.body, ctx)
 
@@ -25,10 +35,9 @@ def _(node, ctx: FuncContext):
                          name=ctx.funcref.name,
                          ret_dtype=ctx.ret_dtype)
 
-    body_ast, cfg, r, looped, registers = reaching(node)
+    body_ast, cfg, r, registers = reaching(node)
     ctx.reaching = r
     ctx.registers = registers
-    ctx.looped = looped
 
     ret = visit_block(block, node.body, ctx)
 

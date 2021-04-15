@@ -216,13 +216,16 @@ class CFG(HDLVisitor):
 
         return node
 
+    def Branch(self, block: ir.Branch):
+        node = self.BaseBlock(block)
+        node.sink.value = ir.BranchSink()
+
     def Statement(self, stmt: ir.Statement):
-        expr = Node(stmt)
-        self.set_head(expr)
+        node = Node(stmt)
+        self.set_head(node)
+        return node
 
     def LoopBlock(self, block: ir.LoopBlock):
-        node = Node(block)
-
         # Start a new level of nesting
         self.break_.append([])
         self.continue_.append([])
@@ -242,15 +245,7 @@ class CFG(HDLVisitor):
 
         for b in block.branches:
             self.set_head(node)
-            bnode = Node(b)
-            self.set_head(bnode)
-
-            for stmt in b.stmts:
-                self.visit(stmt)
-
-            sink = Node(ir.BranchSink(), source=bnode)
-            self.set_head(sink)
-
+            self.visit(b)
             branch_exits.extend(self.head[:])
             self.head[:] = []
 
@@ -267,75 +262,6 @@ class CFG(HDLVisitor):
     def generic_visit(self, node):
         breakpoint()
         raise ValueError('unknown control flow')
-
-    # def visit_AsyncWith(self, node):
-    #     # The current head will hold the conditional
-    #     test = Node(node)
-    #     self.set_head(test)
-    #     # Handle the body
-    #     self.visit_statements(node.body)
-
-    # def visit_If(self, node):
-    #     # The current head will hold the conditional
-    #     test = Node(node.test)
-    #     self.set_head(test)
-    #     # Handle the body
-    #     self.visit_statements(node.body)
-    #     body_exit = self.head[:]
-    #     self.head[:] = []
-    #     self.head.append(test)
-    #     # Handle the orelse
-    #     self.visit_statements(node.orelse)
-    #     self.head.extend(body_exit)
-
-    # def visit_While(self, node):
-    #     test = Node(node.test)
-    #     self.set_head(test)
-    #     # Start a new level of nesting
-    #     self.break_.append([])
-    #     self.continue_.append([])
-    #     # Handle the body
-    #     self.visit_statements(node.body)
-    #     self.head.extend(self.continue_.pop())
-    #     self.set_head(test)
-    #     # Handle the orelse
-    #     self.visit_statements(node.orelse)
-    #     # The break statements and the test go to the next node
-    #     self.head.extend(self.break_.pop())
-
-    # def visit_AsyncFor(self, node):
-    #     self.visit_For(node)
-
-    # def visit_For(self, node):
-    #     iter_ = Node(node)
-    #     self.set_head(iter_)
-    #     self.break_.append([])
-    #     self.continue_.append([])
-    #     self.visit_statements(node.body)
-    #     self.head.extend(self.continue_.pop())
-    #     self.set_head(iter_)
-    #     self.head.extend(self.break_.pop())
-
-    # def visit_Break(self, node):
-    #     self.break_[-1].extend(self.head)
-    #     self.head[:] = []
-
-    # def visit_Continue(self, node):
-    #     self.continue_[-1].extend(self.head)
-    #     self.head[:] = []
-
-    # def visit_Try(self, node):
-    #     self.visit_statements(node.body)
-    #     body = self.head
-    #     handlers = []
-    #     for handler in node.handlers:
-    #         self.head = body[:]
-    #         self.visit_statements(handler.body)
-    #         handlers.extend(self.head)
-    #     self.head = body
-    #     self.visit_statements(node.orelse)
-    #     self.head = handlers + self.head
-    #     self.visit_statements(node.finalbody)
 
 
 class Forward(object):
@@ -547,6 +473,20 @@ class CfgDfs:
     @property
     def parent(self):
         return self.scopes[-1]
+
+    def LoopBlock(self, node):
+        skip = self.enter(node)
+        if not skip:
+            self.scopes.append(node)
+            self.visit(node.next[0])
+            self.scopes.pop()
+
+        self.exit(node)
+
+        return self.visit(node.next[1])
+
+    def LoopBlockSink(self, node):
+        return
 
     def BaseBlock(self, node):
         skip = self.enter(node)

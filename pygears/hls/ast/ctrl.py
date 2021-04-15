@@ -47,15 +47,20 @@ def _(node: ast.While, ctx: Context):
     if test == ir.res_false:
         return None
 
-    ir_node = ir.LoopBlock(test_in=test, stmts=[])
-    block = visit_block(ir_node, node.body, ctx)
+    ir_node = ir.HDLBlock()
+
+    ir_node = ir.LoopBlock()
+    loop = visit_block(ir_node, node.body, ctx)
 
     ctx.closures.append(ir_node)
-    ir_node.test_loop = visit_ast(node.test, ctx)
+    ir_node.test = visit_ast(node.test, ctx)
     ctx.closures.pop()
 
-    merge_cond_alias_map(block, ctx)
-    return block
+    merge_cond_alias_map(loop, ctx)
+
+    maybe_loop = ir.HDLBlock([ir.Branch(test=test, stmts=[loop])])
+
+    return maybe_loop
 
 
 def intf_loop(node, intfs, targets, ctx: Context, enumerated):
@@ -96,7 +101,7 @@ def _(node: ast.For, ctx: Context):
                          getattr(out_intf_ref, 'enumerated', False))
 
     block = ir.LoopBlock(stmts=[ir.AssignValue(targets, ir.GenNext(ctx.ref(gen_name)))],
-                         test_loop=ir.GenDone(gen_name))
+                         test=ir.GenDone(gen_name))
 
     visit_block(block, node.body, ctx)
 

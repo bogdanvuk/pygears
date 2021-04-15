@@ -223,7 +223,6 @@ class CFG(gast.NodeVisitor):
 
     visit_With = visit_AsyncWith
 
-
     def Loop(self, body, orelse, test):
         test = Node(test)
         self.set_head(test)
@@ -324,13 +323,11 @@ class Forward(object):
         self.gen_label = label + '_gen'
         self.kill_label = label + '_kill'
         self.reaching = {}
-        self.looped = {}
         self.registers = set()
 
     def visit(self, node):
         if node not in self.reaching:
             self.reaching[node] = {}
-            self.looped[node] = set()
 
         reaching = self.reaching[node]
 
@@ -357,27 +354,7 @@ class Forward(object):
             reaching['kill'] = kill
             reaching['out'] = (incoming - kill) | gen
 
-            # if isinstance(node.value, gast.Name) and node.value.id == 'c':
-            #     breakpoint()
-
-            # if isinstance(node.value, gast.AugAssign):
-            #     breakpoint()
-
             if reaching['in'] != in_before:
-                # if in_before is not None:
-                #     cnt_prev = Counter(n for n, _ in in_before)
-                #     cnt_cur = Counter(n for n, _ in reaching['in'])
-                #     names = [v[0] for v in gen]
-                #     for n in cnt_cur:
-                #         if cnt_cur[n] == cnt_prev[n]:
-                #             continue
-
-                #         # if n in names:
-                #         #     breakpoint()
-                #         #     self.registers.add(n)
-
-                #         self.looped[node].add(n)
-
                 for succ in node.next:
                     self.visit(succ)
         else:
@@ -388,20 +365,32 @@ class Forward(object):
             self.exit = functools.reduce(self.op, preds[1:], preds[0])
 
 
+def is_blocking_loop(origin):
+    """Given a CFG with outgoing links, create incoming links."""
+    seen = set()
+    to_see = origin.next[:]
+    while to_see:
+        node = to_see.pop()
+
+        if isinstance(node.value, (gast.Yield, gast.AsyncWith, gast.AsyncFor, gast.Await)):
+            return True
+
+        # If we looped all the way back to the origin, we didn't find a
+        # blocking statement
+        if node is origin:
+            return False
+
+        seen.add(node)
+        for succ in node.next:
+            if succ not in seen:
+                to_see.append(succ)
+
+
 class InferRegisters:
     def __init__(self, reaching):
         self.reaching = reaching
         self.visited = set()
         self.registers = set()
-
-    # def bfs(self, node):
-    #     self.queue = Queue()
-    #     self.queue.put(node)
-
-    #     while not self.queue.empty():
-    #         n = self.queue.get()
-    #         if n not in self.visited:
-    #             self.visit(n)
 
     def visit(self, node):
         if node in self.visited:
@@ -435,11 +424,8 @@ class InferRegisters:
 
         variables = [succ.id for succ in gast.walk(node) if isinstance(succ, gast.Name)]
 
-        for name, node in reaching['in']:
-            if name not in variables:
-                continue
-
-            if node in self.visited:
+        for name, n in reaching['in']:
+            if (n in self.visited) or (name not in variables) or (name in self.registers):
                 continue
 
             self.registers.add(name)
@@ -512,10 +498,10 @@ def forward(node, analysis):
 
     v = InferRegisters(analysis.reaching)
     v.visit(cfg_obj.entry)
-    looped = {n.value: s for n, s in analysis.looped.items()}
+
     print(f'Registers: {v.registers}')
 
-    return node, cfg_obj.entry, analysis.reaching, looped, v.registers
+    return node, cfg_obj.entry, analysis.reaching, v.registers
 
 
 def reaching(node):

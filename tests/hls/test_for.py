@@ -83,6 +83,9 @@ def test_unfold_array(lang):
     sim()
 
 
+# test_unfold_array('sv')
+
+
 def test_unfold_uint(lang):
     @gear(hdl={'compile': True})
     async def test(din: Bool, *, w_dout) -> Uint['w_dout']:

@@ -103,9 +103,8 @@ class Context:
         self.submodules: typing.List[Submodule] = []
         self.reaching: typing.Dict = {}
         self.ast_stmt_map: typing.Dict = {}
-        self.looped = {}
         self.reaching = {}
-        self.registers = set()
+        self.registers = {}
 
     def ref(self, name, ctx='load'):
         if name in self.scope:
@@ -151,6 +150,10 @@ class Context:
             name: obj
             for name, obj in self.scope.items() if isinstance(obj, ir.Variable) and obj.val is None
         }
+
+    @property
+    def regs(self):
+        return {}
 
 
 class IntfProxy(Intf):
@@ -333,20 +336,12 @@ def node_visitor(ast_type):
     def wrapper(f):
         def func_wrapper(node, ctx):
             if reg['trace/level'] == 0:
-                if node in ctx.looped:
-                    ctx.expr_closure = node
-                res = f(node, ctx)
-                ctx.expr_closure = None
-                return res
+                return f(node, ctx)
 
             err = None
 
             try:
-                if node in ctx.looped:
-                    ctx.expr_closure = node
-                res = f(node, ctx)
-                ctx.expr_closure = None
-                return res
+                return f(node, ctx)
             except Exception as e:
                 if isinstance(e, HLSSyntaxError) and e.lineno is not None:
                     _, exc_value, tb = sys.exc_info()

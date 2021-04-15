@@ -430,7 +430,19 @@ class UnaryOpExpr(Expr):
             if operand.operator == opc.NotEq:
                 return BinOpExpr(operand.operands, opc.Eq)
 
-        if operator == opc.Not and isinstance(operand, UnaryOpExpr) and operand.operator == opc.Not:
+            # De-Morgan laws
+            if operand.operator in [opc.And, opc.Or]:
+                operands = [UnaryOpExpr(op, opc.Not) for op in operand.operands]
+                return BinOpExpr(operands, opc.Or if operand.operator == opc.And else opc.And)
+
+        elif operator == opc.Not and isinstance(operand, ConditionalExpr):
+            op1, op2 = operand.operands
+            if typeof(op1.dtype, (Uint[1], Bool)) and typeof(op2.dtype, (Uint[1], Bool)):
+                return ConditionalExpr([UnaryOpExpr(op1, opc.Not),
+                                        UnaryOpExpr(op2, opc.Not)], operand.cond)
+
+        elif operator == opc.Not and isinstance(operand,
+                                                UnaryOpExpr) and operand.operator == opc.Not:
             return operand.operand
 
         inst = super().__new__(cls)
@@ -617,6 +629,32 @@ def elimination(op1, op2, operator):
     return None
 
 
+# def elimination_same(op1, op2, operator):
+#     '''
+#     x && (x && y) => x && y
+#     x || (x || y) => x || y
+#     x && ((~x) && y) => y
+#     x || ((~x) || y) => True
+#     '''
+#     if not isinstance(op2, BinOpExpr) or operator != op2.operator:
+#         return None
+
+#     if op1.operator not in [opc.And, opc.Or] or op2.operator not in [opc.And, opc.Or]:
+#         return None
+
+#     if op1.operator != op2.operator or op1.operator == operator:
+#         return None
+
+#     op2_1, op2_2 = op2.operands
+#     for op1_1, op1_2 in [op1.operands, op1.operands[::-1]]:
+#         if op1_1 == op2_1 and op1_2 == UnaryOpExpr(op2_2, opc.Not):
+#             return op1_1
+#         elif op1_1 == op2_2 and op1_2 == UnaryOpExpr(op2_1, opc.Not):
+#             return op1_1
+
+#     return None
+
+
 def booleq(op1, op2, operator):
     if operator not in [opc.Eq, opc.NotEq]:
         return
@@ -657,12 +695,16 @@ bin_op_transforms = [
 ]
 
 
+# TODO: Should be allow BinOpExpr to have arbitrary number of boolean
+# variables. This would allow for some simplfifications, ex. : (~x && y) && (x && ~y)
 class BinOpExpr(Expr):
     def __repr__(self):
         try:
-            return f'{type(self).__name__}(operands={repr(self.operands)}, operator={self.operator.__name__})'
+            return (f'{type(self).__name__}(operands={repr(self.operands)}, '
+                    f'operator={self.operator.__name__})')
         except:
-            return f'{type(self).__name__}(operands={repr(self.operands)}, operator={self.operator})'
+            return (f'{type(self).__name__}(operands={repr(self.operands)}, '
+                    f'operator={self.operator})')
 
     def __str__(self):
         return f'({self.operands[0]} {OPMAP[self.operator]} {self.operands[1]})'
@@ -796,6 +838,7 @@ class SubscriptExpr(Expr):
         if isinstance(self.index, ResExpr):
             return self.val.dtype[self.index.val]
 
+        # TODO: When is this usefull?
         return self.val.dtype[0]
 
 
@@ -854,6 +897,9 @@ class ConditionalExpr(Expr):
 
         # TODO: Bool should be equivalent to Uint[1]
         if typeof(op1.dtype, (Uint[1], Bool)) and typeof(op2.dtype, (Uint[1], Bool)):
+            if cond == op2:
+                return BinOpExpr((cond, op1), opc.And)
+
             const_op1 = get_contextpr(op1)
             if const_op1 is not None:
                 if const_op1:
@@ -871,9 +917,6 @@ class ConditionalExpr(Expr):
         inst = super().__new__(cls)
         inst.operands = operands
         inst.cond = cond
-
-        if str(inst) == '(din.data ? u1(0) : u1(1))':
-            breakpoint()
 
         return inst
 
@@ -991,11 +1034,31 @@ class Await(Statement):
 
 
 @attr.s(auto_attribs=True, eq=False)
+class Jump(Statement):
+    label: str
+    where: typing.Any = None
+
+    def __str__(self):
+        if self.where is None:
+            return f'->> {str(self.label)}\n'
+        else:
+            return f'->> {self.label} {self.where}\n'
+
+
+@attr.s(auto_attribs=True, eq=False)
 class ExprStatement(Statement):
     expr: Expr
 
     def __str__(self):
         return f'{self.expr}\n'
+
+
+@attr.s(auto_attribs=True, eq=False)
+class RegReset(Statement):
+    target: Expr
+
+    def __str__(self):
+        return f'reset {self.target}\n'
 
 
 @attr.s(auto_attribs=True, eq=False)
@@ -1092,6 +1155,11 @@ class Branch(BaseBlock):
 
 
 @attr.s(auto_attribs=True, eq=False)
+class LoopBody(BaseBlock):
+    state_id: int = None
+
+
+@attr.s(auto_attribs=True, eq=False)
 class HDLBlock(Statement):
     branches: typing.List[Branch] = attr.Factory(list)
 
@@ -1128,11 +1196,11 @@ class HDLBlock(Statement):
 
 @attr.s(auto_attribs=True, eq=False)
 class LoopBlock(BaseBlock):
-    test_in: Expr = res_true
-    test_loop: Expr = res_true
+    test: Expr = res_true
+    blocking: Expr = False
 
     def __str__(self):
-        return f'do if ({self.test_in})' + super().__str__() + f'while ({self.test_loop})\n'
+        return f'do ' + super().__str__() + f'while ({self.test})\n'
 
 
 @attr.s(auto_attribs=True, eq=False)

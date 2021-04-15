@@ -47,6 +47,9 @@ def test_queue_directed(sim_cls, din_delay, dout_delay, cfg_delay):
     sim()
 
 
+from pygears.sim.modules import SimVerilated
+test_queue_directed(SimVerilated, 0, 0, 0)
+
 @pytest.mark.parametrize('din_delay', [0, 5])
 @pytest.mark.parametrize('dout_delay', [0, 5])
 @pytest.mark.parametrize('cfg_delay', [0, 5])
