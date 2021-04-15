@@ -12,7 +12,6 @@ def test_lvl1(cosim_cls):
 
     sim()
 
-
 def test_lvl2(cosim_cls):
     directed(drv(t=Queue[Uint[4], 2], seq=[[[0, 1], [2, 3]]]),
              f=sot_queue(sim_cls=cosim_cls),

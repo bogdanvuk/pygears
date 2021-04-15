@@ -355,8 +355,8 @@ class LoopUnfolder(Inline):
 
 
 def match_scopes(spec):
-    for target_scope in spec['target_scope']:
-        for source_scope in spec['source_scope']:
+    for target_scope in reversed(spec['target_scope']):
+        for source_scope in reversed(spec['source_scope']):
             if target_scope is source_scope:
                 return target_scope
     else:

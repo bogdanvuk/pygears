@@ -64,6 +64,10 @@ class SVExpressionVisitor:
         self.separator = '.'
         self.expr = svexpr
 
+        # TODO: Think of a better way of communicating parent context
+        # Used for SubscriptExpr which can have 'store' context, while its value can be 'load'
+        self.ctx = None
+
         if aux_funcs is None:
             aux_funcs = {}
 
@@ -127,7 +131,7 @@ class SVExpressionVisitor:
             name = f'pg_{name}'
 
         if isinstance(node.obj, ir.Variable) and node.obj.reg:
-            if node.ctx in ['next', 'store']:
+            if self.ctx in ['next', 'store'] or node.ctx in ['next', 'store']:
                 return f'{name}_next'
 
         return name
@@ -262,7 +266,10 @@ class SVExpressionVisitor:
         return res
 
     def visit_SubscriptExpr(self, node):
+        prev_ctx = self.ctx
+        self.ctx = node.ctx
         val = self.visit(node.val)
+        self.ctx = prev_ctx
 
         if val is None:
             return None

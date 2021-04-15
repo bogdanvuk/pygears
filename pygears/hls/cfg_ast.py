@@ -422,7 +422,7 @@ class InferRegisters:
         if all(d[1] in self.visited for d in reaching.get('in', [])):
             return
 
-        variables = [succ.id for succ in gast.walk(node) if isinstance(succ, gast.Name)]
+        variables = [succ.id for succ in gast.walk(node) if isinstance(succ, gast.Name) and isinstance(succ.ctx, gast.Load)]
 
         for name, n in reaching['in']:
             if (n in self.visited) or (name not in variables) or (name in self.registers):
@@ -440,11 +440,10 @@ class InferRegisters:
         self.expr(node.value, reaching)
 
     def AugAssign(self, node: gast.AugAssign, reaching):
-        self.expr(node.target, reaching)
-        self.expr(node.value, reaching)
+        self.expr(node, reaching)
 
     def Assign(self, node: gast.Assign, reaching):
-        self.expr(node.value, reaching)
+        self.expr(node, reaching)
 
     AnnAssign = Assign
 

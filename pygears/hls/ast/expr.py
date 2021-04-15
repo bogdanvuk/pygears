@@ -90,10 +90,8 @@ def _(node, ctx: Context):
 
 @node_visitor(ast.Subscript)
 def _(node, ctx: Context):
-    if isinstance(node.value, ast.Name):
-        node.value.ctx = node.ctx
-
-    return ir.SubscriptExpr(visit_ast(node.value, ctx), visit_ast(node.slice, ctx))
+    expr_ctx = 'load' if isinstance(node.ctx, ast.Load) else 'store'
+    return ir.SubscriptExpr(visit_ast(node.value, ctx), visit_ast(node.slice, ctx), expr_ctx)
 
 
 METHOD_OP_MAP = {

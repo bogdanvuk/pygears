@@ -142,7 +142,6 @@ class LoopBreaker(CfgDfs):
 
         node.sink.value = ir.BaseBlockSink()
 
-        breakpoint()
         loop_exit = node.next[1]
         loop_entry = node.prev[0]
 
@@ -152,47 +151,6 @@ class LoopBreaker(CfgDfs):
 
         node.sink.next = [loop_exit]
         loop_exit.prev = [node.sink]
-
-
-class LoopBreakerPrev(IrRewriter):
-    def __init__(self, loops, cpmap, ctx):
-        self.loops = loops
-        self.ctx = ctx
-        super().__init__(cpmap)
-
-    # def Jump(self, node: ir.Jump):
-    #     # # breakpoint()
-    #     # if node.label == 'break':
-    #     #     node.where = self.loops
-
-    #     return node
-
-    def LoopBlock(self, block: ir.LoopBlock):
-        loop = ir.LoopBody(state_id=len(self.loops) + 1)
-        # maybe_loop = ir.Branch(test=block.test_in, stmts=[loop])
-        # loop = ir.Branch(test=block.test_in)
-        # body = ir.LoopBody(state_id=len(self.loops) + 1, test=block.test_in)
-
-        transition = ir.Branch(test=block.test_loop)
-        return_stmt = ir.Jump('state', len(self.loops) + 1)
-        cond_exit_blk = ir.HDLBlock(branches=[transition])
-        # cond_enter_blk = ir.HDLBlock(branches=[maybe_loop])
-
-        self.loops.append(loop)
-
-        for stmt in block.stmts:
-            add_to_list(loop.stmts, self.visit(stmt))
-
-        transition.stmts.append(return_stmt)
-        loop.stmts.append(cond_exit_blk)
-
-        # TODO: out -> in, not just copy
-        self.cpmap[id(transition)] = block.stmts[-1]
-        self.cpmap[id(return_stmt)] = block.stmts[-1]
-        self.cpmap[id(cond_exit_blk)] = block.stmts[-1]
-        # self.cpmap[id(maybe_loop)] = block.stmts[-1]
-
-        return loop
 
 
 class StateIsolator(CfgDfs):
@@ -345,21 +303,7 @@ def find_statement_node(cfg, stmt):
 
 
 def append_state_epilog(cfg, ctx):
-    # sink = cfg.sink
-
-    # source = insert_node_after(cfg, Node(ir.BaseBlock()))
-    # insert_node_before(cfg.sink, Node(ir.BaseBlockSink, source=source))
     insert_node_before(cfg.sink, Node(ir.Jump('state', 0)))
-
-    # exit_jump = Node(
-    #     ir.AssignValue(ctx.ref('_state'), ir.ResExpr(0)),
-    #     prev=[sink.prev[0]],
-    # )
-    # break_stmt = Node(ir.Await(ir.res_false), prev=[exit_jump])
-    # cp_sink = Node(ir.ModuleSink(), prev=[break_stmt], source=cfg)
-    # sink.prev[0].next = [exit_jump]
-    # exit_jump.next = [break_stmt]
-    # break_stmt.next = [cp_sink]
 
 
 def prepend_state_prolog(cfg, ctx, in_scope):
@@ -394,24 +338,12 @@ def schedule(cfg, ctx):
         reg=True,
     )
 
-    draw_scheduled_cfg(cfg, simple=False)
-
     loops = []
-    LoopBreaker(ctx, loops).visit(cfg)
-
-    # cfg = cfgutil.CFG.build_cfg(block)
-    # draw_cfg(cfg)
-
-    # draw_scheduled_cfg(cfg, simple=False)
+    LoopBreaker(ctx, loops, cfg).visit(cfg)
 
     state_cfg = [cfg]
     for l in loops:
         state_cfg.append(isolate(ctx, l))
-
-    # draw_scheduled_cfg(state_cfg[1], simple=False)
-
-    # for k, v in cpmap.items():
-    #     ctx.reaching[k] = ctx.reaching.get(id(v), None)
 
     state_in_scope = [{} for _ in range(len(state_cfg))]
     i = 0
@@ -467,5 +399,4 @@ def schedule(cfg, ctx):
 
         modblock = ir.CombBlock(stmts=[stateblock])
 
-    print(modblock)
     return modblock

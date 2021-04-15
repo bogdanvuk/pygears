@@ -795,13 +795,15 @@ class ArrayOpExpr(Expr):
 
 
 class SubscriptExpr(Expr):
+    ctx: str = 'load'
+
     def __repr__(self):
         return f'{type(self).__name__}(val={repr(self.val)}, index={repr(self.index)})'
 
     def __str__(self):
         return f'{self.val}[{self.index}]'
 
-    def __init__(self, val: Expr, index: Expr):
+    def __init__(self, val: Expr, index: Expr, ctx: str = 'load'):
         pass
 
     def __eq__(self, other):
@@ -810,7 +812,7 @@ class SubscriptExpr(Expr):
 
         return self.val == other.val and self.index == other.index
 
-    def __new__(cls, val: Expr, index: Expr):
+    def __new__(cls, val: Expr, index: Expr, ctx: str = 'load'):
         const_index = get_contextpr(index)
         const_val = get_contextpr(val)
         if const_index is not None:
@@ -823,6 +825,7 @@ class SubscriptExpr(Expr):
         inst = super().__new__(cls)
         inst.val = val
         inst.index = index
+        inst.ctx = ctx
 
         if inst.dtype.width == 0:
             return ResExpr(Unit())
@@ -1068,9 +1071,7 @@ class Assert(Statement):
 
 
 def extract_base_targets(target):
-    if isinstance(target, SubscriptExpr):
-        yield from extract_base_targets(target.val)
-    elif isinstance(target, ConcatExpr):
+    if isinstance(target, ConcatExpr):
         for t in target.operands:
             yield from extract_base_targets(t)
     elif isinstance(target, Name) and isinstance(target.obj, Variable):

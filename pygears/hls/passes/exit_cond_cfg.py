@@ -24,7 +24,9 @@ def cond_wrap(first, last, test):
 
     first.prev = [b_if]
     last.next = [b_if.sink]
-    source[0].next = [cond_blk]
+
+    i = source[0].next.index(first)
+    source[0].next[i] = cond_blk
     sink[0].prev = [cond_blk.sink]
 
     return cond_blk

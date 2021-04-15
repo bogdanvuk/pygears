@@ -293,7 +293,7 @@ class IrRewriter:
 
     # @cp_mapper
     def LoopBlock(self, block: ir.LoopBlock):
-        rw_block = type(block)()
+        rw_block = type(block)(blocking=block.blocking)
         self.enter(rw_block)
         self.enter_scope(rw_block)
 
@@ -513,7 +513,7 @@ class IrExprRewriter:
 
         ops = [old_op if new_op is None else new_op for new_op, old_op in zip(ops, old_ops)]
 
-        return ir.SubscriptExpr(*ops)
+        return ir.SubscriptExpr(*ops, ctx=node.ctx)
 
     def visit_ConditionalExpr(self, node):
         old_ops = (node.cond, *node.operands)

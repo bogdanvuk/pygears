@@ -4,7 +4,9 @@ def remove_node(node):
 
 
 def insert_node_before(origin, node):
-    origin.prev[0].next = [node]
+    i = origin.prev[0].next.index(origin)
+    origin.prev[0].next[i] = node
+
     node.prev = origin.prev[:]
 
     node.next = [origin]
