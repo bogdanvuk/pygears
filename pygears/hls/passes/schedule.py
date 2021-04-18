@@ -4,13 +4,29 @@ import inspect
 from .. import cfg as cfgutil
 from contextlib import contextmanager
 from copy import deepcopy, copy
-from ..cfg import Node, draw_cfg, CfgDfs, ReachingDefinitions
+from ..cfg import Node, draw_cfg, CfgDfs
 from ..cfg_util import insert_node_before, insert_node_after
-from ..ir_utils import res_true, HDLVisitor, ir, add_to_list, res_false, is_intf_id, IrRewriter
+from ..ir_utils import res_true, HDLVisitor, ir, add_to_list, res_false, is_intf_id, IrRewriter, IrExprVisitor
 from pygears.typing import bitw, Uint, Bool
 from .inline_cfg import VarScope, JumpScoping
 from .exit_cond_cfg import ResolveBlocking, cond_wrap
 from ..cfg_util import insert_node_before
+
+
+class VariableFinder(IrExprVisitor):
+    def __init__(self):
+        self.variables = set()
+
+    def visit_AssignValue(self, node: ir.AssignValue):
+        self.visit(node.target)
+        self.visit(node.val)
+
+    def visit_Branch(self, node: ir.Branch):
+        self.visit(node.test)
+
+    def visit_Name(self, node):
+        if node.ctx == 'load':
+            self.variables.add(node.name)
 
 
 def create_scheduled_cfg(node, G, visited, labels, reaching=None, simple=True):
@@ -83,6 +99,9 @@ class RebuildStateIR(CfgDfs):
     def enter_HDLBlockSink(self, node):
         pass
 
+    def enter_Module(self, block):
+        block.value = type(block.value)(states=block.value.states)
+
     def enter_BaseBlock(self, block):
         block.value = type(block.value)()
 
@@ -151,6 +170,41 @@ class LoopBreaker(CfgDfs):
 
         node.sink.next = [loop_exit]
         loop_exit.prev = [node.sink]
+
+
+class LoopLocality(CfgDfs):
+    def __init__(self, ctx, loop, reaching_nodes):
+        self.ctx = ctx
+        self.loop = loop
+        self.non_local = False
+        self.reaching_nodes = set()
+        self.loop_setup_vars = set()
+        for n in reaching_nodes[self.loop]['in']:
+            v = VariableFinder()
+            v.visit(n.value)
+
+            self.loop_setup_vars |= v.variables
+
+        self.within = False
+        super().__init__()
+
+    def enter_LoopBody(self, node):
+        if node is self.loop:
+            self.within = True
+
+    def exit_LoopBody(self, node):
+        if node is self.loop:
+            # TODO: We could exit immediatelly with exception
+            self.within = False
+
+    def enter_AssignValue(self, node):
+        if self.within:
+            # Node within the Loop influences statements before the loop entry.
+            # This loop cannot be easily overlapped with base state
+            if any(name in self.loop_setup_vars
+                   for name, _ in self.ctx.reaching[id(node.value)]['gen']):
+                # TODO: We could exit immediatelly with exception
+                self.non_local = True
 
 
 class StateIsolator(CfgDfs):
@@ -226,8 +280,13 @@ class StateIsolator(CfgDfs):
                 if node.value is not self.entry and node is not self.entry:
                     return
 
-            self.entry = node
             self.isolated = Node(ir.Module())
+            # TODO: Find better way to detect when ir.Module is entry point for isolation
+            if self.entry is None and isinstance(node.prev[0].value, ir.Module):
+                # node.prev[0] is ir.Module
+                self.isolated.value.states = node.prev[0].value.states[:]
+
+            self.entry = node
             self.node_map[node.prev[0]] = self.isolated
 
         if node in self.exits:
@@ -331,6 +390,67 @@ def print_cfg_ir(cfg):
     print(cfg.value)
 
 
+from ..cfg import Forward
+
+
+class ReachingLoops(Forward):
+    """Perform reaching definition analysis.
+
+  Each statement is annotated with a set of (variable, definition) pairs.
+
+  """
+    def __init__(self):
+        def definition(node, incoming):
+            kill = frozenset()
+            gen = frozenset((node, node))
+
+            # if isinstance(node.value, ir.BaseBlockSink) and isinstance(
+            #         node.source.value, ir.LoopBody):
+            #     gen = frozenset((node.source.value.state_id, node.source.value))
+            # else:
+            #     gen = frozenset()
+
+            return gen, kill
+
+        super(ReachingLoops, self).__init__('definitions', definition)
+
+
+class Piggyback(CfgDfs):
+    def __init__(self, ctx, state_in_scope, state_id, reaching_loops):
+        self.scope_map = state_in_scope[state_id]
+        self.state_in_scope = state_in_scope
+        self.state_id = state_id
+        self.reaching_loops = reaching_loops
+        self.ctx = ctx
+        super().__init__()
+
+    def within_state(self):
+        for s in reversed(self.scopes):
+            if isinstance(s.value, ir.LoopBody):
+                if s.value.state_id == self.state_id:
+                    return True
+        else:
+            return False
+
+    def enter_RegReset(self, node):
+        if self.within_state():
+            self.ctx.reset_states[node.value.target.name].add(self.state_id)
+        # remove_node(node)
+
+    # def enter_LoopBody(self, node):
+    #     breakpoint()
+
+    # def enter_AssignValue(self, node):
+    #     irnode: ir.AssignValue = node.value
+    #     if self.within_state() or self.state_id in self.reaching_loops[node]['in']:
+    #         return
+
+    #     for name, _ in self.ctx.reaching[id(irnode)]['gen']:
+    #         if name in self.ctx.scope and self.ctx.scope[name].reg:
+    #             breakpoint()
+    #             self.within_state()
+
+
 def schedule(cfg, ctx):
     ctx.scope['_state'] = ir.Variable(
         '_state',
@@ -341,42 +461,112 @@ def schedule(cfg, ctx):
     loops = []
     LoopBreaker(ctx, loops).visit(cfg)
 
-    state_cfg = [cfg]
-    for l in loops:
-        state_cfg.append(isolate(ctx, l))
+    state_cfg = {0: cfg}
+    v = ReachingLoops()
+    v.visit(cfg)
+    reaching_nodes = v.reaching
 
-    state_in_scope = [{} for _ in range(len(state_cfg))]
+    isolated_loops = {}
+    for l in loops:
+        isolated_loops[l.value.state_id] = isolate(ctx, l)
+
+    # # TODO: Should we delay this after VarScope has been applied, some
+    # # expressions inlined and potentialy some relationships removed?
+    # for l in loops:
+    #     v = LoopLocality(ctx, l, reaching_nodes)
+    #     v.visit(cfg)
+    #     if v.non_local:
+    #         state_cfg[l.value.state_id] = isolate(ctx, l)
+
+    # v = ReachingLoops()
+    # v.visit(cfg)
+    # reaching_loops = v.reaching
+
+    # state_cfg = [cfg] * (1 + len(loops))
+    # for l in loops:
+    #     state_cfg.append(isolate(ctx, l))
+
+    state_in_scope = [{} for _ in range(1 + len(loops))]
+    piggied = set()
     i = 0
-    order = list(range(len(state_cfg)))
+    order = list(state_cfg.keys())
     while i < len(order):
         state_id = order[i]
+        cfg = state_cfg[state_id]
         print(f'[{state_id}]: Scoping')
         new_states = {}
-        # print_cfg_ir(state_cfg[state_id])
-        # breakpoint()
-        VarScope(ctx, state_in_scope, state_id, new_states).visit(state_cfg[state_id])
+        VarScope(ctx, state_in_scope, state_id, new_states).visit(cfg)
+
+        if len(cfg.value.states) > 1:
+            v = cfgutil.ReachingDefinitions()
+            v.visit(cfg)
+            reaching_loops = v.reaching
+
+            for child_state in cfg.value.states[1:]:
+                loop_cfg = loops[child_state - 1]
+
+                v = LoopLocality(ctx, loop_cfg, reaching_nodes)
+                v.visit(cfg)
+                if v.non_local:
+                    state_cfg[child_state] = isolated_loops[child_state]
+                    order.insert(i + 1, child_state)
+                    cfg.value.states.remove(child_state)
+                    continue
+
+                # TODO: Maybe it should go up the "kill" tree and do this for all nodes?
+                for name, in_node in reaching_loops[loop_cfg]['in']:
+                    if not ctx.scope[name].reg:
+                        continue
+
+                    if isinstance(in_node.value, ir.RegReset):
+                        continue
+
+                    # If the register is updated withing the loop
+                    for out_name, out_node in reaching_loops[loop_cfg.sink]['in']:
+                        if out_name == name:
+                            break
+
+                    if in_node is not out_node:
+                        state_test = ir.BinOpExpr((ctx.ref('_state'), ir.ResExpr(child_state)),
+                                                  ir.opc.NotEq)
+                        cond_wrap(in_node, in_node, state_test)
+
+                # state_cfg[child_state] = cfg
+                Piggyback(ctx, state_in_scope, child_state, reaching_loops).visit(cfg)
+                piggied.add(child_state)
+
+        state_num = len(state_in_scope) - len(new_states)
         if new_states:
             print(f'[{state_id}]: Isolating')
-            state_cfg[state_id] = isolate(ctx,
-                                          state_cfg[state_id],
-                                          exits=new_states,
-                                          state_num=len(state_cfg))
+            state_cfg[state_id] = isolate(ctx, cfg, exits=new_states, state_num=state_num)
 
             # draw_scheduled_cfg(state_cfg[state_id], simple=False)
             # print_cfg_ir(state_cfg[state_id])
-            for ns in new_states:
-                order.insert(i + 1, len(state_cfg))
+            for si, ns in enumerate(new_states):
+                new_state_id = state_num + si
+
+                # order.insert(i + 1, len(state_cfg))
+                # print(f'[{len(state_cfg)}]: Isolating')
+                # state_cfg.append(isolate(ctx, ns))
+
+                order.insert(i + 1, new_state_id)
                 print(f'[{len(state_cfg)}]: Isolating')
-                state_cfg.append(isolate(ctx, ns))
+                state_cfg[new_state_id] = isolate(ctx, ns)
                 # draw_scheduled_cfg(state_cfg[-1], simple=False)
 
         i += 1
+        if i == len(order):
+            missing = (piggied | state_cfg.keys()) ^ set(range(len(state_in_scope)))
+            for s in missing:
+                # TODO: Can this really be done after all stmts have been inlined?
+                state_cfg[s] = isolated_loops[s]
+                order.append(s)
 
-    for i, (s, in_scope) in enumerate(zip(state_cfg, state_in_scope)):
-        # print_cfg_ir(s)
+    for i, s in state_cfg.items():
+        in_scope = state_in_scope[i]
+
         # draw_scheduled_cfg(s, simple=True)
         # draw_scheduled_cfg(s, simple=False)
-        # breakpoint()
         append_state_epilog(s, ctx)
         prepend_state_prolog(s, ctx, in_scope)
         ResolveBlocking(ctx).visit(s)
@@ -384,8 +574,12 @@ def schedule(cfg, ctx):
         # JumpScoping(ctx).visit(s)
         RebuildStateIR().visit(s)
 
-    states = [s.value for s in state_cfg]
-    state_num = len(states)
+        print(f'------------- State {i} --------------')
+        print_cfg_ir(s)
+
+    states = {i: s.value for i, s in state_cfg.items()}
+    # state_num = len(states)
+    state_num = len(state_in_scope)
     ctx.scope['_state'].val = ir.ResExpr(Uint[bitw(state_num - 1)](0))
     ctx.scope['_state'].dtype = Uint[bitw(state_num - 1)]
 
@@ -393,8 +587,12 @@ def schedule(cfg, ctx):
         modblock = ir.CombBlock(stmts=states[0].stmts)
     else:
         stateblock = ir.HDLBlock()
-        for i, s in enumerate(states):
-            test = ir.BinOpExpr((ctx.ref('_state'), ir.ResExpr(i)), ir.opc.Eq)
+        for i, s in states.items():
+            test = ir.res_false
+            for j in s.states:
+                state_test = ir.BinOpExpr((ctx.ref('_state'), ir.ResExpr(j)), ir.opc.Eq)
+                test = ir.BinOpExpr([test, state_test], ir.opc.Or)
+
             stateblock.add_branch(ir.Branch(stmts=s.stmts, test=test))
 
         modblock = ir.CombBlock(stmts=[stateblock])

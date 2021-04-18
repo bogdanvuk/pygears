@@ -110,10 +110,14 @@ def expr_dependencies(node):
 
 
 class Inliner(IrExprRewriter):
-    def __init__(self, scope, ctx, missing_ok=False):
+    def __init__(self, scope, ctx, missing_ok=False, reg_inits=None):
         self.scope_map = scope
         self.ctx = ctx
         self.missing_ok = missing_ok
+
+        if reg_inits is None:
+            reg_inits = {}
+        self.reg_inits = reg_inits
 
     def visit_Name(self, irnode):
         # If this name is target of the assignment, we have nothing to do
@@ -128,6 +132,9 @@ class Inliner(IrExprRewriter):
 
         val = self.scope_map[irnode.name]
 
+        if isinstance(val, ir.Name) and val.obj.reg and val.name in self.reg_inits:
+            return val.obj.val
+
         # TODO: What's with unknown?
         if isinstance(val, ir.ResExpr) and getattr(val.val, 'unknown', False):
             return irnode
@@ -135,8 +142,8 @@ class Inliner(IrExprRewriter):
         return val
 
 
-def inline_expr(irnode, scope, ctx):
-    new_node = Inliner(scope, ctx).visit(irnode)
+def inline_expr(irnode, scope, ctx, reg_inits=None):
+    new_node = Inliner(scope, ctx, reg_inits=reg_inits).visit(irnode)
     if new_node is None:
         return irnode
 
@@ -144,6 +151,8 @@ def inline_expr(irnode, scope, ctx):
 
 
 def detect_new_state(node, scope_map):
+    # TODO: Maybe break state at better boundaries, like the start of a loop if
+    # the loop is blocking and we know we need a new state for that
     expr = node.value.expr
     forward = scope_map['forward']
 
@@ -236,7 +245,27 @@ class VarScope(Inline):
         self.new_states = new_states
         self.state_in_scope = state_in_scope
         self.state_id = state_id
+        self.reg_inits = set()
         super().__init__(ctx, self.scope_map)
+
+    def within_loop(self):
+        for s in reversed(self.scopes):
+            if isinstance(s.value, ir.LoopBody):
+                return True
+        else:
+            return False
+
+    def handle_expr(self, expr):
+        # TODO: Think of more general heuristic, when it is better to
+        # substitute a register with its initial value. This should probably
+        # omitted only withing the loop that updates the register value?
+        if self.within_loop():
+            return inline_expr(expr, self.scope_map, self.ctx)
+        else:
+            return inline_expr(expr, self.scope_map, self.ctx, self.reg_inits)
+
+    def enter_Module(self, node):
+        node.value.states.append(self.state_id)
 
     def transition_scope(self, exit_node, state_id):
         if state_id == self.state_id:
@@ -259,11 +288,17 @@ class VarScope(Inline):
         irnode: ir.Jump = node.value
         if irnode.label == 'state':
             state_id = irnode.where
+            for s in reversed(self.scopes):
+                if (isinstance(s.value, ir.LoopBody) and s.value.state_id == state_id
+                        and state_id != self.state_id):
+                    self.scopes[0].value.states.append(state_id)
+
             self.transition_scope(node, state_id)
 
     def enter_RegReset(self, node):
-        self.ctx.reset_states[node.value.target.name].append(self.state_id)
-        remove_node(node)
+        self.ctx.reset_states[node.value.target.name].add(self.state_id)
+        self.reg_inits.add(node.value.target.name)
+        # remove_node(node)
 
     def enter_Await(self, node):
         irnode: ir.Await = node.value

@@ -46,7 +46,7 @@ class RegisterBlockDetect(IrVisitor):
         if id(expr) not in self.ctx.reaching:
             return
 
-        if all(id(d[1]) in self.visited for d in self.ctx.reaching[id(expr)].get('in', [])):
+        if all(id(d[1].value) in self.visited for d in self.ctx.reaching[id(expr)].get('in', [])):
             return
 
         v = VariableFinder()
@@ -59,12 +59,12 @@ class RegisterBlockDetect(IrVisitor):
             if name not in v.variables:
                 continue
 
-            if id(n) in self.visited:
+            if id(n.value) in self.visited:
                 continue
 
             self.registers[name] = {
                 'target': expr,
-                'source': n,
+                'source': n.value,
                 'target_scope': [s for s in self.scopes if isinstance(s, ir.LoopBlock)],
             }
 

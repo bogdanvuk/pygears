@@ -174,6 +174,7 @@ async def mon(din, *, t=b'din') -> Any:
     yield data
 
 
+# TODO: What if the dut quits earlier, catch that situation
 @gear
 async def scoreboard(*din: b't', report=None, cmp=None) -> None:
     """Generic scoreboard used from comparing actual results from the DUT to
@@ -221,6 +222,20 @@ async def scoreboard(*din: b't', report=None, cmp=None) -> None:
 
     except GearDone as e:
         log.info(f'Number of matches: {match_cnt:>4}/{cnt:>4}')
+        offending = None
+
+        if len(items):
+            offending = len(items)
+
+        if any(not d.empty() for d in din):
+            for i, d in enumerate(din):
+                if d.empty():
+                    offending = i
+                    break
+
+        if offending is not None:
+            log.error(f"Input {offending} didn't produce enough output data")
+
         raise e
 
 

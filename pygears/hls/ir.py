@@ -1129,8 +1129,9 @@ class BaseBlock(Statement):
         return f'{{\n{textwrap.indent(body, "    ")}}}\n'
 
 
+@attr.s(auto_attribs=True, kw_only=True, eq=False)
 class Module(BaseBlock):
-    pass
+    states: typing.List = attr.Factory(list)
 
 
 @attr.s(auto_attribs=True, eq=False)

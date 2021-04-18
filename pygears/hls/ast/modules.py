@@ -13,7 +13,7 @@ def parse_async_func(node, ctx: Context):
 
     ctx.reset_states = {}
     for reg in registers:
-        ctx.reset_states[reg] = []
+        ctx.reset_states[reg] = set()
 
     return visit_block(ir.Module(), node.body, ctx)
 

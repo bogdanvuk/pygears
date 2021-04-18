@@ -72,6 +72,8 @@ def get_updated(node):
     """
     if isinstance(node, ir.AssignValue):
         return _get_target(node.target)
+    elif isinstance(node, ir.RegReset):
+        return set([node.target.name])
     else:
         return set()
 
@@ -393,7 +395,7 @@ class ReachingDefinitions(Forward):
                 kill = frozenset(def_ for def_ in incoming if def_[0] == f'{intf_name}.data')
             else:
                 definitions = update(node.value)
-                gen = frozenset((id_, node.value) for id_ in definitions)
+                gen = frozenset((id_, node) for id_ in definitions)
                 kill = frozenset(def_ for def_ in incoming if def_[0] in definitions)
 
             return gen, kill

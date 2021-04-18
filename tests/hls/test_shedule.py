@@ -57,31 +57,35 @@ def test_basic_loop(din_delay, dout_delay):
 # test_basic_loop(2, 2)
 
 
-@pytest.mark.parametrize('din_delay', [0, 1])
-@pytest.mark.parametrize('dout_delay', [0, 1])
-def test_basic_loop_break(din_delay, dout_delay):
-    @gear(hdl={'compile': True})
-    async def test(din: Bool) -> Uint[4]:
-        a = Uint[4](0)
+# TODO: break from async with block should issue ack!
 
-        c = True
-        while c:
-            async with din as c:
-                yield a
-                if a == 1:
-                    break
+# @pytest.mark.parametrize('din_delay', [0, 1])
+# @pytest.mark.parametrize('dout_delay', [0, 1])
+# def test_basic_loop_break(din_delay, dout_delay):
+#     @gear(hdl={'compile': True})
+#     async def test(din: Bool) -> Uint[4]:
+#         a = Uint[4](0)
 
-                a += 1
+#         c = True
+#         while c:
+#             async with din as c:
+#                 print(f'{a}')
+#                 yield a
+#                 if a == 1:
+#                     break
 
-        yield 1
+#                 a += 1
 
-    verif(drv(t=Bool, seq=[True, True, True, True, True]) | delay_rng(din_delay, din_delay),
-          f=test(name='dut'),
-          ref=test,
-          delays=[delay_rng(dout_delay, dout_delay)])
+#         print(f'1')
+#         yield 1
 
-    cosim('/dut', 'verilator')
-    sim()
+#     verif(drv(t=Bool, seq=[True, True, True, True, True]) | delay_rng(din_delay, din_delay),
+#           f=test(name='dut'),
+#           ref=test,
+#           delays=[delay_rng(dout_delay, dout_delay)])
+
+#     cosim('/dut', 'verilator')
+#     sim()
 
 
 # test_basic_loop_break(2, 2)
@@ -130,7 +134,9 @@ def test_cond_state(din_delay, dout_delay):
     cosim('/dut', 'verilator')
     sim()
 
+
 # test_cond_state(0, 0)
+
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
@@ -151,7 +157,9 @@ def test_din_state(din_delay, dout_delay):
     cosim('/dut', 'verilator')
     sim()
 
+
 # test_din_state(0, 0)
+
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
@@ -176,7 +184,73 @@ def test_double_loop_seq(din_delay, dout_delay):
     cosim('/dut', 'verilator')
     sim()
 
+
 # test_double_loop_seq(0, 1)
+
+@pytest.mark.parametrize('din_delay', [0, 1])
+@pytest.mark.parametrize('dout_delay', [0, 1])
+def test_cond_nested_loop_multistate(din_delay, dout_delay):
+    @gear(hdl={'compile': True})
+    async def test(din: Queue[Bool]) -> Uint[4]:
+        a = Uint[4](0)
+        while a < 4:
+            if a > 2:
+                async for d in din:
+                    yield a
+                    # Influences above condition, but should not make a
+                    # difference while loop is running
+                    a += 1
+            a += 1
+
+    verif(drv(t=Queue[Bool], seq=[[True] * 4, [True], [True], [True] * 4])
+          | delay_rng(din_delay, din_delay),
+          f=test(name='dut'),
+          ref=test,
+          delays=[delay_rng(dout_delay, dout_delay)])
+
+    cosim('/dut', 'verilator')
+    sim()
+
+
+# test_cond_nested_loop_multistate(2, 2)
+
+
+@pytest.mark.parametrize('din_delay', [0, 1])
+@pytest.mark.parametrize('dout_delay', [0, 1])
+def test_cond_nested_loop(din_delay, dout_delay):
+    @gear(hdl={'compile': True})
+    async def test(din: Queue[Bool]) -> Uint[4]:
+        a = Uint[4](0)
+
+        i = Uint[4](0)
+        while i < 4:
+            if i < 2:
+                async for d in din:
+                    print(f'1: {a}')
+                    yield a
+                    a += 1
+                i = 2
+            else:
+                async for d in din:
+                    print(f'2: {a}')
+                    yield a
+                    a += 2
+                i = 4
+            i += 1
+
+    verif(drv(t=Queue[Bool], seq=[[True] * 4, [True], [True], [True] * 4])
+          | delay_rng(din_delay, din_delay),
+          f=test(name='dut'),
+          ref=test,
+          delays=[delay_rng(dout_delay, dout_delay)])
+
+    # cosim('/dut', 'verilator', outdir='/tools/home/tmp/shedule', rebuild=True)
+    cosim('/dut', 'verilator')
+    sim()
+
+
+# test_cond_nested_loop(2, 2)
+
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
@@ -199,7 +273,9 @@ def test_loop_after_async_with(din_delay, dout_delay):
     cosim('/dut', 'verilator')
     sim()
 
+
 # test_loop_after_async_with(0, 0)
+
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
@@ -275,7 +351,9 @@ def test_complex1(din_delay, dout_delay):
     cosim('/dut', 'verilator')
     sim()
 
+
 # test_complex1(0, 0)
+
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
@@ -298,7 +376,9 @@ def test_optional_loop(din_delay, dout_delay):
     cosim('/dut', 'verilator')
     sim()
 
+
 # test_optional_loop(0, 0)
+
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])

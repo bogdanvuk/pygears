@@ -32,6 +32,7 @@ def cond_wrap(first, last, test):
     return cond_blk
 
 
+# TODO: Remove scoping, it is implemented in CfgDfs
 class ResolveBlocking(CfgDfs):
     def __init__(self, ctx):
         self.scopes = []
