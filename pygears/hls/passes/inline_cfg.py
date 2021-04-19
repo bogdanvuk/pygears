@@ -90,7 +90,7 @@ def merge_subscope(subscopes, tests):
 
 def cfg_merge_subscope(block):
     subscopes = [b.scope for b in block.next] + [block.scope]
-    tests = [b.value.test for b in block.next] + [ir.res_true]
+    tests = [b.test for b in block.next] + [ir.res_true]
 
     return merge_subscope(subscopes, tests)
 
@@ -176,11 +176,14 @@ def detect_new_state(node, scope_map):
     return ir.res_false
 
 
-class Inline(CfgDfs):
+class Scoping(CfgDfs):
     def __init__(self, ctx, scope_map=None):
         super().__init__()
-        self.scope_map = {} if scope_map is None else scope_map
         self.ctx = ctx
+        self.scope_map = {} if scope_map is None else scope_map
+
+    def handle_expr(self, expr):
+        return inline_expr(expr, self.scope_map, self.ctx)
 
     def enter_FuncBlock(self, block):
         for a in block.value.args:
@@ -193,6 +196,28 @@ class Inline(CfgDfs):
         outscope = cfg_merge_subscope(block)
         self.scope_map.update(outscope)
 
+    def enter_Branch(self, node):
+        self.scope_map = copy(node.prev[0].scope)
+        irnode: ir.Branch = node.value
+        node.test = self.handle_expr(irnode.test)
+
+    def exit_Branch(self, node):
+        node.scope = copy(self.scope_map)
+
+    def enter_AssignValue(self, node):
+        irnode: ir.AssignValue = node.value
+
+        val = self.handle_expr(irnode.val)
+
+        if isinstance(val, ir.ConcatExpr):
+            val = ir.ConcatExpr(
+                operands=[op.expr if isinstance(op, ir.Await) else op for op in val.operands])
+
+        forward_value(irnode.target, val, self.scope_map)
+        node.val = val
+
+
+class Inline(Scoping):
     def handle_expr(self, expr):
         return inline_expr(expr, self.scope_map, self.ctx)
 
@@ -201,27 +226,14 @@ class Inline(CfgDfs):
         irnode.expr = self.handle_expr(irnode.expr)
 
     def enter_Branch(self, node):
-        self.scope_map = copy(node.prev[0].scope)
+        super().enter_Branch(node)
         irnode: ir.Branch = node.value
-        irnode.test = self.handle_expr(irnode.test)
-
-    def exit_Branch(self, node):
-        node.scope = copy(self.scope_map)
+        irnode.test = node.test
 
     def enter_AssignValue(self, node):
+        super().enter_AssignValue(node)
         irnode: ir.AssignValue = node.value
-
-        node.scope = copy(self.scope_map)
-
-        irnode.val = self.handle_expr(irnode.val)
-
-        val = irnode.val
-
-        if isinstance(val, ir.ConcatExpr):
-            val = ir.ConcatExpr(
-                operands=[op.expr if isinstance(op, ir.Await) else op for op in val.operands])
-
-        forward_value(irnode.target, val, self.scope_map)
+        irnode.val = node.val
 
 
 class VarScope(Inline):
@@ -237,7 +249,7 @@ class VarScope(Inline):
             for r in ctx.regs:
                 self.scope_map[r] = ctx.ref(r)
 
-            self.scope_map['_state'] = ctx.scope['_state']
+            self.scope_map['_state'] = ctx.ref('_state')
             self.scope_map['forward'] = ir.res_true
         else:
             self.scope_map = {}
@@ -258,14 +270,11 @@ class VarScope(Inline):
     def handle_expr(self, expr):
         # TODO: Think of more general heuristic, when it is better to
         # substitute a register with its initial value. This should probably
-        # omitted only withing the loop that updates the register value?
+        # omitted only within the loop that updates the register value?
         if self.within_loop():
             return inline_expr(expr, self.scope_map, self.ctx)
         else:
             return inline_expr(expr, self.scope_map, self.ctx, self.reg_inits)
-
-    def enter_Module(self, node):
-        node.value.states.append(self.state_id)
 
     def transition_scope(self, exit_node, state_id):
         if state_id == self.state_id:
@@ -288,11 +297,6 @@ class VarScope(Inline):
         irnode: ir.Jump = node.value
         if irnode.label == 'state':
             state_id = irnode.where
-            for s in reversed(self.scopes):
-                if (isinstance(s.value, ir.LoopBody) and s.value.state_id == state_id
-                        and state_id != self.state_id):
-                    self.scopes[0].value.states.append(state_id)
-
             self.transition_scope(node, state_id)
 
     def enter_RegReset(self, node):
@@ -322,90 +326,64 @@ class VarScope(Inline):
             return True
 
 
-class Scoping(CfgDfs):
-    def __init__(self, scope_map=None):
-        super().__init__()
-        if scope_map is None:
-            scope_map = {}
+class ExploreState(Inline):
+    def __init__(self, ctx, scope_map, state_id):
+        self.states = []
+        self.state_id = state_id
+        self.reg_inits = set()
 
-        self.scope_map = scope_map
-        self.scopes = []
+        scope_map = scope_map.copy()
+        for i in ctx.intfs:
+            scope_map[i] = ctx.ref(i)
+            if f'{i}.valid' not in scope_map:
+                scope_map[f'{i}.valid'] = ir.res_false
 
-    @property
-    def scope(self):
-        return self.scopes[-1]
+        for r in ctx.regs:
+            scope_map[r] = ctx.ref(r)
 
-    def enter_Statement(self, block):
-        block.scope = copy(self.scope_map)
+        scope_map['_state'] = ctx.ref('_state')
+        scope_map['forward'] = ir.res_true
 
-    def enter_BaseBlock(self, block):
-        self.scopes.append(block)
-        block.scope = copy(self.scope_map)
+        super().__init__(ctx, scope_map)
 
-    def exit_BaseBlock(self, node):
-        self.scopes.pop()
-
-    def exit_HDLBlock(self, block):
-        outscope = merge_subscope(block)
-        self.scope_map.update(outscope)
-
-    def enter_Branch(self, node):
-        self.scope_map = copy(node.prev[0].scope)
-        self.enter_BaseBlock(node)
-
-    def exit_Branch(self, node):
-        node.scope = copy(self.scope_map)
-        self.exit_BaseBlock(node)
-
-
-class JumpScoping(Scoping):
-    def __init__(self, ctx):
-        self.ctx = ctx
-        super().__init__()
-
-    def enter_Module(self, mod):
-        self.scope_map['_return'] = ir.res_false
-        self.scope_map['_block'] = ir.res_false
-        super().enter_BaseBlock(mod)
-
-    def enter_BaseBlock(self, block):
-        self.scope_map = {'_return': ir.res_false}
-        super().enter_BaseBlock(block)
-
-    def apply_cont_cond(self, node, cond=None):
-        if not node.next:
-            return
-
-        if cond is None:
-            # jumps = [self.scope_map['_return'], self.scope_map['_block']]
-            # cond = ir.UnaryOpExpr(ir.BinOpExpr(jumps, operator=ir.opc.Or), ir.opc.Not)
-            print(f"_return: {self.scope_map['_return']}")
-            cond = self.scope_map['_return']
-
-        if cond == ir.res_false:
-            return
-
-        cond_wrap(node.next[0], self.scope.sink.prev[0], ir.UnaryOpExpr(cond, ir.opc.Not))
-
-    def exit_Await(self, node):
-        if node.value.expr not in ['forward', 'back', 'break']:
-            self.scope_map['_return'] = ir.UnaryOpExpr(node.value.expr, ir.opc.Not)
-            self.apply_cont_cond(node)
-
-        remove_node(node)
-
-    def enter_Jump(self, stmt):
-        irnode: ir.Jump = stmt.value
-        if irnode.label == 'state':
-            self.scope_map['_return'] = ir.res_true
-            stmt.value = ir.AssignValue(self.ctx.ref('_state'), ir.ResExpr(irnode.where))
-            self.apply_cont_cond(stmt)
+    def within_loop(self):
+        for s in reversed(self.scopes):
+            if isinstance(s.value, ir.LoopBody):
+                return True
         else:
-            remove_node(stmt)
+            return False
 
-    def enter_Statement(self, stmt):
-        super().enter_Statement(stmt)
+    def handle_expr(self, expr):
+        # TODO: Think of more general heuristic, when it is better to
+        # substitute a register with its initial value. This should probably
+        # omitted only within the loop that updates the register value?
+        if self.within_loop():
+            return inline_expr(expr, self.scope_map, self.ctx)
+        else:
+            return inline_expr(expr, self.scope_map, self.ctx, self.reg_inits)
 
-    def exit_HDLBlock(self, block):
-        super().exit_HDLBlock(block)
-        self.apply_cont_cond(block.sink)
+    def enter_RegReset(self, node):
+        self.reg_inits.add(node.value.target.name)
+
+    def enter_Jump(self, node):
+        irnode: ir.Jump = node.value
+        if irnode.label == 'state':
+            state_id = irnode.where
+            for s in reversed(self.scopes):
+                if (isinstance(s.value, ir.LoopBody) and s.value.state_id == state_id
+                        and state_id != self.state_id):
+                    self.states.append(state_id)
+
+    def enter_Await(self, node):
+        irnode: ir.Await = node.value
+
+        if irnode.expr == ir.res_false:
+            return
+
+        if isinstance(irnode.expr, ir.Component) and irnode.expr.field == 'ready':
+            self.scope_map[f'{irnode.expr.val.name}.ready'] = ir.ResExpr(True)
+
+        cond = detect_new_state(node, self.scope_map)
+
+        if cond == ir.res_true:
+            return True

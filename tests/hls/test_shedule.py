@@ -194,7 +194,7 @@ def test_cond_nested_loop_multistate(din_delay, dout_delay):
     async def test(din: Queue[Bool]) -> Uint[4]:
         a = Uint[4](0)
         while a < 4:
-            if a > 2:
+            if a < 2:
                 async for d in din:
                     yield a
                     # Influences above condition, but should not make a

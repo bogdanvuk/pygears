@@ -8,7 +8,7 @@ from ..cfg import Node, draw_cfg, CfgDfs
 from ..cfg_util import insert_node_before, insert_node_after
 from ..ir_utils import res_true, HDLVisitor, ir, add_to_list, res_false, is_intf_id, IrRewriter, IrExprVisitor
 from pygears.typing import bitw, Uint, Bool
-from .inline_cfg import VarScope, JumpScoping
+from .inline_cfg import VarScope, ExploreState
 from .exit_cond_cfg import ResolveBlocking, cond_wrap
 from ..cfg_util import insert_node_before
 
@@ -393,7 +393,7 @@ def print_cfg_ir(cfg):
 from ..cfg import Forward
 
 
-class ReachingLoops(Forward):
+class ReachingNodes(Forward):
     """Perform reaching definition analysis.
 
   Each statement is annotated with a set of (variable, definition) pairs.
@@ -412,15 +412,12 @@ class ReachingLoops(Forward):
 
             return gen, kill
 
-        super(ReachingLoops, self).__init__('definitions', definition)
+        super(ReachingNodes, self).__init__('definitions', definition)
 
 
 class Piggyback(CfgDfs):
-    def __init__(self, ctx, state_in_scope, state_id, reaching_loops):
-        self.scope_map = state_in_scope[state_id]
-        self.state_in_scope = state_in_scope
+    def __init__(self, ctx, state_id):
         self.state_id = state_id
-        self.reaching_loops = reaching_loops
         self.ctx = ctx
         super().__init__()
 
@@ -435,20 +432,71 @@ class Piggyback(CfgDfs):
     def enter_RegReset(self, node):
         if self.within_state():
             self.ctx.reset_states[node.value.target.name].add(self.state_id)
-        # remove_node(node)
 
-    # def enter_LoopBody(self, node):
-    #     breakpoint()
 
-    # def enter_AssignValue(self, node):
-    #     irnode: ir.AssignValue = node.value
-    #     if self.within_state() or self.state_id in self.reaching_loops[node]['in']:
-    #         return
+def discover_piggieback_states(cfg, ctx, scope_map, state_id, loops, reaching_nodes, state_cfg):
+    # cfg_temp = isolate(ctx, cfg)
 
-    #     for name, _ in self.ctx.reaching[id(irnode)]['gen']:
-    #         if name in self.ctx.scope and self.ctx.scope[name].reg:
-    #             breakpoint()
-    #             self.within_state()
+    v_iso = StateIsolator(ctx)
+    v_iso.visit(cfg)
+    cfg_temp = v_iso.isolated
+
+    v = ReachingNodes()
+    v.visit(cfg_temp)
+    reaching_nodes = v.reaching
+
+    v = ExploreState(ctx, scope_map, state_id)
+    v.visit(cfg_temp)
+
+    if not v.states:
+        return [], []
+
+    if all(s in state_cfg for s in v.states):
+        return [], []
+
+    piggy_states = v.states
+
+    v = cfgutil.ReachingDefinitions()
+    v.visit(cfg)
+    reaching_loops = v.reaching
+
+    non_local = []
+    piggied = []
+    for child_state in piggy_states:
+        loop_cfg = loops[child_state - 1]
+
+        v = LoopLocality(ctx, v_iso.node_map[loop_cfg], reaching_nodes)
+        v.visit(cfg_temp)
+
+        # TODO: Optimization currently disabled for loops with multiple states
+        if v.non_local:
+            non_local.append(child_state)
+            continue
+
+        # TODO: Maybe it should go up the "kill" tree and do this for all nodes?
+        for name, in_node in reaching_loops[loop_cfg]['in']:
+            if name in ctx.scope and isinstance(ctx.scope[name],
+                                                ir.Variable) and not ctx.scope[name].reg:
+                continue
+
+            if isinstance(in_node.value, ir.RegReset):
+                continue
+
+            # If the register is updated withing the loop
+            for out_name, out_node in reaching_loops[loop_cfg.sink]['in']:
+                if out_name == name:
+                    break
+
+            if in_node is not out_node:
+                state_test = ir.BinOpExpr((ctx.ref('_state'), ir.ResExpr(child_state)),
+                                          ir.opc.NotEq)
+                cond_wrap(in_node, in_node, state_test)
+
+        # state_cfg[child_state] = cfg
+        Piggyback(ctx, child_state).visit(cfg)
+        piggied.append(child_state)
+
+    return non_local, piggied
 
 
 def schedule(cfg, ctx):
@@ -461,10 +509,11 @@ def schedule(cfg, ctx):
     loops = []
     LoopBreaker(ctx, loops).visit(cfg)
 
-    state_cfg = {0: cfg}
-    v = ReachingLoops()
+    v = ReachingNodes()
     v.visit(cfg)
     reaching_nodes = v.reaching
+
+    state_cfg = {0: cfg}
 
     isolated_loops = {}
     for l in loops:
@@ -478,7 +527,7 @@ def schedule(cfg, ctx):
     #     if v.non_local:
     #         state_cfg[l.value.state_id] = isolate(ctx, l)
 
-    # v = ReachingLoops()
+    # v = ReachingNodes()
     # v.visit(cfg)
     # reaching_loops = v.reaching
 
@@ -495,46 +544,67 @@ def schedule(cfg, ctx):
         cfg = state_cfg[state_id]
         print(f'[{state_id}]: Scoping')
         new_states = {}
+        # print_cfg_ir(cfg)
+
+        if loops:
+            non_local, piggied_cur = discover_piggieback_states(cfg, ctx, state_in_scope[state_id],
+                                                                state_id, loops, reaching_nodes,
+                                                                state_cfg)
+
         VarScope(ctx, state_in_scope, state_id, new_states).visit(cfg)
+        # print_cfg_ir(cfg)
+        # breakpoint()
 
-        if len(cfg.value.states) > 1:
-            v = cfgutil.ReachingDefinitions()
-            v.visit(cfg)
-            reaching_loops = v.reaching
+        cfg.value.states.append(state_id)
 
-            for child_state in cfg.value.states[1:]:
-                loop_cfg = loops[child_state - 1]
+        if loops:
+            for nl in non_local:
+                state_cfg[nl] = isolated_loops[nl]
+                order.insert(i + 1, nl)
 
-                v = LoopLocality(ctx, loop_cfg, reaching_nodes)
-                v.visit(cfg)
-                # TODO: Optimization currently disabled for loops with multiple states
-                if v.non_local:
-                    state_cfg[child_state] = isolated_loops[child_state]
-                    order.insert(i + 1, child_state)
-                    cfg.value.states.remove(child_state)
-                    continue
+            cfg.value.states.extend(piggied_cur)
 
-                # TODO: Maybe it should go up the "kill" tree and do this for all nodes?
-                for name, in_node in reaching_loops[loop_cfg]['in']:
-                    if name in ctx.scope and isinstance(ctx.scope[name], ir.Variable) and not ctx.scope[name].reg:
-                        continue
+            piggied.update(piggied_cur)
 
-                    if isinstance(in_node.value, ir.RegReset):
-                        continue
+        # if len(cfg.value.states) > 1:
+        #     v = cfgutil.ReachingDefinitions()
+        #     v.visit(cfg)
+        #     reaching_loops = v.reaching
 
-                    # If the register is updated withing the loop
-                    for out_name, out_node in reaching_loops[loop_cfg.sink]['in']:
-                        if out_name == name:
-                            break
+        #     for child_state in cfg.value.states[1:]:
+        #         loop_cfg = loops[child_state - 1]
 
-                    if in_node is not out_node:
-                        state_test = ir.BinOpExpr((ctx.ref('_state'), ir.ResExpr(child_state)),
-                                                  ir.opc.NotEq)
-                        cond_wrap(in_node, in_node, state_test)
+        #         v = LoopLocality(ctx, loop_cfg, reaching_nodes)
+        #         v.visit(cfg)
+        #         # TODO: Optimization currently disabled for loops with multiple states
+        #         if v.non_local:
+        #             state_cfg[child_state] = isolated_loops[child_state]
+        #             order.insert(i + 1, child_state)
+        #             cfg.value.states.remove(child_state)
+        #             continue
 
-                # state_cfg[child_state] = cfg
-                Piggyback(ctx, state_in_scope, child_state, reaching_loops).visit(cfg)
-                piggied.add(child_state)
+        #         # TODO: Maybe it should go up the "kill" tree and do this for all nodes?
+        #         for name, in_node in reaching_loops[loop_cfg]['in']:
+        #             if name in ctx.scope and isinstance(ctx.scope[name],
+        #                                                 ir.Variable) and not ctx.scope[name].reg:
+        #                 continue
+
+        #             if isinstance(in_node.value, ir.RegReset):
+        #                 continue
+
+        #             # If the register is updated withing the loop
+        #             for out_name, out_node in reaching_loops[loop_cfg.sink]['in']:
+        #                 if out_name == name:
+        #                     break
+
+        #             if in_node is not out_node:
+        #                 state_test = ir.BinOpExpr((ctx.ref('_state'), ir.ResExpr(child_state)),
+        #                                           ir.opc.NotEq)
+        #                 cond_wrap(in_node, in_node, state_test)
+
+        #         # state_cfg[child_state] = cfg
+        #         Piggyback(ctx, state_in_scope, child_state, reaching_loops).visit(cfg)
+        #         piggied.add(child_state)
 
         state_num = len(state_in_scope) - len(new_states)
         if new_states:
@@ -572,7 +642,6 @@ def schedule(cfg, ctx):
         prepend_state_prolog(s, ctx, in_scope)
         ResolveBlocking(ctx).visit(s)
         # print_cfg_ir(s)
-        # JumpScoping(ctx).visit(s)
         RebuildStateIR().visit(s)
 
         print(f'------------- State {i} --------------')
