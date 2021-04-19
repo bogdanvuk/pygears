@@ -83,10 +83,10 @@ def _(node, ctx: Context):
         if not isinstance(stmts, list):
             stmts = [stmts]
 
-        for s in stmts:
-            s.target.obj.val = s.val
-            if init.val is None or getattr(init.val, 'unknown', False):
-                s.target.obj.any_init = True
+        # for s in stmts:
+        #     s.target.obj.val = s.val
+        #     if init.val is None or getattr(init.val, 'unknown', False):
+        #         s.target.obj.any_init = True
 
         return stmts
 

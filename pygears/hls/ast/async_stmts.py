@@ -164,6 +164,8 @@ def asyncwith(node, ctx: Context):
         res_stmt = visit_ast(stmt, ctx)
         extend_stmts(stmts, res_stmt)
 
+
+    stmts.append(ir.Await('back'))
     for i in intfs:
         stmts.append(ir.AssignValue(ir.Component(i, 'ready'), ir.res_true))
 
@@ -206,6 +208,8 @@ class AsyncForContext:
 
     def __exit__(self, exception_type, exception_value, traceback):
         loop = self.ctx.closures.pop()
+
+        loop.stmts.append(ir.Await('back'))
         loop.stmts.append(ir.AssignValue(ir.Component(self.intf, 'ready'), ir.res_true))
         merge_cond_alias_map(loop, self.ctx)
 

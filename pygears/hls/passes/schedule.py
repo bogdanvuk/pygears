@@ -507,6 +507,7 @@ def schedule(cfg, ctx):
 
                 v = LoopLocality(ctx, loop_cfg, reaching_nodes)
                 v.visit(cfg)
+                # TODO: Optimization currently disabled for loops with multiple states
                 if v.non_local:
                     state_cfg[child_state] = isolated_loops[child_state]
                     order.insert(i + 1, child_state)
@@ -515,7 +516,7 @@ def schedule(cfg, ctx):
 
                 # TODO: Maybe it should go up the "kill" tree and do this for all nodes?
                 for name, in_node in reaching_loops[loop_cfg]['in']:
-                    if not ctx.scope[name].reg:
+                    if name in ctx.scope and isinstance(ctx.scope[name], ir.Variable) and not ctx.scope[name].reg:
                         continue
 
                     if isinstance(in_node.value, ir.RegReset):
