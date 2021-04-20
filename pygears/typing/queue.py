@@ -82,7 +82,7 @@ class QueueMeta(EnumerableGenericMeta):
 
     @property
     def data(self):
-        return self.args[0]
+        return self.__args__[0]
 
     @property
     def eot(self):

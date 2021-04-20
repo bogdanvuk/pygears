@@ -36,16 +36,19 @@ class ArrayType(EnumerableGenericMeta):
 
     @property
     def width(self):
-        return sum(f.width for f in self)
+        return self._args[0].width * int(self._args[1])
+
+    def __len__(self):
+        return self._args[1]
 
     # TODO: Remove this
     @property
     def dtype(self):
-        return self.args[0]
+        return self._args[0]
 
     @property
     def data(self):
-        return self.args[0]
+        return self._args[0]
 
     def __getitem__(self, index):
         """If a single element is supplied for index, returns type T. If a slice is suplied for index, an :class:`Array` type is returned with a number of elements equal to the slice size.
@@ -59,6 +62,12 @@ class ArrayType(EnumerableGenericMeta):
 
         if not self.specified:
             return super().__getitem__(index)
+
+        if isinstance(index, int):
+            if index >= len(self):
+                raise IndexError
+
+            return self._args[0]
 
         index = self.index_norm(index)
 

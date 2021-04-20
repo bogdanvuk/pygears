@@ -71,47 +71,67 @@ class VCDValVisitor(TypingVisitorBase):
         self.writer = writer
         self.timestep = timestep
 
+    def visit(self, type_, field=None, **kwds):
+        return getattr(self, type_._base.__name__)(type_, field, **kwds)
+
     def change(self, dtype, field, val):
         self.writer.change(self.vcd_vars[field], self.timestep, dtype(val).code())
 
-    def visit_Fixp(self, type_, field, val=None):
-        self.change(type_, field, val)
-
-    def visit_Ufixp(self, type_, field, val=None):
-        self.change(type_, field, val)
-
-    def visit_Float(self, type_, field, val=None):
+    def Float(self, type_, field, val=None):
         self.writer.change(self.vcd_vars[field], self.timestep, float(val))
 
-    def visit_Int(self, type_, field, val=None):
-        self.change(type_, field, val)
+    def Union(self, type_, field, val=None):
+        f0 = getattr(self, type_[0]._base.__name__)
+        f1 = getattr(self, type_[1]._base.__name__)
+        if field:
+            f0(type_[0], f'{field}.data', val=val[0])
+            f1(type_[1], f'{field}.ctrl', val=val[1])
+        else:
+            f0(type_[0], 'data', val=val[0])
+            f1(type_[1], 'ctrl', val=val[1])
 
-    def visit_Bool(self, type_, field, val=None):
-        self.change(type_, field, val)
+    def Queue(self, type_, field, val=None):
+        f0 = getattr(self, type_.data._base.__name__)
+        f1 = getattr(self, type_.eot._base.__name__)
+        if field:
+            f0(type_.data, f'{field}.data', val=val[0])
+            f1(type_.eot, f'{field}.eot', val=val[1])
+        else:
+            f0(type_.data, 'data', val=val[0])
+            f1(type_.eot, 'eot', val=val[1])
 
-    def visit_Union(self, type_, field, val=None):
-        self.visit(type_[0], f'{field}.data' if field else 'data', val=val[0])
-        self.visit(type_[1], f'{field}.ctrl' if field else 'ctrl', val=val[1])
+    def Array(self, type_, field, val):
+        t = type_.dtype
+        f = getattr(self, t._base.__name__)
+        if field:
+            for i in range(len(type_)):
+                f(t, f'{field}({i})', val=val[i])
+        else:
+            for i in range(len(type_)):
+                f(t, f'({i})', val=val[i])
 
-    def visit_Queue(self, type_, field, val=None):
-        val = type_(val)
-        self.visit(type_[0], f'{field}.data' if field else 'data', val=val[0])
-        self.visit(type_[1:], f'{field}.eot' if field else 'eot', val=val[1])
+    Ufixp = change
+    Fixp = change
+    Uint = change
+    Int = change
+    Unit = change
+    Bool = change
 
-    def visit_Array(self, type_, field, val):
-        for i, t in enumerate(type_):
-            self.visit(t, f'{field}({i})' if field else f'({i})', val=val[i])
+    def Tuple(self, type_, field, val):
+        if field:
+            for i in range(len(type_)):
+                f = getattr(self, type_[i]._base.__name__)
+                f(type_[i], f'{field}.{type_.fields[i]}', val=val[i])
+        else:
+            for i in range(len(type_)):
+                f = getattr(self, type_[i]._base.__name__)
+                f(type_[i], type_.fields[i], val=val[i])
 
-    def visit_Uint(self, type_, field, val=None):
-        self.change(type_, field, val)
-
-    def visit_Unit(self, type_, field, val=None):
-        self.change(type_, field, val)
-
-    def visit_default(self, type_, field, val=None):
-        if hasattr(type_, 'fields'):
-            for t, f, v in zip(type_, type_.fields, val):
-                self.visit(t, f'{field}.{f}' if field else f, val=v)
+    # def default(self, type_, field, val=None):
+    #     if hasattr(type_, 'fields'):
+    #         breakpoint()
+    #         for t, f, v in zip(type_, type_.fields, val):
+    #             self.visit(t, f'{field}.{f}' if field else f, val=v)
 
 
 def register_traces_for_intf(dtype, scope, writer):
@@ -318,8 +338,11 @@ class VCD(SimExtend):
         if typeof(v['dtype'], TLM):
             self.writer.change(v['data'], timestep() * 10, str(val))
         else:
-            visitor = VCDValVisitor(v, self.writer, timestep() * 10)
-            visitor.visit(v['dtype'], 'data', val=val)
+            try:
+                visitor = VCDValVisitor(v, self.writer, timestep() * 10)
+                visitor.visit(v['dtype'], 'data', val=val)
+            except AttributeError:
+                pass
 
         self.writer.change(v['valid'], timestep() * 10, 1)
 

@@ -45,7 +45,7 @@ def copy_gear_full(g: Gear, name=None):
     # collects unconnected port consumers
     local_in_ports = []
     for p in g.in_ports:
-        cp_p = InPort(cp_g, p.index, p.basename)
+        cp_p = InPort(cp_g, p.index, p.basename, dtype=p.dtype)
         cp_g.in_ports.append(cp_p)
         i = Intf(p.dtype)
         local_in_ports.append(i)
@@ -55,7 +55,7 @@ def copy_gear_full(g: Gear, name=None):
     # collects unconnected port consumers
     outside_intfs = []
     for p in g.out_ports:
-        cp_p = OutPort(cp_g, p.index, p.basename)
+        cp_p = OutPort(cp_g, p.index, p.basename, dtype=p.dtype)
         cp_g.out_ports.append(cp_p)
 
         if not g.hierarchical:

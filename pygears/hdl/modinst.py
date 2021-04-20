@@ -36,6 +36,8 @@ class HDLModuleInst:
         self.lang = lang
 
         self._impl_parse = None
+        self.memoized = False
+
         if 'memoized' in self.node.params:
             memnode = self.node.params['memoized']
 
@@ -47,6 +49,7 @@ class HDLModuleInst:
             # generated? This can happen if we only generate a part of the
             # design
             if memnode in reg['hdlgen/map']:
+                self.memoized = True
                 hdlmod = reg['hdlgen/map'][memnode]
                 self.resolver = hdlmod.resolver
                 return
@@ -152,13 +155,13 @@ class HDLModuleInst:
         return self.resolver.params
 
     def generate(self, template_env, outdir):
-        if 'memoized' not in self.node.params:
+        if not self.memoized:
             self.resolver.generate(template_env, outdir)
 
-            if not self.node.parent:
-                return
+        if not self.node.parent:
+            return
 
-            # TODO: What about reusing memoized module that didn't need a
-            # wrapper. Discern this.
-            if self.wrapped:
-                save_file(self.wrap_file_name, outdir, self.get_wrap(self.parent_lang))
+        # TODO: What about reusing memoized module that didn't need a
+        # wrapper. Discern this.
+        if self.wrapped:
+            save_file(self.wrap_file_name, outdir, self.get_wrap(self.parent_lang))

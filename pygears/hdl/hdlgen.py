@@ -24,6 +24,7 @@ def hdlgen(top=None,
         outdir = reg['results-dir']
 
     conf['outdir'] = expand(outdir)
+    outdir = conf['outdir']
 
     if isinstance(top, tuple):
         top = top[0]
@@ -55,6 +56,7 @@ def hdlgen(top=None,
     for oper in reg[f'{lang}gen/flow']:
         oper(top, conf)
 
+    os.makedirs(outdir, exist_ok=True)
     if generate:
         hdlgen_generate(top, conf)
 
@@ -68,8 +70,8 @@ def hdlgen(top=None,
 
     if copy_files and generate:
         for fn in list_hdl_files(top.name, outdir=outdir, rtl_only=True):
-            modname, lang = os.path.splitext(os.path.basename(fn))
-            if (modname, lang[1:]) in reg['hdlgen/disambig']:
+            modname, ext = os.path.splitext(os.path.basename(fn))
+            if (modname, ext[1:]) in reg['hdlgen/disambig']:
                 continue
 
             try:

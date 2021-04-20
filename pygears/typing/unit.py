@@ -21,6 +21,11 @@ class UnitMeta(TypingMeta):
     def __rmatmul__(self, other):
         return other
 
+    @property
+    def _base(self):
+        return self
+
+
 
 class Unit(metaclass=UnitMeta):
     def __init__(self, v=None):

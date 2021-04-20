@@ -1,4 +1,4 @@
-from pygears import gear, Intf
+from pygears import gear, Intf, reg
 from pygears.typing import Uint, Tuple
 from pygears.util.test_utils import hdl_check
 
@@ -18,6 +18,7 @@ def test_consumer_lower():
 
 @hdl_check(['hier0.sv', 'hier0_hier1.sv'])
 def test_consumer_lower_multilevel():
+    reg['gear/memoize'] = False
     @gear
     def func(din, channeled) -> Tuple['din', 'channeled']:
         pass
