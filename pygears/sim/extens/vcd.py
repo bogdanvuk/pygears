@@ -336,7 +336,10 @@ class VCD(SimExtend):
                     # TODO: Optimization possibility, don't write the data, only ready/valid signals
                     self.var_put(vp, val)
 
-                vp['srcs_active'][vp['srcs'].index(v)] = True
+                for i, vv in enumerate(vp['srcs']):
+                    if vv is v:
+                        vp['srcs_active'][i] = True
+                        break
 
         return True
 
@@ -350,7 +353,11 @@ class VCD(SimExtend):
         if intf in self.end_consumers:
             v = self.end_consumers[intf]
             for vp in v['prods']:
-                vp['srcs_active'][vp['srcs'].index(v)] = False
+
+                for i, vv in enumerate(vp['srcs']):
+                    if vv is v:
+                        vp['srcs_active'][i] = False
+                        break
 
                 if not any(vp['srcs_active']):
                     self.writer.change(vp['ready'], timestep() * 10, 1)
