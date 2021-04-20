@@ -297,10 +297,11 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             self.tasks[g] = g.run()
             self.task_data[g] = None
 
-    def call_soon(self, callback, *fut, context=None):
-        callback(fut[0])
-
     def future_done(self, fut):
+        # This will never be called, call_soon will be called first and handle the finishing
+        pass
+
+    def call_soon(self, callback, fut, context=None):
         sim_gear = self.wait_list.pop(fut, None)
         if fut.cancelled():
             # Interface that sim_gear waited on is done, so we need to finish
@@ -330,7 +331,8 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
     def create_future(self):
         """Create a Future object attached to the loop."""
-        fut = SimFuture()
+        # fut = SimFuture()
+        fut = asyncio.Future()
         fut.add_done_callback(self.future_done)
 
         return fut
@@ -383,7 +385,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             self.done.add(sim_gear)
         else:
             self.wait_list[data] = sim_gear
-            if isinstance(data, SimFuture):
+            if isinstance(data, asyncio.Future):
                 self.wait_list[data] = sim_gear
             else:
                 if sim_gear.phase == 'back':
@@ -441,8 +443,8 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         delta = reg['sim/delta_event']
 
         global gear_reg, sim_reg
-        gear_reg = reg['gear']
-        sim_reg = reg['sim']
+        gear_reg = reg['gear']._dict
+        sim_reg = reg['sim']._dict
 
         reg['sim/timestep'] = 0
 

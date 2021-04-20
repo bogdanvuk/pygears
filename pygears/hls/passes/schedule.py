@@ -538,7 +538,7 @@ def schedule(cfg, ctx):
     while i < len(order):
         state_id = order[i]
         cfg = state_cfg[state_id]
-        print(f'[{state_id}]: Scoping')
+        # print(f'[{state_id}]: Scoping')
         new_states = {}
         # print_cfg_ir(cfg)
 
@@ -561,7 +561,7 @@ def schedule(cfg, ctx):
 
         state_num = len(state_in_scope) - len(new_states)
         if new_states:
-            print(f'[{state_id}]: Isolating')
+            # print(f'[{state_id}]: Isolating')
             state_cfg[state_id] = isolate(ctx, cfg, exits=new_states, state_num=state_num)
 
             # draw_scheduled_cfg(state_cfg[state_id], simple=False)
@@ -574,7 +574,7 @@ def schedule(cfg, ctx):
                 # state_cfg.append(isolate(ctx, ns))
 
                 order.insert(i + 1, new_state_id)
-                print(f'[{len(state_cfg)}]: Isolating')
+                # print(f'[{len(state_cfg)}]: Isolating')
                 state_cfg[new_state_id] = isolate(ctx, ns)
                 # draw_scheduled_cfg(state_cfg[-1], simple=False)
 
@@ -597,8 +597,8 @@ def schedule(cfg, ctx):
         # print_cfg_ir(s)
         RebuildStateIR().visit(s)
 
-        print(f'------------- State {i} --------------')
-        print_cfg_ir(s)
+        # print(f'------------- State {i} --------------')
+        # print_cfg_ir(s)
 
     states = {i: s.value for i, s in state_cfg.items()}
 

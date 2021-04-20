@@ -31,6 +31,18 @@ def datagear(func, **meta_kwds):
     body = f'''async with gather({",".join(paramspec.args)}) as _data:
         yield datafunc({",".join(invocation)})'''
 
+    # TODO: Small optimization point to avoid async context manager. This needs to be supported by the compiler
+    # invocation = [f'await {a}.pull()' for a in paramspec.args]
+    # for name in paramspec.kwonlyargs:
+    #     invocation.append(f'{name}={name}')
+
+    # ack = ','.join(f'{a}.ack()' for a in paramspec.args)
+
+    # body = f'''
+    # yield datafunc({",".join(invocation)})
+    # {ack}
+    # '''
+
     execdict = {'datafunc': func, 'gather': gather}
     execdict.update(get_function_context_dict(func))
 

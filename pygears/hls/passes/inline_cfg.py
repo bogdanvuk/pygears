@@ -315,7 +315,7 @@ class VarScope(Inline):
 
         cond = detect_new_state(node, self.scope_map)
         if cond != ir.res_false:
-            print(f'New state cond: {str(cond)}')
+            # print(f'New state cond: {str(cond)}')
             state_id = len(self.state_in_scope)
             self.state_in_scope.append(None)
 

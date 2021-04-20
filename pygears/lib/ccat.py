@@ -19,8 +19,13 @@ async def ccat(*din) -> b'Tuple[din]':
 
     """
 
-    async with gather(*din) as dout:
-        yield dout
+    yield [await d.pull() for d in din]
+
+    for d in din:
+        d.ack()
+
+    # async with gather(*din) as dout:
+    #     yield dout
 
 
 @gear

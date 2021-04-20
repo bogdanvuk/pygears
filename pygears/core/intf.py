@@ -234,9 +234,9 @@ class Intf:
             q.put_nowait(val)
 
     async def ready(self):
-        if not self.ready_nb():
-            for q, c in zip(self.out_queues, self.end_consumers):
-                gear_reg['current_sim'].phase = 'back'
+        gear_reg['current_sim'].phase = 'back'
+        for q in self._out_queues:
+            if q._unfinished_tasks:
                 await q.join()
 
     def ready_nb(self):
@@ -304,41 +304,45 @@ class Intf:
         return val
 
     async def pull(self):
-        e = self.events['pull_start']
+        ev = self.events
+        e = ev['pull_start']
         if e:
             e(self)
 
         if self._done:
             raise GearDone
 
-        if self._data is None:
+        val = self._data
+        if val is None:
             gear_reg['current_sim'].phase = 'forward'
-            self._data = await self.in_queue.get()
+            val = await self.in_queue.get()
 
-        e = self.events['pull_done']
+        e = ev['pull_done']
         if e:
             e(self)
 
-        if isinstance(self._data, self.dtype):
-            return self._data
+        self._data = val
+        if isinstance(val, self.dtype):
+            return val
 
         try:
-            return self.dtype(self._data)
+            return self.dtype(val)
         except TypeError:
-            return self._data
+            return val
 
     def ack(self):
-        if not self.in_queue._unfinished_tasks:
+        inq = self.in_queue
+        if not inq._unfinished_tasks:
             return
 
         e = self.events['ack']
         if e:
             e(self)
 
-        self.in_queue.task_done()
-        if self.in_queue.intf.ready_nb():
-            e = self.in_queue.intf.events['ack']
-            e(self.in_queue.intf)
+        inq.task_done()
+        if inq.intf.ready_nb():
+            e = inq.intf.events['ack']
+            e(inq.intf)
 
         self._data = None
         return
@@ -364,4 +368,4 @@ class IntfOperPlugin(PluginBase):
     def bind(cls):
         reg['gear/intf_oper'] = {}
         global gear_reg
-        gear_reg = reg['gear']
+        gear_reg = reg['gear']._dict

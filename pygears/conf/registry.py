@@ -208,10 +208,13 @@ class ConfigVariable:
         return self._val != self.default
 
 
-class Registry(dict):
+class Registry:
+    def __init__(self, *args, **kwds):
+        self._dict = dict(*args, **kwds)
+
     def __getitem__(self, key):
         key, _, subpath = key.partition('/')
-        val = super().__getitem__(key)
+        val = self._dict.__getitem__(key)
 
         if subpath:
             return val[subpath]
@@ -221,12 +224,24 @@ class Registry(dict):
 
         return val
 
+    def __iter__(self):
+        return self._dict.__iter__()
+
+    def items(self):
+        return self._dict.items()
+
+    def get(self, key, dflt):
+        return self._dict.get(key, dflt)
+
+    def clear(self):
+        self._dict.clear()
+
     def __contains__(self, key):
         key, _, subpath = key.partition('/')
-        val = super().__contains__(key)
+        val = self._dict.__contains__(key)
 
         if subpath and val:
-            return subpath in super().__getitem__(key)
+            return subpath in self._dict.__getitem__(key)
 
         return val
 
@@ -234,7 +249,7 @@ class Registry(dict):
         key, _, subpath = key.partition('/')
         if not subpath:
             try:
-                cfgvar = super().__getitem__(key)
+                cfgvar = self._dict.__getitem__(key)
             except KeyError:
                 pass
             else:
@@ -242,13 +257,13 @@ class Registry(dict):
                     cfgvar.val = val
                     return
 
-            return super().__setitem__(key, val)
+            return self._dict.__setitem__(key, val)
 
         if key not in self:
             subreg = Registry()
-            super().__setitem__(key, subreg)
+            self._dict.__setitem__(key, subreg)
         else:
-            subreg = super().__getitem__(key)
+            subreg = self._dict.__getitem__(key)
 
         subreg[subpath] = val
 

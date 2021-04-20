@@ -480,7 +480,7 @@ def forward(node, analysis):
     v = InferRegisters(analysis.reaching)
     v.visit(cfg_obj.entry)
 
-    print(f'Registers: {v.registers}')
+    # print(f'Registers: {v.registers}')
 
     return node, cfg_obj.entry, analysis.reaching, v.registers
 
