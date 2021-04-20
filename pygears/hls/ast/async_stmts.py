@@ -233,6 +233,9 @@ def AsyncFor(node, ctx: Context):
 @node_visitor(ast.Await)
 def _(node: ast.Await, ctx: Context):
     if isinstance(node.value, ast.Call):
-        return ir.Await(visit_ast(node.value.func, ctx))
+        res = visit_ast(node.value.func, ctx)
+        from pygears.sim import clk
+        if isinstance(res, ir.ResExpr) and res.val == clk:
+            return [ir.Await('back'), ir.Await('forward')]
 
     breakpoint()

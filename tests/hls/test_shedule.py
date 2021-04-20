@@ -189,6 +189,30 @@ def test_double_loop_seq(din_delay, dout_delay):
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
+def test_double_loop_seq_explicit_split(din_delay, dout_delay):
+    @gear(hdl={'compile': True})
+    async def test(din: Queue[Uint[4]]) -> Uint[5]:
+        async for d, _ in din:
+            yield d + 1
+
+        await clk()
+
+        async for d, _ in din:
+            yield d + 2
+
+    verif(drv(t=Queue[Uint[4]], seq=[[1, 2, 3] * 2] * 2) | delay_rng(din_delay, din_delay),
+          f=test(name='dut'),
+          ref=test,
+          delays=[delay_rng(dout_delay, dout_delay)])
+
+    cosim('/dut', 'verilator')
+    sim()
+
+
+# test_double_loop_seq_explicit_split(0, 1)
+
+@pytest.mark.parametrize('din_delay', [0, 1])
+@pytest.mark.parametrize('dout_delay', [0, 1])
 def test_cond_nested_loop_multistate(din_delay, dout_delay):
     @gear(hdl={'compile': True})
     async def test(din: Queue[Bool]) -> Uint[4]:

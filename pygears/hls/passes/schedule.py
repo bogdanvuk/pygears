@@ -434,7 +434,15 @@ class Piggyback(CfgDfs):
             self.ctx.reset_states[node.value.target.name].add(self.state_id)
 
 
-def discover_piggieback_states(cfg, ctx, scope_map, state_id, loops, reaching_nodes, state_cfg):
+class LoopBodyFinder(CfgDfs):
+    def __init__(self):
+        super().__init__()
+        self.loops = {}
+
+    def enter_LoopBody(self, node):
+        self.loops[node.value.state_id] = node
+
+def discover_piggieback_states(cfg, ctx, scope_map, state_id, reaching_nodes, state_cfg):
     # cfg_temp = isolate(ctx, cfg)
 
     v_iso = StateIsolator(ctx)
@@ -460,10 +468,14 @@ def discover_piggieback_states(cfg, ctx, scope_map, state_id, loops, reaching_no
     v.visit(cfg)
     reaching_loops = v.reaching
 
+    v = LoopBodyFinder()
+    v.visit(cfg)
+    loops = v.loops
+
     non_local = []
     piggied = []
     for child_state in piggy_states:
-        loop_cfg = loops[child_state - 1]
+        loop_cfg = loops[child_state]
 
         v = LoopLocality(ctx, v_iso.node_map[loop_cfg], reaching_nodes)
         v.visit(cfg_temp)
@@ -532,7 +544,7 @@ def schedule(cfg, ctx):
 
         if loops:
             non_local, piggied_cur = discover_piggieback_states(cfg, ctx, state_in_scope[state_id],
-                                                                state_id, loops, reaching_nodes,
+                                                                state_id, reaching_nodes,
                                                                 state_cfg)
 
         VarScope(ctx, state_in_scope, state_id, new_states).visit(cfg)
