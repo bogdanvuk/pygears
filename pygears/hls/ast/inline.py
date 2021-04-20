@@ -2,7 +2,7 @@ import typing
 from . import Context, GearContext, FuncContext, Function, Submodule, ir, ir_utils, node_visitor, visit_ast, visit_block
 from ..debug import print_func_parse_intro
 from pygears import Intf, reg
-from pygears.typing import typeof
+from pygears.typing import typeof, Bool, Uint
 from pygears.core.partial import combine_arg_kwds, extract_arg_kwds
 from pygears.core.port import HDLConsumer, HDLProducer
 
@@ -42,9 +42,16 @@ class UnusedVarCleanup(ir_utils.IrRewriter):
         if not isinstance(node.target, ir.Name):
             return node
 
-        # TODO: Are there situations where we can remove _state
         if node.target.name == '_state':
-            return node
+            # TODO: Find a better way of detecting whether state register is not needed
+            # If we are getting rid of state register
+            if '_rst_cond' in self.ctx.scope:
+                state_en = ir.AssignValue(self.ctx.ref('_state_en'), ir.res_true)
+                rst_cond = ir.AssignValue(ir.SubscriptExpr(self.ctx.ref('_rst_cond'), node.val),
+                                          ir.res_true)
+                return [state_en, rst_cond]
+            else:
+                return node
 
         if node.target.name in self.used or (isinstance(self.ctx, GearContext)
                                              and node.target.name in self.ctx.intfs):
@@ -57,9 +64,45 @@ class UnusedVarCleanup(ir_utils.IrRewriter):
 
 
 def removed_unused_vars(node, ctx):
-    v = UsedVarStmtVisitor()
-    v.visit(node)
-    return UnusedVarCleanup(v.used, ctx).visit(node)
+    # TODO: This part is only for the cleanup of the whole module with inferred
+    # states. Find a better way to implement this if statement
+    if isinstance(ctx, GearContext):
+        used = set()
+        for state in node.stmts[0].branches:
+            v = UsedVarStmtVisitor()
+            for stmt in state.stmts:
+                v.visit(stmt)
+
+            used.update(v.used)
+
+        if len(node.stmts[0].branches) == 1 and '_state' not in used:
+            node.stmts = node.stmts[0].branches[0].stmts
+
+            ctx.scope['_state_en'] = ir.Variable('_state_en', dtype=Bool)
+            state_type = ctx.scope['_state'].dtype
+            state_num = int(state_type.max) + 1
+            ctx.scope['_rst_cond'] = ir.Variable('_rst_cond', dtype=Uint[state_num])
+            node.stmts.insert(0, ir.AssignValue(ctx.ref('_state_en'), ir.res_false))
+            del ctx.scope['_state']
+
+            # TODO: Why can't we just do this? Default value extraction in
+            # svcompile creates a problem. Run "test_double_loop"
+            # node.stmts.insert(0, ir.AssignValue(ctx.ref('_rst_cond'), ir.ResExpr(ctx.scope['_rst_cond'].dtype(0))))
+
+            for s in range(state_num):
+                node.stmts.insert(
+                    0,
+                    ir.AssignValue(ir.SubscriptExpr(
+                        ctx.ref('_rst_cond'), ir.ResExpr(state_type(s))),
+                        ir.res_false))
+
+            used.update(['_state_en', '_rst_cond'])
+
+        return UnusedVarCleanup(used, ctx).visit(node)
+    else:
+        v = UsedVarStmtVisitor()
+        v.visit(node)
+        return UnusedVarCleanup(v.used, ctx).visit(node)
 
 
 class ComplexityExplorer(ir_utils.IrExprVisitor):

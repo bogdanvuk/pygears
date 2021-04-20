@@ -285,7 +285,7 @@ class SVCompiler(HDLVisitor):
             else:
                 pass
 
-    def CombBlock(self, node):
+    def Module(self, node):
         self.block_lines.append(BlockLines())
 
         self.header(f'// Comb block for: {self.var}')
@@ -460,7 +460,10 @@ def write_declarations(ctx, subsvmods, template_env):
         sep = '.'
         exprgen = vexpr
 
-    writer.line(f'logic _state_en;')
+    # TODO: Fix not to require this check
+    if '_state_en' not in ctx.scope:
+        writer.line(f'logic _state_en;')
+
     for name, expr in ctx.regs.items():
         name = exprgen(ctx.ref(name))
 
@@ -624,7 +627,12 @@ def write_module(ctx: Context, hdl, writer, subsvmods, funcs, template_env, conf
             blk += REG_TEMPLATE_NO_RST_COND.format(exprgen(ctx.ref(name)), init)
         else:
             rst_states = ctx.reset_states[name]
-            rst_expr = ' || '.join([f'(_state_next == {exprgen(s)})' for s in rst_states])
+            # TODO: Find a better way to infer when the state register has been removed
+            if '_rst_cond' not in ctx.scope:
+                rst_expr = ' || '.join([f'(_state_next == {exprgen(s)})' for s in rst_states])
+            else:
+                rst_expr = ' || '.join([f'_rst_cond[{s}]' for s in rst_states])
+
             blk += REG_TEMPLATE.format(exprgen(ctx.ref(name)), init, rst_expr)
 
     for name, expr in ctx.regs.items():

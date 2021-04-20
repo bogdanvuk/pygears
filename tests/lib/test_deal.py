@@ -132,7 +132,7 @@ def test_same_lvl(sim_cls):
 #     qdeal(Intf(Queue[Uint[16], 3]), num=3, lvl=2)
 
 
-@synth_check({'logic luts': 4, 'ffs': 2}, tool='vivado')
+@synth_check({'logic luts': 3, 'ffs': 1}, tool='vivado')
 def test_synth_vivado():
     qdeal(Intf(T_TRR_DIST), num=2)
 

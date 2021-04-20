@@ -107,7 +107,7 @@ def test_formal():
     clip(Intf(T_DIN))
 
 
-@synth_check({'logic luts': 11, 'ffs': 17}, tool='vivado')
+@synth_check({'logic luts': 12, 'ffs': 17}, tool='vivado')
 def test_synth_vivado():
     clip(Intf(T_DIN))
 

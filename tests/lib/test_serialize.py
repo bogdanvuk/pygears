@@ -86,7 +86,7 @@ def test_formal_active():
     serialize(Intf(TDin[Uint[8], 4, 4]))
 
 
-@synth_check({'logic luts': 20, 'ffs': 3}, tool='vivado')
+@synth_check({'logic luts': 29, 'ffs': 3}, tool='vivado')
 def test_synth_vivado():
     serialize(Intf(Array[Uint[16], 4]))
 
@@ -96,7 +96,7 @@ def test_synth_yosys():
     serialize(Intf(Array[Uint[16], 4]))
 
 
-@synth_check({'logic luts': 20, 'ffs': 4}, tool='vivado')
+@synth_check({'logic luts': 19, 'ffs': 4}, tool='vivado')
 def test_synth_active_vivado():
     serialize(Intf(TDin[Uint[8], 4, 4]))
 

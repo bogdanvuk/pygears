@@ -1132,6 +1132,7 @@ class BaseBlock(Statement):
 @attr.s(auto_attribs=True, kw_only=True, eq=False)
 class Module(BaseBlock):
     states: typing.List = attr.Factory(list)
+    funcs: typing.List = attr.Factory(list)
 
 
 @attr.s(auto_attribs=True, eq=False)
@@ -1233,11 +1234,6 @@ class HDLBlockSink(Statement):
 class LoopBlockSink(BaseBlock):
     def __str__(self):
         return f'LoopBlockSink'
-
-
-@attr.s(auto_attribs=True, eq=False)
-class CombBlock(BaseBlock):
-    funcs: typing.List = attr.Factory(list)
 
 
 @attr.s(auto_attribs=True, eq=False)

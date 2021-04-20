@@ -519,22 +519,6 @@ def schedule(cfg, ctx):
     for l in loops:
         isolated_loops[l.value.state_id] = isolate(ctx, l)
 
-    # # TODO: Should we delay this after VarScope has been applied, some
-    # # expressions inlined and potentialy some relationships removed?
-    # for l in loops:
-    #     v = LoopLocality(ctx, l, reaching_nodes)
-    #     v.visit(cfg)
-    #     if v.non_local:
-    #         state_cfg[l.value.state_id] = isolate(ctx, l)
-
-    # v = ReachingNodes()
-    # v.visit(cfg)
-    # reaching_loops = v.reaching
-
-    # state_cfg = [cfg] * (1 + len(loops))
-    # for l in loops:
-    #     state_cfg.append(isolate(ctx, l))
-
     state_in_scope = [{} for _ in range(1 + len(loops))]
     piggied = set()
     i = 0
@@ -552,9 +536,6 @@ def schedule(cfg, ctx):
                                                                 state_cfg)
 
         VarScope(ctx, state_in_scope, state_id, new_states).visit(cfg)
-        # print_cfg_ir(cfg)
-        # breakpoint()
-
         cfg.value.states.append(state_id)
 
         if loops:
@@ -565,46 +546,6 @@ def schedule(cfg, ctx):
             cfg.value.states.extend(piggied_cur)
 
             piggied.update(piggied_cur)
-
-        # if len(cfg.value.states) > 1:
-        #     v = cfgutil.ReachingDefinitions()
-        #     v.visit(cfg)
-        #     reaching_loops = v.reaching
-
-        #     for child_state in cfg.value.states[1:]:
-        #         loop_cfg = loops[child_state - 1]
-
-        #         v = LoopLocality(ctx, loop_cfg, reaching_nodes)
-        #         v.visit(cfg)
-        #         # TODO: Optimization currently disabled for loops with multiple states
-        #         if v.non_local:
-        #             state_cfg[child_state] = isolated_loops[child_state]
-        #             order.insert(i + 1, child_state)
-        #             cfg.value.states.remove(child_state)
-        #             continue
-
-        #         # TODO: Maybe it should go up the "kill" tree and do this for all nodes?
-        #         for name, in_node in reaching_loops[loop_cfg]['in']:
-        #             if name in ctx.scope and isinstance(ctx.scope[name],
-        #                                                 ir.Variable) and not ctx.scope[name].reg:
-        #                 continue
-
-        #             if isinstance(in_node.value, ir.RegReset):
-        #                 continue
-
-        #             # If the register is updated withing the loop
-        #             for out_name, out_node in reaching_loops[loop_cfg.sink]['in']:
-        #                 if out_name == name:
-        #                     break
-
-        #             if in_node is not out_node:
-        #                 state_test = ir.BinOpExpr((ctx.ref('_state'), ir.ResExpr(child_state)),
-        #                                           ir.opc.NotEq)
-        #                 cond_wrap(in_node, in_node, state_test)
-
-        #         # state_cfg[child_state] = cfg
-        #         Piggyback(ctx, state_in_scope, child_state, reaching_loops).visit(cfg)
-        #         piggied.add(child_state)
 
         state_num = len(state_in_scope) - len(new_states)
         if new_states:
@@ -648,23 +589,27 @@ def schedule(cfg, ctx):
         print_cfg_ir(s)
 
     states = {i: s.value for i, s in state_cfg.items()}
+
+    for i, s in states.items():
+        test = ir.res_false
+        for j in s.states:
+            state_test = ir.BinOpExpr((ctx.ref('_state'), ir.ResExpr(j)), ir.opc.Eq)
+            test = ir.BinOpExpr([test, state_test], ir.opc.Or)
+
     # state_num = len(states)
     state_num = len(state_in_scope)
     ctx.scope['_state'].val = ir.ResExpr(Uint[bitw(state_num - 1)](0))
     ctx.scope['_state'].dtype = Uint[bitw(state_num - 1)]
 
-    if state_num == 1:
-        modblock = ir.CombBlock(stmts=states[0].stmts)
-    else:
-        stateblock = ir.HDLBlock()
-        for i, s in states.items():
-            test = ir.res_false
-            for j in s.states:
-                state_test = ir.BinOpExpr((ctx.ref('_state'), ir.ResExpr(j)), ir.opc.Eq)
-                test = ir.BinOpExpr([test, state_test], ir.opc.Or)
+    stateblock = ir.HDLBlock()
+    for i, s in states.items():
+        test = ir.res_false
+        for j in s.states:
+            state_test = ir.BinOpExpr((ctx.ref('_state'), ir.ResExpr(j)), ir.opc.Eq)
+            test = ir.BinOpExpr([test, state_test], ir.opc.Or)
 
-            stateblock.add_branch(ir.Branch(stmts=s.stmts, test=test))
+        stateblock.add_branch(ir.Branch(stmts=s.stmts, test=test))
 
-        modblock = ir.CombBlock(stmts=[stateblock])
+    modblock = ir.Module(stmts=[stateblock])
 
     return modblock

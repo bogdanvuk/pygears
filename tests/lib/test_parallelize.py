@@ -1,4 +1,5 @@
 import pytest
+from pygears import Intf
 import itertools
 
 from pygears.lib import parallelize
@@ -6,7 +7,7 @@ from pygears.lib.delay import delay_rng
 from pygears.lib.verif import directed, drv
 from pygears.sim import sim
 from pygears.typing import Array, Uint, Bool
-from pygears.util.test_utils import get_decoupled_dut
+from pygears.util.test_utils import get_decoupled_dut, synth_check
 
 
 @pytest.mark.parametrize('din_delay', [0, 5])
@@ -37,3 +38,8 @@ def test_uint(cosim_cls, din_delay, dout_delay):
              delays=[delay_rng(dout_delay, dout_delay)])
 
     sim()
+
+
+@synth_check({'logic luts': 25, 'ffs': 22}, tool='vivado', part='xcu200-fsgd2104-2-e', prjdir='/tmp/prjsynth')
+def test_synth_vivado():
+    parallelize(Intf(Uint[16]), t=Uint[16])
