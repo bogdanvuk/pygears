@@ -162,7 +162,14 @@ class Gear(NamedHierNode):
         if self.out_ports:
             return not any(has_async_producer(p) for p in self.out_ports)
         else:
-            return not any(p.consumer is None for p in self.in_ports)
+            for p in self.in_ports:
+                if p.consumer is None:
+                    return False
+
+                if isinstance(p.consumer.consumers[0], HDLConsumer):
+                    return False
+            else:
+                return True
 
     @property
     def definition(self):
