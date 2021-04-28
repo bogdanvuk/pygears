@@ -2,7 +2,6 @@ from .. import ir
 from .. import ir_utils
 from ..debug import hls_debug
 
-# from .inline import inline, inline_res
 from .dead_code import remove_dead_code, find_called_funcs
 from .register import infer_registers
 from .schedule import schedule

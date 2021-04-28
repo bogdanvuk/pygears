@@ -107,18 +107,6 @@ def opex(op, *operands):
         return PYOPMAP[op](*(p.val for p in operands))
 
 
-def bin_op_reduce(intfs, func, op, dflt=None):
-    if not intfs:
-        return dflt
-
-    intf1 = func(intfs[0])
-
-    if len(intfs) == 1:
-        return intf1
-    else:
-        return BinOpExpr([intf1, bin_op_reduce(intfs[1:], func, op, dflt=dflt)], op)
-
-
 def find_sub_dtype(val):
     if isinstance(val, (tuple, list)):
         sub = max(val, key=lambda x: getattr(x, 'dtype').width)
@@ -713,7 +701,11 @@ class BinOpExpr(Expr):
         pass
 
     def __new__(cls, operands: typing.Tuple[OpType], operator):
-        op1, op2 = operands
+        if len(operands) > 2:
+            op1 = operands[0]
+            op2 = BinOpExpr(operands[1:], operator)
+        else:
+            op1, op2 = operands
 
         if isinstance(op1, ResExpr) and isinstance(op2, ResExpr):
             return ResExpr(opex(operator, op1, op2))
@@ -795,10 +787,8 @@ class ArrayOpExpr(Expr):
 
 
 class SubscriptExpr(Expr):
-    ctx: str = 'load'
-
     def __repr__(self):
-        return f'{type(self).__name__}(val={repr(self.val)}, index={repr(self.index)})'
+        return f'{type(self).__name__}(val={repr(self.val)}, index={repr(self.index)}, ctx={self.ctx})'
 
     def __str__(self):
         return f'{self.val}[{self.index}]'
@@ -998,6 +988,15 @@ class GenDone(Expr):
     @property
     def dtype(self):
         return Bool
+
+
+@attr.s(auto_attribs=True)
+class GenInit(Expr):
+    val: Name
+
+    @property
+    def dtype(self):
+        return self.val.dtype
 
 
 @attr.s(auto_attribs=True)

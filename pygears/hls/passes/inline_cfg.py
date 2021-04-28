@@ -44,6 +44,8 @@ def forward_value(target, val, scope):
             if isinstance(base_val, ir.ResExpr):
                 base_val.val[target.index.val] = cast(val.val, base_val.dtype[target.index.val])
                 return True
+        else:
+            scope[target.val.name] = target.val
 
 
 def merge_subscope(subscopes, tests):
@@ -118,6 +120,12 @@ class Inliner(IrExprRewriter):
         if reg_inits is None:
             reg_inits = {}
         self.reg_inits = reg_inits
+
+    def visit_SubscriptExpr(self, node):
+        if node.ctx == 'load':
+            return super().visit_SubscriptExpr(node)
+        else:
+            return ir.SubscriptExpr(node.val, self.visit(node.index), ctx=node.ctx)
 
     def visit_Name(self, irnode):
         # If this name is target of the assignment, we have nothing to do

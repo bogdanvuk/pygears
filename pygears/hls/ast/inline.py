@@ -32,6 +32,7 @@ class UsedVarStmtVisitor(ir_utils.IrVisitor):
         UsedVarVisitor(self.used).visit(node)
 
 
+# TODO: Make it work with multiple target assignements
 class UnusedVarCleanup(ir_utils.IrRewriter):
     def __init__(self, used, ctx):
         super().__init__()
@@ -122,6 +123,7 @@ class ComplexityExplorer(ir_utils.IrExprVisitor):
         super().visit_ConditionalExpr(node)
 
 
+# TODO: Should we use Inliner from passes/inline_cfg?
 class Inliner(ir_utils.IrExprRewriter):
     def __init__(self, forwarded):
         self.forwarded = forwarded

@@ -73,8 +73,8 @@ class Unfolder(IrRewriter):
             return super().AssignValue(node)
 
         gen_id = node.val.val
-        if gen_id.name not in self.generators:
-            func_call = gen_id.obj.func
+        if gen_id not in self.generators:
+            func_call = self.ctx.scope[gen_id].func
 
             if not const_func_args(func_call.args.values(), func_call.kwds):
                 raise Ununfoldable()
@@ -83,17 +83,17 @@ class Unfolder(IrRewriter):
 
             vals = exhaust(func_call.func, args)
 
-            self.generators[gen_id.name] = {'vals': quiter(vals)}
+            self.generators[gen_id] = {'vals': quiter(vals)}
 
-        next_val, last = next(self.generators[gen_id.name]['vals'])
+        next_val, last = next(self.generators[gen_id]['vals'])
 
         self.forwarded[node.target.name] = ir.ResExpr(next_val)
-        self.generators[gen_id.name]['last'] = ir.ResExpr(last)
+        self.generators[gen_id]['last'] = ir.ResExpr(last)
 
         return None
 
     def ExprStatement(self, node):
-        if not isinstance(node.expr, ir.GenAck):
+        if not isinstance(node.expr, (ir.GenAck, ir.GenInit)):
             return super().ExprStatement(node)
 
         if node.expr.val in self.generators:
@@ -141,7 +141,7 @@ class HandleGenerators(IrRewriter):
             return node
 
         gen_id = node.val.val
-        func_call = gen_id.obj.func
+        func_call = self.ctx.scope[gen_id].func
         pass_eot = func_call.pass_eot
 
         if func_call.func in builtins:
@@ -159,7 +159,7 @@ class HandleGenerators(IrRewriter):
 
         # intf = intf.obj.val
 
-        self.generators[gen_id.name] = {
+        self.generators[gen_id] = {
             'intf': intf,
             'eot_name': eot_name,
             'eot': self.ctx.scope[eot_name]
@@ -187,12 +187,15 @@ class HandleGenerators(IrRewriter):
         return stmts
 
     def ExprStatement(self, node):
-        if not isinstance(node.expr, ir.GenAck):
+        if not isinstance(node.expr, (ir.GenAck, ir.GenInit)):
             return node
 
-        gen_cfg = self.generators[node.expr.val]
+        if isinstance(node.expr, ir.GenAck):
+            gen_cfg = self.generators[node.expr.val]
+            return ir.AssignValue(ir.Component(gen_cfg['intf'], 'ready'), ir.res_true)
 
-        return ir.AssignValue(ir.Component(gen_cfg['intf'], 'ready'), ir.res_true)
+        if isinstance(node.expr, ir.GenInit):
+            return node
 
     def LoopBlock(self, node):
         # TODO: Checking for blocking coupled with blocking generator resolution. Refactor it out

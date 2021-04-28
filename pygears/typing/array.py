@@ -4,6 +4,7 @@ from .base import class_and_instance_method
 # TODO: Check why array is specified when no length is specified
 
 
+# TODO: Should we define addition?
 class ArrayType(EnumerableGenericMeta):
     def __new__(cls, name, bases, namespace, args=None):
         cls = super().__new__(cls, name, bases, namespace, args)
@@ -116,7 +117,7 @@ class Array(list, metaclass=ArrayType):
         t = type(self).data
 
         if val is None:
-            array_tpl = (None, ) * len(type(self))
+            array_tpl = (t(), ) * len(type(self))
         else:
             array_tpl = (v if typeof(type(v), t) or v is None else t(v) for v in val)
 

@@ -1,4 +1,4 @@
-from pygears.typing import Tuple, Unit, TemplateArgumentsError, Uint
+from pygears.typing import Tuple, Unit, TemplateArgumentsError, Uint, Array
 import pytest
 
 
@@ -150,3 +150,21 @@ def test_subs():
 
     a = t((2, 3, 4))
     assert a.subs(1, 1) == t((2, 1, 4))
+
+def test_add():
+    t1 = Tuple[Uint[1], Uint[2]]
+    t2 = Tuple[Uint[3]]
+    t3 = Array[Uint[4], 2]
+
+    assert t1 + t2 == Tuple[Uint[1], Uint[2], Uint[3]]
+    assert t1 + t3 == Tuple[Uint[1], Uint[2], Uint[4], Uint[4]]
+    assert t3 + t1 == Tuple[Uint[4], Uint[4], Uint[1], Uint[2]]
+    assert t1 + Tuple == t1
+    assert t3 + Tuple == Tuple[Uint[4], Uint[4]]
+
+    v1 = t1((1, 2))
+    v2 = t2((3,))
+    v3 = t3((4, 5))
+
+    assert v1 + v2 == (t1 + t2)((1, 2, 3))
+    assert v1 + v3 == (t1 + t3)((1, 2, 4, 5))

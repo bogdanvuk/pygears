@@ -542,7 +542,36 @@ def test_double_loop(din_delay, dout_delay):
     # print(util)
 
 
-# test_double_loop(0, 0)
+
+# @pytest.mark.parametrize('din_delay', [0, 1])
+# @pytest.mark.parametrize('dout_delay', [0, 1])
+# def test_yield_reg_next_val(din_delay, dout_delay):
+#     @gear(hdl={'compile': True})
+#     async def test(din: Queue[Uint[2]]) -> Queue[Uint[4]]:
+#         data = Uint[4](0)
+#         cnt = Uint[2](0)
+
+#         async for d, last in din:
+#             for i in range(2):
+#                 data[cnt + i] = d[i]
+
+#             cnt += 2
+
+#             if cnt == 4 or last:
+#                 yield (data, last)
+#                 data = Uint[4](0)
+#                 cnt = 0
+
+#     verif(drv(t=Queue[Uint[2]], seq=[[3, 3, 3]]) | delay_rng(din_delay, din_delay),
+#           f=test(name='dut'),
+#           ref=test,
+#           delays=[delay_rng(dout_delay, dout_delay)])
+
+#     cosim('/dut', 'verilator')
+#     sim()
+
+
+# test_yield_reg_next_val(0, 0)
 
 # from pygears.hls.ir import BinOpExpr, opc, UnaryOpExpr
 # res = BinOpExpr([BinOpExpr(['b', 'a'], opc.Or), BinOpExpr([UnaryOpExpr('a', opc.Not), 'b'], opc.Or)], opc.And)

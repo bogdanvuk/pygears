@@ -1,4 +1,4 @@
-from pygears.typing import Fixp, Fixpnumber, Integer, Tuple, Ufixp, Uint, typeof, Int, Union, cast, Array, Queue
+from pygears.typing import Fixp, Fixpnumber, Integer, Tuple, Ufixp, Uint, typeof, Int, Union, cast, Array, Queue, Maybe, Bool
 from . import ir
 from pygears.typing import get_match_conds, TypeMatchError
 
@@ -63,10 +63,19 @@ def queue_resolver(opexp, cast_to):
 def array_resolver(opexp, cast_to):
     cast_to = cast(opexp.dtype, cast_to)
 
-    cast_fields = []
-    for i in range(len(opexp.dtype)):
-        field = subscript(opexp, i)
-        cast_fields.append(resolve_cast_func(field, cast_to.data))
+    dlen, clen = len(opexp.dtype), len(cast_to)
+
+    if dlen == clen:
+        cast_fields = []
+        for i in range(len(opexp.dtype)):
+            field = subscript(opexp, i)
+            cast_fields.append(resolve_cast_func(field, cast_to.data))
+    else:
+        elen = len(cast_to.data)
+        cast_fields = []
+        for i in range(len(cast_to)):
+            field = subscript(opexp, slice(elen*i, elen*(i+1)))
+            cast_fields.append(resolve_cast_func(field, cast_to.data))
 
     return ir.ConcatExpr(cast_fields)
 
@@ -106,6 +115,12 @@ def int_resolver(opexp, cast_to):
     return ir.CastExpr(opexp, cast_to)
 
 
+# TODO: Generalize this to any Union
+def maybe_resolver(opexp, cast_to):
+    data = ir.CastExpr(resolve_cast_func(opexp, cast_to.dtype), cast_to[0])
+    return ir.CastExpr(ir.ConcatExpr([data, ir.ResExpr(Bool(True))]), cast_to)
+
+
 resolvers = {
     Fixpnumber: fixp_resolver,
     Tuple: tuple_resolver,
@@ -113,7 +128,8 @@ resolvers = {
     Array: array_resolver,
     Int: int_resolver,
     Uint: uint_resolver,
-    Union: union_resolver
+    Maybe: maybe_resolver, # Has to go before Union to be detected!
+    Union: union_resolver,
 }
 
 

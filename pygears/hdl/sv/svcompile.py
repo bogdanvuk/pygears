@@ -195,7 +195,14 @@ class SVCompiler(HDLVisitor):
                 return
 
             svstmt = f"{name} = {val}"
-            self.handle_defaults(name, svstmt)
+
+            # if this is only partial assignement, the order of assignment then
+            # matters and this cannot be a default
+            if isinstance(target, ir.SubscriptExpr):
+                self.write(svstmt)
+            else:
+                self.handle_defaults(name, svstmt)
+
             if name == '_state_next':
                 self.handle_defaults("_state_en", "_state_en = 1")
 

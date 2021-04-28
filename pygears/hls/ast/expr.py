@@ -175,7 +175,16 @@ def visit_bin_expr(op, operands, ctx: Context):
 
 @node_visitor(ast.Compare)
 def _(node, ctx: Context):
-    return visit_bin_expr(node.ops[0], (node.left, node.comparators[0]), ctx)
+    left = node.left
+    exprs = []
+    for op, c in zip(node.ops, node.comparators):
+        exprs.append(visit_bin_expr(op, (left, c), ctx))
+        left = c
+
+    if len(exprs) == 1:
+        return exprs[0]
+    else:
+        return ir.BinOpExpr(exprs, ir.opc.And)
 
 
 @node_visitor(ast.BoolOp)
@@ -310,6 +319,7 @@ def _(node, ctx: Context):
     return ir.ResExpr(py_eval_expr(node, ctx))
 
 
+# TODO: Generalize for multiple loops withing list comprehension
 @node_visitor(ast.ListComp)
 def _(node, ctx: Context):
     if len(node.generators) != 1:

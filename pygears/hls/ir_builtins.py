@@ -2,7 +2,7 @@ from pygears.conf import PluginBase, reg
 from . import ir
 from .ast.cast import resolve_cast_func
 from .ast.call import resolve_gear_call, resolve_func
-from pygears import Intf
+from pygears import Intf, reg
 
 from pygears.core.gear import OutSig
 
@@ -45,6 +45,7 @@ def max_expr(op1, op2):
     return ir.ConditionalExpr(cond=cond, operands=(op1, op2))
 
 
+# TODO: Why do we need ir.TupleExpr?
 def call_tuple(arg):
     if isinstance(arg, ir.ConcatExpr):
         return ir.TupleExpr(arg.operands)
@@ -52,8 +53,34 @@ def call_tuple(arg):
         return arg
     elif isinstance(arg, ir.ResExpr):
         return ir.ResExpr(tuple(arg.val))
+    elif typeof(arg.dtype, (Array, Tuple)):
+        return ir.ConcatExpr([ir.SubscriptExpr(arg, ir.ResExpr(i)) for i in range(len(arg.dtype))])
     else:
+        breakpoint()
         raise Exception
+
+def call_tuple_add(op1, op2):
+    if op1 == ir.ResExpr(()):
+        return op2
+    elif op2 == ir.ResExpr(()):
+        return op1
+
+    if not isinstance(op1, ir.ConcatExpr):
+        op1 = call_tuple(op1)
+    if not isinstance(op2, ir.ConcatExpr):
+        op2 = call_tuple(op2)
+
+    if isinstance(op1, ir.ConcatExpr):
+        ops1 = op1.operands
+    elif isinstance(op1, ir.ResExpr):
+        ops1 = [ir.ResExpr(v) for v in op1.val]
+
+    if isinstance(op2, ir.ConcatExpr):
+        ops2 = op2.operands
+    elif isinstance(op2, ir.ResExpr):
+        ops2 = [ir.ResExpr(v) for v in op2.val]
+
+    return ir.ConcatExpr(ops1 + ops2)
 
 
 def call_len(arg, **kwds):
@@ -95,6 +122,7 @@ def call_any(arg, **kwds):
     return ir.ArrayOpExpr(arg, ir.opc.BitOr)
 
 
+# TODO: Can this be generalized a bit?
 def call_max(*arg, **kwds):
     if len(arg) != 1:
         return reduce(max_expr, arg)
@@ -212,6 +240,20 @@ def call_typeof(arg, dtype):
     return ir.ResExpr(Bool(typeof(arg.val, dtype)))
 
 
+# TODO: Implement sum and reduce
+def call_sum(iterable, start):
+    if not isinstance(iterable, ir.ConcatExpr):
+        breakpoint()
+
+    f = getattr(start.dtype, '__add__')
+    ret = resolve_func(f, (start, iterable.operands[0]), {}, reg['hls/ctx'])
+
+    if len(iterable.operands) == 1:
+        return ret
+    else:
+        return call_sum(ir.ConcatExpr(iterable.operands[1:]), ret)
+
+
 def call_subs_fix_index(orig, path, val):
     parts = []
     for i in range(len(orig.dtype)):
@@ -310,6 +352,8 @@ class AddIntfOperPlugin(PluginBase):
             type: call_type,
             isinstance: call_isinstance,
             tuple: call_tuple,
+            tuple.__add__: call_tuple_add,
+            sum: call_sum,
             is_type: call_is_type,
             typeof: call_typeof,
             div: call_div,

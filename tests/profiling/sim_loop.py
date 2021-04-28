@@ -18,7 +18,7 @@ class Profiler(SimExtend):
         s = io.StringIO()
         ps = pstats.Stats(self.pr, stream=s).sort_stats('time')
         ps.print_stats()
-        ps.dump_stats('/tools/home/tmp/pygears.profile')
+        ps.dump_stats('/tmp/pygears.profile')
         print(s.getvalue())
 
 

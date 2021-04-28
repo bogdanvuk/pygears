@@ -273,11 +273,22 @@ def array_type_cast_resolver(dtype, cast_type):
         return Array[arr_dtype, len(dtype)]
 
     if typeof(dtype, Array):
-        if len(dtype) != len(cast_type):
-            comp = 'less' if len(cast_type) < len(dtype) else 'more'
-            raise get_type_error(
-                dtype, cast_type,
-                [f"target Array has {comp} elements ({len(cast_type)}) than source ({len(dtype)})"])
+        dlen, clen = len(dtype), len(cast_type)
+        if dlen != clen:
+            comp = 'less' if clen < dlen else 'more'
+            err_detail = [
+                f"target Array has {comp} elements ({len(cast_type)}) than source ({len(dtype)})"
+            ]
+
+            if dlen % clen == 0:
+                subarray = Array[dtype.data, dlen // clen]
+                try:
+                    subarray = cast(subarray, cast_type.data)
+                    return Array[subarray, clen]
+                except TypeError as e:
+                    err_detail.append(str(e))
+
+            raise get_type_error(dtype, cast_type, err_detail)
 
         try:
             arr_dtype = cast(dtype.data, cast_type.data)
@@ -497,8 +508,14 @@ def tuple_value_cast_resolver(val, cast_type):
 def array_value_cast_resolver(val, cast_type):
     val_type = type(val)
     cast_type = array_type_cast_resolver(val_type, cast_type)
+    cast_elem = cast_type.data
 
-    return cast_type(tuple(cast(v, t) for v, t in zip(val, cast_type)))
+    dlen, clen = len(val_type), len(cast_type)
+    if dlen == clen:
+        return cast_type(tuple(cast(v, cast_elem) for v in val))
+    else:
+        elen = len(cast_elem)
+        return cast_type(tuple(cast(val[elen*i:elen*(i+1)], cast_elem) for i in range(clen)))
 
 
 def union_value_cast_resolver(val, cast_type):

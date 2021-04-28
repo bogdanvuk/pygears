@@ -31,7 +31,7 @@ def test_simple_qrange(sim_cls):
 def test_unfold(lang):
     @gear(hdl={'compile': True})
     async def test() -> Array[Uint[3], 4]:
-        data = Array[Uint[3], 4](None)
+        data = Array[Uint[3], 4]()
         for i in range(4):
             data[i] = i
 

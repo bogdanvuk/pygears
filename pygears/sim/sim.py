@@ -15,6 +15,7 @@ from pygears.core.gear import GearPlugin, Gear
 from pygears.core.port import InPort, OutPort, HDLConsumer, HDLProducer
 from pygears.core.sim_event import SimEvent
 from pygears.core.hier_node import HierVisitorBase
+from pygears.util.fileio import expand
 from pygears.sim import log
 
 gear_reg = {}
@@ -158,6 +159,10 @@ def cosim(top, sim, *args, **kwds):
         if top is None:
             raise Exception(f'No gear found on path: "{top_name}"')
 
+
+    kwds['outdir'] = expand(kwds.get('outdir', reg['results-dir']))
+    kwds['rebuild'] = kwds.get('rebuild', True)
+
     if isinstance(sim, str):
         if sim in ['cadence', 'xsim', 'questa']:
             from .modules import SimSocket
@@ -167,17 +172,16 @@ def cosim(top, sim, *args, **kwds):
             from .modules import SimVerilated
             from .modules.verilator import build
 
-            kwds['outdir'] = kwds.get('outdir', reg['results-dir'])
-            kwds['rebuild'] = kwds.get('rebuild', True)
             timeout = kwds.pop('timeout', 100)
             sim_cls = SimVerilated
             build(top, **kwds)
-            kwds['rebuild'] = False
             kwds['timeout'] = timeout
         else:
             raise Exception(f"Unsupported simulator: {sim}")
     else:
         sim_cls = sim
+
+    kwds['rebuild'] = False
 
     if args or kwds:
         top.params['sim_cls'] = partial(sim_cls, *args, **kwds)
@@ -572,11 +576,13 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             if reg['sim/exception']:
                 raise reg['sim/exception']
 
+class SimSetupDone(Exception):
+    pass
 
 # TODO: This function throws an error when run two times in a script
 def sim(resdir=None, timeout=None, extens=None, run=True, check_activity=False, seed=None):
     if reg['sim/dryrun']:
-        return
+        raise SimSetupDone
 
     if extens is None:
         extens = []

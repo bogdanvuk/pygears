@@ -236,6 +236,9 @@ class Registry:
     def clear(self):
         self._dict.clear()
 
+    def keys(self):
+        return self._dict.keys()
+
     def __contains__(self, key):
         key, _, subpath = key.partition('/')
         val = self._dict.__contains__(key)

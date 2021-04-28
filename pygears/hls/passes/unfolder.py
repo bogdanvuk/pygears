@@ -1,5 +1,6 @@
-from .inline_cfg import forward_value, merge_subscope, inline_expr
+from .inline_cfg import forward_value, merge_subscope, inline_expr, get_forward_value
 from ..ir_utils import ir, IrRewriter, add_to_list, IrVisitor, IrExprVisitor
+from pygears.typing import cast
 from copy import copy
 from ..ast.call import const_func_args
 from pygears.util.utils import quiter
@@ -102,11 +103,17 @@ def ir_merge_subscope(block, block_scope_map):
 
 
 class Inline(IrRewriter):
-    def __init__(self, ctx, scope_map=None):
+    def __init__(self,
+                 ctx,
+                 scope_map=None,
+                 scope_updater=forward_value,
+                 scope_merger=ir_merge_subscope):
         super().__init__()
         self.scope_map = {} if scope_map is None else scope_map
         self.block_scope_map = {}
         self.ctx = ctx
+        self.scope_updater = scope_updater
+        self.scope_merger = scope_merger
 
     def enter_FuncBlock(self, block: ir.FuncBlock):
         for a in block.value.args:
@@ -116,7 +123,7 @@ class Inline(IrRewriter):
         self.block_scope_map[block] = copy(self.scope_map)
 
     def exit_HDLBlock(self, block: ir.HDLBlock):
-        outscope = ir_merge_subscope(block, self.block_scope_map)
+        outscope = self.scope_merger(block, self.block_scope_map)
         self.scope_map.update(outscope)
 
     def handle_expr(self, expr):
@@ -127,7 +134,7 @@ class Inline(IrRewriter):
 
     def enter_Branch(self, node: ir.Branch):
         self.scope_map = self.block_scope_map[self.parent].copy()
-        node.test = self.handle_expr(node.test)
+        # node.test = self.handle_expr(node.test)
 
     def exit_Branch(self, node: ir.Branch):
         self.block_scope_map[node] = self.scope_map.copy()
@@ -147,15 +154,37 @@ class Inline(IrRewriter):
             val = ir.ConcatExpr(
                 operands=[op.expr if isinstance(op, ir.Await) else op for op in val.operands])
 
-        forward_value(rw_node.target, val, self.scope_map)
+        self.scope_updater(rw_node.target, val, self.scope_map)
 
         return rw_node
+
+
+def forward_nonreg_value(target, val, scope):
+    if isinstance(target, ir.Name):
+        if not target.obj.reg or isinstance(val, ir.ResExpr):
+            scope[target.name] = val
+        else:
+            scope[target.name] = ir.Name(target.name, target.obj, ctx='load')
+
+        return True
+    elif isinstance(target, ir.ConcatExpr):
+        for i, t in enumerate(target.operands):
+            forward_nonreg_value(t, ir.SubscriptExpr(val, ir.ResExpr(i)), scope)
+    elif isinstance(target, ir.SubscriptExpr):
+        if (isinstance(target.index, ir.ResExpr) and isinstance(val, ir.ResExpr)):
+            base_val = get_forward_value(target.val, scope)
+
+            if isinstance(base_val, ir.ResExpr):
+                base_val.val[target.index.val] = cast(val.val, base_val.dtype[target.index.val])
+                return True
+        else:
+            scope[target.val.name] = target.val
 
 
 class LoopUnfolder(Inline):
     def __init__(self, ctx, scope_map=None):
         self.generators = {}
-        super().__init__(ctx)
+        super().__init__(ctx, scope_updater=forward_nonreg_value)
 
         for r in ctx.regs:
             self.scope_map[r] = ctx.ref(r)
@@ -164,6 +193,10 @@ class LoopUnfolder(Inline):
         name = node.value.target.name
         if not self.ctx.scope[name].reg:
             self.scope_map[name] = node.value.target.val
+
+    # def enter_HDLBlock(self, node):
+    #     breakpoint()
+    #     print("here")
 
     def LoopBlock(self, block: ir.LoopBlock):
         rw_block = type(block)(blocking=block.blocking)
@@ -190,17 +223,15 @@ class LoopUnfolder(Inline):
             return rw_block.stmts
 
     def ExprStatement(self, node):
-        if not isinstance(node.expr, ir.GenAck):
+        if not isinstance(node.expr, (ir.GenAck, ir.GenInit)):
             return super().ExprStatement(node)
 
-        if node.expr.val in self.generators:
-            return None
+        if isinstance(node.expr, ir.GenAck):
+            if node.expr.val in self.generators:
+                return None
 
-        return node
-
-    def AssignGenNext(self, node: ir.AssignValue):
-        gen_id = node.val.val
-        if gen_id.name not in self.generators:
+        if isinstance(node.expr, ir.GenInit):
+            gen_id = node.expr.val
             func_call = gen_id.obj.func
 
             if not const_func_args(func_call.args.values(), func_call.kwds):
@@ -212,12 +243,21 @@ class LoopUnfolder(Inline):
 
             self.generators[gen_id.name] = {'vals': quiter(vals)}
 
-        next_val, last = next(self.generators[gen_id.name]['vals'])
+            return None
+
+        return node
+
+    def AssignGenNext(self, node: ir.AssignValue):
+        gen_id = node.val.val
+        if gen_id not in self.generators:
+            breakpoint()
+
+        next_val, last = next(self.generators[gen_id]['vals'])
 
         # self.forwarded[node.target.name] = ir.ResExpr(next_val)
-        self.generators[gen_id.name]['last'] = ir.ResExpr(last)
+        self.generators[gen_id]['last'] = ir.ResExpr(last)
 
-        forward_value(node.target, ir.ResExpr(next_val), self.scope_map)
+        self.scope_updater(node.target, ir.ResExpr(next_val), self.scope_map)
 
         return None
 
@@ -244,6 +284,7 @@ def detect_loops(modblock, ctx):
 
     ctx.unfoldable = any(not l.blocking for l in v.loops)
 
+    # Discern which variables changed in the loop need to be registers
     v = RegisterBlockDetect(ctx)
     v.visit(modblock)
 

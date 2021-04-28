@@ -86,7 +86,7 @@ any iterable really)::
 Uint[8](0)
 """
 
-from .base import EnumerableGenericMeta, type_str, type_repr, is_type
+from .base import EnumerableGenericMeta, type_str, type_repr, is_type, typeof
 from .base import TemplatedTypeUnspecified
 from .base import class_and_instance_method
 
@@ -118,12 +118,48 @@ class TupleType(EnumerableGenericMeta):
         >>> Tuple[{'x': Uint[8], 'y': Uint[8]}] + Tuple[{'x': Uint[8], 'z': Uint[8]}]
         Tuple[{'x': Uint[8], 'y': Uint[8], 'z': Uint[8]}]
         """
-        return Tuple[{
-            **{k: v
-               for k, v in zip(self.fields, self.args)},
-            **{k: v
-               for k, v in zip(other.fields, other.args)}
-        }]
+        pself = hasattr(self, '__parameters__')
+        pother = typeof(self, other) and hasattr(other, '__parameters__')
+
+        if pself and pother:
+            return Tuple[{
+                **{k: v
+                for k, v in zip(self.fields, self.args)},
+                **{k: v
+                for k, v in zip(other.fields, other.args)}
+            }]
+        elif not (pself or pother):
+            if typeof(other, Tuple):
+                return Tuple[self.args + other.args]
+            else:
+                return Tuple[self.args + tuple(t for t in other)]
+        else:
+            raise TypeError(f'Currently not supported to combine named and unnamed tuples')
+
+    def __radd__(self, other):
+        """Combines the fields of two :class:`Tuple` types.
+
+        >>> Tuple[{'x': Uint[8], 'y': Uint[8]}] + Tuple[{'x': Uint[8], 'z': Uint[8]}]
+        Tuple[{'x': Uint[8], 'y': Uint[8], 'z': Uint[8]}]
+        """
+        pself = hasattr(self, '__parameters__')
+        pother = typeof(self, other) and hasattr(other, '__parameters__')
+
+        if pself and pother:
+            return Tuple[{
+                **{k: v
+                for k, v in zip(other.fields, other.args)}
+                **{k: v
+                for k, v in zip(self.fields, self.args)},
+            }]
+        elif not (pself or pother):
+            if typeof(other, Tuple):
+                return Tuple[other.args + self.args]
+            else:
+                return Tuple[tuple(t for t in other) + self.args]
+        else:
+            raise TypeError(f'Currently not supported to combine named and unnamed tuples')
+
 
     def __mul__(self, other):
         """Doubles the fields of :class:`Tuple` type.
@@ -131,7 +167,7 @@ class TupleType(EnumerableGenericMeta):
         >>> Tuple[Uint[2], Uint[4]] * 2
         Tuple[Uint[2], Uint[4], Uint[2], Uint[4]]
         """
-        return Tuple[self.args * 2]
+        return Tuple[self.args * int(other)]
 
     def __repr__(self):
         if not self.args or not hasattr(self, '__parameters__'):
@@ -350,8 +386,13 @@ class Tuple(tuple, metaclass=TupleType):
 
             return tout(tuple(subtypes))
 
+    def __add__(self, other):
+        return (type(self) + type(other))(super().__add__(tuple(other)))
+
+    __radd__ = __add__
+
     def __mul__(self, other):
-        return (type(self) * 2)(super().__mul__(2))
+        return (type(self) * int(other))(super().__mul__(int(other)))
 
     @class_and_instance_method
     def __str__(self):

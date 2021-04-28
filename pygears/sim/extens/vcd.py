@@ -110,6 +110,7 @@ class VCDValVisitor(TypingVisitorBase):
             for i in range(len(type_)):
                 f(t, f'({i})', val=val[i])
 
+    Maybe = Union
     Ufixp = change
     Fixp = change
     Uint = change

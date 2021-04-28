@@ -100,7 +100,7 @@ def _(node: ast.For, ctx: Context):
         return intf_loop(node, out_intf_ref.operands, targets, ctx,
                          getattr(out_intf_ref, 'enumerated', False))
 
-    block = ir.LoopBlock(stmts=[ir.AssignValue(targets, ir.GenNext(ctx.ref(gen_name)))],
+    block = ir.LoopBlock(stmts=[ir.AssignValue(targets, ir.GenNext(gen_name))],
                          test=ir.GenDone(gen_name))
 
     visit_block(block, node.body, ctx)
@@ -109,4 +109,4 @@ def _(node: ast.For, ctx: Context):
 
     merge_cond_alias_map(block, ctx)
 
-    return block
+    return [ir.ExprStatement(ir.GenInit(ctx.ref(gen_name))), block]
