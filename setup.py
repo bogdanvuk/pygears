@@ -18,7 +18,6 @@ class PostEggInfoCommand(egg_info):
 
 class PostDevelopCommand(develop):
     """Post-installation for development mode."""
-
     def run(self):
         develop.run(self)
         setup_home()
@@ -26,7 +25,6 @@ class PostDevelopCommand(develop):
 
 class PostInstallCommand(install):
     """Post-installation for installation mode."""
-
     def run(self):
         install.run(self)
         setup_home()
@@ -36,9 +34,9 @@ this_directory = os.path.abspath(os.path.dirname(__file__))
 
 
 def readme():
-    with open(os.path.join(this_directory, 'README.rst'),
-              encoding='utf-8') as f:
+    with open(os.path.join(this_directory, 'README.rst'), encoding='utf-8') as f:
         return f.read()
+
 
 # TODO: Make it work for new jinja versions
 
@@ -70,13 +68,12 @@ setup(
         'jinja2', 'dataclasses;python_version<"3.7"', 'pyvcd', 'attrs', 'stopit'
     ],
     packages=find_packages(exclude=['examples*', 'docs']),
+    extras_require={'pytest': ['pytest', 'pytest-xdist', 'filelock']},
     entry_points={
         'console_scripts': [
             'pygears = pygears.entry:main',
         ],
-        'pytest11' : [
-            'pytest_pygears = pygears.util.pytest_pygears'
-        ]
+        'pytest11': ['pytest_pygears = pygears.util.pytest_pygears']
     },
     cmdclass={
         'develop': PostDevelopCommand,
