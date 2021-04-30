@@ -5,7 +5,9 @@ import os
 import random
 import sys
 import tempfile
+import threading
 import time
+import stopit
 
 from functools import partial
 from pygears import GearDone, find, reg
@@ -27,6 +29,10 @@ class SimFinish(Exception):
 
 
 class SimCyclic(Exception):
+    pass
+
+
+class SimTimeout(Exception):
     pass
 
 
@@ -149,6 +155,12 @@ class GearEnum(HierVisitorBase):
             self.gears.append(node)
 
 
+def cosim_build_dir(top):
+    from pygears.core.gear_memoize import gear_inst_hash
+    hsh = gear_inst_hash(top)
+    return f'{top.basename}_{hex(hsh & 0xfffffff)}'
+
+
 def cosim(top, sim, *args, **kwds):
     if top is None:
         top = reg['gear/root']
@@ -159,9 +171,18 @@ def cosim(top, sim, *args, **kwds):
         if top is None:
             raise Exception(f'No gear found on path: "{top_name}"')
 
-
     kwds['outdir'] = expand(kwds.get('outdir', reg['results-dir']))
     kwds['rebuild'] = kwds.get('rebuild', True)
+
+    reg['sim/hook/cosim_build_before'](top, args, kwds)
+
+    if not kwds['rebuild']:
+        import sys
+        if sys.flags.hash_randomization:
+            raise Exception(
+                f"Reuse of previous cosim build turned on for module '{top}'.\n"
+                " In order to use this feature you need to turn off Python hash randomization.\n"
+                " Before running Python, you need to set environment variable 'PYTHONHASHSEED=0'")
 
     if isinstance(sim, str):
         if sim in ['cadence', 'xsim', 'questa']:
@@ -181,6 +202,8 @@ def cosim(top, sim, *args, **kwds):
     else:
         sim_cls = sim
 
+
+    reg['sim/hook/cosim_build_after'](top, args, kwds)
     kwds['rebuild'] = False
 
     if args or kwds:
@@ -258,7 +281,8 @@ def simgear_exec_order(gears):
 
 
 class EventLoop(asyncio.events.AbstractEventLoop):
-    def __init__(self):
+    def __init__(self, step_timeout=2):
+        self.step_timeout = step_timeout
         self.events = {
             'before_setup': SimEvent(),
             'before_run': SimEvent(),
@@ -458,55 +482,61 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
         log.info("-------------- Simulation start --------------")
         while (self.forward_ready or self.back_ready or self._schedule_to_finish or not finished):
-            finished = not bool(self.forward_ready or self.back_ready or self._schedule_to_finish)
+            with stopit.ThreadingTimeout(self.step_timeout, swallow_exc=False):
 
-            timestep += 1
-            reg['sim/timestep'] = timestep
-            if (timeout is not None) and (timestep == timeout):
-                break
+                finished = not bool(self.forward_ready or self.back_ready
+                                    or self._schedule_to_finish)
 
-            # if (timestep % 1000) == 0:
-            #     log.info("-------------- Simulation cycle --------------")
+                timestep += 1
+                reg['sim/timestep'] = timestep
+                if (timeout is not None) and (timestep == timeout):
+                    break
 
-            # print(f"-------------- {timestep} ------------------")
-            # print(f'Tasks: {len(self.tasks)}')
+                # if (timestep % 1000) == 0:
+                #     log.info("-------------- Simulation cycle --------------")
 
-            self.phase = 'forward'
-            self.sim_list(self.sim_gears)
+                # print(f"-------------- {timestep} ------------------")
+                # print(f'Tasks: {len(self.tasks)}')
 
-            self.phase = 'delta'
-            delta.set()
-            delta.clear()
+                # if timestep == 516:
+                #     breakpoint()
 
-            self.phase = 'back'
-            while self._schedule_to_finish:
-                for sim_gear in self._schedule_to_finish.copy():
-                    self._finish(sim_gear)
-                    self._schedule_to_finish.remove(sim_gear)
+                self.phase = 'forward'
+                self.sim_list(self.sim_gears)
 
-            self.sim_list(self.sim_gears)
+                self.phase = 'delta'
+                delta.set()
+                delta.clear()
 
-            self.phase = 'cycle'
-            self.events['before_timestep'](self, timestep)
+                self.phase = 'back'
+                while self._schedule_to_finish:
+                    for sim_gear in self._schedule_to_finish.copy():
+                        self._finish(sim_gear)
+                        self._schedule_to_finish.remove(sim_gear)
 
-            clk.set()
-            clk.clear()
+                self.sim_list(self.sim_gears)
 
-            # for sim_gear in reversed(self.sim_gears):
-            #     if sim_gear in self.delta_ready:
-            #         # if hasattr(sim_gear, 'port'):
-            #         #     print(f'Clock: {sim_gear.gear.name}.{sim_gear.port.basename}')
-            #         # else:
-            #         #     print(f'Clock: {sim_gear.gear.name}')
+                self.phase = 'cycle'
+                self.events['before_timestep'](self, timestep)
 
-            #         self.maybe_run_gear(sim_gear, self.delta_ready)
+                clk.set()
+                clk.clear()
 
-            for sim_gear in self.done:
-                self.remove(sim_gear)
+                # for sim_gear in reversed(self.sim_gears):
+                #     if sim_gear in self.delta_ready:
+                #         # if hasattr(sim_gear, 'port'):
+                #         #     print(f'Clock: {sim_gear.gear.name}.{sim_gear.port.basename}')
+                #         # else:
+                #         #     print(f'Clock: {sim_gear.gear.name}')
 
-            self.done.clear()
+                #         self.maybe_run_gear(sim_gear, self.delta_ready)
 
-            self.events['after_timestep'](self, timestep)
+                for sim_gear in self.done:
+                    self.remove(sim_gear)
+
+                self.done.clear()
+
+                self.events['after_timestep'](self, timestep)
 
         log.info(f"----------- Simulation done ---------------")
         log.info(f'Elapsed: {time.time() - start_time:.2f}')
@@ -555,8 +585,17 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             self.sim_loop(timeout)
         except SimFinish:
             pass
+        except stopit.TimeoutException:
+            reg['sim/traceback'] = sys.exc_info()[2]
+            reg['sim/exception'] = SimTimeout(
+                f'Timestep took longer then {self.step_timeout}s, simulation ended')
         except Exception as e:
+            reg['sim/traceback'] = sys.exc_info()[2]
             reg['sim/exception'] = e
+
+        if reg['sim/postmortem'] and reg['sim/traceback']:
+            import pdb
+            pdb.post_mortem(reg['sim/traceback'])
 
         reg['gear/exec_context'] = 'compile'
 
@@ -576,8 +615,10 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             if reg['sim/exception']:
                 raise reg['sim/exception']
 
+
 class SimSetupDone(Exception):
     pass
+
 
 # TODO: This function throws an error when run two times in a script
 def sim(resdir=None, timeout=None, extens=None, run=True, check_activity=False, seed=None):
@@ -658,6 +699,14 @@ class SimPlugin(GearPlugin):
         reg['sim/tasks'] = {}
         reg['sim/simulator'] = None
         reg['sim/dryrun'] = False
+        reg['sim'].subreg('hook')
+        reg['sim/hook/cosim_build_before'] = SimEvent()
+        reg['sim/hook/cosim_build_after'] = SimEvent()
+
+        reg['gear/exec_context'] = None
+        reg['sim/postmortem'] = False
+        reg['sim/exception'] = None
+        reg['sim/traceback'] = None
         reg.confdef('sim/rand_seed', None)
         reg.confdef('sim/clk_freq', 1000)
         reg.confdef('results-dir', default=tempfile.mkdtemp())

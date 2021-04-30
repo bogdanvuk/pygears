@@ -68,7 +68,9 @@ class VerilatorCompileError(Exception):
 
 
 def get_file_struct(top, outdir):
-    name = top.name[1:].replace('/', '_')
+    from pygears.sim import cosim_build_dir
+
+    name = cosim_build_dir(top)
 
     if outdir is None:
         outdir = reg['results-dir']

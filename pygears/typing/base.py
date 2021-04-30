@@ -5,6 +5,7 @@ import copyreg
 import operator
 
 
+
 class BlackBox:
     """All BlackBoxes are the same."""
     def __init__(self, contents):
@@ -24,7 +25,7 @@ class BlackBox:
 
 class hashabledict(dict):
     def __hash__(self):
-        return hash(tuple(self.items())) ^ hash(dict)
+        return hash(tuple(self.items()))
 
 @functools.lru_cache(maxsize=None)
 def index_norm_hashable_single(i, dtype):
@@ -303,7 +304,8 @@ class GenericMeta(TypingMeta):
             if bool(self.args):
                 self._hash = hash((self.base, tuple(self.args), tuple(self.fields)))
             else:
-                self._hash = hash(self.__class__)
+                # TODO: Future expansion: what if there is two implementations of the type with the same name
+                self._hash = hash(self.__name__)
 
         return self._hash
 

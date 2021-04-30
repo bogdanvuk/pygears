@@ -14,7 +14,7 @@ from .infer_ftypes import TypeMatchError, infer_ftypes, type_is_specified
 from .gear import TooManyArguments, GearTypeNotSpecified, GearArgsNotSpecified
 from .gear import Gear, create_hier
 from .gear_decorator import GearDecoratorPlugin
-from .gear_memoize import get_memoized_gear, memoize_gear, make_gear_call_hash
+from .gear_memoize import get_memoized_gear, memoize_gear
 from .port import HDLConsumer, HDLProducer
 from .channel import channel_interfaces
 

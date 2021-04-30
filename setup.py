@@ -64,16 +64,19 @@ setup(
     include_package_data=True,
     keywords='functional hardware design Python simulator HDL ASIC FPGA Gears',
     install_requires=[
-        'jinja2', 'dataclasses;python_version<"3.7"', 'pyvcd', 'attrs'
+        'jinja2', 'dataclasses;python_version<"3.7"', 'pyvcd', 'attrs', 'stopit'
     ],
     setup_requires=[
-        'jinja2', 'dataclasses;python_version<"3.7"', 'pyvcd', 'attrs'
+        'jinja2', 'dataclasses;python_version<"3.7"', 'pyvcd', 'attrs', 'stopit'
     ],
     packages=find_packages(exclude=['examples*', 'docs']),
     entry_points={
         'console_scripts': [
             'pygears = pygears.entry:main',
         ],
+        'pytest11' : [
+            'pytest_pygears = pygears.util.pytest_pygears'
+        ]
     },
     cmdclass={
         'develop': PostDevelopCommand,

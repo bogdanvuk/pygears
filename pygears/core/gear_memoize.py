@@ -189,8 +189,12 @@ def make_gear_call_hash(func, args, const_args, kwds, fix_intfs):
         v = ContainerVisitor(kwd_intfs)
         fixi_hsh = v.visit(fix_intfs)
 
+        # Cannot use hash(func) since it is dependent on the id(func)
+        # TODO: This func hashing will not work for lambda
         hsh = kwd_hsh ^ fixi_hsh ^ hash((
-            func,
+            func.__code__.co_name,
+            func.__code__.co_firstlineno,
+            func.__code__.co_filename,
             tuple(a.dtype if isinstance(a, Intf) else a for a in args.values()),
             hashabledict(const_args),
         ))
@@ -200,6 +204,8 @@ def make_gear_call_hash(func, args, const_args, kwds, fix_intfs):
     except TypeError:
         return None, None
 
+def gear_inst_hash(g):
+    return make_gear_call_hash(g.func, g.args, g.const_args, {}, ())[0]
 
 def get_memoized_gear(func, args, const_args, kwds, fix_intfs, name):
     key, kwd_intfs = make_gear_call_hash(func, args, const_args, kwds, fix_intfs)
