@@ -1,5 +1,5 @@
 from pygears.conf import reg
-from pygears.typing.base import Any, GenericMeta, type_repr, typeof
+from pygears.typing.base import Any, GenericMeta, type_repr, typeof, T
 
 
 class TypeMatchError(Exception):
@@ -17,19 +17,26 @@ def _get_match_conds_rec(t, pat, matches):
     if t == pat:
         return t
 
+    if isinstance(pat, T):
+        t = _get_match_conds_rec(t, pat.__bound__, matches)
+        pat = pat.__name__
+
     # Did we reach the parameter name?
     if isinstance(pat, str):
         if pat in matches:
             # If the parameter name is already bound, check if two deductions
             # are same
-            if repr(t) != repr(matches[pat]) and t != Any and matches[pat] != Any:
+            # if repr(t) != repr(matches[pat]) and t != Any and matches[pat] != Any:
+            if t != matches[pat] and t != Any and matches[pat] != Any:
                 raise TypeMatchError(
                     f'Ambiguous match for parameter "{pat}": {type_repr(t)} '
                     f"and {type_repr(matches[pat])}")
         else:
             try:
+                # TODO: Should probably use globals of the string. See: Python
+                # 3.10. typing.get_type_hints()
                 res = eval(pat, reg['gear/type_arith'], matches)
-                if repr(t) != repr(res):
+                if t != res:
                     raise TypeMatchError(
                         f"{type_repr(t)} cannot be matched to {type_repr(res)}")
             except Exception as e:

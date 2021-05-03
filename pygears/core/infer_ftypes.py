@@ -1,7 +1,7 @@
 import collections
 
 from pygears.conf import reg
-from pygears.typing.base import GenericMeta, param_subs, is_type
+from pygears.typing.base import GenericMeta, param_subs, is_type, T
 
 from pygears.typing import TypeMatchError, get_match_conds
 
@@ -27,6 +27,9 @@ def copy_field_names(t, pat):
 
 
 def type_is_specified(t):
+    if isinstance(t, T):
+        return False
+
     if is_type(t):
         return t.specified
 
@@ -43,6 +46,12 @@ def type_is_specified(t):
 
 
 def resolve_param(val, match, namespace):
+    if isinstance(val, T):
+        new_p = param_subs(val, match, namespace)
+        if new_p != val:
+            return True, new_p
+        else:
+            return False, None
 
     is_templated_type = (isinstance(val, GenericMeta) and (not val.is_generic()))
 

@@ -3,7 +3,7 @@ from pygears.conf import PluginBase, reg
 # from .bool import Bool
 from .queue import Queue
 from .array import Array
-from .base import TemplateArgumentsError, typeof, Any, is_type
+from .base import TemplateArgumentsError, typeof, Any, is_type, T
 from .tuple import Tuple
 from .uint import Int, Uint, Integer, Bool, Integral, code, decode
 from .unit import Unit
@@ -27,7 +27,7 @@ __all__ = [
     'Maybe', 'Array', 'Float', 'bitw', 'div', 'floor', 'typeof', 'Any', 'TLM',
     'ceil_pow2', 'is_type', 'flatten', 'expand', 'factor', 'Ufixp', 'Fixp', 'Number',
     'Fixpnumber', 'Integral', 'cast', 'signed', 'code', 'decode',
-    'saturate', 'qround', 'get_match_conds', 'TypeMatchError', 'match', 'trunc'
+    'saturate', 'qround', 'get_match_conds', 'TypeMatchError', 'match', 'trunc', 'T'
 ]
 
 

@@ -73,48 +73,6 @@ def index_norm_hashable_single(i, dtype):
         return i
 
 
-# @functools.lru_cache(maxsize=None)
-# def index_norm_hashable_single(i, size):
-#     if isinstance(i, tuple):
-#         start, stop, step = i
-
-#         if step == -1:
-#             start, stop = stop, start
-#             if stop is not None:
-#                 if stop == -1:
-#                     stop = None
-#                 else:
-#                     stop += 1
-
-#             step = 1
-
-#         if start is None:
-#             start = 0
-#         elif start < 0:
-#             start += size
-
-#         if stop is None:
-#             stop = size
-#         elif stop < 0:
-#             stop += size
-#         elif stop > size:
-#             stop = size
-
-#         # if start == stop:
-#         #     raise IndexError
-
-#         return slice(start, stop, step)
-
-#     else:
-#         if i < 0:
-#             i = size + i
-
-#         if i >= size:
-#             raise IndexError(f'index {i} out of bounds')
-
-#         return i
-
-
 @functools.lru_cache(maxsize=None)
 def index_norm_hashable(index, dtype):
     return tuple(index_norm_hashable_single(i, dtype) for i in index)
@@ -327,7 +285,7 @@ class GenericMeta(TypingMeta):
                     if not a.specified:
                         return False
                 except AttributeError:
-                    if isinstance(a, (str, bytes)):
+                    if isinstance(a, (str, bytes, T)):
                         return False
 
             return True
@@ -394,7 +352,7 @@ searched recursively. Each template is reported only once.
                 a_templates = a.templates
                 templates += [v for v in a_templates if v not in templates]
             else:
-                if isinstance(a, str):  #and templ_var_re.search(a):
+                if isinstance(a, (str, T)):  #and templ_var_re.search(a):
                     templates.append(a)
 
         return make_unique(templates)
@@ -507,6 +465,14 @@ def param_subs(t, matches, namespace):
     if isinstance(t, bytes):
         t = t.decode()
 
+    if isinstance(t, T):
+        res = matches.get(t, namespace.get(t, None))
+        if res is not None:
+            return res
+
+        name = t.__name__
+        return matches.get(name, namespace.get(name, t))
+
     # Did we reach the parameter name?
     if isinstance(t, str):
         if t.isidentifier():
@@ -615,3 +581,20 @@ def typeof(obj, t):
 
 def is_type(obj):
     return isinstance(obj, TypingMeta)
+
+
+class T:
+    __slots__ = ('__name__', '__bound__')
+
+    def __init__(self, name, bound):
+        self.__bound__ = bound
+        self.__name__ = name
+
+    def __repr__(self):
+        return self.__name__
+
+    def __reduce__(self):
+        return f'~{self.__name__}'
+
+    def copy(self):
+        return self

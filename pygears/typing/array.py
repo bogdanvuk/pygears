@@ -40,7 +40,12 @@ class ArrayType(EnumerableGenericMeta):
         return self._args[0].width * int(self._args[1])
 
     def __len__(self):
-        return self._args[1]
+        if isinstance(self._args[1], int):
+            return self._args[1]
+        elif not self.specified:
+            raise TypeError(f"Length of type '{self}' is generic (unspecifed)")
+        else:
+            raise Exception("Unexpected error")
 
     # TODO: Remove this
     @property
@@ -93,7 +98,7 @@ class ArrayType(EnumerableGenericMeta):
 
     def __str__(self):
         if self.args:
-            return f'Array[{str(self.args[0])}, {len(self)}]'
+            return f'Array[{str(self.args[0])}, {self.args[1]}]'
         else:
             return super().__str__()
 
