@@ -73,7 +73,11 @@ def transform(modblock, ctx: GearContext):
     modblock = handle_generators(modblock, ctx)
     hls_debug(modblock, 'Handle Generators')
 
+    # print(modblock)
+
     modblock = loop_unfold(modblock, ctx)
+    hls_debug(modblock, 'Handle Generators')
+    # print(modblock)
 
     modblock, cfg, reaching = cfgutil.forward(modblock, cfgutil.ReachingDefinitions())
     ctx.reaching = {id(n.value): v for n, v in reaching.items()}

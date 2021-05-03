@@ -1,3 +1,4 @@
+from pygears.hls.ir import SubscriptExpr
 from pygears import reg
 from pygears.sim import clk
 from ..ir_utils import Scope, HDLVisitor, res_true, add_to_list, ir, res_false, IrExprRewriter, IrExprVisitor
@@ -57,7 +58,15 @@ def merge_subscope(subscopes, tests):
     for n in names:
         vals = []
         for s in subscopes:
-            vals.append(s.get(n, None))
+            if n.endswith(']') and n not in s:
+                vect_val = s.get(n[:n.index('[')], None)
+                if vect_val is not None:
+                    index = int(n[n.index('[')+1:-1])
+                    vals.append(ir.SubscriptExpr(vect_val, ir.ResExpr(index)))
+                else:
+                    vals.append(None)
+            else:
+                vals.append(s.get(n, None))
 
         if vals.count(vals[0]) == len(vals):
             outscope[n] = vals[0]
@@ -136,9 +145,18 @@ class Inliner(IrExprRewriter):
             if self.missing_ok:
                 return irnode
 
-            breakpoint()
-
         val = self.scope_map[irnode.name]
+
+        if any(k.startswith(f'{irnode.name}[') for k in self.scope_map):
+            elems = [ir.SubscriptExpr(irnode, ir.ResExpr(i)) for i in range(len(irnode.dtype))]
+            for n in self.scope_map:
+                if not n.startswith(f'{irnode.name}['):
+                    continue
+
+                index = int(n[n.index('[')+1:-1])
+                elems[index] = self.scope_map[n]
+
+            val = ir.ConcatExpr(elems)
 
         if isinstance(val, ir.Name) and val.obj.reg and val.name in self.reg_inits:
             return val.obj.val

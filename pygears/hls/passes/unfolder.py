@@ -177,8 +177,12 @@ def forward_nonreg_value(target, val, scope):
             if isinstance(base_val, ir.ResExpr):
                 base_val.val[target.index.val] = cast(val.val, base_val.dtype[target.index.val])
                 return True
-        else:
-            scope[target.val.name] = target.val
+
+        if isinstance(target.index, ir.ResExpr) and target.ctx == 'store':
+            scope[f'{target.val.name}[{int(target.index.val)}]'] = val
+            return True
+
+        scope[target.val.name] = target.val
 
 
 class LoopUnfolder(Inline):
