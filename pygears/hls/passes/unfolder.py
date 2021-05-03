@@ -40,6 +40,28 @@ class RegisterBlockDetect(IrVisitor):
         super().Branch(block)
 
     def LoopBlock(self, block: ir.LoopBlock):
+        stmt_id = self.parent.stmts.index(block)
+        if stmt_id != 0:
+            prev_stmt = self.parent.stmts[stmt_id - 1]
+            all_in_start = self.ctx.reaching[id(prev_stmt)]['out']
+            all_in_end = self.ctx.reaching[id(block.stmts[-1])]['out']
+
+            changed = set(name for name, n in (all_in_end - all_in_start))
+
+            loop_regs = set(name for name, n in (all_in_end & all_in_start)
+                            if name in changed)
+
+            for name in loop_regs:
+                reg_stat = {
+                    'target': block.stmts[-1],
+                    'target_scope': [s for s in self.scopes if isinstance(s, ir.LoopBlock)] + [block],
+                }
+
+                reg_stat['source'] = reg_stat['target']
+                reg_stat['source_scope'] = reg_stat['target_scope']
+
+                self.registers[name] = reg_stat
+
         self.ctx.reaching[id(block.test)] = {'in': self.ctx.reaching[id(block.stmts[-1])]['out']}
         super().LoopBlock(block)
 

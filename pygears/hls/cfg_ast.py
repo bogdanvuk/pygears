@@ -233,7 +233,7 @@ class CFG(gast.NodeVisitor):
         self.visit_statements(body)
         self.head.extend(self.continue_.pop())
 
-        test_exit = Node(copy(test))
+        test_exit = Node(copy(test.value))
         self.set_head(test_exit)
         self.set_head(test.next[0])
         test.next[0].loop = True
@@ -250,7 +250,7 @@ class CFG(gast.NodeVisitor):
         self.Loop(node.body, node.orelse, node.iter)
 
     def visit_For(self, node):
-        self.Loop(node.body, node.orelse, node)
+        self.Loop(node.body, node.orelse, node.iter)
 
     def visit_Break(self, node):
         self.break_[-1].extend(self.head)
@@ -375,6 +375,23 @@ class InferRegisters:
         if node in self.visited:
             return
 
+        if node.loop:
+            loop_end = [p for p in node.prev if p not in self.visited]
+            loop_start = [p for p in node.prev if p in self.visited]
+
+            all_in_end = set()
+            for n in loop_end:
+                all_in_end |= self.reaching[n]['out']
+
+            all_in_start = set()
+            for n in loop_start:
+                all_in_start |= self.reaching[n]['out']
+
+            changed = set(name for name, n in (all_in_end - all_in_start))
+
+            self.registers |= set(name for name, n in (all_in_end & all_in_start)
+                                  if name in changed)
+
         if not node.loop and any(p not in self.visited for p in node.prev):
             return
 
@@ -398,6 +415,20 @@ class InferRegisters:
         pass
 
     def expr(self, node, reaching):
+        # variables = [
+        #     succ.id for succ in gast.walk(node)
+        #     if isinstance(succ, gast.Name) and isinstance(succ.ctx, gast.Load)
+        # ]
+
+        # if 'flag' in variables:
+        #     prev = []
+        #     for name, n in reaching['in']:
+        #         if name == 'flag':
+        #             prev.append(n)
+
+        #     if prev:
+        #         breakpoint()
+
         if all(d[1] in self.visited for d in reaching.get('in', [])):
             return
 
