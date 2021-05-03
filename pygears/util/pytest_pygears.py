@@ -3,6 +3,39 @@ import pathlib
 from functools import partial
 import os
 
+@pytest.hookimpl(hookwrapper=True)
+def pytest_exception_interact(node, call, report):
+    if not node.config.getoption('--pg'):
+        yield
+        return
+
+    from pygears import reg
+    from pygears.conf import TraceLevel
+    if reg['trace/level'] == TraceLevel.debug:
+        yield
+        return
+
+    import re
+    ignore = reg['trace/ignore']
+    r = re.compile('  File "(?P<fn>[^"]+)"')
+
+    for reprs in report.longrepr.reprtraceback.reprentries:
+        lines = []
+        for l in report.longrepr.reprtraceback.reprentries[0].lines:
+            res = r.match(l)
+            if res is not None:
+                fn = res.groupdict()['fn']
+                is_internal = any(fn.startswith(d) for d in ignore)
+                is_decorator_gen = '<decorator-gen' in fn
+                if is_internal or is_decorator_gen:
+                    continue
+
+            lines.append(l)
+
+        reprs.lines = lines
+
+    yield
+
 
 @pytest.fixture(autouse=True)
 def resdir(tmp_path_factory, pytestconfig):
@@ -39,7 +72,7 @@ def hook_before(top, args, kwds, config):
     kwds['rebuild'] = False
 
     if config.getoption('--pg-resdir') is None:
-        kwds['outdir'] = pathlib.Path(kwds['outdir']).parent / 'sim'
+        kwds['outdir'] = pathlib.Path(kwds['outdir']) / 'sim'
     else:
         kwds['outdir'] = pathlib.Path(kwds['outdir'])
 
@@ -70,6 +103,14 @@ def pytest_runtest_call(item):
 def pytest_load_initial_conftests(args):
     if (any(a.startswith('--pg') for a in args) and not any(a == '--pg' for a in args)):
         args[:] = ['--pg'] + args
+
+    if (not any(a.startswith('--tb') for a in args)):
+        args[:] = ['--tb=native'] + args
+
+
+# def pytest_sessionfinish(session, exitstatus):
+#     breakpoint()
+#     pass
 
 
 def pytest_addoption(parser):

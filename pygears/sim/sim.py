@@ -8,6 +8,7 @@ import tempfile
 import threading
 import time
 import stopit
+import contextlib
 
 from functools import partial
 from pygears import GearDone, find, reg
@@ -482,7 +483,10 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
         log.info("-------------- Simulation start --------------")
         while (self.forward_ready or self.back_ready or self._schedule_to_finish or not finished):
-            with stopit.ThreadingTimeout(self.step_timeout, swallow_exc=False):
+            # Conditional timeout context
+            with contextlib.ExitStack() as stack:
+                if self.step_timeout:
+                    stack.enter_context(stopit.ThreadingTimeout(self.step_timeout, swallow_exc=False))
 
                 finished = not bool(self.forward_ready or self.back_ready
                                     or self._schedule_to_finish)
@@ -646,7 +650,7 @@ def sim(resdir=None, timeout=None, extens=None, run=True, check_activity=False, 
 
     log.info(f'Running sim with seed: {reg["sim/rand_seed"]}')
 
-    loop = EventLoop()
+    loop = EventLoop(reg['sim/step_timeout'])
     asyncio.set_event_loop(loop)
     reg['sim/simulator'] = loop
 
@@ -698,6 +702,8 @@ class SimPlugin(GearPlugin):
         reg['sim/flow'] = []
         reg['sim/tasks'] = {}
         reg['sim/simulator'] = None
+        reg['sim/step_timeout'] = 0
+
         reg['sim/dryrun'] = False
         reg['sim'].subreg('hook')
         reg['sim/hook/cosim_build_before'] = SimEvent()
