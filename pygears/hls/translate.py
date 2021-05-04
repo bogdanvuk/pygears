@@ -91,7 +91,6 @@ def transform(modblock, ctx: GearContext):
 
     compile_funcs(modblock, ctx)
 
-    # print(modblock)
     return modblock
 
 

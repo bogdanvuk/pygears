@@ -1,7 +1,7 @@
 import pytest
 from pygears import gear, Intf, find
 from pygears.sim import sim, cosim, clk
-from pygears.typing import Bool, Uint, Integer, Queue, code, Array, bitw
+from pygears.typing import Bool, Uint, Integer, Queue, code, Array, bitw, Int
 from pygears.hls.translate import translate_gear
 from pygears.hdl import hdlgen, synth
 from pygears.lib import drv, verif, delay_rng
@@ -56,7 +56,6 @@ def test_basic_loop(din_delay, dout_delay):
 
 # test_basic_loop(2, 2)
 
-
 # TODO: break from async with block should issue ack!
 
 # @pytest.mark.parametrize('din_delay', [0, 1])
@@ -86,7 +85,6 @@ def test_basic_loop(din_delay, dout_delay):
 
 #     cosim('/dut', 'verilator')
 #     sim()
-
 
 # test_basic_loop_break(2, 2)
 
@@ -187,6 +185,7 @@ def test_double_loop_seq(din_delay, dout_delay):
 
 # test_double_loop_seq(0, 1)
 
+
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_double_loop_seq_explicit_split(din_delay, dout_delay):
@@ -210,6 +209,7 @@ def test_double_loop_seq_explicit_split(din_delay, dout_delay):
 
 
 # test_double_loop_seq_explicit_split(0, 1)
+
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
@@ -401,9 +401,6 @@ def test_optional_loop(din_delay, dout_delay):
     sim()
 
 
-# test_optional_loop(0, 0)
-
-
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_yield_after_loop(din_delay, dout_delay):
@@ -454,6 +451,54 @@ def test_yield_after_loop_reg_scope(din_delay, dout_delay):
     cosim('/dut', 'verilator')
     sim()
 
+
+@pytest.mark.parametrize('din_delay', [0, 1])
+@pytest.mark.parametrize('dout_delay', [0, 1])
+def test_optional_loop_assign(din_delay, dout_delay):
+    @gear(hdl={'compile': True})
+    async def test(din: Queue[Bool]) -> Bool:
+        flag = False
+
+        async for d, eot in din:
+            if d:
+                flag = True
+
+        yield flag
+
+    verif(drv(t=Queue[Bool], seq=[[True, False, False, True]]) | delay_rng(din_delay, din_delay),
+          f=test(name='dut'),
+          ref=test,
+          delays=[delay_rng(dout_delay, dout_delay)])
+
+    cosim('/dut', 'verilator')
+    sim()
+
+
+@pytest.mark.parametrize('din_delay', [0, 1])
+@pytest.mark.parametrize('dout_delay', [0, 1])
+def test_optional_loop_assign_complex(din_delay, dout_delay):
+    @gear(hdl={'compile': True})
+    async def test(din: Queue) -> Uint[8]:
+        max_el = din.dtype.data.min
+        max_idx = Uint[8](0)
+        cnt = Uint[8](0)
+        async for d, eot in din:
+            if d >= max_el:
+                max_el = d
+                max_idx = cnt
+
+            cnt += 1
+
+        yield max_idx
+
+    seq = list(range(4)) + list(range(4, 0, -1))
+    verif(drv(t=Queue[Uint[4]], seq=[seq, seq]) | delay_rng(din_delay, din_delay),
+          f=test(name='dut'),
+          ref=test,
+          delays=[delay_rng(dout_delay, dout_delay)])
+
+    cosim('/dut', 'verilator')
+    sim()
 
 # test_yield_after_loop_reg_scope(2, 2)
 
@@ -542,7 +587,6 @@ def test_double_loop(din_delay, dout_delay):
     # print(util)
 
 
-
 # @pytest.mark.parametrize('din_delay', [0, 1])
 # @pytest.mark.parametrize('dout_delay', [0, 1])
 # def test_yield_reg_next_val(din_delay, dout_delay):
@@ -569,7 +613,6 @@ def test_double_loop(din_delay, dout_delay):
 
 #     cosim('/dut', 'verilator')
 #     sim()
-
 
 # test_yield_reg_next_val(0, 0)
 

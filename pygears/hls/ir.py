@@ -1068,6 +1068,9 @@ class Assert(Statement):
     test: Expr
     msg: str = None
 
+    def __str__(self):
+        return f'{self.test}, "{self.msg}"\n'
+
 
 def extract_base_targets(target):
     if isinstance(target, ConcatExpr):

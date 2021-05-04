@@ -45,7 +45,19 @@ async def decouple_dout(*, t, depth) -> b't':
     await clk()
 
 
-@gear(hdl={'hierarchical': False})
+def check_depth_pow2(depth):
+    import math
+    # Used to specify infinite depth size
+    if depth == 0:
+        return True
+
+    from pygears.typing import TypeMatchError
+    if int(math.log(depth, 2)) != math.log(depth, 2):
+        raise TypeMatchError(f"Decoupler depth needs to be a power of 2, got '{depth}'")
+
+    return True
+
+@gear(hdl={'hierarchical': False}, enablement=b'check_depth_pow2(depth)')
 def decouple(din, *, depth=2, init=None) -> b'din':
     din | decouple_din(depth=depth, init=init)
     return decouple_dout(t=din.dtype, depth=depth)

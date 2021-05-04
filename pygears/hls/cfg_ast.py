@@ -111,6 +111,8 @@ def get_updated(node):
     else:
         return set()
 
+class Loop(gast.AST):
+    pass
 
 class Node(object):
     """A node in the CFG."""
@@ -226,6 +228,8 @@ class CFG(gast.NodeVisitor):
     def Loop(self, body, orelse, test):
         test = Node(test)
         self.set_head(test)
+        loop = Node(Loop())
+        self.set_head(loop)
         # Start a new level of nesting
         self.break_.append([])
         self.continue_.append([])
@@ -233,10 +237,10 @@ class CFG(gast.NodeVisitor):
         self.visit_statements(body)
         self.head.extend(self.continue_.pop())
 
-        test_exit = Node(copy(test))
+        test_exit = Node(copy(test.value))
         self.set_head(test_exit)
-        self.set_head(test.next[0])
-        test.next[0].loop = True
+        self.set_head(loop)
+        # test.next[0].loop = True
         # Handle the orelse
         self.visit_statements(orelse)
         # The break statements and the test go to the next node
@@ -250,7 +254,7 @@ class CFG(gast.NodeVisitor):
         self.Loop(node.body, node.orelse, node.iter)
 
     def visit_For(self, node):
-        self.Loop(node.body, node.orelse, node)
+        self.Loop(node.body, node.orelse, node.iter)
 
     def visit_Break(self, node):
         self.break_[-1].extend(self.head)
@@ -333,10 +337,8 @@ class Forward(object):
 
         if node.value:
             if 'out' in reaching:
-                before = reaching['out']
                 in_before = reaching['in']
             else:
-                before = None
                 in_before = None
 
             preds = [
@@ -375,7 +377,27 @@ class InferRegisters:
         if node in self.visited:
             return
 
-        if not node.loop and any(p not in self.visited for p in node.prev):
+        if isinstance(node.value, Loop):
+            # Check if any of the variables are conditionaly changed (i.e.
+            # under some if statement) in the loop. This means that their value
+            # needs to be registered.
+            loop_end = [p for p in node.prev if p not in self.visited]
+            loop_start = [p for p in node.prev if p in self.visited]
+
+            all_in_end = set()
+            for n in loop_end:
+                all_in_end |= self.reaching[n]['out']
+
+            all_in_start = set()
+            for n in loop_start:
+                all_in_start |= self.reaching[n]['out']
+
+            changed = set(name for name, n in (all_in_end - all_in_start))
+            reached_from_before = set(name for name, _ in (all_in_end & all_in_start) if name in changed)
+
+            self.registers |= reached_from_before
+
+        if not isinstance(node.value, Loop) and any(p not in self.visited for p in node.prev):
             return
 
         # print(f'Visit: {node.value}')
