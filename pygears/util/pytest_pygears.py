@@ -3,6 +3,7 @@ import pathlib
 from functools import partial
 import os
 
+
 @pytest.hookimpl(hookwrapper=True)
 def pytest_exception_interact(node, call, report):
     if not node.config.getoption('--pg'):
@@ -71,10 +72,14 @@ def hook_before(top, args, kwds, config):
     inst_id = cosim_build_dir(top)
     kwds['rebuild'] = False
 
+    kwds['outdir'] = pathlib.Path(kwds['outdir'])
     if config.getoption('--pg-resdir') is None:
-        kwds['outdir'] = pathlib.Path(kwds['outdir']) / 'sim'
-    else:
-        kwds['outdir'] = pathlib.Path(kwds['outdir'])
+        # Xdist creates an extra level of folders. We want one compilation per
+        # test run, so we need to go to the parent
+        if 'PYTEST_XDIST_WORKER_COUNT' in os.environ:
+            kwds['outdir'] = kwds['outdir'].parent
+
+        kwds['outdir'] = kwds['outdir'] / 'sim'
 
     os.makedirs(kwds['outdir'], exist_ok=True)
 
