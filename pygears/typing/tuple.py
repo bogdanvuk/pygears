@@ -119,7 +119,7 @@ class TupleType(EnumerableGenericMeta):
         Tuple[{'x': Uint[8], 'y': Uint[8], 'z': Uint[8]}]
         """
         pself = hasattr(self, '__parameters__')
-        pother = typeof(self, other) and hasattr(other, '__parameters__')
+        pother = typeof(other, Tuple) and hasattr(other, '__parameters__')
 
         if pself and pother:
             return Tuple[{
@@ -143,7 +143,7 @@ class TupleType(EnumerableGenericMeta):
         Tuple[{'x': Uint[8], 'y': Uint[8], 'z': Uint[8]}]
         """
         pself = hasattr(self, '__parameters__')
-        pother = typeof(self, other) and hasattr(other, '__parameters__')
+        pother = typeof(other, Tuple) and hasattr(other, '__parameters__')
 
         if pself and pother:
             return Tuple[{
