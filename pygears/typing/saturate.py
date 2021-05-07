@@ -75,7 +75,7 @@ def integral_saturate_resolver(t, data: Integral, limits=None):
         else:
             return t.max
     else:
-        if idin[t.width:] == 0:
+        if type(conv_data).width <= t.width or idin[t.width:] == 0:
             return code(conv_data, t)
         else:
             return t.max
