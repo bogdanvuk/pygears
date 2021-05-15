@@ -235,7 +235,17 @@ def _(node: ast.Await, ctx: Context):
     if isinstance(node.value, ast.Call):
         res = visit_ast(node.value.func, ctx)
         from pygears.sim import clk
-        if isinstance(res, ir.ResExpr) and res.val == clk:
-            return [ir.Await('back'), ir.Await('forward')]
+        if isinstance(res, ir.ResExpr):
+            if res.val == clk:
+                return [ir.Await('back'), ir.Await('forward')]
+            elif res.val.__qualname__ == 'Intf.ready':
+                intf = res.val.__self__
+                for p in ctx.gear.out_ports:
+                    if p.producer is intf:
+                        break
+                else:
+                    breakpoint()
+
+                return ir.Await(ir.Component(ctx.ref(p.basename), 'ready'))
 
     breakpoint()

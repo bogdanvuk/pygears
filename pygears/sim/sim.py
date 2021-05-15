@@ -200,12 +200,14 @@ def cosim(top, sim, *args, **kwds):
             kwds['timeout'] = timeout
         else:
             raise Exception(f"Unsupported simulator: {sim}")
+
+        kwds['rebuild'] = False
     else:
         sim_cls = sim
 
-
+    # TODO: Should we invoke build here even when simulation class is sent
+    # directly
     reg['sim/hook/cosim_build_after'](top, args, kwds)
-    kwds['rebuild'] = False
 
     if args or kwds:
         top.params['sim_cls'] = partial(sim_cls, *args, **kwds)

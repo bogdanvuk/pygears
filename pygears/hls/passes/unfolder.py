@@ -1,5 +1,5 @@
 from .inline_cfg import forward_value, merge_subscope, inline_expr, get_forward_value
-from ..ir_utils import ir, IrRewriter, add_to_list, IrVisitor, IrExprVisitor
+from ..ir_utils import ir, IrRewriter, add_to_list, IrVisitor, IrExprVisitor, IrExprRewriter
 from pygears.typing import cast
 from copy import copy
 from ..ast.call import const_func_args
@@ -90,6 +90,9 @@ class RegisterBlockDetect(IrVisitor):
                 continue
 
             if id(n.value) in self.visited:
+                continue
+
+            if name in self.registers:
                 continue
 
             self.registers[name] = {
@@ -214,6 +217,68 @@ def forward_nonreg_value(target, val, scope):
         scope[target.val.name] = target.val
 
 
+class Inliner(IrExprRewriter):
+    def __init__(self, scope, ctx, missing_ok=False, reg_inits=None):
+        self.scope_map = scope
+        self.ctx = ctx
+        self.missing_ok = missing_ok
+
+        if reg_inits is None:
+            reg_inits = {}
+        self.reg_inits = reg_inits
+
+    def visit_SubscriptExpr(self, node):
+        if node.ctx == 'load':
+            return super().visit_SubscriptExpr(node)
+        else:
+            return ir.SubscriptExpr(node.val, self.visit(node.index), ctx=node.ctx)
+
+    def visit_Name(self, irnode):
+        # If this name is target of the assignment, we have nothing to do
+        if (irnode.ctx != 'load'):
+            return None
+
+        if (irnode.name not in self.scope_map):
+            if self.missing_ok:
+                return irnode
+
+        val = self.scope_map[irnode.name]
+
+        vv = VariableFinder()
+        vv.visit(val)
+
+        if any(self.ctx.scope[v].reg for v in vv.variables):
+            return irnode
+
+        if any(k.startswith(f'{irnode.name}[') for k in self.scope_map):
+            elems = [ir.SubscriptExpr(irnode, ir.ResExpr(i)) for i in range(len(irnode.dtype))]
+            for n in self.scope_map:
+                if not n.startswith(f'{irnode.name}['):
+                    continue
+
+                index = int(n[n.index('[')+1:-1])
+                elems[index] = self.scope_map[n]
+
+            val = ir.ConcatExpr(elems)
+
+        if isinstance(val, ir.Name) and val.obj.reg and val.name in self.reg_inits:
+            return val.obj.val
+
+        # TODO: What's with unknown?
+        if isinstance(val, ir.ResExpr) and getattr(val.val, 'unknown', False):
+            return irnode
+
+        return val
+
+
+def inline_expr(irnode, scope, ctx, reg_inits=None):
+    new_node = Inliner(scope, ctx, reg_inits=reg_inits).visit(irnode)
+    if new_node is None:
+        return irnode
+
+    return new_node
+
+
 class LoopUnfolder(Inline):
     def __init__(self, ctx, scope_map=None):
         self.generators = {}
@@ -221,6 +286,9 @@ class LoopUnfolder(Inline):
 
         for r in ctx.regs:
             self.scope_map[r] = ctx.ref(r)
+
+    def handle_expr(self, expr):
+        return inline_expr(expr, self.scope_map, self.ctx)
 
     def enter_RegReset(self, node):
         name = node.value.target.name

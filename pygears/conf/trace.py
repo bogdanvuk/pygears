@@ -17,6 +17,7 @@ def gear_definition_location(func):
     fn = inspect.getfile(uwrp)
 
     ln = 1
+    lines = None
     while fn.startswith('<decorator'):
         if hasattr(uwrp, 'definition'):
             uwrp = uwrp.definition

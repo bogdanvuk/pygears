@@ -178,7 +178,7 @@ class Array(list, metaclass=ArrayType):
         return type(self)([self[i] if i != path else val for i in range(len(self))])
 
     def __hash__(self):
-        return super().__hash__()
+        return hash(tuple(self))
 
     def code(self):
         w_dtype = type(self).data.width

@@ -164,7 +164,18 @@ def call_pull_nb(obj):
 
 
 def call_put_nb(obj, arg):
+    ctx = reg['hls/ctx'][-1]
+
+    if isinstance(obj, Intf):
+        for p in ctx.gear.out_ports:
+            if p.producer is obj:
+                obj = ctx.ref(p.basename)
+                break
+        else:
+            breakpoint()
+
     return [
+        ir.Await('forward'),
         ir.AssignValue(ir.Component(obj, 'data'), arg),
         ir.AssignValue(ir.Component(obj, 'valid'), ir.res_true)
     ]

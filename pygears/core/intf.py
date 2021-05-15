@@ -115,6 +115,8 @@ class Intf:
             raise Exception(f"Output of the unresolved gear '{iout.func.__name__}' with"
                             f" arguments {iout.args} and parameters {iout.kwds},"
                             f" connected to '{self}': {str(MultiAlternativeError(iout.errors))}")
+        elif not isinstance(iout, Intf):
+            raise Exception(f"Cannot connect to {iout}")
 
         if iout.dtype != self.dtype:
             raise TypeError(f'Output interface of type "{repr(iout.dtype)}", cannot be connected '

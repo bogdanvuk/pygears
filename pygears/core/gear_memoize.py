@@ -205,7 +205,12 @@ def make_gear_call_hash(func, args, const_args, kwds, fix_intfs):
         return None, None
 
 def gear_inst_hash(g):
-    return make_gear_call_hash(g.func, g.args, g.const_args, {}, ())[0]
+    kwds = g.params.copy()
+    for p in g.in_ports + g.out_ports:
+        if p.basename in kwds:
+            del kwds[p.basename]
+
+    return make_gear_call_hash(g.func, g.args, g.const_args, kwds, ())[0]
 
 def get_memoized_gear(func, args, const_args, kwds, fix_intfs, name):
     key, kwd_intfs = make_gear_call_hash(func, args, const_args, kwds, fix_intfs)
