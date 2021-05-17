@@ -156,6 +156,9 @@ class ContainerVisitor:
 
         return hash(tuple(hsh))
 
+    def visit_NoneType(self, obj):
+        return hash('None')
+
     visit_list = visit_tuple
 
     def visit_dict(self, obj):
@@ -205,6 +208,7 @@ def make_gear_call_hash(func, args, const_args, kwds, fix_intfs):
         return None, None
 
 def gear_inst_hash(g):
+
     kwds = g.params.copy()
     for p in g.in_ports + g.out_ports:
         if p.basename in kwds:

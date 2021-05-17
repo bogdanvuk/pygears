@@ -46,7 +46,7 @@ def resdir(tmp_path_factory, pytestconfig):
     from pygears import clear, reg
     from pygears.conf.custom_settings import load_rc
     clear()
-    load_rc('.pygears', os.path.dirname(__file__))
+    load_rc('.pygears', pytestconfig.rootdir)
 
     resdir = pytestconfig.getoption("--pg-resdir")
 
@@ -94,14 +94,15 @@ def hook_before(top, args, kwds, config):
 
 
 def pytest_runtest_call(item):
+    if item.config.getoption('--pg'):
+        from pygears import reg
+        if item.config.getoption('--pg-reuse'):
+            reg['sim/hook/cosim_build_before'].append(partial(hook_before, config=item.config))
+
     if item.config.getoption('--gearbox'):
         from gearbox.main import main_loop
         main_loop(str(pathlib.Path(item.module.__file__).parent), [], item.runtest, {})
         pytest.skip()
-    elif item.config.getoption('--pg'):
-        from pygears import reg
-        if item.config.getoption('--pg-reuse'):
-            reg['sim/hook/cosim_build_before'].append(partial(hook_before, config=item.config))
 
 
 # If any of --pg switches is active, than --pg should be there too

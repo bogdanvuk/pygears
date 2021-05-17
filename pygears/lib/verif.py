@@ -5,9 +5,9 @@ import textwrap
 from pygears import GearDone, gear, datagear
 from pygears.lib import decouple
 from pygears.util.utils import quiter, gather
-from pygears.typing import Uint
-from pygears.typing import Any
+from pygears.typing import Uint, Any, typeof, TypeMatchError
 from pygears.sim import sim_assert, log, clk
+from pygears.typing.visitor import TypingVisitorBase
 
 
 class TypingYieldVisitorBase:
@@ -47,11 +47,9 @@ def typeseq(t, v):
                 try:
                     yield t(d)
                 except (TypeError, ValueError) as e:
-                    log.error(
-                        f'{e} - Cannot convert value "{d}" to type "{repr(t)}"')
+                    log.error(f'{e} - Cannot convert value "{d}" to type "{repr(t)}"')
         except (TypeError, ValueError):
-            log.error(
-                f'Cannot convert sequence "{v}" to the "{repr(t)}"')
+            log.error(f'Cannot convert sequence "{v}" to the "{repr(t)}"')
 
 
 @gear
@@ -239,6 +237,78 @@ async def scoreboard(*din: b't', report=None, cmp=None) -> None:
         raise e
 
 
+class ErrorVisitor:
+    def visit(self, a, b):
+        # if not typeof(type(b), type(a)):
+        if type(a) != type(b):
+            raise ValueError(f'{type(b)} cannot be matched to {type(a)}')
+
+        type_ = type(a)
+        for c in type_.mro():
+            visit_func_name = c.__name__
+
+            if hasattr(self, visit_func_name):
+                return getattr(self, visit_func_name)(a, b)
+
+        else:
+            return self.visit_default(a, b)
+
+    def visit_default(self, a, b):
+        if a != b:
+            raise ValueError(f'Got: {a}, expected: {b}')
+
+    def Queue(self, a, b):
+        if a.eot != b.eot:
+            raise ValueError(f'Got Queue eot: {a.eot}, expected: {b.eot}')
+
+        err = None
+        try:
+            self.visit(a.data, b.data)
+        except ValueError as e:
+            err = e
+
+        if err:
+            raise ValueError(f'{str(err)}\n - when matching {a} to {b}')
+
+    def Maybe(self, a, b):
+        if a.ctrl != b.ctrl:
+            if a.ctrl:
+                raise ValueError(f'Got: SOME, expected: NONE')
+            else:
+                raise ValueError(f'Got: NONE, expected: SOME')
+
+        if not a.ctrl:
+            return
+
+        va = type(a).types[a.ctrl].decode(a.data)
+        vb = type(b).types[b.ctrl].decode(b.data)
+
+        self.visit(va, vb)
+
+
+    def Array(self, a, b):
+        for i in range(len(type(a))):
+            err = None
+            try:
+                self.visit(a[i], b[i])
+            except ValueError as e:
+                err = e
+
+            if err:
+                raise ValueError(f'{str(err)}\n - when matching element {i} of {a} to {b}')
+
+    def Tuple(self, a, b):
+        for i in range(len(type(a))):
+            err = None
+            try:
+                self.visit(a[i], b[i])
+            except ValueError as e:
+                err = e
+
+            if err:
+                raise ValueError(f'{str(err)}\n - when matching element {i} of {a} to {b}')
+
+
 @gear
 async def check(din, *, ref, cmp=None):
     """Checks equality of input data with expected.
@@ -273,10 +343,20 @@ async def check(din, *, ref, cmp=None):
                 ref_seq = typeseq(din.dtype, next(iter_ref))
                 ref_item = next(ref_seq)
 
-            sim_assert(
-                cmp(data, ref_item),
-                f'mismatch in item #{len(items)}. Got: {data}, expected: {ref_item}'
-            )
+            cmp_res = cmp(data, ref_item)
+
+            if not cmp_res:
+                if cmp is match_exact:
+                    v = ErrorVisitor()
+                    try:
+                        v.visit(data, ref_item)
+                    except ValueError as e:
+                        err = e
+
+                    log.error(f'mismatch in item #{len(items)}\n {str(err)}')
+                else:
+                    log.error(f'mismatch in item #{len(items)}. Got: {data}, expected: {ref_item}')
+
     except GearDone:
         ref_empty = False
         try:
@@ -290,18 +370,14 @@ async def check(din, *, ref, cmp=None):
         if ref_empty:
             log.info(f'Number of matches: {len(items)}')
         else:
-            log.error(
-                f"mismatch in number of items, got '{len(items)}' but expected '{len(ref)}'. "
-                f"\ngot:\n{textwrap.indent(pprint.pformat(items), ' '*4)}"
-                f"\nexp:\n{textwrap.indent(pprint.pformat(ref), ' '*4)}"
-            )
+            log.error(f"mismatch in number of items, got '{len(items)}' but expected '{len(ref)}'. "
+                      f"\ngot:\n{textwrap.indent(pprint.pformat(items), ' '*4)}"
+                      f"\nexp:\n{textwrap.indent(pprint.pformat(ref), ' '*4)}")
 
     except (GearDone, StopIteration):
-        log.error(
-            f"mismatch in number of items {len(items)} vs {len(ref)}. "
-            f"\ngot:\n{textwrap.indent(pprint.pformat(items), ' '*4)}"
-            f"\nexp:\n{textwrap.indent(pprint.pformat(ref), ' '*4)}"
-        )
+        log.error(f"mismatch in number of items {len(items)} vs {len(ref)}. "
+                  f"\ngot:\n{textwrap.indent(pprint.pformat(items), ' '*4)}"
+                  f"\nexp:\n{textwrap.indent(pprint.pformat(ref), ' '*4)}")
 
     raise GearDone
 
