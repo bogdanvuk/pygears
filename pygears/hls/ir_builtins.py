@@ -52,7 +52,11 @@ def call_tuple(arg):
     elif isinstance(arg, ir.TupleExpr):
         return arg
     elif isinstance(arg, ir.ResExpr):
-        return ir.ResExpr(tuple(arg.val))
+        # TODO: Array is a list, so we have a workaround here
+        if typeof(arg.dtype, (Tuple, Array, Queue)):
+            return arg
+        else:
+            return ir.ResExpr(tuple(arg.val))
     elif typeof(arg.dtype, (Array, Tuple)):
         return ir.ConcatExpr([ir.SubscriptExpr(arg, ir.ResExpr(i)) for i in range(len(arg.dtype))])
     else:

@@ -287,7 +287,6 @@ class StateIsolator(CfgDfs):
                 self.isolated.value.states = node.prev[0].value.states[:]
 
             self.entry = node
-            self.node_map[node.prev[0]] = self.isolated
 
         if node in self.exits:
             prev = node.prev[0]
@@ -331,12 +330,12 @@ class StateIsolator(CfgDfs):
 
         self.copy(node)
 
-        # if self.scopes and ((self.parent in self.node_map) or (self.parent is self.entry_scope)):
-        #     self.copy(node)
-        # else:
-        #     for p in node.prev:
-        #         if p in self.node_map:
-        #             self.node_map[node] = self.node_map[p]
+        if self.entry is node:
+            # When we enter in the middle of the graph for isolation, link to
+            # previous node of entry point needs to point to new Module() node
+            self.node_map[node].prev = [self.isolated]
+            self.isolated.next = [self.node_map[node]]
+
 
 
 def isolate(ctx, entry, exits=None, state_num=None):
@@ -576,7 +575,7 @@ def schedule(cfg, ctx):
                 order.insert(i + 1, new_state_id)
                 # print(f'[{len(state_cfg)}]: Isolating')
                 state_cfg[new_state_id] = isolate(ctx, ns)
-                # draw_scheduled_cfg(state_cfg[-1], simple=False)
+                # draw_scheduled_cfg(state_cfg[new_state_id], simple=False)
 
         i += 1
         if i == len(order):

@@ -111,8 +111,10 @@ def get_updated(node):
     else:
         return set()
 
+
 class Loop(gast.AST):
     pass
+
 
 class Node(object):
     """A node in the CFG."""
@@ -393,7 +395,8 @@ class InferRegisters:
                 all_in_start |= self.reaching[n]['out']
 
             changed = set(name for name, n in (all_in_end - all_in_start))
-            reached_from_before = set(name for name, _ in (all_in_end & all_in_start) if name in changed)
+            reached_from_before = set(name for name, _ in (all_in_end & all_in_start)
+                                      if name in changed)
 
             self.registers |= reached_from_before
 
@@ -423,10 +426,16 @@ class InferRegisters:
         if all(d[1] in self.visited for d in reaching.get('in', [])):
             return
 
-        variables = [
-            succ.id for succ in gast.walk(node)
-            if isinstance(succ, gast.Name) and isinstance(succ.ctx, gast.Load)
-        ]
+        variables = []
+        for succ in gast.walk(node):
+            if not isinstance(succ, gast.Name):
+                continue
+
+            if not (isinstance(succ.ctx, gast.Load) or isinstance(node, gast.AugAssign)):
+                continue
+
+            variables.append(succ.id)
+
 
         for name, n in reaching['in']:
             if (n in self.visited) or (name not in variables) or (name in self.registers):

@@ -1,5 +1,5 @@
 from pygears import gear, Intf, find
-from pygears.typing import Queue, Uint, Bool
+from pygears.typing import Queue, Uint, Bool, Maybe
 from pygears.hls.translate import translate_gear
 
 
@@ -37,6 +37,25 @@ def test_optional_loop_assign():
     ctx, res = translate_gear(find('/test'))
 
     assert ctx.scope['flag'].reg
+
+
+def test_augmented():
+    @gear(hdl={'compile': True})
+    async def test(din: Bool) -> Uint[8]:
+        cnt = Uint[8](1)
+        while cnt != 0:
+            async with din as d:
+                if d:
+                    cnt += 1
+                else:
+                    cnt -= 1
+
+                yield cnt
+
+    test(Intf(Bool))
+    ctx, res = translate_gear(find('/test'))
+
+    assert ctx.scope['cnt'].reg
 
 
 def test_non_optional_loop_assign():
