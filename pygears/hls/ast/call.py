@@ -178,7 +178,7 @@ def resolve_func(func, args, kwds, ctx):
         elif getattr(func, '__func__', None) in reg['hls/ir_builtins']:
             val = func.__self__
             for name, v in ctx.scope.items():
-                if val is v.val:
+                if isinstance(v, ir.Variable) and val is v.val:
                     val = ctx.ref(name)
                     break
 

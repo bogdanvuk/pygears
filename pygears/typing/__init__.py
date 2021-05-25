@@ -7,7 +7,7 @@ from .base import TemplateArgumentsError, typeof, Any, is_type, T
 from .tuple import Tuple
 from .uint import Int, Uint, Integer, Bool, Integral, code, decode
 from .unit import Unit
-from .union import Union, Maybe
+from .union import Union, Maybe, some, Nothing
 from .math import bitw, ceil_pow2, div, floor
 from .tlm import TLM
 from .flatten import flatten

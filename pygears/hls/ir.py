@@ -11,7 +11,7 @@ from pygears import Intf
 from pygears.core.port import InPort, OutPort
 from pygears.core.gear import InSig, OutSig
 from pygears.typing import (Bool, Integer, Queue, Tuple, Uint, is_type, typeof, Array, Union, Unit,
-                            cast, code)
+                            cast, code, Nothing)
 # from .ast.utils import get_property_type
 import operator
 

@@ -258,9 +258,12 @@ class GenericMeta(TypingMeta):
 
     def __hash__(self):
         if self._hash is None:
-            # self._hash = hash(repr(self))
             if bool(self.args):
-                self._hash = hash((self.base, tuple(self.args), tuple(self.fields)))
+                base = self.base
+                if base.__name__ == 'Maybe':
+                    base = 'Maybe'
+
+                self._hash = hash((base, tuple(self.args), tuple(self.fields)))
             else:
                 # TODO: Future expansion: what if there is two implementations of the type with the same name
                 self._hash = hash(self.__name__)
@@ -268,7 +271,6 @@ class GenericMeta(TypingMeta):
         return self._hash
 
     def __eq__(self, other):
-        # return hash(self) == hash(other)
         return hash(self) == hash(other)
 
     @property
@@ -574,8 +576,18 @@ def typeof(obj, t):
 
     """
     try:
-        return issubclass(obj, t)
+        res = issubclass(obj, t)
+        if not res and obj.base.__name__ == 'Maybe':
+            if not isinstance(t, tuple):
+                t = (t, )
+
+            return any(ti.base.__name__ == 'Maybe' for ti in t)
+
+        return res
+
     except TypeError:
+        return False
+    except AttributeError:
         return False
 
 

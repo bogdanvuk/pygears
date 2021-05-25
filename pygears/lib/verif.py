@@ -240,8 +240,9 @@ async def scoreboard(*din: b't', report=None, cmp=None) -> None:
 class ErrorVisitor:
     def visit(self, a, b):
         # if not typeof(type(b), type(a)):
-        if type(a) != type(b):
-            raise ValueError(f'{type(b)} cannot be matched to {type(a)}')
+        # if type(a) != type(b):
+        #     breakpoint()
+        #     raise ValueError(f'{type(b)} cannot be matched to {type(a)}')
 
         type_ = type(a)
         for c in type_.mro():
@@ -353,7 +354,10 @@ async def check(din, *, ref, cmp=None):
                     except ValueError as e:
                         err = e
 
-                    log.error(f'mismatch in item #{len(items)}\n {str(err)}')
+                    if err:
+                        log.error(f'mismatch in item #{len(items)}\n {str(err)}')
+                    else:
+                        breakpoint()
                 else:
                     log.error(f'mismatch in item #{len(items)}. Got: {data}, expected: {ref_item}')
 

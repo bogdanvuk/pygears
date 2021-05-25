@@ -67,7 +67,7 @@ def test_unfold_array(lang):
         (None, None, None, None),
     ]
 
-    seq = [[TMaybe(v) for v in arv] for arv in seq]
+    seq = [[TMaybe() if v is None else TMaybe.some(v) for v in arv] for arv in seq]
 
     ref = [
         (0, 1, 2, 3),

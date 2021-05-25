@@ -115,11 +115,38 @@ def int_resolver(opexp, cast_to):
     return ir.CastExpr(opexp, cast_to)
 
 
-# TODO: Generalize this to any Union
-def maybe_resolver(opexp, cast_to):
-    data = ir.CastExpr(resolve_cast_func(opexp, cast_to.dtype), cast_to[0])
-    return ir.CastExpr(ir.ConcatExpr([data, ir.ResExpr(Bool(True))]), cast_to)
+# # TODO: Generalize this to any Union
+# def maybe_resolver(opexp, cast_to):
+#     if cast_to.specified and opexp.dtype == cast_to.dtype:
+#         data = ir.CastExpr(resolve_cast_func(opexp, cast_to.dtype), cast_to[0])
+#         return ir.CastExpr(ir.ConcatExpr([data, ir.ResExpr(Bool(True))]), cast_to)
 
+#     cast_to = cast(opexp.dtype, cast_to)
+
+#     if opexp.dtype == cast_to.dtype:
+#         data = ir.CastExpr(resolve_cast_func(opexp, cast_to.dtype), cast_to[0])
+#         return ir.CastExpr(ir.ConcatExpr([data, ir.ResExpr(Bool(True))]), cast_to)
+#     elif typeof(opexp.dtype, Tuple):
+#         data = resolve_cast_func(ir.SubscriptExpr(opexp, ir.ResExpr(0)), cast_to.dtype)
+#         ctrl = resolve_cast_func(ir.SubscriptExpr(opexp, ir.ResExpr(1)), cast_to[1])
+#         return ir.CastExpr(ir.ConcatExpr([data, ctrl]), cast_to)
+#     elif typeof(opexp.dtype, Union):
+#         return ir.CastExpr(opexp, cast_to)
+#     else:
+#         breakpoint()
+
+
+def maybe_resolver(opexp, cast_to):
+    cast_to = cast(opexp.dtype, cast_to)
+
+    if typeof(opexp.dtype, Tuple):
+        data = resolve_cast_func(ir.SubscriptExpr(opexp, ir.ResExpr(0)), cast_to.dtype)
+        ctrl = resolve_cast_func(ir.SubscriptExpr(opexp, ir.ResExpr(1)), cast_to[1])
+        return ir.CastExpr(ir.ConcatExpr([data, ctrl]), cast_to)
+    elif typeof(opexp.dtype, Union):
+        return ir.CastExpr(opexp, cast_to)
+    else:
+        breakpoint()
 
 resolvers = {
     Fixpnumber: fixp_resolver,

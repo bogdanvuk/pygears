@@ -349,6 +349,11 @@ def union_type_cast_resolver(dtype, cast_type):
         return res
 
     if typeof(cast_type, Maybe):
+        if not typeof(dtype, (Tuple, Union)):
+            raise get_type_error(
+                dtype, cast_type,
+                [f"only Tuples and Unions can be converted to Maybe"])
+
         if not (len(dtype.types) == 2 and typeof(dtype.types[0], Unit)):
             raise get_type_error(
                 dtype, cast_type,
@@ -524,7 +529,10 @@ def union_value_cast_resolver(val, cast_type):
 
     data = cast_type.data(val[0].code())
     ctrl = cast_type.ctrl(val[1])
-    return cast_type((data, ctrl))
+    if typeof(cast_type, Maybe):
+        return cast_type(data, ctrl)
+    else:
+        return cast_type((data, ctrl))
 
 
 def queue_value_cast_resolver(val, cast_type):

@@ -261,13 +261,23 @@ class classproperty(object):
 
 
 class Maybe(Union):
-    def __new__(cls, val=None, ctrl=None):
-        if val is None:
-            return super().__new__(cls)
-        elif val is not None and ctrl is None:
-            return super().__new__(cls, val=val, ctrl=1)
-        else:
-            return super().__new__(cls, (val, ctrl))
+    # def __new__(cls, val=None):
+    #     if val is None:
+    #         return super().__new__(cls)
+        # elif val is not None and ctrl is None:
+        #     return super().__new__(cls, val=val, ctrl=1)
+        # else:
+        #     return super().__new__(cls, (val, ctrl))
+
+    def get(self):
+        return self.dtype.decode(self.data)
+
+    def __bool__(self):
+        return bool(self.ctrl)
+
+    @classmethod
+    def some(cls, val):
+        return cls((val, True))
 
     @classproperty
     def dtype(cls):
@@ -276,3 +286,8 @@ class Maybe(Union):
 
 # TODO: typeof does not work correctly
 Maybe = Maybe[Unit, 'data']
+
+Nothing = Maybe[Uint[1]]()
+
+def some(v):
+    return Maybe[type(v)]((v, True))

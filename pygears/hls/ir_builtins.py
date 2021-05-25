@@ -7,7 +7,7 @@ from pygears import Intf, reg
 from pygears.core.gear import OutSig
 
 from functools import reduce
-from pygears.typing import Int, Uint, code, div, Queue, Integral, Float, Union, Bool
+from pygears.typing import Int, Uint, code, div, Queue, Integral, Float, Union, Bool, Maybe
 from pygears.typing import is_type, typeof, Tuple, Array
 from pygears.typing import floor, cast, signed, saturate
 from pygears.typing.queue import QueueMeta
@@ -324,6 +324,17 @@ def call_subs(orig, *args, **kwds):
 
         return ir.CastExpr(ir.ConcatExpr(parts), orig.dtype)
 
+def call_maybe_get(arg):
+    return ir.CastExpr(ir.SubscriptExpr(arg, ir.ResExpr(0)), cast_to=arg.dtype.dtype)
+
+
+def call_maybe_some(arg, val):
+    if isinstance(arg, ir.ResExpr):
+        breakpoint()
+        arg = arg.dtype
+
+    return ir.CastExpr(ir.ConcatExpr([val, ir.ResExpr(1)]), cast_to=arg)
+
 
 def call_enumerate(arg):
     arg.enumerated = True
@@ -381,6 +392,9 @@ class AddIntfOperPlugin(PluginBase):
             cast: call_cast,
             signed: call_signed,
             QueueMeta.sub: call_sub,
+            Maybe.get: call_maybe_get,
+            Maybe.some: call_maybe_some,
+            Maybe.some.__func__: call_maybe_some, # TODO: Why do we need both this and above
             object.__getattribute__(Array, 'subs').func: call_subs,
             object.__getattribute__(Tuple, 'subs').func: call_subs,
             object.__getattribute__(Uint, '__matmul__'): call_uint_matmul,
