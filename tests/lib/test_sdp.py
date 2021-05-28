@@ -17,3 +17,17 @@ def test_directed(sim_cls):
              ref=rd_data)
 
     sim()
+
+
+def test_sim_prefil():
+    rd_addr = list(range(4))
+
+    mem = {i: 2 * i for i in rd_addr}
+    rd_data = [mem[i] for i in rd_addr]
+
+    directed(drv(t=Tuple[Uint[3], Uint[5]], seq=[]),
+             drv(t=Uint[3], seq=rd_addr),
+             f=sdp(depth=4, mem=mem),
+             ref=rd_data)
+
+    sim()

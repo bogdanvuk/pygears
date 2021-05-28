@@ -7,27 +7,17 @@ TWrDin = Tuple[{'addr': Uint['w_addr'], 'data': 'w_data'}]
 TRdDin = Uint['w_addr']
 
 
-def sdp_wr_port_setup(module):
-    module.ram = {}
-
-
-@gear(sim_setup=sdp_wr_port_setup)
-async def sdp_wr_port(din, *, depth) -> None:
+@gear
+async def sdp_wr_port(din, *, depth, mem) -> None:
     async with din as (addr, data):
-        module().ram[int(addr)] = data
+        mem[int(addr)] = data
 
 
-def sdp_rd_port_setup(module):
-    module.sdp_wr_port = find('../sdp_wr_port')
-
-
-@gear(sim_setup=sdp_rd_port_setup)
-async def sdp_rd_port(addr, *, t, depth) -> b't':
-    ram = module().sdp_wr_port.ram
-
+@gear
+async def sdp_rd_port(addr, *, t, depth, mem) -> b't':
     while True:
         a = await addr.get()
-        dout = ram[int(a)]
+        dout = mem[int(a)]
         await clk()
         yield dout
 
@@ -38,7 +28,8 @@ def sdp(wr_addr_data: TWrDin,
         *,
         depth=b'2**w_addr',
         w_data=b'w_data',
-        w_addr=b'w_addr') -> b'w_data':
+        w_addr=b'w_addr',
+        mem=None) -> b'w_data':
     """Short for Simple Dual-Port RAM. Supports simultaneous read and write
     operations i.e. ``rd_addr`` interface reads from the RAM while the
     ``wr_addr_data`` interface writes to it. It has a sigle output interface
@@ -69,5 +60,8 @@ def sdp(wr_addr_data: TWrDin,
           ``TWrDin`` :class:`Tuple` i.e. the data beeing writen to memory.
     """
 
-    wr_addr_data | sdp_wr_port(depth=depth)
-    return rd_addr | sdp_rd_port(t=wr_addr_data.dtype['data'], depth=depth)
+    if mem is None:
+        mem = {}
+
+    wr_addr_data | sdp_wr_port(depth=depth, mem=mem)
+    return rd_addr | sdp_rd_port(t=wr_addr_data.dtype['data'], depth=depth, mem=mem)
