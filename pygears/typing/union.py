@@ -249,7 +249,7 @@ class Union(tuple, metaclass=UnionType):
         data, ctrl = ret
         subtype = cls.types[ctrl]
 
-        return cls(subtype.decode(data), cls[1].decode(ctrl))
+        return cls((subtype.decode(data), cls[1].decode(ctrl)))
 
 
 class classproperty(object):
@@ -261,13 +261,33 @@ class classproperty(object):
 
 
 class Maybe(Union):
-    # def __new__(cls, val=None):
-    #     if val is None:
-    #         return super().__new__(cls)
-        # elif val is not None and ctrl is None:
-        #     return super().__new__(cls, val=val, ctrl=1)
-        # else:
-        #     return super().__new__(cls, (val, ctrl))
+    def __new__(cls, val=None):
+        if type(val) == cls:
+            return val
+
+        if not cls.specified:
+            raise TemplatedTypeUnspecified
+
+        if val is None:
+            val = cls.types[0]()
+            ctrl = 0
+        else:
+            val, ctrl = val
+
+        if ctrl == 0:
+            return super(Union, cls).__new__(cls, (cls[0](cls.dtype().code()), cls[1](0)))
+        else:
+            subtype = cls.types[ctrl]
+            data_type = cls[0]
+
+            try:
+                subval = subtype(val)
+                data = data_type(subval.code())
+            except TypeError as e:
+                raise TypeError(f'{str(e)}\n - when instantiating subtype "{repr(subtype)}"'
+                                f' with "{repr(val)}"')
+
+        return super(Union, cls).__new__(cls, (data, cls[1](1)))
 
     def get(self):
         return self.dtype.decode(self.data)

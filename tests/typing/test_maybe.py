@@ -1,6 +1,5 @@
 from pygears.typing import Maybe, Uint
 
-
 # TODO: Make proper tests
 
 # def test_instantiation():

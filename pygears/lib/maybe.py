@@ -1,5 +1,5 @@
 from pygears import gear
-from pygears.lib.union import ucase
+from pygears.lib.union import ucase, select
 from pygears.lib.ccat import ccat
 from pygears.lib.const import fix
 from pygears.lib.filt import filt
@@ -14,7 +14,7 @@ def resolve(din: Maybe, *, val):
 
 
 @gear
-def apply(din: Maybe, *, f, args=None):
+def apply(din: Maybe, *, f, args=None, balance=None):
     maybe_args = []
     maybe_kwds = {}
 
@@ -26,9 +26,16 @@ def apply(din: Maybe, *, f, args=None):
             maybe_kwds[n] = sync_with(din, v)
 
     if maybe_args or maybe_kwds:
-        return din | unionmap(f=(None, f(*maybe_args, **maybe_kwds))) | Maybe
+        dout = din | when_some | f(*maybe_args, **maybe_kwds)
     else:
-        return din | unionmap(f=(None, f)) | Maybe
+        dout = din | when_some | f
+
+    if balance is not None:
+        ctrl = din['ctrl'] | balance
+    else:
+        ctrl = din['ctrl']
+
+    return select(ctrl, Maybe[dout.dtype](), some(dout))
 
 
 @gear

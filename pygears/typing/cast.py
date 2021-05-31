@@ -529,10 +529,7 @@ def union_value_cast_resolver(val, cast_type):
 
     data = cast_type.data(val[0].code())
     ctrl = cast_type.ctrl(val[1])
-    if typeof(cast_type, Maybe):
-        return cast_type(data, ctrl)
-    else:
-        return cast_type((data, ctrl))
+    return cast_type((data, ctrl))
 
 
 def queue_value_cast_resolver(val, cast_type):
