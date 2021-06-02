@@ -349,6 +349,7 @@ async def check(din, *, ref, cmp=None):
             if not cmp_res:
                 if cmp is match_exact:
                     v = ErrorVisitor()
+                    err = None
                     try:
                         v.visit(data, ref_item)
                     except ValueError as e:

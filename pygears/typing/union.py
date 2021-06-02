@@ -169,6 +169,8 @@ class Union(tuple, metaclass=UnionType):
         subtype = cls.types[ctrl]
         data_type = cls[0]
 
+        # TODO: This allows for coded value to be supplied to union. This
+        # should probably be refactored into different API
         if type(val) == data_type:
             data = val
         else:
@@ -276,6 +278,8 @@ class Maybe(Union):
 
         if ctrl == 0:
             return super(Union, cls).__new__(cls, (cls[0](cls.dtype().code()), cls[1](0)))
+        elif type(val) == cls[0]:
+            data = val
         else:
             subtype = cls.types[ctrl]
             data_type = cls[0]

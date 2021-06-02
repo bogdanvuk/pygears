@@ -11,9 +11,7 @@ def test_directed_list(sim_cls):
     data = list(range(100, 110))
     addr = list(range(10))
 
-    directed(drv(t=Uint[5], seq=addr),
-             f=rom(sim_cls=sim_cls, data=data, dtype=Uint[8]),
-             ref=data)
+    directed(drv(t=Uint[5], seq=addr), f=rom(sim_cls=sim_cls, data=data, dtype=Uint[8]), ref=data)
 
     sim()
 
@@ -24,9 +22,7 @@ def test_directed_dict(sim_cls):
 
     res = list(data.values())
 
-    directed(drv(t=Uint[8], seq=addr),
-             f=rom(sim_cls=sim_cls, data=data, dtype=Uint[8]),
-             ref=res)
+    directed(drv(t=Uint[8], seq=addr), f=rom(sim_cls=sim_cls, data=data, dtype=Uint[8]), ref=res)
 
     sim()
 
@@ -37,7 +33,7 @@ def test_directed_list_dflt(sim_cls):
 
     directed(drv(t=Uint[5], seq=addr),
              f=rom(sim_cls=sim_cls, data=data, dtype=Uint[8], dflt=0),
-             ref=data + [0]*10)
+             ref=data + [0] * 10)
 
     sim()
 

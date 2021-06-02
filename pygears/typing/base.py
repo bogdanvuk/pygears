@@ -224,7 +224,7 @@ class GenericMeta(TypingMeta):
 
             if isinstance(args, dict):
                 for t in args:
-                    if t not in bases[0].templates:
+                    if not any(t==str(tt) for tt in bases[0].templates):
                         raise TemplateArgumentsError(
                             f"Template parameter '{t}' not part of the "
                             f"templated type: {bases[0]}")
@@ -263,7 +263,8 @@ class GenericMeta(TypingMeta):
                 if base.__name__ == 'Maybe':
                     base = 'Maybe'
 
-                self._hash = hash((base, tuple(self.args), tuple(self.fields)))
+                # self._hash = hash((base, tuple(self.args), tuple(self.fields)))
+                self._hash = hash((base, tuple(self.args)))
             else:
                 # TODO: Future expansion: what if there is two implementations of the type with the same name
                 self._hash = hash(self.__name__)
