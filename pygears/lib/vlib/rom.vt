@@ -46,9 +46,19 @@
       memory[{{key}}] = {{params['dtype'](val).code()}};
     {% endfor %}
   {% else -%}
-    {% for val in params['data'] %}
-      memory[{{loop.index-1}}] = {{params['dtype'](val).code()}};
-    {% endfor %}
+
+    {% py %}
+    from pygears import reg
+    import os
+    mem_path = os.path.join(reg['svgen/conf']['outdir'], params['name'].replace('/', '_') + '.hex')
+    with open(mem_path, 'w') as f:
+        for d in params['data']:
+            v = params['dtype'](d).code()
+            f.write("{0:#0{1}x}\n".format(v,params['dtype'].width//4)[2:])
+
+    print(f'$readmemh("{mem_path}", memory);')
+
+    {% endpy %}
   {% endif -%}
 
 {% else -%}

@@ -1,10 +1,6 @@
+{% set py = import_('builtins') %}
 
 module sdp
-  #(
-    W_DATA = 16,
-    W_ADDR = 16,
-    DEPTH = 1024
-    )
    (
     input                         clk,
     input                         rst,
@@ -21,6 +17,10 @@ module sdp
     output wire                   rd_data_valid,
     output wire [W_DATA-1:0]       rd_data_data
     );
+
+   localparam W_DATA = {{int(params['w_data'].width)}};
+   localparam W_ADDR = {{int(params['w_addr'])}};
+   localparam DEPTH = {{int(params['depth'])}};
 
    wire  wr_en_s;
    wire [W_ADDR-1:0] wr_addr_s;
@@ -103,6 +103,29 @@ module sdp_mem #(
     );
 
    reg [W_DATA-1:0]         ram [DEPTH-1:0];
+
+  {% if py.isinstance(params['mem'], py.dict) -%}
+   initial begin
+    {% for key, val in params['mem'].items() %}
+      ram[{{key}}] = {{params['w_data'](val).code()}};
+    {% endfor %}
+   end
+  {% elif py.isinstance(params['mem'], py.list) -%}
+
+   initial begin
+    {% py %}
+    from pygears import reg
+    import os
+    mem_path = os.path.join(reg['svgen/conf']['outdir'], params['name'].replace('/', '_') + '.hex')
+    with open(mem_path, 'w') as f:
+        for d in params['mem']:
+            v = params['dtype'](d).code()
+            f.write("{0:#0{1}x}\n".format(v,params['dtype'].width//4)[2:])
+
+    print(f'$readmemh("{mem_path}", ram);')
+    {% endpy %}
+   end
+  {% endif -%}
 
    always @(posedge clk) begin
       if (ena) begin
