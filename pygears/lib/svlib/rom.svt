@@ -44,18 +44,18 @@
 
   {% if py.isinstance(params['data'], py.dict) -%}
     {% for key, val in params['data'].items() %}
-      memory[{{key}}] = {{params['dtype'](val).code()}};
+      memory[{{key}}] = {{max(1, params['dtype'].width)}}'d{{params['dtype'](val).code()}};
     {% endfor %}
   {% else -%}
 
     {% py %}
     from pygears import reg
     import os
-    mem_path = os.path.join(reg['svgen/conf']['outdir'], params['name'].replace('/', '_') + '.hex')
+    mem_path = os.path.join(reg['svgen/conf']['outdir'], module_name + '.hex')
     with open(mem_path, 'w') as f:
         for d in params['data']:
             v = params['dtype'](d).code()
-            f.write("{0:#0{1}x}\n".format(v,params['dtype'].width//4)[2:])
+            f.write("{0:#0{1}x}\n".format(v, 2 + params['dtype'].width//4)[2:])
 
     print(f'$readmemh("{mem_path}", memory);')
 
@@ -67,17 +67,17 @@
   {% if py.isinstance(params['data'], py.dict) -%}
     {% for i in range(2**_addr_t.width) %}
       {% if i in params['data'] %}
-      memory[{{i}}] = {{params['dtype'](params['data'][i]).code()}};
+      memory[{{i}}] = {{max(1, params['dtype'].width)}}'d{{params['dtype'](params['data'][i]).code()}};
       {% else -%}
-      memory[{{i}}] = {{params['dtype'](params['dflt']).code()}};
+      memory[{{i}}] = {{max(1, py.type(params['dflt']).width)}}'d{{params['dtype'](params['dflt']).code()}};
       {% endif -%}
     {% endfor %}
   {% else -%}
     {% for i in range(2**_addr_t.width) %}
       {% if i < len(params['data']) %}
-      memory[{{i}}] = {{params['dtype'](params['data'][i]).code()}};
+      memory[{{i}}] = {{max(1, params['dtype'].width)}}'d{{params['dtype'](params['data'][i]).code()}};
       {% else -%}
-      memory[{{i}}] = {{params['dtype'](params['dflt']).code()}};
+      memory[{{i}}] = {{max(1, py.type(params['dflt']).width)}}'d{{params['dtype'](params['dflt']).code()}};
       {% endif -%}
     {% endfor %}
   {% endif -%}

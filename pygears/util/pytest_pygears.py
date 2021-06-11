@@ -20,20 +20,21 @@ def pytest_exception_interact(node, call, report):
     ignore = reg['trace/ignore']
     r = re.compile('  File "(?P<fn>[^"]+)"')
 
-    for reprs in report.longrepr.reprtraceback.reprentries:
-        lines = []
-        for l in report.longrepr.reprtraceback.reprentries[0].lines:
-            res = r.match(l)
-            if res is not None:
-                fn = res.groupdict()['fn']
-                is_internal = any(fn.startswith(d) for d in ignore)
-                is_decorator_gen = '<decorator-gen' in fn
-                if is_internal or is_decorator_gen:
-                    continue
+    if hasattr(report.longrepr, 'reprtraceback'):
+        for reprs in report.longrepr.reprtraceback.reprentries:
+            lines = []
+            for l in report.longrepr.reprtraceback.reprentries[0].lines:
+                res = r.match(l)
+                if res is not None:
+                    fn = res.groupdict()['fn']
+                    is_internal = any(fn.startswith(d) for d in ignore)
+                    is_decorator_gen = '<decorator-gen' in fn
+                    if is_internal or is_decorator_gen:
+                        continue
 
-            lines.append(l)
+                lines.append(l)
 
-        reprs.lines = lines
+            reprs.lines = lines
 
     yield
 

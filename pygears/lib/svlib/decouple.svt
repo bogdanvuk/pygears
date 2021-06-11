@@ -1,16 +1,11 @@
-module decouple
-   #(
-	   parameter DEPTH = 2,
-     parameter DIN = 16,
-     parameter INIT = 0,
-     parameter INIT_VALID = 0
-	   )
-   (
-    input logic clk,
-    input       rst,
-    dti.consumer din,
-    dti.producer dout
-    );
+{%- import 'snippet.j2' as snippet -%}
+
+{% call snippet.gear_module(module_name, intfs, comment) %}
+
+	   localparam DEPTH = {{int(params['depth'])}};
+     localparam DIN = {{int(params['din'].width)}};
+     localparam INIT = {{int(params['init']) if params['init'] is not none else 0}};
+     localparam INIT_VALID = {{int(params['init'] is not none)}};
 
     if (DEPTH > 1) begin
 
@@ -93,4 +88,4 @@ module decouple
       assign dout.valid = din_reg_valid;
    end
 
-endmodule
+{% endcall %}

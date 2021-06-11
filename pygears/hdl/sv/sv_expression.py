@@ -1,6 +1,6 @@
 from pygears.hls import ir
 from functools import partial
-from pygears.typing import Array, Integer, Queue, code, typeof, Integral, Tuple, Union, Int, Unit
+from pygears.typing import Array, Integer, Queue, code, typeof, Integral, Tuple, Union, Int, Unit, Uint
 from .sv_keywords import sv_keywords
 
 # TODO: Use precedence of operators to induce parenthesis around expressions
@@ -87,7 +87,7 @@ class SVExpressionVisitor:
             res = []
             for op in reversed(node.val):
                 res_op = ir.ResExpr(op)
-                if res_op != ir.ResExpr(Unit()):
+                if res_op != ir.ResExpr(Unit()) and res_op.dtype != Uint[0]:
                     svexpr = self.visit(res_op)
                     res.append(self.cast_svexpr(svexpr, res_op.dtype, type(op)))
 

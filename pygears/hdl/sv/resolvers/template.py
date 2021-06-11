@@ -86,7 +86,11 @@ class HDLTemplateResolver(ResolverBase):
         }
 
         if 'attrib' in self.cfg:
-            context['comment'] = {'attrib': self.cfg['attrib']}
+            attrib = self.cfg.get('attrib', None)
+            if isinstance(attrib, str):
+                attrib = [attrib]
+
+            context['comment'] = {'attrib': attrib}
 
         for port in context['intfs']:
             context[f'_{port["name"]}'] = port

@@ -4,7 +4,7 @@ from pygears.core.graph import get_consumer_tree
 from pygears.core.port import OutPort
 from pygears.sim import log, timestep, SimPlugin
 from pygears.sim.sim_gear import SimGear
-from pygears.typing import typeof, TLM, Float
+from pygears.typing import typeof, TLM, Float, Uint
 from pygears.typing.visitor import TypingVisitorBase
 from vcd import VCDWriter
 from pygears.core.hier_node import HierVisitorBase
@@ -21,8 +21,22 @@ def match(val, include_pattern):
 
 
 class VCDTypeVisitor(TypingVisitorBase):
-    def __init__(self):
+    def __init__(self, max_level):
         self.fields = {}
+        self.max_level = max_level
+        self.level = 0
+
+    def visit(self, type_, field=None, **kwds):
+        self.level += 1
+        if self.level == self.max_level:
+            try:
+                self.visit_Uint(Uint[type_.width], field)
+            except:
+                pass
+        else:
+            super().visit(type_, field, **kwds)
+
+        self.level -= 1
 
     def visit_Int(self, type_, field):
         self.fields[field] = type_
@@ -66,13 +80,24 @@ class VCDTypeVisitor(TypingVisitorBase):
 
 
 class VCDValVisitor(TypingVisitorBase):
-    def __init__(self, vcd_vars, writer, timestep):
+    def __init__(self, vcd_vars, writer, timestep, max_level):
         self.vcd_vars = vcd_vars
         self.writer = writer
+        self.max_level = max_level
+        self.level = 0
         self.timestep = timestep
 
-    def visit(self, type_, field=None, **kwds):
-        return getattr(self, type_._base.__name__)(type_, field, **kwds)
+    def visit(self, type_, field=None, val=None):
+        self.level += 1
+        if self.level == self.max_level:
+            try:
+                self.Uint(Uint[type_.width], field, val.code())
+            except:
+                pass
+        else:
+            getattr(self, type_._base.__name__)(type_, field, val=val)
+
+        self.level -= 1
 
     def change(self, dtype, field, val):
         self.writer.change(self.vcd_vars[field], self.timestep, dtype(val).code())
@@ -142,7 +167,7 @@ def register_traces_for_intf(dtype, scope, writer):
     if typeof(dtype, TLM):
         vcd_vars['data'] = writer.register_var(scope, 'data', 'string')
     else:
-        v = VCDTypeVisitor()
+        v = VCDTypeVisitor(max_level=10)
         v.visit(dtype, 'data')
 
         for name, t in v.fields.items():
@@ -340,7 +365,7 @@ class VCD(SimExtend):
             self.writer.change(v['data'], timestep() * 10, str(val))
         else:
             try:
-                visitor = VCDValVisitor(v, self.writer, timestep() * 10)
+                visitor = VCDValVisitor(v, self.writer, timestep() * 10, max_level=10)
                 visitor.visit(v['dtype'], 'data', val=val)
             except AttributeError:
                 pass

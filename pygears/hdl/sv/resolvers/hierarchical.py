@@ -50,6 +50,10 @@ class HierarchicalResolver(ResolverBase):
         return f'{self.module_name}.{self.lang}'
 
     def module_context(self, template_env):
+        attrib = self.cfg.get('attrib', None)
+        if isinstance(attrib, str):
+            attrib = [attrib]
+
         context = {
             'pygears': pygears,
             'module_name': self.module_name,
@@ -58,7 +62,11 @@ class HierarchicalResolver(ResolverBase):
             'sigs': self.node.meta_kwds['signals'],
             'params': self.node.params,
             'inst': [],
-            'generics': []
+            'generics': [],
+            'comment': {
+                'comment': '',
+                'attrib': [] if attrib is None else attrib
+            }
         }
 
         for port in context['intfs']:

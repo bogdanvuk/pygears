@@ -1,6 +1,6 @@
 {% set py = import_('builtins') %}
 
-module sdp
+module {{module_name}}
    (
     input logic clk,
     input logic rst,
@@ -20,7 +20,7 @@ module sdp
    logic [W_ADDR-1:0] rd_addr_s;
    logic [W_DATA-1:0] rd_data_s;
 
-   sdp_wr_port
+   {{module_name}}_sdp_wr_port
      #(
        .W_DATA(W_DATA),
        .W_ADDR(W_ADDR)
@@ -35,7 +35,7 @@ module sdp
       .data_o(wr_data_s)
       );
 
-   sdp_rd_port
+   {{module_name}}_sdp_rd_port
      #(
        .W_DATA(W_DATA),
        .W_ADDR(W_ADDR)
@@ -51,7 +51,7 @@ module sdp
       .data_i(rd_data_s)
       );
 
-   sdp_mem
+   {{module_name}}_sdp_mem
      #(
        .W_DATA(W_DATA),
        .W_ADDR(W_ADDR),
@@ -71,7 +71,7 @@ module sdp
 
 endmodule
 
-module sdp_mem #(
+module {{module_name}}_sdp_mem #(
                  W_DATA = 16,
                  W_ADDR = 6,
                  DEPTH = 64
@@ -129,7 +129,7 @@ module sdp_mem #(
 endmodule
 
 
-module sdp_rd_port #(
+module {{module_name}}_sdp_rd_port #(
                      W_DATA = 16,
                      W_ADDR = 16
                      )
@@ -173,7 +173,7 @@ module sdp_rd_port #(
 
 endmodule
 
-module sdp_wr_port #(
+module {{module_name}}_sdp_wr_port #(
                      W_DATA = 16,
                      W_ADDR = 16
                      )

@@ -1,5 +1,6 @@
 from pygears import gear
 from pygears.typing import Uint
+from pygears.sim import clk
 
 
 @gear
@@ -13,4 +14,5 @@ async def rom(addr: Uint, *, data, dtype, dflt=None) -> b'dtype':
             except (IndexError, KeyError):
                 d = dflt
 
+        await clk()
         yield d
