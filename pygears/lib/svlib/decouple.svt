@@ -16,6 +16,7 @@
       logic [MSB:0] r_ptr;
       logic empty;
       logic full;
+      logic rd_ready;
 
       logic [W_DATA-1 : 0] memory [0 : DEPTH-1];
 

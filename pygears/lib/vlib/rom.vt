@@ -3,6 +3,7 @@
 {% set py = import_('builtins') %}
 {% set bitw = import_from('pygears.typing', 'bitw') %}
 
+// TODO: Implement loading from file
 {% call snippet.module_with_intf_structs(module_name, intfs, intfs, comment) %}
 
    reg                            addr_reg_valid;
