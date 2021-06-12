@@ -44,24 +44,45 @@
       always @(posedge clk) begin
         if(rst) begin
           r_ptr <= 0;
-        end else if(dout.ready & ~empty) begin
+        end else if(rd_ready & ~empty) begin
           r_ptr <= r_ptr + 1;
         end
       end
 
-      assign dout.data = memory[r_ptr[MSB-1:0]];
-      assign dout.valid = ~empty;
-
       assign din.ready = ~full;
+
+   {% if params['latency'] == 2 %}
+      logic [W_DATA-1 : 0] mem_reg;
+      logic reg_empty;
+
+      assign rd_ready = reg_empty | dout.ready;
+
+      always @(posedge clk) begin
+         if (rst) begin
+             reg_empty <= 1;
+         end else if (rd_ready) begin
+             mem_reg <= memory[r_ptr];
+             reg_empty <= empty;
+         end
+      end
+
+      assign dout.data = mem_reg;
+      assign dout.valid = ~reg_empty;
+
+   {% else %}
+      assign rd_ready = dout.ready;
+      assign dout.valid = ~empty;
+      assign dout.data = memory[r_ptr[MSB-1:0]];
+   {% endif %}
 
    end else begin
 
       logic [DIN-1 : 0] din_reg_data;
       logic                         din_reg_valid;
       logic                         reg_empty;
-      logic                         reg_ready;
+      logic                         rd_ready;
 
-      assign reg_ready = reg_empty;
+      assign rd_ready = reg_empty;
       assign reg_empty = !din_reg_valid;
 
       initial begin
@@ -77,13 +98,13 @@
               din_reg_data <= INIT;
          end else if(!reg_empty && dout.ready) begin
             din_reg_valid <= '0;
-         end else if (reg_ready)begin
+         end else if (rd_ready)begin
             din_reg_valid <= din.valid;
             din_reg_data <= din.data;
          end
       end
 
-      assign din.ready = reg_ready;
+      assign din.ready = rd_ready;
       assign dout.data = din_reg_data;
       assign dout.valid = din_reg_valid;
    end

@@ -29,8 +29,9 @@ def decouple_dout_setup(module):
     module.decouple_din = find('../decouple_din')
 
 
+# TODO: Implement latency == 2
 @gear(sim_setup=decouple_dout_setup)
-async def decouple_dout(*, t, depth) -> b't':
+async def decouple_dout(*, t, depth, latency) -> b't':
 
     din = module().decouple_din
     if din.queue.empty() and (din not in reg['sim/map'] or reg['sim/map'][din].done):
@@ -57,10 +58,11 @@ def check_depth_pow2(depth):
 
     return True
 
+
 @gear(hdl={'hierarchical': False}, enablement=b'check_depth_pow2(depth)')
-def decouple(din, *, depth=2, init=None) -> b'din':
+def decouple(din, *, depth=2, init=None, latency=1) -> b'din':
     din | decouple_din(depth=depth, init=init)
-    return decouple_dout(t=din.dtype, depth=depth)
+    return decouple_dout(t=din.dtype, depth=depth, latency=latency)
 
 
 buff = decouple(depth=1)

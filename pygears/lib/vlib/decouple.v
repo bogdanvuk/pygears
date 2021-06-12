@@ -1,3 +1,5 @@
+// # TODO: Implement latency == 2
+
 module decouple
    #(
 	   parameter DEPTH = 2,
