@@ -18,6 +18,25 @@ def test_2state(dout_delay):
     sim(timeout=8)
 
 
+def test_state_get_after_yield():
+    @gear(hdl={'compile': True})
+    async def test(a, b) -> Bool:
+        async with a as aa:
+            yield False
+            async with b as bb:
+                yield True
+
+    directed(
+        drv(t=Uint[4], seq=[1, 2]),
+        drv(t=Uint[2], seq=[]),
+        f=test(name='dut'),
+        ref=[False],
+    )
+
+    cosim('/dut', 'verilator')
+    sim(timeout=8)
+
+
 def test_cond_no_state(lang):
     @gear(hdl={'compile': True})
     async def test(din: Bool) -> Bool:
@@ -50,7 +69,9 @@ def test_cond_2state_asymetric(lang):
     cosim('/test', 'verilator', lang=lang)
     sim()
 
+
 # test_cond_2state_asymetric('sv')
+
 
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
@@ -73,6 +94,7 @@ def test_cond_2state_symetric(lang, din_delay, dout_delay):
 
     cosim('/test', 'verilator', lang=lang)
     sim()
+
 
 # test_cond_2state_symetric('sv', 2, 2)
 

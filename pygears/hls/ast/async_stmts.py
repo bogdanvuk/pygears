@@ -120,9 +120,7 @@ def parse_yield(node, ctx):
 
         stmts.append(ir.Await(ir.Component(p, 'ready')))
 
-    # Only "ir.Await('forward')" is present, all None-s are yielded
-    if len(stmts) == 1:
-        stmts.append(ir.Await('back'))
+    stmts.append(ir.Await('back'))
 
     return stmts
 
@@ -159,17 +157,22 @@ def asyncwith(node, ctx: Context):
     for _, targets in assigns:
         extend_stmts(ctx.ir_parent_block.stmts, targets)
 
-    stmts = []
+    # stmts = []
     for stmt in node.body:
         res_stmt = visit_ast(stmt, ctx)
-        extend_stmts(stmts, res_stmt)
+        extend_stmts(ctx.ir_parent_block.stmts, res_stmt)
+        # extend_stmts(stmts, res_stmt)
 
-
-    stmts.append(ir.Await('back'))
+    # stmts.append(ir.Await('back'))
+    extend_stmts(ctx.ir_parent_block.stmts, ir.Await('back'))
     for i in intfs:
-        stmts.append(ir.AssignValue(ir.Component(i, 'ready'), ir.res_true))
+        extend_stmts(
+            ctx.ir_parent_block.stmts,
+            ir.AssignValue(ir.Component(i, 'ready'), ir.res_true),
+        )
+        # stmts.append(ir.AssignValue(ir.Component(i, 'ready'), ir.res_true))
 
-    return stmts
+    # return stmts
 
 
 class AsyncForContext:
