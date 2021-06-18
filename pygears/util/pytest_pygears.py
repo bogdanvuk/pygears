@@ -93,6 +93,8 @@ def hook_before(top, args, kwds, config):
         with filelock.FileLock(lock_fn):
             pass
 
+    return True
+
 
 def pytest_runtest_call(item):
     if item.config.getoption('--pg'):

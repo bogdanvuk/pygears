@@ -101,7 +101,7 @@ module {{module_name}}_sdp_mem #(
     {% py %}
     from pygears import reg
     import os
-    mem_path = os.path.join(reg['svgen/conf']['outdir'], params['name'].replace('/', '_') + '.hex')
+    mem_path = os.path.join(reg['svgen/conf']['outdir'], module_name + '.hex')
     with open(mem_path, 'w') as f:
         for d in params['mem']:
             v = params['w_data'](d).code()
