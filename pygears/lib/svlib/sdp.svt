@@ -104,8 +104,8 @@ module {{module_name}}_sdp_mem #(
     mem_path = os.path.join(reg['svgen/conf']['outdir'], params['name'].replace('/', '_') + '.hex')
     with open(mem_path, 'w') as f:
         for d in params['mem']:
-            v = params['dtype'](d).code()
-            f.write("{0:#0{1}x}\n".format(v,params['dtype'].width//4)[2:])
+            v = params['w_data'](d).code()
+            f.write("{0:#0{1}x}\n".format(v,params['w_data'].width//4)[2:])
 
     print(f'$readmemh("{mem_path}", ram);')
     {% endpy %}
