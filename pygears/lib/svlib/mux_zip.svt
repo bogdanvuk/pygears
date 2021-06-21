@@ -43,7 +43,6 @@
   {% if i['width'] > 0 %}
                     dout_s.data[{{i['width']-1}}:0] = {{i['name']}}_s;
   {% endif %}
-                    ctrl.ready = handshake && &{{i['name']}}_s.eot;
                 end
 {% endfor %}
                 default: begin
