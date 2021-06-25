@@ -34,16 +34,20 @@ def decouple_dout_setup(module):
 async def decouple_dout(*, t, depth, latency) -> b't':
 
     din = module().decouple_din
-    if din.queue.empty() and (din not in reg['sim/map'] or reg['sim/map'][din].done):
-        raise GearDone
+    sim_map = reg['sim/map']
+    sim_din = sim_map[din]
 
-    queue = din.queue
-    data = await queue.get()
+    while True:
+        if din.queue.empty() and (din not in sim_map or sim_din.done):
+            raise GearDone
 
-    yield data
+        queue = din.queue
+        data = await queue.get()
 
-    queue.task_done()
-    await clk()
+        yield data
+
+        queue.task_done()
+        await clk()
 
 
 def check_depth_pow2(depth):

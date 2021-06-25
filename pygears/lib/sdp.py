@@ -22,13 +22,14 @@ async def sdp_rd_port(addr, *, t, depth, mem) -> b't':
         yield dout
 
 
-@gear(outnames=['rd_data'], hdl={'hierarchical': False})
+@gear(outnames=['rd_data'], hdl={'hierarchical': False}, enablement=b'latency not in [0, 2]')
 def sdp(wr_addr_data: TWrDin,
         rd_addr: TRdDin,
         *,
         depth=b'2**w_addr',
         w_data=b'w_data',
         w_addr=b'w_addr',
+        latency=1,
         mem=None) -> b'w_data':
     """Short for Simple Dual-Port RAM. Supports simultaneous read and write
     operations i.e. ``rd_addr`` interface reads from the RAM while the
