@@ -21,8 +21,11 @@ class SimExtend:
         except AttributeError:
             pass
 
-    def deactivate(self):
+    def deactivate(self, cur_event=None):
         for name, event in self.sim.events.items():
+            if name == cur_event:
+                continue
+
             try:
                 event.remove(getattr(self, name))
             except AttributeError:

@@ -148,7 +148,7 @@ class Context:
     def variables(self):
         return {
             name: obj
-            for name, obj in self.scope.items() if isinstance(obj, ir.Variable) and obj.val is None
+            for name, obj in self.scope.items() if isinstance(obj, ir.Variable) and obj.reg is False
         }
 
     @property

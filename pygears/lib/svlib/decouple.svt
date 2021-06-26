@@ -6,6 +6,7 @@
      localparam DIN = {{int(params['din'].width)}};
      localparam INIT = {{int(params['init']) if params['init'] is not none else 0}};
      localparam INIT_VALID = {{int(params['init'] is not none)}};
+     localparam LATENCY = {{params['latency']}};
 
     if (DEPTH > 1) begin
 
@@ -18,6 +19,11 @@
       logic full;
       logic rd_ready;
 
+  {% if comment is defined and isinstance(comment, dict) and 'attrib' in comment %}
+      {% for i in comment['attrib'] -%}
+        (* {{ i }} *)
+      {% endfor %}
+  {% endif %}
       logic [W_DATA-1 : 0] memory [0 : DEPTH-1];
 
       initial begin

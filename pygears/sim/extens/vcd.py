@@ -324,7 +324,7 @@ class VCD(SimExtend):
         vcd_visitor.visit(find('/'))
 
         if not vcd_visitor.vcd_vars:
-            self.deactivate()
+            self.deactivate('before_run')
             return True
 
         self.vcd_vars = {
