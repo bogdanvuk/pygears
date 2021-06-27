@@ -182,7 +182,8 @@ class ContainerVisitor:
 def make_gear_call_hash(func, args, const_args, kwds, fix_intfs):
     user_kwds = kwds.copy()
     for key in reg['gear/params/extra']:
-        user_kwds.pop(key, None)
+        if key != '__hdl__':
+            user_kwds.pop(key, None)
 
     try:
         kwd_intfs = []
