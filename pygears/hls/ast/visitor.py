@@ -302,6 +302,9 @@ class FuncContext(Context):
 
             res = infer_ftypes(params=params, args=arg_types, namespace=self.local_namespace)
 
+            if 'return' in res:
+                self.ret_dtype = res['return']
+
             for name, dtype in res.items():
                 if name not in args:
                     continue
