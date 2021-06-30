@@ -35,7 +35,7 @@ REG_TEMPLATE_NO_RST_COND = """
 always @(posedge clk) begin
     if (rst) begin
         {0} <= {1};
-    end else begin
+    end else if (_state_en) begin
         {0} <= {0}_next;
     end
 end

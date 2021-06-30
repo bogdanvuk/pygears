@@ -167,6 +167,7 @@ def build(top, outdir=None, postsynth=False, lang=None, rebuild=True):
     if not rebuild and os.path.exists(file_struct['dll_path']):
         return
 
+    log.info(f'Verilating "{top.name}" inside {outdir}...')
     shutil.rmtree(outdir, ignore_errors=True)
 
     reg['svgen/spy_connection_template'] = (signal_spy_connect_hide_interm_t
@@ -252,7 +253,6 @@ class SimVerilated(CosimBase):
         # TODO: When reusing existing verilated build, add test to check
         # whether verilated module is the same as the current one (Maybe hash check?)
         if self.rebuild:
-            log.info(f'Verilating...')
             build(self.top, self.outdir, postsynth=False, lang=self.lang)
             log.info(f'Done')
 
