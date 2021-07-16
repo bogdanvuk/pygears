@@ -74,10 +74,14 @@ void cycle(void) {
 {%- endif %}
 }
 
-unsigned long init(const char* trace_fn) {
+unsigned long init(const char* trace_fn, long seed) {
+{% if not rst %}
+    Verilated::randSeed(seed);
+    Verilated::randReset(2);
+{% endif %}
+
     top = new V{{top_name}};
     main_time = 0;
-
 {% if tracing %}
     if (trace_fn) {
         Verilated::traceEverOn(true);
@@ -98,7 +102,11 @@ unsigned long init(const char* trace_fn) {
     top->{{p.basename}}_ready = 0;
 {% endfor %}
 
-    top->rst = 1;
+{% for p in in_ports -%}
+    top->{{p.basename}}_valid = 0;
+{% endfor %}
+
+    top->rst = {{ 1 if rst else 0 }};
     top->eval();
     top->clk = 1;
 {% if aux_clock %}

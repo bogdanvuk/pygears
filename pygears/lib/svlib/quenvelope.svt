@@ -36,6 +36,13 @@
     assign dout.valid = (din.valid || valid_reg) && (!handshake_reg);
 
     assign handshake = dout.valid & dout.ready;
+    initial begin
+         handshake_reg = 1'b0;
+         valid_reg = 1'b0;
+    {% if params['lvl'] > 0 %}
+         eots_reg = 0;
+    {% endif %}
+    end
 
     always @(posedge clk) begin
        if (rst) begin

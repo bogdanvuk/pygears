@@ -10,6 +10,9 @@ module data_dly #(parameter LEN = 5,
    logic dly_done;
    logic [LEN-1:0] reg_valid;
    dti#(.W_DATA(W_DIN)) reg_dout[LEN-1:0]();
+   initial begin
+      dly_done = 0;
+   end
 
    always @(posedge clk) begin
       if (rst || !(|reg_valid)) begin

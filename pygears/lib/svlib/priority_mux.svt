@@ -57,6 +57,13 @@
       end
    end
 
+   initial begin
+{% if is_queue %}
+      start_reg = 0;
+{% endif %}
+      flag_reg = 0;
+   end
+
    always_ff @(posedge clk) begin
   {% if is_queue %}
       if (rst | (handshake && dout_s.eot)) begin

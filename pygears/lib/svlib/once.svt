@@ -10,6 +10,11 @@
    assign reg_ready = reg_empty | dout.ready;
    assign reg_empty = !din_reg_valid;
 
+   initial begin
+       din_reg_valid = '1;
+       din_reg_data = {{ params['tout'](params['val']).code() }};
+   end
+
    always @(posedge clk)
      begin
         if(rst) begin

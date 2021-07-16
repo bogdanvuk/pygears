@@ -12,7 +12,7 @@ from pygears.util.fileio import save_file
 from . import axi_intfs
 
 
-def generate(top, intfdef):
+def generate(top, intfdef, rst=True):
     files = set()
     if isinstance(top, str):
         top = find(top)
@@ -93,6 +93,7 @@ def generate(top, intfdef):
         'inst_name': modinst.wrap_module_name,
         'intfs': intfs,
         'sigs': sigs,
+        'rst': rst,
         'param_map': modinst.params if not modinst.wrapped else {},
         'port_def': defs,
         'ports': intfdef

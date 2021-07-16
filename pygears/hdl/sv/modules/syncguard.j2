@@ -27,6 +27,10 @@
     assign {{on}}.data = {{in}}.data;
 {% endfor %}
 
+    initial begin
+       ready_all_reg = '0;
+    end
+
     assign in_ready = &ready_all;
     generate
         for (genvar i = 0; i < SIZE; i++) begin

@@ -17,7 +17,10 @@ module sample #(
    logic                         handshake;
 
    initial begin
-      din_reg_valid = 0;
+      din_reg_valid = INIT_VALID;
+      consuming = 0;
+      if (INIT_VALID)
+        din_reg = INIT;
    end
 
    always @(posedge clk) begin

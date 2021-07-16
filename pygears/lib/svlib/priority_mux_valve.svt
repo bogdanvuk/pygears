@@ -27,6 +27,10 @@
       end
    end
 
+   initial begin
+      flag_reg = 0;
+   end
+
    always @(posedge clk) begin
       if (rst | handshake) begin
          flag_reg <= 0;

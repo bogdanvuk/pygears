@@ -165,6 +165,11 @@ module {{module_name}}
       assign cnt = signed'(w_ptr) - signed'(r_ptr);
       assign mem_read = (cnt <= 1) && (!full);
 
+      initial begin
+         r_ptr = 0;
+         w_ptr = 0;
+      end
+
       always @(posedge clk) begin
           if(rst) begin
             w_ptr <= 0;
@@ -188,6 +193,10 @@ module {{module_name}}
 
    end else begin
       logic data_valid_reg;
+
+      initial begin
+         data_valid_reg = 0;
+      end
 
       // valid and eot for data interface are registered
       always @(posedge clk) begin

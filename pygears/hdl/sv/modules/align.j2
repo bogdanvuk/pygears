@@ -39,6 +39,10 @@ module {{module_name}}
    assign dout{{i}}.valid = out_valid[{{i}}];
 {% endfor -%}
 
+   initial begin
+      consumed_reg = '0;
+   end
+
    assign in_valid = {din1.valid, din0.valid};
    assign out_ready = {dout1.ready, dout0.ready};
    assign all_aligned = &aligned;

@@ -26,12 +26,15 @@
   {% endif %}
       logic [W_DATA-1 : 0] memory [0 : DEPTH-1];
 
-      initial begin
-         if (INIT_VALID) begin
-            memory[0] = INIT;
-            w_ptr = 1;
-         end
-      end
+      initial begin 
+         r_ptr = 0; 
+         if (INIT_VALID) begin 
+            memory[0] = INIT; 
+            w_ptr = 1; 
+         end else begin 
+            w_ptr = 0; 
+         end 
+      end 
 
       assign empty = (w_ptr == r_ptr);
       assign full = (w_ptr[MSB-1:0] == r_ptr[MSB-1:0]) & (w_ptr[MSB]!=r_ptr[MSB]);
@@ -62,13 +65,17 @@
       logic [W_DATA-1 : 0] mem_reg;
       logic reg_empty;
 
+      initial begin
+         reg_empty = 1;
+      end
+
       assign rd_ready = reg_empty | dout.ready;
 
       always @(posedge clk) begin
          if (rst) begin
              reg_empty <= 1;
          end else if (rd_ready) begin
-             mem_reg <= memory[r_ptr];
+             mem_reg <= memory[r_ptr[MSB-1:0]];
              reg_empty <= empty;
          end
       end

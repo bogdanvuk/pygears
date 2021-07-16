@@ -15,14 +15,18 @@ module {{wrap_module_name}} #(
 {{ port_def|join(",\n")|indent(4, True)}}
 );
 
-   logic   aresetn_axi;
-   logic   rst;
+   logic   aresetn_axi;  
+   logic   rst;  
 
-   always @(posedge aclk)
-     begin
-        aresetn_axi <= aresetn;
-        rst <= ~aresetn_axi;
-     end
+{% if rst %}
+   always @(posedge aclk)  
+     begin  
+        aresetn_axi <= aresetn;  
+        rst <= ~aresetn_axi;  
+     end  
+{% else %}
+   assign rst = 1'b0;  
+{% endif %}
 
 {{snippet.intf_inst_list(intfs.values())|indent(4, True)}}
 

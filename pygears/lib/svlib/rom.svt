@@ -39,6 +39,7 @@
      end
 
    initial begin
+       addr_reg_valid = '0;
 
 {% if params['dflt'] is none -%}
 

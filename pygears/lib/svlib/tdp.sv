@@ -177,6 +177,10 @@ module tdp_port #(
    assign data_if.data  = data_i;
    assign data_if.valid = rd_req_valid;
 
+   initial begin
+      rd_req_valid = 1'b0;
+   end
+
    // valid and eot for data interface are registered
    always @(posedge clk) begin
       if (rst) begin

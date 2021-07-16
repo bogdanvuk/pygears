@@ -31,6 +31,10 @@
       end
    end
 
+   initial begin
+      {{rd}}_consuming = 0;
+   end
+
    always @(posedge clk) begin
       if (rst || {{rd}}_handshake) begin
          {{rd}}_consuming <= 0;
