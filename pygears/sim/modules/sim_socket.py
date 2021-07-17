@@ -98,10 +98,11 @@ class SimSocketOutputDrv(SimSocketDrv):
 
 
 class SVServerModule:
-    def __init__(self, module, tenv, srcdir):
+    def __init__(self, module, tenv, srcdir, rst):
         self.srcdir = srcdir
         self.module = module
         self.tenv = tenv
+        self.rst = rst
         from pygears import reg
         self.svmod = reg['hdlgen/map'][self.module]
 
@@ -117,7 +118,7 @@ class SVServerModule:
             for port in itertools.chain(self.module.in_ports, self.module.out_ports)
         }
         return self.tenv.snippets.module_inst(
-            self.svmod.wrap_module_name, self.svmod.params, "dut", port_map)
+            self.svmod.wrap_module_name, self.svmod.params, "dut", port_map, self.rst)
 
 
 class SVServerIntf:
@@ -170,7 +171,7 @@ class SVServerIntf:
 
 
 class SimSocket(CosimBase):
-    def __init__(self, gear, timeout=100, rebuild=True, run=True, batch=True, **kwds):
+    def __init__(self, gear, timeout=100, rebuild=True, run=True, batch=True, rst=True, **kwds):
         super().__init__(gear, timeout)
         self.name = gear.name[1:].replace('/', '_')
         self.outdir = os.path.abspath(os.path.join(reg['results-dir'], self.name))
@@ -182,6 +183,7 @@ class SimSocket(CosimBase):
         if not kwds.get('gui', False):
             kwds['batch'] = batch
 
+        self.rst = rst
         self.kwds = kwds
         self.sock = None
         self.cosim_pid = None
@@ -215,7 +217,7 @@ class SimSocket(CosimBase):
             sock_id = register_intf(SVServerIntf(p, tenv))
             self.handlers[p.basename] = SimSocketOutputDrv(p, sock_id)
 
-        register_intf(SVServerModule(self.rtl_node, tenv, self.srcdir))
+        register_intf(SVServerModule(self.rtl_node, tenv, self.srcdir, rst=self.rst))
 
         self.conn = reg['sim/svsock/server']
         self.send_cmd = self.conn.send_cmd

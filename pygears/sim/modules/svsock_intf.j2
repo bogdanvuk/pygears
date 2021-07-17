@@ -75,7 +75,7 @@ assign {{name}}.ready = {{name}}_vif.ready;
   {% endif %}
 {%- endmacro -%}
 
-{% macro module_inst(module_name, param_map, inst_name, port_map=None) -%}
+{% macro module_inst(module_name, param_map, inst_name, port_map=None, rst=True) -%}
 
   {{module_name}}
   {%- if param_map|length > 0 %}
@@ -91,7 +91,7 @@ assign {{name}}.ready = {{name}}_vif.ready;
   {% endif %}
  {{inst_name}} (
     .clk(clk),
-    .rst(rst),
+    .rst({{ "rst" if rst else "1'b0" }}),
   {% if port_map -%}
     {% for name,value in port_map.items() -%}
       {{"."|indent(4,True)}}{{name}}({{value}}){{ "," if not loop.last else "" }}

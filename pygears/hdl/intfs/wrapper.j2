@@ -18,10 +18,14 @@ module {{wrap_module_name}} #(
    logic   aresetn_axi;  
    logic   rst;  
 
-{% if rst %}
    always @(posedge aclk)  
      begin  
         aresetn_axi <= aresetn;  
+     end  
+
+{% if rst %}
+   always @(posedge aclk)  
+     begin  
         rst <= ~aresetn_axi;  
      end  
 {% else %}

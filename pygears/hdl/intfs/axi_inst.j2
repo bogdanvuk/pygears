@@ -53,6 +53,19 @@
 {%- endmacro %}
 
 {% macro slave_write(name, wdata, awaddr) -%}
+
+  {% set data_strb_w = wdata.params['wdata'] + wdata.params['wstrb'] %}
+  {% set wdata_intf = 'strb_' + name %}
+
+  dti #(.W_DATA({{data_strb_w}})) {{wdata_intf}}();
+
+ {{name}}_strb_combiner {{name}}_strb_combiner_i (
+                                .clk(aclk),
+                                .rst(~aresetn_axi),
+                                .din({{wdata_intf}}),
+                                .dout({{wdata.name}})
+                                );
+
   axi_slave_write #(
                     .C_AXI_ID_WIDTH(C_AXI_{{name.upper()}}_ID_WIDTH),
                     .C_AXI_ADDR_WIDTH({{awaddr.params['awaddr']}}),
@@ -68,12 +81,13 @@
         {% else %}
                     .M_AXI_AWREADY(1'b1),
         {% endif %}
-                    .M_AXI_WDATA({{wdata.name}}.data),
+                    .M_AXI_WDATA({{wdata_intf}}.data[{{wdata.params['wdata']-1}}:0]),
+                    .M_AXI_WSTRB({{wdata_intf}}.data[{{wdata.params['wdata']}}+:{{wdata.params['wstrb']}}]),
+                    .M_AXI_WVALID({{wdata_intf}}.valid),
+                    .M_AXI_WREADY({{wdata_intf}}.ready & {{wdata_intf}}.valid),
 
-                    .M_AXI_WVALID({{wdata.name}}.valid),
-                    .M_AXI_WREADY({{wdata.name}}.ready & {{wdata.name}}.valid),
                     .M_AXI_BRESP(2'b0),
-                    .M_AXI_BVALID({{wdata.name}}.valid),
+                    .M_AXI_BVALID({{wdata_intf}}.valid),
 {{axi_intfs.port_map(axi_intfs.AXI_SLAVE, name, "s_axi", uppercase=True,
     awaddr=True,
     bresp=True,
