@@ -99,25 +99,6 @@ class SVGenTypeVisitor(TypingVisitorBase):
 
         return f'{high_parent_context}_t'
 
-    def visit_Queue(self, type_, field):
-        struct_fields = []
-        parent_context = self.context
-        struct_fields.append(f'{self.struct_str} // {type_}')
-        struct_fields.append(
-            f'    {self.basic_type} [{type_.args[1]-1}:0] eot; // u{type_.args[1]}')
-        self.context = f'{parent_context}_data'
-        type_declaration = self.visit(type_.args[0], type_.fields[0])
-
-        if (type_declaration is not None):
-            struct_fields.append(f'    {type_declaration} data; // {type_.args[0]}')
-
-        struct_fields.append(f'}} {parent_context}_t;\n')
-        self.struct_array.append('\n'.join(struct_fields))
-
-        self.context = parent_context
-
-        return f'{parent_context}_t'
-
     def visit_Tuple(self, type_, field):
         if self.depth == self.max_depth:
             return self.visit_Uint(type_, field)
@@ -126,7 +107,7 @@ class SVGenTypeVisitor(TypingVisitorBase):
         parent_context = self.context
 
         struct_fields.append(f'{self.struct_str} // {type_}')
-        for t, f in zip(reversed(type_.args), reversed(type_.fields)):
+        for t, f in zip(reversed(type_), reversed(type_.fields)):
             self.context = f'{parent_context}_{f}'
             type_declaration = self.visit(t, f)
             if type_declaration:
@@ -138,6 +119,8 @@ class SVGenTypeVisitor(TypingVisitorBase):
         self.context = parent_context
 
         return f'{parent_context}_t'
+
+    visit_Queue = visit_Tuple
 
     def visit_Array(self, type_, field):
         if not self.depth:

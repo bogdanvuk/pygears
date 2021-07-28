@@ -2,8 +2,9 @@ import inspect
 
 from .base import EnumerableGenericMeta, type_str, typeof
 from .base import TemplatedTypeUnspecified, class_and_instance_method, is_type
-from .uint import Uint
+from .uint import Uint, Bool
 from .unit import Unit
+from .tuple import Tuple
 
 
 class QueueMeta(EnumerableGenericMeta):
@@ -78,7 +79,7 @@ class QueueMeta(EnumerableGenericMeta):
 
     @property
     def lvl(self):
-        return self.args[1]
+        return len(self.args[1]) if isinstance(self.args[1], tuple) else self.args[1]
 
     @property
     def data(self):
@@ -87,13 +88,18 @@ class QueueMeta(EnumerableGenericMeta):
     @property
     def eot(self):
         if self._eot is None:
-            self._eot = Uint[self.lvl]
+            if isinstance(self.args[1], tuple):
+                self._eot = Tuple[{name: Bool for name in self.args[1]}]
+            else:
+                self._eot = Uint[self.lvl]
 
         return self._eot
 
     def __str__(self):
         if self.args:
-            if self.lvl == 1:
+            if isinstance(self.args[1], tuple):
+                return '[{}]^{}'.format(type_str(self.args[0]), self.args[1])
+            elif self.lvl == 1:
                 return '[%s]' % type_str(self.args[0])
             else:
                 return '[{}]^{}'.format(type_str(self.args[0]), self.lvl)
@@ -119,7 +125,11 @@ class Queue(tuple, metaclass=QueueMeta):
         if eot is None:
             val, eot = val
 
-        queue_tpl = (cls.args[0](val), cls.eot(eot))
+        if typeof(cls.eot, Tuple):
+            queue_tpl = (cls.args[0](val), cls.eot(tuple(eot)))
+        else:
+            queue_tpl = (cls.args[0](val), cls.eot(eot))
+
         return super(Queue, cls).__new__(cls, queue_tpl)
 
     def __eq__(self, other):

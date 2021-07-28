@@ -1,5 +1,5 @@
 import pytest
-from pygears.typing import Queue, TemplateArgumentsError, Uint
+from pygears.typing import Queue, TemplateArgumentsError, Uint, Tuple, Bool
 
 
 def test_inheritance():
@@ -68,3 +68,14 @@ def test_indexing():
 
 def test_queue_of_queues():
     assert Queue[Queue[Uint[2], 2], 3] == Queue[Uint[2], 5]
+
+
+def test_eot_lvl_naming():
+    t = Queue[Uint[8], ('low', 'mid', 'high')]
+    assert t.eot == Tuple[{'low': Bool, 'mid': Bool, 'high': Bool}]
+
+    res = t(0, Uint[3](6))
+
+    assert res.eot['low'] == 0
+    assert res.eot['mid'] == 1
+    assert res.eot['high'] == 1
