@@ -26,10 +26,14 @@ class SVIntfGen:
     @property
     @functools.lru_cache()
     def traced(self):
+        def check(pattern):
+            if isinstance(pattern, str):
+                return fnmatch.fnmatch(self.intf.name, pattern)
+            else:
+                return pattern(self.intf)
+
         return any(
-            fnmatch.fnmatch(self.intf.name, p) for p in reg['debug/trace'])
-        # return any(
-        #     fnmatch.fnmatch(self.intf.name, p) and len(self.intf.name) < 20 for p in reg['debug/trace'])
+            check(p) for p in reg['debug/trace'])
 
     @property
     @functools.lru_cache(maxsize=None)

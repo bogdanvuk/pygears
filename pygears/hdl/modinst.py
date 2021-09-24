@@ -86,7 +86,13 @@ class HDLModuleInst:
     @property
     @functools.lru_cache()
     def traced(self):
-        self_traced = any(fnmatch.fnmatch(self.node.name, p) for p in reg['debug/trace'])
+        def check(pattern):
+            if isinstance(pattern, str):
+                return fnmatch.fnmatch(self.node.name, pattern)
+            else:
+                return pattern(self.node)
+
+        self_traced = any(check(p) for p in reg['debug/trace'])
 
         if self.hierarchical:
             children_traced = any(hdlmod(child).traced for child in self.node.child)

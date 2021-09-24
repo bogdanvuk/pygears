@@ -17,7 +17,13 @@ from pygears.conf import inject, Inject
 
 
 def match(val, include_pattern):
-    return any(fnmatch.fnmatch(val, p) for p in include_pattern)
+    def check(pattern):
+        if isinstance(pattern, str):
+            return fnmatch.fnmatch(val.name, pattern)
+        else:
+            return pattern(val)
+
+    return any(check(p) for p in include_pattern)
 
 
 class VCDTypeVisitor(TypingVisitorBase):
@@ -195,7 +201,8 @@ def register_traces_for_intf(dtype, scope, writer):
 
 
 def is_trace_included(port, include, vcd_tlm):
-    if not match(f'{port.gear.name}.{port.basename}', include):
+    # if not match(f'{port.gear.name}.{port.basename}', include):
+    if not match(port, include):
         return False
 
     if (port.dtype is None) or (typeof(port.dtype, TLM) and not vcd_tlm):

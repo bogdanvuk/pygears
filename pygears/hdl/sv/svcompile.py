@@ -651,12 +651,31 @@ def write_module(ctx: Context, hdl, writer, subsvmods, funcs, template_env, conf
                          aux_funcs=aux_funcs)
 
     for name, expr in ctx.variables.items():
-        blk += svcompile(hdl,
+        var_blk = svcompile(hdl,
                          ctx,
                          name,
                          selected=lambda x: x.obj == expr,
                          lang=lang,
                          aux_funcs=aux_funcs)
+
+        if typeof(expr.dtype, ir.IntfType) and any(expr.name == p.basename for p in ctx.gear.in_ports):
+            # TODO: Make this transformation somewhere else
+            if len(ctx.gear.in_ports) == len(ctx.gear.out_ports) == 1:
+                pin = ctx.gear.in_ports[0].basename
+                pout = ctx.gear.out_ports[0].basename
+
+                template = (
+                    f'if ({pin}.valid) begin\n'
+                    f'    if ({pout}.ready) begin\n'
+                    f'        {pin}.ready = 1;\n'
+                    f'    end\n'
+                    f'end'
+                )
+
+                if all(t.strip() == v.strip() for t, v in zip(template.split('\n'), var_blk.split('\n')[3:8])):
+                    var_blk = f'    assign {pin}.ready = {pout}.ready;'
+
+        blk += var_blk
 
     for name, expr in ctx.signals.items():
         blk += svcompile(hdl,
