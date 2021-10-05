@@ -129,47 +129,13 @@ def manage_async_regs(key_path):
         PluginBase.async_reg.pop(r)
 
 
-# def bind(key_pattern, value):
-#     """Sets a new ``value`` for the registry location designated by ``key_path``.
-
-#     Args:
-#        key_path: a UNIX style path without leading '/'
-#        value: value to set
-
-#     **Example** - configure the simulator not to throw exeptions on simulation
-#     errors::
-
-#         reg['logger/sim/error/exception'] = False
-
-#     """
-
-#     reg = PluginBase.registry
-
-#     # if there is no need to match anything (no wildcards)
-#     if not any(c in key_pattern for c in wildcard_list):
-#         bind_by_path(key_path=key_pattern, value=value)
-#         manage_async_regs(key_pattern)
-#         return
-
-#     matched = False
-#     for reg_list in dict_generator(reg):
-#         as_path = delimiter.join([str(x) for x in reg_list[:-1]])
-#         if fnmatch.fnmatch(as_path, key_pattern):
-#             bind_by_path(key_path=as_path, value=value)
-#             matched = True
-#     if not matched:
-#         raise RegistryException(f'Bind not successful for {key_pattern}')
-#     else:
-#         manage_async_regs(key_pattern)
-
-
 def reset():
     for subc in PluginBase.subclasses:
         subc.reset()
 
 
 def clear():
-    for subc in PluginBase.subclasses:
+    for subc in reversed(PluginBase.subclasses):
         subc.clear()
 
     reg.clear()

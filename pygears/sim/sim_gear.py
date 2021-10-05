@@ -193,8 +193,11 @@ class SimGear:
 
     def _finish(self):
         self.done = True
-        for port in self.gear.out_ports:
-            port.producer.finish()
+        try:
+            for port in self.gear.out_ports:
+                port.producer.finish()
+        except:
+            pass
 
         if not self._clean:
             self._cleanup()

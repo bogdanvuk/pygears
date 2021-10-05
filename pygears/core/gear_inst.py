@@ -19,9 +19,17 @@ from .port import HDLConsumer, HDLProducer
 from .channel import channel_interfaces
 
 
-def is_traced(name):
-    cfg = reg['debug/trace']
-    return any(fnmatch.fnmatch(name, p) for p in cfg)
+def check(pattern, node):
+    if isinstance(pattern, str):
+        return fnmatch.fnmatch(node.name, pattern)
+    else:
+        return pattern(node)
+
+def is_traced(node):
+    return any(check(p, node) for p in reg['debug/trace'])
+
+    # cfg = reg['debug/trace']
+    # return any(fnmatch.fnmatch(name, p) for p in cfg)
 
 
 def get_obj_var_name(frame, obj):
@@ -217,7 +225,7 @@ class intf_name_tracer:
     def __init__(self, gear):
         self.enabled = reg['gear/infer_signal_names']
         if self.enabled == 'debug':
-            self.enabled = is_traced(gear.name)
+            self.enabled = is_traced(gear)
 
         if not self.enabled:
             return

@@ -9,7 +9,7 @@ from pygears.core.graph import has_async_producer
 from traceback import walk_stack
 from .intf import Intf
 from .port import InPort, OutPort, HDLConsumer, HDLProducer
-from .hier_node import NamedHierNode
+from .hier_node import NamedHierNode, HierVisitorBase
 from .util import is_standard_func
 
 
@@ -114,6 +114,9 @@ class Gear(NamedHierNode):
         self.const_args = {}
         self.in_ports: List[InPort] = []
         self.out_ports: List[OutPort] = []
+
+    def _clean():
+        pass
 
     def __repr__(self):
         if self.parent is None:
@@ -308,7 +311,10 @@ class GearPlugin(PluginBase):
         reg['gear/exec_context'] = 'compile'
 
     @classmethod
-    def reset(cls):
-        reg['gear/root'] = Gear(None, params={'name': ''})
-        reg['gear/current_module'] = reg['gear/root']
-        reg['gear/code_map'] = []
+    def clear(cls):
+        class GearCleaner(HierVisitorBase):
+            def HierNode(self, node):
+                super().HierNode(node)
+                node.__dict__.clear()
+
+        GearCleaner().visit(reg['gear/root'])

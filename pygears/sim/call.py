@@ -4,7 +4,7 @@ from pygears.sim import sim
 from pygears.typing import Integer, Int, Uint, is_type, typeof, Any
 from pygears.core.partial import extract_arg_kwds, combine_arg_kwds, all_args_specified
 from pygears.core.gear_inst import resolve_args
-from pygears import reset
+from pygears import reset, clear
 from pygears.sim import cosim
 
 
@@ -26,7 +26,7 @@ def infer_dtype(val, dtype):
 
 
 def call(f, *args, **kwds):
-    reset()
+    clear()
     kwd_intfs, kwd_params = extract_arg_kwds(kwds, f)
     args_comb = combine_arg_kwds(args, kwd_intfs, f)
 

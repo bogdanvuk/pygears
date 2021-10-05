@@ -15,6 +15,14 @@ def merge_cond_alias_map(ir_node, ctx):
         if v != alias_map.get(n, v):
             alias_map[n] = ctx.ref(n)
 
+        # TODO: Why does this change ThorX files?
+        # # If there's an error invoking equality operator
+        # try:
+        #     if v != alias_map.get(n, v):
+        #         alias_map[n] = ctx.ref(n)
+        # except:
+        #     pass
+
 
 # TODO: Revisit cast_return, maybe it can be more general
 from pygears.typing import typeof, Queue, Tuple, Array

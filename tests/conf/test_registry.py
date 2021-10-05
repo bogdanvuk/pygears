@@ -1,10 +1,10 @@
-from pygears import reg
+from pygears import reg, clear
 from dataclasses import dataclass
 from typing import Any, Callable
 
 
 def test_basic():
-    reg.clear()
+    clear()
 
     reg['a/b'] = 1
 
@@ -19,7 +19,7 @@ def test_basic():
 
 
 def test_conf_getter():
-    reg.clear()
+    clear()
 
     def get_b(var):
         return var.path
@@ -30,7 +30,7 @@ def test_conf_getter():
 
 
 def test_conf_setter():
-    reg.clear()
+    clear()
 
     values = []
 
@@ -48,7 +48,7 @@ def test_conf_setter():
     assert values == [1, 2]
 
 def test_subreg():
-    reg.clear()
+    clear()
 
     reg.subreg('a')
 
