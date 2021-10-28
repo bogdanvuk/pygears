@@ -61,9 +61,9 @@ module {{wrap_module_name}} #(
 
     {% if wdata %}
       {% if awaddr.port == wdata.port %}
-        {{axi.slave_write_combined(name, wdata, awaddr)}}
+        {{axi.slave_write_combined(module_name, name, wdata, awaddr)}}
       {% else %}
-        {{axi.slave_write(name, wdata, awaddr)}}
+        {{axi.slave_write(module_name, name, wdata, awaddr)}}
       {% endif %}
     {% endif %}
   {% elif p.t == 'bram' %}

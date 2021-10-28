@@ -2,6 +2,7 @@ import re
 
 port_list_regex = r'\((?P<port_list>[\s\S]*?)\)'
 generic_list_regex = r'(?:#\s*\((?P<param_list>[\s\S]*?)\))'
+range_regex = r"(?:\[(?P<arr_high>[\s\S]*?):(?P<arr_low>[\s\S]*?)\])?"
 space_regex = r'\s+'
 opt_space_regex = r'\s*'
 id_regex_t = r'(?P<{}>[\w"]+)'
@@ -12,7 +13,7 @@ module_regex = r'module' + space_regex + id_regex_t.format("name") + \
 
 simple_port_regex = "(?P<dir>input|output)" + opt_space_regex + \
                     id_regex_t.format("type") + \
-                    "?" + space_regex + id_regex_t.format("name")
+                    "?" + space_regex + range_regex + opt_space_regex + id_regex_t.format("name")
 
 param_regex = r'(?:parameter\s+)?' + id_regex_t.format("name") + \
               opt_space_regex + "=" + opt_space_regex + id_regex_t.format("val")
