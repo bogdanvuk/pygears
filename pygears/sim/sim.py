@@ -552,6 +552,21 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         #     sim_gear = self.schedule_to_finish.pop()
         #     self.finish(sim_gear)
 
+    def cleanup(self):
+        self.sim_map.clear()
+        self.tasks.clear()
+        self.task_data.clear()
+        self.back_ready.clear()
+        self.forward_ready.clear()
+        self._schedule_to_finish.clear()
+        self.sim_gears.clear()
+        self.done.clear()
+        self.wait_list.clear()
+        self.cur_gear = None
+        for e in self.events.values():
+            e.clear()
+
+
     def run(self, timeout=None):
         self.sim_map = reg['sim/map']
         self.sim_gears = []
@@ -610,16 +625,26 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
             if not reg['sim/exception']:
                 self.events['after_run'](self)
+        except:
+            pass
 
-                for sim_gear in self.sim_gears:
-                    if sim_gear not in self.done:
-                        self._finish(sim_gear)
 
+        for sim_gear in self.sim_gears:
+            if not sim_gear.done:
+                try:
+                    print(f'Invoking finish on: {sim_gear.gear}')
+                    sim_gear._finish()
+                except:
+                    pass
+
+        try:
             self.events['after_cleanup'](self)
             self.events['at_exit'](self)
         finally:
             if reg['sim/exception']:
                 raise reg['sim/exception']
+
+            self.cleanup()
 
 
 class SimSetupDone(Exception):
@@ -667,7 +692,11 @@ def sim(resdir=None, timeout=None, extens=None, run=True, check_activity=False, 
     if run:
         loop.run(timeout)
 
-    return loop
+        asyncio.new_event_loop()
+
+        reg['sim/simulator'] = None
+    else:
+        return loop
 
 
 class SimFmtFilter(LogFmtFilter):
@@ -728,7 +757,11 @@ class SimPlugin(GearPlugin):
         reg['logger/sim/print_traceback'] = False
 
     @classmethod
-    def reset(cls):
+    def clear(cls):
+        if reg['sim/simulator'] is not None:
+            asyncio.new_event_loop()
+            reg['sim/simulator'] = None
+
         reg['sim/tasks'] = {}
 
 

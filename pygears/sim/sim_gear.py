@@ -202,5 +202,7 @@ class SimGear:
         if not self._clean:
             self._cleanup()
 
+        atexit.unregister(self._finish)
+
     def _cleanup(self):
         self._clean = True
