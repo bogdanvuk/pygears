@@ -1,3 +1,4 @@
+from pygears.typing.base import is_type
 import subprocess
 from pygears import PluginBase, reg, find
 from pygears.core.graph import get_consumer_tree
@@ -166,33 +167,42 @@ class VCDValVisitor(TypingVisitorBase):
     #             self.visit(t, f'{field}.{f}' if field else f, val=v)
 
 
-def register_traces_for_intf(dtype, scope, writer):
+def register_traces_for_intf(dtype, scope, writer, unroll_data=True):
     # TODO: Refactor this into a class
     vcd_vars = {'srcs': [], 'srcs_active': [], 'dtype': dtype}
 
-    if typeof(dtype, TLM):
+    if typeof(dtype, TLM) or not is_type(dtype):
         vcd_vars['data'] = writer.register_var(scope, 'data', 'string')
     else:
-        v = VCDTypeVisitor(max_level=10)
-        v.visit(dtype, 'data')
+        if not unroll_data:
+            try:
+                vcd_vars['data'] = writer.register_var(scope,
+                                                    'data',
+                                                    var_type='wire',
+                                                    size=max(dtype.width, 1))
+            except:
+                vcd_vars['data'] = writer.register_var(scope, 'data', 'string')
+        else:
+            v = VCDTypeVisitor(max_level=10)
+            v.visit(dtype, 'data')
 
-        for name, t in v.fields.items():
-            field_scope, _, basename = name.rpartition('.')
-            if field_scope:
-                field_scope = '.'.join((scope, field_scope))
-            else:
-                field_scope = scope
+            for name, t in v.fields.items():
+                field_scope, _, basename = name.rpartition('.')
+                if field_scope:
+                    field_scope = '.'.join((scope, field_scope))
+                else:
+                    field_scope = scope
 
-            if typeof(t, Float):
-                vcd_vars[name] = writer.register_var(field_scope,
-                                                     basename,
-                                                     var_type='real',
-                                                     size=32)
-            else:
-                vcd_vars[name] = writer.register_var(field_scope,
-                                                     basename,
-                                                     var_type='wire',
-                                                     size=max(t.width, 1))
+                if typeof(t, Float):
+                    vcd_vars[name] = writer.register_var(field_scope,
+                                                         basename,
+                                                         var_type='real',
+                                                         size=32)
+                else:
+                    vcd_vars[name] = writer.register_var(field_scope,
+                                                         basename,
+                                                         var_type='wire',
+                                                         size=max(t.width, 1))
 
     for sig in ('valid', 'ready'):
         vcd_vars[sig] = writer.register_var(scope, sig, 'wire', size=1, init=0)
@@ -277,6 +287,7 @@ class VCD(SimExtend):
 
         super().__init__()
         self.sim = sim
+        self.unroll_data = True
         self.finished = False
         self.vcd_fifo = vcd_fifo
         self.shmidcat = shmidcat
@@ -335,7 +346,7 @@ class VCD(SimExtend):
             return True
 
         self.vcd_vars = {
-            p: register_traces_for_intf(p.dtype, scope, self.writer)
+            p: register_traces_for_intf(p.dtype, scope, self.writer, self.unroll_data)
             for p, scope in vcd_visitor.vcd_vars.items()
         }
 
@@ -368,16 +379,20 @@ class VCD(SimExtend):
         reg['graph/end_producer'] = {}
 
     def var_put(self, v, val):
+        cur_timestep = timestep() * 10
         if typeof(v['dtype'], TLM):
-            self.writer.change(v['data'], timestep() * 10, str(val))
+            self.writer.change(v['data'], cur_timestep, str(val))
         else:
             try:
-                visitor = VCDValVisitor(v, self.writer, timestep() * 10, max_level=10)
-                visitor.visit(v['dtype'], 'data', val=val)
+                if self.unroll_data:
+                    visitor = VCDValVisitor(v, self.writer, cur_timestep, max_level=10)
+                    visitor.visit(v['dtype'], 'data', val=val)
+                else:
+                    self.writer.change(v['data'], cur_timestep, val.code())
             except AttributeError:
                 pass
 
-        self.writer.change(v['valid'], timestep() * 10, 1)
+        self.writer.change(v['valid'], cur_timestep, 1)
 
     def intf_put(self, intf, val):
         p = intf.producer

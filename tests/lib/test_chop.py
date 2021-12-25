@@ -55,9 +55,6 @@ def test_directed(sim_cls, din_delay, dout_delay):
     sim()
 
 
-from pygears.sim.modules import SimVerilated
-test_directed(SimVerilated, 2, 2)
-
 def test_random(sim_cls):
     skip_ifndef('RANDOM_TEST')
     stim = get_stim()

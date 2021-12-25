@@ -136,10 +136,11 @@ class Array(list, metaclass=ArrayType):
         return type(self) == t_other and super().__eq__(other)
 
     def __ne__(self, other):
-        if not is_type(type(other)):
-            return self._array != other
+        t_other = type(other)
+        if not is_type(t_other):
+            return super().__ne__(other)
 
-        return not self.__eq__(other)
+        return type(self) != t_other or super().__ne__(other)
 
     @class_and_instance_method
     def __getitem__(self, key):
