@@ -328,3 +328,5 @@ class SimVerilated(CosimBase):
                 self.verilib.final()
 
             self.verilib = None
+
+        atexit.unregister(self._finish)

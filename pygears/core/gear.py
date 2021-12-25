@@ -314,7 +314,11 @@ class GearPlugin(PluginBase):
     def clear(cls):
         class GearCleaner(HierVisitorBase):
             def HierNode(self, node):
+                if node.definition:
+                    node.definition._cache.clear()
+
                 super().HierNode(node)
                 node.__dict__.clear()
 
         GearCleaner().visit(reg['gear/root'])
+        reg['gear/root'] = Gear(None, params={'name': ''})

@@ -52,14 +52,14 @@
                     );
 {%- endmacro %}
 
-{% macro slave_write(name, wdata, awaddr) -%}
+{% macro slave_write(module_name, name, wdata, awaddr) -%}
 
   {% set data_strb_w = wdata.params['wdata'] + wdata.params['wstrb'] %}
   {% set wdata_intf = 'strb_' + name %}
 
   dti #(.W_DATA({{data_strb_w}})) {{wdata_intf}}();
 
- {{name}}_strb_combiner {{name}}_strb_combiner_i (
+ {{module_name}}_{{name}}_strb_combiner {{module_name}}_{{name}}_strb_combiner_i (
                                 .clk(aclk),
                                 .rst(~aresetn_axi),
                                 .din({{wdata_intf}}),
