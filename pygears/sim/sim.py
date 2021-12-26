@@ -628,11 +628,9 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         except:
             pass
 
-
         for sim_gear in self.sim_gears:
             if not sim_gear.done:
                 try:
-                    print(f'Invoking finish on: {sim_gear.gear}')
                     sim_gear._finish()
                 except:
                     pass

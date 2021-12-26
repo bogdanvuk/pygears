@@ -3,6 +3,7 @@ from pygears.core.hier_node import HierYielderBase
 from pygears.conf import inject, Inject
 import os
 import atexit
+from pygears.typing import typeof
 from pygears import find
 from pygears.core.gear import Gear
 from pygears.core.port import HDLConsumer
@@ -23,6 +24,55 @@ class ChannelState(IntEnum):
     Awaiting = 4
 
 
+import functools
+
+
+@functools.lru_cache(maxsize=None)
+def subtypes(dtype):
+    return tuple((t, t.width) for t in dtype)
+
+
+def split_coded_dtype(t, val):
+    for subt, subt_width in t:
+        subt_mask = (1 << subt_width) - 1
+        yield val & subt_mask
+        val >>= subt_width
+
+
+def split_coded_change(t, val1, val2):
+    for subt, subt_width in subtypes(t):
+        subt_mask = (1 << subt_width) - 1
+
+        subval1 = val1 & subt_mask
+        val1 >>= subt_width
+
+        if val2 is not None:
+            subval2 = val2 & subt_mask
+            val2 >>= subt_width
+        else:
+            subval2 = None
+
+        yield subt, subval1, subval2
+
+
+def create_data_change(t, val, prev_val):
+    from pygears.typing import Queue, Array, Tuple
+    is_changed = prev_val is None and val is not None or val != prev_val
+
+    if typeof(t, (Queue, Array, Tuple)):
+        change = [
+            create_data_change(subt, v, prev_v)
+            for subt, v, prev_v in split_coded_change(t, val, prev_val)
+        ]
+
+        return {'isValueComplex': True, 'isDataChanged': is_changed, 'value': change}
+    else:
+        if isinstance(val, (int, float)):
+            val = int(val)
+
+        return {'isValueComplex': False, 'isDataChanged': is_changed, 'value': val}
+
+
 class VcdToJson:
     def __init__(self):
         self.json_vcd = {}
@@ -30,25 +80,7 @@ class VcdToJson:
         self.state = {}
         self.value = {}
 
-    def create_data_change(self, val, prev_val):
-        from pygears.typing import Queue, Array, Tuple
-        is_changed = prev_val is None and not val is None or val != prev_val
-
-        if isinstance(val, (Queue, Array, Tuple)):
-            if prev_val is None:
-                prev_val = [None] * len(val)
-
-            change = [self.create_data_change(v, prev_v) for v, prev_v in zip(val, prev_val)]
-            return {'isValueComplex': True, 'isDataChanged': is_changed, 'value': change}
-        else:
-            if isinstance(val, (int, float)):
-                val = int(val)
-            else:
-                val = val.code()
-
-            return {'isValueComplex': False, 'isDataChanged': is_changed, 'value': val}
-
-    def create_change(self, timestep, state, state_change, val, prev_val):
+    def create_change(self, timestep, state, state_change, t, val, prev_val):
         elem = {
             'cycle': timestep,
             'state': int(state),
@@ -56,7 +88,7 @@ class VcdToJson:
         }
 
         if val is not None:
-            elem['data'] = self.create_data_change(val, prev_val)
+            elem['data'] = create_data_change(t, val, prev_val)
 
         return elem
 
@@ -64,10 +96,15 @@ class VcdToJson:
         for p, d in self.diff.items():
             changes = self.json_vcd[p]
             new_state = state = self.state[p]
+            prev_val = self.value[p]
+            new_val = d['d']
 
-            data_change = self.value[p] is None or (d['d'] is not None and self.value[p] != d['d'])
-            if data_change:
-                new_val = p.dtype.decode(d['d'])
+            data_change = new_val is not None and (prev_val or self.value[p] != new_val)
+
+            # if data_change:
+            #     new_val = p.dtype.decode(d['d'])
+            # else:
+            #     new_val = None
 
             if state == ChannelState.Invalid:
                 if d['v'] and d['r']:
@@ -96,19 +133,26 @@ class VcdToJson:
                 cycle_change = self.create_change(timestep,
                                                   new_state,
                                                   state_change=True,
+                                                  t=p.dtype,
                                                   val=new_val,
-                                                  prev_val=self.value[p])
+                                                  prev_val=prev_val)
 
                 if cycle_change is not None:
                     changes.append(cycle_change)
 
-            if d['d'] is not None and data_change:
+            if data_change:
                 self.value[p] = new_val
 
             self.state[p] = new_state
 
 
 def vcd_to_json(vcd_fn):
+    import os
+    import time
+
+    while not os.path.exists(vcd_fn):
+        time.sleep(0.1)
+
     vcd_conv = VcdToJson()
 
     with open(vcd_fn) as f:
@@ -319,15 +363,24 @@ class WebSim(SimExtend):
         self.finished = False
 
     def sim_vcd_to_json(self):
+        import time
+        start = time.time()
         graph = dump_json_graph('/')
+        print(f'Graph dump in {time.time() - start:.2f}')
+
+        start = time.time()
+
+        from pycallgraph import PyCallGraph
+        from pycallgraph.output import GraphvizOutput
+
+        # with PyCallGraph(output=GraphvizOutput()):
         json_vcd = vcd_to_json(self.vcd_fn)
+
+        print(f'Change dump in {time.time() - start:.2f}. Lru cache: {subtypes.cache_info()}')
 
         changes = []
         for p in json_vcd:
-            changes.append({
-                'channelName': p.producer.name,
-                'changes': json_vcd[p]
-            })
+            changes.append({'channelName': p.producer.name, 'changes': json_vcd[p]})
 
         return {
             'graphInfo': graph,
@@ -340,11 +393,7 @@ class WebSim(SimExtend):
 
     def finish(self):
         if not self.finished:
-            from pycallgraph import PyCallGraph
-            from pycallgraph.output import GraphvizOutput
-
-            with PyCallGraph(output=GraphvizOutput()):
-                json_out = self.sim_vcd_to_json()
+            json_out = self.sim_vcd_to_json()
 
             # print(f'VcdToJson in {time.time() - start}')
             import json

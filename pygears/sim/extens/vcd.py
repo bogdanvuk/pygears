@@ -287,7 +287,7 @@ class VCD(SimExtend):
 
         super().__init__()
         self.sim = sim
-        self.unroll_data = True
+        self.unroll_data = False
         self.finished = False
         self.vcd_fifo = vcd_fifo
         self.shmidcat = shmidcat
