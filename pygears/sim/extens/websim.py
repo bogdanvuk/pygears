@@ -147,7 +147,7 @@ class VcdToJson:
 
             self.state[p] = new_state
 
-        self.diff.clear()
+        # self.diff.clear()
 
 
 # def follow(fn, finish_event, sleep_sec=0.1):
@@ -221,7 +221,7 @@ def vcd_to_json_worker(
 
         # print(f'[{wid}] Got {len(res)} entries')
         for identifier_code, value in res:
-        # for t, identifier_code, value in iter(entries.get, None):
+            # for t, identifier_code, value in iter(entries.get, None):
             # if t is not None:
             #     num_changes = len(vcd_conv.diff)
             #     vcd_conv.after_timestep(t)
@@ -396,7 +396,7 @@ def vcd_to_json(vcd_fn, finish_event, json_vcd, num_workers=2):
         p.join()
 
     print(f'Time put outputs: {time.time()}')
-    json_vcd.put(ret_combine)
+    json_vcd.send(ret_combine)
     # return vcd_conv.json_vcd
 
 
@@ -521,10 +521,10 @@ class WebSim(SimExtend):
         manager = multiprocessing.Manager()
         self.json_vcd = manager.dict()
 
-        self.q = multiprocessing.Queue()
+        self.qin, self.qout = multiprocessing.Pipe(duplex=False)
         self.finish_event = multiprocessing.Event()
         self.p = multiprocessing.Process(target=vcd_to_json,
-                                         args=(self.vcd_fn, self.finish_event, self.q))
+                                         args=(self.vcd_fn, self.finish_event, self.qout))
         self.p.start()
 
     def sim_vcd_to_json(self):
@@ -546,7 +546,7 @@ class WebSim(SimExtend):
         # self.p.start()
 
         self.finish_event.set()
-        self.json_vcd = self.q.get()
+        self.json_vcd = self.qin.recv()
         self.p.join()
 
         changes = []
