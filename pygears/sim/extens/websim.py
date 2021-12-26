@@ -1,4 +1,6 @@
 from enum import IntEnum
+import time
+import multiprocessing
 from pygears.core.hier_node import HierYielderBase
 from pygears.conf import inject, Inject
 import os
@@ -94,7 +96,7 @@ class VcdToJson:
 
     def after_timestep(self, timestep):
         for p, d in self.diff.items():
-            changes = self.json_vcd[p]
+            changes = self.json_vcd[p.name]
             new_state = state = self.state[p]
             prev_val = self.value[p]
             new_val = d['d']
@@ -145,104 +147,252 @@ class VcdToJson:
 
             self.state[p] = new_state
 
+        self.diff.clear()
 
-def vcd_to_json(vcd_fn):
+
+# def follow(fn, finish_event, sleep_sec=0.1):
+#     """ Yield each line from a file as they are written.
+#     `sleep_sec` is the time to sleep after empty reads. """
+#     line = ''
+#     slept = False
+#     with open(fn) as f:
+#         while True:
+#             tmp = f.readline()
+#             if tmp:
+#                 slept = False
+#                 line += tmp
+#                 if line.endswith("\n"):
+#                     yield line
+#                     line = ''
+#             else:
+#                 if slept:
+#                     print('Sleeping consecutively')
+
+#                 slept = True
+#                 if finish_event.is_set():
+#                     return
+
+#                 time.sleep(sleep_sec)
+
+
+def follow(fn, finish_event, sleep_sec=0.5):
+    import time
+    import subprocess
+    import select
+
+    f = subprocess.Popen(['tail', '-F', fn], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p = select.poll()
+    p.register(f.stdout)
+
+    while True:
+        if p.poll(sleep_sec):
+            yield f.stdout.readline().decode()
+        elif finish_event.is_set():
+            return
+        else:
+            # print(f'Sleep')
+            time.sleep(sleep_sec)
+
+
+def vcd_to_json_worker(
+    entries,
+    wire_map: dict,
+    ret: multiprocessing.Queue,
+    wid,
+):
+    vcd_conv = VcdToJson()
+
+    print(f'[{wid}] num: {len(wire_map)}')
+    for p, name in wire_map.values():
+        vcd_conv.state[p] = ChannelState.Invalid
+        vcd_conv.value[p] = None
+        vcd_conv.json_vcd[p.name] = []
+
+    cum_get_delay = 0
+    start = time.time()
+    t = 0
+    while True:
+        get_time = time.time()
+        res = entries.recv()
+        cum_get_delay += time.time() - get_time
+
+        if res is None:
+            break
+
+        for identifier_code, value in res:
+        # for t, identifier_code, value in iter(entries.get, None):
+            # if t is not None:
+            #     num_changes = len(vcd_conv.diff)
+            #     vcd_conv.after_timestep(t)
+            #     # print(
+            #     #     f'[{wid}] {t}, diff: {num_changes}, dt: {time.time() - start:.4f}, cum_get_delay: {cum_get_delay:.4f}'
+            #     # )
+            #     cum_get_delay = 0
+            #     start = time.time()
+            #     continue
+
+            if identifier_code not in wire_map:
+                continue
+
+            port, wire_name = wire_map[identifier_code]
+
+            if port not in vcd_conv.diff:
+                vcd_conv.diff[port] = {'r': None, 'v': None, 'd': None}
+
+            if wire_name == 'valid':
+                vcd_conv.diff[port]['v'] = value
+            elif wire_name == 'ready':
+                vcd_conv.diff[port]['r'] = value
+            elif wire_name == 'data' and value is not None:
+                vcd_conv.diff[port]['d'] = value
+
+        vcd_conv.after_timestep(t)
+        t += 1
+
+    print(f'[{wid}] out: {time.time()}')
+    ret.send(vcd_conv.json_vcd)
+
+
+def vcd_to_json(vcd_fn, finish_event, json_vcd, num_workers=1):
+    # def vcd_to_json(vcd_fn, json_vcd):
     import os
     import time
 
     while not os.path.exists(vcd_fn):
         time.sleep(0.1)
 
-    vcd_conv = VcdToJson()
+    worker_entries = [multiprocessing.Pipe(duplex=False) for _ in range(num_workers)]
+    worker_rets = [multiprocessing.Pipe(duplex=False) for _ in range(num_workers)]
+    wire_maps = [{} for _ in range(num_workers)]
+    cur_wire_map = 0
+    worker_p = []
 
-    with open(vcd_fn) as f:
-        wire_map = {}
-        timestep = -1
-        top = find('/')
-        hier = top
+    # with open(vcd_fn) as f:
+    t = -1
+    top = find('/')
+    hier = top
+    send_cum_t = 0
+    worker_data = [[] for _ in range(num_workers)]
 
-        for line in f:
-            line = line.strip()
-            if line == '':
+    for line in follow(vcd_fn, finish_event):
+        # for line in f:
+        line = line.strip()
+        if line == '':
+            continue
+
+        line_head = line[0]
+
+        if line_head == '#':
+            next_t = int(line[1:])
+            if next_t % 10 != 0:
                 continue
 
-            line_head = line[0]
+            next_t //= 10
 
-            if line_head == '#':
-                if timestep >= 0:
-                    vcd_conv.after_timestep(timestep)
-                timestep = int(line[1:])
-            elif line_head in VALUE_CHANGE:
-                if line_head in VECTOR_VALUE_CHANGE:
-                    value, identifier_code = line[1:].split()
-                elif line_head in VALUE:
-                    value = line[0]
-                    identifier_code = line[1:]
+            if t % 100 == 0:
+                print(f'Timestep {t}')
+                send_cum_t = 0
 
-                if identifier_code not in wire_map:
-                    continue
-
-                port, wire_name = wire_map[identifier_code]
-
-                if port not in vcd_conv.diff:
-                    vcd_conv.diff[port] = {'r': None, 'v': None, 'd': None}
-
-                if wire_name == 'valid':
-                    vcd_conv.diff[port]['v'] = int(value)
-                elif wire_name == 'ready':
-                    vcd_conv.diff[port]['r'] = int(value)
-                elif wire_name == 'data' and value[0] not in INVALID_VALUE:
-                    if value[0] not in ('b', 'B'):
-                        value = int(value, 2)
-                    else:
-                        value = int(value[1:])
-
-                    # vcd_conv.diff[port]['d'] = port.dtype.decode(value)
-                    vcd_conv.diff[port]['d'] = value
-
-            elif '$enddefinitions' in line:
+            if t == 0:
+                worker_p = [
+                    multiprocessing.Process(target=vcd_to_json_worker,
+                                            args=(entries[0], wm, ret[1], i))
+                    for i, (entries, wm,
+                            ret) in enumerate(zip(worker_entries, wire_maps, worker_rets))
+                ]
+                for p in worker_p:
+                    p.start()
+            elif t > 0:
                 pass
-            elif '$scope' in line:
-                segs = line.split()
-                # Name of the TOP is ' '
-                if len(segs) == 3:
-                    hier = top
-                    continue
+                # for i, entries in enumerate(worker_entries):
+                #     entries[1].send(worker_data[i])
+                #     worker_data[i].clear()
+                    # entries[1].send((t, None, None))
 
-                scope_name = segs[2]
+            t = next_t
 
-                child = find(f'{hier.name}.{scope_name}')
+        elif line_head in VALUE_CHANGE:
+            if line_head in VECTOR_VALUE_CHANGE:
+                value, identifier_code = line[1:].split()
+            elif line_head in VALUE:
+                value = line[0]
+                identifier_code = line[1:]
 
-                if child is None:
-                    child = hier[scope_name]
+            if value[0] in INVALID_VALUE:
+                value = None
+            elif value[0] not in ('b', 'B'):
+                value = int(value, 2)
+            else:
+                value = int(value[1:])
 
-                if child is None:
-                    raise Exception(f'Cannot find gear for scope: {line}')
+            for i, wm in enumerate(wire_maps):
+                worker_data[i].append((identifier_code, value))
 
-                hier = child
+            # start = time.time()
+            # for entries, wm in zip(worker_entries, wire_maps):
+            #     if identifier_code in wm:
+            #         entries[1].send((None, identifier_code, value))
+            #         break
+            # send_cum_t += time.time() - start
 
-            elif '$upscope' in line:
-                if isinstance(hier, Gear):
-                    if not hier is top:
-                        hier = hier.parent
-                else:
-                    hier = hier.gear
-            elif '$var' in line:
-                if hier is top:
-                    continue
-
-                ls = line.split()
-                identifier_code = ls[3]
-                name = ''.join(ls[4:-1])
-                vcd_conv.state[hier] = ChannelState.Invalid
-                vcd_conv.value[hier] = None
-                vcd_conv.json_vcd[hier] = []
-
-                wire_map[identifier_code] = (hier, name)
-            elif '$timescale' in line:
+        elif '$enddefinitions' in line:
+            pass
+        elif '$scope' in line:
+            segs = line.split()
+            # Name of the TOP is ' '
+            if len(segs) == 3:
+                hier = top
                 continue
 
-        return vcd_conv.json_vcd
+            scope_name = segs[2]
+
+            child = find(f'{hier.name}.{scope_name}')
+
+            if child is None:
+                child = hier[scope_name]
+
+            if child is None:
+                raise Exception(f'Cannot find gear for scope: {line}')
+
+            hier = child
+
+        elif '$upscope' in line:
+            if isinstance(hier, Gear):
+                if hier is not top:
+                    hier = hier.parent
+            else:
+                hier = hier.gear
+        elif '$var' in line:
+            if hier is top:
+                continue
+
+            ls = line.split()
+            identifier_code = ls[3]
+            name = ''.join(ls[4:-1])
+
+            wire_maps[cur_wire_map][identifier_code] = (hier, name)
+            cur_wire_map = (cur_wire_map + 1) % num_workers
+
+        elif '$timescale' in line:
+            continue
+
+    print(f'Time: {time.time()}')
+    for entries in worker_entries:
+        entries[1].send(None)
+
+    print(f'Time start rets: {time.time()}')
+    ret_combine = {}
+    for ret in worker_rets:
+        ret_combine.update(ret[0].recv())
+
+    print(f'Time got rets: {time.time()}')
+
+    for p in worker_p:
+        p.join()
+
+    print(f'Time put outputs: {time.time()}')
+    json_vcd.put(ret_combine)
+    # return vcd_conv.json_vcd
 
 
 def dtype_tree(dtype):
@@ -362,6 +512,16 @@ class WebSim(SimExtend):
         self.vcd_fn = os.path.abspath(os.path.join(self.outdir, 'pygears.vcd'))
         self.finished = False
 
+        self.json_vcd = {}
+        manager = multiprocessing.Manager()
+        self.json_vcd = manager.dict()
+
+        self.q = multiprocessing.Queue()
+        self.finish_event = multiprocessing.Event()
+        self.p = multiprocessing.Process(target=vcd_to_json,
+                                         args=(self.vcd_fn, self.finish_event, self.q))
+        self.p.start()
+
     def sim_vcd_to_json(self):
         import time
         start = time.time()
@@ -374,13 +534,23 @@ class WebSim(SimExtend):
         from pycallgraph.output import GraphvizOutput
 
         # with PyCallGraph(output=GraphvizOutput()):
-        json_vcd = vcd_to_json(self.vcd_fn)
+        # json_vcd = vcd_to_json(self.vcd_fn, self.json_vcd)
+
+        # self.p = multiprocessing.Process(target=vcd_to_json,
+        #                                  args=(self.vcd_fn, q))
+        # self.p.start()
+
+        print(f'Finish time: {start}')
+        self.finish_event.set()
+        self.json_vcd = self.q.get()
+        self.p.join()
 
         print(f'Change dump in {time.time() - start:.2f}. Lru cache: {subtypes.cache_info()}')
 
         changes = []
-        for p in json_vcd:
-            changes.append({'channelName': p.producer.name, 'changes': json_vcd[p]})
+        for p_name in self.json_vcd:
+            p = find(p_name)
+            changes.append({'channelName': p.producer.name, 'changes': self.json_vcd[p_name]})
 
         return {
             'graphInfo': graph,
