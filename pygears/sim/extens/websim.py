@@ -4,9 +4,8 @@ import multiprocessing
 from pygears.core.hier_node import HierYielderBase
 from pygears.conf import inject, Inject
 import os
-import atexit
 from pygears.typing import typeof
-from pygears import find
+from pygears import find, reg
 from pygears.core.gear import Gear
 from pygears.core.port import HDLConsumer
 from pygears.sim import timestep
@@ -67,12 +66,14 @@ def create_data_change(t, val, prev_val):
             for subt, v, prev_v in split_coded_change(t, val, prev_val)
         ]
 
-        return {'isValueComplex': True, 'isDataChanged': is_changed, 'value': change}
+        # return {'isValueComplex': True, 'isDataChanged': is_changed, 'value': change}
+        return (1, int(is_changed), change)
     else:
         if isinstance(val, (int, float)):
             val = int(val)
 
-        return {'isValueComplex': False, 'isDataChanged': is_changed, 'value': val}
+        return (0, int(is_changed), val)
+        # return {'isValueComplex': False, 'isDataChanged': is_changed, 'value': val}
 
 
 class VcdToJson:
@@ -83,16 +84,22 @@ class VcdToJson:
         self.value = {}
 
     def create_change(self, timestep, state, state_change, t, val, prev_val):
-        elem = {
-            'cycle': timestep,
-            'state': int(state),
-            'isStateChanged': state_change,
-        }
+        # elem = {
+        #     'cycle': timestep,
+        #     'state': int(state),
+        #     'isStateChanged': state_change,
+        # }
+
+        elem = [timestep, int(state), int(state_change)]
 
         if val is not None:
-            elem['data'] = create_data_change(t, val, prev_val)
+            elem.append(create_data_change(t, val, prev_val))
+            # elem['data'] = create_data_change(t, val, prev_val)
 
-        return elem
+        import json
+        # print(json.dumps(elem, separators=(',', ':')))
+
+        return json.dumps(elem, separators=(',', ':'))
 
     def after_timestep(self, timestep):
         for p, d in self.diff.items():
@@ -194,84 +201,42 @@ def follow(fn, finish_event, sleep_sec=0.5):
             time.sleep(sleep_sec)
 
 
-def vcd_to_json_worker(
-    entries,
-    wire_map: dict,
-    ret: multiprocessing.Queue,
-    wid,
-):
-    vcd_conv = VcdToJson()
+def vcd_to_json_worker(entries, wire_map: dict, vcd_conv, t):
+    for identifier_code, value in entries:
 
-    print(f'[{wid}] num: {len(wire_map)}')
-    for p, _ in wire_map.values():
-        vcd_conv.state[p] = ChannelState.Invalid
-        vcd_conv.value[p] = None
-        vcd_conv.json_vcd[p.name] = []
+        if identifier_code not in wire_map:
+            continue
 
-    cum_get_delay = 0
-    start = time.time()
-    t = 0
-    while True:
-        get_time = time.time()
-        res = entries.recv()
-        cum_get_delay += time.time() - get_time
+        port, wire_name = wire_map[identifier_code]
+        if port not in vcd_conv.diff:
+            vcd_conv.diff[port] = {'r': None, 'v': None, 'd': None}
 
-        if res is None:
-            break
+        if wire_name == 'valid':
+            vcd_conv.diff[port]['v'] = value
+        elif wire_name == 'ready':
+            vcd_conv.diff[port]['r'] = value
+        elif wire_name == 'data' and value is not None:
+            vcd_conv.diff[port]['d'] = value
 
-        # print(f'[{wid}] Got {len(res)} entries')
-        for identifier_code, value in res:
-            # for t, identifier_code, value in iter(entries.get, None):
-            # if t is not None:
-            #     num_changes = len(vcd_conv.diff)
-            #     vcd_conv.after_timestep(t)
-            #     # print(
-            #     #     f'[{wid}] {t}, diff: {num_changes}, dt: {time.time() - start:.4f}, cum_get_delay: {cum_get_delay:.4f}'
-            #     # )
-            #     cum_get_delay = 0
-            #     start = time.time()
-            #     continue
-
-            if identifier_code not in wire_map:
-                continue
-
-            port, wire_name = wire_map[identifier_code]
-            if port not in vcd_conv.diff:
-                vcd_conv.diff[port] = {'r': None, 'v': None, 'd': None}
-
-            if wire_name == 'valid':
-                vcd_conv.diff[port]['v'] = value
-            elif wire_name == 'ready':
-                vcd_conv.diff[port]['r'] = value
-            elif wire_name == 'data' and value is not None:
-                vcd_conv.diff[port]['d'] = value
-
-        vcd_conv.after_timestep(t)
-        t += 1
-
-    ret.send(vcd_conv.json_vcd)
+    vcd_conv.after_timestep(t)
 
 
-def vcd_to_json(vcd_fn, finish_event, json_vcd, num_workers=2):
-    # def vcd_to_json(vcd_fn, json_vcd):
+def vcd_to_json(vcd_fn, finish_event, ret_pipe):
     import os
     import time
 
     while not os.path.exists(vcd_fn):
         time.sleep(0.1)
 
-    worker_entries = [multiprocessing.Pipe(duplex=False) for _ in range(num_workers)]
-    worker_rets = [multiprocessing.Pipe(duplex=False) for _ in range(num_workers)]
-    port_maps = [set() for _ in range(num_workers)]
-    wire_maps = [{} for _ in range(num_workers)]
-    cur_wire_map = 0
-    worker_p = []
+    time.sleep(0.1)
 
-    # with open(vcd_fn) as f:
+    wire_map = {}
+    vcd_conv = None
+
     t = -1
     top = find('/')
     hier = top
-    worker_data = [[] for _ in range(num_workers)]
+    worker_data = []
 
     for line in follow(vcd_fn, finish_event):
         # for line in f:
@@ -288,24 +253,16 @@ def vcd_to_json(vcd_fn, finish_event, json_vcd, num_workers=2):
 
             next_t //= 10
 
-            # print(f'Timestep {t}')
-            # if t % 100 == 0:
-            #     print(f'Timestep {t}')
-
             if t == -1:
-                worker_p = [
-                    multiprocessing.Process(target=vcd_to_json_worker,
-                                            args=(entries[0], wm, ret[1], i))
-                    for i, (entries, wm,
-                            ret) in enumerate(zip(worker_entries, wire_maps, worker_rets))
-                ]
-                for p in worker_p:
-                    p.start()
+                vcd_conv = VcdToJson()
+                for p, _ in wire_map.values():
+                    vcd_conv.state[p] = ChannelState.Invalid
+                    vcd_conv.value[p] = None
+                    vcd_conv.json_vcd[p.name] = []
 
             if t >= 0:
-                for i, entries in enumerate(worker_entries):
-                    entries[1].send(worker_data[i])
-                    worker_data[i].clear()
+                vcd_to_json_worker(worker_data, wire_map, vcd_conv, t)
+                worker_data.clear()
 
             t = next_t
 
@@ -323,16 +280,8 @@ def vcd_to_json(vcd_fn, finish_event, json_vcd, num_workers=2):
             else:
                 value = int(value[1:])
 
-            for i, wm in enumerate(wire_maps):
-                if identifier_code in wm:
-                    worker_data[i].append((identifier_code, value))
-
-            # start = time.time()
-            # for entries, wm in zip(worker_entries, wire_maps):
-            #     if identifier_code in wm:
-            #         entries[1].send((None, identifier_code, value))
-            #         break
-            # send_cum_t += time.time() - start
+            if identifier_code in wire_map:
+                worker_data.append((identifier_code, value))
 
         elif '$enddefinitions' in line:
             pass
@@ -365,39 +314,23 @@ def vcd_to_json(vcd_fn, finish_event, json_vcd, num_workers=2):
             if hier is top:
                 continue
 
+            from pygears.core.port import OutPort
+            if isinstance(hier, OutPort):
+                continue
+
             ls = line.split()
             identifier_code = ls[3]
             name = ''.join(ls[4:-1])
 
-            for i, pm in enumerate(port_maps):
-                if hier.name in pm:
-                    wire_maps[i][identifier_code] = (hier, name)
-                    break
-            else:
-                wire_maps[cur_wire_map][identifier_code] = (hier, name)
-                port_maps[cur_wire_map].add(hier.name)
-                cur_wire_map = (cur_wire_map + 1) % num_workers
+            wire_map[identifier_code] = (hier, name)
 
         elif '$timescale' in line:
             continue
 
-    print(f'Time: {time.time()}')
-    for entries in worker_entries:
-        entries[1].send(None)
+    if vcd_conv:
+        raise Exception(f'Synchronization error, please rerun simulation')
 
-    print(f'Time start rets: {time.time()}')
-    ret_combine = {}
-    for ret in worker_rets:
-        ret_combine.update(ret[0].recv())
-
-    print(f'Time got rets: {time.time()}')
-
-    for p in worker_p:
-        p.join()
-
-    print(f'Time put outputs: {time.time()}')
-    json_vcd.send(ret_combine)
-    # return vcd_conv.json_vcd
+    ret_pipe.send(vcd_conv.json_vcd)
 
 
 def dtype_tree(dtype):
@@ -482,28 +415,7 @@ def dump_json_graph(top):
 
                 ports[p.name]['producer'] = i.name
 
-        # for i in node.local_intfs:
-        #     if i.name == '.depthwise':
-        #         breakpoint()
-
-        #     connections[i.producer.name] = {
-        #         'producer': i.producer.name,
-        #         'dtype': repr(p.dtype),
-        #         'dtype_tree': dtype_tree(p.dtype),
-        #         'name': i.name,
-        #         'consumers': [p.name for p in i.consumers]
-        #     }
-        #     ports[i.producer.name]['consumer'] = i.name
-        #     for p in i.consumers:
-        #         ports[p.name]['producer'] = i.name
-
     return {'gears': nodes, 'ports': ports, 'connections': connections}
-
-    # import json
-    # # s = json.dumps({'gears': nodes, 'ports': ports, 'connections': connections})
-
-    # with open(fn, 'w') as f:
-    #     f.write(json.dumps(graph, indent=4, sort_keys=True))
 
 
 class WebSim(SimExtend):
@@ -527,23 +439,16 @@ class WebSim(SimExtend):
                                          args=(self.vcd_fn, self.finish_event, self.qout))
         self.p.start()
 
+    def before_setup(self, sim):
+        # TODO: This is a smell, make this dependency explicit
+        if 'VCD' in reg:
+            reg['VCD'].expand_data = False
+        else:
+            # TODO: Now what?
+            breakpoint()
+
     def sim_vcd_to_json(self):
-        import time
-        start = time.time()
         graph = dump_json_graph('/')
-        print(f'Graph dump in {time.time() - start:.2f}')
-
-        start = time.time()
-
-        # from pycallgraph import PyCallGraph
-        # from pycallgraph.output import GraphvizOutput
-
-        # with PyCallGraph(output=GraphvizOutput()):
-        # json_vcd = vcd_to_json(self.vcd_fn, self.json_vcd)
-
-        # self.p = multiprocessing.Process(target=vcd_to_json,
-        #                                  args=(self.vcd_fn, q))
-        # self.p.start()
 
         self.finish_event.set()
         self.json_vcd = self.qin.recv()
@@ -553,8 +458,6 @@ class WebSim(SimExtend):
         for p_name in self.json_vcd:
             p = find(p_name)
             changes.append({'channelName': p.producer.name, 'changes': self.json_vcd[p_name]})
-
-        print(f'Change dump aditional {time.time() - start:.2f}')
 
         return {
             'graphInfo': graph,
@@ -569,7 +472,8 @@ class WebSim(SimExtend):
         if not self.finished:
             json_out = self.sim_vcd_to_json()
             import json
-            json.dump(json_out, open(self.trace_fn, 'w'))
+            json.dump(json_out, open(self.trace_fn, 'w'), separators=(',', ':'))
+
             self.finished = True
 
     def after_cleanup(self, sim):
