@@ -2,7 +2,7 @@ from pygears import gear, alternative
 from pygears.typing import Queue, Uint
 
 
-@gear(hdl={'compile': True}, enablement=b'running==False')
+@gear(enablement=b'running==False')
 async def qcnt(din: Queue, *, running=False, lvl=0, init=1,
                w_out=16) -> Uint['w_out']:
     """Short for Queue Length Count. Counts the number of input sub-transactions
@@ -28,7 +28,7 @@ async def qcnt(din: Queue, *, running=False, lvl=0, init=1,
 
 
 @alternative(qcnt)
-@gear(hdl={'compile': True}, enablement=b'running==True')
+@gear(enablement=b'running==True')
 async def qcnt_running(din: Queue, *, running=True, lvl=0, init=1,
                        w_out=16) -> Queue[Uint['w_out']]:
     """Short for Queue Count. Counts the number of sub-transactions in the input

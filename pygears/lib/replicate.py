@@ -3,7 +3,7 @@ from pygears.util.utils import qrange
 from pygears.typing import Queue, Tuple, Uint, Any, Bool, typeof
 
 
-@gear(hdl={'compile': True})
+@gear
 async def replicate(din: Tuple[{
         'length': Uint,
         'val': Any
@@ -21,7 +21,7 @@ async def replicate(din: Tuple[{
             yield (value, last)
 
 
-@gear(hdl={'compile': True})
+@gear
 async def replicate_while(cond: Bool, data: Any) -> Queue['data']:
     async with data as d:
         last = False

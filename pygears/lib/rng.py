@@ -41,7 +41,7 @@ def qrange_out_type(cfg):
     return cfg
 
 
-@gear(hdl={'compile': True}, enablement=b'inclusive==False')
+@gear(enablement=b'inclusive==False')
 async def qrange(
         cfg: Tuple[{
             'start': Integer,
@@ -68,7 +68,7 @@ async def qrange(
 
 
 @alternative(qrange)
-@gear(hdl={'compile': True}, enablement=b'inclusive==False')
+@gear(enablement=b'inclusive==False')
 async def qrange_start_stop(
         cfg: Tuple[{
             'start': Integer,
@@ -94,7 +94,7 @@ async def qrange_start_stop(
 
 
 @alternative(qrange)
-@gear(hdl={'compile': True}, enablement=b'inclusive==True')
+@gear(enablement=b'inclusive==True')
 async def qrange_start_stop_inclusive(
         cfg: Tuple[{
             'start': Integer,
@@ -116,7 +116,7 @@ async def qrange_start_stop_inclusive(
 
 
 @alternative(qrange)
-@gear(hdl={'compile': True}, enablement=b'inclusive==False')
+@gear(enablement=b'inclusive==False')
 async def qrange_stop(stop: Integer, *, inclusive=False) -> Queue[b'stop']:
     cnt = stop.dtype(0)
     cur_cnt: stop.dtype
@@ -134,7 +134,7 @@ async def qrange_stop(stop: Integer, *, inclusive=False) -> Queue[b'stop']:
 
 
 @alternative(qrange)
-@gear(hdl={'compile': True}, enablement=b'inclusive==True')
+@gear(enablement=b'inclusive==True')
 async def qrange_stop_inclusive(stop: Integer, *, inclusive) -> Queue[b'stop']:
     cnt = stop.dtype(0)
     last: Bool

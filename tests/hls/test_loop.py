@@ -4,7 +4,7 @@ from pygears.sim import sim, cosim
 from pygears.lib import drv, shred, directed
 from pygears.lib.rng import qrange
 
-# @gear(hdl={'compile': True})
+# @gear
 # async def test(din: Queue) -> b'din':
 #     eot: din.dtype.eot
 
@@ -15,7 +15,7 @@ from pygears.lib.rng import qrange
 
 
 def test_while_loop_reg_infer(lang):
-    @gear(hdl={'compile': True})
+    @gear
     async def test() -> Uint[32]:
         cnt = Uint[10](0)
 
@@ -30,7 +30,7 @@ def test_while_loop_reg_infer(lang):
 
 
 
-# @gear(hdl={'compile': True})
+# @gear
 # async def test(din: Uint[32]) -> Queue[Uint[32]]:
 #     last = False
 #     while not last:

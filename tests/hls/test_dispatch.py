@@ -22,7 +22,7 @@ def _(val: Uint):
 
 
 def test_simple_uint(sim_cls):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Integer['w']) -> b'din.base[w+1]':
         async with din as d:
             yield dispatch_test(d)
@@ -35,7 +35,7 @@ def test_simple_uint(sim_cls):
 
 
 def test_simple_int(sim_cls):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Integer['w']) -> b'din.base[w+1]':
         async with din as d:
             yield dispatch_test(d)
@@ -63,7 +63,7 @@ def _(t: UintType, val):
 
 
 def test_type_uint(sim_cls):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Integer['w'], *, t) -> b't':
         async with din as d:
             yield dispatch_types(t, d)
@@ -76,7 +76,7 @@ def test_type_uint(sim_cls):
 
 
 def test_type_int(sim_cls):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Integer['w'], *, t) -> b't':
         async with din as d:
             yield dispatch_types(t, d)

@@ -3,7 +3,7 @@ from pygears.typing import Array, Tuple, Uint
 from pygears.sim import clk
 
 
-@gear(hdl={'compile': True})
+@gear
 async def strb_combiner(din: Tuple[{'data': Array['data_t', 'num'], 'strb': Uint}]) -> b'din["data"]':
     data_t = din.dtype['data'].data
     num = len(din.dtype['data'])

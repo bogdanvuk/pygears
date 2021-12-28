@@ -12,7 +12,7 @@ def queue_wrap_from(din, qdin, *, fcat=czip):
         | Queue[din.dtype, qdin.dtype.lvl]
 
 
-@gear(hdl={'compile': True})
+@gear
 async def sot_queue(din: Queue['data', 'lvl'], *,
                     lvl=b'lvl') -> Tuple[b'din.data', b'din.eot']:
     sot = din.dtype.eot.max

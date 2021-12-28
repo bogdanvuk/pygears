@@ -10,7 +10,7 @@ from pygears.lib import drv, verif, delay_rng
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_basic(din_delay, dout_delay):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Bool) -> Bool:
         c = Bool(True)
         while c:
@@ -35,7 +35,7 @@ def test_basic(din_delay, dout_delay):
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_basic_loop(din_delay, dout_delay):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Bool) -> Uint[4]:
         a = Uint[4](0)
 
@@ -61,7 +61,7 @@ def test_basic_loop(din_delay, dout_delay):
 # @pytest.mark.parametrize('din_delay', [0, 1])
 # @pytest.mark.parametrize('dout_delay', [0, 1])
 # def test_basic_loop_break(din_delay, dout_delay):
-#     @gear(hdl={'compile': True})
+#     @gear
 #     async def test(din: Bool) -> Uint[4]:
 #         a = Uint[4](0)
 
@@ -92,7 +92,7 @@ def test_basic_loop(din_delay, dout_delay):
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_state_in_scope(din_delay, dout_delay):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Queue[Uint[4]]) -> Uint[4]:
         async for c, eot in din:
             yield c
@@ -113,7 +113,7 @@ def test_state_in_scope(din_delay, dout_delay):
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_cond_state(din_delay, dout_delay):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Uint[4]) -> Uint[4]:
         async with din as c:
             if c < 12:
@@ -139,7 +139,7 @@ def test_cond_state(din_delay, dout_delay):
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_din_state(din_delay, dout_delay):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Uint[4]) -> Uint[4]:
         async with din as c:
             yield c
@@ -162,7 +162,7 @@ def test_din_state(din_delay, dout_delay):
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_double_loop_seq(din_delay, dout_delay):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Uint[4]) -> Uint[4]:
         c = Uint[4](0)
         while c[:1] == 0:
@@ -189,7 +189,7 @@ def test_double_loop_seq(din_delay, dout_delay):
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_double_loop_seq_explicit_split(din_delay, dout_delay):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Queue[Uint[4]]) -> Uint[5]:
         async for d, _ in din:
             yield d + 1
@@ -214,7 +214,7 @@ def test_double_loop_seq_explicit_split(din_delay, dout_delay):
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_cond_nested_loop_multistate(din_delay, dout_delay):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Queue[Bool]) -> Uint[4]:
         a = Uint[4](0)
         while a < 4:
@@ -242,7 +242,7 @@ def test_cond_nested_loop_multistate(din_delay, dout_delay):
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_cond_nested_loop(din_delay, dout_delay):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Queue[Bool]) -> Uint[4]:
         a = Uint[4](0)
 
@@ -279,7 +279,7 @@ def test_cond_nested_loop(din_delay, dout_delay):
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_loop_after_async_with(din_delay, dout_delay):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Uint[4]) -> Uint[4]:
         async with din as d:
             yield 1
@@ -304,7 +304,7 @@ def test_loop_after_async_with(din_delay, dout_delay):
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_complex(din_delay, dout_delay):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din, *, chunk_len, num_workers) -> b'din':
         counter = Uint[bitw(chunk_len * chunk_len)](0)
         chunk_pow = chunk_len * chunk_len
@@ -342,7 +342,7 @@ def test_complex(din_delay, dout_delay):
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_complex1(din_delay, dout_delay):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Queue, is_done) -> b'(din, din)':
         first_elem = True
         for_shred = False
@@ -382,7 +382,7 @@ def test_complex1(din_delay, dout_delay):
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_optional_loop(din_delay, dout_delay):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Uint[4]) -> Uint[4]:
         async with din as c:
             if c > 1:
@@ -404,7 +404,7 @@ def test_optional_loop(din_delay, dout_delay):
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_yield_after_loop(din_delay, dout_delay):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Bool) -> Uint[4]:
         c = Bool(True)
         a = Uint[4](0)
@@ -431,7 +431,7 @@ def test_yield_after_loop(din_delay, dout_delay):
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_yield_after_loop_reg_scope(din_delay, dout_delay):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Bool) -> Uint[4]:
         a = Uint[3](0)
 
@@ -455,7 +455,7 @@ def test_yield_after_loop_reg_scope(din_delay, dout_delay):
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_optional_loop_assign(din_delay, dout_delay):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Queue[Bool]) -> Bool:
         flag = False
 
@@ -477,7 +477,7 @@ def test_optional_loop_assign(din_delay, dout_delay):
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_optional_loop_assign_complex(din_delay, dout_delay):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Queue) -> Uint[8]:
         max_el = din.dtype.data.min
         max_idx = Uint[8](0)
@@ -505,7 +505,7 @@ def test_optional_loop_assign_complex(din_delay, dout_delay):
 # @pytest.mark.parametrize('din_delay', [0, 1])
 # @pytest.mark.parametrize('dout_delay', [0, 1])
 # def test_yield_din_out_of_scope(din_delay, dout_delay):
-#     @gear(hdl={'compile': True})
+#     @gear
 #     async def test(din: Bool) -> Bool:
 #         async with din as c:
 #             yield c
@@ -526,7 +526,7 @@ def test_optional_loop_assign_complex(din_delay, dout_delay):
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_qrange(din_delay, dout_delay):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(stop: Integer) -> b'stop':
         cnt = stop.dtype(0)
         last: Bool
@@ -557,7 +557,7 @@ def test_qrange(din_delay, dout_delay):
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_double_loop(din_delay, dout_delay):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(stop: Integer) -> b'stop + stop':
         cnt1 = stop.dtype(0)
 
@@ -590,7 +590,7 @@ def test_double_loop(din_delay, dout_delay):
 # @pytest.mark.parametrize('din_delay', [0, 1])
 # @pytest.mark.parametrize('dout_delay', [0, 1])
 # def test_yield_reg_next_val(din_delay, dout_delay):
-#     @gear(hdl={'compile': True})
+#     @gear
 #     async def test(din: Queue[Uint[2]]) -> Queue[Uint[4]]:
 #         data = Uint[4](0)
 #         cnt = Uint[2](0)
@@ -620,7 +620,7 @@ def test_double_loop(din_delay, dout_delay):
 # res = BinOpExpr([BinOpExpr(['b', 'a'], opc.Or), BinOpExpr([UnaryOpExpr('a', opc.Not), 'b'], opc.Or)], opc.And)
 # print(res)
 
-# @gear(hdl={'compile': True})
+# @gear
 # async def test(stop: Integer) -> b'stop + stop':
 #     cnt1 = stop.dtype(0)
 #     for dout in module().dout:

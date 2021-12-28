@@ -6,7 +6,7 @@ from pygears.lib import directed
 
 
 def test_const_op():
-    @gear(hdl={'compile': True})
+    @gear
     async def test() -> Uint[3]:
         yield 1 + 1
         yield 2 + 2
@@ -18,7 +18,7 @@ def test_const_op():
 
 
 def test_first_const_op():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din) -> Uint[4]:
         async with din as d:
             yield 1 + d
@@ -39,7 +39,7 @@ def test_first_const_op():
 
 
 def test_second_const_op():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din) -> Uint[4]:
         async with din as d:
             yield d + 1
@@ -60,7 +60,7 @@ def test_second_const_op():
 
 
 def test_same_op():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din) -> Uint[4]:
         async with din as d:
             yield d + d
@@ -81,7 +81,7 @@ def test_same_op():
 
 
 def test_first_dif_type_const_op():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din) -> Ufixp[5, 5]:
         async with din as d:
             yield Ufixp[4, 4](1) + d
@@ -102,7 +102,7 @@ def test_first_dif_type_const_op():
 
 
 def test_second_dif_type_const_op():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din) -> Ufixp[5, 5]:
         async with din as d:
             yield d + Ufixp[4, 4](1)
@@ -123,7 +123,7 @@ def test_second_dif_type_const_op():
 
 
 def test_dif_type_op():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din0, din1) -> Ufixp[4, 4]:
         async with din0 as d0, din1 as d1:
             yield d0 + d1

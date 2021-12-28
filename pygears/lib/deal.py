@@ -6,7 +6,7 @@ from .ccat import ccat
 from .demux import demux
 
 
-@gear(hdl={'compile': True}, enablement=b'lvl < din.lvl')
+@gear(enablement=b'lvl < din.lvl')
 async def qdeal_impl(din: Queue, *, num,
                      lvl=b'din.lvl-1') -> b'Union[(Queue[din.data, din.lvl-1], ) * num]':
 
@@ -27,7 +27,7 @@ async def qdeal_impl(din: Queue, *, num,
 
 
 @alternative(qdeal_impl)
-@gear(hdl={'compile': True}, enablement=b'lvl == din.lvl')
+@gear(enablement=b'lvl == din.lvl')
 async def qdeal_impl_same_lvl(din: Queue, *, num, lvl=b'din.lvl-1') -> b'Union[(din, ) * num]':
     for i in range(num):
         async for (data, eot) in din:

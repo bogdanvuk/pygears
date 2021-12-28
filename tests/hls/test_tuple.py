@@ -4,7 +4,7 @@ from pygears.typing import Tuple, Uint
 
 
 def test_subs(sim_cls):
-    @gear(hdl={'compile': True})
+    @gear
     async def proba(din) -> b'din':
         async with din as d:
             yield d.subs(1, 0xaa)

@@ -6,7 +6,7 @@ from pygears.lib import directed, drv
 
 
 def test_abs():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(a_i: Ufixp[3, 6], b_i: Fixp[4, 8]) -> Fixp[5, 9]:
         async with a_i as a, b_i as b:
             yield abs(a)
@@ -21,7 +21,7 @@ def test_abs():
 
 
 def test_add_bin():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(a_i: Ufixp[3, 6], b_i: Fixp[4, 8]) -> Fixp[5, 9]:
         async with a_i as a, b_i as b:
             yield a + b
@@ -42,7 +42,7 @@ def test_add_bin():
 
 
 def test_ceil():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(a_i: Ufixp[3, 6], b_i: Fixp[4, 8]) -> Fixp[5, 9]:
         async with a_i as a, b_i as b:
             yield ceil(a)
@@ -57,7 +57,7 @@ def test_ceil():
 
 
 def test_eq():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(a_i: Ufixp[3, 6], b_i: Fixp[4, 8]) -> Bool:
         async with a_i as a, b_i as b:
             yield a == b
@@ -78,7 +78,7 @@ def test_eq():
 
 
 def test_floor():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(a_i: Ufixp[3, 6], b_i: Fixp[4, 8]) -> Fixp[4, 8]:
         async with a_i as a, b_i as b:
             yield floor(a)
@@ -93,7 +93,7 @@ def test_floor():
 
 
 def test_ge():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(a_i: Ufixp[3, 6], b_i: Fixp[4, 8]) -> Bool:
         async with a_i as a, b_i as b:
             yield a >= b
@@ -114,7 +114,7 @@ def test_ge():
 
 
 def test_gt():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(a_i: Ufixp[3, 6], b_i: Fixp[4, 8]) -> Bool:
         async with a_i as a, b_i as b:
             yield a > b
@@ -135,7 +135,7 @@ def test_gt():
 
 
 def test_le():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(a_i: Ufixp[3, 6], b_i: Fixp[4, 8]) -> Bool:
         async with a_i as a, b_i as b:
             yield a <= b
@@ -156,7 +156,7 @@ def test_le():
 
 
 def test_lt():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(a_i: Ufixp[3, 6], b_i: Fixp[4, 8]) -> Bool:
         async with a_i as a, b_i as b:
             yield a < b
@@ -177,7 +177,7 @@ def test_lt():
 
 
 def test_lshift():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(a_i: Ufixp[3, 6], b_i: Fixp[4, 8]) -> Fixp[5, 9]:
         async with a_i as a, b_i as b:
             yield a << 0
@@ -194,7 +194,7 @@ def test_lshift():
 
 
 def test_neg():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(a_i: Ufixp[3, 6], b_i: Fixp[4, 8]) -> Fixp[5, 9]:
         async with a_i as a, b_i as b:
             yield -a
@@ -209,7 +209,7 @@ def test_neg():
 
 
 def test_rshift():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(a_i: Ufixp[3, 6], b_i: Fixp[4, 8]) -> Fixp[4, 9]:
         async with a_i as a, b_i as b:
             yield a >> 0
@@ -226,7 +226,7 @@ def test_rshift():
 
 
 def test_round():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(a_i: Ufixp[3, 6], b_i: Fixp[4, 8]) -> Fixp[5, 9]:
         async with a_i as a, b_i as b:
             yield round(a)
@@ -241,7 +241,7 @@ def test_round():
 
 
 def test_mul_bin():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(a_i: Ufixp[3, 6], b_i: Fixp[4, 8]) -> Fixp[8, 16]:
         async with a_i as a, b_i as b:
             yield a * b
@@ -262,7 +262,7 @@ def test_mul_bin():
 
 
 def test_sub_bin():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(a_i: Ufixp[3, 6], b_i: Fixp[4, 8]) -> Fixp[5, 9]:
         async with a_i as a, b_i as b:
             yield a - b

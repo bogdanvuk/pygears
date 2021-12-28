@@ -2,7 +2,7 @@ from pygears import gear, alternative
 from pygears.typing import Queue, Uint, Bool
 
 
-@gear(hdl={'compile': True})
+@gear
 async def group(din: Queue, size: Uint, *,
                 init=1) -> Queue['din.data', 'din.lvl + 1']:
 
@@ -23,7 +23,7 @@ async def group(din: Queue, size: Uint, *,
 
 
 @alternative(group)
-@gear(hdl={'compile': True})
+@gear
 async def group_other(din, size: Uint, *, init=1) -> Queue['din']:
     cnt = size.dtype(init)
     last: Bool

@@ -10,8 +10,7 @@ from pygears.lib import drv
 def test_outsig(lang):
     @gear(signals=[InSig('clk', 1),
                    InSig('rst', 1),
-                   OutSig('flush', 1)],
-          hdl={'compile': True})
+                   OutSig('flush', 1)])
     async def local_rst(din):
         sig = module().signals['flush']
         sig.write(0)

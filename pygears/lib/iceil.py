@@ -2,7 +2,7 @@ from pygears import gear
 from pygears.typing import Uint, code
 
 
-@gear(hdl={'compile': True})
+@gear
 async def iceil(din: Uint['T'], *, div=4) -> Uint['T']:
     """Performs division of the input value and return the ceiling of the
     calculated value

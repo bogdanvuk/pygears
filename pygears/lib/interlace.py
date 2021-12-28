@@ -2,7 +2,7 @@ from pygears import gear
 from pygears.typing import Queue
 
 
-@gear(hdl={'compile': True})
+@gear
 async def qinterlace(*din: Queue['t_data']) -> b'Queue[t_data, 2]':
     """Short for Trasaction Round Robin, outputs data from one of the input
     interfaces following a `Round Robin` schedule.
@@ -16,7 +16,7 @@ async def qinterlace(*din: Queue['t_data']) -> b'Queue[t_data, 2]':
             yield (data, (i == len(din) - 1) @ eot)
 
 
-@gear(hdl={'compile': True})
+@gear
 async def interlace(*din: b'din_t') -> b'din_t':
     for i, data_in in enumerate(din):
         async with data_in as data:

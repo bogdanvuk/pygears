@@ -7,7 +7,7 @@ from pygears.util.utils import qrange
 
 
 def test_simple(sim_cls):
-    @gear(hdl={'compile': True})
+    @gear
     async def test() -> Uint[3]:
         for i in range(4):
             yield i
@@ -18,7 +18,7 @@ def test_simple(sim_cls):
 
 
 def test_simple_qrange(sim_cls):
-    @gear(hdl={'compile': True})
+    @gear
     async def test() -> Queue[Uint[3]]:
         for i, last in qrange(4):
             yield i, last
@@ -29,7 +29,7 @@ def test_simple_qrange(sim_cls):
 
 
 def test_unfold(lang):
-    @gear(hdl={'compile': True})
+    @gear
     async def test() -> Array[Uint[3], 4]:
         data = Array[Uint[3], 4]()
         for i in range(4):
@@ -44,7 +44,7 @@ def test_unfold(lang):
 
 
 def test_unfold_array(lang):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Array[Maybe, 'num']) -> b'Array[Uint[bitw(num-1)], num]':
         num = len(din.dtype)
         TIndex = Uint[bitw(num - 1)]
@@ -87,7 +87,7 @@ def test_unfold_array(lang):
 
 
 def test_unfold_uint(lang):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Bool, *, w_dout) -> Uint['w_dout']:
         data = Array[Bool, w_dout](None)
         async with din as d:
@@ -103,7 +103,7 @@ def test_unfold_uint(lang):
 
 
 # def test_comprehension():
-#     @gear(hdl={'compile': True})
+#     @gear
 #     async def test() -> Array[Uint[3], 4]:
 #         yield Array[Uint[3], 4](i for i in range(4))
 

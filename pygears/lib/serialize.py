@@ -4,7 +4,7 @@ from pygears.util.utils import qrange
 # from pygears.lib.rng import qrange
 
 
-@gear(hdl={'compile': True})
+@gear
 async def serialize(din: Tuple[{
         'data': Any,
         'active': Uint
@@ -15,7 +15,7 @@ async def serialize(din: Tuple[{
 
 
 @alternative(serialize)
-@gear(hdl={'compile': True})
+@gear
 async def serialize_plain(din) -> Queue['din[0]']:
     i = Uint[bitw(len(din.dtype) - 1)](0)
 

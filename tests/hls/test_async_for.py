@@ -7,7 +7,7 @@ from pygears.lib import directed
 
 
 def test_simple_async_sim(sim_cls):
-    @gear(hdl={'compile': True})
+    @gear
     async def test() -> Uint[3]:
         async for i, _ in qrange(4):
             yield i
@@ -19,7 +19,7 @@ def test_simple_async_sim(sim_cls):
 
 # TODO: This won't work ("for" instead of "async for"), throw reasonable error
 # def test_simple_async_sim(sim_cls):
-#     @gear(hdl={'compile': True})
+#     @gear
 #     async def test() -> Uint[3]:
 #         for i, _ in qrange(4):
 #             yield i
@@ -30,7 +30,7 @@ def test_simple_async_sim(sim_cls):
 
 
 def test_simple(sim_cls):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Queue) -> b'din':
         async for (data, eot) in din:
             yield data, eot
@@ -43,7 +43,7 @@ def test_simple(sim_cls):
 
 
 def test_exit_cond(sim_cls):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Queue) -> b'din':
         async for (data, eot) in din:
             yield data, eot
@@ -59,7 +59,7 @@ def test_exit_cond(sim_cls):
 
 # Tests the issue where cycles were lost between the calls to qrange-s in simulation
 def test_nested(sim_cls):
-    @gear(hdl={'compile': True})
+    @gear
     async def test() -> Tuple[Uint[4], Uint[4]]:
         async for (i, i_eot) in qrange(2):
             async for (j, j_eot) in qrange(2):

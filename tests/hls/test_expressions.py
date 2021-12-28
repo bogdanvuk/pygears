@@ -5,7 +5,7 @@ from pygears.typing import Bool, Uint, Tuple, Unit, Queue, Array
 
 
 def test_inline_if(cosim_cls):
-    @gear(hdl={'compile': True})
+    @gear
     async def inv(din: Bool) -> Bool:
         async with din as data:
             yield 0 if data else 1
@@ -16,7 +16,7 @@ def test_inline_if(cosim_cls):
 
 
 def test_expr_index(cosim_cls):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Tuple[Uint[4], Uint[3]]) -> Bool:
         async with din as (data, i):
             yield (data @ data)[i]
@@ -29,7 +29,7 @@ def test_expr_index(cosim_cls):
 
 
 def test_list_comprehension(cosim_cls):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(
         din: Tuple[Uint[4], Uint[4], Uint[4],
                    Uint[4]]) -> Tuple[Uint[5], Uint[5], Uint[5], Uint[5]]:
@@ -44,7 +44,7 @@ def test_list_comprehension(cosim_cls):
 
 
 def test_list_to_array_2d(cosim_cls):
-    @gear(hdl={'compile': True})
+    @gear
     async def test() -> Array[Array[Uint[4], 2], 2]:
         yield [[0] * 2] * 2
 
@@ -54,7 +54,7 @@ def test_list_to_array_2d(cosim_cls):
 
 
 def test_unit_const():
-    @gear(hdl={'compile': True})
+    @gear
     async def test() -> Queue[Unit]:
         yield Unit(), Bool(False)
         yield Unit(), Bool(True)
@@ -65,7 +65,7 @@ def test_unit_const():
 
 
 def test_unit():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din) -> Queue[Unit]:
         async for d, eot in din:
             yield Unit(), eot

@@ -4,7 +4,7 @@ from pygears.lib.shred import shred
 from pygears.typing import Tuple
 
 
-# @gear(hdl={'compile': True})
+# @gear
 @gear
 async def ccat(*din) -> b'Tuple[din]':
     """Short for concatenate, combines multiple interfaces into a single interface

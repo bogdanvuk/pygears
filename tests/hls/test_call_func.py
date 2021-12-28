@@ -9,7 +9,7 @@ def test_const_args():
     def func(a, b):
         return 2 * a + b
 
-    @gear(hdl={'compile': True})
+    @gear
     async def test() -> Uint[5]:
         yield func(1, 4)
         yield func(2, 5)
@@ -25,7 +25,7 @@ def test_const_args_datagear_as_gear():
     def func(a, b) -> b'Uint[2] * a + b':
         return 2 * a + b
 
-    @gear(hdl={'compile': True})
+    @gear
     async def test() -> Uint[5]:
         async with func(1, 4) as v:
             yield v
@@ -41,12 +41,12 @@ def test_const_args_datagear_as_gear():
 
 
 def test_const_args_gear():
-    @gear(hdl={'compile': True})
+    @gear
     async def func(dina, dinb) -> b'Uint[2] * dina + dinb':
         async with dina as a, dinb as b:
             yield 2 * a + b
 
-    @gear(hdl={'compile': True})
+    @gear
     async def test() -> Uint[5]:
         async with func(1, 4) as v:
             yield v
@@ -66,7 +66,7 @@ def test_call_inside_loop():
     def func(a, b) -> b'Uint[2] * a + b':
         return 2 * a + b
 
-    @gear(hdl={'compile': True})
+    @gear
     async def test() -> Uint[5]:
         for i in range(3):
             async with func(i, i) as v:
@@ -81,7 +81,7 @@ def test_expr_args():
     def func(a, b) -> b'Uint[2] * a + b':
         return 2 * a + b
 
-    @gear(hdl={'compile': True})
+    @gear
     async def test() -> Uint[8]:
         for i in range(3):
             async with func(2 * i + 1, (i << 2)) as v:
@@ -96,7 +96,7 @@ def test_input_intf_arg():
     def func(a, b) -> b'Uint[2] * a + b':
         return 2 * a + b
 
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Uint[2]) -> Uint[8]:
         async with func(din, 2) as v:
             yield v

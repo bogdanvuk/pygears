@@ -8,13 +8,13 @@ from pygears.hdl.sv import SVGenPlugin
 from pygears.hdl.v import VGenPlugin
 
 
-@gear(hdl={'compile': True})
+@gear
 async def trunc(din, *, t) -> b'type_trunc(din, t)':
     async with din as d:
         yield type_trunc(d, t)
 
 
-@gear(hdl={'compile': True})
+@gear
 async def cast(din, *, t) -> b'type_cast(din, t)':
     async with din as d:
         yield type_cast(d, t)

@@ -25,7 +25,7 @@ def test_multiple_arguments():
     def add_real_part_func(x, y):
         return x[0] + y[0]
 
-    @gear(hdl={'compile': True})
+    @gear
     async def add_real_part_module(x: TComplex, y: TComplex) -> b'x[0]':
         res: x.dtype[0] + y.dtype[0]
         async with gather(x, y) as data:
@@ -79,7 +79,7 @@ def test_multiple_arguments_datagear_complex():
 
 
 def test_fixp_arith(sim_cls):
-    @gear(hdl={'compile': True})
+    @gear
     async def fixp_arith(x: Fixpnumber, y: Fixpnumber) -> Ufixp[6, 9]:
         async with gather(x, y) as data:
             yield (data[0] + data[1]) + (data[0] + data[1])
@@ -94,7 +94,7 @@ def test_fixp_arith(sim_cls):
 
 
 def test_fixp_diff_arith(sim_cls):
-    @gear(hdl={'compile': True})
+    @gear
     async def fixp_arith(x: Fixpnumber, y: Fixpnumber) -> Ufixp[6, 9]:
         async with gather(x, y) as data:
             yield (data[0] + data[1]) + (data[0] + data[1])

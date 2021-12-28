@@ -52,7 +52,7 @@ def test_cast_union_of_units(lang):
 
 
 def test_sim_invoke(lang):
-    @gear(hdl={'compile': True})
+    @gear
     async def sat_wrap(din) -> b'din':
         async with din as d:
             saturate.exec(d, t=Uint[8])

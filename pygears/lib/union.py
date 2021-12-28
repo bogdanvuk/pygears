@@ -79,7 +79,7 @@ async def valve(cond, din) -> b'din':
 
 
 @alternative(when)
-@gear(hdl={'compile': True})
+@gear
 async def when_pass(cond, din, *, halt=False) -> b'din':
     async with cond as c:
         if not halt or c:

@@ -4,7 +4,7 @@ from pygears.lib import directed, drv
 
 
 def test_two_alter_outs_const():
-    @gear(hdl={'compile': True})
+    @gear
     async def test() -> (Uint[4], Uint[4]):
         yield 0, None
         yield None, 1
@@ -15,7 +15,7 @@ def test_two_alter_outs_const():
 
 
 def test_two_alter_outs():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din) -> (Uint[4], Uint[4]):
         async with din as d:
             yield d, None

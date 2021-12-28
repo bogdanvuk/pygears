@@ -5,7 +5,7 @@ from pygears.lib import directed, drv
 
 
 def test_abs_int():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(a_i: Uint[6], b_i: Int[8]) -> Int[9]:
         async with a_i as a, b_i as b:
             yield abs(a)
@@ -20,7 +20,7 @@ def test_abs_int():
 
 
 def test_add_bin_uint():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(a_i: Uint[3], b_i: Int[4]) -> Int[6]:
         async with a_i as a, b_i as b:
             yield a + b
@@ -41,7 +41,7 @@ def test_add_bin_uint():
 
 
 def test_and_bin_uint():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(a_i: Uint[3], b_i: Int[4]) -> Int[5]:
         async with a_i as a, b_i as b:
             yield a & b
@@ -62,7 +62,7 @@ def test_and_bin_uint():
 
 
 def test_mul_bin_uint():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(a_i: Uint[3], b_i: Int[4]) -> Int[8]:
         async with a_i as a, b_i as b:
             yield a * b
@@ -83,7 +83,7 @@ def test_mul_bin_uint():
 
 
 def test_sub_bin_uint():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(a_i: Uint[3], b_i: Int[4]) -> Int[6]:
         async with a_i as a, b_i as b:
             yield a - b

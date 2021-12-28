@@ -3,7 +3,7 @@ from pygears.core.partial import Partial
 from pygears.typing import Number, Queue, saturate
 
 
-@gear(hdl={'compile': True})
+@gear
 async def reduce(din: Queue, init, *, f) -> b'init':
     acc: init.dtype
 

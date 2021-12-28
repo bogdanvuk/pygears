@@ -53,4 +53,4 @@ def datagear(func, **meta_kwds):
                                      addsource=True)
     gear_func.exec = func
 
-    return create_gear_definition(gear_func, hdl={'compile': True})
+    return create_gear_definition(gear_func)

@@ -71,7 +71,7 @@ def test_accum_saturate_gear_directed(cosim_cls):
     def add(x, y):
         return saturate(x + y, Uint[8])
 
-    @gear(hdl={'compile': True})
+    @gear
     async def add_gear(x, y) -> Uint[8]:
         async with x as dx, y as dy:
             yield saturate(dx + dy, t=Uint[8])

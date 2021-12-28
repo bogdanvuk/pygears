@@ -4,7 +4,7 @@ from pygears.hls.translate import translate_gear
 
 
 def test_update_after_in_loop():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Queue[Uint]) -> b'din':
         acc = din.dtype.data(0)
 
@@ -22,7 +22,7 @@ def test_update_after_in_loop():
 
 # TODO: Fix this! This should fail in cast_return, since Bool is yielded for Queue
 def test_optional_loop_assign():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Queue[Bool]) -> b'din':
         flag = False
 
@@ -40,7 +40,7 @@ def test_optional_loop_assign():
 
 
 def test_augmented():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Bool) -> Uint[8]:
         cnt = Uint[8](1)
         while cnt != 0:
@@ -59,7 +59,7 @@ def test_augmented():
 
 
 def test_non_optional_loop_assign():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Queue[Bool]) -> b'din':
         flag = False
 
@@ -80,7 +80,7 @@ def test_non_optional_loop_assign():
 
 # Value for 'acc' is set a new every loop, so it isn't a register
 def test_update_after_in_loop_ifelse_trap():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Queue[Uint]) -> b'din':
         acc = din.dtype.data(0)
 
@@ -105,7 +105,7 @@ def test_update_after_in_loop_ifelse_trap():
 # Value for 'acc' is set only conditionaly at the beggining of the loop, so it
 # has to be a register
 def test_update_after_in_loop_if_trap():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Queue[Uint]) -> b'din':
         acc = din.dtype.data(0)
 
@@ -126,7 +126,7 @@ def test_update_after_in_loop_if_trap():
 
 
 def test_update_after_in_loop_ifelif():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Queue[Uint]) -> b'din':
         acc = din.dtype.data(0)
 

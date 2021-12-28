@@ -3,7 +3,7 @@ from pygears.lib import cart
 from pygears.typing import Bool, Queue, Tuple, Uint
 
 
-@gear(hdl={'compile': True})
+@gear
 async def take(din: Queue[Tuple[{
         'data': 't_data',
         'size': Uint

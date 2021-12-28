@@ -7,7 +7,7 @@ from pygears.lib import drv, shred, directed, delay_rng, verif
 
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_2state(dout_delay):
-    @gear(hdl={'compile': True})
+    @gear
     async def test() -> Bool:
         yield False
         yield True
@@ -19,7 +19,7 @@ def test_2state(dout_delay):
 
 
 def test_state_get_after_yield():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(a, b) -> Bool:
         async with a as aa:
             yield False
@@ -38,7 +38,7 @@ def test_state_get_after_yield():
 
 
 def test_cond_no_state(lang):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Bool) -> Bool:
         async with din as d:
             if d:
@@ -53,7 +53,7 @@ def test_cond_no_state(lang):
 
 
 def test_cond_2state_asymetric(lang):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Bool) -> Bool:
         async with din as d:
             if d:
@@ -76,7 +76,7 @@ def test_cond_2state_asymetric(lang):
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_cond_2state_symetric(lang, din_delay, dout_delay):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Bool) -> Bool:
         async with din as d:
             if d:
@@ -101,7 +101,7 @@ def test_cond_2state_symetric(lang, din_delay, dout_delay):
 # @pytest.mark.parametrize('din_delay', [0, 1])
 # @pytest.mark.parametrize('dout_delay', [0, 1])
 # def test_cond_hourglass(din_delay, dout_delay):
-#     @gear(hdl={'compile': True})
+#     @gear
 #     async def test(din: Bool) -> Bool:
 #         async with din as d:
 #             if d:
@@ -131,7 +131,7 @@ def test_cond_2state_symetric(lang, din_delay, dout_delay):
 
 
 def test_loop_state(lang):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Uint) -> b'din':
         i = Uint[3](0)
 
@@ -149,7 +149,7 @@ def test_loop_state(lang):
 
 # TODO: This fails
 # def test_loop_state(lang):
-#     @gear(hdl={'compile': True})
+#     @gear
 #     async def init() -> Bool:
 #         yield True
 

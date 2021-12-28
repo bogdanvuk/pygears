@@ -8,7 +8,7 @@ from pygears.lib import drv, verif, delay_rng
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_leave_looped(din_delay, dout_delay):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Bool) -> Bool:
         c = Bool(True)
         while c:
@@ -30,7 +30,7 @@ def test_leave_looped(din_delay, dout_delay):
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_leave_branched(din_delay, dout_delay):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Bool) -> Bool:
         c = Bool(True)
         d = True
@@ -58,7 +58,7 @@ def test_leave_branched(din_delay, dout_delay):
 # @pytest.mark.parametrize('din_delay', [0, 1])
 # @pytest.mark.parametrize('dout_delay', [0, 1])
 # def test_leave_looped(din_delay, dout_delay):
-#     @gear(hdl={'compile': True})
+#     @gear
 #     async def test(din: Bool) -> Bool:
 #         c = Bool(True)
 #         while c:
@@ -81,7 +81,7 @@ def test_leave_branched(din_delay, dout_delay):
 # @pytest.mark.parametrize('din_delay', [0, 1])
 # @pytest.mark.parametrize('dout_delay', [0, 1])
 # def test_leave_looped_async_for(din_delay, dout_delay):
-#     @gear(hdl={'compile': True})
+#     @gear
 #     async def test(din: Queue[Bool]) -> Bool:
 #         c = Bool(True)
 #         async for c, eot in din:

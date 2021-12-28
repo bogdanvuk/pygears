@@ -3,7 +3,7 @@ from pygears.lib import cart
 from pygears.typing import Queue, Tuple, Uint, Bool
 
 
-@gear(hdl={'compile': True})
+@gear
 async def chop(din: Queue[Tuple[{
         'data': 't_data',
         'size': Uint

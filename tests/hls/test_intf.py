@@ -11,7 +11,7 @@ from pygears.lib.union import select
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_intf_vararg_fix_index(lang, din_delay, dout_delay):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(*din: Uint) -> b'din[0]':
         async with din[0] as d:
             yield d
@@ -31,7 +31,7 @@ def test_intf_vararg_fix_index(lang, din_delay, dout_delay):
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_intf_vararg_mux(sim_cls, din_delay, dout_delay):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(*din: Uint) -> b'din[0]':
         async with mux(0, *din) as d:
             yield code(d[0], Uint[4])
@@ -48,7 +48,7 @@ def test_intf_vararg_mux(sim_cls, din_delay, dout_delay):
 
 
 def test_loop_select_intfs(lang):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(*din: Uint) -> b'din[0]':
         dsel: Uint[4]
         for i in range(len(din)):
@@ -67,7 +67,7 @@ def test_loop_select_intfs(lang):
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_loop_intfs(lang, din_delay, dout_delay):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(*din: Uint) -> b'din[0]':
         for d in din:
             async with d as data:
@@ -88,7 +88,7 @@ def test_loop_intfs(lang, din_delay, dout_delay):
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_enum_intfs(lang, din_delay, dout_delay):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(*din: Uint) -> b'din[0]':
         for i, d in enumerate(din):
             async with d as data:
@@ -109,7 +109,7 @@ def test_enum_intfs(lang, din_delay, dout_delay):
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_enum_intfs_single(lang, din_delay, dout_delay):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(*din: Uint) -> b'din[0]':
         for i, d in enumerate(din):
             async with d as data:
@@ -128,7 +128,7 @@ def test_enum_intfs_single(lang, din_delay, dout_delay):
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_enum_intfs_use_i(lang, din_delay, dout_delay):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(*din: Uint) -> Tuple['din[0]', Uint['bitw(len(din))']]:
         for i, d in enumerate(din):
             async with d as data:
@@ -149,7 +149,7 @@ def test_enum_intfs_use_i(lang, din_delay, dout_delay):
 @pytest.mark.parametrize('din_delay', [0, 1])
 @pytest.mark.parametrize('dout_delay', [0, 1])
 def test_loop_queue_intfs(lang, din_delay, dout_delay):
-    @gear(hdl={'compile': True})
+    @gear
     async def test(*din: Queue) -> b'din[0].data':
         for i, d in enumerate(din):
             async for (data, last) in d:
@@ -168,7 +168,7 @@ def test_loop_queue_intfs(lang, din_delay, dout_delay):
 
 
 def test_yield_var():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Uint[2]) -> Uint[2]:
         yield din
 
@@ -177,7 +177,7 @@ def test_yield_var():
 
 
 def test_yield_intermediate_var():
-    @gear(hdl={'compile': True})
+    @gear
     async def test(din: Uint[2]) -> Uint[2]:
         d = din
         yield d

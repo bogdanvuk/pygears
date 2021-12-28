@@ -3,7 +3,7 @@ from pygears.sim import clk
 from pygears.util.utils import qrange
 
 
-@gear(enablement='t.data == din', hdl={'compile': True})
+@gear(enablement='t.data == din')
 async def parallelize(din, *, t) -> b't':
     data = t()
 
