@@ -61,6 +61,17 @@ def get_function_ast(func):
 
         return ast.parse(src).body[0]
 
+def is_func_empty(func):
+    # TODO: We are doing AST generation at least twice, performance impact?
+    body = get_function_ast(func).body
+    if isinstance(body[0], ast.Pass):
+        return True
+
+    if isinstance(body[0], ast.Expr) and isinstance(body[0].value, ast.Ellipsis):
+        return True
+
+    return False
+
 
 def get_property_type(prop):
     assert isinstance(prop, property)

@@ -73,11 +73,15 @@ def sim_compile_resolver(func, *args, **kwds):
         def callback(p):
             # print(f'Out of scope: {p.gear.name}')
             g = p.gear
-            for i in g.in_ports:
-                if isinstance(i.producer.producer, HDLProducer):
-                    i.producer.finish()
-                else:
-                    i.producer.disconnect(i)
+
+            # TODO: in_ports can be missing if it was deleted in order to help GC
+            # collect the graph
+            if hasattr(g, 'in_ports'):
+                for i in g.in_ports:
+                    if isinstance(i.producer.producer, HDLProducer):
+                        i.producer.finish()
+                    else:
+                        i.producer.disconnect(i)
 
         weakref.finalize(outputs, callback, outputs.producer)
 

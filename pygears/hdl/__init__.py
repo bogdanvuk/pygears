@@ -21,7 +21,7 @@ def rename_ambiguous(modname, lang):
 
 
 def hdl_log():
-    return logging.getLogger('svgen')
+    return logging.getLogger('hdlgen')
 
 
 def mod_lang(module):

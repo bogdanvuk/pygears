@@ -56,7 +56,7 @@ class TraceFormatPlugin(PluginBase):
     def bind(cls):
         reg['trace/hooks'] = []
 
-        reg.confdef('trace/level', setter=set_trace_level, default=TraceLevel.debug)
+        reg.confdef('trace/level', setter=set_trace_level, default=TraceLevel.user)
 
         reg.confdef(
             'trace/ignore',

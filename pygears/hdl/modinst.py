@@ -8,8 +8,6 @@ from . import hdl_log
 from pygears.hdl import mod_lang, hdlmod
 from pygears.util.fileio import save_file
 
-# from .inst import svgen_log
-
 
 def path_name(path):
     if path.startswith('/'):

@@ -51,6 +51,11 @@ class SimGear:
         self.args, self.kwds = self.sim_func_args
 
     async def run(self):
+        # TODO: Try also to detect endless loops
+        from pygears.hls.ast.utils import is_func_empty
+        if is_func_empty(self.gear.func):
+            raise NotImplementedError(f'Cannot run unimplemented gear "{self.gear.name}"')
+
         out_prods = [p.producer for p in self.gear.out_ports]
         single_output = len(out_prods) == 1
         if single_output:

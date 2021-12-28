@@ -86,6 +86,16 @@ class HDLFileResolver(ResolverBase):
         return params
 
     @property
+    def explicit(self):
+        if 'hdl' not in self.node.meta_kwds:
+            return False
+
+        if 'impl' not in self.node.meta_kwds['hdl']:
+            return False
+
+        return self.node.meta_kwds['hdl']['impl']
+
+    @property
     def file_basename(self):
         fn = self.node_def_name
         if 'hdl' in self.node.meta_kwds:

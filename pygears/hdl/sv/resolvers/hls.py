@@ -1,6 +1,8 @@
 import typing
+import ast
 from ...base_resolver import ResolverBase, ResolverTypeError
 from ..svcompile import compile_gear
+from pygears.hls.ast.utils import is_func_empty
 from pygears.util.fileio import save_file
 from pygears.conf import inject, Inject
 
@@ -11,10 +13,16 @@ class HLSResolver(ResolverBase):
         self.node = node
         self.generated = False
 
-        if not self.node.meta_kwds.get('hdl', {}).get('compile', False):
+        if self.empty_impl:
             raise ResolverTypeError
 
         self._files = [self.file_basename]
+
+    @property
+    def empty_impl(self):
+        # TODO: We are doing AST generation at least twice (once inside this
+        # func, second time when HLS is run), performance impact?
+        return is_func_empty(self.node.func)
 
     @property
     def params(self):

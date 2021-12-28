@@ -27,24 +27,21 @@ class SVGenPlugin(PluginBase):
     def bind(cls):
         reg['svgen/flow'] = [svgen_inst]
         reg['svgen/resolvers'] = [
-            HDLFileResolver, HDLTemplateResolver, HLSResolver,
-            HierarchicalResolver
+            HDLFileResolver, HDLTemplateResolver, HierarchicalResolver, HLSResolver
         ]
         reg['svgen/dflt_resolver'] = BlackBoxResolver
         reg['svgen/templenv'] = SVTemplateEnv()
 
-        reg['svgen/module_namespace'] = {
-            'Gear': SVModuleInst,
-            'GearHierRoot': SVModuleInst
-        }
+        reg['svgen/module_namespace'] = {'Gear': SVModuleInst, 'GearHierRoot': SVModuleInst}
+
 
 class VTemplateEnv(TemplateEnv):
     lang = 'v'
+
     def __init__(self):
         super().__init__(basedir=os.path.join(os.path.dirname(__file__), 'v'))
 
-        self.jenv.globals.update(vgen_intf=vgen_intf,
-                                 vgen_signal=vgen_signal)
+        self.jenv.globals.update(vgen_intf=vgen_intf, vgen_signal=vgen_signal)
 
         self.snippets = self.load(self.basedir, 'snippet.j2').module
 
@@ -54,21 +51,21 @@ class VGenPlugin(PluginBase):
     def bind(cls):
         reg['vgen/templenv'] = VTemplateEnv()
 
-        reg['vgen/module_namespace'] = {
-            'Gear': SVModuleInst,
-            'GearHierRoot': SVModuleInst
-        }
+        reg['vgen/module_namespace'] = {'Gear': SVModuleInst, 'GearHierRoot': SVModuleInst}
 
         reg['vgen/flow'] = [svgen_inst]
         reg['vgen/resolvers'] = [
-            HDLFileResolver, HDLTemplateResolver, HLSResolver,
-            HierarchicalResolver
+            HDLFileResolver,
+            HDLTemplateResolver,
+            HierarchicalResolver,
+            HLSResolver,
         ]
         reg['vgen/dflt_resolver'] = BlackBoxResolver
 
 
 from pygears.conf import load_plugin_folder
 import os
+
 load_plugin_folder(os.path.join(os.path.dirname(__file__), 'modules'))
 
 __all__ = ['svgen_generate']
