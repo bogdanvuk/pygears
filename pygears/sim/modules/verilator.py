@@ -46,17 +46,12 @@ assign ${intf_name}_ready = ${conn_name}.ready;
 
 signal_spy_connect_no_struct = Template("""
 /*verilator tracing_on*/
-logic [${width}:0] ${intf_name}_data;
-logic ${intf_name}_valid;
-logic ${intf_name}_ready;
+dti #(.W_DATA(${width})) _${intf_name}();
 /*verilator tracing_off*/
 
-always_comb
-    if (${conn_name}.valid)
-        ${intf_name}_data = ${conn_name}.data;
-
-assign ${intf_name}_valid = ${conn_name}.valid;
-assign ${intf_name}_ready = ${conn_name}.ready;
+assign _${intf_name}.data = ${conn_name}.data;
+assign _${intf_name}.valid = ${conn_name}.valid;
+assign _${intf_name}.ready = ${conn_name}.ready;
 """)
 
 
@@ -105,7 +100,7 @@ def create_project_script(outdir, top, lang):
     #         f.write(f'{fn}\n')
 
 
-def verilate(outdir, lang, top, top_name, tracing_enabled, rst=True):
+def verilate(outdir, lang, top, top_name, tracing_enabled, rst=True, expand_data=True):
     # include = ' '.join([f'-I{os.path.abspath(p)}' for p in reg[f'{lang}gen/include']])
 
     # include += f' -I{outdir}'
@@ -120,14 +115,15 @@ def verilate(outdir, lang, top, top_name, tracing_enabled, rst=True):
         # TODO: Not much of a speedup: '-O3 --x-assign fast --x-initial fast --noassert',
         '-clk clk',
         f'--top-module {top_name}',
-        '--trace --no-trace-params --trace-structs --trace-underscore' if tracing_enabled else '',
+        '--trace --no-trace-params --trace-underscore' if tracing_enabled else '',
+        '--trace-structs' if tracing_enabled and expand_data else '',
         '--x-initial unique' if not rst else '',
         '-o pygearslib',
         top_name,
         'sim_main.cpp',
     ]
 
-        # '--x-assign unique' if not rst else '',
+    # '--x-assign unique' if not rst else '',
 
     with open(os.path.join(outdir, 'verilate.log'), 'w') as f:
         f.write(" ".join(verilate_cmd))
@@ -167,8 +163,12 @@ def build(top, outdir=None, postsynth=False, lang=None, rebuild=True, rst=True):
     log.info(f'Verilating "{top.name}" inside {outdir}...')
     shutil.rmtree(outdir, ignore_errors=True)
 
-    reg['svgen/spy_connection_template'] = (signal_spy_connect_hide_interm_t if
-                                            reg['debug/hide_interm_vals'] else signal_spy_connect_t)
+    if not reg['debug/expand_trace_data']:
+        reg['svgen/spy_connection_template'] = signal_spy_connect_no_struct
+    elif reg['debug/hide_interm_vals']:
+        reg['svgen/spy_connection_template'] = signal_spy_connect_hide_interm_t
+    else:
+        reg['svgen/spy_connection_template'] = signal_spy_connect_t
 
     synth_src_dir = os.path.join(outdir, 'src')
     hdlgen(top,
@@ -195,6 +195,7 @@ def build(top, outdir=None, postsynth=False, lang=None, rebuild=True, rst=True):
         'out_ports': top.out_ports,
         'top_name': hdlmod.wrap_module_name,
         'tracing': tracing_enabled,
+        'end_cycle_dump': reg['debug/trace_end_cycle_dump'],
         'rst': rst,
         'aux_clock': reg['sim/aux_clock']
     }
@@ -205,7 +206,13 @@ def build(top, outdir=None, postsynth=False, lang=None, rebuild=True, rst=True):
     c = jenv.get_template('sim_veriwrap.j2').render(context)
     save_file('sim_main.cpp', outdir, c)
 
-    verilate(outdir, lang, top, hdlmod.wrap_module_name, tracing_enabled, rst=rst)
+    verilate(outdir,
+             lang,
+             top,
+             hdlmod.wrap_module_name,
+             tracing_enabled,
+             rst=rst,
+             expand_data=reg['debug/expand_trace_data'])
 
     make(file_struct['objdir'], hdlmod.wrap_module_name)
 

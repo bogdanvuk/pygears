@@ -628,7 +628,6 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         except:
             pass
 
-
         for sim_gear in self.sim_gears:
             if not sim_gear.done:
                 try:

@@ -167,19 +167,19 @@ class VCDValVisitor(TypingVisitorBase):
     #             self.visit(t, f'{field}.{f}' if field else f, val=v)
 
 
-def register_traces_for_intf(dtype, scope, writer, unroll_data=True):
+def register_traces_for_intf(dtype, scope, writer, expand_data=True):
     # TODO: Refactor this into a class
     vcd_vars = {'srcs': [], 'srcs_active': [], 'dtype': dtype}
 
     if typeof(dtype, TLM) or not is_type(dtype):
         vcd_vars['data'] = writer.register_var(scope, 'data', 'string')
     else:
-        if not unroll_data:
+        if not expand_data:
             try:
                 vcd_vars['data'] = writer.register_var(scope,
-                                                    'data',
-                                                    var_type='wire',
-                                                    size=max(dtype.width, 1))
+                                                       'data',
+                                                       var_type='wire',
+                                                       size=max(dtype.width, 1))
             except:
                 vcd_vars['data'] = writer.register_var(scope, 'data', 'string')
         else:
@@ -276,18 +276,20 @@ class VCDHierVisitor(HierVisitorBase):
 
 class VCD(SimExtend):
     @inject
-    def __init__(self,
-                 trace_fn='pygears.vcd',
-                 include=Inject('debug/trace'),
-                 tlm=False,
-                 shmidcat=Inject('sim_extens/vcd/shmidcat'),
-                 vcd_fifo=Inject('sim_extens/vcd/vcd_fifo'),
-                 sim=Inject('sim/simulator'),
-                 outdir=Inject('results-dir')):
-
+    def __init__(
+            self,
+            trace_fn='pygears.vcd',
+            include=Inject('debug/trace'),
+            tlm=False,
+            shmidcat=Inject('sim_extens/vcd/shmidcat'),
+            vcd_fifo=Inject('sim_extens/vcd/vcd_fifo'),
+            sim=Inject('sim/simulator'),
+            outdir=Inject('results-dir'),
+            expand_data=Inject('debug/expand_trace_data'),
+    ):
         super().__init__()
         self.sim = sim
-        self.unroll_data = True
+        self.expand_data = expand_data
         self.finished = False
         self.vcd_fifo = vcd_fifo
         self.shmidcat = shmidcat
@@ -346,7 +348,7 @@ class VCD(SimExtend):
             return True
 
         self.vcd_vars = {
-            p: register_traces_for_intf(p.dtype, scope, self.writer, self.unroll_data)
+            p: register_traces_for_intf(p.dtype, scope, self.writer, self.expand_data)
             for p, scope in vcd_visitor.vcd_vars.items()
         }
 
@@ -384,7 +386,7 @@ class VCD(SimExtend):
             self.writer.change(v['data'], cur_timestep, str(val))
         else:
             try:
-                if self.unroll_data:
+                if self.expand_data:
                     visitor = VCDValVisitor(v, self.writer, cur_timestep, max_level=10)
                     visitor.visit(v['dtype'], 'data', val=val)
                 else:

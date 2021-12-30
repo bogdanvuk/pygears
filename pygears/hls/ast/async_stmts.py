@@ -12,16 +12,9 @@ def is_target_id(node):
 def merge_cond_alias_map(ir_node, ctx):
     alias_map = ctx.alias_map
     for n, v in ctx.closure_alias_maps[ir_node].items():
-        if v != alias_map.get(n, v):
-            alias_map[n] = ctx.ref(n)
-
-        # TODO: Why does this change ThorX files?
-        # # If there's an error invoking equality operator
-        # try:
-        #     if v != alias_map.get(n, v):
-        #         alias_map[n] = ctx.ref(n)
-        # except:
-        #     pass
+        if n in alias_map:
+            if v is not alias_map[n] and v != alias_map[n]:
+                alias_map[n] = ctx.ref(n)
 
 
 # TODO: Revisit cast_return, maybe it can be more general

@@ -32,8 +32,7 @@ class SVIntfGen:
             else:
                 return pattern(self.intf)
 
-        return any(
-            check(p) for p in reg['debug/trace'])
+        return any(check(p) for p in reg['debug/trace'])
 
     @property
     @functools.lru_cache(maxsize=None)
@@ -108,9 +107,7 @@ class SVIntfGen:
             return self.basename
 
     @inject
-    def get_inst(self,
-                 template_env,
-                 spy_connect_t=Inject('svgen/spy_connection_template')):
+    def get_inst(self, template_env, spy_connect_t=Inject('svgen/spy_connection_template')):
 
         if self.intf.producer is None:
             return
@@ -121,8 +118,7 @@ class SVIntfGen:
 
         if self.is_broadcast:
             inst.extend([
-                self.get_intf_def(self.outname, len(self.intf.consumers),
-                                  template_env),
+                self.get_intf_def(self.outname, len(self.intf.consumers), template_env),
                 self.get_bc_module(template_env)
             ])
 
@@ -130,13 +126,15 @@ class SVIntfGen:
                 for i in range(len(self.intf.consumers)):
                     intf_name = f'{self.outname}_{i}'
                     conn_name = f'{self.outname}[{i}]'
-                    inst.extend(
-                        svgen_typedef(self.intf.dtype, intf_name).split('\n'))
+                    if reg['debug/expand_trace_data']:
+                        inst.extend(svgen_typedef(self.intf.dtype, intf_name).split('\n'))
 
                     inst.extend(
                         spy_connect_t.substitute(
                             intf_name=intf_name,
-                            conn_name=conn_name).split('\n'))
+                            conn_name=conn_name,
+                            width=self.intf.dtype.width,
+                        ).split('\n'))
 
         for i, cons_port in enumerate(self.intf.consumers):
             if isinstance(cons_port, OutPort):
@@ -147,16 +145,24 @@ class SVIntfGen:
                         index = f'[{i}]'
 
                     inst.append(
-                        template_env.snippets.intf_intf_connect(
-                            din_name, self.intf.consumers[i].basename, index))
+                        template_env.snippets.intf_intf_connect(din_name,
+                                                                self.intf.consumers[i].basename,
+                                                                index))
 
         if self.traced and self.lang == 'sv':
-            inst.extend(
-                svgen_typedef(self.intf.dtype, self.basename).split('\n'))
+            # TODO: Not a great abstraction. This basically differentiates
+            # between Gearbox and Websim
+            if reg['debug/expand_trace_data']:
+                inst.extend(svgen_typedef(self.intf.dtype, self.basename).split('\n'))
 
-            inst.extend(
-                spy_connect_t.substitute(intf_name=self.basename,
-                                         conn_name=self.basename).split('\n'))
+                inst.extend(
+                    spy_connect_t.substitute(intf_name=self.basename,
+                                            conn_name=self.basename).split('\n'))
+            else:
+                inst.extend(
+                    spy_connect_t.substitute(intf_name=f'{self.intf.basename}_spy',
+                                             conn_name=self.basename,
+                                             width=self.intf.dtype.width).split('\n'))
 
         return '\n'.join(inst)
 
