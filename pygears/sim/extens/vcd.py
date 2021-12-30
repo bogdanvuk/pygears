@@ -285,7 +285,7 @@ class VCD(SimExtend):
             vcd_fifo=Inject('sim_extens/vcd/vcd_fifo'),
             sim=Inject('sim/simulator'),
             outdir=Inject('results-dir'),
-            expand_data=True,
+            expand_data=Inject('debug/expand_trace_data'),
     ):
         super().__init__()
         self.sim = sim

@@ -6,15 +6,36 @@ from pygears.conf import inject, Inject
 import os
 from pygears.typing import typeof
 from pygears import find, reg
-from pygears.core.gear import Gear
-from pygears.core.port import HDLConsumer
+from pygears.hdl import HDLPlugin
+from pygears.core.gear import Gear, Intf
+from pygears.core.port import HDLConsumer, Port, InPort
 from pygears.sim import timestep
 from .sim_extend import SimExtend
+from pygears.core.hier_node import HierVisitorBase
+from pygears.sim.modules import SimVerilated, SimSocket
 
 VALUE = set(('0', '1', 'x', 'X', 'z', 'Z'))
 INVALID_VALUE = set(('x', 'X', 'z', 'Z'))
 VECTOR_VALUE_CHANGE = set(('b', 'B', 'r', 'R'))
 VALUE_CHANGE = VALUE | VECTOR_VALUE_CHANGE
+
+
+@inject
+def find_cosim_modules(top=Inject('gear/root')):
+    class CosimVisitor(HierVisitorBase):
+        @inject
+        def __init__(self, sim_map=Inject('sim/map')):
+            self.sim_map = sim_map
+            self.cosim_modules = []
+
+        def Gear(self, module):
+            if isinstance(self.sim_map.get(module, None), SimVerilated):
+                self.cosim_modules.append(self.sim_map[module])
+                return True
+
+    v = CosimVisitor()
+    v.visit(top)
+    return v.cosim_modules
 
 
 class ChannelState(IntEnum):
@@ -104,11 +125,12 @@ class VcdToJson:
     def after_timestep(self, timestep):
         for p, d in self.diff.items():
             changes = self.json_vcd[p.name]
+            data_change = False
             new_state = state = self.state[p]
             prev_val = self.value[p]
             new_val = d['d']
 
-            data_change = new_val is not None and (prev_val or self.value[p] != new_val)
+            # data_change = new_val is not None and (prev_val or prev_val != new_val)
 
             # if data_change:
             #     new_val = p.dtype.decode(d['d'])
@@ -118,8 +140,10 @@ class VcdToJson:
             if state == ChannelState.Invalid:
                 if d['v'] and d['r']:
                     new_state = ChannelState.Ready
+                    data_change = True
                 elif d['v']:
                     new_state = ChannelState.NotReady
+                    data_change = True
                 elif d['r']:
                     new_state = ChannelState.Awaiting
             elif state == ChannelState.Ready:
@@ -127,24 +151,30 @@ class VcdToJson:
                     new_state = ChannelState.Invalid
                 elif d['r'] == 0:
                     new_state = ChannelState.NotReady
+                    data_change = prev_val != new_val
                 elif d['v'] == 0:
                     new_state = ChannelState.Awaiting
+                else:
+                    data_change = prev_val != new_val
             elif state == ChannelState.NotReady:
                 if d['r']:
                     new_state = ChannelState.Ready
             elif state == ChannelState.Awaiting:
                 if d['r'] == 0 and d['v']:
                     new_state = ChannelState.NotReady
+                    data_change = prev_val != new_val
                 elif d['v']:
                     new_state = ChannelState.Ready
+                    data_change = prev_val != new_val
 
             if new_state != state or data_change or timestep == 0:
-                cycle_change = self.create_change(timestep,
-                                                  new_state,
-                                                  state_change=True,
-                                                  t=p.dtype,
-                                                  val=new_val,
-                                                  prev_val=prev_val)
+                cycle_change = self.create_change(
+                    timestep,
+                    new_state,
+                    state_change=(new_state != state),
+                    t=p.dtype,
+                    val=(None if new_state == ChannelState.Invalid else new_val),
+                    prev_val=prev_val)
 
                 if cycle_change is not None:
                     changes.append(cycle_change)
@@ -157,48 +187,42 @@ class VcdToJson:
         # self.diff.clear()
 
 
-# def follow(fn, finish_event, sleep_sec=0.1):
-#     """ Yield each line from a file as they are written.
-#     `sleep_sec` is the time to sleep after empty reads. """
-#     line = ''
-#     slept = False
-#     with open(fn) as f:
-#         while True:
-#             tmp = f.readline()
-#             if tmp:
-#                 slept = False
-#                 line += tmp
-#                 if line.endswith("\n"):
-#                     yield line
-#                     line = ''
-#             else:
-#                 if slept:
-#                     print('Sleeping consecutively')
+def follow(fn, finish_event, sleep_sec=0.1):
+    """ Yield each line from a file as they are written.
+    `sleep_sec` is the time to sleep after empty reads. """
+    line = ''
+    with open(fn) as f:
+        while True:
+            tmp = f.readline()
+            if tmp:
+                line += tmp
+                if line.endswith("\n"):
+                    yield line
+                    line = ''
+            else:
+                if finish_event.is_set():
+                    return
 
-#                 slept = True
-#                 if finish_event.is_set():
-#                     return
-
-#                 time.sleep(sleep_sec)
+                time.sleep(sleep_sec)
 
 
-def follow(fn, finish_event, sleep_sec=0.5):
-    import time
-    import subprocess
-    import select
+# def follow(fn, finish_event, sleep_sec=0.5):
+#     import time
+#     import subprocess
+#     import select
 
-    f = subprocess.Popen(['tail', '-F', fn], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    p = select.poll()
-    p.register(f.stdout)
+#     f = subprocess.Popen(['tail', '-F', fn], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#     p = select.poll()
+#     p.register(f.stdout)
 
-    while True:
-        if p.poll(sleep_sec):
-            yield f.stdout.readline().decode()
-        elif finish_event.is_set():
-            return
-        else:
-            # print(f'Sleep')
-            time.sleep(sleep_sec)
+#     while True:
+#         if p.poll(sleep_sec):
+#             yield f.stdout.readline().decode()
+#         elif finish_event.is_set():
+#             return
+#         else:
+#             # print(f'Sleep')
+#             time.sleep(sleep_sec)
 
 
 def vcd_to_json_worker(entries, wire_map: dict, vcd_conv, t):
@@ -207,21 +231,23 @@ def vcd_to_json_worker(entries, wire_map: dict, vcd_conv, t):
         if identifier_code not in wire_map:
             continue
 
-        port, wire_name = wire_map[identifier_code]
-        if port not in vcd_conv.diff:
-            vcd_conv.diff[port] = {'r': None, 'v': None, 'd': None}
+        for port, wire_name in wire_map[identifier_code]:
+            # print(f'"{identifier_code}": {port.name}_{wire_name} change @ {t}')
 
-        if wire_name == 'valid':
-            vcd_conv.diff[port]['v'] = value
-        elif wire_name == 'ready':
-            vcd_conv.diff[port]['r'] = value
-        elif wire_name == 'data' and value is not None:
-            vcd_conv.diff[port]['d'] = value
+            if port not in vcd_conv.diff:
+                vcd_conv.diff[port] = {'r': None, 'v': None, 'd': None}
+
+            if wire_name == 'valid':
+                vcd_conv.diff[port]['v'] = value
+            elif wire_name == 'ready':
+                vcd_conv.diff[port]['r'] = value
+            elif wire_name == 'data' and value is not None:
+                vcd_conv.diff[port]['d'] = value
 
     vcd_conv.after_timestep(t)
 
 
-def vcd_to_json(vcd_fn, finish_event, ret_pipe):
+def vcd_to_json(vcd_fn, finish_event, ret_pipe, top):
     import os
     import time
 
@@ -232,9 +258,9 @@ def vcd_to_json(vcd_fn, finish_event, ret_pipe):
 
     wire_map = {}
     vcd_conv = None
+    skip_scope = 0
 
     t = -1
-    top = find('/')
     hier = top
     worker_data = []
 
@@ -255,10 +281,11 @@ def vcd_to_json(vcd_fn, finish_event, ret_pipe):
 
             if t == -1:
                 vcd_conv = VcdToJson()
-                for p, _ in wire_map.values():
-                    vcd_conv.state[p] = ChannelState.Invalid
-                    vcd_conv.value[p] = None
-                    vcd_conv.json_vcd[p.name] = []
+                for identifier_code in wire_map:
+                    for p, _ in wire_map[identifier_code]:
+                        vcd_conv.state[p] = ChannelState.Invalid
+                        vcd_conv.value[p] = None
+                        vcd_conv.json_vcd[p.name] = []
 
             if t >= 0:
                 vcd_to_json_worker(worker_data, wire_map, vcd_conv, t)
@@ -286,6 +313,10 @@ def vcd_to_json(vcd_fn, finish_event, ret_pipe):
         elif '$enddefinitions' in line:
             pass
         elif '$scope' in line:
+            if skip_scope:
+                skip_scope += 1
+                continue
+
             segs = line.split()
             # Name of the TOP is ' '
             if len(segs) == 3:
@@ -293,41 +324,88 @@ def vcd_to_json(vcd_fn, finish_event, ret_pipe):
                 continue
 
             scope_name = segs[2]
+            child = None
 
-            child = find(f'{hier.name}.{scope_name}')
+            if scope_name.startswith('_') and scope_name.endswith('_spy'):
+                scope_name = scope_name[1:-4]
+                child = find(f'{hier.name}.{scope_name}')
+
+            if scope_name.startswith('bc_') or '_bc_' in scope_name:
+                skip_scope = 1
+                continue
+
+            if scope_name == 'TOP' or scope_name.endswith('_wrap'):
+                hier = top
+                continue
 
             if child is None:
-                child = hier[scope_name]
+                child = find(f'{hier.name}.{scope_name}')
+                if not isinstance(child, Port):
+                    child = None
 
             if child is None:
-                raise Exception(f'Cannot find gear for scope: {line}')
+                child = find(f'{hier.name}/{scope_name}')
+
+            if child is None:
+                skip_scope = 1
+                continue
+
+            # if child is None:
+            #     if child is None:
+            #         skip_scope = 1
+            #         continue
+
+            #     child = hier[scope_name]
+            #     # if child is not None and not child.hierarchical:
+            #     #     skip_scope = 1
+            #     #     continue
+
+            #     # print(f'Gear scope: {f"{hier.name}/{scope_name}"}')
+            # # else:
+            # #     print(f'Port scope: {f"{hier.name}.{scope_name}"}')
+
+            # if child is None:
+            #     raise Exception(f'Cannot find gear for scope: {line}')
 
             hier = child
 
         elif '$upscope' in line:
-            if isinstance(hier, Gear):
+            if skip_scope:
+                skip_scope -= 1
+                continue
+
+            if isinstance(hier, (Gear, Intf)):
                 if hier is not top:
                     hier = hier.parent
             else:
                 hier = hier.gear
         elif '$var' in line:
-            if hier is top:
+            # print(line)
+            if hier is top or skip_scope:
                 continue
 
-            from pygears.core.port import OutPort
-            if isinstance(hier, OutPort):
+            if not isinstance(hier, (Port, Intf)):
+                continue
+
+            if isinstance(hier,
+                          Port) and not isinstance(hier, InPort) and not hier.gear.hierarchical:
                 continue
 
             ls = line.split()
             identifier_code = ls[3]
-            name = ''.join(ls[4:-1])
+            name = ls[4]
+            # name = ''.join(ls[4:-1])
 
-            wire_map[identifier_code] = (hier, name)
+            # print(f'Var "{identifier_code}": {hier.name}_{name}')
+            if identifier_code not in wire_map:
+                wire_map[identifier_code] = []
+
+            wire_map[identifier_code].append((hier, name))
 
         elif '$timescale' in line:
             continue
 
-    if vcd_conv:
+    if vcd_conv is None:
         raise Exception(f'Synchronization error, please rerun simulation')
 
     ret_pipe.send(vcd_conv.json_vcd)
@@ -356,6 +434,7 @@ def dump_json_graph(top):
     class NodeYielder(HierYielderBase):
         def Gear(self, node):
             yield node
+            return not node.hierarchical
 
     for node in NodeYielder().visit(find(top)):
         in_ports = []
@@ -391,8 +470,9 @@ def dump_json_graph(top):
 
     for node in NodeYielder().visit(find(top)):
         nodes[node.name]['child'] = []
-        for c in node.child:
-            nodes[node.name]['child'].append(c.name)
+        if node.hierarchical:
+            for c in node.child:
+                nodes[node.name]['child'].append(c.name)
 
     for node in NodeYielder().visit(find(top)):
         for p in node.in_ports + node.out_ports:
@@ -408,6 +488,7 @@ def dump_json_graph(top):
                 'consumers': [pc.name for pc in i.consumers if not isinstance(pc, HDLConsumer)]
             }
 
+            # if not all(isinstance(p, HDLConsumer) for p in i.consumers):
             ports[i.producer.name]['consumer'] = i.name
             for p in i.consumers:
                 if isinstance(p, HDLConsumer):
@@ -433,31 +514,43 @@ class WebSim(SimExtend):
         manager = multiprocessing.Manager()
         self.json_vcd = manager.dict()
 
-        self.qin, self.qout = multiprocessing.Pipe(duplex=False)
-        self.finish_event = multiprocessing.Event()
-        self.p = multiprocessing.Process(target=vcd_to_json,
-                                         args=(self.vcd_fn, self.finish_event, self.qout))
-        self.p.start()
+    def register_vcd_worker(self, vcd_fn, top):
+        qin, qout = multiprocessing.Pipe(duplex=False)
+        self.qin.append(qin)
 
-    def before_setup(self, sim):
-        # TODO: This is a smell, make this dependency explicit
-        if 'VCD' in reg:
-            reg['VCD'].expand_data = False
-        else:
-            # TODO: Now what?
-            breakpoint()
+        p = multiprocessing.Process(target=vcd_to_json, args=(vcd_fn, self.finish_event, qout, top))
+        self.p.append(p)
+
+    def before_run(self, sim):
+        self.finish_event = multiprocessing.Event()
+
+        self.qin = []
+        self.p = []
+        for m in find_cosim_modules():
+            self.register_vcd_worker(m.trace_fn, top=m.gear.parent)
+
+        self.register_vcd_worker(self.vcd_fn, find('/'))
+
+        for p in self.p:
+            p.start()
 
     def sim_vcd_to_json(self):
         graph = dump_json_graph('/')
 
         self.finish_event.set()
-        self.json_vcd = self.qin.recv()
-        self.p.join()
+        json_vcds = [qin.recv() for qin in self.qin]
+
+        for p in self.p:
+            p.join()
 
         changes = []
-        for p_name in self.json_vcd:
-            p = find(p_name)
-            changes.append({'channelName': p.producer.name, 'changes': self.json_vcd[p_name]})
+        for json_vcd in json_vcds:
+            for p_name in json_vcd:
+                p = find(p_name)
+                if isinstance(p, Intf):
+                    changes.append({'channelName': p_name, 'changes': json_vcd[p_name]})
+                else:
+                    changes.append({'channelName': p.producer.name, 'changes': json_vcd[p_name]})
 
         return {
             'graphInfo': graph,
@@ -473,8 +566,29 @@ class WebSim(SimExtend):
             json_out = self.sim_vcd_to_json()
             import json
             json.dump(json_out, open(self.trace_fn, 'w'), separators=(',', ':'))
+            # json.dump(json_out, open(self.trace_fn, 'w'))
+            # json.dump(json_out, open(self.trace_fn, 'w'), indent=4)
 
             self.finished = True
 
     def after_cleanup(self, sim):
         self.finish()
+
+
+def websim_activate(var, val):
+    if val:
+        if WebSim not in reg['sim/extens']:
+            reg['debug/expand_trace_data'] = False
+            reg['debug/trace_end_cycle_dump'] = False
+            reg['sim/extens'].append(WebSim)
+    else:
+        if WebSim in reg['sim/extens']:
+            reg['debug/expand_trace_data'] = True
+            reg['debug/trace_end_cycle_dump'] = True
+            del reg['sim/extens'][reg['sim/extens'].index(WebSim)]
+
+
+class WebSimPlugin(HDLPlugin):
+    @classmethod
+    def bind(cls):
+        reg.confdef('debug/webviewer', setter=websim_activate, default=False)

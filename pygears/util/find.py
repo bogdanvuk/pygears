@@ -45,12 +45,8 @@ def find(path, root=None):
         return module
     else:
         port_name = port_name[1:]
-        for i, p in enumerate(module.in_ports):
+        for p in module.in_ports + module.out_ports + module.local_intfs:
             if p.basename == port_name:
-                return module.in_ports[i]
-
-        for i, p in enumerate(module.out_ports):
-            if p.basename == port_name:
-                return module.out_ports[i]
+                return p
 
         return None

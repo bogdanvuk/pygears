@@ -49,12 +49,14 @@ void cycle(void) {
 
     main_time+=5;
     top->clk = 1;
-{% if tracing %} 
-    if (tfp) { 
-      tfp->dump (main_time);
-      tfp->flush(); 
-    } 
-{% endif %} 
+{% if tracing %}  
+    if (tfp) {  
+{% if end_cycle_dump %}
+      tfp->dump (main_time); 
+{% endif %}
+      tfp->flush();  
+    }  
+{% endif %}  
 
 {% if aux_clock %}
     top->{{aux_clock[0].name}} = 1;
@@ -116,7 +118,9 @@ unsigned long init(const char* trace_fn, long seed) {
 
 {% if tracing %}
     if (tfp) {
+{% if end_cycle_dump %}
         tfp->dump(0);
+{% endif %}
         tfp->flush();
     }
 {%- endif %}

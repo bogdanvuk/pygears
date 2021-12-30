@@ -100,6 +100,8 @@ class HDLPlugin(GearPlugin):
         reg['hdl/top'] = None
 
         reg.confdef('debug/hide_interm_vals', default=True)
+        reg.confdef('debug/expand_trace_data', default=True)
+        reg.confdef('debug/trace_end_cycle_dump', default=False)
 
 
 from .util import flow_visitor, HDLGearHierVisitor
@@ -109,5 +111,6 @@ from . import v
 from .hdlgen import hdlgen
 from .ipgen import ipgen
 from .synth import synth
+from pygears.sim.extens import websim
 
 __all__ = ['hdlgen', 'list_hdl_files', 'flow_visitor']
