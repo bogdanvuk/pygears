@@ -14,6 +14,8 @@ from .sim_extend import SimExtend
 from pygears.core.hier_node import HierVisitorBase
 from pygears.sim.modules import SimVerilated, SimSocket
 
+multiprocessing.set_start_method('fork')
+
 VALUE = set(('0', '1', 'x', 'X', 'z', 'Z'))
 INVALID_VALUE = set(('x', 'X', 'z', 'Z'))
 VECTOR_VALUE_CHANGE = set(('b', 'B', 'r', 'R'))
