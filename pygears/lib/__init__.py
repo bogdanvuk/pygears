@@ -56,7 +56,7 @@ from .max_gears import max2
 from .unary import unary
 from .alternate_queues import alternate_queues
 from .delay import delay, delay_rng, delay_gen
-from .pipe import pipe
+from .pipeline import pipeline
 from .verif import directed, verif, drv, check, mon, scoreboard, collect
 from .drvrnd import drvrnd
 from .reduce2 import reduce2
