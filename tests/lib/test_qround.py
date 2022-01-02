@@ -22,6 +22,12 @@ def test_qround_fixp(lang):
     cosim('/dut', 'verilator', lang=lang)
     sim()
 
+def test_qround_non_default():
+    verif(drv(t=Fixp[11, 33], seq=[1, 2, 117]), f=qround(name='dut', fract=21), ref=qround(fract=21))
+
+    cosim('/dut', 'verilator', outdir='/tmp/qround')
+    sim()
+
 
 # def test_qround_even_ufixp():
 #     seq = [0.5 - 0.0625, 0.5, 0.5 + 0.0625, 1.5 - 0.0625, 1.5, 1.5 + 0.0625]

@@ -541,7 +541,7 @@ class GearInstPlugin(GearDecoratorPlugin):
     def bind(cls):
         reg['gear/code_map'] = []
         reg['gear/gear_dflt_resolver'] = gear_base_resolver
-        reg.confdef('gear/memoize', True)
+        reg.confdef('gear/memoize', False)
         reg.confdef('gear/infer_signal_names', 'debug')
         reg.confdef('debug/trace', default=[])
 

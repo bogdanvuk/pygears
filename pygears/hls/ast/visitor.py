@@ -300,6 +300,10 @@ class FuncContext(Context):
                 else:
                     params[name] = var
 
+            for n, v in kwds.items():
+                if isinstance(v, ir.ResExpr):
+                    params[n] = v.val
+
             res = infer_ftypes(params=params, args=arg_types, namespace=self.local_namespace)
 
             if 'return' in res:

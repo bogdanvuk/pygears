@@ -29,20 +29,17 @@ def qround(din,
 
 
 @gear
-def truncate(din, *, nbits=2) -> b'din':
-
+async def truncate(din, *, nbits=2) -> b'din':
     pass
 
 
 @gear
-def round_half_up(din, *, nbits=2) -> b'din':
-
+async def round_half_up(din, *, nbits=2) -> b'din':
     pass
 
 
 @gear
-def round_to_zero(din, *, nbits=2) -> b'din':
-
+async def round_to_zero(din, *, nbits=2) -> b'din':
     pass
 
 
