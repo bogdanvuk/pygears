@@ -50,3 +50,35 @@ def test_cosim_feedback(din_delay, dout_delay):
           )
 
     sim()
+
+@pytest.mark.parametrize('feedback', [True, False])
+def test_cosim_all_init(feedback):
+    from pygears.sim.modules import SimVerilated
+
+    seq = list(range(1, 10))
+    ref = [0] * 8 + seq
+    directed(drv(t=Uint[16], seq=seq),
+             f=pipeline(length=8, init=0, feedback=feedback, sim_cls=SimVerilated),
+             ref=ref)
+
+    sim()
+
+
+@pytest.mark.parametrize('feedback', [True, False])
+@pytest.mark.parametrize('length', [1, 3, 8])
+@pytest.mark.parametrize('filled', [1, 0.5, 0.1])
+def test_cosim_partial_init(feedback, length, filled):
+    from pygears.sim.modules import SimVerilated
+
+
+    seq = list(range(2*length))
+    fill_length = min(1, int(length * filled))
+    init = list(range(fill_length))
+
+    ref = init + seq
+
+    directed(drv(t=Uint[16], seq=seq),
+             f=pipeline(length=length, init=init, feedback=feedback, sim_cls=SimVerilated),
+             ref=ref)
+
+    sim()
