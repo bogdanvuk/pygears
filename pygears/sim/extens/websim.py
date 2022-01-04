@@ -169,11 +169,15 @@ class VcdToJson:
                     new_state = ChannelState.Ready
                     data_change = prev_val != new_val
 
-            if new_state != state or data_change or timestep == 0:
+            new_state_json = state
+            if state == ChannelState.Awaiting:
+                new_state_json = ChannelState.Invalid
+
+            if new_state_json != state or data_change or timestep == 0:
                 cycle_change = self.create_change(
                     timestep,
-                    new_state,
-                    state_change=(new_state != state),
+                    new_state_json,
+                    state_change=(new_state_json != state),
                     t=p.dtype,
                     val=(None if new_state == ChannelState.Invalid else new_val),
                     prev_val=prev_val)
