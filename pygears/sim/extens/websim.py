@@ -170,7 +170,7 @@ class VcdToJson:
                     data_change = prev_val != new_val
 
             new_state_json = state
-            if state == ChannelState.Awaiting:
+            if new_state_json == ChannelState.Awaiting:
                 new_state_json = ChannelState.Invalid
 
             if new_state_json != state or data_change or timestep == 0:
