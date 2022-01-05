@@ -22,6 +22,7 @@ def pipeline(din, *, length, feedback=False, init=None) -> b'din':
         din = decouple(din, init=stage_init)
         length -= 1
 
+    inputs = [din]
     for i in range(length):
         if init:
             stage_init = init[0]
@@ -29,6 +30,7 @@ def pipeline(din, *, length, feedback=False, init=None) -> b'din':
         else:
             stage_init = None
 
-        din = dreg(din, init=stage_init)
+        dout = dreg(inputs.pop(0), init=stage_init)
+        inputs.append(dout)
 
-    return din
+    return inputs.pop(0)
