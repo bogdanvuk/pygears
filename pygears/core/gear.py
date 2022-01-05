@@ -9,7 +9,7 @@ from pygears.core.graph import has_async_producer
 from traceback import walk_stack
 from .intf import Intf
 from .port import InPort, OutPort, HDLConsumer, HDLProducer
-from .hier_node import NamedHierNode, HierVisitorBase
+from .hier_node import NamedHierNode, HierVisitorBase, find_unique_names
 from .util import is_standard_func
 
 
@@ -149,6 +149,11 @@ class Gear(NamedHierNode):
 
         self.out_ports = [OutPort(self, i, name) for i, name in enumerate(self.outnames)]
 
+        port_names = [p.basename for p in self.out_ports + self.in_ports]
+        for p, new_name in zip(self.out_ports, find_unique_names(port_names)):
+            if new_name:
+                p.basename = new_name
+
         # Connect internal interfaces
         if out_intfs:
             for i, r in enumerate(out_intfs):
@@ -208,6 +213,13 @@ class Gear(NamedHierNode):
         intfs = {}  # acts as ordered set
         for c in self.child:
             for i in c.inputs + c.outputs:
+                intfs[i] = None
+
+        # If input interfaces are connected directly to outputs, without
+        # passing through the child, they wont be captured above
+        for port in self.in_ports:
+            i = port.consumer
+            if i is not None and any(c in self.out_ports for c in i.consumers):
                 intfs[i] = None
 
         return list(intfs.keys())

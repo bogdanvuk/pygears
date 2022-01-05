@@ -5,6 +5,7 @@ import hashlib
 from pygears import reg
 from .base_resolver import ResolverTypeError
 from . import hdl_log
+from .sv.sv_keywords import sv_keywords
 from pygears.hdl import mod_lang, hdlmod
 from pygears.util.fileio import save_file
 
@@ -35,6 +36,12 @@ class HDLModuleInst:
 
         self._impl_parse = None
         self.memoized = False
+
+        # TODO Investigate which other names create problems
+        for p in self.node.in_ports + self.node.out_ports:
+            if p.basename in ['clk', 'rst'] or p.basename in sv_keywords:
+                raise NameError(f'Unable to compile "{self.node.name}" to HDL, please change port '
+                                f'"{p.basename}" name, it is illegal.')
 
         if 'memoized' in self.node.params:
             memnode = self.node.params['memoized']
