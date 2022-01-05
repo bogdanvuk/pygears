@@ -173,13 +173,17 @@ class VcdToJson:
             if new_state_json == ChannelState.Awaiting:
                 new_state_json = ChannelState.Invalid
 
-            if new_state_json != state or data_change or timestep == 0:
+            state_json = state
+            if state_json == ChannelState.Awaiting:
+                state_json = ChannelState.Invalid
+
+            if new_state_json != state_json or data_change or timestep == 0:
                 cycle_change = self.create_change(
                     timestep,
                     new_state_json,
-                    state_change=(new_state_json != state),
+                    state_change=(new_state_json != state_json),
                     t=p.dtype,
-                    val=(None if new_state == ChannelState.Invalid else new_val),
+                    val=(None if new_state_json == ChannelState.Invalid else new_val),
                     prev_val=prev_val)
 
                 if cycle_change is not None:
@@ -549,14 +553,15 @@ class WebSim(SimExtend):
         for p in self.p:
             p.join()
 
+        visited_channels = set()
         changes = []
         for json_vcd in json_vcds:
             for p_name in json_vcd:
                 p = find(p_name)
-                if isinstance(p, Intf):
-                    changes.append({'channelName': p_name, 'changes': json_vcd[p_name]})
-                else:
-                    changes.append({'channelName': p.producer.name, 'changes': json_vcd[p_name]})
+                channel_name = p_name if isinstance(p, Intf) else p.producer.name
+                if channel_name not in visited_channels:
+                    changes.append({'channelName': channel_name, 'changes': json_vcd[p_name]})
+                    visited_channels.add(channel_name)
 
         return {
             'graphInfo': graph,
