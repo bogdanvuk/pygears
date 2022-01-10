@@ -20,7 +20,7 @@ def add(din: Tuple[{'a': Number, 'b': Number}]) -> b'din[0] + din[1]':
 
 @alternative(add)
 @gear(enablement=b'len(din) > 2')
-def add_vararg(*din: Integer):
+def add_vararg(*din: Number):
     return oper_tree(din, add)
 
 

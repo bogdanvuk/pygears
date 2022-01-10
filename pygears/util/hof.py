@@ -12,7 +12,7 @@ def oper_tree(din, func):
         if(len(i) == 2):
             results.append(func(*i))
         else:
-            results.append(i)
+            results.append(i[0])
 
     return func(*results)
 
