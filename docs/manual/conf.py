@@ -25,7 +25,7 @@ extensions = [
     'sphinx_verboser.verboser', 'sphinxarg.ext', 'sphinx.ext.autodoc',
     'sphinx.ext.githubpages', 'sphinxcontrib.tikz', 'sphinxcontrib.wavedrom',
     'sphinx.ext.napoleon', 'sphinx_sitemap',
-    'sphinx.ext.autosectionlabel', 'tryme', 'pgexample'
+    'sphinx.ext.autosectionlabel', 'pgexample'
 ]
 
 autosectionlabel_prefix_document = True

@@ -3,21 +3,13 @@
 Installation
 ============
 
-Windows
--------
-
-PyGears has been tested to work on Windows 7 and Windows 10 with `Python 3.6.6 <https://www.python.org/ftp/python/3.6.6/python-3.6.6.exe>`_ and installed via `PyCharm <https://www.jetbrains.com/pycharm/>`_. Currently PyGears does not support co-simulation with third-party RTL simulators on Windows.
-
-However co-simulation with Verilator can be achived using `CygWin <https://cygwin.com/>`_. Installing open-source tools Verilator and GTKWave using `CygWin <https://cygwin.com/>`_ is explained on the ``ZipCPU blog <https://zipcpu.com/blog/2017/07/28/cygwin-fpga.html>`_. Depending on the version you might need to add ``gcc-g++`` to CygWin packages as well as the appropriate Python version and need not prefix some commands with ``sudo``. Important: co-simulation tests must be ran with Python from the CygWin environment, not from Windows.
-
-
 Linux
 -----
 
 Install with ``pip``
 ~~~~~~~~~~~~~~~~~~~~
 
-**PyGears** requires a specific version of Python3, namely Python 3.6, so think about using ``pygears-tools`` and the procedure given :ref:`below <install-pygears-tools>` for installing the correct python version together with **PyGears**. Otherwise, consider using `virtualenv <https://virtualenv.pypa.io/en/stable/>`_ or `pyenv <https://github.com/pyenv/pyenv>`_ to manage your Python version.
+**PyGears** requires a specific version of Python3, namely Python 3.6 or later, so think about using ``pygears-tools`` and the procedure given :ref:`below <install-pygears-tools>` for installing the correct python version together with **PyGears**. Otherwise, consider using `virtualenv <https://virtualenv.pypa.io/en/stable/>`_ or `pyenv <https://github.com/pyenv/pyenv>`_ to manage your Python version.
 
 Install **PyGears** package with the command below. Depending on how your Python was installed you might get an error and need to prefix the command with ``sudo``:
 
@@ -30,7 +22,7 @@ Install **PyGears** package with the command below. Depending on how your Python
 .. code-block:: bash
 
    git clone https://github.com/bogdanvuk/pygears.git
-   cd pygears/examples
+   cd pygears/tests
 
 .. _install-pygears-tools:
 
@@ -68,11 +60,6 @@ Alternative installation from source
   cd pygears
   python3 setup.py install
 
-.. warning::
-
-  setup.py might fail to install the necessary dependencies, so you might additionally need to run::
-
-    pip install jinja2
 
 Installing Verilator
 ~~~~~~~~~~~~~~~~~~~~
@@ -95,3 +82,13 @@ The script will create ``tools.sh`` bash file that should be sourced prior to ru
 .. code-block:: bash
 
   source ~/.pygears/tools/tools.sh
+
+
+Installing GTKWave
+~~~~~~~~~~~~~~~~~~~~
+
+PyGears simulator outputs standard VCD format, which can be viewed by an open-source viewer `GTKWave <http://gtkwave.sourceforge.net>`_. You can install it on Ubuntu via::
+
+.. code-block:: bash
+
+    sudo apt install gtkwave

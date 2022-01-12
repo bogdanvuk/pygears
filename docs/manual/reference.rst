@@ -11,6 +11,7 @@ Infrastructure
    :maxdepth: 2
 
    conf/log
+   conf/registry
 
 Typing
 ------

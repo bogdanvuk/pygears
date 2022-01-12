@@ -14,12 +14,12 @@ class PgExampleDirective(SphinxDirective):
         'sections': directives.unchanged
     }
 
-    def make_tryme(self):
-        tryme_node = nodes.section()
-        self.state.nested_parse(
-            StringList([f'.. tryme:: {self.arguments[0]}.py']), 0, tryme_node)
+    # def make_tryme(self):
+    #     tryme_node = nodes.section()
+    #     self.state.nested_parse(
+    #         StringList([f'.. tryme:: {self.arguments[0]}.py']), 0, tryme_node)
 
-        return tryme_node.children
+    #     return tryme_node.children
 
     def make_include(self):
         include_node = nodes.section()
@@ -44,7 +44,7 @@ class PgExampleDirective(SphinxDirective):
 
     def run(self):
         if 'sections' not in self.options:
-            self.options['sections'] = ['tryme', 'include', 'wavedrom']
+            self.options['sections'] = ['include', 'wavedrom']
 
         children = []
         for section in self.options['sections']:

@@ -9,8 +9,14 @@ Variables
 - ``svgen``: Data used by the SystemVerilog generation submodule
 
   - ``svgen/flow``: List of operations performed while generating a SystemVerilog code for the PyGears description. Flow configuration is usually not modified by the user, but can be used to implement a custom generation flow. 
+
+- ``hdl``: Data used by the SystemVerilog generation submodule
+
   - ``hdl/include``: List of directory paths where SystemVerilog generator will look for the SystemVerilog implementations of the gears. User can include additional direcrories where custom SystemVerilog files are located. 
-  - ``debug_intfs``: []
+
+- ``debug``: Debug settings
+
+  - ``debug/trace`` (list): Lists of paths to the gears that should be traced during the simulation
 
 - ``sim``: 
 
@@ -52,42 +58,42 @@ Variables
 
 - ``logger``: Various PyGears subsystem loggers.
 
-  - ``logger/svgen``: Logger for the SystemVerilog generation subsystem.
+  - ``logger/hdlgen``: Logger for the SystemVerilog generation subsystem.
 
-    - ``logger/svgen/level`` (int): All messages that are logged with a verbosity level
+    - ``logger/hdlgen/level`` (int): All messages that are logged with a verbosity level
       below this configured ``level`` value will be discarded. See
       :ref:`levels` for a list of levels.
 
-    - ``logger/svgen/warning``: Configuration for logging at ``WARNING`` level
+    - ``logger/hdlgen/warning``: Configuration for logging at ``WARNING`` level
 
-      - ``logger/svgen/warning/exception`` (bool): If set to ``True``, an exception will be
+      - ``logger/hdlgen/warning/exception`` (bool): If set to ``True``, an exception will be
         raised whenever logging the message at ``WARNING`` level
 
-      - ``logger/svgen/warning/debug`` (bool): If set to ``True``, whenever logging the
+      - ``logger/hdlgen/warning/debug`` (bool): If set to ``True``, whenever logging the
         message at ``WARNING`` level the debugger will be started and execution
         paused
 
-    - ``logger/svgen/error``: Configuration for logging at ``ERROR`` level.
+    - ``logger/hdlgen/error``: Configuration for logging at ``ERROR`` level.
 
-      - ``logger/svgen/error/exception`` (bool): If set to ``True``, an exception will be
+      - ``logger/hdlgen/error/exception`` (bool): If set to ``True``, an exception will be
         raised whenever logging the message at ``ERROR`` level
 
-      - ``logger/svgen/error/debug`` (bool): If set to ``True``, whenever logging the
+      - ``logger/hdlgen/error/debug`` (bool): If set to ``True``, whenever logging the
         message at ``ERROR`` level the debugger will be started and execution
         paused
 
-    - ``logger/svgen/print_traceback`` (bool): If set to ``True``, the traceback will be
+    - ``logger/hdlgen/print_traceback`` (bool): If set to ``True``, the traceback will be
       printed along with the log message.
 
-  - ``logger/sim``: Logger for the PyGears simulator. Structure is analog to ``logger/svgen``.
+  - ``logger/sim``: Logger for the PyGears simulator. Structure is analog to ``logger/hdlgen``.
   - ``logger/conf``: Logger for the PyGears infrastructure subsystem. Structure
-    is analog to ``logger/svgen``.
+    is analog to ``logger/hdlgen``.
   - ``logger/gear``: Logger for the gears instantiation subsystem. Structure is
-    analog to ``logger/svgen``.
+    analog to ``logger/hdlgen``.
   - ``logger/util``: Logger for the various PyGears utility functions. Structure
-    is analog to ``logger/svgen``.
-  - ``logger/typing``: Logger for the PyGears typing subsystem. Structure is analog to ``logger/svgen``.
-  - ``logger/core``: Logger for the PyGears core. Structure is analog to ``logger/svgen``.
+    is analog to ``logger/hdlgen``.
+  - ``logger/typing``: Logger for the PyGears typing subsystem. Structure is analog to ``logger/hdlgen``.
+  - ``logger/core``: Logger for the PyGears core. Structure is analog to ``logger/hdlgen``.
 
   - ``logger/stack_traceback_fn`` (path): If set with a valid path, the stack trace will be logged to the file specified by the path.
 

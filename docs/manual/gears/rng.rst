@@ -21,8 +21,6 @@ Generates on command a range of numbers in form of a :class:`~.Queue`. The range
 
    The type of the generated numbers is determined based on the concrete types of the :data:`TCfg` fields. If any of the :data:`TCfg` fields is of type :class:`~.Int`, the generated numbers will also be :class:`~.Int`. :func:`~.rng` generates numbers in range from ``cfg['start']`` to ``cfg['cnt']`` exclusive, with increment of ``cfg['incr']``.
 
-   .. tryme:: examples/rng_full.py
-
    .. literalinclude:: examples/rng_full.py
       :lines: 4-6
 
@@ -37,8 +35,6 @@ Generates on command a range of numbers in form of a :class:`~.Queue`. The range
    Generates numbers from ``0`` to ``cfg['cnt'] - 1``.
    
    The example shows the number range generated for the input ``cfg = 10``:
-
-   .. tryme:: examples/rng_cnt.py
 
    .. literalinclude:: examples/rng_cnt.py
       :lines: 6
