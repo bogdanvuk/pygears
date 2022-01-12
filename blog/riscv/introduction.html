@@ -1,13 +1,13 @@
 
 <!DOCTYPE html>
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
     <title>RISC-V Blog Series Introduction &#8212; PyGears - HW Design: A Functional Approach</title>
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
     <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
@@ -19,26 +19,44 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="My First Instruction" href="my_first_instruction.html" />
-    <link rel="prev" title="PyGears 0.1.2 released" href="../release/v0.1.2.html" />
-  
+    <link rel="prev" title="PyGears 0.1.2 released" href="../release/v0.1.2.html" /> 
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
-
-  
-  <link rel="alternate" type="application/atom+xml"  href="../blog/atom.xml" title="PyGears">
-  
-  
-  <style type="text/css">
-    ul.ablog-archive {list-style: none; overflow: auto; margin-left: 0px}
-    ul.ablog-archive li {float: left; margin-right: 5px; font-size: 80%}
-    ul.postlist a {font-style: italic;}
-    ul.postlist-style-disc {list-style-type: disc;}
-    ul.postlist-style-none {list-style-type: none;}
-    ul.postlist-style-circle {list-style-type: circle;}
-  </style>
+ 
+<link
+  rel="alternate"
+  type="application/atom+xml"
+  href="../blog/atom.xml"
+  title="PyGears"
+/>
+ 
+<style type="text/css">
+  ul.ablog-archive {
+    list-style: none;
+    overflow: auto;
+    margin-left: 0px;
+  }
+  ul.ablog-archive li {
+    float: left;
+    margin-right: 5px;
+    font-size: 80%;
+  }
+  ul.postlist a {
+    font-style: italic;
+  }
+  ul.postlist-style-disc {
+    list-style-type: disc;
+  }
+  ul.postlist-style-none {
+    list-style-type: none;
+  }
+  ul.postlist-style-circle {
+    list-style-type: circle;
+  }
+</style>
 
   </head><body>
   
@@ -49,8 +67,7 @@
           
 
           <div class="body" role="main">
-            
-  <div class="section" id="risc-v-blog-series-introduction">
+             <section id="risc-v-blog-series-introduction">
 <h1>RISC-V Blog Series Introduction<a class="headerlink" href="#risc-v-blog-series-introduction" title="Permalink to this headline">¶</a></h1>
 
 <script>
@@ -84,33 +101,30 @@
 <li><p>I can maintain my MVP, so that the customer can try to use the hardware at different stages throughout the development. <span data-verbosity="2" hidden="true"> This offers him a chance to shorten the time-to-market and may provide me with the valuable feedback. This can again lead to the change to the requirements which I would like to have as early as possible.</span></p></li>
 </ul>
 <p>“Hardware” and “requirements change” are two things that were not meant to go together, but the electronics industry is developing at an ever accelerating pace so this needs to change. <span data-verbosity="2" hidden="true"> This is also recognized by the very authors of the RISC-V ISA, and summed up in their paper </span><a class="reference external" data-verbosity="2" hidden="true" href="https://people.eecs.berkeley.edu/~bora/Journals/2016/IEEEMicro16.pdf">AN AGILE APPROACH TO BUILDING RISC-V MICROPROCESSORS</a><span data-verbosity="2" hidden="true">.</span></p>
-<div class="section" id="why-pygears">
+<section id="why-pygears">
 <h2>Why PyGears?<a class="headerlink" href="#why-pygears" title="Permalink to this headline">¶</a></h2>
 <p data-verbosity="2" hidden="true">Traditional HDLs and design methodologies built around them are ill-suited for building larger hardware systems, because they offer very few means of abstraction, besides grouping the implementation into modules. Modules are furthermore quite often formed in the wrong way, by bundling various functionalities together because they operate on the same data, even though they serve different purposes. Think big clunky control path state machines with many outputs which are usually the major source of bugs and a major obstacle for adding new features.</p>
-<div class="figure align-center" data-verbosity="2" hidden="true" id="id1">
+<figure class="align-center" data-verbosity="2" hidden="true" id="figure-1">
 <a class="reference internal image-reference" data-verbosity="2" hidden="true" href="../_images/fsm.png"><img alt="../_images/fsm.png" data-verbosity="2" hidden="true" src="../_images/fsm.png" style="width: 312.0px; height: 326.0px;" /></a>
-<p class="caption" data-verbosity="2" hidden="true"><span class="caption-text" data-verbosity="2" hidden="true">Image from <a class="reference external" data-verbosity="2" hidden="true" href="http://ece-research.unm.edu/jimp/codesign/slides/microprogramming.pdf">&lt;http://ece-research.unm.edu/jimp/codesign/slides/microprogramming.pdf&gt;</a></span><a class="headerlink" href="#id1" title="Permalink to this image">¶</a></p>
-</div>
+<figcaption>
+<p data-verbosity="2" hidden="true"><span class="caption-text" data-verbosity="2" hidden="true">Image from <a class="reference external" data-verbosity="2" hidden="true" href="http://ece-research.unm.edu/jimp/codesign/slides/microprogramming.pdf">&lt;http://ece-research.unm.edu/jimp/codesign/slides/microprogramming.pdf&gt;</a></span><a class="headerlink" href="#figure-1" title="Permalink to this image">¶</a></p>
+</figcaption>
+</figure>
 <p data-verbosity="2" hidden="true">Each of these outputs is probably computed by a functionality that deserves its own module, its own little abstraction. Why are they than being sucked into state machine module monsters? Usually because we either believe that it leads to a more optimized design, or we are afraid of synchronization issues. But wire is a wire even if it leaves the module boundaries, and decent hardware synthesis tools offer inter-module optimization, so we lose next to nothing by factoring out the functionality. As for the synchronization, putting everything in a single module just offers a false sense of security and sweeps the problem under the rug until later when functionality piles up inside the module and pipelining becomes a nightmare, not to mention dealing with synchronization issues between such complex modules.</p>
 <p><span>Since the biggest issue with maintaining a large hardware design is synchronization (as with any other massively parallel system: think multithreading in software), PyGears tries to face it upfront by forcing each module to implement a </span><a class="reference external" href="https://www.pygears.org/gears.html#one-interface">flow-controlled interface</a><span>, which turns modules into “gears” in PyGears terminology (checkout this </span><a class="reference external" href="https://www.pygears.org/gears.html">quick introduction to gears</a><span>). </span><span data-verbosity="2" hidden="true"> As much as it may seem as an overkill in the beginning, it usually pays-off later, and is easily optimized-away by the hardware synthesis tools if not really needed. </span><span> Gears are not built around the state, but are formed to group and abstract some functionality, while the state is embedded in the data sent between the gears. This further alleviates the synchronization problem and pipelined architectures arise naturally, as I intend to show while implementing RISC-V ISA.</span></p>
-<div class="figure">
-<p><img src="../_images/tikz-fb469c944d72dd32a859ee29fb8934cda7c66991.png" alt="\draw[thick] (0, 0) \gear{10}{2}{2.4}{16}{2}{prod}{Producer};
-\draw[thick,xshift=120mm] \gear{10}{2}{2.4}{16}{2}{cons}{Consumer};
-\draw[-Triangle,line width=2mm] (3, 1) -- node[above] {Data [T]} ++(6, 0);
-\draw[-Triangle,line width=0.5mm] (3, -0.5) -- node[above] {Valid} ++(6, 0);
-\draw[Triangle-,line width=0.5mm] (3, -1.5) -- node[above] {Ready} ++(6, 0);
-\node (A) [cylinder, draw,minimum height=6.8cm,minimum width=3.8cm, label=below:DTI] at (6,0) {};" /></p>
-<p class="caption">DTI - Data Transfer Interface</p></div><p>[Omitted long line with 2 matches]</p>
+<div class="figure" id="tikz-1" style="text-align: center"><p><img  src="../_images/tikz-fb469c944d72dd32a859ee29fb8934cda7c66991.png" alt="Figure made with TikZ" /></p>
+<p><span class="caption-text">DTI - Data Transfer Interface</span></p>
+</div><p>[Omitted long line with 2 matches]</p>
 <p data-verbosity="2" hidden="true"> Paradigm shift the PyGears framework offers over traditional HDLs is analog to the difference in paradigm between <a class="reference external" data-verbosity="2" hidden="true" href="https://en.wikipedia.org/wiki/Object-oriented_programming">OOP</a> (Object Oriented Programming) and <a class="reference external" data-verbosity="2" hidden="true" href="https://en.wikipedia.org/wiki/Functional_programming">Functional programming</a>. In OOP, you program in terms of objects, which are in turn formed to enclose certain state and provide operations that depend on that state and can change it. This is very similar to how HDL modules are formed, as discussed earlier in this chapter. On the other hand, in functional programming, you program in terms of functions and types of the data passed between them, which is exactly how you describe hardware with PyGears. It is widely considered that parallel software designs are easier described using functional programming paradigm, so my aim is to show in this blog series that the same holds for the hardware design.</p>
 <p><span>Furthermore, PyGears is written in Python and offers a way to run RTL simulation together with asynchronous Python functions, in which arbitrary functionality for stimulus generation, value checking, logging and gathering statistics. </span><span data-verbosity="2" hidden="true"> Some advantages over SystemVerilog are that Python is open-sourced, much more popular, has huge library of packages and has cleaner syntax.</span></p>
-</div>
-<div class="section" id="why-not-some-of-the-existing-modern-hdls">
+</section>
+<section id="why-not-some-of-the-existing-modern-hdls">
 <div hidden data-verbosity=2>
 <h2 data-verbosity="2" hidden="true"> Why not some of the existing modern HDLs?<a class="headerlink" href="#why-not-some-of-the-existing-modern-hdls" title="Permalink to this headline">¶</a></h2>
 
 </div><p data-verbosity="2" hidden="true">I am aware of several other attempts at higher level HDLs, like: <a class="reference external" data-verbosity="2" hidden="true" href="https://chisel.eecs.berkeley.edu/">Chisel</a>, <a class="reference external" data-verbosity="2" hidden="true" href="http://bluespec.com/">Bluespec</a>, <a class="reference external" data-verbosity="2" hidden="true" href="http://www.clash-lang.org/">Clash</a> and <a class="reference external" data-verbosity="2" hidden="true" href="http://www.myhdl.org/">MyHDL</a>. I never dug deeper into these languages, so I’m not able to give an in depth analysis of each of them here. It’s not that I don’t plan to learn them better sometimes, as I’m sure they have many brilliant ideas incorporated, it’s just that they didn’t seem to really offer solutions to the problems discussed in the previous chapter. Even Clash, which takes the functional approach, in my opinion missed the opportunity to really raise the level of abstraction, by still dealing with the individual signals (as opposed to the flow-controlled interfaces in PyGears) and thus significantly lowering the composability of the modules. Other languages mentioned here take state-centric path of the traditional HDLs and so I truly feel that PyGears has to offer something better.</p>
-</div>
-<div class="section" id="writing-tests-as-a-design-tool">
+</section>
+<section id="writing-tests-as-a-design-tool">
 <h2>Writing tests as a design tool<a class="headerlink" href="#writing-tests-as-a-design-tool" title="Permalink to this headline">¶</a></h2>
 <p>Usually the hardware implementation effort is split between the design and verification teams, where the design team leaves all the testing to the verification. I think that this is a bad dichotomy and tend to agree with the <a class="reference external" href="https://en.wikipedia.org/wiki/Test-driven_development">TDD</a> (Test-Driven Development) philosophy which points-out the importance of the developers tests. These are the tests written by the designers continuously during the development, which test each of the functional requirements of the design.</p>
 <p data-verbosity="2" hidden="true">According to the TDD, the implementation of each functional requirement should be performed in three steps: red, green and refactor:</p>
@@ -127,8 +141,8 @@
 </ol>
 <p>Besides functional correctness, one additional important processor design quality parameter is its throughput. So, in addition to the functional tests for each of the instructions, I plan to use Vivado to test attainable frequency for my design.</p>
 <p data-verbosity="2" hidden="true">Even though I’m aware of the already proposed architectures for the RISC-V processor (like the one in the <a class="reference external" data-verbosity="2" hidden="true" href="https://www.amazon.com/Computer-Architecture-Quantitative-Approach-Kaufmann/dp/0128119055">Computer Architecture: A Quantitative Approach</a>), I will try to blank out the memory of them, and let the new one, guided by the PyGears principles, arise on its own.</p>
-</div>
-<div class="section" id="setup">
+</section>
+<section id="setup">
 <span id="riscv-introduction-setup"></span><h2>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
 <p>For this series I’ll be working on Ubuntu 18.04. For the detailed description of the tools I’m going to use and how to set them up, please refer to <a class="reference external" href="https://www.pygears.org/setup.html#setup-pygears-tools">PyGears tools setup</a>. You can of course choose an alternative to all these tools (except for the PyGears framework itself I hope). Furthermore, PyGears has been tested to work on Windows and openSUSE as well, so feel free to use the OS of your choice. In short you will need:</p>
 <ol class="arabic simple">
@@ -139,8 +153,8 @@
 <li><p>Various RISC-V tools, for which I will make further posts on how to setup and use.</p></li>
 </ol>
 <p>I’ll be using Spacemacs for editing files and running Python scripts, but I’ll try to test the procedures I layout in blog posts on PyCharm as well.</p>
-</div>
-<div class="section" id="logistics">
+</section>
+<section id="logistics">
 <h2>Logistics<a class="headerlink" href="#logistics" title="Permalink to this headline">¶</a></h2>
 <p>All the files related to the RISC-V implementation will be pyblished inside <a class="reference external" href="https://github.com/bogdanvuk/pygears_riscv">pygears_riscv</a> git repository. At the beginning of each blog post, I will state which exact git commit contains code relevant to that post, so that you can get back in history and inspect files at that development stage. Before you can run the scripts from the <code class="docutils literal notranslate"><span class="pre">pygears_riscv</span></code> repository, you need to set it up:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/bogdanvuk/pygears_riscv.git
@@ -156,52 +170,58 @@ python setup.py develop
 <li><p>Verbosity level 2: Additional details and explanations about each of the steps involved in the discussed procedure,</p></li>
 <li><p>Verbosity level 3: Various digressions, brain dumps, detailed results of the procedure steps (log files, command outputs), etc.</p></li>
 </ul>
-</div>
-</div>
-
-  <div class="section">
-  
-    
-
+</section>
+</section>
 
 <div class="section">
-  <span style="float: left;">
-  
+    
+
+<div class="section">
+  <span style="float: left">
+    
   </span>
   <span>&nbsp;</span>
-  <span style="float: right;">
-  
-  Next: 
-  <a href="setup.html">
-    RISC-V Tools Setup
+  <span style="float: right">
+     Next: 
+    <a href="setup.html">
+      RISC-V Tools Setup 
+    </a>
     
-  </a>
   </span>
-  
 </div>
-
   
-  
-    <div class="section">
+  <div class="section">
     <h2>Comments</h2>
     <div id="disqus_thread"></div>
     <script type="text/javascript">
-        var disqus_shortname = 'pygears';
-        var disqus_identifier = '/riscv/introduction/';
-        var disqus_title = 'RISC-V Blog Series Introduction';
-        var disqus_url = 'https://www.pygears.org/riscv/introduction';
+      var disqus_shortname = "pygears";
+      var disqus_identifier = "/riscv/introduction/";
+      var disqus_title = "RISC-V Blog Series Introduction";
+      var disqus_url = "https://www.pygears.org/riscv/introduction";
 
-        (function() {
-            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-        })();
+      (function () {
+        var dsq = document.createElement("script");
+        dsq.type = "text/javascript";
+        dsq.async = true;
+        dsq.src = "//" + disqus_shortname + ".disqus.com/embed.js";
+        (
+          document.getElementsByTagName("head")[0] ||
+          document.getElementsByTagName("body")[0]
+        ).appendChild(dsq);
+      })();
     </script>
-    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
-    </div>
-  
+    <noscript
+      >Please enable JavaScript to view the
+      <a href="https://disqus.com/?ref_noscript"
+        >comments powered by Disqus.</a
+      ></noscript
+    >
+    <a href="https://disqus.com" class="dsq-brlink"
+      >comments powered by <span class="logo-disqus">Disqus</span></a
+    >
   </div>
+  
+</div>
 
           </div>
           
@@ -232,126 +252,162 @@ python setup.py develop
 
 
 
+  
+<h2>
+   
+  06 October 2018 
+</h2>
 
+<ul>
+   
+<li id="author">
+  <span
+    >Author:</span
+  >
+   
+  <a href="../blog/author/bogdan-vukobratovic.html">Bogdan Vukobratović</a>  
+</li>
   
+<li id="language">
+  <span
+    >Language:</span
+  >
+   
+  <a href="../blog/language/english.html">English</a>  
+</li>
+ 
+<li id="category">
+  <span
+    >Category:</span
+  >
+   
+  <a href="../blog/category/risc-v.html">RISC-V</a>  
+</li>
   
-  <h2>
-  
-  
-    06 October 2018
-  
-  </h2>
-
-  <ul>
-    
-
-  
-  <li id="author"><span>Author:</span>
-    
-      
-      <a href="../blog/author/bogdan-vukobratovic.html">Bogdan Vukobratović</a>
-      
-    </li>
-  
-
-  
-
-  
-  <li id="language"><span>Language:</span>
-    
-      
-      <a href="../blog/language/english.html">English</a>
-      
-    </li>
-  
-
-  
-  <li id="category"><span>Category:</span>
-    
-      
-      <a href="../blog/category/risc-v.html">RISC-V</a>
-      
-    </li>
-  
-
-  
-  
-  <li id="comments">
-    <script type="text/javascript">
+<li id="comments">
+  <script type="text/javascript">
     /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
-    var disqus_shortname = 'pygears'; // required: replace example with your forum shortname
+    var disqus_shortname = "pygears"; // required: replace example with your forum shortname
 
     /* * * DON'T EDIT BELOW THIS LINE * * */
     (function () {
-    var s = document.createElement('script'); s.async = true;
-    s.type = 'text/javascript';
-    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
-    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
-    }());
-    </script>
-    
-    <a href="#disqus_thread" data-disqus-identifier="/riscv/introduction/"> Comments</a>
+      var s = document.createElement("script");
+      s.async = true;
+      s.type = "text/javascript";
+      s.src = "//" + disqus_shortname + ".disqus.com/count.js";
+      (
+        document.getElementsByTagName("HEAD")[0] ||
+        document.getElementsByTagName("BODY")[0]
+      ).appendChild(s);
+    })();
+  </script>
+  
+  <a
+    href="#disqus_thread"
+    data-disqus-identifier="/riscv/introduction/"
+  >
+    Comments</a
+  >
+</li>
+
+</ul>
+
+<h3>
+  <a href="../blog.html">Recent Posts</a>
+</h3>
+<ul>
+   
+  <li>
+    <a href="my_first_instruction.html"
+      >30 October - My First Instruction</a
+    >
   </li>
   
-  </ul>
-
-
-
-  <h3><a href="../blog.html">Recent Posts</a></h3>
-  <ul>
-    
-    
-      <li><a href="my_first_instruction.html">30 October - My First Instruction</a></li>
-    
-      <li><a href="../release/v0.1.2.html">28 October - PyGears 0.1.2 released</a></li>
-    
-      <li><a href="setup.html">07 October - RISC-V Tools Setup</a></li>
-    
-      <li><a href="../release/v0.1.1.html">07 October - PyGears 0.1.1 released</a></li>
-    
-  </ul>
-
-  <h3><a href="../blog/tag.html">Tags</a></h3>
-  <style type="text/css">
-    ul.ablog-cloud {list-style: none; overflow: auto;}
-    ul.ablog-cloud li {float: left; height: 20pt; line-height: 18pt; margin-right: 5px;}
-    ul.ablog-cloud a {text-decoration: none; vertical-align: middle;}
-    li.ablog-cloud-1{font-size: 80%;}
-    li.ablog-cloud-2{font-size: 95%;}
-    li.ablog-cloud-3{font-size: 110%;}
-    li.ablog-cloud-4{font-size: 125%;}
-    li.ablog-cloud-5{font-size: 140%;}
-  </style>
-  <ul class="ablog-cloud">
-    
-      
-      <li class="ablog-cloud ablog-cloud-3">
-        <a href="../blog/tag/setup.html">setup</a></li>
-      
-    
-  </ul>
-
-  <h3><a href="../blog/category.html">Categories</a></h3>
-  <ul>
+  <li>
+    <a href="../release/v0.1.2.html"
+      >28 October - PyGears 0.1.2 released</a
+    >
+  </li>
   
-    
-    <li><a href="../blog/category/risc-v.html">RISC-V (3)</a></li>
-    
+  <li>
+    <a href="setup.html"
+      >07 October - RISC-V Tools Setup</a
+    >
+  </li>
   
-    
-    <li><a href="../blog/category/release.html">Release (2)</a></li>
-    
+  <li>
+    <a href="../release/v0.1.1.html"
+      >07 October - PyGears 0.1.1 released</a
+    >
+  </li>
   
-  </ul>
+</ul>
 
-  <h3><a href="../blog/archive.html">Archives</a></h3>
-  <ul>
-  
+<h3><a href="../blog/tag.html">Tags</a></h3>
+<style type="text/css">
+  ul.ablog-cloud {
+    list-style: none;
+    overflow: auto;
+  }
+  ul.ablog-cloud li {
+    float: left;
+    height: 20pt;
+    line-height: 18pt;
+    margin-right: 5px;
+  }
+  ul.ablog-cloud a {
+    text-decoration: none;
+    vertical-align: middle;
+  }
+  li.ablog-cloud-1 {
+    font-size: 80%;
+  }
+  li.ablog-cloud-2 {
+    font-size: 95%;
+  }
+  li.ablog-cloud-3 {
+    font-size: 110%;
+  }
+  li.ablog-cloud-4 {
+    font-size: 125%;
+  }
+  li.ablog-cloud-5 {
+    font-size: 140%;
+  }
+</style>
+<ul class="ablog-cloud">
+   
+  <li class="ablog-cloud ablog-cloud-3">
+    <a href="../blog/tag/setup.html">setup</a>
+  </li>
+   
+</ul>
+
+<h3>
+  <a href="../blog/category.html">Categories</a>
+</h3>
+<ul>
+   
+  <li>
+    <a href="../blog/category/risc-v.html">RISC-V (3)</a>
+  </li>
     
-    <li><a href="../blog/2018.html">2018 (5)</a></li>
-    
-  
-  </ul>
+  <li>
+    <a href="../blog/category/release.html">Release (2)</a>
+  </li>
+   
+</ul>
+
+<h3>
+  <a href="../blog/archive.html">Archives</a>
+</h3>
+<ul>
+   
+  <li>
+    <a href="../blog/2018.html">2018 (5)</a>
+  </li>
+   
+</ul>
 
 <div id="searchbox" style="display: none" role="search">
   <h3 id="searchlabel">Quick search</h3>
@@ -368,10 +424,10 @@ python setup.py develop
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2020, Bogdan Vukobratovic.
+      &copy;2022, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

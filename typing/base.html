@@ -1,13 +1,13 @@
 
 <!DOCTYPE html>
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
     <title>Typing Base Classes &#8212; PyGears - HW Design: A Functional Approach</title>
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
@@ -37,38 +37,38 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="module-pygears.typing.base">
+  <section id="module-pygears.typing.base">
 <span id="typing-base-classes"></span><h1>Typing Base Classes<a class="headerlink" href="#module-pygears.typing.base" title="Permalink to this headline">¶</a></h1>
-<dl class="py class">
+<dl class="class">
 <dt id="pygears.typing.base.Any">
 <em class="property">class </em><code class="sig-name descname">Any</code><a class="headerlink" href="#pygears.typing.base.Any" title="Permalink to this definition">¶</a></dt>
 <dd><p>Type that can be matched to any other type.</p>
 </dd></dl>
 
-<dl class="py class">
+<dl class="class">
 <dt id="pygears.typing.base.BlackBox">
-<em class="property">class </em><code class="sig-name descname">BlackBox</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">contents</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.base.BlackBox" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-name descname">BlackBox</code><span class="sig-paren">(</span><em class="sig-param">contents</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.base.BlackBox" title="Permalink to this definition">¶</a></dt>
 <dd><p>All BlackBoxes are the same.</p>
 </dd></dl>
 
-<dl class="py class">
+<dl class="class">
 <dt id="pygears.typing.base.EnumerableGenericMeta">
-<em class="property">class </em><code class="sig-name descname">EnumerableGenericMeta</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">bases</span></em>, <em class="sig-param"><span class="n">namespace</span></em>, <em class="sig-param"><span class="n">args</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.base.EnumerableGenericMeta" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-name descname">EnumerableGenericMeta</code><a class="headerlink" href="#pygears.typing.base.EnumerableGenericMeta" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pygears.typing.base.GenericMeta" title="pygears.typing.base.GenericMeta"><code class="xref py py-class docutils literal notranslate"><span class="pre">pygears.typing.base.GenericMeta</span></code></a></p>
 <p>Base class for all types that are iterable.</p>
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.base.EnumerableGenericMeta.items">
 <code class="sig-name descname">items</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.base.EnumerableGenericMeta.items" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generator that yields (key, element) pairs.</p>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.base.EnumerableGenericMeta.keys">
 <code class="sig-name descname">keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.base.EnumerableGenericMeta.keys" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a list of keys that can be used for indexing the type.</p>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.base.EnumerableGenericMeta.width">
 <em class="property">property </em><code class="sig-name descname">width</code><a class="headerlink" href="#pygears.typing.base.EnumerableGenericMeta.width" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the bit width of the type.</p>
@@ -80,12 +80,12 @@
 
 </dd></dl>
 
-<dl class="py class">
+<dl class="class">
 <dt id="pygears.typing.base.GenericMeta">
-<em class="property">class </em><code class="sig-name descname">GenericMeta</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">bases</span></em>, <em class="sig-param"><span class="n">namespace</span></em>, <em class="sig-param"><span class="n">args</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.base.GenericMeta" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-name descname">GenericMeta</code><a class="headerlink" href="#pygears.typing.base.GenericMeta" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pygears.typing.base.TypingMeta" title="pygears.typing.base.TypingMeta"><code class="xref py py-class docutils literal notranslate"><span class="pre">pygears.typing.base.TypingMeta</span></code></a></p>
 <p>Base class for all types that have a generic parameter.</p>
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.base.GenericMeta.args">
 <em class="property">property </em><code class="sig-name descname">args</code><a class="headerlink" href="#pygears.typing.base.GenericMeta.args" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a list of values supplied for each generic parameter.</p>
@@ -95,7 +95,7 @@
 </div>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.base.GenericMeta.base">
 <em class="property">property </em><code class="sig-name descname">base</code><a class="headerlink" href="#pygears.typing.base.GenericMeta.base" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns base generic class of the type.</p>
@@ -104,7 +104,7 @@
 </div>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.base.GenericMeta.fields">
 <em class="property">property </em><code class="sig-name descname">fields</code><a class="headerlink" href="#pygears.typing.base.GenericMeta.fields" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the names of the generic parameters.</p>
@@ -118,7 +118,7 @@
 </div>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.base.GenericMeta.is_generic">
 <code class="sig-name descname">is_generic</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.base.GenericMeta.is_generic" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return True if no values have been supplied for the generic parameters.</p>
@@ -132,7 +132,7 @@
 </div>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.base.GenericMeta.specified">
 <em class="property">property </em><code class="sig-name descname">specified</code><a class="headerlink" href="#pygears.typing.base.GenericMeta.specified" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return True if all generic parameters were supplied concrete values.</p>
@@ -146,7 +146,7 @@
 </div>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.base.GenericMeta.templates">
 <em class="property">property </em><code class="sig-name descname">templates</code><a class="headerlink" href="#pygears.typing.base.GenericMeta.templates" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a list of templated generic variables within the type. The type is
@@ -159,37 +159,37 @@ searched recursively. Each template is reported only once.</p>
 
 </dd></dl>
 
-<dl class="py exception">
+<dl class="exception">
 <dt id="pygears.typing.base.TemplateArgumentsError">
 <em class="property">exception </em><code class="sig-name descname">TemplateArgumentsError</code><a class="headerlink" href="#pygears.typing.base.TemplateArgumentsError" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
 </dd></dl>
 
-<dl class="py exception">
+<dl class="exception">
 <dt id="pygears.typing.base.TemplatedTypeUnspecified">
 <em class="property">exception </em><code class="sig-name descname">TemplatedTypeUnspecified</code><a class="headerlink" href="#pygears.typing.base.TemplatedTypeUnspecified" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
 </dd></dl>
 
-<dl class="py class">
+<dl class="class">
 <dt id="pygears.typing.base.TypingMeta">
 <em class="property">class </em><code class="sig-name descname">TypingMeta</code><a class="headerlink" href="#pygears.typing.base.TypingMeta" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></p>
 <p>Base class all types.</p>
 </dd></dl>
 
-<dl class="py class">
+<dl class="class">
 <dt id="pygears.typing.base.hashabledict">
 <em class="property">class </em><code class="sig-name descname">hashabledict</code><a class="headerlink" href="#pygears.typing.base.hashabledict" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p>
 </dd></dl>
 
-<dl class="py function">
+<dl class="function">
 <dt id="pygears.typing.base.typeof">
-<code class="sig-name descname">typeof</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">obj</span></em>, <em class="sig-param"><span class="n">t</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.base.typeof" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">typeof</code><span class="sig-paren">(</span><em class="sig-param">obj</em>, <em class="sig-param">t</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.base.typeof" title="Permalink to this definition">¶</a></dt>
 <dd><p>Check if a specific type instance is a subclass of the type.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>obj</strong> – Concrete type instance</p></li>
 <li><p><strong>t</strong> – Base type class</p></li>
@@ -198,7 +198,7 @@ searched recursively. Each template is reported only once.</p>
 </dl>
 </dd></dl>
 
-</div>
+</section>
 
     <script type="text/javascript">
         function init() {
@@ -237,18 +237,11 @@ searched recursively. Each template is reported only once.</p>
 
 
 <hr />
-<p>
-    <h3> Blogs </h3>
-    <ul>
-        <li class="toctree-l1"><a href="https://www.pygears.org/blog/blog/category/risc-v.html">RISC-V implementation blog</a></li>
-    </ul>
-</p>
 <hr />
 <h3><a href="https://www.pygears.org/blog/blog/category/release.html">Release notes</a></h3>
 <hr />
 <h3><a href="../index.html">Table of Contents</a></h3>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="../live.html">PyGears LIVE!</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../introduction.html">Quick introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../gears.html">Introduction to Gears</a></li>
@@ -258,8 +251,6 @@ searched recursively. Each template is reported only once.</p>
 <li class="toctree-l2 current"><a class="reference internal" href="../typing.html#types-reference">Types reference</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../registry.html">Registry</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../setup.html">PyGears Tools Setup for Linux</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../reference.html">Reference</a></li>
 </ul>
@@ -279,10 +270,10 @@ searched recursively. Each template is reported only once.</p>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2020, Bogdan Vukobratovic.
+      &copy;2022, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

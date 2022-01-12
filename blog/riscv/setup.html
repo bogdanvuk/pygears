@@ -1,13 +1,13 @@
 
 <!DOCTYPE html>
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
     <title>RISC-V Tools Setup &#8212; PyGears - HW Design: A Functional Approach</title>
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
     <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
@@ -19,26 +19,44 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="PyGears pure-Python simulator" href="simulator.html" />
-    <link rel="prev" title="My First Instruction" href="my_first_instruction.html" />
-  
+    <link rel="prev" title="My First Instruction" href="my_first_instruction.html" /> 
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
-
-  
-  <link rel="alternate" type="application/atom+xml"  href="../blog/atom.xml" title="PyGears">
-  
-  
-  <style type="text/css">
-    ul.ablog-archive {list-style: none; overflow: auto; margin-left: 0px}
-    ul.ablog-archive li {float: left; margin-right: 5px; font-size: 80%}
-    ul.postlist a {font-style: italic;}
-    ul.postlist-style-disc {list-style-type: disc;}
-    ul.postlist-style-none {list-style-type: none;}
-    ul.postlist-style-circle {list-style-type: circle;}
-  </style>
+ 
+<link
+  rel="alternate"
+  type="application/atom+xml"
+  href="../blog/atom.xml"
+  title="PyGears"
+/>
+ 
+<style type="text/css">
+  ul.ablog-archive {
+    list-style: none;
+    overflow: auto;
+    margin-left: 0px;
+  }
+  ul.ablog-archive li {
+    float: left;
+    margin-right: 5px;
+    font-size: 80%;
+  }
+  ul.postlist a {
+    font-style: italic;
+  }
+  ul.postlist-style-disc {
+    list-style-type: disc;
+  }
+  ul.postlist-style-none {
+    list-style-type: none;
+  }
+  ul.postlist-style-circle {
+    list-style-type: circle;
+  }
+</style>
 
   </head><body>
   
@@ -49,8 +67,7 @@
           
 
           <div class="body" role="main">
-            
-  <div class="section" id="risc-v-tools-setup">
+             <section id="risc-v-tools-setup">
 <h1>RISC-V Tools Setup<a class="headerlink" href="#risc-v-tools-setup" title="Permalink to this headline">¶</a></h1>
 
 <script>
@@ -194,7 +211,7 @@ core   <span class="m">0</span>: 0xffffffff80000000 <span class="o">(</span>0x00
 </pre></div>
 </div>
 
-</div><div class="section" id="invoking-from-python">
+</div><section id="invoking-from-python">
 <h2>Invoking from Python<a class="headerlink" href="#invoking-from-python" title="Permalink to this headline">¶</a></h2>
 <p>I’d like to have at least one test per RISC-V instruction I implement and run them as often as possible. Hence I need them automated. Specifically, my automated tests need to check whether an instruction introduces the same changes to the memory and registers in my design as it does in the Spike simulator. Unfortunately, Spike doesn’t offer an option of executing commands from the script, so I’ll have to run it in the interactive mode and send commands to him live. <span data-verbosity="2" hidden="true"> Luckily, the Python library </span><a class="reference external" data-verbosity="2" hidden="true" href="https://pexpect.readthedocs.io/en/stable/index.html">pexpect</a><span data-verbosity="2" hidden="true"> was created specifically for the task like this. Pexpect will allow me to start Spike from Python, send it some commands and retrieve the responses. I’ll immediately wrap low-level calls to the </span><code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">pexpect</span></code><span data-verbosity="2" hidden="true"> library inside a class I’ll name “Spike”, which will provide a high-level interface for querying the memory and register state and stepping through the program. </span><span> Let’s put all this functionality inside </span><a class="reference external" href="https://github.com/bogdanvuk/pygears_riscv/blob/bba9a4afe8d20e26f6aef634bc2651fbf8b71c8e/pygears_riscv/spike.py">pygears_riscv/spike.py</a><span>.</span></p>
 <p data-verbosity="2" hidden="true">Let’s do the Spike class the right way, by using the <a class="reference external" data-verbosity="2" hidden="true" href="https://docs.python.org/3/reference/datamodel.html#context-managers">Context Manager</a> pattern. This pattern asks us to define initialization and cleanup code inside <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">__enter__</span></code> and <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">__exit__</span></code> methods respectively. During the initialization, I’d like to start the Spike simulator, setup some communication parameters and let the simulator run until it reaches the beginning of my set of instructions (first few instructions are injected by the simulator).</p>
@@ -264,58 +281,63 @@ core   <span class="m">0</span>: 0xffffffff80000000 <span class="o">(</span>0x00
 </pre></div>
 </div>
 
-</div></div>
-</div>
-
-  <div class="section">
-  
-    
-
+</div></section>
+</section>
 
 <div class="section">
-  <span style="float: left;">
-  
-  Previous: 
-  <a href="introduction.html">
     
-    RISC-V Blog Series Introduction
-  </a>
-  
+
+<div class="section">
+  <span style="float: left">
+     Previous:
+    
+    <a href="introduction.html">
+       RISC-V Blog Series Introduction
+    </a>
+    
   </span>
   <span>&nbsp;</span>
-  <span style="float: right;">
-  
-  Next: 
-  <a href="my_first_instruction.html">
-    My First Instruction
+  <span style="float: right">
+     Next: 
+    <a href="my_first_instruction.html">
+      My First Instruction 
+    </a>
     
-  </a>
   </span>
-  
 </div>
-
   
-  
-    <div class="section">
+  <div class="section">
     <h2>Comments</h2>
     <div id="disqus_thread"></div>
     <script type="text/javascript">
-        var disqus_shortname = 'pygears';
-        var disqus_identifier = '/riscv/setup/';
-        var disqus_title = 'RISC-V Tools Setup';
-        var disqus_url = 'https://www.pygears.org/riscv/setup';
+      var disqus_shortname = "pygears";
+      var disqus_identifier = "/riscv/setup/";
+      var disqus_title = "RISC-V Tools Setup";
+      var disqus_url = "https://www.pygears.org/riscv/setup";
 
-        (function() {
-            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-        })();
+      (function () {
+        var dsq = document.createElement("script");
+        dsq.type = "text/javascript";
+        dsq.async = true;
+        dsq.src = "//" + disqus_shortname + ".disqus.com/embed.js";
+        (
+          document.getElementsByTagName("head")[0] ||
+          document.getElementsByTagName("body")[0]
+        ).appendChild(dsq);
+      })();
     </script>
-    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
-    </div>
-  
+    <noscript
+      >Please enable JavaScript to view the
+      <a href="https://disqus.com/?ref_noscript"
+        >comments powered by Disqus.</a
+      ></noscript
+    >
+    <a href="https://disqus.com" class="dsq-brlink"
+      >comments powered by <span class="logo-disqus">Disqus</span></a
+    >
   </div>
+  
+</div>
 
           </div>
           
@@ -346,133 +368,170 @@ core   <span class="m">0</span>: 0xffffffff80000000 <span class="o">(</span>0x00
 
 
 
+  
+<h2>
+   
+  07 October 2018 
+</h2>
 
+<ul>
+   
+<li id="author">
+  <span
+    >Author:</span
+  >
+   
+  <a href="../blog/author/bogdan-vukobratovic.html">Bogdan Vukobratović</a>  
+</li>
   
-  
-  <h2>
-  
-  
-    07 October 2018
-  
-  </h2>
-
-  <ul>
-    
-
-  
-  <li id="author"><span>Author:</span>
-    
-      
-      <a href="../blog/author/bogdan-vukobratovic.html">Bogdan Vukobratović</a>
-      
-    </li>
-  
-
-  
-
-  
-  <li id="language"><span>Language:</span>
-    
-      
-      <a href="../blog/language/english.html">English</a>
-      
-    </li>
-  
-
-  
-  <li id="category"><span>Category:</span>
-    
-      
-      <a href="../blog/category/risc-v.html">RISC-V</a>
-      
-    </li>
-  
-
-  
-  <li id="tags"><span>Tag:</span>
-    
-      
-      <a href="../blog/tag/setup.html">setup</a>
-      
-    </li>
-  
-  
-  <li id="comments">
-    <script type="text/javascript">
+<li id="language">
+  <span
+    >Language:</span
+  >
+   
+  <a href="../blog/language/english.html">English</a>  
+</li>
+ 
+<li id="category">
+  <span
+    >Category:</span
+  >
+   
+  <a href="../blog/category/risc-v.html">RISC-V</a>  
+</li>
+ 
+<li id="tags">
+  <span
+    >Tag:</span
+  >
+   
+  <a href="../blog/tag/setup.html">setup</a>  
+</li>
+ 
+<li id="comments">
+  <script type="text/javascript">
     /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
-    var disqus_shortname = 'pygears'; // required: replace example with your forum shortname
+    var disqus_shortname = "pygears"; // required: replace example with your forum shortname
 
     /* * * DON'T EDIT BELOW THIS LINE * * */
     (function () {
-    var s = document.createElement('script'); s.async = true;
-    s.type = 'text/javascript';
-    s.src = '//' + disqus_shortname + '.disqus.com/count.js';
-    (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
-    }());
-    </script>
-    
-    <a href="#disqus_thread" data-disqus-identifier="/riscv/setup/"> Comments</a>
+      var s = document.createElement("script");
+      s.async = true;
+      s.type = "text/javascript";
+      s.src = "//" + disqus_shortname + ".disqus.com/count.js";
+      (
+        document.getElementsByTagName("HEAD")[0] ||
+        document.getElementsByTagName("BODY")[0]
+      ).appendChild(s);
+    })();
+  </script>
+  
+  <a
+    href="#disqus_thread"
+    data-disqus-identifier="/riscv/setup/"
+  >
+    Comments</a
+  >
+</li>
+
+</ul>
+
+<h3>
+  <a href="../blog.html">Recent Posts</a>
+</h3>
+<ul>
+   
+  <li>
+    <a href="my_first_instruction.html"
+      >30 October - My First Instruction</a
+    >
   </li>
   
-  </ul>
-
-
-
-  <h3><a href="../blog.html">Recent Posts</a></h3>
-  <ul>
-    
-    
-      <li><a href="my_first_instruction.html">30 October - My First Instruction</a></li>
-    
-      <li><a href="../release/v0.1.2.html">28 October - PyGears 0.1.2 released</a></li>
-    
-      <li><a href="../release/v0.1.1.html">07 October - PyGears 0.1.1 released</a></li>
-    
-      <li><a href="introduction.html">06 October - RISC-V Blog Series Introduction</a></li>
-    
-  </ul>
-
-  <h3><a href="../blog/tag.html">Tags</a></h3>
-  <style type="text/css">
-    ul.ablog-cloud {list-style: none; overflow: auto;}
-    ul.ablog-cloud li {float: left; height: 20pt; line-height: 18pt; margin-right: 5px;}
-    ul.ablog-cloud a {text-decoration: none; vertical-align: middle;}
-    li.ablog-cloud-1{font-size: 80%;}
-    li.ablog-cloud-2{font-size: 95%;}
-    li.ablog-cloud-3{font-size: 110%;}
-    li.ablog-cloud-4{font-size: 125%;}
-    li.ablog-cloud-5{font-size: 140%;}
-  </style>
-  <ul class="ablog-cloud">
-    
-      
-      <li class="ablog-cloud ablog-cloud-3">
-        <a href="../blog/tag/setup.html">setup</a></li>
-      
-    
-  </ul>
-
-  <h3><a href="../blog/category.html">Categories</a></h3>
-  <ul>
+  <li>
+    <a href="../release/v0.1.2.html"
+      >28 October - PyGears 0.1.2 released</a
+    >
+  </li>
   
-    
-    <li><a href="../blog/category/risc-v.html">RISC-V (3)</a></li>
-    
+  <li>
+    <a href="../release/v0.1.1.html"
+      >07 October - PyGears 0.1.1 released</a
+    >
+  </li>
   
-    
-    <li><a href="../blog/category/release.html">Release (2)</a></li>
-    
+  <li>
+    <a href="introduction.html"
+      >06 October - RISC-V Blog Series Introduction</a
+    >
+  </li>
   
-  </ul>
+</ul>
 
-  <h3><a href="../blog/archive.html">Archives</a></h3>
-  <ul>
-  
+<h3><a href="../blog/tag.html">Tags</a></h3>
+<style type="text/css">
+  ul.ablog-cloud {
+    list-style: none;
+    overflow: auto;
+  }
+  ul.ablog-cloud li {
+    float: left;
+    height: 20pt;
+    line-height: 18pt;
+    margin-right: 5px;
+  }
+  ul.ablog-cloud a {
+    text-decoration: none;
+    vertical-align: middle;
+  }
+  li.ablog-cloud-1 {
+    font-size: 80%;
+  }
+  li.ablog-cloud-2 {
+    font-size: 95%;
+  }
+  li.ablog-cloud-3 {
+    font-size: 110%;
+  }
+  li.ablog-cloud-4 {
+    font-size: 125%;
+  }
+  li.ablog-cloud-5 {
+    font-size: 140%;
+  }
+</style>
+<ul class="ablog-cloud">
+   
+  <li class="ablog-cloud ablog-cloud-3">
+    <a href="../blog/tag/setup.html">setup</a>
+  </li>
+   
+</ul>
+
+<h3>
+  <a href="../blog/category.html">Categories</a>
+</h3>
+<ul>
+   
+  <li>
+    <a href="../blog/category/risc-v.html">RISC-V (3)</a>
+  </li>
     
-    <li><a href="../blog/2018.html">2018 (5)</a></li>
-    
-  
-  </ul>
+  <li>
+    <a href="../blog/category/release.html">Release (2)</a>
+  </li>
+   
+</ul>
+
+<h3>
+  <a href="../blog/archive.html">Archives</a>
+</h3>
+<ul>
+   
+  <li>
+    <a href="../blog/2018.html">2018 (5)</a>
+  </li>
+   
+</ul>
 
 <div id="searchbox" style="display: none" role="search">
   <h3 id="searchlabel">Quick search</h3>
@@ -489,10 +548,10 @@ core   <span class="m">0</span>: 0xffffffff80000000 <span class="o">(</span>0x00
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2020, Bogdan Vukobratovic.
+      &copy;2022, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

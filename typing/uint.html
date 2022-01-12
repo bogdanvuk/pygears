@@ -1,13 +1,13 @@
 
 <!DOCTYPE html>
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
     <title>Uint &#8212; PyGears - HW Design: A Functional Approach</title>
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
@@ -37,11 +37,11 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="uint">
+  <section id="uint">
 <h1>Uint<a class="headerlink" href="#uint" title="Permalink to this headline">¶</a></h1>
-<dl class="py class">
+<dl class="class">
 <dt id="pygears.typing.uint.UintType">
-<em class="property">class </em><code class="sig-name descname">UintType</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">bases</span></em>, <em class="sig-param"><span class="n">namespace</span></em>, <em class="sig-param"><span class="n">args</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.UintType" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-name descname">UintType</code><a class="headerlink" href="#pygears.typing.uint.UintType" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="integer.html#pygears.typing.uint.IntegerType" title="pygears.typing.uint.IntegerType"><code class="xref py py-class docutils literal notranslate"><span class="pre">pygears.typing.uint.IntegerType</span></code></a></p>
 <p>Fixed width generic unsigned integer data type.</p>
 <dl class="simple">
@@ -54,7 +54,7 @@ Concrete data type is obtained by indexing:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">u16</span> <span class="o">=</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">]</span>
 </pre></div>
 </div>
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.uint.UintType.args">
 <em class="property">property </em><code class="sig-name descname">args</code><a class="headerlink" href="#pygears.typing.uint.UintType.args" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a list of values supplied for each generic parameter.</p>
@@ -64,7 +64,7 @@ Concrete data type is obtained by indexing:</p>
 </div>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.uint.UintType.base">
 <em class="property">property </em><code class="sig-name descname">base</code><a class="headerlink" href="#pygears.typing.uint.UintType.base" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns base generic class of the type.</p>
@@ -73,7 +73,7 @@ Concrete data type is obtained by indexing:</p>
 </div>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.uint.UintType.fields">
 <em class="property">property </em><code class="sig-name descname">fields</code><a class="headerlink" href="#pygears.typing.uint.UintType.fields" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the names of the generic parameters.</p>
@@ -87,7 +87,7 @@ Concrete data type is obtained by indexing:</p>
 </div>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.uint.UintType.is_generic">
 <code class="sig-name descname">is_generic</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.UintType.is_generic" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return True if no values have been supplied for the generic parameters.</p>
@@ -101,13 +101,13 @@ Concrete data type is obtained by indexing:</p>
 </div>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.uint.UintType.items">
 <code class="sig-name descname">items</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.UintType.items" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generator that yields (key, element) pairs.</p>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.uint.UintType.keys">
 <code class="sig-name descname">keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.UintType.keys" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a list of keys that can be used for indexing the type.</p>
@@ -117,7 +117,7 @@ Concrete data type is obtained by indexing:</p>
 </div>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.uint.UintType.specified">
 <em class="property">property </em><code class="sig-name descname">specified</code><a class="headerlink" href="#pygears.typing.uint.UintType.specified" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return True if all generic parameters were supplied concrete values.</p>
@@ -131,7 +131,7 @@ Concrete data type is obtained by indexing:</p>
 </div>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.uint.UintType.templates">
 <em class="property">property </em><code class="sig-name descname">templates</code><a class="headerlink" href="#pygears.typing.uint.UintType.templates" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a list of templated generic variables within the type. The type is
@@ -142,7 +142,7 @@ searched recursively. Each template is reported only once.</p>
 </div>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.uint.UintType.width">
 <em class="property">property </em><code class="sig-name descname">width</code><a class="headerlink" href="#pygears.typing.uint.UintType.width" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the bit width of the type.</p>
@@ -154,13 +154,13 @@ searched recursively. Each template is reported only once.</p>
 
 </dd></dl>
 
-<dl class="py class">
+<dl class="class">
 <dt id="pygears.typing.uint.Uint">
-<em class="property">class </em><code class="sig-name descname">Uint</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">val</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Uint" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-name descname">Uint</code><a class="headerlink" href="#pygears.typing.uint.Uint" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="integer.html#pygears.typing.uint.Integer" title="pygears.typing.uint.Integer"><code class="xref py py-class docutils literal notranslate"><span class="pre">pygears.typing.uint.Integer</span></code></a></p>
 <p>Implements the <a class="reference internal" href="#pygears.typing.uint.Uint" title="pygears.typing.uint.Uint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Uint</span></code></a> type instance.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>val</strong> – Integer value to convert to <a class="reference internal" href="#pygears.typing.uint.Uint" title="pygears.typing.uint.Uint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Uint</span></code></a></p>
 </dd>
 </dl>
@@ -170,13 +170,13 @@ represents unsigned integers with fixed width binary representation.</p>
 <span class="go">Uint[16](65535)</span>
 </pre></div>
 </div>
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.uint.Uint.__int__">
 <code class="sig-name descname">__int__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Uint.__int__" title="Permalink to this definition">¶</a></dt>
 <dd><p>int(self)</p>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.uint.Uint.__len__">
 <code class="sig-name descname">__len__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Uint.__len__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the number of bits used for the representation</p>
@@ -186,7 +186,7 @@ represents unsigned integers with fixed width binary representation.</p>
 </div>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.uint.Uint.bit_length">
 <code class="sig-name descname">bit_length</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Uint.bit_length" title="Permalink to this definition">¶</a></dt>
 <dd><p>Number of bits necessary to represent self in binary.</p>
@@ -198,9 +198,9 @@ represents unsigned integers with fixed width binary representation.</p>
 </div>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.uint.Uint.decode">
-<em class="property">classmethod </em><code class="sig-name descname">decode</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">val</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Uint.decode" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod </em><code class="sig-name descname">decode</code><span class="sig-paren">(</span><em class="sig-param">val</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Uint.decode" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates Integer object from any int-convertible object val.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Integer</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="mh">0xffff</span><span class="p">)</span>
 <span class="go">Integer[8](255)</span>
@@ -210,7 +210,7 @@ represents unsigned integers with fixed width binary representation.</p>
 
 </dd></dl>
 
-</div>
+</section>
 
     <script type="text/javascript">
         function init() {
@@ -249,18 +249,11 @@ represents unsigned integers with fixed width binary representation.</p>
 
 
 <hr />
-<p>
-    <h3> Blogs </h3>
-    <ul>
-        <li class="toctree-l1"><a href="https://www.pygears.org/blog/blog/category/risc-v.html">RISC-V implementation blog</a></li>
-    </ul>
-</p>
 <hr />
 <h3><a href="https://www.pygears.org/blog/blog/category/release.html">Release notes</a></h3>
 <hr />
 <h3><a href="../index.html">Table of Contents</a></h3>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="../live.html">PyGears LIVE!</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../introduction.html">Quick introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../gears.html">Introduction to Gears</a></li>
@@ -270,8 +263,6 @@ represents unsigned integers with fixed width binary representation.</p>
 <li class="toctree-l2 current"><a class="reference internal" href="../typing.html#types-reference">Types reference</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../registry.html">Registry</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../setup.html">PyGears Tools Setup for Linux</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../reference.html">Reference</a></li>
 </ul>
@@ -291,10 +282,10 @@ represents unsigned integers with fixed width binary representation.</p>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2020, Bogdan Vukobratovic.
+      &copy;2022, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

@@ -1,13 +1,13 @@
 
 <!DOCTYPE html>
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
     <title>Queue &#8212; PyGears - HW Design: A Functional Approach</title>
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
@@ -19,7 +19,7 @@
     <link rel="shortcut icon" href="../_static/pygears.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Registry" href="../registry.html" />
+    <link rel="next" title="Examples" href="../examples.html" />
     <link rel="prev" title="Array" href="array.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
@@ -37,52 +37,52 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="queue">
+  <section id="queue">
 <h1>Queue<a class="headerlink" href="#queue" title="Permalink to this headline">¶</a></h1>
-<dl class="py class">
+<dl class="class">
 <dt id="pygears.typing.queue.Queue">
-<em class="property">class </em><code class="sig-name descname">Queue</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">val</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">eot</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.queue.Queue" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-name descname">Queue</code><a class="headerlink" href="#pygears.typing.queue.Queue" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></p>
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.queue.Queue.__getitem__">
-<code class="sig-name descname">__getitem__</code><span class="sig-paren">(</span><em class="sig-param">key</em>, <em class="sig-param">/</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.queue.Queue.__getitem__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__getitem__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.queue.Queue.__getitem__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return self[key].</p>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.queue.Queue.__int__">
 <code class="sig-name descname">__int__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.queue.Queue.__int__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a packed integer representation of the <a class="reference internal" href="#pygears.typing.queue.Queue" title="pygears.typing.queue.Queue"><code class="xref py py-class docutils literal notranslate"><span class="pre">Queue</span></code></a> instance.</p>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.queue.Queue.__len__">
 <code class="sig-name descname">__len__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.queue.Queue.__len__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return len(self).</p>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.queue.Queue.code">
 <code class="sig-name descname">code</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.queue.Queue.code" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a packed integer representation of the <a class="reference internal" href="#pygears.typing.queue.Queue" title="pygears.typing.queue.Queue"><code class="xref py py-class docutils literal notranslate"><span class="pre">Queue</span></code></a> instance.</p>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.queue.Queue.count">
-<code class="sig-name descname">count</code><span class="sig-paren">(</span><em class="sig-param">value</em>, <em class="sig-param">/</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.queue.Queue.count" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">count</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.queue.Queue.count" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return number of occurrences of value.</p>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.queue.Queue.index">
-<code class="sig-name descname">index</code><span class="sig-paren">(</span><em class="sig-param">value</em>, <em class="sig-param">start=0</em>, <em class="sig-param">stop=9223372036854775807</em>, <em class="sig-param">/</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.queue.Queue.index" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">index</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.queue.Queue.index" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return first index of value.</p>
 <p>Raises ValueError if the value is not present.</p>
 </dd></dl>
 
 </dd></dl>
 
-</div>
+</section>
 
     <script type="text/javascript">
         function init() {
@@ -121,18 +121,11 @@
 
 
 <hr />
-<p>
-    <h3> Blogs </h3>
-    <ul>
-        <li class="toctree-l1"><a href="https://www.pygears.org/blog/blog/category/risc-v.html">RISC-V implementation blog</a></li>
-    </ul>
-</p>
 <hr />
 <h3><a href="https://www.pygears.org/blog/blog/category/release.html">Release notes</a></h3>
 <hr />
 <h3><a href="../index.html">Table of Contents</a></h3>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="../live.html">PyGears LIVE!</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../introduction.html">Quick introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../gears.html">Introduction to Gears</a></li>
@@ -142,8 +135,6 @@
 <li class="toctree-l2 current"><a class="reference internal" href="../typing.html#types-reference">Types reference</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../registry.html">Registry</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../setup.html">PyGears Tools Setup for Linux</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../reference.html">Reference</a></li>
 </ul>
@@ -163,10 +154,10 @@
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2020, Bogdan Vukobratovic.
+      &copy;2022, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

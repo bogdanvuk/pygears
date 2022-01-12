@@ -1,13 +1,13 @@
 
 <!DOCTYPE html>
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
     <title>Typing &#8212; PyGears - HW Design: A Functional Approach</title>
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
@@ -37,41 +37,44 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="typing">
-<span id="id1"></span><h1>Typing<a class="headerlink" href="#typing" title="Permalink to this headline">¶</a></h1>
+  <section id="typing-1">
+<span id="typing"></span><h1>Typing<a class="headerlink" href="#typing-1" title="Permalink to this headline">¶</a></h1>
 <p><strong>PyGears</strong> features a set of generic types that can be used to describe inputs and outputs of the gears. Type system brings many benefits to the process of describing hardware. Take a look also at <a class="reference internal" href="gears.html#gears-type-system"><span class="std std-ref">the hardware implementation of PyGears types</span></a>.</p>
-<div class="section" id="compile-time-type-checking">
+<section id="compile-time-type-checking">
 <h2>Compile time type checking<a class="headerlink" href="#compile-time-type-checking" title="Permalink to this headline">¶</a></h2>
 <p>When composing gears, the framework will check the compatibility of types. For an example, the following design will raise an error:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pygears</span> <span class="kn">import</span> <span class="n">gear</span>
+<span class="kn">from</span> <span class="nn">pygears.lib</span> <span class="kn">import</span> <span class="n">shred</span>
 <span class="kn">from</span> <span class="nn">pygears.typing</span> <span class="kn">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Uint</span>
 
 <span class="nd">@gear</span>
-<span class="k">def</span> <span class="nf">example</span><span class="p">(</span><span class="n">din</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">]]):</span>
+<span class="k">async</span> <span class="k">def</span> <span class="nf">example</span><span class="p">(</span><span class="n">din</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">]]):</span>
     <span class="k">pass</span>
 
-<span class="n">Tuple</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">]]((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="o">|</span> <span class="n">example</span>
+<span class="n">Tuple</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">]]((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="o">|</span> <span class="n">example</span> <span class="o">|</span> <span class="n">shred</span>
 </pre></div>
 </div>
 <p>In this example, a constant of Tuple type (u8, u16), with value 1 for both of its fields, is being fed to the module which accepts Tuples of type (u8, u8). This is a mismatch, since u16 and u8 are not the same type. Upon executing the script, <strong>PyGears</strong> will print:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pygears.typing.TypeMatchError: 16 cannot be matched to 8
-- when matching Uint[16] to Uint[8]
-- when matching Tuple[Uint[8], Uint[16]] to Tuple[Uint[8], Uint[8]]
-- when deducing type for argument din, of the module &quot;/example&quot;
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>TypeMatchError: [0], 16 cannot be matched to 8
+  - when matching Uint[16] to Uint[8]
+  - when matching Tuple[Uint[8], Uint[16]] to Tuple[Uint[8], Uint[8]]
+  - when deducing type for argument &quot;din&quot;
+  - when instantiating &quot;example&quot;
 </pre></div>
 </div>
-</div>
-<div class="section" id="polymorphic-modules-and-pattern-matching">
+</section>
+<section id="polymorphic-modules-and-pattern-matching">
 <h2>Polymorphic modules and pattern matching<a class="headerlink" href="#polymorphic-modules-and-pattern-matching" title="Permalink to this headline">¶</a></h2>
 <p>Using generic types, modules that adapt to their environment can be described. Let’s rewrite the “example” module from previous example to extend the set of types it accepts, by introducing a template parameter “w_field_1” that can be substituted with any value:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pygears</span> <span class="kn">import</span> <span class="n">gear</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pygears</span> <span class="kn">import</span> <span class="n">gear</span><span class="p">,</span> <span class="n">find</span>
+<span class="kn">from</span> <span class="nn">pygears.lib</span> <span class="kn">import</span> <span class="n">shred</span>
 <span class="kn">from</span> <span class="nn">pygears.typing</span> <span class="kn">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Uint</span>
 
 <span class="nd">@gear</span>
-<span class="k">def</span> <span class="nf">example</span><span class="p">(</span><span class="n">din</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="n">Uint</span><span class="p">[</span><span class="s1">&#39;w_field_1&#39;</span><span class="p">]]):</span>
+<span class="k">async</span> <span class="k">def</span> <span class="nf">example</span><span class="p">(</span><span class="n">din</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="n">Uint</span><span class="p">[</span><span class="s1">&#39;w_field_1&#39;</span><span class="p">]]):</span>
     <span class="k">pass</span>
 
-<span class="n">Tuple</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">]]((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="o">|</span> <span class="n">example</span>
+<span class="n">Tuple</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">]]((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="o">|</span> <span class="n">example</span> <span class="o">|</span> <span class="n">shred</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;/example&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;w_field_1&#39;</span><span class="p">])</span>
 </pre></div>
@@ -81,7 +84,7 @@
 <span class="kn">from</span> <span class="nn">pygears.typing</span> <span class="kn">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Uint</span>
 
 <span class="nd">@gear</span>
-<span class="k">def</span> <span class="nf">example</span><span class="p">(</span><span class="n">din</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="n">Uint</span><span class="p">[</span><span class="s1">&#39;w_field_1&#39;</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Uint</span><span class="p">[</span><span class="s1">&#39;w_field_1&#39;</span><span class="p">]:</span>
+<span class="k">async</span> <span class="k">def</span> <span class="nf">example</span><span class="p">(</span><span class="n">din</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="n">Uint</span><span class="p">[</span><span class="s1">&#39;w_field_1&#39;</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Uint</span><span class="p">[</span><span class="s1">&#39;w_field_1&#39;</span><span class="p">]:</span>
     <span class="k">pass</span>
 
 <span class="n">res</span> <span class="o">=</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">]]((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="o">|</span> <span class="n">example</span>
@@ -93,18 +96,18 @@
 <p>The RTL implementation of the “example” module can be also parameterized in this way. Lets make a simple SystemVerilog implementation of this module, saved under “example.sv”.</p>
 <div class="highlight-systemverilog notranslate"><div class="highlight"><pre><span></span><span class="k">module</span> <span class="n">example</span>
 <span class="p">#(</span>
-    <span class="k">parameter</span> <span class="n">W_FIELD_1</span> <span class="o">=</span> <span class="mh">8</span>
+    <span class="k">parameter</span> <span class="n">W_FIELD_1</span> <span class="o">=</span> <span class="mi">8</span>
 <span class="p">)</span>
 <span class="p">(</span>
-    <span class="k">input</span> <span class="k">logic</span> <span class="n">clk</span><span class="p">,</span>
-    <span class="k">input</span> <span class="k">logic</span> <span class="n">rst</span><span class="p">,</span>
+    <span class="k">input</span> <span class="kt">logic</span> <span class="n">clk</span><span class="p">,</span>
+    <span class="k">input</span> <span class="kt">logic</span> <span class="n">rst</span><span class="p">,</span>
     <span class="n">dti</span><span class="p">.</span><span class="n">consumer</span> <span class="n">din</span><span class="p">,</span>
     <span class="n">dti</span><span class="p">.</span><span class="n">producer</span> <span class="n">dout</span>
 <span class="p">);</span>
 
 <span class="k">typedef</span> <span class="k">struct</span> <span class="k">packed</span> <span class="p">{</span>
-    <span class="k">logic</span> <span class="p">[</span><span class="n">W_FIELD_1</span><span class="o">-</span><span class="mh">1</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span> <span class="n">f1</span><span class="p">;</span>
-    <span class="k">logic</span> <span class="p">[</span>          <span class="mh">7</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span> <span class="n">f0</span><span class="p">;</span>
+    <span class="kt">logic</span> <span class="p">[</span><span class="n">W_FIELD_1</span><span class="o">-</span><span class="mi">1</span><span class="o">:</span><span class="mi">0</span><span class="p">]</span> <span class="n">f1</span><span class="p">;</span>
+    <span class="kt">logic</span> <span class="p">[</span>          <span class="mi">7</span><span class="o">:</span><span class="mi">0</span><span class="p">]</span> <span class="n">f0</span><span class="p">;</span>
 <span class="p">}</span> <span class="n">din_t</span><span class="p">;</span>
 
 <span class="n">din_t</span> <span class="n">din_s</span><span class="p">;</span>
@@ -117,15 +120,15 @@
 </pre></div>
 </div>
 <div class="highlight-systemverilog notranslate"><div class="highlight"><pre><span></span><span class="k">module</span> <span class="n">top</span><span class="p">(</span>
-    <span class="k">input</span> <span class="k">logic</span> <span class="n">clk</span><span class="p">,</span>
-    <span class="k">input</span> <span class="k">logic</span> <span class="n">rst</span><span class="p">,</span>
+    <span class="k">input</span> <span class="kt">logic</span> <span class="n">clk</span><span class="p">,</span>
+    <span class="k">input</span> <span class="kt">logic</span> <span class="n">rst</span><span class="p">,</span>
     <span class="n">dti</span><span class="p">.</span><span class="n">producer</span> <span class="n">dout</span> <span class="c1">// u16 (16)</span>
 <span class="p">);</span>
 
-  <span class="n">dti</span> <span class="p">#(.</span><span class="n">W_DATA</span><span class="p">(</span><span class="mh">24</span><span class="p">))</span> <span class="n">const_if_s</span><span class="p">();</span> <span class="c1">// (u8, u16) (24)</span>
+  <span class="n">dti</span> <span class="p">#(.</span><span class="n">W_DATA</span><span class="p">(</span><span class="mi">24</span><span class="p">))</span> <span class="n">const_if_s</span><span class="p">();</span> <span class="c1">// (u8, u16) (24)</span>
 
   <span class="n">example</span> <span class="p">#(</span>
-        <span class="p">.</span><span class="n">W_FIELD_1</span><span class="p">(</span><span class="mh">16</span><span class="p">)</span>
+        <span class="p">.</span><span class="n">W_FIELD_1</span><span class="p">(</span><span class="mi">16</span><span class="p">)</span>
   <span class="p">)</span>
   <span class="n">example_i</span> <span class="p">(</span>
       <span class="p">.</span><span class="n">clk</span><span class="p">(</span><span class="n">clk</span><span class="p">),</span>
@@ -135,8 +138,8 @@
   <span class="p">);</span>
 
   <span class="n">sustain</span> <span class="p">#(</span>
-        <span class="p">.</span><span class="n">VAL</span><span class="p">(</span><span class="mh">257</span><span class="p">),</span>
-        <span class="p">.</span><span class="n">TOUT</span><span class="p">(</span><span class="mh">24</span><span class="p">)</span>
+        <span class="p">.</span><span class="n">VAL</span><span class="p">(</span><span class="mi">257</span><span class="p">),</span>
+        <span class="p">.</span><span class="n">TOUT</span><span class="p">(</span><span class="mi">24</span><span class="p">)</span>
   <span class="p">)</span>
   <span class="n">const_i</span> <span class="p">(</span>
       <span class="p">.</span><span class="n">clk</span><span class="p">(</span><span class="n">clk</span><span class="p">),</span>
@@ -147,8 +150,8 @@
 <span class="k">endmodule</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="types-reference">
+</section>
+<section id="types-reference">
 <h2>Types reference<a class="headerlink" href="#types-reference" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
@@ -161,8 +164,8 @@
 <li class="toctree-l1"><a class="reference internal" href="typing/queue.html">Queue</a></li>
 </ul>
 </div>
-</div>
-</div>
+</section>
+</section>
 
     <script type="text/javascript">
         function init() {
@@ -201,18 +204,11 @@
 
 
 <hr />
-<p>
-    <h3> Blogs </h3>
-    <ul>
-        <li class="toctree-l1"><a href="https://www.pygears.org/blog/blog/category/risc-v.html">RISC-V implementation blog</a></li>
-    </ul>
-</p>
 <hr />
 <h3><a href="https://www.pygears.org/blog/blog/category/release.html">Release notes</a></h3>
 <hr />
 <h3><a href="index.html">Table of Contents</a></h3>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="live.html">PyGears LIVE!</a></li>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="introduction.html">Quick introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gears.html">Introduction to Gears</a></li>
@@ -222,8 +218,6 @@
 <li class="toctree-l2"><a class="reference internal" href="#types-reference">Types reference</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="registry.html">Registry</a></li>
-<li class="toctree-l1"><a class="reference internal" href="setup.html">PyGears Tools Setup for Linux</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reference.html">Reference</a></li>
 </ul>
@@ -243,10 +237,10 @@
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2020, Bogdan Vukobratovic.
+      &copy;2022, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

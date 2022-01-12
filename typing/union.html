@@ -1,13 +1,13 @@
 
 <!DOCTYPE html>
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
     <title>Union &#8212; PyGears - HW Design: A Functional Approach</title>
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
@@ -20,7 +20,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Common" href="../gears/index.html" />
-    <link rel="prev" title="Logger" href="../conf/log.html" />
+    <link rel="prev" title="Registry" href="../conf/registry.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   
@@ -37,7 +37,7 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="module-pygears.typing.union">
+  <section id="module-pygears.typing.union">
 <span id="union"></span><h1>Union<a class="headerlink" href="#module-pygears.typing.union" title="Permalink to this headline">¶</a></h1>
 <p><a class="reference internal" href="#pygears.typing.union.Union" title="pygears.typing.union.Union"><code class="xref py py-class docutils literal notranslate"><span class="pre">Union</span></code></a> is a generic type somewhat similar to the unions in other
 HDLs and C language for an example, with an important differences. Unions in
@@ -99,15 +99,15 @@ in the subtype list provided when defining the <a class="reference internal" hre
 <span class="go">Uint[1](1)</span>
 </pre></div>
 </div>
-<dl class="py class">
+<dl class="class">
 <dt id="pygears.typing.union.UnionType">
-<em class="property">class </em><code class="sig-name descname">UnionType</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">bases</span></em>, <em class="sig-param"><span class="n">namespace</span></em>, <em class="sig-param"><span class="n">args</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.union.UnionType" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-name descname">UnionType</code><a class="headerlink" href="#pygears.typing.union.UnionType" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="base.html#pygears.typing.base.EnumerableGenericMeta" title="pygears.typing.base.EnumerableGenericMeta"><code class="xref py py-class docutils literal notranslate"><span class="pre">pygears.typing.base.EnumerableGenericMeta</span></code></a></p>
 <p>Implements the <a class="reference internal" href="#pygears.typing.union.Union" title="pygears.typing.union.Union"><code class="xref py py-class docutils literal notranslate"><span class="pre">Union</span></code></a> generic type.</p>
 <p>All operations on the <a class="reference internal" href="#pygears.typing.union.Union" title="pygears.typing.union.Union"><code class="xref py py-class docutils literal notranslate"><span class="pre">Union</span></code></a> type are implemented here in the
 <a class="reference internal" href="#pygears.typing.union.UnionType" title="pygears.typing.union.UnionType"><code class="xref py py-class docutils literal notranslate"><span class="pre">UnionType</span></code></a> class. Operations on the <a class="reference internal" href="#pygears.typing.union.Union" title="pygears.typing.union.Union"><code class="xref py py-class docutils literal notranslate"><span class="pre">Union</span></code></a> type instances
 are defined in the <a class="reference internal" href="#pygears.typing.union.Union" title="pygears.typing.union.Union"><code class="xref py py-class docutils literal notranslate"><span class="pre">Union</span></code></a> class.</p>
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.union.UnionType.args">
 <em class="property">property </em><code class="sig-name descname">args</code><a class="headerlink" href="#pygears.typing.union.UnionType.args" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a list of values supplied for each generic parameter.</p>
@@ -117,7 +117,7 @@ are defined in the <a class="reference internal" href="#pygears.typing.union.Uni
 </div>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.union.UnionType.base">
 <em class="property">property </em><code class="sig-name descname">base</code><a class="headerlink" href="#pygears.typing.union.UnionType.base" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns base generic class of the type.</p>
@@ -126,7 +126,7 @@ are defined in the <a class="reference internal" href="#pygears.typing.union.Uni
 </div>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.union.UnionType.ctrl">
 <em class="property">property </em><code class="sig-name descname">ctrl</code><a class="headerlink" href="#pygears.typing.union.UnionType.ctrl" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the type of the <a class="reference internal" href="#pygears.typing.union.Union" title="pygears.typing.union.Union"><code class="xref py py-class docutils literal notranslate"><span class="pre">Union</span></code></a> <code class="docutils literal notranslate"><span class="pre">ctrl</span></code> field, which contains the
@@ -135,7 +135,7 @@ field is of type <code class="xref py py-class docutils literal notranslate"><sp
 <a class="reference internal" href="#pygears.typing.union.Union" title="pygears.typing.union.Union"><code class="xref py py-class docutils literal notranslate"><span class="pre">Union</span></code></a> subtype indices.</p>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.union.UnionType.data">
 <em class="property">property </em><code class="sig-name descname">data</code><a class="headerlink" href="#pygears.typing.union.UnionType.data" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the type of the <a class="reference internal" href="#pygears.typing.union.Union" title="pygears.typing.union.Union"><code class="xref py py-class docutils literal notranslate"><span class="pre">Union</span></code></a> <code class="docutils literal notranslate"><span class="pre">data</span></code> field. This field is of type
@@ -143,7 +143,7 @@ field is of type <code class="xref py py-class docutils literal notranslate"><sp
 <a class="reference internal" href="#pygears.typing.union.Union" title="pygears.typing.union.Union"><code class="xref py py-class docutils literal notranslate"><span class="pre">Union</span></code></a>.</p>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.union.UnionType.fields">
 <em class="property">property </em><code class="sig-name descname">fields</code><a class="headerlink" href="#pygears.typing.union.UnionType.fields" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the names of the generic parameters.</p>
@@ -157,7 +157,7 @@ field is of type <code class="xref py py-class docutils literal notranslate"><sp
 </div>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.union.UnionType.is_generic">
 <code class="sig-name descname">is_generic</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.union.UnionType.is_generic" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return True if no values have been supplied for the generic parameters.</p>
@@ -171,19 +171,19 @@ field is of type <code class="xref py py-class docutils literal notranslate"><sp
 </div>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.union.UnionType.items">
 <code class="sig-name descname">items</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.union.UnionType.items" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generator that yields (key, element) pairs.</p>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.union.UnionType.keys">
 <code class="sig-name descname">keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.union.UnionType.keys" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a list of keys that can be used for indexing the type.</p>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.union.UnionType.specified">
 <em class="property">property </em><code class="sig-name descname">specified</code><a class="headerlink" href="#pygears.typing.union.UnionType.specified" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return True if all generic parameters were supplied concrete values.</p>
@@ -197,7 +197,7 @@ field is of type <code class="xref py py-class docutils literal notranslate"><sp
 </div>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.union.UnionType.templates">
 <em class="property">property </em><code class="sig-name descname">templates</code><a class="headerlink" href="#pygears.typing.union.UnionType.templates" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a list of templated generic variables within the type. The type is
@@ -208,13 +208,13 @@ searched recursively. Each template is reported only once.</p>
 </div>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.union.UnionType.types">
 <em class="property">property </em><code class="sig-name descname">types</code><a class="headerlink" href="#pygears.typing.union.UnionType.types" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a list of subtypes.</p>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.union.UnionType.width">
 <em class="property">property </em><code class="sig-name descname">width</code><a class="headerlink" href="#pygears.typing.union.UnionType.width" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the bit width of the type.</p>
@@ -226,43 +226,43 @@ searched recursively. Each template is reported only once.</p>
 
 </dd></dl>
 
-<dl class="py class">
+<dl class="class">
 <dt id="pygears.typing.union.Union">
-<em class="property">class </em><code class="sig-name descname">Union</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">val</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">ctrl</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.union.Union" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-name descname">Union</code><a class="headerlink" href="#pygears.typing.union.Union" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></p>
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.union.Union.__int__">
 <code class="sig-name descname">__int__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.union.Union.__int__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a packed integer representation of the <a class="reference internal" href="#pygears.typing.union.Union" title="pygears.typing.union.Union"><code class="xref py py-class docutils literal notranslate"><span class="pre">Union</span></code></a> instance.</p>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.union.Union.code">
 <code class="sig-name descname">code</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.union.Union.code" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a packed integer representation of the <a class="reference internal" href="#pygears.typing.union.Union" title="pygears.typing.union.Union"><code class="xref py py-class docutils literal notranslate"><span class="pre">Union</span></code></a> instance.</p>
 </dd></dl>
 
-<dl class="py attribute">
+<dl class="attribute">
 <dt id="pygears.typing.union.Union.ctrl">
 <code class="sig-name descname">ctrl</code><a class="headerlink" href="#pygears.typing.union.Union.ctrl" title="Permalink to this definition">¶</a></dt>
 <dd><p>alias of <a class="reference internal" href="#pygears.typing.union.Union" title="pygears.typing.union.Union"><code class="xref py py-class docutils literal notranslate"><span class="pre">Union</span></code></a></p>
 </dd></dl>
 
-<dl class="py attribute">
+<dl class="attribute">
 <dt id="pygears.typing.union.Union.data">
 <code class="sig-name descname">data</code><a class="headerlink" href="#pygears.typing.union.Union.data" title="Permalink to this definition">¶</a></dt>
 <dd><p>alias of <a class="reference internal" href="#pygears.typing.union.Union" title="pygears.typing.union.Union"><code class="xref py py-class docutils literal notranslate"><span class="pre">Union</span></code></a></p>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.union.Union.decode">
-<em class="property">classmethod </em><code class="sig-name descname">decode</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">val</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.union.Union.decode" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod </em><code class="sig-name descname">decode</code><span class="sig-paren">(</span><em class="sig-param">val</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.union.Union.decode" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a <a class="reference internal" href="#pygears.typing.union.Union" title="pygears.typing.union.Union"><code class="xref py py-class docutils literal notranslate"><span class="pre">Union</span></code></a> instance from its packed integer representation.</p>
 </dd></dl>
 
 </dd></dl>
 
-</div>
+</section>
 
     <script type="text/javascript">
         function init() {
@@ -301,24 +301,15 @@ searched recursively. Each template is reported only once.</p>
 
 
 <hr />
-<p>
-    <h3> Blogs </h3>
-    <ul>
-        <li class="toctree-l1"><a href="https://www.pygears.org/blog/blog/category/risc-v.html">RISC-V implementation blog</a></li>
-    </ul>
-</p>
 <hr />
 <h3><a href="https://www.pygears.org/blog/blog/category/release.html">Release notes</a></h3>
 <hr />
 <h3><a href="../index.html">Table of Contents</a></h3>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="../live.html">PyGears LIVE!</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../introduction.html">Quick introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../gears.html">Introduction to Gears</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../typing.html">Typing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../registry.html">Registry</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../setup.html">PyGears Tools Setup for Linux</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../reference.html">Reference</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="../reference.html#core">Core</a></li>
@@ -344,10 +335,10 @@ searched recursively. Each template is reported only once.</p>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2020, Bogdan Vukobratovic.
+      &copy;2022, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

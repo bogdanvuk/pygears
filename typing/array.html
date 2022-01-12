@@ -1,13 +1,13 @@
 
 <!DOCTYPE html>
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
     <title>Array &#8212; PyGears - HW Design: A Functional Approach</title>
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
@@ -37,11 +37,11 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="module-pygears.typing.array">
+  <section id="module-pygears.typing.array">
 <span id="array"></span><h1>Array<a class="headerlink" href="#module-pygears.typing.array" title="Permalink to this headline">¶</a></h1>
-<dl class="py class">
+<dl class="class">
 <dt id="pygears.typing.array.Array">
-<em class="property">class </em><code class="sig-name descname">Array</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">val</span><span class="p">:</span> <span class="n">tuple</span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.array.Array" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-name descname">Array</code><span class="sig-paren">(</span><em class="sig-param">val: tuple = None</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.array.Array" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></p>
 <p>Generic container datatype that holds N instances of type T</p>
 <dl>
@@ -53,7 +53,7 @@
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">u16_4</span> <span class="o">=</span> <span class="n">Array</span><span class="p">[</span><span class="n">Uint</span><span class="p">[</span><span class="mi">16</span><span class="p">],</span> <span class="mi">4</span><span class="p">]</span>
 </pre></div>
 </div>
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.array.Array.copy">
 <code class="sig-name descname">copy</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.array.Array.copy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a shallow copy of the list.</p>
@@ -61,11 +61,11 @@
 
 </dd></dl>
 
-<dl class="py class">
+<dl class="class">
 <dt id="pygears.typing.array.ArrayType">
-<em class="property">class </em><code class="sig-name descname">ArrayType</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">bases</span></em>, <em class="sig-param"><span class="n">namespace</span></em>, <em class="sig-param"><span class="n">args</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.array.ArrayType" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-name descname">ArrayType</code><a class="headerlink" href="#pygears.typing.array.ArrayType" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="base.html#pygears.typing.base.EnumerableGenericMeta" title="pygears.typing.base.EnumerableGenericMeta"><code class="xref py py-class docutils literal notranslate"><span class="pre">pygears.typing.base.EnumerableGenericMeta</span></code></a></p>
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.array.ArrayType.keys">
 <code class="sig-name descname">keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.array.ArrayType.keys" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a list of keys that can be used for indexing <a class="reference internal" href="#pygears.typing.array.Array" title="pygears.typing.array.Array"><code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code></a> [T, N] type. Number of keys equals to the number of elements N.</p>
@@ -75,7 +75,7 @@
 </div>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.array.ArrayType.width">
 <em class="property">property </em><code class="sig-name descname">width</code><a class="headerlink" href="#pygears.typing.array.ArrayType.width" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the bit width of the type.</p>
@@ -87,7 +87,7 @@
 
 </dd></dl>
 
-</div>
+</section>
 
     <script type="text/javascript">
         function init() {
@@ -126,18 +126,11 @@
 
 
 <hr />
-<p>
-    <h3> Blogs </h3>
-    <ul>
-        <li class="toctree-l1"><a href="https://www.pygears.org/blog/blog/category/risc-v.html">RISC-V implementation blog</a></li>
-    </ul>
-</p>
 <hr />
 <h3><a href="https://www.pygears.org/blog/blog/category/release.html">Release notes</a></h3>
 <hr />
 <h3><a href="../index.html">Table of Contents</a></h3>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="../live.html">PyGears LIVE!</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../introduction.html">Quick introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../gears.html">Introduction to Gears</a></li>
@@ -147,8 +140,6 @@
 <li class="toctree-l2 current"><a class="reference internal" href="../typing.html#types-reference">Types reference</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../registry.html">Registry</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../setup.html">PyGears Tools Setup for Linux</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../reference.html">Reference</a></li>
 </ul>
@@ -168,10 +159,10 @@
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2020, Bogdan Vukobratovic.
+      &copy;2022, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

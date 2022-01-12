@@ -1,13 +1,13 @@
 
 <!DOCTYPE html>
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
     <title>Echo &#8212; PyGears - HW Design: A Functional Approach</title>
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
@@ -37,23 +37,23 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="echo">
+  <section id="echo">
 <span id="echo-examples"></span><h1>Echo<a class="headerlink" href="#echo" title="Permalink to this headline">¶</a></h1>
 <p>This example shows how to use PyGears to implement a hardware module that applies echo audio effect to a continuous audio stream. For a more detailed explanation of PyGears features used in this example, you can checkout a <a class="reference internal" href="introduction.html#introduction"><span class="std std-ref">quick introduction to PyGears</span></a>.</p>
-<p>The hardware module is part of the <a class="reference external" href="https://github.com/bogdanvuk/pygears-dsp">pygears_dsp</a> library and is defined in <a class="reference external" href="https://github.com/bogdanvuk/pygears-dsp/blob/master/pygears_dsp/lib/echo.py">pygears_dsp/lib/echo.py</a>. Its block diagram is given below. You can checkout the <a class="reference internal" href="#examples-echo-functional-description"><span class="std std-ref">functional description</span></a> of the <code class="docutils literal notranslate"><span class="pre">echo</span></code> module. In-depth explanation of the PyGears description of the echo model given in <a class="reference internal" href="#examples-echo-hardware-description"><span class="std std-ref">hardware description</span></a> chapter. PyGears takes the Python module description and compiles it to SystemVerilog which is <a class="reference internal" href="#echo-sv"><span class="std std-ref">listed below</span></a>.</p>
+<p>The hardware module is part of the <a class="reference external" href="https://github.com/bogdanvuk/pygears-dsp">pygears_dsp</a> library and is defined in <a class="reference external" href="https://github.com/bogdanvuk/pygears-dsp/blob/master/pygears_dsp/examples/echo/echo.py">pygears_dsp/examples/echo/echo.py</a>. Its block diagram is given below. You can checkout the <a class="reference internal" href="#examples-echo-functional-description"><span class="std std-ref">functional description</span></a> of the <code class="docutils literal notranslate"><span class="pre">echo</span></code> module. In-depth explanation of the PyGears description of the echo model given in <a class="reference internal" href="#examples-echo-hardware-description"><span class="std std-ref">hardware description</span></a> chapter. PyGears takes the Python module description and compiles it to SystemVerilog which is <a class="reference internal" href="#echo-sv"><span class="std std-ref">listed below</span></a>.</p>
 <img alt="_images/echo.png" class="align-center" src="_images/echo.png" />
-<div class="section" id="systemverilog-generation">
+<section id="systemverilog-generation">
 <h2>SystemVerilog Generation<a class="headerlink" href="#systemverilog-generation" title="Permalink to this headline">¶</a></h2>
-<p>Run the script <a class="reference external" href="https://github.com/bogdanvuk/pygears-dsp/blob/master/examples/echo/echo_svgen.py">examples/echo/echo_svgen.py</a> in order to let PyGears generate SystemVerilog files.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> &lt;pygears_source_dir&gt;/examples/echo
+<p>Run the script <a class="reference external" href="https://github.com/bogdanvuk/pygears-dsp/blob/master/pygears_dsp/examples/echo/echo_svgen.py">pygears_dsp/examples/echo/echo_svgen.py</a> in order to let PyGears generate SystemVerilog files.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> &lt;pygears_dsp_source_dir&gt;/pygears_dsp/examples/echo
 python echo_svgen.py
 </pre></div>
 </div>
 <p>If you have <a class="reference external" href="https://www.xilinx.com/products/design-tools/vivado.html">Vivado</a> installed (you can download a free WebPack version from Xilinx website), the script will automatically try to synthesize the design and display the resource utilization report (displayed also <a class="reference internal" href="#examples-echo-resource-utilization"><span class="std std-ref">below</span></a>).</p>
-</div>
-<div class="section" id="running-simulation">
+</section>
+<section id="running-simulation">
 <h2>Running Simulation<a class="headerlink" href="#running-simulation" title="Permalink to this headline">¶</a></h2>
-<p>Run the script <a class="reference external" href="https://github.com/bogdanvuk/pygears/tree/develop/examples/echo/plop_test_wav_echo_sim.py">examples/echo/plop_test_wav_echo_sim.py</a> to run a simulation of the <code class="docutils literal notranslate"><span class="pre">echo</span></code> module. The simulation is run with the help of the Verilator tool, so please checkout the <a class="reference internal" href="install.html#install"><span class="std std-ref">installation instructions</span></a> if you need help with installing the Verilator. Furthermore, if you would like to see plots of the audio waves, you need to install <a class="reference external" href="https://matplotlib.org/">matplotlib</a>. You can run the echo example like this:</p>
+<p>Run the script <a class="reference external" href="https://github.com/bogdanvuk/pygears-dsp/blob/master/pygears_dsp/examples/echo/plop_test_wav_echo_sim.py">pygears_dsp/examples/echo/plop_test_wav_echo_sim.py</a> to run a simulation of the <code class="docutils literal notranslate"><span class="pre">echo</span></code> module. The simulation is run with the help of the Verilator tool, so please checkout the <a class="reference internal" href="install.html#install"><span class="std std-ref">installation instructions</span></a> if you need help with installing the Verilator. Furthermore, if you would like to see plots of the audio waves, you need to install <a class="reference external" href="https://matplotlib.org/">matplotlib</a>. You can run the echo example like this:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> &lt;pygears_source_dir&gt;/examples/echo
 python plop_test_wav_echo_sim.py
 </pre></div>
@@ -82,44 +82,128 @@ Result length: <span class="m">165359</span>
 <p>Simulation log will display path to the simulation wave file in standard VCD. Wave can be viewed for an example with an open-source tool <a class="reference external" href="http://gtkwave.sourceforge.net/">GTKWave</a>.</p>
 <img alt="_images/echo_vcd.png" src="_images/echo_vcd.png" />
 <p>You can now play with the parameters in <code class="docutils literal notranslate"><span class="pre">plop_test_wav_echo_sim.py</span></code> script. Try changing echo delay and gain settings and check the results.</p>
-</div>
-<div class="section" id="stereo-echo">
+</section>
+<section id="stereo-echo">
 <h2>Stereo Echo<a class="headerlink" href="#stereo-echo" title="Permalink to this headline">¶</a></h2>
 <p>PyGears lets you easily compose gears at any level. To create a stereo echo effect gear, we will instantiate one <code class="docutils literal notranslate"><span class="pre">echo</span></code> gear for each channel.</p>
 <img alt="_images/stereo_echo.png" class="align-center" src="_images/stereo_echo.png" />
 <p>In PyGears this can be described as follows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@alternative</span><span class="p">(</span><span class="n">echo</span><span class="p">)</span>
+<span class="nd">@gear</span>
+<span class="k">def</span> <span class="nf">stereo_echo</span><span class="p">(</span>
+        <span class="n">din</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Fixp</span><span class="p">,</span> <span class="n">Fixp</span><span class="p">],</span>  <span class="c1"># audio samples</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">feedback_gain</span><span class="p">,</span>  <span class="c1"># feedback gain == echo gain</span>
+        <span class="n">sample_rate</span><span class="p">,</span>  <span class="c1"># sample_rate in samples per second</span>
+        <span class="n">delay</span>  <span class="c1"># delay in seconds</span>
+<span class="p">):</span>
+
+    <span class="n">mono_echo</span> <span class="o">=</span> <span class="n">echo</span><span class="p">(</span><span class="n">feedback_gain</span><span class="o">=</span><span class="n">feedback_gain</span><span class="p">,</span>
+                     <span class="n">sample_rate</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">,</span>
+                     <span class="n">delay</span><span class="o">=</span><span class="n">delay</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">din</span> <span class="o">|</span> <span class="n">tuplemap</span><span class="p">(</span><span class="n">f</span><span class="o">=</span><span class="p">(</span><span class="n">mono_echo</span><span class="p">,</span> <span class="n">mono_echo</span><span class="p">))</span>
+</pre></div>
+</div>
 <p>The input interface <code class="docutils literal notranslate"><span class="pre">din</span></code> of the <code class="docutils literal notranslate"><span class="pre">stereo_echo</span></code> module, needs to carry two samples, one for each channel. This can be represented as a <code class="docutils literal notranslate"><span class="pre">Tuple</span></code> data type. If the samples are 16 bits wide, the stereo data should be of the type <code class="docutils literal notranslate"><span class="pre">Tuple[Int[16],</span> <span class="pre">Int[16]]</span></code>, which can be displayed more succinctly as <code class="docutils literal notranslate"><span class="pre">(i16,</span> <span class="pre">116)</span></code>. Other parameters of the <code class="docutils literal notranslate"><span class="pre">stereo_echo</span></code> gear have the same meaning as the <code class="docutils literal notranslate"><span class="pre">echo</span></code> gear parameters.</p>
 <p>First, a version of echo gear is created, with some of its parameters supplied/set. This is akin to the <a class="reference external" href="https://en.wikipedia.org/wiki/Partial_application">partial function application</a>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mono_echo</span> <span class="o">=</span> <span class="n">echo</span><span class="p">(</span>
-    <span class="n">feedback_gain</span><span class="o">=</span><span class="n">feedback_gain</span><span class="p">,</span>
-    <span class="n">sample_rate</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">,</span>
-    <span class="n">delay</span><span class="o">=</span><span class="n">delay</span><span class="p">,</span>
-    <span class="n">precision</span><span class="o">=</span><span class="n">precision</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mono_echo</span> <span class="o">=</span> <span class="n">echo</span><span class="p">(</span><span class="n">feedback_gain</span><span class="o">=</span><span class="n">feedback_gain</span><span class="p">,</span>
+                 <span class="n">sample_rate</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">,</span>
+                 <span class="n">delay</span><span class="o">=</span><span class="n">delay</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>The <code class="docutils literal notranslate"><span class="pre">mono_echo</span></code> variable now points to the <code class="docutils literal notranslate"><span class="pre">echo</span></code> gear, but also carries the information about parameter settings for <code class="docutils literal notranslate"><span class="pre">feedback_gain</span></code>, <code class="docutils literal notranslate"><span class="pre">sample_rate</span></code>, <code class="docutils literal notranslate"><span class="pre">delay</span></code> and <code class="docutils literal notranslate"><span class="pre">precision</span></code>. Even though the <code class="docutils literal notranslate"><span class="pre">echo</span></code> function seems to be called, it will not be instantiated at this moment. The reason is that the input interface <code class="docutils literal notranslate"><span class="pre">din</span></code> was not connected, i.e. it has not been supplied as a parameter. PyGears will instantiate a gear only when all of its input interfaces are supplied.</p>
-<p>Next, the input interface <code class="docutils literal notranslate"><span class="pre">din</span></code> is connected to the two <code class="docutils literal notranslate"><span class="pre">echo</span></code> gears. For this we will rely on <code class="docutils literal notranslate"><span class="pre">fmap</span></code> to split the data from <code class="docutils literal notranslate"><span class="pre">din</span></code> into two components, feed each of the components to the individual <code class="docutils literal notranslate"><span class="pre">echo</span></code> gear, and then combine the result. In more functional terms, <code class="docutils literal notranslate"><span class="pre">fmap</span></code> applies the <code class="docutils literal notranslate"><span class="pre">echo</span></code> functions to each item of the <code class="docutils literal notranslate"><span class="pre">din</span></code> data tuple, i.e. <code class="docutils literal notranslate"><span class="pre">fmap</span></code> is a polymorphic functor. Checkout a <a class="reference internal" href="gears.html#gears-functors"><span class="std std-ref">short presentation</span></a> of useful functors used in PyGears.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">return</span> <span class="n">din</span> <span class="o">|</span> <span class="n">fmap</span><span class="p">(</span><span class="n">f</span><span class="o">=</span><span class="p">(</span><span class="n">mono_echo</span><span class="p">,</span> <span class="n">mono_echo</span><span class="p">))</span>
+<p>The <code class="docutils literal notranslate"><span class="pre">mono_echo</span></code> variable now points to the <code class="docutils literal notranslate"><span class="pre">echo</span></code> gear, but also carries the information about parameter settings for <code class="docutils literal notranslate"><span class="pre">feedback_gain</span></code>, <code class="docutils literal notranslate"><span class="pre">sample_rate</span></code> and <code class="docutils literal notranslate"><span class="pre">delay</span></code>. Even though the <code class="docutils literal notranslate"><span class="pre">echo</span></code> function seems to be called, it will not be instantiated at this moment. The reason is that the input interface <code class="docutils literal notranslate"><span class="pre">din</span></code> was not connected, i.e. it has not been supplied as a parameter. PyGears will instantiate a gear only when all of its input interfaces are supplied.</p>
+<p>Next, the input interface <code class="docutils literal notranslate"><span class="pre">din</span></code> is connected to the two <code class="docutils literal notranslate"><span class="pre">echo</span></code> gears. For this we will rely on <code class="docutils literal notranslate"><span class="pre">tuplemap</span></code> to split the data from <code class="docutils literal notranslate"><span class="pre">din</span></code> into two components, feed each of the components to the individual <code class="docutils literal notranslate"><span class="pre">echo</span></code> gear, and then combine the result. In more functional terms, <code class="docutils literal notranslate"><span class="pre">tuplemap</span></code> applies the <code class="docutils literal notranslate"><span class="pre">echo</span></code> functions to each item of the <code class="docutils literal notranslate"><span class="pre">din</span></code> data tuple. Checkout a <a class="reference internal" href="gears.html#gears-functors"><span class="std std-ref">short presentation</span></a> of useful functors used in PyGears.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">return</span> <span class="n">din</span> <span class="o">|</span> <span class="n">tuplemap</span><span class="p">(</span><span class="n">f</span><span class="o">=</span><span class="p">(</span><span class="n">mono_echo</span><span class="p">,</span> <span class="n">mono_echo</span><span class="p">))</span>
 </pre></div>
 </div>
-<p>The output interface of the <code class="docutils literal notranslate"><span class="pre">fmap</span></code> gear will also be output interface of the <code class="docutils literal notranslate"><span class="pre">stereo_echo</span></code> gear.</p>
-<p>You can run the cosimulation of the stereo design by setting <code class="docutils literal notranslate"><span class="pre">stereo=True</span></code> in <a class="reference external" href="https://github.com/bogdanvuk/pygears/tree/develop/examples/echo/plop_test_wav_echo_sim.py">examples/echo/plop_test_wav_echo_sim.py</a>.</p>
-</div>
-<div class="section" id="functional-description">
+<p>The output interface of the <code class="docutils literal notranslate"><span class="pre">tuplemap</span></code> gear will also be output interface of the <code class="docutils literal notranslate"><span class="pre">stereo_echo</span></code> gear.</p>
+<p>You can run the cosimulation of the stereo design by setting <code class="docutils literal notranslate"><span class="pre">stereo=True</span></code> in <a class="reference external" href="https://github.com/bogdanvuk/pygears/blob/develop/examples/echo/plop_test_wav_echo_sim.py">examples/echo/plop_test_wav_echo_sim.py</a>.</p>
+</section>
+<section id="functional-description">
 <span id="examples-echo-functional-description"></span><h2>Functional description<a class="headerlink" href="#functional-description" title="Permalink to this headline">¶</a></h2>
 <p>The <code class="docutils literal notranslate"><span class="pre">echo</span></code> module operates as follows: audio samples arrive at the <code class="docutils literal notranslate"><span class="pre">echo</span></code> module input <code class="docutils literal notranslate"><span class="pre">din</span></code>, echo is added and the resulting samples are output to the module output <code class="docutils literal notranslate"><span class="pre">dout</span></code>. In PyGears terms this is a single-input, single-output gear (function), with the following declaration:</p>
-<p>As you can see the <code class="docutils literal notranslate"><span class="pre">echo</span></code> gear has few more parameters besides <code class="docutils literal notranslate"><span class="pre">din</span></code>: <code class="docutils literal notranslate"><span class="pre">feedback_gain</span></code>, <code class="docutils literal notranslate"><span class="pre">sample_rate</span></code>, <code class="docutils literal notranslate"><span class="pre">delay</span></code> and <code class="docutils literal notranslate"><span class="pre">precision</span></code>. These are declared after the ‘*’ symbol, which makes them keyword-only arguments in Python, which in turn makes them <strong>compile-time parameters</strong> in PyGears. These are akin to HDL parameters or generics.</p>
+<p>As you can see the <code class="docutils literal notranslate"><span class="pre">echo</span></code> gear has few more parameters besides <code class="docutils literal notranslate"><span class="pre">din</span></code>: <code class="docutils literal notranslate"><span class="pre">feedback_gain</span></code>, <code class="docutils literal notranslate"><span class="pre">sample_rate</span></code> and <code class="docutils literal notranslate"><span class="pre">delay</span></code>. These are declared after the ‘*’ symbol, which makes them keyword-only arguments in Python, which in turn makes them <strong>compile-time parameters</strong> in PyGears. These are akin to HDL parameters or generics.</p>
 <p>Notice that the <code class="docutils literal notranslate"><span class="pre">din</span></code> argument has also a type associated with it, namely a template <code class="docutils literal notranslate"><span class="pre">Int['W']</span></code> which represents signed integers of arbitrary width. Take a look at the <a class="reference internal" href="typing.html#typing"><span class="std std-ref">short explanation</span></a> on how types are used in PyGears. <a class="reference internal" href="typing/int.html#pygears.typing.uint.Int" title="pygears.typing.uint.Int"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int</span></code></a> type is generic in the number of bits, hence <code class="docutils literal notranslate"><span class="pre">echo</span></code> gear can work on samples of arbitrary width. The actual width of the input will be set by <code class="docutils literal notranslate"><span class="pre">echo</span></code> gear parent, i.e the module that instantiates <code class="docutils literal notranslate"><span class="pre">echo</span></code>:</p>
-<p>In <code class="docutils literal notranslate"><span class="pre">mono_echo_sim()</span></code> function, <code class="docutils literal notranslate"><span class="pre">drv</span></code> gear is used to drive audio samples to the <code class="docutils literal notranslate"><span class="pre">echo</span></code> gear, which in turn sends the result to the <code class="docutils literal notranslate"><span class="pre">collect</span></code> gear. In PyGears the connection from <code class="docutils literal notranslate"><span class="pre">drv</span></code> to <code class="docutils literal notranslate"><span class="pre">echo</span></code> can be described using pipe ‘|’ operator. The <code class="docutils literal notranslate"><span class="pre">drv</span></code> gear sends the sequence of audio samples (variable <code class="docutils literal notranslate"><span class="pre">seq</span></code>), by first converting them to the specified data type: <code class="docutils literal notranslate"><span class="pre">Int[sample_bit_width]</span></code>, where <code class="docutils literal notranslate"><span class="pre">sample_bit_width</span></code> value is calculated based on the <code class="docutils literal notranslate"><span class="pre">mono_echo_sim()</span></code> function argument <code class="docutils literal notranslate"><span class="pre">sample_width</span></code>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">wav_echo_sim</span><span class="p">(</span><span class="n">ifn</span><span class="p">,</span>
+                 <span class="n">ofn</span><span class="p">,</span>
+                 <span class="n">stereo</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                 <span class="n">cosim</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                 <span class="n">sample_rng</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">feedback_gain</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span>
+                 <span class="n">delay</span><span class="o">=</span><span class="mf">0.25</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Applies echo effect on a WAV file using Verilator cosimulation</span>
+
+<span class="sd">    ifn - Input WAV file name</span>
+<span class="sd">    ofn - Output WAV file name</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">samples_all</span><span class="p">,</span> <span class="n">params</span> <span class="o">=</span> <span class="n">wav_utils</span><span class="o">.</span><span class="n">load_wav</span><span class="p">(</span><span class="n">ifn</span><span class="p">,</span> <span class="n">stereo</span><span class="o">=</span><span class="n">stereo</span><span class="p">)</span>
+    <span class="n">samples</span> <span class="o">=</span> <span class="n">samples_all</span><span class="p">[:</span><span class="n">sample_rng</span><span class="p">]</span>
+
+    <span class="n">sample_bit_width</span> <span class="o">=</span> <span class="mi">8</span> <span class="o">*</span> <span class="n">params</span><span class="o">.</span><span class="n">sampwidth</span>
+    <span class="n">sample_type</span> <span class="o">=</span> <span class="n">Fixp</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">sample_bit_width</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">stereo</span><span class="p">:</span>
+        <span class="n">stream_type</span> <span class="o">=</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">sample_type</span><span class="p">,</span> <span class="n">sample_type</span><span class="p">]</span>
+
+        <span class="k">def</span> <span class="nf">decode_sample</span><span class="p">(</span><span class="n">seq</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">seq</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">stream_type</span><span class="p">(</span>
+                    <span class="p">(</span><span class="n">sample_type</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">sample_type</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">])))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">stream_type</span> <span class="o">=</span> <span class="n">sample_type</span>
+
+        <span class="k">def</span> <span class="nf">decode_sample</span><span class="p">(</span><span class="n">seq</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">seq</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">sample_type</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+
+<span class="hll">    <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span class="hll">    <span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">stream_type</span><span class="p">,</span> <span class="n">seq</span><span class="o">=</span><span class="n">decode_sample</span><span class="p">(</span><span class="n">samples</span><span class="p">))</span> \
+</span><span class="hll">        <span class="o">|</span> <span class="n">echo</span><span class="p">(</span><span class="n">feedback_gain</span><span class="o">=</span><span class="n">feedback_gain</span><span class="p">,</span>
+</span><span class="hll">               <span class="n">sample_rate</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">framerate</span><span class="p">,</span>
+</span><span class="hll">               <span class="n">delay</span><span class="o">=</span><span class="n">delay</span><span class="p">,</span>
+</span><span class="hll">               <span class="n">sim_cls</span><span class="o">=</span><span class="n">SimVerilated</span> <span class="k">if</span> <span class="n">cosim</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span> \
+</span><span class="hll">        <span class="o">|</span> <span class="n">collect</span><span class="p">(</span><span class="n">result</span><span class="o">=</span><span class="n">result</span><span class="p">,</span> <span class="n">samples_num</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">samples</span><span class="p">))</span>
+</span>
+    <span class="n">sim</span><span class="p">(</span><span class="n">resdir</span><span class="o">=</span><span class="s1">&#39;./build&#39;</span><span class="p">)</span>
+
+    <span class="n">wav_utils</span><span class="o">.</span><span class="n">dump_wav</span><span class="p">(</span><span class="n">ofn</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">stereo</span><span class="o">=</span><span class="n">stereo</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">wav_utils</span><span class="o">.</span><span class="n">plot_wavs</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">stereo</span><span class="o">=</span><span class="n">stereo</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">pass</span>
+</pre></div>
+</div>
+<p>In <code class="docutils literal notranslate"><span class="pre">wav_echo_sim()</span></code> function, <code class="docutils literal notranslate"><span class="pre">drv</span></code> gear is used to drive audio samples to the <code class="docutils literal notranslate"><span class="pre">echo</span></code> gear, which in turn sends the result to the <code class="docutils literal notranslate"><span class="pre">collect</span></code> gear. In PyGears the connection from <code class="docutils literal notranslate"><span class="pre">drv</span></code> to <code class="docutils literal notranslate"><span class="pre">echo</span></code> can be described using pipe ‘|’ operator. The <code class="docutils literal notranslate"><span class="pre">drv</span></code> gear sends the sequence of audio samples (variable <code class="docutils literal notranslate"><span class="pre">seq</span></code>), by first converting them to the specified data type: <code class="docutils literal notranslate"><span class="pre">Fixp[1,</span> <span class="pre">sample_bit_width]</span></code>, where <code class="docutils literal notranslate"><span class="pre">sample_bit_width</span></code> value is calculated based on the input wave file format.</p>
 <img alt="_images/echo_sim.png" class="align-center" src="_images/echo_sim.png" />
-<p>At compile time, PyGears will try to match output data type of <code class="docutils literal notranslate"><span class="pre">drv</span></code> gear: <code class="docutils literal notranslate"><span class="pre">Int[sample_bit_width]</span></code> to the input data type <code class="docutils literal notranslate"><span class="pre">Int['W']</span></code> of the <code class="docutils literal notranslate"><span class="pre">echo</span></code> gear, and since that their base types (<a class="reference internal" href="typing/int.html#pygears.typing.uint.Int" title="pygears.typing.uint.Int"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int</span></code></a>) match, deduce the value of the template parameter <code class="docutils literal notranslate"><span class="pre">W</span> <span class="pre">=</span> <span class="pre">sample_bit_width</span></code>. This parameter can then be used throughout the gear signature to calculate values of a gear compile-time parameters or fix types of a gear interfaces. In this example, value of the <code class="docutils literal notranslate"><span class="pre">echo</span></code> gear argument <code class="docutils literal notranslate"><span class="pre">sample_width</span></code> is set to be exactly equal to <code class="docutils literal notranslate"><span class="pre">W</span></code>.</p>
+<p>At compile time, PyGears will try to match output data type of <code class="docutils literal notranslate"><span class="pre">drv</span></code> gear: <code class="docutils literal notranslate"><span class="pre">Fixp[1,</span> <span class="pre">sample_bit_width]</span></code> to the input data type <code class="docutils literal notranslate"><span class="pre">Fixp</span></code> of the <code class="docutils literal notranslate"><span class="pre">echo</span></code> gear, and since that their base types (<code class="xref py py-class docutils literal notranslate"><span class="pre">Fixp</span></code>) match PyGears will allow the connection.</p>
 <p>Conveniently, <code class="docutils literal notranslate"><span class="pre">echo</span></code> gear accepts also some floating point arguments, but these then need to be converted in order to be used for parametrizing hardware modules. This is done at the beginning of the function:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">sample_dly_len</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">sample_rate</span> <span class="o">*</span> <span class="n">delay</span><span class="p">)</span>
+    <span class="n">fifo_depth</span> <span class="o">=</span> <span class="n">ceil_pow2</span><span class="p">(</span><span class="n">sample_dly_len</span><span class="p">)</span>
+    <span class="n">feedback_gain_fixp</span> <span class="o">=</span> <span class="n">din</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">feedback_gain</span><span class="p">)</span>
+
+</pre></div>
+</div>
 <p>Since echo delay is given in seconds, it needs to be calculated in terms of the number of samples: variable <code class="docutils literal notranslate"><span class="pre">sample_dly_len</span></code> in the code. Then, feedback loop fifo needs to be deep enough to store the delayed samples. Current implementation of the fifo module in PyGears demands its depth to be a power of 2. Hence, function <code class="docutils literal notranslate"><span class="pre">ceil_pow2</span></code> is used to calculate the smallest power of 2 that can accommodate selected delay: variable <code class="docutils literal notranslate"><span class="pre">fifo_depth</span></code> in the code.</p>
 <p>Feedback loop gain is also given as a floating point number and needs to be converted to its fixed-point representation: variable <code class="docutils literal notranslate"><span class="pre">feedback_gain_fixp</span></code>. Width of the fixed-point gain is chosen to be equal to the width of the audio samples received at <code class="docutils literal notranslate"><span class="pre">din</span></code>, which will be available via the <code class="docutils literal notranslate"><span class="pre">sample_width</span></code> argument. Calculated fixed-point value is then cast to the type of the <em>din</em> interface: <code class="docutils literal notranslate"><span class="pre">feedback_gain_fixp</span> <span class="pre">=</span> <span class="pre">din.dtype(...)</span></code>.</p>
-</div>
-<div class="section" id="hardware-description">
+</section>
+<section id="hardware-description">
 <span id="examples-echo-hardware-description"></span><h2>Hardware description<a class="headerlink" href="#hardware-description" title="Permalink to this headline">¶</a></h2>
 <p>After the compile-time parameters calculation in the <code class="docutils literal notranslate"><span class="pre">echo</span></code> function, the description of the actual hardware is given.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
+    <span class="n">feedback</span> <span class="o">=</span> <span class="n">dout</span> \
+        <span class="o">|</span> <span class="n">decouple</span><span class="p">(</span><span class="n">depth</span><span class="o">=</span><span class="n">fifo_depth</span><span class="p">)</span> \
+        <span class="o">|</span> <span class="n">prefill</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">din</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="n">sample_dly_len</span><span class="p">)</span>
+
+    <span class="n">feedback_attenuated</span> <span class="o">=</span> <span class="n">trunc</span><span class="p">(</span><span class="n">feedback</span> <span class="o">*</span> <span class="n">feedback_gain_fixp</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="n">din</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+
+    <span class="n">dout</span> <span class="o">|=</span> <span class="n">trunc</span><span class="p">(</span><span class="n">din</span> <span class="o">+</span> <span class="n">feedback_attenuated</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="n">dout</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">dout</span>
+</pre></div>
+</div>
 <img alt="_images/echo.png" class="align-center" src="_images/echo.png" />
 <p>The feedback loop, present in the design, cannot be described as a plain gear composition since it forms a cycle. This cycle needs to be cut at one spot, described as the gear composition and then stitched together. In this example, we will cut the cycle after the adder and start by defining the interface <code class="docutils literal notranslate"><span class="pre">dout</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dout</span> <span class="o">=</span> <span class="n">Intf</span><span class="p">(</span><span class="n">din</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
@@ -127,26 +211,28 @@ Result length: <span class="m">165359</span>
 </div>
 <p>At this moment, this interface has no source (producer), which has to be attended to later, when we stitch the cycle. We will now connect <code class="docutils literal notranslate"><span class="pre">dout</span></code> interface to the FIFO, which we will in turn connect to the Fill Void gear:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">feedback</span> <span class="o">=</span> <span class="n">dout</span> \
-    <span class="o">|</span> <span class="n">fifo</span><span class="p">(</span><span class="n">depth</span><span class="o">=</span><span class="n">fifo_depth</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="n">sample_dly_len</span><span class="p">)</span> \
-    <span class="o">|</span> <span class="n">fill_void</span><span class="p">(</span><span class="n">fill</span><span class="o">=</span><span class="n">din</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span> \
-    <span class="o">|</span> <span class="n">decouple</span>
+    <span class="o">|</span> <span class="n">decouple</span><span class="p">(</span><span class="n">depth</span><span class="o">=</span><span class="n">fifo_depth</span><span class="p">)</span> \
+    <span class="o">|</span> <span class="n">prefill</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">din</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="n">sample_dly_len</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>[Omitted long line with 1 matches]</p>
-<p>The function of the Fill Void gear is to supply the feedback loop with zeros until there are enough samples (<code class="docutils literal notranslate"><span class="pre">sample_dly_len</span></code> of them) in the FIFO, at which moment the FIFO will start outputting the delayed samples. The definition of the Fill Void gear is given in the same file:</p>
+<p>The function of the prefill gear is to supply the feedback loop with zeros until there are enough samples (<code class="docutils literal notranslate"><span class="pre">sample_dly_len</span></code> of them) in the FIFO, at which moment the FIFO will start outputting the delayed samples. The definition of the prefill gear is given in the same file:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@gear</span>
-<span class="k">def</span> <span class="nf">fill_void</span><span class="p">(</span><span class="n">din</span><span class="p">,</span> <span class="n">fill</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">priority_mux</span><span class="p">(</span><span class="n">din</span><span class="p">,</span> <span class="n">fill</span><span class="p">)</span> \
+<span class="k">def</span> <span class="nf">prefill</span><span class="p">(</span><span class="n">din</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">num</span><span class="p">,</span> <span class="n">dtype</span><span class="p">):</span>
+    <span class="n">fill</span> <span class="o">=</span> <span class="n">once</span><span class="p">(</span><span class="n">val</span><span class="o">=</span><span class="n">dtype</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span> \
+        <span class="o">|</span> <span class="n">replicate</span><span class="p">(</span><span class="n">num</span><span class="p">)</span> \
+        <span class="o">|</span> <span class="n">flatten</span>
+
+    <span class="k">return</span> <span class="n">priority_mux</span><span class="p">(</span><span class="n">fill</span><span class="p">,</span> <span class="n">din</span><span class="p">)</span> \
         <span class="o">|</span> <span class="n">union_collapse</span>
 </pre></div>
 </div>
 <p>The <code class="docutils literal notranslate"><span class="pre">priority_mux</span></code> gives priority to the <code class="docutils literal notranslate"><span class="pre">din</span></code> interface over the <code class="docutils literal notranslate"><span class="pre">fill</span></code> interface. In other words, if the data is available at the <code class="docutils literal notranslate"><span class="pre">din</span></code> interface, it will be passed to the output of the <code class="docutils literal notranslate"><span class="pre">priority_mux</span></code> gear. Otherwise, the data from the <code class="docutils literal notranslate"><span class="pre">fill</span></code> interface is output. <code class="docutils literal notranslate"><span class="pre">priority_mux</span></code> also outputs some additional information (i.e. from which input interface the data was passed) which is not needed here, so <code class="docutils literal notranslate"><span class="pre">union_collapse</span></code> gear is used to filter it out.</p>
-<p>Back to the <code class="docutils literal notranslate"><span class="pre">echo</span></code> function. Finally the output interface of the <code class="docutils literal notranslate"><span class="pre">fill_void</span></code> gear is assigned to the variable <code class="docutils literal notranslate"><span class="pre">feedback</span></code>. This variable can now be used to connect this interface to the multiplier:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">feedback_attenuated</span> <span class="o">=</span> <span class="p">(</span><span class="n">feedback</span> <span class="o">*</span> <span class="n">feedback_gain_fixp</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="n">precision</span>
+<p>Back to the <code class="docutils literal notranslate"><span class="pre">echo</span></code> function. Finally the output interface of the <code class="docutils literal notranslate"><span class="pre">prefill</span></code> gear is assigned to the variable <code class="docutils literal notranslate"><span class="pre">feedback</span></code>. This variable can now be used to connect this interface to the multiplier:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">feedback_attenuated</span> <span class="o">=</span> <span class="n">trunc</span><span class="p">(</span><span class="n">feedback</span> <span class="o">*</span> <span class="n">feedback_gain_fixp</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="n">din</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The output of the multiplier is then connected to the SHR gear, whose output interface is in turn assigned to the variable <code class="docutils literal notranslate"><span class="pre">feedback_attenuated</span></code>. Adder is then instantiated and <code class="docutils literal notranslate"><span class="pre">din</span></code> and <code class="docutils literal notranslate"><span class="pre">feedback_attenuated</span></code> interfaces are connected to it. Multiplication, shifting and addition operations change the bit width of the data, so we need restore the width of the data to the input data width. This is done by the cast to the input data type <code class="docutils literal notranslate"><span class="pre">din.dtype</span></code>. Finally, we stitch the feedback cycle back, by connecting the output interface of the adder to the previously declared <code class="docutils literal notranslate"><span class="pre">dout</span></code> interface:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dout</span> <span class="o">|=</span> <span class="p">(</span><span class="n">din</span> <span class="o">+</span> <span class="n">feedback_attenuated</span><span class="p">)</span> <span class="o">|</span> <span class="n">din</span><span class="o">.</span><span class="n">dtype</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dout</span> <span class="o">|=</span> <span class="n">trunc</span><span class="p">(</span><span class="n">din</span> <span class="o">+</span> <span class="n">feedback_attenuated</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="n">dout</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>At the end of the <code class="docutils literal notranslate"><span class="pre">echo</span></code> function implementation, we declare which of the interfaces will be output outside of the <code class="docutils literal notranslate"><span class="pre">echo</span></code> gear:</p>
@@ -154,163 +240,126 @@ Result length: <span class="m">165359</span>
 </pre></div>
 </div>
 <p>Given description of the <code class="docutils literal notranslate"><span class="pre">echo</span></code> gear is translated by the PyGears into the SystemVerilog module given below:</p>
-</div>
-<div class="section" id="generated-systemverilog">
+</section>
+<section id="generated-systemverilog">
 <span id="echo-sv"></span><h2>Generated SystemVerilog<a class="headerlink" href="#generated-systemverilog" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-systemverilog notranslate"><div class="highlight"><pre><span></span><span class="k">module</span> <span class="n">echo</span><span class="p">(</span>
-    <span class="k">input</span> <span class="k">logic</span> <span class="n">clk</span><span class="p">,</span>
-    <span class="k">input</span> <span class="k">logic</span> <span class="n">rst</span><span class="p">,</span>
-    <span class="n">dti</span><span class="p">.</span><span class="n">consumer</span> <span class="n">din</span><span class="p">,</span> <span class="c1">// i16 (16)</span>
-    <span class="n">dti</span><span class="p">.</span><span class="n">producer</span> <span class="n">dout</span> <span class="c1">// i16 (16)</span>
+    <span class="k">input</span> <span class="kt">logic</span> <span class="n">clk</span><span class="p">,</span>
+    <span class="k">input</span> <span class="kt">logic</span> <span class="n">rst</span><span class="p">,</span>
+
+    <span class="n">dti</span><span class="p">.</span><span class="n">consumer</span> <span class="n">din</span><span class="p">,</span> <span class="c1">// q1.15 (16)</span>
+    <span class="n">dti</span><span class="p">.</span><span class="n">producer</span> <span class="n">dout</span> <span class="c1">// q1.15 (16)</span>
 
 <span class="p">);</span>
 
-      <span class="n">dti</span> <span class="p">#(.</span><span class="n">W_DATA</span><span class="p">(</span><span class="mh">16</span><span class="p">))</span> <span class="n">fifo_s</span><span class="p">();</span> <span class="c1">// i16 (16)</span>
+<span class="cm">/*verilator tracing_off*/</span>
 
-      <span class="n">dti</span> <span class="p">#(.</span><span class="n">W_DATA</span><span class="p">(</span><span class="mh">16</span><span class="p">))</span> <span class="n">fill_void_s</span><span class="p">();</span> <span class="c1">// i16 (16)</span>
-
-      <span class="n">dti</span> <span class="p">#(.</span><span class="n">W_DATA</span><span class="p">(</span><span class="mh">16</span><span class="p">))</span> <span class="n">const0_s</span><span class="p">();</span> <span class="c1">// i16 (16)</span>
-
-      <span class="n">dti</span> <span class="p">#(.</span><span class="n">W_DATA</span><span class="p">(</span><span class="mh">16</span><span class="p">))</span> <span class="n">feedback_s</span><span class="p">();</span> <span class="c1">// i16 (16)</span>
-
-      <span class="n">dti</span> <span class="p">#(.</span><span class="n">W_DATA</span><span class="p">(</span><span class="mh">32</span><span class="p">))</span> <span class="n">mul_s</span><span class="p">();</span> <span class="c1">// i32 (32)</span>
-
-      <span class="n">dti</span> <span class="p">#(.</span><span class="n">W_DATA</span><span class="p">(</span><span class="mh">16</span><span class="p">))</span> <span class="n">const1_s</span><span class="p">();</span> <span class="c1">// i16 (16)</span>
-
-      <span class="n">dti</span> <span class="p">#(.</span><span class="n">W_DATA</span><span class="p">(</span><span class="mh">32</span><span class="p">))</span> <span class="n">feedback_attenuated_s</span><span class="p">();</span> <span class="c1">// i32 (32)</span>
-
-      <span class="n">dti</span> <span class="p">#(.</span><span class="n">W_DATA</span><span class="p">(</span><span class="mh">4</span><span class="p">))</span> <span class="n">const2_s</span><span class="p">();</span> <span class="c1">// u4 (4)</span>
-
-      <span class="n">dti</span> <span class="p">#(.</span><span class="n">W_DATA</span><span class="p">(</span><span class="mh">33</span><span class="p">))</span> <span class="n">add_s</span><span class="p">();</span> <span class="c1">// i33 (33)</span>
-
-      <span class="n">dti</span> <span class="p">#(.</span><span class="n">W_DATA</span><span class="p">(</span><span class="mh">16</span><span class="p">))</span> <span class="n">dout_s</span><span class="p">();</span> <span class="c1">// i16 (16)</span>
-      <span class="n">dti</span> <span class="p">#(.</span><span class="n">W_DATA</span><span class="p">(</span><span class="mh">16</span><span class="p">))</span> <span class="n">dout_s_bc</span><span class="p">[</span><span class="mh">1</span><span class="o">:</span><span class="mh">0</span><span class="p">]();</span> <span class="c1">// i16 (16)</span>
+      <span class="n">dti</span> <span class="p">#(.</span><span class="n">W_DATA</span><span class="p">(</span><span class="mi">16</span><span class="p">))</span> <span class="n">trunc11_s</span><span class="p">();</span> <span class="c1">// q1.15 (16)</span>
+      <span class="n">dti</span> <span class="p">#(.</span><span class="n">W_DATA</span><span class="p">(</span><span class="mi">16</span><span class="p">))</span> <span class="n">trunc11_s_bc</span><span class="p">[</span><span class="mi">1</span><span class="o">:</span><span class="mi">0</span><span class="p">]();</span> <span class="c1">// q1.15 (16)</span>
     <span class="n">bc</span> <span class="p">#(</span>
-                <span class="p">.</span><span class="n">SIZE</span><span class="p">(</span><span class="mh">2</span><span class="mi">&#39;d2</span><span class="p">)</span>
+        <span class="p">.</span><span class="n">SIZE</span><span class="p">(</span><span class="mi">2&#39;d2</span><span class="p">)</span>
     <span class="p">)</span>
-    <span class="n">bc_dout_s</span> <span class="p">(</span>
+    <span class="n">bc_trunc11_s</span> <span class="p">(</span>
         <span class="p">.</span><span class="n">clk</span><span class="p">(</span><span class="n">clk</span><span class="p">),</span>
         <span class="p">.</span><span class="n">rst</span><span class="p">(</span><span class="n">rst</span><span class="p">),</span>
-        <span class="p">.</span><span class="n">din</span><span class="p">(</span><span class="n">dout_s</span><span class="p">),</span>
-        <span class="p">.</span><span class="n">dout</span><span class="p">(</span><span class="n">dout_s_bc</span><span class="p">)</span>
+        <span class="p">.</span><span class="n">din</span><span class="p">(</span><span class="n">trunc11_s</span><span class="p">),</span>
+        <span class="p">.</span><span class="n">dout</span><span class="p">(</span><span class="n">trunc11_s_bc</span><span class="p">)</span>
     <span class="p">);</span>
 
-    <span class="n">connect</span> <span class="n">connect_dout_s_1</span> <span class="p">(</span>
+    <span class="k">assign</span> <span class="n">dout</span><span class="p">.</span><span class="n">valid</span> <span class="o">=</span> <span class="n">trunc11_s_bc</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">valid</span><span class="p">;</span>
+    <span class="k">assign</span> <span class="n">dout</span><span class="p">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">trunc11_s_bc</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">data</span><span class="p">;</span>
+    <span class="k">assign</span> <span class="n">trunc11_s_bc</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">ready</span> <span class="o">=</span> <span class="n">dout</span><span class="p">.</span><span class="n">ready</span><span class="p">;</span>
+
+      <span class="n">dti</span> <span class="p">#(.</span><span class="n">W_DATA</span><span class="p">(</span><span class="mi">16</span><span class="p">))</span> <span class="n">decouple1_s</span><span class="p">();</span> <span class="c1">// q1.15 (16)</span>
+
+      <span class="n">dti</span> <span class="p">#(.</span><span class="n">W_DATA</span><span class="p">(</span><span class="mi">16</span><span class="p">))</span> <span class="n">prefill1_s</span><span class="p">();</span> <span class="c1">// q1.15 (16)</span>
+
+      <span class="n">dti</span> <span class="p">#(.</span><span class="n">W_DATA</span><span class="p">(</span><span class="mi">16</span><span class="p">))</span> <span class="n">const1_s</span><span class="p">();</span> <span class="c1">// q1.15 (16)</span>
+
+      <span class="n">dti</span> <span class="p">#(.</span><span class="n">W_DATA</span><span class="p">(</span><span class="mi">32</span><span class="p">))</span> <span class="n">ccat01_s</span><span class="p">();</span> <span class="c1">// (q1.15, q1.15) (32)</span>
+
+      <span class="n">dti</span> <span class="p">#(.</span><span class="n">W_DATA</span><span class="p">(</span><span class="mi">32</span><span class="p">))</span> <span class="n">mul1_s</span><span class="p">();</span> <span class="c1">// q2.30 (32)</span>
+
+      <span class="n">dti</span> <span class="p">#(.</span><span class="n">W_DATA</span><span class="p">(</span><span class="mi">16</span><span class="p">))</span> <span class="n">trunc01_s</span><span class="p">();</span> <span class="c1">// q1.15 (16)</span>
+
+      <span class="n">dti</span> <span class="p">#(.</span><span class="n">W_DATA</span><span class="p">(</span><span class="mi">32</span><span class="p">))</span> <span class="n">ccat11_s</span><span class="p">();</span> <span class="c1">// (q1.15, q1.15) (32)</span>
+
+      <span class="n">dti</span> <span class="p">#(.</span><span class="n">W_DATA</span><span class="p">(</span><span class="mi">17</span><span class="p">))</span> <span class="n">add1_s</span><span class="p">();</span> <span class="c1">// q2.15 (17)</span>
+
+    <span class="n">echo_decouple</span> <span class="n">decouple</span> <span class="p">(</span>
         <span class="p">.</span><span class="n">clk</span><span class="p">(</span><span class="n">clk</span><span class="p">),</span>
         <span class="p">.</span><span class="n">rst</span><span class="p">(</span><span class="n">rst</span><span class="p">),</span>
-        <span class="p">.</span><span class="n">din</span><span class="p">(</span><span class="n">dout_s_bc</span><span class="p">[</span><span class="mh">1</span><span class="p">]),</span>
-        <span class="p">.</span><span class="n">dout</span><span class="p">(</span><span class="n">dout</span><span class="p">)</span>
-    <span class="p">);</span>
-
-
-    <span class="n">fifo</span> <span class="p">#(</span>
-                <span class="p">.</span><span class="n">DEPTH</span><span class="p">(</span><span class="mh">15</span><span class="mi">&#39;d16384</span><span class="p">),</span>
-                <span class="p">.</span><span class="n">THRESHOLD</span><span class="p">(</span><span class="mh">14</span><span class="mi">&#39;d12000</span><span class="p">)</span>
-    <span class="p">)</span>
-    <span class="n">fifo_i</span> <span class="p">(</span>
-        <span class="p">.</span><span class="n">clk</span><span class="p">(</span><span class="n">clk</span><span class="p">),</span>
-        <span class="p">.</span><span class="n">rst</span><span class="p">(</span><span class="n">rst</span><span class="p">),</span>
-        <span class="p">.</span><span class="n">din</span><span class="p">(</span><span class="n">dout_s_bc</span><span class="p">[</span><span class="mh">0</span><span class="p">]),</span>
-        <span class="p">.</span><span class="n">dout</span><span class="p">(</span><span class="n">fifo_s</span><span class="p">)</span>
-    <span class="p">);</span>
-
-
-    <span class="n">echo_fill_void</span> <span class="n">fill_void_i</span> <span class="p">(</span>
-        <span class="p">.</span><span class="n">clk</span><span class="p">(</span><span class="n">clk</span><span class="p">),</span>
-        <span class="p">.</span><span class="n">rst</span><span class="p">(</span><span class="n">rst</span><span class="p">),</span>
-        <span class="p">.</span><span class="n">din</span><span class="p">(</span><span class="n">fifo_s</span><span class="p">),</span>
-        <span class="p">.</span><span class="n">fill</span><span class="p">(</span><span class="n">const0_s</span><span class="p">),</span>
-        <span class="p">.</span><span class="n">dout</span><span class="p">(</span><span class="n">fill_void_s</span><span class="p">)</span>
-    <span class="p">);</span>
-
-
-    <span class="n">sustain</span> <span class="p">#(</span>
-                <span class="p">.</span><span class="n">TOUT</span><span class="p">(</span><span class="mh">5</span><span class="mi">&#39;d16</span><span class="p">)</span>
-    <span class="p">)</span>
-    <span class="n">const0_i</span> <span class="p">(</span>
-        <span class="p">.</span><span class="n">clk</span><span class="p">(</span><span class="n">clk</span><span class="p">),</span>
-        <span class="p">.</span><span class="n">rst</span><span class="p">(</span><span class="n">rst</span><span class="p">),</span>
-        <span class="p">.</span><span class="n">dout</span><span class="p">(</span><span class="n">const0_s</span><span class="p">)</span>
+        <span class="p">.</span><span class="n">din</span><span class="p">(</span><span class="n">trunc11_s_bc</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+        <span class="p">.</span><span class="n">dout</span><span class="p">(</span><span class="n">decouple1_s</span><span class="p">)</span>
     <span class="p">);</span>
 
 
-    <span class="n">decouple</span> <span class="n">decouple_i</span> <span class="p">(</span>
+    <span class="n">echo_prefill</span> <span class="n">prefill</span> <span class="p">(</span>
         <span class="p">.</span><span class="n">clk</span><span class="p">(</span><span class="n">clk</span><span class="p">),</span>
         <span class="p">.</span><span class="n">rst</span><span class="p">(</span><span class="n">rst</span><span class="p">),</span>
-        <span class="p">.</span><span class="n">din</span><span class="p">(</span><span class="n">fill_void_s</span><span class="p">),</span>
-        <span class="p">.</span><span class="n">dout</span><span class="p">(</span><span class="n">feedback_s</span><span class="p">)</span>
+        <span class="p">.</span><span class="n">din</span><span class="p">(</span><span class="n">decouple1_s</span><span class="p">),</span>
+        <span class="p">.</span><span class="n">dout</span><span class="p">(</span><span class="n">prefill1_s</span><span class="p">)</span>
     <span class="p">);</span>
 
 
-    <span class="n">mul</span> <span class="p">#(</span>
-                <span class="p">.</span><span class="n">DIN0</span><span class="p">(</span><span class="mh">5</span><span class="mi">&#39;d16</span><span class="p">),</span>
-                <span class="p">.</span><span class="n">DIN0_SIGNED</span><span class="p">(</span><span class="mh">1</span><span class="mi">&#39;d1</span><span class="p">),</span>
-                <span class="p">.</span><span class="n">DIN1</span><span class="p">(</span><span class="mh">5</span><span class="mi">&#39;d16</span><span class="p">),</span>
-                <span class="p">.</span><span class="n">DIN1_SIGNED</span><span class="p">(</span><span class="mh">1</span><span class="mi">&#39;d1</span><span class="p">)</span>
-    <span class="p">)</span>
-    <span class="n">mul_i</span> <span class="p">(</span>
+    <span class="n">echo_ccat0</span> <span class="n">ccat0</span> <span class="p">(</span>
         <span class="p">.</span><span class="n">clk</span><span class="p">(</span><span class="n">clk</span><span class="p">),</span>
         <span class="p">.</span><span class="n">rst</span><span class="p">(</span><span class="n">rst</span><span class="p">),</span>
-        <span class="p">.</span><span class="n">din0</span><span class="p">(</span><span class="n">feedback_s</span><span class="p">),</span>
+        <span class="p">.</span><span class="n">din0</span><span class="p">(</span><span class="n">prefill1_s</span><span class="p">),</span>
         <span class="p">.</span><span class="n">din1</span><span class="p">(</span><span class="n">const1_s</span><span class="p">),</span>
-        <span class="p">.</span><span class="n">dout</span><span class="p">(</span><span class="n">mul_s</span><span class="p">)</span>
+        <span class="p">.</span><span class="n">dout</span><span class="p">(</span><span class="n">ccat01_s</span><span class="p">)</span>
     <span class="p">);</span>
 
 
     <span class="n">sustain</span> <span class="p">#(</span>
-                <span class="p">.</span><span class="n">VAL</span><span class="p">(</span><span class="mh">15</span><span class="mi">&#39;d19660</span><span class="p">),</span>
-                <span class="p">.</span><span class="n">TOUT</span><span class="p">(</span><span class="mh">5</span><span class="mi">&#39;d16</span><span class="p">)</span>
+        <span class="p">.</span><span class="n">VAL</span><span class="p">(</span><span class="mi">15&#39;d19661</span><span class="p">),</span>
+        <span class="p">.</span><span class="n">TOUT</span><span class="p">(</span><span class="mi">5&#39;d16</span><span class="p">)</span>
     <span class="p">)</span>
-    <span class="n">const1_i</span> <span class="p">(</span>
+    <span class="n">const_i</span> <span class="p">(</span>
         <span class="p">.</span><span class="n">clk</span><span class="p">(</span><span class="n">clk</span><span class="p">),</span>
         <span class="p">.</span><span class="n">rst</span><span class="p">(</span><span class="n">rst</span><span class="p">),</span>
         <span class="p">.</span><span class="n">dout</span><span class="p">(</span><span class="n">const1_s</span><span class="p">)</span>
     <span class="p">);</span>
 
 
-    <span class="n">shr</span> <span class="p">#(</span>
-                <span class="p">.</span><span class="n">SIGNED</span><span class="p">(</span><span class="mh">1</span><span class="mi">&#39;d1</span><span class="p">)</span>
-    <span class="p">)</span>
-    <span class="n">shr_i</span> <span class="p">(</span>
+    <span class="n">echo_mul</span> <span class="n">mul</span> <span class="p">(</span>
         <span class="p">.</span><span class="n">clk</span><span class="p">(</span><span class="n">clk</span><span class="p">),</span>
         <span class="p">.</span><span class="n">rst</span><span class="p">(</span><span class="n">rst</span><span class="p">),</span>
-        <span class="p">.</span><span class="n">din</span><span class="p">(</span><span class="n">mul_s</span><span class="p">),</span>
-        <span class="p">.</span><span class="n">cfg</span><span class="p">(</span><span class="n">const2_s</span><span class="p">),</span>
-        <span class="p">.</span><span class="n">dout</span><span class="p">(</span><span class="n">feedback_attenuated_s</span><span class="p">)</span>
+        <span class="p">.</span><span class="n">din</span><span class="p">(</span><span class="n">ccat01_s</span><span class="p">),</span>
+        <span class="p">.</span><span class="n">dout</span><span class="p">(</span><span class="n">mul1_s</span><span class="p">)</span>
     <span class="p">);</span>
 
 
-    <span class="n">sustain</span> <span class="p">#(</span>
-                <span class="p">.</span><span class="n">VAL</span><span class="p">(</span><span class="mh">4</span><span class="mi">&#39;d15</span><span class="p">),</span>
-                <span class="p">.</span><span class="n">TOUT</span><span class="p">(</span><span class="mh">3</span><span class="mi">&#39;d4</span><span class="p">)</span>
-    <span class="p">)</span>
-    <span class="n">const2_i</span> <span class="p">(</span>
+    <span class="n">echo_trunc0</span> <span class="n">trunc0</span> <span class="p">(</span>
         <span class="p">.</span><span class="n">clk</span><span class="p">(</span><span class="n">clk</span><span class="p">),</span>
         <span class="p">.</span><span class="n">rst</span><span class="p">(</span><span class="n">rst</span><span class="p">),</span>
-        <span class="p">.</span><span class="n">dout</span><span class="p">(</span><span class="n">const2_s</span><span class="p">)</span>
+        <span class="p">.</span><span class="n">din</span><span class="p">(</span><span class="n">mul1_s</span><span class="p">),</span>
+        <span class="p">.</span><span class="n">dout</span><span class="p">(</span><span class="n">trunc01_s</span><span class="p">)</span>
     <span class="p">);</span>
 
 
-    <span class="n">add</span> <span class="p">#(</span>
-                <span class="p">.</span><span class="n">DIN0</span><span class="p">(</span><span class="mh">5</span><span class="mi">&#39;d16</span><span class="p">),</span>
-                <span class="p">.</span><span class="n">DIN0_SIGNED</span><span class="p">(</span><span class="mh">1</span><span class="mi">&#39;d1</span><span class="p">),</span>
-                <span class="p">.</span><span class="n">DIN1</span><span class="p">(</span><span class="mh">6</span><span class="mi">&#39;d32</span><span class="p">),</span>
-                <span class="p">.</span><span class="n">DIN1_SIGNED</span><span class="p">(</span><span class="mh">1</span><span class="mi">&#39;d1</span><span class="p">)</span>
-    <span class="p">)</span>
-    <span class="n">add_i</span> <span class="p">(</span>
+    <span class="n">echo_ccat1</span> <span class="n">ccat1</span> <span class="p">(</span>
         <span class="p">.</span><span class="n">clk</span><span class="p">(</span><span class="n">clk</span><span class="p">),</span>
         <span class="p">.</span><span class="n">rst</span><span class="p">(</span><span class="n">rst</span><span class="p">),</span>
         <span class="p">.</span><span class="n">din0</span><span class="p">(</span><span class="n">din</span><span class="p">),</span>
-        <span class="p">.</span><span class="n">din1</span><span class="p">(</span><span class="n">feedback_attenuated_s</span><span class="p">),</span>
-        <span class="p">.</span><span class="n">dout</span><span class="p">(</span><span class="n">add_s</span><span class="p">)</span>
+        <span class="p">.</span><span class="n">din1</span><span class="p">(</span><span class="n">trunc01_s</span><span class="p">),</span>
+        <span class="p">.</span><span class="n">dout</span><span class="p">(</span><span class="n">ccat11_s</span><span class="p">)</span>
     <span class="p">);</span>
 
 
-    <span class="n">echo_cast_dout</span> <span class="n">cast_dout_i</span> <span class="p">(</span>
+    <span class="n">echo_add</span> <span class="n">add</span> <span class="p">(</span>
         <span class="p">.</span><span class="n">clk</span><span class="p">(</span><span class="n">clk</span><span class="p">),</span>
         <span class="p">.</span><span class="n">rst</span><span class="p">(</span><span class="n">rst</span><span class="p">),</span>
-        <span class="p">.</span><span class="n">din</span><span class="p">(</span><span class="n">add_s</span><span class="p">),</span>
-        <span class="p">.</span><span class="n">dout</span><span class="p">(</span><span class="n">dout_s</span><span class="p">)</span>
+        <span class="p">.</span><span class="n">din</span><span class="p">(</span><span class="n">ccat11_s</span><span class="p">),</span>
+        <span class="p">.</span><span class="n">dout</span><span class="p">(</span><span class="n">add1_s</span><span class="p">)</span>
+    <span class="p">);</span>
+
+
+    <span class="n">echo_trunc1</span> <span class="n">trunc1</span> <span class="p">(</span>
+        <span class="p">.</span><span class="n">clk</span><span class="p">(</span><span class="n">clk</span><span class="p">),</span>
+        <span class="p">.</span><span class="n">rst</span><span class="p">(</span><span class="n">rst</span><span class="p">),</span>
+        <span class="p">.</span><span class="n">din</span><span class="p">(</span><span class="n">add1_s</span><span class="p">),</span>
+        <span class="p">.</span><span class="n">dout</span><span class="p">(</span><span class="n">trunc11_s</span><span class="p">)</span>
     <span class="p">);</span>
 
 
@@ -318,22 +367,11 @@ Result length: <span class="m">165359</span>
 <span class="k">endmodule</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="resource-utilization">
+</section>
+<section id="resource-utilization">
 <span id="examples-echo-resource-utilization"></span><h2>Resource Utilization<a class="headerlink" href="#resource-utilization" title="Permalink to this headline">¶</a></h2>
-<p>If you have Vivado tool on your path while running the <a class="reference external" href="https://github.com/bogdanvuk/pygears/tree/develop/examples/echo/echo_svgen.py">examples/echo/echo_svgen.py</a> script, the following report will be produced. Some of the <code class="docutils literal notranslate"><span class="pre">echo</span></code> submodules are missing from the list, since Vivado tried to merged the modules in order to reduce the resource utilization.</p>
+<p>If you have Vivado tool on your path while running the <a class="reference external" href="https://github.com/bogdanvuk/pygears-dsp/blob/master/pygears_dsp/examples/echo/echo_svgen.py">pygears_dsp/examples/echo/echo_svgen.py</a> script, the following report will be produced. Some of the <code class="docutils literal notranslate"><span class="pre">echo</span></code> submodules are missing from the list, since Vivado tried to merged the modules in order to reduce the resource utilization.</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 23%" />
-<col style="width: 13%" />
-<col style="width: 13%" />
-<col style="width: 9%" />
-<col style="width: 6%" />
-<col style="width: 5%" />
-<col style="width: 8%" />
-<col style="width: 8%" />
-<col style="width: 15%" />
-</colgroup>
 <tbody>
 <tr class="row-odd"><td><p>Instance</p></td>
 <td><p>Total LUTs</p></td>
@@ -485,8 +523,8 @@ Result length: <span class="m">165359</span>
 </tr>
 </tbody>
 </table>
-</div>
-</div>
+</section>
+</section>
 
     <script type="text/javascript">
         function init() {
@@ -525,24 +563,15 @@ Result length: <span class="m">165359</span>
 
 
 <hr />
-<p>
-    <h3> Blogs </h3>
-    <ul>
-        <li class="toctree-l1"><a href="https://www.pygears.org/blog/blog/category/risc-v.html">RISC-V implementation blog</a></li>
-    </ul>
-</p>
 <hr />
 <h3><a href="https://www.pygears.org/blog/blog/category/release.html">Release notes</a></h3>
 <hr />
 <h3><a href="index.html">Table of Contents</a></h3>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="live.html">PyGears LIVE!</a></li>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="introduction.html">Quick introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gears.html">Introduction to Gears</a></li>
 <li class="toctree-l1"><a class="reference internal" href="typing.html">Typing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="registry.html">Registry</a></li>
-<li class="toctree-l1"><a class="reference internal" href="setup.html">PyGears Tools Setup for Linux</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="examples.html">Examples</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Echo</a></li>
 </ul>
@@ -565,10 +594,10 @@ Result length: <span class="m">165359</span>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2020, Bogdan Vukobratovic.
+      &copy;2022, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

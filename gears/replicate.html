@@ -1,13 +1,13 @@
 
 <!DOCTYPE html>
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
     <title>replicate &#8212; PyGears - HW Design: A Functional Approach</title>
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
@@ -37,21 +37,17 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="module-replicate">
+  <section id="module-replicate">
 <span id="replicate"></span><h1>replicate<a class="headerlink" href="#module-replicate" title="Permalink to this headline">¶</a></h1>
-<dl class="py function">
+<dl class="function">
 <dt id="replicate.replicate">
-<code class="sig-name descname">replicate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">length</span><span class="p">:</span> <span class="n">Uint</span></em>, <em class="sig-param"><span class="n">val</span></em><span class="sig-paren">)</span> &#x2192; Queue<span class="p">[</span>val<span class="p">]</span><a class="headerlink" href="#replicate.replicate" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">replicate</code><span class="sig-paren">(</span><em class="sig-param">length: Uint</em>, <em class="sig-param">val</em><span class="sig-paren">)</span> &#x2192; Queue[val]<a class="headerlink" href="#replicate.replicate" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="py function">
-<dt id="id0">
-<code class="sig-name descname">replicate</code><span class="sig-paren">(</span><em class="sig-param">din: Tuple[{'length': Uint, 'val': Any}]}]</em><span class="sig-paren">)</span> &#x2192; Queue[din[“val”]]<a class="headerlink" href="#id0" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt>
+<code class="sig-name descname">replicate</code><span class="sig-paren">(</span><em class="sig-param">din: Tuple[{'length': Uint, 'val': Any}]}]</em><span class="sig-paren">)</span> &#x2192; Queue[din[&quot;val&quot;]]</dt>
 <dd><p>Replicates the data from the <code class="docutils literal notranslate"><span class="pre">val</span></code> input <code class="docutils literal notranslate"><span class="pre">length</span></code> times in form of a <code class="xref py py-class docutils literal notranslate"><span class="pre">Queue</span></code>.</p>
-<div>
-
-      <link href="/_static/css/fontello.css" type="text/css" rel="stylesheet"/>
-      <button id="cmdrun" class="btn-run cls-tryme" style="font-size:16px; font-weight:bold;" onClick="window.open('/live.html?file=gears/examples/replicate.py', '_blank');" title="Run this example on PyGears LIVE!"><i class="icon-cog-alt"></i> Try Me!</button></div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Uint</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[</span><span class="mi">5</span><span class="p">])</span> \
     <span class="o">|</span> <span class="n">replicate</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span> \
     <span class="o">|</span> <span class="n">check</span><span class="p">(</span><span class="n">ref</span><span class="o">=</span><span class="p">[[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">]])</span>
@@ -65,7 +61,7 @@
 </div>
 </dd></dl>
 
-</div>
+</section>
 
     <script type="text/javascript">
         function init() {
@@ -104,24 +100,15 @@
 
 
 <hr />
-<p>
-    <h3> Blogs </h3>
-    <ul>
-        <li class="toctree-l1"><a href="https://www.pygears.org/blog/blog/category/risc-v.html">RISC-V implementation blog</a></li>
-    </ul>
-</p>
 <hr />
 <h3><a href="https://www.pygears.org/blog/blog/category/release.html">Release notes</a></h3>
 <hr />
 <h3><a href="../index.html">Table of Contents</a></h3>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="../live.html">PyGears LIVE!</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../introduction.html">Quick introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../gears.html">Introduction to Gears</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../typing.html">Typing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../registry.html">Registry</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../setup.html">PyGears Tools Setup for Linux</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../reference.html">Reference</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="../reference.html#core">Core</a></li>
@@ -147,10 +134,10 @@
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2020, Bogdan Vukobratovic.
+      &copy;2022, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

@@ -14,22 +14,24 @@ Compile time type checking
 When composing gears, the framework will check the compatibility of types. For an example, the following design will raise an error::
 
   from pygears import gear
+  from pygears.lib import shred
   from pygears.typing import Tuple, Uint
 
   @gear
-  def example(din: Tuple[Uint[8], Uint[8]]):
+  async def example(din: Tuple[Uint[8], Uint[8]]):
       pass
 
-  Tuple[Uint[8], Uint[16]]((1, 1)) | example
+  Tuple[Uint[8], Uint[16]]((1, 1)) | example | shred
 
 .. highlight:: none
 
 In this example, a constant of Tuple type (u8, u16), with value 1 for both of its fields, is being fed to the module which accepts Tuples of type (u8, u8). This is a mismatch, since u16 and u8 are not the same type. Upon executing the script, **PyGears** will print::
 
-  pygears.typing.TypeMatchError: 16 cannot be matched to 8
-  - when matching Uint[16] to Uint[8]
-  - when matching Tuple[Uint[8], Uint[16]] to Tuple[Uint[8], Uint[8]]
-  - when deducing type for argument din, of the module "/example"
+  TypeMatchError: [0], 16 cannot be matched to 8
+    - when matching Uint[16] to Uint[8]
+    - when matching Tuple[Uint[8], Uint[16]] to Tuple[Uint[8], Uint[8]]
+    - when deducing type for argument "din"
+    - when instantiating "example"
 
 .. highlight:: python
 
@@ -38,14 +40,15 @@ Polymorphic modules and pattern matching
 
 Using generic types, modules that adapt to their environment can be described. Let's rewrite the "example" module from previous example to extend the set of types it accepts, by introducing a template parameter "w_field_1" that can be substituted with any value::
 
-  from pygears import gear
+  from pygears import gear, find
+  from pygears.lib import shred
   from pygears.typing import Tuple, Uint
 
   @gear
-  def example(din: Tuple[Uint[8], Uint['w_field_1']]):
+  async def example(din: Tuple[Uint[8], Uint['w_field_1']]):
       pass
 
-  Tuple[Uint[8], Uint[16]]((1, 1)) | example
+  Tuple[Uint[8], Uint[16]]((1, 1)) | example | shred
 
   print(find('/example').params['w_field_1'])
 
@@ -55,7 +58,7 @@ Now, everything passes without an error. Last line of the script will print: "16
   from pygears.typing import Tuple, Uint
 
   @gear
-  def example(din: Tuple[Uint[8], Uint['w_field_1']]) -> Uint['w_field_1']:
+  async def example(din: Tuple[Uint[8], Uint['w_field_1']]) -> Uint['w_field_1']:
       pass
 
   res = Tuple[Uint[8], Uint[16]]((1, 1)) | example

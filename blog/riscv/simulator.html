@@ -1,13 +1,13 @@
 
 <!DOCTYPE html>
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
     <title>PyGears pure-Python simulator &#8212; PyGears - HW Design: A Functional Approach</title>
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
     <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
@@ -18,26 +18,44 @@
     <link rel="shortcut icon" href="../_static/pygears.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="prev" title="RISC-V Tools Setup" href="setup.html" />
-  
+    <link rel="prev" title="RISC-V Tools Setup" href="setup.html" /> 
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
-
-  
-  <link rel="alternate" type="application/atom+xml"  href="../blog/atom.xml" title="PyGears">
-  
-  
-  <style type="text/css">
-    ul.ablog-archive {list-style: none; overflow: auto; margin-left: 0px}
-    ul.ablog-archive li {float: left; margin-right: 5px; font-size: 80%}
-    ul.postlist a {font-style: italic;}
-    ul.postlist-style-disc {list-style-type: disc;}
-    ul.postlist-style-none {list-style-type: none;}
-    ul.postlist-style-circle {list-style-type: circle;}
-  </style>
+ 
+<link
+  rel="alternate"
+  type="application/atom+xml"
+  href="../blog/atom.xml"
+  title="PyGears"
+/>
+ 
+<style type="text/css">
+  ul.ablog-archive {
+    list-style: none;
+    overflow: auto;
+    margin-left: 0px;
+  }
+  ul.ablog-archive li {
+    float: left;
+    margin-right: 5px;
+    font-size: 80%;
+  }
+  ul.postlist a {
+    font-style: italic;
+  }
+  ul.postlist-style-disc {
+    list-style-type: disc;
+  }
+  ul.postlist-style-none {
+    list-style-type: none;
+  }
+  ul.postlist-style-circle {
+    list-style-type: circle;
+  }
+</style>
 
   </head><body>
   
@@ -48,8 +66,7 @@
           
 
           <div class="body" role="main">
-            
-  <div class="section" id="pygears-pure-python-simulator">
+             <section id="pygears-pure-python-simulator">
 <div hidden data-verbosity=2>
 <h1 data-verbosity="2" hidden="true"> PyGears pure-Python simulator<a class="headerlink" href="#pygears-pure-python-simulator" title="Permalink to this headline">¶</a></h1>
 
@@ -58,7 +75,7 @@
 <p data-verbosity="3" hidden="true">RTL simulators are event-driven, i.e. the processes they simulate are executed to recalculate their outputs each time one of their input signals (called the sensitivity list) change in value. The change in signal value is considered an event and all processes sensitive to that event are triggered by it and their outputs are recalculated, which now in turn triggers other processes sensitive to these outputs, and so on. So whenever a signal changes in value, it can send waves of process reevaluation (called delta cycles) throughout the design, where depending on the inter-process connectivity a single process can be run multiple times, which makes it hard to reason about what’s happening at that level.</p>
 <p data-verbosity="3" hidden="true">I learned a lot about event-driven simulator from the <a class="reference external" data-verbosity="3" hidden="true" href="https://www.springer.com/gp/book/9780387699578">SystemC: From the Ground Up, Section 6: Concurrency</a>, but I had a hard time finding a free succinct explanation on the web to reference here. <a class="reference external" data-verbosity="3" hidden="true" href="https://users.isy.liu.se/da/petka86/Delta_cycle.pdf">This informal article</a> came close, so you might want to take a look at it.</p>
 <p data-verbosity="2" hidden="true">While in RTL methodology the signals travel unconstrained to and fro between the processes, in PyGears design, the data has a clear direction of propagation, namely from the producer to the consumer. This puts a heavy constraint on the order in which gears need to be simulated, where a consumer is always run only after all of its producers were executed and they’ve decided whether they want to offer a new piece of data to the said consumer. In other words, the gears form a <a class="reference external" data-verbosity="2" hidden="true" href="https://en.wikipedia.org/wiki/Directed_acyclic_graph">DAG</a> (Directed Acyclic Graph), where there is a clear order of gear execution (check <a class="reference external" data-verbosity="2" hidden="true" href="https://en.wikipedia.org/wiki/Topological_sorting">Topological sorting</a>).</p>
-<p data-verbosity="2" hidden="true">Furthermore, in PyGears simulation, the signals comprising the <a class="reference external" data-verbosity="2" hidden="true" href="../../gears.html#gears-interface" title="(in PyGears v0.2.0)"><span class="xref std std-ref" data-verbosity="2" hidden="true">DTI interface</span></a> are abstracted away and higher level events are used to trigger gears to execute, of which two are most important:</p>
+<p data-verbosity="2" hidden="true">Furthermore, in PyGears simulation, the signals comprising the <span class="xref std std-ref" data-verbosity="2" hidden="true">DTI interface</span> are abstracted away and higher level events are used to trigger gears to execute, of which two are most important:</p>
 <ol class="arabic simple" data-verbosity="2" hidden="true">
 <li data-verbosity="2" hidden="true"><p data-verbosity="2" hidden="true"><strong data-verbosity="2" hidden="true">put</strong>: an event issued by the producer when it outputs new data. This signals the consumers that new data is available, i.e they have new task to work on and should be scheduled for execution.</p></li>
 <li data-verbosity="2" hidden="true"><p data-verbosity="2" hidden="true"><strong data-verbosity="2" hidden="true">ack</strong>: an event issued by the consumer signaling that it is done using the data from the producer. This signals the producer that it can dispose of the acknowledged data and it is free to output a new value.</p></li>
@@ -70,7 +87,7 @@
 <li data-verbosity="2" hidden="true"><p data-verbosity="2" hidden="true"><strong data-verbosity="2" hidden="true">Backward pass</strong>: The order of execution is reversed and consumers are executed first. Gears are triggered by the <strong data-verbosity="2" hidden="true">ack</strong> event in the backward pass.</p></li>
 </ol>
 <p data-verbosity="2" hidden="true">Throughout the blog, I’ll predominantly debug the design using the PyGears simulator, since it abstracts away the unnecessary details, its flow is easier to follow, it allows me to work with complex data types, it allows me to use the Python debugger during the simulation, etc.</p>
-<p data-verbosity="2" hidden="true">The animation below shows the timelapse of the PyGears pure-Python simulation of the RISC-V design on a single <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">addi</span></code> command (same one used for the test explained in the section <a href="#id1"><span class="problematic" data-verbosity="2" hidden="true" id="id2">`my-first-instruction:Writing the first test`_</span></a>). The python script that generates this gif animation is located in <a class="reference external" data-verbosity="2" hidden="true" href="https://github.com/bogdanvuk/pygears_riscv/blob/a05abf3/script/addi_timelapse.py">script/addi_timelapse.py</a>. The animation shows the graph of the RISC-V verification environment and shows the process of the simulation in the following manner:</p>
+<p data-verbosity="2" hidden="true">The animation below shows the timelapse of the PyGears pure-Python simulation of the RISC-V design on a single <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">addi</span></code> command (same one used for the test explained in the section <a href="#system-message-1"><span class="problematic" data-verbosity="2" hidden="true" id="problematic-1">`my-first-instruction:Writing the first test`_</span></a>). The python script that generates this gif animation is located in <a class="reference external" data-verbosity="2" hidden="true" href="https://github.com/bogdanvuk/pygears_riscv/blob/a05abf3/script/addi_timelapse.py">script/addi_timelapse.py</a>. The animation shows the graph of the RISC-V verification environment and shows the process of the simulation in the following manner:</p>
 <ul class="simple" data-verbosity="2" hidden="true">
 <li data-verbosity="2" hidden="true"><p data-verbosity="2" hidden="true">Gear is painted <span class="html" data-verbosity="2" hidden="true"><font color="green">GREEN</font></span> if it is being executed as part of the “forward pass”, <span class="html" data-verbosity="2" hidden="true"><font color="orange">ORANGE</font></span> if it is being executed as part of the “backward pass”, and <span class="html" data-verbosity="2" hidden="true"><font color="red">RED</font></span> if it received the <strong data-verbosity="2" hidden="true">done</strong> event.</p></li>
 <li data-verbosity="2" hidden="true"><p data-verbosity="2" hidden="true">Interface is painted in <span class="html" data-verbosity="2" hidden="true"><font color="green">GREEN</font></span> if a <strong data-verbosity="2" hidden="true">put</strong> event was issued over it, <span class="html" data-verbosity="2" hidden="true"><font color="orange">ORANGE</font></span> for an <strong data-verbosity="2" hidden="true">ack</strong> event, and <span class="html" data-verbosity="2" hidden="true"><font color="red">RED</font></span> for a <strong data-verbosity="2" hidden="true">done</strong> event.</p></li>
@@ -79,31 +96,42 @@
 <p data-verbosity="2" hidden="true">As you can see, the simulation starts with the <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">drv</span></code> module which has no inputs and is thus a “source node” of the DAG. <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">drv</span></code> generates the test instruction and its consumers are triggered. The simulation continues until a “sink node” of the DAG is reached, namely <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">register_file_write</span></code>, which marks the end of the “forward pass”. The “backward pass” begins and the wave of <strong data-verbosity="2" hidden="true">ack</strong> events trigger the gears in reverse order, until <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">drv</span></code> is reached and the timestep is completed.</p>
 <p data-verbosity="2" hidden="true">In the next timestep, <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">drv</span></code> realizes that there is no more data to produce, so it issues a <strong data-verbosity="2" hidden="true">done</strong> event. The <strong data-verbosity="2" hidden="true">done</strong> event then propagates throughout the design, since no gear in the current design can operate when <code class="docutils literal notranslate" data-verbosity="2" hidden="true"><span class="pre">drv</span></code> stops issuing the instructions.</p>
 <p data-verbosity="3" hidden="true"> Since this post is already too long, I’ll show in some other post how the PyGears simulator can create waveforms, diagnose issues, how to use it with the Python debugger, etc.</p>
-</div>
+</section>
 
+<div class="section">
+   
   <div class="section">
-  
-  
-    <div class="section">
     <h2>Comments</h2>
     <div id="disqus_thread"></div>
     <script type="text/javascript">
-        var disqus_shortname = 'pygears';
-        var disqus_identifier = '/riscv/simulator/';
-        var disqus_title = ' PyGears pure-Python simulator';
-        var disqus_url = 'https://www.pygears.org/riscv/simulator';
+      var disqus_shortname = "pygears";
+      var disqus_identifier = "/riscv/simulator/";
+      var disqus_title = " PyGears pure-Python simulator";
+      var disqus_url = "https://www.pygears.org/riscv/simulator";
 
-        (function() {
-            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-        })();
+      (function () {
+        var dsq = document.createElement("script");
+        dsq.type = "text/javascript";
+        dsq.async = true;
+        dsq.src = "//" + disqus_shortname + ".disqus.com/embed.js";
+        (
+          document.getElementsByTagName("head")[0] ||
+          document.getElementsByTagName("body")[0]
+        ).appendChild(dsq);
+      })();
     </script>
-    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
-    </div>
-  
+    <noscript
+      >Please enable JavaScript to view the
+      <a href="https://disqus.com/?ref_noscript"
+        >comments powered by Disqus.</a
+      ></noscript
+    >
+    <a href="https://disqus.com" class="dsq-brlink"
+      >comments powered by <span class="logo-disqus">Disqus</span></a
+    >
   </div>
+  
+</div>
 
           </div>
           
@@ -135,65 +163,108 @@
 
 
 
-
-
-  <h3><a href="../blog.html">Recent Posts</a></h3>
-  <ul>
-    
-    
-      <li><a href="my_first_instruction.html">30 October - My First Instruction</a></li>
-    
-      <li><a href="../release/v0.1.2.html">28 October - PyGears 0.1.2 released</a></li>
-    
-      <li><a href="setup.html">07 October - RISC-V Tools Setup</a></li>
-    
-      <li><a href="../release/v0.1.1.html">07 October - PyGears 0.1.1 released</a></li>
-    
-      <li><a href="introduction.html">06 October - RISC-V Blog Series Introduction</a></li>
-    
-  </ul>
-
-  <h3><a href="../blog/tag.html">Tags</a></h3>
-  <style type="text/css">
-    ul.ablog-cloud {list-style: none; overflow: auto;}
-    ul.ablog-cloud li {float: left; height: 20pt; line-height: 18pt; margin-right: 5px;}
-    ul.ablog-cloud a {text-decoration: none; vertical-align: middle;}
-    li.ablog-cloud-1{font-size: 80%;}
-    li.ablog-cloud-2{font-size: 95%;}
-    li.ablog-cloud-3{font-size: 110%;}
-    li.ablog-cloud-4{font-size: 125%;}
-    li.ablog-cloud-5{font-size: 140%;}
-  </style>
-  <ul class="ablog-cloud">
-    
-      
-      <li class="ablog-cloud ablog-cloud-3">
-        <a href="../blog/tag/setup.html">setup</a></li>
-      
-    
-  </ul>
-
-  <h3><a href="../blog/category.html">Categories</a></h3>
-  <ul>
+<h3>
+  <a href="../blog.html">Recent Posts</a>
+</h3>
+<ul>
+   
+  <li>
+    <a href="my_first_instruction.html"
+      >30 October - My First Instruction</a
+    >
+  </li>
   
-    
-    <li><a href="../blog/category/risc-v.html">RISC-V (3)</a></li>
-    
+  <li>
+    <a href="../release/v0.1.2.html"
+      >28 October - PyGears 0.1.2 released</a
+    >
+  </li>
   
-    
-    <li><a href="../blog/category/release.html">Release (2)</a></li>
-    
+  <li>
+    <a href="setup.html"
+      >07 October - RISC-V Tools Setup</a
+    >
+  </li>
   
-  </ul>
+  <li>
+    <a href="../release/v0.1.1.html"
+      >07 October - PyGears 0.1.1 released</a
+    >
+  </li>
+  
+  <li>
+    <a href="introduction.html"
+      >06 October - RISC-V Blog Series Introduction</a
+    >
+  </li>
+  
+</ul>
 
-  <h3><a href="../blog/archive.html">Archives</a></h3>
-  <ul>
-  
+<h3><a href="../blog/tag.html">Tags</a></h3>
+<style type="text/css">
+  ul.ablog-cloud {
+    list-style: none;
+    overflow: auto;
+  }
+  ul.ablog-cloud li {
+    float: left;
+    height: 20pt;
+    line-height: 18pt;
+    margin-right: 5px;
+  }
+  ul.ablog-cloud a {
+    text-decoration: none;
+    vertical-align: middle;
+  }
+  li.ablog-cloud-1 {
+    font-size: 80%;
+  }
+  li.ablog-cloud-2 {
+    font-size: 95%;
+  }
+  li.ablog-cloud-3 {
+    font-size: 110%;
+  }
+  li.ablog-cloud-4 {
+    font-size: 125%;
+  }
+  li.ablog-cloud-5 {
+    font-size: 140%;
+  }
+</style>
+<ul class="ablog-cloud">
+   
+  <li class="ablog-cloud ablog-cloud-3">
+    <a href="../blog/tag/setup.html">setup</a>
+  </li>
+   
+</ul>
+
+<h3>
+  <a href="../blog/category.html">Categories</a>
+</h3>
+<ul>
+   
+  <li>
+    <a href="../blog/category/risc-v.html">RISC-V (3)</a>
+  </li>
     
-    <li><a href="../blog/2018.html">2018 (5)</a></li>
-    
-  
-  </ul>
+  <li>
+    <a href="../blog/category/release.html">Release (2)</a>
+  </li>
+   
+</ul>
+
+<h3>
+  <a href="../blog/archive.html">Archives</a>
+</h3>
+<ul>
+   
+  <li>
+    <a href="../blog/2018.html">2018 (5)</a>
+  </li>
+   
+</ul>
 
 <div id="searchbox" style="display: none" role="search">
   <h3 id="searchlabel">Quick search</h3>
@@ -210,10 +281,10 @@
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2020, Bogdan Vukobratovic.
+      &copy;2022, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

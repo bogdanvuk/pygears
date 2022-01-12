@@ -1,13 +1,13 @@
 
 <!DOCTYPE html>
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
     <title>operators &#8212; PyGears - HW Design: A Functional Approach</title>
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
@@ -37,22 +37,18 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="module-add">
+  <section id="module-add">
 <span id="operators"></span><h1>operators<a class="headerlink" href="#module-add" title="Permalink to this headline">¶</a></h1>
-<p>Adds two or more <code class="xref py py-class docutils literal notranslate"><span class="pre">Number</span></code> -s. The <a class="reference internal" href="#id0" title="add.add"><code class="xref py py-func docutils literal notranslate"><span class="pre">add()</span></code></a> gear is automatically instantiated when a “+” operator is used on two interfaces.</p>
-<dl class="py function">
+<p>Adds two or more <code class="xref py py-class docutils literal notranslate"><span class="pre">Number</span></code> -s. The <a class="reference internal" href="#add.add" title="add.add"><code class="xref py py-func docutils literal notranslate"><span class="pre">add()</span></code></a> gear is automatically instantiated when a “+” operator is used on two interfaces.</p>
+<dl class="function">
 <dt id="add.add">
-<code class="sig-name descname">add</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">a</span><span class="p">:</span> <span class="n">Number</span></em>, <em class="sig-param"><span class="n">b</span><span class="p">:</span> <span class="n">Number</span></em><span class="sig-paren">)</span><a class="headerlink" href="#add.add" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">add</code><span class="sig-paren">(</span><em class="sig-param">a: Number</em>, <em class="sig-param">b: Number</em><span class="sig-paren">)</span><a class="headerlink" href="#add.add" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="py function">
-<dt id="id0">
-<code class="sig-name descname">add</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">din</span><span class="p">:</span> <span class="n">Tuple<span class="p">[</span>Number<span class="p">, </span>Number<span class="p">]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id0" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt>
+<code class="sig-name descname">add</code><span class="sig-paren">(</span><em class="sig-param">din: Tuple[Number, Number]</em><span class="sig-paren">)</span></dt>
 <dd><p>Add two <code class="xref py py-class docutils literal notranslate"><span class="pre">Number</span></code> -s together:</p>
-<div>
-
-      <link href="/_static/css/fontello.css" type="text/css" rel="stylesheet"/>
-      <button id="cmdrun" class="btn-run cls-tryme" style="font-size:16px; font-weight:bold;" onClick="window.open('/live.html?file=gears/examples/add.py', '_blank');" title="Run this example on PyGears LIVE!"><i class="icon-cog-alt"></i> Try Me!</button></div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">a</span> <span class="o">=</span> <span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Uint</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
 <span class="n">b</span> <span class="o">=</span> <span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Uint</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
 
@@ -67,20 +63,16 @@
 </div>
 </dd></dl>
 
-<span class="target" id="module-div"></span><p>Divide <code class="xref py py-class docutils literal notranslate"><span class="pre">Number</span></code> -s . The <a class="reference internal" href="#id1" title="div.div"><code class="xref py py-func docutils literal notranslate"><span class="pre">div()</span></code></a> gear is automatically instantiated when a “//” operator is used on two interfaces.</p>
-<dl class="py function">
+<span class="target" id="module-div"></span><p>Divide <code class="xref py py-class docutils literal notranslate"><span class="pre">Number</span></code> -s . The <a class="reference internal" href="#div.div" title="div.div"><code class="xref py py-func docutils literal notranslate"><span class="pre">div()</span></code></a> gear is automatically instantiated when a “//” operator is used on two interfaces.</p>
+<dl class="function">
 <dt id="div.div">
-<code class="sig-name descname">div</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">a</span><span class="p">:</span> <span class="n">Number</span></em>, <em class="sig-param"><span class="n">b</span><span class="p">:</span> <span class="n">Number</span></em><span class="sig-paren">)</span><a class="headerlink" href="#div.div" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">div</code><span class="sig-paren">(</span><em class="sig-param">a: Number</em>, <em class="sig-param">b: Number</em><span class="sig-paren">)</span><a class="headerlink" href="#div.div" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="py function">
-<dt id="id1">
-<code class="sig-name descname">div</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">din</span><span class="p">:</span> <span class="n">Tuple<span class="p">[</span>Number<span class="p">, </span>Number<span class="p">]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id1" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt>
+<code class="sig-name descname">div</code><span class="sig-paren">(</span><em class="sig-param">din: Tuple[Number, Number]</em><span class="sig-paren">)</span></dt>
 <dd><p>Divide a <code class="xref py py-class docutils literal notranslate"><span class="pre">Number</span></code> by a constant:</p>
-<div>
-
-      <link href="/_static/css/fontello.css" type="text/css" rel="stylesheet"/>
-      <button id="cmdrun" class="btn-run cls-tryme" style="font-size:16px; font-weight:bold;" onClick="window.open('/live.html?file=gears/examples/div.py', '_blank');" title="Run this example on PyGears LIVE!"><i class="icon-cog-alt"></i> Try Me!</button></div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">a</span> <span class="o">=</span> <span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Uint</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">9</span><span class="p">])</span>
 
 <span class="p">(</span><span class="n">a</span> <span class="o">//</span> <span class="mi">3</span><span class="p">)</span> <span class="o">|</span> <span class="n">check</span><span class="p">(</span><span class="n">ref</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
@@ -94,20 +86,16 @@
 </div>
 </dd></dl>
 
-<span class="target" id="module-eq"></span><p>Test whether the data from two interfaces is equal. The <a class="reference internal" href="#id2" title="eq.eq"><code class="xref py py-func docutils literal notranslate"><span class="pre">eq()</span></code></a> gear is automatically instantiated when a “==” operator is used on two interfaces.</p>
-<dl class="py function">
+<span class="target" id="module-eq"></span><p>Test whether the data from two interfaces is equal. The <a class="reference internal" href="#eq.eq" title="eq.eq"><code class="xref py py-func docutils literal notranslate"><span class="pre">eq()</span></code></a> gear is automatically instantiated when a “==” operator is used on two interfaces.</p>
+<dl class="function">
 <dt id="eq.eq">
-<code class="sig-name descname">eq</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">a</span></em>, <em class="sig-param"><span class="n">b</span></em><span class="sig-paren">)</span> &#x2192; Bool<a class="headerlink" href="#eq.eq" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">eq</code><span class="sig-paren">(</span><em class="sig-param">a</em>, <em class="sig-param">b</em><span class="sig-paren">)</span> &#x2192; Bool<a class="headerlink" href="#eq.eq" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="py function">
-<dt id="id2">
-<code class="sig-name descname">eq</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">din</span><span class="p">:</span> <span class="n">Tuple<span class="p">[</span>Any<span class="p">, </span>Any<span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; Bool<a class="headerlink" href="#id2" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt>
+<code class="sig-name descname">eq</code><span class="sig-paren">(</span><em class="sig-param">din: Tuple[Any, Any]</em><span class="sig-paren">)</span> &#x2192; Bool</dt>
 <dd><p>Compare if two values are equal:</p>
-<div>
-
-      <link href="/_static/css/fontello.css" type="text/css" rel="stylesheet"/>
-      <button id="cmdrun" class="btn-run cls-tryme" style="font-size:16px; font-weight:bold;" onClick="window.open('/live.html?file=gears/examples/eq.py', '_blank');" title="Run this example on PyGears LIVE!"><i class="icon-cog-alt"></i> Try Me!</button></div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">a</span> <span class="o">=</span> <span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Uint</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">])</span>
 <span class="n">b</span> <span class="o">=</span> <span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Uint</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span>
 
@@ -122,20 +110,16 @@
 </div>
 </dd></dl>
 
-<span class="target" id="module-gt"></span><p>Test whether a <code class="xref py py-class docutils literal notranslate"><span class="pre">Number</span></code> from one interface is greater then a <code class="xref py py-class docutils literal notranslate"><span class="pre">Number</span></code> from the other. The <a class="reference internal" href="#id3" title="gt.gt"><code class="xref py py-func docutils literal notranslate"><span class="pre">gt()</span></code></a> gear is automatically instantiated when a “&gt;” operator is used on two interfaces.</p>
-<dl class="py function">
+<span class="target" id="module-gt"></span><p>Test whether a <code class="xref py py-class docutils literal notranslate"><span class="pre">Number</span></code> from one interface is greater then a <code class="xref py py-class docutils literal notranslate"><span class="pre">Number</span></code> from the other. The <a class="reference internal" href="#gt.gt" title="gt.gt"><code class="xref py py-func docutils literal notranslate"><span class="pre">gt()</span></code></a> gear is automatically instantiated when a “&gt;” operator is used on two interfaces.</p>
+<dl class="function">
 <dt id="gt.gt">
-<code class="sig-name descname">gt</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">a</span><span class="p">:</span> <span class="n">Number</span></em>, <em class="sig-param"><span class="n">b</span><span class="p">:</span> <span class="n">Number</span></em><span class="sig-paren">)</span><a class="headerlink" href="#gt.gt" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">gt</code><span class="sig-paren">(</span><em class="sig-param">a: Number</em>, <em class="sig-param">b: Number</em><span class="sig-paren">)</span><a class="headerlink" href="#gt.gt" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="py function">
-<dt id="id3">
-<code class="sig-name descname">gt</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">din</span><span class="p">:</span> <span class="n">Tuple<span class="p">[</span>Number<span class="p">, </span>Number<span class="p">]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id3" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt>
+<code class="sig-name descname">gt</code><span class="sig-paren">(</span><em class="sig-param">din: Tuple[Number, Number]</em><span class="sig-paren">)</span></dt>
 <dd><p>Compare if one value is greater than the other:</p>
-<div>
-
-      <link href="/_static/css/fontello.css" type="text/css" rel="stylesheet"/>
-      <button id="cmdrun" class="btn-run cls-tryme" style="font-size:16px; font-weight:bold;" onClick="window.open('/live.html?file=gears/examples/gt.py', '_blank');" title="Run this example on PyGears LIVE!"><i class="icon-cog-alt"></i> Try Me!</button></div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">a</span> <span class="o">=</span> <span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Uint</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">])</span>
 <span class="n">b</span> <span class="o">=</span> <span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Uint</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span>
 
@@ -150,20 +134,16 @@
 </div>
 </dd></dl>
 
-<span class="target" id="module-ge"></span><p>Test whether a <code class="xref py py-class docutils literal notranslate"><span class="pre">Number</span></code> from one interface is greater or equal to the <code class="xref py py-class docutils literal notranslate"><span class="pre">Number</span></code> from the other. The <a class="reference internal" href="#id4" title="ge.ge"><code class="xref py py-func docutils literal notranslate"><span class="pre">ge()</span></code></a> gear is automatically instantiated when a “&gt;=” operator is used on two interfaces.</p>
-<dl class="py function">
+<span class="target" id="module-ge"></span><p>Test whether a <code class="xref py py-class docutils literal notranslate"><span class="pre">Number</span></code> from one interface is greater or equal to the <code class="xref py py-class docutils literal notranslate"><span class="pre">Number</span></code> from the other. The <a class="reference internal" href="#ge.ge" title="ge.ge"><code class="xref py py-func docutils literal notranslate"><span class="pre">ge()</span></code></a> gear is automatically instantiated when a “&gt;=” operator is used on two interfaces.</p>
+<dl class="function">
 <dt id="ge.ge">
-<code class="sig-name descname">ge</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">a</span><span class="p">:</span> <span class="n">Number</span></em>, <em class="sig-param"><span class="n">b</span><span class="p">:</span> <span class="n">Number</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ge.ge" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">ge</code><span class="sig-paren">(</span><em class="sig-param">a: Number</em>, <em class="sig-param">b: Number</em><span class="sig-paren">)</span><a class="headerlink" href="#ge.ge" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="py function">
-<dt id="id4">
-<code class="sig-name descname">ge</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">din</span><span class="p">:</span> <span class="n">Tuple<span class="p">[</span>Number<span class="p">, </span>Number<span class="p">]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id4" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt>
+<code class="sig-name descname">ge</code><span class="sig-paren">(</span><em class="sig-param">din: Tuple[Number, Number]</em><span class="sig-paren">)</span></dt>
 <dd><p>Compare if one value is greater or equal to the other:</p>
-<div>
-
-      <link href="/_static/css/fontello.css" type="text/css" rel="stylesheet"/>
-      <button id="cmdrun" class="btn-run cls-tryme" style="font-size:16px; font-weight:bold;" onClick="window.open('/live.html?file=gears/examples/ge.py', '_blank');" title="Run this example on PyGears LIVE!"><i class="icon-cog-alt"></i> Try Me!</button></div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">a</span> <span class="o">=</span> <span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Uint</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">])</span>
 <span class="n">b</span> <span class="o">=</span> <span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Uint</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span>
 
@@ -179,14 +159,10 @@
 </dd></dl>
 
 <span class="target" id="module-invert"></span><p>Bitwise inverts data. The <a class="reference internal" href="#invert.invert" title="invert.invert"><code class="xref py py-func docutils literal notranslate"><span class="pre">invert()</span></code></a> gear is automatically instantiated when a “~” operator is used on an interface.</p>
-<dl class="py function">
+<dl class="function">
 <dt id="invert.invert">
-<code class="sig-name descname">invert</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">a</span></em><span class="sig-paren">)</span><a class="headerlink" href="#invert.invert" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">invert</code><span class="sig-paren">(</span><em class="sig-param">a</em><span class="sig-paren">)</span><a class="headerlink" href="#invert.invert" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bitwise inverts a number:</p>
-<div>
-
-      <link href="/_static/css/fontello.css" type="text/css" rel="stylesheet"/>
-      <button id="cmdrun" class="btn-run cls-tryme" style="font-size:16px; font-weight:bold;" onClick="window.open('/live.html?file=gears/examples/invert.py', '_blank');" title="Run this example on PyGears LIVE!"><i class="icon-cog-alt"></i> Try Me!</button></div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">a</span> <span class="o">=</span> <span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Uint</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[</span><span class="mh">0x01</span><span class="p">,</span> <span class="mh">0x0f</span><span class="p">,</span> <span class="mh">0xff</span><span class="p">])</span>
 
 <span class="p">(</span><span class="o">~</span><span class="n">a</span><span class="p">)</span> <span class="o">|</span> <span class="n">check</span><span class="p">(</span><span class="n">ref</span><span class="o">=</span><span class="p">[</span><span class="mh">0xfe</span><span class="p">,</span> <span class="mh">0xf0</span><span class="p">,</span> <span class="mh">0x00</span><span class="p">])</span>
@@ -200,20 +176,16 @@
 </div>
 </dd></dl>
 
-<span class="target" id="module-lt"></span><p>Test whether a <code class="xref py py-class docutils literal notranslate"><span class="pre">Number</span></code> from one interface is less then a <code class="xref py py-class docutils literal notranslate"><span class="pre">Number</span></code> from the other. The <a class="reference internal" href="#id5" title="lt.lt"><code class="xref py py-func docutils literal notranslate"><span class="pre">lt()</span></code></a> gear is automatically instantiated when a “&lt;” operator is used on two interfaces.</p>
-<dl class="py function">
+<span class="target" id="module-lt"></span><p>Test whether a <code class="xref py py-class docutils literal notranslate"><span class="pre">Number</span></code> from one interface is less then a <code class="xref py py-class docutils literal notranslate"><span class="pre">Number</span></code> from the other. The <a class="reference internal" href="#lt.lt" title="lt.lt"><code class="xref py py-func docutils literal notranslate"><span class="pre">lt()</span></code></a> gear is automatically instantiated when a “&lt;” operator is used on two interfaces.</p>
+<dl class="function">
 <dt id="lt.lt">
-<code class="sig-name descname">lt</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">a</span><span class="p">:</span> <span class="n">Number</span></em>, <em class="sig-param"><span class="n">b</span><span class="p">:</span> <span class="n">Number</span></em><span class="sig-paren">)</span><a class="headerlink" href="#lt.lt" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">lt</code><span class="sig-paren">(</span><em class="sig-param">a: Number</em>, <em class="sig-param">b: Number</em><span class="sig-paren">)</span><a class="headerlink" href="#lt.lt" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="py function">
-<dt id="id5">
-<code class="sig-name descname">lt</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">din</span><span class="p">:</span> <span class="n">Tuple<span class="p">[</span>Number<span class="p">, </span>Number<span class="p">]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id5" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt>
+<code class="sig-name descname">lt</code><span class="sig-paren">(</span><em class="sig-param">din: Tuple[Number, Number]</em><span class="sig-paren">)</span></dt>
 <dd><p>Compare if one value is greater than the other:</p>
-<div>
-
-      <link href="/_static/css/fontello.css" type="text/css" rel="stylesheet"/>
-      <button id="cmdrun" class="btn-run cls-tryme" style="font-size:16px; font-weight:bold;" onClick="window.open('/live.html?file=gears/examples/lt.py', '_blank');" title="Run this example on PyGears LIVE!"><i class="icon-cog-alt"></i> Try Me!</button></div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">a</span> <span class="o">=</span> <span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Uint</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">])</span>
 <span class="n">b</span> <span class="o">=</span> <span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Uint</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span>
 
@@ -228,20 +200,16 @@
 </div>
 </dd></dl>
 
-<span class="target" id="module-le"></span><p>Test whether a <code class="xref py py-class docutils literal notranslate"><span class="pre">Number</span></code> from one interface is less than or equal to a <code class="xref py py-class docutils literal notranslate"><span class="pre">Number</span></code> from the other. The <a class="reference internal" href="#id6" title="le.le"><code class="xref py py-func docutils literal notranslate"><span class="pre">le()</span></code></a> lear is automatically instantiated when a “&lt;=” operator is used on two interfaces.</p>
-<dl class="py function">
+<span class="target" id="module-le"></span><p>Test whether a <code class="xref py py-class docutils literal notranslate"><span class="pre">Number</span></code> from one interface is less than or equal to a <code class="xref py py-class docutils literal notranslate"><span class="pre">Number</span></code> from the other. The <a class="reference internal" href="#le.le" title="le.le"><code class="xref py py-func docutils literal notranslate"><span class="pre">le()</span></code></a> lear is automatically instantiated when a “&lt;=” operator is used on two interfaces.</p>
+<dl class="function">
 <dt id="le.le">
-<code class="sig-name descname">le</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">a</span><span class="p">:</span> <span class="n">Number</span></em>, <em class="sig-param"><span class="n">b</span><span class="p">:</span> <span class="n">Number</span></em><span class="sig-paren">)</span><a class="headerlink" href="#le.le" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">le</code><span class="sig-paren">(</span><em class="sig-param">a: Number</em>, <em class="sig-param">b: Number</em><span class="sig-paren">)</span><a class="headerlink" href="#le.le" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="py function">
-<dt id="id6">
-<code class="sig-name descname">le</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">din</span><span class="p">:</span> <span class="n">Tuple<span class="p">[</span>Number<span class="p">, </span>Number<span class="p">]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id6" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt>
+<code class="sig-name descname">le</code><span class="sig-paren">(</span><em class="sig-param">din: Tuple[Number, Number]</em><span class="sig-paren">)</span></dt>
 <dd><p>Compare if one value is less than or equal to the other:</p>
-<div>
-
-      <link href="/_static/css/fontello.css" type="text/css" rel="stylesheet"/>
-      <button id="cmdrun" class="btn-run cls-tryme" style="font-size:16px; font-weight:bold;" onClick="window.open('/live.html?file=gears/examples/le.py', '_blank');" title="Run this example on PyGears LIVE!"><i class="icon-cog-alt"></i> Try Me!</button></div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">a</span> <span class="o">=</span> <span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Uint</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">])</span>
 <span class="n">b</span> <span class="o">=</span> <span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Uint</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span>
 
@@ -256,20 +224,16 @@
 </div>
 </dd></dl>
 
-<span class="target" id="module-mod"></span><p>Performs integer modulo operation. The <a class="reference internal" href="#id7" title="mod.mod"><code class="xref py py-func docutils literal notranslate"><span class="pre">mod()</span></code></a> gear is automatically instantiated when a “%” operator is used on two interfaces.</p>
-<dl class="py function">
+<span class="target" id="module-mod"></span><p>Performs integer modulo operation. The <a class="reference internal" href="#mod.mod" title="mod.mod"><code class="xref py py-func docutils literal notranslate"><span class="pre">mod()</span></code></a> gear is automatically instantiated when a “%” operator is used on two interfaces.</p>
+<dl class="function">
 <dt id="mod.mod">
-<code class="sig-name descname">mod</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">a</span><span class="p">:</span> <span class="n">Integer</span></em>, <em class="sig-param"><span class="n">b</span><span class="p">:</span> <span class="n">Integer</span></em><span class="sig-paren">)</span><a class="headerlink" href="#mod.mod" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">mod</code><span class="sig-paren">(</span><em class="sig-param">a: Integer</em>, <em class="sig-param">b: Integer</em><span class="sig-paren">)</span><a class="headerlink" href="#mod.mod" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="py function">
-<dt id="id7">
-<code class="sig-name descname">mod</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">din</span><span class="p">:</span> <span class="n">Tuple<span class="p">[</span>Integer<span class="p">, </span>Integer<span class="p">]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id7" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt>
+<code class="sig-name descname">mod</code><span class="sig-paren">(</span><em class="sig-param">din: Tuple[Integer, Integer]</em><span class="sig-paren">)</span></dt>
 <dd><p>Performs integer modulo operation:</p>
-<div>
-
-      <link href="/_static/css/fontello.css" type="text/css" rel="stylesheet"/>
-      <button id="cmdrun" class="btn-run cls-tryme" style="font-size:16px; font-weight:bold;" onClick="window.open('/live.html?file=gears/examples/mod.py', '_blank');" title="Run this example on PyGears LIVE!"><i class="icon-cog-alt"></i> Try Me!</button></div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">a</span> <span class="o">=</span> <span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Uint</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">8</span><span class="p">])</span>
 
 <span class="p">(</span><span class="n">a</span> <span class="o">%</span> <span class="mi">3</span><span class="p">)</span> <span class="o">|</span> <span class="n">check</span><span class="p">(</span><span class="n">ref</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
@@ -283,20 +247,16 @@
 </div>
 </dd></dl>
 
-<span class="target" id="module-mul"></span><p>Multiplies two <code class="xref py py-class docutils literal notranslate"><span class="pre">Number</span></code> data received from the input interfaces and outputs the result. The <a class="reference internal" href="#id8" title="mul.mul"><code class="xref py py-func docutils literal notranslate"><span class="pre">mul()</span></code></a> gear is automatically instantiated when a “*” operator is used on two interfaces.</p>
-<dl class="py function">
+<span class="target" id="module-mul"></span><p>Multiplies two <code class="xref py py-class docutils literal notranslate"><span class="pre">Number</span></code> data received from the input interfaces and outputs the result. The <a class="reference internal" href="#mul.mul" title="mul.mul"><code class="xref py py-func docutils literal notranslate"><span class="pre">mul()</span></code></a> gear is automatically instantiated when a “*” operator is used on two interfaces.</p>
+<dl class="function">
 <dt id="mul.mul">
-<code class="sig-name descname">mul</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">a</span><span class="p">:</span> <span class="n">Number</span></em>, <em class="sig-param"><span class="n">b</span><span class="p">:</span> <span class="n">Number</span></em><span class="sig-paren">)</span><a class="headerlink" href="#mul.mul" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">mul</code><span class="sig-paren">(</span><em class="sig-param">a: Number</em>, <em class="sig-param">b: Number</em><span class="sig-paren">)</span><a class="headerlink" href="#mul.mul" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="py function">
-<dt id="id8">
-<code class="sig-name descname">mul</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">din</span><span class="p">:</span> <span class="n">Tuple<span class="p">[</span>Number<span class="p">, </span>Number<span class="p">]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#id8" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt>
+<code class="sig-name descname">mul</code><span class="sig-paren">(</span><em class="sig-param">din: Tuple[Number, Number]</em><span class="sig-paren">)</span></dt>
 <dd><p>Adds two numbers together:</p>
-<div>
-
-      <link href="/_static/css/fontello.css" type="text/css" rel="stylesheet"/>
-      <button id="cmdrun" class="btn-run cls-tryme" style="font-size:16px; font-weight:bold;" onClick="window.open('/live.html?file=gears/examples/mul.py', '_blank');" title="Run this example on PyGears LIVE!"><i class="icon-cog-alt"></i> Try Me!</button></div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">a</span> <span class="o">=</span> <span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Uint</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
 <span class="n">b</span> <span class="o">=</span> <span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Uint</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
 
@@ -311,20 +271,16 @@
 </div>
 </dd></dl>
 
-<span class="target" id="module-ne"></span><p>Test whether the data from two interfaces is not equal. The <a class="reference internal" href="#id9" title="ne.ne"><code class="xref py py-func docutils literal notranslate"><span class="pre">ne()</span></code></a> gear is automatically instantiated when a “!=” operator is used on two interfaces.</p>
-<dl class="py function">
+<span class="target" id="module-ne"></span><p>Test whether the data from two interfaces is not equal. The <a class="reference internal" href="#ne.ne" title="ne.ne"><code class="xref py py-func docutils literal notranslate"><span class="pre">ne()</span></code></a> gear is automatically instantiated when a “!=” operator is used on two interfaces.</p>
+<dl class="function">
 <dt id="ne.ne">
-<code class="sig-name descname">ne</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">a</span></em>, <em class="sig-param"><span class="n">b</span></em><span class="sig-paren">)</span> &#x2192; Bool<a class="headerlink" href="#ne.ne" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">ne</code><span class="sig-paren">(</span><em class="sig-param">a</em>, <em class="sig-param">b</em><span class="sig-paren">)</span> &#x2192; Bool<a class="headerlink" href="#ne.ne" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="py function">
-<dt id="id9">
-<code class="sig-name descname">ne</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">din</span><span class="p">:</span> <span class="n">Tuple<span class="p">[</span>Any<span class="p">, </span>Any<span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; Bool<a class="headerlink" href="#id9" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt>
+<code class="sig-name descname">ne</code><span class="sig-paren">(</span><em class="sig-param">din: Tuple[Any, Any]</em><span class="sig-paren">)</span> &#x2192; Bool</dt>
 <dd><p>Compare if two values are not equal:</p>
-<div>
-
-      <link href="/_static/css/fontello.css" type="text/css" rel="stylesheet"/>
-      <button id="cmdrun" class="btn-run cls-tryme" style="font-size:16px; font-weight:bold;" onClick="window.open('/live.html?file=gears/examples/ne.py', '_blank');" title="Run this example on PyGears LIVE!"><i class="icon-cog-alt"></i> Try Me!</button></div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">a</span> <span class="o">=</span> <span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Uint</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">])</span>
 <span class="n">b</span> <span class="o">=</span> <span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Uint</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span>
 
@@ -340,14 +296,10 @@
 </dd></dl>
 
 <span class="target" id="module-neg"></span><p>Negates data. The <a class="reference internal" href="#neg.neg" title="neg.neg"><code class="xref py py-func docutils literal notranslate"><span class="pre">neg()</span></code></a> gear is automatically instantiated when unary “-” operator is used on an interface.</p>
-<dl class="py function">
+<dl class="function">
 <dt id="neg.neg">
-<code class="sig-name descname">neg</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">a</span><span class="p">:</span> <span class="n">Number</span></em><span class="sig-paren">)</span><a class="headerlink" href="#neg.neg" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">neg</code><span class="sig-paren">(</span><em class="sig-param">a: Number</em><span class="sig-paren">)</span><a class="headerlink" href="#neg.neg" title="Permalink to this definition">¶</a></dt>
 <dd><p>Negates a number:</p>
-<div>
-
-      <link href="/_static/css/fontello.css" type="text/css" rel="stylesheet"/>
-      <button id="cmdrun" class="btn-run cls-tryme" style="font-size:16px; font-weight:bold;" onClick="window.open('/live.html?file=gears/examples/neg.py', '_blank');" title="Run this example on PyGears LIVE!"><i class="icon-cog-alt"></i> Try Me!</button></div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">a</span> <span class="o">=</span> <span class="n">drv</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">Uint</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">seq</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">15</span><span class="p">])</span>
 
 <span class="p">(</span><span class="o">-</span><span class="n">a</span><span class="p">)</span> <span class="o">|</span> <span class="n">check</span><span class="p">(</span><span class="n">ref</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">7</span><span class="p">,</span> <span class="o">-</span><span class="mi">15</span><span class="p">])</span>
@@ -361,7 +313,7 @@
 </div>
 </dd></dl>
 
-</div>
+</section>
 
     <script type="text/javascript">
         function init() {
@@ -400,24 +352,15 @@
 
 
 <hr />
-<p>
-    <h3> Blogs </h3>
-    <ul>
-        <li class="toctree-l1"><a href="https://www.pygears.org/blog/blog/category/risc-v.html">RISC-V implementation blog</a></li>
-    </ul>
-</p>
 <hr />
 <h3><a href="https://www.pygears.org/blog/blog/category/release.html">Release notes</a></h3>
 <hr />
 <h3><a href="../index.html">Table of Contents</a></h3>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="../live.html">PyGears LIVE!</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../introduction.html">Quick introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../gears.html">Introduction to Gears</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../typing.html">Typing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../registry.html">Registry</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../setup.html">PyGears Tools Setup for Linux</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../reference.html">Reference</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="../reference.html#core">Core</a></li>
@@ -443,10 +386,10 @@
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2020, Bogdan Vukobratovic.
+      &copy;2022, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

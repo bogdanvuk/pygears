@@ -1,28 +1,28 @@
 
 <!DOCTYPE html>
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
     <title>Registry &#8212; PyGears - HW Design: A Functional Approach</title>
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
-    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/doctools.js"></script>
-    <script src="_static/language_data.js"></script>
-    <script src="_static/default.js"></script>
-    <script src="_static/wavedrom.js"></script>
-    <link rel="canonical" href="https://www.pygears.org/registry.html" />
-    <link rel="shortcut icon" href="_static/pygears.ico"/>
-    <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="PyGears Tools Setup for Linux" href="setup.html" />
-    <link rel="prev" title="Queue" href="typing/queue.html" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../_static/default.js"></script>
+    <script src="../_static/wavedrom.js"></script>
+    <link rel="canonical" href="https://www.pygears.org/conf/registry.html" />
+    <link rel="shortcut icon" href="../_static/pygears.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Union" href="../typing/union.html" />
+    <link rel="prev" title="Logger" href="log.html" />
    
-  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
@@ -37,17 +37,25 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="registry">
+  <section id="registry">
 <h1>Registry<a class="headerlink" href="#registry" title="Permalink to this headline">¶</a></h1>
 <p>PyGears uses a centralized registry to share global data, like configuration, between its submodules. There is also a user API for manipulating the registry in order to provide some user configuration. Registryis organized as a large tree resembling the file system. Basically, there are two commands at users disposal:</p>
-<div class="section" id="variables">
+<section id="variables">
 <h2>Variables<a class="headerlink" href="#variables" title="Permalink to this headline">¶</a></h2>
 <ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">svgen</span></code>: Data used by the SystemVerilog generation submodule</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">svgen/flow</span></code>: List of operations performed while generating a SystemVerilog code for the PyGears description. Flow configuration is usually not modified by the user, but can be used to implement a custom generation flow.</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">hdl</span></code>: Data used by the SystemVerilog generation submodule</p>
+<ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">hdl/include</span></code>: List of directory paths where SystemVerilog generator will look for the SystemVerilog implementations of the gears. User can include additional direcrories where custom SystemVerilog files are located.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">debug_intfs</span></code>: []</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">debug</span></code>: Debug settings</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">debug/trace</span></code> (list): Lists of paths to the gears that should be traced during the simulation</p></li>
 </ul>
 </li>
 <li><p><code class="docutils literal notranslate"><span class="pre">sim</span></code>:</p>
@@ -99,42 +107,42 @@ PyGears subsystems. Default:</p>
 </li>
 <li><p><code class="docutils literal notranslate"><span class="pre">logger</span></code>: Various PyGears subsystem loggers.</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">logger/svgen</span></code>: Logger for the SystemVerilog generation subsystem.</p>
+<li><p><code class="docutils literal notranslate"><span class="pre">logger/hdlgen</span></code>: Logger for the SystemVerilog generation subsystem.</p>
 <ul>
-<li><p><code class="docutils literal notranslate"><span class="pre">logger/svgen/level</span></code> (int): All messages that are logged with a verbosity level
+<li><p><code class="docutils literal notranslate"><span class="pre">logger/hdlgen/level</span></code> (int): All messages that are logged with a verbosity level
 below this configured <code class="docutils literal notranslate"><span class="pre">level</span></code> value will be discarded. See
-<a class="reference internal" href="conf/log.html#levels"><span class="std std-ref">Logging Levels</span></a> for a list of levels.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">logger/svgen/warning</span></code>: Configuration for logging at <code class="docutils literal notranslate"><span class="pre">WARNING</span></code> level</p>
+<a class="reference internal" href="log.html#levels"><span class="std std-ref">Logging Levels</span></a> for a list of levels.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">logger/hdlgen/warning</span></code>: Configuration for logging at <code class="docutils literal notranslate"><span class="pre">WARNING</span></code> level</p>
 <ul>
-<li><p><code class="docutils literal notranslate"><span class="pre">logger/svgen/warning/exception</span></code> (bool): If set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, an exception will be
+<li><p><code class="docutils literal notranslate"><span class="pre">logger/hdlgen/warning/exception</span></code> (bool): If set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, an exception will be
 raised whenever logging the message at <code class="docutils literal notranslate"><span class="pre">WARNING</span></code> level</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">logger/svgen/warning/debug</span></code> (bool): If set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, whenever logging the
+<li><p><code class="docutils literal notranslate"><span class="pre">logger/hdlgen/warning/debug</span></code> (bool): If set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, whenever logging the
 message at <code class="docutils literal notranslate"><span class="pre">WARNING</span></code> level the debugger will be started and execution
 paused</p></li>
 </ul>
 </li>
-<li><p><code class="docutils literal notranslate"><span class="pre">logger/svgen/error</span></code>: Configuration for logging at <code class="docutils literal notranslate"><span class="pre">ERROR</span></code> level.</p>
+<li><p><code class="docutils literal notranslate"><span class="pre">logger/hdlgen/error</span></code>: Configuration for logging at <code class="docutils literal notranslate"><span class="pre">ERROR</span></code> level.</p>
 <ul>
-<li><p><code class="docutils literal notranslate"><span class="pre">logger/svgen/error/exception</span></code> (bool): If set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, an exception will be
+<li><p><code class="docutils literal notranslate"><span class="pre">logger/hdlgen/error/exception</span></code> (bool): If set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, an exception will be
 raised whenever logging the message at <code class="docutils literal notranslate"><span class="pre">ERROR</span></code> level</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">logger/svgen/error/debug</span></code> (bool): If set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, whenever logging the
+<li><p><code class="docutils literal notranslate"><span class="pre">logger/hdlgen/error/debug</span></code> (bool): If set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, whenever logging the
 message at <code class="docutils literal notranslate"><span class="pre">ERROR</span></code> level the debugger will be started and execution
 paused</p></li>
 </ul>
 </li>
-<li><p><code class="docutils literal notranslate"><span class="pre">logger/svgen/print_traceback</span></code> (bool): If set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, the traceback will be
+<li><p><code class="docutils literal notranslate"><span class="pre">logger/hdlgen/print_traceback</span></code> (bool): If set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, the traceback will be
 printed along with the log message.</p></li>
 </ul>
 </li>
-<li><p><code class="docutils literal notranslate"><span class="pre">logger/sim</span></code>: Logger for the PyGears simulator. Structure is analog to <code class="docutils literal notranslate"><span class="pre">logger/svgen</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">logger/sim</span></code>: Logger for the PyGears simulator. Structure is analog to <code class="docutils literal notranslate"><span class="pre">logger/hdlgen</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">logger/conf</span></code>: Logger for the PyGears infrastructure subsystem. Structure
-is analog to <code class="docutils literal notranslate"><span class="pre">logger/svgen</span></code>.</p></li>
+is analog to <code class="docutils literal notranslate"><span class="pre">logger/hdlgen</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">logger/gear</span></code>: Logger for the gears instantiation subsystem. Structure is
-analog to <code class="docutils literal notranslate"><span class="pre">logger/svgen</span></code>.</p></li>
+analog to <code class="docutils literal notranslate"><span class="pre">logger/hdlgen</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">logger/util</span></code>: Logger for the various PyGears utility functions. Structure
-is analog to <code class="docutils literal notranslate"><span class="pre">logger/svgen</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">logger/typing</span></code>: Logger for the PyGears typing subsystem. Structure is analog to <code class="docutils literal notranslate"><span class="pre">logger/svgen</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">logger/core</span></code>: Logger for the PyGears core. Structure is analog to <code class="docutils literal notranslate"><span class="pre">logger/svgen</span></code>.</p></li>
+is analog to <code class="docutils literal notranslate"><span class="pre">logger/hdlgen</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">logger/typing</span></code>: Logger for the PyGears typing subsystem. Structure is analog to <code class="docutils literal notranslate"><span class="pre">logger/hdlgen</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">logger/core</span></code>: Logger for the PyGears core. Structure is analog to <code class="docutils literal notranslate"><span class="pre">logger/hdlgen</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">logger/stack_traceback_fn</span></code> (path): If set with a valid path, the stack trace will be logged to the file specified by the path.</p></li>
 </ul>
 </li>
@@ -146,8 +154,8 @@ debugging with PDB.</p></li>
 </ul>
 </li>
 </ul>
-</div>
-</div>
+</section>
+</section>
 
     <script type="text/javascript">
         function init() {
@@ -163,8 +171,8 @@ debugging with PDB.</p></li>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
 <p class="logo">
-  <a href="index.html">
-    <img class="logo" src="_static/logo.png" alt="Logo"/>
+  <a href="../index.html">
+    <img class="logo" src="../_static/logo.png" alt="Logo"/>
     
   </a>
 </p>
@@ -186,35 +194,29 @@ debugging with PDB.</p></li>
 
 
 <hr />
-<p>
-    <h3> Blogs </h3>
-    <ul>
-        <li class="toctree-l1"><a href="https://www.pygears.org/blog/blog/category/risc-v.html">RISC-V implementation blog</a></li>
-    </ul>
-</p>
 <hr />
 <h3><a href="https://www.pygears.org/blog/blog/category/release.html">Release notes</a></h3>
 <hr />
-<h3><a href="index.html">Table of Contents</a></h3>
+<h3><a href="../index.html">Table of Contents</a></h3>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="live.html">PyGears LIVE!</a></li>
-<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="introduction.html">Quick introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="gears.html">Introduction to Gears</a></li>
-<li class="toctree-l1"><a class="reference internal" href="typing.html">Typing</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Registry</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#variables">Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Quick introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gears.html">Introduction to Gears</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../typing.html">Typing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../reference.html">Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../reference.html#core">Core</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../reference.html#infrastructure">Infrastructure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference.html#typing">Typing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference.html#gears">Gears</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="setup.html">PyGears Tools Setup for Linux</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference.html">Reference</a></li>
 </ul>
 
 <div id="searchbox" style="display: none" role="search">
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
-    <form class="search" action="search.html" method="get">
+    <form class="search" action="../search.html" method="get">
       <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
     </form>
@@ -226,14 +228,14 @@ debugging with PDB.</p></li>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2020, Bogdan Vukobratovic.
+      &copy;2022, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
-      <a href="_sources/registry.rst.txt"
+      <a href="../_sources/conf/registry.rst.txt"
           rel="nofollow">Page source</a>
     </div>
 

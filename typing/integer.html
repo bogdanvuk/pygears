@@ -1,13 +1,13 @@
 
 <!DOCTYPE html>
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
     <title>Integer &#8212; PyGears - HW Design: A Functional Approach</title>
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
@@ -37,21 +37,21 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="module-pygears.typing.uint">
+  <section id="module-pygears.typing.uint">
 <span id="integer"></span><h1>Integer<a class="headerlink" href="#module-pygears.typing.uint" title="Permalink to this headline">¶</a></h1>
 <p>Implements fixed width integer types: <a class="reference internal" href="uint.html#pygears.typing.uint.Uint" title="pygears.typing.uint.Uint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Uint</span></code></a> - unsigned, <a class="reference internal" href="int.html#pygears.typing.uint.Int" title="pygears.typing.uint.Int"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int</span></code></a>
 - signed and <a class="reference internal" href="#pygears.typing.uint.Integer" title="pygears.typing.uint.Integer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Integer</span></code></a> - sign agnostic type. These types correspond to
 HDL logic vector types.</p>
 <p>Objects of these classes can also be instantiated and they provide some integer
 arithmetic capabilities.</p>
-<dl class="py class">
+<dl class="class">
 <dt id="pygears.typing.uint.IntegerType">
-<em class="property">class </em><code class="sig-name descname">IntegerType</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">bases</span></em>, <em class="sig-param"><span class="n">namespace</span></em>, <em class="sig-param"><span class="n">args</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.IntegerType" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-name descname">IntegerType</code><a class="headerlink" href="#pygears.typing.uint.IntegerType" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pygears.typing.uint.IntegralType</span></code></p>
 <p>Defines lib methods for all Integer based classes.</p>
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.uint.IntegerType.__mul__">
-<code class="sig-name descname">__mul__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.IntegerType.__mul__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__mul__</code><span class="sig-paren">(</span><em class="sig-param">other</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.IntegerType.__mul__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the same type, whose width is equal to the sum of operand widths
 if both operands are unsigned.
 Returns the signed Int type if other operand is signed.</p>
@@ -63,7 +63,7 @@ Returns the signed Int type if other operand is signed.</p>
 </div>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.uint.IntegerType.args">
 <em class="property">property </em><code class="sig-name descname">args</code><a class="headerlink" href="#pygears.typing.uint.IntegerType.args" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a list of values supplied for each generic parameter.</p>
@@ -73,7 +73,7 @@ Returns the signed Int type if other operand is signed.</p>
 </div>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.uint.IntegerType.base">
 <em class="property">property </em><code class="sig-name descname">base</code><a class="headerlink" href="#pygears.typing.uint.IntegerType.base" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns base generic class of the type.</p>
@@ -82,7 +82,7 @@ Returns the signed Int type if other operand is signed.</p>
 </div>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.uint.IntegerType.fields">
 <em class="property">property </em><code class="sig-name descname">fields</code><a class="headerlink" href="#pygears.typing.uint.IntegerType.fields" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the names of the generic parameters.</p>
@@ -96,7 +96,7 @@ Returns the signed Int type if other operand is signed.</p>
 </div>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.uint.IntegerType.is_generic">
 <code class="sig-name descname">is_generic</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.IntegerType.is_generic" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return True if no values have been supplied for the generic parameters.</p>
@@ -110,13 +110,13 @@ Returns the signed Int type if other operand is signed.</p>
 </div>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.uint.IntegerType.items">
 <code class="sig-name descname">items</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.IntegerType.items" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generator that yields (key, element) pairs.</p>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.uint.IntegerType.keys">
 <code class="sig-name descname">keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.IntegerType.keys" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a list of keys that can be used for indexing the type.</p>
@@ -126,7 +126,7 @@ Returns the signed Int type if other operand is signed.</p>
 </div>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.uint.IntegerType.specified">
 <em class="property">property </em><code class="sig-name descname">specified</code><a class="headerlink" href="#pygears.typing.uint.IntegerType.specified" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return True if all generic parameters were supplied concrete values.</p>
@@ -140,7 +140,7 @@ Returns the signed Int type if other operand is signed.</p>
 </div>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.uint.IntegerType.templates">
 <em class="property">property </em><code class="sig-name descname">templates</code><a class="headerlink" href="#pygears.typing.uint.IntegerType.templates" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a list of templated generic variables within the type. The type is
@@ -151,7 +151,7 @@ searched recursively. Each template is reported only once.</p>
 </div>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.uint.IntegerType.width">
 <em class="property">property </em><code class="sig-name descname">width</code><a class="headerlink" href="#pygears.typing.uint.IntegerType.width" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the bit width of the type.</p>
@@ -163,14 +163,14 @@ searched recursively. Each template is reported only once.</p>
 
 </dd></dl>
 
-<dl class="py class">
+<dl class="class">
 <dt id="pygears.typing.uint.Integer">
-<em class="property">class </em><code class="sig-name descname">Integer</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">val</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Integer" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-name descname">Integer</code><a class="headerlink" href="#pygears.typing.uint.Integer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pygears.typing.uint.Integral</span></code></p>
 <p>Base type for both <a class="reference internal" href="int.html#pygears.typing.uint.Int" title="pygears.typing.uint.Int"><code class="xref py py-class docutils literal notranslate"><span class="pre">Int</span></code></a> and <a class="reference internal" href="uint.html#pygears.typing.uint.Uint" title="pygears.typing.uint.Uint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Uint</span></code></a> generic types.
 Corresponds to HDL logic vector types. For an example Integer[9] translates
-to <code class="code sv systemverilog docutils literal notranslate"><span class="keyword"><span class="pre">logic</span></span> <span class="punctuation"><span class="pre">[</span></span><span class="literal number hex"><span class="pre">8</span></span><span class="operator"><span class="pre">:</span></span><span class="literal number hex"><span class="pre">0</span></span><span class="punctuation"><span class="pre">]</span></span></code>.</p>
-<dl class="py method">
+to <code class="code sv systemverilog docutils literal notranslate"><span class="keyword type"><span class="pre">logic</span></span> <span class="punctuation"><span class="pre">[</span></span><span class="literal number integer"><span class="pre">8</span></span><span class="operator"><span class="pre">:</span></span><span class="literal number integer"><span class="pre">0</span></span><span class="punctuation"><span class="pre">]</span></span></code>.</p>
+<dl class="method">
 <dt id="pygears.typing.uint.Integer.__len__">
 <code class="sig-name descname">__len__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Integer.__len__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the number of bits used for the representation</p>
@@ -180,9 +180,9 @@ to <code class="code sv systemverilog docutils literal notranslate"><span class=
 </div>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="pygears.typing.uint.Integer.decode">
-<em class="property">classmethod </em><code class="sig-name descname">decode</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">val</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Integer.decode" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod </em><code class="sig-name descname">decode</code><span class="sig-paren">(</span><em class="sig-param">val</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.typing.uint.Integer.decode" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates Integer object from any int-convertible object val.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Integer</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="mh">0xffff</span><span class="p">)</span>
 <span class="go">Integer[8](255)</span>
@@ -190,7 +190,7 @@ to <code class="code sv systemverilog docutils literal notranslate"><span class=
 </div>
 </dd></dl>
 
-<dl class="py attribute">
+<dl class="attribute">
 <dt id="pygears.typing.uint.Integer.width">
 <code class="sig-name descname">width</code><a class="headerlink" href="#pygears.typing.uint.Integer.width" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the number of bits used for the representation</p>
@@ -202,7 +202,7 @@ to <code class="code sv systemverilog docutils literal notranslate"><span class=
 
 </dd></dl>
 
-</div>
+</section>
 
     <script type="text/javascript">
         function init() {
@@ -241,18 +241,11 @@ to <code class="code sv systemverilog docutils literal notranslate"><span class=
 
 
 <hr />
-<p>
-    <h3> Blogs </h3>
-    <ul>
-        <li class="toctree-l1"><a href="https://www.pygears.org/blog/blog/category/risc-v.html">RISC-V implementation blog</a></li>
-    </ul>
-</p>
 <hr />
 <h3><a href="https://www.pygears.org/blog/blog/category/release.html">Release notes</a></h3>
 <hr />
 <h3><a href="../index.html">Table of Contents</a></h3>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="../live.html">PyGears LIVE!</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../introduction.html">Quick introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../gears.html">Introduction to Gears</a></li>
@@ -262,8 +255,6 @@ to <code class="code sv systemverilog docutils literal notranslate"><span class=
 <li class="toctree-l2 current"><a class="reference internal" href="../typing.html#types-reference">Types reference</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../registry.html">Registry</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../setup.html">PyGears Tools Setup for Linux</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../reference.html">Reference</a></li>
 </ul>
@@ -283,10 +274,10 @@ to <code class="code sv systemverilog docutils literal notranslate"><span class=
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2020, Bogdan Vukobratovic.
+      &copy;2022, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

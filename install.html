@@ -1,13 +1,13 @@
 
 <!DOCTYPE html>
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
     <title>Installation &#8212; PyGears - HW Design: A Functional Approach</title>
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
@@ -20,7 +20,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Quick introduction" href="introduction.html" />
-    <link rel="prev" title="PyGears LIVE!" href="live.html" />
+    <link rel="prev" title="Welcome to PyGears" href="index.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -37,31 +37,26 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="installation">
+  <section id="installation">
 <span id="install"></span><h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="windows">
-<h2>Windows<a class="headerlink" href="#windows" title="Permalink to this headline">¶</a></h2>
-<p>PyGears has been tested to work on Windows 7 and Windows 10 with <a class="reference external" href="https://www.python.org/ftp/python/3.6.6/python-3.6.6.exe">Python 3.6.6</a> and installed via <a class="reference external" href="https://www.jetbrains.com/pycharm/">PyCharm</a>. Currently PyGears does not support co-simulation with third-party RTL simulators on Windows.</p>
-<p>However co-simulation with Verilator can be achived using <a class="reference external" href="https://cygwin.com/">CygWin</a>. Installing open-source tools Verilator and GTKWave using <a class="reference external" href="https://cygwin.com/">CygWin</a> is explained on the <code class="docutils literal notranslate"><span class="pre">ZipCPU</span> <span class="pre">blog</span> <span class="pre">&lt;https://zipcpu.com/blog/2017/07/28/cygwin-fpga.html&gt;`_.</span> <span class="pre">Depending</span> <span class="pre">on</span> <span class="pre">the</span> <span class="pre">version</span> <span class="pre">you</span> <span class="pre">might</span> <span class="pre">need</span> <span class="pre">to</span> <span class="pre">add</span> <span class="pre">``gcc-g++</span></code> to CygWin packages as well as the appropriate Python version and need not prefix some commands with <code class="docutils literal notranslate"><span class="pre">sudo</span></code>. Important: co-simulation tests must be ran with Python from the CygWin environment, not from Windows.</p>
-</div>
-<div class="section" id="linux">
+<section id="linux">
 <h2>Linux<a class="headerlink" href="#linux" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="install-with-pip">
+<section id="install-with-pip">
 <h3>Install with <code class="docutils literal notranslate"><span class="pre">pip</span></code><a class="headerlink" href="#install-with-pip" title="Permalink to this headline">¶</a></h3>
-<p><strong>PyGears</strong> requires a specific version of Python3, namely Python 3.6, so think about using <code class="docutils literal notranslate"><span class="pre">pygears-tools</span></code> and the procedure given <a class="reference internal" href="#install-pygears-tools"><span class="std std-ref">below</span></a> for installing the correct python version together with <strong>PyGears</strong>. Otherwise, consider using <a class="reference external" href="https://virtualenv.pypa.io/en/stable/">virtualenv</a> or <a class="reference external" href="https://github.com/pyenv/pyenv">pyenv</a> to manage your Python version.</p>
+<p><strong>PyGears</strong> requires a specific version of Python3, namely Python 3.6 or later, so think about using <code class="docutils literal notranslate"><span class="pre">pygears-tools</span></code> and the procedure given <a class="reference internal" href="#install-pygears-tools"><span class="std std-ref">below</span></a> for installing the correct python version together with <strong>PyGears</strong>. Otherwise, consider using <a class="reference external" href="https://virtualenv.pypa.io/en/stable/">virtualenv</a> or <a class="reference external" href="https://github.com/pyenv/pyenv">pyenv</a> to manage your Python version.</p>
 <p>Install <strong>PyGears</strong> package with the command below. Depending on how your Python was installed you might get an error and need to prefix the command with <code class="docutils literal notranslate"><span class="pre">sudo</span></code>:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip3 install pygears
 </pre></div>
 </div>
 <p><em>[Optional]</em> Obtain examples and tests:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/bogdanvuk/pygears.git
-<span class="nb">cd</span> pygears/examples
+<span class="nb">cd</span> pygears/tests
 </pre></div>
 </div>
-</div>
-<div class="section" id="installing-using-pygears-tools">
+</section>
+<section id="installing-using-pygears-tools">
 <span id="install-pygears-tools"></span><h3>Installing using pygears-tools<a class="headerlink" href="#installing-using-pygears-tools" title="Permalink to this headline">¶</a></h3>
-<p>Below you can find a procedure for installing the <strong>PyGears</strong> with the correct Python version. On detailed description and capabilities of <code class="docutils literal notranslate"><span class="pre">pygears-tools</span></code> refer to <a class="reference internal" href="setup.html#setup-pygears-tools"><span class="std std-ref">PyGears tools setup</span></a> page. The procedure was tested on Ubuntu 18.04, Ubuntu 16.04, Ubuntu 14.04 and openSUSE Leap 15.</p>
+<p>Below you can find a procedure for installing the <strong>PyGears</strong> with the correct Python version. On detailed description and capabilities of <code class="docutils literal notranslate"><span class="pre">pygears-tools</span></code> refer to <span class="xref std std-ref">PyGears tools setup</span> page. The procedure was tested on Ubuntu 18.04, Ubuntu 16.04, Ubuntu 14.04 and openSUSE Leap 15.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo apt install python3-pip
 sudo pip3 install pygears-tools
 
@@ -79,23 +74,16 @@ pygears-tools-install pyenv python pygears
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span> ~/.pygears/tools/tools.sh
 </pre></div>
 </div>
-</div>
-<div class="section" id="alternative-installation-from-source">
+</section>
+<section id="alternative-installation-from-source">
 <h3>Alternative installation from source<a class="headerlink" href="#alternative-installation-from-source" title="Permalink to this headline">¶</a></h3>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/bogdanvuk/pygears.git
 <span class="nb">cd</span> pygears
 python3 setup.py install
 </pre></div>
 </div>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>setup.py might fail to install the necessary dependencies, so you might additionally need to run:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">jinja2</span>
-</pre></div>
-</div>
-</div>
-</div>
-<div class="section" id="installing-verilator">
+</section>
+<section id="installing-verilator">
 <h3>Installing Verilator<a class="headerlink" href="#installing-verilator" title="Permalink to this headline">¶</a></h3>
 <p>If you would like to run cosimulations with the Verilator, you need to make sure that it is available on the PATH. You can install it manually by following <a class="reference external" href="https://www.veripool.org/projects/verilator/wiki/Installing">these instructions</a>. As an alternative, PyGears offers a script that automatically compiles the latest Verilator. The script was tested on Ubuntu.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># List the system-wide dependencies for Verilator</span>
@@ -112,9 +100,19 @@ pygears-tools-install verilator
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span> ~/.pygears/tools/tools.sh
 </pre></div>
 </div>
+</section>
+<section id="installing-gtkwave">
+<h3>Installing GTKWave<a class="headerlink" href="#installing-gtkwave" title="Permalink to this headline">¶</a></h3>
+<p>PyGears simulator outputs standard VCD format, which can be viewed by an open-source viewer <a class="reference external" href="http://gtkwave.sourceforge.net">GTKWave</a>. You can install it on Ubuntu via:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">..</span> <span class="n">code</span><span class="o">-</span><span class="n">block</span><span class="p">::</span> <span class="n">bash</span>
+</pre></div>
 </div>
-</div>
-</div>
+<blockquote>
+<div><p>sudo apt install gtkwave</p>
+</div></blockquote>
+</section>
+</section>
+</section>
 
     <script type="text/javascript">
         function init() {
@@ -153,28 +151,18 @@ pygears-tools-install verilator
 
 
 <hr />
-<p>
-    <h3> Blogs </h3>
-    <ul>
-        <li class="toctree-l1"><a href="https://www.pygears.org/blog/blog/category/risc-v.html">RISC-V implementation blog</a></li>
-    </ul>
-</p>
 <hr />
 <h3><a href="https://www.pygears.org/blog/blog/category/release.html">Release notes</a></h3>
 <hr />
 <h3><a href="index.html">Table of Contents</a></h3>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="live.html">PyGears LIVE!</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#windows">Windows</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#linux">Linux</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="introduction.html">Quick introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gears.html">Introduction to Gears</a></li>
 <li class="toctree-l1"><a class="reference internal" href="typing.html">Typing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="registry.html">Registry</a></li>
-<li class="toctree-l1"><a class="reference internal" href="setup.html">PyGears Tools Setup for Linux</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reference.html">Reference</a></li>
 </ul>
@@ -194,10 +182,10 @@ pygears-tools-install verilator
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2020, Bogdan Vukobratovic.
+      &copy;2022, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

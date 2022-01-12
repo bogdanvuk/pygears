@@ -1,13 +1,13 @@
 
 <!DOCTYPE html>
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
     <title>Logger &#8212; PyGears - HW Design: A Functional Approach</title>
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
@@ -19,7 +19,7 @@
     <link rel="shortcut icon" href="../_static/pygears.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Union" href="../typing/union.html" />
+    <link rel="next" title="Registry" href="registry.html" />
     <link rel="prev" title="Reference" href="../reference.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
@@ -37,7 +37,7 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="module-pygears.conf.log">
+  <section id="module-pygears.conf.log">
 <span id="logger"></span><h1>Logger<a class="headerlink" href="#module-pygears.conf.log" title="Permalink to this headline">¶</a></h1>
 <p>This module implements various logging facilities for the PyGears framework.
 It is a wrapper around standard Python <a class="reference external" href="https://docs.python.org/library/logging.html">logging</a> but provides some additional
@@ -53,14 +53,10 @@ logger name and the default logging level:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">CustomLog</span><span class="p">(</span><span class="s1">&#39;core&#39;</span><span class="p">,</span> <span class="n">log</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="section" id="logging-levels">
+<section id="logging-levels">
 <span id="levels"></span><h2>Logging Levels<a class="headerlink" href="#logging-levels" title="Permalink to this headline">¶</a></h2>
 <p>The numeric values of logging levels are given in the following table.</p>
 <table class="docutils align-default">
-<colgroup>
-<col style="width: 48%" />
-<col style="width: 52%" />
-</colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Level</p></th>
 <th class="head"><p>Numeric value</p></th>
@@ -87,15 +83,15 @@ logger name and the default logging level:</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="section" id="reference">
+</section>
+<section id="reference">
 <h2>Reference<a class="headerlink" href="#reference" title="Permalink to this headline">¶</a></h2>
-<dl class="py class">
+<dl class="class">
 <dt id="pygears.conf.log.register_custom_log">
-<em class="property">class </em><code class="sig-name descname">register_custom_log</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">level=20</em>, <em class="sig-param">cls=&lt;class 'pygears.conf.log.CustomLogger'&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#pygears.conf.log.register_custom_log" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-name descname">register_custom_log</code><a class="headerlink" href="#pygears.conf.log.register_custom_log" title="Permalink to this definition">¶</a></dt>
 <dd><p>PyGears integrated logger class.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>name</strong> – logger name</p></li>
 <li><p><strong>verbosity</strong> – default logging level:</p></li>
@@ -103,7 +99,7 @@ logger name and the default logging level:</p>
 </dd>
 </dl>
 <p>CustomLog instances are customizable via <code class="samp docutils literal notranslate"><span class="pre">logger/</span><em><span class="pre">logger_name</span></em></code>
-<a class="reference internal" href="../registry.html#registry"><span class="std std-ref">registry</span></a> subtree. The logger instance registry subtree
+<span class="xref std std-ref">registry</span> subtree. The logger instance registry subtree
 contains the following configuration variables:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">level</span></code> (int): All messages that are logged with a verbosity level
@@ -137,8 +133,8 @@ taken; this is usefull for clearing prevously set values</p></li>
 </div>
 </dd></dl>
 
-</div>
-</div>
+</section>
+</section>
 
     <script type="text/javascript">
         function init() {
@@ -177,24 +173,15 @@ taken; this is usefull for clearing prevously set values</p></li>
 
 
 <hr />
-<p>
-    <h3> Blogs </h3>
-    <ul>
-        <li class="toctree-l1"><a href="https://www.pygears.org/blog/blog/category/risc-v.html">RISC-V implementation blog</a></li>
-    </ul>
-</p>
 <hr />
 <h3><a href="https://www.pygears.org/blog/blog/category/release.html">Release notes</a></h3>
 <hr />
 <h3><a href="../index.html">Table of Contents</a></h3>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="../live.html">PyGears LIVE!</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../introduction.html">Quick introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../gears.html">Introduction to Gears</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../typing.html">Typing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../registry.html">Registry</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../setup.html">PyGears Tools Setup for Linux</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../reference.html">Reference</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="../reference.html#core">Core</a></li>
@@ -220,10 +207,10 @@ taken; this is usefull for clearing prevously set values</p></li>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2020, Bogdan Vukobratovic.
+      &copy;2022, Bogdan Vukobratovic.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

@@ -15,24 +15,40 @@ HW Design: A Functional Approach
 
 .. code-block:: python
 
-  @gear
-  def echo(samples: Fixp, *, feedback_gain, sample_rate, delay):
+  from pygears import gear, Intf, alternative
+  from pygears.lib import decouple, fmap, union_collapse, trunc
+  from pygears.typing import Fixp, ceil_pow2, Tuple
+  from pygears.lib import flatten, priority_mux, replicate, once
 
+
+  @gear
+  def prefill(din, *, num, dtype):
+      fill = once(val=dtype(0)) \
+          | replicate(num) \
+          | flatten
+
+      return priority_mux(fill, din) \
+          | union_collapse
+
+
+  @gear
+  def echo(din: Fixp, *, feedback_gain, sample_rate, delay):
       sample_dly_len = round(sample_rate * delay)
       fifo_depth = ceil_pow2(sample_dly_len)
-      feedback_gain_fixp = samples.dtype(feedback_gain)
+      feedback_gain_fixp = din.dtype(feedback_gain)
 
-      dout = Intf(samples.dtype)
+      dout = Intf(din.dtype)
 
-      feedback = decouple(dout, depth=fifo_depth) \
-          | prefill(dtype=samples.dtype, num=sample_dly_len)
+      feedback = dout \
+          | decouple(depth=fifo_depth) \
+          | prefill(dtype=din.dtype, num=sample_dly_len)
 
-      feedback_attenuated = (feedback * feedback_gain_fixp) \
-          | samples.dtype
+      feedback_attenuated = trunc(feedback * feedback_gain_fixp, t=din.dtype)
 
-      dout |= (samples + feedback_attenuated) | samples.dtype
+      dout |= trunc(din + feedback_attenuated, t=dout.dtype)
 
       return dout
+
 
 Python functions model hardware modules, where function arguments represent module inputs and parameters. Example ``echo`` module has a single input port called ``samples`` where data of arbitrary signed fixed-point type ``Fixp`` can be received. Other three parameters ``feedback_gain``, ``sample_rate`` and ``delay`` are compile time parameters.
 
@@ -104,8 +120,6 @@ Checkout the examples
 
 :ref:`Echo <echo-examples>`: Hardware module that applies echo audio effect to a continuous audio stream.
 
-`RISC-V processor <https://github.com/bogdanvuk/pygears_riscv>`__: **PyGears** implementation. Checkout also the `RISC-V implementation blog series <https://www.pygears.org/blog/riscv/introduction.html>`_.
-
 `Tests <https://github.com/bogdanvuk/pygears/tree/master/tests>`_: Contain many examples on how individual **PyGears** components operate
 
 Contributions
@@ -129,13 +143,10 @@ Contents
 .. toctree::
    :maxdepth: 2
 
-   live
    install
    introduction
    gears
    typing
-   registry
-   setup
    examples
    reference
 
