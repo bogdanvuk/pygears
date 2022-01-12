@@ -14,7 +14,10 @@ def oper_tree(din, func):
         else:
             results.append(i[0])
 
-    return func(*results)
+    if len(results) == 1:
+        return results[0]
+    else:
+        return func(*results)
 
 
 def oper_reduce(din, func, init=0):
