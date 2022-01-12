@@ -1,6 +1,6 @@
 sphinx==2.4
 -e git+https://github.com/bogdanvuk/sphinx-verboser.git@master#egg=sphinx_verboser
--e git+https://github.com/bogdanvuk/sphinx-verboser.git@master#egg=sphinx_urlinclude
+-e git+https://github.com/bogdanvuk/sphinx-urlinclude.git@master#egg=sphinx_urlinclude
 -e git+https://github.com/bogdanvuk/bdp.git@master#egg=bdp
 -e ..
 sphinxcontrib-tikz
