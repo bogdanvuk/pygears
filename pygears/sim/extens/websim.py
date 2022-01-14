@@ -257,7 +257,6 @@ def vcd_to_json_worker(entries, wire_map: dict, vcd_conv, t):
     vcd_conv.after_timestep(t)
 
 
-
 def vcd_to_json(top, file_iter):
     wire_map = {}
     vcd_conv = None
@@ -522,7 +521,8 @@ class WebSim(SimExtend):
         qin, qout = multiprocessing.Pipe(duplex=False)
         self.qin.append(qin)
 
-        p = multiprocessing.Process(target=vcd_to_json_task, args=(vcd_fn, self.finish_event, qout, top))
+        p = multiprocessing.Process(target=vcd_to_json_task,
+                                    args=(vcd_fn, self.finish_event, qout, top))
         self.p.append(p)
 
     def before_run(self, sim):
@@ -572,7 +572,8 @@ class WebSim(SimExtend):
                 intf_name = p_name
                 port_name = None if isinstance(p, Intf) else p.producer.name
 
-                if isinstance(p, InPort) and any(isinstance(c, HDLConsumer) for c in p.consumer.consumers):
+                if isinstance(p, InPort) and (p.consumer is None or any(
+                        isinstance(c, HDLConsumer) for c in p.consumer.consumers)):
                     intf_name = None
 
                 for channel_name in [intf_name, port_name]:
