@@ -197,7 +197,7 @@ class VcdToJson:
         # self.diff.clear()
 
 
-def follow(fn, finish_event, sleep_sec=0.1):
+def follow(fn, finish_event=None, sleep_sec=0.1):
     """ Yield each line from a file as they are written.
     `sleep_sec` is the time to sleep after empty reads. """
     line = ''
@@ -210,7 +210,7 @@ def follow(fn, finish_event, sleep_sec=0.1):
                     yield line
                     line = ''
             else:
-                if finish_event.is_set():
+                if finish_event is None or finish_event.is_set():
                     return
 
                 time.sleep(sleep_sec)
@@ -257,15 +257,8 @@ def vcd_to_json_worker(entries, wire_map: dict, vcd_conv, t):
     vcd_conv.after_timestep(t)
 
 
-def vcd_to_json(vcd_fn, finish_event, ret_pipe, top):
-    import os
-    import time
 
-    while not os.path.exists(vcd_fn):
-        time.sleep(0.1)
-
-    time.sleep(0.1)
-
+def vcd_to_json(top, file_iter):
     wire_map = {}
     vcd_conv = None
     skip_scope = 0
@@ -274,7 +267,7 @@ def vcd_to_json(vcd_fn, finish_event, ret_pipe, top):
     hier = top
     worker_data = []
 
-    for line in follow(vcd_fn, finish_event):
+    for line in file_iter:
         # for line in f:
         line = line.strip()
         if line == '':
@@ -340,6 +333,12 @@ def vcd_to_json(vcd_fn, finish_event, ret_pipe, top):
                 scope_name = scope_name[1:-4]
                 child = find(f'{hier.name}.{scope_name}')
 
+                if child is None:
+                    for i in hier.local_intfs:
+                        if reg['hdlgen/map'][i].basename == scope_name:
+                            child = i
+                            break
+
             if scope_name.startswith('bc_') or '_bc_' in scope_name:
                 skip_scope = 1
                 continue
@@ -359,23 +358,6 @@ def vcd_to_json(vcd_fn, finish_event, ret_pipe, top):
             if child is None:
                 skip_scope = 1
                 continue
-
-            # if child is None:
-            #     if child is None:
-            #         skip_scope = 1
-            #         continue
-
-            #     child = hier[scope_name]
-            #     # if child is not None and not child.hierarchical:
-            #     #     skip_scope = 1
-            #     #     continue
-
-            #     # print(f'Gear scope: {f"{hier.name}/{scope_name}"}')
-            # # else:
-            # #     print(f'Port scope: {f"{hier.name}.{scope_name}"}')
-
-            # if child is None:
-            #     raise Exception(f'Cannot find gear for scope: {line}')
 
             hier = child
 
@@ -416,9 +398,23 @@ def vcd_to_json(vcd_fn, finish_event, ret_pipe, top):
             continue
 
     if vcd_conv is None:
-        raise Exception(f'Synchronization error, please rerun simulation')
+        return None
 
-    ret_pipe.send(vcd_conv.json_vcd)
+    return vcd_conv.json_vcd
+
+
+def vcd_to_json_task(vcd_fn, finish_event, ret_pipe, top):
+    import os
+    import time
+
+    while not os.path.exists(vcd_fn):
+        time.sleep(0.1)
+
+    time.sleep(0.1)
+
+    json_vcd = vcd_to_json(top, follow(vcd_fn, finish_event))
+
+    ret_pipe.send(json_vcd)
 
 
 def dtype_tree(dtype):
@@ -486,7 +482,7 @@ def dump_json_graph(top):
 
     for node in NodeYielder().visit(find(top)):
         for p in node.in_ports + node.out_ports:
-            if p.consumer is None:
+            if p.consumer is None or any(isinstance(c, HDLConsumer) for c in p.consumer.consumers):
                 continue
 
             i = p.consumer
@@ -511,27 +507,31 @@ def dump_json_graph(top):
 
 class WebSim(SimExtend):
     @inject
-    def __init__(self, trace_fn='pygears.json', outdir=Inject('results-dir')):
+    def __init__(self, trace_fn='pygears.json', outdir=Inject('results-dir'), multiprocess=True):
         super().__init__()
         self.outdir = outdir
         self.trace_fn = os.path.abspath(os.path.join(self.outdir, trace_fn))
+        self.multiprocess = multiprocess
+        self.cosim_modules = []
         # atexit.register(self.finish)
 
         self.vcd_fn = os.path.abspath(os.path.join(self.outdir, 'pygears.vcd'))
         self.finished = False
 
-        self.json_vcd = {}
-        manager = multiprocessing.Manager()
-        self.json_vcd = manager.dict()
-
     def register_vcd_worker(self, vcd_fn, top):
         qin, qout = multiprocessing.Pipe(duplex=False)
         self.qin.append(qin)
 
-        p = multiprocessing.Process(target=vcd_to_json, args=(vcd_fn, self.finish_event, qout, top))
+        p = multiprocessing.Process(target=vcd_to_json_task, args=(vcd_fn, self.finish_event, qout, top))
         self.p.append(p)
 
     def before_run(self, sim):
+        if not self.multiprocess:
+            for m in find_cosim_modules():
+                self.cosim_modules.append((m.gear.parent, m.trace_fn))
+
+            return
+
         self.finish_event = multiprocessing.Event()
 
         self.qin = []
@@ -547,21 +547,34 @@ class WebSim(SimExtend):
     def sim_vcd_to_json(self):
         graph = dump_json_graph('/')
 
-        self.finish_event.set()
-        json_vcds = [qin.recv() for qin in self.qin]
+        if self.multiprocess:
+            self.finish_event.set()
+            json_vcds = [qin.recv() for qin in self.qin]
 
-        for p in self.p:
-            p.join()
+            for p in self.p:
+                p.join()
+        else:
+            json_vcds = []
+            for top, trace_fn in self.cosim_modules:
+                json_vcds.append(vcd_to_json(top, follow(trace_fn)))
+
+            json_vcds.append(vcd_to_json(find('/'), follow(self.vcd_fn)))
 
         visited_channels = set()
         changes = []
         for json_vcd in json_vcds:
             for p_name in json_vcd:
                 p = find(p_name)
-                channel_name = p_name if isinstance(p, Intf) else p.producer.name
-                if channel_name not in visited_channels:
-                    changes.append({'channelName': channel_name, 'changes': json_vcd[p_name]})
-                    visited_channels.add(channel_name)
+                intf_name = p_name
+                port_name = None if isinstance(p, Intf) else p.producer.name
+
+                if isinstance(p, InPort) and any(isinstance(c, HDLConsumer) for c in p.consumer.consumers):
+                    intf_name = None
+
+                for channel_name in [intf_name, port_name]:
+                    if channel_name is not None and channel_name not in visited_channels:
+                        changes.append({'channelName': channel_name, 'changes': json_vcd[p_name]})
+                        visited_channels.add(channel_name)
 
         return {
             'graphInfo': graph,

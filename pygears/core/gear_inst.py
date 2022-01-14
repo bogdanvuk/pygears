@@ -255,7 +255,8 @@ class intf_name_tracer:
         if not self.enabled:
             return
 
-        if reg['gear/current_module'].parent == reg['gear/root']:
+        cur_gear = reg['gear/current_module']
+        if cur_gear.parent == reg['gear/root']:
             sys.setprofile(None)
 
         cm = self.code_map.pop()
@@ -263,7 +264,15 @@ class intf_name_tracer:
         if exception_type is None and hasattr(cm, 'func_locals'):
             for name, val in filter(lambda x: isinstance(x[1], Intf), cm.func_locals.items()):
                 if not hasattr(val, 'var_name'):
-                    val.var_name = name
+                    cnt = 0
+                    for c in cur_gear.child + cur_gear.in_ports:
+                        if c.basename == name:
+                            cnt += 1
+
+                    if cnt == 0:
+                        val.var_name = name
+                    else:
+                        val.var_name = f'{name}{cnt}'
 
 
 # TODO: Apparently no error is thrown if an input interface is not connected

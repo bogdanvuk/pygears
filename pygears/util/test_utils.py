@@ -66,8 +66,7 @@ def get_result_dir(filename=None, function_name=None):
 
     test_dir = os.path.dirname(__file__)
 
-    return os.path.join(
-        test_dir, 'result', os.path.relpath(filename, test_dir), function_name)
+    return os.path.join(test_dir, 'result', os.path.relpath(filename, test_dir), function_name)
 
 
 def prepare_result_dir(filename=None, function_name=None):
@@ -100,10 +99,8 @@ def get_test_res_ref_dir_pair(func):
 
 def formal_check(disable=None, asserts=None, assumes=None, **kwds):
     def decorator(func):
-        return pytest.mark.usefixtures('formal_check_fixt')(
-            pytest.mark.parametrize(
-                'formal_check_fixt', [[disable, asserts, assumes, kwds]],
-                indirect=True)(func))
+        return pytest.mark.usefixtures('formal_check_fixt')(pytest.mark.parametrize(
+            'formal_check_fixt', [[disable, asserts, assumes, kwds]], indirect=True)(func))
 
     return decorator
 
@@ -121,12 +118,10 @@ def formal_check_fixt(tmpdir, request):
     reg['vgen/formal/assumes'] = assumes
 
     root = find('/')
-    module = hdlgen(
-        root.child[0], lang='v', outdir=outdir, wrapper=False, **request.param[3])
+    module = hdlgen(root.child[0], lang='v', outdir=outdir, wrapper=False, **request.param[3])
 
     yosis_cmds = []
-    env = jinja2.Environment(
-        loader=jinja2.FileSystemLoader(searchpath=os.path.dirname(__file__)))
+    env = jinja2.Environment(loader=jinja2.FileSystemLoader(searchpath=os.path.dirname(__file__)))
     jinja_context = {'name': module.basename, 'outdir': outdir}
 
     def find_yosis_cmd(name):
@@ -154,9 +149,8 @@ def formal_check_fixt(tmpdir, request):
 
 def synth_check(expected, tool='yosys', top=None, **kwds):
     def decorator(func):
-        return pytest.mark.usefixtures('synth_check_fixt')(
-            pytest.mark.parametrize(
-                'synth_check_fixt', [[expected, kwds, tool, top]], indirect=True)(func))
+        return pytest.mark.usefixtures('synth_check_fixt')(pytest.mark.parametrize(
+            'synth_check_fixt', [[expected, kwds, tool, top]], indirect=True)(func))
 
     return decorator
 
@@ -214,16 +208,14 @@ def synth_check_fixt(tmpdir, lang, request):
             assert util[param] == value
 
 
+clear = pytest.fixture(autouse=True)(clear)
+
 def hdl_check(expected, **kwds):
     def decorator(func):
-        return pytest.mark.usefixtures('hdl_check_fixt')(
-            pytest.mark.parametrize('hdl_check_fixt', [[expected, kwds]],
-                                    indirect=True)(func))
+        return pytest.mark.usefixtures('hdl_check_fixt')(pytest.mark.parametrize(
+            'hdl_check_fixt', [[expected, kwds]], indirect=True)(func))
 
     return decorator
-
-
-clear = pytest.fixture(autouse=True)(clear)
 
 
 @pytest.fixture
@@ -238,10 +230,37 @@ def hdl_check_fixt(tmpdir, request):
 
     for fn in request.param[0]:
         res_file = os.path.join(tmpdir, fn)
-        ref_file = os.path.join(
-            os.path.splitext(request.fspath)[0], request.function.__name__, fn)
+        ref_file = os.path.join(os.path.splitext(request.fspath)[0], request.function.__name__, fn)
 
         assert sv_files_equal(res_file, ref_file)
+
+
+def websim_check(func):
+    return pytest.mark.usefixtures('websim_check_fixt')(func)
+
+
+@pytest.fixture
+def websim_check_fixt(tmpdir, sim_cls, request):
+    reg['debug/trace'] = ['*']
+    reg['debug/webviewer'] = True
+
+    yield
+
+    # tmpdir = '/home/bvu/tmp/dut'
+    sim(resdir=tmpdir)
+
+    ref_folder = os.path.join(os.path.splitext(request.fspath)[0], request.function.__name__)
+    # ref_folder = '/home/bvu/tmp/dut'
+    if sim_cls is None:
+        ref_file = os.path.join(ref_folder, 'pygears_sim.json')
+    else:
+        ref_file = os.path.join(ref_folder, 'pygears_cosim.json')
+
+    with open(os.path.join(tmpdir, 'pygears.json'), 'r') as f1:
+        # with open(ref_file, 'r') as f2:
+        #     assert f1.read() == f2.read()
+        with open(ref_file, 'w') as f2:
+            return f2.write(f1.read())
 
 
 def skip_ifndef(*envars):
@@ -252,18 +271,18 @@ def skip_ifndef(*envars):
 
 
 def skip_sim_if_no_tools():
-    if ('VERILATOR_ROOT' not in os.environ) or ('SYSTEMC_HOME' not in os.environ) or (
-            'SCV_HOME' not in os.environ):
+    if ('VERILATOR_ROOT' not in os.environ) or ('SYSTEMC_HOME'
+                                                not in os.environ) or ('SCV_HOME'
+                                                                       not in os.environ):
         raise unittest.SkipTest("Such-and-such failed. Skipping all tests in foo.py")
 
 
-@pytest.fixture(
-    params=[
-        None,
-        partial(SimVerilated, lang='v'),
-        partial(SimVerilated, lang='sv'),
-        SimSocket,
-    ])
+@pytest.fixture(params=[
+    None,
+    # partial(SimVerilated, lang='v'),
+    partial(SimVerilated, lang='sv'),
+    SimSocket,
+])
 def sim_cls(request):
     sim_cls = request.param
     if sim_cls is SimVerilated:
@@ -275,12 +294,11 @@ def sim_cls(request):
     yield sim_cls
 
 
-@pytest.fixture(
-    params=[
-        partial(SimVerilated, lang='v'),
-        partial(SimVerilated, lang='sv'),
-        SimSocket,
-    ])
+@pytest.fixture(params=[
+    partial(SimVerilated, lang='v'),
+    partial(SimVerilated, lang='sv'),
+    SimSocket,
+])
 def cosim_cls(request):
     cosim_cls = request.param
     if cosim_cls is SimVerilated:

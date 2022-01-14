@@ -160,7 +160,7 @@ class SVIntfGen:
                                             conn_name=self.basename).split('\n'))
             else:
                 inst.extend(
-                    spy_connect_t.substitute(intf_name=f'{self.intf.basename}_spy',
+                    spy_connect_t.substitute(intf_name=f'{self.basename}_spy',
                                              conn_name=self.basename,
                                              width=self.intf.dtype.width).split('\n'))
 
