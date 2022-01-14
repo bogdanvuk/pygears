@@ -537,6 +537,8 @@ class WebSim(SimExtend):
         self.qin = []
         self.p = []
         for m in find_cosim_modules():
+            if not m.trace_fn:
+                continue
             self.register_vcd_worker(m.trace_fn, top=m.gear.parent)
 
         self.register_vcd_worker(self.vcd_fn, find('/'))
@@ -563,6 +565,8 @@ class WebSim(SimExtend):
         visited_channels = set()
         changes = []
         for json_vcd in json_vcds:
+            if json_vcd is None:
+                continue
             for p_name in json_vcd:
                 p = find(p_name)
                 intf_name = p_name
