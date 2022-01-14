@@ -5,7 +5,7 @@ from pygears.core.graph import get_consumer_tree
 from pygears.core.port import OutPort
 from pygears.sim import log, timestep, SimPlugin
 from pygears.sim.sim_gear import SimGear
-from pygears.typing import typeof, TLM, Float, Uint
+from pygears.typing import typeof, TLM, Float, Uint, Any
 from pygears.typing.visitor import TypingVisitorBase
 from vcd import VCDWriter
 from pygears.core.hier_node import HierVisitorBase
@@ -382,7 +382,7 @@ class VCD(SimExtend):
 
     def var_put(self, v, val):
         cur_timestep = timestep() * 10
-        if typeof(v['dtype'], TLM):
+        if typeof(v['dtype'], (Any, TLM)):
             self.writer.change(v['data'], cur_timestep, str(val))
         else:
             try:
