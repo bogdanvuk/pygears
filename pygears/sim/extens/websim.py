@@ -7,6 +7,7 @@ import os
 from pygears.typing import typeof
 from pygears import find, reg
 from pygears.hdl import HDLPlugin
+from pygears.hdl.sv.intf import SVIntfGen
 from pygears.core.gear import Gear, Intf
 from pygears.core.port import HDLConsumer, Port, InPort
 from pygears.sim import timestep
@@ -80,10 +81,10 @@ def split_coded_change(t, val1, val2):
 
 
 def create_data_change(t, val, prev_val):
-    from pygears.typing import Queue, Array, Tuple
+    from pygears.typing import Queue, Array, Tuple, Union
     is_changed = prev_val is None and val is not None or val != prev_val
 
-    if typeof(t, (Queue, Array, Tuple)):
+    if typeof(t, (Queue, Array, Tuple, Union)):
         change = [
             create_data_change(subt, v, prev_v)
             for subt, v, prev_v in split_coded_change(t, val, prev_val)
@@ -330,13 +331,6 @@ def vcd_to_json(top, file_iter):
 
             if scope_name.startswith('_') and scope_name.endswith('_spy'):
                 scope_name = scope_name[1:-4]
-                child = find(f'{hier.name}.{scope_name}')
-
-                if child is None:
-                    for i in hier.local_intfs:
-                        if reg['hdlgen/map'][i].basename == scope_name:
-                            child = i
-                            break
 
             if scope_name.startswith('bc_') or '_bc_' in scope_name:
                 skip_scope = 1
@@ -346,8 +340,26 @@ def vcd_to_json(top, file_iter):
                 hier = top
                 continue
 
+            child = None
+            for c in hier.child + hier.local_intfs:
+                svmod = reg['hdlgen/map'].get(c, None)
+                if svmod is None:
+                    continue
+
+                if isinstance(svmod, SVIntfGen):
+                    if svmod.basename == scope_name:
+                        child = c
+                elif svmod.inst_name == scope_name:
+                    child = c
+                    break
+
             if child is None:
                 child = find(f'{hier.name}.{scope_name}')
+
+                if child is not None and hier.parent is not None and not node_hierarchical(hier.parent):
+                    skip_scope = 1
+                    continue
+
                 if not isinstance(child, Port):
                     child = None
 
@@ -371,7 +383,6 @@ def vcd_to_json(top, file_iter):
             else:
                 hier = hier.gear
         elif '$var' in line:
-            # print(line)
             if hier is top or skip_scope:
                 continue
 
@@ -379,7 +390,7 @@ def vcd_to_json(top, file_iter):
                 continue
 
             if isinstance(hier,
-                          Port) and not isinstance(hier, InPort) and not hier.gear.hierarchical:
+                          Port) and not isinstance(hier, InPort) and not node_hierarchical(hier.gear):
                 continue
 
             ls = line.split()
@@ -417,10 +428,10 @@ def vcd_to_json_task(vcd_fn, finish_event, ret_pipe, top):
 
 
 def dtype_tree(dtype):
-    from pygears.typing import Queue, Array, Tuple
+    from pygears.typing import Queue, Array, Tuple, Union
     if issubclass(dtype, Array):
         return {'name': repr(dtype), 'subtypes': [dtype_tree(t) for t in dtype]}
-    elif issubclass(dtype, (Queue, Array, Tuple)):
+    elif issubclass(dtype, (Queue, Array, Tuple, Union)):
         return {
             'name': repr(dtype),
             'subtypes': [dtype_tree(t) for t in dtype],
@@ -430,8 +441,11 @@ def dtype_tree(dtype):
         return {'name': repr(dtype)}
 
 
-def dump_json_graph(top):
+def node_hierarchical(node):
+    return node.hierarchical and node.meta_kwds.get('hdl', {}).get('hierarchical', True)
 
+
+def dump_json_graph(top):
     nodes = {}
     ports = {}
     connections = {}
@@ -439,7 +453,7 @@ def dump_json_graph(top):
     class NodeYielder(HierYielderBase):
         def Gear(self, node):
             yield node
-            return not node.hierarchical
+            return not node_hierarchical(node)
 
     for node in NodeYielder().visit(find(top)):
         in_ports = []
@@ -475,7 +489,7 @@ def dump_json_graph(top):
 
     for node in NodeYielder().visit(find(top)):
         nodes[node.name]['child'] = []
-        if node.hierarchical:
+        if node_hierarchical(node): # node.hierarchical:
             for c in node.child:
                 nodes[node.name]['child'].append(c.name)
 
@@ -484,14 +498,20 @@ def dump_json_graph(top):
             if p.consumer is None or any(isinstance(c, HDLConsumer) for c in p.consumer.consumers):
                 continue
 
+            if isinstance(p, InPort) and not node_hierarchical(node):
+                continue
+
             i = p.consumer
             connections[i.name] = {
                 'producer': i.producer.name,
                 'dtype': repr(p.dtype),
                 'dtype_tree': dtype_tree(p.dtype),
-                'name': i.name,
-                'consumers': [pc.name for pc in i.consumers if not isinstance(pc, HDLConsumer)]
+                'name': i.name
             }
+
+            connections[i.name]['consumers'] = [
+                pc.name for pc in i.consumers if not isinstance(pc, HDLConsumer)
+            ]
 
             # if not all(isinstance(p, HDLConsumer) for p in i.consumers):
             ports[i.producer.name]['consumer'] = i.name
@@ -506,12 +526,13 @@ def dump_json_graph(top):
 
 class WebSim(SimExtend):
     @inject
-    def __init__(self, trace_fn='pygears.json', outdir=Inject('results-dir'), multiprocess=True):
+    def __init__(self, trace_fn='pygears.json', outdir=Inject('results-dir'), multiprocess=False):
         super().__init__()
         self.outdir = outdir
         self.trace_fn = os.path.abspath(os.path.join(self.outdir, trace_fn))
         self.multiprocess = multiprocess
         self.cosim_modules = []
+        self.p = []
         # atexit.register(self.finish)
 
         self.vcd_fn = os.path.abspath(os.path.join(self.outdir, 'pygears.vcd'))
@@ -592,11 +613,21 @@ class WebSim(SimExtend):
 
     def finish(self):
         if not self.finished:
+            err = None
             json_out = self.sim_vcd_to_json()
-            import json
-            json.dump(json_out, open(self.trace_fn, 'w'), separators=(',', ':'))
-            # json.dump(json_out, open(self.trace_fn, 'w'))
-            # json.dump(json_out, open(self.trace_fn, 'w'), indent=4)
+            try:
+                # json_out = self.sim_vcd_to_json()
+                import json
+                # json.dump(json_out, open(self.trace_fn, 'w'), separators=(',', ':'))
+                # json.dump(json_out, open(self.trace_fn, 'w'))
+                json.dump(json_out, open(self.trace_fn, 'w'), indent=4)
+            except Exception as e:
+                for p in self.p:
+                    p.terminate()
+                err = e
+
+            if err is not None:
+                raise err
 
             self.finished = True
 

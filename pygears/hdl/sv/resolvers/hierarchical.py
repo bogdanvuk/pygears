@@ -5,6 +5,7 @@ import os
 import pygears
 from pygears import reg
 from pygears.core.gear import OutSig
+from ...sv.sv_keywords import sv_keywords
 from ...base_resolver import ResolverBase, ResolverTypeError
 from pygears.util.fileio import find_in_dirs, save_file
 from pygears.conf import inject, Inject
@@ -39,8 +40,8 @@ class HierarchicalResolver(ResolverBase):
     @property
     @functools.lru_cache()
     def module_name(self):
-        if find_in_dirs(f'{self.hier_path_name}.{self.lang}',
-                        self.hdl_path_list):
+        if (self.hier_path_name in sv_keywords
+                or find_in_dirs(f'{self.hier_path_name}.{self.lang}', self.hdl_path_list)):
             return self.hier_path_name + '_hier'
         else:
             return self.hier_path_name
@@ -107,5 +108,4 @@ class HierarchicalResolver(ResolverBase):
         return template_env.render_local(__file__, "hier_module.j2", context)
 
     def generate(self, template_env, outdir):
-        save_file(self.file_basename, outdir,
-                  self.get_hier_module(template_env))
+        save_file(self.file_basename, outdir, self.get_hier_module(template_env))

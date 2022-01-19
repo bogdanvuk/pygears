@@ -1,0 +1,1104 @@
+{
+    "graphInfo": {
+        "gears": {
+            "": {
+                "basename": "",
+                "name": "",
+                "definition": "None",
+                "in_ports": [],
+                "out_ports": [],
+                "child": [
+                    "/drv0",
+                    "/drv1",
+                    "/case",
+                    "/check"
+                ]
+            },
+            "/drv0": {
+                "basename": "drv0",
+                "name": "/drv0",
+                "definition": "pygears.lib.verif.drv",
+                "in_ports": [],
+                "out_ports": [
+                    "/drv0.dout"
+                ],
+                "child": []
+            },
+            "/drv1": {
+                "basename": "drv1",
+                "name": "/drv1",
+                "definition": "pygears.lib.verif.drv",
+                "in_ports": [],
+                "out_ports": [
+                    "/drv1.dout"
+                ],
+                "child": []
+            },
+            "/case": {
+                "basename": "case",
+                "name": "/case",
+                "definition": "pygears.lib.union.case",
+                "in_ports": [
+                    "/case.cond",
+                    "/case.din"
+                ],
+                "out_ports": [
+                    "/case.dout"
+                ],
+                "child": [
+                    "/case/ccat",
+                    "/case/cast_dout",
+                    "/case/fmap",
+                    "/case/union_collapse"
+                ]
+            },
+            "/case/ccat": {
+                "basename": "ccat",
+                "name": "/case/ccat",
+                "definition": "pygears.lib.ccat.ccat",
+                "in_ports": [
+                    "/case/ccat.din0",
+                    "/case/ccat.din1"
+                ],
+                "out_ports": [
+                    "/case/ccat.dout"
+                ],
+                "child": []
+            },
+            "/case/cast_dout": {
+                "basename": "cast_dout",
+                "name": "/case/cast_dout",
+                "definition": "pygears.lib.cast.cast",
+                "in_ports": [
+                    "/case/cast_dout.din"
+                ],
+                "out_ports": [
+                    "/case/cast_dout.dout"
+                ],
+                "child": []
+            },
+            "/case/fmap": {
+                "basename": "fmap",
+                "name": "/case/fmap",
+                "definition": "pygears.lib.fmaps.union.unionmap",
+                "in_ports": [
+                    "/case/fmap.din"
+                ],
+                "out_ports": [
+                    "/case/fmap.dout"
+                ],
+                "child": [
+                    "/case/fmap/demux_ctrl",
+                    "/case/fmap/add0",
+                    "/case/fmap/add1",
+                    "/case/fmap/mux"
+                ]
+            },
+            "/case/fmap/demux_ctrl": {
+                "basename": "demux_ctrl",
+                "name": "/case/fmap/demux_ctrl",
+                "definition": "pygears.lib.demux.demux_ctrl",
+                "in_ports": [
+                    "/case/fmap/demux_ctrl.din"
+                ],
+                "out_ports": [
+                    "/case/fmap/demux_ctrl.dout0",
+                    "/case/fmap/demux_ctrl.dout1",
+                    "/case/fmap/demux_ctrl.dout2"
+                ],
+                "child": [
+                    "/case/fmap/demux_ctrl/demux",
+                    "/case/fmap/demux_ctrl/sieve_1"
+                ]
+            },
+            "/case/fmap/demux_ctrl/demux": {
+                "basename": "demux",
+                "name": "/case/fmap/demux_ctrl/demux",
+                "definition": "pygears.lib.demux.demux",
+                "in_ports": [
+                    "/case/fmap/demux_ctrl/demux.din"
+                ],
+                "out_ports": [
+                    "/case/fmap/demux_ctrl/demux.dout0",
+                    "/case/fmap/demux_ctrl/demux.dout1"
+                ],
+                "child": []
+            },
+            "/case/fmap/demux_ctrl/sieve_1": {
+                "basename": "sieve_1",
+                "name": "/case/fmap/demux_ctrl/sieve_1",
+                "definition": "pygears.lib.sieve.sieve",
+                "in_ports": [
+                    "/case/fmap/demux_ctrl/sieve_1.din"
+                ],
+                "out_ports": [
+                    "/case/fmap/demux_ctrl/sieve_1.dout"
+                ],
+                "child": []
+            },
+            "/case/fmap/add0": {
+                "basename": "add0",
+                "name": "/case/fmap/add0",
+                "definition": "pygears.lib.operators.add",
+                "in_ports": [
+                    "/case/fmap/add0.din"
+                ],
+                "out_ports": [
+                    "/case/fmap/add0.dout"
+                ],
+                "child": []
+            },
+            "/case/fmap/add1": {
+                "basename": "add1",
+                "name": "/case/fmap/add1",
+                "definition": "pygears.lib.operators.add",
+                "in_ports": [
+                    "/case/fmap/add1.din"
+                ],
+                "out_ports": [
+                    "/case/fmap/add1.dout"
+                ],
+                "child": []
+            },
+            "/case/fmap/mux": {
+                "basename": "mux",
+                "name": "/case/fmap/mux",
+                "definition": "pygears.lib.mux.mux",
+                "in_ports": [
+                    "/case/fmap/mux.ctrl",
+                    "/case/fmap/mux.din0",
+                    "/case/fmap/mux.din1"
+                ],
+                "out_ports": [
+                    "/case/fmap/mux.dout"
+                ],
+                "child": []
+            },
+            "/case/union_collapse": {
+                "basename": "union_collapse",
+                "name": "/case/union_collapse",
+                "definition": "pygears.lib.union.union_collapse",
+                "in_ports": [
+                    "/case/union_collapse.din"
+                ],
+                "out_ports": [
+                    "/case/union_collapse.dout"
+                ],
+                "child": [
+                    "/case/union_collapse/sieve_0",
+                    "/case/union_collapse/code"
+                ]
+            },
+            "/case/union_collapse/sieve_0": {
+                "basename": "sieve_0",
+                "name": "/case/union_collapse/sieve_0",
+                "definition": "pygears.lib.sieve.sieve",
+                "in_ports": [
+                    "/case/union_collapse/sieve_0.din"
+                ],
+                "out_ports": [
+                    "/case/union_collapse/sieve_0.dout"
+                ],
+                "child": []
+            },
+            "/case/union_collapse/code": {
+                "basename": "code",
+                "name": "/case/union_collapse/code",
+                "definition": "pygears.lib.operators.code",
+                "in_ports": [
+                    "/case/union_collapse/code.din"
+                ],
+                "out_ports": [
+                    "/case/union_collapse/code.dout"
+                ],
+                "child": []
+            },
+            "/check": {
+                "basename": "check",
+                "name": "/check",
+                "definition": "pygears.lib.verif.check",
+                "in_ports": [
+                    "/check.din"
+                ],
+                "out_ports": [],
+                "child": []
+            }
+        },
+        "ports": {
+            "/drv0.dout": {
+                "basename": "dout",
+                "name": "/drv0.dout",
+                "dtype": "Bool",
+                "index": 0,
+                "consumer": ".drv0"
+            },
+            "/drv1.dout": {
+                "basename": "dout",
+                "name": "/drv1.dout",
+                "dtype": "Tuple[Uint[8], Uint[8]]",
+                "index": 0,
+                "consumer": ".drv1"
+            },
+            "/case.cond": {
+                "basename": "cond",
+                "name": "/case.cond",
+                "dtype": "Bool",
+                "index": 0,
+                "producer": ".drv0",
+                "consumer": "/case.cond"
+            },
+            "/case.din": {
+                "basename": "din",
+                "name": "/case.din",
+                "dtype": "Tuple[Uint[8], Uint[8]]",
+                "index": 1,
+                "producer": ".drv1",
+                "consumer": "/case.din"
+            },
+            "/case.dout": {
+                "basename": "dout",
+                "name": "/case.dout",
+                "dtype": "Uint[9]",
+                "index": 0,
+                "consumer": ".case",
+                "producer": "/case.dout"
+            },
+            "/case/ccat.din0": {
+                "basename": "din0",
+                "name": "/case/ccat.din0",
+                "dtype": "Tuple[Uint[8], Uint[8]]",
+                "index": 0,
+                "producer": "/case.din"
+            },
+            "/case/ccat.din1": {
+                "basename": "din1",
+                "name": "/case/ccat.din1",
+                "dtype": "Bool",
+                "index": 1,
+                "producer": "/case.cond"
+            },
+            "/case/ccat.dout": {
+                "basename": "dout",
+                "name": "/case/ccat.dout",
+                "dtype": "Tuple[Tuple[Uint[8], Uint[8]], Bool]",
+                "index": 0,
+                "consumer": "/case.ccat"
+            },
+            "/case/cast_dout.din": {
+                "basename": "din",
+                "name": "/case/cast_dout.din",
+                "dtype": "Tuple[Tuple[Uint[8], Uint[8]], Bool]",
+                "index": 0,
+                "producer": "/case.ccat"
+            },
+            "/case/cast_dout.dout": {
+                "basename": "dout",
+                "name": "/case/cast_dout.dout",
+                "dtype": "Union[Tuple[Uint[8], Uint[8]], Tuple[Uint[8], Uint[8]]]",
+                "index": 0,
+                "consumer": "/case.cast_dout"
+            },
+            "/case/fmap.din": {
+                "basename": "din",
+                "name": "/case/fmap.din",
+                "dtype": "Union[Tuple[Uint[8], Uint[8]], Tuple[Uint[8], Uint[8]]]",
+                "index": 0,
+                "producer": "/case.cast_dout",
+                "consumer": "/case/fmap.din"
+            },
+            "/case/fmap.dout": {
+                "basename": "dout",
+                "name": "/case/fmap.dout",
+                "dtype": "Union[Uint[9], Uint[9]]",
+                "index": 0,
+                "consumer": "/case.fmap",
+                "producer": "/case/fmap.dout"
+            },
+            "/case/fmap/demux_ctrl.din": {
+                "basename": "din",
+                "name": "/case/fmap/demux_ctrl.din",
+                "dtype": "Union[Tuple[Uint[8], Uint[8]], Tuple[Uint[8], Uint[8]]]",
+                "index": 0,
+                "producer": "/case/fmap.din",
+                "consumer": "/case/fmap/demux_ctrl.din"
+            },
+            "/case/fmap/demux_ctrl.dout0": {
+                "basename": "dout0",
+                "name": "/case/fmap/demux_ctrl.dout0",
+                "dtype": "Uint[1]",
+                "index": 0,
+                "consumer": "/case/fmap.ctrl",
+                "producer": "/case/fmap/demux_ctrl.dout0"
+            },
+            "/case/fmap/demux_ctrl.dout1": {
+                "basename": "dout1",
+                "name": "/case/fmap/demux_ctrl.dout1",
+                "dtype": "Tuple[Uint[8], Uint[8]]",
+                "index": 1,
+                "consumer": "/case/fmap.demux_ctrl_dout1",
+                "producer": "/case/fmap/demux_ctrl.dout1"
+            },
+            "/case/fmap/demux_ctrl.dout2": {
+                "basename": "dout2",
+                "name": "/case/fmap/demux_ctrl.dout2",
+                "dtype": "Tuple[Uint[8], Uint[8]]",
+                "index": 2,
+                "consumer": "/case/fmap.demux_ctrl_dout2",
+                "producer": "/case/fmap/demux_ctrl.dout2"
+            },
+            "/case/fmap/demux_ctrl/demux.din": {
+                "basename": "din",
+                "name": "/case/fmap/demux_ctrl/demux.din",
+                "dtype": "Union[Tuple[Uint[8], Uint[8]], Tuple[Uint[8], Uint[8]]]",
+                "index": 0,
+                "producer": "/case/fmap/demux_ctrl.din"
+            },
+            "/case/fmap/demux_ctrl/demux.dout0": {
+                "basename": "dout0",
+                "name": "/case/fmap/demux_ctrl/demux.dout0",
+                "dtype": "Tuple[Uint[8], Uint[8]]",
+                "index": 0,
+                "consumer": "/case/fmap/demux_ctrl.dout1"
+            },
+            "/case/fmap/demux_ctrl/demux.dout1": {
+                "basename": "dout1",
+                "name": "/case/fmap/demux_ctrl/demux.dout1",
+                "dtype": "Tuple[Uint[8], Uint[8]]",
+                "index": 1,
+                "consumer": "/case/fmap/demux_ctrl.dout2"
+            },
+            "/case/fmap/demux_ctrl/sieve_1.din": {
+                "basename": "din",
+                "name": "/case/fmap/demux_ctrl/sieve_1.din",
+                "dtype": "Union[Tuple[Uint[8], Uint[8]], Tuple[Uint[8], Uint[8]]]",
+                "index": 0,
+                "producer": "/case/fmap/demux_ctrl.din"
+            },
+            "/case/fmap/demux_ctrl/sieve_1.dout": {
+                "basename": "dout",
+                "name": "/case/fmap/demux_ctrl/sieve_1.dout",
+                "dtype": "Uint[1]",
+                "index": 0,
+                "consumer": "/case/fmap/demux_ctrl.dout0"
+            },
+            "/case/fmap/add0.din": {
+                "basename": "din",
+                "name": "/case/fmap/add0.din",
+                "dtype": "Tuple[{'a': Uint[8], 'b': Uint[8]}]",
+                "index": 0,
+                "producer": "/case/fmap.demux_ctrl_dout1"
+            },
+            "/case/fmap/add0.dout": {
+                "basename": "dout",
+                "name": "/case/fmap/add0.dout",
+                "dtype": "Uint[9]",
+                "index": 0,
+                "consumer": "/case/fmap.add0"
+            },
+            "/case/fmap/add1.din": {
+                "basename": "din",
+                "name": "/case/fmap/add1.din",
+                "dtype": "Tuple[{'a': Uint[8], 'b': Uint[8]}]",
+                "index": 0,
+                "producer": "/case/fmap.demux_ctrl_dout2"
+            },
+            "/case/fmap/add1.dout": {
+                "basename": "dout",
+                "name": "/case/fmap/add1.dout",
+                "dtype": "Uint[9]",
+                "index": 0,
+                "consumer": "/case/fmap.add1"
+            },
+            "/case/fmap/mux.ctrl": {
+                "basename": "ctrl",
+                "name": "/case/fmap/mux.ctrl",
+                "dtype": "Uint[1]",
+                "index": 0,
+                "producer": "/case/fmap.ctrl"
+            },
+            "/case/fmap/mux.din0": {
+                "basename": "din0",
+                "name": "/case/fmap/mux.din0",
+                "dtype": "Uint[9]",
+                "index": 1,
+                "producer": "/case/fmap.add0"
+            },
+            "/case/fmap/mux.din1": {
+                "basename": "din1",
+                "name": "/case/fmap/mux.din1",
+                "dtype": "Uint[9]",
+                "index": 2,
+                "producer": "/case/fmap.add1"
+            },
+            "/case/fmap/mux.dout": {
+                "basename": "dout",
+                "name": "/case/fmap/mux.dout",
+                "dtype": "Union[Uint[9], Uint[9]]",
+                "index": 0,
+                "consumer": "/case/fmap.dout"
+            },
+            "/case/union_collapse.din": {
+                "basename": "din",
+                "name": "/case/union_collapse.din",
+                "dtype": "Union[Uint[9], Uint[9]]",
+                "index": 0,
+                "producer": "/case.fmap",
+                "consumer": "/case/union_collapse.din"
+            },
+            "/case/union_collapse.dout": {
+                "basename": "dout",
+                "name": "/case/union_collapse.dout",
+                "dtype": "Uint[9]",
+                "index": 0,
+                "consumer": "/case.dout",
+                "producer": "/case/union_collapse.dout"
+            },
+            "/case/union_collapse/sieve_0.din": {
+                "basename": "din",
+                "name": "/case/union_collapse/sieve_0.din",
+                "dtype": "Union[Uint[9], Uint[9]]",
+                "index": 0,
+                "producer": "/case/union_collapse.din"
+            },
+            "/case/union_collapse/sieve_0.dout": {
+                "basename": "dout",
+                "name": "/case/union_collapse/sieve_0.dout",
+                "dtype": "Uint[9]",
+                "index": 0,
+                "consumer": "/case/union_collapse.sieve_0"
+            },
+            "/case/union_collapse/code.din": {
+                "basename": "din",
+                "name": "/case/union_collapse/code.din",
+                "dtype": "Uint[9]",
+                "index": 0,
+                "producer": "/case/union_collapse.sieve_0"
+            },
+            "/case/union_collapse/code.dout": {
+                "basename": "dout",
+                "name": "/case/union_collapse/code.dout",
+                "dtype": "Uint[9]",
+                "index": 0,
+                "consumer": "/case/union_collapse.dout"
+            },
+            "/check.din": {
+                "basename": "din",
+                "name": "/check.din",
+                "dtype": "Uint[9]",
+                "index": 0,
+                "producer": ".case"
+            }
+        },
+        "connections": {
+            ".drv0": {
+                "producer": "/drv0.dout",
+                "dtype": "Bool",
+                "dtype_tree": {
+                    "name": "Bool"
+                },
+                "name": ".drv0",
+                "consumers": [
+                    "/case.cond"
+                ]
+            },
+            ".drv1": {
+                "producer": "/drv1.dout",
+                "dtype": "Tuple[Uint[8], Uint[8]]",
+                "dtype_tree": {
+                    "name": "Tuple[Uint[8], Uint[8]]",
+                    "subtypes": [
+                        {
+                            "name": "Uint[8]"
+                        },
+                        {
+                            "name": "Uint[8]"
+                        }
+                    ],
+                    "keys": [
+                        "f0",
+                        "f1"
+                    ]
+                },
+                "name": ".drv1",
+                "consumers": [
+                    "/case.din"
+                ]
+            },
+            "/case.cond": {
+                "producer": "/case.cond",
+                "dtype": "Bool",
+                "dtype_tree": {
+                    "name": "Bool"
+                },
+                "name": "/case.cond",
+                "consumers": [
+                    "/case/ccat.din1"
+                ]
+            },
+            "/case.din": {
+                "producer": "/case.din",
+                "dtype": "Tuple[Uint[8], Uint[8]]",
+                "dtype_tree": {
+                    "name": "Tuple[Uint[8], Uint[8]]",
+                    "subtypes": [
+                        {
+                            "name": "Uint[8]"
+                        },
+                        {
+                            "name": "Uint[8]"
+                        }
+                    ],
+                    "keys": [
+                        "f0",
+                        "f1"
+                    ]
+                },
+                "name": "/case.din",
+                "consumers": [
+                    "/case/ccat.din0"
+                ]
+            },
+            ".case": {
+                "producer": "/case.dout",
+                "dtype": "Uint[9]",
+                "dtype_tree": {
+                    "name": "Uint[9]"
+                },
+                "name": ".case",
+                "consumers": [
+                    "/check.din"
+                ]
+            },
+            "/case.ccat": {
+                "producer": "/case/ccat.dout",
+                "dtype": "Tuple[Tuple[Uint[8], Uint[8]], Bool]",
+                "dtype_tree": {
+                    "name": "Tuple[Tuple[Uint[8], Uint[8]], Bool]",
+                    "subtypes": [
+                        {
+                            "name": "Tuple[Uint[8], Uint[8]]",
+                            "subtypes": [
+                                {
+                                    "name": "Uint[8]"
+                                },
+                                {
+                                    "name": "Uint[8]"
+                                }
+                            ],
+                            "keys": [
+                                "f0",
+                                "f1"
+                            ]
+                        },
+                        {
+                            "name": "Bool"
+                        }
+                    ],
+                    "keys": [
+                        "f0",
+                        "f1"
+                    ]
+                },
+                "name": "/case.ccat",
+                "consumers": [
+                    "/case/cast_dout.din"
+                ]
+            },
+            "/case.cast_dout": {
+                "producer": "/case/cast_dout.dout",
+                "dtype": "Union[Tuple[Uint[8], Uint[8]], Tuple[Uint[8], Uint[8]]]",
+                "dtype_tree": {
+                    "name": "Union[Tuple[Uint[8], Uint[8]], Tuple[Uint[8], Uint[8]]]",
+                    "subtypes": [
+                        {
+                            "name": "Uint[16]"
+                        },
+                        {
+                            "name": "Uint[1]"
+                        }
+                    ],
+                    "keys": [
+                        "data",
+                        "ctrl"
+                    ]
+                },
+                "name": "/case.cast_dout",
+                "consumers": [
+                    "/case/fmap.din"
+                ]
+            },
+            "/case/fmap.din": {
+                "producer": "/case/fmap.din",
+                "dtype": "Union[Tuple[Uint[8], Uint[8]], Tuple[Uint[8], Uint[8]]]",
+                "dtype_tree": {
+                    "name": "Union[Tuple[Uint[8], Uint[8]], Tuple[Uint[8], Uint[8]]]",
+                    "subtypes": [
+                        {
+                            "name": "Uint[16]"
+                        },
+                        {
+                            "name": "Uint[1]"
+                        }
+                    ],
+                    "keys": [
+                        "data",
+                        "ctrl"
+                    ]
+                },
+                "name": "/case/fmap.din",
+                "consumers": [
+                    "/case/fmap/demux_ctrl.din"
+                ]
+            },
+            "/case.fmap": {
+                "producer": "/case/fmap.dout",
+                "dtype": "Union[Uint[9], Uint[9]]",
+                "dtype_tree": {
+                    "name": "Union[Uint[9], Uint[9]]",
+                    "subtypes": [
+                        {
+                            "name": "Uint[9]"
+                        },
+                        {
+                            "name": "Uint[1]"
+                        }
+                    ],
+                    "keys": [
+                        "data",
+                        "ctrl"
+                    ]
+                },
+                "name": "/case.fmap",
+                "consumers": [
+                    "/case/union_collapse.din"
+                ]
+            },
+            "/case/fmap/demux_ctrl.din": {
+                "producer": "/case/fmap/demux_ctrl.din",
+                "dtype": "Union[Tuple[Uint[8], Uint[8]], Tuple[Uint[8], Uint[8]]]",
+                "dtype_tree": {
+                    "name": "Union[Tuple[Uint[8], Uint[8]], Tuple[Uint[8], Uint[8]]]",
+                    "subtypes": [
+                        {
+                            "name": "Uint[16]"
+                        },
+                        {
+                            "name": "Uint[1]"
+                        }
+                    ],
+                    "keys": [
+                        "data",
+                        "ctrl"
+                    ]
+                },
+                "name": "/case/fmap/demux_ctrl.din",
+                "consumers": [
+                    "/case/fmap/demux_ctrl/demux.din",
+                    "/case/fmap/demux_ctrl/sieve_1.din"
+                ]
+            },
+            "/case/fmap.ctrl": {
+                "producer": "/case/fmap/demux_ctrl.dout0",
+                "dtype": "Uint[1]",
+                "dtype_tree": {
+                    "name": "Uint[1]"
+                },
+                "name": "/case/fmap.ctrl",
+                "consumers": [
+                    "/case/fmap/mux.ctrl"
+                ]
+            },
+            "/case/fmap.demux_ctrl_dout1": {
+                "producer": "/case/fmap/demux_ctrl.dout1",
+                "dtype": "Tuple[Uint[8], Uint[8]]",
+                "dtype_tree": {
+                    "name": "Tuple[Uint[8], Uint[8]]",
+                    "subtypes": [
+                        {
+                            "name": "Uint[8]"
+                        },
+                        {
+                            "name": "Uint[8]"
+                        }
+                    ],
+                    "keys": [
+                        "f0",
+                        "f1"
+                    ]
+                },
+                "name": "/case/fmap.demux_ctrl_dout1",
+                "consumers": [
+                    "/case/fmap/add0.din"
+                ]
+            },
+            "/case/fmap.demux_ctrl_dout2": {
+                "producer": "/case/fmap/demux_ctrl.dout2",
+                "dtype": "Tuple[Uint[8], Uint[8]]",
+                "dtype_tree": {
+                    "name": "Tuple[Uint[8], Uint[8]]",
+                    "subtypes": [
+                        {
+                            "name": "Uint[8]"
+                        },
+                        {
+                            "name": "Uint[8]"
+                        }
+                    ],
+                    "keys": [
+                        "f0",
+                        "f1"
+                    ]
+                },
+                "name": "/case/fmap.demux_ctrl_dout2",
+                "consumers": [
+                    "/case/fmap/add1.din"
+                ]
+            },
+            "/case/fmap/demux_ctrl.dout1": {
+                "producer": "/case/fmap/demux_ctrl/demux.dout0",
+                "dtype": "Tuple[Uint[8], Uint[8]]",
+                "dtype_tree": {
+                    "name": "Tuple[Uint[8], Uint[8]]",
+                    "subtypes": [
+                        {
+                            "name": "Uint[8]"
+                        },
+                        {
+                            "name": "Uint[8]"
+                        }
+                    ],
+                    "keys": [
+                        "f0",
+                        "f1"
+                    ]
+                },
+                "name": "/case/fmap/demux_ctrl.dout1",
+                "consumers": [
+                    "/case/fmap/demux_ctrl.dout1"
+                ]
+            },
+            "/case/fmap/demux_ctrl.dout2": {
+                "producer": "/case/fmap/demux_ctrl/demux.dout1",
+                "dtype": "Tuple[Uint[8], Uint[8]]",
+                "dtype_tree": {
+                    "name": "Tuple[Uint[8], Uint[8]]",
+                    "subtypes": [
+                        {
+                            "name": "Uint[8]"
+                        },
+                        {
+                            "name": "Uint[8]"
+                        }
+                    ],
+                    "keys": [
+                        "f0",
+                        "f1"
+                    ]
+                },
+                "name": "/case/fmap/demux_ctrl.dout2",
+                "consumers": [
+                    "/case/fmap/demux_ctrl.dout2"
+                ]
+            },
+            "/case/fmap/demux_ctrl.dout0": {
+                "producer": "/case/fmap/demux_ctrl/sieve_1.dout",
+                "dtype": "Uint[1]",
+                "dtype_tree": {
+                    "name": "Uint[1]"
+                },
+                "name": "/case/fmap/demux_ctrl.dout0",
+                "consumers": [
+                    "/case/fmap/demux_ctrl.dout0"
+                ]
+            },
+            "/case/fmap.add0": {
+                "producer": "/case/fmap/add0.dout",
+                "dtype": "Uint[9]",
+                "dtype_tree": {
+                    "name": "Uint[9]"
+                },
+                "name": "/case/fmap.add0",
+                "consumers": [
+                    "/case/fmap/mux.din0"
+                ]
+            },
+            "/case/fmap.add1": {
+                "producer": "/case/fmap/add1.dout",
+                "dtype": "Uint[9]",
+                "dtype_tree": {
+                    "name": "Uint[9]"
+                },
+                "name": "/case/fmap.add1",
+                "consumers": [
+                    "/case/fmap/mux.din1"
+                ]
+            },
+            "/case/fmap.dout": {
+                "producer": "/case/fmap/mux.dout",
+                "dtype": "Union[Uint[9], Uint[9]]",
+                "dtype_tree": {
+                    "name": "Union[Uint[9], Uint[9]]",
+                    "subtypes": [
+                        {
+                            "name": "Uint[9]"
+                        },
+                        {
+                            "name": "Uint[1]"
+                        }
+                    ],
+                    "keys": [
+                        "data",
+                        "ctrl"
+                    ]
+                },
+                "name": "/case/fmap.dout",
+                "consumers": [
+                    "/case/fmap.dout"
+                ]
+            },
+            "/case/union_collapse.din": {
+                "producer": "/case/union_collapse.din",
+                "dtype": "Union[Uint[9], Uint[9]]",
+                "dtype_tree": {
+                    "name": "Union[Uint[9], Uint[9]]",
+                    "subtypes": [
+                        {
+                            "name": "Uint[9]"
+                        },
+                        {
+                            "name": "Uint[1]"
+                        }
+                    ],
+                    "keys": [
+                        "data",
+                        "ctrl"
+                    ]
+                },
+                "name": "/case/union_collapse.din",
+                "consumers": [
+                    "/case/union_collapse/sieve_0.din"
+                ]
+            },
+            "/case.dout": {
+                "producer": "/case/union_collapse.dout",
+                "dtype": "Uint[9]",
+                "dtype_tree": {
+                    "name": "Uint[9]"
+                },
+                "name": "/case.dout",
+                "consumers": [
+                    "/case.dout"
+                ]
+            },
+            "/case/union_collapse.sieve_0": {
+                "producer": "/case/union_collapse/sieve_0.dout",
+                "dtype": "Uint[9]",
+                "dtype_tree": {
+                    "name": "Uint[9]"
+                },
+                "name": "/case/union_collapse.sieve_0",
+                "consumers": [
+                    "/case/union_collapse/code.din"
+                ]
+            },
+            "/case/union_collapse.dout": {
+                "producer": "/case/union_collapse/code.dout",
+                "dtype": "Uint[9]",
+                "dtype_tree": {
+                    "name": "Uint[9]"
+                },
+                "name": "/case/union_collapse.dout",
+                "consumers": [
+                    "/case/union_collapse.dout"
+                ]
+            }
+        }
+    },
+    "simulationChanges": {
+        "startCycle": 0,
+        "endCycle": 103,
+        "channelChanges": [
+            {
+                "channelName": "/case.cast_dout",
+                "changes": [
+                    "[0,2,1,[1,1,[[0,1,256],[0,1,0]]]]",
+                    "[1,2,0,[1,1,[[0,1,770],[0,1,1]]]]",
+                    "[2,0,1]"
+                ]
+            },
+            {
+                "channelName": "/case.ccat",
+                "changes": [
+                    "[0,2,1,[1,1,[[1,1,[[0,1,0],[0,1,1]]],[0,1,0]]]]",
+                    "[1,2,0,[1,1,[[1,1,[[0,1,2],[0,1,3]]],[0,1,1]]]]",
+                    "[2,0,1]"
+                ]
+            },
+            {
+                "channelName": "/case/fmap.din",
+                "changes": [
+                    "[0,2,1,[1,1,[[0,1,256],[0,1,0]]]]",
+                    "[1,2,0,[1,1,[[0,1,770],[0,1,1]]]]",
+                    "[2,0,1]"
+                ]
+            },
+            {
+                "channelName": "/case/fmap/demux_ctrl.din",
+                "changes": [
+                    "[0,2,1,[1,1,[[0,1,256],[0,1,0]]]]",
+                    "[1,2,0,[1,1,[[0,1,770],[0,1,1]]]]",
+                    "[2,0,1]"
+                ]
+            },
+            {
+                "channelName": "/case.cond",
+                "changes": [
+                    "[0,2,1,[0,1,0]]",
+                    "[1,2,0,[0,1,1]]",
+                    "[2,0,1]"
+                ]
+            },
+            {
+                "channelName": ".drv0",
+                "changes": [
+                    "[0,2,1,[0,1,0]]",
+                    "[1,2,0,[0,1,1]]",
+                    "[2,0,1]"
+                ]
+            },
+            {
+                "channelName": "/case.din",
+                "changes": [
+                    "[0,2,1,[1,1,[[0,1,0],[0,1,1]]]]",
+                    "[1,2,0,[1,1,[[0,1,2],[0,1,3]]]]",
+                    "[2,0,1]"
+                ]
+            },
+            {
+                "channelName": ".drv1",
+                "changes": [
+                    "[0,2,1,[1,1,[[0,1,0],[0,1,1]]]]",
+                    "[1,2,0,[1,1,[[0,1,2],[0,1,3]]]]",
+                    "[2,0,1]"
+                ]
+            },
+            {
+                "channelName": "/case.dout",
+                "changes": [
+                    "[0,2,1,[0,1,1]]",
+                    "[1,2,0,[0,1,5]]",
+                    "[2,0,1]"
+                ]
+            },
+            {
+                "channelName": "/case/union_collapse.dout",
+                "changes": [
+                    "[0,2,1,[0,1,1]]",
+                    "[1,2,0,[0,1,5]]",
+                    "[2,0,1]"
+                ]
+            },
+            {
+                "channelName": "/case/union_collapse.sieve_0",
+                "changes": [
+                    "[0,2,1,[0,1,1]]",
+                    "[1,2,0,[0,1,5]]",
+                    "[2,0,1]"
+                ]
+            },
+            {
+                "channelName": "/case.fmap",
+                "changes": [
+                    "[0,2,1,[1,1,[[0,1,1],[0,1,0]]]]",
+                    "[1,2,0,[1,1,[[0,1,5],[0,1,1]]]]",
+                    "[2,0,1]"
+                ]
+            },
+            {
+                "channelName": "/case/fmap.dout",
+                "changes": [
+                    "[0,2,1,[1,1,[[0,1,1],[0,1,0]]]]",
+                    "[1,2,0,[1,1,[[0,1,5],[0,1,1]]]]",
+                    "[2,0,1]"
+                ]
+            },
+            {
+                "channelName": "/case/union_collapse.din",
+                "changes": [
+                    "[0,2,1,[1,1,[[0,1,1],[0,1,0]]]]",
+                    "[1,2,0,[1,1,[[0,1,5],[0,1,1]]]]",
+                    "[2,0,1]"
+                ]
+            },
+            {
+                "channelName": "/case/fmap.add0",
+                "changes": [
+                    "[0,2,1,[0,1,1]]",
+                    "[1,0,1]"
+                ]
+            },
+            {
+                "channelName": "/case/fmap.demux_ctrl_dout1",
+                "changes": [
+                    "[0,2,1,[1,1,[[0,1,0],[0,1,1]]]]",
+                    "[1,0,1]"
+                ]
+            },
+            {
+                "channelName": "/case/fmap/demux_ctrl.dout1",
+                "changes": [
+                    "[0,2,1,[1,1,[[0,1,0],[0,1,1]]]]",
+                    "[1,0,1]"
+                ]
+            },
+            {
+                "channelName": "/case/fmap.add1",
+                "changes": [
+                    "[0,0,0]",
+                    "[1,2,1,[0,1,5]]",
+                    "[2,0,1]"
+                ]
+            },
+            {
+                "channelName": "/case/fmap.demux_ctrl_dout2",
+                "changes": [
+                    "[0,0,0]",
+                    "[1,2,1,[1,1,[[0,1,2],[0,1,3]]]]",
+                    "[2,0,1]"
+                ]
+            },
+            {
+                "channelName": "/case/fmap/demux_ctrl.dout2",
+                "changes": [
+                    "[0,0,0]",
+                    "[1,2,1,[1,1,[[0,1,2],[0,1,3]]]]",
+                    "[2,0,1]"
+                ]
+            },
+            {
+                "channelName": "/case/fmap.ctrl",
+                "changes": [
+                    "[0,2,1,[0,1,0]]",
+                    "[1,2,0,[0,1,1]]",
+                    "[2,0,1]"
+                ]
+            },
+            {
+                "channelName": "/case/fmap/demux_ctrl.dout0",
+                "changes": [
+                    "[0,2,1,[0,1,0]]",
+                    "[1,2,0,[0,1,1]]",
+                    "[2,0,1]"
+                ]
+            },
+            {
+                "channelName": ".case",
+                "changes": [
+                    "[0,2,1,[0,1,1]]",
+                    "[1,2,0,[0,1,5]]",
+                    "[2,0,1]"
+                ]
+            }
+        ]
+    }
+}

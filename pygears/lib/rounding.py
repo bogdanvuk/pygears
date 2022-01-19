@@ -46,4 +46,4 @@ async def round_to_zero(din, *, nbits=2) -> b'din':
 @gear
 async def round_to_even(din, *, nbits=2) -> b'din':
     async with din as d:
-        return round(float(d) / (2**nbits)) * (2**nbits)
+        yield round(float(d) / (2**nbits)) * (2**nbits)

@@ -257,10 +257,10 @@ def websim_check_fixt(tmpdir, sim_cls, request):
         ref_file = os.path.join(ref_folder, 'pygears_cosim.json')
 
     with open(os.path.join(tmpdir, 'pygears.json'), 'r') as f1:
-        # with open(ref_file, 'r') as f2:
-        #     assert f1.read() == f2.read()
-        with open(ref_file, 'w') as f2:
-            return f2.write(f1.read())
+        with open(ref_file, 'r') as f2:
+            assert f1.read() == f2.read()
+        # with open(ref_file, 'w') as f2:
+        #     return f2.write(f1.read())
 
 
 def skip_ifndef(*envars):
