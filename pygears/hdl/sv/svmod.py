@@ -82,7 +82,7 @@ class SVModuleInst(HDLModuleInst):
             'module_name': self.module_name,
             'inst_name': self.inst_name,
             'intfs': template_env.port_intfs(self.node),
-            'sigs': self.node.meta_kwds['signals'],
+            'sigs': self.node.meta_kwds.get('signals', {}),
             'param_map': self.resolver.params
         }
 

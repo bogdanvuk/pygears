@@ -1,7 +1,7 @@
 import shutil
 import os
 from pygears import Intf, find, reg
-from pygears.util.fileio import expand
+from pygears.util.fileio import expand, save_file
 from .common import list_hdl_files
 from .generate import generate as hdlgen_generate
 
@@ -59,6 +59,9 @@ def hdlgen(top=None,
     os.makedirs(outdir, exist_ok=True)
     if generate:
         hdlgen_generate(top, conf)
+        hdltop = reg[f'hdlgen/map'][top]
+        if toplang == hdltop.lang == 'sv':
+            save_file(f'{hdltop.wrap_module_name}_wrap.sv', outdir, hdltop.get_synth_wrap(reg[f'svgen/templenv']))
 
         for (modname, lang), (fn, fn_dis) in reg['hdlgen/disambig'].items():
             with open(fn) as fin:
