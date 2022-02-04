@@ -1,6 +1,6 @@
 from pygears import gear, reg, sim
 from pygears.sim import cosim
-from pygears.lib import drv, shred, mul, add, case, directed, decouple
+from pygears.lib import drv, shred, mul, add, case, directed, decouple, dreg
 from pygears.typing import Int, Bool, Tuple, Uint
 from pygears.util.test_utils import websim_check
 
@@ -34,3 +34,14 @@ def test_sim_hier_cosim_nonhier(sim_cls):
         f=decouple(sim_cls=sim_cls),
         ref=[0, 1, 2]
     )
+
+
+@websim_check
+def test_broadcast(sim_cls):
+    @gear
+    def dut(row):
+        return row + dreg(row)
+
+    drv(t=Int[8], seq=list(range(8))) \
+        | dut(sim_cls=sim_cls) \
+        | shred
