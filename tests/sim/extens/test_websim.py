@@ -1,7 +1,7 @@
 from pygears import gear, reg, sim
 from pygears.sim import cosim
-from pygears.lib import drv, shred, mul, add, case, directed, decouple, dreg
-from pygears.typing import Int, Bool, Tuple, Uint
+from pygears.lib import drv, shred, mul, add, case, directed, decouple, dreg, queuemap
+from pygears.typing import Int, Bool, Tuple, Uint, Queue
 from pygears.util.test_utils import websim_check
 
 @websim_check
@@ -45,3 +45,17 @@ def test_broadcast(sim_cls):
     drv(t=Int[8], seq=list(range(8))) \
         | dut(sim_cls=sim_cls) \
         | shred
+
+
+# Issue where "/dut/row_bc.dout0" has duplicate entries in JSON for cosim
+@websim_check
+def test_broadcast_short_to_dout(sim_cls):
+    @gear
+    def dut(row):
+        return row, row | queuemap(f=mul(Int[8](2)))
+
+    a, b = drv(t=Queue[Int[8]], seq=[list(range(8))]) \
+        | dut(sim_cls=sim_cls)
+
+    shred(a)
+    shred(b)
