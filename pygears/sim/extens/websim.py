@@ -260,6 +260,7 @@ def vcd_to_json_worker(entries, wire_map: dict, vcd_conv, t):
 
 def vcd_to_json(top, file_iter):
     wire_map = {}
+    traced_channels = set()
     vcd_conv = None
     skip_scope = 0
     bc_parent = None
@@ -433,9 +434,13 @@ def vcd_to_json(top, file_iter):
                 wire_map[identifier_code] = []
 
             if isinstance(hier, OutPort) and len(hier.consumer.consumers) > 1:
-                wire_map[identifier_code].append((hier.consumer, name))
+                channel = hier.consumer
             else:
-                wire_map[identifier_code].append((hier, name))
+                channel = hier
+
+            if (channel.name, name) not in traced_channels:
+                wire_map[identifier_code].append((channel, name))
+                traced_channels.add((channel.name, name))
 
         elif '$timescale' in line:
             continue
