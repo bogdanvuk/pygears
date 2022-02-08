@@ -22,24 +22,33 @@ def _find_rec(path, root):
 
 
 def find(path, root=None):
+    module = None
+    port_name = None
+
     if path.startswith('/'):
         path = path[1:]
         root = reg['gear/root']
     else:
         if path.startswith('./'):
             path = path[2:]
+        elif path.startswith('..'):
+            pass
+        elif path.startswith('.'):
+            port_name = path
+            module = reg['gear/current_module']
 
         root = reg['gear/current_module']
 
     if path == '':
         return root
 
-    module_path, port_name = os.path.splitext(path)
+    if module is None:
+        module_path, port_name = os.path.splitext(path)
 
-    try:
-        module = _find_rec(module_path, root)
-    except ModuleNotFoundError:
-        return None
+        try:
+            module = _find_rec(module_path, root)
+        except ModuleNotFoundError:
+            return None
 
     if not port_name:
         return module
