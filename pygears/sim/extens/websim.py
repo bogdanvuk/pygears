@@ -265,7 +265,7 @@ def vcd_to_json(top, file_iter):
     bc_parent = None
 
     t = -1
-    hier = top
+    hier = None
     worker_data = []
 
     for line in file_iter:
@@ -324,17 +324,19 @@ def vcd_to_json(top, file_iter):
             segs = line.split()
             # Name of the TOP is ' '
             if len(segs) == 3:
-                hier = top
-                continue
+                scope_name = ''
+            else:
+                scope_name = segs[2]
 
-            scope_name = segs[2]
             child = None
 
             if scope_name.startswith('_') and scope_name.endswith('_spy'):
                 scope_name = scope_name[1:-4]
 
-            if scope_name == 'TOP' or scope_name.endswith('_wrap'):
-                hier = top
+            if hier is None:
+                top_maybe_sv_mod = reg['hdlgen/map'].get(top, top)
+                if scope_name == top_maybe_sv_mod.basename or scope_name == getattr(top_maybe_sv_mod, 'inst_name'):
+                    hier = top
                 continue
 
             if scope_name.startswith('bc_'):
@@ -393,14 +395,17 @@ def vcd_to_json(top, file_iter):
                 skip_scope -= 1
                 continue
 
-            if bc_parent is not None:
+            if hier is top:
+                hier = None
+            elif bc_parent is not None:
                 hier = bc_parent
                 bc_parent = None
             elif isinstance(hier, (Gear, Intf)):
                 if hier is not top:
                     hier = hier.parent
-            else:
+            elif hier is not None:
                 hier = hier.gear
+
         elif '$var' in line:
             if hier is top or skip_scope:
                 continue
@@ -624,7 +629,7 @@ class WebSim(SimExtend):
     def before_run(self, sim):
         if not self.multiprocess:
             for m in find_cosim_modules():
-                self.cosim_modules.append((m.gear.parent, m.trace_fn))
+                self.cosim_modules.append((m.gear, m.trace_fn))
 
             return
 
@@ -635,7 +640,7 @@ class WebSim(SimExtend):
         for m in find_cosim_modules():
             if not m.trace_fn:
                 continue
-            self.register_vcd_worker(m.trace_fn, top=m.gear.parent)
+            self.register_vcd_worker(m.trace_fn, top=m.gear)
 
         self.register_vcd_worker(self.vcd_fn, find('/'))
 
@@ -700,9 +705,8 @@ class WebSim(SimExtend):
     def finish(self):
         if not self.finished:
             err = None
-            json_out = self.sim_vcd_to_json()
             try:
-                # json_out = self.sim_vcd_to_json()
+                json_out = self.sim_vcd_to_json()
                 import json
                 json.dump(json_out, open(self.trace_fn, 'w'), separators=(',', ':'))
                 # json.dump(json_out, open(self.trace_fn, 'w'))

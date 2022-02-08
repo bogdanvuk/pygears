@@ -241,7 +241,7 @@ class VCDHierVisitor(HierVisitorBase):
         if not is_trace_included(p, self.include, self.vcd_tlm):
             return
 
-        gear_vcd_scope = p.gear.name[1:].replace('/', '.')
+        gear_vcd_scope = p.gear.name.replace('/', '.')
 
         scope = '.'.join([gear_vcd_scope, p.basename])
 
