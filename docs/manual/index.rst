@@ -8,6 +8,10 @@
 Welcome to PyGears 
 ==================
 
++------------------------------------------------------------------------+
+| :ref:`Check our new presentation for beginners <presentation_pygears>` |
++------------------------------------------------------------------------+
+
 HW Design: A Functional Approach
 --------------------------------
 
@@ -134,6 +138,16 @@ Special thanks to the people that helped develop this framework:
 - Stefan Tambur
 - Vladimir Nikić
 - Vladimir Vrbaški
+- Stefan Stanić
+- Filip Dojčinović
+- Aleksa Knežević
+- Alena Delkić
+- Nataša Samac
+- Jovan Stojanović
+- Mirko Jeličić
+- Stefan Sredojević
+- Dejan Marković
+- Tim Ling
 
 In order to contribute, pull your copy from `github repository <https://github.com/bogdanvuk/pygears>`_ and create a pull request.
 
@@ -143,12 +157,14 @@ Contents
 .. toctree::
    :maxdepth: 2
 
+   presentation_pygears
    install
    introduction
    gears
    typing
    examples
    reference
+   third_party_tools
 
 * :ref:`genindex`
 * :ref:`search`
