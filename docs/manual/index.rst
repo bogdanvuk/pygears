@@ -8,6 +8,9 @@
 Welcome to PyGears 
 ==================
 
+.. image:: images/pygears_presentation_picture.png
+    :align: center
+
 +------------------------------------------------------------------------+
 | :ref:`Check our new presentation for beginners <presentation_pygears>` |
 +------------------------------------------------------------------------+
