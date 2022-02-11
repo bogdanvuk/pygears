@@ -154,6 +154,28 @@ Special thanks to the people that helped develop this framework:
 
 In order to contribute, pull your copy from `github repository <https://github.com/bogdanvuk/pygears>`_ and create a pull request.
 
+Community
+---------
+
+.. image:: images/discord_join_us.png
+    :align: center
+    :width: 30%
+    :target: https://discord.gg/N499SsBMVD
+
+|
+
+.. image:: images/reddit_join_us.png
+    :align: center
+    :width: 30%
+    :target: https://www.reddit.com/r/pygears/
+
+|
+
+.. image:: images/quora_join_us.png
+    :align: center
+    :width: 30%
+    :target: https://pygears.quora.com/?invite_code=d35I9R5DWpN2bDMeX9mJ
+
 Contents
 --------
 
