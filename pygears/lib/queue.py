@@ -24,6 +24,6 @@ async def sot_queue(din: Queue['data', 'lvl'], *,
 
         sot_arr = Array[Uint[1], lvl](None)
         for i in range(lvl):
-            sot_arr[i] = eot[i] if i == 0 else sot[i] & neot[i]
+            sot_arr[i] = eot[i] if i == 0 else Uint[1]((sot[i] & any(neot[1:i + 1])) | all(eot[:i + 1]))
 
         sot = code(sot_arr, Uint)

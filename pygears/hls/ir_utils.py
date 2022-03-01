@@ -492,6 +492,9 @@ class IrExprRewriter:
 
         return ir.SubscriptExpr(*ops, ctx=node.ctx)
 
+    def visit_SliceExpr(self, node):
+        return ir.SliceExpr(self.visit(node.start), self.visit(node.stop), self.visit(node.step))
+
     def visit_ConditionalExpr(self, node):
         old_ops = (node.cond, *node.operands)
 
