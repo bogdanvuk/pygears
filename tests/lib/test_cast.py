@@ -23,7 +23,6 @@ def cast_cosim_test(src_type,
                     seq,
                     expected,
                     module=cast_gear):
-    skip_ifndef('VERILATOR_ROOT')
 
     report = verif(drv(t=src_type, seq=seq),
                    f=module(sim_cls=SimVerilated, t=cast_type),
@@ -33,6 +32,14 @@ def cast_cosim_test(src_type,
 
     for e, rep in zip(expected, report[0]):
         assert e == rep['items'][0]
+
+
+def test_cast_to_named_tuple():
+    t_named = Tuple['t1': Uint[8], 't2': Uint[8]]
+    a = Intf(Tuple[Uint[8], Uint[8]])
+    b = a | t_named
+
+    assert b.dtype.fields == t_named.fields
 
 
 def test_signed_signed_more_cosim():

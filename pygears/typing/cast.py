@@ -424,7 +424,7 @@ type_cast_resolvers = {
 def type_cast(dtype, cast_type):
 
     if dtype == cast_type:
-        return dtype
+        return cast_type
 
     if isinstance(cast_type, str):
         return dtype
@@ -572,7 +572,7 @@ value_cast_resolvers = {
 
 def value_cast(val, cast_type):
     if type(val) == cast_type:
-        return val
+        return cast_type(val)
 
     for templ in value_cast_resolvers:
         if typeof(cast_type, templ):
