@@ -1,13 +1,13 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <feed xmlns="http://www.w3.org/2005/Atom">
-  <id>https://www.pygears.org/</id>
+  <id>https://docs.pygears.org/</id>
   <title>PyGears - Posts tagged setup</title>
   <updated>2022-02-11T16:16:41.342132+00:00</updated>
-  <link href="https://www.pygears.org/"/>
-  <link href="https://www.pygears.org/blog/tag/setup/atom.xml" rel="self"/>
+  <link href="https://docs.pygears.org/"/>
+  <link href="https://docs.pygears.org/blog/tag/setup/atom.xml" rel="self"/>
   <generator uri="https://ablog.readthedocs.org/" version="0.10.23">ABlog</generator>
   <entry>
-    <id>https://www.pygears.org/riscv/setup.html</id>
+    <id>https://docs.pygears.org/riscv/setup.html</id>
     <title>RISC-V Tools Setup</title>
     <updated>2018-10-07T00:00:00+02:00</updated>
     <author>
@@ -230,7 +230,7 @@ core   &lt;span class="m"&gt;0&lt;/span&gt;: 0xffffffff80000000 &lt;span class="
 &lt;/div&gt;&lt;/section&gt;
 &lt;/section&gt;
 </content>
-    <link href="https://www.pygears.org/riscv/setup.html" rel="alternate"/>
+    <link href="https://docs.pygears.org/riscv/setup.html" rel="alternate"/>
     <summary>This post only explains the setup procedure for the additional tools needed for the RISC-V development. Installation procedure for the PyGears tools has been discussed in the previous post.</summary>
     <category term="setup" label="setup"/>
     <published>2018-10-07T00:00:00+02:00</published>

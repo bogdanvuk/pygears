@@ -5,7 +5,7 @@ Introduction to Gears
 
 **PyGears** is an ambitious attempt to create a Python framework that facilitates describing digital hardware. It aims to augment current RTL methodology to drastically increase **composability** of hardware modules. Ease of composition leads to better **reusability**, since modules that compose better can be used in a wider variety of contexts. Set of reusable components can then form a well-tested and documented library that significantly speeds up the development process.  
 
-For a guide through **PyGears** methodology, checkout `blog series on implementing RISC-V in PyGears <https://www.pygears.org/blog/riscv/introduction.html>`_. 
+For a guide through **PyGears** methodology, checkout `blog series on implementing RISC-V in PyGears <https://docs.pygears.org/blog/riscv/introduction.html>`_. 
 
 For an introductory **PyGears** example, checkout :ref:`echo <echo-examples>`. A snippet is given below: 
 

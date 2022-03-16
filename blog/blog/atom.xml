@@ -1,13 +1,13 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <feed xmlns="http://www.w3.org/2005/Atom">
-  <id>https://www.pygears.org/</id>
+  <id>https://docs.pygears.org/</id>
   <title>PyGears</title>
   <updated>2022-02-11T16:16:40.091857+00:00</updated>
-  <link href="https://www.pygears.org/"/>
-  <link href="https://www.pygears.org/blog/atom.xml" rel="self"/>
+  <link href="https://docs.pygears.org/"/>
+  <link href="https://docs.pygears.org/blog/atom.xml" rel="self"/>
   <generator uri="https://ablog.readthedocs.org/" version="0.10.23">ABlog</generator>
   <entry>
-    <id>https://www.pygears.org/riscv/introduction.html</id>
+    <id>https://docs.pygears.org/riscv/introduction.html</id>
     <title>RISC-V Blog Series Introduction</title>
     <updated>2018-10-06T00:00:00+02:00</updated>
     <author>
@@ -40,7 +40,7 @@
     &amp;ensp;
     &lt;input type="number" maxlength="1" id="verbosity_value" min="1" max="2" value="1" oninput="changeVerbosity(this.value);" style="font-weight: bold"/&gt;
 &lt;/form&gt;
-&lt;p&gt;Welcome to the blog series in which I’ll be implementing the &lt;a class="reference external" href="https://riscv.org/risc-v-isa/"&gt;RISC-V ISA&lt;/a&gt; (Instruction Set Architecture) in hardware using functional approach with &lt;a class="reference external" href="https://www.pygears.org/index.html"&gt;PyGears&lt;/a&gt;. My aim is to show how PyGears offers a way to build hardware in an incremental, evolutionary fashion, where the architecture, implementation and the verification environment evolve together, as opposed to the standard approach where these steps mostly happen in sequence. Developing hardware in such an &lt;a class="reference external" href="https://en.wikipedia.org/wiki/Agile_software_development"&gt;agile&lt;/a&gt; way offers many benefits to the hardware design process, with some of them being that:&lt;/p&gt;
+[Omitted long matching line]
 &lt;ul class="simple"&gt;
 &lt;li&gt;&lt;p&gt;I don’t need to take into the account all the requirements from the start in order to design the architecture before I start the implementation. &lt;span data-verbosity="2" hidden="true"&gt; This means that I will sooner start the implementation and have feedback about my architectural choices and thus avoid catching architectural errors late, which are then most expensive to fix.&lt;/span&gt;&lt;/p&gt;&lt;/li&gt;
 &lt;li&gt;&lt;p&gt;I can get an &lt;a class="reference external" href="https://en.wikipedia.org/wiki/Minimum_viable_product"&gt;MVP&lt;/a&gt; (Minimum Viable Product) early, which means that I can start &lt;a class="reference external" href="http://softwaretestingfundamentals.com/system-testing/"&gt;system testing&lt;/a&gt; early and try to catch errors in the design’s &lt;a class="reference external" href="https://en.wikipedia.org/wiki/Functional_requirement"&gt;functional requirements&lt;/a&gt; as early as possible.&lt;/p&gt;&lt;/li&gt;
@@ -57,7 +57,7 @@
 &lt;/figcaption&gt;
 &lt;/figure&gt;
 &lt;p data-verbosity="2" hidden="true"&gt;Each of these outputs is probably computed by a functionality that deserves its own module, its own little abstraction. Why are they than being sucked into state machine module monsters? Usually because we either believe that it leads to a more optimized design, or we are afraid of synchronization issues. But wire is a wire even if it leaves the module boundaries, and decent hardware synthesis tools offer inter-module optimization, so we lose next to nothing by factoring out the functionality. As for the synchronization, putting everything in a single module just offers a false sense of security and sweeps the problem under the rug until later when functionality piles up inside the module and pipelining becomes a nightmare, not to mention dealing with synchronization issues between such complex modules.&lt;/p&gt;
-&lt;p&gt;&lt;span&gt;Since the biggest issue with maintaining a large hardware design is synchronization (as with any other massively parallel system: think multithreading in software), PyGears tries to face it upfront by forcing each module to implement a &lt;/span&gt;&lt;a class="reference external" href="https://www.pygears.org/gears.html#one-interface"&gt;flow-controlled interface&lt;/a&gt;&lt;span&gt;, which turns modules into “gears” in PyGears terminology (checkout this &lt;/span&gt;&lt;a class="reference external" href="https://www.pygears.org/gears.html"&gt;quick introduction to gears&lt;/a&gt;&lt;span&gt;). &lt;/span&gt;&lt;span data-verbosity="2" hidden="true"&gt; As much as it may seem as an overkill in the beginning, it usually pays-off later, and is easily optimized-away by the hardware synthesis tools if not really needed. &lt;/span&gt;&lt;span&gt; Gears are not built around the state, but are formed to group and abstract some functionality, while the state is embedded in the data sent between the gears. This further alleviates the synchronization problem and pipelined architectures arise naturally, as I intend to show while implementing RISC-V ISA.&lt;/span&gt;&lt;/p&gt;
+[Omitted long matching line]
 &lt;div class="figure" id="tikz-1" style="text-align: center"&gt;&lt;p&gt;&lt;img  src="_images/tikz-fb469c944d72dd32a859ee29fb8934cda7c66991.png" alt="Figure made with TikZ" /&gt;&lt;/p&gt;
 &lt;p&gt;&lt;span class="caption-text"&gt;DTI - Data Transfer Interface&lt;/span&gt;&lt;/p&gt;
 &lt;/div&gt;&lt;p&gt;[Omitted long line with 2 matches]&lt;/p&gt;
@@ -90,7 +90,7 @@
 &lt;/section&gt;
 &lt;section id="setup"&gt;
 &lt;span id="riscv-introduction-setup"&gt;&lt;/span&gt;&lt;h2&gt;Setup&lt;/h2&gt;
-&lt;p&gt;For this series I’ll be working on Ubuntu 18.04. For the detailed description of the tools I’m going to use and how to set them up, please refer to &lt;a class="reference external" href="https://www.pygears.org/setup.html#setup-pygears-tools"&gt;PyGears tools setup&lt;/a&gt;. You can of course choose an alternative to all these tools (except for the PyGears framework itself I hope). Furthermore, PyGears has been tested to work on Windows and openSUSE as well, so feel free to use the OS of your choice. In short you will need:&lt;/p&gt;
+[Omitted long matching line]
 &lt;ol class="arabic simple"&gt;
 &lt;li&gt;&lt;p&gt;PyGears,&lt;/p&gt;&lt;/li&gt;
 &lt;li&gt;&lt;p&gt;An RTL simulator: I’ll be using mostly Verilator since it is open-source, but I will try to provide an option in the code to run Questa or Cadence simulators as well,&lt;/p&gt;&lt;/li&gt;
@@ -119,12 +119,12 @@ python setup.py develop
 &lt;/section&gt;
 &lt;/section&gt;
 </content>
-    <link href="https://www.pygears.org/riscv/introduction.html" rel="alternate"/>
+    <link href="https://docs.pygears.org/riscv/introduction.html" rel="alternate"/>
     <summary>Welcome to the blog series in which I’ll be implementing the RISC-V ISA (Instruction Set Architecture) in hardware using functional approach with PyGears. My aim is to show how PyGears offers a way to build hardware in an incremental, evolutionary fashion, where the architecture, implementation and the verification environment evolve together, as opposed to the standard approach where these steps mostly happen in sequence. Developing hardware in such an agile way offers many benefits to the hardware design process, with some of them being that:</summary>
     <published>2018-10-06T00:00:00+02:00</published>
   </entry>
   <entry>
-    <id>https://www.pygears.org/release/v0.1.1.html</id>
+    <id>https://docs.pygears.org/release/v0.1.1.html</id>
     <title>PyGears 0.1.1 released</title>
     <updated>2018-10-07T00:00:00+02:00</updated>
     <author>
@@ -153,7 +153,7 @@ python setup.py develop
 &lt;h2&gt;Bug-fixes&lt;/h2&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;p&gt;Echo example can now be simulated completely in Python without an RTL simulator. Simulator is still in experimental stage, since not all gears from the libraries are supported.&lt;/p&gt;
-&lt;p&gt;This mode can be invoked when running &lt;a class="reference external" href="https://www.pygears.org/echo.html#running-simulation"&gt;plop_test_wav_echo_sim&lt;/a&gt; by setting &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;cosim=False&lt;/span&gt;&lt;/code&gt;:&lt;/p&gt;
+&lt;p&gt;This mode can be invoked when running &lt;a class="reference external" href="https://docs.pygears.org/echo.html#running-simulation"&gt;plop_test_wav_echo_sim&lt;/a&gt; by setting &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;cosim=False&lt;/span&gt;&lt;/code&gt;:&lt;/p&gt;
 &lt;div class="highlight-default notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="n"&gt;wav_echo_sim&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;
     &lt;span class="n"&gt;os&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;path&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;join&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;os&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;path&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;dirname&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="vm"&gt;__file__&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;plop.wav&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;
     &lt;span class="n"&gt;os&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;path&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;join&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;build&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;plop_echo.wav&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;
@@ -171,12 +171,12 @@ python setup.py develop
 &lt;/section&gt;
 &lt;/section&gt;
 </content>
-    <link href="https://www.pygears.org/release/v0.1.1.html" rel="alternate"/>
+    <link href="https://docs.pygears.org/release/v0.1.1.html" rel="alternate"/>
     <summary>Add less-then ‘&lt;’ operator</summary>
     <published>2018-10-07T00:00:00+02:00</published>
   </entry>
   <entry>
-    <id>https://www.pygears.org/riscv/setup.html</id>
+    <id>https://docs.pygears.org/riscv/setup.html</id>
     <title>RISC-V Tools Setup</title>
     <updated>2018-10-07T00:00:00+02:00</updated>
     <author>
@@ -399,13 +399,13 @@ core   &lt;span class="m"&gt;0&lt;/span&gt;: 0xffffffff80000000 &lt;span class="
 &lt;/div&gt;&lt;/section&gt;
 &lt;/section&gt;
 </content>
-    <link href="https://www.pygears.org/riscv/setup.html" rel="alternate"/>
+    <link href="https://docs.pygears.org/riscv/setup.html" rel="alternate"/>
     <summary>This post only explains the setup procedure for the additional tools needed for the RISC-V development. Installation procedure for the PyGears tools has been discussed in the previous post.</summary>
     <category term="setup" label="setup"/>
     <published>2018-10-07T00:00:00+02:00</published>
   </entry>
   <entry>
-    <id>https://www.pygears.org/release/v0.1.2.html</id>
+    <id>https://docs.pygears.org/release/v0.1.2.html</id>
     <title>PyGears 0.1.2 released</title>
     <updated>2018-10-28T00:00:00+02:00</updated>
     <author>
@@ -457,12 +457,12 @@ core   &lt;span class="m"&gt;0&lt;/span&gt;: 0xffffffff80000000 &lt;span class="
 &lt;/section&gt;
 &lt;/section&gt;
 </content>
-    <link href="https://www.pygears.org/release/v0.1.2.html" rel="alternate"/>
+    <link href="https://docs.pygears.org/release/v0.1.2.html" rel="alternate"/>
     <summary>Add support for user configuration .pygears.py files that are loaded at startup. These files can be local to the project or located in ~/.pygears.py and active globally.</summary>
     <published>2018-10-28T00:00:00+02:00</published>
   </entry>
   <entry>
-    <id>https://www.pygears.org/riscv/my_first_instruction.html</id>
+    <id>https://docs.pygears.org/riscv/my_first_instruction.html</id>
     <title>My First Instruction</title>
     <updated>2018-10-30T00:00:00+01:00</updated>
     <author>
@@ -969,7 +969,7 @@ core   &lt;span class="m"&gt;0&lt;/span&gt;: 0xffffffff80000000 &lt;span class="
 &lt;/section&gt;
 &lt;/section&gt;
 </content>
-    <link href="https://www.pygears.org/riscv/my_first_instruction.html" rel="alternate"/>
+    <link href="https://docs.pygears.org/riscv/my_first_instruction.html" rel="alternate"/>
     <summary> First instruction is probably going to be unlike any other in the amount of work that I’ll need to put into implementing it, so it deserves a post on its own.  Let’s start from the RV32I description in the (currently) latest version of the RISC-V ISA Specification, which is given in the Chapter 2: RV32I Base Integer Instruction Set. The specification first goes on to describe Integer Computational Instructions (Chapter 2.4), of which the addi instruction is explained first, so let’s start with that one.</summary>
     <published>2018-10-30T00:00:00+01:00</published>
   </entry>

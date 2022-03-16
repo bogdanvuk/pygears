@@ -118,7 +118,7 @@ For more detailed installation instructions (including how to install additional
 Read the documentation
 ~~~~~~~~~~~~~~~~~~~~~~
 
-`PyGears documentation <https://www.pygears.org/>`_
+`PyGears documentation <https://docs.pygears.org/>`_
 
 Checkout the examples
 ~~~~~~~~~~~~~~~~~~~~~

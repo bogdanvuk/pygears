@@ -1,13 +1,13 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <feed xmlns="http://www.w3.org/2005/Atom">
-  <id>https://www.pygears.org/</id>
+  <id>https://docs.pygears.org/</id>
   <title>PyGears - Posts in Release</title>
   <updated>2022-02-11T16:16:41.071576+00:00</updated>
-  <link href="https://www.pygears.org/"/>
-  <link href="https://www.pygears.org/blog/category/release/atom.xml" rel="self"/>
+  <link href="https://docs.pygears.org/"/>
+  <link href="https://docs.pygears.org/blog/category/release/atom.xml" rel="self"/>
   <generator uri="https://ablog.readthedocs.org/" version="0.10.23">ABlog</generator>
   <entry>
-    <id>https://www.pygears.org/release/v0.1.1.html</id>
+    <id>https://docs.pygears.org/release/v0.1.1.html</id>
     <title>PyGears 0.1.1 released</title>
     <updated>2018-10-07T00:00:00+02:00</updated>
     <author>
@@ -36,7 +36,7 @@
 &lt;h2&gt;Bug-fixes&lt;/h2&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;p&gt;Echo example can now be simulated completely in Python without an RTL simulator. Simulator is still in experimental stage, since not all gears from the libraries are supported.&lt;/p&gt;
-&lt;p&gt;This mode can be invoked when running &lt;a class="reference external" href="https://www.pygears.org/echo.html#running-simulation"&gt;plop_test_wav_echo_sim&lt;/a&gt; by setting &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;cosim=False&lt;/span&gt;&lt;/code&gt;:&lt;/p&gt;
+&lt;p&gt;This mode can be invoked when running &lt;a class="reference external" href="https://docs.pygears.org/echo.html#running-simulation"&gt;plop_test_wav_echo_sim&lt;/a&gt; by setting &lt;code class="docutils literal notranslate"&gt;&lt;span class="pre"&gt;cosim=False&lt;/span&gt;&lt;/code&gt;:&lt;/p&gt;
 &lt;div class="highlight-default notranslate"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="n"&gt;wav_echo_sim&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;
     &lt;span class="n"&gt;os&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;path&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;join&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;os&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;path&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;dirname&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="vm"&gt;__file__&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;plop.wav&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;
     &lt;span class="n"&gt;os&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;path&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;join&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;build&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;plop_echo.wav&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;
@@ -54,12 +54,12 @@
 &lt;/section&gt;
 &lt;/section&gt;
 </content>
-    <link href="https://www.pygears.org/release/v0.1.1.html" rel="alternate"/>
+    <link href="https://docs.pygears.org/release/v0.1.1.html" rel="alternate"/>
     <summary>Add less-then ‘&lt;’ operator</summary>
     <published>2018-10-07T00:00:00+02:00</published>
   </entry>
   <entry>
-    <id>https://www.pygears.org/release/v0.1.2.html</id>
+    <id>https://docs.pygears.org/release/v0.1.2.html</id>
     <title>PyGears 0.1.2 released</title>
     <updated>2018-10-28T00:00:00+02:00</updated>
     <author>
@@ -111,7 +111,7 @@
 &lt;/section&gt;
 &lt;/section&gt;
 </content>
-    <link href="https://www.pygears.org/release/v0.1.2.html" rel="alternate"/>
+    <link href="https://docs.pygears.org/release/v0.1.2.html" rel="alternate"/>
     <summary>Add support for user configuration .pygears.py files that are loaded at startup. These files can be local to the project or located in ~/.pygears.py and active globally.</summary>
     <published>2018-10-28T00:00:00+02:00</published>
   </entry>
