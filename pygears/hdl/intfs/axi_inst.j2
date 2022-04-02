@@ -218,8 +218,8 @@
     logic [31:0] bram_wr_data;
     logic bram_we_a;
 
-    assign {{name}}_rid = 0;
-    assign {{name}}_bid = 0;
+    assign {{name}}_rid = {{name}}_arid;
+    assign {{name}}_bid = {{name}}_awid;
 
     {# TODO: Fixme: BRAM controller pulls valid low after initial cycle. It expects return data exactly on next cycle #}
     {% if bram_dout %}
