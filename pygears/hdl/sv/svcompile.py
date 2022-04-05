@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from typing import List
 import itertools
 from pygears.hdl.sv.v.accessors import rewrite
+from pygears.hdl import HDLPlugin
 
 from .util import svgen_typedef
 from .v.util import vgen_signal, vgen_intf
@@ -658,22 +659,23 @@ def write_module(ctx: Context, hdl, writer, subsvmods, funcs, template_env, conf
                          lang=lang,
                          aux_funcs=aux_funcs)
 
-        if typeof(expr.dtype, ir.IntfType) and any(expr.name == p.basename for p in ctx.gear.in_ports):
-            # TODO: Make this transformation somewhere else
-            if len(ctx.gear.in_ports) == len(ctx.gear.out_ports) == 1:
-                pin = ctx.gear.in_ports[0].basename
-                pout = ctx.gear.out_ports[0].basename
+        if reg['hdl/simple_ready_passthrough']:
+            if typeof(expr.dtype, ir.IntfType) and any(expr.name == p.basename for p in ctx.gear.in_ports):
+                # TODO: Make this transformation somewhere else
+                if len(ctx.gear.in_ports) == len(ctx.gear.out_ports) == 1:
+                    pin = ctx.gear.in_ports[0].basename
+                    pout = ctx.gear.out_ports[0].basename
 
-                template = (
-                    f'if ({pin}.valid) begin\n'
-                    f'    if ({pout}.ready) begin\n'
-                    f'        {pin}.ready = 1;\n'
-                    f'    end\n'
-                    f'end'
-                )
+                    template = (
+                        f'if ({pin}.valid) begin\n'
+                        f'    if ({pout}.ready) begin\n'
+                        f'        {pin}.ready = 1;\n'
+                        f'    end\n'
+                        f'end'
+                    )
 
-                if all(t.strip() == v.strip() for t, v in zip(template.split('\n'), var_blk.split('\n')[3:8])):
-                    var_blk = f'    assign {pin}.ready = {pout}.ready;'
+                    if all(t.strip() == v.strip() for t, v in zip(template.split('\n'), var_blk.split('\n')[3:8])):
+                        var_blk = f'    assign {pin}.ready = {pout}.ready;'
 
         blk += var_blk
 
@@ -768,3 +770,9 @@ def compile_gear(gear, template_env, module_name, outdir, comment=None, attrib=N
     context['svlines'], subsvmods = compile_gear_body(gear, outdir, template_env)
 
     return template_env.render_string(gear_module_template, context), subsvmods
+
+
+class SVCompilePlugin(HDLPlugin):
+    @classmethod
+    def bind(cls):
+        reg.confdef('hdl/simple_ready_passthrough', default=True)
