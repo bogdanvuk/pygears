@@ -6,13 +6,7 @@ from .common import list_hdl_files
 from .generate import generate as hdlgen_generate
 
 
-def hdlgen(top=None,
-           lang=None,
-           toplang=None,
-           copy_files=False,
-           generate=True,
-           outdir=None,
-           **conf):
+def hdlgen(top=None, lang=None, toplang=None, copy_files=False, generate=True, outdir=None, **conf):
 
     if lang is None:
         lang = reg['hdl/lang']
@@ -61,14 +55,14 @@ def hdlgen(top=None,
         hdlgen_generate(top, conf)
         hdltop = reg[f'hdlgen/map'][top]
         if toplang == hdltop.lang == 'sv':
-            save_file(f'{hdltop.wrap_module_name}_wrap.sv', outdir, hdltop.get_synth_wrap(reg[f'svgen/templenv']))
+            save_file(f'{hdltop.wrap_module_name}_wrap.sv', outdir,
+                      hdltop.get_synth_wrap(reg[f'svgen/templenv']))
 
         for (modname, lang), (fn, fn_dis) in reg['hdlgen/disambig'].items():
             with open(fn) as fin:
                 with open(fn_dis, 'w') as fout:
                     mod = fin.read()
-                    mod = mod.replace(f'module {modname}',
-                                      f'module {modname}_{lang}')
+                    mod = mod.replace(f'module {modname}', f'module {modname}_{lang}')
                     fout.write(mod)
 
     if copy_files and generate:

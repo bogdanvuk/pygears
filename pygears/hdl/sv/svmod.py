@@ -6,16 +6,11 @@ from pygears.conf import inject, Inject
 from pygears.hdl import hdlmod, mod_lang, rename_ambiguous
 
 
+def valid_inst_name(inst_name):
+    return inst_name if inst_name not in sv_keywords else f'{inst_name}_i'
+
+
 class SVModuleInst(HDLModuleInst):
-    @property
-    def inst_name(self):
-        inst_name = super().inst_name
-
-        if inst_name in sv_keywords:
-            return f'{inst_name}_i'
-        else:
-            return inst_name
-
     def get_impl_wrap(self, template_env):
         intfs = template_env.port_intfs(self.node)
 
@@ -57,16 +52,37 @@ class SVModuleInst(HDLModuleInst):
 
         return port_map, sig_map
 
-    def get_wrap(self, parent_lang):
+    def get_fixed_latency_decouple_wrap(self, parent_lang, wrap_module_name, module_name,
+                                        inst_name):
+        template_env = reg[f'{parent_lang}gen/templenv']
+
+        port_map, sigmap = self.get_wrap_portmap(parent_lang)
+
+        context = {
+            'wrap_module_name': wrap_module_name,
+            'module_name': module_name,
+            'inst_name': inst_name,
+            'param_map': self.params,
+            'port_map': port_map,
+            'intfs': template_env.port_intfs(self.node),
+            'sigs': self.node.meta_kwds['signals'],
+            'sig_map': sigmap,
+            'latency': self.fixed_latency
+        }
+
+        return template_env.render(template_env.basedir, f"fixed_latency_decoupler_wrap.j2",
+                                   context)
+
+    def get_wrap(self, parent_lang, wrap_module_name, module_name, inst_name):
         template_env = reg[f'{parent_lang}gen/templenv']
 
         port_map, sigmap = self.get_wrap_portmap(parent_lang)
 
         context = {
             'rst_name': 'rst',
-            'wrap_module_name': self.wrap_module_name,
-            'module_name': self.module_name,
-            'inst_name': self.inst_name,
+            'wrap_module_name': wrap_module_name,
+            'module_name': module_name,
+            'inst_name': valid_inst_name(inst_name),
             'param_map': self.params,
             'port_map': port_map,
             'intfs': template_env.port_intfs(self.node),
@@ -78,9 +94,9 @@ class SVModuleInst(HDLModuleInst):
 
     def get_synth_wrap(self, template_env):
         context = {
-            'wrap_module_name': f'wrap_{self.module_name}',
-            'module_name': self.module_name,
-            'inst_name': self.inst_name,
+            'wrap_module_name': f'wrap_{self.module_name_hier[-1]}',
+            'module_name': self.module_name_hier[-1],
+            'inst_name': valid_inst_name(self.inst_name_hier[-1]),
             'intfs': template_env.port_intfs(self.node),
             'sigs': self.node.meta_kwds.get('signals', {}),
             'param_map': self.resolver.params
@@ -122,12 +138,10 @@ class SVModuleInst(HDLModuleInst):
             params = {}
 
         if not port_map:
-            in_port_map = [(port.basename,
-                            self.get_in_port_map_intf_name(port, parent_lang))
+            in_port_map = [(port.basename, self.get_in_port_map_intf_name(port, parent_lang))
                            for port in self.node.in_ports]
 
-            out_port_map = [(port.basename,
-                             self.get_out_port_map_intf_name(port, parent_lang))
+            out_port_map = [(port.basename, self.get_out_port_map_intf_name(port, parent_lang))
                             for port in self.node.out_ports]
             port_map = OrderedDict(in_port_map + out_port_map)
 
@@ -138,7 +152,7 @@ class SVModuleInst(HDLModuleInst):
         context = {
             'rst_name': 'rst',
             'module_name': rename_ambiguous(module_name, self.lang),
-            'inst_name': self.inst_name,
+            'inst_name': valid_inst_name(self.inst_name),
             'param_map': params,
             'port_map': port_map,
             'sig_map': sigmap

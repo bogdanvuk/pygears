@@ -119,20 +119,61 @@ class HDLModuleInst:
         return path_name(self.node.basename)
 
     @property
-    def module_name(self):
-        return self.resolver.module_name
+    def wrapper_hier(self):
+        module_names = [self.resolver.module_name]
+        inst_names = [path_name(self.node.basename)]
+        file_names = [self.resolver.file_basename]
+        generators = [None]
+
+        if self.fixed_latency_decouple_wrapped:
+            module_names.append(f'{module_names[-1]}_fixed_latency')
+            file_names.append(f'{module_names[-1]}.{self.lang}')
+            generators.append(
+                functools.partial(
+                    self.get_fixed_latency_decouple_wrap,
+                    self.lang,
+                    module_names[-1],
+                    module_names[-2],
+                    inst_names[-1],
+                ))
+            inst_names.append(f'{inst_names[-1]}_fixed_latency')
+
+        if self.wrapped:
+            # TODO: What about reusing memoized module that didn't need a
+            # wrapper. Discern this.
+            module_names.append(f'{module_names[-1]}_{self.parent_lang}_wrap')
+            file_names.append(f'{module_names[-1]}.{self.parent_lang}')
+            generators.append(
+                functools.partial(
+                    self.get_wrap,
+                    self.parent_lang,
+                    module_names[-1],
+                    module_names[-2],
+                    inst_names[-1],
+                ))
+            inst_names.append(f'{inst_names[-1]}_{self.parent_lang}_wrap')
+
+        return module_names, file_names, inst_names, generators
+
+    @property
+    def module_name_hier(self):
+        return self.wrapper_hier[0]
+
+    @property
+    def inst_name_hier(self):
+        return self.wrapper_hier[2]
 
     @property
     def wrap_module_name(self):
-        module_name = self.module_name
-        if self.wrapped:
-            return f'{module_name}_{self.parent_lang}_wrap'
-
-        return module_name
+        return self.wrapper_hier[0][-1]
 
     @property
     def wrap_file_name(self):
-        return f'{self.wrap_module_name}.{self.parent_lang}'
+        return self.wrapper_hier[1][-1]
+
+    @property
+    def fixed_latency_decouple_wrap_file_name(self):
+        return f'{self.module_name}.{self.lang}'
 
     @property
     def file_basename(self):
@@ -142,8 +183,13 @@ class HDLModuleInst:
     def files(self):
         res_files = self.resolver.files
 
-        if self.wrapped:
-            res_files.append(self.wrap_file_name)
+        module_names, file_names, inst_names, generators = self.wrapper_hier
+
+        # First element is already included by resolver.files
+        res_files += file_names[1:]
+
+        if self.fixed_latency_decouple_wrapped:
+            res_files.append('fixed_latency_decoupler.sv')
 
         return res_files
 
@@ -162,6 +208,22 @@ class HDLModuleInst:
         return False
 
     @property
+    def fixed_latency(self):
+        # TODO: Fuse __hdl__ and hdl params before this in a generic way
+        hdl_param = self.node.params.get('__hdl__', None)
+
+        if hdl_param is not None:
+            fixed_latency = hdl_param.get('fixed_latency', None)
+            if fixed_latency is not None:
+                return fixed_latency
+
+        return self.node.meta_kwds.get('hdl', {}).get('fixed_latency', None)
+
+    @property
+    def fixed_latency_decouple_wrapped(self):
+        return bool(self.fixed_latency)
+
+    @property
     def params(self):
         return self.resolver.params
 
@@ -172,7 +234,12 @@ class HDLModuleInst:
         if not self.node.parent:
             return
 
+        module_names, file_names, inst_names, generators = self.wrapper_hier
+
         # TODO: What about reusing memoized module that didn't need a
         # wrapper. Discern this.
-        if self.wrapped:
-            save_file(self.wrap_file_name, outdir, self.get_wrap(self.parent_lang))
+        for fn, gen in zip(file_names, generators):
+            if gen is None:
+                continue
+
+            save_file(fn, outdir, gen())
