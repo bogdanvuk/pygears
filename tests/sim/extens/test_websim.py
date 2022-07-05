@@ -3,6 +3,7 @@ from pygears.sim import cosim
 from pygears.lib import drv, shred, mul, add, case, directed, decouple, dreg, queuemap
 from pygears.typing import Int, Bool, Tuple, Uint, Queue
 from pygears.util.test_utils import websim_check
+import pytest
 
 
 @websim_check

@@ -703,7 +703,7 @@ class WebSim(SimExtend):
             'simulationChanges': {
                 'startCycle': 0,
                 'endCycle': timestep(),
-                'channelChanges': changes
+                'channelChanges': sorted(changes, key=lambda d: d['channelName'])
             }
         }
 
@@ -713,9 +713,10 @@ class WebSim(SimExtend):
             try:
                 json_out = self.sim_vcd_to_json()
                 import json
-                json.dump(json_out, open(self.trace_fn, 'w'), separators=(',', ':'))
-                # json.dump(json_out, open(self.trace_fn, 'w'))
-                # json.dump(json_out, open(self.trace_fn, 'w'), indent=4)
+                with open(self.trace_fn, 'w') as f:
+                    json.dump(json_out, f, separators=(',', ':'))
+                    # json.dump(json_out, f)
+                    # json.dump(json_out, f, indent=4)
             except Exception as e:
                 for p in self.p:
                     p.terminate()

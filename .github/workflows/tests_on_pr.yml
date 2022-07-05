@@ -1,0 +1,108 @@
+name: PyGears Tests
+
+on:
+  pull_request:
+    branches:
+      - master
+      - develop
+  push:
+    branches:
+      - develop
+env:
+  VERILATOR_VERSION: v4.200
+  PYTHONHASHSEED: 0
+
+jobs:
+  build-verilator:
+    strategy:
+      matrix:
+        os:
+          - ubuntu-20.04
+          - ubuntu-18.04
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: apt update
+        run: sudo apt-get update -y
+
+      - uses: ConorMacBride/install-package@v1
+        with:
+          apt: |
+            git perl make autoconf g++ flex bison libgoogle-perftools-dev ccache numactl perl-doc libfl2 libfl-dev zlibc zlib1g zlib1g-dev
+
+      - name: Verilator cache
+        id: cache-verilator
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-verilator
+        with:
+          path: ~/verilator
+          key: ${{ matrix.os }}-build-${{ env.cache-name }}-${{ env.VERILATOR_VERSION }}
+
+      - name: Build Verilator from source
+        if: ${{ steps.cache-verilator.outputs.cache-hit != 'true' }}
+        run: |
+          cd ${HOME}
+          git clone https://github.com/verilator/verilator
+          unset VERILATOR_ROOT
+          cd verilator
+          # Change if needed Verilator major version or hardcode exact version in 'git checkout' command
+          git checkout $VERILATOR_VERSION # Hardcoded Verilator version
+          # git checkout $(git tag | grep "v$VERILATOR_MAJOR_VERSION.*" | tail -1)
+          autoconf
+          ./configure
+          make -j `nproc`
+
+  run-tests:
+    needs: build-verilator
+    strategy:
+      matrix:
+        python-version:
+          - 3.7.x
+          - 3.8.x
+          - 3.9.x
+          # TODO: Add Python 3.10 when it's ready
+        os:
+          - ubuntu-20.04
+          - ubuntu-18.04
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: apt update
+        run: sudo apt-get update -y
+
+      - uses: ConorMacBride/install-package@v1
+        with:
+          apt: |
+            git perl make autoconf g++ flex bison libgoogle-perftools-dev ccache numactl perl-doc libfl2 libfl-dev zlibc zlib1g zlib1g-dev
+
+      - name: Install Python 3
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: x64
+          cache: pip
+
+      - name: Install pip3 packages
+        run: pip3 install wheel pytest pytest-xdist
+
+      - name: Verilator cache
+        id: cache-verilator
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-verilator
+        with:
+          path: ~/verilator
+          key: ${{ matrix.os }}-build-${{ env.cache-name }}-${{ env.VERILATOR_VERSION }}
+
+      - name: Install Verilator
+        run: |
+          cd ${HOME}/verilator
+          sudo make install
+
+      - name: Install Pygears
+        run: pip3 install .
+
+      - name: Run tests
+        run: pytest tests/ -n `nproc` -x

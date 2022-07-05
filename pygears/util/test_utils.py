@@ -9,7 +9,7 @@ from functools import partial, wraps
 import jinja2
 import pytest
 
-from pygears import clear, find, reg
+from pygears import clear as reg_clear, find, reg
 from pygears.sim import sim
 from pygears.sim.modules.sim_socket import SimSocket
 from pygears.sim.modules.verilator import SimVerilated
@@ -208,7 +208,11 @@ def synth_check_fixt(tmpdir, lang, request):
             assert util[param] == value
 
 
-clear = pytest.fixture(autouse=True)(clear)
+@pytest.fixture(autouse=True)
+def clear():
+    yield
+    reg_clear()
+
 
 def hdl_check(expected, **kwds):
     def decorator(func):

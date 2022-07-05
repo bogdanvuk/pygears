@@ -345,6 +345,8 @@ class VCD(SimExtend):
 
         if not vcd_visitor.vcd_vars:
             self.deactivate('before_run')
+            self.writer.close()
+            self.vcd_file.close()
             return True
 
         self.vcd_vars = {

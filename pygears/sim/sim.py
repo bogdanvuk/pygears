@@ -642,7 +642,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
             if reg['sim/exception']:
                 raise reg['sim/exception']
 
-            self.cleanup()
+        self.cleanup()
 
 
 class SimSetupDone(Exception):
