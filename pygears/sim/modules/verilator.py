@@ -16,6 +16,7 @@ from pygears.hdl import hdlgen, list_hdl_files
 from pygears.util.fileio import save_file
 from pygears.core.port import InPort, OutPort
 from .cosim_port import InCosimPort, OutCosimPort
+import _ctypes
 
 signal_spy_connect_t = Template("""
 /*verilator tracing_on*/
@@ -109,7 +110,6 @@ def verilate(outdir, lang, top, top_name, tracing_enabled, rst=True, expand_data
     # create_project_script(outdir, top, lang)
 
     verilate_cmd = [
-        f'cd {outdir};',
         'verilator -cc -CFLAGS -fpic -LDFLAGS -shared --exe',
         '-Wno-fatal',
         # TODO: Not much of a speedup: '-O3 --x-assign fast --x-initial fast --noassert',
@@ -129,7 +129,7 @@ def verilate(outdir, lang, top, top_name, tracing_enabled, rst=True, expand_data
         f.write(" ".join(verilate_cmd))
         f.write("\n")
 
-    ret = subprocess.call(f'{" ".join(verilate_cmd)} >> verilate.log 2>&1', shell=True)
+    ret = subprocess.call(f'{" ".join(verilate_cmd)} >> verilate.log 2>&1', cwd=outdir, shell=True, close_fds=True)
 
     if ret != 0:
         raise VerilatorCompileError(f'Verilator compile error: {ret}. '
@@ -334,6 +334,12 @@ class SimVerilated(CosimBase):
             if self.verilib:
                 self.verilib.final()
 
-            self.verilib = None
+            # Destroy verilib
+            verilib_handle = self.verilib._handle
+            del self.verilib
+            if os.name == 'nt':
+                _ctypes.FreeLibrary(verilib_handle)
+            else: # assume posix
+                _ctypes.dlclose(verilib_handle)
 
         atexit.unregister(self._finish)
