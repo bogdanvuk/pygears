@@ -2,6 +2,7 @@ import pytest
 from pygears import Intf
 from pygears.typing import Tuple, Uint
 from pygears.lib import sieve
+from pygears.typing.unit import Unit
 
 
 def test_explicit_tuple_single():
@@ -42,6 +43,5 @@ def test_indexing_tuple_multi_slice():
     assert iout.dtype == Tuple[Uint[1], Uint[2], Uint[4]]
 
 
-@pytest.mark.xfail(raises=IndexError)
 def test_uint_downto_slice():
-    Intf(Uint[8])[8:4]
+    assert Intf(Uint[8])[8:4].dtype == Unit

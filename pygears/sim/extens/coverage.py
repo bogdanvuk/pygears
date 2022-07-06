@@ -384,7 +384,8 @@ def save_coverage(cg, outdir):
         for j in range(len(cg.cover_points[i].bins)):
             del cg.cover_points[i].bins[j].enablement
     path = os.path.join(outdir, f'{cg.name}_{timestr}.p')
-    pickle.dump(cg, open(path, 'wb'))
+    with open(path, 'wb') as f:
+        pickle.dump(cg, f)
 
 
 def merge_cover_groups(cg0, cg1):
@@ -401,7 +402,8 @@ def merge_coverage(name, outdir):
     merged_cg = None
     for fn in os.listdir(outdir):
         if name in fn:
-            curr_cg = pickle.load(open(os.path.join(outdir, fn), 'rb'))
+            with open(os.path.join(outdir, fn)) as f:
+                curr_cg = pickle.load(f, 'rb')
             if merged_cg:
                 merged_cg = merge_cover_groups(merged_cg, curr_cg)
             else:

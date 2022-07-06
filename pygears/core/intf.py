@@ -196,7 +196,7 @@ class Intf:
             return self._out_queues
 
         self._out_queues = [
-            asyncio.Queue(maxsize=1, loop=reg['sim/simulator']) for _ in self.end_consumers
+            asyncio.Queue(maxsize=1) for _ in self.end_consumers
         ]
 
         for i, q in enumerate(self._out_queues):

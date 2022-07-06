@@ -67,7 +67,7 @@ def sim_compile_resolver(func, *args, **kwds):
             if isinstance(a, Intf):
                 continue
 
-            intf._in_queue = asyncio.Queue(maxsize=1, loop=reg['sim/simulator'])
+            intf._in_queue = asyncio.Queue(maxsize=1)
             intf.put_nb(a)
 
         def callback(p):
