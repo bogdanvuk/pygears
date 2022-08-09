@@ -378,7 +378,7 @@ gear_module_template = """
 
 {%- set outputs = intfs|isoutput %}
 
-{% if len(outputs) == 1 %}
+{% if len(outputs) <= 1 %}
 
 {% call snippet.gear_module(module_name, intfs, comment, sigs) %}
 {{svlines|indent(4,True)}}
