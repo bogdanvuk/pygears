@@ -376,11 +376,22 @@ class SVCompiler(HDLVisitor):
 gear_module_template = """
 {%- import 'snippet.j2' as snippet -%}
 
+{%- set outputs = intfs|isoutput %}
+
+{% if len(outputs) == 1 %}
+
 {% call snippet.gear_module(module_name, intfs, comment, sigs) %}
-
 {{svlines|indent(4,True)}}
-
 {%- endcall %}
+
+{% else %}
+
+{% call snippet.gear_module(module_name + "_base", intfs, comment, sigs) %}
+{{svlines|indent(4,True)}}
+{%- endcall %}
+{{snippet.output_syncguard(module_name, intfs)}}
+
+{% endif %}
 """
 
 
