@@ -110,7 +110,7 @@ class SVExpressionVisitor:
             val = Integer(code(node.val, int))
 
         sign = '-' if val < 0 else ''
-        return f"{sign}{val.width}'d{abs(int(val))}"
+        return f"{sign}{node.dtype.width}'d{abs(int(val))}"
 
     def visit_FunctionCall(self, node):
         return (f'{node.name}(' + ', '.join(str(self.visit(op)) for op in node.operands) + ')')
