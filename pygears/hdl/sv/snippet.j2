@@ -286,13 +286,14 @@ endmodule
     logic [SIZE-1 : 0] ready_reg;
     logic [SIZE-1 : 0] ready_all;
 
-    assign all_valid = {{in_names|format_list("%s.valid")|join(" && ")}};
+    // assign all_valid = {{in_names|format_list("%s.valid")|join(" && ")}};
     assign in_valid = { {{in_names|reverse|format_list("%s.valid")|join(", ")}} };
     assign out_ready = { {{out_names|reverse|format_list("%s.ready")|join(", ")}} };
-    assign in_ready = &ready_all && all_valid;
+    // assign in_ready = &ready_all && all_valid;
+    assign in_ready = &ready_all;
 
 {% for din, dout in zip(in_names, out_names) %}
-    assign {{din}}.ready = in_ready;
+    assign {{din}}.ready = in_ready && in_valid[{{loop.index-1}}];
     assign {{dout}}.valid = out_valid[{{loop.index-1}}];
     assign {{dout}}.data = {{din}}.data;
 {% endfor %}
@@ -303,13 +304,13 @@ endmodule
 
    generate
       for (genvar i = 0; i < SIZE; i++) begin
-         assign ready_all[i]  = out_ready[i] || ready_reg[i];
+         assign ready_all[i]  = out_ready[i] || !in_valid[i] || ready_reg[i];
          assign out_valid[i]  = in_valid[i] && !ready_reg[i];
 
          always @(posedge clk) begin
             if (rst || (!in_valid[i]) || in_ready) begin
                ready_reg[i] <= 1'b0;
-            end else if (out_ready[i]) begin
+            end else if (out_ready[i] || !in_valid[i]) begin
                ready_reg[i] <= 1'b1;
             end
          end
