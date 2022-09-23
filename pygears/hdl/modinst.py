@@ -172,10 +172,6 @@ class HDLModuleInst:
         return self.wrapper_hier[1][-1]
 
     @property
-    def fixed_latency_decouple_wrap_file_name(self):
-        return f'{self.module_name}.{self.lang}'
-
-    @property
     def file_basename(self):
         return self.resolver.file_basename
 

@@ -23,8 +23,10 @@ class Port:
 
     @consumer.setter
     def consumer(self, val):
-        # self._consumer = weakref.ref(val, partial(callback, self))
-        self._consumer = weakref.ref(val)
+        if val is None:
+            self._consumer = None
+        else:
+            self._consumer = weakref.ref(val)
 
     @property
     def name(self):

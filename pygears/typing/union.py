@@ -106,6 +106,7 @@ class UnionType(EnumerableGenericMeta):
                 raise IndexError
         else:
             if (index[0] == 0):
+                # TODO: What if calculated width is 0? Should we output Unit type instead?
                 return Uint[max(a.width for a in self.args)]
             elif (index[0] == 1):
                 return Uint[bitw(len(self.args) - 1)]

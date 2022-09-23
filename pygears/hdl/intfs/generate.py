@@ -88,7 +88,7 @@ def generate(top, intfdef, rst=True):
             defs.extend(pdefs)
 
     context = {
-        'wrap_module_name': f'wrap_{modinst.module_name}',
+        'wrap_module_name': f'wrap_{modinst.wrap_module_name}',
         'module_name': modinst.wrap_module_name,
         'inst_name': modinst.wrap_module_name,
         'intfs': intfs,
