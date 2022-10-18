@@ -293,8 +293,11 @@ class SVExpressionVisitor:
                 if isinstance(node.val, (ir.Name, ir.AttrExpr, ir.Component)):
                     if typeof(node.val.dtype, (Tuple, Union, Queue)):
                         return f'{val}{self.separator}{node.val.dtype.fields[index]}'
-                    else:
+                    elif typeof(node.val.dtype, Integral):
                         return f'{val}[{index}]'
+                    else:
+                        elem_dtype = node.val.dtype[index]
+                        return self.cast_svexpr(f'{val}[{index}]', Uint[elem_dtype.width], elem_dtype)
 
             if isinstance(node.val, ir.ResExpr):
                 if typeof(node.val.dtype, Array):
