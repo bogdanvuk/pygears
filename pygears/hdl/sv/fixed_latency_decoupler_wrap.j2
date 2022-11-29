@@ -3,29 +3,41 @@
 {% call snippet.gear_module(wrap_module_name, intfs, sigs=sigs) %}
 
   {%- set din = intfs[0]['name'] %}
-  {%- set dout = intfs[1]['name'] %}
-  {%- set width = intfs[1]['width'] %}
+  {%- set douts = intfs|isoutput %}
+  {%- set width = douts[0]['width'] %}
+  {%- set dins = intfs|isinput %}
+  {%- set dout_names = douts|keymap("name") %}
+  {%- set din_names = dins|keymap("name") %}
 
-  {% for i in intfs %}
+  {# {% for i in intfs %} #}
+  {# {{snippet.intf_inst(i['name']+"_base", width=i['width'], size=1, type=i['type'], backpressure=0)|indent(4,True)}} #}
+  {# {% endfor %} #}
+
+  {% for i in [dins[0], douts[0]] %}
   {{snippet.intf_inst(i['name']+"_base", width=i['width'], size=1, type=i['type'])|indent(4,True)}}
   {% endfor %}
 
-
-  {% set decouple_port_map = {'dout': dout} %}
+  {% set decouple_port_map = {'dout': dout_names[0]} %}
   {% set decouple_sig_map = {'clk': 'clk', 'rst': 'rst', 'din_valid': 'decouple_din_valid', 'din_ready': 'decouple_din_ready', 'dout_data': 'decouple_din_data'} %}
-  {% set base_port_map = {din: din + '_base', dout: dout + '_base'} %}
+  {# {% set base_port_map = {i: i + '_base' for i in intfs} %} #}
+
+  {% set base_port_map = {din_names[0]: din_names[0] + '_base', dout_names[0]: dout_names[0] + '_base'} %}
+  {%- for d in din_names[1:] -%}
+    {%- do base_port_map.update({d: d}) -%}
+  {%- endfor -%}
 
   logic decouple_din_valid;
   logic decouple_din_ready;
   logic [{{width}}-1 : 0] decouple_din_data;
 
-  assign {{din}}_base.valid = decouple_din_ready & {{din}}.valid; 
+  assign {{din}}_base.valid = decouple_din_ready & {{din}}.valid;
   assign {{din}}_base.data = {{din}}.data;
 
   assign {{din}}.ready = decouple_din_ready;
   assign decouple_din_valid = decouple_din_ready & {{din}}.valid;
-  assign decouple_din_data = {{dout}}_base.data;
-  assign {{dout}}_base.ready = 1;
+  {# assign decouple_din_valid = decouple_din_ready & {{dout_names[0]}}_base.valid; #}
+  assign decouple_din_data = {{dout_names[0]}}_base.data;
+  assign {{dout_names[0]}}_base.ready = 1;
 
   {{snippet.module_inst(module_name, param_map, inst_name, port_map=base_port_map, sig_map=sig_map)|indent(4, True)}}
   {{snippet.module_inst('fixed_latency_decoupler', {'LATENCY': latency, 'DATA_W': width}, "fixed_latency_decoupler", port_map=decouple_port_map, sig_map=decouple_sig_map)|indent(4, True)}}

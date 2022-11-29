@@ -178,6 +178,16 @@ class SVIntfGen:
         if self.lang == 'v' and self.traced:
             inst.append('/*verilator tracing_on*/')
 
+        node = self.parent
+        while node.parent is not None:
+            if reg['hdlgen/map'][node].fixed_latency_decouple_wrapped:
+                ctx['backpressure'] = False
+                break
+            node = node.parent
+
+        # if reg['hdlgen/map'][self.parent].fixed_latency_decouple_wrapped:
+        #     ctx['backpressure'] = False
+
         inst.append(template_env.snippets.intf_inst(**ctx))
 
         if self.lang == 'v' and self.traced:

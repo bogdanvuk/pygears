@@ -68,7 +68,7 @@ def removed_unused_vars(node, ctx):
     # TODO: This part is only for the cleanup of the whole module with inferred
     # states. Find a better way to implement this if statement
     if isinstance(ctx, GearContext):
-        used = set()
+        used = set(ctx.signals.keys())
         for state in node.stmts[0].branches:
             v = UsedVarStmtVisitor()
             for stmt in state.stmts:

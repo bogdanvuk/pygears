@@ -30,11 +30,16 @@
   {% endfor %}
 {%- endmacro %}
 
-{% macro intf_inst(name, width, size, type) -%}
+{% macro intf_inst(name, width, size, type, backpressure = 1) -%}
   {% if width == 0 %}
 	{% set width = 1 %}
   {% endif %}
+
+  {% if backpressure %}
   dti #(.W_DATA({{width}})) {{name}}{{ "[%d:0]"|format(size-1) if size>1 else "" }}(); // {{type}} ({{width}})
+  {% else %}
+  dti #(.W_DATA({{width}}), .BACKPRESSURE(0)) {{name}}{{ "[%d:0]"|format(size-1) if size>1 else "" }}(); // {{type}} ({{width}})
+  {% endif %}
 {%- endmacro %}
 
 {% macro module_inst(module_name, param_map, inst_name, port_map=None, sig_map=None, rst_name="rst") -%}
@@ -69,13 +74,6 @@
   {% endif -%}
   );
 {% endmacro %}
-
-{% macro intf_inst(name, width, size, type) -%}
-  {% if width == 0 %}
-	{% set width = 1 %}
-  {% endif %}
-  dti #(.W_DATA({{width}})) {{name}}{{ "[%d:0]"|format(size-1) if size>1 else "" }}(); // {{type}} ({{width}})
-{%- endmacro %}
 
 {% macro assign(name, value) -%}
   assign {{name}} = {{value}};

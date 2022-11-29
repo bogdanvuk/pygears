@@ -41,9 +41,10 @@
 
       always @(posedge clk) begin
         if(rst) begin
-           if (INIT_VALID)
+           if (INIT_VALID) begin
+             memory[0] = INIT;
              w_ptr <= 1;
-           else
+           end else
              w_ptr <= 0;
         end else if(din.valid & ~full) begin
           w_ptr <= w_ptr + 1;
