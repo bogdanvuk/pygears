@@ -28,7 +28,8 @@ module fixed_latency_decoupler # (
 
    assign dout_valid_pipe_out = dout_valid_pipe[LATENCY-1];
 
-   localparam MSB = $clog2(LATENCY + 1);
+   // localparam MSB = $clog2(LATENCY + 1);
+   localparam MSB = $clog2(LATENCY + 2);
 
    localparam DECOUPLE_DEPTH = 2**MSB;
 
@@ -67,6 +68,7 @@ module fixed_latency_decoupler # (
    end
 
    assign din_ready = (cnt <= 1) && (!full);
+   // assign din_ready = empty || dout.ready;
    assign dout.data = decouple_mem[r_ptr[MSB-1:0]];
    assign dout.valid = ~empty;
 
