@@ -180,7 +180,7 @@ class SVIntfGen:
 
         node = self.parent
         while node.parent is not None:
-            if reg['hdlgen/map'][node].fixed_latency_decouple_wrapped:
+            if node in reg['hdlgen/map'] and reg['hdlgen/map'][node].fixed_latency_decouple_wrapped:
                 ctx['backpressure'] = False
                 break
             node = node.parent

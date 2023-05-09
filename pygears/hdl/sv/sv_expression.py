@@ -174,7 +174,7 @@ class SVExpressionVisitor:
 
         return expr
 
-    def cast_svexpr(self, svexpr, expr_dtype, cast_dtype):
+    def cast_svexpr(self, svexpr, expr_dtype, cast_dtype, force=False):
         expr_signed = getattr(expr_dtype, 'signed', False)
         res_signed = getattr(cast_dtype, 'signed', False)
 
@@ -191,7 +191,7 @@ class SVExpressionVisitor:
             else:
                 svexpr = f"unsigned'({svexpr})"
 
-        if cast_width != expr_width:
+        if cast_width != expr_width or force:
             svexpr = f"{cast_width}'({svexpr})"
 
         return svexpr
@@ -211,7 +211,8 @@ class SVExpressionVisitor:
             sv = self.visit(op)
             if sv is None:
                 continue
-            svexprs.append(str(sv))
+
+            svexprs.append(str(self.cast_svexpr(sv, op.dtype, op.dtype, force=True)))
 
         if svexprs:
             return '{' + ', '.join(svexprs) + '}'
@@ -245,6 +246,9 @@ class SVExpressionVisitor:
                 ir.opc.Add, ir.opc.Sub, ir.opc.Mult, ir.opc.BitOr, ir.opc.BitAnd, ir.opc.BitXor
         ]:
             cast_dtype = node.dtype
+            ops = [self.cast_svexpr(expr, dtype, cast_dtype) for expr, dtype in zip(ops, op_dtypes)]
+        elif node.operator in [ir.opc.Div, ir.opc.FloorDiv]:
+            cast_dtype = node.operands[0].dtype
             ops = [self.cast_svexpr(expr, dtype, cast_dtype) for expr, dtype in zip(ops, op_dtypes)]
         elif node.operator == ir.opc.LShift:
             if op_dtypes[0].width < node.dtype.width:

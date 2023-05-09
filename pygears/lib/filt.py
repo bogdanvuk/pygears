@@ -67,10 +67,10 @@ def filt_f(din, *, f):
 async def qfilt_union(din: Queue[Union, 'lvl'], *, fixsel=0,
                       filt_lvl=1) -> b'filt_type(din, lvl, fixsel)':
 
-    data_reg: din.dtype.data.data = din.dtype.data.data(0)
+    data_reg: din.dtype.data.types[0] = din.dtype.data.types[0](0)
     eot_reg: Uint[din.dtype.lvl] = Uint[din.dtype.lvl](0)
     empty_reg: Bool = Bool(True)
-    curr_data: din.dtype.data.data
+    curr_data: din.dtype.data.types[0]
     field_sel: Bool
 
     while True:
@@ -82,7 +82,9 @@ async def qfilt_union(din: Queue[Union, 'lvl'], *, fixsel=0,
                 if field_sel:
                     if not empty_reg:
                         yield (data_reg, eot_reg)
-                        yield (curr_data, d.eot)
+
+                    yield (curr_data, d.eot)
+
                 elif not empty_reg:
                     yield (data_reg, d.eot)
                 empty_reg = True

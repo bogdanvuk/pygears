@@ -568,6 +568,7 @@ class EventLoop(asyncio.events.AbstractEventLoop):
 
 
     def run(self, timeout=None):
+        asyncio.events._set_running_loop(self)
         self.sim_map = reg['sim/map']
         self.sim_gears = []
         self.tasks = {}

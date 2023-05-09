@@ -24,12 +24,12 @@ COMMUTATIVE_BIN_OPERATORS = [
 
 ARITH_BIN_OPERATORS = [
     opc.Add, opc.Sub, opc.Mult, opc.Div, opc.Mod, opc.Pow, opc.LShift, opc.RShift, opc.BitOr,
-    opc.BitAnd, opc.BitXor, opc.Div
+    opc.BitAnd, opc.BitXor, opc.Div, opc.FloorDiv
 ]
 
 EXTENDABLE_OPERATORS = [
     opc.Add, opc.Sub, opc.Mult, opc.Div, opc.Mod, opc.Pow, opc.LShift, opc.RShift, opc.BitOr,
-    opc.BitAnd, opc.BitXor, opc.Div, opc.Invert, opc.Not
+    opc.BitAnd, opc.BitXor, opc.Div, opc.FloorDiv, opc.Invert, opc.Not
 ]
 
 OPMAP = {
@@ -520,6 +520,13 @@ class SliceExpr(Expr):
         inst.step = step
         return inst
 
+    @property
+    def dtype(self):
+        if self.stop == ResExpr(None) and self.step == ResExpr(None):
+            return self.start.dtype
+
+        # TODO: Or else?
+
 
 def identity_anihilation(op1, op2, operator):
     '''
@@ -744,6 +751,8 @@ class BinOpExpr(Expr):
 
         if (self.operator in (opc.LShift, opc.RShift)) and isinstance(self.operands[1], ResExpr):
             op2 = self.operands[1].val
+        elif (self.operator in (opc.LShift, opc.RShift)):
+            op2 = self.operands[1].dtype.max
         else:
             op2 = self.operands[1].dtype
 
@@ -811,6 +820,8 @@ class SubscriptExpr(Expr):
 
             if isinstance(val, ConcatExpr):
                 return val.operands[const_index]
+        elif is_type(const_val):
+            return ResExpr(const_val[2**index.dtype.width])
 
         inst = super().__new__(cls)
         inst.val = val
@@ -832,6 +843,9 @@ class SubscriptExpr(Expr):
             return self.val.dtype[self.index.val]
 
         # TODO: When is this usefull?
+        # Well we are betting that this is simple indexing without slicing
+        # and all result types will be the same, so we chose index 0 to probe
+        # the return type
         return self.val.dtype[0]
 
 
