@@ -107,7 +107,12 @@ async def zip_sync(*din, outsync=True) -> b'din':
             eot_aligned = (eot_overlap[0] >= eot_overlap[1], eot_overlap[1] >= eot_overlap[0])
         else:
             eot_aligned = (1, 1)
-            eot_overlap = din_data[0].eot if lvls[0] else din_data[1].eot
+            if lvls[0]:
+                eot_overlap = din_data[0].eot
+            elif lvls[1]:
+                eot_overlap = din_data[1].eot
+            else:
+                eot_overlap = True
 
         if all(eot_aligned):
             yield din_data

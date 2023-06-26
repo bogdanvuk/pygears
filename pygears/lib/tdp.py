@@ -11,10 +11,10 @@ TUniReq = Union[Uint['w_addr'], TWrReq]
 
 
 @gear
-async def tdp_port0(req, *, depth, mem) -> b'req["data"].data':
-    (addr, (data, ctrl)) = await req.get()
-    if ctrl:
-        mem[int(addr)] = data
+async def tdp_port0(req, *, depth, mem) -> b'req["data"].dtype':
+    (addr, maybe_data) = await req.get()
+    if maybe_data:
+        mem[int(addr)] = maybe_data.get()
     else:
         dout = mem[int(addr)]
         await clk()
@@ -22,10 +22,10 @@ async def tdp_port0(req, *, depth, mem) -> b'req["data"].data':
 
 
 @gear
-async def tdp_port1(req, *, depth, mem) -> b'req["data"].data':
-    (addr, (data, ctrl)) = await req.get()
-    if ctrl:
-        mem[int(addr)] = data
+async def tdp_port1(req, *, depth, mem) -> b'req["data"].dtype':
+    (addr, maybe_data) = await req.get()
+    if maybe_data:
+        mem[int(addr)] = maybe_data.get()
     else:
         dout = mem[int(addr)]
         await clk()
@@ -41,7 +41,7 @@ def tdp(
     w_data=b'data.width',
     w_addr=b'w_addr',
     mem=None,
-) -> b'(req0["data"].data, req1["data"].data)':
+) -> b'(req0["data"].dtype, req1["data"].dtype)':
 
     if mem is None:
         mem = {}

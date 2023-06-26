@@ -159,6 +159,8 @@ class GearEnum(HierVisitorBase):
 def cosim_build_dir(top):
     from pygears.core.gear_memoize import gear_inst_hash
     hsh = gear_inst_hash(top)
+    if hsh is None:
+        hsh = 0
     return f'{top.basename}_{hex(hsh & 0xfffffff)}'
 
 

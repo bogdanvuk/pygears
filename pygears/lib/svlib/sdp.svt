@@ -52,9 +52,13 @@ module {{module_name}}_ram#(
         mem[din_addr] <= din_data;
    end
 
-   always @ (posedge clk)begin
-      if(dout_read) begin
-         dout_mem <= mem[dout_addr];
+   if (NBPIPE == -2) begin
+      assign dout_mem = mem[dout_addr];
+   end else begin
+      always @ (posedge clk)begin
+          if(dout_read) begin
+            dout_mem <= mem[dout_addr];
+          end
       end
    end
 
@@ -192,24 +196,30 @@ module {{module_name}}
       assign rd_data.valid = ~empty;
 
    end else begin
-      logic data_valid_reg;
+      if (LATENCY == 0) begin
+          assign rd_data.data = dout_data;
+          assign rd_data.valid = rd_addr.valid;
+          assign mem_read = !rd_addr.valid || rd_data.ready;
+      end else begin
+          logic data_valid_reg;
 
-      initial begin
-         data_valid_reg = 0;
-      end
-
-      // valid and eot for data interface are registered
-      always @(posedge clk) begin
-          if (rst) begin
-            data_valid_reg <= 1'b0;
-          end else if (mem_read) begin
-                data_valid_reg <= rd_addr.valid;
+          initial begin
+            data_valid_reg = 0;
           end
-      end
 
-      assign rd_data.data = dout_data;
-      assign rd_data.valid = data_valid_reg;
-      assign mem_read = !data_valid_reg || rd_data.ready;
+          // valid and eot for data interface are registered
+          always @(posedge clk) begin
+              if (rst) begin
+                data_valid_reg <= 1'b0;
+              end else if (mem_read) begin
+                    data_valid_reg <= rd_addr.valid;
+              end
+          end
+
+          assign rd_data.data = dout_data;
+          assign rd_data.valid = data_valid_reg;
+          assign mem_read = !data_valid_reg || rd_data.ready;
+      end
    end
 
    assign rd_addr.ready = mem_read;

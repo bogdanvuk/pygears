@@ -14,15 +14,16 @@ async def sdp_wr_port(din, *, depth, mem) -> None:
 
 
 @gear
-async def sdp_rd_port(addr, *, t, depth, mem) -> b't':
+async def sdp_rd_port(addr, *, t, depth, latency, mem) -> b't':
     while True:
         a = await addr.get()
         dout = mem[int(a)]
-        await clk()
+        if latency == 1:
+            await clk()
         yield dout
 
 
-@gear(outnames=['rd_data'], hdl={'hierarchical': False}, enablement=b'latency not in [0, 2]')
+@gear(outnames=['rd_data'], hdl={'hierarchical': False}, enablement=b'latency != 2')
 def sdp(wr_addr_data: TWrDin,
         rd_addr: TRdDin,
         *,
@@ -65,4 +66,4 @@ def sdp(wr_addr_data: TWrDin,
         mem = {}
 
     wr_addr_data | sdp_wr_port(depth=depth, mem=mem)
-    return rd_addr | sdp_rd_port(t=wr_addr_data.dtype['data'], depth=depth, mem=mem)
+    return rd_addr | sdp_rd_port(t=wr_addr_data.dtype['data'], depth=depth, latency=latency, mem=mem)
